@@ -141,11 +141,13 @@ async function compile(inputFile: string, target: CodegenTarget, outputFile?: st
   // ---------------------------------------------------------------------------
 
   const { tokens, errors: tokenErrors } = tokenize(source)
+
   if (tokenErrors.length > 0) {
     console.error("Tokenizer errors:")
     for (const err of tokenErrors) {
       console.error(`  ${inputFile}:${err.position.line}:${err.position.column} - ${err.message}`)
     }
+
     process.exit(1)
   }
 
@@ -154,11 +156,13 @@ async function compile(inputFile: string, target: CodegenTarget, outputFile?: st
   // ---------------------------------------------------------------------------
 
   const { program, errors: parseErrors } = parse(tokens)
+
   if (parseErrors.length > 0) {
     console.error("Parser errors:")
     for (const err of parseErrors) {
       console.error(`  ${inputFile}:${err.position.line}:${err.position.column} - ${err.message}`)
     }
+
     process.exit(1)
   }
 
@@ -173,11 +177,13 @@ async function compile(inputFile: string, target: CodegenTarget, outputFile?: st
   // ---------------------------------------------------------------------------
 
   const { errors: semanticErrors } = analyze(program)
+
   if (semanticErrors.length > 0) {
     console.error("Semantic errors:")
     for (const err of semanticErrors) {
       console.error(`  ${inputFile}:${err.position.line}:${err.position.column} - ${err.message}`)
     }
+
     process.exit(1)
   }
 
@@ -218,6 +224,7 @@ async function run(inputFile: string): Promise<void> {
   // WHY: Bun can execute TypeScript directly without transpilation step
   try {
     const fn = new Function(ts)
+
     fn()
   }
   catch (err) {
@@ -244,8 +251,10 @@ async function check(inputFile: string): Promise<void> {
   const { program, errors: parseErrors } = parse(tokens)
 
   let semanticErrors: { message: string; position: { line: number; column: number } }[] = []
+
   if (program) {
     const result = analyze(program)
+
     semanticErrors = result.errors
   }
 
@@ -259,6 +268,7 @@ async function check(inputFile: string): Promise<void> {
     for (const err of allErrors) {
       console.log(`  ${err.position.line}:${err.position.column} - ${err.message}`)
     }
+
     process.exit(1)
   }
 }
@@ -298,10 +308,12 @@ for (let i = 2; i < args.length; i++) {
   }
   else if (args[i] === "-t" || args[i] === "--target") {
     const t = args[++i]
+
     if (t !== "ts" && t !== "zig" && t !== "wasm") {
       console.error(`Error: Unknown target '${t}'. Valid targets: ${VALID_TARGETS.join(", ")}`)
       process.exit(1)
     }
+
     target = t
   }
 }
@@ -325,6 +337,7 @@ switch (command) {
       console.error("Error: 'run' command only works with TS target")
       process.exit(1)
     }
+
     await run(inputFile)
     break
   case "check":

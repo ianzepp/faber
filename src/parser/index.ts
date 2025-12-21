@@ -91,18 +91,11 @@ import type {
   ThrowStatement,
   ExpressionStatement,
   Identifier,
-  Literal,
-  BinaryExpression,
-  UnaryExpression,
-  CallExpression,
-  MemberExpression,
   ArrowFunctionExpression,
   Parameter,
   TypeAnnotation,
   CatchClause,
-  AwaitExpression,
   NewExpression,
-  TemplateLiteral,
 } from "./ast"
 
 // =============================================================================
@@ -176,7 +169,10 @@ export function parse(tokens: Token[]): ParserResult {
    * INVARIANT: Never advances past EOF.
    */
   function advance(): Token {
-    if (!isAtEnd()) current++
+    if (!isAtEnd()) {
+      current++
+    }
+
     return tokens[current - 1]
   }
 
@@ -205,9 +201,11 @@ export function parse(tokens: Token[]): ParserResult {
     for (const type of types) {
       if (check(type)) {
         advance()
+
         return true
       }
     }
+
     return false
   }
 
@@ -219,8 +217,10 @@ export function parse(tokens: Token[]): ParserResult {
   function matchKeyword(keyword: string): boolean {
     if (checkKeyword(keyword)) {
       advance()
+
       return true
     }
+
     return false
   }
 
@@ -232,9 +232,14 @@ export function parse(tokens: Token[]): ParserResult {
    * @returns Matched token if found, current token if not
    */
   function expect(type: TokenType, message: string): Token {
-    if (check(type)) return advance()
+    if (check(type)) {
+      return advance()
+    }
+
     const token = peek()
+
     errors.push({ message: `${message}, got '${token.value}'`, position: token.position })
+
     return token
   }
 
@@ -244,9 +249,14 @@ export function parse(tokens: Token[]): ParserResult {
    * ERROR RECOVERY: Records error but returns current token.
    */
   function expectKeyword(keyword: string, message: string): Token {
-    if (checkKeyword(keyword)) return advance()
+    if (checkKeyword(keyword)) {
+      return advance()
+    }
+
     const token = peek()
+
     errors.push({ message: `${message}, got '${token.value}'`, position: token.position })
+
     return token
   }
 
@@ -258,6 +268,7 @@ export function parse(tokens: Token[]): ParserResult {
    */
   function error(message: string): never {
     const token = peek()
+
     errors.push({ message, position: token.position })
     throw new Error(message)
   }
@@ -307,6 +318,7 @@ export function parse(tokens: Token[]): ParserResult {
           checkKeyword("redde") || checkKeyword("tempta")) {
         return
       }
+
       advance()
     }
   }
@@ -324,30 +336,39 @@ export function parse(tokens: Token[]): ParserResult {
     if (checkKeyword("ex")) {
       return parseImportDeclaration()
     }
+
     if (checkKeyword("esto") || checkKeyword("fixum")) {
       return parseVariableDeclaration()
     }
+
     if (checkKeyword("functio") || checkKeyword("futura")) {
       return parseFunctionDeclaration()
     }
+
     if (checkKeyword("si")) {
       return parseIfStatement()
     }
+
     if (checkKeyword("dum")) {
       return parseWhileStatement()
     }
+
     if (checkKeyword("pro")) {
       return parseForStatement()
     }
+
     if (checkKeyword("redde")) {
       return parseReturnStatement()
     }
+
     if (checkKeyword("iace")) {
       return parseThrowStatement()
     }
+
     if (checkKeyword("tempta")) {
       return parseTryStatement()
     }
+
     if (check("LBRACE")) {
       return parseBlockStatement()
     }
@@ -372,6 +393,7 @@ export function parse(tokens: Token[]): ParserResult {
    */
   function parseImportDeclaration(): ImportDeclaration {
     const position = peek().position
+
     expectKeyword("ex", "Expected 'ex'")
 
     const sourceToken = expect("IDENTIFIER", "Expected module name after 'ex'")
@@ -384,6 +406,7 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     const specifiers: Identifier[] = []
+
     do {
       specifiers.push(parseIdentifier())
     } while (match("COMMA"))
@@ -402,16 +425,19 @@ export function parse(tokens: Token[]): ParserResult {
   function parseVariableDeclaration(): VariableDeclaration {
     const position = peek().position
     const kind = peek().keyword as "esto" | "fixum"
+
     advance() // esto or fixum
 
     const name = parseIdentifier()
 
     let typeAnnotation: TypeAnnotation | undefined
+
     if (match("COLON")) {
       typeAnnotation = parseTypeAnnotation()
     }
 
     let init: Expression | undefined
+
     if (match("EQUAL")) {
       init = parseExpression()
     }
@@ -442,9 +468,11 @@ export function parse(tokens: Token[]): ParserResult {
 
     expect("LPAREN", "Expected '(' after function name")
     const params = parseParameterList()
+
     expect("RPAREN", "Expected ')' after parameters")
 
     let returnType: TypeAnnotation | undefined
+
     if (match("THIN_ARROW")) {
       returnType = parseTypeAnnotation()
     }
@@ -463,7 +491,9 @@ export function parse(tokens: Token[]): ParserResult {
   function parseParameterList(): Parameter[] {
     const params: Parameter[] = []
 
-    if (check("RPAREN")) return params
+    if (check("RPAREN")) {
+      return params
+    }
 
     do {
       params.push(parseParameter())
@@ -486,6 +516,7 @@ export function parse(tokens: Token[]): ParserResult {
 
     // Check for preposition (ad, cum, in, ex)
     let preposition: string | undefined
+
     if (peek().type === "KEYWORD" &&
         ["ad", "cum", "in", "ex"].includes(peek().keyword ?? "")) {
       preposition = advance().keyword
@@ -494,6 +525,7 @@ export function parse(tokens: Token[]): ParserResult {
     const name = parseIdentifier()
 
     let typeAnnotation: TypeAnnotation | undefined
+
     if (match("COLON")) {
       typeAnnotation = parseTypeAnnotation()
     }
@@ -516,6 +548,7 @@ export function parse(tokens: Token[]): ParserResult {
    */
   function parseIfStatement(): IfStatement {
     const position = peek().position
+
     expectKeyword("si", "Expected 'si'")
 
     const test = parseExpression()
@@ -523,12 +556,14 @@ export function parse(tokens: Token[]): ParserResult {
 
     // Check for cape (catch) clause
     let catchClause: CatchClause | undefined
+
     if (checkKeyword("cape")) {
       catchClause = parseCatchClause()
     }
 
     // Check for alternate (aliter)
     let alternate: BlockStatement | IfStatement | undefined
+
     if (matchKeyword("aliter")) {
       if (checkKeyword("si")) {
         alternate = parseIfStatement()
@@ -551,12 +586,14 @@ export function parse(tokens: Token[]): ParserResult {
    */
   function parseWhileStatement(): WhileStatement {
     const position = peek().position
+
     expectKeyword("dum", "Expected 'dum'")
 
     const test = parseExpression()
     const body = parseBlockStatement()
 
     let catchClause: CatchClause | undefined
+
     if (checkKeyword("cape")) {
       catchClause = parseCatchClause()
     }
@@ -575,11 +612,13 @@ export function parse(tokens: Token[]): ParserResult {
    */
   function parseForStatement(): ForStatement {
     const position = peek().position
+
     expectKeyword("pro", "Expected 'pro'")
 
     const variable = parseIdentifier()
 
     let kind: "in" | "ex" = "in"
+
     if (matchKeyword("in")) {
       kind = "in"
     }
@@ -594,6 +633,7 @@ export function parse(tokens: Token[]): ParserResult {
     const body = parseBlockStatement()
 
     let catchClause: CatchClause | undefined
+
     if (checkKeyword("cape")) {
       catchClause = parseCatchClause()
     }
@@ -611,9 +651,11 @@ export function parse(tokens: Token[]): ParserResult {
    */
   function parseReturnStatement(): ReturnStatement {
     const position = peek().position
+
     expectKeyword("redde", "Expected 'redde'")
 
     let argument: Expression | undefined
+
     if (!check("RBRACE") && !isAtEnd()) {
       argument = parseExpression()
     }
@@ -631,6 +673,7 @@ export function parse(tokens: Token[]): ParserResult {
    */
   function parseThrowStatement(): ThrowStatement {
     const position = peek().position
+
     expectKeyword("iace", "Expected 'iace'")
 
     const argument = parseExpression()
@@ -648,16 +691,19 @@ export function parse(tokens: Token[]): ParserResult {
    */
   function parseTryStatement(): Statement {
     const position = peek().position
+
     expectKeyword("tempta", "Expected 'tempta'")
 
     const block = parseBlockStatement()
 
     let handler: CatchClause | undefined
+
     if (checkKeyword("cape")) {
       handler = parseCatchClause()
     }
 
     let finalizer: BlockStatement | undefined
+
     if (matchKeyword("demum")) {
       finalizer = parseBlockStatement()
     }
@@ -673,6 +719,7 @@ export function parse(tokens: Token[]): ParserResult {
    */
   function parseCatchClause(): CatchClause {
     const position = peek().position
+
     expectKeyword("cape", "Expected 'cape'")
 
     const param = parseIdentifier()
@@ -689,9 +736,11 @@ export function parse(tokens: Token[]): ParserResult {
    */
   function parseBlockStatement(): BlockStatement {
     const position = peek().position
+
     expect("LBRACE", "Expected '{'")
 
     const body: Statement[] = []
+
     while (!check("RBRACE") && !isAtEnd()) {
       body.push(parseStatement())
     }
@@ -710,6 +759,7 @@ export function parse(tokens: Token[]): ParserResult {
   function parseExpressionStatement(): ExpressionStatement {
     const position = peek().position
     const expression = parseExpression()
+
     return { type: "ExpressionStatement", expression, position }
   }
 
@@ -745,9 +795,11 @@ export function parse(tokens: Token[]): ParserResult {
     if (match("EQUAL")) {
       const position = peek().position
       const value = parseAssignment()
+
       if (expr.type === "Identifier" || expr.type === "MemberExpression") {
         return { type: "AssignmentExpression", operator: "=", left: expr, right: value, position }
       }
+
       error("Invalid assignment target")
     }
 
@@ -770,6 +822,7 @@ export function parse(tokens: Token[]): ParserResult {
     while (match("OR") || matchKeyword("aut")) {
       const position = peek().position
       const right = parseAnd()
+
       left = { type: "BinaryExpression", operator: "||", left, right, position }
     }
 
@@ -792,6 +845,7 @@ export function parse(tokens: Token[]): ParserResult {
     while (match("AND") || matchKeyword("et")) {
       const position = peek().position
       const right = parseEquality()
+
       left = { type: "BinaryExpression", operator: "&&", left, right, position }
     }
 
@@ -813,6 +867,7 @@ export function parse(tokens: Token[]): ParserResult {
       const operator = tokens[current - 1].value
       const position = tokens[current - 1].position
       const right = parseComparison()
+
       left = { type: "BinaryExpression", operator, left, right, position }
     }
 
@@ -834,6 +889,7 @@ export function parse(tokens: Token[]): ParserResult {
       const operator = tokens[current - 1].value
       const position = tokens[current - 1].position
       const right = parseAdditive()
+
       left = { type: "BinaryExpression", operator, left, right, position }
     }
 
@@ -855,6 +911,7 @@ export function parse(tokens: Token[]): ParserResult {
       const operator = tokens[current - 1].value
       const position = tokens[current - 1].position
       const right = parseMultiplicative()
+
       left = { type: "BinaryExpression", operator, left, right, position }
     }
 
@@ -876,6 +933,7 @@ export function parse(tokens: Token[]): ParserResult {
       const operator = tokens[current - 1].value
       const position = tokens[current - 1].position
       const right = parseUnary()
+
       left = { type: "BinaryExpression", operator, left, right, position }
     }
 
@@ -896,18 +954,21 @@ export function parse(tokens: Token[]): ParserResult {
     if (match("BANG") || matchKeyword("non")) {
       const position = tokens[current - 1].position
       const argument = parseUnary()
+
       return { type: "UnaryExpression", operator: "!", argument, prefix: true, position }
     }
 
     if (match("MINUS")) {
       const position = tokens[current - 1].position
       const argument = parseUnary()
+
       return { type: "UnaryExpression", operator: "-", argument, prefix: true, position }
     }
 
     if (matchKeyword("exspecta")) {
       const position = tokens[current - 1].position
       const argument = parseUnary()
+
       return { type: "AwaitExpression", argument, position }
     }
 
@@ -930,6 +991,7 @@ export function parse(tokens: Token[]): ParserResult {
 
     expect("LPAREN", "Expected '(' after constructor")
     const args = parseArgumentList()
+
     expect("RPAREN", "Expected ')' after arguments")
 
     return { type: "NewExpression", callee, arguments: args, position }
@@ -953,17 +1015,20 @@ export function parse(tokens: Token[]): ParserResult {
       if (match("LPAREN")) {
         const position = tokens[current - 1].position
         const args = parseArgumentList()
+
         expect("RPAREN", "Expected ')' after arguments")
         expr = { type: "CallExpression", callee: expr, arguments: args, position }
       }
       else if (match("DOT")) {
         const position = tokens[current - 1].position
         const property = parseIdentifier()
+
         expr = { type: "MemberExpression", object: expr, property, computed: false, position }
       }
       else if (match("LBRACKET")) {
         const position = tokens[current - 1].position
         const property = parseExpression() as Identifier
+
         expect("RBRACKET", "Expected ']'")
         expr = { type: "MemberExpression", object: expr, property, computed: true, position }
       }
@@ -984,7 +1049,9 @@ export function parse(tokens: Token[]): ParserResult {
   function parseArgumentList(): Expression[] {
     const args: Expression[] = []
 
-    if (check("RPAREN")) return args
+    if (check("RPAREN")) {
+      return args
+    }
 
     do {
       args.push(parseExpression())
@@ -1013,9 +1080,11 @@ export function parse(tokens: Token[]): ParserResult {
     if (matchKeyword("verum")) {
       return { type: "Literal", value: true, raw: "verum", position }
     }
+
     if (matchKeyword("falsum")) {
       return { type: "Literal", value: false, raw: "falsum", position }
     }
+
     if (matchKeyword("nihil")) {
       return { type: "Literal", value: null, raw: "nihil", position }
     }
@@ -1024,18 +1093,21 @@ export function parse(tokens: Token[]): ParserResult {
     if (check("NUMBER")) {
       const token = advance()
       const value = token.value.includes(".") ? parseFloat(token.value) : parseInt(token.value, 10)
+
       return { type: "Literal", value, raw: token.value, position }
     }
 
     // String literal
     if (check("STRING")) {
       const token = advance()
+
       return { type: "Literal", value: token.value, raw: `"${token.value}"`, position }
     }
 
     // Template string
     if (check("TEMPLATE_STRING")) {
       const token = advance()
+
       return { type: "TemplateLiteral", raw: token.value, position }
     }
 
@@ -1050,9 +1122,17 @@ export function parse(tokens: Token[]): ParserResult {
       let parenDepth = 1
 
       while (parenDepth > 0 && !isAtEnd()) {
-        if (check("LPAREN")) parenDepth++
-        if (check("RPAREN")) parenDepth--
-        if (parenDepth > 0) advance()
+        if (check("LPAREN")) {
+          parenDepth++
+        }
+
+        if (check("RPAREN")) {
+          parenDepth--
+        }
+
+        if (parenDepth > 0) {
+          advance()
+        }
       }
 
       if (check("RPAREN")) {
@@ -1060,6 +1140,7 @@ export function parse(tokens: Token[]): ParserResult {
         if (check("ARROW")) {
           // It's an arrow function, backtrack and parse properly
           current = startPos
+
           return parseArrowFunction(position)
         }
       }
@@ -1067,7 +1148,9 @@ export function parse(tokens: Token[]): ParserResult {
       // Not an arrow function, backtrack and parse as grouped expression
       current = startPos
       const expr = parseExpression()
+
       expect("RPAREN", "Expected ')'")
+
       return expr
     }
 
@@ -1089,10 +1172,12 @@ export function parse(tokens: Token[]): ParserResult {
    */
   function parseArrowFunction(position: Position): ArrowFunctionExpression {
     const params = parseParameterList()
+
     expect("RPAREN", "Expected ')' after arrow function parameters")
     expect("ARROW", "Expected '=>'")
 
     let body: Expression | BlockStatement
+
     if (check("LBRACE")) {
       body = parseBlockStatement()
     }
@@ -1111,6 +1196,7 @@ export function parse(tokens: Token[]): ParserResult {
    */
   function parseIdentifier(): Identifier {
     const token = expect("IDENTIFIER", "Expected identifier")
+
     return { type: "Identifier", name: token.value, position: token.position }
   }
 
@@ -1130,31 +1216,36 @@ export function parse(tokens: Token[]): ParserResult {
   function parseTypeAnnotation(): TypeAnnotation {
     const position = peek().position
     const token = expect("IDENTIFIER", "Expected type name")
-    let name = token.value
+    const name = token.value
 
     // Check for nullable (?)
     let nullable = false
+
     if (match("QUESTION")) {
       nullable = true
     }
 
     // Check for generic parameters (<T>)
     let typeParameters: TypeAnnotation[] | undefined
+
     if (match("LESS")) {
       typeParameters = []
       do {
         typeParameters.push(parseTypeAnnotation())
       } while (match("COMMA"))
+
       expect("GREATER", "Expected '>' after type parameters")
     }
 
     // Check for union types (|)
     let union: TypeAnnotation[] | undefined
+
     if (check("PIPE")) {
       union = [{ type: "TypeAnnotation", name, typeParameters, nullable, position }]
       while (match("PIPE")) {
         union.push(parseTypeAnnotation())
       }
+
       return { type: "TypeAnnotation", name: "union", union, position }
     }
 
@@ -1173,6 +1264,7 @@ export function parse(tokens: Token[]): ParserResult {
    */
   try {
     const program = parseProgram()
+
     return { program, errors }
   }
   catch {

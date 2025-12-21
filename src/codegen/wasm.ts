@@ -63,12 +63,9 @@ import type {
   BinaryExpression,
   UnaryExpression,
   CallExpression,
-  MemberExpression,
   AssignmentExpression,
   Identifier,
   Literal,
-  Parameter,
-  TypeAnnotation,
 } from "../parser/ast"
 import type { CodegenOptions } from "./types"
 
@@ -172,20 +169,26 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
   function addString(value: string): number {
     // Check if already registered
     const existing = strings.find(s => s.value === value)
-    if (existing) return existing.offset
+
+    if (existing) {
+      return existing.offset
+    }
 
     const offset = stringOffset
     const length = value.length
+
     strings.push({ value, offset, length })
     stringOffset += length + 1 // +1 for null terminator
+
     return offset
   }
 
   /**
    * Get string length by offset.
    */
-  function getStringLength(offset: number): number {
+  function _getStringLength(offset: number): number {
     const str = strings.find(s => s.offset === offset)
+
     return str?.length ?? 0
   }
 
@@ -198,7 +201,9 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
    */
   function addLocal(name: string, type: WasmType = "i64"): number {
     const index = localIndex++
+
     currentLocals.push({ name, type, index })
+
     return index
   }
 
@@ -207,6 +212,7 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
    */
   function getLocal(name: string): number | undefined {
     const local = currentLocals.find(l => l.name === name)
+
     return local?.index
   }
 
@@ -271,6 +277,7 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
       lines.push(`${ind()};; String data segment`)
       for (const str of strings) {
         const escaped = str.value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+
         lines.push(`${ind()}(data (i32.const ${str.offset}) "${escaped}\\00")`)
       }
     }
@@ -286,6 +293,7 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
    */
   function programUsesScribe(node: Program): boolean {
     const source = JSON.stringify(node)
+
     return source.includes('"name":"scribe"')
   }
 
@@ -302,6 +310,7 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
 
     // Collect all variable declarations for locals
     const varDecls = collectVariables(statements)
+
     for (const name of varDecls) {
       addLocal(name, "i64")
     }
@@ -309,13 +318,17 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
     // Emit locals
     if (currentLocals.length > 0) {
       const localDecls = currentLocals.map(l => `(local $${l.name} ${l.type})`).join(" ")
+
       lines.push(`${ind()}${localDecls}`)
     }
 
     // Generate statements
     for (const stmt of statements) {
       const code = genStatement(stmt)
-      if (code) lines.push(code)
+
+      if (code) {
+        lines.push(code)
+      }
     }
 
     depth--
@@ -331,15 +344,18 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
 
     // Build parameter list
     const params: string[] = []
+
     for (const param of node.params) {
       const paramName = param.name.name
       const paramType = param.typeAnnotation ? mapType(param.typeAnnotation.name) : "i64"
+
       addLocal(paramName, paramType)
       params.push(`(param $${paramName} ${paramType})`)
     }
 
     // Determine return type
     let returnType = ""
+
     if (node.returnType && node.returnType.name !== "Nihil") {
       returnType = ` (result ${mapType(node.returnType.name)})`
     }
@@ -349,6 +365,7 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
 
     // Collect additional locals from function body
     const varDecls = collectVariables(node.body.body)
+
     for (const varName of varDecls) {
       if (!getLocal(varName)) {
         addLocal(varName, "i64")
@@ -357,15 +374,20 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
 
     // Emit non-parameter locals
     const nonParamLocals = currentLocals.slice(node.params.length)
+
     if (nonParamLocals.length > 0) {
       const localDecls = nonParamLocals.map(l => `(local $${l.name} ${l.type})`).join(" ")
+
       lines.push(`${ind()}${localDecls}`)
     }
 
     // Generate function body
     for (const stmt of node.body.body) {
       const code = genStatement(stmt)
-      if (code) lines.push(code)
+
+      if (code) {
+        lines.push(code)
+      }
     }
 
     depth--
@@ -379,6 +401,7 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
    */
   function collectVariables(statements: Statement[]): string[] {
     const vars: string[] = []
+
     for (const stmt of statements) {
       if (stmt.type === "VariableDeclaration") {
         vars.push(stmt.name.name)
@@ -395,6 +418,7 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
         vars.push(...collectVariables(stmt.body.body))
       }
     }
+
     return vars
   }
 
@@ -434,13 +458,16 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
 
   function genVariableDeclaration(node: VariableDeclaration): string {
     const name = node.name.name
+
     if (!node.init) {
       return `${ind()};; ${name} declared without initializer`
     }
 
     const lines: string[] = []
+
     lines.push(genExpression(node.init))
     lines.push(`${ind()}local.set $${name}`)
+
     return lines.join("\n")
   }
 
@@ -457,7 +484,10 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
 
     for (const stmt of node.consequent.body) {
       const code = genStatement(stmt)
-      if (code) lines.push(code)
+
+      if (code) {
+        lines.push(code)
+      }
     }
 
     depth--
@@ -470,7 +500,10 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
       if (node.alternate.type === "BlockStatement") {
         for (const stmt of node.alternate.body) {
           const code = genStatement(stmt)
-          if (code) lines.push(code)
+
+          if (code) {
+            lines.push(code)
+          }
         }
       }
       else if (node.alternate.type === "IfStatement") {
@@ -503,7 +536,10 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
     // Loop body
     for (const stmt of node.body.body) {
       const code = genStatement(stmt)
-      if (code) lines.push(code)
+
+      if (code) {
+        lines.push(code)
+      }
     }
 
     // Continue loop
@@ -517,7 +553,7 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
     return lines.join("\n")
   }
 
-  function genForStatement(node: ForStatement): string {
+  function genForStatement(_node: ForStatement): string {
     // For-in loops are complex in WASM - emit as comment for now
     return `${ind()};; TODO: for-in loop not yet supported in WASM target`
   }
@@ -526,9 +562,12 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
     if (!node.argument) {
       return `${ind()}return`
     }
+
     const lines: string[] = []
+
     lines.push(genExpression(node.argument))
     lines.push(`${ind()}return`)
+
     return lines.join("\n")
   }
 
@@ -579,8 +618,10 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
         // For now, just use the first quasi if it exists
         if (node.quasis.length > 0 && node.quasis[0].value) {
           const offset = addString(node.quasis[0].value)
+
           return `${ind()}i32.const ${offset}`
         }
+
         return `${ind()}i32.const 0`
       default:
         return `${ind()};; Unsupported expression: ${(node as Expression).type}`
@@ -591,30 +632,45 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
     if (node.value === null) {
       return `${ind()}i64.const 0`
     }
+
     if (typeof node.value === "boolean") {
       return `${ind()}i32.const ${node.value ? 1 : 0}`
     }
+
     if (typeof node.value === "number") {
       if (Number.isInteger(node.value)) {
         return `${ind()}i64.const ${node.value}`
       }
+
       return `${ind()}f64.const ${node.value}`
     }
+
     if (typeof node.value === "string") {
       const offset = addString(node.value)
+
       return `${ind()}i32.const ${offset}`
     }
+
     return `${ind()}i64.const 0`
   }
 
   function genIdentifier(node: Identifier): string {
     // Handle Latin boolean/null keywords
-    if (node.name === "verum") return `${ind()}i32.const 1`
-    if (node.name === "falsum") return `${ind()}i32.const 0`
-    if (node.name === "nihil") return `${ind()}i64.const 0`
+    if (node.name === "verum") {
+      return `${ind()}i32.const 1`
+    }
+
+    if (node.name === "falsum") {
+      return `${ind()}i32.const 0`
+    }
+
+    if (node.name === "nihil") {
+      return `${ind()}i64.const 0`
+    }
 
     // Look up local variable
     const localIdx = getLocal(node.name)
+
     if (localIdx !== undefined) {
       return `${ind()}local.get $${node.name}`
     }
@@ -706,6 +762,7 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
 
     // Get function name
     let funcName = ""
+
     if (node.callee.type === "Identifier") {
       funcName = node.callee.name
     }
@@ -714,10 +771,12 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
     if (funcName === "scribe") {
       if (node.arguments.length > 0) {
         const arg = node.arguments[0]
+
         if (arg.type === "Literal" && typeof arg.value === "string") {
           // String literal - use print_str
           const offset = addString(arg.value)
           const length = arg.value.length
+
           lines.push(`${ind()}i32.const ${offset}`)
           lines.push(`${ind()}i32.const ${length}`)
           lines.push(`${ind()}call $print_str`)
@@ -728,6 +787,7 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
           lines.push(`${ind()}call $print_i64`)
         }
       }
+
       return lines.join("\n")
     }
 
@@ -735,6 +795,7 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
     for (const arg of node.arguments) {
       lines.push(genExpression(arg))
     }
+
     lines.push(`${ind()}call $${funcName}`)
 
     return lines.join("\n")

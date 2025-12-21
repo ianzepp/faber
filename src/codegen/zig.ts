@@ -68,14 +68,11 @@ import type {
   MemberExpression,
   ArrowFunctionExpression,
   AssignmentExpression,
-  AwaitExpression,
   NewExpression,
   Identifier,
   Literal,
-  TemplateLiteral,
   Parameter,
   TypeAnnotation,
-  CatchClause,
 } from "../parser/ast"
 import type { CodegenOptions } from "./types"
 import type { SemanticType } from "../semantic/types"
@@ -152,6 +149,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
 
     // WHY: scribe() maps to std.debug.print(), so we need std import
     const needsStd = programUsesScribe(node)
+
     if (needsStd) {
       lines.push("const std = @import(\"std\");")
       lines.push("")
@@ -174,7 +172,10 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
 
     // WHY: Only emit main() if there's runtime code to execute
     if (runtime.length > 0) {
-      if (topLevel.length > 0) lines.push("")
+      if (topLevel.length > 0) {
+        lines.push("")
+      }
+
       lines.push("pub fn main() void {")
       depth++
       lines.push(...runtime.map(genStatement))
@@ -195,12 +196,21 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
    *         Const declarations with comptime values are hoisted.
    */
   function isTopLevelDeclaration(node: Statement): boolean {
-    if (node.type === "FunctionDeclaration") return true
-    if (node.type === "ImportDeclaration") return true
+    if (node.type === "FunctionDeclaration") {
+      return true
+    }
+
+    if (node.type === "ImportDeclaration") {
+      return true
+    }
+
     // WHY: fixum with literal is comptime in Zig
     if (node.type === "VariableDeclaration" && node.kind === "fixum") {
-      if (node.init && isComptimeValue(node.init)) return true
+      if (node.init && isComptimeValue(node.init)) {
+        return true
+      }
     }
+
     return false
   }
 
@@ -211,12 +221,19 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
    *      evaluated during compilation, not runtime.
    */
   function isComptimeValue(node: Expression): boolean {
-    if (node.type === "Literal") return true
-    if (node.type === "TemplateLiteral") return true
+    if (node.type === "Literal") {
+      return true
+    }
+
+    if (node.type === "TemplateLiteral") {
+      return true
+    }
+
     // WHY: verum, falsum, nihil are Latin keywords for literal values
     if (node.type === "Identifier") {
       return ["verum", "falsum", "nihil"].includes(node.name)
     }
+
     return false
   }
 
@@ -228,6 +245,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
    */
   function programUsesScribe(node: Program): boolean {
     const source = JSON.stringify(node)
+
     return source.includes('"name":"scribe"')
   }
 
@@ -281,16 +299,20 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
    */
   function genImportDeclaration(node: ImportDeclaration): string {
     const source = node.source
+
     if (node.wildcard) {
       return `${ind()}const ${source} = @import("${source}");`
     }
+
     // WHY: Import module once with underscore prefix, then bind specific names
     const lines: string[] = []
     const modVar = `_${source}`
+
     lines.push(`${ind()}const ${modVar} = @import("${source}");`)
     for (const spec of node.specifiers) {
       lines.push(`${ind()}const ${spec.name} = ${modVar}.${spec.name};`)
     }
+
     return lines.join("\n")
   }
 
@@ -310,6 +332,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
 
     // TARGET: Zig requires explicit types for var, we infer if not provided
     let typeAnno = ""
+
     if (node.typeAnnotation) {
       typeAnno = `: ${genType(node.typeAnnotation)}`
     }
@@ -318,6 +341,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     }
 
     const init = node.init ? ` = ${genExpression(node.init)}` : " = undefined"
+
     return `${ind()}${kind} ${name}${typeAnno}${init};`
   }
 
@@ -338,13 +362,26 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
       if (typeof node.value === "number") {
         return Number.isInteger(node.value) ? "i64" : "f64"
       }
-      if (typeof node.value === "string") return "[]const u8"
-      if (typeof node.value === "boolean") return "bool"
+
+      if (typeof node.value === "string") {
+        return "[]const u8"
+      }
+
+      if (typeof node.value === "boolean") {
+        return "bool"
+      }
     }
+
     if (node.type === "Identifier") {
-      if (node.name === "verum" || node.name === "falsum") return "bool"
-      if (node.name === "nihil") return "?void"
+      if (node.name === "verum" || node.name === "falsum") {
+        return "bool"
+      }
+
+      if (node.name === "nihil") {
+        return "?void"
+      }
     }
+
     return "anytype"
   }
 
@@ -363,6 +400,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
           case "Nihil": return "void"
           case "Vacuum": return "void"
         }
+
         break
       case "generic":
         // Generic types not fully supported in Zig target yet
@@ -376,6 +414,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
       case "user":
         return type.name
     }
+
     return "anytype"
   }
 
@@ -386,12 +425,15 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     if (node.resolvedType?.kind === "primitive" && node.resolvedType.name === "Textus") {
       return true
     }
+
     if (node.type === "Literal" && typeof node.value === "string") {
       return true
     }
+
     if (node.type === "TemplateLiteral") {
       return true
     }
+
     return false
   }
 
@@ -407,9 +449,11 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
    */
   function genType(node: TypeAnnotation): string {
     const base = typeMap[node.name] ?? node.name
+
     if (node.nullable) {
       return `?${base}`
     }
+
     return base
   }
 
@@ -431,6 +475,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     const retType = node.async ? `!${returnType}` : returnType
 
     const body = genBlockStatement(node.body)
+
     return `${ind()}fn ${name}(${params}) ${retType} ${body}`
   }
 
@@ -445,6 +490,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
   function genParameter(node: Parameter): string {
     const name = node.name.name
     const type = node.typeAnnotation ? genType(node.typeAnnotation) : "anytype"
+
     return `${name}: ${type}`
   }
 
@@ -470,6 +516,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
   function genWhileStatement(node: WhileStatement): string {
     const test = genExpression(node.test)
     const body = genBlockStatement(node.body)
+
     return `${ind()}while (${test}) ${body}`
   }
 
@@ -486,6 +533,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     if (node.argument) {
       return `${ind()}return ${genExpression(node.argument)};`
     }
+
     return `${ind()}return;`
   }
 
@@ -498,6 +546,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     // Zig handles errors differently — this is a simplified mapping
     // Real Zig would use catch |err| { } syntax on expressions
     let result = `${ind()}// try block\n`
+
     result += genBlockStatementContent(node.block)
 
     if (node.handler) {
@@ -514,6 +563,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
 
     depth++
     const body = node.body.map(genStatement).join("\n")
+
     depth--
 
     return `{\n${body}\n${ind()}}`
@@ -531,10 +581,12 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
    */
   function genExpressionStatement(node: ExpressionStatement): string {
     const expr = genExpression(node.expression)
+
     // TARGET: Zig assignments and calls are statements, not expressions
     if (node.expression.type === "CallExpression" || node.expression.type === "AssignmentExpression") {
       return `${ind()}${expr};`
     }
+
     // WHY: Zig requires explicit discard with _ = for unused expression results
     return `${ind()}_ = ${expr};`
   }
@@ -611,9 +663,18 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
    * TARGET: Zig string literals use double quotes, no escaping needed for simple strings.
    */
   function genLiteral(node: Literal): string {
-    if (node.value === null) return "null"
-    if (typeof node.value === "string") return `"${node.value}"`
-    if (typeof node.value === "boolean") return node.value ? "true" : "false"
+    if (node.value === null) {
+      return "null"
+    }
+
+    if (typeof node.value === "string") {
+      return `"${node.value}"`
+    }
+
+    if (typeof node.value === "boolean") {
+      return node.value ? "true" : "false"
+    }
+
     return String(node.value)
   }
 
@@ -639,14 +700,17 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
       if (node.left.type === "Literal" && node.right.type === "Literal") {
         const leftStr = String(node.left.value)
         const rightStr = String(node.right.value)
+
         return `"${leftStr}${rightStr}"`
       }
+
       // For runtime concatenation, we'd need an allocator
       // This is a simplified output - real Zig would need memory management
       return `@concat(${left}, ${right})`
     }
 
     const op = mapOperator(node.operator)
+
     return `(${left} ${op} ${right})`
   }
 
@@ -672,6 +736,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
    */
   function genUnaryExpression(node: UnaryExpression): string {
     const arg = genExpression(node.argument)
+
     return node.prefix ? `${node.operator}${arg}` : `${arg}${node.operator}`
   }
 
@@ -692,11 +757,13 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
       const args = node.arguments.map(genExpression)
       const formatSpecs = node.arguments.map(arg => getFormatSpecifier(arg))
       const format = formatSpecs.join(" ") + "\\n"
+
       return `std.debug.print("${format}", .{${args.join(", ")}})`
     }
 
     const callee = genExpression(node.callee)
     const args = node.arguments.map(genExpression).join(", ")
+
     return `${callee}(${args})`
   }
 
@@ -718,13 +785,25 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
 
     // Fallback: infer from literal/identifier
     if (expr.type === "Literal") {
-      if (typeof expr.value === "string") return "{s}"
-      if (typeof expr.value === "number") return "{d}"
-      if (typeof expr.value === "boolean") return "{}"
+      if (typeof expr.value === "string") {
+        return "{s}"
+      }
+
+      if (typeof expr.value === "number") {
+        return "{d}"
+      }
+
+      if (typeof expr.value === "boolean") {
+        return "{}"
+      }
     }
+
     if (expr.type === "Identifier") {
-      if (expr.name === "verum" || expr.name === "falsum") return "{}"
+      if (expr.name === "verum" || expr.name === "falsum") {
+        return "{}"
+      }
     }
+
     if (expr.type === "TemplateLiteral") {
       return "{s}"
     }
@@ -741,9 +820,11 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
    */
   function genMemberExpression(node: MemberExpression): string {
     const obj = genExpression(node.object)
+
     if (node.computed) {
       return `${obj}[${genExpression(node.property)}]`
     }
+
     return `${obj}.${node.property.name}`
   }
 
@@ -764,10 +845,12 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
 
     if (node.body.type === "BlockStatement") {
       const body = genBlockStatement(node.body)
+
       return `struct { fn call(${params}) anytype ${body} }.call`
     }
 
     const body = genExpression(node.body as Expression)
+
     return `struct { fn call(${params}) anytype { return ${body}; } }.call`
   }
 
@@ -782,6 +865,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     const left = node.left.type === "Identifier"
       ? node.left.name
       : genExpression(node.left)
+
     return `${left} ${node.operator} ${genExpression(node.right)}`
   }
 
@@ -796,6 +880,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
   function genNewExpression(node: NewExpression): string {
     const callee = node.callee.name
     const args = node.arguments.map(genExpression).join(", ")
+
     return `${callee}.init(${args})`
   }
 

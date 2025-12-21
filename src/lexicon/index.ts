@@ -39,10 +39,10 @@
  * @module lexicon
  */
 
-import type { ParsedNoun, ParsedVerb, Case, Number, Tense } from "./types"
+import type { ParsedNoun, ParsedVerb, Number, Tense } from "./types"
 import { nouns, getEndingsForDeclension } from "./nouns"
 import { verbs, conjugation1Endings, conjugation3Endings } from "./verbs"
-import { builtinTypes, type TypeEntry } from "./types-builtin"
+import { builtinTypes } from "./types-builtin"
 
 // =============================================================================
 // TYPES
@@ -90,16 +90,21 @@ export function parseNoun(word: string): ParsedNoun[] | null {
   const lowerWord = word.toLowerCase()
 
   for (const noun of nouns) {
-    if (!lowerWord.startsWith(noun.stem)) continue
+    if (!lowerWord.startsWith(noun.stem)) {
+      continue
+    }
 
     const ending = lowerWord.slice(noun.stem.length)
     const endingsTable = getEndingsForDeclension(noun.declension, noun.gender)
 
-    if (!endingsTable) continue
+    if (!endingsTable) {
+      continue
+    }
 
     const matches = endingsTable[ending]
+
     if (matches) {
-      return matches.map((m) => ({
+      return matches.map(m => ({
         stem: noun.stem,
         declension: noun.declension,
         gender: noun.gender,
@@ -138,13 +143,17 @@ export function parseNoun(word: string): ParsedNoun[] | null {
 export function parseType(word: string): ParsedType[] | null {
   // WHY: Case-sensitive stem matching preserves TitleCase convention for types
   for (const typeEntry of builtinTypes) {
-    if (!word.startsWith(typeEntry.stem)) continue
+    if (!word.startsWith(typeEntry.stem)) {
+      continue
+    }
 
     // WHY: Endings are lowercase in declension tables, but stem is TitleCase
     const ending = word.slice(typeEntry.stem.length).toLowerCase()
     const endingsTable = getEndingsForDeclension(typeEntry.declension, typeEntry.gender)
 
-    if (!endingsTable) continue
+    if (!endingsTable) {
+      continue
+    }
 
     // EDGE: 3rd declension nominative singular has no ending
     //       Example: "Cursor" (not "Cursorus"), "Functio" (as-is)
@@ -162,8 +171,9 @@ export function parseType(word: string): ParsedType[] | null {
     }
 
     const matches = endingsTable[ending]
+
     if (matches) {
-      return matches.map((m) => ({
+      return matches.map(m => ({
         stem: typeEntry.stem,
         declension: typeEntry.declension,
         gender: typeEntry.gender,
@@ -211,21 +221,32 @@ export function parseVerb(word: string): ParsedVerb[] | null {
   const lowerWord = word.toLowerCase()
 
   for (const verb of verbs) {
-    if (!lowerWord.startsWith(verb.stem)) continue
+    if (!lowerWord.startsWith(verb.stem)) {
+      continue
+    }
 
     const ending = lowerWord.slice(verb.stem.length)
 
     // WHY: Currently only 1st and 3rd conjugations implemented
     //      2nd and 4th conjugations can be added as needed
     let endingsTable: typeof conjugation1Endings | null = null
-    if (verb.conjugation === 1) endingsTable = conjugation1Endings
-    if (verb.conjugation === 3) endingsTable = conjugation3Endings
 
-    if (!endingsTable) continue
+    if (verb.conjugation === 1) {
+      endingsTable = conjugation1Endings
+    }
+
+    if (verb.conjugation === 3) {
+      endingsTable = conjugation3Endings
+    }
+
+    if (!endingsTable) {
+      continue
+    }
 
     const matches = endingsTable[ending]
+
     if (matches) {
-      return matches.map((m) => ({
+      return matches.map(m => ({
         stem: verb.stem,
         conjugation: verb.conjugation,
         tense: m.tense as Tense,

@@ -5,6 +5,7 @@ describe("parseNoun", () => {
   describe("2nd declension masculine", () => {
     test("nominative singular: nuntius", () => {
       const results = parseNoun("nuntius")
+
       expect(results).not.toBeNull()
       expect(results).toHaveLength(1)
       expect(results![0]).toEqual({
@@ -18,6 +19,7 @@ describe("parseNoun", () => {
 
     test("accusative singular: nuntium", () => {
       const results = parseNoun("nuntium")
+
       expect(results).not.toBeNull()
       expect(results).toHaveLength(1)
       expect(results![0].case).toBe("accusative")
@@ -26,22 +28,25 @@ describe("parseNoun", () => {
 
     test("genitive singular: nuntii", () => {
       const results = parseNoun("nuntii")
+
       expect(results).not.toBeNull()
       // Could be genitive singular OR nominative plural
       expect(results!.length).toBeGreaterThanOrEqual(1)
-      expect(results!.some((r) => r.case === "genitive")).toBe(true)
+      expect(results!.some(r => r.case === "genitive")).toBe(true)
     })
 
     test("dative/ablative singular: nuntio (ambiguous)", () => {
       const results = parseNoun("nuntio")
+
       expect(results).not.toBeNull()
       expect(results).toHaveLength(2)
-      expect(results!.map((r) => r.case)).toContain("dative")
-      expect(results!.map((r) => r.case)).toContain("ablative")
+      expect(results!.map(r => r.case)).toContain("dative")
+      expect(results!.map(r => r.case)).toContain("ablative")
     })
 
     test("accusative plural: nuntios", () => {
       const results = parseNoun("nuntios")
+
       expect(results).not.toBeNull()
       expect(results![0].case).toBe("accusative")
       expect(results![0].number).toBe("plural")
@@ -49,6 +54,7 @@ describe("parseNoun", () => {
 
     test("genitive plural: nuntiorum", () => {
       const results = parseNoun("nuntiorum")
+
       expect(results).not.toBeNull()
       expect(results![0].case).toBe("genitive")
       expect(results![0].number).toBe("plural")
@@ -70,6 +76,7 @@ describe("parseVerb", () => {
   describe("3rd conjugation: mittere (send)", () => {
     test("imperative: mitte (sync)", () => {
       const results = parseVerb("mitte")
+
       expect(results).not.toBeNull()
       expect(results![0].stem).toBe("mitt")
       expect(results![0].tense).toBe("imperative")
@@ -78,6 +85,7 @@ describe("parseVerb", () => {
 
     test("present 3rd person: mittit (sync)", () => {
       const results = parseVerb("mittit")
+
       expect(results).not.toBeNull()
       expect(results![0].tense).toBe("present")
       expect(results![0].person).toBe(3)
@@ -86,6 +94,7 @@ describe("parseVerb", () => {
 
     test("future 3rd person: mittet (async)", () => {
       const results = parseVerb("mittet")
+
       expect(results).not.toBeNull()
       expect(results![0].tense).toBe("future")
       expect(results![0].person).toBe(3)
@@ -96,6 +105,7 @@ describe("parseVerb", () => {
   describe("1st conjugation: creare (create)", () => {
     test("imperative: crea (sync)", () => {
       const results = parseVerb("crea")
+
       expect(results).not.toBeNull()
       expect(results![0].stem).toBe("cre")
       expect(results![0].tense).toBe("imperative")
@@ -104,6 +114,7 @@ describe("parseVerb", () => {
 
     test("present 3rd person: creat (sync)", () => {
       const results = parseVerb("creat")
+
       expect(results).not.toBeNull()
       expect(results![0].tense).toBe("present")
       expect(results![0].async).toBe(false)
@@ -111,6 +122,7 @@ describe("parseVerb", () => {
 
     test("future 3rd person: creabit (async)", () => {
       const results = parseVerb("creabit")
+
       expect(results).not.toBeNull()
       expect(results![0].tense).toBe("future")
       expect(results![0].async).toBe(true)
@@ -167,6 +179,7 @@ describe("parseType", () => {
   describe("primitives", () => {
     test("Textus (4th declension)", () => {
       const results = parseType("Textus")
+
       expect(results).not.toBeNull()
       expect(results![0].jsType).toBe("string")
       expect(results![0].category).toBe("primitive")
@@ -174,12 +187,14 @@ describe("parseType", () => {
 
     test("Numerus (2nd declension masculine)", () => {
       const results = parseType("Numerus")
+
       expect(results).not.toBeNull()
       expect(results![0].jsType).toBe("number")
     })
 
     test("Numerum (accusative)", () => {
       const results = parseType("Numerum")
+
       expect(results).not.toBeNull()
       expect(results![0].case).toBe("accusative")
       expect(results![0].jsType).toBe("number")
@@ -189,6 +204,7 @@ describe("parseType", () => {
   describe("collections", () => {
     test("Lista (1st declension feminine)", () => {
       const results = parseType("Lista")
+
       expect(results).not.toBeNull()
       expect(results![0].jsType).toBe("Array")
       expect(results![0].category).toBe("collection")
@@ -197,18 +213,21 @@ describe("parseType", () => {
 
     test("Listam (accusative)", () => {
       const results = parseType("Listam")
+
       expect(results).not.toBeNull()
       expect(results![0].case).toBe("accusative")
     })
 
     test("Tabula (Map)", () => {
       const results = parseType("Tabula")
+
       expect(results).not.toBeNull()
       expect(results![0].jsType).toBe("Map")
     })
 
     test("Copia (Set)", () => {
       const results = parseType("Copia")
+
       expect(results).not.toBeNull()
       expect(results![0].jsType).toBe("Set")
     })
@@ -217,6 +236,7 @@ describe("parseType", () => {
   describe("structural", () => {
     test("Promissum (2nd declension neuter)", () => {
       const results = parseType("Promissum")
+
       expect(results).not.toBeNull()
       expect(results![0].jsType).toBe("Promise")
       expect(results![0].generic).toBe(true)
@@ -224,12 +244,14 @@ describe("parseType", () => {
 
     test("Erratum (Error)", () => {
       const results = parseType("Erratum")
+
       expect(results).not.toBeNull()
       expect(results![0].jsType).toBe("Error")
     })
 
     test("Cursor (3rd declension, no ending)", () => {
       const results = parseType("Cursor")
+
       expect(results).not.toBeNull()
       expect(results![0].jsType).toBe("Iterator")
       expect(results![0].case).toBe("nominative")

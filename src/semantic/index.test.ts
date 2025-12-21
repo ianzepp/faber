@@ -16,12 +16,16 @@ import type { SemanticType } from "./types"
 function analyzeSource(source: string): { errors: SemanticError[]; types: Map<string, SemanticType> } {
   const { tokens } = tokenize(source)
   const { program } = parse(tokens)
-  if (!program) throw new Error("Parse failed")
+
+  if (!program) {
+    throw new Error("Parse failed")
+  }
 
   const result = analyze(program)
 
   // Collect resolved types from variable declarations for inspection
   const types = new Map<string, SemanticType>()
+
   for (const stmt of program.body) {
     if (stmt.type === "VariableDeclaration" && stmt.resolvedType) {
       types.set(stmt.name.name, stmt.resolvedType)
@@ -35,42 +39,49 @@ describe("Semantic Analyzer", () => {
   describe("Variable Type Resolution", () => {
     it("resolves type from explicit annotation", () => {
       const { errors, types } = analyzeSource(`esto x: Numerus = 5`)
+
       expect(errors).toHaveLength(0)
       expect(types.get("x")).toEqual({ kind: "primitive", name: "Numerus" })
     })
 
     it("resolves type from string annotation", () => {
       const { errors, types } = analyzeSource(`esto s: Textus = "hello"`)
+
       expect(errors).toHaveLength(0)
       expect(types.get("s")).toEqual({ kind: "primitive", name: "Textus" })
     })
 
     it("resolves type from boolean annotation", () => {
       const { errors, types } = analyzeSource(`esto b: Bivalens = verum`)
+
       expect(errors).toHaveLength(0)
       expect(types.get("b")).toEqual({ kind: "primitive", name: "Bivalens" })
     })
 
     it("infers type from number literal", () => {
       const { errors, types } = analyzeSource(`esto x = 42`)
+
       expect(errors).toHaveLength(0)
       expect(types.get("x")).toEqual({ kind: "primitive", name: "Numerus" })
     })
 
     it("infers type from string literal", () => {
       const { errors, types } = analyzeSource(`esto s = "hello"`)
+
       expect(errors).toHaveLength(0)
       expect(types.get("s")).toEqual({ kind: "primitive", name: "Textus" })
     })
 
     it("infers type from boolean literal", () => {
       const { errors, types } = analyzeSource(`esto b = verum`)
+
       expect(errors).toHaveLength(0)
       expect(types.get("b")).toEqual({ kind: "primitive", name: "Bivalens" })
     })
 
     it("handles nullable types", () => {
       const { errors, types } = analyzeSource(`esto x: Numerus? = nihil`)
+
       expect(errors).toHaveLength(0)
       expect(types.get("x")).toEqual({ kind: "primitive", name: "Numerus", nullable: true })
     })
@@ -79,11 +90,13 @@ describe("Semantic Analyzer", () => {
   describe("Expression Type Resolution", () => {
     it("resolves arithmetic expression to Numerus", () => {
       const { errors } = analyzeSource(`esto x = 1 + 2`)
+
       expect(errors).toHaveLength(0)
     })
 
     it("resolves string concatenation to Textus", () => {
       const { errors, types } = analyzeSource(`esto s = "a" + "b"`)
+
       expect(errors).toHaveLength(0)
       // The + operator on strings resolves to Textus
       expect(types.get("s")).toEqual({ kind: "primitive", name: "Textus" })
@@ -91,24 +104,28 @@ describe("Semantic Analyzer", () => {
 
     it("resolves comparison to Bivalens", () => {
       const { errors, types } = analyzeSource(`esto b = 1 < 2`)
+
       expect(errors).toHaveLength(0)
       expect(types.get("b")).toEqual({ kind: "primitive", name: "Bivalens" })
     })
 
     it("resolves equality to Bivalens", () => {
       const { errors, types } = analyzeSource(`esto b = 1 == 2`)
+
       expect(errors).toHaveLength(0)
       expect(types.get("b")).toEqual({ kind: "primitive", name: "Bivalens" })
     })
 
     it("resolves logical operators to Bivalens", () => {
       const { errors, types } = analyzeSource(`esto b = verum && falsum`)
+
       expect(errors).toHaveLength(0)
       expect(types.get("b")).toEqual({ kind: "primitive", name: "Bivalens" })
     })
 
     it("resolves negation to Bivalens", () => {
       const { errors, types } = analyzeSource(`esto b = !verum`)
+
       expect(errors).toHaveLength(0)
       expect(types.get("b")).toEqual({ kind: "primitive", name: "Bivalens" })
     })
@@ -122,6 +139,7 @@ describe("Semantic Analyzer", () => {
         }
       `
       const { errors } = analyzeSource(source)
+
       expect(errors).toHaveLength(0)
     })
 
@@ -132,6 +150,7 @@ describe("Semantic Analyzer", () => {
         }
       `
       const { errors } = analyzeSource(source)
+
       expect(errors).toHaveLength(0)
     })
 
@@ -142,6 +161,7 @@ describe("Semantic Analyzer", () => {
         }
       `
       const { errors } = analyzeSource(source)
+
       expect(errors.length).toBeGreaterThan(0)
       expect(errors[0].message).toContain("not assignable")
     })
@@ -156,6 +176,7 @@ describe("Semantic Analyzer", () => {
         }
       `
       const { errors } = analyzeSource(source)
+
       expect(errors).toHaveLength(0)
     })
 
@@ -165,6 +186,7 @@ describe("Semantic Analyzer", () => {
         esto x = 2
       `
       const { errors } = analyzeSource(source)
+
       expect(errors.length).toBeGreaterThan(0)
       expect(errors[0].message).toContain("already defined")
     })
@@ -173,6 +195,7 @@ describe("Semantic Analyzer", () => {
   describe("Error Detection", () => {
     it("reports undefined variable", () => {
       const { errors } = analyzeSource(`esto x = y`)
+
       expect(errors.length).toBeGreaterThan(0)
       expect(errors[0].message).toContain("Undefined variable")
     })
@@ -183,6 +206,7 @@ describe("Semantic Analyzer", () => {
         x = 10
       `
       const { errors } = analyzeSource(source)
+
       expect(errors.length).toBeGreaterThan(0)
       expect(errors[0].message).toContain("immutable")
     })
@@ -193,12 +217,14 @@ describe("Semantic Analyzer", () => {
         x = "hello"
       `
       const { errors } = analyzeSource(source)
+
       expect(errors.length).toBeGreaterThan(0)
       expect(errors[0].message).toContain("not assignable")
     })
 
     it("reports variable without type or initializer", () => {
       const { errors } = analyzeSource(`esto x`)
+
       expect(errors.length).toBeGreaterThan(0)
       expect(errors[0].message).toContain("no type annotation or initializer")
     })
@@ -213,6 +239,7 @@ describe("Semantic Analyzer", () => {
         }
       `
       const { errors } = analyzeSource(source)
+
       expect(errors).toHaveLength(0)
     })
 
@@ -224,6 +251,7 @@ describe("Semantic Analyzer", () => {
         }
       `
       const { errors } = analyzeSource(source)
+
       expect(errors).toHaveLength(0)
     })
 
@@ -234,6 +262,7 @@ describe("Semantic Analyzer", () => {
         }
       `
       const { errors } = analyzeSource(source)
+
       expect(errors).toHaveLength(0)
     })
   })
@@ -241,8 +270,10 @@ describe("Semantic Analyzer", () => {
   describe("Generic Types", () => {
     it("resolves generic type annotation", () => {
       const { errors, types } = analyzeSource(`esto items: Lista<Numerus>? = nihil`)
+
       expect(errors).toHaveLength(0)
       const itemsType = types.get("items")
+
       expect(itemsType?.kind).toBe("generic")
     })
   })
@@ -251,6 +282,7 @@ describe("Semantic Analyzer", () => {
     it("resolves arrow function type", () => {
       const source = `esto add = (a: Numerus, b: Numerus) => a + b`
       const { errors } = analyzeSource(source)
+
       expect(errors).toHaveLength(0)
     })
   })

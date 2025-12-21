@@ -142,7 +142,7 @@ export const builtinTypes: TypeEntry[] = [
  * WHY: Lowercase keys allow case-insensitive stem lookup while preserving
  *      TitleCase in the actual type entries.
  */
-const typeMap = new Map(builtinTypes.map((t) => [t.stem.toLowerCase(), t]))
+const typeMap = new Map(builtinTypes.map(t => [t.stem.toLowerCase(), t]))
 
 /**
  * Check if a stem is a built-in type.

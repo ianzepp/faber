@@ -243,14 +243,29 @@ export const declension4Endings: EndingMap = {
  */
 export function getEndingsForDeclension(
   declension: Declension,
-  gender: Gender
+  gender: Gender,
 ): EndingMap | null {
-  if (declension === 1) return declension1Endings
+  if (declension === 1) {
+    return declension1Endings
+  }
+
   // WHY: 2nd declension splits by gender (masculine -us vs neuter -um)
-  if (declension === 2 && gender === "masculine") return declension2MascEndings
-  if (declension === 2 && gender === "neuter") return declension2NeutEndings
-  if (declension === 3) return declension3Endings
-  if (declension === 4) return declension4Endings
+  if (declension === 2 && gender === "masculine") {
+    return declension2MascEndings
+  }
+
+  if (declension === 2 && gender === "neuter") {
+    return declension2NeutEndings
+  }
+
+  if (declension === 3) {
+    return declension3Endings
+  }
+
+  if (declension === 4) {
+    return declension4Endings
+  }
+
   // EDGE: 5th declension not yet implemented
   return null
 }

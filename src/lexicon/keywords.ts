@@ -144,7 +144,7 @@ export const keywords: KeywordEntry[] = [
  * PERF: Pre-computed Map is much faster than linear array search for keywords.
  *       With 30+ keywords, this matters during tokenization of large files.
  */
-const keywordMap = new Map(keywords.map((k) => [k.latin, k]))
+const keywordMap = new Map(keywords.map(k => [k.latin, k]))
 
 /**
  * Check if a word is a reserved keyword.

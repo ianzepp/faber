@@ -175,29 +175,55 @@ export const UNKNOWN: UnknownType = unknownType()
  * WHY: Used for type checking assignments, function calls, etc.
  */
 export function typesEqual(a: SemanticType, b: SemanticType): boolean {
-  if (a.kind !== b.kind) return false
+  if (a.kind !== b.kind) {
+    return false
+  }
 
   switch (a.kind) {
     case "primitive":
       return a.name === (b as PrimitiveType).name
     case "generic": {
       const bg = b as GenericType
-      if (a.name !== bg.name) return false
-      if (a.typeParameters.length !== bg.typeParameters.length) return false
+
+      if (a.name !== bg.name) {
+        return false
+      }
+
+      if (a.typeParameters.length !== bg.typeParameters.length) {
+        return false
+      }
+
       return a.typeParameters.every((t, i) => typesEqual(t, bg.typeParameters[i]))
     }
+
     case "function": {
       const bf = b as FunctionType
-      if (a.async !== bf.async) return false
-      if (a.parameterTypes.length !== bf.parameterTypes.length) return false
-      if (!typesEqual(a.returnType, bf.returnType)) return false
+
+      if (a.async !== bf.async) {
+        return false
+      }
+
+      if (a.parameterTypes.length !== bf.parameterTypes.length) {
+        return false
+      }
+
+      if (!typesEqual(a.returnType, bf.returnType)) {
+        return false
+      }
+
       return a.parameterTypes.every((t, i) => typesEqual(t, bf.parameterTypes[i]))
     }
+
     case "union": {
       const bu = b as UnionType
-      if (a.types.length !== bu.types.length) return false
+
+      if (a.types.length !== bu.types.length) {
+        return false
+      }
+
       return a.types.every((t, i) => typesEqual(t, bu.types[i]))
     }
+
     case "unknown":
       return true
     case "user":
@@ -212,8 +238,13 @@ export function typesEqual(a: SemanticType, b: SemanticType): boolean {
  */
 export function isAssignableTo(source: SemanticType, target: SemanticType): boolean {
   // Unknown is assignable to anything
-  if (source.kind === "unknown") return true
-  if (target.kind === "unknown") return true
+  if (source.kind === "unknown") {
+    return true
+  }
+
+  if (target.kind === "unknown") {
+    return true
+  }
 
   // Nihil is assignable to nullable types
   if (source.kind === "primitive" && source.name === "Nihil") {
@@ -243,13 +274,17 @@ export function formatType(type: SemanticType): string {
       return type.name + (type.nullable ? "?" : "")
     case "generic": {
       const params = type.typeParameters.map(formatType).join(", ")
+
       return `${type.name}<${params}>` + (type.nullable ? "?" : "")
     }
+
     case "function": {
       const params = type.parameterTypes.map(formatType).join(", ")
       const async = type.async ? "futura " : ""
+
       return `${async}(${params}) -> ${formatType(type.returnType)}`
     }
+
     case "union":
       return type.types.map(formatType).join(" | ")
     case "unknown":

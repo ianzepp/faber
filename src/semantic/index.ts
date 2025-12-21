@@ -50,7 +50,6 @@ import type {
   ForStatement,
   ReturnStatement,
   BlockStatement,
-  ExpressionStatement,
   Identifier,
   Literal,
   BinaryExpression,
@@ -62,7 +61,6 @@ import type {
   AwaitExpression,
   NewExpression,
   TypeAnnotation,
-  Parameter,
   ThrowStatement,
   TryStatement,
 } from "../parser/ast"
@@ -74,13 +72,11 @@ import {
   defineSymbol,
   lookupSymbol,
 } from "./scope"
-import type { SemanticType, FunctionType } from "./types"
+import type { SemanticType } from "./types"
 import {
-  primitiveType,
   genericType,
   functionType,
   unionType,
-  unknownType,
   userType,
   TEXTUS,
   NUMERUS,
@@ -111,7 +107,6 @@ export interface SemanticResult {
   program: Program
   errors: SemanticError[]
 }
-
 
 // =============================================================================
 // LATIN TYPE MAPPING
@@ -190,6 +185,7 @@ export function analyze(program: Program): SemanticResult {
    */
   function define(symbol: Symbol): void {
     const err = defineSymbol(currentScope, symbol)
+
     if (err) {
       error(err, symbol.position)
     }
@@ -206,21 +202,25 @@ export function analyze(program: Program): SemanticResult {
     // Handle union types
     if (node.union && node.union.length > 0) {
       const types = node.union.map(resolveTypeAnnotation)
+
       return unionType(types)
     }
 
     // Check for built-in primitive type
     const primitive = LATIN_TYPE_MAP[node.name]
+
     if (primitive) {
       if (node.nullable) {
         return { ...primitive, nullable: true }
       }
+
       return primitive
     }
 
     // Check for generic type
     if (GENERIC_TYPES.has(node.name)) {
       const typeParams = (node.typeParameters ?? []).map(resolveTypeAnnotation)
+
       return genericType(node.name, typeParams, node.nullable)
     }
 
@@ -232,10 +232,22 @@ export function analyze(program: Program): SemanticResult {
    * Infer type from a literal value.
    */
   function inferLiteralType(node: Literal): SemanticType {
-    if (node.value === null) return NIHIL
-    if (typeof node.value === "string") return TEXTUS
-    if (typeof node.value === "number") return NUMERUS
-    if (typeof node.value === "boolean") return BIVALENS
+    if (node.value === null) {
+      return NIHIL
+    }
+
+    if (typeof node.value === "string") {
+      return TEXTUS
+    }
+
+    if (typeof node.value === "number") {
+      return NUMERUS
+    }
+
+    if (typeof node.value === "boolean") {
+      return BIVALENS
+    }
+
     return UNKNOWN
   }
 
@@ -254,6 +266,7 @@ export function analyze(program: Program): SemanticResult {
         return resolveLiteral(node)
       case "TemplateLiteral":
         node.resolvedType = TEXTUS
+
         return TEXTUS
       case "BinaryExpression":
         return resolveBinaryExpression(node)
@@ -282,28 +295,36 @@ export function analyze(program: Program): SemanticResult {
     // Handle Latin boolean/null keywords
     if (node.name === "verum" || node.name === "falsum") {
       node.resolvedType = BIVALENS
+
       return BIVALENS
     }
+
     if (node.name === "nihil") {
       node.resolvedType = NIHIL
+
       return NIHIL
     }
 
     // Look up in symbol table
     const symbol = lookupSymbol(currentScope, node.name)
+
     if (!symbol) {
       error(`Undefined variable '${node.name}'`, node.position)
       node.resolvedType = UNKNOWN
+
       return UNKNOWN
     }
 
     node.resolvedType = symbol.type
+
     return symbol.type
   }
 
   function resolveLiteral(node: Literal): SemanticType {
     const type = inferLiteralType(node)
+
     node.resolvedType = type
+
     return type
   }
 
@@ -316,38 +337,47 @@ export function analyze(program: Program): SemanticResult {
       // String concatenation
       if (node.operator === "+" && leftType.kind === "primitive" && leftType.name === "Textus") {
         node.resolvedType = TEXTUS
+
         return TEXTUS
       }
+
       // Numeric arithmetic
       if (leftType.kind === "primitive" && leftType.name === "Numerus" &&
           rightType.kind === "primitive" && rightType.name === "Numerus") {
         node.resolvedType = NUMERUS
+
         return NUMERUS
       }
+
       // Mixed or unknown
       node.resolvedType = NUMERUS
+
       return NUMERUS
     }
 
     // Comparison operators: <, >, <=, >=
     if (["<", ">", "<=", ">="].includes(node.operator)) {
       node.resolvedType = BIVALENS
+
       return BIVALENS
     }
 
     // Equality operators: ==, !=
     if (["==", "!="].includes(node.operator)) {
       node.resolvedType = BIVALENS
+
       return BIVALENS
     }
 
     // Logical operators: &&, ||
     if (["&&", "||"].includes(node.operator)) {
       node.resolvedType = BIVALENS
+
       return BIVALENS
     }
 
     node.resolvedType = UNKNOWN
+
     return UNKNOWN
   }
 
@@ -356,15 +386,18 @@ export function analyze(program: Program): SemanticResult {
 
     if (node.operator === "!" || node.operator === "non") {
       node.resolvedType = BIVALENS
+
       return BIVALENS
     }
 
     if (node.operator === "-") {
       node.resolvedType = NUMERUS
+
       return NUMERUS
     }
 
     node.resolvedType = argType
+
     return argType
   }
 
@@ -379,19 +412,23 @@ export function analyze(program: Program): SemanticResult {
     // If callee is a function type, return its return type
     if (calleeType.kind === "function") {
       node.resolvedType = calleeType.returnType
+
       return calleeType.returnType
     }
 
     // Built-in function handling (scribe, etc.)
     if (node.callee.type === "Identifier") {
       const name = node.callee.name
+
       if (name === "scribe") {
         node.resolvedType = VACUUM
+
         return VACUUM
       }
     }
 
     node.resolvedType = UNKNOWN
+
     return UNKNOWN
   }
 
@@ -399,6 +436,7 @@ export function analyze(program: Program): SemanticResult {
     resolveExpression(node.object)
     // Property access type depends on the object type - for now return unknown
     node.resolvedType = UNKNOWN
+
     return UNKNOWN
   }
 
@@ -407,10 +445,12 @@ export function analyze(program: Program): SemanticResult {
 
     // Define parameters
     const paramTypes: SemanticType[] = []
+
     for (const param of node.params) {
       const paramType = param.typeAnnotation
         ? resolveTypeAnnotation(param.typeAnnotation)
         : UNKNOWN
+
       paramTypes.push(paramType)
       define({
         name: param.name.name,
@@ -423,6 +463,7 @@ export function analyze(program: Program): SemanticResult {
 
     // Resolve body
     let returnType: SemanticType
+
     if (node.body.type === "BlockStatement") {
       analyzeBlock(node.body)
       returnType = VACUUM
@@ -434,7 +475,9 @@ export function analyze(program: Program): SemanticResult {
     exitScope()
 
     const fnType = functionType(paramTypes, returnType, node.async)
+
     node.resolvedType = fnType
+
     return fnType
   }
 
@@ -443,6 +486,7 @@ export function analyze(program: Program): SemanticResult {
 
     if (node.left.type === "Identifier") {
       const symbol = lookupSymbol(currentScope, node.left.name)
+
       if (!symbol) {
         error(`Undefined variable '${node.left.name}'`, node.left.position)
       }
@@ -452,7 +496,7 @@ export function analyze(program: Program): SemanticResult {
       else if (!isAssignableTo(rightType, symbol.type)) {
         error(
           `Type '${formatType(rightType)}' is not assignable to type '${formatType(symbol.type)}'`,
-          node.position
+          node.position,
         )
       }
     }
@@ -461,6 +505,7 @@ export function analyze(program: Program): SemanticResult {
     }
 
     node.resolvedType = rightType
+
     return rightType
   }
 
@@ -470,11 +515,14 @@ export function analyze(program: Program): SemanticResult {
     // If awaiting a Promise, unwrap it
     if (argType.kind === "generic" && argType.name === "Promissum") {
       const unwrapped = argType.typeParameters[0] ?? UNKNOWN
+
       node.resolvedType = unwrapped
+
       return unwrapped
     }
 
     node.resolvedType = argType
+
     return argType
   }
 
@@ -486,7 +534,9 @@ export function analyze(program: Program): SemanticResult {
 
     // Return user type based on constructor name
     const type = userType(node.callee.name)
+
     node.resolvedType = type
+
     return type
   }
 
@@ -500,11 +550,14 @@ export function analyze(program: Program): SemanticResult {
         consequentType.kind === "primitive" &&
         (consequentType as any).name === (alternateType as any).name) {
       node.resolvedType = consequentType
+
       return consequentType
     }
 
     const result = unionType([consequentType, alternateType])
+
     node.resolvedType = result
+
     return result
   }
 
@@ -553,6 +606,7 @@ export function analyze(program: Program): SemanticResult {
   function analyzeVariableDeclaration(node: VariableDeclaration): void {
     // Resolve type from annotation or infer from initializer
     let type: SemanticType
+
     if (node.typeAnnotation) {
       type = resolveTypeAnnotation(node.typeAnnotation)
     }
@@ -567,10 +621,11 @@ export function analyze(program: Program): SemanticResult {
     // Check initializer type compatibility
     if (node.typeAnnotation && node.init) {
       const initType = resolveExpression(node.init)
+
       if (!isAssignableTo(initType, type)) {
         error(
           `Type '${formatType(initType)}' is not assignable to type '${formatType(type)}'`,
-          node.position
+          node.position,
         )
       }
     }
@@ -591,7 +646,7 @@ export function analyze(program: Program): SemanticResult {
   function analyzeFunctionDeclaration(node: FunctionDeclaration): void {
     // Build function type
     const paramTypes: SemanticType[] = node.params.map(p =>
-      p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN
+      p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN,
     )
     const returnType = node.returnType
       ? resolveTypeAnnotation(node.returnType)
@@ -611,11 +666,13 @@ export function analyze(program: Program): SemanticResult {
     // Analyze function body in new scope
     enterScope("function")
     const previousReturnType = currentFunctionReturnType
+
     currentFunctionReturnType = returnType
 
     // Define parameters
     for (let i = 0; i < node.params.length; i++) {
       const param = node.params[i]
+
       define({
         name: param.name.name,
         type: paramTypes[i],
@@ -636,6 +693,7 @@ export function analyze(program: Program): SemanticResult {
 
   function analyzeIfStatement(node: IfStatement): void {
     const testType = resolveExpression(node.test)
+
     if (testType.kind === "primitive" && testType.name !== "Bivalens") {
       // Warn but don't error - truthy/falsy is valid
     }
@@ -695,10 +753,11 @@ export function analyze(program: Program): SemanticResult {
   function analyzeReturnStatement(node: ReturnStatement): void {
     if (node.argument) {
       const returnType = resolveExpression(node.argument)
+
       if (currentFunctionReturnType && !isAssignableTo(returnType, currentFunctionReturnType)) {
         error(
           `Return type '${formatType(returnType)}' is not assignable to function return type '${formatType(currentFunctionReturnType)}'`,
-          node.position
+          node.position,
         )
       }
     }

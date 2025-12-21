@@ -6,7 +6,11 @@ import { generate } from "./index"
 function compile(code: string): string {
   const { tokens } = tokenize(code)
   const { program } = parse(tokens)
-  if (!program) throw new Error("Parse failed")
+
+  if (!program) {
+    throw new Error("Parse failed")
+  }
+
   return generate(program)
 }
 
@@ -14,11 +18,13 @@ describe("codegen", () => {
   describe("variable declarations", () => {
     test("esto -> let", () => {
       const js = compile('esto nomen = "Marcus"')
+
       expect(js).toBe('let nomen = "Marcus";')
     })
 
     test("fixum -> const", () => {
       const js = compile("fixum PI = 3.14159")
+
       expect(js).toBe("const PI = 3.14159;")
     })
   })
@@ -30,6 +36,7 @@ describe("codegen", () => {
           redde nomen
         }
       `)
+
       expect(js).toContain("function salve(nomen)")
       expect(js).toContain("return nomen;")
     })
@@ -40,6 +47,7 @@ describe("codegen", () => {
           redde data
         }
       `)
+
       expect(js).toContain("async function fetch(url)")
     })
   })
@@ -51,6 +59,7 @@ describe("codegen", () => {
           scribe("yes")
         }
       `)
+
       expect(js).toContain("if (true)")
       expect(js).toContain('scribe("yes")')
     })
@@ -64,6 +73,7 @@ describe("codegen", () => {
           b()
         }
       `)
+
       expect(js).toContain("if (false)")
       expect(js).toContain("} else {")
     })
@@ -77,6 +87,7 @@ describe("codegen", () => {
           handleError()
         }
       `)
+
       expect(js).toContain("try {")
       expect(js).toContain("catch (erratum)")
     })
@@ -89,6 +100,7 @@ describe("codegen", () => {
           scribe("loop")
         }
       `)
+
       expect(js).toContain("while (true)")
     })
 
@@ -98,6 +110,7 @@ describe("codegen", () => {
           scribe(item)
         }
       `)
+
       expect(js).toContain("for (const item in lista)")
     })
 
@@ -107,6 +120,7 @@ describe("codegen", () => {
           scribe(numero)
         }
       `)
+
       expect(js).toContain("for (const numero of numeros)")
     })
   })
@@ -114,31 +128,37 @@ describe("codegen", () => {
   describe("expressions", () => {
     test("binary operators", () => {
       const js = compile("1 + 2")
+
       expect(js).toBe("(1 + 2);")
     })
 
     test("Latin logical operators become JS", () => {
       const js = compile("a et b")
+
       expect(js).toBe("(a && b);")
     })
 
     test("aut becomes ||", () => {
       const js = compile("a aut b")
+
       expect(js).toBe("(a || b);")
     })
 
     test("function call", () => {
       const js = compile("salve(nomen)")
+
       expect(js).toBe("salve(nomen);")
     })
 
     test("method call", () => {
       const js = compile("lista.filter(f)")
+
       expect(js).toBe("lista.filter(f);")
     })
 
     test("member access", () => {
       const js = compile("usuario.nomen")
+
       expect(js).toBe("usuario.nomen;")
     })
   })
@@ -146,11 +166,13 @@ describe("codegen", () => {
   describe("arrow functions", () => {
     test("simple arrow", () => {
       const js = compile("(x) => x")
+
       expect(js).toBe("(x) => x;")
     })
 
     test("arrow with block", () => {
       const js = compile("(x) => { redde x }")
+
       expect(js).toContain("(x) =>")
       expect(js).toContain("return x;")
     })
@@ -159,26 +181,31 @@ describe("codegen", () => {
   describe("special expressions", () => {
     test("exspecta -> await", () => {
       const js = compile("exspecta fetch(url)")
+
       expect(js).toBe("await fetch(url);")
     })
 
     test("novum -> new", () => {
       const js = compile("novum Erratum(message)")
+
       expect(js).toBe("new Erratum(message);")
     })
 
     test("verum -> true", () => {
       const js = compile("verum")
+
       expect(js).toBe("true;")
     })
 
     test("falsum -> false", () => {
       const js = compile("falsum")
+
       expect(js).toBe("false;")
     })
 
     test("nihil -> null", () => {
       const js = compile("nihil")
+
       expect(js).toBe("null;")
     })
   })
@@ -193,6 +220,7 @@ describe("codegen", () => {
           handleError()
         }
       `)
+
       expect(js).toContain("try {")
       expect(js).toContain("catch (error)")
     })
@@ -209,6 +237,7 @@ describe("codegen", () => {
           cleanup()
         }
       `)
+
       expect(js).toContain("finally {")
       expect(js).toContain("cleanup()")
     })
@@ -222,6 +251,7 @@ describe("codegen", () => {
         }
         scribe(salve("Mundus"))
       `)
+
       expect(js).toContain('function salve(nomen)')
       expect(js).toContain('return ("Salve, " + nomen);')
       expect(js).toContain('scribe(salve("Mundus"))')

@@ -34,7 +34,7 @@
  */
 
 import type { Program } from "../parser/ast"
-import type { CodegenOptions, CodegenTarget } from "./types"
+import type { CodegenOptions } from "./types"
 import { generateTs } from "./ts"
 import { generateZig } from "./zig"
 import { generateWasm } from "./wasm"

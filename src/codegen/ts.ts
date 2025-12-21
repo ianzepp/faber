@@ -62,14 +62,10 @@ import type {
   MemberExpression,
   ArrowFunctionExpression,
   AssignmentExpression,
-  AwaitExpression,
   NewExpression,
-  Identifier,
   Literal,
-  TemplateLiteral,
   Parameter,
   TypeAnnotation,
-  CatchClause,
 } from "../parser/ast"
 import type { CodegenOptions } from "./types"
 
@@ -197,10 +193,13 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
    */
   function genImportDeclaration(node: ImportDeclaration): string {
     const source = node.source
+
     if (node.wildcard) {
       return `${ind()}import * as ${source} from "${source}"${semi ? ";" : ""}`
     }
+
     const names = node.specifiers.map(s => s.name).join(", ")
+
     return `${ind()}import { ${names} } from "${source}"${semi ? ";" : ""}`
   }
 
@@ -217,6 +216,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     const name = node.name.name
     const typeAnno = node.typeAnnotation ? `: ${genType(node.typeAnnotation)}` : ""
     const init = node.init ? ` = ${genExpression(node.init)}` : ""
+
     return `${ind()}${kind} ${name}${typeAnno}${init}${semi ? ";" : ""}`
   }
 
@@ -234,8 +234,10 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
 
     // Handle generic type parameters: Lista<Textus> -> Array<string>
     let result = base
+
     if (node.typeParameters && node.typeParameters.length > 0) {
       const params = node.typeParameters.map(genType).join(", ")
+
       result = `${base}<${params}>`
     }
 
@@ -265,6 +267,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     const params = node.params.map(genParameter).join(", ")
     const returnType = node.returnType ? `: ${genType(node.returnType)}` : ""
     const body = genBlockStatement(node.body)
+
     return `${ind()}${async}function ${name}(${params})${returnType} ${body}`
   }
 
@@ -277,6 +280,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
   function genParameter(node: Parameter): string {
     const name = node.name.name
     const typeAnno = node.typeAnnotation ? `: ${genType(node.typeAnnotation)}` : ""
+
     return `${name}${typeAnno}`
   }
 
@@ -323,10 +327,12 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
 
     if (node.catchClause) {
       let result = `${ind()}try {\n`
+
       depth++
       result += `${ind()}while (${test}) ${body}`
       depth--
       result += `\n${ind()}} catch (${node.catchClause.param.name}) ${genBlockStatement(node.catchClause.body)}`
+
       return result
     }
 
@@ -341,10 +347,12 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
 
     if (node.catchClause) {
       let result = `${ind()}try {\n`
+
       depth++
       result += `${ind()}for (const ${varName} ${keyword} ${iterable}) ${body}`
       depth--
       result += `\n${ind()}} catch (${node.catchClause.param.name}) ${genBlockStatement(node.catchClause.body)}`
+
       return result
     }
 
@@ -355,6 +363,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     if (node.argument) {
       return `${ind()}return ${genExpression(node.argument)}${semi ? ";" : ""}`
     }
+
     return `${ind()}return${semi ? ";" : ""}`
   }
 
@@ -383,6 +392,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
 
     depth++
     const body = node.body.map(genStatement).join("\n")
+
     depth--
 
     return `{\n${body}\n${ind()}}`
@@ -443,9 +453,18 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
    * WHY: JSON.stringify ensures proper escaping of string literals.
    */
   function genLiteral(node: Literal): string {
-    if (node.value === null) return "null"
-    if (typeof node.value === "string") return JSON.stringify(node.value)
-    if (typeof node.value === "boolean") return node.value ? "true" : "false"
+    if (node.value === null) {
+      return "null"
+    }
+
+    if (typeof node.value === "string") {
+      return JSON.stringify(node.value)
+    }
+
+    if (typeof node.value === "boolean") {
+      return node.value ? "true" : "false"
+    }
+
     return String(node.value)
   }
 
@@ -461,6 +480,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
   function genBinaryExpression(node: BinaryExpression): string {
     const left = genExpression(node.left)
     const right = genExpression(node.right)
+
     return `(${left} ${node.operator} ${right})`
   }
 
@@ -473,6 +493,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
    */
   function genUnaryExpression(node: UnaryExpression): string {
     const arg = genExpression(node.argument)
+
     return node.prefix ? `${node.operator}${arg}` : `${arg}${node.operator}`
   }
 
@@ -485,6 +506,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
   function genCallExpression(node: CallExpression): string {
     const callee = genExpression(node.callee)
     const args = node.arguments.map(genExpression).join(", ")
+
     return `${callee}(${args})`
   }
 
@@ -497,9 +519,11 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
    */
   function genMemberExpression(node: MemberExpression): string {
     const obj = genExpression(node.object)
+
     if (node.computed) {
       return `${obj}[${genExpression(node.property)}]`
     }
+
     return `${obj}.${node.property.name}`
   }
 
@@ -515,10 +539,12 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
 
     if (node.body.type === "BlockStatement") {
       const body = genBlockStatement(node.body)
+
       return `(${params}) => ${body}`
     }
 
     const body = genExpression(node.body as Expression)
+
     return `(${params}) => ${body}`
   }
 
@@ -526,12 +552,14 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     const left = node.left.type === "Identifier"
       ? node.left.name
       : genExpression(node.left)
+
     return `${left} ${node.operator} ${genExpression(node.right)}`
   }
 
   function genNewExpression(node: NewExpression): string {
     const callee = node.callee.name
     const args = node.arguments.map(genExpression).join(", ")
+
     return `new ${callee}(${args})`
   }
 

@@ -88,9 +88,12 @@ export function createScope(parent: Scope, kind: Scope["kind"] = "block"): Scope
 export function defineSymbol(scope: Scope, symbol: Symbol): string | null {
   if (scope.symbols.has(symbol.name)) {
     const existing = scope.symbols.get(symbol.name)!
+
     return `'${symbol.name}' is already defined at line ${existing.position.line}`
   }
+
   scope.symbols.set(symbol.name, symbol)
+
   return null
 }
 
@@ -101,8 +104,15 @@ export function defineSymbol(scope: Scope, symbol: Symbol): string | null {
  */
 export function lookupSymbol(scope: Scope, name: string): Symbol | null {
   const symbol = scope.symbols.get(name)
-  if (symbol) return symbol
-  if (scope.parent) return lookupSymbol(scope.parent, name)
+
+  if (symbol) {
+    return symbol
+  }
+
+  if (scope.parent) {
+    return lookupSymbol(scope.parent, name)
+  }
+
   return null
 }
 
@@ -121,7 +131,13 @@ export function lookupSymbolLocal(scope: Scope, name: string): Symbol | null {
  * WHY: Needed for return type checking.
  */
 export function findFunctionScope(scope: Scope): Scope | null {
-  if (scope.kind === "function") return scope
-  if (scope.parent) return findFunctionScope(scope.parent)
+  if (scope.kind === "function") {
+    return scope
+  }
+
+  if (scope.parent) {
+    return findFunctionScope(scope.parent)
+  }
+
   return null
 }

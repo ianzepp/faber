@@ -92,7 +92,8 @@ export function tokenize(source: string): TokenizerResult {
 
   let current = 0     // Current position in source string
   let line = 1        // Current line (1-based)
-  let column = 1      // Current column (1-based)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let column = 1      // Current column (1-based) - tracked for potential future use
   let lineStart = 0   // Offset of current line start (for column calculation)
 
   // ---------------------------------------------------------------------------
@@ -134,8 +135,10 @@ export function tokenize(source: string): TokenizerResult {
    */
   function advance(): string {
     const char = source[current]
+
     current++
     column++
+
     return char
   }
 
@@ -222,6 +225,7 @@ export function tokenize(source: string): TokenizerResult {
   function skipWhitespace(): void {
     while (!isAtEnd()) {
       const char = peek()
+
       if (char === " " || char === "\t" || char === "\r") {
         advance()
       }
@@ -232,8 +236,10 @@ export function tokenize(source: string): TokenizerResult {
       }
       else if (char === "/" && peek(1) === "/") {
         // WHY: Single-line comments extend to end of line (C++ style)
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         const pos = position()
         let comment = ""
+
         advance() // /
         advance() // /
         while (!isAtEnd() && peek() !== "\n") {
@@ -241,6 +247,7 @@ export function tokenize(source: string): TokenizerResult {
         }
         // FUTURE: Emit comment tokens for documentation tooling
         // addToken("COMMENT", comment.trim(), pos)
+        /* eslint-enable @typescript-eslint/no-unused-vars */
       }
       else if (char === "/" && peek(1) === "*") {
         // WHY: Multi-line comments can span multiple lines (C style)
@@ -251,8 +258,10 @@ export function tokenize(source: string): TokenizerResult {
             line++
             lineStart = current + 1
           }
+
           advance()
         }
+
         if (!isAtEnd()) {
           advance() // *
           advance() // /
@@ -315,16 +324,20 @@ export function tokenize(source: string): TokenizerResult {
   function scanString(quote: string): void {
     const pos = position()
     let value = ""
+
     advance() // opening quote
 
     while (!isAtEnd() && peek() !== quote) {
       if (peek() === "\n") {
         addError("Unterminated string", pos)
+
         return
       }
+
       if (peek() === "\\") {
         advance()
         const escaped = advance()
+
         // WHY: Map escape sequences to their runtime equivalents
         switch (escaped) {
           case "n": value += "\n"; break
@@ -342,6 +355,7 @@ export function tokenize(source: string): TokenizerResult {
 
     if (isAtEnd()) {
       addError("Unterminated string", pos)
+
       return
     }
 
@@ -368,6 +382,7 @@ export function tokenize(source: string): TokenizerResult {
   function scanTemplateString(): void {
     const pos = position()
     let value = ""
+
     advance() // opening backtick
 
     while (!isAtEnd() && peek() !== "`") {
@@ -387,9 +402,16 @@ export function tokenize(source: string): TokenizerResult {
         value += advance() // $
         value += advance() // {
         let braceDepth = 1
+
         while (!isAtEnd() && braceDepth > 0) {
-          if (peek() === "{") braceDepth++
-          if (peek() === "}") braceDepth--
+          if (peek() === "{") {
+            braceDepth++
+          }
+
+          if (peek() === "}") {
+            braceDepth--
+          }
+
           value += advance()
         }
       }
@@ -400,6 +422,7 @@ export function tokenize(source: string): TokenizerResult {
 
     if (isAtEnd()) {
       addError("Unterminated template string", pos)
+
       return
     }
 
@@ -434,6 +457,7 @@ export function tokenize(source: string): TokenizerResult {
     // WHY: Check lexicon for keyword match
     if (isKeyword(value)) {
       const kw = getKeyword(value)!
+
       addToken("KEYWORD", value, pos, kw.latin)
     }
     else {
@@ -456,7 +480,9 @@ export function tokenize(source: string): TokenizerResult {
    */
   function scanToken(): void {
     skipWhitespace()
-    if (isAtEnd()) return
+    if (isAtEnd()) {
+      return
+    }
 
     const pos = position()
     const char = peek()
@@ -464,24 +490,28 @@ export function tokenize(source: string): TokenizerResult {
     // WHY: Numbers can't start with letter, so check digits first
     if (isDigit(char)) {
       scanNumber()
+
       return
     }
 
     // WHY: Identifiers and keywords both start with alpha
     if (isAlpha(char)) {
       scanIdentifier()
+
       return
     }
 
     // WHY: String literals can use ' or "
     if (char === '"' || char === "'") {
       scanString(char)
+
       return
     }
 
     // WHY: Template strings use backticks
     if (char === "`") {
       scanTemplateString()
+
       return
     }
 
@@ -514,6 +544,7 @@ export function tokenize(source: string): TokenizerResult {
         else {
           addToken("PIPE", char, pos)
         }
+
         break
 
       // WHY: & must be && (logical AND), single & is reserved/invalid
@@ -525,6 +556,7 @@ export function tokenize(source: string): TokenizerResult {
         else {
           addError(`Unexpected character '${char}'`, pos)
         }
+
         break
 
       // Single-character arithmetic operators
@@ -539,6 +571,7 @@ export function tokenize(source: string): TokenizerResult {
         else {
           addToken("MINUS", char, pos)
         }
+
         break
 
       case "*": addToken("STAR", char, pos); break
@@ -561,6 +594,7 @@ export function tokenize(source: string): TokenizerResult {
         else {
           addToken("EQUAL", char, pos)
         }
+
         break
 
       // WHY: ! can be != (not equal) or ! (logical not)
@@ -572,6 +606,7 @@ export function tokenize(source: string): TokenizerResult {
         else {
           addToken("BANG", char, pos)
         }
+
         break
 
       // WHY: < can be <= (less or equal) or < (less than)
@@ -583,6 +618,7 @@ export function tokenize(source: string): TokenizerResult {
         else {
           addToken("LESS", char, pos)
         }
+
         break
 
       // WHY: > can be >= (greater or equal) or > (greater than)
@@ -594,6 +630,7 @@ export function tokenize(source: string): TokenizerResult {
         else {
           addToken("GREATER", char, pos)
         }
+
         break
 
       // EDGE: Unrecognized character - emit error but continue

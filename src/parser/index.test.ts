@@ -4,6 +4,7 @@ import { parse } from "./index"
 
 function parseCode(code: string) {
   const { tokens } = tokenize(code)
+
   return parse(tokens)
 }
 
@@ -11,9 +12,11 @@ describe("parser", () => {
   describe("variable declarations", () => {
     test("esto without type", () => {
       const { program } = parseCode('esto nomen = "Marcus"')
+
       expect(program).not.toBeNull()
       expect(program!.body[0].type).toBe("VariableDeclaration")
       const decl = program!.body[0] as any
+
       expect(decl.kind).toBe("esto")
       expect(decl.name.name).toBe("nomen")
       expect(decl.init.value).toBe("Marcus")
@@ -22,6 +25,7 @@ describe("parser", () => {
     test("fixum with type annotation", () => {
       const { program } = parseCode("fixum numerus: Numerus = 42")
       const decl = program!.body[0] as any
+
       expect(decl.kind).toBe("fixum")
       expect(decl.typeAnnotation.name).toBe("Numerus")
       expect(decl.init.value).toBe(42)
@@ -30,6 +34,7 @@ describe("parser", () => {
     test("generic type annotation", () => {
       const { program } = parseCode("fixum lista: Lista<Numerus> = nihil")
       const decl = program!.body[0] as any
+
       expect(decl.typeAnnotation.name).toBe("Lista")
       expect(decl.typeAnnotation.typeParameters[0].name).toBe("Numerus")
     })
@@ -42,8 +47,10 @@ describe("parser", () => {
           redde nomen
         }
       `)
+
       expect(program!.body[0].type).toBe("FunctionDeclaration")
       const fn = program!.body[0] as any
+
       expect(fn.name.name).toBe("salve")
       expect(fn.params).toHaveLength(1)
       expect(fn.params[0].name.name).toBe("nomen")
@@ -58,6 +65,7 @@ describe("parser", () => {
         }
       `)
       const fn = program!.body[0] as any
+
       expect(fn.async).toBe(true)
     })
 
@@ -68,6 +76,7 @@ describe("parser", () => {
         }
       `)
       const fn = program!.body[0] as any
+
       expect(fn.params[1].preposition).toBe("ad")
       expect(fn.params[1].name.name).toBe("recipientem")
     })
@@ -80,8 +89,10 @@ describe("parser", () => {
           scribe("yes")
         }
       `)
+
       expect(program!.body[0].type).toBe("IfStatement")
       const stmt = program!.body[0] as any
+
       expect(stmt.test.value).toBe(true)
     })
 
@@ -95,6 +106,7 @@ describe("parser", () => {
         }
       `)
       const stmt = program!.body[0] as any
+
       expect(stmt.alternate).not.toBeUndefined()
       expect(stmt.alternate.type).toBe("BlockStatement")
     })
@@ -109,6 +121,7 @@ describe("parser", () => {
         }
       `)
       const stmt = program!.body[0] as any
+
       expect(stmt.catchClause).not.toBeUndefined()
       expect(stmt.catchClause.param.name).toBe("erratum")
     })
@@ -121,6 +134,7 @@ describe("parser", () => {
           scribe("loop")
         }
       `)
+
       expect(program!.body[0].type).toBe("WhileStatement")
     })
 
@@ -131,6 +145,7 @@ describe("parser", () => {
         }
       `)
       const stmt = program!.body[0] as any
+
       expect(stmt.type).toBe("ForStatement")
       expect(stmt.kind).toBe("in")
       expect(stmt.variable.name).toBe("item")
@@ -143,6 +158,7 @@ describe("parser", () => {
         }
       `)
       const stmt = program!.body[0] as any
+
       expect(stmt.kind).toBe("ex")
     })
   })
@@ -151,6 +167,7 @@ describe("parser", () => {
     test("binary operators", () => {
       const { program } = parseCode("1 + 2 * 3")
       const expr = (program!.body[0] as any).expression
+
       expect(expr.type).toBe("BinaryExpression")
       expect(expr.operator).toBe("+")
       expect(expr.right.operator).toBe("*")
@@ -159,24 +176,28 @@ describe("parser", () => {
     test("comparison operators", () => {
       const { program } = parseCode("a > b")
       const expr = (program!.body[0] as any).expression
+
       expect(expr.operator).toBe(">")
     })
 
     test("logical operators with Latin keywords", () => {
       const { program } = parseCode("a et b")
       const expr = (program!.body[0] as any).expression
+
       expect(expr.operator).toBe("&&")
     })
 
     test("aut operator", () => {
       const { program } = parseCode("a aut b")
       const expr = (program!.body[0] as any).expression
+
       expect(expr.operator).toBe("||")
     })
 
     test("negation with !", () => {
       const { program } = parseCode("!active")
       const expr = (program!.body[0] as any).expression
+
       expect(expr.type).toBe("UnaryExpression")
       expect(expr.operator).toBe("!")
     })
@@ -184,6 +205,7 @@ describe("parser", () => {
     test("function call", () => {
       const { program } = parseCode("salve(nomen)")
       const expr = (program!.body[0] as any).expression
+
       expect(expr.type).toBe("CallExpression")
       expect(expr.callee.name).toBe("salve")
       expect(expr.arguments).toHaveLength(1)
@@ -192,6 +214,7 @@ describe("parser", () => {
     test("member access", () => {
       const { program } = parseCode("usuario.nomen")
       const expr = (program!.body[0] as any).expression
+
       expect(expr.type).toBe("MemberExpression")
       expect(expr.object.name).toBe("usuario")
       expect(expr.property.name).toBe("nomen")
@@ -200,6 +223,7 @@ describe("parser", () => {
     test("chained member access", () => {
       const { program } = parseCode("a.b.c")
       const expr = (program!.body[0] as any).expression
+
       expect(expr.type).toBe("MemberExpression")
       expect(expr.object.type).toBe("MemberExpression")
     })
@@ -207,6 +231,7 @@ describe("parser", () => {
     test("method call", () => {
       const { program } = parseCode("lista.filter(f)")
       const expr = (program!.body[0] as any).expression
+
       expect(expr.type).toBe("CallExpression")
       expect(expr.callee.type).toBe("MemberExpression")
     })
@@ -216,6 +241,7 @@ describe("parser", () => {
     test("simple arrow function", () => {
       const { program } = parseCode("(x) => x")
       const expr = (program!.body[0] as any).expression
+
       expect(expr.type).toBe("ArrowFunctionExpression")
       expect(expr.params).toHaveLength(1)
       expect(expr.body.name).toBe("x")
@@ -224,6 +250,7 @@ describe("parser", () => {
     test("arrow function with block", () => {
       const { program } = parseCode("(x) => { redde x }")
       const expr = (program!.body[0] as any).expression
+
       expect(expr.type).toBe("ArrowFunctionExpression")
       expect(expr.body.type).toBe("BlockStatement")
     })
@@ -233,6 +260,7 @@ describe("parser", () => {
     test("exspecta", () => {
       const { program } = parseCode("exspecta fetch(url)")
       const expr = (program!.body[0] as any).expression
+
       expect(expr.type).toBe("AwaitExpression")
       expect(expr.argument.type).toBe("CallExpression")
     })
@@ -242,6 +270,7 @@ describe("parser", () => {
     test("novum", () => {
       const { program } = parseCode("novum Erratum(message)")
       const expr = (program!.body[0] as any).expression
+
       expect(expr.type).toBe("NewExpression")
       expect(expr.callee.name).toBe("Erratum")
     })
@@ -258,6 +287,7 @@ describe("parser", () => {
         }
       `)
       const stmt = program!.body[0] as any
+
       expect(stmt.type).toBe("TryStatement")
       expect(stmt.handler.param.name).toBe("error")
     })
@@ -275,6 +305,7 @@ describe("parser", () => {
         }
       `)
       const stmt = program!.body[0] as any
+
       expect(stmt.finalizer).not.toBeUndefined()
     })
   })
@@ -283,12 +314,14 @@ describe("parser", () => {
     test("nullable type", () => {
       const { program } = parseCode("fixum x: Textus? = nihil")
       const decl = program!.body[0] as any
+
       expect(decl.typeAnnotation.nullable).toBe(true)
     })
 
     test("union type", () => {
       const { program } = parseCode("fixum x: Textus | Nihil = nihil")
       const decl = program!.body[0] as any
+
       expect(decl.typeAnnotation.name).toBe("union")
       expect(decl.typeAnnotation.union).toHaveLength(2)
     })
