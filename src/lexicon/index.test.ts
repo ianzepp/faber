@@ -1,5 +1,5 @@
 import { test, expect, describe } from "bun:test"
-import { parseNoun, parseVerb, isKeyword, getKeyword } from "./index"
+import { parseNoun, parseVerb, parseType, isKeyword, getKeyword, isBuiltinType } from "./index"
 
 describe("parseNoun", () => {
   describe("2nd declension masculine", () => {
@@ -160,5 +160,88 @@ describe("keywords", () => {
   test("getKeyword is case insensitive", () => {
     expect(getKeyword("SI")?.javascript).toBe("if")
     expect(getKeyword("Fixum")?.javascript).toBe("const")
+  })
+})
+
+describe("parseType", () => {
+  describe("primitives", () => {
+    test("Textus (4th declension)", () => {
+      const results = parseType("Textus")
+      expect(results).not.toBeNull()
+      expect(results![0].jsType).toBe("string")
+      expect(results![0].category).toBe("primitive")
+    })
+
+    test("Numerus (2nd declension masculine)", () => {
+      const results = parseType("Numerus")
+      expect(results).not.toBeNull()
+      expect(results![0].jsType).toBe("number")
+    })
+
+    test("Numerum (accusative)", () => {
+      const results = parseType("Numerum")
+      expect(results).not.toBeNull()
+      expect(results![0].case).toBe("accusative")
+      expect(results![0].jsType).toBe("number")
+    })
+  })
+
+  describe("collections", () => {
+    test("Lista (1st declension feminine)", () => {
+      const results = parseType("Lista")
+      expect(results).not.toBeNull()
+      expect(results![0].jsType).toBe("Array")
+      expect(results![0].category).toBe("collection")
+      expect(results![0].generic).toBe(true)
+    })
+
+    test("Listam (accusative)", () => {
+      const results = parseType("Listam")
+      expect(results).not.toBeNull()
+      expect(results![0].case).toBe("accusative")
+    })
+
+    test("Tabula (Map)", () => {
+      const results = parseType("Tabula")
+      expect(results).not.toBeNull()
+      expect(results![0].jsType).toBe("Map")
+    })
+
+    test("Copia (Set)", () => {
+      const results = parseType("Copia")
+      expect(results).not.toBeNull()
+      expect(results![0].jsType).toBe("Set")
+    })
+  })
+
+  describe("structural", () => {
+    test("Promissum (2nd declension neuter)", () => {
+      const results = parseType("Promissum")
+      expect(results).not.toBeNull()
+      expect(results![0].jsType).toBe("Promise")
+      expect(results![0].generic).toBe(true)
+    })
+
+    test("Erratum (Error)", () => {
+      const results = parseType("Erratum")
+      expect(results).not.toBeNull()
+      expect(results![0].jsType).toBe("Error")
+    })
+
+    test("Cursor (3rd declension, no ending)", () => {
+      const results = parseType("Cursor")
+      expect(results).not.toBeNull()
+      expect(results![0].jsType).toBe("Iterator")
+      expect(results![0].case).toBe("nominative")
+    })
+  })
+
+  describe("builtin type helpers", () => {
+    test("isBuiltinType recognizes type stems", () => {
+      expect(isBuiltinType("Text")).toBe(true)
+      expect(isBuiltinType("Numer")).toBe(true)
+      expect(isBuiltinType("List")).toBe(true)
+      expect(isBuiltinType("asdfgh")).toBe(false)
+    })
   })
 })
