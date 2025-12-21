@@ -39,6 +39,7 @@
 
 import { tokenize } from "./tokenizer"
 import { parse } from "./parser"
+import { analyze } from "./semantic"
 import { generate, type CodegenTarget } from "./codegen"
 
 // =============================================================================
@@ -168,6 +169,19 @@ async function compile(inputFile: string, target: CodegenTarget, outputFile?: st
   }
 
   // ---------------------------------------------------------------------------
+  // Semantic Analysis
+  // ---------------------------------------------------------------------------
+
+  const { errors: semanticErrors } = analyze(program)
+  if (semanticErrors.length > 0) {
+    console.error("Semantic errors:")
+    for (const err of semanticErrors) {
+      console.error(`  ${inputFile}:${err.position.line}:${err.position.column} - ${err.message}`)
+    }
+    process.exit(1)
+  }
+
+  // ---------------------------------------------------------------------------
   // Code Generation
   // ---------------------------------------------------------------------------
 
@@ -229,7 +243,13 @@ async function check(inputFile: string): Promise<void> {
   const { tokens, errors: tokenErrors } = tokenize(source)
   const { program, errors: parseErrors } = parse(tokens)
 
-  const allErrors = [...tokenErrors, ...parseErrors]
+  let semanticErrors: { message: string; position: { line: number; column: number } }[] = []
+  if (program) {
+    const result = analyze(program)
+    semanticErrors = result.errors
+  }
+
+  const allErrors = [...tokenErrors, ...parseErrors, ...semanticErrors]
 
   if (allErrors.length === 0) {
     console.log(`${inputFile}: No errors`)

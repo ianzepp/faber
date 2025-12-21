@@ -128,6 +128,40 @@ Target-specific codegen
 - Need a transform step to estree (additional code)
 - Can leverage existing JS codegen tools for final output
 
+### ADR-006: Semantic analysis phase with type resolution (2024-12-21)
+
+**Status**: Accepted
+
+**Context**: The compiler pipeline had a gap between parsing and code generation. Type information from annotations wasn't being used, and codegen was guessing types from literal values. This prevented:
+- Type error detection before code generation
+- Type-aware code generation (e.g., string concatenation vs numeric addition in Zig)
+- Undefined variable detection
+- Proper scoping validation
+
+**Decision**: Add a semantic analysis phase between parsing and code generation that:
+1. Builds a symbol table with lexical scoping
+2. Resolves types from annotations and infers types from expressions
+3. Annotates AST nodes with `resolvedType` field
+4. Reports semantic errors (type mismatches, undefined variables, etc.)
+5. Provides type information to codegen for target-specific decisions
+
+**Architecture**:
+```
+Source → Tokenizer → Parser → Semantic Analyzer → Codegen
+                               ↓
+                        - Symbol table
+                        - Type resolution
+                        - Error collection
+                        - AST annotation
+```
+
+**Consequences**:
+- Codegen can make type-aware decisions (e.g., Zig format specifiers, string concat)
+- Type errors caught before code generation
+- Foundation for future morphological analysis (Phase B)
+- Slightly longer compilation time (additional AST traversal)
+- AST nodes are mutable (resolvedType added during analysis)
+
 <!-- Template for decisions:
 
 ### ADR-001: Title (YYYY-MM-DD)

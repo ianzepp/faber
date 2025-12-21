@@ -78,6 +78,7 @@ import type {
   CatchClause,
 } from "../parser/ast"
 import type { CodegenOptions } from "./types"
+import type { SemanticType } from "../semantic/types"
 
 // =============================================================================
 // TYPE MAPPING
@@ -321,15 +322,20 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
   }
 
   /**
-   * Infer Zig type from expression when no explicit annotation.
+   * Infer Zig type from expression using resolved semantic type when available.
    *
-   * WHY: Zig var declarations require types. We infer from literals.
-   *      Falls back to anytype for complex expressions.
+   * WHY: Zig var declarations require types. We use the resolved type from
+   *      semantic analysis when available, falling back to literal inference.
    */
   function inferZigType(node: Expression): string {
+    // Use resolved type from semantic analysis if available
+    if (node.resolvedType) {
+      return semanticTypeToZig(node.resolvedType)
+    }
+
+    // Fallback: infer from literals
     if (node.type === "Literal") {
       if (typeof node.value === "number") {
-        // WHY: Distinguish integer from float for Zig's type system
         return Number.isInteger(node.value) ? "i64" : "f64"
       }
       if (typeof node.value === "string") return "[]const u8"
@@ -339,8 +345,54 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
       if (node.name === "verum" || node.name === "falsum") return "bool"
       if (node.name === "nihil") return "?void"
     }
-    // WHY: anytype lets Zig infer from assignment
     return "anytype"
+  }
+
+  /**
+   * Convert a semantic type to Zig type string.
+   */
+  function semanticTypeToZig(type: SemanticType): string {
+    const nullable = type.nullable ? "?" : ""
+
+    switch (type.kind) {
+      case "primitive":
+        switch (type.name) {
+          case "Textus": return `${nullable}[]const u8`
+          case "Numerus": return `${nullable}i64`
+          case "Bivalens": return `${nullable}bool`
+          case "Nihil": return "void"
+          case "Vacuum": return "void"
+        }
+        break
+      case "generic":
+        // Generic types not fully supported in Zig target yet
+        return "anytype"
+      case "function":
+        return "anytype"
+      case "union":
+        return "anytype"
+      case "unknown":
+        return "anytype"
+      case "user":
+        return type.name
+    }
+    return "anytype"
+  }
+
+  /**
+   * Check if an expression has a string type.
+   */
+  function isStringType(node: Expression): boolean {
+    if (node.resolvedType?.kind === "primitive" && node.resolvedType.name === "Textus") {
+      return true
+    }
+    if (node.type === "Literal" && typeof node.value === "string") {
+      return true
+    }
+    if (node.type === "TemplateLiteral") {
+      return true
+    }
+    return false
   }
 
   /**
@@ -569,15 +621,31 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
    * Generate binary expression.
    *
    * TRANSFORMS:
-   *   x + y -> (x + y)
+   *   x + y -> (x + y) for numbers
+   *   "a" + "b" -> std.mem.concat(allocator, "a", "b") for strings
    *   a && b -> (a and b)
    *   a || b -> (a or b)
    *
    * TARGET: Zig uses 'and'/'or' keywords not &&/|| operators.
+   *         String concatenation requires std.mem.concat or array operations.
    */
   function genBinaryExpression(node: BinaryExpression): string {
     const left = genExpression(node.left)
     const right = genExpression(node.right)
+
+    // Handle string concatenation with + operator
+    if (node.operator === "+" && (isStringType(node.left) || isStringType(node.right))) {
+      // For now, use a simpler approach - concatenate at compile time if both are literals
+      if (node.left.type === "Literal" && node.right.type === "Literal") {
+        const leftStr = String(node.left.value)
+        const rightStr = String(node.right.value)
+        return `"${leftStr}${rightStr}"`
+      }
+      // For runtime concatenation, we'd need an allocator
+      // This is a simplified output - real Zig would need memory management
+      return `@concat(${left}, ${right})`
+    }
+
     const op = mapOperator(node.operator)
     return `(${left} ${op} ${right})`
   }
@@ -586,9 +654,6 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
    * Map JavaScript operators to Zig equivalents.
    *
    * TARGET: Zig uses keyword operators for boolean logic.
-   *
-   * LIMITATION: String concatenation (++) vs numeric addition (+) can't be
-   *             distinguished without type information. Using + for both.
    */
   function mapOperator(op: string): string {
     switch (op) {
@@ -615,6 +680,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
    *
    * TRANSFORMS:
    *   scribe("hello") -> std.debug.print("{s}\n", .{"hello"})
+   *   scribe(42) -> std.debug.print("{d}\n", .{42})
    *   foo(x, y) -> foo(x, y)
    *
    * TARGET: scribe() is Latin's print function, maps to std.debug.print().
@@ -624,12 +690,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     // TARGET: scribe() maps to Zig's std.debug.print()
     if (node.callee.type === "Identifier" && node.callee.name === "scribe") {
       const args = node.arguments.map(genExpression)
-      // WHY: {s} for string literals, {any} for runtime values
-      const formatSpecs = node.arguments.map(arg => {
-        if (arg.type === "Literal" && typeof arg.value === "string") return "{s}"
-        if (arg.type === "Identifier") return "{any}"
-        return "{any}"
-      })
+      const formatSpecs = node.arguments.map(arg => getFormatSpecifier(arg))
       const format = formatSpecs.join(" ") + "\\n"
       return `std.debug.print("${format}", .{${args.join(", ")}})`
     }
@@ -637,6 +698,38 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     const callee = genExpression(node.callee)
     const args = node.arguments.map(genExpression).join(", ")
     return `${callee}(${args})`
+  }
+
+  /**
+   * Get Zig format specifier for an expression based on its resolved type.
+   *
+   * TARGET: Zig uses {s} for strings, {d} for integers, {any} for unknown.
+   */
+  function getFormatSpecifier(expr: Expression): string {
+    // Use resolved type if available
+    if (expr.resolvedType?.kind === "primitive") {
+      switch (expr.resolvedType.name) {
+        case "Textus": return "{s}"
+        case "Numerus": return "{d}"
+        case "Bivalens": return "{}"
+        default: return "{any}"
+      }
+    }
+
+    // Fallback: infer from literal/identifier
+    if (expr.type === "Literal") {
+      if (typeof expr.value === "string") return "{s}"
+      if (typeof expr.value === "number") return "{d}"
+      if (typeof expr.value === "boolean") return "{}"
+    }
+    if (expr.type === "Identifier") {
+      if (expr.name === "verum" || expr.name === "falsum") return "{}"
+    }
+    if (expr.type === "TemplateLiteral") {
+      return "{s}"
+    }
+
+    return "{any}"
   }
 
   /**

@@ -39,6 +39,7 @@
 
 import type { Position } from "../tokenizer/types"
 import type { Case, Number as GramNumber } from "../lexicon/types"
+import type { SemanticType } from "../semantic/types"
 
 // =============================================================================
 // BASE TYPES
@@ -48,9 +49,13 @@ import type { Case, Number as GramNumber } from "../lexicon/types"
  * Base node with position for error reporting.
  *
  * INVARIANT: Every AST node extends this to ensure source tracking.
+ *
+ * The resolvedType field is populated by the semantic analyzer and used by
+ * code generators to make type-aware decisions.
  */
 export interface BaseNode {
   position: Position
+  resolvedType?: SemanticType
 }
 
 /**
