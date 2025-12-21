@@ -1,0 +1,11 @@
+// Salve Mundus - Hello World in Faber Romanus
+
+functio salve(nomen) {
+  redde "Salve, " + nomen + "!"
+}
+
+fixum nomen = "Mundus"
+fixum salutatio = salve(nomen)
+
+// Print it (scribe = console.log in runtime)
+scribe(salutatio)

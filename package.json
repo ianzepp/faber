@@ -1,12 +1,23 @@
 {
   "name": "faber-romanus",
+  "version": "0.1.0",
+  "description": "A Latin-to-JavaScript transpiler - The Roman Craftsman",
   "module": "index.ts",
   "type": "module",
-  "private": true,
+  "bin": {
+    "faber": "./src/cli.ts"
+  },
+  "scripts": {
+    "build": "bun build ./src/cli.ts --outfile=dist/faber.js --target=node",
+    "test": "bun test",
+    "check": "bun run src/cli.ts check"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
-  }
+  },
+  "keywords": ["latin", "transpiler", "compiler", "javascript"],
+  "license": "MIT"
 }
