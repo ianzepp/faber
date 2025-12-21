@@ -47,7 +47,7 @@
  * @module lexicon/verbs
  */
 
-import type { VerbEntry } from "./types"
+import type { VerbEntry } from "./types";
 
 // =============================================================================
 // USER VOCABULARY
@@ -63,12 +63,12 @@ import type { VerbEntry } from "./types"
  *         the parsing algorithm which strips endings.
  */
 export const verbs: VerbEntry[] = [
-  { stem: "mitt", conjugation: 3, meaning: "send" },
-  { stem: "leg", conjugation: 3, meaning: "read" },
-  { stem: "scrib", conjugation: 3, meaning: "write" },
-  { stem: "cre", conjugation: 1, meaning: "create" },
-  { stem: "port", conjugation: 1, meaning: "carry" },
-]
+    { stem: "mitt", conjugation: 3, meaning: "send" },
+    { stem: "leg", conjugation: 3, meaning: "read" },
+    { stem: "scrib", conjugation: 3, meaning: "write" },
+    { stem: "cre", conjugation: 1, meaning: "create" },
+    { stem: "port", conjugation: 1, meaning: "carry" },
+];
 
 // =============================================================================
 // CONJUGATION TABLES
@@ -88,27 +88,27 @@ export const verbs: VerbEntry[] = [
  *      connecting vowel in some forms.
  */
 export const conjugation3Endings: Record<string, { tense: string; person?: number; number?: string; async: boolean }[]> = {
-  // WHY: Imperative is command form (2nd person only), always synchronous
-  "e": [{ tense: "imperative", person: 2, number: "singular", async: false }],
-  "ite": [{ tense: "imperative", person: 2, number: "plural", async: false }],
+    // WHY: Imperative is command form (2nd person only), always synchronous
+    "e": [{ tense: "imperative", person: 2, number: "singular", async: false }],
+    "ite": [{ tense: "imperative", person: 2, number: "plural", async: false }],
 
-  // WHY: Present tense describes current action, maps to synchronous functions
-  "o": [{ tense: "present", person: 1, number: "singular", async: false }],
-  "is": [{ tense: "present", person: 2, number: "singular", async: false }],
-  "it": [{ tense: "present", person: 3, number: "singular", async: false }],
-  "imus": [{ tense: "present", person: 1, number: "plural", async: false }],
-  "itis": [{ tense: "present", person: 2, number: "plural", async: false }],
-  "unt": [{ tense: "present", person: 3, number: "plural", async: false }],
+    // WHY: Present tense describes current action, maps to synchronous functions
+    "o": [{ tense: "present", person: 1, number: "singular", async: false }],
+    "is": [{ tense: "present", person: 2, number: "singular", async: false }],
+    "it": [{ tense: "present", person: 3, number: "singular", async: false }],
+    "imus": [{ tense: "present", person: 1, number: "plural", async: false }],
+    "itis": [{ tense: "present", person: 2, number: "plural", async: false }],
+    "unt": [{ tense: "present", person: 3, number: "plural", async: false }],
 
-  // WHY: Future tense describes future action, maps to async functions (Promise)
-  //      Example: "mittet" (will send) -> async function returning Promise
-  "am": [{ tense: "future", person: 1, number: "singular", async: true }],
-  "es": [{ tense: "future", person: 2, number: "singular", async: true }],
-  "et": [{ tense: "future", person: 3, number: "singular", async: true }],
-  "emus": [{ tense: "future", person: 1, number: "plural", async: true }],
-  "etis": [{ tense: "future", person: 2, number: "plural", async: true }],
-  "ent": [{ tense: "future", person: 3, number: "plural", async: true }],
-}
+    // WHY: Future tense describes future action, maps to async functions (Promise)
+    //      Example: "mittet" (will send) -> async function returning Promise
+    "am": [{ tense: "future", person: 1, number: "singular", async: true }],
+    "es": [{ tense: "future", person: 2, number: "singular", async: true }],
+    "et": [{ tense: "future", person: 3, number: "singular", async: true }],
+    "emus": [{ tense: "future", person: 1, number: "plural", async: true }],
+    "etis": [{ tense: "future", person: 2, number: "plural", async: true }],
+    "ent": [{ tense: "future", person: 3, number: "plural", async: true }],
+};
 
 // ---------------------------------------------------------------------------
 // 1st Conjugation
@@ -123,24 +123,24 @@ export const conjugation3Endings: Record<string, { tense: string; person?: numbe
  *      Characterized by the -a- theme vowel in most forms.
  */
 export const conjugation1Endings: Record<string, { tense: string; person?: number; number?: string; async: boolean }[]> = {
-  // WHY: Imperative singular is just the stem + -a
-  "a": [{ tense: "imperative", person: 2, number: "singular", async: false }],
-  "ate": [{ tense: "imperative", person: 2, number: "plural", async: false }],
+    // WHY: Imperative singular is just the stem + -a
+    "a": [{ tense: "imperative", person: 2, number: "singular", async: false }],
+    "ate": [{ tense: "imperative", person: 2, number: "plural", async: false }],
 
-  // WHY: Present tense uses -a- theme vowel characteristic of 1st conjugation
-  "o": [{ tense: "present", person: 1, number: "singular", async: false }],
-  "as": [{ tense: "present", person: 2, number: "singular", async: false }],
-  "at": [{ tense: "present", person: 3, number: "singular", async: false }],
-  "amus": [{ tense: "present", person: 1, number: "plural", async: false }],
-  "atis": [{ tense: "present", person: 2, number: "plural", async: false }],
-  "ant": [{ tense: "present", person: 3, number: "plural", async: false }],
+    // WHY: Present tense uses -a- theme vowel characteristic of 1st conjugation
+    "o": [{ tense: "present", person: 1, number: "singular", async: false }],
+    "as": [{ tense: "present", person: 2, number: "singular", async: false }],
+    "at": [{ tense: "present", person: 3, number: "singular", async: false }],
+    "amus": [{ tense: "present", person: 1, number: "plural", async: false }],
+    "atis": [{ tense: "present", person: 2, number: "plural", async: false }],
+    "ant": [{ tense: "present", person: 3, number: "plural", async: false }],
 
-  // WHY: Future tense in 1st conjugation uses -ab- + personal endings
-  //      Different from 3rd conjugation which uses -e- + personal endings
-  "abo": [{ tense: "future", person: 1, number: "singular", async: true }],
-  "abis": [{ tense: "future", person: 2, number: "singular", async: true }],
-  "abit": [{ tense: "future", person: 3, number: "singular", async: true }],
-  "abimus": [{ tense: "future", person: 1, number: "plural", async: true }],
-  "abitis": [{ tense: "future", person: 2, number: "plural", async: true }],
-  "abunt": [{ tense: "future", person: 3, number: "plural", async: true }],
-}
+    // WHY: Future tense in 1st conjugation uses -ab- + personal endings
+    //      Different from 3rd conjugation which uses -e- + personal endings
+    "abo": [{ tense: "future", person: 1, number: "singular", async: true }],
+    "abis": [{ tense: "future", person: 2, number: "singular", async: true }],
+    "abit": [{ tense: "future", person: 3, number: "singular", async: true }],
+    "abimus": [{ tense: "future", person: 1, number: "plural", async: true }],
+    "abitis": [{ tense: "future", person: 2, number: "plural", async: true }],
+    "abunt": [{ tense: "future", person: 3, number: "plural", async: true }],
+};

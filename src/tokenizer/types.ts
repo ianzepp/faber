@@ -107,7 +107,7 @@ export type TokenType =
   // ---------------------------------------------------------------------------
   | "NEWLINE"         // Line break (currently unused, may be significant later)
   | "EOF"             // End of file sentinel
-  | "COMMENT"         // Comment token (for tooling, not emitted by default)
+  | "COMMENT";         // Comment token (for tooling, not emitted by default)
 
 // =============================================================================
 // POSITION TRACKING
@@ -122,9 +122,9 @@ export type TokenType =
  * INVARIANT: line >= 1, column >= 1, offset >= 0
  */
 export interface Position {
-  line: number    // 1-based line number
-  column: number  // 1-based column number (visual characters, not bytes)
-  offset: number  // 0-based byte offset into source string
+    line: number    // 1-based line number
+    column: number  // 1-based column number (visual characters, not bytes)
+    offset: number  // 0-based byte offset into source string
 }
 
 // =============================================================================
@@ -142,10 +142,10 @@ export interface Position {
  * INVARIANT: If type === "KEYWORD", keyword field must be populated
  */
 export interface Token {
-  type: TokenType
-  value: string      // Original source text of this token
-  position: Position // Source location for error reporting
-  keyword?: string   // For KEYWORD tokens: the specific Latin keyword
+    type: TokenType
+    value: string      // Original source text of this token
+    position: Position // Source location for error reporting
+    keyword?: string   // For KEYWORD tokens: the specific Latin keyword
 }
 
 // =============================================================================
@@ -162,8 +162,8 @@ export interface Token {
  *       where the problem started (e.g., unterminated string detected at EOF).
  */
 export interface TokenizerError {
-  message: string
-  position: Position
+    message: string
+    position: Position
 }
 
 /**
@@ -175,6 +175,6 @@ export interface TokenizerError {
  * INVARIANT: tokens array always contains at least one EOF token
  */
 export interface TokenizerResult {
-  tokens: Token[]
-  errors: TokenizerError[]
+    tokens: Token[]
+    errors: TokenizerError[]
 }

@@ -33,20 +33,20 @@
  * INV-3: Generated code preserves Latin source semantics in target language
  */
 
-import type { Program } from "../parser/ast"
-import type { CodegenOptions } from "./types"
-import { generateTs } from "./ts"
-import { generateZig } from "./zig"
-import { generateWasm } from "./wasm"
+import type { Program } from "../parser/ast";
+import type { CodegenOptions } from "./types";
+import { generateTs } from "./ts";
+import { generateZig } from "./zig";
+import { generateWasm } from "./wasm";
 
 // =============================================================================
 // PUBLIC API
 // =============================================================================
 
-export type { CodegenOptions, CodegenTarget } from "./types"
-export { generateTs } from "./ts"
-export { generateZig } from "./zig"
-export { generateWasm } from "./wasm"
+export type { CodegenOptions, CodegenTarget } from "./types";
+export { generateTs } from "./ts";
+export { generateZig } from "./zig";
+export { generateWasm } from "./wasm";
 
 // =============================================================================
 // TARGET DISPATCHER
@@ -71,18 +71,18 @@ export { generateWasm } from "./wasm"
  * @throws Error if target is not 'ts' or 'zig' (should never happen with types)
  */
 export function generate(program: Program, options: CodegenOptions = {}): string {
-  // WHY: Default to TypeScript for web-first development
-  const target = options.target ?? "ts"
+    // WHY: Default to TypeScript for web-first development
+    const target = options.target ?? "ts";
 
-  switch (target) {
-    case "ts":
-      return generateTs(program, options)
-    case "zig":
-      return generateZig(program, options)
-    case "wasm":
-      return generateWasm(program, options)
-    default:
-      // EDGE: TypeScript types prevent this, but defensive check for runtime
-      throw new Error(`Unknown codegen target: ${target}`)
-  }
+    switch (target) {
+        case "ts":
+            return generateTs(program, options);
+        case "zig":
+            return generateZig(program, options);
+        case "wasm":
+            return generateWasm(program, options);
+        default:
+            // EDGE: TypeScript types prevent this, but defensive check for runtime
+            throw new Error(`Unknown codegen target: ${target}`);
+    }
 }

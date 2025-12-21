@@ -51,9 +51,9 @@
  *         For example, control keywords expect blocks, operators expect operands.
  */
 export interface KeywordEntry {
-  latin: string
-  meaning: string
-  category: "control" | "declaration" | "operator" | "value" | "preposition" | "modifier"
+    latin: string
+    meaning: string
+    category: "control" | "declaration" | "operator" | "value" | "preposition" | "modifier"
 }
 
 // =============================================================================
@@ -67,73 +67,73 @@ export interface KeywordEntry {
  *      declarations, then smaller categories. This mirrors typical language specs.
  */
 export const keywords: KeywordEntry[] = [
-  // ---------------------------------------------------------------------------
-  // Control Flow
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    // Control Flow
+    // ---------------------------------------------------------------------------
 
-  // WHY: Latin uses imperative mood (command forms) for control structures
-  { latin: "si", meaning: "if", category: "control" },
-  { latin: "aliter", meaning: "else", category: "control" },
-  { latin: "dum", meaning: "while", category: "control" },
-  { latin: "fac", meaning: "do", category: "control" },
-  { latin: "pro", meaning: "for", category: "control" },
-  { latin: "elige", meaning: "switch", category: "control" },
-  { latin: "quando", meaning: "case", category: "control" },
-  { latin: "rumpe", meaning: "break", category: "control" },
-  { latin: "perge", meaning: "continue", category: "control" },
-  { latin: "redde", meaning: "return", category: "control" },
-  { latin: "tempta", meaning: "try", category: "control" },
-  { latin: "cape", meaning: "catch", category: "control" },
-  { latin: "demum", meaning: "finally", category: "control" },
-  { latin: "iace", meaning: "throw", category: "control" },
-  { latin: "exspecta", meaning: "await", category: "control" },
+    // WHY: Latin uses imperative mood (command forms) for control structures
+    { latin: "si", meaning: "if", category: "control" },
+    { latin: "aliter", meaning: "else", category: "control" },
+    { latin: "dum", meaning: "while", category: "control" },
+    { latin: "fac", meaning: "do", category: "control" },
+    { latin: "pro", meaning: "for", category: "control" },
+    { latin: "elige", meaning: "switch", category: "control" },
+    { latin: "quando", meaning: "case", category: "control" },
+    { latin: "rumpe", meaning: "break", category: "control" },
+    { latin: "perge", meaning: "continue", category: "control" },
+    { latin: "redde", meaning: "return", category: "control" },
+    { latin: "tempta", meaning: "try", category: "control" },
+    { latin: "cape", meaning: "catch", category: "control" },
+    { latin: "demum", meaning: "finally", category: "control" },
+    { latin: "iace", meaning: "throw", category: "control" },
+    { latin: "exspecta", meaning: "await", category: "control" },
 
-  // ---------------------------------------------------------------------------
-  // Declarations
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    // Declarations
+    // ---------------------------------------------------------------------------
 
-  // WHY: "esto" (be!) and "fixum" (fixed) express mutability in Latin terms
-  { latin: "esto", meaning: "let", category: "declaration" },
-  { latin: "fixum", meaning: "const", category: "declaration" },
-  { latin: "functio", meaning: "function", category: "declaration" },
-  { latin: "novum", meaning: "new", category: "declaration" },
-  { latin: "importa", meaning: "import", category: "declaration" },
-  { latin: "typus", meaning: "type", category: "declaration" },
+    // WHY: "esto" (be!) and "fixum" (fixed) express mutability in Latin terms
+    { latin: "esto", meaning: "let", category: "declaration" },
+    { latin: "fixum", meaning: "const", category: "declaration" },
+    { latin: "functio", meaning: "function", category: "declaration" },
+    { latin: "novum", meaning: "new", category: "declaration" },
+    { latin: "importa", meaning: "import", category: "declaration" },
+    { latin: "typus", meaning: "type", category: "declaration" },
 
-  // ---------------------------------------------------------------------------
-  // Modifiers
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    // Modifiers
+    // ---------------------------------------------------------------------------
 
-  // WHY: "futura" (future/about to be) naturally expresses async operations
-  { latin: "futura", meaning: "async", category: "modifier" },
+    // WHY: "futura" (future/about to be) naturally expresses async operations
+    { latin: "futura", meaning: "async", category: "modifier" },
 
-  // ---------------------------------------------------------------------------
-  // Operators
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    // Operators
+    // ---------------------------------------------------------------------------
 
-  // WHY: Latin conjunctions map naturally to logical operators
-  { latin: "et", meaning: "&&", category: "operator" },
-  { latin: "aut", meaning: "||", category: "operator" },
-  { latin: "non", meaning: "!", category: "operator" },
+    // WHY: Latin conjunctions map naturally to logical operators
+    { latin: "et", meaning: "&&", category: "operator" },
+    { latin: "aut", meaning: "||", category: "operator" },
+    { latin: "non", meaning: "!", category: "operator" },
 
-  // ---------------------------------------------------------------------------
-  // Literal Values
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    // Literal Values
+    // ---------------------------------------------------------------------------
 
-  { latin: "verum", meaning: "true", category: "value" },
-  { latin: "falsum", meaning: "false", category: "value" },
-  { latin: "nihil", meaning: "null", category: "value" },
+    { latin: "verum", meaning: "true", category: "value" },
+    { latin: "falsum", meaning: "false", category: "value" },
+    { latin: "nihil", meaning: "null", category: "value" },
 
-  // ---------------------------------------------------------------------------
-  // Prepositions
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    // Prepositions
+    // ---------------------------------------------------------------------------
 
-  // WHY: Latin prepositions govern grammatical cases and express relationships
-  { latin: "in", meaning: "in", category: "preposition" },
-  { latin: "ex", meaning: "of", category: "preposition" },
-  { latin: "cum", meaning: "with", category: "preposition" },
-  { latin: "ad", meaning: "to", category: "preposition" },
-]
+    // WHY: Latin prepositions govern grammatical cases and express relationships
+    { latin: "in", meaning: "in", category: "preposition" },
+    { latin: "ex", meaning: "of", category: "preposition" },
+    { latin: "cum", meaning: "with", category: "preposition" },
+    { latin: "ad", meaning: "to", category: "preposition" },
+];
 
 // =============================================================================
 // LOOKUP FUNCTIONS
@@ -145,7 +145,7 @@ export const keywords: KeywordEntry[] = [
  * PERF: Pre-computed Map is much faster than linear array search for keywords.
  *       With 30+ keywords, this matters during tokenization of large files.
  */
-const keywordMap = new Map(keywords.map(k => [k.latin, k]))
+const keywordMap = new Map(keywords.map(k => [k.latin, k]));
 
 /**
  * Check if a word is a reserved keyword.
@@ -157,7 +157,7 @@ const keywordMap = new Map(keywords.map(k => [k.latin, k]))
  * @returns true if word is a keyword, false otherwise
  */
 export function isKeyword(word: string): boolean {
-  return keywordMap.has(word.toLowerCase())
+    return keywordMap.has(word.toLowerCase());
 }
 
 /**
@@ -167,5 +167,5 @@ export function isKeyword(word: string): boolean {
  * @returns KeywordEntry if word is a keyword, undefined otherwise
  */
 export function getKeyword(word: string): KeywordEntry | undefined {
-  return keywordMap.get(word.toLowerCase())
+    return keywordMap.get(word.toLowerCase());
 }

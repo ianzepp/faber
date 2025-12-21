@@ -37,10 +37,10 @@
  * @module cli
  */
 
-import { tokenize } from "./tokenizer"
-import { parse } from "./parser"
-import { analyze } from "./semantic"
-import { generate, type CodegenTarget } from "./codegen"
+import { tokenize } from "./tokenizer";
+import { parse } from "./parser";
+import { analyze } from "./semantic";
+import { generate, type CodegenTarget } from "./codegen";
 
 // =============================================================================
 // CONSTANTS
@@ -50,26 +50,26 @@ import { generate, type CodegenTarget } from "./codegen"
  * Version string for Faber Romanus compiler.
  * WHY: Hardcoded until we integrate with package.json or build system.
  */
-const VERSION = "0.2.0"
+const VERSION = "0.2.0";
 
 /**
  * Default compilation target.
  * WHY: TypeScript is the primary target as it's most accessible and runs
  *      directly via Bun without additional toolchain setup.
  */
-const DEFAULT_TARGET: CodegenTarget = "ts"
+const DEFAULT_TARGET: CodegenTarget = "ts";
 
 /**
  * Valid compilation targets.
  * WHY: Defined as array for validation and help text generation.
  */
-const VALID_TARGETS = ["ts", "zig", "wasm"] as const
+const VALID_TARGETS = ["ts", "zig", "wasm"] as const;
 
 // =============================================================================
 // ARGUMENT PARSING
 // =============================================================================
 
-const args = process.argv.slice(2)
+const args = process.argv.slice(2);
 
 // =============================================================================
 // HELP AND VERSION
@@ -82,7 +82,7 @@ const args = process.argv.slice(2)
  *                then options, then examples.
  */
 function printUsage(): void {
-  console.log(`
+    console.log(`
 Faber Romanus - The Roman Craftsman
 A Latin programming language
 
@@ -106,7 +106,7 @@ Examples:
   faber compile hello.fab --target zig        # Compile to Zig
   faber compile hello.fab -t wasm -o hello.wat  # Compile to WASM text format
   faber run hello.fab                         # Compile to TS and execute
-`)
+`);
 }
 
 // =============================================================================
@@ -135,75 +135,75 @@ Examples:
  * @returns Generated source code as string
  */
 async function compile(inputFile: string, target: CodegenTarget, outputFile?: string, silent = false): Promise<string> {
-  const source = await Bun.file(inputFile).text()
+    const source = await Bun.file(inputFile).text();
 
-  // ---------------------------------------------------------------------------
-  // Lexical Analysis
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    // Lexical Analysis
+    // ---------------------------------------------------------------------------
 
-  const { tokens, errors: tokenErrors } = tokenize(source)
+    const { tokens, errors: tokenErrors } = tokenize(source);
 
-  if (tokenErrors.length > 0) {
-    console.error("Tokenizer errors:")
-    for (const err of tokenErrors) {
-      console.error(`  ${inputFile}:${err.position.line}:${err.position.column} - ${err.message}`)
+    if (tokenErrors.length > 0) {
+        console.error("Tokenizer errors:");
+        for (const err of tokenErrors) {
+            console.error(`  ${inputFile}:${err.position.line}:${err.position.column} - ${err.message}`);
+        }
+
+        process.exit(1);
     }
 
-    process.exit(1)
-  }
+    // ---------------------------------------------------------------------------
+    // Syntactic Analysis
+    // ---------------------------------------------------------------------------
 
-  // ---------------------------------------------------------------------------
-  // Syntactic Analysis
-  // ---------------------------------------------------------------------------
+    const { program, errors: parseErrors } = parse(tokens);
 
-  const { program, errors: parseErrors } = parse(tokens)
+    if (parseErrors.length > 0) {
+        console.error("Parser errors:");
+        for (const err of parseErrors) {
+            console.error(`  ${inputFile}:${err.position.line}:${err.position.column} - ${err.message}`);
+        }
 
-  if (parseErrors.length > 0) {
-    console.error("Parser errors:")
-    for (const err of parseErrors) {
-      console.error(`  ${inputFile}:${err.position.line}:${err.position.column} - ${err.message}`)
+        process.exit(1);
     }
 
-    process.exit(1)
-  }
-
-  // EDGE: Parser can return null program on catastrophic failure
-  if (!program) {
-    console.error("Failed to parse program")
-    process.exit(1)
-  }
-
-  // ---------------------------------------------------------------------------
-  // Semantic Analysis
-  // ---------------------------------------------------------------------------
-
-  const { errors: semanticErrors } = analyze(program)
-
-  if (semanticErrors.length > 0) {
-    console.error("Semantic errors:")
-    for (const err of semanticErrors) {
-      console.error(`  ${inputFile}:${err.position.line}:${err.position.column} - ${err.message}`)
+    // EDGE: Parser can return null program on catastrophic failure
+    if (!program) {
+        console.error("Failed to parse program");
+        process.exit(1);
     }
 
-    process.exit(1)
-  }
+    // ---------------------------------------------------------------------------
+    // Semantic Analysis
+    // ---------------------------------------------------------------------------
 
-  // ---------------------------------------------------------------------------
-  // Code Generation
-  // ---------------------------------------------------------------------------
+    const { errors: semanticErrors } = analyze(program);
 
-  const output = generate(program, { target })
+    if (semanticErrors.length > 0) {
+        console.error("Semantic errors:");
+        for (const err of semanticErrors) {
+            console.error(`  ${inputFile}:${err.position.line}:${err.position.column} - ${err.message}`);
+        }
 
-  if (outputFile) {
-    await Bun.write(outputFile, output)
-    console.log(`Compiled: ${inputFile} -> ${outputFile} (${target})`)
-  }
-  else if (!silent) {
+        process.exit(1);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Code Generation
+    // ---------------------------------------------------------------------------
+
+    const output = generate(program, { target });
+
+    if (outputFile) {
+        await Bun.write(outputFile, output);
+        console.log(`Compiled: ${inputFile} -> ${outputFile} (${target})`);
+    }
+    else if (!silent) {
     // WHY: Write to stdout for Unix pipeline compatibility
-    console.log(output)
-  }
+        console.log(output);
+    }
 
-  return output
+    return output;
 }
 
 /**
@@ -220,31 +220,31 @@ async function compile(inputFile: string, target: CodegenTarget, outputFile?: st
  * @param inputFile - Path to .fab source file
  */
 async function run(inputFile: string): Promise<void> {
-  const ts = await compile(inputFile, "ts", undefined, true)
+    const ts = await compile(inputFile, "ts", undefined, true);
 
-  // WHY: Bun can execute TypeScript directly - write to temp file and run
-  const tempFile = `/tmp/faber-${Date.now()}.ts`
+    // WHY: Bun can execute TypeScript directly - write to temp file and run
+    const tempFile = `/tmp/faber-${Date.now()}.ts`;
 
-  try {
-    await Bun.write(tempFile, ts)
-    const proc = Bun.spawn(["bun", tempFile], {
-      stdout: "inherit",
-      stderr: "inherit",
-    })
-    const exitCode = await proc.exited
+    try {
+        await Bun.write(tempFile, ts);
+        const proc = Bun.spawn(["bun", tempFile], {
+            stdout: "inherit",
+            stderr: "inherit",
+        });
+        const exitCode = await proc.exited;
 
-    if (exitCode !== 0) {
-      process.exit(exitCode)
+        if (exitCode !== 0) {
+            process.exit(exitCode);
+        }
     }
-  }
-  catch (err) {
-    console.error("Runtime error:", err)
-    process.exit(1)
-  }
-  finally {
+    catch (err) {
+        console.error("Runtime error:", err);
+        process.exit(1);
+    }
+    finally {
     // Clean up temp file
-    await Bun.file(tempFile).exists() && await Bun.write(tempFile, "")
-  }
+        await Bun.file(tempFile).exists() && await Bun.write(tempFile, "");
+    }
 }
 
 /**
@@ -259,83 +259,83 @@ async function run(inputFile: string): Promise<void> {
  * @param inputFile - Path to .fab source file
  */
 async function check(inputFile: string): Promise<void> {
-  const source = await Bun.file(inputFile).text()
+    const source = await Bun.file(inputFile).text();
 
-  const { tokens, errors: tokenErrors } = tokenize(source)
-  const { program, errors: parseErrors } = parse(tokens)
+    const { tokens, errors: tokenErrors } = tokenize(source);
+    const { program, errors: parseErrors } = parse(tokens);
 
-  let semanticErrors: { message: string; position: { line: number; column: number } }[] = []
+    let semanticErrors: { message: string; position: { line: number; column: number } }[] = [];
 
-  if (program) {
-    const result = analyze(program)
+    if (program) {
+        const result = analyze(program);
 
-    semanticErrors = result.errors
-  }
-
-  const allErrors = [...tokenErrors, ...parseErrors, ...semanticErrors]
-
-  if (allErrors.length === 0) {
-    console.log(`${inputFile}: No errors`)
-  }
-  else {
-    console.log(`${inputFile}: ${allErrors.length} error(s)`)
-    for (const err of allErrors) {
-      console.log(`  ${err.position.line}:${err.position.column} - ${err.message}`)
+        semanticErrors = result.errors;
     }
 
-    process.exit(1)
-  }
+    const allErrors = [...tokenErrors, ...parseErrors, ...semanticErrors];
+
+    if (allErrors.length === 0) {
+        console.log(`${inputFile}: No errors`);
+    }
+    else {
+        console.log(`${inputFile}: ${allErrors.length} error(s)`);
+        for (const err of allErrors) {
+            console.log(`  ${err.position.line}:${err.position.column} - ${err.message}`);
+        }
+
+        process.exit(1);
+    }
 }
 
 // =============================================================================
 // COMMAND DISPATCH
 // =============================================================================
 
-const command = args[0]
+const command = args[0];
 
 // ---------------------------------------------------------------------------
 // Help and Version
 // ---------------------------------------------------------------------------
 
 if (!command || command === "-h" || command === "--help") {
-  printUsage()
-  process.exit(0)
+    printUsage();
+    process.exit(0);
 }
 
 if (command === "-v" || command === "--version") {
-  console.log(`Faber Romanus v${VERSION}`)
-  process.exit(0)
+    console.log(`Faber Romanus v${VERSION}`);
+    process.exit(0);
 }
 
 // ---------------------------------------------------------------------------
 // Option Parsing
 // ---------------------------------------------------------------------------
 
-const inputFile = args[1]
-let outputFile: string | undefined
-let target: CodegenTarget = DEFAULT_TARGET
+const inputFile = args[1];
+let outputFile: string | undefined;
+let target: CodegenTarget = DEFAULT_TARGET;
 
 // WHY: Simple linear scan is sufficient for small option set
 for (let i = 2; i < args.length; i++) {
-  if (args[i] === "-o" || args[i] === "--output") {
-    outputFile = args[++i]
-  }
-  else if (args[i] === "-t" || args[i] === "--target") {
-    const t = args[++i]
-
-    if (t !== "ts" && t !== "zig" && t !== "wasm") {
-      console.error(`Error: Unknown target '${t}'. Valid targets: ${VALID_TARGETS.join(", ")}`)
-      process.exit(1)
+    if (args[i] === "-o" || args[i] === "--output") {
+        outputFile = args[++i];
     }
+    else if (args[i] === "-t" || args[i] === "--target") {
+        const t = args[++i];
 
-    target = t
-  }
+        if (t !== "ts" && t !== "zig" && t !== "wasm") {
+            console.error(`Error: Unknown target '${t}'. Valid targets: ${VALID_TARGETS.join(", ")}`);
+            process.exit(1);
+        }
+
+        target = t;
+    }
 }
 
 if (!inputFile) {
-  console.error("Error: No input file specified")
-  printUsage()
-  process.exit(1)
+    console.error("Error: No input file specified");
+    printUsage();
+    process.exit(1);
 }
 
 // ---------------------------------------------------------------------------
@@ -343,22 +343,22 @@ if (!inputFile) {
 // ---------------------------------------------------------------------------
 
 switch (command) {
-  case "compile":
-    await compile(inputFile, target, outputFile)
-    break
-  case "run":
-    if (target !== "ts") {
-      console.error("Error: 'run' command only works with TS target")
-      process.exit(1)
-    }
+    case "compile":
+        await compile(inputFile, target, outputFile);
+        break;
+    case "run":
+        if (target !== "ts") {
+            console.error("Error: 'run' command only works with TS target");
+            process.exit(1);
+        }
 
-    await run(inputFile)
-    break
-  case "check":
-    await check(inputFile)
-    break
-  default:
-    console.error(`Unknown command: ${command}`)
-    printUsage()
-    process.exit(1)
+        await run(inputFile);
+        break;
+    case "check":
+        await check(inputFile);
+        break;
+    default:
+        console.error(`Unknown command: ${command}`);
+        printUsage();
+        process.exit(1);
 }

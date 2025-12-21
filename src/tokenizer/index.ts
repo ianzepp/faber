@@ -66,8 +66,8 @@
  * @module tokenizer
  */
 
-import type { Token, TokenType, Position, TokenizerResult, TokenizerError } from "./types"
-import { isKeyword, getKeyword } from "../lexicon"
+import type { Token, TokenType, Position, TokenizerResult, TokenizerError } from "./types";
+import { isKeyword, getKeyword } from "../lexicon";
 
 // =============================================================================
 // MAIN TOKENIZER FUNCTION
@@ -83,38 +83,38 @@ import { isKeyword, getKeyword } from "../lexicon"
  * @returns TokenizerResult with tokens and any errors encountered
  */
 export function tokenize(source: string): TokenizerResult {
-  const tokens: Token[] = []
-  const errors: TokenizerError[] = []
+    const tokens: Token[] = [];
+    const errors: TokenizerError[] = [];
 
-  // ---------------------------------------------------------------------------
-  // Scanner State
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    // Scanner State
+    // ---------------------------------------------------------------------------
 
-  let current = 0     // Current position in source string
-  let line = 1        // Current line (1-based)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let column = 1      // Current column (1-based) - tracked for potential future use
-  let lineStart = 0   // Offset of current line start (for column calculation)
+    let current = 0;     // Current position in source string
+    let line = 1;        // Current line (1-based)
 
-  // ---------------------------------------------------------------------------
-  // Position Tracking
-  // ---------------------------------------------------------------------------
+    let column = 1;      // Current column (1-based) - tracked for potential future use
+    let lineStart = 0;   // Offset of current line start (for column calculation)
 
-  /**
+    // ---------------------------------------------------------------------------
+    // Position Tracking
+    // ---------------------------------------------------------------------------
+
+    /**
    * Capture current source position.
    *
    * WHY: Position snapshots taken at token start, not end, to point error
    *      messages at the beginning of problematic tokens.
    */
-  function position(): Position {
-    return { line, column: current - lineStart + 1, offset: current }
-  }
+    function position(): Position {
+        return { line, column: current - lineStart + 1, offset: current };
+    }
 
-  // ---------------------------------------------------------------------------
-  // Character Navigation
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    // Character Navigation
+    // ---------------------------------------------------------------------------
 
-  /**
+    /**
    * Look ahead at upcoming characters without advancing.
    *
    * WHY: Enables multi-character operator detection (==, !=, etc.) and
@@ -123,68 +123,68 @@ export function tokenize(source: string): TokenizerResult {
    * @param offset - How many characters ahead to look (default 0 = current)
    * @returns Character at position, or empty string if past end
    */
-  function peek(offset = 0): string {
-    return source[current + offset] ?? ""
-  }
+    function peek(offset = 0): string {
+        return source[current + offset] ?? "";
+    }
 
-  /**
+    /**
    * Consume current character and advance position.
    *
    * WHY: Centralizes position tracking to maintain invariant that
    *      line/column/offset always advance together.
    */
-  function advance(): string {
-    const char = source[current]
+    function advance(): string {
+        const char = source[current];
 
-    current++
-    column++
+        current++;
+        column++;
 
-    return char
-  }
+        return char;
+    }
 
-  /**
+    /**
    * Check if we've consumed all input.
    */
-  function isAtEnd(): boolean {
-    return current >= source.length
-  }
+    function isAtEnd(): boolean {
+        return current >= source.length;
+    }
 
-  // ---------------------------------------------------------------------------
-  // Character Class Predicates
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    // Character Class Predicates
+    // ---------------------------------------------------------------------------
 
-  /**
+    /**
    * Check if character is a decimal digit.
    *
    * WHY: Using ASCII range comparison is faster than regex and avoids
    *      allocating regex objects in the hot tokenization loop.
    */
-  function isDigit(char: string): boolean {
-    return char >= "0" && char <= "9"
-  }
+    function isDigit(char: string): boolean {
+        return char >= "0" && char <= "9";
+    }
 
-  /**
+    /**
    * Check if character can start an identifier.
    *
    * WHY: Allows underscore prefix (common in modern languages) while
    *      excluding digits (which cannot start identifiers).
    */
-  function isAlpha(char: string): boolean {
-    return (char >= "a" && char <= "z") || (char >= "A" && char <= "Z") || char === "_"
-  }
+    function isAlpha(char: string): boolean {
+        return (char >= "a" && char <= "z") || (char >= "A" && char <= "Z") || char === "_";
+    }
 
-  /**
+    /**
    * Check if character can continue an identifier.
    */
-  function isAlphaNumeric(char: string): boolean {
-    return isAlpha(char) || isDigit(char)
-  }
+    function isAlphaNumeric(char: string): boolean {
+        return isAlpha(char) || isDigit(char);
+    }
 
-  // ---------------------------------------------------------------------------
-  // Token and Error Collection
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    // Token and Error Collection
+    // ---------------------------------------------------------------------------
 
-  /**
+    /**
    * Add a token to the output stream.
    *
    * @param type - Token type discriminator
@@ -192,11 +192,11 @@ export function tokenize(source: string): TokenizerResult {
    * @param pos - Source position where token started
    * @param keyword - For KEYWORD tokens, the specific Latin keyword
    */
-  function addToken(type: TokenType, value: string, pos: Position, keyword?: string): void {
-    tokens.push({ type, value, position: pos, keyword })
-  }
+    function addToken(type: TokenType, value: string, pos: Position, keyword?: string): void {
+        tokens.push({ type, value, position: pos, keyword });
+    }
 
-  /**
+    /**
    * Record a lexical error without stopping tokenization.
    *
    * WHY: Collecting errors rather than throwing enables:
@@ -204,15 +204,15 @@ export function tokenize(source: string): TokenizerResult {
    *      - Partial compilation when some sections are valid
    *      - Better batch error reporting
    */
-  function addError(message: string, pos: Position): void {
-    errors.push({ message, position: pos })
-  }
+    function addError(message: string, pos: Position): void {
+        errors.push({ message, position: pos });
+    }
 
-  // =============================================================================
-  // WHITESPACE AND COMMENT HANDLING
-  // =============================================================================
+    // =============================================================================
+    // WHITESPACE AND COMMENT HANDLING
+    // =============================================================================
 
-  /**
+    /**
    * Skip over whitespace and comments.
    *
    * WHY: Latin syntax (like C/JavaScript) treats whitespace as insignificant.
@@ -222,62 +222,61 @@ export function tokenize(source: string): TokenizerResult {
    *         The commented-out COMMENT token emission can be enabled for
    *         documentation generators or IDE tooling.
    */
-  function skipWhitespace(): void {
-    while (!isAtEnd()) {
-      const char = peek()
+    function skipWhitespace(): void {
+        while (!isAtEnd()) {
+            const char = peek();
 
-      if (char === " " || char === "\t" || char === "\r") {
-        advance()
-      }
-      else if (char === "\n") {
-        advance()
-        line++
-        lineStart = current
-      }
-      else if (char === "/" && peek(1) === "/") {
-        // WHY: Single-line comments extend to end of line (C++ style)
-        /* eslint-disable @typescript-eslint/no-unused-vars */
-        const pos = position()
-        let comment = ""
+            if (char === " " || char === "\t" || char === "\r") {
+                advance();
+            }
+            else if (char === "\n") {
+                advance();
+                line++;
+                lineStart = current;
+            }
+            else if (char === "/" && peek(1) === "/") {
+                // WHY: Single-line comments extend to end of line (C++ style)
 
-        advance() // /
-        advance() // /
-        while (!isAtEnd() && peek() !== "\n") {
-          comment += advance()
+                const pos = position();
+                let comment = "";
+
+                advance(); // /
+                advance(); // /
+                while (!isAtEnd() && peek() !== "\n") {
+                    comment += advance();
+                }
+                // FUTURE: Emit comment tokens for documentation tooling
+                // addToken("COMMENT", comment.trim(), pos)
+            }
+            else if (char === "/" && peek(1) === "*") {
+                // WHY: Multi-line comments can span multiple lines (C style)
+                advance(); // /
+                advance(); // *
+                while (!isAtEnd() && !(peek() === "*" && peek(1) === "/")) {
+                    if (peek() === "\n") {
+                        line++;
+                        lineStart = current + 1;
+                    }
+
+                    advance();
+                }
+
+                if (!isAtEnd()) {
+                    advance(); // *
+                    advance(); // /
+                }
+            }
+            else {
+                break;
+            }
         }
-        // FUTURE: Emit comment tokens for documentation tooling
-        // addToken("COMMENT", comment.trim(), pos)
-        /* eslint-enable @typescript-eslint/no-unused-vars */
-      }
-      else if (char === "/" && peek(1) === "*") {
-        // WHY: Multi-line comments can span multiple lines (C style)
-        advance() // /
-        advance() // *
-        while (!isAtEnd() && !(peek() === "*" && peek(1) === "/")) {
-          if (peek() === "\n") {
-            line++
-            lineStart = current + 1
-          }
-
-          advance()
-        }
-
-        if (!isAtEnd()) {
-          advance() // *
-          advance() // /
-        }
-      }
-      else {
-        break
-      }
     }
-  }
 
-  // =============================================================================
-  // LITERAL SCANNING
-  // =============================================================================
+    // =============================================================================
+    // LITERAL SCANNING
+    // =============================================================================
 
-  /**
+    /**
    * Scan a numeric literal.
    *
    * PATTERN: digit+ ('.' digit+)?
@@ -288,27 +287,27 @@ export function tokenize(source: string): TokenizerResult {
    * WHY: Lookahead required for decimal point to distinguish from
    *      member access: 123.toString() vs 123.45
    */
-  function scanNumber(): void {
-    const pos = position()
-    let value = ""
+    function scanNumber(): void {
+        const pos = position();
+        let value = "";
 
-    // Integer part
-    while (isDigit(peek())) {
-      value += advance()
+        // Integer part
+        while (isDigit(peek())) {
+            value += advance();
+        }
+
+        // Decimal part (only if followed by digit to avoid member access)
+        if (peek() === "." && isDigit(peek(1))) {
+            value += advance(); // .
+            while (isDigit(peek())) {
+                value += advance();
+            }
+        }
+
+        addToken("NUMBER", value, pos);
     }
 
-    // Decimal part (only if followed by digit to avoid member access)
-    if (peek() === "." && isDigit(peek(1))) {
-      value += advance() // .
-      while (isDigit(peek())) {
-        value += advance()
-      }
-    }
-
-    addToken("NUMBER", value, pos)
-  }
-
-  /**
+    /**
    * Scan a string literal (single or double quoted).
    *
    * PATTERN: '"' (escape | [^"\n])* '"' | "'" (escape | [^'\n])* "'"
@@ -321,49 +320,49 @@ export function tokenize(source: string): TokenizerResult {
    *
    * @param quote - The quote character that opened this string (' or ")
    */
-  function scanString(quote: string): void {
-    const pos = position()
-    let value = ""
+    function scanString(quote: string): void {
+        const pos = position();
+        let value = "";
 
-    advance() // opening quote
+        advance(); // opening quote
 
-    while (!isAtEnd() && peek() !== quote) {
-      if (peek() === "\n") {
-        addError("Unterminated string", pos)
+        while (!isAtEnd() && peek() !== quote) {
+            if (peek() === "\n") {
+                addError("Unterminated string", pos);
 
-        return
-      }
+                return;
+            }
 
-      if (peek() === "\\") {
-        advance()
-        const escaped = advance()
+            if (peek() === "\\") {
+                advance();
+                const escaped = advance();
 
-        // WHY: Map escape sequences to their runtime equivalents
-        switch (escaped) {
-          case "n": value += "\n"; break
-          case "t": value += "\t"; break
-          case "r": value += "\r"; break
-          case "\\": value += "\\"; break
-          case quote: value += quote; break
-          default: value += escaped  // Unknown escapes pass through
+                // WHY: Map escape sequences to their runtime equivalents
+                switch (escaped) {
+                    case "n": value += "\n"; break;
+                    case "t": value += "\t"; break;
+                    case "r": value += "\r"; break;
+                    case "\\": value += "\\"; break;
+                    case quote: value += quote; break;
+                    default: value += escaped;  // Unknown escapes pass through
+                }
+            }
+            else {
+                value += advance();
+            }
         }
-      }
-      else {
-        value += advance()
-      }
+
+        if (isAtEnd()) {
+            addError("Unterminated string", pos);
+
+            return;
+        }
+
+        advance(); // closing quote
+        addToken("STRING", value, pos);
     }
 
-    if (isAtEnd()) {
-      addError("Unterminated string", pos)
-
-      return
-    }
-
-    advance() // closing quote
-    addToken("STRING", value, pos)
-  }
-
-  /**
+    /**
    * Scan a template string literal.
    *
    * PATTERN: '`' (escape | [^`] | '${' expr '}')* '`'
@@ -379,62 +378,62 @@ export function tokenize(source: string): TokenizerResult {
    * WHY: Track brace depth to handle nested braces in interpolations:
    *      `result: ${obj.map(x => { return x * 2 })}`
    */
-  function scanTemplateString(): void {
-    const pos = position()
-    let value = ""
+    function scanTemplateString(): void {
+        const pos = position();
+        let value = "";
 
-    advance() // opening backtick
+        advance(); // opening backtick
 
-    while (!isAtEnd() && peek() !== "`") {
-      if (peek() === "\n") {
-        // WHY: Template strings can span multiple lines (unlike STRING)
-        line++
-        lineStart = current + 1
-        value += advance()
-      }
-      else if (peek() === "\\") {
-        // WHY: Preserve escapes in template for later processing
-        advance()
-        value += advance()
-      }
-      else if (peek() === "$" && peek(1) === "{") {
-        // WHY: Capture interpolation syntax including nested braces
-        value += advance() // $
-        value += advance() // {
-        let braceDepth = 1
+        while (!isAtEnd() && peek() !== "`") {
+            if (peek() === "\n") {
+                // WHY: Template strings can span multiple lines (unlike STRING)
+                line++;
+                lineStart = current + 1;
+                value += advance();
+            }
+            else if (peek() === "\\") {
+                // WHY: Preserve escapes in template for later processing
+                advance();
+                value += advance();
+            }
+            else if (peek() === "$" && peek(1) === "{") {
+                // WHY: Capture interpolation syntax including nested braces
+                value += advance(); // $
+                value += advance(); // {
+                let braceDepth = 1;
 
-        while (!isAtEnd() && braceDepth > 0) {
-          if (peek() === "{") {
-            braceDepth++
-          }
+                while (!isAtEnd() && braceDepth > 0) {
+                    if (peek() === "{") {
+                        braceDepth++;
+                    }
 
-          if (peek() === "}") {
-            braceDepth--
-          }
+                    if (peek() === "}") {
+                        braceDepth--;
+                    }
 
-          value += advance()
+                    value += advance();
+                }
+            }
+            else {
+                value += advance();
+            }
         }
-      }
-      else {
-        value += advance()
-      }
+
+        if (isAtEnd()) {
+            addError("Unterminated template string", pos);
+
+            return;
+        }
+
+        advance(); // closing backtick
+        addToken("TEMPLATE_STRING", value, pos);
     }
 
-    if (isAtEnd()) {
-      addError("Unterminated template string", pos)
+    // =============================================================================
+    // IDENTIFIER AND KEYWORD SCANNING
+    // =============================================================================
 
-      return
-    }
-
-    advance() // closing backtick
-    addToken("TEMPLATE_STRING", value, pos)
-  }
-
-  // =============================================================================
-  // IDENTIFIER AND KEYWORD SCANNING
-  // =============================================================================
-
-  /**
+    /**
    * Scan an identifier or keyword.
    *
    * PATTERN: alpha alphanumeric*
@@ -446,30 +445,30 @@ export function tokenize(source: string): TokenizerResult {
    * WHY: Keywords are case-sensitive in Latin (unlike some languages).
    *      'si' is a keyword but 'Si' is an identifier.
    */
-  function scanIdentifier(): void {
-    const pos = position()
-    let value = ""
+    function scanIdentifier(): void {
+        const pos = position();
+        let value = "";
 
-    while (isAlphaNumeric(peek())) {
-      value += advance()
+        while (isAlphaNumeric(peek())) {
+            value += advance();
+        }
+
+        // WHY: Check lexicon for keyword match
+        if (isKeyword(value)) {
+            const kw = getKeyword(value)!;
+
+            addToken("KEYWORD", value, pos, kw.latin);
+        }
+        else {
+            addToken("IDENTIFIER", value, pos);
+        }
     }
 
-    // WHY: Check lexicon for keyword match
-    if (isKeyword(value)) {
-      const kw = getKeyword(value)!
+    // =============================================================================
+    // MAIN SCANNER DISPATCH
+    // =============================================================================
 
-      addToken("KEYWORD", value, pos, kw.latin)
-    }
-    else {
-      addToken("IDENTIFIER", value, pos)
-    }
-  }
-
-  // =============================================================================
-  // MAIN SCANNER DISPATCH
-  // =============================================================================
-
-  /**
+    /**
    * Scan a single token from current position.
    *
    * DESIGN: Uses longest-match strategy for operators. For example, '=='
@@ -478,180 +477,180 @@ export function tokenize(source: string): TokenizerResult {
    * ERROR RECOVERY: On unexpected character, emits error and advances to
    *                 next character to avoid infinite loop.
    */
-  function scanToken(): void {
-    skipWhitespace()
-    if (isAtEnd()) {
-      return
+    function scanToken(): void {
+        skipWhitespace();
+        if (isAtEnd()) {
+            return;
+        }
+
+        const pos = position();
+        const char = peek();
+
+        // WHY: Numbers can't start with letter, so check digits first
+        if (isDigit(char)) {
+            scanNumber();
+
+            return;
+        }
+
+        // WHY: Identifiers and keywords both start with alpha
+        if (isAlpha(char)) {
+            scanIdentifier();
+
+            return;
+        }
+
+        // WHY: String literals can use ' or "
+        if (char === '"' || char === "'") {
+            scanString(char);
+
+            return;
+        }
+
+        // WHY: Template strings use backticks
+        if (char === "`") {
+            scanTemplateString();
+
+            return;
+        }
+
+        // ---------------------------------------------------------------------------
+        // Operators and Delimiters
+        // ---------------------------------------------------------------------------
+
+        // WHY: Advance first, then lookahead for multi-character operators
+        advance();
+        switch (char) {
+            // Single-character delimiters
+            case "(": addToken("LPAREN", char, pos); break;
+            case ")": addToken("RPAREN", char, pos); break;
+            case "{": addToken("LBRACE", char, pos); break;
+            case "}": addToken("RBRACE", char, pos); break;
+            case "[": addToken("LBRACKET", char, pos); break;
+            case "]": addToken("RBRACKET", char, pos); break;
+            case ",": addToken("COMMA", char, pos); break;
+            case ";": addToken("SEMICOLON", char, pos); break;
+            case ".": addToken("DOT", char, pos); break;
+            case ":": addToken("COLON", char, pos); break;
+            case "?": addToken("QUESTION", char, pos); break;
+
+                // WHY: | can be || (logical OR) or | (union type operator)
+            case "|":
+                if (peek() === "|") {
+                    advance();
+                    addToken("OR", "||", pos);
+                }
+                else {
+                    addToken("PIPE", char, pos);
+                }
+
+                break;
+
+                // WHY: & must be && (logical AND), single & is reserved/invalid
+            case "&":
+                if (peek() === "&") {
+                    advance();
+                    addToken("AND", "&&", pos);
+                }
+                else {
+                    addError(`Unexpected character '${char}'`, pos);
+                }
+
+                break;
+
+                // Single-character arithmetic operators
+            case "+": addToken("PLUS", char, pos); break;
+
+                // WHY: - can be -> (type arrow) or - (minus/subtract)
+            case "-":
+                if (peek() === ">") {
+                    advance();
+                    addToken("THIN_ARROW", "->", pos);
+                }
+                else {
+                    addToken("MINUS", char, pos);
+                }
+
+                break;
+
+            case "*": addToken("STAR", char, pos); break;
+
+                // WHY: / handled separately - already consumed by comment scanner
+            case "/": addToken("SLASH", char, pos); break;
+
+            case "%": addToken("PERCENT", char, pos); break;
+
+                // WHY: = can be == (equality), => (fat arrow), or = (assignment)
+            case "=":
+                if (peek() === "=") {
+                    advance();
+                    addToken("EQUAL_EQUAL", "==", pos);
+                }
+                else if (peek() === ">") {
+                    advance();
+                    addToken("ARROW", "=>", pos);
+                }
+                else {
+                    addToken("EQUAL", char, pos);
+                }
+
+                break;
+
+                // WHY: ! can be != (not equal) or ! (logical not)
+            case "!":
+                if (peek() === "=") {
+                    advance();
+                    addToken("BANG_EQUAL", "!=", pos);
+                }
+                else {
+                    addToken("BANG", char, pos);
+                }
+
+                break;
+
+                // WHY: < can be <= (less or equal) or < (less than)
+            case "<":
+                if (peek() === "=") {
+                    advance();
+                    addToken("LESS_EQUAL", "<=", pos);
+                }
+                else {
+                    addToken("LESS", char, pos);
+                }
+
+                break;
+
+                // WHY: > can be >= (greater or equal) or > (greater than)
+            case ">":
+                if (peek() === "=") {
+                    advance();
+                    addToken("GREATER_EQUAL", ">=", pos);
+                }
+                else {
+                    addToken("GREATER", char, pos);
+                }
+
+                break;
+
+                // EDGE: Unrecognized character - emit error but continue
+            default:
+                addError(`Unexpected character '${char}'`, pos);
+        }
     }
 
-    const pos = position()
-    const char = peek()
+    // =============================================================================
+    // MAIN TOKENIZATION LOOP
+    // =============================================================================
 
-    // WHY: Numbers can't start with letter, so check digits first
-    if (isDigit(char)) {
-      scanNumber()
-
-      return
+    // WHY: Continue scanning until end of input, collecting all errors
+    while (!isAtEnd()) {
+        scanToken();
     }
 
-    // WHY: Identifiers and keywords both start with alpha
-    if (isAlpha(char)) {
-      scanIdentifier()
+    // WHY: EOF sentinel simplifies parser lookahead (no null checks needed)
+    addToken("EOF", "", position());
 
-      return
-    }
-
-    // WHY: String literals can use ' or "
-    if (char === '"' || char === "'") {
-      scanString(char)
-
-      return
-    }
-
-    // WHY: Template strings use backticks
-    if (char === "`") {
-      scanTemplateString()
-
-      return
-    }
-
-    // ---------------------------------------------------------------------------
-    // Operators and Delimiters
-    // ---------------------------------------------------------------------------
-
-    // WHY: Advance first, then lookahead for multi-character operators
-    advance()
-    switch (char) {
-      // Single-character delimiters
-      case "(": addToken("LPAREN", char, pos); break
-      case ")": addToken("RPAREN", char, pos); break
-      case "{": addToken("LBRACE", char, pos); break
-      case "}": addToken("RBRACE", char, pos); break
-      case "[": addToken("LBRACKET", char, pos); break
-      case "]": addToken("RBRACKET", char, pos); break
-      case ",": addToken("COMMA", char, pos); break
-      case ";": addToken("SEMICOLON", char, pos); break
-      case ".": addToken("DOT", char, pos); break
-      case ":": addToken("COLON", char, pos); break
-      case "?": addToken("QUESTION", char, pos); break
-
-      // WHY: | can be || (logical OR) or | (union type operator)
-      case "|":
-        if (peek() === "|") {
-          advance()
-          addToken("OR", "||", pos)
-        }
-        else {
-          addToken("PIPE", char, pos)
-        }
-
-        break
-
-      // WHY: & must be && (logical AND), single & is reserved/invalid
-      case "&":
-        if (peek() === "&") {
-          advance()
-          addToken("AND", "&&", pos)
-        }
-        else {
-          addError(`Unexpected character '${char}'`, pos)
-        }
-
-        break
-
-      // Single-character arithmetic operators
-      case "+": addToken("PLUS", char, pos); break
-
-      // WHY: - can be -> (type arrow) or - (minus/subtract)
-      case "-":
-        if (peek() === ">") {
-          advance()
-          addToken("THIN_ARROW", "->", pos)
-        }
-        else {
-          addToken("MINUS", char, pos)
-        }
-
-        break
-
-      case "*": addToken("STAR", char, pos); break
-
-      // WHY: / handled separately - already consumed by comment scanner
-      case "/": addToken("SLASH", char, pos); break
-
-      case "%": addToken("PERCENT", char, pos); break
-
-      // WHY: = can be == (equality), => (fat arrow), or = (assignment)
-      case "=":
-        if (peek() === "=") {
-          advance()
-          addToken("EQUAL_EQUAL", "==", pos)
-        }
-        else if (peek() === ">") {
-          advance()
-          addToken("ARROW", "=>", pos)
-        }
-        else {
-          addToken("EQUAL", char, pos)
-        }
-
-        break
-
-      // WHY: ! can be != (not equal) or ! (logical not)
-      case "!":
-        if (peek() === "=") {
-          advance()
-          addToken("BANG_EQUAL", "!=", pos)
-        }
-        else {
-          addToken("BANG", char, pos)
-        }
-
-        break
-
-      // WHY: < can be <= (less or equal) or < (less than)
-      case "<":
-        if (peek() === "=") {
-          advance()
-          addToken("LESS_EQUAL", "<=", pos)
-        }
-        else {
-          addToken("LESS", char, pos)
-        }
-
-        break
-
-      // WHY: > can be >= (greater or equal) or > (greater than)
-      case ">":
-        if (peek() === "=") {
-          advance()
-          addToken("GREATER_EQUAL", ">=", pos)
-        }
-        else {
-          addToken("GREATER", char, pos)
-        }
-
-        break
-
-      // EDGE: Unrecognized character - emit error but continue
-      default:
-        addError(`Unexpected character '${char}'`, pos)
-    }
-  }
-
-  // =============================================================================
-  // MAIN TOKENIZATION LOOP
-  // =============================================================================
-
-  // WHY: Continue scanning until end of input, collecting all errors
-  while (!isAtEnd()) {
-    scanToken()
-  }
-
-  // WHY: EOF sentinel simplifies parser lookahead (no null checks needed)
-  addToken("EOF", "", position())
-
-  return { tokens, errors }
+    return { tokens, errors };
 }
 
-export * from "./types"
+export * from "./types";

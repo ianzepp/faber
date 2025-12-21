@@ -37,9 +37,9 @@
  * @module parser/ast
  */
 
-import type { Position } from "../tokenizer/types"
-import type { Case, Number as GramNumber } from "../lexicon/types"
-import type { SemanticType } from "../semantic/types"
+import type { Position } from "../tokenizer/types";
+import type { Case, Number as GramNumber } from "../lexicon/types";
+import type { SemanticType } from "../semantic/types";
 
 // =============================================================================
 // BASE TYPES
@@ -54,8 +54,8 @@ import type { SemanticType } from "../semantic/types"
  * code generators to make type-aware decisions.
  */
 export interface BaseNode {
-  position: Position
-  resolvedType?: SemanticType
+    position: Position
+    resolvedType?: SemanticType
 }
 
 /**
@@ -64,8 +64,8 @@ export interface BaseNode {
  * INVARIANT: Body is always an array, never null (empty source = empty array).
  */
 export interface Program extends BaseNode {
-  type: "Program"
-  body: Statement[]
+    type: "Program"
+    body: Statement[]
 }
 
 // =============================================================================
@@ -90,7 +90,7 @@ export type Statement =
   | ReturnStatement
   | BlockStatement
   | ThrowStatement
-  | TryStatement
+  | TryStatement;
 
 // ---------------------------------------------------------------------------
 // Import/Export Declarations
@@ -111,10 +111,10 @@ export type Statement =
  *   ex norma importa *             -> source="norma", wildcard=true
  */
 export interface ImportDeclaration extends BaseNode {
-  type: "ImportDeclaration"
-  source: string
-  specifiers: Identifier[]
-  wildcard: boolean
+    type: "ImportDeclaration"
+    source: string
+    specifiers: Identifier[]
+    wildcard: boolean
 }
 
 // ---------------------------------------------------------------------------
@@ -137,11 +137,11 @@ export interface ImportDeclaration extends BaseNode {
  *   fixum SALVE = "ave"
  */
 export interface VariableDeclaration extends BaseNode {
-  type: "VariableDeclaration"
-  kind: "esto" | "fixum"
-  name: Identifier
-  typeAnnotation?: TypeAnnotation
-  init?: Expression
+    type: "VariableDeclaration"
+    kind: "esto" | "fixum"
+    name: Identifier
+    typeAnnotation?: TypeAnnotation
+    init?: Expression
 }
 
 /**
@@ -159,12 +159,12 @@ export interface VariableDeclaration extends BaseNode {
  *   futura functio exspecta() { ... }
  */
 export interface FunctionDeclaration extends BaseNode {
-  type: "FunctionDeclaration"
-  name: Identifier
-  params: Parameter[]
-  returnType?: TypeAnnotation
-  body: BlockStatement
-  async: boolean
+    type: "FunctionDeclaration"
+    name: Identifier
+    params: Parameter[]
+    returnType?: TypeAnnotation
+    body: BlockStatement
+    async: boolean
 }
 
 /**
@@ -180,11 +180,11 @@ export interface FunctionDeclaration extends BaseNode {
  *      in target languages (e.g., 'ad' might indicate a callback parameter).
  */
 export interface Parameter extends BaseNode {
-  type: "Parameter"
-  name: Identifier
-  typeAnnotation?: TypeAnnotation
-  case?: Case
-  preposition?: string
+    type: "Parameter"
+    name: Identifier
+    typeAnnotation?: TypeAnnotation
+    case?: Case
+    preposition?: string
 }
 
 /**
@@ -203,9 +203,9 @@ export interface Parameter extends BaseNode {
  *   typus UserID = Numerus<32, Naturalis>
  */
 export interface TypeAliasDeclaration extends BaseNode {
-  type: "TypeAliasDeclaration"
-  name: Identifier
-  typeAnnotation: TypeAnnotation
+    type: "TypeAliasDeclaration"
+    name: Identifier
+    typeAnnotation: TypeAnnotation
 }
 
 // ---------------------------------------------------------------------------
@@ -221,8 +221,8 @@ export interface TypeAliasDeclaration extends BaseNode {
  * INVARIANT: expression is never null.
  */
 export interface ExpressionStatement extends BaseNode {
-  type: "ExpressionStatement"
-  expression: Expression
+    type: "ExpressionStatement"
+    expression: Expression
 }
 
 /**
@@ -244,11 +244,11 @@ export interface ExpressionStatement extends BaseNode {
  *   si x > 0 { ... } aliter si x < 0 { ... } aliter { ... }
  */
 export interface IfStatement extends BaseNode {
-  type: "IfStatement"
-  test: Expression
-  consequent: BlockStatement
-  alternate?: BlockStatement | IfStatement
-  catchClause?: CatchClause
+    type: "IfStatement"
+    test: Expression
+    consequent: BlockStatement
+    alternate?: BlockStatement | IfStatement
+    catchClause?: CatchClause
 }
 
 /**
@@ -260,10 +260,10 @@ export interface IfStatement extends BaseNode {
  * INVARIANT: catchClause allows error handling within loop iterations.
  */
 export interface WhileStatement extends BaseNode {
-  type: "WhileStatement"
-  test: Expression
-  body: BlockStatement
-  catchClause?: CatchClause
+    type: "WhileStatement"
+    test: Expression
+    body: BlockStatement
+    catchClause?: CatchClause
 }
 
 /**
@@ -279,12 +279,12 @@ export interface WhileStatement extends BaseNode {
  *      'ex' = iterate over values (from/out of collection)
  */
 export interface ForStatement extends BaseNode {
-  type: "ForStatement"
-  kind: "in" | "ex"
-  variable: Identifier
-  iterable: Expression
-  body: BlockStatement
-  catchClause?: CatchClause
+    type: "ForStatement"
+    kind: "in" | "ex"
+    variable: Identifier
+    iterable: Expression
+    body: BlockStatement
+    catchClause?: CatchClause
 }
 
 /**
@@ -296,8 +296,8 @@ export interface ForStatement extends BaseNode {
  * INVARIANT: argument is optional (void return).
  */
 export interface ReturnStatement extends BaseNode {
-  type: "ReturnStatement"
-  argument?: Expression
+    type: "ReturnStatement"
+    argument?: Expression
 }
 
 /**
@@ -309,8 +309,8 @@ export interface ReturnStatement extends BaseNode {
  * INVARIANT: body is always an array (empty block = empty array).
  */
 export interface BlockStatement extends BaseNode {
-  type: "BlockStatement"
-  body: Statement[]
+    type: "BlockStatement"
+    body: Statement[]
 }
 
 // ---------------------------------------------------------------------------
@@ -328,8 +328,8 @@ export interface BlockStatement extends BaseNode {
  * WHY: Latin 'iace' (to throw/hurl) for throwing exceptions.
  */
 export interface ThrowStatement extends BaseNode {
-  type: "ThrowStatement"
-  argument: Expression
+    type: "ThrowStatement"
+    argument: Expression
 }
 
 /**
@@ -346,10 +346,10 @@ export interface ThrowStatement extends BaseNode {
  *      demum = finally (at last)
  */
 export interface TryStatement extends BaseNode {
-  type: "TryStatement"
-  block: BlockStatement
-  handler?: CatchClause
-  finalizer?: BlockStatement
+    type: "TryStatement"
+    block: BlockStatement
+    handler?: CatchClause
+    finalizer?: BlockStatement
 }
 
 /**
@@ -363,9 +363,9 @@ export interface TryStatement extends BaseNode {
  * WHY: Reusable in both TryStatement and control flow (IfStatement, loops).
  */
 export interface CatchClause extends BaseNode {
-  type: "CatchClause"
-  param: Identifier
-  body: BlockStatement
+    type: "CatchClause"
+    param: Identifier
+    body: BlockStatement
 }
 
 // =============================================================================
@@ -389,7 +389,7 @@ export type Expression =
   | ConditionalExpression
   | AwaitExpression
   | NewExpression
-  | TemplateLiteral
+  | TemplateLiteral;
 
 // ---------------------------------------------------------------------------
 // Primary Expressions
@@ -408,13 +408,13 @@ export type Expression =
  *      for parsing (allows non-Latin identifiers like API names).
  */
 export interface Identifier extends BaseNode {
-  type: "Identifier"
-  name: string
-  morphology?: {
-    stem: string
-    case?: Case
-    number?: GramNumber
-  }
+    type: "Identifier"
+    name: string
+    morphology?: {
+        stem: string
+        case?: Case
+        number?: GramNumber
+    }
 }
 
 /**
@@ -433,9 +433,9 @@ export interface Identifier extends BaseNode {
  *   nihil   -> value=null, raw='nihil'
  */
 export interface Literal extends BaseNode {
-  type: "Literal"
-  value: string | number | boolean | null
-  raw: string
+    type: "Literal"
+    value: string | number | boolean | null
+    raw: string
 }
 
 /**
@@ -450,8 +450,8 @@ export interface Literal extends BaseNode {
  *      embedded expressions, but that requires template expression tokens.
  */
 export interface TemplateLiteral extends BaseNode {
-  type: "TemplateLiteral"
-  raw: string
+    type: "TemplateLiteral"
+    raw: string
 }
 
 // ---------------------------------------------------------------------------
@@ -471,10 +471,10 @@ export interface TemplateLiteral extends BaseNode {
  * DESIGN: Operator precedence is handled during parsing, not stored in AST.
  */
 export interface BinaryExpression extends BaseNode {
-  type: "BinaryExpression"
-  operator: string
-  left: Expression
-  right: Expression
+    type: "BinaryExpression"
+    operator: string
+    left: Expression
+    right: Expression
 }
 
 /**
@@ -490,10 +490,10 @@ export interface BinaryExpression extends BaseNode {
  * WHY: Latin 'non' keyword supported alongside '!' for negation.
  */
 export interface UnaryExpression extends BaseNode {
-  type: "UnaryExpression"
-  operator: string
-  argument: Expression
-  prefix: boolean
+    type: "UnaryExpression"
+    operator: string
+    argument: Expression
+    prefix: boolean
 }
 
 // ---------------------------------------------------------------------------
@@ -511,9 +511,9 @@ export interface UnaryExpression extends BaseNode {
  * INVARIANT: arguments is always an array (empty for zero-arg calls).
  */
 export interface CallExpression extends BaseNode {
-  type: "CallExpression"
-  callee: Expression
-  arguments: Expression[]
+    type: "CallExpression"
+    callee: Expression
+    arguments: Expression[]
 }
 
 /**
@@ -528,10 +528,10 @@ export interface CallExpression extends BaseNode {
  * WHY: computed flag enables different code generation strategies.
  */
 export interface MemberExpression extends BaseNode {
-  type: "MemberExpression"
-  object: Expression
-  property: Identifier
-  computed: boolean
+    type: "MemberExpression"
+    object: Expression
+    property: Identifier
+    computed: boolean
 }
 
 // ---------------------------------------------------------------------------
@@ -552,10 +552,10 @@ export interface MemberExpression extends BaseNode {
  *   (x, y) => { redde x + y }
  */
 export interface ArrowFunctionExpression extends BaseNode {
-  type: "ArrowFunctionExpression"
-  params: Parameter[]
-  body: Expression | BlockStatement
-  async: boolean
+    type: "ArrowFunctionExpression"
+    params: Parameter[]
+    body: Expression | BlockStatement
+    async: boolean
 }
 
 // ---------------------------------------------------------------------------
@@ -572,10 +572,10 @@ export interface ArrowFunctionExpression extends BaseNode {
  * INVARIANT: operator is '=' for now (compound assignments not yet supported).
  */
 export interface AssignmentExpression extends BaseNode {
-  type: "AssignmentExpression"
-  operator: string
-  left: Identifier | MemberExpression
-  right: Expression
+    type: "AssignmentExpression"
+    operator: string
+    left: Identifier | MemberExpression
+    right: Expression
 }
 
 /**
@@ -589,10 +589,10 @@ export interface AssignmentExpression extends BaseNode {
  * WHY: Currently not implemented in parser, but defined for future use.
  */
 export interface ConditionalExpression extends BaseNode {
-  type: "ConditionalExpression"
-  test: Expression
-  consequent: Expression
-  alternate: Expression
+    type: "ConditionalExpression"
+    test: Expression
+    consequent: Expression
+    alternate: Expression
 }
 
 // ---------------------------------------------------------------------------
@@ -610,8 +610,8 @@ export interface ConditionalExpression extends BaseNode {
  * WHY: Latin 'exspecta' (to wait for) for async/await.
  */
 export interface AwaitExpression extends BaseNode {
-  type: "AwaitExpression"
-  argument: Expression
+    type: "AwaitExpression"
+    argument: Expression
 }
 
 /**
@@ -626,9 +626,9 @@ export interface AwaitExpression extends BaseNode {
  * WHY: Latin 'novum' (new) for object construction.
  */
 export interface NewExpression extends BaseNode {
-  type: "NewExpression"
-  callee: Identifier
-  arguments: Expression[]
+    type: "NewExpression"
+    callee: Identifier
+    arguments: Expression[]
 }
 
 // =============================================================================
@@ -646,7 +646,7 @@ export interface NewExpression extends BaseNode {
  * WHY: Type parameters aren't always types - they can be size constraints
  *      or ownership/mutability modifiers.
  */
-export type TypeParameter = TypeAnnotation | Literal | ModifierParameter
+export type TypeParameter = TypeAnnotation | Literal | ModifierParameter;
 
 /**
  * Modifier parameter for type annotations.
@@ -667,8 +667,8 @@ export type TypeParameter = TypeAnnotation | Literal | ModifierParameter
  *   Textus<Alienus> -> borrowed string reference
  */
 export interface ModifierParameter extends BaseNode {
-  type: "ModifierParameter"
-  name: "Naturalis" | "Proprius" | "Alienus" | "Mutabilis"
+    type: "ModifierParameter"
+    name: "Naturalis" | "Proprius" | "Alienus" | "Mutabilis"
 }
 
 /**
@@ -692,9 +692,9 @@ export interface ModifierParameter extends BaseNode {
  *   Textus | Numerus -> name="union", union=[{name="Textus"}, {name="Numerus"}]
  */
 export interface TypeAnnotation extends BaseNode {
-  type: "TypeAnnotation"
-  name: string
-  typeParameters?: TypeParameter[]
-  nullable?: boolean
-  union?: TypeAnnotation[]
+    type: "TypeAnnotation"
+    name: string
+    typeParameters?: TypeParameter[]
+    nullable?: boolean
+    union?: TypeAnnotation[]
 }

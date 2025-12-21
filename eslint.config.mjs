@@ -50,7 +50,7 @@ export default tseslint.config(
             // INDENTATION AND WHITESPACE
             // =================================================================
 
-            '@stylistic/indent': ['error', 2],
+            '@stylistic/indent': ['error', 4],
             '@stylistic/no-tabs': 'error',
             '@stylistic/no-trailing-spaces': 'error',
             '@stylistic/eol-last': ['error', 'always'],
@@ -71,7 +71,7 @@ export default tseslint.config(
             // SEMICOLONS AND COMMAS
             // =================================================================
 
-            '@stylistic/semi': ['error', 'never'],
+            '@stylistic/semi': ['error', 'always'],
             '@stylistic/comma-dangle': ['error', 'always-multiline'],
 
             // =================================================================
@@ -90,12 +90,9 @@ export default tseslint.config(
                 disallowTypeAnnotations: false,
             }],
 
-            // Allow unused vars prefixed with _
-            '@typescript-eslint/no-unused-vars': ['error', {
-                argsIgnorePattern: '^_',
-                varsIgnorePattern: '^_',
-                caughtErrorsIgnorePattern: '^_',
-            }],
+            // WHY: Stubs for future implementation
+            '@typescript-eslint/no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-expressions': 'off',
 
             // WHY: Allow `const self = this` where context is needed
             '@typescript-eslint/no-this-alias': ['error', {

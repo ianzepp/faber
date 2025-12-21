@@ -27,8 +27,8 @@
  * @module semantic/scope
  */
 
-import type { SemanticType } from "./types"
-import type { Position } from "../tokenizer/types"
+import type { SemanticType } from "./types";
+import type { Position } from "../tokenizer/types";
 
 // =============================================================================
 // SYMBOL DEFINITIONS
@@ -40,20 +40,20 @@ import type { Position } from "../tokenizer/types"
  * WHY: Extended to support type aliases (typus declarations).
  */
 export interface Symbol {
-  name: string
-  type: SemanticType
-  kind: "variable" | "function" | "parameter" | "type"
-  mutable: boolean
-  position: Position
+    name: string
+    type: SemanticType
+    kind: "variable" | "function" | "parameter" | "type"
+    mutable: boolean
+    position: Position
 }
 
 /**
  * A lexical scope containing symbol bindings.
  */
 export interface Scope {
-  symbols: Map<string, Symbol>
-  parent: Scope | null
-  kind: "global" | "function" | "block"
+    symbols: Map<string, Symbol>
+    parent: Scope | null
+    kind: "global" | "function" | "block"
 }
 
 // =============================================================================
@@ -64,22 +64,22 @@ export interface Scope {
  * Create the global scope.
  */
 export function createGlobalScope(): Scope {
-  return {
-    symbols: new Map(),
-    parent: null,
-    kind: "global",
-  }
+    return {
+        symbols: new Map(),
+        parent: null,
+        kind: "global",
+    };
 }
 
 /**
  * Create a child scope.
  */
 export function createScope(parent: Scope, kind: Scope["kind"] = "block"): Scope {
-  return {
-    symbols: new Map(),
-    parent,
-    kind,
-  }
+    return {
+        symbols: new Map(),
+        parent,
+        kind,
+    };
 }
 
 /**
@@ -88,15 +88,15 @@ export function createScope(parent: Scope, kind: Scope["kind"] = "block"): Scope
  * @returns Error message if symbol already defined in this scope, null otherwise
  */
 export function defineSymbol(scope: Scope, symbol: Symbol): string | null {
-  if (scope.symbols.has(symbol.name)) {
-    const existing = scope.symbols.get(symbol.name)!
+    if (scope.symbols.has(symbol.name)) {
+        const existing = scope.symbols.get(symbol.name)!;
 
-    return `'${symbol.name}' is already defined at line ${existing.position.line}`
-  }
+        return `'${symbol.name}' is already defined at line ${existing.position.line}`;
+    }
 
-  scope.symbols.set(symbol.name, symbol)
+    scope.symbols.set(symbol.name, symbol);
 
-  return null
+    return null;
 }
 
 /**
@@ -105,17 +105,17 @@ export function defineSymbol(scope: Scope, symbol: Symbol): string | null {
  * @returns The symbol if found, null otherwise
  */
 export function lookupSymbol(scope: Scope, name: string): Symbol | null {
-  const symbol = scope.symbols.get(name)
+    const symbol = scope.symbols.get(name);
 
-  if (symbol) {
-    return symbol
-  }
+    if (symbol) {
+        return symbol;
+    }
 
-  if (scope.parent) {
-    return lookupSymbol(scope.parent, name)
-  }
+    if (scope.parent) {
+        return lookupSymbol(scope.parent, name);
+    }
 
-  return null
+    return null;
 }
 
 /**
@@ -124,7 +124,7 @@ export function lookupSymbol(scope: Scope, name: string): Symbol | null {
  * WHY: Used to check for redefinition in the same scope.
  */
 export function lookupSymbolLocal(scope: Scope, name: string): Symbol | null {
-  return scope.symbols.get(name) ?? null
+    return scope.symbols.get(name) ?? null;
 }
 
 /**
@@ -133,13 +133,13 @@ export function lookupSymbolLocal(scope: Scope, name: string): Symbol | null {
  * WHY: Needed for return type checking.
  */
 export function findFunctionScope(scope: Scope): Scope | null {
-  if (scope.kind === "function") {
-    return scope
-  }
+    if (scope.kind === "function") {
+        return scope;
+    }
 
-  if (scope.parent) {
-    return findFunctionScope(scope.parent)
-  }
+    if (scope.parent) {
+        return findFunctionScope(scope.parent);
+    }
 
-  return null
+    return null;
 }

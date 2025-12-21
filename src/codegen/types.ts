@@ -31,7 +31,7 @@
  * WHY: Three targets are supported - TypeScript (default), Zig, and WASM
  *      Future targets (C, Rust) would extend this union
  */
-export type CodegenTarget = 'ts' | 'zig' | 'wasm'
+export type CodegenTarget = 'ts' | 'zig' | 'wasm';
 
 /**
  * Configuration options for code generation.
@@ -40,23 +40,23 @@ export type CodegenTarget = 'ts' | 'zig' | 'wasm'
  *         Target-specific options are documented with comments.
  */
 export interface CodegenOptions {
-  /**
+    /**
    * Target language to generate.
    * WHY: Defaults to 'ts' in generate() function for web-first development.
    */
-  target?: CodegenTarget
+    target?: CodegenTarget
 
-  /**
+    /**
    * Indentation string for generated code.
    * WHY: TypeScript convention is 2 spaces, Zig convention is 4 spaces.
    *      Each target sets its own default.
    */
-  indent?: string
+    indent?: string
 
-  /**
+    /**
    * Whether to emit semicolons at end of statements.
    * TARGET: TypeScript only - Zig always requires semicolons.
    *         This option is ignored for Zig target.
    */
-  semicolons?: boolean
+    semicolons?: boolean
 }

@@ -39,10 +39,10 @@
  * @module lexicon
  */
 
-import type { ParsedNoun, ParsedVerb, Number, Tense } from "./types"
-import { nouns, getEndingsForDeclension } from "./nouns"
-import { verbs, conjugation1Endings, conjugation3Endings } from "./verbs"
-import { builtinTypes } from "./types-builtin"
+import type { ParsedNoun, ParsedVerb, Number, Tense } from "./types";
+import { nouns, getEndingsForDeclension } from "./nouns";
+import { verbs, conjugation1Endings, conjugation3Endings } from "./verbs";
+import { builtinTypes } from "./types-builtin";
 
 // =============================================================================
 // TYPES
@@ -55,9 +55,9 @@ import { builtinTypes } from "./types-builtin"
  *         patterns. jsType maps to target language primitives.
  */
 export interface ParsedType extends ParsedNoun {
-  jsType: string
-  category: "primitive" | "collection" | "structural" | "iteration"
-  generic?: boolean
+    jsType: string
+    category: "primitive" | "collection" | "structural" | "iteration"
+    generic?: boolean
 }
 
 // =============================================================================
@@ -86,35 +86,35 @@ export interface ParsedType extends ParsedNoun {
  * @returns Array of possible interpretations, or null if not recognized
  */
 export function parseNoun(word: string): ParsedNoun[] | null {
-  // WHY: Latin nouns in user code are case-insensitive (unlike types which are TitleCase)
-  const lowerWord = word.toLowerCase()
+    // WHY: Latin nouns in user code are case-insensitive (unlike types which are TitleCase)
+    const lowerWord = word.toLowerCase();
 
-  for (const noun of nouns) {
-    if (!lowerWord.startsWith(noun.stem)) {
-      continue
+    for (const noun of nouns) {
+        if (!lowerWord.startsWith(noun.stem)) {
+            continue;
+        }
+
+        const ending = lowerWord.slice(noun.stem.length);
+        const endingsTable = getEndingsForDeclension(noun.declension, noun.gender);
+
+        if (!endingsTable) {
+            continue;
+        }
+
+        const matches = endingsTable[ending];
+
+        if (matches) {
+            return matches.map(m => ({
+                stem: noun.stem,
+                declension: noun.declension,
+                gender: noun.gender,
+                case: m.case,
+                number: m.number,
+            }));
+        }
     }
 
-    const ending = lowerWord.slice(noun.stem.length)
-    const endingsTable = getEndingsForDeclension(noun.declension, noun.gender)
-
-    if (!endingsTable) {
-      continue
-    }
-
-    const matches = endingsTable[ending]
-
-    if (matches) {
-      return matches.map(m => ({
-        stem: noun.stem,
-        declension: noun.declension,
-        gender: noun.gender,
-        case: m.case,
-        number: m.number,
-      }))
-    }
-  }
-
-  return null
+    return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -141,52 +141,52 @@ export function parseNoun(word: string): ParsedNoun[] | null {
  * @returns Array of possible interpretations with target type info, or null
  */
 export function parseType(word: string): ParsedType[] | null {
-  // WHY: Case-sensitive stem matching preserves TitleCase convention for types
-  for (const typeEntry of builtinTypes) {
-    if (!word.startsWith(typeEntry.stem)) {
-      continue
+    // WHY: Case-sensitive stem matching preserves TitleCase convention for types
+    for (const typeEntry of builtinTypes) {
+        if (!word.startsWith(typeEntry.stem)) {
+            continue;
+        }
+
+        // WHY: Endings are lowercase in declension tables, but stem is TitleCase
+        const ending = word.slice(typeEntry.stem.length).toLowerCase();
+        const endingsTable = getEndingsForDeclension(typeEntry.declension, typeEntry.gender);
+
+        if (!endingsTable) {
+            continue;
+        }
+
+        // EDGE: 3rd declension nominative singular has no ending
+        //       Example: "Cursor" (not "Cursorus"), "Functio" (as-is)
+        if (ending === "" && typeEntry.declension === 3) {
+            return [{
+                stem: typeEntry.stem,
+                declension: typeEntry.declension,
+                gender: typeEntry.gender,
+                case: "nominative",
+                number: "singular",
+                jsType: typeEntry.jsType,
+                category: typeEntry.category,
+                generic: typeEntry.generic,
+            }];
+        }
+
+        const matches = endingsTable[ending];
+
+        if (matches) {
+            return matches.map(m => ({
+                stem: typeEntry.stem,
+                declension: typeEntry.declension,
+                gender: typeEntry.gender,
+                case: m.case,
+                number: m.number,
+                jsType: typeEntry.jsType,
+                category: typeEntry.category,
+                generic: typeEntry.generic,
+            }));
+        }
     }
 
-    // WHY: Endings are lowercase in declension tables, but stem is TitleCase
-    const ending = word.slice(typeEntry.stem.length).toLowerCase()
-    const endingsTable = getEndingsForDeclension(typeEntry.declension, typeEntry.gender)
-
-    if (!endingsTable) {
-      continue
-    }
-
-    // EDGE: 3rd declension nominative singular has no ending
-    //       Example: "Cursor" (not "Cursorus"), "Functio" (as-is)
-    if (ending === "" && typeEntry.declension === 3) {
-      return [{
-        stem: typeEntry.stem,
-        declension: typeEntry.declension,
-        gender: typeEntry.gender,
-        case: "nominative",
-        number: "singular",
-        jsType: typeEntry.jsType,
-        category: typeEntry.category,
-        generic: typeEntry.generic,
-      }]
-    }
-
-    const matches = endingsTable[ending]
-
-    if (matches) {
-      return matches.map(m => ({
-        stem: typeEntry.stem,
-        declension: typeEntry.declension,
-        gender: typeEntry.gender,
-        case: m.case,
-        number: m.number,
-        jsType: typeEntry.jsType,
-        category: typeEntry.category,
-        generic: typeEntry.generic,
-      }))
-    }
-  }
-
-  return null
+    return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -218,54 +218,54 @@ export function parseType(word: string): ParsedType[] | null {
  * @returns Array of possible interpretations, or null if not recognized
  */
 export function parseVerb(word: string): ParsedVerb[] | null {
-  const lowerWord = word.toLowerCase()
+    const lowerWord = word.toLowerCase();
 
-  for (const verb of verbs) {
-    if (!lowerWord.startsWith(verb.stem)) {
-      continue
+    for (const verb of verbs) {
+        if (!lowerWord.startsWith(verb.stem)) {
+            continue;
+        }
+
+        const ending = lowerWord.slice(verb.stem.length);
+
+        // WHY: Currently only 1st and 3rd conjugations implemented
+        //      2nd and 4th conjugations can be added as needed
+        let endingsTable: typeof conjugation1Endings | null = null;
+
+        if (verb.conjugation === 1) {
+            endingsTable = conjugation1Endings;
+        }
+
+        if (verb.conjugation === 3) {
+            endingsTable = conjugation3Endings;
+        }
+
+        if (!endingsTable) {
+            continue;
+        }
+
+        const matches = endingsTable[ending];
+
+        if (matches) {
+            return matches.map(m => ({
+                stem: verb.stem,
+                conjugation: verb.conjugation,
+                tense: m.tense as Tense,
+                person: m.person,
+                number: m.number as Number | undefined,
+                // WHY: Future tense verbs are async in our mapping
+                async: m.async,
+            }));
+        }
     }
 
-    const ending = lowerWord.slice(verb.stem.length)
-
-    // WHY: Currently only 1st and 3rd conjugations implemented
-    //      2nd and 4th conjugations can be added as needed
-    let endingsTable: typeof conjugation1Endings | null = null
-
-    if (verb.conjugation === 1) {
-      endingsTable = conjugation1Endings
-    }
-
-    if (verb.conjugation === 3) {
-      endingsTable = conjugation3Endings
-    }
-
-    if (!endingsTable) {
-      continue
-    }
-
-    const matches = endingsTable[ending]
-
-    if (matches) {
-      return matches.map(m => ({
-        stem: verb.stem,
-        conjugation: verb.conjugation,
-        tense: m.tense as Tense,
-        person: m.person,
-        number: m.number as Number | undefined,
-        // WHY: Future tense verbs are async in our mapping
-        async: m.async,
-      }))
-    }
-  }
-
-  return null
+    return null;
 }
 
 // =============================================================================
 // RE-EXPORTS
 // =============================================================================
 
-export * from "./types"
-export { isKeyword, getKeyword, keywords } from "./keywords"
-export { isBuiltinType, getBuiltinType, builtinTypes, typeModifiers, isTypeModifier } from "./types-builtin"
-export type { TypeEntry, TypeModifier } from "./types-builtin"
+export * from "./types";
+export { isKeyword, getKeyword, keywords } from "./keywords";
+export { isBuiltinType, getBuiltinType, builtinTypes, typeModifiers, isTypeModifier } from "./types-builtin";
+export type { TypeEntry, TypeModifier } from "./types-builtin";
