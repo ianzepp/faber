@@ -1,3 +1,52 @@
+/**
+ * Zig Code Generator - Emit systems programming code
+ *
+ * COMPILER PHASE
+ * ==============
+ * codegen
+ *
+ * ARCHITECTURE
+ * ============
+ * This module transforms a validated Latin AST into Zig source code. Unlike
+ * the TypeScript generator which preserves JavaScript semantics, this generator
+ * adapts Latin constructs to Zig's systems programming model.
+ *
+ * Key transformations:
+ * - Top-level code is wrapped in pub fn main()
+ * - Comptime (compile-time) values are hoisted to module scope
+ * - Function declarations remain at module scope
+ * - Async becomes error union types (!T)
+ * - Exceptions map to error returns
+ * - scribe() maps to std.debug.print()
+ *
+ * The generator uses the same recursive descent pattern as the TypeScript
+ * generator but with Zig-specific semantics for types, error handling, and
+ * memory management.
+ *
+ * INPUT/OUTPUT CONTRACT
+ * =====================
+ * INPUT:  Program AST node with Latin keywords and type names
+ * OUTPUT: Valid Zig source code string
+ * ERRORS: Throws on unknown AST node types (should never happen with valid AST)
+ *
+ * TARGET DIFFERENCES
+ * ==================
+ * Zig uses systems programming semantics:
+ * - Compile-time vs runtime execution (comptime)
+ * - Explicit types required for var declarations
+ * - Error unions instead of exceptions (!T)
+ * - No garbage collection (manual memory)
+ * - Nullable via optional types (?T)
+ * - No arrow functions (use struct { fn ... }.call pattern)
+ *
+ * INVARIANTS
+ * ==========
+ * INV-1: Generated code is syntactically valid Zig
+ * INV-2: All Latin type names are mapped to Zig equivalents
+ * INV-3: Top-level declarations separate from runtime code
+ * INV-4: Main function is only emitted if there are runtime statements
+ */
+
 import type {
   Program,
   Statement,
@@ -30,7 +79,26 @@ import type {
 } from "../parser/ast"
 import type { CodegenOptions } from "./types"
 
-// Map Latin type names to Zig types
+// =============================================================================
+// TYPE MAPPING
+// =============================================================================
+
+/**
+ * Map Latin type names to Zig types.
+ *
+ * WHY: Zig uses explicit, low-level types instead of JavaScript's dynamic types.
+ *      Strings are slices of bytes, numbers are sized integers, void replaces null.
+ *
+ * TARGET MAPPING:
+ * | Latin     | TypeScript | Zig        |
+ * |-----------|------------|------------|
+ * | Textus    | string     | []const u8 |
+ * | Numerus   | number     | i64        |
+ * | Bivalens  | boolean    | bool       |
+ * | Nihil     | null       | void       |
+ *
+ * LIMITATION: Complex types (Lista, Tabula, etc.) not yet supported in Zig target.
+ */
 const typeMap: Record<string, string> = {
   Textus: "[]const u8",
   Numerus: "i64",
@@ -38,26 +106,57 @@ const typeMap: Record<string, string> = {
   Nihil: "void",
 }
 
+// =============================================================================
+// MAIN GENERATOR
+// =============================================================================
+
+/**
+ * Generate Zig source code from a Latin AST.
+ *
+ * TRANSFORMS:
+ *   Program AST -> Zig source code string
+ *
+ * @param program - Validated AST from parser
+ * @param options - Formatting configuration (indent only, semicolons always used)
+ * @returns Zig source code
+ */
 export function generateZig(program: Program, options: CodegenOptions = {}): string {
+  // WHY: 4 spaces is Zig convention
   const indent = options.indent ?? "    "
 
+  // Track indentation depth for nested blocks
   let depth = 0
 
+  /**
+   * Generate indentation for current depth.
+   * WHY: Centralized indentation logic ensures consistent formatting.
+   */
   function ind(): string {
     return indent.repeat(depth)
   }
 
+  // ---------------------------------------------------------------------------
+  // Top-level
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Generate top-level program structure.
+   *
+   * WHY: Zig requires separation between compile-time and runtime code.
+   *      Functions and comptime constants go at module scope.
+   *      Runtime statements are wrapped in pub fn main().
+   */
   function genProgram(node: Program): string {
     const lines: string[] = []
 
-    // Add std import if we detect scribe() usage
+    // WHY: scribe() maps to std.debug.print(), so we need std import
     const needsStd = programUsesScribe(node)
     if (needsStd) {
       lines.push("const std = @import(\"std\");")
       lines.push("")
     }
 
-    // Separate top-level declarations from runtime statements
+    // WHY: Zig distinguishes compile-time (const, fn) from runtime (var, statements)
     const topLevel: Statement[] = []
     const runtime: Statement[] = []
 
@@ -70,10 +169,9 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
       }
     }
 
-    // Emit top-level declarations
     lines.push(...topLevel.map(genStatement))
 
-    // Wrap runtime statements in main()
+    // WHY: Only emit main() if there's runtime code to execute
     if (runtime.length > 0) {
       if (topLevel.length > 0) lines.push("")
       lines.push("pub fn main() void {")
@@ -86,34 +184,60 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     return lines.join("\n")
   }
 
+  /**
+   * Determine if a statement belongs at module scope.
+   *
+   * WHY: Zig executes at compile-time (comptime) by default.
+   *      Only runtime-dependent code goes in main().
+   *
+   * TARGET: Functions and imports are always top-level in Zig.
+   *         Const declarations with comptime values are hoisted.
+   */
   function isTopLevelDeclaration(node: Statement): boolean {
-    // Functions are always top-level
     if (node.type === "FunctionDeclaration") return true
-    // Imports are always top-level
     if (node.type === "ImportDeclaration") return true
-    // Const declarations with literal values are comptime
+    // WHY: fixum with literal is comptime in Zig
     if (node.type === "VariableDeclaration" && node.kind === "fixum") {
       if (node.init && isComptimeValue(node.init)) return true
     }
     return false
   }
 
+  /**
+   * Determine if an expression can be evaluated at compile-time.
+   *
+   * WHY: Zig's comptime system allows literals and constants to be
+   *      evaluated during compilation, not runtime.
+   */
   function isComptimeValue(node: Expression): boolean {
-    // Literals are comptime
     if (node.type === "Literal") return true
     if (node.type === "TemplateLiteral") return true
-    // Identifiers that are verum/falsum/nihil are comptime
+    // WHY: verum, falsum, nihil are Latin keywords for literal values
     if (node.type === "Identifier") {
       return ["verum", "falsum", "nihil"].includes(node.name)
     }
     return false
   }
 
+  /**
+   * Check if program uses scribe() function.
+   *
+   * WHY: scribe() maps to std.debug.print(), so we need to import std.
+   *      Quick check via JSON serialization instead of full AST walk.
+   */
   function programUsesScribe(node: Program): boolean {
     const source = JSON.stringify(node)
     return source.includes('"name":"scribe"')
   }
 
+  // ---------------------------------------------------------------------------
+  // Statements
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Generate code for any statement type.
+   * WHY: Exhaustive switch ensures all statement types are handled.
+   */
   function genStatement(node: Statement): string {
     switch (node.type) {
       case "ImportDeclaration":
@@ -143,15 +267,23 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     }
   }
 
+  /**
+   * Generate import declaration.
+   *
+   * TRANSFORMS:
+   *   ex norma importa * -> const norma = @import("norma");
+   *   ex norma importa scribe, lege -> const _norma = @import("norma");
+   *                                     const scribe = _norma.scribe;
+   *                                     const lege = _norma.lege;
+   *
+   * TARGET: Zig uses @import() builtin. Specific imports create const bindings.
+   */
   function genImportDeclaration(node: ImportDeclaration): string {
     const source = node.source
-    // In Zig, imports are done via @import
-    // ex norma importa * -> const norma = @import("norma");
-    // ex norma importa scribe, lege -> const scribe = @import("norma").scribe; etc.
     if (node.wildcard) {
       return `${ind()}const ${source} = @import("${source}");`
     }
-    // For specific imports, we import the module and then reference the names
+    // WHY: Import module once with underscore prefix, then bind specific names
     const lines: string[] = []
     const modVar = `_${source}`
     lines.push(`${ind()}const ${modVar} = @import("${source}");`)
@@ -161,11 +293,21 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     return lines.join("\n")
   }
 
+  /**
+   * Generate variable declaration.
+   *
+   * TRANSFORMS:
+   *   esto x: Numerus = 5 -> var x: i64 = 5;
+   *   fixum y: Textus = "hello" -> const y: []const u8 = "hello";
+   *
+   * TARGET: Zig requires explicit types for var (mutable) declarations.
+   *         Const can infer but we add type for clarity.
+   */
   function genVariableDeclaration(node: VariableDeclaration): string {
     const kind = node.kind === "esto" ? "var" : "const"
     const name = node.name.name
 
-    // Zig needs explicit types for var declarations with literals
+    // TARGET: Zig requires explicit types for var, we infer if not provided
     let typeAnno = ""
     if (node.typeAnnotation) {
       typeAnno = `: ${genType(node.typeAnnotation)}`
@@ -178,9 +320,16 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     return `${ind()}${kind} ${name}${typeAnno}${init};`
   }
 
+  /**
+   * Infer Zig type from expression when no explicit annotation.
+   *
+   * WHY: Zig var declarations require types. We infer from literals.
+   *      Falls back to anytype for complex expressions.
+   */
   function inferZigType(node: Expression): string {
     if (node.type === "Literal") {
       if (typeof node.value === "number") {
+        // WHY: Distinguish integer from float for Zig's type system
         return Number.isInteger(node.value) ? "i64" : "f64"
       }
       if (typeof node.value === "string") return "[]const u8"
@@ -190,9 +339,20 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
       if (node.name === "verum" || node.name === "falsum") return "bool"
       if (node.name === "nihil") return "?void"
     }
+    // WHY: anytype lets Zig infer from assignment
     return "anytype"
   }
 
+  /**
+   * Generate type annotation from Latin type.
+   *
+   * TRANSFORMS:
+   *   Textus -> []const u8
+   *   Numerus -> i64
+   *   Textus? -> ?[]const u8
+   *
+   * TARGET: Zig uses ? prefix for optional types, not | null suffix.
+   */
   function genType(node: TypeAnnotation): string {
     const base = typeMap[node.name] ?? node.name
     if (node.nullable) {
@@ -201,18 +361,35 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     return base
   }
 
+  /**
+   * Generate function declaration.
+   *
+   * TRANSFORMS:
+   *   functio salve(nomen: Textus): Nihil -> fn salve(nomen: []const u8) void
+   *   futura functio f(): Numerus -> fn f() !i64
+   *
+   * TARGET: Zig uses fn not function. Async becomes error union (!T).
+   */
   function genFunctionDeclaration(node: FunctionDeclaration): string {
     const name = node.name.name
     const params = node.params.map(genParameter).join(", ")
     const returnType = node.returnType ? genType(node.returnType) : "void"
 
-    // Handle async with error union
+    // TARGET: Async in Zig uses error unions (!T) not async/await
     const retType = node.async ? `!${returnType}` : returnType
 
     const body = genBlockStatement(node.body)
     return `${ind()}fn ${name}(${params}) ${retType} ${body}`
   }
 
+  /**
+   * Generate function parameter.
+   *
+   * TRANSFORMS:
+   *   nomen: Textus -> nomen: []const u8
+   *
+   * TARGET: Zig requires type after parameter name (name: type).
+   */
   function genParameter(node: Parameter): string {
     const name = node.name.name
     const type = node.typeAnnotation ? genType(node.typeAnnotation) : "anytype"
@@ -294,16 +471,30 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     return node.body.map(genStatement).join("\n")
   }
 
+  /**
+   * Generate expression statement.
+   *
+   * TARGET: Zig requires expressions to be used or discarded with _ = prefix.
+   *         Calls and assignments don't need discard prefix.
+   */
   function genExpressionStatement(node: ExpressionStatement): string {
     const expr = genExpression(node.expression)
-    // In Zig, assignment is a statement, not an expression
-    // Calls also don't need _ = prefix
+    // TARGET: Zig assignments and calls are statements, not expressions
     if (node.expression.type === "CallExpression" || node.expression.type === "AssignmentExpression") {
       return `${ind()}${expr};`
     }
+    // WHY: Zig requires explicit discard with _ = for unused expression results
     return `${ind()}_ = ${expr};`
   }
 
+  // ---------------------------------------------------------------------------
+  // Expressions
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Generate code for any expression type.
+   * WHY: Exhaustive switch ensures all expression types are handled.
+   */
   function genExpression(node: Expression): string {
     switch (node.type) {
       case "Identifier":
@@ -337,8 +528,17 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     }
   }
 
+  /**
+   * Generate identifier.
+   *
+   * TRANSFORMS:
+   *   verum -> true
+   *   falsum -> false
+   *   nihil -> null
+   *
+   * WHY: Latin uses Latin words for boolean/null literals.
+   */
   function genIdentifier(node: Identifier): string {
-    // Map Latin keywords to Zig equivalents
     switch (node.name) {
       case "verum": return "true"
       case "falsum": return "false"
@@ -347,6 +547,17 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     }
   }
 
+  /**
+   * Generate literal value.
+   *
+   * TRANSFORMS:
+   *   "hello" -> "hello"
+   *   42 -> 42
+   *   verum -> true
+   *   nihil -> null
+   *
+   * TARGET: Zig string literals use double quotes, no escaping needed for simple strings.
+   */
   function genLiteral(node: Literal): string {
     if (node.value === null) return "null"
     if (typeof node.value === "string") return `"${node.value}"`
@@ -354,6 +565,16 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     return String(node.value)
   }
 
+  /**
+   * Generate binary expression.
+   *
+   * TRANSFORMS:
+   *   x + y -> (x + y)
+   *   a && b -> (a and b)
+   *   a || b -> (a or b)
+   *
+   * TARGET: Zig uses 'and'/'or' keywords not &&/|| operators.
+   */
   function genBinaryExpression(node: BinaryExpression): string {
     const left = genExpression(node.left)
     const right = genExpression(node.right)
@@ -361,29 +582,52 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     return `(${left} ${op} ${right})`
   }
 
+  /**
+   * Map JavaScript operators to Zig equivalents.
+   *
+   * TARGET: Zig uses keyword operators for boolean logic.
+   *
+   * LIMITATION: String concatenation (++) vs numeric addition (+) can't be
+   *             distinguished without type information. Using + for both.
+   */
   function mapOperator(op: string): string {
     switch (op) {
       case "&&": return "and"
       case "||": return "or"
-      // NOTE: String concat in Zig needs ++ but we can't distinguish from numeric +
-      // without type information. This is a known limitation.
       default: return op
     }
   }
 
+  /**
+   * Generate unary expression.
+   *
+   * TRANSFORMS:
+   *   !x -> !x (prefix)
+   *   x++ -> x++ (postfix)
+   */
   function genUnaryExpression(node: UnaryExpression): string {
     const arg = genExpression(node.argument)
     return node.prefix ? `${node.operator}${arg}` : `${arg}${node.operator}`
   }
 
+  /**
+   * Generate function call.
+   *
+   * TRANSFORMS:
+   *   scribe("hello") -> std.debug.print("{s}\n", .{"hello"})
+   *   foo(x, y) -> foo(x, y)
+   *
+   * TARGET: scribe() is Latin's print function, maps to std.debug.print().
+   *         Zig print uses format strings and anonymous tuple syntax (.{...}).
+   */
   function genCallExpression(node: CallExpression): string {
-    // Special case: scribe() -> std.debug.print()
+    // TARGET: scribe() maps to Zig's std.debug.print()
     if (node.callee.type === "Identifier" && node.callee.name === "scribe") {
       const args = node.arguments.map(genExpression)
-      // Use {s} for string literals, {any} for others
+      // WHY: {s} for string literals, {any} for runtime values
       const formatSpecs = node.arguments.map(arg => {
         if (arg.type === "Literal" && typeof arg.value === "string") return "{s}"
-        if (arg.type === "Identifier") return "{any}"  // Could be string or number
+        if (arg.type === "Identifier") return "{any}"
         return "{any}"
       })
       const format = formatSpecs.join(" ") + "\\n"
@@ -395,6 +639,13 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     return `${callee}(${args})`
   }
 
+  /**
+   * Generate member access.
+   *
+   * TRANSFORMS:
+   *   obj.prop -> obj.prop
+   *   obj[key] -> obj[key]
+   */
   function genMemberExpression(node: MemberExpression): string {
     const obj = genExpression(node.object)
     if (node.computed) {
@@ -403,9 +654,19 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     return `${obj}.${node.property.name}`
   }
 
+  /**
+   * Generate arrow function (emulated).
+   *
+   * TRANSFORMS:
+   *   (x) => x + 1 -> struct { fn call(x: anytype) anytype { return x + 1; } }.call
+   *
+   * TARGET: Zig doesn't have arrow functions. We emulate with anonymous struct
+   *         containing a function. This is a simplification for basic cases.
+   *
+   * LIMITATION: This pattern doesn't capture closures properly. Full implementation
+   *             would require passing captured variables explicitly.
+   */
   function genArrowFunction(node: ArrowFunctionExpression): string {
-    // Zig doesn't have arrow functions, but has inline closures
-    // This is a simplification — real Zig would need more context
     const params = node.params.map(genParameter).join(", ")
 
     if (node.body.type === "BlockStatement") {
@@ -417,6 +678,13 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     return `struct { fn call(${params}) anytype { return ${body}; } }.call`
   }
 
+  /**
+   * Generate assignment expression.
+   *
+   * TRANSFORMS:
+   *   x = 5 -> x = 5
+   *   x += 1 -> x += 1
+   */
   function genAssignmentExpression(node: AssignmentExpression): string {
     const left = node.left.type === "Identifier"
       ? node.left.name
@@ -424,8 +692,15 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     return `${left} ${node.operator} ${genExpression(node.right)}`
   }
 
+  /**
+   * Generate new expression.
+   *
+   * TRANSFORMS:
+   *   new Foo(x, y) -> Foo.init(x, y)
+   *
+   * TARGET: Zig doesn't have 'new' keyword. Idiomatic pattern is Type.init().
+   */
   function genNewExpression(node: NewExpression): string {
-    // Zig doesn't have 'new', use init pattern
     const callee = node.callee.name
     const args = node.arguments.map(genExpression).join(", ")
     return `${callee}.init(${args})`

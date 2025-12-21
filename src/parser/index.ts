@@ -1,3 +1,80 @@
+/**
+ * Parser - Recursive Descent Parser for Latin Source Code
+ *
+ * COMPILER PHASE
+ * ==============
+ * syntactic
+ *
+ * ARCHITECTURE
+ * ============
+ * This module implements a recursive descent parser that transforms a stream of tokens
+ * from the lexical analyzer into an Abstract Syntax Tree (AST). The parser uses
+ * predictive parsing with one token of lookahead to determine which production to use.
+ *
+ * The parser is organized around the grammar's structure:
+ * - Statement parsing functions handle declarations and control flow
+ * - Expression parsing uses precedence climbing to handle operator precedence
+ * - Error recovery via synchronization prevents cascading errors
+ *
+ * Key design decisions:
+ * 1. Never throws exceptions - collects errors and continues parsing
+ * 2. Synchronizes at statement boundaries after errors
+ * 3. Uses helper functions (peek, match, expect) for token manipulation
+ * 4. Preserves Latin keywords in AST for semantic analysis phase
+ *
+ * INPUT/OUTPUT CONTRACT
+ * =====================
+ * INPUT:  Token[] from tokenizer (includes position info for error reporting)
+ * OUTPUT: ParserResult containing Program AST and array of ParserErrors
+ * ERRORS: Syntax errors (unexpected tokens, missing punctuation, malformed constructs)
+ *
+ * INVARIANTS
+ * ==========
+ * INV-1: Parser never crashes on malformed input (errors collected, not thrown)
+ * INV-2: After error, synchronize() finds next statement boundary
+ * INV-3: All AST nodes include position for error reporting
+ * INV-4: Empty input produces valid Program with empty body
+ * INV-5: Parser maintains single token lookahead (peek() without consuming)
+ *
+ * GRAMMAR
+ * =======
+ * High-level grammar in EBNF (detailed rules in function comments):
+ *
+ *   program        := statement*
+ *   statement      := importDecl | varDecl | funcDecl | ifStmt | whileStmt | forStmt
+ *                   | returnStmt | throwStmt | tryStmt | blockStmt | exprStmt
+ *   expression     := assignment
+ *   assignment     := or ('=' assignment)?
+ *   or             := and ('||' and)*
+ *   and            := equality ('&&' equality)*
+ *   equality       := comparison (('==' | '!=') comparison)*
+ *   comparison     := additive (('<' | '>' | '<=' | '>=') additive)*
+ *   additive       := multiplicative (('+' | '-') multiplicative)*
+ *   multiplicative := unary (('*' | '/' | '%') unary)*
+ *   unary          := ('!' | '-' | 'non' | 'exspecta' | 'novum') unary | call
+ *   call           := primary ('(' args ')' | '.' IDENTIFIER | '[' expr ']')*
+ *   primary        := IDENTIFIER | NUMBER | STRING | TEMPLATE_STRING
+ *                   | 'verum' | 'falsum' | 'nihil' | '(' expression ')'
+ *
+ * ERROR RECOVERY STRATEGY
+ * =======================
+ * When a parse error occurs:
+ * 1. Record error with message and position
+ * 2. Call synchronize() to skip tokens until statement boundary
+ * 3. Resume parsing at next statement
+ * 4. Return partial AST with collected errors
+ *
+ * Synchronization points (keywords that start statements):
+ * - functio, esto, fixum (declarations)
+ * - si, dum, pro (control flow)
+ * - redde, tempta (other statements)
+ *
+ * WHY: Allows parser to report multiple errors in one pass and produce
+ *      partial AST for IDE/tooling use even with syntax errors.
+ *
+ * @module parser
+ */
+
 import type { Token, TokenType, Position } from "../tokenizer/types"
 import type {
   Program,
@@ -28,41 +105,102 @@ import type {
   TemplateLiteral,
 } from "./ast"
 
+// =============================================================================
+// TYPES
+// =============================================================================
+
+/**
+ * Parser error with source location.
+ *
+ * INVARIANT: position always references valid source location.
+ */
 export interface ParserError {
   message: string
   position: Position
 }
 
+/**
+ * Parser output containing AST and errors.
+ *
+ * INVARIANT: If parse succeeds, program is non-null and errors is empty.
+ * INVARIANT: If parse fails catastrophically, program is null.
+ * INVARIANT: Partial errors (recovered) have non-null program with non-empty errors.
+ */
 export interface ParserResult {
   program: Program | null
   errors: ParserError[]
 }
 
+// =============================================================================
+// MAIN PARSER FUNCTION
+// =============================================================================
+
+/**
+ * Parse a token stream into an Abstract Syntax Tree.
+ *
+ * GRAMMAR:
+ *   program := statement*
+ *
+ * ERROR RECOVERY: Catches errors at statement level, synchronizes, and continues.
+ *
+ * @param tokens - Token array from tokenizer (must end with EOF token)
+ * @returns ParserResult with program AST and error list
+ */
 export function parse(tokens: Token[]): ParserResult {
   const errors: ParserError[] = []
   let current = 0
 
+  // ---------------------------------------------------------------------------
+  // Token Navigation Helpers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Look ahead at token without consuming.
+   *
+   * INVARIANT: Returns EOF token if offset goes beyond end.
+   */
   function peek(offset = 0): Token {
     return tokens[current + offset] ?? tokens[tokens.length - 1]
   }
 
+  /**
+   * Check if at end of token stream.
+   */
   function isAtEnd(): boolean {
     return peek().type === "EOF"
   }
 
+  /**
+   * Consume and return current token.
+   *
+   * INVARIANT: Never advances past EOF.
+   */
   function advance(): Token {
     if (!isAtEnd()) current++
     return tokens[current - 1]
   }
 
+  /**
+   * Check if current token matches type without consuming.
+   */
   function check(type: TokenType): boolean {
     return peek().type === type
   }
 
+  /**
+   * Check if current token is specific keyword without consuming.
+   *
+   * WHY: Latin keywords are stored in token.keyword field, not token.type.
+   */
   function checkKeyword(keyword: string): boolean {
     return peek().type === "KEYWORD" && peek().keyword === keyword
   }
 
+  /**
+   * Match and consume token if type matches.
+   *
+   * @returns true if matched and consumed, false otherwise
+   */
   function match(...types: TokenType[]): boolean {
     for (const type of types) {
       if (check(type)) {
@@ -73,6 +211,11 @@ export function parse(tokens: Token[]): ParserResult {
     return false
   }
 
+  /**
+   * Match and consume token if keyword matches.
+   *
+   * @returns true if matched and consumed, false otherwise
+   */
   function matchKeyword(keyword: string): boolean {
     if (checkKeyword(keyword)) {
       advance()
@@ -81,6 +224,13 @@ export function parse(tokens: Token[]): ParserResult {
     return false
   }
 
+  /**
+   * Expect specific token type or record error.
+   *
+   * ERROR RECOVERY: Records error but returns current token (possibly wrong type).
+   *
+   * @returns Matched token if found, current token if not
+   */
   function expect(type: TokenType, message: string): Token {
     if (check(type)) return advance()
     const token = peek()
@@ -88,6 +238,11 @@ export function parse(tokens: Token[]): ParserResult {
     return token
   }
 
+  /**
+   * Expect specific keyword or record error.
+   *
+   * ERROR RECOVERY: Records error but returns current token.
+   */
   function expectKeyword(keyword: string, message: string): Token {
     if (checkKeyword(keyword)) return advance()
     const token = peek()
@@ -95,13 +250,32 @@ export function parse(tokens: Token[]): ParserResult {
     return token
   }
 
+  /**
+   * Record error and throw for error recovery.
+   *
+   * WHY: Used in expression parsing where we can't easily recover locally.
+   *      Caught by statement parser which calls synchronize().
+   */
   function error(message: string): never {
     const token = peek()
     errors.push({ message, position: token.position })
     throw new Error(message)
   }
 
-  // Parsing functions
+  // =============================================================================
+  // STATEMENT PARSING
+  // =============================================================================
+
+  /**
+   * Parse top-level program.
+   *
+   * GRAMMAR:
+   *   program := statement*
+   *
+   * ERROR RECOVERY: Catches statement errors, synchronizes, continues.
+   *
+   * EDGE: Empty source file produces valid Program with empty body.
+   */
   function parseProgram(): Program {
     const body: Statement[] = []
     const position = peek().position
@@ -111,7 +285,6 @@ export function parse(tokens: Token[]): ParserResult {
         body.push(parseStatement())
       }
       catch {
-        // Synchronize on errors
         synchronize()
       }
     }
@@ -119,10 +292,16 @@ export function parse(tokens: Token[]): ParserResult {
     return { type: "Program", body, position }
   }
 
+  /**
+   * Synchronize parser after error by skipping to next statement boundary.
+   *
+   * ERROR RECOVERY: Advances until finding a keyword that starts a statement.
+   *
+   * WHY: Prevents cascading errors by resuming at known-good parse state.
+   */
   function synchronize(): void {
     advance()
     while (!isAtEnd()) {
-      // Sync at statement boundaries
       if (checkKeyword("functio") || checkKeyword("esto") || checkKeyword("fixum") ||
           checkKeyword("si") || checkKeyword("dum") || checkKeyword("pro") ||
           checkKeyword("redde") || checkKeyword("tempta")) {
@@ -132,8 +311,16 @@ export function parse(tokens: Token[]): ParserResult {
     }
   }
 
+  /**
+   * Parse any statement by dispatching to specific parser.
+   *
+   * GRAMMAR:
+   *   statement := importDecl | varDecl | funcDecl | ifStmt | whileStmt | forStmt
+   *              | returnStmt | throwStmt | tryStmt | blockStmt | exprStmt
+   *
+   * WHY: Uses lookahead to determine statement type via keyword inspection.
+   */
   function parseStatement(): Statement {
-    // Import: ex norma importa scribe, lege
     if (checkKeyword("ex")) {
       return parseImportDeclaration()
     }
@@ -168,22 +355,34 @@ export function parse(tokens: Token[]): ParserResult {
     return parseExpressionStatement()
   }
 
+  // ---------------------------------------------------------------------------
+  // Declaration Statements
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Parse import declaration.
+   *
+   * GRAMMAR:
+   *   importDecl := 'ex' IDENTIFIER 'importa' (identifierList | '*')
+   *   identifierList := IDENTIFIER (',' IDENTIFIER)*
+   *
+   * Examples:
+   *   ex norma importa scribe, lege
+   *   ex norma importa *
+   */
   function parseImportDeclaration(): ImportDeclaration {
     const position = peek().position
     expectKeyword("ex", "Expected 'ex'")
 
-    // Module name
     const sourceToken = expect("IDENTIFIER", "Expected module name after 'ex'")
     const source = sourceToken.value
 
     expectKeyword("importa", "Expected 'importa' after module name")
 
-    // Check for wildcard: ex norma importa *
     if (match("STAR")) {
       return { type: "ImportDeclaration", source, specifiers: [], wildcard: true, position }
     }
 
-    // Parse comma-separated identifiers
     const specifiers: Identifier[] = []
     do {
       specifiers.push(parseIdentifier())
@@ -192,6 +391,14 @@ export function parse(tokens: Token[]): ParserResult {
     return { type: "ImportDeclaration", source, specifiers, wildcard: false, position }
   }
 
+  /**
+   * Parse variable declaration.
+   *
+   * GRAMMAR:
+   *   varDecl := ('esto' | 'fixum') IDENTIFIER (':' typeAnnotation)? ('=' expression)?
+   *
+   * WHY: Latin 'esto' (let it be) for mutable, 'fixum' (fixed) for immutable.
+   */
   function parseVariableDeclaration(): VariableDeclaration {
     const position = peek().position
     const kind = peek().keyword as "esto" | "fixum"
@@ -212,6 +419,15 @@ export function parse(tokens: Token[]): ParserResult {
     return { type: "VariableDeclaration", kind, name, typeAnnotation, init, position }
   }
 
+  /**
+   * Parse function declaration.
+   *
+   * GRAMMAR:
+   *   funcDecl := 'futura'? 'functio' IDENTIFIER '(' paramList ')' ('->' typeAnnotation)? blockStmt
+   *
+   * WHY: 'futura' prefix marks async functions (future/promise-based).
+   *      '->' arrow indicates return type annotation.
+   */
   function parseFunctionDeclaration(): FunctionDeclaration {
     const position = peek().position
     let async = false
@@ -238,6 +454,12 @@ export function parse(tokens: Token[]): ParserResult {
     return { type: "FunctionDeclaration", name, params, returnType, body, async, position }
   }
 
+  /**
+   * Parse function parameter list.
+   *
+   * GRAMMAR:
+   *   paramList := (parameter (',' parameter)*)?
+   */
   function parseParameterList(): Parameter[] {
     const params: Parameter[] = []
 
@@ -250,6 +472,15 @@ export function parse(tokens: Token[]): ParserResult {
     return params
   }
 
+  /**
+   * Parse single function parameter.
+   *
+   * GRAMMAR:
+   *   parameter := ('ad' | 'cum' | 'in' | 'ex')? IDENTIFIER (':' typeAnnotation)?
+   *
+   * WHY: Prepositional prefixes indicate semantic roles:
+   *      ad = toward/to, cum = with, in = in/into, ex = from/out of
+   */
   function parseParameter(): Parameter {
     const position = peek().position
 
@@ -270,6 +501,19 @@ export function parse(tokens: Token[]): ParserResult {
     return { type: "Parameter", name, typeAnnotation, preposition, position }
   }
 
+  // ---------------------------------------------------------------------------
+  // Control Flow Statements
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Parse if statement.
+   *
+   * GRAMMAR:
+   *   ifStmt := 'si' expression blockStmt ('cape' IDENTIFIER blockStmt)? ('aliter' (ifStmt | blockStmt))?
+   *
+   * WHY: 'cape' (catch/seize) clause allows error handling within conditionals.
+   *      'aliter' (otherwise) for else clause.
+   */
   function parseIfStatement(): IfStatement {
     const position = peek().position
     expectKeyword("si", "Expected 'si'")
@@ -297,6 +541,14 @@ export function parse(tokens: Token[]): ParserResult {
     return { type: "IfStatement", test, consequent, alternate, catchClause, position }
   }
 
+  /**
+   * Parse while loop statement.
+   *
+   * GRAMMAR:
+   *   whileStmt := 'dum' expression blockStmt ('cape' IDENTIFIER blockStmt)?
+   *
+   * WHY: 'dum' (while/until) for while loops.
+   */
   function parseWhileStatement(): WhileStatement {
     const position = peek().position
     expectKeyword("dum", "Expected 'dum'")
@@ -312,6 +564,15 @@ export function parse(tokens: Token[]): ParserResult {
     return { type: "WhileStatement", test, body, catchClause, position }
   }
 
+  /**
+   * Parse for loop statement.
+   *
+   * GRAMMAR:
+   *   forStmt := 'pro' IDENTIFIER ('in' | 'ex') expression blockStmt ('cape' IDENTIFIER blockStmt)?
+   *
+   * WHY: 'pro' (for/on behalf of) for for loops.
+   *      'in' for for-in (keys), 'ex' for for-of (values from collection).
+   */
   function parseForStatement(): ForStatement {
     const position = peek().position
     expectKeyword("pro", "Expected 'pro'")
@@ -340,6 +601,14 @@ export function parse(tokens: Token[]): ParserResult {
     return { type: "ForStatement", kind, variable, iterable, body, catchClause, position }
   }
 
+  /**
+   * Parse return statement.
+   *
+   * GRAMMAR:
+   *   returnStmt := 'redde' expression?
+   *
+   * WHY: 'redde' (give back/return) for return statements.
+   */
   function parseReturnStatement(): ReturnStatement {
     const position = peek().position
     expectKeyword("redde", "Expected 'redde'")
@@ -352,6 +621,14 @@ export function parse(tokens: Token[]): ParserResult {
     return { type: "ReturnStatement", argument, position }
   }
 
+  /**
+   * Parse throw statement.
+   *
+   * GRAMMAR:
+   *   throwStmt := 'iace' expression
+   *
+   * WHY: 'iace' (throw/hurl) for throwing exceptions.
+   */
   function parseThrowStatement(): ThrowStatement {
     const position = peek().position
     expectKeyword("iace", "Expected 'iace'")
@@ -361,6 +638,14 @@ export function parse(tokens: Token[]): ParserResult {
     return { type: "ThrowStatement", argument, position }
   }
 
+  /**
+   * Parse try-catch-finally statement.
+   *
+   * GRAMMAR:
+   *   tryStmt := 'tempta' blockStmt ('cape' IDENTIFIER blockStmt)? ('demum' blockStmt)?
+   *
+   * WHY: 'tempta' (attempt/try), 'cape' (catch/seize), 'demum' (finally/at last).
+   */
   function parseTryStatement(): Statement {
     const position = peek().position
     expectKeyword("tempta", "Expected 'tempta'")
@@ -380,6 +665,12 @@ export function parse(tokens: Token[]): ParserResult {
     return { type: "TryStatement", block, handler, finalizer, position }
   }
 
+  /**
+   * Parse catch clause.
+   *
+   * GRAMMAR:
+   *   catchClause := 'cape' IDENTIFIER blockStmt
+   */
   function parseCatchClause(): CatchClause {
     const position = peek().position
     expectKeyword("cape", "Expected 'cape'")
@@ -390,6 +681,12 @@ export function parse(tokens: Token[]): ParserResult {
     return { type: "CatchClause", param, body, position }
   }
 
+  /**
+   * Parse block statement.
+   *
+   * GRAMMAR:
+   *   blockStmt := '{' statement* '}'
+   */
   function parseBlockStatement(): BlockStatement {
     const position = peek().position
     expect("LBRACE", "Expected '{'")
@@ -404,17 +701,44 @@ export function parse(tokens: Token[]): ParserResult {
     return { type: "BlockStatement", body, position }
   }
 
+  /**
+   * Parse expression statement.
+   *
+   * GRAMMAR:
+   *   exprStmt := expression
+   */
   function parseExpressionStatement(): ExpressionStatement {
     const position = peek().position
     const expression = parseExpression()
     return { type: "ExpressionStatement", expression, position }
   }
 
-  // Expression parsing with precedence climbing
+  // =============================================================================
+  // EXPRESSION PARSING (Precedence Climbing)
+  // =============================================================================
+
+  /**
+   * Parse expression (entry point for precedence climbing).
+   *
+   * GRAMMAR:
+   *   expression := assignment
+   *
+   * WHY: Top-level expression delegates to assignment (lowest precedence).
+   */
   function parseExpression(): Expression {
     return parseAssignment()
   }
 
+  /**
+   * Parse assignment expression.
+   *
+   * GRAMMAR:
+   *   assignment := or ('=' assignment)?
+   *
+   * PRECEDENCE: Lowest (right-associative via recursion).
+   *
+   * ERROR RECOVERY: Reports error if left side is not valid lvalue.
+   */
   function parseAssignment(): Expression {
     const expr = parseOr()
 
@@ -430,6 +754,16 @@ export function parse(tokens: Token[]): ParserResult {
     return expr
   }
 
+  /**
+   * Parse logical OR expression.
+   *
+   * GRAMMAR:
+   *   or := and ('||' and | 'aut' and)*
+   *
+   * PRECEDENCE: Lower than AND, higher than assignment.
+   *
+   * WHY: Latin 'aut' (or) supported alongside '||'.
+   */
   function parseOr(): Expression {
     let left = parseAnd()
 
@@ -442,6 +776,16 @@ export function parse(tokens: Token[]): ParserResult {
     return left
   }
 
+  /**
+   * Parse logical AND expression.
+   *
+   * GRAMMAR:
+   *   and := equality ('&&' equality | 'et' equality)*
+   *
+   * PRECEDENCE: Lower than equality, higher than OR.
+   *
+   * WHY: Latin 'et' (and) supported alongside '&&'.
+   */
   function parseAnd(): Expression {
     let left = parseEquality()
 
@@ -454,6 +798,14 @@ export function parse(tokens: Token[]): ParserResult {
     return left
   }
 
+  /**
+   * Parse equality expression.
+   *
+   * GRAMMAR:
+   *   equality := comparison (('==' | '!=') comparison)*
+   *
+   * PRECEDENCE: Lower than comparison, higher than AND.
+   */
   function parseEquality(): Expression {
     let left = parseComparison()
 
@@ -467,6 +819,14 @@ export function parse(tokens: Token[]): ParserResult {
     return left
   }
 
+  /**
+   * Parse comparison expression.
+   *
+   * GRAMMAR:
+   *   comparison := additive (('<' | '>' | '<=' | '>=') additive)*
+   *
+   * PRECEDENCE: Lower than additive, higher than equality.
+   */
   function parseComparison(): Expression {
     let left = parseAdditive()
 
@@ -480,6 +840,14 @@ export function parse(tokens: Token[]): ParserResult {
     return left
   }
 
+  /**
+   * Parse additive expression.
+   *
+   * GRAMMAR:
+   *   additive := multiplicative (('+' | '-') multiplicative)*
+   *
+   * PRECEDENCE: Lower than multiplicative, higher than comparison.
+   */
   function parseAdditive(): Expression {
     let left = parseMultiplicative()
 
@@ -493,6 +861,14 @@ export function parse(tokens: Token[]): ParserResult {
     return left
   }
 
+  /**
+   * Parse multiplicative expression.
+   *
+   * GRAMMAR:
+   *   multiplicative := unary (('*' | '/' | '%') unary)*
+   *
+   * PRECEDENCE: Lower than unary, higher than additive.
+   */
   function parseMultiplicative(): Expression {
     let left = parseUnary()
 
@@ -506,6 +882,16 @@ export function parse(tokens: Token[]): ParserResult {
     return left
   }
 
+  /**
+   * Parse unary expression.
+   *
+   * GRAMMAR:
+   *   unary := ('!' | '-' | 'non' | 'exspecta' | 'novum') unary | call
+   *
+   * PRECEDENCE: Higher than binary operators, lower than call/member access.
+   *
+   * WHY: Latin 'non' (not), 'exspecta' (await), 'novum' (new).
+   */
   function parseUnary(): Expression {
     if (match("BANG") || matchKeyword("non")) {
       const position = tokens[current - 1].position
@@ -532,6 +918,12 @@ export function parse(tokens: Token[]): ParserResult {
     return parseCall()
   }
 
+  /**
+   * Parse new expression (object construction).
+   *
+   * GRAMMAR:
+   *   newExpr := 'novum' IDENTIFIER '(' argumentList ')'
+   */
   function parseNewExpression(): NewExpression {
     const position = tokens[current - 1].position
     const callee = parseIdentifier()
@@ -543,6 +935,17 @@ export function parse(tokens: Token[]): ParserResult {
     return { type: "NewExpression", callee, arguments: args, position }
   }
 
+  /**
+   * Parse call expression with postfix operators.
+   *
+   * GRAMMAR:
+   *   call := primary ('(' argumentList ')' | '.' IDENTIFIER | '[' expression ']')*
+   *
+   * PRECEDENCE: Highest (binds tightest after primary).
+   *
+   * WHY: Handles function calls, member access, and computed member access.
+   *      Left-associative via loop (obj.a.b parsed as (obj.a).b).
+   */
   function parseCall(): Expression {
     let expr = parsePrimary()
 
@@ -572,6 +975,12 @@ export function parse(tokens: Token[]): ParserResult {
     return expr
   }
 
+  /**
+   * Parse function call argument list.
+   *
+   * GRAMMAR:
+   *   argumentList := (expression (',' expression)*)?
+   */
   function parseArgumentList(): Expression[] {
     const args: Expression[] = []
 
@@ -584,6 +993,19 @@ export function parse(tokens: Token[]): ParserResult {
     return args
   }
 
+  /**
+   * Parse primary expression (literals, identifiers, grouped expressions).
+   *
+   * GRAMMAR:
+   *   primary := IDENTIFIER | NUMBER | STRING | TEMPLATE_STRING
+   *            | 'verum' | 'falsum' | 'nihil'
+   *            | '(' (expression | arrowFunction) ')'
+   *
+   * PRECEDENCE: Highest (atoms of the language).
+   *
+   * WHY: Latin literals: verum (true), falsum (false), nihil (null).
+   *      Parenthesized expressions require lookahead to distinguish from arrow functions.
+   */
   function parsePrimary(): Expression {
     const position = peek().position
 
@@ -657,6 +1079,14 @@ export function parse(tokens: Token[]): ParserResult {
     error(`Unexpected token: ${peek().value}`)
   }
 
+  /**
+   * Parse arrow function expression.
+   *
+   * GRAMMAR:
+   *   arrowFunction := '(' paramList ')' '=>' (expression | blockStmt)
+   *
+   * WHY: Called after detecting '() =>' pattern in parsePrimary.
+   */
   function parseArrowFunction(position: Position): ArrowFunctionExpression {
     const params = parseParameterList()
     expect("RPAREN", "Expected ')' after arrow function parameters")
@@ -673,11 +1103,30 @@ export function parse(tokens: Token[]): ParserResult {
     return { type: "ArrowFunctionExpression", params, body, async: false, position }
   }
 
+  /**
+   * Parse identifier.
+   *
+   * GRAMMAR:
+   *   identifier := IDENTIFIER
+   */
   function parseIdentifier(): Identifier {
     const token = expect("IDENTIFIER", "Expected identifier")
     return { type: "Identifier", name: token.value, position: token.position }
   }
 
+  // =============================================================================
+  // TYPE ANNOTATION PARSING
+  // =============================================================================
+
+  /**
+   * Parse type annotation.
+   *
+   * GRAMMAR:
+   *   typeAnnotation := IDENTIFIER ('<' typeAnnotation (',' typeAnnotation)* '>')? '?'? ('|' typeAnnotation)*
+   *
+   * WHY: Supports generics (Array<T>), nullable (?), and union types (A | B).
+   *      Union types create special 'union' type node containing all alternatives.
+   */
   function parseTypeAnnotation(): TypeAnnotation {
     const position = peek().position
     const token = expect("IDENTIFIER", "Expected type name")
@@ -712,7 +1161,16 @@ export function parse(tokens: Token[]): ParserResult {
     return { type: "TypeAnnotation", name, typeParameters, nullable, position }
   }
 
-  // Main parse
+  // =============================================================================
+  // MAIN PARSE EXECUTION
+  // =============================================================================
+
+  /**
+   * Execute the parse.
+   *
+   * ERROR RECOVERY: Top-level try-catch ensures parser never crashes.
+   *                 Returns null program on catastrophic failure.
+   */
   try {
     const program = parseProgram()
     return { program, errors }
