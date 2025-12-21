@@ -149,17 +149,17 @@ describe("keywords", () => {
     expect(isKeyword("asdfgh")).toBe(false)
   })
 
-  test("getKeyword returns JS equivalent", () => {
-    expect(getKeyword("si")?.javascript).toBe("if")
-    expect(getKeyword("esto")?.javascript).toBe("let")
-    expect(getKeyword("fixum")?.javascript).toBe("const")
-    expect(getKeyword("verum")?.javascript).toBe("true")
-    expect(getKeyword("futura")?.javascript).toBe("async")
+  test("getKeyword returns meaning", () => {
+    expect(getKeyword("si")?.meaning).toBe("if")
+    expect(getKeyword("esto")?.meaning).toBe("let")
+    expect(getKeyword("fixum")?.meaning).toBe("const")
+    expect(getKeyword("verum")?.meaning).toBe("true")
+    expect(getKeyword("futura")?.meaning).toBe("async")
   })
 
   test("getKeyword is case insensitive", () => {
-    expect(getKeyword("SI")?.javascript).toBe("if")
-    expect(getKeyword("Fixum")?.javascript).toBe("const")
+    expect(getKeyword("SI")?.meaning).toBe("if")
+    expect(getKeyword("Fixum")?.meaning).toBe("const")
   })
 })
 

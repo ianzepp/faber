@@ -1,8 +1,8 @@
 # Faber Romanus
 
-**The Roman Craftsman** — A Latin-to-JavaScript transpiler.
+**The Roman Craftsman** — A Latin programming language.
 
-Write code in Latin, compile to JavaScript. The compiler teaches Latin grammar through error messages.
+Write code in Latin, compile to JavaScript or Zig. The compiler teaches Latin grammar through error messages.
 
 ## Quick Start
 
@@ -10,20 +10,20 @@ Write code in Latin, compile to JavaScript. The compiler teaches Latin grammar t
 # Install
 bun install
 
-# Compile a .fab file
-bun run src/cli.ts compile examples/salve.fab
+# Compile a .la file
+bun run src/cli.ts compile examples/salve.la
 
 # Run directly
-bun run src/cli.ts run examples/salve.fab
+bun run src/cli.ts run examples/salve.la
 
 # Check for errors
-bun run src/cli.ts check examples/salve.fab
+bun run src/cli.ts check examples/salve.la
 ```
 
 ## Example
 
-```fab
-// salve.fab - Hello World
+```la
+// salve.la - Hello World
 
 functio salve(nomen) {
   redde "Salve, " + nomen + "!"
@@ -47,14 +47,14 @@ scribe(salve(nomen));
 
 ### Variables
 
-```fab
+```la
 esto nomen = "Marcus"      // let (mutable)
 fixum PI = 3.14159         // const (immutable)
 ```
 
 ### Functions
 
-```fab
+```la
 functio salve(nomen: Textus) -> Textus {
   redde "Salve, " + nomen
 }
@@ -67,7 +67,7 @@ futura functio fetch(url: Textus) -> Textus {
 
 ### Control Flow
 
-```fab
+```la
 si conditio {
   // if
 }
@@ -95,7 +95,7 @@ pro numero ex numeros {
 
 Any block can have a `cape` (catch) clause:
 
-```fab
+```la
 si riskyCall() {
   process()
 }
@@ -106,7 +106,7 @@ cape erratum {
 
 Explicit try/catch/finally:
 
-```fab
+```la
 tempta {
   dangerousCode()
 }
@@ -128,7 +128,7 @@ demum {
 
 ### Types
 
-```fab
+```la
 Textus          // String
 Numerus         // Number
 Bivalens        // Boolean (verum/falsum)
@@ -177,7 +177,7 @@ src/
 ├── lexicon/     # Latin vocabulary (nouns, verbs, keywords)
 ├── tokenizer/   # Source -> Tokens
 ├── parser/      # Tokens -> AST
-├── codegen/     # AST -> JavaScript
+├── codegen/     # AST -> JavaScript or Zig
 └── cli.ts       # Command-line interface
 ```
 

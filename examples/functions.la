@@ -1,0 +1,29 @@
+// Functions in Faber Romanus
+
+// Simple function
+functio salve(nomen) {
+  redde "Salve, " + nomen + "!"
+}
+
+// Function with explicit return
+functio adde(a, b) {
+  fixum summa = a + b
+  redde summa
+}
+
+// Function that calls other functions
+functio salutaOmnes() {
+  scribe(salve("Marcus"))
+  scribe(salve("Claudia"))
+  scribe(salve("Mundus"))
+}
+
+// Async function (futura)
+futura functio expectaData(url) {
+  fixum data = exspecta fetch(url)
+  redde data
+}
+
+// Call the functions
+scribe(adde(2, 3))
+salutaOmnes()

@@ -1,0 +1,23 @@
+// Variables in Faber Romanus
+
+// Mutable variable (esto -> let/var)
+esto numerus = 42
+esto nomen = "Marcus"
+
+// Immutable constant (fixum -> const)
+fixum PI = 3.14159
+fixum SALUTATIO = "Salve!"
+
+// Boolean values
+fixum veritatis = verum
+fixum falsitatis = falsum
+
+// Null
+fixum nihilum = nihil
+
+// Reassignment (only esto variables)
+numerus = 100
+nomen = "Claudius"
+
+scribe(nomen)
+scribe(numerus)

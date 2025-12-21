@@ -1,0 +1,13 @@
+// Import examples in Faber Romanus
+
+// Import specific functions from a module
+ex norma importa scribe, lege
+
+// Import everything from a module
+ex rete importa *
+
+// Use imported functions
+scribe("Salve, Mundus!")
+
+// Use namespaced access with wildcard import
+rete.mitte("http://example.com")

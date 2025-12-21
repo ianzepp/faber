@@ -1,51 +1,52 @@
 export interface KeywordEntry {
   latin: string
-  javascript: string
+  meaning: string
   category: "control" | "declaration" | "operator" | "value" | "preposition" | "modifier"
 }
 
 export const keywords: KeywordEntry[] = [
   // Control flow
-  { latin: "si", javascript: "if", category: "control" },
-  { latin: "aliter", javascript: "else", category: "control" },
-  { latin: "dum", javascript: "while", category: "control" },
-  { latin: "fac", javascript: "do", category: "control" },
-  { latin: "pro", javascript: "for", category: "control" },
-  { latin: "elige", javascript: "switch", category: "control" },
-  { latin: "quando", javascript: "case", category: "control" },
-  { latin: "rumpe", javascript: "break", category: "control" },
-  { latin: "perge", javascript: "continue", category: "control" },
-  { latin: "redde", javascript: "return", category: "control" },
-  { latin: "tempta", javascript: "try", category: "control" },
-  { latin: "cape", javascript: "catch", category: "control" },
-  { latin: "demum", javascript: "finally", category: "control" },
-  { latin: "iace", javascript: "throw", category: "control" },
-  { latin: "exspecta", javascript: "await", category: "control" },
+  { latin: "si", meaning: "if", category: "control" },
+  { latin: "aliter", meaning: "else", category: "control" },
+  { latin: "dum", meaning: "while", category: "control" },
+  { latin: "fac", meaning: "do", category: "control" },
+  { latin: "pro", meaning: "for", category: "control" },
+  { latin: "elige", meaning: "switch", category: "control" },
+  { latin: "quando", meaning: "case", category: "control" },
+  { latin: "rumpe", meaning: "break", category: "control" },
+  { latin: "perge", meaning: "continue", category: "control" },
+  { latin: "redde", meaning: "return", category: "control" },
+  { latin: "tempta", meaning: "try", category: "control" },
+  { latin: "cape", meaning: "catch", category: "control" },
+  { latin: "demum", meaning: "finally", category: "control" },
+  { latin: "iace", meaning: "throw", category: "control" },
+  { latin: "exspecta", meaning: "await", category: "control" },
 
   // Declarations
-  { latin: "esto", javascript: "let", category: "declaration" },
-  { latin: "fixum", javascript: "const", category: "declaration" },
-  { latin: "functio", javascript: "function", category: "declaration" },
-  { latin: "novum", javascript: "new", category: "declaration" },
+  { latin: "esto", meaning: "let", category: "declaration" },
+  { latin: "fixum", meaning: "const", category: "declaration" },
+  { latin: "functio", meaning: "function", category: "declaration" },
+  { latin: "novum", meaning: "new", category: "declaration" },
+  { latin: "importa", meaning: "import", category: "declaration" },
 
   // Modifiers
-  { latin: "futura", javascript: "async", category: "modifier" },
+  { latin: "futura", meaning: "async", category: "modifier" },
 
   // Operators
-  { latin: "et", javascript: "&&", category: "operator" },
-  { latin: "aut", javascript: "||", category: "operator" },
-  { latin: "non", javascript: "!", category: "operator" },
+  { latin: "et", meaning: "&&", category: "operator" },
+  { latin: "aut", meaning: "||", category: "operator" },
+  { latin: "non", meaning: "!", category: "operator" },
 
   // Values
-  { latin: "verum", javascript: "true", category: "value" },
-  { latin: "falsum", javascript: "false", category: "value" },
-  { latin: "nihil", javascript: "null", category: "value" },
+  { latin: "verum", meaning: "true", category: "value" },
+  { latin: "falsum", meaning: "false", category: "value" },
+  { latin: "nihil", meaning: "null", category: "value" },
 
   // Prepositions (used with cases)
-  { latin: "in", javascript: "in", category: "preposition" },
-  { latin: "ex", javascript: "of", category: "preposition" },
-  { latin: "cum", javascript: "with", category: "preposition" },
-  { latin: "ad", javascript: "to", category: "preposition" },
+  { latin: "in", meaning: "in", category: "preposition" },
+  { latin: "ex", meaning: "of", category: "preposition" },
+  { latin: "cum", meaning: "with", category: "preposition" },
+  { latin: "ad", meaning: "to", category: "preposition" },
 ]
 
 const keywordMap = new Map(keywords.map((k) => [k.latin, k]))

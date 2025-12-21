@@ -1,0 +1,51 @@
+// Control Flow in Faber Romanus
+
+// If statement (si)
+fixum x = 10
+
+si x > 5 {
+  scribe("x est magnus")
+}
+
+// If-else (si-aliter)
+si x > 20 {
+  scribe("x est maximus")
+}
+aliter {
+  scribe("x non est maximus")
+}
+
+// If-else if-else chain
+fixum nota = 85
+
+si nota >= 90 {
+  scribe("A")
+}
+aliter si nota >= 80 {
+  scribe("B")
+}
+aliter si nota >= 70 {
+  scribe("C")
+}
+aliter {
+  scribe("F")
+}
+
+// While loop (dum)
+esto i = 0
+dum i < 3 {
+  scribe(i)
+  i = i + 1
+}
+
+// Logical operators
+fixum a = verum
+fixum b = falsum
+
+si a et b {
+  scribe("utrumque verum")
+}
+
+si a aut b {
+  scribe("alterum verum")
+}

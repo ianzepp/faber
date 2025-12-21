@@ -3,6 +3,7 @@ import type {
   Program,
   Statement,
   Expression,
+  ImportDeclaration,
   VariableDeclaration,
   FunctionDeclaration,
   IfStatement,
@@ -132,6 +133,10 @@ export function parse(tokens: Token[]): ParserResult {
   }
 
   function parseStatement(): Statement {
+    // Import: ex norma importa scribe, lege
+    if (checkKeyword("ex")) {
+      return parseImportDeclaration()
+    }
     if (checkKeyword("esto") || checkKeyword("fixum")) {
       return parseVariableDeclaration()
     }
@@ -161,6 +166,30 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     return parseExpressionStatement()
+  }
+
+  function parseImportDeclaration(): ImportDeclaration {
+    const position = peek().position
+    expectKeyword("ex", "Expected 'ex'")
+
+    // Module name
+    const sourceToken = expect("IDENTIFIER", "Expected module name after 'ex'")
+    const source = sourceToken.value
+
+    expectKeyword("importa", "Expected 'importa' after module name")
+
+    // Check for wildcard: ex norma importa *
+    if (match("STAR")) {
+      return { type: "ImportDeclaration", source, specifiers: [], wildcard: true, position }
+    }
+
+    // Parse comma-separated identifiers
+    const specifiers: Identifier[] = []
+    do {
+      specifiers.push(parseIdentifier())
+    } while (match("COMMA"))
+
+    return { type: "ImportDeclaration", source, specifiers, wildcard: false, position }
   }
 
   function parseVariableDeclaration(): VariableDeclaration {

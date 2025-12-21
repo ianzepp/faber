@@ -14,6 +14,7 @@ export interface Program extends BaseNode {
 
 // Statements
 export type Statement =
+  | ImportDeclaration
   | VariableDeclaration
   | FunctionDeclaration
   | ExpressionStatement
@@ -24,6 +25,13 @@ export type Statement =
   | BlockStatement
   | ThrowStatement
   | TryStatement
+
+export interface ImportDeclaration extends BaseNode {
+  type: "ImportDeclaration"
+  source: string  // module name (e.g., "norma")
+  specifiers: Identifier[]  // imported names (e.g., [scribe, lege])
+  wildcard: boolean  // ex norma importa *
+}
 
 export interface VariableDeclaration extends BaseNode {
   type: "VariableDeclaration"

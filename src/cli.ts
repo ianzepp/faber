@@ -2,35 +2,39 @@
 
 import { tokenize } from "./tokenizer"
 import { parse } from "./parser"
-import { generate } from "./codegen"
+import { generate, type CodegenTarget } from "./codegen"
 
 const args = process.argv.slice(2)
 
 function printUsage() {
   console.log(`
 Faber Romanus - The Roman Craftsman
-A Latin-to-JavaScript transpiler
+A Latin programming language
 
 Usage:
   faber <command> [options] <file>
 
 Commands:
-  compile <file.fab>     Compile .fab file to JavaScript
-  run <file.fab>         Compile and execute
-  check <file.fab>       Check for errors without compiling
+  compile <file.la>     Compile .la file to target language
+  run <file.la>         Compile and execute (TS target only)
+  check <file.la>       Check for errors without compiling
 
 Options:
+  -t, --target <lang>    Target language: ts (default), zig
   -o, --output <file>    Output file (default: stdout)
   -h, --help             Show this help
   -v, --version          Show version
 
-Example:
-  faber compile hello.fab -o hello.js
-  faber run hello.fab
+Examples:
+  faber compile hello.la                    # Compile to TS (stdout)
+  faber compile hello.la -o hello.ts        # Compile to TS file
+  faber compile hello.la --target zig       # Compile to Zig (stdout)
+  faber compile hello.la -t zig -o hello.zig
+  faber run hello.la                        # Compile to TS and execute
 `)
 }
 
-async function compile(inputFile: string, outputFile?: string) {
+async function compile(inputFile: string, target: CodegenTarget, outputFile?: string): Promise<string> {
   const source = await Bun.file(inputFile).text()
 
   // Tokenize
@@ -59,25 +63,25 @@ async function compile(inputFile: string, outputFile?: string) {
   }
 
   // Generate
-  const js = generate(program)
+  const output = generate(program, { target })
 
   if (outputFile) {
-    await Bun.write(outputFile, js)
-    console.log(`Compiled: ${inputFile} -> ${outputFile}`)
+    await Bun.write(outputFile, output)
+    console.log(`Compiled: ${inputFile} -> ${outputFile} (${target})`)
   }
   else {
-    console.log(js)
+    console.log(output)
   }
 
-  return js
+  return output
 }
 
 async function run(inputFile: string) {
-  const js = await compile(inputFile)
+  const ts = await compile(inputFile, "ts")
 
-  // Execute the generated JS
+  // Execute the generated TS (Bun runs TS natively)
   try {
-    const fn = new Function(js)
+    const fn = new Function(ts)  // Bun can execute TS directly
     fn()
   }
   catch (err) {
@@ -95,10 +99,10 @@ async function check(inputFile: string) {
   const allErrors = [...tokenErrors, ...parseErrors]
 
   if (allErrors.length === 0) {
-    console.log(`✓ ${inputFile}: No errors`)
+    console.log(`${inputFile}: No errors`)
   }
   else {
-    console.log(`✗ ${inputFile}: ${allErrors.length} error(s)`)
+    console.log(`${inputFile}: ${allErrors.length} error(s)`)
     for (const err of allErrors) {
       console.log(`  ${err.position.line}:${err.position.column} - ${err.message}`)
     }
@@ -115,17 +119,26 @@ if (!command || command === "-h" || command === "--help") {
 }
 
 if (command === "-v" || command === "--version") {
-  console.log("Faber Romanus v0.1.0")
+  console.log("Faber Romanus v0.2.0")
   process.exit(0)
 }
 
 const inputFile = args[1]
 let outputFile: string | undefined
+let target: CodegenTarget = "ts"
 
 // Parse options
 for (let i = 2; i < args.length; i++) {
   if (args[i] === "-o" || args[i] === "--output") {
     outputFile = args[++i]
+  }
+  else if (args[i] === "-t" || args[i] === "--target") {
+    const t = args[++i]
+    if (t !== "ts" && t !== "zig") {
+      console.error(`Error: Unknown target '${t}'. Valid targets: ts, zig`)
+      process.exit(1)
+    }
+    target = t
   }
 }
 
@@ -137,9 +150,13 @@ if (!inputFile) {
 
 switch (command) {
   case "compile":
-    await compile(inputFile, outputFile)
+    await compile(inputFile, target, outputFile)
     break
   case "run":
+    if (target !== "ts") {
+      console.error("Error: 'run' command only works with TS target")
+      process.exit(1)
+    }
     await run(inputFile)
     break
   case "check":

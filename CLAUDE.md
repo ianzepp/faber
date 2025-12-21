@@ -12,7 +12,7 @@ A Latin-to-JavaScript transpiler. "The Roman Craftsman."
 
 - Runtime: Bun
 - Language: TypeScript
-- Target: JavaScript/ES modules
+- Targets: TypeScript (default), Zig
 
 ## Commands
 
