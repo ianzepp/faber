@@ -431,7 +431,7 @@ module.exports = grammar({
     )),
 
     await_expression: $ => prec.right(PREC.UNARY, seq(
-      "exspecta",
+      "cede",
       $._expression,
     )),
 

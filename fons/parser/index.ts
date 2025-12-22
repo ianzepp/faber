@@ -51,7 +51,7 @@
  *   comparison     := additive (('<' | '>' | '<=' | '>=') additive)*
  *   additive       := multiplicative (('+' | '-') multiplicative)*
  *   multiplicative := unary (('*' | '/' | '%') unary)*
- *   unary          := ('!' | '-' | 'non' | 'exspecta' | 'novum') unary | call
+ *   unary          := ('!' | '-' | 'non' | 'cede' | 'novum') unary | call
  *   call           := primary ('(' args ')' | '.' IDENTIFIER | '[' expr ']')*
  *   primary        := IDENTIFIER | NUMBER | STRING | TEMPLATE_STRING
  *                   | 'verum' | 'falsum' | 'nihil' | '(' expression ')'
@@ -1493,12 +1493,12 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse unary expression.
      *
      * GRAMMAR:
-     *   unary := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'exspecta' | 'novum') unary | call
+     *   unary := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'cede' | 'novum') unary | call
      *
      * PRECEDENCE: Higher than binary operators, lower than call/member access.
      *
      * WHY: Latin 'non' (not), 'nulla' (none/empty), 'nonnulla' (some/non-empty),
-     *      'exspecta' (await), 'novum' (new).
+     *      'cede' (await), 'novum' (new).
      */
     function parseUnary(): Expression {
         if (match('BANG') || matchKeyword('non')) {
@@ -1535,7 +1535,7 @@ export function parse(tokens: Token[]): ParserResult {
             };
         }
 
-        if (matchKeyword('exspecta')) {
+        if (matchKeyword('cede')) {
             const position = tokens[current - 1].position;
             const argument = parseUnary();
 

@@ -193,7 +193,7 @@ export interface VariableDeclaration extends BaseNode {
  *
  * Examples:
  *   functio salve(nomen: Textus) -> Textus { ... }
- *   futura functio exspecta() { ... }
+ *   futura functio cede() { ... }
  */
 export interface FunctionDeclaration extends BaseNode {
     type: 'FunctionDeclaration';
@@ -840,11 +840,11 @@ export interface ConditionalExpression extends BaseNode {
  * Await expression.
  *
  * GRAMMAR (in EBNF):
- *   awaitExpr := 'exspecta' expression
+ *   awaitExpr := 'cede' expression
  *
  * INVARIANT: argument is never null.
  *
- * WHY: Latin 'exspecta' (to wait for) for async/await.
+ * WHY: Latin 'cede' (to wait for) for async/await.
  */
 export interface AwaitExpression extends BaseNode {
     type: 'AwaitExpression';

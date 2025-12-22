@@ -298,8 +298,8 @@ describe('parser', () => {
     });
 
     describe('await expression', () => {
-        test('exspecta', () => {
-            const { program } = parseCode('exspecta fetch(url)');
+        test('cede', () => {
+            const { program } = parseCode('cede fetch(url)');
             const expr = (program!.body[0] as any).expression;
 
             expect(expr.type).toBe('AwaitExpression');

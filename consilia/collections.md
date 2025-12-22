@@ -242,8 +242,8 @@ lista.filtra({ .activus })     // filter in place
 fixum nova = lista.filtrata({ .activus })  // new filtered list
 
 // Async operations
-exspecta lista.addet(x)        // mutate eventually
-fixum nova = exspecta lista.additura(x)  // new list eventually
+cede lista.addet(x)        // mutate eventually
+fixum nova = cede lista.additura(x)  // new list eventually
 ```
 
 **Participle agreement:** Feminine endings (`-a`) agree with `lista`, `tabula`, `copia`.

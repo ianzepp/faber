@@ -66,7 +66,7 @@
 "cum" @keyword
 "adfirma" @keyword
 "scribe" @keyword.function
-"exspecta" @keyword.control
+"cede" @keyword.control
 
 ; ==============================================================================
 ; Literals

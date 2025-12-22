@@ -806,7 +806,7 @@ function printAwaitExpression(
     options: FaberOptions,
     print: (path: AstPath<AstNode>) => Doc,
 ): Doc {
-    return ['exspecta ', path.call(print, 'argument')];
+    return ['cede ', path.call(print, 'argument')];
 }
 
 function printNewExpression(

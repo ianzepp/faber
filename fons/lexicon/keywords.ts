@@ -92,7 +92,7 @@ export const keywords: KeywordEntry[] = [
     { latin: 'demum', meaning: 'finally', category: 'control' },
     { latin: 'iace', meaning: 'throw', category: 'control' },
     { latin: 'scribe', meaning: 'print', category: 'control' },
-    { latin: 'exspecta', meaning: 'await', category: 'control' },
+    { latin: 'cede', meaning: 'await', category: 'control' },
 
     // ---------------------------------------------------------------------------
     // Declarations

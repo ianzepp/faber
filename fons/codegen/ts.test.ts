@@ -179,8 +179,8 @@ describe('codegen', () => {
     });
 
     describe('special expressions', () => {
-        test('exspecta -> await', () => {
-            const js = compile('exspecta fetch(url)');
+        test('cede -> await', () => {
+            const js = compile('cede fetch(url)');
 
             expect(js).toBe('await fetch(url);');
         });

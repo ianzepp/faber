@@ -25,9 +25,9 @@
 //     functio omnesStabiles(lista<promissum<T>> promissa) -> promissum<lista<T>> { ... } // allSettled
 // }
 //
-// Usage with futura/exspecta:
+// Usage with futura/cede:
 //
 // futura functio fetchData(textus url) -> promissum<textus> {
-//     fixum response = exspecta fetch(url)
+//     fixum response = cede fetch(url)
 //     redde response.text()
 // }

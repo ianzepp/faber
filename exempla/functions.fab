@@ -26,7 +26,7 @@ functio salutaOmnes() {
 
 // Async functions use futura keyword
 // futura functio fetchData(url) -> Textus {
-// fixum data = exspecta fetch(url)
+// fixum data = cede fetch(url)
 // redde data
 // }
 

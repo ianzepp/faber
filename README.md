@@ -96,7 +96,7 @@ functio adde(Numerus a, Numerus b) -> Numerus {
 
 // Async function
 futura functio fetch(url) -> Textus {
-  redde exspecta getData(url)
+  redde cede getData(url)
 }
 ```
 
@@ -310,7 +310,7 @@ fixum Lista<Numerus> items = [1, 2, 3]
 | `demum` | `finally` | control |
 | `iace` | `throw` | control |
 | `scribe` | `console.log` | I/O |
-| `exspecta` | `await` | async |
+| `cede` | `await` | async |
 | `novum` | `new` | expression |
 | `cum` | (with) | block |
 | `verum` | `true` | value |
