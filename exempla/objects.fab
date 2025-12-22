@@ -5,8 +5,13 @@
 // - Property access: obj.key
 // - Destructuring: fixum { a, b } = obj
 // - With blocks: cum obj { ... }
+// - Genus (struct): genus name { fields, methods }
 
-// Object literal
+// =============================================================================
+// OBJECT LITERALS
+// =============================================================================
+
+// Object literal - anonymous structure
 fixum persona = { nomen: "Marcus", aetas: 30, activus: verum }
 
 scribe persona.nomen
@@ -35,3 +40,51 @@ cum config {
 
 scribe config.host
 scribe config.port
+
+// =============================================================================
+// GENUS (STRUCT) - PARSING ONLY
+// =============================================================================
+// Note: genus parsing works, but instantiation (novum...cum) and
+// self-reference (ego) are not yet implemented in codegen.
+
+// Basic genus - fields without defaults (all required)
+genus punctum {
+    numerus x
+    numerus y
+}
+
+// Genus with default field values (use : not =)
+// The colon means "has value" - declarative specification
+// The equals sign means "assign" - imperative action
+genus civis {
+    textus nomen: "Incognitus"
+    numerus aetas: 0
+    bivalens activus: verum
+}
+
+// Genus with methods
+genus salutator {
+    textus nomen: "Mundus"
+
+    functio saluta() -> textus {
+        redde "Salve!"
+    }
+}
+
+// Mixed required and optional fields
+genus liber {
+    textus titulus              // required - no default
+    textus auctor               // required - no default
+    numerus annus: 0            // optional - defaults to 0
+    bivalens lectus: falsum     // optional - defaults to falsum
+}
+
+// =============================================================================
+// PLANNED: INSTANTIATION SYNTAX
+// =============================================================================
+// When novum...cum and ego are implemented:
+//
+//   fixum p1 = novum civis                              // all defaults
+//   fixum p2 = novum civis cum { nomen: "Claudia" }     // override one field
+//   fixum s = novum salutator cum { nomen: "Roma" }
+//   scribe s.saluta()  // "Salve, Roma!"

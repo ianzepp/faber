@@ -862,7 +862,7 @@ export function parse(tokens: Token[]): ParserResult {
      *
      * GRAMMAR:
      *   genusMember := fieldDecl | methodDecl
-     *   fieldDecl := 'publicus'? 'generis'? typeAnnotation IDENTIFIER ('=' expression)?
+     *   fieldDecl := 'publicus'? 'generis'? typeAnnotation IDENTIFIER (':' expression)?
      *   methodDecl := 'publicus'? 'generis'? 'futura'? 'functio' ...
      *
      * WHY: Distinguishes between fields and methods by looking for 'functio' keyword.
@@ -918,13 +918,15 @@ export function parse(tokens: Token[]): ParserResult {
             };
         }
 
-        // Otherwise it's a field: type name (= init)?
+        // Otherwise it's a field: type name (: default)?
         const fieldType = parseTypeAnnotation();
         const fieldName = parseIdentifier();
 
         let init: Expression | undefined;
 
-        if (match('EQUAL')) {
+        // WHY: Field defaults use ':' (declarative "has value") not '=' (imperative "assign")
+        // This aligns with object literal syntax: { nomen: "Marcus" }
+        if (match('COLON')) {
             init = parseExpression();
         }
 

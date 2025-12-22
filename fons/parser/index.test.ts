@@ -390,7 +390,7 @@ describe('parser', () => {
         });
 
         test('genus with default field value', () => {
-            const { program } = parseCode('genus persona { numerus aetas = 0 }');
+            const { program } = parseCode('genus persona { numerus aetas: 0 }');
             const genus = program!.body[0] as any;
 
             expect(genus.fields[0].init.value).toBe(0);
@@ -404,7 +404,7 @@ describe('parser', () => {
         });
 
         test('genus with static field', () => {
-            const { program } = parseCode('genus math { generis numerus PI = 3 }');
+            const { program } = parseCode('genus math { generis numerus PI: 3 }');
             const genus = program!.body[0] as any;
 
             expect(genus.fields[0].isStatic).toBe(true);

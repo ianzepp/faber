@@ -1,5 +1,29 @@
 # Types Design
 
+## Implementation Status
+
+### Implemented
+
+- `genus` declaration with fields and methods
+- Field defaults using `:` syntax
+- Field visibility (`publicus`)
+- Static members (`generis`)
+- Type parameters (`genus capsa<T>`)
+- `pactum` declaration
+- `implet` for interface implementation
+- Methods in genus (without `ego`)
+
+### Not Yet Implemented
+
+- `ego` (self-reference in methods)
+- `novum Type` without parentheses
+- `novum Type cum { ... }` field override syntax
+- `creo` constructor function
+- Value semantics (copy on assign)
+- Computed properties
+
+---
+
 ## Core Concepts
 
 | Faber | Closest analog | Description |
@@ -34,18 +58,29 @@ genus persona {
 
 ### Default Field Values
 
-Fields can have defaults in their declaration:
+Fields can have defaults in their declaration using `:` (colon):
 
 ```
 genus persona {
-    textus nomen = "Incognitus"
-    numerus aetas = 0
-    bivalens activus = verum
+    textus nomen: "Incognitus"
+    numerus aetas: 0
+    bivalens activus: verum
 }
 
 fixum p = novum persona  // uses all defaults
 fixum q = novum persona cum { nomen: "Marcus" }  // override nomen only
 ```
+
+**Why `:` not `=`?**
+
+The colon means "has the value of" — a declarative specification. The equals sign means "assign this value" — an imperative action.
+
+| Syntax | Meaning | Context |
+|--------|---------|---------|
+| `:` | "has value" / "defaults to" | Field defaults, object literals, construction |
+| `=` | "assign value" | Variable binding, reassignment, method bodies |
+
+This aligns field defaults with object literal syntax (`{ nomen: "Marcus" }`) and construction overrides (`cum { nomen: "Marcus" }`), creating a consistent "property specification" form throughout the language.
 
 ### Naming
 

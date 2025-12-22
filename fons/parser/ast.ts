@@ -254,19 +254,21 @@ export interface TypeAliasDeclaration extends BaseNode {
  * Field declaration within a genus.
  *
  * GRAMMAR (in EBNF):
- *   fieldDecl := 'publicus'? 'generis'? typeAnnotation IDENTIFIER ('=' expression)?
+ *   fieldDecl := 'publicus'? 'generis'? typeAnnotation IDENTIFIER (':' expression)?
  *
  * INVARIANT: typeAnnotation uses Latin word order (type before name).
  * INVARIANT: isPublic defaults to false (private by default).
  * INVARIANT: isStatic is true when 'generis' modifier present.
  *
  * WHY: Latin word order places type before name (e.g., "textus nomen" not "nomen: textus").
+ * WHY: Field defaults use ':' (declarative "has value") not '=' (imperative "assign").
+ *      This aligns with object literal syntax: { nomen: "Marcus" }
  *
  * Examples:
  *   textus nomen                    -> private field
  *   publicus textus nomen           -> public field
- *   numerus aetas = 0               -> field with default
- *   generis fixum PI = 3.14159      -> static constant
+ *   numerus aetas: 0                -> field with default
+ *   generis fixum PI: 3.14159       -> static constant
  */
 export interface FieldDeclaration extends BaseNode {
     type: 'FieldDeclaration';
