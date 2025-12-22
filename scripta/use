@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Switch active faber binary
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+if [[ $# -ne 1 ]]; then
+    echo "Usage: bun run use <version|opus>"
+    echo ""
+    echo "Examples:"
+    echo "  bun run use opus    # Use dev build (opus/faber)"
+    echo "  bun run use 0.2.0   # Use release (editiones/faber-0.2.0)"
+    echo ""
+    echo "Available releases:"
+    ls -1 editiones/faber-* 2>/dev/null | sed 's|editiones/faber-||' || echo "  (none)"
+    exit 1
+fi
+
+TARGET="$1"
+
+if [[ "$TARGET" == "opus" || "$TARGET" == "dev" ]]; then
+    if [[ ! -f opus/faber ]]; then
+        echo "Error: opus/faber not found. Run 'bun run build' first."
+        exit 1
+    fi
+    SOURCE="opus/faber"
+else
+    SOURCE="editiones/faber-${TARGET}"
+    if [[ ! -f "$SOURCE" ]]; then
+        echo "Error: $SOURCE not found"
+        echo ""
+        echo "Available releases:"
+        ls -1 editiones/faber-* 2>/dev/null | sed 's|editiones/faber-||' || echo "  (none)"
+        exit 1
+    fi
+fi
+
+rm -f faber
+ln -s "$SOURCE" faber
+echo "Active: $(readlink faber)"
