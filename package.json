@@ -8,7 +8,7 @@
     "faber": "./fons/cli.ts"
   },
   "scripts": {
-    "build": "bun build ./fons/cli.ts --outfile=opus/faber.js --target=node",
+    "build": "bun build ./fons/cli.ts --compile --outfile=opus/faber",
     "test": "bun test",
     "check": "bun run fons/cli.ts check",
     "lint": "eslint fons",

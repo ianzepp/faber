@@ -4,7 +4,9 @@ node_modules
 # output
 out
 dist
+opus/
 *.tgz
+*.bun-build
 
 # code coverage
 coverage
