@@ -84,6 +84,37 @@ async function main() {
         }
     }
 
+    // Compile Zig output
+    if (targets.includes('zig')) {
+        console.log('Compiling Zig...');
+        const zigDir = join(OUTPUT, 'zig');
+        const zigFiles = (await readdir(zigDir)).filter(f => f.endsWith('.zig'));
+        let zigFailed = 0;
+
+        for (const file of zigFiles) {
+            const name = basename(file, '.zig');
+            const input = join(zigDir, file);
+            const output = join(zigDir, name);
+
+            try {
+                await $`zig build-exe ${input} -femit-bin=${output}`.quiet();
+                console.log(`  ${file}: OK`);
+            }
+            catch (err: any) {
+                console.error(`  ${file}: FAILED`);
+                const errText = err.stderr?.toString() || '';
+                // Show first error only
+                const firstError = errText.split('\n').slice(0, 3).join('\n');
+                if (firstError) console.error(`    ${firstError}`);
+                zigFailed++;
+            }
+        }
+
+        if (zigFailed > 0) {
+            console.log(`\n${zigFailed}/${zigFiles.length} Zig file(s) failed to compile.`);
+        }
+    }
+
     console.log('Done.');
 }
 
