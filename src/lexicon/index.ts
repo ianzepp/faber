@@ -264,11 +264,14 @@ export function parseType(word: string): ParsedType[] | LexiconError {
     // Track best match for error reporting
     let bestMatch: { stem: string; ending: string } | null = null;
 
-    // WHY: Case-sensitive stem matching preserves TitleCase convention for types
+    // WHY: Normalize to lowercase for case-insensitive matching
+    //      (Latin had no case distinction, so textus/Textus/TEXTUS all work)
+    const lowerWord = word.toLowerCase();
+
     for (const typeEntry of builtinTypes) {
-        // EDGE: Check alternate nominative forms first (e.g., Tempus for Tempor-)
+        // EDGE: Check alternate nominative forms first (e.g., tempus for tempor-)
         //       3rd declension neuters have nominatives that differ from stems
-        if (typeEntry.nominative && word === typeEntry.nominative) {
+        if (typeEntry.nominative && lowerWord === typeEntry.nominative) {
             return [
                 {
                     stem: typeEntry.stem,
@@ -283,12 +286,12 @@ export function parseType(word: string): ParsedType[] | LexiconError {
             ];
         }
 
-        if (!word.startsWith(typeEntry.stem)) {
+        if (!lowerWord.startsWith(typeEntry.stem)) {
             continue;
         }
 
-        // WHY: Endings are lowercase in declension tables, but stem is TitleCase
-        const ending = word.slice(typeEntry.stem.length).toLowerCase();
+        // WHY: Both word and stem are now lowercase
+        const ending = lowerWord.slice(typeEntry.stem.length);
         const endingsTable = getEndingsForDeclension(typeEntry.declension, typeEntry.gender);
 
         if (!endingsTable) {

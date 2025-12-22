@@ -74,78 +74,81 @@ export interface TypeEntry extends NounEntry {
  *
  * WHY: Organized by category (primitives, collections, etc.) for clarity.
  *      Each type's gender and declension chosen for linguistic appropriateness.
+ *
+ * CASE: Stems are lowercase (canonical form). Lookup is case-insensitive,
+ *       so "textus", "Textus", and "TEXTUS" all resolve to the same type.
  */
 export const builtinTypes: TypeEntry[] = [
     // ---------------------------------------------------------------------------
     // Primitives
     // ---------------------------------------------------------------------------
 
-    // WHY: Textus (4th decl masculine) - "texture, fabric, text"
+    // WHY: textus (4th decl masculine) - "texture, fabric, text"
     {
-        stem: 'Text',
+        stem: 'text',
         declension: 4,
         gender: 'masculine',
         meaning: 'text/string',
         jsType: 'string',
         category: 'primitive',
     },
-    // WHY: Numerus (2nd decl masculine) - "number, count"
+    // WHY: numerus (2nd decl masculine) - "number, count"
     {
-        stem: 'Numer',
+        stem: 'numer',
         declension: 2,
         gender: 'masculine',
         meaning: 'number',
         jsType: 'number',
         category: 'primitive',
     },
-    // WHY: Bivalens (3rd decl masculine) - "two-valued, having two values"
+    // WHY: bivalens (3rd decl masculine) - "two-valued, having two values"
     {
-        stem: 'Bivalen',
+        stem: 'bivalen',
         declension: 3,
         gender: 'masculine',
         meaning: 'boolean',
         jsType: 'boolean',
         category: 'primitive',
     },
-    // WHY: Fractus (2nd decl masculine) - "broken, fractional" (floating point)
+    // WHY: fractus (2nd decl masculine) - "broken, fractional" (floating point)
     {
-        stem: 'Fract',
+        stem: 'fract',
         declension: 2,
         gender: 'masculine',
         meaning: 'floating point',
         jsType: 'number',
         category: 'primitive',
     },
-    // WHY: Decimus (2nd decl masculine) - "tenth, decimal"
+    // WHY: decimus (2nd decl masculine) - "tenth, decimal"
     {
-        stem: 'Decim',
+        stem: 'decim',
         declension: 2,
         gender: 'masculine',
         meaning: 'decimal',
         jsType: 'Decimal',
         category: 'primitive',
     },
-    // WHY: Signum (2nd decl neuter) - "sign, mark, token"
+    // WHY: signum (2nd decl neuter) - "sign, mark, token"
     {
-        stem: 'Sign',
+        stem: 'sign',
         declension: 2,
         gender: 'neuter',
         meaning: 'symbol',
         jsType: 'symbol',
         category: 'primitive',
     },
-    // WHY: Incertum (2nd decl neuter) - "uncertain, undefined"
+    // WHY: incertum (2nd decl neuter) - "uncertain, undefined"
     {
-        stem: 'Incert',
+        stem: 'incert',
         declension: 2,
         gender: 'neuter',
         meaning: 'undefined',
         jsType: 'undefined',
         category: 'primitive',
     },
-    // WHY: Nihil (irregular neuter) - "nothing, null"
+    // WHY: nihil (irregular neuter) - "nothing, null"
     {
-        stem: 'Nihil',
+        stem: 'nihil',
         declension: 3,
         gender: 'neuter',
         meaning: 'null',
@@ -157,9 +160,9 @@ export const builtinTypes: TypeEntry[] = [
     // Collections (Generic)
     // ---------------------------------------------------------------------------
 
-    // WHY: Lista (1st decl feminine) - "list, edge, border" (feminine for containers)
+    // WHY: lista (1st decl feminine) - "list, edge, border" (feminine for containers)
     {
-        stem: 'List',
+        stem: 'list',
         declension: 1,
         gender: 'feminine',
         meaning: 'list/array',
@@ -167,9 +170,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'collection',
         generic: true,
     },
-    // WHY: Tabula (1st decl feminine) - "board, tablet, table"
+    // WHY: tabula (1st decl feminine) - "board, tablet, table"
     {
-        stem: 'Tabul',
+        stem: 'tabul',
         declension: 1,
         gender: 'feminine',
         meaning: 'table/map',
@@ -177,9 +180,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'collection',
         generic: true,
     },
-    // WHY: Copia (1st decl feminine) - "abundance, supply, collection"
+    // WHY: copia (1st decl feminine) - "abundance, supply, collection"
     {
-        stem: 'Copi',
+        stem: 'copi',
         declension: 1,
         gender: 'feminine',
         meaning: 'set/collection',
@@ -192,9 +195,9 @@ export const builtinTypes: TypeEntry[] = [
     // Structural Types
     // ---------------------------------------------------------------------------
 
-    // WHY: Promissum (2nd decl neuter) - "promise, guarantee" (neuter for abstract concepts)
+    // WHY: promissum (2nd decl neuter) - "promise, guarantee" (neuter for abstract concepts)
     {
-        stem: 'Promiss',
+        stem: 'promiss',
         declension: 2,
         gender: 'neuter',
         meaning: 'promise',
@@ -202,9 +205,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'structural',
         generic: true,
     },
-    // WHY: Forsitan (adverb as type) - "perhaps, maybe" (optional type)
+    // WHY: forsitan (adverb as type) - "perhaps, maybe" (optional type)
     {
-        stem: 'Forsitan',
+        stem: 'forsitan',
         declension: 3,
         gender: 'neuter',
         meaning: 'optional',
@@ -212,9 +215,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'structural',
         generic: true,
     },
-    // WHY: Fors (3rd decl feminine) - "chance, fortune" (result type)
+    // WHY: fors (3rd decl feminine) - "chance, fortune" (result type)
     {
-        stem: 'For',
+        stem: 'for',
         declension: 3,
         gender: 'feminine',
         meaning: 'result',
@@ -222,47 +225,47 @@ export const builtinTypes: TypeEntry[] = [
         category: 'structural',
         generic: true,
     },
-    // WHY: Tempus (3rd decl neuter) - "time, period"
+    // WHY: tempus (3rd decl neuter) - "time, period"
     //      Nominative differs from stem (tempus vs tempor-)
     {
-        stem: 'Tempor',
-        nominative: 'Tempus',
+        stem: 'tempor',
+        nominative: 'tempus',
         declension: 3,
         gender: 'neuter',
         meaning: 'time/date',
         jsType: 'Date',
         category: 'structural',
     },
-    // WHY: Erratum (2nd decl neuter) - "error, mistake" (neuter participle)
+    // WHY: erratum (2nd decl neuter) - "error, mistake" (neuter participle)
     {
-        stem: 'Errat',
+        stem: 'errat',
         declension: 2,
         gender: 'neuter',
         meaning: 'error',
         jsType: 'Error',
         category: 'structural',
     },
-    // WHY: Vacuum (2nd decl neuter) - "empty space, void"
+    // WHY: vacuum (2nd decl neuter) - "empty space, void"
     {
-        stem: 'Vacu',
+        stem: 'vacu',
         declension: 2,
         gender: 'neuter',
         meaning: 'void/empty',
         jsType: 'void',
         category: 'structural',
     },
-    // WHY: Quodlibet (3rd decl neuter) - "whatever you please, anything"
+    // WHY: quodlibet (3rd decl neuter) - "whatever you please, anything"
     {
-        stem: 'Quodlibet',
+        stem: 'quodlibet',
         declension: 3,
         gender: 'neuter',
         meaning: 'any',
         jsType: 'any',
         category: 'structural',
     },
-    // WHY: Ignotum (2nd decl neuter) - "unknown, unfamiliar"
+    // WHY: ignotum (2nd decl neuter) - "unknown, unfamiliar"
     {
-        stem: 'Ignot',
+        stem: 'ignot',
         declension: 2,
         gender: 'neuter',
         meaning: 'unknown',
@@ -274,9 +277,9 @@ export const builtinTypes: TypeEntry[] = [
     // Iteration & Streaming
     // ---------------------------------------------------------------------------
 
-    // WHY: Cursor (3rd decl masculine) - "runner, iterator" (agent noun, masculine)
+    // WHY: cursor (3rd decl masculine) - "runner, iterator" (agent noun, masculine)
     {
-        stem: 'Cursor',
+        stem: 'cursor',
         declension: 3,
         gender: 'masculine',
         meaning: 'cursor/iterator',
@@ -284,9 +287,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'iteration',
         generic: true,
     },
-    // WHY: Fluxus (4th decl masculine) - "flow, stream, flux"
+    // WHY: fluxus (4th decl masculine) - "flow, stream, flux"
     {
-        stem: 'Flux',
+        stem: 'flux',
         declension: 4,
         gender: 'masculine',
         meaning: 'flow/stream',
@@ -294,9 +297,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'iteration',
         generic: true,
     },
-    // WHY: FuturaCursor (compound) - "future iterator" (async iterator)
+    // WHY: futuracursor (compound) - "future iterator" (async iterator)
     {
-        stem: 'FuturaCursor',
+        stem: 'futuracursor',
         declension: 3,
         gender: 'masculine',
         meaning: 'async iterator',
@@ -304,9 +307,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'iteration',
         generic: true,
     },
-    // WHY: FuturusFluxus (compound) - "future stream" (async stream)
+    // WHY: futurusfluxus (compound) - "future stream" (async stream)
     {
-        stem: 'FuturusFlux',
+        stem: 'futurusflux',
         declension: 4,
         gender: 'masculine',
         meaning: 'async stream',
@@ -319,9 +322,9 @@ export const builtinTypes: TypeEntry[] = [
     // Systems Types (Zig/WASM targets)
     // ---------------------------------------------------------------------------
 
-    // WHY: Indicium (2nd decl neuter) - "indication, pointer"
+    // WHY: indicium (2nd decl neuter) - "indication, pointer"
     {
-        stem: 'Indici',
+        stem: 'indici',
         declension: 2,
         gender: 'neuter',
         meaning: 'pointer',
@@ -329,9 +332,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'structural',
         generic: true,
     },
-    // WHY: Refera (1st decl feminine) - "reference" (from refero - to refer back)
+    // WHY: refera (1st decl feminine) - "reference" (from refero - to refer back)
     {
-        stem: 'Refer',
+        stem: 'refer',
         declension: 1,
         gender: 'feminine',
         meaning: 'reference',
@@ -344,9 +347,9 @@ export const builtinTypes: TypeEntry[] = [
     // Utility Types (TypeScript only)
     // ---------------------------------------------------------------------------
 
-    // WHY: Pars (3rd decl feminine) - "part, portion" (Partial<T>)
+    // WHY: pars (3rd decl feminine) - "part, portion" (Partial<T>)
     {
-        stem: 'Par',
+        stem: 'par',
         declension: 3,
         gender: 'feminine',
         meaning: 'partial',
@@ -354,9 +357,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'structural',
         generic: true,
     },
-    // WHY: Totum (2nd decl neuter) - "whole, total" (Required<T>)
+    // WHY: totum (2nd decl neuter) - "whole, total" (Required<T>)
     {
-        stem: 'Tot',
+        stem: 'tot',
         declension: 2,
         gender: 'neuter',
         meaning: 'required',
@@ -364,9 +367,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'structural',
         generic: true,
     },
-    // WHY: Lectum (2nd decl neuter) - "read, chosen" (Readonly<T>)
+    // WHY: lectum (2nd decl neuter) - "read, chosen" (Readonly<T>)
     {
-        stem: 'Lect',
+        stem: 'lect',
         declension: 2,
         gender: 'neuter',
         meaning: 'readonly',
@@ -374,9 +377,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'structural',
         generic: true,
     },
-    // WHY: Registrum (2nd decl neuter) - "record, registry" (Record<K, V>)
+    // WHY: registrum (2nd decl neuter) - "record, registry" (Record<K, V>)
     {
-        stem: 'Registr',
+        stem: 'registr',
         declension: 2,
         gender: 'neuter',
         meaning: 'record',
@@ -384,9 +387,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'structural',
         generic: true,
     },
-    // WHY: Selectum (2nd decl neuter) - "selected, picked" (Pick<T, K>)
+    // WHY: selectum (2nd decl neuter) - "selected, picked" (Pick<T, K>)
     {
-        stem: 'Select',
+        stem: 'select',
         declension: 2,
         gender: 'neuter',
         meaning: 'pick',
@@ -394,9 +397,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'structural',
         generic: true,
     },
-    // WHY: Omissum (2nd decl neuter) - "omitted, left out" (Omit<T, K>)
+    // WHY: omissum (2nd decl neuter) - "omitted, left out" (Omit<T, K>)
     {
-        stem: 'Omiss',
+        stem: 'omiss',
         declension: 2,
         gender: 'neuter',
         meaning: 'omit',
@@ -404,9 +407,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'structural',
         generic: true,
     },
-    // WHY: Extractum (2nd decl neuter) - "extracted, drawn out" (Extract<T, U>)
+    // WHY: extractum (2nd decl neuter) - "extracted, drawn out" (Extract<T, U>)
     {
-        stem: 'Extract',
+        stem: 'extract',
         declension: 2,
         gender: 'neuter',
         meaning: 'extract',
@@ -414,9 +417,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'structural',
         generic: true,
     },
-    // WHY: Exclusum (2nd decl neuter) - "excluded, shut out" (Exclude<T, U>)
+    // WHY: exclusum (2nd decl neuter) - "excluded, shut out" (Exclude<T, U>)
     {
-        stem: 'Exclus',
+        stem: 'exclus',
         declension: 2,
         gender: 'neuter',
         meaning: 'exclude',
@@ -424,9 +427,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'structural',
         generic: true,
     },
-    // WHY: NonNihil (compound) - "not null" (NonNullable<T>)
+    // WHY: nonnihil (compound) - "not null" (NonNullable<T>)
     {
-        stem: 'NonNihil',
+        stem: 'nonnihil',
         declension: 3,
         gender: 'neuter',
         meaning: 'non-nullable',
@@ -434,9 +437,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'structural',
         generic: true,
     },
-    // WHY: Reditus (4th decl masculine) - "return, going back" (ReturnType<T>)
+    // WHY: reditus (4th decl masculine) - "return, going back" (ReturnType<T>)
     {
-        stem: 'Redit',
+        stem: 'redit',
         declension: 4,
         gender: 'masculine',
         meaning: 'return type',
@@ -444,9 +447,9 @@ export const builtinTypes: TypeEntry[] = [
         category: 'structural',
         generic: true,
     },
-    // WHY: Parametra (1st decl feminine plural) - "parameters" (Parameters<T>)
+    // WHY: parametra (1st decl feminine plural) - "parameters" (Parameters<T>)
     {
-        stem: 'Parametr',
+        stem: 'parametr',
         declension: 1,
         gender: 'feminine',
         meaning: 'parameters',
@@ -467,24 +470,26 @@ export const builtinTypes: TypeEntry[] = [
  *      semantics that are critical for systems programming (Zig target) but
  *      can be ignored for TypeScript target.
  *
+ * CASE: Modifiers are lowercase (canonical form). Lookup is case-insensitive.
+ *
  * USAGE:
- *   - Numerus<32, Naturalis>  (unsigned 32-bit integer)
- *   - Textus<Proprius>        (owned string)
- *   - Textus<Alienus>         (borrowed string reference)
- *   - Indicium<T, Mutabilis>  (mutable pointer)
+ *   - numerus<32, naturalis>  (unsigned 32-bit integer)
+ *   - textus<proprius>        (owned string)
+ *   - textus<alienus>         (borrowed string reference)
+ *   - indicium<T, mutabilis>  (mutable pointer)
  */
 export const typeModifiers = {
-    // WHY: Naturalis (3rd decl adj) - "natural" (unsigned numbers in systems programming)
-    Naturalis: 'unsigned',
+    // WHY: naturalis (3rd decl adj) - "natural" (unsigned numbers in systems programming)
+    naturalis: 'unsigned',
 
-    // WHY: Proprius (2nd decl adj) - "one's own" (owned/move semantics)
-    Proprius: 'owned',
+    // WHY: proprius (2nd decl adj) - "one's own" (owned/move semantics)
+    proprius: 'owned',
 
-    // WHY: Alienus (2nd decl adj) - "belonging to another" (borrowed/borrow semantics)
-    Alienus: 'borrowed',
+    // WHY: alienus (2nd decl adj) - "belonging to another" (borrowed/borrow semantics)
+    alienus: 'borrowed',
 
-    // WHY: Mutabilis (3rd decl adj) - "changeable, mutable"
-    Mutabilis: 'mutable',
+    // WHY: mutabilis (3rd decl adj) - "changeable, mutable"
+    mutabilis: 'mutable',
 } as const;
 
 /**
@@ -495,11 +500,13 @@ export type TypeModifier = keyof typeof typeModifiers;
 /**
  * Check if a name is a valid type modifier.
  *
+ * WHY: Case-insensitive matching follows Latin convention.
+ *
  * @param name - The name to check
  * @returns true if name is a valid type modifier
  */
 export function isTypeModifier(name: string): name is TypeModifier {
-    return name in typeModifiers;
+    return name.toLowerCase() in typeModifiers;
 }
 
 // =============================================================================

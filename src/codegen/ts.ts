@@ -97,23 +97,27 @@ import type { CodegenOptions } from './types';
  * | Bivalens   | boolean    |
  * | Nihil      | null       |
  * | Lista      | Array      |
- * | Tabula     | Map        |
- * | Copia      | Set        |
- * | Promissum  | Promise    |
- * | Erratum    | Error      |
- * | Cursor     | Iterator   |
+ * | tabula     | Map        |
+ * | copia      | Set        |
+ * | promissum  | Promise    |
+ * | erratum    | Error      |
+ * | cursor     | Iterator   |
+ *
+ * CASE: Keys are lowercase. Lookup normalizes input to lowercase for
+ *       case-insensitive matching (textus, Textus, TEXTUS all work).
  */
 const typeMap: Record<string, string> = {
-    Textus: 'string',
-    Numerus: 'number',
-    Bivalens: 'boolean',
-    Nihil: 'null',
-    Lista: 'Array',
-    Tabula: 'Map',
-    Copia: 'Set',
-    Promissum: 'Promise',
-    Erratum: 'Error',
-    Cursor: 'Iterator',
+    textus: 'string',
+    numerus: 'number',
+    bivalens: 'boolean',
+    nihil: 'null',
+    lista: 'Array',
+    tabula: 'Map',
+    copia: 'Set',
+    promissum: 'Promise',
+    erratum: 'Error',
+    cursor: 'Iterator',
+    vacuum: 'void',
 };
 
 // =============================================================================
@@ -317,8 +321,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *   Numerus<Naturalis> -> number (modifier ignored)
      */
     function genType(node: TypeAnnotation): string {
-        // Map Latin type name to TS type
-        const base = typeMap[node.name] ?? node.name;
+        // Map Latin type name to TS type (case-insensitive lookup)
+        const base = typeMap[node.name.toLowerCase()] ?? node.name;
 
         // Handle generic type parameters: Lista<Textus> -> Array<string>
         let result = base;

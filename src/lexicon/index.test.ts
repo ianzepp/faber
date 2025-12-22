@@ -378,7 +378,7 @@ describe('parseType', () => {
             if (Array.isArray(results)) {
                 expect(results[0].jsType).toBe('Date');
                 expect(results[0].case).toBe('nominative');
-                expect(results[0].stem).toBe('Tempor');
+                expect(results[0].stem).toBe('tempor');
             }
         });
 

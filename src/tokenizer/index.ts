@@ -36,7 +36,7 @@
  * INV-1: Token stream always ends with exactly one EOF token
  * INV-2: Position tracking never goes backwards (line/column/offset only increase)
  * INV-3: Tokenizer never throws - all errors collected in result.errors
- * INV-4: Keyword detection is case-sensitive (Latin preserves case)
+ * INV-4: Keyword detection is case-insensitive (Latin had no case distinction)
  *
  * CHARACTER CLASSES
  * =================
@@ -445,8 +445,8 @@ export function tokenize(source: string): TokenizerResult {
      *      the canonical list of Latin keywords. This keeps the tokenizer
      *      independent of language evolution.
      *
-     * WHY: Keywords are case-sensitive in Latin (unlike some languages).
-     *      'si' is a keyword but 'Si' is an identifier.
+     * WHY: Keywords are case-insensitive in Latin (classical Latin had no
+     *      case distinction). 'si', 'Si', and 'SI' all match the keyword.
      */
     function scanIdentifier(): void {
         const pos = position();

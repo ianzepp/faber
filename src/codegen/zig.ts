@@ -98,18 +98,22 @@ import type { SemanticType } from '../semantic/types';
  * TARGET MAPPING:
  * | Latin     | TypeScript | Zig        |
  * |-----------|------------|------------|
- * | Textus    | string     | []const u8 |
- * | Numerus   | number     | i64        |
- * | Bivalens  | boolean    | bool       |
- * | Nihil     | null       | void       |
+ * | textus    | string     | []const u8 |
+ * | numerus   | number     | i64        |
+ * | bivalens  | boolean    | bool       |
+ * | nihil     | null       | void       |
  *
- * LIMITATION: Complex types (Lista, Tabula, etc.) not yet supported in Zig target.
+ * CASE: Keys are lowercase. Lookup normalizes input to lowercase for
+ *       case-insensitive matching.
+ *
+ * LIMITATION: Complex types (lista, tabula, etc.) not yet supported in Zig target.
  */
 const typeMap: Record<string, string> = {
-    Textus: '[]const u8',
-    Numerus: 'i64',
-    Bivalens: 'bool',
-    Nihil: 'void',
+    textus: '[]const u8',
+    numerus: 'i64',
+    bivalens: 'bool',
+    nihil: 'void',
+    vacuum: 'void',
 };
 
 // =============================================================================
@@ -493,7 +497,8 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      * TARGET: Zig uses ? prefix for optional types, not | null suffix.
      */
     function genType(node: TypeAnnotation): string {
-        const base = typeMap[node.name] ?? node.name;
+        // Case-insensitive type lookup
+        const base = typeMap[node.name.toLowerCase()] ?? node.name;
 
         if (node.nullable) {
             return `?${base}`;
