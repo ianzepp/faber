@@ -248,26 +248,91 @@ structura fluxus<T> {
 
 ---
 
+## Generators
+
+### Declaration Syntax
+
+The keyword matches the return type — one concept, one keyword:
+
+| Declaration | Produces | JS Equivalent |
+|-------------|----------|---------------|
+| `cursor functio` | `cursor<T>` | `function*` |
+| `fluxus functio` | `fluxus<T>` | `async function*` |
+
+**Sync generator:**
+
+```
+cursor functio numerare(numerus n) -> numerus {
+    esto i = 0
+    dum i < n {
+        cede i
+        i = i + 1
+    }
+}
+
+// Usage
+ex numerare(10) pro n {
+    scribe n
+}
+```
+
+**Async generator:**
+
+```
+fluxus functio lege(numerus fd) -> bytes {
+    futura ex syscall('file:read', fd) pro r {
+        si r.op == 'data' {
+            cede r.bytes
+        }
+        aliter si r.op == 'done' {
+            redde
+        }
+    }
+}
+
+// Usage
+futura ex lege(fd) pro chunk {
+    process(chunk)
+}
+```
+
+### Yield Keyword: `cede`
+
+**Etymology:** "yield, give way, withdraw" — the root of "cede" and "concede."
+
+- `cede value` — yield a single value
+- `cede* iterator` — delegate to another iterator (yield*)
+
+```
+cursor functio omnia() -> numerus {
+    cede* numerare(5)    // yields 0,1,2,3,4
+    cede* numerare(3)    // yields 0,1,2
+}
+```
+
+### Return Type
+
+The return type annotation is the *element* type, not the full iterator type:
+
+```
+cursor functio foo() -> numerus { ... }   // produces cursor<numerus>
+fluxus functio bar() -> textus { ... }    // produces fluxus<textus>
+```
+
+The `cursor` or `fluxus` keyword already indicates the wrapper type.
+
+---
+
 ## Open Questions
 
-1. **Generator syntax**: How to define custom iterators?
-   - `functio*` keyword (JS-style)?
-   - `generator functio`?
-   - `cursor functio`?
-
-2. **Yield keyword**: What Latin word?
-   - `cede` = "yield, give way"
-   - `da` = "give"
-   - `redde` already means "return"
-
-3. **Indexed iteration**: Best syntax for index access?
+1. **Indexed iteration**: Best syntax for index access?
    - Proposal: `ex lista.cumIndice() pro (i, val) { }`
 
-4. **Early return from iteration**: Allow `redde` inside `ex...pro`?
+2. **Early return from iteration**: Allow `redde` inside `ex...pro`?
    - JS: Yes, returns from enclosing function
    - Should work the same in Faber
 
-5. **Labeled loops**: For breaking outer loops?
+3. **Labeled loops**: For breaking outer loops?
    ```
    // Proposed
    @exterior: ex items pro item {
