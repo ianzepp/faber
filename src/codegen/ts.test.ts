@@ -106,7 +106,7 @@ describe('codegen', () => {
 
         test('for...in loop', () => {
             const js = compile(`
-        pro item in lista {
+        in lista pro item {
           _scribe(item)
         }
       `);
@@ -116,7 +116,7 @@ describe('codegen', () => {
 
         test('for...of loop', () => {
             const js = compile(`
-        pro numero ex numeros {
+        ex numeros pro numero {
           _scribe(numero)
         }
       `);

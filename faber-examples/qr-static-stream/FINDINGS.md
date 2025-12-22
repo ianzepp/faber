@@ -59,8 +59,8 @@ Added target-specific intrinsics that norma.fab builds on:
 
 ### 5. For-of vs For-in
 
-Latin `pro x ex collection` → JS `for (x of collection)` (values)
-Latin `pro x in collection` → JS `for (x in collection)` (keys)
+Latin `ex collection pro x` → JS `for (x of collection)` (values)
+Latin `in collection pro x` → JS `for (x in collection)` (keys)
 
 ## Language Features Exercised
 

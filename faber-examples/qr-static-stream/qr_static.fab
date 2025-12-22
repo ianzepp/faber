@@ -9,9 +9,9 @@ ex norma importa scribe, series, seriesAb, fortuitus, pavimentum
 functio generateNoiseFrame(Numerus rows, Numerus cols) -> Lista<Lista<Numerus>> {
   esto frame = []
 
-  pro i ex series(rows) {
+  ex series(rows) pro i {
     esto row = []
-    pro j ex series(cols) {
+    ex series(cols) pro j {
       // Random 0 or 1
       esto bit = pavimentum(fortuitus() * 2)
       row.push(bit)
@@ -28,11 +28,11 @@ functio xorMatrices(a, b) -> Lista<Lista<Numerus>> {
   esto result = []
   fixum rows = a.length
 
-  pro i ex series(rows) {
+  ex series(rows) pro i {
     esto row = []
     fixum cols = a[i].length
 
-    pro j ex series(cols) {
+    ex series(cols) pro j {
       esto xored = (a[i][j] + b[i][j]) % 2
       row.push(xored)
     }
@@ -54,14 +54,14 @@ functio encode(qrMatrix, Numerus nFrames) -> Lista<Lista<Lista<Numerus>>> {
 
   // Generate N-1 random frames
   esto frames = []
-  pro i ex series(nFrames - 1) {
+  ex series(nFrames - 1) pro i {
     frames.push(generateNoiseFrame(rows, cols))
   }
 
   // Compute final frame: QR XOR all previous frames
   esto accumulated = qrMatrix
 
-  pro frame ex frames {
+  ex frames pro frame {
     accumulated = xorMatrices(accumulated, frame)
   }
 
@@ -78,7 +78,7 @@ functio decode(frames) -> Lista<Lista<Numerus>> {
 
   esto result = frames[0]
 
-  pro i ex seriesAb(1, frames.length, 1) {
+  ex seriesAb(1, frames.length, 1) pro i {
     result = xorMatrices(result, frames[i])
   }
 
@@ -87,9 +87,9 @@ functio decode(frames) -> Lista<Lista<Numerus>> {
 
 // Helper to print a matrix
 functio printMatrix(m) {
-  pro row ex m {
+  ex m pro row {
     esto line = ""
-    pro cell ex row {
+    ex row pro cell {
       si cell == 1 {
         line = line + "#"
       }
@@ -119,7 +119,7 @@ functio demo() {
   scribe("Encoded into " + frames.length + " frames")
 
   // Show each frame
-  pro i ex series(frames.length) {
+  ex series(frames.length) pro i {
     scribe("Frame " + i + ":")
     printMatrix(frames[i])
   }

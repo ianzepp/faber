@@ -153,7 +153,7 @@ describe('parser', () => {
 
         test('for...in loop', () => {
             const { program } = parseCode(`
-        pro item in lista {
+        in lista pro item {
           scribe(item)
         }
       `);
@@ -166,7 +166,7 @@ describe('parser', () => {
 
         test('for...ex loop', () => {
             const { program } = parseCode(`
-        pro numero ex numeros {
+        ex numeros pro numero {
           scribe(numero)
         }
       `);

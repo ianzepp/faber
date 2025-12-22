@@ -262,7 +262,7 @@ describe('Semantic Analyzer', () => {
         it('analyzes for loop with loop variable', () => {
             const source = `
         esto count = 0
-        pro item ex "test" {
+        ex "test" pro item {
           count = count + 1
         }
       `;

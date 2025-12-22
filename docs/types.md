@@ -309,11 +309,11 @@ fac {
   // do...while
 } dum conditio
 
-pro usuario in usuarios {
+in usuarios pro usuario {
   // for...in (keys)
 }
 
-pro numero ex numeris {
+ex numeris pro numero {
   // for...of (values)
 }
 
@@ -340,7 +340,7 @@ si fetch(url) {
   handleError(erratum)
 }
 
-pro item in items {
+in items pro item {
   process(item)
 } cape erratum {
   logFailure(erratum)

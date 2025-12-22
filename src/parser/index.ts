@@ -455,8 +455,19 @@ export function parse(tokens: Token[]): ParserResult {
      * WHY: Uses lookahead to determine statement type via keyword inspection.
      */
     function parseStatement(): Statement {
+        // Distinguish 'ex norma importa' (import) from 'ex numeri pro n' (for-loop)
         if (checkKeyword('ex')) {
-            return parseImportDeclaration();
+            // Look ahead: ex IDENTIFIER importa -> import, otherwise for-loop
+            if (peek(1).type === 'IDENTIFIER' && peek(2).keyword === 'importa') {
+                return parseImportDeclaration();
+            }
+
+            return parseForStatement();
+        }
+
+        // 'in tabula pro k' is for-in loop
+        if (checkKeyword('in')) {
+            return parseForStatement();
         }
 
         if (checkKeyword('esto') || checkKeyword('fixum')) {
@@ -477,10 +488,6 @@ export function parse(tokens: Token[]): ParserResult {
 
         if (checkKeyword('dum')) {
             return parseWhileStatement();
-        }
-
-        if (checkKeyword('pro')) {
-            return parseForStatement();
         }
 
         if (checkKeyword('cum')) {
@@ -780,29 +787,36 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse for loop statement.
      *
      * GRAMMAR:
-     *   forStmt := 'pro' IDENTIFIER ('in' | 'ex') expression blockStmt ('cape' IDENTIFIER blockStmt)?
+     *   forStmt := ('ex' | 'in') expression 'pro' IDENTIFIER blockStmt ('cape' IDENTIFIER blockStmt)?
      *
-     * WHY: 'pro' (for/on behalf of) for for loops.
-     *      'in' for for-in (keys), 'ex' for for-of (values from collection).
+     * WHY: Source-first syntax consistent with import: 'ex norma importa x'
+     *      'ex' for for-of (values from collection), 'in' for for-in (keys).
+     *
+     * Examples:
+     *   ex numeri pro n { ... }     // from numbers, for each n
+     *   in tabula pro clavis { ... } // in table, for each key
      */
     function parseForStatement(): ForStatement {
         const position = peek().position;
 
-        expectKeyword('pro', "Expected 'pro'");
+        let kind: 'in' | 'ex' = 'ex';
 
-        const variable = parseIdentifier();
-
-        let kind: 'in' | 'ex' = 'in';
-
-        if (matchKeyword('in')) {
-            kind = 'in';
-        } else if (matchKeyword('ex')) {
+        if (matchKeyword('ex')) {
             kind = 'ex';
-        } else {
-            error("Expected 'in' or 'ex' after variable in for loop");
+        }
+        else if (matchKeyword('in')) {
+            kind = 'in';
+        }
+        else {
+            error("Expected 'ex' or 'in' to start for loop");
         }
 
         const iterable = parseExpression();
+
+        expectKeyword('pro', "Expected 'pro' after iterable");
+
+        const variable = parseIdentifier();
+
         const body = parseBlockStatement();
 
         let catchClause: CatchClause | undefined;

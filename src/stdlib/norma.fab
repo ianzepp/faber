@@ -208,7 +208,7 @@ fixum TAU = 6.283185307179586
 // Sum of numeric array
 functio summa(Lista<Numerus> numeri) -> Numerus {
     esto total = 0
-    pro n ex numeri {
+    ex numeri pro n {
         total = total + n
     }
     redde total
@@ -217,7 +217,7 @@ functio summa(Lista<Numerus> numeri) -> Numerus {
 // Product of numeric array
 functio factum(Lista<Numerus> numeri) -> Numerus {
     esto total = 1
-    pro n ex numeri {
+    ex numeri pro n {
         total = total * n
     }
     redde total

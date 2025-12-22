@@ -123,12 +123,12 @@ dum conditio {
   // while
 }
 
-pro item in lista {
-  // for...in
+in lista pro item {
+  // for...in (iterate keys)
 }
 
-pro numero ex numeros {
-  // for...of
+ex numeros pro numero {
+  // for...of (iterate values)
 }
 ```
 
