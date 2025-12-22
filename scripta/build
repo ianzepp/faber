@@ -5,4 +5,5 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p opus
 bun build ./fons/cli.ts --compile --outfile=opus/faber
+rm -f *.bun-build
 echo "Built: opus/faber"
