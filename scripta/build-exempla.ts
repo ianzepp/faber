@@ -70,6 +70,20 @@ async function main() {
         process.exit(1);
     }
 
+    // Lint TypeScript output
+    if (targets.includes('ts')) {
+        console.log('Linting TypeScript...');
+        try {
+            await $`npx eslint ${join(OUTPUT, 'ts')}/*.ts`.quiet();
+            console.log('  eslint: OK');
+        }
+        catch (err: any) {
+            console.error('  eslint: FAILED');
+            console.error(err.stdout?.toString() || err.stderr?.toString());
+            process.exit(1);
+        }
+    }
+
     console.log('Done.');
 }
 
