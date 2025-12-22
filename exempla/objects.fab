@@ -7,11 +7,7 @@
 // - With blocks: cum obj { ... }
 
 // Object literal
-fixum persona = {
-  nomen: "Marcus",
-  aetas: 30,
-  activus: verum
-}
+fixum persona = { nomen: "Marcus", aetas: 30, activus: verum }
 
 scribe persona.nomen
 scribe persona.aetas
@@ -33,8 +29,9 @@ isActive = falsum
 // With block (cum) - set properties in context
 fixum config = { host: "", port: 0 }
 cum config {
-  host = "localhost"
-  port = 8080
+    host = "localhost"
+    port = 8080
 }
+
 scribe config.host
 scribe config.port

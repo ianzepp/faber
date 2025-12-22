@@ -1,8 +1,8 @@
 // Type System in Faber Romanus
 //
 // Type-first syntax: the type precedes the identifier
-//   fixum Textus nomen = "Marcus"
-//   functio saluta(Textus nomen) -> Textus { ... }
+// fixum Textus nomen = "Marcus"
+// functio saluta(Textus nomen) -> Textus { ... }
 //
 // Types are case-insensitive: Textus, textus, TEXTUS all work.
 // Return types use arrow syntax: -> Type
@@ -47,17 +47,17 @@ fixum Numerus? result = nihil
 // Parameters: type-first (Type name)
 // Return: arrow syntax (-> Type)
 functio adde(Numerus a, Numerus b) -> Numerus {
-  redde a + b
+    redde a + b
 }
 
 // No return type means Vacuum (void)
 functio saluta(Textus nomen) {
-  scribe "Salve, " + nomen
+    scribe "Salve, " + nomen
 }
 
 // Multiple parameters
 functio describe(Textus nomen, Numerus aetas, Bivalens activus) -> Textus {
-  redde nomen + " (" + aetas + ")"
+    redde nomen + " (" + aetas + ")"
 }
 
 // =============================================================================
@@ -73,29 +73,26 @@ typus UserID = Numerus
 // =============================================================================
 
 // Object literals (untyped)
-fixum config = {
-  host: "localhost",
-  port: 8080
-}
+fixum config = { host: "localhost", port: 8080 }
 
 // =============================================================================
 // PLANNED FEATURES (not yet implemented)
 // =============================================================================
 
 // Numeric type parameters:
-//   fixum Numerus<32> smallInt = 42
-//   fixum Numerus<Naturalis> unsigned = 100
-//   fixum Fractus pi = 3.14159
+// fixum Numerus<32> smallInt = 42
+// fixum Numerus<Naturalis> unsigned = 100
+// fixum Fractus pi = 3.14159
 
 // Maps and sets:
-//   fixum Tabula<Textus, Numerus> ages = { ... }
-//   fixum Copia<Textus> uniques = ...
+// fixum Tabula<Textus, Numerus> ages = { ... }
+// fixum Copia<Textus> uniques = ...
 
 // Type alias usage:
-//   fixum ID orderId = "ORD-12345"
+// fixum ID orderId = "ORD-12345"
 
 // Systems types (Zig/Rust):
-//   Indicium<T>, Refera<T>, Naturalis, Proprius, Alienus
+// Indicium<T>, Refera<T>, Naturalis, Proprius, Alienus
 
 // =============================================================================
 // EXAMPLES

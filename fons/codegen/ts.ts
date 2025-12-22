@@ -255,8 +255,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
             });
 
             name = `{ ${props.join(', ')} }`;
-        }
-        else {
+        } else {
             name = node.name.name;
         }
 
@@ -467,8 +466,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 // With step: need to handle positive/negative direction
                 // For simplicity, assume positive step uses <=, negative uses >=
                 forHeader = `for (let ${varName} = ${start}; ${varName} <= ${end}; ${varName} += ${step})`;
-            }
-            else {
+            } else {
                 // Default step of 1
                 forHeader = `for (let ${varName} = ${start}; ${varName} <= ${end}; ${varName}++)`;
             }
@@ -529,8 +527,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 const op = stmt.expression.operator;
 
                 lines.push(`${ind()}${context}.${prop} ${op} ${value}${semi ? ';' : ''}`);
-            }
-            else {
+            } else {
                 lines.push(genStatement(stmt));
             }
         }
@@ -634,8 +631,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
 
         if (node.message) {
             message = genExpression(node.message);
-        }
-        else {
+        } else {
             // Auto-generate message from the test expression
             message = `"Assertion failed: ${test.replace(/"/g, '\\"')}"`;
         }
@@ -790,9 +786,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         }
 
         const props = node.properties.map(prop => {
-            const key = prop.key.type === 'Identifier'
-                ? prop.key.name
-                : genLiteral(prop.key);
+            const key = prop.key.type === 'Identifier' ? prop.key.name : genLiteral(prop.key);
             const value = genExpression(prop.value);
 
             return `${key}: ${value}`;
@@ -903,17 +897,17 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      */
     const TS_INTRINSICS: Record<string, (args: string) => string> = {
         // I/O (internal intrinsics used by norma.fab)
-        _scribe: (args) => `console.log(${args})`,
-        _vide: (args) => `console.debug(${args})`,
-        _mone: (args) => `console.warn(${args})`,
+        _scribe: args => `console.log(${args})`,
+        _vide: args => `console.debug(${args})`,
+        _mone: args => `console.warn(${args})`,
         _lege: () => `prompt() ?? ""`,
 
         // Math (internal intrinsics used by norma.fab)
         _fortuitus: () => `Math.random()`,
-        _pavimentum: (args) => `Math.floor(${args})`,
-        _tectum: (args) => `Math.ceil(${args})`,
-        _radix: (args) => `Math.sqrt(${args})`,
-        _potentia: (args) => `Math.pow(${args})`,
+        _pavimentum: args => `Math.floor(${args})`,
+        _tectum: args => `Math.ceil(${args})`,
+        _radix: args => `Math.sqrt(${args})`,
+        _potentia: args => `Math.pow(${args})`,
     };
 
     /**

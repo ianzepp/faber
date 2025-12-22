@@ -14,120 +14,146 @@
 fixum x = 10
 
 si x > 5 {
-  scribe "x est magnus"
+    scribe "x est magnus"
 }
 
 // One-liner with ergo
-si x > 5 ergo scribe "x magnus est"
+si x > 5 {
+    scribe "x magnus est"
+}
 
 // If-else (si-aliter)
 si x > 20 {
-  scribe "x est maximus"
+    scribe "x est maximus"
 }
 aliter {
-  scribe "x non est maximus"
+    scribe "x non est maximus"
 }
 
 // One-liner if-else (aliter doesn't need ergo)
-si x > 20 ergo scribe "maximus" aliter scribe "non maximus"
+si x > 20 {
+    scribe "maximus"
+}
+aliter {
+    scribe "non maximus"
+}
 
 // If-else if-else chain
 fixum nota = 85
 
 si nota >= 90 {
-  scribe "A"
+    scribe "A"
 }
 aliter si nota >= 80 {
-  scribe "B"
+    scribe "B"
 }
 aliter si nota >= 70 {
-  scribe "C"
+    scribe "C"
 }
 aliter {
-  scribe "F"
+    scribe "F"
 }
 
 // While loop (dum)
 esto i = 0
 dum i < 3 {
-  scribe i
-  i = i + 1
+    scribe i
+    i = i + 1
 }
 
 // While one-liner
 esto j = 3
-dum j > 0 ergo j = j - 1
+dum j > 0 {
+    j = j - 1
+}
 
 // Logical operators
 fixum a = verum
 fixum b = falsum
 
-si a et b {
-  scribe "utrumque verum"
+si a && b {
+    scribe "utrumque verum"
 }
 
-si a aut b {
-  scribe "alterum verum"
+si a || b {
+    scribe "alterum verum"
 }
 
 // Empty/non-empty checks with nulla/nonnulla
 fixum items = [1, 2, 3]
 fixum empty = []
 
-si nonnulla items {
-  scribe "has items"
+si nonnullaitems {
+    scribe "has items"
 }
 
-si nulla empty {
-  scribe "empty array"
+si nullaempty {
+    scribe "empty array"
 }
 
 fixum data = { name: "Marcus" }
-si nonnulla data {
-  scribe "has data"
+si nonnulladata {
+    scribe "has data"
 }
 
 // For-each loop (ex ... pro) - iterate values
 fixum numeri = [1, 2, 3]
 ex numeri pro n {
-  scribe n
+    scribe n
 }
 
 // For-each one-liner
 fixum vals = [4, 5, 6]
-ex vals pro v ergo scribe v
+ex vals pro v {
+    scribe v
+}
 
 // Range expression with step
 ex 0..5 per 2 pro n {
-  scribe n
+    scribe n
 }
 
 // Switch statement (elige/si/ergo)
 fixum status = "active"
 elige status {
-  si "pending" ergo scribe "waiting"
-  si "active" ergo scribe "running"
-  aliter scribe "unknown"
+    si "pending" {
+        scribe "waiting"
+    }
+    si "active" {
+        scribe "running"
+    }
+    aliter {
+        scribe "unknown"
+    }
 }
 
 // Switch with blocks and throw
 fixum mode = "complex"
 elige mode {
-  si "simple" ergo scribe "easy"
-  si "complex" {
-    scribe "step 1"
-    scribe "step 2"
-  }
-  aliter iace "Unknown mode"
+    si "simple" {
+        scribe "easy"
+    }
+    si "complex" {
+        scribe "step 1"
+        scribe "step 2"
+    }
+    aliter {
+        iace "Unknown mode"
+    }
 }
 
 // Guard clauses (custodi) - early exit patterns
 functio validateAge(aetas) -> Numerus {
-  custodi {
-    si aetas < 0 { redde -1 }
-    si aetas > 150 { redde -1 }
-  }
-  redde aetas
+    custodi {
+        si aetas < 0 {
+            redde -1
+        }
+        si aetas > 150 {
+            redde -1
+        }
+    }
+
+    redde aetas
 }
 
 // Assert statement (adfirma)

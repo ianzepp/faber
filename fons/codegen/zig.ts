@@ -381,8 +381,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
 
         if (node.typeAnnotation) {
             typeAnno = `: ${genType(node.typeAnnotation)}`;
-        }
-        else if (kind === 'var' && node.init) {
+        } else if (kind === 'var' && node.init) {
             typeAnno = `: ${inferZigType(node.init)}`;
         }
 
@@ -629,8 +628,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 const op = stmt.expression.operator;
 
                 lines.push(`${ind()}${context}.${prop} ${op} ${value};`);
-            }
-            else {
+            } else {
                 lines.push(genStatement(stmt));
             }
         }
@@ -822,9 +820,11 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         }
 
         // Handle new Error("msg") - extract message and use @panic
-        if (node.argument.type === 'NewExpression' &&
+        if (
+            node.argument.type === 'NewExpression' &&
             node.argument.callee.name === 'Error' &&
-            node.argument.arguments.length > 0) {
+            node.argument.arguments.length > 0
+        ) {
             const msg = genExpression(node.argument.arguments[0]);
             return `${ind()}@panic(${msg});`;
         }
@@ -1043,9 +1043,10 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         }
 
         const props = node.properties.map(prop => {
-            const key = prop.key.type === 'Identifier'
-                ? prop.key.name
-                : String((prop.key as Literal).value);
+            const key =
+                prop.key.type === 'Identifier'
+                    ? prop.key.name
+                    : String((prop.key as Literal).value);
             const value = genExpression(prop.value);
 
             return `.${key} = ${value}`;

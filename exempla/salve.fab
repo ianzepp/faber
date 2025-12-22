@@ -7,7 +7,7 @@
 // - The scribe statement for output
 
 functio salve(nomen) -> Textus {
-  redde "Salve, " + nomen + "!"
+    redde "Salve, " + nomen + "!"
 }
 
 fixum nomen = "Mundus"

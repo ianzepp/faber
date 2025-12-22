@@ -151,7 +151,10 @@ const NORMA_EXPORTS: Record<string, { type: SemanticType; kind: 'function' | 'va
 
     // Iteration
     series: { type: functionType([NUMERUS], genericType('Lista', [NUMERUS])), kind: 'function' },
-    seriesAb: { type: functionType([NUMERUS, NUMERUS, NUMERUS], genericType('Lista', [NUMERUS])), kind: 'function' },
+    seriesAb: {
+        type: functionType([NUMERUS, NUMERUS, NUMERUS], genericType('Lista', [NUMERUS])),
+        kind: 'function',
+    },
 
     // Math functions
     fortuitus: { type: functionType([], NUMERUS), kind: 'function' },
@@ -306,8 +309,7 @@ export function analyze(program: Program): SemanticResult {
                     position: node.position,
                 });
             }
-        }
-        else {
+        } else {
             // ex norma importa scribe, series - add specific exports
             for (const specifier of node.specifiers) {
                 const exportInfo = NORMA_EXPORTS[specifier.name];
@@ -320,8 +322,7 @@ export function analyze(program: Program): SemanticResult {
                         mutable: false,
                         position: specifier.position,
                     });
-                }
-                else {
+                } else {
                     error(`'${specifier.name}' is not exported from 'norma'`, specifier.position);
                 }
             }
@@ -522,7 +523,9 @@ export function analyze(program: Program): SemanticResult {
         }
     }
 
-    function resolveObjectExpression(node: Expression & { type: 'ObjectExpression' }): SemanticType {
+    function resolveObjectExpression(
+        node: Expression & { type: 'ObjectExpression' },
+    ): SemanticType {
         // Resolve each property value
         for (const prop of node.properties) {
             resolveExpression(prop.value);
@@ -1085,8 +1088,7 @@ export function analyze(program: Program): SemanticResult {
                 // Skip validation for bare identifier assignments - these
                 // become property assignments on the context object
                 resolveExpression(stmt.expression.right);
-            }
-            else {
+            } else {
                 analyzeStatement(stmt);
             }
         }

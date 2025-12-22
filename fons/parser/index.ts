@@ -601,12 +601,10 @@ export function parse(tokens: Token[]): ParserResult {
         // Check for object destructuring pattern: fixum { a, b } = obj
         if (check('LBRACE')) {
             name = parseObjectPattern();
-        }
-        else if (isTypeName(peek())) {
+        } else if (isTypeName(peek())) {
             typeAnnotation = parseTypeAnnotation();
             name = parseIdentifier();
-        }
-        else {
+        } else {
             name = parseIdentifier();
         }
 
@@ -812,8 +810,7 @@ export function parse(tokens: Token[]): ParserResult {
             const stmtPos = peek().position;
             const stmt = parseStatement();
             consequent = { type: 'BlockStatement', body: [stmt], position: stmtPos };
-        }
-        else {
+        } else {
             consequent = parseBlockStatement();
         }
 
@@ -830,11 +827,9 @@ export function parse(tokens: Token[]): ParserResult {
         if (matchKeyword('aliter')) {
             if (checkKeyword('si')) {
                 alternate = parseIfStatement();
-            }
-            else if (check('LBRACE')) {
+            } else if (check('LBRACE')) {
                 alternate = parseBlockStatement();
-            }
-            else {
+            } else {
                 // One-liner: aliter statement (no ergo needed)
                 const stmtPos = peek().position;
                 const stmt = parseStatement();
@@ -870,8 +865,7 @@ export function parse(tokens: Token[]): ParserResult {
             const stmtPos = peek().position;
             const stmt = parseStatement();
             body = { type: 'BlockStatement', body: [stmt], position: stmtPos };
-        }
-        else {
+        } else {
             body = parseBlockStatement();
         }
 
@@ -905,11 +899,9 @@ export function parse(tokens: Token[]): ParserResult {
 
         if (matchKeyword('ex')) {
             kind = 'ex';
-        }
-        else if (matchKeyword('in')) {
+        } else if (matchKeyword('in')) {
             kind = 'in';
-        }
-        else {
+        } else {
             error("Expected 'ex' or 'in' to start for loop");
         }
 
@@ -925,8 +917,7 @@ export function parse(tokens: Token[]): ParserResult {
             const stmtPos = peek().position;
             const stmt = parseStatement();
             body = { type: 'BlockStatement', body: [stmt], position: stmtPos };
-        }
-        else {
+        } else {
             body = parseBlockStatement();
         }
 
@@ -1032,13 +1023,11 @@ export function parse(tokens: Token[]): ParserResult {
                 const consequent = parseSiBody();
 
                 cases.push({ type: 'SwitchCase', test, consequent, position: casePosition });
-            }
-            else if (checkKeyword('aliter')) {
+            } else if (checkKeyword('aliter')) {
                 expectKeyword('aliter', "Expected 'aliter'");
                 defaultCase = parseAliterBody();
                 break; // Default must be last
-            }
-            else {
+            } else {
                 error("Expected 'si' or 'aliter' in switch block");
                 break;
             }
@@ -1088,8 +1077,7 @@ export function parse(tokens: Token[]): ParserResult {
                 const consequent = parseBlockStatement();
 
                 clauses.push({ type: 'GuardClause', test, consequent, position: clausePosition });
-            }
-            else {
+            } else {
                 error("Expected 'si' in guard block");
                 break;
             }
@@ -1538,7 +1526,13 @@ export function parse(tokens: Token[]): ParserResult {
             const position = tokens[current - 1].position;
             const argument = parseUnary();
 
-            return { type: 'UnaryExpression', operator: 'nonnulla', argument, prefix: true, position };
+            return {
+                type: 'UnaryExpression',
+                operator: 'nonnulla',
+                argument,
+                prefix: true,
+                position,
+            };
         }
 
         if (matchKeyword('exspecta')) {
@@ -1727,9 +1721,13 @@ export function parse(tokens: Token[]): ParserResult {
                     if (check('STRING')) {
                         const token = advance();
 
-                        key = { type: 'Literal', value: token.value, raw: `"${token.value}"`, position: propPosition };
-                    }
-                    else {
+                        key = {
+                            type: 'Literal',
+                            value: token.value,
+                            raw: `"${token.value}"`,
+                            position: propPosition,
+                        };
+                    } else {
                         key = parseIdentifier();
                     }
 

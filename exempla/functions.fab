@@ -8,26 +8,26 @@
 
 // Function with return type
 functio salve(nomen) -> Textus {
-  redde "Salve, " + nomen + "!"
+    redde "Salve, " + nomen + "!"
 }
 
 // Function with typed parameters
 functio adde(a, b) -> Numerus {
-  fixum summa = a + b
-  redde summa
+    fixum summa = a + b
+    redde summa
 }
 
 // Function without return (implicit Vacuum)
 functio salutaOmnes() {
-  scribe salve("Marcus")
-  scribe salve("Claudia")
-  scribe salve("Mundus")
+    scribe salve("Marcus")
+    scribe salve("Claudia")
+    scribe salve("Mundus")
 }
 
 // Async functions use futura keyword
 // futura functio fetchData(url) -> Textus {
-//   fixum data = exspecta fetch(url)
-//   redde data
+// fixum data = exspecta fetch(url)
+// redde data
 // }
 
 scribe adde(2, 3)

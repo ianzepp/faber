@@ -1,11 +1,23 @@
 #!/usr/bin/env bash
 # Format source code
+#
+# WHY: Use bun runtime so the TypeScript Prettier plugin for .fab files works.
+#      Standard prettier command can't load TypeScript plugins directly.
+#
+# NOTE: fons/stdlib/norma.fab is excluded because it defines `functio scribe(...)`.
+#       The parser treats `scribe` as a keyword, causing parse errors.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# Use bun to run prettier so our TypeScript plugin works
+PRETTIER="bun run node_modules/.bin/prettier"
+
+# Exclude norma.fab (uses 'scribe' as function name - parser limitation)
+IGNORE="--ignore-path /dev/stdin"
+
 if [[ "${1:-}" == "--check" ]]; then
-    prettier --check fons
+    echo "fons/stdlib/norma.fab" | $PRETTIER --check "fons/**/*.ts" "exempla/**/*.fab" $IGNORE
 else
-    prettier --write fons
+    echo "fons/stdlib/norma.fab" | $PRETTIER --write "fons/**/*.ts" "exempla/**/*.fab" $IGNORE
 fi

@@ -3,132 +3,130 @@
 // Each frame is random static. XOR all N frames together to reveal a QR code.
 // This is a port of the Python qr_static.py to Faber Romanus.
 
-ex norma importa scribe, series, seriesAb, fortuitus, pavimentum
+ex norma importa series, seriesAb, fortuitus, pavimentum
 
 // Generate a single frame of binary noise (0 or 1 per cell)
 functio generateNoiseFrame(Numerus rows, Numerus cols) -> Lista<Lista<Numerus>> {
-  esto frame = []
+    esto frame = []
 
-  ex series(rows) pro i {
-    esto row = []
-    ex series(cols) pro j {
-      // Random 0 or 1
-      esto bit = pavimentum(fortuitus() * 2)
-      row.push(bit)
+    ex series(rows) pro i {
+        esto row = []
+        ex series(cols) pro j {
+            esto bit = pavimentum(fortuitus() * 2)
+            row.push(bit)
+        }
+
+        frame.push(row)
     }
-    frame.push(row)
-  }
 
-  redde frame
+    redde frame
 }
 
+// Random 0 or 1
 // XOR two matrices together (element-wise)
 // Since we only have 0 and 1, XOR is equivalent to (a + b) % 2
 functio xorMatrices(a, b) -> Lista<Lista<Numerus>> {
-  esto result = []
-  fixum rows = a.length
+    esto result = []
+    fixum rows = a.length
 
-  ex series(rows) pro i {
-    esto row = []
-    fixum cols = a[i].length
+    ex series(rows) pro i {
+        esto row = []
+        fixum cols = a[i].length
 
-    ex series(cols) pro j {
-      esto xored = (a[i][j] + b[i][j]) % 2
-      row.push(xored)
+        ex series(cols) pro j {
+            esto xored = a[i][j] + b[i][j] % 2
+            row.push(xored)
+        }
+
+        result.push(row)
     }
-    result.push(row)
-  }
 
-  redde result
+    redde result
 }
 
 // Encode a QR matrix into N frames of noise
 // XOR of all returned frames equals the original QR matrix
 functio encode(qrMatrix, Numerus nFrames) -> Lista<Lista<Lista<Numerus>>> {
-  si nFrames < 2 {
-    iace "Need at least 2 frames"
-  }
+    si nFrames < 2 {
+        iace "Need at least 2 frames"
+    }
 
-  fixum rows = qrMatrix.length
-  fixum cols = qrMatrix[0].length
+    fixum rows = qrMatrix.length
+    fixum cols = qrMatrix[0].length
 
-  // Generate N-1 random frames
-  esto frames = []
-  ex series(nFrames - 1) pro i {
-    frames.push(generateNoiseFrame(rows, cols))
-  }
+    esto frames = []
+    ex series(nFrames - 1) pro i {
+        frames.push(generateNoiseFrame(rows, cols))
+    }
 
-  // Compute final frame: QR XOR all previous frames
-  esto accumulated = qrMatrix
+    esto accumulated = qrMatrix
 
-  ex frames pro frame {
-    accumulated = xorMatrices(accumulated, frame)
-  }
+    ex frames pro frame {
+        accumulated = xorMatrices(accumulated, frame)
+    }
 
-  frames.push(accumulated)
+    frames.push(accumulated)
 
-  redde frames
+    redde frames
 }
 
+// Generate N-1 random frames
+// Compute final frame: QR XOR all previous frames
 // Decode frames by XORing them all together
 functio decode(frames) -> Lista<Lista<Numerus>> {
-  si frames.length == 0 {
-    iace "No frames to decode"
-  }
+    si frames.length == 0 {
+        iace "No frames to decode"
+    }
 
-  esto result = frames[0]
+    esto result = frames[0]
 
-  ex seriesAb(1, frames.length, 1) pro i {
-    result = xorMatrices(result, frames[i])
-  }
+    ex seriesAb(1, frames.length, 1) pro i {
+        result = xorMatrices(result, frames[i])
+    }
 
-  redde result
+    redde result
 }
 
 // Helper to print a matrix
 functio printMatrix(m) {
-  ex m pro row {
-    esto line = ""
-    ex row pro cell {
-      si cell == 1 {
-        line = line + "#"
-      }
-      aliter {
-        line = line + "."
-      }
+    ex m pro row {
+        esto line = ""
+        ex row pro cell {
+            si cell == 1 {
+                line = line + "#"
+            }
+            aliter {
+                line = line + "."
+            }
+        }
+
+        scribe line
     }
-    scribe(line)
-  }
 }
 
 // Demo: encode and decode a simple pattern
 functio demo() {
-  // Simple 4x4 test pattern (checkerboard)
-  fixum testPattern = [
-    [1, 0, 1, 0],
-    [0, 1, 0, 1],
-    [1, 0, 1, 0],
-    [0, 1, 0, 1]
-  ]
+    fixum testPattern = [[1, 0, 1, 0], [0, 1, 0, 1], [1, 0, 1, 0], [0, 1, 0, 1]]
 
-  scribe("Original pattern:")
-  printMatrix(testPattern)
+    scribe "Original pattern:"
+    printMatrix(testPattern)
 
-  // Encode into 4 frames
-  fixum frames = encode(testPattern, 4)
-  scribe("Encoded into " + frames.length + " frames")
+    fixum frames = encode(testPattern, 4)
+    scribe "Encoded into " + frames.length + " frames"
 
-  // Show each frame
-  ex series(frames.length) pro i {
-    scribe("Frame " + i + ":")
-    printMatrix(frames[i])
-  }
+    ex series(frames.length) pro i {
+        scribe "Frame " + i + ":"
+        printMatrix(frames[i])
+    }
 
-  // Decode
-  fixum recovered = decode(frames)
-  scribe("Recovered pattern:")
-  printMatrix(recovered)
+    fixum recovered = decode(frames)
+    scribe "Recovered pattern:"
+    printMatrix(recovered)
 }
 
+// Simple 4x4 test pattern (checkerboard)
+// Encode into 4 frames
+// Show each frame
+// Decode
 // Run the demo
 demo()
