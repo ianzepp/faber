@@ -88,6 +88,7 @@ export type Statement =
     | WhileStatement
     | ForStatement
     | WithStatement
+    | SwitchStatement
     | ReturnStatement
     | BlockStatement
     | ThrowStatement
@@ -309,6 +310,41 @@ export interface WithStatement extends BaseNode {
     type: 'WithStatement';
     object: Expression;
     body: BlockStatement;
+}
+
+/**
+ * Switch statement.
+ *
+ * GRAMMAR (in EBNF):
+ *   switchStmt := 'elige' expression '{' switchCase* defaultCase? '}' catchClause?
+ *   switchCase := 'si' expression blockStmt
+ *   defaultCase := 'aliter' blockStmt
+ *
+ * WHY: Latin 'elige' (choose) for switch, 'si' (if) for cases.
+ *      Uses 'aliter' (otherwise) for default case.
+ *
+ * Example:
+ *   elige status {
+ *       si "pending" { processPending() }
+ *       si "active" { processActive() }
+ *       aliter { processDefault() }
+ *   }
+ */
+export interface SwitchStatement extends BaseNode {
+    type: 'SwitchStatement';
+    discriminant: Expression;
+    cases: SwitchCase[];
+    defaultCase?: BlockStatement;
+    catchClause?: CatchClause;
+}
+
+/**
+ * Switch case (part of switch statement).
+ */
+export interface SwitchCase extends BaseNode {
+    type: 'SwitchCase';
+    test: Expression;
+    consequent: BlockStatement;
 }
 
 /**

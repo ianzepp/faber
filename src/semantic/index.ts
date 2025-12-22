@@ -51,6 +51,7 @@ import type {
     WhileStatement,
     ForStatement,
     WithStatement,
+    SwitchStatement,
     ReturnStatement,
     BlockStatement,
     Identifier,
@@ -809,6 +810,9 @@ export function analyze(program: Program): SemanticResult {
             case 'WithStatement':
                 analyzeWithStatement(node);
                 break;
+            case 'SwitchStatement':
+                analyzeSwitchStatement(node);
+                break;
             case 'ReturnStatement':
                 analyzeReturnStatement(node);
                 break;
@@ -1014,6 +1018,27 @@ export function analyze(program: Program): SemanticResult {
         }
 
         exitScope();
+    }
+
+    function analyzeSwitchStatement(node: SwitchStatement): void {
+        resolveExpression(node.discriminant);
+
+        for (const caseNode of node.cases) {
+            resolveExpression(caseNode.test);
+            enterScope();
+            analyzeBlock(caseNode.consequent);
+            exitScope();
+        }
+
+        if (node.defaultCase) {
+            enterScope();
+            analyzeBlock(node.defaultCase);
+            exitScope();
+        }
+
+        if (node.catchClause) {
+            analyzeCatchClause(node.catchClause);
+        }
     }
 
     function analyzeReturnStatement(node: ReturnStatement): void {

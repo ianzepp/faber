@@ -53,6 +53,7 @@ import type {
     WhileStatement,
     ForStatement,
     WithStatement,
+    SwitchStatement,
     ReturnStatement,
     BlockStatement,
     ThrowStatement,
@@ -177,6 +178,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 return genForStatement(node);
             case 'WithStatement':
                 return genWithStatement(node);
+            case 'SwitchStatement':
+                return genSwitchStatement(node);
             case 'ReturnStatement':
                 return genReturnStatement(node);
             case 'ThrowStatement':
@@ -451,6 +454,63 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         }
 
         return lines.join('\n');
+    }
+
+    /**
+     * Generate switch statement.
+     *
+     * TRANSFORMS:
+     *   elige x { si 1 { a() } si 2 { b() } aliter { c() } }
+     *   -> switch (x) { case 1: a(); break; case 2: b(); break; default: c(); }
+     */
+    function genSwitchStatement(node: SwitchStatement): string {
+        const discriminant = genExpression(node.discriminant);
+        let result = '';
+
+        if (node.catchClause) {
+            result += `${ind()}try {\n`;
+            depth++;
+        }
+
+        result += `${ind()}switch (${discriminant}) {\n`;
+        depth++;
+
+        for (const caseNode of node.cases) {
+            const test = genExpression(caseNode.test);
+
+            result += `${ind()}case ${test}: {\n`;
+            depth++;
+
+            for (const stmt of caseNode.consequent.body) {
+                result += genStatement(stmt) + '\n';
+            }
+
+            result += `${ind()}break${semi ? ';' : ''}\n`;
+            depth--;
+            result += `${ind()}}\n`;
+        }
+
+        if (node.defaultCase) {
+            result += `${ind()}default: {\n`;
+            depth++;
+
+            for (const stmt of node.defaultCase.body) {
+                result += genStatement(stmt) + '\n';
+            }
+
+            depth--;
+            result += `${ind()}}\n`;
+        }
+
+        depth--;
+        result += `${ind()}}`;
+
+        if (node.catchClause) {
+            depth--;
+            result += `\n${ind()}} catch (${node.catchClause.param.name}) ${genBlockStatement(node.catchClause.body)}`;
+        }
+
+        return result;
     }
 
     function genReturnStatement(node: ReturnStatement): string {

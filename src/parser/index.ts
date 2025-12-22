@@ -87,6 +87,8 @@ import type {
     WhileStatement,
     ForStatement,
     WithStatement,
+    SwitchStatement,
+    SwitchCase,
     ReturnStatement,
     BlockStatement,
     ThrowStatement,
@@ -482,6 +484,10 @@ export function parse(tokens: Token[]): ParserResult {
             return parseWithStatement();
         }
 
+        if (checkKeyword('elige')) {
+            return parseSwitchStatement();
+        }
+
         if (checkKeyword('redde')) {
             return parseReturnStatement();
         }
@@ -821,6 +827,67 @@ export function parse(tokens: Token[]): ParserResult {
         const body = parseBlockStatement();
 
         return { type: 'WithStatement', object, body, position };
+    }
+
+    /**
+     * Parse switch statement.
+     *
+     * GRAMMAR:
+     *   switchStmt := 'elige' expression '{' switchCase* defaultCase? '}' catchClause?
+     *   switchCase := 'si' expression blockStmt
+     *   defaultCase := 'aliter' blockStmt
+     *
+     * WHY: 'elige' (choose) for switch, 'si' (if) for cases.
+     *
+     * Example:
+     *   elige status {
+     *       si "pending" { processPending() }
+     *       si "active" { processActive() }
+     *       aliter { processDefault() }
+     *   }
+     */
+    function parseSwitchStatement(): SwitchStatement {
+        const position = peek().position;
+
+        expectKeyword('elige', "Expected 'elige'");
+
+        const discriminant = parseExpression();
+
+        expect('LBRACE', "Expected '{' after switch expression");
+
+        const cases: SwitchCase[] = [];
+        let defaultCase: BlockStatement | undefined;
+
+        while (!check('RBRACE') && !isAtEnd()) {
+            if (checkKeyword('si')) {
+                const casePosition = peek().position;
+
+                expectKeyword('si', "Expected 'si'");
+                const test = parseExpression();
+                const consequent = parseBlockStatement();
+
+                cases.push({ type: 'SwitchCase', test, consequent, position: casePosition });
+            }
+            else if (checkKeyword('aliter')) {
+                expectKeyword('aliter', "Expected 'aliter'");
+                defaultCase = parseBlockStatement();
+                break; // Default must be last
+            }
+            else {
+                error("Expected 'si' or 'aliter' in switch block");
+                break;
+            }
+        }
+
+        expect('RBRACE', "Expected '}' after switch cases");
+
+        let catchClause: CatchClause | undefined;
+
+        if (checkKeyword('cape')) {
+            catchClause = parseCatchClause();
+        }
+
+        return { type: 'SwitchStatement', discriminant, cases, defaultCase, catchClause, position };
     }
 
     /**
