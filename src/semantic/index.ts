@@ -512,9 +512,25 @@ export function analyze(program: Program): SemanticResult {
                 return resolveConditional(node);
             case 'RangeExpression':
                 return resolveRange(node);
+            case 'ObjectExpression':
+                return resolveObjectExpression(node);
             default:
                 return UNKNOWN;
         }
+    }
+
+    function resolveObjectExpression(node: Expression & { type: 'ObjectExpression' }): SemanticType {
+        // Resolve each property value
+        for (const prop of node.properties) {
+            resolveExpression(prop.value);
+        }
+
+        // Object literals have user type (structural typing)
+        const objType = userType('Object');
+
+        node.resolvedType = objType;
+
+        return objType;
     }
 
     function resolveRange(node: Expression & { type: 'RangeExpression' }): SemanticType {

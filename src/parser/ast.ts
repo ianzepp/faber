@@ -525,6 +525,7 @@ export type Expression =
     | Identifier
     | Literal
     | ArrayExpression
+    | ObjectExpression
     | RangeExpression
     | BinaryExpression
     | UnaryExpression
@@ -616,6 +617,37 @@ export interface TemplateLiteral extends BaseNode {
 export interface ArrayExpression extends BaseNode {
     type: 'ArrayExpression';
     elements: Expression[];
+}
+
+/**
+ * Object literal expression.
+ *
+ * GRAMMAR (in EBNF):
+ *   objectExpr := '{' (objectProperty (',' objectProperty)*)? '}'
+ *   objectProperty := (IDENTIFIER | STRING) ':' expression
+ *
+ * WHY: Object literals are the primary way to create structured data.
+ *
+ * Examples:
+ *   {}                           -> empty object
+ *   { nomen: "Marcus" }          -> single property
+ *   { nomen: "Marcus", aetas: 30 } -> multiple properties
+ */
+export interface ObjectExpression extends BaseNode {
+    type: 'ObjectExpression';
+    properties: ObjectProperty[];
+}
+
+/**
+ * Single property in an object literal.
+ *
+ * key: property name (identifier or string)
+ * value: property value expression
+ */
+export interface ObjectProperty extends BaseNode {
+    type: 'ObjectProperty';
+    key: Identifier | Literal;
+    value: Expression;
 }
 
 /**

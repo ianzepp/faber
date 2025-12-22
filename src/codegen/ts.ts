@@ -62,6 +62,7 @@ import type {
     TryStatement,
     ExpressionStatement,
     ArrayExpression,
+    ObjectExpression,
     RangeExpression,
     BinaryExpression,
     UnaryExpression,
@@ -716,6 +717,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 return `${genExpression(node.test)} ? ${genExpression(node.consequent)} : ${genExpression(node.alternate)}`;
             case 'RangeExpression':
                 return genRangeExpression(node);
+            case 'ObjectExpression':
+                return genObjectExpression(node);
             default:
                 throw new Error(`Unknown expression type: ${(node as any).type}`);
         }
@@ -760,6 +763,30 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         const elements = node.elements.map(genExpression).join(', ');
 
         return `[${elements}]`;
+    }
+
+    /**
+     * Generate object literal.
+     *
+     * TRANSFORMS:
+     *   { nomen: "Marcus" } -> { nomen: "Marcus" }
+     *   { nomen: x, aetas: y } -> { nomen: x, aetas: y }
+     */
+    function genObjectExpression(node: ObjectExpression): string {
+        if (node.properties.length === 0) {
+            return '{}';
+        }
+
+        const props = node.properties.map(prop => {
+            const key = prop.key.type === 'Identifier'
+                ? prop.key.name
+                : genLiteral(prop.key);
+            const value = genExpression(prop.value);
+
+            return `${key}: ${value}`;
+        });
+
+        return `{ ${props.join(', ')} }`;
     }
 
     /**

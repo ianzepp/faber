@@ -109,6 +109,8 @@ import type {
     RangeExpression,
     ObjectPattern,
     ObjectPatternProperty,
+    ObjectExpression,
+    ObjectProperty,
 } from './ast';
 import { builtinTypes, typeModifiers } from '../lexicon/types-builtin';
 
@@ -1578,6 +1580,39 @@ export function parse(tokens: Token[]): ParserResult {
             expect('RBRACKET', "Expected ']' after array elements");
 
             return { type: 'ArrayExpression', elements, position };
+        }
+
+        // Object literal
+        if (match('LBRACE')) {
+            const properties: ObjectProperty[] = [];
+
+            if (!check('RBRACE')) {
+                do {
+                    const propPosition = peek().position;
+
+                    // Key can be identifier or string
+                    let key: Identifier | Literal;
+
+                    if (check('STRING')) {
+                        const token = advance();
+
+                        key = { type: 'Literal', value: token.value, raw: `"${token.value}"`, position: propPosition };
+                    }
+                    else {
+                        key = parseIdentifier();
+                    }
+
+                    expect('COLON', "Expected ':' after property key");
+
+                    const value = parseExpression();
+
+                    properties.push({ type: 'ObjectProperty', key, value, position: propPosition });
+                } while (match('COMMA'));
+            }
+
+            expect('RBRACE', "Expected '}' after object properties");
+
+            return { type: 'ObjectExpression', properties, position };
         }
 
         // Parenthesized expression or arrow function
