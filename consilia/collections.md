@@ -244,11 +244,80 @@ Methods that return collections can be chained:
 
 ```
 fixum result = users
-    .filtra((u) => u.activus)
-    .ordina((u) => u.nomen)
-    .mappa((u) => u.email)
+    .filtra({ redde .activus })
+    .ordina(cum nomen)
+    .mappa({ redde .email })
     .prima(10)
 ```
+
+---
+
+## Closure Syntax
+
+Three levels of expressiveness, from tersest to most powerful:
+
+### Level 1: `cum property` — Property Shorthand
+
+For simple property access, use `cum` (with) followed by property name(s):
+
+```
+users.ordina(cum aetas)
+users.congrega(cum civitas)
+users.ordina(cum aetas et nomen)
+```
+
+Reads as Latin: "order with age and name."
+
+**Sort direction** uses Latin adjectives (default is `ascendens`):
+
+```
+users.ordina(cum aetas descendens)
+users.ordina(cum aetas descendens et nomen ascendens)
+users.ordina(cum aetas et nomen)  // both ascending
+```
+
+### Level 2: `{ redde .property }` — Implicit Subject Block
+
+For expressions involving the current item, use `.` as implicit subject:
+
+```
+users.filtra({ redde .aetas > 18 })
+users.mappa({ redde .nomen + " " + .cognomen })
+users.ordina({ redde .aetas * -1 })  // manual descending
+```
+
+The `.property` means "property of the current item."
+
+For single expressions, `redde` may be implicit:
+
+```
+users.filtra({ .aetas > 18 })
+users.mappa({ .nomen + " " + .cognomen })
+```
+
+### Level 3: `var => { }` — Explicit Variable
+
+For complex logic requiring named variable:
+
+```
+users.filtra(user => {
+    si user.aetas < 18 {
+        redde falsum
+    }
+    redde user.activus et user.verificatus
+})
+```
+
+### Summary
+
+| Form | Use Case | Example |
+|------|----------|---------|
+| `cum property` | Property access | `ordina(cum aetas)` |
+| `cum a et b` | Multi-property | `ordina(cum aetas et nomen)` |
+| `cum a descendens` | Sort direction | `ordina(cum aetas descendens)` |
+| `{ .property }` | Expressions | `filtra({ .aetas > 18 })` |
+| `{ redde ... }` | Multi-statement | `mappa({ redde .x + .y })` |
+| `v => { }` | Complex logic | `filtra(u => { ... })` |
 
 ---
 
