@@ -219,14 +219,46 @@ Higher-order function helpers.
 | Nouns | Derived values | `longitudo`, `claves`, `valores`, `summa` |
 | `-Per` suffix | "by" variant | `ordinaPer`, `maximusPer` |
 
-### The `cum` Pattern
+### Verb Conjugation for Mutability and Async
 
-For immutable operations, use `cum` (with) prefix:
+Latin verb forms distinguish between mutable/immutable and sync/async operations:
+
+| | Mutates | Returns New |
+|---|---------|-------------|
+| **Sync** | `adde` (imperative) | `addita` (perfect participle) |
+| **Async** | `addet` (future) | `additura` (future participle) |
+
+**Examples:**
 
 ```
-fixum nova = lista.cumAdde(elementum)  // returns new list
-lista.adde(elementum)                   // mutates in place
+// Sync operations
+lista.adde(x)                  // mutate in place
+fixum nova = lista.addita(x)   // new list with x
+
+lista.ordina(cum aetas)        // sort in place
+fixum nova = lista.ordinata(cum aetas)  // new sorted list
+
+lista.filtra({ .activus })     // filter in place
+fixum nova = lista.filtrata({ .activus })  // new filtered list
+
+// Async operations
+exspecta lista.addet(x)        // mutate eventually
+fixum nova = exspecta lista.additura(x)  // new list eventually
 ```
+
+**Participle agreement:** Feminine endings (`-a`) agree with `lista`, `tabula`, `copia`.
+
+**Pattern for any verb:**
+
+| Root | Imperative | Perfect Participle | Future | Future Participle |
+|------|------------|-------------------|--------|-------------------|
+| addere | adde | addita | addet | additura |
+| ordinare | ordina | ordinata | ordinat | ordinatura |
+| filtrare | filtra | filtrata | filtrat | filtratura |
+| removere | remove | remota | removet | remotura |
+| purgare | purga | purgata | purgat | purgatura |
+
+The grammar carries semantic weight that other languages encode with symbols (`!`, `async`, `Immutable.`).
 
 ### Iteration Integration
 
