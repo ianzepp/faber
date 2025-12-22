@@ -6,7 +6,7 @@
 ex norma importa series, seriesAb, fortuitus, pavimentum
 
 // Generate a single frame of binary noise (0 or 1 per cell)
-functio generateNoiseFrame(Numerus rows, Numerus cols) -> Lista<Lista<Numerus>> {
+functio generateNoiseFrame(Numerus rows, Numerus cols) -> Numerus[][] {
     fixum frame = []
 
     ex series(rows) pro i {
@@ -25,7 +25,7 @@ functio generateNoiseFrame(Numerus rows, Numerus cols) -> Lista<Lista<Numerus>> 
 // Random 0 or 1
 // XOR two matrices together (element-wise)
 // Since we only have 0 and 1, XOR is equivalent to (a + b) % 2
-functio xorMatrices(a, b) -> Lista<Lista<Numerus>> {
+functio xorMatrices(a, b) -> Numerus[][] {
     fixum result = []
     fixum rows = a.length
 
@@ -46,7 +46,7 @@ functio xorMatrices(a, b) -> Lista<Lista<Numerus>> {
 
 // Encode a QR matrix into N frames of noise
 // XOR of all returned frames equals the original QR matrix
-functio encode(qrMatrix, Numerus nFrames) -> Lista<Lista<Lista<Numerus>>> {
+functio encode(qrMatrix, Numerus nFrames) -> Numerus[][][] {
     si nFrames < 2 {
         iace "Need at least 2 frames"
     }
@@ -66,14 +66,13 @@ functio encode(qrMatrix, Numerus nFrames) -> Lista<Lista<Lista<Numerus>>> {
     }
 
     frames.push(accumulated)
-
     redde frames
 }
 
 // Generate N-1 random frames
 // Compute final frame: QR XOR all previous frames
 // Decode frames by XORing them all together
-functio decode(frames) -> Lista<Lista<Numerus>> {
+functio decode(frames) -> Numerus[][] {
     si frames.length == 0 {
         iace "No frames to decode"
     }

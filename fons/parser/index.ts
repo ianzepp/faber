@@ -1840,15 +1840,17 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse type annotation.
      *
      * GRAMMAR:
-     *   typeAnnotation := IDENTIFIER typeParams? '?'? ('|' typeAnnotation)*
+     *   typeAnnotation := IDENTIFIER typeParams? '?'? arrayBrackets* ('|' typeAnnotation)*
      *   typeParams := '<' typeParameter (',' typeParameter)* '>'
      *   typeParameter := typeAnnotation | NUMBER | MODIFIER
+     *   arrayBrackets := '[]' '?'?
      *
-     * WHY: Supports generics (Lista<Textus>), nullable (?), and union types (A | B).
-     *      Type parameters can be types, numeric literals, or modifiers.
+     * WHY: Supports generics (Lista<Textus>), nullable (?), union types (A | B),
+     *      and array shorthand (Numerus[] desugars to Lista<Numerus>).
      *
      * EDGE: Numeric parameters for sized types (Numerus<32>).
      *       Modifier parameters for ownership/signedness (Numerus<Naturalis>).
+     *       Array shorthand preserves source form via arrayShorthand flag.
      */
     function parseTypeAnnotation(): TypeAnnotation {
         const position = peek().position;
@@ -1894,10 +1896,33 @@ export function parse(tokens: Token[]): ParserResult {
             nullable = true;
         }
 
-        let union: TypeAnnotation[] | undefined;
+        // Build the base type
+        let result: TypeAnnotation = { type: 'TypeAnnotation', name, typeParameters, nullable, position };
 
+        // Handle array shorthand: Numerus[] -> Lista<Numerus>
+        // Each [] wraps in Lista with arrayShorthand flag for round-trip fidelity
+        while (check('LBRACKET') && peek(1).type === 'RBRACKET') {
+            advance(); // [
+            advance(); // ]
+
+            let arrayNullable = false;
+            if (match('QUESTION')) {
+                arrayNullable = true;
+            }
+
+            result = {
+                type: 'TypeAnnotation',
+                name: 'Lista',
+                typeParameters: [result],
+                nullable: arrayNullable,
+                arrayShorthand: true,
+                position,
+            };
+        }
+
+        // Handle union types
         if (check('PIPE')) {
-            union = [{ type: 'TypeAnnotation', name, typeParameters, nullable, position }];
+            const union: TypeAnnotation[] = [result];
             while (match('PIPE')) {
                 union.push(parseTypeAnnotation());
             }
@@ -1905,7 +1930,7 @@ export function parse(tokens: Token[]): ParserResult {
             return { type: 'TypeAnnotation', name: 'union', union, position };
         }
 
-        return { type: 'TypeAnnotation', name, typeParameters, nullable, position };
+        return result;
     }
 
     // =============================================================================

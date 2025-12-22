@@ -934,4 +934,5 @@ export interface TypeAnnotation extends BaseNode {
     typeParameters?: TypeParameter[];
     nullable?: boolean;
     union?: TypeAnnotation[];
+    arrayShorthand?: boolean; // true if parsed from [] syntax (e.g., Numerus[] vs Lista<Numerus>)
 }
