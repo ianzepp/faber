@@ -23,5 +23,5 @@ fixum nihilum = nihil
 valor = 100
 nomen = "Claudius"
 
-scribe(nomen)
-scribe(valor)
+scribe nomen
+scribe valor

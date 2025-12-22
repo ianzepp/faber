@@ -4,7 +4,7 @@
 // - Function declaration with return type (functio ... -> Type)
 // - Constant binding (fixum)
 // - String concatenation
-// - The built-in scribe() function for output
+// - The scribe statement for output
 
 functio salve(nomen) -> Textus {
   redde "Salve, " + nomen + "!"
@@ -13,4 +13,4 @@ functio salve(nomen) -> Textus {
 fixum nomen = "Mundus"
 fixum salutatio = salve(nomen)
 
-scribe(salutatio)
+scribe salutatio

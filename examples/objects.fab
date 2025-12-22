@@ -13,18 +13,18 @@ fixum persona = {
   activus: verum
 }
 
-scribe(persona.nomen)
-scribe(persona.aetas)
+scribe persona.nomen
+scribe persona.aetas
 
 // Object destructuring - extract properties into variables
 fixum { nomen, aetas } = persona
-scribe(nomen)
-scribe(aetas)
+scribe nomen
+scribe aetas
 
 // Destructuring with rename
 fixum { nomen: userName, aetas: userAge } = persona
-scribe(userName)
-scribe(userAge)
+scribe userName
+scribe userAge
 
 // Mutable destructuring
 esto { activus: isActive } = persona
@@ -36,5 +36,5 @@ cum config {
   host = "localhost"
   port = 8080
 }
-scribe(config.host)
-scribe(config.port)
+scribe config.host
+scribe config.port

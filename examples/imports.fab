@@ -5,13 +5,15 @@
 // - ex module importa *            - wildcard import
 //
 // Built-in modules:
-// - norma: standard library (scribe, lege, etc.)
+// - norma: standard library (lege, fortuitus, etc.)
 // - rete: networking (planned)
+//
+// Note: scribe is a built-in keyword, not an import
 
 // Named imports from norma
-ex norma importa scribe, lege
+ex norma importa lege, fortuitus
 
 // Wildcard import
 ex rete importa *
 
-scribe("Salve, Mundus!")
+scribe "Salve, Mundus!"

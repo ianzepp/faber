@@ -19,9 +19,9 @@ functio adde(a, b) -> Numerus {
 
 // Function without return (implicit Vacuum)
 functio salutaOmnes() {
-  scribe(salve("Marcus"))
-  scribe(salve("Claudia"))
-  scribe(salve("Mundus"))
+  scribe salve("Marcus")
+  scribe salve("Claudia")
+  scribe salve("Mundus")
 }
 
 // Async functions use futura keyword
@@ -30,5 +30,5 @@ functio salutaOmnes() {
 //   redde data
 // }
 
-scribe(adde(2, 3))
+scribe adde(2, 3)
 salutaOmnes()
