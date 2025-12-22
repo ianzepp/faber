@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Build standalone faber executable
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+mkdir -p opus
+bun build ./fons/cli.ts --compile --outfile=opus/faber
+echo "Built: opus/faber"

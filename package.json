@@ -8,13 +8,14 @@
     "faber": "./fons/cli.ts"
   },
   "scripts": {
-    "build": "bun build ./fons/cli.ts --compile --outfile=opus/faber",
-    "test": "bun test",
-    "check": "bun run fons/cli.ts check",
-    "lint": "eslint fons",
-    "lint:fix": "eslint fons --fix",
-    "format": "prettier --write fons",
-    "format:check": "prettier --check fons"
+    "build": "./scripta/build",
+    "build:exempla": "bun ./scripta/build-exempla.ts",
+    "test": "./scripta/test",
+    "check": "./scripta/check",
+    "lint": "./scripta/lint",
+    "lint:fix": "./scripta/lint --fix",
+    "format": "./scripta/format",
+    "format:check": "./scripta/format --check"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

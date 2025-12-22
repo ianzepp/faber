@@ -14,14 +14,8 @@
 // Textus (string)
 fixum Textus nomen = "Marcus Aurelius"
 
-// Numerus (number - integer)
+// Numerus (number)
 fixum Numerus aetas = 30
-fixum Numerus<32> smallInt = 42        // 32-bit integer
-fixum Numerus<Naturalis> unsigned = 100 // unsigned (no negatives)
-
-// Fractus (floating point)
-fixum Fractus pi = 3.14159
-fixum Fractus<32> float32 = 2.718
 
 // Bivalens (boolean)
 fixum Bivalens activus = verum
@@ -29,8 +23,6 @@ fixum Bivalens completus = falsum
 
 // Nihil (null)
 fixum nihilum = nihil
-
-// Vacuum (void) - used for functions that return nothing
 
 // =============================================================================
 // COLLECTION TYPES
@@ -40,16 +32,6 @@ fixum nihilum = nihil
 fixum Lista<Textus> nomina = ["Gaius", "Marcus", "Julia"]
 fixum Lista<Numerus> numeri = [1, 2, 3, 4, 5]
 
-// Tabula<K, V> - map/dictionary
-fixum Tabula<Textus, Numerus> aetates = {
-  marcus: 30,
-  julia: 25,
-  gaius: 45
-}
-
-// Copia<T> - set (unique values)
-// fixum Copia<Textus> uniques = ...
-
 // =============================================================================
 // NULLABLE TYPES
 // =============================================================================
@@ -57,9 +39,6 @@ fixum Tabula<Textus, Numerus> aetates = {
 // Use ? suffix for optional/nullable types
 fixum Textus? cognomen = nihil
 esto Numerus? result = nihil
-
-// Forsitan<T> is the explicit optional type
-// fixum Forsitan<Textus> maybe = nihil
 
 // =============================================================================
 // FUNCTION TYPES
@@ -88,63 +67,35 @@ functio describe(Textus nomen, Numerus aetas, Bivalens activus) -> Textus {
 // typus creates a type alias
 typus ID = Textus
 typus UserID = Numerus
-typus Handler = Functio<Res, Vacuum>
-
-// Using type aliases
-fixum ID oderId = "ORD-12345"
-fixum UserID currentUser = 42
 
 // =============================================================================
-// ASYNC TYPES
+// OBJECTS
 // =============================================================================
 
-// Promissum<T> - Promise
-// futura functio fetchUser(Numerus id) -> Promissum<Textus> {
-//   redde exspecta fetch("/users/" + id)
-// }
-
-// =============================================================================
-// STRUCTURAL TYPES
-// =============================================================================
-
-// Tempus - Date/time
-// fixum Tempus now = novum Tempus
-
-// Erratum - Error
-// iace novum Erratum("Something went wrong")
-
-// Res - generic object
-fixum Res config = {
+// Object literals (untyped)
+fixum config = {
   host: "localhost",
   port: 8080
 }
 
 // =============================================================================
-// ESCAPE HATCHES
+// PLANNED FEATURES (not yet implemented)
 // =============================================================================
 
-// Quodlibet - "whatever pleases" (any) - opt out of type checking
-// fixum Quodlibet anything = "could be anything"
+// Numeric type parameters:
+//   fixum Numerus<32> smallInt = 42
+//   fixum Numerus<Naturalis> unsigned = 100
+//   fixum Fractus pi = 3.14159
 
-// Ignotum - "unknown" - must narrow before use
-// fixum Ignotum mystery = getData()
+// Maps and sets:
+//   fixum Tabula<Textus, Numerus> ages = { ... }
+//   fixum Copia<Textus> uniques = ...
 
-// =============================================================================
-// SYSTEMS TYPES (Zig/Rust targets)
-// =============================================================================
+// Type alias usage:
+//   fixum ID orderId = "ORD-12345"
 
-// Type modifiers for systems programming:
-//   Naturalis - unsigned (natural numbers)
-//   Proprius  - owned (move semantics)
-//   Alienus   - borrowed (reference semantics)
-//   Mutabilis - mutable
-
-// fixum Textus<Proprius> ownedString = "I own this"
-// fixum Textus<Alienus> borrowedRef = someString
-
-// Pointer types (ignored in TypeScript target)
-// fixum Indicium<Numerus> ptr = ...
-// fixum Refera<Textus> ref = ...
+// Systems types (Zig/Rust):
+//   Indicium<T>, Refera<T>, Naturalis, Proprius, Alienus
 
 // =============================================================================
 // EXAMPLES

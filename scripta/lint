@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Lint source code
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+if [[ "${1:-}" == "--fix" ]]; then
+    eslint fons --fix
+else
+    eslint fons
+fi
