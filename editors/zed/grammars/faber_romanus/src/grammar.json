@@ -1454,19 +1454,19 @@
       "members": [
         {
           "type": "STRING",
-          "value": "Naturalis"
+          "value": "naturalis"
         },
         {
           "type": "STRING",
-          "value": "Proprius"
+          "value": "proprius"
         },
         {
           "type": "STRING",
-          "value": "Alienus"
+          "value": "alienus"
         },
         {
           "type": "STRING",
-          "value": "Mutabilis"
+          "value": "mutabilis"
         }
       ]
     },

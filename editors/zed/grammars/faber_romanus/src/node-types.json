@@ -1625,22 +1625,6 @@
     "named": false
   },
   {
-    "type": "Alienus",
-    "named": false
-  },
-  {
-    "type": "Mutabilis",
-    "named": false
-  },
-  {
-    "type": "Naturalis",
-    "named": false
-  },
-  {
-    "type": "Proprius",
-    "named": false
-  },
-  {
     "type": "[",
     "named": false
   },
@@ -1658,6 +1642,10 @@
   },
   {
     "type": "adfirma",
+    "named": false
+  },
+  {
+    "type": "alienus",
     "named": false
   },
   {
@@ -1758,6 +1746,14 @@
     "named": false
   },
   {
+    "type": "mutabilis",
+    "named": false
+  },
+  {
+    "type": "naturalis",
+    "named": false
+  },
+  {
     "type": "non",
     "named": false
   },
@@ -1787,6 +1783,10 @@
   },
   {
     "type": "pro",
+    "named": false
+  },
+  {
+    "type": "proprius",
     "named": false
   },
   {

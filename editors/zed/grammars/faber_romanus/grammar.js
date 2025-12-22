@@ -99,11 +99,11 @@ module.exports = grammar({
       ),
     ),
 
-    // Variable: esto/fixum [Type] name = value (type-first, optional)
+    // Variable: esto/fixum [type] name = value (type-first, optional)
     variable_declaration: $ => seq(
       field("kind", choice("esto", "fixum")),
       choice(
-        // Type-first: fixum Textus name
+        // Type-first: fixum textus name
         seq(
           field("type", $.type),
           field("name", $.identifier),
@@ -342,7 +342,8 @@ module.exports = grammar({
       optional("?"),
     ),
 
-    // Type names: lowercase builtins (textus, numerus) or TitleCase custom
+    // Type names: case-insensitive (textus, Textus, TEXTUS all work)
+    // Convention: lowercase preferred (Latin had no case distinction)
     type_identifier: $ => /[A-Za-z][a-zA-Z0-9_]*/,
 
     type_arguments: $ => seq(
@@ -352,10 +353,10 @@ module.exports = grammar({
     ),
 
     type_modifier: $ => choice(
-      "Naturalis",
-      "Proprius",
-      "Alienus",
-      "Mutabilis",
+      "naturalis",
+      "proprius",
+      "alienus",
+      "mutabilis",
     ),
 
     // ==========================================================================
