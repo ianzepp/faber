@@ -110,6 +110,8 @@ export const keywords: KeywordEntry[] = [
     { latin: 'genus', meaning: 'struct/class', category: 'declaration' },
     // WHY: "pactum" (agreement) for contracts - compiles to interface/trait
     { latin: 'pactum', meaning: 'interface/trait', category: 'declaration' },
+    // WHY: "ordo" (order/rank) for enumerations - named constants
+    { latin: 'ordo', meaning: 'enum', category: 'declaration' },
 
     // ---------------------------------------------------------------------------
     // Modifiers
@@ -136,6 +138,8 @@ export const keywords: KeywordEntry[] = [
     { latin: 'verum', meaning: 'true', category: 'value' },
     { latin: 'falsum', meaning: 'false', category: 'value' },
     { latin: 'nihil', meaning: 'null', category: 'value' },
+    // WHY: "ego" (I) for self-reference in methods - like "this" or "self"
+    { latin: 'ego', meaning: 'this/self', category: 'value' },
 
     // ---------------------------------------------------------------------------
     // Prepositions

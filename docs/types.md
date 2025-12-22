@@ -142,6 +142,173 @@ Semantic distinction:
 | `Tempus` | date/time | `Date` |
 | `Erratum` | error | `Error` |
 
+## User-Defined Types
+
+### genus (Struct/Class)
+
+Latin: "kind" — defines a data structure with fields and methods.
+
+```faber
+genus persona {
+  textus nomen
+  numerus aetas = 18
+
+  crea(init) {
+    ego.nomen = init.nomen
+    ego.aetas = init.aetas aut 18
+  }
+
+  functio saluta() -> textus {
+    redde "Salve, " + ego.nomen
+  }
+}
+```
+
+| Target | Compiles To |
+|--------|-------------|
+| TypeScript | `class` |
+| Zig | `struct` with methods |
+| Rust | `struct` + `impl` block |
+
+**Fields:**
+- Type-first syntax: `textus nomen`
+- Default values allowed: `numerus aetas = 18`
+- Private by default, use `publicus` for visibility
+
+**Methods:**
+- Defined with `functio` inside the genus body
+- Use `ego` (Latin "I") for self-reference
+- Private by default, use `publicus` for visibility
+
+**Constructor:**
+- Optional `crea(init)` block receives initialization object
+- If no `crea` defined, direct field assignment
+
+**Visibility:**
+
+```faber
+genus persona {
+  publicus textus nomen      // accessible from outside
+  numerus secretum           // private (default)
+
+  publicus functio saluta()  // public method
+  functio helper()           // private method
+}
+```
+
+**Module export:**
+
+```faber
+exporta genus persona { ... }  // available to other files
+```
+
+**Instantiation:**
+
+```faber
+// With initialization values
+fixum marcus = novum persona cum { nomen: "Marcus", aetas: 30 }
+
+// Partial initialization (uses defaults)
+fixum julia = novum persona cum { nomen: "Julia" }
+
+// All defaults (calls crea({}) if defined)
+fixum hospes = novum persona
+```
+
+### pactum (Interface/Trait)
+
+Latin: "agreement" — defines a contract of required methods.
+
+```faber
+pactum salutabilis {
+  functio saluta() -> textus
+}
+
+pactum comparabilis {
+  functio compara(alius) -> numerus
+}
+```
+
+| Target | Compiles To |
+|--------|-------------|
+| TypeScript | `interface` |
+| Zig | (compile-time duck typing) |
+| Rust | `trait` |
+
+**Characteristics:**
+- Method signatures only, no implementations
+- No fields (methods only)
+- Structural typing — a genus satisfies a pactum if it has matching methods
+
+**Usage as type:**
+
+```faber
+functio greet(s: salutabilis) -> textus {
+  redde s.saluta()
+}
+
+// Any genus with saluta() method works
+fixum marcus = novum persona cum { nomen: "Marcus" }
+greet(marcus)
+```
+
+### ordo (Enum)
+
+Latin: "order, rank" — defines named constants.
+
+```faber
+// Auto-numbered (starts at 0)
+ordo direction {
+  north
+  east
+  south
+  west
+}
+
+// Explicit values
+ordo httpStatus {
+  ok = 200
+  notFound = 404
+  serverError = 500
+}
+
+// Mixed (continues from last explicit value)
+ordo priority {
+  low = 1
+  medium
+  high
+  critical = 10
+}
+```
+
+| Target | Compiles To |
+|--------|-------------|
+| TypeScript | `enum` |
+| Zig | `enum` |
+| Rust | `enum` (C-style) |
+
+**Usage:**
+
+```faber
+fixum d = direction.north
+fixum status = httpStatus.ok
+
+si status == httpStatus.notFound {
+  scribe "Not found"
+}
+```
+
+Note: The language is case-insensitive, so `direction.NORTH` and `direction.north` are equivalent.
+
+### User-Defined Types Summary
+
+| Keyword | Purpose | TypeScript | Zig | Rust |
+|---------|---------|------------|-----|------|
+| `genus` | struct/class | `class` | `struct` | `struct` + `impl` |
+| `pactum` | interface/trait | `interface` | — | `trait` |
+| `ordo` | enum | `enum` | `enum` | `enum` |
+| `typus` | type alias | `type` | — | `type` |
+
 ## Optional & Error Types
 
 ### Forsitan (Optional)
@@ -251,25 +418,54 @@ For systems programming targets (Zig, Rust).
 ## Variables
 
 ```faber
-esto Textus nomen = "Marcus"        // mutable (let) — "let it be"
-fixum Textus nomen = "Marcus"       // immutable (const) — "fixed"
+esto nomen = "Marcus"        // mutable (let) — "let it be"
+fixum PI = 3.14159           // immutable (const) — "fixed"
 
-fixum Numerus PI = 3.14159          // constant with type
-esto nomen = "Marcus"               // type inferred from literal
+// Boolean literals
+fixum veritatis = verum      // true
+fixum falsitatis = falsum    // false
+
+// Null literal
+fixum nihilum = nihil        // null
+
+// Reassignment works only with esto
+esto valor = 42
+valor = 100
 ```
 
 ## Functions
 
 ```faber
-functio Textus salve(Textus nomen) {
-  redde "Salve, " + nomen
+// Function with return type (-> at end)
+functio salve(nomen) -> Textus {
+  redde "Salve, " + nomen + "!"
+}
+
+// Function with multiple parameters
+functio adde(a, b) -> Numerus {
+  redde a + b
+}
+
+// Function without return (implicit Vacuum)
+functio salutaOmnes() {
+  scribe "Salve, Mundus"
 }
 
 // Async function
-futura functio Textus fetchData(Textus url) {
-  fixum Res response = exspecta fetch(url)
-  redde exspecta response.text()
+futura functio fetchData(url) -> Textus {
+  fixum data = exspecta fetch(url)
+  redde data
 }
+```
+
+## Output
+
+`scribe` is a statement keyword (not a function call):
+
+```faber
+scribe "Hello"
+scribe nomen
+scribe "Value:", x
 ```
 
 ## Control Flow
@@ -277,48 +473,85 @@ futura functio Textus fetchData(Textus url) {
 ### Conditionals
 
 ```faber
-si conditio {
-  // if
+si x > 5 {
+  scribe "x est magnus"
 }
-aliter si alia {
-  // else if
+
+// One-liner with ergo (then)
+si x > 5 ergo scribe "x magnus est"
+
+// If-else
+si x > 20 {
+  scribe "x est maximus"
 }
 aliter {
-  // else
+  scribe "x non est maximus"
+}
+
+// One-liner if-else
+si x > 20 ergo scribe "maximus" aliter scribe "non maximus"
+
+// If-else chain
+si nota >= 90 {
+  scribe "A"
+}
+aliter si nota >= 80 {
+  scribe "B"
+}
+aliter {
+  scribe "F"
 }
 ```
 
-### Switch / Pattern Matching
+### Switch Statement
+
+`elige` uses `si`/`ergo` for cases (not `quando`/`=>`):
 
 ```faber
-elige valor {
-  quando 1 => scribe("unum")
-  quando 2 => scribe("duo")
-  aliter => scribe("ignotum")
+elige status {
+  si "pending" ergo scribe "waiting"
+  si "active" ergo scribe "running"
+  si "done" {
+    scribe "finished"
+    cleanup()
+  }
+  aliter scribe "unknown"
 }
 ```
 
 ### Loops
 
 ```faber
-dum conditio {
-  // while
+// While loop
+dum i < 3 {
+  scribe i
+  i = i + 1
 }
 
-fac {
-  // do...while
-} dum conditio
+// While one-liner
+dum j > 0 ergo j = j - 1
 
-in usuarios pro usuario {
-  // for...in (keys)
+// For-each (ex ... pro) - source first
+ex numeri pro n {
+  scribe n
 }
 
-ex numeris pro numero {
-  // for...of (values)
+// For-each one-liner
+ex items pro item ergo scribe item
+
+// Range expression
+ex 0..10 pro i {
+  scribe i
 }
 
-pro (esto i = 0; i < 10; i++) {
-  // traditional for (available but discouraged)
+// Range with step
+ex 0..10 per 2 pro i {
+  scribe i
+}
+
+// For-in (keys)
+in objeto pro key {
+  scribe key
 }
 ```
 
@@ -329,18 +562,58 @@ pro (esto i = 0; i < 10; i++) {
 | `rumpe` | `break` | break out of loop |
 | `perge` | `continue` | continue to next iteration |
 
+### Logical Operators
+
+```faber
+si a et b {
+  scribe "both true"
+}
+
+si a aut b {
+  scribe "one true"
+}
+
+// Empty/non-empty checks
+si nonnulla items {
+  scribe "has items"
+}
+
+si nulla data {
+  scribe "no data"
+}
+```
+
+## Guard Clauses
+
+```faber
+functio validate(x) -> Numerus {
+  custodi {
+    si x < 0 { redde -1 }
+    si x > 100 { redde -1 }
+  }
+  redde x
+}
+```
+
+## Assert Statement
+
+```faber
+adfirma x > 0, "x must be positive"
+adfirma valid
+```
+
 ## Error Handling
 
 Any block can have a `cape` clause:
 
 ```faber
-si fetch(url) {
+si riskyCall() {
   process()
 } cape erratum {
   handleError(erratum)
 }
 
-in items pro item {
+ex items pro item {
   process(item)
 } cape erratum {
   logFailure(erratum)
@@ -355,31 +628,40 @@ tempta {
 } cape erratum {
   recover()
 } demum {
-  cleanup()  // finally — always runs
+  cleanup()
 }
 ```
 
 Throw:
 
 ```faber
-iace novum Erratum("Something went wrong")
+iace "Something went wrong"
+iace novum Error("message")
 ```
 
-## Arrow Functions
+## Objects
 
 ```faber
-fixum duplex = (x) => x * 2
-
-fixum processare = (x) => {
-  fixum Numerus result = x * 2
-  redde result
+// Object literal
+fixum persona = {
+  nomen: "Marcus",
+  aetas: 30
 }
 
-// With types
-fixum saluta = (Textus nomen) => `Salve, ${nomen}!`
+scribe persona.nomen
 
-// As callback
-usuarios.filter((u) => u.activa)
+// Destructuring
+fixum { nomen, aetas } = persona
+
+// Destructuring with rename
+fixum { nomen: userName } = persona
+
+// With block - set properties in context
+esto config = { host: "", port: 0 }
+cum config {
+  host = "localhost"
+  port = 8080
+}
 ```
 
 ## Operators
@@ -389,8 +671,8 @@ usuarios.filter((u) => u.activa)
 | `et` | `&&` | and |
 | `aut` | `\|\|` | or |
 | `non` | `!` | not |
-
-Both Latin and symbol operators are valid. Prefer Latin when mixing with symbols for readability.
+| `nulla` | — | is null/empty |
+| `nonnulla` | — | is non-null/non-empty |
 
 ## Keywords Reference
 
@@ -398,89 +680,131 @@ Both Latin and symbol operators are valid. Prefer Latin when mixing with symbols
 |-------|------------|----------|
 | `si` | `if` | control |
 | `aliter` | `else` | control |
+| `ergo` | (then) | control |
 | `elige` | `switch` | control |
-| `quando` | `case` | control |
 | `dum` | `while` | control |
-| `fac` | `do` | control |
-| `pro` | `for` | control |
 | `in` | `in` | preposition |
 | `ex` | `of` | preposition |
+| `cum` | `with` | preposition |
+| `per` | `by/through` | preposition |
 | `rumpe` | `break` | control |
 | `perge` | `continue` | control |
+| `custodi` | (guard) | control |
+| `adfirma` | (assert) | control |
 | `tempta` | `try` | error |
 | `cape` | `catch` | error |
 | `demum` | `finally` | error |
 | `iace` | `throw` | error |
+| `scribe` | `console.log` | I/O |
 | `exspecta` | `await` | async |
 | `novum` | `new` | expression |
+| `ego` | `this` | expression |
 | `esto` | `let` | declaration |
 | `fixum` | `const` | declaration |
 | `functio` | `function` | declaration |
+| `genus` | `class`/`struct` | declaration |
+| `pactum` | `interface`/`trait` | declaration |
+| `ordo` | `enum` | declaration |
+| `typus` | `type` | declaration |
+| `importa` | `import` | declaration |
+| `exporta` | `export` | declaration |
 | `futura` | `async` | modifier |
+| `publicus` | `public` | modifier |
 | `redde` | `return` | control |
 | `verum` | `true` | value |
 | `falsum` | `false` | value |
 | `nihil` | `null` | value |
+| `et` | `&&` | operator |
+| `aut` | `\|\|` | operator |
+| `non` | `!` | operator |
+| `nulla` | — | operator |
+| `nonnulla` | — | operator |
 
 ## Examples
 
 ### Hello World
 
 ```faber
-functio Textus salve(Textus nomen) {
-  si nomen.vacuum {
-    redde "Salve, hospes"
-  }
-  redde "Salve, " + nomen
+functio salve(nomen) -> Textus {
+  redde "Salve, " + nomen + "!"
 }
 
-esto Textus nomen = lege("Quid est nomen tuum? ")
-scribe(salve(nomen))
+fixum nomen = "Mundus"
+scribe salve(nomen)
 ```
 
-### With Error Handling
+### Control Flow
 
 ```faber
-functio Vacuum mitte(Textus nuntium, Textus recipiens, HttpCliens client) {
-  esto Res responsum = client.posta(recipiens, nuntium)
-  si responsum.successum {
-    scribe("Missum est!")
-  }
-  aliter {
-    scribe("Error: " + responsum.error)
-  }
+fixum nota = 85
+
+si nota >= 90 {
+  scribe "A"
+}
+aliter si nota >= 80 {
+  scribe "B"
+}
+aliter {
+  scribe "F"
+}
+
+// Switch
+elige status {
+  si "pending" ergo scribe "waiting"
+  si "active" ergo scribe "running"
+  aliter scribe "unknown"
 }
 ```
 
-### Full Program
+### Loops and Collections
 
 ```faber
-// Variables with explicit types
-fixum Textus nomen = "Marcus"
-esto Numerus<32> aetas = 30
-fixum Fractus pretium = 19.99
-fixum Decimus<64> saldo = 1000.00
+fixum numeri = [1, 2, 3, 4, 5]
 
-// Collections
-fixum Lista<Textus> nomina = ["Marcus", "Julius", "Claudia"]
-fixum Tabula<Textus, Numerus> aetates = { "Marcus": 30, "Julius": 45 }
+ex numeri pro n {
+  scribe n
+}
 
-// Optional values
-fixum Textus? cognomen = nihil
+// Range with step
+ex 0..10 per 2 pro i {
+  scribe i
+}
 
-// Functions
-functio Numerus adde(Numerus a, Numerus b) {
+// While
+esto i = 0
+dum i < 3 {
+  scribe i
+  i = i + 1
+}
+```
+
+### Functions
+
+```faber
+functio adde(a, b) -> Numerus {
   redde a + b
 }
 
-functio Fors<Numerus> divide(Numerus a, Numerus b) {
-  si b == 0 {
-    iace novum Erratum("Divisio per nihil")
+functio divide(a, b) -> Numerus {
+  custodi {
+    si b == 0 { iace "Divisio per nihil" }
   }
   redde a / b
 }
 
-// Type inference (type optional when inferable)
-fixum salutatio = "Salve"    // inferred Textus
-esto summa = 0               // inferred Numerus
+scribe adde(2, 3)
+```
+
+### Objects
+
+```faber
+fixum persona = {
+  nomen: "Marcus",
+  aetas: 30
+}
+
+scribe persona.nomen
+
+fixum { nomen, aetas } = persona
+scribe nomen
 ```
