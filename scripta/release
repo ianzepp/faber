@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# Build, version bump, and release faber
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+# Parse arguments
+BUMP="minor"
+for arg in "$@"; do
+    case $arg in
+        --major) BUMP="major" ;;
+        --minor) BUMP="minor" ;;
+        --patch) BUMP="patch" ;;
+        *) echo "Unknown argument: $arg"; exit 1 ;;
+    esac
+done
+
+# Preflight checks
+if [[ $(git branch --show-current) != "main" ]]; then
+    echo "Error: Must be on main branch"
+    exit 1
+fi
+
+if [[ -n $(git status --porcelain) ]]; then
+    echo "Error: Working tree is dirty. Commit or stash changes first."
+    exit 1
+fi
+
+echo "=== Running tests ==="
+bun test
+
+echo "=== Building faber ==="
+bun run build
+
+echo "=== Verifying exempla ==="
+bun run build:exempla
+
+# Read current version
+CURRENT=$(jq -r .version package.json)
+IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+# Bump version
+case $BUMP in
+    major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+    minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+    patch) PATCH=$((PATCH + 1)) ;;
+esac
+
+VERSION="${MAJOR}.${MINOR}.${PATCH}"
+echo "=== Bumping version: $CURRENT → $VERSION ==="
+
+# Update package.json
+jq --arg v "$VERSION" '.version = $v' package.json > package.json.tmp
+mv package.json.tmp package.json
+
+# Copy artifact
+mkdir -p editiones
+ARTIFACT="editiones/faber-${VERSION}"
+cp opus/faber "$ARTIFACT"
+chmod +x "$ARTIFACT"
+echo "Created: $ARTIFACT"
+
+# Commit and tag
+git add package.json "$ARTIFACT"
+git commit -m "Release v${VERSION}"
+git tag "v${VERSION}"
+
+echo "=== Pushing to origin ==="
+git push
+git push --tags
+
+echo "=== Released v${VERSION} ==="

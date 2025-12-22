@@ -15,7 +15,8 @@
     "lint": "./scripta/lint",
     "lint:fix": "./scripta/lint --fix",
     "format": "./scripta/format",
-    "format:check": "./scripta/format --check"
+    "format:check": "./scripta/format --check",
+    "release": "./scripta/release"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
