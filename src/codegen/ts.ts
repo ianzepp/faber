@@ -888,6 +888,9 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         _mone: (args) => `console.warn(${args})`,
         _lege: () => `prompt() ?? ""`,
 
+        // Global convenience aliases
+        scribe: (args) => `console.log(${args})`,
+
         // Math (internal intrinsics used by norma.fab)
         _fortuitus: () => `Math.random()`,
         _pavimentum: (args) => `Math.floor(${args})`,

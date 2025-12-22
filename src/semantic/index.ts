@@ -213,6 +213,7 @@ export function analyze(program: Program): SemanticResult {
 
         // _scribe - print/log (variadic, returns void)
         defFn('_scribe', [], VACUUM);
+        defFn('scribe', [], VACUUM); // Global alias for convenience
 
         // _vide - debug output
         defFn('_vide', [], VACUUM);

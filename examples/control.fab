@@ -1,6 +1,15 @@
 // Control Flow in Faber Romanus
+//
+// Latin keywords for control structures:
+// - si/aliter (if/else)
+// - dum (while)
+// - ex/in ... pro (for-each)
+// - elige/si (switch/case)
+// - custodi (guard)
+// - adfirma (assert)
+// - et/aut (and/or)
 
-// If statement (si)
+// Conditionals with si (if)
 fixum x = 10
 
 si x > 5 {
@@ -49,3 +58,46 @@ si a et b {
 si a aut b {
   scribe("alterum verum")
 }
+
+// For-each loop (ex ... pro) - iterate values
+fixum numeri = [1, 2, 3]
+ex numeri pro n {
+  scribe(n)
+}
+
+// Range expression with step
+ex 0..5 per 2 pro n {
+  scribe(n)
+}
+
+// Switch statement (elige/si/ergo)
+fixum status = "active"
+elige status {
+  si "pending" ergo scribe("waiting")
+  si "active" ergo scribe("running")
+  aliter scribe("unknown")
+}
+
+// Switch with blocks and throw
+fixum mode = "complex"
+elige mode {
+  si "simple" ergo scribe("easy")
+  si "complex" {
+    scribe("step 1")
+    scribe("step 2")
+  }
+  aliter iace "Unknown mode"
+}
+
+// Guard clauses (custodi) - early exit patterns
+functio validateAge(aetas) -> Numerus {
+  custodi {
+    si aetas < 0 { redde -1 }
+    si aetas > 150 { redde -1 }
+  }
+  redde aetas
+}
+
+// Assert statement (adfirma)
+fixum result = validateAge(25)
+adfirma result > 0, "age must be valid"

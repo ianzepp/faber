@@ -1,4 +1,10 @@
 // Salve Mundus - Hello World in Faber Romanus
+//
+// This is the simplest Faber program. It demonstrates:
+// - Function declaration with return type (functio ... -> Type)
+// - Constant binding (fixum)
+// - String concatenation
+// - The built-in scribe() function for output
 
 functio salve(nomen) -> Textus {
   redde "Salve, " + nomen + "!"
@@ -7,5 +13,4 @@ functio salve(nomen) -> Textus {
 fixum nomen = "Mundus"
 fixum salutatio = salve(nomen)
 
-// Print it (scribe = console.log in runtime)
 scribe(salutatio)

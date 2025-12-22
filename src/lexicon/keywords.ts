@@ -78,6 +78,7 @@ export const keywords: KeywordEntry[] = [
     { latin: 'fac', meaning: 'do', category: 'control' },
     { latin: 'pro', meaning: 'for', category: 'control' },
     { latin: 'elige', meaning: 'switch', category: 'control' },
+    { latin: 'ergo', meaning: 'then', category: 'control' },
     { latin: 'quando', meaning: 'case', category: 'control' },
     { latin: 'rumpe', meaning: 'break', category: 'control' },
     { latin: 'perge', meaning: 'continue', category: 'control' },

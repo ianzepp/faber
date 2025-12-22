@@ -1,0 +1,40 @@
+// Objects in Faber Romanus
+//
+// Object features:
+// - Object literals: { key: value }
+// - Property access: obj.key
+// - Destructuring: fixum { a, b } = obj
+// - With blocks: cum obj { ... }
+
+// Object literal
+fixum persona = {
+  nomen: "Marcus",
+  aetas: 30,
+  activus: verum
+}
+
+scribe(persona.nomen)
+scribe(persona.aetas)
+
+// Object destructuring - extract properties into variables
+fixum { nomen, aetas } = persona
+scribe(nomen)
+scribe(aetas)
+
+// Destructuring with rename
+fixum { nomen: userName, aetas: userAge } = persona
+scribe(userName)
+scribe(userAge)
+
+// Mutable destructuring
+esto { activus: isActive } = persona
+isActive = falsum
+
+// With block (cum) - set properties in context
+esto config = { host: "", port: 0 }
+cum config {
+  host = "localhost"
+  port = 8080
+}
+scribe(config.host)
+scribe(config.port)

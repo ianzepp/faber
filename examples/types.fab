@@ -1,15 +1,22 @@
-// Type annotations in Faber Romanus
-// Latin types map to TypeScript types
+// Type Annotations in Faber Romanus
+//
+// Types are optional but recommended. Latin type names:
+// - Textus (string)
+// - Numerus (number)
+// - Bivalens (boolean)
+// - Vacuum (void)
+//
+// Types are case-insensitive: Textus, textus, TEXTUS all work.
 
-// Primitives (type-first syntax)
+// Type-first syntax: Type name
 fixum Textus nomen = "Marcus"
 fixum Numerus aetas = 25
 fixum Bivalens activus = verum
 
-// Nullable type
+// Nullable type with ?
 esto Textus? error = nihil
 
-// Function with typed parameters and arrow return
+// Functions with typed parameters and return type
 functio saluta(Textus nomen, Numerus aetas) -> Textus {
   redde "Salve, " + nomen
 }

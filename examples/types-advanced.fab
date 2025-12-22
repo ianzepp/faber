@@ -1,32 +1,32 @@
-// Advanced type features - type-first syntax
+// Advanced Types in Faber Romanus
+//
+// Faber supports generics, type aliases, and parameterized types.
 
-// Type alias declarations
+// Type aliases with typus
 typus ID = Textus
 typus UserID = Numerus
 typus UserName = Textus
 
-// Using type aliases (note: type aliases work in declarations but
-// parser only recognizes builtin types in type-first position)
 fixum userId = 123
 fixum userName = "Marcus"
 
-// Generic type with type parameter and array literal
+// Generic types: Lista<T> for arrays
 fixum Lista<Textus> nombres = ["Marcus", "Julia", "Gaius"]
 
-// Type with numeric parameter (size constraint)
+// Numeric type parameters (bit width)
 fixum Numerus<32> smallNumber = 42
 
-// Type with modifier parameter (unsigned)
+// Modifier parameters: Naturalis (unsigned)
 fixum Numerus<Naturalis> naturalNumber = 100
 
-// Type with both numeric and modifier parameters
+// Combined: bit width and modifier
 fixum Numerus<32, Naturalis> precisNumber = 255
 
-// Complex type alias with generics
+// Type alias with generics
 typus StringList = Lista<Textus>
 fixum names = ["Gaius", "Titus"]
 
-// Nested arrays (2D matrix)
+// Nested arrays
 fixum matrix = [
   [1, 0, 0],
   [0, 1, 0],

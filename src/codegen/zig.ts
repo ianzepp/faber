@@ -1043,8 +1043,8 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *         Zig print uses format strings and anonymous tuple syntax (.{...}).
      */
     function genCallExpression(node: CallExpression): string {
-        // TARGET: scribe() maps to Zig's std.debug.print()
-        if (node.callee.type === 'Identifier' && node.callee.name === 'scribe') {
+        // TARGET: scribe/_scribe maps to Zig's std.debug.print()
+        if (node.callee.type === 'Identifier' && (node.callee.name === 'scribe' || node.callee.name === '_scribe')) {
             const args = node.arguments.map(genExpression);
             const formatSpecs = node.arguments.map(arg => getFormatSpecifier(arg));
             const format = formatSpecs.join(' ') + '\\n';

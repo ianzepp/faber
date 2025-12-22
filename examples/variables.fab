@@ -1,23 +1,27 @@
 // Variables in Faber Romanus
+//
+// Two ways to bind values:
+// - esto (let it be) - mutable, can be reassigned
+// - fixum (fixed) - immutable constant
 
-// Mutable variable (esto -> let/var)
-esto numerus = 42
+// Mutable bindings with esto
+esto valor = 42
 esto nomen = "Marcus"
 
-// Immutable constant (fixum -> const)
+// Immutable bindings with fixum
 fixum PI = 3.14159
 fixum SALUTATIO = "Salve!"
 
-// Boolean values
+// Boolean literals: verum (true), falsum (false)
 fixum veritatis = verum
 fixum falsitatis = falsum
 
-// Null
+// Null literal: nihil (nothing)
 fixum nihilum = nihil
 
-// Reassignment (only esto variables)
-numerus = 100
+// Reassignment works only with esto bindings
+valor = 100
 nomen = "Claudius"
 
 scribe(nomen)
-scribe(numerus)
+scribe(valor)

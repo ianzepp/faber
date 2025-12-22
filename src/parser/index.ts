@@ -919,16 +919,17 @@ export function parse(tokens: Token[]): ParserResult {
      *
      * GRAMMAR:
      *   switchStmt := 'elige' expression '{' switchCase* defaultCase? '}' catchClause?
-     *   switchCase := 'si' expression blockStmt
-     *   defaultCase := 'aliter' blockStmt
+     *   switchCase := 'si' expression (blockStmt | 'ergo' expression)
+     *   defaultCase := 'aliter' (blockStmt | statement)
      *
-     * WHY: 'elige' (choose) for switch, 'si' (if) for cases.
+     * WHY: 'elige' (choose) for switch, 'si' (if) for cases, 'ergo' (therefore) for one-liners.
+     *      'aliter' (otherwise) doesn't need 'ergo' - it's already the consequence.
      *
-     * Example:
+     * Examples:
      *   elige status {
-     *       si "pending" { processPending() }
+     *       si "pending" ergo scribe("waiting")
      *       si "active" { processActive() }
-     *       aliter { processDefault() }
+     *       aliter iace "Unknown status"
      *   }
      */
     function parseSwitchStatement(): SwitchStatement {
@@ -943,19 +944,47 @@ export function parse(tokens: Token[]): ParserResult {
         const cases: SwitchCase[] = [];
         let defaultCase: BlockStatement | undefined;
 
+        // Helper: parse 'si' case body (requires ergo or block)
+        function parseSiBody(): BlockStatement {
+            if (matchKeyword('ergo')) {
+                const exprPos = peek().position;
+                const expr = parseExpression();
+                return {
+                    type: 'BlockStatement',
+                    body: [{ type: 'ExpressionStatement', expression: expr, position: exprPos }],
+                    position: exprPos,
+                };
+            }
+            return parseBlockStatement();
+        }
+
+        // Helper: parse 'aliter' body (block or direct statement, no ergo needed)
+        function parseAliterBody(): BlockStatement {
+            if (check('LBRACE')) {
+                return parseBlockStatement();
+            }
+            const stmtPos = peek().position;
+            const stmt = parseStatement();
+            return {
+                type: 'BlockStatement',
+                body: [stmt],
+                position: stmtPos,
+            };
+        }
+
         while (!check('RBRACE') && !isAtEnd()) {
             if (checkKeyword('si')) {
                 const casePosition = peek().position;
 
                 expectKeyword('si', "Expected 'si'");
                 const test = parseExpression();
-                const consequent = parseBlockStatement();
+                const consequent = parseSiBody();
 
                 cases.push({ type: 'SwitchCase', test, consequent, position: casePosition });
             }
             else if (checkKeyword('aliter')) {
                 expectKeyword('aliter', "Expected 'aliter'");
-                defaultCase = parseBlockStatement();
+                defaultCase = parseAliterBody();
                 break; // Default must be last
             }
             else {

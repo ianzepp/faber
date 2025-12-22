@@ -1,30 +1,34 @@
 // Functions in Faber Romanus
+//
+// Functions use the functio keyword:
+// - functio name(params) { ... }        - no return value
+// - functio name(params) -> Type { ... } - with return type
+// - redde value                          - return statement
+// - futura functio ...                   - async function
 
-// Simple function with return type
+// Function with return type
 functio salve(nomen) -> Textus {
   redde "Salve, " + nomen + "!"
 }
 
-// Function with explicit return type
+// Function with typed parameters
 functio adde(a, b) -> Numerus {
   fixum summa = a + b
   redde summa
 }
 
-// Function without return (void)
+// Function without return (implicit Vacuum)
 functio salutaOmnes() {
   scribe(salve("Marcus"))
   scribe(salve("Claudia"))
   scribe(salve("Mundus"))
 }
 
-// Async function (futura) with return type
-// Note: requires 'fetch' to be defined in runtime
-// futura functio expectaData(url) -> Textus {
+// Async functions use futura keyword
+// futura functio fetchData(url) -> Textus {
 //   fixum data = exspecta fetch(url)
 //   redde data
 // }
 
-// Call the functions
 scribe(adde(2, 3))
 salutaOmnes()

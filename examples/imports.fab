@@ -1,13 +1,17 @@
-// Import examples in Faber Romanus
+// Imports in Faber Romanus
+//
+// Import syntax follows source-first order:
+// - ex module importa name, name   - named imports
+// - ex module importa *            - wildcard import
+//
+// Built-in modules:
+// - norma: standard library (scribe, lege, etc.)
+// - rete: networking (planned)
 
-// Import specific functions from a module
+// Named imports from norma
 ex norma importa scribe, lege
 
-// Import everything from a module
+// Wildcard import
 ex rete importa *
 
-// Use imported functions
 scribe("Salve, Mundus!")
-
-// Note: namespaced access with wildcard import not yet fully supported
-// rete.mitte("http://example.com")
