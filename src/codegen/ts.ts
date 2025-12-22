@@ -576,21 +576,48 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *
      * TRANSFORMS:
      *   scribe("hello") -> console.log("hello")
+     *   _pavimentum(x) -> Math.floor(x)
      *   foo(x, y) -> foo(x, y)
+     *
+     * Intrinsics are mapped to target-specific implementations.
      */
     function genCallExpression(node: CallExpression): string {
-        // Map Latin built-in functions to JavaScript equivalents
-        if (node.callee.type === 'Identifier' && node.callee.name === 'scribe') {
-            const args = node.arguments.map(genExpression).join(', ');
+        const args = node.arguments.map(genExpression).join(', ');
 
-            return `console.log(${args})`;
+        // Check for intrinsics
+        if (node.callee.type === 'Identifier') {
+            const name = node.callee.name;
+            const intrinsic = TS_INTRINSICS[name];
+
+            if (intrinsic) {
+                return intrinsic(args);
+            }
         }
 
         const callee = genExpression(node.callee);
-        const args = node.arguments.map(genExpression).join(', ');
 
         return `${callee}(${args})`;
     }
+
+    /**
+     * TypeScript intrinsic mappings.
+     *
+     * Maps Latin intrinsic names to TypeScript/JavaScript equivalents.
+     */
+    const TS_INTRINSICS: Record<string, (args: string) => string> = {
+        // I/O
+        scribe: (args) => `console.log(${args})`,
+        vide: (args) => `console.debug(${args})`,
+        mone: (args) => `console.warn(${args})`,
+        lege: () => `prompt() ?? ""`,
+
+        // Math (internal intrinsics used by norma.fab)
+        _fortuitus: () => `Math.random()`,
+        _pavimentum: (args) => `Math.floor(${args})`,
+        _tectum: (args) => `Math.ceil(${args})`,
+        _radix: (args) => `Math.sqrt(${args})`,
+        _potentia: (args) => `Math.pow(${args})`,
+    };
 
     /**
      * Generate member access.

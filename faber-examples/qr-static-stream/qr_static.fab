@@ -2,19 +2,18 @@
 //
 // Each frame is random static. XOR all N frames together to reveal a QR code.
 // This is a port of the Python qr_static.py to Faber Romanus.
-//
-// STATUS: Does not compile. Blocked on missing stdlib (range, Math).
-// See FINDINGS.md for details.
+
+ex norma importa scribe, series, seriesAb, fortuitus, pavimentum
 
 // Generate a single frame of binary noise (0 or 1 per cell)
-functio generateNoiseFrame(Numerus rows, Numerus cols) {
+functio generateNoiseFrame(Numerus rows, Numerus cols) -> Lista<Lista<Numerus>> {
   esto frame = []
 
-  pro i in range(rows) {
+  pro i ex series(rows) {
     esto row = []
-    pro j in range(cols) {
+    pro j ex series(cols) {
       // Random 0 or 1
-      esto bit = Math.floor(Math.random() * 2)
+      esto bit = pavimentum(fortuitus() * 2)
       row.push(bit)
     }
     frame.push(row)
@@ -25,15 +24,15 @@ functio generateNoiseFrame(Numerus rows, Numerus cols) {
 
 // XOR two matrices together (element-wise)
 // Since we only have 0 and 1, XOR is equivalent to (a + b) % 2
-functio xorMatrices(a, b) {
+functio xorMatrices(a, b) -> Lista<Lista<Numerus>> {
   esto result = []
   fixum rows = a.length
 
-  pro i in range(rows) {
+  pro i ex series(rows) {
     esto row = []
     fixum cols = a[i].length
 
-    pro j in range(cols) {
+    pro j ex series(cols) {
       esto xored = (a[i][j] + b[i][j]) % 2
       row.push(xored)
     }
@@ -45,7 +44,7 @@ functio xorMatrices(a, b) {
 
 // Encode a QR matrix into N frames of noise
 // XOR of all returned frames equals the original QR matrix
-functio encode(qrMatrix, Numerus nFrames) {
+functio encode(qrMatrix, Numerus nFrames) -> Lista<Lista<Lista<Numerus>>> {
   si nFrames < 2 {
     iace "Need at least 2 frames"
   }
@@ -55,14 +54,14 @@ functio encode(qrMatrix, Numerus nFrames) {
 
   // Generate N-1 random frames
   esto frames = []
-  pro i in range(nFrames - 1) {
+  pro i ex series(nFrames - 1) {
     frames.push(generateNoiseFrame(rows, cols))
   }
 
   // Compute final frame: QR XOR all previous frames
   esto accumulated = qrMatrix
 
-  pro frame in frames {
+  pro frame ex frames {
     accumulated = xorMatrices(accumulated, frame)
   }
 
@@ -72,14 +71,14 @@ functio encode(qrMatrix, Numerus nFrames) {
 }
 
 // Decode frames by XORing them all together
-functio decode(frames) {
+functio decode(frames) -> Lista<Lista<Numerus>> {
   si frames.length == 0 {
     iace "No frames to decode"
   }
 
   esto result = frames[0]
 
-  pro i in range(1, frames.length) {
+  pro i ex seriesAb(1, frames.length, 1) {
     result = xorMatrices(result, frames[i])
   }
 
@@ -88,9 +87,9 @@ functio decode(frames) {
 
 // Helper to print a matrix
 functio printMatrix(m) {
-  pro row in m {
+  pro row ex m {
     esto line = ""
-    pro cell in row {
+    pro cell ex row {
       si cell == 1 {
         line = line + "#"
       }
@@ -120,7 +119,7 @@ functio demo() {
   scribe("Encoded into " + frames.length + " frames")
 
   // Show each frame
-  pro i in range(frames.length) {
+  pro i ex series(frames.length) {
     scribe("Frame " + i + ":")
     printMatrix(frames[i])
   }

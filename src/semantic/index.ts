@@ -43,6 +43,7 @@ import type {
     Program,
     Statement,
     Expression,
+    ImportDeclaration,
     VariableDeclaration,
     FunctionDeclaration,
     TypeAliasDeclaration,
@@ -125,6 +126,45 @@ const LATIN_TYPE_MAP: Record<string, SemanticType> = {
 const GENERIC_TYPES = new Set(['Lista', 'Tabula', 'Copia', 'Promissum', 'Cursor', 'Fluxus']);
 
 // =============================================================================
+// STANDARD LIBRARY EXPORTS
+// =============================================================================
+
+/**
+ * Norma standard library exports.
+ *
+ * Maps function names to their semantic types for import resolution.
+ * When `ex norma importa X` is encountered, these symbols are added to scope.
+ */
+const NORMA_EXPORTS: Record<string, { type: SemanticType; kind: 'function' | 'variable' }> = {
+    // I/O
+    scribe: { type: functionType([], VACUUM), kind: 'function' },
+    lege: { type: functionType([], TEXTUS), kind: 'function' },
+
+    // Iteration
+    series: { type: functionType([NUMERUS], genericType('Lista', [NUMERUS])), kind: 'function' },
+    seriesAb: { type: functionType([NUMERUS, NUMERUS, NUMERUS], genericType('Lista', [NUMERUS])), kind: 'function' },
+
+    // Math functions
+    fortuitus: { type: functionType([], NUMERUS), kind: 'function' },
+    pavimentum: { type: functionType([NUMERUS], NUMERUS), kind: 'function' },
+    tectum: { type: functionType([NUMERUS], NUMERUS), kind: 'function' },
+    rotundus: { type: functionType([NUMERUS], NUMERUS), kind: 'function' },
+    absolutus: { type: functionType([NUMERUS], NUMERUS), kind: 'function' },
+    radix: { type: functionType([NUMERUS], NUMERUS), kind: 'function' },
+    potentia: { type: functionType([NUMERUS, NUMERUS], NUMERUS), kind: 'function' },
+    minimus: { type: functionType([NUMERUS], NUMERUS), kind: 'function' },
+    maximus: { type: functionType([NUMERUS], NUMERUS), kind: 'function' },
+
+    // Type conversion
+    numerus: { type: functionType([UNKNOWN], NUMERUS), kind: 'function' },
+    textus: { type: functionType([UNKNOWN], TEXTUS), kind: 'function' },
+
+    // Constants
+    PI: { type: NUMERUS, kind: 'variable' },
+    E: { type: NUMERUS, kind: 'variable' },
+};
+
+// =============================================================================
 // MAIN ANALYZER
 // =============================================================================
 
@@ -140,17 +180,59 @@ export function analyze(program: Program): SemanticResult {
     defineBuiltins();
 
     /**
-     * Define built-in functions in global scope.
+     * Define built-in functions (intrinsics) in global scope.
+     *
+     * Intrinsics are functions provided by the target runtime, not written in Faber.
+     * They form the foundation that norma.fab builds upon.
      */
     function defineBuiltins(): void {
-        // scribe - print function (variadic, returns void)
-        currentScope.symbols.set('scribe', {
-            name: 'scribe',
-            type: functionType([], VACUUM),
-            kind: 'function',
-            mutable: false,
-            position: { line: 0, column: 0 },
-        });
+        const builtinPos = { line: 0, column: 0 };
+
+        // Helper to define a function intrinsic
+        function defFn(name: string, params: SemanticType[], ret: SemanticType): void {
+            currentScope.symbols.set(name, {
+                name,
+                type: functionType(params, ret),
+                kind: 'function',
+                mutable: false,
+                position: builtinPos,
+            });
+        }
+
+        // =====================================================================
+        // I/O Intrinsics
+        // =====================================================================
+
+        // scribe - print/log (variadic, returns void)
+        defFn('scribe', [], VACUUM);
+
+        // vide - debug output
+        defFn('vide', [], VACUUM);
+
+        // mone - warning output
+        defFn('mone', [], VACUUM);
+
+        // lege - read input line
+        defFn('lege', [], TEXTUS);
+
+        // =====================================================================
+        // Math Intrinsics (prefixed with _ for internal use by norma.fab)
+        // =====================================================================
+
+        // _fortuitus - random number 0.0 to 1.0
+        defFn('_fortuitus', [], NUMERUS);
+
+        // _pavimentum - floor
+        defFn('_pavimentum', [NUMERUS], NUMERUS);
+
+        // _tectum - ceiling
+        defFn('_tectum', [NUMERUS], NUMERUS);
+
+        // _radix - square root
+        defFn('_radix', [NUMERUS], NUMERUS);
+
+        // _potentia - power (base, exponent)
+        defFn('_potentia', [NUMERUS, NUMERUS], NUMERUS);
     }
 
     /**
@@ -184,6 +266,56 @@ export function analyze(program: Program): SemanticResult {
 
         if (err) {
             error(err, symbol.position);
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Import Resolution
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Analyze import declaration and add symbols to scope.
+     *
+     * Currently only recognizes 'norma' standard library.
+     * Other modules are passed through without type information.
+     */
+    function analyzeImportDeclaration(node: ImportDeclaration): void {
+        if (node.source !== 'norma') {
+            // Unknown module - imports pass through without type info
+            // This allows importing external JS/TS modules
+            return;
+        }
+
+        if (node.wildcard) {
+            // ex norma importa * - add all exports to scope
+            for (const [name, { type, kind }] of Object.entries(NORMA_EXPORTS)) {
+                currentScope.symbols.set(name, {
+                    name,
+                    type,
+                    kind,
+                    mutable: false,
+                    position: node.position,
+                });
+            }
+        }
+        else {
+            // ex norma importa scribe, series - add specific exports
+            for (const specifier of node.specifiers) {
+                const exportInfo = NORMA_EXPORTS[specifier.name];
+
+                if (exportInfo) {
+                    currentScope.symbols.set(specifier.name, {
+                        name: specifier.name,
+                        type: exportInfo.type,
+                        kind: exportInfo.kind,
+                        mutable: false,
+                        position: specifier.position,
+                    });
+                }
+                else {
+                    error(`'${specifier.name}' is not exported from 'norma'`, specifier.position);
+                }
+            }
         }
     }
 
@@ -662,7 +794,7 @@ export function analyze(program: Program): SemanticResult {
     function analyzeStatement(node: Statement): void {
         switch (node.type) {
             case 'ImportDeclaration':
-                // Imports don't affect type checking for now
+                analyzeImportDeclaration(node);
                 break;
             case 'VariableDeclaration':
                 analyzeVariableDeclaration(node);

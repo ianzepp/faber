@@ -1,0 +1,204 @@
+// Norma - Faber Romanus Standard Library
+//
+// "Norma" (Latin: carpenter's square, rule, standard)
+//
+// This file is written in Faber and compiles to all targets.
+// It depends on a small set of intrinsics provided by each target.
+
+// =============================================================================
+// INTRINSICS (provided by target runtime)
+// =============================================================================
+//
+// These are "magic" functions the codegen emits directly:
+//
+//   scribe(...args)      -> console.log / std.debug.print / etc.
+//   lege() -> Textus     -> readline / stdin read
+//   fortuitus() -> Numerus   -> Math.random / std.rand (0.0 to 1.0)
+//   _pavimentum(n) -> Numerus -> Math.floor / @floor
+//   _tectum(n) -> Numerus     -> Math.ceil / @ceil
+//   _radix(n) -> Numerus      -> Math.sqrt / @sqrt
+//   _potentia(base, exp) -> Numerus -> Math.pow / std.math.pow
+//
+// Intrinsics prefixed with _ are internal; public API wraps them.
+
+// =============================================================================
+// ITERATION
+// =============================================================================
+
+// Generate sequence 0..n-1 (like Python's range(n))
+functio series(Numerus n) -> Lista<Numerus> {
+    esto result = []
+    esto i = 0
+    dum i < n {
+        result.push(i)
+        i = i + 1
+    }
+    redde result
+}
+
+// Generate sequence start..end-1 with optional step
+functio seriesAb(Numerus initium, Numerus finis, Numerus gradus) -> Lista<Numerus> {
+    esto result = []
+    esto i = initium
+    si gradus > 0 {
+        dum i < finis {
+            result.push(i)
+            i = i + gradus
+        }
+    }
+    aliter si gradus < 0 {
+        dum i > finis {
+            result.push(i)
+            i = i + gradus
+        }
+    }
+    redde result
+}
+
+// =============================================================================
+// MATH - Wrappers around intrinsics
+// =============================================================================
+
+// Floor (round down)
+functio pavimentum(Numerus n) -> Numerus {
+    redde _pavimentum(n)
+}
+
+// Ceiling (round up)
+functio tectum(Numerus n) -> Numerus {
+    redde _tectum(n)
+}
+
+// Round to nearest integer
+functio rotundus(Numerus n) -> Numerus {
+    redde _pavimentum(n + 0.5)
+}
+
+// Square root
+functio radix(Numerus n) -> Numerus {
+    redde _radix(n)
+}
+
+// Power (exponentiation)
+functio potentia(Numerus basis, Numerus exponens) -> Numerus {
+    redde _potentia(basis, exponens)
+}
+
+// =============================================================================
+// MATH - Pure Faber implementations
+// =============================================================================
+
+// Absolute value
+functio absolutus(Numerus n) -> Numerus {
+    si n < 0 {
+        redde 0 - n
+    }
+    redde n
+}
+
+// Minimum of two values
+functio minimus(Numerus a, Numerus b) -> Numerus {
+    si a < b {
+        redde a
+    }
+    redde b
+}
+
+// Maximum of two values
+functio maximus(Numerus a, Numerus b) -> Numerus {
+    si a > b {
+        redde a
+    }
+    redde b
+}
+
+// Clamp value between min and max
+functio constrictus(Numerus n, Numerus min, Numerus max) -> Numerus {
+    si n < min {
+        redde min
+    }
+    si n > max {
+        redde max
+    }
+    redde n
+}
+
+// Sign of number (-1, 0, or 1)
+functio signum(Numerus n) -> Numerus {
+    si n > 0 {
+        redde 1
+    }
+    si n < 0 {
+        redde 0 - 1
+    }
+    redde 0
+}
+
+// =============================================================================
+// RANDOM
+// =============================================================================
+
+// Random number between 0 and 1 (wrapper around intrinsic)
+functio fortuitus() -> Numerus {
+    redde _fortuitus()
+}
+
+// Random integer from 0 to n-1
+functio fortunatus(Numerus n) -> Numerus {
+    redde pavimentum(fortuitus() * n)
+}
+
+// Random integer from min to max (inclusive)
+functio fortunatusInter(Numerus min, Numerus max) -> Numerus {
+    redde min + pavimentum(fortuitus() * (max - min + 1))
+}
+
+// =============================================================================
+// TYPE CONVERSION
+// =============================================================================
+
+// These may need intrinsics depending on target capabilities
+// For now, assume targets provide implicit conversion or we add intrinsics
+
+// functio numerus(valor) -> Numerus { ... }
+// functio textus(valor) -> Textus { ... }
+
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+fixum PI = 3.141592653589793
+fixum E = 2.718281828459045
+fixum TAU = 6.283185307179586
+
+// =============================================================================
+// ARRAY UTILITIES
+// =============================================================================
+
+// Length is accessed via .length property, not a function
+
+// Sum of numeric array
+functio summa(Lista<Numerus> numeri) -> Numerus {
+    esto total = 0
+    pro n ex numeri {
+        total = total + n
+    }
+    redde total
+}
+
+// Product of numeric array
+functio factum(Lista<Numerus> numeri) -> Numerus {
+    esto total = 1
+    pro n ex numeri {
+        total = total * n
+    }
+    redde total
+}
+
+// Average of numeric array
+functio medium(Lista<Numerus> numeri) -> Numerus {
+    si numeri.length == 0 {
+        redde 0
+    }
+    redde summa(numeri) / numeri.length
+}
