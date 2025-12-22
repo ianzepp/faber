@@ -25,9 +25,10 @@
  * INPUT/OUTPUT CONTRACT
  * =====================
  * INPUT:  Inflected Latin word (string)
- * OUTPUT: Array of possible grammatical interpretations (may be multiple due to
- *         homographs - same form, different meanings)
- * ERRORS: Returns null when word is not recognized in lexicon
+ * OUTPUT: Array of possible grammatical interpretations, or LexiconError
+ * ERRORS: Returns LexiconError with kind indicating why parsing failed:
+ *         - unknown_stem: No vocabulary entry matches the word
+ *         - invalid_ending: Stem matched but ending not in declension/conjugation
  *
  * INVARIANTS
  * ==========
@@ -53,6 +54,26 @@ import { builtinTypes } from './types-builtin';
 // =============================================================================
 // TYPES
 // =============================================================================
+
+/**
+ * Error returned when lexicon parsing fails.
+ *
+ * WHY: Instead of returning null, we return what we learned during parsing.
+ *      This enables better error messages for users.
+ */
+export interface LexiconError {
+    error: 'unknown_stem' | 'invalid_ending';
+    word: string;
+    stem?: string; // Present if we matched a stem but ending failed
+    ending?: string; // The ending that didn't match
+}
+
+/**
+ * Check if a parse result is an error.
+ */
+export function isLexiconError(result: unknown): result is LexiconError {
+    return result !== null && typeof result === 'object' && 'error' in result;
+}
 
 /**
  * Parsed type with JavaScript/TypeScript target information.
@@ -89,11 +110,14 @@ export interface ParsedType extends ParsedNoun {
  *      The parser must handle this ambiguity.
  *
  * @param word - The inflected Latin noun (e.g., "numerum", "usuarii")
- * @returns Array of possible interpretations, or null if not recognized
+ * @returns Array of possible interpretations, or LexiconError
  */
-export function parseNoun(word: string): ParsedNoun[] | null {
+export function parseNoun(word: string): ParsedNoun[] | LexiconError {
     // WHY: Latin nouns in user code are case-insensitive (unlike types which are TitleCase)
     const lowerWord = word.toLowerCase();
+
+    // Track best match for error reporting
+    let bestMatch: { stem: string; ending: string } | null = null;
 
     for (const noun of nouns) {
         if (!lowerWord.startsWith(noun.stem)) {
@@ -106,6 +130,9 @@ export function parseNoun(word: string): ParsedNoun[] | null {
         if (!endingsTable) {
             continue;
         }
+
+        // Remember we got this far (stem matched)
+        bestMatch = { stem: noun.stem, ending };
 
         const matches = endingsTable[ending];
 
@@ -120,7 +147,12 @@ export function parseNoun(word: string): ParsedNoun[] | null {
         }
     }
 
-    return null;
+    // Return what we learned
+    if (bestMatch) {
+        return { error: 'invalid_ending', word, stem: bestMatch.stem, ending: bestMatch.ending };
+    }
+
+    return { error: 'unknown_stem', word };
 }
 
 // ---------------------------------------------------------------------------
@@ -144,9 +176,12 @@ export function parseNoun(word: string): ParsedNoun[] | null {
  *       singular. Must handle empty ending specially.
  *
  * @param word - The inflected type name (e.g., "Textus", "Cursorem")
- * @returns Array of possible interpretations with target type info, or null
+ * @returns Array of possible interpretations with target type info, or LexiconError
  */
-export function parseType(word: string): ParsedType[] | null {
+export function parseType(word: string): ParsedType[] | LexiconError {
+    // Track best match for error reporting
+    let bestMatch: { stem: string; ending: string } | null = null;
+
     // WHY: Case-sensitive stem matching preserves TitleCase convention for types
     for (const typeEntry of builtinTypes) {
         if (!word.startsWith(typeEntry.stem)) {
@@ -160,6 +195,9 @@ export function parseType(word: string): ParsedType[] | null {
         if (!endingsTable) {
             continue;
         }
+
+        // Remember we got this far (stem matched)
+        bestMatch = { stem: typeEntry.stem, ending };
 
         // EDGE: 3rd declension nominative singular has no ending
         //       Example: "Cursor" (not "Cursorus"), "Functio" (as-is)
@@ -194,7 +232,12 @@ export function parseType(word: string): ParsedType[] | null {
         }
     }
 
-    return null;
+    // Return what we learned
+    if (bestMatch) {
+        return { error: 'invalid_ending', word, stem: bestMatch.stem, ending: bestMatch.ending };
+    }
+
+    return { error: 'unknown_stem', word };
 }
 
 // ---------------------------------------------------------------------------
@@ -223,10 +266,13 @@ export function parseType(word: string): ParsedType[] | null {
  *                    stem + {-am, -es, -et, ...} (future)
  *
  * @param word - The inflected Latin verb (e.g., "mittit", "legam")
- * @returns Array of possible interpretations, or null if not recognized
+ * @returns Array of possible interpretations, or LexiconError
  */
-export function parseVerb(word: string): ParsedVerb[] | null {
+export function parseVerb(word: string): ParsedVerb[] | LexiconError {
     const lowerWord = word.toLowerCase();
+
+    // Track best match for error reporting
+    let bestMatch: { stem: string; ending: string } | null = null;
 
     for (const verb of verbs) {
         if (!lowerWord.startsWith(verb.stem)) {
@@ -251,6 +297,9 @@ export function parseVerb(word: string): ParsedVerb[] | null {
             continue;
         }
 
+        // Remember we got this far (stem matched)
+        bestMatch = { stem: verb.stem, ending };
+
         const matches = endingsTable[ending];
 
         if (matches) {
@@ -266,7 +315,12 @@ export function parseVerb(word: string): ParsedVerb[] | null {
         }
     }
 
-    return null;
+    // Return what we learned
+    if (bestMatch) {
+        return { error: 'invalid_ending', word, stem: bestMatch.stem, ending: bestMatch.ending };
+    }
+
+    return { error: 'unknown_stem', word };
 }
 
 // =============================================================================

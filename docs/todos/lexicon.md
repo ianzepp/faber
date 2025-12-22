@@ -130,10 +130,27 @@ Designed for cross-target portability (TS, Zig, Rust, C, WASM):
 - [x] `publicus` → public (default is private)
 
 ### Error Diagnostics
-- [ ] Return structured errors instead of `null`
-- [ ] Distinguish unknown stem vs invalid ending
+- [x] Return structured errors instead of `null`
+- [x] Distinguish unknown stem vs invalid ending
 - [ ] Add position information for error messages
 - [ ] "Did you mean?" suggestions for near-misses
+
+**Decision (2024-12-21):** Parse functions now return `LexiconError` instead of `null`:
+
+```typescript
+interface LexiconError {
+    error: 'unknown_stem' | 'invalid_ending';
+    word: string;
+    stem?: string;   // Present if stem matched but ending failed
+    ending?: string; // The ending that didn't match
+}
+```
+
+Examples:
+- `parseNoun('asdfgh')` → `{ error: 'unknown_stem', word: 'asdfgh' }`
+- `parseNoun('nuntixx')` → `{ error: 'invalid_ending', word: 'nuntixx', stem: 'nunti', ending: 'xx' }`
+
+No extra computation - we already knew why parsing failed, just stopped throwing it away.
 
 ### Fix Incorrect Latin
 - [ ] `Res` stem is "R" but should be "re-" (5th declension irregular)
