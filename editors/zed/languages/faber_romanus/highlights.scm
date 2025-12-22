@@ -1,5 +1,4 @@
 ; Faber Romanus syntax highlighting queries for Tree-sitter
-; Aligned with grammar.js
 
 ; ==============================================================================
 ; Comments
@@ -70,22 +69,12 @@
 "exspecta" @keyword.control
 
 ; ==============================================================================
-; Keywords - Prepositions (in parameters)
-; ==============================================================================
-
-(formal_parameter
-  preposition: _ @keyword)
-
-; ==============================================================================
 ; Literals
 ; ==============================================================================
 
 (number) @constant.numeric
 (string) @string
 (template_string) @string
-(template_substitution
-  "${" @punctuation.special
-  "}" @punctuation.special)
 
 ; Booleans
 (true) @constant.builtin.boolean
@@ -100,7 +89,6 @@
 ; ==============================================================================
 
 (type_identifier) @type
-(type_modifier) @type.builtin
 
 ; ==============================================================================
 ; Functions
@@ -109,19 +97,6 @@
 ; Function declarations
 (function_declaration
   name: (identifier) @function)
-
-; Function calls
-(call_expression
-  function: (identifier) @function.call)
-
-; Method calls
-(call_expression
-  function: (member_expression
-    property: (identifier) @function.method.call))
-
-; Constructor calls
-(new_expression
-  callee: (identifier) @type)
 
 ; ==============================================================================
 ; Variables and Parameters
@@ -146,9 +121,11 @@
 (pair
   key: (identifier) @property)
 
-; Object pattern properties
-(object_pattern_property
-  key: (identifier) @property)
+; ==============================================================================
+; Identifiers (fallback)
+; ==============================================================================
+
+(identifier) @variable
 
 ; ==============================================================================
 ; Operators
@@ -172,7 +149,6 @@
 "=>" @operator
 "->" @operator
 ".." @operator
-"?" @operator
 
 ; ==============================================================================
 ; Punctuation
@@ -188,5 +164,3 @@
 "}" @punctuation.bracket
 "[" @punctuation.bracket
 "]" @punctuation.bracket
-"<" @punctuation.bracket
-">" @punctuation.bracket
