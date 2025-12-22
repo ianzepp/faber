@@ -7,12 +7,12 @@ ex norma importa series, seriesAb, fortuitus, pavimentum
 
 // Generate a single frame of binary noise (0 or 1 per cell)
 functio generateNoiseFrame(Numerus rows, Numerus cols) -> Lista<Lista<Numerus>> {
-    esto frame = []
+    fixum frame = []
 
     ex series(rows) pro i {
-        esto row = []
+        fixum row = []
         ex series(cols) pro j {
-            esto bit = pavimentum(fortuitus() * 2)
+            fixum bit = pavimentum(fortuitus() * 2)
             row.push(bit)
         }
 
@@ -26,15 +26,15 @@ functio generateNoiseFrame(Numerus rows, Numerus cols) -> Lista<Lista<Numerus>> 
 // XOR two matrices together (element-wise)
 // Since we only have 0 and 1, XOR is equivalent to (a + b) % 2
 functio xorMatrices(a, b) -> Lista<Lista<Numerus>> {
-    esto result = []
+    fixum result = []
     fixum rows = a.length
 
     ex series(rows) pro i {
-        esto row = []
+        fixum row = []
         fixum cols = a[i].length
 
         ex series(cols) pro j {
-            esto xored = a[i][j] + b[i][j] % 2
+            fixum xored = a[i][j] + b[i][j] % 2
             row.push(xored)
         }
 
@@ -54,7 +54,7 @@ functio encode(qrMatrix, Numerus nFrames) -> Lista<Lista<Lista<Numerus>>> {
     fixum rows = qrMatrix.length
     fixum cols = qrMatrix[0].length
 
-    esto frames = []
+    fixum frames = []
     ex series(nFrames - 1) pro i {
         frames.push(generateNoiseFrame(rows, cols))
     }
