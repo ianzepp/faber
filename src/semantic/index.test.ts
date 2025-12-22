@@ -237,8 +237,9 @@ describe('Semantic Analyzer', () => {
         it('analyzes if statement condition', () => {
             const source = `
         esto x = 5
+        esto y = 0
         si x > 0 {
-          scribe("positive")
+          y = 1
         }
       `;
             const { errors } = analyzeSource(source);
@@ -260,8 +261,9 @@ describe('Semantic Analyzer', () => {
 
         it('analyzes for loop with loop variable', () => {
             const source = `
+        esto count = 0
         pro item ex "test" {
-          scribe("loop")
+          count = count + 1
         }
       `;
             const { errors } = analyzeSource(source);

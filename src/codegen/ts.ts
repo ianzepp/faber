@@ -605,11 +605,11 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * Maps Latin intrinsic names to TypeScript/JavaScript equivalents.
      */
     const TS_INTRINSICS: Record<string, (args: string) => string> = {
-        // I/O
-        scribe: (args) => `console.log(${args})`,
-        vide: (args) => `console.debug(${args})`,
-        mone: (args) => `console.warn(${args})`,
-        lege: () => `prompt() ?? ""`,
+        // I/O (internal intrinsics used by norma.fab)
+        _scribe: (args) => `console.log(${args})`,
+        _vide: (args) => `console.debug(${args})`,
+        _mone: (args) => `console.warn(${args})`,
+        _lege: () => `prompt() ?? ""`,
 
         // Math (internal intrinsics used by norma.fab)
         _fortuitus: () => `Math.random()`,

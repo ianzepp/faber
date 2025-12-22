@@ -9,17 +9,45 @@
 // INTRINSICS (provided by target runtime)
 // =============================================================================
 //
-// These are "magic" functions the codegen emits directly:
+// These are "magic" functions the codegen emits directly.
+// All intrinsics are prefixed with _ and wrapped by public functions.
 //
-//   scribe(...args)      -> console.log / std.debug.print / etc.
-//   lege() -> Textus     -> readline / stdin read
-//   fortuitus() -> Numerus   -> Math.random / std.rand (0.0 to 1.0)
+// I/O:
+//   _scribe(...args)         -> console.log / std.debug.print / etc.
+//   _vide(...args)           -> console.debug / debug output
+//   _mone(...args)           -> console.warn / warning output
+//   _lege() -> Textus        -> readline / stdin read
+//
+// Math:
+//   _fortuitus() -> Numerus  -> Math.random / std.rand (0.0 to 1.0)
 //   _pavimentum(n) -> Numerus -> Math.floor / @floor
 //   _tectum(n) -> Numerus     -> Math.ceil / @ceil
 //   _radix(n) -> Numerus      -> Math.sqrt / @sqrt
 //   _potentia(base, exp) -> Numerus -> Math.pow / std.math.pow
-//
-// Intrinsics prefixed with _ are internal; public API wraps them.
+
+// =============================================================================
+// I/O - Wrappers around intrinsics
+// =============================================================================
+
+// Print/log output
+functio scribe(Textus msg) {
+    _scribe(msg)
+}
+
+// Debug output
+functio vide(Textus msg) {
+    _vide(msg)
+}
+
+// Warning output
+functio mone(Textus msg) {
+    _mone(msg)
+}
+
+// Read input line
+functio lege() -> Textus {
+    redde _lege()
+}
 
 // =============================================================================
 // ITERATION

@@ -56,7 +56,7 @@ describe('codegen', () => {
         test('simple if', () => {
             const js = compile(`
         si verum {
-          scribe("yes")
+          _scribe("yes")
         }
       `);
 
@@ -97,7 +97,7 @@ describe('codegen', () => {
         test('while loop', () => {
             const js = compile(`
         dum verum {
-          scribe("loop")
+          _scribe("loop")
         }
       `);
 
@@ -107,7 +107,7 @@ describe('codegen', () => {
         test('for...in loop', () => {
             const js = compile(`
         pro item in lista {
-          scribe(item)
+          _scribe(item)
         }
       `);
 
@@ -117,7 +117,7 @@ describe('codegen', () => {
         test('for...of loop', () => {
             const js = compile(`
         pro numero ex numeros {
-          scribe(numero)
+          _scribe(numero)
         }
       `);
 
@@ -281,7 +281,7 @@ describe('codegen', () => {
         functio salve(nomen) {
           redde "Salve, " + nomen
         }
-        scribe(salve("Mundus"))
+        _scribe(salve("Mundus"))
       `);
 
             expect(js).toContain('function salve(nomen)');

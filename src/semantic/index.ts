@@ -137,7 +137,9 @@ const GENERIC_TYPES = new Set(['Lista', 'Tabula', 'Copia', 'Promissum', 'Cursor'
  */
 const NORMA_EXPORTS: Record<string, { type: SemanticType; kind: 'function' | 'variable' }> = {
     // I/O
-    scribe: { type: functionType([], VACUUM), kind: 'function' },
+    scribe: { type: functionType([TEXTUS], VACUUM), kind: 'function' },
+    vide: { type: functionType([TEXTUS], VACUUM), kind: 'function' },
+    mone: { type: functionType([TEXTUS], VACUUM), kind: 'function' },
     lege: { type: functionType([], TEXTUS), kind: 'function' },
 
     // Iteration
@@ -200,20 +202,20 @@ export function analyze(program: Program): SemanticResult {
         }
 
         // =====================================================================
-        // I/O Intrinsics
+        // I/O Intrinsics (prefixed with _ for internal use by norma.fab)
         // =====================================================================
 
-        // scribe - print/log (variadic, returns void)
-        defFn('scribe', [], VACUUM);
+        // _scribe - print/log (variadic, returns void)
+        defFn('_scribe', [], VACUUM);
 
-        // vide - debug output
-        defFn('vide', [], VACUUM);
+        // _vide - debug output
+        defFn('_vide', [], VACUUM);
 
-        // mone - warning output
-        defFn('mone', [], VACUUM);
+        // _mone - warning output
+        defFn('_mone', [], VACUUM);
 
-        // lege - read input line
-        defFn('lege', [], TEXTUS);
+        // _lege - read input line
+        defFn('_lege', [], TEXTUS);
 
         // =====================================================================
         // Math Intrinsics (prefixed with _ for internal use by norma.fab)
@@ -640,17 +642,6 @@ export function analyze(program: Program): SemanticResult {
             node.resolvedType = calleeType.returnType;
 
             return calleeType.returnType;
-        }
-
-        // Built-in function handling (scribe, etc.)
-        if (node.callee.type === 'Identifier') {
-            const name = node.callee.name;
-
-            if (name === 'scribe') {
-                node.resolvedType = VACUUM;
-
-                return VACUUM;
-            }
         }
 
         node.resolvedType = UNKNOWN;
