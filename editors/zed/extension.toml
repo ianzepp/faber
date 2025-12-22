@@ -7,6 +7,5 @@ authors = ["Ian Zepp <ian@ianzepp.com>"]
 repository = "https://github.com/ianzepp/faber-romanus"
 
 [grammars.faber_romanus]
-repository = "https://github.com/ianzepp/faber-romanus"
-rev = "3c704cb059c28e570c98fb6669a9ec428771840f"
-path = "editors/zed/grammars/faber_romanus"
+repository = "https://github.com/ianzepp/tree-sitter-faber-romanus"
+rev = "d4f6302a0b0935e982148513cff91d90db6b68dc"
