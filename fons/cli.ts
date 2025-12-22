@@ -92,10 +92,10 @@ Usage:
   faber <command> [options] <file>
 
 Commands:
-  compile <file.fab>     Compile .fab file to target language
-  run <file.fab>         Compile and execute (TS target only)
-  check <file.fab>       Check for errors without compiling
-  format <file.fab>      Format source file with Prettier
+  compile, finge <file>  Compile .fab file to target language
+  run, curre <file>      Compile and execute (TS target only)
+  check, proba <file>    Check for errors without compiling
+  format, forma <file>   Format source file with Prettier
 
 Options:
   -t, --target <lang>    Target language: ts (default), zig, wasm
@@ -410,9 +410,11 @@ if (!inputFile) {
 
 switch (command) {
     case 'compile':
+    case 'finge':
         await compile(inputFile, target, outputFile);
         break;
     case 'run':
+    case 'curre':
         if (target !== 'ts') {
             console.error("Error: 'run' command only works with TS target");
             process.exit(1);
@@ -421,9 +423,11 @@ switch (command) {
         await run(inputFile);
         break;
     case 'check':
+    case 'proba':
         await check(inputFile);
         break;
     case 'format':
+    case 'forma':
         await format(inputFile, checkOnly);
         break;
     default:
