@@ -160,8 +160,8 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     function genProgram(node: Program): string {
         const lines: string[] = [];
 
-        // WHY: scribe() maps to std.debug.print(), so we need std import
-        const needsStd = programUsesScribe(node);
+        // WHY: Many features need std (print, assert, string comparison)
+        const needsStd = programNeedsStd(node);
 
         if (needsStd) {
             lines.push('const std = @import("std");');
@@ -250,15 +250,14 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     }
 
     /**
-     * Check if program uses scribe() function.
+     * Check if program needs std library import.
      *
-     * WHY: scribe() maps to std.debug.print(), so we need to import std.
-     *      Quick check via JSON serialization instead of full AST walk.
+     * WHY: scribe() maps to std.debug.print(), adfirma uses std.debug.assert(),
+     *      string switches use std.mem.eql(). Quick check via JSON serialization.
      */
-    function programUsesScribe(node: Program): boolean {
-        const source = JSON.stringify(node);
-
-        return source.includes('"name":"scribe"');
+    function programNeedsStd(node: Program): boolean {
+        // Always import std for now - it's used for print, assert, string comparison
+        return true;
     }
 
     // ---------------------------------------------------------------------------
@@ -647,9 +646,16 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *   -> switch (x) { 1 => a(), 2 => b(), else => c() }
      *
      * TARGET: Zig uses switch (x) { value => expr, ... } syntax.
+     *         However, Zig cannot switch on strings, so we convert to if-else chain.
      */
     function genSwitchStatement(node: SwitchStatement): string {
         const discriminant = genExpression(node.discriminant);
+
+        // Check if discriminant is a string type - need if-else chain instead
+        if (isStringType(node.discriminant)) {
+            return genStringSwitchStatement(node, discriminant);
+        }
+
         let result = `${ind()}switch (${discriminant}) {\n`;
 
         depth++;
@@ -682,6 +688,52 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
 
         depth--;
         result += `${ind()}}`;
+
+        return result;
+    }
+
+    /**
+     * Generate string switch as if-else chain with std.mem.eql.
+     *
+     * TRANSFORMS:
+     *   elige status { si "pending" { ... } si "active" { ... } aliter { ... } }
+     *   -> if (std.mem.eql(u8, status, "pending")) { ... }
+     *      else if (std.mem.eql(u8, status, "active")) { ... }
+     *      else { ... }
+     *
+     * TARGET: Zig cannot switch on []const u8, must use std.mem.eql for comparison.
+     */
+    function genStringSwitchStatement(node: SwitchStatement, discriminant: string): string {
+        let result = '';
+        let first = true;
+
+        for (const caseNode of node.cases) {
+            const test = genExpression(caseNode.test);
+            const prefix = first ? '' : ' else ';
+            first = false;
+
+            result += `${ind()}${prefix}if (std.mem.eql(u8, ${discriminant}, ${test})) {\n`;
+            depth++;
+
+            for (const stmt of caseNode.consequent.body) {
+                result += genStatement(stmt) + '\n';
+            }
+
+            depth--;
+            result += `${ind()}}`;
+        }
+
+        if (node.defaultCase) {
+            result += ` else {\n`;
+            depth++;
+
+            for (const stmt of node.defaultCase.body) {
+                result += genStatement(stmt) + '\n';
+            }
+
+            depth--;
+            result += `${ind()}}`;
+        }
 
         return result;
     }
@@ -753,26 +805,61 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         return `${ind()}return;`;
     }
 
+    /**
+     * Generate throw statement.
+     *
+     * TRANSFORMS:
+     *   iace "message" -> @panic("message")
+     *   iace novum Error("msg") -> @panic("msg")
+     *
+     * TARGET: Zig doesn't have exceptions. For string errors, use @panic.
+     *         For proper error handling, would need error union returns.
+     */
     function genThrowStatement(node: ThrowStatement): string {
-        // Zig uses return error.X for errors
-        return `${ind()}return error.${genExpression(node.argument)};`;
+        // Handle string literals - use @panic
+        if (node.argument.type === 'Literal' && typeof node.argument.value === 'string') {
+            return `${ind()}@panic("${node.argument.value}");`;
+        }
+
+        // Handle new Error("msg") - extract message and use @panic
+        if (node.argument.type === 'NewExpression' &&
+            node.argument.callee.name === 'Error' &&
+            node.argument.arguments.length > 0) {
+            const msg = genExpression(node.argument.arguments[0]);
+            return `${ind()}@panic(${msg});`;
+        }
+
+        // Fallback - use @panic with expression
+        return `${ind()}@panic(${genExpression(node.argument)});`;
     }
 
+    /**
+     * Generate scribe statement.
+     *
+     * TRANSFORMS:
+     *   scribe "hello" -> std.debug.print("hello\n", .{});
+     *   scribe x       -> std.debug.print("{any}\n", .{x});
+     *   scribe a, b    -> std.debug.print("{any} {any}\n", .{a, b});
+     *
+     * TARGET: Zig's std.debug.print uses format specifiers.
+     */
     function genScribeStatement(node: ScribeStatement): string {
-        // First arg is format string, rest are values
         if (node.arguments.length === 0) {
             return `${ind()}std.debug.print("\\n", .{});`;
         }
 
-        const format = genExpression(node.arguments[0]);
-        const args = node.arguments.slice(1).map(genExpression);
+        // Build format string and args list
+        const formatParts: string[] = [];
+        const args: string[] = [];
 
-        if (args.length === 0) {
-            // Single argument - add newline and pass as tuple
-            return `${ind()}std.debug.print(${format} ++ "\\n", .{});`;
+        for (const arg of node.arguments) {
+            formatParts.push(getFormatSpecifier(arg));
+            args.push(genExpression(arg));
         }
 
-        return `${ind()}std.debug.print(${format} ++ "\\n", .{${args.join(', ')}});`;
+        const format = formatParts.join(' ') + '\\n';
+
+        return `${ind()}std.debug.print("${format}", .{ ${args.join(', ')} });`;
     }
 
     function genTryStatement(node: TryStatement): string {
@@ -1004,17 +1091,10 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
 
         // Handle string concatenation with + operator
         if (node.operator === '+' && (isStringType(node.left) || isStringType(node.right))) {
-            // For now, use a simpler approach - concatenate at compile time if both are literals
-            if (node.left.type === 'Literal' && node.right.type === 'Literal') {
-                const leftStr = String(node.left.value);
-                const rightStr = String(node.right.value);
-
-                return `"${leftStr}${rightStr}"`;
-            }
-
-            // For runtime concatenation, we'd need an allocator
-            // This is a simplified output - real Zig would need memory management
-            return `@concat(${left}, ${right})`;
+            // For compile-time known strings, use ++ operator
+            // Note: This only works for comptime-known strings in Zig
+            // Runtime string concatenation would require an allocator
+            return `(${left} ++ ${right})`;
         }
 
         const op = mapOperator(node.operator);
