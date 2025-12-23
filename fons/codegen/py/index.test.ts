@@ -316,10 +316,29 @@ describe('Python codegen', () => {
             expect(compile('scribe !verum')).toContain('print(not True)');
         });
 
-        // Note: The parser may not support ternary ?: syntax
-        test.skip('conditional/ternary expression', () => {
+        test('ternary with ? :', () => {
+            const result = compile('verum ? 1 : 0');
+            expect(result).toBe('1 if True else 0');
+        });
+
+        test('ternary with sic secus (Latin)', () => {
+            const result = compile('verum sic 1 secus 0');
+            expect(result).toBe('1 if True else 0');
+        });
+
+        test('ternary in variable', () => {
             const result = compile('varia x = verum ? 1 : 0');
             expect(result).toBe('x = 1 if True else 0');
+        });
+
+        test('ternary with condition', () => {
+            const result = compile('x > 5 ? "big" : "small"');
+            expect(result).toBe('"big" if (x > 5) else "small"');
+        });
+
+        test('nested ternary', () => {
+            const result = compile('a ? b ? c : d : e');
+            expect(result).toBe('c if b else d if a else e');
         });
 
         test('member access', () => {

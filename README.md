@@ -252,6 +252,23 @@ iace novum Error("message")
 | `non` | `!`        | not |
 | `nulla` | — | is null/empty |
 | `nonnulla` | — | is non-null/non-empty |
+| `sic` | `?` | then (ternary) |
+| `secus` | `:` | otherwise (ternary) |
+
+### Ternary Expressions
+
+```
+// Symbolic style (familiar)
+varia x = verum ? 1 : 0
+
+// Latin style (sic = thus, secus = otherwise)
+varia x = verum sic 1 secus 0
+
+// With conditions
+varia status = aetas >= 18 sic "adultus" secus "puer"
+```
+
+Both forms compile to identical output. Pick one style per expression—no mixing.
 
 Empty/non-empty checks:
 
@@ -321,6 +338,8 @@ fixum lista<numerus> items = [1, 2, 3]
 | `non` | `!` | operator |
 | `nulla` | — | operator |
 | `nonnulla` | — | operator |
+| `sic` | `?` | ternary |
+| `secus` | `:` | ternary |
 
 ## Development
 

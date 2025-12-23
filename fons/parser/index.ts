@@ -113,6 +113,7 @@ import type {
     TypeAliasDeclaration,
     Literal,
     RangeExpression,
+    ConditionalExpression,
     ObjectPattern,
     ObjectPatternProperty,
     ObjectExpression,
@@ -1753,14 +1754,14 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse assignment expression.
      *
      * GRAMMAR:
-     *   assignment := or ('=' assignment)?
+     *   assignment := ternary ('=' assignment)?
      *
      * PRECEDENCE: Lowest (right-associative via recursion).
      *
      * ERROR RECOVERY: Reports error if left side is not valid lvalue.
      */
     function parseAssignment(): Expression {
-        const expr = parseOr();
+        const expr = parseTernary();
 
         if (match('EQUAL')) {
             const position = peek().position;
@@ -1780,6 +1781,67 @@ export function parse(tokens: Token[]): ParserResult {
         }
 
         return expr;
+    }
+
+    /**
+     * Parse ternary conditional expression.
+     *
+     * GRAMMAR:
+     *   ternary := or (('?' expression ':' | 'sic' expression 'secus') ternary)?
+     *
+     * PRECEDENCE: Between assignment and logical OR (right-associative).
+     *
+     * WHY: Supports both symbolic (? :) and Latin (sic secus) syntax.
+     *      The two forms cannot be mixed: use either ? : or sic secus.
+     *
+     * Examples:
+     *   verum ? 1 : 0              // symbolic style
+     *   verum sic 1 secus 0        // Latin style
+     *   a ? b ? c : d : e          // nested (right-associative)
+     */
+    function parseTernary(): Expression {
+        const test = parseOr();
+        const position = test.position;
+
+        // Check for symbolic ternary: condition ? consequent : alternate
+        if (match('QUESTION')) {
+            const consequent = parseExpression();
+
+            if (!match('COLON')) {
+                error(ParserErrorCode.ExpectedColon, `got '${peek().value}'`);
+            }
+
+            const alternate = parseTernary();
+
+            return {
+                type: 'ConditionalExpression',
+                test,
+                consequent,
+                alternate,
+                position,
+            } as ConditionalExpression;
+        }
+
+        // Check for Latin ternary: condition sic consequent secus alternate
+        if (matchKeyword('sic')) {
+            const consequent = parseExpression();
+
+            if (!matchKeyword('secus')) {
+                error(ParserErrorCode.ExpectedKeywordSecus, `got '${peek().value}'`);
+            }
+
+            const alternate = parseTernary();
+
+            return {
+                type: 'ConditionalExpression',
+                test,
+                consequent,
+                alternate,
+                position,
+            } as ConditionalExpression;
+        }
+
+        return test;
     }
 
     /**

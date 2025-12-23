@@ -257,6 +257,36 @@ describe('codegen', () => {
 
             expect(js).toBe('usuario.nomen;');
         });
+
+        test('ternary with ? :', () => {
+            const js = compile('verum ? 1 : 0');
+
+            expect(js).toBe('true ? 1 : 0;');
+        });
+
+        test('ternary with sic secus', () => {
+            const js = compile('verum sic 1 secus 0');
+
+            expect(js).toBe('true ? 1 : 0;');
+        });
+
+        test('ternary with condition', () => {
+            const js = compile('x > 5 ? "big" : "small"');
+
+            expect(js).toBe('(x > 5) ? "big" : "small";');
+        });
+
+        test('nested ternary', () => {
+            const js = compile('a ? b ? c : d : e');
+
+            expect(js).toBe('a ? b ? c : d : e;');
+        });
+
+        test('ternary in variable', () => {
+            const js = compile('varia x = verum ? 1 : 0');
+
+            expect(js).toBe('let x = true ? 1 : 0;');
+        });
     });
 
     describe('arrow functions', () => {

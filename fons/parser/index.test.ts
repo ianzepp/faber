@@ -299,6 +299,92 @@ describe('parser', () => {
         });
     });
 
+    describe('ternary expressions', () => {
+        test('symbolic ternary with ? :', () => {
+            const { program } = parseCode('verum ? 1 : 0');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('ConditionalExpression');
+            expect(expr.test.value).toBe(true);
+            expect(expr.consequent.value).toBe(1);
+            expect(expr.alternate.value).toBe(0);
+        });
+
+        test('Latin ternary with sic secus', () => {
+            const { program } = parseCode('verum sic 1 secus 0');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('ConditionalExpression');
+            expect(expr.test.value).toBe(true);
+            expect(expr.consequent.value).toBe(1);
+            expect(expr.alternate.value).toBe(0);
+        });
+
+        test('ternary with comparison condition', () => {
+            const { program } = parseCode('x > 5 ? "big" : "small"');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('ConditionalExpression');
+            expect(expr.test.type).toBe('BinaryExpression');
+            expect(expr.test.operator).toBe('>');
+        });
+
+        test('ternary with logical condition', () => {
+            const { program } = parseCode('a et b sic 1 secus 0');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('ConditionalExpression');
+            expect(expr.test.type).toBe('BinaryExpression');
+            expect(expr.test.operator).toBe('&&');
+        });
+
+        test('nested ternary (right-associative)', () => {
+            const { program } = parseCode('a ? b ? c : d : e');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('ConditionalExpression');
+            expect(expr.consequent.type).toBe('ConditionalExpression');
+            expect(expr.consequent.consequent.name).toBe('c');
+            expect(expr.consequent.alternate.name).toBe('d');
+        });
+
+        test('nested Latin ternary', () => {
+            const { program } = parseCode('a sic b sic c secus d secus e');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('ConditionalExpression');
+            expect(expr.consequent.type).toBe('ConditionalExpression');
+        });
+
+        test('ternary in assignment', () => {
+            const { program } = parseCode('varia x = verum ? 1 : 0');
+            const decl = program!.body[0] as any;
+
+            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.init.type).toBe('ConditionalExpression');
+        });
+
+        test('ternary with expressions', () => {
+            const { program } = parseCode('x > 0 sic x * 2 secus 0 - x');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('ConditionalExpression');
+            expect(expr.consequent.type).toBe('BinaryExpression');
+            expect(expr.consequent.operator).toBe('*');
+            expect(expr.alternate.type).toBe('BinaryExpression');
+            expect(expr.alternate.operator).toBe('-');
+        });
+
+        test('ternary with function calls', () => {
+            const { program } = parseCode('active ? start() : stop()');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('ConditionalExpression');
+            expect(expr.consequent.type).toBe('CallExpression');
+            expect(expr.alternate.type).toBe('CallExpression');
+        });
+    });
+
     describe('arrow functions', () => {
         test('simple arrow function', () => {
             const { program } = parseCode('(x) => x');

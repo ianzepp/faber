@@ -83,6 +83,7 @@ export enum ParserErrorCode {
     ExpectedKeywordTempta = 'P036',
     ExpectedKeywordCape = 'P037',
     ExpectedKeywordAliter = 'P038',
+    ExpectedKeywordSecus = 'P039',
 
     // Module/source errors (P050-P059)
     ExpectedModuleName = 'P050',
@@ -94,6 +95,9 @@ export enum ParserErrorCode {
     InvalidGuardClauseStart = 'P103',
     UnexpectedToken = 'P104',
     ExpectedObjectAfterCum = 'P105',
+
+    // Generic errors (P190-P199)
+    GenericError = 'P190',
 
     // Declaration errors (P200-P299)
     MissingFunctionName = 'P200',
@@ -139,7 +143,7 @@ export const PARSER_ERRORS = {
     },
     [ParserErrorCode.ExpectedColon]: {
         text: "Expected ':'",
-        help: 'Use colon to separate keys from values in object literals or to specify default field values.',
+        help: "Use colon to separate keys from values in object literals, default field values, or as the alternate separator in ternary expressions: condition ? truthy : falsy",
     },
     [ParserErrorCode.ExpectedEqual]: {
         text: "Expected '='",
@@ -247,6 +251,10 @@ export const PARSER_ERRORS = {
         text: "Expected 'aliter'",
         help: "Else clauses and switch defaults use 'aliter' (otherwise): si x { ... } aliter { ... }",
     },
+    [ParserErrorCode.ExpectedKeywordSecus]: {
+        text: "Expected 'secus'",
+        help: "Latin ternary expressions use 'secus' (otherwise) after 'sic' (thus): verum sic 1 secus 0",
+    },
 
     // Module/source errors
     [ParserErrorCode.ExpectedModuleName]: {
@@ -278,6 +286,12 @@ export const PARSER_ERRORS = {
     [ParserErrorCode.ExpectedObjectAfterCum]: {
         text: "Expected object literal after 'cum'",
         help: "The 'cum' clause in 'novum' expressions requires an object literal: novum Persona cum { nomen: 'Marcus' }",
+    },
+
+    // Generic errors
+    [ParserErrorCode.GenericError]: {
+        text: 'Syntax error',
+        help: 'Check the code structure for syntax errors.',
     },
 
     // Declaration errors

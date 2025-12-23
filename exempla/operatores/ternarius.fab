@@ -1,0 +1,175 @@
+// =============================================================================
+// OPERATORES - Ternary Expressions
+// =============================================================================
+//
+// Faber supports conditional expressions (ternaries) in two forms:
+//
+// SYMBOLIC STYLE:
+// condition ? consequent : alternate
+//
+// LATIN STYLE:
+// condition sic consequent secus alternate
+//
+// ETYMOLOGY:
+// sic: "thus, so" - the truthy result
+// secus: "otherwise, differently" - the falsy result
+//
+// WHY BOTH FORMS:
+// - Symbolic (? :) for programmers familiar with C-style syntax
+// - Latin (sic secus) for consistency with the language's aesthetic
+// - Both compile to identical output
+// - Pick one style per expression - no mixing allowed
+
+// =============================================================================
+// BASIC TERNARY - SYMBOLIC STYLE
+// =============================================================================
+
+// Simple true/false choice
+fixum x = verum ? 1 : 0
+scribe x
+
+// With boolean variables
+fixum active = verum
+fixum status = active ? "on" : "off"
+scribe status
+
+// With comparison
+fixum age = 25
+fixum category = age >= 18 ? "adultus" : "puer"
+scribe category
+
+// =============================================================================
+// BASIC TERNARY - LATIN STYLE
+// =============================================================================
+
+// Same examples using sic/secus
+fixum y = verum sic 1 secus 0
+scribe y
+
+fixum enabled = verum
+fixum state = enabled sic "activum" secus "inactivum"
+scribe state
+
+fixum aetas = 30
+fixum genus = aetas >= 18 sic "adultus" secus "puer"
+scribe genus
+
+// =============================================================================
+// COMPLEX CONDITIONS
+// =============================================================================
+
+// Logical operators in condition
+fixum loggedIn = verum
+fixum admin = falsum
+
+fixum access = loggedIn et admin ? "full" : "limited"
+scribe access
+
+// Latin logical operators with Latin ternary
+fixum authenticated = verum
+fixum authorized = verum
+fixum permission = authenticated et authorized sic "granted" secus "denied"
+scribe permission
+
+// Multiple comparisons
+fixum score = 85
+fixum grade = score >= 90 ? "A" : score >= 80 ? "B" : "C"
+scribe grade
+
+// =============================================================================
+// NESTED TERNARIES
+// =============================================================================
+
+// Right-associative nesting (use sparingly)
+fixum n = 5
+fixum sign = n > 0 ? "positive" : n < 0 ? "negative" : "zero"
+scribe sign
+
+// Latin style nesting
+fixum m = -3
+fixum signum = m > 0 sic "positivum" secus m < 0 sic "negativum" secus "nullum"
+scribe signum
+
+// =============================================================================
+// TERNARY WITH EXPRESSIONS
+// =============================================================================
+
+// Arithmetic in results
+fixum value = 10
+fixum doubled = value > 0 ? value * 2 : 0
+scribe doubled
+
+// Function calls in results
+functio activate() -> textus { redde "activated" }
+functio deactivate() -> textus { redde "deactivated" }
+
+fixum isActive = verum
+fixum result = isActive ? activate() : deactivate()
+scribe result
+
+// =============================================================================
+// PRACTICAL EXAMPLES
+// =============================================================================
+
+// Default values
+fixum input = ""
+fixum displayName = input != "" ? input : "Anonymous"
+scribe displayName
+
+// Conditional formatting
+fixum count = 5
+fixum message = count == 1 ? "1 item" : count + " items"
+scribe message
+
+// Status mapping
+fixum code = 200
+fixum statusText = code == 200 sic "OK" secus code == 404 sic "Not Found" secus "Error"
+scribe statusText
+
+// Null coalescing pattern
+fixum maybeValue = nihil
+fixum safeValue = maybeValue != nihil ? maybeValue : "default"
+scribe safeValue
+
+// =============================================================================
+// STYLE CONSISTENCY
+// =============================================================================
+
+// Pick one style per expression
+// GOOD:
+fixum a = verum ? 1 : 0
+fixum b = verum sic 1 secus 0
+
+// The following would be ERRORS (mixing styles):
+// fixum bad1 = verum sic 1 : 0    // ERROR: mixed sic with :
+// fixum bad2 = verum ? 1 secus 0  // ERROR: mixed ? with secus
+
+// =============================================================================
+// WHEN TO USE TERNARY VS SI/ALITER
+// =============================================================================
+
+// Ternary is best for simple value selection
+fixum simple = verum ? "yes" : "no"
+
+// For complex logic, prefer si/aliter
+fixum complex = 42
+si complex > 100 {
+    scribe "large"
+}
+aliter si complex > 50 {
+    scribe "medium"
+}
+aliter {
+    scribe "small"
+}
+
+// For multi-line consequences, prefer si/aliter
+fixum shouldProcess = verum
+si shouldProcess {
+    // Multiple statements
+    scribe "Processing..."
+    scribe "Done"
+}
+aliter {
+    scribe "Skipped"
+}

@@ -74,10 +74,11 @@ export const keywords: KeywordEntry[] = [
     // WHY: Latin uses imperative mood (command forms) for control structures
     // Literal: si / aliter si / aliter
     // Poetic:  si / sin / secus
+    // Ternary: condition sic truthy secus falsy (or ? :)
     { latin: 'si', meaning: 'if', category: 'control' },
     { latin: 'aliter', meaning: 'else', category: 'control' },
     { latin: 'sin', meaning: 'else if', category: 'control' },
-    { latin: 'secus', meaning: 'else', category: 'control' },
+    { latin: 'secus', meaning: 'else/:', category: 'control' },
     { latin: 'dum', meaning: 'while', category: 'control' },
     { latin: 'fac', meaning: 'do', category: 'control' },
     { latin: 'pro', meaning: 'for', category: 'control' },
@@ -144,6 +145,9 @@ export const keywords: KeywordEntry[] = [
     { latin: 'non', meaning: '!', category: 'operator' },
     // WHY: "est" (is) for strict equality - natural Latin copula
     { latin: 'est', meaning: '===', category: 'operator' },
+    // WHY: "sic" (thus) and "secus" (otherwise) for ternary expressions
+    // sic/secus are the Latin equivalent of ?/:
+    { latin: 'sic', meaning: '?', category: 'operator' },
     // WHY: "fieri" conjugation encodes return semantics:
     //   fit   = becomes (sync, single return)
     //   fiet  = will become (async, single return)
