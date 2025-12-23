@@ -97,7 +97,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented
 | Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
 | Identifiers | [x] | [x] | [x] | [ ] | [ ] | [ ] |
-| `ego` (this/self) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `ego` (this/self) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | Boolean literals (`verum`/`falsum`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `nihil` literal | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | String literals | [x] | [x] | [x] | [ ] | [ ] | [ ] |
@@ -121,27 +121,27 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented
 | Conditional (ternary) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `cede` (await/yield) | [x] | [~] | [x] | [ ] | [ ] | [ ] |
 | `novum` (new) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
-| `novum...cum` (new with props) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `novum...cum` (new with props) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 
 ## OOP Features (genus/pactum)
 
 | Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
-| `genus` declaration | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
-| Field declarations | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
-| Field defaults | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
-| Computed fields (getters) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `genus` declaration | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Field declarations | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Field defaults | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Computed fields (getters) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | Static fields (`generis`) | [x] | [ ] | [~] | [ ] | [ ] | [ ] |
 | Public/private visibility | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
-| `creo` constructor | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
-| Auto-merge constructor | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
-| Methods | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
-| Async methods | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `creo` constructor | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Auto-merge constructor | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Methods | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Async methods | [x] | [~] | [x] | [ ] | [ ] | [ ] |
 | Generator methods | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
 | `implet` (implements) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
 | Generic classes | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
-| `pactum` declaration | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
-| Interface methods | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `pactum` declaration | [x] | [~] | [x] | [ ] | [ ] | [ ] |
+| Interface methods | [x] | [~] | [x] | [ ] | [ ] | [ ] |
 
 ## Import/Export
 

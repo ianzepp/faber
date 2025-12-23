@@ -58,6 +58,27 @@ describe('zig codegen', () => {
 
             expect(zig).toContain('fn fetch(url: []const u8) !i64');
         });
+
+        test('async with void return', () => {
+            const zig = compile(`
+                futura functio doWork() {
+                    redde
+                }
+            `);
+
+            expect(zig).toContain('fn doWork() !void');
+        });
+
+        test('cede becomes try', () => {
+            const zig = compile(`
+                futura functio getData() -> numerus {
+                    fixum result = cede fetchData()
+                    redde result
+                }
+            `);
+
+            expect(zig).toContain('try fetchData()');
+        });
     });
 
     describe('if statements', () => {
@@ -381,6 +402,128 @@ describe('zig codegen', () => {
             const zig = compile('scribe x + y, a');
 
             expect(zig).toContain('std.debug.print');
+        });
+    });
+
+    describe('genus declarations', () => {
+        test('genus generates struct', () => {
+            const zig = compile('genus persona { textus nomen: "X" }');
+
+            expect(zig).toContain('const persona = struct {');
+            expect(zig).toContain('nomen: []const u8 = "X"');
+            expect(zig).toContain('};');
+        });
+
+        test('genus with multiple fields', () => {
+            const zig = compile(`
+                genus persona {
+                    textus nomen: "anon"
+                    numerus aetas: 0
+                }
+            `);
+
+            expect(zig).toContain('nomen: []const u8 = "anon"');
+            expect(zig).toContain('aetas: i64 = 0');
+        });
+
+        test('genus generates init with @hasField', () => {
+            const zig = compile('genus persona { textus nomen: "X" }');
+
+            expect(zig).toContain('pub fn init(overrides: anytype) Self');
+            expect(zig).toContain('@hasField(@TypeOf(overrides), "nomen")');
+            expect(zig).toContain('return self;');
+        });
+
+        test('genus with creo calls creo in init', () => {
+            const zig = compile(`
+                genus persona {
+                    numerus aetas: 0
+                    functio creo() {
+                        si ego.aetas < 0 { ego.aetas = 0 }
+                    }
+                }
+            `);
+
+            expect(zig).toContain('self.creo();');
+            expect(zig).toContain('fn creo(self: *Self) void');
+        });
+
+        test('genus without creo does not call creo', () => {
+            const zig = compile('genus persona { textus nomen: "X" }');
+
+            expect(zig).not.toContain('self.creo()');
+        });
+
+        test('genus with method generates pub fn', () => {
+            const zig = compile(`
+                genus persona {
+                    textus nomen: "X"
+                    functio saluta() -> textus { redde ego.nomen }
+                }
+            `);
+
+            expect(zig).toContain('pub fn saluta(self: *const Self) []const u8');
+            expect(zig).toContain('return self.nomen');
+        });
+
+        test('genus generates Self = @This()', () => {
+            const zig = compile(`
+                genus persona {
+                    textus nomen: "X"
+                    functio saluta() -> textus { redde ego.nomen }
+                }
+            `);
+
+            expect(zig).toContain('const Self = @This();');
+        });
+
+        test('ego becomes self in methods', () => {
+            const zig = compile(`
+                genus persona {
+                    textus nomen: "X"
+                    functio saluta() { redde ego.nomen }
+                }
+            `);
+
+            expect(zig).toContain('return self.nomen');
+            expect(zig).not.toContain('ego');
+        });
+
+        test('novum becomes Type.init()', () => {
+            const zig = compile('fixum p = novum persona');
+
+            expect(zig).toContain('persona.init()');
+        });
+
+        test('novum with cum passes overrides', () => {
+            const zig = compile('fixum p = novum persona cum { nomen: "Claudia" }');
+
+            expect(zig).toContain('persona.init(.{ .nomen = "Claudia" })');
+        });
+    });
+
+    describe('pactum declarations', () => {
+        test('pactum generates comment', () => {
+            const zig = compile(`
+                pactum iterabilis {
+                    functio sequens() -> textus?
+                }
+            `);
+
+            expect(zig).toContain('// pactum iterabilis');
+            expect(zig).toContain('interface contract');
+        });
+
+        test('pactum documents required methods', () => {
+            const zig = compile(`
+                pactum iterabilis {
+                    functio sequens() -> textus?
+                    functio reset()
+                }
+            `);
+
+            expect(zig).toContain('requires fn sequens');
+            expect(zig).toContain('requires fn reset');
         });
     });
 });

@@ -54,6 +54,11 @@ import type {
     ImportDeclaration,
     VariableDeclaration,
     FunctionDeclaration,
+    GenusDeclaration,
+    PactumDeclaration,
+    FieldDeclaration,
+    ComputedFieldDeclaration,
+    PactumMethod,
     TypeAliasDeclaration,
     IfStatement,
     WhileStatement,
@@ -78,6 +83,7 @@ import type {
     ArrowFunctionExpression,
     AssignmentExpression,
     NewExpression,
+    ThisExpression,
     Identifier,
     Literal,
     Parameter,
@@ -216,6 +222,11 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             return true;
         }
 
+        // WHY: Structs and interfaces are always module-level in Zig
+        if (node.type === 'GenusDeclaration' || node.type === 'PactumDeclaration') {
+            return true;
+        }
+
         // WHY: fixum with literal is comptime in Zig
         if (node.type === 'VariableDeclaration' && node.kind === 'fixum') {
             if (node.init && isComptimeValue(node.init)) {
@@ -276,6 +287,10 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 return genVariableDeclaration(node);
             case 'FunctionDeclaration':
                 return genFunctionDeclaration(node);
+            case 'GenusDeclaration':
+                return genGenusDeclaration(node);
+            case 'PactumDeclaration':
+                return genPactumDeclaration(node);
             case 'TypeAliasDeclaration':
                 return genTypeAliasDeclaration(node);
             case 'IfStatement':
@@ -543,6 +558,244 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         const type = node.typeAnnotation ? genType(node.typeAnnotation) : 'anytype';
 
         return `${name}: ${type}`;
+    }
+
+    // -------------------------------------------------------------------------
+    // OOP: Genus (Struct) and Pactum (Interface)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Generate genus declaration as a Zig struct.
+     *
+     * TRANSFORMS:
+     *   genus persona { textus nomen: "X" }
+     *   -> const persona = struct {
+     *          nomen: []const u8 = "X",
+     *          const Self = @This();
+     *          pub fn init(overrides: anytype) Self { ... }
+     *      };
+     *
+     * TARGET: Zig uses structs with methods. The init() pattern replaces constructors.
+     *         Self = @This() enables methods to reference their own type.
+     */
+    function genGenusDeclaration(node: GenusDeclaration): string {
+        const name = node.name.name;
+        const lines: string[] = [];
+
+        lines.push(`${ind()}const ${name} = struct {`);
+        depth++;
+
+        // Fields with defaults
+        for (const field of node.fields) {
+            lines.push(genFieldDeclaration(field));
+        }
+
+        // Self type reference (needed for methods)
+        if (node.methods.length > 0 || node.constructor || node.computedFields.length > 0) {
+            if (node.fields.length > 0) lines.push('');
+            lines.push(`${ind()}const Self = @This();`);
+        }
+
+        // Computed fields as getter methods
+        if (node.computedFields.length > 0) {
+            lines.push('');
+            for (const field of node.computedFields) {
+                lines.push(genComputedFieldDeclaration(field));
+            }
+        }
+
+        // Auto-merge init function
+        if (node.fields.length > 0) {
+            lines.push('');
+            lines.push(genStructInit(node));
+        }
+
+        // User's creo as private post-init method
+        if (node.constructor) {
+            lines.push('');
+            lines.push(genCreoMethod(node.constructor));
+        }
+
+        // Methods
+        if (node.methods.length > 0) {
+            lines.push('');
+            for (const method of node.methods) {
+                lines.push(genStructMethod(method));
+            }
+        }
+
+        depth--;
+        lines.push(`${ind()}};`);
+
+        return lines.join('\n');
+    }
+
+    /**
+     * Generate field declaration within a struct.
+     *
+     * TRANSFORMS:
+     *   textus nomen: "X" -> nomen: []const u8 = "X",
+     *   numerus aetas -> aetas: i64 = undefined,
+     */
+    function genFieldDeclaration(node: FieldDeclaration): string {
+        const name = node.name.name;
+        const type = genType(node.fieldType);
+        const init = node.init ? genExpression(node.init) : 'undefined';
+
+        // TARGET: Zig struct fields use = for defaults, end with comma
+        return `${ind()}${name}: ${type} = ${init},`;
+    }
+
+    /**
+     * Generate computed field as a getter method.
+     *
+     * TRANSFORMS:
+     *   numerus area => ego.latus * ego.altitudo
+     *   -> pub fn area(self: *const Self) i64 { return self.latus * self.altitudo; }
+     */
+    function genComputedFieldDeclaration(node: ComputedFieldDeclaration): string {
+        const name = node.name.name;
+        const type = genType(node.fieldType);
+        const expr = genExpression(node.expression);
+
+        // Replace ego with self for Zig
+        const zigExpr = expr.replace(/\bego\b/g, 'self');
+
+        return `${ind()}pub fn ${name}(self: *const Self) ${type} { return ${zigExpr}; }`;
+    }
+
+    /**
+     * Generate init function for struct (auto-merge constructor).
+     *
+     * TRANSFORMS:
+     *   genus persona { textus nomen: "X", numerus aetas: 0 }
+     *   -> pub fn init(overrides: anytype) Self {
+     *          var self = Self{
+     *              .nomen = if (@hasField(@TypeOf(overrides), "nomen")) overrides.nomen else "X",
+     *              .aetas = if (@hasField(@TypeOf(overrides), "aetas")) overrides.aetas else 0,
+     *          };
+     *          return self;
+     *      }
+     *
+     * TARGET: Uses comptime @hasField to check if override was provided.
+     */
+    function genStructInit(node: GenusDeclaration): string {
+        const lines: string[] = [];
+
+        lines.push(`${ind()}pub fn init(overrides: anytype) Self {`);
+        depth++;
+
+        lines.push(`${ind()}var self = Self{`);
+        depth++;
+
+        for (const field of node.fields) {
+            const name = field.name.name;
+            const defaultVal = field.init ? genExpression(field.init) : 'undefined';
+
+            lines.push(
+                `${ind()}.${name} = if (@hasField(@TypeOf(overrides), "${name}")) overrides.${name} else ${defaultVal},`,
+            );
+        }
+
+        depth--;
+        lines.push(`${ind()}};`);
+
+        // Call creo if defined
+        if (node.constructor) {
+            lines.push(`${ind()}self.creo();`);
+        }
+
+        lines.push(`${ind()}return self;`);
+
+        depth--;
+        lines.push(`${ind()}}`);
+
+        return lines.join('\n');
+    }
+
+    /**
+     * Generate user's creo as a method.
+     *
+     * TRANSFORMS:
+     *   functio creo() { si ego.aetas < 0 { ego.aetas = 0 } }
+     *   -> fn creo(self: *Self) void { if (self.aetas < 0) { self.aetas = 0; } }
+     */
+    function genCreoMethod(node: FunctionDeclaration): string {
+        const lines: string[] = [];
+
+        lines.push(`${ind()}fn creo(self: *Self) void {`);
+        depth++;
+
+        // Generate body, replacing ego with self
+        for (const stmt of node.body.body) {
+            const code = genStatement(stmt);
+            lines.push(code.replace(/\bego\b/g, 'self'));
+        }
+
+        depth--;
+        lines.push(`${ind()}}`);
+
+        return lines.join('\n');
+    }
+
+    /**
+     * Generate method declaration within a struct.
+     *
+     * TRANSFORMS:
+     *   functio saluta() -> textus { redde ego.nomen }
+     *   -> pub fn saluta(self: *const Self) []const u8 { return self.nomen; }
+     */
+    function genStructMethod(node: FunctionDeclaration): string {
+        const name = node.name.name;
+        const params = node.params.map(genParameter);
+        const returnType = node.returnType ? genType(node.returnType) : 'void';
+
+        // Add self parameter - use *Self for methods that might mutate
+        const selfParam = 'self: *const Self';
+        const allParams = [selfParam, ...params].join(', ');
+
+        const lines: string[] = [];
+
+        lines.push(`${ind()}pub fn ${name}(${allParams}) ${returnType} {`);
+        depth++;
+
+        // Generate body, replacing ego with self
+        for (const stmt of node.body.body) {
+            const code = genStatement(stmt);
+            lines.push(code.replace(/\bego\b/g, 'self'));
+        }
+
+        depth--;
+        lines.push(`${ind()}}`);
+
+        return lines.join('\n');
+    }
+
+    /**
+     * Generate pactum declaration.
+     *
+     * TARGET: Zig doesn't have interfaces. We emit a comment documenting the contract
+     *         and rely on duck typing / comptime checks.
+     *
+     * TRANSFORMS:
+     *   pactum iterabilis { functio sequens() -> textus? }
+     *   -> // pactum iterabilis: requires fn sequens() ?[]const u8
+     */
+    function genPactumDeclaration(node: PactumDeclaration): string {
+        const name = node.name.name;
+        const lines: string[] = [];
+
+        lines.push(`${ind()}// pactum ${name}: interface contract (Zig uses duck typing)`);
+
+        for (const method of node.methods) {
+            const methodName = method.name.name;
+            const params = method.params.map(genParameter).join(', ');
+            const returnType = method.returnType ? genType(method.returnType) : 'void';
+
+            lines.push(`${ind()}//   requires fn ${methodName}(${params}) ${returnType}`);
+        }
+
+        return lines.join('\n');
     }
 
     function genIfStatement(node: IfStatement): string {
@@ -952,6 +1205,9 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             case 'AwaitExpression':
                 // Zig async is different, use try for error handling
                 return `try ${genExpression(node.argument)}`;
+            case 'ThisExpression':
+                // TARGET: ego (this) becomes self in Zig struct methods
+                return 'self';
             case 'NewExpression':
                 return genNewExpression(node);
             case 'ConditionalExpression':
@@ -1293,14 +1549,23 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      * Generate new expression.
      *
      * TRANSFORMS:
-     *   new Foo(x, y) -> Foo.init(x, y)
+     *   novum Foo(x, y) -> Foo.init(x, y)
+     *   novum Foo cum { a: 1 } -> Foo.init(.{ .a = 1 })
      *
      * TARGET: Zig doesn't have 'new' keyword. Idiomatic pattern is Type.init().
+     *         The cum { } overrides are passed as an anonymous struct.
      */
     function genNewExpression(node: NewExpression): string {
         const callee = node.callee.name;
-        const args = node.arguments.map(genExpression).join(', ');
 
+        // Handle cum { ... } overrides
+        if (node.withExpression) {
+            const overrides = genExpression(node.withExpression);
+            return `${callee}.init(${overrides})`;
+        }
+
+        // Regular constructor call
+        const args = node.arguments.map(genExpression).join(', ');
         return `${callee}.init(${args})`;
     }
 
