@@ -7,8 +7,8 @@
 //
 // GRAMMAR:
 // cum <object> {
-//   <property> = <value>
-//   <property> = <value>
+// <property> = <value>
+// <property> = <value>
 // }
 //
 // ETYMOLOGY:
@@ -24,11 +24,7 @@
 // =============================================================================
 
 // Create and configure object
-fixum config = {
-    host: "",
-    port: 0,
-    secure: falsum
-}
+fixum config = { host: "", port: 0, secure: falsum }
 
 // Set properties in cum block
 cum config {
@@ -46,11 +42,7 @@ scribe config.secure
 // =============================================================================
 
 // Without cum (verbose):
-varia settings = {
-    volume: 0,
-    brightness: 0,
-    contrast: 0
-}
+varia settings = { volume: 0, brightness: 0, contrast: 0 }
 
 settings.volume = 75
 settings.brightness = 80
@@ -59,11 +51,7 @@ settings.contrast = 50
 scribe settings.volume
 
 // With cum (concise):
-varia display = {
-    volume: 0,
-    brightness: 0,
-    contrast: 0
-}
+varia display = { volume: 0, brightness: 0, contrast: 0 }
 
 cum display {
     volume = 75
@@ -78,11 +66,7 @@ scribe display.volume
 // =============================================================================
 
 functio configureServer(host, port) {
-    fixum server = {
-        host: "",
-        port: 0,
-        started: falsum
-    }
+    fixum server = { host: "", port: 0, started: falsum }
 
     cum server {
         host = host
@@ -101,16 +85,7 @@ scribe myServer.port
 // NESTED CUM BLOCKS
 // =============================================================================
 
-fixum app = {
-    server: {
-        host: "",
-        port: 0
-    },
-    database: {
-        url: "",
-        timeout: 0
-    }
-}
+fixum app = { server: { host: "", port: 0 }, database: { url: "", timeout: 0 } }
 
 // Configure nested objects
 cum app.server {
@@ -130,11 +105,7 @@ scribe app.database.url
 // CUM WITH CONDITIONALS
 // =============================================================================
 
-varia options = {
-    debug: falsum,
-    verbose: falsum,
-    logLevel: ""
-}
+varia options = { debug: falsum, verbose: falsum, logLevel: "" }
 
 fixum isDevelopment = verum
 
@@ -158,12 +129,7 @@ scribe options.logLevel
 
 // Builder pattern using cum
 functio createUser(name, email) {
-    fixum user = {
-        name: "",
-        email: "",
-        verified: falsum,
-        created: verum
-    }
+    fixum user = { name: "", email: "", verified: falsum, created: verum }
 
     cum user {
         name = name
@@ -183,11 +149,7 @@ scribe newUser.verified
 // MULTIPLE CUM BLOCKS ON SAME OBJECT
 // =============================================================================
 
-varia state = {
-    count: 0,
-    status: "",
-    active: falsum
-}
+varia state = { count: 0, status: "", active: falsum }
 
 // Initialize
 cum state {
@@ -211,11 +173,7 @@ scribe state.active
 // CUM WITH COMPUTED VALUES
 // =============================================================================
 
-fixum form = {
-    width: 0,
-    height: 0,
-    area: 0
-}
+fixum form = { width: 0, height: 0, area: 0 }
 
 fixum w = 10
 fixum h = 20
@@ -259,11 +217,7 @@ counter.value = 1
 // =============================================================================
 
 functio initializeApp() {
-    fixum app = {
-        name: "",
-        version: "",
-        started: falsum
-    }
+    fixum app = { name: "", version: "", started: falsum }
 
     cum app {
         name = "Faber Romanus"

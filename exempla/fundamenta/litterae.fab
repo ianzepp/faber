@@ -40,7 +40,7 @@ scribe isEmpty
 fixum canProceed = verum
 fixum isBlocked = falsum
 
-si canProceed et non isBlocked {
+si canProceed && !isBlocked {
     scribe "Proceeding..."
 }
 

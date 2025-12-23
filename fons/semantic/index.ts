@@ -398,7 +398,9 @@ export function analyze(program: Program): SemanticResult {
      *
      * WHY: Numeric literals in type parameters specify bit width (e.g., numerus<32>).
      */
-    function extractSizeFromTypeParams(typeParams?: Array<TypeAnnotation | Literal>): number | undefined {
+    function extractSizeFromTypeParams(
+        typeParams?: Array<TypeAnnotation | Literal>,
+    ): number | undefined {
         if (!typeParams) {
             return undefined;
         }

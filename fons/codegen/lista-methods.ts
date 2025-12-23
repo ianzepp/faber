@@ -301,7 +301,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'ordinata',
         mutates: false,
         async: false,
-        ts: (obj, args) => args ? `[...${obj}].sort(${args})` : `[...${obj}].sort()`,
+        ts: (obj, args) => (args ? `[...${obj}].sort(${args})` : `[...${obj}].sort()`),
     },
 
     /** Slice (returns new array) */

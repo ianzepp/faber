@@ -19,11 +19,7 @@
 // BASIC DESTRUCTURING
 // =============================================================================
 
-fixum person = {
-    name: "Marcus",
-    age: 30,
-    city: "Roma"
-}
+fixum person = { name: "Marcus", age: 30, city: "Roma" }
 
 // Extract properties into variables
 fixum { name, age } = person
@@ -39,10 +35,7 @@ scribe city
 // DESTRUCTURING WITH RENAME
 // =============================================================================
 
-fixum user = {
-    name: "Julia",
-    email: "julia@roma.com"
-}
+fixum user = { name: "Julia", email: "julia@roma.com" }
 
 // Rename during destructuring
 fixum { name: userName, email: userEmail } = user
@@ -51,10 +44,7 @@ scribe userName
 scribe userEmail
 
 // Multiple renames
-fixum config = {
-    host: "localhost",
-    port: 8080
-}
+fixum config = { host: "localhost", port: 8080 }
 
 fixum { host: serverHost, port: serverPort } = config
 
@@ -65,10 +55,7 @@ scribe serverPort
 // MUTABLE DESTRUCTURING
 // =============================================================================
 
-fixum data = {
-    count: 100,
-    active: verum
-}
+fixum data = { count: 100, active: verum }
 
 // Use varia for mutable bindings
 varia { count, active } = data
@@ -88,7 +75,7 @@ scribe active
 
 // Function parameter destructuring (when supported)
 // functio greetUser({ name, age }) {
-//     scribe "Salve, " + name + " (" + age + ")"
+// scribe "Salve, " + name + " (" + age + ")"
 // }
 
 // For now, destructure in function body
@@ -103,15 +90,7 @@ displayUser({ name: "Claudia", age: 28 })
 // NESTED DESTRUCTURING
 // =============================================================================
 
-fixum profile = {
-    user: {
-        name: "Gaius",
-        id: 42
-    },
-    settings: {
-        theme: "dark"
-    }
-}
+fixum profile = { user: { name: "Gaius", id: 42 }, settings: { theme: "dark" } }
 
 // Destructure nested objects
 fixum { user, settings } = profile
@@ -137,11 +116,7 @@ scribe y
 
 // Return multiple values
 functio getUserInfo() {
-    redde {
-        name: "Marcus",
-        email: "marcus@roma.com",
-        verified: verum
-    }
+    redde { name: "Marcus", email: "marcus@roma.com", verified: verum }
 }
 
 fixum { name: registeredName, verified } = getUserInfo()
@@ -182,11 +157,7 @@ scribe price
 // COMPARISON WITH MANUAL EXTRACTION
 // =============================================================================
 
-fixum response = {
-    status: 200,
-    data: { value: 42 },
-    error: nihil
-}
+fixum response = { status: 200, data: { value: 42 }, error: nihil }
 
 // Without destructuring (verbose):
 fixum status = response.status

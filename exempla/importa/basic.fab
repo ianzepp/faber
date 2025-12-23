@@ -1,112 +1,10 @@
-// =============================================================================
-// IMPORTA - Import Statement
-// =============================================================================
-//
-// The import statement brings declarations from other modules.
-// Uses source-first syntax: "from module import names"
-//
-// GRAMMAR:
-// ex <module> importa <name>, <name>, ...
-// ex <module> importa *
-//
-// ETYMOLOGY:
-// ex: "from, out of" (source preposition)
-// importa: "import!" (imperative of importare - to bring in)
-//
-// WHY SOURCE-FIRST:
-// - Matches Latin word order preference
-// - Makes the module source prominent
-// - Consistent with ex...pro iteration syntax
-// - More explicit than "import X from Y"
-
-// =============================================================================
-// NAMED IMPORTS
-// =============================================================================
-
-// Import specific functions from a module
 ex norma importa lege, fortuitus
 
-// lege: read function (from legere - to read)
-// fortuitus: random function (from fortuitus - chance, random)
-
-// Use imported functions
-// fixum data = lege("file.txt")
-// fixum random = fortuitus()
-
-// =============================================================================
-// MULTIPLE NAMED IMPORTS
-// =============================================================================
-
-// Import several items from same module
 ex utilities importa formatDate, parseNumber, validateEmail
 
-// Each imported name is available
-// fixum formatted = formatDate(date)
-// fixum number = parseNumber("123")
-// fixum valid = validateEmail("user@example.com")
-
-// =============================================================================
-// WILDCARD IMPORTS
-// =============================================================================
-
-// Import everything from a module
 ex mathematics importa *
 
-// All exports from mathematics are now available
-// fixum result = sum([1, 2, 3])
-// fixum avg = average([10, 20, 30])
-
-// =============================================================================
-// MODULE ORGANIZATION
-// =============================================================================
-
-// Standard library modules
-ex norma importa lege, scribe    // Standard I/O
-ex tempus importa nunc, dormire  // Time utilities
-ex rete importa accipe, mitte    // Network operations
-
-// User modules
-ex moduli/utilities importa helper
-ex moduli/database importa connect, query
-
-// =============================================================================
-// BUILT-IN MODULES (Planned)
-// =============================================================================
-
-// norma - standard library
-// ex norma importa lege, scribe, fortuitus
-
-// rete - networking
-// ex rete importa accipe, mitte, aperire
-
-// tempus - time/date
-// ex tempus importa nunc, dormire, format
-
-// lima - file system
-// ex lima importa lege, scribe, eradere
-
-// =============================================================================
-// COMPARISON WITH OTHER SYNTAX
-// =============================================================================
-
-// Faber (source-first):
-ex database importa connect, query, disconnect
-
-// JavaScript (destination-first):
-// import { connect, query, disconnect } from 'database'
-
-// Python (similar to Faber):
-// from database import connect, query, disconnect
-
-// The Faber syntax emphasizes the source (where you're importing from)
-// This aligns with Latin's flexible word order and ex...pro pattern
-
-// =============================================================================
-// IMPORT IN PRACTICE
-// =============================================================================
-
-// Utility module
-ex utilities importa isEmpty, isValid
+ex norma importa lege, scribe
 
 functio processData(data) {
     si isEmpty(data) {
@@ -114,96 +12,17 @@ functio processData(data) {
         redde
     }
 
-    si non isValid(data) {
+    si !isValid(data) {
         iace "Invalid data"
     }
 
     scribe "Processing:", data
 }
 
-// Mathematical operations
 ex mathematics importa sum, average, maximus
 
 fixum numbers = [10, 20, 30, 40, 50]
 
-// fixum total = sum(numbers)
-// fixum avg = average(numbers)
-// fixum max = maximus(numbers)
-
-// =============================================================================
-// NOTES ON BUILT-IN KEYWORDS
-// =============================================================================
-
-// Note: scribe is a built-in keyword, not an import
 scribe "This is built-in, no import needed"
 
-// Other built-ins:
-// - scribe (console.log)
-// - iace (throw)
-// - redde (return)
-// - verum/falsum (true/false)
-// - nihil (null)
-
-// These are language keywords, not module exports
-
-// =============================================================================
-// MODULE PATHS (Future)
-// =============================================================================
-
-// Relative imports:
-// ex ./utilities importa helper
-// ex ../shared/constants importa API_URL
-
-// Absolute imports:
-// ex @project/core importa init
-// ex @lib/validation importa validate
-
-// =============================================================================
-// EXPORT SYNTAX (Future)
-// =============================================================================
-
-// In a module file, export declarations:
-// exporta functio sum(lista<numerus> nums) -> numerus { ... }
-// exporta fixum VERSION = "1.0.0"
-// exporta genus Usuario { ... }
-
-// Default export:
-// exporta defectus functio main() { ... }
-
-// =============================================================================
-// WHEN TO USE IMPORTS
-// =============================================================================
-
-// GOOD: Reusable utilities
 ex utilities importa formatDate, parseJSON
-
-// GOOD: External libraries
-ex external/http importa get, post
-
-// GOOD: Shared types
-ex types importa Usuario, Config
-
-// BAD: Importing everything unnecessarily
-// ex utilities importa *  // Only when you need most/all exports
-
-// Import what you need:
-ex largeModule importa specificFunction
-
-// Not everything:
-// ex largeModule importa *
-
-// =============================================================================
-// IMPORT ORDER CONVENTION
-// =============================================================================
-
-// 1. Standard library
-ex norma importa lege, scribe
-
-// 2. External libraries
-ex external/framework importa init
-
-// 3. Project modules
-ex modules/database importa connect
-ex modules/utilities importa helper
-
-// Keep imports organized and grouped by source

@@ -58,7 +58,7 @@ functio processRange(start, end, step) -> numerus {
     adfirma end > start, "end must be greater than start"
     adfirma step > 0, "step must be positive"
 
-    fixum count = (end - start) / step
+    fixum count = end - start / step
     redde count
 }
 
@@ -73,7 +73,7 @@ functio calculatePercentage(part, whole) -> numerus {
     adfirma part >= 0, "part must be non-negative"
     adfirma part <= whole, "part cannot exceed whole"
 
-    fixum percentage = (part / whole) * 100
+    fixum percentage = part / whole * 100
 
     adfirma percentage >= 0, "percentage invariant failed"
     adfirma percentage <= 100, "percentage invariant failed"
@@ -96,17 +96,18 @@ functio clamp(value, min, max) -> numerus {
     si result < min {
         result = min
     }
+
     si result > max {
         result = max
     }
 
-    // Post-condition: result must be in range
     adfirma result >= min, "postcondition: result >= min"
     adfirma result <= max, "postcondition: result <= max"
 
     redde result
 }
 
+// Post-condition: result must be in range
 scribe clamp(5, 0, 10)
 scribe clamp(-5, 0, 10)
 scribe clamp(15, 0, 10)
@@ -130,7 +131,7 @@ scribe getFirst([1, 2, 3])
 functio factorial(n) -> numerus {
     adfirma n >= 0, "factorial only defined for non-negative integers"
 
-    si n == 0 aut n == 1 {
+    si n == 0 || n == 1 {
         redde 1
     }
 
@@ -151,9 +152,9 @@ scribe factorial(0)
 
 // BAD: Don't use for expected runtime conditions (use si + error handling)
 // Instead of:
-//   adfirma userInput != "", "input required"
+// adfirma userInput != "", "input required"
 // Use:
-//   si userInput == "" { iace "input required" }
+// si userInput == "" { iace "input required" }
 
 // adfirma is for programmer errors (bugs)
 // Error handling is for runtime errors (bad input, network failures, etc.)
@@ -169,6 +170,7 @@ functio processAge(age) -> textus {
             redde "Invalid age"
         }
     }
+
     redde "Age: " + age
 }
 

@@ -18,23 +18,14 @@
 // =============================================================================
 
 // Simple object
-fixum person = {
-    name: "Marcus",
-    age: 30,
-    city: "Roma"
-}
+fixum person = { name: "Marcus", age: 30, city: "Roma" }
 
 scribe person.name
 scribe person.age
 scribe person.city
 
 // Object with mixed types
-fixum user = {
-    id: 1,
-    username: "marcus",
-    active: verum,
-    email: "marcus@roma.com"
-}
+fixum user = { id: 1, username: "marcus", active: verum, email: "marcus@roma.com" }
 
 scribe user.id
 scribe user.username
@@ -44,11 +35,7 @@ scribe user.active
 // PROPERTY ACCESS
 // =============================================================================
 
-fixum config = {
-    host: "localhost",
-    port: 8080,
-    secure: falsum
-}
+fixum config = { host: "localhost", port: 8080, secure: falsum }
 
 scribe config.host
 scribe config.port
@@ -62,16 +49,7 @@ scribe url
 // NESTED OBJECTS
 // =============================================================================
 
-fixum profile = {
-    user: {
-        name: "Julia",
-        id: 42
-    },
-    settings: {
-        theme: "dark",
-        language: "latin"
-    }
-}
+fixum profile = { user: { name: "Julia", id: 42 }, settings: { theme: "dark", language: "latin" } }
 
 scribe profile.user.name
 scribe profile.user.id
@@ -81,11 +59,7 @@ scribe profile.settings.theme
 // OBJECTS WITH ARRAYS
 // =============================================================================
 
-fixum team = {
-    name: "Legion I",
-    members: ["Marcus", "Julia", "Claudia"],
-    size: 3
-}
+fixum team = { name: "Legion I", members: ["Marcus", "Julia", "Claudia"], size: 3 }
 
 scribe team.name
 ex team.members pro member {
@@ -97,11 +71,7 @@ ex team.members pro member {
 // =============================================================================
 
 functio createUser(name, email) {
-    redde {
-        name: name,
-        email: email,
-        created: verum
-    }
+    redde { name: name, email: email, created: verum }
 }
 
 fixum newUser = createUser("Gaius", "gaius@roma.com")
@@ -120,10 +90,7 @@ displayPerson({ name: "Claudia", age: 28 })
 // MUTATING OBJECT PROPERTIES
 // =============================================================================
 
-varia settings = {
-    volume: 50,
-    brightness: 80
-}
+varia settings = { volume: 50, brightness: 80 }
 
 scribe settings.volume
 
@@ -142,6 +109,7 @@ scribe empty
 
 // Build up object dynamically (when property assignment works)
 varia dynamic = {}
+
 // dynamic.key = "value"
 // dynamic.count = 42
 
@@ -155,11 +123,7 @@ varia dynamic = {}
 // - Quick return values
 // - Test data
 
-fixum options = {
-    timeout: 5000,
-    retries: 3,
-    verbose: verum
-}
+fixum options = { timeout: 5000, retries: 3, verbose: verum }
 
 // Use genus for:
 // - Reusable types with methods
@@ -173,13 +137,13 @@ fixum options = {
 
 // Future: methods on object literals
 // fixum calculator = {
-//     value: 0,
-//     add: functio(n) {
-//         ego.value = ego.value + n
-//     },
-//     get: functio() -> numerus {
-//         redde ego.value
-//     }
+// value: 0,
+// add: functio(n) {
+// ego.value = ego.value + n
+// },
+// get: functio() -> numerus {
+// redde ego.value
+// }
 // }
 
 // =============================================================================
@@ -187,25 +151,14 @@ fixum options = {
 // =============================================================================
 
 // API response
-fixum response = {
-    status: 200,
-    data: {
-        id: 1,
-        name: "Marcus"
-    },
-    error: nihil
-}
+fixum response = { status: 200, data: { id: 1, name: "Marcus" }, error: nihil }
 
 si response.status == 200 {
     scribe "Success:", response.data.name
 }
 
 // Form data
-fixum formData = {
-    username: "julia",
-    email: "julia@example.com",
-    acceptTerms: verum
-}
+fixum formData = { username: "julia", email: "julia@example.com", acceptTerms: verum }
 
 si formData.acceptTerms {
     scribe "Submitting for:", formData.username

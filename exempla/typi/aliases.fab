@@ -1,209 +1,112 @@
-// =============================================================================
-// TYPI - Type Aliases
-// =============================================================================
-//
-// The typus keyword creates type aliases - alternative names for types.
-// Use for documentation, semantic clarity, and reducing repetition.
-//
-// GRAMMAR:
-// typus <AliasName> = <type>
-//
-// ETYMOLOGY:
-// typus: "type, kind, model" (from Greek typos)
-//
-// WHY TYPE ALIASES:
-// - Make intent clear (UserID vs numerus)
-// - Document domain concepts
-// - Simplify complex type signatures
-
-// =============================================================================
-// BASIC TYPE ALIASES
-// =============================================================================
-
-// ID types
 typus UserID = numerus
 typus OrderID = textus
 typus SessionID = textus
 
-// Semantic clarity
-fixum UserID currentUser = 12345
-fixum OrderID orderId = "ORD-2024-001"
-fixum SessionID sessionId = "sess_abc123"
+fixum UserID
+currentUser = 12345
+fixum OrderID
+orderId = "ORD-2024-001"
+fixum SessionID
+sessionId = "sess_abc123"
 
 scribe currentUser
 scribe orderId
 
-// =============================================================================
-// PRIMITIVE ALIASES
-// =============================================================================
-
-// String aliases for semantic meaning
 typus EmailAddress = textus
 typus PhoneNumber = textus
 typus URL = textus
 
-fixum EmailAddress email = "marcus@roma.com"
-fixum PhoneNumber phone = "+1-555-0100"
-fixum URL homepage = "https://example.com"
+fixum EmailAddress
+email = "marcus@roma.com"
+fixum PhoneNumber
+phone = "+1-555-0100"
+fixum URL
+homepage = "https://example.com"
 
 scribe email
 scribe phone
 
-// Numeric aliases
 typus Age = numerus
 typus Price = numerus
 typus Quantity = numerus
 
-fixum Age personAge = 30
-fixum Price itemPrice = 99
-fixum Quantity stockCount = 100
+fixum Age
+personAge = 30
+fixum Price
+itemPrice = 99
+fixum Quantity
+stockCount = 100
 
-// =============================================================================
-// COLLECTION ALIASES
-// =============================================================================
-
-// Array aliases
 typus UserList = lista<UserID>
 typus NameList = lista<textus>
 typus ScoreList = lista<numerus>
 
-fixum UserList activeUsers = [1, 2, 3, 4, 5]
-fixum NameList teamMembers = ["Marcus", "Julia", "Claudia"]
-fixum ScoreList testScores = [85, 92, 78, 95]
+fixum UserList
+activeUsers = [1, 2, 3, 4, 5]
+fixum NameList
+teamMembers = ["Marcus", "Julia", "Claudia"]
+fixum ScoreList
+testScores = [85, 92, 78, 95]
 
 ex activeUsers pro userId {
     scribe "User ID:", userId
 }
 
-// =============================================================================
-// NULLABLE ALIASES
-// =============================================================================
-
 typus OptionalEmail = textus?
 typus OptionalAge = numerus?
 
-fixum OptionalEmail contactEmail = nihil
-fixum OptionalAge retirementAge = nihil
+fixum OptionalEmail
+contactEmail = nihil
+fixum OptionalAge
+retirementAge = nihil
 
 scribe contactEmail
 scribe retirementAge
 
-// With values
-fixum OptionalEmail validEmail = "user@example.com"
-fixum OptionalAge validAge = 65
-
-// =============================================================================
-// FUNCTION TYPE ALIASES (future)
-// =============================================================================
-
-// Future: function type aliases
-// typus Comparator = (numerus, numerus) -> numerus
-// typus Validator = (textus) -> bivalens
-// typus Transformer = (textus) -> textus
-
-// =============================================================================
-// TYPE ALIASES IN FUNCTIONS
-// =============================================================================
+fixum OptionalEmail
+validEmail = "user@example.com"
+fixum OptionalAge
+validAge = 65
 
 typus Celsius = numerus
 typus Fahrenheit = numerus
 
-functio celsiusToFahrenheit(Celsius temp) -> Fahrenheit {
-    redde (temp * 9 / 5) + 32
-}
+redde temp * 9 / 5 + 32
 
-fixum Celsius roomTemp = 22
-fixum Fahrenheit convertedTemp = celsiusToFahrenheit(roomTemp)
+fixum Celsius
+roomTemp = 22
+fixum Fahrenheit
+convertedTemp = celsiusToFahrenheit(roomTemp)
 
 scribe convertedTemp
 
-// Distance types
 typus Meters = numerus
 typus Kilometers = numerus
 
-functio toKilometers(Meters distance) -> Kilometers {
-    redde distance / 1000
-}
+redde distance / 1000
 
-scribe toKilometers(5000)
-
-// =============================================================================
-// DOMAIN MODELING
-// =============================================================================
-
-// Model business domain
 typus ProductID = textus
 typus ProductName = textus
 typus ProductPrice = numerus
 
-functio createProduct(ProductID id, ProductName name, ProductPrice price) -> textus {
-    redde "Product: " + id + " - " + name + " ($" + price + ")"
-}
+redde "Product: " + id + " - " + name + " ($" + price + ")"
 
-scribe createProduct("PROD-001", "Widget", 29)
-
-// User management
 typus Username = textus
 typus PasswordHash = textus
 
-functio authenticate(Username user, PasswordHash hash) -> bivalens {
-    redde verum
-}
+redde verum
 
-// =============================================================================
-// DOCUMENTATION VALUE
-// =============================================================================
-
-// Without aliases (unclear intent):
 functio processOrder(textus id, numerus amount, textus status) {
     scribe id, amount, status
 }
 
-// With aliases (clear domain model):
 typus OrderStatus = textus
 
-functio processOrderClear(OrderID id, Price amount, OrderStatus status) {
-    scribe id, amount, status
-}
-
-// The second version documents what each parameter represents
-
-// =============================================================================
-// COMPLEX TYPE ALIASES (future)
-// =============================================================================
-
-// Future: object shape aliases
-// typus User = {
-//     id: UserID,
-//     name: textus,
-//     email: EmailAddress,
-//     age: Age
-// }
-
-// typus Coordinate = {
-//     x: numerus,
-//     y: numerus
-// }
-
-// =============================================================================
-// WHEN TO USE TYPE ALIASES
-// =============================================================================
-
-// GOOD: Semantic clarity
 typus Seconds = numerus
 typus Milliseconds = numerus
 
-functio delay(Milliseconds ms) {
-    scribe "Waiting", ms, "milliseconds"
-}
-
-delay(1000)
-
-// GOOD: Reduce repetition
 typus ValidationResult = textus?
 
-// BAD: Unnecessary alias
-typus Number = numerus  // Just use numerus
+typus Number = numerus
 
-// BAD: Obscuring simple types
-typus S = textus  // Too cryptic
+typus S = textus

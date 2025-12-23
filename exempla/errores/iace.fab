@@ -131,7 +131,9 @@ cape err {
 // =============================================================================
 
 functio mustBePositive(n) -> numerus {
-    si n <= 0 ergo iace "Must be positive"
+    si n <= 0 {
+        iace "Must be positive"
+    }
 
     redde n * 2
 }
@@ -228,11 +230,11 @@ cape err {
 // With return (normal flow):
 functio normalFlow(x) -> numerus {
     si x < 0 {
-        redde -1  // Error indicator
+        redde -1
     }
 
     redde x * 2
-}
+} // Error indicator
 
 scribe normalFlow(10)
 scribe normalFlow(-5)
@@ -283,12 +285,12 @@ functio criticalOperation() {
 
 // BAD: Expected conditions (use return codes)
 // functio find(items, target) {
-//     ex items pro item {
-//         si item == target {
-//             redde item
-//         }
-//     }
-//     iace "Not found"  // Don't do this
+// ex items pro item {
+// si item == target {
+// redde item
+// }
+// }
+// iace "Not found"  // Don't do this
 // }
 
 // Instead:
@@ -298,8 +300,9 @@ functio findItem(items, target) {
             redde item
         }
     }
-    redde nihil  // Return null for "not found"
-}
+
+    redde nihil
+} // Return null for "not found"
 
 // Use iace for:
 // - Programming errors (bugs)

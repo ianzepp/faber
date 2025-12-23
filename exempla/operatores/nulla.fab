@@ -140,12 +140,12 @@ fixum username = "marcus"
 fixum password = "secret123"
 
 // Check both fields are present
-si nonnulla username et nonnulla password {
+si nonnulla username && nonnulla password {
     scribe "Can authenticate"
 }
 
 // Check if either is missing
-si nulla username aut nulla password {
+si nulla username || nulla password {
     scribe "Missing credentials"
 }
 
@@ -153,10 +153,10 @@ si nulla username aut nulla password {
 fixum email = "test@example.com"
 fixum phone = ""
 
-si nonnulla email et nonnulla phone {
+si nonnulla email && nonnulla phone {
     scribe "Has both contact methods"
 }
-aliter si nonnulla email aut nonnulla phone {
+aliter si nonnulla email || nonnulla phone {
     scribe "Has at least one contact method"
 }
 aliter {
