@@ -233,6 +233,15 @@ describe('parser', () => {
             expect(expr.property.name).toBe('nomen');
         });
 
+        test('ego self reference', () => {
+            const { program } = parseCode('ego.nomen');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('MemberExpression');
+            expect(expr.object.type).toBe('ThisExpression');
+            expect(expr.property.name).toBe('nomen');
+        });
+
         test('chained member access', () => {
             const { program } = parseCode('a.b.c');
             const expr = (program!.body[0] as any).expression;
@@ -314,6 +323,22 @@ describe('parser', () => {
 
             expect(expr.type).toBe('NewExpression');
             expect(expr.callee.name).toBe('erratum');
+        });
+
+        test('novum without parentheses', () => {
+            const { program } = parseCode('novum persona');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.arguments).toHaveLength(0);
+            expect(expr.withExpression).toBeUndefined();
+        });
+
+        test('novum with cum overrides', () => {
+            const { program } = parseCode('novum persona cum { nomen: "Marcus" }');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.withExpression.type).toBe('ObjectExpression');
+            expect(expr.withExpression.properties[0].key.name).toBe('nomen');
         });
     });
 
@@ -432,6 +457,39 @@ describe('parser', () => {
 
             expect(genus.methods).toHaveLength(1);
             expect(genus.methods[0].name.name).toBe('saluta');
+        });
+
+        test('genus with creo constructor', () => {
+            const { program } = parseCode('genus persona { functio creo(valores) { redde nihil } }');
+            const genus = program!.body[0] as any;
+
+            expect(genus.constructor).toBeDefined();
+            expect(genus.methods).toHaveLength(0);
+        });
+
+        test('genus with computed field', () => {
+            const { program } = parseCode('genus figura { numerus area => latus * altitudo }');
+            const genus = program!.body[0] as any;
+
+            expect(genus.computedFields).toHaveLength(1);
+            expect(genus.computedFields[0].name.name).toBe('area');
+        });
+    });
+
+    describe('pactum declarations', () => {
+        test('pactum with methods', () => {
+            const { program } = parseCode(`
+                pactum iterabilis<T> {
+                    functio sequens() -> T?
+                    functio habet() -> bivalens
+                }
+            `);
+            const pactum = program!.body[0] as any;
+
+            expect(pactum.type).toBe('PactumDeclaration');
+            expect(pactum.methods).toHaveLength(2);
+            expect(pactum.methods[0].name.name).toBe('sequens');
+            expect(pactum.typeParameters[0].name).toBe('T');
         });
     });
 });

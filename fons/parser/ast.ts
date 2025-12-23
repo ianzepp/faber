@@ -83,6 +83,7 @@ export type Statement =
     | VariableDeclaration
     | FunctionDeclaration
     | GenusDeclaration
+    | PactumDeclaration
     | TypeAliasDeclaration
     | ExpressionStatement
     | IfStatement
@@ -203,6 +204,7 @@ export interface FunctionDeclaration extends BaseNode {
     returnType?: TypeAnnotation;
     body: BlockStatement;
     async: boolean;
+    isConstructor?: boolean;
 }
 
 /**
@@ -255,6 +257,7 @@ export interface TypeAliasDeclaration extends BaseNode {
  *
  * GRAMMAR (in EBNF):
  *   fieldDecl := 'publicus'? 'generis'? typeAnnotation IDENTIFIER (':' expression)?
+ *   computedField := 'publicus'? 'generis'? typeAnnotation IDENTIFIER '=>' expression
  *
  * INVARIANT: typeAnnotation uses Latin word order (type before name).
  * INVARIANT: isPublic defaults to false (private by default).
@@ -275,6 +278,20 @@ export interface FieldDeclaration extends BaseNode {
     name: Identifier;
     fieldType: TypeAnnotation;
     init?: Expression;
+    isPublic: boolean;
+    isStatic: boolean;
+}
+
+/**
+ * Computed field declaration within a genus.
+ *
+ * WHY: Enables property-like getters (`numerus area => ego.latus * ego.altitudo`).
+ */
+export interface ComputedFieldDeclaration extends BaseNode {
+    type: 'ComputedFieldDeclaration';
+    name: Identifier;
+    fieldType: TypeAnnotation;
+    expression: Expression;
     isPublic: boolean;
     isStatic: boolean;
 }
@@ -312,7 +329,34 @@ export interface GenusDeclaration extends BaseNode {
     typeParameters?: Identifier[];
     implements?: Identifier[];
     fields: FieldDeclaration[];
+    computedFields: ComputedFieldDeclaration[];
+    constructor?: FunctionDeclaration;
     methods: FunctionDeclaration[];
+}
+
+// ---------------------------------------------------------------------------
+// Pactum (Interface) Declarations
+// ---------------------------------------------------------------------------
+
+/**
+ * Pactum declaration (interface/protocol contract).
+ */
+export interface PactumDeclaration extends BaseNode {
+    type: 'PactumDeclaration';
+    name: Identifier;
+    typeParameters?: Identifier[];
+    methods: PactumMethod[];
+}
+
+/**
+ * Pactum method signature (no body, contract only).
+ */
+export interface PactumMethod extends BaseNode {
+    type: 'PactumMethod';
+    name: Identifier;
+    params: Parameter[];
+    returnType?: TypeAnnotation;
+    async: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -612,6 +656,7 @@ export interface CatchClause extends BaseNode {
  */
 export type Expression =
     | Identifier
+    | ThisExpression
     | Literal
     | ArrayExpression
     | ObjectExpression
@@ -651,6 +696,13 @@ export interface Identifier extends BaseNode {
         case?: Case;
         number?: GramNumber;
     };
+}
+
+/**
+ * `ego` self-reference expression (like `this`).
+ */
+export interface ThisExpression extends BaseNode {
+    type: 'ThisExpression';
 }
 
 /**
@@ -925,7 +977,7 @@ export interface AwaitExpression extends BaseNode {
  * New expression (object construction).
  *
  * GRAMMAR (in EBNF):
- *   newExpr := 'novum' IDENTIFIER '(' argumentList ')'
+ *   newExpr := 'novum' IDENTIFIER ('(' argumentList ')')? ('cum' objectLiteral)?
  *
  * INVARIANT: callee is Identifier (constructor name).
  * INVARIANT: arguments is always an array.
@@ -936,6 +988,7 @@ export interface NewExpression extends BaseNode {
     type: 'NewExpression';
     callee: Identifier;
     arguments: Expression[];
+    withExpression?: ObjectExpression;
 }
 
 // =============================================================================

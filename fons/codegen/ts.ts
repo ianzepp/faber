@@ -50,6 +50,9 @@ import type {
     FunctionDeclaration,
     GenusDeclaration,
     FieldDeclaration,
+    ComputedFieldDeclaration,
+    PactumDeclaration,
+    PactumMethod,
     TypeAliasDeclaration,
     IfStatement,
     WhileStatement,
@@ -75,6 +78,7 @@ import type {
     AssignmentExpression,
     NewExpression,
     Literal,
+    ThisExpression,
     Parameter,
     TypeAnnotation,
     TypeParameter,
@@ -181,6 +185,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 return genFunctionDeclaration(node);
             case 'GenusDeclaration':
                 return genGenusDeclaration(node);
+            case 'PactumDeclaration':
+                return genPactumDeclaration(node);
             case 'TypeAliasDeclaration':
                 return genTypeAliasDeclaration(node);
             case 'IfStatement':
@@ -297,18 +303,30 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
 
         depth++;
 
-        // Generate fields
-        for (const field of node.fields) {
-            lines.push(genFieldDeclaration(field));
+        const sections: string[][] = [];
+
+        if (node.fields.length > 0) {
+            sections.push(node.fields.map(genFieldDeclaration));
         }
 
-        // Generate methods
-        for (const method of node.methods) {
-            if (node.fields.length > 0 || node.methods.indexOf(method) > 0) {
-                lines.push(''); // blank line before methods
-            }
-            lines.push(genMethodDeclaration(method));
+        if (node.computedFields.length > 0) {
+            sections.push(node.computedFields.map(genComputedFieldDeclaration));
         }
+
+        if (node.constructor) {
+            sections.push([genConstructorDeclaration(node.constructor)]);
+        }
+
+        if (node.methods.length > 0) {
+            sections.push(node.methods.map(genMethodDeclaration));
+        }
+
+        sections.forEach((section, index) => {
+            if (index > 0) {
+                lines.push('');
+            }
+            lines.push(...section);
+        });
 
         depth--;
         lines.push(`${ind()}}`);
@@ -330,6 +348,19 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     }
 
     /**
+     * Generate computed field declaration as a getter.
+     */
+    function genComputedFieldDeclaration(node: ComputedFieldDeclaration): string {
+        const visibility = node.isPublic ? '' : 'private ';
+        const staticMod = node.isStatic ? 'static ' : '';
+        const name = node.name.name;
+        const type = genType(node.fieldType);
+        const expression = genExpression(node.expression);
+
+        return `${ind()}${visibility}${staticMod}get ${name}(): ${type} { return ${expression}; }`;
+    }
+
+    /**
      * Generate method declaration within a class.
      */
     function genMethodDeclaration(node: FunctionDeclaration): string {
@@ -340,6 +371,48 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         const body = genBlockStatement(node.body);
 
         return `${ind()}${asyncMod}${name}(${params})${returnType} ${body}`;
+    }
+
+    function genConstructorDeclaration(node: FunctionDeclaration): string {
+        const params = node.params.map(genParameter).join(', ');
+        const body = genBlockStatement(node.body);
+
+        return `${ind()}constructor(${params}) ${body}`;
+    }
+
+    /**
+     * Generate pactum declaration as a TypeScript interface.
+     */
+    function genPactumDeclaration(node: PactumDeclaration): string {
+        const name = node.name.name;
+        const typeParams = node.typeParameters
+            ? `<${node.typeParameters.map(p => p.name).join(', ')}>`
+            : '';
+        const lines: string[] = [];
+
+        lines.push(`${ind()}interface ${name}${typeParams} {`);
+        depth++;
+
+        for (const method of node.methods) {
+            lines.push(genPactumMethod(method));
+        }
+
+        depth--;
+        lines.push(`${ind()}}`);
+
+        return lines.join('\n');
+    }
+
+    function genPactumMethod(node: PactumMethod): string {
+        const name = node.name.name;
+        const params = node.params.map(genParameter).join(', ');
+        let returnType = node.returnType ? genType(node.returnType) : 'void';
+
+        if (node.async) {
+            returnType = `Promise<${returnType}>`;
+        }
+
+        return `${ind()}${name}(${params}): ${returnType}${semi ? ';' : ''}`;
     }
 
     /**
@@ -780,6 +853,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 return genLiteral(node);
             case 'TemplateLiteral':
                 return `\`${node.raw}\``;
+            case 'ThisExpression':
+                return 'this';
             case 'ArrayExpression':
                 return genArrayExpression(node);
             case 'BinaryExpression':
@@ -1033,9 +1108,15 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
 
     function genNewExpression(node: NewExpression): string {
         const callee = node.callee.name;
-        const args = node.arguments.map(genExpression).join(', ');
+        const args: string[] = node.arguments.map(genExpression);
 
-        return `new ${callee}(${args})`;
+        if (node.withExpression) {
+            args.push(genObjectExpression(node.withExpression));
+        }
+
+        const argsText = args.join(', ');
+
+        return `new ${callee}(${argsText})`;
     }
 
     return genProgram(program);

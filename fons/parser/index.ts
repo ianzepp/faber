@@ -85,6 +85,9 @@ import type {
     FunctionDeclaration,
     GenusDeclaration,
     FieldDeclaration,
+    ComputedFieldDeclaration,
+    PactumDeclaration,
+    PactumMethod,
     IfStatement,
     WhileStatement,
     ForStatement,
@@ -100,6 +103,7 @@ import type {
     ScribeStatement,
     ExpressionStatement,
     Identifier,
+    ThisExpression,
     ArrowFunctionExpression,
     Parameter,
     TypeAnnotation,
@@ -498,6 +502,10 @@ export function parse(tokens: Token[]): ParserResult {
             return parseGenusDeclaration();
         }
 
+        if (checkKeyword('pactum')) {
+            return parsePactumDeclaration();
+        }
+
         if (checkKeyword('si')) {
             return parseIfStatement();
         }
@@ -831,13 +839,21 @@ export function parse(tokens: Token[]): ParserResult {
         expect('LBRACE', "Expected '{' to begin genus body");
 
         const fields: FieldDeclaration[] = [];
+        const computedFields: ComputedFieldDeclaration[] = [];
         const methods: FunctionDeclaration[] = [];
+        let constructorMethod: FunctionDeclaration | undefined;
 
         while (!check('RBRACE') && !isAtEnd()) {
             const member = parseGenusMember();
 
             if (member.type === 'FieldDeclaration') {
                 fields.push(member);
+            }
+            else if (member.type === 'ComputedFieldDeclaration') {
+                computedFields.push(member);
+            }
+            else if (member.isConstructor) {
+                constructorMethod = member;
             }
             else {
                 methods.push(member);
@@ -852,6 +868,8 @@ export function parse(tokens: Token[]): ParserResult {
             typeParameters,
             implements: implementsList,
             fields,
+            computedFields,
+            constructor: constructorMethod,
             methods,
             position,
         };
@@ -867,7 +885,7 @@ export function parse(tokens: Token[]): ParserResult {
      *
      * WHY: Distinguishes between fields and methods by looking for 'functio' keyword.
      */
-    function parseGenusMember(): FieldDeclaration | FunctionDeclaration {
+    function parseGenusMember(): FieldDeclaration | ComputedFieldDeclaration | FunctionDeclaration {
         const position = peek().position;
 
         // Parse modifiers
@@ -904,10 +922,7 @@ export function parse(tokens: Token[]): ParserResult {
 
             const body = parseBlockStatement();
 
-            // WHY: Methods in genus reuse FunctionDeclaration but carry modifiers implicitly
-            // The isPublic and isStatic are not yet part of FunctionDeclaration AST
-            // For now, we store methods as regular function declarations
-            return {
+            const method: FunctionDeclaration = {
                 type: 'FunctionDeclaration',
                 name: methodName,
                 params,
@@ -916,11 +931,31 @@ export function parse(tokens: Token[]): ParserResult {
                 async: isAsync,
                 position,
             };
+
+            if (methodName.name === 'creo') {
+                method.isConstructor = true;
+            }
+
+            return method;
         }
 
-        // Otherwise it's a field: type name (: default)?
+        // Otherwise it's a field: type name with ':' default or '=> computed value'
         const fieldType = parseTypeAnnotation();
         const fieldName = parseIdentifier();
+
+        if (match('ARROW')) {
+            const expression = parseExpression();
+
+            return {
+                type: 'ComputedFieldDeclaration',
+                name: fieldName,
+                fieldType,
+                expression,
+                isPublic,
+                isStatic,
+                position,
+            };
+        }
 
         let init: Expression | undefined;
 
@@ -937,6 +972,68 @@ export function parse(tokens: Token[]): ParserResult {
             init,
             isPublic,
             isStatic,
+            position,
+        };
+    }
+
+    // ---------------------------------------------------------------------------
+    // Pactum (Interface) Declarations
+    // ---------------------------------------------------------------------------
+
+    function parsePactumDeclaration(): PactumDeclaration {
+        const position = peek().position;
+
+        expectKeyword('pactum', "Expected 'pactum'");
+
+        const name = parseIdentifier();
+
+        let typeParameters: Identifier[] | undefined;
+
+        if (match('LESS')) {
+            typeParameters = [];
+            do {
+                typeParameters.push(parseIdentifier());
+            } while (match('COMMA'));
+            expect('GREATER', "Expected '>' after type parameters");
+        }
+
+        expect('LBRACE', "Expected '{' to begin pactum body");
+
+        const methods: PactumMethod[] = [];
+
+        while (!check('RBRACE') && !isAtEnd()) {
+            methods.push(parsePactumMethod());
+        }
+
+        expect('RBRACE', "Expected '}' to end pactum body");
+
+        return { type: 'PactumDeclaration', name, typeParameters, methods, position };
+    }
+
+    function parsePactumMethod(): PactumMethod {
+        const position = peek().position;
+        const isAsync = matchKeyword('futura');
+
+        expectKeyword('functio', "Expected 'functio' in pactum");
+
+        const name = parseIdentifier();
+
+        expect('LPAREN', "Expected '(' after pactum method name");
+        const params = parseParameterList();
+        expect('RPAREN', "Expected ')' after pactum method parameters");
+
+        let returnType: TypeAnnotation | undefined;
+
+        if (match('THIN_ARROW')) {
+            returnType = parseTypeAnnotation();
+        }
+
+        return {
+            type: 'PactumMethod',
+            name,
+            params,
+            returnType,
+            async: isAsync,
             position,
         };
     }
@@ -1721,12 +1818,26 @@ export function parse(tokens: Token[]): ParserResult {
         const position = tokens[current - 1].position;
         const callee = parseIdentifier();
 
-        expect('LPAREN', "Expected '(' after constructor");
-        const args = parseArgumentList();
+        let args: Expression[] = [];
 
-        expect('RPAREN', "Expected ')' after arguments");
+        if (match('LPAREN')) {
+            args = parseArgumentList();
+            expect('RPAREN', "Expected ')' after arguments");
+        }
 
-        return { type: 'NewExpression', callee, arguments: args, position };
+        let withExpression: ObjectExpression | undefined;
+
+        if (matchKeyword('cum')) {
+            const override = parsePrimary();
+
+            if (override.type !== 'ObjectExpression') {
+                error("Expected object literal after 'cum'");
+            }
+
+            withExpression = override as ObjectExpression;
+        }
+
+        return { type: 'NewExpression', callee, arguments: args, withExpression, position };
     }
 
     /**
@@ -1816,6 +1927,11 @@ export function parse(tokens: Token[]): ParserResult {
      */
     function parsePrimary(): Expression {
         const position = peek().position;
+
+        if (matchKeyword('ego')) {
+            const thisExpr: ThisExpression = { type: 'ThisExpression', position };
+            return thisExpr;
+        }
 
         // Boolean literals
         if (matchKeyword('verum')) {

@@ -42,10 +42,10 @@ scribe config.host
 scribe config.port
 
 // =============================================================================
-// GENUS (STRUCT) - PARSING ONLY
+// GENUS (STRUCT)
 // =============================================================================
-// Note: genus parsing works, but instantiation (novum...cum) and
-// self-reference (ego) are not yet implemented in codegen.
+// genus declarations now support instantiation via `novum`, `cum { ... }` overrides,
+// computed fields, constructors (`creo`), and `ego` for self-reference.
 
 // Basic genus - fields without defaults (all required)
 genus punctum {
@@ -60,14 +60,36 @@ genus civis {
     textus nomen: "Incognitus"
     numerus aetas: 0
     bivalens activus: verum
+
+    functio creo(valores) {
+        si nonnulla valores {
+            si nonnulla valores.nomen {
+                ego.nomen = valores.nomen
+            }
+            si nonnulla valores.aetas {
+                ego.aetas = valores.aetas
+            }
+            si nonnulla valores.activus {
+                ego.activus = valores.activus
+            }
+        }
+    }
 }
 
 // Genus with methods
 genus salutator {
     textus nomen: "Mundus"
 
+    functio creo(valores) {
+        si nonnulla valores {
+            si nonnulla valores.nomen {
+                ego.nomen = valores.nomen
+            }
+        }
+    }
+
     functio saluta() -> textus {
-        redde "Salve!"
+        redde "Salve, " + ego.nomen + "!"
     }
 }
 
@@ -79,12 +101,45 @@ genus liber {
     bivalens lectus: falsum     // optional - defaults to falsum
 }
 
+// Genus with constructor + computed property
+genus rectangulum {
+    numerus latitudo: 1
+    numerus altitudo: 1
+    publicus numerus area => ego.latitudo * ego.altitudo
+
+    functio creo(valores) {
+        si nonnulla valores {
+            si nonnulla valores.latitudo {
+                ego.latitudo = valores.latitudo
+            }
+            si nonnulla valores.altitudo {
+                ego.altitudo = valores.altitudo
+            }
+        }
+    }
+}
+
 // =============================================================================
-// PLANNED: INSTANTIATION SYNTAX
+// GENUS INSTANTIATION + METHODS
 // =============================================================================
-// When novum...cum and ego are implemented:
-//
-//   fixum p1 = novum civis                              // all defaults
-//   fixum p2 = novum civis cum { nomen: "Claudia" }     // override one field
-//   fixum s = novum salutator cum { nomen: "Roma" }
-//   scribe s.saluta()  // "Salve, Roma!"
+
+// Instantiation with defaults
+fixum incognitus = novum civis
+scribe incognitus.nomen
+
+// Override specific fields via `cum { ... }`
+fixum claudia = novum civis cum { nomen: "Claudia", aetas: 28 }
+scribe claudia.nomen
+scribe claudia.aetas
+
+// Instantiate salutator and call a method using `ego`
+fixum sal = novum salutator
+fixum salRoma = novum salutator cum { nomen: "Roma" }
+scribe sal.saluta()
+scribe salRoma.saluta()
+
+// Use constructor + computed property
+fixum quadratum = novum rectangulum
+fixum poster = novum rectangulum cum { latitudo: 5, altitudo: 3 }
+scribe quadratum.area
+scribe poster.area
