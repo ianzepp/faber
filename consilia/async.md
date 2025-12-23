@@ -1,5 +1,30 @@
 # Async Design
 
+## TODO: Verb Conjugation for Async/Iterator Semantics
+
+Consider replacing `futura`/`cursor` prefixes with Latin verb conjugation of *fieri* (to become):
+
+| | Sync | Async |
+|---|---|---|
+| **Single return** | `fit textus` | `fiet textus` |
+| **Iterator/yield** | `fiunt textus` | `fient textus` |
+
+Examples:
+```
+functio greet(name) fit textus { ... }       // sync, returns string
+functio fetch(url) fiet textus { ... }       // async, returns Promise<string>
+functio range(n) fiunt numerus { ... }       // sync generator, yields numbers
+functio stream(url) fient textus { ... }     // async generator, yields strings
+```
+
+Grammar encodes both dimensions:
+- **Tense**: present (sync) vs future (async)
+- **Number**: singular (return once) vs plural (yield many)
+
+This eliminates `futura`/`cursor` prefixes — the return type verb carries all semantics.
+
+---
+
 ## Overview
 
 Faber's async model maps to native async/await patterns:
