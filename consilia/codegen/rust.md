@@ -184,6 +184,40 @@ fn longest(x: &str, y: &str) -> &str
 
 This mirrors Rust's lifetime elision rules - no explicit lifetime names needed for common patterns.
 
+### Async/Generator Restriction: No Borrowed Returns
+
+The return verb distinguishes sync from async:
+- `fit` (present: "becomes") = sync return
+- `fiet` (future: "will become") = async return
+
+**Borrowed returns are only allowed with `fit` (sync).**
+
+Async functions and generators cannot return borrowed values because the `Future`/iterator may outlive the borrowed data, creating dangling references. This is a fundamental Rust constraint.
+
+```
+// ALLOWED - sync can return borrowed
+functio first(de lista<textus> items) fit de textus
+
+// ERROR - async cannot return borrowed
+futura functio first(de lista<textus> items) fiet de textus
+```
+
+**Error message:**
+```
+error: futura functio cannot return borrowed (de) value
+  --> file.fab:10:50
+   |
+10 | futura functio first(de lista<textus> items) fiet de textus
+   |                                                   ^^ borrowed return not allowed with fiet
+   |
+note: async futures may outlive borrowed data, causing dangling references
+help: return owned value instead
+   |
+10 | futura functio first(de lista<textus> items) fiet textus
+```
+
+The same restriction applies to generators (`cursor` functions) yielding borrowed values.
+
 ### Design Principles
 
 1. **No preposition = owned** (matches Rust's default move semantics)
