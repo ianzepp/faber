@@ -219,6 +219,27 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented
 
 **Minimum version**: Python 3.10+ (for `match`/`case` and `|` union syntax)
 
+### Zig Target Notes
+
+1. **No classes** - Uses `struct` with methods; `genus` → `const Name = struct { ... };`
+2. **No interfaces** - Duck typing via comptime; `pactum` emits documentation comment
+3. **No constructors** - Uses `init()` pattern; auto-merge via comptime `@hasField`
+4. **Self reference** - `const Self = @This();` for methods to reference own type
+5. **No exceptions** - Error unions (`!T`) and `try` for propagation; `iace` → `@panic`
+6. **No generators** - Would need custom iterator struct pattern
+7. **No async/await** - Has frame-based async, but error unions more idiomatic
+8. **Comptime generics** - Generic classes would need `fn(comptime T: type)` pattern
+9. **No visibility modifiers** - All struct fields public; `pub` only for functions
+10. **String handling** - `[]const u8` slices; no `+` concatenation at runtime
+
+**Current gaps**:
+- Static fields (`generis`) - would need module-level const
+- Public/private - Zig doesn't have field visibility
+- Generic classes - requires comptime type parameters
+- `implet` (implements) - Zig uses structural typing, not nominal
+
+**Minimum version**: Zig 0.11+ (stable)
+
 ### WASM Target Notes
 
 1. **No native strings** - Strings require memory management, often via linear memory
