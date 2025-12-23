@@ -65,7 +65,7 @@ const DEFAULT_TARGET: CodegenTarget = 'ts';
  * Valid compilation targets.
  * WHY: Defined as array for validation and help text generation.
  */
-const VALID_TARGETS = ['ts', 'zig', 'wasm'] as const;
+const VALID_TARGETS = ['ts', 'zig', 'wasm', 'py', 'rb', 'cpp'] as const;
 
 // =============================================================================
 // ARGUMENT PARSING
