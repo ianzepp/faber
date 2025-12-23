@@ -6,201 +6,201 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented
 
 | Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
-| `textus` (string) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `numerus` (number) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `bivalens` (boolean) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `nihil` (null) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `vacuum` (void) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `lista<T>` (array) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `tabula<K,V>` (map) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `copia<T>` (set) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `promissum<T>` (promise) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `erratum` (error) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `cursor<T>` (iterator) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Nullable types (`T?`) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Union types (`T | U`) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Generic type params | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Type aliases (`typus`) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
+| `textus` (string) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `numerus` (number) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `bivalens` (boolean) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `nihil` (null) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `vacuum` (void) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `lista<T>` (array) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `tabula<K,V>` (map) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `copia<T>` (set) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `promissum<T>` (promise) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `erratum` (error) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `cursor<T>` (iterator) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Nullable types (`T?`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Union types (`T | U`) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Generic type params | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Type aliases (`typus`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 
 ## Variable Declarations
 
 | Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
-| `varia` (mutable) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `fixum` (immutable) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Type annotations | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Object destructuring | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Initializer expressions | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
+| `varia` (mutable) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `fixum` (immutable) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Type annotations | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Object destructuring | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Initializer expressions | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 
 ## Function Declarations
 
 | Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
-| Basic functions (`functio`) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Parameters | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Parameter type annotations | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Return type annotation | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `futura` (async) | [x] | [~] | [ ] | [ ] | [ ] | [ ] |
-| `cursor` (generator) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Async generator | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Arrow functions | [x] | [~] | [ ] | [ ] | [ ] | [ ] |
+| Basic functions (`functio`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Parameters | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Parameter type annotations | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Return type annotation | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `futura` (async) | [x] | [~] | [x] | [ ] | [ ] | [ ] |
+| `cursor` (generator) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Async generator | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Arrow functions | [x] | [~] | [x] | [ ] | [ ] | [ ] |
 
 ## Control Flow Statements
 
 | Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
-| `si` (if) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `aliter` (else) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `aliter si` (else if) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `dum` (while) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `ex...pro` (for-of) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `in...pro` (for-in) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `ex...fit` (for-of verb form) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `ex...fiet` (async for) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Range expressions (`0..10`) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Range with step (`per`) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `cum` (with/context) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `elige` (switch) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Switch cases (`si`) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Switch default (`aliter`) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `custodi` (guard) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Catch on control flow | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
+| `si` (if) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `aliter` (else) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `aliter si` (else if) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `dum` (while) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `ex...pro` (for-of) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `in...pro` (for-in) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `ex...fit` (for-of verb form) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `ex...fiet` (async for) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Range expressions (`0..10`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Range with step (`per`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `cum` (with/context) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `elige` (switch) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Switch cases (`si`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Switch default (`aliter`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `custodi` (guard) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Catch on control flow | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
 
 ## Return/Exit Statements
 
 | Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
-| `redde` (return) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `redde` with value | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `redde` void | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
+| `redde` (return) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `redde` with value | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `redde` void | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 
 ## Exception Handling
 
 | Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
-| `tempta` (try) | [x] | [~] | [ ] | [ ] | [ ] | [ ] |
-| `cape` (catch) | [x] | [~] | [ ] | [ ] | [ ] | [ ] |
-| `demum` (finally) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `iace` (throw) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `adfirma` (assert) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Assert with message | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
+| `tempta` (try) | [x] | [~] | [x] | [ ] | [ ] | [ ] |
+| `cape` (catch) | [x] | [~] | [x] | [ ] | [ ] | [ ] |
+| `demum` (finally) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `iace` (throw) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `adfirma` (assert) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Assert with message | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 
 ## Output/Debug
 
 | Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
-| `scribe` statement | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Multiple args | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
+| `scribe` statement | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Multiple args | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 
 ## Expressions
 
 | Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
-| Identifiers | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `ego` (this/self) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Boolean literals (`verum`/`falsum`) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `nihil` literal | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| String literals | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Number literals | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Template literals | [x] | [~] | [ ] | [ ] | [ ] | [ ] |
-| Array literals | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Object literals | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Binary operators | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Comparison operators | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Logical operators | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Unary operators | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `nulla` (is empty) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `nonnulla` (has content) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `negativum` (is negative) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `positivum` (is positive) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Member access (`.`) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Computed access (`[]`) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Function calls | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Method calls | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Assignment | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| Conditional (ternary) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `cede` (await/yield) | [x] | [~] | [ ] | [ ] | [ ] | [ ] |
-| `novum` (new) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `novum...cum` (new with props) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
+| Identifiers | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `ego` (this/self) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Boolean literals (`verum`/`falsum`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `nihil` literal | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| String literals | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Number literals | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Template literals | [x] | [~] | [x] | [ ] | [ ] | [ ] |
+| Array literals | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Object literals | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Binary operators | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Comparison operators | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Logical operators | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Unary operators | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `nulla` (is empty) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `nonnulla` (has content) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `negativum` (is negative) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `positivum` (is positive) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Member access (`.`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Computed access (`[]`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Function calls | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Method calls | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Assignment | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| Conditional (ternary) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `cede` (await/yield) | [x] | [~] | [x] | [ ] | [ ] | [ ] |
+| `novum` (new) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `novum...cum` (new with props) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
 
 ## OOP Features (genus/pactum)
 
 | Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
-| `genus` declaration | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Field declarations | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Field defaults | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Computed fields (getters) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Static fields (`generis`) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Public/private visibility | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `creo` constructor | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Auto-merge constructor | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Methods | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Async methods | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Generator methods | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `implet` (implements) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Generic classes | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `pactum` declaration | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| Interface methods | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
+| `genus` declaration | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Field declarations | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Field defaults | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Computed fields (getters) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Static fields (`generis`) | [x] | [ ] | [~] | [ ] | [ ] | [ ] |
+| Public/private visibility | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `creo` constructor | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Auto-merge constructor | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Methods | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Async methods | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Generator methods | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `implet` (implements) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Generic classes | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `pactum` declaration | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| Interface methods | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
 
 ## Import/Export
 
 | Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
-| `ex...importa` (named imports) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `ex...importa *` (wildcard) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
+| `ex...importa` (named imports) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `ex...importa *` (wildcard) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 
 ## Standard Library Intrinsics
 
 | Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
-| `_scribe` (print) | [x] | [x] | [ ] | [ ] | [ ] | [ ] |
-| `_vide` (debug) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `_mone` (warn) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `_lege` (read input) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `_fortuitus` (random) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `_pavimentum` (floor) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `_tectum` (ceiling) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `_radix` (sqrt) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `_potentia` (pow) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
+| `_scribe` (print) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `_vide` (debug) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `_mone` (warn) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `_lege` (read input) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `_fortuitus` (random) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `_pavimentum` (floor) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `_tectum` (ceiling) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `_radix` (sqrt) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `_potentia` (pow) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
 
 ## Lista (Array) Methods
 
 | Latin | TypeScript | Zig | Python | WASM | Ruby | C++ |
 |-------|:----------:|:---:|:------:|:----:|:----:|:---:|
-| `adde` (push) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `addita` (push copy) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `praepone` (unshift) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `praeposita` (unshift copy) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `remove` (pop) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `remota` (pop copy) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `decapita` (shift) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `decapitata` (shift copy) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `purga` (clear) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `primus` (first) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `ultimus` (last) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `accipe` (at index) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `longitudo` (length) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `vacua` (is empty) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `continet` (includes) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `indiceDe` (indexOf) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `inveni` (find) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `inveniIndicem` (findIndex) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `filtrata` (filter) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `mappata` (map) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `reducta` (reduce) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `explanata` (flatMap) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `plana` (flat) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `inversa` (reverse copy) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `ordinata` (sort copy) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `sectio` (slice) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `prima` (take first n) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `ultima` (take last n) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `omitte` (skip first n) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `omnes` (every) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `aliquis` (some) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `coniunge` (join) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `perambula` (forEach) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
+| `adde` (push) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `addita` (push copy) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `praepone` (unshift) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `praeposita` (unshift copy) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `remove` (pop) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `remota` (pop copy) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `decapita` (shift) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `decapitata` (shift copy) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `purga` (clear) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `primus` (first) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `ultimus` (last) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `accipe` (at index) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `longitudo` (length) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `vacua` (is empty) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `continet` (includes) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `indiceDe` (indexOf) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `inveni` (find) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `inveniIndicem` (findIndex) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `filtrata` (filter) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `mappata` (map) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `reducta` (reduce) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `explanata` (flatMap) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `plana` (flat) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `inversa` (reverse copy) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `ordinata` (sort copy) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `sectio` (slice) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `prima` (take first n) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `ultima` (take last n) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `omitte` (skip first n) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `omnes` (every) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `aliquis` (some) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `coniunge` (join) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `perambula` (forEach) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
 
 ## Target-Specific Considerations
 
