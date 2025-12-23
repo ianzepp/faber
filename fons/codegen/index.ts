@@ -35,18 +35,18 @@
 
 import type { Program } from '../parser/ast';
 import type { CodegenOptions } from './types';
-import { generateTs } from './ts';
-import { generateZig } from './zig';
-import { generateWasm } from './wasm';
+import { generateTs } from './ts/index';
+import { generateZig } from './zig/index';
+import { generateWasm } from './wasm/index';
 
 // =============================================================================
 // PUBLIC API
 // =============================================================================
 
 export type { CodegenOptions, CodegenTarget } from './types';
-export { generateTs } from './ts';
-export { generateZig } from './zig';
-export { generateWasm } from './wasm';
+export { generateTs } from './ts/index';
+export { generateZig } from './zig/index';
+export { generateWasm } from './wasm/index';
 
 // =============================================================================
 // TARGET DISPATCHER

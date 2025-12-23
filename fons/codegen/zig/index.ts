@@ -82,9 +82,9 @@ import type {
     Literal,
     Parameter,
     TypeAnnotation,
-} from '../parser/ast';
-import type { CodegenOptions } from './types';
-import type { SemanticType } from '../semantic/types';
+} from '../../parser/ast';
+import type { CodegenOptions } from '../types';
+import type { SemanticType } from '../../semantic/types';
 
 // =============================================================================
 // TYPE MAPPING

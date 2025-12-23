@@ -1,7 +1,7 @@
 import { test, expect, describe } from 'bun:test';
-import { tokenize } from '../tokenizer';
-import { parse } from '../parser';
-import { generate } from './index';
+import { tokenize } from '../../tokenizer';
+import { parse } from '../../parser';
+import { generate } from '../index';
 
 function compile(code: string): string {
     const { tokens } = tokenize(code);

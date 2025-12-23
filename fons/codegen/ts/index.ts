@@ -83,9 +83,9 @@ import type {
     Parameter,
     TypeAnnotation,
     TypeParameter,
-} from '../parser/ast';
-import type { CodegenOptions } from './types';
-import { getListaMethod } from './lista-methods';
+} from '../../parser/ast';
+import type { CodegenOptions } from '../types';
+import { getListaMethod } from './norma/lista';
 
 // =============================================================================
 // TYPE MAPPING

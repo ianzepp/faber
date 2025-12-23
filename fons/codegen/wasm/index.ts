@@ -66,8 +66,8 @@ import type {
     AssignmentExpression,
     Identifier,
     Literal,
-} from '../parser/ast';
-import type { CodegenOptions } from './types';
+} from '../../parser/ast';
+import type { CodegenOptions } from '../types';
 
 // =============================================================================
 // TYPES

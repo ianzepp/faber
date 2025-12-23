@@ -1,19 +1,18 @@
 /**
- * Lista Method Registry - Latin array methods mapped to target implementations
+ * Lista Method Registry - TypeScript translations for Latin array methods
  *
  * COMPILER PHASE
  * ==============
- * codegen
+ * codegen (TypeScript target)
  *
  * ARCHITECTURE
  * ============
- * This module defines the Latin method vocabulary for lista<T> (arrays).
- * Each method specifies its semantics (mutates/copies, sync/async) and
- * target-specific translations.
+ * This module defines TypeScript translations for lista<T> (array) methods.
+ * Each method specifies its Latin name, mutation semantics, and TS output.
  *
  * LATIN VERB CONJUGATION
  * ======================
- * Latin verb forms encode mutability and async semantics:
+ * Latin verb forms encode mutability:
  *
  * |           | Mutates (in-place) | Returns New (copy) |
  * |-----------|--------------------|--------------------|
@@ -25,8 +24,8 @@
  * INPUT/OUTPUT CONTRACT
  * =====================
  * INPUT:  Latin method name from CallExpression
- * OUTPUT: Target-specific code string
- * ERRORS: Returns null if method name not recognized
+ * OUTPUT: TypeScript code string
+ * ERRORS: Returns undefined if method name not recognized
  */
 
 // =============================================================================
@@ -34,7 +33,7 @@
 // =============================================================================
 
 /**
- * Describes how to translate a Latin method to a target language.
+ * Describes how to translate a Latin method to TypeScript.
  */
 export interface ListaMethod {
     /** The Latin method name */
@@ -52,22 +51,16 @@ export interface ListaMethod {
      * - function: custom code generation
      */
     ts: string | TsGenerator;
-
-    /**
-     * Zig translation (optional, for future use).
-     */
-    zig?: string | ZigGenerator;
 }
 
 type TsGenerator = (obj: string, args: string) => string;
-type ZigGenerator = (obj: string, args: string) => string;
 
 // =============================================================================
 // METHOD REGISTRY
 // =============================================================================
 
 /**
- * Registry of Latin array methods.
+ * Registry of Latin array methods with TypeScript translations.
  *
  * Organized by category for clarity. All methods are keyed by Latin name.
  */
@@ -382,7 +375,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
 };
 
 // =============================================================================
-// LOOKUP FUNCTION
+// LOOKUP FUNCTIONS
 // =============================================================================
 
 /**
