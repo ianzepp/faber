@@ -161,12 +161,36 @@ The compiler already has morphological analysis via the lexicon. It knows `texti
 | `numerus` | `numeri` | `numero` | `i64` / `&i64` / `&mut i64` |
 | `lista` | `listae` | `listae` | `Vec<T>` / `&[T]` / `&mut Vec<T>` |
 
+### Lifetimes via `de` on Return Type
+
+When a function returns a borrowed value, use `de` on the return type to tie its lifetime to the borrowed input(s):
+
+```
+functio first(de lista<textus> items) fit de textus
+//            ^^ borrowed input          ^^ borrowed return, tied to input
+
+functio longest(de textus x, de textus y) fit de textus
+// All three share the same implicit lifetime
+```
+
+**Rust output:**
+```rust
+fn first(items: &[String]) -> &str
+// Compiler infers: fn first<'a>(items: &'a [String]) -> &'a str
+
+fn longest(x: &str, y: &str) -> &str
+// Compiler infers: fn longest<'a>(x: &'a str, y: &'a str) -> &'a str
+```
+
+This mirrors Rust's lifetime elision rules - no explicit lifetime names needed for common patterns.
+
 ### Design Principles
 
 1. **No preposition = owned** (matches Rust's default move semantics)
 2. **Prepositions are the accessible path** (work with any variable name)
 3. **Declensions are the elegant path** (for Latin purists)
-4. **Both are equivalent** (same semantics, different aesthetics)
+4. **`de` on return = borrowed, lifetime tied to inputs**
+5. **Both syntaxes are equivalent** (same semantics, different aesthetics)
 
 ## Fallback Approaches
 
@@ -232,5 +256,6 @@ When no annotation is provided:
 3. Could we detect pure functions and optimize ownership automatically?
 4. Should `genus` generate `#[derive(Clone, Default)]` automatically?
 5. What preposition maps to `Box<T>` (heap allocation)?
-6. How do we handle lifetime annotations when borrowing across scopes?
+6. ~~How do we handle lifetime annotations when borrowing across scopes?~~ **Use `de` on return type - mirrors Rust's elision rules.**
 7. Should `de de textus` (double borrow) mean `&&str`? Probably not needed.
+8. What about complex lifetime relationships (multiple distinct lifetimes)? Rare in practice - defer.
