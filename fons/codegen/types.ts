@@ -33,10 +33,10 @@
  *      - zig: Systems programming, educational
  *      - wasm: WebAssembly for browser runtime
  *      - py: Python - popular, good for teaching
- *      - rb: Ruby - dynamic semantics similar to Python
+ *      - rs: Rust - memory safety without garbage collection
  *      - cpp: C++ - systems programming alternative
  */
-export type CodegenTarget = 'ts' | 'zig' | 'wasm' | 'py' | 'rb' | 'cpp';
+export type CodegenTarget = 'ts' | 'zig' | 'wasm' | 'py' | 'rs' | 'cpp';
 
 /**
  * Configuration options for code generation.

@@ -39,7 +39,7 @@ import { generateTs } from './ts/index';
 import { generateZig } from './zig/index';
 import { generateWasm } from './wasm/index';
 import { generatePy } from './py/index';
-import { generateRb } from './rb/index';
+import { generateRs } from './rs/index';
 import { generateCpp } from './cpp/index';
 
 // =============================================================================
@@ -51,7 +51,7 @@ export { generateTs } from './ts/index';
 export { generateZig } from './zig/index';
 export { generateWasm } from './wasm/index';
 export { generatePy } from './py/index';
-export { generateRb } from './rb/index';
+export { generateRs } from './rs/index';
 export { generateCpp } from './cpp/index';
 
 // =============================================================================
@@ -89,8 +89,8 @@ export function generate(program: Program, options: CodegenOptions = {}): string
             return generateWasm(program, options);
         case 'py':
             return generatePy(program, options);
-        case 'rb':
-            return generateRb(program, options);
+        case 'rs':
+            return generateRs(program, options);
         case 'cpp':
             return generateCpp(program, options);
         default:

@@ -1,35 +1,35 @@
 /**
- * Lista Method Registry - Ruby translations for Latin array methods
+ * Lista Method Registry - Rust translations for Latin array methods
  *
  * COMPILER PHASE
  * ==============
- * codegen (Ruby target)
+ * codegen (Rust target)
  *
  * ARCHITECTURE
  * ============
- * This module defines Ruby translations for lista<T> (array) methods.
- * Ruby has rich Array methods with block-based iteration patterns.
+ * This module defines Rust translations for lista<T> (Vec<T>) methods.
+ * Rust uses iterator combinators for functional-style operations.
  *
- * RUBY IDIOMS
+ * RUST IDIOMS
  * ===========
- * | Latin         | Ruby                        |
- * |---------------|-----------------------------|
- * | adde          | array.push(x) or array << x |
- * | addita        | array + [x]                 |
- * | filtrata      | array.select { |x| ... }    |
- * | mappata       | array.map { |x| ... }       |
- * | reducta       | array.reduce(init) { ... }  |
- * | primus        | array.first                 |
- * | ultimus       | array.last                  |
- * | longitudo     | array.length                |
- * | continet      | array.include?(x)           |
- * | inversa       | array.reverse               |
- * | ordinata      | array.sort                  |
+ * | Latin         | Rust                              |
+ * |---------------|-----------------------------------|
+ * | adde          | vec.push(x)                       |
+ * | addita        | [vec.clone(), vec![x]].concat()   |
+ * | filtrata      | vec.iter().filter(|x| ...).collect() |
+ * | mappata       | vec.iter().map(|x| ...).collect() |
+ * | reducta       | vec.iter().fold(init, |acc, x| ...)|
+ * | primus        | vec.first()                       |
+ * | ultimus       | vec.last()                        |
+ * | longitudo     | vec.len()                         |
+ * | continet      | vec.contains(&x)                  |
+ * | inversa       | vec.iter().rev().collect()        |
+ * | ordinata      | { let mut v = vec.clone(); v.sort(); v } |
  *
  * INPUT/OUTPUT CONTRACT
  * =====================
  * INPUT:  Latin method name from CallExpression
- * OUTPUT: Ruby code string
+ * OUTPUT: Rust code string
  * ERRORS: Returns undefined if method name not recognized
  */
 
@@ -41,17 +41,17 @@ export interface ListaMethod {
     latin: string;
     mutates: boolean;
     async: boolean;
-    rb: string | RbGenerator;
+    rs: string | RsGenerator;
 }
 
-type RbGenerator = (obj: string, args: string) => string;
+type RsGenerator = (obj: string, args: string) => string;
 
 // =============================================================================
 // METHOD REGISTRY
 // =============================================================================
 
 /**
- * Registry of Latin array methods with Ruby translations.
+ * Registry of Latin array methods with Rust translations.
  *
  * TODO: Implement all methods from checklist.md
  */
@@ -64,14 +64,14 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'adde',
         mutates: true,
         async: false,
-        rb: 'push',
+        rs: 'push',
     },
 
     addita: {
         latin: 'addita',
         mutates: false,
         async: false,
-        rb: (obj, args) => `${obj} + [${args}]`,
+        rs: (obj, args) => `{ let mut v = ${obj}.clone(); v.push(${args}); v }`,
     },
 
     // TODO: Implement remaining methods

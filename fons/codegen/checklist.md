@@ -4,7 +4,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented
 
 ## Type System
 
-| Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
 | `textus` (string) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `numerus` (number) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
@@ -24,7 +24,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented
 
 ## Variable Declarations
 
-| Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
 | `varia` (mutable) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `fixum` (immutable) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
@@ -34,7 +34,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented
 
 ## Function Declarations
 
-| Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
 | Basic functions (`functio`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | Parameters | [x] | [x] | [x] | [ ] | [ ] | [ ] |
@@ -47,7 +47,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented
 
 ## Control Flow Statements
 
-| Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
 | `si` (if) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `aliter` (else) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
@@ -68,7 +68,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented
 
 ## Return/Exit Statements
 
-| Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
 | `redde` (return) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `redde` with value | [x] | [x] | [x] | [ ] | [ ] | [ ] |
@@ -76,7 +76,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented
 
 ## Exception Handling
 
-| Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
 | `tempta` (try) | [x] | [~] | [x] | [ ] | [ ] | [ ] |
 | `cape` (catch) | [x] | [~] | [x] | [ ] | [ ] | [ ] |
@@ -87,14 +87,14 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented
 
 ## Output/Debug
 
-| Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
 | `scribe` statement | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | Multiple args | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 
 ## Expressions
 
-| Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
 | Identifiers | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `ego` (this/self) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
@@ -125,7 +125,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented
 
 ## OOP Features (genus/pactum)
 
-| Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
 | `genus` declaration | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
 | Field declarations | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
@@ -145,14 +145,14 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented
 
 ## Import/Export
 
-| Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
 | `ex...importa` (named imports) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `ex...importa *` (wildcard) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 
 ## Standard Library Intrinsics
 
-| Feature | TypeScript | Zig | Python | WASM | Ruby | C++ |
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
 | `_scribe` (print) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `_vide` (debug) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
@@ -166,7 +166,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented
 
 ## Lista (Array) Methods
 
-| Latin | TypeScript | Zig | Python | WASM | Ruby | C++ |
+| Latin | TypeScript | Zig | Python | WASM | Rust | C++ |
 |-------|:----------:|:---:|:------:|:----:|:----:|:---:|
 | `adde` (push) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
 | `addita` (push copy) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
@@ -232,20 +232,20 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented
 
 **Approach**: Consider targeting WASM via Zig backend or using WAT text format directly
 
-### Ruby Target Notes
+### Rust Target Notes
 
-1. **Dynamic typing** - Types are runtime-only, no static annotations
-2. **Everything is an object** - Even primitives like integers
-3. **Blocks and procs** - `do...end` blocks, lambdas with `->`
-4. **No braces for blocks** - Uses `do`/`end` or `{`/`}` for single-line
-5. **Symbols** - `:symbol` syntax for interned strings
-6. **Duck typing** - No interfaces, just method presence
-7. **Mixins** - `include`/`extend` modules instead of interfaces
-8. **Metaprogramming** - Heavy use of `method_missing`, `define_method`
-9. **Iterator pattern** - `.each`, `.map`, `.select` with blocks
-10. **Exception model** - `begin`/`rescue`/`ensure`/`raise`
+1. **Ownership system** - Every value has exactly one owner; moved on assignment
+2. **Borrowing** - References via `&` (immutable) and `&mut` (mutable)
+3. **No null** - Uses `Option<T>` for optional values, `Result<T, E>` for errors
+4. **Lifetimes** - Explicit `'a` annotations when compiler can't infer reference validity
+5. **Traits** - Like interfaces but with default implementations; no inheritance
+6. **Pattern matching** - `match` is exhaustive; compiler enforces all cases covered
+7. **Macros** - `println!`, `vec!`, `format!` - metaprogramming via macro_rules!
+8. **Error handling** - No exceptions; uses `Result<T, E>` and `?` operator for propagation
+9. **Iterators** - Lazy, composable, zero-cost via `.iter()`, `.map()`, `.filter()`
+10. **Memory safety** - No data races, no dangling pointers, enforced at compile time
 
-**Minimum version**: Ruby 3.0+ (for pattern matching, ractor)
+**Minimum version**: Rust 2021 edition (stable)
 
 ### C++ Target Notes
 
@@ -269,6 +269,6 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented
 | TypeScript | Done | Primary target, web-first |
 | Zig | In Progress | Systems programming, educational |
 | Python | High | Popular, good for teaching Latin syntax |
-| Ruby | Medium | Similar dynamic semantics to Python |
+| Rust | Medium | Memory safety, systems programming |
 | WASM | Medium | Browser runtime, but complex |
 | C++ | Low | Complex, better served by Zig path |
