@@ -39,20 +39,18 @@
  */
 interface BaseType {
     nullable?: boolean;
-    size?: number;
-    unsigned?: boolean;
-    ownership?: 'owned' | 'borrowed';
-    mutable?: boolean;
+    size?: number; // Bit width for numerus<32>, etc.
 }
 
 /**
  * Primitive type (textus, numerus, bivalens, nihil, vacuum).
  *
- * WHY: Extended with modifiers to support type-first syntax:
+ * WHY: Extended with size to support sized numeric types:
  *      - size: numeric bit width (numerus<32>)
- *      - unsigned: natural numbers (numerus<Naturalis>)
- *      - ownership: owned/borrowed semantics (textus<Proprius>)
- *      - mutable: mutability modifier (textus<Mutabilis>)
+ *
+ * For explicit signed/unsigned, use type parameters:
+ *      - numerus<i32> -> signed 32-bit
+ *      - numerus<u64> -> unsigned 64-bit
  */
 export interface PrimitiveType extends BaseType {
     kind: 'primitive';
@@ -287,38 +285,15 @@ export function isAssignableTo(source: SemanticType, target: SemanticType): bool
 
 /**
  * Format a type for error messages.
- *
- * WHY: Updated to display type modifiers (size, unsigned, ownership, mutable)
- *      in error messages for better debugging.
  */
 export function formatType(type: SemanticType): string {
     switch (type.kind) {
         case 'primitive': {
             let result = type.name;
 
-            // Add type parameters if present
-            const params: string[] = [];
-
+            // Add size parameter if present (e.g., numerus<32>)
             if (type.size !== undefined) {
-                params.push(type.size.toString());
-            }
-
-            if (type.unsigned) {
-                params.push('Naturalis');
-            }
-
-            if (type.ownership === 'owned') {
-                params.push('Proprius');
-            } else if (type.ownership === 'borrowed') {
-                params.push('Alienus');
-            }
-
-            if (type.mutable) {
-                params.push('Mutabilis');
-            }
-
-            if (params.length > 0) {
-                result += `<${params.join(', ')}>`;
+                result += `<${type.size}>`;
             }
 
             return result + (type.nullable ? '?' : '');

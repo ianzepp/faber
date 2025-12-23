@@ -108,7 +108,6 @@ import type {
     Parameter,
     TypeAnnotation,
     TypeParameter,
-    ModifierParameter,
     CatchClause,
     NewExpression,
     TypeAliasDeclaration,
@@ -119,7 +118,7 @@ import type {
     ObjectExpression,
     ObjectProperty,
 } from './ast';
-import { builtinTypes, typeModifiers } from '../lexicon/types-builtin';
+import { builtinTypes } from '../lexicon/types-builtin';
 
 // =============================================================================
 // TYPES
@@ -188,17 +187,6 @@ function computeNominative(stem: string, declension: number, gender: string): st
 const BUILTIN_TYPE_NAMES = new Set(
     builtinTypes.map(t => t.nominative ?? computeNominative(t.stem, t.declension, t.gender)),
 );
-
-/**
- * Set of all type modifier names for quick lookup.
- *
- * WHY: Used to distinguish modifiers from regular type parameters.
- *
- * CASE: Lowercase canonical form. Lookup is case-insensitive.
- *
- * DESIGN: Computed from typeModifiers to avoid duplication.
- */
-const TYPE_MODIFIER_NAMES = new Set(Object.keys(typeModifiers));
 
 // =============================================================================
 // MAIN PARSER FUNCTION
@@ -364,18 +352,6 @@ export function parse(tokens: Token[]): ParserResult {
     function isTypeName(token: Token): boolean {
         // Case-insensitive lookup (textus, textus, TEXTUS all match)
         return token.type === 'IDENTIFIER' && BUILTIN_TYPE_NAMES.has(token.value.toLowerCase());
-    }
-
-    /**
-     * Check if token is a type modifier name.
-     *
-     * WHY: Used to distinguish modifier parameters from regular type parameters.
-     *
-     * @returns true if token is an identifier and a known type modifier
-     */
-    function isModifier(token: Token): boolean {
-        // Case-insensitive lookup
-        return token.type === 'IDENTIFIER' && TYPE_MODIFIER_NAMES.has(token.value.toLowerCase());
     }
 
     /**
@@ -2123,6 +2099,7 @@ export function parse(tokens: Token[]): ParserResult {
             typeParameters = [];
             do {
                 if (check('NUMBER')) {
+                    // Numeric parameter (e.g., numerus<32>)
                     const numToken = advance();
                     const value = numToken.value.includes('.')
                         ? parseFloat(numToken.value)
@@ -2134,20 +2111,8 @@ export function parse(tokens: Token[]): ParserResult {
                         raw: numToken.value,
                         position: numToken.position,
                     });
-                } else if (isModifier(peek())) {
-                    const modToken = advance();
-                    const modName = modToken.value.toLowerCase() as
-                        | 'naturalis'
-                        | 'proprius'
-                        | 'alienus'
-                        | 'mutabilis';
-
-                    typeParameters.push({
-                        type: 'ModifierParameter',
-                        name: modName,
-                        position: modToken.position,
-                    });
                 } else {
+                    // Type parameter (e.g., lista<textus>, numerus<i32>)
                     typeParameters.push(parseTypeAnnotation());
                 }
             } while (match('COMMA'));

@@ -441,11 +441,5 @@ export function parseVerb(word: string): ParsedVerb[] | LexiconError {
 
 export * from './types';
 export { isKeyword, getKeyword, keywords } from './keywords';
-export {
-    isBuiltinType,
-    getBuiltinType,
-    builtinTypes,
-    typeModifiers,
-    isTypeModifier,
-} from './types-builtin';
-export type { TypeEntry, TypeModifier } from './types-builtin';
+export { isBuiltinType, getBuiltinType, builtinTypes } from './types-builtin';
+export type { TypeEntry } from './types-builtin';

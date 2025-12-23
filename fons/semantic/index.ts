@@ -336,10 +336,9 @@ export function analyze(program: Program): SemanticResult {
     /**
      * Resolve a TypeAnnotation AST node to a SemanticType.
      *
-     * WHY: Type parameters can now be types, literals, or modifiers.
-     *      - TypeAnnotation: Generic type params (lista<textus>)
+     * WHY: Type parameters can be types or literals.
+     *      - TypeAnnotation: Generic type params (lista<textus>), or sized types (numerus<i32>)
      *      - Literal: Numeric size params (numerus<32>)
-     *      - ModifierParameter: Type modifiers (numerus<Naturalis>)
      */
     function resolveTypeAnnotation(node: TypeAnnotation): SemanticType {
         // Handle union types
@@ -353,22 +352,15 @@ export function analyze(program: Program): SemanticResult {
         const primitive = LATIN_TYPE_MAP[node.name.toLowerCase()];
 
         if (primitive) {
-            // Extract modifiers and size from type parameters
-            const modifiers = extractTypeModifiers(node.typeParameters);
+            // Extract size from type parameters (e.g., numerus<32>)
+            const size = extractSizeFromTypeParams(node.typeParameters);
 
-            // Check if any modifiers or nullable flag is set
-            const hasModifiers =
-                node.nullable ||
-                modifiers.size !== undefined ||
-                modifiers.unsigned !== undefined ||
-                modifiers.ownership !== undefined ||
-                modifiers.mutable !== undefined;
-
-            if (hasModifiers) {
+            // Check if any size or nullable flag is set
+            if (node.nullable || size !== undefined) {
                 return {
                     ...primitive,
                     nullable: node.nullable,
-                    ...modifiers,
+                    size,
                 };
             }
 
@@ -402,58 +394,22 @@ export function analyze(program: Program): SemanticResult {
     }
 
     /**
-     * Extract type modifiers from type parameters.
+     * Extract size from type parameters.
      *
-     * WHY: Type parameters can include size constraints and modifiers:
-     *      - Naturalis: unsigned/natural numbers
-     *      - Proprius: owned (move semantics)
-     *      - Alienus: borrowed (reference semantics)
-     *      - Mutabilis: mutable
-     *      - Literal numbers: size constraints (numerus<32>)
+     * WHY: Numeric literals in type parameters specify bit width (e.g., numerus<32>).
      */
-    function extractTypeModifiers(typeParams?: Array<TypeAnnotation | Literal | any>): {
-        size?: number;
-        unsigned?: boolean;
-        ownership?: 'owned' | 'borrowed';
-        mutable?: boolean;
-    } {
-        const modifiers: {
-            size?: number;
-            unsigned?: boolean;
-            ownership?: 'owned' | 'borrowed';
-            mutable?: boolean;
-        } = {};
-
+    function extractSizeFromTypeParams(typeParams?: Array<TypeAnnotation | Literal>): number | undefined {
         if (!typeParams) {
-            return modifiers;
+            return undefined;
         }
 
         for (const param of typeParams) {
-            // Handle numeric size parameters
             if (param.type === 'Literal' && typeof param.value === 'number') {
-                modifiers.size = param.value;
-            }
-
-            // Handle modifier parameters
-            if (param.type === 'ModifierParameter') {
-                switch (param.name) {
-                    case 'Naturalis':
-                        modifiers.unsigned = true;
-                        break;
-                    case 'Proprius':
-                        modifiers.ownership = 'owned';
-                        break;
-                    case 'Alienus':
-                        modifiers.ownership = 'borrowed';
-                        break;
-                    case 'Mutabilis':
-                        modifiers.mutable = true;
-                        break;
-                }
+                return param.value;
             }
         }
 
-        return modifiers;
+        return undefined;
     }
 
     /**

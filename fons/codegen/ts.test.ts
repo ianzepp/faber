@@ -262,16 +262,11 @@ describe('codegen', () => {
             expect(js).toBe('type SmallNum = number;');
         });
 
-        test('type with modifier parameter is ignored in TS', () => {
-            const js = compile('typus Natural = numerus<Naturalis>');
+        test('type with size type parameter', () => {
+            // i32, u64 etc. are parsed as type annotations but ignored in TS
+            const js = compile('typus Int32 = numerus<i32>');
 
-            expect(js).toBe('type Natural = number;');
-        });
-
-        test('type with both numeric and modifier parameters', () => {
-            const js = compile('typus UInt32 = numerus<32, Naturalis>');
-
-            expect(js).toBe('type UInt32 = number;');
+            expect(js).toBe('type Int32 = number<i32>;');
         });
     });
 

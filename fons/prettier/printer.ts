@@ -151,8 +151,6 @@ export function faberPrint(
             return printGuardClause(path, options, print);
         case 'CatchClause':
             return printCatchClause(path, options, print);
-        case 'ModifierParameter':
-            return (node as any).name;
 
         default:
             throw new Error(`Unknown node type: ${(node as any).type}`);

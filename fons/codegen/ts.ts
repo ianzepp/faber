@@ -492,10 +492,9 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * TRANSFORMS:
      *   textus -> string (nested type)
      *   32 -> ignored (size constraint)
-     *   Naturalis -> ignored (modifier)
      *
-     * WHY: TypeScript doesn't support numeric size constraints or modifiers.
-     *      These are semantic hints for other targets (Zig, C++) but not TS.
+     * WHY: TypeScript doesn't support numeric size constraints.
+     *      These are semantic hints for other targets (Zig, Rust) but not TS.
      */
     function genTypeParameter(param: TypeParameter): string | null {
         if (param.type === 'TypeAnnotation') {
@@ -505,12 +504,6 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         if (param.type === 'Literal') {
             // EDGE: Numeric params like numerus<32> indicate size/width
             // For TypeScript, we ignore size - all numbers are float64
-            return null;
-        }
-
-        if (param.type === 'ModifierParameter') {
-            // EDGE: Modifiers like Naturalis (unsigned) don't exist in TS
-            // TypeScript has no unsigned types or ownership semantics
             return null;
         }
 
@@ -525,7 +518,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *   lista<numerus> -> Array<number>
      *   textus? -> string | null
      *   numerus<32> -> number (size ignored)
-     *   numerus<Naturalis> -> number (modifier ignored)
+     *   numerus<i32> -> number (size type ignored)
      */
     function genType(node: TypeAnnotation): string {
         // Map Latin type name to TS type (case-insensitive lookup)

@@ -999,37 +999,16 @@ export interface NewExpression extends BaseNode {
  * Type parameter for parameterized types.
  *
  * DESIGN: Union type allows different parameter kinds:
- *         - TypeAnnotation: Generic type params (lista<textus>)
- *         - Literal: Numeric params (numerus<32>) or size specs
- *         - ModifierParameter: Type modifiers (numerus<Naturalis>)
- *
- * WHY: Type parameters aren't always types - they can be size constraints
- *      or ownership/mutability modifiers.
- */
-export type TypeParameter = TypeAnnotation | Literal | ModifierParameter;
-
-/**
- * Modifier parameter for type annotations.
- *
- * GRAMMAR (in EBNF):
- *   modifierParam := 'Naturalis' | 'Proprius' | 'Alienus' | 'Mutabilis'
- *
- * INVARIANT: name is one of the four supported modifiers (lowercase canonical form).
- *
- * WHY: Type modifiers control numeric signedness, ownership semantics, etc.
- *      - naturalis: unsigned/natural numbers
- *      - proprius: owned (move semantics)
- *      - alienus: borrowed (reference semantics)
- *      - mutabilis: mutable
+ *         - TypeAnnotation: Generic type params (lista<textus>), or size specs (i32, u64)
+ *         - Literal: Numeric params (numerus<32>)
  *
  * Examples:
- *   numerus<naturalis> -> unsigned integer
- *   textus<alienus> -> borrowed string reference
+ *   lista<textus> -> TypeAnnotation
+ *   numerus<32> -> Literal (size in bits)
+ *   numerus<i32> -> TypeAnnotation (explicit signed 32-bit)
+ *   numerus<u64> -> TypeAnnotation (explicit unsigned 64-bit)
  */
-export interface ModifierParameter extends BaseNode {
-    type: 'ModifierParameter';
-    name: 'naturalis' | 'proprius' | 'alienus' | 'mutabilis';
-}
+export type TypeParameter = TypeAnnotation | Literal;
 
 /**
  * Type annotation for variables, parameters, and return types.
@@ -1041,14 +1020,14 @@ export interface ModifierParameter extends BaseNode {
  * INVARIANT: name is the base type name (textus, numerus, etc.).
  * INVARIANT: nullable indicates optional type with '?'.
  * INVARIANT: union contains multiple types for union types (A | B).
- * INVARIANT: typeParameters can contain types, literals, or modifiers.
+ * INVARIANT: typeParameters can contain types or literals.
  *
  * Examples:
  *   textus -> name="textus"
  *   numerus? -> name="numerus", nullable=true
  *   lista<textus> -> name="lista", typeParameters=[TypeAnnotation]
  *   numerus<32> -> name="numerus", typeParameters=[Literal{value=32}]
- *   numerus<Naturalis> -> name="numerus", typeParameters=[ModifierParameter]
+ *   numerus<i32> -> name="numerus", typeParameters=[TypeAnnotation{name="i32"}]
  *   textus | numerus -> name="union", union=[{name="textus"}, {name="numerus"}]
  */
 export interface TypeAnnotation extends BaseNode {

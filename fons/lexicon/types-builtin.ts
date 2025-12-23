@@ -462,56 +462,6 @@ export const builtinTypes: TypeEntry[] = [
 ];
 
 // =============================================================================
-// TYPE MODIFIERS
-// =============================================================================
-
-/**
- * Type modifier constants for parameterized types.
- *
- * WHY: These Latin modifiers express ownership, mutability, and signedness
- *      semantics that are critical for systems programming (Zig target) but
- *      can be ignored for TypeScript target.
- *
- * CASE: Modifiers are lowercase (canonical form). Lookup is case-insensitive.
- *
- * USAGE:
- *   - numerus<32, naturalis>  (unsigned 32-bit integer)
- *   - textus<proprius>        (owned string)
- *   - textus<alienus>         (borrowed string reference)
- *   - indicium<T, mutabilis>  (mutable pointer)
- */
-export const typeModifiers = {
-    // WHY: naturalis (3rd decl adj) - "natural" (unsigned numbers in systems programming)
-    naturalis: 'unsigned',
-
-    // WHY: proprius (2nd decl adj) - "one's own" (owned/move semantics)
-    proprius: 'owned',
-
-    // WHY: alienus (2nd decl adj) - "belonging to another" (borrowed/borrow semantics)
-    alienus: 'borrowed',
-
-    // WHY: mutabilis (3rd decl adj) - "changeable, mutable"
-    mutabilis: 'mutable',
-} as const;
-
-/**
- * Type for valid modifier names.
- */
-export type TypeModifier = keyof typeof typeModifiers;
-
-/**
- * Check if a name is a valid type modifier.
- *
- * WHY: Case-insensitive matching follows Latin convention.
- *
- * @param name - The name to check
- * @returns true if name is a valid type modifier
- */
-export function isTypeModifier(name: string): name is TypeModifier {
-    return name.toLowerCase() in typeModifiers;
-}
-
-// =============================================================================
 // LOOKUP FUNCTIONS
 // =============================================================================
 
