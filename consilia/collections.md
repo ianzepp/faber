@@ -374,3 +374,146 @@ Use standard library types:
 Zig requires allocator handling — need design decision on how to expose this.
 
 Many lodash-style methods need custom implementation for Zig.
+
+---
+
+## Collection DSL: Prefix Operations
+
+An alternative syntax for collection operations using Latin prefix verbs with comma chaining. Reads like natural Latin sentences.
+
+### Basic Syntax
+
+```
+<verb> <collection> [<preposition> <arg>], <verb> [<preposition> <arg>], ...
+```
+
+The comma acts as an implicit pipe — each operation flows into the next.
+
+### Prefix Verbs
+
+| Latin | Meaning | Method Equivalent |
+|-------|---------|-------------------|
+| `summa` | sum | `.summa()` |
+| `maximum` | max | `.maximus()` |
+| `minimum` | min | `.minimus()` |
+| `medium` | average | `.medium()` |
+| `quota` | count | `.longitudo()` |
+| `filtra` | filter | `.filtrata()` |
+| `ordina` | sort/order | `.ordinata()` |
+| `collige` | collect/pluck | `.mappa()` for property extraction |
+| `mappa` | map to key-value | creates `tabula` keyed by property |
+| `grupa` | group by | `.congrega()` |
+| `prima` | first n | `.prima()` |
+| `ultima` | last n | `.ultima()` |
+| `inversa` | reverse | `.inversa()` |
+| `unica` | unique | `.unica()` |
+
+### Prepositions
+
+| Latin | Meaning | Use |
+|-------|---------|-----|
+| `ubi` | where | filter condition |
+| `cum` | with/by | property selector |
+| `per` | by | sort/group field |
+| `ex` | from | source collection |
+
+### Examples
+
+**Aggregates:**
+```
+fixum total = summa numeri
+fixum highest = maximum pretia
+fixum count = quota users
+fixum avg = medium scores
+```
+
+**Filtering:**
+```
+fixum active = filtra users ubi activus
+fixum expensive = filtra items ubi pretium > 100
+fixum adults = filtra users ubi aetas >= 18
+```
+
+**Transformation:**
+```
+fixum names = collige users cum nomen
+fixum sorted = ordina items per pretium
+fixum byRole = grupa users per role
+fixum indexed = mappa users cum id
+```
+
+**Chained with comma:**
+```
+// Filter active users, extract names, sort
+fixum result = filtra users ubi activus, collige cum nomen, ordina
+
+// Filter expensive items, sort by price, take top 5
+fixum top5 = filtra items ubi pretium > 100, ordina per pretium, prima 5
+
+// Sum prices of active products
+fixum total = filtra products ubi activus, collige cum pretium, summa
+
+// Group users by role, then by department
+fixum nested = grupa users per role, mappa cum departmentum
+```
+
+### Comparison with Method Chaining
+
+Both syntaxes are valid and equivalent:
+
+```
+// Method chaining (OOP style)
+fixum result = users
+    .filtrata({ .activus })
+    .ordinata(cum nomen)
+    .prima(10)
+
+// Prefix DSL (Latin sentence style)
+fixum result = filtra users ubi activus, ordina cum nomen, prima 10
+```
+
+The prefix DSL reads more like natural Latin:
+- "filtra users ubi activus" = "filter users where active"
+- "ordina cum nomen" = "order by name"
+- "prima 10" = "first 10"
+
+### Grammar Notes
+
+When using genitive case for collection names, the syntax becomes fully grammatical Latin:
+
+```
+fixum summa numerorum        // sum of the numbers
+fixum maximum pretiorum      // maximum of the prices
+fixum prima 5 ex itemis      // first 5 from the items
+```
+
+However, for practical code with non-Latin variable names, the nominative form works:
+
+```
+fixum total = summa orderTotals
+fixum result = filtra userList ubi active
+```
+
+### Target Compilation
+
+**TypeScript:**
+```typescript
+// filtra users ubi activus, collige cum nomen, ordina
+users.filter(u => u.activus).map(u => u.nomen).sort()
+```
+
+**Zig:**
+```zig
+// Generates iterator chain or explicit loops
+// with arena allocator for intermediate results
+```
+
+**Rust:**
+```rust
+// filtra users ubi activus, collige cum nomen, ordina
+users.iter()
+    .filter(|u| u.activus)
+    .map(|u| &u.nomen)
+    .sorted()
+    .collect()
+```
