@@ -1,0 +1,279 @@
+// =============================================================================
+// STRUCTURAE - With Blocks (cum)
+// =============================================================================
+//
+// The cum block sets properties on an object within a scoped context.
+// Property assignments inside the block apply to the target object.
+//
+// GRAMMAR:
+// cum <object> {
+//   <property> = <value>
+//   <property> = <value>
+// }
+//
+// ETYMOLOGY:
+// cum: "with" (preposition indicating association)
+//
+// WHY "cum":
+// Expresses "working with" an object
+// Scopes property assignments to a specific target
+// Alternative to repeated object.property = value
+
+// =============================================================================
+// BASIC CUM BLOCKS
+// =============================================================================
+
+// Create and configure object
+fixum config = {
+    host: "",
+    port: 0,
+    secure: falsum
+}
+
+// Set properties in cum block
+cum config {
+    host = "localhost"
+    port = 8080
+    secure = verum
+}
+
+scribe config.host
+scribe config.port
+scribe config.secure
+
+// =============================================================================
+// CUM VS MANUAL ASSIGNMENT
+// =============================================================================
+
+// Without cum (verbose):
+varia settings = {
+    volume: 0,
+    brightness: 0,
+    contrast: 0
+}
+
+settings.volume = 75
+settings.brightness = 80
+settings.contrast = 50
+
+scribe settings.volume
+
+// With cum (concise):
+varia display = {
+    volume: 0,
+    brightness: 0,
+    contrast: 0
+}
+
+cum display {
+    volume = 75
+    brightness = 80
+    contrast = 50
+}
+
+scribe display.volume
+
+// =============================================================================
+// CUM IN FUNCTIONS
+// =============================================================================
+
+functio configureServer(host, port) {
+    fixum server = {
+        host: "",
+        port: 0,
+        started: falsum
+    }
+
+    cum server {
+        host = host
+        port = port
+        started = verum
+    }
+
+    redde server
+}
+
+fixum myServer = configureServer("example.com", 443)
+scribe myServer.host
+scribe myServer.port
+
+// =============================================================================
+// NESTED CUM BLOCKS
+// =============================================================================
+
+fixum app = {
+    server: {
+        host: "",
+        port: 0
+    },
+    database: {
+        url: "",
+        timeout: 0
+    }
+}
+
+// Configure nested objects
+cum app.server {
+    host = "localhost"
+    port = 3000
+}
+
+cum app.database {
+    url = "postgres://localhost"
+    timeout = 5000
+}
+
+scribe app.server.host
+scribe app.database.url
+
+// =============================================================================
+// CUM WITH CONDITIONALS
+// =============================================================================
+
+varia options = {
+    debug: falsum,
+    verbose: falsum,
+    logLevel: ""
+}
+
+fixum isDevelopment = verum
+
+cum options {
+    si isDevelopment {
+        debug = verum
+        verbose = verum
+        logLevel = "debug"
+    }
+    aliter {
+        logLevel = "error"
+    }
+}
+
+scribe options.debug
+scribe options.logLevel
+
+// =============================================================================
+// CUM FOR INITIALIZATION
+// =============================================================================
+
+// Builder pattern using cum
+functio createUser(name, email) {
+    fixum user = {
+        name: "",
+        email: "",
+        verified: falsum,
+        created: verum
+    }
+
+    cum user {
+        name = name
+        email = email
+        verified = falsum
+        created = verum
+    }
+
+    redde user
+}
+
+fixum newUser = createUser("Marcus", "marcus@roma.com")
+scribe newUser.name
+scribe newUser.verified
+
+// =============================================================================
+// MULTIPLE CUM BLOCKS ON SAME OBJECT
+// =============================================================================
+
+varia state = {
+    count: 0,
+    status: "",
+    active: falsum
+}
+
+// Initialize
+cum state {
+    count = 10
+    status = "ready"
+}
+
+scribe state.count
+scribe state.status
+
+// Update later
+cum state {
+    count = 20
+    active = verum
+}
+
+scribe state.count
+scribe state.active
+
+// =============================================================================
+// CUM WITH COMPUTED VALUES
+// =============================================================================
+
+fixum form = {
+    width: 0,
+    height: 0,
+    area: 0
+}
+
+fixum w = 10
+fixum h = 20
+
+cum form {
+    width = w
+    height = h
+    area = w * h
+}
+
+scribe form.area
+
+// =============================================================================
+// WHEN TO USE CUM
+// =============================================================================
+
+// GOOD: Multiple related property updates
+varia layout = { x: 0, y: 0, width: 0, height: 0 }
+
+cum layout {
+    x = 100
+    y = 200
+    width = 300
+    height = 400
+}
+
+// BAD: Single property update (just use dot notation)
+varia counter = { value: 0 }
+
+// Instead of:
+// cum counter { value = 1 }
+
+// Just use:
+counter.value = 1
+
+// Use cum when setting 2+ properties at once
+// Use dot notation for single updates
+
+// =============================================================================
+// CUM IN INITIALIZATION PATTERNS
+// =============================================================================
+
+functio initializeApp() {
+    fixum app = {
+        name: "",
+        version: "",
+        started: falsum
+    }
+
+    cum app {
+        name = "Faber Romanus"
+        version = "0.3.0"
+        started = verum
+    }
+
+    redde app
+}
+
+fixum application = initializeApp()
+scribe application.name
+scribe application.version

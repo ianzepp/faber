@@ -1,0 +1,236 @@
+// =============================================================================
+// STRUCTURAE - Destructuring
+// =============================================================================
+//
+// Destructuring extracts properties from objects into individual bindings.
+// Syntax mirrors object literals but on the left side of assignment.
+//
+// GRAMMAR:
+// fixum { prop1, prop2 } = object
+// fixum { prop: alias } = object
+// varia { prop1, prop2 } = object
+//
+// WHY DESTRUCTURING:
+// - Extract multiple values in one statement
+// - Clearer than multiple property accesses
+// - Document which properties are used
+
+// =============================================================================
+// BASIC DESTRUCTURING
+// =============================================================================
+
+fixum person = {
+    name: "Marcus",
+    age: 30,
+    city: "Roma"
+}
+
+// Extract properties into variables
+fixum { name, age } = person
+
+scribe name
+scribe age
+
+// Partial destructuring
+fixum { city } = person
+scribe city
+
+// =============================================================================
+// DESTRUCTURING WITH RENAME
+// =============================================================================
+
+fixum user = {
+    name: "Julia",
+    email: "julia@roma.com"
+}
+
+// Rename during destructuring
+fixum { name: userName, email: userEmail } = user
+
+scribe userName
+scribe userEmail
+
+// Multiple renames
+fixum config = {
+    host: "localhost",
+    port: 8080
+}
+
+fixum { host: serverHost, port: serverPort } = config
+
+scribe serverHost
+scribe serverPort
+
+// =============================================================================
+// MUTABLE DESTRUCTURING
+// =============================================================================
+
+fixum data = {
+    count: 100,
+    active: verum
+}
+
+// Use varia for mutable bindings
+varia { count, active } = data
+
+scribe count
+scribe active
+
+count = 200
+active = falsum
+
+scribe count
+scribe active
+
+// =============================================================================
+// DESTRUCTURING IN FUNCTIONS
+// =============================================================================
+
+// Function parameter destructuring (when supported)
+// functio greetUser({ name, age }) {
+//     scribe "Salve, " + name + " (" + age + ")"
+// }
+
+// For now, destructure in function body
+functio displayUser(user) {
+    fixum { name, age } = user
+    scribe "User:", name, "Age:", age
+}
+
+displayUser({ name: "Claudia", age: 28 })
+
+// =============================================================================
+// NESTED DESTRUCTURING
+// =============================================================================
+
+fixum profile = {
+    user: {
+        name: "Gaius",
+        id: 42
+    },
+    settings: {
+        theme: "dark"
+    }
+}
+
+// Destructure nested objects
+fixum { user, settings } = profile
+fixum { name, id } = user
+fixum { theme } = settings
+
+scribe name
+scribe id
+scribe theme
+
+// =============================================================================
+// DESTRUCTURING FUNCTION RETURNS
+// =============================================================================
+
+functio getCoordinates() {
+    redde { x: 10, y: 20 }
+}
+
+fixum { x, y } = getCoordinates()
+
+scribe x
+scribe y
+
+// Return multiple values
+functio getUserInfo() {
+    redde {
+        name: "Marcus",
+        email: "marcus@roma.com",
+        verified: verum
+    }
+}
+
+fixum { name: registeredName, verified } = getUserInfo()
+
+scribe registeredName
+scribe verified
+
+// =============================================================================
+// SELECTIVE EXTRACTION
+// =============================================================================
+
+fixum largeObject = {
+    id: 1,
+    name: "Product",
+    description: "A long description...",
+    price: 99,
+    inStock: verum,
+    category: "widgets",
+    sku: "WDG-001"
+}
+
+// Extract only what you need
+fixum { id, name, price } = largeObject
+
+scribe id
+scribe name
+scribe price
+
+// =============================================================================
+// DESTRUCTURING WITH DEFAULTS (future)
+// =============================================================================
+
+// Future: default values for missing properties
+// fixum { timeout = 5000, retries = 3 } = options
+// Uses defaults if properties don't exist
+
+// =============================================================================
+// COMPARISON WITH MANUAL EXTRACTION
+// =============================================================================
+
+fixum response = {
+    status: 200,
+    data: { value: 42 },
+    error: nihil
+}
+
+// Without destructuring (verbose):
+fixum status = response.status
+fixum data = response.data
+fixum error = response.error
+
+scribe status
+scribe data
+
+// With destructuring (concise):
+fixum { status: responseStatus, data: responseData } = response
+
+scribe responseStatus
+scribe responseData
+
+// =============================================================================
+// PRACTICAL PATTERNS
+// =============================================================================
+
+// Configuration objects
+functio connect(options) {
+    fixum { host, port, secure } = options
+
+    si secure {
+        scribe "Connecting securely to " + host + ":" + port
+    }
+    aliter {
+        scribe "Connecting to " + host + ":" + port
+    }
+}
+
+connect({ host: "example.com", port: 443, secure: verum })
+
+// API responses
+functio handleResponse(response) {
+    fixum { status, data, error } = response
+
+    si status == 200 {
+        scribe "Success:", data
+    }
+    aliter {
+        scribe "Error:", error
+    }
+}
+
+handleResponse({ status: 200, data: "OK", error: nihil })
+handleResponse({ status: 404, data: nihil, error: "Not found" })

@@ -1,0 +1,45 @@
+// =============================================================================
+// FIXUM - Immutable Bindings
+// =============================================================================
+//
+// The fixum keyword creates immutable bindings (like JavaScript's const).
+// Values bound with fixum cannot be reassigned.
+//
+// ETYMOLOGY:
+// fixum: "fixed, immovable" (past participle of figere - to fix, fasten)
+//
+// GRAMMAR:
+// fixum <name> = <expr>
+//
+// WHY "fixum" not "const":
+// fixum directly expresses immutability in Latin - something made fixed.
+// It's declarative about the binding's nature.
+//
+// CONVENTION:
+// Use fixum by default. Only use varia when you need reassignment.
+
+// Numeric constant
+fixum PI = 3.14159
+scribe PI
+
+// String constant
+fixum GREETING = "Salve, Mundus!"
+scribe GREETING
+
+// Object constants
+// NOTE: fixum prevents reassignment of the binding, not mutation of the value
+fixum config = { host: "localhost", port: 8080 }
+scribe config.host
+
+// Arrays
+fixum primes = [2, 3, 5, 7, 11]
+scribe primes
+
+// Function results
+fixum sum = 10 + 20 + 30
+scribe sum
+
+// Constants in expressions
+fixum radius = 5
+fixum area = PI * radius * radius
+scribe area

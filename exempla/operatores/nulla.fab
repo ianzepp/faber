@@ -1,0 +1,237 @@
+// =============================================================================
+// OPERATORES - Null/Empty Checks (nulla/nonnulla)
+// =============================================================================
+//
+// Faber provides dedicated operators for checking emptiness/presence.
+//
+// OPERATORS:
+// nulla     - is null/empty/undefined
+// nonnulla  - is not null/not empty/defined
+//
+// ETYMOLOGY:
+// nulla: "none, nothing" (feminine of nullus - not any)
+// nonnulla: "some, not nothing" (non + nulla - not none)
+//
+// WHY DEDICATED OPERATORS:
+// - More semantic than !!value or value != null
+// - Handles multiple emptiness concepts uniformly
+// - Clearer intent for null-safety checks
+
+// =============================================================================
+// NULLA - Check for Empty/Null
+// =============================================================================
+
+// Null values
+fixum noValue = nihil
+
+si nulla noValue {
+    scribe "Value is null"
+}
+
+// Empty arrays
+fixum emptyList = []
+
+si nulla emptyList {
+    scribe "List is empty"
+}
+
+// Empty strings
+fixum emptyString = ""
+
+si nulla emptyString {
+    scribe "String is empty"
+}
+
+// Empty objects
+fixum emptyObject = {}
+
+si nulla emptyObject {
+    scribe "Object is empty"
+}
+
+// =============================================================================
+// NONNULLA - Check for Presence
+// =============================================================================
+
+// Non-null values
+fixum data = { name: "Marcus" }
+
+si nonnulla data {
+    scribe "Data exists"
+}
+
+// Non-empty arrays
+fixum items = [1, 2, 3]
+
+si nonnulla items {
+    scribe "Items array has", items, "elements"
+}
+
+// Non-empty strings
+fixum message = "Salve!"
+
+si nonnulla message {
+    scribe "Message:", message
+}
+
+// =============================================================================
+// PRACTICAL USAGE
+// =============================================================================
+
+// Safe access pattern
+fixum user = { name: "Julia", email: "julia@roma.com" }
+
+si nonnulla user {
+    scribe "User:", user.name
+}
+aliter {
+    scribe "No user found"
+}
+
+// Array processing
+fixum numbers = [10, 20, 30]
+
+si nonnulla numbers {
+    ex numbers pro n {
+        scribe n
+    }
+}
+aliter {
+    scribe "No numbers to process"
+}
+
+// =============================================================================
+// IN FUNCTIONS
+// =============================================================================
+
+functio getFirstItem(items) -> textus {
+    si nulla items {
+        redde "Empty list"
+    }
+
+    redde items
+}
+
+scribe getFirstItem([1, 2, 3])
+scribe getFirstItem([])
+
+// Validation function
+functio validateInput(input) -> bivalens {
+    si nulla input {
+        redde falsum
+    }
+
+    si nonnulla input {
+        redde verum
+    }
+
+    redde falsum
+}
+
+scribe validateInput("data")
+scribe validateInput("")
+scribe validateInput(nihil)
+
+// =============================================================================
+// COMBINING WITH LOGICAL OPERATORS
+// =============================================================================
+
+fixum username = "marcus"
+fixum password = "secret123"
+
+// Check both fields are present
+si nonnulla username et nonnulla password {
+    scribe "Can authenticate"
+}
+
+// Check if either is missing
+si nulla username aut nulla password {
+    scribe "Missing credentials"
+}
+
+// Multiple checks
+fixum email = "test@example.com"
+fixum phone = ""
+
+si nonnulla email et nonnulla phone {
+    scribe "Has both contact methods"
+}
+aliter si nonnulla email aut nonnulla phone {
+    scribe "Has at least one contact method"
+}
+aliter {
+    scribe "No contact information"
+}
+
+// =============================================================================
+// GUARD CLAUSES WITH NULLA
+// =============================================================================
+
+functio processData(data) -> textus {
+    custodi {
+        si nulla data {
+            redde "Error: no data provided"
+        }
+    }
+
+    redde "Processing: " + data
+}
+
+scribe processData("sample")
+scribe processData(nihil)
+scribe processData("")
+
+// Multiple guards
+functio createRecord(name, email) -> textus {
+    custodi {
+        si nulla name {
+            redde "Error: name required"
+        }
+        si nulla email {
+            redde "Error: email required"
+        }
+    }
+
+    redde "Record created for " + name
+}
+
+scribe createRecord("Marcus", "marcus@roma.com")
+scribe createRecord("", "test@test.com")
+scribe createRecord("Julia", "")
+
+// =============================================================================
+// COMPARISON WITH JAVASCRIPT
+// =============================================================================
+
+// Faber (explicit):
+si nonnulla items {
+    scribe "Has items"
+}
+
+// JavaScript (multiple ways to express same thing):
+// if (items)                    // truthy check
+// if (items != null)            // null check
+// if (items !== undefined)      // undefined check
+// if (items && items.length)    // length check
+// if (!!items)                  // double negation
+
+// nulla/nonnulla unify these patterns with clear semantics
+
+// =============================================================================
+// SEMANTIC MEANING
+// =============================================================================
+
+// nulla checks for "absence" in various forms:
+// - nihil (null)
+// - undefined (when supported)
+// - "" (empty string)
+// - [] (empty array)
+// - {} (empty object)
+
+// nonnulla is the inverse: "presence" or "something exists"
+
+fixum hasData = nonnulla { count: 0 }
+scribe "hasData:", hasData
+
+fixum noData = nulla nihil
+scribe "noData:", noData

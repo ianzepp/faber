@@ -1,0 +1,278 @@
+// =============================================================================
+// GENUS - Computed Properties
+// =============================================================================
+//
+// Computed properties use the `=>` arrow operator for derived values.
+// They're evaluated on access, not stored.
+//
+// GRAMMAR:
+// publicus <type> <name> => <expression>
+//
+// SEMANTICS:
+// - publicus: makes the property accessible
+// - =>: indicates computation (not storage)
+// - Expression evaluated each time property is accessed
+// - Can reference other fields via ego
+//
+// WHY COMPUTED PROPERTIES:
+// - Avoid storing redundant data
+// - Ensure derived values stay synchronized
+// - Clearer than methods for simple derivations
+
+// =============================================================================
+// BASIC COMPUTED PROPERTIES
+// =============================================================================
+
+genus rectangle {
+    numerus width: 1
+    numerus height: 1
+
+    // Computed property: area derived from width and height
+    publicus numerus area => ego.width * ego.height
+}
+
+fixum rect = novum rectangle cum {
+    width: 10,
+    height: 5
+}
+
+scribe rect.area  // 50
+
+// Change dimensions
+rect.width = 20
+scribe rect.area  // 100 - automatically updated
+
+// =============================================================================
+// MULTIPLE COMPUTED PROPERTIES
+// =============================================================================
+
+genus circle {
+    numerus radius: 1
+
+    publicus numerus diameter => ego.radius * 2
+    publicus numerus circumference => 3.14159 * ego.diameter
+    publicus numerus area => 3.14159 * ego.radius * ego.radius
+}
+
+fixum c = novum circle cum {
+    radius: 5
+}
+
+scribe c.diameter
+scribe c.circumference
+scribe c.area
+
+// Update radius
+c.radius = 10
+scribe c.diameter  // Automatically doubles
+
+// =============================================================================
+// COMPUTED FROM MULTIPLE FIELDS
+// =============================================================================
+
+genus fullName {
+    textus firstName: ""
+    textus lastName: ""
+
+    publicus textus display => ego.firstName + " " + ego.lastName
+}
+
+varia person = novum fullName cum {
+    firstName: "Marcus",
+    lastName: "Aurelius"
+}
+
+scribe person.display
+
+// Update name
+person.firstName = "Julia"
+scribe person.display  // Julia Aurelius
+
+// =============================================================================
+// BOOLEAN COMPUTED PROPERTIES
+// =============================================================================
+
+genus usuario {
+    textus name
+    textus email
+    numerus age: 0
+
+    publicus bivalens isAdult => ego.age >= 18
+    publicus bivalens hasEmail => nonnulla ego.email
+    publicus bivalens isValid => nonnulla ego.name et nonnulla ego.email
+}
+
+fixum user = novum usuario cum {
+    name: "Marcus",
+    email: "marcus@roma.com",
+    age: 30
+}
+
+scribe user.isAdult
+scribe user.hasEmail
+scribe user.isValid
+
+// =============================================================================
+// COMPUTED VS STORED
+// =============================================================================
+
+// With computed property (no storage):
+genus efficientRect {
+    numerus width: 1
+    numerus height: 1
+
+    publicus numerus area => ego.width * ego.height
+}
+
+// Without computed property (stored, can get out of sync):
+genus storedRect {
+    numerus width: 1
+    numerus height: 1
+    numerus area: 0
+
+    functio creo() {
+        ego.area = ego.width * ego.height
+    }
+}
+
+fixum e = novum efficientRect cum { width: 5, height: 10 }
+scribe e.area
+
+e.width = 20
+scribe e.area  // Automatically correct
+
+varia s = novum storedRect cum { width: 5, height: 10 }
+scribe s.area
+
+s.width = 20
+scribe s.area  // Still shows old value! Out of sync
+
+// =============================================================================
+// COMPUTED WITH CONDITIONALS
+// =============================================================================
+
+genus account {
+    numerus balance: 0
+    numerus creditLimit: 1000
+
+    publicus numerus available => ego.balance + ego.creditLimit
+    publicus bivalens isOverdrawn => ego.balance < 0
+    publicus textus status => {
+        si ego.balance >= 1000 {
+            redde "premium"
+        }
+        aliter si ego.balance >= 0 {
+            redde "standard"
+        }
+        aliter {
+            redde "overdrawn"
+        }
+    }
+}
+
+varia acc = novum account
+
+scribe acc.available
+scribe acc.isOverdrawn
+scribe acc.status
+
+acc.balance = 500
+scribe acc.status
+
+acc.balance = -100
+scribe acc.isOverdrawn
+
+// =============================================================================
+// CHAINED COMPUTED PROPERTIES
+// =============================================================================
+
+genus temperature {
+    numerus celsius: 0
+
+    publicus numerus fahrenheit => (ego.celsius * 9 / 5) + 32
+    publicus numerus kelvin => ego.celsius + 273.15
+    publicus bivalens isFreezing => ego.celsius <= 0
+    publicus bivalens isBoiling => ego.celsius >= 100
+}
+
+varia temp = novum temperature
+
+scribe temp.celsius
+scribe temp.fahrenheit
+scribe temp.kelvin
+
+temp.celsius = 100
+scribe temp.fahrenheit
+scribe temp.isBoiling
+
+// =============================================================================
+// COMPLEX COMPUTATIONS
+// =============================================================================
+
+genus statistics {
+    lista<numerus> values: []
+
+    publicus numerus count => values.length  // when supported
+    publicus bivalens isEmpty => nulla ego.values
+    publicus bivalens hasData => nonnulla ego.values
+}
+
+// =============================================================================
+// WHEN TO USE COMPUTED PROPERTIES
+// =============================================================================
+
+// GOOD: Simple derivations
+genus point {
+    numerus x: 0
+    numerus y: 0
+    publicus numerus magnitude => ego.x * ego.x + ego.y * ego.y
+}
+
+// GOOD: Format transformations
+genus usuario {
+    textus firstName
+    textus lastName
+    publicus textus fullName => ego.firstName + " " + ego.lastName
+}
+
+// BAD: Expensive computations (use method + caching instead)
+// genus processor {
+//     publicus numerus expensive => verySlowCalculation()
+// }
+
+// BAD: Side effects (use methods)
+// genus logger {
+//     publicus textus message => {
+//         scribe "side effect!"  // Don't do this
+//         redde "value"
+//     }
+// }
+
+// Computed properties should be:
+// - Fast (evaluated on every access)
+// - Pure (no side effects)
+// - Deterministic (same inputs = same output)
+
+// =============================================================================
+// COMPARISON: COMPUTED VS METHOD
+// =============================================================================
+
+genus comparison {
+    numerus value: 0
+
+    // Computed property (accessed like field)
+    publicus numerus doubled => ego.value * 2
+
+    // Method (called like function)
+    functio triple() -> numerus {
+        redde ego.value * 3
+    }
+}
+
+fixum comp = novum comparison cum { value: 10 }
+
+scribe comp.doubled      // Property access
+scribe comp.triple()     // Method call
+
+// Use computed properties for simple, derived values
+// Use methods for actions or complex operations

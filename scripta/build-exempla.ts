@@ -1,6 +1,8 @@
 #!/usr/bin/env bun
 /**
- * Compile all exempla/*.fab files to opus/exempla/
+ * Compile all .fab files in exempla/ to opus/exempla/
+ *
+ * Recursively scans exempla/ directory and mirrors structure in output.
  *
  * Usage:
  *   bun scripta/build-exempla.ts           # TypeScript output (default)
@@ -9,8 +11,8 @@
  */
 
 import { readdir, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
-import { join, basename } from 'path';
+import { existsSync, statSync } from 'fs';
+import { join, basename, relative, dirname } from 'path';
 import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
@@ -19,6 +21,29 @@ const OUTPUT = join(ROOT, 'opus', 'exempla');
 const FABER = join(ROOT, 'opus', 'faber');
 
 type Target = 'ts' | 'zig';
+
+/**
+ * Recursively find all .fab files in a directory
+ */
+async function findFabFiles(dir: string): Promise<string[]> {
+    const entries = await readdir(dir);
+    const files: string[] = [];
+
+    for (const entry of entries) {
+        const fullPath = join(dir, entry);
+        const stat = statSync(fullPath);
+
+        if (stat.isDirectory()) {
+            const subFiles = await findFabFiles(fullPath);
+            files.push(...subFiles);
+        }
+        else if (entry.endsWith('.fab')) {
+            files.push(fullPath);
+        }
+    }
+
+    return files;
+}
 
 async function main() {
     const args = process.argv.slice(2);
@@ -32,33 +57,33 @@ async function main() {
         await $`${ROOT}/scripta/build`;
     }
 
-    // Create output directories
-    for (const target of targets) {
-        await mkdir(join(OUTPUT, target), { recursive: true });
-    }
+    // Find all .fab files recursively
+    const files = await findFabFiles(EXEMPLA);
 
-    // Find all .fab files
-    const files = (await readdir(EXEMPLA)).filter(f => f.endsWith('.fab'));
-
-    console.log(`Compiling ${files.length} files...`);
+    console.log(`Found ${files.length} .fab files in exempla/`);
 
     let failed = 0;
 
     for (const file of files) {
+        const relativePath = relative(EXEMPLA, file);
         const name = basename(file, '.fab');
-        const input = join(EXEMPLA, file);
+        const subdir = dirname(relativePath);
 
         for (const target of targets) {
             const ext = target === 'ts' ? 'ts' : 'zig';
-            const output = join(OUTPUT, target, `${name}.${ext}`);
+            const outputDir = join(OUTPUT, target, subdir);
+            const output = join(outputDir, `${name}.${ext}`);
+
+            // Create output directory if needed
+            await mkdir(outputDir, { recursive: true });
 
             try {
-                const result = await $`${FABER} compile ${input} -t ${target}`.quiet();
+                const result = await $`${FABER} compile ${file} -t ${target}`.quiet();
                 await Bun.write(output, result.stdout);
-                console.log(`  ${file} -> opus/exempla/${target}/${name}.${ext}`);
+                console.log(`  ${relativePath} -> opus/exempla/${target}/${subdir}/${name}.${ext}`);
             }
             catch (err: any) {
-                console.error(`  ${file} [${target}] FAILED`);
+                console.error(`  ${relativePath} [${target}] FAILED`);
                 if (err.stderr) console.error(err.stderr);
                 failed++;
             }
@@ -74,7 +99,7 @@ async function main() {
     if (targets.includes('ts')) {
         console.log('Linting TypeScript...');
         try {
-            await $`npx eslint ${join(OUTPUT, 'ts')}/*.ts`.quiet();
+            await $`npx eslint ${join(OUTPUT, 'ts')}/**/*.ts`.quiet();
             console.log('  eslint: OK');
         }
         catch (err: any) {
@@ -87,21 +112,20 @@ async function main() {
     // Compile Zig output
     if (targets.includes('zig')) {
         console.log('Compiling Zig...');
-        const zigDir = join(OUTPUT, 'zig');
-        const zigFiles = (await readdir(zigDir)).filter(f => f.endsWith('.zig'));
+        const zigFiles = await findFabFiles(join(OUTPUT, 'zig'));
+        const zigSources = zigFiles.filter(f => f.endsWith('.zig'));
         let zigFailed = 0;
 
-        for (const file of zigFiles) {
+        for (const file of zigSources) {
             const name = basename(file, '.zig');
-            const input = join(zigDir, file);
-            const output = join(zigDir, name);
+            const output = join(dirname(file), name);
 
             try {
-                await $`zig build-exe ${input} -femit-bin=${output}`.quiet();
-                console.log(`  ${file}: OK`);
+                await $`zig build-exe ${file} -femit-bin=${output}`.quiet();
+                console.log(`  ${relative(OUTPUT, file)}: OK`);
             }
             catch (err: any) {
-                console.error(`  ${file}: FAILED`);
+                console.error(`  ${relative(OUTPUT, file)}: FAILED`);
                 const errText = err.stderr?.toString() || '';
                 // Show first error only
                 const firstError = errText.split('\n').slice(0, 3).join('\n');
@@ -111,7 +135,7 @@ async function main() {
         }
 
         if (zigFailed > 0) {
-            console.log(`\n${zigFailed}/${zigFiles.length} Zig file(s) failed to compile.`);
+            console.log(`\n${zigFailed}/${zigSources.length} Zig file(s) failed to compile.`);
         }
     }
 

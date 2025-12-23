@@ -1,0 +1,115 @@
+// =============================================================================
+// FUNCTIONES - Typed Parameters
+// =============================================================================
+//
+// Faber uses type-first syntax for function parameters.
+// This mirrors Latin's flexible word order and makes types more prominent.
+//
+// GRAMMAR:
+// functio name(<type> <param>, ...) -> <returnType> { ... }
+//
+// TYPE-FIRST SYNTAX:
+// functio greet(textus name) -> textus { ... }
+//
+// WHY TYPE-FIRST:
+// - Mirrors Latin adjective-noun patterns
+// - Makes type constraints immediately visible
+// - Consistent with variable declarations: fixum textus name = "x"
+
+// =============================================================================
+// SINGLE TYPED PARAMETER
+// =============================================================================
+
+// String parameter
+functio upper(textus s) -> textus {
+    redde s
+}
+
+scribe upper("salve")
+
+// Numeric parameter
+functio square(numerus n) -> numerus {
+    redde n * n
+}
+
+scribe square(5)
+scribe square(12)
+
+// Boolean parameter
+functio negate(bivalens b) -> bivalens {
+    si b {
+        redde falsum
+    }
+    redde verum
+}
+
+scribe negate(verum)
+scribe negate(falsum)
+
+// =============================================================================
+// MULTIPLE TYPED PARAMETERS
+// =============================================================================
+
+// Two parameters of same type
+functio concatena(textus a, textus b) -> textus {
+    redde a + " " + b
+}
+
+scribe concatena("Salve", "Mundus")
+
+// Mixed parameter types
+functio describe(textus nomen, numerus aetas) -> textus {
+    redde nomen + " est " + aetas + " annos"
+}
+
+scribe describe("Marcus", 30)
+scribe describe("Julia", 25)
+
+// Three parameters
+functio range(numerus min, numerus max, numerus step) -> numerus {
+    redde (max - min) / step
+}
+
+scribe range(0, 100, 10)
+
+// =============================================================================
+// COMPLEX TYPES
+// =============================================================================
+
+// Array parameter
+functio firstus(lista<textus> items) -> textus {
+    redde items
+}
+
+scribe firstus(["alpha", "beta", "gamma"])
+
+// Optional/nullable parameter
+functio greetOptional(textus? name) -> textus {
+    si name == nihil {
+        redde "Salve, Ignotus!"
+    }
+    redde "Salve, " + name + "!"
+}
+
+scribe greetOptional("Marcus")
+scribe greetOptional(nihil)
+
+// =============================================================================
+// TYPE INFERENCE
+// =============================================================================
+
+// Parameters without type annotations use inference
+functio echo(value) {
+    scribe value
+}
+
+echo("Hello")
+echo(42)
+echo(verum)
+
+// Return type can be inferred
+functio sum(numerus a, numerus b) {
+    redde a + b
+}
+
+scribe sum(15, 27)

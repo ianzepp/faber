@@ -1,0 +1,229 @@
+// =============================================================================
+// TYPI - Nullable Types
+// =============================================================================
+//
+// Faber uses the `?` suffix to denote optional/nullable types.
+// A nullable type can hold either a value of the base type or nihil.
+//
+// GRAMMAR:
+// <type>?  - nullable/optional type
+//
+// EXAMPLES:
+// textus?   - string or nihil
+// numerus?  - number or nihil
+// bivalens? - boolean or nihil
+//
+// WHY SUFFIX SYNTAX:
+// - Familiar to TypeScript/Kotlin/Swift users
+// - Visually lightweight
+// - Clear that optionality modifies the type
+
+// =============================================================================
+// BASIC NULLABLE TYPES
+// =============================================================================
+
+// String that can be null
+fixum textus? optionalName = nihil
+scribe optionalName
+
+// Number that can be null
+fixum numerus? optionalCount = nihil
+scribe optionalCount
+
+// Boolean that can be null
+fixum bivalens? optionalFlag = nihil
+scribe optionalFlag
+
+// =============================================================================
+// NULLABLE WITH VALUES
+// =============================================================================
+
+// Initially null, then assigned
+varia textus? userName = nihil
+scribe userName
+
+userName = "Marcus"
+scribe userName
+
+// Optional with initial value
+fixum textus? greeting = "Salve!"
+scribe greeting
+
+// =============================================================================
+// NULL CHECKS
+// =============================================================================
+
+functio processName(textus? name) -> textus {
+    si name == nihil {
+        redde "No name provided"
+    }
+
+    redde "Name: " + name
+}
+
+scribe processName("Julia")
+scribe processName(nihil)
+
+// Using nulla/nonnulla
+functio safePrint(textus? value) {
+    si nonnulla value {
+        scribe "Value:", value
+    }
+    aliter {
+        scribe "No value"
+    }
+}
+
+safePrint("Hello")
+safePrint(nihil)
+
+// =============================================================================
+// OPTIONAL FUNCTION PARAMETERS
+// =============================================================================
+
+functio greet(textus? name) -> textus {
+    si nulla name {
+        redde "Salve, Ignotus!"
+    }
+
+    redde "Salve, " + name + "!"
+}
+
+scribe greet("Marcus")
+scribe greet(nihil)
+
+// Multiple optional parameters
+functio describe(textus? name, numerus? age) -> textus {
+    varia result = ""
+
+    si nonnulla name {
+        result = "Name: " + name
+    }
+
+    si nonnulla age {
+        si nonnulla name {
+            result = result + ", "
+        }
+        result = result + "Age: " + age
+    }
+
+    si nulla name et nulla age {
+        redde "No information"
+    }
+
+    redde result
+}
+
+scribe describe("Julia", 25)
+scribe describe("Marcus", nihil)
+scribe describe(nihil, 30)
+scribe describe(nihil, nihil)
+
+// =============================================================================
+// NULLABLE RETURN TYPES
+// =============================================================================
+
+functio findFirst(lista<numerus> nums, numerus target) -> numerus? {
+    ex nums pro n {
+        si n == target {
+            redde n
+        }
+    }
+
+    redde nihil
+}
+
+fixum numerus? found = findFirst([1, 2, 3, 4, 5], 3)
+fixum numerus? notFound = findFirst([1, 2, 3], 10)
+
+si nonnulla found {
+    scribe "Found:", found
+}
+
+si nulla notFound {
+    scribe "Not found"
+}
+
+// =============================================================================
+// NULLABLE ARRAYS
+// =============================================================================
+
+// Array that can be null
+fixum lista<numerus>? optionalList = nihil
+scribe optionalList
+
+// Array of nullable numbers
+fixum lista<numerus?> numbersWithNulls = [1, nihil, 3, nihil, 5]
+
+ex numbersWithNulls pro n {
+    si nonnulla n {
+        scribe "Number:", n
+    }
+    aliter {
+        scribe "Null value"
+    }
+}
+
+// =============================================================================
+// DEFAULT VALUES
+// =============================================================================
+
+functio getValueOrDefault(numerus? value, numerus defaultValue) -> numerus {
+    si nulla value {
+        redde defaultValue
+    }
+
+    redde value
+}
+
+scribe getValueOrDefault(42, 0)
+scribe getValueOrDefault(nihil, 100)
+
+// String with default
+functio getStringOrDefault(textus? str) -> textus {
+    si nulla str {
+        redde "default"
+    }
+
+    redde str
+}
+
+scribe getStringOrDefault("custom")
+scribe getStringOrDefault(nihil)
+
+// =============================================================================
+// NULLABLE GUARDS
+// =============================================================================
+
+functio processOptional(numerus? value) -> numerus {
+    custodi {
+        si nulla value {
+            redde 0
+        }
+        si value < 0 {
+            redde -1
+        }
+    }
+
+    redde value
+}
+
+scribe processOptional(42)
+scribe processOptional(nihil)
+scribe processOptional(-5)
+
+// =============================================================================
+// COMPARISON WITH NON-NULLABLE
+// =============================================================================
+
+// Non-nullable: must have a value
+fixum textus required = "Must have value"
+
+// Nullable: can be nihil
+fixum textus? optional = nihil
+
+// Type safety: this would be an error
+// fixum textus cannotBeNull = nihil  // Error!
+
+// This is fine
+fixum textus? canBeNull = nihil  // OK

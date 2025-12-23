@@ -1,0 +1,267 @@
+// =============================================================================
+// ERRORES - Inline Cape (catch on any block)
+// =============================================================================
+//
+// Any control block can have a cape clause attached.
+// This allows catching errors without explicit tempta blocks.
+//
+// GRAMMAR:
+// <any-block> cape <errorName> { <handler> }
+//
+// WORKS WITH:
+// - si blocks
+// - dum blocks
+// - ex-pro blocks
+// - elige blocks
+// - Function bodies
+//
+// WHY INLINE CAPE:
+// - Concise error handling for single operations
+// - No need for wrapper tempta block
+// - Clearer intent when handling specific operation errors
+
+// =============================================================================
+// CAPE ON SI BLOCKS
+// =============================================================================
+
+fixum value = 10
+
+si value > 0 {
+    scribe "Processing:", value
+    // Might throw error
+}
+cape err {
+    scribe "Error during processing:", err
+}
+
+// Multiple statements with inline cape
+fixum data = { count: 5 }
+
+si nonnulla data {
+    scribe "Data:", data
+    // More operations that might fail
+}
+cape err {
+    scribe "Failed to process data:", err
+}
+
+// =============================================================================
+// CAPE ON DUM LOOPS
+// =============================================================================
+
+varia counter = 0
+
+dum counter < 5 {
+    scribe counter
+    counter = counter + 1
+
+    si counter == 3 {
+        iace "Error at 3"
+    }
+}
+cape err {
+    scribe "Loop error:", err
+}
+
+// =============================================================================
+// CAPE ON EX-PRO LOOPS
+// =============================================================================
+
+fixum numbers = [1, 2, 3, 4, 5]
+
+ex numbers pro n {
+    scribe "Processing:", n
+
+    si n == 4 {
+        iace "Cannot process 4"
+    }
+}
+cape err {
+    scribe "Iteration error:", err
+}
+
+// =============================================================================
+// CAPE ON ELIGE BLOCKS
+// =============================================================================
+
+fixum status = "error"
+
+elige status {
+    si "success" {
+        scribe "OK"
+    }
+    si "error" {
+        iace "Status is error"
+    }
+    aliter {
+        scribe "Unknown"
+    }
+}
+cape err {
+    scribe "Switch error:", err
+}
+
+// =============================================================================
+// CAPE ON FUNCTION CALLS
+// =============================================================================
+
+functio riskyFunction() {
+    iace "Function failed"
+}
+
+// Inline cape on function call block
+si verum {
+    riskyFunction()
+}
+cape err {
+    scribe "Caught:", err
+}
+
+// =============================================================================
+// NESTED BLOCKS WITH CAPE
+// =============================================================================
+
+si verum {
+    scribe "Outer block"
+
+    si verum {
+        scribe "Inner block"
+        iace "Inner error"
+    }
+    cape innerErr {
+        scribe "Caught inner:", innerErr
+    }
+
+    scribe "After inner"
+}
+cape outerErr {
+    scribe "Caught outer:", outerErr
+}
+
+// =============================================================================
+// COMPARISON: INLINE vs TEMPTA
+// =============================================================================
+
+// With explicit tempta:
+tempta {
+    si verum {
+        scribe "Operation"
+        iace "Error"
+    }
+}
+cape err {
+    scribe "Caught:", err
+}
+
+// With inline cape (cleaner):
+si verum {
+    scribe "Operation"
+    iace "Error"
+}
+cape err {
+    scribe "Caught:", err
+}
+
+// =============================================================================
+// PRACTICAL PATTERNS
+// =============================================================================
+
+// Safe iteration
+fixum items = [1, 2, 3]
+
+ex items pro item {
+    // Process item
+    si item == 2 {
+        iace "Cannot process 2"
+    }
+    scribe "Processed:", item
+}
+cape err {
+    scribe "Skipping item due to:", err
+}
+
+// Conditional execution with error handling
+fixum config = { enabled: verum }
+
+si config.enabled {
+    scribe "Feature enabled"
+    // Risky operation
+}
+cape err {
+    scribe "Feature failed:", err
+}
+
+// =============================================================================
+// WHEN TO USE INLINE CAPE
+// =============================================================================
+
+// GOOD: Single operation that might fail
+si nonnulla data {
+    processData(data)
+}
+cape err {
+    scribe "Processing failed:", err
+}
+
+// GOOD: Loop with error handling
+ex items pro item {
+    validateAndProcess(item)
+}
+cape err {
+    scribe "Item processing failed"
+}
+
+// BAD: Multiple unrelated operations (use tempta)
+// si verum {
+//     operation1()
+//     operation2()
+//     operation3()
+// }
+// cape err {
+//     // Which operation failed?
+// }
+
+// Use inline cape for:
+// - Single, focused operations
+// - Clear error context
+// - Concise error handling
+
+// Use tempta-cape for:
+// - Multiple related operations
+// - Complex error handling
+// - Need for finally (demum) block
+
+// =============================================================================
+// CAPE WITHOUT DEMUM
+// =============================================================================
+
+// Inline cape doesn't support demum
+// For cleanup, use explicit tempta-cape-demum
+
+varia resource = nihil
+
+si verum {
+    // resource = allocate()
+    scribe "Using resource"
+}
+cape err {
+    scribe "Error:", err
+}
+// No demum available here
+
+// Instead, use:
+tempta {
+    si verum {
+        // resource = allocate()
+        scribe "Using resource"
+    }
+}
+cape err {
+    scribe "Error:", err
+}
+demum {
+    si nonnulla resource {
+        // resource.free()
+        scribe "Cleanup"
+    }
+}

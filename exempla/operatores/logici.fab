@@ -1,0 +1,201 @@
+// =============================================================================
+// OPERATORES - Logical Operators
+// =============================================================================
+//
+// Faber uses Latin words for logical operators instead of symbols.
+// This makes code more readable for both humans and LLMs.
+//
+// OPERATORS:
+// et    - logical AND (&&)
+// aut   - logical OR (||)
+// non   - logical NOT (!)
+//
+// ETYMOLOGY:
+// et: "and" (conjunction)
+// aut: "or" (disjunction - exclusive or inclusive based on context)
+// non: "not" (negation)
+//
+// WHY LATIN WORDS:
+// - More explicit than symbols (&&, ||, !)
+// - Better for LLM parsing (natural language tokens)
+// - Clearer intent for non-experts
+
+// =============================================================================
+// ET (AND)
+// =============================================================================
+
+// Both conditions must be true
+fixum isLoggedIn = verum
+fixum hasPermission = verum
+
+si isLoggedIn et hasPermission {
+    scribe "Access granted"
+}
+
+// Multiple et operators
+fixum age = 25
+fixum hasLicense = verum
+fixum hasInsurance = verum
+
+si age >= 18 et hasLicense et hasInsurance {
+    scribe "Can drive"
+}
+
+// Short-circuit evaluation
+fixum isActive = verum
+fixum isValid = falsum
+
+si isActive et isValid {
+    scribe "Will not print"
+}
+
+// =============================================================================
+// AUT (OR)
+// =============================================================================
+
+// At least one condition must be true
+fixum isAdmin = falsum
+fixum isModerator = verum
+
+si isAdmin aut isModerator {
+    scribe "Has elevated privileges"
+}
+
+// Multiple aut operators
+fixum status = "pending"
+
+si status == "active" aut status == "pending" aut status == "review" {
+    scribe "In progress"
+}
+
+// Short-circuit with aut
+fixum hasToken = verum
+fixum hasPassword = falsum
+
+si hasToken aut hasPassword {
+    scribe "Can authenticate"
+}
+
+// =============================================================================
+// NON (NOT)
+// =============================================================================
+
+// Negate a boolean
+fixum isReady = falsum
+
+si non isReady {
+    scribe "Not ready yet"
+}
+
+// Negate complex expressions
+fixum isWeekend = falsum
+
+si non isWeekend {
+    scribe "It's a weekday"
+}
+
+// Double negation (avoid in practice)
+fixum value = verum
+si non non value {
+    scribe "Same as value"
+}
+
+// =============================================================================
+// COMBINING OPERATORS
+// =============================================================================
+
+// et + aut
+fixum temperature = 25
+fixum isRaining = falsum
+fixum hasUmbrella = verum
+
+si (temperature > 20 et non isRaining) aut hasUmbrella {
+    scribe "Good to go outside"
+}
+
+// Complex conditions
+fixum score = 85
+fixum hasBonus = verum
+fixum isPassing = score >= 70
+
+si isPassing et (score >= 90 aut hasBonus) {
+    scribe "Excellent performance"
+}
+
+// =============================================================================
+// PRECEDENCE
+// =============================================================================
+
+// non has highest precedence
+fixum a = verum
+fixum b = falsum
+
+si non a aut b {
+    scribe "Evaluates as (non a) aut b"
+}
+
+// et has higher precedence than aut
+fixum x = verum
+fixum y = verum
+fixum z = falsum
+
+si x aut y et z {
+    scribe "Evaluates as x aut (y et z)"
+}
+
+// Use parentheses for clarity
+si (x aut y) et z {
+    scribe "Different grouping"
+}
+
+// =============================================================================
+// PRACTICAL EXAMPLES
+// =============================================================================
+
+// Validation
+functio canProcess(data, isAuthorized) -> bivalens {
+    si data != nihil et isAuthorized {
+        redde verum
+    }
+    redde falsum
+}
+
+scribe canProcess({ value: 42 }, verum)
+scribe canProcess(nihil, verum)
+
+// Multi-condition checks
+functio validateUser(age, hasConsent, isVerified) -> textus {
+    si age < 18 et non hasConsent {
+        redde "Parental consent required"
+    }
+
+    si age >= 18 et isVerified {
+        redde "Approved"
+    }
+
+    si non isVerified {
+        redde "Verification required"
+    }
+
+    redde "Pending review"
+}
+
+scribe validateUser(16, falsum, verum)
+scribe validateUser(25, verum, verum)
+
+// =============================================================================
+// COMPARISON WITH SYMBOLIC OPERATORS
+// =============================================================================
+
+// Faber (clear):
+si isActive et non isExpired {
+    scribe "Valid"
+}
+
+// JavaScript (dense):
+// if (isActive && !isExpired) {
+//     console.log("Valid")
+// }
+
+// The Latin versions are more explicit and easier to parse,
+// especially for LLMs and non-native English speakers

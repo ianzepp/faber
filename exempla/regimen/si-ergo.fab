@@ -1,0 +1,104 @@
+// =============================================================================
+// REGIMEN - One-liner Conditionals (ergo)
+// =============================================================================
+//
+// The ergo keyword enables one-liner conditionals without braces.
+// Use for simple, single-statement branches.
+//
+// GRAMMAR:
+// si <condition> ergo <statement>
+// si <condition> ergo <statement> aliter <statement>
+//
+// ETYMOLOGY:
+// ergo: "therefore, thus" (logical consequence marker)
+//
+// WHY "ergo":
+// Expresses logical consequence explicitly: "if X, therefore Y"
+// Maps to Ruby/Python one-liner if syntax but more semantically clear
+
+// =============================================================================
+// BASIC ONE-LINERS
+// =============================================================================
+
+fixum x = 10
+
+// Single condition with ergo
+si x > 5 ergo scribe "x is big"
+
+// Another example
+fixum count = 100
+si count > 50 ergo scribe "Count is high"
+
+// =============================================================================
+// ONE-LINER IF-ELSE
+// =============================================================================
+
+// si-ergo-aliter pattern (note: aliter doesn't need ergo)
+fixum age = 25
+si age >= 18 ergo scribe "Adult" aliter scribe "Minor"
+
+// Expression assignment (when supported)
+fixum status = "active"
+si status == "active" ergo scribe "Running" aliter scribe "Stopped"
+
+// Multiple conditions
+fixum score = 85
+si score >= 90 ergo scribe "A" aliter scribe "Not A"
+
+// =============================================================================
+// WHEN TO USE ERGO
+// =============================================================================
+
+// GOOD: Simple, single statement
+fixum valid = verum
+si valid ergo scribe "OK"
+
+// GOOD: Clear conditional assignment (when implemented)
+fixum temp = 25
+si temp > 30 ergo scribe "Hot" aliter scribe "Cool"
+
+// BAD: Multiple statements need braces, not ergo
+// This should use block syntax instead:
+fixum debug = verum
+si debug {
+    scribe "Debug mode"
+    scribe "Verbose output enabled"
+}
+
+// GOOD: Inline checks
+functio absolutus(n) -> numerus {
+    si n < 0 ergo redde -n
+    redde n
+}
+
+scribe absolutus(-42)
+scribe absolutus(42)
+
+// =============================================================================
+// ERGO WITH FUNCTION CALLS
+// =============================================================================
+
+functio greet(name) {
+    scribe "Salve, " + name
+}
+
+fixum hasName = verum
+si hasName ergo greet("Marcus") aliter greet("Ignotus")
+
+// =============================================================================
+// COMPARISON WITH BLOCK SYNTAX
+// =============================================================================
+
+// Block syntax (multi-statement)
+fixum authenticated = verum
+si authenticated {
+    scribe "Access granted"
+    scribe "Welcome back"
+}
+
+// One-liner syntax (single statement)
+si authenticated ergo scribe "Access granted"
+
+// Choose based on complexity:
+// - Use ergo for simple, single actions
+// - Use blocks for multiple statements or complex logic

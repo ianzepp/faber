@@ -1,0 +1,110 @@
+// =============================================================================
+// FUNCTIONES - Basic Functions
+// =============================================================================
+//
+// Functions in Faber use the functio keyword and optional return types.
+//
+// GRAMMAR:
+// functio <name>(<params>) { <body> }          // no return (vacuum)
+// functio <name>(<params>) -> <type> { <body> } // with return type
+//
+// RETURN:
+// redde <expr>  // return statement (from reddere - to give back)
+//
+// WHY "functio":
+// Latin functio means "performance, execution" - the act of doing something.
+// More precise than English "function" which has multiple meanings.
+
+// =============================================================================
+// SIMPLE FUNCTIONS
+// =============================================================================
+
+// Function with single parameter and return type
+functio salve(nomen) -> textus {
+    redde "Salve, " + nomen + "!"
+}
+
+scribe salve("Marcus")
+scribe salve("Julia")
+
+// Function with multiple parameters
+functio adde(a, b) -> numerus {
+    redde a + b
+}
+
+scribe adde(10, 20)
+scribe adde(100, 250)
+
+// Function with expression body
+functio multiplica(x, y) -> numerus {
+    redde x * y
+}
+
+scribe multiplica(6, 7)
+
+// =============================================================================
+// FUNCTIONS WITHOUT RETURN
+// =============================================================================
+
+// No return type means vacuum (void)
+functio greet() {
+    scribe "Salve, Mundus!"
+}
+
+greet()
+
+// Multiple statements, no return
+functio showInfo() {
+    scribe "Faber Romanus"
+    scribe "The Roman Craftsman"
+    scribe "A Latin programming language"
+}
+
+showInfo()
+
+// =============================================================================
+// FUNCTIONS WITH LOGIC
+// =============================================================================
+
+// Conditional logic in function
+functio maximus(a, b) -> numerus {
+    si a > b {
+        redde a
+    }
+    aliter {
+        redde b
+    }
+}
+
+scribe maximus(10, 20)
+scribe maximus(100, 50)
+
+// Early return pattern
+functio absolutus(x) -> numerus {
+    si x < 0 {
+        redde -x
+    }
+    redde x
+}
+
+scribe absolutus(-42)
+scribe absolutus(42)
+
+// =============================================================================
+// FUNCTION EXPRESSIONS
+// =============================================================================
+
+// Functions as values
+fixum duplica = functio(n) -> numerus {
+    redde n * 2
+}
+
+scribe duplica(21)
+scribe duplica(100)
+
+// Functions calling functions
+functio quadruplum(n) -> numerus {
+    redde duplica(duplica(n))
+}
+
+scribe quadruplum(10)

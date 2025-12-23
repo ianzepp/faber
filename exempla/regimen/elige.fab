@@ -1,0 +1,169 @@
+// =============================================================================
+// REGIMEN - Switch Statement (elige)
+// =============================================================================
+//
+// The elige statement provides multi-way branching (like switch/match).
+// Each case uses si, with optional aliter for default case.
+//
+// GRAMMAR:
+// elige <expr> {
+//   si <value> { <body> }
+//   si <value> { <body> }
+//   aliter { <body> }
+// }
+//
+// ETYMOLOGY:
+// elige: "choose!" (imperative of eligere - to choose, select)
+//
+// WHY "elige":
+// Explicitly expresses choice among alternatives
+// More semantic than "switch" (which suggests toggling)
+
+// =============================================================================
+// BASIC ELIGE
+// =============================================================================
+
+fixum status = "active"
+
+elige status {
+    si "pending" {
+        scribe "Waiting..."
+    }
+    si "active" {
+        scribe "Running"
+    }
+    si "done" {
+        scribe "Completed"
+    }
+    aliter {
+        scribe "Unknown status"
+    }
+}
+
+// Numeric cases
+fixum code = 200
+
+elige code {
+    si 200 {
+        scribe "OK"
+    }
+    si 404 {
+        scribe "Not Found"
+    }
+    si 500 {
+        scribe "Server Error"
+    }
+    aliter {
+        scribe "Other status code"
+    }
+}
+
+// =============================================================================
+// MULTIPLE STATEMENTS PER CASE
+// =============================================================================
+
+fixum mode = "production"
+
+elige mode {
+    si "development" {
+        scribe "Dev mode enabled"
+        scribe "Verbose logging on"
+    }
+    si "production" {
+        scribe "Production mode"
+        scribe "Optimizations enabled"
+        scribe "Logging minimal"
+    }
+    si "test" {
+        scribe "Test mode"
+        scribe "Mock data active"
+    }
+    aliter {
+        scribe "Unknown mode"
+    }
+}
+
+// =============================================================================
+// ELIGE WITH EARLY RETURNS
+// =============================================================================
+
+functio getGreeting(language) -> textus {
+    elige language {
+        si "latin" {
+            redde "Salve"
+        }
+        si "english" {
+            redde "Hello"
+        }
+        si "spanish" {
+            redde "Hola"
+        }
+        si "french" {
+            redde "Bonjour"
+        }
+        aliter {
+            redde "Hi"
+        }
+    }
+}
+
+scribe getGreeting("latin")
+scribe getGreeting("spanish")
+scribe getGreeting("unknown")
+
+// =============================================================================
+// ELIGE WITH THROW
+// =============================================================================
+
+functio processCommand(cmd) {
+    elige cmd {
+        si "start" {
+            scribe "Starting..."
+        }
+        si "stop" {
+            scribe "Stopping..."
+        }
+        si "restart" {
+            scribe "Restarting..."
+        }
+        aliter {
+            iace "Unknown command: " + cmd
+        }
+    }
+}
+
+processCommand("start")
+processCommand("stop")
+
+// =============================================================================
+// COMPARISON WITH SI-ALITER CHAINS
+// =============================================================================
+
+// This elige:
+fixum day = "monday"
+
+elige day {
+    si "monday" {
+        scribe "Start of week"
+    }
+    si "friday" {
+        scribe "End of week"
+    }
+    aliter {
+        scribe "Midweek"
+    }
+}
+
+// Is clearer than this si-aliter chain:
+si day == "monday" {
+    scribe "Start of week"
+}
+aliter si day == "friday" {
+    scribe "End of week"
+}
+aliter {
+    scribe "Midweek"
+}
+
+// Use elige when comparing one value against multiple possibilities
+// Use si-aliter for complex boolean conditions

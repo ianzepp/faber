@@ -1,0 +1,190 @@
+// =============================================================================
+// TYPI - Collection Types
+// =============================================================================
+//
+// Faber provides generic collection types using Latin names.
+//
+// COLLECTION TYPES:
+// lista<T>      - Array/List
+// tabula<K, V>  - Map/Dictionary (planned)
+// copia<T>      - Set (planned)
+//
+// ETYMOLOGY:
+// lista: "list, border, edge"
+// tabula: "tablet, table, board"
+// copia: "abundance, supply, collection"
+//
+// WHY FEMININE:
+// Latin containers/collections tend toward feminine gender
+// Reflects pattern where abstract containers are feminine
+
+// =============================================================================
+// LISTA<T> - Arrays
+// =============================================================================
+
+// Array of numbers
+fixum lista<numerus> numbers = [1, 2, 3, 4, 5]
+scribe numbers
+
+// Array of strings
+fixum lista<textus> names = ["Marcus", "Julia", "Claudia"]
+scribe names
+
+// Array of booleans
+fixum lista<bivalens> flags = [verum, falsum, verum]
+scribe flags
+
+// Empty array
+fixum lista<numerus> empty = []
+scribe empty
+
+// =============================================================================
+// ACCESSING ARRAY ELEMENTS
+// =============================================================================
+
+fixum lista<textus> cities = ["Roma", "Athens", "Alexandria"]
+
+// Access by index (when supported)
+// scribe cities[0]
+// scribe cities[1]
+
+// Array in iteration
+ex names pro name {
+    scribe name
+}
+
+// =============================================================================
+// ARRAYS IN FUNCTIONS
+// =============================================================================
+
+// Array parameter
+functio sumArray(lista<numerus> nums) -> numerus {
+    varia total = 0
+
+    ex nums pro n {
+        total = total + n
+    }
+
+    redde total
+}
+
+scribe sumArray([1, 2, 3, 4, 5])
+scribe sumArray([10, 20, 30])
+
+// Return array
+functio createRange(numerus count) -> lista<numerus> {
+    fixum result = []
+    varia i = 0
+
+    dum i < count {
+        i = i + 1
+    }
+
+    redde result
+}
+
+// Array of strings
+functio getGreetings() -> lista<textus> {
+    redde ["Salve", "Vale", "Ave"]
+}
+
+fixum lista<textus> greetings = getGreetings()
+ex greetings pro greeting {
+    scribe greeting
+}
+
+// =============================================================================
+// NESTED ARRAYS
+// =============================================================================
+
+// Array of arrays
+fixum lista<lista<numerus>> matrix = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9]
+]
+
+ex matrix pro row {
+    ex row pro value {
+        scribe value
+    }
+}
+
+// =============================================================================
+// ARRAY WITH MIXED OPERATIONS
+// =============================================================================
+
+functio filterPositive(lista<numerus> nums) -> lista<numerus> {
+    fixum result = []
+
+    ex nums pro n {
+        si n > 0 {
+            // result.push(n) when array methods supported
+        }
+    }
+
+    redde result
+}
+
+// Map over array
+functio doubleAll(lista<numerus> nums) -> lista<numerus> {
+    fixum result = []
+
+    ex nums pro n {
+        // result.push(n * 2)
+    }
+
+    redde result
+}
+
+// =============================================================================
+// TABULA<K, V> - Maps (Planned)
+// =============================================================================
+
+// Future: key-value maps
+// fixum tabula<textus, numerus> ages = {
+//     "Marcus": 30,
+//     "Julia": 25,
+//     "Claudia": 28
+// }
+
+// fixum tabula<numerus, textus> codes = {
+//     200: "OK",
+//     404: "Not Found",
+//     500: "Server Error"
+// }
+
+// =============================================================================
+// COPIA<T> - Sets (Planned)
+// =============================================================================
+
+// Future: unique collections
+// fixum copia<numerus> uniqueIds = {1, 2, 3, 4, 5}
+// fixum copia<textus> tags = {"latin", "programming", "compiler"}
+
+// =============================================================================
+// TYPE PARAMETERS
+// =============================================================================
+
+// Generic function with type parameter (future)
+// functio identity<T>(T value) -> T {
+//     redde value
+// }
+
+// scribe identity<numerus>(42)
+// scribe identity<textus>("Hello")
+
+// =============================================================================
+// COLLECTION LITERALS
+// =============================================================================
+
+// Inferred array types
+fixum inferredNumbers = [1, 2, 3]
+fixum inferredStrings = ["a", "b", "c"]
+
+// Explicit types are clearer
+fixum lista<numerus> explicitNumbers = [1, 2, 3]
+fixum lista<textus> explicitStrings = ["a", "b", "c"]
+
+// Mixed-type arrays (when supported)
+// fixum mixed = [1, "text", verum]

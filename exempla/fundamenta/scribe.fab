@@ -1,0 +1,89 @@
+// =============================================================================
+// SCRIBE - Output Statement
+// =============================================================================
+//
+// The scribe keyword outputs values to the console (like console.log).
+//
+// ETYMOLOGY:
+// scribe: "write!" (imperative of scribere - to write)
+//
+// GRAMMAR:
+// scribe <expr>
+// scribe <expr1>, <expr2>, ...
+//
+// WHY "scribe" not "print":
+// - Follows Latin imperative verb pattern (like Unix commands)
+// - More precise than "print" (which implies physical printing)
+// - Consistent with language philosophy: verbs for actions
+
+// =============================================================================
+// BASIC OUTPUT
+// =============================================================================
+
+// Single value
+scribe "Salve, Mundus!"
+
+// Numbers
+scribe 42
+scribe 3.14159
+
+// Booleans and null
+scribe verum
+scribe falsum
+scribe nihil
+
+// =============================================================================
+// MULTIPLE VALUES
+// =============================================================================
+
+// Multiple arguments (comma-separated)
+fixum name = "Marcus"
+fixum age = 30
+
+scribe "Name:", name
+scribe "Age:", age
+
+// Mix literals and variables
+scribe "Status:", verum, "Count:", 100
+
+// =============================================================================
+// EXPRESSIONS
+// =============================================================================
+
+// Arithmetic expressions
+scribe 10 + 20
+scribe 5 * 8
+scribe 100 - 25
+
+// String concatenation
+scribe "Salve, " + "Mundus!"
+
+// Function results
+functio double(x) -> numerus {
+    redde x * 2
+}
+
+scribe double(21)
+scribe "Result:", double(100)
+
+// =============================================================================
+// OBJECTS AND ARRAYS
+// =============================================================================
+
+// Object literals
+scribe { name: "Julia", city: "Roma" }
+
+// Arrays
+scribe [1, 2, 3, 4, 5]
+
+// Nested structures
+scribe {
+    user: "Marcus",
+    scores: [95, 87, 92],
+    active: verum
+}
+
+// Property access
+fixum person = { name: "Claudia", age: 28 }
+scribe person.name
+scribe person.age
