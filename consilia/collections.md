@@ -377,14 +377,39 @@ Many lodash-style methods need custom implementation for Zig.
 
 ---
 
-## Collection DSL: Prefix Operations
+## Collection DSL: Unified `ex` Syntax
 
-An alternative syntax for collection operations using Latin prefix verbs with comma chaining. Reads like natural Latin sentences.
+Collection operations and loops share a unified syntax rooted in `ex` (from). The difference is whether you assign the result or execute a loop body.
+
+### The Unification
+
+```
+// DSL expression - assignment captures result
+fixum result = ex items filtra ubi active, ordina per nomen
+
+// Loop - pro + body executes code
+ex items pro item {
+    scribe item.nomen
+}
+
+// Composed - DSL operations inline with loop
+ex items filtra ubi active, ordina per nomen pro item {
+    scribe item.nomen
+}
+```
+
+The differentiator:
+- `= ex ...` → expression, returns value
+- `ex ... pro var { }` → loop, executes body
+
+Both start with `ex` (from). Both can use the same operations. The ending determines the behavior.
+
+> **Implementation note:** The composed form (`ex ... filtra/ordina, pro var { }`) requires new parser/codegen work beyond the current `ex...pro` loop implementation.
 
 ### Basic Syntax
 
 ```
-<verb> <collection> [<preposition> <arg>], <verb> [<preposition> <arg>], ...
+ex <collection> [<operation> <preposition> <arg>], ... [pro <var> { <body> }]
 ```
 
 The comma acts as an implicit pipe — each operation flows into the next.
@@ -421,40 +446,53 @@ The comma acts as an implicit pipe — each operation flows into the next.
 
 **Aggregates:**
 ```
-fixum total = summa numeri
-fixum highest = maximum pretia
-fixum count = quota users
-fixum avg = medium scores
+fixum total = ex numeri summa
+fixum highest = ex pretia maximum
+fixum count = ex users quota
+fixum avg = ex scores medium
 ```
 
 **Filtering:**
 ```
-fixum active = filtra users ubi activus
-fixum expensive = filtra items ubi pretium > 100
-fixum adults = filtra users ubi aetas >= 18
+fixum active = ex users filtra ubi activus
+fixum expensive = ex items filtra ubi pretium > 100
+fixum adults = ex users filtra ubi aetas >= 18
 ```
 
 **Transformation:**
 ```
-fixum names = collige users cum nomen
-fixum sorted = ordina items per pretium
-fixum byRole = grupa users per role
-fixum indexed = mappa users cum id
+fixum names = ex users collige cum nomen
+fixum sorted = ex items ordina per pretium
+fixum byRole = ex users grupa per role
+fixum indexed = ex users mappa cum id
 ```
 
 **Chained with comma:**
 ```
 // Filter active users, extract names, sort
-fixum result = filtra users ubi activus, collige cum nomen, ordina
+fixum result = ex users filtra ubi activus, collige cum nomen, ordina
 
 // Filter expensive items, sort by price, take top 5
-fixum top5 = filtra items ubi pretium > 100, ordina per pretium, prima 5
+fixum top5 = ex items filtra ubi pretium > 100, ordina per pretium, prima 5
 
 // Sum prices of active products
-fixum total = filtra products ubi activus, collige cum pretium, summa
+fixum total = ex products filtra ubi activus, collige cum pretium, summa
 
 // Group users by role, then by department
-fixum nested = grupa users per role, mappa cum departmentum
+fixum nested = ex users grupa per role, mappa cum departmentum
+```
+
+**DSL into loop:**
+```
+// Filter and sort, then iterate
+ex users filtra ubi activus, ordina per nomen pro user {
+    scribe user.nomen
+}
+
+// Process top 10 expensive items
+ex items ordina per pretium, prima 10 pro item {
+    processItem(item)
+}
 ```
 
 ### Comparison with Method Chaining
@@ -468,13 +506,14 @@ fixum result = users
     .ordinata(cum nomen)
     .prima(10)
 
-// Prefix DSL (Latin sentence style)
-fixum result = filtra users ubi activus, ordina cum nomen, prima 10
+// DSL (Latin sentence style)
+fixum result = ex users filtra ubi activus, ordina per nomen, prima 10
 ```
 
-The prefix DSL reads more like natural Latin:
-- "filtra users ubi activus" = "filter users where active"
-- "ordina cum nomen" = "order by name"
+The DSL reads more like natural Latin:
+- "ex users" = "from users"
+- "filtra ubi activus" = "filter where active"
+- "ordina per nomen" = "order by name"
 - "prima 10" = "first 10"
 
 ### Grammar Notes
@@ -482,24 +521,27 @@ The prefix DSL reads more like natural Latin:
 When using genitive case for collection names, the syntax becomes fully grammatical Latin:
 
 ```
-fixum summa numerorum        // sum of the numbers
-fixum maximum pretiorum      // maximum of the prices
-fixum prima 5 ex itemis      // first 5 from the items
+fixum total = ex numerorum summa      // from the numbers, sum
+fixum high = ex pretiorum maximum     // from the prices, maximum
+fixum top = ex itemis prima 5         // from the items, first 5
 ```
 
 However, for practical code with non-Latin variable names, the nominative form works:
 
 ```
-fixum total = summa orderTotals
-fixum result = filtra userList ubi active
+fixum total = ex orderTotals summa
+fixum result = ex userList filtra ubi active
 ```
 
 ### Target Compilation
 
 **TypeScript:**
 ```typescript
-// filtra users ubi activus, collige cum nomen, ordina
+// ex users filtra ubi activus, collige cum nomen, ordina
 users.filter(u => u.activus).map(u => u.nomen).sort()
+
+// ex users filtra ubi activus pro user { ... }
+for (const user of users.filter(u => u.activus)) { ... }
 ```
 
 **Zig:**
@@ -510,7 +552,7 @@ users.filter(u => u.activus).map(u => u.nomen).sort()
 
 **Rust:**
 ```rust
-// filtra users ubi activus, collige cum nomen, ordina
+// ex users filtra ubi activus, collige cum nomen, ordina
 users.iter()
     .filter(|u| u.activus)
     .map(|u| &u.nomen)
