@@ -77,6 +77,7 @@ import type {
     ArrowFunctionExpression,
     AssignmentExpression,
     NewExpression,
+    Identifier,
     Literal,
     ThisExpression,
     Parameter,
@@ -1129,7 +1130,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
             return `${obj}[${genExpression(node.property)}]`;
         }
 
-        return `${obj}.${node.property.name}`;
+        // WHY: Non-computed access always has Identifier property by grammar
+        return `${obj}.${(node.property as Identifier).name}`;
     }
 
     /**

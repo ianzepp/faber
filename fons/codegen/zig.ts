@@ -1236,7 +1236,8 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             return `${obj}[${genExpression(node.property)}]`;
         }
 
-        return `${obj}.${node.property.name}`;
+        // WHY: Non-computed access always has Identifier property by grammar
+        return `${obj}.${(node.property as Identifier).name}`;
     }
 
     /**
