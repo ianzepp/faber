@@ -696,13 +696,17 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *   ex 0..10 pro i { } -> for (let i = 0; i <= 10; i++) { }
      *   ex 0..10 per 2 pro i { } -> for (let i = 0; i <= 10; i += 2) { }
      *   ex items pro item { } -> for (const item of items) { }
+     *   ex items fit item { } -> for (const item of items) { }
+     *   ex stream fiet chunk { } -> for await (const chunk of stream) { }
      *
      * WHY: Range expressions compile to efficient traditional for loops
-     *      instead of allocating arrays.
+     *      instead of allocating arrays. The 'fiet' verb form generates
+     *      'for await' for async iteration.
      */
     function genForStatement(node: ForStatement): string {
         const varName = node.variable.name;
         const body = genBlockStatement(node.body);
+        const awaitKeyword = node.async ? ' await' : '';
 
         // Check if iterable is a range expression for efficient loop generation
         if (node.iterable.type === 'RangeExpression') {
@@ -717,10 +721,10 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
 
                 // With step: need to handle positive/negative direction
                 // For simplicity, assume positive step uses <=, negative uses >=
-                forHeader = `for (let ${varName} = ${start}; ${varName} <= ${end}; ${varName} += ${step})`;
+                forHeader = `for${awaitKeyword} (let ${varName} = ${start}; ${varName} <= ${end}; ${varName} += ${step})`;
             } else {
                 // Default step of 1
-                forHeader = `for (let ${varName} = ${start}; ${varName} <= ${end}; ${varName}++)`;
+                forHeader = `for${awaitKeyword} (let ${varName} = ${start}; ${varName} <= ${end}; ${varName}++)`;
             }
 
             if (node.catchClause) {
@@ -745,14 +749,14 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
             let result = `${ind()}try {\n`;
 
             depth++;
-            result += `${ind()}for (const ${varName} ${keyword} ${iterable}) ${body}`;
+            result += `${ind()}for${awaitKeyword} (const ${varName} ${keyword} ${iterable}) ${body}`;
             depth--;
             result += `\n${ind()}} catch (${node.catchClause.param.name}) ${genBlockStatement(node.catchClause.body)}`;
 
             return result;
         }
 
-        return `${ind()}for (const ${varName} ${keyword} ${iterable}) ${body}`;
+        return `${ind()}for${awaitKeyword} (const ${varName} ${keyword} ${iterable}) ${body}`;
     }
 
     /**

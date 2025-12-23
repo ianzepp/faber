@@ -6,10 +6,12 @@ Faber provides several iteration constructs:
 
 | Construct | Purpose | Example |
 |-----------|---------|---------|
-| `ex...pro` | Iterate values | `ex items pro item { }` |
+| `ex...pro` | Iterate values (sync) | `ex items pro item { }` |
+| `ex...fit` | Iterate values (sync, verb) | `ex items fit item { }` |
+| `ex...fiet` | Iterate values (async) | `ex stream fiet chunk { }` |
 | `in...pro` | Iterate keys | `in object pro key { }` |
 | `dum` | While loop | `dum x > 0 { }` |
-| Range | Numeric sequence | `ex 0..10 pro n { }` |
+| Range | Numeric sequence | `ex 0..10 fit n { }` |
 
 Plus iterator types:
 - `cursor<T>` — synchronous iterator
@@ -17,9 +19,35 @@ Plus iterator types:
 
 ---
 
+## Verb Conjugation in Loops
+
+The binding keyword can use verb conjugation to encode sync/async semantics, consistent with function return types:
+
+| Keyword | Meaning | Compiles to |
+|---------|---------|-------------|
+| `pro` | for (preposition) | `for...of` / `for...in` |
+| `fit` | becomes (sync verb) | `for...of` / `for...in` |
+| `fiet` | will become (async verb) | `for await...of` / `for await...in` |
+
+Examples:
+```
+// Sync iteration (equivalent)
+ex items pro item { scribe item }
+ex items fit item { scribe item }
+
+// Async iteration
+ex stream fiet chunk { scribe chunk }
+```
+
+The verb forms (`fit`/`fiet`) parallel function return types:
+- Functions: `functio f() fit T` (sync) vs `functio f() fiet T` (async)
+- Loops: `ex items fit item` (sync) vs `ex items fiet item` (async)
+
+---
+
 ## ex...pro (For-Each Values)
 
-**Syntax:** `ex <source> [per <transform>]... pro <variable> { body }`
+**Syntax:** `ex <source> [per <transform>]... (pro | fit | fiet) <variable> { body }`
 
 Iterates over values, optionally through a transformation pipeline.
 
@@ -296,8 +324,10 @@ For async iteration over streams, events, etc.
 
 ### Async For-Each
 
+Use `fiet` (will become) for async iteration:
+
 ```
-futura ex stream pro chunk {
+ex stream fiet chunk {
     scribe chunk
 }
 ```
@@ -308,6 +338,8 @@ for await (const chunk of stream) {
     console.log(chunk);
 }
 ```
+
+The `fiet` verb form replaces the older `futura ex...pro` syntax, providing consistency with function return type conjugation.
 
 ### Protocol
 
@@ -323,17 +355,23 @@ structura fluxus<T> {
 
 ### Declaration Syntax
 
-The keyword matches the return type — one concept, one keyword:
+Generators use verb conjugation to encode their semantics:
 
 | Declaration | Produces | JS Equivalent |
 |-------------|----------|---------------|
-| `cursor functio` | `cursor<T>` | `function*` |
-| `fluxus functio` | `fluxus<T>` | `async function*` |
+| `functio f() fiunt T` | `Generator<T>` | `function*` |
+| `functio f() fient T` | `AsyncGenerator<T>` | `async function*` |
+| `cursor functio f() -> T` | `Generator<T>` | `function*` (prefix style) |
+| `fluxus functio f() -> T` | `AsyncGenerator<T>` | `async function*` (prefix style) |
+
+The verb forms (`fiunt`/`fient`) are preferred — they encode semantics grammatically:
+- `fiunt` = "they become" (present plural) → yields many values synchronously
+- `fient` = "they will become" (future plural) → yields many values asynchronously
 
 **Sync generator:**
 
 ```
-cursor functio numerare(numerus n) -> numerus {
+functio numerare(numerus n) fiunt numerus {
     varia i = 0
     dum i < n {
         cede i
@@ -342,7 +380,7 @@ cursor functio numerare(numerus n) -> numerus {
 }
 
 // Usage
-ex numerare(10) pro n {
+ex numerare(10) fit n {
     scribe n
 }
 ```
@@ -350,8 +388,8 @@ ex numerare(10) pro n {
 **Async generator:**
 
 ```
-fluxus functio lege(numerus fd) -> bytes {
-    futura ex syscall('file:read', fd) pro r {
+functio lege(numerus fd) fient bytes {
+    ex syscall('file:read', fd) fiet r {
         si r.op == 'data' {
             cede r.bytes
         }
@@ -362,7 +400,7 @@ fluxus functio lege(numerus fd) -> bytes {
 }
 
 // Usage
-futura ex lege(fd) pro chunk {
+ex lege(fd) fiet chunk {
     process(chunk)
 }
 ```
@@ -423,8 +461,10 @@ The `cursor` or `fluxus` keyword already indicates the wrapper type.
 
 | Faber | TypeScript |
 |-------|------------|
-| `ex...pro` | `for...of` |
-| `in...pro` | `for...in` |
+| `ex...pro` / `ex...fit` | `for...of` |
+| `ex...fiet` | `for await...of` |
+| `in...pro` / `in...fit` | `for...in` |
+| `in...fiet` | `for await...in` |
 | `dum` | `while` |
 | `rumpe` | `break` |
 | `perge` | `continue` |
@@ -435,9 +475,9 @@ The `cursor` or `fluxus` keyword already indicates the wrapper type.
 
 | Faber | Zig |
 |-------|-----|
-| `ex...pro` | `for` loop over slice/iterator |
+| `ex...pro` / `ex...fit` | `for` loop over slice/iterator |
 | `dum` | `while` |
 | `rumpe` | `break` |
 | `perge` | `continue` |
 
-Zig iteration is more explicit — may need adapter patterns.
+Zig iteration is more explicit — may need adapter patterns. Async iteration (`fiet`) will require special handling for Zig's different concurrency model.

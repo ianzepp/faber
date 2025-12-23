@@ -193,6 +193,32 @@ describe('codegen', () => {
 
             expect(js).toContain('for (const numero of numeros)');
         });
+
+        test('ex...fit generates sync for...of', () => {
+            const js = compile('ex items fit item { scribe item }');
+
+            expect(js).toContain('for (const item of items)');
+            expect(js).not.toContain('await');
+        });
+
+        test('ex...fiet generates for await...of', () => {
+            const js = compile('ex stream fiet chunk { scribe chunk }');
+
+            expect(js).toContain('for await (const chunk of stream)');
+        });
+
+        test('in...fit generates sync for...in', () => {
+            const js = compile('in obj fit key { scribe key }');
+
+            expect(js).toContain('for (const key in obj)');
+            expect(js).not.toContain('await');
+        });
+
+        test('in...fiet generates for await...in', () => {
+            const js = compile('in asyncObj fiet key { scribe key }');
+
+            expect(js).toContain('for await (const key in asyncObj)');
+        });
     });
 
     describe('expressions', () => {

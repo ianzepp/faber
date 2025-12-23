@@ -805,6 +805,63 @@ describe('parser', () => {
         });
     });
 
+    describe('loop verb conjugation (fit/fiet)', () => {
+        test('ex...fit parses as sync loop', () => {
+            const { program } = parseCode('ex items fit item { scribe item }');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('ForStatement');
+            expect(stmt.kind).toBe('ex');
+            expect(stmt.async).toBe(false);
+            expect(stmt.variable.name).toBe('item');
+        });
+
+        test('ex...fiet parses as async loop', () => {
+            const { program } = parseCode('ex stream fiet chunk { scribe chunk }');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('ForStatement');
+            expect(stmt.kind).toBe('ex');
+            expect(stmt.async).toBe(true);
+            expect(stmt.variable.name).toBe('chunk');
+        });
+
+        test('ex...pro remains sync (backward compatibility)', () => {
+            const { program } = parseCode('ex items pro item { scribe item }');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('ForStatement');
+            expect(stmt.async).toBe(false);
+        });
+
+        test('in...fit parses as sync loop', () => {
+            const { program } = parseCode('in obj fit key { scribe key }');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('ForStatement');
+            expect(stmt.kind).toBe('in');
+            expect(stmt.async).toBe(false);
+        });
+
+        test('ex...fit with ergo one-liner', () => {
+            const { program } = parseCode('ex items fit item ergo scribe item');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('ForStatement');
+            expect(stmt.async).toBe(false);
+            expect(stmt.body.body[0].type).toBe('ScribeStatement');
+        });
+
+        test('ex...fiet with ergo one-liner', () => {
+            const { program } = parseCode('ex stream fiet chunk ergo process(chunk)');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('ForStatement');
+            expect(stmt.async).toBe(true);
+            expect(stmt.body.body[0].expression.type).toBe('CallExpression');
+        });
+    });
+
     describe('edge cases - empty constructs', () => {
         test('empty block', () => {
             const { program } = parseCode('{}');

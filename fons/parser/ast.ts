@@ -423,13 +423,19 @@ export interface WhileStatement extends BaseNode {
  * For loop statement.
  *
  * GRAMMAR (in EBNF):
- *   forStmt := 'pro' IDENTIFIER ('in' | 'ex') expression blockStmt ('cape' IDENTIFIER blockStmt)?
+ *   forStmt := ('ex' | 'in') expression ('pro' | 'fit' | 'fiet') IDENTIFIER blockStmt
+ *              ('cape' IDENTIFIER blockStmt)?
  *
  * INVARIANT: kind is 'in' (for...in) or 'ex' (for...of).
  *
  * WHY: Latin distinguishes iteration kinds with different prepositions:
  *      'in' = iterate over keys/indices
  *      'ex' = iterate over values (from/out of collection)
+ *
+ * The binding keyword encodes sync/async:
+ *      'pro' = sync iteration (traditional)
+ *      'fit' = sync iteration (verb form: "becomes")
+ *      'fiet' = async iteration (verb form: "will become")
  */
 export interface ForStatement extends BaseNode {
     type: 'ForStatement';
@@ -437,6 +443,7 @@ export interface ForStatement extends BaseNode {
     variable: Identifier;
     iterable: Expression;
     body: BlockStatement;
+    async: boolean;
     catchClause?: CatchClause;
 }
 

@@ -1314,15 +1314,23 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse for loop statement.
      *
      * GRAMMAR:
-     *   forStmt := ('ex' | 'in') expression 'pro' IDENTIFIER (blockStmt | 'ergo' statement) ('cape' IDENTIFIER blockStmt)?
+     *   forStmt := ('ex' | 'in') expression ('pro' | 'fit' | 'fiet') IDENTIFIER
+     *              (blockStmt | 'ergo' statement) ('cape' IDENTIFIER blockStmt)?
      *
      * WHY: Source-first syntax consistent with import: 'ex norma importa x'
      *      'ex' for for-of (values from collection), 'in' for for-in (keys).
      *
+     * The binding keyword uses verb conjugation to encode sync/async:
+     *      'pro' = sync iteration (traditional preposition)
+     *      'fit' = sync iteration (verb: "becomes")
+     *      'fiet' = async iteration (verb: "will become")
+     *
      * Examples:
-     *   ex numeri pro n { ... }      // from numbers, for each n
-     *   ex numeri pro n ergo run(n)  // one-liner
-     *   in tabula pro clavis { ... } // in table, for each key
+     *   ex numeri pro n { ... }       // sync: from numbers, for each n
+     *   ex numeri fit n { ... }       // sync: from numbers, n becomes each
+     *   ex stream fiet chunk { ... }  // async: from stream, chunk will become each
+     *   ex numeri pro n ergo run(n)   // one-liner
+     *   in tabula pro clavis { ... }  // in table, for each key
      */
     function parseForStatement(): ForStatement {
         const position = peek().position;
@@ -1339,7 +1347,18 @@ export function parse(tokens: Token[]): ParserResult {
 
         const iterable = parseExpression();
 
-        expectKeyword('pro', ParserErrorCode.ExpectedKeywordPro);
+        // WHY: Accept 'pro', 'fit', or 'fiet' as the binding keyword
+        // 'pro' and 'fit' = sync iteration, 'fiet' = async iteration
+        let async = false;
+        if (matchKeyword('pro')) {
+            async = false;
+        } else if (matchKeyword('fit')) {
+            async = false;
+        } else if (matchKeyword('fiet')) {
+            async = true;
+        } else {
+            error(ParserErrorCode.ExpectedKeywordPro);
+        }
 
         const variable = parseIdentifier();
 
@@ -1359,7 +1378,7 @@ export function parse(tokens: Token[]): ParserResult {
             catchClause = parseCatchClause();
         }
 
-        return { type: 'ForStatement', kind, variable, iterable, body, catchClause, position };
+        return { type: 'ForStatement', kind, variable, iterable, body, async, catchClause, position };
     }
 
     /**
