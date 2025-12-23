@@ -85,6 +85,7 @@ import type {
     TypeParameter,
 } from '../parser/ast';
 import type { CodegenOptions } from './types';
+import { getListaMethod } from './lista-methods';
 
 // =============================================================================
 // TYPE MAPPING
@@ -1075,19 +1076,41 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *   scribe("hello") -> console.log("hello")
      *   _pavimentum(x) -> Math.floor(x)
      *   foo(x, y) -> foo(x, y)
+     *   lista.adde(x) -> lista.push(x)
+     *   lista.filtrata(fn) -> lista.filter(fn)
      *
      * Intrinsics are mapped to target-specific implementations.
+     * Lista methods (Latin array methods) are translated to JS equivalents.
      */
     function genCallExpression(node: CallExpression): string {
         const args = node.arguments.map(genExpression).join(', ');
 
-        // Check for intrinsics
+        // Check for intrinsics (bare function calls)
         if (node.callee.type === 'Identifier') {
             const name = node.callee.name;
             const intrinsic = TS_INTRINSICS[name];
 
             if (intrinsic) {
                 return intrinsic(args);
+            }
+        }
+
+        // Check for lista methods (method calls on arrays)
+        if (node.callee.type === 'MemberExpression' && !node.callee.computed) {
+            const methodName = (node.callee.property as Identifier).name;
+            const listaMethod = getListaMethod(methodName);
+
+            if (listaMethod) {
+                const obj = genExpression(node.callee.object);
+
+                // Handle different translation types
+                if (typeof listaMethod.ts === 'function') {
+                    // Custom generator function
+                    return listaMethod.ts(obj, args);
+                }
+
+                // Simple method rename
+                return `${obj}.${listaMethod.ts}(${args})`;
             }
         }
 

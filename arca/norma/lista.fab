@@ -1,27 +1,191 @@
-// lista<T> - Dynamic array type
+// lista<T> - Dynamic Array Type
 //
-// Core collection type wrapping native arrays with Latin interface.
-// Provides consistent API across all compilation targets.
-
-// TODO: Requires struct syntax support
+// Latin vocabulary for array operations. All methods are compiler intrinsics
+// that translate to target-specific implementations (JS Array, Zig ArrayList).
 //
-// Proposed syntax:
+// LATIN VERB CONJUGATION
+// ======================
+// Latin verb forms encode mutability semantics:
 //
-// structura lista<T> {
-//     // Fields (internal, managed by target runtime)
+// |           | Mutates (in-place) | Returns New (copy) |
+// |-----------|--------------------|--------------------|
+// | Sync      | adde (imperative)  | addita (participle)|
+// | Async     | addet (future)     | additura (fut.part)|
 //
-//     // Methods
-//     functio adde(T elementum) { ... }
-//     functio remove() -> T? { ... }
-//     functio primus() -> T? { ... }
-//     functio ultimus() -> T? { ... }
-//     functio longitudo() -> numerus { ... }
-//     functio vacua() -> bivalens { ... }
-//     functio purgare() { ... }
-//     functio contine(T elementum) -> bivalens { ... }
-//     functio indiceDe(T elementum) -> numerus? { ... }
-//     functio coniunge(textus separator) -> textus { ... }
-//     functio filtra((T) -> bivalens praedicatum) -> lista<T> { ... }
-//     functio mappa((T) -> U transformatio) -> lista<U> { ... }
-//     functio reducere(U initium, (U, T) -> U aggregator) -> U { ... }
-// }
+// The feminine endings (-a, -ura) agree with lista/tabula/copia.
+//
+// TYPE EQUIVALENCE
+// ================
+// lista<T> and T[] are synonymous:
+//   lista<numerus>  ≡  numerus[]
+//   lista<textus>   ≡  textus[]
+//   numerus[][]     ≡  lista<lista<numerus>>
+//
+// =============================================================================
+// ADDING ELEMENTS
+// =============================================================================
+//
+// adde(T) -> vacuum
+//   Add element to end (mutates array)
+//   lista.adde(x)  →  lista.push(x)
+//
+// addita(T) -> lista<T>
+//   Add element to end (returns new array)
+//   lista.addita(x)  →  [...lista, x]
+//
+// praepone(T) -> vacuum
+//   Add element to start (mutates array)
+//   lista.praepone(x)  →  lista.unshift(x)
+//
+// praeposita(T) -> lista<T>
+//   Add element to start (returns new array)
+//   lista.praeposita(x)  →  [x, ...lista]
+//
+// =============================================================================
+// REMOVING ELEMENTS
+// =============================================================================
+//
+// remove() -> T?
+//   Remove last element (mutates, returns removed)
+//   lista.remove()  →  lista.pop()
+//
+// remota() -> lista<T>
+//   Remove last element (returns new array without last)
+//   lista.remota()  →  lista.slice(0, -1)
+//
+// decapita() -> T?
+//   Remove first element (mutates, returns removed)
+//   lista.decapita()  →  lista.shift()
+//
+// decapitata() -> lista<T>
+//   Remove first element (returns new array without first)
+//   lista.decapitata()  →  lista.slice(1)
+//
+// purga() -> vacuum
+//   Clear all elements (mutates)
+//   lista.purga()  →  lista.length = 0
+//
+// =============================================================================
+// ACCESSING ELEMENTS
+// =============================================================================
+//
+// primus() -> T?
+//   Get first element
+//   lista.primus()  →  lista[0]
+//
+// ultimus() -> T?
+//   Get last element
+//   lista.ultimus()  →  lista.at(-1)
+//
+// accipe(numerus) -> T?
+//   Get element at index
+//   lista.accipe(2)  →  lista[2]
+//
+// =============================================================================
+// PROPERTIES
+// =============================================================================
+//
+// longitudo() -> numerus
+//   Get length
+//   lista.longitudo()  →  lista.length
+//
+// vacua() -> bivalens
+//   Check if empty
+//   lista.vacua()  →  lista.length === 0
+//
+// =============================================================================
+// SEARCHING
+// =============================================================================
+//
+// continet(T) -> bivalens
+//   Check if contains element
+//   lista.continet(x)  →  lista.includes(x)
+//
+// indiceDe(T) -> numerus
+//   Find index of element (-1 if not found)
+//   lista.indiceDe(x)  →  lista.indexOf(x)
+//
+// inveni((T) -> bivalens) -> T?
+//   Find first element matching predicate
+//   lista.inveni(fn)  →  lista.find(fn)
+//
+// inveniIndicem((T) -> bivalens) -> numerus
+//   Find index of first element matching predicate
+//   lista.inveniIndicem(fn)  →  lista.findIndex(fn)
+//
+// =============================================================================
+// TRANSFORMATIONS
+// =============================================================================
+//
+// filtrata((T) -> bivalens) -> lista<T>
+//   Filter elements (returns new array)
+//   lista.filtrata(fn)  →  lista.filter(fn)
+//
+// mappata((T) -> U) -> lista<U>
+//   Map elements (returns new array)
+//   lista.mappata(fn)  →  lista.map(fn)
+//
+// reducta(U, (U, T) -> U) -> U
+//   Reduce to single value
+//   Faber puts initial value first (more natural Latin reading)
+//   lista.reducta(0, (acc, n) => acc + n)  →  lista.reduce((acc, n) => acc + n, 0)
+//
+// explanata((T) -> lista<U>) -> lista<U>
+//   Flat map (map + flatten one level)
+//   lista.explanata(fn)  →  lista.flatMap(fn)
+//
+// plana() -> lista<T>
+//   Flatten one level
+//   lista.plana()  →  lista.flat()
+//
+// inversa() -> lista<T>
+//   Reverse order (returns new array)
+//   lista.inversa()  →  [...lista].reverse()
+//
+// ordinata() -> lista<T>
+// ordinata((T, T) -> numerus) -> lista<T>
+//   Sort (returns new array)
+//   lista.ordinata()  →  [...lista].sort()
+//   lista.ordinata(fn)  →  [...lista].sort(fn)
+//
+// sectio(numerus, numerus) -> lista<T>
+//   Slice (returns new array)
+//   lista.sectio(1, 3)  →  lista.slice(1, 3)
+//
+// prima(numerus) -> lista<T>
+//   Take first n elements
+//   lista.prima(5)  →  lista.slice(0, 5)
+//
+// ultima(numerus) -> lista<T>
+//   Take last n elements
+//   lista.ultima(3)  →  lista.slice(-3)
+//
+// omitte(numerus) -> lista<T>
+//   Skip first n elements
+//   lista.omitte(2)  →  lista.slice(2)
+//
+// =============================================================================
+// PREDICATES
+// =============================================================================
+//
+// omnes((T) -> bivalens) -> bivalens
+//   Check if all elements match predicate
+//   lista.omnes(fn)  →  lista.every(fn)
+//
+// aliquis((T) -> bivalens) -> bivalens
+//   Check if any element matches predicate
+//   lista.aliquis(fn)  →  lista.some(fn)
+//
+// =============================================================================
+// OTHER
+// =============================================================================
+//
+// coniunge(textus) -> textus
+//   Join elements to string
+//   lista.coniunge(", ")  →  lista.join(", ")
+//
+// perambula((T) -> vacuum) -> vacuum
+//   Iterate with callback (no return value)
+//   lista.perambula(fn)  →  lista.forEach(fn)
+//
+// See exempla/norma/lista.fab for usage examples.

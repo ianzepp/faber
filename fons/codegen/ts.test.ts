@@ -646,4 +646,216 @@ describe('codegen', () => {
             expect(js).toContain('getName()');
         });
     });
+
+    describe('lista methods - Latin array API', () => {
+        describe('adding elements', () => {
+            test('adde -> push (mutating)', () => {
+                const js = compile('items.adde(x)');
+                expect(js).toBe('items.push(x);');
+            });
+
+            test('addita -> spread (copying)', () => {
+                const js = compile('items.addita(x)');
+                expect(js).toBe('[...items, x];');
+            });
+
+            test('praepone -> unshift (mutating)', () => {
+                const js = compile('items.praepone(x)');
+                expect(js).toBe('items.unshift(x);');
+            });
+
+            test('praeposita -> spread (copying)', () => {
+                const js = compile('items.praeposita(x)');
+                expect(js).toBe('[x, ...items];');
+            });
+        });
+
+        describe('removing elements', () => {
+            test('remove -> pop (mutating)', () => {
+                const js = compile('items.remove()');
+                expect(js).toBe('items.pop();');
+            });
+
+            test('remota -> slice (copying)', () => {
+                const js = compile('items.remota()');
+                expect(js).toBe('items.slice(0, -1);');
+            });
+
+            test('decapita -> shift (mutating)', () => {
+                const js = compile('items.decapita()');
+                expect(js).toBe('items.shift();');
+            });
+
+            test('decapitata -> slice (copying)', () => {
+                const js = compile('items.decapitata()');
+                expect(js).toBe('items.slice(1);');
+            });
+
+            test('purga -> length = 0 (mutating)', () => {
+                const js = compile('items.purga()');
+                expect(js).toBe('items.length = 0;');
+            });
+        });
+
+        describe('accessing elements', () => {
+            test('primus -> [0]', () => {
+                const js = compile('items.primus()');
+                expect(js).toBe('items[0];');
+            });
+
+            test('ultimus -> at(-1)', () => {
+                const js = compile('items.ultimus()');
+                expect(js).toBe('items.at(-1);');
+            });
+
+            test('accipe -> indexed access', () => {
+                const js = compile('items.accipe(2)');
+                expect(js).toBe('items[2];');
+            });
+        });
+
+        describe('properties', () => {
+            test('longitudo -> length', () => {
+                const js = compile('items.longitudo()');
+                expect(js).toBe('items.length;');
+            });
+
+            test('vacua -> length === 0', () => {
+                const js = compile('items.vacua()');
+                expect(js).toBe('items.length === 0;');
+            });
+        });
+
+        describe('searching', () => {
+            test('continet -> includes', () => {
+                const js = compile('items.continet(x)');
+                expect(js).toBe('items.includes(x);');
+            });
+
+            test('indiceDe -> indexOf', () => {
+                const js = compile('items.indiceDe(x)');
+                expect(js).toBe('items.indexOf(x);');
+            });
+
+            test('inveni -> find', () => {
+                const js = compile('items.inveni(fn)');
+                expect(js).toBe('items.find(fn);');
+            });
+
+            test('inveniIndicem -> findIndex', () => {
+                const js = compile('items.inveniIndicem(fn)');
+                expect(js).toBe('items.findIndex(fn);');
+            });
+        });
+
+        describe('transformations', () => {
+            test('filtrata -> filter', () => {
+                const js = compile('items.filtrata(fn)');
+                expect(js).toBe('items.filter(fn);');
+            });
+
+            test('mappata -> map', () => {
+                const js = compile('items.mappata(fn)');
+                expect(js).toBe('items.map(fn);');
+            });
+
+            test('reducta -> reduce (args swapped)', () => {
+                const js = compile('items.reducta(0, (acc, n) => acc + n)');
+                expect(js).toBe('items.reduce((acc, n) => (acc + n), 0);');
+            });
+
+            test('inversa -> spread + reverse (copying)', () => {
+                const js = compile('items.inversa()');
+                expect(js).toBe('[...items].reverse();');
+            });
+
+            test('ordinata -> spread + sort (copying)', () => {
+                const js = compile('items.ordinata()');
+                expect(js).toBe('[...items].sort();');
+            });
+
+            test('ordinata with comparator', () => {
+                const js = compile('items.ordinata(fn)');
+                expect(js).toBe('[...items].sort(fn);');
+            });
+
+            test('sectio -> slice', () => {
+                const js = compile('items.sectio(1, 3)');
+                expect(js).toBe('items.slice(1, 3);');
+            });
+
+            test('prima -> slice(0, n)', () => {
+                const js = compile('items.prima(5)');
+                expect(js).toBe('items.slice(0, 5);');
+            });
+
+            test('ultima -> slice(-n)', () => {
+                const js = compile('items.ultima(3)');
+                expect(js).toBe('items.slice(-3);');
+            });
+
+            test('omitte -> slice(n)', () => {
+                const js = compile('items.omitte(2)');
+                expect(js).toBe('items.slice(2);');
+            });
+        });
+
+        describe('predicates', () => {
+            test('omnes -> every', () => {
+                const js = compile('items.omnes(fn)');
+                expect(js).toBe('items.every(fn);');
+            });
+
+            test('aliquis -> some', () => {
+                const js = compile('items.aliquis(fn)');
+                expect(js).toBe('items.some(fn);');
+            });
+        });
+
+        describe('other methods', () => {
+            test('coniunge -> join', () => {
+                const js = compile('items.coniunge(", ")');
+                expect(js).toBe('items.join(", ");');
+            });
+
+            test('perambula -> forEach', () => {
+                const js = compile('items.perambula(fn)');
+                expect(js).toBe('items.forEach(fn);');
+            });
+
+            test('plana -> flat', () => {
+                const js = compile('items.plana()');
+                expect(js).toBe('items.flat();');
+            });
+
+            test('explanata -> flatMap', () => {
+                const js = compile('items.explanata(fn)');
+                expect(js).toBe('items.flatMap(fn);');
+            });
+        });
+
+        describe('chaining', () => {
+            test('method chain is preserved', () => {
+                const js = compile('items.filtrata(f).mappata(g)');
+                expect(js).toBe('items.filter(f).map(g);');
+            });
+
+            test('complex chain', () => {
+                const js = compile('items.filtrata(f).mappata(g).prima(10)');
+                expect(js).toBe('items.filter(f).map(g).slice(0, 10);');
+            });
+        });
+
+        describe('with arrow functions', () => {
+            test('filtrata with arrow', () => {
+                const js = compile('items.filtrata((x) => x > 0)');
+                expect(js).toBe('items.filter((x) => (x > 0));');
+            });
+
+            test('mappata with arrow', () => {
+                const js = compile('items.mappata((x) => x * 2)');
+                expect(js).toBe('items.map((x) => (x * 2));');
+            });
+        });
+    });
 });

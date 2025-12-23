@@ -1,0 +1,151 @@
+// =============================================================================
+// lista<T> - Usage Examples
+// =============================================================================
+//
+// Demonstrates Latin array methods. See arca/norma/lista.fab for full API.
+
+// =============================================================================
+// BASIC OPERATIONS
+// =============================================================================
+
+fixum numeri = [1, 2, 3, 4, 5]
+
+// Mutating: adde modifies the array
+numeri.adde(6)
+scribe numeri.longitudo()  // 6
+
+// Copying: addita returns new array, original unchanged
+fixum extended = numeri.addita(7)
+scribe extended.longitudo()  // 7
+scribe numeri.longitudo()    // still 6
+
+// =============================================================================
+// ACCESSING ELEMENTS
+// =============================================================================
+
+fixum items = ["alpha", "beta", "gamma", "delta"]
+
+scribe items.primus()    // "alpha"
+scribe items.ultimus()   // "delta"
+scribe items.accipe(2)   // "gamma"
+
+// =============================================================================
+// TRANSFORMATIONS
+// =============================================================================
+
+fixum numbers = [1, 2, 3, 4, 5]
+
+// mappata: transform each element
+fixum doubled = numbers.mappata((n) => n * 2)
+scribe doubled  // [2, 4, 6, 8, 10]
+
+// filtrata: keep elements matching predicate
+fixum evens = numbers.filtrata((n) => n % 2 == 0)
+scribe evens  // [2, 4]
+
+// reducta: fold to single value
+fixum sum = numbers.reducta(0, (acc, n) => acc + n)
+scribe sum  // 15
+
+// =============================================================================
+// CHAINING
+// =============================================================================
+
+fixum data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+// Filter, transform, take first 3
+fixum result = data
+    .filtrata((n) => n > 3)
+    .mappata((n) => n * 10)
+    .prima(3)
+
+scribe result  // [40, 50, 60]
+
+// =============================================================================
+// PREDICATES
+// =============================================================================
+
+fixum values = [2, 4, 6, 8]
+
+scribe values.omnes((n) => n % 2 == 0)   // verum (all even)
+scribe values.aliquis((n) => n > 5)      // verum (some > 5)
+scribe values.omnes((n) => n > 5)        // falsum (not all > 5)
+
+// =============================================================================
+// SEARCHING
+// =============================================================================
+
+fixum names = ["Marcus", "Julia", "Claudia", "Gaius"]
+
+scribe names.continet("Julia")   // verum
+scribe names.indiceDe("Claudia") // 2
+
+fixum found = names.inveni((n) => n == "Gaius")
+scribe found  // "Gaius"
+
+// =============================================================================
+// MUTATING VS COPYING
+// =============================================================================
+
+// Latin verb forms indicate mutation:
+//   adde (imperative) -> mutates
+//   addita (participle) -> copies
+
+varia stack = [1, 2, 3]
+
+// Mutating operations
+stack.adde(4)       // stack is now [1, 2, 3, 4]
+stack.remove()      // stack is now [1, 2, 3], returns 4
+stack.praepone(0)   // stack is now [0, 1, 2, 3]
+stack.decapita()    // stack is now [1, 2, 3], returns 0
+
+// Copying operations (original unchanged)
+fixum original = [1, 2, 3]
+fixum withFour = original.addita(4)      // [1, 2, 3, 4]
+fixum withZero = original.praeposita(0)  // [0, 1, 2, 3]
+fixum reversed = original.inversa()      // [3, 2, 1]
+fixum sorted = original.ordinata()       // [1, 2, 3]
+
+scribe original  // still [1, 2, 3]
+
+// =============================================================================
+// SLICING
+// =============================================================================
+
+fixum alphabet = ["a", "b", "c", "d", "e"]
+
+scribe alphabet.prima(3)      // ["a", "b", "c"]
+scribe alphabet.ultima(2)     // ["d", "e"]
+scribe alphabet.omitte(2)     // ["c", "d", "e"]
+scribe alphabet.sectio(1, 4)  // ["b", "c", "d"]
+
+// =============================================================================
+// ITERATION
+// =============================================================================
+
+fixum tasks = ["compile", "test", "deploy"]
+
+// perambula: iterate without return value
+tasks.perambula((task) => {
+    scribe "Running:", task
+})
+
+// =============================================================================
+// JOINING
+// =============================================================================
+
+fixum words = ["Salve", "Munde"]
+scribe words.coniunge(" ")  // "Salve Munde"
+scribe words.coniunge(", ") // "Salve, Munde"
+
+// =============================================================================
+// FLATTENING
+// =============================================================================
+
+fixum nested = [[1, 2], [3, 4], [5, 6]]
+fixum flat = nested.plana()
+scribe flat  // [1, 2, 3, 4, 5, 6]
+
+// explanata: map + flatten
+fixum expanded = [1, 2, 3].explanata((n) => [n, n * 10])
+scribe expanded  // [1, 10, 2, 20, 3, 30]

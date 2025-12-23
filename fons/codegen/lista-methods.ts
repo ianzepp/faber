@@ -1,0 +1,403 @@
+/**
+ * Lista Method Registry - Latin array methods mapped to target implementations
+ *
+ * COMPILER PHASE
+ * ==============
+ * codegen
+ *
+ * ARCHITECTURE
+ * ============
+ * This module defines the Latin method vocabulary for lista<T> (arrays).
+ * Each method specifies its semantics (mutates/copies, sync/async) and
+ * target-specific translations.
+ *
+ * LATIN VERB CONJUGATION
+ * ======================
+ * Latin verb forms encode mutability and async semantics:
+ *
+ * |           | Mutates (in-place) | Returns New (copy) |
+ * |-----------|--------------------|--------------------|
+ * | Sync      | adde (imperative)  | addita (participle)|
+ * | Async     | addet (future)     | additura (fut.part)|
+ *
+ * The feminine endings (-a, -ura) agree with lista/tabula/copia.
+ *
+ * INPUT/OUTPUT CONTRACT
+ * =====================
+ * INPUT:  Latin method name from CallExpression
+ * OUTPUT: Target-specific code string
+ * ERRORS: Returns null if method name not recognized
+ */
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+/**
+ * Describes how to translate a Latin method to a target language.
+ */
+export interface ListaMethod {
+    /** The Latin method name */
+    latin: string;
+
+    /** True if method mutates the array in place */
+    mutates: boolean;
+
+    /** True if method is async (future tense) */
+    async: boolean;
+
+    /**
+     * TypeScript translation.
+     * - string: simple method rename (obj.latin() -> obj.ts())
+     * - function: custom code generation
+     */
+    ts: string | TsGenerator;
+
+    /**
+     * Zig translation (optional, for future use).
+     */
+    zig?: string | ZigGenerator;
+}
+
+type TsGenerator = (obj: string, args: string) => string;
+type ZigGenerator = (obj: string, args: string) => string;
+
+// =============================================================================
+// METHOD REGISTRY
+// =============================================================================
+
+/**
+ * Registry of Latin array methods.
+ *
+ * Organized by category for clarity. All methods are keyed by Latin name.
+ */
+export const LISTA_METHODS: Record<string, ListaMethod> = {
+    // -------------------------------------------------------------------------
+    // ADDING ELEMENTS
+    // -------------------------------------------------------------------------
+
+    /** Add element to end (mutates) */
+    adde: {
+        latin: 'adde',
+        mutates: true,
+        async: false,
+        ts: 'push',
+    },
+
+    /** Add element to end (returns new array) */
+    addita: {
+        latin: 'addita',
+        mutates: false,
+        async: false,
+        ts: (obj, args) => `[...${obj}, ${args}]`,
+    },
+
+    /** Add element to start (mutates) */
+    praepone: {
+        latin: 'praepone',
+        mutates: true,
+        async: false,
+        ts: 'unshift',
+    },
+
+    /** Add element to start (returns new array) */
+    praeposita: {
+        latin: 'praeposita',
+        mutates: false,
+        async: false,
+        ts: (obj, args) => `[${args}, ...${obj}]`,
+    },
+
+    // -------------------------------------------------------------------------
+    // REMOVING ELEMENTS
+    // -------------------------------------------------------------------------
+
+    /** Remove last element (mutates, returns removed) */
+    remove: {
+        latin: 'remove',
+        mutates: true,
+        async: false,
+        ts: 'pop',
+    },
+
+    /** Remove last element (returns new array without last) */
+    remota: {
+        latin: 'remota',
+        mutates: false,
+        async: false,
+        ts: (obj, _args) => `${obj}.slice(0, -1)`,
+    },
+
+    /** Remove first element (mutates, returns removed) */
+    decapita: {
+        latin: 'decapita',
+        mutates: true,
+        async: false,
+        ts: 'shift',
+    },
+
+    /** Remove first element (returns new array without first) */
+    decapitata: {
+        latin: 'decapitata',
+        mutates: false,
+        async: false,
+        ts: (obj, _args) => `${obj}.slice(1)`,
+    },
+
+    /** Clear all elements (mutates) */
+    purga: {
+        latin: 'purga',
+        mutates: true,
+        async: false,
+        ts: (obj, _args) => `${obj}.length = 0`,
+    },
+
+    // -------------------------------------------------------------------------
+    // ACCESSING ELEMENTS
+    // -------------------------------------------------------------------------
+
+    /** Get first element */
+    primus: {
+        latin: 'primus',
+        mutates: false,
+        async: false,
+        ts: (obj, _args) => `${obj}[0]`,
+    },
+
+    /** Get last element */
+    ultimus: {
+        latin: 'ultimus',
+        mutates: false,
+        async: false,
+        ts: (obj, _args) => `${obj}.at(-1)`,
+    },
+
+    /** Get element at index */
+    accipe: {
+        latin: 'accipe',
+        mutates: false,
+        async: false,
+        ts: (obj, args) => `${obj}[${args}]`,
+    },
+
+    // -------------------------------------------------------------------------
+    // PROPERTIES (as methods for consistency)
+    // -------------------------------------------------------------------------
+
+    /** Get length */
+    longitudo: {
+        latin: 'longitudo',
+        mutates: false,
+        async: false,
+        ts: (obj, _args) => `${obj}.length`,
+    },
+
+    /** Check if empty */
+    vacua: {
+        latin: 'vacua',
+        mutates: false,
+        async: false,
+        ts: (obj, _args) => `${obj}.length === 0`,
+    },
+
+    // -------------------------------------------------------------------------
+    // SEARCHING
+    // -------------------------------------------------------------------------
+
+    /** Check if contains element */
+    continet: {
+        latin: 'continet',
+        mutates: false,
+        async: false,
+        ts: 'includes',
+    },
+
+    /** Find index of element (-1 if not found) */
+    indiceDe: {
+        latin: 'indiceDe',
+        mutates: false,
+        async: false,
+        ts: 'indexOf',
+    },
+
+    /** Find first element matching predicate */
+    inveni: {
+        latin: 'inveni',
+        mutates: false,
+        async: false,
+        ts: 'find',
+    },
+
+    /** Find index of first element matching predicate */
+    inveniIndicem: {
+        latin: 'inveniIndicem',
+        mutates: false,
+        async: false,
+        ts: 'findIndex',
+    },
+
+    // -------------------------------------------------------------------------
+    // TRANSFORMATIONS (return new arrays)
+    // -------------------------------------------------------------------------
+
+    /** Filter elements (returns new array) */
+    filtrata: {
+        latin: 'filtrata',
+        mutates: false,
+        async: false,
+        ts: 'filter',
+    },
+
+    /** Map elements (returns new array) */
+    mappata: {
+        latin: 'mappata',
+        mutates: false,
+        async: false,
+        ts: 'map',
+    },
+
+    /** Reduce to single value - note: Faber uses (init, fn), JS uses (fn, init) */
+    reducta: {
+        latin: 'reducta',
+        mutates: false,
+        async: false,
+        ts: (obj, args) => {
+            // Faber: reducta(init, fn) -> JS: reduce(fn, init)
+            // Split args and swap order
+            const match = args.match(/^(.+?),\s*(\(.+)$/);
+            if (match) {
+                return `${obj}.reduce(${match[2]}, ${match[1]})`;
+            }
+            return `${obj}.reduce(${args})`;
+        },
+    },
+
+    /** Flat map (map + flatten one level) */
+    explanata: {
+        latin: 'explanata',
+        mutates: false,
+        async: false,
+        ts: 'flatMap',
+    },
+
+    /** Flatten one level */
+    plana: {
+        latin: 'plana',
+        mutates: false,
+        async: false,
+        ts: 'flat',
+    },
+
+    /** Reverse (returns new array) */
+    inversa: {
+        latin: 'inversa',
+        mutates: false,
+        async: false,
+        ts: (obj, _args) => `[...${obj}].reverse()`,
+    },
+
+    /** Sort (returns new array) */
+    ordinata: {
+        latin: 'ordinata',
+        mutates: false,
+        async: false,
+        ts: (obj, args) => args ? `[...${obj}].sort(${args})` : `[...${obj}].sort()`,
+    },
+
+    /** Slice (returns new array) */
+    sectio: {
+        latin: 'sectio',
+        mutates: false,
+        async: false,
+        ts: 'slice',
+    },
+
+    /** Take first n elements */
+    prima: {
+        latin: 'prima',
+        mutates: false,
+        async: false,
+        ts: (obj, args) => `${obj}.slice(0, ${args})`,
+    },
+
+    /** Take last n elements */
+    ultima: {
+        latin: 'ultima',
+        mutates: false,
+        async: false,
+        ts: (obj, args) => `${obj}.slice(-${args})`,
+    },
+
+    /** Skip first n elements */
+    omitte: {
+        latin: 'omitte',
+        mutates: false,
+        async: false,
+        ts: (obj, args) => `${obj}.slice(${args})`,
+    },
+
+    // -------------------------------------------------------------------------
+    // PREDICATES
+    // -------------------------------------------------------------------------
+
+    /** Check if all elements match predicate */
+    omnes: {
+        latin: 'omnes',
+        mutates: false,
+        async: false,
+        ts: 'every',
+    },
+
+    /** Check if any element matches predicate */
+    aliquis: {
+        latin: 'aliquis',
+        mutates: false,
+        async: false,
+        ts: 'some',
+    },
+
+    // -------------------------------------------------------------------------
+    // AGGREGATION
+    // -------------------------------------------------------------------------
+
+    /** Join elements to string */
+    coniunge: {
+        latin: 'coniunge',
+        mutates: false,
+        async: false,
+        ts: 'join',
+    },
+
+    // -------------------------------------------------------------------------
+    // ITERATION
+    // -------------------------------------------------------------------------
+
+    /** Iterate with callback (no return value) */
+    perambula: {
+        latin: 'perambula',
+        mutates: false,
+        async: false,
+        ts: 'forEach',
+    },
+};
+
+// =============================================================================
+// LOOKUP FUNCTION
+// =============================================================================
+
+/**
+ * Look up a Latin method name and return its definition.
+ *
+ * @param name - Latin method name
+ * @returns Method definition or undefined if not found
+ */
+export function getListaMethod(name: string): ListaMethod | undefined {
+    return LISTA_METHODS[name];
+}
+
+/**
+ * Check if a method name is a known lista method.
+ */
+export function isListaMethod(name: string): boolean {
+    return name in LISTA_METHODS;
+}
