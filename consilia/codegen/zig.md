@@ -41,9 +41,27 @@ Faber encourages type annotations (`numerus x = 5`). Zig requires them for `var`
 
 ### 1. `pactum` (Interfaces)
 
-Faber has nominal interfaces. Zig uses structural/duck typing. We can't actually enforce that a struct "implements" a pactum - we just document the contract and hope.
+Faber has nominal interfaces (`pactum`). Zig uses structural/duck typing with no interface declarations.
 
-**Current approach:** Emit documentation comment describing the required methods.
+**Key insight:** Interface enforcement happens in Faber's semantic analyzer, not Zig. This is analogous to TypeScript → JavaScript: TypeScript enforces types at compile time, then emits untyped JavaScript. By the time JS runs, the types are already validated.
+
+Similarly:
+1. Faber checks that `genus X implet Y` has all methods declared in `pactum Y`
+2. Errors are raised during Faber compilation if methods are missing
+3. Zig receives already-validated code — no interface info needed
+
+```
+// Faber - semantic analyzer catches this
+pactum Nominatus {
+    functio nomen() -> textus
+}
+
+genus Persona implet Nominatus {
+    // error: missing method 'nomen' required by Nominatus
+}
+```
+
+**Generated Zig:** Just the struct with methods. The `pactum` becomes a documentation comment for human readers. Zig's duck typing "just works" because Faber already verified the methods exist.
 
 ### 2. Generators (`cursor` Functions)
 
@@ -81,7 +99,7 @@ Faber's nullable types (`textus?`) map to Zig's `?[]const u8`. The mapping works
 | Functions | Done | `fn` with params and return type |
 | Control flow | Done | `if`, `while`, `for`, `switch` |
 | `genus` | Done | `struct` with `init()` |
-| `pactum` | Partial | Documentation comment only |
+| `pactum` | Done | Enforced in semantic analyzer; emits doc comment |
 | `ego` | Done | → `self` |
 | `novum cum` | Done | `@hasField` pattern |
 | Async | Partial | Error unions, not real async |
@@ -425,7 +443,7 @@ Remaining tensions:
 | Functions | Done | `fn` with params and return type |
 | Control flow | Done | `if`, `while`, `for`, `switch` |
 | `genus` | Done | `struct` with `init()` |
-| `pactum` | Partial | Documentation comment only |
+| `pactum` | Done | Enforced in semantic analyzer; emits doc comment |
 | `ego` | Done | → `self` |
 | `novum cum` | Done | `@hasField` pattern |
 | Async | Partial | Error unions, not real async |

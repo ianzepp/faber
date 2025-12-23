@@ -16,7 +16,9 @@ Faber's `genus` doesn't support inheritance - only `implet`. Rust also has no in
 
 ### 3. `pactum` → `trait`
 
-Unlike Zig, Rust actually has a direct equivalent for interfaces. `pactum` can become a real `trait` definition, and `implet` becomes `impl Trait for Struct`. This is much cleaner than Zig's duck typing.
+Rust has a direct equivalent for interfaces: traits. `pactum` becomes a `trait` definition, and `implet` becomes `impl Trait for Struct`.
+
+**Interface enforcement:** Like all targets, interface conformance is checked in Faber's semantic analyzer before codegen. This is analogous to TypeScript → JavaScript: types are enforced at compile time, then erased. For Rust, the trait info is preserved in the output (unlike Zig where it becomes a comment), but Faber has already validated correctness.
 
 ### 4. Pattern Matching (`elige`)
 
