@@ -270,4 +270,203 @@ describe('tokenizer', () => {
             expect(errors[0].message).toContain('Unexpected');
         });
     });
+
+    describe('error recovery - unterminated constructs', () => {
+        test('unterminated string with newline', () => {
+            const { errors } = tokenize('"unterminated\n');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('unterminated template string', () => {
+            const { errors } = tokenize('`unterminated ${x}');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test.todo('unterminated multi-line comment', () => {
+            // TOKENIZER GAP: Should error on unterminated block comment
+            const { errors } = tokenize('/* comment without closing');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('string with unescaped newline', () => {
+            const { errors } = tokenize('"line1\nline2"');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('template string with unclosed interpolation', () => {
+            const { errors } = tokenize('`text ${incomplete`');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+    });
+
+    describe('edge cases - boundary values', () => {
+        test('empty source', () => {
+            const { tokens, errors } = tokenize('');
+
+            expect(errors).toHaveLength(0);
+            expect(tokens).toHaveLength(1); // Just EOF
+            expect(tokens[0].type).toBe('EOF');
+        });
+
+        test('only whitespace', () => {
+            const { tokens } = tokenize('   \n\t  ');
+
+            expect(tokens).toHaveLength(1); // Just EOF
+            expect(tokens[0].type).toBe('EOF');
+        });
+
+        test('only comments', () => {
+            const { tokens } = tokenize('// comment\n/* block */');
+
+            expect(tokens).toHaveLength(1); // Just EOF
+        });
+
+        test('zero values', () => {
+            const { tokens } = tokenize('0 0.0 0.00');
+
+            expect(tokens[0].value).toBe('0');
+            expect(tokens[1].value).toBe('0.0');
+            expect(tokens[2].value).toBe('0.00');
+        });
+
+        test('very long number', () => {
+            const { tokens } = tokenize('123456789012345678901234567890');
+
+            expect(tokens[0].type).toBe('NUMBER');
+        });
+
+        test('very long identifier', () => {
+            const longId = 'a'.repeat(100);
+            const { tokens } = tokenize(longId);
+
+            expect(tokens[0].type).toBe('IDENTIFIER');
+            expect(tokens[0].value).toHaveLength(100);
+        });
+
+        test('number with leading zeros', () => {
+            const { tokens } = tokenize('007');
+
+            expect(tokens[0].type).toBe('NUMBER');
+            expect(tokens[0].value).toBe('007');
+        });
+
+        test('decimal starting with dot', () => {
+            const { tokens } = tokenize('.5');
+
+            // May tokenize as DOT + NUMBER or as NUMBER
+            expect(tokens).toBeDefined();
+        });
+    });
+
+    describe('edge cases - whitespace variations', () => {
+        test('mixed tabs and spaces', () => {
+            const { tokens } = tokenize('fixum\t  x\t=\t5');
+
+            expect(tokens[0].type).toBe('KEYWORD');
+            expect(tokens[1].type).toBe('IDENTIFIER');
+        });
+
+        test('multiple consecutive spaces', () => {
+            const { tokens } = tokenize('fixum     x     =     5');
+
+            expect(tokens).toHaveLength(5); // fixum, x, =, 5, EOF
+        });
+
+        test('CR LF line endings', () => {
+            const { tokens } = tokenize('fixum\r\nx\r\n=\r\n5');
+
+            expect(tokens[0].type).toBe('KEYWORD');
+            expect(tokens[3].value).toBe('5');
+        });
+
+        test('no whitespace between tokens', () => {
+            const { tokens } = tokenize('fixum x=5');
+
+            expect(tokens[0].type).toBe('KEYWORD');
+            expect(tokens[1].type).toBe('IDENTIFIER');
+            expect(tokens[2].type).toBe('EQUAL');
+            expect(tokens[3].type).toBe('NUMBER');
+        });
+
+        test('trailing whitespace', () => {
+            const { tokens } = tokenize('fixum x = 5   \n\t ');
+
+            expect(tokens[tokens.length - 1].type).toBe('EOF');
+        });
+    });
+
+    describe('edge cases - special characters', () => {
+        test('multiple consecutive operators', () => {
+            const { tokens } = tokenize('+++');
+
+            expect(tokens[0].type).toBe('PLUS');
+            expect(tokens[1].type).toBe('PLUS');
+            expect(tokens[2].type).toBe('PLUS');
+        });
+
+        test('mixed quote types in file', () => {
+            const { tokens } = tokenize('"double" `template` "another"');
+
+            expect(tokens[0].type).toBe('STRING');
+            expect(tokens[1].type).toBe('TEMPLATE_STRING');
+            expect(tokens[2].type).toBe('STRING');
+        });
+
+        test('escaped quotes in strings', () => {
+            const { tokens } = tokenize('"He said \\"hello\\""');
+
+            expect(tokens[0].type).toBe('STRING');
+            expect(tokens[0].value).toContain('"');
+        });
+
+        test('unicode in identifiers', () => {
+            const { tokens } = tokenize('niño');
+
+            expect(tokens[0].type).toBe('IDENTIFIER');
+        });
+
+        test('emoji in string', () => {
+            const { tokens } = tokenize('"hello 👋"');
+
+            expect(tokens[0].type).toBe('STRING');
+            expect(tokens[0].value).toContain('👋');
+        });
+    });
+
+    describe('edge cases - comment variations', () => {
+        test('single-line comment at end of file', () => {
+            const { tokens } = tokenize('fixum x = 5 // comment');
+
+            expect(tokens[tokens.length - 1].type).toBe('EOF');
+        });
+
+        test('multi-line comment with nested slashes', () => {
+            const { tokens } = tokenize('/* // not a comment */');
+
+            expect(tokens).toHaveLength(1); // Just EOF
+        });
+
+        test('comment with special chars', () => {
+            const { tokens } = tokenize('// @#$%^&*()');
+
+            expect(tokens).toHaveLength(1); // Just EOF
+        });
+
+        test('adjacent comments', () => {
+            const { tokens } = tokenize('// comment1\n// comment2');
+
+            expect(tokens).toHaveLength(1); // Just EOF
+        });
+
+        test('block comment spanning multiple lines', () => {
+            const { tokens } = tokenize('/* line1\nline2\nline3 */');
+
+            expect(tokens).toHaveLength(1); // Just EOF
+        });
+    });
 });

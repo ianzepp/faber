@@ -516,4 +516,134 @@ describe('codegen', () => {
             expect(js).toContain('return this.nomen');
         });
     });
+
+    describe('missing features - nulla/nonnulla operators', () => {
+        test('nulla generates null check', () => {
+            const js = compile('si nulla x { scribe "empty" }');
+
+            expect(js).toContain('if');
+            expect(js).toContain('null');
+        });
+
+        test('nonnulla generates non-null check', () => {
+            const js = compile('si nonnulla items { scribe "has items" }');
+
+            expect(js).toContain('if');
+        });
+
+        test('nulla on array', () => {
+            const js = compile('fixum check = nulla []');
+
+            expect(js).toContain('const check');
+        });
+
+        test('nonnulla on object', () => {
+            const js = compile('fixum check = nonnulla { a: 1 }');
+
+            expect(js).toContain('const check');
+        });
+
+        test('nulla in conditional', () => {
+            const js = compile('fixum result = nulla x && verum');
+
+            expect(js).toContain('&&');
+            expect(js).toContain('true');
+        });
+    });
+
+    describe('missing features - iace (throw)', () => {
+        test('iace string becomes throw', () => {
+            const js = compile('iace "error message"');
+
+            expect(js).toContain('throw');
+            expect(js).toContain('error message');
+        });
+
+        test('iace with Error constructor', () => {
+            const js = compile('iace novum Error("msg")');
+
+            expect(js).toContain('throw');
+            expect(js).toContain('new Error');
+        });
+
+        test('iace variable', () => {
+            const js = compile('iace err');
+
+            expect(js).toContain('throw');
+            expect(js).toContain('err');
+        });
+
+        test('iace in function', () => {
+            const js = compile(`
+                functio validate() {
+                    iace "invalid"
+                }
+            `);
+
+            expect(js).toContain('function validate');
+            expect(js).toContain('throw');
+        });
+
+        test('iace in switch case', () => {
+            const js = compile(`
+                elige x {
+                    si 1 { iace "error" }
+                }
+            `);
+
+            expect(js).toContain('switch');
+            expect(js).toContain('throw');
+        });
+    });
+
+    describe('missing features - ergo one-liners', () => {
+        test('si with ergo generates inline if', () => {
+            const js = compile('si x > 5 ergo scribe "big"');
+
+            expect(js).toContain('if');
+            expect(js).toContain('x > 5');
+        });
+
+        test('dum with ergo generates while', () => {
+            const js = compile('dum x > 0 ergo x = x - 1');
+
+            expect(js).toContain('while');
+            expect(js).toContain('x > 0');
+        });
+
+        test('ex...pro with ergo', () => {
+            const js = compile('ex items pro item ergo scribe item');
+
+            expect(js).toContain('for');
+            expect(js).toContain('of items');
+        });
+    });
+
+    describe('missing features - scribe with multiple arguments', () => {
+        test('scribe two args becomes console.log', () => {
+            const js = compile('scribe "Name:", name');
+
+            expect(js).toContain('console.log');
+            expect(js).toContain('Name:');
+        });
+
+        test('scribe multiple args', () => {
+            const js = compile('scribe "a", "b", "c"');
+
+            expect(js).toContain('console.log');
+        });
+
+        test('scribe with expressions', () => {
+            const js = compile('scribe x + y, a * b');
+
+            expect(js).toContain('console.log');
+        });
+
+        test('scribe with function calls', () => {
+            const js = compile('scribe getName(), getAge()');
+
+            expect(js).toContain('console.log');
+            expect(js).toContain('getName()');
+        });
+    });
 });

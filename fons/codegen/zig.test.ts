@@ -304,4 +304,83 @@ describe('zig codegen', () => {
             expect(zig).toContain('const ID = []const u8');
         });
     });
+
+    describe('missing features - nulla/nonnulla operators', () => {
+        test('nulla generates null check', () => {
+            const zig = compile('si nulla x { scribe "empty" }');
+
+            expect(zig).toContain('if');
+        });
+
+        test('nonnulla generates non-null check', () => {
+            const zig = compile('si nonnulla items { scribe "has" }');
+
+            expect(zig).toContain('if');
+        });
+
+        test('nulla in assignment', () => {
+            const zig = compile('fixum check = nulla x');
+
+            expect(zig).toContain('const check');
+        });
+    });
+
+    describe('missing features - iace (throw)', () => {
+        test('iace with string', () => {
+            const zig = compile('iace "error"');
+
+            expect(zig).toContain('error');
+        });
+
+        test('iace with Error generates panic', () => {
+            const zig = compile('iace novum Error("msg")');
+
+            expect(zig).toContain('@panic');
+        });
+
+        test('iace in function', () => {
+            const zig = compile(`
+                functio validate() {
+                    iace "error"
+                }
+            `);
+
+            expect(zig).toContain('fn validate');
+        });
+    });
+
+    describe('missing features - ergo one-liners', () => {
+        test('si with ergo', () => {
+            const zig = compile('si x > 5 ergo scribe "big"');
+
+            expect(zig).toContain('if');
+            expect(zig).toContain('(x > 5)');
+        });
+
+        test('dum with ergo', () => {
+            const zig = compile('dum x > 0 ergo x = x - 1');
+
+            expect(zig).toContain('while');
+        });
+
+        test('ex...pro with ergo', () => {
+            const zig = compile('ex items pro item ergo process(item)');
+
+            expect(zig).toContain('for');
+        });
+    });
+
+    describe('missing features - scribe with multiple arguments', () => {
+        test('scribe with multiple args', () => {
+            const zig = compile('scribe "Name:", name');
+
+            expect(zig).toContain('std.debug.print');
+        });
+
+        test('scribe with expressions', () => {
+            const zig = compile('scribe x + y, a');
+
+            expect(zig).toContain('std.debug.print');
+        });
+    });
 });
