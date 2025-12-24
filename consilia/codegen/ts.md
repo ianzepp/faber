@@ -27,7 +27,7 @@ TypeScript is the primary compilation target for Faber. The language design was 
 | `si`/`aliter` | `if`/`else` | Conditionals |
 | `dum` | `while` | While loop |
 | `ex...pro` | `for...of` | Iteration |
-| `elige` | `switch` | Switch statement |
+| `elige` | `if/else` chain | See `principles.md` — always if/else, not switch |
 | `tempta`/`cape`/`demum` | `try`/`catch`/`finally` | Exception handling |
 | `iace` | `throw` | Throw exception |
 | `redde` | `return` | Return statement |

@@ -586,32 +586,61 @@ describe('codegen', () => {
         });
     });
 
-    describe('switch statements', () => {
-        test('elige with cases', () => {
+    describe('switch statements (elige)', () => {
+        test('elige with cases emits if/else chain', () => {
             const js = compile(`
-        elige x {
-          si 1 { a() }
-          si 2 { b() }
-        }
-      `);
+                elige x {
+                    si 1 { a() }
+                    si 2 { b() }
+                }
+            `);
 
-            expect(js).toContain('switch (x)');
-            expect(js).toContain('case 1:');
-            expect(js).toContain('case 2:');
-            expect(js).toContain('break;');
+            expect(js).toContain('if (x === 1)');
+            expect(js).toContain('else if (x === 2)');
+            expect(js).toContain('a()');
+            expect(js).toContain('b()');
         });
 
-        test('elige with default', () => {
+        test('elige with default emits else', () => {
             const js = compile(`
-        elige x {
-          si 1 { a() }
-          aliter { c() }
-        }
-      `);
+                elige x {
+                    si 1 { a() }
+                    aliter { c() }
+                }
+            `);
 
-            expect(js).toContain('switch (x)');
-            expect(js).toContain('case 1:');
-            expect(js).toContain('default:');
+            expect(js).toContain('if (x === 1)');
+            expect(js).toContain('else {');
+            expect(js).toContain('c()');
+        });
+
+        test('elige with multiple cases and default', () => {
+            const js = compile(`
+                elige status {
+                    si 0 { pending() }
+                    si 1 { active() }
+                    si 2 { done() }
+                    aliter { unknown() }
+                }
+            `);
+
+            expect(js).toContain('if (status === 0)');
+            expect(js).toContain('else if (status === 1)');
+            expect(js).toContain('else if (status === 2)');
+            expect(js).toContain('else {');
+            expect(js).toContain('unknown()');
+        });
+
+        test('elige with string cases', () => {
+            const js = compile(`
+                elige name {
+                    si "alice" { greetAlice() }
+                    si "bob" { greetBob() }
+                }
+            `);
+
+            expect(js).toContain('if (name === "alice")');
+            expect(js).toContain('else if (name === "bob")');
         });
     });
 
@@ -805,15 +834,15 @@ describe('codegen', () => {
             expect(js).toContain('throw');
         });
 
-        test('iace in switch case', () => {
+        test('iace in elige case', () => {
             const js = compile(`
                 elige x {
                     si 1 { iace "error" }
                 }
             `);
 
-            expect(js).toContain('switch');
-            expect(js).toContain('throw');
+            expect(js).toContain('if (x === 1)');
+            expect(js).toContain('throw "error"');
         });
     });
 

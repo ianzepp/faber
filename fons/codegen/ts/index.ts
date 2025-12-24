@@ -842,11 +842,14 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     }
 
     /**
-     * Generate switch statement.
+     * Generate switch statement as if/else chain.
      *
      * TRANSFORMS:
      *   elige x { si 1 { a() } si 2 { b() } aliter { c() } }
-     *   -> switch (x) { case 1: a(); break; case 2: b(); break; default: c(); }
+     *   -> if (x === 1) { a(); } else if (x === 2) { b(); } else { c(); }
+     *
+     * WHY: Always emit if/else for all targets. Simpler codegen, no type
+     *      detection needed, and downstream compilers optimize anyway.
      */
     function genSwitchStatement(node: SwitchStatement): string {
         const discriminant = genExpression(node.discriminant);
@@ -857,26 +860,38 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
             depth++;
         }
 
-        result += `${ind()}switch (${discriminant}) {\n`;
-        depth++;
-
-        for (const caseNode of node.cases) {
+        // Generate if/else chain
+        for (let i = 0; i < node.cases.length; i++) {
+            const caseNode = node.cases[i];
             const test = genExpression(caseNode.test);
+            const keyword = i === 0 ? 'if' : 'else if';
 
-            result += `${ind()}case ${test}: {\n`;
+            result += `${ind()}${keyword} (${discriminant} === ${test}) {\n`;
             depth++;
 
             for (const stmt of caseNode.consequent.body) {
                 result += genStatement(stmt) + '\n';
             }
 
-            result += `${ind()}break${semi ? ';' : ''}\n`;
             depth--;
-            result += `${ind()}}\n`;
+            result += `${ind()}}`;
+
+            // Add newline if more cases or default follows
+            if (i < node.cases.length - 1 || node.defaultCase) {
+                result += '\n';
+            }
         }
 
         if (node.defaultCase) {
-            result += `${ind()}default: {\n`;
+            // Add "else" for default case
+            if (node.cases.length > 0) {
+                result += `${ind()}else {\n`;
+            }
+            else {
+                // No cases, just default — emit as bare block
+                result += `${ind()}{\n`;
+            }
+
             depth++;
 
             for (const stmt of node.defaultCase.body) {
@@ -884,11 +899,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
             }
 
             depth--;
-            result += `${ind()}}\n`;
+            result += `${ind()}}`;
         }
-
-        depth--;
-        result += `${ind()}}`;
 
         if (node.catchClause) {
             depth--;

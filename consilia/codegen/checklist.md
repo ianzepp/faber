@@ -72,7 +72,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | Range expressions (`0..10`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | Range with step (`per`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `cum` (with/context) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
-| `elige` (switch) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `elige` (→ if/else) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `quando` (switch case) | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
 | Switch cases (`si`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | Switch default (`aliter`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
