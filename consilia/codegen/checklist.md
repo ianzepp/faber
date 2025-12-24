@@ -1,6 +1,6 @@
 # Codegen Target Checklist
 
-Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not applicable to target
+Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not applicable, `[c]` convention (no compiler support needed)
 
 ## Type System
 
@@ -168,8 +168,8 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | Static fields (`generis`) | [x] | [ ] | [~] | [ ] | [ ] | [ ] |
 | Public/private visibility | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
 | `creo` (constructor hook) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
-| `deleo` (destructor) | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `pingo` (render method) | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
+| `deleo` (destructor) | [c] | [c] | [c] | [c] | [c] | [c] |
+| `pingo` (render method) | [c] | [c] | [c] | [c] | [c] | [c] |
 | Auto-merge constructor | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | Methods | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | Async methods | [x] | [~] | [x] | [ ] | [ ] | [ ] |
