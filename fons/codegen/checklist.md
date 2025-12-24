@@ -4,8 +4,8 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 ## Type System
 
-| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
-|---------|:----------:|:---:|:------:|:----:|:----:|:---:|
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++23 |
+|---------|:----------:|:---:|:------:|:----:|:----:|:-----:|
 | `textus` (string) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `numerus` (number) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `bivalens` (boolean) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
@@ -24,8 +24,8 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 ## Variable Declarations
 
-| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
-|---------|:----------:|:---:|:------:|:----:|:----:|:---:|
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++23 |
+|---------|:----------:|:---:|:------:|:----:|:----:|:-----:|
 | `varia` (mutable) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `fixum` (immutable) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | Type annotations | [x] | [x] | [x] | [ ] | [ ] | [ ] |
@@ -34,8 +34,8 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 ## Function Declarations
 
-| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
-|---------|:----------:|:---:|:------:|:----:|:----:|:---:|
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++23 |
+|---------|:----------:|:---:|:------:|:----:|:----:|:-----:|
 | Basic functions (`functio`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | Parameters | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | Parameter type annotations | [x] | [x] | [x] | [ ] | [ ] | [ ] |
@@ -47,8 +47,8 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 ## Control Flow Statements
 
-| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
-|---------|:----------:|:---:|:------:|:----:|:----:|:---:|
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++23 |
+|---------|:----------:|:---:|:------:|:----:|:----:|:-----:|
 | `si` (if) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `aliter` (else) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `aliter si` (else if) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
@@ -68,16 +68,16 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 ## Return/Exit Statements
 
-| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
-|---------|:----------:|:---:|:------:|:----:|:----:|:---:|
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++23 |
+|---------|:----------:|:---:|:------:|:----:|:----:|:-----:|
 | `redde` (return) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `redde` with value | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `redde` void | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 
 ## Exception Handling
 
-| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
-|---------|:----------:|:---:|:------:|:----:|:----:|:---:|
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++23 |
+|---------|:----------:|:---:|:------:|:----:|:----:|:-----:|
 | `tempta` (try) | [x] | [-] | [x] | [ ] | [ ] | [ ] |
 | `cape` (catch) | [x] | [~] | [x] | [ ] | [ ] | [ ] |
 | `demum` (finally) | [x] | [-] | [x] | [ ] | [ ] | [ ] |
@@ -87,8 +87,8 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 ## Output/Debug/Events
 
-| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
-|---------|:----------:|:---:|:------:|:----:|:----:|:---:|
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++23 |
+|---------|:----------:|:---:|:------:|:----:|:----:|:-----:|
 | `scribe` statement | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `vide` (debug) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
 | `mone` (warn) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
@@ -98,8 +98,8 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 ## Expressions
 
-| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
-|---------|:----------:|:---:|:------:|:----:|:----:|:---:|
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++23 |
+|---------|:----------:|:---:|:------:|:----:|:----:|:-----:|
 | Identifiers | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `ego` (this/self) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | Boolean literals (`verum`/`falsum`) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
@@ -129,8 +129,8 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 ## OOP Features (genus/pactum)
 
-| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
-|---------|:----------:|:---:|:------:|:----:|:----:|:---:|
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++23 |
+|---------|:----------:|:---:|:------:|:----:|:----:|:-----:|
 | `genus` declaration | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | Field declarations | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | Field defaults | [x] | [x] | [x] | [ ] | [ ] | [ ] |
@@ -149,15 +149,15 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 ## Import/Export
 
-| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
-|---------|:----------:|:---:|:------:|:----:|:----:|:---:|
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++23 |
+|---------|:----------:|:---:|:------:|:----:|:----:|:-----:|
 | `ex...importa` (named imports) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `ex...importa *` (wildcard) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 
 ## Standard Library Intrinsics
 
-| Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
-|---------|:----------:|:---:|:------:|:----:|:----:|:---:|
+| Feature | TypeScript | Zig | Python | WASM | Rust | C++23 |
+|---------|:----------:|:---:|:------:|:----:|:----:|:-----:|
 | `_scribe` (print) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `_vide` (debug) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
 | `_mone` (warn) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
@@ -170,8 +170,8 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 ## Lista (Array) Methods
 
-| Latin | TypeScript | Zig | Python | WASM | Rust | C++ |
-|-------|:----------:|:---:|:------:|:----:|:----:|:---:|
+| Latin | TypeScript | Zig | Python | WASM | Rust | C++23 |
+|-------|:----------:|:---:|:------:|:----:|:----:|:-----:|
 | `adde` (push) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
 | `addita` (push copy) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
 | `praepone` (unshift) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
@@ -271,28 +271,33 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 **Minimum version**: Rust 2021 edition (stable)
 
-### C++ Target Notes
+### C++23 Target Notes
 
-1. **Header/source split** - May need `.hpp`/`.cpp` file pairs
-2. **Manual memory** - RAII, smart pointers (`unique_ptr`, `shared_ptr`)
-3. **Templates** - For generics, but complex instantiation rules
-4. **No reflection** - Type info limited without RTTI
-5. **Exceptions** - `try`/`catch`/`throw`, but often avoided in perf-critical code
-6. **STL containers** - `std::vector`, `std::map`, `std::set`, `std::string`
-7. **Lambdas** - `[captures](params) { body }` syntax
-8. **Async** - `std::async`, `std::future`, or coroutines (C++20)
-9. **Modules** - C++20 modules vs traditional `#include`
-10. **constexpr** - Compile-time evaluation similar to Zig's comptime
+1. **`std::expected<T,E>`** - Rust-like error handling; `iace` → `std::unexpected`
+2. **`std::print`** - Clean output without iostream complexity
+3. **Concepts** - `pactum` → C++20 concepts for compile-time interfaces
+4. **`if constexpr (requires {})`** - Auto-merge constructor field checking
+5. **Ranges** - `std::views::transform`, `filter` for lista methods
+6. **Coroutines** - `futura`/`cede` → `co_await`/`co_yield`
+7. **RAII** - `demum` works via scope guards (unlike Zig/Rust)
+8. **`std::string`** - Just works, no ownership complexity
+9. **`std::string_view`** - `de textus` → borrowed string view
+10. **Templates** - Generics via templates with concepts constraints
 
-**Minimum version**: C++17 (structured bindings, `if constexpr`) or C++20 (coroutines, concepts)
+**Alignment with Zig/Rust**:
+- `de`/`in` prepositions map to `const T&`/`std::string_view` and `T&`
+- `std::expected` mirrors Rust's `Result<T,E>` and Zig's error unions
+- Arena optional via `std::pmr::monotonic_buffer_resource`
+
+**Minimum version**: C++23 (GCC 13+, Clang 17+, MSVC 19.37+)
 
 ## Implementation Priority Suggestion
 
 | Target | Priority | Rationale |
 |--------|----------|-----------|
 | TypeScript | Done | Primary target, web-first |
+| Python | Done | Popular, good for teaching Latin syntax |
 | Zig | In Progress | Systems programming, educational |
-| Python | High | Popular, good for teaching Latin syntax |
+| C++23 | Medium | Bridges to C++ ecosystem, aligns with Rust/Zig patterns |
 | Rust | Medium | Memory safety, systems programming |
-| WASM | Medium | Browser runtime, but complex |
-| C++ | Low | Complex, better served by Zig path |
+| WASM | Low | Browser runtime, complex; consider Zig backend |
