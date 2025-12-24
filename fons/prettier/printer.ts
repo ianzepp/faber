@@ -550,8 +550,10 @@ function printScribeStatement(
     options: FaberOptions,
     print: (path: AstPath<AstNode>) => Doc,
 ): Doc {
+    const node = path.getValue() as any;
+    const keyword = node.level === 'debug' ? 'vide' : node.level === 'warn' ? 'mone' : 'scribe';
     const args = path.map(print, 'arguments');
-    return ['scribe ', join(', ', args)];
+    return [keyword, ' ', join(', ', args)];
 }
 
 // =============================================================================

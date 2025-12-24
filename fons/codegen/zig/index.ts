@@ -1087,18 +1087,20 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     }
 
     /**
-     * Generate scribe statement.
+     * Generate scribe/vide/mone statement.
      *
      * TRANSFORMS:
      *   scribe "hello" -> std.debug.print("hello\n", .{});
-     *   scribe x       -> std.debug.print("{any}\n", .{x});
-     *   scribe a, b    -> std.debug.print("{any} {any}\n", .{a, b});
+     *   vide x         -> std.debug.print("[DEBUG] {any}\n", .{x});
+     *   mone "oops"    -> std.debug.print("[WARN] oops\n", .{});
      *
-     * TARGET: Zig's std.debug.print uses format specifiers.
+     * TARGET: Zig's std.debug.print with level prefixes for debug/warn.
      */
     function genScribeStatement(node: ScribeStatement): string {
+        const prefix = node.level === 'debug' ? '[DEBUG] ' : node.level === 'warn' ? '[WARN] ' : '';
+
         if (node.arguments.length === 0) {
-            return `${ind()}std.debug.print("\\n", .{});`;
+            return `${ind()}std.debug.print("${prefix}\\n", .{});`;
         }
 
         // Build format string and args list
@@ -1110,7 +1112,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             args.push(genExpression(arg));
         }
 
-        const format = formatParts.join(' ') + '\\n';
+        const format = prefix + formatParts.join(' ') + '\\n';
 
         return `${ind()}std.debug.print("${format}", .{ ${args.join(', ')} });`;
     }

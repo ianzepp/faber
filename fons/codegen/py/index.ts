@@ -908,11 +908,22 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
     }
 
     /**
-     * Generate scribe statement.
+     * Generate scribe/vide/mone statement.
+     *
+     * TRANSFORMS:
+     *   scribe "hello" -> print("hello")
+     *   vide x         -> print("[DEBUG]", x)
+     *   mone "oops"    -> print("[WARN]", "oops")
      */
     function genScribeStatement(node: ScribeStatement): string {
-        const args = node.arguments.map(genExpression).join(', ');
-        return `${ind()}print(${args})`;
+        const args = node.arguments.map(genExpression);
+        if (node.level === 'debug') {
+            args.unshift('"[DEBUG]"');
+        }
+        else if (node.level === 'warn') {
+            args.unshift('"[WARN]"');
+        }
+        return `${ind()}print(${args.join(', ')})`;
     }
 
     /**

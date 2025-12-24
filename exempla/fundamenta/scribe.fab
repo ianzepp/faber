@@ -1,18 +1,26 @@
 // =============================================================================
-// SCRIBE - Output Statement
+// OUTPUT STATEMENTS - scribe, vide, mone
 // =============================================================================
 //
-// The scribe keyword outputs values to the console (like console.log).
+// Latin has three output keywords for different logging levels:
+//
+//   scribe  ->  console.log    (normal output)
+//   vide    ->  console.debug  (debug output)
+//   mone    ->  console.warn   (warning output)
 //
 // ETYMOLOGY:
-// scribe: "write!" (imperative of scribere - to write)
+//   scribe: "write!" (imperative of scribere - to write)
+//   vide:   "see!"   (imperative of videre - to see/observe)
+//   mone:   "warn!"  (imperative of monere - to warn/advise)
 //
 // GRAMMAR:
-// scribe <expr>
-// scribe <expr1>, <expr2>, ...
+//   scribe <expr>
+//   scribe <expr1>, <expr2>, ...
+//   vide <expr>, ...
+//   mone <expr>, ...
 //
-// WHY "scribe" not "print":
-// - Follows Latin imperative verb pattern (like Unix commands)
+// WHY LATIN IMPERATIVES:
+// - Follows Latin verb pattern (like Unix commands)
 // - More precise than "print" (which implies physical printing)
 // - Consistent with language philosophy: verbs for actions
 
@@ -83,3 +91,48 @@ scribe { user: "Marcus", scores: [95, 87, 92], active: verum }
 fixum person = { name: "Claudia", age: 28 }
 scribe person.name
 scribe person.age
+
+// =============================================================================
+// DEBUG OUTPUT (vide)
+// =============================================================================
+
+// Developer-level output for debugging
+vide "Entering function"
+vide "Variable state:", person
+vide "Loop iteration:", 5, "of", 10
+
+// Useful for tracing execution
+functio fibonacci(n) -> numerus {
+    vide "fibonacci called with:", n
+    si n <= 1 { redde n }
+    redde fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+// =============================================================================
+// WARNING OUTPUT (mone)
+// =============================================================================
+
+// Warn about potential issues
+mone "Deprecated function called"
+mone "Value exceeds recommended limit:", 9999
+
+// Validation warnings
+fixum value = -5
+si value < 0 {
+    mone "Negative value detected:", value
+}
+
+// =============================================================================
+// USING ALL THREE LEVELS
+// =============================================================================
+
+// Typical logging pattern
+functio processData(data) {
+    vide "Processing started"
+
+    si nulla data {
+        mone "Data is null, using defaults"
+    }
+
+    scribe "Processing complete"
+}

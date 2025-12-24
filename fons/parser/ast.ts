@@ -602,20 +602,34 @@ export interface ThrowStatement extends BaseNode {
 }
 
 /**
+ * Output level for scribe/vide/mone statements.
+ *
+ * WHY: Latin has three output keywords mapping to different console levels:
+ *   scribe (write!) → console.log  - normal output
+ *   vide (see!)     → console.debug - developer/debug output
+ *   mone (warn!)    → console.warn  - warning output
+ */
+export type OutputLevel = 'log' | 'debug' | 'warn';
+
+/**
  * Scribe (print) statement.
  *
  * GRAMMAR (in EBNF):
- *   scribeStmt := 'scribe' expression (',' expression)*
+ *   scribeStmt := ('scribe' | 'vide' | 'mone') expression (',' expression)*
  *
- * WHY: Latin 'scribe' (write!) as a statement keyword, not a function call.
- *      Supports printf-style format strings passed directly to target runtime.
+ * WHY: Latin output keywords as statement forms, not function calls.
+ *   scribe (write!) → console.log  - normal output
+ *   vide (see!)     → console.debug - developer/debug output
+ *   mone (warn!)    → console.warn  - warning output
  *
  * Examples:
  *   scribe "hello"
- *   scribe "%s: %d", name, count
+ *   vide "debugging:", value
+ *   mone "warning: value is", x
  */
 export interface ScribeStatement extends BaseNode {
     type: 'ScribeStatement';
+    level: OutputLevel;
     arguments: Expression[];
 }
 

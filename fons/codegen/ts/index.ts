@@ -915,7 +915,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
 
     function genScribeStatement(node: ScribeStatement): string {
         const args = node.arguments.map(genExpression).join(', ');
-        return `${ind()}console.log(${args})${semi ? ';' : ''}`;
+        const method = node.level === 'debug' ? 'debug' : node.level === 'warn' ? 'warn' : 'log';
+        return `${ind()}console.${method}(${args})${semi ? ';' : ''}`;
     }
 
     function genTryStatement(node: TryStatement): string {

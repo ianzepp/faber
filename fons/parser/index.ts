@@ -101,6 +101,7 @@ import type {
     BlockStatement,
     ThrowStatement,
     ScribeStatement,
+    OutputLevel,
     ExpressionStatement,
     Identifier,
     ThisExpression,
@@ -521,7 +522,15 @@ export function parse(tokens: Token[]): ParserResult {
         }
 
         if (checkKeyword('scribe')) {
-            return parseScribeStatement();
+            return parseScribeStatement('log');
+        }
+
+        if (checkKeyword('vide')) {
+            return parseScribeStatement('debug');
+        }
+
+        if (checkKeyword('mone')) {
+            return parseScribeStatement('warn');
         }
 
         if (checkKeyword('tempta')) {
@@ -1628,27 +1637,30 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     /**
-     * Parse scribe (print) statement.
+     * Parse output statement (scribe/vide/mone).
      *
      * GRAMMAR:
-     *   scribeStmt := 'scribe' expression (',' expression)*
+     *   outputStmt := ('scribe' | 'vide' | 'mone') expression (',' expression)*
      *
-     * WHY: 'scribe' (write!) as a statement keyword for output.
-     *      Supports printf-style format strings.
+     * WHY: Latin output keywords as statement forms:
+     *   scribe (write!) → console.log
+     *   vide (see!)     → console.debug
+     *   mone (warn!)    → console.warn
      *
      * Examples:
      *   scribe "hello"
-     *   scribe n
-     *   scribe "%s: %d", name, count
+     *   vide "debugging:", value
+     *   mone "warning:", message
      */
-    function parseScribeStatement(): ScribeStatement {
+    function parseScribeStatement(level: OutputLevel): ScribeStatement {
         const position = peek().position;
 
-        expectKeyword('scribe', ParserErrorCode.ExpectedKeywordScribe);
+        // Consume the keyword (already validated by checkKeyword in parseStatement)
+        advance();
 
         const args: Expression[] = [];
 
-        // Parse first argument
+        // Parse first argument (required)
         args.push(parseExpression());
 
         // Parse additional comma-separated arguments
@@ -1656,7 +1668,7 @@ export function parse(tokens: Token[]): ParserResult {
             args.push(parseExpression());
         }
 
-        return { type: 'ScribeStatement', arguments: args, position };
+        return { type: 'ScribeStatement', level, arguments: args, position };
     }
 
     /**
