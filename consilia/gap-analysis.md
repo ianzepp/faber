@@ -139,7 +139,7 @@ The checklist now tracks high-priority stdlib items. These remain untracked:
 
 ### Phase 1: Core Language Gaps (Remaining)
 
-1. `quando` (switch case alt) — In checklist but not implemented
+Core language features for TypeScript are complete. Remaining work is stdlib and advanced features.
 
 ### Phase 2: Basic Stdlib
 
@@ -171,9 +171,9 @@ The following items were added to the checklist and are now tracked:
 - `secus` (else/ternary alt) — TS: implemented
 - `fac` (do/block) — TS: implemented
 - `ergo` (then one-liner) — TS: implemented
-- `quando` (switch case) — Not implemented
 - `rumpe` (break) — TS: implemented
 - `perge` (continue) — TS: implemented
+- `elige` — TS: emits if/else chains (not switch)
 
 ### Declarations
 - `ordo` (enum) — TS: implemented

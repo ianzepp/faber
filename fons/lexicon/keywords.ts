@@ -88,7 +88,6 @@ export const keywords: KeywordEntry[] = [
     { latin: 'nonnulla', meaning: 'some/non-empty', category: 'operator' },
     { latin: 'negativum', meaning: '< 0', category: 'operator' },
     { latin: 'positivum', meaning: '> 0', category: 'operator' },
-    { latin: 'quando', meaning: 'case', category: 'control' },
     { latin: 'rumpe', meaning: 'break', category: 'control' },
     { latin: 'perge', meaning: 'continue', category: 'control' },
     { latin: 'redde', meaning: 'return', category: 'control' },
