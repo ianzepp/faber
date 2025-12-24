@@ -516,6 +516,47 @@ The DSL reads more like natural Latin:
 - "ordina per nomen" = "order by name"
 - "prima 10" = "first 10"
 
+### Unary Predicates
+
+Simple Latin adjectives work as prefix predicates, returning `bivalens`:
+
+| Latin | Meaning | Works on |
+|-------|---------|----------|
+| `nulla` | is null/empty | any |
+| `nonnulla` | has content | any |
+| `positivum` | is positive | numerus |
+| `negativum` | is negative | numerus |
+| `vacuum` | is void/zero | numerus, lista |
+
+These work in three contexts:
+
+**Standalone expression:**
+```
+fixum hasItems = nonnulla items
+fixum isPos = positivum balance
+fixum isEmpty = nulla data
+```
+
+**DSL filter predicate** (no explicit comparison needed):
+```
+// Filter to only positive numbers
+fixum positives = ex numbers filtra ubi positivum
+
+// Filter to non-empty strings
+fixum nonEmpty = ex strings filtra ubi nonnulla
+```
+
+**DSL terminator** (check property of result):
+```
+// Does the filtered result have any items?
+fixum hasActive = ex users filtra ubi active nonnulla
+
+// Are there any negative values?
+fixum anyNegative = ex numbers filtra ubi negativum nonnulla
+```
+
+The predicates are just unary functions returning `bivalens`. They read naturally as Latin prefix adjectives agreeing with their subject.
+
 ### Grammar Notes
 
 When using genitive case for collection names, the syntax becomes fully grammatical Latin:
