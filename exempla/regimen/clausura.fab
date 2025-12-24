@@ -1,22 +1,22 @@
 // =============================================================================
-// REGIMEN - Blocks (fac) and Lambdas (pro)
+// REGIMEN - Clausura (Closures/Lambdas)
 // =============================================================================
 //
-// Two keywords serve different purposes:
-// - fac { } creates block scope (for error handling, grouping)
-// - pro x { } creates lambdas/closures (for callbacks, higher-order functions)
+// Clausura: Latin for "closure" (from claudere, to close)
 //
 // GRAMMAR:
-// fac { <body> }                          // block scope
-// fac { <body> } cape <id> { <handler> }  // block with error handling
 // pro <params> fit <expr>                 // expression lambda
 // pro <params> { <body> }                 // block lambda
 // pro { <body> }                          // zero-param lambda
 //
+// Also covers fac blocks (related but distinct):
+// fac { <body> }                          // block scope
+// fac { <body> } cape <id> { <handler> }  // block with error handling
+//
 // ETYMOLOGY:
-// fac: imperative of "facere" (to do/make) - "do!"
 // pro: "for" - same keyword as iteration (ex items pro x { })
 // fit: "becomes" (passive of fieri)
+// fac: imperative of "facere" (to do/make) - "do!"
 //
 // WHY "pro" for lambdas:
 // Aligns with iteration: "ex items pro x { }" and "pro x { }" both use pro
