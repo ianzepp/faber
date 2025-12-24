@@ -372,6 +372,185 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         async: false,
         ts: 'forEach',
     },
+
+    // -------------------------------------------------------------------------
+    // MUTATING VARIANTS (in-place operations)
+    // -------------------------------------------------------------------------
+
+    /** Filter in place (mutates) */
+    filtra: {
+        latin: 'filtra',
+        mutates: true,
+        async: false,
+        ts: (obj, args) => {
+            // WHY: JS has no in-place filter. Splice out non-matching elements.
+            // This is expensive but semantically correct for mutation.
+            return `(() => { for (let i = ${obj}.length - 1; i >= 0; i--) { if (!(${args})(${obj}[i])) ${obj}.splice(i, 1); } })()`;
+        },
+    },
+
+    /** Sort in place (mutates) */
+    ordina: {
+        latin: 'ordina',
+        mutates: true,
+        async: false,
+        ts: 'sort',
+    },
+
+    /** Reverse in place (mutates) */
+    inverte: {
+        latin: 'inverte',
+        mutates: true,
+        async: false,
+        ts: 'reverse',
+    },
+
+    // -------------------------------------------------------------------------
+    // LODASH-INSPIRED METHODS
+    // -------------------------------------------------------------------------
+
+    /** Group by key function -> tabula<K, lista<T>> */
+    congrega: {
+        latin: 'congrega',
+        mutates: false,
+        async: false,
+        ts: (obj, args) => `Object.groupBy(${obj}, ${args})`,
+    },
+
+    /** Remove duplicates */
+    unica: {
+        latin: 'unica',
+        mutates: false,
+        async: false,
+        ts: (obj, _args) => `[...new Set(${obj})]`,
+    },
+
+    /** Flatten all levels */
+    planaOmnia: {
+        latin: 'planaOmnia',
+        mutates: false,
+        async: false,
+        ts: (obj, _args) => `${obj}.flat(Infinity)`,
+    },
+
+    /** Split into chunks of size n */
+    fragmenta: {
+        latin: 'fragmenta',
+        mutates: false,
+        async: false,
+        ts: (obj, args) => {
+            // WHY: No native chunk. Build inline for simple cases.
+            return `Array.from({ length: Math.ceil(${obj}.length / ${args}) }, (_, i) => ${obj}.slice(i * ${args}, i * ${args} + ${args}))`;
+        },
+    },
+
+    /** Remove falsy values */
+    densa: {
+        latin: 'densa',
+        mutates: false,
+        async: false,
+        ts: (obj, _args) => `${obj}.filter(Boolean)`,
+    },
+
+    /** Partition by predicate -> [truthy, falsy] */
+    partire: {
+        latin: 'partire',
+        mutates: false,
+        async: false,
+        ts: (obj, args) => {
+            return `${obj}.reduce(([t, f], x) => (${args})(x) ? [[...t, x], f] : [t, [...f, x]], [[], []])`;
+        },
+    },
+
+    /** Shuffle (Fisher-Yates) */
+    misce: {
+        latin: 'misce',
+        mutates: false,
+        async: false,
+        ts: (obj, _args) => {
+            // WHY: Returns new shuffled array. Uses Fisher-Yates in IIFE.
+            return `(() => { const a = [...${obj}]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; })()`;
+        },
+    },
+
+    /** Random element */
+    specimen: {
+        latin: 'specimen',
+        mutates: false,
+        async: false,
+        ts: (obj, _args) => `${obj}[Math.floor(Math.random() * ${obj}.length)]`,
+    },
+
+    /** Random n elements */
+    specimina: {
+        latin: 'specimina',
+        mutates: false,
+        async: false,
+        ts: (obj, args) => {
+            // WHY: Shuffle then take first n. Not most efficient but correct.
+            return `(() => { const a = [...${obj}]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, ${args}); })()`;
+        },
+    },
+
+    // -------------------------------------------------------------------------
+    // AGGREGATION (numeric operations)
+    // -------------------------------------------------------------------------
+
+    /** Sum of numbers */
+    summa: {
+        latin: 'summa',
+        mutates: false,
+        async: false,
+        ts: (obj, _args) => `${obj}.reduce((a, b) => a + b, 0)`,
+    },
+
+    /** Average of numbers */
+    medium: {
+        latin: 'medium',
+        mutates: false,
+        async: false,
+        ts: (obj, _args) => `(${obj}.reduce((a, b) => a + b, 0) / ${obj}.length)`,
+    },
+
+    /** Minimum value */
+    minimus: {
+        latin: 'minimus',
+        mutates: false,
+        async: false,
+        ts: (obj, _args) => `Math.min(...${obj})`,
+    },
+
+    /** Maximum value */
+    maximus: {
+        latin: 'maximus',
+        mutates: false,
+        async: false,
+        ts: (obj, _args) => `Math.max(...${obj})`,
+    },
+
+    /** Minimum by key function */
+    minimusPer: {
+        latin: 'minimusPer',
+        mutates: false,
+        async: false,
+        ts: (obj, args) => `${obj}.reduce((min, x) => (${args})(x) < (${args})(min) ? x : min)`,
+    },
+
+    /** Maximum by key function */
+    maximusPer: {
+        latin: 'maximusPer',
+        mutates: false,
+        async: false,
+        ts: (obj, args) => `${obj}.reduce((max, x) => (${args})(x) > (${args})(max) ? x : max)`,
+    },
+
+    /** Count elements matching predicate */
+    numera: {
+        latin: 'numera',
+        mutates: false,
+        async: false,
+        ts: (obj, args) => `${obj}.filter(${args}).length`,
+    },
 };
 
 // =============================================================================

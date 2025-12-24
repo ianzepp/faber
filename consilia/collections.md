@@ -14,6 +14,25 @@ All collection type names are feminine (Latin convention for containers).
 
 ---
 
+## Implementation Status (TypeScript)
+
+Method registries implemented in `fons/codegen/ts/norma/`:
+
+| Collection | Status | File | Notes |
+|------------|--------|------|-------|
+| `lista<T>` | [x] Complete | `lista.ts` | 50+ methods |
+| `tabula<K,V>` | [x] Complete | `tabula.ts` | 17 methods |
+| `copia<T>` | [x] Complete | `copia.ts` | 14 methods |
+
+**Not yet implemented:**
+- [-] Collection DSL (`ex items filtra ubi...`) — requires parser work
+- [-] Closure syntax (`cum property`, `{ .property }`) — requires parser work
+- [-] Tabula/copia literals — no syntax for `tabula { k: v }` or `copia { a, b }`
+
+**Known limitation:** Some method names overlap across collection types (`accipe`, `longitudo`, `vacua`, `purga`, `inversa`, `omitte`, `adde`, `valores`, `inLista`, `perambula`). Without semantic type info at codegen, lista methods take precedence. Unique methods work correctly for all types.
+
+---
+
 ## lista<T>
 
 **Etymology:** "list, border, edge" — a bounded sequence.

@@ -978,5 +978,248 @@ describe('codegen', () => {
                 expect(js).toBe('items.map((x) => (x * 2));');
             });
         });
+
+        describe('mutating variants', () => {
+            test('filtra -> in-place filter', () => {
+                const js = compile('items.filtra(fn)');
+                expect(js).toContain('splice');
+                expect(js).toContain('fn');
+            });
+
+            test('ordina -> sort (mutating)', () => {
+                const js = compile('items.ordina()');
+                expect(js).toBe('items.sort();');
+            });
+
+            test('ordina with comparator', () => {
+                const js = compile('items.ordina(fn)');
+                expect(js).toBe('items.sort(fn);');
+            });
+
+            test('inverte -> reverse (mutating)', () => {
+                const js = compile('items.inverte()');
+                expect(js).toBe('items.reverse();');
+            });
+        });
+
+        describe('lodash-inspired', () => {
+            test('congrega -> Object.groupBy', () => {
+                const js = compile('items.congrega(fn)');
+                expect(js).toBe('Object.groupBy(items, fn);');
+            });
+
+            test('unica -> Set spread', () => {
+                const js = compile('items.unica()');
+                expect(js).toBe('[...new Set(items)];');
+            });
+
+            test('planaOmnia -> flat(Infinity)', () => {
+                const js = compile('items.planaOmnia()');
+                expect(js).toBe('items.flat(Infinity);');
+            });
+
+            test('fragmenta -> chunk implementation', () => {
+                const js = compile('items.fragmenta(3)');
+                expect(js).toContain('Array.from');
+                expect(js).toContain('Math.ceil');
+                expect(js).toContain('slice');
+            });
+
+            test('densa -> filter(Boolean)', () => {
+                const js = compile('items.densa()');
+                expect(js).toBe('items.filter(Boolean);');
+            });
+
+            test('partire -> partition via reduce', () => {
+                const js = compile('items.partire(fn)');
+                expect(js).toContain('reduce');
+                expect(js).toContain('fn');
+            });
+
+            test('misce -> Fisher-Yates shuffle', () => {
+                const js = compile('items.misce()');
+                expect(js).toContain('Math.random');
+                expect(js).toContain('[...items]');
+            });
+
+            test('specimen -> random element', () => {
+                const js = compile('items.specimen()');
+                expect(js).toContain('Math.floor');
+                expect(js).toContain('Math.random');
+                expect(js).toContain('items.length');
+            });
+
+            test('specimina -> random n elements', () => {
+                const js = compile('items.specimina(5)');
+                expect(js).toContain('Math.random');
+                expect(js).toContain('slice(0, 5)');
+            });
+        });
+
+        describe('aggregation', () => {
+            test('summa -> reduce sum', () => {
+                const js = compile('nums.summa()');
+                expect(js).toBe('nums.reduce((a, b) => a + b, 0);');
+            });
+
+            test('medium -> average', () => {
+                const js = compile('nums.medium()');
+                expect(js).toContain('reduce');
+                expect(js).toContain('nums.length');
+            });
+
+            test('minimus -> Math.min', () => {
+                const js = compile('nums.minimus()');
+                expect(js).toBe('Math.min(...nums);');
+            });
+
+            test('maximus -> Math.max', () => {
+                const js = compile('nums.maximus()');
+                expect(js).toBe('Math.max(...nums);');
+            });
+
+            test('minimusPer -> min by key', () => {
+                const js = compile('items.minimusPer(fn)');
+                expect(js).toContain('reduce');
+                expect(js).toContain('fn');
+            });
+
+            test('maximusPer -> max by key', () => {
+                const js = compile('items.maximusPer(fn)');
+                expect(js).toContain('reduce');
+                expect(js).toContain('fn');
+            });
+
+            test('numera -> count matching', () => {
+                const js = compile('items.numera(fn)');
+                expect(js).toBe('items.filter(fn).length;');
+            });
+        });
+    });
+
+    // =========================================================================
+    // TABULA METHODS - Latin Map API
+    // =========================================================================
+    // NOTE: Some method names overlap with lista (accipe, longitudo, vacua,
+    // purga, inversa). Without semantic type info at codegen, lista methods
+    // take precedence. Only unique tabula methods are tested here.
+    // Full tabula support requires semantic type information.
+    describe('tabula methods - Latin Map API (unique methods)', () => {
+        describe('core operations', () => {
+            test('pone -> set', () => {
+                const js = compile('map.pone(k, v)');
+                expect(js).toBe('map.set(k, v);');
+            });
+
+            // habet and dele are unique to tabula/copia (lista uses continet/remove)
+            test('habet -> has', () => {
+                const js = compile('map.habet(k)');
+                expect(js).toBe('map.has(k);');
+            });
+
+            test('dele -> delete', () => {
+                const js = compile('map.dele(k)');
+                expect(js).toBe('map.delete(k);');
+            });
+        });
+
+        describe('iteration', () => {
+            test('claves -> keys', () => {
+                const js = compile('map.claves()');
+                expect(js).toBe('map.keys();');
+            });
+
+            test('paria -> entries', () => {
+                const js = compile('map.paria()');
+                expect(js).toBe('map.entries();');
+            });
+        });
+
+        describe('lodash-inspired', () => {
+            test('accipeAut -> get with default', () => {
+                const js = compile('map.accipeAut(k, def)');
+                expect(js).toBe('(map.get(k) ?? def);');
+            });
+
+            test('confla -> merge maps', () => {
+                const js = compile('map.confla(other)');
+                expect(js).toBe('new Map([...map, ...other]);');
+            });
+
+            test('mappaValores -> transform values', () => {
+                const js = compile('map.mappaValores(fn)');
+                expect(js).toContain('new Map');
+                expect(js).toContain('fn');
+            });
+
+            test('mappaClaves -> transform keys', () => {
+                const js = compile('map.mappaClaves(fn)');
+                expect(js).toContain('new Map');
+                expect(js).toContain('fn');
+            });
+
+            test('selige -> pick keys', () => {
+                const js = compile('map.selige(a, b)');
+                expect(js).toContain('new Map');
+                expect(js).toContain('filter');
+            });
+
+            // omitte conflicts with lista.omitte (skip first n)
+        });
+
+        describe('conversions', () => {
+            test('inObjectum -> Object.fromEntries', () => {
+                const js = compile('map.inObjectum()');
+                expect(js).toBe('Object.fromEntries(map);');
+            });
+        });
+    });
+
+    // =========================================================================
+    // COPIA METHODS - Latin Set API
+    // =========================================================================
+    // NOTE: Some method names overlap with lista (adde, longitudo, vacua,
+    // purga, valores, perambula, inLista). Without semantic type info at
+    // codegen, lista methods take precedence. Only unique copia methods
+    // are tested here.
+    describe('copia methods - Latin Set API (unique methods)', () => {
+        describe('set operations', () => {
+            test('unio -> union', () => {
+                const js = compile('a.unio(b)');
+                expect(js).toBe('new Set([...a, ...b]);');
+            });
+
+            test('intersectio -> intersection', () => {
+                const js = compile('a.intersectio(b)');
+                expect(js).toContain('filter');
+                expect(js).toContain('b.has');
+            });
+
+            test('differentia -> difference', () => {
+                const js = compile('a.differentia(b)');
+                expect(js).toContain('filter');
+                expect(js).toContain('!b.has');
+            });
+
+            test('symmetrica -> symmetric difference', () => {
+                const js = compile('a.symmetrica(b)');
+                expect(js).toContain('new Set');
+                expect(js).toContain('filter');
+            });
+        });
+
+        describe('predicates', () => {
+            test('subcopia -> is subset', () => {
+                const js = compile('a.subcopia(b)');
+                expect(js).toContain('every');
+                expect(js).toContain('b.has');
+            });
+
+            test('supercopia -> is superset', () => {
+                const js = compile('a.supercopia(b)');
+                expect(js).toContain('every');
+                expect(js).toContain('a.has');
+            });
+        });
     });
 });

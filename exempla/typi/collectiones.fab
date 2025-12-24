@@ -138,6 +138,70 @@ functio doubleAll(lista<numerus> nums) -> lista<numerus> {
 }
 
 // =============================================================================
+// LISTA METHODS - Transformation
+// =============================================================================
+
+fixum lista<numerus> nums = [1, 2, 3, 4, 5]
+
+// Transform with mappata (returns new array)
+fixum doubled = nums.mappata((n) => n * 2)
+scribe doubled
+
+// Filter with filtrata (returns new array)
+fixum evens = nums.filtrata((n) => n % 2 == 0)
+scribe evens
+
+// Sort with ordinata (returns new sorted array)
+fixum unsorted = [3, 1, 4, 1, 5, 9, 2, 6]
+fixum sorted = unsorted.ordinata()
+scribe sorted
+
+// =============================================================================
+// LISTA METHODS - Aggregation
+// =============================================================================
+
+fixum scores = [85, 90, 78, 92, 88]
+
+// Sum
+fixum total = scores.summa()
+scribe total
+
+// Average
+fixum average = scores.medium()
+scribe average
+
+// Min and max
+fixum lowest = scores.minimus()
+fixum highest = scores.maximus()
+scribe lowest
+scribe highest
+
+// =============================================================================
+// LISTA METHODS - Lodash-inspired
+// =============================================================================
+
+// Remove duplicates
+fixum withDupes = [1, 2, 2, 3, 3, 3, 4]
+fixum unique = withDupes.unica()
+scribe unique
+
+// Remove falsy values
+fixum sparse = [1, 0, 2, nihil, 3]
+// fixum dense = sparse.densa()
+// scribe dense
+
+// Chunk into groups
+fixum letters = ["a", "b", "c", "d", "e", "f"]
+fixum chunks = letters.fragmenta(2)
+scribe chunks
+
+// First/last n elements
+fixum first3 = letters.prima(3)
+fixum last2 = letters.ultima(2)
+scribe first3
+scribe last2
+
+// =============================================================================
 // TABULA<K, V> - Maps (Planned)
 // =============================================================================
 
