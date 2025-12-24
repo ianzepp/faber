@@ -515,7 +515,9 @@ function printThrowStatement(
     options: FaberOptions,
     print: (path: AstPath<AstNode>) => Doc,
 ): Doc {
-    return ['iace ', path.call(print, 'argument')];
+    const node = path.getValue() as any;
+    const keyword = node.fatal ? 'mori' : 'iace';
+    return [keyword, ' ', path.call(print, 'argument')];
 }
 
 function printTryStatement(

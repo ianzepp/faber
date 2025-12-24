@@ -882,28 +882,33 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
     }
 
     /**
-     * Generate throw statement.
+     * Generate throw/panic statement.
      *
      * TRANSFORMS:
      *   iace "message" -> raise Exception("message")
+     *   mori "message" -> raise SystemExit("message")
      */
     function genThrowStatement(node: ThrowStatement): string {
         const arg = genExpression(node.argument);
+        const exceptionType = node.fatal ? 'SystemExit' : 'Exception';
 
-        // If throwing a string literal, wrap in Exception
+        // If throwing a string literal, wrap in exception type
         if (node.argument.type === 'Literal' && typeof node.argument.value === 'string') {
-            return `${ind()}raise Exception(${arg})`;
+            return `${ind()}raise ${exceptionType}(${arg})`;
         }
 
-        // If throwing a new Error, convert to Exception
+        // If throwing a new Error, convert to exception type
         if (node.argument.type === 'NewExpression') {
             const callee = node.argument.callee.name;
             if (callee === 'Error' || callee === 'erratum') {
                 const args = node.argument.arguments.map(genExpression).join(', ');
-                return `${ind()}raise Exception(${args})`;
+                return `${ind()}raise ${exceptionType}(${args})`;
             }
         }
 
+        if (node.fatal) {
+            return `${ind()}raise SystemExit(${arg})`;
+        }
         return `${ind()}raise ${arg}`;
     }
 

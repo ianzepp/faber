@@ -1,0 +1,89 @@
+// =============================================================================
+// ERROR HANDLING - iace and mori
+// =============================================================================
+//
+// Latin has two error keywords for different severity levels:
+//
+//   iace (throw!) -> recoverable error, can be caught
+//   mori (die!)   -> fatal/panic, unrecoverable
+//
+// ETYMOLOGY:
+//   iace: "throw!" (imperative of iacere - to throw/hurl)
+//   mori: "die!"   (imperative of mori - to die)
+//
+// TARGET MAPPINGS:
+//   iace -> throw (TS/Py), return error.X (Zig), return Err (Rust)
+//   mori -> throw (TS/Py), @panic (Zig), panic! (Rust)
+
+// =============================================================================
+// RECOVERABLE ERRORS (iace)
+// =============================================================================
+
+// Throw a string error
+functio divide(a, b) -> numerus {
+    si b == 0 {
+        iace "Division by zero"
+    }
+    redde a / b
+}
+
+// Throw with Error object
+functio fetchUser(id) {
+    si id < 0 {
+        iace novum Error("Invalid user ID")
+    }
+    // ... fetch user from database
+}
+
+// Errors can be caught with tempta/cape
+tempta {
+    fixum result = divide(10, 0)
+} cape err {
+    scribe "Caught error:", err
+}
+
+// =============================================================================
+// FATAL ERRORS (mori)
+// =============================================================================
+
+// Panic on impossible state - should never be caught
+functio assertPositive(n) {
+    si n < 0 {
+        mori "Negative value in assertPositive - this is a bug"
+    }
+}
+
+// Panic on invariant violation
+functio processArray(items) {
+    si nulla items {
+        mori "processArray called with null - programming error"
+    }
+    // ... process items
+}
+
+// =============================================================================
+// WHEN TO USE WHICH
+// =============================================================================
+
+// Use iace for:
+// - Expected failures (network errors, file not found, validation)
+// - Errors the caller should handle
+// - Recoverable situations
+
+// Use mori for:
+// - Bugs in the code (should never happen)
+// - Invariant violations
+// - Unrecoverable states
+// - Assertion failures
+
+functio example(value) {
+    // Validation error - recoverable, use iace
+    si value < 0 {
+        iace "Value must be non-negative"
+    }
+
+    // Impossible state - bug, use mori
+    si value > 1000000 et value < 0 {
+        mori "Impossible: value is both > 1000000 and < 0"
+    }
+}

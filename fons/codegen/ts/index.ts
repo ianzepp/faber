@@ -910,7 +910,15 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     }
 
     function genThrowStatement(node: ThrowStatement): string {
-        return `${ind()}throw ${genExpression(node.argument)}${semi ? ';' : ''}`;
+        const expr = genExpression(node.argument);
+        if (node.fatal) {
+            // mori (panic) - wrap in Error to indicate unrecoverable
+            if (node.argument.type === 'Literal' && typeof node.argument.value === 'string') {
+                return `${ind()}throw new Error(${expr})${semi ? ';' : ''} /* panic */`;
+            }
+            return `${ind()}throw ${expr}${semi ? ';' : ''} /* panic */`;
+        }
+        return `${ind()}throw ${expr}${semi ? ';' : ''}`;
     }
 
     function genScribeStatement(node: ScribeStatement): string {

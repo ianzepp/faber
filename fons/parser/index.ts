@@ -518,7 +518,11 @@ export function parse(tokens: Token[]): ParserResult {
         }
 
         if (checkKeyword('iace')) {
-            return parseThrowStatement();
+            return parseThrowStatement(false);
+        }
+
+        if (checkKeyword('mori')) {
+            return parseThrowStatement(true);
         }
 
         if (checkKeyword('scribe')) {
@@ -1619,21 +1623,24 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     /**
-     * Parse throw statement.
+     * Parse throw/panic statement.
      *
      * GRAMMAR:
-     *   throwStmt := 'iace' expression
+     *   throwStmt := ('iace' | 'mori') expression
      *
-     * WHY: 'iace' (throw/hurl) for throwing exceptions.
+     * WHY: Two error severity levels:
+     *   iace (throw!) → recoverable, can be caught
+     *   mori (die!)   → fatal/panic, unrecoverable
      */
-    function parseThrowStatement(): ThrowStatement {
+    function parseThrowStatement(fatal: boolean): ThrowStatement {
         const position = peek().position;
 
-        expectKeyword('iace', ParserErrorCode.ExpectedKeywordIace);
+        // Consume the keyword (already validated by checkKeyword in parseStatement)
+        advance();
 
         const argument = parseExpression();
 
-        return { type: 'ThrowStatement', argument, position };
+        return { type: 'ThrowStatement', fatal, argument, position };
     }
 
     /**

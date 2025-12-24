@@ -587,17 +587,24 @@ export interface BlockStatement extends BaseNode {
 // ---------------------------------------------------------------------------
 
 /**
- * Throw statement.
+ * Throw/panic statement.
  *
  * GRAMMAR (in EBNF):
- *   throwStmt := 'iace' expression
+ *   throwStmt := ('iace' | 'mori') expression
  *
  * INVARIANT: argument is never null.
  *
- * WHY: Latin 'iace' (to throw/hurl) for throwing exceptions.
+ * WHY: Latin error keywords for two severity levels:
+ *   iace (throw!) → recoverable error, can be caught
+ *   mori (die!)   → fatal/panic, unrecoverable
+ *
+ * Target mappings:
+ *   iace → throw (TS/Py), return error.X (Zig), return Err (Rust)
+ *   mori → throw (TS/Py), @panic (Zig), panic! (Rust)
  */
 export interface ThrowStatement extends BaseNode {
     type: 'ThrowStatement';
+    fatal: boolean;
     argument: Expression;
 }
 

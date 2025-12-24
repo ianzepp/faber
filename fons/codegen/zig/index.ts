@@ -1057,22 +1057,23 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     }
 
     /**
-     * Generate throw statement.
+     * Generate throw/panic statement.
      *
      * TRANSFORMS:
-     *   iace "message" -> @panic("message")
-     *   iace novum Error("msg") -> @panic("msg")
+     *   iace "message" -> @panic("message")  // TODO: should be return error.X
+     *   mori "message" -> @panic("message")
      *
-     * TARGET: Zig doesn't have exceptions. For string errors, use @panic.
-     *         For proper error handling, would need error union returns.
+     * TARGET: Zig uses @panic for fatal errors. Recoverable errors (iace)
+     *         should ideally use error unions, but that requires function
+     *         signature changes. For now, both use @panic.
      */
     function genThrowStatement(node: ThrowStatement): string {
-        // Handle string literals - use @panic
+        // Handle string literals
         if (node.argument.type === 'Literal' && typeof node.argument.value === 'string') {
             return `${ind()}@panic("${node.argument.value}");`;
         }
 
-        // Handle new Error("msg") - extract message and use @panic
+        // Handle new Error("msg") - extract message
         if (
             node.argument.type === 'NewExpression' &&
             node.argument.callee.name === 'Error' &&
@@ -1082,7 +1083,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             return `${ind()}@panic(${msg});`;
         }
 
-        // Fallback - use @panic with expression
+        // Fallback
         return `${ind()}@panic(${genExpression(node.argument)});`;
     }
 
