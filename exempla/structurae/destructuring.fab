@@ -3,17 +3,18 @@
 // =============================================================================
 //
 // Destructuring extracts properties from objects into individual bindings.
-// Syntax mirrors object literals but on the left side of assignment.
+// The 'ex' (from) syntax parallels iteration: ex SOURCE VERB BINDING
 //
 // GRAMMAR:
-// fixum { prop1, prop2 } = object
-// fixum { prop: alias } = object
-// varia { prop1, prop2 } = object
+// ex object fixum { prop1, prop2 }
+// ex object fixum { prop: alias }
+// ex object varia { prop1, prop2 }
 //
 // WHY DESTRUCTURING:
 // - Extract multiple values in one statement
 // - Clearer than multiple property accesses
 // - Document which properties are used
+// - Reads naturally: "from person, take (const) name and age"
 
 // =============================================================================
 // BASIC DESTRUCTURING
@@ -22,13 +23,14 @@
 fixum person = { name: "Marcus", age: 30, city: "Roma" }
 
 // Extract properties into variables
-fixum { name, age } = person
+// Reads: "from person, take (const) name and age"
+ex person fixum { name, age }
 
 scribe name
 scribe age
 
 // Partial destructuring
-fixum { city } = person
+ex person fixum { city }
 scribe city
 
 // =============================================================================
@@ -38,7 +40,8 @@ scribe city
 fixum user = { name: "Julia", email: "julia@roma.com" }
 
 // Rename during destructuring
-fixum { name: userName, email: userEmail } = user
+// Reads: "from user, take name as userName and email as userEmail"
+ex user fixum { name: userName, email: userEmail }
 
 scribe userName
 scribe userEmail
@@ -46,7 +49,7 @@ scribe userEmail
 // Multiple renames
 fixum config = { host: "localhost", port: 8080 }
 
-fixum { host: serverHost, port: serverPort } = config
+ex config fixum { host: serverHost, port: serverPort }
 
 scribe serverHost
 scribe serverPort
@@ -58,7 +61,7 @@ scribe serverPort
 fixum data = { count: 100, active: verum }
 
 // Use varia for mutable bindings
-varia { count, active } = data
+ex data varia { count, active }
 
 scribe count
 scribe active
@@ -80,7 +83,7 @@ scribe active
 
 // For now, destructure in function body
 functio displayUser(user) {
-    fixum { name, age } = user
+    ex user fixum { name, age }
     scribe "User:", name, "Age:", age
 }
 
@@ -93,9 +96,9 @@ displayUser({ name: "Claudia", age: 28 })
 fixum profile = { user: { name: "Gaius", id: 42 }, settings: { theme: "dark" } }
 
 // Destructure nested objects
-fixum { user, settings } = profile
-fixum { name, id } = user
-fixum { theme } = settings
+ex profile fixum { user, settings }
+ex user fixum { name, id }
+ex settings fixum { theme }
 
 scribe name
 scribe id
@@ -109,7 +112,7 @@ functio getCoordinates() {
     redde { x: 10, y: 20 }
 }
 
-fixum { x, y } = getCoordinates()
+ex getCoordinates() fixum { x, y }
 
 scribe x
 scribe y
@@ -119,7 +122,7 @@ functio getUserInfo() {
     redde { name: "Marcus", email: "marcus@roma.com", verified: verum }
 }
 
-fixum { name: registeredName, verified } = getUserInfo()
+ex getUserInfo() fixum { name: registeredName, verified }
 
 scribe registeredName
 scribe verified
@@ -139,7 +142,7 @@ fixum largeObject = {
 }
 
 // Extract only what you need
-fixum { id, name, price } = largeObject
+ex largeObject fixum { id, name, price }
 
 scribe id
 scribe name
@@ -150,7 +153,7 @@ scribe price
 // =============================================================================
 
 // Future: default values for missing properties
-// fixum { timeout = 5000, retries = 3 } = options
+// ex options fixum { timeout = 5000, retries = 3 }
 // Uses defaults if properties don't exist
 
 // =============================================================================
@@ -161,17 +164,17 @@ fixum response = { status: 200, data: { value: 42 }, error: nihil }
 
 // Without destructuring (verbose):
 fixum status = response.status
-fixum data = response.data
+fixum responseData = response.data
 fixum error = response.error
 
 scribe status
-scribe data
+scribe responseData
 
 // With destructuring (concise):
-fixum { status: responseStatus, data: responseData } = response
+ex response fixum { status: responseStatus, data: respData }
 
 scribe responseStatus
-scribe responseData
+scribe respData
 
 // =============================================================================
 // PRACTICAL PATTERNS
@@ -179,7 +182,7 @@ scribe responseData
 
 // Configuration objects
 functio connect(options) {
-    fixum { host, port, secure } = options
+    ex options fixum { host, port, secure }
 
     si secure {
         scribe "Connecting securely to " + host + ":" + port
@@ -193,7 +196,7 @@ connect({ host: "example.com", port: 443, secure: verum })
 
 // API responses
 functio handleResponse(response) {
-    fixum { status, data, error } = response
+    ex response fixum { status, data, error }
 
     si status == 200 {
         scribe "Success:", data

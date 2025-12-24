@@ -40,6 +40,80 @@ describe('parser', () => {
         });
     });
 
+    describe('destructuring', () => {
+        test('basic destructuring with fixum', () => {
+            const { program } = parseCode('fixum { name, age } = person');
+            const decl = program!.body[0] as any;
+
+            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.kind).toBe('fixum');
+            expect(decl.name.type).toBe('ObjectPattern');
+            expect(decl.name.properties).toHaveLength(2);
+            expect(decl.name.properties[0].key.name).toBe('name');
+            expect(decl.name.properties[1].key.name).toBe('age');
+        });
+
+        test('destructuring with rename', () => {
+            const { program } = parseCode('fixum { name: userName } = person');
+            const decl = program!.body[0] as any;
+
+            expect(decl.name.properties[0].key.name).toBe('name');
+            expect(decl.name.properties[0].value.name).toBe('userName');
+        });
+
+        test('ex destructuring with fixum', () => {
+            const { program } = parseCode('ex response fixum { status, data }');
+            const decl = program!.body[0] as any;
+
+            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.kind).toBe('fixum');
+            expect(decl.name.type).toBe('ObjectPattern');
+            expect(decl.name.properties).toHaveLength(2);
+            expect(decl.name.properties[0].key.name).toBe('status');
+            expect(decl.name.properties[1].key.name).toBe('data');
+            expect(decl.init.name).toBe('response');
+        });
+
+        test('ex destructuring with varia', () => {
+            const { program } = parseCode('ex config varia { host, port }');
+            const decl = program!.body[0] as any;
+
+            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.kind).toBe('varia');
+            expect(decl.name.type).toBe('ObjectPattern');
+            expect(decl.init.name).toBe('config');
+        });
+
+        test('ex destructuring with rename', () => {
+            const { program } = parseCode('ex response fixum { status: responseStatus, data: responseData }');
+            const decl = program!.body[0] as any;
+
+            expect(decl.name.properties[0].key.name).toBe('status');
+            expect(decl.name.properties[0].value.name).toBe('responseStatus');
+            expect(decl.name.properties[1].key.name).toBe('data');
+            expect(decl.name.properties[1].value.name).toBe('responseData');
+        });
+
+        test('ex destructuring from function call', () => {
+            const { program } = parseCode('ex getUser() fixum { name, email }');
+            const decl = program!.body[0] as any;
+
+            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.init.type).toBe('CallExpression');
+            expect(decl.init.callee.name).toBe('getUser');
+        });
+
+        test('ex destructuring from member access', () => {
+            const { program } = parseCode('ex response.data fixum { items, count }');
+            const decl = program!.body[0] as any;
+
+            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.init.type).toBe('MemberExpression');
+            expect(decl.init.object.name).toBe('response');
+            expect(decl.init.property.name).toBe('data');
+        });
+    });
+
     describe('function declarations', () => {
         test('simple function with arrow return type', () => {
             const { program } = parseCode(`

@@ -454,14 +454,16 @@ export function parse(tokens: Token[]): ParserResult {
      * WHY: Uses lookahead to determine statement type via keyword inspection.
      */
     function parseStatement(): Statement {
-        // Distinguish 'ex norma importa' (import) from 'ex numeri pro n' (for-loop)
+        // Distinguish 'ex norma importa' (import), 'ex items pro n' (for-loop),
+        // and 'ex response fixum { }' (destructuring)
         if (checkKeyword('ex')) {
-            // Look ahead: ex IDENTIFIER importa -> import, otherwise for-loop
+            // Look ahead: ex IDENTIFIER importa -> import
             if (peek(1).type === 'IDENTIFIER' && peek(2).keyword === 'importa') {
                 return parseImportDeclaration();
             }
 
-            return parseForStatement();
+            // Could be for-loop or destructuring - parse and dispatch
+            return parseExStatement();
         }
 
         // 'in tabula pro k' is for-in loop
@@ -1336,39 +1338,86 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     /**
-     * Parse for loop statement.
+     * Parse statement starting with 'ex'.
+     *
+     * Dispatches to either:
+     * - ForStatement: ex SOURCE (pro|fit|fiet) VARIABLE { }
+     * - VariableDeclaration (destructuring): ex SOURCE (fixum|varia) { props }
      *
      * GRAMMAR:
-     *   forStmt := ('ex' | 'in') expression ('pro' | 'fit' | 'fiet') IDENTIFIER
-     *              (blockStmt | 'ergo' statement) ('cape' IDENTIFIER blockStmt)?
-     *
-     * WHY: Source-first syntax consistent with import: 'ex norma importa x'
-     *      'ex' for for-of (values from collection), 'in' for for-in (keys).
-     *
-     * The binding keyword uses verb conjugation to encode sync/async:
-     *      'pro' = sync iteration (traditional preposition)
-     *      'fit' = sync iteration (verb: "becomes")
-     *      'fiet' = async iteration (verb: "will become")
+     *   exStmt := 'ex' expression (forBinding | destructBinding)
+     *   forBinding := ('pro' | 'fit' | 'fiet') IDENTIFIER (blockStmt | 'ergo' statement) catchClause?
+     *   destructBinding := ('fixum' | 'varia') objectPattern
      *
      * Examples:
-     *   ex numeri pro n { ... }       // sync: from numbers, for each n
-     *   ex numeri fit n { ... }       // sync: from numbers, n becomes each
-     *   ex stream fiet chunk { ... }  // async: from stream, chunk will become each
-     *   ex numeri pro n ergo run(n)   // one-liner
+     *   ex numeri pro n { ... }           // for-loop
+     *   ex response fixum { status, data } // destructuring
+     */
+    function parseExStatement(): ForStatement | VariableDeclaration {
+        const position = peek().position;
+
+        expectKeyword('ex', ParserErrorCode.InvalidForLoopStart);
+
+        const source = parseExpression();
+
+        // Dispatch based on what follows the expression
+        if (checkKeyword('fixum') || checkKeyword('varia')) {
+            // Destructuring: ex source fixum { ... }
+            const kind = advance().keyword as 'varia' | 'fixum';
+            const name = parseObjectPattern();
+
+            return { type: 'VariableDeclaration', kind, name, init: source, position };
+        }
+
+        // Otherwise it's a for-loop: ex source pro/fit/fiet variable { }
+        let async = false;
+        if (matchKeyword('pro')) {
+            async = false;
+        } else if (matchKeyword('fit')) {
+            async = false;
+        } else if (matchKeyword('fiet')) {
+            async = true;
+        } else {
+            error(ParserErrorCode.ExpectedKeywordPro);
+        }
+
+        const variable = parseIdentifier();
+
+        // Parse body: block or ergo one-liner
+        let body: BlockStatement;
+        if (matchKeyword('ergo')) {
+            const stmtPos = peek().position;
+            const stmt = parseStatement();
+            body = { type: 'BlockStatement', body: [stmt], position: stmtPos };
+        } else {
+            body = parseBlockStatement();
+        }
+
+        let catchClause: CatchClause | undefined;
+        if (checkKeyword('cape')) {
+            catchClause = parseCatchClause();
+        }
+
+        return { type: 'ForStatement', kind: 'ex', variable, iterable: source, body, async, catchClause, position };
+    }
+
+    /**
+     * Parse for-in loop statement.
+     *
+     * GRAMMAR:
+     *   forStmt := 'in' expression ('pro' | 'fit' | 'fiet') IDENTIFIER
+     *              (blockStmt | 'ergo' statement) ('cape' IDENTIFIER blockStmt)?
+     *
+     * WHY: 'in' for for-in (keys). 'ex' loops are handled by parseExStatement().
+     *
+     * Examples:
      *   in tabula pro clavis { ... }  // in table, for each key
      */
     function parseForStatement(): ForStatement {
         const position = peek().position;
 
-        let kind: 'in' | 'ex' = 'ex';
-
-        if (matchKeyword('ex')) {
-            kind = 'ex';
-        } else if (matchKeyword('in')) {
-            kind = 'in';
-        } else {
-            error(ParserErrorCode.InvalidForLoopStart);
-        }
+        // Only handles 'in' loops - 'ex' is handled by parseExStatement
+        expectKeyword('in', ParserErrorCode.InvalidForLoopStart);
 
         const iterable = parseExpression();
 
@@ -1403,7 +1452,7 @@ export function parse(tokens: Token[]): ParserResult {
             catchClause = parseCatchClause();
         }
 
-        return { type: 'ForStatement', kind, variable, iterable, body, async, catchClause, position };
+        return { type: 'ForStatement', kind: 'in', variable, iterable, body, async, catchClause, position };
     }
 
     /**
