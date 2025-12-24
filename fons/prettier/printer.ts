@@ -30,6 +30,20 @@ import type {
     SwitchCase,
     GuardClause,
     CatchClause,
+    EnumMember,
+    EnumDeclaration,
+    FieldDeclaration,
+    ComputedFieldDeclaration,
+    GenusDeclaration,
+    PactumDeclaration,
+    PactumMethod,
+    BreakStatement,
+    ContinueStatement,
+    EmitStatement,
+    FacBlockStatement,
+    FacExpression,
+    ThisExpression,
+    AuscultaExpression,
 } from '../parser/ast.ts';
 import type { AstNode, PrettierProgram } from './parser.ts';
 
@@ -75,6 +89,20 @@ export function faberPrint(
             return printFunctionDeclaration(path, options, print);
         case 'TypeAliasDeclaration':
             return printTypeAliasDeclaration(path, options, print);
+        case 'EnumDeclaration':
+            return printEnumDeclaration(path, options, print);
+        case 'EnumMember':
+            return printEnumMember(path, options, print);
+        case 'GenusDeclaration':
+            return printGenusDeclaration(path, options, print);
+        case 'FieldDeclaration':
+            return printFieldDeclaration(path, options, print);
+        case 'ComputedFieldDeclaration':
+            return printComputedFieldDeclaration(path, options, print);
+        case 'PactumDeclaration':
+            return printPactumDeclaration(path, options, print);
+        case 'PactumMethod':
+            return printPactumMethod(path, options, print);
         case 'ExpressionStatement':
             return printExpressionStatement(path, options, print);
         case 'IfStatement':
@@ -93,6 +121,14 @@ export function faberPrint(
             return printAssertStatement(path, options, print);
         case 'ReturnStatement':
             return printReturnStatement(path, options, print);
+        case 'BreakStatement':
+            return 'rumpe';
+        case 'ContinueStatement':
+            return 'perge';
+        case 'EmitStatement':
+            return printEmitStatement(path, options, print);
+        case 'FacBlockStatement':
+            return printFacBlockStatement(path, options, print);
         case 'BlockStatement':
             return printBlockStatement(path, options, print);
         case 'ThrowStatement':
@@ -105,6 +141,8 @@ export function faberPrint(
         // Expressions
         case 'Identifier':
             return printIdentifier(path, options, print);
+        case 'ThisExpression':
+            return 'ego';
         case 'Literal':
             return printLiteral(path, options, print);
         case 'TemplateLiteral':
@@ -133,6 +171,10 @@ export function faberPrint(
             return printAwaitExpression(path, options, print);
         case 'NewExpression':
             return printNewExpression(path, options, print);
+        case 'FacExpression':
+            return printFacExpression(path, options, print);
+        case 'AuscultaExpression':
+            return printAuscultaExpression(path, options, print);
 
         // Type nodes
         case 'TypeAnnotation':
@@ -299,6 +341,285 @@ function printTypeAliasDeclaration(
 ): Doc {
     const node = path.getValue() as any;
     return ['typus ', path.call(print, 'name'), ' = ', path.call(print, 'typeAnnotation')];
+}
+
+function printEnumDeclaration(
+    path: AstPath<AstNode>,
+    options: FaberOptions,
+    print: (path: AstPath<AstNode>) => Doc,
+): Doc {
+    const node = path.getValue() as any;
+    const members = path.map(print, 'members');
+
+    if (members.length === 0) {
+        return ['ordo ', path.call(print, 'name'), ' {}'];
+    }
+
+    return [
+        'ordo ',
+        path.call(print, 'name'),
+        ' {',
+        indent([hardline, join([',', hardline], members)]),
+        hardline,
+        '}',
+    ];
+}
+
+function printEnumMember(
+    path: AstPath<AstNode>,
+    options: FaberOptions,
+    print: (path: AstPath<AstNode>) => Doc,
+): Doc {
+    const node = path.getValue() as any;
+    const parts: Doc[] = [path.call(print, 'name')];
+
+    if (node.value) {
+        parts.push(' = ', path.call(print, 'value'));
+    }
+
+    return parts;
+}
+
+function printGenusDeclaration(
+    path: AstPath<AstNode>,
+    options: FaberOptions,
+    print: (path: AstPath<AstNode>) => Doc,
+): Doc {
+    const node = path.getValue() as any;
+    const parts: Doc[] = ['genus ', path.call(print, 'name')];
+
+    // Type parameters
+    if (node.typeParameters && node.typeParameters.length > 0) {
+        const typeParams = path.map(print, 'typeParameters');
+        parts.push('<', join(', ', typeParams), '>');
+    }
+
+    // Implements clause
+    if (node.implements && node.implements.length > 0) {
+        const impls = path.map(print, 'implements');
+        parts.push(' implet ', join(', ', impls));
+    }
+
+    parts.push(' {');
+
+    const bodyParts: Doc[] = [];
+
+    // Fields
+    path.each((fieldPath, index) => {
+        if (index > 0 || bodyParts.length > 0) {
+            bodyParts.push(hardline);
+        }
+        bodyParts.push(print(fieldPath as AstPath<AstNode>));
+    }, 'fields');
+
+    // Computed fields
+    path.each((fieldPath, index) => {
+        if (bodyParts.length > 0) {
+            bodyParts.push(hardline);
+        }
+        bodyParts.push(print(fieldPath as AstPath<AstNode>));
+    }, 'computedFields');
+
+    // Constructor
+    if (node.constructor) {
+        if (bodyParts.length > 0) {
+            bodyParts.push(hardline, hardline);
+        }
+        bodyParts.push(path.call(print, 'constructor'));
+    }
+
+    // Methods
+    path.each((methodPath, index) => {
+        if (bodyParts.length > 0) {
+            bodyParts.push(hardline, hardline);
+        }
+        bodyParts.push(print(methodPath as AstPath<AstNode>));
+    }, 'methods');
+
+    if (bodyParts.length > 0) {
+        parts.push(indent([hardline, ...bodyParts]), hardline);
+    }
+
+    parts.push('}');
+    return parts;
+}
+
+function printFieldDeclaration(
+    path: AstPath<AstNode>,
+    options: FaberOptions,
+    print: (path: AstPath<AstNode>) => Doc,
+): Doc {
+    const node = path.getValue() as any;
+    const parts: Doc[] = [];
+
+    if (node.isPublic) {
+        parts.push('publicus ');
+    }
+
+    if (node.isStatic) {
+        parts.push('generis ');
+    }
+
+    if (node.isReactive) {
+        parts.push('nexum ');
+    }
+
+    parts.push(path.call(print, 'fieldType'), ' ', path.call(print, 'name'));
+
+    if (node.init) {
+        parts.push(': ', path.call(print, 'init'));
+    }
+
+    return parts;
+}
+
+function printComputedFieldDeclaration(
+    path: AstPath<AstNode>,
+    options: FaberOptions,
+    print: (path: AstPath<AstNode>) => Doc,
+): Doc {
+    const node = path.getValue() as any;
+    const parts: Doc[] = [];
+
+    if (node.isPublic) {
+        parts.push('publicus ');
+    }
+
+    if (node.isStatic) {
+        parts.push('generis ');
+    }
+
+    parts.push(
+        path.call(print, 'fieldType'),
+        ' ',
+        path.call(print, 'name'),
+        ' => ',
+        path.call(print, 'expression'),
+    );
+
+    return parts;
+}
+
+function printPactumDeclaration(
+    path: AstPath<AstNode>,
+    options: FaberOptions,
+    print: (path: AstPath<AstNode>) => Doc,
+): Doc {
+    const node = path.getValue() as any;
+    const parts: Doc[] = ['pactum ', path.call(print, 'name')];
+
+    // Type parameters
+    if (node.typeParameters && node.typeParameters.length > 0) {
+        const typeParams = path.map(print, 'typeParameters');
+        parts.push('<', join(', ', typeParams), '>');
+    }
+
+    parts.push(' {');
+
+    const methodParts: Doc[] = [];
+    path.each((methodPath, index) => {
+        if (index > 0) {
+            methodParts.push(hardline);
+        }
+        methodParts.push(print(methodPath as AstPath<AstNode>));
+    }, 'methods');
+
+    if (methodParts.length > 0) {
+        parts.push(indent([hardline, ...methodParts]), hardline);
+    }
+
+    parts.push('}');
+    return parts;
+}
+
+function printPactumMethod(
+    path: AstPath<AstNode>,
+    options: FaberOptions,
+    print: (path: AstPath<AstNode>) => Doc,
+): Doc {
+    const node = path.getValue() as any;
+    const parts: Doc[] = [];
+
+    if (node.async) {
+        parts.push('futura ');
+    }
+
+    parts.push('functio ', path.call(print, 'name'));
+
+    // Parameters
+    const params = path.map(print, 'params');
+    const threshold = getBreakThreshold(options);
+
+    if (params.length >= threshold) {
+        parts.push(group(['(', indent([softline, join([',', line], params)]), softline, ')']));
+    } else if (params.length > 0) {
+        parts.push('(', join(', ', params), ')');
+    } else {
+        parts.push('()');
+    }
+
+    // Return type
+    if (node.returnType) {
+        parts.push(' -> ', path.call(print, 'returnType'));
+    }
+
+    return parts;
+}
+
+function printEmitStatement(
+    path: AstPath<AstNode>,
+    options: FaberOptions,
+    print: (path: AstPath<AstNode>) => Doc,
+): Doc {
+    const node = path.getValue() as any;
+    const parts: Doc[] = ['emitte ', path.call(print, 'event')];
+
+    if (node.data) {
+        parts.push(', ', path.call(print, 'data'));
+    }
+
+    return parts;
+}
+
+function printFacBlockStatement(
+    path: AstPath<AstNode>,
+    options: FaberOptions,
+    print: (path: AstPath<AstNode>) => Doc,
+): Doc {
+    const node = path.getValue() as any;
+    const parts: Doc[] = ['fac ', path.call(print, 'body')];
+
+    if (node.catchClause) {
+        parts.push(hardline, path.call(print, 'catchClause'));
+    }
+
+    return parts;
+}
+
+function printFacExpression(
+    path: AstPath<AstNode>,
+    options: FaberOptions,
+    print: (path: AstPath<AstNode>) => Doc,
+): Doc {
+    const node = path.getValue() as any;
+    const parts: Doc[] = ['pro '];
+
+    if (node.params.length > 0) {
+        const params = path.map(print, 'params');
+        parts.push(join(', ', params), ' ');
+    }
+
+    parts.push('redde ', path.call(print, 'body'));
+
+    return parts;
+}
+
+function printAuscultaExpression(
+    path: AstPath<AstNode>,
+    options: FaberOptions,
+    print: (path: AstPath<AstNode>) => Doc,
+): Doc {
+    return ['ausculta ', path.call(print, 'event')];
 }
 
 function printExpressionStatement(

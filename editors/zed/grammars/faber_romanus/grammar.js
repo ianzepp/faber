@@ -2,22 +2,23 @@
  * Tree-sitter grammar for Faber Romanus
  *
  * A Latin programming language that compiles to TypeScript and Zig.
- * Aligned with fons/parser/index.ts
+ * Aligned with fons/parser/ast.ts
  */
 
 const PREC = {
   COMMA: -1,
   ASSIGN: 0,
-  OR: 1,
-  AND: 2,
-  EQUAL: 3,
-  COMPARE: 4,
-  RANGE: 5,
-  ADD: 6,
-  MULT: 7,
-  UNARY: 8,
-  CALL: 9,
-  MEMBER: 10,
+  TERNARY: 1,
+  OR: 2,
+  AND: 3,
+  EQUAL: 4,
+  COMPARE: 5,
+  RANGE: 6,
+  ADD: 7,
+  MULT: 8,
+  UNARY: 9,
+  CALL: 10,
+  MEMBER: 11,
 };
 
 module.exports = grammar({
@@ -45,7 +46,7 @@ module.exports = grammar({
   conflicts: $ => [
     [$.return_statement],
     [$.primary_expression, $.arrow_function_parameter],
-    [$.statement_block, $.object],
+    [$.block_statement, $.object_expression],
   ],
 
   word: $ => $.identifier,
@@ -55,7 +56,7 @@ module.exports = grammar({
     // Program
     // ==========================================================================
 
-    source_file: $ => repeat($._statement),
+    program: $ => repeat($._statement),
 
     // ==========================================================================
     // Statements
@@ -66,6 +67,9 @@ module.exports = grammar({
       $.variable_declaration,
       $.function_declaration,
       $.type_alias_declaration,
+      $.enum_declaration,
+      $.genus_declaration,
+      $.pactum_declaration,
       $.if_statement,
       $.while_statement,
       $.for_statement,
@@ -79,7 +83,9 @@ module.exports = grammar({
       $.continue_statement,
       $.throw_statement,
       $.scribe_statement,
-      $.statement_block,
+      $.emit_statement,
+      $.fac_block_statement,
+      $.block_statement,
       $.expression_statement,
     ),
 
@@ -101,11 +107,11 @@ module.exports = grammar({
 
     // Variable: varia/fixum [type] name = value (type-first, optional)
     variable_declaration: $ => seq(
-      field("kind", choice("varia", "fixum")),
+      field("kind", choice("varia", "fixum", "figendum", "variandum")),
       choice(
         // Type-first: fixum textus name
         seq(
-          field("type", $.type),
+          field("type", $.type_annotation),
           field("name", $.identifier),
         ),
         // Type inference: fixum name
@@ -130,23 +136,24 @@ module.exports = grammar({
     // Function: [futura] functio name(params) [-> ReturnType] { body }
     function_declaration: $ => seq(
       optional(field("async", "futura")),
+      optional(field("generator", "cursor")),
       "functio",
       field("name", $.identifier),
       field("parameters", $.formal_parameters),
-      optional(seq("->", field("return_type", $.type))),
-      field("body", $.statement_block),
+      optional(seq("->", field("return_type", $.type_annotation))),
+      field("body", $.block_statement),
     ),
 
     formal_parameters: $ => seq(
       "(",
-      sep($.formal_parameter, ","),
+      sep($.parameter, ","),
       ")",
     ),
 
     // Parameter: [preposition] [Type] name
-    formal_parameter: $ => seq(
-      optional(field("preposition", choice("ad", "cum", "in", "ex"))),
-      optional(field("type", $.type)),
+    parameter: $ => seq(
+      optional(field("preposition", choice("ad", "cum", "de", "in", "ex"))),
+      optional(field("type", $.type_annotation)),
       field("name", $.identifier),
     ),
 
@@ -155,7 +162,83 @@ module.exports = grammar({
       "typus",
       field("name", $.identifier),
       "=",
-      field("type", $.type),
+      field("type", $.type_annotation),
+    ),
+
+    // Enum: ordo Name { member1, member2 = value }
+    enum_declaration: $ => seq(
+      "ordo",
+      field("name", $.identifier),
+      "{",
+      sep($.enum_member, ","),
+      optional(","),
+      "}",
+    ),
+
+    enum_member: $ => seq(
+      field("name", $.identifier),
+      optional(seq("=", field("value", $.literal))),
+    ),
+
+    // Genus (class/struct): genus Name<T> implet Interface { fields, methods }
+    genus_declaration: $ => seq(
+      "genus",
+      field("name", $.identifier),
+      optional(field("type_parameters", $.type_parameters)),
+      optional(seq("implet", sep1($.identifier, ","))),
+      "{",
+      repeat(choice(
+        $.field_declaration,
+        $.computed_field_declaration,
+        $.function_declaration,
+      )),
+      "}",
+    ),
+
+    type_parameters: $ => seq(
+      "<",
+      sep1($.identifier, ","),
+      ">",
+    ),
+
+    // Field: [publicus] [generis] [nexum] Type name [: default]
+    field_declaration: $ => seq(
+      optional("publicus"),
+      optional("generis"),
+      optional("nexum"),
+      field("type", $.type_annotation),
+      field("name", $.identifier),
+      optional(seq(":", field("default", $._expression))),
+    ),
+
+    // Computed field: [publicus] [generis] Type name => expression
+    computed_field_declaration: $ => seq(
+      optional("publicus"),
+      optional("generis"),
+      field("type", $.type_annotation),
+      field("name", $.identifier),
+      "=>",
+      field("expression", $._expression),
+    ),
+
+    // Pactum (interface): pactum Name<T> { method signatures }
+    pactum_declaration: $ => seq(
+      "pactum",
+      field("name", $.identifier),
+      optional(field("type_parameters", $.type_parameters)),
+      "{",
+      repeat($.pactum_method),
+      "}",
+    ),
+
+    // Pactum method signature (no body)
+    pactum_method: $ => seq(
+      optional(field("async", "futura")),
+      optional(field("generator", "cursor")),
+      "functio",
+      field("name", $.identifier),
+      field("parameters", $.formal_parameters),
+      optional(seq("->", field("return_type", $.type_annotation))),
     ),
 
     // If: si condition { } [cape err { }] [aliter { }]
@@ -165,7 +248,7 @@ module.exports = grammar({
       seq(
         "si",
         field("condition", $._expression),
-        field("consequence", $.statement_block),
+        field("consequence", $.block_statement),
         optional(field("catch", $.catch_clause)),
         optional(field("alternative", $.else_clause)),
       ),
@@ -183,7 +266,7 @@ module.exports = grammar({
       "aliter",
       choice(
         $.if_statement,
-        $.statement_block,
+        $.block_statement,
         $._statement,
       ),
     ),
@@ -194,7 +277,7 @@ module.exports = grammar({
       seq(
         "dum",
         field("condition", $._expression),
-        field("body", $.statement_block),
+        field("body", $.block_statement),
         optional(field("catch", $.catch_clause)),
       ),
       seq(
@@ -205,15 +288,15 @@ module.exports = grammar({
       ),
     ),
 
-    // For: ex/in iterable pro variable { } [cape err { }]
+    // For: ex/in iterable pro/fit/fiet variable { } [cape err { }]
     // Or: ex/in iterable pro variable ergo statement
     for_statement: $ => choice(
       seq(
         field("kind", choice("ex", "in")),
         field("iterable", $._expression),
-        "pro",
+        field("binding", choice("pro", "fit", "fiet")),
         field("variable", $.identifier),
-        field("body", $.statement_block),
+        field("body", $.block_statement),
         optional(field("catch", $.catch_clause)),
       ),
       seq(
@@ -230,7 +313,7 @@ module.exports = grammar({
     with_statement: $ => seq(
       "cum",
       field("object", $._expression),
-      field("body", $.statement_block),
+      field("body", $.block_statement),
     ),
 
     // Switch: elige expr { si val ergo/{ } ... aliter { } }
@@ -248,7 +331,7 @@ module.exports = grammar({
       seq(
         "si",
         field("test", $._expression),
-        field("consequent", $.statement_block),
+        field("consequent", $.block_statement),
       ),
       seq(
         "si",
@@ -261,7 +344,7 @@ module.exports = grammar({
     switch_default: $ => seq(
       "aliter",
       choice(
-        $.statement_block,
+        $.block_statement,
         $._statement,
       ),
     ),
@@ -277,7 +360,7 @@ module.exports = grammar({
     guard_clause: $ => seq(
       "si",
       field("test", $._expression),
-      field("consequent", $.statement_block),
+      field("consequent", $.block_statement),
     ),
 
     // Assert: adfirma condition [, message]
@@ -290,7 +373,7 @@ module.exports = grammar({
     // Try: tempta { } [cape err { }] [demum { }]
     try_statement: $ => seq(
       "tempta",
-      field("body", $.statement_block),
+      field("body", $.block_statement),
       optional(field("handler", $.catch_clause)),
       optional(field("finalizer", $.finally_clause)),
     ),
@@ -298,12 +381,12 @@ module.exports = grammar({
     catch_clause: $ => seq(
       "cape",
       field("parameter", $.identifier),
-      field("body", $.statement_block),
+      field("body", $.block_statement),
     ),
 
     finally_clause: $ => seq(
       "demum",
-      field("body", $.statement_block),
+      field("body", $.block_statement),
     ),
 
     return_statement: $ => seq(
@@ -316,17 +399,31 @@ module.exports = grammar({
     continue_statement: $ => "perge",
 
     throw_statement: $ => seq(
-      "iace",
+      choice("iace", "mori"),
       $._expression,
     ),
 
-    // Scribe: scribe expr [, expr, ...]
+    // Scribe: scribe/vide/mone expr [, expr, ...]
     scribe_statement: $ => seq(
-      "scribe",
+      choice("scribe", "vide", "mone"),
       sep1($._expression, ","),
     ),
 
-    statement_block: $ => seq(
+    // Emit: emitte event [, data]
+    emit_statement: $ => seq(
+      "emitte",
+      field("event", $._expression),
+      optional(seq(",", field("data", $._expression))),
+    ),
+
+    // Fac block: fac { } [cape err { }]
+    fac_block_statement: $ => seq(
+      "fac",
+      field("body", $.block_statement),
+      optional(field("catch", $.catch_clause)),
+    ),
+
+    block_statement: $ => seq(
       "{",
       repeat($._statement),
       "}",
@@ -336,11 +433,13 @@ module.exports = grammar({
     // Types
     // ==========================================================================
 
-    type: $ => seq(
+    type_annotation: $ => prec.right(seq(
+      optional(field("preposition", choice("de", "in"))),
       field("name", $.type_identifier),
       optional(field("arguments", $.type_arguments)),
       optional("?"),
-    ),
+      optional(seq("|", $.type_annotation)),
+    )),
 
     // Type names: case-insensitive (textus, textus, TEXTUS all work)
     // Convention: lowercase preferred (Latin had no case distinction)
@@ -348,7 +447,7 @@ module.exports = grammar({
 
     type_arguments: $ => seq(
       "<",
-      sep1(choice($.type, $.number, $.type_modifier), ","),
+      sep1(choice($.type_annotation, $.number, $.type_modifier), ","),
       ">",
     ),
 
@@ -365,13 +464,16 @@ module.exports = grammar({
 
     _expression: $ => choice(
       $.assignment_expression,
+      $.conditional_expression,
       $.binary_expression,
       $.unary_expression,
       $.await_expression,
+      $.ausculta_expression,
       $.call_expression,
       $.member_expression,
       $.subscript_expression,
-      $.arrow_function,
+      $.arrow_function_expression,
+      $.fac_expression,
       $.new_expression,
       $.range_expression,
       $.parenthesized_expression,
@@ -380,15 +482,11 @@ module.exports = grammar({
 
     primary_expression: $ => choice(
       $.identifier,
-      $.number,
-      $.string,
-      $.template_string,
-      $.true,
-      $.false,
-      $.null,
-      $.self,
-      $.array,
-      $.object,
+      $.this_expression,
+      $.literal,
+      $.template_literal,
+      $.array_expression,
+      $.object_expression,
     ),
 
     _expressions: $ => choice(
@@ -408,11 +506,30 @@ module.exports = grammar({
       field("right", $._expression),
     )),
 
+    // Ternary: condition sic consequent secus alternate
+    // Or: condition ? consequent : alternate
+    conditional_expression: $ => prec.right(PREC.TERNARY, choice(
+      seq(
+        field("test", $._expression),
+        "sic",
+        field("consequent", $._expression),
+        "secus",
+        field("alternate", $._expression),
+      ),
+      seq(
+        field("test", $._expression),
+        "?",
+        field("consequent", $._expression),
+        ":",
+        field("alternate", $._expression),
+      ),
+    )),
+
     binary_expression: $ => choice(
       ...[
         [choice("aut", "||"), PREC.OR],
         [choice("et", "&&"), PREC.AND],
-        [choice("==", "!="), PREC.EQUAL],
+        [choice("==", "!=", "est"), PREC.EQUAL],
         [choice("<", "<=", ">", ">="), PREC.COMPARE],
         [choice("+", "-"), PREC.ADD],
         [choice("*", "/", "%"), PREC.MULT],
@@ -426,13 +543,19 @@ module.exports = grammar({
     ),
 
     unary_expression: $ => prec.right(PREC.UNARY, seq(
-      field("operator", choice("!", "non", "-", "+", "nulla", "nonnulla")),
+      field("operator", choice("!", "non", "-", "+", "nulla", "nonnulla", "negativum", "positivum")),
       field("argument", $._expression),
     )),
 
     await_expression: $ => prec.right(PREC.UNARY, seq(
       "cede",
       $._expression,
+    )),
+
+    // Ausculta (event stream): ausculta eventName
+    ausculta_expression: $ => prec.right(PREC.UNARY, seq(
+      "ausculta",
+      field("event", $._expression),
     )),
 
     call_expression: $ => prec(PREC.CALL, seq(
@@ -459,24 +582,35 @@ module.exports = grammar({
       "]",
     )),
 
-    arrow_function: $ => prec.right(seq(
+    // Arrow function: (params) => body
+    arrow_function_expression: $ => prec.right(seq(
+      optional(field("async", "futura")),
       choice(
         $.arrow_function_parameter,
         seq("(", sep($.arrow_function_parameter, ","), ")"),
       ),
       "=>",
-      field("body", choice($._expression, $.statement_block)),
+      field("body", choice($._expression, $.block_statement)),
     )),
 
     arrow_function_parameter: $ => seq(
-      optional(field("type", $.type)),
+      optional(field("type", $.type_annotation)),
       field("name", $.identifier),
     ),
+
+    // Fac expression (lambda): pro params redde expr
+    fac_expression: $ => prec.right(seq(
+      "pro",
+      optional(sep1($.identifier, ",")),
+      "redde",
+      field("body", $._expression),
+    )),
 
     new_expression: $ => prec.right(PREC.CALL, seq(
       "novum",
       field("callee", $.identifier),
       optional($.arguments),
+      optional(seq("cum", field("with", $.object_expression))),
     )),
 
     // Range: start..end [per step]
@@ -499,6 +633,17 @@ module.exports = grammar({
 
     identifier: $ => /[a-z_][a-zA-Z0-9_]*/,
 
+    this_expression: $ => "ego",
+
+    // Unified literal for numbers, strings, booleans, null
+    literal: $ => choice(
+      $.number,
+      $.string,
+      $.true,
+      $.false,
+      $.null,
+    ),
+
     number: $ => /\d+(\.\d+)?/,
 
     string: $ => choice(
@@ -506,7 +651,7 @@ module.exports = grammar({
       seq("'", repeat(choice(/[^'\\]/, /\\./)), "'"),
     ),
 
-    template_string: $ => seq(
+    template_literal: $ => seq(
       "`",
       repeat(choice(
         $._template_chars,
@@ -526,21 +671,20 @@ module.exports = grammar({
     true: $ => "verum",
     false: $ => "falsum",
     null: $ => "nihil",
-    self: $ => "ego",
 
-    array: $ => seq(
+    array_expression: $ => seq(
       "[",
       sep($._expression, ","),
       "]",
     ),
 
-    object: $ => seq(
+    object_expression: $ => seq(
       "{",
-      sep($.pair, ","),
+      sep($.object_property, ","),
       "}",
     ),
 
-    pair: $ => seq(
+    object_property: $ => seq(
       field("key", choice($.identifier, $.string)),
       ":",
       field("value", $._expression),
