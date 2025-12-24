@@ -570,12 +570,9 @@ export function parse(tokens: Token[]): ParserResult {
             return parseTryStatement();
         }
 
-        if (checkKeyword('fac')) {
-            // fac { } is block statement, fac x fit expr is lambda (expression)
-            if (peek(1).type === 'LBRACE') {
-                return parseFacBlockStatement();
-            }
-            // Lambda falls through to expression statement parsing
+        // fac { } cape { } is block with optional catch (see parseFacBlockStatement)
+        if (checkKeyword('fac') && peek(1).type === 'LBRACE') {
+            return parseFacBlockStatement();
         }
 
         if (check('LBRACE')) {
@@ -2538,9 +2535,9 @@ export function parse(tokens: Token[]): ParserResult {
             return { type: 'Literal', value: null, raw: 'nihil', position };
         }
 
-        // Lambda expression: fac x fit expr, fac x, y fit expr, fac fit expr
-        if (checkKeyword('fac')) {
-            return parseFacExpression();
+        // Lambda expression: pro x redde expr, pro x, y redde expr, pro redde expr
+        if (checkKeyword('pro')) {
+            return parseProExpression();
         }
 
         // Number literal
@@ -2697,46 +2694,39 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     /**
-     * Parse fac expression (lambda/anonymous function).
+     * Parse pro expression (lambda/anonymous function).
      *
      * GRAMMAR:
-     *   facExpr := 'fac' params? ('fit' | 'fiet') expression
+     *   proExpr := 'pro' params? 'redde' expression
      *   params := IDENTIFIER (',' IDENTIFIER)*
      *
-     * WHY: Latin 'fac' (do) + 'fit' (becomes) creates lambda syntax.
-     *      'fiet' (will become) for async lambdas.
-     *      Zero-param: fac fit expr -> () => expr
-     *      Single param: fac x fit expr -> (x) => expr
-     *      Multi param: fac x, y fit expr -> (x, y) => expr
+     * WHY: Latin 'pro' (for) + 'redde' (return) creates lambda syntax.
+     *      Zero-param: pro redde expr -> () => expr
+     *      Single param: pro x redde expr -> (x) => expr
+     *      Multi param: pro x, y redde expr -> (x, y) => x + y
+     *      Async: use block form pro x { redde cede fetch(x) }
      */
-    function parseFacExpression(): FacExpression {
+    function parseProExpression(): FacExpression {
         const position = peek().position;
 
-        expectKeyword('fac', ParserErrorCode.ExpectedKeywordFac);
+        expectKeyword('pro', ParserErrorCode.ExpectedKeywordPro);
 
         const params: Identifier[] = [];
-        let async = false;
 
-        // Check for immediate fit/fiet (zero-param lambda)
-        if (!checkKeyword('fit') && !checkKeyword('fiet')) {
-            // Parse parameters until we hit fit/fiet
+        // Check for immediate redde (zero-param lambda)
+        if (!checkKeyword('redde')) {
+            // Parse parameters until we hit redde
             do {
                 params.push(parseIdentifier());
             } while (match('COMMA'));
         }
 
-        // Check for fit (sync) or fiet (async)
-        if (matchKeyword('fiet')) {
-            async = true;
-        }
-        else {
-            expectKeyword('fit', ParserErrorCode.ExpectedKeywordFit);
-        }
+        expectKeyword('redde', ParserErrorCode.ExpectedKeywordRedde);
 
         // Parse the body expression
         const body = parseExpression();
 
-        return { type: 'FacExpression', params, body, async, position };
+        return { type: 'FacExpression', params, body, async: false, position };
     }
 
     /**

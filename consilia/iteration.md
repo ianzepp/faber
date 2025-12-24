@@ -5,7 +5,7 @@
 | Feature | Status | Notes |
 |---------|--------|-------|
 | `ex...pro/fit/fiet` loops | Done | For-of iteration |
-| `in...pro/fit` loops | Done | For-in iteration |
+| `in...pro/fit/fiet` loops | Done | For-in iteration |
 | Range `0..10` | Done | Inclusive endpoints |
 | Range step `per` | Done | `0..10 per 2` |
 | `dum` while loop | Done | Basic while |

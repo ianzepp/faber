@@ -1568,34 +1568,29 @@ describe('codegen', () => {
             });
         });
 
-        describe('fac expression (lambda)', () => {
+        describe('pro expression (lambda)', () => {
             test('single param lambda', () => {
-                const js = compile('fac x fit x * 2');
+                const js = compile('pro x redde x * 2');
                 expect(js).toBe('(x) => (x * 2);');
             });
 
             test('multi param lambda', () => {
-                const js = compile('fac x, y fit x + y');
+                const js = compile('pro x, y redde x + y');
                 expect(js).toBe('(x, y) => (x + y);');
             });
 
             test('zero param lambda', () => {
-                const js = compile('fac fit 42');
+                const js = compile('pro redde 42');
                 expect(js).toBe('() => 42;');
             });
 
-            test('async lambda with fiet', () => {
-                const js = compile('fac url fiet fetch(url)');
-                expect(js).toBe('async (url) => fetch(url);');
-            });
-
             test('lambda used in variable declaration', () => {
-                const js = compile('fixum double = fac x fit x * 2');
+                const js = compile('fixum double = pro x redde x * 2');
                 expect(js).toBe('const double = (x) => (x * 2);');
             });
 
             test('lambda as method argument', () => {
-                const js = compile('items.filtrata(fac x fit x > 0)');
+                const js = compile('items.filtrata(pro x redde x > 0)');
                 expect(js).toBe('items.filter((x) => (x > 0));');
             });
         });

@@ -148,14 +148,14 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `est` (strict equality) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
 | `aut` (logical or) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
 
-## Arrow/Lambda Operators
+## Lambda Syntax
 
 | Feature | TypeScript | Zig | Python | WASM | Rust | C++23 |
 |---------|:----------:|:---:|:------:|:----:|:----:|:-----:|
-| `fit` (-> sync single) | [~] | [~] | [~] | [ ] | [ ] | [ ] |
-| `fiet` (async ->) | [~] | [ ] | [~] | [ ] | [ ] | [ ] |
-| `fiunt` (yields ->, generator) | [~] | [-] | [~] | [ ] | [ ] | [ ] |
-| `fient` (async yields ->) | [~] | [-] | [~] | [ ] | [ ] | [ ] |
+| `pro x redde expr` (expression) | [x] | [~] | [~] | [ ] | [ ] | [ ] |
+| `pro x { body }` (block) | [x] | [~] | [~] | [ ] | [ ] | [ ] |
+| `pro redde expr` (zero-param) | [x] | [~] | [~] | [ ] | [ ] | [ ] |
+| `(x) => expr` (JS-style) | [x] | [~] | [~] | [ ] | [ ] | [ ] |
 
 ## OOP Features (genus/pactum)
 

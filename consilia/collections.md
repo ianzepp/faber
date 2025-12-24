@@ -360,10 +360,10 @@ users.filtra(pro user {
 })
 ```
 
-**`pro var fit expr` expression form:**
+**`pro var redde expr` expression form:**
 ```
-users.filtra(pro user fit user.activus et user.verificatus)
-lista.mappa(pro item fit item.nomen)
+users.filtra(pro user redde user.activus et user.verificatus)
+lista.mappa(pro item redde item.nomen)
 ```
 
 **`var => { }` (supported — familiar to JS/TS developers):**
@@ -387,7 +387,7 @@ The `pro` keyword aligns with iteration: `ex items pro x { }` iterates, `pro x {
 | `cum a descendens` | Sort direction | `ordina(cum aetas descendens)` |
 | `{ .property }` | Expressions | `filtra({ .aetas > 18 })` |
 | `{ redde ... }` | Multi-statement | `mappa({ redde .x + .y })` |
-| `pro v fit expr` | Expression closure | `mappa(pro x fit x * 2)` |
+| `pro v redde expr` | Expression closure | `mappa(pro x redde x * 2)` |
 | `pro v { }` | Block closure (preferred) | `filtra(pro u { ... })` |
 | `v => { }` | Block closure (JS-style) | `filtra(u => { ... })` |
 

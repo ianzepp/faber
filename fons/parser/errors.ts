@@ -260,11 +260,11 @@ export const PARSER_ERRORS = {
     },
     [ParserErrorCode.ExpectedKeywordFac]: {
         text: "Expected 'fac'",
-        help: "Block scopes use 'fac' (do) keyword: fac { ... } or lambdas: fac x fit x * 2",
+        help: "Block scopes use 'fac' (do) keyword: fac { ... } cape { ... }",
     },
     [ParserErrorCode.ExpectedKeywordFit]: {
-        text: "Expected 'fit' or 'fiet'",
-        help: "Lambdas require 'fit' (becomes) or 'fiet' (will become) after parameters: fac x fit x * 2",
+        text: "Expected 'fit'",
+        help: "Return type uses 'fit' (becomes): functio f() fit textus { }",
     },
     [ParserErrorCode.ExpectedKeywordOrdo]: {
         text: "Expected 'ordo'",

@@ -1463,16 +1463,14 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     }
 
     /**
-     * Generate fac expression (lambda/anonymous function).
+     * Generate pro expression (lambda/anonymous function).
      *
      * TRANSFORMS:
-     *   fac x fit x * 2 -> (x) => x * 2
-     *   fac x, y fit x + y -> (x, y) => x + y
-     *   fac fit 42 -> () => 42
-     *   fac url fiet getData(url) -> async (url) => await getData(url)
+     *   pro x redde x * 2 -> (x) => x * 2
+     *   pro x, y redde x + y -> (x, y) => x + y
+     *   pro redde 42 -> () => 42
      *
-     * WHY: Latin fac (do) + fit (becomes) creates arrow functions.
-     *      fiet makes it async.
+     * WHY: Latin pro (for) + redde (return) creates arrow functions.
      */
     function genFacExpression(node: FacExpression): string {
         const params = node.params.map(p => p.name).join(', ');

@@ -5,17 +5,18 @@
 // Clausura: Latin for "closure" (from claudere, to close)
 //
 // GRAMMAR:
-// pro <params> fit <expr>                 // expression lambda
-// pro <params> { <body> }                 // block lambda
-// pro { <body> }                          // zero-param lambda
+// pro <params> redde <expr>             // expression lambda
+// pro <params> { <body> }               // block lambda
+// pro { <body> }                        // zero-param lambda
 //
 // ETYMOLOGY:
 // pro: "for" - same keyword as iteration (ex items pro x { })
-// fit: "becomes" (passive of fieri)
+// redde: "return" (give back)
 //
-// WHY "pro" for lambdas:
+// WHY "pro...redde" for lambdas:
 // Aligns with iteration: "ex items pro x { }" and "pro x { }" both use pro
-// Reads naturally: "for x, becomes x times 2" or "for x, do { ... }"
+// Reads naturally: "for x, return x times 2"
+// Consistent with function bodies using redde
 //
 // SEE ALSO: errores.fab for fac/cape block scope and error handling
 
@@ -34,19 +35,19 @@ varia users = []
 varia items = []
 
 // =============================================================================
-// PART 1: EXPRESSION LAMBDAS (pro x fit expr)
+// PART 1: EXPRESSION LAMBDAS (pro x redde expr)
 // =============================================================================
 
 // Single parameter - expression lambda
-fixum double = pro x fit x * 2
+fixum double = pro x redde x * 2
 scribe double(5)  // 10
 
 // Multiple parameters
-fixum add = pro a, b fit a + b
+fixum add = pro a, b redde a + b
 scribe add(3, 4)  // 7
 
 // Zero parameters - expression form
-fixum getAnswer = pro fit 42
+fixum getAnswer = pro redde 42
 scribe getAnswer()  // 42
 
 // =============================================================================
@@ -80,9 +81,9 @@ fixum greet = pro {
 fixum numbers = [1, 2, 3, 4, 5]
 
 // Expression lambdas - clean for simple transforms
-fixum evens = numbers.filtrata(pro n fit n % 2 == 0)
-fixum doubled = numbers.mappata(pro n fit n * 2)
-fixum sum = numbers.reducta(pro acc, n fit acc + n, 0)
+fixum evens = numbers.filtrata(pro n redde n % 2 == 0)
+fixum doubled = numbers.mappata(pro n redde n * 2)
+fixum sum = numbers.reducta(pro acc, n redde acc + n, 0)
 
 // Block lambdas - for complex logic
 fixum processed = numbers.filtrata(pro n {
@@ -96,7 +97,7 @@ fixum processed = numbers.filtrata(pro n {
 // -----------------------------------------------------------------------------
 
 // Curried add function
-fixum curriedAdd = pro x fit pro y fit x + y
+fixum curriedAdd = pro x redde pro y redde x + y
 fixum addFive = curriedAdd(5)
 scribe addFive(3)  // 8
 
@@ -116,9 +117,9 @@ button.addEventListener("click", pro e {
 
 // Promise chains - expression form for one-liners
 fetchData()
-    .then(pro data fit process(data))
-    .then(pro result fit display(result))
-    .catch(pro error fit logError(error))
+    .then(pro data redde process(data))
+    .then(pro result redde display(result))
+    .catch(pro error redde logError(error))
 
 // Promise with block for complex handling
 fetchData()
@@ -143,7 +144,7 @@ fetchData()
 fixum arrowDouble = (x) => x * 2
 
 // Pro lambda syntax (Latin-aligned)
-fixum proDouble = pro x fit x * 2
+fixum proDouble = pro x redde x * 2
 
 // Arrow with block body
 fixum arrowComplex = (x) => {
@@ -158,7 +159,7 @@ fixum proComplex = pro x {
 }
 
 // When to use which:
-// - pro x fit expr: Short expression lambdas, Latin style
+// - pro x redde expr: Short expression lambdas, Latin style
 // - pro x { }: Block lambdas with multiple statements
 // - pro { }: Zero-param callbacks
 // - (x) => expr: JS-familiar alternative
@@ -169,10 +170,10 @@ fixum proComplex = pro x {
 // =============================================================================
 
 // Filtering - expression lambda reads well
-users.filtrata(pro u fit u.active)
+users.filtrata(pro u redde u.active)
 
 // Mapping - expression lambda reads well
-items.mappata(pro i fit i.price * 1.1)
+items.mappata(pro i redde i.price * 1.1)
 
 // Complex filtering - block lambda for clarity
 users.filtrata(pro user {
@@ -187,7 +188,6 @@ conn.onClose(pro { cleanup() })
 conn.onError(pro err { logError(err) })
 
 // Higher-order functions returning lambdas
-fixum multiplier = pro factor fit pro x fit x * factor
+fixum multiplier = pro factor redde pro x redde x * factor
 fixum double = multiplier(2)
 fixum triple = multiplier(3)
-

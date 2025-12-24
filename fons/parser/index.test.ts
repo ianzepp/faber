@@ -1847,9 +1847,9 @@ describe('parser', () => {
             });
         });
 
-        describe('fac expression (lambda)', () => {
+        describe('pro expression (lambda)', () => {
             test('single param lambda', () => {
-                const { program } = parseCode('fac x fit x * 2');
+                const { program } = parseCode('pro x redde x * 2');
                 const expr = (program!.body[0] as any).expression;
 
                 expect(expr.type).toBe('FacExpression');
@@ -1860,7 +1860,7 @@ describe('parser', () => {
             });
 
             test('multi param lambda', () => {
-                const { program } = parseCode('fac a, b fit a + b');
+                const { program } = parseCode('pro a, b redde a + b');
                 const expr = (program!.body[0] as any).expression;
 
                 expect(expr.type).toBe('FacExpression');
@@ -1870,7 +1870,7 @@ describe('parser', () => {
             });
 
             test('zero param lambda', () => {
-                const { program } = parseCode('fac fit 42');
+                const { program } = parseCode('pro redde 42');
                 const expr = (program!.body[0] as any).expression;
 
                 expect(expr.type).toBe('FacExpression');
@@ -1878,17 +1878,8 @@ describe('parser', () => {
                 expect(expr.body.value).toBe(42);
             });
 
-            test('async lambda with fiet', () => {
-                const { program } = parseCode('fac url fiet getData(url)');
-                const expr = (program!.body[0] as any).expression;
-
-                expect(expr.type).toBe('FacExpression');
-                expect(expr.async).toBe(true);
-                expect(expr.params[0].name).toBe('url');
-            });
-
             test('lambda in variable declaration', () => {
-                const { program } = parseCode('fixum double = fac x fit x * 2');
+                const { program } = parseCode('fixum double = pro x redde x * 2');
                 const decl = program!.body[0] as any;
 
                 expect(decl.type).toBe('VariableDeclaration');
@@ -1896,7 +1887,7 @@ describe('parser', () => {
             });
 
             test('nested lambdas', () => {
-                const { program } = parseCode('fac x fit fac y fit x + y');
+                const { program } = parseCode('pro x redde pro y redde x + y');
                 const expr = (program!.body[0] as any).expression;
 
                 expect(expr.type).toBe('FacExpression');

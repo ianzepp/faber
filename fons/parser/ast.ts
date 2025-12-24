@@ -820,25 +820,24 @@ export interface FacBlockStatement extends BaseNode {
 }
 
 /**
- * Fac expression (lambda/anonymous function).
+ * Pro expression (lambda/anonymous function).
  *
  * GRAMMAR (in EBNF):
- *   facExpr := 'fac' params? ('fit' | 'fiet') expression
+ *   proExpr := 'pro' params? 'redde' expression
  *   params := IDENTIFIER (',' IDENTIFIER)*
  *
  * INVARIANT: params is always an array (empty for zero-arg lambdas).
- * INVARIANT: async is true when 'fiet' used, false for 'fit'.
+ * INVARIANT: async is always false (use block form for async).
  * INVARIANT: body is always an Expression (no block body syntax).
  *
- * WHY: Latin 'fac' (do) + 'fit' (becomes) creates lambda syntax.
- *      'fiet' (will become) for async lambdas.
- *      Expression-only body reads naturally: "do x, becoming x * 2"
+ * WHY: Latin 'pro' (for) + 'redde' (return) creates lambda syntax.
+ *      Expression-only body reads naturally: "for x, return x * 2"
+ *      Async lambdas use block form: pro x { redde cede fetch(x) }
  *
  * Examples:
- *   fac x fit x * 2           -> (x) => x * 2
- *   fac x, y fit x + y        -> (x, y) => x + y
- *   fac fit 42                -> () => 42
- *   fac url fiet getData(url) -> async (url) => await getData(url)
+ *   pro x redde x * 2     -> (x) => x * 2
+ *   pro x, y redde x + y  -> (x, y) => x + y
+ *   pro redde 42          -> () => 42
  */
 export interface FacExpression extends BaseNode {
     type: 'FacExpression';

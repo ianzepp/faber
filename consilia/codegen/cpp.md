@@ -261,7 +261,7 @@ Faber's `pro` lambdas map to C++ lambdas:
 
 ```
 // Faber
-pro x fit x * 2
+pro x redde x * 2
 
 // C++23
 [](auto x) { return x * 2; }
@@ -288,7 +288,7 @@ pro user {
 ```
 // Faber
 fixum multiplier = 2
-pro x fit x * multiplier
+pro x redde x * multiplier
 
 // C++23 - captures by value by default
 [multiplier](auto x) { return x * multiplier; }
@@ -385,7 +385,7 @@ C++23 ranges provide functional-style list operations:
 
 ```
 // Faber
-fixum result = items.filtrata(pro x fit x > 0).mappata(pro x fit x * 2).prima(5)
+fixum result = items.filtrata(pro x redde x > 0).mappata(pro x redde x * 2).prima(5)
 ```
 
 **C++23:**

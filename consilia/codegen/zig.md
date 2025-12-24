@@ -249,16 +249,16 @@ Faber uses `pro` for lambdas/closures, aligning with iteration syntax (`ex items
 ### Syntax
 
 ```
-pro <params> fit <expr>   // expression lambda
-pro <params> { <body> }   // block lambda
+pro <params> redde <expr>   // expression lambda
+pro <params> { <body> }     // block lambda
 ```
 
 ### Examples
 
 ```
 // Expression lambdas
-fixum double = pro x fit x * 2
-fixum add = pro x, y fit x + y
+fixum double = pro x redde x * 2
+fixum add = pro x, y redde x + y
 
 // Block lambdas
 lista.filtra(pro user {
@@ -270,12 +270,12 @@ lista.filtra(pro user {
 button.onClick(pro { scribe "clicked" })
 
 // With higher-order functions
-lista.mappa(pro item fit item.nomen)
-lista.reducta(pro acc, x fit acc + x, 0)
-lista.filtra(pro x fit x > 0)
+lista.mappa(pro item redde item.nomen)
+lista.reducta(pro acc, x redde acc + x, 0)
+lista.filtra(pro x redde x > 0)
 ```
 
-Reads as: "for x, becomes x times 2" — same `pro` as iteration.
+Reads as: "for x, return x times 2" — same `pro` as iteration.
 
 ### Zig Output
 
@@ -284,7 +284,7 @@ Zig doesn't have closures. Lambdas compile to function pointers with explicit co
 **Expression lambda:**
 ```
 // Faber
-pro x fit x * 2
+pro x redde x * 2
 
 // Zig
 struct { fn call(x: i64) i64 { return x * 2; } }.call
@@ -311,7 +311,7 @@ struct {
 ```
 // Faber
 fixum multiplier = 2
-pro x fit x * multiplier
+pro x redde x * multiplier
 
 // Zig - context struct
 const Context = struct { multiplier: i64 };
@@ -488,7 +488,7 @@ Remaining tensions:
 1. ~~**Allocator threading**~~ - Solved: arena allocator with implicit threading
 2. ~~**Ownership annotations**~~ - Solved: `de`/`in` prepositions (shared with Rust)
 3. ~~**Error handling**~~ - Solved: `iace`/`mori` split, `fac`/`cape` for blocks
-4. ~~**Lambda syntax**~~ - Solved: `pro x fit expr` / `pro x { }` with context struct for captures
+4. ~~**Lambda syntax**~~ - Solved: `pro x redde expr` / `pro x { }` with context struct for captures
 5. **Iterator pattern** - Manual struct for generators
 6. **Comptime generics** - `fn(comptime T: type)` for generic types
 7. **Build integration** - Generate `build.zig` for projects
