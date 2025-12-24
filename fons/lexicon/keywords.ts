@@ -176,7 +176,11 @@ export const keywords: KeywordEntry[] = [
     // ---------------------------------------------------------------------------
 
     // WHY: Latin prepositions govern grammatical cases and express relationships
-    { latin: 'in', meaning: 'in', category: 'preposition' },
+    // WHY: 'de' and 'in' also encode ownership semantics for systems targets (Rust/Zig):
+    //      de = borrowed/read-only (&T, []const u8)
+    //      in = mutable borrow (&mut T, *T)
+    { latin: 'de', meaning: 'from/concerning', category: 'preposition' },
+    { latin: 'in', meaning: 'in/into', category: 'preposition' },
     { latin: 'ex', meaning: 'of', category: 'preposition' },
     { latin: 'cum', meaning: 'with', category: 'preposition' },
     { latin: 'ad', meaning: 'to', category: 'preposition' },

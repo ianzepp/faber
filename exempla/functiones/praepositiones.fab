@@ -1,0 +1,176 @@
+// =============================================================================
+// PRAEPOSITIONES - Ownership Prepositions for Systems Targets
+// =============================================================================
+//
+// Latin prepositions can annotate ownership semantics for systems targets
+// (Rust, Zig). These prepositions are optional and have no effect on
+// TypeScript/Python targets.
+//
+// PREPOSITIONS:
+// de = borrowed, read-only (&T in Rust, []const u8 in Zig)
+// in = mutable borrow (&mut T in Rust, *T in Zig)
+// (none) = owned value (T in Rust, allocator-managed in Zig)
+//
+// GRAMMAR:
+// parameter: (de | in)? <type> <name>
+// return:    fit (de | in)? <type>
+//            -> (de | in)? <type>
+//
+// WHY PREPOSITIONS:
+// - Natural Latin syntax ("de textus" = "concerning the string")
+// - Maps directly to Rust/Zig borrow semantics
+// - Accessible to non-systems programmers
+
+// =============================================================================
+// BORROWED PARAMETERS (de)
+// =============================================================================
+
+// "de" indicates a borrowed, read-only parameter
+// The caller retains ownership; the function only reads the value.
+// Rust: &str, Zig: []const u8
+
+functio longitudo(de textus s) -> numerus {
+    redde s.longitudo
+}
+
+scribe longitudo("Salve Mundus")
+
+// Multiple borrowed parameters
+functio compara(de textus a, de textus b) -> bivalens {
+    redde a == b
+}
+
+scribe compara("alpha", "alpha")
+scribe compara("alpha", "beta")
+
+// Borrowed list - reads elements without consuming the list
+functio summa(de lista<numerus> numeri) -> numerus {
+    varia total = 0
+    ex numeri pro n {
+        total = total + n
+    }
+    redde total
+}
+
+scribe summa([1, 2, 3, 4, 5])
+
+// =============================================================================
+// MUTABLE PARAMETERS (in)
+// =============================================================================
+
+// "in" indicates a mutable borrow
+// The function can modify the value in place.
+// Rust: &mut T, Zig: *T
+
+functio adde(in lista<numerus> items, numerus value) {
+    items.adde(value)
+}
+
+varia numeri = [1, 2, 3]
+adde(numeri, 4)
+scribe numeri
+
+// Clearing a mutable list
+functio vacua(in lista<textus> items) {
+    items.vacua()
+}
+
+// Modifying a mutable parameter (conceptual - string concat creates new value)
+// For true mutation, use collections like lista with adde()
+functio describe(in lista<textus> buffer, textus prefix) {
+    buffer.adde(prefix)
+}
+
+// =============================================================================
+// BORROWED RETURN TYPES
+// =============================================================================
+
+// Return types can also use "de" to indicate borrowed returns.
+// The returned value borrows from one of the input parameters.
+// Only valid for sync functions (fit, not fiet).
+
+// Borrowing return - returns a reference tied to input lifetime
+functio primus(de lista<textus> items) fit de textus {
+    redde items[0]
+}
+
+scribe primus(["alpha", "beta", "gamma"])
+
+// Using arrow syntax
+functio ultimus(de lista<numerus> items) -> de numerus {
+    redde items[items.longitudo - 1]
+}
+
+scribe ultimus([10, 20, 30, 40])
+
+// Returning the longer of two strings (borrowed)
+functio longior(de textus a, de textus b) fit de textus {
+    si a.longitudo > b.longitudo {
+        redde a
+    }
+    redde b
+}
+
+scribe longior("brevis", "longissimus")
+
+// =============================================================================
+// MIXED OWNERSHIP
+// =============================================================================
+
+// Combining borrowed and owned parameters
+// "source" is borrowed (de), "suffix" is owned (consumed)
+functio appendCopy(de textus source, textus suffix) -> textus {
+    redde source + suffix
+}
+
+scribe appendCopy("Salve ", "Mundus")
+
+// Borrowed read, mutable write
+functio copia(de lista<numerus> source, in lista<numerus> dest) {
+    ex source pro item {
+        dest.adde(item)
+    }
+}
+
+// =============================================================================
+// OWNERSHIP IN GENUS METHODS
+// =============================================================================
+
+genus Persona {
+    textus nomen
+    numerus aetas
+
+    // Method with borrowed self (implicit de ego)
+    functio describe() -> textus {
+        redde ego.nomen + " (" + ego.aetas + ")"
+    }
+
+    // Method that borrows a string parameter
+    functio saluta(de textus otherNomen) -> textus {
+        redde ego.nomen + " salutat " + otherNomen
+    }
+
+    // Method with mutable list parameter
+    functio addToList(in lista<textus> nomina) {
+        nomina.adde(ego.nomen)
+    }
+}
+
+fixum marcus = novum Persona cum { nomen: "Marcus", aetas: 30 }
+fixum julia = novum Persona cum { nomen: "Julia", aetas: 25 }
+
+scribe marcus.describe()
+scribe marcus.saluta(julia.nomen)
+
+// =============================================================================
+// NOTES FOR SYSTEMS TARGETS
+// =============================================================================
+
+// For TypeScript/Python: These prepositions are parsed but have no effect
+// on code generation. All values are passed by reference (JS) or by value
+// with copy-on-write semantics.
+
+// For Rust: Generates proper borrow annotations (&, &mut, owned)
+// For Zig: Generates pointer types and const slices
+
+// See consilia/codegen/rust.md and consilia/codegen/zig.md for details.

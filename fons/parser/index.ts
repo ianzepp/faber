@@ -384,7 +384,7 @@ export function parse(tokens: Token[]): ParserResult {
      * @returns true if token is a preposition keyword
      */
     function isPreposition(token: Token): boolean {
-        return token.type === 'KEYWORD' && ['ad', 'cum', 'in', 'ex'].includes(token.keyword ?? '');
+        return token.type === 'KEYWORD' && ['ad', 'cum', 'de', 'in', 'ex'].includes(token.keyword ?? '');
     }
 
     // =============================================================================
@@ -803,11 +803,12 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse single function parameter.
      *
      * GRAMMAR:
-     *   parameter := ('ad' | 'cum' | 'in' | 'ex')? (typeAnnotation IDENTIFIER | IDENTIFIER)
+     *   parameter := ('ad' | 'cum' | 'de' | 'in' | 'ex')? (typeAnnotation IDENTIFIER | IDENTIFIER)
      *
      * WHY: Type-first syntax: "textus name" or "ad textus recipientem"
      *      Prepositional prefixes indicate semantic roles:
-     *      ad = toward/to, cum = with, in = in/into, ex = from/out of
+     *      ad = toward/to, cum = with, de = from/concerning (borrowed),
+     *      in = in/into (mutable), ex = from/out of
      *
      * EDGE: Preposition comes first (if present), then type (if present), then identifier.
      */
@@ -2524,10 +2525,23 @@ export function parse(tokens: Token[]): ParserResult {
     // =============================================================================
 
     /**
+     * Check if token is a borrow preposition (de/in for ownership semantics).
+     *
+     * WHY: These prepositions encode ownership for systems targets (Rust/Zig):
+     *      de = borrowed/read-only (&T, []const u8)
+     *      in = mutable borrow (&mut T, *T)
+     *
+     * @returns true if token is 'de' or 'in' keyword
+     */
+    function isBorrowPreposition(token: Token): boolean {
+        return token.type === 'KEYWORD' && ['de', 'in'].includes(token.keyword ?? '');
+    }
+
+    /**
      * Parse type annotation.
      *
      * GRAMMAR:
-     *   typeAnnotation := IDENTIFIER typeParams? '?'? arrayBrackets* ('|' typeAnnotation)*
+     *   typeAnnotation := ('de' | 'in')? IDENTIFIER typeParams? '?'? arrayBrackets* ('|' typeAnnotation)*
      *   typeParams := '<' typeParameter (',' typeParameter)* '>'
      *   typeParameter := typeAnnotation | NUMBER | MODIFIER
      *   arrayBrackets := '[]' '?'?
@@ -2538,9 +2552,16 @@ export function parse(tokens: Token[]): ParserResult {
      * EDGE: Numeric parameters for sized types (numerus<32>).
      *       Modifier parameters for ownership/signedness (numerus<Naturalis>).
      *       Array shorthand preserves source form via arrayShorthand flag.
+     *       Borrow prepositions (de/in) for systems targets (Rust/Zig).
      */
     function parseTypeAnnotation(): TypeAnnotation {
         const position = peek().position;
+
+        // Check for borrow preposition (de/in for ownership semantics)
+        let preposition: string | undefined;
+        if (isBorrowPreposition(peek())) {
+            preposition = advance().keyword;
+        }
 
         const token = expect('IDENTIFIER', ParserErrorCode.ExpectedTypeName);
         const name = token.value;
@@ -2585,6 +2606,7 @@ export function parse(tokens: Token[]): ParserResult {
             name,
             typeParameters,
             nullable,
+            preposition,
             position,
         };
 

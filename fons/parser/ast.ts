@@ -213,13 +213,14 @@ export interface FunctionDeclaration extends BaseNode {
  * Function parameter.
  *
  * GRAMMAR (in EBNF):
- *   parameter := ('ad' | 'cum' | 'in' | 'ex')? IDENTIFIER (':' typeAnnotation)?
+ *   parameter := ('ad' | 'cum' | 'de' | 'in' | 'ex')? IDENTIFIER (':' typeAnnotation)?
  *
- * INVARIANT: preposition is Latin (ad/cum/in/ex), not English (to/with/in/from).
+ * INVARIANT: preposition is Latin (ad/cum/de/in/ex), not English (to/with/from/in/of).
  * INVARIANT: case and preposition enable semantic analysis of parameter roles.
  *
  * WHY: Latin prepositions indicate semantic roles that map to different constructs
- *      in target languages (e.g., 'ad' might indicate a callback parameter).
+ *      in target languages. For systems targets (Rust/Zig), 'de' = borrowed/read-only
+ *      and 'in' = mutable borrow.
  */
 export interface Parameter extends BaseNode {
     type: 'Parameter';
@@ -1101,13 +1102,16 @@ export type TypeParameter = TypeAnnotation | Literal;
  * Type annotation for variables, parameters, and return types.
  *
  * GRAMMAR (in EBNF):
- *   typeAnnotation := IDENTIFIER typeParams? '?'? ('|' typeAnnotation)*
+ *   typeAnnotation := ('de' | 'in')? IDENTIFIER typeParams? '?'? ('|' typeAnnotation)*
  *   typeParams := '<' typeParameter (',' typeParameter)* '>'
  *
  * INVARIANT: name is the base type name (textus, numerus, etc.).
  * INVARIANT: nullable indicates optional type with '?'.
  * INVARIANT: union contains multiple types for union types (A | B).
  * INVARIANT: typeParameters can contain types or literals.
+ * INVARIANT: preposition encodes ownership for systems targets (Rust/Zig):
+ *            de = borrowed/read-only (&T, []const u8)
+ *            in = mutable borrow (&mut T, *T)
  *
  * Examples:
  *   textus -> name="textus"
@@ -1116,6 +1120,8 @@ export type TypeParameter = TypeAnnotation | Literal;
  *   numerus<32> -> name="numerus", typeParameters=[Literal{value=32}]
  *   numerus<i32> -> name="numerus", typeParameters=[TypeAnnotation{name="i32"}]
  *   textus | numerus -> name="union", union=[{name="textus"}, {name="numerus"}]
+ *   de textus -> name="textus", preposition="de" (borrowed)
+ *   in textus -> name="textus", preposition="in" (mutable borrow)
  */
 export interface TypeAnnotation extends BaseNode {
     type: 'TypeAnnotation';
@@ -1124,4 +1130,5 @@ export interface TypeAnnotation extends BaseNode {
     nullable?: boolean;
     union?: TypeAnnotation[];
     arrayShorthand?: boolean; // true if parsed from [] syntax (e.g., numerus[] vs lista<numerus>)
+    preposition?: string; // 'de' (borrowed) or 'in' (mutable) for systems targets
 }

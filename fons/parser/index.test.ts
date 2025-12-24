@@ -94,6 +94,58 @@ describe('parser', () => {
             expect(fn.params[1].name.name).toBe('recipientem');
         });
 
+        test('function with de preposition (borrowed parameter)', () => {
+            const { program } = parseCode(`
+        functio read(de textus source) -> numerus {
+          redde 0
+        }
+      `);
+            const fn = program!.body[0] as any;
+
+            expect(fn.params[0].preposition).toBe('de');
+            expect(fn.params[0].typeAnnotation.name).toBe('textus');
+            expect(fn.params[0].name.name).toBe('source');
+        });
+
+        test('function with in preposition (mutable parameter)', () => {
+            const { program } = parseCode(`
+        functio append(in lista<textus> items, textus value) {
+          scribe(value)
+        }
+      `);
+            const fn = program!.body[0] as any;
+
+            expect(fn.params[0].preposition).toBe('in');
+            expect(fn.params[0].typeAnnotation.name).toBe('lista');
+            expect(fn.params[0].name.name).toBe('items');
+            expect(fn.params[1].preposition).toBeUndefined();
+        });
+
+        test('function with borrowed return type (fit de)', () => {
+            const { program } = parseCode(`
+        functio first(de lista<textus> items) fit de textus {
+          redde items[0]
+        }
+      `);
+            const fn = program!.body[0] as any;
+
+            expect(fn.params[0].preposition).toBe('de');
+            expect(fn.returnType.preposition).toBe('de');
+            expect(fn.returnType.name).toBe('textus');
+        });
+
+        test('function with borrowed return type (arrow de)', () => {
+            const { program } = parseCode(`
+        functio first(de lista<textus> items) -> de textus {
+          redde items[0]
+        }
+      `);
+            const fn = program!.body[0] as any;
+
+            expect(fn.returnType.preposition).toBe('de');
+            expect(fn.returnType.name).toBe('textus');
+        });
+
         test('function without return type', () => {
             const { program } = parseCode(`
         functio greet(nomen) {
