@@ -23,11 +23,14 @@ Network operations for HTTP, WebSocket, and raw sockets. The "sky" to `solum`'s 
 ```
 ex "norma/caelum" importa { pete }
 
-// GET request
+// GET request (explicit cede)
 fixum response = cede pete("https://api.example.com/users")
 
+// GET request (figendum - implicit await, more natural Latin)
+figendum response = pete("https://api.example.com/users")
+
 // With options
-fixum response = cede pete("https://api.example.com/users", {
+figendum response = pete("https://api.example.com/users", {
     modus: "POST",
     corpus: { nomen: "Marcus" },
     capita: { "Content-Type": "application/json" }
@@ -298,10 +301,17 @@ futura functio fetchUsers() -> lista<User> {
 For parallel requests:
 
 ```
-fixum (users, posts) = cede omnes(
+// Using explicit cede
+fixum (users, posts) = cede promissum.omnes([
     pete("/api/users").json(),
     pete("/api/posts").json()
-)
+])
+
+// Using figendum (implicit await)
+figendum (users, posts) = promissum.omnes([
+    pete("/api/users").json(),
+    pete("/api/posts").json()
+])
 ```
 
 ---

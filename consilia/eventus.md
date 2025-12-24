@@ -43,7 +43,14 @@ ausculta <event-name>
 Returns `fluxus<T>` (AsyncIterator). Use with `fiet` for async iteration:
 
 ```
+// Using fixum
 fixum stream = ausculta "userAction"
+ex stream fiet event {
+    scribe event
+}
+
+// Using figendum (equivalent, more natural Latin)
+figendum stream = ausculta "userAction"
 ex stream fiet event {
     scribe event
 }

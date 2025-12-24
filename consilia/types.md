@@ -320,6 +320,29 @@ textus? nomen            // may be nihil
 functio inveni() -> persona?
 ```
 
+### Ownership Annotations (Rust/Zig Targets)
+
+For systems targets, Latin prepositions annotate borrowing semantics:
+
+| Preposition | Meaning | Rust | Zig |
+|-------------|---------|------|-----|
+| (none) | Owned | `T` | allocator-managed |
+| `de` | Borrowed, read-only | `&T` | `*const T`, `[]const u8` |
+| `in` | Mutable borrow | `&mut T` | `*T` |
+
+```
+// No preposition = owned, will be moved/consumed
+functio consume(textus data) -> Result
+
+// "de" (from/concerning) = borrowed, read-only
+functio read(de textus source) -> numerus
+
+// "in" (into) = mutable borrow, will be modified
+functio append(in textus target, textus suffix)
+```
+
+These keywords are **target-specific** — valid only for Rust/Zig projects. TypeScript/Python targets reject them as syntax errors. See `codegen/rust.md` and `codegen/zig.md` for details.
+
 ---
 
 ## Implementation Notes

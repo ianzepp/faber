@@ -93,6 +93,21 @@ fixum data = cede fetchData("https://api.example.com")
 
 **See also:** In `cursor functio`, `cede` yields values to the caller (see iteration.md).
 
+### figendum / variandum (async bindings)
+
+Alternative syntax using gerundive forms ("that which will be...") with implicit await:
+
+```
+figendum data = fetchData("https://api.example.com")  // immutable, implicit await
+variandum result = fetchInitial()                      // mutable, implicit await
+```
+
+These are equivalent to `fixum x = cede y()` and `varia x = cede y()` respectively, but more natural Latin. The gerundive signals futurity — the value will be fixed/varied once the operation completes.
+
+**Sync/async agnostic:** `figendum` works with both sync and async values. If the RHS is a promise, it awaits; if plain, it passes through. This makes code future-proof when APIs evolve from sync to async.
+
+See `vincula.md` for full details.
+
 ---
 
 ## promissum<T>
@@ -142,7 +157,9 @@ fixum data = cede fetchData("https://api.example.com")
 
 ## Error Handling
 
-### With tempta/cape
+### With tempta/cape (TS/Python only)
+
+> **Note:** `tempta`/`demum` implies try/catch/finally semantics. Since `demum` (finally) has no direct equivalent in Rust/Zig (they use RAII/defer), use `fac`/`cape` for systems targets instead. See `codegen/rust.md` and `codegen/zig.md`.
 
 ```
 tempta {

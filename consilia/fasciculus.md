@@ -326,18 +326,20 @@ See `consilia/cura.md` for the full resource management design.
 High-level operations are async by default on async-capable targets:
 
 ```
-// In async function
+// Using explicit cede
 futura functio loadConfig() -> object {
     fixum config = cede lege "config.json" ut json
     redde config
 }
+
+// Using figendum (implicit await, more natural Latin)
+futura functio loadConfig() -> object {
+    figendum config = lege "config.json" ut json
+    redde config
+}
 ```
 
-Or implicit await for convenience (target-dependent):
-```
-// May be sync or async depending on target
-fixum config = lege "config.json" ut json
-```
+Both forms are valid. The `figendum` gerundive ("that which will be fixed") signals async intent without explicit `cede`. See `vincula.md` for details.
 
 ### Low-Level
 

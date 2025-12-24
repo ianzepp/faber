@@ -91,23 +91,23 @@ ex items pro item {
 
 **Syntax:** `start..end [per step]`
 
-**Both endpoints are inclusive** (natural language semantics).
+**End is exclusive** (matches Rust, Python, lodash conventions).
 
 ```
 ex 0..5 pro n {
-    scribe n  // 0, 1, 2, 3, 4, 5
+    scribe n  // 0, 1, 2, 3, 4
 }
 
 ex 0..10 per 2 pro n {
-    scribe n  // 0, 2, 4, 6, 8, 10
+    scribe n  // 0, 2, 4, 6, 8
 }
 
-ex 10..1 per -1 pro n {
+ex 10..0 per -1 pro n {
     scribe n  // 10, 9, 8, ... 1
 }
 ```
 
-**Why inclusive?** "From 0 to 10" in natural language includes both endpoints. The exclusive convention exists because of `i < 10` in C-style loops, but Faber doesn't expose that, so exclusion would be arbitrary.
+**Why exclusive?** Matches Rust (`0..5`), Python (`range(0, 5)`), and lodash (`_.range(0, 5)`). Avoids off-by-one errors when working across targets. To include 5, use `0..6`.
 
 ---
 

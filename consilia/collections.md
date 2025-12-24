@@ -346,10 +346,23 @@ users.filtra({ .aetas > 18 })
 users.mappa({ .nomen + " " + .cognomen })
 ```
 
-### Level 3: `var => { }` — Explicit Variable
+### Level 3: Explicit Variable
 
-For complex logic requiring named variable:
+For complex logic requiring named variable, two syntaxes are supported:
 
+**`fac var fit expr`** (preferred — reduces symbols, aligns with Latin):
+```
+users.filtra(fac user fit user.activus et user.verificatus)
+
+users.filtra(fac user fit {
+    si user.aetas < 18 {
+        redde falsum
+    }
+    redde user.activus et user.verificatus
+})
+```
+
+**`var => { }` (supported — familiar to JS/TS developers):**
 ```
 users.filtra(user => {
     si user.aetas < 18 {
@@ -358,6 +371,8 @@ users.filtra(user => {
     redde user.activus et user.verificatus
 })
 ```
+
+The `fac...fit` pattern reads as "do user, becomes expression" and uses the same `fit`/`fiet` verbs as function returns.
 
 ### Summary
 
@@ -368,7 +383,8 @@ users.filtra(user => {
 | `cum a descendens` | Sort direction | `ordina(cum aetas descendens)` |
 | `{ .property }` | Expressions | `filtra({ .aetas > 18 })` |
 | `{ redde ... }` | Multi-statement | `mappa({ redde .x + .y })` |
-| `v => { }` | Complex logic | `filtra(u => { ... })` |
+| `fac v fit expr` | Explicit variable (preferred) | `filtra(fac u fit u.activus)` |
+| `v => { }` | Explicit variable (JS-style) | `filtra(u => { ... })` |
 
 ---
 
