@@ -1,0 +1,169 @@
+// =============================================================================
+// EVENTUS - Event Emission (emitte)
+// =============================================================================
+//
+// The emitte statement sends events to listeners. It follows the same pattern
+// as scribe/vide/mone - a keyword that compiles to a stdlib call.
+//
+// GRAMMAR:
+// emitte <event-name>
+// emitte <event-name>, <data>
+//
+// ETYMOLOGY:
+// emitte: "send out!" (imperative of emittere - to send out, release)
+//
+// WHY "emitte":
+// - Imperative verb form matches other statements (scribe, mone, iace)
+// - Direct Latin translation of "emit"
+// - Short and clear
+
+// =============================================================================
+// BASIC EVENT EMISSION
+// =============================================================================
+
+// Simple event with no data
+emitte "appStarted"
+
+// Event with data payload
+emitte "userLogin", { userId: 42, timestamp: 1234567890 }
+
+// =============================================================================
+// EVENT NAMES
+// =============================================================================
+
+// String literals (most common)
+emitte "order:created"
+emitte "user:updated"
+emitte "cache:invalidated"
+
+// Variables work too
+fixum eventName = "notification:sent"
+emitte eventName, { message: "Hello!" }
+
+// =============================================================================
+// EVENT DATA PATTERNS
+// =============================================================================
+
+// Object payload (recommended)
+emitte "purchase", {
+    orderId: "ORD-123",
+    amount: 99.99,
+    currency: "EUR"
+}
+
+// Simple value
+emitte "counterChanged", 42
+
+// Array payload
+emitte "batchComplete", [1, 2, 3, 4, 5]
+
+// =============================================================================
+// EVENTS IN FUNCTIONS
+// =============================================================================
+
+functio processOrder(order) {
+    // Emit before processing
+    emitte "order:processing", { orderId: order.id }
+
+    // ... processing logic ...
+
+    // Emit after success
+    emitte "order:completed", {
+        orderId: order.id,
+        total: order.total
+    }
+}
+
+processOrder({ id: "ORD-456", total: 150.00 })
+
+// =============================================================================
+// EVENTS IN GENUS
+// =============================================================================
+
+genus Counter {
+    varia count: numerus: 0
+
+    functio increment() {
+        ego.count = ego.count + 1
+        emitte "counter:changed", { value: ego.count }
+    }
+
+    functio reset() {
+        ego.count = 0
+        emitte "counter:reset"
+    }
+}
+
+fixum counter = novum Counter()
+counter.increment()
+counter.increment()
+counter.reset()
+
+// =============================================================================
+// CONDITIONAL EVENTS
+// =============================================================================
+
+functio updateUser(userId, changes) {
+    // Only emit if there are actual changes
+    si changes.email {
+        emitte "user:emailChanged", { userId: userId, newEmail: changes.email }
+    }
+
+    si changes.password {
+        emitte "user:passwordChanged", { userId: userId }
+    }
+}
+
+updateUser(42, { email: "new@example.com" })
+
+// =============================================================================
+// EVENTS IN LOOPS
+// =============================================================================
+
+fixum items = ["apple", "banana", "cherry"]
+
+ex items pro item {
+    emitte "item:processed", { name: item }
+}
+
+// =============================================================================
+// ERROR EVENTS
+// =============================================================================
+
+functio riskyOperation() {
+    tempta {
+        // ... might fail ...
+        emitte "operation:success"
+    } cape err {
+        emitte "operation:failed", { error: err }
+    }
+}
+
+riskyOperation()
+
+// =============================================================================
+// SUBSCRIBING TO EVENTS (stdlib)
+// =============================================================================
+
+// Subscription is done via Eventus methods, not keywords:
+//
+// fixum unsubscribe = Eventus.audi("userLogin", fac data fit {
+//     scribe "User logged in:", data.userId
+// })
+//
+// // Later: stop listening
+// unsubscribe()
+
+// =============================================================================
+// COMPARISON WITH SCRIBE
+// =============================================================================
+
+// scribe: output to console (direct, immediate, for humans)
+scribe "Application started"
+
+// emitte: send to event system (decoupled, for code)
+emitte "app:started", { version: "1.0.0" }
+
+// Both are statements, not function calls
+// Both compile to stdlib calls
+// Different purposes: logging vs. event-driven architecture

@@ -85,11 +85,14 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `adfirma` (assert) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | Assert with message | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 
-## Output/Debug
+## Output/Debug/Events
 
 | Feature | TypeScript | Zig | Python | WASM | Rust | C++ |
 |---------|:----------:|:---:|:------:|:----:|:----:|:---:|
 | `scribe` statement | [x] | [x] | [x] | [ ] | [ ] | [ ] |
+| `vide` (debug) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `mone` (warn) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `emitte` (emit event) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
 | Multiple args | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 
 ## Expressions

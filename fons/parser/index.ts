@@ -101,6 +101,7 @@ import type {
     BlockStatement,
     ThrowStatement,
     ScribeStatement,
+    EmitStatement,
     OutputLevel,
     ExpressionStatement,
     Identifier,
@@ -537,6 +538,10 @@ export function parse(tokens: Token[]): ParserResult {
 
         if (checkKeyword('mone')) {
             return parseScribeStatement('warn');
+        }
+
+        if (checkKeyword('emitte')) {
+            return parseEmitStatement();
         }
 
         if (checkKeyword('tempta')) {
@@ -1726,6 +1731,27 @@ export function parse(tokens: Token[]): ParserResult {
         }
 
         return { type: 'ScribeStatement', level, arguments: args, position };
+    }
+
+    /**
+     * Parse emit statement.
+     *
+     * GRAMMAR: emitStmt := 'emitte' expression (',' expression)?
+     */
+    function parseEmitStatement(): EmitStatement {
+        const position = peek().position;
+
+        expectKeyword('emitte', ParserErrorCode.ExpectedKeyword);
+
+        const event = parseExpression();
+
+        let data: Expression | undefined;
+
+        if (match('COMMA')) {
+            data = parseExpression();
+        }
+
+        return { type: 'EmitStatement', event, data, position };
     }
 
     /**

@@ -98,6 +98,7 @@ export type Statement =
     | ThrowStatement
     | TryStatement
     | ScribeStatement
+    | EmitStatement
     | FacBlockStatement;
 
 // ---------------------------------------------------------------------------
@@ -639,6 +640,29 @@ export interface ScribeStatement extends BaseNode {
     type: 'ScribeStatement';
     level: OutputLevel;
     arguments: Expression[];
+}
+
+/**
+ * Emit (event) statement.
+ *
+ * GRAMMAR (in EBNF):
+ *   emitStmt := 'emitte' expression (',' expression)?
+ *
+ * WHY: Latin 'emitte' (send out!) for event emission.
+ *      First argument is event name (typically string).
+ *      Second argument is optional event data payload.
+ *
+ * Examples:
+ *   emitte "userLogin"
+ *   emitte "userLogin", { userId: 42 }
+ *
+ * Compiles to stdlib call:
+ *   Eventus.emitte("userLogin", { userId: 42 });
+ */
+export interface EmitStatement extends BaseNode {
+    type: 'EmitStatement';
+    event: Expression;
+    data?: Expression;
 }
 
 /**

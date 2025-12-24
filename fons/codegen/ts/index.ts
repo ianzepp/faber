@@ -65,6 +65,7 @@ import type {
     BlockStatement,
     ThrowStatement,
     ScribeStatement,
+    EmitStatement,
     TryStatement,
     ExpressionStatement,
     ArrayExpression,
@@ -218,6 +219,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 return genThrowStatement(node);
             case 'ScribeStatement':
                 return genScribeStatement(node);
+            case 'EmitStatement':
+                return genEmitStatement(node);
             case 'TryStatement':
                 return genTryStatement(node);
             case 'BlockStatement':
@@ -925,6 +928,13 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         const args = node.arguments.map(genExpression).join(', ');
         const method = node.level === 'debug' ? 'debug' : node.level === 'warn' ? 'warn' : 'log';
         return `${ind()}console.${method}(${args})${semi ? ';' : ''}`;
+    }
+
+    function genEmitStatement(node: EmitStatement): string {
+        const event = genExpression(node.event);
+        const data = node.data ? genExpression(node.data) : undefined;
+        const args = data ? `${event}, ${data}` : event;
+        return `${ind()}Eventus.emitte(${args})${semi ? ';' : ''}`;
     }
 
     function genTryStatement(node: TryStatement): string {

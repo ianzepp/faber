@@ -1563,6 +1563,38 @@ describe('parser', () => {
         });
     });
 
+    describe('emitte statement', () => {
+        test('emitte with event name only', () => {
+            const { program } = parseCode('emitte "userLogin"');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('EmitStatement');
+            expect(stmt.event.type).toBe('Literal');
+            expect(stmt.event.value).toBe('userLogin');
+            expect(stmt.data).toBeUndefined();
+        });
+
+        test('emitte with event name and data', () => {
+            const { program } = parseCode('emitte "userLogin", { userId: 42 }');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('EmitStatement');
+            expect(stmt.event.value).toBe('userLogin');
+            expect(stmt.data.type).toBe('ObjectExpression');
+        });
+
+        test('emitte with variable event name', () => {
+            const { program } = parseCode('emitte eventName, data');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('EmitStatement');
+            expect(stmt.event.type).toBe('Identifier');
+            expect(stmt.event.name).toBe('eventName');
+            expect(stmt.data.type).toBe('Identifier');
+            expect(stmt.data.name).toBe('data');
+        });
+    });
+
     describe('fac block and lambda', () => {
         describe('fac block statement', () => {
             test('simple fac block', () => {
