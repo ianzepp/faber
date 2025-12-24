@@ -9,74 +9,32 @@
 // pro <params> { <body> }                 // block lambda
 // pro { <body> }                          // zero-param lambda
 //
-// Also covers fac blocks (related but distinct):
-// fac { <body> }                          // block scope
-// fac { <body> } cape <id> { <handler> }  // block with error handling
-//
 // ETYMOLOGY:
 // pro: "for" - same keyword as iteration (ex items pro x { })
 // fit: "becomes" (passive of fieri)
-// fac: imperative of "facere" (to do/make) - "do!"
 //
 // WHY "pro" for lambdas:
 // Aligns with iteration: "ex items pro x { }" and "pro x { }" both use pro
 // Reads naturally: "for x, becomes x times 2" or "for x, do { ... }"
+//
+// SEE ALSO: errores.fab for fac/cape block scope and error handling
 
 // =============================================================================
 // STUBS for examples (would be defined elsewhere in real code)
 // =============================================================================
-functio riskyOperation() {}
 functio handleClick(e) {}
-functio getData(id) { redde id }
 functio process(data) { redde data }
 functio display(result) {}
 functio logError(e) {}
-functio openDatabase() { }
-functio doWork(conn) {}
 functio fetchData() { }
+functio cleanup() {}
 varia button = nihil
+varia conn = nihil
 varia users = []
 varia items = []
 
 // =============================================================================
-// PART 1: BLOCK SCOPE (fac)
-// =============================================================================
-
-// -----------------------------------------------------------------------------
-// Block Scope - Explicit scoping without conditions
-// -----------------------------------------------------------------------------
-
-// Simple block scope
-fac {
-    varia temp = "scoped"
-    scribe temp
-}
-// temp is not visible here
-
-// Block scope for grouping related operations
-fac {
-    varia a = 10
-    varia b = 20
-    varia sum = a + b
-    scribe "Sum:", sum
-}
-
-// Block with error handling (like try-catch but cleaner)
-fac {
-    riskyOperation()
-} cape error {
-    scribe "Caught:", error
-}
-
-// Scoped setup/teardown
-fac {
-    varia connection = openDatabase()
-    doWork(connection)
-    connection.close()
-}
-
-// =============================================================================
-// PART 2: EXPRESSION LAMBDAS (pro x fit expr)
+// PART 1: EXPRESSION LAMBDAS (pro x fit expr)
 // =============================================================================
 
 // Single parameter - expression lambda
@@ -92,7 +50,7 @@ fixum getAnswer = pro fit 42
 scribe getAnswer()  // 42
 
 // =============================================================================
-// PART 3: BLOCK LAMBDAS (pro x { })
+// PART 2: BLOCK LAMBDAS (pro x { })
 // =============================================================================
 
 // Block lambda with single parameter
@@ -116,7 +74,7 @@ fixum greet = pro {
 }
 
 // =============================================================================
-// PART 4: LAMBDAS WITH COLLECTIONS
+// PART 3: LAMBDAS WITH COLLECTIONS
 // =============================================================================
 
 fixum numbers = [1, 2, 3, 4, 5]
@@ -143,7 +101,7 @@ fixum addFive = curriedAdd(5)
 scribe addFive(3)  // 8
 
 // =============================================================================
-// PART 5: EVENT HANDLERS AND CALLBACKS
+// PART 4: EVENT HANDLERS AND CALLBACKS
 // =============================================================================
 
 // Zero-param callbacks - block form is cleaner
@@ -176,7 +134,7 @@ fetchData()
     })
 
 // =============================================================================
-// PART 6: COMPARISON WITH ARROW FUNCTIONS
+// PART 5: COMPARISON WITH ARROW FUNCTIONS
 // =============================================================================
 
 // Both syntaxes are valid and compile to the same JavaScript:
@@ -204,10 +162,10 @@ fixum proComplex = pro x {
 // - pro x { }: Block lambdas with multiple statements
 // - pro { }: Zero-param callbacks
 // - (x) => expr: JS-familiar alternative
-// - fac { } cape: Block scope with error handling
+// See errores.fab for fac/cape error handling
 
 // =============================================================================
-// PART 7: IDIOMATIC USAGE
+// PART 6: IDIOMATIC USAGE
 // =============================================================================
 
 // Filtering - expression lambda reads well

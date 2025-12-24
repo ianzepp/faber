@@ -1,0 +1,258 @@
+// =============================================================================
+// REGIMEN - Errores (Error Handling)
+// =============================================================================
+//
+// Error handling in Faber uses three keywords:
+// - iace: throw recoverable errors (can be caught)
+// - mori: fatal errors, program terminates (panic)
+// - cape: catch errors from a block
+//
+// GRAMMAR:
+// iace <expr>                              // throw error
+// mori <expr>                              // fatal panic
+// fac { <body> } cape <id> { <handler> }   // block with error boundary
+//
+// ETYMOLOGY:
+// iace: imperative of "iacere" (to throw) - "throw!"
+// mori: "to die" - unrecoverable
+// cape: imperative of "capere" (to catch/seize) - "catch!"
+// fac: imperative of "facere" (to do/make) - "do!"
+//
+// WHY TWO ERROR TYPES:
+// iace = expected failures (network timeout, file not found, validation)
+// mori = bugs, impossible states, programmer errors
+
+// =============================================================================
+// STUBS for examples
+// =============================================================================
+functio riskyOperation() {}
+functio validateInput(x) { redde x != nihil }
+functio openDatabase() { redde { close: pro {} } }
+functio doWork(conn) {}
+functio fetchData(url) { redde {} }
+functio processData(data) { redde data }
+functio useFallback() { redde "fallback" }
+functio logError(e) {}
+functio cleanup() {}
+
+// =============================================================================
+// PART 1: RECOVERABLE ERRORS (iace)
+// =============================================================================
+
+// Throw an error when validation fails
+functio divide(a, b) {
+    si b == 0 {
+        iace "division by zero"
+    }
+    redde a / b
+}
+
+// Throw with error object
+functio fetchUser(id) {
+    si id < 0 {
+        iace { code: "INVALID_ID", message: "ID must be positive" }
+    }
+    // ... fetch logic
+}
+
+// Errors propagate up the call stack
+functio processOrder(order) {
+    si non validateInput(order) {
+        iace "invalid order"
+    }
+    // ... process
+}
+
+// =============================================================================
+// PART 2: FATAL ERRORS (mori)
+// =============================================================================
+
+// Use mori for impossible states (bugs)
+functio getItemAt(lista, index) {
+    si index < 0 {
+        mori "negative index is a bug"
+    }
+    si index >= lista.longitudo {
+        mori "index out of bounds"
+    }
+    redde lista[index]
+}
+
+// Assert invariants
+functio initializeSystem(config) {
+    si config == nihil {
+        mori "config required - this is a programmer error"
+    }
+    // ... initialize
+}
+
+// Unreachable code
+functio handleStatus(status) {
+    si status == "ok" { redde verum }
+    si status == "error" { redde falsum }
+    mori "unknown status: " + status
+}
+
+// =============================================================================
+// PART 3: CATCHING ERRORS (fac/cape)
+// =============================================================================
+
+// Basic error catching
+fac {
+    riskyOperation()
+} cape error {
+    scribe "Caught:", error
+}
+
+// Handle specific error and continue
+fac {
+    fixum result = divide(10, 0)
+    scribe result
+} cape error {
+    scribe "Division failed:", error
+    // program continues
+}
+
+// Catch and provide fallback
+fixum data = fac {
+    redde fetchData("https://api.example.com")
+} cape error {
+    scribe "Fetch failed, using fallback"
+    redde useFallback()
+}
+
+// =============================================================================
+// PART 4: BLOCK SCOPE (fac without cape)
+// =============================================================================
+
+// fac also creates block scope for variable isolation
+fac {
+    varia temp = "scoped"
+    scribe temp
+}
+// temp is not visible here
+
+// Group related operations
+fac {
+    varia a = 10
+    varia b = 20
+    varia sum = a + b
+    scribe "Sum:", sum
+}
+
+// Scoped resource management
+fac {
+    varia connection = openDatabase()
+    doWork(connection)
+    connection.close()
+}
+
+// =============================================================================
+// PART 5: NESTED ERROR HANDLING
+// =============================================================================
+
+// Outer handler catches inner errors
+fac {
+    fac {
+        iace "inner error"
+    } cape inner {
+        scribe "Inner caught:", inner
+        iace "re-thrown"  // propagate up
+    }
+} cape outer {
+    scribe "Outer caught:", outer
+}
+
+// Selective catching
+fac {
+    fixum user = fetchUser(-1)
+} cape error {
+    si error.code == "INVALID_ID" {
+        scribe "Bad ID, using default"
+    } aut {
+        iace error  // re-throw unknown errors
+    }
+}
+
+// =============================================================================
+// PART 6: ERROR HANDLING PATTERNS
+// =============================================================================
+
+// Pattern: Validate early, throw once
+functio createUser(nomen, aetas) {
+    // Validate all inputs first
+    si nomen == nihil vel nomen == "" {
+        iace "name required"
+    }
+    si aetas < 0 {
+        iace "age must be positive"
+    }
+    si aetas < 13 {
+        iace "must be 13 or older"
+    }
+
+    // All valid, proceed with creation
+    redde { nomen: nomen, aetas: aetas }
+}
+
+// Pattern: Wrap external calls
+functio safeProcessData(url) {
+    fac {
+        fixum raw = fetchData(url)
+        redde processData(raw)
+    } cape error {
+        logError(error)
+        redde nihil
+    }
+}
+
+// Pattern: Cleanup on error (manual)
+functio withConnection(callback) {
+    varia conn = openDatabase()
+    fac {
+        callback(conn)
+    } cape error {
+        conn.close()
+        iace error
+    }
+    conn.close()
+}
+
+// =============================================================================
+// PART 7: WHEN TO USE WHICH
+// =============================================================================
+
+// iace: User/input errors, expected failures
+// - File not found
+// - Network timeout
+// - Validation failed
+// - Permission denied
+
+// mori: Programmer errors, impossible states
+// - Null where value required
+// - Index out of bounds
+// - Invalid enum value
+// - Unreachable code reached
+
+// fac/cape: When you want to handle errors locally
+// - Provide fallback value
+// - Log and continue
+// - Transform error type
+// - Clean up resources
+
+// =============================================================================
+// TARGET-SPECIFIC NOTES
+// =============================================================================
+
+// TypeScript/Python: tempta/demum available (try/finally pattern)
+// tempta {
+//     riskyOperation()
+// } cape error {
+//     handleError(error)
+// } demum {
+//     cleanup()  // always runs
+// }
+
+// Rust/Zig: Use fac/cape only (no finally equivalent)
+// For cleanup, use cura (with) for resource management
+
