@@ -908,6 +908,11 @@ export function parse(tokens: Token[]): ParserResult {
      *      in = in/into (mutable), ex = from/out of
      *
      * EDGE: Preposition comes first (if present), then type (if present), then identifier.
+     *
+     * TYPE DETECTION: Uses lookahead to detect type annotations for user-defined types.
+     *   - Builtin type names (textus, numerus, etc.) are recognized directly
+     *   - IDENT IDENT pattern: first is type, second is name (e.g., "coordinate point")
+     *   - IDENT< pattern: generic type (e.g., "lista<textus>")
      */
     function parseParameter(): Parameter {
         const position = peek().position;
@@ -920,7 +925,15 @@ export function parse(tokens: Token[]): ParserResult {
 
         let typeAnnotation: TypeAnnotation | undefined;
 
-        if (isTypeName(peek())) {
+        // WHY: Use lookahead to detect user-defined types, not just builtins.
+        // If we see IDENT followed by IDENT, first is type, second is name.
+        // If we see IDENT followed by <, it's a generic type.
+        const hasTypeAnnotation =
+            isTypeName(peek()) ||
+            (check('IDENTIFIER') && peek(1).type === 'IDENTIFIER') ||
+            (check('IDENTIFIER') && peek(1).type === 'LESS');
+
+        if (hasTypeAnnotation) {
             typeAnnotation = parseTypeAnnotation();
         }
 

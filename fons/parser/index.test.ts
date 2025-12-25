@@ -290,6 +290,61 @@ describe('parser', () => {
             expect(fn.name.name).toBe('greet');
             expect(fn.returnType).toBeUndefined();
         });
+
+        test('function with user-defined type parameter', () => {
+            const { program } = parseCode(`
+        functio distance(coordinate p1, coordinate p2) -> numerus {
+          redde 0
+        }
+      `);
+            const fn = program!.body[0] as any;
+
+            expect(fn.params).toHaveLength(2);
+            expect(fn.params[0].typeAnnotation.name).toBe('coordinate');
+            expect(fn.params[0].name.name).toBe('p1');
+            expect(fn.params[1].typeAnnotation.name).toBe('coordinate');
+            expect(fn.params[1].name.name).toBe('p2');
+        });
+
+        test('function with mixed builtin and user-defined types', () => {
+            const { program } = parseCode(`
+        functio process(textus name, config options) {
+          scribe(name)
+        }
+      `);
+            const fn = program!.body[0] as any;
+
+            expect(fn.params[0].typeAnnotation.name).toBe('textus');
+            expect(fn.params[0].name.name).toBe('name');
+            expect(fn.params[1].typeAnnotation.name).toBe('config');
+            expect(fn.params[1].name.name).toBe('options');
+        });
+
+        test('function with user-defined generic type parameter', () => {
+            const { program } = parseCode(`
+        functio first(container<T> items) -> T {
+          redde items[0]
+        }
+      `);
+            const fn = program!.body[0] as any;
+
+            expect(fn.params[0].typeAnnotation.name).toBe('container');
+            expect(fn.params[0].typeAnnotation.typeParameters[0].name).toBe('T');
+            expect(fn.params[0].name.name).toBe('items');
+        });
+
+        test('function with preposition and user-defined type', () => {
+            const { program } = parseCode(`
+        functio moveTo(ad coordinate destination) {
+          scribe(destination)
+        }
+      `);
+            const fn = program!.body[0] as any;
+
+            expect(fn.params[0].preposition).toBe('ad');
+            expect(fn.params[0].typeAnnotation.name).toBe('coordinate');
+            expect(fn.params[0].name.name).toBe('destination');
+        });
     });
 
     describe('if statements', () => {
