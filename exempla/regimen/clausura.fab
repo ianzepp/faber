@@ -129,7 +129,7 @@ fetchData()
         }
         redde process(data)
     })
-    .cape(pro error {
+    .catch(pro error {
         logError(error)
         redde nihil
     })
@@ -189,5 +189,5 @@ conn.onError(pro err { logError(err) })
 
 // Higher-order functions returning lambdas
 fixum multiplier = pro factor redde pro x redde x * factor
-fixum double = multiplier(2)
-fixum triple = multiplier(3)
+fixum timesTwo = multiplier(2)
+fixum timesThree = multiplier(3)

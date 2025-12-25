@@ -88,7 +88,7 @@ import type {
     TypeAnnotation,
     TypeParameter,
     FacBlockStatement,
-    FacExpression,
+    LambdaExpression,
     AuscultaExpression,
 } from '../../parser/ast';
 import type { CodegenOptions, RequiredFeatures } from '../types';
@@ -1196,8 +1196,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 return genRangeExpression(node);
             case 'ObjectExpression':
                 return genObjectExpression(node);
-            case 'FacExpression':
-                return genFacExpression(node);
+            case 'LambdaExpression':
+                return genLambdaExpression(node);
             default:
                 throw new Error(`Unknown expression type: ${(node as any).type}`);
         }
@@ -1507,20 +1507,27 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     }
 
     /**
-     * Generate pro expression (lambda/anonymous function).
+     * Generate lambda expression (pro ... redde or pro ... { }).
      *
      * TRANSFORMS:
      *   pro x redde x * 2 -> (x) => x * 2
      *   pro x, y redde x + y -> (x, y) => x + y
      *   pro redde 42 -> () => 42
+     *   pro x { redde x * 2 } -> (x) => { return x * 2; }
+     *   pro { scribe "hi" } -> () => { console.log("hi"); }
      *
      * WHY: Latin pro (for) + redde (return) creates arrow functions.
      */
-    function genFacExpression(node: FacExpression): string {
+    function genLambdaExpression(node: LambdaExpression): string {
         const params = node.params.map(p => p.name).join(', ');
-        const body = genExpression(node.body);
         const asyncPrefix = node.async ? 'async ' : '';
 
+        if (node.body.type === 'BlockStatement') {
+            const body = genBlockStatement(node.body);
+            return `${asyncPrefix}(${params}) => ${body}`;
+        }
+
+        const body = genExpression(node.body);
         return `${asyncPrefix}(${params}) => ${body}`;
     }
 

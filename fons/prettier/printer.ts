@@ -41,7 +41,7 @@ import type {
     ContinueStatement,
     EmitStatement,
     FacBlockStatement,
-    FacExpression,
+    LambdaExpression,
     ThisExpression,
     AuscultaExpression,
 } from '../parser/ast.ts';
@@ -171,8 +171,8 @@ export function faberPrint(
             return printAwaitExpression(path, options, print);
         case 'NewExpression':
             return printNewExpression(path, options, print);
-        case 'FacExpression':
-            return printFacExpression(path, options, print);
+        case 'LambdaExpression':
+            return printLambdaExpression(path, options, print);
         case 'AuscultaExpression':
             return printAuscultaExpression(path, options, print);
 
@@ -596,7 +596,7 @@ function printFacBlockStatement(
     return parts;
 }
 
-function printFacExpression(
+function printLambdaExpression(
     path: AstPath<AstNode>,
     options: FaberOptions,
     print: (path: AstPath<AstNode>) => Doc,
@@ -609,7 +609,12 @@ function printFacExpression(
         parts.push(join(', ', params), ' ');
     }
 
-    parts.push('redde ', path.call(print, 'body'));
+    if (node.body.type === 'BlockStatement') {
+        parts.push(path.call(print, 'body'));
+    }
+    else {
+        parts.push('redde ', path.call(print, 'body'));
+    }
 
     return parts;
 }

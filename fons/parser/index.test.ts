@@ -1895,7 +1895,7 @@ describe('parser', () => {
                 const { program } = parseCode('pro x redde x * 2');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('FacExpression');
+                expect(expr.type).toBe('LambdaExpression');
                 expect(expr.params).toHaveLength(1);
                 expect(expr.params[0].name).toBe('x');
                 expect(expr.body.type).toBe('BinaryExpression');
@@ -1906,7 +1906,7 @@ describe('parser', () => {
                 const { program } = parseCode('pro a, b redde a + b');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('FacExpression');
+                expect(expr.type).toBe('LambdaExpression');
                 expect(expr.params).toHaveLength(2);
                 expect(expr.params[0].name).toBe('a');
                 expect(expr.params[1].name).toBe('b');
@@ -1916,7 +1916,7 @@ describe('parser', () => {
                 const { program } = parseCode('pro redde 42');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('FacExpression');
+                expect(expr.type).toBe('LambdaExpression');
                 expect(expr.params).toHaveLength(0);
                 expect(expr.body.value).toBe(42);
             });
@@ -1926,16 +1926,53 @@ describe('parser', () => {
                 const decl = program!.body[0] as any;
 
                 expect(decl.type).toBe('VariableDeclaration');
-                expect(decl.init.type).toBe('FacExpression');
+                expect(decl.init.type).toBe('LambdaExpression');
             });
 
             test('nested lambdas', () => {
                 const { program } = parseCode('pro x redde pro y redde x + y');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('FacExpression');
-                expect(expr.body.type).toBe('FacExpression');
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.body.type).toBe('LambdaExpression');
                 expect(expr.body.body.type).toBe('BinaryExpression');
+            });
+
+            test('single param block lambda', () => {
+                const { program } = parseCode('pro x { redde x * 2 }');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.params).toHaveLength(1);
+                expect(expr.params[0].name).toBe('x');
+                expect(expr.body.type).toBe('BlockStatement');
+            });
+
+            test('multi param block lambda', () => {
+                const { program } = parseCode('pro a, b { redde a + b }');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.params).toHaveLength(2);
+                expect(expr.body.type).toBe('BlockStatement');
+            });
+
+            test('zero param block lambda', () => {
+                const { program } = parseCode('pro { scribe "hello" }');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.params).toHaveLength(0);
+                expect(expr.body.type).toBe('BlockStatement');
+            });
+
+            test('block lambda with multiple statements', () => {
+                const { program } = parseCode('pro x {\nfixum y = x * 2\nredde y\n}');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.body.type).toBe('BlockStatement');
+                expect(expr.body.body).toHaveLength(2);
             });
         });
     });
@@ -1977,6 +2014,115 @@ describe('parser', () => {
             expect(decl.specifiers[0].name).toBe('SECUNDUM');
             expect(decl.specifiers[1].name).toBe('MINUTUM');
             expect(decl.specifiers[2].name).toBe('HORA');
+        });
+    });
+
+    describe('semicolon as optional statement separator', () => {
+        test('multiple statements on one line', () => {
+            const { program } = parseCode('fixum x = 1; fixum y = 2');
+
+            expect(program!.body).toHaveLength(2);
+            expect((program!.body[0] as any).name.name).toBe('x');
+            expect((program!.body[1] as any).name.name).toBe('y');
+        });
+
+        test('three statements on one line', () => {
+            const { program } = parseCode('fixum a = 1; fixum b = 2; fixum c = 3');
+
+            expect(program!.body).toHaveLength(3);
+        });
+
+        test('trailing semicolon is valid', () => {
+            const { program } = parseCode('fixum x = 1;');
+
+            expect(program!.body).toHaveLength(1);
+            expect((program!.body[0] as any).name.name).toBe('x');
+        });
+
+        test('multiple semicolons collapse', () => {
+            const { program } = parseCode('fixum x = 1;; fixum y = 2');
+
+            expect(program!.body).toHaveLength(2);
+        });
+
+        test('semicolons in block lambda', () => {
+            const { program } = parseCode('pro x { fixum y = x * 2; redde y }');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('LambdaExpression');
+            expect(expr.body.type).toBe('BlockStatement');
+            expect(expr.body.body).toHaveLength(2);
+        });
+
+        test('block lambda single line with semicolon', () => {
+            const { program } = parseCode('items.mappata(pro x { fixum y = transform(x); redde y })');
+            const expr = (program!.body[0] as any).expression;
+            const lambda = expr.arguments[0];
+
+            expect(lambda.type).toBe('LambdaExpression');
+            expect(lambda.body.body).toHaveLength(2);
+        });
+
+        test('semicolons in function body', () => {
+            const { program } = parseCode('functio f() { fixum a = 1; fixum b = 2; redde a + b }');
+            const fn = program!.body[0] as any;
+
+            expect(fn.body.body).toHaveLength(3);
+        });
+
+        test('semicolons in if block', () => {
+            const { program } = parseCode('si verum { a(); b() }');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.consequent.body).toHaveLength(2);
+        });
+
+        test('semicolons in while block', () => {
+            const { program } = parseCode('dum verum { a(); b(); rumpe }');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.body.body).toHaveLength(3);
+        });
+
+        test('semicolons with newlines mixed', () => {
+            const { program } = parseCode('fixum a = 1;\nfixum b = 2; fixum c = 3\nfixum d = 4');
+
+            expect(program!.body).toHaveLength(4);
+        });
+
+        test('leading semicolons ignored', () => {
+            const { program } = parseCode('; fixum x = 1');
+
+            expect(program!.body).toHaveLength(1);
+            expect((program!.body[0] as any).name.name).toBe('x');
+        });
+
+        test('only semicolons produces empty program', () => {
+            const { program } = parseCode(';;;');
+
+            expect(program!.body).toHaveLength(0);
+        });
+
+        test('semicolon in empty block is valid', () => {
+            const { program } = parseCode('{ ; }');
+            const block = program!.body[0] as any;
+
+            expect(block.type).toBe('BlockStatement');
+            expect(block.body).toHaveLength(0);
+        });
+
+        test('event handler with semicolon', () => {
+            const { program } = parseCode('button.onClick(pro { setup(); doThing() })');
+            const expr = (program!.body[0] as any).expression;
+            const lambda = expr.arguments[0];
+
+            expect(lambda.body.body).toHaveLength(2);
+        });
+
+        test('style preference - semicolons at line ends', () => {
+            const { program } = parseCode('fixum nomen = "Marcus";\nfixum aetas = 30;');
+
+            expect(program!.body).toHaveLength(2);
         });
     });
 });

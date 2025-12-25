@@ -125,7 +125,7 @@ import type {
     ObjectExpression,
     ObjectProperty,
     FacBlockStatement,
-    FacExpression,
+    LambdaExpression,
     AuscultaExpression,
 } from './ast';
 import { builtinTypes } from '../lexicon/types-builtin';
@@ -415,6 +415,11 @@ export function parse(tokens: Token[]): ParserResult {
         const position = peek().position;
 
         while (!isAtEnd()) {
+            // Consume optional semicolons between statements
+            while (match('SEMICOLON')) {}
+
+            if (isAtEnd()) break;
+
             try {
                 body.push(parseStatement());
             } catch {
@@ -448,6 +453,44 @@ export function parse(tokens: Token[]): ParserResult {
                 checkKeyword('pro') ||
                 checkKeyword('redde') ||
                 checkKeyword('tempta')
+            ) {
+                return;
+            }
+
+            advance();
+        }
+    }
+
+    /**
+     * Synchronize parser after error in genus member by skipping to next member boundary.
+     *
+     * ERROR RECOVERY: Advances until finding a token that could start a genus member.
+     *
+     * WHY: Prevents infinite loops when malformed syntax (e.g., TS-style `fixum name: textus`)
+     *      causes parseGenusMember to return without advancing.
+     */
+    function synchronizeGenusMember(): void {
+        advance();
+        while (!isAtEnd() && !check('RBRACE')) {
+            // Stop at tokens that could start a new member
+            if (
+                checkKeyword('functio') ||
+                checkKeyword('publicus') ||
+                checkKeyword('generis') ||
+                checkKeyword('nexum') ||
+                checkKeyword('futura') ||
+                checkKeyword('cursor') ||
+                // Type keywords that could start a field
+                checkKeyword('textus') ||
+                checkKeyword('numerus') ||
+                checkKeyword('fractus') ||
+                checkKeyword('verus') ||
+                checkKeyword('nihil') ||
+                checkKeyword('lista') ||
+                checkKeyword('mappa') ||
+                checkKeyword('vacuum') ||
+                // Generic identifier could be a type name
+                check('IDENTIFIER')
             ) {
                 return;
             }
@@ -1046,7 +1089,15 @@ export function parse(tokens: Token[]): ParserResult {
         const hasMoreMembers = () => !check('RBRACE') && !isAtEnd();
 
         while (hasMoreMembers()) {
+            const startPosition = current;
             const member = parseGenusMember();
+
+            // EDGE: If parser didn't advance, synchronize to avoid infinite loop.
+            // This happens with malformed syntax like `fixum name: textus` (TS-style).
+            if (current === startPosition) {
+                synchronizeGenusMember();
+                continue;
+            }
 
             switch (member.type) {
                 case 'FieldDeclaration':
@@ -2019,6 +2070,11 @@ export function parse(tokens: Token[]): ParserResult {
         const hasMoreStatements = () => !check('RBRACE') && !isAtEnd();
 
         while (hasMoreStatements()) {
+            // Consume optional semicolons between statements
+            while (match('SEMICOLON')) {}
+
+            if (!hasMoreStatements()) break;
+
             body.push(parseStatement());
         }
 
@@ -2741,36 +2797,44 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse pro expression (lambda/anonymous function).
      *
      * GRAMMAR:
-     *   proExpr := 'pro' params? 'redde' expression
+     *   lambdaExpr := 'pro' params? ('redde' expression | blockStmt)
      *   params := IDENTIFIER (',' IDENTIFIER)*
      *
      * WHY: Latin 'pro' (for) + 'redde' (return) creates lambda syntax.
-     *      Zero-param: pro redde expr -> () => expr
-     *      Single param: pro x redde expr -> (x) => expr
-     *      Multi param: pro x, y redde expr -> (x, y) => x + y
-     *      Async: use block form pro x { redde cede fetch(x) }
+     *      Zero-param expr: pro redde 42 -> () => 42
+     *      Single param expr: pro x redde x * 2 -> (x) => x * 2
+     *      Multi param expr: pro x, y redde x + y -> (x, y) => x + y
+     *      Block form: pro x { redde x * 2 } -> (x) => { return x * 2; }
+     *      Zero-param block: pro { scribe "hi" } -> () => { console.log("hi"); }
      */
-    function parseProExpression(): FacExpression {
+    function parseProExpression(): LambdaExpression {
         const position = peek().position;
 
         expectKeyword('pro', ParserErrorCode.ExpectedKeywordPro);
 
         const params: Identifier[] = [];
 
-        // Check for immediate redde (zero-param lambda)
-        if (!checkKeyword('redde')) {
-            // Parse parameters until we hit redde
+        // Check for immediate redde or { (zero-param lambda)
+        if (!checkKeyword('redde') && !check('LBRACE')) {
+            // Parse parameters until we hit redde or {
             do {
                 params.push(parseIdentifier());
             } while (match('COMMA'));
         }
 
-        expectKeyword('redde', ParserErrorCode.ExpectedKeywordRedde);
+        let body: Expression | BlockStatement;
 
-        // Parse the body expression
-        const body = parseExpression();
+        if (check('LBRACE')) {
+            // Block form: pro x { ... }
+            body = parseBlockStatement();
+        }
+        else {
+            // Expression form: pro x redde expr
+            expectKeyword('redde', ParserErrorCode.ExpectedKeywordRedde);
+            body = parseExpression();
+        }
 
-        return { type: 'FacExpression', params, body, async: false, position };
+        return { type: 'LambdaExpression', params, body, async: false, position };
     }
 
     /**

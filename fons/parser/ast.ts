@@ -826,26 +826,27 @@ export interface FacBlockStatement extends BaseNode {
  * Pro expression (lambda/anonymous function).
  *
  * GRAMMAR (in EBNF):
- *   proExpr := 'pro' params? 'redde' expression
+ *   lambdaExpr := 'pro' params? ('redde' expression | blockStmt)
  *   params := IDENTIFIER (',' IDENTIFIER)*
  *
  * INVARIANT: params is always an array (empty for zero-arg lambdas).
- * INVARIANT: async is always false (use block form for async).
- * INVARIANT: body is always an Expression (no block body syntax).
+ * INVARIANT: async inferred from presence of cede in block body.
  *
  * WHY: Latin 'pro' (for) + 'redde' (return) creates lambda syntax.
- *      Expression-only body reads naturally: "for x, return x * 2"
- *      Async lambdas use block form: pro x { redde cede fetch(x) }
+ *      Expression form: "for x, return x * 2"
+ *      Block form: "for x { ... }" for multi-statement bodies
  *
  * Examples:
  *   pro x redde x * 2     -> (x) => x * 2
  *   pro x, y redde x + y  -> (x, y) => x + y
  *   pro redde 42          -> () => 42
+ *   pro x { redde x * 2 } -> (x) => { return x * 2; }
+ *   pro { scribe "hi" }   -> () => { console.log("hi"); }
  */
-export interface FacExpression extends BaseNode {
-    type: 'FacExpression';
+export interface LambdaExpression extends BaseNode {
+    type: 'LambdaExpression';
     params: Identifier[];
-    body: Expression;
+    body: Expression | BlockStatement;
     async: boolean;
 }
 
@@ -876,7 +877,7 @@ export type Expression =
     | NewExpression
     | TemplateLiteral
     | AuscultaExpression
-    | FacExpression;
+    | LambdaExpression;
 
 // ---------------------------------------------------------------------------
 // Primary Expressions

@@ -72,7 +72,7 @@ import type {
     ScribeStatement,
     TryStatement,
     FacBlockStatement,
-    FacExpression,
+    LambdaExpression,
 } from '../parser/ast';
 import type { Position } from '../tokenizer/types';
 import type { Scope, Symbol } from './scope';
@@ -534,8 +534,8 @@ export function analyze(program: Program): SemanticResult {
             case 'ArrayExpression':
                 return resolveArrayExpression(node);
 
-            case 'FacExpression':
-                return resolveFacExpression(node);
+            case 'LambdaExpression':
+                return resolveLambdaExpression(node);
 
             default: {
                 const _exhaustive: never = node;
@@ -832,12 +832,12 @@ export function analyze(program: Program): SemanticResult {
     }
 
     /**
-     * Resolve fac expression (lambda).
+     * Resolve lambda expression (pro ... redde or pro ... { }).
      *
-     * WHY: FacExpression is simpler than ArrowFunction - params are just
-     *      identifiers (no type annotations) and body is always an expression.
+     * WHY: LambdaExpression is simpler than ArrowFunction - params are just
+     *      identifiers (no type annotations). Body can be expression or block.
      */
-    function resolveFacExpression(node: FacExpression): SemanticType {
+    function resolveLambdaExpression(node: LambdaExpression): SemanticType {
         enterScope('function');
 
         // Define parameters (untyped - infer from usage)
@@ -855,8 +855,16 @@ export function analyze(program: Program): SemanticResult {
             });
         }
 
-        // Resolve body expression
-        const returnType = resolveExpression(node.body);
+        // Resolve body
+        let returnType: SemanticType;
+
+        if (node.body.type === 'BlockStatement') {
+            analyzeBlock(node.body);
+            returnType = VACUUM;
+        }
+        else {
+            returnType = resolveExpression(node.body as Expression);
+        }
 
         exitScope();
 

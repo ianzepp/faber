@@ -11,7 +11,7 @@
  */
 
 import { readdir, mkdir } from 'fs/promises';
-import { existsSync, statSync } from 'fs';
+import { statSync } from 'fs';
 import { join, basename, relative, dirname } from 'path';
 import { $ } from 'bun';
 
@@ -51,11 +51,9 @@ async function main() {
 
     const targets: Target[] = targetArg === 'all' ? ['ts', 'zig'] : [targetArg as Target];
 
-    // Ensure faber executable exists
-    if (!existsSync(FABER)) {
-        console.log('Building faber executable...');
-        await $`${ROOT}/scripta/build`;
-    }
+    // Always rebuild to avoid stale executable issues
+    console.log('Building faber executable...');
+    await $`${ROOT}/scripta/build`;
 
     // Find all .fab files recursively
     const files = await findFabFiles(EXEMPLA);
@@ -84,7 +82,7 @@ async function main() {
             }
             catch (err: any) {
                 console.error(`  ${relativePath} [${target}] FAILED`);
-                if (err.stderr) console.error(err.stderr);
+                if (err.stderr) console.error(err.stderr.toString());
                 failed++;
             }
         }
