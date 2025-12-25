@@ -20,7 +20,20 @@ returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
 > Arrow syntax for return types: "functio greet(textus name) -> textus"
 > 'futura' prefix marks async functions (future/promise-based).
 > 'cursor' prefix marks generator functions (yield-based).
-> Verb forms encode semantics: fit (sync), fiet (async), fiunt (generator), fient (async generator).
+> RETURN TYPE VERBS: Latin verb forms encode async/generator semantics directly:
+> '->'    neutral arrow (semantics from prefix only)
+> 'fit'   "it becomes" - sync, returns single value
+> 'fiet'  "it will become" - async, returns Promise<T>
+> 'fiunt' "they become" - sync generator, yields multiple values
+> 'fient' "they will become" - async generator, yields Promise values
+> When using verb forms, the futura/cursor prefix is NOT required - the verb
+> itself carries the semantic information. The prefix becomes redundant:
+> functio compute() -> numerus { ... }    // arrow: sync by default
+> functio compute() fit numerus { ... }   // verb: explicitly sync
+> functio fetch() fiet textus { ... }     // verb implies async (no futura needed)
+> functio items() fiunt numerus { ... }   // verb implies generator (no cursor needed)
+> functio stream() fient datum { ... }    // verb implies async generator
+> Prefix is still allowed for emphasis, but verb/prefix conflicts are errors.
 
 ### Parameter List
 
@@ -54,13 +67,17 @@ lambdaExpr := 'pro' params? ((':' | 'redde') expression | blockStmt)
 params := IDENTIFIER (',' IDENTIFIER)*
 ```
 
-> Latin 'pro' (for) + 'redde' (return) creates lambda syntax.
-> The ':' shorthand mirrors object literal syntax (x: value = "x is defined as value").
-> Zero-param expr: pro redde 42, pro: 42 -> () => 42
-> Single param expr: pro x redde x * 2, pro x: x * 2 -> (x) => x * 2
-> Multi param expr: pro x, y redde x + y, pro x, y: x + y -> (x, y) => x + y
-> Block form: pro x { redde x * 2 } -> (x) => { return x * 2; }
-> Zero-param block: pro { scribe "hi" } -> () => { console.log("hi"); }
+> Latin 'pro' (for) creates lambda syntax with two equivalent forms:
+> - 'pro x redde expr' - explicit return keyword
+> - 'pro x: expr' - colon shorthand (mirrors object literal syntax)
+> The ':' and 'redde' forms are INTERCHANGEABLE - use whichever reads better:
+> pro x: x * 2        ≡  pro x redde x * 2      -> (x) => x * 2
+> pro: 42             ≡  pro redde 42           -> () => 42
+> pro x, y: x + y     ≡  pro x, y redde x + y   -> (x, y) => x + y
+> Block form (for multi-statement bodies):
+> pro x { redde x * 2 }     -> (x) => { return x * 2; }
+> pro { scribe "hi" }       -> () => { console.log("hi"); }
+> Style guidance: Use ':' for short expressions, 'redde' for clarity in complex cases.
 
 ---
 

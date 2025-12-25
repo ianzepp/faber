@@ -40,7 +40,19 @@ catchClause := 'cape' IDENTIFIER blockStmt
 facBlockStmt := 'fac' blockStmt ('cape' IDENTIFIER blockStmt)?
 ```
 
-> Creates explicit scope boundary with optional error handling.
+> 'fac' (do/make) creates an explicit scope boundary for grouping
+> statements with optional error handling via 'cape' (catch).
+> Useful for:
+> - Scoped variable declarations
+> - Grouping related operations with shared error handling
+> - Creating IIFE-like constructs
+
+**Examples:**
+
+```fab
+fac { fixum x = computeValue() }
+fac { riskyOperation() } cape e { scribe e }
+```
 
 ---
 

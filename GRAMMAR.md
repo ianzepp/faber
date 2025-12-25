@@ -217,7 +217,20 @@ returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
 > Arrow syntax for return types: "functio greet(textus name) -> textus"
 > 'futura' prefix marks async functions (future/promise-based).
 > 'cursor' prefix marks generator functions (yield-based).
-> Verb forms encode semantics: fit (sync), fiet (async), fiunt (generator), fient (async generator).
+> RETURN TYPE VERBS: Latin verb forms encode async/generator semantics directly:
+> '->'    neutral arrow (semantics from prefix only)
+> 'fit'   "it becomes" - sync, returns single value
+> 'fiet'  "it will become" - async, returns Promise<T>
+> 'fiunt' "they become" - sync generator, yields multiple values
+> 'fient' "they will become" - async generator, yields Promise values
+> When using verb forms, the futura/cursor prefix is NOT required - the verb
+> itself carries the semantic information. The prefix becomes redundant:
+> functio compute() -> numerus { ... }    // arrow: sync by default
+> functio compute() fit numerus { ... }   // verb: explicitly sync
+> functio fetch() fiet textus { ... }     // verb implies async (no futura needed)
+> functio items() fiunt numerus { ... }   // verb implies generator (no cursor needed)
+> functio stream() fient datum { ... }    // verb implies async generator
+> Prefix is still allowed for emphasis, but verb/prefix conflicts are errors.
 
 ### Parameter List
 
@@ -251,13 +264,17 @@ lambdaExpr := 'pro' params? ((':' | 'redde') expression | blockStmt)
 params := IDENTIFIER (',' IDENTIFIER)*
 ```
 
-> Latin 'pro' (for) + 'redde' (return) creates lambda syntax.
-> The ':' shorthand mirrors object literal syntax (x: value = "x is defined as value").
-> Zero-param expr: pro redde 42, pro: 42 -> () => 42
-> Single param expr: pro x redde x * 2, pro x: x * 2 -> (x) => x * 2
-> Multi param expr: pro x, y redde x + y, pro x, y: x + y -> (x, y) => x + y
-> Block form: pro x { redde x * 2 } -> (x) => { return x * 2; }
-> Zero-param block: pro { scribe "hi" } -> () => { console.log("hi"); }
+> Latin 'pro' (for) creates lambda syntax with two equivalent forms:
+> - 'pro x redde expr' - explicit return keyword
+> - 'pro x: expr' - colon shorthand (mirrors object literal syntax)
+> The ':' and 'redde' forms are INTERCHANGEABLE - use whichever reads better:
+> pro x: x * 2        ≡  pro x redde x * 2      -> (x) => x * 2
+> pro: 42             ≡  pro redde 42           -> () => 42
+> pro x, y: x + y     ≡  pro x, y redde x + y   -> (x, y) => x + y
+> Block form (for multi-statement bodies):
+> pro x { redde x * 2 }     -> (x) => { return x * 2; }
+> pro { scribe "hi" }       -> () => { console.log("hi"); }
+> Style guidance: Use ':' for short expressions, 'redde' for clarity in complex cases.
 
 ---
 
@@ -291,8 +308,19 @@ elseClause := ('aliter' | 'secus') (ifStmt | blockStmt | statement)
 
 > 'cape' (catch/seize) clause allows error handling within conditionals.
 > 'ergo' (therefore) for one-liner consequents.
+> TWO STYLE OPTIONS (both supported, can be mixed within the same chain):
 > Literal style: si / aliter si / aliter
-> Poetic style:  si / sin / secus
+> si x > 0 { positive() }
+> aliter si x < 0 { negative() }
+> aliter { zero() }
+> Poetic style: si / sin / secus
+> si x > 0 { positive() }
+> sin x < 0 { negative() }    // "sin" = "but if" (classical Latin)
+> secus { zero() }            // "secus" = "otherwise"
+> Keywords are interchangeable at each branch point:
+> - 'aliter si' ≡ 'sin' (else-if)
+> - 'aliter' ≡ 'secus' (else)
+> - Mixed: si ... sin ... aliter { } is valid
 
 **Examples:**
 
@@ -322,14 +350,26 @@ dum x > 0 ergo x = x - 1
 ```ebnf
 exStmt := 'ex' expression (forBinding | destructBinding)
 forBinding := ('pro' | 'fit' | 'fiet') IDENTIFIER (blockStmt | 'ergo' statement) catchClause?
-destructBinding := ('fixum' | 'varia') objectPattern
+destructBinding := ('fixum' | 'varia' | 'figendum' | 'variandum') objectPattern
 ```
+
+> 'ex' (from/out of) introduces both iteration and extraction:
+> - Iteration: ex items pro item { ... } (for each item from items)
+> - Destructuring: ex response fixum { data } (extract data from response)
+> - Async destructuring: ex promise figendum { result } (await + extract)
+> The binding keywords encode mutability and async semantics:
+> - fixum: immutable binding (const)
+> - varia: mutable binding (let)
+> - figendum: immutable + await (const with await)
+> - variandum: mutable + await (let with await)
 
 **Examples:**
 
 ```fab
-ex numeri pro n { ... }           // for-loop
-ex response fixum { status, data } // destructuring
+ex numeri pro n { ... }              // for-loop (sync)
+ex numeri fiet n { ... }             // for-await-of loop (async)
+ex response fixum { status, data }   // destructuring (sync)
+ex fetchData() figendum { result }   // destructuring (async, awaits first)
 ```
 
 ### De Statement
@@ -519,7 +559,19 @@ catchClause := 'cape' IDENTIFIER blockStmt
 facBlockStmt := 'fac' blockStmt ('cape' IDENTIFIER blockStmt)?
 ```
 
-> Creates explicit scope boundary with optional error handling.
+> 'fac' (do/make) creates an explicit scope boundary for grouping
+> statements with optional error handling via 'cape' (catch).
+> Useful for:
+> - Scoped variable declarations
+> - Grouping related operations with shared error handling
+> - Creating IIFE-like constructs
+
+**Examples:**
+
+```fab
+fac { fixum x = computeValue() }
+fac { riskyOperation() } cape e { scribe e }
+```
 
 ---
 
