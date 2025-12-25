@@ -75,6 +75,11 @@ describe('Python codegen', () => {
             expect(result).toBe('x: int = 99999999999999999999');
         });
 
+        test('numquam maps to NoReturn', () => {
+            const result = compile('functio moritur() -> numquam { iace novum Erratum("fatal") }');
+            expect(result).toContain('def moritur() -> NoReturn:');
+        });
+
         test('octeti maps to bytes', () => {
             const result = compile('varia octeti data = []');
             expect(result).toBe('data: bytes = []');

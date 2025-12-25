@@ -141,6 +141,7 @@ const typeMap: Record<string, string> = {
     bivalens: 'bool',
     nihil: 'None',
     vacuum: 'None',
+    numquam: 'NoReturn', // WHY: typing.NoReturn for functions that never return
     octeti: 'bytes',
     objectum: 'object',
     object: 'object',

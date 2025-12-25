@@ -131,6 +131,8 @@ const typeMap: Record<string, string> = {
     magnus: 'bigint',
     bivalens: 'boolean',
     nihil: 'null',
+    vacuum: 'void',
+    numquam: 'never',
     octeti: 'Uint8Array',
     lista: 'Array',
     tabula: 'Map',
@@ -138,7 +140,6 @@ const typeMap: Record<string, string> = {
     promissum: 'Promise',
     erratum: 'Error',
     cursor: 'Iterator',
-    vacuum: 'void',
     objectum: 'object',
     // WHY: Map Object -> object for TS compatibility
     object: 'object',

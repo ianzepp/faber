@@ -65,7 +65,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `bivalens` (boolean)     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `nihil` (null)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `vacuum` (void)          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
-| `numquam` (never)        |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
+| `numquam` (never)        |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `octeti` (bytes)         |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `objectum` (object)      |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `lista<T>` (array)       |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |

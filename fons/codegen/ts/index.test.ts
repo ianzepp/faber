@@ -560,6 +560,12 @@ describe('codegen', () => {
 
             expect(js).toBe('const huge: bigint = 99999999999999999999n;');
         });
+
+        test('numquam maps to never', () => {
+            const js = compile('functio moritur() -> numquam { iace novum Erratum("fatal") }');
+
+            expect(js).toContain('function moritur(): never');
+        });
     });
 
     describe('enum declarations (ordo)', () => {
