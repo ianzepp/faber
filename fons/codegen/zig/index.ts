@@ -1364,6 +1364,10 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 return 'and';
             case '||':
                 return 'or';
+            case '===':
+                return '==';
+            case '!==':
+                return '!=';
             default:
                 return op;
         }

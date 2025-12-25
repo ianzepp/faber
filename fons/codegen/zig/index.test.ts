@@ -326,6 +326,32 @@ describe('zig codegen', () => {
         });
     });
 
+    describe('operator mapping', () => {
+        test('est maps to ==', () => {
+            const zig = compile(`
+                varia x = 1
+                varia y = 2
+                si x est y { scribe "equal" }
+            `);
+
+            expect(zig).toContain('(x == y)');
+        });
+
+        test('&& maps to and', () => {
+            const zig = compile('si verum et falsum { scribe "both" }');
+
+            expect(zig).toContain('and');
+            expect(zig).not.toContain('&&');
+        });
+
+        test('|| maps to or', () => {
+            const zig = compile('si verum aut falsum { scribe "either" }');
+
+            expect(zig).toContain('or');
+            expect(zig).not.toContain('||');
+        });
+    });
+
     describe('missing features - nulla/nonnulla operators', () => {
         test('nulla generates null check', () => {
             const zig = compile('si nulla x { scribe "empty" }');
