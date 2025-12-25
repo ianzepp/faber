@@ -157,17 +157,8 @@ genus account {
 
     publicus numerus available => ego.balance + ego.creditLimit
     publicus bivalens isOverdrawn => ego.balance < 0
-    publicus textus status => {
-        si ego.balance >= 1000 {
-            redde "premium"
-        }
-        aliter si ego.balance >= 0 {
-            redde "standard"
-        }
-        aliter {
-            redde "overdrawn"
-        }
-    }
+    // WHY: Computed fields use expression syntax, not block syntax
+    publicus textus status => ego.balance >= 1000 ? "premium" : ego.balance >= 0 ? "standard" : "overdrawn"
 }
 
 varia acc = novum account

@@ -195,6 +195,18 @@ cape err {
 // WHEN TO USE INLINE CAPE
 // =============================================================================
 
+// Declare the functions used in examples
+functio processData(d) {
+    scribe "Processing data:", d
+}
+
+functio validateAndProcess(i) {
+    si i == 2 {
+        iace "Cannot process 2"
+    }
+    scribe "Validated:", i
+}
+
 // GOOD: Single operation that might fail
 si nonnulla data {
     processData(data)

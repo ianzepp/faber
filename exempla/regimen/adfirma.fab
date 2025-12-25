@@ -118,7 +118,7 @@ scribe clamp(15, 0, 10)
 
 functio getFirst(lista<numerus> items) -> numerus {
     adfirma nonnulla items, "array cannot be empty"
-    redde items
+    redde items[0]
 }
 
 scribe getFirst([1, 2, 3])

@@ -1,100 +1,128 @@
+// =============================================================================
+// TYPI - Type Aliases
+// =============================================================================
+//
+// Type aliases create alternative names for existing types.
+// They improve code readability and enable domain modeling.
+//
+// SYNTAX:
+// typus AliasName = ExistingType
+
+// =============================================================================
+// BASIC TYPE ALIASES
+// =============================================================================
+
 typus UserID = numerus
 typus OrderID = textus
 typus SessionID = textus
 
-fixum UserID
-currentUser = 12345
-fixum OrderID
-orderId = "ORD-2024-001"
-fixum SessionID
-sessionId = "sess_abc123"
+fixum numerus currentUser = 12345
+fixum textus orderId = "ORD-2024-001"
+fixum textus sessionId = "sess_abc123"
 
 scribe currentUser
 scribe orderId
+
+// =============================================================================
+// STRING-BASED ALIASES
+// =============================================================================
 
 typus EmailAddress = textus
 typus PhoneNumber = textus
 typus URL = textus
 
-fixum EmailAddress
-email = "marcus@roma.com"
-fixum PhoneNumber
-phone = "+1-555-0100"
-fixum URL
-homepage = "https://example.com"
+fixum textus email = "marcus@roma.com"
+fixum textus phone = "+1-555-0100"
+fixum textus homepage = "https://example.com"
 
 scribe email
 scribe phone
+
+// =============================================================================
+// NUMERIC ALIASES
+// =============================================================================
 
 typus Age = numerus
 typus Price = numerus
 typus Quantity = numerus
 
-fixum Age
-personAge = 30
-fixum Price
-itemPrice = 99
-fixum Quantity
-stockCount = 100
+fixum numerus personAge = 30
+fixum numerus itemPrice = 99
+fixum numerus stockCount = 100
 
-typus UserList = lista<UserID>
+// =============================================================================
+// COLLECTION ALIASES
+// =============================================================================
+
+typus UserList = lista<numerus>
 typus NameList = lista<textus>
 typus ScoreList = lista<numerus>
 
-fixum UserList
-activeUsers = [1, 2, 3, 4, 5]
-fixum NameList
-teamMembers = ["Marcus", "Julia", "Claudia"]
-fixum ScoreList
-testScores = [85, 92, 78, 95]
+fixum lista<numerus> activeUsers = [1, 2, 3, 4, 5]
+fixum lista<textus> teamMembers = ["Marcus", "Julia", "Claudia"]
+fixum lista<numerus> testScores = [85, 92, 78, 95]
 
 ex activeUsers pro userId {
     scribe "User ID:", userId
 }
 
+// =============================================================================
+// OPTIONAL TYPE ALIASES
+// =============================================================================
+
 typus OptionalEmail = textus?
 typus OptionalAge = numerus?
 
-fixum OptionalEmail
-contactEmail = nihil
-fixum OptionalAge
-retirementAge = nihil
+fixum textus? contactEmail = nihil
+fixum numerus? retirementAge = nihil
 
 scribe contactEmail
 scribe retirementAge
 
-fixum OptionalEmail
-validEmail = "user@example.com"
-fixum OptionalAge
-validAge = 65
+fixum textus? validEmail = "user@example.com"
+fixum numerus? validAge = 65
+
+// =============================================================================
+// MEASUREMENT ALIASES
+// =============================================================================
 
 typus Celsius = numerus
 typus Fahrenheit = numerus
 
-redde temp * 9 / 5 + 32
+functio celsiusToFahrenheit(numerus temp) -> numerus {
+    redde temp * 9 / 5 + 32
+}
 
-fixum Celsius
-roomTemp = 22
-fixum Fahrenheit
-convertedTemp = celsiusToFahrenheit(roomTemp)
+fixum numerus roomTemp = 22
+fixum numerus convertedTemp = celsiusToFahrenheit(roomTemp)
 
 scribe convertedTemp
 
 typus Meters = numerus
 typus Kilometers = numerus
 
-redde distance / 1000
+functio metersToKilometers(numerus distance) -> numerus {
+    redde distance / 1000
+}
+
+// =============================================================================
+// DOMAIN-SPECIFIC ALIASES
+// =============================================================================
 
 typus ProductID = textus
 typus ProductName = textus
 typus ProductPrice = numerus
 
-redde "Product: " + id + " - " + name + " ($" + price + ")"
+functio formatProduct(textus id, textus name, numerus price) -> textus {
+    redde "Product: " + id + " - " + name
+}
 
 typus Username = textus
 typus PasswordHash = textus
 
-redde verum
+functio validateCredentials(textus username, textus passwordHash) -> bivalens {
+    redde verum
+}
 
 functio processOrder(textus id, numerus amount, textus status) {
     scribe id, amount, status
@@ -102,11 +130,22 @@ functio processOrder(textus id, numerus amount, textus status) {
 
 typus OrderStatus = textus
 
+// =============================================================================
+// TIME-BASED ALIASES
+// =============================================================================
+
 typus Seconds = numerus
 typus Milliseconds = numerus
 
+// =============================================================================
+// RESULT TYPE ALIASES
+// =============================================================================
+
 typus ValidationResult = textus?
 
-typus Number = numerus
+// =============================================================================
+// GENERIC ALIASES
+// =============================================================================
 
+typus Number = numerus
 typus S = textus

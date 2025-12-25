@@ -81,7 +81,7 @@ processOrder({ id: "ORD-456", total: 150.00 })
 // =============================================================================
 
 genus Counter {
-    varia count: numerus: 0
+    numerus count: 0
 
     functio increment() {
         ego.count = ego.count + 1

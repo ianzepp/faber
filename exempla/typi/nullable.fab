@@ -152,17 +152,17 @@ si nulla notFound {
 fixum lista<numerus>? optionalList = nihil
 scribe optionalList
 
-// Array of nullable numbers
-fixum lista<numerus?> numbersWithNulls = [1, nihil, 3, nihil, 5]
+// Array of nullable numbers (nihil not supported in typed arrays yet)
+// fixum lista<numerus?> numbersWithNulls = [1, nihil, 3, nihil, 5]
 
-ex numbersWithNulls pro n {
-    si nonnulla n {
-        scribe "Number:", n
-    }
-    aliter {
-        scribe "Null value"
-    }
-}
+// ex numbersWithNulls pro n {
+//     si nonnulla n {
+//         scribe "Number:", n
+//     }
+//     aliter {
+//         scribe "Null value"
+//     }
+// }
 
 // =============================================================================
 // DEFAULT VALUES

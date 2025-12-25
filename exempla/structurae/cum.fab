@@ -65,7 +65,7 @@ scribe display.volume
 // CUM IN FUNCTIONS
 // =============================================================================
 
-functio configureServer(host, port) {
+functio configureServer(host, port) -> Object {
     fixum server = { host: "", port: 0, started: falsum }
 
     cum server {
@@ -109,13 +109,15 @@ varia options = { debug: falsum, verbose: falsum, logLevel: "" }
 
 fixum isDevelopment = verum
 
-cum options {
-    si isDevelopment {
+si isDevelopment {
+    cum options {
         debug = verum
         verbose = verum
         logLevel = "debug"
     }
-    aliter {
+}
+aliter {
+    cum options {
         logLevel = "error"
     }
 }
@@ -128,7 +130,7 @@ scribe options.logLevel
 // =============================================================================
 
 // Builder pattern using cum
-functio createUser(name, email) {
+functio createUser(name, email) -> Object {
     fixum user = { name: "", email: "", verified: falsum, created: verum }
 
     cum user {
@@ -216,7 +218,7 @@ counter.value = 1
 // CUM IN INITIALIZATION PATTERNS
 // =============================================================================
 
-functio initializeApp() {
+functio initializeApp() -> Object {
     fixum app = { name: "", version: "", started: falsum }
 
     cum app {

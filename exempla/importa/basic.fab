@@ -4,6 +4,14 @@ ex utilities importa formatDate, parseNumber, validateEmail
 
 ex mathematics importa *
 
+functio isEmpty(data) -> bivalens {
+    redde data == nihil
+}
+
+functio isValid(data) -> bivalens {
+    redde data != nihil
+}
+
 functio processData(data) {
     si isEmpty(data) {
         scribe "No data to process"

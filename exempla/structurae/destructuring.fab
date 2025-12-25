@@ -96,19 +96,19 @@ displayUser({ name: "Claudia", age: 28 })
 fixum profile = { user: { name: "Gaius", id: 42 }, settings: { theme: "dark" } }
 
 // Destructure nested objects
-ex profile fixum { user, settings }
-ex user fixum { name, id }
+ex profile fixum { user: profileUser, settings }
+ex profileUser fixum { name: profileName, id: profileId }
 ex settings fixum { theme }
 
-scribe name
-scribe id
+scribe profileName
+scribe profileId
 scribe theme
 
 // =============================================================================
 // DESTRUCTURING FUNCTION RETURNS
 // =============================================================================
 
-functio getCoordinates() {
+functio getCoordinates() -> Object {
     redde { x: 10, y: 20 }
 }
 
@@ -118,7 +118,7 @@ scribe x
 scribe y
 
 // Return multiple values
-functio getUserInfo() {
+functio getUserInfo() -> Object {
     redde { name: "Marcus", email: "marcus@roma.com", verified: verum }
 }
 
@@ -142,10 +142,10 @@ fixum largeObject = {
 }
 
 // Extract only what you need
-ex largeObject fixum { id, name, price }
+ex largeObject fixum { id: productId, name: productName, price }
 
-scribe id
-scribe name
+scribe productId
+scribe productName
 scribe price
 
 // =============================================================================

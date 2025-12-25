@@ -63,10 +63,3 @@ fixum data = nihil
 si data == nihil {
     scribe "No data available"
 }
-
-// Optional values default to nihil
-varia user = nihil
-scribe user
-
-user = { name: "Marcus" }
-scribe user

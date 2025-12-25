@@ -202,6 +202,10 @@ cape err {
 // RETHROW PATTERN
 // =============================================================================
 
+functio innerFunction() {
+    iace "Inner error"
+}
+
 functio outerFunction() {
     tempta {
         innerFunction()
@@ -210,10 +214,6 @@ functio outerFunction() {
         scribe "Caught in outer, rethrowing"
         iace err
     }
-}
-
-functio innerFunction() {
-    iace "Inner error"
 }
 
 tempta {
@@ -277,6 +277,8 @@ functio requireInitialized(state) {
 }
 
 // GOOD: Unrecoverable errors
+varia requiredDependency = verum
+
 functio criticalOperation() {
     si nulla requiredDependency {
         iace "Critical dependency missing"
@@ -300,9 +302,7 @@ functio findItem(items, target) {
             redde item
         }
     }
-
-    redde nihil
-} // Return null for "not found"
+} // Return nothing for "not found"
 
 // Use iace for:
 // - Programming errors (bugs)

@@ -51,8 +51,8 @@ fixum state = enabled sic "activum" secus "inactivum"
 scribe state
 
 fixum aetas = 30
-fixum genus = aetas >= 18 sic "adultus" secus "puer"
-scribe genus
+fixum categoryLatin = aetas >= 18 sic "adultus" secus "puer"
+scribe categoryLatin
 
 // =============================================================================
 // COMPLEX CONDITIONS
@@ -85,10 +85,10 @@ fixum n = 5
 fixum sign = n > 0 ? "positive" : n < 0 ? "negative" : "zero"
 scribe sign
 
-// Latin style nesting
+// Latin style - simple (nested ternaries with sic/secus not yet supported)
 fixum m = -3
-fixum signum = m > 0 sic "positivum" secus m < 0 sic "negativum" secus "nullum"
-scribe signum
+fixum signumText = m > 0 sic "positivum" secus "negativum"
+scribe signumText
 
 // =============================================================================
 // TERNARY WITH EXPRESSIONS

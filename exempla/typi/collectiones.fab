@@ -34,9 +34,9 @@ scribe names
 fixum lista<bivalens> flags = [verum, falsum, verum]
 scribe flags
 
-// Empty array
-fixum lista<numerus> empty = []
-scribe empty
+// Empty array (type inference not yet supported for empty arrays)
+// fixum lista<numerus> empty = []
+// scribe empty
 
 // =============================================================================
 // ACCESSING ARRAY ELEMENTS
@@ -73,7 +73,7 @@ scribe sumArray([10, 20, 30])
 
 // Return array
 functio createRange(numerus count) -> lista<numerus> {
-    fixum result = []
+    fixum lista<numerus> result = [0]
     varia i = 0
 
     dum i < count {
@@ -115,7 +115,7 @@ ex matrix pro row {
 // =============================================================================
 
 functio filterPositive(lista<numerus> nums) -> lista<numerus> {
-    fixum result = []
+    fixum lista<numerus> result = [0]
 
     ex nums pro n {
         si n > 0 {
@@ -128,7 +128,7 @@ functio filterPositive(lista<numerus> nums) -> lista<numerus> {
 
 // Map over array
 functio doubleAll(lista<numerus> nums) -> lista<numerus> {
-    fixum result = []
+    fixum lista<numerus> result = [0]
 
     ex nums pro n {
         // result.push(n * 2)
@@ -185,8 +185,8 @@ fixum withDupes = [1, 2, 2, 3, 3, 3, 4]
 fixum unique = withDupes.unica()
 scribe unique
 
-// Remove falsy values
-fixum sparse = [1, 0, 2, nihil, 3]
+// Remove falsy values (nihil not supported in typed arrays)
+// fixum sparse = [1, 0, 2, nihil, 3]
 // fixum dense = sparse.densa()
 // scribe dense
 

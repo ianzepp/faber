@@ -209,9 +209,9 @@ fixum origin = createOrigin()
 scribe origin.x
 scribe origin.y
 
-fixum custom = createPoint(10, 20)
-scribe custom.x
-scribe custom.y
+fixum customPoint = createPoint(10, 20)
+scribe customPoint.x
+scribe customPoint.y
 
 // =============================================================================
 // CONFIGURATION PATTERNS

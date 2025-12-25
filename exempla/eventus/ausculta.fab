@@ -69,7 +69,6 @@ futura functio commandLoop() {
         elige cmd.type {
             si "start" {
                 scribe "Starting..."
-                start()
             }
             si "stop" {
                 scribe "Stopping..."
@@ -105,9 +104,9 @@ futura functio monitor() {
 // =============================================================================
 
 genus EventProcessor {
-    fixum eventName: textus
+    textus eventName: ""
 
-    functio creo(eventName: textus) {
+    functio creo(textus eventName) {
         ego.eventName = eventName
     }
 

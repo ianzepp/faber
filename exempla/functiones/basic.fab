@@ -55,7 +55,9 @@ functio absolutus(x) -> numerus {
 scribe absolutus(-42)
 scribe absolutus(42)
 
-redde n * 2
+functio duplica(n) -> numerus {
+    redde n * 2
+}
 
 functio quadruplum(n) -> numerus {
     redde duplica(duplica(n))

@@ -70,7 +70,7 @@ ex team.members pro member {
 // OBJECTS IN FUNCTIONS
 // =============================================================================
 
-functio createUser(name, email) {
+functio createUser(name, email) -> Object {
     redde { name: name, email: email, created: verum }
 }
 
