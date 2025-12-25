@@ -94,7 +94,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | Type annotations             |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Object destructuring         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Array destructuring          |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
-| Rest in destructuring        |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
+| Rest in destructuring        |    [x]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Initializer expressions      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 
 ## Enum Declarations
@@ -112,7 +112,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | Basic functions (`functio`)        |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Parameters                         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Parameter type annotations         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
-| Rest parameters (`ceteri`)         |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
+| Rest parameters (`ceteri`)         |    [x]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Return type annotation (`->`)      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `futura` (async prefix)            |    [x]     | [~] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `cursor` (generator prefix)        |    [x]     | [-] |  [x]   | [ ]  | [ ]  |  [-]  |
@@ -193,9 +193,9 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | Template literals                   |    [x]     | [~] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Regex literals (`sed`)              |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Array literals                      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
-| Array spread (`sparge`)             |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
+| Array spread (`sparge`)             |    [x]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Object literals                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
-| Object spread (`sparge`)            |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
+| Object spread (`sparge`)            |    [x]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Binary operators                    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Comparison operators                |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Logical operators                   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
@@ -209,7 +209,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | Non-null assertion (`!.`)           |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Computed access (`[]`)              |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Function calls                      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
-| Call spread (`sparge`)              |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
+| Call spread (`sparge`)              |    [x]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Method calls                        |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Assignment                          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Conditional (ternary)               |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |

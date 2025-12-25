@@ -194,6 +194,17 @@ export const keywords: KeywordEntry[] = [
     { latin: 'ut', meaning: 'as', category: 'preposition' },
     // WHY: "vel" (or) for default values in destructuring
     { latin: 'vel', meaning: 'or', category: 'operator' },
+
+    // ---------------------------------------------------------------------------
+    // Spread/Rest Operators
+    // ---------------------------------------------------------------------------
+
+    // WHY: "sparge" (scatter/spread) for spreading elements in arrays/objects/calls
+    //      Latin spargere = "to scatter, spread, sprinkle"
+    { latin: 'sparge', meaning: '...', category: 'operator' },
+    // WHY: "ceteri" (the rest/others) for collecting remaining elements
+    //      Latin ceteri = "the rest, the others, the remaining"
+    { latin: 'ceteri', meaning: '...rest', category: 'operator' },
 ];
 
 // =============================================================================

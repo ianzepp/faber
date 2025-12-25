@@ -156,11 +156,18 @@ export interface ObjectPattern extends BaseNode {
  *
  * key: the property name to extract from the object
  * value: the variable name to bind (same as key if not renamed)
+ * rest: if true, collects all remaining properties (ceteri pattern)
+ *
+ * Examples:
+ *   { nomen }                -> key=nomen, value=nomen, rest=false
+ *   { nomen: n }             -> key=nomen, value=n, rest=false
+ *   { nomen, ceteri rest }   -> second prop: key=rest, value=rest, rest=true
  */
 export interface ObjectPatternProperty extends BaseNode {
     type: 'ObjectPatternProperty';
     key: Identifier;
     value: Identifier;
+    rest?: boolean;
 }
 
 /**
@@ -222,14 +229,19 @@ export interface FunctionDeclaration extends BaseNode {
  * Function parameter.
  *
  * GRAMMAR (in EBNF):
- *   parameter := ('ad' | 'de' | 'in' | 'ex')? IDENTIFIER (':' typeAnnotation)?
+ *   parameter := ('ad' | 'de' | 'in' | 'ex')? 'ceteri'? (typeAnnotation IDENTIFIER | IDENTIFIER)
  *
  * INVARIANT: preposition is Latin (ad/de/in/ex), not English (to/from/in/of).
  * INVARIANT: case and preposition enable semantic analysis of parameter roles.
+ * INVARIANT: rest is true when 'ceteri' modifier present (variadic/rest parameter).
  *
  * WHY: Latin prepositions indicate semantic roles that map to different constructs
  *      in target languages. For systems targets (Rust/Zig), 'de' = borrowed/read-only
  *      and 'in' = mutable borrow.
+ *
+ * Examples:
+ *   nomen: textus             -> regular param
+ *   ceteri lista<textus> args -> rest param (...args: string[])
  */
 export interface Parameter extends BaseNode {
     type: 'Parameter';
@@ -237,6 +249,7 @@ export interface Parameter extends BaseNode {
     typeAnnotation?: TypeAnnotation;
     case?: Case;
     preposition?: string;
+    rest?: boolean;
 }
 
 /**
@@ -914,37 +927,60 @@ export interface TemplateLiteral extends BaseNode {
  * Array literal expression.
  *
  * GRAMMAR (in EBNF):
- *   arrayExpr := '[' (expression (',' expression)*)? ']'
+ *   arrayExpr := '[' (arrayElement (',' arrayElement)*)? ']'
+ *   arrayElement := 'sparge' expression | expression
  *
  * INVARIANT: elements is always an array (empty array = empty elements).
+ * INVARIANT: elements can contain SpreadElement for spread syntax.
  *
  * Examples:
- *   []           -> elements=[]
- *   [1, 2, 3]    -> elements=[Literal, Literal, Literal]
- *   [[1], [2]]   -> elements=[ArrayExpression, ArrayExpression]
+ *   []                    -> elements=[]
+ *   [1, 2, 3]             -> elements=[Literal, Literal, Literal]
+ *   [sparge a, sparge b]  -> elements=[SpreadElement, SpreadElement]
  */
 export interface ArrayExpression extends BaseNode {
     type: 'ArrayExpression';
-    elements: Expression[];
+    elements: (Expression | SpreadElement)[];
+}
+
+/**
+ * Spread element (sparge) for arrays, objects, and function calls.
+ *
+ * GRAMMAR (in EBNF):
+ *   spreadElement := 'sparge' expression
+ *
+ * WHY: Latin 'sparge' (scatter/spread) for spreading elements.
+ *      Used in arrays: [sparge a, sparge b]
+ *      Used in objects: { sparge o }
+ *      Used in calls: fn(sparge args)
+ *
+ * Examples:
+ *   sparge a   -> spread array a into containing array
+ *   sparge obj -> spread object properties into containing object
+ */
+export interface SpreadElement extends BaseNode {
+    type: 'SpreadElement';
+    argument: Expression;
 }
 
 /**
  * Object literal expression.
  *
  * GRAMMAR (in EBNF):
- *   objectExpr := '{' (objectProperty (',' objectProperty)*)? '}'
- *   objectProperty := (IDENTIFIER | STRING) ':' expression
+ *   objectExpr := '{' (objectMember (',' objectMember)*)? '}'
+ *   objectMember := 'sparge' expression | (IDENTIFIER | STRING) ':' expression
  *
  * WHY: Object literals are the primary way to create structured data.
+ * INVARIANT: properties can contain SpreadElement for object spread.
  *
  * Examples:
  *   {}                           -> empty object
  *   { nomen: "Marcus" }          -> single property
- *   { nomen: "Marcus", aetas: 30 } -> multiple properties
+ *   { sparge defaults, x: 1 }    -> spread + property
  */
 export interface ObjectExpression extends BaseNode {
     type: 'ObjectExpression';
-    properties: ObjectProperty[];
+    properties: (ObjectProperty | SpreadElement)[];
 }
 
 /**
@@ -1032,15 +1068,22 @@ export interface UnaryExpression extends BaseNode {
  *
  * GRAMMAR (in EBNF):
  *   callExpr := expression '(' argumentList ')'
- *   argumentList := (expression (',' expression)*)?
+ *   argumentList := (argument (',' argument)*)?
+ *   argument := 'sparge' expression | expression
  *
  * INVARIANT: callee can be any expression (Identifier, MemberExpression, etc.).
  * INVARIANT: arguments is always an array (empty for zero-arg calls).
+ * INVARIANT: arguments can contain SpreadElement for spread in calls.
+ *
+ * Examples:
+ *   f()              -> args=[]
+ *   f(a, b)          -> args=[a, b]
+ *   f(sparge nums)   -> args=[SpreadElement]
  */
 export interface CallExpression extends BaseNode {
     type: 'CallExpression';
     callee: Expression;
-    arguments: Expression[];
+    arguments: (Expression | SpreadElement)[];
 }
 
 /**

@@ -550,9 +550,14 @@ export function analyze(program: Program): SemanticResult {
     }
 
     function resolveObjectExpression(node: Expression & { type: 'ObjectExpression' }): SemanticType {
-        // Resolve each property value
+        // Resolve each property value or spread argument
         for (const prop of node.properties) {
-            resolveExpression(prop.value);
+            if (prop.type === 'SpreadElement') {
+                resolveExpression(prop.argument);
+            }
+            else {
+                resolveExpression(prop.value);
+            }
         }
 
         // WHY: Use Latin type name for consistency
@@ -573,11 +578,24 @@ export function analyze(program: Program): SemanticResult {
             return arrType;
         }
 
-        // Resolve all element types
+        // Resolve all element types (SpreadElement resolves to its argument's type)
         const elementTypes: SemanticType[] = [];
 
         for (const element of node.elements) {
-            elementTypes.push(resolveExpression(element));
+            if (element.type === 'SpreadElement') {
+                // For spread, resolve the argument (should be an array) and use its element type
+                const argType = resolveExpression(element.argument);
+                // If spreading an array, use its element type; otherwise use unknown
+                if (argType.kind === 'generic' && argType.name === 'lista' && argType.typeParams?.length) {
+                    elementTypes.push(argType.typeParams[0]);
+                }
+                else {
+                    elementTypes.push(UNKNOWN);
+                }
+            }
+            else {
+                elementTypes.push(resolveExpression(element));
+            }
         }
 
         // Infer element type from first element
@@ -770,9 +788,14 @@ export function analyze(program: Program): SemanticResult {
     function resolveCallExpression(node: CallExpression): SemanticType {
         const calleeType = resolveExpression(node.callee);
 
-        // Resolve argument types
+        // Resolve argument types (handle SpreadElement)
         for (const arg of node.arguments) {
-            resolveExpression(arg);
+            if (arg.type === 'SpreadElement') {
+                resolveExpression(arg.argument);
+            }
+            else {
+                resolveExpression(arg);
+            }
         }
 
         // If callee is a function type, return its return type

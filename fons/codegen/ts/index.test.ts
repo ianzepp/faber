@@ -2113,4 +2113,108 @@ describe('codegen', () => {
             expect(js).toContain('console.log("always")');
         });
     });
+
+    // =========================================================================
+    // Spread/Rest Operators (sparge/ceteri)
+    // =========================================================================
+
+    describe('sparge (spread)', () => {
+        test('spread in array literal', () => {
+            const js = compile(`
+                fixum a = [1, 2]
+                fixum b = [sparge a, 3, 4]
+            `);
+
+            expect(js).toContain('const b = [...a, 3, 4]');
+        });
+
+        test('multiple spreads in array', () => {
+            const js = compile(`
+                fixum a = [1]
+                fixum b = [2]
+                fixum c = [sparge a, sparge b]
+            `);
+
+            expect(js).toContain('const c = [...a, ...b]');
+        });
+
+        test('spread in object literal', () => {
+            const js = compile(`
+                fixum defaults = { a: 1 }
+                fixum merged = { sparge defaults, b: 2 }
+            `);
+
+            expect(js).toContain('const merged = { ...defaults, b: 2 }');
+        });
+
+        test('multiple spreads in object', () => {
+            const js = compile(`
+                fixum a = { x: 1 }
+                fixum b = { y: 2 }
+                fixum c = { sparge a, sparge b }
+            `);
+
+            expect(js).toContain('const c = { ...a, ...b }');
+        });
+
+        test('spread in function call', () => {
+            const js = compile(`
+                functio sum(numerus a, numerus b) -> numerus { redde a + b }
+                fixum args = [1, 2]
+                sum(sparge args)
+            `);
+
+            expect(js).toContain('sum(...args)');
+        });
+
+        test('spread with other args in call', () => {
+            const js = compile(`
+                functio f(a, b, c) { scribe a, b, c }
+                fixum rest = [2, 3]
+                f(1, sparge rest)
+            `);
+
+            expect(js).toContain('f(1, ...rest)');
+        });
+    });
+
+    describe('ceteri (rest)', () => {
+        test('rest parameter in function', () => {
+            const js = compile(`
+                functio sum(ceteri lista<numerus> nums) -> numerus {
+                    redde 0
+                }
+            `);
+
+            expect(js).toContain('function sum(...nums: Array<number>)');
+        });
+
+        test('rest with regular params', () => {
+            const js = compile(`
+                functio log(textus prefix, ceteri lista<textus> messages) {
+                    scribe prefix
+                }
+            `);
+
+            expect(js).toContain('function log(prefix: string, ...messages: Array<string>)');
+        });
+
+        test('rest in object destructuring', () => {
+            const js = compile(`
+                fixum obj = { a: 1, b: 2, c: 3 }
+                fixum { a, ceteri rest } = obj
+            `);
+
+            expect(js).toContain('const { a, ...rest } = obj');
+        });
+
+        test('rest with rename in destructuring', () => {
+            const js = compile(`
+                fixum obj = { x: 1, y: 2, z: 3 }
+                fixum { x: localX, ceteri others } = obj
+            `);
+
+            expect(js).toContain('const { x: localX, ...others } = obj');
+        });
+    });
 });

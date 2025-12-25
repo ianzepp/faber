@@ -85,6 +85,7 @@ import type {
     Parameter,
     TypeAnnotation,
     TypeParameter,
+    SpreadElement,
     FacBlockStatement,
     LambdaExpression,
 } from '../../parser/ast';
@@ -323,8 +324,12 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         let name: string;
 
         if (node.name.type === 'ObjectPattern') {
-            // Generate object destructuring pattern
+            // Generate object destructuring pattern with rest support
             const props = node.name.properties.map(prop => {
+                // Rest pattern: ceteri restName -> ...restName
+                if (prop.rest) {
+                    return `...${prop.value.name}`;
+                }
                 if (prop.key.name === prop.value.name) {
                     return prop.key.name;
                 }
@@ -723,12 +728,14 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *
      * TRANSFORMS:
      *   nomen: textus -> nomen: string
+     *   ceteri lista<numerus> nums -> ...nums: number[]
      */
     function genParameter(node: Parameter): string {
         const name = node.name.name;
         const typeAnno = node.typeAnnotation ? `: ${genType(node.typeAnnotation)}` : '';
+        const prefix = node.rest ? '...' : '';
 
-        return `${name}${typeAnno}`;
+        return `${prefix}${name}${typeAnno}`;
     }
 
     /**
@@ -1212,9 +1219,15 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *   [] -> []
      *   [1, 2, 3] -> [1, 2, 3]
      *   [[1], [2]] -> [[1], [2]]
+     *   [sparge a, sparge b] -> [...a, ...b]
      */
     function genArrayExpression(node: ArrayExpression): string {
-        const elements = node.elements.map(genExpression).join(', ');
+        const elements = node.elements.map(el => {
+            if (el.type === 'SpreadElement') {
+                return `...${genExpression(el.argument)}`;
+            }
+            return genExpression(el);
+        }).join(', ');
 
         return `[${elements}]`;
     }
@@ -1225,6 +1238,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * TRANSFORMS:
      *   { nomen: "Marcus" } -> { nomen: "Marcus" }
      *   { nomen: x, aetas: y } -> { nomen: x, aetas: y }
+     *   { sparge defaults, x: 1 } -> { ...defaults, x: 1 }
      */
     function genObjectExpression(node: ObjectExpression): string {
         if (node.properties.length === 0) {
@@ -1232,6 +1246,9 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         }
 
         const props = node.properties.map(prop => {
+            if (prop.type === 'SpreadElement') {
+                return `...${genExpression(prop.argument)}`;
+            }
             const key = prop.key.type === 'Identifier' ? prop.key.name : genLiteral(prop.key);
             const value = genExpression(prop.value);
 
@@ -1327,12 +1344,18 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *   foo(x, y) -> foo(x, y)
      *   lista.adde(x) -> lista.push(x)
      *   lista.filtrata(fn) -> lista.filter(fn)
+     *   f(sparge nums) -> f(...nums)
      *
      * Intrinsics are mapped to target-specific implementations.
      * Lista methods (Latin array methods) are translated to JS equivalents.
      */
     function genCallExpression(node: CallExpression): string {
-        const args = node.arguments.map(genExpression).join(', ');
+        const args = node.arguments.map(arg => {
+            if (arg.type === 'SpreadElement') {
+                return `...${genExpression(arg.argument)}`;
+            }
+            return genExpression(arg);
+        }).join(', ');
 
         // Check for intrinsics (bare function calls)
         if (node.callee.type === 'Identifier') {

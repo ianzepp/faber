@@ -122,6 +122,7 @@ import type {
     ObjectPatternProperty,
     ObjectExpression,
     ObjectProperty,
+    SpreadElement,
     FacBlockStatement,
     LambdaExpression,
 } from './ast';
@@ -738,12 +739,20 @@ export function parse(tokens: Token[]): ParserResult {
 
         while (hasMoreProperties()) {
             const propPosition = peek().position;
+
+            // Check for rest pattern: ceteri restName
+            let rest = false;
+            if (checkKeyword('ceteri')) {
+                advance(); // consume 'ceteri'
+                rest = true;
+            }
+
             const key = parseIdentifier();
 
             let value = key;
 
-            // Check for rename: { nomen: localName }
-            if (match('COLON')) {
+            // Check for rename: { nomen: localName } (not valid with ceteri)
+            if (match('COLON') && !rest) {
                 value = parseIdentifier();
             }
 
@@ -751,6 +760,7 @@ export function parse(tokens: Token[]): ParserResult {
                 type: 'ObjectPatternProperty',
                 key,
                 value,
+                rest,
                 position: propPosition,
             });
 
@@ -911,6 +921,13 @@ export function parse(tokens: Token[]): ParserResult {
             preposition = advance().keyword;
         }
 
+        // Check for rest parameter: ceteri [type] name
+        let rest = false;
+        if (checkKeyword('ceteri')) {
+            advance(); // consume 'ceteri'
+            rest = true;
+        }
+
         let typeAnnotation: TypeAnnotation | undefined;
 
         // WHY: Use lookahead to detect user-defined types, not just builtins.
@@ -925,7 +942,7 @@ export function parse(tokens: Token[]): ParserResult {
 
         const name = parseIdentifier();
 
-        return { type: 'Parameter', name, typeAnnotation, preposition, position };
+        return { type: 'Parameter', name, typeAnnotation, preposition, rest, position };
     }
 
     /**
@@ -2534,17 +2551,27 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse function call argument list.
      *
      * GRAMMAR:
-     *   argumentList := (expression (',' expression)*)?
+     *   argumentList := (argument (',' argument)*)?
+     *   argument := 'sparge' expression | expression
      */
-    function parseArgumentList(): Expression[] {
-        const args: Expression[] = [];
+    function parseArgumentList(): (Expression | SpreadElement)[] {
+        const args: (Expression | SpreadElement)[] = [];
 
         if (check('RPAREN')) {
             return args;
         }
 
         do {
-            args.push(parseExpression());
+            // Check for spread: sparge expr
+            if (checkKeyword('sparge')) {
+                const spreadPos = peek().position;
+                advance(); // consume 'sparge'
+                const argument = parseExpression();
+                args.push({ type: 'SpreadElement', argument, position: spreadPos });
+            }
+            else {
+                args.push(parseExpression());
+            }
         } while (match('COMMA'));
 
         return args;
@@ -2620,11 +2647,20 @@ export function parse(tokens: Token[]): ParserResult {
 
         // Array literal
         if (match('LBRACKET')) {
-            const elements: Expression[] = [];
+            const elements: (Expression | SpreadElement)[] = [];
 
             if (!check('RBRACKET')) {
                 do {
-                    elements.push(parseExpression());
+                    // Check for spread element: sparge expr
+                    if (checkKeyword('sparge')) {
+                        const spreadPos = peek().position;
+                        advance(); // consume 'sparge'
+                        const argument = parseExpression();
+                        elements.push({ type: 'SpreadElement', argument, position: spreadPos });
+                    }
+                    else {
+                        elements.push(parseExpression());
+                    }
                 } while (match('COMMA'));
             }
 
@@ -2635,33 +2671,41 @@ export function parse(tokens: Token[]): ParserResult {
 
         // Object literal
         if (match('LBRACE')) {
-            const properties: ObjectProperty[] = [];
+            const properties: (ObjectProperty | SpreadElement)[] = [];
 
             if (!check('RBRACE')) {
                 do {
                     const propPosition = peek().position;
 
-                    // Key can be identifier or string
-                    let key: Identifier | Literal;
-
-                    if (check('STRING')) {
-                        const token = advance();
-
-                        key = {
-                            type: 'Literal',
-                            value: token.value,
-                            raw: `"${token.value}"`,
-                            position: propPosition,
-                        };
-                    } else {
-                        key = parseIdentifier();
+                    // Check for spread: sparge expr
+                    if (checkKeyword('sparge')) {
+                        advance(); // consume 'sparge'
+                        const argument = parseExpression();
+                        properties.push({ type: 'SpreadElement', argument, position: propPosition });
                     }
+                    else {
+                        // Key can be identifier or string
+                        let key: Identifier | Literal;
 
-                    expect('COLON', ParserErrorCode.ExpectedColon);
+                        if (check('STRING')) {
+                            const token = advance();
 
-                    const value = parseExpression();
+                            key = {
+                                type: 'Literal',
+                                value: token.value,
+                                raw: `"${token.value}"`,
+                                position: propPosition,
+                            };
+                        } else {
+                            key = parseIdentifier();
+                        }
 
-                    properties.push({ type: 'ObjectProperty', key, value, position: propPosition });
+                        expect('COLON', ParserErrorCode.ExpectedColon);
+
+                        const value = parseExpression();
+
+                        properties.push({ type: 'ObjectProperty', key, value, position: propPosition });
+                    }
                 } while (match('COMMA'));
             }
 
