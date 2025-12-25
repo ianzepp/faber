@@ -5,18 +5,20 @@
 // Clausura: Latin for "closure" (from claudere, to close)
 //
 // GRAMMAR:
-// pro <params> redde <expr>             // expression lambda
+// pro <params>: <expr>                  // expression lambda (shorthand)
+// pro <params> redde <expr>             // expression lambda (explicit)
 // pro <params> { <body> }               // block lambda
 // pro { <body> }                        // zero-param lambda
 //
 // ETYMOLOGY:
 // pro: "for" - same keyword as iteration (ex items pro x { })
 // redde: "return" (give back)
+// :    "is defined as" - shorthand, mirrors object literal syntax { x: 42 }
 //
-// WHY "pro...redde" for lambdas:
+// WHY "pro...:" for lambdas:
 // Aligns with iteration: "ex items pro x { }" and "pro x { }" both use pro
-// Reads naturally: "for x, return x times 2"
-// Consistent with function bodies using redde
+// The colon acts as "defined as", matching object literals (x: value)
+// redde remains available for emphasis or teaching
 //
 // SEE ALSO: errores.fab for fac/cape block scope and error handling
 
@@ -35,20 +37,23 @@ varia users = []
 varia items = []
 
 // =============================================================================
-// PART 1: EXPRESSION LAMBDAS (pro x redde expr)
+// PART 1: EXPRESSION LAMBDAS (pro x: expr)
 // =============================================================================
 
-// Single parameter - expression lambda
-fixum double = pro x redde x * 2
+// Single parameter - expression lambda with : shorthand
+fixum double = pro x: x * 2
 scribe double(5)  // 10
 
 // Multiple parameters
-fixum add = pro a, b redde a + b
+fixum add = pro a, b: a + b
 scribe add(3, 4)  // 7
 
 // Zero parameters - expression form
-fixum getAnswer = pro redde 42
+fixum getAnswer = pro: 42
 scribe getAnswer()  // 42
+
+// Explicit redde form (equivalent, more verbose)
+fixum tripleExplicit = pro x redde x * 3
 
 // =============================================================================
 // PART 2: BLOCK LAMBDAS (pro x { })
@@ -81,9 +86,9 @@ fixum greet = pro {
 fixum numbers = [1, 2, 3, 4, 5]
 
 // Expression lambdas - clean for simple transforms
-fixum evens = numbers.filtrata(pro n redde n % 2 == 0)
-fixum doubled = numbers.mappata(pro n redde n * 2)
-fixum sum = numbers.reducta(pro acc, n redde acc + n, 0)
+fixum evens = numbers.filtrata(pro n: n % 2 == 0)
+fixum doubled = numbers.mappata(pro n: n * 2)
+fixum sum = numbers.reducta(pro acc, n: acc + n, 0)
 
 // Block lambdas - for complex logic
 fixum processed = numbers.filtrata(pro n {
@@ -96,8 +101,8 @@ fixum processed = numbers.filtrata(pro n {
 // Nested Lambdas (Currying)
 // -----------------------------------------------------------------------------
 
-// Curried add function
-fixum curriedAdd = pro x redde pro y redde x + y
+// Curried add function - : shorthand shines here
+fixum curriedAdd = pro x: pro y: x + y
 fixum addFive = curriedAdd(5)
 scribe addFive(3)  // 8
 
@@ -115,11 +120,11 @@ button.addEventListener("click", pro e {
     handleClick(e)
 })
 
-// Promise chains - expression form for one-liners
+// Promise chains - : shorthand for one-liners
 fetchData()
-    .then(pro data redde process(data))
-    .then(pro result redde display(result))
-    .catch(pro error redde logError(error))
+    .then(pro data: process(data))
+    .then(pro result: display(result))
+    .catch(pro error: logError(error))
 
 // Promise with block for complex handling
 fetchData()
@@ -135,45 +140,43 @@ fetchData()
     })
 
 // =============================================================================
-// PART 5: COMPARISON WITH ARROW FUNCTIONS
+// PART 5: COMPARISON OF LAMBDA SYNTAXES
 // =============================================================================
 
-// Both syntaxes are valid and compile to the same JavaScript:
+// All three syntaxes are valid and compile to the same JavaScript:
+
+// Colon shorthand (preferred for expression lambdas)
+fixum colonDouble = pro x: x * 2
+
+// Explicit redde (more verbose, good for teaching)
+fixum reddeDouble = pro x redde x * 2
 
 // Arrow function syntax (JS-familiar)
 fixum arrowDouble = (x) => x * 2
 
-// Pro lambda syntax (Latin-aligned)
-fixum proDouble = pro x redde x * 2
-
-// Arrow with block body
-fixum arrowComplex = (x) => {
-    si x < 0 { redde -x }
-    redde x
-}
-
-// Pro with block body
+// Block lambdas - use pro with block body
 fixum proComplex = pro x {
     si x < 0 { redde -x }
     redde x
 }
 
 // When to use which:
-// - pro x redde expr: Short expression lambdas, Latin style
-// - pro x { }: Block lambdas with multiple statements
-// - pro { }: Zero-param callbacks
-// - (x) => expr: JS-familiar alternative
+// - pro x: expr       Preferred for expression lambdas
+// - pro x redde expr  For emphasis or teaching
+// - pro x { }         Block lambdas with multiple statements
+// - pro { }           Zero-param callbacks
+// - (x) => expr       JS-familiar alternative
 // See errores.fab for fac/cape error handling
 
 // =============================================================================
 // PART 6: IDIOMATIC USAGE
 // =============================================================================
 
-// Filtering - expression lambda reads well
-users.filtrata(pro u redde u.active)
+// Filtering - : shorthand is clean
+users.filtrata(pro u: u.active)
 
-// Mapping - expression lambda reads well
-items.mappata(pro i redde i.price * 1.1)
+// Mapping - : shorthand is clean
+items.mappata(pro i: i.price * 1.1)
 
 // Complex filtering - block lambda for clarity
 users.filtrata(pro user {
@@ -187,7 +190,7 @@ button.onClick(pro { scribe "clicked" })
 conn.onClose(pro { cleanup() })
 conn.onError(pro err { logError(err) })
 
-// Higher-order functions returning lambdas
-fixum multiplier = pro factor redde pro x redde x * factor
+// Higher-order functions returning lambdas - : shines here
+fixum multiplier = pro factor: pro x: x * factor
 fixum timesTwo = multiplier(2)
 fixum timesThree = multiplier(3)

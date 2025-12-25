@@ -2763,13 +2763,14 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse pro expression (lambda/anonymous function).
      *
      * GRAMMAR:
-     *   lambdaExpr := 'pro' params? ('redde' expression | blockStmt)
+     *   lambdaExpr := 'pro' params? ((':' | 'redde') expression | blockStmt)
      *   params := IDENTIFIER (',' IDENTIFIER)*
      *
      * WHY: Latin 'pro' (for) + 'redde' (return) creates lambda syntax.
-     *      Zero-param expr: pro redde 42 -> () => 42
-     *      Single param expr: pro x redde x * 2 -> (x) => x * 2
-     *      Multi param expr: pro x, y redde x + y -> (x, y) => x + y
+     *      The ':' shorthand mirrors object literal syntax (x: value = "x is defined as value").
+     *      Zero-param expr: pro redde 42, pro: 42 -> () => 42
+     *      Single param expr: pro x redde x * 2, pro x: x * 2 -> (x) => x * 2
+     *      Multi param expr: pro x, y redde x + y, pro x, y: x + y -> (x, y) => x + y
      *      Block form: pro x { redde x * 2 } -> (x) => { return x * 2; }
      *      Zero-param block: pro { scribe "hi" } -> () => { console.log("hi"); }
      */
@@ -2780,9 +2781,9 @@ export function parse(tokens: Token[]): ParserResult {
 
         const params: Identifier[] = [];
 
-        // Check for immediate redde or { (zero-param lambda)
-        if (!checkKeyword('redde') && !check('LBRACE')) {
-            // Parse parameters until we hit redde or {
+        // Check for immediate redde, :, or { (zero-param lambda)
+        if (!checkKeyword('redde') && !check('COLON') && !check('LBRACE')) {
+            // Parse parameters until we hit redde, :, or {
             do {
                 params.push(parseIdentifier());
             } while (match('COMMA'));
@@ -2793,6 +2794,9 @@ export function parse(tokens: Token[]): ParserResult {
         if (check('LBRACE')) {
             // Block form: pro x { ... }
             body = parseBlockStatement();
+        } else if (match('COLON')) {
+            // Expression shorthand: pro x: expr
+            body = parseExpression();
         } else {
             // Expression form: pro x redde expr
             expectKeyword('redde', ParserErrorCode.ExpectedKeywordRedde);

@@ -1970,6 +1970,62 @@ describe('parser', () => {
                 expect(expr.body.body).toHaveLength(2);
             });
         });
+
+        describe('pro expression with : shorthand', () => {
+            test('single param lambda with :', () => {
+                const { program } = parseCode('pro x: x * 2');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.params).toHaveLength(1);
+                expect(expr.params[0].name).toBe('x');
+                expect(expr.body.type).toBe('BinaryExpression');
+            });
+
+            test('multi param lambda with :', () => {
+                const { program } = parseCode('pro a, b: a + b');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.params).toHaveLength(2);
+                expect(expr.params[0].name).toBe('a');
+                expect(expr.params[1].name).toBe('b');
+            });
+
+            test('zero param lambda with :', () => {
+                const { program } = parseCode('pro: 42');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.params).toHaveLength(0);
+                expect(expr.body.value).toBe(42);
+            });
+
+            test('nested lambdas with :', () => {
+                const { program } = parseCode('pro x: pro y: x + y');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.body.type).toBe('LambdaExpression');
+                expect(expr.body.body.type).toBe('BinaryExpression');
+            });
+
+            test('lambda with : in variable declaration', () => {
+                const { program } = parseCode('fixum double = pro x: x * 2');
+                const decl = program!.body[0] as any;
+
+                expect(decl.type).toBe('VariableDeclaration');
+                expect(decl.init.type).toBe('LambdaExpression');
+            });
+
+            test('mixed : and redde in nested lambdas', () => {
+                const { program } = parseCode('pro x: pro y redde x + y');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.body.type).toBe('LambdaExpression');
+            });
+        });
     });
 
     describe('import declarations', () => {
