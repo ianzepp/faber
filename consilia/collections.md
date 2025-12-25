@@ -25,6 +25,7 @@ Method registries implemented in `fons/codegen/ts/norma/`:
 | `copia<T>` | [x] Complete | `copia.ts` | 14 methods |
 
 **Not yet implemented:**
+- [-] Array destructuring (`ex arr fixum [a, b, ceteri rest]`) — requires parser work
 - [-] Collection DSL (`ex items filtra ubi...`) — requires parser work
 - [-] Closure syntax (`per property`, `{ .property }`) — requires parser work
 - [-] Tabula/copia literals — no syntax for `tabula { k: v }` or `copia { a, b }`
@@ -196,6 +197,151 @@ Method dispatch uses `resolvedType` from semantic analysis to correctly route ov
 ### Open Questions
 
 1. **Conversion to lista**: `inLista() -> lista<T>`?
+
+---
+
+## Array Destructuring
+
+Positional extraction from arrays, using the same `ex` syntax as object destructuring.
+
+### Why Array Destructuring?
+
+Originally excluded because without rest syntax, it's limited to fixed-length patterns which are fragile. With `ceteri` (rest), array destructuring enables:
+
+- Head/tail splitting for recursive algorithms
+- Extracting first N elements while collecting remainder
+- Tuple-style returns from functions
+
+### Basic Syntax
+
+```faber
+fixum coords = [10, 20, 30]
+
+// Extract by position
+ex coords fixum [x, y, z]
+scribe x  // 10
+scribe y  // 20
+scribe z  // 30
+```
+
+Parallels object destructuring: `ex obj fixum { a, b }` vs `ex arr fixum [a, b]`
+
+### Rest Pattern with ceteri
+
+The primary use case—split head from tail:
+
+```faber
+fixum items = [1, 2, 3, 4, 5]
+
+// First element + rest
+ex items fixum [first, ceteri rest]
+scribe first  // 1
+scribe rest   // [2, 3, 4, 5]
+
+// First two + rest
+ex items fixum [a, b, ceteri tail]
+scribe a     // 1
+scribe b     // 2
+scribe tail  // [3, 4, 5]
+```
+
+### Practical Examples
+
+**Recursive list processing:**
+```faber
+functio sum(lista<numerus> nums) -> numerus {
+    si nums.vacua() { redde 0 }
+    ex nums fixum [head, ceteri tail]
+    redde head + sum(tail)
+}
+
+scribe sum([1, 2, 3, 4, 5])  // 15
+```
+
+**Command argument parsing:**
+```faber
+functio parseArgs(lista<textus> args) {
+    ex args fixum [command, ceteri flags]
+
+    elige {
+        command est "build" => handleBuild(flags)
+        command est "test" => handleTest(flags)
+        aliter => scribe "Unknown command:", command
+    }
+}
+```
+
+**Tuple-style returns:**
+```faber
+functio divide(numerus a, numerus b) -> lista<numerus> {
+    redde [a / b, a % b]
+}
+
+ex divide(17, 5) fixum [quotient, remainder]
+scribe quotient   // 3
+scribe remainder  // 2
+```
+
+**Swapping values:**
+```faber
+varia a = 1
+varia b = 2
+[a, b] = [b, a]
+scribe a  // 2
+scribe b  // 1
+```
+
+### Skipping Elements
+
+Use `_` (underscore) to skip positions:
+
+```faber
+fixum data = [1, 2, 3, 4, 5]
+
+ex data fixum [_, second, _]     // skip first and third
+ex data fixum [_, _, third]      // skip first two
+ex data fixum [first, _, _, fourth]  // skip middle
+```
+
+### Mutable Bindings
+
+Use `varia` for mutable destructured values:
+
+```faber
+ex coords varia [x, y, z]
+x = x + 10
+scribe x  // 20
+```
+
+### Comparison with Object Destructuring
+
+| Aspect | Object | Array |
+|--------|--------|-------|
+| Syntax | `ex obj fixum { a, b }` | `ex arr fixum [a, b]` |
+| Extraction | By name | By position |
+| Rest | `{ a, ceteri rest }` | `[a, ceteri rest]` |
+| Self-documenting | Yes (names) | No (positions) |
+| Fragile | No | Yes (order matters) |
+
+**Recommendation:** Prefer object destructuring when possible. Use array destructuring for:
+- Tuple returns where position has clear meaning
+- Head/tail recursion patterns
+- Coordinate/vector operations
+
+### Target Mappings
+
+| Target | Syntax |
+|--------|--------|
+| TypeScript | `const [a, b, ...rest] = arr` |
+| Python | `a, b, *rest = arr` |
+| Zig | Manual indexing or slice patterns |
+| Rust | `let [a, b, rest @ ..] = arr` |
+
+### Open Questions
+
+1. **Nested destructuring**: Allow `ex arr fixum [[a, b], c]` for nested arrays?
+2. **Default values**: Allow `ex arr fixum [a, b = 0]` for missing elements?
+3. **Length mismatch**: Error or silent `nihil` for missing positions?
 
 ---
 

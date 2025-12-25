@@ -89,6 +89,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `nexum` (reactive binding)   |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Type annotations             |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Object destructuring         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| Array destructuring          |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Rest in destructuring        |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Initializer expressions      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 

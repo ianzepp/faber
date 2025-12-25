@@ -89,14 +89,14 @@ Features that would need new Faber syntax to support.
 
 | TS Feature | Syntax | Status | Latin Candidate | Notes |
 |------------|--------|--------|-----------------|-------|
-| Spread (array) | `...arr` | Not done | `sparge`? | Array/object spreading |
-| Spread (object) | `...obj` | Not done | `sparge`? | Object spreading |
-| Rest parameters | `...args` | Not done | `ceteri`? | Collect remaining args |
+| Spread (array) | `...arr` | Planned | `sparge arr` | Array spreading |
+| Spread (object) | `...obj` | Planned | `sparge obj` | Object spreading |
+| Rest parameters | `...args` | Planned | `ceteri args` | Collect remaining args |
 | Optional chaining | `?.` | Not done | TBD | Safe property access |
 | Nullish coalescing | `??` | Partial | `vel` | Only in destructuring |
-| Array destructuring | `[a, b] = arr` | Not done | — | Explicitly excluded |
-| typeof (runtime) | `typeof x` | Not done | `typus`? | Runtime type inspection |
-| instanceof | `x instanceof T` | Not done | `exemplar`? | Type checking |
+| Array destructuring | `[a, b] = arr` | Planned | `ex arr fixum [a, b]` | Enabled by `ceteri` rest syntax |
+| typeof (runtime) | `typeof x` | Planned | `x est numerus` | Via `est` with type RHS |
+| instanceof | `x instanceof T` | Planned | `x est T` | Via `est` with type RHS |
 | Regex literals | `/pattern/` | Not done | — | No tokenizer support |
 | Setters | `set prop(v)` | Not done | — | Computed props read-only |
 
@@ -104,7 +104,7 @@ Features that would need new Faber syntax to support.
 
 | TS Feature | Syntax | Status | Latin Candidate | Notes |
 |------------|--------|--------|-----------------|-------|
-| Type assertions | `x as T` | Not done | `ut`? | Cast/narrow type |
+| Type assertions | `x as T` | Planned | `x ut T` | Cast/narrow type |
 | Computed property names | `{ [key]: v }` | Not done | — | Dynamic keys |
 | Shorthand properties | `{ x }` | Not done | — | For `{ x: x }` |
 | Tagged templates | `` fn`text` `` | Not done | — | Template processors |
