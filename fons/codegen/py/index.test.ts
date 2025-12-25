@@ -59,9 +59,84 @@ describe('Python codegen', () => {
             expect(result).toBe('x: str | None = None');
         });
 
+        test('fractus maps to float', () => {
+            const result = compile('varia fractus x = 3.14');
+            expect(result).toBe('x: float = 3.14');
+        });
+
+        test('decimus maps to Decimal', () => {
+            const result = compile('varia decimus x = 99.99');
+            expect(result).toContain('x: Decimal = 99.99');
+        });
+
+        test('octeti maps to bytes', () => {
+            const result = compile('varia octeti data = []');
+            expect(result).toBe('data: bytes = []');
+        });
+
+        test('objectum maps to object', () => {
+            const result = compile('varia objectum x = {}');
+            expect(result).toBe('x: object = {}');
+        });
+
+        test('copia maps to set', () => {
+            const result = compile('varia copia<numerus> x = []');
+            expect(result).toBe('x: set[int] = []');
+        });
+
         test('type alias', () => {
             const result = compile('typus ID = textus');
             expect(result).toBe('ID = str');
+        });
+    });
+
+    // =========================================================================
+    // ENUM DECLARATIONS
+    // =========================================================================
+
+    describe('enum declarations', () => {
+        test('basic enum with auto values', () => {
+            const result = compile('ordo Color { rubrum, viridis, caeruleum }');
+            expect(result).toContain('class Color(Enum):');
+            expect(result).toContain('rubrum = auto()');
+            expect(result).toContain('viridis = auto()');
+            expect(result).toContain('caeruleum = auto()');
+        });
+
+        test('enum with numeric values', () => {
+            const result = compile('ordo Status { pendens = 0, actum = 1, finitum = 2 }');
+            expect(result).toContain('class Status(Enum):');
+            expect(result).toContain('pendens = 0');
+            expect(result).toContain('actum = 1');
+            expect(result).toContain('finitum = 2');
+        });
+
+        test('enum with string values', () => {
+            const result = compile('ordo Direction { north = "N", south = "S" }');
+            expect(result).toContain('class Direction(Enum):');
+            expect(result).toContain('north = "N"');
+            expect(result).toContain('south = "S"');
+        });
+
+        test('enum emits preamble import', () => {
+            const result = compile('ordo Color { rubrum }');
+            expect(result).toContain('from enum import Enum, auto');
+        });
+    });
+
+    // =========================================================================
+    // PREAMBLE
+    // =========================================================================
+
+    describe('preamble', () => {
+        test('decimal type emits Decimal import', () => {
+            const result = compile('varia decimus x = 99.99');
+            expect(result).toContain('from decimal import Decimal');
+        });
+
+        test('no preamble when not needed', () => {
+            const result = compile('varia numerus x = 5');
+            expect(result).toBe('x: int = 5');
         });
     });
 

@@ -62,6 +62,7 @@ import type {
     PactumDeclaration,
     PactumMethod,
     TypeAliasDeclaration,
+    EnumDeclaration,
     IfStatement,
     WhileStatement,
     ForStatement,
@@ -93,7 +94,8 @@ import type {
     TypeAnnotation,
     TypeParameter,
 } from '../../parser/ast';
-import type { CodegenOptions } from '../types';
+import type { CodegenOptions, RequiredFeatures } from '../types';
+import { createRequiredFeatures } from '../types';
 import { getListaMethod } from './norma/lista';
 
 // =============================================================================
@@ -108,22 +110,36 @@ import { getListaMethod } from './norma/lista';
  * |------------|---------------------|
  * | textus     | str                 |
  * | numerus    | int                 |
+ * | fractus    | float               |
+ * | decimus    | Decimal             |
  * | bivalens   | bool                |
  * | nihil      | None                |
  * | vacuum     | None                |
+ * | octeti     | bytes               |
+ * | objectum   | object              |
  * | lista      | list                |
  * | tabula     | dict                |
  * | copia      | set                 |
  * | promissum  | Awaitable           |
  * | erratum    | Exception           |
  * | cursor     | Iterator            |
+ *
+ * WHY: Python uses `float` for IEEE 754 doubles (same as JS number).
+ *      `Decimal` requires `from decimal import Decimal` for arbitrary precision.
+ *      `bytes` is Python's native byte array type.
+ *      `object` is the base type for all Python objects.
  */
 const typeMap: Record<string, string> = {
     textus: 'str',
     numerus: 'int',
+    fractus: 'float',
+    decimus: 'Decimal',
     bivalens: 'bool',
     nihil: 'None',
     vacuum: 'None',
+    octeti: 'bytes',
+    objectum: 'object',
+    object: 'object',
     lista: 'list',
     tabula: 'dict',
     copia: 'set',
@@ -156,6 +172,9 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
     // Track if we're inside a generator function (for cede -> yield vs await)
     let inGenerator = false;
 
+    // Track which features are used (for preamble generation)
+    const features = createRequiredFeatures();
+
     /**
      * Generate indentation for current depth.
      */
@@ -163,12 +182,41 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         return indent.repeat(depth);
     }
 
+    /**
+     * Generate preamble based on features used.
+     *
+     * WHY: Python requires explicit imports for standard library features.
+     *      Only emit imports for features actually used in the program.
+     */
+    function genPreamble(): string {
+        const imports: string[] = [];
+
+        if (features.enum) {
+            imports.push('from enum import Enum, auto');
+        }
+
+        if (features.decimal) {
+            imports.push('from decimal import Decimal');
+        }
+
+        // functools needed for reduce
+        // TODO: Track when reducta is used
+
+        return imports.length > 0 ? imports.join('\n') + '\n\n' : '';
+    }
+
     // ---------------------------------------------------------------------------
     // Top-level
     // ---------------------------------------------------------------------------
 
     function genProgram(node: Program): string {
-        return node.body.map(genStatement).join('\n');
+        // First pass: generate body (this populates features)
+        const body = node.body.map(genStatement).join('\n');
+
+        // Second: prepend preamble based on detected features
+        const preamble = genPreamble();
+
+        return preamble + body;
     }
 
     // ---------------------------------------------------------------------------
@@ -189,6 +237,8 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
                 return genPactumDeclaration(node);
             case 'TypeAliasDeclaration':
                 return genTypeAliasDeclaration(node);
+            case 'EnumDeclaration':
+                return genEnumDeclaration(node);
             case 'IfStatement':
                 return genIfStatement(node);
             case 'WhileStatement':
@@ -594,11 +644,62 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
     }
 
     /**
+     * Generate enum declaration.
+     *
+     * TRANSFORMS:
+     *   ordo Color { rubrum, viridis, caeruleum }
+     *   ->
+     *   class Color(Enum):
+     *       rubrum = auto()
+     *       viridis = auto()
+     *       caeruleum = auto()
+     *
+     *   ordo Status { pendens = 0, actum = 1 }
+     *   ->
+     *   class Status(Enum):
+     *       pendens = 0
+     *       actum = 1
+     *
+     * WHY: Python uses class-based Enum from the enum module.
+     *      Members without explicit values use auto() for automatic numbering.
+     */
+    function genEnumDeclaration(node: EnumDeclaration): string {
+        // Track that we need the Enum import in preamble
+        features.enum = true;
+
+        const name = node.name.name;
+        const lines: string[] = [];
+
+        lines.push(`${ind()}class ${name}(Enum):`);
+        depth++;
+
+        for (const member of node.members) {
+            const memberName = member.name.name;
+
+            if (member.value !== undefined) {
+                const value = typeof member.value.value === 'string' ? `"${member.value.value}"` : member.value.value;
+                lines.push(`${ind()}${memberName} = ${value}`);
+            } else {
+                lines.push(`${ind()}${memberName} = auto()`);
+            }
+        }
+
+        depth--;
+        return lines.join('\n');
+    }
+
+    /**
      * Generate type annotation from Latin type.
      */
     function genType(node: TypeAnnotation): string {
+        // Track feature usage for preamble
+        const lowerName = node.name.toLowerCase();
+        if (lowerName === 'decimus' || lowerName === 'decim') {
+            features.decimal = true;
+        }
+
         // Map Latin type name to Python type (case-insensitive lookup)
-        const base = typeMap[node.name.toLowerCase()] ?? node.name;
+        const base = typeMap[lowerName] ?? node.name;
 
         // Handle generic type parameters
         let result = base;
@@ -975,8 +1076,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
             depth++;
             lines.push(genBlockStatementContent(node.catchClause.body));
             depth--;
-        }
-        else {
+        } else {
             // No catch - just emit the block contents
             lines.push(genBlockStatementContent(node.body));
         }

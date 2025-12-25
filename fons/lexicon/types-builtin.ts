@@ -169,6 +169,16 @@ export const builtinTypes: TypeEntry[] = [
         jsType: 'Uint8Array',
         category: 'primitive',
     },
+    // WHY: objectum (2nd decl neuter) - "object, thing thrown before"
+    //      Generic object type for dynamic data structures.
+    {
+        stem: 'object',
+        declension: 2,
+        gender: 'neuter',
+        meaning: 'object',
+        jsType: 'object',
+        category: 'primitive',
+    },
 
     // ---------------------------------------------------------------------------
     // Collections (Generic)

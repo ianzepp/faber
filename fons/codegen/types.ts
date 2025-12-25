@@ -66,6 +66,9 @@ export interface RequiredFeatures {
 
     // Numeric types
     decimal: boolean; // decimus - needs decimal.js import
+
+    // Enums
+    enum: boolean; // ordo - needs Enum import (Python)
 }
 
 /**
@@ -81,6 +84,7 @@ export function createRequiredFeatures(): RequiredFeatures {
         asyncIterator: false,
         generator: false,
         decimal: false,
+        enum: false,
     };
 }
 
