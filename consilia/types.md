@@ -15,7 +15,6 @@
 - `novum Type` instantiation without parentheses
 - `novum Type { ... }` inline field overrides (literal object only)
 - `creo()` post-initialization hook (no args, `ego` pre-merged)
-- Computed properties (`numerus area => ...`)
 - Auto-merge: constructor merges field defaults + `{ ... }`
 - `novum Type de dato` construction from existing variable (ablative — "from this source")
 
@@ -152,20 +151,32 @@ fixum m = math.maximus(5, 3)  // 5
 
 **Naming rationale:** `generis` is the genitive of `genus` — literally "of the type."
 
-### Computed Properties
+### Derived Values (Use Methods)
 
-- Declare with `type name => expression`
-- Expression runs in the instance context (`ego` is available)
-- Public by default, use `privatus` for private, `generis` for static
-- Currently read-only (no setter syntax yet)
+Faber intentionally omits computed properties (getters). Use methods instead:
 
 ```
 genus rectangulum {
     numerus latitudo: 1
     numerus altitudo: 1
-    numerus area => ego.latitudo * ego.altitudo    // public computed field
+
+    functio area() -> numerus {
+        redde ego.latitudo * ego.altitudo
+    }
 }
+
+fixum r = novum rectangulum { latitudo: 10, altitudo: 5 }
+scribe r.area()  // 50
 ```
+
+**Why no getters?**
+
+1. **Getters become traps** — start simple, grow complex, but API is locked to property access
+2. **Methods are honest** — `r.area()` clearly indicates computation
+3. **Symmetry** — no setters either (use `nexum` for reactivity, methods for validation)
+4. **Simplicity** — one way to do derived values, not two
+
+**For reactive state**, use `nexum` which auto-generates getters/setters with invalidation hooks.
 
 ### Constructor
 
@@ -284,7 +295,7 @@ Goal: genus instances behave like value types (copy on assign, no accidental ali
 
 - TypeScript backend emits `class` declarations (reference semantics)
 - Assignments copy references (`b = a` points to the same object)
-- Computed properties/constructors already use `this`, so switching to structs requires coordinated runtime changes
+- Constructors already use `this`, so switching to structs requires coordinated runtime changes
 
 ```
 // Today

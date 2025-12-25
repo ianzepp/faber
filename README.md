@@ -237,7 +237,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `genus` declaration       |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Field declarations        |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Field defaults            |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
-| Computed fields (getters) |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| Computed fields (getters) |    [-]     | [-] |  [-]   | [-]  | [-]  |  [-]  |
 | Static fields (`generis`) |    [x]     | [ ] |  [~]   | [ ]  | [ ]  |  [ ]  |
 | Public/private visibility |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `creo` (constructor hook) |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |

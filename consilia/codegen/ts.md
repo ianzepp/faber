@@ -99,7 +99,8 @@ Features that would need new Faber syntax to support.
 | typeof (runtime) | `typeof x` | Planned | `x est numerus` | Via `est` with type RHS |
 | instanceof | `x instanceof T` | Planned | `x est T` | Via `est` with type RHS |
 | Regex literals | `/pattern/` | Planned | `sed /pattern/` | Keyword disambiguates tokenizer |
-| Setters | `set prop(v)` | Not done | — | Computed props read-only |
+| Getters | `get prop()` | Excluded | — | Use methods instead |
+| Setters | `set prop(v)` | Excluded | — | Use `nexum` or methods |
 
 ### Medium Priority (useful)
 
