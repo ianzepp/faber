@@ -766,7 +766,9 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
                 // elif chain
                 const elifLines = genIfStatement(node.alternate).split('\n');
                 // Replace 'if' with 'elif' on first line
-                elifLines[0] = elifLines[0].replace(/^(\s*)if /, '$1elif ');
+                if (elifLines[0]) {
+                    elifLines[0] = elifLines[0].replace(/^(\s*)if /, '$1elif ');
+                }
                 lines.push(elifLines.join('\n'));
             } else {
                 lines.push(`${ind()}else:`);
@@ -1360,10 +1362,10 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
 
         // Block body - extract return expression if simple
         const block = node.body;
-        if (block.body.length === 1 && block.body[0].type === 'ReturnStatement') {
-            const ret = block.body[0];
-            if (ret.argument) {
-                const body = genExpression(ret.argument);
+        const firstStmt = block.body[0];
+        if (block.body.length === 1 && firstStmt?.type === 'ReturnStatement') {
+            if (firstStmt.argument) {
+                const body = genExpression(firstStmt.argument);
                 return `lambda ${params}: ${body}`;
             }
         }
@@ -1387,10 +1389,10 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
 
         // Block body - extract return expression if simple
         const block = node.body;
-        if (block.body.length === 1 && block.body[0].type === 'ReturnStatement') {
-            const ret = block.body[0];
-            if (ret.argument) {
-                const body = genExpression(ret.argument);
+        const firstStmt = block.body[0];
+        if (block.body.length === 1 && firstStmt?.type === 'ReturnStatement') {
+            if (firstStmt.argument) {
+                const body = genExpression(firstStmt.argument);
                 return `lambda ${params}: ${body}`;
             }
         }
