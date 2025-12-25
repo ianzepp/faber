@@ -1729,4 +1729,445 @@ describe('codegen', () => {
             expect(js).toContain('const e = 86400000');
         });
     });
+
+    describe('pactum (interface) declarations', () => {
+        test('basic pactum with method', () => {
+            const js = compile(`
+                pactum Salutator {
+                    functio salve(textus nomen) -> textus
+                }
+            `);
+
+            expect(js).toContain('interface Salutator');
+            expect(js).toContain('salve(nomen: string): string;');
+        });
+
+        test('pactum with multiple methods', () => {
+            const js = compile(`
+                pactum Calculator {
+                    functio adde(numerus a, numerus b) -> numerus
+                    functio minue(numerus a, numerus b) -> numerus
+                }
+            `);
+
+            expect(js).toContain('interface Calculator');
+            expect(js).toContain('adde(a: number, b: number): number;');
+            expect(js).toContain('minue(a: number, b: number): number;');
+        });
+
+        test('pactum with async method', () => {
+            const js = compile(`
+                pactum DataFetcher {
+                    futura functio fetch(textus url) -> textus
+                }
+            `);
+
+            expect(js).toContain('interface DataFetcher');
+            expect(js).toContain('fetch(url: string): Promise<string>;');
+        });
+
+        test('pactum with generator method', () => {
+            const js = compile(`
+                pactum NumberGenerator {
+                    cursor functio generate(numerus max) -> numerus
+                }
+            `);
+
+            expect(js).toContain('interface NumberGenerator');
+            expect(js).toContain('generate(max: number): Generator<number>;');
+        });
+
+        test('pactum with async generator method', () => {
+            const js = compile(`
+                pactum StreamReader {
+                    futura cursor functio read() -> textus
+                }
+            `);
+
+            expect(js).toContain('interface StreamReader');
+            expect(js).toContain('read(): AsyncGenerator<string>;');
+        });
+
+        test('pactum with type parameters', () => {
+            const js = compile(`
+                pactum Container<T> {
+                    functio get() -> T
+                    functio set(T value)
+                }
+            `);
+
+            expect(js).toContain('interface Container<T>');
+            expect(js).toContain('get(): T;');
+            expect(js).toContain('set(value: T): void;');
+        });
+
+        test('genus implements pactum', () => {
+            const js = compile(`
+                pactum Greeter {
+                    functio greet(textus name) -> textus
+                }
+
+                genus FriendlyGreeter implet Greeter {
+                    functio greet(textus name) -> textus {
+                        redde "Hello, " + name
+                    }
+                }
+            `);
+
+            expect(js).toContain('interface Greeter');
+            expect(js).toContain('class FriendlyGreeter implements Greeter');
+            expect(js).toContain('greet(name: string): string');
+        });
+    });
+
+    describe('computed fields (getters)', () => {
+        test('basic computed field', () => {
+            const js = compile(`
+                genus Rectangle {
+                    numerus width: 1
+                    numerus height: 1
+                    publicus numerus area => ego.width * ego.height
+                }
+            `);
+
+            expect(js).toContain('get area(): number { return (this.width * this.height); }');
+        });
+
+        test('computed field with string return', () => {
+            const js = compile(`
+                genus Person {
+                    textus firstName: ""
+                    textus lastName: ""
+                    publicus textus fullName => ego.firstName + " " + ego.lastName
+                }
+            `);
+
+            expect(js).toContain('get fullName(): string');
+        });
+
+        test('private computed field', () => {
+            const js = compile(`
+                genus Counter {
+                    numerus count: 0
+                    privatus numerus doubled => ego.count * 2
+                }
+            `);
+
+            expect(js).toContain('private get doubled(): number');
+        });
+
+        test('static computed field', () => {
+            const js = compile(`
+                genus Config {
+                    generis textus version => "1.0.0"
+                }
+            `);
+
+            expect(js).toContain('static get version(): string { return "1.0.0"; }');
+        });
+    });
+
+    describe('method return type wrapping', () => {
+        test('async method with return type', () => {
+            const js = compile(`
+                genus Fetcher {
+                    futura functio fetch(textus url) -> textus {
+                        redde "data"
+                    }
+                }
+            `);
+
+            expect(js).toContain('async fetch(url: string): Promise<string>');
+        });
+
+        test('generator method with return type', () => {
+            const js = compile(`
+                genus NumberStream {
+                    cursor functio numbers(numerus max) -> numerus {
+                        cede 1
+                        cede 2
+                    }
+                }
+            `);
+
+            expect(js).toContain('*numbers(max: number): Generator<number>');
+        });
+
+        test('async generator method with return type', () => {
+            const js = compile(`
+                genus DataStream {
+                    futura cursor functio stream() -> textus {
+                        cede "chunk1"
+                        cede "chunk2"
+                    }
+                }
+            `);
+
+            expect(js).toContain('async *stream(): AsyncGenerator<string>');
+        });
+    });
+
+    describe('template literals', () => {
+        test('simple template literal', () => {
+            const js = compile('fixum msg = `hello world`');
+
+            expect(js).toBe('const msg = `hello world`;');
+        });
+
+        test('template literal with interpolation', () => {
+            const js = compile(`
+                fixum name = "Marcus"
+                fixum greeting = \`Hello, \${name}!\`
+            `);
+
+            expect(js).toContain('const greeting = `Hello, ${name}!`');
+        });
+    });
+
+    describe('wildcard imports', () => {
+        test('wildcard import from external package', () => {
+            const js = compile('ex "@lodash/lodash" importa *');
+
+            expect(js).toContain('import * as @lodash/lodash from "@lodash/lodash"');
+        });
+    });
+
+    describe('catch on control flow', () => {
+        test('if with catch', () => {
+            const js = compile(`
+                si verum {
+                    iace novum Erratum("boom")
+                } cape e {
+                    scribe e
+                }
+            `);
+
+            expect(js).toContain('try {');
+            expect(js).toContain('if (true)');
+            expect(js).toContain('} catch (e)');
+        });
+
+        test('while with catch', () => {
+            const js = compile(`
+                dum verum {
+                    iace novum Erratum("boom")
+                } cape e {
+                    scribe e
+                }
+            `);
+
+            expect(js).toContain('try {');
+            expect(js).toContain('while (true)');
+            expect(js).toContain('} catch (e)');
+        });
+
+        test('for-of with catch', () => {
+            const js = compile(`
+                ex [1, 2, 3] pro item {
+                    iace novum Erratum("boom")
+                } cape e {
+                    scribe e
+                }
+            `);
+
+            expect(js).toContain('try {');
+            expect(js).toContain('for (const item of');
+            expect(js).toContain('} catch (e)');
+        });
+
+        test('for range with catch', () => {
+            const js = compile(`
+                ex 0..5 pro i {
+                    iace novum Erratum("boom")
+                } cape e {
+                    scribe e
+                }
+            `);
+
+            expect(js).toContain('try {');
+            expect(js).toContain('for (let i = 0; i <= 5; i++)');
+            expect(js).toContain('} catch (e)');
+        });
+
+        test('elige with catch', () => {
+            const js = compile(`
+                fixum x = 1
+                elige x {
+                    si 1 { scribe "one" }
+                    aliter { scribe "other" }
+                } cape e {
+                    scribe e
+                }
+            `);
+
+            expect(js).toContain('try {');
+            expect(js).toContain('if (x === 1)');
+            expect(js).toContain('} catch (e)');
+        });
+    });
+
+    describe('range expression as value', () => {
+        test('simple range as array', () => {
+            const js = compile('fixum nums = 0..5');
+
+            expect(js).toContain('Array.from({length: 5 - 0 + 1}, (_, i) => 0 + i)');
+        });
+
+        test('range with step as array', () => {
+            const js = compile('fixum evens = 0..10 per 2');
+
+            expect(js).toContain('Array.from({length: Math.floor((10 - 0) / 2) + 1}, (_, i) => 0 + i * 2)');
+        });
+
+        test('range with variables', () => {
+            const js = compile(`
+                fixum start = 5
+                fixum end = 10
+                fixum nums = start..end
+            `);
+
+            expect(js).toContain('Array.from({length: end - start + 1}, (_, i) => start + i)');
+        });
+    });
+
+    describe('computed member access', () => {
+        test('array index access', () => {
+            const js = compile(`
+                fixum items = [1, 2, 3]
+                fixum first = items[0]
+            `);
+
+            expect(js).toContain('const first = items[0]');
+        });
+
+        test('dynamic property access', () => {
+            const js = compile(`
+                fixum obj = { a: 1 }
+                fixum key = "a"
+                fixum val = obj[key]
+            `);
+
+            expect(js).toContain('const val = obj[key]');
+        });
+    });
+
+    describe('block-body lambdas', () => {
+        test('lambda with block body', () => {
+            const js = compile(`
+                fixum fn = pro x {
+                    fixum doubled = x * 2
+                    redde doubled
+                }
+            `);
+
+            expect(js).toContain('(x) => {');
+            expect(js).toContain('const doubled = (x * 2)');
+            expect(js).toContain('return doubled');
+        });
+
+        test('zero-param lambda with block body', () => {
+            const js = compile(`
+                fixum fn = pro {
+                    scribe "hello"
+                    redde 42
+                }
+            `);
+
+            expect(js).toContain('() => {');
+            expect(js).toContain('console.log("hello")');
+            expect(js).toContain('return 42');
+        });
+
+        test('multi-param lambda with block body', () => {
+            const js = compile(`
+                fixum fn = pro x, y {
+                    fixum sum = x + y
+                    redde sum
+                }
+            `);
+
+            expect(js).toContain('(x, y) => {');
+            expect(js).toContain('const sum = (x + y)');
+            expect(js).toContain('return sum');
+        });
+    });
+
+    describe('empty blocks', () => {
+        test('empty function body', () => {
+            const js = compile('functio noop() {}');
+
+            expect(js).toBe('function noop() {}');
+        });
+
+        test('empty if body', () => {
+            const js = compile('si verum {}');
+
+            expect(js).toBe('if (true) {}');
+        });
+    });
+
+    describe('else-if chaining', () => {
+        test('multiple else-if', () => {
+            const js = compile(`
+                fixum x = 2
+                si x == 1 {
+                    scribe "one"
+                } aliter si x == 2 {
+                    scribe "two"
+                } aliter si x == 3 {
+                    scribe "three"
+                } aliter {
+                    scribe "other"
+                }
+            `);
+
+            expect(js).toContain('if ((x == 1))');
+            expect(js).toContain('else if ((x == 2))');
+            expect(js).toContain('else if ((x == 3))');
+            expect(js).toContain('else {');
+        });
+    });
+
+    describe('elige edge cases', () => {
+        test('elige with only default', () => {
+            const js = compile(`
+                fixum x = 1
+                elige x {
+                    aliter { scribe "always" }
+                }
+            `);
+
+            expect(js).toContain('{');
+            expect(js).toContain('console.log("always")');
+        });
+    });
+
+    describe('event system (emitte/ausculta)', () => {
+        test('emitte with event name only', () => {
+            const js = compile('emitte "appStarted"');
+
+            expect(js).toContain('Eventus.emitte("appStarted")');
+        });
+
+        test('emitte with event name and data', () => {
+            const js = compile('emitte "userLogin", { userId: 42 }');
+
+            expect(js).toContain('Eventus.emitte("userLogin", { userId: 42 })');
+        });
+
+        test('emitte with variable event name', () => {
+            const js = compile(`
+                fixum eventName = "notification"
+                emitte eventName, { message: "hi" }
+            `);
+
+            expect(js).toContain('Eventus.emitte(eventName, { message: "hi" })');
+        });
+
+        test('ausculta expression', () => {
+            const js = compile('fixum stream = ausculta "userAction"');
+
+            expect(js).toContain('Eventus.ausculta("userAction")');
+        });
+    });
 });

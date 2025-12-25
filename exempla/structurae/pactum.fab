@@ -1,0 +1,191 @@
+// =============================================================================
+// PACTUM - Interface Declarations
+// =============================================================================
+//
+// Pactum (Latin: "agreement, contract") defines interfaces that genus can
+// implement. It specifies method signatures without implementations.
+//
+// GRAMMAR:
+// pactum <Name> {
+//     functio <methodName>(<params>) -> <returnType>
+//     futura functio <asyncMethod>() -> <returnType>
+//     cursor functio <generatorMethod>() -> <yieldType>
+// }
+//
+// ETYMOLOGY:
+// pactum: "agreement, contract" (neuter noun from pacisci - to agree)
+// implet: "fulfills" (present indicative of implere - to fill up, fulfill)
+//
+// WHY "pactum":
+// - Conveys the contract nature of interfaces
+// - Root of "pact" in English
+// - Matches the legal/formal tone of type contracts
+
+// =============================================================================
+// BASIC INTERFACE
+// =============================================================================
+
+// Simple interface with one method
+pactum Salutator {
+    functio salve(textus nomen) -> textus
+}
+
+// Genus that fulfills the pactum
+genus AmicusSalutator implet Salutator {
+    functio salve(textus nomen) -> textus {
+        redde "Salve, " + nomen + "!"
+    }
+}
+
+fixum greeter = novum AmicusSalutator()
+scribe greeter.salve("Marcus")
+
+// =============================================================================
+// MULTIPLE METHODS
+// =============================================================================
+
+pactum Calculator {
+    functio adde(numerus a, numerus b) -> numerus
+    functio minue(numerus a, numerus b) -> numerus
+    functio multiplica(numerus a, numerus b) -> numerus
+}
+
+genus SimpleCalculator implet Calculator {
+    functio adde(numerus a, numerus b) -> numerus {
+        redde a + b
+    }
+
+    functio minue(numerus a, numerus b) -> numerus {
+        redde a - b
+    }
+
+    functio multiplica(numerus a, numerus b) -> numerus {
+        redde a * b
+    }
+}
+
+fixum calc = novum SimpleCalculator()
+scribe calc.adde(10, 5)
+scribe calc.minue(10, 5)
+scribe calc.multiplica(10, 5)
+
+// =============================================================================
+// ASYNC METHODS
+// =============================================================================
+
+pactum DataFetcher {
+    futura functio fetch(textus url) -> textus
+    futura functio post(textus url, textus data) -> textus
+}
+
+genus HttpFetcher implet DataFetcher {
+    futura functio fetch(textus url) -> textus {
+        // In real code, would make HTTP request
+        redde "data from " + url
+    }
+
+    futura functio post(textus url, textus data) -> textus {
+        redde "posted to " + url
+    }
+}
+
+// =============================================================================
+// GENERATOR METHODS
+// =============================================================================
+
+pactum NumberSequence {
+    cursor functio generate(numerus max) -> numerus
+}
+
+genus Fibonacci implet NumberSequence {
+    cursor functio generate(numerus max) -> numerus {
+        varia a = 0
+        varia b = 1
+
+        dum a < max {
+            cede a
+            fixum temp = a + b
+            a = b
+            b = temp
+        }
+    }
+}
+
+fixum fib = novum Fibonacci()
+ex fib.generate(100) pro n {
+    scribe n
+}
+
+// =============================================================================
+// ASYNC GENERATOR METHODS
+// =============================================================================
+
+pactum StreamReader {
+    futura cursor functio read() -> textus
+}
+
+genus ChunkReader implet StreamReader {
+    futura cursor functio read() -> textus {
+        cede "chunk1"
+        cede "chunk2"
+        cede "chunk3"
+    }
+}
+
+// =============================================================================
+// COMPARISON: PACTUM VS GENUS
+// =============================================================================
+
+// Pactum: defines the contract (what methods must exist)
+pactum Stringifiable {
+    functio toTextus() -> textus
+}
+
+// Genus: implements the contract (how methods work)
+genus Point implet Stringifiable {
+    numerus x: 0
+    numerus y: 0
+
+    functio toTextus() -> textus {
+        redde "(" + ego.x + ", " + ego.y + ")"
+    }
+}
+
+fixum p = novum Point cum { x: 10, y: 20 }
+scribe p.toTextus()
+
+// =============================================================================
+// WHY USE PACTUM
+// =============================================================================
+
+// 1. Type safety: compiler ensures genus implements all methods
+// 2. Abstraction: code can depend on interface, not implementation
+// 3. Polymorphism: different genus can fulfill same pactum
+// 4. Documentation: declares expected behavior
+
+// Multiple implementations of same interface:
+pactum Logger {
+    functio log(textus message)
+}
+
+genus ConsoleLogger implet Logger {
+    functio log(textus message) {
+        scribe message
+    }
+}
+
+genus FileLogger implet Logger {
+    textus path: ""
+
+    functio log(textus message) {
+        // Would write to file
+        scribe "[FILE] " + message
+    }
+}
+
+// Both can be used wherever Logger is expected
+fixum logger1 = novum ConsoleLogger()
+fixum logger2 = novum FileLogger cum { path: "/var/log/app.log" }
+
+logger1.log("Hello from console")
+logger2.log("Hello from file")
