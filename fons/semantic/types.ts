@@ -54,7 +54,7 @@ interface BaseType {
  */
 export interface PrimitiveType extends BaseType {
     kind: 'primitive';
-    name: 'textus' | 'numerus' | 'fractus' | 'decimus' | 'bivalens' | 'nihil' | 'vacuum' | 'octeti';
+    name: 'textus' | 'numerus' | 'fractus' | 'decimus' | 'magnus' | 'bivalens' | 'nihil' | 'vacuum' | 'octeti';
 }
 
 /**
@@ -164,6 +164,7 @@ export const TEXTUS: PrimitiveType = primitiveType('textus');
 export const NUMERUS: PrimitiveType = primitiveType('numerus');
 export const FRACTUS: PrimitiveType = primitiveType('fractus');
 export const DECIMUS: PrimitiveType = primitiveType('decimus');
+export const MAGNUS: PrimitiveType = primitiveType('magnus');
 export const BIVALENS: PrimitiveType = primitiveType('bivalens');
 export const NIHIL: PrimitiveType = primitiveType('nihil');
 export const VACUUM: PrimitiveType = primitiveType('vacuum');

@@ -87,6 +87,7 @@ import {
     NUMERUS,
     FRACTUS,
     DECIMUS,
+    MAGNUS,
     BIVALENS,
     NIHIL,
     VACUUM,
@@ -129,6 +130,7 @@ const LATIN_TYPE_MAP: Record<string, SemanticType> = {
     numerus: NUMERUS,
     fractus: FRACTUS,
     decimus: DECIMUS,
+    magnus: MAGNUS,
     bivalens: BIVALENS,
     nihil: NIHIL,
     vacuum: VACUUM,
@@ -470,6 +472,10 @@ export function analyze(program: Program): SemanticResult {
             return NUMERUS;
         }
 
+        if (typeof node.value === 'bigint') {
+            return MAGNUS;
+        }
+
         if (typeof node.value === 'boolean') {
             return BIVALENS;
         }
@@ -664,11 +670,19 @@ export function analyze(program: Program): SemanticResult {
                 return TEXTUS;
             }
 
-            // Numeric arithmetic
-            if (leftType.kind === 'primitive' && leftType.name === 'numerus' && rightType.kind === 'primitive' && rightType.name === 'numerus') {
-                node.resolvedType = NUMERUS;
-
-                return NUMERUS;
+            // Numeric arithmetic - preserve type when both operands are the same numeric type
+            const numericTypes = ['numerus', 'fractus', 'decimus', 'magnus'];
+            if (leftType.kind === 'primitive' && rightType.kind === 'primitive') {
+                if (numericTypes.includes(leftType.name) && numericTypes.includes(rightType.name)) {
+                    // Same type: preserve it
+                    if (leftType.name === rightType.name) {
+                        node.resolvedType = leftType;
+                        return leftType;
+                    }
+                    // Mixed numeric types: use left type (caller's responsibility)
+                    node.resolvedType = leftType;
+                    return leftType;
+                }
             }
 
             // Mixed or unknown - default to numerus
@@ -734,10 +748,17 @@ export function analyze(program: Program): SemanticResult {
             return BIVALENS;
         }
 
-        // Numeric negation
+        // Numeric negation - preserve the numeric type
         if (node.operator === '-') {
+            // Keep the argument type for numeric types (numerus, fractus, decimus, magnus)
+            if (argType.kind === 'primitive') {
+                const numericTypes = ['numerus', 'fractus', 'decimus', 'magnus'];
+                if (numericTypes.includes(argType.name)) {
+                    node.resolvedType = argType;
+                    return argType;
+                }
+            }
             node.resolvedType = NUMERUS;
-
             return NUMERUS;
         }
 

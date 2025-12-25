@@ -56,6 +56,7 @@ export type TokenType =
     // Literals
     // ---------------------------------------------------------------------------
     | 'NUMBER' // Integer or decimal: 123, 45.67
+    | 'BIGINT' // Bigint literal with 'n' suffix: 123n, 456789n
     | 'STRING' // Single or double quoted: "text", 'text'
     | 'TEMPLATE_STRING' // Backtick with interpolation: `template ${expr}`
     | 'IDENTIFIER' // Variable/function names: variableName

@@ -130,6 +130,15 @@ export const builtinTypes: TypeEntry[] = [
         jsType: 'Decimal',
         category: 'primitive',
     },
+    // WHY: magnus (2nd decl masculine) - "great, large" (bigint)
+    {
+        stem: 'magn',
+        declension: 2,
+        gender: 'masculine',
+        meaning: 'bigint',
+        jsType: 'bigint',
+        category: 'primitive',
+    },
     // WHY: signum (2nd decl neuter) - "sign, mark, token"
     {
         stem: 'sign',

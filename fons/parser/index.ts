@@ -564,7 +564,6 @@ export function parse(tokens: Token[]): ParserResult {
             return parseWhileStatement();
         }
 
-
         if (checkKeyword('elige')) {
             return parseSwitchStatement();
         }
@@ -1622,7 +1621,7 @@ export function parse(tokens: Token[]): ParserResult {
 
         return {
             type: 'ForStatement',
-            kind: 'in',  // Still 'in' kind for codegen (for-in loop)
+            kind: 'in', // Still 'in' kind for codegen (for-in loop)
             variable,
             iterable: expr,
             body,
@@ -2470,8 +2469,7 @@ export function parse(tokens: Token[]): ParserResult {
         // Check for property overrides: novum X { ... } or novum X de expr
         if (check('LBRACE')) {
             withExpression = parsePrimary();
-        }
-        else if (matchKeyword('de')) {
+        } else if (matchKeyword('de')) {
             withExpression = parseExpression();
         }
 
@@ -2597,6 +2595,13 @@ export function parse(tokens: Token[]): ParserResult {
             const value = token.value.includes('.') ? parseFloat(token.value) : parseInt(token.value, 10);
 
             return { type: 'Literal', value, raw: token.value, position };
+        }
+
+        // Bigint literal
+        if (check('BIGINT')) {
+            const token = advance();
+
+            return { type: 'Literal', value: BigInt(token.value), raw: `${token.value}n`, position };
         }
 
         // String literal

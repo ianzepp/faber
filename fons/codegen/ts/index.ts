@@ -127,6 +127,7 @@ const typeMap: Record<string, string> = {
     numerus: 'number',
     fractus: 'number',
     decimus: 'Decimal',
+    magnus: 'bigint',
     bivalens: 'boolean',
     nihil: 'null',
     octeti: 'Uint8Array',
@@ -1195,6 +1196,10 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
 
         if (typeof node.value === 'boolean') {
             return node.value ? 'true' : 'false';
+        }
+
+        if (typeof node.value === 'bigint') {
+            return `${node.value}n`;
         }
 
         return String(node.value);

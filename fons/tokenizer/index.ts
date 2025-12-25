@@ -186,15 +186,39 @@ export function tokenize(source: string): TokenizerResult {
     // ---------------------------------------------------------------------------
 
     /**
-     * Add a token to the output stream.
+     * Scan a number literal (integer, decimal, or bigint).
      *
-     * @param type - Token type discriminator
-     * @param value - Original source text of token
-     * @param pos - Source position where token started
-     * @param keyword - For KEYWORD tokens, the specific Latin keyword
+     * PATTERN: digit+ ('.' digit+)? 'n'?
+     *
+     * WHY: Numbers must be tokenized as a unit to distinguish from
+     *      member access: 123.toString() vs 123.45
      */
-    function addToken(type: TokenType, value: string, pos: Position, keyword?: string): void {
-        tokens.push({ type, value, position: pos, keyword });
+    function scanNumber(): void {
+        const pos = position();
+        let value = '';
+
+        // Integer part
+        while (isDigit(peek())) {
+            value += advance();
+        }
+
+        // Decimal part (only if followed by digit to avoid member access)
+        if (peek() === '.' && isDigit(peek(1))) {
+            value += advance(); // .
+
+            while (isDigit(peek())) {
+                value += advance();
+            }
+        }
+
+        // Check for bigint suffix 'n' (must follow a valid number)
+        if (peek() === 'n') {
+            advance(); // consume 'n'
+            addToken('BIGINT', value, pos);
+            return;
+        }
+
+        addToken('NUMBER', value, pos);
     }
 
     /**
@@ -286,40 +310,24 @@ export function tokenize(source: string): TokenizerResult {
     }
 
     // =============================================================================
-    // LITERAL SCANNING
+    // TOKEN CREATION
     // =============================================================================
 
     /**
-     * Scan a numeric literal.
+     * Add a token to the output stream.
      *
-     * PATTERN: digit+ ('.' digit+)?
-     *
-     * WHY: Supports both integers (123) and decimals (45.67).
-     *      Does not handle scientific notation (1e10) or hex (0xFF) yet.
-     *
-     * WHY: Lookahead required for decimal point to distinguish from
-     *      member access: 123.toString() vs 123.45
+     * @param type - Token type discriminator
+     * @param value - Original source text of token
+     * @param pos - Source position where token started
+     * @param keyword - For KEYWORD tokens, the specific Latin keyword
      */
-    function scanNumber(): void {
-        const pos = position();
-        let value = '';
-
-        // Integer part
-        while (isDigit(peek())) {
-            value += advance();
-        }
-
-        // Decimal part (only if followed by digit to avoid member access)
-        if (peek() === '.' && isDigit(peek(1))) {
-            value += advance(); // .
-
-            while (isDigit(peek())) {
-                value += advance();
-            }
-        }
-
-        addToken('NUMBER', value, pos);
+    function addToken(type: TokenType, value: string, pos: Position, keyword?: string): void {
+        tokens.push({ type, value, position: pos, keyword });
     }
+
+    // =============================================================================
+    // LITERAL SCANNING
+    // =============================================================================
 
     /**
      * Scan a string literal (single or double quoted).

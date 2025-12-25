@@ -873,10 +873,10 @@ export interface ThisExpression extends BaseNode {
 }
 
 /**
- * Literal value (string, number, boolean, null).
+ * Literal value (string, number, bigint, boolean, null).
  *
  * GRAMMAR (in EBNF):
- *   literal := STRING | NUMBER | 'verum' | 'falsum' | 'nihil'
+ *   literal := STRING | NUMBER | BIGINT | 'verum' | 'falsum' | 'nihil'
  *
  * INVARIANT: value type matches the literal kind.
  * INVARIANT: raw preserves original source text for error messages.
@@ -884,12 +884,13 @@ export interface ThisExpression extends BaseNode {
  * Examples:
  *   "hello" -> value="hello", raw='"hello"'
  *   42      -> value=42, raw='42'
+ *   123n     -> value=123n, raw='123n'
  *   verum   -> value=true, raw='verum'
  *   nihil   -> value=null, raw='nihil'
  */
 export interface Literal extends BaseNode {
     type: 'Literal';
-    value: string | number | boolean | null;
+    value: string | number | bigint | boolean | null;
     raw: string;
 }
 
