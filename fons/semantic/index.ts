@@ -1212,7 +1212,7 @@ export function analyze(program: Program): SemanticResult {
     function analyzeWithStatement(node: WithStatement): void {
         resolveExpression(node.object);
 
-        // WHY: Inside cum blocks, bare identifier assignments become property
+        // WHY: Inside 'in' blocks, bare identifier assignments become property
         //      assignments on the context object. We don't validate these as
         //      variables since they'll be transformed at codegen time.
         enterScope();

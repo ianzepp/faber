@@ -1,33 +1,34 @@
 // =============================================================================
-// STRUCTURAE - With Blocks (cum)
+// STRUCTURAE - Mutation Blocks (in)
 // =============================================================================
 //
-// The cum block sets properties on an object within a scoped context.
+// The 'in' block sets properties on an object within a scoped context.
 // Property assignments inside the block apply to the target object.
 //
 // GRAMMAR:
-// cum <object> {
-// <property> = <value>
-// <property> = <value>
+// in <object> {
+//     <property> = <value>
+//     <property> = <value>
 // }
 //
 // ETYMOLOGY:
-// cum: "with" (preposition indicating association)
+// in: "into" (preposition indicating modification/entry)
 //
-// WHY "cum":
-// Expresses "working with" an object
+// WHY "in":
+// Expresses "reaching into" an object to modify it
+// Consistent with borrowing semantics (in = mutable, de = read-only)
 // Scopes property assignments to a specific target
 // Alternative to repeated object.property = value
 
 // =============================================================================
-// BASIC CUM BLOCKS
+// BASIC IN BLOCKS
 // =============================================================================
 
 // Create and configure object
 fixum config = { host: "", port: 0, secure: falsum }
 
-// Set properties in cum block
-cum config {
+// Set properties in mutation block
+in config {
     host = "localhost"
     port = 8080
     secure = verum
@@ -38,10 +39,10 @@ scribe config.port
 scribe config.secure
 
 // =============================================================================
-// CUM VS MANUAL ASSIGNMENT
+// IN VS MANUAL ASSIGNMENT
 // =============================================================================
 
-// Without cum (verbose):
+// Without in (verbose):
 varia settings = { volume: 0, brightness: 0, contrast: 0 }
 
 settings.volume = 75
@@ -50,10 +51,10 @@ settings.contrast = 50
 
 scribe settings.volume
 
-// With cum (concise):
+// With in (concise):
 varia display = { volume: 0, brightness: 0, contrast: 0 }
 
-cum display {
+in display {
     volume = 75
     brightness = 80
     contrast = 50
@@ -62,13 +63,13 @@ cum display {
 scribe display.volume
 
 // =============================================================================
-// CUM IN FUNCTIONS
+// IN BLOCKS IN FUNCTIONS
 // =============================================================================
 
 functio configureServer(host, port) -> objectum {
     fixum server = { host: "", port: 0, started: falsum }
 
-    cum server {
+    in server {
         host = host
         port = port
         started = verum
@@ -82,18 +83,18 @@ scribe myServer.host
 scribe myServer.port
 
 // =============================================================================
-// NESTED CUM BLOCKS
+// NESTED IN BLOCKS
 // =============================================================================
 
 fixum app = { server: { host: "", port: 0 }, database: { url: "", timeout: 0 } }
 
 // Configure nested objects
-cum app.server {
+in app.server {
     host = "localhost"
     port = 3000
 }
 
-cum app.database {
+in app.database {
     url = "postgres://localhost"
     timeout = 5000
 }
@@ -102,7 +103,7 @@ scribe app.server.host
 scribe app.database.url
 
 // =============================================================================
-// CUM WITH CONDITIONALS
+// IN WITH CONDITIONALS
 // =============================================================================
 
 varia options = { debug: falsum, verbose: falsum, logLevel: "" }
@@ -110,14 +111,14 @@ varia options = { debug: falsum, verbose: falsum, logLevel: "" }
 fixum isDevelopment = verum
 
 si isDevelopment {
-    cum options {
+    in options {
         debug = verum
         verbose = verum
         logLevel = "debug"
     }
 }
 aliter {
-    cum options {
+    in options {
         logLevel = "error"
     }
 }
@@ -126,14 +127,14 @@ scribe options.debug
 scribe options.logLevel
 
 // =============================================================================
-// CUM FOR INITIALIZATION
+// IN FOR INITIALIZATION
 // =============================================================================
 
-// Builder pattern using cum
+// Builder pattern using in
 functio createUser(name, email) -> objectum {
     fixum user = { name: "", email: "", verified: falsum, created: verum }
 
-    cum user {
+    in user {
         name = name
         email = email
         verified = falsum
@@ -148,13 +149,13 @@ scribe newUser.name
 scribe newUser.verified
 
 // =============================================================================
-// MULTIPLE CUM BLOCKS ON SAME OBJECT
+// MULTIPLE IN BLOCKS ON SAME OBJECT
 // =============================================================================
 
 varia state = { count: 0, status: "", active: falsum }
 
 // Initialize
-cum state {
+in state {
     count = 10
     status = "ready"
 }
@@ -163,7 +164,7 @@ scribe state.count
 scribe state.status
 
 // Update later
-cum state {
+in state {
     count = 20
     active = verum
 }
@@ -172,7 +173,7 @@ scribe state.count
 scribe state.active
 
 // =============================================================================
-// CUM WITH COMPUTED VALUES
+// IN WITH COMPUTED VALUES
 // =============================================================================
 
 fixum form = { width: 0, height: 0, area: 0 }
@@ -180,7 +181,7 @@ fixum form = { width: 0, height: 0, area: 0 }
 fixum w = 10
 fixum h = 20
 
-cum form {
+in form {
     width = w
     height = h
     area = w * h
@@ -189,13 +190,13 @@ cum form {
 scribe form.area
 
 // =============================================================================
-// WHEN TO USE CUM
+// WHEN TO USE IN
 // =============================================================================
 
 // GOOD: Multiple related property updates
 varia layout = { x: 0, y: 0, width: 0, height: 0 }
 
-cum layout {
+in layout {
     x = 100
     y = 200
     width = 300
@@ -206,22 +207,22 @@ cum layout {
 varia counter = { value: 0 }
 
 // Instead of:
-// cum counter { value = 1 }
+// in counter { value = 1 }
 
 // Just use:
 counter.value = 1
 
-// Use cum when setting 2+ properties at once
+// Use 'in' when setting 2+ properties at once
 // Use dot notation for single updates
 
 // =============================================================================
-// CUM IN INITIALIZATION PATTERNS
+// IN FOR INITIALIZATION PATTERNS
 // =============================================================================
 
 functio initializeApp() -> objectum {
     fixum app = { name: "", version: "", started: falsum }
 
-    cum app {
+    in app {
         name = "Faber Romanus"
         version = "0.3.0"
         started = verum

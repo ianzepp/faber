@@ -953,10 +953,10 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
     }
 
     /**
-     * Generate with statement (context block).
+     * Generate with statement (mutation block).
      *
      * TRANSFORMS:
-     *   cum user { nomen = "Marcus" } -> user.nomen = "Marcus"
+     *   in user { nomen = "Marcus" } -> user.nomen = "Marcus"
      */
     function genWithStatement(node: WithStatement): string {
         const context = genExpression(node.object);

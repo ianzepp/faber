@@ -881,10 +881,10 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     }
 
     /**
-     * Generate with statement.
+     * Generate with statement (mutation block).
      *
      * TRANSFORMS:
-     *   cum user { nomen = "Marcus" } -> user.nomen = "Marcus";
+     *   in user { nomen = "Marcus" } -> user.nomen = "Marcus";
      *
      * TARGET: Zig doesn't have with-blocks, we expand to member assignments.
      */

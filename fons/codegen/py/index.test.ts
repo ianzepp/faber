@@ -853,13 +853,13 @@ describe('Python codegen', () => {
     });
 
     // =========================================================================
-    // CUM (WITH) STATEMENTS
+    // IN (WITH) STATEMENTS
     // =========================================================================
 
-    describe('cum (with) statements', () => {
+    describe('in (with) statements', () => {
         test('simple property assignment', () => {
             const result = compile(`
-                cum user {
+                in user {
                     nomen = "Marcus"
                 }
             `);
@@ -868,7 +868,7 @@ describe('Python codegen', () => {
 
         test('multiple property assignments', () => {
             const result = compile(`
-                cum config {
+                in config {
                     host = "localhost"
                     port = 8080
                 }

@@ -240,7 +240,7 @@ describe('codegen', () => {
 
         test('for...in loop', () => {
             const js = compile(`
-        in lista pro item {
+        de lista pro item {
           _scribe(item)
         }
       `);
@@ -271,15 +271,15 @@ describe('codegen', () => {
             expect(js).toContain('for await (const chunk of stream)');
         });
 
-        test('in...fit generates sync for...in', () => {
-            const js = compile('in obj fit key { scribe key }');
+        test('de...fit generates sync for...in', () => {
+            const js = compile('de obj fit key { scribe key }');
 
             expect(js).toContain('for (const key in obj)');
             expect(js).not.toContain('await');
         });
 
-        test('in...fiet generates for await...in', () => {
-            const js = compile('in asyncObj fiet key { scribe key }');
+        test('de...fiet generates for await...in', () => {
+            const js = compile('de asyncObj fiet key { scribe key }');
 
             expect(js).toContain('for await (const key in asyncObj)');
         });
@@ -723,9 +723,9 @@ describe('codegen', () => {
     });
 
     describe('with statements', () => {
-        test('cum block transforms assignments', () => {
+        test('in block transforms assignments', () => {
             const js = compile(`
-        cum user {
+        in user {
           nomen = "Marcus"
           aetas = 30
         }

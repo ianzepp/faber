@@ -566,4 +566,4 @@ Future enhancement: infer error enums from `iace` usage patterns.
 6. ~~How do we handle lifetime annotations when borrowing across scopes?~~ **Use `de` on return type - mirrors Rust's elision rules.**
 7. Should `de de textus` (double borrow) mean `&&str`? Probably not needed.
 8. What about complex lifetime relationships (multiple distinct lifetimes)? Rare in practice - defer.
-9. ~~Scope-based arenas: should `cum arena { }` create nested arenas for bounded lifetimes?~~ **Use `fac arena { }` - extends existing block syntax without overloading `cum`.**
+9. ~~Scope-based arenas: should `in arena { }` create nested arenas for bounded lifetimes?~~ **Use `fac arena { }` - extends existing block syntax without overloading `in`.**

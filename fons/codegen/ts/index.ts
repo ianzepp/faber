@@ -873,12 +873,12 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     }
 
     /**
-     * Generate with statement (context block).
+     * Generate with statement (mutation block).
      *
      * TRANSFORMS:
-     *   cum user { nomen = "Marcus" } -> user.nomen = "Marcus";
+     *   in user { nomen = "Marcus" } -> user.nomen = "Marcus";
      *
-     * WHY: Bare identifier assignments inside cum blocks become property
+     * WHY: Bare identifier assignments inside 'in' blocks become property
      *      assignments on the context object.
      */
     function genWithStatement(node: WithStatement): string {

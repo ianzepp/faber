@@ -267,9 +267,9 @@ describe('zig codegen', () => {
     });
 
     describe('with statements', () => {
-        test('cum block expands to member assignments', () => {
+        test('in block expands to member assignments', () => {
             const zig = compile(`
-        cum user {
+        in user {
           nomen = "Marcus"
           aetas = 30
         }

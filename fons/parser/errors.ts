@@ -73,7 +73,8 @@ export enum ParserErrorCode {
     ExpectedKeywordSi = 'P026',
     ExpectedKeywordDum = 'P027',
     ExpectedKeywordPro = 'P028',
-    ExpectedKeywordCum = 'P029',
+    ExpectedKeywordIn = 'P029',
+    ExpectedKeywordDe = 'P043',
     ExpectedKeywordElige = 'P030',
     ExpectedKeywordCustodi = 'P031',
     ExpectedKeywordAdfirma = 'P032',
@@ -214,9 +215,13 @@ export const PARSER_ERRORS = {
         text: "Expected 'pro'",
         help: "For loops use 'pro' (for each) after iterable: ex lista pro item { ... }",
     },
-    [ParserErrorCode.ExpectedKeywordCum]: {
-        text: "Expected 'cum'",
-        help: "With statements use 'cum' (with) keyword: cum object { ... }",
+    [ParserErrorCode.ExpectedKeywordIn]: {
+        text: "Expected 'in'",
+        help: "Mutation blocks use 'in' (into) keyword: in object { prop = value }",
+    },
+    [ParserErrorCode.ExpectedKeywordDe]: {
+        text: "Expected 'de'",
+        help: "For-in loops use 'de' (from/concerning) keyword: de tabula pro clavis { ... }",
     },
     [ParserErrorCode.ExpectedKeywordElige]: {
         text: "Expected 'elige'",
@@ -283,8 +288,8 @@ export const PARSER_ERRORS = {
         help: 'Only identifiers and member expressions can be assigned to. Literals and operators cannot be assignment targets.',
     },
     [ParserErrorCode.InvalidForLoopStart]: {
-        text: "Expected 'ex' or 'in' to start for loop",
-        help: "For loops start with 'ex' (for-of) or 'in' (for-in): ex items pro item { ... } or in obj pro key { ... }",
+        text: "Expected 'ex' or 'de' to start for loop",
+        help: "For loops start with 'ex' (for-of) or 'de' (for-in): ex items pro item { ... } or de tabula pro clavis { ... }",
     },
     [ParserErrorCode.InvalidSwitchCaseStart]: {
         text: "Expected 'si' or 'aliter' in switch block",

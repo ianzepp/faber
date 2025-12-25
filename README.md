@@ -125,12 +125,12 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `sin` (else if, poetic)       |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `dum` (while)                 |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `ex...pro` (for-of)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
-| `in...pro` (for-in)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `de...pro` (for-in)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `ex...fit` (for-of verb form) |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `ex...fiet` (async for)       |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Range expressions (`0..10`)   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Range with step (`per`)       |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `cum` (with/context)          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `in` (mutation block)         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `elige` (switch)              |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Switch cases (`si`)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Switch default (`aliter`)     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |

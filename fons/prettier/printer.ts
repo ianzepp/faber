@@ -567,7 +567,7 @@ function printForStatement(path: AstPath<AstNode>, options: FaberOptions, print:
 }
 
 function printWithStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
-    return ['cum ', path.call(print, 'object'), ' ', path.call(print, 'body')];
+    return ['in ', path.call(print, 'object'), ' ', path.call(print, 'body')];
 }
 
 function printSwitchStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {

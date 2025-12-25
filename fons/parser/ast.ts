@@ -508,17 +508,17 @@ export interface ForStatement extends BaseNode {
 }
 
 /**
- * With statement (context block).
+ * With statement (mutation block).
  *
  * GRAMMAR (in EBNF):
- *   withStmt := 'cum' expression blockStmt
+ *   withStmt := 'in' expression blockStmt
  *
- * WHY: Latin 'cum' (with) establishes context for property access.
+ * WHY: Latin 'in' (into) establishes context for property mutation.
  *      Inside the block, bare identifiers in assignments refer to
  *      properties of the context object.
  *
  * Example:
- *   cum user {
+ *   in user {
  *       nomen = "Marcus"
  *       email = "marcus@roma.it"
  *   }
@@ -635,7 +635,7 @@ export interface ReturnStatement extends BaseNode {
  *   breakStmt := 'rumpe'
  *
  * WHY: Latin 'rumpe' (break!) exits the innermost loop.
- *      Used within dum, ex...pro, and in...pro loops.
+ *      Used within dum, ex...pro, and de...pro loops.
  *
  * Example:
  *   dum verum {
@@ -653,7 +653,7 @@ export interface BreakStatement extends BaseNode {
  *   continueStmt := 'perge'
  *
  * WHY: Latin 'perge' (continue/proceed!) skips to next iteration.
- *      Used within dum, ex...pro, and in...pro loops.
+ *      Used within dum, ex...pro, and de...pro loops.
  *
  * Example:
  *   ex items pro item {

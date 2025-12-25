@@ -81,6 +81,79 @@ This allows: `novum persona cum { nomen: "Marcus" }` → `new persona({ nomen: "
 
 `cede` maps to `yield` inside generator functions, `await` inside async functions. The codegen tracks context via `inGenerator` flag.
 
+## Unsupported TypeScript Features
+
+Features that would need new Faber syntax to support.
+
+### High Priority (commonly used)
+
+| TS Feature | Syntax | Status | Latin Candidate | Notes |
+|------------|--------|--------|-----------------|-------|
+| Spread (array) | `...arr` | Not done | `sparge`? | Array/object spreading |
+| Spread (object) | `...obj` | Not done | `sparge`? | Object spreading |
+| Rest parameters | `...args` | Not done | `ceteri`? | Collect remaining args |
+| Optional chaining | `?.` | Not done | TBD | Safe property access |
+| Nullish coalescing | `??` | Partial | `vel` | Only in destructuring |
+| Array destructuring | `[a, b] = arr` | Not done | — | Explicitly excluded |
+| typeof (runtime) | `typeof x` | Not done | `typus`? | Runtime type inspection |
+| instanceof | `x instanceof T` | Not done | `exemplar`? | Type checking |
+| Regex literals | `/pattern/` | Not done | — | No tokenizer support |
+| Setters | `set prop(v)` | Not done | — | Computed props read-only |
+
+### Medium Priority (useful)
+
+| TS Feature | Syntax | Status | Latin Candidate | Notes |
+|------------|--------|--------|-----------------|-------|
+| Type assertions | `x as T` | Not done | `ut`? | Cast/narrow type |
+| Computed property names | `{ [key]: v }` | Not done | — | Dynamic keys |
+| Shorthand properties | `{ x }` | Not done | — | For `{ x: x }` |
+| Tagged templates | `` fn`text` `` | Not done | — | Template processors |
+| BigInt | `123n` | Not done | `magnus`? | Arbitrary precision int |
+| Decorators | `@foo` | Not done | — | Metaprogramming |
+| Static blocks | `static { }` | Not done | `generis { }` | Class-level init |
+
+### Lower Priority (advanced TS)
+
+| TS Feature | Syntax | Status | Notes |
+|------------|--------|--------|-------|
+| keyof | `keyof T` | Not done | Type-level key extraction |
+| typeof (type-level) | `typeof x` | Not done | Type from value |
+| Mapped types | `{ [K in T]: V }` | Not done | Type transformation |
+| Conditional types | `T extends U ? A : B` | Not done | Type-level conditionals |
+| Tuple types | `[A, B, C]` | Not done | Fixed-length arrays |
+| Index signatures | `{ [k: string]: T }` | Not done | Dynamic property types |
+| satisfies | `x satisfies T` | Not done | Type check without widening |
+| infer | `infer R` | Not done | Type inference in conditionals |
+| never type | `never` | Not done | Bottom type |
+| unknown type | `unknown` | Not done | Safe any |
+
+### Design Notes
+
+**Spread/Rest**: Latin `spargere` (to scatter) → `sparge` for spread, `ceteri` (the rest) for rest params.
+
+```
+// Possible syntax
+fixum combined = [sparge arr1, sparge arr2]
+fixum merged = { sparge obj1, sparge obj2 }
+functio f(a, ceteri args) { }
+```
+
+**Optional chaining**: Could use `?.` directly (punctuation, not Latin) or a keyword like `forsitan` (perhaps).
+
+```
+// Option 1: Direct
+user?.address?.city
+
+// Option 2: Latin (verbose)
+user forsitan address forsitan city
+```
+
+**Nullish coalescing**: `vel` (or) currently used in destructuring. Could extend to general expressions.
+
+```
+fixum name = user.name vel "Anonymous"
+```
+
 ## Future Considerations
 
 - **ESM vs CommonJS** - Currently generates ESM-style imports

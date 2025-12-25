@@ -238,7 +238,7 @@ fac arena {
 }
 ```
 
-WHY `fac arena` not `cum arena`: The `cum` keyword is already used for context objects (`cum user { nomen = "Marcus" }`). Using `fac arena` extends the existing block syntax with a modifier, avoiding semantic confusion. The word "arena" is genuinely Latin (sand, amphitheater floor) and familiar to systems programmers.
+WHY `fac arena` not `in arena`: The `in` keyword is already used for mutation blocks (`in user { nomen = "Marcus" }`). Using `fac arena` extends the existing block syntax with a modifier, avoiding semantic confusion. The word "arena" is genuinely Latin (sand, amphitheater floor) and familiar to systems programmers.
 
 This maps to Zig's pattern of creating child arenas for bounded scopes.
 

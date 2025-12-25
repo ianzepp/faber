@@ -5,7 +5,7 @@
 | Feature | Status | Notes |
 |---------|--------|-------|
 | `ex...pro/fit/fiet` loops | Done | For-of iteration |
-| `in...pro/fit/fiet` loops | Done | For-in iteration |
+| `de...pro/fit/fiet` loops | Done | For-in iteration |
 | Range `0..10` | Done | Inclusive endpoints |
 | Range step `per` | Done | `0..10 per 2` |
 | `dum` while loop | Done | Basic while |
@@ -52,18 +52,18 @@ ex items fit item { scribe item }
 ex stream fiet chunk { scribe chunk }
 ```
 
-### in...pro (For-Each Keys)
+### de...pro (For-Each Keys)
 
-**Syntax:** `in <object> (pro | fit) <key> { body }`
+**Syntax:** `de <object> (pro | fit) <key> { body }`
 
 ```
 fixum persona = { nomen: "Marcus", aetas: 30 }
-in persona pro clavis {
+de persona pro clavis {
     scribe clavis + ": " + persona[clavis]
 }
 ```
 
-Compiles to `for...in`.
+Compiles to `for...in`. Uses `de` (from/concerning) because we're extracting keys from the object — a read operation.
 
 ### One-liner Form
 
@@ -268,7 +268,7 @@ For breaking outer loops:
 |-------|------------|
 | `ex...pro/fit` | `for...of` |
 | `ex...fiet` | `for await...of` |
-| `in...pro/fit` | `for...in` |
+| `de...pro/fit` | `for...in` |
 | `dum` | `while` |
 | `cede` (generator) | `yield` |
 | `cede` (async) | `await` |

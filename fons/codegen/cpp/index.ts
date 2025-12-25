@@ -712,10 +712,10 @@ export function generateCpp(program: Program, options: CodegenOptions = {}): str
     }
 
     /**
-     * Generate with statement.
+     * Generate with statement (mutation block).
      *
      * TRANSFORMS:
-     *   cum user { nomen = "Marcus" } -> { user.nomen = "Marcus"; }
+     *   in user { nomen = "Marcus" } -> { user.nomen = "Marcus"; }
      */
     function genWithStatement(node: WithStatement): string {
         const context = genExpression(node.object);

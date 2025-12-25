@@ -521,9 +521,16 @@ export function parse(tokens: Token[]): ParserResult {
             return parseExStatement();
         }
 
-        // 'in tabula pro k' is for-in loop
+        // 'de' for for-in loops (iterate over keys)
+        // de tabula pro k { } → for-in loop
+        if (checkKeyword('de')) {
+            return parseDeStatement();
+        }
+
+        // 'in' for mutation blocks
+        // in user { } → with-block (mutation)
         if (checkKeyword('in')) {
-            return parseForStatement();
+            return parseInStatement();
         }
 
         if (checkKeyword('varia') || checkKeyword('fixum') || checkKeyword('figendum') || checkKeyword('variandum')) {
@@ -558,9 +565,6 @@ export function parse(tokens: Token[]): ParserResult {
             return parseWhileStatement();
         }
 
-        if (checkKeyword('cum')) {
-            return parseWithStatement();
-        }
 
         if (checkKeyword('elige')) {
             return parseSwitchStatement();
@@ -1588,27 +1592,27 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     /**
-     * Parse for-in loop statement.
+     * Parse 'de' statement (for-in loop).
      *
      * GRAMMAR:
-     *   forStmt := 'in' expression ('pro' | 'fit' | 'fiet') IDENTIFIER
-     *              (blockStmt | 'ergo' statement) ('cape' IDENTIFIER blockStmt)?
+     *   deStmt := 'de' expression ('pro' | 'fit' | 'fiet') IDENTIFIER
+     *             (blockStmt | 'ergo' statement) catchClause?
      *
-     * WHY: 'in' for for-in (keys). 'ex' loops are handled by parseExStatement().
+     * WHY: 'de' (from/concerning) for extracting keys from an object.
+     *      Semantically read-only - contrasts with 'in' for mutation.
      *
      * Examples:
-     *   in tabula pro clavis { ... }  // in table, for each key
+     *   de tabula pro clavis { ... }  // from table, for each key
+     *   de object pro k ergo scribe k // one-liner form
      */
-    function parseForStatement(): ForStatement {
+    function parseDeStatement(): ForStatement {
         const position = peek().position;
 
-        // Only handles 'in' loops - 'ex' is handled by parseExStatement
-        expectKeyword('in', ParserErrorCode.InvalidForLoopStart);
+        expectKeyword('de', ParserErrorCode.ExpectedKeywordDe);
 
-        const iterable = parseExpression();
+        const expr = parseExpression();
 
-        // WHY: Accept 'pro', 'fit', or 'fiet' as the binding keyword
-        // 'pro' and 'fit' = sync iteration, 'fiet' = async iteration
+        // Require binding keyword
         let async = false;
         if (matchKeyword('pro')) {
             async = false;
@@ -1633,16 +1637,15 @@ export function parse(tokens: Token[]): ParserResult {
         }
 
         let catchClause: CatchClause | undefined;
-
         if (checkKeyword('cape')) {
             catchClause = parseCatchClause();
         }
 
         return {
             type: 'ForStatement',
-            kind: 'in',
+            kind: 'in',  // Still 'in' kind for codegen (for-in loop)
             variable,
-            iterable,
+            iterable: expr,
             body,
             async,
             catchClause,
@@ -1651,29 +1654,26 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     /**
-     * Parse with statement (context block).
+     * Parse 'in' statement (mutation block).
      *
      * GRAMMAR:
-     *   withStmt := 'cum' expression blockStmt
+     *   inStmt := 'in' expression blockStmt
      *
-     * WHY: 'cum' (with) establishes context for property access.
-     *      Inside the block, bare identifier assignments become
-     *      property assignments on the context object.
+     * WHY: 'in' (into) for reaching into an object to modify it.
+     *      Semantically mutable - contrasts with 'de' for read-only iteration.
      *
      * Example:
-     *   cum user {
-     *       nomen = "Marcus"
-     *   }
+     *   in user { nomen = "Marcus" }  // mutation block
      */
-    function parseWithStatement(): WithStatement {
+    function parseInStatement(): WithStatement {
         const position = peek().position;
 
-        expectKeyword('cum', ParserErrorCode.ExpectedKeywordCum);
+        expectKeyword('in', ParserErrorCode.ExpectedKeywordIn);
 
-        const object = parseExpression();
+        const expr = parseExpression();
         const body = parseBlockStatement();
 
-        return { type: 'WithStatement', object, body, position };
+        return { type: 'WithStatement', object: expr, body, position };
     }
 
     /**

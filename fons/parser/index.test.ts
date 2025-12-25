@@ -403,7 +403,7 @@ describe('parser', () => {
 
         test('for...in loop', () => {
             const { program } = parseCode(`
-        in lista pro item {
+        de lista pro item {
           scribe(item)
         }
       `);
@@ -1197,8 +1197,8 @@ describe('parser', () => {
             expect(stmt.body.body[0].type).toBe('ScribeStatement');
         });
 
-        test('in...pro with ergo', () => {
-            const { program } = parseCode('in obj pro key ergo scribe key');
+        test('de...pro with ergo', () => {
+            const { program } = parseCode('de obj pro key ergo scribe key');
             const stmt = program!.body[0] as any;
 
             expect(stmt.type).toBe('ForStatement');
@@ -1347,8 +1347,8 @@ describe('parser', () => {
             expect(stmt.async).toBe(false);
         });
 
-        test('in...fit parses as sync loop', () => {
-            const { program } = parseCode('in obj fit key { scribe key }');
+        test('de...fit parses as sync loop', () => {
+            const { program } = parseCode('de obj fit key { scribe key }');
             const stmt = program!.body[0] as any;
 
             expect(stmt.type).toBe('ForStatement');
