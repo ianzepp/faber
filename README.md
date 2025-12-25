@@ -161,8 +161,6 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `scribe` statement | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `vide` (debug) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
 | `mone` (warn) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
-| `emitte` (emit event) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `ausculta` (event stream) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
 | Multiple args | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 
 ## Expressions
