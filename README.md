@@ -61,7 +61,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `numerus` (integer)      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `fractus` (float)        |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `decimus` (decimal)      |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `magnus` (bigint)        |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
+| `magnus` (bigint)        |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `bivalens` (boolean)     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `nihil` (null)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `vacuum` (void)          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |

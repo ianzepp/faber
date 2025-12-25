@@ -137,6 +137,7 @@ const typeMap: Record<string, string> = {
     numerus: 'int',
     fractus: 'float',
     decimus: 'Decimal',
+    magnus: 'int', // WHY: Python ints are arbitrary precision
     bivalens: 'bool',
     nihil: 'None',
     vacuum: 'None',
