@@ -54,7 +54,7 @@ interface BaseType {
  */
 export interface PrimitiveType extends BaseType {
     kind: 'primitive';
-    name: 'textus' | 'numerus' | 'bivalens' | 'nihil' | 'vacuum';
+    name: 'textus' | 'numerus' | 'fractus' | 'decimus' | 'bivalens' | 'nihil' | 'vacuum' | 'octeti';
 }
 
 /**
@@ -162,9 +162,12 @@ export function userType(name: string, nullable?: boolean): UserType {
 
 export const TEXTUS: PrimitiveType = primitiveType('textus');
 export const NUMERUS: PrimitiveType = primitiveType('numerus');
+export const FRACTUS: PrimitiveType = primitiveType('fractus');
+export const DECIMUS: PrimitiveType = primitiveType('decimus');
 export const BIVALENS: PrimitiveType = primitiveType('bivalens');
 export const NIHIL: PrimitiveType = primitiveType('nihil');
 export const VACUUM: PrimitiveType = primitiveType('vacuum');
+export const OCTETI: PrimitiveType = primitiveType('octeti');
 export const UNKNOWN: UnknownType = unknownType();
 
 // =============================================================================
@@ -253,6 +256,15 @@ export function isAssignableTo(source: SemanticType, target: SemanticType): bool
     // nihil is assignable to nullable types (case-insensitive)
     if (source.kind === 'primitive' && source.name.toLowerCase() === 'nihil') {
         return target.nullable === true;
+    }
+
+    // Numeric type promotion: numerus -> fractus, numerus -> decimus
+    // WHY: Integer literals can be used where floats/decimals are expected
+    if (source.kind === 'primitive' && target.kind === 'primitive') {
+        const numericTypes = ['numerus', 'fractus', 'decimus'];
+        if (numericTypes.includes(source.name) && numericTypes.includes(target.name)) {
+            return true;
+        }
     }
 
     // Check if source is in target union

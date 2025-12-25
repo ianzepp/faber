@@ -517,6 +517,25 @@ describe('codegen', () => {
 
             expect(js).toBe('type Int32 = number<i32>;');
         });
+
+        test('fractus maps to number', () => {
+            const js = compile('typus Ratio = fractus');
+
+            expect(js).toBe('type Ratio = number;');
+        });
+
+        test('decimus maps to Decimal with import', () => {
+            const js = compile('typus Price = decimus');
+
+            expect(js).toContain("import Decimal from 'decimal.js';");
+            expect(js).toContain('type Price = Decimal;');
+        });
+
+        test('octeti maps to Uint8Array', () => {
+            const js = compile('typus Buffer = octeti');
+
+            expect(js).toBe('type Buffer = Uint8Array;');
+        });
     });
 
     describe('enum declarations (ordo)', () => {

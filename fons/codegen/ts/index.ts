@@ -128,6 +128,8 @@ import { getCopiaMethod } from './norma/copia';
 const typeMap: Record<string, string> = {
     textus: 'string',
     numerus: 'number',
+    fractus: 'number',
+    decimus: 'Decimal',
     bivalens: 'boolean',
     nihil: 'null',
     octeti: 'Uint8Array',
@@ -185,12 +187,18 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * WHY: Only emit setup code for features actually used in the program.
      */
     function genPreamble(): string {
-        const lines: string[] = [];
+        const imports: string[] = [];
+        const definitions: string[] = [];
 
-        if (features.panic) {
-            lines.push('class Panic extends Error { name = "Panic"; }');
+        if (features.decimal) {
+            imports.push("import Decimal from 'decimal.js';");
         }
 
+        if (features.panic) {
+            definitions.push('class Panic extends Error { name = "Panic"; }');
+        }
+
+        const lines = [...imports, ...definitions];
         return lines.length > 0 ? lines.join('\n') + '\n\n' : '';
     }
 
@@ -660,7 +668,13 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      */
     function genType(node: TypeAnnotation): string {
         // Map Latin type name to TS type (case-insensitive lookup)
-        const base = typeMap[node.name.toLowerCase()] ?? node.name;
+        const typeName = node.name.toLowerCase();
+        const base = typeMap[typeName] ?? node.name;
+
+        // Track decimal.js dependency
+        if (typeName === 'decimus') {
+            features.decimal = true;
+        }
 
         // Handle generic type parameters: lista<textus> -> Array<string>
         let result = base;

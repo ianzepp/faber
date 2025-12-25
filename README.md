@@ -51,12 +51,12 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 |---------|:----------:|:---:|:------:|:----:|:----:|:-----:|
 | `textus` (string) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `numerus` (integer) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
-| `fractus` (float) | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `decimus` (decimal) | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
+| `fractus` (float) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
+| `decimus` (decimal) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
 | `bivalens` (boolean) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `nihil` (null) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
 | `vacuum` (void) | [x] | [x] | [x] | [ ] | [ ] | [ ] |
-| `octeti` (bytes) | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
+| `octeti` (bytes) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
 | `objectum` (object) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
 | `lista<T>` (array) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
 | `tabula<K,V>` (map) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |

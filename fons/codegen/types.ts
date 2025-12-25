@@ -66,6 +66,9 @@ export interface RequiredFeatures {
 
     // Events
     events: boolean; // emitte, ausculta
+
+    // Numeric types
+    decimal: boolean; // decimus - needs decimal.js import
 }
 
 /**
@@ -81,6 +84,7 @@ export function createRequiredFeatures(): RequiredFeatures {
         asyncIterator: false,
         generator: false,
         events: false,
+        decimal: false,
     };
 }
 

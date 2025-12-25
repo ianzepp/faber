@@ -85,9 +85,12 @@ import {
     userType,
     TEXTUS,
     NUMERUS,
+    FRACTUS,
+    DECIMUS,
     BIVALENS,
     NIHIL,
     VACUUM,
+    OCTETI,
     UNKNOWN,
     formatType,
     isAssignableTo,
@@ -124,9 +127,12 @@ export interface SemanticResult {
 const LATIN_TYPE_MAP: Record<string, SemanticType> = {
     textus: TEXTUS,
     numerus: NUMERUS,
+    fractus: FRACTUS,
+    decimus: DECIMUS,
     bivalens: BIVALENS,
     nihil: NIHIL,
     vacuum: VACUUM,
+    octeti: OCTETI,
 };
 
 /**

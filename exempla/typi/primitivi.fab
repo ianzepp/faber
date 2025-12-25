@@ -7,10 +7,13 @@
 //
 // PRIMITIVE TYPES:
 // textus    - string ("woven, texture")
-// numerus   - number ("count, quantity")
+// numerus   - integer ("count, quantity")
+// fractus   - float ("broken, fractional")
+// decimus   - decimal ("tenth, decimal") - arbitrary precision
 // bivalens  - boolean ("two-valued")
 // nihil     - null literal ("nothing")
 // vacuum    - void type ("empty, vacant")
+// octeti    - bytes ("octets") - raw binary data
 //
 // GRAMMAR:
 // fixum <type> <name> = <value>
@@ -76,6 +79,62 @@ fixum numerus product = a * b
 
 scribe sum
 scribe product
+
+// =============================================================================
+// FRACTUS (Float)
+// =============================================================================
+
+// Floating-point numbers for scientific calculations
+// WHY: "fractus" means "broken, fractional" - the root of "fraction"
+fixum fractus piPrecise = 3.14159265359
+fixum fractus euler = 2.71828
+fixum fractus golden = 1.618033988749
+
+scribe piPrecise
+scribe euler
+
+// Fractus in function parameters
+functio circleArea(fractus radius) -> fractus {
+    redde 3.14159 * radius * radius
+}
+
+scribe circleArea(5.0)
+scribe circleArea(2.5)
+
+// =============================================================================
+// DECIMUS (Decimal)
+// =============================================================================
+
+// Arbitrary-precision decimal for financial calculations
+// WHY: "decimus" means "tenth, decimal" - exact decimal representation
+// Unlike fractus, decimus avoids floating-point precision errors
+fixum decimus price = 19.99
+fixum decimus taxRate = 0.0825
+fixum decimus balance = 1000.00
+
+scribe price
+scribe taxRate
+
+// Decimus in function parameters
+functio calculateTotal(decimus amount, decimus tax) -> decimus {
+    redde amount + (amount * tax)
+}
+
+scribe calculateTotal(100.00, 0.08)
+
+// =============================================================================
+// OCTETI (Bytes)
+// =============================================================================
+
+// Raw binary data as byte arrays
+// WHY: "octeti" means "octets, groups of eight" - the 8-bit byte
+// Distinct from textus: octeti has no encoding, textus is UTF-8
+typus Buffer = octeti
+
+// Function accepting bytes
+functio processData(octeti data) -> numerus {
+    redde 0
+}
 
 // =============================================================================
 // BIVALENS (Boolean)
