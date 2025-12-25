@@ -151,6 +151,7 @@ const typeMap: Record<string, string> = {
     promissum: 'Awaitable',
     erratum: 'Exception',
     cursor: 'Iterator',
+    ignotum: 'Any', // WHY: Python has no unknown, Any is closest
 };
 
 // =============================================================================

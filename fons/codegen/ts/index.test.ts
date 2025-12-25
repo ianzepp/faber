@@ -566,6 +566,18 @@ describe('codegen', () => {
 
             expect(js).toContain('function moritur(): never');
         });
+
+        test('ignotum maps to unknown', () => {
+            const js = compile('typus Mystery = ignotum');
+
+            expect(js).toBe('type Mystery = unknown;');
+        });
+
+        test('ignotum variable accepts any value', () => {
+            const js = compile('varia ignotum x = 42');
+
+            expect(js).toBe('let x: unknown = 42;');
+        });
     });
 
     describe('enum declarations (ordo)', () => {

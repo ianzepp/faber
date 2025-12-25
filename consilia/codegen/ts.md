@@ -11,39 +11,40 @@ TypeScript is the primary compilation target for Faber. The language design was 
 
 ## Direct Mappings
 
-| Faber | TypeScript | Notes |
-|-------|------------|-------|
-| `varia` | `let` | Mutable binding |
-| `fixum` | `const` | Immutable binding |
-| `functio` | `function` | Function declaration |
-| `futura` | `async` | Async function |
-| `cede` | `await`/`yield` | Context-dependent |
-| `genus` | `class` | With auto-merge constructor |
-| `pactum` | `interface` | Direct mapping |
-| `implet` | `implements` | Direct mapping |
-| `ego` | `this` | Self reference |
-| `novum` | `new` | Object construction |
-| `novum X {}` | `new X({})` | Constructor with overrides |
-| `si`/`aliter` | `if`/`else` | Conditionals |
-| `dum` | `while` | While loop |
-| `ex...pro` | `for...of` | Iteration |
-| `elige` | `if/else` chain | See `principles.md` — always if/else, not switch |
-| `tempta`/`cape`/`demum` | `try`/`catch`/`finally` | Exception handling |
-| `iace` | `throw` | Throw exception |
-| `redde` | `return` | Return statement |
-| `textus` | `string` | String type |
-| `numerus` | `number` | Integer (JS has single number type) |
-| `fractus` | `number` | Floating point (JS has single number type) |
-| `decimus` | `Decimal` | Arbitrary precision (requires library) |
-| `bivalens` | `boolean` | Boolean type |
-| `nihil` | `null` | Null value |
-| `lista<T>` | `T[]` | Array type |
-| `tabula<K,V>` | `Map<K,V>` | Map type |
-| `copia<T>` | `Set<T>` | Set type |
+| Faber                   | TypeScript              | Notes                                            |
+| ----------------------- | ----------------------- | ------------------------------------------------ |
+| `varia`                 | `let`                   | Mutable binding                                  |
+| `fixum`                 | `const`                 | Immutable binding                                |
+| `functio`               | `function`              | Function declaration                             |
+| `futura`                | `async`                 | Async function                                   |
+| `cede`                  | `await`/`yield`         | Context-dependent                                |
+| `genus`                 | `class`                 | With auto-merge constructor                      |
+| `pactum`                | `interface`             | Direct mapping                                   |
+| `implet`                | `implements`            | Direct mapping                                   |
+| `ego`                   | `this`                  | Self reference                                   |
+| `novum`                 | `new`                   | Object construction                              |
+| `novum X {}`            | `new X({})`             | Constructor with overrides                       |
+| `si`/`aliter`           | `if`/`else`             | Conditionals                                     |
+| `dum`                   | `while`                 | While loop                                       |
+| `ex...pro`              | `for...of`              | Iteration                                        |
+| `elige`                 | `if/else` chain         | See `principles.md` — always if/else, not switch |
+| `tempta`/`cape`/`demum` | `try`/`catch`/`finally` | Exception handling                               |
+| `iace`                  | `throw`                 | Throw exception                                  |
+| `redde`                 | `return`                | Return statement                                 |
+| `textus`                | `string`                | String type                                      |
+| `numerus`               | `number`                | Integer (JS has single number type)              |
+| `fractus`               | `number`                | Floating point (JS has single number type)       |
+| `decimus`               | `Decimal`               | Arbitrary precision (requires library)           |
+| `bivalens`              | `boolean`               | Boolean type                                     |
+| `nihil`                 | `null`                  | Null value                                       |
+| `lista<T>`              | `T[]`                   | Array type                                       |
+| `tabula<K,V>`           | `Map<K,V>`              | Map type                                         |
+| `copia<T>`              | `Set<T>`                | Set type                                         |
 
 ## Implementation Status
 
 **Complete:**
+
 - All control flow constructs
 - All expression types
 - Full OOP support (genus, pactum, methods, constructors)
@@ -53,6 +54,7 @@ TypeScript is the primary compilation target for Faber. The language design was 
 - Import/export
 
 **Not applicable:**
+
 - Memory management (GC handles it)
 - Ownership/borrowing (not a concept in TS)
 
@@ -64,10 +66,10 @@ Faber's `genus` generates a constructor that merges field defaults with override
 
 ```typescript
 class persona {
-    nomen: string = "anonymous";
+    nomen: string = 'anonymous';
     aetas: number = 0;
 
-    constructor(overrides: { nomen?: string, aetas?: number } = {}) {
+    constructor(overrides: { nomen?: string; aetas?: number } = {}) {
         if (overrides.nomen !== undefined) this.nomen = overrides.nomen;
         if (overrides.aetas !== undefined) this.aetas = overrides.aetas;
         this.creo(); // if defined
@@ -87,47 +89,47 @@ Features that would need new Faber syntax to support.
 
 ### High Priority (commonly used)
 
-| TS Feature | Syntax | Status | Latin Candidate | Notes |
-|------------|--------|--------|-----------------|-------|
-| Spread (array) | `...arr` | Planned | `sparge arr` | Array spreading |
-| Spread (object) | `...obj` | Planned | `sparge obj` | Object spreading |
-| Rest parameters | `...args` | Planned | `ceteri args` | Collect remaining args |
-| Optional chaining | `?.` | Planned | `?.` | Keep as punctuation |
-| Non-null assertion | `!.` | Planned | `!.` | Keep as punctuation |
-| Nullish coalescing | `??` | Partial | `vel` | Extending to general expressions |
-| Array destructuring | `[a, b] = arr` | Planned | `ex arr fixum [a, b]` | Enabled by `ceteri` rest syntax |
-| typeof (runtime) | `typeof x` | Planned | `x est numerus` | Via `est` with type RHS |
-| instanceof | `x instanceof T` | Planned | `x est T` | Via `est` with type RHS |
-| Regex literals | `/pattern/` | Planned | `sed /pattern/` | Keyword disambiguates tokenizer |
-| Getters | `get prop()` | Excluded | — | Use methods instead |
-| Setters | `set prop(v)` | Excluded | — | Use `nexum` or methods |
+| TS Feature          | Syntax           | Status   | Latin Candidate       | Notes                            |
+| ------------------- | ---------------- | -------- | --------------------- | -------------------------------- |
+| Spread (array)      | `...arr`         | Planned  | `sparge arr`          | Array spreading                  |
+| Spread (object)     | `...obj`         | Planned  | `sparge obj`          | Object spreading                 |
+| Rest parameters     | `...args`        | Planned  | `ceteri args`         | Collect remaining args           |
+| Optional chaining   | `?.`             | Planned  | `?.`                  | Keep as punctuation              |
+| Non-null assertion  | `!.`             | Planned  | `!.`                  | Keep as punctuation              |
+| Nullish coalescing  | `??`             | Partial  | `vel`                 | Extending to general expressions |
+| Array destructuring | `[a, b] = arr`   | Planned  | `ex arr fixum [a, b]` | Enabled by `ceteri` rest syntax  |
+| typeof (runtime)    | `typeof x`       | Planned  | `x est numerus`       | Via `est` with type RHS          |
+| instanceof          | `x instanceof T` | Planned  | `x est T`             | Via `est` with type RHS          |
+| Regex literals      | `/pattern/`      | Planned  | `sed /pattern/`       | Keyword disambiguates tokenizer  |
+| Getters             | `get prop()`     | Excluded | —                     | Use methods instead              |
+| Setters             | `set prop(v)`    | Excluded | —                     | Use `nexum` or methods           |
 
 ### Medium Priority (useful)
 
-| TS Feature | Syntax | Status | Latin Candidate | Notes |
-|------------|--------|--------|-----------------|-------|
-| Type assertions | `x as T` | Planned | `x ut T` | Cast/narrow type |
-| Computed property names | `{ [key]: v }` | Excluded | — | Runtime key construction; use tabula |
-| Shorthand properties | `{ x }` | Excluded | — | Rust-only; not portable |
-| Tagged templates | `` fn`text` `` | Excluded | — | JS-specific |
-| BigInt | `123n` | Designed | `magnus` | Constructed via preamble, no literal suffix |
-| Decorators | `@foo` | Excluded | — | Semantics differ across targets |
-| Static blocks | `static { }` | Excluded | — | Semantics vary across targets |
+| TS Feature              | Syntax         | Status   | Latin Candidate | Notes                                       |
+| ----------------------- | -------------- | -------- | --------------- | ------------------------------------------- |
+| Type assertions         | `x as T`       | Planned  | `x ut T`        | Cast/narrow type                            |
+| Computed property names | `{ [key]: v }` | Excluded | —               | Runtime key construction; use tabula        |
+| Shorthand properties    | `{ x }`        | Excluded | —               | Rust-only; not portable                     |
+| Tagged templates        | `` fn`text` `` | Excluded | —               | JS-specific                                 |
+| BigInt                  | `123n`         | Designed | `magnus`        | Constructed via preamble, no literal suffix |
+| Decorators              | `@foo`         | Excluded | —               | Semantics differ across targets             |
+| Static blocks           | `static { }`   | Excluded | —               | Semantics vary across targets               |
 
 ### Lower Priority (advanced TS)
 
-| TS Feature | Syntax | Status | Latin | Notes |
-|------------|--------|--------|-------|-------|
-| keyof | `keyof T` | Excluded | — | TS-specific type machinery |
-| typeof (type-level) | `typeof x` | Designed | `typus x` | Same keyword as type alias declaration |
-| Mapped types | `{ [K in T]: V }` | Excluded | — | TS-specific |
-| Conditional types | `T extends U ? A : B` | Excluded | — | TS-specific |
-| Tuple types | `[A, B, C]` | Designed | `series<A, B, C>` | Generic type, bracket literals |
-| Index signatures | `{ [k: string]: T }` | Designed | `aperit T` | TS-only; use tabula elsewhere |
-| satisfies | `x satisfies T` | Excluded | — | TS-specific |
-| infer | `infer R` | Excluded | — | TS-specific |
-| never type | `never` | Designed | `numquam` | "never" — function doesn't return |
-| unknown type | `unknown` | Done | `ignotus` | Already implemented |
+| TS Feature          | Syntax                | Status   | Latin             | Notes                                  |
+| ------------------- | --------------------- | -------- | ----------------- | -------------------------------------- |
+| keyof               | `keyof T`             | Excluded | —                 | TS-specific type machinery             |
+| typeof (type-level) | `typeof x`            | Designed | `typus x`         | Same keyword as type alias declaration |
+| Mapped types        | `{ [K in T]: V }`     | Excluded | —                 | TS-specific                            |
+| Conditional types   | `T extends U ? A : B` | Excluded | —                 | TS-specific                            |
+| Tuple types         | `[A, B, C]`           | Designed | `series<A, B, C>` | Generic type, bracket literals         |
+| Index signatures    | `{ [k: string]: T }`  | Designed | `aperit T`        | TS-only; use tabula elsewhere          |
+| satisfies           | `x satisfies T`       | Excluded | —                 | TS-specific                            |
+| infer               | `infer R`             | Excluded | —                 | TS-specific                            |
+| never type          | `never`               | Designed | `numquam`         | "never" — function doesn't return      |
+| unknown type        | `unknown`             | Done     | `ignotum`         | Already implemented                    |
 
 ### Design Notes
 
@@ -147,6 +149,7 @@ pactum DynamicRecord aperit textus { }
 ```
 
 Generates:
+
 ```typescript
 class config {
     [key: string]: string;
@@ -158,6 +161,7 @@ interface DynamicRecord {
 ```
 
 Grammar:
+
 ```
 genus_decl := 'genus' identifier type_params? implet_clause? aperit_clause? '{' members '}'
 implet_clause := 'implet' identifier (',' identifier)*

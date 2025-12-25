@@ -75,7 +75,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `promissum<T>` (promise) |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `erratum` (error)        |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `cursor<T>` (iterator)   |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `ignotus` (unknown)      |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
+| `ignotum` (unknown)      |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Nullable types (`T?`)    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Union types (`T \| U`)   |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Generic type params      |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |

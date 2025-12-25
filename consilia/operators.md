@@ -121,10 +121,10 @@ ex user fixum { name, ceteri profile }
 
 ### Type Inference
 
-When no type annotation is provided, `ceteri` infers `lista<ignotus>`:
+When no type annotation is provided, `ceteri` infers `lista<ignotum>`:
 
 ```faber
-functio f(ceteri args) { }  // args: lista<ignotus>
+functio f(ceteri args) { }  // args: lista<ignotum>
 ```
 
 ### Design Notes
@@ -153,7 +153,7 @@ Asserts that a value has a specific type without runtime checking.
 ### Basic Usage
 
 ```faber
-fixum data: ignotus = getData()
+fixum data: ignotum = getData()
 fixum name = data ut textus
 
 // In expressions
@@ -165,7 +165,7 @@ scribe (response.body ut objectum).id
 Typically used after narrowing with `est`:
 
 ```faber
-functio process(data: ignotus) -> textus {
+functio process(data: ignotum) -> textus {
     si data est textus {
         redde data  // already narrowed, ut not needed
     }
@@ -226,7 +226,7 @@ x est Error       // x instanceof Error
 ### In Conditionals
 
 ```faber
-functio describe(value: ignotus) -> textus {
+functio describe(value: ignotum) -> textus {
     elige {
         value est textus => redde "Text: " + value
         value est numerus => redde "Number: " + value
@@ -241,7 +241,7 @@ functio describe(value: ignotus) -> textus {
 After `est` check, the type is narrowed in that branch:
 
 ```faber
-functio process(data: ignotus) {
+functio process(data: ignotum) {
     si data est textus {
         // data is textus here
         scribe data.longitudo()

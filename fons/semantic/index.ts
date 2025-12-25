@@ -135,6 +135,7 @@ const LATIN_TYPE_MAP: Record<string, SemanticType> = {
     nihil: NIHIL,
     vacuum: VACUUM,
     octeti: OCTETI,
+    ignotum: UNKNOWN,
 };
 
 /**

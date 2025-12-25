@@ -80,6 +80,12 @@ describe('Python codegen', () => {
             expect(result).toContain('def moritur() -> NoReturn:');
         });
 
+        test('ignotum maps to Any', () => {
+            // WHY: Python has no unknown type, Any is the closest equivalent
+            const result = compile('typus Mystery = ignotum');
+            expect(result).toContain('Mystery = Any');
+        });
+
         test('octeti maps to bytes', () => {
             const result = compile('varia octeti data = []');
             expect(result).toBe('data: bytes = []');

@@ -26,9 +26,9 @@
 
 ## Core Concepts
 
-| Faber | Closest analog | Description |
-|-------|----------------|-------------|
-| `genus` | struct | Data type with fields and methods |
+| Faber    | Closest analog     | Description                              |
+| -------- | ------------------ | ---------------------------------------- |
+| `genus`  | struct             | Data type with fields and methods        |
 | `pactum` | interface/protocol | Contract of methods only (no properties) |
 
 ## What Doesn't Exist
@@ -75,10 +75,10 @@ fixum q = novum persona { nomen: "Marcus" }  // override nomen only
 
 The colon means "has the value of" — a declarative specification. The equals sign means "assign this value" — an imperative action.
 
-| Syntax | Meaning | Context |
-|--------|---------|---------|
-| `:` | "has value" / "defaults to" | Field defaults, object literals, construction |
-| `=` | "assign value" | Variable binding, reassignment, method bodies |
+| Syntax | Meaning                     | Context                                       |
+| ------ | --------------------------- | --------------------------------------------- |
+| `:`    | "has value" / "defaults to" | Field defaults, object literals, construction |
+| `=`    | "assign value"              | Variable binding, reassignment, method bodies |
 
 This aligns field defaults with object literal syntax (`{ nomen: "Marcus" }`) and construction overrides (`de overrides`), creating a consistent "property specification" form throughout the language.
 
@@ -197,6 +197,7 @@ genus persona {
 ```
 
 **Initialization order:**
+
 1. Field defaults applied
 2. `{ ... }` or `de props` overrides merged
 3. `creo()` runs (if defined)
@@ -308,11 +309,13 @@ pactum DynamicRecord aperit textus { }
 **Etymology:** `aperire` — "to open, uncover" — the type opens to any key.
 
 **Constraints:**
+
 - Order is fixed: `implet` before `aperit`
 - Multiple interfaces use comma: `implet A, B aperit T`
 - Only one `aperit` per type (same as TypeScript)
 
 **TypeScript output:**
+
 ```typescript
 class config {
     [key: string]: string;
@@ -344,13 +347,13 @@ fixum series<textus, numerus> pair = ["answer", 42]
 
 **Target mappings:**
 
-| Target | `series<A, B>` |
-|--------|----------------|
-| TypeScript | `[A, B]` |
-| Python | `tuple[A, B]` |
-| Rust | `(A, B)` |
-| C++ | `std::tuple<A, B>` |
-| Zig | anonymous struct |
+| Target     | `series<A, B>`     |
+| ---------- | ------------------ |
+| TypeScript | `[A, B]`           |
+| Python     | `tuple[A, B]`      |
+| Rust       | `(A, B)`           |
+| C++        | `std::tuple<A, B>` |
+| Zig        | anonymous struct   |
 
 **Values:** Use bracket literals `[a, b]`. The type annotation determines array vs tuple.
 
@@ -369,11 +372,11 @@ typus Config = typus config
 
 **Target mappings:**
 
-| Target | `typus x` |
-|--------|-----------|
-| TypeScript | `typeof x` |
-| C++ | `decltype(x)` |
-| Zig | `@TypeOf(x)` |
+| Target     | `typus x`     |
+| ---------- | ------------- |
+| TypeScript | `typeof x`    |
+| C++        | `decltype(x)` |
+| Zig        | `@TypeOf(x)`  |
 
 ### Never Type (`numquam`)
 
@@ -392,18 +395,19 @@ functio infinitus() -> numquam {
 **Etymology:** `numquam` — "never" — the function never completes normally.
 
 **Distinct from `vacuum`:**
+
 - `vacuum` — function returns, but with no value (void)
 - `numquam` — function never returns (throws, loops forever, exits)
 
 **Target mappings:**
 
-| Target | `numquam` |
-|--------|-----------|
-| TypeScript | `never` |
-| Rust | `!` |
-| Zig | `noreturn` |
-| Python | `NoReturn` |
-| C++ | `[[noreturn]]` attribute |
+| Target     | `numquam`                |
+| ---------- | ------------------------ |
+| TypeScript | `never`                  |
+| Rust       | `!`                      |
+| Zig        | `noreturn`               |
+| Python     | `NoReturn`               |
+| C++        | `[[noreturn]]` attribute |
 
 ---
 
@@ -423,6 +427,7 @@ b.x = 10           // a.x is ALSO 10 (reference semantics)
 ```
 
 **Open questions:**
+
 - Should we introduce explicit reference wrappers (`arcus<persona>`, `&persona`) once value semantics arrive?
 - How do we express borrowing/ownership hints in Latin syntax?
 
@@ -432,12 +437,12 @@ b.x = 10           // a.x is ALSO 10 (reference semantics)
 
 ### Numeric Types
 
-| Type | Meaning | TS | Rust | Zig |
-|------|---------|----|----- |-----|
-| `numerus` | Integer | `number` | `i64` | `i64` |
-| `fractus` | Floating point | `number` | `f64` | `f64` |
-| `decimus` | Arbitrary precision decimal | `Decimal` | `BigDecimal` | — |
-| `magnus` | Arbitrary precision integer | `bigint` | `BigInt` | — |
+| Type      | Meaning                     | TS        | Rust         | Zig   |
+| --------- | --------------------------- | --------- | ------------ | ----- |
+| `numerus` | Integer                     | `number`  | `i64`        | `i64` |
+| `fractus` | Floating point              | `number`  | `f64`        | `f64` |
+| `decimus` | Arbitrary precision decimal | `Decimal` | `BigDecimal` | —     |
+| `magnus`  | Arbitrary precision integer | `bigint`  | `BigInt`     | —     |
 
 ```
 fixum numerus count = 42
@@ -447,6 +452,7 @@ fixum magnus huge = magnus("99999999999999999999")
 ```
 
 **Etymology:**
+
 - `numerus` — "number, count"
 - `fractus` — "broken, fractional" (root of "fraction")
 - `decimus` — "tenth, decimal"
@@ -454,18 +460,19 @@ fixum magnus huge = magnus("99999999999999999999")
 
 ### Other Primitives
 
-| Type | Meaning | Notes |
-|------|---------|-------|
-| `textus` | String/text | UTF-8 encoded |
-| `bivalens` | Boolean | `verum`/`falsum` |
-| `nihil` | Null | Absence of value |
-| `vacuum` | Void | Function returns nothing |
-| `numquam` | Never | Function never returns |
-| `octeti` | Bytes | Raw byte data (Uint8Array) |
-| `objectum` | Object | Any non-primitive value |
-| `ignotus` | Unknown | Must narrow before use |
+| Type       | Meaning     | Notes                      |
+| ---------- | ----------- | -------------------------- |
+| `textus`   | String/text | UTF-8 encoded              |
+| `bivalens` | Boolean     | `verum`/`falsum`           |
+| `nihil`    | Null        | Absence of value           |
+| `vacuum`   | Void        | Function returns nothing   |
+| `numquam`  | Never       | Function never returns     |
+| `octeti`   | Bytes       | Raw byte data (Uint8Array) |
+| `objectum` | Object      | Any non-primitive value    |
+| `ignotum`  | Unknown     | Must narrow before use     |
 
 **Etymology:**
+
 - `textus` — "woven, texture" (text as woven words)
 - `bivalens` — "two-valued" (true/false)
 - `nihil` — "nothing"
@@ -473,7 +480,7 @@ fixum magnus huge = magnus("99999999999999999999")
 - `numquam` — "never" (function doesn't return)
 - `octeti` — "groups of eight" (bytes)
 - `objectum` — "something thrown before" (root of "object")
-- `ignotus` — "unknown, unrecognized" (in- + gnoscere, "not known")
+- `ignotum` — "unknown, unrecognized" (in- + gnoscere, "not known")
 
 ### Object Type
 
@@ -494,12 +501,12 @@ For known shapes, prefer defining a `genus` instead.
 
 ### Unknown Type
 
-The `ignotus` type represents a value whose type is not known at compile time. Unlike permissive "any" types in other languages, `ignotus` requires explicit narrowing before use.
+The `ignotum` type represents a value whose type is not known at compile time. Unlike permissive "any" types in other languages, `ignotum` requires explicit narrowing before use.
 
 ```
-fixum data: ignotus = getExternalData()
+fixum data: ignotum = getExternalData()
 
-// Error: cannot use ignotus directly
+// Error: cannot use ignotum directly
 // scribe data.length
 
 // Must narrow first with type check
@@ -514,23 +521,25 @@ scribe name.longitudo()
 
 **Why no `any` type?**
 
-Faber deliberately omits a permissive "any" type. The `ignotus` type requires you to either:
+Faber deliberately omits a permissive "any" type. The `ignotum` type requires you to either:
+
 1. Narrow with `est` (safe, compiler-verified)
 2. Cast with `ut` (explicit acknowledgment of risk)
 
 This design:
+
 - Maps cleanly to strict targets (Zig, Rust) where "any" doesn't exist
 - Makes type uncertainty visible and intentional
 - Encourages proper type handling rather than escape hatches
 
 **Target mappings:**
 
-| Target | `ignotus` |
-|--------|-----------|
-| TypeScript | `unknown` |
-| Python | `Any` (but with runtime checks encouraged) |
-| Zig | `anytype` / `*anyopaque` |
-| Rust | Generics or `Box<dyn Any>` |
+| Target     | `ignotum`                                  |
+| ---------- | ------------------------------------------ |
+| TypeScript | `unknown`                                  |
+| Python     | `Any` (but with runtime checks encouraged) |
+| Zig        | `anytype` / `*anyopaque`                   |
+| Rust       | Generics or `Box<dyn Any>`                 |
 
 ---
 
@@ -562,11 +571,11 @@ functio inveni() -> persona?
 
 For systems targets, Latin prepositions annotate borrowing semantics:
 
-| Preposition | Meaning | Rust | Zig |
-|-------------|---------|------|-----|
-| (none) | Owned | `T` | allocator-managed |
-| `de` | Borrowed, read-only | `&T` | `*const T`, `[]const u8` |
-| `in` | Mutable borrow | `&mut T` | `*T` |
+| Preposition | Meaning             | Rust     | Zig                      |
+| ----------- | ------------------- | -------- | ------------------------ |
+| (none)      | Owned               | `T`      | allocator-managed        |
+| `de`        | Borrowed, read-only | `&T`     | `*const T`, `[]const u8` |
+| `in`        | Mutable borrow      | `&mut T` | `*T`                     |
 
 ```
 // No preposition = owned, will be moved/consumed
@@ -594,10 +603,10 @@ These keywords are **target-specific** — valid only for Rust/Zig projects. Typ
 //     functio creo() { if (this.aetas < 0) this.aetas = 0 }
 // }
 class persona {
-    nomen: string = "Incognitus";
+    nomen: string = 'Incognitus';
     aetas: number = 0;
 
-    constructor(overrides: { nomen?: string, aetas?: number } = {}) {
+    constructor(overrides: { nomen?: string; aetas?: number } = {}) {
         // Merge overrides into defaults
         if (overrides.nomen !== undefined) this.nomen = overrides.nomen;
         if (overrides.aetas !== undefined) this.aetas = overrides.aetas;
@@ -611,7 +620,7 @@ class persona {
 }
 
 // novum persona { nomen: "Marcus" }
-new persona({ nomen: "Marcus" })
+new persona({ nomen: 'Marcus' });
 ```
 
 ### Zig Target

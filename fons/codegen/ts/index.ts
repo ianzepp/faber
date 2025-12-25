@@ -143,6 +143,7 @@ const typeMap: Record<string, string> = {
     objectum: 'object',
     // WHY: Map Object -> object for TS compatibility
     object: 'object',
+    ignotum: 'unknown',
 };
 
 // =============================================================================
