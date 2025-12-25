@@ -2,23 +2,23 @@
 
 ## Implementation Status
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| `ex...pro/fit/fiet` loops | Done | For-of iteration |
-| `de...pro/fit/fiet` loops | Done | For-in iteration |
-| Range `0..10` | Done | Inclusive endpoints |
-| Range step `per` | Done | `0..10 per 2` |
-| `dum` while loop | Done | Basic while |
-| Generators `fiunt/fient` | Done | Verb conjugation |
-| Prefix `cursor/fluxus` | Done | Alternative syntax |
-| `cede` yield | Done | Context-aware (yield/await) |
-| One-liner `ergo` | Done | `ex items pro n ergo scribe n` |
-| Error handling `cape` | Done | `ex items pro n { } cape err { }` |
-| `rumpe` (break) | **Not done** | Designed only |
-| `perge` (continue) | **Not done** | Designed only |
-| Pipeline `per` transforms | **Not done** | Future feature |
-| Indexed iteration | **Not done** | Tuple destructuring `(i, n)` |
-| `cede ex` delegation | **Not done** | yield* equivalent |
+| Feature                   | Status       | Notes                             |
+| ------------------------- | ------------ | --------------------------------- |
+| `ex...pro/fit/fiet` loops | Done         | For-of iteration                  |
+| `de...pro/fit/fiet` loops | Done         | For-in iteration                  |
+| Range `0..10`             | Done         | Inclusive endpoints               |
+| Range step `per`          | Done         | `0..10 per 2`                     |
+| `dum` while loop          | Done         | Basic while                       |
+| Generators `fiunt/fient`  | Done         | Verb conjugation                  |
+| Prefix `cursor/fluxus`    | Done         | Alternative syntax                |
+| `cede` yield              | Done         | Context-aware (yield/await)       |
+| One-liner `ergo`          | Done         | `ex items pro n ergo scribe n`    |
+| Error handling `cape`     | Done         | `ex items pro n { } cape err { }` |
+| `rumpe` (break)           | Done         | Exits innermost loop              |
+| `perge` (continue)        | Done         | Skips to next iteration           |
+| Pipeline `per` transforms | **Not done** | Future feature                    |
+| Indexed iteration         | **Not done** | Tuple destructuring `(i, n)`      |
+| `cede ex` delegation      | **Not done** | yield\* equivalent                |
 
 ---
 
@@ -37,11 +37,11 @@ ex numeri pro n {
 
 The binding keyword encodes sync/async:
 
-| Keyword | Meaning | Compiles to |
-|---------|---------|-------------|
-| `pro` | for (preposition) | `for...of` |
-| `fit` | becomes (sync verb) | `for...of` |
-| `fiet` | will become (async) | `for await...of` |
+| Keyword | Meaning             | Compiles to      |
+| ------- | ------------------- | ---------------- |
+| `pro`   | for (preposition)   | `for...of`       |
+| `fit`   | becomes (sync verb) | `for...of`       |
+| `fiet`  | will become (async) | `for await...of` |
 
 ```
 // Sync (equivalent)
@@ -91,23 +91,23 @@ ex items pro item {
 
 **Syntax:** `start..end [per step]`
 
-**End is exclusive** (matches Rust, Python, lodash conventions).
+**End is inclusive** (unlike Rust/Python).
 
 ```
 ex 0..5 pro n {
-    scribe n  // 0, 1, 2, 3, 4
+    scribe n  // 0, 1, 2, 3, 4, 5
 }
 
 ex 0..10 per 2 pro n {
-    scribe n  // 0, 2, 4, 6, 8
+    scribe n  // 0, 2, 4, 6, 8, 10
 }
 
 ex 10..0 per -1 pro n {
-    scribe n  // 10, 9, 8, ... 1
+    scribe n  // 10, 9, 8, ... 0
 }
 ```
 
-**Why exclusive?** Matches Rust (`0..5`), Python (`range(0, 5)`), and lodash (`_.range(0, 5)`). Avoids off-by-one errors when working across targets. To include 5, use `0..6`.
+**Why inclusive?** More intuitive for mathematical ranges ("0 to 10" means including 10). The compiler adjusts for target languages that use exclusive ranges.
 
 ---
 
@@ -124,6 +124,7 @@ dum i < 10 {
 ```
 
 One-liner:
+
 ```
 dum i > 0 ergo i = i - 1
 ```
@@ -134,14 +135,15 @@ dum i > 0 ergo i = i - 1
 
 Generators use verb conjugation to encode semantics:
 
-| Declaration | Meaning | JS Output |
-|-------------|---------|-----------|
-| `functio f() fit T` | sync, returns one | `function f(): T` |
-| `functio f() fiet T` | async, returns one | `async function f(): Promise<T>` |
-| `functio f() fiunt T` | sync, yields many | `function* f(): Generator<T>` |
+| Declaration           | Meaning            | JS Output                                |
+| --------------------- | ------------------ | ---------------------------------------- |
+| `functio f() fit T`   | sync, returns one  | `function f(): T`                        |
+| `functio f() fiet T`  | async, returns one | `async function f(): Promise<T>`         |
+| `functio f() fiunt T` | sync, yields many  | `function* f(): Generator<T>`            |
 | `functio f() fient T` | async, yields many | `async function* f(): AsyncGenerator<T>` |
 
 Alternative prefix syntax:
+
 - `cursor functio f() -> T` — sync generator
 - `fluxus functio f() -> T` — async generator
 
@@ -164,6 +166,7 @@ ex numerare(10) fit n {
 ### cede (yield/await)
 
 The `cede` keyword is context-aware:
+
 - In generator: compiles to `yield`
 - In async function: compiles to `await`
 - In async generator: compiles to `yield`
@@ -172,9 +175,9 @@ The `cede` keyword is context-aware:
 
 ## Iterator Types
 
-| Faber | TypeScript | Purpose |
-|-------|------------|---------|
-| `cursor<T>` | `Iterator<T>` | Sync iterator |
+| Faber       | TypeScript         | Purpose        |
+| ----------- | ------------------ | -------------- |
+| `cursor<T>` | `Iterator<T>`      | Sync iterator  |
 | `fluxus<T>` | `AsyncIterator<T>` | Async iterator |
 
 These are recognized as generic types but don't yet have method implementations (`.proximus()`, etc.).
@@ -197,6 +200,7 @@ ex users per filtra({ .activus }) per ordina(per nomen) pro user {
 Reading: "from users, through filter, through sort, as user..."
 
 Currently, use method chaining on the iterable instead:
+
 ```
 ex users.filtrata({ .activus }).ordinata(per nomen) pro user {
     scribe user.nomen
@@ -259,19 +263,22 @@ ex numeri pro (i, n) {
 Index comes first, matching Python's `enumerate()` convention. Compiles to:
 
 **TypeScript:**
+
 ```typescript
 for (const [i, n] of numeri.entries()) {
-    console.log(i + ": " + n);
+    console.log(i + ': ' + n);
 }
 ```
 
 **Python:**
+
 ```python
 for i, n in enumerate(numeri):
     print(f"{i}: {n}")
 ```
 
 Works with ranges too:
+
 ```
 ex 0..10 pro (i, n) {
     // i and n are the same for ranges
@@ -283,9 +290,10 @@ ex 0..10 pro (i, n) {
 ## Open Questions
 
 1. **`cede ex` delegation**: Yield from another iterator (like JS `yield*`)
-   ```
-   cede ex numerare(5)  // yields 0,1,2,3,4
-   ```
+
+    ```
+    cede ex numerare(5)  // yields 0,1,2,3,4
+    ```
 
 2. **Early return**: Should `redde` inside loops return from enclosing function? (Yes, like JS)
 
@@ -295,32 +303,32 @@ ex 0..10 pro (i, n) {
 
 ### TypeScript
 
-| Faber | TypeScript |
-|-------|------------|
-| `ex...pro/fit` | `for...of` |
-| `ex...fiet` | `for await...of` |
-| `de...pro/fit` | `for...in` |
-| `dum` | `while` |
-| `cede` (generator) | `yield` |
-| `cede` (async) | `await` |
-| `fiunt` | `function*` |
-| `fient` | `async function*` |
+| Faber              | TypeScript        |
+| ------------------ | ----------------- |
+| `ex...pro/fit`     | `for...of`        |
+| `ex...fiet`        | `for await...of`  |
+| `de...pro/fit`     | `for...in`        |
+| `dum`              | `while`           |
+| `cede` (generator) | `yield`           |
+| `cede` (async)     | `await`           |
+| `fiunt`            | `function*`       |
+| `fient`            | `async function*` |
 
 ### Python
 
-| Faber | Python |
-|-------|--------|
-| `ex...pro` | `for x in iterable:` |
-| `ex 0..10` | `for x in range(0, 11):` (note +1 for inclusive) |
-| `dum` | `while` |
-| `cede` | `yield` |
+| Faber      | Python                                            |
+| ---------- | ------------------------------------------------- |
+| `ex...pro` | `for x in iterable:`                              |
+| `ex 0..10` | `for x in range(0, 11):` (adjusted for inclusive) |
+| `dum`      | `while`                                           |
+| `cede`     | `yield`                                           |
 
 ### Zig
 
-| Faber | Zig |
-|-------|-----|
-| `ex...pro` | `for (slice) \|item\|` |
+| Faber      | Zig                          |
+| ---------- | ---------------------------- |
+| `ex...pro` | `for (slice) \|item\|`       |
 | `ex 0..10` | `while (i <= 10) : (i += 1)` |
-| `dum` | `while` |
+| `dum`      | `while`                      |
 
 Zig has no async iteration — requires different approach.

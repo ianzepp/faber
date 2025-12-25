@@ -4,18 +4,18 @@ New operators for spread/rest, type casting, and type checking.
 
 ## Implementation Status
 
-| Operator | Purpose | TypeScript | Zig | Python | Status |
-|----------|---------|------------|-----|--------|--------|
-| `sparge` | Spread | `...x` | TBD | `*x` | Not implemented |
-| `ceteri` | Rest params | `...args` | TBD | `*args` | Not implemented |
-| `ut` | Type cast | `x as T` | `@as(T, x)` | N/A | Not implemented |
-| `est` (type) | Type check | `instanceof` | TBD | `isinstance` | Partial (equality only) |
+| Operator     | Purpose     | TypeScript   | Zig         | Python       | Status                  |
+| ------------ | ----------- | ------------ | ----------- | ------------ | ----------------------- |
+| `sparge`     | Spread      | `...x`       | TBD         | `*x`         | Implemented (TS/Py)     |
+| `ceteri`     | Rest params | `...args`    | TBD         | `*args`      | Implemented (TS)        |
+| `ut`         | Type cast   | `x as T`     | `@as(T, x)` | N/A          | Not implemented         |
+| `est` (type) | Type check  | `instanceof` | TBD         | `isinstance` | Partial (equality only) |
 
 ---
 
 ## sparge (Spread)
 
-**Etymology:** From Latin *spargere* — "to scatter, spread, sprinkle"
+**Etymology:** From Latin _spargere_ — "to scatter, spread, sprinkle"
 
 Spreads elements of an array or properties of an object into a new container.
 
@@ -69,17 +69,17 @@ scribe add(sparge nums)  // 6
 
 ### Target Mappings
 
-| Target | Array Spread | Object Spread | Call Spread |
-|--------|--------------|---------------|-------------|
-| TypeScript | `[...a]` | `{...o}` | `fn(...a)` |
-| Python | `[*a]` | `{**o}` | `fn(*a)` |
-| Zig | Manual loop or `++` | N/A (structs) | N/A |
+| Target     | Array Spread        | Object Spread | Call Spread |
+| ---------- | ------------------- | ------------- | ----------- |
+| TypeScript | `[...a]`            | `{...o}`      | `fn(...a)`  |
+| Python     | `[*a]`              | `{**o}`       | `fn(*a)`    |
+| Zig        | Manual loop or `++` | N/A (structs) | N/A         |
 
 ---
 
 ## ceteri (Rest)
 
-**Etymology:** From Latin *ceteri* — "the rest, the others, the remaining"
+**Etymology:** From Latin _ceteri_ — "the rest, the others, the remaining"
 
 Collects remaining elements into an array.
 
@@ -136,17 +136,17 @@ functio f(ceteri args) { }  // args: lista<ignotus>
 
 ### Target Mappings
 
-| Target | Rest Params | Rest Destructuring |
-|--------|-------------|-------------------|
-| TypeScript | `...args: T[]` | `{ a, ...rest }` |
-| Python | `*args` | `**rest` (dict) |
-| Zig | Slice parameter | N/A |
+| Target     | Rest Params     | Rest Destructuring |
+| ---------- | --------------- | ------------------ |
+| TypeScript | `...args: T[]`  | `{ a, ...rest }`   |
+| Python     | `*args`         | `**rest` (dict)    |
+| Zig        | Slice parameter | N/A                |
 
 ---
 
 ## ut (Type Cast)
 
-**Etymology:** From Latin *ut* — "as, in the capacity of"
+**Etymology:** From Latin _ut_ — "as, in the capacity of"
 
 Asserts that a value has a specific type without runtime checking.
 
@@ -184,19 +184,19 @@ functio process(data: ignotus) -> textus {
 
 ### Target Mappings
 
-| Target | Cast Syntax |
-|--------|-------------|
-| TypeScript | `x as T` |
-| Python | N/A (dynamic typing) |
-| Zig | `@as(T, x)` |
-| Rust | `x as T` |
-| C++ | `static_cast<T>(x)` |
+| Target     | Cast Syntax          |
+| ---------- | -------------------- |
+| TypeScript | `x as T`             |
+| Python     | N/A (dynamic typing) |
+| Zig        | `@as(T, x)`          |
+| Rust       | `x as T`             |
+| C++        | `static_cast<T>(x)`  |
 
 ---
 
 ## est (Type Check)
 
-**Etymology:** From Latin *est* — "is, exists"
+**Etymology:** From Latin _est_ — "is, exists"
 
 Already implemented for strict equality (`===`). Extends to type checking when the right-hand side is a type name.
 
@@ -261,12 +261,12 @@ functio process(data: ignotus) {
 
 ### Target Mappings
 
-| Target | Primitive Check | Class Check |
-|--------|-----------------|-------------|
-| TypeScript | `typeof x === "t"` | `x instanceof T` |
-| Python | `isinstance(x, t)` | `isinstance(x, T)` |
-| Zig | Comptime type check | N/A |
-| Rust | Pattern matching | Pattern matching |
+| Target     | Primitive Check     | Class Check        |
+| ---------- | ------------------- | ------------------ |
+| TypeScript | `typeof x === "t"`  | `x instanceof T`   |
+| Python     | `isinstance(x, t)`  | `isinstance(x, T)` |
+| Zig        | Comptime type check | N/A                |
+| Rust       | Pattern matching    | Pattern matching   |
 
 ---
 
@@ -292,12 +292,12 @@ fixum words = sed /\b\w+\b/g
 
 ### Flags
 
-| Flag | Meaning |
-|------|---------|
-| `g` | Global (all matches) |
-| `i` | Case insensitive |
-| `m` | Multiline |
-| `s` | Dotall (`.` matches newlines) |
+| Flag | Meaning                       |
+| ---- | ----------------------------- |
+| `g`  | Global (all matches)          |
+| `i`  | Case insensitive              |
+| `m`  | Multiline                     |
+| `s`  | Dotall (`.` matches newlines) |
 
 ### In Expressions
 
@@ -319,13 +319,13 @@ fixum names = text.inveniOmnes(pattern)
 
 ### String Methods for Regex
 
-| Faber | JS Equivalent | Description |
-|-------|---------------|-------------|
-| `congruet(sed)` | `test()` / `match()` | Test if pattern matches |
-| `inveni(sed)` | `match()` | Find first match |
-| `inveniOmnes(sed)` | `matchAll()` | Find all matches |
-| `muta(sed, textus)` | `replace()` | Replace matches |
-| `scinde(sed)` | `split()` | Split by pattern |
+| Faber               | JS Equivalent        | Description             |
+| ------------------- | -------------------- | ----------------------- |
+| `congruet(sed)`     | `test()` / `match()` | Test if pattern matches |
+| `inveni(sed)`       | `match()`            | Find first match        |
+| `inveniOmnes(sed)`  | `matchAll()`         | Find all matches        |
+| `muta(sed, textus)` | `replace()`          | Replace matches         |
+| `scinde(sed)`       | `split()`            | Split by pattern        |
 
 ### Design Notes
 
@@ -336,13 +336,13 @@ fixum names = text.inveniOmnes(pattern)
 
 ### Target Mappings
 
-| Target | Compilation |
-|--------|-------------|
-| TypeScript | `/pattern/flags` (native RegExp) |
-| Python | `re.compile(r"pattern", flags)` |
-| Zig | Library-dependent (not in stdlib) |
-| Rust | `Regex::new(r"pattern")` |
-| C++ | `std::regex("pattern", flags)` |
+| Target     | Compilation                       |
+| ---------- | --------------------------------- |
+| TypeScript | `/pattern/flags` (native RegExp)  |
+| Python     | `re.compile(r"pattern", flags)`   |
+| Zig        | Library-dependent (not in stdlib) |
+| Rust       | `Regex::new(r"pattern")`          |
+| C++        | `std::regex("pattern", flags)`    |
 
 ### Open Questions
 
@@ -354,7 +354,7 @@ fixum names = text.inveniOmnes(pattern)
 
 ## vel (Nullish Coalescing)
 
-**Etymology:** Latin *vel* — "or" (in the sense of alternatives).
+**Etymology:** Latin _vel_ — "or" (in the sense of alternatives).
 
 Provides a fallback value when the left operand is `nihil`. Currently implemented in destructuring; extending to general expressions.
 
@@ -409,24 +409,24 @@ fixum city = user?.address?.city vel "Unknown"
 
 ### Comparison with Logical Or
 
-| Expression | `vel` (nullish) | `aut` (logical) |
-|------------|-----------------|-----------------|
-| `0 vel 5` | `0` | `5` |
-| `"" vel "x"` | `""` | `"x"` |
-| `falsum vel verum` | `falsum` | `verum` |
-| `nihil vel 5` | `5` | `5` |
+| Expression         | `vel` (nullish) | `aut` (logical) |
+| ------------------ | --------------- | --------------- |
+| `0 vel 5`          | `0`             | `5`             |
+| `"" vel "x"`       | `""`            | `"x"`           |
+| `falsum vel verum` | `falsum`        | `verum`         |
+| `nihil vel 5`      | `5`             | `5`             |
 
 Use `vel` for defaults. Use `aut` for boolean logic.
 
 ### Target Mappings
 
-| Target | Compilation |
-|--------|-------------|
-| TypeScript | `??` |
-| Python | `if x is None else` pattern |
-| Zig | `orelse` |
-| Rust | `.unwrap_or()` / `?` |
-| C++ | `value_or()` / ternary |
+| Target     | Compilation                 |
+| ---------- | --------------------------- |
+| TypeScript | `??`                        |
+| Python     | `if x is None else` pattern |
+| Zig        | `orelse`                    |
+| Rust       | `.unwrap_or()` / `?`        |
+| C++        | `value_or()` / ternary      |
 
 ---
 
@@ -452,6 +452,7 @@ obj?.method?()
 ```
 
 **Semantics:**
+
 - Short-circuits on `nihil` — remaining chain not evaluated
 - Returns `nihil`, not an error
 - Type narrows to `T?` (nullable)
@@ -474,6 +475,7 @@ obj!.method!()
 ```
 
 **Semantics:**
+
 - No runtime check (in most targets)
 - Tells compiler "I know this isn't nihil"
 - Type narrows to `T` (non-nullable)
@@ -505,21 +507,21 @@ fixum handler = events?.onClick vel defaultHandler
 
 ### Comparison
 
-| Operator | On nihil | Type result | Use when |
-|----------|----------|-------------|----------|
-| `.` | Error | `T` | Value is definitely present |
-| `?.` | Returns `nihil` | `T?` | Value might be absent |
-| `!.` | Undefined | `T` | You know it's present, compiler doesn't |
+| Operator | On nihil        | Type result | Use when                                |
+| -------- | --------------- | ----------- | --------------------------------------- |
+| `.`      | Error           | `T`         | Value is definitely present             |
+| `?.`     | Returns `nihil` | `T?`        | Value might be absent                   |
+| `!.`     | Undefined       | `T`         | You know it's present, compiler doesn't |
 
 ### Target Mappings
 
-| Target | `?.` | `!.` |
-|--------|------|------|
-| TypeScript | `?.` | `!.` |
-| Python | `getattr(x, 'y', None)` chain | Direct access (no equivalent) |
-| Zig | `if (x) \|v\| v.y else null` | `x.?` / `.?` |
-| Rust | `x.as_ref()?.y` | `x.unwrap().y` |
-| C++ | `x ? x->y : nullopt` | `x->y` / `*x.y` |
+| Target     | `?.`                          | `!.`                          |
+| ---------- | ----------------------------- | ----------------------------- |
+| TypeScript | `?.`                          | `!.`                          |
+| Python     | `getattr(x, 'y', None)` chain | Direct access (no equivalent) |
+| Zig        | `if (x) \|v\| v.y else null`  | `x.?` / `.?`                  |
+| Rust       | `x.as_ref()?.y`               | `x.unwrap().y`                |
+| C++        | `x ? x->y : nullopt`          | `x->y` / `*x.y`               |
 
 ### Open Questions
 
@@ -533,6 +535,6 @@ fixum handler = events?.onClick vel defaultHandler
 
 All high-priority operators now documented above. Remaining candidates:
 
-| Operator | Purpose | Notes |
-|----------|---------|-------|
-| `typus` | Runtime type name | `typus x` → "textus", "numerus", etc. |
+| Operator | Purpose           | Notes                                 |
+| -------- | ----------------- | ------------------------------------- |
+| `typus`  | Runtime type name | `typus x` → "textus", "numerus", etc. |
