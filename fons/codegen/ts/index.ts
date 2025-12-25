@@ -138,6 +138,9 @@ const typeMap: Record<string, string> = {
     erratum: 'Error',
     cursor: 'Iterator',
     vacuum: 'void',
+    objectum: 'object',
+    // WHY: Map Object -> object for TS compatibility
+    object: 'object',
 };
 
 // =============================================================================

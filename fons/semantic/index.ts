@@ -553,7 +553,8 @@ export function analyze(program: Program): SemanticResult {
             resolveExpression(prop.value);
         }
 
-        const objType = userType('Object');
+        // WHY: Use Latin type name for consistency
+        const objType = userType('objectum');
 
         node.resolvedType = objType;
 

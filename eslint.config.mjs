@@ -66,7 +66,6 @@ export default tseslint.config(
             'no-constant-binary-expression': 'warn',
             'no-extra-boolean-cast': 'warn',
             'for-direction': 'warn',
-            '@typescript-eslint/no-wrapper-object-types': 'warn',
         },
     },
     {

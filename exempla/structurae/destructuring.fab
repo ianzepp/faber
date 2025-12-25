@@ -108,7 +108,7 @@ scribe theme
 // DESTRUCTURING FUNCTION RETURNS
 // =============================================================================
 
-functio getCoordinates() -> Object {
+functio getCoordinates() -> objectum {
     redde { x: 10, y: 20 }
 }
 
@@ -118,7 +118,7 @@ scribe x
 scribe y
 
 // Return multiple values
-functio getUserInfo() -> Object {
+functio getUserInfo() -> objectum {
     redde { name: "Marcus", email: "marcus@roma.com", verified: verum }
 }
 

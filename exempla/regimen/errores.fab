@@ -27,10 +27,10 @@
 // =============================================================================
 functio riskyOperation() -> textus { redde "ok" }
 functio validateInput(x) -> bivalens { redde x != nihil }
-functio openDatabase() -> Object { redde { close: pro {} } }
+functio openDatabase() -> objectum { redde { close: pro {} } }
 functio doWork(conn) -> textus { redde "done" }
-functio fetchData(url) -> Object { redde {} }
-functio processData(data) -> Object { redde data }
+functio fetchData(url) -> objectum { redde {} }
+functio processData(data) -> objectum { redde data }
 functio useFallback() -> textus { redde "fallback" }
 functio logError(e) -> textus { redde "logged" }
 functio cleanup() -> textus { redde "cleaned" }
@@ -48,7 +48,7 @@ functio divide(a, b) -> numerus {
 }
 
 // Throw with error object
-functio fetchUser(id) -> Object {
+functio fetchUser(id) -> objectum {
     si id < 0 {
         iace { code: "INVALID_ID", message: "ID must be positive" }
     }
@@ -182,7 +182,7 @@ fac {
 // =============================================================================
 
 // Pattern: Validate early, throw once
-functio createUser(nomen, aetas) -> Object {
+functio createUser(nomen, aetas) -> objectum {
     // Validate all inputs first
     si nomen == nihil aut nomen == "" {
         iace "name required"
@@ -199,7 +199,7 @@ functio createUser(nomen, aetas) -> Object {
 }
 
 // Pattern: Wrap external calls
-functio safeProcessData(url) -> Object {
+functio safeProcessData(url) -> objectum {
     varia result = {}
     fac {
         fixum raw = fetchData(url)
