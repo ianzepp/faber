@@ -247,6 +247,20 @@ expression := assignment
 
 > Top-level expression delegates to assignment (lowest precedence).
 
+### Cast
+
+```ebnf
+castExpr := call ('ut' typeAnnotation)*
+```
+
+> Latin 'ut' (as, in the capacity of) for type assertions.
+> Compile-time only — no runtime checking. Maps to:
+> - TypeScript: x as T
+> - Python: x (ignored, dynamic typing)
+> - Zig: @as(T, x)
+> - Rust: x as T
+> - C++: static_cast<T>(x)
+
 ---
 
 *Generated from `fons/parser/index.ts` — do not edit directly.*

@@ -196,7 +196,7 @@ multiplicative := unary (('*' | '/' | '%') unary)*
 ### Unary
 
 ```ebnf
-unary := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'negativum' | 'positivum' | 'cede' | 'novum') unary | call
+unary := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'negativum' | 'positivum' | 'cede' | 'novum') unary | cast
 ```
 
 > Latin 'non' (not), 'nulla' (none/empty), 'nonnulla' (some/non-empty),
@@ -523,6 +523,20 @@ expression := assignment
 ```
 
 > Top-level expression delegates to assignment (lowest precedence).
+
+### Cast
+
+```ebnf
+castExpr := call ('ut' typeAnnotation)*
+```
+
+> Latin 'ut' (as, in the capacity of) for type assertions.
+> Compile-time only — no runtime checking. Maps to:
+> - TypeScript: x as T
+> - Python: x (ignored, dynamic typing)
+> - Zig: @as(T, x)
+> - Rust: x as T
+> - C++: static_cast<T>(x)
 
 ---
 

@@ -103,7 +103,7 @@ multiplicative := unary (('*' | '/' | '%') unary)*
 ### Unary
 
 ```ebnf
-unary := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'negativum' | 'positivum' | 'cede' | 'novum') unary | call
+unary := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'negativum' | 'positivum' | 'cede' | 'novum') unary | cast
 ```
 
 > Latin 'non' (not), 'nulla' (none/empty), 'nonnulla' (some/non-empty),

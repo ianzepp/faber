@@ -842,6 +842,7 @@ export type Expression =
     | RangeExpression
     | BinaryExpression
     | UnaryExpression
+    | TypeCastExpression
     | CallExpression
     | MemberExpression
     | ArrowFunctionExpression
@@ -1060,6 +1061,41 @@ export interface UnaryExpression extends BaseNode {
     operator: string;
     argument: Expression;
     prefix: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Type Cast Expression
+// ---------------------------------------------------------------------------
+
+/**
+ * Type cast expression (ut operator).
+ *
+ * GRAMMAR (in EBNF):
+ *   castExpr := call ('ut' typeAnnotation)*
+ *
+ * INVARIANT: expression is the value being cast.
+ * INVARIANT: targetType is the type to cast to.
+ *
+ * WHY: Latin 'ut' (as, in the capacity of) for type assertions.
+ *      Compile-time only — no runtime overhead or checking.
+ *      Use 'est' first when possible for safe narrowing.
+ *
+ * Target mappings:
+ *   TypeScript: x as T
+ *   Python:     x (cast ignored, dynamic typing)
+ *   Zig:        @as(T, x)
+ *   Rust:       x as T
+ *   C++:        static_cast<T>(x)
+ *
+ * Examples:
+ *   data ut textus              -> data as string
+ *   response.body ut objectum   -> (response.body) as object
+ *   x ut A ut B                 -> (x as A) as B (left-associative)
+ */
+export interface TypeCastExpression extends BaseNode {
+    type: 'TypeCastExpression';
+    expression: Expression;
+    targetType: TypeAnnotation;
 }
 
 // ---------------------------------------------------------------------------

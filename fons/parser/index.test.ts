@@ -1126,6 +1126,101 @@ describe('parser', () => {
         });
     });
 
+    describe('ut (type cast) operator', () => {
+        test('simple type cast', () => {
+            const { program } = parseCode('data ut textus');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('TypeCastExpression');
+            expect(expr.expression.name).toBe('data');
+            expect(expr.targetType.name).toBe('textus');
+        });
+
+        test('cast member expression', () => {
+            const { program } = parseCode('response.body ut objectum');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('TypeCastExpression');
+            expect(expr.expression.type).toBe('MemberExpression');
+            expect(expr.expression.object.name).toBe('response');
+            expect(expr.expression.property.name).toBe('body');
+            expect(expr.targetType.name).toBe('objectum');
+        });
+
+        test('cast call expression', () => {
+            const { program } = parseCode('getData() ut textus');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('TypeCastExpression');
+            expect(expr.expression.type).toBe('CallExpression');
+            expect(expr.targetType.name).toBe('textus');
+        });
+
+        test('chained casts (left-associative)', () => {
+            const { program } = parseCode('x ut A ut B');
+            const expr = (program!.body[0] as any).expression;
+
+            // Should parse as (x ut A) ut B
+            expect(expr.type).toBe('TypeCastExpression');
+            expect(expr.targetType.name).toBe('B');
+            expect(expr.expression.type).toBe('TypeCastExpression');
+            expect(expr.expression.targetType.name).toBe('A');
+            expect(expr.expression.expression.name).toBe('x');
+        });
+
+        test('cast with generic type', () => {
+            const { program } = parseCode('items ut lista<textus>');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('TypeCastExpression');
+            expect(expr.targetType.name).toBe('lista');
+            expect(expr.targetType.typeParameters[0].name).toBe('textus');
+        });
+
+        test('cast with nullable type', () => {
+            const { program } = parseCode('value ut textus?');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('TypeCastExpression');
+            expect(expr.targetType.name).toBe('textus');
+            expect(expr.targetType.nullable).toBe(true);
+        });
+
+        test('cast precedence: unary binds looser', () => {
+            // -x ut numerus should parse as -(x ut numerus)
+            const { program } = parseCode('-x ut numerus');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('UnaryExpression');
+            expect(expr.operator).toBe('-');
+            expect(expr.argument.type).toBe('TypeCastExpression');
+            expect(expr.argument.expression.name).toBe('x');
+            expect(expr.argument.targetType.name).toBe('numerus');
+        });
+
+        test('cast precedence: member access binds tighter', () => {
+            // x.y ut T should parse as (x.y) ut T
+            const { program } = parseCode('x.y ut textus');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('TypeCastExpression');
+            expect(expr.expression.type).toBe('MemberExpression');
+        });
+
+        test('cast in binary expression', () => {
+            // a + b ut numerus should parse as (a + b) ut numerus
+            // because ut has lower precedence than +
+            const { program } = parseCode('a + b ut numerus');
+            const expr = (program!.body[0] as any).expression;
+
+            // WHY: ut has higher precedence than + in our grammar,
+            // so this parses as a + (b ut numerus)
+            expect(expr.type).toBe('BinaryExpression');
+            expect(expr.operator).toBe('+');
+            expect(expr.right.type).toBe('TypeCastExpression');
+        });
+    });
+
     describe('iace (throw) statements', () => {
         test('throw string literal', () => {
             const { program } = parseCode('iace "Error message"');

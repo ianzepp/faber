@@ -94,6 +94,7 @@ import type {
     Parameter,
     TypeAnnotation,
     TypeParameter,
+    TypeCastExpression,
 } from '../../parser/ast';
 import type { CodegenOptions, RequiredFeatures } from '../types';
 import { createRequiredFeatures } from '../types';
@@ -1261,6 +1262,10 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
             case 'ConditionalExpression':
                 // Python ternary: consequent if test else alternate
                 return `${genExpression(node.consequent)} if ${genExpression(node.test)} else ${genExpression(node.alternate)}`;
+            case 'TypeCastExpression':
+                // WHY: Python is dynamically typed, type casts have no runtime effect.
+                // Just emit the expression — the cast is a compile-time annotation only.
+                return genExpression(node.expression);
             default:
                 throw new Error(`Unknown expression type: ${(node as any).type}`);
         }

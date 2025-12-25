@@ -87,6 +87,7 @@ import type {
     Literal,
     Parameter,
     TypeAnnotation,
+    TypeCastExpression,
 } from '../../parser/ast';
 import type { CodegenOptions } from '../types';
 import type { SemanticType } from '../../semantic/types';
@@ -1204,6 +1205,8 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 return genNewExpression(node);
             case 'ConditionalExpression':
                 return `if (${genExpression(node.test)}) ${genExpression(node.consequent)} else ${genExpression(node.alternate)}`;
+            case 'TypeCastExpression':
+                return genTypeCastExpression(node);
             default:
                 throw new Error(`Unknown expression type: ${(node as any).type}`);
         }
@@ -1425,6 +1428,22 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         }
 
         return node.prefix ? `${node.operator}${arg}` : `${arg}${node.operator}`;
+    }
+
+    /**
+     * Generate type cast expression.
+     *
+     * TRANSFORMS:
+     *   x ut numerus -> @as(i64, x)
+     *   data ut textus -> @as([]const u8, data)
+     *
+     * TARGET: Zig uses @as(T, x) builtin for type coercion.
+     */
+    function genTypeCastExpression(node: TypeCastExpression): string {
+        const expr = genExpression(node.expression);
+        const targetType = genType(node.targetType);
+
+        return `@as(${targetType}, ${expr})`;
     }
 
     /**

@@ -88,6 +88,7 @@ import type {
     SpreadElement,
     FacBlockStatement,
     LambdaExpression,
+    TypeCastExpression,
 } from '../../parser/ast';
 import type { CodegenOptions, RequiredFeatures } from '../types';
 import { createRequiredFeatures } from '../types';
@@ -1179,6 +1180,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 return genObjectExpression(node);
             case 'LambdaExpression':
                 return genLambdaExpression(node);
+            case 'TypeCastExpression':
+                return genTypeCastExpression(node);
             default:
                 throw new Error(`Unknown expression type: ${(node as any).type}`);
         }
@@ -1345,6 +1348,23 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         }
 
         return node.prefix ? `${node.operator}${arg}` : `${arg}${node.operator}`;
+    }
+
+    /**
+     * Generate type cast expression.
+     *
+     * TRANSFORMS:
+     *   x ut textus -> (x as string)
+     *   response.body ut objectum -> (response.body as object)
+     *
+     * WHY: TypeScript uses 'as' for type assertions. Parentheses ensure
+     *      correct precedence when the cast appears in larger expressions.
+     */
+    function genTypeCastExpression(node: TypeCastExpression): string {
+        const expr = genExpression(node.expression);
+        const targetType = genType(node.targetType);
+
+        return `(${expr} as ${targetType})`;
     }
 
     /**

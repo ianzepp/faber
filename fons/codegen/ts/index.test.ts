@@ -1014,6 +1014,45 @@ describe('codegen', () => {
         });
     });
 
+    describe('ut (type cast) operator', () => {
+        test('simple type cast', () => {
+            const js = compile('fixum name = data ut textus');
+
+            expect(js).toBe('const name = (data as string);');
+        });
+
+        test('cast member expression', () => {
+            const js = compile('fixum body = response.body ut objectum');
+
+            expect(js).toBe('const body = (response.body as object);');
+        });
+
+        test('cast in expression context', () => {
+            const js = compile('scribe (x ut numerus)');
+
+            expect(js).toContain('(x as number)');
+        });
+
+        test('chained casts', () => {
+            const js = compile('fixum result = x ut A ut B');
+
+            // Should be ((x as A) as B)
+            expect(js).toContain('((x as A) as B)');
+        });
+
+        test('cast with generic type', () => {
+            const js = compile('fixum items = data ut lista<textus>');
+
+            expect(js).toContain('as Array<string>');
+        });
+
+        test('cast with nullable type', () => {
+            const js = compile('fixum value = data ut textus?');
+
+            expect(js).toContain('as string | null');
+        });
+    });
+
     describe('missing features - iace (throw)', () => {
         test('iace string becomes throw', () => {
             const js = compile('iace "error message"');

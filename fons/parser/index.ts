@@ -125,6 +125,7 @@ import type {
     SpreadElement,
     FacBlockStatement,
     LambdaExpression,
+    TypeCastExpression,
 } from './ast';
 import { builtinTypes } from '../lexicon/types-builtin';
 import { ParserErrorCode, PARSER_ERRORS } from './errors';
@@ -2492,9 +2493,9 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse unary expression.
      *
      * GRAMMAR:
-     *   unary := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'negativum' | 'positivum' | 'cede' | 'novum') unary | call
+     *   unary := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'negativum' | 'positivum' | 'cede' | 'novum') unary | cast
      *
-     * PRECEDENCE: Higher than binary operators, lower than call/member access.
+     * PRECEDENCE: Higher than binary operators, lower than cast/call/member access.
      *
      * WHY: Latin 'non' (not), 'nulla' (none/empty), 'nonnulla' (some/non-empty),
      *      'negativum' (< 0), 'positivum' (> 0), 'cede' (await), 'novum' (new).
@@ -2573,7 +2574,44 @@ export function parse(tokens: Token[]): ParserResult {
             return parseNewExpression();
         }
 
-        return parseCall();
+        return parseCast();
+    }
+
+    /**
+     * Parse type cast expression.
+     *
+     * GRAMMAR:
+     *   castExpr := call ('ut' typeAnnotation)*
+     *
+     * PRECEDENCE: Between unary and call. This means:
+     *   -x ut T     parses as -(x ut T)    — unary binds looser
+     *   x.y ut T    parses as (x.y) ut T   — member access binds tighter
+     *   x ut A ut B parses as (x ut A) ut B — left-associative
+     *
+     * WHY: Latin 'ut' (as, in the capacity of) for type assertions.
+     *      Compile-time only — no runtime checking. Maps to:
+     *      - TypeScript: x as T
+     *      - Python: x (ignored, dynamic typing)
+     *      - Zig: @as(T, x)
+     *      - Rust: x as T
+     *      - C++: static_cast<T>(x)
+     */
+    function parseCast(): Expression {
+        let expr = parseCall();
+
+        while (matchKeyword('ut')) {
+            const position = tokens[current - 1].position;
+            const targetType = parseTypeAnnotation();
+
+            expr = {
+                type: 'TypeCastExpression',
+                expression: expr,
+                targetType,
+                position,
+            } as TypeCastExpression;
+        }
+
+        return expr;
     }
 
     /**

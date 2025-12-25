@@ -220,7 +220,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `===` / `est` (strict equality)     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `!==` / `non est` (strict ineq.)    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `est` (instanceof/typeof)           |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
-| `ut` (type cast)                    |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
+| `ut` (type cast)                    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `aut` (logical or)                  |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `vel` (nullish coalescing)          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 
