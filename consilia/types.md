@@ -325,6 +325,86 @@ interface DynamicRecord {
 
 **Note:** This is a TypeScript-specific feature. Other targets (Zig, Rust, C++) don't have equivalent semantics — use `tabula<textus, T>` for dynamic key/value storage on those targets.
 
+### Tuple Types (`series`)
+
+Use **`series<A, B, ...>`** for fixed-length, heterogeneous collections (tuples):
+
+```
+typus Point = series<numerus, numerus>
+fixum p: Point = [10, 20]
+
+typus Record = series<numerus, textus, bivalens>
+fixum r: Record = [1, "foo", verum]
+
+// Inline type annotation
+fixum series<textus, numerus> pair = ["answer", 42]
+```
+
+**Etymology:** `series` — "row, sequence, chain" — a fixed sequence of elements.
+
+**Target mappings:**
+
+| Target | `series<A, B>` |
+|--------|----------------|
+| TypeScript | `[A, B]` |
+| Python | `tuple[A, B]` |
+| Rust | `(A, B)` |
+| C++ | `std::tuple<A, B>` |
+| Zig | anonymous struct |
+
+**Values:** Use bracket literals `[a, b]`. The type annotation determines array vs tuple.
+
+### typeof (`typus` on RHS)
+
+Use **`typus`** on the right-hand side of a type alias to extract a type from a value:
+
+```
+fixum config = { port: 3000, host: "localhost" }
+typus Config = typus config
+
+// Config is now the type { port: numerus, host: textus }
+```
+
+**Etymology:** Same keyword as type alias declaration — context disambiguates (LHS = declaration, RHS = extraction).
+
+**Target mappings:**
+
+| Target | `typus x` |
+|--------|-----------|
+| TypeScript | `typeof x` |
+| C++ | `decltype(x)` |
+| Zig | `@TypeOf(x)` |
+
+### Never Type (`numquam`)
+
+Use **`numquam`** as the return type for functions that never return:
+
+```
+functio moritur() -> numquam {
+    iace novum Error { message: "fatal" }
+}
+
+functio infinitus() -> numquam {
+    dum verum { }
+}
+```
+
+**Etymology:** `numquam` — "never" — the function never completes normally.
+
+**Distinct from `vacuum`:**
+- `vacuum` — function returns, but with no value (void)
+- `numquam` — function never returns (throws, loops forever, exits)
+
+**Target mappings:**
+
+| Target | `numquam` |
+|--------|-----------|
+| TypeScript | `never` |
+| Rust | `!` |
+| Zig | `noreturn` |
+| Python | `NoReturn` |
+| C++ | `[[noreturn]]` attribute |
+
 ---
 
 ## Value Semantics (Future)
@@ -356,18 +436,21 @@ b.x = 10           // a.x is ALSO 10 (reference semantics)
 |------|---------|----|----- |-----|
 | `numerus` | Integer | `number` | `i64` | `i64` |
 | `fractus` | Floating point | `number` | `f64` | `f64` |
-| `decimus` | Arbitrary precision | `Decimal` | `BigDecimal` | — |
+| `decimus` | Arbitrary precision decimal | `Decimal` | `BigDecimal` | — |
+| `magnus` | Arbitrary precision integer | `bigint` | `BigInt` | — |
 
 ```
 fixum numerus count = 42
 fixum fractus ratio = 3.14159
 fixum decimus price = 19.99d
+fixum magnus huge = magnus("99999999999999999999")
 ```
 
 **Etymology:**
 - `numerus` — "number, count"
 - `fractus` — "broken, fractional" (root of "fraction")
 - `decimus` — "tenth, decimal"
+- `magnus` — "great, large" (arbitrary size)
 
 ### Other Primitives
 
@@ -376,6 +459,8 @@ fixum decimus price = 19.99d
 | `textus` | String/text | UTF-8 encoded |
 | `bivalens` | Boolean | `verum`/`falsum` |
 | `nihil` | Null | Absence of value |
+| `vacuum` | Void | Function returns nothing |
+| `numquam` | Never | Function never returns |
 | `octeti` | Bytes | Raw byte data (Uint8Array) |
 | `objectum` | Object | Any non-primitive value |
 | `ignotus` | Unknown | Must narrow before use |
@@ -384,6 +469,8 @@ fixum decimus price = 19.99d
 - `textus` — "woven, texture" (text as woven words)
 - `bivalens` — "two-valued" (true/false)
 - `nihil` — "nothing"
+- `vacuum` — "empty, void"
+- `numquam` — "never" (function doesn't return)
 - `octeti` — "groups of eight" (bytes)
 - `objectum` — "something thrown before" (root of "object")
 - `ignotus` — "unknown, unrecognized" (in- + gnoscere, "not known")

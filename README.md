@@ -61,14 +61,17 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `numerus` (integer)      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `fractus` (float)        |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `decimus` (decimal)      |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `magnus` (bigint)        |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | `bivalens` (boolean)     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `nihil` (null)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `vacuum` (void)          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `numquam` (never)        |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | `octeti` (bytes)         |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `objectum` (object)      |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `lista<T>` (array)       |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `tabula<K,V>` (map)      |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `copia<T>` (set)         |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `series<T...>` (tuple)   |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | `promissum<T>` (promise) |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `erratum` (error)        |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `cursor<T>` (iterator)   |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
@@ -77,6 +80,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | Union types (`T \| U`)   |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Generic type params      |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Type aliases (`typus`)   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| typeof (`typus` RHS)     |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 
 ## Variable Declarations
 

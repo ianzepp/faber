@@ -107,27 +107,27 @@ Features that would need new Faber syntax to support.
 | TS Feature | Syntax | Status | Latin Candidate | Notes |
 |------------|--------|--------|-----------------|-------|
 | Type assertions | `x as T` | Planned | `x ut T` | Cast/narrow type |
-| Computed property names | `{ [key]: v }` | Not done | — | Dynamic keys |
-| Shorthand properties | `{ x }` | Not done | — | For `{ x: x }` |
-| Tagged templates | `` fn`text` `` | Not done | — | Template processors |
-| BigInt | `123n` | Not done | `magnus`? | Arbitrary precision int |
-| Decorators | `@foo` | Not done | — | Metaprogramming |
-| Static blocks | `static { }` | Not done | `generis { }` | Class-level init |
+| Computed property names | `{ [key]: v }` | Excluded | — | Runtime key construction; use tabula |
+| Shorthand properties | `{ x }` | Excluded | — | Rust-only; not portable |
+| Tagged templates | `` fn`text` `` | Excluded | — | JS-specific |
+| BigInt | `123n` | Designed | `magnus` | Constructed via preamble, no literal suffix |
+| Decorators | `@foo` | Excluded | — | Semantics differ across targets |
+| Static blocks | `static { }` | Excluded | — | Semantics vary across targets |
 
 ### Lower Priority (advanced TS)
 
-| TS Feature | Syntax | Status | Notes |
-|------------|--------|--------|-------|
-| keyof | `keyof T` | Not done | Type-level key extraction |
-| typeof (type-level) | `typeof x` | Not done | Type from value |
-| Mapped types | `{ [K in T]: V }` | Not done | Type transformation |
-| Conditional types | `T extends U ? A : B` | Not done | Type-level conditionals |
-| Tuple types | `[A, B, C]` | Not done | Fixed-length arrays |
-| Index signatures | `{ [k: string]: T }` | Designed | `aperit T` on genus/pactum |
-| satisfies | `x satisfies T` | Not done | Type check without widening |
-| infer | `infer R` | Not done | Type inference in conditionals |
-| never type | `never` | Not done | Bottom type |
-| unknown type | `unknown` | Not done | Safe any |
+| TS Feature | Syntax | Status | Latin | Notes |
+|------------|--------|--------|-------|-------|
+| keyof | `keyof T` | Excluded | — | TS-specific type machinery |
+| typeof (type-level) | `typeof x` | Designed | `typus x` | Same keyword as type alias declaration |
+| Mapped types | `{ [K in T]: V }` | Excluded | — | TS-specific |
+| Conditional types | `T extends U ? A : B` | Excluded | — | TS-specific |
+| Tuple types | `[A, B, C]` | Designed | `series<A, B, C>` | Generic type, bracket literals |
+| Index signatures | `{ [k: string]: T }` | Designed | `aperit T` | TS-only; use tabula elsewhere |
+| satisfies | `x satisfies T` | Excluded | — | TS-specific |
+| infer | `infer R` | Excluded | — | TS-specific |
+| never type | `never` | Designed | `numquam` | "never" — function doesn't return |
+| unknown type | `unknown` | Done | `ignotus` | Already implemented |
 
 ### Design Notes
 
@@ -163,6 +163,38 @@ genus_decl := 'genus' identifier type_params? implet_clause? aperit_clause? '{' 
 implet_clause := 'implet' identifier (',' identifier)*
 aperit_clause := 'aperit' type
 pactum_decl := 'pactum' identifier type_params? aperit_clause? '{' members '}'
+```
+
+**typeof (type-level) (`typus`)**: Same keyword as type alias declaration. Context disambiguates.
+
+```
+fixum config = { port: 3000 }
+typus Config = typus config   // type Config = typeof config
+```
+
+**Tuple types (`series`)**: Variadic generic type. Values use bracket literals.
+
+```
+typus Point = series<numerus, numerus>
+fixum p: Point = [10, 20]
+fixum series<textus, numerus> pair = ["answer", 42]
+```
+
+**never type (`numquam`)**: Function never returns (throws, loops forever).
+
+```
+functio moritur() -> numquam {
+    iace novum Error { message: "fatal" }
+}
+```
+
+Distinct from `vacuum` (void — returns nothing) vs `numquam` (never — doesn't return).
+
+**BigInt (`magnus`)**: Arbitrary precision integer. Constructed via preamble, no literal suffix.
+
+```
+fixum big: magnus = magnus(123)
+fixum huge: magnus = magnus("99999999999999999999")
 ```
 
 **Spread/Rest**: Latin `spargere` (to scatter) → `sparge` for spread, `ceteri` (the rest) for rest params.
