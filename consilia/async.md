@@ -2,14 +2,15 @@
 
 ## Verb Conjugation for Return Types
 
-Faber uses Latin verb conjugation of *fieri* (to become) to encode async/iterator semantics in the return type:
+Faber uses Latin verb conjugation of _fieri_ (to become) to encode async/iterator semantics in the return type:
 
-| | Sync | Async |
-|---|---|---|
-| **Single return** | `fit textus` | `fiet textus` |
+|                    | Sync           | Async          |
+| ------------------ | -------------- | -------------- |
+| **Single return**  | `fit textus`   | `fiet textus`  |
 | **Iterator/yield** | `fiunt textus` | `fient textus` |
 
 Examples:
+
 ```
 functio greet(name) fit textus { ... }       // sync, returns string
 functio fetch(url) fiet textus { ... }       // async, returns Promise<string>
@@ -18,6 +19,7 @@ functio stream(url) fient textus { ... }     // async generator, yields strings
 ```
 
 Grammar encodes both dimensions:
+
 - **Tense**: present (sync) vs future (async)
 - **Number**: singular (return once) vs plural (yield many)
 
@@ -25,18 +27,19 @@ Grammar encodes both dimensions:
 
 The `->` arrow and `futura`/`cursor` prefixes remain valid. Either mechanism works:
 
-| Syntax | Semantics |
-|--------|-----------|
-| `functio f() -> T` | sync, single (default) |
-| `functio f() fit T` | sync, single (explicit) |
-| `functio f() fiet T` | async, single |
-| `functio f() fiunt T` | sync, generator |
-| `functio f() fient T` | async, generator |
-| `futura functio f() -> T` | async, single (prefix determines) |
-| `cursor functio f() -> T` | sync, generator (prefix determines) |
-| `futura cursor functio f() -> T` | async, generator |
+| Syntax                           | Semantics                           |
+| -------------------------------- | ----------------------------------- |
+| `functio f() -> T`               | sync, single (default)              |
+| `functio f() fit T`              | sync, single (explicit)             |
+| `functio f() fiet T`             | async, single                       |
+| `functio f() fiunt T`            | sync, generator                     |
+| `functio f() fient T`            | async, generator                    |
+| `futura functio f() -> T`        | async, single (prefix determines)   |
+| `cursor functio f() -> T`        | sync, generator (prefix determines) |
+| `futura cursor functio f() -> T` | async, generator                    |
 
 **Validation**: If both prefix and verb are used, they must agree:
+
 - `futura functio f() fit T` - ERROR: `fit` (sync) contradicts `futura` (async)
 - `cursor functio f() fit T` - ERROR: `fit` (single) contradicts `cursor` (generator)
 - `futura functio f() fiet T` - OK: redundant but valid
@@ -48,13 +51,14 @@ The `->` arrow and `futura`/`cursor` prefixes remain valid. Either mechanism wor
 
 Faber's async model maps to native async/await patterns:
 
-| Faber | JavaScript | Zig |
-|-------|------------|-----|
+| Faber            | JavaScript       | Zig                  |
+| ---------------- | ---------------- | -------------------- |
 | `futura functio` | `async function` | `fn` returning frame |
-| `cede` | `await` | `await` / suspend |
-| `promissum<T>` | `Promise<T>` | Future-like pattern |
+| `cede`           | `await`          | `await` / suspend    |
+| `promissum<T>`   | `Promise<T>`     | Future-like pattern  |
 
 **Unified suspension model:** `cede` is shared with generators (`cursor functio`). The function modifier determines semantics:
+
 - In `futura functio`: `cede expr` awaits a promise
 - In `cursor functio`: `cede expr` yields a value
 
@@ -74,6 +78,7 @@ futura functio fetchData(textus url) -> textus {
 ```
 
 Compiles to:
+
 ```typescript
 async function fetchData(url: string): Promise<string> {
     const response = await fetch(url);
@@ -116,38 +121,41 @@ See `vincula.md` for full details.
 
 ### Instance Methods
 
-| Faber | JS Equivalent | Description |
-|-------|---------------|-------------|
-| `tunc((T) -> U) -> promissum<U>` | `then` | Chain success |
-| `cape((erratum) -> U) -> promissum<U>` | `catch` | Handle error |
-| `demum(() -> vacuum) -> promissum<T>` | `finally` | Always run |
+| Faber                                  | JS Equivalent | Description   |
+| -------------------------------------- | ------------- | ------------- |
+| `tunc((T) -> U) -> promissum<U>`       | `then`        | Chain success |
+| `cape((erratum) -> U) -> promissum<U>` | `catch`       | Handle error  |
+| `demum(() -> vacuum) -> promissum<T>`  | `finally`     | Always run    |
 
 **Naming rationale:**
+
 - `tunc` = "then" (Latin temporal adverb)
 - `cape` = "catch, seize" (imperative of capere)
 - `demum` = "finally, at last" (Latin adverb)
 
 ### Static Constructors
 
-| Faber | JS Equivalent | Description |
-|-------|---------------|-------------|
-| `promissum.da(T)` | `Promise.resolve` | Immediate success |
-| `promissum.nega(erratum)` | `Promise.reject` | Immediate failure |
+| Faber                     | JS Equivalent     | Description       |
+| ------------------------- | ----------------- | ----------------- |
+| `promissum.da(T)`         | `Promise.resolve` | Immediate success |
+| `promissum.nega(erratum)` | `Promise.reject`  | Immediate failure |
 
 **Naming rationale:**
+
 - `da` = "give" (imperative of dare) — here's your value
 - `nega` = "deny" (imperative of negare) — refused with error
 
 ### Static Combinators
 
-| Faber | JS Equivalent | Description |
-|-------|---------------|-------------|
-| `promissum.omnes(lista<promissum<T>>)` | `Promise.all` | All must succeed |
-| `promissum.primus(lista<promissum<T>>)` | `Promise.race` | First to settle |
-| `promissum.quilibet(lista<promissum<T>>)` | `Promise.any` | First to succeed |
-| `promissum.finita(...)` | `Promise.allSettled` | All settled |
+| Faber                                     | JS Equivalent        | Description      |
+| ----------------------------------------- | -------------------- | ---------------- |
+| `promissum.omnes(lista<promissum<T>>)`    | `Promise.all`        | All must succeed |
+| `promissum.primus(lista<promissum<T>>)`   | `Promise.race`       | First to settle  |
+| `promissum.quilibet(lista<promissum<T>>)` | `Promise.any`        | First to succeed |
+| `promissum.finita(...)`                   | `Promise.allSettled` | All settled      |
 
 **Naming rationale:**
+
 - `omnes` = "all" (must succeed)
 - `primus` = "first" (race — first to settle wins)
 - `quilibet` = "any, whichever" (first to succeed)
@@ -182,6 +190,7 @@ fetchData(url)
 ### Unhandled Rejections
 
 Open question: How to handle unhandled promise rejections?
+
 - Compiler warning for promises not awaited or `.cape()`'d?
 - Runtime hook like Node's `unhandledRejection`?
 
@@ -227,23 +236,24 @@ futura functio cumTimeout(promissum<T> p, numerus ms) -> T {
 ## Open Questions
 
 1. **Top-level await**: Allow `cede` at module level?
-   - JS: Yes (ES modules)
-   - Proposal: Yes, for scripts
+    - JS: Yes (ES modules)
+    - Proposal: Yes, for scripts
 
 2. **Async iterators**: Support `futura ex...pro`?
-   ```
-   futura ex stream pro chunk {
-       // process each chunk as it arrives
-   }
-   ```
+
+    ```
+    futura ex stream pro chunk {
+        // process each chunk as it arrives
+    }
+    ```
 
 3. **Cancellation**: Add cancellation token pattern?
-   - Not native to JS Promises
-   - Could wrap with AbortController
+    - Not native to JS Promises
+    - Could wrap with AbortController
 
 4. **Zig target**: How to map to Zig's async model?
-   - Zig uses suspend/resume with frames
-   - May need different abstraction
+    - Zig uses suspend/resume with frames
+    - May need different abstraction
 
 ---
 
@@ -252,6 +262,7 @@ futura functio cumTimeout(promissum<T> p, numerus ms) -> T {
 ### TypeScript Target
 
 Direct mapping:
+
 - `futura functio` → `async function`
 - `cede` (in async) → `await`
 - `promissum<T>` → `Promise<T>`
@@ -261,107 +272,115 @@ All instance methods map directly to Promise prototype.
 ### Zig Target
 
 More complex — Zig's async is different:
+
 - Functions return frames
 - Explicit suspend points
 - No built-in Promise type
 
 Options:
+
 1. Generate Zig async frames directly
 2. Provide runtime promise library
 3. Limit async to TypeScript target initially
 
 ---
 
-## Future: Non-Blocking Async Bindings (nexum)
+## Nexum (Reactive Fields)
 
-**Status:** Conceptual — not yet implemented.
+**Status:** Implemented for TypeScript and Python
 
-**Etymology:** *nexum* = "bond, tie" (past participle of *necto*, "to bind")
+**Etymology:** _nexum_ = "bound, tied" (past participle of _necto_, "to bind")
 
-### The Problem
+### Reactive Fields in Genus
 
-`figendum` and `variandum` block execution until the promise resolves:
+`nexum` marks a field as reactive — changes trigger invalidation and re-render. Unlike regular fields, `nexum` fields emit getter/setter pairs with an invalidation hook.
 
-```
-figendum data = loadData()   // execution pauses here
-scribe "loaded"              // runs after loadData() completes
-```
-
-For reactive UIs, you often want non-blocking async — start the operation, continue execution, update the binding when the result arrives.
-
-### Proposed Syntax
-
-| Keyword | Mutability | Async | Blocking |
-|---------|------------|-------|----------|
-| `fixum` | const | no | n/a |
-| `figendum` | const | yes | **blocks** |
-| `nexum` | const | yes | **non-blocking** |
-| `nectendum`? | let | yes | **non-blocking** |
+### Syntax
 
 ```
-// Non-blocking — execution continues immediately
-// `results` starts as undefined (or default), updates when promise resolves
-nexum results = loadResults()
-scribe "loading started"  // runs immediately
-
-// With default value via `vel` (or)
-nexum results = loadResults() vel []  // starts as [], becomes loaded value
+genus counter {
+    nexum numerus count: 0
+    textus label: "Counter"
+}
 ```
 
-### Codegen Challenge
+### Codegen Transformation
 
-Non-blocking async that "updates later" requires a reactive runtime. The variable can't be a plain `const` — something must observe the state change.
-
-**Possible outputs:**
+**TypeScript:**
 
 ```typescript
-// Vanilla TS — fire-and-forget, no reactivity
-let results = undefined;
-loadResults().then(v => { results = v; });
+class counter {
+    #count = 0; // Private backing field
+    label = 'Counter'; // Regular field
 
-// With signals (SolidJS-style)
-const results = createSignal(undefined);
-loadResults().then(results.set);
+    get count(): number {
+        return this.#count;
+    }
 
-// With stores (Svelte-style)
-const results = writable(undefined);
-loadResults().then(v => results.set(v));
+    set count(v: number) {
+        this.#count = v;
+        this.__invalidate?.('count'); // Invalidation hook
+    }
+}
 ```
 
-### Open Questions
+**Python:**
 
-1. **Reactive runtime:** Does Faber ship a minimal Signal class in the preamble, or target specific frameworks (Svelte, Solid, Vue)?
+```python
+class counter:
+    def __init__(self, overrides={}):
+        self._count = 0
+        self.label = "Counter"
 
-2. **Initial value:** What is the value before resolution?
-   - `undefined` by default?
-   - Require `vel defaultValue` syntax?
-   - Special `pendens` (pending) state?
+    @property
+    def count(self):
+        return self._count
 
-3. **Error handling:** What happens if the promise rejects?
-   - Silent failure?
-   - Require `cape` clause?
-   - Set to error state?
+    @count.setter
+    def count(self, value):
+        self._count = value
+        self.__invalidate__('count')
+```
 
-4. **Re-triggering:** Can `nectendum` be re-assigned to start a new async operation?
-   ```
-   nectendum results = loadResults()
-   // later...
-   results = loadMore()  // re-trigger?
-   ```
+### Implementation Details
 
-5. **Interaction with genus:** How does `nexum` relate to computed fields (`=>`)?
-   ```
-   genus Component {
-       nexum data = loadData()           // async field?
-       numerus count => data.longitudo() // depends on async?
-   }
-   ```
+| Target     | Status       | Notes                                   |
+| ---------- | ------------ | --------------------------------------- |
+| TypeScript | [x] Done     | Uses private fields (#) + getter/setter |
+| Python     | [x] Done     | Uses @property decorator                |
+| Zig        | [ ] Not Done | Reactivity needs runtime decision       |
+| Rust       | [ ] Not Done | Reactivity needs runtime decision       |
+| C++23      | [ ] Not Done | Reactivity needs runtime decision       |
 
-### Recommendation
+### Use Cases
 
-Defer implementation until:
-1. A clear reactive model is chosen (signals vs stores vs observables)
-2. The primary UI target is determined (web framework integration)
-3. The `vel` default value syntax is validated in other contexts
+Reactive fields are designed for UI frameworks where state changes should trigger re-renders:
 
-The existing `figendum`/`variandum` cover blocking async well. `nexum` is valuable for reactive UIs but requires framework-level decisions.
+```faber
+genus TodoItem {
+    nexum textus title
+    nexum bivalens completed: falsum
+
+    functio toggle() {
+        ego.completed = non ego.completed
+    }
+}
+```
+
+### Interaction with `pingo` (render)
+
+When a `genus` has a `pingo()` method and reactive fields, the framework calls `__invalidate(field)` on changes, which may trigger re-render by calling `pingo()`.
+
+**Note:** This is framework-integration specific. The exact invalidation → re-render mechanism depends on the target UI framework (Svelte, Solid, Vue, etc.).
+
+### Differences from `figendum`/`variandum`
+
+| Feature | `figendum`/`variandum` | `nexum` (in genus)        |
+| ------- | ---------------------- | ------------------------- |
+| Scope   | Top-level bindings     | Class/struct fields       |
+| Async   | Blocks until resolves  | Non-blocking reactive     |
+| Purpose | Async data loading     | Reactive state management |
+
+`figendum` and `variandum` are for awaiting async results. `nexum` is for reactive state in UI components.
+
+**Important:** Top-level `nexum` bindings (non-blocking async variables) remain conceptual and not implemented. `nexum` is only supported as a field modifier within `genus`.

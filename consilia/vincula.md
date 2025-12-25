@@ -16,10 +16,10 @@ Variable declaration and binding keywords for sync and async contexts.
 
 ## Binding Keywords
 
-| | Sync | Async |
-|---|---|---|
-| Immutable | `fixum` | `figendum` |
-| Mutable | `varia` | `variandum` |
+|           | Sync    | Async       |
+| --------- | ------- | ----------- |
+| Immutable | `fixum` | `figendum`  |
+| Mutable   | `varia` | `variandum` |
 
 ### Sync Bindings
 
@@ -92,11 +92,11 @@ The compiler handles the difference — sync values pass through, async values a
 
 The async keywords mirror the `fit`/`fiet` return pattern:
 
-| Concept | Present/Past | Future |
-|---------|--------------|--------|
-| Return | `fit` (becomes) | `fiet` (will become) |
-| Immutable | `fixum` (fixed) | `figendum` (will be fixed) |
-| Mutable | `varia` (varied) | `variandum` (will be varied) |
+| Concept   | Present/Past     | Future                       |
+| --------- | ---------------- | ---------------------------- |
+| Return    | `fit` (becomes)  | `fiet` (will become)         |
+| Immutable | `fixum` (fixed)  | `figendum` (will be fixed)   |
+| Mutable   | `varia` (varied) | `variandum` (will be varied) |
 
 Both use the Latin future/gerundive to indicate "not yet, but will be."
 
@@ -165,7 +165,7 @@ fixum x = x + 1      // shadow with immutable
 
 ```typescript
 // fixum
-const name = "Marcus";
+const name = 'Marcus';
 
 // varia
 let counter = 0;
@@ -229,9 +229,10 @@ const response = try await async fetch(url);
 
 ### Why gerundives for async?
 
-The gerundive is the Latin future passive participle — "that which must/will be done." It perfectly captures the semantics of an async binding: the value *will be* fixed once the operation completes.
+The gerundive is the Latin future passive participle — "that which must/will be done." It perfectly captures the semantics of an async binding: the value _will be_ fixed once the operation completes.
 
 Alternatives considered:
+
 - `cede fixum` — requires two keywords, less elegant
 - `fiet` — already a verb form, grammatically inconsistent with `fixum`/`varia`
 - New unrelated keyword — loses the Latin grammatical connection
@@ -251,6 +252,7 @@ The gerundive form makes the async nature explicit in the binding declaration.
 ### Why allow both forms?
 
 Some developers prefer explicit `cede`:
+
 ```
 fixum data = cede asyncValue
 ```
@@ -272,15 +274,12 @@ This mirrors JavaScript's `await` behavior on non-promises, but makes the intent
 
 ## Implementation Status
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| `fixum` | Done | Immutable binding |
-| `varia` | Done | Mutable binding |
-| `figendum` | Not Done | Async immutable |
-| `variandum` | Not Done | Async mutable |
-| Type annotations | Done | On all binding forms |
-| Destructuring | Done | Via `ex` |
-| Async destructuring | Not Done | `ex cede ... figendum` |
-| TypeScript codegen | Partial | const/let done, await TBD |
-| Rust codegen | Partial | let/let mut done, .await TBD |
-| Zig codegen | Partial | const/var done, async TBD |
+| Feature             | TypeScript |  Python  |     Zig      |     Rust     |    C++23     | Notes                           |
+| ------------------- | :--------: | :------: | :----------: | :----------: | :----------: | ------------------------------- |
+| `fixum`             |  [x] Done  | [x] Done |   [x] Done   |   [x] Done   |   [x] Done   | Immutable binding               |
+| `varia`             |  [x] Done  | [x] Done |   [x] Done   |   [x] Done   |   [x] Done   | Mutable binding                 |
+| `figendum`          |  [x] Done  | [x] Done | [ ] Not Done | [ ] Not Done | [ ] Not Done | Async immutable - impl. `await` |
+| `variandum`         |  [x] Done  | [x] Done | [ ] Not Done | [ ] Not Done | [ ] Not Done | Async mutable - impl. `await`   |
+| Type annotations    |  [x] Done  | [x] Done |   [x] Done   |   [x] Done   |   [x] Done   | On all binding forms            |
+| Destructuring       |  [x] Done  | [x] Done |   [x] Done   |   [x] Done   | [ ] Not Done | Via `ex` - object pattern only  |
+| Async destructuring |  [x] Done  | [x] Done | [ ] Not Done | [ ] Not Done | [ ] Not Done | `ex cede ... figendum`          |

@@ -56,14 +56,14 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 ## Type System
 
 | Feature                  | TypeScript | Zig | Python | WASM | Rust | C++23 |
-| ------------------------ | :--------: | :-: | :----: | :--: | :--: | :---: | --- |
-| `textus` (string)        |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `numerus` (integer)      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `fractus` (float)        |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| ------------------------ | :--------: | :-: | :----: | :--: | :--: | :---: |
+| `textus` (string)        |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `numerus` (integer)      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `fractus` (float)        |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `decimus` (decimal)      |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `bivalens` (boolean)     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `nihil` (null)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `vacuum` (void)          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `bivalens` (boolean)     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `nihil` (null)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `vacuum` (void)          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `octeti` (bytes)         |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `objectum` (object)      |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `lista<T>` (array)       |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
@@ -73,7 +73,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `erratum` (error)        |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `cursor<T>` (iterator)   |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Nullable types (`T?`)    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Union types (`T          |    U`)     | [x] |  [ ]   | [x]  | [ ]  |  [ ]  | [ ] |
+| Union types (`T \| U`)   |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Generic type params      |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Type aliases (`typus`)   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 
@@ -81,14 +81,14 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 | Feature                      | TypeScript | Zig | Python | WASM | Rust | C++23 |
 | ---------------------------- | :--------: | :-: | :----: | :--: | :--: | :---: |
-| `varia` (mutable)            |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `fixum` (immutable)          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `varia` (mutable)            |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `fixum` (immutable)          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `figendum` (async immutable) |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `variandum` (async mutable)  |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `nexum` (reactive binding)   |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Type annotations             |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| Type annotations             |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Object destructuring         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Initializer expressions      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| Initializer expressions      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 
 ## Enum Declarations
 
@@ -102,33 +102,33 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 | Feature                            | TypeScript | Zig | Python | WASM | Rust | C++23 |
 | ---------------------------------- | :--------: | :-: | :----: | :--: | :--: | :---: |
-| Basic functions (`functio`)        |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Parameters                         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Parameter type annotations         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Return type annotation (`->`)      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| Basic functions (`functio`)        |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Parameters                         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Parameter type annotations         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Return type annotation (`->`)      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `futura` (async prefix)            |    [x]     | [~] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `cursor` (generator prefix)        |    [x]     | [-] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Async generator                    |    [x]     | [-] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Arrow functions                    |    [x]     | [~] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `cursor` (generator prefix)        |    [x]     | [-] |  [x]   | [ ]  | [ ]  |  [-]  |
+| Async generator                    |    [x]     | [-] |  [x]   | [ ]  | [ ]  |  [-]  |
+| Arrow functions                    |    [x]     | [~] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `fit T` (sync return)              |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `fiet T` (async return)            |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `fiunt T` (generator return)       |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `fient T` (async generator return) |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `fiunt T` (generator return)       |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [-]  |
+| `fient T` (async generator return) |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [-]  |
 
 ## Control Flow Statements
 
 | Feature                       | TypeScript | Zig | Python | WASM | Rust | C++23 |
 | ----------------------------- | :--------: | :-: | :----: | :--: | :--: | :---: |
-| `si` (if)                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `aliter` (else)               |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `aliter si` (else if)         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `si` (if)                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `aliter` (else)               |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `aliter si` (else if)         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `sin` (else if, poetic)       |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `dum` (while)                 |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `ex...pro` (for-of)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `dum` (while)                 |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `ex...pro` (for-of)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `in...pro` (for-in)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `ex...fit` (for-of verb form) |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `ex...fiet` (async for)       |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Range expressions (`0..10`)   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| Range expressions (`0..10`)   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Range with step (`per`)       |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `cum` (with/context)          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `elige` (switch)              |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
@@ -146,65 +146,65 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 | Feature            | TypeScript | Zig | Python | WASM | Rust | C++23 |
 | ------------------ | :--------: | :-: | :----: | :--: | :--: | :---: |
-| `redde` (return)   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `redde` with value |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `redde` void       |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `redde` (return)   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `redde` with value |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `redde` void       |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 
 ## Exception Handling
 
 | Feature              | TypeScript | Zig | Python | WASM | Rust | C++23 |
 | -------------------- | :--------: | :-: | :----: | :--: | :--: | :---: |
-| `tempta` (try)       |    [x]     | [-] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `cape` (catch)       |    [x]     | [~] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `tempta` (try)       |    [x]     | [-] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `cape` (catch)       |    [x]     | [~] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `demum` (finally)    |    [x]     | [-] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `iace` (throw)       |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `adfirma` (assert)   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Assert with message  |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `iace` (throw)       |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `adfirma` (assert)   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Assert with message  |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `mori` (panic/fatal) |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 
 ## Output/Debug/Events
 
 | Feature            | TypeScript | Zig | Python | WASM | Rust | C++23 |
 | ------------------ | :--------: | :-: | :----: | :--: | :--: | :---: |
-| `scribe` statement |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `scribe` statement |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `vide` (debug)     |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `mone` (warn)      |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Multiple args      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| Multiple args      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 
 ## Expressions
 
 | Feature                             | TypeScript | Zig | Python | WASM | Rust | C++23 |
 | ----------------------------------- | :--------: | :-: | :----: | :--: | :--: | :---: |
-| Identifiers                         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `ego` (this/self)                   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Boolean literals (`verum`/`falsum`) |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `nihil` literal                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| String literals                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Number literals                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| Identifiers                         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `ego` (this/self)                   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Boolean literals (`verum`/`falsum`) |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `nihil` literal                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| String literals                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Number literals                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Template literals                   |    [x]     | [~] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Array literals                      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Object literals                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Binary operators                    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Comparison operators                |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Logical operators                   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Unary operators                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| Array literals                      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Object literals                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Binary operators                    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Comparison operators                |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Logical operators                   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Unary operators                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `nulla` (is empty)                  |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `nonnulla` (has content)            |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `negativum` (is negative)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `positivum` (is positive)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Member access (`.`)                 |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Computed access (`[]`)              |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Function calls                      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Method calls                        |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Assignment                          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Conditional (ternary)               |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| Member access (`.`)                 |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Computed access (`[]`)              |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Function calls                      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Method calls                        |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Assignment                          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Conditional (ternary)               |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `sic`/`secus` ternary syntax        |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `cede` (await/yield)                |    [x]     | [~] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `novum` (new)                       |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `novum...cum` (new with props)      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `===` / `est` (strict equality)     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `!==` / `non est` (strict ineq.)    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `aut` (logical or)                  |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `novum` (new)                       |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `novum...cum` (new with props)      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `===` / `est` (strict equality)     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `!==` / `non est` (strict ineq.)    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `aut` (logical or)                  |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [x]  |
 
 ## Lambda Syntax
 
@@ -213,15 +213,15 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `pro x redde expr` (expression) |    [x]     | [~] |  [~]   | [ ]  | [ ]  |  [ ]  |
 | `pro x { body }` (block)        |    [x]     | [~] |  [~]   | [ ]  | [ ]  |  [ ]  |
 | `pro redde expr` (zero-param)   |    [x]     | [~] |  [~]   | [ ]  | [ ]  |  [ ]  |
-| `(x) => expr` (JS-style)        |    [x]     | [~] |  [~]   | [ ]  | [ ]  |  [ ]  |
+| `(x) => expr` (JS-style)        |    [x]     | [~] |  [~]   | [ ]  | [ ]  |  [x]  |
 
 ## OOP Features (genus/pactum)
 
 | Feature                   | TypeScript | Zig | Python | WASM | Rust | C++23 |
 | ------------------------- | :--------: | :-: | :----: | :--: | :--: | :---: |
-| `genus` declaration       |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Field declarations        |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Field defaults            |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `genus` declaration       |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Field declarations        |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Field defaults            |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Computed fields (getters) |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Static fields (`generis`) |    [x]     | [ ] |  [~]   | [ ]  | [ ]  |  [ ]  |
 | Public/private visibility |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
@@ -229,13 +229,13 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `deleo` (destructor)      |    [c]     | [c] |  [c]   | [c]  | [c]  |  [c]  |
 | `pingo` (render method)   |    [c]     | [c] |  [c]   | [c]  | [c]  |  [c]  |
 | Auto-merge constructor    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Methods                   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| Methods                   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Async methods             |    [x]     | [~] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Generator methods         |    [x]     | [-] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| Generator methods         |    [x]     | [-] |  [x]   | [ ]  | [ ]  |  [-]  |
 | `implet` (implements)     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Generic classes           |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `pactum` declaration      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Interface methods         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `pactum` declaration      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Interface methods         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 
 ## Import/Export
 
@@ -248,17 +248,17 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 | Feature                 | TypeScript | Zig | Python | WASM | Rust | C++23 |
 | ----------------------- | :--------: | :-: | :----: | :--: | :--: | :---: |
-| Preamble infrastructure |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Panic class/import      |    [x]     | [-] |  [ ]   | [ ]  | [-]  |  [ ]  |
-| Collection imports      |    [-]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
-| Async imports           |    [-]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
-| Arena allocator         |    [-]     | [ ] |  [-]   | [ ]  | [ ]  |  [ ]  |
+| Preamble infrastructure |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Panic class/import      |    [x]     | [-] |  [ ]   | [ ]  | [-]  |  [-]  |
+| Collection imports      |    [-]     | [ ] |  [ ]   | [ ]  | [ ]  |  [-]  |
+| Async imports           |    [-]     | [ ] |  [ ]   | [ ]  | [ ]  |  [-]  |
+| Arena allocator         |    [-]     | [ ] |  [-]   | [ ]  | [ ]  |  [-]  |
 
 ## Standard Library Intrinsics
 
 | Feature               | TypeScript | Zig | Python | WASM | Rust | C++23 |
 | --------------------- | :--------: | :-: | :----: | :--: | :--: | :---: |
-| `_scribe` (print)     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `_scribe` (print)     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `_vide` (debug)       |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `_mone` (warn)        |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `_lege` (read input)  |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
