@@ -20,7 +20,8 @@
         "use": "./scripta/use",
         "check:ast": "bun ./scripta/check-ast-sync.ts",
         "check:tree-sitter": "bun ./scripta/check-tree-sitter.ts",
-        "verify:exempla": "bun ./scripta/verify-exempla.ts"
+        "verify:exempla": "bun ./scripta/verify-exempla.ts",
+        "grammar": "bun ./scripta/extract-grammar.ts"
     },
     "devDependencies": {
         "@eslint/js": "^9.39.2",

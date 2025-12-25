@@ -1294,6 +1294,20 @@ export function parse(tokens: Token[]): ParserResult {
     // Pactum (Interface) Declarations
     // ---------------------------------------------------------------------------
 
+    /**
+     * Parse interface declaration.
+     *
+     * GRAMMAR:
+     *   pactumDecl := 'pactum' IDENTIFIER typeParams? '{' pactumMethod* '}'
+     *   typeParams := '<' IDENTIFIER (',' IDENTIFIER)* '>'
+     *
+     * WHY: Latin 'pactum' (agreement/contract) for interfaces.
+     *      Defines method signatures that genus types can implement via 'implet'.
+     *
+     * Examples:
+     *   pactum Legibilis { functio lege() -> textus }
+     *   pactum Mappabilis<T, U> { functio mappa(T valor) -> U }
+     */
     function parsePactumDeclaration(): PactumDeclaration {
         const position = peek().position;
 
@@ -1329,6 +1343,16 @@ export function parse(tokens: Token[]): ParserResult {
         return { type: 'PactumDeclaration', name, typeParameters, methods, position };
     }
 
+    /**
+     * Parse interface method signature.
+     *
+     * GRAMMAR:
+     *   pactumMethod := ('futura' | 'cursor')* 'functio' IDENTIFIER '(' paramList ')' returnClause?
+     *   returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
+     *
+     * WHY: Method signatures without bodies. Same syntax as function declarations
+     *      but terminates after return type (no block).
+     */
     function parsePactumMethod(): PactumMethod {
         const position = peek().position;
 
@@ -2204,11 +2228,9 @@ export function parse(tokens: Token[]): ParserResult {
 
             if (match('OR') || matchKeyword('aut')) {
                 isLogicalOr = true;
-            }
-            else if (matchKeyword('vel')) {
+            } else if (matchKeyword('vel')) {
                 isNullish = true;
-            }
-            else {
+            } else {
                 break;
             }
 
@@ -2565,8 +2587,7 @@ export function parse(tokens: Token[]): ParserResult {
                         optional: true,
                         position,
                     };
-                }
-                else if (match('LBRACKET')) {
+                } else if (match('LBRACKET')) {
                     const property = parseExpression();
                     expect('RBRACKET', ParserErrorCode.ExpectedClosingBracket);
                     expr = {
@@ -2577,8 +2598,7 @@ export function parse(tokens: Token[]): ParserResult {
                         optional: true,
                         position,
                     };
-                }
-                else if (match('LPAREN')) {
+                } else if (match('LPAREN')) {
                     const args = parseArgumentList();
                     expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
                     expr = { type: 'CallExpression', callee: expr, arguments: args, optional: true, position };
@@ -2602,8 +2622,7 @@ export function parse(tokens: Token[]): ParserResult {
                         nonNull: true,
                         position,
                     };
-                }
-                else if (match('LBRACKET')) {
+                } else if (match('LBRACKET')) {
                     const property = parseExpression();
                     expect('RBRACKET', ParserErrorCode.ExpectedClosingBracket);
                     expr = {
@@ -2614,8 +2633,7 @@ export function parse(tokens: Token[]): ParserResult {
                         nonNull: true,
                         position,
                     };
-                }
-                else if (match('LPAREN')) {
+                } else if (match('LPAREN')) {
                     const args = parseArgumentList();
                     expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
                     expr = { type: 'CallExpression', callee: expr, arguments: args, nonNull: true, position };
@@ -2631,8 +2649,7 @@ export function parse(tokens: Token[]): ParserResult {
                 expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
 
                 expr = { type: 'CallExpression', callee: expr, arguments: args, position };
-            }
-            else if (match('DOT')) {
+            } else if (match('DOT')) {
                 const position = tokens[current - 1].position;
                 const property = parseIdentifier();
 
@@ -2643,8 +2660,7 @@ export function parse(tokens: Token[]): ParserResult {
                     computed: false,
                     position,
                 };
-            }
-            else if (match('LBRACKET')) {
+            } else if (match('LBRACKET')) {
                 const position = tokens[current - 1].position;
                 const property = parseExpression();
 
@@ -2657,8 +2673,7 @@ export function parse(tokens: Token[]): ParserResult {
                     computed: true,
                     position,
                 };
-            }
-            else {
+            } else {
                 break;
             }
         }
@@ -2694,8 +2709,7 @@ export function parse(tokens: Token[]): ParserResult {
                 advance(); // consume 'sparge'
                 const argument = parseExpression();
                 args.push({ type: 'SpreadElement', argument, position: spreadPos });
-            }
-            else {
+            } else {
                 args.push(parseExpression());
             }
         } while (match('COMMA'));
@@ -2708,12 +2722,13 @@ export function parse(tokens: Token[]): ParserResult {
      *
      * GRAMMAR:
      *   primary := IDENTIFIER | NUMBER | STRING | TEMPLATE_STRING
-     *            | 'verum' | 'falsum' | 'nihil'
+     *            | 'ego' | 'verum' | 'falsum' | 'nihil'
      *            | '(' (expression | arrowFunction) ')'
      *
      * PRECEDENCE: Highest (atoms of the language).
      *
      * WHY: Latin literals: verum (true), falsum (false), nihil (null).
+     *      'ego' (I/self) is the self-reference keyword (like 'this' in JS).
      *      Parenthesized expressions require lookahead to distinguish from arrow functions.
      */
     function parsePrimary(): Expression {
@@ -2783,8 +2798,7 @@ export function parse(tokens: Token[]): ParserResult {
                         advance(); // consume 'sparge'
                         const argument = parseExpression();
                         elements.push({ type: 'SpreadElement', argument, position: spreadPos });
-                    }
-                    else {
+                    } else {
                         elements.push(parseExpression());
                     }
                 } while (match('COMMA'));
@@ -2808,8 +2822,7 @@ export function parse(tokens: Token[]): ParserResult {
                         advance(); // consume 'sparge'
                         const argument = parseExpression();
                         properties.push({ type: 'SpreadElement', argument, position: propPosition });
-                    }
-                    else {
+                    } else {
                         // Key can be identifier or string
                         let key: Identifier | Literal;
 
