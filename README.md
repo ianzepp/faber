@@ -46,7 +46,7 @@ scribe salve(nomen)
 | Target     | Completion |
 | ---------- | :--------: |
 | TypeScript |    100%    |
-| Python     |    85%     |
+| Python     |    95%     |
 | Zig        |    37%     |
 | Rust       |     0%     |
 | C++23      |     0%     |
@@ -83,9 +83,9 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | ---------------------------- | :--------: | :-: | :----: | :--: | :--: | :---: |
 | `varia` (mutable)            |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `fixum` (immutable)          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `figendum` (async immutable) |    [x]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
-| `variandum` (async mutable)  |    [x]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
-| `nexum` (reactive binding)   |    [x]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
+| `figendum` (async immutable) |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `variandum` (async mutable)  |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `nexum` (reactive binding)   |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Type annotations             |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Object destructuring         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Initializer expressions      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
@@ -111,9 +111,9 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | Async generator                    |    [x]     | [-] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Arrow functions                    |    [x]     | [~] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `fit T` (sync return)              |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `fiet T` (async return)            |    [x]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
+| `fiet T` (async return)            |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `fiunt T` (generator return)       |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| `fient T` (async generator return) |    [x]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
+| `fient T` (async generator return) |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 
 ## Control Flow Statements
 
