@@ -72,6 +72,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `promissum<T>` (promise) |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `erratum` (error)        |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `cursor<T>` (iterator)   |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `ignotus` (unknown)      |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Nullable types (`T?`)    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Union types (`T \| U`)   |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Generic type params      |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
@@ -88,6 +89,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `nexum` (reactive binding)   |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Type annotations             |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Object destructuring         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| Rest in destructuring        |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Initializer expressions      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 
 ## Enum Declarations
@@ -105,6 +107,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | Basic functions (`functio`)        |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Parameters                         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Parameter type annotations         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Rest parameters (`ceteri`)         |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Return type annotation (`->`)      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `futura` (async prefix)            |    [x]     | [~] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `cursor` (generator prefix)        |    [x]     | [-] |  [x]   | [ ]  | [ ]  |  [-]  |
@@ -184,7 +187,9 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | Number literals                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Template literals                   |    [x]     | [~] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Array literals                      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Array spread (`sparge`)             |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Object literals                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Object spread (`sparge`)            |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Binary operators                    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Comparison operators                |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Logical operators                   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
@@ -196,6 +201,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | Member access (`.`)                 |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Computed access (`[]`)              |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Function calls                      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Call spread (`sparge`)              |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Method calls                        |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Assignment                          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Conditional (ternary)               |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
@@ -205,6 +211,8 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `novum...de` (new with props)       |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `===` / `est` (strict equality)     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `!==` / `non est` (strict ineq.)    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `est` (instanceof/typeof)           |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
+| `ut` (type cast)                    |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | `aut` (logical or)                  |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [x]  |
 
 ## Lambda Syntax

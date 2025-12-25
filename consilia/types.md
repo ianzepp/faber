@@ -329,6 +329,7 @@ fixum decimus price = 19.99d
 | `nihil` | Null | Absence of value |
 | `octeti` | Bytes | Raw byte data (Uint8Array) |
 | `objectum` | Object | Any non-primitive value |
+| `ignotus` | Unknown | Must narrow before use |
 
 **Etymology:**
 - `textus` — "woven, texture" (text as woven words)
@@ -336,6 +337,7 @@ fixum decimus price = 19.99d
 - `nihil` — "nothing"
 - `octeti` — "groups of eight" (bytes)
 - `objectum` — "something thrown before" (root of "object")
+- `ignotus` — "unknown, unrecognized" (in- + gnoscere, "not known")
 
 ### Object Type
 
@@ -353,6 +355,46 @@ scribe user.name
 
 Use `objectum` when a function returns an anonymous object structure.
 For known shapes, prefer defining a `genus` instead.
+
+### Unknown Type
+
+The `ignotus` type represents a value whose type is not known at compile time. Unlike permissive "any" types in other languages, `ignotus` requires explicit narrowing before use.
+
+```
+fixum data: ignotus = getExternalData()
+
+// Error: cannot use ignotus directly
+// scribe data.length
+
+// Must narrow first with type check
+si data est textus {
+    scribe data.longitudo()  // OK, data is textus here
+}
+
+// Or cast explicitly (unsafe)
+fixum name = data ut textus
+scribe name.longitudo()
+```
+
+**Why no `any` type?**
+
+Faber deliberately omits a permissive "any" type. The `ignotus` type requires you to either:
+1. Narrow with `est` (safe, compiler-verified)
+2. Cast with `ut` (explicit acknowledgment of risk)
+
+This design:
+- Maps cleanly to strict targets (Zig, Rust) where "any" doesn't exist
+- Makes type uncertainty visible and intentional
+- Encourages proper type handling rather than escape hatches
+
+**Target mappings:**
+
+| Target | `ignotus` |
+|--------|-----------|
+| TypeScript | `unknown` |
+| Python | `Any` (but with runtime checks encouraged) |
+| Zig | `anytype` / `*anyopaque` |
+| Rust | Generics or `Box<dyn Any>` |
 
 ---
 
