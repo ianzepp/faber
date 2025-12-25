@@ -216,6 +216,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `est` (instanceof/typeof)           |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | `ut` (type cast)                    |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | `aut` (logical or)                  |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [x]  |
+| `vel` (nullish coalescing)          |    [~]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 
 ## Lambda Syntax
 

@@ -352,6 +352,84 @@ fixum names = text.inveniOmnes(pattern)
 
 ---
 
+## vel (Nullish Coalescing)
+
+**Etymology:** Latin *vel* — "or" (in the sense of alternatives).
+
+Provides a fallback value when the left operand is `nihil`. Currently implemented in destructuring; extending to general expressions.
+
+### Syntax
+
+```faber
+expression vel fallback
+```
+
+### Nullish, Not Falsy
+
+`vel` triggers **only** on `nihil`, not on falsy values:
+
+```faber
+0 vel 5           // 0 (not nihil)
+"" vel "default"  // "" (not nihil)
+falsum vel verum  // falsum (not nihil)
+nihil vel 5       // 5
+```
+
+This is more precise than logical OR and prevents surprising behavior with valid zero/empty/false values.
+
+### Basic Usage
+
+```faber
+fixum name = user.name vel "Anonymous"
+fixum count = getData() vel 0
+fixum config = loadConfig() vel defaultConfig
+```
+
+### Chaining
+
+Left-to-right evaluation, first non-nihil wins:
+
+```faber
+fixum value = primary vel secondary vel tertiary vel default
+```
+
+### In Destructuring (existing)
+
+```faber
+ex config fixum { timeout vel 5000, retries vel 3 }
+```
+
+### With Optional Chaining (future)
+
+Pairs naturally with safe property access:
+
+```faber
+fixum city = user?.address?.city vel "Unknown"
+```
+
+### Comparison with Logical Or
+
+| Expression | `vel` (nullish) | `aut` (logical) |
+|------------|-----------------|-----------------|
+| `0 vel 5` | `0` | `5` |
+| `"" vel "x"` | `""` | `"x"` |
+| `falsum vel verum` | `falsum` | `verum` |
+| `nihil vel 5` | `5` | `5` |
+
+Use `vel` for defaults. Use `aut` for boolean logic.
+
+### Target Mappings
+
+| Target | Compilation |
+|--------|-------------|
+| TypeScript | `??` |
+| Python | `if x is None else` pattern |
+| Zig | `orelse` |
+| Rust | `.unwrap_or()` / `?` |
+| C++ | `value_or()` / ternary |
+
+---
+
 ## Future Operators
 
 Candidates for future implementation:
@@ -359,4 +437,3 @@ Candidates for future implementation:
 | Operator | Purpose | Notes |
 |----------|---------|-------|
 | `?.` | Optional chaining | Safe property access |
-| `vel` | Nullish coalescing | Extend beyond destructuring |
