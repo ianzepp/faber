@@ -357,8 +357,7 @@ async function format(inputFile: string, checkOnly: boolean): Promise<void> {
         if (isStdin) {
             // For stdin, just output the formatted code
             console.log(formatted);
-        }
-        else if (checkOnly) {
+        } else if (checkOnly) {
             if (source === formatted) {
                 console.log(`${displayName}: Formatted`);
             } else {

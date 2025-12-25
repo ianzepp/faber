@@ -554,8 +554,7 @@ export function analyze(program: Program): SemanticResult {
         for (const prop of node.properties) {
             if (prop.type === 'SpreadElement') {
                 resolveExpression(prop.argument);
-            }
-            else {
+            } else {
                 resolveExpression(prop.value);
             }
         }
@@ -588,12 +587,10 @@ export function analyze(program: Program): SemanticResult {
                 // If spreading an array, use its element type; otherwise use unknown
                 if (argType.kind === 'generic' && argType.name === 'lista' && argType.typeParams?.length) {
                     elementTypes.push(argType.typeParams[0]);
-                }
-                else {
+                } else {
                     elementTypes.push(UNKNOWN);
                 }
-            }
-            else {
+            } else {
                 elementTypes.push(resolveExpression(element));
             }
         }
@@ -792,8 +789,7 @@ export function analyze(program: Program): SemanticResult {
         for (const arg of node.arguments) {
             if (arg.type === 'SpreadElement') {
                 resolveExpression(arg.argument);
-            }
-            else {
+            } else {
                 resolveExpression(arg);
             }
         }

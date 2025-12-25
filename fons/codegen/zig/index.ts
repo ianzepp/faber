@@ -1522,9 +1522,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      */
     function genMemberExpression(node: MemberExpression): string {
         const obj = genExpression(node.object);
-        const prop = node.computed
-            ? `[${genExpression(node.property)}]`
-            : `.${(node.property as Identifier).name}`;
+        const prop = node.computed ? `[${genExpression(node.property)}]` : `.${(node.property as Identifier).name}`;
 
         // WHY: Zig's optional unwrap uses .? syntax
         if (node.nonNull) {
@@ -1534,9 +1532,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         // WHY: Zig's optional chaining requires if-else pattern
         //      This is a simplified version; full impl would need temp vars
         if (node.optional) {
-            const propName = node.computed
-                ? `[${genExpression(node.property)}]`
-                : (node.property as Identifier).name;
+            const propName = node.computed ? `[${genExpression(node.property)}]` : (node.property as Identifier).name;
             return `(if (${obj}) |_o| _o.${propName} else null)`;
         }
 

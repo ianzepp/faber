@@ -1222,12 +1222,14 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *   [sparge a, sparge b] -> [...a, ...b]
      */
     function genArrayExpression(node: ArrayExpression): string {
-        const elements = node.elements.map(el => {
-            if (el.type === 'SpreadElement') {
-                return `...${genExpression(el.argument)}`;
-            }
-            return genExpression(el);
-        }).join(', ');
+        const elements = node.elements
+            .map(el => {
+                if (el.type === 'SpreadElement') {
+                    return `...${genExpression(el.argument)}`;
+                }
+                return genExpression(el);
+            })
+            .join(', ');
 
         return `[${elements}]`;
     }
@@ -1350,12 +1352,14 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * Lista methods (Latin array methods) are translated to JS equivalents.
      */
     function genCallExpression(node: CallExpression): string {
-        const args = node.arguments.map(arg => {
-            if (arg.type === 'SpreadElement') {
-                return `...${genExpression(arg.argument)}`;
-            }
-            return genExpression(arg);
-        }).join(', ');
+        const args = node.arguments
+            .map(arg => {
+                if (arg.type === 'SpreadElement') {
+                    return `...${genExpression(arg.argument)}`;
+                }
+                return genExpression(arg);
+            })
+            .join(', ');
 
         // Check for intrinsics (bare function calls)
         if (node.callee.type === 'Identifier') {
