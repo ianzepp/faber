@@ -305,19 +305,26 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      *   varia x: numerus = 5 -> x: int = 5
      *   fixum y: textus = "hello" -> y: str = "hello"
      *   fixum { nomen, aetas } = persona -> nomen = persona.nomen; aetas = persona.aetas
+     *   figendum data = fetchData() -> data = await fetchData()
+     *   variandum result = getResult() -> result = await getResult()
      *
      * WHY: Python has no const, so both varia and fixum become simple assignment.
+     * WHY: Async bindings (figendum/variandum) imply await without explicit cede.
      */
     function genVariableDeclaration(node: VariableDeclaration): string {
+        // Check if this is an async binding (figendum/variandum)
+        const isAsync = node.kind === 'figendum' || node.kind === 'variandum';
+
         // Handle object pattern destructuring
         if (node.name.type === 'ObjectPattern') {
             const initExpr = node.init ? genExpression(node.init) : 'None';
+            const awaitPrefix = isAsync ? 'await ' : '';
             const lines: string[] = [];
 
             for (const prop of node.name.properties) {
                 const key = prop.key.name;
                 const localName = prop.value.name;
-                lines.push(`${ind()}${localName} = ${initExpr}.${key}`);
+                lines.push(`${ind()}${localName} = ${awaitPrefix}${initExpr}.${key}`);
             }
 
             return lines.join('\n');
@@ -325,8 +332,13 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
 
         const name = node.name.name;
         const typeAnno = node.typeAnnotation ? `: ${genType(node.typeAnnotation)}` : '';
-        const init = node.init ? ` = ${genExpression(node.init)}` : '';
 
+        if (isAsync && node.init) {
+            const init = genExpression(node.init);
+            return `${ind()}${name}${typeAnno} = await ${init}`;
+        }
+
+        const init = node.init ? ` = ${genExpression(node.init)}` : '';
         return `${ind()}${name}${typeAnno}${init}`;
     }
 
@@ -425,10 +437,24 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         // Track if we have any content
         let hasContent = false;
 
-        // Field declarations
-        if (node.fields.length > 0) {
-            for (const field of node.fields) {
+        // Field declarations (separate reactive and regular)
+        const regularFields = node.fields.filter(f => !f.isReactive);
+        const reactiveFields = node.fields.filter(f => f.isReactive);
+
+        if (regularFields.length > 0) {
+            for (const field of regularFields) {
                 lines.push(genFieldDeclaration(field));
+            }
+            hasContent = true;
+        }
+
+        // Reactive fields as properties with backing field
+        if (reactiveFields.length > 0) {
+            if (hasContent) {
+                lines.push('');
+            }
+            for (const field of reactiveFields) {
+                lines.push(genReactiveFieldDeclaration(field));
             }
             hasContent = true;
         }
@@ -538,6 +564,55 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         const prefix = node.isPrivate ? '_' : '';
 
         return `${ind()}${prefix}${name}: ${type}${init}`;
+    }
+
+    /**
+     * Generate reactive (nexum) field declaration as property with backing field.
+     *
+     * TRANSFORMS:
+     *   nexum numerus count: 0
+     *   ->
+     *   _count: int = 0
+     *   @property
+     *   def count(self) -> int:
+     *       return self._count
+     *   @count.setter
+     *   def count(self, value: int):
+     *       self._count = value
+     *       if hasattr(self, '_pingo'):
+     *           self._pingo()
+     */
+    function genReactiveFieldDeclaration(node: FieldDeclaration): string {
+        const name = node.name.name;
+        const type = genType(node.fieldType);
+        const init = node.init ? ` = ${genExpression(node.init)}` : '';
+
+        const lines: string[] = [];
+
+        // Private backing field
+        lines.push(`${ind()}_${name}: ${type}${init}`);
+        lines.push('');
+
+        // Getter property
+        lines.push(`${ind()}@property`);
+        lines.push(`${ind()}def ${name}(self) -> ${type}:`);
+        depth++;
+        lines.push(`${ind()}return self._${name}`);
+        depth--;
+        lines.push('');
+
+        // Setter with invalidation
+        lines.push(`${ind()}@${name}.setter`);
+        lines.push(`${ind()}def ${name}(self, value: ${type}):`);
+        depth++;
+        lines.push(`${ind()}self._${name} = value`);
+        lines.push(`${ind()}if hasattr(self, '_pingo'):`);
+        depth++;
+        lines.push(`${ind()}self._pingo()`);
+        depth--;
+        depth--;
+
+        return lines.join('\n');
     }
 
     /**

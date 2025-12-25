@@ -159,6 +159,26 @@ describe('Python codegen', () => {
             const result = compile('varia textus nomen = "Marcus"');
             expect(result).toBe('nomen: str = "Marcus"');
         });
+
+        test('figendum adds await', () => {
+            const result = compile('figendum data = fetchData()');
+            expect(result).toBe('data = await fetchData()');
+        });
+
+        test('variandum adds await', () => {
+            const result = compile('variandum result = getResult()');
+            expect(result).toBe('result = await getResult()');
+        });
+
+        test('figendum with type annotation', () => {
+            const result = compile('figendum textus data = fetch()');
+            expect(result).toBe('data: str = await fetch()');
+        });
+
+        test('variandum with type annotation', () => {
+            const result = compile('variandum numerus count = getCount()');
+            expect(result).toBe('count: int = await getCount()');
+        });
     });
 
     // =========================================================================
@@ -754,6 +774,32 @@ describe('Python codegen', () => {
                 }
             `);
             expect(result).toContain('class Container[T]:');
+        });
+
+        test('class with nexum reactive field', () => {
+            const result = compile(`
+                genus counter {
+                    nexum numerus count: 0
+                }
+            `);
+            expect(result).toContain('_count: int = 0');
+            expect(result).toContain('@property');
+            expect(result).toContain('def count(self) -> int:');
+            expect(result).toContain('@count.setter');
+            expect(result).toContain('self._pingo()');
+        });
+
+        test('class with mixed regular and nexum fields', () => {
+            const result = compile(`
+                genus widget {
+                    textus name
+                    nexum numerus value: 0
+                }
+            `);
+            expect(result).toContain('name: str');
+            expect(result).toContain('_value: int = 0');
+            expect(result).toContain('@property');
+            expect(result).toContain('def value(self) -> int:');
         });
     });
 
