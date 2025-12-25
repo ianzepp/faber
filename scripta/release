@@ -53,20 +53,16 @@ echo "=== Bumping version: $CURRENT → $VERSION ==="
 jq --arg v "$VERSION" '.version = $v' package.json > package.json.tmp
 mv package.json.tmp package.json
 
-# Copy artifact
-mkdir -p editiones
-ARTIFACT="editiones/faber-${VERSION}"
-cp opus/faber "$ARTIFACT"
-chmod +x "$ARTIFACT"
-echo "Created: $ARTIFACT"
-
 # Commit and tag
-git add package.json "$ARTIFACT"
+git add package.json
 git commit -m "Release v${VERSION}"
 git tag "v${VERSION}"
 
 echo "=== Pushing to origin ==="
 git push -u origin main
 git push --tags
+
+echo "=== Creating GitHub release ==="
+gh release create "v${VERSION}" opus/faber --title "v${VERSION}" --notes "Release v${VERSION}"
 
 echo "=== Released v${VERSION} ==="
