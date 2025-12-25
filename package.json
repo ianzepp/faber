@@ -1,6 +1,6 @@
 {
   "name": "faber-romanus",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A Latin-to-JavaScript transpiler - The Roman Craftsman",
   "module": "index.ts",
   "type": "module",
