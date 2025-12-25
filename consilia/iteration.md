@@ -17,7 +17,7 @@
 | `rumpe` (break) | **Not done** | Designed only |
 | `perge` (continue) | **Not done** | Designed only |
 | Pipeline `per` transforms | **Not done** | Future feature |
-| Indexed iteration | **Not done** | Open question |
+| Indexed iteration | **Not done** | Tuple destructuring `(i, n)` |
 | `cede ex` delegation | **Not done** | yield* equivalent |
 
 ---
@@ -189,7 +189,7 @@ The `per` keyword is envisioned to chain transformations inline:
 
 ```
 // Future syntax
-ex users per filtra({ .activus }) per ordina(ad nomen) pro user {
+ex users per filtra({ .activus }) per ordina(per nomen) pro user {
     scribe user.nomen
 }
 ```
@@ -198,7 +198,7 @@ Reading: "from users, through filter, through sort, as user..."
 
 Currently, use method chaining on the iterable instead:
 ```
-ex users.filtrata({ .activus }).ordinata(ad nomen) pro user {
+ex users.filtrata({ .activus }).ordinata(per nomen) pro user {
     scribe user.nomen
 }
 ```
@@ -244,19 +244,50 @@ For breaking outer loops:
 
 ---
 
+## Future: Indexed Iteration
+
+**Status: Designed, not implemented**
+
+Use tuple destructuring to bind both index and value:
+
+```
+ex numeri pro (i, n) {
+    scribe i + ": " + n
+}
+```
+
+Index comes first, matching Python's `enumerate()` convention. Compiles to:
+
+**TypeScript:**
+```typescript
+for (const [i, n] of numeri.entries()) {
+    console.log(i + ": " + n);
+}
+```
+
+**Python:**
+```python
+for i, n in enumerate(numeri):
+    print(f"{i}: {n}")
+```
+
+Works with ranges too:
+```
+ex 0..10 pro (i, n) {
+    // i and n are the same for ranges
+}
+```
+
+---
+
 ## Open Questions
 
-1. **Indexed iteration**: Best syntax for index access?
-   - `ex numeri pro (i, n) { }` — tuple destructuring
-   - `ex numeri pro n ad indice i { }` — explicit clause
-   - `ex numeri.cumIndice() pro (i, n) { }` — method approach
-
-2. **`cede ex` delegation**: Yield from another iterator (like JS `yield*`)
+1. **`cede ex` delegation**: Yield from another iterator (like JS `yield*`)
    ```
    cede ex numerare(5)  // yields 0,1,2,3,4
    ```
 
-3. **Early return**: Should `redde` inside loops return from enclosing function? (Yes, like JS)
+2. **Early return**: Should `redde` inside loops return from enclosing function? (Yes, like JS)
 
 ---
 

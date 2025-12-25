@@ -128,6 +128,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `de...pro` (for-in)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `ex...fit` (for-of verb form) |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `ex...fiet` (async for)       |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `ex...pro (i, n)` (indexed)   |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Range expressions (`0..10`)   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Range with step (`per`)       |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `in` (mutation block)         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
@@ -214,6 +215,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `pro x { body }` (block)        |    [x]     | [~] |  [~]   | [ ]  | [ ]  |  [ ]  |
 | `pro redde expr` (zero-param)   |    [x]     | [~] |  [~]   | [ ]  | [ ]  |  [ ]  |
 | `(x) => expr` (JS-style)        |    [x]     | [~] |  [~]   | [ ]  | [ ]  |  [x]  |
+| `per property` (shorthand)      |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 
 ## OOP Features (genus/pactum)
 

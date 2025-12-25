@@ -207,5 +207,5 @@ Note: `ausculta` is the root of medical "auscultation" (listening to body sounds
 
 1. **Typed events** - Enforce event name + payload type pairs at compile time
 2. **Event filtering** - `ausculta "user:*"` for wildcard patterns
-3. **Buffering** - `ausculta "data" ad buffer(10)` for bounded queues
+3. **Buffering** - `ausculta "data" in buffer(10)` for bounded queues
 4. **Timeout** - `ausculta "data" per timeout(5000)` for bounded waiting
