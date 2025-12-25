@@ -2405,7 +2405,7 @@ export function parse(tokens: Token[]): ParserResult {
      * PRECEDENCE: Lower than additive, higher than comparison.
      *
      * WHY: Range expressions provide concise numeric iteration.
-     *      End is inclusive: 0..10 includes 10.
+     *      End is exclusive: 0..10 produces 0-9 (use 0..11 to include 10).
      *      Optional step via 'per' keyword.
      *
      * Examples:

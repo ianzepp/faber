@@ -652,7 +652,7 @@ describe('codegen', () => {
         }
       `);
 
-            expect(js).toContain('for (let i = 0; i <= 10; i++)');
+            expect(js).toContain('for (let i = 0; i < 10; i++)');
         });
 
         test('range with step', () => {
@@ -662,7 +662,7 @@ describe('codegen', () => {
         }
       `);
 
-            expect(js).toContain('for (let i = 0; i <= 10; i += 2)');
+            expect(js).toContain('for (let i = 0; i < 10; i += 2)');
         });
 
         test('range with expressions', () => {
@@ -672,7 +672,7 @@ describe('codegen', () => {
         }
       `);
 
-            expect(js).toContain('for (let i = 1; i <= n; i++)');
+            expect(js).toContain('for (let i = 1; i < n; i++)');
         });
     });
 
@@ -1969,7 +1969,7 @@ describe('codegen', () => {
             `);
 
             expect(js).toContain('try {');
-            expect(js).toContain('for (let i = 0; i <= 5; i++)');
+            expect(js).toContain('for (let i = 0; i < 5; i++)');
             expect(js).toContain('} catch (e)');
         });
 
@@ -1994,13 +1994,13 @@ describe('codegen', () => {
         test('simple range as array', () => {
             const js = compile('fixum nums = 0..5');
 
-            expect(js).toContain('Array.from({length: 5 - 0 + 1}, (_, i) => 0 + i)');
+            expect(js).toContain('Array.from({length: 5 - 0}, (_, i) => 0 + i)');
         });
 
         test('range with step as array', () => {
             const js = compile('fixum evens = 0..10 per 2');
 
-            expect(js).toContain('Array.from({length: Math.floor((10 - 0) / 2) + 1}, (_, i) => 0 + i * 2)');
+            expect(js).toContain('Array.from({length: Math.ceil((10 - 0) / 2)}, (_, i) => 0 + i * 2)');
         });
 
         test('range with variables', () => {
@@ -2010,7 +2010,7 @@ describe('codegen', () => {
                 fixum nums = start..end
             `);
 
-            expect(js).toContain('Array.from({length: end - start + 1}, (_, i) => start + i)');
+            expect(js).toContain('Array.from({length: end - start}, (_, i) => start + i)');
         });
     });
 

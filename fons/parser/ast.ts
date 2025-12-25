@@ -1002,7 +1002,7 @@ export interface ObjectProperty extends BaseNode {
  *   rangeExpr := expression '..' expression ('per' expression)?
  *
  * WHY: Provides concise syntax for numeric iteration ranges.
- *      End is inclusive (0..10 includes 10).
+ *      End is exclusive (0..10 produces 0-9).
  *      Optional step via 'per' keyword.
  *
  * Examples:

@@ -872,7 +872,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      * Generate for statement.
      *
      * TRANSFORMS:
-     *   ex 0..10 pro i { } -> for i in range(0, 11):
+     *   ex 0..10 pro i { } -> for i in range(0, 10):
      *   ex items pro item { } -> for item in items:
      *   ex stream fiet chunk { } -> async for chunk in stream:
      */
@@ -895,9 +895,9 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
             let rangeCall: string;
             if (range.step) {
                 const step = genExpression(range.step);
-                rangeCall = `range(${start}, ${end} + 1, ${step})`;
+                rangeCall = `range(${start}, ${end}, ${step})`;
             } else {
-                rangeCall = `range(${start}, ${end} + 1)`;
+                rangeCall = `range(${start}, ${end})`;
             }
 
             lines.push(`${ind()}${asyncKw}for ${varName} in ${rangeCall}:`);
@@ -1281,6 +1281,8 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
 
     /**
      * Generate range expression.
+     *
+     * WHY: End is exclusive, matching Python's native range() semantics.
      */
     function genRangeExpression(node: RangeExpression): string {
         const start = genExpression(node.start);
@@ -1288,10 +1290,10 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
 
         if (node.step) {
             const step = genExpression(node.step);
-            return `list(range(${start}, ${end} + 1, ${step}))`;
+            return `list(range(${start}, ${end}, ${step}))`;
         }
 
-        return `list(range(${start}, ${end} + 1))`;
+        return `list(range(${start}, ${end}))`;
     }
 
     /**

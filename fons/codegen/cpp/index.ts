@@ -669,7 +669,7 @@ export function generateCpp(program: Program, options: CodegenOptions = {}): str
      *
      * TRANSFORMS:
      *   ex items pro item { } -> for (auto& item : items) { }
-     *   ex 0..10 pro i { } -> for (int64_t i = 0; i <= 10; ++i) { }
+     *   ex 0..10 pro i { } -> for (int64_t i = 0; i < 10; ++i) { }
      */
     function genForStatement(node: ForStatement): string {
         const varName = node.variable.name;
@@ -682,7 +682,7 @@ export function generateCpp(program: Program, options: CodegenOptions = {}): str
             const end = genExpression(range.end);
             const step = range.step ? genExpression(range.step) : '1';
 
-            return `${ind()}for (int64_t ${varName} = ${start}; ${varName} <= ${end}; ${varName} += ${step}) ${body}`;
+            return `${ind()}for (int64_t ${varName} = ${start}; ${varName} < ${end}; ${varName} += ${step}) ${body}`;
         }
 
         const iterable = genExpression(node.iterable);

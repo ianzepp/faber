@@ -274,13 +274,13 @@ describe('Python codegen', () => {
     describe('for statements', () => {
         test('for with range', () => {
             const result = compile('ex 0..10 pro i { scribe i }');
-            expect(result).toContain('for i in range(0, 10 + 1):');
+            expect(result).toContain('for i in range(0, 10):');
             expect(result).toContain('print(i)');
         });
 
         test('for with range and step', () => {
             const result = compile('ex 0..10 per 2 pro i { scribe i }');
-            expect(result).toContain('for i in range(0, 10 + 1, 2):');
+            expect(result).toContain('for i in range(0, 10, 2):');
         });
 
         test('for over array', () => {
@@ -934,12 +934,12 @@ describe('Python codegen', () => {
     describe('range expressions', () => {
         test('simple range', () => {
             const result = compile('varia x = 0..10');
-            expect(result).toBe('x = list(range(0, 10 + 1))');
+            expect(result).toBe('x = list(range(0, 10))');
         });
 
         test('range with step', () => {
             const result = compile('varia x = 0..10 per 2');
-            expect(result).toBe('x = list(range(0, 10 + 1, 2))');
+            expect(result).toBe('x = list(range(0, 10, 2))');
         });
     });
 

@@ -6,7 +6,7 @@
 | ------------------------- | ------------ | --------------------------------- |
 | `ex...pro/fit/fiet` loops | Done         | For-of iteration                  |
 | `de...pro/fit/fiet` loops | Done         | For-in iteration                  |
-| Range `0..10`             | Done         | Inclusive endpoints               |
+| Range `0..10`             | Done         | Exclusive end (like Python/Rust)  |
 | Range step `per`          | Done         | `0..10 per 2`                     |
 | `dum` while loop          | Done         | Basic while                       |
 | Generators `fiunt/fient`  | Done         | Verb conjugation                  |
@@ -91,23 +91,23 @@ ex items pro item {
 
 **Syntax:** `start..end [per step]`
 
-**End is inclusive** (unlike Rust/Python).
+**End is exclusive** (like Python/Rust). Use `0..11` to include 10.
 
 ```
 ex 0..5 pro n {
-    scribe n  // 0, 1, 2, 3, 4, 5
+    scribe n  // 0, 1, 2, 3, 4
 }
 
 ex 0..10 per 2 pro n {
-    scribe n  // 0, 2, 4, 6, 8, 10
+    scribe n  // 0, 2, 4, 6, 8
 }
 
 ex 10..0 per -1 pro n {
-    scribe n  // 10, 9, 8, ... 0
+    scribe n  // 10, 9, 8, ... 1
 }
 ```
 
-**Why inclusive?** More intuitive for mathematical ranges ("0 to 10" means including 10). The compiler adjusts for target languages that use exclusive ranges.
+**Why exclusive?** Matches target language semantics (TypeScript, Python, Rust, Zig) for direct codegen without off-by-one adjustments.
 
 ---
 
@@ -316,19 +316,19 @@ ex 0..10 pro (i, n) {
 
 ### Python
 
-| Faber      | Python                                            |
-| ---------- | ------------------------------------------------- |
-| `ex...pro` | `for x in iterable:`                              |
-| `ex 0..10` | `for x in range(0, 11):` (adjusted for inclusive) |
-| `dum`      | `while`                                           |
-| `cede`     | `yield`                                           |
+| Faber      | Python                   |
+| ---------- | ------------------------ |
+| `ex...pro` | `for x in iterable:`     |
+| `ex 0..10` | `for x in range(0, 10):` |
+| `dum`      | `while`                  |
+| `cede`     | `yield`                  |
 
 ### Zig
 
-| Faber      | Zig                          |
-| ---------- | ---------------------------- |
-| `ex...pro` | `for (slice) \|item\|`       |
-| `ex 0..10` | `while (i <= 10) : (i += 1)` |
-| `dum`      | `while`                      |
+| Faber      | Zig                         |
+| ---------- | --------------------------- |
+| `ex...pro` | `for (slice) \|item\|`      |
+| `ex 0..10` | `while (i < 10) : (i += 1)` |
+| `dum`      | `while`                     |
 
 Zig has no async iteration — requires different approach.

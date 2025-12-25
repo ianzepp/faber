@@ -137,7 +137,7 @@ describe('zig codegen', () => {
       `);
 
             expect(zig).toContain('var i: usize = 0');
-            expect(zig).toContain('while (i <= 10)');
+            expect(zig).toContain('while (i < 10)');
             expect(zig).toContain('(i += 1)');
         });
 
@@ -148,7 +148,7 @@ describe('zig codegen', () => {
         }
       `);
 
-            expect(zig).toContain('while (i <= 10)');
+            expect(zig).toContain('while (i < 10)');
             expect(zig).toContain('(i += 2)');
         });
     });

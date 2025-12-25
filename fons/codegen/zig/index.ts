@@ -822,7 +822,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      * Generate for statement.
      *
      * TRANSFORMS:
-     *   ex 0..10 pro i { } -> var i: usize = 0; while (i <= 10) : (i += 1) { }
+     *   ex 0..10 pro i { } -> var i: usize = 0; while (i < 10) : (i += 1) { }
      *   ex items pro item { } -> for (items) |item| { }
      *
      * TARGET: Zig uses for (slice) |item| for iteration over slices.
@@ -841,10 +841,10 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             if (range.step) {
                 const step = genExpression(range.step);
 
-                return `${ind()}var ${varName}: usize = ${start}; while (${varName} <= ${end}) : (${varName} += ${step}) ${body}`;
+                return `${ind()}var ${varName}: usize = ${start}; while (${varName} < ${end}) : (${varName} += ${step}) ${body}`;
             }
 
-            return `${ind()}var ${varName}: usize = ${start}; while (${varName} <= ${end}) : (${varName} += 1) ${body}`;
+            return `${ind()}var ${varName}: usize = ${start}; while (${varName} < ${end}) : (${varName} += 1) ${body}`;
         }
 
         const iterable = genExpression(node.iterable);

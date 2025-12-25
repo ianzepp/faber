@@ -107,7 +107,7 @@ describe('cpp codegen', () => {
                 }
             `);
 
-            expect(cpp).toContain('for (int64_t i = 0; i <= 10; i += 1)');
+            expect(cpp).toContain('for (int64_t i = 0; i < 10; i += 1)');
         });
 
         test('for loop over collection', () => {
