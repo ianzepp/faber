@@ -815,6 +815,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
             const range = node.iterable;
             const start = genExpression(range.start);
             const end = genExpression(range.end);
+            const cmp = range.inclusive ? '<=' : '<';
 
             let forHeader: string;
 
@@ -822,11 +823,11 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 const step = genExpression(range.step);
 
                 // With step: need to handle positive/negative direction
-                // For simplicity, assume positive step uses <, negative uses >
-                forHeader = `for${awaitKeyword} (let ${varName} = ${start}; ${varName} < ${end}; ${varName} += ${step})`;
+                // For simplicity, assume positive step uses </<= based on inclusive
+                forHeader = `for${awaitKeyword} (let ${varName} = ${start}; ${varName} ${cmp} ${end}; ${varName} += ${step})`;
             } else {
                 // Default step of 1
-                forHeader = `for${awaitKeyword} (let ${varName} = ${start}; ${varName} < ${end}; ${varName}++)`;
+                forHeader = `for${awaitKeyword} (let ${varName} = ${start}; ${varName} ${cmp} ${end}; ${varName}++)`;
             }
 
             if (node.catchClause) {
@@ -1264,27 +1265,33 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * Generate range expression as array.
      *
      * TRANSFORMS:
-     *   0..5 -> Array.from({length: 5}, (_, i) => i)
-     *   2..5 -> Array.from({length: 3}, (_, i) => 2 + i)
+     *   0..5 -> Array.from({length: 5}, (_, i) => i)           // exclusive
+     *   0 usque 5 -> Array.from({length: 6}, (_, i) => i)      // inclusive
      *   0..10 per 2 -> Array.from({length: 5}, (_, i) => i * 2)
      *
      * WHY: When used outside a for-loop, ranges become arrays.
-     *      End is exclusive: 0..5 produces [0,1,2,3,4].
+     *      End is exclusive by default, inclusive with 'usque'.
      *      In for-loops, they compile to efficient traditional loops instead.
      */
     function genRangeExpression(node: RangeExpression): string {
         const start = genExpression(node.start);
         const end = genExpression(node.end);
+        const adj = node.inclusive ? ' + 1' : '';
 
         if (node.step) {
             const step = genExpression(node.step);
 
             // With step: more complex calculation
+            // WHY: inclusive adds 1 to length calculation
+            if (node.inclusive) {
+                return `Array.from({length: Math.floor((${end} - ${start}) / ${step}) + 1}, (_, i) => ${start} + i * ${step})`;
+            }
+
             return `Array.from({length: Math.ceil((${end} - ${start}) / ${step})}, (_, i) => ${start} + i * ${step})`;
         }
 
-        // Simple range: start to end exclusive
-        return `Array.from({length: ${end} - ${start}}, (_, i) => ${start} + i)`;
+        // Simple range: adjust length for inclusive
+        return `Array.from({length: ${end} - ${start}${adj}}, (_, i) => ${start} + i)`;
     }
 
     /**

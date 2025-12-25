@@ -292,6 +292,21 @@ describe('Python codegen', () => {
             const result = compile('ex stream fiet chunk { scribe chunk }');
             expect(result).toContain('async for chunk in stream:');
         });
+
+        test('ante keyword (explicit exclusive)', () => {
+            const result = compile('ex 0 ante 10 pro i { scribe i }');
+            expect(result).toContain('for i in range(0, 10):');
+        });
+
+        test('usque keyword (inclusive)', () => {
+            const result = compile('ex 0 usque 10 pro i { scribe i }');
+            expect(result).toContain('for i in range(0, 10 + 1):');
+        });
+
+        test('usque with step', () => {
+            const result = compile('ex 0 usque 10 per 2 pro i { scribe i }');
+            expect(result).toContain('for i in range(0, 10 + 1, 2):');
+        });
     });
 
     // =========================================================================
@@ -940,6 +955,16 @@ describe('Python codegen', () => {
         test('range with step', () => {
             const result = compile('varia x = 0..10 per 2');
             expect(result).toBe('x = list(range(0, 10, 2))');
+        });
+
+        test('usque range (inclusive)', () => {
+            const result = compile('varia x = 0 usque 10');
+            expect(result).toBe('x = list(range(0, 10 + 1))');
+        });
+
+        test('usque range with step', () => {
+            const result = compile('varia x = 0 usque 10 per 2');
+            expect(result).toBe('x = list(range(0, 10 + 1, 2))');
         });
     });
 

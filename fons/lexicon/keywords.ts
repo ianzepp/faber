@@ -194,6 +194,11 @@ export const keywords: KeywordEntry[] = [
     { latin: 'ut', meaning: 'as', category: 'preposition' },
     // WHY: "vel" (or) for default values in destructuring
     { latin: 'vel', meaning: 'or', category: 'operator' },
+    // WHY: "ante" (before) and "usque" (up to) for range operators
+    //      ante = exclusive (0 ante 10 = 0-9)
+    //      usque = inclusive (0 usque 10 = 0-10)
+    { latin: 'ante', meaning: 'before (exclusive)', category: 'operator' },
+    { latin: 'usque', meaning: 'up to (inclusive)', category: 'operator' },
 
     // ---------------------------------------------------------------------------
     // Spread/Rest Operators

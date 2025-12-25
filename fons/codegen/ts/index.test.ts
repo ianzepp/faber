@@ -674,6 +674,36 @@ describe('codegen', () => {
 
             expect(js).toContain('for (let i = 1; i < n; i++)');
         });
+
+        test('ante keyword (explicit exclusive)', () => {
+            const js = compile(`
+        ex 0 ante 10 pro i {
+          _scribe(i)
+        }
+      `);
+
+            expect(js).toContain('for (let i = 0; i < 10; i++)');
+        });
+
+        test('usque keyword (inclusive)', () => {
+            const js = compile(`
+        ex 0 usque 10 pro i {
+          _scribe(i)
+        }
+      `);
+
+            expect(js).toContain('for (let i = 0; i <= 10; i++)');
+        });
+
+        test('usque with step', () => {
+            const js = compile(`
+        ex 0 usque 10 per 2 pro i {
+          _scribe(i)
+        }
+      `);
+
+            expect(js).toContain('for (let i = 0; i <= 10; i += 2)');
+        });
     });
 
     describe('switch statements (elige)', () => {
@@ -2011,6 +2041,18 @@ describe('codegen', () => {
             `);
 
             expect(js).toContain('Array.from({length: end - start}, (_, i) => start + i)');
+        });
+
+        test('usque range as array (inclusive)', () => {
+            const js = compile('fixum nums = 0 usque 5');
+
+            expect(js).toContain('Array.from({length: 5 - 0 + 1}, (_, i) => 0 + i)');
+        });
+
+        test('usque range with step as array', () => {
+            const js = compile('fixum evens = 0 usque 10 per 2');
+
+            expect(js).toContain('Array.from({length: Math.floor((10 - 0) / 2) + 1}, (_, i) => 0 + i * 2)');
         });
     });
 

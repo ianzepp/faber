@@ -7,8 +7,10 @@
 //
 // GRAMMAR:
 // ex <collection> pro <item> { <body> }
-// ex <start>..<end> pro <item> { <body> }      // range
-// ex <start>..<end> per <step> pro <item> { }  // range with step
+// ex <start>..<end> pro <item> { <body> }         // range (exclusive)
+// ex <start> ante <end> pro <item> { <body> }     // range (explicit exclusive)
+// ex <start> usque <end> pro <item> { <body> }    // range (inclusive)
+// ex <start>..<end> per <step> pro <item> { }     // range with step
 //
 // ETYMOLOGY:
 // ex: "out of, from" (source preposition)
@@ -43,12 +45,27 @@ ex names pro name {
 
 // Basic range (0 to 4, end is exclusive)
 ex 0..5 pro i {
-    scribe i
+    scribe i  // 0, 1, 2, 3, 4
+}
+
+// Inclusive range with usque ("up to")
+ex 0 usque 5 pro i {
+    scribe i  // 0, 1, 2, 3, 4, 5
+}
+
+// Explicit exclusive with ante ("before")
+ex 0 ante 5 pro i {
+    scribe i  // 0, 1, 2, 3, 4 (same as ..)
 }
 
 // Range with step
 ex 0..10 per 2 pro i {
-    scribe i
+    scribe i  // 0, 2, 4, 6, 8
+}
+
+// Inclusive range with step
+ex 0 usque 10 per 2 pro i {
+    scribe i  // 0, 2, 4, 6, 8, 10
 }
 
 // Countdown with step

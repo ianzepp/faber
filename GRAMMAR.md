@@ -163,19 +163,22 @@ comparison := range (('<' | '>' | '<=' | '>=') range)*
 ### Range
 
 ```ebnf
-range := additive ('..' additive ('per' additive)?)?
+range := additive (('..' | 'ante' | 'usque') additive ('per' additive)?)?
 ```
 
 > Range expressions provide concise numeric iteration.
-> End is exclusive: 0..10 produces 0-9 (use 0..11 to include 10).
+> Three operators with different end semantics:
+> - '..' and 'ante': exclusive (0..10 / 0 ante 10 = 0-9)
+> - 'usque': inclusive (0 usque 10 = 0-10)
 > Optional step via 'per' keyword.
 
 **Examples:**
 
 ```fab
-0..10           -> RangeExpression(0, 10)
-0..10 per 2     -> RangeExpression(0, 10, 2)
-start..end      -> RangeExpression(start, end)
+0..10           -> RangeExpression(0, 10, inclusive=false)
+0 ante 10       -> RangeExpression(0, 10, inclusive=false)
+0 usque 10      -> RangeExpression(0, 10, inclusive=true)
+0..10 per 2     -> RangeExpression(0, 10, 2, inclusive=false)
 ```
 
 ### Additive

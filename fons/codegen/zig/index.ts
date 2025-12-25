@@ -837,14 +837,15 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             const range = node.iterable;
             const start = genExpression(range.start);
             const end = genExpression(range.end);
+            const cmp = range.inclusive ? '<=' : '<';
 
             if (range.step) {
                 const step = genExpression(range.step);
 
-                return `${ind()}var ${varName}: usize = ${start}; while (${varName} < ${end}) : (${varName} += ${step}) ${body}`;
+                return `${ind()}var ${varName}: usize = ${start}; while (${varName} ${cmp} ${end}) : (${varName} += ${step}) ${body}`;
             }
 
-            return `${ind()}var ${varName}: usize = ${start}; while (${varName} < ${end}) : (${varName} += 1) ${body}`;
+            return `${ind()}var ${varName}: usize = ${start}; while (${varName} ${cmp} ${end}) : (${varName} += 1) ${body}`;
         }
 
         const iterable = genExpression(node.iterable);

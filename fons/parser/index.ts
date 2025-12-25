@@ -2400,23 +2400,35 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse range expression.
      *
      * GRAMMAR:
-     *   range := additive ('..' additive ('per' additive)?)?
+     *   range := additive (('..' | 'ante' | 'usque') additive ('per' additive)?)?
      *
      * PRECEDENCE: Lower than additive, higher than comparison.
      *
      * WHY: Range expressions provide concise numeric iteration.
-     *      End is exclusive: 0..10 produces 0-9 (use 0..11 to include 10).
+     *      Three operators with different end semantics:
+     *      - '..' and 'ante': exclusive (0..10 / 0 ante 10 = 0-9)
+     *      - 'usque': inclusive (0 usque 10 = 0-10)
      *      Optional step via 'per' keyword.
      *
      * Examples:
-     *   0..10           -> RangeExpression(0, 10)
-     *   0..10 per 2     -> RangeExpression(0, 10, 2)
-     *   start..end      -> RangeExpression(start, end)
+     *   0..10           -> RangeExpression(0, 10, inclusive=false)
+     *   0 ante 10       -> RangeExpression(0, 10, inclusive=false)
+     *   0 usque 10      -> RangeExpression(0, 10, inclusive=true)
+     *   0..10 per 2     -> RangeExpression(0, 10, 2, inclusive=false)
      */
     function parseRange(): Expression {
         const start = parseAdditive();
 
-        if (!match('DOT_DOT')) {
+        // Check for range operators: .., ante (exclusive), usque (inclusive)
+        let inclusive = false;
+
+        if (match('DOT_DOT')) {
+            inclusive = false;
+        } else if (matchKeyword('ante')) {
+            inclusive = false;
+        } else if (matchKeyword('usque')) {
+            inclusive = true;
+        } else {
             return start;
         }
 
@@ -2429,7 +2441,7 @@ export function parse(tokens: Token[]): ParserResult {
             step = parseAdditive();
         }
 
-        return { type: 'RangeExpression', start, end, step, position } as RangeExpression;
+        return { type: 'RangeExpression', start, end, step, inclusive, position } as RangeExpression;
     }
 
     /**

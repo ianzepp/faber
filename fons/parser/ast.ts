@@ -999,22 +999,25 @@ export interface ObjectProperty extends BaseNode {
  * Range expression for iteration bounds.
  *
  * GRAMMAR (in EBNF):
- *   rangeExpr := expression '..' expression ('per' expression)?
+ *   rangeExpr := expression ('..' | 'ante' | 'usque') expression ('per' expression)?
  *
  * WHY: Provides concise syntax for numeric iteration ranges.
- *      End is exclusive (0..10 produces 0-9).
- *      Optional step via 'per' keyword.
+ *      Three operators with different end semantics:
+ *      - '..' and 'ante': exclusive (0..10 / 0 ante 10 = 0-9)
+ *      - 'usque': inclusive (0 usque 10 = 0-10)
  *
  * Examples:
- *   0..10           -> start=0, end=10, step=undefined (default 1)
- *   0..10 per 2     -> start=0, end=10, step=2
- *   10..0 per -1    -> start=10, end=0, step=-1 (countdown)
+ *   0..10           -> exclusive, produces 0-9
+ *   0 ante 10       -> exclusive, produces 0-9 (explicit)
+ *   0 usque 10      -> inclusive, produces 0-10
+ *   0..10 per 2     -> exclusive with step
  */
 export interface RangeExpression extends BaseNode {
     type: 'RangeExpression';
     start: Expression;
     end: Expression;
     step?: Expression;
+    inclusive?: boolean;
 }
 
 // ---------------------------------------------------------------------------

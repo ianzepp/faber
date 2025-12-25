@@ -151,6 +151,26 @@ describe('zig codegen', () => {
             expect(zig).toContain('while (i < 10)');
             expect(zig).toContain('(i += 2)');
         });
+
+        test('ante keyword (explicit exclusive)', () => {
+            const zig = compile(`
+        ex 0 ante 10 pro i {
+          process(i)
+        }
+      `);
+
+            expect(zig).toContain('while (i < 10)');
+        });
+
+        test('usque keyword (inclusive)', () => {
+            const zig = compile(`
+        ex 0 usque 10 pro i {
+          process(i)
+        }
+      `);
+
+            expect(zig).toContain('while (i <= 10)');
+        });
     });
 
     describe('expressions', () => {

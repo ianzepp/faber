@@ -681,8 +681,9 @@ export function generateCpp(program: Program, options: CodegenOptions = {}): str
             const start = genExpression(range.start);
             const end = genExpression(range.end);
             const step = range.step ? genExpression(range.step) : '1';
+            const cmp = range.inclusive ? '<=' : '<';
 
-            return `${ind()}for (int64_t ${varName} = ${start}; ${varName} < ${end}; ${varName} += ${step}) ${body}`;
+            return `${ind()}for (int64_t ${varName} = ${start}; ${varName} ${cmp} ${end}; ${varName} += ${step}) ${body}`;
         }
 
         const iterable = genExpression(node.iterable);

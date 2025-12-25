@@ -891,13 +891,15 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
             const range = node.iterable;
             const start = genExpression(range.start);
             const end = genExpression(range.end);
+            // WHY: Python range() is exclusive, so add 1 for inclusive ranges
+            const endExpr = range.inclusive ? `${end} + 1` : end;
 
             let rangeCall: string;
             if (range.step) {
                 const step = genExpression(range.step);
-                rangeCall = `range(${start}, ${end}, ${step})`;
+                rangeCall = `range(${start}, ${endExpr}, ${step})`;
             } else {
-                rangeCall = `range(${start}, ${end})`;
+                rangeCall = `range(${start}, ${endExpr})`;
             }
 
             lines.push(`${ind()}${asyncKw}for ${varName} in ${rangeCall}:`);
@@ -1282,18 +1284,20 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
     /**
      * Generate range expression.
      *
-     * WHY: End is exclusive, matching Python's native range() semantics.
+     * WHY: Python range() is exclusive. For inclusive ranges (usque),
+     *      we add 1 to the end value.
      */
     function genRangeExpression(node: RangeExpression): string {
         const start = genExpression(node.start);
         const end = genExpression(node.end);
+        const endExpr = node.inclusive ? `${end} + 1` : end;
 
         if (node.step) {
             const step = genExpression(node.step);
-            return `list(range(${start}, ${end}, ${step}))`;
+            return `list(range(${start}, ${endExpr}, ${step}))`;
         }
 
-        return `list(range(${start}, ${end}))`;
+        return `list(range(${start}, ${endExpr}))`;
     }
 
     /**

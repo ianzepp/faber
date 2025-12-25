@@ -119,6 +119,26 @@ describe('cpp codegen', () => {
 
             expect(cpp).toContain('for (auto& item : items)');
         });
+
+        test('ante keyword (explicit exclusive)', () => {
+            const cpp = compile(`
+                ex 0 ante 10 pro i {
+                    scribe i
+                }
+            `);
+
+            expect(cpp).toContain('for (int64_t i = 0; i < 10; i += 1)');
+        });
+
+        test('usque keyword (inclusive)', () => {
+            const cpp = compile(`
+                ex 0 usque 10 pro i {
+                    scribe i
+                }
+            `);
+
+            expect(cpp).toContain('for (int64_t i = 0; i <= 10; i += 1)');
+        });
     });
 
     describe('expressions', () => {

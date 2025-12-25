@@ -89,25 +89,35 @@ ex items pro item {
 
 ## Range Expressions
 
-**Syntax:** `start..end [per step]`
+**Syntax:** `start (.. | ante | usque) end [per step]`
 
-**End is exclusive** (like Python/Rust). Use `0..11` to include 10.
+Three range operators with different end semantics:
+
+| Operator | Latin meaning | End       | Example             |
+| -------- | ------------- | --------- | ------------------- |
+| `..`     | (shorthand)   | exclusive | `0..10` → 0-9       |
+| `ante`   | "before"      | exclusive | `0 ante 10` → 0-9   |
+| `usque`  | "up to"       | inclusive | `0 usque 10` → 0-10 |
 
 ```
 ex 0..5 pro n {
     scribe n  // 0, 1, 2, 3, 4
 }
 
+ex 0 usque 5 pro n {
+    scribe n  // 0, 1, 2, 3, 4, 5
+}
+
 ex 0..10 per 2 pro n {
     scribe n  // 0, 2, 4, 6, 8
 }
 
-ex 10..0 per -1 pro n {
-    scribe n  // 10, 9, 8, ... 1
+ex 0 usque 10 per 2 pro n {
+    scribe n  // 0, 2, 4, 6, 8, 10
 }
 ```
 
-**Why exclusive?** Matches target language semantics (TypeScript, Python, Rust, Zig) for direct codegen without off-by-one adjustments.
+**Why both?** `..` (exclusive) matches target language semantics for direct codegen. `usque` (inclusive) reads naturally in Latin for mathematical ranges ("zero up to ten").
 
 ---
 
