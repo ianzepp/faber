@@ -92,7 +92,8 @@ Features that would need new Faber syntax to support.
 | Spread (array) | `...arr` | Planned | `sparge arr` | Array spreading |
 | Spread (object) | `...obj` | Planned | `sparge obj` | Object spreading |
 | Rest parameters | `...args` | Planned | `ceteri args` | Collect remaining args |
-| Optional chaining | `?.` | Not done | TBD | Safe property access |
+| Optional chaining | `?.` | Planned | `?.` | Keep as punctuation |
+| Non-null assertion | `!.` | Planned | `!.` | Keep as punctuation |
 | Nullish coalescing | `??` | Partial | `vel` | Extending to general expressions |
 | Array destructuring | `[a, b] = arr` | Planned | `ex arr fixum [a, b]` | Enabled by `ceteri` rest syntax |
 | typeof (runtime) | `typeof x` | Planned | `x est numerus` | Via `est` with type RHS |

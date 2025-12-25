@@ -430,10 +430,109 @@ Use `vel` for defaults. Use `aut` for boolean logic.
 
 ---
 
+## ?. and !. (Optional Chaining and Non-null Assertion)
+
+Pure punctuation operators for safe and assertive property access. No Latin translation needed—these are symbolic like `.` and `[]`.
+
+### Optional Chaining (`?.`)
+
+Returns `nihil` if the left operand is `nihil`, otherwise accesses the property/element/call.
+
+```faber
+// Property access
+user?.address?.city
+
+// Element access
+items?[0]
+matrix?[row]?[col]
+
+// Method call
+callback?()
+obj?.method?()
+```
+
+**Semantics:**
+- Short-circuits on `nihil` — remaining chain not evaluated
+- Returns `nihil`, not an error
+- Type narrows to `T?` (nullable)
+
+### Non-null Assertion (`!.`)
+
+Asserts the left operand is not `nihil`. Compiler trusts you; runtime behavior is undefined if wrong.
+
+```faber
+// Property access
+user!.address!.city
+
+// Element access
+items![0]
+data![key]
+
+// Method call
+handler!()
+obj!.method!()
+```
+
+**Semantics:**
+- No runtime check (in most targets)
+- Tells compiler "I know this isn't nihil"
+- Type narrows to `T` (non-nullable)
+
+### Combining Both
+
+Mix based on what you know:
+
+```faber
+// response is required, but data inside might be absent
+fixum name = response!.data?.name
+
+// user is optional, but if present, address is guaranteed
+fixum city = user?.address!.city
+
+// chain of uncertainty
+fixum value = config?.settings?.options?[key]
+```
+
+### With vel
+
+Natural pairing for defaults:
+
+```faber
+fixum city = user?.address?.city vel "Unknown"
+fixum count = response?.data?.items?.longitudo() vel 0
+fixum handler = events?.onClick vel defaultHandler
+```
+
+### Comparison
+
+| Operator | On nihil | Type result | Use when |
+|----------|----------|-------------|----------|
+| `.` | Error | `T` | Value is definitely present |
+| `?.` | Returns `nihil` | `T?` | Value might be absent |
+| `!.` | Undefined | `T` | You know it's present, compiler doesn't |
+
+### Target Mappings
+
+| Target | `?.` | `!.` |
+|--------|------|------|
+| TypeScript | `?.` | `!.` |
+| Python | `getattr(x, 'y', None)` chain | Direct access (no equivalent) |
+| Zig | `if (x) \|v\| v.y else null` | `x.?` / `.?` |
+| Rust | `x.as_ref()?.y` | `x.unwrap().y` |
+| C++ | `x ? x->y : nullopt` | `x->y` / `*x.y` |
+
+### Open Questions
+
+1. **Chained calls**: Does `obj?.method()?.result` work as expected?
+2. **Assignment**: Should `obj?.prop = value` be allowed? (Probably no—too confusing)
+3. **Short-circuit scope**: In `a?.b + c`, is `c` evaluated if `a` is nihil?
+
+---
+
 ## Future Operators
 
-Candidates for future implementation:
+All high-priority operators now documented above. Remaining candidates:
 
 | Operator | Purpose | Notes |
 |----------|---------|-------|
-| `?.` | Optional chaining | Safe property access |
+| `typus` | Runtime type name | `typus x` → "textus", "numerus", etc. |
