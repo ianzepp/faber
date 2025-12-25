@@ -108,13 +108,7 @@ export interface UserType extends BaseType {
 /**
  * Discriminated union of all semantic types.
  */
-export type SemanticType =
-    | PrimitiveType
-    | GenericType
-    | FunctionType
-    | UnionType
-    | UnknownType
-    | UserType;
+export type SemanticType = PrimitiveType | GenericType | FunctionType | UnionType | UnknownType | UserType;
 
 // =============================================================================
 // TYPE CONSTRUCTORS
@@ -130,22 +124,14 @@ export function primitiveType(name: PrimitiveType['name'], nullable?: boolean): 
 /**
  * Create a generic type.
  */
-export function genericType(
-    name: string,
-    typeParameters: SemanticType[],
-    nullable?: boolean,
-): GenericType {
+export function genericType(name: string, typeParameters: SemanticType[], nullable?: boolean): GenericType {
     return { kind: 'generic', name, typeParameters, nullable };
 }
 
 /**
  * Create a function type.
  */
-export function functionType(
-    parameterTypes: SemanticType[],
-    returnType: SemanticType,
-    async = false,
-): FunctionType {
+export function functionType(parameterTypes: SemanticType[], returnType: SemanticType, async = false): FunctionType {
     return { kind: 'function', parameterTypes, returnType, async };
 }
 

@@ -575,10 +575,7 @@ export function generateWasm(program: Program, options: CodegenOptions = {}): st
         const expr = genExpression(node.expression);
 
         // If expression leaves value on stack and isn't a call, drop it
-        if (
-            node.expression.type !== 'CallExpression' &&
-            node.expression.type !== 'AssignmentExpression'
-        ) {
+        if (node.expression.type !== 'CallExpression' && node.expression.type !== 'AssignmentExpression') {
             return `${expr}\n${ind()}drop`;
         }
 

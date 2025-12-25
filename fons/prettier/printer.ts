@@ -68,11 +68,7 @@ function getBreakThreshold(options: FaberOptions): number {
 /**
  * Main entry point for Prettier printing.
  */
-export function faberPrint(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+export function faberPrint(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue();
 
     switch (node.type) {
@@ -203,11 +199,7 @@ export function faberPrint(
 // PROGRAM
 // =============================================================================
 
-function printProgram(
-    path: AstPath<PrettierProgram>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printProgram(path: AstPath<PrettierProgram>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue();
 
     if (node.body.length === 0) {
@@ -246,11 +238,7 @@ function printProgram(
 // STATEMENTS
 // =============================================================================
 
-function printImportDeclaration(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printImportDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
 
     if (node.wildcard) {
@@ -261,22 +249,13 @@ function printImportDeclaration(
     const threshold = getBreakThreshold(options);
 
     if (specifiers.length >= threshold) {
-        return group([
-            'ex ',
-            node.source,
-            ' importa ',
-            indent([softline, join([',', line], specifiers)]),
-        ]);
+        return group(['ex ', node.source, ' importa ', indent([softline, join([',', line], specifiers)])]);
     }
 
     return ['ex ', node.source, ' importa ', join(', ', specifiers)];
 }
 
-function printVariableDeclaration(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printVariableDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = [node.kind, ' '];
 
@@ -296,11 +275,7 @@ function printVariableDeclaration(
     return parts;
 }
 
-function printFunctionDeclaration(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printFunctionDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = [];
 
@@ -334,20 +309,12 @@ function printFunctionDeclaration(
     return parts;
 }
 
-function printTypeAliasDeclaration(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printTypeAliasDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     return ['typus ', path.call(print, 'name'), ' = ', path.call(print, 'typeAnnotation')];
 }
 
-function printEnumDeclaration(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printEnumDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const members = path.map(print, 'members');
 
@@ -355,21 +322,10 @@ function printEnumDeclaration(
         return ['ordo ', path.call(print, 'name'), ' {}'];
     }
 
-    return [
-        'ordo ',
-        path.call(print, 'name'),
-        ' {',
-        indent([hardline, join([',', hardline], members)]),
-        hardline,
-        '}',
-    ];
+    return ['ordo ', path.call(print, 'name'), ' {', indent([hardline, join([',', hardline], members)]), hardline, '}'];
 }
 
-function printEnumMember(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printEnumMember(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = [path.call(print, 'name')];
 
@@ -380,11 +336,7 @@ function printEnumMember(
     return parts;
 }
 
-function printGenusDeclaration(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printGenusDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = ['genus ', path.call(print, 'name')];
 
@@ -444,11 +396,7 @@ function printGenusDeclaration(
     return parts;
 }
 
-function printFieldDeclaration(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printFieldDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = [];
 
@@ -473,11 +421,7 @@ function printFieldDeclaration(
     return parts;
 }
 
-function printComputedFieldDeclaration(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printComputedFieldDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = [];
 
@@ -489,22 +433,12 @@ function printComputedFieldDeclaration(
         parts.push('generis ');
     }
 
-    parts.push(
-        path.call(print, 'fieldType'),
-        ' ',
-        path.call(print, 'name'),
-        ' => ',
-        path.call(print, 'expression'),
-    );
+    parts.push(path.call(print, 'fieldType'), ' ', path.call(print, 'name'), ' => ', path.call(print, 'expression'));
 
     return parts;
 }
 
-function printPactumDeclaration(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printPactumDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = ['pactum ', path.call(print, 'name')];
 
@@ -532,11 +466,7 @@ function printPactumDeclaration(
     return parts;
 }
 
-function printPactumMethod(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printPactumMethod(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = [];
 
@@ -566,11 +496,7 @@ function printPactumMethod(
     return parts;
 }
 
-function printEmitStatement(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printEmitStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = ['emitte ', path.call(print, 'event')];
 
@@ -581,11 +507,7 @@ function printEmitStatement(
     return parts;
 }
 
-function printFacBlockStatement(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printFacBlockStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = ['fac ', path.call(print, 'body')];
 
@@ -596,11 +518,7 @@ function printFacBlockStatement(
     return parts;
 }
 
-function printLambdaExpression(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printLambdaExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = ['pro '];
 
@@ -611,35 +529,22 @@ function printLambdaExpression(
 
     if (node.body.type === 'BlockStatement') {
         parts.push(path.call(print, 'body'));
-    }
-    else {
+    } else {
         parts.push('redde ', path.call(print, 'body'));
     }
 
     return parts;
 }
 
-function printAuscultaExpression(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printAuscultaExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     return ['ausculta ', path.call(print, 'event')];
 }
 
-function printExpressionStatement(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printExpressionStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     return path.call(print, 'expression');
 }
 
-function printIfStatement(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printIfStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = ['si ', path.call(print, 'test'), ' ', path.call(print, 'consequent')];
 
@@ -660,11 +565,7 @@ function printIfStatement(
     return parts;
 }
 
-function printWhileStatement(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printWhileStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = ['dum ', path.call(print, 'test'), ' ', path.call(print, 'body')];
 
@@ -675,21 +576,9 @@ function printWhileStatement(
     return parts;
 }
 
-function printForStatement(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printForStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
-    const parts: Doc[] = [
-        node.kind,
-        ' ',
-        path.call(print, 'iterable'),
-        ' pro ',
-        path.call(print, 'variable'),
-        ' ',
-        path.call(print, 'body'),
-    ];
+    const parts: Doc[] = [node.kind, ' ', path.call(print, 'iterable'), ' pro ', path.call(print, 'variable'), ' ', path.call(print, 'body')];
 
     if (node.catchClause) {
         parts.push(hardline, path.call(print, 'catchClause'));
@@ -698,19 +587,11 @@ function printForStatement(
     return parts;
 }
 
-function printWithStatement(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printWithStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     return ['cum ', path.call(print, 'object'), ' ', path.call(print, 'body')];
 }
 
-function printSwitchStatement(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printSwitchStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = ['elige ', path.call(print, 'discriminant'), ' {'];
 
@@ -738,19 +619,11 @@ function printSwitchStatement(
     return parts;
 }
 
-function printSwitchCase(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printSwitchCase(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     return ['si ', path.call(print, 'test'), ' ', path.call(print, 'consequent')];
 }
 
-function printGuardStatement(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printGuardStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const clauseParts: Doc[] = [];
 
     path.each((clausePath, index) => {
@@ -763,19 +636,11 @@ function printGuardStatement(
     return ['custodi {', indent([hardline, ...clauseParts]), hardline, '}'];
 }
 
-function printGuardClause(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printGuardClause(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     return ['si ', path.call(print, 'test'), ' ', path.call(print, 'consequent')];
 }
 
-function printAssertStatement(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printAssertStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = ['adfirma ', path.call(print, 'test')];
 
@@ -786,11 +651,7 @@ function printAssertStatement(
     return parts;
 }
 
-function printReturnStatement(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printReturnStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
 
     if (node.argument) {
@@ -800,11 +661,7 @@ function printReturnStatement(
     return 'redde';
 }
 
-function printBlockStatement(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printBlockStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
 
     if (node.body.length === 0) {
@@ -836,21 +693,13 @@ function printBlockStatement(
     return ['{', indent([hardline, ...stmtParts]), hardline, '}'];
 }
 
-function printThrowStatement(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printThrowStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const keyword = node.fatal ? 'mori' : 'iace';
     return [keyword, ' ', path.call(print, 'argument')];
 }
 
-function printTryStatement(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printTryStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = ['tempta ', path.call(print, 'block')];
 
@@ -865,19 +714,11 @@ function printTryStatement(
     return parts;
 }
 
-function printCatchClause(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printCatchClause(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     return ['cape ', path.call(print, 'param'), ' ', path.call(print, 'body')];
 }
 
-function printScribeStatement(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printScribeStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const keyword = node.level === 'debug' ? 'vide' : node.level === 'warn' ? 'mone' : 'scribe';
     const args = path.map(print, 'arguments');
@@ -888,20 +729,12 @@ function printScribeStatement(
 // EXPRESSIONS
 // =============================================================================
 
-function printIdentifier(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printIdentifier(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     return node.name;
 }
 
-function printLiteral(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printLiteral(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
 
     // Prefer raw representation, fall back to stringified value
@@ -922,11 +755,7 @@ function printLiteral(
     return String(node.value);
 }
 
-function printTemplateLiteral(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printTemplateLiteral(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
 
     // Ensure backticks are present (tokenizer may strip them)
@@ -937,11 +766,7 @@ function printTemplateLiteral(
     return `\`${raw}\``;
 }
 
-function printArrayExpression(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printArrayExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
 
     if (node.elements.length === 0) {
@@ -961,11 +786,7 @@ function printArrayExpression(
     return ['[', join(', ', elements), ']'];
 }
 
-function printObjectExpression(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printObjectExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
 
     if (node.properties.length === 0) {
@@ -982,28 +803,16 @@ function printObjectExpression(
     return ['{ ', join(', ', properties), ' }'];
 }
 
-function printObjectProperty(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printObjectProperty(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     return [path.call(print, 'key'), ': ', path.call(print, 'value')];
 }
 
-function printObjectPattern(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printObjectPattern(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const properties = path.map(print, 'properties');
     return ['{ ', join(', ', properties), ' }'];
 }
 
-function printObjectPatternProperty(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printObjectPatternProperty(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
 
     // If key and value are the same, use shorthand
@@ -1014,11 +823,7 @@ function printObjectPatternProperty(
     return [path.call(print, 'key'), ': ', path.call(print, 'value')];
 }
 
-function printRangeExpression(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printRangeExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = [path.call(print, 'start'), '..', path.call(print, 'end')];
 
@@ -1029,20 +834,12 @@ function printRangeExpression(
     return parts;
 }
 
-function printBinaryExpression(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printBinaryExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     return group([path.call(print, 'left'), ' ', node.operator, line, path.call(print, 'right')]);
 }
 
-function printUnaryExpression(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printUnaryExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
 
     if (node.prefix) {
@@ -1056,30 +853,19 @@ function printUnaryExpression(
     return [path.call(print, 'argument'), node.operator];
 }
 
-function printCallExpression(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printCallExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const args = path.map(print, 'arguments');
     const threshold = getBreakThreshold(options);
 
     if (args.length >= threshold) {
-        return [
-            path.call(print, 'callee'),
-            group(['(', indent([softline, join([',', line], args)]), softline, ')']),
-        ];
+        return [path.call(print, 'callee'), group(['(', indent([softline, join([',', line], args)]), softline, ')'])];
     }
 
     return [path.call(print, 'callee'), '(', join(', ', args), ')'];
 }
 
-function printMemberExpression(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printMemberExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
 
     if (node.computed) {
@@ -1089,11 +875,7 @@ function printMemberExpression(
     return [path.call(print, 'object'), '.', path.call(print, 'property')];
 }
 
-function printArrowFunctionExpression(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printArrowFunctionExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = [];
 
@@ -1124,55 +906,25 @@ function printArrowFunctionExpression(
     return parts;
 }
 
-function printAssignmentExpression(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printAssignmentExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     return [path.call(print, 'left'), ' ', node.operator, ' ', path.call(print, 'right')];
 }
 
-function printConditionalExpression(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
-    return group([
-        path.call(print, 'test'),
-        indent([
-            line,
-            '? ',
-            path.call(print, 'consequent'),
-            line,
-            ': ',
-            path.call(print, 'alternate'),
-        ]),
-    ]);
+function printConditionalExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+    return group([path.call(print, 'test'), indent([line, '? ', path.call(print, 'consequent'), line, ': ', path.call(print, 'alternate')])]);
 }
 
-function printAwaitExpression(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printAwaitExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     return ['cede ', path.call(print, 'argument')];
 }
 
-function printNewExpression(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printNewExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const args = path.map(print, 'arguments');
     const threshold = getBreakThreshold(options);
 
     if (args.length >= threshold) {
-        return [
-            'novum ',
-            path.call(print, 'callee'),
-            group(['(', indent([softline, join([',', line], args)]), softline, ')']),
-        ];
+        return ['novum ', path.call(print, 'callee'), group(['(', indent([softline, join([',', line], args)]), softline, ')'])];
     }
 
     return ['novum ', path.call(print, 'callee'), '(', join(', ', args), ')'];
@@ -1182,11 +934,7 @@ function printNewExpression(
 // TYPE ANNOTATIONS
 // =============================================================================
 
-function printTypeAnnotation(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printTypeAnnotation(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
 
     // Union type
@@ -1221,11 +969,7 @@ function printTypeAnnotation(
     return parts;
 }
 
-function printParameter(
-    path: AstPath<AstNode>,
-    options: FaberOptions,
-    print: (path: AstPath<AstNode>) => Doc,
-): Doc {
+function printParameter(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = [];
 

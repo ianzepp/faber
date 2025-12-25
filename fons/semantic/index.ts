@@ -186,34 +186,30 @@ const NORMA_EXPORTS: Record<string, { type: SemanticType; kind: 'function' | 'va
  * Time operations: current time, sleeping, duration constants.
  * When `ex "norma/tempus" importa X` is encountered, these symbols are added to scope.
  */
-const NORMA_TEMPUS_EXPORTS: Record<string, { type: SemanticType; kind: 'function' | 'variable' }> =
-    {
-        // Current time functions
-        nunc: { type: functionType([], NUMERUS), kind: 'function' },
-        nunc_nano: { type: functionType([], NUMERUS), kind: 'function' },
-        nunc_secunda: { type: functionType([], NUMERUS), kind: 'function' },
+const NORMA_TEMPUS_EXPORTS: Record<string, { type: SemanticType; kind: 'function' | 'variable' }> = {
+    // Current time functions
+    nunc: { type: functionType([], NUMERUS), kind: 'function' },
+    nunc_nano: { type: functionType([], NUMERUS), kind: 'function' },
+    nunc_secunda: { type: functionType([], NUMERUS), kind: 'function' },
 
-        // Sleep (async)
-        dormi: {
-            type: functionType([NUMERUS], genericType('promissum', [VACUUM])),
-            kind: 'function',
-        },
+    // Sleep (async)
+    dormi: {
+        type: functionType([NUMERUS], genericType('promissum', [VACUUM])),
+        kind: 'function',
+    },
 
-        // Duration constants (milliseconds)
-        MILLISECUNDUM: { type: NUMERUS, kind: 'variable' },
-        SECUNDUM: { type: NUMERUS, kind: 'variable' },
-        MINUTUM: { type: NUMERUS, kind: 'variable' },
-        HORA: { type: NUMERUS, kind: 'variable' },
-        DIES: { type: NUMERUS, kind: 'variable' },
-    };
+    // Duration constants (milliseconds)
+    MILLISECUNDUM: { type: NUMERUS, kind: 'variable' },
+    SECUNDUM: { type: NUMERUS, kind: 'variable' },
+    MINUTUM: { type: NUMERUS, kind: 'variable' },
+    HORA: { type: NUMERUS, kind: 'variable' },
+    DIES: { type: NUMERUS, kind: 'variable' },
+};
 
 /**
  * Map of all norma submodule exports.
  */
-const NORMA_SUBMODULES: Record<
-    string,
-    Record<string, { type: SemanticType; kind: 'function' | 'variable' }>
-> = {
+const NORMA_SUBMODULES: Record<string, Record<string, { type: SemanticType; kind: 'function' | 'variable' }>> = {
     'norma/tempus': NORMA_TEMPUS_EXPORTS,
 };
 
@@ -322,9 +318,7 @@ export function analyze(program: Program): SemanticResult {
      */
     function analyzeImportDeclaration(node: ImportDeclaration): void {
         // Determine which export map to use
-        let exports:
-            | Record<string, { type: SemanticType; kind: 'function' | 'variable' }>
-            | undefined;
+        let exports: Record<string, { type: SemanticType; kind: 'function' | 'variable' }> | undefined;
         const moduleName = node.source;
 
         if (node.source === 'norma') {
@@ -440,9 +434,7 @@ export function analyze(program: Program): SemanticResult {
      *
      * WHY: Numeric literals in type parameters specify bit width (e.g., numerus<32>).
      */
-    function extractSizeFromTypeParams(
-        typeParams?: Array<TypeAnnotation | Literal>,
-    ): number | undefined {
+    function extractSizeFromTypeParams(typeParams?: Array<TypeAnnotation | Literal>): number | undefined {
         if (!typeParams) {
             return undefined;
         }
@@ -545,9 +537,7 @@ export function analyze(program: Program): SemanticResult {
         }
     }
 
-    function resolveObjectExpression(
-        node: Expression & { type: 'ObjectExpression' },
-    ): SemanticType {
+    function resolveObjectExpression(node: Expression & { type: 'ObjectExpression' }): SemanticType {
         // Resolve each property value
         for (const prop of node.properties) {
             resolveExpression(prop.value);
@@ -662,23 +652,14 @@ export function analyze(program: Program): SemanticResult {
         // Arithmetic operators: +, -, *, /, %
         if (['+', '-', '*', '/', '%'].includes(node.operator)) {
             // String concatenation with + operator
-            if (
-                node.operator === '+' &&
-                leftType.kind === 'primitive' &&
-                leftType.name === 'textus'
-            ) {
+            if (node.operator === '+' && leftType.kind === 'primitive' && leftType.name === 'textus') {
                 node.resolvedType = TEXTUS;
 
                 return TEXTUS;
             }
 
             // Numeric arithmetic
-            if (
-                leftType.kind === 'primitive' &&
-                leftType.name === 'numerus' &&
-                rightType.kind === 'primitive' &&
-                rightType.name === 'numerus'
-            ) {
+            if (leftType.kind === 'primitive' && leftType.name === 'numerus' && rightType.kind === 'primitive' && rightType.name === 'numerus') {
                 node.resolvedType = NUMERUS;
 
                 return NUMERUS;
@@ -700,13 +681,9 @@ export function analyze(program: Program): SemanticResult {
             if (leftPrim && rightPrim && leftPrim !== rightPrim) {
                 // Allow unknown types to pass through
                 if (leftPrim !== 'unknown' && rightPrim !== 'unknown') {
-                    const { text, help } =
-                        SEMANTIC_ERRORS[SemanticErrorCode.IncompatibleComparison];
+                    const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.IncompatibleComparison];
 
-                    error(
-                        `${text(formatType(leftType), formatType(rightType), node.operator)}\n${help}`,
-                        node.position,
-                    );
+                    error(`${text(formatType(leftType), formatType(rightType), node.operator)}\n${help}`, node.position);
                 }
             }
 
@@ -799,9 +776,7 @@ export function analyze(program: Program): SemanticResult {
         const paramTypes: SemanticType[] = [];
 
         for (const param of node.params) {
-            const paramType = param.typeAnnotation
-                ? resolveTypeAnnotation(param.typeAnnotation)
-                : UNKNOWN;
+            const paramType = param.typeAnnotation ? resolveTypeAnnotation(param.typeAnnotation) : UNKNOWN;
 
             paramTypes.push(paramType);
             define({
@@ -862,8 +837,7 @@ export function analyze(program: Program): SemanticResult {
         if (node.body.type === 'BlockStatement') {
             analyzeBlock(node.body);
             returnType = VACUUM;
-        }
-        else {
+        } else {
             returnType = resolveExpression(node.body as Expression);
         }
 
@@ -892,10 +866,7 @@ export function analyze(program: Program): SemanticResult {
             } else if (!isAssignableTo(rightType, symbol.type)) {
                 const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.TypeMismatch];
 
-                error(
-                    `${text(formatType(rightType), formatType(symbol.type))}\n${help}`,
-                    node.position,
-                );
+                error(`${text(formatType(rightType), formatType(symbol.type))}\n${help}`, node.position);
             }
         } else {
             resolveExpression(node.left);
@@ -936,9 +907,7 @@ export function analyze(program: Program): SemanticResult {
         return type;
     }
 
-    function resolveConditional(
-        node: Expression & { type: 'ConditionalExpression' },
-    ): SemanticType {
+    function resolveConditional(node: Expression & { type: 'ConditionalExpression' }): SemanticType {
         resolveExpression(node.test);
 
         const consequentType = resolveExpression(node.consequent);
@@ -1115,9 +1084,7 @@ export function analyze(program: Program): SemanticResult {
 
     function analyzeFunctionDeclaration(node: FunctionDeclaration): void {
         // Build function type from parameters and return type
-        const paramTypes: SemanticType[] = node.params.map(p =>
-            p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN,
-        );
+        const paramTypes: SemanticType[] = node.params.map(p => (p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN));
         const returnType = node.returnType ? resolveTypeAnnotation(node.returnType) : VACUUM;
 
         const fnType = functionType(paramTypes, returnType, node.async);
@@ -1246,9 +1213,7 @@ export function analyze(program: Program): SemanticResult {
 
         for (const stmt of node.body.body) {
             const isBareAssignment =
-                stmt.type === 'ExpressionStatement' &&
-                stmt.expression.type === 'AssignmentExpression' &&
-                stmt.expression.left.type === 'Identifier';
+                stmt.type === 'ExpressionStatement' && stmt.expression.type === 'AssignmentExpression' && stmt.expression.left.type === 'Identifier';
 
             if (isBareAssignment) {
                 // Skip validation for bare identifier assignments
@@ -1311,10 +1276,7 @@ export function analyze(program: Program): SemanticResult {
         if (currentFunctionReturnType && !isAssignableTo(returnType, currentFunctionReturnType)) {
             const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.ReturnTypeMismatch];
 
-            error(
-                `${text(formatType(returnType), formatType(currentFunctionReturnType))}\n${help}`,
-                node.position,
-            );
+            error(`${text(formatType(returnType), formatType(currentFunctionReturnType))}\n${help}`, node.position);
         }
     }
 

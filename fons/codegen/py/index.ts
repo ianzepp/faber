@@ -351,9 +351,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      */
     function genGenusDeclaration(node: GenusDeclaration): string {
         const name = node.name.name;
-        const typeParams = node.typeParameters
-            ? `[${node.typeParameters.map(p => p.name).join(', ')}]`
-            : '';
+        const typeParams = node.typeParameters ? `[${node.typeParameters.map(p => p.name).join(', ')}]` : '';
 
         // Python uses Protocol for interfaces
         const impl = node.implements ? `(${node.implements.map(i => i.name).join(', ')})` : '';
@@ -528,8 +526,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
 
         const header = `${ind()}${asyncMod}def ${name}(${params})${returnType}:`;
         depth++;
-        const body =
-            node.body.body.length === 0 ? `${ind()}pass` : genBlockStatementContent(node.body);
+        const body = node.body.body.length === 0 ? `${ind()}pass` : genBlockStatementContent(node.body);
         depth--;
 
         inGenerator = prevInGenerator;
@@ -542,9 +539,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      */
     function genPactumDeclaration(node: PactumDeclaration): string {
         const name = node.name.name;
-        const typeParams = node.typeParameters
-            ? `[${node.typeParameters.map(p => p.name).join(', ')}]`
-            : '';
+        const typeParams = node.typeParameters ? `[${node.typeParameters.map(p => p.name).join(', ')}]` : '';
 
         const lines: string[] = [];
         lines.push(`${ind()}class ${name}${typeParams}(Protocol):`);
@@ -604,9 +599,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         // Handle generic type parameters
         let result = base;
         if (node.typeParameters && node.typeParameters.length > 0) {
-            const params = node.typeParameters
-                .map(genTypeParameter)
-                .filter((p): p is string => p !== null);
+            const params = node.typeParameters.map(genTypeParameter).filter((p): p is string => p !== null);
 
             if (params.length > 0) {
                 result = `${base}[${params.join(', ')}]`;
@@ -1070,8 +1063,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         }
 
         const props = node.properties.map(prop => {
-            const key =
-                prop.key.type === 'Identifier' ? `"${prop.key.name}"` : genLiteral(prop.key);
+            const key = prop.key.type === 'Identifier' ? `"${prop.key.name}"` : genLiteral(prop.key);
             const value = genExpression(prop.value);
             return `${key}: ${value}`;
         });

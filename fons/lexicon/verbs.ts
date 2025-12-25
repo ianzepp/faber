@@ -108,10 +108,7 @@ export const verbs: VerbEntry[] = [
  *      stem vowel (unlike 2nd conjugation's long -ē-) and uses -i- as a
  *      connecting vowel in some forms.
  */
-export const conjugation3Endings: Record<
-    string,
-    { tense: Tense; person?: Person; number?: Number; async: boolean }[]
-> = {
+export const conjugation3Endings: Record<string, { tense: Tense; person?: Person; number?: Number; async: boolean }[]> = {
     // WHY: Imperative is command form (2nd person only), always synchronous
     e: [{ tense: 'imperative', person: 2, number: 'singular', async: false }],
     ite: [{ tense: 'imperative', person: 2, number: 'plural', async: false }],
@@ -146,10 +143,7 @@ export const conjugation3Endings: Record<
  * WHY: First conjugation is the largest and most regular conjugation class.
  *      Characterized by the -a- theme vowel in most forms.
  */
-export const conjugation1Endings: Record<
-    string,
-    { tense: Tense; person?: Person; number?: Number; async: boolean }[]
-> = {
+export const conjugation1Endings: Record<string, { tense: Tense; person?: Person; number?: Number; async: boolean }[]> = {
     // WHY: Imperative singular is just the stem + -a
     a: [{ tense: 'imperative', person: 2, number: 'singular', async: false }],
     ate: [{ tense: 'imperative', person: 2, number: 'plural', async: false }],
@@ -191,10 +185,7 @@ export const conjugation1Endings: Record<
  * - monere: console.warn
  * - respondere: yield (generators/async iterators)
  */
-export const conjugation2Endings: Record<
-    string,
-    { tense: Tense; person?: Person; number?: Number; async: boolean }[]
-> = {
+export const conjugation2Endings: Record<string, { tense: Tense; person?: Person; number?: Number; async: boolean }[]> = {
     // WHY: Imperative uses -e (like 3rd conj) but from -ē- stem
     e: [{ tense: 'imperative', person: 2, number: 'singular', async: false }],
     ete: [{ tense: 'imperative', person: 2, number: 'plural', async: false }],
@@ -237,10 +228,7 @@ export const conjugation2Endings: Record<
  * - invenire: .find() / search operations
  * - scire: type guards, instanceof checks
  */
-export const conjugation4Endings: Record<
-    string,
-    { tense: Tense; person?: Person; number?: Number; async: boolean }[]
-> = {
+export const conjugation4Endings: Record<string, { tense: Tense; person?: Person; number?: Number; async: boolean }[]> = {
     // WHY: Imperative uses -i (singular), -ite (plural)
     i: [{ tense: 'imperative', person: 2, number: 'singular', async: false }],
     ite: [{ tense: 'imperative', person: 2, number: 'plural', async: false }],

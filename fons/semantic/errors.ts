@@ -71,13 +71,11 @@ export const SEMANTIC_ERRORS = {
         help: "Variables declared with 'fixum' cannot be reassigned. Use 'varia' for mutable variables.",
     },
     [SemanticErrorCode.TypeMismatch]: {
-        text: (sourceType: string, targetType: string) =>
-            `Type '${sourceType}' is not assignable to type '${targetType}'`,
+        text: (sourceType: string, targetType: string) => `Type '${sourceType}' is not assignable to type '${targetType}'`,
         help: 'Ensure the types are compatible. You may need a type conversion or to change the variable type.',
     },
     [SemanticErrorCode.ReturnTypeMismatch]: {
-        text: (returnType: string, functionType: string) =>
-            `Return type '${returnType}' is not assignable to function return type '${functionType}'`,
+        text: (returnType: string, functionType: string) => `Return type '${returnType}' is not assignable to function return type '${functionType}'`,
         help: 'The returned value must match the function return type annotation.',
     },
     [SemanticErrorCode.NoTypeOrInitializer]: {
@@ -89,8 +87,7 @@ export const SEMANTIC_ERRORS = {
         help: 'Check the module documentation for available exports. You may have a typo in the import name.',
     },
     [SemanticErrorCode.IncompatibleComparison]: {
-        text: (leftType: string, rightType: string, operator: string) =>
-            `Cannot compare '${leftType}' with '${rightType}' using '${operator}'`,
+        text: (leftType: string, rightType: string, operator: string) => `Cannot compare '${leftType}' with '${rightType}' using '${operator}'`,
         help: 'Comparison operators require operands of the same type. Both sides must be numbers or both must be strings.',
     },
 } as const;

@@ -42,13 +42,7 @@
 
 import type { ParsedNoun, ParsedVerb, Number, Tense } from './types';
 import { nouns, getEndingsForDeclension } from './nouns';
-import {
-    verbs,
-    conjugation1Endings,
-    conjugation2Endings,
-    conjugation3Endings,
-    conjugation4Endings,
-} from './verbs';
+import { verbs, conjugation1Endings, conjugation2Endings, conjugation3Endings, conjugation4Endings } from './verbs';
 import { builtinTypes } from './types-builtin';
 
 // =============================================================================

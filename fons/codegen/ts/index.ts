@@ -366,12 +366,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      */
     function genGenusDeclaration(node: GenusDeclaration): string {
         const name = node.name.name;
-        const typeParams = node.typeParameters
-            ? `<${node.typeParameters.map(p => p.name).join(', ')}>`
-            : '';
-        const impl = node.implements
-            ? ` implements ${node.implements.map(i => i.name).join(', ')}`
-            : '';
+        const typeParams = node.typeParameters ? `<${node.typeParameters.map(p => p.name).join(', ')}>` : '';
+        const impl = node.implements ? ` implements ${node.implements.map(i => i.name).join(', ')}` : '';
 
         const lines: string[] = [];
         lines.push(`${ind()}class ${name}${typeParams}${impl} {`);
@@ -428,8 +424,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
             const fieldType = genType(f.fieldType);
             return `${fieldName}?: ${fieldType}`;
         });
-        const overridesType =
-            overrideProps.length > 0 ? `{ ${overrideProps.join(', ')} }` : 'Record<string, never>';
+        const overridesType = overrideProps.length > 0 ? `{ ${overrideProps.join(', ')} }` : 'Record<string, never>';
 
         lines.push(`${ind()}constructor(overrides: ${overridesType} = {}) {`);
         depth++;
@@ -437,9 +432,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         // Apply each override if provided
         for (const field of node.fields) {
             const fieldName = field.name.name;
-            lines.push(
-                `${ind()}if (overrides.${fieldName} !== undefined) { this.${fieldName} = overrides.${fieldName}${semi ? ';' : ''} }`,
-            );
+            lines.push(`${ind()}if (overrides.${fieldName} !== undefined) { this.${fieldName} = overrides.${fieldName}${semi ? ';' : ''} }`);
         }
 
         // Call creo() if user defined it
@@ -491,9 +484,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
             lines.push(`${ind()}get ${name}(): ${type} { return this.#${name}; }`);
 
             // Setter with invalidation
-            lines.push(
-                `${ind()}set ${name}(v: ${type}) { this.#${name} = v; this.__invalidate?.('${name}'); }`,
-            );
+            lines.push(`${ind()}set ${name}(v: ${type}) { this.#${name} = v; this.__invalidate?.('${name}'); }`);
 
             return lines.join('\n');
         }
@@ -557,9 +548,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      */
     function genPactumDeclaration(node: PactumDeclaration): string {
         const name = node.name.name;
-        const typeParams = node.typeParameters
-            ? `<${node.typeParameters.map(p => p.name).join(', ')}>`
-            : '';
+        const typeParams = node.typeParameters ? `<${node.typeParameters.map(p => p.name).join(', ')}>` : '';
         const lines: string[] = [];
 
         lines.push(`${ind()}interface ${name}${typeParams} {`);
@@ -625,10 +614,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
             const memberName = member.name.name;
 
             if (member.value !== undefined) {
-                const value =
-                    typeof member.value.value === 'string'
-                        ? `"${member.value.value}"`
-                        : member.value.value;
+                const value = typeof member.value.value === 'string' ? `"${member.value.value}"` : member.value.value;
                 return `${memberName} = ${value}`;
             }
 
@@ -681,9 +667,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
 
         if (node.typeParameters && node.typeParameters.length > 0) {
             // Filter out null params (literals and modifiers that TS doesn't support)
-            const params = node.typeParameters
-                .map(genTypeParameter)
-                .filter((p): p is string => p !== null);
+            const params = node.typeParameters.map(genTypeParameter).filter((p): p is string => p !== null);
 
             // Only add type params if we have any left after filtering
             if (params.length > 0) {

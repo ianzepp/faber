@@ -198,9 +198,7 @@ function computeNominative(stem: string, declension: number, gender: string): st
  * DESIGN: Computed from builtinTypes to avoid duplication. Uses nominative forms
  *         since that's what users write in source code.
  */
-const BUILTIN_TYPE_NAMES = new Set(
-    builtinTypes.map(t => t.nominative ?? computeNominative(t.stem, t.declension, t.gender)),
-);
+const BUILTIN_TYPE_NAMES = new Set(builtinTypes.map(t => t.nominative ?? computeNominative(t.stem, t.declension, t.gender)));
 
 // =============================================================================
 // MAIN PARSER FUNCTION
@@ -390,10 +388,7 @@ export function parse(tokens: Token[]): ParserResult {
      * @returns true if token is a preposition keyword
      */
     function isPreposition(token: Token): boolean {
-        return (
-            token.type === 'KEYWORD' &&
-            ['ad', 'cum', 'de', 'in', 'ex'].includes(token.keyword ?? '')
-        );
+        return token.type === 'KEYWORD' && ['ad', 'cum', 'de', 'in', 'ex'].includes(token.keyword ?? '');
     }
 
     // =============================================================================
@@ -416,9 +411,13 @@ export function parse(tokens: Token[]): ParserResult {
 
         while (!isAtEnd()) {
             // Consume optional semicolons between statements
-            while (match('SEMICOLON')) {}
+            while (match('SEMICOLON')) {
+                // do nothing - avoids linter no-empty
+            }
 
-            if (isAtEnd()) break;
+            if (isAtEnd()) {
+                break;
+            }
 
             try {
                 body.push(parseStatement());
@@ -516,10 +515,7 @@ export function parse(tokens: Token[]): ParserResult {
             // Look ahead: ex (IDENTIFIER|STRING) importa -> import
             const nextType = peek(1).type;
 
-            if (
-                (nextType === 'IDENTIFIER' || nextType === 'STRING') &&
-                peek(2).keyword === 'importa'
-            ) {
+            if ((nextType === 'IDENTIFIER' || nextType === 'STRING') && peek(2).keyword === 'importa') {
                 return parseImportDeclaration();
             }
 
@@ -532,12 +528,7 @@ export function parse(tokens: Token[]): ParserResult {
             return parseForStatement();
         }
 
-        if (
-            checkKeyword('varia') ||
-            checkKeyword('fixum') ||
-            checkKeyword('figendum') ||
-            checkKeyword('variandum')
-        ) {
+        if (checkKeyword('varia') || checkKeyword('fixum') || checkKeyword('figendum') || checkKeyword('variandum')) {
             return parseVariableDeclaration();
         }
 
@@ -930,9 +921,7 @@ export function parse(tokens: Token[]): ParserResult {
         // If we see IDENT followed by IDENT, first is type, second is name.
         // If we see IDENT followed by <, it's a generic type.
         const hasTypeAnnotation =
-            isTypeName(peek()) ||
-            (check('IDENTIFIER') && peek(1).type === 'IDENTIFIER') ||
-            (check('IDENTIFIER') && peek(1).type === 'LESS');
+            isTypeName(peek()) || (check('IDENTIFIER') && peek(1).type === 'IDENTIFIER') || (check('IDENTIFIER') && peek(1).type === 'LESS');
 
         if (hasTypeAnnotation) {
             typeAnnotation = parseTypeAnnotation();
@@ -1555,12 +1544,7 @@ export function parse(tokens: Token[]): ParserResult {
         const source = parseExpression();
 
         // Dispatch based on what follows the expression
-        if (
-            checkKeyword('fixum') ||
-            checkKeyword('varia') ||
-            checkKeyword('figendum') ||
-            checkKeyword('variandum')
-        ) {
+        if (checkKeyword('fixum') || checkKeyword('varia') || checkKeyword('figendum') || checkKeyword('variandum')) {
             // Destructuring: ex source fixum { ... } or async: ex source figendum { ... }
             const kind = advance().keyword as 'varia' | 'fixum' | 'figendum' | 'variandum';
             const name = parseObjectPattern();
@@ -2089,9 +2073,13 @@ export function parse(tokens: Token[]): ParserResult {
 
         while (hasMoreStatements()) {
             // Consume optional semicolons between statements
-            while (match('SEMICOLON')) {}
+            while (match('SEMICOLON')) {
+                // do nothing - avoids linter no-empty
+            }
 
-            if (!hasMoreStatements()) break;
+            if (!hasMoreStatements()) {
+                break;
+            }
 
             body.push(parseStatement());
         }
@@ -2292,11 +2280,7 @@ export function parse(tokens: Token[]): ParserResult {
             if (match('EQUAL_EQUAL', 'BANG_EQUAL')) {
                 operator = tokens[current - 1].value;
                 position = tokens[current - 1].position;
-            } else if (
-                checkKeyword('non') &&
-                peek(1)?.type === 'KEYWORD' &&
-                peek(1)?.value.toLowerCase() === 'est'
-            ) {
+            } else if (checkKeyword('non') && peek(1)?.type === 'KEYWORD' && peek(1)?.value.toLowerCase() === 'est') {
                 // 'non est' maps to strict inequality (!==)
                 position = peek().position;
                 advance(); // consume 'non'
@@ -2661,9 +2645,7 @@ export function parse(tokens: Token[]): ParserResult {
         // Number literal
         if (check('NUMBER')) {
             const token = advance();
-            const value = token.value.includes('.')
-                ? parseFloat(token.value)
-                : parseInt(token.value, 10);
+            const value = token.value.includes('.') ? parseFloat(token.value) : parseInt(token.value, 10);
 
             return { type: 'Literal', value, raw: token.value, position };
         }
@@ -2845,8 +2827,7 @@ export function parse(tokens: Token[]): ParserResult {
         if (check('LBRACE')) {
             // Block form: pro x { ... }
             body = parseBlockStatement();
-        }
-        else {
+        } else {
             // Expression form: pro x redde expr
             expectKeyword('redde', ParserErrorCode.ExpectedKeywordRedde);
             body = parseExpression();
@@ -2922,9 +2903,7 @@ export function parse(tokens: Token[]): ParserResult {
                 if (check('NUMBER')) {
                     // Numeric parameter (e.g., numerus<32>)
                     const numToken = advance();
-                    const value = numToken.value.includes('.')
-                        ? parseFloat(numToken.value)
-                        : parseInt(numToken.value, 10);
+                    const value = numToken.value.includes('.') ? parseFloat(numToken.value) : parseInt(numToken.value, 10);
 
                     typeParameters.push({
                         type: 'Literal',

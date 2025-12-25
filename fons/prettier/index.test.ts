@@ -282,9 +282,7 @@ fixum b = 2`;
         });
 
         test('breaks long parameter lists', async () => {
-            const result = await format(
-                'functio longFunc(numerus aaa, numerus bbb, numerus ccc) { redde aaa }',
-                );
+            const result = await format('functio longFunc(numerus aaa, numerus bbb, numerus ccc) { redde aaa }');
             expect(result).toContain('functio longFunc');
         });
     });

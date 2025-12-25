@@ -217,9 +217,7 @@ export function faberParse(text: string): PrettierProgram {
 
     if (lexErrors.length > 0) {
         const err = lexErrors[0];
-        throw new SyntaxError(
-            `Lexical error at ${err.position.line}:${err.position.column}: ${err.message}`,
-        );
+        throw new SyntaxError(`Lexical error at ${err.position.line}:${err.position.column}: ${err.message}`);
     }
 
     // Parse
@@ -227,9 +225,7 @@ export function faberParse(text: string): PrettierProgram {
 
     if (!program) {
         const err = parseErrors[0];
-        throw new SyntaxError(
-            `Parse error at ${err?.position.line}:${err?.position.column}: ${err?.message ?? 'Unknown error'}`,
-        );
+        throw new SyntaxError(`Parse error at ${err?.position.line}:${err?.position.column}: ${err?.message ?? 'Unknown error'}`);
     }
 
     // Extract comments for Prettier

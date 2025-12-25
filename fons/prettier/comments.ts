@@ -78,13 +78,7 @@ export function printComment(path: AstPath<CommentNode>): Doc {
             return content ? [' * ', content] : ' *';
         });
 
-        return [
-            prefix,
-            hardline,
-            join(hardline, formattedLines.slice(isDocComment ? 0 : 0)),
-            hardline,
-            ' */',
-        ];
+        return [prefix, hardline, join(hardline, formattedLines.slice(isDocComment ? 0 : 0)), hardline, ' */'];
     }
 
     // Line comment: // content

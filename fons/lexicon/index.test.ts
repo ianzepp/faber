@@ -1,13 +1,5 @@
 import { test, expect, describe } from 'bun:test';
-import {
-    parseNoun,
-    parseVerb,
-    parseType,
-    isKeyword,
-    getKeyword,
-    isBuiltinType,
-    isLexiconError,
-} from './index';
+import { parseNoun, parseVerb, parseType, isKeyword, getKeyword, isBuiltinType, isLexiconError } from './index';
 
 describe('parseNoun', () => {
     describe('2nd declension masculine', () => {

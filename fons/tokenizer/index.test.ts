@@ -100,28 +100,13 @@ describe('tokenizer', () => {
         test('arithmetic operators', () => {
             const { tokens } = tokenize('+ - * / %');
 
-            expect(tokens.map(t => t.type)).toEqual([
-                'PLUS',
-                'MINUS',
-                'STAR',
-                'SLASH',
-                'PERCENT',
-                'EOF',
-            ]);
+            expect(tokens.map(t => t.type)).toEqual(['PLUS', 'MINUS', 'STAR', 'SLASH', 'PERCENT', 'EOF']);
         });
 
         test('comparison operators', () => {
             const { tokens } = tokenize('== != < <= > >=');
 
-            expect(tokens.map(t => t.type)).toEqual([
-                'EQUAL_EQUAL',
-                'BANG_EQUAL',
-                'LESS',
-                'LESS_EQUAL',
-                'GREATER',
-                'GREATER_EQUAL',
-                'EOF',
-            ]);
+            expect(tokens.map(t => t.type)).toEqual(['EQUAL_EQUAL', 'BANG_EQUAL', 'LESS', 'LESS_EQUAL', 'GREATER', 'GREATER_EQUAL', 'EOF']);
         });
 
         test('logical operators', () => {
@@ -165,14 +150,7 @@ describe('tokenizer', () => {
         test('punctuation', () => {
             const { tokens } = tokenize(', ; : . ?');
 
-            expect(tokens.map(t => t.type)).toEqual([
-                'COMMA',
-                'SEMICOLON',
-                'COLON',
-                'DOT',
-                'QUESTION',
-                'EOF',
-            ]);
+            expect(tokens.map(t => t.type)).toEqual(['COMMA', 'SEMICOLON', 'COLON', 'DOT', 'QUESTION', 'EOF']);
         });
 
         test('pipe for union types', () => {
@@ -209,13 +187,7 @@ describe('tokenizer', () => {
         test('variable declaration', () => {
             const { tokens } = tokenize('fixum nomen = "Marcus"');
 
-            expect(tokens.map(t => t.type)).toEqual([
-                'KEYWORD',
-                'IDENTIFIER',
-                'EQUAL',
-                'STRING',
-                'EOF',
-            ]);
+            expect(tokens.map(t => t.type)).toEqual(['KEYWORD', 'IDENTIFIER', 'EQUAL', 'STRING', 'EOF']);
         });
 
         test('function declaration', () => {
@@ -242,16 +214,7 @@ describe('tokenizer', () => {
         test('arrow function', () => {
             const { tokens } = tokenize('(x) => x * 2');
 
-            expect(tokens.map(t => t.type)).toEqual([
-                'LPAREN',
-                'IDENTIFIER',
-                'RPAREN',
-                'ARROW',
-                'IDENTIFIER',
-                'STAR',
-                'NUMBER',
-                'EOF',
-            ]);
+            expect(tokens.map(t => t.type)).toEqual(['LPAREN', 'IDENTIFIER', 'RPAREN', 'ARROW', 'IDENTIFIER', 'STAR', 'NUMBER', 'EOF']);
         });
     });
 

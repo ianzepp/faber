@@ -142,9 +142,7 @@ describe('parser', () => {
         });
 
         test('ex destructuring with rename', () => {
-            const { program } = parseCode(
-                'ex response fixum { status: responseStatus, data: responseData }',
-            );
+            const { program } = parseCode('ex response fixum { status: responseStatus, data: responseData }');
             const decl = program!.body[0] as any;
 
             expect(decl.name.properties[0].key.name).toBe('status');
@@ -805,9 +803,7 @@ describe('parser', () => {
         });
 
         test('genus with creo constructor', () => {
-            const { program } = parseCode(
-                'genus persona { functio creo(valores) { redde nihil } }',
-            );
+            const { program } = parseCode('genus persona { functio creo(valores) { redde nihil } }');
             const genus = program!.body[0] as any;
 
             expect(genus.constructor).toBeDefined();

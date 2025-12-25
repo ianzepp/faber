@@ -140,12 +140,7 @@ Examples:
  * @param silent - If true, don't print to stdout (for use by run command)
  * @returns Generated source code as string
  */
-async function compile(
-    inputFile: string,
-    target: CodegenTarget,
-    outputFile?: string,
-    silent = false,
-): Promise<string> {
+async function compile(inputFile: string, target: CodegenTarget, outputFile?: string, silent = false): Promise<string> {
     const source = await Bun.file(inputFile).text();
 
     // ---------------------------------------------------------------------------
@@ -157,9 +152,7 @@ async function compile(
     if (tokenErrors.length > 0) {
         console.error('Tokenizer errors:');
         for (const err of tokenErrors) {
-            console.error(
-                `  ${inputFile}:${err.position.line}:${err.position.column} - ${err.message}`,
-            );
+            console.error(`  ${inputFile}:${err.position.line}:${err.position.column} - ${err.message}`);
         }
 
         process.exit(1);
@@ -174,9 +167,7 @@ async function compile(
     if (parseErrors.length > 0) {
         console.error('Parser errors:');
         for (const err of parseErrors) {
-            console.error(
-                `  ${inputFile}:${err.position.line}:${err.position.column} - ${err.message}`,
-            );
+            console.error(`  ${inputFile}:${err.position.line}:${err.position.column} - ${err.message}`);
         }
 
         process.exit(1);
@@ -197,9 +188,7 @@ async function compile(
     if (semanticErrors.length > 0) {
         console.error('Semantic errors:');
         for (const err of semanticErrors) {
-            console.error(
-                `  ${inputFile}:${err.position.line}:${err.position.column} - ${err.message}`,
-            );
+            console.error(`  ${inputFile}:${err.position.line}:${err.position.column} - ${err.message}`);
         }
 
         process.exit(1);
@@ -386,9 +375,7 @@ for (let i = 2; i < args.length; i++) {
         const t = args[++i];
 
         if (t !== 'ts' && t !== 'zig' && t !== 'wasm') {
-            console.error(
-                `Error: Unknown target '${t}'. Valid targets: ${VALID_TARGETS.join(', ')}`,
-            );
+            console.error(`Error: Unknown target '${t}'. Valid targets: ${VALID_TARGETS.join(', ')}`);
             process.exit(1);
         }
 

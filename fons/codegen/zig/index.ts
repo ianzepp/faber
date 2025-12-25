@@ -695,9 +695,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             const name = field.name.name;
             const defaultVal = field.init ? genExpression(field.init) : 'undefined';
 
-            lines.push(
-                `${ind()}.${name} = if (@hasField(@TypeOf(overrides), "${name}")) overrides.${name} else ${defaultVal},`,
-            );
+            lines.push(`${ind()}.${name} = if (@hasField(@TypeOf(overrides), "${name}")) overrides.${name} else ${defaultVal},`);
         }
 
         depth--;
@@ -1077,11 +1075,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         }
 
         // Handle new Error("msg") - extract message
-        if (
-            node.argument.type === 'NewExpression' &&
-            node.argument.callee.name === 'Error' &&
-            node.argument.arguments.length > 0
-        ) {
+        if (node.argument.type === 'NewExpression' && node.argument.callee.name === 'Error' && node.argument.arguments.length > 0) {
             const msg = genExpression(node.argument.arguments[0]);
             return `${ind()}@panic(${msg});`;
         }
@@ -1162,10 +1156,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         const expr = genExpression(node.expression);
 
         // TARGET: Zig assignments and calls are statements, not expressions
-        if (
-            node.expression.type === 'CallExpression' ||
-            node.expression.type === 'AssignmentExpression'
-        ) {
+        if (node.expression.type === 'CallExpression' || node.expression.type === 'AssignmentExpression') {
             return `${ind()}${expr};`;
         }
 
@@ -1305,10 +1296,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         }
 
         const props = node.properties.map(prop => {
-            const key =
-                prop.key.type === 'Identifier'
-                    ? prop.key.name
-                    : String((prop.key as Literal).value);
+            const key = prop.key.type === 'Identifier' ? prop.key.name : String((prop.key as Literal).value);
             const value = genExpression(prop.value);
 
             return `.${key} = ${value}`;
