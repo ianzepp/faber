@@ -102,10 +102,10 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `cursor` (generator prefix) | [x] | [-] | [x] | [ ] | [ ] | [ ] |
 | Async generator | [x] | [-] | [x] | [ ] | [ ] | [ ] |
 | Arrow functions | [x] | [~] | [x] | [ ] | [ ] | [ ] |
-| `fit T` (sync return) | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `fiet T` (async return) | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `fiunt T` (generator return) | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
-| `fient T` (async generator return) | [ ] | [ ] | [ ] | [ ] | [ ] | [ ] |
+| `fit T` (sync return) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `fiet T` (async return) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
+| `fiunt T` (generator return) | [x] | [ ] | [x] | [ ] | [ ] | [ ] |
+| `fient T` (async generator return) | [x] | [ ] | [ ] | [ ] | [ ] | [ ] |
 
 ## Control Flow Statements
 
