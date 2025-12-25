@@ -644,6 +644,347 @@ describe('Python codegen', () => {
     });
 
     // =========================================================================
+    // GENUS (CLASS) DECLARATIONS
+    // =========================================================================
+
+    describe('genus declarations', () => {
+        test('empty class', () => {
+            const result = compile('genus Persona { }');
+            expect(result).toContain('class Persona:');
+            expect(result).toContain('pass');
+        });
+
+        test('class with fields', () => {
+            const result = compile(`
+                genus Persona {
+                    textus nomen
+                    numerus aetas
+                }
+            `);
+            expect(result).toContain('class Persona:');
+            expect(result).toContain('nomen: str');
+            expect(result).toContain('aetas: int');
+        });
+
+        test('class with field defaults', () => {
+            const result = compile(`
+                genus Config {
+                    numerus timeout: 30
+                    bivalens debug: falsum
+                }
+            `);
+            expect(result).toContain('timeout: int = 30');
+            expect(result).toContain('debug: bool = False');
+        });
+
+        test('class with method', () => {
+            const result = compile(`
+                genus Persona {
+                    textus nomen
+                    functio saluta() fit textus {
+                        redde "Salve, " + ego.nomen
+                    }
+                }
+            `);
+            expect(result).toContain('def saluta(self) -> str:');
+            expect(result).toContain('return ("Salve, " + self.nomen)');
+        });
+
+        test('class with async method', () => {
+            const result = compile(`
+                genus Service {
+                    functio fetch() fiet textus {
+                        redde "data"
+                    }
+                }
+            `);
+            expect(result).toContain('async def fetch(self) -> Awaitable[str]:');
+        });
+
+        test('class with generator method', () => {
+            const result = compile(`
+                genus Range {
+                    functio iter() fiunt numerus {
+                        cede 1
+                    }
+                }
+            `);
+            expect(result).toContain('def iter(self) -> Iterator[int]:');
+            expect(result).toContain('yield 1');
+        });
+
+        test('class with creo constructor', () => {
+            const result = compile(`
+                genus Persona {
+                    textus nomen
+                    functio creo() {
+                        scribe "Created"
+                    }
+                }
+            `);
+            expect(result).toContain('def __init__(self');
+            expect(result).toContain('def _creo(self):');
+            expect(result).toContain('print("Created")');
+        });
+
+        test('class with computed field', () => {
+            const result = compile(`
+                genus Persona {
+                    textus nomen
+                    publicus textus salutatio => "Salve, " + ego.nomen
+                }
+            `);
+            expect(result).toContain('@property');
+            expect(result).toContain('def salutatio(self) -> str:');
+        });
+
+        test('class implements interface', () => {
+            const result = compile(`
+                genus Worker implet Runnable {
+                    functio run() { }
+                }
+            `);
+            expect(result).toContain('class Worker(Runnable):');
+        });
+
+        test('class with type parameters', () => {
+            const result = compile(`
+                genus Container<T> {
+                    T value
+                }
+            `);
+            expect(result).toContain('class Container[T]:');
+        });
+    });
+
+    // =========================================================================
+    // PACTUM (INTERFACE/PROTOCOL) DECLARATIONS
+    // =========================================================================
+
+    describe('pactum declarations', () => {
+        test('empty protocol', () => {
+            const result = compile('pactum Runnable { }');
+            expect(result).toContain('class Runnable(Protocol):');
+            expect(result).toContain('pass');
+        });
+
+        test('protocol with method signature', () => {
+            const result = compile(`
+                pactum Runnable {
+                    functio run() fit vacuum
+                }
+            `);
+            expect(result).toContain('class Runnable(Protocol):');
+            expect(result).toContain('def run(self) -> None: ...');
+        });
+
+        test('protocol with async method', () => {
+            const result = compile(`
+                pactum Fetcher {
+                    functio fetch() fiet textus
+                }
+            `);
+            expect(result).toContain('async def fetch(self) -> Awaitable[str]: ...');
+        });
+
+        test('protocol with generator method', () => {
+            const result = compile(`
+                pactum Iterable {
+                    functio iter() fiunt numerus
+                }
+            `);
+            expect(result).toContain('def iter(self) -> Iterator[int]: ...');
+        });
+
+        test('protocol with type parameters', () => {
+            const result = compile(`
+                pactum Container<T> {
+                    functio get() fit T
+                }
+            `);
+            expect(result).toContain('class Container[T](Protocol):');
+        });
+    });
+
+    // =========================================================================
+    // CUM (WITH) STATEMENTS
+    // =========================================================================
+
+    describe('cum (with) statements', () => {
+        test('simple property assignment', () => {
+            const result = compile(`
+                cum user {
+                    nomen = "Marcus"
+                }
+            `);
+            expect(result).toContain('user.nomen = "Marcus"');
+        });
+
+        test('multiple property assignments', () => {
+            const result = compile(`
+                cum config {
+                    host = "localhost"
+                    port = 8080
+                }
+            `);
+            expect(result).toContain('config.host = "localhost"');
+            expect(result).toContain('config.port = 8080');
+        });
+    });
+
+    // =========================================================================
+    // THROW VARIATIONS
+    // =========================================================================
+
+    describe('throw variations', () => {
+        test('throw string literal', () => {
+            const result = compile('iace "error"');
+            expect(result).toBe('raise Exception("error")');
+        });
+
+        test('throw new Error', () => {
+            const result = compile('iace novum Error("something went wrong")');
+            expect(result).toBe('raise Exception("something went wrong")');
+        });
+
+        test('throw new erratum', () => {
+            const result = compile('iace novum erratum("failed")');
+            expect(result).toBe('raise Exception("failed")');
+        });
+
+        test('mori (fatal/panic)', () => {
+            const result = compile('mori "fatal error"');
+            expect(result).toBe('raise SystemExit("fatal error")');
+        });
+    });
+
+    // =========================================================================
+    // VIDE/MONE (DEBUG/WARN) STATEMENTS
+    // =========================================================================
+
+    describe('vide/mone statements', () => {
+        test('vide adds debug prefix', () => {
+            const result = compile('vide "checking value"');
+            expect(result).toBe('print("[DEBUG]", "checking value")');
+        });
+
+        test('mone adds warn prefix', () => {
+            const result = compile('mone "deprecated"');
+            expect(result).toBe('print("[WARN]", "deprecated")');
+        });
+
+        test('vide with multiple args', () => {
+            const result = compile('vide "x =", x');
+            expect(result).toBe('print("[DEBUG]", "x =", x)');
+        });
+    });
+
+    // =========================================================================
+    // FAC BLOCK STATEMENTS
+    // =========================================================================
+
+    describe('fac block statements', () => {
+        test('simple fac block', () => {
+            const result = compile('fac { scribe "hello" }');
+            // fac block just outputs the body directly in Python
+            expect(result).toContain('print("hello")');
+        });
+    });
+
+    // =========================================================================
+    // RANGE EXPRESSIONS
+    // =========================================================================
+
+    describe('range expressions', () => {
+        test('simple range', () => {
+            const result = compile('varia x = 0..10');
+            expect(result).toBe('x = list(range(0, 10 + 1))');
+        });
+
+        test('range with step', () => {
+            const result = compile('varia x = 0..10 per 2');
+            expect(result).toBe('x = list(range(0, 10 + 1, 2))');
+        });
+    });
+
+    // =========================================================================
+    // STRICT EQUALITY
+    // =========================================================================
+
+    describe('strict equality', () => {
+        test('est maps to ==', () => {
+            const result = compile(`
+                varia x = 1
+                varia y = 2
+                scribe x est y
+            `);
+            expect(result).toContain('(x == y)');
+        });
+    });
+
+    // =========================================================================
+    // NULLA/NONNULLA OPERATORS
+    // =========================================================================
+
+    describe('nulla/nonnulla operators', () => {
+        test('nulla checks empty', () => {
+            const result = compile('scribe nulla x');
+            expect(result).toContain("not x or len(x) == 0 if hasattr(x, '__len__') else not x");
+        });
+
+        test('nonnulla checks has content', () => {
+            const result = compile('scribe nonnulla x');
+            expect(result).toContain("x and (len(x) > 0 if hasattr(x, '__len__') else bool(x))");
+        });
+    });
+
+    // =========================================================================
+    // AWAIT/YIELD EXPRESSIONS
+    // =========================================================================
+
+    describe('await/yield expressions', () => {
+        test('cede as await in async context', () => {
+            const result = compile(`
+                functio fetch() fiet textus {
+                    varia data = cede getData()
+                    redde data
+                }
+            `);
+            expect(result).toContain('data = await getData()');
+        });
+
+        test('cede as yield in generator context', () => {
+            const result = compile(`
+                functio gen() fiunt numerus {
+                    cede 1
+                    cede 2
+                }
+            `);
+            expect(result).toContain('yield 1');
+            expect(result).toContain('yield 2');
+        });
+    });
+
+    // =========================================================================
+    // SWITCH WITH CATCH
+    // =========================================================================
+
+    describe('switch with catch', () => {
+        test('switch with catch clause', () => {
+            const result = compile(`
+                elige x {
+                    si 1 { scribe "one" }
+                } cape e {
+                    scribe "error"
+                }
+            `);
+            expect(result).toContain('try:');
+            expect(result).toContain('match x:');
+            expect(result).toContain('except Exception as e:');
+        });
+    });
+
+    // =========================================================================
     // COMPLETE PROGRAMS
     // =========================================================================
 
