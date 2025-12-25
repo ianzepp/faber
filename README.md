@@ -187,6 +187,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | String literals                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Number literals                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Template literals                   |    [x]     | [~] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| Regex literals (`sed`)              |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Array literals                      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Array spread (`sparge`)             |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 | Object literals                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |

@@ -97,7 +97,7 @@ Features that would need new Faber syntax to support.
 | Array destructuring | `[a, b] = arr` | Planned | `ex arr fixum [a, b]` | Enabled by `ceteri` rest syntax |
 | typeof (runtime) | `typeof x` | Planned | `x est numerus` | Via `est` with type RHS |
 | instanceof | `x instanceof T` | Planned | `x est T` | Via `est` with type RHS |
-| Regex literals | `/pattern/` | Not done | — | No tokenizer support |
+| Regex literals | `/pattern/` | Planned | `sed /pattern/` | Keyword disambiguates tokenizer |
 | Setters | `set prop(v)` | Not done | — | Computed props read-only |
 
 ### Medium Priority (useful)

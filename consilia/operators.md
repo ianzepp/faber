@@ -270,6 +270,88 @@ functio process(data: ignotus) {
 
 ---
 
+## sed (Regex Literals)
+
+**Etymology:** Playful nod to Unix `sed` (stream editor). In Latin, `sed` means "but"—semantically unrelated, but the Unix association is so strong that using it for regex feels natural.
+
+### Syntax
+
+```faber
+sed /pattern/flags
+```
+
+The `sed` keyword signals the tokenizer to switch to regex mode until the closing `/`.
+
+### Basic Usage
+
+```faber
+fixum digits = sed /\d+/
+fixum email = sed /[a-z]+@[a-z]+\.[a-z]+/i
+fixum words = sed /\b\w+\b/g
+```
+
+### Flags
+
+| Flag | Meaning |
+|------|---------|
+| `g` | Global (all matches) |
+| `i` | Case insensitive |
+| `m` | Multiline |
+| `s` | Dotall (`.` matches newlines) |
+
+### In Expressions
+
+Regex literals work anywhere an expression is expected:
+
+```faber
+// Conditional
+si text.congruet(sed /^\d{3}-\d{4}$/) {
+    scribe "Valid phone"
+}
+
+// Method argument
+fixum clean = text.muta(sed /\s+/g, " ")
+
+// Variable
+fixum pattern = sed /[A-Z][a-z]+/
+fixum names = text.inveniOmnes(pattern)
+```
+
+### String Methods for Regex
+
+| Faber | JS Equivalent | Description |
+|-------|---------------|-------------|
+| `congruet(sed)` | `test()` / `match()` | Test if pattern matches |
+| `inveni(sed)` | `match()` | Find first match |
+| `inveniOmnes(sed)` | `matchAll()` | Find all matches |
+| `muta(sed, textus)` | `replace()` | Replace matches |
+| `scinde(sed)` | `split()` | Split by pattern |
+
+### Design Notes
+
+- Keyword prefix (`sed /`) disambiguates from division operator
+- Space between `sed` and `/` required (consistent with `novum`, `sparge`, etc.)
+- Escaping follows target language rules (backslash escapes)
+- Compile-time syntax validation where possible
+
+### Target Mappings
+
+| Target | Compilation |
+|--------|-------------|
+| TypeScript | `/pattern/flags` (native RegExp) |
+| Python | `re.compile(r"pattern", flags)` |
+| Zig | Library-dependent (not in stdlib) |
+| Rust | `Regex::new(r"pattern")` |
+| C++ | `std::regex("pattern", flags)` |
+
+### Open Questions
+
+1. **Zig support**: Require external library or mark as unsupported?
+2. **Named capture groups**: `sed /(?<name>\w+)/` syntax?
+3. **Interpolation**: Allow variables in pattern? `sed /${prefix}\d+/`
+
+---
+
 ## Future Operators
 
 Candidates for future implementation:
@@ -278,4 +360,3 @@ Candidates for future implementation:
 |----------|---------|-------|
 | `?.` | Optional chaining | Safe property access |
 | `vel` | Nullish coalescing | Extend beyond destructuring |
-| `typus` | Runtime typeof | `typus x` → "textus", "numerus", etc. |
