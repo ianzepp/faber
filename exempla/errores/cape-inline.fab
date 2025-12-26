@@ -250,11 +250,10 @@ cape err {
 // Inline cape doesn't support demum
 // For cleanup, use explicit tempta-cape-demum
 
-varia resource = nihil
+varia resource = "allocated"
 
 si verum {
-    // resource = allocate()
-    scribe "Using resource"
+    scribe "Using resource:", resource
 }
 cape err {
     scribe "Error:", err
@@ -264,16 +263,12 @@ cape err {
 // Instead, use:
 tempta {
     si verum {
-        // resource = allocate()
-        scribe "Using resource"
+        scribe "Using resource:", resource
     }
 }
 cape err {
     scribe "Error:", err
 }
 demum {
-    si nonnulla resource {
-        // resource.free()
-        scribe "Cleanup"
-    }
+    scribe "Cleanup:", resource
 }

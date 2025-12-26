@@ -137,11 +137,18 @@ typus OrderStatus = textus
 typus Seconds = numerus
 typus Milliseconds = numerus
 
+fixum Seconds timeout = 30
+fixum Milliseconds delay = 1000
+scribe "timeout:", timeout, "delay:", delay
+
 // =============================================================================
 // RESULT TYPE ALIASES
 // =============================================================================
 
 typus ValidationResult = textus?
+
+fixum ValidationResult result = "valid"
+scribe "validation result:", result
 
 // =============================================================================
 // GENERIC ALIASES
@@ -149,3 +156,7 @@ typus ValidationResult = textus?
 
 typus Number = numerus
 typus S = textus
+
+fixum Number count = 42
+fixum S message = "hello"
+scribe "count:", count, "message:", message

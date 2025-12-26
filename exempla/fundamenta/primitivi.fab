@@ -133,7 +133,7 @@ typus Buffer = octeti
 
 // Function accepting bytes
 functio processData(octeti data) -> numerus {
-    redde 0
+    redde data.longitudo
 }
 
 // =============================================================================
@@ -203,8 +203,8 @@ fixum numerus documentedNumber = 100
 // =============================================================================
 
 functio describe(textus name, numerus age, bivalens active) -> textus {
-    fixum status = active
-    redde name + " is " + age + " years old"
+    fixum status = active ? "active" : "inactive"
+    redde name + " is " + age + " years old (" + status + ")"
 }
 
 scribe describe("Marcus", 30, verum)

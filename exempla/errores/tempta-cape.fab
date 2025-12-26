@@ -133,26 +133,23 @@ cape outer {
 // =============================================================================
 
 functio processFile(filename) {
-    varia file = nihil
+    varia file = "handle"
 
     tempta {
         scribe "Opening file:", filename
-        // file = open(filename)
+        file = filename
 
         si filename == "" {
             iace "Empty filename"
         }
 
-        scribe "Processing..."
+        scribe "Processing:", file
     }
     cape err {
         scribe "Error processing file:", err
     }
     demum {
-        si nonnulla file {
-            scribe "Closing file"
-            // file.close()
-        }
+        scribe "Closing file:", file
     }
 }
 
@@ -223,7 +220,7 @@ scribe withCleanup()
 
 // Resource management
 functio connectDatabase(url) {
-    varia connection = nihil
+    varia connection = "pending"
 
     tempta {
         scribe "Connecting to:", url
@@ -232,17 +229,14 @@ functio connectDatabase(url) {
             iace "Invalid URL"
         }
 
-        // connection = database.connect(url)
-        scribe "Connected"
+        connection = url
+        scribe "Connected:", connection
     }
     cape err {
         scribe "Connection failed:", err
     }
     demum {
-        si nonnulla connection {
-            scribe "Disconnecting"
-            // connection.close()
-        }
+        scribe "Disconnecting:", connection
     }
 }
 

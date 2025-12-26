@@ -139,6 +139,7 @@ scribe safeValue
 // GOOD:
 fixum a = verum ? 1 : 0
 fixum b = verum sic 1 secus 0
+scribe "a:", a, "b:", b
 
 // The following would be ERRORS (mixing styles):
 // fixum bad1 = verum sic 1 : 0    // ERROR: mixed sic with :
@@ -150,6 +151,7 @@ fixum b = verum sic 1 secus 0
 
 // Ternary is best for simple value selection
 fixum simple = verum ? "yes" : "no"
+scribe "simple:", simple
 
 // For complex logic, prefer si/aliter
 fixum complex = 42

@@ -38,6 +38,7 @@ functio fetchUser(id) {
 // Errors can be caught with tempta/cape
 tempta {
     fixum result = divide(10, 0)
+    scribe "Result:", result
 } cape err {
     scribe "Caught error:", err
 }

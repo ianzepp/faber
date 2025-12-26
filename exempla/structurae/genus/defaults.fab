@@ -174,6 +174,7 @@ genus address {
 fixum person1 = novum persona {
     name: "Marcus"
 }
+scribe "person1:", person1.name
 
 // Override location
 fixum customAddr = novum address {
@@ -185,6 +186,7 @@ fixum person2 = novum persona {
     name: "Julia",
     location: customAddr
 }
+scribe "person2:", person2.name
 
 scribe person2.location.city
 

@@ -41,6 +41,8 @@ fixum obj1 = novum loggedObject
 fixum obj2 = novum loggedObject {
     name: "Marcus"
 }
+scribe "obj1:", obj1.name
+scribe "obj2:", obj2.name
 
 // =============================================================================
 // VALIDATION IN CREO
@@ -168,6 +170,7 @@ fixum user = novum usuario {
     username: "MARCUS",
     email: "  marcus@roma.com  "
 }
+scribe "User:", user.username, user.email
 
 // =============================================================================
 // COMPUTED STATE
@@ -230,6 +233,9 @@ fixum cfg2 = novum config {
     port: 99999,
     timeout: 500
 }
+
+scribe "cfg1:", cfg1.host, cfg1.port
+scribe "cfg2:", cfg2.host, cfg2.port
 
 // =============================================================================
 // CREO VS REGULAR METHODS

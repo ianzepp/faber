@@ -83,6 +83,7 @@ functio fibonacci(numerus limit) fiunt numerus {
 
 // Async generator using 'fient' - equivalent to 'futura cursor functio ... -> T'
 functio streamData(textus source) fient textus {
+    scribe "Streaming from:", source
     fixum items = ["chunk1", "chunk2", "chunk3"]
     ex items pro item {
         cede item

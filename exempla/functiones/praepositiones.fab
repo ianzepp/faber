@@ -89,8 +89,10 @@ functio last(de lista<numerus> items) -> de numerus {
 
 // Returning the longer of two strings (borrowed)
 functio longer(de textus a, de textus b) fit de textus {
-    // Would compare lengths; simplified here
-    redde a
+    si a.longitudo > b.longitudo {
+        redde a
+    }
+    redde b
 }
 
 // =============================================================================
