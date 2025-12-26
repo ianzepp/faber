@@ -89,6 +89,9 @@ import type {
     FacBlockStatement,
     LambdaExpression,
     TypeCastExpression,
+    ProbandumStatement,
+    ProbaStatement,
+    CuraBlock,
 } from '../../parser/ast';
 import type { CodegenOptions, RequiredFeatures } from '../types';
 import { createRequiredFeatures } from '../types';
@@ -274,6 +277,12 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 return genFacBlockStatement(node);
             case 'ExpressionStatement':
                 return genExpressionStatement(node);
+            case 'ProbandumStatement':
+                return genProbandumStatement(node);
+            case 'ProbaStatement':
+                return genProbaStatement(node);
+            case 'CuraBlock':
+                return genCuraBlock(node);
             default:
                 throw new Error(`Unknown statement type: ${(node as any).type}`);
         }
@@ -1110,6 +1119,116 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
 
         // Without cape, just emit the block
         return `${ind()}${genBlockStatement(node.body)}`;
+    }
+
+    // ---------------------------------------------------------------------------
+    // Test Declarations (Proba)
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Generate test suite declaration.
+     *
+     * TRANSFORMS:
+     *   probandum "Tokenizer" {
+     *       ante { lexer = init() }
+     *       proba "parses numbers" { ... }
+     *   }
+     *   ->
+     *   describe("Tokenizer", () => {
+     *       beforeEach(() => { lexer = init(); });
+     *       test("parses numbers", () => { ... });
+     *   });
+     *
+     * WHY: Maps to Bun/Jest/Vitest describe() for test organization.
+     *      Setup/teardown blocks map to beforeEach/afterEach or beforeAll/afterAll.
+     */
+    function genProbandumStatement(node: ProbandumStatement): string {
+        const lines: string[] = [];
+        lines.push(`${ind()}describe("${node.name}", () => {`);
+
+        depth++;
+
+        for (const member of node.body) {
+            switch (member.type) {
+                case 'ProbandumStatement':
+                    lines.push(genProbandumStatement(member));
+                    break;
+                case 'ProbaStatement':
+                    lines.push(genProbaStatement(member));
+                    break;
+                case 'CuraBlock':
+                    lines.push(genCuraBlock(member));
+                    break;
+            }
+        }
+
+        depth--;
+        lines.push(`${ind()}})${semi ? ';' : ''}`);
+
+        return lines.join('\n');
+    }
+
+    /**
+     * Generate individual test case.
+     *
+     * TRANSFORMS:
+     *   proba "parses integers" { adfirma parse("42") est 42 }
+     *   -> test("parses integers", () => { ... });
+     *
+     *   proba omitte "blocked by #42" { ... }
+     *   -> test.skip("blocked by #42", () => { ... });
+     *
+     *   proba futurum "needs feature" { ... }
+     *   -> test.todo("needs feature");
+     *
+     * WHY: Maps to test()/test.skip()/test.todo() for test runners.
+     */
+    function genProbaStatement(node: ProbaStatement): string {
+        if (node.modifier === 'omitte') {
+            // Skip: test.skip("reason: name", () => { ... })
+            const reason = node.modifierReason ? `${node.modifierReason}: ` : '';
+            const body = genBlockStatement(node.body);
+            return `${ind()}test.skip("${reason}${node.name}", () => ${body})${semi ? ';' : ''}`;
+        }
+
+        if (node.modifier === 'futurum') {
+            // Todo: test.todo("reason: name")
+            const reason = node.modifierReason ? `${node.modifierReason}: ` : '';
+            return `${ind()}test.todo("${reason}${node.name}")${semi ? ';' : ''}`;
+        }
+
+        // Regular test
+        const body = genBlockStatement(node.body);
+        return `${ind()}test("${node.name}", () => ${body})${semi ? ';' : ''}`;
+    }
+
+    /**
+     * Generate cura block (test setup/teardown).
+     *
+     * TRANSFORMS:
+     *   cura ante { lexer = init() }
+     *   -> beforeEach(() => { lexer = init(); });
+     *
+     *   cura ante omnia { db = connect() }
+     *   -> beforeAll(() => { db = connect(); });
+     *
+     *   cura post { cleanup() }
+     *   -> afterEach(() => { cleanup(); });
+     *
+     *   cura post omnia { db.close() }
+     *   -> afterAll(() => { db.close(); });
+     *
+     * WHY: Maps timing (ante/post) and scope (omnia) to JS test hooks.
+     */
+    function genCuraBlock(node: CuraBlock): string {
+        let hook: string;
+        if (node.timing === 'ante') {
+            hook = node.omnia ? 'beforeAll' : 'beforeEach';
+        } else {
+            hook = node.omnia ? 'afterAll' : 'afterEach';
+        }
+        const body = genBlockStatement(node.body);
+        return `${ind()}${hook}(() => ${body})${semi ? ';' : ''}`;
     }
 
     function genBlockStatement(node: BlockStatement): string {

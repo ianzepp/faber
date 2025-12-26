@@ -2478,4 +2478,180 @@ describe('codegen', () => {
             expect(js).toContain('user?.address.city');
         });
     });
+
+    describe('proba - test syntax codegen', () => {
+        describe('probandum -> describe', () => {
+            test('simple probandum', () => {
+                const js = compile('probandum "Suite" { }');
+
+                expect(js).toContain('describe("Suite"');
+                expect(js).toContain('() => {');
+            });
+
+            test('probandum with proba', () => {
+                const js = compile(`
+                    probandum "Math" {
+                        proba "adds" { adfirma 1 + 1 est 2 }
+                    }
+                `);
+
+                expect(js).toContain('describe("Math"');
+                expect(js).toContain('test("adds"');
+            });
+
+            test('nested probandum', () => {
+                const js = compile(`
+                    probandum "Outer" {
+                        probandum "Inner" {
+                            proba "test" { adfirma verum }
+                        }
+                    }
+                `);
+
+                expect(js).toContain('describe("Outer"');
+                expect(js).toContain('describe("Inner"');
+                expect(js).toContain('test("test"');
+            });
+        });
+
+        describe('proba -> test', () => {
+            test('simple proba', () => {
+                const js = compile('proba "test name" { adfirma verum }');
+
+                expect(js).toContain('test("test name"');
+                expect(js).toContain('() => {');
+            });
+
+            test('proba omitte -> test.skip', () => {
+                const js = compile('proba omitte "reason" "skipped" { adfirma verum }');
+
+                expect(js).toContain('test.skip("reason: skipped"');
+            });
+
+            test('proba futurum -> test.todo', () => {
+                const js = compile('proba futurum "later" "pending" { }');
+
+                expect(js).toContain('test.todo("later: pending"');
+            });
+
+            test('proba with adfirma generates assertion', () => {
+                const js = compile('proba "math" { adfirma 1 + 1 est 2 }');
+
+                expect(js).toContain('test("math"');
+                expect(js).toContain('if (!(');
+                expect(js).toContain('throw new Error');
+            });
+        });
+
+        describe('cura ante -> beforeEach/beforeAll', () => {
+            test('cura ante -> beforeEach', () => {
+                const js = compile(`
+                    probandum "Suite" {
+                        cura ante { x = 0 }
+                    }
+                `);
+
+                expect(js).toContain('beforeEach(() => {');
+                expect(js).toContain('x = 0');
+            });
+
+            test('cura ante omnia -> beforeAll', () => {
+                const js = compile(`
+                    probandum "Suite" {
+                        cura ante omnia { db = connect() }
+                    }
+                `);
+
+                expect(js).toContain('beforeAll(() => {');
+                expect(js).toContain('db = connect()');
+            });
+        });
+
+        describe('cura post -> afterEach/afterAll', () => {
+            test('cura post -> afterEach', () => {
+                const js = compile(`
+                    probandum "Suite" {
+                        cura post { cleanup() }
+                    }
+                `);
+
+                expect(js).toContain('afterEach(() => {');
+                expect(js).toContain('cleanup()');
+            });
+
+            test('cura post omnia -> afterAll', () => {
+                const js = compile(`
+                    probandum "Suite" {
+                        cura post omnia { db.close() }
+                    }
+                `);
+
+                expect(js).toContain('afterAll(() => {');
+                expect(js).toContain('db.close()');
+            });
+        });
+
+        describe('full test suite codegen', () => {
+            test('complete probandum with all hooks', () => {
+                const js = compile(`
+                    probandum "Database" {
+                        cura ante omnia { db = connect() }
+                        cura ante { db.reset() }
+                        proba "inserts" { adfirma db.count() est 0 }
+                        cura post { db.rollback() }
+                        cura post omnia { db.close() }
+                    }
+                `);
+
+                expect(js).toContain('describe("Database"');
+                expect(js).toContain('beforeAll(() => {');
+                expect(js).toContain('beforeEach(() => {');
+                expect(js).toContain('test("inserts"');
+                expect(js).toContain('afterEach(() => {');
+                expect(js).toContain('afterAll(() => {');
+            });
+
+            test('multiple tests in suite', () => {
+                const js = compile(`
+                    probandum "Math" {
+                        proba "adds" { adfirma 1 + 1 est 2 }
+                        proba "subtracts" { adfirma 5 - 3 est 2 }
+                        proba "multiplies" { adfirma 3 * 4 est 12 }
+                    }
+                `);
+
+                expect(js).toContain('test("adds"');
+                expect(js).toContain('test("subtracts"');
+                expect(js).toContain('test("multiplies"');
+            });
+
+            test('mixed skip and todo tests', () => {
+                const js = compile(`
+                    probandum "Suite" {
+                        proba "works" { adfirma verum }
+                        proba omitte "broken" "skip this" { }
+                        proba futurum "later" "todo this" { }
+                    }
+                `);
+
+                expect(js).toContain('test("works"');
+                expect(js).toContain('test.skip("broken: skip this"');
+                expect(js).toContain('test.todo("later: todo this"');
+            });
+        });
+
+        describe('standalone proba and cura', () => {
+            test('proba at top level', () => {
+                const js = compile('proba "standalone" { adfirma 1 est 1 }');
+
+                expect(js).toContain('test("standalone"');
+            });
+
+            test('cura at top level', () => {
+                const js = compile('cura ante { setup() }');
+
+                expect(js).toContain('beforeEach(() => {');
+            });
+        });
+    });
 });

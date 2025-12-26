@@ -126,6 +126,11 @@ import type {
     FacBlockStatement,
     LambdaExpression,
     TypeCastExpression,
+    ProbandumStatement,
+    ProbaStatement,
+    ProbaModifier,
+    CuraBlock,
+    CuraTiming,
 } from './ast';
 import { builtinTypes } from '../lexicon/types-builtin';
 import { ParserErrorCode, PARSER_ERRORS } from './errors';
@@ -466,7 +471,9 @@ export function parse(tokens: Token[]): ParserResult {
                 checkKeyword('dum') ||
                 checkKeyword('pro') ||
                 checkKeyword('redde') ||
-                checkKeyword('tempta')
+                checkKeyword('tempta') ||
+                checkKeyword('probandum') ||
+                checkKeyword('proba')
             ) {
                 return;
             }
@@ -633,6 +640,21 @@ export function parse(tokens: Token[]): ParserResult {
         // fac { } cape { } is block with optional catch (see parseFacBlockStatement)
         if (checkKeyword('fac') && peek(1).type === 'LBRACE') {
             return parseFacBlockStatement();
+        }
+
+        // Test suite declaration: probandum "name" { ... }
+        if (checkKeyword('probandum')) {
+            return parseProbandumStatement();
+        }
+
+        // Individual test: proba "name" { ... }
+        if (checkKeyword('proba')) {
+            return parseProbaStatement();
+        }
+
+        // Resource management / test setup-teardown: cura ante/post [omnia]? { }
+        if (checkKeyword('cura')) {
+            return parseCuraBlock();
         }
 
         if (check('LBRACE')) {
@@ -2149,6 +2171,151 @@ export function parse(tokens: Token[]): ParserResult {
         }
 
         return { type: 'FacBlockStatement', body, catchClause, position };
+    }
+
+    // ---------------------------------------------------------------------------
+    // Test Declarations (Proba)
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Parse test suite declaration.
+     *
+     * GRAMMAR:
+     *   probandumDecl := 'probandum' STRING '{' probandumBody '}'
+     *   probandumBody := (curaBlock | probandumDecl | probaStmt)*
+     *
+     * WHY: Latin "probandum" (gerundive of probare) = "that which must be tested".
+     *      Analogous to describe() in Jest/Vitest.
+     *
+     * Example:
+     *   probandum "Tokenizer" {
+     *       cura ante { lexer = init() }
+     *       proba "parses numbers" { ... }
+     *   }
+     */
+    function parseProbandumStatement(): ProbandumStatement {
+        const position = peek().position;
+
+        expectKeyword('probandum', ParserErrorCode.ExpectedKeywordProbandum);
+
+        // Parse suite name string
+        const nameToken = expect('STRING', ParserErrorCode.ExpectedString);
+        const name = nameToken.value;
+
+        expect('LBRACE', ParserErrorCode.ExpectedOpeningBrace);
+
+        const body: (CuraBlock | ProbandumStatement | ProbaStatement)[] = [];
+
+        // True while there are unparsed members (not at '}' or EOF)
+        const hasMoreMembers = () => !check('RBRACE') && !isAtEnd();
+
+        while (hasMoreMembers()) {
+            if (checkKeyword('probandum')) {
+                body.push(parseProbandumStatement());
+            } else if (checkKeyword('proba')) {
+                body.push(parseProbaStatement());
+            } else if (checkKeyword('cura')) {
+                body.push(parseCuraBlock());
+            } else {
+                // Unknown token in probandum body
+                reportError(ParserErrorCode.UnexpectedToken, `got '${peek().value}'`);
+                advance(); // Skip to prevent infinite loop
+            }
+        }
+
+        expect('RBRACE', ParserErrorCode.ExpectedClosingBrace);
+
+        return { type: 'ProbandumStatement', name, body, position };
+    }
+
+    /**
+     * Parse individual test case.
+     *
+     * GRAMMAR:
+     *   probaStmt := 'proba' probaModifier? STRING blockStmt
+     *   probaModifier := 'omitte' STRING | 'futurum' STRING
+     *
+     * WHY: Latin "proba" (imperative of probare) = "test!" / "prove!".
+     *      Analogous to test() or it() in Jest/Vitest.
+     *
+     * Examples:
+     *   proba "parses integers" { adfirma parse("42") est 42 }
+     *   proba omitte "blocked by #42" { ... }
+     *   proba futurum "needs async support" { ... }
+     */
+    function parseProbaStatement(): ProbaStatement {
+        const position = peek().position;
+
+        expectKeyword('proba', ParserErrorCode.ExpectedKeywordProba);
+
+        // Check for modifier: omitte or futurum
+        let modifier: ProbaModifier | undefined;
+        let modifierReason: string | undefined;
+
+        if (matchKeyword('omitte')) {
+            modifier = 'omitte';
+            const reasonToken = expect('STRING', ParserErrorCode.ExpectedString);
+            modifierReason = reasonToken.value;
+        } else if (matchKeyword('futurum')) {
+            modifier = 'futurum';
+            const reasonToken = expect('STRING', ParserErrorCode.ExpectedString);
+            modifierReason = reasonToken.value;
+        }
+
+        // Parse test name string
+        const nameToken = expect('STRING', ParserErrorCode.ExpectedString);
+        const name = nameToken.value;
+
+        // Parse test body
+        const body = parseBlockStatement();
+
+        return { type: 'ProbaStatement', name, modifier, modifierReason, body, position };
+    }
+
+    /**
+     * Parse cura block (resource management / test setup-teardown).
+     *
+     * GRAMMAR:
+     *   curaBlock := 'cura' ('ante' | 'post') 'omnia'? blockStmt
+     *
+     * WHY: Latin "cura" (care, concern) for resource management.
+     *      In test context:
+     *        cura ante { } = beforeEach (care before each test)
+     *        cura ante omnia { } = beforeAll (care before all tests)
+     *        cura post { } = afterEach (care after each test)
+     *        cura post omnia { } = afterAll (care after all tests)
+     *
+     * Examples:
+     *   cura ante { lexer = init() }
+     *   cura ante omnia { db = connect() }
+     *   cura post { cleanup() }
+     *   cura post omnia { db.close() }
+     */
+    function parseCuraBlock(): CuraBlock {
+        const position = peek().position;
+
+        expectKeyword('cura', ParserErrorCode.ExpectedKeywordCura);
+
+        // Parse timing: ante or post
+        // WHY: 'ante' is a keyword (also used for ranges), but 'post' is an identifier
+        //      to avoid conflicts with method names like HTTP post()
+        let timing: CuraTiming;
+        if (matchKeyword('ante')) {
+            timing = 'ante';
+        } else if (check('IDENTIFIER') && peek().value === 'post') {
+            advance();
+            timing = 'post';
+        } else {
+            reportError(ParserErrorCode.ExpectedKeywordAnteOrPost, `got '${peek().value}'`);
+            timing = 'ante'; // Default to ante for error recovery
+        }
+
+        // Check for 'omnia' modifier
+        const omnia = matchKeyword('omnia');
+
+        const body = parseBlockStatement();
+
+        return { type: 'CuraBlock', timing, omnia, body, position };
     }
 
     /**

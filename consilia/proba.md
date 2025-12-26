@@ -2,19 +2,37 @@
 
 Test framework syntax for self-hosted compiler testing in rivus/.
 
+## Implementation Status
+
+| Feature              | Status   | Notes                         |
+| -------------------- | -------- | ----------------------------- |
+| `probandum` suites   | Done     | Nested suites supported       |
+| `proba` test cases   | Done     | Basic test declarations       |
+| `proba omitte`       | Done     | Skip with reason              |
+| `proba futurum`      | Done     | Todo with reason              |
+| `cura ante/post`     | Done     | Setup/teardown blocks         |
+| `cura ... omnia`     | Done     | Before/after all              |
+| `adfirma` assertions | Done     | Already existed               |
+| Table-driven tests   | Phase 2  | `proba ex [...] pro { }`      |
+| TypeScript codegen   | Done     | describe/test/beforeEach/etc. |
+| Python codegen       | Not Done | —                             |
+| Zig codegen          | Not Done | —                             |
+| Rust codegen         | Not Done | —                             |
+| C++ codegen          | Not Done | —                             |
+
 ## Keywords
 
-| Construct | Syntax | JS Equivalent |
-|-----------|--------|---------------|
-| Suite | `probandum "name" { }` | `describe()` |
-| Test | `proba "name" { }` | `test()` |
-| Skip | `proba omitte "reason" { }` | `test.skip()` |
-| Todo | `proba futurum "reason" { }` | `test.todo()` |
-| Before each | `ante { }` | `beforeEach()` |
-| Before all | `ante omnia { }` | `beforeAll()` |
-| After each | `post { }` | `afterEach()` |
-| After all | `post omnia { }` | `afterAll()` |
-| Assertion | `adfirma expr` | `expect(expr).toBe(true)` |
+| Construct   | Syntax                              | JS Equivalent             |
+| ----------- | ----------------------------------- | ------------------------- |
+| Suite       | `probandum "name" { }`              | `describe()`              |
+| Test        | `proba "name" { }`                  | `test()`                  |
+| Skip        | `proba omitte "reason" "name" { }`  | `test.skip()`             |
+| Todo        | `proba futurum "reason" "name" { }` | `test.todo()`             |
+| Before each | `cura ante { }`                     | `beforeEach()`            |
+| Before all  | `cura ante omnia { }`               | `beforeAll()`             |
+| After each  | `cura post { }`                     | `afterEach()`             |
+| After all   | `cura post omnia { }`               | `afterAll()`              |
+| Assertion   | `adfirma expr`                      | `expect(expr).toBe(true)` |
 
 ## Etymology
 
@@ -22,10 +40,10 @@ Test framework syntax for self-hosted compiler testing in rivus/.
 - **proba** - imperative of `probare`: "test!" / "prove!"
 - **omitte** - imperative of `omittere`: "skip!" / "omit!"
 - **futurum** - neuter noun: "the future" / "pending"
+- **cura** - noun: "care, concern" — resource management keyword
 - **ante** - preposition: "before"
-- **post** - preposition: "after"
+- **post** - preposition: "after" (used as identifier after `cura`)
 - **omnia** - neuter plural: "all things"
-- **singula** - neuter plural: "each one" (implied default)
 
 ## Syntax
 
@@ -39,20 +57,6 @@ probandum "Tokenizer" {
 ```
 
 Suites are optional. Prefer flat `proba` with descriptive names over deep nesting.
-
-### Table-Driven Tests
-
-```fab
-proba "parse" ex [
-    { ingressus: "42",  exitus: 42 },
-    { ingressus: "-7",  exitus: -7 },
-    { ingressus: "0",   exitus: 0 },
-] pro { ingressus, exitus } {
-    adfirma parse(ingressus) est exitus
-}
-```
-
-`proba ... ex ... pro` iterates over test cases with destructuring. The test runner expands this into N individual tests. Prefer this over nested `probandum` for coverage.
 
 ### Assertions
 
@@ -97,32 +101,37 @@ Optional second argument provides a label. Both sides of comparisons are shown i
 ### Skip and Todo
 
 ```fab
-proba omitte "blocked by issue #42" {
+proba omitte "blocked by issue #42" "test name" {
     // skipped - not executed
 }
 
-proba futurum "needs new parser feature" {
+proba futurum "needs new parser feature" "test name" {
     // todo - marked pending
 }
 ```
 
-Modifier comes after `proba`, before the description string.
+Modifier comes after `proba`, then reason string, then test name string.
 
 ### Setup and Teardown
 
 ```fab
 probandum "Database" {
-    ante omnia { db = connect() }   // once before all tests
-    ante { db.reset() }             // before each test
-    post { db.rollback() }          // after each test
-    post omnia { db.close() }       // once after all tests
+    cura ante omnia { db = connect() }   // once before all tests
+    cura ante { db.reset() }             // before each test
+    cura post { db.rollback() }          // after each test
+    cura post omnia { db.close() }       // once after all tests
 
     proba "inserts" { ... }
     proba "updates" { ... }
 }
 ```
 
-Default (no modifier) means "each". Explicit `omnia` for "all".
+Uses `cura` (care) keyword for resource management, consistent with the general
+resource management design in `consilia/cura.md`. The `ante`/`post` timing
+specifier follows, with optional `omnia` for "all" vs "each" semantics.
+
+Design note: `post` is recognized as an identifier (not keyword) after `cura`
+to avoid conflicts with method names like `post()` for HTTP operations.
 
 ### Async Tests
 
@@ -146,276 +155,82 @@ No `futura proba` needed - `cede` and `figendum` just work.
 ## Grammar
 
 ```ebnf
-probaDecl := 'probandum' STRING '{' probaBody '}'
-probaBody := (anteBlock | postBlock | probaDecl | probaStmt)*
+probandumDecl := 'probandum' STRING '{' probandumBody '}'
+probandumBody := (curaBlock | probandumDecl | probaStmt)*
 
-probaStmt := 'proba' probaModifier? STRING probaSource? blockStmt
-probaModifier := 'omitte' | 'futurum'
-probaSource := 'ex' expression 'pro' (IDENTIFIER | objectPattern)
+probaStmt := 'proba' probaModifier? STRING blockStmt
+probaModifier := 'omitte' STRING | 'futurum' STRING
 
-anteBlock := 'ante' 'omnia'? blockStmt
-postBlock := 'post' 'omnia'? blockStmt
+curaBlock := 'cura' ('ante' | 'post') 'omnia'? blockStmt
 ```
 
-The `probaSource` clause enables table-driven tests by iterating over an expression with destructuring.
+## Code Generation
 
-## Compilation Model
+### TypeScript Output
 
-The compiler transforms Faber test syntax into flat, native test code. No runtime framework required.
+```fab
+probandum "Calculator" {
+    cura ante omnia { db = connect() }
+    cura ante { x = 0 }
 
-### Algorithm
+    proba "adds numbers" {
+        adfirma 1 + 1 est 2
+    }
 
-1. **Walk the tree** - traverse `probandum` and `proba` nodes
-2. **Accumulate prefixes** - `probandum` names build a path (e.g., "Tokenizer: numerals:")
-3. **Collect setup/teardown** - `ante`/`post` blocks from each scope
-4. **Emit at `proba`** - generate one native test with:
-   - Full prefixed name
-   - Inlined `ante` blocks from all parent scopes
-   - Inlined `post` blocks (or `defer` equivalent)
-   - Test body
-5. **Unroll tables** - `proba ex` becomes N separate tests at compile time
+    proba omitte "broken" "needs fix" { }
+
+    cura post { cleanup() }
+    cura post omnia { db.close() }
+}
+```
+
+Generates:
+
+```typescript
+describe('Calculator', () => {
+    beforeAll(() => {
+        db = connect();
+    });
+    beforeEach(() => {
+        x = 0;
+    });
+    test('adds numbers', () => {
+        if (!(1 + 1 === 2)) {
+            throw new Error('Assertion failed: ((1 + 1) === 2)');
+        }
+    });
+    test.skip('broken: needs fix', () => {});
+    afterEach(() => {
+        cleanup();
+    });
+    afterAll(() => {
+        db.close();
+    });
+});
+```
+
+## Phase 2: Table-Driven Tests
+
+Not yet implemented. Planned syntax:
+
+```fab
+proba "parse" ex [
+    { ingressus: "42",  exitus: 42 },
+    { ingressus: "-7",  exitus: -7 },
+    { ingressus: "0",   exitus: 0 },
+] pro { ingressus, exitus } {
+    adfirma parse(ingressus) est exitus
+}
+```
+
+`proba ... ex ... pro` iterates over test cases with destructuring. The test
+runner expands this into N individual tests at compile time.
 
 ### Constraints
 
 - Table expressions in `proba ex` must be compile-time literals
 - Cannot use runtime variables for test case generation
 - All unrolling happens during compilation, not execution
-
-## Code Generation
-
-### Full Example
-
-```fab
-probandum "Tokenizer" {
-    ante { lexer = init() }
-
-    probandum "numerals" {
-        proba "integers" {
-            adfirma tokenize("42")[0].typus est "NUMBER"
-        }
-        proba "floats" {
-            adfirma tokenize("3.14")[0].typus est "NUMBER"
-        }
-    }
-
-    proba "empty" ex [
-        { input: "", expect: 0 },
-        { input: "   ", expect: 0 },
-    ] pro { input, expect } {
-        adfirma longitudo(tokenize(input)) est expect
-    }
-}
-```
-
-### Zig Output
-
-```zig
-const std = @import("std");
-const testing = std.testing;
-
-test "Tokenizer: numerals: integers" {
-    var lexer = init();
-    try testing.expectEqualStrings("NUMBER", tokenize("42")[0].typus);
-}
-
-test "Tokenizer: numerals: floats" {
-    var lexer = init();
-    try testing.expectEqualStrings("NUMBER", tokenize("3.14")[0].typus);
-}
-
-test "Tokenizer: empty: ''" {
-    var lexer = init();
-    try testing.expectEqual(@as(usize, 0), tokenize("").len);
-}
-
-test "Tokenizer: empty: '   '" {
-    var lexer = init();
-    try testing.expectEqual(@as(usize, 0), tokenize("   ").len);
-}
-```
-
-Flat structure. Setup inlined. Table unrolled. Native idioms.
-
-### Rust Output
-
-```rust
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn tokenizer_numerals_integers() {
-        let lexer = init();
-        assert_eq!(tokenize("42")[0].typus, "NUMBER");
-    }
-
-    #[test]
-    fn tokenizer_numerals_floats() {
-        let lexer = init();
-        assert_eq!(tokenize("3.14")[0].typus, "NUMBER");
-    }
-
-    #[test]
-    fn tokenizer_empty_blank() {
-        let lexer = init();
-        assert_eq!(tokenize("").len(), 0);
-    }
-
-    #[test]
-    fn tokenizer_empty_spaces() {
-        let lexer = init();
-        assert_eq!(tokenize("   ").len(), 0);
-    }
-}
-```
-
-Names become snake_case function identifiers. Same flattening, same inlining.
-
-### TypeScript Output
-
-```typescript
-import { test } from "bun:test";
-
-test("Tokenizer: numerals: integers", () => {
-    const lexer = init();
-    if (!(tokenize("42")[0].typus === "NUMBER")) {
-        throw new Error("Assertion failed: tokenize(\"42\")[0].typus est \"NUMBER\"");
-    }
-});
-
-test("Tokenizer: numerals: floats", () => {
-    const lexer = init();
-    if (!(tokenize("3.14")[0].typus === "NUMBER")) {
-        throw new Error("Assertion failed: tokenize(\"3.14\")[0].typus est \"NUMBER\"");
-    }
-});
-
-test("Tokenizer: empty: ''", () => {
-    const lexer = init();
-    if (!(tokenize("").length === 0)) {
-        throw new Error("Assertion failed: longitudo(tokenize(\"\")) est 0");
-    }
-});
-
-test("Tokenizer: empty: '   '", () => {
-    const lexer = init();
-    if (!(tokenize("   ").length === 0)) {
-        throw new Error("Assertion failed: longitudo(tokenize(\"   \")) est 0");
-    }
-});
-```
-
-Flat like all other targets. No describe/beforeEach - setup inlined, names prefixed.
-
-### Python Output
-
-```python
-import pytest
-
-@pytest.fixture
-def lexer():
-    return init()
-
-def test_tokenizer_numerals_integers(lexer):
-    assert tokenize("42")[0].typus == "NUMBER"
-
-def test_tokenizer_numerals_floats(lexer):
-    assert tokenize("3.14")[0].typus == "NUMBER"
-
-@pytest.mark.parametrize("input,expect", [
-    ("", 0),
-    ("   ", 0),
-])
-def test_tokenizer_empty(lexer, input, expect):
-    assert len(tokenize(input)) == expect
-```
-
-Python uses pytest fixtures for setup and `@parametrize` for table-driven (preserves the loop, pytest handles expansion).
-
-### C++ Output
-
-No external framework. Raw test functions with a generated harness:
-
-```cpp
-#include <iostream>
-#include <string>
-#include <functional>
-#include <vector>
-
-struct TestResult {
-    std::string name;
-    bool passed;
-    std::string error;
-};
-
-std::vector<TestResult> results;
-
-void run_test(const std::string& name, std::function<void()> fn) {
-    try {
-        fn();
-        results.push_back({name, true, ""});
-    } catch (const std::exception& e) {
-        results.push_back({name, false, e.what()});
-    }
-}
-
-// Generated tests
-
-void test_tokenizer_numerals_integers() {
-    auto lexer = init();
-    auto result = tokenize("42")[0].typus;
-    if (!(result == "NUMBER")) {
-        throw std::runtime_error("Assertion failed: tokenize(\"42\")[0].typus est \"NUMBER\"\n  got: " + result);
-    }
-}
-
-void test_tokenizer_numerals_floats() {
-    auto lexer = init();
-    auto result = tokenize("3.14")[0].typus;
-    if (!(result == "NUMBER")) {
-        throw std::runtime_error("Assertion failed: tokenize(\"3.14\")[0].typus est \"NUMBER\"\n  got: " + result);
-    }
-}
-
-void test_tokenizer_empty_blank() {
-    auto lexer = init();
-    if (!(tokenize("").size() == 0)) {
-        throw std::runtime_error("Assertion failed: longitudo(tokenize(\"\")) est 0");
-    }
-}
-
-void test_tokenizer_empty_spaces() {
-    auto lexer = init();
-    if (!(tokenize("   ").size() == 0)) {
-        throw std::runtime_error("Assertion failed: longitudo(tokenize(\"   \")) est 0");
-    }
-}
-
-// Generated main
-
-int main() {
-    run_test("Tokenizer: numerals: integers", test_tokenizer_numerals_integers);
-    run_test("Tokenizer: numerals: floats", test_tokenizer_numerals_floats);
-    run_test("Tokenizer: empty: ''", test_tokenizer_empty_blank);
-    run_test("Tokenizer: empty: '   '", test_tokenizer_empty_spaces);
-
-    int passed = 0, failed = 0;
-    for (const auto& r : results) {
-        if (r.passed) {
-            std::cout << "✓ " << r.name << "\n";
-            passed++;
-        } else {
-            std::cout << "✗ " << r.name << "\n  " << r.error << "\n";
-            failed++;
-        }
-    }
-
-    std::cout << "\n" << passed << " passed, " << failed << " failed\n";
-    return failed > 0 ? 1 : 0;
-}
-```
-
-No dependencies. Compiler emits the harness alongside the tests.
 
 ## Open Design Questions
 
@@ -424,26 +239,16 @@ No dependencies. Compiler emits the harness alongside the tests.
 Two approaches for emitting test infrastructure:
 
 **Inline**: Emit harness code directly into each test file.
+
 - Pro: Zero dependencies, self-contained single file output
 - Con: Duplicated boilerplate across test files
 
 **Static stdlib**: Ship a `faber/proba` module per target.
+
 - Pro: Clean test files, single source of truth, updatable without recompile
 - Con: Additional distribution/installation step
 
-Potential stdlib structure:
-```
-faber/
-  proba.hpp      # C++ harness
-  proba.zig      # Zig helpers (supplements std.testing)
-  proba.rs       # Rust macros and harness
-  proba.py       # Python helpers (minimal, pytest does most)
-  proba.ts       # TypeScript runner and assertions
-```
-
 **Recommendation**: Start with inline emission for simplicity. Extract to stdlib when harness needs grow beyond basic run/catch/report (e.g., timing, filtering, parallel execution, watch mode).
-
-Consider a compiler flag: `--emit-harness` for self-contained output vs default stdlib import.
 
 ### Test Discovery
 
@@ -467,52 +272,8 @@ proba "slow operation" tempora 5000 {  // 5 second timeout?
 
 Or leave timeout to the harness/runner level rather than per-test syntax?
 
-### Test Filtering
-
-Runtime filtering by name pattern:
-
-```bash
-./tests --filter "Tokenizer:*"
-./tests --filter "*:integers"
-```
-
-This is a harness feature, not language syntax. Note for stdlib implementation.
-
 ### Failure Continuation
 
 Current model: first `adfirma` failure throws, test stops.
 
-Alternative: collect all failures, report at end.
-
-```fab
-proba "multiple checks" {
-    adfirma a est 1    // fails
-    adfirma b est 2    // still runs?
-    adfirma c est 3    // still runs?
-}
-// Reports: 2 of 3 assertions failed
-```
-
-This would require a different codegen strategy - wrap each assertion rather than throw immediately. Adds complexity. Probably not worth it for v1.
-
-## Implementation Notes
-
-New keywords to add to lexicon:
-- `probandum` (keyword, test-suite)
-- `proba` (keyword, test-case)
-- `omitte` (modifier)
-- `futurum` (modifier)
-- `ante` (keyword, setup)
-- `post` (keyword, teardown)
-- `omnia` (modifier)
-
-Parser additions:
-- `parseProbandum()` - suite blocks
-- `parseProba()` - test cases with optional modifiers
-- `parseAnte()` / `parsePost()` - setup/teardown blocks
-
-AST types:
-- `ProbandumStatement`
-- `ProbaStatement`
-- `AnteBlock`
-- `PostBlock`
+Alternative: collect all failures, report at end. This would require a different codegen strategy. Probably not worth it for v1.

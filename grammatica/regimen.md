@@ -227,6 +227,65 @@ vide "debugging:", value
 mone "warning:", message
 ```
 
+### Probandum Statement
+
+```ebnf
+probandumDecl := 'probandum' STRING '{' probandumBody '}'
+probandumBody := (curaBlock | probandumDecl | probaStmt)*
+```
+
+> Latin "probandum" (gerundive of probare) = "that which must be tested".
+> Analogous to describe() in Jest/Vitest.
+
+**Examples:**
+
+```fab
+probandum "Tokenizer" {
+cura ante { lexer = init() }
+proba "parses numbers" { ... }
+}
+```
+
+### Proba Statement
+
+```ebnf
+probaStmt := 'proba' probaModifier? STRING blockStmt
+probaModifier := 'omitte' STRING | 'futurum' STRING
+```
+
+> Latin "proba" (imperative of probare) = "test!" / "prove!".
+> Analogous to test() or it() in Jest/Vitest.
+
+**Examples:**
+
+```fab
+proba "parses integers" { adfirma parse("42") est 42 }
+proba omitte "blocked by #42" { ... }
+proba futurum "needs async support" { ... }
+```
+
+### Cura Block
+
+```ebnf
+curaBlock := 'cura' ('ante' | 'post') 'omnia'? blockStmt
+```
+
+> Latin "cura" (care, concern) for resource management.
+> In test context:
+> cura ante { } = beforeEach (care before each test)
+> cura ante omnia { } = beforeAll (care before all tests)
+> cura post { } = afterEach (care after each test)
+> cura post omnia { } = afterAll (care after all tests)
+
+**Examples:**
+
+```fab
+cura ante { lexer = init() }
+cura ante omnia { db = connect() }
+cura post { cleanup() }
+cura post omnia { db.close() }
+```
+
 ### Block Statement
 
 ```ebnf

@@ -2601,4 +2601,230 @@ describe('parser', () => {
             expect(program!.body).toHaveLength(2);
         });
     });
+
+    describe('proba - test syntax', () => {
+        describe('probandum (test suite)', () => {
+            test('simple probandum', () => {
+                const { program } = parseCode('probandum "Suite" { }');
+                const stmt = program!.body[0] as any;
+
+                expect(stmt.type).toBe('ProbandumStatement');
+                expect(stmt.name).toBe('Suite');
+                expect(stmt.body).toHaveLength(0);
+            });
+
+            test('probandum with proba', () => {
+                const { program } = parseCode(`
+                    probandum "Math" {
+                        proba "adds" { adfirma 1 + 1 est 2 }
+                    }
+                `);
+                const stmt = program!.body[0] as any;
+
+                expect(stmt.type).toBe('ProbandumStatement');
+                expect(stmt.name).toBe('Math');
+                expect(stmt.body).toHaveLength(1);
+                expect(stmt.body[0].type).toBe('ProbaStatement');
+            });
+
+            test('nested probandum', () => {
+                const { program } = parseCode(`
+                    probandum "Outer" {
+                        probandum "Inner" {
+                            proba "test" { }
+                        }
+                    }
+                `);
+                const outer = program!.body[0] as any;
+                const inner = outer.body[0];
+
+                expect(outer.type).toBe('ProbandumStatement');
+                expect(outer.name).toBe('Outer');
+                expect(inner.type).toBe('ProbandumStatement');
+                expect(inner.name).toBe('Inner');
+            });
+        });
+
+        describe('proba (test case)', () => {
+            test('simple proba', () => {
+                const { program } = parseCode('proba "test name" { adfirma verum }');
+                const stmt = program!.body[0] as any;
+
+                expect(stmt.type).toBe('ProbaStatement');
+                expect(stmt.name).toBe('test name');
+                expect(stmt.modifier).toBeUndefined();
+                expect(stmt.body.type).toBe('BlockStatement');
+            });
+
+            test('proba omitte (skip)', () => {
+                const { program } = parseCode('proba omitte "reason" "skipped test" { }');
+                const stmt = program!.body[0] as any;
+
+                expect(stmt.type).toBe('ProbaStatement');
+                expect(stmt.modifier).toBe('omitte');
+                expect(stmt.modifierReason).toBe('reason');
+                expect(stmt.name).toBe('skipped test');
+            });
+
+            test('proba futurum (todo)', () => {
+                const { program } = parseCode('proba futurum "not yet" "future test" { }');
+                const stmt = program!.body[0] as any;
+
+                expect(stmt.type).toBe('ProbaStatement');
+                expect(stmt.modifier).toBe('futurum');
+                expect(stmt.modifierReason).toBe('not yet');
+                expect(stmt.name).toBe('future test');
+            });
+
+            test('proba at top level', () => {
+                const { program } = parseCode('proba "standalone" { adfirma 1 est 1 }');
+                const stmt = program!.body[0] as any;
+
+                expect(stmt.type).toBe('ProbaStatement');
+                expect(stmt.name).toBe('standalone');
+            });
+        });
+
+        describe('cura (setup/teardown)', () => {
+            test('cura ante (beforeEach)', () => {
+                const { program } = parseCode(`
+                    probandum "Suite" {
+                        cura ante { x = 0 }
+                        proba "test" { }
+                    }
+                `);
+                const suite = program!.body[0] as any;
+                const cura = suite.body[0];
+
+                expect(cura.type).toBe('CuraBlock');
+                expect(cura.timing).toBe('ante');
+                expect(cura.omnia).toBe(false);
+            });
+
+            test('cura ante omnia (beforeAll)', () => {
+                const { program } = parseCode(`
+                    probandum "Suite" {
+                        cura ante omnia { db = connect() }
+                    }
+                `);
+                const suite = program!.body[0] as any;
+                const cura = suite.body[0];
+
+                expect(cura.type).toBe('CuraBlock');
+                expect(cura.timing).toBe('ante');
+                expect(cura.omnia).toBe(true);
+            });
+
+            test('cura post (afterEach)', () => {
+                const { program } = parseCode(`
+                    probandum "Suite" {
+                        cura post { cleanup() }
+                    }
+                `);
+                const suite = program!.body[0] as any;
+                const cura = suite.body[0];
+
+                expect(cura.type).toBe('CuraBlock');
+                expect(cura.timing).toBe('post');
+                expect(cura.omnia).toBe(false);
+            });
+
+            test('cura post omnia (afterAll)', () => {
+                const { program } = parseCode(`
+                    probandum "Suite" {
+                        cura post omnia { db.close() }
+                    }
+                `);
+                const suite = program!.body[0] as any;
+                const cura = suite.body[0];
+
+                expect(cura.type).toBe('CuraBlock');
+                expect(cura.timing).toBe('post');
+                expect(cura.omnia).toBe(true);
+            });
+
+            test('cura at top level', () => {
+                const { program } = parseCode('cura ante { setup() }');
+                const stmt = program!.body[0] as any;
+
+                expect(stmt.type).toBe('CuraBlock');
+                expect(stmt.timing).toBe('ante');
+            });
+        });
+
+        describe('full test suite', () => {
+            test('complete probandum with all features', () => {
+                const { program } = parseCode(`
+                    probandum "Database" {
+                        cura ante omnia { db = connect() }
+                        cura ante { db.reset() }
+
+                        proba "inserts" { adfirma db.count() est 0 }
+                        proba omitte "broken" "updates" { }
+                        proba futurum "later" "deletes" { }
+
+                        cura post { db.rollback() }
+                        cura post omnia { db.close() }
+                    }
+                `);
+                const suite = program!.body[0] as any;
+
+                expect(suite.type).toBe('ProbandumStatement');
+                expect(suite.body).toHaveLength(7);
+
+                // Check order and types
+                expect(suite.body[0].type).toBe('CuraBlock');
+                expect(suite.body[0].timing).toBe('ante');
+                expect(suite.body[0].omnia).toBe(true);
+
+                expect(suite.body[1].type).toBe('CuraBlock');
+                expect(suite.body[1].timing).toBe('ante');
+                expect(suite.body[1].omnia).toBe(false);
+
+                expect(suite.body[2].type).toBe('ProbaStatement');
+                expect(suite.body[2].name).toBe('inserts');
+
+                expect(suite.body[3].type).toBe('ProbaStatement');
+                expect(suite.body[3].modifier).toBe('omitte');
+
+                expect(suite.body[4].type).toBe('ProbaStatement');
+                expect(suite.body[4].modifier).toBe('futurum');
+
+                expect(suite.body[5].type).toBe('CuraBlock');
+                expect(suite.body[5].timing).toBe('post');
+
+                expect(suite.body[6].type).toBe('CuraBlock');
+                expect(suite.body[6].timing).toBe('post');
+                expect(suite.body[6].omnia).toBe(true);
+            });
+        });
+
+        describe('post as identifier (not keyword)', () => {
+            test('post can be used as method name', () => {
+                const { program } = parseCode(`
+                    pactum DataFetcher {
+                        futura functio post(textus url) -> textus
+                    }
+                `);
+                const pactum = program!.body[0] as any;
+                const method = pactum.methods[0];
+
+                expect(method.name.name).toBe('post');
+            });
+
+            test('post can be used as variable name', () => {
+                const { program } = parseCode('fixum post = "data"');
+                const decl = program!.body[0] as any;
+
+                expect(decl.name.name).toBe('post');
+            });
+
+            test('post can be used as function name', () => {
+                const { program } = parseCode('functio post() { redde nihil }');
+                const fn = program!.body[0] as any;
+
+                expect(fn.name.name).toBe('post');
+            });
+        });
+    });
 });

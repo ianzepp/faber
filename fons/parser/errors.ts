@@ -88,9 +88,14 @@ export enum ParserErrorCode {
     ExpectedKeywordFac = 'P040',
     ExpectedKeywordFit = 'P041',
     ExpectedKeywordOrdo = 'P042',
+    ExpectedKeywordProbandum = 'P044',
+    ExpectedKeywordProba = 'P045',
+    ExpectedKeywordCura = 'P046',
+    ExpectedKeywordAnteOrPost = 'P047',
 
     // Module/source errors (P050-P059)
     ExpectedModuleName = 'P050',
+    ExpectedString = 'P051',
 
     // Invalid construct errors (P100-P199)
     InvalidAssignmentTarget = 'P100',
@@ -274,11 +279,31 @@ export const PARSER_ERRORS = {
         text: "Expected 'ordo'",
         help: "Enum declarations use 'ordo' (order): ordo color { rubrum, viridis, caeruleum }",
     },
+    [ParserErrorCode.ExpectedKeywordProbandum]: {
+        text: "Expected 'probandum'",
+        help: 'Test suites use \'probandum\' (that which must be tested): probandum "Tokenizer" { ... }',
+    },
+    [ParserErrorCode.ExpectedKeywordProba]: {
+        text: "Expected 'proba'",
+        help: 'Test cases use \'proba\' (test!): proba "parses numbers" { ... }',
+    },
+    [ParserErrorCode.ExpectedKeywordCura]: {
+        text: "Expected 'cura'",
+        help: "Resource management blocks use 'cura' (care): cura ante { ... } or cura post { ... }",
+    },
+    [ParserErrorCode.ExpectedKeywordAnteOrPost]: {
+        text: "Expected 'ante' or 'post'",
+        help: "After 'cura', specify timing: 'ante' (before) or 'post' (after)",
+    },
 
     // Module/source errors
     [ParserErrorCode.ExpectedModuleName]: {
         text: "Expected module name after 'ex'",
         help: 'Import declarations require module name: ex norma importa scribe',
+    },
+    [ParserErrorCode.ExpectedString]: {
+        text: 'Expected string literal',
+        help: 'A quoted string is required here (exempli gratia: "test name").',
     },
 
     // Invalid construct errors

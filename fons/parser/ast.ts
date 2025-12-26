@@ -101,7 +101,10 @@ export type Statement =
     | ThrowStatement
     | TryStatement
     | ScribeStatement
-    | FacBlockStatement;
+    | FacBlockStatement
+    | ProbandumStatement
+    | ProbaStatement
+    | CuraBlock;
 
 // ---------------------------------------------------------------------------
 // Import/Export Declarations
@@ -827,6 +830,126 @@ export interface FacBlockStatement extends BaseNode {
     type: 'FacBlockStatement';
     body: BlockStatement;
     catchClause?: CatchClause;
+}
+
+// ---------------------------------------------------------------------------
+// Test Declarations (Proba)
+// ---------------------------------------------------------------------------
+
+/**
+ * Test suite declaration (probandum).
+ *
+ * GRAMMAR (in EBNF):
+ *   probandumDecl := 'probandum' STRING '{' probandumBody '}'
+ *   probandumBody := (anteBlock | postBlock | probandumDecl | probaStmt)*
+ *
+ * INVARIANT: name is the suite description string.
+ * INVARIANT: body contains setup/teardown blocks, nested suites, and tests.
+ *
+ * WHY: Latin "probandum" (gerundive of probare) = "that which must be tested".
+ *      Analogous to describe() in Jest/Vitest or test module in Zig.
+ *
+ * Target mappings:
+ *   TypeScript: describe("name", () => { ... })
+ *   Python:     class TestName: ...
+ *   Zig:        test "name" { ... } (flattened with prefix)
+ *   Rust:       mod tests { ... } (flattened with prefix)
+ *   C++:        void test_name() { ... } (flattened with prefix)
+ *
+ * Examples:
+ *   probandum "Tokenizer" {
+ *       ante { lexer = init() }
+ *       proba "parses numbers" { ... }
+ *   }
+ */
+export interface ProbandumStatement extends BaseNode {
+    type: 'ProbandumStatement';
+    name: string;
+    body: (CuraBlock | ProbandumStatement | ProbaStatement)[];
+}
+
+/**
+ * Test modifier for skipped or todo tests.
+ *
+ * WHY: Two modifiers:
+ *   omitte = skip (imperative: "skip!")
+ *   futurum = todo/pending (noun: "the future")
+ */
+export type ProbaModifier = 'omitte' | 'futurum';
+
+/**
+ * Individual test case (proba).
+ *
+ * GRAMMAR (in EBNF):
+ *   probaStmt := 'proba' probaModifier? STRING blockStmt
+ *   probaModifier := 'omitte' STRING | 'futurum' STRING
+ *
+ * INVARIANT: name is the test description string.
+ * INVARIANT: modifier is optional (omitte/futurum) with reason string.
+ * INVARIANT: body is the test block.
+ *
+ * WHY: Latin "proba" (imperative of probare) = "test!" / "prove!".
+ *      Analogous to test() or it() in Jest/Vitest.
+ *
+ * Target mappings:
+ *   TypeScript: test("name", () => { ... })
+ *   Python:     def test_name(): ...
+ *   Zig:        test "name" { ... }
+ *   Rust:       #[test] fn name() { ... }
+ *   C++:        void test_name() { ... }
+ *
+ * Examples:
+ *   proba "parses integers" { adfirma parse("42") est 42 }
+ *   proba omitte "blocked by #42" { ... }
+ *   proba futurum "needs async support" { ... }
+ */
+export interface ProbaStatement extends BaseNode {
+    type: 'ProbaStatement';
+    name: string;
+    modifier?: ProbaModifier;
+    modifierReason?: string;
+    body: BlockStatement;
+}
+
+/**
+ * Timing for cura blocks in test context.
+ */
+export type CuraTiming = 'ante' | 'post';
+
+/**
+ * Resource management / test setup-teardown block.
+ *
+ * GRAMMAR (in EBNF):
+ *   curaBlock := 'cura' ('ante' | 'post') 'omnia'? blockStmt
+ *
+ * INVARIANT: timing distinguishes setup (ante) vs teardown (post).
+ * INVARIANT: omnia flag distinguishes all vs each.
+ *
+ * WHY: Latin "cura" (care, concern) for resource management.
+ *      In test context:
+ *        cura ante { } = beforeEach (care before each test)
+ *        cura ante omnia { } = beforeAll (care before all tests)
+ *        cura post { } = afterEach (care after each test)
+ *        cura post omnia { } = afterAll (care after all tests)
+ *
+ * Target mappings:
+ *   TypeScript: beforeEach() / beforeAll() / afterEach() / afterAll()
+ *   Python:     @pytest.fixture / setup_module / teardown
+ *   Zig:        inlined into each test
+ *   Rust:       inlined into each test
+ *   C++:        inlined into each test
+ *
+ * Examples:
+ *   cura ante { lexer = init() }
+ *   cura ante omnia { db = connect() }
+ *   cura post { cleanup() }
+ *   cura post omnia { db.close() }
+ */
+export interface CuraBlock extends BaseNode {
+    type: 'CuraBlock';
+    timing: CuraTiming;
+    omnia: boolean;
+    body: BlockStatement;
 }
 
 /**

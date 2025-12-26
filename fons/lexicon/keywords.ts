@@ -93,6 +93,30 @@ export const keywords: KeywordEntry[] = [
     { latin: 'redde', meaning: 'return', category: 'control' },
     { latin: 'custodi', meaning: 'guard', category: 'control' },
     { latin: 'adfirma', meaning: 'assert', category: 'control' },
+
+    // ---------------------------------------------------------------------------
+    // Testing
+    // ---------------------------------------------------------------------------
+
+    // WHY: "probandum" (gerundive of probare) = "that which must be tested"
+    //      Used for test suite declarations
+    { latin: 'probandum', meaning: 'describe', category: 'control' },
+    // WHY: "proba" (imperative of probare) = "test!" / "prove!"
+    //      Used for individual test cases
+    { latin: 'proba', meaning: 'test', category: 'control' },
+    // WHY: "omitte" (imperative of omittere) = "skip!" / "omit!"
+    //      Modifier for skipped tests
+    { latin: 'omitte', meaning: 'skip', category: 'modifier' },
+    // WHY: "futurum" (neuter noun) = "the future" / "pending"
+    //      Modifier for todo/pending tests
+    { latin: 'futurum', meaning: 'todo', category: 'modifier' },
+    // WHY: "omnia" (neuter plural) = "all things"
+    //      Used with cura ante/post for beforeAll/afterAll semantics
+    { latin: 'omnia', meaning: 'all', category: 'modifier' },
+    // WHY: "cura" (care, concern) for resource management
+    //      Used for test setup/teardown: cura ante { }, cura post { }
+    //      Also for scoped resources: cura aperi "file" fit fd { }
+    { latin: 'cura', meaning: 'care', category: 'control' },
     { latin: 'tempta', meaning: 'try', category: 'control' },
     { latin: 'cape', meaning: 'catch', category: 'control' },
     { latin: 'demum', meaning: 'finally', category: 'control' },
@@ -197,6 +221,7 @@ export const keywords: KeywordEntry[] = [
     // WHY: "ante" (before) and "usque" (up to) for range operators
     //      ante = exclusive (0 ante 10 = 0-9)
     //      usque = inclusive (0 usque 10 = 0-10)
+    // NOTE: "ante" is also used in test setup blocks (cura ante { })
     { latin: 'ante', meaning: 'before (exclusive)', category: 'operator' },
     { latin: 'usque', meaning: 'up to (inclusive)', category: 'operator' },
 
