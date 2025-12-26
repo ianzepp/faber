@@ -835,14 +835,123 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *
      * TRANSFORMS:
      *   nomen: textus -> nomen: []const u8
+     *   de textus source -> source: []const u8 (borrowed, read-only)
+     *   in lista<T> items -> items: *std.ArrayList(T) (mutable pointer)
      *
      * TARGET: Zig requires type after parameter name (name: type).
+     *         Prepositions (de/in) modify the type for ownership semantics.
      */
     function genParameter(node: Parameter): string {
         const name = node.name.name;
-        const type = node.typeAnnotation ? genType(node.typeAnnotation) : 'anytype';
+        const preposition = node.preposition;
+        const type = node.typeAnnotation ? genTypeWithPreposition(node.typeAnnotation, preposition) : 'anytype';
 
         return `${name}: ${type}`;
+    }
+
+    /**
+     * Generate type with ownership preposition applied.
+     *
+     * TRANSFORMS:
+     *   (none) textus -> []const u8 (owned, uses module allocator if needed)
+     *   de textus -> []const u8 (borrowed slice, read-only)
+     *   in textus -> *[]u8 (mutable pointer to slice)
+     *
+     *   (none) numerus -> i64 (owned value)
+     *   de numerus -> *const i64 (borrowed, read-only pointer)
+     *   in numerus -> *i64 (mutable pointer)
+     *
+     *   (none) lista<T> -> std.ArrayList(T) (owned)
+     *   de lista<T> -> []const T (borrowed slice of items)
+     *   in lista<T> -> *std.ArrayList(T) (mutable pointer)
+     *
+     * WHY: Latin prepositions encode ownership for systems targets:
+     *      de = "from/concerning" = borrowed, read-only
+     *      in = "into" = mutable borrow, will be modified
+     */
+    function genTypeWithPreposition(node: TypeAnnotation, preposition?: string): string {
+        const baseType = genType(node);
+        const typeName = node.name.toLowerCase();
+
+        if (!preposition) {
+            // No preposition = owned value (current behavior)
+            return baseType;
+        }
+
+        if (preposition === 'de') {
+            // Borrowed, read-only
+            return genBorrowedType(typeName, baseType, node);
+        }
+
+        if (preposition === 'in') {
+            // Mutable borrow
+            return genMutableType(typeName, baseType, node);
+        }
+
+        // Unknown preposition, return base type
+        return baseType;
+    }
+
+    /**
+     * Generate borrowed (read-only) type for 'de' preposition.
+     *
+     * WHY: 'de' means "from/concerning" - the parameter is borrowed, not owned.
+     *      For slices (textus, lista), we keep the slice type.
+     *      For values (numerus, bivalens), we use *const T pointer.
+     */
+    function genBorrowedType(typeName: string, baseType: string, node: TypeAnnotation): string {
+        // Strings are already slices - no change needed
+        if (typeName === 'textus') {
+            return baseType; // []const u8
+        }
+
+        // Lista becomes a const slice of the element type
+        if (typeName === 'lista' && node.typeParameters && node.typeParameters.length > 0) {
+            const elemType = node.typeParameters[0]!;
+            if (elemType.type === 'TypeAnnotation') {
+                const innerType = genType(elemType);
+                return `[]const ${innerType}`;
+            }
+        }
+
+        // Tabula/Copia - const pointer to the map
+        if (typeName === 'tabula' || typeName === 'copia') {
+            return `*const ${baseType}`;
+        }
+
+        // Primitives (numerus, bivalens, etc.) - const pointer
+        if (typeMap[typeName]) {
+            return `*const ${baseType}`;
+        }
+
+        // User-defined types - const pointer
+        return `*const ${baseType}`;
+    }
+
+    /**
+     * Generate mutable type for 'in' preposition.
+     *
+     * WHY: 'in' means "into" - the parameter will be modified.
+     *      All types become mutable pointers.
+     */
+    function genMutableType(typeName: string, baseType: string, node: TypeAnnotation): string {
+        // Strings with 'in' - mutable pointer to mutable slice
+        if (typeName === 'textus') {
+            return `*[]u8`;
+        }
+
+        // Lista with 'in' - mutable pointer to ArrayList (not slice)
+        // WHY: To mutate a list, we need access to the ArrayList, not just its items
+        if (typeName === 'lista' && node.typeParameters && node.typeParameters.length > 0) {
+            const elemType = node.typeParameters[0]!;
+            if (elemType.type === 'TypeAnnotation') {
+                const innerType = genType(elemType);
+                return `*std.ArrayList(${innerType})`;
+            }
+        }
+
+        // Everything else - mutable pointer
+        return `*${baseType}`;
     }
 
     // -------------------------------------------------------------------------

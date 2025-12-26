@@ -18,7 +18,7 @@ Zig and Rust share similar memory management concerns. Faber uses a **unified ap
 | Lambdas                | Done        | Anonymous struct `.call` pattern                       |
 | Error handling         | Done        | `mori` → `@panic`, `iace` → `return error.X` with `!T` |
 | Allocators             | Partial     | Arena preamble auto-emitted for collections            |
-| `de`/`in` prepositions | Not started | Design complete, not implemented                       |
+| `de`/`in` prepositions | Done        | `de` = borrowed/const, `in` = mutable pointer          |
 | Collections            | Partial     | Core methods implemented, functional methods stubbed   |
 | Comptime               | Done        | `prae typus` → `comptime T: type`, `praefixum` blocks  |
 | Slices                 | Partial     | Type mapping works, runtime building needs allocators  |
@@ -127,50 +127,66 @@ Faber's nullable types (`textus?`) map to Zig's `?[]const u8`. The mapping works
 
 ## Ownership Design: Latin Prepositions
 
-> **Status:** Design complete. **NOT IMPLEMENTED.**
+> **Status:** Implemented for parameter types.
 
 Faber uses Latin prepositions to annotate borrowing semantics. This design is shared with the Rust target.
 
-| Preposition | Meaning             | Zig Output               |
-| ----------- | ------------------- | ------------------------ |
-| (none)      | Owned, may allocate | Allocator-managed value  |
-| `de`        | Borrowed, read-only | `[]const u8`, `*const T` |
-| `in`        | Mutable borrow      | `*T`, `*[]u8`            |
+| Preposition | Meaning             | Zig Output                          |
+| ----------- | ------------------- | ----------------------------------- |
+| (none)      | Owned, may allocate | Base type (uses module-level arena) |
+| `de`        | Borrowed, read-only | `[]const T`, `*const T`             |
+| `in`        | Mutable borrow      | `*T`, `*std.ArrayList(T)`           |
 
-### Examples (Design Only)
+### Type Transformations
+
+| Faber Type    | No Preposition         | `de` (borrowed)               | `in` (mutable)          |
+| ------------- | ---------------------- | ----------------------------- | ----------------------- |
+| `textus`      | `[]const u8`           | `[]const u8`                  | `*[]u8`                 |
+| `numerus`     | `i64`                  | `*const i64`                  | `*i64`                  |
+| `lista<T>`    | `[]T`                  | `[]const T`                   | `*std.ArrayList(T)`     |
+| `tabula<K,V>` | `std.StringHashMap(V)` | `*const std.StringHashMap(V)` | `*std.StringHashMap(V)` |
+| User type     | `T`                    | `*const T`                    | `*T`                    |
+
+### Examples
 
 ```fab
-// No preposition = owned, allocator-managed
-functio greet(textus name) -> textus {
-    redde "Hello, " + name + "!"
+// No preposition = owned value
+functio process(numerus x) -> numerus {
+    redde x * 2
 }
 
-// "de" = borrowed slice, read-only
+// "de" = borrowed, read-only
 functio length(de textus source) -> numerus {
     redde source.longitudo
 }
 
 // "in" = mutable pointer, will be modified
-functio append(in lista<textus> items, textus value) {
+functio append(in lista<numerus> items, numerus value) {
     items.adde(value)
 }
 ```
 
-**Would generate:**
+**Generates:**
 
 ```zig
-fn greet(alloc: Allocator, name: []const u8) []const u8 {
-    return std.fmt.allocPrint(alloc, "Hello, {s}!", .{name}) catch @panic("OOM");
+fn process(x: i64) i64 {
+    return x * 2;
 }
 
 fn length(source: []const u8) i64 {
     return @intCast(source.len);
 }
 
-fn append(alloc: Allocator, items: *std.ArrayList([]const u8), value: []const u8) void {
+fn append(items: *std.ArrayList(i64), value: i64) void {
     items.append(alloc, value) catch @panic("OOM");
 }
 ```
+
+### Not Yet Implemented
+
+- Allocator threading to call sites (owned parameters that allocate)
+- Return type prepositions (`-> de textus` for borrowed returns)
+- Automatic `try` insertion at call sites for error-returning functions with prepositions
 
 ## Memory Management: Arena Allocator
 
@@ -528,7 +544,7 @@ Known limitation - generates `@compileError`.
 ### High Priority (Blocking Self-Hosting)
 
 1. **Arena allocator expansion** - Runtime string/collection operations beyond preamble
-2. **`de`/`in` prepositions** - Implement borrowing semantics
+2. **Return type prepositions** - `-> de textus` for borrowed returns with lifetime semantics
 
 ### Medium Priority
 
@@ -547,6 +563,7 @@ Known limitation - generates `@compileError`.
 - ~~Tagged unions~~ - `discretio` → `union(enum)` with pattern matching
 - ~~Comptime~~ - `prae typus` and `praefixum` blocks
 - ~~Collection methods~~ - Core methods for `lista`, `tabula`, `copia`
+- ~~`de`/`in` prepositions~~ - Parameter ownership semantics
 
 ## Design Tensions
 

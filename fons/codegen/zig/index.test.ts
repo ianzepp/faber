@@ -87,6 +87,122 @@ describe('zig codegen', () => {
         });
     });
 
+    describe('ownership prepositions (de/in)', () => {
+        describe('de (borrowed, read-only)', () => {
+            test('de textus remains slice', () => {
+                const zig = compile(`
+                    functio length(de textus source) -> numerus {
+                        redde 0
+                    }
+                `);
+
+                // WHY: textus is already []const u8, de doesn't change it
+                expect(zig).toContain('fn length(source: []const u8) i64');
+            });
+
+            test('de numerus becomes const pointer', () => {
+                const zig = compile(`
+                    functio read(de numerus value) -> numerus {
+                        redde 0
+                    }
+                `);
+
+                // WHY: Primitives need pointer for borrow semantics
+                expect(zig).toContain('fn read(value: *const i64) i64');
+            });
+
+            test('de lista becomes const slice', () => {
+                const zig = compile(`
+                    functio sum(de lista<numerus> items) -> numerus {
+                        redde 0
+                    }
+                `);
+
+                // WHY: Borrowed list exposes items as const slice, not ArrayList
+                expect(zig).toContain('fn sum(items: []const i64) i64');
+            });
+
+            test('de with user-defined type becomes const pointer', () => {
+                const zig = compile(`
+                    functio inspect(de persona p) -> numerus {
+                        redde 0
+                    }
+                `);
+
+                expect(zig).toContain('fn inspect(p: *const persona) i64');
+            });
+        });
+
+        describe('in (mutable borrow)', () => {
+            test('in textus becomes mutable pointer to slice', () => {
+                const zig = compile(`
+                    functio modify(in textus target) {
+                        redde
+                    }
+                `);
+
+                // WHY: Mutable string needs pointer to mutable slice
+                expect(zig).toContain('fn modify(target: *[]u8) void');
+            });
+
+            test('in numerus becomes mutable pointer', () => {
+                const zig = compile(`
+                    functio increment(in numerus value) {
+                        redde
+                    }
+                `);
+
+                expect(zig).toContain('fn increment(value: *i64) void');
+            });
+
+            test('in lista becomes mutable pointer to ArrayList', () => {
+                const zig = compile(`
+                    functio append(in lista<numerus> items, numerus value) {
+                        redde
+                    }
+                `);
+
+                // WHY: Mutable list access needs pointer to ArrayList
+                expect(zig).toContain('fn append(items: *std.ArrayList(i64), value: i64) void');
+            });
+
+            test('in with user-defined type becomes mutable pointer', () => {
+                const zig = compile(`
+                    functio update(in persona p) {
+                        redde
+                    }
+                `);
+
+                expect(zig).toContain('fn update(p: *persona) void');
+            });
+        });
+
+        describe('mixed prepositions', () => {
+            test('function with de and in parameters', () => {
+                const zig = compile(`
+                    functio copy(de textus source, in textus target) {
+                        redde
+                    }
+                `);
+
+                expect(zig).toContain('source: []const u8');
+                expect(zig).toContain('target: *[]u8');
+            });
+
+            test('function with owned and borrowed parameters', () => {
+                const zig = compile(`
+                    functio process(de lista<numerus> input, numerus multiplier) -> numerus {
+                        redde 0
+                    }
+                `);
+
+                // de lista = borrowed slice, no preposition numerus = owned value
+                expect(zig).toContain('input: []const i64');
+                expect(zig).toContain('multiplier: i64');
+            });
+        });
+    });
+
     describe('if statements', () => {
         test('simple if', () => {
             const zig = compile(`
