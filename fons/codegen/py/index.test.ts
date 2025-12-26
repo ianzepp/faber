@@ -1174,6 +1174,38 @@ describe('Python codegen', () => {
         });
     });
 
+    describe('Python patterns not valid in Faber', () => {
+        test('Fail when using Python star unpack', () => {
+            const errors = getParseErrors('fixum { *rest } = obj');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using Python double-star kwargs', () => {
+            const errors = getParseErrors('fixum { **kwargs } = obj');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using exponentiation operator', () => {
+            const errors = getParseErrors('a ** b');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using increment operator', () => {
+            const errors = getParseErrors('x++');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using compound assignment', () => {
+            const errors = getParseErrors('x += 1');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+    });
+
     // =========================================================================
     // STATIC FIELDS IN GENUS
     // =========================================================================

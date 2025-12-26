@@ -169,6 +169,40 @@ describe('parser', () => {
             expect(decl.init.object.name).toBe('response');
             expect(decl.init.property.name).toBe('data');
         });
+
+        // Invalid destructuring patterns
+        test('Fail when using JS spread syntax ...rest', () => {
+            const { errors } = parseCode('fixum { nomen, ...rest } = user');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using JS default value syntax', () => {
+            const { errors } = parseCode('fixum { a = 1 } = obj');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using array destructuring', () => {
+            const { errors } = parseCode('fixum [a, b] = arr');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using computed property in destructure', () => {
+            const { errors } = parseCode('fixum { [key]: value } = obj');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when ceteri appears without variable name', () => {
+            const { errors } = parseCode('fixum { ceteri } = obj');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        // WHY: ceteri in the middle is valid - it collects remaining props at that point
+        // The parser doesn't enforce ceteri being last; semantics would handle it
     });
 
     describe('function declarations', () => {
@@ -342,6 +376,31 @@ describe('parser', () => {
             expect(fn.params[0].preposition).toBe('ad');
             expect(fn.params[0].typeAnnotation.name).toBe('coordinate');
             expect(fn.params[0].name.name).toBe('destination');
+        });
+
+        // Invalid function declaration patterns
+        test('Fail when using TS-style param annotation (name: type)', () => {
+            const { errors } = parseCode('functio f(x: textus) {}');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using TS-style return type with colon', () => {
+            const { errors } = parseCode('functio f(): textus {}');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using trailing comma in params', () => {
+            const { errors } = parseCode('functio f(a, b,) {}');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when preposition appears without type or name', () => {
+            const { errors } = parseCode('functio f(ad) {}');
+
+            expect(errors.length).toBeGreaterThan(0);
         });
     });
 
@@ -845,6 +904,19 @@ describe('parser', () => {
 
             expect(decl.typeAnnotation.name).toBe('union');
             expect(decl.typeAnnotation.union).toHaveLength(2);
+        });
+
+        // Invalid type annotation patterns
+        test('Fail when using TS-style variable annotation (name: type)', () => {
+            const { errors } = parseCode('fixum nomen: textus = "x"');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using TS-style type alias with colon', () => {
+            const { errors } = parseCode('typus ID: textus');
+
+            expect(errors.length).toBeGreaterThan(0);
         });
     });
 
@@ -2027,6 +2099,58 @@ describe('parser', () => {
 
             expect(errors.length).toBeGreaterThan(0);
             expect(errors[0].message).toContain('contradicts');
+        });
+
+        // Unsupported operators from other languages
+        test('Fail when using postfix increment', () => {
+            const { errors } = parseCode('x++');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using prefix increment', () => {
+            const { errors } = parseCode('++x');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using postfix decrement', () => {
+            const { errors } = parseCode('x--');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        // WHY: --x parses as -(-x) which is valid double negation
+        // Only postfix forms (x++, x--) produce errors
+
+        test('Fail when using compound assignment +=', () => {
+            const { errors } = parseCode('x += 1');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using compound assignment -=', () => {
+            const { errors } = parseCode('x -= 1');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using compound assignment *=', () => {
+            const { errors } = parseCode('x *= 2');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using compound assignment /=', () => {
+            const { errors } = parseCode('x /= 2');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using exponentiation operator **', () => {
+            const { errors } = parseCode('a ** b');
+
+            expect(errors.length).toBeGreaterThan(0);
         });
     });
 

@@ -719,6 +719,10 @@ export function parse(tokens: Token[]): ParserResult {
      * NOT SUPPORTED (will produce parser errors):
      *   - JS spread: { ...rest }
      *   - Python unpack: { *rest } or { **rest }
+     *   - TS-style annotation: fixum nomen: textus = "x" (use: fixum textus nomen = "x")
+     *   - Array destructuring: fixum [a, b] = arr
+     *   - Increment/decrement: x++, ++x, x--, --x
+     *   - Compound assignment: x += 1, x -= 1, x *= 2, x /= 2
      */
     function parseVariableDeclaration(): VariableDeclaration {
         const position = peek().position;
@@ -843,6 +847,11 @@ export function parse(tokens: Token[]): ParserResult {
      *      functio stream() fient datum { ... }    // verb implies async generator
      *
      * Prefix is still allowed for emphasis, but verb/prefix conflicts are errors.
+     *
+     * NOT SUPPORTED (will produce parser errors):
+     *   - TS-style param annotation: functio f(x: textus) (use: functio f(textus x))
+     *   - TS-style return type: functio f(): textus (use: functio f() -> textus)
+     *   - Trailing comma in params: functio f(a, b,)
      */
     function parseFunctionDeclaration(): FunctionDeclaration {
         const position = peek().position;
@@ -2515,6 +2524,12 @@ export function parse(tokens: Token[]): ParserResult {
      *   multiplicative := unary (('*' | '/' | '%') unary)*
      *
      * PRECEDENCE: Lower than unary, higher than additive.
+     *
+     * NOT SUPPORTED (will produce parser errors):
+     *   - Exponentiation: a ** b (use function call or explicit multiplication)
+     *   - Floor division: a // b (// starts a comment in Faber)
+     *   - Increment/decrement: x++, ++x, x--, --x
+     *   - Compound assignment: x += 1, x -= 1, x *= 2, x /= 2
      */
     function parseMultiplicative(): Expression {
         let left = parseUnary();

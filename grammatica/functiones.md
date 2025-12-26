@@ -34,6 +34,10 @@ returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
 > functio items() fiunt numerus { ... }   // verb implies generator (no cursor needed)
 > functio stream() fient datum { ... }    // verb implies async generator
 > Prefix is still allowed for emphasis, but verb/prefix conflicts are errors.
+> NOT SUPPORTED (will produce parser errors):
+> - TS-style param annotation: functio f(x: textus) (use: functio f(textus x))
+> - TS-style return type: functio f(): textus (use: functio f() -> textus)
+> - Trailing comma in params: functio f(a, b,)
 
 ### Parameter List
 

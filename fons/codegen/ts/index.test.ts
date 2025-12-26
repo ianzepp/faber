@@ -863,6 +863,56 @@ describe('codegen', () => {
                 // Should complete without hanging
                 expect(errors).toBeDefined();
             });
+
+            test('Fail when using TS default value in destructure', () => {
+                const errors = getParseErrors('fixum { a = 1 } = obj');
+
+                expect(errors.length).toBeGreaterThan(0);
+            });
+
+            test('Fail when using array destructuring', () => {
+                const errors = getParseErrors('fixum [a, b] = arr');
+
+                expect(errors.length).toBeGreaterThan(0);
+            });
+        });
+    });
+
+    describe('TS patterns not valid in Faber', () => {
+        test('Fail when using TS-style type annotation', () => {
+            const errors = getParseErrors('fixum nomen: textus = "x"');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using TS-style param annotation', () => {
+            const errors = getParseErrors('functio f(x: textus) {}');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using TS-style return type', () => {
+            const errors = getParseErrors('functio f(): textus {}');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using increment operator', () => {
+            const errors = getParseErrors('x++');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using compound assignment', () => {
+            const errors = getParseErrors('x += 1');
+
+            expect(errors.length).toBeGreaterThan(0);
+        });
+
+        test('Fail when using exponentiation operator', () => {
+            const errors = getParseErrors('a ** b');
+
+            expect(errors.length).toBeGreaterThan(0);
         });
     });
 
