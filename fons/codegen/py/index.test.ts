@@ -22,6 +22,15 @@ function compile(code: string): string {
     return generate(program, { target: 'py' });
 }
 
+/**
+ * Helper to get parse errors from invalid syntax.
+ */
+function getParseErrors(code: string): string[] {
+    const { tokens } = tokenize(code);
+    const { errors } = parse(tokens);
+    return errors.map(e => e.message);
+}
+
 // =============================================================================
 // TYPE SYSTEM
 // =============================================================================
@@ -1095,6 +1104,286 @@ describe('Python codegen', () => {
             expect(result).toContain('return b');
         });
     });
+
+    // =========================================================================
+    // OBJECT PATTERN DESTRUCTURING
+    // =========================================================================
+
+    describe('object pattern destructuring', () => {
+        test('simple destructuring', () => {
+            const result = compile('fixum { data } = response');
+            expect(result).toContain('data = response["data"]');
+        });
+
+        test('destructuring with renamed property', () => {
+            const result = compile('fixum { data: localData } = response');
+            expect(result).toContain('localData = response["data"]');
+        });
+
+        test('destructuring multiple properties', () => {
+            const result = compile('fixum { status, data } = response');
+            expect(result).toContain('status = response["status"]');
+            expect(result).toContain('data = response["data"]');
+        });
+
+        test('destructuring with rest pattern', () => {
+            const result = compile('fixum { nomen, ceteri rest } = obj');
+            expect(result).toContain('nomen = obj["nomen"]');
+            expect(result).toContain('rest = {k: v for k, v in obj.items() if k not in ["nomen"]}');
+        });
+
+        test('async destructuring with figendum', () => {
+            const result = compile('figendum { result } = fetchData()');
+            expect(result).toContain('result = await fetchData()["result"]');
+        });
+
+        describe('invalid syntax produces errors', () => {
+            test('Python *rest syntax is not valid', () => {
+                const errors = getParseErrors('fixum { nomen, *rest } = user');
+
+                expect(errors.length).toBeGreaterThan(0);
+                expect(errors[0]).toContain("Expected identifier, got '*'");
+            });
+
+            test('Python **kwargs syntax is not valid', () => {
+                const errors = getParseErrors('fixum { **rest } = user');
+
+                expect(errors.length).toBeGreaterThan(0);
+            });
+
+            test('JS spread syntax ...rest is not valid', () => {
+                const errors = getParseErrors('fixum { nomen, ...rest } = user');
+
+                expect(errors.length).toBeGreaterThan(0);
+                expect(errors[0]).toContain("Expected identifier, got '..'");
+            });
+
+            test('missing closing brace', () => {
+                const errors = getParseErrors('fixum { nomen, aetas = user');
+
+                expect(errors.length).toBeGreaterThan(0);
+            });
+
+            test('empty pattern parses without hanging', () => {
+                // Empty pattern is syntactically valid (though semantically useless)
+                const errors = getParseErrors('fixum { } = user');
+
+                // Should complete without hanging
+                expect(errors).toBeDefined();
+            });
+        });
+    });
+
+    // =========================================================================
+    // STATIC FIELDS IN GENUS
+    // =========================================================================
+
+    describe('static fields in genus', () => {
+        test('static field declaration', () => {
+            const result = compile(`
+                genus Config {
+                    generis textus VERSION: "1.0"
+                }
+            `);
+            expect(result).toContain('class Config:');
+            expect(result).toContain('VERSION: str = "1.0"');
+        });
+
+        test('mixed static and instance fields', () => {
+            const result = compile(`
+                genus Counter {
+                    generis numerus total: 0
+                    numerus count: 0
+                }
+            `);
+            expect(result).toContain('total: int = 0');
+            expect(result).toContain('count: int = 0');
+        });
+    });
+
+    // =========================================================================
+    // CATCH CLAUSES ON CONTROL FLOW
+    // =========================================================================
+
+    describe('catch clauses on control flow', () => {
+        test('if with catch clause', () => {
+            const result = compile(`
+                si riskyCondition() {
+                    scribe "ok"
+                } cape e {
+                    scribe "error"
+                }
+            `);
+            expect(result).toContain('try:');
+            expect(result).toContain('if riskyCondition():');
+            expect(result).toContain('except Exception as e:');
+        });
+
+        test('while with catch clause', () => {
+            const result = compile(`
+                dum verum {
+                    riskyOperation()
+                } cape e {
+                    scribe "caught"
+                }
+            `);
+            expect(result).toContain('try:');
+            expect(result).toContain('while True:');
+            expect(result).toContain('except Exception as e:');
+        });
+
+        test('for with catch clause', () => {
+            const result = compile(`
+                ex items pro item {
+                    process(item)
+                } cape e {
+                    scribe "failed"
+                }
+            `);
+            expect(result).toContain('try:');
+            expect(result).toContain('for item in items:');
+            expect(result).toContain('except Exception as e:');
+        });
+    });
+
+    // =========================================================================
+    // MORI (FATAL THROW) VARIATIONS
+    // =========================================================================
+
+    describe('mori variations', () => {
+        test('mori with variable', () => {
+            const result = compile('mori errorMessage');
+            expect(result).toBe('raise SystemExit(errorMessage)');
+        });
+
+        test('mori with new Error', () => {
+            const result = compile('mori novum Error("fatal")');
+            expect(result).toBe('raise SystemExit("fatal")');
+        });
+    });
+
+    // =========================================================================
+    // LAMBDA EXPRESSIONS (PRO SYNTAX)
+    // =========================================================================
+
+    describe('lambda expressions (pro syntax)', () => {
+        test('simple pro lambda with colon', () => {
+            const result = compile('varia f = pro x: x * 2');
+            expect(result).toBe('f = lambda x: (x * 2)');
+        });
+
+        test('pro lambda with redde keyword', () => {
+            const result = compile('varia f = pro x redde x * 2');
+            expect(result).toBe('f = lambda x: (x * 2)');
+        });
+
+        test('pro lambda with multiple params', () => {
+            const result = compile('varia add = pro a, b: a + b');
+            expect(result).toBe('add = lambda a, b: (a + b)');
+        });
+
+        test('pro lambda with no params', () => {
+            const result = compile('varia f = pro: 42');
+            expect(result).toBe('f = lambda : 42');
+        });
+
+        test('pro lambda with block body', () => {
+            const result = compile('varia f = pro x { redde x * 2 }');
+            expect(result).toBe('f = lambda x: (x * 2)');
+        });
+
+        test('pro lambda with complex block returns None', () => {
+            const result = compile('varia f = pro x { scribe x }');
+            // Python lambdas can't have statements, so it falls back to None
+            expect(result).toBe('f = lambda x: None');
+        });
+    });
+
+    // =========================================================================
+    // SPREAD IN FUNCTION CALLS
+    // =========================================================================
+
+    describe('spread in function calls', () => {
+        test('spread single array in call', () => {
+            const result = compile('func(sparge args)');
+            expect(result).toBe('func(*args)');
+        });
+
+        test('spread with other arguments', () => {
+            const result = compile('func(1, sparge rest, 2)');
+            expect(result).toBe('func(1, *rest, 2)');
+        });
+    });
+
+    // =========================================================================
+    // ARROW FUNCTIONS WITH BLOCK BODIES
+    // =========================================================================
+
+    describe('arrow functions with block bodies', () => {
+        test('arrow with single return statement', () => {
+            const result = compile('varia f = (x) => { redde x * 2 }');
+            expect(result).toBe('f = lambda x: (x * 2)');
+        });
+
+        test('arrow with complex block returns None', () => {
+            const result = compile('varia f = (x) => { scribe x }');
+            // Python lambdas can't have statements
+            expect(result).toBe('f = lambda x: None');
+        });
+    });
+
+    // =========================================================================
+    // FAC BLOCK WITH CATCH
+    // =========================================================================
+
+    describe('fac block with catch', () => {
+        test('fac with catch clause', () => {
+            const result = compile(`
+                fac {
+                    riskyOperation()
+                } cape e {
+                    scribe "caught"
+                }
+            `);
+            expect(result).toContain('try:');
+            expect(result).toContain('riskyOperation()');
+            expect(result).toContain('except Exception as e:');
+            expect(result).toContain('print("caught")');
+        });
+    });
+
+    // =========================================================================
+    // NULLISH COALESCING
+    // =========================================================================
+
+    describe('nullish coalescing', () => {
+        test('vel operator expands to conditional', () => {
+            const result = compile('varia x = a vel b');
+            expect(result).toBe('x = (a if a is not None else b)');
+        });
+    });
+
+    // =========================================================================
+    // ARRAY AND OBJECT SPREAD
+    // =========================================================================
+
+    describe('array spread', () => {
+        test('spread in array literal', () => {
+            const result = compile('varia x = [sparge a, sparge b]');
+            expect(result).toBe('x = [*a, *b]');
+        });
+    });
+
+    describe('object spread', () => {
+        test('spread in object literal', () => {
+            const result = compile('varia x = { sparge defaults, name: "test" }');
+            expect(result).toBe('x = {**defaults, "name": "test"}');
+        });
+    });
+
+    // =========================================================================
+    // OPTIONAL CHAINING AND NON-NULL ASSERTION
+    // =========================================================================
 
     describe('optional chaining and non-null assertion', () => {
         test('optional member access ?. expands to conditional', () => {

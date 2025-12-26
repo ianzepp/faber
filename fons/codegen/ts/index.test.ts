@@ -19,6 +19,15 @@ function compile(code: string): string {
     return generate(analyzedProgram);
 }
 
+/**
+ * Helper to get parse errors from invalid syntax.
+ */
+function getParseErrors(code: string): string[] {
+    const { tokens } = tokenize(code);
+    const { errors } = parse(tokens);
+    return errors.map(e => e.message);
+}
+
 describe('codegen', () => {
     describe('variable declarations', () => {
         test('varia -> let', () => {
@@ -825,6 +834,35 @@ describe('codegen', () => {
             const js = compile('varia { count } = data');
 
             expect(js).toBe('let { count } = data;');
+        });
+
+        describe('invalid syntax produces errors', () => {
+            test('JS spread syntax ...rest is not valid', () => {
+                const errors = getParseErrors('fixum { nomen, ...rest } = user');
+
+                expect(errors.length).toBeGreaterThan(0);
+                expect(errors[0]).toContain("Expected identifier, got '..'");
+            });
+
+            test('missing closing brace', () => {
+                const errors = getParseErrors('fixum { nomen, aetas = user');
+
+                expect(errors.length).toBeGreaterThan(0);
+            });
+
+            test('nested spread syntax is not valid', () => {
+                const errors = getParseErrors('fixum { ...a, ...b } = user');
+
+                expect(errors.length).toBeGreaterThan(0);
+            });
+
+            test('empty pattern parses without hanging', () => {
+                // Empty pattern is syntactically valid (though semantically useless)
+                const errors = getParseErrors('fixum { } = user');
+
+                // Should complete without hanging
+                expect(errors).toBeDefined();
+            });
         });
     });
 

@@ -13,7 +13,7 @@ Basic language elements: variables, constants, literals, and output.
 ### Variable Declaration
 
 ```ebnf
-varDecl := ('varia' | 'fixum') (typeAnnotation IDENTIFIER | IDENTIFIER) ('=' expression)?
+varDecl := ('varia' | 'fixum') (objectPattern '=' expression | typeAnnotation IDENTIFIER | IDENTIFIER) ('=' expression)?
 ```
 
 > Type-first syntax: "fixum textus nomen = value" or "fixum nomen = value"
@@ -23,14 +23,19 @@ varDecl := ('varia' | 'fixum') (typeAnnotation IDENTIFIER | IDENTIFIER) ('=' exp
 
 ```ebnf
 objectPattern := '{' patternProperty (',' patternProperty)* '}'
-patternProperty := IDENTIFIER (':' IDENTIFIER)?
+patternProperty := 'ceteri'? IDENTIFIER (':' IDENTIFIER)?
 ```
 
 **Examples:**
 
 ```fab
-{ nomen, aetas }
-{ nomen: localName, aetas }
+{ nomen, aetas }              // extract nomen and aetas
+{ nomen: localName, aetas }   // rename nomen to localName
+{ nomen, ceteri rest }        // extract nomen, collect rest
+NOT SUPPORTED (will produce parser errors):
+{ ...rest }    // JS spread syntax
+{ *rest }      // Python unpack syntax
+{ **rest }     // Python kwargs syntax
 ```
 
 ---

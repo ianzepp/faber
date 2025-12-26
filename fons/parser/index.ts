@@ -318,9 +318,13 @@ export function parse(tokens: Token[]): ParserResult {
     /**
      * Expect specific token type or record error.
      *
-     * ERROR RECOVERY: Records error but returns current token (possibly wrong type).
+     * ERROR RECOVERY: Records error and advances past the unexpected token to
+     * prevent infinite loops. Returns a synthetic token of the expected type.
      *
-     * @returns Matched token if found, current token if not
+     * WHY: If we don't advance, callers in loops (like parseObjectPattern) will
+     * spin forever on the same unexpected token.
+     *
+     * @returns Matched token if found, synthetic token after advancing if not
      */
     function expect(type: TokenType, code: ParserErrorCode): Token {
         if (check(type)) {
@@ -331,13 +335,19 @@ export function parse(tokens: Token[]): ParserResult {
 
         reportError(code, `got '${token.value}'`);
 
-        return token;
+        // Advance past the unexpected token to prevent infinite loops
+        if (!isAtEnd()) {
+            advance();
+        }
+
+        // Return synthetic token with expected type but actual position
+        return { type, value: '', position: token.position };
     }
 
     /**
      * Expect specific keyword or record error.
      *
-     * ERROR RECOVERY: Records error but returns current token.
+     * ERROR RECOVERY: Records error and advances past the unexpected token.
      */
     function expectKeyword(keyword: string, code: ParserErrorCode): Token {
         if (checkKeyword(keyword)) {
@@ -348,7 +358,13 @@ export function parse(tokens: Token[]): ParserResult {
 
         reportError(code, `got '${token.value}'`);
 
-        return token;
+        // Advance past the unexpected token to prevent infinite loops
+        if (!isAtEnd()) {
+            advance();
+        }
+
+        // Return synthetic token with expected keyword but actual position
+        return { type: 'KEYWORD', value: keyword, keyword, position: token.position };
     }
 
     /**
@@ -667,8 +683,9 @@ export function parse(tokens: Token[]): ParserResult {
 
         const specifiers: Identifier[] = [];
 
+        // WHY: Import names can be keywords (ex norma importa scribe)
         do {
-            specifiers.push(parseIdentifier());
+            specifiers.push(parseIdentifierOrKeyword());
         } while (match('COMMA'));
 
         return { type: 'ImportDeclaration', source, specifiers, wildcard: false, position };
@@ -678,7 +695,7 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse variable declaration.
      *
      * GRAMMAR:
-     *   varDecl := ('varia' | 'fixum') (typeAnnotation IDENTIFIER | IDENTIFIER) ('=' expression)?
+     *   varDecl := ('varia' | 'fixum') (objectPattern '=' expression | typeAnnotation IDENTIFIER | IDENTIFIER) ('=' expression)?
      *
      * WHY: Type-first syntax: "fixum textus nomen = value" or "fixum nomen = value"
      *      Latin 'varia' (let it be) for mutable, 'fixum' (fixed) for immutable.
@@ -688,6 +705,20 @@ export function parse(tokens: Token[]): ParserResult {
      *
      * Async bindings (figendum/variandum) work the same way syntactically,
      * but imply await on the initializer during codegen.
+     *
+     * DESTRUCTURING: Two equivalent syntaxes are supported:
+     *   1. Direct assignment: fixum { nomen, aetas } = user
+     *   2. Ex-prefix (Latin): ex user fixum { nomen, aetas }
+     *
+     * Both produce the same AST. The ex-prefix form reads more naturally
+     * in Latin: "from user, take (const) nomen and aetas".
+     *
+     * Rest patterns use 'ceteri' (Latin "the rest"):
+     *   fixum { nomen, ceteri rest } = user
+     *
+     * NOT SUPPORTED (will produce parser errors):
+     *   - JS spread: { ...rest }
+     *   - Python unpack: { *rest } or { **rest }
      */
     function parseVariableDeclaration(): VariableDeclaration {
         const position = peek().position;
@@ -722,11 +753,21 @@ export function parse(tokens: Token[]): ParserResult {
      *
      * GRAMMAR:
      *   objectPattern := '{' patternProperty (',' patternProperty)* '}'
-     *   patternProperty := IDENTIFIER (':' IDENTIFIER)?
+     *   patternProperty := 'ceteri'? IDENTIFIER (':' IDENTIFIER)?
+     *
+     * Used by two destructuring syntaxes:
+     *   1. Direct assignment: fixum { nomen, aetas } = user
+     *   2. Ex-prefix (Latin): ex user fixum { nomen, aetas }
      *
      * Examples:
-     *   { nomen, aetas }
-     *   { nomen: localName, aetas }
+     *   { nomen, aetas }              // extract nomen and aetas
+     *   { nomen: localName, aetas }   // rename nomen to localName
+     *   { nomen, ceteri rest }        // extract nomen, collect rest
+     *
+     * NOT SUPPORTED (will produce parser errors):
+     *   { ...rest }    // JS spread syntax
+     *   { *rest }      // Python unpack syntax
+     *   { **rest }     // Python kwargs syntax
      */
     function parseObjectPattern(): ObjectPattern {
         const position = peek().position;
@@ -3104,6 +3145,24 @@ export function parse(tokens: Token[]): ParserResult {
         const token = expect('IDENTIFIER', ParserErrorCode.ExpectedIdentifier);
 
         return { type: 'Identifier', name: token.value, position: token.position };
+    }
+
+    /**
+     * Parse identifier or keyword as a name.
+     *
+     * WHY: Import specifiers can be keywords (ex norma importa scribe).
+     *      In this context, 'scribe' is a valid name, not a statement keyword.
+     */
+    function parseIdentifierOrKeyword(): Identifier {
+        const token = peek();
+
+        if (token.type === 'IDENTIFIER' || token.type === 'KEYWORD') {
+            advance();
+            return { type: 'Identifier', name: token.value, position: token.position };
+        }
+
+        // Fall back to normal identifier parsing (will report error and advance)
+        return parseIdentifier();
     }
 
     // =============================================================================
