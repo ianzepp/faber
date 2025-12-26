@@ -6,7 +6,7 @@ Complete reference of all operators in Faber Romanus.
 
 | Level | Operators                                                           | Associativity | Description         |
 | ----- | ------------------------------------------------------------------- | ------------- | ------------------- |
-| 1     | `=`                                                                 | Right         | Assignment          |
+| 1     | `=`, `+=`, `-=`, `*=`, `/=`, `&=`, `\|=`                            | Right         | Assignment          |
 | 2     | `? :`, `sic secus`                                                  | Right         | Ternary conditional |
 | 3     | `vel`, `??`                                                         | Left          | Nullish coalescing  |
 | 4     | `\|\|`, `aut`                                                       | Left          | Logical OR          |
@@ -202,11 +202,17 @@ positivum x    // x > 0
 
 ## Assignment
 
-| Operator | Description |
-| -------- | ----------- |
-| `=`      | Assignment  |
+| Operator | Description            | Example          |
+| -------- | ---------------------- | ---------------- |
+| `=`      | Assignment             | `x = 5`          |
+| `+=`     | Add and assign         | `x += 1`         |
+| `-=`     | Subtract and assign    | `x -= 1`         |
+| `*=`     | Multiply and assign    | `x *= 2`         |
+| `/=`     | Divide and assign      | `x /= 2`         |
+| `&=`     | Bitwise AND and assign | `flags &= mask`  |
+| `\|=`    | Bitwise OR and assign  | `flags \|= flag` |
 
-**Not supported:** `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`
+**Not supported:** `%=`, `^=`, `<<=`, `>>=`, `++`, `--`
 
 ---
 
@@ -249,10 +255,11 @@ positivum x    // x > 0
 
 ## Not Yet Implemented
 
-| Feature             | Description                        | Status        |
-| ------------------- | ---------------------------------- | ------------- |
-| `sed /pattern/`     | Regex literals                     | Design only   |
-| `est` (type check)  | `x est textus` → typeof/instanceof | Design only   |
-| Binary literals     | `0b1010`                           | Not supported |
-| `>>>`               | Unsigned right shift               | Not planned   |
-| Compound assignment | `+=`, `-=`, etc.                   | Not planned   |
+| Feature                  | Description                        | Status        |
+| ------------------------ | ---------------------------------- | ------------- |
+| `sed /pattern/`          | Regex literals                     | Design only   |
+| `est` (type check)       | `x est textus` → typeof/instanceof | Design only   |
+| Binary literals          | `0b1010`                           | Not supported |
+| `>>>`                    | Unsigned right shift               | Not planned   |
+| `++`, `--`               | Increment/decrement                | Not planned   |
+| `%=`, `^=`, `<<=`, `>>=` | Additional compound                | Not planned   |

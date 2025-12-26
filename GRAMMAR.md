@@ -111,7 +111,7 @@ Operators: arithmetic, logical, comparison, ternary, nullish coalescing, and ran
 ### Assignment
 
 ```ebnf
-assignment := ternary ('=' assignment)?
+assignment := ternary (('=' | '+=' | '-=' | '*=' | '/=' | '&=' | '|=') assignment)?
 ```
 
 ### Ternary
