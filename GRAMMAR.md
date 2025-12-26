@@ -91,13 +91,13 @@ ordo status { pendens = 0, actum = 1, finitum = 2 }
 ### Type Annotation
 
 ```ebnf
-typeAnnotation := ('de' | 'in')? IDENTIFIER typeParams? '?'? arrayBrackets* ('|' typeAnnotation)*
+typeAnnotation := ('de' | 'in')? IDENTIFIER typeParams? '?'? arrayBrackets*
 typeParams := '<' typeParameter (',' typeParameter)* '>'
 typeParameter := typeAnnotation | NUMBER | MODIFIER
 arrayBrackets := '[]' '?'?
 ```
 
-> Supports generics (lista<textus>), nullable (?), union types (A | B),
+> Supports generics (lista<textus>), nullable (?), union types (unio<A, B>),
 > and array shorthand (numerus[] desugars to lista<numerus>).
 
 ---
