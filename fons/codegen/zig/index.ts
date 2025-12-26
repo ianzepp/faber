@@ -281,6 +281,15 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             return ['verum', 'falsum', 'nihil'].includes(node.name);
         }
 
+        // WHY: Binary/unary expressions with comptime operands are also comptime
+        if (node.type === 'BinaryExpression') {
+            return isComptimeValue(node.left) && isComptimeValue(node.right);
+        }
+
+        if (node.type === 'UnaryExpression') {
+            return isComptimeValue(node.argument);
+        }
+
         return false;
     }
 

@@ -3093,7 +3093,8 @@ export function parse(tokens: Token[]): ParserResult {
                 advance(); // consume QUESTION
 
                 if (match('DOT')) {
-                    const property = parseIdentifier();
+                    // WHY: Allow keywords as property names (e.g., items.omitte)
+                    const property = parseIdentifierOrKeyword();
                     expr = {
                         type: 'MemberExpression',
                         object: expr,
@@ -3128,7 +3129,8 @@ export function parse(tokens: Token[]): ParserResult {
                 advance(); // consume BANG
 
                 if (match('DOT')) {
-                    const property = parseIdentifier();
+                    // WHY: Allow keywords as property names (e.g., items.omitte)
+                    const property = parseIdentifierOrKeyword();
                     expr = {
                         type: 'MemberExpression',
                         object: expr,
@@ -3166,7 +3168,8 @@ export function parse(tokens: Token[]): ParserResult {
                 expr = { type: 'CallExpression', callee: expr, arguments: args, position };
             } else if (match('DOT')) {
                 const position = tokens[current - 1].position;
-                const property = parseIdentifier();
+                // WHY: Allow keywords as property names (e.g., items.omitte)
+                const property = parseIdentifierOrKeyword();
 
                 expr = {
                     type: 'MemberExpression',
