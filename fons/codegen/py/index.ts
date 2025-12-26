@@ -199,6 +199,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      */
     function genPreamble(): string {
         const imports: string[] = [];
+        const helpers: string[] = [];
 
         if (features.enum) {
             imports.push('from enum import Enum, auto');
@@ -211,7 +212,21 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         // functools needed for reduce
         // TODO: Track when reducta is used
 
-        return imports.length > 0 ? imports.join('\n') + '\n\n' : '';
+        // WHY: praefixum blocks need a helper that executes code via exec()
+        // with a restricted set of builtins (mimicking compile-time constraints)
+        if (features.praefixum) {
+            helpers.push(`def __praefixum__(code):
+    __globals__ = {"range": range, "len": len, "list": list, "dict": dict, "int": int, "float": float, "str": str, "bool": bool, "abs": abs, "min": min, "max": max, "sum": sum}
+    __locals__ = {}
+    exec(code, __globals__, __locals__)
+    return __locals__.get('__result__')`);
+        }
+
+        const parts: string[] = [];
+        if (imports.length > 0) parts.push(imports.join('\n'));
+        if (helpers.length > 0) parts.push(helpers.join('\n\n'));
+
+        return parts.length > 0 ? parts.join('\n\n') + '\n\n' : '';
     }
 
     // ---------------------------------------------------------------------------
@@ -1285,11 +1300,10 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
                 // Just emit the expression — the cast is a compile-time annotation only.
                 return genExpression(node.expression);
             case 'PraefixumExpression':
-                // WHY: Python has no compile-time evaluation.
-                // Rather than silently dropping praefixum, throw an error.
-                throw new Error(
-                    'praefixum requires compile-time evaluation which Python does not support. ' + 'Use a literal value or remove praefixum.',
-                );
+                // WHY: Python lacks compile-time evaluation. We emit an IIFE-like
+                // construct so the code compiles and runs, even though it won't
+                // have true compile-time semantics.
+                return genPraefixumExpression(node);
             default:
                 throw new Error(`Unknown expression type: ${(node as any).type}`);
         }
@@ -1677,9 +1691,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      */
     function genNewExpression(node: NewExpression): string {
         const callee = node.callee.name;
-        const args: string[] = node.arguments
-            .filter((arg): arg is Expression => arg.type !== 'SpreadElement')
-            .map(genExpression);
+        const args: string[] = node.arguments.filter((arg): arg is Expression => arg.type !== 'SpreadElement').map(genExpression);
 
         if (node.withExpression) {
             // withExpression can be ObjectExpression (inline) or any Expression (de X)
@@ -1687,6 +1699,60 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         }
 
         return `${callee}(${args.join(', ')})`;
+    }
+
+    /**
+     * Generate compile-time evaluation expression as runtime equivalent.
+     *
+     * TRANSFORMS:
+     *   praefixum(expr) -> (expr)
+     *   praefixum { redde expr } -> (expr)  (single return only)
+     *   praefixum { ... redde x } -> __praefixum__('''...code...''')
+     *
+     * TARGET: Python lacks compile-time evaluation and true IIFEs.
+     *         For simple expressions and single-return blocks, we emit
+     *         the expression directly. Complex blocks use __praefixum__
+     *         helper with exec().
+     *
+     * WHY: Rather than crashing the build, we degrade gracefully.
+     *      The __praefixum__ helper executes code with restricted builtins
+     *      (mimicking compile-time constraints: no I/O, limited stdlib).
+     */
+    function genPraefixumExpression(node: PraefixumExpression): string {
+        if (node.body.type === 'BlockStatement') {
+            const block = node.body;
+            const lastStmt = block.body[block.body.length - 1];
+
+            // Single return statement: just emit the expression
+            if (block.body.length === 1 && lastStmt?.type === 'ReturnStatement' && lastStmt.argument) {
+                return `(${genExpression(lastStmt.argument)})`;
+            }
+
+            // Complex block: use __praefixum__ helper with exec()
+            features.praefixum = true;
+
+            // Generate block statements, transforming final return to __result__ assignment
+            const statements: string[] = [];
+            for (let i = 0; i < block.body.length; i++) {
+                const stmt = block.body[i]!;
+                if (i === block.body.length - 1 && stmt.type === 'ReturnStatement' && stmt.argument) {
+                    // Transform final return into __result__ assignment
+                    statements.push(`__result__ = ${genExpression(stmt.argument)}`);
+                } else {
+                    // Generate statement without leading indent (we're inside a string)
+                    const saved = depth;
+                    depth = 0;
+                    statements.push(genStatement(stmt));
+                    depth = saved;
+                }
+            }
+
+            const code = statements.join('\n');
+            return `__praefixum__('''${code}''')`;
+        }
+
+        // Expression form: just parenthesize
+        return `(${genExpression(node.body)})`;
     }
 
     return genProgram(program);

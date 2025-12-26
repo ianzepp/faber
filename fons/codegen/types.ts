@@ -68,6 +68,9 @@ export interface RequiredFeatures {
 
     // Enums
     enum: boolean; // ordo - needs Enum import (Python)
+
+    // Compile-time evaluation
+    praefixum: boolean; // praefixum blocks - needs __praefixum__ helper (Python)
 }
 
 /**
@@ -84,6 +87,7 @@ export function createRequiredFeatures(): RequiredFeatures {
         generator: false,
         decimal: false,
         enum: false,
+        praefixum: false,
     };
 }
 

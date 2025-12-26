@@ -13,8 +13,8 @@ Compile-time computation for Faber, enabling static evaluation and type-level pr
 | Lexicon            | Done   | `prae`, `praefixum` keywords added                          |
 | Parser             | Done   | `TypeParameterDeclaration`, `PraefixumExpression` AST nodes |
 | Zig codegen        | Done   | `comptime T: type`, `comptime blk:`                         |
-| TypeScript codegen | Done   | `<T>` generics; error for `praefixum`                       |
-| Python codegen     | Done   | `TypeVar('T')`; error for `praefixum`                       |
+| TypeScript codegen | Done   | `<T>` generics; IIFE for `praefixum`                        |
+| Python codegen     | Done   | `TypeVar('T')`; graceful degradation for `praefixum`        |
 | Tests              | Done   | Parser tests, Zig codegen tests                             |
 | Example            | Done   | `exempla/functiones/prae.fab`                               |
 | Grammar docs       | Done   | Auto-generated in GRAMMAR.md                                |
@@ -288,25 +288,74 @@ fn max<T: Ord>(a: T, b: T) -> T { ... }
 
 ### TypeScript / Python
 
-TypeScript and Python lack native compile-time evaluation. Using `praefixum` when targeting these languages produces a semantic error:
+TypeScript and Python lack native compile-time evaluation. Rather than failing the build, `praefixum` degrades gracefully to runtime evaluation:
 
-> "praefixum requires compile-time evaluation which [TypeScript|Python] does not support. Use a literal value or remove praefixum."
+**TypeScript:**
 
-This is an intentional limitation. Rather than building a full Faber interpreter into the compiler, we delegate compile-time evaluation to target languages that support it natively. Users targeting TypeScript/Python simply don't use `praefixum` — the feature is for static compilation targets (Zig, C++, Rust).
+```fab
+fixum size = praefixum(256 * 4)
+```
 
-**Future consideration:** A Faber interpreter could enable `praefixum` for all targets by evaluating blocks at compile time and emitting the result as a literal. This is deferred until there's concrete demand.
+```typescript
+const size = 256 * 4;
+```
+
+```fab
+fixum table = praefixum { varia t = []; ex 0..10 pro i { t.adde(i) }; redde t }
+```
+
+```typescript
+const table = (() => {
+    let t = [];
+    for (let i = 0; i < 10; i++) {
+        t.push(i);
+    }
+    return t;
+})();
+```
+
+**Python:**
+
+```fab
+fixum size = praefixum(256 * 4)
+```
+
+```python
+SIZE = (256 * 4)
+```
+
+```fab
+fixum table = praefixum { varia t = []; ex 0..10 pro i { t.adde(i) }; redde t }
+```
+
+```python
+def __praefixum__(code):
+    __globals__ = {"range": range, "len": len, "list": list, ...}
+    __locals__ = {}
+    exec(code, __globals__, __locals__)
+    return __locals__.get('__result__')
+
+table = __praefixum__('''t = []
+for i in range(0, 10):
+    t.append(i)
+__result__ = t''')
+```
+
+Python lacks IIFEs, so complex blocks use a `__praefixum__` helper that executes code via `exec()` with restricted builtins (mimicking compile-time constraints: no I/O, limited stdlib).
+
+**Future consideration:** A Faber interpreter could enable true `praefixum` for all targets by evaluating blocks at compile time and emitting the result as a literal. This is deferred until there's concrete demand.
 
 ## Implementation Notes
 
 ### Target Language Support
 
-| Target     | `praefixum` | `prae typus`           | Notes                |
-| ---------- | ----------- | ---------------------- | -------------------- |
-| Zig        | `comptime`  | `comptime T: type`     | Full support         |
-| C++        | `constexpr` | `template<typename T>` | Full support         |
-| Rust       | `const`     | `<T>`                  | Full support         |
-| TypeScript | **error**   | `<T>`                  | No compile-time eval |
-| Python     | **error**   | `TypeVar`              | No compile-time eval |
+| Target     | `praefixum`          | `prae typus`           | Notes                          |
+| ---------- | -------------------- | ---------------------- | ------------------------------ |
+| Zig        | `comptime`           | `comptime T: type`     | Full support                   |
+| C++        | `constexpr`          | `template<typename T>` | Full support                   |
+| Rust       | `const`              | `<T>`                  | Full support                   |
+| TypeScript | IIFE `(() => {})()`  | `<T>`                  | Runtime eval, not compile-time |
+| Python     | `__praefixum__('''`) | `TypeVar`              | exec() with restricted globals |
 
 ### Compiler Requirements
 

@@ -1799,28 +1799,34 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     }
 
     /**
-     * Generate compile-time evaluation expression (not supported in TypeScript).
+     * Generate compile-time evaluation expression as runtime IIFE.
      *
      * TRANSFORMS:
-     *   praefixum(...) -> throws error
+     *   praefixum(expr) -> (expr)
+     *   praefixum { ... } -> (() => { ... })()
      *
-     * TARGET: TypeScript does not support compile-time evaluation.
-     *         Users targeting TypeScript should not use praefixum.
+     * TARGET: TypeScript lacks compile-time evaluation. We emit an IIFE
+     *         so the code compiles and runs, even though it won't have
+     *         true compile-time semantics.
+     *
+     * WHY: Rather than crashing the build, we degrade gracefully.
+     *      The code still works correctly at runtime—it just doesn't
+     *      benefit from compile-time optimization.
      */
-    function genPraefixumExpression(_node: PraefixumExpression): string {
-        // WHY: TypeScript has no compile-time evaluation capability.
-        // Rather than silently dropping the praefixum or incorrectly emitting
-        // runtime code, we throw an error to alert the user.
-        throw new Error(
-            'praefixum requires compile-time evaluation which TypeScript does not support. ' + 'Use a literal value or remove praefixum.',
-        );
+    function genPraefixumExpression(node: PraefixumExpression): string {
+        if (node.body.type === 'BlockStatement') {
+            // Block form: wrap in IIFE
+            const body = genBlockStatement(node.body);
+            return `(() => ${body})()`;
+        }
+
+        // Expression form: just parenthesize
+        return `(${genExpression(node.body)})`;
     }
 
     function genNewExpression(node: NewExpression): string {
         const callee = node.callee.name;
-        const args: string[] = node.arguments
-            .filter((arg): arg is Expression => arg.type !== 'SpreadElement')
-            .map(genExpression);
+        const args: string[] = node.arguments.filter((arg): arg is Expression => arg.type !== 'SpreadElement').map(genExpression);
 
         if (node.withExpression) {
             args.push(genObjectExpression(node.withExpression as ObjectExpression));
