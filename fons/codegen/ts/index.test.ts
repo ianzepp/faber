@@ -1067,6 +1067,51 @@ describe('codegen', () => {
         });
     });
 
+    describe('array slicing and negative indices', () => {
+        test('negative index uses .at()', () => {
+            const js = compile('fixum x = nums[-1]');
+
+            expect(js).toBe('const x = nums.at(-1);');
+        });
+
+        test('slice with exclusive range', () => {
+            const js = compile('fixum x = nums[1..3]');
+
+            expect(js).toBe('const x = nums.slice(1, 3);');
+        });
+
+        test('slice with inclusive range (usque)', () => {
+            const js = compile('fixum x = nums[0 usque 2]');
+
+            expect(js).toBe('const x = nums.slice(0, 3);');
+        });
+
+        test('slice with negative indices', () => {
+            const js = compile('fixum x = nums[-3..-1]');
+
+            expect(js).toBe('const x = nums.slice(-3, -1);');
+        });
+
+        test('slice with inclusive negative end', () => {
+            const js = compile('fixum x = nums[-3 usque -1]');
+
+            // inclusive of -1 means to end
+            expect(js).toBe('const x = nums.slice(-3);');
+        });
+
+        test('optional slice with ?[]', () => {
+            const js = compile('fixum x = nums?[1..3]');
+
+            expect(js).toBe('const x = nums?.slice(1, 3);');
+        });
+
+        test('optional negative index', () => {
+            const js = compile('fixum x = nums?[-1]');
+
+            expect(js).toBe('const x = nums?.at(-1);');
+        });
+    });
+
     describe('genus declarations', () => {
         test('genus generates auto-merge constructor', () => {
             const js = compile('genus persona { textus nomen: "X" }');

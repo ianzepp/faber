@@ -97,6 +97,8 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | Object destructuring         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Array destructuring          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Rest in destructuring        |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Negative indices `[-1]`      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
+| Slicing `[1..3]`             |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Initializer expressions      |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 
 ## Enum & Tagged Union Declarations

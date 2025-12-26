@@ -1286,6 +1286,34 @@ describe('Python codegen', () => {
         });
     });
 
+    describe('array slicing and negative indices', () => {
+        test('negative index (native Python)', () => {
+            const result = compile('fixum x = nums[-1]');
+            expect(result).toBe('x = nums[-1]');
+        });
+
+        test('slice with exclusive range', () => {
+            const result = compile('fixum x = nums[1..3]');
+            expect(result).toBe('x = nums[1:3]');
+        });
+
+        test('slice with inclusive range (usque)', () => {
+            const result = compile('fixum x = nums[0 usque 2]');
+            expect(result).toBe('x = nums[0:3]');
+        });
+
+        test('slice with negative indices', () => {
+            const result = compile('fixum x = nums[-3..-1]');
+            expect(result).toBe('x = nums[-3:-1]');
+        });
+
+        test('slice with inclusive negative end', () => {
+            const result = compile('fixum x = nums[-3 usque -1]');
+            // inclusive of -1 means to end (empty end in Python)
+            expect(result).toBe('x = nums[-3:]');
+        });
+    });
+
     describe('Python patterns not valid in Faber', () => {
         test('Fail when using Python star unpack', () => {
             const errors = getParseErrors('fixum { *rest } = obj');

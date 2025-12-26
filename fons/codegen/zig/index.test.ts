@@ -517,6 +517,39 @@ describe('zig codegen', () => {
         });
     });
 
+    describe('array slicing and negative indices', () => {
+        test('negative index converts to len - n', () => {
+            const zig = compile('fixum x = nums[-1]');
+
+            expect(zig).toContain('const x = nums[nums.len - 1]');
+        });
+
+        test('slice with exclusive range', () => {
+            const zig = compile('fixum x = nums[1..3]');
+
+            expect(zig).toContain('const x = nums[1..3]');
+        });
+
+        test('slice with inclusive range (usque)', () => {
+            const zig = compile('fixum x = nums[0 usque 2]');
+
+            expect(zig).toContain('const x = nums[0..3]');
+        });
+
+        test('slice with negative indices', () => {
+            const zig = compile('fixum x = nums[-3..-1]');
+
+            expect(zig).toContain('nums[nums.len - 3..nums.len - 1]');
+        });
+
+        test('slice with inclusive negative end', () => {
+            const zig = compile('fixum x = nums[-3 usque -1]');
+
+            // inclusive of -1 means to end
+            expect(zig).toContain('nums[nums.len - 3..nums.len]');
+        });
+    });
+
     describe('type declarations', () => {
         test('type alias', () => {
             const zig = compile('typus ID = textus');

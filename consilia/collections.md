@@ -129,21 +129,46 @@ Method dispatch uses `resolvedType` from semantic analysis to correctly route ov
 | `maximusPer((T) -> U) -> T?`         | `maxBy`   | Max by key function |
 | `numera((T) -> bivalens) -> numerus` | `countBy` | Count matching      |
 
+### Slicing and Negative Indices
+
+**Status:** Implemented for all targets (TS, Py, Zig, C++).
+
+**Negative indices** access elements from the end:
+
+```faber
+fixum last = nums[-1]      // last element
+fixum secondLast = nums[-2] // second to last
+```
+
+Target mappings:
+
+- TypeScript: `nums.at(-1)` (native `.at()` method)
+- Python: `nums[-1]` (native)
+- Zig: `nums[nums.len - 1]` (computed)
+- C++: `nums[nums.size() - 1]` (computed)
+
+**Slicing** uses range syntax inside brackets:
+
+```faber
+fixum slice = nums[1..3]       // elements 1, 2 (exclusive end)
+fixum slice = nums[1 usque 3]  // elements 1, 2, 3 (inclusive end)
+fixum tail = nums[-3..-1]      // last 3 except final
+fixum tail = nums[-3 usque -1] // last 3 elements (to end)
+```
+
+Target mappings:
+
+- TypeScript: `nums.slice(1, 3)`
+- Python: `nums[1:3]` (native)
+- Zig: `nums[1..3]` (native)
+- C++: `std::vector<T>(nums.begin() + 1, nums.begin() + 3)`
+
 ### Open Questions
 
 1. **Mutability**: Should `adde`/`remove` mutate in place or return new list?
     - JS convention: mutate in place
     - Functional convention: return new
     - Proposal: mutate in place, provide variants for immutable ops
-
-2. **Negative indices**: Support `lista[-1]` for last element?
-    - JS: No (use `at(-1)`)
-    - Python: Yes
-    - Proposal: Support via subscript operator
-
-3. **Slicing**: Syntax for sublists?
-    - Python: `lista[1:3]`
-    - Proposal: `lista.sectio(1, 3)` method
 
 ---
 
