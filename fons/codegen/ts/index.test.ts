@@ -2734,4 +2734,31 @@ describe('codegen', () => {
             expect(js.trim().endsWith('}')).toBe(true);
         });
     });
+
+    describe('hex literals', () => {
+        test('hex literal passes through', () => {
+            const js = compile('fixum mask = 0xFF');
+
+            expect(js).toBe('const mask = 0xFF;');
+        });
+
+        test('hex literal in expression', () => {
+            const js = compile('fixum result = 0xFF - 0xAA');
+
+            expect(js).toContain('const result');
+            expect(js).toContain('0xFF - 0xAA');
+        });
+
+        test('hex bigint passes through', () => {
+            const js = compile('fixum big = 0xFFFFFFFFFFn');
+
+            expect(js).toBe('const big = 0xFFFFFFFFFFn;');
+        });
+
+        test('lowercase hex', () => {
+            const js = compile('fixum val = 0xabcdef');
+
+            expect(js).toBe('const val = 0xabcdef;');
+        });
+    });
 });

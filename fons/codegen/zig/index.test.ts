@@ -686,13 +686,44 @@ describe('zig codegen', () => {
                 expect(zig).toContain('break :blk x');
             });
 
-            test('praefixum with subtraction', () => {
-                // WHY: Using subtraction instead of XOR because hex literals
-                // are not yet fully supported in the tokenizer
-                const zig = compile('fixum mask = praefixum(255 - 170)');
+            test('praefixum with binary expression', () => {
+                const zig = compile('fixum mask = praefixum(0xFF - 0xAA)');
 
-                expect(zig).toContain('comptime ((255 - 170))');
+                expect(zig).toContain('comptime ((0xFF - 0xAA))');
             });
+        });
+    });
+
+    describe('hex literals', () => {
+        test('hex literal passes through', () => {
+            const zig = compile('fixum mask = 0xFF');
+
+            expect(zig).toContain('const m_mask');
+            expect(zig).toContain('= 0xFF');
+        });
+
+        test('hex literal in expression', () => {
+            const zig = compile('fixum result = 0xFF - 0xAA');
+
+            expect(zig).toContain('const m_result');
+            expect(zig).toContain('0xFF');
+            expect(zig).toContain('0xAA');
+        });
+
+        test('hex bigint strips n suffix', () => {
+            const zig = compile('fixum big = 0xFFFFFFFFFFn');
+
+            // Zig comptime_int is arbitrary precision, no n suffix needed
+            expect(zig).toContain('const m_big');
+            expect(zig).toContain('= 0xFFFFFFFFFF');
+            expect(zig).not.toContain('n;');
+        });
+
+        test('lowercase hex', () => {
+            const zig = compile('fixum val = 0xabcdef');
+
+            expect(zig).toContain('const m_val');
+            expect(zig).toContain('= 0xabcdef');
         });
     });
 });

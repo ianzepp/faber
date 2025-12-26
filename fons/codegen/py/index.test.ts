@@ -1454,4 +1454,32 @@ describe('Python codegen', () => {
             expect(result).toContain('callback(x)');
         });
     });
+
+    describe('hex literals', () => {
+        test('hex literal passes through', () => {
+            const result = compile('fixum mask = 0xFF');
+
+            expect(result).toBe('mask = 0xFF');
+        });
+
+        test('hex literal in expression', () => {
+            const result = compile('fixum result = 0xFF - 0xAA');
+
+            expect(result).toContain('result');
+            expect(result).toContain('0xFF - 0xAA');
+        });
+
+        test('hex bigint strips n suffix', () => {
+            const result = compile('fixum big = 0xFFFFFFFFFFn');
+
+            // Python integers are arbitrary precision, no n suffix needed
+            expect(result).toBe('big = 0xFFFFFFFFFF');
+        });
+
+        test('lowercase hex', () => {
+            const result = compile('fixum val = 0xabcdef');
+
+            expect(result).toBe('val = 0xabcdef');
+        });
+    });
 });

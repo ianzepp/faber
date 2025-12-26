@@ -334,6 +334,88 @@ describe('tokenizer', () => {
         });
     });
 
+    describe('hex literals', () => {
+        test('basic hex literal', () => {
+            const { tokens } = tokenize('0xFF');
+
+            expect(tokens[0].type).toBe('NUMBER');
+            expect(tokens[0].value).toBe('0xFF');
+        });
+
+        test('lowercase prefix', () => {
+            const { tokens } = tokenize('0xff');
+
+            expect(tokens[0].type).toBe('NUMBER');
+            expect(tokens[0].value).toBe('0xff');
+        });
+
+        test('uppercase prefix', () => {
+            const { tokens } = tokenize('0XFF');
+
+            expect(tokens[0].type).toBe('NUMBER');
+            expect(tokens[0].value).toBe('0XFF');
+        });
+
+        test('mixed case digits', () => {
+            const { tokens } = tokenize('0xAbCdEf');
+
+            expect(tokens[0].type).toBe('NUMBER');
+            expect(tokens[0].value).toBe('0xAbCdEf');
+        });
+
+        test('hex with all digits', () => {
+            const { tokens } = tokenize('0x1234567890ABCDEFabcdef');
+
+            expect(tokens[0].type).toBe('NUMBER');
+            expect(tokens[0].value).toBe('0x1234567890ABCDEFabcdef');
+        });
+
+        test('hex bigint', () => {
+            const { tokens } = tokenize('0xFFn');
+
+            expect(tokens[0].type).toBe('BIGINT');
+            expect(tokens[0].value).toBe('0xFF');
+        });
+
+        test('large hex bigint', () => {
+            const { tokens } = tokenize('0xFFFFFFFFFn');
+
+            expect(tokens[0].type).toBe('BIGINT');
+            expect(tokens[0].value).toBe('0xFFFFFFFFF');
+        });
+
+        test('hex in expression', () => {
+            const { tokens } = tokenize('0xFF - 0xAA');
+
+            expect(tokens[0].type).toBe('NUMBER');
+            expect(tokens[0].value).toBe('0xFF');
+            expect(tokens[1].type).toBe('MINUS');
+            expect(tokens[2].type).toBe('NUMBER');
+            expect(tokens[2].value).toBe('0xAA');
+        });
+
+        test('hex zero', () => {
+            const { tokens } = tokenize('0x0');
+
+            expect(tokens[0].type).toBe('NUMBER');
+            expect(tokens[0].value).toBe('0x0');
+        });
+
+        test('invalid hex - no digits', () => {
+            const { tokens, errors } = tokenize('0x');
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors[0].code).toBe('L004');
+        });
+
+        test('invalid hex - non-hex char after prefix', () => {
+            const { tokens, errors } = tokenize('0xGG');
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors[0].code).toBe('L004');
+        });
+    });
+
     describe('edge cases - whitespace variations', () => {
         test('mixed tabs and spaces', () => {
             const { tokens } = tokenize('fixum\t  x\t=\t5');

@@ -1401,7 +1401,13 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         }
 
         if (typeof node.value === 'bigint') {
-            return `${node.value}n`;
+            // WHY: Use raw to preserve hex format, raw already includes 'n' suffix
+            return node.raw;
+        }
+
+        // WHY: Use raw to preserve original format (hex: 0xFF, decimal: 123)
+        if (typeof node.value === 'number') {
+            return node.raw;
         }
 
         return String(node.value);

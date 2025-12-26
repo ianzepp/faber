@@ -3272,10 +3272,11 @@ export function parse(tokens: Token[]): ParserResult {
             return parseProExpression();
         }
 
-        // Number literal
+        // Number literal (decimal or hex)
         if (check('NUMBER')) {
             const token = advance();
-            const value = token.value.includes('.') ? parseFloat(token.value) : parseInt(token.value, 10);
+            // WHY: Number() handles both decimal and hex (0x) prefixes correctly
+            const value = Number(token.value);
 
             return { type: 'Literal', value, raw: token.value, position };
         }

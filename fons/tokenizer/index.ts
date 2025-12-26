@@ -165,6 +165,13 @@ export function tokenize(source: string): TokenizerResult {
     }
 
     /**
+     * Check if character is a hexadecimal digit (0-9, a-f, A-F).
+     */
+    function isHexDigit(char: string): boolean {
+        return isDigit(char) || (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F');
+    }
+
+    /**
      * Check if character can start an identifier.
      *
      * WHY: Allows underscore prefix (common in modern languages) while
@@ -186,9 +193,11 @@ export function tokenize(source: string): TokenizerResult {
     // ---------------------------------------------------------------------------
 
     /**
-     * Scan a number literal (integer, decimal, or bigint).
+     * Scan a number literal (integer, decimal, hex, or bigint).
      *
-     * PATTERN: digit+ ('.' digit+)? 'n'?
+     * GRAMMAR: number = hex_literal | decimal_literal
+     *          hex_literal = '0' ('x' | 'X') hex_digit+
+     *          decimal_literal = digit+ ('.' digit+)? 'n'?
      *
      * WHY: Numbers must be tokenized as a unit to distinguish from
      *      member access: 123.toString() vs 123.45
@@ -197,7 +206,33 @@ export function tokenize(source: string): TokenizerResult {
         const pos = position();
         let value = '';
 
-        // Integer part
+        // Check for hex prefix: 0x or 0X
+        if (peek() === '0' && (peek(1) === 'x' || peek(1) === 'X')) {
+            value += advance(); // 0
+            value += advance(); // x or X
+
+            // Must have at least one hex digit
+            if (!isHexDigit(peek())) {
+                addError(TokenizerErrorCode.InvalidHexLiteral, pos);
+                return;
+            }
+
+            while (isHexDigit(peek())) {
+                value += advance();
+            }
+
+            // Check for bigint suffix 'n'
+            if (peek() === 'n') {
+                advance();
+                addToken('BIGINT', value, pos);
+                return;
+            }
+
+            addToken('NUMBER', value, pos);
+            return;
+        }
+
+        // Decimal integer part
         while (isDigit(peek())) {
             value += advance();
         }

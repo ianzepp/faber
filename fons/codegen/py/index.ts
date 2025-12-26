@@ -1324,6 +1324,17 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
             return node.value ? 'True' : 'False';
         }
 
+        // WHY: Python integers are arbitrary precision, no 'n' suffix needed
+        if (typeof node.value === 'bigint') {
+            // Strip 'n' suffix from raw (e.g., "0xFFn" -> "0xFF")
+            return node.raw.replace(/n$/, '');
+        }
+
+        // WHY: Use raw to preserve original format (hex: 0xFF, decimal: 123)
+        if (typeof node.value === 'number') {
+            return node.raw;
+        }
+
         return String(node.value);
     }
 

@@ -47,6 +47,7 @@ export enum TokenizerErrorCode {
     UnterminatedString = 'L001',
     UnterminatedTemplateString = 'L002',
     UnexpectedCharacter = 'L003',
+    InvalidHexLiteral = 'L004',
 }
 
 // =============================================================================
@@ -78,5 +79,9 @@ export const TOKENIZER_ERRORS = {
     [TokenizerErrorCode.UnexpectedCharacter]: {
         text: 'Unexpected character',
         help: 'This character is not valid in Latin syntax. Check for typos or unsupported operators.',
+    },
+    [TokenizerErrorCode.InvalidHexLiteral]: {
+        text: 'Invalid hex literal',
+        help: 'Hex literals must have at least one digit after 0x prefix. Use 0x followed by hex digits (0-9, a-f, A-F).',
     },
 } as const;
