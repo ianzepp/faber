@@ -30,7 +30,7 @@ function analyzeSource(source: string): {
     const types = new Map<string, SemanticType>();
 
     for (const stmt of program.body) {
-        if (stmt.type === 'VariableDeclaration' && stmt.resolvedType) {
+        if (stmt.type === 'VariaDeclaration' && stmt.resolvedType) {
             types.set(stmt.name.name, stmt.resolvedType);
         }
     }

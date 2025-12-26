@@ -51,27 +51,27 @@ import type {
     Program,
     Statement,
     Expression,
-    ImportDeclaration,
-    VariableDeclaration,
-    FunctionDeclaration,
+    ImportaDeclaration,
+    VariaDeclaration,
+    FunctioDeclaration,
     GenusDeclaration,
     PactumDeclaration,
     FieldDeclaration,
     PactumMethod,
     TypeAliasDeclaration,
-    IfStatement,
-    WhileStatement,
-    ForStatement,
-    WithStatement,
-    SwitchStatement,
+    SiStatement,
+    DumStatement,
+    IteratioStatement,
+    InStatement,
+    EligeStatement,
     DiscretioDeclaration,
-    GuardStatement,
-    AssertStatement,
-    ReturnStatement,
+    CustodiStatement,
+    AdfirmaStatement,
+    ReddeStatement,
     BlockStatement,
-    ThrowStatement,
+    IaceStatement,
     ScribeStatement,
-    TryStatement,
+    TemptaStatement,
     ExpressionStatement,
     ArrayExpression,
     ObjectExpression,
@@ -82,19 +82,19 @@ import type {
     MemberExpression,
     ArrowFunctionExpression,
     AssignmentExpression,
-    NewExpression,
-    ThisExpression,
+    NovumExpression,
+    EgoExpression,
     Identifier,
     Literal,
     Parameter,
     TypeAnnotation,
-    TypeCastExpression,
-    TypeCheckExpression,
+    UtExpression,
+    EstExpression,
     SpreadElement,
     LambdaExpression,
     FacBlockStatement,
-    BreakStatement,
-    ContinueStatement,
+    RumpeStatement,
+    PergeStatement,
     PraefixumExpression,
     TypeParameterDeclaration,
 } from '../../parser/ast';
@@ -202,10 +202,10 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
 
     function statementContainsIace(stmt: Statement): boolean {
         switch (stmt.type) {
-            case 'ThrowStatement':
+            case 'IaceStatement':
                 return !stmt.fatal; // iace has fatal=false, mori has fatal=true
 
-            case 'IfStatement':
+            case 'SiStatement':
                 if (blockContainsIace(stmt.consequent)) {
                     return true;
                 }
@@ -214,7 +214,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                         if (blockContainsIace(stmt.alternate)) {
                             return true;
                         }
-                    } else if (stmt.alternate.type === 'IfStatement') {
+                    } else if (stmt.alternate.type === 'SiStatement') {
                         if (statementContainsIace(stmt.alternate)) {
                             return true;
                         }
@@ -222,13 +222,13 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 }
                 return false;
 
-            case 'WhileStatement':
-            case 'ForStatement':
+            case 'DumStatement':
+            case 'IteratioStatement':
                 return blockContainsIace(stmt.body);
 
-            case 'SwitchStatement':
+            case 'EligeStatement':
                 for (const c of stmt.cases) {
-                    if (c.type === 'SwitchCase' && blockContainsIace(c.consequent)) {
+                    if (c.type === 'EligeCasus' && blockContainsIace(c.consequent)) {
                         return true;
                     }
                     if (c.type === 'VariantCase' && blockContainsIace(c.consequent)) {
@@ -240,7 +240,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 }
                 return false;
 
-            case 'TryStatement':
+            case 'TemptaStatement':
                 if (blockContainsIace(stmt.block)) {
                     return true;
                 }
@@ -261,10 +261,10 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 }
                 return false;
 
-            case 'GuardStatement':
+            case 'CustodiStatement':
                 return stmt.clauses.some(c => blockContainsIace(c.consequent));
 
-            case 'WithStatement':
+            case 'InStatement':
                 return blockContainsIace(stmt.body);
 
             default:
@@ -356,11 +356,11 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *         Const declarations with comptime values are hoisted.
      */
     function isTopLevelDeclaration(node: Statement): boolean {
-        if (node.type === 'FunctionDeclaration') {
+        if (node.type === 'FunctioDeclaration') {
             return true;
         }
 
-        if (node.type === 'ImportDeclaration') {
+        if (node.type === 'ImportaDeclaration') {
             return true;
         }
 
@@ -370,7 +370,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         }
 
         // WHY: fixum with literal is comptime in Zig
-        if (node.type === 'VariableDeclaration' && node.kind === 'fixum') {
+        if (node.type === 'VariaDeclaration' && node.kind === 'fixum') {
             if (node.init && isComptimeValue(node.init)) {
                 return true;
             }
@@ -432,12 +432,12 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      */
     function genStatement(node: Statement): string {
         switch (node.type) {
-            case 'ImportDeclaration':
-                return genImportDeclaration(node);
-            case 'VariableDeclaration':
-                return genVariableDeclaration(node);
-            case 'FunctionDeclaration':
-                return genFunctionDeclaration(node);
+            case 'ImportaDeclaration':
+                return genImportaDeclaration(node);
+            case 'VariaDeclaration':
+                return genVariaDeclaration(node);
+            case 'FunctioDeclaration':
+                return genFunctioDeclaration(node);
             case 'GenusDeclaration':
                 return genGenusDeclaration(node);
             case 'PactumDeclaration':
@@ -446,36 +446,36 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 return genTypeAliasDeclaration(node);
             case 'DiscretioDeclaration':
                 return genDiscretioDeclaration(node);
-            case 'IfStatement':
-                return genIfStatement(node);
-            case 'WhileStatement':
-                return genWhileStatement(node);
-            case 'ForStatement':
-                return genForStatement(node);
-            case 'WithStatement':
-                return genWithStatement(node);
-            case 'SwitchStatement':
-                return genSwitchStatement(node);
-            case 'GuardStatement':
-                return genGuardStatement(node);
-            case 'AssertStatement':
-                return genAssertStatement(node);
-            case 'ReturnStatement':
-                return genReturnStatement(node);
-            case 'ThrowStatement':
-                return genThrowStatement(node);
+            case 'SiStatement':
+                return genSiStatement(node);
+            case 'DumStatement':
+                return genDumStatement(node);
+            case 'IteratioStatement':
+                return genIteratioStatement(node);
+            case 'InStatement':
+                return genInStatement(node);
+            case 'EligeStatement':
+                return genEligeStatement(node);
+            case 'CustodiStatement':
+                return genCustodiStatement(node);
+            case 'AdfirmaStatement':
+                return genAdfirmaStatement(node);
+            case 'ReddeStatement':
+                return genReddeStatement(node);
+            case 'IaceStatement':
+                return genIaceStatement(node);
             case 'ScribeStatement':
                 return genScribeStatement(node);
-            case 'TryStatement':
-                return genTryStatement(node);
+            case 'TemptaStatement':
+                return genTemptaStatement(node);
             case 'BlockStatement':
                 return genBlockStatementContent(node);
             case 'FacBlockStatement':
                 return genFacBlockStatement(node);
-            case 'BreakStatement':
-                return genBreakStatement();
-            case 'ContinueStatement':
-                return genContinueStatement();
+            case 'RumpeStatement':
+                return genRumpeStatement();
+            case 'PergeStatement':
+                return genPergeStatement();
             case 'ExpressionStatement':
                 return genExpressionStatement(node);
             default:
@@ -494,7 +494,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *
      * TARGET: Zig uses @import() builtin. Specific imports create const bindings.
      */
-    function genImportDeclaration(node: ImportDeclaration): string {
+    function genImportaDeclaration(node: ImportaDeclaration): string {
         const source = node.source;
 
         if (node.wildcard) {
@@ -534,7 +534,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *      with function parameters. Zig forbids a param named 'x' if there's a
      *      module const 'x', but m_x doesn't conflict.
      */
-    function genVariableDeclaration(node: VariableDeclaration): string {
+    function genVariaDeclaration(node: VariaDeclaration): string {
         const kind = node.kind === 'varia' ? 'var' : 'const';
 
         // Handle object pattern destructuring
@@ -844,7 +844,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      * EDGE: anytype is not valid as a return type in Zig. If the return type
      *       resolves to anytype (from objectum/ignotum), generate a compile error.
      */
-    function genFunctionDeclaration(node: FunctionDeclaration): string {
+    function genFunctioDeclaration(node: FunctioDeclaration): string {
         const name = node.name.name;
 
         // Generate type parameters as comptime T: type
@@ -1148,7 +1148,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *   functio creo() { si ego.aetas < 0 { ego.aetas = 0 } }
      *   -> fn creo(self: *Self) void { if (self.aetas < 0) { self.aetas = 0; } }
      */
-    function genCreoMethod(node: FunctionDeclaration): string {
+    function genCreoMethod(node: FunctioDeclaration): string {
         const lines: string[] = [];
 
         lines.push(`${ind()}fn creo(self: *Self) void {`);
@@ -1175,7 +1175,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *
      * EDGE: anytype is not valid as a return type in Zig.
      */
-    function genStructMethod(node: FunctionDeclaration): string {
+    function genStructMethod(node: FunctioDeclaration): string {
         const name = node.name.name;
         const params = node.params.map(genParameter);
         const returnType = node.returnType ? genType(node.returnType) : 'void';
@@ -1233,7 +1233,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         return lines.join('\n');
     }
 
-    function genIfStatement(node: IfStatement): string {
+    function genSiStatement(node: SiStatement): string {
         let result = '';
 
         // Zig doesn't have try/catch like JS, we'll use error handling differently
@@ -1241,8 +1241,8 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         result += `${ind()}if (${genExpression(node.test)}) ${genBlockStatement(node.consequent)}`;
 
         if (node.alternate) {
-            if (node.alternate.type === 'IfStatement') {
-                result += ` else ${genIfStatement(node.alternate).trim()}`;
+            if (node.alternate.type === 'SiStatement') {
+                result += ` else ${genSiStatement(node.alternate).trim()}`;
             } else {
                 result += ` else ${genBlockStatement(node.alternate)}`;
             }
@@ -1251,7 +1251,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         return result;
     }
 
-    function genWhileStatement(node: WhileStatement): string {
+    function genDumStatement(node: DumStatement): string {
         const test = genExpression(node.test);
         const body = genBlockStatement(node.body);
 
@@ -1268,7 +1268,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      * TARGET: Zig uses for (slice) |item| for iteration over slices.
      *         For ranges, we use while loops since Zig doesn't have range syntax.
      */
-    function genForStatement(node: ForStatement): string {
+    function genIteratioStatement(node: IteratioStatement): string {
         const varName = node.variable.name;
         const body = genBlockStatement(node.body);
 
@@ -1302,7 +1302,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *
      * TARGET: Zig doesn't have with-blocks, we expand to member assignments.
      */
-    function genWithStatement(node: WithStatement): string {
+    function genInStatement(node: InStatement): string {
         const context = genExpression(node.object);
         const lines: string[] = [];
 
@@ -1342,7 +1342,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      * WHY: For value matching, use if-else chains instead of switch statements.
      *      For variant matching, Zig's switch on tagged unions is idiomatic.
      */
-    function genSwitchStatement(node: SwitchStatement): string {
+    function genEligeStatement(node: EligeStatement): string {
         const discriminant = genExpression(node.discriminant);
 
         // Check if we have any variant cases (pattern matching on discretio)
@@ -1411,14 +1411,14 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
 
         // Value matching: use if-else chain
         // Check if comparing strings (need std.mem.eql)
-        const hasStringCase = node.cases.some(c => c.type === 'SwitchCase' && c.test.type === 'Literal' && typeof c.test.value === 'string');
+        const hasStringCase = node.cases.some(c => c.type === 'EligeCasus' && c.test.type === 'Literal' && typeof c.test.value === 'string');
         const isString = isStringType(node.discriminant) || hasStringCase;
 
         let result = '';
         let first = true;
 
         for (const caseNode of node.cases) {
-            if (caseNode.type !== 'SwitchCase') {
+            if (caseNode.type !== 'EligeCasus') {
                 continue;
             }
 
@@ -1464,7 +1464,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *
      * TARGET: Guards are just sequential if statements in Zig too.
      */
-    function genGuardStatement(node: GuardStatement): string {
+    function genCustodiStatement(node: CustodiStatement): string {
         const lines: string[] = [];
 
         for (const clause of node.clauses) {
@@ -1487,7 +1487,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      * TARGET: Zig has std.debug.assert() for assertions.
      *         For custom messages, we use @panic.
      */
-    function genAssertStatement(node: AssertStatement): string {
+    function genAdfirmaStatement(node: AdfirmaStatement): string {
         const test = genExpression(node.test);
 
         if (node.message) {
@@ -1556,7 +1556,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         return lines.join('\n');
     }
 
-    function genReturnStatement(node: ReturnStatement): string {
+    function genReddeStatement(node: ReddeStatement): string {
         if (node.argument) {
             return `${ind()}return ${genExpression(node.argument)};`;
         }
@@ -1572,7 +1572,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *
      * TARGET: Zig uses 'break' keyword, same as most languages.
      */
-    function genBreakStatement(): string {
+    function genRumpeStatement(): string {
         return `${ind()}break;`;
     }
 
@@ -1584,7 +1584,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *
      * TARGET: Zig uses 'continue' keyword, same as most languages.
      */
-    function genContinueStatement(): string {
+    function genPergeStatement(): string {
         return `${ind()}continue;`;
     }
 
@@ -1602,7 +1602,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      * WHY: iace converts error message to PascalCase error name for Zig's error set.
      *      Example: "invalid input" -> error.InvalidInput
      */
-    function genThrowStatement(node: ThrowStatement): string {
+    function genIaceStatement(node: IaceStatement): string {
         // mori (fatal=true) -> @panic
         if (node.fatal) {
             return genPanicStatement(node.argument);
@@ -1622,7 +1622,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         }
 
         // Handle new Error("msg") - extract message
-        if (argument.type === 'NewExpression' && argument.callee.name === 'Error' && argument.arguments.length > 0) {
+        if (argument.type === 'NovumExpression' && argument.callee.name === 'Error' && argument.arguments.length > 0) {
             const firstArg = argument.arguments[0]!;
             const msg = firstArg.type !== 'SpreadElement' ? genExpression(firstArg) : genExpression(argument);
             return `${ind()}@panic(${msg});`;
@@ -1646,7 +1646,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         }
 
         // Handle new Error("msg") - extract message and convert
-        if (argument.type === 'NewExpression' && argument.callee.name === 'Error' && argument.arguments.length > 0) {
+        if (argument.type === 'NovumExpression' && argument.callee.name === 'Error' && argument.arguments.length > 0) {
             const firstArg = argument.arguments[0]!;
             if (firstArg.type !== 'SpreadElement' && firstArg.type === 'Literal' && typeof firstArg.value === 'string') {
                 const errorName = stringToErrorName(firstArg.value);
@@ -1727,7 +1727,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         return `${ind()}std.debug.print("${format}", .{ ${args.join(', ')} });`;
     }
 
-    function genTryStatement(node: TryStatement): string {
+    function genTemptaStatement(node: TemptaStatement): string {
         // Zig handles errors differently — this is a simplified mapping
         // Real Zig would use catch |err| { } syntax on expressions
         let result = `${ind()}// try block\n`;
@@ -1839,20 +1839,20 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 return genArrowFunction(node);
             case 'AssignmentExpression':
                 return genAssignmentExpression(node);
-            case 'AwaitExpression':
+            case 'CedeExpression':
                 // Zig async is different, use try for error handling
                 return `try ${genExpression(node.argument)}`;
-            case 'ThisExpression':
+            case 'EgoExpression':
                 // TARGET: ego (this) becomes self in Zig struct methods
                 return 'self';
-            case 'NewExpression':
-                return genNewExpression(node);
+            case 'NovumExpression':
+                return genNovumExpression(node);
             case 'ConditionalExpression':
                 return `if (${genExpression(node.test)}) ${genExpression(node.consequent)} else ${genExpression(node.alternate)}`;
-            case 'TypeCastExpression':
-                return genTypeCastExpression(node);
-            case 'TypeCheckExpression':
-                return genTypeCheckExpression(node);
+            case 'UtExpression':
+                return genUtExpression(node);
+            case 'EstExpression':
+                return genEstExpression(node);
             case 'LambdaExpression':
                 return genLambdaExpression(node);
             case 'PraefixumExpression':
@@ -2149,7 +2149,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *
      * TARGET: Zig uses @as(T, x) builtin for type coercion.
      */
-    function genTypeCastExpression(node: TypeCastExpression): string {
+    function genUtExpression(node: UtExpression): string {
         const expr = genExpression(node.expression);
         const targetType = genType(node.targetType);
 
@@ -2173,7 +2173,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *
      * NOTE: For null checks, use `nihil x` or `nonnihil x` unary operators.
      */
-    function genTypeCheckExpression(node: TypeCheckExpression): string {
+    function genEstExpression(node: EstExpression): string {
         const expr = genExpression(node.expression);
         const op = node.negated ? '!=' : '==';
 
@@ -2570,7 +2570,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         const statements: string[] = [];
 
         for (const stmt of node.body) {
-            if (stmt.type === 'ReturnStatement') {
+            if (stmt.type === 'ReddeStatement') {
                 // Transform redde into break :blk
                 const value = stmt.argument ? genExpression(stmt.argument) : 'void{}';
                 statements.push(`${ind()}break :blk ${value};`);
@@ -2599,7 +2599,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      * WHY: When no overrides are provided, we pass .{} (empty struct) so the
      *      init() function's @hasField checks all return false, using defaults.
      */
-    function genNewExpression(node: NewExpression): string {
+    function genNovumExpression(node: NovumExpression): string {
         const callee = node.callee.name;
 
         // Handle { ... } or de expr overrides

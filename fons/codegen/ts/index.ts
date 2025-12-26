@@ -45,32 +45,32 @@ import type {
     Program,
     Statement,
     Expression,
-    ImportDeclaration,
-    VariableDeclaration,
-    FunctionDeclaration,
+    ImportaDeclaration,
+    VariaDeclaration,
+    FunctioDeclaration,
     GenusDeclaration,
     FieldDeclaration,
     PactumDeclaration,
     PactumMethod,
     TypeAliasDeclaration,
-    IfStatement,
-    WhileStatement,
-    ForStatement,
-    WithStatement,
-    SwitchStatement,
+    SiStatement,
+    DumStatement,
+    IteratioStatement,
+    InStatement,
+    EligeStatement,
     DiscretioDeclaration,
     VariantDeclaration,
     VariantField,
-    GuardStatement,
-    AssertStatement,
-    ReturnStatement,
-    BreakStatement,
-    ContinueStatement,
+    CustodiStatement,
+    AdfirmaStatement,
+    ReddeStatement,
+    RumpeStatement,
+    PergeStatement,
     BlockStatement,
-    EnumDeclaration,
-    ThrowStatement,
+    OrdoDeclaration,
+    IaceStatement,
     ScribeStatement,
-    TryStatement,
+    TemptaStatement,
     ExpressionStatement,
     ArrayExpression,
     ObjectExpression,
@@ -81,10 +81,10 @@ import type {
     MemberExpression,
     ArrowFunctionExpression,
     AssignmentExpression,
-    NewExpression,
+    NovumExpression,
     Identifier,
     Literal,
-    ThisExpression,
+    EgoExpression,
     Parameter,
     TypeAnnotation,
     TypeParameter,
@@ -92,8 +92,8 @@ import type {
     SpreadElement,
     FacBlockStatement,
     LambdaExpression,
-    TypeCastExpression,
-    TypeCheckExpression,
+    UtExpression,
+    EstExpression,
     ProbandumStatement,
     ProbaStatement,
     CuraBlock,
@@ -238,48 +238,48 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      */
     function genStatement(node: Statement): string {
         switch (node.type) {
-            case 'ImportDeclaration':
-                return genImportDeclaration(node);
-            case 'VariableDeclaration':
-                return genVariableDeclaration(node);
-            case 'FunctionDeclaration':
-                return genFunctionDeclaration(node);
+            case 'ImportaDeclaration':
+                return genImportaDeclaration(node);
+            case 'VariaDeclaration':
+                return genVariaDeclaration(node);
+            case 'FunctioDeclaration':
+                return genFunctioDeclaration(node);
             case 'GenusDeclaration':
                 return genGenusDeclaration(node);
             case 'PactumDeclaration':
                 return genPactumDeclaration(node);
             case 'TypeAliasDeclaration':
                 return genTypeAliasDeclaration(node);
-            case 'EnumDeclaration':
-                return genEnumDeclaration(node);
+            case 'OrdoDeclaration':
+                return genOrdoDeclaration(node);
             case 'DiscretioDeclaration':
                 return genDiscretioDeclaration(node);
-            case 'IfStatement':
-                return genIfStatement(node);
-            case 'WhileStatement':
-                return genWhileStatement(node);
-            case 'ForStatement':
-                return genForStatement(node);
-            case 'WithStatement':
-                return genWithStatement(node);
-            case 'SwitchStatement':
-                return genSwitchStatement(node);
-            case 'GuardStatement':
-                return genGuardStatement(node);
-            case 'AssertStatement':
-                return genAssertStatement(node);
-            case 'ReturnStatement':
-                return genReturnStatement(node);
-            case 'BreakStatement':
-                return genBreakStatement();
-            case 'ContinueStatement':
-                return genContinueStatement();
-            case 'ThrowStatement':
-                return genThrowStatement(node);
+            case 'SiStatement':
+                return genSiStatement(node);
+            case 'DumStatement':
+                return genDumStatement(node);
+            case 'IteratioStatement':
+                return genIteratioStatement(node);
+            case 'InStatement':
+                return genInStatement(node);
+            case 'EligeStatement':
+                return genEligeStatement(node);
+            case 'CustodiStatement':
+                return genCustodiStatement(node);
+            case 'AdfirmaStatement':
+                return genAdfirmaStatement(node);
+            case 'ReddeStatement':
+                return genReddeStatement(node);
+            case 'RumpeStatement':
+                return genRumpeStatement();
+            case 'PergeStatement':
+                return genPergeStatement();
+            case 'IaceStatement':
+                return genIaceStatement(node);
             case 'ScribeStatement':
                 return genScribeStatement(node);
-            case 'TryStatement':
-                return genTryStatement(node);
+            case 'TemptaStatement':
+                return genTemptaStatement(node);
             case 'BlockStatement':
                 return genBlockStatement(node);
             case 'FacBlockStatement':
@@ -309,7 +309,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * WHY: norma/* imports are compiler-handled via intrinsics, not runtime imports.
      *      External packages pass through as native imports.
      */
-    function genImportDeclaration(node: ImportDeclaration): string {
+    function genImportaDeclaration(node: ImportaDeclaration): string {
         const source = node.source;
 
         // Skip norma imports - these are handled via intrinsics
@@ -339,7 +339,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * WHY: Async bindings (figendum/variandum) imply await without explicit cede.
      *      The gerundive form ("that which will be fixed/varied") signals async intent.
      */
-    function genVariableDeclaration(node: VariableDeclaration): string {
+    function genVariaDeclaration(node: VariaDeclaration): string {
         // Map kind to JS keyword and determine if async
         const isAsync = node.kind === 'figendum' || node.kind === 'variandum';
         const kind = node.kind === 'varia' || node.kind === 'variandum' ? 'let' : 'const';
@@ -495,7 +495,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * WHY: creo() is a post-initialization hook. By the time it runs,
      *      ego (this) already has merged field values. No args needed.
      */
-    function genCreoMethod(node: FunctionDeclaration): string {
+    function genCreoMethod(node: FunctioDeclaration): string {
         const body = genBlockStatement(node.body);
         return `${ind()}private creo() ${body}`;
     }
@@ -543,7 +543,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     /**
      * Generate method declaration within a class.
      */
-    function genMethodDeclaration(node: FunctionDeclaration): string {
+    function genMethodDeclaration(node: FunctioDeclaration): string {
         const asyncMod = node.async ? 'async ' : '';
         const star = node.generator ? '*' : '';
         const name = node.name.name;
@@ -645,7 +645,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *
      * WHY: TypeScript enums map directly from Latin 'ordo'.
      */
-    function genEnumDeclaration(node: EnumDeclaration): string {
+    function genOrdoDeclaration(node: OrdoDeclaration): string {
         const name = node.name.name;
 
         const members = node.members.map(member => {
@@ -781,7 +781,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *   cursor functio f(): numerus -> function* f(): Generator<number>
      *   futura cursor functio f(): numerus -> async function* f(): AsyncGenerator<number>
      */
-    function genFunctionDeclaration(node: FunctionDeclaration): string {
+    function genFunctioDeclaration(node: FunctioDeclaration): string {
         const async = node.async ? 'async ' : '';
         const star = node.generator ? '*' : '';
         const name = node.name.name;
@@ -838,7 +838,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * WHY: Latin if-statements can have optional catch clauses for exception handling.
      *      When present, we wrap the entire if in a try-catch block.
      */
-    function genIfStatement(node: IfStatement): string {
+    function genSiStatement(node: SiStatement): string {
         let result = '';
 
         // WHY: Latin allows 'capta' (catch) clause on if-statements for brevity
@@ -853,8 +853,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         }
 
         if (node.alternate) {
-            if (node.alternate.type === 'IfStatement') {
-                result += ` else ${genIfStatement(node.alternate).trim()}`;
+            if (node.alternate.type === 'SiStatement') {
+                result += ` else ${genSiStatement(node.alternate).trim()}`;
             } else {
                 result += ` else ${genBlockStatement(node.alternate)}`;
             }
@@ -863,7 +863,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         return result;
     }
 
-    function genWhileStatement(node: WhileStatement): string {
+    function genDumStatement(node: DumStatement): string {
         const test = genExpression(node.test);
         const body = genBlockStatement(node.body);
 
@@ -895,7 +895,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *      instead of allocating arrays. The 'fiet' verb form generates
      *      'for await' for async iteration.
      */
-    function genForStatement(node: ForStatement): string {
+    function genIteratioStatement(node: IteratioStatement): string {
         const varName = node.variable.name;
         const body = genBlockStatement(node.body);
         const awaitKeyword = node.async ? ' await' : '';
@@ -961,7 +961,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * WHY: Bare identifier assignments inside 'in' blocks become property
      *      assignments on the context object.
      */
-    function genWithStatement(node: WithStatement): string {
+    function genInStatement(node: InStatement): string {
         const context = genExpression(node.object);
         const lines: string[] = [];
 
@@ -999,7 +999,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * WHY: Always emit if/else for all targets. Simpler codegen, no type
      *      detection needed, and downstream compilers optimize anyway.
      */
-    function genSwitchStatement(node: SwitchStatement): string {
+    function genEligeStatement(node: EligeStatement): string {
         const discriminant = genExpression(node.discriminant);
         let result = '';
 
@@ -1013,7 +1013,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
             const caseNode = node.cases[i]!;
             const keyword = i === 0 ? 'if' : 'else if';
 
-            if (caseNode.type === 'SwitchCase') {
+            if (caseNode.type === 'EligeCasus') {
                 // Value matching: si expression { ... }
                 const test = genExpression(caseNode.test);
                 result += `${ind()}${keyword} (${discriminant} === ${test}) {\n`;
@@ -1084,7 +1084,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *
      * WHY: Guard clauses are just sequential if statements with early exits.
      */
-    function genGuardStatement(node: GuardStatement): string {
+    function genCustodiStatement(node: CustodiStatement): string {
         const lines: string[] = [];
 
         for (const clause of node.clauses) {
@@ -1107,7 +1107,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * WHY: Always-on runtime checks that throw on failure.
      *      Auto-generates message from expression if not provided.
      */
-    function genAssertStatement(node: AssertStatement): string {
+    function genAdfirmaStatement(node: AdfirmaStatement): string {
         const test = genExpression(node.test);
 
         let message: string;
@@ -1122,7 +1122,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         return `${ind()}if (!(${test})) { throw new Error(${message}); }`;
     }
 
-    function genReturnStatement(node: ReturnStatement): string {
+    function genReddeStatement(node: ReddeStatement): string {
         if (node.argument) {
             return `${ind()}return ${genExpression(node.argument)}${semi ? ';' : ''}`;
         }
@@ -1136,7 +1136,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * TRANSFORMS:
      *   rumpe -> break
      */
-    function genBreakStatement(): string {
+    function genRumpeStatement(): string {
         return `${ind()}break${semi ? ';' : ''}`;
     }
 
@@ -1146,7 +1146,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * TRANSFORMS:
      *   perge -> continue
      */
-    function genContinueStatement(): string {
+    function genPergeStatement(): string {
         return `${ind()}continue${semi ? ';' : ''}`;
     }
 
@@ -1163,7 +1163,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *      Using a dedicated Panic class allows catching panics separately from
      *      regular errors if needed, and makes stack traces clearer.
      */
-    function genThrowStatement(node: ThrowStatement): string {
+    function genIaceStatement(node: IaceStatement): string {
         const expr = genExpression(node.argument);
 
         if (node.fatal) {
@@ -1187,7 +1187,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         return `${ind()}console.${method}(${args})${semi ? ';' : ''}`;
     }
 
-    function genTryStatement(node: TryStatement): string {
+    function genTemptaStatement(node: TemptaStatement): string {
         let result = `${ind()}try ${genBlockStatement(node.block)}`;
 
         if (node.handler) {
@@ -1431,7 +1431,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 return genLiteral(node);
             case 'TemplateLiteral':
                 return `\`${node.raw}\``;
-            case 'ThisExpression':
+            case 'EgoExpression':
                 return 'this';
             case 'ArrayExpression':
                 return genArrayExpression(node);
@@ -1447,11 +1447,11 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 return genArrowFunction(node);
             case 'AssignmentExpression':
                 return genAssignmentExpression(node);
-            case 'AwaitExpression':
+            case 'CedeExpression':
                 // WHY: cede maps to yield in generators, await in async functions
                 return `${inGenerator ? 'yield' : 'await'} ${genExpression(node.argument)}`;
-            case 'NewExpression':
-                return genNewExpression(node);
+            case 'NovumExpression':
+                return genNovumExpression(node);
             case 'ConditionalExpression':
                 return `${genExpression(node.test)} ? ${genExpression(node.consequent)} : ${genExpression(node.alternate)}`;
             case 'RangeExpression':
@@ -1460,10 +1460,10 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 return genObjectExpression(node);
             case 'LambdaExpression':
                 return genLambdaExpression(node);
-            case 'TypeCastExpression':
-                return genTypeCastExpression(node);
-            case 'TypeCheckExpression':
-                return genTypeCheckExpression(node);
+            case 'UtExpression':
+                return genUtExpression(node);
+            case 'EstExpression':
+                return genEstExpression(node);
             case 'PraefixumExpression':
                 return genPraefixumExpression(node);
             default:
@@ -1662,7 +1662,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * WHY: TypeScript uses 'as' for type assertions. Parentheses ensure
      *      correct precedence when the cast appears in larger expressions.
      */
-    function genTypeCastExpression(node: TypeCastExpression): string {
+    function genUtExpression(node: UtExpression): string {
         const expr = genExpression(node.expression);
         const targetType = genType(node.targetType);
 
@@ -1703,7 +1703,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *
      * NOTE: For null checks, use `nihil x` or `nonnihil x` unary operators.
      */
-    function genTypeCheckExpression(node: TypeCheckExpression): string {
+    function genEstExpression(node: EstExpression): string {
         const expr = genExpression(node.expression);
         const typeName = node.targetType.name;
         const op = node.negated ? '!==' : '===';
@@ -2069,7 +2069,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         return `(${genExpression(node.body)})`;
     }
 
-    function genNewExpression(node: NewExpression): string {
+    function genNovumExpression(node: NovumExpression): string {
         const callee = node.callee.name;
         const args: string[] = node.arguments.filter((arg): arg is Expression => arg.type !== 'SpreadElement').map(genExpression);
 

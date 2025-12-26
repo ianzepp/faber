@@ -14,7 +14,7 @@ describe('parser', () => {
             const { program } = parseCode('varia nomen = "Marcus"');
 
             expect(program).not.toBeNull();
-            expect(program!.body[0]!.type).toBe('VariableDeclaration');
+            expect(program!.body[0]!.type).toBe('VariaDeclaration');
             const decl = program!.body[0] as any;
 
             expect(decl.kind).toBe('varia');
@@ -43,7 +43,7 @@ describe('parser', () => {
             const { program } = parseCode('figendum data = fetchData()');
             const decl = program!.body[0] as any;
 
-            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.type).toBe('VariaDeclaration');
             expect(decl.kind).toBe('figendum');
             expect(decl.name.name).toBe('data');
             expect(decl.init.type).toBe('CallExpression');
@@ -53,7 +53,7 @@ describe('parser', () => {
             const { program } = parseCode('variandum result = getResult()');
             const decl = program!.body[0] as any;
 
-            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.type).toBe('VariaDeclaration');
             expect(decl.kind).toBe('variandum');
             expect(decl.name.name).toBe('result');
             expect(decl.init.type).toBe('CallExpression');
@@ -102,7 +102,7 @@ describe('parser', () => {
             const { program } = parseCode('fixum { name, age } = person');
             const decl = program!.body[0] as any;
 
-            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.type).toBe('VariaDeclaration');
             expect(decl.kind).toBe('fixum');
             expect(decl.name.type).toBe('ObjectPattern');
             expect(decl.name.properties).toHaveLength(2);
@@ -122,7 +122,7 @@ describe('parser', () => {
             const { program } = parseCode('ex response fixum { status, data }');
             const decl = program!.body[0] as any;
 
-            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.type).toBe('VariaDeclaration');
             expect(decl.kind).toBe('fixum');
             expect(decl.name.type).toBe('ObjectPattern');
             expect(decl.name.properties).toHaveLength(2);
@@ -135,7 +135,7 @@ describe('parser', () => {
             const { program } = parseCode('ex config varia { host, port }');
             const decl = program!.body[0] as any;
 
-            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.type).toBe('VariaDeclaration');
             expect(decl.kind).toBe('varia');
             expect(decl.name.type).toBe('ObjectPattern');
             expect(decl.init.name).toBe('config');
@@ -155,7 +155,7 @@ describe('parser', () => {
             const { program } = parseCode('ex getUser() fixum { name, email }');
             const decl = program!.body[0] as any;
 
-            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.type).toBe('VariaDeclaration');
             expect(decl.init.type).toBe('CallExpression');
             expect(decl.init.callee.name).toBe('getUser');
         });
@@ -164,7 +164,7 @@ describe('parser', () => {
             const { program } = parseCode('ex response.data fixum { items, count }');
             const decl = program!.body[0] as any;
 
-            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.type).toBe('VariaDeclaration');
             expect(decl.init.type).toBe('MemberExpression');
             expect(decl.init.object.name).toBe('response');
             expect(decl.init.property.name).toBe('data');
@@ -188,7 +188,7 @@ describe('parser', () => {
             const { program } = parseCode('fixum [a, b, c] = coords');
             const decl = program!.body[0] as any;
 
-            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.type).toBe('VariaDeclaration');
             expect(decl.kind).toBe('fixum');
             expect(decl.name.type).toBe('ArrayPattern');
             expect(decl.name.elements).toHaveLength(3);
@@ -225,7 +225,7 @@ describe('parser', () => {
             const { program } = parseCode('ex coords fixum [x, y, z]');
             const decl = program!.body[0] as any;
 
-            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.type).toBe('VariaDeclaration');
             expect(decl.kind).toBe('fixum');
             expect(decl.name.type).toBe('ArrayPattern');
             expect(decl.name.elements).toHaveLength(3);
@@ -236,7 +236,7 @@ describe('parser', () => {
             const { program } = parseCode('ex coords varia [x, y]');
             const decl = program!.body[0] as any;
 
-            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.type).toBe('VariaDeclaration');
             expect(decl.kind).toBe('varia');
             expect(decl.name.type).toBe('ArrayPattern');
         });
@@ -245,7 +245,7 @@ describe('parser', () => {
             const { program } = parseCode('ex divide(17, 5) fixum [quotient, remainder]');
             const decl = program!.body[0] as any;
 
-            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.type).toBe('VariaDeclaration');
             expect(decl.init.type).toBe('CallExpression');
             expect(decl.init.callee.name).toBe('divide');
             expect(decl.name.type).toBe('ArrayPattern');
@@ -276,7 +276,7 @@ describe('parser', () => {
         }
       `);
 
-            expect(program!.body[0]!.type).toBe('FunctionDeclaration');
+            expect(program!.body[0]!.type).toBe('FunctioDeclaration');
             const fn = program!.body[0] as any;
 
             expect(fn.name.name).toBe('salve');
@@ -294,7 +294,7 @@ describe('parser', () => {
       `);
             const fn = program!.body[0] as any;
 
-            expect(fn.type).toBe('FunctionDeclaration');
+            expect(fn.type).toBe('FunctioDeclaration');
             expect(fn.returnType.name).toBe('textus');
         });
 
@@ -475,7 +475,7 @@ describe('parser', () => {
         }
       `);
 
-            expect(program!.body[0]!.type).toBe('IfStatement');
+            expect(program!.body[0]!.type).toBe('SiStatement');
             const stmt = program!.body[0] as any;
 
             expect(stmt.test.value).toBe(true);
@@ -520,7 +520,7 @@ describe('parser', () => {
         }
       `);
 
-            expect(program!.body[0]!.type).toBe('WhileStatement');
+            expect(program!.body[0]!.type).toBe('DumStatement');
         });
 
         test('for...in loop', () => {
@@ -531,7 +531,7 @@ describe('parser', () => {
       `);
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('ForStatement');
+            expect(stmt.type).toBe('IteratioStatement');
             expect(stmt.kind).toBe('in');
             expect(stmt.variable.name).toBe('item');
         });
@@ -687,7 +687,7 @@ describe('parser', () => {
             const expr = (program!.body[0] as any).expression;
 
             expect(expr.type).toBe('MemberExpression');
-            expect(expr.object.type).toBe('ThisExpression');
+            expect(expr.object.type).toBe('EgoExpression');
             expect(expr.property.name).toBe('nomen');
         });
 
@@ -797,7 +797,7 @@ describe('parser', () => {
             const { program } = parseCode('varia x = verum ? 1 : 0');
             const decl = program!.body[0] as any;
 
-            expect(decl.type).toBe('VariableDeclaration');
+            expect(decl.type).toBe('VariaDeclaration');
             expect(decl.init.type).toBe('ConditionalExpression');
         });
 
@@ -944,7 +944,7 @@ describe('parser', () => {
             const { program } = parseCode('cede fetch(url)');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('AwaitExpression');
+            expect(expr.type).toBe('CedeExpression');
             expect(expr.argument.type).toBe('CallExpression');
         });
     });
@@ -954,7 +954,7 @@ describe('parser', () => {
             const { program } = parseCode('novum erratum(message)');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('NewExpression');
+            expect(expr.type).toBe('NovumExpression');
             expect(expr.callee.name).toBe('erratum');
         });
 
@@ -978,7 +978,7 @@ describe('parser', () => {
             const { program } = parseCode('novum persona de props');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('NewExpression');
+            expect(expr.type).toBe('NovumExpression');
             expect(expr.callee.name).toBe('persona');
             expect(expr.withExpression.type).toBe('Identifier');
             expect(expr.withExpression.name).toBe('props');
@@ -988,7 +988,7 @@ describe('parser', () => {
             const { program } = parseCode('novum user de fetchProps()');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('NewExpression');
+            expect(expr.type).toBe('NovumExpression');
             expect(expr.withExpression.type).toBe('CallExpression');
             expect(expr.withExpression.callee.name).toBe('fetchProps');
         });
@@ -1006,7 +1006,7 @@ describe('parser', () => {
       `);
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('TryStatement');
+            expect(stmt.type).toBe('TemptaStatement');
             expect(stmt.handler.param.name).toBe('error');
         });
 
@@ -1205,7 +1205,7 @@ describe('parser', () => {
             const { program } = parseCode('ordo color { rubrum, viridis, caeruleum }');
             const enumDecl = program!.body[0] as any;
 
-            expect(enumDecl.type).toBe('EnumDeclaration');
+            expect(enumDecl.type).toBe('OrdoDeclaration');
             expect(enumDecl.name.name).toBe('color');
             expect(enumDecl.members).toHaveLength(3);
             expect(enumDecl.members[0].name.name).toBe('rubrum');
@@ -1217,7 +1217,7 @@ describe('parser', () => {
             const { program } = parseCode('ordo status { pendens = 0, actum = 1, finitum = 2 }');
             const enumDecl = program!.body[0] as any;
 
-            expect(enumDecl.type).toBe('EnumDeclaration');
+            expect(enumDecl.type).toBe('OrdoDeclaration');
             expect(enumDecl.name.name).toBe('status');
             expect(enumDecl.members).toHaveLength(3);
             expect(enumDecl.members[0].value.value).toBe(0);
@@ -1229,7 +1229,7 @@ describe('parser', () => {
             const { program } = parseCode('ordo direction { north = "N", south = "S" }');
             const enumDecl = program!.body[0] as any;
 
-            expect(enumDecl.type).toBe('EnumDeclaration');
+            expect(enumDecl.type).toBe('OrdoDeclaration');
             expect(enumDecl.members[0].value.value).toBe('N');
             expect(enumDecl.members[1].value.value).toBe('S');
         });
@@ -1238,7 +1238,7 @@ describe('parser', () => {
             const { program } = parseCode('ordo color { rubrum, viridis, }');
             const enumDecl = program!.body[0] as any;
 
-            expect(enumDecl.type).toBe('EnumDeclaration');
+            expect(enumDecl.type).toBe('OrdoDeclaration');
             expect(enumDecl.members).toHaveLength(2);
         });
 
@@ -1265,7 +1265,7 @@ describe('parser', () => {
             const { program } = parseCode('si nulla x { scribe "empty" }');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
             expect(stmt.test.type).toBe('UnaryExpression');
             expect(stmt.test.operator).toBe('nulla');
             expect(stmt.test.argument.name).toBe('x');
@@ -1275,7 +1275,7 @@ describe('parser', () => {
             const { program } = parseCode('si nonnulla items { scribe "has items" }');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
             expect(stmt.test.type).toBe('UnaryExpression');
             expect(stmt.test.operator).toBe('nonnulla');
             expect(stmt.test.argument.name).toBe('items');
@@ -1343,7 +1343,7 @@ describe('parser', () => {
             const { program } = parseCode('data ut textus');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('TypeCastExpression');
+            expect(expr.type).toBe('UtExpression');
             expect(expr.expression.name).toBe('data');
             expect(expr.targetType.name).toBe('textus');
         });
@@ -1352,7 +1352,7 @@ describe('parser', () => {
             const { program } = parseCode('response.body ut objectum');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('TypeCastExpression');
+            expect(expr.type).toBe('UtExpression');
             expect(expr.expression.type).toBe('MemberExpression');
             expect(expr.expression.object.name).toBe('response');
             expect(expr.expression.property.name).toBe('body');
@@ -1363,7 +1363,7 @@ describe('parser', () => {
             const { program } = parseCode('getData() ut textus');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('TypeCastExpression');
+            expect(expr.type).toBe('UtExpression');
             expect(expr.expression.type).toBe('CallExpression');
             expect(expr.targetType.name).toBe('textus');
         });
@@ -1373,9 +1373,9 @@ describe('parser', () => {
             const expr = (program!.body[0] as any).expression;
 
             // Should parse as (x ut A) ut B
-            expect(expr.type).toBe('TypeCastExpression');
+            expect(expr.type).toBe('UtExpression');
             expect(expr.targetType.name).toBe('B');
-            expect(expr.expression.type).toBe('TypeCastExpression');
+            expect(expr.expression.type).toBe('UtExpression');
             expect(expr.expression.targetType.name).toBe('A');
             expect(expr.expression.expression.name).toBe('x');
         });
@@ -1384,7 +1384,7 @@ describe('parser', () => {
             const { program } = parseCode('items ut lista<textus>');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('TypeCastExpression');
+            expect(expr.type).toBe('UtExpression');
             expect(expr.targetType.name).toBe('lista');
             expect(expr.targetType.typeParameters[0].name).toBe('textus');
         });
@@ -1393,7 +1393,7 @@ describe('parser', () => {
             const { program } = parseCode('value ut textus?');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('TypeCastExpression');
+            expect(expr.type).toBe('UtExpression');
             expect(expr.targetType.name).toBe('textus');
             expect(expr.targetType.nullable).toBe(true);
         });
@@ -1405,7 +1405,7 @@ describe('parser', () => {
 
             expect(expr.type).toBe('UnaryExpression');
             expect(expr.operator).toBe('-');
-            expect(expr.argument.type).toBe('TypeCastExpression');
+            expect(expr.argument.type).toBe('UtExpression');
             expect(expr.argument.expression.name).toBe('x');
             expect(expr.argument.targetType.name).toBe('numerus');
         });
@@ -1415,7 +1415,7 @@ describe('parser', () => {
             const { program } = parseCode('x.y ut textus');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('TypeCastExpression');
+            expect(expr.type).toBe('UtExpression');
             expect(expr.expression.type).toBe('MemberExpression');
         });
 
@@ -1429,7 +1429,7 @@ describe('parser', () => {
             // so this parses as a + (b ut numerus)
             expect(expr.type).toBe('BinaryExpression');
             expect(expr.operator).toBe('+');
-            expect(expr.right.type).toBe('TypeCastExpression');
+            expect(expr.right.type).toBe('UtExpression');
         });
     });
 
@@ -1438,7 +1438,7 @@ describe('parser', () => {
             const { program } = parseCode('iace "Error message"');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('ThrowStatement');
+            expect(stmt.type).toBe('IaceStatement');
             expect(stmt.argument.type).toBe('Literal');
             expect(stmt.argument.value).toBe('Error message');
         });
@@ -1447,8 +1447,8 @@ describe('parser', () => {
             const { program } = parseCode('iace novum Error("message")');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('ThrowStatement');
-            expect(stmt.argument.type).toBe('NewExpression');
+            expect(stmt.type).toBe('IaceStatement');
+            expect(stmt.argument.type).toBe('NovumExpression');
             expect(stmt.argument.callee.name).toBe('Error');
         });
 
@@ -1456,7 +1456,7 @@ describe('parser', () => {
             const { program } = parseCode('iace error');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('ThrowStatement');
+            expect(stmt.type).toBe('IaceStatement');
             expect(stmt.argument.type).toBe('Identifier');
             expect(stmt.argument.name).toBe('error');
         });
@@ -1468,7 +1468,7 @@ describe('parser', () => {
             const block = program!.body[0] as any;
 
             expect(block.type).toBe('BlockStatement');
-            expect(block.body[0]!.type).toBe('ThrowStatement');
+            expect(block.body[0]!.type).toBe('IaceStatement');
         });
 
         test('throw in switch case', () => {
@@ -1479,8 +1479,8 @@ describe('parser', () => {
             `);
             const switchStmt = program!.body[0] as any;
 
-            expect(switchStmt.type).toBe('SwitchStatement');
-            expect(switchStmt.cases[0].consequent.body[0]!.type).toBe('ThrowStatement');
+            expect(switchStmt.type).toBe('EligeStatement');
+            expect(switchStmt.cases[0].consequent.body[0]!.type).toBe('IaceStatement');
         });
 
         test('throw in if statement', () => {
@@ -1491,15 +1491,15 @@ describe('parser', () => {
             `);
             const ifStmt = program!.body[0] as any;
 
-            expect(ifStmt.type).toBe('IfStatement');
-            expect(ifStmt.consequent.body[0]!.type).toBe('ThrowStatement');
+            expect(ifStmt.type).toBe('SiStatement');
+            expect(ifStmt.consequent.body[0]!.type).toBe('IaceStatement');
         });
 
         test('throw expression result', () => {
             const { program } = parseCode('iace x + y');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('ThrowStatement');
+            expect(stmt.type).toBe('IaceStatement');
             expect(stmt.argument.type).toBe('BinaryExpression');
         });
     });
@@ -1509,7 +1509,7 @@ describe('parser', () => {
             const { program } = parseCode('si x > 5 ergo scribe "big"');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
             expect(stmt.test.type).toBe('BinaryExpression');
             expect(stmt.consequent.type).toBe('BlockStatement');
             expect(stmt.consequent.body).toHaveLength(1);
@@ -1520,7 +1520,7 @@ describe('parser', () => {
             const { program } = parseCode('si x > 5 ergo scribe "big" aliter scribe "small"');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
             expect(stmt.consequent.type).toBe('BlockStatement');
             expect(stmt.consequent.body).toHaveLength(1);
             expect(stmt.alternate).toBeDefined();
@@ -1536,8 +1536,8 @@ describe('parser', () => {
             `);
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
-            expect(stmt.alternate.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
+            expect(stmt.alternate.type).toBe('SiStatement');
             expect(stmt.alternate.alternate.type).toBe('BlockStatement');
         });
 
@@ -1549,8 +1549,8 @@ describe('parser', () => {
             `);
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
-            expect(stmt.alternate.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
+            expect(stmt.alternate.type).toBe('SiStatement');
             expect(stmt.alternate.alternate.type).toBe('BlockStatement');
         });
 
@@ -1558,7 +1558,7 @@ describe('parser', () => {
             const { program } = parseCode('si nihil x { scribe "null" }');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
             expect(stmt.test.type).toBe('UnaryExpression');
             expect(stmt.test.operator).toBe('nihil');
             expect(stmt.test.argument.name).toBe('x');
@@ -1568,7 +1568,7 @@ describe('parser', () => {
             const { program } = parseCode('si nonnihil x { scribe "not null" }');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
             expect(stmt.test.type).toBe('UnaryExpression');
             expect(stmt.test.operator).toBe('nonnihil');
             expect(stmt.test.argument.name).toBe('x');
@@ -1579,8 +1579,8 @@ describe('parser', () => {
             const { program } = parseCode('si x est textus { scribe "string" }');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
-            expect(stmt.test.type).toBe('TypeCheckExpression');
+            expect(stmt.type).toBe('SiStatement');
+            expect(stmt.test.type).toBe('EstExpression');
             expect(stmt.test.expression.name).toBe('x');
             expect(stmt.test.targetType.name).toBe('textus');
         });
@@ -1589,8 +1589,8 @@ describe('parser', () => {
             const { program } = parseCode('si val est textus { scribe "string" }');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
-            expect(stmt.test.type).toBe('TypeCheckExpression');
+            expect(stmt.type).toBe('SiStatement');
+            expect(stmt.test.type).toBe('EstExpression');
             expect(stmt.test.expression.name).toBe('val');
             expect(stmt.test.targetType.name).toBe('textus');
             expect(stmt.test.negated).toBe(false);
@@ -1600,8 +1600,8 @@ describe('parser', () => {
             const { program } = parseCode('si items est lista<textus> { scribe "array" }');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
-            expect(stmt.test.type).toBe('TypeCheckExpression');
+            expect(stmt.type).toBe('SiStatement');
+            expect(stmt.test.type).toBe('EstExpression');
             expect(stmt.test.targetType.name).toBe('lista');
             expect(stmt.test.targetType.typeParameters).toHaveLength(1);
         });
@@ -1610,8 +1610,8 @@ describe('parser', () => {
             const { program } = parseCode('si obj est persona { scribe "is persona" }');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
-            expect(stmt.test.type).toBe('TypeCheckExpression');
+            expect(stmt.type).toBe('SiStatement');
+            expect(stmt.test.type).toBe('EstExpression');
             expect(stmt.test.expression.name).toBe('obj');
             expect(stmt.test.targetType.name).toBe('persona');
         });
@@ -1620,7 +1620,7 @@ describe('parser', () => {
             const { program } = parseCode('si negativum n { scribe "negative" }');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
             expect(stmt.test.type).toBe('UnaryExpression');
             expect(stmt.test.operator).toBe('negativum');
         });
@@ -1629,7 +1629,7 @@ describe('parser', () => {
             const { program } = parseCode('si positivum n { scribe "positive" }');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
             expect(stmt.test.type).toBe('UnaryExpression');
             expect(stmt.test.operator).toBe('positivum');
         });
@@ -1638,7 +1638,7 @@ describe('parser', () => {
             const { program } = parseCode('dum x > 0 ergo x = x - 1');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('WhileStatement');
+            expect(stmt.type).toBe('DumStatement');
             expect(stmt.body.type).toBe('BlockStatement');
             expect(stmt.body.body).toHaveLength(1);
             expect(stmt.body.body[0].expression.type).toBe('AssignmentExpression');
@@ -1648,7 +1648,7 @@ describe('parser', () => {
             const { program } = parseCode('ex items pro item ergo scribe item');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('ForStatement');
+            expect(stmt.type).toBe('IteratioStatement');
             expect(stmt.kind).toBe('ex');
             expect(stmt.body.type).toBe('BlockStatement');
             expect(stmt.body.body).toHaveLength(1);
@@ -1659,7 +1659,7 @@ describe('parser', () => {
             const { program } = parseCode('de obj pro key ergo scribe key');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('ForStatement');
+            expect(stmt.type).toBe('IteratioStatement');
             expect(stmt.kind).toBe('in');
             expect(stmt.body.type).toBe('BlockStatement');
             expect(stmt.body.body).toHaveLength(1);
@@ -1669,7 +1669,7 @@ describe('parser', () => {
             const { program } = parseCode('si active ergo process()');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
             expect(stmt.consequent.type).toBe('BlockStatement');
             expect(stmt.consequent.body[0].expression.type).toBe('CallExpression');
         });
@@ -1678,7 +1678,7 @@ describe('parser', () => {
             const { program } = parseCode('si valid ergo result = 1');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
             expect(stmt.consequent.type).toBe('BlockStatement');
             expect(stmt.consequent.body[0].expression.type).toBe('AssignmentExpression');
         });
@@ -1687,61 +1687,61 @@ describe('parser', () => {
             const { program } = parseCode('si done ergo redde result');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
             expect(stmt.consequent.type).toBe('BlockStatement');
-            expect(stmt.consequent.body[0]!.type).toBe('ReturnStatement');
+            expect(stmt.consequent.body[0]!.type).toBe('ReddeStatement');
         });
 
         test('ergo with rumpe', () => {
             const { program } = parseCode('si done ergo rumpe');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
             expect(stmt.consequent.type).toBe('BlockStatement');
-            expect(stmt.consequent.body[0]!.type).toBe('BreakStatement');
+            expect(stmt.consequent.body[0]!.type).toBe('RumpeStatement');
         });
 
         test('ergo with perge', () => {
             const { program } = parseCode('si skip ergo perge');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
             expect(stmt.consequent.type).toBe('BlockStatement');
-            expect(stmt.consequent.body[0]!.type).toBe('ContinueStatement');
+            expect(stmt.consequent.body[0]!.type).toBe('PergeStatement');
         });
     });
 
     describe('break and continue (rumpe/perge)', () => {
-        test('rumpe parses as BreakStatement', () => {
+        test('rumpe parses as RumpeStatement', () => {
             const { program } = parseCode('dum verum { rumpe }');
             const loop = program!.body[0] as any;
 
-            expect(loop.type).toBe('WhileStatement');
-            expect(loop.body.body[0]!.type).toBe('BreakStatement');
+            expect(loop.type).toBe('DumStatement');
+            expect(loop.body.body[0]!.type).toBe('RumpeStatement');
         });
 
-        test('perge parses as ContinueStatement', () => {
+        test('perge parses as PergeStatement', () => {
             const { program } = parseCode('dum verum { perge }');
             const loop = program!.body[0] as any;
 
-            expect(loop.type).toBe('WhileStatement');
-            expect(loop.body.body[0]!.type).toBe('ContinueStatement');
+            expect(loop.type).toBe('DumStatement');
+            expect(loop.body.body[0]!.type).toBe('PergeStatement');
         });
 
         test('rumpe in for loop', () => {
             const { program } = parseCode('ex items pro item { rumpe }');
             const loop = program!.body[0] as any;
 
-            expect(loop.type).toBe('ForStatement');
-            expect(loop.body.body[0]!.type).toBe('BreakStatement');
+            expect(loop.type).toBe('IteratioStatement');
+            expect(loop.body.body[0]!.type).toBe('RumpeStatement');
         });
 
         test('perge in for loop', () => {
             const { program } = parseCode('ex items pro item { perge }');
             const loop = program!.body[0] as any;
 
-            expect(loop.type).toBe('ForStatement');
-            expect(loop.body.body[0]!.type).toBe('ContinueStatement');
+            expect(loop.type).toBe('IteratioStatement');
+            expect(loop.body.body[0]!.type).toBe('PergeStatement');
         });
 
         test('rumpe inside conditional in loop', () => {
@@ -1749,8 +1749,8 @@ describe('parser', () => {
             const loop = program!.body[0] as any;
             const ifStmt = loop.body.body[0];
 
-            expect(ifStmt.type).toBe('IfStatement');
-            expect(ifStmt.consequent.body[0]!.type).toBe('BreakStatement');
+            expect(ifStmt.type).toBe('SiStatement');
+            expect(ifStmt.consequent.body[0]!.type).toBe('RumpeStatement');
         });
 
         test('perge inside conditional in loop', () => {
@@ -1758,8 +1758,8 @@ describe('parser', () => {
             const loop = program!.body[0] as any;
             const ifStmt = loop.body.body[0];
 
-            expect(ifStmt.type).toBe('IfStatement');
-            expect(ifStmt.consequent.body[0]!.type).toBe('ContinueStatement');
+            expect(ifStmt.type).toBe('SiStatement');
+            expect(ifStmt.consequent.body[0]!.type).toBe('PergeStatement');
         });
 
         test('multiple rumpe and perge in same loop', () => {
@@ -1771,8 +1771,8 @@ describe('parser', () => {
             `);
             const loop = program!.body[0] as any;
 
-            expect(loop.body.body[0].consequent.body[0]!.type).toBe('ContinueStatement');
-            expect(loop.body.body[1].consequent.body[0]!.type).toBe('BreakStatement');
+            expect(loop.body.body[0].consequent.body[0]!.type).toBe('PergeStatement');
+            expect(loop.body.body[1].consequent.body[0]!.type).toBe('RumpeStatement');
         });
     });
 
@@ -1781,7 +1781,7 @@ describe('parser', () => {
             const { program } = parseCode('ex items fit item { scribe item }');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('ForStatement');
+            expect(stmt.type).toBe('IteratioStatement');
             expect(stmt.kind).toBe('ex');
             expect(stmt.async).toBe(false);
             expect(stmt.variable.name).toBe('item');
@@ -1791,7 +1791,7 @@ describe('parser', () => {
             const { program } = parseCode('ex stream fiet chunk { scribe chunk }');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('ForStatement');
+            expect(stmt.type).toBe('IteratioStatement');
             expect(stmt.kind).toBe('ex');
             expect(stmt.async).toBe(true);
             expect(stmt.variable.name).toBe('chunk');
@@ -1801,7 +1801,7 @@ describe('parser', () => {
             const { program } = parseCode('ex items pro item { scribe item }');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('ForStatement');
+            expect(stmt.type).toBe('IteratioStatement');
             expect(stmt.async).toBe(false);
         });
 
@@ -1809,7 +1809,7 @@ describe('parser', () => {
             const { program } = parseCode('de obj fit key { scribe key }');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('ForStatement');
+            expect(stmt.type).toBe('IteratioStatement');
             expect(stmt.kind).toBe('in');
             expect(stmt.async).toBe(false);
         });
@@ -1818,7 +1818,7 @@ describe('parser', () => {
             const { program } = parseCode('ex items fit item ergo scribe item');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('ForStatement');
+            expect(stmt.type).toBe('IteratioStatement');
             expect(stmt.async).toBe(false);
             expect(stmt.body.body[0]!.type).toBe('ScribeStatement');
         });
@@ -1827,7 +1827,7 @@ describe('parser', () => {
             const { program } = parseCode('ex stream fiet chunk ergo process(chunk)');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('ForStatement');
+            expect(stmt.type).toBe('IteratioStatement');
             expect(stmt.async).toBe(true);
             expect(stmt.body.body[0].expression.type).toBe('CallExpression');
         });
@@ -1845,7 +1845,7 @@ describe('parser', () => {
             const { program } = parseCode('functio f() {}');
             const fn = program!.body[0] as any;
 
-            expect(fn.type).toBe('FunctionDeclaration');
+            expect(fn.type).toBe('FunctioDeclaration');
             expect(fn.body.body).toHaveLength(0);
         });
 
@@ -1906,7 +1906,7 @@ describe('parser', () => {
             const { program } = parseCode('si verum { } aliter { }');
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
             expect(stmt.consequent.body).toHaveLength(0);
             expect(stmt.alternate.body).toHaveLength(0);
         });
@@ -1980,9 +1980,9 @@ describe('parser', () => {
             `);
             const stmt = program!.body[0] as any;
 
-            expect(stmt.type).toBe('IfStatement');
-            expect(stmt.consequent.body[0]!.type).toBe('IfStatement');
-            expect(stmt.consequent.body[0].consequent.body[0]!.type).toBe('IfStatement');
+            expect(stmt.type).toBe('SiStatement');
+            expect(stmt.consequent.body[0]!.type).toBe('SiStatement');
+            expect(stmt.consequent.body[0].consequent.body[0]!.type).toBe('SiStatement');
         });
     });
 
@@ -2474,7 +2474,7 @@ describe('parser', () => {
                 const { program } = parseCode('fixum double = pro x redde x * 2');
                 const decl = program!.body[0] as any;
 
-                expect(decl.type).toBe('VariableDeclaration');
+                expect(decl.type).toBe('VariaDeclaration');
                 expect(decl.init.type).toBe('LambdaExpression');
             });
 
@@ -2568,7 +2568,7 @@ describe('parser', () => {
                 const { program } = parseCode('fixum double = pro x: x * 2');
                 const decl = program!.body[0] as any;
 
-                expect(decl.type).toBe('VariableDeclaration');
+                expect(decl.type).toBe('VariaDeclaration');
                 expect(decl.init.type).toBe('LambdaExpression');
             });
 
@@ -2668,7 +2668,7 @@ describe('parser', () => {
             const { program } = parseCode('ex "norma/tempus" importa nunc, dormi');
             const decl = program!.body[0] as any;
 
-            expect(decl.type).toBe('ImportDeclaration');
+            expect(decl.type).toBe('ImportaDeclaration');
             expect(decl.source).toBe('norma/tempus');
             expect(decl.specifiers).toHaveLength(2);
             expect(decl.specifiers[0].name).toBe('nunc');
@@ -2679,7 +2679,7 @@ describe('parser', () => {
             const { program } = parseCode('ex "norma/tempus" importa *');
             const decl = program!.body[0] as any;
 
-            expect(decl.type).toBe('ImportDeclaration');
+            expect(decl.type).toBe('ImportaDeclaration');
             expect(decl.wildcard).toBe(true);
             expect(decl.specifiers).toHaveLength(0);
         });
@@ -3133,7 +3133,7 @@ describe('parser', () => {
                 `);
                 const fn = program!.body[0] as any;
 
-                expect(fn.type).toBe('FunctionDeclaration');
+                expect(fn.type).toBe('FunctioDeclaration');
                 expect(fn.typeParams).toHaveLength(1);
                 expect(fn.typeParams[0].name.name).toBe('T');
                 expect(fn.params).toHaveLength(1);
@@ -3311,7 +3311,7 @@ describe('parser', () => {
                 expect(errors).toHaveLength(0);
 
                 const switchStmt = program!.body[0] as any;
-                expect(switchStmt.type).toBe('SwitchStatement');
+                expect(switchStmt.type).toBe('EligeStatement');
                 expect(switchStmt.cases).toHaveLength(2);
 
                 // First case: ex Click pro x, y

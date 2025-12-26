@@ -27,21 +27,21 @@ import type {
     TypeParameter,
     ObjectProperty,
     ObjectPatternProperty,
-    SwitchCase,
-    GuardClause,
-    CatchClause,
-    EnumMember,
-    EnumDeclaration,
+    EligeCasus,
+    CustodiClause,
+    CapeClause,
+    OrdoMember,
+    OrdoDeclaration,
     FieldDeclaration,
     ComputedFieldDeclaration,
     GenusDeclaration,
     PactumDeclaration,
     PactumMethod,
-    BreakStatement,
-    ContinueStatement,
+    RumpeStatement,
+    PergeStatement,
     FacBlockStatement,
     LambdaExpression,
-    ThisExpression,
+    EgoExpression,
 } from '../parser/ast.ts';
 import type { AstNode, PrettierProgram } from './parser.ts';
 
@@ -75,18 +75,18 @@ export function faberPrint(path: AstPath<AstNode>, options: FaberOptions, print:
             return printProgram(path as AstPath<PrettierProgram>, options, print);
 
         // Statements
-        case 'ImportDeclaration':
-            return printImportDeclaration(path, options, print);
-        case 'VariableDeclaration':
-            return printVariableDeclaration(path, options, print);
-        case 'FunctionDeclaration':
-            return printFunctionDeclaration(path, options, print);
+        case 'ImportaDeclaration':
+            return printImportaDeclaration(path, options, print);
+        case 'VariaDeclaration':
+            return printVariaDeclaration(path, options, print);
+        case 'FunctioDeclaration':
+            return printFunctioDeclaration(path, options, print);
         case 'TypeAliasDeclaration':
             return printTypeAliasDeclaration(path, options, print);
-        case 'EnumDeclaration':
-            return printEnumDeclaration(path, options, print);
-        case 'EnumMember':
-            return printEnumMember(path, options, print);
+        case 'OrdoDeclaration':
+            return printOrdoDeclaration(path, options, print);
+        case 'OrdoMember':
+            return printOrdoMember(path, options, print);
         case 'GenusDeclaration':
             return printGenusDeclaration(path, options, print);
         case 'FieldDeclaration':
@@ -99,41 +99,41 @@ export function faberPrint(path: AstPath<AstNode>, options: FaberOptions, print:
             return printPactumMethod(path, options, print);
         case 'ExpressionStatement':
             return printExpressionStatement(path, options, print);
-        case 'IfStatement':
-            return printIfStatement(path, options, print);
-        case 'WhileStatement':
-            return printWhileStatement(path, options, print);
-        case 'ForStatement':
-            return printForStatement(path, options, print);
-        case 'WithStatement':
-            return printWithStatement(path, options, print);
-        case 'SwitchStatement':
-            return printSwitchStatement(path, options, print);
-        case 'GuardStatement':
-            return printGuardStatement(path, options, print);
-        case 'AssertStatement':
-            return printAssertStatement(path, options, print);
-        case 'ReturnStatement':
-            return printReturnStatement(path, options, print);
-        case 'BreakStatement':
+        case 'SiStatement':
+            return printSiStatement(path, options, print);
+        case 'DumStatement':
+            return printDumStatement(path, options, print);
+        case 'IteratioStatement':
+            return printIteratioStatement(path, options, print);
+        case 'InStatement':
+            return printInStatement(path, options, print);
+        case 'EligeStatement':
+            return printEligeStatement(path, options, print);
+        case 'CustodiStatement':
+            return printCustodiStatement(path, options, print);
+        case 'AdfirmaStatement':
+            return printAdfirmaStatement(path, options, print);
+        case 'ReddeStatement':
+            return printReddeStatement(path, options, print);
+        case 'RumpeStatement':
             return 'rumpe';
-        case 'ContinueStatement':
+        case 'PergeStatement':
             return 'perge';
         case 'FacBlockStatement':
             return printFacBlockStatement(path, options, print);
         case 'BlockStatement':
             return printBlockStatement(path, options, print);
-        case 'ThrowStatement':
-            return printThrowStatement(path, options, print);
-        case 'TryStatement':
-            return printTryStatement(path, options, print);
+        case 'IaceStatement':
+            return printIaceStatement(path, options, print);
+        case 'TemptaStatement':
+            return printTemptaStatement(path, options, print);
         case 'ScribeStatement':
             return printScribeStatement(path, options, print);
 
         // Expressions
         case 'Identifier':
             return printIdentifier(path, options, print);
-        case 'ThisExpression':
+        case 'EgoExpression':
             return 'ego';
         case 'Literal':
             return printLiteral(path, options, print);
@@ -159,10 +159,10 @@ export function faberPrint(path: AstPath<AstNode>, options: FaberOptions, print:
             return printAssignmentExpression(path, options, print);
         case 'ConditionalExpression':
             return printConditionalExpression(path, options, print);
-        case 'AwaitExpression':
-            return printAwaitExpression(path, options, print);
-        case 'NewExpression':
-            return printNewExpression(path, options, print);
+        case 'CedeExpression':
+            return printCedeExpression(path, options, print);
+        case 'NovumExpression':
+            return printNovumExpression(path, options, print);
         case 'LambdaExpression':
             return printLambdaExpression(path, options, print);
 
@@ -177,12 +177,12 @@ export function faberPrint(path: AstPath<AstNode>, options: FaberOptions, print:
             return printObjectPatternProperty(path, options, print);
         case 'ObjectProperty':
             return printObjectProperty(path, options, print);
-        case 'SwitchCase':
-            return printSwitchCase(path, options, print);
-        case 'GuardClause':
-            return printGuardClause(path, options, print);
-        case 'CatchClause':
-            return printCatchClause(path, options, print);
+        case 'EligeCasus':
+            return printEligeCasus(path, options, print);
+        case 'CustodiClause':
+            return printCustodiClause(path, options, print);
+        case 'CapeClause':
+            return printCapeClause(path, options, print);
 
         default:
             throw new Error(`Unknown node type: ${(node as any).type}`);
@@ -232,7 +232,7 @@ function printProgram(path: AstPath<PrettierProgram>, options: FaberOptions, pri
 // STATEMENTS
 // =============================================================================
 
-function printImportDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printImportaDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
 
     if (node.wildcard) {
@@ -249,7 +249,7 @@ function printImportDeclaration(path: AstPath<AstNode>, options: FaberOptions, p
     return ['ex ', node.source, ' importa ', join(', ', specifiers)];
 }
 
-function printVariableDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printVariaDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = [node.kind, ' '];
 
@@ -269,7 +269,7 @@ function printVariableDeclaration(path: AstPath<AstNode>, options: FaberOptions,
     return parts;
 }
 
-function printFunctionDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printFunctioDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = [];
 
@@ -308,7 +308,7 @@ function printTypeAliasDeclaration(path: AstPath<AstNode>, options: FaberOptions
     return ['typus ', path.call(print, 'name'), ' = ', path.call(print, 'typeAnnotation')];
 }
 
-function printEnumDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printOrdoDeclaration(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const members = path.map(print, 'members');
 
@@ -319,7 +319,7 @@ function printEnumDeclaration(path: AstPath<AstNode>, options: FaberOptions, pri
     return ['ordo ', path.call(print, 'name'), ' {', indent([hardline, join([',', hardline], members)]), hardline, '}'];
 }
 
-function printEnumMember(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printOrdoMember(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = [path.call(print, 'name')];
 
@@ -515,7 +515,7 @@ function printExpressionStatement(path: AstPath<AstNode>, options: FaberOptions,
     return path.call(print, 'expression');
 }
 
-function printIfStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printSiStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = ['si ', path.call(print, 'test'), ' ', path.call(print, 'consequent')];
 
@@ -526,7 +526,7 @@ function printIfStatement(path: AstPath<AstNode>, options: FaberOptions, print: 
 
     // Else clause - Stroustrup style (else on new line)
     if (node.alternate) {
-        if (node.alternate.type === 'IfStatement') {
+        if (node.alternate.type === 'SiStatement') {
             parts.push(hardline, 'aliter ', path.call(print, 'alternate'));
         } else {
             parts.push(hardline, 'aliter ', path.call(print, 'alternate'));
@@ -536,7 +536,7 @@ function printIfStatement(path: AstPath<AstNode>, options: FaberOptions, print: 
     return parts;
 }
 
-function printWhileStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printDumStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = ['dum ', path.call(print, 'test'), ' ', path.call(print, 'body')];
 
@@ -547,7 +547,7 @@ function printWhileStatement(path: AstPath<AstNode>, options: FaberOptions, prin
     return parts;
 }
 
-function printForStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printIteratioStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = [node.kind, ' ', path.call(print, 'iterable'), ' pro ', path.call(print, 'variable'), ' ', path.call(print, 'body')];
 
@@ -558,11 +558,11 @@ function printForStatement(path: AstPath<AstNode>, options: FaberOptions, print:
     return parts;
 }
 
-function printWithStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printInStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     return ['in ', path.call(print, 'object'), ' ', path.call(print, 'body')];
 }
 
-function printSwitchStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printEligeStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = ['elige ', path.call(print, 'discriminant'), ' {'];
 
@@ -590,11 +590,11 @@ function printSwitchStatement(path: AstPath<AstNode>, options: FaberOptions, pri
     return parts;
 }
 
-function printSwitchCase(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printEligeCasus(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     return ['si ', path.call(print, 'test'), ' ', path.call(print, 'consequent')];
 }
 
-function printGuardStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printCustodiStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const clauseParts: Doc[] = [];
 
     path.each((clausePath, index) => {
@@ -607,11 +607,11 @@ function printGuardStatement(path: AstPath<AstNode>, options: FaberOptions, prin
     return ['custodi {', indent([hardline, ...clauseParts]), hardline, '}'];
 }
 
-function printGuardClause(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printCustodiClause(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     return ['si ', path.call(print, 'test'), ' ', path.call(print, 'consequent')];
 }
 
-function printAssertStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printAdfirmaStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = ['adfirma ', path.call(print, 'test')];
 
@@ -622,7 +622,7 @@ function printAssertStatement(path: AstPath<AstNode>, options: FaberOptions, pri
     return parts;
 }
 
-function printReturnStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printReddeStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
 
     if (node.argument) {
@@ -664,13 +664,13 @@ function printBlockStatement(path: AstPath<AstNode>, options: FaberOptions, prin
     return ['{', indent([hardline, ...stmtParts]), hardline, '}'];
 }
 
-function printThrowStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printIaceStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const keyword = node.fatal ? 'mori' : 'iace';
     return [keyword, ' ', path.call(print, 'argument')];
 }
 
-function printTryStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printTemptaStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
     const parts: Doc[] = ['tempta ', path.call(print, 'block')];
 
@@ -685,7 +685,7 @@ function printTryStatement(path: AstPath<AstNode>, options: FaberOptions, print:
     return parts;
 }
 
-function printCatchClause(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printCapeClause(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     return ['cape ', path.call(print, 'param'), ' ', path.call(print, 'body')];
 }
 
@@ -886,11 +886,11 @@ function printConditionalExpression(path: AstPath<AstNode>, options: FaberOption
     return group([path.call(print, 'test'), indent([line, '? ', path.call(print, 'consequent'), line, ': ', path.call(print, 'alternate')])]);
 }
 
-function printAwaitExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printCedeExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     return ['cede ', path.call(print, 'argument')];
 }
 
-function printNewExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+function printNovumExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const args = path.map(print, 'arguments');
     const threshold = getBreakThreshold(options);
 

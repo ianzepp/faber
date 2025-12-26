@@ -79,28 +79,28 @@ export interface Program extends BaseNode {
  *         in visitors and transformers.
  */
 export type Statement =
-    | ImportDeclaration
-    | VariableDeclaration
-    | FunctionDeclaration
+    | ImportaDeclaration
+    | VariaDeclaration
+    | FunctioDeclaration
     | GenusDeclaration
     | PactumDeclaration
     | TypeAliasDeclaration
-    | EnumDeclaration
+    | OrdoDeclaration
     | DiscretioDeclaration
     | ExpressionStatement
-    | IfStatement
-    | WhileStatement
-    | ForStatement
-    | WithStatement
-    | SwitchStatement
-    | GuardStatement
-    | AssertStatement
-    | ReturnStatement
-    | BreakStatement
-    | ContinueStatement
+    | SiStatement
+    | DumStatement
+    | IteratioStatement
+    | InStatement
+    | EligeStatement
+    | CustodiStatement
+    | AdfirmaStatement
+    | ReddeStatement
+    | RumpeStatement
+    | PergeStatement
     | BlockStatement
-    | ThrowStatement
-    | TryStatement
+    | IaceStatement
+    | TemptaStatement
     | ScribeStatement
     | FacBlockStatement
     | ProbandumStatement
@@ -127,8 +127,8 @@ export type Statement =
  *   ex "norma/tempus" importa nunc      -> source="norma/tempus", specifiers=[nunc]
  *   ex norma importa *                  -> source="norma", wildcard=true
  */
-export interface ImportDeclaration extends BaseNode {
-    type: 'ImportDeclaration';
+export interface ImportaDeclaration extends BaseNode {
+    type: 'ImportaDeclaration';
     source: string;
     specifiers: Identifier[];
     wildcard: boolean;
@@ -242,8 +242,8 @@ export interface ArrayPatternElement extends BaseNode {
  *   figendum data = fetchData()
  *   variandum result = fetchInitial()
  */
-export interface VariableDeclaration extends BaseNode {
-    type: 'VariableDeclaration';
+export interface VariaDeclaration extends BaseNode {
+    type: 'VariaDeclaration';
     kind: 'varia' | 'fixum' | 'figendum' | 'variandum';
     name: Identifier | ObjectPattern | ArrayPattern;
     typeAnnotation?: TypeAnnotation;
@@ -294,8 +294,8 @@ export interface TypeParameterDeclaration extends BaseNode {
  *   futura functio cede() { ... }
  *   functio max(prae typus T, T a, T b) -> T { ... }
  */
-export interface FunctionDeclaration extends BaseNode {
-    type: 'FunctionDeclaration';
+export interface FunctioDeclaration extends BaseNode {
+    type: 'FunctioDeclaration';
     name: Identifier;
     typeParams?: TypeParameterDeclaration[];
     params: Parameter[];
@@ -383,8 +383,8 @@ export interface TypeAliasDeclaration extends BaseNode {
  *   actum = 1        -> explicit numeric
  *   septentrio = "north"  -> string enum
  */
-export interface EnumMember extends BaseNode {
-    type: 'EnumMember';
+export interface OrdoMember extends BaseNode {
+    type: 'OrdoMember';
     name: Identifier;
     value?: Literal;
 }
@@ -396,7 +396,7 @@ export interface EnumMember extends BaseNode {
  *   enumDecl := 'ordo' IDENTIFIER '{' enumMember (',' enumMember)* ','? '}'
  *
  * INVARIANT: name is lowercase (Latin convention).
- * INVARIANT: members is non-empty array of EnumMember.
+ * INVARIANT: members is non-empty array of OrdoMember.
  *
  * WHY: "ordo" (order/rank) represents enumerated constants.
  *
@@ -404,10 +404,10 @@ export interface EnumMember extends BaseNode {
  *   ordo color { rubrum, viridis, caeruleum }
  *   ordo status { pendens = 0, actum = 1, finitum = 2 }
  */
-export interface EnumDeclaration extends BaseNode {
-    type: 'EnumDeclaration';
+export interface OrdoDeclaration extends BaseNode {
+    type: 'OrdoDeclaration';
     name: Identifier;
-    members: EnumMember[];
+    members: OrdoMember[];
 }
 
 // ---------------------------------------------------------------------------
@@ -533,7 +533,7 @@ export interface FieldDeclaration extends BaseNode {
  *
  * INVARIANT: name is the type name (lowercase by convention).
  * INVARIANT: fields contains all field declarations.
- * INVARIANT: methods contains all method declarations (FunctionDeclaration with implicit ego).
+ * INVARIANT: methods contains all method declarations (FunctioDeclaration with implicit ego).
  * INVARIANT: implements lists pactum names this genus fulfills.
  *
  * WHY: Latin 'genus' (kind/type) for data structures with fields and methods.
@@ -561,8 +561,8 @@ export interface GenusDeclaration extends BaseNode {
     typeParameters?: Identifier[];
     implements?: Identifier[];
     fields: FieldDeclaration[];
-    constructor?: FunctionDeclaration;
-    methods: FunctionDeclaration[];
+    constructor?: FunctioDeclaration;
+    methods: FunctioDeclaration[];
 }
 
 // ---------------------------------------------------------------------------
@@ -615,7 +615,7 @@ export interface ExpressionStatement extends BaseNode {
  *   ifStmt := 'si' expression blockStmt ('cape' IDENTIFIER blockStmt)? ('aliter' (ifStmt | blockStmt))?
  *
  * INVARIANT: catchClause is unique to Latin - allows error handling within conditionals.
- * INVARIANT: alternate can be BlockStatement (else) or IfStatement (else if chain).
+ * INVARIANT: alternate can be BlockStatement (else) or SiStatement (else if chain).
  *
  * WHY: Latin 'cape' clause enables localized error handling in conditionals,
  *      not found in most target languages.
@@ -626,12 +626,12 @@ export interface ExpressionStatement extends BaseNode {
  *   si x > 0 { ... } aliter { ... }
  *   si x > 0 { ... } aliter si x < 0 { ... } aliter { ... }
  */
-export interface IfStatement extends BaseNode {
-    type: 'IfStatement';
+export interface SiStatement extends BaseNode {
+    type: 'SiStatement';
     test: Expression;
     consequent: BlockStatement;
-    alternate?: BlockStatement | IfStatement;
-    catchClause?: CatchClause;
+    alternate?: BlockStatement | SiStatement;
+    catchClause?: CapeClause;
 }
 
 /**
@@ -642,11 +642,11 @@ export interface IfStatement extends BaseNode {
  *
  * INVARIANT: catchClause allows error handling within loop iterations.
  */
-export interface WhileStatement extends BaseNode {
-    type: 'WhileStatement';
+export interface DumStatement extends BaseNode {
+    type: 'DumStatement';
     test: Expression;
     body: BlockStatement;
-    catchClause?: CatchClause;
+    catchClause?: CapeClause;
 }
 
 /**
@@ -672,14 +672,14 @@ export interface WhileStatement extends BaseNode {
  *   de...pro  → for...in (TS), for...in keys (Py), iteration over keys (Zig)
  *   ex...fiet → for await...of (TS), async for (Py), N/A (Zig)
  */
-export interface ForStatement extends BaseNode {
-    type: 'ForStatement';
+export interface IteratioStatement extends BaseNode {
+    type: 'IteratioStatement';
     kind: 'in' | 'ex';
     variable: Identifier;
     iterable: Expression;
     body: BlockStatement;
     async: boolean;
-    catchClause?: CatchClause;
+    catchClause?: CapeClause;
 }
 
 /**
@@ -699,8 +699,8 @@ export interface ForStatement extends BaseNode {
  *   }
  *   // Compiles to: user.nomen = "Marcus"; user.email = "marcus@roma.it";
  */
-export interface WithStatement extends BaseNode {
-    type: 'WithStatement';
+export interface InStatement extends BaseNode {
+    type: 'InStatement';
     object: Expression;
     body: BlockStatement;
 }
@@ -732,19 +732,19 @@ export interface WithStatement extends BaseNode {
  *       ex Quit { mori "goodbye" }
  *   }
  */
-export interface SwitchStatement extends BaseNode {
-    type: 'SwitchStatement';
+export interface EligeStatement extends BaseNode {
+    type: 'EligeStatement';
     discriminant: Expression;
-    cases: (SwitchCase | VariantCase)[];
+    cases: (EligeCasus | VariantCase)[];
     defaultCase?: BlockStatement;
-    catchClause?: CatchClause;
+    catchClause?: CapeClause;
 }
 
 /**
  * Switch case for value matching (part of switch statement).
  */
-export interface SwitchCase extends BaseNode {
-    type: 'SwitchCase';
+export interface EligeCasus extends BaseNode {
+    type: 'EligeCasus';
     test: Expression;
     consequent: BlockStatement;
 }
@@ -790,16 +790,16 @@ export interface VariantCase extends BaseNode {
  *       si useri age < 0 { iace "Invalid age" }
  *   }
  */
-export interface GuardStatement extends BaseNode {
-    type: 'GuardStatement';
-    clauses: GuardClause[];
+export interface CustodiStatement extends BaseNode {
+    type: 'CustodiStatement';
+    clauses: CustodiClause[];
 }
 
 /**
  * Guard clause (part of guard statement).
  */
-export interface GuardClause extends BaseNode {
-    type: 'GuardClause';
+export interface CustodiClause extends BaseNode {
+    type: 'CustodiClause';
     test: Expression;
     consequent: BlockStatement;
 }
@@ -818,8 +818,8 @@ export interface GuardClause extends BaseNode {
  *   adfirma x > 0
  *   adfirma x > 0, "x must be positive"
  */
-export interface AssertStatement extends BaseNode {
-    type: 'AssertStatement';
+export interface AdfirmaStatement extends BaseNode {
+    type: 'AdfirmaStatement';
     test: Expression;
     message?: Expression;
 }
@@ -832,8 +832,8 @@ export interface AssertStatement extends BaseNode {
  *
  * INVARIANT: argument is optional (void return).
  */
-export interface ReturnStatement extends BaseNode {
-    type: 'ReturnStatement';
+export interface ReddeStatement extends BaseNode {
+    type: 'ReddeStatement';
     argument?: Expression;
 }
 
@@ -851,8 +851,8 @@ export interface ReturnStatement extends BaseNode {
  *       si found { rumpe }
  *   }
  */
-export interface BreakStatement extends BaseNode {
-    type: 'BreakStatement';
+export interface RumpeStatement extends BaseNode {
+    type: 'RumpeStatement';
 }
 
 /**
@@ -870,8 +870,8 @@ export interface BreakStatement extends BaseNode {
  *       process(item)
  *   }
  */
-export interface ContinueStatement extends BaseNode {
-    type: 'ContinueStatement';
+export interface PergeStatement extends BaseNode {
+    type: 'PergeStatement';
 }
 
 /**
@@ -907,8 +907,8 @@ export interface BlockStatement extends BaseNode {
  *   iace → throw (TS/Py), return error.X (Zig), return Err (Rust)
  *   mori → throw (TS/Py), @panic (Zig), panic! (Rust)
  */
-export interface ThrowStatement extends BaseNode {
-    type: 'ThrowStatement';
+export interface IaceStatement extends BaseNode {
+    type: 'IaceStatement';
     fatal: boolean;
     argument: Expression;
 }
@@ -965,10 +965,10 @@ export interface ScribeStatement extends BaseNode {
  *   cape   → catch (TS), except (Py), catch |err| (Zig)
  *   demum  → finally (TS), finally (Py), defer (Zig)
  */
-export interface TryStatement extends BaseNode {
-    type: 'TryStatement';
+export interface TemptaStatement extends BaseNode {
+    type: 'TemptaStatement';
     block: BlockStatement;
-    handler?: CatchClause;
+    handler?: CapeClause;
     finalizer?: BlockStatement;
 }
 
@@ -980,10 +980,10 @@ export interface TryStatement extends BaseNode {
  *
  * INVARIANT: param is the error variable name.
  *
- * WHY: Reusable in both TryStatement and control flow (IfStatement, loops).
+ * WHY: Reusable in both TemptaStatement and control flow (SiStatement, loops).
  */
-export interface CatchClause extends BaseNode {
-    type: 'CatchClause';
+export interface CapeClause extends BaseNode {
+    type: 'CapeClause';
     param: Identifier;
     body: BlockStatement;
 }
@@ -1012,7 +1012,7 @@ export interface CatchClause extends BaseNode {
 export interface FacBlockStatement extends BaseNode {
     type: 'FacBlockStatement';
     body: BlockStatement;
-    catchClause?: CatchClause;
+    catchClause?: CapeClause;
 }
 
 // ---------------------------------------------------------------------------
@@ -1168,7 +1168,7 @@ export interface CuraStatement extends BaseNode {
     binding: Identifier;
     async: boolean;
     body: BlockStatement;
-    catchClause?: CatchClause;
+    catchClause?: CapeClause;
 }
 
 /**
@@ -1242,22 +1242,22 @@ export interface PraefixumExpression extends BaseNode {
  */
 export type Expression =
     | Identifier
-    | ThisExpression
+    | EgoExpression
     | Literal
     | ArrayExpression
     | ObjectExpression
     | RangeExpression
     | BinaryExpression
     | UnaryExpression
-    | TypeCheckExpression
-    | TypeCastExpression
+    | EstExpression
+    | UtExpression
     | CallExpression
     | MemberExpression
     | ArrowFunctionExpression
     | AssignmentExpression
     | ConditionalExpression
-    | AwaitExpression
-    | NewExpression
+    | CedeExpression
+    | NovumExpression
     | TemplateLiteral
     | LambdaExpression
     | PraefixumExpression;
@@ -1291,8 +1291,8 @@ export interface Identifier extends BaseNode {
 /**
  * `ego` self-reference expression (like `this`).
  */
-export interface ThisExpression extends BaseNode {
-    type: 'ThisExpression';
+export interface EgoExpression extends BaseNode {
+    type: 'EgoExpression';
 }
 
 /**
@@ -1507,8 +1507,8 @@ export interface UnaryExpression extends BaseNode {
  *   si x non est numerus { ... }
  *   si obj est persona { ... }
  */
-export interface TypeCheckExpression extends BaseNode {
-    type: 'TypeCheckExpression';
+export interface EstExpression extends BaseNode {
+    type: 'EstExpression';
     expression: Expression;
     targetType: TypeAnnotation;
     negated: boolean;
@@ -1543,8 +1543,8 @@ export interface TypeCheckExpression extends BaseNode {
  *   response.body ut objectum   -> (response.body) as object
  *   x ut A ut B                 -> (x as A) as B (left-associative)
  */
-export interface TypeCastExpression extends BaseNode {
-    type: 'TypeCastExpression';
+export interface UtExpression extends BaseNode {
+    type: 'UtExpression';
     expression: Expression;
     targetType: TypeAnnotation;
 }
@@ -1626,7 +1626,7 @@ export interface MemberExpression extends BaseNode {
  *   arrowFuncExpr := '(' paramList ')' '=>' (expression | blockStmt)
  *
  * INVARIANT: body is Expression for concise form, BlockStatement for full form.
- * INVARIANT: params follows same structure as FunctionDeclaration.
+ * INVARIANT: params follows same structure as FunctioDeclaration.
  *
  * Examples:
  *   (x) => x + 1
@@ -1694,8 +1694,8 @@ export interface ConditionalExpression extends BaseNode {
  *   cede → await (TS), await (Py), try (Zig error union), .await (Rust)
  *   cede (in cursor) → yield (TS), yield (Py), N/A (Zig)
  */
-export interface AwaitExpression extends BaseNode {
-    type: 'AwaitExpression';
+export interface CedeExpression extends BaseNode {
+    type: 'CedeExpression';
     argument: Expression;
 }
 
@@ -1717,8 +1717,8 @@ export interface AwaitExpression extends BaseNode {
  *   novum Type     → new Type() (TS), Type() (Py), Type.init() (Zig)
  *   novum Type { } → new Type() merged with object (TS/Py), Type{ .field = } (Zig)
  */
-export interface NewExpression extends BaseNode {
-    type: 'NewExpression';
+export interface NovumExpression extends BaseNode {
+    type: 'NovumExpression';
     callee: Identifier;
     arguments: (Expression | SpreadElement)[];
     withExpression?: Expression;

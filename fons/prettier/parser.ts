@@ -13,7 +13,7 @@ import type {
     Program,
     Statement,
     Expression,
-    EnumMember,
+    OrdoMember,
     FieldDeclaration,
     PactumMethod,
     TypeAnnotation,
@@ -21,9 +21,9 @@ import type {
     ObjectPattern,
     ObjectPatternProperty,
     ObjectProperty,
-    SwitchCase,
-    GuardClause,
-    CatchClause,
+    EligeCasus,
+    CustodiClause,
+    CapeClause,
 } from '../parser/ast.ts';
 import type { Token } from '../tokenizer/types.ts';
 import { tokenize } from '../tokenizer/index.ts';
@@ -67,7 +67,7 @@ export type AstNode =
     | Program
     | Statement
     | Expression
-    | EnumMember
+    | OrdoMember
     | FieldDeclaration
     | PactumMethod
     | TypeAnnotation
@@ -75,9 +75,9 @@ export type AstNode =
     | ObjectPattern
     | ObjectPatternProperty
     | ObjectProperty
-    | SwitchCase
-    | GuardClause
-    | CatchClause
+    | EligeCasus
+    | CustodiClause
+    | CapeClause
     | CommentNode;
 
 // =============================================================================

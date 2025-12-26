@@ -53,30 +53,30 @@ import type {
     Program,
     Statement,
     Expression,
-    ImportDeclaration,
-    VariableDeclaration,
-    FunctionDeclaration,
+    ImportaDeclaration,
+    VariaDeclaration,
+    FunctioDeclaration,
     GenusDeclaration,
     FieldDeclaration,
     PactumDeclaration,
     PactumMethod,
     TypeAliasDeclaration,
-    EnumDeclaration,
+    OrdoDeclaration,
     DiscretioDeclaration,
-    IfStatement,
-    WhileStatement,
-    ForStatement,
-    WithStatement,
-    SwitchStatement,
-    GuardStatement,
-    AssertStatement,
-    ReturnStatement,
-    BreakStatement,
-    ContinueStatement,
+    SiStatement,
+    DumStatement,
+    IteratioStatement,
+    InStatement,
+    EligeStatement,
+    CustodiStatement,
+    AdfirmaStatement,
+    ReddeStatement,
+    RumpeStatement,
+    PergeStatement,
     BlockStatement,
-    ThrowStatement,
+    IaceStatement,
     ScribeStatement,
-    TryStatement,
+    TemptaStatement,
     FacBlockStatement,
     ExpressionStatement,
     ArrayExpression,
@@ -89,15 +89,15 @@ import type {
     ArrowFunctionExpression,
     LambdaExpression,
     AssignmentExpression,
-    NewExpression,
+    NovumExpression,
     Identifier,
     Literal,
     Parameter,
     TypeAnnotation,
     TypeParameter,
     TypeParameterDeclaration,
-    TypeCastExpression,
-    TypeCheckExpression,
+    UtExpression,
+    EstExpression,
     PraefixumExpression,
 } from '../../parser/ast';
 import type { CodegenOptions, RequiredFeatures } from '../types';
@@ -255,48 +255,48 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
 
     function genStatement(node: Statement): string {
         switch (node.type) {
-            case 'ImportDeclaration':
-                return genImportDeclaration(node);
-            case 'VariableDeclaration':
-                return genVariableDeclaration(node);
-            case 'FunctionDeclaration':
-                return genFunctionDeclaration(node);
+            case 'ImportaDeclaration':
+                return genImportaDeclaration(node);
+            case 'VariaDeclaration':
+                return genVariaDeclaration(node);
+            case 'FunctioDeclaration':
+                return genFunctioDeclaration(node);
             case 'GenusDeclaration':
                 return genGenusDeclaration(node);
             case 'PactumDeclaration':
                 return genPactumDeclaration(node);
             case 'TypeAliasDeclaration':
                 return genTypeAliasDeclaration(node);
-            case 'EnumDeclaration':
-                return genEnumDeclaration(node);
+            case 'OrdoDeclaration':
+                return genOrdoDeclaration(node);
             case 'DiscretioDeclaration':
                 return genDiscretioDeclaration(node);
-            case 'IfStatement':
-                return genIfStatement(node);
-            case 'WhileStatement':
-                return genWhileStatement(node);
-            case 'ForStatement':
-                return genForStatement(node);
-            case 'WithStatement':
-                return genWithStatement(node);
-            case 'SwitchStatement':
-                return genSwitchStatement(node);
-            case 'GuardStatement':
-                return genGuardStatement(node);
-            case 'AssertStatement':
-                return genAssertStatement(node);
-            case 'ReturnStatement':
-                return genReturnStatement(node);
-            case 'BreakStatement':
-                return genBreakStatement();
-            case 'ContinueStatement':
-                return genContinueStatement();
-            case 'ThrowStatement':
-                return genThrowStatement(node);
+            case 'SiStatement':
+                return genSiStatement(node);
+            case 'DumStatement':
+                return genDumStatement(node);
+            case 'IteratioStatement':
+                return genIteratioStatement(node);
+            case 'InStatement':
+                return genInStatement(node);
+            case 'EligeStatement':
+                return genEligeStatement(node);
+            case 'CustodiStatement':
+                return genCustodiStatement(node);
+            case 'AdfirmaStatement':
+                return genAdfirmaStatement(node);
+            case 'ReddeStatement':
+                return genReddeStatement(node);
+            case 'RumpeStatement':
+                return genRumpeStatement();
+            case 'PergeStatement':
+                return genPergeStatement();
+            case 'IaceStatement':
+                return genIaceStatement(node);
             case 'ScribeStatement':
                 return genScribeStatement(node);
-            case 'TryStatement':
-                return genTryStatement(node);
+            case 'TemptaStatement':
+                return genTemptaStatement(node);
             case 'FacBlockStatement':
                 return genFacBlockStatement(node);
             case 'BlockStatement':
@@ -315,7 +315,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      *   ex norma importa * -> import norma
      *   ex norma importa scribe, lege -> from norma import scribe, lege
      */
-    function genImportDeclaration(node: ImportDeclaration): string {
+    function genImportaDeclaration(node: ImportaDeclaration): string {
         const source = node.source;
 
         if (node.wildcard) {
@@ -339,7 +339,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      * WHY: Python has no const, so both varia and fixum become simple assignment.
      * WHY: Async bindings (figendum/variandum) imply await without explicit cede.
      */
-    function genVariableDeclaration(node: VariableDeclaration): string {
+    function genVariaDeclaration(node: VariaDeclaration): string {
         // Check if this is an async binding (figendum/variandum)
         const isAsync = node.kind === 'figendum' || node.kind === 'variandum';
 
@@ -420,7 +420,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      *   -> def f() -> Iterator[int]:
      *          ... (with yield)
      */
-    function genFunctionDeclaration(node: FunctionDeclaration): string {
+    function genFunctioDeclaration(node: FunctioDeclaration): string {
         const asyncMod = node.async ? 'async ' : '';
         const name = node.name.name;
         const params = node.params.map(genParameter).join(', ');
@@ -628,7 +628,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
     /**
      * Generate user's creo as a private method.
      */
-    function genCreoMethod(node: FunctionDeclaration): string {
+    function genCreoMethod(node: FunctioDeclaration): string {
         const lines: string[] = [];
         lines.push(`${ind()}def _creo(self):`);
         depth++;
@@ -710,7 +710,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
     /**
      * Generate method declaration within a class.
      */
-    function genMethodDeclaration(node: FunctionDeclaration): string {
+    function genMethodDeclaration(node: FunctioDeclaration): string {
         const asyncMod = node.async ? 'async ' : '';
         const name = node.name.name;
 
@@ -819,7 +819,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      * WHY: Python uses class-based Enum from the enum module.
      *      Members without explicit values use auto() for automatic numbering.
      */
-    function genEnumDeclaration(node: EnumDeclaration): string {
+    function genOrdoDeclaration(node: OrdoDeclaration): string {
         // Track that we need the Enum import in preamble
         features.enum = true;
 
@@ -948,7 +948,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      *   si (conditio) { ... } -> if conditio:
      *   si (conditio) { ... } aliter { ... } -> if conditio: ... else: ...
      */
-    function genIfStatement(node: IfStatement): string {
+    function genSiStatement(node: SiStatement): string {
         const lines: string[] = [];
 
         // Handle catch clause by wrapping in try
@@ -963,9 +963,9 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         depth--;
 
         if (node.alternate) {
-            if (node.alternate.type === 'IfStatement') {
+            if (node.alternate.type === 'SiStatement') {
                 // elif chain
-                const elifLines = genIfStatement(node.alternate).split('\n');
+                const elifLines = genSiStatement(node.alternate).split('\n');
                 // Replace 'if' with 'elif' on first line
                 if (elifLines[0]) {
                     elifLines[0] = elifLines[0].replace(/^(\s*)if /, '$1elif ');
@@ -993,7 +993,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
     /**
      * Generate while statement.
      */
-    function genWhileStatement(node: WhileStatement): string {
+    function genDumStatement(node: DumStatement): string {
         const lines: string[] = [];
 
         if (node.catchClause) {
@@ -1025,7 +1025,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      *   ex items pro item { } -> for item in items:
      *   ex stream fiet chunk { } -> async for chunk in stream:
      */
-    function genForStatement(node: ForStatement): string {
+    function genIteratioStatement(node: IteratioStatement): string {
         const lines: string[] = [];
         const varName = node.variable.name;
         const asyncKw = node.async ? 'async ' : '';
@@ -1078,7 +1078,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      * TRANSFORMS:
      *   in user { nomen = "Marcus" } -> user.nomen = "Marcus"
      */
-    function genWithStatement(node: WithStatement): string {
+    function genInStatement(node: InStatement): string {
         const context = genExpression(node.object);
         const lines: string[] = [];
 
@@ -1105,7 +1105,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      *
      * Supports both value matching (si) and variant matching (ex).
      */
-    function genSwitchStatement(node: SwitchStatement): string {
+    function genEligeStatement(node: EligeStatement): string {
         const lines: string[] = [];
         const discriminant = genExpression(node.discriminant);
 
@@ -1118,7 +1118,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         depth++;
 
         for (const caseNode of node.cases) {
-            if (caseNode.type === 'SwitchCase') {
+            if (caseNode.type === 'EligeCasus') {
                 // Value matching: si expression { ... }
                 const test = genExpression(caseNode.test);
                 lines.push(`${ind()}case ${test}:`);
@@ -1164,7 +1164,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
     /**
      * Generate guard statement.
      */
-    function genGuardStatement(node: GuardStatement): string {
+    function genCustodiStatement(node: CustodiStatement): string {
         const lines: string[] = [];
 
         for (const clause of node.clauses) {
@@ -1185,7 +1185,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      *   adfirma x > 0 -> assert x > 0
      *   adfirma x > 0, "msg" -> assert x > 0, "msg"
      */
-    function genAssertStatement(node: AssertStatement): string {
+    function genAdfirmaStatement(node: AdfirmaStatement): string {
         const test = genExpression(node.test);
 
         if (node.message) {
@@ -1196,7 +1196,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         return `${ind()}assert ${test}`;
     }
 
-    function genReturnStatement(node: ReturnStatement): string {
+    function genReddeStatement(node: ReddeStatement): string {
         if (node.argument) {
             return `${ind()}return ${genExpression(node.argument)}`;
         }
@@ -1209,7 +1209,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      * TRANSFORMS:
      *   rumpe -> break
      */
-    function genBreakStatement(): string {
+    function genRumpeStatement(): string {
         return `${ind()}break`;
     }
 
@@ -1219,7 +1219,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      * TRANSFORMS:
      *   perge -> continue
      */
-    function genContinueStatement(): string {
+    function genPergeStatement(): string {
         return `${ind()}continue`;
     }
 
@@ -1230,7 +1230,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      *   iace "message" -> raise Exception("message")
      *   mori "message" -> raise SystemExit("message")
      */
-    function genThrowStatement(node: ThrowStatement): string {
+    function genIaceStatement(node: IaceStatement): string {
         const arg = genExpression(node.argument);
         const exceptionType = node.fatal ? 'SystemExit' : 'Exception';
 
@@ -1240,7 +1240,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         }
 
         // If throwing a new Error, convert to exception type
-        if (node.argument.type === 'NewExpression') {
+        if (node.argument.type === 'NovumExpression') {
             const callee = node.argument.callee.name;
             if (callee === 'Error' || callee === 'erratum') {
                 const args = node.argument.arguments
@@ -1278,7 +1278,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
     /**
      * Generate try statement.
      */
-    function genTryStatement(node: TryStatement): string {
+    function genTemptaStatement(node: TemptaStatement): string {
         const lines: string[] = [];
 
         lines.push(`${ind()}try:`);
@@ -1356,7 +1356,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
                 return genLiteral(node);
             case 'TemplateLiteral':
                 return `f"${node.raw}"`;
-            case 'ThisExpression':
+            case 'EgoExpression':
                 return 'self';
             case 'ArrayExpression':
                 return genArrayExpression(node);
@@ -1378,20 +1378,20 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
                 return genLambdaExpression(node);
             case 'AssignmentExpression':
                 return genAssignmentExpression(node);
-            case 'AwaitExpression':
+            case 'CedeExpression':
                 // cede maps to yield in generators, await in async functions
                 return `${inGenerator ? 'yield' : 'await'} ${genExpression(node.argument)}`;
-            case 'NewExpression':
-                return genNewExpression(node);
+            case 'NovumExpression':
+                return genNovumExpression(node);
             case 'ConditionalExpression':
                 // Python ternary: consequent if test else alternate
                 return `${genExpression(node.consequent)} if ${genExpression(node.test)} else ${genExpression(node.alternate)}`;
-            case 'TypeCastExpression':
+            case 'UtExpression':
                 // WHY: Python is dynamically typed, type casts have no runtime effect.
                 // Just emit the expression — the cast is a compile-time annotation only.
                 return genExpression(node.expression);
-            case 'TypeCheckExpression':
-                return genTypeCheckExpression(node);
+            case 'EstExpression':
+                return genEstExpression(node);
             case 'PraefixumExpression':
                 // WHY: Python lacks compile-time evaluation. We emit an IIFE-like
                 // construct so the code compiles and runs, even though it won't
@@ -1790,7 +1790,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         // Block body - extract return expression if simple
         const block = node.body;
         const firstStmt = block.body[0];
-        if (block.body.length === 1 && firstStmt?.type === 'ReturnStatement') {
+        if (block.body.length === 1 && firstStmt?.type === 'ReddeStatement') {
             if (firstStmt.argument) {
                 const body = genExpression(firstStmt.argument);
                 return `lambda ${params}: ${body}`;
@@ -1821,7 +1821,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         // Block body - extract return expression if simple
         const block = node.body;
         const firstStmt = block.body[0];
-        if (block.body.length === 1 && firstStmt?.type === 'ReturnStatement') {
+        if (block.body.length === 1 && firstStmt?.type === 'ReddeStatement') {
             if (firstStmt.argument) {
                 const body = genExpression(firstStmt.argument);
                 return `lambda ${params}: ${body}`;
@@ -1866,7 +1866,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      *
      * NOTE: For null checks, use `nihil x` or `nonnihil x` unary operators.
      */
-    function genTypeCheckExpression(node: TypeCheckExpression): string {
+    function genEstExpression(node: EstExpression): string {
         const expr = genExpression(node.expression);
         const typeName = node.targetType.name;
 
@@ -1887,7 +1887,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      *
      * WHY: Python classes are called directly without `new`.
      */
-    function genNewExpression(node: NewExpression): string {
+    function genNovumExpression(node: NovumExpression): string {
         const callee = node.callee.name;
         const args: string[] = node.arguments.filter((arg): arg is Expression => arg.type !== 'SpreadElement').map(genExpression);
 
@@ -1922,7 +1922,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
             const lastStmt = block.body[block.body.length - 1];
 
             // Single return statement: just emit the expression
-            if (block.body.length === 1 && lastStmt?.type === 'ReturnStatement' && lastStmt.argument) {
+            if (block.body.length === 1 && lastStmt?.type === 'ReddeStatement' && lastStmt.argument) {
                 return `(${genExpression(lastStmt.argument)})`;
             }
 
@@ -1933,7 +1933,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
             const statements: string[] = [];
             for (let i = 0; i < block.body.length; i++) {
                 const stmt = block.body[i]!;
-                if (i === block.body.length - 1 && stmt.type === 'ReturnStatement' && stmt.argument) {
+                if (i === block.body.length - 1 && stmt.type === 'ReddeStatement' && stmt.argument) {
                     // Transform final return into __result__ assignment
                     statements.push(`__result__ = ${genExpression(stmt.argument)}`);
                 } else {

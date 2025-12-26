@@ -80,9 +80,9 @@ import type {
     Program,
     Statement,
     Expression,
-    ImportDeclaration,
-    VariableDeclaration,
-    FunctionDeclaration,
+    ImportaDeclaration,
+    VariaDeclaration,
+    FunctioDeclaration,
     GenusDeclaration,
     FieldDeclaration,
     PactumDeclaration,
@@ -91,35 +91,35 @@ import type {
     VariantDeclaration,
     VariantField,
     VariantCase,
-    IfStatement,
-    WhileStatement,
-    ForStatement,
-    WithStatement,
-    SwitchStatement,
-    SwitchCase,
-    GuardStatement,
-    GuardClause,
-    AssertStatement,
-    ReturnStatement,
-    BreakStatement,
-    ContinueStatement,
+    SiStatement,
+    DumStatement,
+    IteratioStatement,
+    InStatement,
+    EligeStatement,
+    EligeCasus,
+    CustodiStatement,
+    CustodiClause,
+    AdfirmaStatement,
+    ReddeStatement,
+    RumpeStatement,
+    PergeStatement,
     BlockStatement,
-    ThrowStatement,
+    IaceStatement,
     ScribeStatement,
     OutputLevel,
     ExpressionStatement,
     Identifier,
-    ThisExpression,
+    EgoExpression,
     ArrowFunctionExpression,
     Parameter,
     TypeAnnotation,
     TypeParameter,
     TypeParameterDeclaration,
-    CatchClause,
-    NewExpression,
+    CapeClause,
+    NovumExpression,
     TypeAliasDeclaration,
-    EnumDeclaration,
-    EnumMember,
+    OrdoDeclaration,
+    OrdoMember,
     Literal,
     RangeExpression,
     ConditionalExpression,
@@ -132,8 +132,8 @@ import type {
     SpreadElement,
     FacBlockStatement,
     LambdaExpression,
-    TypeCastExpression,
-    TypeCheckExpression,
+    UtExpression,
+    EstExpression,
     ProbandumStatement,
     ProbaStatement,
     ProbaModifier,
@@ -699,7 +699,7 @@ export function parse(tokens: Token[]): ParserResult {
      *   ex "norma/tempus" importa nunc, dormi
      *   ex norma importa *
      */
-    function parseImportaDeclaration(): ImportDeclaration {
+    function parseImportaDeclaration(): ImportaDeclaration {
         const position = peek().position;
 
         expectKeyword('ex', ParserErrorCode.ExpectedKeywordEx);
@@ -719,7 +719,7 @@ export function parse(tokens: Token[]): ParserResult {
         expectKeyword('importa', ParserErrorCode.ExpectedKeywordImporta);
 
         if (match('STAR')) {
-            return { type: 'ImportDeclaration', source, specifiers: [], wildcard: true, position };
+            return { type: 'ImportaDeclaration', source, specifiers: [], wildcard: true, position };
         }
 
         const specifiers: Identifier[] = [];
@@ -729,7 +729,7 @@ export function parse(tokens: Token[]): ParserResult {
             specifiers.push(parseIdentifierOrKeyword());
         } while (match('COMMA'));
 
-        return { type: 'ImportDeclaration', source, specifiers, wildcard: false, position };
+        return { type: 'ImportaDeclaration', source, specifiers, wildcard: false, position };
     }
 
     /**
@@ -765,7 +765,7 @@ export function parse(tokens: Token[]): ParserResult {
      *   - Increment/decrement: x++, ++x, x--, --x
      *   - Compound assignment: x += 1, x -= 1, x *= 2, x /= 2
      */
-    function parseVariaDeclaration(): VariableDeclaration {
+    function parseVariaDeclaration(): VariaDeclaration {
         const position = peek().position;
         const kind = peek().keyword as 'varia' | 'fixum' | 'figendum' | 'variandum';
 
@@ -793,7 +793,7 @@ export function parse(tokens: Token[]): ParserResult {
             init = parseExpression();
         }
 
-        return { type: 'VariableDeclaration', kind, name, typeAnnotation, init, position };
+        return { type: 'VariaDeclaration', kind, name, typeAnnotation, init, position };
     }
 
     /**
@@ -975,7 +975,7 @@ export function parse(tokens: Token[]): ParserResult {
      *   - TS-style return type: functio f(): textus (use: functio f() -> textus)
      *   - Trailing comma in params: functio f(a, b,)
      */
-    function parseFunctioDeclaration(): FunctionDeclaration {
+    function parseFunctioDeclaration(): FunctioDeclaration {
         const position = peek().position;
 
         // Parse optional prefixes (futura = async, cursor = generator)
@@ -1053,7 +1053,7 @@ export function parse(tokens: Token[]): ParserResult {
         const body = parseBlockStatement();
 
         return {
-            type: 'FunctionDeclaration',
+            type: 'FunctioDeclaration',
             name,
             typeParams: typeParams.length > 0 ? typeParams : undefined,
             params,
@@ -1251,7 +1251,7 @@ export function parse(tokens: Token[]): ParserResult {
      *   ordo color { rubrum, viridis, caeruleum }
      *   ordo status { pendens = 0, actum = 1, finitum = 2 }
      */
-    function parseOrdoDeclaration(): EnumDeclaration {
+    function parseOrdoDeclaration(): OrdoDeclaration {
         const position = peek().position;
 
         expectKeyword('ordo', ParserErrorCode.ExpectedKeywordOrdo);
@@ -1260,7 +1260,7 @@ export function parse(tokens: Token[]): ParserResult {
 
         expect('LBRACE', ParserErrorCode.ExpectedOpeningBrace);
 
-        const members: EnumMember[] = [];
+        const members: OrdoMember[] = [];
 
         while (!check('RBRACE') && !isAtEnd()) {
             const memberPosition = peek().position;
@@ -1296,7 +1296,7 @@ export function parse(tokens: Token[]): ParserResult {
             }
 
             members.push({
-                type: 'EnumMember',
+                type: 'OrdoMember',
                 name: memberName,
                 value,
                 position: memberPosition,
@@ -1310,7 +1310,7 @@ export function parse(tokens: Token[]): ParserResult {
 
         expect('RBRACE', ParserErrorCode.ExpectedClosingBrace);
 
-        return { type: 'EnumDeclaration', name, members, position };
+        return { type: 'OrdoDeclaration', name, members, position };
     }
 
     // ---------------------------------------------------------------------------
@@ -1473,8 +1473,8 @@ export function parse(tokens: Token[]): ParserResult {
         expect('LBRACE', ParserErrorCode.ExpectedOpeningBrace);
 
         const fields: FieldDeclaration[] = [];
-        const methods: FunctionDeclaration[] = [];
-        let constructorMethod: FunctionDeclaration | undefined;
+        const methods: FunctioDeclaration[] = [];
+        let constructorMethod: FunctioDeclaration | undefined;
 
         // True while there are unparsed members (not at '}' or EOF)
         const hasMoreMembers = () => !check('RBRACE') && !isAtEnd();
@@ -1495,7 +1495,7 @@ export function parse(tokens: Token[]): ParserResult {
                     fields.push(member);
                     break;
 
-                case 'FunctionDeclaration':
+                case 'FunctioDeclaration':
                     if (member.isConstructor) {
                         constructorMethod = member;
                     } else {
@@ -1535,7 +1535,7 @@ export function parse(tokens: Token[]): ParserResult {
      * WHY: Distinguishes between fields and methods by looking for 'functio' keyword.
      * WHY: Fields are public by default (struct semantics), use 'privatus' for private.
      */
-    function parseGenusMember(): FieldDeclaration | FunctionDeclaration {
+    function parseGenusMember(): FieldDeclaration | FunctioDeclaration {
         const position = peek().position;
 
         // Parse modifiers
@@ -1624,8 +1624,8 @@ export function parse(tokens: Token[]): ParserResult {
 
             const body = parseBlockStatement();
 
-            const method: FunctionDeclaration = {
-                type: 'FunctionDeclaration',
+            const method: FunctioDeclaration = {
+                type: 'FunctioDeclaration',
                 name: methodName,
                 params,
                 returnType,
@@ -1842,7 +1842,7 @@ export function parse(tokens: Token[]): ParserResult {
      *   si x > 5 { scribe("big") } aliter scribe("small")
      *   si x < 0 { ... } sin x == 0 { ... } secus { ... }
      */
-    function parseSiStatement(skipSiKeyword = false): IfStatement {
+    function parseSiStatement(skipSiKeyword = false): SiStatement {
         const position = peek().position;
 
         if (!skipSiKeyword) {
@@ -1862,14 +1862,14 @@ export function parse(tokens: Token[]): ParserResult {
         }
 
         // Check for cape (catch) clause
-        let catchClause: CatchClause | undefined;
+        let catchClause: CapeClause | undefined;
 
         if (checkKeyword('cape')) {
             catchClause = parseCapeClause();
         }
 
         // Check for alternate: aliter/secus (else) or sin (else-if)
-        let alternate: BlockStatement | IfStatement | undefined;
+        let alternate: BlockStatement | SiStatement | undefined;
 
         if (matchKeyword('aliter') || matchKeyword('secus')) {
             if (checkKeyword('si')) {
@@ -1887,7 +1887,7 @@ export function parse(tokens: Token[]): ParserResult {
             alternate = parseSiStatement(true);
         }
 
-        return { type: 'IfStatement', test, consequent, alternate, catchClause, position };
+        return { type: 'SiStatement', test, consequent, alternate, catchClause, position };
     }
 
     /**
@@ -1902,7 +1902,7 @@ export function parse(tokens: Token[]): ParserResult {
      *   dum x > 0 { x = x - 1 }
      *   dum x > 0 ergo x = x - 1
      */
-    function parseDumStatement(): WhileStatement {
+    function parseDumStatement(): DumStatement {
         const position = peek().position;
 
         expectKeyword('dum', ParserErrorCode.ExpectedKeywordDum);
@@ -1919,21 +1919,21 @@ export function parse(tokens: Token[]): ParserResult {
             body = parseBlockStatement();
         }
 
-        let catchClause: CatchClause | undefined;
+        let catchClause: CapeClause | undefined;
 
         if (checkKeyword('cape')) {
             catchClause = parseCapeClause();
         }
 
-        return { type: 'WhileStatement', test, body, catchClause, position };
+        return { type: 'DumStatement', test, body, catchClause, position };
     }
 
     /**
      * Parse statement starting with 'ex'.
      *
      * Dispatches to either:
-     * - ForStatement: ex SOURCE (pro|fit|fiet) VARIABLE { }
-     * - VariableDeclaration (destructuring): ex SOURCE (fixum|varia|figendum|variandum) { props }
+     * - IteratioStatement: ex SOURCE (pro|fit|fiet) VARIABLE { }
+     * - VariaDeclaration (destructuring): ex SOURCE (fixum|varia|figendum|variandum) { props }
      *
      * GRAMMAR:
      *   exStmt := 'ex' expression (forBinding | destructBinding)
@@ -1957,7 +1957,7 @@ export function parse(tokens: Token[]): ParserResult {
      *   ex response fixum { status, data }   // destructuring (sync)
      *   ex fetchData() figendum { result }   // destructuring (async, awaits first)
      */
-    function parseExStatement(): ForStatement | VariableDeclaration {
+    function parseExStatement(): IteratioStatement | VariaDeclaration {
         const position = peek().position;
 
         expectKeyword('ex', ParserErrorCode.InvalidForLoopStart);
@@ -1977,7 +1977,7 @@ export function parse(tokens: Token[]): ParserResult {
                 name = parseObjectPattern();
             }
 
-            return { type: 'VariableDeclaration', kind, name, init: source, position };
+            return { type: 'VariaDeclaration', kind, name, init: source, position };
         }
 
         // Otherwise it's a for-loop: ex source pro/fit/fiet variable { }
@@ -2004,13 +2004,13 @@ export function parse(tokens: Token[]): ParserResult {
             body = parseBlockStatement();
         }
 
-        let catchClause: CatchClause | undefined;
+        let catchClause: CapeClause | undefined;
         if (checkKeyword('cape')) {
             catchClause = parseCapeClause();
         }
 
         return {
-            type: 'ForStatement',
+            type: 'IteratioStatement',
             kind: 'ex',
             variable,
             iterable: source,
@@ -2035,7 +2035,7 @@ export function parse(tokens: Token[]): ParserResult {
      *   de tabula pro clavis { ... }  // from table, for each key
      *   de object pro k ergo scribe k // one-liner form
      */
-    function parseDeStatement(): ForStatement {
+    function parseDeStatement(): IteratioStatement {
         const position = peek().position;
 
         expectKeyword('de', ParserErrorCode.ExpectedKeywordDe);
@@ -2066,13 +2066,13 @@ export function parse(tokens: Token[]): ParserResult {
             body = parseBlockStatement();
         }
 
-        let catchClause: CatchClause | undefined;
+        let catchClause: CapeClause | undefined;
         if (checkKeyword('cape')) {
             catchClause = parseCapeClause();
         }
 
         return {
-            type: 'ForStatement',
+            type: 'IteratioStatement',
             kind: 'in', // Still 'in' kind for codegen (for-in loop)
             variable,
             iterable: expr,
@@ -2095,7 +2095,7 @@ export function parse(tokens: Token[]): ParserResult {
      * Example:
      *   in user { nomen = "Marcus" }  // mutation block
      */
-    function parseInStatement(): WithStatement {
+    function parseInStatement(): InStatement {
         const position = peek().position;
 
         expectKeyword('in', ParserErrorCode.ExpectedKeywordIn);
@@ -2103,7 +2103,7 @@ export function parse(tokens: Token[]): ParserResult {
         const expr = parseExpression();
         const body = parseBlockStatement();
 
-        return { type: 'WithStatement', object: expr, body, position };
+        return { type: 'InStatement', object: expr, body, position };
     }
 
     /**
@@ -2132,7 +2132,7 @@ export function parse(tokens: Token[]): ParserResult {
      *       ex Quit { mori "goodbye" }
      *   }
      */
-    function parseEligeStatement(): SwitchStatement {
+    function parseEligeStatement(): EligeStatement {
         const position = peek().position;
 
         expectKeyword('elige', ParserErrorCode.ExpectedKeywordElige);
@@ -2141,7 +2141,7 @@ export function parse(tokens: Token[]): ParserResult {
 
         expect('LBRACE', ParserErrorCode.ExpectedOpeningBrace);
 
-        const cases: (SwitchCase | VariantCase)[] = [];
+        const cases: (EligeCasus | VariantCase)[] = [];
         let defaultCase: BlockStatement | undefined;
 
         // Helper: parse 'si' case body (requires ergo or block)
@@ -2185,7 +2185,7 @@ export function parse(tokens: Token[]): ParserResult {
                 const test = parseExpression();
                 const consequent = parseSiBody();
 
-                cases.push({ type: 'SwitchCase', test, consequent, position: casePosition });
+                cases.push({ type: 'EligeCasus', test, consequent, position: casePosition });
             } else if (checkKeyword('ex')) {
                 // Variant case: ex VariantName pro bindings { ... }
                 const casePosition = peek().position;
@@ -2211,20 +2211,20 @@ export function parse(tokens: Token[]): ParserResult {
                 defaultCase = parseAliterBody();
                 break; // Default must be last
             } else {
-                error(ParserErrorCode.InvalidSwitchCaseStart);
+                error(ParserErrorCode.InvalidEligeCasusStart);
                 break;
             }
         }
 
         expect('RBRACE', ParserErrorCode.ExpectedClosingBrace);
 
-        let catchClause: CatchClause | undefined;
+        let catchClause: CapeClause | undefined;
 
         if (checkKeyword('cape')) {
             catchClause = parseCapeClause();
         }
 
-        return { type: 'SwitchStatement', discriminant, cases, defaultCase, catchClause, position };
+        return { type: 'EligeStatement', discriminant, cases, defaultCase, catchClause, position };
     }
 
     /**
@@ -2242,14 +2242,14 @@ export function parse(tokens: Token[]): ParserResult {
      *       si useri age < 0 { iace "Invalid age" }
      *   }
      */
-    function parseCustodiStatement(): GuardStatement {
+    function parseCustodiStatement(): CustodiStatement {
         const position = peek().position;
 
         expectKeyword('custodi', ParserErrorCode.ExpectedKeywordCustodi);
 
         expect('LBRACE', ParserErrorCode.ExpectedOpeningBrace);
 
-        const clauses: GuardClause[] = [];
+        const clauses: CustodiClause[] = [];
 
         // True while there are unparsed clauses (not at '}' or EOF)
         const hasMoreClauses = () => !check('RBRACE') && !isAtEnd();
@@ -2263,16 +2263,16 @@ export function parse(tokens: Token[]): ParserResult {
                 const test = parseExpression();
                 const consequent = parseBlockStatement();
 
-                clauses.push({ type: 'GuardClause', test, consequent, position: clausePosition });
+                clauses.push({ type: 'CustodiClause', test, consequent, position: clausePosition });
             } else {
-                error(ParserErrorCode.InvalidGuardClauseStart);
+                error(ParserErrorCode.InvalidCustodiClauseStart);
                 break;
             }
         }
 
         expect('RBRACE', ParserErrorCode.ExpectedClosingBrace);
 
-        return { type: 'GuardStatement', clauses, position };
+        return { type: 'CustodiStatement', clauses, position };
     }
 
     /**
@@ -2287,7 +2287,7 @@ export function parse(tokens: Token[]): ParserResult {
      *   adfirma x > 0
      *   adfirma x > 0, "x must be positive"
      */
-    function parseAdfirmaStatement(): AssertStatement {
+    function parseAdfirmaStatement(): AdfirmaStatement {
         const position = peek().position;
 
         expectKeyword('adfirma', ParserErrorCode.ExpectedKeywordAdfirma);
@@ -2300,7 +2300,7 @@ export function parse(tokens: Token[]): ParserResult {
             message = parseExpression();
         }
 
-        return { type: 'AssertStatement', test, message, position };
+        return { type: 'AdfirmaStatement', test, message, position };
     }
 
     /**
@@ -2311,7 +2311,7 @@ export function parse(tokens: Token[]): ParserResult {
      *
      * WHY: 'redde' (give back/return) for return statements.
      */
-    function parseReddeStatement(): ReturnStatement {
+    function parseReddeStatement(): ReddeStatement {
         const position = peek().position;
 
         expectKeyword('redde', ParserErrorCode.ExpectedKeywordRedde);
@@ -2322,7 +2322,7 @@ export function parse(tokens: Token[]): ParserResult {
             argument = parseExpression();
         }
 
-        return { type: 'ReturnStatement', argument, position };
+        return { type: 'ReddeStatement', argument, position };
     }
 
     /**
@@ -2333,13 +2333,13 @@ export function parse(tokens: Token[]): ParserResult {
      *
      * WHY: 'rumpe' (break!) exits the innermost loop.
      */
-    function parseRumpeStatement(): BreakStatement {
+    function parseRumpeStatement(): RumpeStatement {
         const position = peek().position;
 
         // Consume the 'rumpe' keyword (already validated by checkKeyword in parseStatement)
         advance();
 
-        return { type: 'BreakStatement', position };
+        return { type: 'RumpeStatement', position };
     }
 
     /**
@@ -2350,13 +2350,13 @@ export function parse(tokens: Token[]): ParserResult {
      *
      * WHY: 'perge' (continue/proceed!) skips to the next loop iteration.
      */
-    function parsePergeStatement(): ContinueStatement {
+    function parsePergeStatement(): PergeStatement {
         const position = peek().position;
 
         // Consume the 'perge' keyword (already validated by checkKeyword in parseStatement)
         advance();
 
-        return { type: 'ContinueStatement', position };
+        return { type: 'PergeStatement', position };
     }
 
     /**
@@ -2369,7 +2369,7 @@ export function parse(tokens: Token[]): ParserResult {
      *   iace (throw!) → recoverable, can be caught
      *   mori (die!)   → fatal/panic, unrecoverable
      */
-    function parseIaceStatement(fatal: boolean): ThrowStatement {
+    function parseIaceStatement(fatal: boolean): IaceStatement {
         const position = peek().position;
 
         // Consume the keyword (already validated by checkKeyword in parseStatement)
@@ -2377,7 +2377,7 @@ export function parse(tokens: Token[]): ParserResult {
 
         const argument = parseExpression();
 
-        return { type: 'ThrowStatement', fatal, argument, position };
+        return { type: 'IaceStatement', fatal, argument, position };
     }
 
     /**
@@ -2430,7 +2430,7 @@ export function parse(tokens: Token[]): ParserResult {
 
         const block = parseBlockStatement();
 
-        let handler: CatchClause | undefined;
+        let handler: CapeClause | undefined;
 
         if (checkKeyword('cape')) {
             handler = parseCapeClause();
@@ -2442,7 +2442,7 @@ export function parse(tokens: Token[]): ParserResult {
             finalizer = parseBlockStatement();
         }
 
-        return { type: 'TryStatement', block, handler, finalizer, position };
+        return { type: 'TemptaStatement', block, handler, finalizer, position };
     }
 
     /**
@@ -2451,7 +2451,7 @@ export function parse(tokens: Token[]): ParserResult {
      * GRAMMAR:
      *   catchClause := 'cape' IDENTIFIER blockStmt
      */
-    function parseCapeClause(): CatchClause {
+    function parseCapeClause(): CapeClause {
         const position = peek().position;
 
         expectKeyword('cape', ParserErrorCode.ExpectedKeywordCape);
@@ -2459,7 +2459,7 @@ export function parse(tokens: Token[]): ParserResult {
         const param = parseIdentifier();
         const body = parseBlockStatement();
 
-        return { type: 'CatchClause', param, body, position };
+        return { type: 'CapeClause', param, body, position };
     }
 
     /**
@@ -2486,7 +2486,7 @@ export function parse(tokens: Token[]): ParserResult {
 
         const body = parseBlockStatement();
 
-        let catchClause: CatchClause | undefined;
+        let catchClause: CapeClause | undefined;
 
         if (checkKeyword('cape')) {
             catchClause = parseCapeClause();
@@ -2703,7 +2703,7 @@ export function parse(tokens: Token[]): ParserResult {
         const body = parseBlockStatement();
 
         // Optional catch clause
-        let catchClause: CatchClause | undefined;
+        let catchClause: CapeClause | undefined;
         if (checkKeyword('cape')) {
             catchClause = parseCapeClause();
         }
@@ -2974,12 +2974,12 @@ export function parse(tokens: Token[]): ParserResult {
 
                 const targetType = parseTypeAnnotation();
                 left = {
-                    type: 'TypeCheckExpression',
+                    type: 'EstExpression',
                     expression: left,
                     targetType,
                     negated: true,
                     position,
-                } as TypeCheckExpression;
+                } as EstExpression;
                 continue;
             } else if (matchKeyword('est')) {
                 // 'est' - type check (instanceof/typeof)
@@ -2987,12 +2987,12 @@ export function parse(tokens: Token[]): ParserResult {
 
                 const targetType = parseTypeAnnotation();
                 left = {
-                    type: 'TypeCheckExpression',
+                    type: 'EstExpression',
                     expression: left,
                     targetType,
                     negated: false,
                     position,
-                } as TypeCheckExpression;
+                } as EstExpression;
                 continue;
             } else {
                 break;
@@ -3330,7 +3330,7 @@ export function parse(tokens: Token[]): ParserResult {
             const position = tokens[current - 1]!.position;
             const argument = parseUnary();
 
-            return { type: 'AwaitExpression', argument, position };
+            return { type: 'CedeExpression', argument, position };
         }
 
         if (matchKeyword('novum')) {
@@ -3415,11 +3415,11 @@ export function parse(tokens: Token[]): ParserResult {
             const targetType = parseTypeAnnotation();
 
             expr = {
-                type: 'TypeCastExpression',
+                type: 'UtExpression',
                 expression: expr,
                 targetType,
                 position,
-            } as TypeCastExpression;
+            } as UtExpression;
         }
 
         return expr;
@@ -3437,7 +3437,7 @@ export function parse(tokens: Token[]): ParserResult {
      *
      *      The `de` (from) form allows dynamic overrides from variables or function results.
      */
-    function parseNovumExpression(): NewExpression {
+    function parseNovumExpression(): NovumExpression {
         const position = tokens[current - 1]!.position;
         const callee = parseIdentifier();
 
@@ -3458,7 +3458,7 @@ export function parse(tokens: Token[]): ParserResult {
             withExpression = parseExpression();
         }
 
-        return { type: 'NewExpression', callee, arguments: args, withExpression, position };
+        return { type: 'NovumExpression', callee, arguments: args, withExpression, position };
     }
 
     /**
@@ -3652,7 +3652,7 @@ export function parse(tokens: Token[]): ParserResult {
         const position = peek().position;
 
         if (matchKeyword('ego')) {
-            const thisExpr: ThisExpression = { type: 'ThisExpression', position };
+            const thisExpr: EgoExpression = { type: 'EgoExpression', position };
             return thisExpr;
         }
 

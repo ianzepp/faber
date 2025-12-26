@@ -43,21 +43,21 @@ import type {
     Program,
     Statement,
     Expression,
-    ImportDeclaration,
-    VariableDeclaration,
-    FunctionDeclaration,
+    ImportaDeclaration,
+    VariaDeclaration,
+    FunctioDeclaration,
     TypeAliasDeclaration,
-    EnumDeclaration,
+    OrdoDeclaration,
     GenusDeclaration,
     PactumDeclaration,
-    IfStatement,
-    WhileStatement,
-    ForStatement,
-    WithStatement,
-    SwitchStatement,
-    GuardStatement,
-    AssertStatement,
-    ReturnStatement,
+    SiStatement,
+    DumStatement,
+    IteratioStatement,
+    InStatement,
+    EligeStatement,
+    CustodiStatement,
+    AdfirmaStatement,
+    ReddeStatement,
     BlockStatement,
     Identifier,
     Literal,
@@ -67,13 +67,13 @@ import type {
     MemberExpression,
     ArrowFunctionExpression,
     AssignmentExpression,
-    AwaitExpression,
-    NewExpression,
+    CedeExpression,
+    NovumExpression,
     ArrayExpression,
     TypeAnnotation,
-    ThrowStatement,
+    IaceStatement,
     ScribeStatement,
-    TryStatement,
+    TemptaStatement,
     FacBlockStatement,
     LambdaExpression,
     ProbandumStatement,
@@ -336,7 +336,7 @@ export function analyze(program: Program): SemanticResult {
      * WHY: Recognizes 'norma' base library and 'norma/*' submodules.
      *      Other modules pass through without type info for external JS/TS modules.
      */
-    function analyzeImportDeclaration(node: ImportDeclaration): void {
+    function analyzeImportaDeclaration(node: ImportaDeclaration): void {
         // Determine which export map to use
         let exports: Record<string, { type: SemanticType; kind: 'function' | 'variable' }> | undefined;
         const moduleName = node.source;
@@ -536,10 +536,10 @@ export function analyze(program: Program): SemanticResult {
             case 'AssignmentExpression':
                 return resolveAssignment(node);
 
-            case 'AwaitExpression':
+            case 'CedeExpression':
                 return resolveAwait(node);
 
-            case 'NewExpression':
+            case 'NovumExpression':
                 return resolveNew(node);
 
             case 'ConditionalExpression':
@@ -557,11 +557,11 @@ export function analyze(program: Program): SemanticResult {
             case 'LambdaExpression':
                 return resolveLambdaExpression(node);
 
-            case 'ThisExpression':
+            case 'EgoExpression':
                 // WHY: 'hoc' (this) type depends on enclosing class context
                 return UNKNOWN;
 
-            case 'TypeCastExpression':
+            case 'UtExpression':
                 // WHY: Type cast asserts a type, so return the target type
                 return resolveExpression(node.expression);
 
@@ -572,7 +572,7 @@ export function analyze(program: Program): SemanticResult {
                 }
                 return resolveExpression(node.body);
 
-            case 'TypeCheckExpression':
+            case 'EstExpression':
                 // WHY: Type check returns boolean (bivalens)
                 resolveExpression(node.expression);
                 node.resolvedType = BIVALENS;
@@ -1015,7 +1015,7 @@ export function analyze(program: Program): SemanticResult {
         return rightType;
     }
 
-    function resolveAwait(node: AwaitExpression): SemanticType {
+    function resolveAwait(node: CedeExpression): SemanticType {
         const argType = resolveExpression(node.argument);
 
         // If awaiting a Promise, unwrap it
@@ -1032,7 +1032,7 @@ export function analyze(program: Program): SemanticResult {
         return argType;
     }
 
-    function resolveNew(node: NewExpression): SemanticType {
+    function resolveNew(node: NovumExpression): SemanticType {
         // Resolve constructor arguments
         for (const arg of node.arguments) {
             if (arg.type === 'SpreadElement') {
@@ -1079,52 +1079,52 @@ export function analyze(program: Program): SemanticResult {
 
     function analyzeStatement(node: Statement): void {
         switch (node.type) {
-            case 'ImportDeclaration':
-                analyzeImportDeclaration(node);
+            case 'ImportaDeclaration':
+                analyzeImportaDeclaration(node);
                 break;
 
-            case 'VariableDeclaration':
-                analyzeVariableDeclaration(node);
+            case 'VariaDeclaration':
+                analyzeVariaDeclaration(node);
                 break;
 
-            case 'FunctionDeclaration':
-                analyzeFunctionDeclaration(node);
+            case 'FunctioDeclaration':
+                analyzeFunctioDeclaration(node);
                 break;
 
             case 'TypeAliasDeclaration':
                 analyzeTypeAliasDeclaration(node);
                 break;
 
-            case 'IfStatement':
-                analyzeIfStatement(node);
+            case 'SiStatement':
+                analyzeSiStatement(node);
                 break;
 
-            case 'WhileStatement':
-                analyzeWhileStatement(node);
+            case 'DumStatement':
+                analyzeDumStatement(node);
                 break;
 
-            case 'ForStatement':
-                analyzeForStatement(node);
+            case 'IteratioStatement':
+                analyzeIteratioStatement(node);
                 break;
 
-            case 'WithStatement':
-                analyzeWithStatement(node);
+            case 'InStatement':
+                analyzeInStatement(node);
                 break;
 
-            case 'SwitchStatement':
-                analyzeSwitchStatement(node);
+            case 'EligeStatement':
+                analyzeEligeStatement(node);
                 break;
 
-            case 'GuardStatement':
-                analyzeGuardStatement(node);
+            case 'CustodiStatement':
+                analyzeCustodiStatement(node);
                 break;
 
-            case 'AssertStatement':
-                analyzeAssertStatement(node);
+            case 'AdfirmaStatement':
+                analyzeAdfirmaStatement(node);
                 break;
 
-            case 'ReturnStatement':
-                analyzeReturnStatement(node);
+            case 'ReddeStatement':
+                analyzeReddeStatement(node);
                 break;
 
             case 'BlockStatement':
@@ -1135,24 +1135,24 @@ export function analyze(program: Program): SemanticResult {
                 resolveExpression(node.expression);
                 break;
 
-            case 'ThrowStatement':
-                analyzeThrowStatement(node);
+            case 'IaceStatement':
+                analyzeIaceStatement(node);
                 break;
 
             case 'ScribeStatement':
                 analyzeScribeStatement(node);
                 break;
 
-            case 'TryStatement':
-                analyzeTryStatement(node);
+            case 'TemptaStatement':
+                analyzeTemptaStatement(node);
                 break;
 
             case 'FacBlockStatement':
                 analyzeFacBlockStatement(node);
                 break;
 
-            case 'EnumDeclaration':
-                analyzeEnumDeclaration(node);
+            case 'OrdoDeclaration':
+                analyzeOrdoDeclaration(node);
                 break;
 
             case 'GenusDeclaration':
@@ -1169,8 +1169,8 @@ export function analyze(program: Program): SemanticResult {
                 analyzeDiscretioDeclaration(node);
                 break;
 
-            case 'BreakStatement':
-            case 'ContinueStatement':
+            case 'RumpeStatement':
+            case 'PergeStatement':
                 // No semantic analysis needed for break/continue
                 break;
 
@@ -1207,7 +1207,7 @@ export function analyze(program: Program): SemanticResult {
         }
     }
 
-    function analyzeVariableDeclaration(node: VariableDeclaration): void {
+    function analyzeVariaDeclaration(node: VariaDeclaration): void {
         // Handle object destructuring pattern
         if (node.name.type === 'ObjectPattern') {
             if (node.init) {
@@ -1291,7 +1291,7 @@ export function analyze(program: Program): SemanticResult {
         node.name.resolvedType = type;
     }
 
-    function analyzeFunctionDeclaration(node: FunctionDeclaration): void {
+    function analyzeFunctioDeclaration(node: FunctioDeclaration): void {
         // Build function type from parameters and return type
         const paramTypes: SemanticType[] = node.params.map(p => (p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN));
         const returnType = node.returnType ? resolveTypeAnnotation(node.returnType) : VACUUM;
@@ -1358,7 +1358,7 @@ export function analyze(program: Program): SemanticResult {
      *   ordo Status { pending, active, done }
      *   -> EnumType with members { pending: NUMERUS, active: NUMERUS, done: NUMERUS }
      */
-    function analyzeEnumDeclaration(node: EnumDeclaration): void {
+    function analyzeOrdoDeclaration(node: OrdoDeclaration): void {
         const members = new Map<string, SemanticType>();
 
         for (const member of node.members) {
@@ -1525,11 +1525,11 @@ export function analyze(program: Program): SemanticResult {
         exitScope();
 
         if (node.catchClause) {
-            analyzeCatchClause(node.catchClause);
+            analyzeCapeClause(node.catchClause);
         }
     }
 
-    function analyzeIfStatement(node: IfStatement): void {
+    function analyzeSiStatement(node: SiStatement): void {
         const testType = resolveExpression(node.test);
 
         // TODO: Warn but don't error - truthy/falsy is valid
@@ -1542,8 +1542,8 @@ export function analyze(program: Program): SemanticResult {
         exitScope();
 
         if (node.alternate) {
-            if (node.alternate.type === 'IfStatement') {
-                analyzeIfStatement(node.alternate);
+            if (node.alternate.type === 'SiStatement') {
+                analyzeSiStatement(node.alternate);
             } else {
                 enterScope();
                 analyzeBlock(node.alternate);
@@ -1552,11 +1552,11 @@ export function analyze(program: Program): SemanticResult {
         }
 
         if (node.catchClause) {
-            analyzeCatchClause(node.catchClause);
+            analyzeCapeClause(node.catchClause);
         }
     }
 
-    function analyzeWhileStatement(node: WhileStatement): void {
+    function analyzeDumStatement(node: DumStatement): void {
         resolveExpression(node.test);
 
         enterScope();
@@ -1564,11 +1564,11 @@ export function analyze(program: Program): SemanticResult {
         exitScope();
 
         if (node.catchClause) {
-            analyzeCatchClause(node.catchClause);
+            analyzeCapeClause(node.catchClause);
         }
     }
 
-    function analyzeForStatement(node: ForStatement): void {
+    function analyzeIteratioStatement(node: IteratioStatement): void {
         resolveExpression(node.iterable);
 
         enterScope();
@@ -1586,11 +1586,11 @@ export function analyze(program: Program): SemanticResult {
         exitScope();
 
         if (node.catchClause) {
-            analyzeCatchClause(node.catchClause);
+            analyzeCapeClause(node.catchClause);
         }
     }
 
-    function analyzeWithStatement(node: WithStatement): void {
+    function analyzeInStatement(node: InStatement): void {
         resolveExpression(node.object);
 
         // WHY: Inside 'in' blocks, bare identifier assignments become property
@@ -1613,11 +1613,11 @@ export function analyze(program: Program): SemanticResult {
         exitScope();
     }
 
-    function analyzeSwitchStatement(node: SwitchStatement): void {
+    function analyzeEligeStatement(node: EligeStatement): void {
         resolveExpression(node.discriminant);
 
         for (const caseNode of node.cases) {
-            if (caseNode.type === 'SwitchCase') {
+            if (caseNode.type === 'EligeCasus') {
                 // Value matching: si expression { ... }
                 resolveExpression(caseNode.test);
 
@@ -1652,11 +1652,11 @@ export function analyze(program: Program): SemanticResult {
         }
 
         if (node.catchClause) {
-            analyzeCatchClause(node.catchClause);
+            analyzeCapeClause(node.catchClause);
         }
     }
 
-    function analyzeGuardStatement(node: GuardStatement): void {
+    function analyzeCustodiStatement(node: CustodiStatement): void {
         for (const clause of node.clauses) {
             resolveExpression(clause.test);
 
@@ -1666,7 +1666,7 @@ export function analyze(program: Program): SemanticResult {
         }
     }
 
-    function analyzeAssertStatement(node: AssertStatement): void {
+    function analyzeAdfirmaStatement(node: AdfirmaStatement): void {
         resolveExpression(node.test);
 
         if (node.message) {
@@ -1674,7 +1674,7 @@ export function analyze(program: Program): SemanticResult {
         }
     }
 
-    function analyzeReturnStatement(node: ReturnStatement): void {
+    function analyzeReddeStatement(node: ReddeStatement): void {
         if (!node.argument) {
             return;
         }
@@ -1688,17 +1688,17 @@ export function analyze(program: Program): SemanticResult {
         }
     }
 
-    function analyzeThrowStatement(node: ThrowStatement): void {
+    function analyzeIaceStatement(node: IaceStatement): void {
         resolveExpression(node.argument);
     }
 
-    function analyzeTryStatement(node: TryStatement): void {
+    function analyzeTemptaStatement(node: TemptaStatement): void {
         enterScope();
         analyzeBlock(node.block);
         exitScope();
 
         if (node.handler) {
-            analyzeCatchClause(node.handler);
+            analyzeCapeClause(node.handler);
         }
 
         if (node.finalizer) {
@@ -1708,7 +1708,7 @@ export function analyze(program: Program): SemanticResult {
         }
     }
 
-    function analyzeCatchClause(node: { param: Identifier; body: BlockStatement }): void {
+    function analyzeCapeClause(node: { param: Identifier; body: BlockStatement }): void {
         enterScope();
 
         define({
@@ -1734,7 +1734,7 @@ export function analyze(program: Program): SemanticResult {
         exitScope();
 
         if (node.catchClause) {
-            analyzeCatchClause(node.catchClause);
+            analyzeCapeClause(node.catchClause);
         }
     }
 

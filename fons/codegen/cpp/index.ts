@@ -45,26 +45,26 @@ import type {
     Program,
     Statement,
     Expression,
-    ImportDeclaration,
-    VariableDeclaration,
-    FunctionDeclaration,
+    ImportaDeclaration,
+    VariaDeclaration,
+    FunctioDeclaration,
     GenusDeclaration,
     FieldDeclaration,
     PactumDeclaration,
     TypeAliasDeclaration,
     DiscretioDeclaration,
-    IfStatement,
-    WhileStatement,
-    ForStatement,
-    WithStatement,
-    SwitchStatement,
-    GuardStatement,
-    AssertStatement,
-    ReturnStatement,
+    SiStatement,
+    DumStatement,
+    IteratioStatement,
+    InStatement,
+    EligeStatement,
+    CustodiStatement,
+    AdfirmaStatement,
+    ReddeStatement,
     BlockStatement,
-    ThrowStatement,
+    IaceStatement,
     ScribeStatement,
-    TryStatement,
+    TemptaStatement,
     ExpressionStatement,
     ArrayExpression,
     ObjectExpression,
@@ -75,7 +75,7 @@ import type {
     MemberExpression,
     ArrowFunctionExpression,
     AssignmentExpression,
-    NewExpression,
+    NovumExpression,
     Identifier,
     Literal,
     Parameter,
@@ -240,11 +240,11 @@ export function generateCpp(program: Program, options: CodegenOptions = {}): str
      */
     function isDeclaration(node: Statement): boolean {
         switch (node.type) {
-            case 'FunctionDeclaration':
+            case 'FunctioDeclaration':
             case 'GenusDeclaration':
             case 'PactumDeclaration':
             case 'TypeAliasDeclaration':
-            case 'EnumDeclaration':
+            case 'OrdoDeclaration':
             case 'DiscretioDeclaration':
                 return true;
             // Top-level const could be declaration, but we'll put in main for simplicity
@@ -292,12 +292,12 @@ struct _ScopeGuard {
      */
     function genStatement(node: Statement): string {
         switch (node.type) {
-            case 'ImportDeclaration':
-                return genImportDeclaration(node);
-            case 'VariableDeclaration':
-                return genVariableDeclaration(node);
-            case 'FunctionDeclaration':
-                return genFunctionDeclaration(node);
+            case 'ImportaDeclaration':
+                return genImportaDeclaration(node);
+            case 'VariaDeclaration':
+                return genVariaDeclaration(node);
+            case 'FunctioDeclaration':
+                return genFunctioDeclaration(node);
             case 'GenusDeclaration':
                 return genGenusDeclaration(node);
             case 'PactumDeclaration':
@@ -306,28 +306,28 @@ struct _ScopeGuard {
                 return genTypeAliasDeclaration(node);
             case 'DiscretioDeclaration':
                 return genDiscretioDeclaration(node);
-            case 'IfStatement':
-                return genIfStatement(node);
-            case 'WhileStatement':
-                return genWhileStatement(node);
-            case 'ForStatement':
-                return genForStatement(node);
-            case 'WithStatement':
-                return genWithStatement(node);
-            case 'SwitchStatement':
-                return genSwitchStatement(node);
-            case 'GuardStatement':
-                return genGuardStatement(node);
-            case 'AssertStatement':
-                return genAssertStatement(node);
-            case 'ReturnStatement':
-                return genReturnStatement(node);
-            case 'ThrowStatement':
-                return genThrowStatement(node);
+            case 'SiStatement':
+                return genSiStatement(node);
+            case 'DumStatement':
+                return genDumStatement(node);
+            case 'IteratioStatement':
+                return genIteratioStatement(node);
+            case 'InStatement':
+                return genInStatement(node);
+            case 'EligeStatement':
+                return genEligeStatement(node);
+            case 'CustodiStatement':
+                return genCustodiStatement(node);
+            case 'AdfirmaStatement':
+                return genAdfirmaStatement(node);
+            case 'ReddeStatement':
+                return genReddeStatement(node);
+            case 'IaceStatement':
+                return genIaceStatement(node);
             case 'ScribeStatement':
                 return genScribeStatement(node);
-            case 'TryStatement':
-                return genTryStatement(node);
+            case 'TemptaStatement':
+                return genTemptaStatement(node);
             case 'BlockStatement':
                 return genBlockStatementContent(node);
             case 'ExpressionStatement':
@@ -347,7 +347,7 @@ struct _ScopeGuard {
      * WHY: C++ uses #include, not import (until C++20 modules are widespread).
      *      For now, we just track that an import was requested.
      */
-    function genImportDeclaration(node: ImportDeclaration): string {
+    function genImportaDeclaration(node: ImportaDeclaration): string {
         // Add to includes set - will be rendered at top
         const source = node.source;
 
@@ -370,7 +370,7 @@ struct _ScopeGuard {
      *   varia numerus x = 5 -> int64_t x = 5;
      *   fixum textus y = "hi" -> const std::string y = "hi";
      */
-    function genVariableDeclaration(node: VariableDeclaration): string {
+    function genVariaDeclaration(node: VariaDeclaration): string {
         const isConst = node.kind === 'fixum';
 
         // Handle destructuring (not directly supported in C++, expand it)
@@ -405,7 +405,7 @@ struct _ScopeGuard {
      * TRANSFORMS:
      *   fixum { a, b } = obj -> const auto& a = obj.a; const auto& b = obj.b;
      */
-    function genObjectDestructuringDeclaration(node: VariableDeclaration): string {
+    function genObjectDestructuringDeclaration(node: VariaDeclaration): string {
         if (node.name.type !== 'ObjectPattern') {
             throw new Error('Expected ObjectPattern');
         }
@@ -436,7 +436,7 @@ struct _ScopeGuard {
      *   fixum [a, b, c] = arr -> const auto& _tmp = arr; const auto& a = _tmp[0]; ...
      *   [a, ceteri rest] = arr -> const auto& a = _tmp[0]; const auto rest = std::vector(_tmp.begin() + 1, _tmp.end());
      */
-    function genArrayDestructuringDeclaration(node: VariableDeclaration): string {
+    function genArrayDestructuringDeclaration(node: VariaDeclaration): string {
         if (node.name.type !== 'ArrayPattern') {
             throw new Error('Expected ArrayPattern');
         }
@@ -480,7 +480,7 @@ struct _ScopeGuard {
      *   functio salve(textus nomen) -> nihil { }
      *   -> void salve(std::string nomen) { }
      */
-    function genFunctionDeclaration(node: FunctionDeclaration): string {
+    function genFunctioDeclaration(node: FunctioDeclaration): string {
         const name = node.name.name;
         const params = node.params.map(genParameter).join(', ');
         const returnType = node.returnType ? genType(node.returnType) : 'void';
@@ -698,7 +698,7 @@ struct _ScopeGuard {
      *      the struct already has merged field values. Named _creo to
      *      avoid conflicts with user-defined methods.
      */
-    function genCreoMethod(node: FunctionDeclaration): string {
+    function genCreoMethod(node: FunctioDeclaration): string {
         const lines: string[] = [];
 
         lines.push(`${ind()}void _creo() {`);
@@ -719,7 +719,7 @@ struct _ScopeGuard {
     /**
      * Generate method declaration.
      */
-    function genMethodDeclaration(node: FunctionDeclaration): string {
+    function genMethodDeclaration(node: FunctioDeclaration): string {
         const name = node.name.name;
         const params = node.params.map(genParameter).join(', ');
         const returnType = node.returnType ? genType(node.returnType) : 'void';
@@ -853,12 +853,12 @@ struct _ScopeGuard {
     // Control Flow
     // -------------------------------------------------------------------------
 
-    function genIfStatement(node: IfStatement): string {
+    function genSiStatement(node: SiStatement): string {
         let result = `${ind()}if (${genExpression(node.test)}) ${genBlockStatement(node.consequent)}`;
 
         if (node.alternate) {
-            if (node.alternate.type === 'IfStatement') {
-                result += ` else ${genIfStatement(node.alternate).trim()}`;
+            if (node.alternate.type === 'SiStatement') {
+                result += ` else ${genSiStatement(node.alternate).trim()}`;
             } else {
                 result += ` else ${genBlockStatement(node.alternate)}`;
             }
@@ -867,7 +867,7 @@ struct _ScopeGuard {
         return result;
     }
 
-    function genWhileStatement(node: WhileStatement): string {
+    function genDumStatement(node: DumStatement): string {
         const test = genExpression(node.test);
         const body = genBlockStatement(node.body);
 
@@ -881,7 +881,7 @@ struct _ScopeGuard {
      *   ex items pro item { } -> for (auto& item : items) { }
      *   ex 0..10 pro i { } -> for (int64_t i = 0; i < 10; ++i) { }
      */
-    function genForStatement(node: ForStatement): string {
+    function genIteratioStatement(node: IteratioStatement): string {
         const varName = node.variable.name;
         const body = genBlockStatement(node.body);
 
@@ -908,7 +908,7 @@ struct _ScopeGuard {
      * TRANSFORMS:
      *   in user { nomen = "Marcus" } -> { user.nomen = "Marcus"; }
      */
-    function genWithStatement(node: WithStatement): string {
+    function genInStatement(node: InStatement): string {
         const context = genExpression(node.object);
         const lines: string[] = [];
 
@@ -943,14 +943,14 @@ struct _ScopeGuard {
      * NOTE: Variant matching not yet implemented for C++.
      *       For now, only value cases are supported.
      */
-    function genSwitchStatement(node: SwitchStatement): string {
+    function genEligeStatement(node: EligeStatement): string {
         const discriminant = genExpression(node.discriminant);
         const lines: string[] = [];
 
         lines.push(`${ind()}switch (${discriminant}) {`);
 
         for (const caseNode of node.cases) {
-            if (caseNode.type === 'SwitchCase') {
+            if (caseNode.type === 'EligeCasus') {
                 // Value matching: si expression { ... }
                 const test = genExpression(caseNode.test);
 
@@ -989,7 +989,7 @@ struct _ScopeGuard {
         return lines.join('\n');
     }
 
-    function genGuardStatement(node: GuardStatement): string {
+    function genCustodiStatement(node: CustodiStatement): string {
         const lines: string[] = [];
 
         for (const clause of node.clauses) {
@@ -1002,7 +1002,7 @@ struct _ScopeGuard {
         return lines.join('\n');
     }
 
-    function genAssertStatement(node: AssertStatement): string {
+    function genAdfirmaStatement(node: AdfirmaStatement): string {
         includes.add('<cassert>');
 
         const test = genExpression(node.test);
@@ -1017,7 +1017,7 @@ struct _ScopeGuard {
         return `${ind()}assert(${test});`;
     }
 
-    function genReturnStatement(node: ReturnStatement): string {
+    function genReddeStatement(node: ReddeStatement): string {
         if (node.argument) {
             return `${ind()}return ${genExpression(node.argument)};`;
         }
@@ -1025,7 +1025,7 @@ struct _ScopeGuard {
         return `${ind()}return;`;
     }
 
-    function genThrowStatement(node: ThrowStatement): string {
+    function genIaceStatement(node: IaceStatement): string {
         // WHY: mori (fatal=true) is unrecoverable, iace (fatal=false) is catchable
         if (node.fatal) {
             includes.add('<cstdlib>');
@@ -1049,7 +1049,7 @@ struct _ScopeGuard {
         }
 
         // Handle new Error("msg")
-        if (node.argument.type === 'NewExpression' && node.argument.callee.name === 'Error') {
+        if (node.argument.type === 'NovumExpression' && node.argument.callee.name === 'Error') {
             const firstArg = node.argument.arguments[0];
             const msg = firstArg && firstArg.type !== 'SpreadElement' ? genExpression(firstArg) : '""';
 
@@ -1083,7 +1083,7 @@ struct _ScopeGuard {
         return `${ind()}std::print("${format}", ${args});`;
     }
 
-    function genTryStatement(node: TryStatement): string {
+    function genTemptaStatement(node: TemptaStatement): string {
         const lines: string[] = [];
 
         // WHY: C++ doesn't have finally. We use a scope guard pattern:
@@ -1161,13 +1161,13 @@ struct _ScopeGuard {
                 return genArrowFunction(node);
             case 'AssignmentExpression':
                 return genAssignmentExpression(node);
-            case 'AwaitExpression':
+            case 'CedeExpression':
                 // C++ doesn't have await, would need coroutines
                 return genExpression(node.argument);
-            case 'ThisExpression':
+            case 'EgoExpression':
                 return 'this';
-            case 'NewExpression':
-                return genNewExpression(node);
+            case 'NovumExpression':
+                return genNovumExpression(node);
             case 'ConditionalExpression':
                 return `(${genExpression(node.test)} ? ${genExpression(node.consequent)} : ${genExpression(node.alternate)})`;
             case 'LambdaExpression':
@@ -1642,7 +1642,7 @@ struct _ScopeGuard {
      *   novum Foo() -> std::make_unique<Foo>()
      *   novum Foo { x: 1 } -> Foo{.x = 1}
      */
-    function genNewExpression(node: NewExpression): string {
+    function genNovumExpression(node: NovumExpression): string {
         const callee = node.callee.name;
 
         // Handle { ... } or de expr overrides - use aggregate initialization
