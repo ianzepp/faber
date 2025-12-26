@@ -51,6 +51,8 @@ scribe salve(nomen)
 | C++23      |   17%    |
 | Rust       |    0%    |
 
+> Features % = count of `[x]` entries in the tables below divided by total feature rows (~200).
+
 Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not applicable, `[c]` convention (no compiler support needed)
 
 ## Type System
