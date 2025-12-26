@@ -167,7 +167,7 @@ describe('Semantic Analyzer', () => {
             const { errors } = analyzeSource(source);
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('not assignable');
+            expect(errors[0]!.message).toContain('not assignable');
         });
     });
 
@@ -192,7 +192,7 @@ describe('Semantic Analyzer', () => {
             const { errors } = analyzeSource(source);
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('already defined');
+            expect(errors[0]!.message).toContain('already defined');
         });
     });
 
@@ -201,7 +201,7 @@ describe('Semantic Analyzer', () => {
             const { errors } = analyzeSource(`varia x = y`);
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('Undefined variable');
+            expect(errors[0]!.message).toContain('Undefined variable');
         });
 
         it('reports assignment to immutable variable', () => {
@@ -212,7 +212,7 @@ describe('Semantic Analyzer', () => {
             const { errors } = analyzeSource(source);
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('immutable');
+            expect(errors[0]!.message).toContain('immutable');
         });
 
         it('reports type mismatch in assignment', () => {
@@ -223,14 +223,14 @@ describe('Semantic Analyzer', () => {
             const { errors } = analyzeSource(source);
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('not assignable');
+            expect(errors[0]!.message).toContain('not assignable');
         });
 
         it('reports variable without type or initializer', () => {
             const { errors } = analyzeSource(`varia x`);
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('no type annotation or initializer');
+            expect(errors[0]!.message).toContain('no type annotation or initializer');
         });
     });
 
@@ -408,7 +408,7 @@ describe('Semantic Analyzer', () => {
             const { errors } = analyzeSource(source);
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('nullable');
+            expect(errors[0]!.message).toContain('nullable');
         });
 
         it('allows operations on non-nullable types', () => {
@@ -483,8 +483,8 @@ describe('Semantic Analyzer', () => {
             const { errors } = analyzeSource(source);
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('textus');
-            expect(errors[0].message).toContain('numerus');
+            expect(errors[0]!.message).toContain('textus');
+            expect(errors[0]!.message).toContain('numerus');
         });
     });
 
@@ -541,7 +541,7 @@ describe('Semantic Analyzer', () => {
             const { errors } = analyzeSource(source);
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('Undefined');
+            expect(errors[0]!.message).toContain('Undefined');
         });
     });
 
@@ -587,7 +587,7 @@ describe('Semantic Analyzer', () => {
             const { errors } = analyzeSource(source);
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('not assignable');
+            expect(errors[0]!.message).toContain('not assignable');
         });
 
         it('reports function parameter type mismatch', () => {
@@ -613,7 +613,7 @@ describe('Semantic Analyzer', () => {
             const { errors } = analyzeSource(source);
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('not assignable');
+            expect(errors[0]!.message).toContain('not assignable');
         });
 
         it('binary operation type checking', () => {
@@ -633,7 +633,7 @@ describe('Semantic Analyzer', () => {
             const { errors } = analyzeSource(source);
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('Cannot compare');
+            expect(errors[0]!.message).toContain('Cannot compare');
         });
     });
 
@@ -643,8 +643,8 @@ describe('Semantic Analyzer', () => {
             const { errors } = analyzeSource(source);
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('Undefined variable');
-            expect(errors[0].message).toContain('unknownVar');
+            expect(errors[0]!.message).toContain('Undefined variable');
+            expect(errors[0]!.message).toContain('unknownVar');
         });
 
         it('immutable reassignment has helpful message', () => {
@@ -655,7 +655,7 @@ describe('Semantic Analyzer', () => {
             const { errors } = analyzeSource(source);
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('immutable');
+            expect(errors[0]!.message).toContain('immutable');
         });
 
         it('duplicate declaration has helpful message', () => {
@@ -666,7 +666,7 @@ describe('Semantic Analyzer', () => {
             const { errors } = analyzeSource(source);
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('already defined');
+            expect(errors[0]!.message).toContain('already defined');
         });
     });
 });

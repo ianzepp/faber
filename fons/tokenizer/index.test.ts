@@ -6,35 +6,35 @@ describe('tokenizer', () => {
         test('integers', () => {
             const { tokens } = tokenize('42');
 
-            expect(tokens[0].type).toBe('NUMBER');
-            expect(tokens[0].value).toBe('42');
+            expect(tokens[0]!.type).toBe('NUMBER');
+            expect(tokens[0]!.value).toBe('42');
         });
 
         test('decimals', () => {
             const { tokens } = tokenize('3.14159');
 
-            expect(tokens[0].type).toBe('NUMBER');
-            expect(tokens[0].value).toBe('3.14159');
+            expect(tokens[0]!.type).toBe('NUMBER');
+            expect(tokens[0]!.value).toBe('3.14159');
         });
 
         test('strings with double quotes', () => {
             const { tokens } = tokenize('"Salve, mundus!"');
 
-            expect(tokens[0].type).toBe('STRING');
-            expect(tokens[0].value).toBe('Salve, mundus!');
+            expect(tokens[0]!.type).toBe('STRING');
+            expect(tokens[0]!.value).toBe('Salve, mundus!');
         });
 
         test('strings with escapes', () => {
             const { tokens } = tokenize('"line1\\nline2"');
 
-            expect(tokens[0].value).toBe('line1\nline2');
+            expect(tokens[0]!.value).toBe('line1\nline2');
         });
 
         test('template strings', () => {
             const { tokens } = tokenize('`Salve, ${nomen}!`');
 
-            expect(tokens[0].type).toBe('TEMPLATE_STRING');
-            expect(tokens[0].value).toContain('${nomen}');
+            expect(tokens[0]!.type).toBe('TEMPLATE_STRING');
+            expect(tokens[0]!.value).toContain('${nomen}');
         });
     });
 
@@ -42,34 +42,34 @@ describe('tokenizer', () => {
         test('recognizes si as keyword', () => {
             const { tokens } = tokenize('si');
 
-            expect(tokens[0].type).toBe('KEYWORD');
-            expect(tokens[0].keyword).toBe('si');
+            expect(tokens[0]!.type).toBe('KEYWORD');
+            expect(tokens[0]!.keyword).toBe('si');
         });
 
         test('recognizes fixum as keyword', () => {
             const { tokens } = tokenize('fixum');
 
-            expect(tokens[0].type).toBe('KEYWORD');
-            expect(tokens[0].keyword).toBe('fixum');
+            expect(tokens[0]!.type).toBe('KEYWORD');
+            expect(tokens[0]!.keyword).toBe('fixum');
         });
 
         test('recognizes varia as keyword', () => {
             const { tokens } = tokenize('varia');
 
-            expect(tokens[0].type).toBe('KEYWORD');
+            expect(tokens[0]!.type).toBe('KEYWORD');
         });
 
         test('recognizes functio as keyword', () => {
             const { tokens } = tokenize('functio');
 
-            expect(tokens[0].type).toBe('KEYWORD');
+            expect(tokens[0]!.type).toBe('KEYWORD');
         });
 
         test('recognizes verum/falsum as keywords', () => {
             const { tokens } = tokenize('verum falsum');
 
-            expect(tokens[0].type).toBe('KEYWORD');
-            expect(tokens[1].type).toBe('KEYWORD');
+            expect(tokens[0]!.type).toBe('KEYWORD');
+            expect(tokens[1]!.type).toBe('KEYWORD');
         });
     });
 
@@ -77,22 +77,22 @@ describe('tokenizer', () => {
         test('simple identifier', () => {
             const { tokens } = tokenize('nuntius');
 
-            expect(tokens[0].type).toBe('IDENTIFIER');
-            expect(tokens[0].value).toBe('nuntius');
+            expect(tokens[0]!.type).toBe('IDENTIFIER');
+            expect(tokens[0]!.value).toBe('nuntius');
         });
 
         test('identifier with numbers', () => {
             const { tokens } = tokenize('usuario1');
 
-            expect(tokens[0].type).toBe('IDENTIFIER');
-            expect(tokens[0].value).toBe('usuario1');
+            expect(tokens[0]!.type).toBe('IDENTIFIER');
+            expect(tokens[0]!.value).toBe('usuario1');
         });
 
         test('TitleCase identifier', () => {
             const { tokens } = tokenize('textus');
 
-            expect(tokens[0].type).toBe('IDENTIFIER');
-            expect(tokens[0].value).toBe('textus');
+            expect(tokens[0]!.type).toBe('IDENTIFIER');
+            expect(tokens[0]!.value).toBe('textus');
         });
     });
 
@@ -113,8 +113,8 @@ describe('tokenizer', () => {
             const { tokens } = tokenize('=== !==');
 
             expect(tokens.map(t => t.type)).toEqual(['TRIPLE_EQUAL', 'BANG_DOUBLE_EQUAL', 'EOF']);
-            expect(tokens[0].value).toBe('===');
-            expect(tokens[1].value).toBe('!==');
+            expect(tokens[0]!.value).toBe('===');
+            expect(tokens[1]!.value).toBe('!==');
         });
 
         test('logical operators', () => {
@@ -133,8 +133,8 @@ describe('tokenizer', () => {
             const { tokens } = tokenize('<< >>');
 
             expect(tokens.map(t => t.type)).toEqual(['LEFT_SHIFT', 'RIGHT_SHIFT', 'EOF']);
-            expect(tokens[0].value).toBe('<<');
-            expect(tokens[1].value).toBe('>>');
+            expect(tokens[0]!.value).toBe('<<');
+            expect(tokens[1]!.value).toBe('>>');
         });
 
         test('bitwise vs logical distinction', () => {
@@ -166,13 +166,13 @@ describe('tokenizer', () => {
         test('arrow operator', () => {
             const { tokens } = tokenize('=>');
 
-            expect(tokens[0].type).toBe('ARROW');
+            expect(tokens[0]!.type).toBe('ARROW');
         });
 
         test('assignment', () => {
             const { tokens } = tokenize('=');
 
-            expect(tokens[0].type).toBe('EQUAL');
+            expect(tokens[0]!.type).toBe('EQUAL');
         });
     });
 
@@ -204,7 +204,7 @@ describe('tokenizer', () => {
         test('pipe for union types', () => {
             const { tokens } = tokenize('textus | nihil');
 
-            expect(tokens[1].type).toBe('PIPE');
+            expect(tokens[1]!.type).toBe('PIPE');
         });
     });
 
@@ -226,8 +226,8 @@ describe('tokenizer', () => {
         test('tracks line and column', () => {
             const { tokens } = tokenize('fixum\nnomen');
 
-            expect(tokens[0].position.line).toBe(1);
-            expect(tokens[1].position.line).toBe(2);
+            expect(tokens[0]!.position.line).toBe(1);
+            expect(tokens[1]!.position.line).toBe(2);
         });
     });
 
@@ -253,10 +253,10 @@ describe('tokenizer', () => {
         test('if statement with Latin operators', () => {
             const { tokens } = tokenize('si activa et verificata {');
 
-            expect(tokens[0].type).toBe('KEYWORD'); // si
-            expect(tokens[0].keyword).toBe('si');
-            expect(tokens[2].type).toBe('KEYWORD'); // et
-            expect(tokens[2].keyword).toBe('et');
+            expect(tokens[0]!.type).toBe('KEYWORD'); // si
+            expect(tokens[0]!.keyword).toBe('si');
+            expect(tokens[2]!.type).toBe('KEYWORD'); // et
+            expect(tokens[2]!.keyword).toBe('et');
         });
 
         test('arrow function', () => {
@@ -271,14 +271,14 @@ describe('tokenizer', () => {
             const { errors } = tokenize('"unterminated');
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].text).toContain('Unterminated');
+            expect(errors[0]!.text).toContain('Unterminated');
         });
 
         test('reports unexpected character', () => {
             const { errors } = tokenize('fixum @ nomen');
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].text).toContain('Unexpected');
+            expect(errors[0]!.text).toContain('Unexpected');
         });
     });
 
@@ -321,14 +321,14 @@ describe('tokenizer', () => {
 
             expect(errors).toHaveLength(0);
             expect(tokens).toHaveLength(1); // Just EOF
-            expect(tokens[0].type).toBe('EOF');
+            expect(tokens[0]!.type).toBe('EOF');
         });
 
         test('only whitespace', () => {
             const { tokens } = tokenize('   \n\t  ');
 
             expect(tokens).toHaveLength(1); // Just EOF
-            expect(tokens[0].type).toBe('EOF');
+            expect(tokens[0]!.type).toBe('EOF');
         });
 
         test('only comments', () => {
@@ -340,30 +340,30 @@ describe('tokenizer', () => {
         test('zero values', () => {
             const { tokens } = tokenize('0 0.0 0.00');
 
-            expect(tokens[0].value).toBe('0');
-            expect(tokens[1].value).toBe('0.0');
-            expect(tokens[2].value).toBe('0.00');
+            expect(tokens[0]!.value).toBe('0');
+            expect(tokens[1]!.value).toBe('0.0');
+            expect(tokens[2]!.value).toBe('0.00');
         });
 
         test('very long number', () => {
             const { tokens } = tokenize('123456789012345678901234567890');
 
-            expect(tokens[0].type).toBe('NUMBER');
+            expect(tokens[0]!.type).toBe('NUMBER');
         });
 
         test('very long identifier', () => {
             const longId = 'a'.repeat(100);
             const { tokens } = tokenize(longId);
 
-            expect(tokens[0].type).toBe('IDENTIFIER');
-            expect(tokens[0].value).toHaveLength(100);
+            expect(tokens[0]!.type).toBe('IDENTIFIER');
+            expect(tokens[0]!.value).toHaveLength(100);
         });
 
         test('number with leading zeros', () => {
             const { tokens } = tokenize('007');
 
-            expect(tokens[0].type).toBe('NUMBER');
-            expect(tokens[0].value).toBe('007');
+            expect(tokens[0]!.type).toBe('NUMBER');
+            expect(tokens[0]!.value).toBe('007');
         });
 
         test('decimal starting with dot', () => {
@@ -378,81 +378,81 @@ describe('tokenizer', () => {
         test('basic hex literal', () => {
             const { tokens } = tokenize('0xFF');
 
-            expect(tokens[0].type).toBe('NUMBER');
-            expect(tokens[0].value).toBe('0xFF');
+            expect(tokens[0]!.type).toBe('NUMBER');
+            expect(tokens[0]!.value).toBe('0xFF');
         });
 
         test('lowercase prefix', () => {
             const { tokens } = tokenize('0xff');
 
-            expect(tokens[0].type).toBe('NUMBER');
-            expect(tokens[0].value).toBe('0xff');
+            expect(tokens[0]!.type).toBe('NUMBER');
+            expect(tokens[0]!.value).toBe('0xff');
         });
 
         test('uppercase prefix', () => {
             const { tokens } = tokenize('0XFF');
 
-            expect(tokens[0].type).toBe('NUMBER');
-            expect(tokens[0].value).toBe('0XFF');
+            expect(tokens[0]!.type).toBe('NUMBER');
+            expect(tokens[0]!.value).toBe('0XFF');
         });
 
         test('mixed case digits', () => {
             const { tokens } = tokenize('0xAbCdEf');
 
-            expect(tokens[0].type).toBe('NUMBER');
-            expect(tokens[0].value).toBe('0xAbCdEf');
+            expect(tokens[0]!.type).toBe('NUMBER');
+            expect(tokens[0]!.value).toBe('0xAbCdEf');
         });
 
         test('hex with all digits', () => {
             const { tokens } = tokenize('0x1234567890ABCDEFabcdef');
 
-            expect(tokens[0].type).toBe('NUMBER');
-            expect(tokens[0].value).toBe('0x1234567890ABCDEFabcdef');
+            expect(tokens[0]!.type).toBe('NUMBER');
+            expect(tokens[0]!.value).toBe('0x1234567890ABCDEFabcdef');
         });
 
         test('hex bigint', () => {
             const { tokens } = tokenize('0xFFn');
 
-            expect(tokens[0].type).toBe('BIGINT');
-            expect(tokens[0].value).toBe('0xFF');
+            expect(tokens[0]!.type).toBe('BIGINT');
+            expect(tokens[0]!.value).toBe('0xFF');
         });
 
         test('large hex bigint', () => {
             const { tokens } = tokenize('0xFFFFFFFFFn');
 
-            expect(tokens[0].type).toBe('BIGINT');
-            expect(tokens[0].value).toBe('0xFFFFFFFFF');
+            expect(tokens[0]!.type).toBe('BIGINT');
+            expect(tokens[0]!.value).toBe('0xFFFFFFFFF');
         });
 
         test('hex in expression', () => {
             const { tokens } = tokenize('0xFF - 0xAA');
 
-            expect(tokens[0].type).toBe('NUMBER');
-            expect(tokens[0].value).toBe('0xFF');
-            expect(tokens[1].type).toBe('MINUS');
-            expect(tokens[2].type).toBe('NUMBER');
-            expect(tokens[2].value).toBe('0xAA');
+            expect(tokens[0]!.type).toBe('NUMBER');
+            expect(tokens[0]!.value).toBe('0xFF');
+            expect(tokens[1]!.type).toBe('MINUS');
+            expect(tokens[2]!.type).toBe('NUMBER');
+            expect(tokens[2]!.value).toBe('0xAA');
         });
 
         test('hex zero', () => {
             const { tokens } = tokenize('0x0');
 
-            expect(tokens[0].type).toBe('NUMBER');
-            expect(tokens[0].value).toBe('0x0');
+            expect(tokens[0]!.type).toBe('NUMBER');
+            expect(tokens[0]!.value).toBe('0x0');
         });
 
         test('invalid hex - no digits', () => {
             const { tokens, errors } = tokenize('0x');
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].code).toBe('L004');
+            expect(errors[0]!.code).toBe('L004');
         });
 
         test('invalid hex - non-hex char after prefix', () => {
             const { tokens, errors } = tokenize('0xGG');
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].code).toBe('L004');
+            expect(errors[0]!.code).toBe('L004');
         });
     });
 
@@ -460,8 +460,8 @@ describe('tokenizer', () => {
         test('mixed tabs and spaces', () => {
             const { tokens } = tokenize('fixum\t  x\t=\t5');
 
-            expect(tokens[0].type).toBe('KEYWORD');
-            expect(tokens[1].type).toBe('IDENTIFIER');
+            expect(tokens[0]!.type).toBe('KEYWORD');
+            expect(tokens[1]!.type).toBe('IDENTIFIER');
         });
 
         test('multiple consecutive spaces', () => {
@@ -473,23 +473,23 @@ describe('tokenizer', () => {
         test('CR LF line endings', () => {
             const { tokens } = tokenize('fixum\r\nx\r\n=\r\n5');
 
-            expect(tokens[0].type).toBe('KEYWORD');
-            expect(tokens[3].value).toBe('5');
+            expect(tokens[0]!.type).toBe('KEYWORD');
+            expect(tokens[3]!.value).toBe('5');
         });
 
         test('no whitespace between tokens', () => {
             const { tokens } = tokenize('fixum x=5');
 
-            expect(tokens[0].type).toBe('KEYWORD');
-            expect(tokens[1].type).toBe('IDENTIFIER');
-            expect(tokens[2].type).toBe('EQUAL');
-            expect(tokens[3].type).toBe('NUMBER');
+            expect(tokens[0]!.type).toBe('KEYWORD');
+            expect(tokens[1]!.type).toBe('IDENTIFIER');
+            expect(tokens[2]!.type).toBe('EQUAL');
+            expect(tokens[3]!.type).toBe('NUMBER');
         });
 
         test('trailing whitespace', () => {
             const { tokens } = tokenize('fixum x = 5   \n\t ');
 
-            expect(tokens[tokens.length - 1].type).toBe('EOF');
+            expect(tokens[tokens.length - 1]!.type).toBe('EOF');
         });
     });
 
@@ -497,37 +497,37 @@ describe('tokenizer', () => {
         test('multiple consecutive operators', () => {
             const { tokens } = tokenize('+++');
 
-            expect(tokens[0].type).toBe('PLUS');
-            expect(tokens[1].type).toBe('PLUS');
-            expect(tokens[2].type).toBe('PLUS');
+            expect(tokens[0]!.type).toBe('PLUS');
+            expect(tokens[1]!.type).toBe('PLUS');
+            expect(tokens[2]!.type).toBe('PLUS');
         });
 
         test('mixed quote types in file', () => {
             const { tokens } = tokenize('"double" `template` "another"');
 
-            expect(tokens[0].type).toBe('STRING');
-            expect(tokens[1].type).toBe('TEMPLATE_STRING');
-            expect(tokens[2].type).toBe('STRING');
+            expect(tokens[0]!.type).toBe('STRING');
+            expect(tokens[1]!.type).toBe('TEMPLATE_STRING');
+            expect(tokens[2]!.type).toBe('STRING');
         });
 
         test('escaped quotes in strings', () => {
             const { tokens } = tokenize('"He said \\"hello\\""');
 
-            expect(tokens[0].type).toBe('STRING');
-            expect(tokens[0].value).toContain('"');
+            expect(tokens[0]!.type).toBe('STRING');
+            expect(tokens[0]!.value).toContain('"');
         });
 
         test('unicode in identifiers', () => {
             const { tokens } = tokenize('niño');
 
-            expect(tokens[0].type).toBe('IDENTIFIER');
+            expect(tokens[0]!.type).toBe('IDENTIFIER');
         });
 
         test('emoji in string', () => {
             const { tokens } = tokenize('"hello 👋"');
 
-            expect(tokens[0].type).toBe('STRING');
-            expect(tokens[0].value).toContain('👋');
+            expect(tokens[0]!.type).toBe('STRING');
+            expect(tokens[0]!.value).toContain('👋');
         });
     });
 
@@ -535,7 +535,7 @@ describe('tokenizer', () => {
         test('single-line comment at end of file', () => {
             const { tokens } = tokenize('fixum x = 5 // comment');
 
-            expect(tokens[tokens.length - 1].type).toBe('EOF');
+            expect(tokens[tokens.length - 1]!.type).toBe('EOF');
         });
 
         test('multi-line comment with nested slashes', () => {

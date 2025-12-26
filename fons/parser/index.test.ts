@@ -14,7 +14,7 @@ describe('parser', () => {
             const { program } = parseCode('varia nomen = "Marcus"');
 
             expect(program).not.toBeNull();
-            expect(program!.body[0].type).toBe('VariableDeclaration');
+            expect(program!.body[0]!.type).toBe('VariableDeclaration');
             const decl = program!.body[0] as any;
 
             expect(decl.kind).toBe('varia');
@@ -213,7 +213,7 @@ describe('parser', () => {
         }
       `);
 
-            expect(program!.body[0].type).toBe('FunctionDeclaration');
+            expect(program!.body[0]!.type).toBe('FunctionDeclaration');
             const fn = program!.body[0] as any;
 
             expect(fn.name.name).toBe('salve');
@@ -412,7 +412,7 @@ describe('parser', () => {
         }
       `);
 
-            expect(program!.body[0].type).toBe('IfStatement');
+            expect(program!.body[0]!.type).toBe('IfStatement');
             const stmt = program!.body[0] as any;
 
             expect(stmt.test.value).toBe(true);
@@ -457,7 +457,7 @@ describe('parser', () => {
         }
       `);
 
-            expect(program!.body[0].type).toBe('WhileStatement');
+            expect(program!.body[0]!.type).toBe('WhileStatement');
         });
 
         test('for...in loop', () => {
@@ -1001,7 +1001,7 @@ describe('parser', () => {
         test('simple genus with one field', () => {
             const { program } = parseCode('genus persona { textus nomen }');
 
-            expect(program!.body[0].type).toBe('GenusDeclaration');
+            expect(program!.body[0]!.type).toBe('GenusDeclaration');
             const genus = program!.body[0] as any;
 
             expect(genus.name.name).toBe('persona');
@@ -1405,7 +1405,7 @@ describe('parser', () => {
             const block = program!.body[0] as any;
 
             expect(block.type).toBe('BlockStatement');
-            expect(block.body[0].type).toBe('ThrowStatement');
+            expect(block.body[0]!.type).toBe('ThrowStatement');
         });
 
         test('throw in switch case', () => {
@@ -1417,7 +1417,7 @@ describe('parser', () => {
             const switchStmt = program!.body[0] as any;
 
             expect(switchStmt.type).toBe('SwitchStatement');
-            expect(switchStmt.cases[0].consequent.body[0].type).toBe('ThrowStatement');
+            expect(switchStmt.cases[0].consequent.body[0]!.type).toBe('ThrowStatement');
         });
 
         test('throw in if statement', () => {
@@ -1429,7 +1429,7 @@ describe('parser', () => {
             const ifStmt = program!.body[0] as any;
 
             expect(ifStmt.type).toBe('IfStatement');
-            expect(ifStmt.consequent.body[0].type).toBe('ThrowStatement');
+            expect(ifStmt.consequent.body[0]!.type).toBe('ThrowStatement');
         });
 
         test('throw expression result', () => {
@@ -1450,7 +1450,7 @@ describe('parser', () => {
             expect(stmt.test.type).toBe('BinaryExpression');
             expect(stmt.consequent.type).toBe('BlockStatement');
             expect(stmt.consequent.body).toHaveLength(1);
-            expect(stmt.consequent.body[0].type).toBe('ScribeStatement');
+            expect(stmt.consequent.body[0]!.type).toBe('ScribeStatement');
         });
 
         test('si with ergo and aliter', () => {
@@ -1462,7 +1462,7 @@ describe('parser', () => {
             expect(stmt.consequent.body).toHaveLength(1);
             expect(stmt.alternate).toBeDefined();
             expect(stmt.alternate.type).toBe('BlockStatement');
-            expect(stmt.alternate.body[0].type).toBe('ScribeStatement');
+            expect(stmt.alternate.body[0]!.type).toBe('ScribeStatement');
         });
 
         test('sin as else-if alias', () => {
@@ -1549,7 +1549,7 @@ describe('parser', () => {
             expect(stmt.kind).toBe('ex');
             expect(stmt.body.type).toBe('BlockStatement');
             expect(stmt.body.body).toHaveLength(1);
-            expect(stmt.body.body[0].type).toBe('ScribeStatement');
+            expect(stmt.body.body[0]!.type).toBe('ScribeStatement');
         });
 
         test('de...pro with ergo', () => {
@@ -1586,7 +1586,7 @@ describe('parser', () => {
 
             expect(stmt.type).toBe('IfStatement');
             expect(stmt.consequent.type).toBe('BlockStatement');
-            expect(stmt.consequent.body[0].type).toBe('ReturnStatement');
+            expect(stmt.consequent.body[0]!.type).toBe('ReturnStatement');
         });
 
         test('ergo with rumpe', () => {
@@ -1595,7 +1595,7 @@ describe('parser', () => {
 
             expect(stmt.type).toBe('IfStatement');
             expect(stmt.consequent.type).toBe('BlockStatement');
-            expect(stmt.consequent.body[0].type).toBe('BreakStatement');
+            expect(stmt.consequent.body[0]!.type).toBe('BreakStatement');
         });
 
         test('ergo with perge', () => {
@@ -1604,7 +1604,7 @@ describe('parser', () => {
 
             expect(stmt.type).toBe('IfStatement');
             expect(stmt.consequent.type).toBe('BlockStatement');
-            expect(stmt.consequent.body[0].type).toBe('ContinueStatement');
+            expect(stmt.consequent.body[0]!.type).toBe('ContinueStatement');
         });
     });
 
@@ -1614,7 +1614,7 @@ describe('parser', () => {
             const loop = program!.body[0] as any;
 
             expect(loop.type).toBe('WhileStatement');
-            expect(loop.body.body[0].type).toBe('BreakStatement');
+            expect(loop.body.body[0]!.type).toBe('BreakStatement');
         });
 
         test('perge parses as ContinueStatement', () => {
@@ -1622,7 +1622,7 @@ describe('parser', () => {
             const loop = program!.body[0] as any;
 
             expect(loop.type).toBe('WhileStatement');
-            expect(loop.body.body[0].type).toBe('ContinueStatement');
+            expect(loop.body.body[0]!.type).toBe('ContinueStatement');
         });
 
         test('rumpe in for loop', () => {
@@ -1630,7 +1630,7 @@ describe('parser', () => {
             const loop = program!.body[0] as any;
 
             expect(loop.type).toBe('ForStatement');
-            expect(loop.body.body[0].type).toBe('BreakStatement');
+            expect(loop.body.body[0]!.type).toBe('BreakStatement');
         });
 
         test('perge in for loop', () => {
@@ -1638,7 +1638,7 @@ describe('parser', () => {
             const loop = program!.body[0] as any;
 
             expect(loop.type).toBe('ForStatement');
-            expect(loop.body.body[0].type).toBe('ContinueStatement');
+            expect(loop.body.body[0]!.type).toBe('ContinueStatement');
         });
 
         test('rumpe inside conditional in loop', () => {
@@ -1647,7 +1647,7 @@ describe('parser', () => {
             const ifStmt = loop.body.body[0];
 
             expect(ifStmt.type).toBe('IfStatement');
-            expect(ifStmt.consequent.body[0].type).toBe('BreakStatement');
+            expect(ifStmt.consequent.body[0]!.type).toBe('BreakStatement');
         });
 
         test('perge inside conditional in loop', () => {
@@ -1656,7 +1656,7 @@ describe('parser', () => {
             const ifStmt = loop.body.body[0];
 
             expect(ifStmt.type).toBe('IfStatement');
-            expect(ifStmt.consequent.body[0].type).toBe('ContinueStatement');
+            expect(ifStmt.consequent.body[0]!.type).toBe('ContinueStatement');
         });
 
         test('multiple rumpe and perge in same loop', () => {
@@ -1668,8 +1668,8 @@ describe('parser', () => {
             `);
             const loop = program!.body[0] as any;
 
-            expect(loop.body.body[0].consequent.body[0].type).toBe('ContinueStatement');
-            expect(loop.body.body[1].consequent.body[0].type).toBe('BreakStatement');
+            expect(loop.body.body[0].consequent.body[0]!.type).toBe('ContinueStatement');
+            expect(loop.body.body[1].consequent.body[0]!.type).toBe('BreakStatement');
         });
     });
 
@@ -1717,7 +1717,7 @@ describe('parser', () => {
 
             expect(stmt.type).toBe('ForStatement');
             expect(stmt.async).toBe(false);
-            expect(stmt.body.body[0].type).toBe('ScribeStatement');
+            expect(stmt.body.body[0]!.type).toBe('ScribeStatement');
         });
 
         test('ex...fiet with ergo one-liner', () => {
@@ -1734,7 +1734,7 @@ describe('parser', () => {
         test('empty block', () => {
             const { program } = parseCode('{}');
 
-            expect(program!.body[0].type).toBe('BlockStatement');
+            expect(program!.body[0]!.type).toBe('BlockStatement');
             expect((program!.body[0] as any).body).toHaveLength(0);
         });
 
@@ -1878,8 +1878,8 @@ describe('parser', () => {
             const stmt = program!.body[0] as any;
 
             expect(stmt.type).toBe('IfStatement');
-            expect(stmt.consequent.body[0].type).toBe('IfStatement');
-            expect(stmt.consequent.body[0].consequent.body[0].type).toBe('IfStatement');
+            expect(stmt.consequent.body[0]!.type).toBe('IfStatement');
+            expect(stmt.consequent.body[0].consequent.body[0]!.type).toBe('IfStatement');
         });
     });
 
@@ -1994,7 +1994,7 @@ describe('parser', () => {
             const { errors } = parseCode('a vel b aut c');
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('Cannot mix');
+            expect(errors[0]!.message).toContain('Cannot mix');
         });
 
         test('vel with parentheses around aut is allowed', () => {
@@ -2154,28 +2154,28 @@ describe('parser', () => {
             const { errors } = parseCode('futura functio f() fit textus { redde "x" }');
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('contradicts');
+            expect(errors[0]!.message).toContain('contradicts');
         });
 
         test('cursor with fit contradicts (single vs generator)', () => {
             const { errors } = parseCode('cursor functio f() fit textus { redde "x" }');
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('contradicts');
+            expect(errors[0]!.message).toContain('contradicts');
         });
 
         test('futura with fiunt contradicts (sync generator vs async)', () => {
             const { errors } = parseCode('futura functio f() fiunt numerus { redde 1 }');
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('contradicts');
+            expect(errors[0]!.message).toContain('contradicts');
         });
 
         test('cursor with fiet contradicts (single async vs generator)', () => {
             const { errors } = parseCode('cursor functio f() fiet textus { redde "x" }');
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0].message).toContain('contradicts');
+            expect(errors[0]!.message).toContain('contradicts');
         });
 
         // Unsupported operators from other languages
@@ -2731,7 +2731,7 @@ describe('parser', () => {
                 expect(stmt.type).toBe('ProbandumStatement');
                 expect(stmt.name).toBe('Math');
                 expect(stmt.body).toHaveLength(1);
-                expect(stmt.body[0].type).toBe('ProbaStatement');
+                expect(stmt.body[0]!.type).toBe('ProbaStatement');
             });
 
             test('nested probandum', () => {
@@ -2880,11 +2880,11 @@ describe('parser', () => {
                 expect(suite.body).toHaveLength(7);
 
                 // Check order and types
-                expect(suite.body[0].type).toBe('CuraBlock');
+                expect(suite.body[0]!.type).toBe('CuraBlock');
                 expect(suite.body[0].timing).toBe('ante');
                 expect(suite.body[0].omnia).toBe(true);
 
-                expect(suite.body[1].type).toBe('CuraBlock');
+                expect(suite.body[1]!.type).toBe('CuraBlock');
                 expect(suite.body[1].timing).toBe('ante');
                 expect(suite.body[1].omnia).toBe(false);
 
@@ -3014,8 +3014,8 @@ describe('parser', () => {
                     cura resource() fit r { use(r) }
                 `);
 
-                expect(program!.body[0].type).toBe('CuraBlock');
-                expect(program!.body[1].type).toBe('CuraStatement');
+                expect(program!.body[0]!.type).toBe('CuraBlock');
+                expect(program!.body[1]!.type).toBe('CuraStatement');
             });
         });
     });

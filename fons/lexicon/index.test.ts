@@ -26,8 +26,8 @@ describe('parseNoun', () => {
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
                 expect(results).toHaveLength(1);
-                expect(results[0].case).toBe('accusative');
-                expect(results[0].number).toBe('singular');
+                expect(results[0]!.case).toBe('accusative');
+                expect(results[0]!.number).toBe('singular');
             }
         });
 
@@ -58,8 +58,8 @@ describe('parseNoun', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].case).toBe('accusative');
-                expect(results[0].number).toBe('plural');
+                expect(results[0]!.case).toBe('accusative');
+                expect(results[0]!.number).toBe('plural');
             }
         });
 
@@ -68,8 +68,8 @@ describe('parseNoun', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].case).toBe('genitive');
-                expect(results[0].number).toBe('plural');
+                expect(results[0]!.case).toBe('genitive');
+                expect(results[0]!.number).toBe('plural');
             }
         });
     });
@@ -126,9 +126,9 @@ describe('parseVerb', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].stem).toBe('mitt');
-                expect(results[0].tense).toBe('imperative');
-                expect(results[0].async).toBe(false);
+                expect(results[0]!.stem).toBe('mitt');
+                expect(results[0]!.tense).toBe('imperative');
+                expect(results[0]!.async).toBe(false);
             }
         });
 
@@ -137,9 +137,9 @@ describe('parseVerb', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].tense).toBe('present');
-                expect(results[0].person).toBe(3);
-                expect(results[0].async).toBe(false);
+                expect(results[0]!.tense).toBe('present');
+                expect(results[0]!.person).toBe(3);
+                expect(results[0]!.async).toBe(false);
             }
         });
 
@@ -148,9 +148,9 @@ describe('parseVerb', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].tense).toBe('future');
-                expect(results[0].person).toBe(3);
-                expect(results[0].async).toBe(true);
+                expect(results[0]!.tense).toBe('future');
+                expect(results[0]!.person).toBe(3);
+                expect(results[0]!.async).toBe(true);
             }
         });
     });
@@ -161,9 +161,9 @@ describe('parseVerb', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].stem).toBe('cre');
-                expect(results[0].tense).toBe('imperative');
-                expect(results[0].async).toBe(false);
+                expect(results[0]!.stem).toBe('cre');
+                expect(results[0]!.tense).toBe('imperative');
+                expect(results[0]!.async).toBe(false);
             }
         });
 
@@ -172,8 +172,8 @@ describe('parseVerb', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].tense).toBe('present');
-                expect(results[0].async).toBe(false);
+                expect(results[0]!.tense).toBe('present');
+                expect(results[0]!.async).toBe(false);
             }
         });
 
@@ -182,8 +182,8 @@ describe('parseVerb', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].tense).toBe('future');
-                expect(results[0].async).toBe(true);
+                expect(results[0]!.tense).toBe('future');
+                expect(results[0]!.async).toBe(true);
             }
         });
     });
@@ -268,8 +268,8 @@ describe('parseType', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].meaning).toBe('text/string');
-                expect(results[0].category).toBe('primitive');
+                expect(results[0]!.meaning).toBe('text/string');
+                expect(results[0]!.category).toBe('primitive');
             }
         });
 
@@ -278,7 +278,7 @@ describe('parseType', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].meaning).toBe('number');
+                expect(results[0]!.meaning).toBe('number');
             }
         });
 
@@ -287,8 +287,8 @@ describe('parseType', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].case).toBe('accusative');
-                expect(results[0].meaning).toBe('number');
+                expect(results[0]!.case).toBe('accusative');
+                expect(results[0]!.meaning).toBe('number');
             }
         });
     });
@@ -299,9 +299,9 @@ describe('parseType', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].meaning).toBe('list/array');
-                expect(results[0].category).toBe('collection');
-                expect(results[0].generic).toBe(true);
+                expect(results[0]!.meaning).toBe('list/array');
+                expect(results[0]!.category).toBe('collection');
+                expect(results[0]!.generic).toBe(true);
             }
         });
 
@@ -310,7 +310,7 @@ describe('parseType', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].case).toBe('accusative');
+                expect(results[0]!.case).toBe('accusative');
             }
         });
 
@@ -319,7 +319,7 @@ describe('parseType', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].meaning).toBe('table/map');
+                expect(results[0]!.meaning).toBe('table/map');
             }
         });
 
@@ -328,7 +328,7 @@ describe('parseType', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].meaning).toBe('set/collection');
+                expect(results[0]!.meaning).toBe('set/collection');
             }
         });
     });
@@ -339,8 +339,8 @@ describe('parseType', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].meaning).toBe('promise');
-                expect(results[0].generic).toBe(true);
+                expect(results[0]!.meaning).toBe('promise');
+                expect(results[0]!.generic).toBe(true);
             }
         });
 
@@ -349,7 +349,7 @@ describe('parseType', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].meaning).toBe('error');
+                expect(results[0]!.meaning).toBe('error');
             }
         });
 
@@ -358,8 +358,8 @@ describe('parseType', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].meaning).toBe('cursor/iterator');
-                expect(results[0].case).toBe('nominative');
+                expect(results[0]!.meaning).toBe('cursor/iterator');
+                expect(results[0]!.case).toBe('nominative');
             }
         });
 
@@ -368,9 +368,9 @@ describe('parseType', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].meaning).toBe('time/date');
-                expect(results[0].case).toBe('nominative');
-                expect(results[0].stem).toBe('tempor');
+                expect(results[0]!.meaning).toBe('time/date');
+                expect(results[0]!.case).toBe('nominative');
+                expect(results[0]!.stem).toBe('tempor');
             }
         });
 
@@ -379,8 +379,8 @@ describe('parseType', () => {
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
-                expect(results[0].meaning).toBe('time/date');
-                expect(results[0].case).toBe('genitive');
+                expect(results[0]!.meaning).toBe('time/date');
+                expect(results[0]!.case).toBe('genitive');
             }
         });
     });
