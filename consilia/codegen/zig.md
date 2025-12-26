@@ -6,24 +6,24 @@ Zig and Rust share similar memory management concerns. Faber uses a **unified ap
 
 ## Implementation Status Summary
 
-| Category               | Status       | Notes                                                  |
-| ---------------------- | ------------ | ------------------------------------------------------ |
-| Variables              | Done         | `var`/`const` with type inference                      |
-| Functions              | Done         | Parameters, return types, async stubs                  |
-| Control flow           | Done         | `if`, `while`, `for`, `switch`                         |
-| `genus`/struct         | Done         | Fields, methods, `init()` with `@hasField`             |
-| `pactum`/interface     | Stub         | Emits doc comment only                                 |
-| `ego` → `self`         | Done         | Explicit self parameter                                |
-| `novum .. de`          | Done         | `@hasField` pattern with `.{}` default                 |
-| Lambdas                | Done         | Anonymous struct `.call` pattern                       |
-| Error handling         | Done         | `mori` → `@panic`, `iace` → `return error.X` with `!T` |
-| Allocators             | Partial      | Arena preamble auto-emitted for collections            |
-| `de`/`in` prepositions | Not started  | Design complete, not implemented                       |
-| Collections            | Partial      | Core methods implemented, functional methods stubbed   |
-| Comptime               | Not started  | No explicit comptime blocks                            |
-| Slices                 | Partial      | Type mapping works, runtime building needs allocators  |
-| Tuples                 | Not started  | `series<A,B>` designed but not implemented             |
-| Tagged unions          | Not designed | Critical gap for self-hosting                          |
+| Category               | Status      | Notes                                                  |
+| ---------------------- | ----------- | ------------------------------------------------------ |
+| Variables              | Done        | `var`/`const` with type inference                      |
+| Functions              | Done        | Parameters, return types, async stubs                  |
+| Control flow           | Done        | `if`, `while`, `for`, `switch`                         |
+| `genus`/struct         | Done        | Fields, methods, `init()` with `@hasField`             |
+| `pactum`/interface     | Stub        | Emits doc comment only                                 |
+| `ego` → `self`         | Done        | Explicit self parameter                                |
+| `novum .. de`          | Done        | `@hasField` pattern with `.{}` default                 |
+| Lambdas                | Done        | Anonymous struct `.call` pattern                       |
+| Error handling         | Done        | `mori` → `@panic`, `iace` → `return error.X` with `!T` |
+| Allocators             | Partial     | Arena preamble auto-emitted for collections            |
+| `de`/`in` prepositions | Not started | Design complete, not implemented                       |
+| Collections            | Partial     | Core methods implemented, functional methods stubbed   |
+| Comptime               | Done        | `prae typus` → `comptime T: type`, `praefixum` blocks  |
+| Slices                 | Partial     | Type mapping works, runtime building needs allocators  |
+| Tuples                 | Not started | `series<A,B>` designed but not implemented             |
+| Tagged unions          | Done        | `discretio` → `union(enum)` with pattern matching      |
 
 **Exempla Status: 25/45 passing (56%)**
 
@@ -376,20 +376,40 @@ fn lambda(ctx: *const Context, x: i64) i64 {
 
 ### Comptime
 
-Zig's compile-time execution. Faber has no equivalent syntax.
+> **Status:** Implemented via `prae` and `praefixum` keywords. See `consilia/prae.md`.
 
-```zig
-// Zig - comptime block
-const lookup = comptime blk: {
-    var table: [256]u8 = undefined;
-    for (0..256) |i| {
-        table[i] = @as(u8, i) ^ 0xFF;
-    }
-    break :blk table;
-};
+Faber exposes Zig's comptime through two constructs:
+
+**Type parameters:** `prae typus T` → `comptime T: type`
+
+```fab
+functio max(prae typus T, T a, T b) -> T {
+    redde a > b sic a secus b
+}
 ```
 
-Faber does implicit compile-time work (like `proba ex` table unrolling) but doesn't expose a general `comptime` keyword.
+```zig
+fn max(comptime T: type, a: T, b: T) T {
+    return if (a > b) a else b;
+}
+```
+
+**Compile-time blocks:** `praefixum { ... }` → `comptime blk: { ... }`
+
+```fab
+fixum table = praefixum {
+    varia result = []
+    ex 0..10 pro i { result.adde(i * i) }
+    redde result
+}
+```
+
+````zig
+const table = comptime blk: {
+    var result: [10]i64 = undefined;
+    // ...
+    break :blk result;
+};
 
 ### Slices vs Arrays
 
@@ -400,17 +420,45 @@ Zig distinguishes fixed arrays `[N]T` from slices `[]T`. Faber's `lista<T>` maps
 
 ### Tagged Unions
 
-Zig has tagged unions for type-safe discrimination:
+> **Status:** Implemented via `discretio` keyword. See `consilia/unio.md`.
+
+Faber's `discretio` maps directly to Zig's `union(enum)`:
+
+```fab
+discretio Event {
+    Click { numerus x, numerus y }
+    Keypress { textus key }
+    Quit
+}
+```
 
 ```zig
 const Event = union(enum) {
-    click: struct { x: i32, y: i32 },
-    keypress: u8,
+    click: struct { x: i64, y: i64 },
+    keypress: struct { key: []const u8 },
     quit,
 };
 ```
 
-**Faber status:** Untagged unions (`A | B`) work. Tagged unions with payloads are NOT designed and NOT implemented. This is a critical gap for compiler self-hosting.
+Pattern matching with `elige`/`ex` generates Zig switch statements:
+
+```fab
+elige event {
+    ex Click pro x, y { scribe x, y }
+    ex Quit { mori "goodbye" }
+}
+```
+
+```zig
+switch (event) {
+    .click => |payload| {
+        const x = payload.x;
+        const y = payload.y;
+        std.debug.print("{} {}\n", .{ x, y });
+    },
+    .quit => @panic("goodbye"),
+}
+```
 
 ## Exempla Test Results
 
@@ -479,24 +527,30 @@ Known limitation - generates `@compileError`.
 
 ### High Priority (Blocking Self-Hosting)
 
-1. **Error unions** - `iace` must generate `return error.X`, not `@panic`
-2. **Tagged unions** - Design and implement discriminated unions
-3. **Arena allocator** - Enable runtime string/collection operations
+1. **Arena allocator expansion** - Runtime string/collection operations beyond preamble
+2. **`de`/`in` prepositions** - Implement borrowing semantics
 
 ### Medium Priority
 
-4. **`de`/`in` prepositions** - Implement borrowing semantics
-5. **Collection methods** - `lista.adde()`, `tabula.pone()`, etc.
-6. **Lambda type inference** - Reduce `@compileError` on lambdas
+3. **Lambda type inference** - Reduce `@compileError` on lambdas without return types
+4. **Slice literals** - Proper `[]T` from array literals
+5. **`fac`/`cape` error handling** - Generate proper `catch |err|` blocks
 
 ### Lower Priority
 
-7. **Comptime blocks** - Expose Zig's comptime to Faber syntax
-8. **Slice literals** - Proper `[]T` from array literals
-9. **Build integration** - Generate `build.zig` for projects
+6. **Build integration** - Generate `build.zig` for projects
+7. **Functional collection methods** - `filtrata`, `mappata`, `reducta` via explicit loops
+
+### Completed
+
+- ~~Error unions~~ - `iace` generates `return error.X` with `!T` return types
+- ~~Tagged unions~~ - `discretio` → `union(enum)` with pattern matching
+- ~~Comptime~~ - `prae typus` and `praefixum` blocks
+- ~~Collection methods~~ - Core methods for `lista`, `tabula`, `copia`
 
 ## Design Tensions
 
 The core tension: **Faber leans toward dynamic/high-level semantics** while **Zig is explicitly low-level**.
 
 The ownership prepositions and arena allocator bridge this gap, but neither is implemented yet. Current Zig codegen produces valid Zig for simple cases but fails on anything requiring runtime memory management.
+````
