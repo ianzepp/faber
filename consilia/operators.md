@@ -1,540 +1,258 @@
-# Operators Design
+# Operators Reference
 
-New operators for spread/rest, type casting, and type checking.
+Complete reference of all operators in Faber Romanus.
 
-## Implementation Status
+## Precedence Table (Lowest to Highest)
 
-| Operator     | Purpose     | TypeScript   | Zig         | Python       | Status                  |
-| ------------ | ----------- | ------------ | ----------- | ------------ | ----------------------- |
-| `sparge`     | Spread      | `...x`       | TBD         | `*x`         | Implemented (TS/Py)     |
-| `ceteri`     | Rest params | `...args`    | TBD         | `*args`      | Implemented (TS)        |
-| `ut`         | Type cast   | `x as T`     | `@as(T, x)` | N/A          | Not implemented         |
-| `est` (type) | Type check  | `instanceof` | TBD         | `isinstance` | Partial (equality only) |
+| Level | Operators                                                           | Associativity | Description         |
+| ----- | ------------------------------------------------------------------- | ------------- | ------------------- |
+| 1     | `=`                                                                 | Right         | Assignment          |
+| 2     | `? :`, `sic secus`                                                  | Right         | Ternary conditional |
+| 3     | `vel`, `??`                                                         | Left          | Nullish coalescing  |
+| 4     | `\|\|`, `aut`                                                       | Left          | Logical OR          |
+| 5     | `&&`, `et`                                                          | Left          | Logical AND         |
+| 6     | `==`, `!=`, `===`, `!==`, `est`, `non est`                          | Left          | Equality            |
+| 7     | `<`, `>`, `<=`, `>=`                                                | Left          | Comparison          |
+| 8     | `\|`                                                                | Left          | Bitwise OR          |
+| 9     | `^`                                                                 | Left          | Bitwise XOR         |
+| 10    | `&`                                                                 | Left          | Bitwise AND         |
+| 11    | `<<`, `>>`                                                          | Left          | Bit shift           |
+| 12    | `..`, `ante`, `usque`                                               | N/A           | Range               |
+| 13    | `+`, `-`                                                            | Left          | Additive            |
+| 14    | `*`, `/`, `%`                                                       | Left          | Multiplicative      |
+| 15    | `!`, `-`, `~`, `non`, `nulla`, `nonnulla`, `negativum`, `positivum` | Right         | Unary prefix        |
+| 16    | `ut`                                                                | Left          | Type cast           |
+| 17    | `.`, `?.`, `!.`, `[]`, `()`                                         | Left          | Member access, call |
 
----
-
-## sparge (Spread)
-
-**Etymology:** From Latin _spargere_ — "to scatter, spread, sprinkle"
-
-Spreads elements of an array or properties of an object into a new container.
-
-### Array Spread
-
-```faber
-fixum a = [1, 2, 3]
-fixum b = [4, 5, 6]
-
-// Concatenation
-fixum combined = [sparge a, sparge b]    // [1, 2, 3, 4, 5, 6]
-
-// Shallow copy
-fixum copy = [sparge a]                   // [1, 2, 3]
-
-// Interleaved with literals
-fixum wrapped = [0, sparge a, 99]         // [0, 1, 2, 3, 99]
-```
-
-### Object Spread
-
-```faber
-fixum defaults = { timeout: 5000, retries: 3 }
-fixum custom = { sparge defaults, timeout: 10000 }
-// { timeout: 10000, retries: 3 }
-
-// Immutable update pattern
-fixum user = { name: "Marcus", age: 30 }
-fixum updated = { sparge user, age: 31 }
-// { name: "Marcus", age: 31 }
-```
-
-### Function Call Spread
-
-Pass array elements as individual arguments:
-
-```faber
-functio add(a, b, c) -> numerus {
-    redde a + b + c
-}
-
-fixum nums = [1, 2, 3]
-scribe add(sparge nums)  // 6
-```
-
-### Design Notes
-
-- `sparge` is prefix syntax: `sparge x`, not `x sparge`
-- Single-level only — `sparge sparge x` is a syntax error (use `.plana()` for flattening)
-- Order matters for objects: later properties override earlier ones
-
-### Target Mappings
-
-| Target     | Array Spread        | Object Spread | Call Spread |
-| ---------- | ------------------- | ------------- | ----------- |
-| TypeScript | `[...a]`            | `{...o}`      | `fn(...a)`  |
-| Python     | `[*a]`              | `{**o}`       | `fn(*a)`    |
-| Zig        | Manual loop or `++` | N/A (structs) | N/A         |
+**Note:** Bitwise operators bind tighter than comparison (unlike C). This means `flags & MASK == 0` parses as `(flags & MASK) == 0`.
 
 ---
 
-## ceteri (Rest)
+## Arithmetic Operators
 
-**Etymology:** From Latin _ceteri_ — "the rest, the others, the remaining"
+| Operator    | Description              | Example | Result |
+| ----------- | ------------------------ | ------- | ------ |
+| `+`         | Addition / concatenation | `3 + 2` | `5`    |
+| `-`         | Subtraction              | `3 - 2` | `1`    |
+| `*`         | Multiplication           | `3 * 2` | `6`    |
+| `/`         | Division                 | `6 / 2` | `3`    |
+| `%`         | Modulo                   | `7 % 3` | `1`    |
+| `-` (unary) | Negation                 | `-5`    | `-5`   |
 
-Collects remaining elements into an array.
-
-### Rest Parameters
-
-Variadic function parameters:
-
-```faber
-functio sum(ceteri lista<numerus> nums) -> numerus {
-    redde nums.reducta(0, (acc, n) => acc + n)
-}
-
-scribe sum(1, 2, 3, 4, 5)  // 15
-```
-
-With leading fixed parameters:
-
-```faber
-functio log(textus level, ceteri lista<textus> messages) {
-    ex messages pro msg {
-        scribe "[" + level + "]", msg
-    }
-}
-
-log("INFO", "Starting", "Loading config", "Ready")
-```
-
-### Rest in Destructuring
-
-Collect remaining object properties:
-
-```faber
-fixum user = { name: "Marcus", age: 30, city: "Roma", role: "admin" }
-
-ex user fixum { name, ceteri profile }
-// name = "Marcus"
-// profile = { age: 30, city: "Roma", role: "admin" }
-```
-
-### Type Inference
-
-When no type annotation is provided, `ceteri` infers `lista<ignotum>`:
-
-```faber
-functio f(ceteri args) { }  // args: lista<ignotum>
-```
-
-### Design Notes
-
-- `ceteri` must be the last parameter in a function signature
-- In destructuring, `ceteri` collects all unmentioned properties
-- The collected value is always an array (for params) or object (for destructuring), never `nihil`
-- Empty rest produces empty array `[]` or empty object `{}`
-
-### Target Mappings
-
-| Target     | Rest Params     | Rest Destructuring |
-| ---------- | --------------- | ------------------ |
-| TypeScript | `...args: T[]`  | `{ a, ...rest }`   |
-| Python     | `*args`         | `**rest` (dict)    |
-| Zig        | Slice parameter | N/A                |
+**Not supported:** `++`, `--`, `+=`, `-=`, `*=`, `/=`, `**` (exponentiation)
 
 ---
 
-## ut (Type Cast)
+## Comparison Operators
 
-**Etymology:** From Latin _ut_ — "as, in the capacity of"
-
-Asserts that a value has a specific type without runtime checking.
-
-### Basic Usage
-
-```faber
-fixum data: ignotum = getData()
-fixum name = data ut textus
-
-// In expressions
-scribe (response.body ut objectum).id
-```
-
-### With Type Checking
-
-Typically used after narrowing with `est`:
-
-```faber
-functio process(data: ignotum) -> textus {
-    si data est textus {
-        redde data  // already narrowed, ut not needed
-    }
-
-    // Force cast when you know better than the compiler
-    redde data ut textus
-}
-```
-
-### Design Notes
-
-- `ut` is a compile-time assertion — no runtime overhead or checking
-- Use `est` first when possible to let the compiler narrow safely
-- Incorrect casts produce undefined behavior (target-dependent)
-- No `ut!` variant (runtime-checked cast) for now
-
-### Target Mappings
-
-| Target     | Cast Syntax          |
-| ---------- | -------------------- |
-| TypeScript | `x as T`             |
-| Python     | N/A (dynamic typing) |
-| Zig        | `@as(T, x)`          |
-| Rust       | `x as T`             |
-| C++        | `static_cast<T>(x)`  |
+| Operator | Latin     | Description           | Example                  |
+| -------- | --------- | --------------------- | ------------------------ |
+| `==`     |           | Equality              | `x == y`                 |
+| `!=`     |           | Inequality            | `x != y`                 |
+| `===`    | `est`     | Strict equality       | `x === y`, `x est y`     |
+| `!==`    | `non est` | Strict inequality     | `x !== y`, `x non est y` |
+| `<`      |           | Less than             | `x < y`                  |
+| `>`      |           | Greater than          | `x > y`                  |
+| `<=`     |           | Less than or equal    | `x <= y`                 |
+| `>=`     |           | Greater than or equal | `x >= y`                 |
 
 ---
 
-## est (Type Check)
+## Logical Operators
 
-**Etymology:** From Latin _est_ — "is, exists"
+| Operator | Latin | Description | Example               |
+| -------- | ----- | ----------- | --------------------- |
+| `&&`     | `et`  | Logical AND | `a && b`, `a et b`    |
+| `\|\|`   | `aut` | Logical OR  | `a \|\| b`, `a aut b` |
+| `!`      | `non` | Logical NOT | `!x`, `non x`         |
 
-Already implemented for strict equality (`===`). Extends to type checking when the right-hand side is a type name.
-
-### Current Behavior (Equality)
-
-```faber
-x est 5           // x === 5
-x est "hello"     // x === "hello"
-x est verum       // x === true
-```
-
-### Extended Behavior (Type Check)
-
-When RHS is a type name:
-
-```faber
-// Primitive type check (typeof)
-x est numerus     // typeof x === "number"
-x est textus      // typeof x === "string"
-x est bivalens    // typeof x === "boolean"
-
-// Class/genus check (instanceof)
-x est Persona     // x instanceof Persona
-x est Error       // x instanceof Error
-```
-
-### In Conditionals
-
-```faber
-functio describe(value: ignotum) -> textus {
-    elige {
-        value est textus => redde "Text: " + value
-        value est numerus => redde "Number: " + value
-        value est bivalens => redde "Boolean: " + value
-        aliter => redde "Unknown type"
-    }
-}
-```
-
-### Type Narrowing
-
-After `est` check, the type is narrowed in that branch:
-
-```faber
-functio process(data: ignotum) {
-    si data est textus {
-        // data is textus here
-        scribe data.longitudo()
-    }
-    aliter si data est lista<numerus> {
-        // data is lista<numerus> here
-        scribe data.summa()
-    }
-}
-```
-
-### Design Notes
-
-- Context determines interpretation: RHS is a type name → type check; RHS is a value → equality
-- The compiler distinguishes types from values at semantic analysis time
-- Primitive types use `typeof`, genus/pactum use `instanceof`
-
-### Target Mappings
-
-| Target     | Primitive Check     | Class Check        |
-| ---------- | ------------------- | ------------------ |
-| TypeScript | `typeof x === "t"`  | `x instanceof T`   |
-| Python     | `isinstance(x, t)`  | `isinstance(x, T)` |
-| Zig        | Comptime type check | N/A                |
-| Rust       | Pattern matching    | Pattern matching   |
+**Note:** Prefix `!` is deprecated in favor of `non` to avoid confusion with `!.` (non-null assertion).
 
 ---
 
-## sed (Regex Literals)
+## Bitwise Operators
 
-**Etymology:** Playful nod to Unix `sed` (stream editor). In Latin, `sed` means "but"—semantically unrelated, but the Unix association is so strong that using it for regex feels natural.
+| Operator | Description | Example        | Result |
+| -------- | ----------- | -------------- | ------ |
+| `&`      | Bitwise AND | `0x0F & 0x03`  | `0x03` |
+| `\|`     | Bitwise OR  | `0x0F \| 0x30` | `0x3F` |
+| `^`      | Bitwise XOR | `0x0F ^ 0x03`  | `0x0C` |
+| `~`      | Bitwise NOT | `~0x0F`        | `-16`  |
+| `<<`     | Left shift  | `1 << 4`       | `16`   |
+| `>>`     | Right shift | `16 >> 2`      | `4`    |
 
-### Syntax
+**Design decision:** No Latin keywords for bitwise operators. These are low-level operations that don't map naturally to spoken language.
 
-```faber
-sed /pattern/flags
-```
-
-The `sed` keyword signals the tokenizer to switch to regex mode until the closing `/`.
-
-### Basic Usage
-
-```faber
-fixum digits = sed /\d+/
-fixum email = sed /[a-z]+@[a-z]+\.[a-z]+/i
-fixum words = sed /\b\w+\b/g
-```
-
-### Flags
-
-| Flag | Meaning                       |
-| ---- | ----------------------------- |
-| `g`  | Global (all matches)          |
-| `i`  | Case insensitive              |
-| `m`  | Multiline                     |
-| `s`  | Dotall (`.` matches newlines) |
-
-### In Expressions
-
-Regex literals work anywhere an expression is expected:
-
-```faber
-// Conditional
-si text.congruet(sed /^\d{3}-\d{4}$/) {
-    scribe "Valid phone"
-}
-
-// Method argument
-fixum clean = text.muta(sed /\s+/g, " ")
-
-// Variable
-fixum pattern = sed /[A-Z][a-z]+/
-fixum names = text.inveniOmnes(pattern)
-```
-
-### String Methods for Regex
-
-| Faber               | JS Equivalent        | Description             |
-| ------------------- | -------------------- | ----------------------- |
-| `congruet(sed)`     | `test()` / `match()` | Test if pattern matches |
-| `inveni(sed)`       | `match()`            | Find first match        |
-| `inveniOmnes(sed)`  | `matchAll()`         | Find all matches        |
-| `muta(sed, textus)` | `replace()`          | Replace matches         |
-| `scinde(sed)`       | `split()`            | Split by pattern        |
-
-### Design Notes
-
-- Keyword prefix (`sed /`) disambiguates from division operator
-- Space between `sed` and `/` required (consistent with `novum`, `sparge`, etc.)
-- Escaping follows target language rules (backslash escapes)
-- Compile-time syntax validation where possible
-
-### Target Mappings
-
-| Target     | Compilation                       |
-| ---------- | --------------------------------- |
-| TypeScript | `/pattern/flags` (native RegExp)  |
-| Python     | `re.compile(r"pattern", flags)`   |
-| Zig        | Library-dependent (not in stdlib) |
-| Rust       | `Regex::new(r"pattern")`          |
-| C++        | `std::regex("pattern", flags)`    |
-
-### Open Questions
-
-1. **Zig support**: Require external library or mark as unsupported?
-2. **Named capture groups**: `sed /(?<name>\w+)/` syntax?
-3. **Interpolation**: Allow variables in pattern? `sed /${prefix}\d+/`
+**Not supported:** `>>>` (unsigned right shift), `&=`, `|=`, `^=`, `<<=`, `>>=`
 
 ---
 
-## vel (Nullish Coalescing)
+## Nullish and Coalescing
 
-**Etymology:** Latin _vel_ — "or" (in the sense of alternatives).
+| Operator | Latin | Description        | Example             |
+| -------- | ----- | ------------------ | ------------------- |
+| `??`     | `vel` | Nullish coalescing | `x ?? y`, `x vel y` |
 
-Provides a fallback value when the left operand is `nihil`. Currently implemented in destructuring; extending to general expressions.
-
-### Syntax
-
-```faber
-expression vel fallback
-```
-
-### Nullish, Not Falsy
-
-`vel` triggers **only** on `nihil`, not on falsy values:
+**Nullish vs Falsy:** `vel` only triggers on `nihil`, not on `0`, `""`, or `falsum`.
 
 ```faber
 0 vel 5           // 0 (not nihil)
 "" vel "default"  // "" (not nihil)
-falsum vel verum  // falsum (not nihil)
 nihil vel 5       // 5
 ```
 
-This is more precise than logical OR and prevents surprising behavior with valid zero/empty/false values.
+---
 
-### Basic Usage
+## Member Access
 
-```faber
-fixum name = user.name vel "Anonymous"
-fixum count = getData() vel 0
-fixum config = loadConfig() vel defaultConfig
-```
-
-### Chaining
-
-Left-to-right evaluation, first non-nihil wins:
-
-```faber
-fixum value = primary vel secondary vel tertiary vel default
-```
-
-### In Destructuring (existing)
-
-```faber
-ex config fixum { timeout vel 5000, retries vel 3 }
-```
-
-### With Optional Chaining (future)
-
-Pairs naturally with safe property access:
-
-```faber
-fixum city = user?.address?.city vel "Unknown"
-```
-
-### Comparison with Logical Or
-
-| Expression         | `vel` (nullish) | `aut` (logical) |
-| ------------------ | --------------- | --------------- |
-| `0 vel 5`          | `0`             | `5`             |
-| `"" vel "x"`       | `""`            | `"x"`           |
-| `falsum vel verum` | `falsum`        | `verum`         |
-| `nihil vel 5`      | `5`             | `5`             |
-
-Use `vel` for defaults. Use `aut` for boolean logic.
-
-### Target Mappings
-
-| Target     | Compilation                 |
-| ---------- | --------------------------- |
-| TypeScript | `??`                        |
-| Python     | `if x is None else` pattern |
-| Zig        | `orelse`                    |
-| Rust       | `.unwrap_or()` / `?`        |
-| C++        | `value_or()` / ternary      |
+| Operator | Description        | Example                  |
+| -------- | ------------------ | ------------------------ |
+| `.`      | Property access    | `user.name`              |
+| `?.`     | Optional chaining  | `user?.address?.city`    |
+| `!.`     | Non-null assertion | `user!.name`             |
+| `[]`     | Computed access    | `items[0]`, `map["key"]` |
 
 ---
 
-## ?. and !. (Optional Chaining and Non-null Assertion)
+## Type Operators
 
-Pure punctuation operators for safe and assertive property access. No Latin translation needed—these are symbolic like `.` and `[]`.
+| Operator | Latin | Description         | Example        |
+| -------- | ----- | ------------------- | -------------- |
+| `ut`     |       | Type cast           | `x ut textus`  |
+| `est`    |       | Type check (future) | `x est textus` |
 
-### Optional Chaining (`?.`)
-
-Returns `nihil` if the left operand is `nihil`, otherwise accesses the property/element/call.
-
-```faber
-// Property access
-user?.address?.city
-
-// Element access
-items?[0]
-matrix?[row]?[col]
-
-// Method call
-callback?()
-obj?.method?()
-```
-
-**Semantics:**
-
-- Short-circuits on `nihil` — remaining chain not evaluated
-- Returns `nihil`, not an error
-- Type narrows to `T?` (nullable)
-
-### Non-null Assertion (`!.`)
-
-Asserts the left operand is not `nihil`. Compiler trusts you; runtime behavior is undefined if wrong.
-
-```faber
-// Property access
-user!.address!.city
-
-// Element access
-items![0]
-data![key]
-
-// Method call
-handler!()
-obj!.method!()
-```
-
-**Semantics:**
-
-- No runtime check (in most targets)
-- Tells compiler "I know this isn't nihil"
-- Type narrows to `T` (non-nullable)
-
-### Combining Both
-
-Mix based on what you know:
-
-```faber
-// response is required, but data inside might be absent
-fixum name = response!.data?.name
-
-// user is optional, but if present, address is guaranteed
-fixum city = user?.address!.city
-
-// chain of uncertainty
-fixum value = config?.settings?.options?[key]
-```
-
-### With vel
-
-Natural pairing for defaults:
-
-```faber
-fixum city = user?.address?.city vel "Unknown"
-fixum count = response?.data?.items?.longitudo() vel 0
-fixum handler = events?.onClick vel defaultHandler
-```
-
-### Comparison
-
-| Operator | On nihil        | Type result | Use when                                |
-| -------- | --------------- | ----------- | --------------------------------------- |
-| `.`      | Error           | `T`         | Value is definitely present             |
-| `?.`     | Returns `nihil` | `T?`        | Value might be absent                   |
-| `!.`     | Undefined       | `T`         | You know it's present, compiler doesn't |
-
-### Target Mappings
-
-| Target     | `?.`                          | `!.`                          |
-| ---------- | ----------------------------- | ----------------------------- |
-| TypeScript | `?.`                          | `!.`                          |
-| Python     | `getattr(x, 'y', None)` chain | Direct access (no equivalent) |
-| Zig        | `if (x) \|v\| v.y else null`  | `x.?` / `.?`                  |
-| Rust       | `x.as_ref()?.y`               | `x.unwrap().y`                |
-| C++        | `x ? x->y : nullopt`          | `x->y` / `*x.y`               |
-
-### Open Questions
-
-1. **Chained calls**: Does `obj?.method()?.result` work as expected?
-2. **Assignment**: Should `obj?.prop = value` be allowed? (Probably no—too confusing)
-3. **Short-circuit scope**: In `a?.b + c`, is `c` evaluated if `a` is nihil?
+**Note:** `est` for type checking is not yet implemented. Currently `est` is an alias for `===`.
 
 ---
 
-## Future Operators
+## Range Operators
 
-All high-priority operators now documented above. Remaining candidates:
+| Operator | Latin   | Description    | Inclusive |
+| -------- | ------- | -------------- | --------- |
+| `..`     |         | Range          | Exclusive |
+|          | `ante`  | Range (before) | Exclusive |
+|          | `usque` | Range (up to)  | Inclusive |
+|          | `per`   | Step modifier  | N/A       |
 
-| Operator | Purpose           | Notes                                 |
-| -------- | ----------------- | ------------------------------------- |
-| `typus`  | Runtime type name | `typus x` → "textus", "numerus", etc. |
+```faber
+0..10           // 0, 1, 2, ..., 9
+0 ante 10       // 0, 1, 2, ..., 9
+0 usque 10      // 0, 1, 2, ..., 10
+0..10 per 2     // 0, 2, 4, 6, 8
+```
+
+---
+
+## Spread and Rest
+
+| Keyword  | Description     | Example                  |
+| -------- | --------------- | ------------------------ |
+| `sparge` | Spread elements | `[sparge a, sparge b]`   |
+| `ceteri` | Rest parameters | `functio f(ceteri args)` |
+
+```faber
+// Array spread
+fixum combined = [sparge first, sparge second]
+
+// Object spread
+fixum merged = { sparge defaults, timeout: 5000 }
+
+// Call spread
+add(sparge nums)
+
+// Rest parameters
+functio sum(ceteri lista<numerus> nums) -> numerus
+```
+
+---
+
+## Conditional (Ternary)
+
+| Syntax                          | Description      |
+| ------------------------------- | ---------------- |
+| `condition ? then : else`       | Standard ternary |
+| `condition sic then secus else` | Latin ternary    |
+
+```faber
+fixum max = a > b ? a : b
+fixum max = a > b sic a secus b
+```
+
+---
+
+## Special Unary Operators
+
+| Operator | Latin       | Description   | Example       |
+| -------- | ----------- | ------------- | ------------- |
+|          | `nulla`     | Is null/empty | `nulla x`     |
+|          | `nonnulla`  | Has content   | `nonnulla x`  |
+|          | `negativum` | Is negative   | `negativum x` |
+|          | `positivum` | Is positive   | `positivum x` |
+
+These expand to inline checks:
+
+```faber
+nulla x        // x == null || x.length === 0 || ...
+nonnulla x     // x != null && x.length > 0 && ...
+negativum x    // x < 0
+positivum x    // x > 0
+```
+
+---
+
+## Assignment
+
+| Operator | Description |
+| -------- | ----------- |
+| `=`      | Assignment  |
+
+**Not supported:** `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`
+
+---
+
+## Target Mappings
+
+### Bitwise Operators
+
+| Faber | TypeScript | Python | Zig  | C++  | Rust |
+| ----- | ---------- | ------ | ---- | ---- | ---- |
+| `&`   | `&`        | `&`    | `&`  | `&`  | `&`  |
+| `\|`  | `\|`       | `\|`   | `\|` | `\|` | `\|` |
+| `^`   | `^`        | `^`    | `^`  | `^`  | `^`  |
+| `~`   | `~`        | `~`    | `~`  | `~`  | `!`  |
+| `<<`  | `<<`       | `<<`   | `<<` | `<<` | `<<` |
+| `>>`  | `>>`       | `>>`   | `>>` | `>>` | `>>` |
+
+**Note:** Rust uses `!` for bitwise NOT instead of `~`.
+
+### Logical Operators
+
+| Faber          | TypeScript | Python | Zig   | C++    |
+| -------------- | ---------- | ------ | ----- | ------ |
+| `&&` / `et`    | `&&`       | `and`  | `and` | `&&`   |
+| `\|\|` / `aut` | `\|\|`     | `or`   | `or`  | `\|\|` |
+| `!` / `non`    | `!`        | `not`  | `!`   | `!`    |
+
+### Nullish Coalescing
+
+| Faber        | TypeScript | Python                      | Zig      |
+| ------------ | ---------- | --------------------------- | -------- |
+| `vel` / `??` | `??`       | `x if x is not None else y` | `orelse` |
+
+### Type Cast
+
+| Faber    | TypeScript | Python | Zig         | C++                 |
+| -------- | ---------- | ------ | ----------- | ------------------- |
+| `x ut T` | `x as T`   | N/A    | `@as(T, x)` | `static_cast<T>(x)` |
+
+---
+
+## Not Yet Implemented
+
+| Feature             | Description                        | Status        |
+| ------------------- | ---------------------------------- | ------------- |
+| `sed /pattern/`     | Regex literals                     | Design only   |
+| `est` (type check)  | `x est textus` → typeof/instanceof | Design only   |
+| Binary literals     | `0b1010`                           | Not supported |
+| `>>>`               | Unsigned right shift               | Not planned   |
+| Compound assignment | `+=`, `-=`, etc.                   | Not planned   |
