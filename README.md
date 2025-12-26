@@ -79,7 +79,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `cursor<T>` (iterator)    |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `ignotum` (unknown)       |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Nullable types (`T?`)     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| Union types (`unio<A,B>`) |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| Union types (`unio<A,B>`) |    [x]     | [~] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Generic type params       |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Type aliases (`typus`)    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | typeof (`typus` RHS)      |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |

@@ -569,12 +569,25 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *   lista<numerus> -> []i64
      *   lista<textus> -> [][]const u8
      *   tabula<textus, numerus> -> std.StringHashMap(i64)
+     *   unio<A, B> -> anytype (Zig doesn't have untagged unions)
      *
      * TARGET: Zig uses ? prefix for optional types, not | null suffix.
      *         Generic collections map to Zig slice/hashmap types.
+     *
+     * LIMITATION: Zig doesn't support untagged unions like TypeScript's A | B.
+     *             Use `discretio` (tagged unions) for Zig target instead.
+     *             For unio types, we emit anytype as a fallback.
      */
     function genType(node: TypeAnnotation): string {
         const name = node.name.toLowerCase();
+
+        // Handle union types (unio<A, B>) - Zig doesn't have untagged unions
+        // WHY: Zig's type system requires tagged unions (union(enum)) for sum types.
+        //      Untagged unions like TS's `A | B` have no Zig equivalent.
+        //      Use `discretio` instead for Zig target.
+        if (node.union && node.union.length > 0) {
+            return 'anytype';
+        }
 
         // Handle generic types
         if (node.typeParameters && node.typeParameters.length > 0) {

@@ -4,12 +4,15 @@ Faber has two union constructs with distinct semantics.
 
 ## Implementation Status
 
+### Implemented
+
+- `unio<A, B>` generic type — TypeScript, Python, Zig (falls back to `anytype`)
+
 ### Not Yet Implemented
 
-- `unio<A, B>` generic type
 - `discretio` declaration and variant syntax
 - Pattern matching on `discretio` variants
-- Codegen for all targets
+- Codegen for Rust, C++
 
 ---
 
@@ -42,9 +45,9 @@ si id est textus {
 
 ### Target Mappings
 
-| Faber | TypeScript | Python | Zig | Rust |
-|-------|------------|--------|-----|------|
-| `unio<A, B>` | `A \| B` | `A \| B` | — | — |
+| Faber        | TypeScript | Python   | Zig | Rust |
+| ------------ | ---------- | -------- | --- | ---- |
+| `unio<A, B>` | `A \| B`   | `A \| B` | —   | —    |
 
 **Note:** Zig and Rust don't have untagged unions in this sense. For systems targets, prefer `discretio` which maps to native tagged unions.
 
@@ -81,21 +84,23 @@ discretio Result<T, E> {
 Variants can have:
 
 1. **No payload** — just the tag
-   ```
-   Quit
-   None
-   ```
+
+    ```
+    Quit
+    None
+    ```
 
 2. **Named fields** — struct-like payload
-   ```
-   Click { x: numerus, y: numerus }
-   ```
+
+    ```
+    Click { x: numerus, y: numerus }
+    ```
 
 3. **Single value** — tuple-like payload (shorthand)
-   ```
-   Some { value: T }
-   // or potentially: Some(T)
-   ```
+    ```
+    Some { value: T }
+    // or potentially: Some(T)
+    ```
 
 ### Construction
 
@@ -134,24 +139,26 @@ Variant fields are bound as local variables within the branch.
 
 ### Target Mappings
 
-| Faber | TypeScript | Python | Zig | Rust |
-|-------|------------|--------|-----|------|
+| Faber                     | TypeScript          | Python                | Zig           | Rust                 |
+| ------------------------- | ------------------- | --------------------- | ------------- | -------------------- |
 | `discretio Event { ... }` | Discriminated union | `@dataclass` variants | `union(enum)` | `enum Event { ... }` |
 
 #### TypeScript Output
 
 ```typescript
-type Event =
-    | { tag: 'Click', x: number, y: number }
-    | { tag: 'Keypress', key: string }
-    | { tag: 'Quit' }
+type Event = { tag: 'Click'; x: number; y: number } | { tag: 'Keypress'; key: string } | { tag: 'Quit' };
 
 const event: Event = { tag: 'Click', x: 10, y: 20 };
 
 switch (event.tag) {
-    case 'Click': console.log(`clicked at ${event.x}, ${event.y}`); break;
-    case 'Keypress': console.log(`pressed ${event.key}`); break;
-    case 'Quit': throw new Error('goodbye');
+    case 'Click':
+        console.log(`clicked at ${event.x}, ${event.y}`);
+        break;
+    case 'Keypress':
+        console.log(`pressed ${event.key}`);
+        break;
+    case 'Quit':
+        throw new Error('goodbye');
 }
 ```
 
@@ -195,22 +202,24 @@ match event {
 
 ## Comparison
 
-| Aspect | `unio<A, B>` | `discretio Name { ... }` |
-|--------|--------------|--------------------------|
-| Tag | None (untagged) | Compiler-managed |
-| Type check | Runtime (`est`) | Compile-time (pattern match) |
-| Exhaustive | No | Yes |
-| Systems targets | Not supported | Native support |
-| Use case | Flexible "one of" | Structured variants |
+| Aspect          | `unio<A, B>`      | `discretio Name { ... }`     |
+| --------------- | ----------------- | ---------------------------- |
+| Tag             | None (untagged)   | Compiler-managed             |
+| Type check      | Runtime (`est`)   | Compile-time (pattern match) |
+| Exhaustive      | No                | Yes                          |
+| Systems targets | Not supported     | Native support               |
+| Use case        | Flexible "one of" | Structured variants          |
 
 ### When to Use Which
 
 **Use `unio<A, B>` when:**
+
 - Targeting TypeScript/Python only
 - Types are simple primitives
 - Runtime type checking is acceptable
 
 **Use `discretio` when:**
+
 - Targeting Zig/Rust (required)
 - Variants have associated data
 - Exhaustive matching is desired

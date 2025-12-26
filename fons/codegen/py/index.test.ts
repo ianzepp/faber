@@ -114,6 +114,21 @@ describe('Python codegen', () => {
             const result = compile('typus ID = textus');
             expect(result).toBe('ID = str');
         });
+
+        test('union type with unio<A, B>', () => {
+            const result = compile('varia unio<textus, numerus> value = "hello"');
+            expect(result).toBe('value: str | int = "hello"');
+        });
+
+        test('union type with three members', () => {
+            const result = compile('varia unio<textus, numerus, nihil> value = nihil');
+            expect(result).toBe('value: str | int | None = None');
+        });
+
+        test('type alias with union type', () => {
+            const result = compile('typus Json = unio<textus, numerus, bivalens, nihil>');
+            expect(result).toBe('Json = str | int | bool | None');
+        });
     });
 
     // =========================================================================

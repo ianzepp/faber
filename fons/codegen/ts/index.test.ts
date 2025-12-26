@@ -660,6 +660,24 @@ describe('codegen', () => {
 
             expect(js).toBe('let x: unknown = 42;');
         });
+
+        test('union type with unio<A, B>', () => {
+            const js = compile('fixum unio<textus, numerus> value = "hello"');
+
+            expect(js).toBe('const value: string | number = "hello";');
+        });
+
+        test('union type with three members', () => {
+            const js = compile('fixum unio<textus, numerus, nihil> value = nihil');
+
+            expect(js).toBe('const value: string | number | null = null;');
+        });
+
+        test('type alias with union type', () => {
+            const js = compile('typus Json = unio<textus, numerus, bivalens, nihil>');
+
+            expect(js).toBe('type Json = string | number | boolean | null;');
+        });
     });
 
     describe('enum declarations (ordo)', () => {

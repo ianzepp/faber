@@ -356,6 +356,21 @@ describe('zig codegen', () => {
 
             expect(zig).toContain('const ID = []const u8');
         });
+
+        test('union type falls back to anytype', () => {
+            // WHY: Zig doesn't support untagged unions like TS's A | B.
+            // For unio<A, B>, we emit anytype as a fallback.
+            // Use discretio (tagged unions) for proper Zig support.
+            const zig = compile('fixum unio<textus, numerus> value = "hello"');
+
+            expect(zig).toContain('anytype');
+        });
+
+        test('type alias with union falls back to anytype', () => {
+            const zig = compile('typus Json = unio<textus, numerus, bivalens, nihil>');
+
+            expect(zig).toContain('const Json = anytype');
+        });
     });
 
     describe('operator mapping', () => {
