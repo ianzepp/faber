@@ -88,6 +88,9 @@ import type {
     Parameter,
     TypeAnnotation,
     TypeCastExpression,
+    SpreadElement,
+    LambdaExpression,
+    FacBlockStatement,
 } from '../../parser/ast';
 import type { CodegenOptions } from '../types';
 import type { SemanticType } from '../../semantic/types';
@@ -103,25 +106,41 @@ import type { SemanticType } from '../../semantic/types';
  *      Strings are slices of bytes, numbers are sized integers, void replaces null.
  *
  * TARGET MAPPING:
- * | Latin     | TypeScript | Zig        |
- * |-----------|------------|------------|
- * | textus    | string     | []const u8 |
- * | numerus   | number     | i64        |
- * | bivalens  | boolean    | bool       |
- * | nihil     | null       | void       |
+ * | Latin     | TypeScript | Zig            |
+ * |-----------|------------|----------------|
+ * | textus    | string     | []const u8     |
+ * | numerus   | number     | i64            |
+ * | fractus   | number     | f64            |
+ * | decimus   | number     | f128           |
+ * | magnus    | bigint     | i128           |
+ * | bivalens  | boolean    | bool           |
+ * | nihil     | null       | void           |
+ * | vacuum    | void       | void           |
+ * | objectum  | object     | anytype        |
+ * | ignotum   | unknown    | anytype        |
+ * | numquam   | never      | noreturn       |
  *
  * CASE: Keys are lowercase. Lookup normalizes input to lowercase for
  *       case-insensitive matching.
  *
- * LIMITATION: Complex types (lista, tabula, etc.) not yet supported in Zig target.
+ * LIMITATION: Generic types (lista<T>, tabula<K,V>) require special handling
+ *             since Zig uses comptime generics differently.
  */
 const typeMap: Record<string, string> = {
+    // Primitives
     textus: '[]const u8',
     numerus: 'i64',
+    fractus: 'f64',
+    decimus: 'f128',
+    magnus: 'i128',
     bivalens: 'bool',
     nihil: 'void',
     vacuum: 'void',
     octeti: '[]u8',
+    // Meta types
+    objectum: 'anytype',
+    ignotum: 'anytype',
+    numquam: 'noreturn',
 };
 
 // =============================================================================
@@ -318,6 +337,8 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 return genTryStatement(node);
             case 'BlockStatement':
                 return genBlockStatementContent(node);
+            case 'FacBlockStatement':
+                return genFacBlockStatement(node);
             case 'ExpressionStatement':
                 return genExpressionStatement(node);
             default:
@@ -528,18 +549,101 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *   textus -> []const u8
      *   numerus -> i64
      *   textus? -> ?[]const u8
+     *   lista<numerus> -> []i64
+     *   lista<textus> -> [][]const u8
+     *   tabula<textus, numerus> -> std.StringHashMap(i64)
      *
      * TARGET: Zig uses ? prefix for optional types, not | null suffix.
+     *         Generic collections map to Zig slice/hashmap types.
      */
     function genType(node: TypeAnnotation): string {
+        const name = node.name.toLowerCase();
+
+        // Handle generic types
+        if (node.typeParameters && node.typeParameters.length > 0) {
+            return genGenericType(name, node.typeParameters, node.nullable);
+        }
+
         // Case-insensitive type lookup
-        const base = typeMap[node.name.toLowerCase()] ?? node.name;
+        const base = typeMap[name] ?? node.name;
 
         if (node.nullable) {
             return `?${base}`;
         }
 
         return base;
+    }
+
+    /**
+     * Generate generic type (lista<T>, tabula<K,V>, etc).
+     *
+     * TRANSFORMS:
+     *   lista<numerus> -> []i64
+     *   lista<textus> -> [][]const u8
+     *   tabula<textus, numerus> -> std.StringHashMap(i64)
+     *   copia<textus> -> std.StringHashMap(void)
+     *
+     * TARGET: Zig uses slices for arrays, std library hashmaps for maps/sets.
+     *
+     * LIMITATION: Zig's std collections require allocators which we don't
+     *             manage here. For now, we emit the type signature only.
+     */
+    function genGenericType(name: string, params: import('../../parser/ast').TypeParameter[], nullable?: boolean): string {
+        let result: string;
+
+        switch (name) {
+            case 'lista': {
+                // lista<T> -> []T
+                const elemType = params[0];
+                const innerType = elemType && 'name' in elemType ? genType(elemType as TypeAnnotation) : 'anytype';
+                result = `[]${innerType}`;
+                break;
+            }
+            case 'tabula': {
+                // tabula<K, V> -> depends on key type
+                // For string keys: std.StringHashMap(V)
+                // For other keys: std.AutoHashMap(K, V)
+                const keyType = params[0];
+                const valType = params[1];
+                const keyZig = keyType && 'name' in keyType ? genType(keyType as TypeAnnotation) : 'anytype';
+                const valZig = valType && 'name' in valType ? genType(valType as TypeAnnotation) : 'anytype';
+
+                if (keyZig === '[]const u8') {
+                    result = `std.StringHashMap(${valZig})`;
+                } else {
+                    result = `std.AutoHashMap(${keyZig}, ${valZig})`;
+                }
+                break;
+            }
+            case 'copia': {
+                // copia<T> -> set, implemented as map with void values
+                const elemType = params[0];
+                const innerType = elemType && 'name' in elemType ? genType(elemType as TypeAnnotation) : 'anytype';
+
+                if (innerType === '[]const u8') {
+                    result = 'std.StringHashMap(void)';
+                } else {
+                    result = `std.AutoHashMap(${innerType}, void)`;
+                }
+                break;
+            }
+            case 'promissum': {
+                // promissum<T> -> Zig doesn't have promises, use error union
+                const innerType = params[0];
+                const zigType = innerType && 'name' in innerType ? genType(innerType as TypeAnnotation) : 'anytype';
+                result = `!${zigType}`;
+                break;
+            }
+            default:
+                // Unknown generic - pass through
+                result = name;
+        }
+
+        if (nullable) {
+            return `?${result}`;
+        }
+
+        return result;
     }
 
     /**
@@ -1072,7 +1176,8 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
 
         // Handle new Error("msg") - extract message
         if (node.argument.type === 'NewExpression' && node.argument.callee.name === 'Error' && node.argument.arguments.length > 0) {
-            const msg = genExpression(node.argument.arguments[0]);
+            const firstArg = node.argument.arguments[0]!;
+            const msg = genExpression(firstArg);
             return `${ind()}@panic(${msg});`;
         }
 
@@ -1123,6 +1228,34 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         }
 
         return result;
+    }
+
+    /**
+     * Generate fac block statement.
+     *
+     * TRANSFORMS:
+     *   fac { riskyOperation() } -> { riskyOperation(); }
+     *   fac { op() } cape err { handle(err) } -> // fac block with error capture
+     *
+     * TARGET: Zig uses error unions and catch syntax for error handling,
+     *         not try-catch blocks. fac without cape is just a scope block.
+     *         fac with cape requires different patterns (catch on expressions).
+     */
+    function genFacBlockStatement(node: FacBlockStatement): string {
+        if (node.catchClause) {
+            // With cape, emit as commented block since Zig catch works differently
+            // Real implementation would need to use catch on error-returning expressions
+            let result = `${ind()}// fac block with catch - Zig uses 'catch' on error union expressions\n`;
+            result += genBlockStatementContent(node.body);
+
+            result += `\n${ind()}// catch clause for: ${node.catchClause.param.name}`;
+            // The catch body is not directly usable without error union context
+
+            return result;
+        }
+
+        // Without cape, just emit the block
+        return genBlockStatementContent(node.body);
     }
 
     function genBlockStatement(node: BlockStatement): string {
@@ -1207,6 +1340,8 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 return `if (${genExpression(node.test)}) ${genExpression(node.consequent)} else ${genExpression(node.alternate)}`;
             case 'TypeCastExpression':
                 return genTypeCastExpression(node);
+            case 'LambdaExpression':
+                return genLambdaExpression(node);
             default:
                 throw new Error(`Unknown expression type: ${(node as any).type}`);
         }
@@ -1271,15 +1406,37 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *
      * TRANSFORMS:
      *   [1, 2, 3] -> .{ 1, 2, 3 }
+     *   [sparge a, sparge b] -> a ++ b (comptime only)
      *
      * TARGET: Zig uses .{ } for array/tuple literals.
+     *         Spread requires ++ concatenation (comptime only).
+     *
+     * LIMITATION: Zig array spread only works at comptime. Runtime spread
+     *             would require allocators and explicit memory management.
      */
     function genArrayExpression(node: ArrayExpression): string {
         if (node.elements.length === 0) {
             return '.{}';
         }
 
-        const elements = node.elements.map(genExpression).join(', ');
+        // Check if any elements are spread
+        const hasSpread = node.elements.some(el => el.type === 'SpreadElement');
+
+        if (hasSpread) {
+            // WHY: Zig doesn't have spread syntax. For comptime arrays, we use ++
+            // This is a simplification - runtime would need allocator
+            const parts = node.elements.map(el => {
+                if (el.type === 'SpreadElement') {
+                    return genExpression(el.argument);
+                }
+                // Wrap non-spread elements in array literal
+                return `.{ ${genExpression(el)} }`;
+            });
+
+            return parts.join(' ++ ');
+        }
+
+        const elements = node.elements.map(el => genExpression(el as Expression)).join(', ');
 
         return `.{ ${elements} }`;
     }
@@ -1289,8 +1446,12 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *
      * TRANSFORMS:
      *   { nomen: "Marcus" } -> .{ .nomen = "Marcus" }
+     *   { sparge defaults, x: 1 } -> (struct merge not directly supported)
      *
      * TARGET: Zig uses .{ .field = value } for struct literals.
+     *
+     * LIMITATION: Zig doesn't have object spread. We generate a compile error
+     *             for spread in objects since it would require comptime reflection.
      */
     function genObjectExpression(node: ObjectExpression): string {
         if (node.properties.length === 0) {
@@ -1298,6 +1459,13 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         }
 
         const props = node.properties.map(prop => {
+            // Handle spread element
+            if (prop.type === 'SpreadElement') {
+                // WHY: Zig doesn't support struct spread/merge at runtime
+                // Would require comptime reflection or explicit field copying
+                return `@compileError("Object spread not supported in Zig target")`;
+            }
+
             const key = prop.key.type === 'Identifier' ? prop.key.name : String((prop.key as Literal).value);
             const value = genExpression(prop.value);
 
@@ -1453,22 +1621,39 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *   scribe("hello") -> std.debug.print("{s}\n", .{"hello"})
      *   scribe(42) -> std.debug.print("{d}\n", .{42})
      *   foo(x, y) -> foo(x, y)
+     *   foo(sparge args) -> (spread not directly supported)
      *
      * TARGET: scribe() is Latin's print function, maps to std.debug.print().
      *         Zig print uses format strings and anonymous tuple syntax (.{...}).
+     *
+     * LIMITATION: Zig doesn't support spread in function calls. Would require
+     *             comptime tuple unpacking or @call with .args tuple.
      */
     function genCallExpression(node: CallExpression): string {
+        // Helper to generate argument, handling spread
+        const genArg = (arg: Expression | SpreadElement): string => {
+            if (arg.type === 'SpreadElement') {
+                // WHY: Zig doesn't have spread in calls. This is a limitation.
+                // Could potentially use @call(.auto, fn, args_tuple) but complex.
+                return `@compileError("Call spread not supported in Zig target")`;
+            }
+            return genExpression(arg);
+        };
+
         // TARGET: _scribe intrinsic maps to Zig's std.debug.print()
         if (node.callee.type === 'Identifier' && node.callee.name === '_scribe') {
-            const args = node.arguments.map(genExpression);
-            const formatSpecs = node.arguments.map(arg => getFormatSpecifier(arg));
+            const args = node.arguments.map(genArg);
+            const formatSpecs = node.arguments.map(arg => {
+                if (arg.type === 'SpreadElement') return '{any}';
+                return getFormatSpecifier(arg);
+            });
             const format = formatSpecs.join(' ') + '\\n';
 
             return `std.debug.print("${format}", .{${args.join(', ')}})`;
         }
 
         const callee = genExpression(node.callee);
-        const args = node.arguments.map(genExpression).join(', ');
+        const args = node.arguments.map(genArg).join(', ');
 
         // WHY: Optional call in Zig requires if-else pattern
         if (node.optional) {
@@ -1580,6 +1765,38 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             return `struct { fn call(${params}) anytype ${body} }.call`;
         }
 
+        const body = genExpression(node.body as Expression);
+
+        return `struct { fn call(${params}) anytype { return ${body}; } }.call`;
+    }
+
+    /**
+     * Generate lambda expression (pro syntax).
+     *
+     * TRANSFORMS:
+     *   pro x: x * 2 -> struct { fn call(x: anytype) anytype { return x * 2; } }.call
+     *   pro x, y: x + y -> struct { fn call(x: anytype, y: anytype) anytype { return x + y; } }.call
+     *   pro: 42 -> struct { fn call() anytype { return 42; } }.call
+     *   pro x { redde x * 2 } -> struct { fn call(x: anytype) anytype { return x * 2; } }.call
+     *
+     * TARGET: Zig doesn't have lambdas/closures. We emulate with anonymous struct
+     *         containing a function, same pattern as arrow functions.
+     *
+     * LIMITATION: This pattern doesn't capture closures properly. Full implementation
+     *             would require passing captured variables explicitly or using
+     *             Zig's comptime function pointers with context.
+     */
+    function genLambdaExpression(node: LambdaExpression): string {
+        // Build parameter list - lambda params are just Identifiers
+        const params = node.params.map(p => `${p.name}: anytype`).join(', ');
+
+        if (node.body.type === 'BlockStatement') {
+            const body = genBlockStatement(node.body);
+
+            return `struct { fn call(${params}) anytype ${body} }.call`;
+        }
+
+        // Expression body
         const body = genExpression(node.body as Expression);
 
         return `struct { fn call(${params}) anytype { return ${body}; } }.call`;
