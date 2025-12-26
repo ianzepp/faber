@@ -70,6 +70,7 @@ typeAliasDecl := 'typus' IDENTIFIER '=' typeAnnotation
 ```fab
 typus ID = textus
 typus UserID = numerus<32, Naturalis>
+typus ConfigTypus = typus config    // typeof
 ```
 
 ### Enum Declaration
@@ -152,12 +153,12 @@ and := equality ('&&' equality | 'et' equality)*
 ### Equality
 
 ```ebnf
-equality := comparison (('==' | '!=' | 'est' | 'non' 'est') comparison)*
+equality := comparison (('==' | '!=' | '===' | '!==' | 'est' | 'non' 'est') comparison)*
 ```
 
-> 'est' (is) is the Latin copula for strict equality (===).
-> 'non est' (is not) is strict inequality (!==).
-> Allows natural syntax: si x est nihil { ... }
+> 'est' always means type check (instanceof/typeof).
+> Use '===' or '!==' for value equality.
+> Use 'nihil x' or 'nonnihil x' for null checks.
 
 ### Comparison
 
@@ -201,10 +202,11 @@ multiplicative := unary (('*' | '/' | '%') unary)*
 ### Unary
 
 ```ebnf
-unary := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'negativum' | 'positivum' | 'cede' | 'novum') unary | cast
+unary := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'novum') unary | cast
 ```
 
 > Latin 'non' (not), 'nulla' (none/empty), 'nonnulla' (some/non-empty),
+> 'nihil' (is null), 'nonnihil' (is not null),
 > 'negativum' (< 0), 'positivum' (> 0), 'cede' (await), 'novum' (new).
 
 ---

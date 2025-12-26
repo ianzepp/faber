@@ -2846,4 +2846,77 @@ describe('codegen', () => {
             expect(js).toBe('const val = 0xabcdef;');
         });
     });
+
+    describe('type alias declarations', () => {
+        test('simple type alias', () => {
+            const js = compile('typus ID = textus');
+
+            expect(js).toBe('type ID = string;');
+        });
+
+        test('generic type alias', () => {
+            const js = compile('typus StringList = lista<textus>');
+
+            expect(js).toBe('type StringList = Array<string>;');
+        });
+
+        test('typeof type alias', () => {
+            const js = compile(`
+                fixum config = { debug: verum }
+                typus ConfigTypus = typus config
+            `);
+
+            expect(js).toContain('type ConfigTypus = typeof config;');
+        });
+    });
+
+    describe('type check expressions', () => {
+        test('est with primitive type uses typeof', () => {
+            const js = compile('si x est textus { scribe "string" }');
+
+            expect(js).toContain('typeof x === "string"');
+        });
+
+        test('est with numerus uses typeof number', () => {
+            const js = compile('si x est numerus { scribe "number" }');
+
+            expect(js).toContain('typeof x === "number"');
+        });
+
+        test('est with bivalens uses typeof boolean', () => {
+            const js = compile('si x est bivalens { scribe "boolean" }');
+
+            expect(js).toContain('typeof x === "boolean"');
+        });
+
+        test('nihil unary uses === null', () => {
+            const js = compile('si nihil x { scribe "null" }');
+
+            expect(js).toContain('(x === null)');
+        });
+
+        test('nonnihil unary uses !== null', () => {
+            const js = compile('si nonnihil x { scribe "not null" }');
+
+            expect(js).toContain('(x !== null)');
+        });
+
+        test('non est with type uses typeof !==', () => {
+            const js = compile('si x non est textus { scribe "not string" }');
+
+            expect(js).toContain('typeof x !== "string"');
+        });
+
+        test('est with user type uses instanceof', () => {
+            const js = compile('si x est persona { scribe "is persona" }');
+
+            expect(js).toContain('(x instanceof persona)');
+        });
+
+        test('non est with user type uses !(instanceof)', () => {
+            const js = compile('si x non est persona { scribe "not persona" }');
+
+            expect(js).toContain('!(x instanceof persona)');
+        });
+    });
 });

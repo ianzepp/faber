@@ -97,6 +97,7 @@ import type {
     TypeParameter,
     TypeParameterDeclaration,
     TypeCastExpression,
+    TypeCheckExpression,
     PraefixumExpression,
 } from '../../parser/ast';
 import type { CodegenOptions, RequiredFeatures } from '../types';
@@ -1369,6 +1370,8 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
                 // WHY: Python is dynamically typed, type casts have no runtime effect.
                 // Just emit the expression — the cast is a compile-time annotation only.
                 return genExpression(node.expression);
+            case 'TypeCheckExpression':
+                return genTypeCheckExpression(node);
             case 'PraefixumExpression':
                 // WHY: Python lacks compile-time evaluation. We emit an IIFE-like
                 // construct so the code compiles and runs, even though it won't
@@ -1544,6 +1547,16 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         // nonnulla: check if non-empty
         if (node.operator === 'nonnulla') {
             return `(${arg} and (len(${arg}) > 0 if hasattr(${arg}, '__len__') else bool(${arg})))`;
+        }
+
+        // nihil: check if None
+        if (node.operator === 'nihil') {
+            return `(${arg} is None)`;
+        }
+
+        // nonnihil: check if not None
+        if (node.operator === 'nonnihil') {
+            return `(${arg} is not None)`;
         }
 
         // negativum: check if less than zero
@@ -1747,6 +1760,42 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         const left = node.left.type === 'Identifier' ? node.left.name : genExpression(node.left);
 
         return `${left} ${node.operator} ${genExpression(node.right)}`;
+    }
+
+    /**
+     * Primitive types that use isinstance with Python built-in types.
+     */
+    const ISINSTANCE_PRIMITIVES: Record<string, string> = {
+        textus: 'str',
+        numerus: 'int',
+        fractus: 'float',
+        bivalens: 'bool',
+        magnus: 'int', // Python int handles bigint natively
+    };
+
+    /**
+     * Generate type check expression.
+     *
+     * TRANSFORMS:
+     *   x est textus      -> isinstance(x, str)
+     *   x est numerus     -> isinstance(x, int)
+     *   x est persona     -> isinstance(x, persona)
+     *   x est nihil       -> (x is None)
+     *   x non est textus  -> not isinstance(x, str)
+     *
+     * WHY: Python uses isinstance() for both primitive and class type checks.
+     *
+     * NOTE: For null checks, use `nihil x` or `nonnihil x` unary operators.
+     */
+    function genTypeCheckExpression(node: TypeCheckExpression): string {
+        const expr = genExpression(node.expression);
+        const typeName = node.targetType.name;
+
+        // Get Python type name
+        const pyType = ISINSTANCE_PRIMITIVES[typeName] ?? typeName;
+        const check = `isinstance(${expr}, ${pyType})`;
+
+        return node.negated ? `(not ${check})` : check;
     }
 
     /**

@@ -82,7 +82,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | Union types (`unio<A,B>`) |    [x]     | [~] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Generic type params       |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Type aliases (`typus`)    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
-| typeof (`typus` RHS)      |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
+| typeof (`typus` RHS)      |    [x]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
 
 ## Variable Declarations
 
@@ -192,7 +192,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 ## Expressions
 
 | Feature                             | TypeScript | Zig | Python | WASM | Rust | C++23 |
-| ----------------------------------- | :--------: | :-: | :----: | :--: | :--: | :---: | --- |
+| ----------------------------------- | :--------: | :-: | :----: | :--: | :--: | :---: |
 | Identifiers                         |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `ego` (this/self)                   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Boolean literals (`verum`/`falsum`) |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
@@ -210,10 +210,12 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | Binary operators                    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Comparison operators                |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Logical operators                   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
-| Bitwise operators (`&               |  ^~<<>>`)  | [x] |  [x]   | [x]  | [ ]  |  [ ]  | [x] |
+| Bitwise operators                   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Unary operators                     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `nulla` (is empty)                  |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `nonnulla` (has content)            |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `nihil` (is null)                   |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
+| `nonnihil` (is not null)            |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `negativum` (is negative)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `positivum` (is positive)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | Member access (`.`)                 |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
@@ -231,7 +233,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `novum...de` (new with props)       |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `===` / `est` (strict equality)     |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `!==` / `non est` (strict ineq.)    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
-| `est` (instanceof/typeof)           |    [ ]     | [ ] |  [ ]   | [ ]  | [ ]  |  [ ]  |
+| `est` (instanceof/typeof)           |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `ut` (type cast)                    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [ ]  |
 | `aut` (logical or)                  |    [x]     | [ ] |  [x]   | [ ]  | [ ]  |  [x]  |
 | `vel` (nullish coalescing)          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |

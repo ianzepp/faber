@@ -1491,26 +1491,66 @@ describe('parser', () => {
             expect(stmt.alternate.alternate.type).toBe('BlockStatement');
         });
 
-        test('est as strict equality operator', () => {
-            const { program } = parseCode('si x est nihil { scribe "null" }');
+        test('nihil unary operator', () => {
+            const { program } = parseCode('si nihil x { scribe "null" }');
             const stmt = program!.body[0] as any;
 
             expect(stmt.type).toBe('IfStatement');
-            expect(stmt.test.type).toBe('BinaryExpression');
-            expect(stmt.test.operator).toBe('===');
-            expect(stmt.test.left.name).toBe('x');
-            expect(stmt.test.right.value).toBe(null);
+            expect(stmt.test.type).toBe('UnaryExpression');
+            expect(stmt.test.operator).toBe('nihil');
+            expect(stmt.test.argument.name).toBe('x');
         });
 
-        test('non est as strict inequality operator', () => {
-            const { program } = parseCode('si x non est nihil { scribe "not null" }');
+        test('nonnihil unary operator', () => {
+            const { program } = parseCode('si nonnihil x { scribe "not null" }');
             const stmt = program!.body[0] as any;
 
             expect(stmt.type).toBe('IfStatement');
-            expect(stmt.test.type).toBe('BinaryExpression');
-            expect(stmt.test.operator).toBe('!==');
-            expect(stmt.test.left.name).toBe('x');
-            expect(stmt.test.right.value).toBe(null);
+            expect(stmt.test.type).toBe('UnaryExpression');
+            expect(stmt.test.operator).toBe('nonnihil');
+            expect(stmt.test.argument.name).toBe('x');
+        });
+
+        test('est always parses type annotation', () => {
+            // est is always followed by a type, use === for value equality
+            const { program } = parseCode('si x est textus { scribe "string" }');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.test.type).toBe('TypeCheckExpression');
+            expect(stmt.test.expression.name).toBe('x');
+            expect(stmt.test.targetType.name).toBe('textus');
+        });
+
+        test('est with primitive types', () => {
+            const { program } = parseCode('si val est textus { scribe "string" }');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.test.type).toBe('TypeCheckExpression');
+            expect(stmt.test.expression.name).toBe('val');
+            expect(stmt.test.targetType.name).toBe('textus');
+            expect(stmt.test.negated).toBe(false);
+        });
+
+        test('est with generic type', () => {
+            const { program } = parseCode('si items est lista<textus> { scribe "array" }');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.test.type).toBe('TypeCheckExpression');
+            expect(stmt.test.targetType.name).toBe('lista');
+            expect(stmt.test.targetType.typeParameters).toHaveLength(1);
+        });
+
+        test('est with user-defined type', () => {
+            const { program } = parseCode('si obj est persona { scribe "is persona" }');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('IfStatement');
+            expect(stmt.test.type).toBe('TypeCheckExpression');
+            expect(stmt.test.expression.name).toBe('obj');
+            expect(stmt.test.targetType.name).toBe('persona');
         });
 
         test('negativum as unary check', () => {
@@ -3240,6 +3280,45 @@ describe('parser', () => {
                 const { errors } = parseCode('discretio { Loading }');
 
                 expect(errors.length).toBeGreaterThan(0);
+            });
+        });
+
+        describe('typus (type alias)', () => {
+            test('basic type alias', () => {
+                const { program } = parseCode('typus ID = textus');
+                const stmt = program!.body[0] as any;
+
+                expect(stmt.type).toBe('TypeAliasDeclaration');
+                expect(stmt.name.name).toBe('ID');
+                expect(stmt.typeAnnotation.name).toBe('textus');
+                expect(stmt.typeofTarget).toBeUndefined();
+            });
+
+            test('type alias with generic type', () => {
+                const { program } = parseCode('typus StringList = lista<textus>');
+                const stmt = program!.body[0] as any;
+
+                expect(stmt.type).toBe('TypeAliasDeclaration');
+                expect(stmt.name.name).toBe('StringList');
+                expect(stmt.typeAnnotation.name).toBe('lista');
+                expect(stmt.typeAnnotation.typeParameters).toHaveLength(1);
+            });
+
+            test('typeof with typus RHS', () => {
+                const { program } = parseCode('typus ConfigTypus = typus config');
+                const stmt = program!.body[0] as any;
+
+                expect(stmt.type).toBe('TypeAliasDeclaration');
+                expect(stmt.name.name).toBe('ConfigTypus');
+                expect(stmt.typeofTarget.name).toBe('config');
+            });
+
+            test('typeof with member expression target', () => {
+                // Note: currently only supports simple identifiers
+                const { program } = parseCode('typus T = typus x');
+                const stmt = program!.body[0] as any;
+
+                expect(stmt.typeofTarget.name).toBe('x');
             });
         });
     });

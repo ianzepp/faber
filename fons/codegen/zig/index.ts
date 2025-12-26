@@ -89,6 +89,7 @@ import type {
     Parameter,
     TypeAnnotation,
     TypeCastExpression,
+    TypeCheckExpression,
     SpreadElement,
     LambdaExpression,
     FacBlockStatement,
@@ -1816,6 +1817,8 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 return `if (${genExpression(node.test)}) ${genExpression(node.consequent)} else ${genExpression(node.alternate)}`;
             case 'TypeCastExpression':
                 return genTypeCastExpression(node);
+            case 'TypeCheckExpression':
+                return genTypeCheckExpression(node);
             case 'LambdaExpression':
                 return genLambdaExpression(node);
             case 'PraefixumExpression':
@@ -2080,6 +2083,16 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             return `(${arg}.len > 0)`;
         }
 
+        // nihil: check if null (for optionals)
+        if (node.operator === 'nihil') {
+            return `(${arg} == null)`;
+        }
+
+        // nonnihil: check if not null (for optionals)
+        if (node.operator === 'nonnihil') {
+            return `(${arg} != null)`;
+        }
+
         // negativum: check if less than zero
         if (node.operator === 'negativum') {
             return `(${arg} < 0)`;
@@ -2107,6 +2120,32 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         const targetType = genType(node.targetType);
 
         return `@as(${targetType}, ${expr})`;
+    }
+
+    /**
+     * Generate type check expression.
+     *
+     * TRANSFORMS:
+     *   x est textus      -> @TypeOf(x) == []const u8  (compile-time)
+     *   x est numerus     -> @TypeOf(x) == i64         (compile-time)
+     *   x est persona     -> @TypeOf(x) == persona     (compile-time)
+     *   x non est textus  -> @TypeOf(x) != []const u8
+     *
+     * TARGET: Zig is statically typed - all type checks are compile-time.
+     *         @TypeOf gives the type at comptime.
+     *
+     * LIMITATION: Runtime type checks don't exist in Zig. This emits comptime
+     *             comparisons that the compiler will constant-fold to true/false.
+     *
+     * NOTE: For null checks, use `nihil x` or `nonnihil x` unary operators.
+     */
+    function genTypeCheckExpression(node: TypeCheckExpression): string {
+        const expr = genExpression(node.expression);
+        const op = node.negated ? '!=' : '==';
+
+        // Compile-time type comparison
+        const targetType = genType(node.targetType);
+        return `(@TypeOf(${expr}) ${op} ${targetType})`;
     }
 
     /**

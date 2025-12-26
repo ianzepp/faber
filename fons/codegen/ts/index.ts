@@ -93,6 +93,7 @@ import type {
     FacBlockStatement,
     LambdaExpression,
     TypeCastExpression,
+    TypeCheckExpression,
     ProbandumStatement,
     ProbaStatement,
     CuraBlock,
@@ -600,11 +601,20 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * TRANSFORMS:
      *   typus ID = textus -> type ID = string;
      *   typus UserID = numerus<32, Naturalis> -> type UserID = number;
+     *   typus ConfigTypus = typus config -> type ConfigTypus = typeof config;
      *
      * WHY: TypeScript type aliases provide semantic naming without runtime cost.
+     *      The `typus x` form extracts the type of a value at compile time.
      */
     function genTypeAliasDeclaration(node: TypeAliasDeclaration): string {
         const name = node.name.name;
+
+        // Check for typeof form: `typus X = typus y`
+        if (node.typeofTarget) {
+            const target = node.typeofTarget.name;
+            return `${ind()}type ${name} = typeof ${target}${semi ? ';' : ''}`;
+        }
+
         const typeAnno = genType(node.typeAnnotation);
 
         return `${ind()}type ${name} = ${typeAnno}${semi ? ';' : ''}`;
@@ -1437,6 +1447,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 return genLambdaExpression(node);
             case 'TypeCastExpression':
                 return genTypeCastExpression(node);
+            case 'TypeCheckExpression':
+                return genTypeCheckExpression(node);
             case 'PraefixumExpression':
                 return genPraefixumExpression(node);
             default:
@@ -1586,6 +1598,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *   x++ -> x++ (postfix)
      *   nulla x -> inline empty check
      *   nonnulla x -> inline non-empty check
+     *   nihil x -> (x === null)
+     *   nonnihil x -> (x !== null)
      */
     function genUnaryExpression(node: UnaryExpression): string {
         const arg = genExpression(node.argument);
@@ -1598,6 +1612,16 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         // nonnulla: check if non-null and has content
         if (node.operator === 'nonnulla') {
             return `(${arg} != null && (Array.isArray(${arg}) || typeof ${arg} === 'string' ? ${arg}.length > 0 : typeof ${arg} === 'object' ? Object.keys(${arg}).length > 0 : Boolean(${arg})))`;
+        }
+
+        // nihil: check if null
+        if (node.operator === 'nihil') {
+            return `(${arg} === null)`;
+        }
+
+        // nonnihil: check if not null
+        if (node.operator === 'nonnihil') {
+            return `(${arg} !== null)`;
         }
 
         // negativum: check if less than zero
@@ -1628,6 +1652,59 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         const targetType = genType(node.targetType);
 
         return `(${expr} as ${targetType})`;
+    }
+
+    /**
+     * Primitive types that use typeof for runtime checks.
+     *
+     * WHY: These Latin type names map to JavaScript typeof strings.
+     *      Other types (user-defined, collections) use instanceof.
+     */
+    const TYPEOF_PRIMITIVES: Record<string, string> = {
+        textus: 'string',
+        numerus: 'number',
+        fractus: 'number',
+        bivalens: 'boolean',
+        functio: 'function',
+        signum: 'symbol',
+        magnus: 'bigint',
+        incertum: 'undefined',
+        objectum: 'object',
+    };
+
+    /**
+     * Generate type check expression (est/non est with type).
+     *
+     * TRANSFORMS:
+     *   x est textus      -> (typeof x === "string")
+     *   x est numerus     -> (typeof x === "number")
+     *   x est persona     -> (x instanceof persona)
+     *   x non est textus  -> (typeof x !== "string")
+     *   x non est persona -> !(x instanceof persona)
+     *
+     * WHY: JavaScript distinguishes primitive type checks (typeof) from
+     *      class/constructor checks (instanceof). Latin 'est' unifies these
+     *      semantically; codegen chooses the right runtime mechanism.
+     *
+     * NOTE: For null checks, use `nihil x` or `nonnihil x` unary operators.
+     */
+    function genTypeCheckExpression(node: TypeCheckExpression): string {
+        const expr = genExpression(node.expression);
+        const typeName = node.targetType.name;
+        const op = node.negated ? '!==' : '===';
+
+        // Check if it's a primitive type (uses typeof)
+        const jsType = TYPEOF_PRIMITIVES[typeName];
+        if (jsType) {
+            return `(typeof ${expr} ${op} "${jsType}")`;
+        }
+
+        // User-defined type or collection (uses instanceof)
+        const targetType = genType(node.targetType);
+        if (node.negated) {
+            return `!(${expr} instanceof ${targetType})`;
+        }
+        return `(${expr} instanceof ${targetType})`;
     }
 
     /**

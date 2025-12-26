@@ -572,6 +572,12 @@ export function analyze(program: Program): SemanticResult {
                 }
                 return resolveExpression(node.body);
 
+            case 'TypeCheckExpression':
+                // WHY: Type check returns boolean (bivalens)
+                resolveExpression(node.expression);
+                node.resolvedType = BIVALENS;
+                return BIVALENS;
+
             default: {
                 const _exhaustive: never = node;
 

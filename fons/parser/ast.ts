@@ -303,21 +303,27 @@ export interface Parameter extends BaseNode {
  * Type alias declaration statement.
  *
  * GRAMMAR (in EBNF):
- *   typeAliasDecl := 'typus' IDENTIFIER '=' typeAnnotation
+ *   typeAliasDecl := 'typus' IDENTIFIER '=' (typeAnnotation | typeofAnnotation)
+ *   typeofAnnotation := 'typus' IDENTIFIER
  *
  * INVARIANT: name is the alias identifier.
- * INVARIANT: typeAnnotation is the type being aliased.
+ * INVARIANT: typeAnnotation is the type being aliased (standard form).
+ * INVARIANT: typeofTarget is set when RHS is `typus identifier` (typeof).
+ * INVARIANT: Exactly one of typeAnnotation or typeofTarget is set.
  *
  * WHY: Enables creating named type aliases for complex types.
+ *      When RHS is `typus identifier`, extracts the type of a value.
  *
  * Examples:
  *   typus ID = textus
  *   typus UserID = numerus<32, Naturalis>
+ *   typus ConfigTypus = typus config    // type ConfigTypus = typeof config
  */
 export interface TypeAliasDeclaration extends BaseNode {
     type: 'TypeAliasDeclaration';
     name: Identifier;
     typeAnnotation: TypeAnnotation;
+    typeofTarget?: Identifier;
 }
 
 // ---------------------------------------------------------------------------
@@ -1204,6 +1210,7 @@ export type Expression =
     | RangeExpression
     | BinaryExpression
     | UnaryExpression
+    | TypeCheckExpression
     | TypeCastExpression
     | CallExpression
     | MemberExpression
@@ -1428,6 +1435,44 @@ export interface UnaryExpression extends BaseNode {
     operator: string;
     argument: Expression;
     prefix: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Type Check Expression
+// ---------------------------------------------------------------------------
+
+/**
+ * Type check expression (est/non est with type operand).
+ *
+ * GRAMMAR (in EBNF):
+ *   typeCheckExpr := expression ('est' | 'non' 'est') typeAnnotation
+ *
+ * INVARIANT: expression is the value being checked.
+ * INVARIANT: targetType is the type to check against.
+ * INVARIANT: negated is true for 'non est' form.
+ *
+ * WHY: Latin 'est' (is) for runtime type checking.
+ *      For primitive types (textus, numerus, bivalens, functio), generates typeof.
+ *      For user-defined types (genus), generates instanceof.
+ *
+ * Target mappings:
+ *   x est textus     -> typeof x === "string"
+ *   x est numerus    -> typeof x === "number"
+ *   x est bivalens   -> typeof x === "boolean"
+ *   x est functio    -> typeof x === "function"
+ *   x est persona    -> x instanceof persona
+ *   x non est textus -> typeof x !== "string"
+ *
+ * Examples:
+ *   si x est textus { ... }
+ *   si x non est numerus { ... }
+ *   si obj est persona { ... }
+ */
+export interface TypeCheckExpression extends BaseNode {
+    type: 'TypeCheckExpression';
+    expression: Expression;
+    targetType: TypeAnnotation;
+    negated: boolean;
 }
 
 // ---------------------------------------------------------------------------

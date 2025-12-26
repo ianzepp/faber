@@ -1042,13 +1042,45 @@ describe('Python codegen', () => {
     // =========================================================================
 
     describe('strict equality', () => {
-        test('est maps to ==', () => {
+        test('=== maps to ==', () => {
             const result = compile(`
                 varia x = 1
                 varia y = 2
-                scribe x est y
+                scribe x === y
             `);
             expect(result).toContain('(x == y)');
+        });
+
+        test('est with type uses isinstance', () => {
+            const result = compile(`
+                varia x = 1
+                scribe x est numerus
+            `);
+            expect(result).toContain('isinstance(x, int)');
+        });
+
+        test('nihil unary uses is None', () => {
+            const result = compile(`
+                varia x = nihil
+                scribe nihil x
+            `);
+            expect(result).toContain('(x is None)');
+        });
+
+        test('nonnihil unary uses is not None', () => {
+            const result = compile(`
+                varia x = "hello"
+                scribe nonnihil x
+            `);
+            expect(result).toContain('(x is not None)');
+        });
+
+        test('non est with type uses not isinstance', () => {
+            const result = compile(`
+                varia x = "hello"
+                scribe x non est numerus
+            `);
+            expect(result).toContain('(not isinstance(x, int))');
         });
     });
 

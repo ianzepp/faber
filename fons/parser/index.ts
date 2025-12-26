@@ -131,6 +131,7 @@ import type {
     FacBlockStatement,
     LambdaExpression,
     TypeCastExpression,
+    TypeCheckExpression,
     ProbandumStatement,
     ProbaStatement,
     ProbaModifier,
@@ -1125,6 +1126,7 @@ export function parse(tokens: Token[]): ParserResult {
      * Examples:
      *   typus ID = textus
      *   typus UserID = numerus<32, Naturalis>
+     *   typus ConfigTypus = typus config    // typeof
      */
     function parseTypeAliasDeclaration(): TypeAliasDeclaration {
         const position = peek().position;
@@ -1134,6 +1136,21 @@ export function parse(tokens: Token[]): ParserResult {
         const name = parseIdentifier();
 
         expect('EQUAL', ParserErrorCode.ExpectedEqual);
+
+        // Check for typeof: `typus X = typus y`
+        if (checkKeyword('typus')) {
+            advance(); // consume 'typus'
+            const typeofTarget = parseIdentifier();
+            // WHY: When RHS is `typus identifier`, we extract the type of a value.
+            // typeAnnotation is set to a placeholder; codegen uses typeofTarget.
+            return {
+                type: 'TypeAliasDeclaration',
+                name,
+                typeAnnotation: { type: 'TypeAnnotation', name: 'ignotum', position },
+                typeofTarget,
+                position,
+            };
+        }
 
         const typeAnnotation = parseTypeAnnotation();
 
@@ -2847,13 +2864,13 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse equality expression.
      *
      * GRAMMAR:
-     *   equality := comparison (('==' | '!=' | 'est' | 'non' 'est') comparison)*
+     *   equality := comparison (('==' | '!=' | '===' | '!==' | 'est' | 'non' 'est') comparison)*
      *
      * PRECEDENCE: Lower than comparison, higher than AND.
      *
-     * WHY: 'est' (is) is the Latin copula for strict equality (===).
-     *      'non est' (is not) is strict inequality (!==).
-     *      Allows natural syntax: si x est nihil { ... }
+     * WHY: 'est' always means type check (instanceof/typeof).
+     *      Use '===' or '!==' for value equality.
+     *      Use 'nihil x' or 'nonnihil x' for null checks.
      */
     function parseEquality(): Expression {
         let left = parseComparison();
@@ -2866,15 +2883,33 @@ export function parse(tokens: Token[]): ParserResult {
                 operator = tokens[current - 1]!.value;
                 position = tokens[current - 1]!.position;
             } else if (checkKeyword('non') && peek(1)?.type === 'KEYWORD' && peek(1)?.value.toLowerCase() === 'est') {
-                // 'non est' maps to strict inequality (!==)
+                // 'non est' - negated type check
                 position = peek().position;
                 advance(); // consume 'non'
                 advance(); // consume 'est'
-                operator = '!==';
+
+                const targetType = parseTypeAnnotation();
+                left = {
+                    type: 'TypeCheckExpression',
+                    expression: left,
+                    targetType,
+                    negated: true,
+                    position,
+                } as TypeCheckExpression;
+                continue;
             } else if (matchKeyword('est')) {
-                // 'est' maps to strict equality (===)
-                operator = '===';
+                // 'est' - type check (instanceof/typeof)
                 position = tokens[current - 1]!.position;
+
+                const targetType = parseTypeAnnotation();
+                left = {
+                    type: 'TypeCheckExpression',
+                    expression: left,
+                    targetType,
+                    negated: false,
+                    position,
+                } as TypeCheckExpression;
+                continue;
             } else {
                 break;
             }
@@ -3101,11 +3136,12 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse unary expression.
      *
      * GRAMMAR:
-     *   unary := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'negativum' | 'positivum' | 'cede' | 'novum') unary | cast
+     *   unary := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'novum') unary | cast
      *
      * PRECEDENCE: Higher than binary operators, lower than cast/call/member access.
      *
      * WHY: Latin 'non' (not), 'nulla' (none/empty), 'nonnulla' (some/non-empty),
+     *      'nihil' (is null), 'nonnihil' (is not null),
      *      'negativum' (< 0), 'positivum' (> 0), 'cede' (await), 'novum' (new).
      */
     function parseUnary(): Expression {
@@ -3150,6 +3186,34 @@ export function parse(tokens: Token[]): ParserResult {
                 prefix: true,
                 position,
             };
+        }
+
+        // WHY: 'nihil x' checks if x is null, parallels 'nulla x' for emptiness
+        //      But 'nihil' alone is the null literal (handled in parsePrimary)
+        //      Check if followed by identifier or expression-starting keyword
+        if (checkKeyword('nihil')) {
+            const next = peek(1);
+            const isUnaryOperand =
+                next?.type === 'IDENTIFIER' ||
+                (next?.type === 'KEYWORD' &&
+                    ['verum', 'falsum', 'nihil', 'ego', 'non', 'nulla', 'nonnulla', 'negativum', 'positivum', 'novum', 'cede'].includes(
+                        next.value.toLowerCase(),
+                    ));
+            if (isUnaryOperand) {
+                advance(); // consume 'nihil'
+                const position = tokens[current - 1]!.position;
+                const argument = parseUnary();
+
+                return { type: 'UnaryExpression', operator: 'nihil', argument, prefix: true, position };
+            }
+        }
+
+        // WHY: 'nonnihil x' checks if x is not null (always unary, no ambiguity)
+        if (matchKeyword('nonnihil')) {
+            const position = tokens[current - 1]!.position;
+            const argument = parseUnary();
+
+            return { type: 'UnaryExpression', operator: 'nonnihil', argument, prefix: true, position };
         }
 
         if (matchKeyword('negativum')) {
