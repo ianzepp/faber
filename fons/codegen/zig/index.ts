@@ -91,6 +91,8 @@ import type {
     SpreadElement,
     LambdaExpression,
     FacBlockStatement,
+    BreakStatement,
+    ContinueStatement,
 } from '../../parser/ast';
 import type { CodegenOptions } from '../types';
 import type { SemanticType } from '../../semantic/types';
@@ -339,6 +341,10 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 return genBlockStatementContent(node);
             case 'FacBlockStatement':
                 return genFacBlockStatement(node);
+            case 'BreakStatement':
+                return genBreakStatement();
+            case 'ContinueStatement':
+                return genContinueStatement();
             case 'ExpressionStatement':
                 return genExpressionStatement(node);
             default:
@@ -1129,6 +1135,30 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         }
 
         return `${ind()}return;`;
+    }
+
+    /**
+     * Generate break statement.
+     *
+     * TRANSFORMS:
+     *   rumpe -> break
+     *
+     * TARGET: Zig uses 'break' keyword, same as most languages.
+     */
+    function genBreakStatement(): string {
+        return `${ind()}break;`;
+    }
+
+    /**
+     * Generate continue statement.
+     *
+     * TRANSFORMS:
+     *   perge -> continue
+     *
+     * TARGET: Zig uses 'continue' keyword, same as most languages.
+     */
+    function genContinueStatement(): string {
+        return `${ind()}continue;`;
     }
 
     /**
