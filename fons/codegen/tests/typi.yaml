@@ -1,18 +1,27 @@
 # Typi - Type system codegen tests
 # Covers: type aliases, ordo (enum), union types, nullable
 
-# Type aliases
+# =============================================================================
+# Type Aliases
+# =============================================================================
+
+# typus creates a type alias
 - name: simple type alias
   input: typus ID = textus
   ts: 'type ID = string;'
   py: 'ID = str'
 
+# Generic type aliases preserve type parameters
 - name: generic type alias
   input: typus StringList = lista<textus>
   ts: 'type StringList = Array<string>;'
   py: 'StringList = list[str]'
 
-# Nullable types
+# =============================================================================
+# Nullable Types
+# =============================================================================
+
+# ? suffix makes type nullable (| null in TS, | None in Python)
 - name: nullable type
   input: fixum textus? name = nihil
   ts:
@@ -20,7 +29,11 @@
   py:
       - 'str | None'
 
-# Enums
+# =============================================================================
+# Enums (ordo)
+# =============================================================================
+
+# ordo declares an enum - TS uses native enum, Python uses Enum class
 - name: simple enum
   input: 'ordo color { rubrum, viridis, caeruleum }'
   ts: 'enum color { rubrum, viridis, caeruleum }'
@@ -29,6 +42,7 @@
       - 'rubrum = auto()'
       - 'viridis = auto()'
 
+# Enum with explicit numeric values
 - name: enum with values
   input: 'ordo status { pendens = 0, actum = 1, finitum = 2 }'
   ts: 'enum status { pendens = 0, actum = 1, finitum = 2 }'
@@ -37,6 +51,7 @@
       - 'pendens = 0'
       - 'actum = 1'
 
+# Enum with string values
 - name: enum with string values
   input: 'ordo direction { north = "N", south = "S" }'
   ts: 'enum direction { north = "N", south = "S" }'
@@ -45,7 +60,11 @@
       - 'north = "N"'
       - 'south = "S"'
 
-# Type checks
+# =============================================================================
+# Type Checks (est)
+# =============================================================================
+
+# est with primitive uses typeof in TS, isinstance in Python
 - name: est with primitive
   input: fixum check = x est textus
   ts:
@@ -53,6 +72,7 @@
   py:
       - 'isinstance(x, str)'
 
+# non est negates the type check
 - name: non est with primitive
   input: fixum check = x non est numerus
   ts:
@@ -60,6 +80,7 @@
   py:
       - 'not isinstance(x, int)'
 
+# est with user type uses instanceof in both targets
 - name: est with user type
   input: fixum check = obj est Persona
   ts:

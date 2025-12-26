@@ -1,7 +1,11 @@
 # Errores - Error handling codegen tests
 # Covers: tempta/cape/demum, iace/mori, fac blocks
 
-# Try/catch/finally
+# =============================================================================
+# Try/Catch/Finally
+# =============================================================================
+
+# tempta/cape is try/catch (try/except in Python)
 - name: tempta cape
   input: |
       tempta {
@@ -17,6 +21,7 @@
       - 'try:'
       - 'except Exception as error:'
 
+# demum is finally - runs regardless of exception
 - name: tempta with demum
   input: |
       tempta {
@@ -37,7 +42,11 @@
       - 'finally:'
       - 'cleanup()'
 
-# Throw
+# =============================================================================
+# Throw (iace)
+# =============================================================================
+
+# iace with string literal - wraps in Error/Exception
 - name: iace string
   input: 'iace "error message"'
   ts:
@@ -46,6 +55,7 @@
   py:
       - 'raise Exception("error message")'
 
+# iace with new Error - translates constructor
 - name: iace with Error
   input: 'iace novum Error("msg")'
   ts:
@@ -54,6 +64,7 @@
   py:
       - 'raise Exception("msg")'
 
+# iace with variable - throws directly
 - name: iace variable
   input: iace err
   ts:
@@ -62,7 +73,11 @@
   py:
       - 'raise err'
 
+# =============================================================================
 # Panic (mori)
+# =============================================================================
+
+# mori is fatal error - Panic in TS, SystemExit in Python
 - name: mori string
   input: 'mori "something went wrong"'
   ts:
@@ -70,7 +85,11 @@
   py:
       - 'raise SystemExit("something went wrong")'
 
-# Fac block
+# =============================================================================
+# Fac Block
+# =============================================================================
+
+# fac creates a bare block scope (no try wrapper)
 - name: fac block bare
   input: 'fac { varia x = 1 }'
   ts:
@@ -79,6 +98,7 @@
   py:
       - 'x = 1'
 
+# fac with cape wraps in try/catch
 - name: fac with cape
   input: 'fac { x() } cape e { y() }'
   ts:

@@ -1,7 +1,11 @@
 # Regimen - Control flow codegen tests
 # Covers: si/aliter, dum, ex/de...pro, elige, custodi, adfirma, redde/rumpe/perge
 
-# If statements
+# =============================================================================
+# If Statements
+# =============================================================================
+
+# si is the if keyword - verum becomes true/True
 - name: simple if
   input: |
       si verum {
@@ -14,6 +18,7 @@
       - 'if True:'
       - 'print("yes")'
 
+# aliter is the else keyword
 - name: if with else
   input: |
       si falsum {
@@ -29,6 +34,7 @@
       - 'if False:'
       - 'else:'
 
+# aliter si chains become else if/elif
 - name: if-elif-else chain
   input: |
       si x == 1 { a() }
@@ -43,7 +49,11 @@
       - 'elif (x == 2):'
       - 'else:'
 
-# While loops
+# =============================================================================
+# While Loops
+# =============================================================================
+
+# dum is the while keyword
 - name: while loop
   input: |
       dum verum {
@@ -54,7 +64,11 @@
   py:
       - 'while True:'
 
-# For loops
+# =============================================================================
+# For Loops
+# =============================================================================
+
+# ex...pro is for-of (iterate values)
 - name: for-of loop
   input: |
       ex numeros pro numero {
@@ -65,6 +79,7 @@
   py:
       - 'for numero in numeros:'
 
+# de...pro is for-in (iterate keys/indices)
 - name: for-in loop
   input: |
       de lista pro item {
@@ -75,7 +90,11 @@
   py:
       - 'for item in lista:'
 
-# Range loops
+# =============================================================================
+# Range Loops
+# =============================================================================
+
+# .. creates exclusive range (0..10 = 0 to 9)
 - name: simple range loop
   input: |
       ex 0..10 pro i {
@@ -86,6 +105,7 @@
   py:
       - 'for i in range(0, 10):'
 
+# per specifies step size
 - name: range with step
   input: |
       ex 0..10 per 2 pro i {
@@ -96,6 +116,7 @@
   py:
       - 'for i in range(0, 10, 2):'
 
+# usque creates inclusive range (0 usque 10 = 0 to 10)
 - name: inclusive range loop
   input: |
       ex 0 usque 10 pro i {
@@ -106,7 +127,11 @@
   py:
       - 'for i in range(0, 10 + 1):'
 
-# Break and continue
+# =============================================================================
+# Break and Continue
+# =============================================================================
+
+# rumpe is break
 - name: break statement
   input: |
       dum verum {
@@ -117,6 +142,7 @@
   py:
       - 'break'
 
+# perge is continue
 - name: continue statement
   input: |
       dum verum {
@@ -127,7 +153,11 @@
   py:
       - 'continue'
 
+# =============================================================================
 # Return
+# =============================================================================
+
+# redde with value returns that value
 - name: return with value
   input: |
       functio f() {
@@ -138,6 +168,7 @@
   py:
       - 'return 42'
 
+# redde without value returns undefined/None
 - name: return without value
   input: |
       functio f() {
@@ -148,7 +179,11 @@
   py:
       - 'return'
 
+# =============================================================================
 # Assert
+# =============================================================================
+
+# adfirma is assert - TS emits if(!condition) throw, Python uses assert
 - name: assert without message
   input: adfirma x > 0
   ts:
@@ -156,13 +191,18 @@
       - 'throw new Error'
   py: 'assert (x > 0)'
 
+# adfirma with message includes that in the error
 - name: assert with message
   input: 'adfirma x > 0, "x must be positive"'
   ts:
       - 'throw new Error("x must be positive")'
   py: 'assert (x > 0), "x must be positive"'
 
-# Elige (switch/match)
+# =============================================================================
+# Elige (Switch/Match)
+# =============================================================================
+
+# elige with si cases becomes if/else-if chain in TS, match/case in Python
 - name: elige with cases
   input: |
       elige x {
@@ -177,6 +217,7 @@
       - 'case 1:'
       - 'case 2:'
 
+# aliter in elige is the default case
 - name: elige with default
   input: |
       elige x {
@@ -191,7 +232,11 @@
       - 'case 1:'
       - 'case _:'
 
-# Guard statements
+# =============================================================================
+# Guard Statements
+# =============================================================================
+
+# custodi provides early-exit guard clauses
 - name: guard with condition
   input: |
       custodi {

@@ -1,7 +1,11 @@
 # Structurae - Data structure codegen tests
 # Covers: genus, pactum, destructuring, novum, ego
 
-# Object destructuring
+# =============================================================================
+# Object Destructuring
+# =============================================================================
+
+# Extract named properties from object
 - name: simple object destructuring
   input: 'fixum { nomen, aetas } = user'
   ts: 'const { nomen, aetas } = user;'
@@ -9,29 +13,40 @@
       - 'nomen = user["nomen"]'
       - 'aetas = user["aetas"]'
 
+# Rename during destructuring with colon
 - name: destructuring with rename
   input: 'fixum { nomen: localName } = user'
   ts: 'const { nomen: localName } = user;'
   py:
       - 'localName = user["nomen"]'
 
-# Array destructuring
+# =============================================================================
+# Array Destructuring
+# =============================================================================
+
+# Extract elements by position
 - name: simple array destructuring
   input: fixum [a, b, c] = coords
   ts: 'const [a, b, c] = coords;'
   py: 'a, b, c = coords'
 
+# ceteri collects remaining elements
 - name: array destructuring with rest
   input: fixum [first, ceteri rest] = items
   ts: 'const [first, ...rest] = items;'
   py: 'first, *rest = items'
 
+# Underscore skips elements
 - name: array destructuring with skip
   input: fixum [_, second, _] = data
   ts: 'const [, second, ] = data;'
   py: '_, second, _ = data'
 
-# Genus (class)
+# =============================================================================
+# Genus (Class)
+# =============================================================================
+
+# genus declares a class with typed fields
 - name: genus with field
   input: 'genus persona { textus nomen: "X" }'
   ts:
@@ -43,6 +58,7 @@
       - 'nomen: str = "X"'
       - 'def __init__'
 
+# Methods inside genus use ego for self-reference
 - name: genus with method
   input: |
       genus persona {
@@ -56,18 +72,27 @@
       - 'class persona:'
       - 'return self.nomen'
 
-# Novum (new)
+# =============================================================================
+# Novum (New)
+# =============================================================================
+
+# novum creates instance - new in TS, direct call in Python
 - name: novum without args
   input: fixum p = novum persona
   ts: 'const p = new persona();'
   py: 'p = persona()'
 
+# novum with object literal passes overrides to constructor
 - name: novum with overrides
   input: 'fixum p = novum persona { nomen: "Claudia" }'
   ts: 'const p = new persona({ nomen: "Claudia" });'
   py: 'p = persona({"nomen": "Claudia"})'
 
+# =============================================================================
 # Ego (this/self)
+# =============================================================================
+
+# ego is this in TS, self in Python
 - name: ego becomes this or self
   input: |
       genus persona {
@@ -79,7 +104,11 @@
   py:
       - 'return self.nomen'
 
-# Pactum (interface/protocol)
+# =============================================================================
+# Pactum (Interface/Protocol)
+# =============================================================================
+
+# pactum declares interface (interface in TS, Protocol in Python)
 - name: pactum with method
   input: |
       pactum Salutator {
@@ -92,6 +121,7 @@
       - 'class Salutator(Protocol):'
       - 'def salve(self, nomen: str) -> str:'
 
+# implet makes a class implement an interface
 - name: genus implements pactum
   input: |
       pactum Greeter {

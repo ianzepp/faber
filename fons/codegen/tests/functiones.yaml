@@ -1,7 +1,11 @@
 # Functiones - Function declaration and lambda codegen tests
 # Covers: functio, futura, cursor, arrow functions, pro lambdas
 
-# Simple functions
+# =============================================================================
+# Simple Functions
+# =============================================================================
+
+# functio declares a function (function in TS, def in Python)
 - name: simple function
   input: |
       functio salve(nomen) {
@@ -14,6 +18,7 @@
       - 'def salve(nomen):'
       - 'return nomen'
 
+# -> specifies return type annotation
 - name: function with return type
   input: 'functio greet() -> textus { redde "hello" }'
   ts:
@@ -21,7 +26,11 @@
   py:
       - 'def greet() -> str:'
 
-# Async functions
+# =============================================================================
+# Async Functions
+# =============================================================================
+
+# futura makes a function async
 - name: async function
   input: |
       futura functio fetch(url) {
@@ -32,6 +41,7 @@
   py:
       - 'async def fetch(url):'
 
+# fiet is async + return type (wraps in Promise/Awaitable)
 - name: async function with return type
   input: 'functio fetch() fiet textus { redde "data" }'
   ts:
@@ -39,7 +49,11 @@
   py:
       - 'async def fetch() -> Awaitable[str]:'
 
-# Generator functions
+# =============================================================================
+# Generator Functions
+# =============================================================================
+
+# fiunt makes a function a generator (wraps return in Generator/Iterator)
 - name: generator function
   input: 'functio range() fiunt numerus { redde 1 }'
   ts:
@@ -47,6 +61,7 @@
   py:
       - 'def range() -> Iterator[int]:'
 
+# fient is async generator (wraps in AsyncGenerator/AsyncIterator)
 - name: async generator function
   input: 'functio stream() fient textus { redde "chunk" }'
   ts:
@@ -54,7 +69,11 @@
   py:
       - 'async def stream() -> AsyncIterator[str]:'
 
-# Yield/await
+# =============================================================================
+# Yield/Await
+# =============================================================================
+
+# cede in generator context becomes yield
 - name: cede in generator
   input: 'functio range() fiunt numerus { cede 1 }'
   ts:
@@ -62,6 +81,7 @@
   py:
       - 'yield 1'
 
+# cede in async context becomes await
 - name: cede in async function
   input: 'functio fetch() fiet textus { cede getData() }'
   ts:
@@ -69,12 +89,17 @@
   py:
       - 'await getData()'
 
-# Arrow functions
+# =============================================================================
+# Arrow Functions
+# =============================================================================
+
+# JavaScript-style arrow syntax
 - name: simple arrow
   input: '(x) => x'
   ts: '(x) => x;'
   py: 'lambda x: x'
 
+# Arrow with block body
 - name: arrow with block
   input: '(x) => { redde x }'
   ts:
@@ -82,27 +107,35 @@
       - 'return x;'
   py: 'lambda x: x'
 
-# Lambda expressions (pro)
+# =============================================================================
+# Lambda Expressions (pro)
+# =============================================================================
+
+# pro is the Latin lambda syntax - single param
 - name: single param lambda
   input: pro x redde x * 2
   ts: '(x) => (x * 2);'
   py: 'lambda x: (x * 2)'
 
+# Multiple parameters separated by comma
 - name: multi param lambda
   input: pro x, y redde x + y
   ts: '(x, y) => (x + y);'
   py: 'lambda x, y: (x + y)'
 
+# Zero parameters - empty param list
 - name: zero param lambda
   input: pro redde 42
   ts: '() => 42;'
   py: 'lambda : 42'
 
+# Lambda assigned to variable
 - name: lambda in variable
   input: fixum double = pro x redde x * 2
   ts: 'const double = (x) => (x * 2);'
   py: 'double = lambda x: (x * 2)'
 
+# Lambda passed as callback argument
 - name: lambda as callback
   input: items.filtrata(pro x redde x > 0)
   ts: 'items.filter((x) => (x > 0));'
@@ -110,7 +143,11 @@
       - 'filter'
       - 'lambda x: (x > 0)'
 
-# Empty blocks
+# =============================================================================
+# Empty Blocks
+# =============================================================================
+
+# Empty function body - TS allows {}, Python needs pass
 - name: empty function body
   input: 'functio noop() {}'
   ts: 'function noop() {}'
