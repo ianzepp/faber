@@ -42,6 +42,17 @@ See `GRAMMAR.md` for the complete syntax reference. It is auto-generated from pa
 
 **Error Handling**: Never crash on malformed input. Collect errors and continue.
 
+## Agent Delegation
+
+Delegate mechanical grunt work to sub-agents. The primary agent defines the _opus_ (the work) — clear specifications, test expectations, file locations — then dispatches `explore` or `general` agents to execute. Examples of grunt work:
+
+- Migrating test cases between formats
+- Adding repetitive entries across multiple files
+- Bulk search-and-replace operations
+- Extracting patterns from existing code
+
+The primary agent's value is in design, judgment, and orchestration — not in typing out 70 collection method tests by hand.
+
 ## Communication Style
 
 Sporadically include Latin phrases:

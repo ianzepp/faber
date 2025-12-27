@@ -20,6 +20,7 @@ function compile(code: string): string {
 }
 
 describe('cpp codegen', () => {
+    // MIGRATED to fundamenta.yaml
     describe('variable declarations', () => {
         test('varia -> auto', () => {
             const cpp = compile('varia x = 5');
@@ -46,6 +47,7 @@ describe('cpp codegen', () => {
         });
     });
 
+    // MIGRATED to functiones.yaml
     describe('function declarations', () => {
         test('simple function', () => {
             const cpp = compile(`
@@ -70,6 +72,7 @@ describe('cpp codegen', () => {
         });
     });
 
+    // MIGRATED to regimen.yaml
     describe('control flow', () => {
         test('if statement', () => {
             const cpp = compile(`
@@ -146,6 +149,7 @@ describe('cpp codegen', () => {
         });
     });
 
+    // MIGRATED to operatores.yaml
     describe('expressions', () => {
         test('binary operators', () => {
             const cpp = compile('1 + 2');
@@ -184,6 +188,7 @@ describe('cpp codegen', () => {
         });
     });
 
+    // MIGRATED to fundamenta.yaml
     describe('special expressions', () => {
         test('verum -> true', () => {
             const cpp = compile('verum');
@@ -204,6 +209,7 @@ describe('cpp codegen', () => {
         });
     });
 
+    // MIGRATED to fundamenta.yaml
     describe('scribe statement', () => {
         test('scribe with string', () => {
             const cpp = compile('scribe "hello"');
@@ -219,6 +225,7 @@ describe('cpp codegen', () => {
         });
     });
 
+    // MIGRATED to structurae.yaml
     describe('genus declarations', () => {
         test('simple struct', () => {
             const cpp = compile(`
@@ -331,6 +338,7 @@ describe('cpp codegen', () => {
         });
     });
 
+    // MIGRATED to structurae.yaml
     describe('pactum declarations', () => {
         test('generates C++20 concept', () => {
             const cpp = compile(`
@@ -344,6 +352,7 @@ describe('cpp codegen', () => {
         });
     });
 
+    // MIGRATED to errores.yaml
     describe('error handling', () => {
         test('iace (throw) statement', () => {
             const cpp = compile('iace "error"');
@@ -439,6 +448,7 @@ describe('cpp codegen', () => {
         });
     });
 
+    // MIGRATED to functiones.yaml
     describe('lambda expressions', () => {
         test('arrow function', () => {
             const cpp = compile('fixum f = (x) => x + 1');
@@ -447,6 +457,7 @@ describe('cpp codegen', () => {
         });
     });
 
+    // MIGRATED to structurae.yaml
     describe('new expressions', () => {
         test('novum with default', () => {
             const cpp = compile('novum Persona');
