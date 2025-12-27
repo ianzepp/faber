@@ -21,10 +21,10 @@ These features are heavily used and would be difficult to work around:
 b as PrimitiveType;
 ```
 
-Used extensively for type narrowing in pattern matching. Faber would need an equivalent like `ut` (as):
+Used extensively for type narrowing in pattern matching. Faber would need an equivalent like `qua` (as):
 
 ```fab
-(b ut typus_primitivus)
+(b qua typus_primitivus)
 ```
 
 ### 2. Interface Declarations
@@ -211,7 +211,7 @@ Good news — these TypeScript features are NOT needed:
 Priority order for enabling self-hosting:
 
 1. **Template literals** — `"hello ${nomen}"` syntax
-2. **Type casting** — `expr ut typus` syntax
+2. **Type casting** — `expr qua typus` syntax
 3. **Optional fields in genus** — `textus? nomen` syntax
 4. **Interface/shape types** — extend `pactum` or add `forma`
 5. **Generic constraints** — `genus T[]` declarations

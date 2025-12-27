@@ -27,7 +27,7 @@ Complete reference of all operators in Faber Romanus.
 | 13    | `+`, `-`                                                            | Left          | Additive            |
 | 14    | `*`, `/`, `%`                                                       | Left          | Multiplicative      |
 | 15    | `!`, `-`, `~`, `non`, `nulla`, `nonnulla`, `negativum`, `positivum` | Right         | Unary prefix        |
-| 16    | `ut`                                                                | Left          | Type cast           |
+| 16    | `qua`                                                               | Left          | Type cast           |
 | 17    | `.`, `?.`, `!.`, `[]`, `()`                                         | Left          | Member access, call |
 
 **Note:** Bitwise operators bind tighter than comparison (unlike C). This means `flags & MASK == 0` parses as `(flags & MASK) == 0`.
@@ -124,7 +124,7 @@ nihil vel 5       // 5
 
 | Operator | Latin | Description         | Example        |
 | -------- | ----- | ------------------- | -------------- |
-| `ut`     |       | Type cast           | `x ut textus`  |
+| `qua`    |       | Type cast           | `x qua textus` |
 | `est`    |       | Type check (future) | `x est textus` |
 
 **Note:** `est` for type checking is not yet implemented. Currently `est` is an alias for `===`.
@@ -255,7 +255,7 @@ positivum x    // x > 0
 
 | Faber    | TypeScript | Python | Zig         | C++                 |
 | -------- | ---------- | ------ | ----------- | ------------------- |
-| `x ut T` | `x as T`   | N/A    | `@as(T, x)` | `static_cast<T>(x)` |
+| `x qua T` | `x as T`   | N/A    | `@as(T, x)` | `static_cast<T>(x)` |
 
 ---
 

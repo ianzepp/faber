@@ -72,4 +72,4 @@ curl -X DELETE http://localhost:3000/users/1
 - **Async lambdas**: `fiet c { fixum body = cede c.req.json() }`
 - **Collection methods**: `users.inveni()`, `users.adde()`, `users.inveniIndicem()`
 - **Null checks**: `si user === nihil { ... }`
-- **Type casting**: `[] ut lista<objectum>`
+- **Type casting**: `[] qua objectum[]`

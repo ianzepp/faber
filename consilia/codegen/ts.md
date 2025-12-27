@@ -114,7 +114,7 @@ Features that would need new Faber syntax to support.
 
 | TS Feature              | Syntax         | Status   | Latin Candidate | Notes                                       |
 | ----------------------- | -------------- | -------- | --------------- | ------------------------------------------- |
-| Type assertions         | `x as T`       | Planned  | `x ut T`        | Cast/narrow type                            |
+| Type assertions         | `x as T`       | Planned  | `x qua T`       | Cast/narrow type                            |
 | Computed property names | `{ [key]: v }` | Excluded | —               | Runtime key construction; use tabula        |
 | Shorthand properties    | `{ x }`        | Excluded | —               | Rust-only; not portable                     |
 | Tagged templates        | `` fn`text` `` | Excluded | —               | JS-specific                                 |

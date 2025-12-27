@@ -122,7 +122,7 @@ This document is designed for both human readers and LLM code generation. When g
 - `non` — logical not (!)
 - `vel` — nullish coalescing (??)
 - `est` — instanceof/typeof check
-- `ut` — type cast (as)
+- `qua` — type cast (as)
 
 ### Collection Methods (lista)
 
@@ -185,12 +185,12 @@ genus UserService {
             si response.status !== 200 { redde nihil }
         }
 
-        redde response.json() ut User
+        redde response.json() qua User
     }
 
     futura functio fetchAll() fiet lista<User> {
         fixum response = cede ego.client.get(`${ego.baseUrl}/users`)
-        fixum users = cede response.json() ut lista<User>
+        fixum users = cede response.json() qua User[]
 
         redde users.filtrata(pro u: u.active)
     }
@@ -199,7 +199,7 @@ genus UserService {
 fixum app = novum Hono()
 
 app.get("/users/:id", futura functio(Context ctx) {
-    fixum id = ctx.param("id") ut numerus
+    fixum id = ctx.param("id") qua numerus
     fixum service = novum UserService("https://api.example.com")
     fixum user = cede service.fetch(id)
 

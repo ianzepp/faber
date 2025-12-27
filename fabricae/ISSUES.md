@@ -33,7 +33,7 @@ Known issues and limitations discovered while building the demo projects.
 
     Should use `arr = arr.filter(pred)` or native splice loop without IIFE.
 
-- [ ] **Type inference for empty arrays** — `varia users = []` fails. Must use `[] ut lista<T>`.
+- [ ] **Type inference for empty arrays** — `varia users = []` fails. Must use `[] qua T[]`.
 
 ---
 

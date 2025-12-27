@@ -27,7 +27,7 @@ ex "hono" importa Hono
 // Simple array-based storage. In a real app, this would be a database.
 // Users are stored as objectum (untyped objects) for simplicity.
 
-varia users = [] ut lista<objectum>
+varia users = [] qua objectum[]
 varia numerus nextId = 1
 
 // =============================================================================
