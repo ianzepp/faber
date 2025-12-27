@@ -1,0 +1,15 @@
+.{
+    .name = "http-demo",
+    .version = "0.1.0",
+    .dependencies = .{
+        .httpz = .{
+            .url = "git+https://github.com/karlseguin/http.zig#v0.0.17",
+            .hash = "122037f278ddb0c75a54ef22e1cc5ff8a6c91fd846f2ba543c5c64e5170777e2ce88",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}

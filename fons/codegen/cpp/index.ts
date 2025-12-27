@@ -492,14 +492,36 @@ struct _ScopeGuard {
 
     /**
      * Generate function parameter.
+     *
+     * TRANSFORMS:
+     *   textus nomen -> const std::string& nomen (auto const ref for strings/vectors)
+     *   de User user -> const User& user (explicit const ref)
+     *   in User user -> User& user (mutable ref)
+     *   numerus id   -> int64_t id (value for primitives)
+     *
+     * WHY: Latin prepositions encode reference semantics:
+     *      de = "from/concerning" = const reference (read-only)
+     *      in = "into" = mutable reference (will be modified)
      */
     function genParameter(node: Parameter): string {
         const name = node.name.name;
+        const preposition = node.preposition;
 
         if (node.typeAnnotation) {
             const type = genType(node.typeAnnotation);
 
-            // Pass strings and vectors by const reference
+            // Explicit prepositions override default behavior
+            if (preposition === 'de') {
+                // de = const reference (borrowed, read-only)
+                return `const ${type}& ${name}`;
+            }
+
+            if (preposition === 'in') {
+                // in = mutable reference (will be modified)
+                return `${type}& ${name}`;
+            }
+
+            // Default: pass strings and vectors by const reference
             if (type === 'std::string' || type.startsWith('std::vector')) {
                 return `const ${type}& ${name}`;
             }
@@ -508,6 +530,15 @@ struct _ScopeGuard {
         }
 
         // No type annotation - use auto (requires C++20 abbreviated function template)
+        // Still respect prepositions
+        if (preposition === 'de') {
+            return `const auto& ${name}`;
+        }
+
+        if (preposition === 'in') {
+            return `auto& ${name}`;
+        }
+
         return `auto ${name}`;
     }
 
