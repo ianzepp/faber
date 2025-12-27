@@ -16,7 +16,7 @@ import { analyze } from '../fons/semantic';
 import { generate } from '../fons/codegen';
 
 // Supported targets
-const TARGETS = ['ts', 'py'] as const;
+const TARGETS = ['ts', 'py', 'cpp', 'rs', 'zig'] as const;
 type Target = (typeof TARGETS)[number];
 
 interface TargetExpectation {

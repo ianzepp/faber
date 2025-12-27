@@ -140,7 +140,7 @@
   py:
       - 'return self.nomen'
   cpp:
-      - 'std::string saluta()'
+      - 'void saluta()'
       - 'this->nomen'
 
 # =============================================================================

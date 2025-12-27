@@ -19,7 +19,7 @@
   ts: 'let nomen = "Marcus";'
   py: 'nomen = "Marcus"'
   cpp:
-      - 'auto nomen = "Marcus"'
+      - 'auto nomen = std::string("Marcus")'
 
 # Type annotations are emitted in both targets
 - name: 'const with type annotation'
@@ -205,7 +205,7 @@
   ts: 'console.log("a", "b", "c");'
   py: 'print("a", "b", "c")'
   cpp:
-      - 'std::print("{} {} {}"'
+      - 'std::print("{} {} {}\n"'
 
 # Expressions are evaluated before printing
 - name: 'scribe with expression'
