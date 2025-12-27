@@ -97,7 +97,7 @@ import type {
     TypeAnnotation,
     TypeParameter,
     TypeParameterDeclaration,
-    UtExpression,
+    QuaExpression,
     EstExpression,
     PraefixumExpression,
 } from '../../parser/ast';
@@ -1404,7 +1404,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
             case 'ConditionalExpression':
                 // Python ternary: consequent if test else alternate
                 return `${genExpression(node.consequent)} if ${genExpression(node.test)} else ${genExpression(node.alternate)}`;
-            case 'UtExpression':
+            case 'QuaExpression':
                 // WHY: Python is dynamically typed, type casts have no runtime effect.
                 // Just emit the expression — the cast is a compile-time annotation only.
                 return genExpression(node.expression);

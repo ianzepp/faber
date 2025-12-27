@@ -455,18 +455,18 @@
       - 'const auto x = std::vector<typename decltype(nums)::value_type>(nums.begin() + 0, nums.begin() + 3);'
 
 # =============================================================================
-# Type Cast (ut)
+# Type Cast (qua)
 # =============================================================================
 
-# ut casts expression to type (as in TS, ignored in Python)
+# qua casts expression to type (as in TS, ignored in Python)
 - name: 'simple type cast'
-  input: 'fixum name = data ut textus'
+  input: 'fixum name = data qua textus'
   ts: 'const name = (data as string);'
   py: 'name = data'
 
 # Cast member expression
 - name: 'cast member expression'
-  input: 'fixum body = response.body ut objectum'
+  input: 'fixum body = response.body qua objectum'
   ts: 'const body = (response.body as object);'
   py: 'body = response.body'
 

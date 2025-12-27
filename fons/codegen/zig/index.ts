@@ -89,7 +89,7 @@ import type {
     Literal,
     Parameter,
     TypeAnnotation,
-    UtExpression,
+    QuaExpression,
     EstExpression,
     SpreadElement,
     LambdaExpression,
@@ -1867,8 +1867,8 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 return genNovumExpression(node);
             case 'ConditionalExpression':
                 return `if (${genExpression(node.test)}) ${genExpression(node.consequent)} else ${genExpression(node.alternate)}`;
-            case 'UtExpression':
-                return genUtExpression(node);
+            case 'QuaExpression':
+                return genQuaExpression(node);
             case 'EstExpression':
                 return genEstExpression(node);
             case 'LambdaExpression':
@@ -2162,12 +2162,12 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      * Generate type cast expression.
      *
      * TRANSFORMS:
-     *   x ut numerus -> @as(i64, x)
-     *   data ut textus -> @as([]const u8, data)
+     *   x qua numerus -> @as(i64, x)
+     *   data qua textus -> @as([]const u8, data)
      *
      * TARGET: Zig uses @as(T, x) builtin for type coercion.
      */
-    function genUtExpression(node: UtExpression): string {
+    function genQuaExpression(node: QuaExpression): string {
         const expr = genExpression(node.expression);
         const targetType = genType(node.targetType);
 

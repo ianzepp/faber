@@ -3379,7 +3379,7 @@ export function parse(tokens: Token[]): ParserResult {
             return parsePraefixumExpression();
         }
 
-        return parseUtExpression();
+        return parseQuaExpression();
     }
 
     /**
@@ -3430,14 +3430,14 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse type cast expression.
      *
      * GRAMMAR:
-     *   castExpr := call ('ut' typeAnnotation)*
+     *   castExpr := call ('qua' typeAnnotation)*
      *
      * PRECEDENCE: Between unary and call. This means:
-     *   -x ut T     parses as -(x ut T)    — unary binds looser
-     *   x.y ut T    parses as (x.y) ut T   — member access binds tighter
-     *   x ut A ut B parses as (x ut A) ut B — left-associative
+     *   -x qua T     parses as -(x qua T)    — unary binds looser
+     *   x.y qua T    parses as (x.y) qua T   — member access binds tighter
+     *   x qua A qua B parses as (x qua A) qua B — left-associative
      *
-     * WHY: Latin 'ut' (as, in the capacity of) for type assertions.
+     * WHY: Latin 'qua' (as, in the capacity of) for type assertions.
      *      Compile-time only — no runtime checking. Maps to:
      *      - TypeScript: x as T
      *      - Python: x (ignored, dynamic typing)
@@ -3445,19 +3445,19 @@ export function parse(tokens: Token[]): ParserResult {
      *      - Rust: x as T
      *      - C++: static_cast<T>(x)
      */
-    function parseUtExpression(): Expression {
+    function parseQuaExpression(): Expression {
         let expr = parseCall();
 
-        while (matchKeyword('ut')) {
+        while (matchKeyword('qua')) {
             const position = tokens[current - 1]!.position;
             const targetType = parseTypeAnnotation();
 
             expr = {
-                type: 'UtExpression',
+                type: 'QuaExpression',
                 expression: expr,
                 targetType,
                 position,
-            } as UtExpression;
+            } as QuaExpression;
         }
 
         return expr;

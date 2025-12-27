@@ -587,13 +587,13 @@ fixum table = praefixum {
 }
 ```
 
-### Ut Expression
+### Qua Expression
 
 ```ebnf
-castExpr := call ('ut' typeAnnotation)*
+castExpr := call ('qua' typeAnnotation)*
 ```
 
-> Latin 'ut' (as, in the capacity of) for type assertions.
+> Latin 'qua' (as, in the capacity of) for type assertions.
 > Compile-time only — no runtime checking. Maps to:
 > - TypeScript: x as T
 > - Python: x (ignored, dynamic typing)

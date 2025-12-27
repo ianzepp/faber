@@ -93,7 +93,7 @@ import type {
     SpreadElement,
     FacBlockStatement,
     LambdaExpression,
-    UtExpression,
+    QuaExpression,
     EstExpression,
     ProbandumStatement,
     ProbaStatement,
@@ -1487,8 +1487,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 return genObjectExpression(node);
             case 'LambdaExpression':
                 return genLambdaExpression(node);
-            case 'UtExpression':
-                return genUtExpression(node);
+            case 'QuaExpression':
+                return genQuaExpression(node);
             case 'EstExpression':
                 return genEstExpression(node);
             case 'PraefixumExpression':
@@ -1683,13 +1683,13 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * Generate type cast expression.
      *
      * TRANSFORMS:
-     *   x ut textus -> (x as string)
-     *   response.body ut objectum -> (response.body as object)
+     *   x qua textus -> (x as string)
+     *   response.body qua objectum -> (response.body as object)
      *
      * WHY: TypeScript uses 'as' for type assertions. Parentheses ensure
      *      correct precedence when the cast appears in larger expressions.
      */
-    function genUtExpression(node: UtExpression): string {
+    function genQuaExpression(node: QuaExpression): string {
         const expr = genExpression(node.expression);
         const targetType = genType(node.targetType);
 

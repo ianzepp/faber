@@ -1264,7 +1264,7 @@ export type Expression =
     | BinaryExpression
     | UnaryExpression
     | EstExpression
-    | UtExpression
+    | QuaExpression
     | CallExpression
     | MemberExpression
     | ArrowFunctionExpression
@@ -1533,15 +1533,15 @@ export interface EstExpression extends BaseNode {
 // ---------------------------------------------------------------------------
 
 /**
- * Type cast expression (ut operator).
+ * Type cast expression (qua operator).
  *
  * GRAMMAR (in EBNF):
- *   castExpr := call ('ut' typeAnnotation)*
+ *   castExpr := call ('qua' typeAnnotation)*
  *
  * INVARIANT: expression is the value being cast.
  * INVARIANT: targetType is the type to cast to.
  *
- * WHY: Latin 'ut' (as, in the capacity of) for type assertions.
+ * WHY: Latin 'qua' (as, in the capacity of) for type assertions.
  *      Compile-time only — no runtime overhead or checking.
  *      Use 'est' first when possible for safe narrowing.
  *
@@ -1553,12 +1553,12 @@ export interface EstExpression extends BaseNode {
  *   C++:        static_cast<T>(x)
  *
  * Examples:
- *   data ut textus              -> data as string
- *   response.body ut objectum   -> (response.body) as object
- *   x ut A ut B                 -> (x as A) as B (left-associative)
+ *   data qua textus              -> data as string
+ *   response.body qua objectum   -> (response.body) as object
+ *   x qua A qua B                -> (x as A) as B (left-associative)
  */
-export interface UtExpression extends BaseNode {
-    type: 'UtExpression';
+export interface QuaExpression extends BaseNode {
+    type: 'QuaExpression';
     expression: Expression;
     targetType: TypeAnnotation;
 }

@@ -385,7 +385,7 @@ ad url ("GET") fiet Response qua resp { }
 | `pro`       | Variant binding (`discerne`) | Not done   |
 | `pro`       | Internal param name          | Not done   |
 | `qua`       | Response binding (`ad`)      | Partial    |
-| `qua`       | Type assertion               | Not done   |
+| `qua`       | Type assertion               | Done       |
 
 ---
 

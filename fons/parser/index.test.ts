@@ -1338,21 +1338,21 @@ describe('parser', () => {
         });
     });
 
-    describe('ut (type cast) operator', () => {
+    describe('qua (type cast) operator', () => {
         test('simple type cast', () => {
-            const { program } = parseCode('data ut textus');
+            const { program } = parseCode('data qua textus');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('UtExpression');
+            expect(expr.type).toBe('QuaExpression');
             expect(expr.expression.name).toBe('data');
             expect(expr.targetType.name).toBe('textus');
         });
 
         test('cast member expression', () => {
-            const { program } = parseCode('response.body ut objectum');
+            const { program } = parseCode('response.body qua objectum');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('UtExpression');
+            expect(expr.type).toBe('QuaExpression');
             expect(expr.expression.type).toBe('MemberExpression');
             expect(expr.expression.object.name).toBe('response');
             expect(expr.expression.property.name).toBe('body');
@@ -1360,76 +1360,76 @@ describe('parser', () => {
         });
 
         test('cast call expression', () => {
-            const { program } = parseCode('getData() ut textus');
+            const { program } = parseCode('getData() qua textus');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('UtExpression');
+            expect(expr.type).toBe('QuaExpression');
             expect(expr.expression.type).toBe('CallExpression');
             expect(expr.targetType.name).toBe('textus');
         });
 
         test('chained casts (left-associative)', () => {
-            const { program } = parseCode('x ut A ut B');
+            const { program } = parseCode('x qua A qua B');
             const expr = (program!.body[0] as any).expression;
 
-            // Should parse as (x ut A) ut B
-            expect(expr.type).toBe('UtExpression');
+            // Should parse as (x qua A) qua B
+            expect(expr.type).toBe('QuaExpression');
             expect(expr.targetType.name).toBe('B');
-            expect(expr.expression.type).toBe('UtExpression');
+            expect(expr.expression.type).toBe('QuaExpression');
             expect(expr.expression.targetType.name).toBe('A');
             expect(expr.expression.expression.name).toBe('x');
         });
 
         test('cast with generic type', () => {
-            const { program } = parseCode('items ut textus[]');
+            const { program } = parseCode('items qua textus[]');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('UtExpression');
+            expect(expr.type).toBe('QuaExpression');
             expect(expr.targetType.name).toBe('lista');
             expect(expr.targetType.typeParameters[0].name).toBe('textus');
         });
 
         test('cast with nullable type', () => {
-            const { program } = parseCode('value ut textus?');
+            const { program } = parseCode('value qua textus?');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('UtExpression');
+            expect(expr.type).toBe('QuaExpression');
             expect(expr.targetType.name).toBe('textus');
             expect(expr.targetType.nullable).toBe(true);
         });
 
         test('cast precedence: unary binds looser', () => {
-            // -x ut numerus should parse as -(x ut numerus)
-            const { program } = parseCode('-x ut numerus');
+            // -x qua numerus should parse as -(x qua numerus)
+            const { program } = parseCode('-x qua numerus');
             const expr = (program!.body[0] as any).expression;
 
             expect(expr.type).toBe('UnaryExpression');
             expect(expr.operator).toBe('-');
-            expect(expr.argument.type).toBe('UtExpression');
+            expect(expr.argument.type).toBe('QuaExpression');
             expect(expr.argument.expression.name).toBe('x');
             expect(expr.argument.targetType.name).toBe('numerus');
         });
 
         test('cast precedence: member access binds tighter', () => {
-            // x.y ut T should parse as (x.y) ut T
-            const { program } = parseCode('x.y ut textus');
+            // x.y qua T should parse as (x.y) qua T
+            const { program } = parseCode('x.y qua textus');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('UtExpression');
+            expect(expr.type).toBe('QuaExpression');
             expect(expr.expression.type).toBe('MemberExpression');
         });
 
         test('cast in binary expression', () => {
-            // a + b ut numerus should parse as (a + b) ut numerus
-            // because ut has lower precedence than +
-            const { program } = parseCode('a + b ut numerus');
+            // a + b qua numerus should parse as (a + b) qua numerus
+            // because qua has lower precedence than +
+            const { program } = parseCode('a + b qua numerus');
             const expr = (program!.body[0] as any).expression;
 
-            // WHY: ut has higher precedence than + in our grammar,
-            // so this parses as a + (b ut numerus)
+            // WHY: qua has higher precedence than + in our grammar,
+            // so this parses as a + (b qua numerus)
             expect(expr.type).toBe('BinaryExpression');
             expect(expr.operator).toBe('+');
-            expect(expr.right.type).toBe('UtExpression');
+            expect(expr.right.type).toBe('QuaExpression');
         });
     });
 
