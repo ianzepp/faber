@@ -369,6 +369,7 @@ function functionNameToTitle(name: string): string {
 const ROOT = join(import.meta.dir, '..');
 const PARSER_PATH = join(ROOT, 'fons/parser/index.ts');
 const GRAMMATICA_DIR = join(ROOT, 'grammatica');
+const PREAMBLE_PATH = join(GRAMMATICA_DIR, 'preamble.md');
 
 console.log('Extracting GRAMMAR blocks from parser...');
 
@@ -391,11 +392,20 @@ for (const [category, categoryBlocks] of groups) {
 }
 
 // Generate concatenated GRAMMAR.md at project root
+// Start with preamble (static content for LLM consumption)
+let preamble = '';
+try {
+    preamble = readFileSync(PREAMBLE_PATH, 'utf-8');
+    console.log('  Loaded preamble.md');
+} catch {
+    console.log('  No preamble.md found, using minimal header');
+    preamble = '# Faber Romanus Grammar\n\nComplete syntax reference.\n\n';
+}
+
 const allSections: string[] = [];
 
-allSections.push('# Faber Romanus Grammar');
-allSections.push('');
-allSections.push('Complete syntax reference for the Faber Romanus programming language.');
+// Add preamble content
+allSections.push(preamble.trim());
 allSections.push('');
 allSections.push('## Table of Contents');
 allSections.push('');

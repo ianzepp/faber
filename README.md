@@ -1,22 +1,47 @@
 # Faber Romanus
 
-**The Roman Craftsman** — A Latin programming language that compiles to TypeScript, Python, Zig, or C++.
+**The Roman Craftsman** — A Latin programming language that compiles to TypeScript, Python, Zig, C++, or Rust.
 
-## Why Latin?
+## The Problem
 
-Latin makes implicit programming concepts explicit. By mapping Latin's morphological system to code semantics, Faber Romanus makes visible what other languages hide: the roles that values play, the flow of data, the relationship between caller and callee.
+LLMs write code. Humans review it. But the target languages — especially systems languages like Zig, C++, and Rust — are hard for both:
 
-Case systems aren't a gimmick—they scaffold understanding of semantic roles. English hides this; only word order distinguishes subject from object. Latin makes roles explicit in the words themselves: _canis_ (subject) vs _canem_ (object). Programming has the same structures, just less visible. A function's parameters are objects (accusative). Its return value is a subject (nominative).
+- **LLMs struggle with symbol-dense syntax.** Lifetimes, borrow checkers, template metaprogramming, `&&` vs `&`, `->` vs `.` — these create semantic chaos that increases error rates.
+- **Humans can't skim generated code.** Reviewing 50 lines of Rust requires understanding Rust. You can't quickly verify "yes, that logic looks right" without parsing the syntax mentally.
 
-This is not a novelty language. It is an experiment in whether linguistic structure can scaffold understanding of computation.
+## The Solution
+
+Faber Romanus is a **human-readable intermediate language** for LLM-generated code.
+
+```
+ex items pro item {
+    si item.price > 100 {
+        scribe item.name
+    }
+}
+```
+
+- **LLMs write Latin.** Word-based, consistent syntax. No lifetime annotations, no pointer semantics, no template noise. One language regardless of compile target.
+- **Humans skim Latin.** You see `si` (if), `pro` (for), `scribe` (print). You don't need to know Zig to verify the loop logic is correct.
+- **Compiler emits target code.** TypeScript, Python, Zig, C++, or Rust. The generated code is what actually runs — you never read it.
+
+The workflow: LLM writes Faber → Human approves → Compiler emits production code.
+
+## Why It Works
+
+**No ecosystem problem.** Faber compiles to the target language, so you use its libraries directly. `ex hono importa Hono` becomes `import { Hono } from 'hono'`. No need to rewrite npm/PyPI/crates.io packages in Latin.
+
+**Grammar designed for LLMs.** The [GRAMMAR.md](GRAMMAR.md) file is built for LLM consumption: type tables, keyword references, style guides, and complete examples. An LLM can read it once and generate valid Faber immediately.
+
+**Semantics, not syntax.** Latin keywords encode meaning: `fixum` (fixed/immutable) vs `varia` (variable/mutable), `cede` (yield/await), `redde` (give back/return). The code reads like intent, not implementation.
 
 ## Principles
 
-**Compiler as Tutor.** Error messages teach Latin grammar in context. The compiler never crashes on malformed input—it collects errors and continues, showing multiple issues at once. Each error is an opportunity to teach.
+**LLM-First, Human-Readable.** The language is optimized for LLMs to write and humans to review. Not the other way around. Humans don't type Faber; they approve it.
 
-**Accessibility Over Purity.** Pragmatism beats philological correctness. You don't need to know Latin case declensions to write code. When Latin conventions conflict with programming conventions, we ask: which choice helps more people understand?
+**Compiler as Safety Net.** The compiler never crashes on malformed input — it collects errors and continues. When an LLM generates broken code, you see all the issues at once, not one at a time.
 
-**Single-Target Pragmatism.** Faber projects compile to one target language. Foreign imports work natively—`ex hono importa Hono` becomes `import { Hono } from 'hono'`. You use your target's libraries directly.
+**Target Transparency.** You pick a compile target (TypeScript, Zig, etc.) and use that ecosystem directly. Faber is a skin over the target, not a replacement for it.
 
 ## Quick Start
 
@@ -30,13 +55,24 @@ bun test                                                         # Run tests
 
 ## Example
 
-```
+```fab
 functio salve(nomen) -> textus {
-  redde "Salve, " + nomen + "!"
+    redde "Salve, " + nomen + "!"
 }
 
 fixum nomen = "Mundus"
 scribe salve(nomen)
+```
+
+Compiles to TypeScript:
+
+```typescript
+function salve(nomen): string {
+    return 'Salve, ' + nomen + '!';
+}
+
+const nomen = 'Mundus';
+console.log(salve(nomen));
 ```
 
 ---
