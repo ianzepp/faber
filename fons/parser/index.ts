@@ -1964,7 +1964,7 @@ export function parse(tokens: Token[]): ParserResult {
     function parseExStatement(): IteratioStatement | VariaDeclaration {
         const position = peek().position;
 
-        expectKeyword('ex', ParserErrorCode.InvalidForLoopStart);
+        expectKeyword('ex', ParserErrorCode.InvalidExDeStart);
 
         const source = parseExpression();
 
@@ -2189,7 +2189,7 @@ export function parse(tokens: Token[]): ParserResult {
                 defaultCase = parseAliterBody();
                 break; // Default must be last
             } else {
-                error(ParserErrorCode.InvalidSwitchCaseStart);
+                error(ParserErrorCode.InvalidEligeCaseStart);
                 break;
             }
         }
@@ -2305,7 +2305,7 @@ export function parse(tokens: Token[]): ParserResult {
 
                 clauses.push({ type: 'CustodiClause', test, consequent, position: clausePosition });
             } else {
-                error(ParserErrorCode.InvalidGuardClauseStart);
+                error(ParserErrorCode.InvalidCustodiClauseStart);
                 break;
             }
         }

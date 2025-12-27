@@ -102,10 +102,10 @@ export enum ParserErrorCode {
 
     // Invalid construct errors (P100-P199)
     InvalidAssignmentTarget = 'P100',
-    InvalidForLoopStart = 'P101',
-    InvalidSwitchCaseStart = 'P102',
+    InvalidExDeStart = 'P101',
+    InvalidEligeCaseStart = 'P102',
     InvalidDiscerneCaseStart = 'P106',
-    InvalidGuardClauseStart = 'P103',
+    InvalidCustodiClauseStart = 'P103',
     UnexpectedToken = 'P104',
     ExpectedOpeningBraceOrParen = 'P105',
 
@@ -113,11 +113,11 @@ export enum ParserErrorCode {
     GenericError = 'P190',
 
     // Declaration errors (P200-P299)
-    MissingFunctionName = 'P200',
+    MissingFunctioName = 'P200',
     MissingParameterName = 'P201',
     MissingGenusName = 'P202',
     MissingPactumName = 'P203',
-    MissingTypeAliasName = 'P204',
+    MissingTypusName = 'P204',
     MissingVariableName = 'P205',
 }
 
@@ -193,123 +193,123 @@ export const PARSER_ERRORS = {
 
     // Keyword expectation errors
     [ParserErrorCode.ExpectedKeywordEx]: {
-        text: "Expected 'ex'",
+        text: "Expected 'ex' (from)",
         help: "For-of loops start with 'ex' (from/out of): ex lista pro item { ... }",
     },
     [ParserErrorCode.ExpectedKeywordImporta]: {
-        text: "Expected 'importa'",
+        text: "Expected import keyword 'importa'",
         help: "Import declarations use 'importa' after module name: ex norma importa scribe",
     },
     [ParserErrorCode.ExpectedKeywordFunctio]: {
-        text: "Expected 'functio'",
+        text: "Expected function keyword 'functio'",
         help: "Function declarations require 'functio' keyword (optionally preceded by 'futura' for async).",
     },
     [ParserErrorCode.ExpectedKeywordGenus]: {
-        text: "Expected 'genus'",
+        text: "Expected struct keyword 'genus'",
         help: "Struct/class declarations use 'genus' keyword: genus Persona { ... }",
     },
     [ParserErrorCode.ExpectedKeywordPactum]: {
-        text: "Expected 'pactum'",
+        text: "Expected interface keyword 'pactum'",
         help: "Interface declarations use 'pactum' keyword: pactum Iterabilis { ... }",
     },
     [ParserErrorCode.ExpectedKeywordTypus]: {
-        text: "Expected 'typus'",
+        text: "Expected type alias keyword 'typus'",
         help: "Type alias declarations use 'typus' keyword: typus ID = textus",
     },
     [ParserErrorCode.ExpectedKeywordSi]: {
-        text: "Expected 'si'",
+        text: "Expected condition keyword 'si' (if)",
         help: "Conditional statements and switch cases use 'si' (if): si x > 0 { ... }",
     },
     [ParserErrorCode.ExpectedKeywordDum]: {
-        text: "Expected 'dum'",
+        text: "Expected while keyword 'dum'",
         help: "While loops use 'dum' keyword: dum verum { ... }",
     },
     [ParserErrorCode.ExpectedKeywordPro]: {
-        text: "Expected 'pro'",
+        text: "Expected 'pro' (for each)",
         help: "For loops use 'pro' (for each) after iterable: ex lista pro item { ... }",
     },
     [ParserErrorCode.ExpectedKeywordIn]: {
-        text: "Expected 'in'",
+        text: "Expected mutation keyword 'in' (into)",
         help: "Mutation blocks use 'in' (into) keyword: in object { prop = value }",
     },
     [ParserErrorCode.ExpectedKeywordDe]: {
-        text: "Expected 'de'",
+        text: "Expected 'de' (concerning)",
         help: "For-in loops use 'de' (from/concerning) keyword: de tabula pro clavis { ... }",
     },
     [ParserErrorCode.ExpectedKeywordElige]: {
-        text: "Expected 'elige'",
+        text: "Expected switch keyword 'elige' (choose)",
         help: "Switch statements use 'elige' (choose) keyword: elige status { si 'active' { ... } }",
     },
     [ParserErrorCode.ExpectedKeywordCustodi]: {
-        text: "Expected 'custodi'",
+        text: "Expected guard keyword 'custodi'",
         help: "Guard statements use 'custodi' (guard) keyword: custodi { si error { ... } }",
     },
     [ParserErrorCode.ExpectedKeywordAdfirma]: {
-        text: "Expected 'adfirma'",
+        text: "Expected assert keyword 'adfirma' (affirm)",
         help: "Assert statements use 'adfirma' (affirm) keyword: adfirma x > 0",
     },
     [ParserErrorCode.ExpectedKeywordRedde]: {
-        text: "Expected 'redde'",
+        text: "Expected return keyword 'redde'",
         help: "Return statements use 'redde' (give back) keyword: redde valor",
     },
     [ParserErrorCode.ExpectedKeywordIace]: {
-        text: "Expected 'iace'",
+        text: "Expected throw keyword 'iace'",
         help: "Throw statements use 'iace' (throw/hurl) keyword: iace erratum",
     },
     [ParserErrorCode.ExpectedKeywordScribe]: {
-        text: "Expected 'scribe'",
+        text: "Expected print keyword 'scribe' (write)",
         help: "Print statements use 'scribe' (write) keyword: scribe 'hello'",
     },
     [ParserErrorCode.ExpectedKeywordTempta]: {
-        text: "Expected 'tempta'",
+        text: "Expected try keyword 'tempta' (attempt)",
         help: "Try-catch blocks use 'tempta' (attempt) keyword: tempta { ... } cape e { ... }",
     },
     [ParserErrorCode.ExpectedKeywordCape]: {
-        text: "Expected 'cape'",
+        text: "Expected catch keyword 'cape' (seize)",
         help: "Catch clauses use 'cape' (seize/capture) keyword: cape erratum { ... }",
     },
     [ParserErrorCode.ExpectedKeywordAliter]: {
-        text: "Expected 'aliter'",
+        text: "Expected else keyword 'aliter' (otherwise)",
         help: "Else clauses and switch defaults use 'aliter' (otherwise): si x { ... } aliter { ... }",
     },
     [ParserErrorCode.ExpectedKeywordSecus]: {
-        text: "Expected 'secus'",
+        text: "Expected 'secus' (otherwise)",
         help: "Latin ternary expressions use 'secus' (otherwise) after 'sic' (thus): verum sic 1 secus 0",
     },
     [ParserErrorCode.ExpectedKeywordFac]: {
-        text: "Expected 'fac'",
+        text: "Expected do keyword 'fac'",
         help: "Block scopes use 'fac' (do) keyword: fac { ... } cape { ... }",
     },
     [ParserErrorCode.ExpectedKeywordFit]: {
-        text: "Expected 'fit'",
+        text: "Expected 'fit' (becomes)",
         help: "Return type uses 'fit' (becomes): functio f() fit textus { }",
     },
     [ParserErrorCode.ExpectedKeywordOrdo]: {
-        text: "Expected 'ordo'",
+        text: "Expected enum keyword 'ordo' (order)",
         help: "Enum declarations use 'ordo' (order): ordo color { rubrum, viridis, caeruleum }",
     },
     [ParserErrorCode.ExpectedKeywordDiscretio]: {
-        text: "Expected 'discretio'",
+        text: "Expected tagged union keyword 'discretio'",
         help: "Tagged union declarations use 'discretio' (distinction): discretio Event { Click { numerus x } }",
     },
     [ParserErrorCode.ExpectedKeywordDiscerne]: {
-        text: "Expected 'discerne'",
+        text: "Expected match keyword 'discerne' (distinguish)",
         help: "Variant matching uses 'discerne' (distinguish!): discerne event { si Click pro x, y { ... } }",
     },
     [ParserErrorCode.ExpectedKeywordProbandum]: {
-        text: "Expected 'probandum'",
+        text: "Expected test suite keyword 'probandum'",
         help: 'Test suites use \'probandum\' (that which must be tested): probandum "Tokenizer" { ... }',
     },
     [ParserErrorCode.ExpectedKeywordProba]: {
-        text: "Expected 'proba'",
+        text: "Expected test keyword 'proba'",
         help: 'Test cases use \'proba\' (test!): proba "parses numbers" { ... }',
     },
     [ParserErrorCode.ExpectedKeywordCura]: {
-        text: "Expected 'cura'",
+        text: "Expected resource keyword 'cura' (care)",
         help: "Resource management blocks use 'cura' (care): cura ante { ... } or cura post { ... }",
     },
     [ParserErrorCode.ExpectedKeywordAnteOrPost]: {
-        text: "Expected 'ante' or 'post'",
+        text: "Expected 'ante' (before) or 'post' (after)",
         help: "After 'cura', specify timing: 'ante' (before) or 'post' (after)",
     },
 
@@ -328,20 +328,20 @@ export const PARSER_ERRORS = {
         text: 'Invalid assignment target',
         help: 'Only identifiers and member expressions can be assigned to. Literals and operators cannot be assignment targets.',
     },
-    [ParserErrorCode.InvalidForLoopStart]: {
-        text: "Expected 'ex' or 'de' to start for loop",
+    [ParserErrorCode.InvalidExDeStart]: {
+        text: "For loop 'pro' requires 'ex' (for-of) or 'de' (for-in)",
         help: "For loops start with 'ex' (for-of) or 'de' (for-in): ex items pro item { ... } or de tabula pro clavis { ... }",
     },
-    [ParserErrorCode.InvalidSwitchCaseStart]: {
-        text: "Expected 'si' or 'aliter' in switch block",
+    [ParserErrorCode.InvalidEligeCaseStart]: {
+        text: "Switch 'elige' cases must start with 'si' or 'aliter'",
         help: "Switch cases start with 'si' for value matching or 'aliter' for default: elige x { si 1 { ... } aliter { ... } }. For variant matching, use 'discerne' instead.",
     },
     [ParserErrorCode.InvalidDiscerneCaseStart]: {
-        text: "Expected 'si' in discerne block",
+        text: "Match 'discerne' cases must start with 'si'",
         help: "Variant cases start with 'si' followed by variant name: discerne event { si Click pro x, y { ... } si Quit { ... } }",
     },
-    [ParserErrorCode.InvalidGuardClauseStart]: {
-        text: "Expected 'si' in guard block",
+    [ParserErrorCode.InvalidCustodiClauseStart]: {
+        text: "Guard 'custodi' clauses must start with 'si'",
         help: "Guard clauses must start with 'si' condition: custodi { si error { redde nihil } }",
     },
     [ParserErrorCode.UnexpectedToken]: {
@@ -360,8 +360,8 @@ export const PARSER_ERRORS = {
     },
 
     // Declaration errors
-    [ParserErrorCode.MissingFunctionName]: {
-        text: 'Expected function name',
+    [ParserErrorCode.MissingFunctioName]: {
+        text: "Function 'functio' requires a name",
         help: 'Function declarations require a name: functio salve() { ... }',
     },
     [ParserErrorCode.MissingParameterName]: {
@@ -369,19 +369,19 @@ export const PARSER_ERRORS = {
         help: 'Function parameters require names. Type-first syntax: functio f(textus nomen) or type inference: functio f(nomen)',
     },
     [ParserErrorCode.MissingGenusName]: {
-        text: 'Expected genus name',
+        text: "Struct 'genus' requires a name",
         help: 'Genus declarations require a name: genus Persona { ... }',
     },
     [ParserErrorCode.MissingPactumName]: {
-        text: 'Expected pactum name',
+        text: "Interface 'pactum' requires a name",
         help: 'Pactum declarations require a name: pactum Iterabilis { ... }',
     },
-    [ParserErrorCode.MissingTypeAliasName]: {
-        text: 'Expected type alias name',
+    [ParserErrorCode.MissingTypusName]: {
+        text: "Type alias 'typus' requires a name",
         help: 'Type alias declarations require a name: typus ID = textus',
     },
     [ParserErrorCode.MissingVariableName]: {
-        text: 'Expected variable name',
+        text: "Variable 'varia'/'fixum' requires a name",
         help: "Variable declarations require a name: varia x = 5 or fixum nomen = 'Marcus'",
     },
 } as const;
