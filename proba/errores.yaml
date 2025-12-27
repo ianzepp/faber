@@ -79,6 +79,8 @@
       - 'raise Exception("msg")'
   zig:
       - 'return error.Msg'
+  cpp:
+      - 'throw std::runtime_error(std::string("msg"));'
 
 # iace with variable - throws directly
 - name: 'iace variable'
@@ -90,6 +92,8 @@
       - 'raise err'
   zig:
       - 'return error.Err'
+  cpp:
+      - 'throw err;'
 
 # =============================================================================
 # Panic (mori)

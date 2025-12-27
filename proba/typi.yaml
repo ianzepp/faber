@@ -12,6 +12,8 @@
   py: 'ID = str'
   zig:
       - 'const ID = []const u8'
+  cpp:
+      - 'using ID = std::string;'
 
 # Generic type aliases preserve type parameters
 - name: 'generic type alias'
@@ -20,6 +22,8 @@
   py: 'StringList = list[str]'
   zig:
       - 'const StringList = [][]const u8;'
+  cpp:
+      - 'using StringList = std::vector<std::string>;'
 
 # typeof captures the type of a value (TS only - Python uses Any)
 - name: 'typeof type alias'
@@ -34,6 +38,9 @@
   zig:
       - 'const config = .{ .debug = true };'
       - 'const ConfigTypus = anytype;'
+  cpp:
+      - 'using ConfigTypus = ignotum;'
+      - 'const auto config = {.debug = true};'
 
 # Numeric type parameters are ignored in TS (no fixed-width integers)
 - name: 'type with numeric parameter ignored'
@@ -42,6 +49,8 @@
   py: 'SmallNum = int'
   zig:
       - 'const SmallNum = numerus;'
+  cpp:
+      - 'using SmallNum = int64_t<32>;'
 
 # Size type parameters (i32, u64) preserved but ignored in TS
 - name: 'type with size type parameter'
@@ -50,6 +59,8 @@
   py: 'Int32 = int[i32]'
   zig:
       - 'const Int32 = numerus;'
+  cpp:
+      - 'using Int32 = int64_t<i32>;'
 
 # =============================================================================
 # Primitive Type Mappings
@@ -62,6 +73,8 @@
   py: 'Ratio = float'
   zig:
       - 'const Ratio = f64;'
+  cpp:
+      - 'using Ratio = double;'
 
 # decimus is arbitrary precision decimal (requires import)
 - name: 'decimus maps to Decimal'
@@ -74,6 +87,8 @@
       - 'Price = Decimal'
   zig:
       - 'const Price = f128;'
+  cpp:
+      - 'using Price = double;'
 
 # octeti is byte array
 - name: 'octeti maps to Uint8Array'
@@ -82,6 +97,8 @@
   py: 'Buffer = bytes'
   zig:
       - 'const Buffer = []u8;'
+  cpp:
+      - 'using Buffer = std::vector<uint8_t>;'
 
 # magnus is arbitrary precision integer (bigint in TS, int in Python)
 - name: 'magnus maps to bigint'
@@ -90,6 +107,8 @@
   py: 'BigNum = int'
   zig:
       - 'const BigNum = i128;'
+  cpp:
+      - 'using BigNum = magnus;'
 
 # magnus variable with bigint literal
 - name: 'magnus variable with literal'
@@ -98,6 +117,8 @@
   py: 'huge: int = 99999999999999999999'
   zig:
       - 'const m_huge: i128 = 99999999999999999999;'
+  cpp:
+      - 'const magnus huge = 99999999999999999999;'
 
 # numquam is the never type (function never returns)
 - name: 'numquam maps to never'
@@ -109,6 +130,9 @@
   zig:
       - 'fn moritur() !noreturn {'
       - 'return error.Error;'
+  cpp:
+      - 'numquam moritur() {'
+      - 'throw Erratum(std::string("fatal"));'
 
 # ignotum is the unknown type
 - name: 'ignotum maps to unknown'
@@ -117,6 +141,8 @@
   py: 'Mystery = Any'
   zig:
       - 'const Mystery = anytype;'
+  cpp:
+      - 'using Mystery = ignotum;'
 
 # ignotum variable accepts any value
 - name: 'ignotum variable'
@@ -125,6 +151,8 @@
   py: 'x: Any = 42'
   zig:
       - 'var x: anytype = 42;'
+  cpp:
+      - 'ignotum x = 42;'
 
 # =============================================================================
 # Union Types
@@ -137,12 +165,16 @@
   py: 'value: str | int = "hello"'
   zig:
       - 'anytype'
+  cpp:
+      - 'const union value = std::string("hello");'
 
 # unio can have multiple members
 - name: 'union type with three members'
   input: 'fixum unio<textus, numerus, nihil> value = nihil'
   ts: 'const value: string | number | null = null;'
   py: 'value: str | int | None = None'
+  cpp:
+      - 'const union value = nullptr;'
 
 # Type alias with union type
 - name: 'type alias with union'
@@ -151,6 +183,8 @@
   py: 'Json = str | int | bool | None'
   zig:
       - 'const Json = anytype'
+  cpp:
+      - 'using Json = union;'
 
 # =============================================================================
 # Nullable Types
@@ -165,6 +199,8 @@
       - 'str | None'
   zig:
       - 'const m_name: ?[]const u8 = null;'
+  cpp:
+      - 'const std::optional<std::string> name = nullptr;'
 
 # =============================================================================
 # Enums (ordo)

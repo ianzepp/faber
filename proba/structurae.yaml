@@ -16,6 +16,10 @@
       - 'const _tmp = user'
       - 'const nomen = _tmp.nomen'
       - 'const aetas = _tmp.aetas'
+  cpp:
+      - 'const auto& _tmp = user;'
+      - 'const auto& nomen = _tmp.nomen;'
+      - 'const auto& aetas = _tmp.aetas;'
 
 # Rename during destructuring with colon
 - name: 'destructuring with rename'
@@ -23,11 +27,17 @@
   ts: 'const { nomen: localName } = user;'
   py:
       - 'localName = user["nomen"]'
+  cpp:
+      - 'const auto& _tmp = user;'
+      - 'const auto& localName = _tmp.nomen;'
 
 # Mutable destructuring uses varia
 - name: 'mutable destructuring'
   input: 'varia { count } = data'
   ts: 'let { count } = data;'
+  cpp:
+      - 'auto& _tmp = data;'
+      - 'auto& count = _tmp.count;'
 
 # =============================================================================
 # Array Destructuring
@@ -43,6 +53,10 @@
       - 'const a = _tmp[0]'
       - 'const b = _tmp[1]'
       - 'const c = _tmp[2]'
+  cpp:
+      - 'const auto& _tmp = coords;'
+      - 'const auto& a = _tmp[0];'
+      - 'const auto& b = _tmp[1];'
 
 # ceteri collects remaining elements
 - name: 'array destructuring with rest'
@@ -53,6 +67,10 @@
       - 'const _tmp = items'
       - 'const first = _tmp[0]'
       - 'const rest = _tmp[1..]'
+  cpp:
+      - 'const auto& _tmp = items;'
+      - 'const auto& first = _tmp[0];'
+      - 'const auto rest = std::vector<decltype(_tmp)::value_type>(_tmp.begin() + 1, _tmp.end());'
 
 # Underscore skips elements
 - name: 'array destructuring with skip'
@@ -62,6 +80,9 @@
   zig:
       - 'const _tmp = data'
       - 'const second = _tmp[1]'
+  cpp:
+      - 'const auto& _tmp = data;'
+      - 'const auto& second = _tmp[1];'
 
 # Mutable array destructuring
 - name: 'mutable array destructuring'
@@ -71,6 +92,10 @@
       - 'const _tmp = coords'
       - 'var x = _tmp[0]'
       - 'var y = _tmp[1]'
+  cpp:
+      - 'auto& _tmp = coords;'
+      - 'auto& x = _tmp[0];'
+      - 'auto& y = _tmp[1];'
 
 # ex array syntax (source first)
 - name: 'ex array destructuring'
@@ -81,11 +106,19 @@
       - 'const x = _tmp[0]'
       - 'const y = _tmp[1]'
       - 'const z = _tmp[2]'
+  cpp:
+      - 'const auto& _tmp = coords;'
+      - 'const auto& x = _tmp[0];'
+      - 'const auto& y = _tmp[1];'
 
 # ex array with rest
 - name: 'ex array destructuring with rest'
   input: 'ex items fixum [first, ceteri tail]'
   ts: 'const [first, ...tail] = items;'
+  cpp:
+      - 'const auto& _tmp = items;'
+      - 'const auto& first = _tmp[0];'
+      - 'const auto tail = std::vector<decltype(_tmp)::value_type>(_tmp.begin() + 1, _tmp.end());'
 
 # =============================================================================
 # Genus (Class)
@@ -138,6 +171,10 @@
   zig:
       - 'self.creo();'
       - 'fn creo(self: *Self) void'
+  cpp:
+      - 'struct persona {'
+      - 'int64_t aetas = 0;'
+      - 'persona() = default;'
 
 # Without creo, no creo method is generated
 - name: 'genus without creo'
@@ -155,6 +192,10 @@
   zig:
       not_contains:
           - 'self.creo()'
+  cpp:
+      - 'struct persona {'
+      - 'std::string nomen = std::string("X");'
+      - 'persona() = default;'
 
 # =============================================================================
 # Novum (New)
@@ -233,6 +274,10 @@
       - '.count = if (@hasField(@TypeOf(overrides), "count")) overrides.count else 0,'
       - '};'
       - 'return self;'
+  cpp:
+      - 'struct counter {'
+      - 'int64_t count = 0;'
+      - 'counter() = default;'
 
 # nexum emits getter
 - name: 'nexum getter'
@@ -262,6 +307,10 @@
       - '.count = if (@hasField(@TypeOf(overrides), "count")) overrides.count else 0,'
       - '};'
       - 'return self;'
+  cpp:
+      - 'struct counter {'
+      - 'int64_t count = 0;'
+      - 'counter() = default;'
 
 # nexum emits setter with invalidation
 - name: 'nexum setter with invalidation'
@@ -293,6 +342,10 @@
       - '.count = if (@hasField(@TypeOf(overrides), "count")) overrides.count else 0,'
       - '};'
       - 'return self;'
+  cpp:
+      - 'struct counter {'
+      - 'int64_t count = 0;'
+      - 'counter() = default;'
 
 # nexum works with different types
 - name: 'nexum with textus'
@@ -324,6 +377,10 @@
       - '.name = if (@hasField(@TypeOf(overrides), "name")) overrides.name else "anon",'
       - '};'
       - 'return self;'
+  cpp:
+      - 'struct user {'
+      - 'std::string name = std::string("anon");'
+      - 'user() = default;'
 
 # nexum without initial value
 - name: 'nexum without initial value'
@@ -355,6 +412,10 @@
       - '.elapsed = if (@hasField(@TypeOf(overrides), "elapsed")) overrides.elapsed else undefined,'
       - '};'
       - 'return self;'
+  cpp:
+      - 'struct timer {'
+      - 'int64_t elapsed;'
+      - 'timer() = default;'
 
 # Mixed nexum and regular fields
 - name: 'mixed nexum and regular fields'
@@ -403,6 +464,10 @@
       - '.active = if (@hasField(@TypeOf(overrides), "active")) overrides.active else true,'
       - '};'
       - 'return self;'
+  cpp:
+      - 'struct widget {'
+      - 'std::string id = std::string("x");'
+      - 'int64_t count = 0;'
 
 # =============================================================================
 # Pactum (Interface/Protocol)
@@ -447,6 +512,10 @@
       - '// pactum Calculator: interface contract (Zig uses duck typing)'
       - '//   requires fn adde(a: i64, b: i64) i64'
       - '//   requires fn minue(a: i64, b: i64) i64'
+  cpp:
+      - 'template<typename T>'
+      - 'concept Calculator = requires(T t) {'
+      - '{ t.adde(std::declval<int64_t>(), std::declval<int64_t>()) } -> std::same_as<int64_t>;'
 
 # pactum with async method
 - name: 'pactum with async method'
@@ -463,6 +532,10 @@
   zig:
       - '// pactum DataFetcher: interface contract (Zig uses duck typing)'
       - '//   requires fn fetch(url: []const u8) []const u8'
+  cpp:
+      - 'template<typename T>'
+      - 'concept DataFetcher = requires(T t) {'
+      - '{ t.fetch(std::declval<std::string>()) } -> std::same_as<std::string>;'
 
 # pactum with generator method
 - name: 'pactum with generator method'
@@ -479,6 +552,10 @@
   zig:
       - '// pactum NumberGenerator: interface contract (Zig uses duck typing)'
       - '//   requires fn generate(max: i64) i64'
+  cpp:
+      - 'template<typename T>'
+      - 'concept NumberGenerator = requires(T t) {'
+      - '{ t.generate(std::declval<int64_t>()) } -> std::same_as<int64_t>;'
 
 # pactum with async generator method
 - name: 'pactum with async generator method'
@@ -495,6 +572,10 @@
   zig:
       - '// pactum StreamReader: interface contract (Zig uses duck typing)'
       - '//   requires fn read() []const u8'
+  cpp:
+      - 'template<typename T>'
+      - 'concept StreamReader = requires(T t) {'
+      - '{ t.read() } -> std::same_as<std::string>;'
 
 # pactum with type parameters
 - name: 'pactum with type parameters'
@@ -515,6 +596,10 @@
       - '// pactum Container: interface contract (Zig uses duck typing)'
       - '//   requires fn get() T'
       - '//   requires fn set(value: T) void'
+  cpp:
+      - 'template<typename T>'
+      - 'concept Container = requires(T t) {'
+      - '{ t.get() } -> std::same_as<T>;'
 
 # implet makes a class implement an interface
 - name: 'genus implements pactum'
@@ -542,3 +627,7 @@
       - 'pub fn greet(self: *const Self, name: []const u8) []const u8 {'
       - 'return ("Hello, " ++ name);'
       - '};'
+  cpp:
+      - 'template<typename T>'
+      - 'concept Greeter = requires(T t) {'
+      - '{ t.greet(std::declval<std::string>()) } -> std::same_as<std::string>;'

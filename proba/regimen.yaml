@@ -58,6 +58,10 @@
       - 'if (x == 1):'
       - 'elif (x == 2):'
       - 'else:'
+  cpp:
+      - 'if ((x == 1)) {'
+      - 'a();'
+      - '} else if ((x == 2)) {'
 
 # =============================================================================
 # While Loops
@@ -105,6 +109,9 @@
       - 'for (const item in lista)'
   py:
       - 'for item in lista:'
+  cpp:
+      - 'for (auto& item : lista) {'
+      - 'std::print("{}\n", item);'
 
 # =============================================================================
 # Range Loops
@@ -140,6 +147,9 @@
   zig:
       - 'while (i < 10)'
       - '(i += 2)'
+  cpp:
+      - 'for (int64_t i = 0; i < 10; i += 2) {'
+      - 'std::print("{}\n", i);'
 
 # usque creates inclusive range (0 usque 10 = 0 to 10)
 - name: 'inclusive range loop'
@@ -202,6 +212,9 @@
       - 'return 42;'
   py:
       - 'return 42'
+  cpp:
+      - 'void f() {'
+      - 'return 42;'
 
 # redde without value returns undefined/None
 - name: 'return without value'
@@ -215,6 +228,9 @@
       - 'return'
   zig:
       - 'fn f() void {'
+      - 'return;'
+  cpp:
+      - 'void f() {'
       - 'return;'
 
 # =============================================================================
@@ -230,6 +246,8 @@
   py: 'assert (x > 0)'
   zig:
       - 'std.debug.assert'
+  cpp:
+      - 'assert((x > 0));'
 
 # adfirma with message includes that in the error
 - name: 'assert with message'
@@ -240,6 +258,8 @@
   zig:
       - 'if (!((x > 0)))'
       - '@panic("x must be positive")'
+  cpp:
+      - 'assert(((x > 0)) && std::string("x must be positive"));'
 
 # =============================================================================
 # Elige (Switch/Match)
@@ -262,6 +282,10 @@
   zig:
       - 'if ((x == 1))'
       - 'else if ((x == 2))'
+  cpp:
+      - 'switch (x) {'
+      - 'case 1: {'
+      - 'a();'
 
 # aliter in elige is the default case
 - name: 'elige with default'
@@ -280,6 +304,10 @@
   zig:
       - 'if ((x == 1))'
       - 'else {'
+  cpp:
+      - 'switch (x) {'
+      - 'case 1: {'
+      - 'a();'
 
 # =============================================================================
 # Guard Statements
@@ -299,6 +327,9 @@
       - 'return'
   zig:
       - 'if ((x == null))'
+      - 'return;'
+  cpp:
+      - 'if ((x == nullptr)) {'
       - 'return;'
 
 # =============================================================================

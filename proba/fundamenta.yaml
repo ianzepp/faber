@@ -48,6 +48,10 @@
       - 'fn fetchData() ![]const u8 {'
       - 'return "data";'
       - 'const data = fetchData();'
+  cpp:
+      - 'std::string fetchData() {'
+      - 'return std::string("data");'
+      - 'auto data = fetchData();'
 
 # variandum is varia + implicit await (let with async initialization)
 - name: 'let with await'
@@ -62,6 +66,10 @@
       - 'fn getResult() !i64 {'
       - 'return 42;'
       - 'const result = getResult();'
+  cpp:
+      - 'int64_t getResult() {'
+      - 'return 42;'
+      - 'auto result = getResult();'
 
 # =============================================================================
 # Special Expressions
@@ -72,6 +80,8 @@
   input: 'cede fetch(url)'
   ts: 'await fetch(url);'
   py: 'await fetch(url)'
+  cpp:
+      - 'fetch(url);'
 
 # novum creates a new instance (new keyword in TS, direct call in Python)
 - name: 'new expression'
@@ -80,6 +90,8 @@
   py: 'erratum(message)'
   zig:
       - 'erratum.init(message)'
+  cpp:
+      - 'erratum(message);'
 
 # =============================================================================
 # Boolean and Null Literals
@@ -126,6 +138,8 @@
   py: 'x = {}'
   zig:
       - 'const x = .{}'
+  cpp:
+      - 'const auto x = {};'
 
 # Object with properties - Python uses quoted keys
 - name: 'object with properties'
@@ -135,6 +149,8 @@
   zig:
       - '.nomen = "Marcus"'
       - '.aetas = 30'
+  cpp:
+      - 'const auto user = {.nomen = std::string("Marcus"), .aetas = 30};'
 
 # Object values can be expressions; verum becomes true/True
 - name: 'object with expression values'
@@ -151,6 +167,8 @@
       - 'True'
   zig:
       - 'const data = .{ .sum = (1 + 2), .active = true };'
+  cpp:
+      - 'const auto data = {.sum = (1 + 2), .active = true};'
 
 # =============================================================================
 # Array Literals
@@ -163,6 +181,8 @@
   py: 'arr = []'
   zig:
       - 'const arr = .{}'
+  cpp:
+      - 'const auto arr = std::vector<int>{};'
 
 # Array with elements
 - name: 'array with elements'
@@ -171,6 +191,8 @@
   py: 'nums = [1, 2, 3]'
   zig:
       - '.{ 1, 2, 3 }'
+  cpp:
+      - 'const auto nums = std::vector{1, 2, 3};'
 
 # =============================================================================
 # Hex Literals
@@ -183,6 +205,8 @@
   py: 'x = 0xFF'
   zig:
       - 'const m_x = 0xFF;'
+  cpp:
+      - 'const auto x = 255;'
 
 # Hex in binary expressions
 - name: 'hex in expression'
@@ -191,6 +215,8 @@
   py: '(0xFF & 0x0F)'
   zig:
       - '_ = (0xFF & 0x0F);'
+  cpp:
+      - '(255 & 15);'
 
 # BigInt hex literals (n suffix) - Python strips suffix since ints are arbitrary precision
 - name: 'hex bigint'
@@ -199,6 +225,8 @@
   py: 'big = 0xFFFFFFFFFF'
   zig:
       - 'const m_big = 0xFFFFFFFFFF;'
+  cpp:
+      - 'const auto big = 1099511627775;'
 
 # Lowercase hex is preserved
 - name: 'lowercase hex'
@@ -207,6 +235,8 @@
   py: 'val = 0xabcdef'
   zig:
       - 'const m_val = 0xabcdef;'
+  cpp:
+      - 'const auto val = 11259375;'
 
 # =============================================================================
 # Template Literals
@@ -219,6 +249,8 @@
   py: 'msg = f"hello world"'
   zig:
       - 'const m_msg = "hello world";'
+  cpp:
+      - 'const auto msg = std::string(hello world);'
 
 # Template interpolation syntax differs between targets
 - name: 'template with interpolation'
@@ -232,6 +264,9 @@
   zig:
       - 'const m_name = "Marcus";'
       - 'const m_greeting = "Hello, ${name}!";'
+  cpp:
+      - 'const auto name = std::string("Marcus");'
+      - 'const auto greeting = std::format(Hello, {}!, name);'
 
 # =============================================================================
 # Scribe Statements
@@ -264,6 +299,8 @@
   py:
       - 'print'
       - 'x + y'
+  cpp:
+      - 'std::print("{}\n", (x + y));'
 
 # =============================================================================
 # Includes (C++)

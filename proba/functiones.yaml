@@ -54,6 +54,9 @@
       - 'async def fetch(url):'
   zig:
       - '!void'
+  cpp:
+      - 'void fetch(auto url) {'
+      - 'return data;'
 
 # fiet is async + return type (wraps in Promise/Awaitable)
 - name: 'async function with return type'
@@ -65,6 +68,9 @@
   zig:
       - 'fn fetch() ![]const u8 {'
       - 'return "data";'
+  cpp:
+      - 'std::string fetch() {'
+      - 'return std::string("data");'
 
 # =============================================================================
 # Generator Functions
@@ -80,6 +86,9 @@
   zig:
       - 'fn range() i64 {'
       - 'return 1;'
+  cpp:
+      - 'int64_t range() {'
+      - 'return 1;'
 
 # fient is async generator (wraps in AsyncGenerator/AsyncIterator)
 - name: 'async generator function'
@@ -91,6 +100,9 @@
   zig:
       - 'fn stream() ![]const u8 {'
       - 'return "chunk";'
+  cpp:
+      - 'std::string stream() {'
+      - 'return std::string("chunk");'
 
 # =============================================================================
 # Yield/Await
@@ -106,6 +118,8 @@
   zig:
       - 'fn range() i64 {'
       - '_ = try 1;'
+  cpp:
+      - 'int64_t range() {'
 
 # cede in async context becomes await
 - name: 'cede in async function'
@@ -116,6 +130,9 @@
       - 'await getData()'
   zig:
       - 'try getData()'
+  cpp:
+      - 'std::string fetch() {'
+      - 'getData();'
 
 # =============================================================================
 # Arrow Functions
@@ -140,6 +157,9 @@
   py: 'lambda x: x'
   zig:
       - '_ = @compileError("Arrow functions not supported in Zig - use ''pro x -> Type: expr'' syntax");'
+  cpp:
+      - '[&](auto x) {'
+      - 'return x;'
 
 # =============================================================================
 # Lambda Expressions (pro)
@@ -152,6 +172,8 @@
   py: 'lambda x: (x * 2)'
   zig:
       - '_ = @compileError("Lambda requires return type annotation for Zig target: pro x -> Type: expr");'
+  cpp:
+      - '[&](auto x) { return (x * 2); };'
 
 # Multiple parameters separated by comma
 - name: 'multi param lambda'
@@ -160,6 +182,8 @@
   py: 'lambda x, y: (x + y)'
   zig:
       - '_ = @compileError("Lambda requires return type annotation for Zig target: pro x -> Type: expr");'
+  cpp:
+      - '[&](auto x, auto y) { return (x + y); };'
 
 # Zero parameters - empty param list
 - name: 'zero param lambda'
@@ -168,6 +192,8 @@
   py: 'lambda : 42'
   zig:
       - '_ = @compileError("Lambda requires return type annotation for Zig target: pro x -> Type: expr");'
+  cpp:
+      - '[&]() { return 42; };'
 
 # Lambda assigned to variable
 - name: 'lambda in variable'
@@ -176,6 +202,8 @@
   py: 'double = lambda x: (x * 2)'
   zig:
       - 'const double = @compileError("Lambda requires return type annotation for Zig target: pro x -> Type: expr");'
+  cpp:
+      - 'const auto double = [&](auto x) { return (x * 2); };'
 
 # Lambda passed as callback argument
 - name: 'lambda as callback'
@@ -184,6 +212,8 @@
   py:
       - 'filter'
       - 'lambda x: (x > 0)'
+  cpp:
+      - '(items | std::views::filter([&](auto x) { return (x > 0); }) | std::ranges::to<std::vector>());'
 
 # =============================================================================
 # Empty Blocks
@@ -198,3 +228,5 @@
       - 'pass'
   zig:
       - 'fn noop() void {}'
+  cpp:
+      - 'void noop() {}'
