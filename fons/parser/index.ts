@@ -133,7 +133,7 @@ import type {
     SpreadElement,
     FacBlockStatement,
     LambdaExpression,
-    UtExpression,
+    QuaExpression,
     EstExpression,
     ProbandumStatement,
     ProbaStatement,
@@ -415,12 +415,14 @@ export function parse(tokens: Token[]): ParserResult {
     /**
      * Check if token is a preposition used in parameters.
      *
-     * WHY: Prepositions indicate semantic roles (ad, de, in, ex).
+     * WHY: Prepositions indicate semantic roles:
+     *      de = borrowed/read-only, in = mutable borrow, ex = source
+     *      Note: 'ad' is reserved for statement-level dispatch, not parameters.
      *
      * @returns true if token is a preposition keyword
      */
     function isPreposition(token: Token): boolean {
-        return token.type === 'KEYWORD' && ['ad', 'de', 'in', 'ex'].includes(token.keyword ?? '');
+        return token.type === 'KEYWORD' && ['de', 'in', 'ex'].includes(token.keyword ?? '');
     }
 
     // =============================================================================
@@ -1149,12 +1151,13 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse single function parameter.
      *
      * GRAMMAR:
-     *   parameter := ('ad' | 'de' | 'in' | 'ex')? (typeAnnotation IDENTIFIER | IDENTIFIER)
+     *   parameter := ('de' | 'in' | 'ex')? (typeAnnotation IDENTIFIER | IDENTIFIER)
      *
-     * WHY: Type-first syntax: "textus name" or "ad textus recipientem"
+     * WHY: Type-first syntax: "textus name" or "de textus source"
      *      Prepositional prefixes indicate semantic roles:
-     *      ad = toward/to, de = from/concerning (borrowed),
-     *      in = in/into (mutable), ex = from/out of
+     *      de = from/concerning (borrowed, read-only),
+     *      in = in/into (mutable borrow),
+     *      ex = from/out of (source)
      *
      * EDGE: Preposition comes first (if present), then type (if present), then identifier.
      *

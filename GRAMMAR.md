@@ -122,7 +122,7 @@ This document is designed for both human readers and LLM code generation. When g
 - `non` — logical not (!)
 - `vel` — nullish coalescing (??)
 - `est` — instanceof/typeof check
-- `ut` — type cast (as)
+- `qua` — type cast (as)
 
 ### Collection Methods (lista)
 
@@ -185,12 +185,12 @@ genus UserService {
             si response.status !== 200 { redde nihil }
         }
 
-        redde response.json() ut User
+        redde response.json() qua User
     }
 
     futura functio fetchAll() fiet lista<User> {
         fixum response = cede ego.client.get(`${ego.baseUrl}/users`)
-        fixum users = cede response.json() ut lista<User>
+        fixum users = cede response.json() qua User[]
 
         redde users.filtrata(pro u: u.active)
     }
@@ -199,7 +199,7 @@ genus UserService {
 fixum app = novum Hono()
 
 app.get("/users/:id", futura functio(Context ctx) {
-    fixum id = ctx.param("id") ut numerus
+    fixum id = ctx.param("id") qua numerus
     fixum service = novum UserService("https://api.example.com")
     fixum user = cede service.fetch(id)
 
@@ -413,13 +413,14 @@ paramList := (parameter (',' parameter)*)?
 ### Parameter
 
 ```ebnf
-parameter := ('ad' | 'de' | 'in' | 'ex')? (typeAnnotation IDENTIFIER | IDENTIFIER)
+parameter := ('de' | 'in' | 'ex')? (typeAnnotation IDENTIFIER | IDENTIFIER)
 ```
 
-> Type-first syntax: "textus name" or "ad textus recipientem"
+> Type-first syntax: "textus name" or "de textus source"
 > Prepositional prefixes indicate semantic roles:
-> ad = toward/to, de = from/concerning (borrowed),
-> in = in/into (mutable), ex = from/out of
+> de = from/concerning (borrowed, read-only),
+> in = in/into (mutable borrow),
+> ex = from/out of (source)
 
 ### Arrow Function
 

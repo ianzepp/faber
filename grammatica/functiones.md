@@ -19,13 +19,14 @@ paramList := (parameter (',' parameter)*)?
 ### Parameter
 
 ```ebnf
-parameter := ('ad' | 'de' | 'in' | 'ex')? (typeAnnotation IDENTIFIER | IDENTIFIER)
+parameter := ('de' | 'in' | 'ex')? (typeAnnotation IDENTIFIER | IDENTIFIER)
 ```
 
-> Type-first syntax: "textus name" or "ad textus recipientem"
+> Type-first syntax: "textus name" or "de textus source"
 > Prepositional prefixes indicate semantic roles:
-> ad = toward/to, de = from/concerning (borrowed),
-> in = in/into (mutable), ex = from/out of
+> de = from/concerning (borrowed, read-only),
+> in = in/into (mutable borrow),
+> ex = from/out of (source)
 
 ### Arrow Function
 

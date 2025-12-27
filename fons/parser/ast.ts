@@ -311,23 +311,26 @@ export interface FunctioDeclaration extends BaseNode {
  * Function parameter.
  *
  * GRAMMAR (in EBNF):
- *   parameter := ('ad' | 'de' | 'in' | 'ex')? 'ceteri'? (typeAnnotation IDENTIFIER | IDENTIFIER)
+ *   parameter := ('de' | 'in' | 'ex')? 'ceteri'? (typeAnnotation IDENTIFIER | IDENTIFIER)
  *
- * INVARIANT: preposition is Latin (ad/de/in/ex), not English (to/from/in/of).
+ * INVARIANT: preposition is Latin (de/in/ex), not English (from/in/of).
  * INVARIANT: case and preposition enable semantic analysis of parameter roles.
  * INVARIANT: rest is true when 'ceteri' modifier present (variadic/rest parameter).
  *
  * WHY: Latin prepositions indicate semantic roles that map to different constructs
  *      in target languages. For systems targets (Rust/Zig), 'de' = borrowed/read-only
- *      and 'in' = mutable borrow.
+ *      and 'in' = mutable borrow. Note: 'ad' is reserved for statement-level dispatch.
  *
  * Target mappings (prepositions):
  *   de (from)  → param (TS/Py), &T (Rust), []const (Zig) — borrowed/read-only
  *   in (into)  → param (TS/Py), &mut T (Rust), *T (Zig) — mutable borrow
+ *   ex (from)  → param (TS/Py), source semantics
  *   ceteri     → ...rest (TS), *args (Py), slice (Zig)
  *
  * Examples:
- *   nomen: textus             -> regular param
+ *   textus nomen              -> regular param
+ *   de textus source          -> borrowed/read-only param
+ *   in lista<T> items         -> mutable borrow param
  *   ceteri lista<textus> args -> rest param (...args: string[])
  */
 export interface Parameter extends BaseNode {

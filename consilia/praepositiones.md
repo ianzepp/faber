@@ -1,7 +1,7 @@
 ---
 status: partial
 targets: [ts, py, zig, cpp, rs]
-note: Core prepositions implemented; collection DSL and some ownership features pending
+note: Core prepositions (ex, de, in, pro, qua) implemented. Collection DSL, ad dispatch, and ut aliasing not yet implemented.
 updated: 2024-12
 ---
 
@@ -23,15 +23,15 @@ The Latin preposition `cum` ("with") is **permanently banned** from Faber. Its E
 
 ## The Seven Prepositions
 
-| Preposition | Latin Meaning       | Core Semantic         |
-| ----------- | ------------------- | --------------------- |
-| `ex`        | "from, out of"      | Source/origin         |
-| `de`        | "from, concerning"  | Read-only reference   |
-| `in`        | "in, into"          | Mutable target        |
-| `ad`        | "to, toward"        | Destination/recipient |
-| `pro`       | "for, on behalf of" | Iteration binding     |
-| `ut`        | "as, like"          | Aliasing/renaming     |
-| `qua`       | "as, in capacity of"| Type assertion        |
+| Preposition | Latin Meaning        | Core Semantic         |
+| ----------- | -------------------- | --------------------- |
+| `ex`        | "from, out of"       | Source/origin         |
+| `de`        | "from, concerning"   | Read-only reference   |
+| `in`        | "in, into"           | Mutable target        |
+| `ad`        | "to, toward"         | Destination/recipient |
+| `pro`       | "for, on behalf of"  | Iteration binding     |
+| `ut`        | "as, like"           | Aliasing/renaming     |
+| `qua`       | "as, in capacity of" | Type assertion        |
 
 ---
 
@@ -60,7 +60,9 @@ ex items pro item {
 
 Draw each element **from** the collection.
 
-### Iteration with Transforms
+### Iteration with Transforms — Future
+
+> **Status:** Collection DSL not yet implemented. Use method chaining (`.filtrata()`, `.ordinata()`) instead.
 
 ```fab
 ex items filtra ubi active pro item {
@@ -74,7 +76,9 @@ ex items filtra ubi active, ordina per nomen pro item {
 
 Draw elements **from** the collection, after applying transforms. The `ex ... pro` frame stays constant; the middle is an optional pipeline.
 
-### Collection Expression
+### Collection Expression — Future
+
+> **Status:** Collection DSL not yet implemented.
 
 ```fab
 fixum active = ex users filtra ubi active
@@ -201,34 +205,62 @@ The parameter is mutably borrowed. The function modifies what was passed **in**.
 
 ---
 
-## `ad` — Destination/Recipient
+## `ad` — Universal Dispatch
 
 **Latin:** "to, toward"
 
-`ad` indicates a destination or recipient.
+> **Status:** Not yet implemented. Reserved for statement-level dispatch only.
 
-### Ad Dispatch (HTTP/Messaging)
+`ad` is a syscall-style dispatch mechanism. It provides uniform syntax for calling into stdlib modules, external packages, and remote services. HTTP is just one convenience pattern routed through the syscall table.
+
+See `ad.md` for full design documentation.
+
+### Stdlib Syscall — Future
 
 ```fab
-ad "https://api.example.com/users" ("GET") fiet Response qua resp {
+ad "fasciculus:lege" ("file.txt") fit textus pro content {
+    scribe(content)
+}
+```
+
+Dispatch **to** a stdlib module method. The target string follows `module:method` convention.
+
+### HTTP (Protocol Sugar) — Future
+
+```fab
+ad "https://api.example.com/users" ("GET") fiet Response pro resp {
     scribe(resp.status)
 }
 ```
 
-Send a request **to** a destination. See `ad.md` for full documentation.
+URLs are syntactic sugar. The compiler rewrites `https://...` to `ad "caelum:request" (url, ...)`.
 
-### Future Uses
+### External Package — Future
 
-`ad` may be used for:
+```fab
+ad "hono/Hono" () fit App pro app {
+    app.get("/", handler)
+}
+```
 
-- Channel sends: `ad channel mitte(message)`
-- Event dispatch: `ad handler mitte(event)`
+Dispatch **to** an external package export.
+
+### Binding with Alias
+
+The `pro` preposition binds the result, optionally with `ut` alias:
+
+```fab
+ad "fasciculus:lege" ("file.txt") fit textus pro content ut c { ... }
+```
 
 ### Summary
 
-| Pattern                                 | Meaning                      |
-| --------------------------------------- | ---------------------------- |
-| `ad url (method) fiet Type qua var { }` | HTTP/dispatch to destination |
+| Pattern                                  | Meaning                   |
+| ---------------------------------------- | ------------------------- |
+| `ad "module:method" (args) pro var { }`  | Stdlib syscall dispatch   |
+| `ad "https://..." (method) pro var { }`  | HTTP (sugar for caelum)   |
+| `ad "package/export" (args) pro var { }` | External package dispatch |
+| `... pro var ut alias { }`               | Bind with alias           |
 
 ---
 
@@ -281,7 +313,11 @@ discerne event {
 
 **Latin:** "as, like"
 
+> **Status:** Not yet implemented. The examples below describe intended behavior.
+
 `ut` renames identifiers. It says "call this AS that name."
+
+Note: Type casting uses `qua`, not `ut`. The `ut` preposition is reserved for aliasing/renaming.
 
 ### Import Alias
 
@@ -314,11 +350,11 @@ External name `from`, internally known **as** `source`.
 
 ### Summary
 
-| Pattern                    | Meaning                 |
-| -------------------------- | ----------------------- |
-| `importa name ut alias`    | Import alias            |
-| `{ field ut alias }`       | Destructuring alias     |
-| `Type external ut internal`| Parameter internal name |
+| Pattern                     | Meaning                 |
+| --------------------------- | ----------------------- |
+| `importa name ut alias`     | Import alias            |
+| `{ field ut alias }`        | Destructuring alias     |
+| `Type external ut internal` | Parameter internal name |
 
 ---
 
@@ -356,10 +392,10 @@ Treat the result **as** `textus`. (Type assertion, not conversion.)
 
 ### Summary
 
-| Pattern              | Meaning                    |
-| -------------------- | -------------------------- |
-| `fiet Type qua name` | Bind typed result as name  |
-| `expr qua Type`      | Assert expression as type  |
+| Pattern              | Meaning                   |
+| -------------------- | ------------------------- |
+| `fiet Type qua name` | Bind typed result as name |
+| `expr qua Type`      | Assert expression as type |
 
 ---
 
@@ -406,33 +442,33 @@ ex norma importa scribe ut s { }
 ex response fixum { data }
 
 // Send to destination, bind response
-ad url ("GET") fiet Response qua resp { }
+ad url ("GET") fiet Response pro resp { }
 ```
 
 ---
 
 ## Implementation Status
 
-| Preposition | Context                      | Status     |
-| ----------- | ---------------------------- | ---------- |
-| `ex`        | Import                       | Done       |
-| `ex`        | Iteration (`ex...pro`)       | Done       |
-| `ex`        | Destructuring                | Done       |
-| `ex`        | Collection DSL               | Not done   |
-| `de`        | Key iteration (`de...pro`)   | Done       |
-| `de`        | Borrowed parameter           | Done (Zig) |
-| `de`        | Novum source                 | Done       |
-| `in`        | Mutation block               | Not done   |
-| `in`        | Mutable parameter            | Done (Zig) |
-| `ad`        | HTTP dispatch                | Partial    |
-| `pro`       | Iteration binding            | Done       |
-| `pro`       | Lambda parameter             | Done       |
-| `pro`       | Variant binding (`discerne`) | Not done   |
-| `ut`        | Import alias                 | Not done   |
-| `ut`        | Destructuring alias          | Not done   |
-| `ut`        | Parameter alias              | Not done   |
-| `qua`       | Response binding (`ad`)      | Partial    |
-| `qua`       | Type assertion               | Done       |
+| Preposition | Context                      | Status         |
+| ----------- | ---------------------------- | -------------- |
+| `ex`        | Import                       | Done           |
+| `ex`        | Iteration (`ex...pro`)       | Done           |
+| `ex`        | Destructuring                | Done           |
+| `ex`        | Collection DSL               | Not done       |
+| `de`        | Key iteration (`de...pro`)   | Done           |
+| `de`        | Borrowed parameter           | Done (Zig/C++) |
+| `de`        | Novum source                 | Done           |
+| `in`        | Mutation block               | Done           |
+| `in`        | Mutable parameter            | Done (Zig/C++) |
+| `ad`        | Syscall dispatch             | Not done       |
+| `pro`       | Iteration binding            | Done           |
+| `pro`       | Lambda parameter             | Done           |
+| `pro`       | Variant binding (`discerne`) | Done           |
+| `pro`       | Ad result binding            | Not done       |
+| `ut`        | Import alias                 | Not done       |
+| `ut`        | Destructuring alias          | Not done       |
+| `ut`        | Parameter alias              | Not done       |
+| `qua`       | Type assertion               | Done           |
 
 ---
 

@@ -24,10 +24,12 @@ Universal dispatch for stdlib, external packages, and remote services.
 
 ```ebnf
 adStmt := 'ad' target '(' args ')' bindingClause? block?
-bindingClause := fitKeyword typeAnnotation? 'qua' IDENTIFIER
+bindingClause := fitKeyword typeAnnotation? 'pro' IDENTIFIER ('ut' IDENTIFIER)?
 fitKeyword := 'fit' | 'fiet' | 'fiunt' | 'fient'
 target := STRING
 ```
+
+The `pro` preposition introduces the binding (consistent with iteration/lambda bindings). Optional `ut` provides an alias.
 
 ## Binding Keywords
 
@@ -43,17 +45,17 @@ target := STRING
 ### Stdlib Syscall
 
 ```fab
-ad "fasciculus:lege" ("file.txt") fit textus qua content {
+ad "fasciculus:lege" ("file.txt") fit textus pro content {
     scribe content
 }
 ```
 
-Reads as: "to fasciculus:lege with 'file.txt', becomes textus as content"
+Reads as: "to fasciculus:lege with 'file.txt', becomes textus, for content"
 
 ### Async Call
 
 ```fab
-ad "http:get" (url) fiet Response qua response {
+ad "http:get" (url) fiet Response pro response {
     scribe response.body
 }
 ```
@@ -61,7 +63,7 @@ ad "http:get" (url) fiet Response qua response {
 ### Batch/Plural
 
 ```fab
-ad "http:batch" (urls) fient Response[] qua responses {
+ad "http:batch" (urls) fient Response[] pro responses {
     ex responses pro r {
         scribe r.status
     }
@@ -71,11 +73,11 @@ ad "http:batch" (urls) fient Response[] qua responses {
 ### External Package
 
 ```fab
-ad "hono/Hono" () fit App qua app {
+ad "hono/Hono" () fit App pro app {
     app.get("/", handler)
 }
 
-ad "hono/app:serve" (app, 3000) fiet Server qua server {
+ad "hono/app:serve" (app, 3000) fiet Server pro server {
     scribe "Listening on " + server.port
 }
 ```
@@ -94,10 +96,10 @@ If the syscall table defines the return type, the type annotation is optional:
 
 ```fab
 // Explicit type
-ad "fasciculus:lege" ("file.txt") fit textus qua content { ... }
+ad "fasciculus:lege" ("file.txt") fit textus pro content { ... }
 
 // Inferred from syscall table
-ad "fasciculus:lege" ("file.txt") qua content { ... }
+ad "fasciculus:lege" ("file.txt") pro content { ... }
 ```
 
 When type is omitted, `fit`/`fiet` can also be omitted — sync is assumed.
@@ -120,30 +122,30 @@ URLs are syntactic sugar. The compiler prepends the URL to the args and rewrites
 
 ```fab
 // What you write
-ad "https://api.example.com/users" ("GET") fiet Response qua r { }
-ad "https://api.example.com/users" ("POST", body) fiet Response qua r { }
+ad "https://api.example.com/users" ("GET") fiet Response pro r { }
+ad "https://api.example.com/users" ("POST", body) fiet Response pro r { }
 
 // What the compiler rewrites to
-ad "caelum:request" ("https://api.example.com/users", "GET") fiet Response qua r { }
-ad "caelum:request" ("https://api.example.com/users", "POST", body) fiet Response qua r { }
+ad "caelum:request" ("https://api.example.com/users", "GET") fiet Response pro r { }
+ad "caelum:request" ("https://api.example.com/users", "POST", body) fiet Response pro r { }
 ```
 
 The args pass through unchanged with the URL prepended. The stdlib handler defines its signature:
 
 ```fab
 // HTTP - args are (method, body?, headers?)
-ad "https://api.example.com/users" ("GET") fiet Response qua r { }
-ad "https://api.example.com/users" ("POST", body, headers) fiet Response qua r { }
+ad "https://api.example.com/users" ("GET") fiet Response pro r { }
+ad "https://api.example.com/users" ("POST", body, headers) fiet Response pro r { }
 
 // File - args are (mode, content?)
-ad "file:///etc/hosts" ("r") fit textus qua content { }
-ad "file:///tmp/out" ("w", content) fit qua ok { }
+ad "file:///etc/hosts" ("r") fit textus pro content { }
+ad "file:///tmp/out" ("w", content) fit pro ok { }
 
 // WebSocket - args are (options?)
-ad "wss://stream.example.com" () fiet Socket qua ws { }
+ad "wss://stream.example.com" () fiet Socket pro ws { }
 
 // Explicit stdlib call (equivalent)
-ad "caelum:request" (url, "GET") fiet Response qua r { }
+ad "caelum:request" (url, "GET") fiet Response pro r { }
 ```
 
 ### Namespace Conventions
@@ -166,14 +168,14 @@ The `ad` binding mirrors function declaration syntax:
 functio fetch(textus url) fiet Response
 
 // Dispatch: binds result with same keywords
-ad "http:get" (url) fiet Response qua response { ... }
+ad "http:get" (url) fiet Response pro response { ... }
 ```
 
 | Aspect        | `functio`              | `ad`                          |
 | ------------- | ---------------------- | ----------------------------- |
-| Return type   | `fiet Type` after args | `fiet Type` before `qua`      |
+| Return type   | `fiet Type` after args | `fiet Type` before `pro`      |
 | Async marker  | `fiet` vs `fit`        | `fiet` vs `fit`               |
-| Result access | caller binds with `=`  | `qua name` binds in statement |
+| Result access | caller binds with `=`  | `pro name` binds in statement |
 
 ## Codegen Strategy
 
@@ -184,7 +186,7 @@ Two approaches were considered:
 ### Option A: Direct Codegen
 
 ```fab
-ad "https://api.example.com/users" ("GET") fiet Response qua r { }
+ad "https://api.example.com/users" ("GET") fiet Response pro r { }
 ```
 
 Becomes (TypeScript):
@@ -202,7 +204,7 @@ const r = try std.http.Client.fetch(allocator, "https://api.example.com/users", 
 ### Option B: Runtime Syscall Proxy
 
 ```fab
-ad "https://api.example.com/users" ("GET") fiet Response qua r { }
+ad "https://api.example.com/users" ("GET") fiet Response pro r { }
 ```
 
 Becomes (TypeScript):
@@ -244,8 +246,8 @@ const r = await __fab_syscall('caelum:request', 'https://api.example.com/users',
 ```fab
 importa { App, Context } de "hono"  // types only
 
-ad "hono/Hono" () fit App qua app {
-    app.get("/") fit Context qua c {
+ad "hono/Hono" () fit App pro app {
+    app.get("/") fit Context pro c {
         c.text("Salve")
     }
 }
@@ -258,7 +260,7 @@ ad "hono/Hono" () fit App qua app {
 3. Streaming results — does `pro` bind each item as it arrives?
 
 ```fab
-ad "wss://stream.example.com/events" () pro Event qua event {
+ad "wss://stream.example.com/events" () pro Event pro event {
     scribe event.data
 }
 ```

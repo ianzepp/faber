@@ -312,14 +312,14 @@ describe('parser', () => {
 
         test('function with preposition parameter', () => {
             const { program } = parseCode(`
-        functio mitte(textus nuntium, ad textus recipientem) {
+        functio mitte(textus nuntium, de textus source) {
           scribe(nuntium)
         }
       `);
             const fn = program!.body[0] as any;
 
-            expect(fn.params[1].preposition).toBe('ad');
-            expect(fn.params[1].name.name).toBe('recipientem');
+            expect(fn.params[1].preposition).toBe('de');
+            expect(fn.params[1].name.name).toBe('source');
         });
 
         test('function with de preposition (borrowed parameter)', () => {
@@ -430,13 +430,13 @@ describe('parser', () => {
 
         test('function with preposition and user-defined type', () => {
             const { program } = parseCode(`
-        functio moveTo(ad coordinate destination) {
+        functio moveTo(in coordinate destination) {
           scribe(destination)
         }
       `);
             const fn = program!.body[0] as any;
 
-            expect(fn.params[0].preposition).toBe('ad');
+            expect(fn.params[0].preposition).toBe('in');
             expect(fn.params[0].typeAnnotation.name).toBe('coordinate');
             expect(fn.params[0].name.name).toBe('destination');
         });
