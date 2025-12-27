@@ -10,10 +10,10 @@ import { parse as parseYaml } from 'yaml';
 import { readFileSync, readdirSync } from 'fs';
 import { join, basename } from 'path';
 
-import { tokenize } from '../../tokenizer';
-import { parse } from '../../parser';
-import { analyze } from '../../semantic';
-import { generate } from '../index';
+import { tokenize } from '../fons/tokenizer';
+import { parse } from '../fons/parser';
+import { analyze } from '../fons/semantic';
+import { generate } from '../fons/codegen';
 
 // Supported targets
 const TARGETS = ['ts', 'py'] as const;
