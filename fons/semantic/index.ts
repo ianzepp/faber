@@ -411,8 +411,8 @@ export function analyze(program: Program): SemanticResult {
             return unionType(types);
         }
 
-        // Check for built-in primitive type (case-insensitive)
-        const primitive = LATIN_TYPE_MAP[node.name.toLowerCase()];
+        // Check for built-in primitive type
+        const primitive = LATIN_TYPE_MAP[node.name];
 
         if (primitive) {
             const size = extractSizeFromTypeParams(node.typeParameters);
@@ -428,8 +428,8 @@ export function analyze(program: Program): SemanticResult {
             return primitive;
         }
 
-        // Check for generic type (case-insensitive)
-        if (GENERIC_TYPES.has(node.name.toLowerCase())) {
+        // Check for generic type
+        if (GENERIC_TYPES.has(node.name)) {
             // Filter only TypeAnnotation params for generic type parameters
             const typeParams = (node.typeParameters ?? [])
                 .filter(p => p.type === 'TypeAnnotation')

@@ -737,8 +737,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      *   numerus<i32> -> number (size type ignored)
      */
     function genType(node: TypeAnnotation): string {
-        // Map Latin type name to TS type (case-insensitive lookup)
-        const typeName = node.name.toLowerCase();
+        // Map Latin type name to TS type
+        const typeName = node.name;
         const base = typeMap[typeName] ?? node.name;
 
         // Track decimal.js dependency

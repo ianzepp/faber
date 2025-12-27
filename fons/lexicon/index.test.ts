@@ -255,9 +255,13 @@ describe('keywords', () => {
         expect(getKeyword('futura')?.meaning).toBe('async');
     });
 
-    test('getKeyword is case insensitive', () => {
-        expect(getKeyword('SI')?.meaning).toBe('if');
-        expect(getKeyword('Fixum')?.meaning).toBe('const');
+    test('getKeyword is case sensitive', () => {
+        // Keywords must be lowercase
+        expect(getKeyword('si')?.meaning).toBe('if');
+        expect(getKeyword('fixum')?.meaning).toBe('const');
+        // Uppercase variants are not keywords
+        expect(getKeyword('SI')).toBe(undefined);
+        expect(getKeyword('Fixum')).toBe(undefined);
     });
 });
 
@@ -282,8 +286,8 @@ describe('parseType', () => {
             }
         });
 
-        test('Numerum (accusative)', () => {
-            const results = parseType('Numerum');
+        test('numerum (accusative)', () => {
+            const results = parseType('numerum');
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
@@ -305,8 +309,8 @@ describe('parseType', () => {
             }
         });
 
-        test('Listam (accusative)', () => {
-            const results = parseType('Listam');
+        test('listam (accusative)', () => {
+            const results = parseType('listam');
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
@@ -363,8 +367,8 @@ describe('parseType', () => {
             }
         });
 
-        test('Tempus (3rd declension neuter, alternate nominative)', () => {
-            const results = parseType('Tempus');
+        test('tempus (3rd declension neuter, alternate nominative)', () => {
+            const results = parseType('tempus');
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
@@ -374,8 +378,8 @@ describe('parseType', () => {
             }
         });
 
-        test('Temporis (3rd declension neuter, genitive)', () => {
-            const results = parseType('Temporis');
+        test('temporis (3rd declension neuter, genitive)', () => {
+            const results = parseType('temporis');
 
             expect(Array.isArray(results)).toBe(true);
             if (Array.isArray(results)) {
@@ -386,10 +390,15 @@ describe('parseType', () => {
     });
 
     describe('builtin type helpers', () => {
-        test('isBuiltinType recognizes type stems', () => {
-            expect(isBuiltinType('Text')).toBe(true);
-            expect(isBuiltinType('Numer')).toBe(true);
-            expect(isBuiltinType('List')).toBe(true);
+        test('isBuiltinType recognizes type stems (case-sensitive)', () => {
+            // Stems are lowercase
+            expect(isBuiltinType('text')).toBe(true);
+            expect(isBuiltinType('numer')).toBe(true);
+            expect(isBuiltinType('list')).toBe(true);
+            // Uppercase variants don't match
+            expect(isBuiltinType('Text')).toBe(false);
+            expect(isBuiltinType('Numer')).toBe(false);
+            // Unknown stems
             expect(isBuiltinType('asdfgh')).toBe(false);
         });
     });

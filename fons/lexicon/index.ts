@@ -35,7 +35,7 @@
  * INV-1: All stems are stored without endings (e.g., "numer" not "numerus")
  * INV-2: Ending tables are complete for each declension/conjugation
  * INV-3: Multiple interpretations are returned when forms are ambiguous
- * INV-4: Case-sensitive matching for types (TitleCase), case-insensitive for others
+ * INV-4: All matching is case-sensitive (exact match required)
  *
  * @module lexicon
  */
@@ -169,11 +169,10 @@ export interface ParsedType extends ParsedNoun {
  * Parse an inflected Latin noun to determine its grammatical properties.
  *
  * ALGORITHM:
- *   1. Normalize to lowercase (Latin nouns are case-insensitive in source)
- *   2. Try each known noun stem
- *   3. Extract ending by removing stem
- *   4. Lookup ending in appropriate declension table
- *   5. Return all matching interpretations (may be multiple)
+ *   1. Try each known noun stem (case-sensitive)
+ *   2. Extract ending by removing stem
+ *   3. Lookup ending in appropriate declension table
+ *   4. Return all matching interpretations (may be multiple)
  *
  * WHY: Returns array rather than single result because Latin has homographs.
  *      For example, "lista" could be nominative singular OR ablative singular.
@@ -183,18 +182,15 @@ export interface ParsedType extends ParsedNoun {
  * @returns Array of possible interpretations, or LexiconError
  */
 export function parseNoun(word: string): ParsedNoun[] | LexiconError {
-    // WHY: Latin nouns in user code are case-insensitive (unlike types which are TitleCase)
-    const lowerWord = word.toLowerCase();
-
     // Track best match for error reporting
     let bestMatch: { stem: string; ending: string } | null = null;
 
     for (const noun of nouns) {
-        if (!lowerWord.startsWith(noun.stem)) {
+        if (!word.startsWith(noun.stem)) {
             continue;
         }
 
-        const ending = lowerWord.slice(noun.stem.length);
+        const ending = word.slice(noun.stem.length);
         const endingsTable = getEndingsForDeclension(noun.declension, noun.gender);
 
         if (!endingsTable) {
@@ -238,35 +234,27 @@ export function parseNoun(word: string): ParsedNoun[] | LexiconError {
  * Parse an inflected Latin type name to determine its grammatical properties.
  *
  * ALGORITHM:
- *   1. Check for alternate nominative forms (e.g., Tempus for Tempor-)
- *   2. Preserve original case for stem matching (types are TitleCase)
- *   3. Try each built-in type stem
- *   4. Extract ending (convert to lowercase for ending lookup)
- *   5. Lookup ending in appropriate declension table
- *   6. Return all matching interpretations
- *
- * WHY: Types use TitleCase (textus, numerus) to distinguish from user nouns.
- *      This follows TypeScript convention where types start with uppercase.
+ *   1. Check for alternate nominative forms (e.g., tempus for tempor-)
+ *   2. Try each built-in type stem (case-sensitive)
+ *   3. Extract ending
+ *   4. Lookup ending in appropriate declension table
+ *   5. Return all matching interpretations
  *
  * EDGE: 3rd declension types have special nominative handling:
  *       - Regular: stem equals nominative (cursor)
- *       - Neuter: nominative differs from stem (Tempus vs Tempor-)
+ *       - Neuter: nominative differs from stem (tempus vs tempor-)
  *
- * @param word - The inflected type name (e.g., "textus", "Cursorem", "Tempus")
+ * @param word - The inflected type name (e.g., "textus", "cursor", "tempus")
  * @returns Array of possible interpretations with target type info, or LexiconError
  */
 export function parseType(word: string): ParsedType[] | LexiconError {
     // Track best match for error reporting
     let bestMatch: { stem: string; ending: string } | null = null;
 
-    // WHY: Normalize to lowercase for case-insensitive matching
-    //      (Latin had no case distinction, so textus/textus/TEXTUS all work)
-    const lowerWord = word.toLowerCase();
-
     for (const typeEntry of builtinTypes) {
         // EDGE: Check alternate nominative forms first (e.g., tempus for tempor-)
         //       3rd declension neuters have nominatives that differ from stems
-        if (typeEntry.nominative && lowerWord === typeEntry.nominative) {
+        if (typeEntry.nominative && word === typeEntry.nominative) {
             return [
                 {
                     stem: typeEntry.stem,
@@ -281,12 +269,11 @@ export function parseType(word: string): ParsedType[] | LexiconError {
             ];
         }
 
-        if (!lowerWord.startsWith(typeEntry.stem)) {
+        if (!word.startsWith(typeEntry.stem)) {
             continue;
         }
 
-        // WHY: Both word and stem are now lowercase
-        const ending = lowerWord.slice(typeEntry.stem.length);
+        const ending = word.slice(typeEntry.stem.length);
         const endingsTable = getEndingsForDeclension(typeEntry.declension, typeEntry.gender);
 
         if (!endingsTable) {
@@ -350,12 +337,11 @@ export function parseType(word: string): ParsedType[] | LexiconError {
  * Parse an inflected Latin verb to determine its grammatical properties.
  *
  * ALGORITHM:
- *   1. Normalize to lowercase
- *   2. Try each known verb stem
- *   3. Extract ending by removing stem
- *   4. Select conjugation table (1st or 3rd conjugation)
- *   5. Lookup ending to get tense/person/number
- *   6. Return all matching interpretations
+ *   1. Try each known verb stem (case-sensitive)
+ *   2. Extract ending by removing stem
+ *   3. Select conjugation table (1st or 3rd conjugation)
+ *   4. Lookup ending to get tense/person/number
+ *   5. Return all matching interpretations
  *
  * WHY: Latin verbs encode tense, person, number, and mood in their endings.
  *      Present tense = synchronous, Future tense = asynchronous (returns Promise).
@@ -371,17 +357,15 @@ export function parseType(word: string): ParsedType[] | LexiconError {
  * @returns Array of possible interpretations, or LexiconError
  */
 export function parseVerb(word: string): ParsedVerb[] | LexiconError {
-    const lowerWord = word.toLowerCase();
-
     // Track best match for error reporting
     let bestMatch: { stem: string; ending: string } | null = null;
 
     for (const verb of verbs) {
-        if (!lowerWord.startsWith(verb.stem)) {
+        if (!word.startsWith(verb.stem)) {
             continue;
         }
 
-        const ending = lowerWord.slice(verb.stem.length);
+        const ending = word.slice(verb.stem.length);
 
         let endingsTable: typeof conjugation1Endings | null = null;
 

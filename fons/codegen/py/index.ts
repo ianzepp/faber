@@ -894,13 +894,12 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      */
     function genType(node: TypeAnnotation): string {
         // Track feature usage for preamble
-        const lowerName = node.name.toLowerCase();
-        if (lowerName === 'decimus' || lowerName === 'decim') {
+        if (node.name === 'decimus' || node.name === 'decim') {
             features.decimal = true;
         }
 
-        // Map Latin type name to Python type (case-insensitive lookup)
-        const base = typeMap[lowerName] ?? node.name;
+        // Map Latin type name to Python type
+        const base = typeMap[node.name] ?? node.name;
 
         // Handle generic type parameters
         let result = base;

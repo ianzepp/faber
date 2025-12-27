@@ -12,9 +12,8 @@
  * They map directly to control flow, declarations, operators, and literal values
  * in the target language.
  *
- * Unlike identifiers, keywords are case-insensitive in Latin (following the
- * historical tradition that Latin had no distinction between upper/lowercase
- * until medieval times). "SI", "Si", and "si" all mean "if".
+ * Keywords are case-sensitive and lowercase only. "si" is the if keyword,
+ * "SI" is a valid constant identifier.
  *
  * Keywords are categorized by their syntactic role:
  * - control: Control flow statements (si, dum, redde)
@@ -33,8 +32,8 @@
  * INVARIANTS
  * ==========
  * INV-1: All keywords are stored in lowercase
- * INV-2: Keyword lookup is case-insensitive (normalized to lowercase)
- * INV-3: Keywords are disjoint from type names (types use TitleCase)
+ * INV-2: Keyword lookup is case-sensitive (exact match required)
+ * INV-3: Keywords are disjoint from type names
  * INV-4: Map lookup is O(1) for performance
  *
  * @module lexicon/keywords
@@ -263,14 +262,13 @@ const keywordMap = new Map(keywords.map(k => [k.latin, k]));
 /**
  * Check if a word is a reserved keyword.
  *
- * WHY: Case-insensitive matching follows Latin convention (no case distinction
- *      in classical Latin). "SI", "Si", "si" all recognized as keywords.
+ * WHY: Case-sensitive matching — "si" is a keyword, "SI" is a valid identifier.
  *
  * @param word - The word to check
  * @returns true if word is a keyword, false otherwise
  */
 export function isKeyword(word: string): boolean {
-    return keywordMap.has(word.toLowerCase());
+    return keywordMap.has(word);
 }
 
 /**
@@ -280,5 +278,5 @@ export function isKeyword(word: string): boolean {
  * @returns KeywordEntry if word is a keyword, undefined otherwise
  */
 export function getKeyword(word: string): KeywordEntry | undefined {
-    return keywordMap.get(word.toLowerCase());
+    return keywordMap.get(word);
 }

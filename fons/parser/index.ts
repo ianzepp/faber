@@ -408,8 +408,7 @@ export function parse(tokens: Token[]): ParserResult {
      * @returns true if token is an identifier and a known builtin type
      */
     function isTypeName(token: Token): boolean {
-        // Case-insensitive lookup (textus, textus, TEXTUS all match)
-        return token.type === 'IDENTIFIER' && BUILTIN_TYPE_NAMES.has(token.value.toLowerCase());
+        return token.type === 'IDENTIFIER' && BUILTIN_TYPE_NAMES.has(token.value);
     }
 
     /**
@@ -2966,7 +2965,7 @@ export function parse(tokens: Token[]): ParserResult {
             if (match('EQUAL_EQUAL', 'BANG_EQUAL', 'TRIPLE_EQUAL', 'BANG_DOUBLE_EQUAL')) {
                 operator = tokens[current - 1]!.value;
                 position = tokens[current - 1]!.position;
-            } else if (checkKeyword('non') && peek(1)?.type === 'KEYWORD' && peek(1)?.value.toLowerCase() === 'est') {
+            } else if (checkKeyword('non') && peek(1)?.type === 'KEYWORD' && peek(1)?.value === 'est') {
                 // 'non est' - negated type check
                 position = peek().position;
                 advance(); // consume 'non'
@@ -3280,9 +3279,7 @@ export function parse(tokens: Token[]): ParserResult {
             const isUnaryOperand =
                 next?.type === 'IDENTIFIER' ||
                 (next?.type === 'KEYWORD' &&
-                    ['verum', 'falsum', 'nihil', 'ego', 'non', 'nulla', 'nonnulla', 'negativum', 'positivum', 'novum', 'cede'].includes(
-                        next.value.toLowerCase(),
-                    ));
+                    ['verum', 'falsum', 'nihil', 'ego', 'non', 'nulla', 'nonnulla', 'negativum', 'positivum', 'novum', 'cede'].includes(next.value));
             if (isUnaryOperand) {
                 advance(); // consume 'nihil'
                 const position = tokens[current - 1]!.position;

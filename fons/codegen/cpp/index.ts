@@ -552,7 +552,7 @@ struct _ScopeGuard {
      *   textus? -> std::optional<std::string>
      */
     function genType(node: TypeAnnotation): string {
-        const base = typeMap[node.name.toLowerCase()] ?? node.name;
+        const base = typeMap[node.name] ?? node.name;
 
         // Handle generic type parameters
         let result = base;

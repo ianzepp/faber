@@ -152,6 +152,8 @@ const typeMap: Record<string, string> = {
     objectum: 'anytype',
     ignotum: 'anytype',
     numquam: 'noreturn',
+    // Memory management
+    curator: 'std.mem.Allocator',
 };
 
 // =============================================================================
@@ -189,6 +191,18 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
 
     // Track if program uses collections (need arena allocator)
     let usesCollections = false;
+
+    // Track active allocator name for collection operations
+    // WHY: Functions with `curator` param use that allocator name instead of default 'alloc'
+    let curatorStack: string[] = ['alloc'];
+
+    /**
+     * Get the current active allocator name.
+     * WHY: Collection methods need to know which allocator to use.
+     */
+    function getCurator(): string {
+        return curatorStack[curatorStack.length - 1] ?? 'alloc';
+    }
 
     /**
      * Check if a block contains non-fatal throw statements (iace).
@@ -733,7 +747,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      *             For unio types, we emit anytype as a fallback.
      */
     function genType(node: TypeAnnotation): string {
-        const name = node.name.toLowerCase();
+        const name = node.name;
 
         // Handle union types (unio<A, B>) - Zig doesn't have untagged unions
         // WHY: Zig's type system requires tagged unions (union(enum)) for sum types.
@@ -748,7 +762,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             return genGenericType(name, node.typeParameters, node.nullable);
         }
 
-        // Case-insensitive type lookup
+        // Type lookup
         const base = typeMap[name] ?? node.name;
 
         if (node.nullable) {
@@ -870,7 +884,23 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
         const needsErrorUnion = node.async || hasIace;
         const retType = needsErrorUnion ? `!${returnType}` : returnType;
 
+        // WHY: Track curator parameter for collection allocator calls
+        // Find curator param: type annotation name is 'curator'
+        const curatorParam = node.params.find(
+            p => p.typeAnnotation?.name.toLowerCase() === 'curator'
+        );
+
+        // Push curator name onto stack if present
+        if (curatorParam) {
+            curatorStack.push(curatorParam.name.name);
+        }
+
         const body = genBlockStatement(node.body);
+
+        // Pop curator from stack after generating body
+        if (curatorParam) {
+            curatorStack.pop();
+        }
 
         return `${ind()}fn ${name}(${allParams}) ${retType} ${body}`;
     }
@@ -928,7 +958,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
      */
     function genTypeWithPreposition(node: TypeAnnotation, preposition?: string): string {
         const baseType = genType(node);
-        const typeName = node.name.toLowerCase();
+        const typeName = node.name;
 
         if (!preposition) {
             // No preposition = owned value (current behavior)
@@ -2234,11 +2264,14 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             const collectionName = objType?.kind === 'generic' ? objType.name : null;
 
             // Dispatch based on resolved type
+            // WHY: Pass current curator to method generators that need allocator
+            const curator = getCurator();
+
             if (collectionName === 'tabula') {
                 const method = getTabulaMethod(methodName);
                 if (method) {
                     if (typeof method.zig === 'function') {
-                        return method.zig(obj, args);
+                        return method.zig(obj, args, curator);
                     }
                     return `${obj}.${method.zig}(${args})`;
                 }
@@ -2246,7 +2279,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 const method = getCopiaMethod(methodName);
                 if (method) {
                     if (typeof method.zig === 'function') {
-                        return method.zig(obj, args);
+                        return method.zig(obj, args, curator);
                     }
                     return `${obj}.${method.zig}(${args})`;
                 }
@@ -2254,7 +2287,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 const method = getListaMethod(methodName);
                 if (method) {
                     if (typeof method.zig === 'function') {
-                        return method.zig(obj, args);
+                        return method.zig(obj, args, curator);
                     }
                     return `${obj}.${method.zig}(${args})`;
                 }
@@ -2264,7 +2297,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             const listaMethod = getListaMethod(methodName);
             if (listaMethod) {
                 if (typeof listaMethod.zig === 'function') {
-                    return listaMethod.zig(obj, args);
+                    return listaMethod.zig(obj, args, curator);
                 }
                 return `${obj}.${listaMethod.zig}(${args})`;
             }

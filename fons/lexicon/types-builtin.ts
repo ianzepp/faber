@@ -9,8 +9,7 @@
  * ============
  * This module defines the built-in Latin type names that map to JavaScript/
  * TypeScript primitives and standard library types. Types follow Latin noun
- * declension patterns but use TitleCase to distinguish them from user-defined
- * identifiers.
+ * declension patterns.
  *
  * TYPE CATEGORIES:
  * - primitive: Basic scalar types (textus, numerus, bivalens)
@@ -36,8 +35,8 @@
  *
  * INVARIANTS
  * ==========
- * INV-1: Type stems are lowercase (lookup is case-insensitive)
- * INV-2: All types follow valid Latin declension patterns
+ * INV-1: Type stems are lowercase
+ * INV-2: Lookup is case-sensitive (exact match required)
  * INV-3: Generic types are marked with generic flag
  * INV-4: Each type has a unique stem
  *
@@ -74,8 +73,7 @@ export interface TypeEntry extends NounEntry {
  * WHY: Organized by category (primitives, collections, etc.) for clarity.
  *      Each type's gender and declension chosen for linguistic appropriateness.
  *
- * CASE: Stems are lowercase (canonical form). Lookup is case-insensitive,
- *       so "textus", "textus", and "TEXTUS" all resolve to the same type.
+ * CASE: Stems are lowercase. Lookup is case-sensitive (exact match required).
  */
 export const builtinTypes: TypeEntry[] = [
     // ---------------------------------------------------------------------------
@@ -470,20 +468,17 @@ export const builtinTypes: TypeEntry[] = [
  * Type lookup map for O(1) access.
  *
  * PERF: Pre-computed Map is faster than linear array search.
- *
- * WHY: Lowercase keys allow case-insensitive stem lookup while preserving
- *      TitleCase in the actual type entries.
  */
-const typeMap = new Map(builtinTypes.map(t => [t.stem.toLowerCase(), t]));
+const typeMap = new Map(builtinTypes.map(t => [t.stem, t]));
 
 /**
  * Check if a stem is a built-in type.
  *
- * @param stem - The type stem to check (e.g., "Text", "Numer")
+ * @param stem - The type stem to check (e.g., "text", "numer")
  * @returns true if stem is a built-in type, false otherwise
  */
 export function isBuiltinType(stem: string): boolean {
-    return typeMap.has(stem.toLowerCase());
+    return typeMap.has(stem);
 }
 
 /**
@@ -493,5 +488,5 @@ export function isBuiltinType(stem: string): boolean {
  * @returns TypeEntry if stem is a built-in type, undefined otherwise
  */
 export function getBuiltinType(stem: string): TypeEntry | undefined {
-    return typeMap.get(stem.toLowerCase());
+    return typeMap.get(stem);
 }

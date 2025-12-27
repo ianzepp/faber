@@ -1,0 +1,202 @@
+# Casus - Case sensitivity tests
+# Verifies that keywords and types are case-sensitive (lowercase only)
+
+# =============================================================================
+# Keywords are lowercase only
+# =============================================================================
+
+# Standard lowercase keywords work
+- name: 'lowercase si keyword'
+  input: 'si verum { scribe("yes") }'
+  ts:
+      - 'if (true)'
+      - 'console.log("yes")'
+  py:
+      - 'if True:'
+      - 'print("yes")'
+
+- name: 'lowercase fixum keyword'
+  input: 'fixum x = 1'
+  ts: 'const x = 1;'
+  py: 'x = 1'
+
+- name: 'lowercase varia keyword'
+  input: 'varia y = 2'
+  ts: 'let y = 2;'
+  py: 'y = 2'
+
+- name: 'lowercase functio keyword'
+  input: 'functio greet() { redde "hello" }'
+  ts:
+      - 'function greet()'
+      - 'return "hello"'
+  py:
+      - 'def greet():'
+      - 'return "hello"'
+
+- name: 'lowercase dum keyword'
+  input: 'varia i = 0; dum i < 5 { i += 1 }'
+  ts:
+      - 'let i = 0'
+      - 'while'
+      - 'i < 5'
+      - 'i += 1'
+  py:
+      - 'i = 0'
+      - 'while'
+      - 'i < 5'
+      - 'i += 1'
+
+- name: 'lowercase de-pro keywords'
+  input: |
+      de items pro item {
+        scribe(item)
+      }
+  ts:
+      - 'for (const item in items)'
+      - 'console.log(item)'
+  py:
+      - 'for item in items:'
+      - 'print(item)'
+
+# =============================================================================
+# Uppercase identifiers are NOT keywords
+# =============================================================================
+
+# SI is a valid identifier, not the 'if' keyword
+- name: 'SI is identifier not keyword'
+  input: 'fixum SI = "signal intelligence"'
+  ts: 'const SI = "signal intelligence";'
+  py: 'SI = "signal intelligence"'
+
+# FIXUM is a valid identifier, not the 'const' keyword
+- name: 'FIXUM is identifier not keyword'
+  input: 'fixum FIXUM = 42'
+  ts: 'const FIXUM = 42;'
+  py: 'FIXUM = 42'
+
+# Mixed case identifiers work
+- name: 'Verum is identifier not keyword'
+  input: 'fixum Verum = "truth"'
+  ts: 'const Verum = "truth";'
+  py: 'Verum = "truth"'
+
+- name: 'VERUM is identifier not keyword'
+  input: 'fixum VERUM = falsum'
+  ts: 'const VERUM = false;'
+  py: 'VERUM = False'
+
+# DUM as identifier
+- name: 'DUM is identifier not keyword'
+  input: 'fixum DUM = "while in Latin"'
+  ts: 'const DUM = "while in Latin";'
+  py: 'DUM = "while in Latin"'
+
+# =============================================================================
+# Types are lowercase only
+# =============================================================================
+
+# Standard lowercase types work
+- name: 'lowercase textus type'
+  input: 'fixum textus msg = "hello"'
+  ts: 'const msg: string = "hello";'
+  py: 'msg: str = "hello"'
+
+- name: 'lowercase numerus type'
+  input: 'fixum numerus count = 42'
+  ts: 'const count: number = 42;'
+  py: 'count: int = 42'
+
+- name: 'lowercase bivalens type'
+  input: 'fixum bivalens flag = verum'
+  ts: 'const flag: boolean = true;'
+  py: 'flag: bool = True'
+
+# Array syntax with lowercase types
+- name: 'lowercase array type'
+  input: 'fixum numerus[] nums = [1, 2, 3]'
+  ts: 'const nums: Array<number> = [1, 2, 3];'
+  py: 'nums: list[int] = [1, 2, 3]'
+
+# Map with lowercase types
+- name: 'lowercase tabula type'
+  input: 'fixum tabula<textus, numerus> scores = {}'
+  ts: 'const scores: Map<string, number> = {};'
+  py: 'scores: dict[str, int] = {}'
+
+# Set with lowercase types
+- name: 'lowercase copia type'
+  input: 'fixum copia<textus> names = {}'
+  ts: 'const names: Set<string> = {};'
+  py: 'names: set[str] = {}'
+
+# =============================================================================
+# Constants with type-like names
+# =============================================================================
+
+# TEXTUS as constant identifier
+- name: 'TEXTUS is identifier not type'
+  input: 'fixum TEXTUS = "text type name"'
+  ts: 'const TEXTUS = "text type name";'
+  py: 'TEXTUS = "text type name"'
+
+# NUMERUS as constant identifier
+- name: 'NUMERUS is identifier not type'
+  input: 'fixum NUMERUS = 123'
+  ts: 'const NUMERUS = 123;'
+  py: 'NUMERUS = 123'
+
+# Textus (PascalCase) as identifier
+- name: 'Textus is identifier not type'
+  input: 'fixum Textus = "PascalCase"'
+  ts: 'const Textus = "PascalCase";'
+  py: 'Textus = "PascalCase"'
+
+# =============================================================================
+# Function names can use any case
+# =============================================================================
+
+- name: 'PascalCase function name'
+  input: 'functio GetUser() { redde "user" }'
+  ts:
+      - 'function GetUser()'
+      - 'return "user"'
+  py:
+      - 'def GetUser():'
+      - 'return "user"'
+
+- name: 'SCREAMING_SNAKE function name'
+  input: 'functio GET_CONFIG() { redde {} }'
+  ts:
+      - 'function GET_CONFIG()'
+      - 'return {}'
+  py:
+      - 'def GET_CONFIG():'
+      - 'return {}'
+
+# =============================================================================
+# Operators are lowercase only
+# =============================================================================
+
+- name: 'lowercase et operator'
+  input: 'fixum result = verum et falsum'
+  ts:
+      - 'const result'
+      - 'true && false'
+  py:
+      - 'result'
+      - 'True and False'
+
+- name: 'lowercase aut operator'
+  input: 'fixum result = verum aut falsum'
+  ts:
+      - 'const result'
+      - 'true || false'
+  py:
+      - 'result'
+      - 'True or False'
+
+- name: 'lowercase non operator'
+  input: 'fixum result = non verum'
+  ts: 'const result = !true;'
+  py: 'result = not True'
