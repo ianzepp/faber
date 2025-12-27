@@ -597,6 +597,13 @@ newExpr := 'novum' IDENTIFIER ('(' argumentList ')')? (objectLiteral | 'de' expr
 > 
 > The `de` (from) form allows dynamic overrides from variables or function results.
 
+### Lambda Expression
+
+```ebnf
+lambdaExpr := ('pro' | 'fit' | 'fiet') params? ((':' | 'redde') expression | blockStmt)
+params := IDENTIFIER (',' IDENTIFIER)*
+```
+
 ---
 
 *Generated from `fons/parser/index.ts` — do not edit directly.*

@@ -3670,8 +3670,13 @@ export function parse(tokens: Token[]): ParserResult {
         }
 
         // Lambda expression: pro x redde expr, pro x, y redde expr, pro redde expr
-        if (checkKeyword('pro')) {
-            return parseProExpression();
+        // Also: fit x: expr (sync, explicit), fiet x: expr (async)
+        if (checkKeyword('pro') || checkKeyword('fit')) {
+            return parseLambdaExpression(false);
+        }
+
+        if (checkKeyword('fiet')) {
+            return parseLambdaExpression(true);
         }
 
         // Number literal (decimal or hex)
@@ -3849,31 +3854,33 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     /**
-     * Parse pro expression (lambda/anonymous function).
+     * Parse lambda expression (anonymous function).
      *
      * GRAMMAR:
-     *   lambdaExpr := 'pro' params? ((':' | 'redde') expression | blockStmt)
+     *   lambdaExpr := ('pro' | 'fit' | 'fiet') params? ((':' | 'redde') expression | blockStmt)
      *   params := IDENTIFIER (',' IDENTIFIER)*
      *
-     * WHY: Latin 'pro' (for) creates lambda syntax with two equivalent forms:
-     *      - 'pro x redde expr' - explicit return keyword
-     *      - 'pro x: expr' - colon shorthand (mirrors object literal syntax)
+     * Three keyword forms with different semantics:
+     *   - 'pro' / 'fit': sync lambda (pro is casual, fit is explicit verb form)
+     *   - 'fiet': async lambda (future tense verb form)
      *
      * The ':' and 'redde' forms are INTERCHANGEABLE - use whichever reads better:
      *      pro x: x * 2        ≡  pro x redde x * 2      -> (x) => x * 2
+     *      fiet x: expr        ≡  fiet x redde expr      -> async (x) => expr
      *      pro: 42             ≡  pro redde 42           -> () => 42
      *      pro x, y: x + y     ≡  pro x, y redde x + y   -> (x, y) => x + y
      *
      * Block form (for multi-statement bodies):
      *      pro x { redde x * 2 }     -> (x) => { return x * 2; }
-     *      pro { scribe "hi" }       -> () => { console.log("hi"); }
+     *      fiet c { cede fetch() }   -> async (c) => { await fetch(); }
      *
      * Style guidance: Use ':' for short expressions, 'redde' for clarity in complex cases.
      */
-    function parseProExpression(): LambdaExpression {
+    function parseLambdaExpression(async: boolean): LambdaExpression {
         const position = peek().position;
 
-        expectKeyword('pro', ParserErrorCode.ExpectedKeywordPro);
+        // Consume the keyword (pro, fit, or fiet)
+        advance();
 
         const params: Identifier[] = [];
 
@@ -3906,7 +3913,7 @@ export function parse(tokens: Token[]): ParserResult {
             body = parseExpression();
         }
 
-        return { type: 'LambdaExpression', params, returnType, body, async: false, position };
+        return { type: 'LambdaExpression', params, returnType, body, async, position };
     }
 
     /**

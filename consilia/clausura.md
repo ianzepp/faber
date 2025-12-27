@@ -15,8 +15,9 @@ Latin: _clausura_ (from _claudere_, to close) — a closure, enclosure.
 | Nested lambdas                    |   [x] Done   |   [x] Done   | [ ] Not Done | [ ] Not Done |            [x] Done             | `pro x: pro y: x + y`          |
 | Captures                          |   [x] Done   |   [x] Done   | [ ] Not Done |   [x] Done   | Implicit capture of outer scope |
 | `(x) => expr` JS-style            |   [x] Done   |   [x] Done   | [~] Partial  | [ ] Not Done |            [x] Done             | Alternative syntax             |
-| Async lambdas                     |   [x] Done   |   [x] Done   | [ ] Not Done | [ ] Not Done |            [x] Done             | Use block form with `cede`     |
-| Generator lambdas                 | [ ] Not Done | [ ] Not Done | [ ] Not Done | [ ] Not Done |          [ ] Not Done           | Use named functions            |
+| `fiet x: expr` async lambda       |   [x] Done   |   [x] Done   | [ ] Not Done | [ ] Not Done |            [x] Done             | Async closure with verb form   |
+| `fiet x { body }` async block     |   [x] Done   |   [x] Done   | [ ] Not Done | [ ] Not Done |            [x] Done             | Async block closure            |
+| Generator lambdas                 |     [-]      |     [-]      |     [-]      |     [-]      |               [-]               | Use named functions instead    |
 | Typed parameters                  | [ ] Not Done | [ ] Not Done | [ ] Not Done | [ ] Not Done |          [ ] Not Done           | Future: `pro numerus x: x * 2` |
 | Return type annotation            |   [x] Done   |   [-] N/A    |   [x] Done   | [ ] Not Done |            [x] Done             | `pro x -> numerus: x * 2`      |
 
@@ -209,17 +210,62 @@ fixum triple = multiplier(3)
 
 ## Async Lambdas
 
-For async operations, use block form with `cede` (await):
+Use the `fiet` verb form for async closures. This mirrors the function declaration pattern where `fiet` indicates "will become" (future/async):
 
 ```
-// Async lambda
-pro url {
-    fixum response = cede fetch(url)
-    redde cede response.json()
-}
+fiet x: expr              // async (x) => expr
+fiet x { body }           // async (x) => { body }
+fiet: expr                // async () => expr
+fiet { body }             // async () => { body }
 ```
 
-The compiler infers async from the presence of `cede` in the body.
+### Examples
+
+```fab
+// Async HTTP handler
+app.post("/users", fiet c {
+    fixum body = cede c.req.json()
+    redde c.json(body)
+})
+
+// Async map operation
+fixum results = urls.mappata(fiet url: cede fetch(url))
+
+// Async with multiple awaits
+fetchData().then(fiet data {
+    fixum processed = cede transform(data)
+    redde cede save(processed)
+})
+```
+
+### Design Rationale
+
+The `fiet` keyword is consistent with the verb conjugation system used throughout Faber:
+
+| Context          | Sync                | Async                |
+| ---------------- | ------------------- | -------------------- |
+| Function return  | `functio f() fit T` | `functio f() fiet T` |
+| For-loop binding | `ex items fit x`    | `ex items fiet x`    |
+| Lambda/closure   | `fit x: expr`       | `fiet x: expr`       |
+
+The `pro` keyword remains as the casual/default form for sync lambdas:
+
+- `pro x: expr` ≡ `fit x: expr` (both sync)
+- `fiet x: expr` (async, no `pro` equivalent)
+
+### Why No `futura pro`?
+
+The `futura` prefix is reserved for function declarations. Lambdas use verb conjugation instead:
+
+```fab
+// Functions use prefix
+futura functio fetch() -> textus { ... }
+
+// Lambdas use verb form
+fiet url: cede fetch(url)
+```
+
+This keeps lambda syntax concise while maintaining semantic clarity.
 
 ---
 
@@ -338,16 +384,16 @@ pro x: x * 2
     pro numerus x: x * 2    // type precedes identifier
     ```
 
-2. **Generator lambdas** — Worth supporting inline generators?
-
-    ```
-    pro x fiunt 1..x   // hypothetical
-    ```
-
-3. **Capture annotations** — Explicit control over capture mode?
+2. **Capture annotations** — Explicit control over capture mode?
     ```
     pro [in factor] x: x * factor   // hypothetical
     ```
+
+## Closed Decisions
+
+1. **Generator lambdas** — Not supported. Use named `cursor functio` instead. Inline generators are rare and add complexity without significant benefit.
+
+2. **Async lambdas** — Use `fiet` verb form. The `futura pro` syntax was rejected as inconsistent with function prefix usage.
 
 ---
 

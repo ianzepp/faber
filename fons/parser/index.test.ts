@@ -2661,6 +2661,95 @@ describe('parser', () => {
                 expect(expr.returnType.typeParameters).toHaveLength(1);
             });
         });
+
+        describe('fit expression (sync lambda, explicit)', () => {
+            test('fit is equivalent to pro (sync)', () => {
+                const { program } = parseCode('fit x: x * 2');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.params).toHaveLength(1);
+                expect(expr.params[0].name).toBe('x');
+                expect(expr.async).toBe(false);
+            });
+
+            test('fit with block body', () => {
+                const { program } = parseCode('fit x { redde x * 2 }');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.body.type).toBe('BlockStatement');
+                expect(expr.async).toBe(false);
+            });
+
+            test('fit zero params', () => {
+                const { program } = parseCode('fit: 42');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.params).toHaveLength(0);
+                expect(expr.async).toBe(false);
+            });
+        });
+
+        describe('fiet expression (async lambda)', () => {
+            test('fiet creates async lambda', () => {
+                const { program } = parseCode('fiet x: x * 2');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.params).toHaveLength(1);
+                expect(expr.params[0].name).toBe('x');
+                expect(expr.async).toBe(true);
+            });
+
+            test('fiet with block body', () => {
+                const { program } = parseCode('fiet c { redde c.json() }');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.body.type).toBe('BlockStatement');
+                expect(expr.async).toBe(true);
+            });
+
+            test('fiet zero params', () => {
+                const { program } = parseCode('fiet: fetch()');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.params).toHaveLength(0);
+                expect(expr.async).toBe(true);
+            });
+
+            test('fiet multi params', () => {
+                const { program } = parseCode('fiet a, b { redde a + b }');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.params).toHaveLength(2);
+                expect(expr.async).toBe(true);
+            });
+
+            test('fiet with return type annotation', () => {
+                const { program } = parseCode('fiet x -> textus: x');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.returnType).toBeDefined();
+                expect(expr.returnType.name).toBe('textus');
+                expect(expr.async).toBe(true);
+            });
+
+            test('fiet in function call', () => {
+                const { program } = parseCode('app.post("/users", fiet c { redde c.json() })');
+                const expr = (program!.body[0] as any).expression;
+
+                expect(expr.type).toBe('CallExpression');
+                const lambda = expr.arguments[1];
+                expect(lambda.type).toBe('LambdaExpression');
+                expect(lambda.async).toBe(true);
+            });
+        });
     });
 
     describe('import declarations', () => {
