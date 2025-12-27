@@ -547,7 +547,7 @@ si data est textus {
 }
 
 // Or cast explicitly (unsafe)
-fixum name = data ut textus
+fixum name = data qua textus
 scribe name.longitudo()
 ```
 
@@ -556,7 +556,7 @@ scribe name.longitudo()
 Faber deliberately omits a permissive "any" type. The `ignotum` type requires you to either:
 
 1. Narrow with `est` (safe, compiler-verified)
-2. Cast with `ut` (explicit acknowledgment of risk)
+2. Cast with `qua` (explicit acknowledgment of risk)
 
 This design:
 
@@ -712,7 +712,7 @@ fixum { nomen, aetas } = p
 Both Latin and symbolic syntax supported:
 
 ```
-fixum { nomen ut n } = p      // Latin: "nomen as n"
+fixum { nomen pro n } = p     // Latin: "nomen, [call it] n"
 fixum { nomen: n } = p        // symbolic
 
 scribe n  // "Marcus"
@@ -730,7 +730,7 @@ fixum { aetas ?? 0 } = p      // symbolic (nil-coalescing)
 ### Combined
 
 ```
-fixum { nomen ut n, aetas vel 0 } = p
+fixum { nomen pro n, aetas vel 0 } = p
 ```
 
 ### Partial

@@ -277,14 +277,24 @@ functio move(de Point[] from pro source, in Point[] to pro dest) {
 
 **For** external name `from`, use internal name `source`.
 
+### Destructuring Alias
+
+```fab
+fixum { nomen pro n, aetas pro a } = persona
+scribe(n, a)
+```
+
+**For** field `nomen`, bind it as `n`. Same pattern as parameter aliasing — `source pro local`.
+
 ### Summary
 
-| Pattern                      | Meaning                  |
-| ---------------------------- | ------------------------ |
-| `ex source pro var { }`      | Bind each element as var |
-| `pro params: expr`           | Lambda with params       |
-| `si Variant pro fields { }`  | Bind variant fields      |
-| `Type external pro internal` | Internal parameter name  |
+| Pattern                      | Meaning                   |
+| ---------------------------- | ------------------------- |
+| `ex source pro var { }`      | Bind each element as var  |
+| `pro params: expr`           | Lambda with params        |
+| `si Variant pro fields { }`  | Bind variant fields       |
+| `Type external pro internal` | Internal parameter name   |
+| `{ field pro alias }`        | Destructuring field alias |
 
 ---
 
@@ -384,6 +394,7 @@ ad url ("GET") fiet Response qua resp { }
 | `pro`       | Lambda parameter             | Done       |
 | `pro`       | Variant binding (`discerne`) | Not done   |
 | `pro`       | Internal param name          | Not done   |
+| `pro`       | Destructuring alias          | Not done   |
 | `qua`       | Response binding (`ad`)      | Partial    |
 | `qua`       | Type assertion               | Done       |
 
