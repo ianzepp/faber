@@ -90,6 +90,7 @@ export enum ParserErrorCode {
     ExpectedKeywordFit = 'P041',
     ExpectedKeywordOrdo = 'P042',
     ExpectedKeywordDiscretio = 'P048',
+    ExpectedKeywordDiscerne = 'P049',
     ExpectedKeywordProbandum = 'P044',
     ExpectedKeywordProba = 'P045',
     ExpectedKeywordCura = 'P046',
@@ -103,6 +104,7 @@ export enum ParserErrorCode {
     InvalidAssignmentTarget = 'P100',
     InvalidForLoopStart = 'P101',
     InvalidSwitchCaseStart = 'P102',
+    InvalidDiscerneCaseStart = 'P106',
     InvalidGuardClauseStart = 'P103',
     UnexpectedToken = 'P104',
     ExpectedOpeningBraceOrParen = 'P105',
@@ -290,6 +292,10 @@ export const PARSER_ERRORS = {
         text: "Expected 'discretio'",
         help: "Tagged union declarations use 'discretio' (distinction): discretio Event { Click { numerus x } }",
     },
+    [ParserErrorCode.ExpectedKeywordDiscerne]: {
+        text: "Expected 'discerne'",
+        help: "Variant matching uses 'discerne' (distinguish!): discerne event { si Click pro x, y { ... } }",
+    },
     [ParserErrorCode.ExpectedKeywordProbandum]: {
         text: "Expected 'probandum'",
         help: 'Test suites use \'probandum\' (that which must be tested): probandum "Tokenizer" { ... }',
@@ -327,8 +333,12 @@ export const PARSER_ERRORS = {
         help: "For loops start with 'ex' (for-of) or 'de' (for-in): ex items pro item { ... } or de tabula pro clavis { ... }",
     },
     [ParserErrorCode.InvalidSwitchCaseStart]: {
-        text: "Expected 'si', 'ex', or 'aliter' in switch block",
-        help: "Switch cases start with 'si' for value matching, 'ex' for variant matching, or 'aliter' for default: elige x { si 1 { ... } } or elige event { ex Click pro x, y { ... } }",
+        text: "Expected 'si' or 'aliter' in switch block",
+        help: "Switch cases start with 'si' for value matching or 'aliter' for default: elige x { si 1 { ... } aliter { ... } }. For variant matching, use 'discerne' instead.",
+    },
+    [ParserErrorCode.InvalidDiscerneCaseStart]: {
+        text: "Expected 'si' in discerne block",
+        help: "Variant cases start with 'si' followed by variant name: discerne event { si Click pro x, y { ... } si Quit { ... } }",
     },
     [ParserErrorCode.InvalidGuardClauseStart]: {
         text: "Expected 'si' in guard block",

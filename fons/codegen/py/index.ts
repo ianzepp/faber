@@ -68,6 +68,7 @@ import type {
     IteratioStatement,
     InStatement,
     EligeStatement,
+    DiscerneStatement,
     CustodiStatement,
     AdfirmaStatement,
     ReddeStatement,
@@ -281,6 +282,8 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
                 return genInStatement(node);
             case 'EligeStatement':
                 return genEligeStatement(node);
+            case 'DiscerneStatement':
+                return genDiscerneStatement(node);
             case 'CustodiStatement':
                 return genCustodiStatement(node);
             case 'AdfirmaStatement':
@@ -1102,7 +1105,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
     /**
      * Generate switch statement using match/case (Python 3.10+).
      *
-     * Supports both value matching (si) and variant matching (ex).
+     * Value matching only; use discerne for variant matching.
      */
     function genEligeStatement(node: EligeStatement): string {
         const lines: string[] = [];
@@ -1117,27 +1120,12 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         depth++;
 
         for (const caseNode of node.cases) {
-            if (caseNode.type === 'EligeCasus') {
-                // Value matching: si expression { ... }
-                const test = genExpression(caseNode.test);
-                lines.push(`${ind()}case ${test}:`);
-                depth++;
-                lines.push(genBlockStatementContent(caseNode.consequent));
-                depth--;
-            } else {
-                // Variant matching: ex VariantName pro bindings { ... }
-                // WHY: Python match can destructure tagged unions with type guards
-                const variantName = caseNode.variant.name;
-                if (caseNode.bindings.length > 0) {
-                    const bindingNames = caseNode.bindings.map(b => b.name).join(', ');
-                    lines.push(`${ind()}case {'tag': '${variantName}', ${bindingNames}}:`);
-                } else {
-                    lines.push(`${ind()}case {'tag': '${variantName}'}:`);
-                }
-                depth++;
-                lines.push(genBlockStatementContent(caseNode.consequent));
-                depth--;
-            }
+            // Value matching: si expression { ... }
+            const test = genExpression(caseNode.test);
+            lines.push(`${ind()}case ${test}:`);
+            depth++;
+            lines.push(genBlockStatementContent(caseNode.consequent));
+            depth--;
         }
 
         if (node.defaultCase) {
@@ -1156,6 +1144,37 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
             lines.push(genBlockStatementContent(node.catchClause.body));
             depth--;
         }
+
+        return lines.join('\n');
+    }
+
+    /**
+     * Generate variant matching statement using match/case (Python 3.10+).
+     *
+     * WHY: Python match can destructure tagged unions using dict patterns.
+     */
+    function genDiscerneStatement(node: DiscerneStatement): string {
+        const lines: string[] = [];
+        const discriminant = genExpression(node.discriminant);
+
+        lines.push(`${ind()}match ${discriminant}:`);
+        depth++;
+
+        for (const caseNode of node.cases) {
+            // Variant matching: si VariantName pro bindings { ... }
+            const variantName = caseNode.variant.name;
+            if (caseNode.bindings.length > 0) {
+                const bindingNames = caseNode.bindings.map((b: Identifier) => b.name).join(', ');
+                lines.push(`${ind()}case {'tag': '${variantName}', ${bindingNames}}:`);
+            } else {
+                lines.push(`${ind()}case {'tag': '${variantName}'}:`);
+            }
+            depth++;
+            lines.push(genBlockStatementContent(caseNode.consequent));
+            depth--;
+        }
+
+        depth--;
 
         return lines.join('\n');
     }

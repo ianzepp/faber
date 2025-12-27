@@ -154,6 +154,9 @@ export const keywords: KeywordEntry[] = [
     { latin: 'ordo', meaning: 'enum', category: 'declaration' },
     // WHY: "discretio" (distinction) for tagged unions - discriminated variants
     { latin: 'discretio', meaning: 'tagged union', category: 'declaration' },
+    // WHY: "discerne" (distinguish!) for variant matching - pairs with discretio
+    //      Imperative of discernere (to separate, distinguish)
+    { latin: 'discerne', meaning: 'match variant', category: 'control' },
 
     // ---------------------------------------------------------------------------
     // Modifiers

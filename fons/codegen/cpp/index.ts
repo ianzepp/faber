@@ -58,6 +58,7 @@ import type {
     IteratioStatement,
     InStatement,
     EligeStatement,
+    DiscerneStatement,
     CustodiStatement,
     AdfirmaStatement,
     ReddeStatement,
@@ -316,6 +317,8 @@ struct _ScopeGuard {
                 return genInStatement(node);
             case 'EligeStatement':
                 return genEligeStatement(node);
+            case 'DiscerneStatement':
+                return genDiscerneStatement(node);
             case 'CustodiStatement':
                 return genCustodiStatement(node);
             case 'AdfirmaStatement':
@@ -969,10 +972,7 @@ struct _ScopeGuard {
     }
 
     /**
-     * Generate switch statement.
-     *
-     * NOTE: Variant matching not yet implemented for C++.
-     *       For now, only value cases are supported.
+     * Generate switch statement (value matching).
      */
     function genEligeStatement(node: EligeStatement): string {
         const discriminant = genExpression(node.discriminant);
@@ -981,25 +981,19 @@ struct _ScopeGuard {
         lines.push(`${ind()}switch (${discriminant}) {`);
 
         for (const caseNode of node.cases) {
-            if (caseNode.type === 'EligeCasus') {
-                // Value matching: si expression { ... }
-                const test = genExpression(caseNode.test);
+            // Value matching: si expression { ... }
+            const test = genExpression(caseNode.test);
 
-                lines.push(`${ind()}case ${test}: {`);
-                depth++;
+            lines.push(`${ind()}case ${test}: {`);
+            depth++;
 
-                for (const stmt of caseNode.consequent.body) {
-                    lines.push(genStatement(stmt));
-                }
-
-                lines.push(`${ind()}break;`);
-                depth--;
-                lines.push(`${ind()}}`);
-            } else {
-                // Variant matching: ex VariantName pro bindings { ... }
-                // TODO: Implement std::visit or variant pattern matching for C++
-                lines.push(`${ind()}// TODO: Variant case ${caseNode.variant.name} not yet implemented for C++`);
+            for (const stmt of caseNode.consequent.body) {
+                lines.push(genStatement(stmt));
             }
+
+            lines.push(`${ind()}break;`);
+            depth--;
+            lines.push(`${ind()}}`);
         }
 
         if (node.defaultCase) {
@@ -1016,6 +1010,25 @@ struct _ScopeGuard {
         }
 
         lines.push(`${ind()}}`);
+
+        return lines.join('\n');
+    }
+
+    /**
+     * Generate variant matching statement.
+     *
+     * NOTE: C++ variant matching with std::visit is complex.
+     *       For now, emit TODO placeholder.
+     */
+    function genDiscerneStatement(node: DiscerneStatement): string {
+        const lines: string[] = [];
+        const discriminant = genExpression(node.discriminant);
+
+        lines.push(`${ind()}// TODO: discerne on ${discriminant} - implement std::visit for C++`);
+
+        for (const caseNode of node.cases) {
+            lines.push(`${ind()}// si ${caseNode.variant.name}: { ... }`);
+        }
 
         return lines.join('\n');
     }

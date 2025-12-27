@@ -16,7 +16,7 @@ Faber has two union constructs with distinct semantics.
 - `discretio` declaration — TypeScript, Python, Zig, C++
 - Variant syntax with named fields — All targets
 - Generic type parameters (`discretio Option<T>`) — All targets
-- Pattern matching (`ex Variant pro bindings`) — TypeScript, Python, Zig
+- Pattern matching (`discerne`/`si Variant pro bindings`) — TypeScript, Python, Zig
 - Semantic analysis: type registration and binding introduction
 
 ### Partial / In Progress
@@ -358,10 +358,10 @@ discerneCase := 'si' IDENTIFIER ('pro' IDENTIFIER (',' IDENTIFIER)*)? blockStmt
 2. **Parser** (`fons/parser/index.ts`):
     - `parseDiscretioDeclaration()` — parses the full declaration
     - `parseVariantDeclaration()` — parses each variant
-    - Extended `parseSwitchStatement()` to handle `ex`/`pro` variant cases
+    - `parseDiscerneStatement()` — parses variant matching with `si`/`pro` syntax
 3. **Semantic** (`fons/semantic/index.ts`):
     - `analyzeDiscretioDeclaration()` — registers type in scope
-    - Extended `analyzeSwitchStatement()` — introduces variant bindings
+    - `analyzeDiscerneStatement()` — introduces variant bindings in each case scope
 4. **Codegen**:
     - TypeScript: Discriminated union with `tag` property
     - Python: `@dataclass` per variant + union type alias

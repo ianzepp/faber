@@ -58,6 +58,7 @@ import type {
     IteratioStatement,
     InStatement,
     EligeStatement,
+    DiscerneStatement,
     DiscretioDeclaration,
     VariantDeclaration,
     VariantField,
@@ -264,6 +265,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 return genInStatement(node);
             case 'EligeStatement':
                 return genEligeStatement(node);
+            case 'DiscerneStatement':
+                return genDiscerneStatement(node);
             case 'CustodiStatement':
                 return genCustodiStatement(node);
             case 'AdfirmaStatement':
@@ -985,16 +988,11 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     }
 
     /**
-     * Generate switch statement.
+     * Generate switch statement (value matching).
      *
-     * TRANSFORMS (value matching):
+     * TRANSFORMS:
      *   elige x { si 1 { a() } si 2 { b() } aliter { c() } }
      *   -> if (x === 1) { a(); } else if (x === 2) { b(); } else { c(); }
-     *
-     * TRANSFORMS (variant matching):
-     *   elige event { ex Click pro x, y { use(x, y) } ex Quit { exit() } }
-     *   -> if (event.tag === 'Click') { const { x, y } = event; use(x, y); }
-     *      else if (event.tag === 'Quit') { exit(); }
      *
      * WHY: Always emit if/else for all targets. Simpler codegen, no type
      *      detection needed, and downstream compilers optimize anyway.
@@ -1013,30 +1011,13 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
             const caseNode = node.cases[i]!;
             const keyword = i === 0 ? 'if' : 'else if';
 
-            if (caseNode.type === 'EligeCasus') {
-                // Value matching: si expression { ... }
-                const test = genExpression(caseNode.test);
-                result += `${ind()}${keyword} (${discriminant} === ${test}) {\n`;
-                depth++;
+            // Value matching: si expression { ... }
+            const test = genExpression(caseNode.test);
+            result += `${ind()}${keyword} (${discriminant} === ${test}) {\n`;
+            depth++;
 
-                for (const stmt of caseNode.consequent.body) {
-                    result += genStatement(stmt) + '\n';
-                }
-            } else {
-                // Variant matching: ex VariantName pro bindings { ... }
-                const variantName = caseNode.variant.name;
-                result += `${ind()}${keyword} (${discriminant}.tag === '${variantName}') {\n`;
-                depth++;
-
-                // Destructure bindings if any
-                if (caseNode.bindings.length > 0) {
-                    const bindingNames = caseNode.bindings.map(b => b.name).join(', ');
-                    result += `${ind()}const { ${bindingNames} } = ${discriminant};\n`;
-                }
-
-                for (const stmt of caseNode.consequent.body) {
-                    result += genStatement(stmt) + '\n';
-                }
+            for (const stmt of caseNode.consequent.body) {
+                result += genStatement(stmt) + '\n';
             }
 
             depth--;
@@ -1070,6 +1051,52 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         if (node.catchClause) {
             depth--;
             result += `\n${ind()}} catch (${node.catchClause.param.name}) ${genBlockStatement(node.catchClause.body)}`;
+        }
+
+        return result;
+    }
+
+    /**
+     * Generate variant matching statement (for discretio types).
+     *
+     * TRANSFORMS:
+     *   discerne event { si Click pro x, y { use(x, y) } si Quit { exit() } }
+     *   -> if (event.tag === 'Click') { const { x, y } = event; use(x, y); }
+     *      else if (event.tag === 'Quit') { exit(); }
+     *
+     * WHY: TypeScript discriminated unions use a 'tag' property for discrimination.
+     */
+    function genDiscerneStatement(node: DiscerneStatement): string {
+        const discriminant = genExpression(node.discriminant);
+        let result = '';
+
+        // Generate if/else chain
+        for (let i = 0; i < node.cases.length; i++) {
+            const caseNode = node.cases[i]!;
+            const keyword = i === 0 ? 'if' : 'else if';
+
+            // Variant matching: si VariantName pro bindings { ... }
+            const variantName = caseNode.variant.name;
+            result += `${ind()}${keyword} (${discriminant}.tag === '${variantName}') {\n`;
+            depth++;
+
+            // Destructure bindings if any
+            if (caseNode.bindings.length > 0) {
+                const bindingNames = caseNode.bindings.map((b: Identifier) => b.name).join(', ');
+                result += `${ind()}const { ${bindingNames} } = ${discriminant};\n`;
+            }
+
+            for (const stmt of caseNode.consequent.body) {
+                result += genStatement(stmt) + '\n';
+            }
+
+            depth--;
+            result += `${ind()}}`;
+
+            // Add newline if more cases follow
+            if (i < node.cases.length - 1) {
+                result += '\n';
+            }
         }
 
         return result;

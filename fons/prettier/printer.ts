@@ -109,6 +109,8 @@ export function faberPrint(path: AstPath<AstNode>, options: FaberOptions, print:
             return printInStatement(path, options, print);
         case 'EligeStatement':
             return printEligeStatement(path, options, print);
+        case 'DiscerneStatement':
+            return printDiscerneStatement(path, options, print);
         case 'CustodiStatement':
             return printCustodiStatement(path, options, print);
         case 'AdfirmaStatement':
@@ -179,6 +181,8 @@ export function faberPrint(path: AstPath<AstNode>, options: FaberOptions, print:
             return printObjectProperty(path, options, print);
         case 'EligeCasus':
             return printEligeCasus(path, options, print);
+        case 'VariantCase':
+            return printVariantCase(path, options, print);
         case 'CustodiClause':
             return printCustodiClause(path, options, print);
         case 'CapeClause':
@@ -592,6 +596,45 @@ function printEligeStatement(path: AstPath<AstNode>, options: FaberOptions, prin
 
 function printEligeCasus(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     return ['si ', path.call(print, 'test'), ' ', path.call(print, 'consequent')];
+}
+
+function printDiscerneStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+    const node = path.getValue() as any;
+    const parts: Doc[] = ['discerne ', path.call(print, 'discriminant'), ' {'];
+
+    // Cases
+    if (node.cases.length > 0) {
+        const caseParts: Doc[] = [];
+
+        path.each(casePath => {
+            caseParts.push(hardline, print(casePath as AstPath<AstNode>));
+        }, 'cases');
+
+        parts.push(indent(caseParts), hardline);
+    }
+
+    parts.push('}');
+
+    return parts;
+}
+
+function printVariantCase(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
+    const node = path.getValue() as any;
+    const parts: Doc[] = ['si ', path.call(print, 'variant')];
+
+    if (node.bindings && node.bindings.length > 0) {
+        parts.push(' pro ');
+        path.each((bindingPath, index) => {
+            if (index > 0) {
+                parts.push(', ');
+            }
+            parts.push(print(bindingPath as AstPath<AstNode>));
+        }, 'bindings');
+    }
+
+    parts.push(' ', path.call(print, 'consequent'));
+
+    return parts;
 }
 
 function printCustodiStatement(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {

@@ -3389,30 +3389,30 @@ describe('parser', () => {
                 expect(decl.typeParameters[0].name).toBe('T');
             });
 
-            test('variant case pattern matching in elige', () => {
+            test('variant case pattern matching with discerne', () => {
                 const { program, errors } = parseCode(`
-                    elige event {
-                        ex Click pro x, y { scribe x }
-                        ex Quit { mori "goodbye" }
+                    discerne event {
+                        si Click pro x, y { scribe x }
+                        si Quit { mori "goodbye" }
                     }
                 `);
 
                 expect(errors).toHaveLength(0);
 
-                const switchStmt = program!.body[0] as any;
-                expect(switchStmt.type).toBe('EligeStatement');
-                expect(switchStmt.cases).toHaveLength(2);
+                const discerneStmt = program!.body[0] as any;
+                expect(discerneStmt.type).toBe('DiscerneStatement');
+                expect(discerneStmt.cases).toHaveLength(2);
 
-                // First case: ex Click pro x, y
-                const clickCase = switchStmt.cases[0];
+                // First case: si Click pro x, y
+                const clickCase = discerneStmt.cases[0];
                 expect(clickCase.type).toBe('VariantCase');
                 expect(clickCase.variant.name).toBe('Click');
                 expect(clickCase.bindings).toHaveLength(2);
                 expect(clickCase.bindings[0].name).toBe('x');
                 expect(clickCase.bindings[1].name).toBe('y');
 
-                // Second case: ex Quit (no bindings)
-                const quitCase = switchStmt.cases[1];
+                // Second case: si Quit (no bindings)
+                const quitCase = discerneStmt.cases[1];
                 expect(quitCase.type).toBe('VariantCase');
                 expect(quitCase.variant.name).toBe('Quit');
                 expect(quitCase.bindings).toHaveLength(0);

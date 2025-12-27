@@ -148,7 +148,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `discretio` (tagged union) |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Variant fields             |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
 | Generic discretio          |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [x]  |
-| Pattern matching (`ex`)    |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [~]  |
+| `discerne` (variant match) |    [x]     | [x] |  [x]   | [ ]  | [ ]  |  [~]  |
 
 ## Function Declarations
 

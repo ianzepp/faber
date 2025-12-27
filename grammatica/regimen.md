@@ -297,28 +297,44 @@ in user { nomen = "Marcus" }  // mutation block
 ### Elige Statement
 
 ```ebnf
-switchStmt := 'elige' expression '{' (switchCase | variantCase)* defaultCase? '}' catchClause?
-switchCase := 'si' expression (blockStmt | 'ergo' expression)
-variantCase := 'ex' IDENTIFIER ('pro' IDENTIFIER (',' IDENTIFIER)*)? blockStmt
+eligeStmt := 'elige' expression '{' eligeCase* defaultCase? '}' catchClause?
+eligeCase := 'si' expression (blockStmt | 'ergo' expression)
 defaultCase := ('aliter' | 'secus') (blockStmt | statement)
 ```
 
-> 'elige' (choose) for switch, 'si' (if) for value cases, 'ex' (from) for variant cases,
+> 'elige' (choose) for value-based switch.
 > 'ergo' (therefore) for one-liners, 'aliter'/'secus' (otherwise) for default.
-> 
-> Examples (value matching):
-> elige status {
-> si "pending" ergo scribe("waiting")
-> si "active" { processActive() }
-> aliter iace "Unknown status"
-> }
-> 
-> Examples (variant matching):
-> elige event {
-> ex Click pro x, y { scribe x + ", " + y }
-> ex Keypress pro key { scribe key }
-> ex Quit { mori "goodbye" }
-> }
+> For variant matching on discretio types, use 'discerne' instead.
+
+**Examples:**
+
+```fab
+elige status {
+    si "pending" ergo scribe("waiting")
+    si "active" { processActive() }
+    aliter iace "Unknown status"
+}
+```
+
+### Discerne Statement
+
+```ebnf
+discerneStmt := 'discerne' expression '{' variantCase* '}'
+variantCase := 'si' IDENTIFIER ('pro' IDENTIFIER (',' IDENTIFIER)*)? blockStmt
+```
+
+> 'discerne' (distinguish!) pairs with 'discretio' (the tagged union type).
+> Uses 'si' for conditional match, 'pro' to introduce bindings.
+
+**Examples:**
+
+```fab
+discerne event {
+    si Click pro x, y { scribe "clicked at " + x + ", " + y }
+    si Keypress pro key { scribe "pressed " + key }
+    si Quit { mori "goodbye" }
+}
+```
 
 ### Custodi Statement
 

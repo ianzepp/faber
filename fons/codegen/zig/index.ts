@@ -64,6 +64,7 @@ import type {
     IteratioStatement,
     InStatement,
     EligeStatement,
+    DiscerneStatement,
     DiscretioDeclaration,
     CustodiStatement,
     AdfirmaStatement,
@@ -242,15 +243,20 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
 
             case 'EligeStatement':
                 for (const c of stmt.cases) {
-                    if (c.type === 'EligeCasus' && blockContainsIace(c.consequent)) {
-                        return true;
-                    }
-                    if (c.type === 'VariantCase' && blockContainsIace(c.consequent)) {
+                    if (blockContainsIace(c.consequent)) {
                         return true;
                     }
                 }
                 if (stmt.defaultCase && blockContainsIace(stmt.defaultCase)) {
                     return true;
+                }
+                return false;
+
+            case 'DiscerneStatement':
+                for (const c of stmt.cases) {
+                    if (blockContainsIace(c.consequent)) {
+                        return true;
+                    }
                 }
                 return false;
 
@@ -470,6 +476,8 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 return genInStatement(node);
             case 'EligeStatement':
                 return genEligeStatement(node);
+            case 'DiscerneStatement':
+                return genDiscerneStatement(node);
             case 'CustodiStatement':
                 return genCustodiStatement(node);
             case 'AdfirmaStatement':
@@ -886,9 +894,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
 
         // WHY: Track curator parameter for collection allocator calls
         // Find curator param: type annotation name is 'curator'
-        const curatorParam = node.params.find(
-            p => p.typeAnnotation?.name.toLowerCase() === 'curator'
-        );
+        const curatorParam = node.params.find(p => p.typeAnnotation?.name.toLowerCase() === 'curator');
 
         // Push curator name onto stack if present
         if (curatorParam) {
@@ -1356,102 +1362,30 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
     }
 
     /**
-     * Generate switch statement as if-else chain.
+     * Generate switch statement (value matching) as if-else chain.
      *
-     * TRANSFORMS (value matching):
+     * TRANSFORMS:
      *   elige x { si 1 { a() } si 2 { b() } aliter { c() } }
      *   -> if (x == 1) { a(); } else if (x == 2) { b(); } else { c(); }
      *
      *   elige status { si "pending" { ... } aliter { ... } }
      *   -> if (std.mem.eql(u8, status, "pending")) { ... } else { ... }
      *
-     * TRANSFORMS (variant matching):
-     *   elige event { ex Click pro x, y { use(x, y) } ex Quit { exit() } }
-     *   -> switch (event) { .click => |c| { use(c.x, c.y); }, .quit => { exit(); } }
-     *
-     * WHY: For value matching, use if-else chains instead of switch statements.
-     *      For variant matching, Zig's switch on tagged unions is idiomatic.
+     * WHY: For value matching, use if-else chains since Zig switch
+     *      requires exhaustive comptime-known values.
      */
     function genEligeStatement(node: EligeStatement): string {
         const discriminant = genExpression(node.discriminant);
 
-        // Check if we have any variant cases (pattern matching on discretio)
-        const hasVariantCases = node.cases.some(c => c.type === 'VariantCase');
-
-        if (hasVariantCases) {
-            // Variant matching: use native switch on tagged union
-            let result = `${ind()}switch (${discriminant}) {\n`;
-            depth++;
-
-            for (const caseNode of node.cases) {
-                if (caseNode.type === 'VariantCase') {
-                    const variantName = caseNode.variant.name.toLowerCase();
-
-                    if (caseNode.bindings.length > 0) {
-                        // Capture payload: .click => |c| { ... }
-                        result += `${ind()}.${variantName} => |payload| {\n`;
-                        depth++;
-
-                        // Bind individual fields
-                        for (const binding of caseNode.bindings) {
-                            result += `${ind()}const ${binding.name} = payload.${binding.name};\n`;
-                        }
-
-                        for (const stmt of caseNode.consequent.body) {
-                            result += genStatement(stmt) + '\n';
-                        }
-
-                        depth--;
-                        result += `${ind()}},\n`;
-                    } else {
-                        // No payload: .quit => { ... }
-                        result += `${ind()}.${variantName} => {\n`;
-                        depth++;
-
-                        for (const stmt of caseNode.consequent.body) {
-                            result += genStatement(stmt) + '\n';
-                        }
-
-                        depth--;
-                        result += `${ind()}},\n`;
-                    }
-                } else {
-                    // Mixed value case in variant switch - not typical
-                    result += `${ind()}// TODO: Mixed value case not supported in Zig variant switch\n`;
-                }
-            }
-
-            if (node.defaultCase) {
-                result += `${ind()}else => {\n`;
-                depth++;
-
-                for (const stmt of node.defaultCase.body) {
-                    result += genStatement(stmt) + '\n';
-                }
-
-                depth--;
-                result += `${ind()}},\n`;
-            }
-
-            depth--;
-            result += `${ind()}}`;
-
-            return result;
-        }
-
         // Value matching: use if-else chain
         // Check if comparing strings (need std.mem.eql)
-        const hasStringCase = node.cases.some(c => c.type === 'EligeCasus' && c.test.type === 'Literal' && typeof c.test.value === 'string');
+        const hasStringCase = node.cases.some(c => c.test.type === 'Literal' && typeof c.test.value === 'string');
         const isString = isStringType(node.discriminant) || hasStringCase;
 
         let result = '';
         let first = true;
 
         for (const caseNode of node.cases) {
-            if (caseNode.type !== 'EligeCasus') {
-                continue;
-            }
-
             const test = genExpression(caseNode.test);
             const prefix = first ? '' : ' else ';
             first = false;
@@ -1481,6 +1415,60 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             depth--;
             result += `${ind()}}`;
         }
+
+        return result;
+    }
+
+    /**
+     * Generate variant matching statement using native Zig switch.
+     *
+     * TRANSFORMS:
+     *   discerne event { si Click pro x, y { use(x, y) } si Quit { exit() } }
+     *   -> switch (event) { .click => |c| { use(c.x, c.y); }, .quit => { exit(); } }
+     *
+     * WHY: Zig's switch on tagged unions is idiomatic and efficient.
+     */
+    function genDiscerneStatement(node: DiscerneStatement): string {
+        const discriminant = genExpression(node.discriminant);
+
+        let result = `${ind()}switch (${discriminant}) {\n`;
+        depth++;
+
+        for (const caseNode of node.cases) {
+            const variantName = caseNode.variant.name.toLowerCase();
+
+            if (caseNode.bindings.length > 0) {
+                // Capture payload: .click => |c| { ... }
+                result += `${ind()}.${variantName} => |payload| {\n`;
+                depth++;
+
+                // Bind individual fields
+                for (const binding of caseNode.bindings) {
+                    result += `${ind()}const ${binding.name} = payload.${binding.name};\n`;
+                }
+
+                for (const stmt of caseNode.consequent.body) {
+                    result += genStatement(stmt) + '\n';
+                }
+
+                depth--;
+                result += `${ind()}},\n`;
+            } else {
+                // No payload: .quit => { ... }
+                result += `${ind()}.${variantName} => {\n`;
+                depth++;
+
+                for (const stmt of caseNode.consequent.body) {
+                    result += genStatement(stmt) + '\n';
+                }
+
+                depth--;
+                result += `${ind()}},\n`;
+            }
+        }
+
+        depth--;
+        result += `${ind()}}`;
 
         return result;
     }

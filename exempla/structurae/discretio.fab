@@ -21,19 +21,19 @@ discretio Result<T, E> {
     Err { E error }
 }
 
-// Pattern matching with elige/ex/pro
+// Pattern matching with discerne/si/pro
 functio handle_event(Event event) -> nihil {
-    elige event {
-        ex Click pro x, y {
+    discerne event {
+        si Click pro x, y {
             scribe "Click at " + x + ", " + y
         }
-        ex Keypress pro key {
+        si Keypress pro key {
             scribe "Key pressed: " + key
         }
-        ex Resize pro width, height {
+        si Resize pro width, height {
             scribe "Resized to " + width + "x" + height
         }
-        ex Quit {
+        si Quit {
             mori "Exiting"
         }
     }
@@ -48,10 +48,10 @@ discretio Status {
 }
 
 functio describe_status(Status s) -> textus {
-    elige s {
-        ex Pending { redde "Waiting to start" }
-        ex InProgress { redde "Working on it" }
-        ex Complete { redde "All done" }
-        ex Failed { redde "Something went wrong" }
+    discerne s {
+        si Pending { redde "Waiting to start" }
+        si InProgress { redde "Working on it" }
+        si Complete { redde "All done" }
+        si Failed { redde "Something went wrong" }
     }
 }

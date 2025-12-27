@@ -97,6 +97,7 @@ import type {
     InStatement,
     EligeStatement,
     EligeCasus,
+    DiscerneStatement,
     CustodiStatement,
     CustodiClause,
     AdfirmaStatement,
@@ -606,6 +607,10 @@ export function parse(tokens: Token[]): ParserResult {
 
         if (checkKeyword('elige')) {
             return parseEligeStatement();
+        }
+
+        if (checkKeyword('discerne')) {
+            return parseDiscerneStatement();
         }
 
         if (checkKeyword('custodi')) {
@@ -2106,29 +2111,22 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     /**
-     * Parse switch statement.
+     * Parse switch statement (value matching).
      *
      * GRAMMAR:
-     *   switchStmt := 'elige' expression '{' (switchCase | variantCase)* defaultCase? '}' catchClause?
-     *   switchCase := 'si' expression (blockStmt | 'ergo' expression)
-     *   variantCase := 'ex' IDENTIFIER ('pro' IDENTIFIER (',' IDENTIFIER)*)? blockStmt
+     *   eligeStmt := 'elige' expression '{' eligeCase* defaultCase? '}' catchClause?
+     *   eligeCase := 'si' expression (blockStmt | 'ergo' expression)
      *   defaultCase := ('aliter' | 'secus') (blockStmt | statement)
      *
-     * WHY: 'elige' (choose) for switch, 'si' (if) for value cases, 'ex' (from) for variant cases,
+     * WHY: 'elige' (choose) for value-based switch.
      *      'ergo' (therefore) for one-liners, 'aliter'/'secus' (otherwise) for default.
+     *      For variant matching on discretio types, use 'discerne' instead.
      *
-     * Examples (value matching):
+     * Example:
      *   elige status {
      *       si "pending" ergo scribe("waiting")
      *       si "active" { processActive() }
      *       aliter iace "Unknown status"
-     *   }
-     *
-     * Examples (variant matching):
-     *   elige event {
-     *       ex Click pro x, y { scribe x + ", " + y }
-     *       ex Keypress pro key { scribe key }
-     *       ex Quit { mori "goodbye" }
      *   }
      */
     function parseEligeStatement(): EligeStatement {
@@ -2140,7 +2138,7 @@ export function parse(tokens: Token[]): ParserResult {
 
         expect('LBRACE', ParserErrorCode.ExpectedOpeningBrace);
 
-        const cases: (EligeCasus | VariantCase)[] = [];
+        const cases: EligeCasus[] = [];
         let defaultCase: BlockStatement | undefined;
 
         // Helper: parse 'si' case body (requires ergo or block)
@@ -2185,11 +2183,65 @@ export function parse(tokens: Token[]): ParserResult {
                 const consequent = parseSiBody();
 
                 cases.push({ type: 'EligeCasus', test, consequent, position: casePosition });
-            } else if (checkKeyword('ex')) {
-                // Variant case: ex VariantName pro bindings { ... }
+            } else if (checkKeyword('aliter') || checkKeyword('secus')) {
+                advance(); // consume aliter or secus
+
+                defaultCase = parseAliterBody();
+                break; // Default must be last
+            } else {
+                error(ParserErrorCode.InvalidSwitchCaseStart);
+                break;
+            }
+        }
+
+        expect('RBRACE', ParserErrorCode.ExpectedClosingBrace);
+
+        let catchClause: CapeClause | undefined;
+
+        if (checkKeyword('cape')) {
+            catchClause = parseCapeClause();
+        }
+
+        return { type: 'EligeStatement', discriminant, cases, defaultCase, catchClause, position };
+    }
+
+    /**
+     * Parse variant matching statement (for discretio types).
+     *
+     * GRAMMAR:
+     *   discerneStmt := 'discerne' expression '{' variantCase* '}'
+     *   variantCase := 'si' IDENTIFIER ('pro' IDENTIFIER (',' IDENTIFIER)*)? blockStmt
+     *
+     * WHY: 'discerne' (distinguish!) pairs with 'discretio' (the tagged union type).
+     *      Uses 'si' for conditional match, 'pro' to introduce bindings.
+     *
+     * Example:
+     *   discerne event {
+     *       si Click pro x, y { scribe "clicked at " + x + ", " + y }
+     *       si Keypress pro key { scribe "pressed " + key }
+     *       si Quit { mori "goodbye" }
+     *   }
+     */
+    function parseDiscerneStatement(): DiscerneStatement {
+        const position = peek().position;
+
+        expectKeyword('discerne', ParserErrorCode.ExpectedKeywordDiscerne);
+
+        const discriminant = parseExpression();
+
+        expect('LBRACE', ParserErrorCode.ExpectedOpeningBrace);
+
+        const cases: VariantCase[] = [];
+
+        // True while there are unparsed cases (not at '}' or EOF)
+        const hasMoreCases = () => !check('RBRACE') && !isAtEnd();
+
+        while (hasMoreCases()) {
+            if (checkKeyword('si')) {
+                // Variant case: si VariantName pro bindings { ... }
                 const casePosition = peek().position;
 
-                advance(); // consume 'ex'
+                advance(); // consume 'si'
 
                 const variant = parseIdentifier();
 
@@ -2204,26 +2256,15 @@ export function parse(tokens: Token[]): ParserResult {
                 const consequent = parseBlockStatement();
 
                 cases.push({ type: 'VariantCase', variant, bindings, consequent, position: casePosition });
-            } else if (checkKeyword('aliter') || checkKeyword('secus')) {
-                advance(); // consume aliter or secus
-
-                defaultCase = parseAliterBody();
-                break; // Default must be last
             } else {
-                error(ParserErrorCode.InvalidEligeCasusStart);
+                error(ParserErrorCode.InvalidDiscerneCaseStart);
                 break;
             }
         }
 
         expect('RBRACE', ParserErrorCode.ExpectedClosingBrace);
 
-        let catchClause: CapeClause | undefined;
-
-        if (checkKeyword('cape')) {
-            catchClause = parseCapeClause();
-        }
-
-        return { type: 'EligeStatement', discriminant, cases, defaultCase, catchClause, position };
+        return { type: 'DiscerneStatement', discriminant, cases, position };
     }
 
     /**
@@ -2264,7 +2305,7 @@ export function parse(tokens: Token[]): ParserResult {
 
                 clauses.push({ type: 'CustodiClause', test, consequent, position: clausePosition });
             } else {
-                error(ParserErrorCode.InvalidCustodiClauseStart);
+                error(ParserErrorCode.InvalidGuardClauseStart);
                 break;
             }
         }

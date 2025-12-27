@@ -93,6 +93,7 @@ export type Statement =
     | IteratioStatement
     | InStatement
     | EligeStatement
+    | DiscerneStatement
     | CustodiStatement
     | AdfirmaStatement
     | ReddeStatement
@@ -706,36 +707,27 @@ export interface InStatement extends BaseNode {
 }
 
 /**
- * Switch statement.
+ * Switch statement (value matching).
  *
  * GRAMMAR (in EBNF):
- *   switchStmt := 'elige' expression '{' (switchCase | variantCase)* defaultCase? '}' catchClause?
- *   switchCase := 'si' expression blockStmt
- *   variantCase := 'ex' IDENTIFIER ('pro' IDENTIFIER (',' IDENTIFIER)*)? blockStmt
- *   defaultCase := 'aliter' blockStmt
+ *   eligeStmt := 'elige' expression '{' eligeCase* defaultCase? '}' catchClause?
+ *   eligeCase := 'si' expression (blockStmt | 'ergo' expression)
+ *   defaultCase := ('aliter' | 'secus') (blockStmt | statement)
  *
- * WHY: Latin 'elige' (choose) for switch, 'si' (if) for value cases,
- *      'ex' (from) for variant pattern matching.
- *      Uses 'aliter' (otherwise) for default case.
+ * WHY: Latin 'elige' (choose) for value-based switch.
+ *      Use 'discerne' for variant pattern matching on discretio types.
  *
- * Example (value matching):
+ * Example:
  *   elige status {
  *       si "pending" { processPending() }
  *       si "active" { processActive() }
  *       aliter { processDefault() }
  *   }
- *
- * Example (variant matching):
- *   elige event {
- *       ex Click pro x, y { scribe x + ", " + y }
- *       ex Keypress pro key { scribe key }
- *       ex Quit { mori "goodbye" }
- *   }
  */
 export interface EligeStatement extends BaseNode {
     type: 'EligeStatement';
     discriminant: Expression;
-    cases: (EligeCasus | VariantCase)[];
+    cases: EligeCasus[];
     defaultCase?: BlockStatement;
     catchClause?: CapeClause;
 }
@@ -750,22 +742,44 @@ export interface EligeCasus extends BaseNode {
 }
 
 /**
- * Variant case for pattern matching (part of switch statement).
+ * Variant matching statement (for discretio types).
  *
  * GRAMMAR (in EBNF):
- *   variantCase := 'ex' IDENTIFIER ('pro' IDENTIFIER (',' IDENTIFIER)*)? blockStmt
+ *   discerneStmt := 'discerne' expression '{' variantCase* '}'
+ *   variantCase := 'si' IDENTIFIER ('pro' IDENTIFIER (',' IDENTIFIER)*)? blockStmt
+ *
+ * WHY: 'discerne' (distinguish!) pairs with 'discretio' (the tagged union type).
+ *      Uses 'si' for conditional match, 'pro' for bindings.
+ *
+ * Example:
+ *   discerne event {
+ *       si Click pro x, y { scribe "clicked at " + x + ", " + y }
+ *       si Keypress pro key { scribe "pressed " + key }
+ *       si Quit { mori "goodbye" }
+ *   }
+ */
+export interface DiscerneStatement extends BaseNode {
+    type: 'DiscerneStatement';
+    discriminant: Expression;
+    cases: VariantCase[];
+}
+
+/**
+ * Variant case for pattern matching (part of discerne statement).
+ *
+ * GRAMMAR (in EBNF):
+ *   variantCase := 'si' IDENTIFIER ('pro' IDENTIFIER (',' IDENTIFIER)*)? blockStmt
  *
  * INVARIANT: variant is the variant name to match (e.g., Click, Keypress).
  * INVARIANT: bindings are field names to bind (empty for unit variants).
  * INVARIANT: consequent is the block to execute on match.
  *
- * WHY: 'ex' (from) for extraction, 'pro' (for) to introduce bindings.
- *      Parallels iteration syntax: ex items pro item { ... }
+ * WHY: 'si' (if) for conditional variant match, 'pro' (for) to introduce bindings.
  *
  * Examples:
- *   ex Click pro x, y { ... }  -> variant=Click, bindings=[x, y]
- *   ex Keypress pro key { ... } -> variant=Keypress, bindings=[key]
- *   ex Quit { ... }             -> variant=Quit, bindings=[]
+ *   si Click pro x, y { ... }  -> variant=Click, bindings=[x, y]
+ *   si Keypress pro key { ... } -> variant=Keypress, bindings=[key]
+ *   si Quit { ... }             -> variant=Quit, bindings=[]
  */
 export interface VariantCase extends BaseNode {
     type: 'VariantCase';

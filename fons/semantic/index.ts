@@ -55,6 +55,7 @@ import type {
     IteratioStatement,
     InStatement,
     EligeStatement,
+    DiscerneStatement,
     CustodiStatement,
     AdfirmaStatement,
     ReddeStatement,
@@ -1115,6 +1116,10 @@ export function analyze(program: Program): SemanticResult {
                 analyzeEligeStatement(node);
                 break;
 
+            case 'DiscerneStatement':
+                analyzeDiscerneStatement(node);
+                break;
+
             case 'CustodiStatement':
                 analyzeCustodiStatement(node);
                 break;
@@ -1617,32 +1622,12 @@ export function analyze(program: Program): SemanticResult {
         resolveExpression(node.discriminant);
 
         for (const caseNode of node.cases) {
-            if (caseNode.type === 'EligeCasus') {
-                // Value matching: si expression { ... }
-                resolveExpression(caseNode.test);
+            // Value matching: si expression { ... }
+            resolveExpression(caseNode.test);
 
-                enterScope();
-                analyzeBlock(caseNode.consequent);
-                exitScope();
-            } else {
-                // Variant matching: ex VariantName pro bindings { ... }
-                // WHY: VariantCase introduces bindings into scope
-                enterScope();
-
-                // Define each binding as a variable in this scope
-                for (const binding of caseNode.bindings) {
-                    define({
-                        name: binding.name,
-                        type: UNKNOWN, // TODO: Infer from variant field type
-                        kind: 'variable',
-                        mutable: false, // Pattern bindings are immutable
-                        position: caseNode.position,
-                    });
-                }
-
-                analyzeBlock(caseNode.consequent);
-                exitScope();
-            }
+            enterScope();
+            analyzeBlock(caseNode.consequent);
+            exitScope();
         }
 
         if (node.defaultCase) {
@@ -1653,6 +1638,30 @@ export function analyze(program: Program): SemanticResult {
 
         if (node.catchClause) {
             analyzeCapeClause(node.catchClause);
+        }
+    }
+
+    function analyzeDiscerneStatement(node: DiscerneStatement): void {
+        resolveExpression(node.discriminant);
+
+        for (const caseNode of node.cases) {
+            // Variant matching: si VariantName pro bindings { ... }
+            // WHY: VariantCase introduces bindings into scope
+            enterScope();
+
+            // Define each binding as a variable in this scope
+            for (const binding of caseNode.bindings) {
+                define({
+                    name: binding.name,
+                    type: UNKNOWN, // TODO: Infer from variant field type
+                    kind: 'variable',
+                    mutable: false, // Pattern bindings are immutable
+                    position: caseNode.position,
+                });
+            }
+
+            analyzeBlock(caseNode.consequent);
+            exitScope();
         }
     }
 
