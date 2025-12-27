@@ -6,25 +6,25 @@
 # =============================================================================
 
 # fixum declares an immutable binding (const in TS, simple assignment in Python)
-- name: const declaration
-  input: fixum x = 1
+- name: 'const declaration'
+  input: 'fixum x = 1'
   ts: 'const x = 1;'
   py: 'x = 1'
 
 # varia declares a mutable binding (let in TS, simple assignment in Python)
-- name: let declaration
-  input: varia nomen = "Marcus"
+- name: 'let declaration'
+  input: 'varia nomen = "Marcus"'
   ts: 'let nomen = "Marcus";'
   py: 'nomen = "Marcus"'
 
 # Type annotations are emitted in both targets
-- name: const with type annotation
-  input: fixum numerus x = 42
+- name: 'const with type annotation'
+  input: 'fixum numerus x = 42'
   ts: 'const x: number = 42;'
   py: 'x: int = 42'
 
 # figendum is fixum + implicit await (const with async initialization)
-- name: const with await
+- name: 'const with await'
   input: |
       futura functio fetchData() -> textus { redde "data" }
       figendum data = fetchData()
@@ -34,7 +34,7 @@
       - 'data = await fetchData()'
 
 # variandum is varia + implicit await (let with async initialization)
-- name: let with await
+- name: 'let with await'
   input: |
       futura functio getResult() -> numerus { redde 42 }
       variandum result = getResult()
@@ -48,14 +48,14 @@
 # =============================================================================
 
 # cede is the await/yield keyword depending on context
-- name: await expression
-  input: cede fetch(url)
+- name: 'await expression'
+  input: 'cede fetch(url)'
   ts: 'await fetch(url);'
   py: 'await fetch(url)'
 
 # novum creates a new instance (new keyword in TS, direct call in Python)
-- name: new expression
-  input: novum erratum(message)
+- name: 'new expression'
+  input: 'novum erratum(message)'
   ts: 'new erratum(message);'
   py: 'erratum(message)'
 
@@ -64,20 +64,20 @@
 # =============================================================================
 
 # verum is the true literal
-- name: true literal
-  input: verum
+- name: 'true literal'
+  input: 'verum'
   ts: 'true;'
   py: 'True'
 
 # falsum is the false literal
-- name: false literal
-  input: falsum
+- name: 'false literal'
+  input: 'falsum'
   ts: 'false;'
   py: 'False'
 
 # nihil is the null literal (null in TS, None in Python)
-- name: null literal
-  input: nihil
+- name: 'null literal'
+  input: 'nihil'
   ts: 'null;'
   py: 'None'
 
@@ -86,19 +86,19 @@
 # =============================================================================
 
 # Empty object literal
-- name: empty object
-  input: fixum x = {}
+- name: 'empty object'
+  input: 'fixum x = {}'
   ts: 'const x = {};'
   py: 'x = {}'
 
 # Object with properties - Python uses quoted keys
-- name: object with properties
+- name: 'object with properties'
   input: 'fixum user = { nomen: "Marcus", aetas: 30 }'
   ts: 'const user = { nomen: "Marcus", aetas: 30 };'
   py: 'user = {"nomen": "Marcus", "aetas": 30}'
 
 # Object values can be expressions; verum becomes true/True
-- name: object with expression values
+- name: 'object with expression values'
   input: 'fixum data = { sum: 1 + 2, active: verum }'
   ts:
       - 'sum:'
@@ -116,14 +116,14 @@
 # =============================================================================
 
 # Empty array literal
-- name: empty array
-  input: fixum arr = []
+- name: 'empty array'
+  input: 'fixum arr = []'
   ts: 'const arr = [];'
   py: 'arr = []'
 
 # Array with elements
-- name: array with elements
-  input: fixum nums = [1, 2, 3]
+- name: 'array with elements'
+  input: 'fixum nums = [1, 2, 3]'
   ts: 'const nums = [1, 2, 3];'
   py: 'nums = [1, 2, 3]'
 
@@ -132,26 +132,26 @@
 # =============================================================================
 
 # Hex literals are preserved in output
-- name: hex literal
-  input: fixum x = 0xFF
+- name: 'hex literal'
+  input: 'fixum x = 0xFF'
   ts: 'const x = 0xFF;'
   py: 'x = 0xFF'
 
 # Hex in binary expressions
-- name: hex in expression
-  input: 0xFF & 0x0F
+- name: 'hex in expression'
+  input: '0xFF & 0x0F'
   ts: '(0xFF & 0x0F);'
   py: '(0xFF & 0x0F)'
 
 # BigInt hex literals (n suffix) - Python strips suffix since ints are arbitrary precision
-- name: hex bigint
-  input: fixum big = 0xFFFFFFFFFFn
+- name: 'hex bigint'
+  input: 'fixum big = 0xFFFFFFFFFFn'
   ts: 'const big = 0xFFFFFFFFFFn;'
   py: 'big = 0xFFFFFFFFFF'
 
 # Lowercase hex is preserved
-- name: lowercase hex
-  input: fixum val = 0xabcdef
+- name: 'lowercase hex'
+  input: 'fixum val = 0xabcdef'
   ts: 'const val = 0xabcdef;'
   py: 'val = 0xabcdef'
 
@@ -160,13 +160,13 @@
 # =============================================================================
 
 # Template literals become f-strings in Python
-- name: simple template literal
-  input: fixum msg = `hello world`
+- name: 'simple template literal'
+  input: 'fixum msg = `hello world`'
   ts: 'const msg = `hello world`;'
   py: 'msg = f"hello world"'
 
 # Template interpolation syntax differs between targets
-- name: template with interpolation
+- name: 'template with interpolation'
   input: |
       fixum name = "Marcus"
       fixum greeting = `Hello, ${name}!`
@@ -180,20 +180,20 @@
 # =============================================================================
 
 # scribe is the print statement (console.log in TS, print in Python)
-- name: scribe single arg
-  input: scribe x
+- name: 'scribe single arg'
+  input: 'scribe x'
   ts: 'console.log(x);'
   py: 'print(x)'
 
 # Multiple arguments are comma-separated
-- name: scribe multiple args
+- name: 'scribe multiple args'
   input: 'scribe "a", "b", "c"'
   ts: 'console.log("a", "b", "c");'
   py: 'print("a", "b", "c")'
 
 # Expressions are evaluated before printing
-- name: scribe with expression
-  input: scribe x + y
+- name: 'scribe with expression'
+  input: 'scribe x + y'
   ts:
       - 'console.log'
       - 'x + y'

@@ -6,7 +6,7 @@
 # =============================================================================
 
 # tempta/cape is try/catch (try/except in Python)
-- name: tempta cape
+- name: 'tempta cape'
   input: |
       tempta {
         riskyCode()
@@ -22,7 +22,7 @@
       - 'except Exception as error:'
 
 # demum is finally - runs regardless of exception
-- name: tempta with demum
+- name: 'tempta with demum'
   input: |
       tempta {
         riskyCode()
@@ -47,7 +47,7 @@
 # =============================================================================
 
 # iace with string literal - wraps in Error/Exception
-- name: iace string
+- name: 'iace string'
   input: 'iace "error message"'
   ts:
       - 'throw'
@@ -56,7 +56,7 @@
       - 'raise Exception("error message")'
 
 # iace with new Error - translates constructor
-- name: iace with Error
+- name: 'iace with Error'
   input: 'iace novum Error("msg")'
   ts:
       - 'throw'
@@ -65,8 +65,8 @@
       - 'raise Exception("msg")'
 
 # iace with variable - throws directly
-- name: iace variable
-  input: iace err
+- name: 'iace variable'
+  input: 'iace err'
   ts:
       - 'throw'
       - 'err'
@@ -78,7 +78,7 @@
 # =============================================================================
 
 # mori is fatal error - Panic in TS, SystemExit in Python
-- name: mori string
+- name: 'mori string'
   input: 'mori "something went wrong"'
   ts:
       - 'throw new Panic("something went wrong")'
@@ -90,7 +90,7 @@
 # =============================================================================
 
 # fac creates a bare block scope (no try wrapper)
-- name: fac block bare
+- name: 'fac block bare'
   input: 'fac { varia x = 1 }'
   ts:
       - '{'
@@ -99,7 +99,7 @@
       - 'x = 1'
 
 # fac with cape wraps in try/catch
-- name: fac with cape
+- name: 'fac with cape'
   input: 'fac { x() } cape e { y() }'
   ts:
       - 'try {'

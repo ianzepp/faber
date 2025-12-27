@@ -7,14 +7,14 @@
 # =============================================================================
 
 # probandum creates a test suite (describe block)
-- name: simple probandum
+- name: 'simple probandum'
   input: 'probandum "Suite" { }'
   ts:
       - 'describe("Suite"'
       - '() => {'
 
 # probandum containing proba tests
-- name: probandum with proba
+- name: 'probandum with proba'
   input: |
       probandum "Math" {
         proba "adds" { adfirma 1 + 1 est 2 }
@@ -24,7 +24,7 @@
       - 'test("adds"'
 
 # Nested probandum blocks
-- name: nested probandum
+- name: 'nested probandum'
   input: |
       probandum "Outer" {
         probandum "Inner" {
@@ -41,26 +41,26 @@
 # =============================================================================
 
 # proba creates a test case
-- name: simple proba
+- name: 'simple proba'
   input: 'proba "test name" { adfirma verum }'
   ts:
       - 'test("test name"'
       - '() => {'
 
 # proba omitte creates a skipped test
-- name: proba omitte
+- name: 'proba omitte'
   input: 'proba omitte "reason" "skipped" { adfirma verum }'
   ts:
       - 'test.skip("reason: skipped"'
 
 # proba futurum creates a todo test
-- name: proba futurum
+- name: 'proba futurum'
   input: 'proba futurum "later" "pending" { }'
   ts:
       - 'test.todo("later: pending"'
 
 # adfirma in proba generates assertion
-- name: proba with adfirma
+- name: 'proba with adfirma'
   input: 'proba "math" { adfirma 1 + 1 est 2 }'
   ts:
       - 'test("math"'
@@ -72,7 +72,7 @@
 # =============================================================================
 
 # cura ante runs before each test
-- name: cura ante
+- name: 'cura ante'
   input: |
       probandum "Suite" {
         cura ante { x = 0 }
@@ -82,7 +82,7 @@
       - 'x = 0'
 
 # cura ante omnia runs before all tests
-- name: cura ante omnia
+- name: 'cura ante omnia'
   input: |
       probandum "Suite" {
         cura ante omnia { db = connect() }
@@ -92,7 +92,7 @@
       - 'db = connect()'
 
 # cura post runs after each test
-- name: cura post
+- name: 'cura post'
   input: |
       probandum "Suite" {
         cura post { cleanup() }
@@ -102,7 +102,7 @@
       - 'cleanup()'
 
 # cura post omnia runs after all tests
-- name: cura post omnia
+- name: 'cura post omnia'
   input: |
       probandum "Suite" {
         cura post omnia { db.close() }
@@ -116,7 +116,7 @@
 # =============================================================================
 
 # Complete suite with all lifecycle hooks
-- name: complete probandum with all hooks
+- name: 'complete probandum with all hooks'
   input: |
       probandum "Database" {
         cura ante omnia { db = connect() }
@@ -134,7 +134,7 @@
       - 'afterAll(() => {'
 
 # Multiple tests in one suite
-- name: multiple tests in suite
+- name: 'multiple tests in suite'
   input: |
       probandum "Math" {
         proba "adds" { adfirma 1 + 1 est 2 }
@@ -147,7 +147,7 @@
       - 'test("multiplies"'
 
 # Mixed skip and todo tests
-- name: mixed skip and todo tests
+- name: 'mixed skip and todo tests'
   input: |
       probandum "Suite" {
         proba "works" { adfirma verum }
@@ -164,14 +164,14 @@
 # =============================================================================
 
 # proba at top level (not in probandum)
-- name: proba at top level
+- name: 'proba at top level'
   input: 'proba "standalone" { adfirma 1 est 1 }'
   ts:
       - 'test("standalone"'
 
 # cura at top level
-- name: cura at top level
-  input: cura ante { setup() }
+- name: 'cura at top level'
+  input: 'cura ante { setup() }'
   ts:
       - 'beforeEach(() => {'
 
@@ -180,7 +180,7 @@
 # =============================================================================
 
 # cura fit creates try/finally for resource cleanup
-- name: cura fit try finally
+- name: 'cura fit try finally'
   input: 'cura aperi("file.txt") fit fd { lege(fd) }'
   ts:
       - 'const fd = aperi("file.txt")'
@@ -190,8 +190,8 @@
       - 'fd.solve?.()'
 
 # cura with async acquisition
-- name: cura with async
-  input: cura cede connect(url) fit conn { query(conn) }
+- name: 'cura with async'
+  input: 'cura cede connect(url) fit conn { query(conn) }'
   ts:
       - 'const conn = await connect(url)'
       - 'try {'
@@ -199,8 +199,8 @@
       - 'conn.solve?.()'
 
 # cura with cape adds catch block
-- name: cura with cape
-  input: cura lock() fit guard { work() } cape err { mone(err) }
+- name: 'cura with cape'
+  input: 'cura lock() fit guard { work() } cape err { mone(err) }'
   ts:
       - 'const guard = lock()'
       - 'try {'
@@ -211,14 +211,14 @@
       - 'guard.solve?.()'
 
 # cura with method call resource
-- name: cura method call resource
-  input: cura mutex.lock() fit guard { counter = counter + 1 }
+- name: 'cura method call resource'
+  input: 'cura mutex.lock() fit guard { counter = counter + 1 }'
   ts:
       - 'const guard = mutex.lock()'
       - 'guard.solve?.()'
 
 # Nested cura statements
-- name: nested cura
+- name: 'nested cura'
   input: |
       cura aperi("input.txt") fit input {
         cura aperi("output.txt") fit output {
@@ -232,7 +232,7 @@
       - 'output.solve?.()'
 
 # cura with async and cape
-- name: cura async with cape
+- name: 'cura async with cape'
   input: |
       cura cede connect(db_url) fit conn {
         cede conn.query(sql)

@@ -6,13 +6,13 @@
 # =============================================================================
 
 # External package imports pass through unchanged
-- name: external package import
+- name: 'external package import'
   input: 'ex "@hono/hono" importa Hono, Context'
   ts: 'import { Hono, Context } from "@hono/hono";'
   py: 'from @hono/hono import Hono, Context'
 
 # Wildcard import
-- name: wildcard import
+- name: 'wildcard import'
   input: 'ex "@lodash/lodash" importa *'
   ts:
       - 'import * as'
@@ -24,14 +24,14 @@
 # These tests use not_contains to verify norma imports are suppressed
 
 # norma imports don't emit import statements - they're handled as intrinsics
-- name: norma imports are suppressed
+- name: 'norma imports are suppressed'
   input: 'ex "norma/tempus" importa nunc'
   ts:
       not_contains:
           - 'import'
 
 # nunc() becomes Date.now() in TS
-- name: nunc compiles to Date.now
+- name: 'nunc compiles to Date.now'
   input: |
       ex "norma/tempus" importa nunc
       fixum now = nunc()
@@ -42,7 +42,7 @@
           - 'import'
 
 # SECUNDUM is a duration constant (1000ms)
-- name: SECUNDUM compiles to literal
+- name: 'SECUNDUM compiles to literal'
   input: |
       ex "norma/tempus" importa SECUNDUM
       fixum sec = SECUNDUM
@@ -53,7 +53,7 @@
           - 'import'
 
 # dormi() becomes Promise with setTimeout
-- name: dormi compiles to Promise setTimeout
+- name: 'dormi compiles to Promise setTimeout'
   input: |
       ex "norma/tempus" importa dormi, SECUNDUM
       futura functio wait() {
@@ -66,7 +66,7 @@
           - 'import'
 
 # All duration constants compile to millisecond literals
-- name: duration constants compile to literals
+- name: 'duration constants compile to literals'
   input: |
       ex "norma/tempus" importa MILLISECUNDUM, SECUNDUM, MINUTUM, HORA, DIES
       fixum a = MILLISECUNDUM

@@ -6,7 +6,7 @@
 # =============================================================================
 
 # Extract named properties from object
-- name: simple object destructuring
+- name: 'simple object destructuring'
   input: 'fixum { nomen, aetas } = user'
   ts: 'const { nomen, aetas } = user;'
   py:
@@ -14,15 +14,15 @@
       - 'aetas = user["aetas"]'
 
 # Rename during destructuring with colon
-- name: destructuring with rename
+- name: 'destructuring with rename'
   input: 'fixum { nomen: localName } = user'
   ts: 'const { nomen: localName } = user;'
   py:
       - 'localName = user["nomen"]'
 
 # Mutable destructuring uses varia
-- name: mutable destructuring
-  input: varia { count } = data
+- name: 'mutable destructuring'
+  input: 'varia { count } = data'
   ts: 'let { count } = data;'
 
 # =============================================================================
@@ -30,36 +30,36 @@
 # =============================================================================
 
 # Extract elements by position
-- name: simple array destructuring
-  input: fixum [a, b, c] = coords
+- name: 'simple array destructuring'
+  input: 'fixum [a, b, c] = coords'
   ts: 'const [a, b, c] = coords;'
   py: 'a, b, c = coords'
 
 # ceteri collects remaining elements
-- name: array destructuring with rest
-  input: fixum [first, ceteri rest] = items
+- name: 'array destructuring with rest'
+  input: 'fixum [first, ceteri rest] = items'
   ts: 'const [first, ...rest] = items;'
   py: 'first, *rest = items'
 
 # Underscore skips elements
-- name: array destructuring with skip
-  input: fixum [_, second, _] = data
+- name: 'array destructuring with skip'
+  input: 'fixum [_, second, _] = data'
   ts: 'const [, second, ] = data;'
   py: '_, second, _ = data'
 
 # Mutable array destructuring
-- name: mutable array destructuring
-  input: varia [x, y] = coords
+- name: 'mutable array destructuring'
+  input: 'varia [x, y] = coords'
   ts: 'let [x, y] = coords;'
 
 # ex array syntax (source first)
-- name: ex array destructuring
-  input: ex coords fixum [x, y, z]
+- name: 'ex array destructuring'
+  input: 'ex coords fixum [x, y, z]'
   ts: 'const [x, y, z] = coords;'
 
 # ex array with rest
-- name: ex array destructuring with rest
-  input: ex items fixum [first, ceteri tail]
+- name: 'ex array destructuring with rest'
+  input: 'ex items fixum [first, ceteri tail]'
   ts: 'const [first, ...tail] = items;'
 
 # =============================================================================
@@ -67,7 +67,7 @@
 # =============================================================================
 
 # genus generates class with auto-merge constructor
-- name: genus with auto-merge constructor
+- name: 'genus with auto-merge constructor'
   input: 'genus persona { textus nomen: "X" }'
   ts:
       - 'class persona'
@@ -80,7 +80,7 @@
       - 'def __init__'
 
 # creo becomes private method called from constructor
-- name: genus with creo
+- name: 'genus with creo'
   input: |
       genus persona {
         numerus aetas: 0
@@ -93,7 +93,7 @@
       - 'private creo()'
 
 # Without creo, no creo method is generated
-- name: genus without creo
+- name: 'genus without creo'
   input: 'genus persona { textus nomen: "X" }'
   ts:
       not_contains:
@@ -105,13 +105,13 @@
 # =============================================================================
 
 # novum creates instance - new in TS, direct call in Python
-- name: novum without args
-  input: fixum p = novum persona
+- name: 'novum without args'
+  input: 'fixum p = novum persona'
   ts: 'const p = new persona();'
   py: 'p = persona()'
 
 # novum with object literal passes overrides to constructor
-- name: novum with overrides
+- name: 'novum with overrides'
   input: 'fixum p = novum persona { nomen: "Claudia" }'
   ts: 'const p = new persona({ nomen: "Claudia" });'
   py: 'p = persona({"nomen": "Claudia"})'
@@ -121,7 +121,7 @@
 # =============================================================================
 
 # ego is this in TS, self in Python
-- name: ego becomes this or self
+- name: 'ego becomes this or self'
   input: |
       genus persona {
         textus nomen: "X"
@@ -137,19 +137,19 @@
 # =============================================================================
 
 # nexum emits private backing field
-- name: nexum private backing field
+- name: 'nexum private backing field'
   input: 'genus counter { nexum numerus count: 0 }'
   ts:
       - '#count = 0;'
 
 # nexum emits getter
-- name: nexum getter
+- name: 'nexum getter'
   input: 'genus counter { nexum numerus count: 0 }'
   ts:
       - 'get count(): number { return this.#count; }'
 
 # nexum emits setter with invalidation
-- name: nexum setter with invalidation
+- name: 'nexum setter with invalidation'
   input: 'genus counter { nexum numerus count: 0 }'
   ts:
       - 'set count(v: number)'
@@ -157,7 +157,7 @@
       - "__invalidate?.('count')"
 
 # nexum works with different types
-- name: nexum with textus
+- name: 'nexum with textus'
   input: 'genus user { nexum textus name: "anon" }'
   ts:
       - '#name = "anon";'
@@ -165,7 +165,7 @@
       - 'set name(v: string)'
 
 # nexum without initial value
-- name: nexum without initial value
+- name: 'nexum without initial value'
   input: 'genus timer { nexum numerus elapsed }'
   ts:
       - '#elapsed;'
@@ -173,7 +173,7 @@
       - 'set elapsed(v: number)'
 
 # Mixed nexum and regular fields
-- name: mixed nexum and regular fields
+- name: 'mixed nexum and regular fields'
   input: |
       genus widget {
         textus id: "x"
@@ -192,7 +192,7 @@
 # =============================================================================
 
 # pactum declares interface (interface in TS, Protocol in Python)
-- name: pactum with method
+- name: 'pactum with method'
   input: |
       pactum Salutator {
         functio salve(textus nomen) -> textus
@@ -205,7 +205,7 @@
       - 'def salve(self, nomen: str) -> str:'
 
 # pactum with multiple methods
-- name: pactum with multiple methods
+- name: 'pactum with multiple methods'
   input: |
       pactum Calculator {
         functio adde(numerus a, numerus b) -> numerus
@@ -217,7 +217,7 @@
       - 'minue(a: number, b: number): number;'
 
 # pactum with async method
-- name: pactum with async method
+- name: 'pactum with async method'
   input: |
       pactum DataFetcher {
         futura functio fetch(textus url) -> textus
@@ -227,7 +227,7 @@
       - 'fetch(url: string): Promise<string>;'
 
 # pactum with generator method
-- name: pactum with generator method
+- name: 'pactum with generator method'
   input: |
       pactum NumberGenerator {
         cursor functio generate(numerus max) -> numerus
@@ -237,7 +237,7 @@
       - 'generate(max: number): Generator<number>;'
 
 # pactum with async generator method
-- name: pactum with async generator method
+- name: 'pactum with async generator method'
   input: |
       pactum StreamReader {
         futura cursor functio read() -> textus
@@ -247,7 +247,7 @@
       - 'read(): AsyncGenerator<string>;'
 
 # pactum with type parameters
-- name: pactum with type parameters
+- name: 'pactum with type parameters'
   input: |
       pactum Container<T> {
         functio get() -> T
@@ -259,7 +259,7 @@
       - 'set(value: T): void;'
 
 # implet makes a class implement an interface
-- name: genus implements pactum
+- name: 'genus implements pactum'
   input: |
       pactum Greeter {
         functio greet(textus name) -> textus

@@ -6,7 +6,7 @@
 # =============================================================================
 
 # si is the if keyword - verum becomes true/True
-- name: simple if
+- name: 'simple if'
   input: |
       si verum {
         scribe "yes"
@@ -19,7 +19,7 @@
       - 'print("yes")'
 
 # aliter is the else keyword
-- name: if with else
+- name: 'if with else'
   input: |
       si falsum {
         a()
@@ -35,7 +35,7 @@
       - 'else:'
 
 # aliter si chains become else if/elif
-- name: if-elif-else chain
+- name: 'if-elif-else chain'
   input: |
       si x == 1 { a() }
       aliter si x == 2 { b() }
@@ -54,7 +54,7 @@
 # =============================================================================
 
 # dum is the while keyword
-- name: while loop
+- name: 'while loop'
   input: |
       dum verum {
         scribe "loop"
@@ -69,7 +69,7 @@
 # =============================================================================
 
 # ex...pro is for-of (iterate values)
-- name: for-of loop
+- name: 'for-of loop'
   input: |
       ex numeros pro numero {
         scribe numero
@@ -80,7 +80,7 @@
       - 'for numero in numeros:'
 
 # de...pro is for-in (iterate keys/indices)
-- name: for-in loop
+- name: 'for-in loop'
   input: |
       de lista pro item {
         scribe item
@@ -95,7 +95,7 @@
 # =============================================================================
 
 # .. creates exclusive range (0..10 = 0 to 9)
-- name: simple range loop
+- name: 'simple range loop'
   input: |
       ex 0..10 pro i {
         scribe i
@@ -106,7 +106,7 @@
       - 'for i in range(0, 10):'
 
 # per specifies step size
-- name: range with step
+- name: 'range with step'
   input: |
       ex 0..10 per 2 pro i {
         scribe i
@@ -117,7 +117,7 @@
       - 'for i in range(0, 10, 2):'
 
 # usque creates inclusive range (0 usque 10 = 0 to 10)
-- name: inclusive range loop
+- name: 'inclusive range loop'
   input: |
       ex 0 usque 10 pro i {
         scribe i
@@ -132,7 +132,7 @@
 # =============================================================================
 
 # rumpe is break
-- name: break statement
+- name: 'break statement'
   input: |
       dum verum {
         rumpe
@@ -143,7 +143,7 @@
       - 'break'
 
 # perge is continue
-- name: continue statement
+- name: 'continue statement'
   input: |
       dum verum {
         perge
@@ -158,7 +158,7 @@
 # =============================================================================
 
 # redde with value returns that value
-- name: return with value
+- name: 'return with value'
   input: |
       functio f() {
         redde 42
@@ -169,7 +169,7 @@
       - 'return 42'
 
 # redde without value returns undefined/None
-- name: return without value
+- name: 'return without value'
   input: |
       functio f() {
         redde
@@ -184,15 +184,15 @@
 # =============================================================================
 
 # adfirma is assert - TS emits if(!condition) throw, Python uses assert
-- name: assert without message
-  input: adfirma x > 0
+- name: 'assert without message'
+  input: 'adfirma x > 0'
   ts:
       - 'if (!('
       - 'throw new Error'
   py: 'assert (x > 0)'
 
 # adfirma with message includes that in the error
-- name: assert with message
+- name: 'assert with message'
   input: 'adfirma x > 0, "x must be positive"'
   ts:
       - 'throw new Error("x must be positive")'
@@ -203,7 +203,7 @@
 # =============================================================================
 
 # elige with si cases becomes if/else-if chain in TS, match/case in Python
-- name: elige with cases
+- name: 'elige with cases'
   input: |
       elige x {
         si 1 { a() }
@@ -218,7 +218,7 @@
       - 'case 2:'
 
 # aliter in elige is the default case
-- name: elige with default
+- name: 'elige with default'
   input: |
       elige x {
         si 1 { a() }
@@ -237,7 +237,7 @@
 # =============================================================================
 
 # custodi provides early-exit guard clauses
-- name: guard with condition
+- name: 'guard with condition'
   input: |
       custodi {
         si x == nihil { redde }

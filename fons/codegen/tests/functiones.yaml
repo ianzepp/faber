@@ -6,7 +6,7 @@
 # =============================================================================
 
 # functio declares a function (function in TS, def in Python)
-- name: simple function
+- name: 'simple function'
   input: |
       functio salve(nomen) {
         redde nomen
@@ -19,7 +19,7 @@
       - 'return nomen'
 
 # -> specifies return type annotation
-- name: function with return type
+- name: 'function with return type'
   input: 'functio greet() -> textus { redde "hello" }'
   ts:
       - 'function greet(): string'
@@ -31,7 +31,7 @@
 # =============================================================================
 
 # futura makes a function async
-- name: async function
+- name: 'async function'
   input: |
       futura functio fetch(url) {
         redde data
@@ -42,7 +42,7 @@
       - 'async def fetch(url):'
 
 # fiet is async + return type (wraps in Promise/Awaitable)
-- name: async function with return type
+- name: 'async function with return type'
   input: 'functio fetch() fiet textus { redde "data" }'
   ts:
       - 'async function fetch(): Promise<string>'
@@ -54,7 +54,7 @@
 # =============================================================================
 
 # fiunt makes a function a generator (wraps return in Generator/Iterator)
-- name: generator function
+- name: 'generator function'
   input: 'functio range() fiunt numerus { redde 1 }'
   ts:
       - 'function* range(): Generator<number>'
@@ -62,7 +62,7 @@
       - 'def range() -> Iterator[int]:'
 
 # fient is async generator (wraps in AsyncGenerator/AsyncIterator)
-- name: async generator function
+- name: 'async generator function'
   input: 'functio stream() fient textus { redde "chunk" }'
   ts:
       - 'async function* stream(): AsyncGenerator<string>'
@@ -74,7 +74,7 @@
 # =============================================================================
 
 # cede in generator context becomes yield
-- name: cede in generator
+- name: 'cede in generator'
   input: 'functio range() fiunt numerus { cede 1 }'
   ts:
       - 'yield 1'
@@ -82,7 +82,7 @@
       - 'yield 1'
 
 # cede in async context becomes await
-- name: cede in async function
+- name: 'cede in async function'
   input: 'functio fetch() fiet textus { cede getData() }'
   ts:
       - 'await getData()'
@@ -94,13 +94,13 @@
 # =============================================================================
 
 # JavaScript-style arrow syntax
-- name: simple arrow
+- name: 'simple arrow'
   input: '(x) => x'
   ts: '(x) => x;'
   py: 'lambda x: x'
 
 # Arrow with block body
-- name: arrow with block
+- name: 'arrow with block'
   input: '(x) => { redde x }'
   ts:
       - '(x) =>'
@@ -112,32 +112,32 @@
 # =============================================================================
 
 # pro is the Latin lambda syntax - single param
-- name: single param lambda
-  input: pro x redde x * 2
+- name: 'single param lambda'
+  input: 'pro x redde x * 2'
   ts: '(x) => (x * 2);'
   py: 'lambda x: (x * 2)'
 
 # Multiple parameters separated by comma
-- name: multi param lambda
-  input: pro x, y redde x + y
+- name: 'multi param lambda'
+  input: 'pro x, y redde x + y'
   ts: '(x, y) => (x + y);'
   py: 'lambda x, y: (x + y)'
 
 # Zero parameters - empty param list
-- name: zero param lambda
-  input: pro redde 42
+- name: 'zero param lambda'
+  input: 'pro redde 42'
   ts: '() => 42;'
   py: 'lambda : 42'
 
 # Lambda assigned to variable
-- name: lambda in variable
-  input: fixum double = pro x redde x * 2
+- name: 'lambda in variable'
+  input: 'fixum double = pro x redde x * 2'
   ts: 'const double = (x) => (x * 2);'
   py: 'double = lambda x: (x * 2)'
 
 # Lambda passed as callback argument
-- name: lambda as callback
-  input: items.filtrata(pro x redde x > 0)
+- name: 'lambda as callback'
+  input: 'items.filtrata(pro x redde x > 0)'
   ts: 'items.filter((x) => (x > 0));'
   py:
       - 'filter'
@@ -148,7 +148,7 @@
 # =============================================================================
 
 # Empty function body - TS allows {}, Python needs pass
-- name: empty function body
+- name: 'empty function body'
   input: 'functio noop() {}'
   ts: 'function noop() {}'
   py:
