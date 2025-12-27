@@ -89,7 +89,7 @@ Faber Romanus - The Roman Craftsman
 A Latin programming language
 
 Usage:
-  faber <command> [options] <file>
+  faber <command> <file> [options]
 
 Commands:
   compile, finge <file>  Compile .fab file to target language
@@ -104,7 +104,7 @@ Options:
   -h, --help             Show this help
   -v, --version          Show version
 
-Use '-' as filename to read from stdin.
+Reads from stdin if no file specified (or use '-' explicitly).
 
 Examples:
   faber compile hello.fab                     # Compile to TS (stdout)
@@ -114,7 +114,7 @@ Examples:
   faber run hello.fab                         # Compile to TS and execute
   faber format hello.fab                      # Format file in place
   faber format hello.fab --check              # Check if file is formatted
-  echo 'scribe "hello"' | faber compile -     # Compile from stdin
+  echo 'scribe "hello"' | faber compile        # Compile from stdin
 `);
 }
 
@@ -410,16 +410,19 @@ if (command === '-v' || command === '--version') {
 // Option Parsing
 // ---------------------------------------------------------------------------
 
-const inputFile = args[1];
+let inputFile: string | undefined;
 let outputFile: string | undefined;
 let target: CodegenTarget = DEFAULT_TARGET;
 let checkOnly = false;
 
-// WHY: Simple linear scan is sufficient for small option set
-for (let i = 2; i < args.length; i++) {
-    if (args[i] === '-o' || args[i] === '--output') {
+// WHY: Scan all args, options can appear anywhere, non-option is the file
+for (let i = 1; i < args.length; i++) {
+    const arg = args[i];
+
+    if (arg === '-o' || arg === '--output') {
         outputFile = args[++i];
-    } else if (args[i] === '-t' || args[i] === '--target') {
+    }
+    else if (arg === '-t' || arg === '--target') {
         const t = args[++i];
 
         if (!t || !VALID_TARGETS.includes(t as (typeof VALID_TARGETS)[number])) {
@@ -428,16 +431,22 @@ for (let i = 2; i < args.length; i++) {
         }
 
         target = t as CodegenTarget;
-    } else if (args[i] === '-c' || args[i] === '--check') {
+    }
+    else if (arg === '-c' || arg === '--check') {
         checkOnly = true;
+    }
+    else if (!arg.startsWith('-') || arg === '-') {
+        // Non-option arg is the file, or explicit '-' for stdin
+        inputFile = arg;
+    }
+    else {
+        console.error(`Error: Unknown option '${arg}'`);
+        process.exit(1);
     }
 }
 
-if (!inputFile) {
-    console.error('Error: No input file specified');
-    printUsage();
-    process.exit(1);
-}
+// WHY: Default to stdin when no file specified, enabling: echo 'code' | faber compile
+const effectiveInputFile = inputFile ?? '-';
 
 // ---------------------------------------------------------------------------
 // Command Execution
@@ -446,7 +455,7 @@ if (!inputFile) {
 switch (command) {
     case 'compile':
     case 'finge':
-        await compile(inputFile, target, outputFile);
+        await compile(effectiveInputFile, target, outputFile);
         break;
     case 'run':
     case 'curre':
@@ -455,15 +464,15 @@ switch (command) {
             process.exit(1);
         }
 
-        await run(inputFile);
+        await run(effectiveInputFile);
         break;
     case 'check':
     case 'proba':
-        await check(inputFile);
+        await check(effectiveInputFile);
         break;
     case 'format':
     case 'forma':
-        await format(inputFile, checkOnly);
+        await format(effectiveInputFile, checkOnly);
         break;
     default:
         console.error(`Unknown command: ${command}`);
