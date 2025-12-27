@@ -185,7 +185,7 @@ The existing `cura expr fit name { }` syntax works for allocators:
 
 ```fab
 cura arena() fit alloc {
-    varia items: lista<textus> = []
+    varia items: textus[] = []
     items.adde("test")  // uses alloc implicitly
 }
 // arena freed, all allocations released
@@ -196,8 +196,8 @@ cura arena() fit alloc {
 Functions that need an allocator declare a `curator` parameter:
 
 ```fab
-functio buildList(curator memoria, textus prefix) -> lista<textus> {
-    varia items: lista<textus> = []
+functio buildList(curator memoria, textus prefix) -> textus[] {
+    varia items: textus[] = []
     items.adde(prefix)
     redde items
 }
@@ -217,12 +217,12 @@ Each scope has an "active curator" name. Collection methods use whatever name is
 
 ```fab
 // main scope: curator = 'alloc' (implicit)
-varia outer: lista<numerus> = []
+varia outer: numerus[] = []
 outer.adde(1)  // uses alloc
 
 cura arena() fit temp {
     // inner scope: curator = 'temp'
-    varia inner: lista<numerus> = []
+    varia inner: numerus[] = []
     inner.adde(2)  // uses temp
 }
 
@@ -233,9 +233,9 @@ outer.adde(3)  // uses alloc again
 Functions establish their own scope:
 
 ```fab
-functio process(curator mem, lista<numerus> data) -> lista<numerus> {
+functio process(curator mem, numerus[] data) -> numerus[] {
     // function scope: curator = 'mem'
-    varia result: lista<numerus> = []
+    varia result: numerus[] = []
     result.adde(42)  // uses mem
     redde result
 }
@@ -244,8 +244,8 @@ functio process(curator mem, lista<numerus> data) -> lista<numerus> {
 ### Complete Example
 
 ```fab
-functio processUsers(curator alloc, lista<User> users) -> lista<User> {
-    varia result: lista<User> = []
+functio processUsers(curator alloc, User[] users) -> User[] {
+    varia result: User[] = []
 
     ex users pro user {
         si user.active {

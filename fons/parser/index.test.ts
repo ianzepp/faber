@@ -32,7 +32,7 @@ describe('parser', () => {
         });
 
         test('generic type annotation', () => {
-            const { program } = parseCode('fixum lista<numerus> lista = nihil');
+            const { program } = parseCode('fixum numerus[] lista = nihil');
             const decl = program!.body[0] as any;
 
             expect(decl.typeAnnotation.name).toBe('lista');
@@ -337,7 +337,7 @@ describe('parser', () => {
 
         test('function with in preposition (mutable parameter)', () => {
             const { program } = parseCode(`
-        functio append(in lista<textus> items, textus value) {
+        functio append(in textus[] items, textus value) {
           scribe(value)
         }
       `);
@@ -351,7 +351,7 @@ describe('parser', () => {
 
         test('function with borrowed return type (fit de)', () => {
             const { program } = parseCode(`
-        functio first(de lista<textus> items) fit de textus {
+        functio first(de textus[] items) fit de textus {
           redde items[0]
         }
       `);
@@ -364,7 +364,7 @@ describe('parser', () => {
 
         test('function with borrowed return type (arrow de)', () => {
             const { program } = parseCode(`
-        functio first(de lista<textus> items) -> de textus {
+        functio first(de textus[] items) -> de textus {
           redde items[0]
         }
       `);
@@ -1381,7 +1381,7 @@ describe('parser', () => {
         });
 
         test('cast with generic type', () => {
-            const { program } = parseCode('items ut lista<textus>');
+            const { program } = parseCode('items ut textus[]');
             const expr = (program!.body[0] as any).expression;
 
             expect(expr.type).toBe('UtExpression');
@@ -1597,7 +1597,7 @@ describe('parser', () => {
         });
 
         test('est with generic type', () => {
-            const { program } = parseCode('si items est lista<textus> { scribe "array" }');
+            const { program } = parseCode('si items est textus[] { scribe "array" }');
             const stmt = program!.body[0] as any;
 
             expect(stmt.type).toBe('SiStatement');
@@ -2652,7 +2652,7 @@ describe('parser', () => {
             });
 
             test('lambda with generic return type', () => {
-                const { program } = parseCode('pro x -> lista<numerus>: [x]');
+                const { program } = parseCode('pro x -> numerus[]: [x]');
                 const expr = (program!.body[0] as any).expression;
 
                 expect(expr.type).toBe('LambdaExpression');
@@ -3231,7 +3231,7 @@ describe('parser', () => {
 
             test('function with multiple type parameters', () => {
                 const { program } = parseCode(`
-                    functio pair(prae typus K, prae typus V, K key, V value) -> lista<K> {
+                    functio pair(prae typus K, prae typus V, K key, V value) -> K[] {
                         redde nihil
                     }
                 `);
@@ -3447,7 +3447,7 @@ describe('parser', () => {
             });
 
             test('type alias with generic type', () => {
-                const { program } = parseCode('typus StringList = lista<textus>');
+                const { program } = parseCode('typus StringList = textus[]');
                 const stmt = program!.body[0] as any;
 
                 expect(stmt.type).toBe('TypeAliasDeclaration');

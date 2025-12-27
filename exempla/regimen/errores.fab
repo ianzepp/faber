@@ -64,7 +64,7 @@ functio processOrder(objectum order) -> textus {
 // =============================================================================
 
 // Use mori for impossible states (bugs)
-functio getItemAt(lista<numerus> items, numerus index) -> numerus {
+functio getItemAt(numerus[] items, numerus index) -> numerus {
     si index < 0 {
         mori "negative index is a bug"
     }

@@ -71,7 +71,7 @@ interface GenericType extends BaseType {
 }
 ```
 
-Faber has `lista<T>` syntax but not generic interfaces/classes.
+Faber has `T[]` syntax but not generic interfaces/classes.
 
 ### 5. Optional Properties (`?:`)
 
@@ -214,7 +214,7 @@ Priority order for enabling self-hosting:
 2. **Type casting** — `expr ut typus` syntax
 3. **Optional fields in genus** — `textus? nomen` syntax
 4. **Interface/shape types** — extend `pactum` or add `forma`
-5. **Generic constraints** — `genus lista<T>` declarations
+5. **Generic constraints** — `genus T[]` declarations
 6. **Discriminated union support** — exhaustiveness checking
 
 ## Bootstrap Strategy
@@ -282,23 +282,23 @@ The parser creates an `ImportDeclaration` AST node, but the semantic analyzer do
 Object/array literals don't infer types from annotations:
 
 ```fab
-fixum lista<verbum_clavis> verba = [
+fixum verbum_clavis[] verba = [
     { latinum: "si", ... }
 ]
-// Error: Type 'lista<objectum>' is not assignable to 'lista<verbum_clavis>'
+// Error: Type 'objectum[]' is not assignable to 'verbum_clavis[]'
 ```
 
-The analyzer infers `lista<objectum>` from the literal instead of using the declared type.
+The analyzer infers `objectum[]` from the literal instead of using the declared type.
 
 #### 3. `novum tabula de {...}` Type Inference
 
 Same issue with Map initialization:
 
 ```fab
-fixum tabula<textus, lista<casus_numerus>> terminationes = novum tabula de {
+fixum tabula<textus, casus_numerus[]> terminationes = novum tabula de {
     "a": [...]
 }
-// Error: Type 'tabula' is not assignable to 'tabula<textus, lista<casus_numerus>>'
+// Error: Type 'tabula' is not assignable to 'tabula<textus, casus_numerus[]>'
 ```
 
 ### Naming Conventions

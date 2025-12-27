@@ -54,13 +54,13 @@ fixum numerus stockCount = 100
 // COLLECTION ALIASES
 // =============================================================================
 
-typus UserList = lista<numerus>
-typus NameList = lista<textus>
-typus ScoreList = lista<numerus>
+typus UserList = numerus[]
+typus NameList = textus[]
+typus ScoreList = numerus[]
 
-fixum lista<numerus> activeUsers = [1, 2, 3, 4, 5]
-fixum lista<textus> teamMembers = ["Marcus", "Julia", "Claudia"]
-fixum lista<numerus> testScores = [85, 92, 78, 95]
+fixum numerus[] activeUsers = [1, 2, 3, 4, 5]
+fixum textus[] teamMembers = ["Marcus", "Julia", "Claudia"]
+fixum numerus[] testScores = [85, 92, 78, 95]
 
 ex activeUsers pro userId {
     scribe "User ID:", userId

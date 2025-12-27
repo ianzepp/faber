@@ -21,7 +21,7 @@ fixum nums = [1, 2, 3]
 scribe "Sum:", sum(sparge nums)
 
 // Rest parameters: collect remaining arguments
-functio logAll(textus prefix, ceteri lista<textus> messages) {
+functio logAll(textus prefix, ceteri textus[] messages) {
     scribe prefix
     ex messages pro msg {
         scribe "  -", msg

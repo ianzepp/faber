@@ -5,7 +5,7 @@
 // Faber provides generic collection types using Latin names.
 //
 // COLLECTION TYPES:
-// lista<T>      - Array/List
+// T[]      - Array/List
 // tabula<K, V>  - Map/Dictionary (planned)
 // copia<T>      - Set (planned)
 //
@@ -19,15 +19,15 @@
 // =============================================================================
 
 // Array of numbers
-fixum lista<numerus> numbers = [1, 2, 3, 4, 5]
+fixum numerus[] numbers = [1, 2, 3, 4, 5]
 scribe numbers
 
 // Array of strings
-fixum lista<textus> names = ["Marcus", "Julia", "Claudia"]
+fixum textus[] names = ["Marcus", "Julia", "Claudia"]
 scribe names
 
 // Array of booleans
-fixum lista<bivalens> flags = [verum, falsum, verum]
+fixum bivalens[] flags = [verum, falsum, verum]
 scribe flags
 
 // Inferred array types
@@ -40,7 +40,7 @@ scribe inferredStrings
 // ACCESSING ELEMENTS
 // =============================================================================
 
-fixum lista<textus> cities = ["Roma", "Athens", "Alexandria"]
+fixum textus[] cities = ["Roma", "Athens", "Alexandria"]
 
 // Index access
 scribe cities[0]  // "Roma"
@@ -66,7 +66,7 @@ ex 0..4 pro i {
 // =============================================================================
 
 // Array parameter
-functio sumArray(lista<numerus> nums) -> numerus {
+functio sumArray(numerus[] nums) -> numerus {
     varia total = 0
 
     ex nums pro n {
@@ -80,7 +80,7 @@ scribe sumArray([1, 2, 3, 4, 5])  // 15
 scribe sumArray([10, 20, 30])     // 60
 
 // Return array
-functio getGreetings() -> lista<textus> {
+functio getGreetings() -> textus[] {
     redde ["Salve", "Vale", "Ave"]
 }
 
@@ -94,7 +94,7 @@ ex greetings pro greeting {
 // =============================================================================
 
 // Array of arrays (matrix)
-fixum lista<lista<numerus>> matrix = [
+fixum numerus[][] matrix = [
     [1, 2, 3],
     [4, 5, 6],
     [7, 8, 9]
@@ -126,11 +126,11 @@ scribe extended  // [0, 1, 2, 3, 4]
 // ARRAY SHORTHAND
 // =============================================================================
 
-// numerus[] desugars to lista<numerus>
+// numerus[] desugars to numerus[]
 fixum numerus[] scores = [85, 90, 78, 92, 88]
 scribe scores
 
-// textus[] desugars to lista<textus>
+// textus[] desugars to textus[]
 fixum textus[] words = ["alpha", "beta", "gamma"]
 scribe words
 

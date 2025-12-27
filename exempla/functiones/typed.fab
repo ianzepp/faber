@@ -78,7 +78,7 @@ scribe range(0, 100, 10)
 // =============================================================================
 
 // Array parameter
-functio firstus(lista<textus> items) -> textus {
+functio firstus(textus[] items) -> textus {
     redde items[0]
 }
 

@@ -174,7 +174,7 @@ The compiler already has morphological analysis via the lexicon. It knows `texti
 When a function returns a borrowed value, use `de` on the return type to tie its lifetime to the borrowed input(s):
 
 ```
-functio first(de lista<textus> items) fit de textus
+functio first(de textus[] items) fit de textus
 //            ^^ borrowed input          ^^ borrowed return, tied to input
 
 functio longest(de textus x, de textus y) fit de textus
@@ -206,10 +206,10 @@ Async functions and generators cannot return borrowed values because the `Future
 
 ```
 // ALLOWED - sync can return borrowed
-functio first(de lista<textus> items) fit de textus
+functio first(de textus[] items) fit de textus
 
 // ERROR - async cannot return borrowed
-futura functio first(de lista<textus> items) fiet de textus
+futura functio first(de textus[] items) fiet de textus
 ```
 
 **Error message:**
@@ -218,13 +218,13 @@ futura functio first(de lista<textus> items) fiet de textus
 error: futura functio cannot return borrowed (de) value
   --> file.fab:10:50
    |
-10 | futura functio first(de lista<textus> items) fiet de textus
+10 | futura functio first(de textus[] items) fiet de textus
    |                                                   ^^ borrowed return not allowed with fiet
    |
 note: async futures may outlive borrowed data, causing dangling references
 help: return owned value instead
    |
-10 | futura functio first(de lista<textus> items) fiet textus
+10 | futura functio first(de textus[] items) fiet textus
 ```
 
 The same restriction applies to generators (`cursor` functions) yielding borrowed values.
@@ -561,7 +561,7 @@ Future enhancement: infer error enums from `iace` usage patterns.
 | `bivalens`    | `bool`           | Boolean                     |
 | `nihil`       | `()`             | Unit type                   |
 | `textus?`     | `Option<String>` | Optional                    |
-| `lista<T>`    | `Vec<T>`         | Vector                      |
+| `T[]`    | `Vec<T>`         | Vector                      |
 | `tabula<K,V>` | `HashMap<K,V>`   | Hash map                    |
 | `copia<T>`    | `HashSet<T>`     | Hash set                    |
 

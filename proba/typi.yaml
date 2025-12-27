@@ -17,7 +17,7 @@
 
 # Generic type aliases preserve type parameters
 - name: 'generic type alias'
-  input: 'typus StringList = lista<textus>'
+  input: 'typus StringList = textus[]'
   ts: 'type StringList = Array<string>;'
   py: 'StringList = list[str]'
   zig:

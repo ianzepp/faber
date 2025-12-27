@@ -167,7 +167,7 @@ fixum merged = { sparge defaults, timeout: 5000 }
 add(sparge nums)
 
 // Rest parameters
-functio sum(ceteri lista<numerus> nums) -> numerus
+functio sum(ceteri numerus[] nums) -> numerus
 ```
 
 ---

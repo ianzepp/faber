@@ -43,7 +43,7 @@ scribe compara("alpha", "alpha")  // verum
 scribe compara("alpha", "beta")   // falsum
 
 // Borrowed list - reads elements without consuming the list
-functio summa(de lista<numerus> numeri) -> numerus {
+functio summa(de numerus[] numeri) -> numerus {
     varia total = 0
     ex numeri pro n {
         total = total + n
@@ -76,14 +76,14 @@ scribe summa([1, 2, 3, 4, 5])  // 15
 // Only valid for sync functions (fit, not fiet).
 
 // Return borrowed reference tied to input lifetime
-functio first(de lista<textus> items) fit de textus {
+functio first(de textus[] items) fit de textus {
     redde items[0]
 }
 
 scribe first(["alpha", "beta", "gamma"])  // "alpha"
 
 // Using arrow syntax for borrowed return
-functio last(de lista<numerus> items) -> de numerus {
+functio last(de numerus[] items) -> de numerus {
     redde items[items.length - 1]
 }
 

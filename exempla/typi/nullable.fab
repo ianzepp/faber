@@ -123,7 +123,7 @@ scribe describe(nihil, nihil)
 // NULLABLE RETURN TYPES
 // =============================================================================
 
-functio findFirst(lista<numerus> nums, numerus target) -> numerus? {
+functio findFirst(numerus[] nums, numerus target) -> numerus? {
     ex nums pro n {
         si n == target {
             redde n
@@ -149,11 +149,11 @@ si nulla notFound {
 // =============================================================================
 
 // Array that can be null
-fixum lista<numerus>? optionalList = nihil
+fixum numerus[]? optionalList = nihil
 scribe optionalList
 
 // Array of nullable numbers (nihil not supported in typed arrays yet)
-// fixum lista<numerus?> numbersWithNulls = [1, nihil, 3, nihil, 5]
+// fixum numerus?[] numbersWithNulls = [1, nihil, 3, nihil, 5]
 
 // ex numbersWithNulls pro n {
 //     si nonnulla n {

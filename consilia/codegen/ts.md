@@ -43,7 +43,7 @@ TypeScript is the primary compilation target for Faber. The language design was 
 | `decimus`               | `Decimal`               | Arbitrary precision (requires library)           |
 | `bivalens`              | `boolean`               | Boolean type                                     |
 | `nihil`                 | `null`                  | Null value                                       |
-| `lista<T>`              | `T[]`                   | Array type                                       |
+| `T[]`              | `T[]`                   | Array type                                       |
 | `tabula<K,V>`           | `Map<K,V>`              | Map type                                         |
 | `copia<T>`              | `Set<T>`                | Set type                                         |
 

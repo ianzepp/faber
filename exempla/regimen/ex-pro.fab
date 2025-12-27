@@ -118,7 +118,7 @@ ex 1..5 pro i {
 // EX-PRO IN FUNCTIONS
 // =============================================================================
 
-functio sumArray(lista<numerus> nums) -> numerus {
+functio sumArray(numerus[] nums) -> numerus {
     varia numerus total = 0
 
     ex nums pro n {
@@ -132,7 +132,7 @@ scribe sumArray([1, 2, 3, 4, 5])
 scribe sumArray([10, 20, 30])
 
 // Find maximum value
-functio maxValue(lista<numerus> nums) -> numerus {
+functio maxValue(numerus[] nums) -> numerus {
     varia numerus max = nums[0]
 
     ex nums pro n {

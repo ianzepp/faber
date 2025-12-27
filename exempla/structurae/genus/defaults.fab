@@ -89,7 +89,7 @@ genus settings {
     numerus brightness: 75
     textus theme: "light"
     bivalens notifications: verum
-    lista<textus> tags: []
+    textus[] tags: []
 }
 
 fixum defaults = novum settings
@@ -110,7 +110,7 @@ scribe custom.brightness  // default
 
 genus collection {
     textus name
-    lista<numerus> items: []
+    numerus[] items: []
     numerus count: 0
 }
 

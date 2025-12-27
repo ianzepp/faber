@@ -275,7 +275,7 @@ describe('Semantic Analyzer', () => {
 
     describe('Generic Types', () => {
         it('resolves generic type annotation', () => {
-            const { errors, types } = analyzeSource(`varia lista<numerus>? items = nihil`);
+            const { errors, types } = analyzeSource(`varia numerus[]? items = nihil`);
 
             expect(errors).toHaveLength(0);
             const itemsType = types.get('items');
@@ -318,7 +318,7 @@ describe('Semantic Analyzer', () => {
 
         it('nulla on array type', () => {
             const source = `
-                varia lista<numerus> nums = [1, 2, 3]
+                varia numerus[] nums = [1, 2, 3]
                 varia check = nulla nums
             `;
             const { errors, types } = analyzeSource(source);
@@ -455,7 +455,7 @@ describe('Semantic Analyzer', () => {
 
     describe('Edge Cases - Generic Validation', () => {
         it('resolves generic type annotation', () => {
-            const source = `varia lista<numerus> nums = [1, 2, 3]`;
+            const source = `varia numerus[] nums = [1, 2, 3]`;
             const { errors, types } = analyzeSource(source);
 
             expect(errors).toHaveLength(0);
@@ -464,7 +464,7 @@ describe('Semantic Analyzer', () => {
         });
 
         it('nested generics', () => {
-            const source = `varia lista<lista<numerus>> matrix = [[1, 2], [3, 4]]`;
+            const source = `varia numerus[][] matrix = [[1, 2], [3, 4]]`;
             const { errors } = analyzeSource(source);
 
             expect(errors).toHaveLength(0);
@@ -479,7 +479,7 @@ describe('Semantic Analyzer', () => {
         });
 
         it('validates array element types', () => {
-            const source = `varia lista<numerus> nums = [1, "two", 3]`;
+            const source = `varia numerus[] nums = [1, "two", 3]`;
             const { errors } = analyzeSource(source);
 
             expect(errors.length).toBeGreaterThan(0);

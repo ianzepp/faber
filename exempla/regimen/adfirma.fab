@@ -116,7 +116,7 @@ scribe clamp(15, 0, 10)
 // ARRAY ASSERTIONS
 // =============================================================================
 
-functio getFirst(lista<numerus> items) -> numerus {
+functio getFirst(numerus[] items) -> numerus {
     adfirma nonnulla items, "array cannot be empty"
     redde items[0]
 }

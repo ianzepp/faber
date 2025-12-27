@@ -26,7 +26,7 @@ Different targets require different setup:
 | Feature Used   | TypeScript       | Python                    | C++23                        | Rust                            | Zig                          |
 | -------------- | ---------------- | ------------------------- | ---------------------------- | ------------------------------- | ---------------------------- |
 | `mori` (panic) | `class Panic...` | `import sys`              | `#include <stdexcept>`       | — (built-in)                    | — (built-in)                 |
-| `lista<T>`     | —                | `from typing import List` | `#include <vector>`          | `use std::vec::Vec`             | `const std = @import("std")` |
+| `T[]`     | —                | `from typing import List` | `#include <vector>`          | `use std::vec::Vec`             | `const std = @import("std")` |
 | `tabula<K,V>`  | —                | `from typing import Dict` | `#include <unordered_map>`   | `use std::collections::HashMap` | —                            |
 | `promissum<T>` | —                | `import asyncio`          | `#include <future>`          | —                               | —                            |
 | `scribe`       | —                | —                         | `#include <print>`           | —                               | —                            |
@@ -44,7 +44,7 @@ interface RequiredFeatures {
     panic: boolean; // mori used
 
     // Collections
-    lista: boolean; // lista<T> or array methods
+    lista: boolean; // T[] or array methods
     tabula: boolean; // tabula<K,V>
     copia: boolean; // copia<T>
 

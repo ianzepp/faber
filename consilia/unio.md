@@ -45,7 +45,7 @@ A value that could be one of several types, without a discriminator tag. Require
 
 ```
 typus Id = unio<numerus, textus>
-typus Json = unio<textus, numerus, bivalens, nihil, lista<Json>, tabula<textus, Json>>
+typus Json = unio<textus, numerus, bivalens, nihil, Json[], tabula<textus, Json>>
 ```
 
 ### Usage

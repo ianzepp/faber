@@ -153,12 +153,12 @@ See `vincula.md` for full details.
 
 ### Static Combinators
 
-| Faber                                     | JS Equivalent        | Description      |
-| ----------------------------------------- | -------------------- | ---------------- |
-| `promissum.omnes(lista<promissum<T>>)`    | `Promise.all`        | All must succeed |
-| `promissum.primus(lista<promissum<T>>)`   | `Promise.race`       | First to settle  |
-| `promissum.quilibet(lista<promissum<T>>)` | `Promise.any`        | First to succeed |
-| `promissum.finita(...)`                   | `Promise.allSettled` | All settled      |
+| Faber                                | JS Equivalent        | Description      |
+| ------------------------------------ | -------------------- | ---------------- |
+| `promissum.omnes(promissum<T>[])`    | `Promise.all`        | All must succeed |
+| `promissum.primus(promissum<T>[])`   | `Promise.race`       | First to settle  |
+| `promissum.quilibet(promissum<T>[])` | `Promise.any`        | First to succeed |
+| `promissum.finita(...)`              | `Promise.allSettled` | All settled      |
 
 **Naming rationale:**
 
@@ -207,7 +207,7 @@ Open question: How to handle unhandled promise rejections?
 ### Sequential Async
 
 ```
-futura functio processAll(lista<textus> urls) -> lista<textus> {
+futura functio processAll(textus[] urls) -> textus[] {
     varia results = []
     ex urls pro url {
         fixum data = cede fetchData(url)
@@ -220,7 +220,7 @@ futura functio processAll(lista<textus> urls) -> lista<textus> {
 ### Parallel Async
 
 ```
-futura functio fetchAll(lista<textus> urls) -> lista<textus> {
+futura functio fetchAll(textus[] urls) -> textus[] {
     fixum promissa = urls.mappa((url) => fetchData(url))
     redde cede promissum.omnes(promissa)
 }

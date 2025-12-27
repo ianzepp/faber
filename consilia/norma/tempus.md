@@ -1,7 +1,7 @@
 ---
 status: partial
 targets: [ts]
-note: `nunc`, `dormi`, duration constants done for TS; datetime objects and formatting not yet done
+note: Basic instant/sleep done for TS; datetime and formatting not yet implemented
 updated: 2024-12
 ---
 
@@ -9,163 +9,240 @@ updated: 2024-12
 
 ## Overview
 
-Time operations for getting current time, sleeping, scheduling, and date manipulation.
+Time operations: instants, datetimes, durations, sleeping, and formatting.
+
+## Core Types
+
+| Type       | Meaning                  | Use Case                       |
+| ---------- | ------------------------ | ------------------------------ |
+| `momentum` | Point in time (epoch ms) | Timestamps, elapsed time       |
+| `tempus`   | Calendar datetime        | Dates, scheduling, display     |
+| `duratio`  | Time span                | Delays, intervals, differences |
 
 ## Etymology
 
-- `tempus` - "time, period" — the Date type
-- `nunc` - "now" — current instant
-- `dormi` - "sleep!" — pause execution
-- `mora` - "delay" — a duration of waiting
-- `intervallum` - "interval" — space between
-- `duratio` - "duration" — length of time
+| Latin      | Meaning          | Maps To            |
+| ---------- | ---------------- | ------------------ |
+| `momentum` | instant, moment  | epoch milliseconds |
+| `tempus`   | time, period     | Date/DateTime      |
+| `duratio`  | duration, length | time span          |
+| `nunc`     | now              | current instant    |
+| `hodie`    | today            | current date       |
+| `dormi`    | sleep!           | pause execution    |
+| `forma`    | shape, form      | format to string   |
+| `para`     | prepare, parse   | parse from string  |
 
 ---
 
-## Current Time
+## momentum (Instant)
 
-### Instant
+A point in time as milliseconds since Unix epoch. Lightweight, no timezone.
 
+```fab
+ex "norma/tempus" importa momentum
+
+fixum now = momentum.nunc()           // current instant (ms)
+fixum later = momentum.nunc()
+fixum elapsed = later - now           // duratio
+
+// Comparison
+si later > now { scribe "time passed" }
+
+// Arithmetic with duratio
+fixum future = now + duratio.secunda(5)
 ```
-ex "norma/tempus" importa { nunc }
 
-fixum now = nunc()                    // current instant (ms since epoch)
-fixum now_ns = nunc_nano()            // nanosecond precision
-fixum now_sec = nunc_secunda()        // seconds since epoch
-```
+### momentum Methods
 
-### Date/Time
+| Method              | Returns    | Meaning                           |
+| ------------------- | ---------- | --------------------------------- |
+| `momentum.nunc()`   | `momentum` | Current instant                   |
+| `m.ad_tempus()`     | `tempus`   | Convert to datetime (local TZ)    |
+| `m.ad_tempus(zona)` | `tempus`   | Convert to datetime (specific TZ) |
+| `m - other`         | `duratio`  | Difference between instants       |
+| `m + duratio`       | `momentum` | Add duration                      |
+| `m - duratio`       | `momentum` | Subtract duration                 |
 
-```
-ex "norma/tempus" importa { hodie, tempus }
+---
 
-fixum today = hodie()                 // current date (no time)
-fixum now = tempus.nunc()             // full datetime
+## tempus (DateTime)
 
+Calendar datetime with year, month, day, hour, minute, second. Timezone-aware.
+
+```fab
+ex "norma/tempus" importa tempus
+
+fixum now = tempus.nunc()             // current datetime (local TZ)
+fixum today = tempus.hodie()          // current date at midnight
+fixum utc = tempus.nunc_utc()         // current datetime (UTC)
+
+// Access fields
 scribe now.annus                      // 2025
 scribe now.mensis                     // 12
-scribe now.dies                       // 24
+scribe now.dies                       // 27
 scribe now.hora                       // 14
 scribe now.minutum                    // 30
 scribe now.secundum                   // 45
+
+// Day of week (1=Monday, 7=Sunday)
+scribe now.dies_hebdomadis            // 6 (Saturday)
+```
+
+### tempus Fields
+
+| Field             | Type      | Range | Meaning       |
+| ----------------- | --------- | ----- | ------------- |
+| `annus`           | `numerus` | any   | year          |
+| `mensis`          | `numerus` | 1-12  | month         |
+| `dies`            | `numerus` | 1-31  | day of month  |
+| `hora`            | `numerus` | 0-23  | hour          |
+| `minutum`         | `numerus` | 0-59  | minute        |
+| `secundum`        | `numerus` | 0-59  | second        |
+| `millisecundum`   | `numerus` | 0-999 | millisecond   |
+| `dies_hebdomadis` | `numerus` | 1-7   | day of week   |
+| `dies_anni`       | `numerus` | 1-366 | day of year   |
+| `zona`            | `textus`  | IANA  | timezone name |
+
+### tempus Constructors
+
+```fab
+// From fields
+fixum t = tempus.ex(2025, 12, 25)                    // Dec 25, 2025 midnight
+fixum t = tempus.ex(2025, 12, 25, 14, 30, 0)         // Dec 25, 2025 14:30:00
+
+// From epoch
+fixum t = tempus.ex_momento(momentum.nunc())
+
+// From string
+fixum t = tempus.para("2025-12-25", "YYYY-MM-DD")
+fixum t = tempus.para("2025-12-25T14:30:00Z")        // ISO 8601 auto-detected
+```
+
+### tempus Methods
+
+| Method              | Returns    | Meaning                   |
+| ------------------- | ---------- | ------------------------- |
+| `tempus.nunc()`     | `tempus`   | Current local datetime    |
+| `tempus.nunc_utc()` | `tempus`   | Current UTC datetime      |
+| `tempus.hodie()`    | `tempus`   | Today at midnight (local) |
+| `tempus.ex(...)`    | `tempus`   | From fields               |
+| `tempus.para(str)`  | `tempus?`  | Parse from string         |
+| `t.ad_momentum()`   | `momentum` | Convert to instant        |
+| `t.in_zona(zona)`   | `tempus`   | Convert to timezone       |
+| `t.forma(pattern)`  | `textus`   | Format to string          |
+| `t + duratio`       | `tempus`   | Add duration              |
+| `t - duratio`       | `tempus`   | Subtract duration         |
+| `t - other`         | `duratio`  | Difference                |
+
+---
+
+## duratio (Duration)
+
+A length of time, independent of calendar. Used for arithmetic and delays.
+
+```fab
+ex "norma/tempus" importa duratio
+
+// Named constructors
+fixum d = duratio.milli(500)          // 500 milliseconds
+fixum d = duratio.secunda(5)          // 5 seconds
+fixum d = duratio.minuta(2)           // 2 minutes
+fixum d = duratio.hora(1)             // 1 hour
+fixum d = duratio.dies(7)             // 7 days
+
+// Arithmetic
+fixum total = duratio.hora(1) + duratio.minuta(30)   // 1h 30m
+
+// Access components
+scribe total.in_secundis              // 5400
+scribe total.in_minutis               // 90
+scribe total.in_horis                 // 1.5
+```
+
+### duratio Constructors
+
+| Constructor          | Meaning        |
+| -------------------- | -------------- |
+| `duratio.milli(n)`   | n milliseconds |
+| `duratio.secunda(n)` | n seconds      |
+| `duratio.minuta(n)`  | n minutes      |
+| `duratio.hora(n)`    | n hours        |
+| `duratio.dies(n)`    | n days         |
+
+### duratio Accessors
+
+| Accessor        | Returns   | Meaning            |
+| --------------- | --------- | ------------------ |
+| `d.in_millis`   | `numerus` | total milliseconds |
+| `d.in_secundis` | `numerus` | total seconds      |
+| `d.in_minutis`  | `fractus` | total minutes      |
+| `d.in_horis`    | `fractus` | total hours        |
+| `d.in_diebus`   | `fractus` | total days         |
+
+### duratio Arithmetic
+
+```fab
+fixum a = duratio.secunda(30)
+fixum b = duratio.secunda(20)
+
+fixum sum = a + b                     // 50 seconds
+fixum diff = a - b                    // 10 seconds
+fixum doubled = a * 2                 // 60 seconds
+fixum halved = a / 2                  // 15 seconds
+```
+
+---
+
+## Duration Constants
+
+Convenience constants for common durations:
+
+```fab
+ex "norma/tempus" importa {
+    MILLISECUNDUM,    // duratio.milli(1)
+    SECUNDUM,         // duratio.secunda(1)
+    MINUTUM,          // duratio.minuta(1)
+    HORA,             // duratio.hora(1)
+    DIES              // duratio.dies(1)
+}
+
+cede dormi(5 * SECUNDUM)
+cede dormi(HORA + 30 * MINUTUM)
 ```
 
 ---
 
 ## Sleeping
 
-### Basic Sleep
+```fab
+ex "norma/tempus" importa dormi, SECUNDUM
 
-```
-ex "norma/tempus" importa { dormi }
+// Sleep for duration
+cede dormi(duratio.secunda(5))
+cede dormi(5 * SECUNDUM)              // same thing
 
-cede dormi(1000)                      // sleep 1000ms
-cede dormi(5 * SECUNDUM)              // sleep 5 seconds
-cede dormi(2 * MINUTUM)               // sleep 2 minutes
-```
-
-### Duration Constants
-
-```
-ex "norma/tempus" importa {
-    MILLISECUNDUM,    // 1
-    SECUNDUM,         // 1000
-    MINUTUM,          // 60_000
-    HORA,             // 3_600_000
-    DIES              // 86_400_000
-}
-
-cede dormi(30 * SECUNDUM)
-cede dormi(HORA + 30 * MINUTUM)
+// Sleep until instant
+cede dormi_usque(target)
 ```
 
----
-
-## Durations
-
-### Creating Durations
-
-```
-ex "norma/tempus" importa { duratio }
-
-fixum d = duratio(5000)               // 5000ms
-fixum d = duratio.secunda(5)          // 5 seconds
-fixum d = duratio.minuta(2)           // 2 minutes
-fixum d = duratio.horae(1)            // 1 hour
-
-// Combined
-fixum d = duratio.horae(1) + duratio.minuta(30)  // 1h 30m
-```
-
-### Duration Arithmetic
-
-```
-fixum start = nunc()
-// ... work ...
-fixum elapsed = nunc() - start
-
-si elapsed > duratio.secunda(5) {
-    mone "Operation took too long"
-}
-```
-
----
-
-## Timers
-
-### One-shot Timer
-
-```
-ex "norma/tempus" importa { post }
-
-// Execute after delay
-post(5 * SECUNDUM, pro {
-    scribe "5 seconds elapsed"
-})
-```
-
-### Repeating Interval
-
-```
-ex "norma/tempus" importa { intervallum }
-
-// Execute every second
-fixum timer = intervallum(SECUNDUM, pro {
-    scribe "tick"
-})
-
-// Stop after 10 seconds
-cede dormi(10 * SECUNDUM)
-timer.siste()
-```
-
-### Interval as Stream
-
-```
-ex "norma/tempus" importa { intervallum }
-
-// Process ticks as event stream
-ex ausculta intervallum(SECUNDUM) fiet tick {
-    scribe "tick:", tick
-    si tick >= 10 { exi }
-}
-```
+| Function                | Meaning             |
+| ----------------------- | ------------------- |
+| `dormi(duratio)`        | Sleep for duration  |
+| `dormi_usque(momentum)` | Sleep until instant |
 
 ---
 
 ## Formatting
 
-### To String
-
-```
-ex "norma/tempus" importa { forma }
+```fab
+ex "norma/tempus" importa tempus
 
 fixum now = tempus.nunc()
 
-scribe forma(now, "YYYY-MM-DD")           // "2025-12-24"
-scribe forma(now, "HH:mm:ss")             // "14:30:45"
-scribe forma(now, "YYYY-MM-DD HH:mm:ss")  // "2025-12-24 14:30:45"
-scribe forma(now, "ISO")                  // "2025-12-24T14:30:45.000Z"
+scribe now.forma("YYYY-MM-DD")            // "2025-12-27"
+scribe now.forma("HH:mm:ss")              // "14:30:45"
+scribe now.forma("YYYY-MM-DD HH:mm:ss")   // "2025-12-27 14:30:45"
+scribe now.forma()                        // ISO 8601 default
 ```
 
 ### Format Tokens
@@ -173,72 +250,71 @@ scribe forma(now, "ISO")                  // "2025-12-24T14:30:45.000Z"
 | Token  | Meaning          | Example |
 | ------ | ---------------- | ------- |
 | `YYYY` | 4-digit year     | 2025    |
+| `YY`   | 2-digit year     | 25      |
 | `MM`   | Month (01-12)    | 12      |
-| `DD`   | Day (01-31)      | 24      |
+| `DD`   | Day (01-31)      | 27      |
 | `HH`   | Hour 24h (00-23) | 14      |
 | `hh`   | Hour 12h (01-12) | 02      |
 | `mm`   | Minutes (00-59)  | 30      |
 | `ss`   | Seconds (00-59)  | 45      |
 | `SSS`  | Milliseconds     | 123     |
-| `a`    | AM/PM            | PM      |
+| `a`    | am/pm            | pm      |
+| `A`    | AM/PM            | PM      |
+| `Z`    | Timezone offset  | +05:00  |
+| `ZZ`   | Timezone offset  | +0500   |
 
 ---
 
 ## Parsing
 
-```
-ex "norma/tempus" importa { lege_tempus }
+```fab
+ex "norma/tempus" importa tempus
 
-fixum date = lege_tempus("2025-12-24", "YYYY-MM-DD")
-fixum datetime = lege_tempus("2025-12-24 14:30:00", "YYYY-MM-DD HH:mm:ss")
-fixum iso = lege_tempus("2025-12-24T14:30:45.000Z", "ISO")
+// With explicit format
+fixum t = tempus.para("2025-12-25", "YYYY-MM-DD")
+
+// ISO 8601 auto-detected
+fixum t = tempus.para("2025-12-25T14:30:00Z")
+fixum t = tempus.para("2025-12-25T14:30:00+05:00")
+
+// Returns nihil on failure
+fixum t = tempus.para("invalid")      // nihil
 ```
 
 ---
 
-## Time Zones
+## Timezones
 
-```
-ex "norma/tempus" importa { zona }
+```fab
+ex "norma/tempus" importa tempus
 
-fixum now = tempus.nunc()
+fixum now = tempus.nunc()                     // local timezone
 fixum tokyo = now.in_zona("Asia/Tokyo")
 fixum utc = now.in_zona("UTC")
 
-scribe now.zona                       // "America/New_York"
-scribe tokyo.hora                     // different hour
+scribe now.zona                               // "America/New_York"
+scribe tokyo.zona                             // "Asia/Tokyo"
+scribe tokyo.hora                             // different hour
 ```
+
+IANA timezone names are used (e.g., "America/New_York", "Europe/London", "Asia/Tokyo").
 
 ---
 
-## Date Arithmetic
+## Elapsed Time Pattern
 
-```
-fixum now = tempus.nunc()
+```fab
+ex "norma/tempus" importa momentum
 
-// Add/subtract
-fixum tomorrow = now + DIES
-fixum yesterday = now - DIES
-fixum next_week = now + 7 * DIES
-fixum in_2_hours = now + 2 * HORA
+fixum start = momentum.nunc()
 
-// Difference
-fixum diff = end_date - start_date    // duratio
-scribe diff.dies                      // days between
-```
+// ... do work ...
 
----
+fixum elapsed = momentum.nunc() - start
 
-## Comparison
-
-```
-fixum a = tempus.nunc()
-cede dormi(100)
-fixum b = tempus.nunc()
-
-si b > a { scribe "b is later" }
-si a < b { scribe "a is earlier" }
-si a == b { scribe "same instant" }
+si elapsed > duratio.secunda(5) {
+    mone "Operation took too long:", elapsed.in_secundis, "s"
+}
 ```
 
 ---
@@ -248,20 +324,23 @@ si a == b { scribe "same instant" }
 ### TypeScript
 
 ```typescript
-// nunc()
+// momentum.nunc()
 Date.now();
 
 // tempus.nunc()
 new Date();
 
-// dormi(1000)
-await new Promise(resolve => setTimeout(resolve, 1000));
+// tempus.ex(2025, 12, 25)
+new Date(2025, 11, 25); // Note: JS months are 0-indexed
 
-// intervallum(1000, callback)
-setInterval(callback, 1000);
+// duratio.secunda(5)
+5000; // milliseconds
 
-// forma(date, "YYYY-MM-DD")
-// Use Intl.DateTimeFormat or date-fns
+// dormi(duratio)
+await new Promise(r => setTimeout(r, duratio));
+
+// t.forma("YYYY-MM-DD")
+// Requires Intl.DateTimeFormat or date-fns
 ```
 
 ### Python
@@ -269,38 +348,24 @@ setInterval(callback, 1000);
 ```python
 import time
 import datetime
-import asyncio
 
-# nunc()
-time.time() * 1000  # ms
+# momentum.nunc()
+int(time.time() * 1000)
 
 # tempus.nunc()
 datetime.datetime.now()
 
-# dormi(1000)
-await asyncio.sleep(1.0)
+# tempus.ex(2025, 12, 25)
+datetime.datetime(2025, 12, 25)
 
-# forma(date, "YYYY-MM-DD")
-date.strftime("%Y-%m-%d")
-```
+# duratio.secunda(5)
+datetime.timedelta(seconds=5)
 
-### Rust
+# dormi(duratio)
+await asyncio.sleep(duratio.total_seconds())
 
-```rust
-use std::time::{Duration, Instant, SystemTime};
-use chrono::{DateTime, Utc};
-
-// nunc()
-SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
-
-// tempus.nunc()
-Utc::now()
-
-// dormi(1000)
-tokio::time::sleep(Duration::from_millis(1000)).await
-
-// forma(date, "YYYY-MM-DD")
-date.format("%Y-%m-%d").to_string()
+# t.forma("YYYY-MM-DD")
+t.strftime("%Y-%m-%d")
 ```
 
 ### Zig
@@ -308,77 +373,68 @@ date.format("%Y-%m-%d").to_string()
 ```zig
 const std = @import("std");
 
-// nunc()
+// momentum.nunc()
 std.time.milliTimestamp()
 
-// nunc_nano()
-std.time.nanoTimestamp()
+// duratio: just use i64 milliseconds
 
-// dormi(1000)
-std.time.sleep(1_000_000_000)  // nanoseconds
+// dormi(duratio)
+std.time.sleep(duratio * 1_000_000)  // ns
 
-// No built-in date formatting - needs external lib
+// tempus: no built-in, needs external lib
 ```
 
 ---
 
 ## Implementation Status
 
-| Feature            | Status      | Notes                                             |
-| ------------------ | ----------- | ------------------------------------------------- |
-| `nunc`             | **Done**    | Current instant (TS)                              |
-| `nunc_nano`        | **Done**    | Nanosecond precision (TS)                         |
-| `nunc_secunda`     | **Done**    | Seconds since epoch (TS)                          |
-| `dormi`            | **Done**    | Async sleep (TS)                                  |
-| Duration constants | **Done**    | MILLISECUNDUM, SECUNDUM, MINUTUM, HORA, DIES (TS) |
-| `tempus.nunc()`    | Not Done    | Current datetime object                           |
-| `hodie`            | Not Done    | Current date                                      |
-| Duration type      | Not Done    | Time spans                                        |
-| `post`             | Not Done    | One-shot timer                                    |
-| `intervallum`      | Not Done    | Repeating timer                                   |
-| `forma`            | Not Done    | Format to string                                  |
-| `lege_tempus`      | Not Done    | Parse from string                                 |
-| Time zones         | Not Done    | Zona support                                      |
-| Date arithmetic    | Not Done    | Add/subtract                                      |
-| TypeScript codegen | **Partial** | Basic functions done                              |
-| Python codegen     | Not Done    | datetime, asyncio                                 |
-| Rust codegen       | Not Done    | chrono, tokio                                     |
-| Zig codegen        | Not Done    | std.time                                          |
+| Feature                | TS   | Py  | Zig | Notes                 |
+| ---------------------- | ---- | --- | --- | --------------------- |
+| `momentum.nunc()`      | Done | -   | -   | Epoch ms              |
+| `momentum` arithmetic  | -    | -   | -   |                       |
+| `tempus.nunc()`        | -    | -   | -   | Datetime object       |
+| `tempus.hodie()`       | -    | -   | -   | Today at midnight     |
+| `tempus` fields        | -    | -   | -   | annus, mensis, etc.   |
+| `tempus.forma()`       | -    | -   | -   | Formatting            |
+| `tempus.para()`        | -    | -   | -   | Parsing               |
+| `duratio` constructors | -    | -   | -   | secunda, minuta, etc. |
+| `duratio` arithmetic   | -    | -   | -   | +, -, \*, /           |
+| Duration constants     | Done | -   | -   | SECUNDUM, etc.        |
+| `dormi()`              | Done | -   | -   | Async sleep           |
+| Timezone support       | -    | -   | -   | in_zona()             |
 
 ---
 
 ## Design Decisions
 
-### Why `nunc` over `tempus.nunc()`?
+### Why three types?
 
-Both provided:
+- `momentum` — machine time, for performance measurement and timestamps
+- `tempus` — human time, for display and scheduling
+- `duratio` — intervals, for arithmetic and delays
 
-- `nunc()` — quick epoch milliseconds (primitive)
-- `tempus.nunc()` — full datetime object with fields
+Mixing these is a common bug source. Explicit types prevent it.
 
-Most code needs one or the other, not both.
+### Why `momentum` not `instantum`?
 
-### Why `dormi` is async?
+"Momentum" is already English (borrowed from Latin). "Instantum" is awkward Latin. `momentum` reads naturally in both languages.
 
-Blocking sleep halts the entire program. Async sleep yields to other tasks. Even in sync contexts, codegen can emit blocking sleep where appropriate.
+### Why method syntax over free functions?
 
-### Why duration constants?
+`tempus.nunc()` vs `nunc()`:
 
-`dormi(5 * SECUNDUM)` is clearer than `dormi(5000)`. Constants are compile-time evaluated, no runtime cost.
+- Namespaced: no collisions with user code
+- Discoverable: type tells you what operations exist
+- Consistent: same pattern as collections
 
-### Why Latin date field names?
+### Why `para` for parsing?
 
-| Latin      | English |
-| ---------- | ------- |
-| `annus`    | year    |
-| `mensis`   | month   |
-| `dies`     | day     |
-| `hora`     | hour    |
-| `minutum`  | minute  |
-| `secundum` | second  |
+"Para" (prepare/make ready) implies transformation into a usable form. Alternatives considered:
 
-Consistent with the language's Latin vocabulary. These are common Latin words that are recognizable.
+- `lege` — but that means "read" (files)
+- `ex_texto` — verbose
+- `parse` — not Latin
 
-### Timezone handling?
+### Why milliseconds for momentum?
 
-Timezones are complex. Default to local timezone, allow explicit conversion via `in_zona()`. Store instants in UTC internally.
+JavaScript's `Date.now()` returns milliseconds. Most APIs use ms. Nanoseconds available via `momentum.nunc_nano()` where targets support it.

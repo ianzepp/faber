@@ -137,7 +137,7 @@ scribe user2.age
 
 genus collection {
     textus name
-    lista<numerus> items
+    numerus[] items
 }
 
 fixum numbers = novum collection {

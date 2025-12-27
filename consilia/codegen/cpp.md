@@ -68,9 +68,9 @@ C++23 shares ownership concerns with Zig and Rust. Faber uses a **unified approa
 | `bivalens`     | `bool`                    | Boolean                                 |
 | `nihil`        | `std::nullopt`            | In optional context                     |
 | `vacuum`       | `void`                    | Void return                             |
-| `lista<T>`     | `std::vector<T>`          | Dynamic array                           |
-| `de lista<T>`  | `std::span<const T>`      | Borrowed view                           |
-| `in lista<T>`  | `std::vector<T>&`         | Mutable reference                       |
+| `T[]`     | `std::vector<T>`          | Dynamic array                           |
+| `de T[]`  | `std::span<const T>`      | Borrowed view                           |
+| `in T[]`  | `std::vector<T>&`         | Mutable reference                       |
 | `tabula<K,V>`  | `std::unordered_map<K,V>` | Hash map                                |
 | `copia<T>`     | `std::unordered_set<T>`   | Hash set                                |
 | `T?`           | `std::optional<T>`        | Nullable                                |
@@ -97,7 +97,7 @@ functio greet(de textus name) -> textus {
     redde "Hello, " + name + "!"
 }
 
-functio append(in lista<textus> items, textus value) {
+functio append(in textus[] items, textus value) {
     items.adde(value)
 }
 
@@ -128,7 +128,7 @@ When returning a borrowed value, use `de` on return type to indicate the referen
 
 ```
 // Faber
-functio first(de lista<textus> items) -> de textus {
+functio first(de textus[] items) -> de textus {
     redde items.primus()
 }
 ```

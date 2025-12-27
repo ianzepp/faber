@@ -13,7 +13,7 @@ Three core collection types wrap native implementations:
 
 | Faber         | JavaScript | Zig            | Description                          |
 | ------------- | ---------- | -------------- | ------------------------------------ |
-| `lista<T>`    | `Array<T>` | `ArrayList(T)` | Ordered, indexed, duplicates allowed |
+| `T[]`    | `Array<T>` | `ArrayList(T)` | Ordered, indexed, duplicates allowed |
 | `tabula<K,V>` | `Map<K,V>` | `HashMap(K,V)` | Key-value pairs, unique keys         |
 | `copia<T>`    | `Set<T>`   | `HashSet(T)`   | Unique values, unordered             |
 
@@ -29,7 +29,7 @@ Method registries implemented in `fons/codegen/*/norma/`:
 
 | Collection    | Status       | File        | Notes      |
 | ------------- | ------------ | ----------- | ---------- |
-| `lista<T>`    | [x] Complete | `lista.ts`  | 46 methods |
+| `T[]`    | [x] Complete | `lista.ts`  | 46 methods |
 | `tabula<K,V>` | [x] Complete | `tabula.ts` | 17 methods |
 | `copia<T>`    | [x] Complete | `copia.ts`  | 14 methods |
 
@@ -37,7 +37,7 @@ Method registries implemented in `fons/codegen/*/norma/`:
 
 | Collection    | Status      | File        | Notes                                                 |
 | ------------- | ----------- | ----------- | ----------------------------------------------------- |
-| `lista<T>`    | [~] Partial | `lista.ts`  | 12 core methods; functional methods use @compileError |
+| `T[]`    | [~] Partial | `lista.ts`  | 12 core methods; functional methods use @compileError |
 | `tabula<K,V>` | [~] Partial | `tabula.ts` | 11 core methods                                       |
 | `copia<T>`    | [~] Partial | `copia.ts`  | 7 core methods; set operations use @compileError      |
 
@@ -55,7 +55,7 @@ Functional methods (`filtrata`, `mappata`, `reducta`, etc.) emit `@compileError`
 
 | Collection    | Status       | File        | Notes      |
 | ------------- | ------------ | ----------- | ---------- |
-| `lista<T>`    | [x] Complete | `lista.ts`  | 46 methods |
+| `T[]`    | [x] Complete | `lista.ts`  | 46 methods |
 | `tabula<K,V>` | [x] Complete | `tabula.ts` | 17 methods |
 | `copia<T>`    | [x] Complete | `copia.ts`  | 14 methods |
 
@@ -69,7 +69,7 @@ Method dispatch uses `resolvedType` from semantic analysis to correctly route ov
 
 ---
 
-## lista<T>
+## T[]
 
 **Etymology:** "list, border, edge" — a bounded sequence.
 
@@ -99,8 +99,8 @@ Method dispatch uses `resolvedType` from semantic analysis to correctly route ov
 
 | Faber                                 | JS Equivalent | Description    |
 | ------------------------------------- | ------------- | -------------- |
-| `mappa((T) -> U) -> lista<U>`         | `map`         | Transform each |
-| `filtra((T) -> bivalens) -> lista<T>` | `filter`      | Keep matching  |
+| `mappa((T) -> U) -> U[]`         | `map`         | Transform each |
+| `filtra((T) -> bivalens) -> T[]` | `filter`      | Keep matching  |
 | `reducere(U, (U,T) -> U) -> U`        | `reduce`      | Fold to value  |
 | `coniunge(textus) -> textus`          | `join`        | Join to string |
 
@@ -108,21 +108,21 @@ Method dispatch uses `resolvedType` from semantic analysis to correctly route ov
 
 | Faber                                              | lodash        | Description                 |
 | -------------------------------------------------- | ------------- | --------------------------- |
-| `ordina((T) -> U) -> lista<T>`                     | `sortBy`      | Sort by key function        |
-| `congrega((T) -> K) -> tabula<K, lista<T>>`        | `groupBy`     | Group by key function       |
-| `unica() -> lista<T>`                              | `uniq`        | Remove duplicates           |
-| `plana() -> lista<T>`                              | `flatten`     | Flatten one level           |
-| `planaOmnia() -> lista<T>`                         | `flattenDeep` | Flatten all levels          |
-| `fragmenta(numerus) -> lista<lista<T>>`            | `chunk`       | Split into chunks of size n |
-| `densa() -> lista<T>`                              | `compact`     | Remove falsy values         |
-| `partire((T) -> bivalens) -> (lista<T>, lista<T>)` | `partition`   | Split by predicate          |
-| `misce() -> lista<T>`                              | `shuffle`     | Randomize order             |
+| `ordina((T) -> U) -> T[]`                     | `sortBy`      | Sort by key function        |
+| `congrega((T) -> K) -> tabula<K, T[]>`        | `groupBy`     | Group by key function       |
+| `unica() -> T[]`                              | `uniq`        | Remove duplicates           |
+| `plana() -> T[]`                              | `flatten`     | Flatten one level           |
+| `planaOmnia() -> T[]`                         | `flattenDeep` | Flatten all levels          |
+| `fragmenta(numerus) -> T[][]`            | `chunk`       | Split into chunks of size n |
+| `densa() -> T[]`                              | `compact`     | Remove falsy values         |
+| `partire((T) -> bivalens) -> (T[], T[])` | `partition`   | Split by predicate          |
+| `misce() -> T[]`                              | `shuffle`     | Randomize order             |
 | `specimen() -> T?`                                 | `sample`      | Random element              |
-| `specimina(numerus) -> lista<T>`                   | `sampleSize`  | Random n elements           |
-| `prima(numerus) -> lista<T>`                       | `take`        | First n elements            |
-| `ultima(numerus) -> lista<T>`                      | `takeRight`   | Last n elements             |
-| `omitte(numerus) -> lista<T>`                      | `drop`        | Skip first n                |
-| `inversa() -> lista<T>`                            | `reverse`     | Reverse order               |
+| `specimina(numerus) -> T[]`                   | `sampleSize`  | Random n elements           |
+| `prima(numerus) -> T[]`                       | `take`        | First n elements            |
+| `ultima(numerus) -> T[]`                      | `takeRight`   | Last n elements             |
+| `omitte(numerus) -> T[]`                      | `drop`        | Skip first n                |
+| `inversa() -> T[]`                            | `reverse`     | Reverse order               |
 
 ### Aggregation
 
@@ -256,7 +256,7 @@ Target mappings:
 
 ### Open Questions
 
-1. **Conversion to lista**: `inLista() -> lista<T>`?
+1. **Conversion to lista**: `inLista() -> T[]`?
 
 ---
 
@@ -312,7 +312,7 @@ scribe tail  // [3, 4, 5]
 **Recursive list processing:**
 
 ```faber
-functio sum(lista<numerus> nums) -> numerus {
+functio sum(numerus[] nums) -> numerus {
     si nums.vacua() { redde 0 }
     ex nums fixum [head, ceteri tail]
     redde head + sum(tail)
@@ -324,7 +324,7 @@ scribe sum([1, 2, 3, 4, 5])  // 15
 **Command argument parsing:**
 
 ```faber
-functio parseArgs(lista<textus> args) {
+functio parseArgs(textus[] args) {
     ex args fixum [command, ceteri flags]
 
     elige {
@@ -338,7 +338,7 @@ functio parseArgs(lista<textus> args) {
 **Tuple-style returns:**
 
 ```faber
-functio divide(numerus a, numerus b) -> lista<numerus> {
+functio divide(numerus a, numerus b) -> numerus[] {
     redde [a / b, a % b]
 }
 
@@ -419,11 +419,11 @@ Functions that operate on multiple collections or don't belong to a single type.
 
 | Faber                                       | lodash   | Description          |
 | ------------------------------------------- | -------- | -------------------- |
-| `iunge(lista<T>, lista<U>) -> lista<(T,U)>` | `zip`    | Pair up elements     |
-| `iungeOmnes(...lista) -> lista<(...)>`      | `zipAll` | Zip multiple lists   |
-| `series(n) -> lista<numerus>`               | `range`  | 0 to n-1             |
-| `series(a, b) -> lista<numerus>`            | `range`  | a to b-1             |
-| `repete(T, n) -> lista<T>`                  | `times`  | Repeat value n times |
+| `iunge(T[], U[]) -> (T,U)[]` | `zip`    | Pair up elements     |
+| `iungeOmnes(...lista) -> (...)[]`      | `zipAll` | Zip multiple lists   |
+| `series(n) -> numerus[]`               | `range`  | 0 to n-1             |
+| `series(a, b) -> numerus[]`            | `range`  | a to b-1             |
+| `repete(T, n) -> T[]`                  | `times`  | Repeat value n times |
 
 ---
 
@@ -616,7 +616,7 @@ The `pro` keyword aligns with iteration: `ex items pro x { }` iterates, `pro x {
 
 Direct mapping to native types:
 
-- `lista<T>` → `Array<T>`
+- `T[]` → `Array<T>`
 - `tabula<K,V>` → `Map<K,V>`
 - `copia<T>` → `Set<T>`
 
@@ -626,7 +626,7 @@ Lodash methods compile to equivalent lodash calls or inline implementations.
 
 Use standard library types:
 
-- `lista<T>` → `std.ArrayList(T)`
+- `T[]` → `std.ArrayList(T)`
 - `tabula<K,V>` → `std.HashMap(K,V,...)`
 - `copia<T>` → `std.HashSet(T,...)`
 

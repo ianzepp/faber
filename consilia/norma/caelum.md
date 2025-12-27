@@ -298,7 +298,7 @@ fixum response = cede pete(url, { tempus: 5000 }) cape err {
 All network operations are async by default:
 
 ```
-futura functio fetchUsers() -> lista<User> {
+futura functio fetchUsers() -> User[] {
     fixum response = cede pete("/api/users")
     redde cede response.json()
 }

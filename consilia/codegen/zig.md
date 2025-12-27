@@ -51,7 +51,7 @@ Zig is a systems programming target. Faber uses Latin prepositions (`de`, `in`) 
 
 | Faber          | Zig                        | Notes                       |
 | -------------- | -------------------------- | --------------------------- |
-| `lista<T>`     | `std.ArrayList(T)`         | Requires allocator          |
+| `T[]`     | `std.ArrayList(T)`         | Requires allocator          |
 | `tabula<K,V>`  | `std.StringHashMap(V)`     | String keys; requires alloc |
 | `copia<T>`     | `std.AutoHashMap(T, void)` | Set via HashMap; req alloc  |
 | `promissum<T>` | `!T`                       | Error union                 |
@@ -70,7 +70,7 @@ Zig is a systems programming target. Faber uses Latin prepositions (`de`, `in`) 
 ```faber
 functio process(numerus x) -> numerus { redde x * 2 }
 functio length(de textus source) -> numerus { redde source.longitudo }
-functio append(in lista<numerus> items, numerus value) { items.adde(value) }
+functio append(in numerus[] items, numerus value) { items.adde(value) }
 ```
 
 ```zig
@@ -102,7 +102,7 @@ pub fn main() void {
 
 ```faber
 cura arena() fit temp {
-    varia scratch: lista<numerus> = []
+    varia scratch: numerus[] = []
     scratch.adde(42)
 }
 ```
@@ -123,8 +123,8 @@ cura arena() fit temp {
 Functions needing an allocator declare a `curator` parameter:
 
 ```faber
-functio buildList(curator memoria, textus prefix) -> lista<textus> {
-    varia items: lista<textus> = []
+functio buildList(curator memoria, textus prefix) -> textus[] {
+    varia items: textus[] = []
     items.adde(prefix)
     redde items
 }
@@ -169,7 +169,7 @@ adde: {
 
 ## Collection Methods
 
-### lista<T>
+### T[]
 
 | Faber       | Zig Output                       | Status |
 | ----------- | -------------------------------- | ------ |

@@ -64,7 +64,7 @@ ex config fixum { routes, parsers, database }
 | (none) | Raw text | `textus` |
 | `json` | JSON parsing | object/array |
 | `toml` | TOML parsing | object |
-| `csv` | CSV parsing | `lista<lista<textus>>` or `lista<object>` |
+| `csv` | CSV parsing | `textus[][]` or `object[]` |
 | `octeti` | Raw bytes | `octeti` (Uint8Array / []u8) |
 
 ### Formatter Interface
@@ -98,15 +98,15 @@ genus Octeti implet formator<octeti> {
     functio reverte(octeti input) -> octeti  // identity (passthrough)
 }
 
-genus Lineae implet formator<lista<textus>> {
-    functio verte(lista<textus> lines) -> octeti   // join with \n, encode
-    functio reverte(octeti input) -> lista<textus> // decode, split on \n
+genus Lineae implet formator<textus[]> {
+    functio verte(textus[] lines) -> octeti   // join with \n, encode
+    functio reverte(octeti input) -> textus[] // decode, split on \n
 }
 
 // Structured text formats
 genus JSON implet formator<object> { }
 genus TOML implet formator<object> { }
-genus CSV implet formator<lista<object>> { }
+genus CSV implet formator<object[]> { }
 
 // Binary formats
 genus MessagePack implet formator<object> { }

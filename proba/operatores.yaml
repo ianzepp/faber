@@ -336,7 +336,7 @@
 
 # ceteri as function parameter collects variadic args
 - name: 'rest in function params'
-  input: 'functio sum(ceteri lista<numerus> nums) { redde 0 }'
+  input: 'functio sum(ceteri numerus[] nums) { redde 0 }'
   ts:
       - '...nums: Array<number>'
   py:

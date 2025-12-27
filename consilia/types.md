@@ -91,7 +91,7 @@ This aligns field defaults with object literal syntax (`{ nomen: "Marcus" }`) an
 
 ### Naming
 
-- Type names are **lowercase**: `genus persona`, `genus lista<T>`
+- Type names are **lowercase**: `genus persona`, `genus T[]`
 - Follows Latin convention (common nouns, not proper nouns)
 
 ### Field Visibility
@@ -270,7 +270,7 @@ Use `implet` to declare that a genus fulfills a pactum:
 ```
 genus cursorem<T> implet iterabilis<T> {
     numerus index
-    lista<T> data
+    T[] data
 
     functio sequens() -> T? {
         si ego.index >= ego.data.longitudo() {
@@ -581,7 +581,7 @@ This design:
 
 ```
 fixum persona p = novum persona { ... }
-varia lista<textus> items = []
+varia textus[] items = []
 ```
 
 ### Function Parameters and Returns

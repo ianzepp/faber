@@ -54,7 +54,7 @@ Python is a high-priority compilation target for Faber due to its accessibility 
 | `bivalens`     | `bool`         | Boolean                         |
 | `nihil`        | `None`         | Null type                       |
 | `vacuum`       | `None`         | Void return                     |
-| `lista<T>`     | `list[T]`      | List type (3.9+ bracket syntax) |
+| `T[]`     | `list[T]`      | List type (3.9+ bracket syntax) |
 | `tabula<K,V>`  | `dict[K, V]`   | Dictionary type                 |
 | `copia<T>`     | `set[T]`       | Set type                        |
 | `promissum<T>` | `Awaitable[T]` | Async result                    |
