@@ -26,22 +26,6 @@ typus UserID = numerus<32, Naturalis>
 typus ConfigTypus = typus config    // typeof
 ```
 
-### Enum Declaration
-
-```ebnf
-enumDecl := 'ordo' IDENTIFIER '{' enumMember (',' enumMember)* ','? '}'
-enumMember := IDENTIFIER ('=' (NUMBER | STRING))?
-```
-
-> Latin 'ordo' (order/rank) for enumerated constants.
-
-**Examples:**
-
-```fab
-ordo color { rubrum, viridis, caeruleum }
-ordo status { pendens = 0, actum = 1, finitum = 2 }
-```
-
 ### Type Annotation
 
 ```ebnf

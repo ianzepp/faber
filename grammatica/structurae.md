@@ -59,18 +59,6 @@ returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
 > Method signatures without bodies. Same syntax as function declarations
 > but terminates after return type (no block).
 
-### New Expression
-
-```ebnf
-newExpr := 'novum' IDENTIFIER ('(' argumentList ')')? (objectLiteral | 'de' expression)?
-```
-
-> Two forms for property overrides:
-> - Inline literal: `novum Persona { nomen: "Marcus" }`
-> - From expression: `novum Persona de props` (props is variable/call/etc.)
-> 
-> The `de` (from) form allows dynamic overrides from variables or function results.
-
 ### Call
 
 ```ebnf

@@ -25,6 +25,30 @@ statement := importDecl | varDecl | funcDecl | typeAliasDecl | ifStmt | whileStm
 
 > Uses lookahead to determine statement type via keyword inspection.
 
+### Importa Declaration
+
+```ebnf
+importDecl := 'ex' (STRING | IDENTIFIER) 'importa' (identifierList | '*')
+identifierList := IDENTIFIER (',' IDENTIFIER)*
+```
+
+**Examples:**
+
+```fab
+ex norma importa scribe, lege
+ex "norma/tempus" importa nunc, dormi
+ex norma importa *
+```
+
+### Varia Declaration
+
+```ebnf
+varDecl := ('varia' | 'fixum') (objectPattern '=' expression | typeAnnotation IDENTIFIER | IDENTIFIER) ('=' expression)?
+```
+
+> Type-first syntax: "fixum textus nomen = value" or "fixum nomen = value"
+> Latin 'varia' (let it be) for mutable, 'fixum' (fixed) for immutable.
+
 ### Array Pattern
 
 ```ebnf
@@ -44,6 +68,45 @@ T SUPPORTED:
 [*rest]                  // Python unpack syntax
 ```
 
+### Functio Declaration
+
+```ebnf
+funcDecl := ('futura' | 'cursor')* 'functio' IDENTIFIER '(' paramList ')' returnClause? blockStmt
+paramList := (typeParamDecl ',')* (parameter (',' parameter)*)?
+typeParamDecl := 'prae' 'typus' IDENTIFIER
+returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
+```
+
+> Arrow syntax for return types: "functio greet(textus name) -> textus"
+> 'futura' prefix marks async functions (future/promise-based).
+> 'cursor' prefix marks generator functions (yield-based).
+> 
+> TYPE PARAMETERS: 'prae typus T' declares compile-time type parameters.
+> functio max(prae typus T, T a, T b) -> T { ... }
+> Maps to: <T> (TS/Rust), TypeVar (Py), comptime T: type (Zig)
+> 
+> RETURN TYPE VERBS: Latin verb forms encode async/generator semantics directly:
+> '->'    neutral arrow (semantics from prefix only)
+> 'fit'   "it becomes" - sync, returns single value
+> 'fiet'  "it will become" - async, returns Promise<T>
+> 'fiunt' "they become" - sync generator, yields multiple values
+> 'fient' "they will become" - async generator, yields Promise values
+> 
+> When using verb forms, the futura/cursor prefix is NOT required - the verb
+> itself carries the semantic information. The prefix becomes redundant:
+> functio compute() -> numerus { ... }    // arrow: sync by default
+> functio compute() fit numerus { ... }   // verb: explicitly sync
+> functio fetch() fiet textus { ... }     // verb implies async (no futura needed)
+> functio items() fiunt numerus { ... }   // verb implies generator (no cursor needed)
+> functio stream() fient datum { ... }    // verb implies async generator
+> 
+> Prefix is still allowed for emphasis, but verb/prefix conflicts are errors.
+> 
+> NOT SUPPORTED (will produce parser errors):
+> - TS-style param annotation: functio f(x: textus) (use: functio f(textus x))
+> - TS-style return type: functio f(): textus (use: functio f() -> textus)
+> - Trailing comma in params: functio f(a, b,)
+
 ### Type And Parameter List
 
 ```ebnf
@@ -60,6 +123,22 @@ typeParamDecl := 'prae' 'typus' IDENTIFIER
 (prae typus T, T a, T b)     -> typeParams=[T], params=[a, b]
 (prae typus T, prae typus U) -> typeParams=[T, U], params=[]
 (numerus a, numerus b)       -> typeParams=[], params=[a, b]
+```
+
+### Ordo Declaration
+
+```ebnf
+enumDecl := 'ordo' IDENTIFIER '{' enumMember (',' enumMember)* ','? '}'
+enumMember := IDENTIFIER ('=' (NUMBER | STRING))?
+```
+
+> Latin 'ordo' (order/rank) for enumerated constants.
+
+**Examples:**
+
+```fab
+ordo color { rubrum, viridis, caeruleum }
+ordo status { pendens = 0, actum = 1, finitum = 2 }
 ```
 
 ### Discretio Declaration
@@ -105,7 +184,7 @@ Click { numerus x, numerus y }  -> fields with payload
 Quit                            -> unit variant (no payload)
 ```
 
-### If Statement
+### Si Statement
 
 ```ebnf
 ifStmt := 'si' expression (blockStmt | 'ergo' statement) ('cape' IDENTIFIER blockStmt)? (elseClause | 'sin' ifStmt)?
@@ -140,7 +219,7 @@ si x > 5 { scribe("big") } aliter scribe("small")
 si x < 0 { ... } sin x == 0 { ... } secus { ... }
 ```
 
-### While Statement
+### Dum Statement
 
 ```ebnf
 whileStmt := 'dum' expression (blockStmt | 'ergo' statement) ('cape' IDENTIFIER blockStmt)?
@@ -215,7 +294,7 @@ inStmt := 'in' expression blockStmt
 in user { nomen = "Marcus" }  // mutation block
 ```
 
-### Switch Statement
+### Elige Statement
 
 ```ebnf
 switchStmt := 'elige' expression '{' (switchCase | variantCase)* defaultCase? '}' catchClause?
@@ -241,7 +320,7 @@ defaultCase := ('aliter' | 'secus') (blockStmt | statement)
 > ex Quit { mori "goodbye" }
 > }
 
-### Guard Statement
+### Custodi Statement
 
 ```ebnf
 guardStmt := 'custodi' '{' guardClause+ '}'
@@ -259,7 +338,7 @@ custodi {
 }
 ```
 
-### Assert Statement
+### Adfirma Statement
 
 ```ebnf
 assertStmt := 'adfirma' expression (',' expression)?
@@ -274,7 +353,7 @@ adfirma x > 0
 adfirma x > 0, "x must be positive"
 ```
 
-### Return Statement
+### Redde Statement
 
 ```ebnf
 returnStmt := 'redde' expression?
@@ -282,7 +361,7 @@ returnStmt := 'redde' expression?
 
 > 'redde' (give back/return) for return statements.
 
-### Break Statement
+### Rumpe Statement
 
 ```ebnf
 breakStmt := 'rumpe'
@@ -290,13 +369,23 @@ breakStmt := 'rumpe'
 
 > 'rumpe' (break!) exits the innermost loop.
 
-### Continue Statement
+### Perge Statement
 
 ```ebnf
 continueStmt := 'perge'
 ```
 
 > 'perge' (continue/proceed!) skips to the next loop iteration.
+
+### Iace Statement
+
+```ebnf
+throwStmt := ('iace' | 'mori') expression
+```
+
+> Two error severity levels:
+> iace (throw!) → recoverable, can be caught
+> mori (die!)   → fatal/panic, unrecoverable
 
 ### Scribe Statement
 
@@ -315,6 +404,20 @@ outputStmt := ('scribe' | 'vide' | 'mone') expression (',' expression)*
 scribe "hello"
 vide "debugging:", value
 mone "warning:", message
+```
+
+### Tempta Statement
+
+```ebnf
+tryStmt := 'tempta' blockStmt ('cape' IDENTIFIER blockStmt)? ('demum' blockStmt)?
+```
+
+> 'tempta' (attempt/try), 'cape' (catch/seize), 'demum' (finally/at last).
+
+### Cape Clause
+
+```ebnf
+catchClause := 'cape' IDENTIFIER blockStmt
 ```
 
 ### Probandum Statement
@@ -468,7 +571,7 @@ fixum table = praefixum {
 }
 ```
 
-### Cast
+### Ut Expression
 
 ```ebnf
 castExpr := call ('ut' typeAnnotation)*
@@ -481,6 +584,18 @@ castExpr := call ('ut' typeAnnotation)*
 > - Zig: @as(T, x)
 > - Rust: x as T
 > - C++: static_cast<T>(x)
+
+### Novum Expression
+
+```ebnf
+newExpr := 'novum' IDENTIFIER ('(' argumentList ')')? (objectLiteral | 'de' expression)?
+```
+
+> Two forms for property overrides:
+> - Inline literal: `novum Persona { nomen: "Marcus" }`
+> - From expression: `novum Persona de props` (props is variable/call/etc.)
+> 
+> The `de` (from) form allows dynamic overrides from variables or function results.
 
 ---
 
