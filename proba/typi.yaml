@@ -28,6 +28,9 @@
       typus ConfigTypus = typus config
   ts:
       - 'type ConfigTypus = typeof config;'
+  py:
+      - 'config = {"debug": True}'
+      - 'ConfigTypus = Any'
   zig:
       - 'const config = .{ .debug = true };'
       - 'const ConfigTypus = anytype;'
@@ -36,6 +39,7 @@
 - name: 'type with numeric parameter ignored'
   input: 'typus SmallNum = numerus<32>'
   ts: 'type SmallNum = number;'
+  py: 'SmallNum = int'
   zig:
       - 'const SmallNum = numerus;'
 
@@ -43,6 +47,7 @@
 - name: 'type with size type parameter'
   input: 'typus Int32 = numerus<i32>'
   ts: 'type Int32 = number<i32>;'
+  py: 'Int32 = int[i32]'
   zig:
       - 'const Int32 = numerus;'
 

@@ -21,6 +21,7 @@
   ts:
       - 'import * as'
       - '@lodash/lodash'
+  py: 'import @lodash/lodash'
   zig:
       - 'const @lodash/lodash = @import("@lodash/lodash");'
 
@@ -35,6 +36,7 @@
   ts:
       not_contains:
           - 'import'
+  py: 'from norma/tempus import nunc'
   zig:
       - 'const _norma/tempus = @import("norma/tempus");'
       - 'const nunc = _norma/tempus.nunc;'
@@ -49,6 +51,9 @@
           - 'const now = Date.now()'
       not_contains:
           - 'import'
+  py:
+      - 'from norma/tempus import nunc'
+      - 'now = nunc()'
   zig:
       - 'const _norma/tempus = @import("norma/tempus");'
       - 'const nunc = _norma/tempus.nunc;'
@@ -64,6 +69,9 @@
           - 'const sec = 1000'
       not_contains:
           - 'import'
+  py:
+      - 'from norma/tempus import SECUNDUM'
+      - 'sec = SECUNDUM'
   zig:
       - 'const _norma/tempus = @import("norma/tempus");'
       - 'const SECUNDUM = _norma/tempus.SECUNDUM;'
@@ -81,6 +89,10 @@
           - 'await new Promise(r => setTimeout(r, (5 * 1000)))'
       not_contains:
           - 'import'
+  py:
+      - 'from norma/tempus import dormi, SECUNDUM'
+      - 'async def wait():'
+      - 'await dormi((5 * SECUNDUM))'
   zig:
       - 'const _norma/tempus = @import("norma/tempus");'
       - 'const dormi = _norma/tempus.dormi;'
@@ -106,6 +118,13 @@
           - 'const e = 86400000'
       not_contains:
           - 'import'
+  py:
+      - 'from norma/tempus import MILLISECUNDUM, SECUNDUM, MINUTUM, HORA, DIES'
+      - 'a = MILLISECUNDUM'
+      - 'b = SECUNDUM'
+      - 'c = MINUTUM'
+      - 'd = HORA'
+      - 'e = DIES'
   zig:
       - 'const _norma/tempus = @import("norma/tempus");'
       - 'const MILLISECUNDUM = _norma/tempus.MILLISECUNDUM;'

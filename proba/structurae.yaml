@@ -125,6 +125,16 @@
   ts:
       - 'this.creo();'
       - 'private creo()'
+  py:
+      - 'class persona:'
+      - 'aetas: int = 0'
+      - 'def __init__(self, overrides: dict = {}):'
+      - "if 'aetas' in overrides:"
+      - "self.aetas = overrides['aetas']"
+      - 'self._creo()'
+      - 'def _creo(self):'
+      - 'if (self.aetas < 0):'
+      - 'self.aetas = 0'
   zig:
       - 'self.creo();'
       - 'fn creo(self: *Self) void'
@@ -136,6 +146,12 @@
       not_contains:
           - 'this.creo()'
           - 'private creo()'
+  py:
+      - 'class persona:'
+      - 'nomen: str = "X"'
+      - 'def __init__(self, overrides: dict = {}):'
+      - "if 'nomen' in overrides:"
+      - "self.nomen = overrides['nomen']"
   zig:
       not_contains:
           - 'self.creo()'
@@ -194,6 +210,20 @@
   input: 'genus counter { nexum numerus count: 0 }'
   ts:
       - '#count = 0;'
+  py:
+      - 'class counter:'
+      - '_count: int = 0'
+      - '@property'
+      - 'def count(self) -> int:'
+      - 'return self._count'
+      - '@count.setter'
+      - 'def count(self, value: int):'
+      - 'self._count = value'
+      - "if hasattr(self, '_pingo'):"
+      - 'self._pingo()'
+      - 'def __init__(self, overrides: dict = {}):'
+      - "if 'count' in overrides:"
+      - "self.count = overrides['count']"
   zig:
       - 'const counter = struct {'
       - 'count: i64 = 0,'
@@ -209,6 +239,20 @@
   input: 'genus counter { nexum numerus count: 0 }'
   ts:
       - 'get count(): number { return this.#count; }'
+  py:
+      - 'class counter:'
+      - '_count: int = 0'
+      - '@property'
+      - 'def count(self) -> int:'
+      - 'return self._count'
+      - '@count.setter'
+      - 'def count(self, value: int):'
+      - 'self._count = value'
+      - "if hasattr(self, '_pingo'):"
+      - 'self._pingo()'
+      - 'def __init__(self, overrides: dict = {}):'
+      - "if 'count' in overrides:"
+      - "self.count = overrides['count']"
   zig:
       - 'const counter = struct {'
       - 'count: i64 = 0,'
@@ -226,6 +270,20 @@
       - 'set count(v: number)'
       - 'this.#count = v'
       - "__invalidate?.('count')"
+  py:
+      - 'class counter:'
+      - '_count: int = 0'
+      - '@property'
+      - 'def count(self) -> int:'
+      - 'return self._count'
+      - '@count.setter'
+      - 'def count(self, value: int):'
+      - 'self._count = value'
+      - "if hasattr(self, '_pingo'):"
+      - 'self._pingo()'
+      - 'def __init__(self, overrides: dict = {}):'
+      - "if 'count' in overrides:"
+      - "self.count = overrides['count']"
   zig:
       - 'const counter = struct {'
       - 'count: i64 = 0,'
@@ -243,6 +301,20 @@
       - '#name = "anon";'
       - 'get name(): string { return this.#name; }'
       - 'set name(v: string)'
+  py:
+      - 'class user:'
+      - '_name: str = "anon"'
+      - '@property'
+      - 'def name(self) -> str:'
+      - 'return self._name'
+      - '@name.setter'
+      - 'def name(self, value: str):'
+      - 'self._name = value'
+      - "if hasattr(self, '_pingo'):"
+      - 'self._pingo()'
+      - 'def __init__(self, overrides: dict = {}):'
+      - "if 'name' in overrides:"
+      - "self.name = overrides['name']"
   zig:
       - 'const user = struct {'
       - 'name: []const u8 = "anon",'
@@ -260,6 +332,20 @@
       - '#elapsed;'
       - 'get elapsed(): number'
       - 'set elapsed(v: number)'
+  py:
+      - 'class timer:'
+      - '_elapsed: int'
+      - '@property'
+      - 'def elapsed(self) -> int:'
+      - 'return self._elapsed'
+      - '@elapsed.setter'
+      - 'def elapsed(self, value: int):'
+      - 'self._elapsed = value'
+      - "if hasattr(self, '_pingo'):"
+      - 'self._pingo()'
+      - 'def __init__(self, overrides: dict = {}):'
+      - "if 'elapsed' in overrides:"
+      - "self.elapsed = overrides['elapsed']"
   zig:
       - 'const timer = struct {'
       - 'elapsed: i64 = undefined,'
@@ -284,6 +370,26 @@
       - '#count = 0;'
       - 'get count(): number'
       - 'set count(v: number)'
+  py:
+      - 'class widget:'
+      - 'id: str = "x"'
+      - 'active: bool = True'
+      - '_count: int = 0'
+      - '@property'
+      - 'def count(self) -> int:'
+      - 'return self._count'
+      - '@count.setter'
+      - 'def count(self, value: int):'
+      - 'self._count = value'
+      - "if hasattr(self, '_pingo'):"
+      - 'self._pingo()'
+      - 'def __init__(self, overrides: dict = {}):'
+      - "if 'id' in overrides:"
+      - "self.id = overrides['id']"
+      - "if 'count' in overrides:"
+      - "self.count = overrides['count']"
+      - "if 'active' in overrides:"
+      - "self.active = overrides['active']"
   zig:
       - 'const widget = struct {'
       - 'id: []const u8 = "x",'
@@ -333,6 +439,10 @@
       - 'interface Calculator'
       - 'adde(a: number, b: number): number;'
       - 'minue(a: number, b: number): number;'
+  py:
+      - 'class Calculator(Protocol):'
+      - 'def adde(self, a: int, b: int) -> int: ...'
+      - 'def minue(self, a: int, b: int) -> int: ...'
   zig:
       - '// pactum Calculator: interface contract (Zig uses duck typing)'
       - '//   requires fn adde(a: i64, b: i64) i64'
@@ -347,6 +457,9 @@
   ts:
       - 'interface DataFetcher'
       - 'fetch(url: string): Promise<string>;'
+  py:
+      - 'class DataFetcher(Protocol):'
+      - 'async def fetch(self, url: str) -> Awaitable[str]: ...'
   zig:
       - '// pactum DataFetcher: interface contract (Zig uses duck typing)'
       - '//   requires fn fetch(url: []const u8) []const u8'
@@ -360,6 +473,9 @@
   ts:
       - 'interface NumberGenerator'
       - 'generate(max: number): Generator<number>;'
+  py:
+      - 'class NumberGenerator(Protocol):'
+      - 'def generate(self, max: int) -> Iterator[int]: ...'
   zig:
       - '// pactum NumberGenerator: interface contract (Zig uses duck typing)'
       - '//   requires fn generate(max: i64) i64'
@@ -373,6 +489,9 @@
   ts:
       - 'interface StreamReader'
       - 'read(): AsyncGenerator<string>;'
+  py:
+      - 'class StreamReader(Protocol):'
+      - 'async def read(self) -> AsyncIterator[str]: ...'
   zig:
       - '// pactum StreamReader: interface contract (Zig uses duck typing)'
       - '//   requires fn read() []const u8'
@@ -388,6 +507,10 @@
       - 'interface Container<T>'
       - 'get(): T;'
       - 'set(value: T): void;'
+  py:
+      - 'class Container[T](Protocol):'
+      - 'def get(self) -> T: ...'
+      - 'def set(self, value: T) -> None: ...'
   zig:
       - '// pactum Container: interface contract (Zig uses duck typing)'
       - '//   requires fn get() T'
