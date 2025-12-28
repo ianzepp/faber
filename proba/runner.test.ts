@@ -7,8 +7,8 @@
 
 import { describe, test, expect } from 'bun:test';
 import { parse as parseYaml } from 'yaml';
-import { readFileSync, readdirSync } from 'fs';
-import { join, basename } from 'path';
+import { readFileSync, readdirSync, statSync } from 'fs';
+import { join, basename, relative } from 'path';
 
 import { tokenize } from '../fons/tokenizer';
 import { parse } from '../fons/parser';
@@ -25,7 +25,8 @@ interface TargetExpectation {
     exact?: string;
 }
 
-interface TestCase {
+// Legacy format: input + top-level target keys
+interface LegacyTestCase {
     name: string;
     input: string;
     ts?: string | string[] | TargetExpectation;
@@ -34,6 +35,34 @@ interface TestCase {
     cpp?: string | string[] | TargetExpectation;
     rs?: string | string[] | TargetExpectation;
     skip?: Target[];
+}
+
+// New format: faber + expect object
+interface ModernTestCase {
+    name: string;
+    faber: string;
+    expect: {
+        ts?: string | string[] | TargetExpectation;
+        py?: string | string[] | TargetExpectation;
+        zig?: string | string[] | TargetExpectation;
+        cpp?: string | string[] | TargetExpectation;
+        rs?: string | string[] | TargetExpectation;
+    };
+    skip?: Target[];
+}
+
+type TestCase = LegacyTestCase | ModernTestCase;
+
+function isModernTestCase(tc: TestCase): tc is ModernTestCase {
+    return 'faber' in tc && 'expect' in tc;
+}
+
+function getInput(tc: TestCase): string {
+    return isModernTestCase(tc) ? tc.faber : tc.input;
+}
+
+function getExpectation(tc: TestCase, target: Target): string | string[] | TargetExpectation | undefined {
+    return isModernTestCase(tc) ? tc.expect[target] : tc[target];
 }
 
 /**
@@ -85,16 +114,15 @@ function checkOutput(output: string, expected: string | string[] | TargetExpecta
 /**
  * Load and run all test cases from a YAML file.
  */
-function runTestFile(filePath: string): void {
+function runTestFile(filePath: string, suiteName: string): void {
     const content = readFileSync(filePath, 'utf-8');
     const cases: TestCase[] = parseYaml(content);
-    const suiteName = basename(filePath, '.yaml');
 
     describe(suiteName, () => {
         for (const target of TARGETS) {
             describe(target, () => {
                 for (const tc of cases) {
-                    const expected = tc[target];
+                    const expected = getExpectation(tc, target);
 
                     // Skip if no expectation for this target
                     if (expected === undefined) continue;
@@ -103,7 +131,8 @@ function runTestFile(filePath: string): void {
                     if (tc.skip?.includes(target)) continue;
 
                     test(tc.name, () => {
-                        const output = compile(tc.input.trim(), target);
+                        const input = getInput(tc);
+                        const output = compile(input.trim(), target);
                         checkOutput(output, expected);
                     });
                 }
@@ -112,10 +141,34 @@ function runTestFile(filePath: string): void {
     });
 }
 
-// Load all YAML test files from this directory
-const testDir = import.meta.dir;
-const yamlFiles = readdirSync(testDir).filter(f => f.endsWith('.yaml'));
+/**
+ * Recursively find all YAML files in a directory.
+ */
+function findYamlFiles(dir: string, baseDir: string): Array<{ path: string; name: string }> {
+    const results: Array<{ path: string; name: string }> = [];
 
-for (const file of yamlFiles) {
-    runTestFile(join(testDir, file));
+    for (const entry of readdirSync(dir)) {
+        const fullPath = join(dir, entry);
+        const stat = statSync(fullPath);
+
+        if (stat.isDirectory()) {
+            results.push(...findYamlFiles(fullPath, baseDir));
+        }
+        else if (entry.endsWith('.yaml')) {
+            // Build suite name from relative path: codegen/expressions/identifier
+            const relPath = relative(baseDir, fullPath);
+            const suiteName = relPath.replace(/\.yaml$/, '').replace(/\//g, '/');
+            results.push({ path: fullPath, name: suiteName });
+        }
+    }
+
+    return results;
+}
+
+// Load all YAML test files from this directory and subdirectories
+const testDir = import.meta.dir;
+const yamlFiles = findYamlFiles(testDir, testDir);
+
+for (const { path, name } of yamlFiles) {
+    runTestFile(path, name);
 }

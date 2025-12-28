@@ -1,0 +1,40 @@
+# Identifier expressions - boolean literals, null
+# Maps Faber identifiers to target-language equivalents
+#
+# Note: ts/py use exact match; cpp/rs/zig use contains (they wrap in main)
+
+- name: boolean true
+  faber: verum
+  expect:
+    ts: "true;"
+    py: "True"
+    rs:
+      - "true;"
+    cpp:
+      - "true;"
+    zig:
+      - "true;"
+
+- name: boolean false
+  faber: falsum
+  expect:
+    ts: "false;"
+    py: "False"
+    rs:
+      - "false;"
+    cpp:
+      - "false;"
+    zig:
+      - "false;"
+
+- name: null literal
+  faber: nihil
+  expect:
+    ts: "null;"
+    py: "None"
+    rs:
+      - "None;"
+    cpp:
+      - "nullptr;"
+    zig:
+      - "null;"
