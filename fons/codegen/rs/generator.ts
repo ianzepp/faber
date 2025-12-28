@@ -7,6 +7,54 @@
 
 import type { Statement, Expression, BlockStatement, Parameter, TypeAnnotation, TypeParameter } from '../../parser/ast';
 
+// Statement handlers
+import { genImportaDeclaration } from './statements/importa';
+import { genDestructureDeclaration } from './statements/destructure';
+import { genVariaDeclaration } from './statements/varia';
+import { genFunctioDeclaration, genBlockStatement } from './statements/functio';
+import { genGenusDeclaration } from './statements/genus';
+import { genPactumDeclaration } from './statements/pactum';
+import { genTypeAliasDeclaration } from './statements/typealias';
+import { genOrdoDeclaration } from './statements/ordo';
+import { genDiscretioDeclaration } from './statements/discretio';
+import { genSiStatement } from './statements/si';
+import { genDumStatement } from './statements/dum';
+import { genIteratioStatement } from './statements/iteratio';
+import { genInStatement } from './statements/in';
+import { genEligeStatement } from './statements/elige';
+import { genDiscerneStatement } from './statements/discerne';
+import { genCustodiStatement } from './statements/custodi';
+import { genAdfirmaStatement } from './statements/adfirma';
+import { genReddeStatement } from './statements/redde';
+import { genRumpeStatement } from './statements/rumpe';
+import { genPergeStatement } from './statements/perge';
+import { genIaceStatement } from './statements/iace';
+import { genScribeStatement } from './statements/scribe';
+import { genTemptaStatement } from './statements/tempta';
+import { genFacBlockStatement } from './statements/fac';
+import { genExpressionStatement } from './statements/expression';
+import { genProbandumStatement } from './statements/probandum';
+import { genProbaStatement } from './statements/proba';
+import { genCuraBlock, genCuraStatement } from './statements/cura';
+
+// Expression handlers
+import { genIdentifier } from './expressions/identifier';
+import { genLiteral } from './expressions/literal';
+import { genArrayExpression } from './expressions/array';
+import { genObjectExpression } from './expressions/object';
+import { genRangeExpression } from './expressions/range';
+import { genBinaryExpression } from './expressions/binary';
+import { genUnaryExpression } from './expressions/unary';
+import { genCallExpression } from './expressions/call';
+import { genMemberExpression } from './expressions/member';
+import { genArrowFunction } from './expressions/arrow';
+import { genLambdaExpression } from './expressions/lambda';
+import { genAssignmentExpression } from './expressions/assignment';
+import { genNovumExpression } from './expressions/novum';
+import { genQuaExpression } from './expressions/qua';
+import { genEstExpression } from './expressions/est';
+import { genPraefixumExpression } from './expressions/praefixum';
+
 /**
  * Map Latin type names to Rust type names.
  */
@@ -42,16 +90,120 @@ export class RsGenerator {
      * Generate a statement. Dispatches to specific gen* functions.
      */
     genStatement(node: Statement): string {
-        // TODO: Import and dispatch to individual statement handlers
-        throw new Error(`genStatement not yet implemented for: ${node.type}`);
+        switch (node.type) {
+            case 'ImportaDeclaration':
+                return genImportaDeclaration(node, this);
+            case 'DestructureDeclaration':
+                return genDestructureDeclaration(node, this);
+            case 'VariaDeclaration':
+                return genVariaDeclaration(node, this);
+            case 'FunctioDeclaration':
+                return genFunctioDeclaration(node, this);
+            case 'GenusDeclaration':
+                return genGenusDeclaration(node, this);
+            case 'PactumDeclaration':
+                return genPactumDeclaration(node, this);
+            case 'TypeAliasDeclaration':
+                return genTypeAliasDeclaration(node, this);
+            case 'OrdoDeclaration':
+                return genOrdoDeclaration(node, this);
+            case 'DiscretioDeclaration':
+                return genDiscretioDeclaration(node, this);
+            case 'SiStatement':
+                return genSiStatement(node, this);
+            case 'DumStatement':
+                return genDumStatement(node, this);
+            case 'IteratioStatement':
+                return genIteratioStatement(node, this);
+            case 'InStatement':
+                return genInStatement(node, this);
+            case 'EligeStatement':
+                return genEligeStatement(node, this);
+            case 'DiscerneStatement':
+                return genDiscerneStatement(node, this);
+            case 'CustodiStatement':
+                return genCustodiStatement(node, this);
+            case 'AdfirmaStatement':
+                return genAdfirmaStatement(node, this);
+            case 'ReddeStatement':
+                return genReddeStatement(node, this);
+            case 'RumpeStatement':
+                return genRumpeStatement(this);
+            case 'PergeStatement':
+                return genPergeStatement(this);
+            case 'IaceStatement':
+                return genIaceStatement(node, this);
+            case 'ScribeStatement':
+                return genScribeStatement(node, this);
+            case 'TemptaStatement':
+                return genTemptaStatement(node, this);
+            case 'FacBlockStatement':
+                return genFacBlockStatement(node, this);
+            case 'BlockStatement':
+                return this.genBlockStatementContent(node);
+            case 'ExpressionStatement':
+                return genExpressionStatement(node, this);
+            case 'ProbandumStatement':
+                return genProbandumStatement(node, this);
+            case 'ProbaStatement':
+                return genProbaStatement(node, this);
+            case 'CuraBlock':
+                return genCuraBlock(node, this);
+            case 'CuraStatement':
+                return genCuraStatement(node, this);
+            default:
+                throw new Error(`Unknown statement type: ${(node as any).type}`);
+        }
     }
 
     /**
      * Generate an expression. Dispatches to specific gen* functions.
      */
     genExpression(node: Expression): string {
-        // TODO: Import and dispatch to individual expression handlers
-        throw new Error(`genExpression not yet implemented for: ${node.type}`);
+        switch (node.type) {
+            case 'Identifier':
+                return genIdentifier(node, this);
+            case 'Literal':
+                return genLiteral(node, this);
+            case 'TemplateLiteral':
+                return `format!("${node.raw}")`;
+            case 'EgoExpression':
+                return 'self';
+            case 'ArrayExpression':
+                return genArrayExpression(node, this);
+            case 'ObjectExpression':
+                return genObjectExpression(node, this);
+            case 'RangeExpression':
+                return genRangeExpression(node, this);
+            case 'BinaryExpression':
+                return genBinaryExpression(node, this);
+            case 'UnaryExpression':
+                return genUnaryExpression(node, this);
+            case 'CallExpression':
+                return genCallExpression(node, this);
+            case 'MemberExpression':
+                return genMemberExpression(node, this);
+            case 'ArrowFunctionExpression':
+                return genArrowFunction(node, this);
+            case 'LambdaExpression':
+                return genLambdaExpression(node, this);
+            case 'AssignmentExpression':
+                return genAssignmentExpression(node, this);
+            case 'CedeExpression':
+                return `${this.genExpression(node.argument)}.await`;
+            case 'NovumExpression':
+                return genNovumExpression(node, this);
+            case 'ConditionalExpression':
+                return `if ${this.genExpression(node.test)} { ${this.genExpression(node.consequent)} } else { ${this.genExpression(node.alternate)} }`;
+            case 'QuaExpression':
+                return genQuaExpression(node, this);
+            case 'EstExpression':
+                return genEstExpression(node, this);
+            case 'PraefixumExpression':
+                return genPraefixumExpression(node, this);
+            default:
+                throw new Error(`Unknown expression type: ${(node as any).type}`);
+        }
     }
 
     /**

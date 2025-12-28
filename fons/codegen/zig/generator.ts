@@ -8,6 +8,49 @@
 import type { Statement, Expression, BlockStatement, Parameter, TypeAnnotation, TypeParameter } from '../../parser/ast';
 import type { SemanticType } from '../../semantic/types';
 
+// Statement handlers
+import { genImportaDeclaration } from './statements/importa';
+import { genDestructureDeclaration } from './statements/destructure';
+import { genVariaDeclaration } from './statements/varia';
+import { genFunctioDeclaration } from './statements/functio';
+import { genGenusDeclaration } from './statements/genus';
+import { genPactumDeclaration } from './statements/pactum';
+import { genTypeAliasDeclaration } from './statements/typealias';
+import { genOrdoDeclaration } from './statements/ordo';
+import { genDiscretioDeclaration } from './statements/discretio';
+import { genSiStatement } from './statements/si';
+import { genDumStatement } from './statements/dum';
+import { genIteratioStatement } from './statements/iteratio';
+import { genInStatement } from './statements/in';
+import { genEligeStatement } from './statements/elige';
+import { genDiscerneStatement } from './statements/discerne';
+import { genCustodiStatement } from './statements/custodi';
+import { genAdfirmaStatement } from './statements/adfirma';
+import { genReddeStatement } from './statements/redde';
+import { genRumpeStatement } from './statements/rumpe';
+import { genPergeStatement } from './statements/perge';
+import { genIaceStatement } from './statements/iace';
+import { genScribeStatement } from './statements/scribe';
+import { genTemptaStatement } from './statements/tempta';
+import { genFacBlockStatement } from './statements/fac';
+
+// Expression handlers
+import { genIdentifier } from './expressions/identifier';
+import { genLiteral } from './expressions/literal';
+import { genArrayExpression } from './expressions/array';
+import { genObjectExpression } from './expressions/object';
+import { genRangeExpression } from './expressions/range';
+import { genBinaryExpression } from './expressions/binary';
+import { genUnaryExpression } from './expressions/unary';
+import { genCallExpression } from './expressions/call';
+import { genMemberExpression } from './expressions/member';
+import { genArrowFunction } from './expressions/arrow';
+import { genLambdaExpression } from './expressions/lambda';
+import { genAssignmentExpression } from './expressions/assignment';
+import { genNovumExpression } from './expressions/novum';
+import { genEstExpression } from './expressions/est';
+import { genPraefixumExpression } from './expressions/praefixum';
+
 /**
  * Map Latin type names to Zig types.
  */
@@ -188,16 +231,148 @@ export class ZigGenerator {
      * Generate a statement. Dispatches to specific gen* functions.
      */
     genStatement(node: Statement): string {
-        // TODO: Import and dispatch to individual statement handlers
-        throw new Error(`genStatement not yet implemented for: ${node.type}`);
+        switch (node.type) {
+            case 'ImportaDeclaration':
+                return genImportaDeclaration(node, this);
+            case 'DestructureDeclaration':
+                return genDestructureDeclaration(node, this);
+            case 'VariaDeclaration':
+                return genVariaDeclaration(node, this);
+            case 'FunctioDeclaration':
+                return genFunctioDeclaration(node, this);
+            case 'GenusDeclaration':
+                return genGenusDeclaration(node, this);
+            case 'PactumDeclaration':
+                return genPactumDeclaration(node, this);
+            case 'TypeAliasDeclaration':
+                return genTypeAliasDeclaration(node, this);
+            case 'OrdoDeclaration':
+                return genOrdoDeclaration(node as any, this);
+            case 'DiscretioDeclaration':
+                return genDiscretioDeclaration(node, this);
+            case 'SiStatement':
+                return genSiStatement(node, this);
+            case 'DumStatement':
+                return genDumStatement(node, this);
+            case 'IteratioStatement':
+                return genIteratioStatement(node, this);
+            case 'InStatement':
+                return genInStatement(node, this);
+            case 'EligeStatement':
+                return genEligeStatement(node, this);
+            case 'DiscerneStatement':
+                return genDiscerneStatement(node, this);
+            case 'CustodiStatement':
+                return genCustodiStatement(node, this);
+            case 'AdfirmaStatement':
+                return genAdfirmaStatement(node, this);
+            case 'ReddeStatement':
+                return genReddeStatement(node, this);
+            case 'RumpeStatement':
+                return genRumpeStatement(this);
+            case 'PergeStatement':
+                return genPergeStatement(this);
+            case 'IaceStatement':
+                return genIaceStatement(node, this);
+            case 'ScribeStatement':
+                return genScribeStatement(node, this);
+            case 'TemptaStatement':
+                return genTemptaStatement(node, this);
+            case 'FacBlockStatement':
+                return genFacBlockStatement(node, this);
+            case 'BlockStatement':
+                return this.genBlockStatementContent(node);
+            case 'ExpressionStatement':
+                return this.genExpressionStatement(node);
+            default:
+                throw new Error(`Unknown statement type: ${(node as any).type}`);
+        }
     }
 
     /**
      * Generate an expression. Dispatches to specific gen* functions.
      */
     genExpression(node: Expression): string {
-        // TODO: Import and dispatch to individual expression handlers
-        throw new Error(`genExpression not yet implemented for: ${node.type}`);
+        switch (node.type) {
+            case 'Identifier':
+                return genIdentifier(node, this);
+            case 'Literal':
+                return genLiteral(node, this);
+            case 'TemplateLiteral':
+                // Zig doesn't have template literals, convert to string
+                return `"${node.raw.replace(/`/g, '')}"`;
+            case 'EgoExpression':
+                // TARGET: ego (this) becomes self in Zig struct methods
+                return 'self';
+            case 'ArrayExpression':
+                return genArrayExpression(node, this);
+            case 'ObjectExpression':
+                return genObjectExpression(node, this);
+            case 'RangeExpression':
+                return genRangeExpression(node, this);
+            case 'BinaryExpression':
+                return genBinaryExpression(node, this);
+            case 'UnaryExpression':
+                return genUnaryExpression(node, this);
+            case 'CallExpression':
+                return genCallExpression(node, this);
+            case 'MemberExpression':
+                return genMemberExpression(node, this);
+            case 'ArrowFunctionExpression':
+                return genArrowFunction(node, this);
+            case 'LambdaExpression':
+                return genLambdaExpression(node, this);
+            case 'AssignmentExpression':
+                return genAssignmentExpression(node, this);
+            case 'CedeExpression':
+                // Zig async is different, use try for error handling
+                return `try ${this.genExpression(node.argument)}`;
+            case 'NovumExpression':
+                return genNovumExpression(node, this);
+            case 'ConditionalExpression':
+                return `if (${this.genExpression(node.test)}) ${this.genExpression(node.consequent)} else ${this.genExpression(node.alternate)}`;
+            case 'QuaExpression':
+                return this.genQuaExpression(node);
+            case 'EstExpression':
+                return genEstExpression(node, this);
+            case 'PraefixumExpression':
+                return genPraefixumExpression(node, this);
+            default:
+                throw new Error(`Unknown expression type: ${(node as any).type}`);
+        }
+    }
+
+    /**
+     * Generate type cast expression.
+     *
+     * TRANSFORMS:
+     *   x qua numerus -> @as(i64, x)
+     *   data qua textus -> @as([]const u8, data)
+     *
+     * TARGET: Zig uses @as(T, x) builtin for type coercion.
+     */
+    genQuaExpression(node: import('../../parser/ast').QuaExpression): string {
+        const expr = this.genExpression(node.expression);
+        const targetType = this.genType(node.targetType);
+        return `@as(${targetType}, ${expr})`;
+    }
+
+    /**
+     * Generate expression statement.
+     *
+     * TARGET: Zig requires expressions to be used or discarded with _ = prefix.
+     *         Calls and assignments don't need discard prefix.
+     */
+    genExpressionStatement(node: import('../../parser/ast').ExpressionStatement): string {
+        const expr = this.genExpression(node.expression);
+
+        // TARGET: Zig assignments and calls are statements, not expressions
+        if (node.expression.type === 'CallExpression' || node.expression.type === 'AssignmentExpression') {
+            return `${this.ind()}${expr};`;
+        }
+
+        // WHY: Zig requires explicit discard with _ = for unused expression results
+        return `${this.ind()}_ = ${expr};`;
     }
 
     /**
@@ -228,37 +403,160 @@ export class ZigGenerator {
      */
     genParameter(node: Parameter): string {
         const name = node.name.name;
-        const type = node.typeAnnotation ? this.genType(node.typeAnnotation) : 'anytype';
-        // WHY: Zig uses ... before the type for variadic
-        const prefix = node.rest ? '...' : '';
-        return `${name}: ${prefix}${type}`;
+        const preposition = node.preposition;
+        const type = node.typeAnnotation ? this.genTypeWithPreposition(node.typeAnnotation, preposition) : 'anytype';
+        return `${name}: ${type}`;
+    }
+
+    /**
+     * Generate type with ownership preposition applied.
+     *
+     * TRANSFORMS:
+     *   (none) textus -> []const u8 (owned, uses module allocator if needed)
+     *   de textus -> []const u8 (borrowed slice, read-only)
+     *   in textus -> *[]u8 (mutable pointer to slice)
+     */
+    genTypeWithPreposition(node: TypeAnnotation, preposition?: string): string {
+        const baseType = this.genType(node);
+        const typeName = node.name;
+
+        if (!preposition) {
+            return baseType;
+        }
+
+        if (preposition === 'de') {
+            return this.genBorrowedType(typeName, baseType, node);
+        }
+
+        if (preposition === 'in') {
+            return this.genMutableType(typeName, baseType, node);
+        }
+
+        return baseType;
+    }
+
+    /**
+     * Generate borrowed (read-only) type for 'de' preposition.
+     */
+    genBorrowedType(typeName: string, baseType: string, node: TypeAnnotation): string {
+        if (typeName === 'textus') {
+            return baseType;
+        }
+
+        if (typeName === 'lista' && node.typeParameters && node.typeParameters.length > 0) {
+            const elemType = node.typeParameters[0]!;
+            if (elemType.type === 'TypeAnnotation') {
+                const innerType = this.genType(elemType);
+                return `[]const ${innerType}`;
+            }
+        }
+
+        if (typeName === 'tabula' || typeName === 'copia') {
+            return `*const ${baseType}`;
+        }
+
+        if (typeMap[typeName]) {
+            return `*const ${baseType}`;
+        }
+
+        return `*const ${baseType}`;
+    }
+
+    /**
+     * Generate mutable type for 'in' preposition.
+     */
+    genMutableType(typeName: string, baseType: string, node: TypeAnnotation): string {
+        if (typeName === 'textus') {
+            return `*[]u8`;
+        }
+
+        if (typeName === 'lista' && node.typeParameters && node.typeParameters.length > 0) {
+            const elemType = node.typeParameters[0]!;
+            if (elemType.type === 'TypeAnnotation') {
+                const innerType = this.genType(elemType);
+                return `*std.ArrayList(${innerType})`;
+            }
+        }
+
+        return `*${baseType}`;
     }
 
     /**
      * Generate type annotation from Latin type.
      */
     genType(node: TypeAnnotation): string {
-        // Map Latin type name to Zig type
-        const base = typeMap[node.name] ?? node.name;
+        const name = node.name;
 
-        // Handle generic type parameters
-        let result = base;
+        // Handle union types - Zig doesn't have untagged unions
+        if (node.union && node.union.length > 0) {
+            return 'anytype';
+        }
+
+        // Handle generic types
         if (node.typeParameters && node.typeParameters.length > 0) {
-            const params = node.typeParameters.map(p => this.genTypeParameter(p)).filter((p): p is string => p !== null);
-
-            // WHY: Zig generics use function call syntax: ArrayList(i32)
-            if (params.length > 0) {
-                result = `${base}(${params.join(', ')})`;
-            }
+            return this.genGenericType(name, node.typeParameters, node.nullable);
         }
 
-        // Handle nullable: textus? -> ?[]const u8
+        // Type lookup
+        const base = typeMap[name] ?? node.name;
+
         if (node.nullable) {
-            result = `?${result}`;
+            return `?${base}`;
         }
 
-        // WHY: Zig doesn't have union types in the same way
-        // Union types would need to be defined as tagged unions
+        return base;
+    }
+
+    /**
+     * Generate generic type (lista<T>, tabula<K,V>, etc).
+     */
+    genGenericType(name: string, params: TypeParameter[], nullable?: boolean): string {
+        let result: string;
+
+        switch (name) {
+            case 'lista': {
+                const elemType = params[0];
+                const innerType = elemType && 'name' in elemType ? this.genType(elemType as TypeAnnotation) : 'anytype';
+                result = `[]${innerType}`;
+                break;
+            }
+            case 'tabula': {
+                const keyType = params[0];
+                const valType = params[1];
+                const keyZig = keyType && 'name' in keyType ? this.genType(keyType as TypeAnnotation) : 'anytype';
+                const valZig = valType && 'name' in valType ? this.genType(valType as TypeAnnotation) : 'anytype';
+
+                if (keyZig === '[]const u8') {
+                    result = `std.StringHashMap(${valZig})`;
+                } else {
+                    result = `std.AutoHashMap(${keyZig}, ${valZig})`;
+                }
+                break;
+            }
+            case 'copia': {
+                const elemType = params[0];
+                const innerType = elemType && 'name' in elemType ? this.genType(elemType as TypeAnnotation) : 'anytype';
+
+                if (innerType === '[]const u8') {
+                    result = 'std.StringHashMap(void)';
+                } else {
+                    result = `std.AutoHashMap(${innerType}, void)`;
+                }
+                break;
+            }
+            case 'promissum': {
+                const innerType = params[0];
+                const zigType = innerType && 'name' in innerType ? this.genType(innerType as TypeAnnotation) : 'anytype';
+                result = `!${zigType}`;
+                break;
+            }
+            default:
+                result = name;
+        }
+
+        if (nullable) {
+            return `?${result}`;
+        }
 
         return result;
     }
