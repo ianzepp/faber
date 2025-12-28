@@ -1,32 +1,14 @@
 ---
-status: partial
-targets: [ts, zig]
-note: Parser/AST done; TS codegen done; Zig curatorStack partial; grammar needs update for fit/fiet
+status: design
+targets: [ts, py, zig, rs, cpp]
 updated: 2025-12
 ---
 
 # Cura - Resource Management
 
-## Implementation Status
-
-| Feature                | Status   | Notes                             |
-| ---------------------- | -------- | --------------------------------- |
-| `cura ... fit` syntax  | Done     | Parser + AST (needs grammar update) |
-| `cura ... fiet` async  | Not Done | Replaces `cura cede` syntax       |
-| `cura ... cape` errors | Done     | Optional catch clause             |
-| TypeScript codegen     | Done     | try/finally with solve?.()        |
-| Zig `curatorStack`     | Partial  | Functions only; not `cura` blocks |
-| `curatum` param        | Not Done | Allocator in function signature   |
-| `curatum` callsite     | Not Done | Per-call allocator override       |
-| `curator` keyword      | Not Done | Allocator category in cura blocks |
-| Python codegen         | Not Done | with statement                    |
-| Rust codegen           | Not Done | RAII / Drop                       |
-
----
-
 ## Overview
 
-`cura` provides two related capabilities:
+`cura` provides scoped resource management with explicit intent:
 
 1. **Resource cleanup** — file handles, connections, locks get released on scope exit
 2. **Allocator scoping** — memory allocators for non-GC targets (Zig, C++, Rust)
@@ -37,95 +19,185 @@ For GC targets (TypeScript, Python), allocators are irrelevant. The compiler ign
 
 ## Etymology
 
-| Keyword   | Meaning                       | Role                              |
-| --------- | ----------------------------- | --------------------------------- |
-| `cura`    | "care, concern"               | Block that manages a resource     |
-| `curator` | "one who cares for, steward"  | Allocator category keyword        |
-| `curatum` | "having been cared for" (PPP) | Allocator annotation              |
-| `fit`     | "it becomes" (sync)           | Sync resource binding             |
-| `fiet`    | "it will become" (async)      | Async resource binding            |
-| `solve`   | "release, free"               | Cleanup method                    |
+| Keyword   | Meaning                       | Role                             |
+| --------- | ----------------------------- | -------------------------------- |
+| `cura`    | "care, concern"               | Block that manages a resource    |
+| `curator` | "one who cares for, steward"  | Generic resource manager pactum  |
+| `curatum` | "having been cared for" (PPP) | Bound resource / allocator param |
+| `fit`     | "it becomes" (sync)           | Sync resource binding            |
+| `fiet`    | "it will become" (async)      | Async resource binding           |
+| `solve`   | "release, free"               | Cleanup method                   |
 
 ---
 
 ## Syntax
 
-All `cura` blocks follow a uniform grammar:
-
 ```ebnf
-curaStmt := 'cura' expression ('fit' | 'fiet') IDENTIFIER blockStmt catchClause?
+curaStmt := 'cura' curatorKind expression? ('fit' | 'fiet') typeAnnotation? IDENTIFIER blockStmt catchClause?
+curatorKind := 'curator' | 'arena' | 'page' | 'liber' | 'transactio' | 'mutex' | 'conexio'
 ```
+
+The curator kind is **required** — it declares what type of resource management is being performed. This follows the Zig philosophy that explicit intent aids readability and correctness.
 
 - `fit` — sync resource acquisition
 - `fiet` — async resource acquisition
 
-The binding is always created and available in the block scope.
+---
+
+## Well-Known Curators
+
+| Curator      | Latin meaning     | Use case              | Expression required? |
+| ------------ | ----------------- | --------------------- | -------------------- |
+| `curator`    | steward (generic) | Custom resource type  | yes                  |
+| `arena`      | sand, open space  | Arena allocator       | no                   |
+| `page`       | pagina            | Page allocator        | no                   |
+| `liber`      | book, document    | File handle           | yes                  |
+| `transactio` | transaction       | DB transaction        | yes                  |
+| `mutex`      | mutual exclusion  | Lock guard            | yes                  |
+| `conexio`    | connection        | Network/DB connection | yes                  |
 
 ---
 
-## The Three Use Cases
+## Examples
 
-### 1. Allocators — `cura curator fit <strategy>`
-
-For memory allocators on non-GC targets (Zig, C++, Rust):
+### Allocators (expression optional)
 
 ```fab
-cura curator fit arena {
+cura arena fit mem {
     varia items: textus[] = []
-    items.adde("hello")        // uses 'arena' implicitly via curatorStack
+    items.adde("hello")
     items.adde("world")
-
-    // Explicit access for Zig interop:
-    zigLibrary.init(arena)     // pass allocator directly when needed
 }
-// arena freed, all allocations released
+// mem freed, all allocations released
+
+cura page fit mem {
+    fixum buffer = allocate(1024)
+}
 ```
 
-**How it works:**
-1. The `curator` keyword signals allocator scoping
-2. The binding (`arena`) is pushed onto the `curatorStack`
-3. Operations within the block use the stack top implicitly
-4. The binding is also available as a variable for explicit access (Zig interop)
-5. On block exit: stack pops, cleanup runs
-
-Nesting works naturally:
+Nested allocators:
 
 ```fab
-cura curator fit outer {
+cura arena fit outer {
     varia a: textus[] = []
-    a.adde("one")              // uses 'outer'
+    a.adde("one")
 
-    cura curator fit inner {
+    cura arena fit inner {
         varia b: textus[] = []
-        b.adde("two")          // uses 'inner'
+        b.adde("two")
     }
     // inner freed
 
-    a.adde("three")            // uses 'outer' again
+    a.adde("three")
 }
 // outer freed
 ```
 
-**Allocator strategies:**
+### Files
 
-| Strategy | Zig Mapping                          |
-| -------- | ------------------------------------ |
-| `arena`  | `std.heap.ArenaAllocator`            |
-| `page`   | `std.heap.page_allocator`            |
-| `alloc`  | Default (context-dependent)          |
+```fab
+cura liber aperi("data.txt") fit fd {
+    fixum data = lege(fd)
+    process(data)
+}
+// fd closed automatically
 
-### 2. `curatum` — Allocator Annotation (Escape Hatch)
+cura liber aperi("config.json") fit File fd {
+    // explicit type annotation
+    fixum config = parse(fd)
+}
+```
 
-The `curatum` keyword marks allocator intent. It appears in two places:
+### Connections
 
-#### In Function Signatures
+```fab
+cura conexio db.connect(url) fiet conn {
+    fixum users = cede conn.query("SELECT * FROM users")
+    redde users
+}
+// conn closed automatically
+```
+
+### Transactions
+
+```fab
+cura transactio conn.begin() fiet tx {
+    tx.execute("INSERT INTO users (name) VALUES (?)", name)
+    tx.execute("UPDATE stats SET count = count + 1")
+}
+// commit on success, rollback on error
+```
+
+### Locks
+
+```fab
+cura mutex lock.acquire() fit guard {
+    shared_counter += 1
+}
+// lock released automatically
+```
+
+### Generic (custom curator)
+
+```fab
+cura curator TempFile.create() fit tmp {
+    inscribe(tmp.path, data)
+}
+// tmp.solve() called on exit
+```
+
+### Error handling
+
+```fab
+cura liber aperi("data.txt") fit fd {
+    riskyOperation(fd)
+} cape err {
+    mone("Operation failed:", err)
+}
+// fd still closed
+```
+
+---
+
+## The Curator Pactum
+
+Resources implement cleanup via the `Curator` pactum:
+
+```fab
+pactum Curator {
+    functio solve() -> vacuum
+}
+```
+
+Custom resources:
+
+```fab
+genus TempFile implet Curator {
+    privatus textus path
+
+    functio solve() {
+        dele(ego.path)
+    }
+}
+
+cura curator TempFile.create() fit tmp {
+    inscribe(tmp.path, data)
+}
+// temp file deleted via solve()
+```
+
+---
+
+## Allocator Annotations
+
+### `curatum` in function signatures
 
 When a function needs an explicit allocator parameter:
 
 ```fab
 functio buildList(curatum mem, textus prefix) -> textus[] {
     varia items: textus[] = []
-    items.adde(prefix)         // uses 'mem'
+    items.adde(prefix)
     redde items
 }
 ```
@@ -138,30 +210,21 @@ functio buildList(curatum mem, textus prefix) -> textus[] {
 
 **Target behavior:**
 
-- Zig: `curatum mem` → `mem: std.mem.Allocator`
+- Zig: `curatum mem` becomes `mem: std.mem.Allocator`
 - TS/Py: parameter stripped entirely (GC handles memory)
 
-#### At Callsites
+### `curatum` at callsites
 
-Override the allocator for a single call without modifying the callee:
+Override the allocator for a single call:
 
 ```fab
-cura curator fit temp {
-    // Everything here uses 'temp'
-    fixum a = buildList("foo")
-
-    // But this specific call uses a different allocator
-    fixum b = buildList("bar") curatum custom_alloc
+cura arena fit temp {
+    fixum a = buildList("foo")              // uses temp
+    fixum b = buildList("bar") curatum other // uses other
 }
 ```
 
-**When to use:** When you need a specific call to use a different allocator than the current scope provides, but you don't want to (or can't) modify the function signature.
-
-**How it works:** `curatum X` temporarily pushes `X` onto the `curatorStack` for the duration of that call only.
-
-#### Symmetry
-
-Same keyword, same meaning — "with this allocator":
+**Symmetry:**
 
 | Context   | Syntax                        | Meaning                              |
 | --------- | ----------------------------- | ------------------------------------ |
@@ -172,113 +235,15 @@ Same keyword, same meaning — "with this allocator":
 
 ## Default Behavior
 
-Outside any `cura` block, there's an implicit default allocator (`alloc`). For Zig, this maps to a global arena or page allocator. For GC targets, it's ignored.
+Outside any `cura` block, there's an implicit default allocator. For Zig, this maps to a global arena or page allocator. For GC targets, it's ignored.
 
 ```fab
 // Top-level code, no explicit cura block
 varia items: textus[] = []
-items.adde("hello")           // uses default 'alloc'
+items.adde("hello")           // uses default allocator
 ```
 
-Most Faber code never mentions allocators at all. Just use `cura` blocks when you need scoped cleanup, and let the compiler handle the rest.
-
----
-
-## Sync Resources — `cura <expr> fit <binding>`
-
-For sync resource acquisition (files, locks):
-
-```fab
-cura aperi("data.bin") fit fd {
-    fixum data = lege(fd, 1024)
-    process(data)
-}
-// fd closed automatically
-```
-
-```fab
-cura mutex.lock() fit guard {
-    shared_counter += 1
-}
-// lock released automatically
-```
-
-Cleanup runs even if an error occurs:
-
-```fab
-cura aperi("data.bin") fit fd {
-    riskyOperation(fd)
-} cape err {
-    mone("Operation failed:", err)
-}
-// fd still closed
-```
-
----
-
-## Async Resources — `cura <expr> fiet <binding>`
-
-For async resource acquisition (connections, transactions):
-
-```fab
-cura connect(db_url) fiet conn {
-    fixum users = cede conn.query("SELECT * FROM users")
-    redde users
-}
-// conn closed automatically
-```
-
-Database transactions:
-
-```fab
-cura db.transactio fiet tx {
-    in tx.accounts muta "balance = balance - ?" (amount) ubi "id = ?" (fromId)
-    in tx.accounts muta "balance = balance + ?" (amount) ubi "id = ?" (toId)
-    in tx.transfers adde (fromId: fromId, toId: toId, amount: amount)
-}
-// commit on success, rollback on error
-```
-
-The `fiet` verb signals async acquisition. Cleanup is always synchronous — async cleanup creates ordering problems.
-
----
-
-## The Solvable Interface
-
-Resources implement cleanup via the `solve` method:
-
-```fab
-pactum Solvable {
-    functio solve() -> vacuum
-}
-```
-
-Custom resources:
-
-```fab
-genus TempFile implet Solvable {
-    privatum path: textus
-
-    functio solve() {
-        dele(ego.path)
-    }
-}
-
-cura TempFile.create() fit tmp {
-    inscribe(tmp.path, data)
-}
-// temp file deleted
-```
-
----
-
-## Summary
-
-| Use Case       | Syntax                          | Binding          |
-| -------------- | ------------------------------- | ---------------- |
-| Allocator      | `cura curator fit arena`        | Strategy (stack) |
-| Sync resource  | `cura mutex.lock() fit guard`   | Handle           |
-| Async resource | `cura db.transactio fiet tx`    | Handle           |
+Most Faber code never mentions allocators at all.
 
 ---
 
@@ -286,37 +251,37 @@ cura TempFile.create() fit tmp {
 
 ### TypeScript
 
-Sync resource (`cura X fit Y`):
+Sync resource (`cura liber X fit Y`):
 
 ```typescript
-const fd = open('data.bin');
+const fd = open('data.txt');
 try {
-    const data = read(fd, 1024);
+    const data = read(fd);
     process(data);
 } finally {
     fd.solve?.();
 }
 ```
 
-Async resource (`cura X fiet Y`):
+Async resource (`cura conexio X fiet Y`):
 
 ```typescript
-const conn = await connect(db_url);
+const conn = await db.connect(url);
 try {
-    const users = await conn.query("SELECT * FROM users");
+    const users = await conn.query('SELECT * FROM users');
     return users;
 } finally {
     conn.solve?.();
 }
 ```
 
-Allocator constructs (`curatum` params/callsites, `cura curator` blocks) are stripped entirely.
+Allocator constructs (`curatum` params/callsites, `cura arena/page` blocks) are stripped entirely.
 
 ### Python
 
 ```python
-with open("data.bin") as fd:
-    data = fd.read(1024)
+with open("data.txt") as fd:
+    data = fd.read()
     process(data)
 ```
 
@@ -331,7 +296,7 @@ const alloc = arena.allocator();
 
 var items = std.ArrayList([]const u8).init(alloc);
 defer items.deinit();
-try items.append(alloc, "hello");
+try items.append("hello");
 ```
 
 The `curatorStack` determines which allocator name appears in generated code.
@@ -340,16 +305,20 @@ The `curatorStack` determines which allocator name appears in generated code.
 
 ```rust
 {
-    let fd = File::open("data.bin")?;
-    let data = read(&fd, 1024)?;
+    let fd = File::open("data.txt")?;
+    let data = read(&fd)?;
     process(data);
 }
-// fd dropped
+// fd dropped via RAII
 ```
 
 ---
 
 ## Design Decisions
+
+### Why explicit curator kinds?
+
+Following Zig's philosophy: explicit is better than implicit for resource management. Saying `cura liber` instead of just `cura` tells the reader exactly what kind of resource is being managed, and lets the compiler verify the expression matches.
 
 ### Why `fit` vs `fiet`?
 
@@ -358,21 +327,11 @@ Latin conjugation of `fio` ("to become"):
 - `fit` — present tense, "it becomes" (sync)
 - `fiet` — future tense, "it will become" (async)
 
-The verb signals whether resource acquisition is sync or async. This replaces the earlier `cura cede` syntax with a more consistent approach.
+The verb signals whether resource acquisition is sync or async.
 
-### Why `curator` for allocators?
+### Why `liber` for files?
 
-The keyword `curator` (steward, caretaker) comes from the same root as `cura` (care). For allocators, the binding name (`arena`, `page`, etc.) specifies the *strategy*, not just a variable name. The compiler maps strategies to target-specific implementations.
-
-### Why the binding is both on stack and available as variable?
-
-For allocators, most operations use the `curatorStack` implicitly — Faber code stays clean. But when calling Zig code directly (interop), you need explicit access to pass the allocator. The binding provides that escape hatch.
-
-### Why implicit allocator threading?
-
-Explicit allocator params pollute every function signature. Faber targets multiple backends — forcing Zig's allocator model onto TypeScript code is wrong.
-
-The `curatorStack` approach keeps Faber source clean while generating correct Zig code.
+The Latin `fasciculus` (file/bundle) is too long. `liber` (book, document) is short and captures the concept of a readable/writable document.
 
 ### Why sync-only cleanup?
 
@@ -392,20 +351,6 @@ Latin `solve` means "release, free" — fitting for releasing resources. Short a
 
 ## Implementation Notes
 
-### Grammar Update Needed
-
-The parser currently uses:
-
-```ebnf
-curaStmt := 'cura' 'cede'? expression 'fit' IDENTIFIER blockStmt catchClause?
-```
-
-Should become:
-
-```ebnf
-curaStmt := 'cura' expression ('fit' | 'fiet') IDENTIFIER blockStmt catchClause?
-```
-
 ### Zig Codegen
 
 The `curatorStack` tracks the active allocator name:
@@ -420,7 +365,7 @@ function getCurator(): string {
 
 Push on:
 
-- `cura curator fit X` block entry (using the strategy name)
+- `cura arena/page fit X` block entry
 - Function entry when a `curatum` param exists
 - `curatum` callsite (for that call only, then pop)
 
@@ -430,5 +375,5 @@ Simply ignore:
 
 - `curatum` parameters (strip from signature and callsites)
 - `curatum` callsite annotations (strip entirely)
-- `cura curator` blocks (strip entirely — no allocator concept)
+- `cura arena/page` blocks (strip entirely — no allocator concept)
 - Other `cura` blocks: generate try/finally with solve?.() cleanup

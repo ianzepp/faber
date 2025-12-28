@@ -2,7 +2,7 @@
 status: planned
 targets: [ts, py]
 note: Database query DSL design. Not yet implemented.
-updated: 2024-12
+updated: 2025-12
 ---
 
 # Tabularium - Database Query DSL
@@ -381,10 +381,10 @@ in db.users adde (nomen: "Marcus", email: "marcus@roma.it")
 
 ### Transactions
 
-Transaction blocks use `cura ... fiet` to acquire a transaction handle:
+Transaction blocks use `cura transactio ... fiet` to acquire a transaction handle:
 
 ```fab
-cura db.transactio fiet tx {
+cura transactio db.begin() fiet tx {
     // Read within transaction
     de tx.accounts quaere ubi "id = ?" (fromId) fiet from {
         fixum balance = from.balance
@@ -399,11 +399,13 @@ cura db.transactio fiet tx {
 }
 ```
 
-The `fiet` signals async acquisition. The `tx` binding is the transaction handle — all operations inside use it explicitly. The `cura` block ensures:
+The `transactio` curator kind declares explicit intent. The `fiet` signals async acquisition. The `tx` binding is the transaction handle — all operations inside use it explicitly. The `cura` block ensures:
 
 - All operations use the same transaction
 - Automatic commit on success
 - Automatic rollback on error
+
+See `consilia/cura.md` for the full `cura` grammar and well-known curator kinds.
 
 ---
 
