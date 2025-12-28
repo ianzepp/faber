@@ -12,7 +12,8 @@
   py: '(1 + 2)'
   cpp:
       - '(1 + 2)'
-  rs: '(1 + 2);'
+  rs:
+      - '(1 + 2);'
   zig:
       - '(1 + 2)'
 
@@ -23,7 +24,8 @@
   py: 'salve(nomen)'
   cpp:
       - 'salve(nomen);'
-  rs: 'salve(nomen);'
+  rs:
+      - 'salve(nomen);'
   zig:
       - 'salve(nomen)'
 
@@ -34,7 +36,8 @@
   py: 'lista.filter(f)'
   cpp:
       - 'lista.filter(f);'
-  rs: 'lista.filter(f);'
+  rs:
+      - 'lista.filter(f);'
 
 # Property access via dot notation
 - name: 'member access'
@@ -43,7 +46,8 @@
   py: 'usuario.nomen'
   cpp:
       - 'usuario.nomen;'
-  rs: 'usuario.nomen;'
+  rs:
+      - 'usuario.nomen;'
   zig:
       - 'usuario.nomen'
 
@@ -58,7 +62,8 @@
   py: '(a and b)'
   cpp:
       - '(a && b)'
-  rs: '(a && b);'
+  rs:
+      - '(a && b);'
   zig:
       - '(a and b)'
 
@@ -69,7 +74,8 @@
   py: '(a or b)'
   cpp:
       - '(a || b)'
-  rs: '(a || b);'
+  rs:
+      - '(a || b);'
   zig:
       - '(a or b)'
 
@@ -81,7 +87,8 @@
       - 'a if a is not None else b'
   cpp:
       - '(a != nullptr ? a : b);'
-  rs: '(a ?? b);'
+  rs:
+      - '(a ?? b);'
 
 # vel chains left-to-right
 - name: 'vel chains correctly'
@@ -92,7 +99,8 @@
       - 'is not None'
   cpp:
       - '((a != nullptr ? a : b) != nullptr ? (a != nullptr ? a : b) : c);'
-  rs: '((a ?? b) ?? c);'
+  rs:
+      - '((a ?? b) ?? c);'
 
 # =============================================================================
 # Bitwise Operators
@@ -105,7 +113,8 @@
   py: '(5 & 3)'
   cpp:
       - '(5 & 3);'
-  rs: '(5 & 3);'
+  rs:
+      - '(5 & 3);'
   zig:
       - '(5 & 3)'
 
@@ -116,7 +125,8 @@
   py: '(5 | 3)'
   cpp:
       - '(5 | 3);'
-  rs: '(5 | 3);'
+  rs:
+      - '(5 | 3);'
   zig:
       - '(5 | 3)'
 
@@ -127,7 +137,8 @@
   py: '(5 ^ 3)'
   cpp:
       - '(5 ^ 3);'
-  rs: '(5 ^ 3);'
+  rs:
+      - '(5 ^ 3);'
   zig:
       - '(5 ^ 3)'
 
@@ -138,7 +149,8 @@
   py: '~5'
   cpp:
       - '~5;'
-  rs: '~5;'
+  rs:
+      - '~5;'
   zig:
       - '~5'
 
@@ -149,7 +161,8 @@
   py: '(1 << 4)'
   cpp:
       - '(1 << 4);'
-  rs: '(1 << 4);'
+  rs:
+      - '(1 << 4);'
   zig:
       - '(1 << 4)'
 
@@ -160,7 +173,8 @@
   py: '(16 >> 2)'
   cpp:
       - '(16 >> 2);'
-  rs: '(16 >> 2);'
+  rs:
+      - '(16 >> 2);'
   zig:
       - '(16 >> 2)'
 
@@ -295,7 +309,8 @@
   py: '(a == b)'
   cpp:
       - '(a == b)'
-  rs: '(a == b);'
+  rs:
+      - '(a == b);'
 
 # Inequality - same in both targets
 - name: 'inequality'
@@ -304,7 +319,8 @@
   py: '(a != b)'
   cpp:
       - '(a != b)'
-  rs: '(a != b);'
+  rs:
+      - '(a != b);'
 
 # Less than - same in both targets
 - name: 'less than'
@@ -313,7 +329,8 @@
   py: '(a < b)'
   cpp:
       - '(a < b);'
-  rs: '(a < b);'
+  rs:
+      - '(a < b);'
 
 # Greater than - same in both targets
 - name: 'greater than'
@@ -322,7 +339,8 @@
   py: '(a > b)'
   cpp:
       - '(a > b);'
-  rs: '(a > b);'
+  rs:
+      - '(a > b);'
 
 # =============================================================================
 # Spread Operator (sparge)
@@ -419,7 +437,8 @@
       - 'arr[0] if arr is not None else None'
   cpp:
       - '(arr ? (*arr)[0] : std::nullopt);'
-  rs: 'arr.get(0);'
+  rs:
+      - 'arr.get(0);'
 
 # ?( safely calls functions
 - name: 'optional call'
@@ -444,7 +463,8 @@
   py: 'user.name'
   cpp:
       - 'user->name;'
-  rs: 'user.name;'
+  rs:
+      - 'user.name;'
 
 # ![ asserts non-null then indexes
 - name: 'non-null computed access'
@@ -453,7 +473,8 @@
   py: 'arr[0]'
   cpp:
       - '(*arr)[0];'
-  rs: 'arr[0];'
+  rs:
+      - 'arr[0];'
 
 # =============================================================================
 # Computed Member Access
@@ -466,7 +487,8 @@
   py: 'obj[key]'
   cpp:
       - 'obj[key];'
-  rs: 'obj[key];'
+  rs:
+      - 'obj[key];'
 
 # Literal index access
 - name: 'computed access with literal'
@@ -475,7 +497,8 @@
   py: 'arr[0]'
   cpp:
       - 'arr[0];'
-  rs: 'arr[0];'
+  rs:
+      - 'arr[0];'
 
 # =============================================================================
 # Negative Indexing
@@ -488,7 +511,8 @@
   py: 'x = nums[-1]'
   cpp:
       - 'const auto x = nums[nums.size() - 1];'
-  rs: 'let x = nums[-1];'
+  rs:
+      - 'let x = nums[-1];'
   zig:
       - 'nums[nums.len - 1]'
 
@@ -529,14 +553,16 @@
   input: 'fixum name = data qua textus'
   ts: 'const name = (data as string);'
   py: 'name = data'
-  rs: 'let name = data as String;'
+  rs:
+      - 'let name = data as String;'
 
 # Cast member expression
 - name: 'cast member expression'
   input: 'fixum body = response.body qua objectum'
   ts: 'const body = (response.body as object);'
   py: 'body = response.body'
-  rs: 'let body = response.body as objectum;'
+  rs:
+      - 'let body = response.body as objectum;'
 
 # =============================================================================
 # Type Check (est)

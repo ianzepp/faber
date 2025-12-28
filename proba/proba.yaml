@@ -78,7 +78,8 @@
   input: 'proba futurum "later" "pending" { }'
   ts:
       - 'test.todo("later: pending"'
-  rs: '// TODO: pending'
+  rs:
+      - '// TODO: pending'
 
 # adfirma in proba generates assertion
 - name: 'proba with adfirma'

@@ -2,8 +2,11 @@
  * Rust Code Generator - FunctioDeclaration
  *
  * TRANSFORMS:
- *   functio greet(textus name) -> textus { } -> fn greet(name: String) -> String { }
+ *   functio greet(textus name) -> textus { } -> fn greet(name: &str) -> String { }
  *   futura functio fetch() -> textus { } -> async fn fetch() -> String { }
+ *
+ * NOTE: Untyped parameters emit `_` which rustc will reject with a helpful error.
+ *       This is intentional - Rust requires explicit types, unlike TypeScript.
  */
 
 import type { FunctioDeclaration, BlockStatement } from '../../../parser/ast';

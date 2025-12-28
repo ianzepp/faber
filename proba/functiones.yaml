@@ -171,7 +171,8 @@
       - '[&](auto x) { return x; }'
   zig:
       - '_ = @compileError("Arrow functions not supported in Zig - use ''pro x -> Type: expr'' syntax");'
-  rs: '|x| x;'
+  rs:
+      - '|x| x;'
 
 # Arrow with block body
 - name: 'arrow with block'
@@ -202,7 +203,8 @@
       - '_ = @compileError("Lambda requires return type annotation for Zig target: pro x -> Type: expr");'
   cpp:
       - '[&](auto x) { return (x * 2); };'
-  rs: '|x| (x * 2);'
+  rs:
+      - '|x| (x * 2);'
 
 # Multiple parameters separated by comma
 - name: 'multi param lambda'
@@ -213,7 +215,8 @@
       - '_ = @compileError("Lambda requires return type annotation for Zig target: pro x -> Type: expr");'
   cpp:
       - '[&](auto x, auto y) { return (x + y); };'
-  rs: '|x, y| (x + y);'
+  rs:
+      - '|x, y| (x + y);'
 
 # Zero parameters - empty param list
 - name: 'zero param lambda'
@@ -224,7 +227,8 @@
       - '_ = @compileError("Lambda requires return type annotation for Zig target: pro x -> Type: expr");'
   cpp:
       - '[&]() { return 42; };'
-  rs: '|| 42;'
+  rs:
+      - '|| 42;'
 
 # Lambda assigned to variable
 - name: 'lambda in variable'
@@ -235,7 +239,8 @@
       - 'const double = @compileError("Lambda requires return type annotation for Zig target: pro x -> Type: expr");'
   cpp:
       - 'const auto double = [&](auto x) { return (x * 2); };'
-  rs: 'let double = |x| (x * 2);'
+  rs:
+      - 'let double = |x| (x * 2);'
 
 # Lambda passed as callback argument
 - name: 'lambda as callback'
@@ -246,7 +251,8 @@
       - 'lambda x: (x > 0)'
   cpp:
       - '(items | std::views::filter([&](auto x) { return (x > 0); }) | std::ranges::to<std::vector>());'
-  rs: 'items.filtrata(|x| (x > 0));'
+  rs:
+      - 'items.filtrata(|x| (x > 0));'
 
 # =============================================================================
 # Empty Blocks

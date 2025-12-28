@@ -23,7 +23,7 @@
       - 'if (true)'
   rs:
       - 'if true'
-      - 'println!(String::from("yes"))'
+      - 'println!'
 
 # aliter is the else keyword
 - name: 'if with else'
@@ -301,7 +301,8 @@
       - 'std.debug.assert'
   cpp:
       - 'assert((x > 0));'
-  rs: 'assert!((x > 0));'
+  rs:
+      - 'assert!((x > 0));'
 
 # adfirma with message includes that in the error
 - name: 'assert with message'

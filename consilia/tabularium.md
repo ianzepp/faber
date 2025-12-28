@@ -381,25 +381,25 @@ in db.users adde (nomen: "Marcus", email: "marcus@roma.it")
 
 ### Transactions
 
-Transaction blocks use `cura` (care/manage) with the connection:
+Transaction blocks use `cura ... fiet` to acquire a transaction handle:
 
 ```fab
-cura db.transactio {
+cura db.transactio fiet tx {
     // Read within transaction
-    de db.accounts quaere ubi "id = ?" (fromId) fiet from {
+    de tx.accounts quaere ubi "id = ?" (fromId) fiet from {
         fixum balance = from.balance
     }
 
     // Write within transaction
-    in db.accounts muta "balance = balance - ?" (amount) ubi "id = ?" (fromId)
-    in db.accounts muta "balance = balance + ?" (amount) ubi "id = ?" (toId)
+    in tx.accounts muta "balance = balance - ?" (amount) ubi "id = ?" (fromId)
+    in tx.accounts muta "balance = balance + ?" (amount) ubi "id = ?" (toId)
 
     // Insert audit log
-    in db.transfers adde (fromId: fromId, toId: toId, amount: amount)
+    in tx.transfers adde (fromId: fromId, toId: toId, amount: amount)
 }
 ```
 
-The `cura` block ensures:
+The `fiet` signals async acquisition. The `tx` binding is the transaction handle — all operations inside use it explicitly. The `cura` block ensures:
 
 - All operations use the same transaction
 - Automatic commit on success

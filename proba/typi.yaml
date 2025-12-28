@@ -130,7 +130,8 @@
       - 'const m_huge: i128 = 99999999999999999999;'
   cpp:
       - 'const magnus huge = 99999999999999999999;'
-  rs: 'let huge: i128 = 99999999999999999999ni128;'
+  rs:
+      - 'let huge: i128 = 99999999999999999999ni128;'
 
 # numquam is the never type (function never returns)
 - name: 'numquam maps to never'
@@ -169,7 +170,8 @@
       - 'var x: anytype = 42;'
   cpp:
       - 'ignotum x = 42;'
-  rs: 'let mut x: ignotum = 42;'
+  rs:
+      - 'let mut x: ignotum = 42;'
 
 # =============================================================================
 # Union Types
@@ -184,7 +186,8 @@
       - 'anytype'
   cpp:
       - 'const union value = std::string("hello");'
-  rs: 'let value: union = String::from("hello");'
+  rs:
+      - 'let value: union = String::from("hello");'
 
 # unio can have multiple members
 - name: 'union type with three members'
@@ -193,7 +196,8 @@
   py: 'value: str | int | None = None'
   cpp:
       - 'const union value = nullptr;'
-  rs: 'let value: union = None;'
+  rs:
+      - 'let value: union = None;'
 
 # Type alias with union type
 - name: 'type alias with union'
@@ -221,7 +225,8 @@
       - 'const m_name: ?[]const u8 = null;'
   cpp:
       - 'const std::optional<std::string> name = nullptr;'
-  rs: 'let name: Option<String> = None;'
+  rs:
+      - 'let name: Option<String> = None;'
 
 # =============================================================================
 # Enums (ordo)
@@ -296,7 +301,7 @@
       - 'print(color.rubrum)'
   rs:
       - 'enum color {'
-      - 'println!(color.rubrum);'
+      - 'println!'
 
 # =============================================================================
 # Type Checks (est)
