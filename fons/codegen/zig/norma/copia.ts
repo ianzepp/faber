@@ -31,9 +31,12 @@
 
 /**
  * Generator function type for Zig collection methods.
+ *
  * WHY: The curator parameter allows methods to use the correct allocator.
+ * WHY: The args parameter is a string[] (not a joined string) to preserve
+ *      argument boundaries for multi-parameter lambdas.
  */
-export type ZigGenerator = (obj: string, args: string, curator: string) => string;
+export type ZigGenerator = (obj: string, args: string[], curator: string) => string;
 
 export interface CopiaMethod {
     latin: string;
@@ -55,21 +58,21 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         latin: 'adde',
         mutates: true,
         // WHY: Set is implemented as HashMap with void value
-        zig: (obj, args, curator) => `${obj}.put(${curator}, ${args}, {}) catch @panic("OOM")`,
+        zig: (obj, args, curator) => `${obj}.put(${curator}, ${args[0]}, {}) catch @panic("OOM")`,
     },
 
     /** Check if element exists */
     habet: {
         latin: 'habet',
         mutates: false,
-        zig: (obj, args) => `${obj}.contains(${args})`,
+        zig: (obj, args) => `${obj}.contains(${args[0]})`,
     },
 
     /** Delete element (mutates) */
     dele: {
         latin: 'dele',
         mutates: true,
-        zig: (obj, args) => `_ = ${obj}.remove(${args})`,
+        zig: (obj, args) => `_ = ${obj}.remove(${args[0]})`,
     },
 
     /** Get size */

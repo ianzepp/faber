@@ -33,6 +33,19 @@
 // =============================================================================
 
 /**
+ * Generator function type for TypeScript collection methods.
+ *
+ * WHY: The args parameter is a string[] (not a joined string) to preserve
+ *      argument boundaries. This allows methods like reducta to correctly
+ *      handle multi-parameter lambdas that contain commas.
+ *
+ * @param obj - The collection expression (e.g., "myList")
+ * @param args - Array of argument strings, each already generated
+ * @returns TypeScript code string
+ */
+export type TsGenerator = (obj: string, args: string[]) => string;
+
+/**
  * Describes how to translate a Latin method to TypeScript.
  */
 export interface ListaMethod {
@@ -48,12 +61,10 @@ export interface ListaMethod {
     /**
      * TypeScript translation.
      * - string: simple method rename (obj.latin() -> obj.ts())
-     * - function: custom code generation
+     * - function: custom code generation with structured args
      */
     ts: string | TsGenerator;
 }
-
-type TsGenerator = (obj: string, args: string) => string;
 
 // =============================================================================
 // METHOD REGISTRY
@@ -82,7 +93,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'addita',
         mutates: false,
         async: false,
-        ts: (obj, args) => `[...${obj}, ${args}]`,
+        ts: (obj, args) => `[...${obj}, ${args.join(', ')}]`,
     },
 
     /** Add element to start (mutates) */
@@ -98,7 +109,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'praeposita',
         mutates: false,
         async: false,
-        ts: (obj, args) => `[${args}, ...${obj}]`,
+        ts: (obj, args) => `[${args.join(', ')}, ...${obj}]`,
     },
 
     // -------------------------------------------------------------------------
@@ -170,7 +181,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'accipe',
         mutates: false,
         async: false,
-        ts: (obj, args) => `${obj}[${args}]`,
+        ts: (obj, args) => `${obj}[${args[0]}]`,
     },
 
     // -------------------------------------------------------------------------
@@ -249,19 +260,21 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         ts: 'map',
     },
 
-    /** Reduce to single value - note: Faber uses (init, fn), JS uses (fn, init) */
+    /** Reduce to single value - Faber uses (fn, init), JS uses (fn, init) */
     reducta: {
         latin: 'reducta',
         mutates: false,
         async: false,
         ts: (obj, args) => {
-            // Faber: reducta(init, fn) -> JS: reduce(fn, init)
-            // Split args and swap order
-            const match = args.match(/^(.+?),\s*(\(.+)$/);
-            if (match) {
-                return `${obj}.reduce(${match[2]}, ${match[1]})`;
+            // WHY: Now that args is a proper array, we can directly access
+            //      fn and init without string parsing. No more comma ambiguity.
+            if (args.length >= 2) {
+                const fn = args[0];
+                const init = args[1];
+                return `${obj}.reduce(${fn}, ${init})`;
             }
-            return `${obj}.reduce(${args})`;
+            // Just function, no initial value
+            return `${obj}.reduce(${args[0]})`;
         },
     },
 
@@ -294,7 +307,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'ordinata',
         mutates: false,
         async: false,
-        ts: (obj, args) => (args ? `[...${obj}].sort(${args})` : `[...${obj}].sort()`),
+        ts: (obj, args) => (args.length > 0 ? `[...${obj}].sort(${args[0]})` : `[...${obj}].sort()`),
     },
 
     /** Slice (returns new array) */
@@ -310,7 +323,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'prima',
         mutates: false,
         async: false,
-        ts: (obj, args) => `${obj}.slice(0, ${args})`,
+        ts: (obj, args) => `${obj}.slice(0, ${args[0]})`,
     },
 
     /** Take last n elements */
@@ -318,7 +331,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'ultima',
         mutates: false,
         async: false,
-        ts: (obj, args) => `${obj}.slice(-${args})`,
+        ts: (obj, args) => `${obj}.slice(-${args[0]})`,
     },
 
     /** Skip first n elements */
@@ -326,7 +339,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'omitte',
         mutates: false,
         async: false,
-        ts: (obj, args) => `${obj}.slice(${args})`,
+        ts: (obj, args) => `${obj}.slice(${args[0]})`,
     },
 
     // -------------------------------------------------------------------------
@@ -385,7 +398,8 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         ts: (obj, args) => {
             // WHY: JS has no in-place filter. Splice out non-matching elements.
             // This is expensive but semantically correct for mutation.
-            return `(() => { for (let i = ${obj}.length - 1; i >= 0; i--) { if (!(${args})(${obj}[i])) ${obj}.splice(i, 1); } })()`;
+            const fn = args[0];
+            return `(() => { for (let i = ${obj}.length - 1; i >= 0; i--) { if (!(${fn})(${obj}[i])) ${obj}.splice(i, 1); } })()`;
         },
     },
 
@@ -414,7 +428,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'congrega',
         mutates: false,
         async: false,
-        ts: (obj, args) => `Object.groupBy(${obj}, ${args})`,
+        ts: (obj, args) => `Object.groupBy(${obj}, ${args[0]})`,
     },
 
     /** Remove duplicates */
@@ -440,7 +454,8 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         async: false,
         ts: (obj, args) => {
             // WHY: No native chunk. Build inline for simple cases.
-            return `Array.from({ length: Math.ceil(${obj}.length / ${args}) }, (_, i) => ${obj}.slice(i * ${args}, i * ${args} + ${args}))`;
+            const n = args[0];
+            return `Array.from({ length: Math.ceil(${obj}.length / ${n}) }, (_, i) => ${obj}.slice(i * ${n}, i * ${n} + ${n}))`;
         },
     },
 
@@ -458,7 +473,8 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         ts: (obj, args) => {
-            return `${obj}.reduce(([t, f], x) => (${args})(x) ? [[...t, x], f] : [t, [...f, x]], [[], []])`;
+            const fn = args[0];
+            return `${obj}.reduce(([t, f], x) => (${fn})(x) ? [[...t, x], f] : [t, [...f, x]], [[], []])`;
         },
     },
 
@@ -488,7 +504,8 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         async: false,
         ts: (obj, args) => {
             // WHY: Shuffle then take first n. Not most efficient but correct.
-            return `(() => { const a = [...${obj}]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, ${args}); })()`;
+            const n = args[0];
+            return `(() => { const a = [...${obj}]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, ${n}); })()`;
         },
     },
 
@@ -533,7 +550,10 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'minimusPer',
         mutates: false,
         async: false,
-        ts: (obj, args) => `${obj}.reduce((min, x) => (${args})(x) < (${args})(min) ? x : min)`,
+        ts: (obj, args) => {
+            const fn = args[0];
+            return `${obj}.reduce((min, x) => (${fn})(x) < (${fn})(min) ? x : min)`;
+        },
     },
 
     /** Maximum by key function */
@@ -541,7 +561,10 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'maximusPer',
         mutates: false,
         async: false,
-        ts: (obj, args) => `${obj}.reduce((max, x) => (${args})(x) > (${args})(max) ? x : max)`,
+        ts: (obj, args) => {
+            const fn = args[0];
+            return `${obj}.reduce((max, x) => (${fn})(x) > (${fn})(max) ? x : max)`;
+        },
     },
 
     /** Count elements matching predicate */
@@ -549,7 +572,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'numera',
         mutates: false,
         async: false,
-        ts: (obj, args) => `${obj}.filter(${args}).length`,
+        ts: (obj, args) => `${obj}.filter(${args[0]}).length`,
     },
 };
 

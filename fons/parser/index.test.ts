@@ -1832,6 +1832,82 @@ describe('parser', () => {
         });
     });
 
+    describe('collection DSL', () => {
+        test('ex...prima...pro parses iteration with transform', () => {
+            const { program } = parseCode('ex items prima 5 pro item { scribe item }');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('IteratioStatement');
+            expect(stmt.kind).toBe('ex');
+            expect(stmt.variable.name).toBe('item');
+            expect(stmt.transforms).toHaveLength(1);
+            expect(stmt.transforms[0].verb).toBe('prima');
+            expect(stmt.transforms[0].argument.value).toBe(5);
+        });
+
+        test('ex...ultima...pro parses iteration with transform', () => {
+            const { program } = parseCode('ex items ultima 3 pro item { scribe item }');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('IteratioStatement');
+            expect(stmt.transforms).toHaveLength(1);
+            expect(stmt.transforms[0].verb).toBe('ultima');
+            expect(stmt.transforms[0].argument.value).toBe(3);
+        });
+
+        test('ex...prima...ultima...pro parses chained transforms', () => {
+            const { program } = parseCode('ex items prima 10, ultima 3 pro item { scribe item }');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('IteratioStatement');
+            expect(stmt.transforms).toHaveLength(2);
+            expect(stmt.transforms[0].verb).toBe('prima');
+            expect(stmt.transforms[0].argument.value).toBe(10);
+            expect(stmt.transforms[1].verb).toBe('ultima');
+            expect(stmt.transforms[1].argument.value).toBe(3);
+        });
+
+        test('ex items without transforms has no transforms property', () => {
+            const { program } = parseCode('ex items pro item { scribe item }');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('IteratioStatement');
+            expect(stmt.transforms).toBeUndefined();
+        });
+
+        test('ex...summa parses as DSL expression', () => {
+            const { program } = parseCode('fixum total = ex prices summa');
+            const decl = program!.body[0] as any;
+
+            expect(decl.type).toBe('VariaDeclaration');
+            expect(decl.init.type).toBe('CollectionDSLExpression');
+            expect(decl.init.source.name).toBe('prices');
+            expect(decl.init.transforms).toHaveLength(1);
+            expect(decl.init.transforms[0].verb).toBe('summa');
+            expect(decl.init.transforms[0].argument).toBeUndefined();
+        });
+
+        test('ex...prima parses as DSL expression', () => {
+            const { program } = parseCode('fixum top5 = ex items prima 5');
+            const decl = program!.body[0] as any;
+
+            expect(decl.type).toBe('VariaDeclaration');
+            expect(decl.init.type).toBe('CollectionDSLExpression');
+            expect(decl.init.transforms[0].verb).toBe('prima');
+            expect(decl.init.transforms[0].argument.value).toBe(5);
+        });
+
+        test('ex...prima...ultima parses chained DSL expression', () => {
+            const { program } = parseCode('fixum result = ex items prima 10, ultima 3');
+            const decl = program!.body[0] as any;
+
+            expect(decl.init.type).toBe('CollectionDSLExpression');
+            expect(decl.init.transforms).toHaveLength(2);
+            expect(decl.init.transforms[0].verb).toBe('prima');
+            expect(decl.init.transforms[1].verb).toBe('ultima');
+        });
+    });
+
     describe('edge cases - empty constructs', () => {
         test('empty block', () => {
             const { program } = parseCode('{}');

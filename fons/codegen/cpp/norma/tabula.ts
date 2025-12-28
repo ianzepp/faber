@@ -57,7 +57,7 @@ export interface TabulaMethod {
     headers?: string[];
 }
 
-type CppGenerator = (obj: string, args: string) => string;
+type CppGenerator = (obj: string, args: string[]) => string;
 
 // =============================================================================
 // METHOD REGISTRY
@@ -78,11 +78,10 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         async: false,
         // WHY: insert_or_assign handles both insert and update
         cpp: (obj, args) => {
-            const parts = args.split(',').map(s => s.trim());
-            if (parts.length >= 2) {
-                return `${obj}.insert_or_assign(${parts[0]}, ${parts.slice(1).join(', ')})`;
+            if (args.length >= 2) {
+                return `${obj}.insert_or_assign(${args[0]}, ${args.slice(1).join(', ')})`;
             }
-            return `${obj}.insert_or_assign(${args})`;
+            return `${obj}.insert_or_assign(${args[0]})`;
         },
         headers: ['<unordered_map>'],
     },
@@ -93,7 +92,7 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         mutates: false,
         async: false,
         // WHY: at() throws if key missing (safer than operator[])
-        cpp: (obj, args) => `${obj}.at(${args})`,
+        cpp: (obj, args) => `${obj}.at(${args[0]})`,
     },
 
     /** Check if key exists */
@@ -102,7 +101,7 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         mutates: false,
         async: false,
         // WHY: C++20 contains() is cleaner than find() != end()
-        cpp: (obj, args) => `${obj}.contains(${args})`,
+        cpp: (obj, args) => `${obj}.contains(${args[0]})`,
     },
 
     /** Delete key (mutates) */
@@ -179,13 +178,12 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         mutates: false,
         async: false,
         cpp: (obj, args) => {
-            const parts = args.split(',').map(s => s.trim());
-            if (parts.length >= 2) {
-                const key = parts[0];
-                const defaultVal = parts.slice(1).join(', ');
+            if (args.length >= 2) {
+                const key = args[0];
+                const defaultVal = args.slice(1).join(', ');
                 return `(${obj}.contains(${key}) ? ${obj}.at(${key}) : ${defaultVal})`;
             }
-            return `${obj}.at(${args})`;
+            return `${obj}.at(${args[0]})`;
         },
     },
 
@@ -196,7 +194,7 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         async: false,
         // WHY: Filter to subset of keys
         cpp: (obj, args) => {
-            return `[&]{ std::unordered_map<decltype(${obj})::key_type, decltype(${obj})::mapped_type> r; std::initializer_list<decltype(${obj})::key_type> keys = {${args}}; for (auto& k : keys) if (${obj}.contains(k)) r[k] = ${obj}.at(k); return r; }()`;
+            return `[&]{ std::unordered_map<decltype(${obj})::key_type, decltype(${obj})::mapped_type> r; std::initializer_list<decltype(${obj})::key_type> keys = {${args.join(', ')}}; for (auto& k : keys) if (${obj}.contains(k)) r[k] = ${obj}.at(k); return r; }()`;
         },
         headers: ['<unordered_map>'],
     },
@@ -207,7 +205,7 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         mutates: false,
         async: false,
         cpp: (obj, args) => {
-            return `[&]{ auto r = ${obj}; std::initializer_list<decltype(${obj})::key_type> keys = {${args}}; for (auto& k : keys) r.erase(k); return r; }()`;
+            return `[&]{ auto r = ${obj}; std::initializer_list<decltype(${obj})::key_type> keys = {${args.join(', ')}}; for (auto& k : keys) r.erase(k); return r; }()`;
         },
         headers: ['<unordered_map>'],
     },
@@ -217,7 +215,7 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         latin: 'confla',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `[&]{ auto r = ${obj}; for (auto& [k, v] : ${args}) r[k] = v; return r; }()`,
+        cpp: (obj, args) => `[&]{ auto r = ${obj}; for (auto& [k, v] : ${args[0]}) r[k] = v; return r; }()`,
         headers: ['<unordered_map>'],
     },
 
@@ -237,7 +235,7 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         mutates: false,
         async: false,
         cpp: (obj, args) =>
-            `[&]{ std::unordered_map<decltype(${obj})::key_type, decltype((${args})(${obj}.begin()->second))> r; for (auto& [k, v] : ${obj}) r[k] = (${args})(v); return r; }()`,
+            `[&]{ std::unordered_map<decltype(${obj})::key_type, decltype((${args[0]})(${obj}.begin()->second))> r; for (auto& [k, v] : ${obj}) r[k] = (${args[0]})(v); return r; }()`,
         headers: ['<unordered_map>'],
     },
 
@@ -247,7 +245,7 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         mutates: false,
         async: false,
         cpp: (obj, args) =>
-            `[&]{ std::unordered_map<decltype((${args})(${obj}.begin()->first)), decltype(${obj})::mapped_type> r; for (auto& [k, v] : ${obj}) r[(${args})(k)] = v; return r; }()`,
+            `[&]{ std::unordered_map<decltype((${args[0]})(${obj}.begin()->first)), decltype(${obj})::mapped_type> r; for (auto& [k, v] : ${obj}) r[(${args[0]})(k)] = v; return r; }()`,
         headers: ['<unordered_map>'],
     },
 

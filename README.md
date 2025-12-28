@@ -53,6 +53,59 @@ bun run fons/cli.ts run exempla/fundamenta/salve.fab            # Compile and ru
 bun test                                                         # Run tests
 ```
 
+## Block Syntax Patterns
+
+Faber uses a consistent `keyword expr VERB name { body }` pattern for scoped constructs:
+
+| Construct         | Syntax                                   | Binding | Purpose        |
+| ----------------- | ---------------------------------------- | ------- | -------------- |
+| `ex...pro`        | `ex expr pro name { }`                   | `name`  | iterate values |
+| `ex...fiet`       | `ex expr fiet name { }`                  | `name`  | async iterate  |
+| `de...pro`        | `de expr pro name { }`                   | `name`  | iterate keys   |
+| `cura...fit`      | `cura expr fit name { }`                 | `name`  | resource scope |
+| `cura cede...fit` | `cura cede expr fit name { }`            | `name`  | async acquire  |
+| `probandum`       | `probandum "label" { }`                  | —       | test suite     |
+| `proba`           | `proba "label" { }`                      | —       | test case      |
+| `cura ante`       | `cura ante { }`                          | —       | before each    |
+| `cura post`       | `cura post { }`                          | —       | after each     |
+| `tempta...cape`   | `tempta { } cape err { }`                | `err`   | error handling |
+| `fac...cape`      | `fac { } cape err { }`                   | `err`   | scoped block   |
+| `dum`             | `dum expr { }`                           | —       | while loop     |
+| `si`              | `si expr { }`                            | —       | conditional    |
+| `custodi`         | `custodi { si expr { } }`                | —       | guard clauses  |
+| `elige`           | `elige expr { si val { } }`              | —       | switch         |
+| `discerne`        | `discerne expr { si Variant pro x { } }` | `x`     | pattern match  |
+| `in`              | `in expr { }`                            | —       | mutation scope |
+
+## Primitive Types
+
+| Faber      | TypeScript   | Python     | Zig          | C++                    | Rust      |
+| ---------- | ------------ | ---------- | ------------ | ---------------------- | --------- |
+| `textus`   | `string`     | `str`      | `[]const u8` | `std::string`          | `String`  |
+| `numerus`  | `number`     | `int`      | `i64`        | `int64_t`              | `i64`     |
+| `fractus`  | `number`     | `float`    | `f64`        | `double`               | `f64`     |
+| `decimus`  | `number`     | `Decimal`  | —            | —                      | —         |
+| `magnus`   | `bigint`     | `int`      | `i128`       | —                      | `i128`    |
+| `bivalens` | `boolean`    | `bool`     | `bool`       | `bool`                 | `bool`    |
+| `nihil`    | `null`       | `None`     | `null`       | `std::nullopt`         | `None`    |
+| `vacuum`   | `void`       | `None`     | `void`       | `void`                 | `()`      |
+| `numquam`  | `never`      | `NoReturn` | `noreturn`   | `[[noreturn]]`         | `!`       |
+| `octeti`   | `Uint8Array` | `bytes`    | `[]u8`       | `std::vector<uint8_t>` | `Vec<u8>` |
+| `ignotum`  | `unknown`    | `Any`      | —            | —                      | —         |
+
+## Return Type Verbs
+
+Function return types use Latin verb forms of `fio` ("to become") to encode async and generator semantics:
+
+| Verb    | Async | Generator | Meaning            | Example                         |
+| ------- | :---: | :-------: | ------------------ | ------------------------------- |
+| `fit`   |  no   |    no     | "it becomes"       | `functio parse() fit numerus`   |
+| `fiet`  |  yes  |    no     | "it will become"   | `functio fetch() fiet textus`   |
+| `fiunt` |  no   |    yes    | "they become"      | `functio items() fiunt numerus` |
+| `fient` |  yes  |    yes    | "they will become" | `functio stream() fient datum`  |
+
+The verb alone carries the semantic — no `futura` or `cursor` prefix needed. Arrow syntax (`->`) is also supported but requires explicit prefixes for async/generator behavior.
+
 ## Example
 
 ```fab
@@ -489,29 +542,6 @@ Ownership system, borrowing (`&`/`&mut`), `Option<T>`/`Result<T,E>` instead of n
 ### C++23
 
 `std::expected<T,E>` for errors, `std::print` for output, concepts for interfaces, coroutines for async, RAII for cleanup.
-
----
-
-## Critical Note: Method Handler Architecture
-
-The codegen method handlers (for `lista`, `tabula`, `copia`) receive arguments as a pre-joined string rather than a structured array. This creates a parsing ambiguity when arguments contain commas—such as multi-parameter lambdas like `lambda acc, n: (acc + n)`.
-
-**Current flow (problematic):**
-
-1. `genCallExpression` generates each argument as a string
-2. Joins them with `", "` into a single string
-3. Passes that string to the method handler
-4. Method handler attempts to parse the string back apart
-
-This is a lossy transformation. Once `["0", "lambda acc, n: (acc + n)"]` becomes `"0, lambda acc, n: (acc + n)"`, the boundary between arguments is lost.
-
-**Required fix:** Pass structured data to method handlers:
-
-```typescript
-type PyGenerator = (obj: string, args: string[]) => string;
-```
-
-This affects all target languages (TypeScript, Python, Zig) since any language with multi-parameter functions/lambdas will have commas in argument strings that can't be reliably distinguished from argument separators.
 
 ---
 

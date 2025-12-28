@@ -34,14 +34,17 @@
 // TYPES
 // =============================================================================
 
+/**
+ * Generator function type for Python collection methods.
+ */
+export type PyGenerator = (obj: string, args: string[]) => string;
+
 export interface TabulaMethod {
     latin: string;
     mutates: boolean;
     async: boolean;
     py: string | PyGenerator;
 }
-
-type PyGenerator = (obj: string, args: string) => string;
 
 // =============================================================================
 // METHOD REGISTRY
@@ -56,13 +59,13 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         latin: 'pone',
         mutates: true,
         async: false,
-        // dict[key] = value; need to split args
+        // dict[key] = value
         py: (obj, args) => {
-            const match = args.match(/^(.+?),\s*(.+)$/);
-            if (match) {
-                return `${obj}[${match[1]}] = ${match[2]}`;
+            // WHY: args is now an array - key is first, value is second
+            if (args.length >= 2) {
+                return `${obj}[${args[0]}] = ${args[1]}`;
             }
-            return `${obj}.update(${args})`;
+            return `${obj}.update(${args[0]})`;
         },
     },
 
@@ -70,21 +73,21 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         latin: 'accipe',
         mutates: false,
         async: false,
-        py: (obj, args) => `${obj}.get(${args})`,
+        py: (obj, args) => `${obj}.get(${args[0]})`,
     },
 
     habet: {
         latin: 'habet',
         mutates: false,
         async: false,
-        py: (obj, args) => `(${args} in ${obj})`,
+        py: (obj, args) => `(${args[0]} in ${obj})`,
     },
 
     dele: {
         latin: 'dele',
         mutates: true,
         async: false,
-        py: (obj, args) => `${obj}.pop(${args}, None)`,
+        py: (obj, args) => `${obj}.pop(${args[0]}, None)`,
     },
 
     longitudo: {
@@ -142,11 +145,11 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         mutates: false,
         async: false,
         py: (obj, args) => {
-            const match = args.match(/^(.+?),\s*(.+)$/);
-            if (match) {
-                return `${obj}.get(${match[1]}, ${match[2]})`;
+            // WHY: args is now an array - key and default
+            if (args.length >= 2) {
+                return `${obj}.get(${args[0]}, ${args[1]})`;
             }
-            return `${obj}.get(${args})`;
+            return `${obj}.get(${args[0]})`;
         },
     },
 
@@ -155,7 +158,7 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         mutates: false,
         async: false,
         // pick - keep only specified keys
-        py: (obj, args) => `{k: ${obj}[k] for k in [${args}] if k in ${obj}}`,
+        py: (obj, args) => `{k: ${obj}[k] for k in [${args.join(', ')}] if k in ${obj}}`,
     },
 
     omitte: {
@@ -163,7 +166,7 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         mutates: false,
         async: false,
         // omit - remove specified keys
-        py: (obj, args) => `{k: v for k, v in ${obj}.items() if k not in [${args}]}`,
+        py: (obj, args) => `{k: v for k, v in ${obj}.items() if k not in [${args.join(', ')}]}`,
     },
 
     confla: {
@@ -171,7 +174,7 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         mutates: false,
         async: false,
         // merge dicts (Python 3.9+ syntax)
-        py: (obj, args) => `{**${obj}, **${args}}`,
+        py: (obj, args) => `{**${obj}, **${args[0]}}`,
     },
 
     inversa: {
@@ -186,14 +189,14 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         latin: 'mappaValores',
         mutates: false,
         async: false,
-        py: (obj, args) => `{k: (${args})(v) for k, v in ${obj}.items()}`,
+        py: (obj, args) => `{k: (${args[0]})(v) for k, v in ${obj}.items()}`,
     },
 
     mappaClaves: {
         latin: 'mappaClaves',
         mutates: false,
         async: false,
-        py: (obj, args) => `{(${args})(k): v for k, v in ${obj}.items()}`,
+        py: (obj, args) => `{(${args[0]})(k): v for k, v in ${obj}.items()}`,
     },
 
     // -------------------------------------------------------------------------

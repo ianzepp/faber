@@ -56,7 +56,7 @@ export interface CopiaMethod {
     headers?: string[];
 }
 
-type CppGenerator = (obj: string, args: string) => string;
+type CppGenerator = (obj: string, args: string[]) => string;
 
 // =============================================================================
 // METHOD REGISTRY
@@ -84,7 +84,7 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         mutates: false,
         async: false,
         // WHY: C++20 contains() is cleaner than find() != end()
-        cpp: (obj, args) => `${obj}.contains(${args})`,
+        cpp: (obj, args) => `${obj}.contains(${args[0]})`,
     },
 
     /** Delete element (mutates) */
@@ -130,7 +130,7 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         async: false,
         // WHY: Create new set from both inputs
         cpp: (obj, args) =>
-            `[&]{ std::unordered_set<typename std::decay_t<decltype(${obj})>::value_type> r(${obj}.begin(), ${obj}.end()); r.insert(${args}.begin(), ${args}.end()); return r; }()`,
+            `[&]{ std::unordered_set<typename std::decay_t<decltype(${obj})>::value_type> r(${obj}.begin(), ${obj}.end()); r.insert(${args[0]}.begin(), ${args[0]}.end()); return r; }()`,
         headers: ['<unordered_set>'],
     },
 
@@ -140,7 +140,7 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         mutates: false,
         async: false,
         cpp: (obj, args) =>
-            `[&]{ std::unordered_set<typename std::decay_t<decltype(${obj})>::value_type> r; for (auto& x : ${obj}) if (${args}.contains(x)) r.insert(x); return r; }()`,
+            `[&]{ std::unordered_set<typename std::decay_t<decltype(${obj})>::value_type> r; for (auto& x : ${obj}) if (${args[0]}.contains(x)) r.insert(x); return r; }()`,
         headers: ['<unordered_set>'],
     },
 
@@ -150,7 +150,7 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         mutates: false,
         async: false,
         cpp: (obj, args) =>
-            `[&]{ std::unordered_set<typename std::decay_t<decltype(${obj})>::value_type> r; for (auto& x : ${obj}) if (!${args}.contains(x)) r.insert(x); return r; }()`,
+            `[&]{ std::unordered_set<typename std::decay_t<decltype(${obj})>::value_type> r; for (auto& x : ${obj}) if (!${args[0]}.contains(x)) r.insert(x); return r; }()`,
         headers: ['<unordered_set>'],
     },
 
@@ -160,7 +160,7 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         mutates: false,
         async: false,
         cpp: (obj, args) =>
-            `[&]{ std::unordered_set<typename std::decay_t<decltype(${obj})>::value_type> r; for (auto& x : ${obj}) if (!${args}.contains(x)) r.insert(x); for (auto& x : ${args}) if (!${obj}.contains(x)) r.insert(x); return r; }()`,
+            `[&]{ std::unordered_set<typename std::decay_t<decltype(${obj})>::value_type> r; for (auto& x : ${obj}) if (!${args[0]}.contains(x)) r.insert(x); for (auto& x : ${args[0]}) if (!${obj}.contains(x)) r.insert(x); return r; }()`,
         headers: ['<unordered_set>'],
     },
 
@@ -173,7 +173,7 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         latin: 'subcopia',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `std::ranges::all_of(${obj}, [&](auto& x) { return ${args}.contains(x); })`,
+        cpp: (obj, args) => `std::ranges::all_of(${obj}, [&](auto& x) { return ${args[0]}.contains(x); })`,
         headers: ['<algorithm>'],
     },
 
@@ -182,7 +182,7 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         latin: 'supercopia',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `std::ranges::all_of(${args}, [&](auto& x) { return ${obj}.contains(x); })`,
+        cpp: (obj, args) => `std::ranges::all_of(${args[0]}, [&](auto& x) { return ${obj}.contains(x); })`,
         headers: ['<algorithm>'],
     },
 
@@ -217,7 +217,7 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         latin: 'perambula',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `std::ranges::for_each(${obj}, ${args})`,
+        cpp: (obj, args) => `std::ranges::for_each(${obj}, ${args[0]})`,
         headers: ['<algorithm>'],
     },
 };

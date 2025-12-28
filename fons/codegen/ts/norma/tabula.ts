@@ -27,6 +27,15 @@
 // =============================================================================
 
 /**
+ * Generator function type for TypeScript collection methods.
+ *
+ * WHY: The args parameter is a string[] (not a joined string) to preserve
+ *      argument boundaries. This allows methods to correctly handle
+ *      multi-parameter lambdas that contain commas.
+ */
+export type TsGenerator = (obj: string, args: string[]) => string;
+
+/**
  * Describes how to translate a Latin method to TypeScript.
  */
 export interface TabulaMethod {
@@ -42,12 +51,10 @@ export interface TabulaMethod {
     /**
      * TypeScript translation.
      * - string: simple method rename (obj.latin() -> obj.ts())
-     * - function: custom code generation
+     * - function: custom code generation with structured args
      */
     ts: string | TsGenerator;
 }
-
-type TsGenerator = (obj: string, args: string) => string;
 
 // =============================================================================
 // METHOD REGISTRY
@@ -155,12 +162,11 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         mutates: false,
         async: false,
         ts: (obj, args) => {
-            // args: "key, default"
-            const match = args.match(/^(.+?),\s*(.+)$/);
-            if (match) {
-                return `(${obj}.get(${match[1]}) ?? ${match[2]})`;
+            // WHY: Now args is an array, so we can directly access key and default
+            if (args.length >= 2) {
+                return `(${obj}.get(${args[0]}) ?? ${args[1]})`;
             }
-            return `${obj}.get(${args})`;
+            return `${obj}.get(${args[0]})`;
         },
     },
 
@@ -170,8 +176,8 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         mutates: false,
         async: false,
         ts: (obj, args) => {
-            // WHY: Filter to subset of keys. Args is spread of keys.
-            return `new Map([...${obj}].filter(([k]) => [${args}].includes(k)))`;
+            // WHY: Filter to subset of keys. Args is array of keys.
+            return `new Map([...${obj}].filter(([k]) => [${args.join(', ')}].includes(k)))`;
         },
     },
 
@@ -181,7 +187,7 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         mutates: false,
         async: false,
         ts: (obj, args) => {
-            return `new Map([...${obj}].filter(([k]) => ![${args}].includes(k)))`;
+            return `new Map([...${obj}].filter(([k]) => ![${args.join(', ')}].includes(k)))`;
         },
     },
 
@@ -190,7 +196,7 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         latin: 'confla',
         mutates: false,
         async: false,
-        ts: (obj, args) => `new Map([...${obj}, ...${args}])`,
+        ts: (obj, args) => `new Map([...${obj}, ...${args[0]}])`,
     },
 
     /** Swap keys and values (returns new map) */
@@ -206,7 +212,7 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         latin: 'mappaValores',
         mutates: false,
         async: false,
-        ts: (obj, args) => `new Map([...${obj}].map(([k, v]) => [k, (${args})(v)]))`,
+        ts: (obj, args) => `new Map([...${obj}].map(([k, v]) => [k, (${args[0]})(v)]))`,
     },
 
     /** Transform keys (returns new map) */
@@ -214,7 +220,7 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         latin: 'mappaClaves',
         mutates: false,
         async: false,
-        ts: (obj, args) => `new Map([...${obj}].map(([k, v]) => [(${args})(k), v]))`,
+        ts: (obj, args) => `new Map([...${obj}].map(([k, v]) => [(${args[0]})(k), v]))`,
     },
 
     // -------------------------------------------------------------------------

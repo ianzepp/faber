@@ -27,6 +27,15 @@
 // =============================================================================
 
 /**
+ * Generator function type for TypeScript collection methods.
+ *
+ * WHY: The args parameter is a string[] (not a joined string) to preserve
+ *      argument boundaries. This allows methods to correctly handle
+ *      multi-parameter lambdas that contain commas.
+ */
+export type TsGenerator = (obj: string, args: string[]) => string;
+
+/**
  * Describes how to translate a Latin method to TypeScript.
  */
 export interface CopiaMethod {
@@ -42,12 +51,10 @@ export interface CopiaMethod {
     /**
      * TypeScript translation.
      * - string: simple method rename (obj.latin() -> obj.ts())
-     * - function: custom code generation
+     * - function: custom code generation with structured args
      */
     ts: string | TsGenerator;
 }
-
-type TsGenerator = (obj: string, args: string) => string;
 
 // =============================================================================
 // METHOD REGISTRY
@@ -118,7 +125,7 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         latin: 'unio',
         mutates: false,
         async: false,
-        ts: (obj, args) => `new Set([...${obj}, ...${args}])`,
+        ts: (obj, args) => `new Set([...${obj}, ...${args[0]}])`,
     },
 
     /** Intersection: A n B */
@@ -126,7 +133,7 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         latin: 'intersectio',
         mutates: false,
         async: false,
-        ts: (obj, args) => `new Set([...${obj}].filter(x => ${args}.has(x)))`,
+        ts: (obj, args) => `new Set([...${obj}].filter(x => ${args[0]}.has(x)))`,
     },
 
     /** Difference: A - B */
@@ -134,7 +141,7 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         latin: 'differentia',
         mutates: false,
         async: false,
-        ts: (obj, args) => `new Set([...${obj}].filter(x => !${args}.has(x)))`,
+        ts: (obj, args) => `new Set([...${obj}].filter(x => !${args[0]}.has(x)))`,
     },
 
     /** Symmetric difference: (A - B) U (B - A) */
@@ -144,7 +151,8 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         async: false,
         ts: (obj, args) => {
             // WHY: XOR requires checking both directions
-            return `new Set([...[...${obj}].filter(x => !${args}.has(x)), ...[...${args}].filter(x => !${obj}.has(x))])`;
+            const other = args[0];
+            return `new Set([...[...${obj}].filter(x => !${other}.has(x)), ...[...${other}].filter(x => !${obj}.has(x))])`;
         },
     },
 
@@ -157,7 +165,7 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         latin: 'subcopia',
         mutates: false,
         async: false,
-        ts: (obj, args) => `[...${obj}].every(x => ${args}.has(x))`,
+        ts: (obj, args) => `[...${obj}].every(x => ${args[0]}.has(x))`,
     },
 
     /** Is superset of other */
@@ -165,7 +173,7 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         latin: 'supercopia',
         mutates: false,
         async: false,
-        ts: (obj, args) => `[...${args}].every(x => ${obj}.has(x))`,
+        ts: (obj, args) => `[...${args[0]}].every(x => ${obj}.has(x))`,
     },
 
     // -------------------------------------------------------------------------

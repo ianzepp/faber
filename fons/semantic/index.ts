@@ -83,6 +83,7 @@ import type {
     CuraBlock,
     CuraStatement,
     DiscretioDeclaration,
+    CollectionDSLExpression,
 } from '../parser/ast';
 import type { Position } from '../tokenizer/types';
 import type { Scope, Symbol } from './scope';
@@ -585,6 +586,14 @@ export function analyze(program: Program): SemanticResult {
                 resolveExpression(node.expression);
                 node.resolvedType = BIVALENS;
                 return BIVALENS;
+
+            case 'CollectionDSLExpression':
+                // WHY: DSL expressions resolve to their source type after transforms
+                // For now, return the source type (transforms don't change element type for prima/ultima)
+                // summa would change to numerus, but we'd need smarter type inference for that
+                resolveExpression(node.source);
+                node.resolvedType = node.source.resolvedType || UNKNOWN;
+                return node.resolvedType;
 
             default: {
                 const _exhaustive: never = node;

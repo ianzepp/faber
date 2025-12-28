@@ -2255,9 +2255,14 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             return genExpression(arg);
         };
 
+        // WHY: Build args as array first, then join for regular calls.
+        // Collection method handlers receive the array to preserve argument
+        // boundaries (avoiding comma-in-lambda parsing issues).
+        const argsArray = node.arguments.map(genArg);
+        const args = argsArray.join(', ');
+
         // TARGET: _scribe intrinsic maps to Zig's std.debug.print()
         if (node.callee.type === 'Identifier' && node.callee.name === '_scribe') {
-            const args = node.arguments.map(genArg);
             const formatSpecs = node.arguments.map(arg => {
                 if (arg.type === 'SpreadElement') {
                     return '{any}';
@@ -2266,15 +2271,16 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             });
             const format = formatSpecs.join(' ') + '\\n';
 
-            return `std.debug.print("${format}", .{${args.join(', ')}})`;
+            return `std.debug.print("${format}", .{${args}})`;
         }
 
         // Check for collection methods (method calls on lista/tabula/copia)
         // WHY: Latin collection methods map to Zig stdlib ArrayList/HashMap operations
+        // WHY: Pass argsArray (not joined string) to method handlers
+        //      so they can correctly handle multi-param lambdas with commas.
         if (node.callee.type === 'MemberExpression' && !node.callee.computed) {
             const methodName = (node.callee.property as Identifier).name;
             const obj = genExpression(node.callee.object);
-            const args = node.arguments.map(genArg).join(', ');
 
             // Use semantic type info to dispatch to correct collection registry
             const objType = node.callee.object.resolvedType;
@@ -2288,7 +2294,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 const method = getTabulaMethod(methodName);
                 if (method) {
                     if (typeof method.zig === 'function') {
-                        return method.zig(obj, args, curator);
+                        return method.zig(obj, argsArray, curator);
                     }
                     return `${obj}.${method.zig}(${args})`;
                 }
@@ -2296,7 +2302,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 const method = getCopiaMethod(methodName);
                 if (method) {
                     if (typeof method.zig === 'function') {
-                        return method.zig(obj, args, curator);
+                        return method.zig(obj, argsArray, curator);
                     }
                     return `${obj}.${method.zig}(${args})`;
                 }
@@ -2304,7 +2310,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
                 const method = getListaMethod(methodName);
                 if (method) {
                     if (typeof method.zig === 'function') {
-                        return method.zig(obj, args, curator);
+                        return method.zig(obj, argsArray, curator);
                     }
                     return `${obj}.${method.zig}(${args})`;
                 }
@@ -2314,14 +2320,13 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             const listaMethod = getListaMethod(methodName);
             if (listaMethod) {
                 if (typeof listaMethod.zig === 'function') {
-                    return listaMethod.zig(obj, args, curator);
+                    return listaMethod.zig(obj, argsArray, curator);
                 }
                 return `${obj}.${listaMethod.zig}(${args})`;
             }
         }
 
         const callee = genExpression(node.callee);
-        const args = node.arguments.map(genArg).join(', ');
 
         // WHY: Optional call in Zig requires if-else pattern
         if (node.optional) {

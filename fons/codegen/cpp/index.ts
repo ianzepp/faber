@@ -1421,10 +1421,10 @@ struct _ScopeGuard {
      *   lista.filtrata(fn) -> (lista | views::filter(fn) | ranges::to<vector>())
      */
     function genCallExpression(node: CallExpression): string {
-        const args = node.arguments
-            .filter((arg): arg is Expression => arg.type !== 'SpreadElement')
-            .map(genExpression)
-            .join(', ');
+        // WHY: Build both joined string (for simple cases) and array (for method handlers)
+        // to preserve argument boundaries for multi-parameter lambdas containing commas.
+        const argsArray = node.arguments.filter((arg): arg is Expression => arg.type !== 'SpreadElement').map(genExpression);
+        const args = argsArray.join(', ');
 
         // Check for collection methods (method calls on lista/tabula/copia)
         if (node.callee.type === 'MemberExpression' && !node.callee.computed) {
@@ -1445,7 +1445,7 @@ struct _ScopeGuard {
                         includes.add(header);
                     }
                     if (typeof method.cpp === 'function') {
-                        return method.cpp(obj, args);
+                        return method.cpp(obj, argsArray);
                     }
                     return `${obj}.${method.cpp}(${args})`;
                 }
@@ -1456,7 +1456,7 @@ struct _ScopeGuard {
                         includes.add(header);
                     }
                     if (typeof method.cpp === 'function') {
-                        return method.cpp(obj, args);
+                        return method.cpp(obj, argsArray);
                     }
                     return `${obj}.${method.cpp}(${args})`;
                 }
@@ -1467,7 +1467,7 @@ struct _ScopeGuard {
                         includes.add(header);
                     }
                     if (typeof method.cpp === 'function') {
-                        return method.cpp(obj, args);
+                        return method.cpp(obj, argsArray);
                     }
                     return `${obj}.${method.cpp}(${args})`;
                 }
@@ -1480,7 +1480,7 @@ struct _ScopeGuard {
                     includes.add(header);
                 }
                 if (typeof listaMethod.cpp === 'function') {
-                    return listaMethod.cpp(obj, args);
+                    return listaMethod.cpp(obj, argsArray);
                 }
                 return `${obj}.${listaMethod.cpp}(${args})`;
             }

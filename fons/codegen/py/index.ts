@@ -1659,14 +1659,16 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
      * WHY: Python uses * for unpacking iterables in function calls.
      */
     function genCallExpression(node: CallExpression): string {
-        const args = node.arguments
-            .map(arg => {
-                if (arg.type === 'SpreadElement') {
-                    return `*${genExpression(arg.argument)}`;
-                }
-                return genExpression(arg);
-            })
-            .join(', ');
+        // WHY: Build args as array first, then join for regular calls.
+        // Collection method handlers receive the array to preserve argument
+        // boundaries (avoiding comma-in-lambda parsing issues).
+        const argsArray = node.arguments.map(arg => {
+            if (arg.type === 'SpreadElement') {
+                return `*${genExpression(arg.argument)}`;
+            }
+            return genExpression(arg);
+        });
+        const args = argsArray.join(', ');
 
         // Check for intrinsics
         if (node.callee.type === 'Identifier') {
@@ -1678,6 +1680,8 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
         }
 
         // Check for collection methods (lista, tabula, copia)
+        // WHY: Pass argsArray (not joined string) to method handlers
+        //      so they can correctly handle multi-param lambdas with commas.
         if (node.callee.type === 'MemberExpression' && !node.callee.computed) {
             const methodName = (node.callee.property as Identifier).name;
             const obj = genExpression(node.callee.object);
@@ -1686,7 +1690,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
             const listaMethod = getListaMethod(methodName);
             if (listaMethod) {
                 if (typeof listaMethod.py === 'function') {
-                    return listaMethod.py(obj, args);
+                    return listaMethod.py(obj, argsArray);
                 }
                 return `${obj}.${listaMethod.py}(${args})`;
             }
@@ -1695,7 +1699,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
             const tabulaMethod = getTabulaMethod(methodName);
             if (tabulaMethod) {
                 if (typeof tabulaMethod.py === 'function') {
-                    return tabulaMethod.py(obj, args);
+                    return tabulaMethod.py(obj, argsArray);
                 }
                 return `${obj}.${tabulaMethod.py}(${args})`;
             }
@@ -1704,7 +1708,7 @@ export function generatePy(program: Program, options: CodegenOptions = {}): stri
             const copiaMethod = getCopiaMethod(methodName);
             if (copiaMethod) {
                 if (typeof copiaMethod.py === 'function') {
-                    return copiaMethod.py(obj, args);
+                    return copiaMethod.py(obj, argsArray);
                 }
                 return `${obj}.${copiaMethod.py}(${args})`;
             }

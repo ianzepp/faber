@@ -40,6 +40,14 @@
 // TYPES
 // =============================================================================
 
+/**
+ * Generator function type for C++ collection methods.
+ *
+ * WHY: The args parameter is a string[] (not a joined string) to preserve
+ *      argument boundaries for multi-parameter lambdas that contain commas.
+ */
+export type CppGenerator = (obj: string, args: string[]) => string;
+
 export interface ListaMethod {
     /** The Latin method name */
     latin: string;
@@ -53,15 +61,13 @@ export interface ListaMethod {
     /**
      * C++23 translation.
      * - string: simple method rename (obj.latin() -> obj.cpp())
-     * - function: custom code generation
+     * - function: custom code generation with structured args
      */
     cpp: string | CppGenerator;
 
     /** Required headers for this method */
     headers?: string[];
 }
-
-type CppGenerator = (obj: string, args: string) => string;
 
 // =============================================================================
 // METHOD REGISTRY
@@ -92,7 +98,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         // WHY: C++ has no spread. Copy, push, return via IIFE.
-        cpp: (obj, args) => `[&]{ auto v = ${obj}; v.push_back(${args}); return v; }()`,
+        cpp: (obj, args) => `[&]{ auto v = ${obj}; v.push_back(${args.join(', ')}); return v; }()`,
     },
 
     /** Add element to start (mutates) */
@@ -100,7 +106,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'praepone',
         mutates: true,
         async: false,
-        cpp: (obj, args) => `${obj}.insert(${obj}.begin(), ${args})`,
+        cpp: (obj, args) => `${obj}.insert(${obj}.begin(), ${args[0]})`,
     },
 
     /** Add element to start (returns new vector) */
@@ -108,7 +114,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'praeposita',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `[&]{ auto v = ${obj}; v.insert(v.begin(), ${args}); return v; }()`,
+        cpp: (obj, args) => `[&]{ auto v = ${obj}; v.insert(v.begin(), ${args[0]}); return v; }()`,
     },
 
     // -------------------------------------------------------------------------
@@ -183,7 +189,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'accipe',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `${obj}.at(${args})`,
+        cpp: (obj, args) => `${obj}.at(${args[0]})`,
     },
 
     // -------------------------------------------------------------------------
@@ -215,7 +221,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'continet',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `(std::find(${obj}.begin(), ${obj}.end(), ${args}) != ${obj}.end())`,
+        cpp: (obj, args) => `(std::find(${obj}.begin(), ${obj}.end(), ${args[0]}) != ${obj}.end())`,
         headers: ['<algorithm>'],
     },
 
@@ -226,7 +232,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         async: false,
         // WHY: C++ returns iterator, need to convert to index or -1
         cpp: (obj, args) =>
-            `[&]{ auto it = std::find(${obj}.begin(), ${obj}.end(), ${args}); return it != ${obj}.end() ? std::distance(${obj}.begin(), it) : -1; }()`,
+            `[&]{ auto it = std::find(${obj}.begin(), ${obj}.end(), ${args[0]}); return it != ${obj}.end() ? std::distance(${obj}.begin(), it) : -1; }()`,
         headers: ['<algorithm>'],
     },
 
@@ -235,7 +241,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'inveni',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `*std::find_if(${obj}.begin(), ${obj}.end(), ${args})`,
+        cpp: (obj, args) => `*std::find_if(${obj}.begin(), ${obj}.end(), ${args[0]})`,
         headers: ['<algorithm>'],
     },
 
@@ -245,7 +251,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         cpp: (obj, args) =>
-            `[&]{ auto it = std::find_if(${obj}.begin(), ${obj}.end(), ${args}); return it != ${obj}.end() ? std::distance(${obj}.begin(), it) : -1; }()`,
+            `[&]{ auto it = std::find_if(${obj}.begin(), ${obj}.end(), ${args[0]}); return it != ${obj}.end() ? std::distance(${obj}.begin(), it) : -1; }()`,
         headers: ['<algorithm>'],
     },
 
@@ -259,7 +265,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         // WHY: C++23 ranges::to<vector> materializes the view
-        cpp: (obj, args) => `(${obj} | std::views::filter(${args}) | std::ranges::to<std::vector>())`,
+        cpp: (obj, args) => `(${obj} | std::views::filter(${args[0]}) | std::ranges::to<std::vector>())`,
         headers: ['<ranges>', '<vector>'],
     },
 
@@ -268,7 +274,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'mappata',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `(${obj} | std::views::transform(${args}) | std::ranges::to<std::vector>())`,
+        cpp: (obj, args) => `(${obj} | std::views::transform(${args[0]}) | std::ranges::to<std::vector>())`,
         headers: ['<ranges>', '<vector>'],
     },
 
@@ -279,11 +285,10 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         async: false,
         // WHY: Faber uses (init, fn), C++23 fold_left uses (range, init, fn)
         cpp: (obj, args) => {
-            const match = args.match(/^(.+?),\s*(\(.+)$/);
-            if (match) {
-                return `std::ranges::fold_left(${obj}, ${match[1]}, ${match[2]})`;
+            if (args.length >= 2) {
+                return `std::ranges::fold_left(${obj}, ${args[0]}, ${args[1]})`;
             }
-            return `std::ranges::fold_left(${obj}, ${args})`;
+            return `std::ranges::fold_left(${obj}, ${args[0]})`;
         },
         headers: ['<ranges>'],
     },
@@ -294,7 +299,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         // WHY: C++23 views::join flattens after transform
-        cpp: (obj, args) => `(${obj} | std::views::transform(${args}) | std::views::join | std::ranges::to<std::vector>())`,
+        cpp: (obj, args) => `(${obj} | std::views::transform(${args[0]}) | std::views::join | std::ranges::to<std::vector>())`,
         headers: ['<ranges>', '<vector>'],
     },
 
@@ -322,7 +327,9 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         cpp: (obj, args) =>
-            args ? `[&]{ auto v = ${obj}; std::ranges::sort(v, ${args}); return v; }()` : `[&]{ auto v = ${obj}; std::ranges::sort(v); return v; }()`,
+            args.length > 0
+                ? `[&]{ auto v = ${obj}; std::ranges::sort(v, ${args[0]}); return v; }()`
+                : `[&]{ auto v = ${obj}; std::ranges::sort(v); return v; }()`,
         headers: ['<algorithm>'],
     },
 
@@ -333,11 +340,10 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         async: false,
         // WHY: Args are start, end - use subrange
         cpp: (obj, args) => {
-            const parts = args.split(',').map(s => s.trim());
-            if (parts.length === 2) {
-                return `std::vector(${obj}.begin() + ${parts[0]}, ${obj}.begin() + ${parts[1]})`;
+            if (args.length >= 2) {
+                return `std::vector(${obj}.begin() + ${args[0]}, ${obj}.begin() + ${args[1]})`;
             }
-            return `std::vector(${obj}.begin() + ${args}, ${obj}.end())`;
+            return `std::vector(${obj}.begin() + ${args[0]}, ${obj}.end())`;
         },
         headers: ['<vector>'],
     },
@@ -347,7 +353,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'prima',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `(${obj} | std::views::take(${args}) | std::ranges::to<std::vector>())`,
+        cpp: (obj, args) => `(${obj} | std::views::take(${args[0]}) | std::ranges::to<std::vector>())`,
         headers: ['<ranges>', '<vector>'],
     },
 
@@ -357,7 +363,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         // WHY: No direct views::take_last, use drop + size
-        cpp: (obj, args) => `(${obj} | std::views::drop(${obj}.size() - ${args}) | std::ranges::to<std::vector>())`,
+        cpp: (obj, args) => `(${obj} | std::views::drop(${obj}.size() - ${args[0]}) | std::ranges::to<std::vector>())`,
         headers: ['<ranges>', '<vector>'],
     },
 
@@ -366,7 +372,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'omitte',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `(${obj} | std::views::drop(${args}) | std::ranges::to<std::vector>())`,
+        cpp: (obj, args) => `(${obj} | std::views::drop(${args[0]}) | std::ranges::to<std::vector>())`,
         headers: ['<ranges>', '<vector>'],
     },
 
@@ -379,7 +385,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'omnes',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `std::ranges::all_of(${obj}, ${args})`,
+        cpp: (obj, args) => `std::ranges::all_of(${obj}, ${args[0]})`,
         headers: ['<algorithm>'],
     },
 
@@ -388,7 +394,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'aliquis',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `std::ranges::any_of(${obj}, ${args})`,
+        cpp: (obj, args) => `std::ranges::any_of(${obj}, ${args[0]})`,
         headers: ['<algorithm>'],
     },
 
@@ -403,7 +409,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         async: false,
         // WHY: C++ has no native join. Use ranges with format or accumulate.
         cpp: (obj, args) => {
-            const sep = args || '""';
+            const sep = args.length > 0 ? args[0] : '""';
             return `[&]{ std::string r; for (size_t i = 0; i < ${obj}.size(); ++i) { if (i > 0) r += ${sep}; r += ${obj}[i]; } return r; }()`;
         },
         headers: ['<string>'],
@@ -418,7 +424,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'perambula',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `std::ranges::for_each(${obj}, ${args})`,
+        cpp: (obj, args) => `std::ranges::for_each(${obj}, ${args[0]})`,
         headers: ['<algorithm>'],
     },
 
@@ -432,7 +438,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: true,
         async: false,
         // WHY: erase-remove idiom with negated predicate
-        cpp: (obj, args) => `${obj}.erase(std::remove_if(${obj}.begin(), ${obj}.end(), [&](auto& x) { return !(${args})(x); }), ${obj}.end())`,
+        cpp: (obj, args) => `${obj}.erase(std::remove_if(${obj}.begin(), ${obj}.end(), [&](auto& x) { return !(${args[0]})(x); }), ${obj}.end())`,
         headers: ['<algorithm>'],
     },
 
@@ -441,7 +447,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'ordina',
         mutates: true,
         async: false,
-        cpp: (obj, args) => (args ? `std::ranges::sort(${obj}, ${args})` : `std::ranges::sort(${obj})`),
+        cpp: (obj, args) => (args.length > 0 ? `std::ranges::sort(${obj}, ${args[0]})` : `std::ranges::sort(${obj})`),
         headers: ['<algorithm>'],
     },
 
@@ -465,7 +471,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         async: false,
         // WHY: C++ has no groupBy. Manual implementation.
         cpp: (obj, args) =>
-            `[&]{ std::unordered_map<decltype((${args})(${obj}[0])), std::vector<decltype(${obj}[0])>> m; for (auto& x : ${obj}) m[(${args})(x)].push_back(x); return m; }()`,
+            `[&]{ std::unordered_map<decltype((${args[0]})(${obj}[0])), std::vector<decltype(${obj}[0])>> m; for (auto& x : ${obj}) m[(${args[0]})(x)].push_back(x); return m; }()`,
         headers: ['<unordered_map>', '<vector>'],
     },
 
@@ -496,7 +502,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         // WHY: C++23 has views::chunk
-        cpp: (obj, args) => `(${obj} | std::views::chunk(${args}) | std::ranges::to<std::vector<std::vector<decltype(${obj}[0])>>>())`,
+        cpp: (obj, args) => `(${obj} | std::views::chunk(${args[0]}) | std::ranges::to<std::vector<std::vector<decltype(${obj}[0])>>>())`,
         headers: ['<ranges>', '<vector>'],
     },
 
@@ -516,7 +522,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         cpp: (obj, args) =>
-            `[&]{ std::vector<decltype(${obj}[0])> t, f; for (auto& x : ${obj}) ((${args})(x) ? t : f).push_back(x); return std::make_pair(t, f); }()`,
+            `[&]{ std::vector<decltype(${obj}[0])> t, f; for (auto& x : ${obj}) ((${args[0]})(x) ? t : f).push_back(x); return std::make_pair(t, f); }()`,
         headers: ['<vector>', '<utility>'],
     },
 
@@ -544,7 +550,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         cpp: (obj, args) =>
-            `[&]{ auto v = ${obj}; std::random_device rd; std::mt19937 g(rd()); std::ranges::shuffle(v, g); v.resize(std::min(${args}, v.size())); return v; }()`,
+            `[&]{ auto v = ${obj}; std::random_device rd; std::mt19937 g(rd()); std::ranges::shuffle(v, g); v.resize(std::min(${args[0]}, v.size())); return v; }()`,
         headers: ['<algorithm>', '<random>'],
     },
 
@@ -593,7 +599,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'minimusPer',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `*std::ranges::min_element(${obj}, [&](auto& a, auto& b) { return (${args})(a) < (${args})(b); })`,
+        cpp: (obj, args) => `*std::ranges::min_element(${obj}, [&](auto& a, auto& b) { return (${args[0]})(a) < (${args[0]})(b); })`,
         headers: ['<algorithm>'],
     },
 
@@ -602,7 +608,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'maximusPer',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `*std::ranges::max_element(${obj}, [&](auto& a, auto& b) { return (${args})(a) < (${args})(b); })`,
+        cpp: (obj, args) => `*std::ranges::max_element(${obj}, [&](auto& a, auto& b) { return (${args[0]})(a) < (${args[0]})(b); })`,
         headers: ['<algorithm>'],
     },
 
@@ -611,7 +617,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'numera',
         mutates: false,
         async: false,
-        cpp: (obj, args) => `std::ranges::count_if(${obj}, ${args})`,
+        cpp: (obj, args) => `std::ranges::count_if(${obj}, ${args[0]})`,
         headers: ['<algorithm>'],
     },
 };

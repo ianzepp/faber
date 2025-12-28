@@ -35,14 +35,17 @@
 // TYPES
 // =============================================================================
 
+/**
+ * Generator function type for Python collection methods.
+ */
+export type PyGenerator = (obj: string, args: string[]) => string;
+
 export interface CopiaMethod {
     latin: string;
     mutates: boolean;
     async: boolean;
     py: string | PyGenerator;
 }
-
-type PyGenerator = (obj: string, args: string) => string;
 
 // =============================================================================
 // METHOD REGISTRY
@@ -64,7 +67,7 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         latin: 'habet',
         mutates: false,
         async: false,
-        py: (obj, args) => `(${args} in ${obj})`,
+        py: (obj, args) => `(${args[0]} in ${obj})`,
     },
 
     dele: {
@@ -103,28 +106,28 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         latin: 'unio',
         mutates: false,
         async: false,
-        py: (obj, args) => `(${obj} | ${args})`,
+        py: (obj, args) => `(${obj} | ${args[0]})`,
     },
 
     intersectio: {
         latin: 'intersectio',
         mutates: false,
         async: false,
-        py: (obj, args) => `(${obj} & ${args})`,
+        py: (obj, args) => `(${obj} & ${args[0]})`,
     },
 
     differentia: {
         latin: 'differentia',
         mutates: false,
         async: false,
-        py: (obj, args) => `(${obj} - ${args})`,
+        py: (obj, args) => `(${obj} - ${args[0]})`,
     },
 
     symmetrica: {
         latin: 'symmetrica',
         mutates: false,
         async: false,
-        py: (obj, args) => `(${obj} ^ ${args})`,
+        py: (obj, args) => `(${obj} ^ ${args[0]})`,
     },
 
     // -------------------------------------------------------------------------
@@ -135,14 +138,14 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         latin: 'subcopia',
         mutates: false,
         async: false,
-        py: (obj, args) => `(${obj} <= ${args})`,
+        py: (obj, args) => `(${obj} <= ${args[0]})`,
     },
 
     supercopia: {
         latin: 'supercopia',
         mutates: false,
         async: false,
-        py: (obj, args) => `(${obj} >= ${args})`,
+        py: (obj, args) => `(${obj} >= ${args[0]})`,
     },
 
     // -------------------------------------------------------------------------
@@ -172,7 +175,7 @@ export const COPIA_METHODS: Record<string, CopiaMethod> = {
         mutates: false,
         async: false,
         // forEach - use list comprehension for side effects
-        py: (obj, args) => `[(${args})(x) for x in ${obj}]`,
+        py: (obj, args) => `[(${args[0]})(x) for x in ${obj}]`,
     },
 };
 

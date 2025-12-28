@@ -144,6 +144,8 @@ import type {
     CuraTiming,
     CuraStatement,
     PraefixumExpression,
+    CollectionDSLTransform,
+    CollectionDSLExpression,
 } from './ast';
 import { builtinTypes } from '../lexicon/types-builtin';
 import { ParserErrorCode, PARSER_ERRORS } from './errors';
@@ -2012,6 +2014,10 @@ export function parse(tokens: Token[]): ParserResult {
      *   ex persona fixum nomen, ceteri rest  // object destructuring with rest
      *   ex coords fixum [x, y, z]            // array destructuring
      *   ex fetchData() figendum result       // async destructuring
+     *
+     * Collection DSL forms:
+     *   ex items prima 5 pro item { }        // iteration with transforms
+     *   ex items prima 5, ultima 2 pro x {}  // multiple transforms
      */
     function parseExStatement(): IteratioStatement | VariaDeclaration | DestructureDeclaration {
         const position = peek().position;
@@ -2040,7 +2046,10 @@ export function parse(tokens: Token[]): ParserResult {
             return { type: 'DestructureDeclaration', source, kind, specifiers, position };
         }
 
-        // Otherwise it's a for-loop: ex source pro/fit/fiet variable { }
+        // Check for DSL transforms before pro/fit/fiet
+        const transforms = parseDSLTransforms();
+
+        // Now expect for-loop binding: ex source [transforms] pro/fit/fiet variable { }
         let async = false;
         if (matchKeyword('pro')) {
             async = false;
@@ -2077,6 +2086,104 @@ export function parse(tokens: Token[]): ParserResult {
             body,
             async,
             catchClause,
+            transforms: transforms.length > 0 ? transforms : undefined,
+            position,
+        };
+    }
+
+    /**
+     * Check if current token is a DSL verb.
+     *
+     * WHY: DSL verbs are collection transform operations.
+     */
+    function isDSLVerb(): boolean {
+        return checkKeyword('prima') || checkKeyword('ultima') || checkKeyword('summa');
+    }
+
+    /**
+     * Parse collection DSL transforms.
+     *
+     * GRAMMAR:
+     *   dslTransforms := dslTransform (',' dslTransform)*
+     *   dslTransform := dslVerb expression?
+     *   dslVerb := 'prima' | 'ultima' | 'summa'
+     *
+     * WHY: DSL provides concise syntax for common collection operations.
+     *      Transforms chain with commas: prima 5, ultima 3
+     *
+     * Examples:
+     *   prima 5           -> first 5 elements
+     *   ultima 3          -> last 3 elements
+     *   summa             -> sum (no argument)
+     *   prima 5, ultima 2 -> first 5, then last 2 of those
+     */
+    function parseDSLTransforms(): CollectionDSLTransform[] {
+        const transforms: CollectionDSLTransform[] = [];
+
+        while (isDSLVerb()) {
+            const transformPos = peek().position;
+            const verb = advance().keyword!;
+
+            // Check if this verb takes an argument
+            // prima and ultima require numeric argument
+            // summa takes no argument
+            let argument: Expression | undefined;
+            if (verb === 'prima' || verb === 'ultima') {
+                // These verbs require a numeric argument
+                argument = parseExpression();
+            }
+            // summa takes no argument
+
+            transforms.push({
+                type: 'CollectionDSLTransform',
+                verb,
+                argument,
+                position: transformPos,
+            });
+
+            // Check for comma to continue chain
+            if (!match('COMMA')) {
+                break;
+            }
+        }
+
+        return transforms;
+    }
+
+    /**
+     * Parse collection DSL expression (expression context).
+     *
+     * GRAMMAR:
+     *   dslExpr := 'ex' expression dslTransform (',' dslTransform)*
+     *
+     * WHY: When 'ex' appears in expression context with DSL verbs (not pro/fit/fiet),
+     *      it creates a collection pipeline expression that can be assigned.
+     *
+     * Examples:
+     *   fixum top5 = ex items prima 5
+     *   fixum total = ex prices summa
+     *   fixum result = ex items prima 10, ultima 3
+     */
+    function parseCollectionDSLExpression(): CollectionDSLExpression {
+        const position = peek().position;
+
+        expectKeyword('ex', ParserErrorCode.InvalidExDeStart);
+
+        const source = parseExpression();
+
+        // Parse DSL transforms (at least one required for expression form)
+        const transforms = parseDSLTransforms();
+
+        if (transforms.length === 0) {
+            // No transforms means this shouldn't be parsed as DSL expression
+            // This case shouldn't happen if called correctly from parsePrimary
+            error(ParserErrorCode.UnexpectedToken, 'expected DSL verb after ex');
+        }
+
+        return {
+            type: 'CollectionDSLExpression',
+            source,
+            transforms,
             position,
         };
     }
@@ -3771,6 +3878,13 @@ export function parse(tokens: Token[]): ParserResult {
 
         if (checkKeyword('fiet')) {
             return parseLambdaExpression(true);
+        }
+
+        // Collection DSL expression: ex items prima 5
+        // WHY: When ex appears in expression context with DSL verbs,
+        //      it's a collection pipeline expression (no iteration)
+        if (checkKeyword('ex')) {
+            return parseCollectionDSLExpression();
         }
 
         // Number literal (decimal or hex)

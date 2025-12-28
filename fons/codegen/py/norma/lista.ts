@@ -38,14 +38,21 @@
 // TYPES
 // =============================================================================
 
+/**
+ * Generator function type for Python collection methods.
+ *
+ * WHY: The args parameter is a string[] (not a joined string) to preserve
+ *      argument boundaries. This allows methods like reducta to correctly
+ *      handle multi-parameter lambdas that contain commas.
+ */
+export type PyGenerator = (obj: string, args: string[]) => string;
+
 export interface ListaMethod {
     latin: string;
     mutates: boolean;
     async: boolean;
     py: string | PyGenerator;
 }
-
-type PyGenerator = (obj: string, args: string) => string;
 
 // =============================================================================
 // METHOD REGISTRY
@@ -70,21 +77,21 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'addita',
         mutates: false,
         async: false,
-        py: (obj, args) => `[*${obj}, ${args}]`,
+        py: (obj, args) => `[*${obj}, ${args.join(', ')}]`,
     },
 
     praepone: {
         latin: 'praepone',
         mutates: true,
         async: false,
-        py: (obj, args) => `${obj}.insert(0, ${args})`,
+        py: (obj, args) => `${obj}.insert(0, ${args[0]})`,
     },
 
     praeposita: {
         latin: 'praeposita',
         mutates: false,
         async: false,
-        py: (obj, args) => `[${args}, *${obj}]`,
+        py: (obj, args) => `[${args.join(', ')}, *${obj}]`,
     },
 
     // -------------------------------------------------------------------------
@@ -148,7 +155,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'accipe',
         mutates: false,
         async: false,
-        py: (obj, args) => `${obj}[${args}]`,
+        py: (obj, args) => `${obj}[${args[0]}]`,
     },
 
     longitudo: {
@@ -173,28 +180,28 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'continet',
         mutates: false,
         async: false,
-        py: (obj, args) => `(${args} in ${obj})`,
+        py: (obj, args) => `(${args[0]} in ${obj})`,
     },
 
     indiceDe: {
         latin: 'indiceDe',
         mutates: false,
         async: false,
-        py: (obj, args) => `${obj}.index(${args})`,
+        py: (obj, args) => `${obj}.index(${args[0]})`,
     },
 
     inveni: {
         latin: 'inveni',
         mutates: false,
         async: false,
-        py: (obj, args) => `next(filter(${args}, ${obj}), None)`,
+        py: (obj, args) => `next(filter(${args[0]}, ${obj}), None)`,
     },
 
     inveniIndicem: {
         latin: 'inveniIndicem',
         mutates: false,
         async: false,
-        py: (obj, args) => `next((i for i, x in enumerate(${obj}) if (${args})(x)), -1)`,
+        py: (obj, args) => `next((i for i, x in enumerate(${obj}) if (${args[0]})(x)), -1)`,
     },
 
     // -------------------------------------------------------------------------
@@ -205,14 +212,14 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'filtrata',
         mutates: false,
         async: false,
-        py: (obj, args) => `list(filter(${args}, ${obj}))`,
+        py: (obj, args) => `list(filter(${args[0]}, ${obj}))`,
     },
 
     mappata: {
         latin: 'mappata',
         mutates: false,
         async: false,
-        py: (obj, args) => `list(map(${args}, ${obj}))`,
+        py: (obj, args) => `list(map(${args[0]}, ${obj}))`,
     },
 
     reducta: {
@@ -220,19 +227,15 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         py: (obj, args) => {
-            // Latin API: reducta(fn, init) - function first, then initial value
-            // Split on LAST comma since init is typically simple (0, "", etc.)
-            // while fn may contain commas in lambda params
-            // NOTE: See README "Critical Note" - this is a workaround for the
-            // architectural issue of receiving args as a joined string
-            const lastComma = args.lastIndexOf(',');
-            if (lastComma !== -1) {
-                const fn = args.slice(0, lastComma).trim();
-                const init = args.slice(lastComma + 1).trim();
+            // WHY: Now that args is a proper array, we can directly access
+            //      fn and init without string parsing. No more comma ambiguity.
+            if (args.length >= 2) {
+                const fn = args[0];
+                const init = args[1];
                 return `functools.reduce(${fn}, ${obj}, ${init})`;
             }
             // Just function, no initial value
-            return `functools.reduce(${args}, ${obj})`;
+            return `functools.reduce(${args[0]}, ${obj})`;
         },
     },
 
@@ -240,7 +243,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'explanata',
         mutates: false,
         async: false,
-        py: (obj, args) => `[y for x in ${obj} for y in (${args})(x)]`,
+        py: (obj, args) => `[y for x in ${obj} for y in (${args[0]})(x)]`,
     },
 
     plana: {
@@ -262,8 +265,8 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         py: (obj, args) => {
-            if (args) {
-                return `sorted(${obj}, key=${args})`;
+            if (args.length > 0) {
+                return `sorted(${obj}, key=${args[0]})`;
             }
             return `sorted(${obj})`;
         },
@@ -278,12 +281,11 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         py: (obj, args) => {
-            // args is "start, end" or "start"
-            const parts = args.split(',').map(s => s.trim());
-            if (parts.length >= 2) {
-                return `${obj}[${parts[0]}:${parts[1]}]`;
+            // WHY: args is now an array, so direct access
+            if (args.length >= 2) {
+                return `${obj}[${args[0]}:${args[1]}]`;
             }
-            return `${obj}[${args}:]`;
+            return `${obj}[${args[0]}:]`;
         },
     },
 
@@ -291,21 +293,21 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'prima',
         mutates: false,
         async: false,
-        py: (obj, args) => `${obj}[:${args}]`,
+        py: (obj, args) => `${obj}[:${args[0]}]`,
     },
 
     ultima: {
         latin: 'ultima',
         mutates: false,
         async: false,
-        py: (obj, args) => `${obj}[-${args}:]`,
+        py: (obj, args) => `${obj}[-${args[0]}:]`,
     },
 
     omitte: {
         latin: 'omitte',
         mutates: false,
         async: false,
-        py: (obj, args) => `${obj}[${args}:]`,
+        py: (obj, args) => `${obj}[${args[0]}:]`,
     },
 
     // -------------------------------------------------------------------------
@@ -316,14 +318,14 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'omnes',
         mutates: false,
         async: false,
-        py: (obj, args) => `all(map(${args}, ${obj}))`,
+        py: (obj, args) => `all(map(${args[0]}, ${obj}))`,
     },
 
     aliquis: {
         latin: 'aliquis',
         mutates: false,
         async: false,
-        py: (obj, args) => `any(map(${args}, ${obj}))`,
+        py: (obj, args) => `any(map(${args[0]}, ${obj}))`,
     },
 
     // -------------------------------------------------------------------------
@@ -335,8 +337,8 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         py: (obj, args) => {
-            if (args) {
-                return `${args}.join(${obj})`;
+            if (args.length > 0) {
+                return `${args[0]}.join(${obj})`;
             }
             return `"".join(${obj})`;
         },
@@ -353,7 +355,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         // forEach doesn't exist in Python; we use a for loop or list comprehension
         // For side effects, we use: [fn(x) for x in list] and discard result
         // Or generate a for loop if in statement context
-        py: (obj, args) => `[(${args})(x) for x in ${obj}]`,
+        py: (obj, args) => `[(${args[0]})(x) for x in ${obj}]`,
     },
 
     // -------------------------------------------------------------------------
@@ -365,7 +367,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: true,
         async: false,
         // Python list doesn't have in-place filter; use slice assignment
-        py: (obj, args) => `${obj}[:] = [x for x in ${obj} if (${args})(x)]`,
+        py: (obj, args) => `${obj}[:] = [x for x in ${obj} if (${args[0]})(x)]`,
     },
 
     ordina: {
@@ -373,8 +375,8 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: true,
         async: false,
         py: (obj, args) => {
-            if (args) {
-                return `${obj}.sort(key=${args})`;
+            if (args.length > 0) {
+                return `${obj}.sort(key=${args[0]})`;
             }
             return `${obj}.sort()`;
         },
@@ -398,7 +400,8 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         // groupBy - returns dict of lists
         py: (obj, args) => {
             // Python doesn't have native groupBy; use itertools or inline
-            return `{k: list(g) for k, g in itertools.groupby(sorted(${obj}, key=${args}), key=${args})}`;
+            const fn = args[0];
+            return `{k: list(g) for k, g in itertools.groupby(sorted(${obj}, key=${fn}), key=${fn})}`;
         },
     },
 
@@ -414,7 +417,10 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         // chunk into sublists of size n
-        py: (obj, args) => `[${obj}[i:i+${args}] for i in range(0, len(${obj}), ${args})]`,
+        py: (obj, args) => {
+            const n = args[0];
+            return `[${obj}[i:i+${n}] for i in range(0, len(${obj}), ${n})]`;
+        },
     },
 
     densa: {
@@ -430,7 +436,10 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         // partition into [matching, non-matching]
-        py: (obj, args) => `[[x for x in ${obj} if (${args})(x)], [x for x in ${obj} if not (${args})(x)]]`,
+        py: (obj, args) => {
+            const fn = args[0];
+            return `[[x for x in ${obj} if (${fn})(x)], [x for x in ${obj} if not (${fn})(x)]]`;
+        },
     },
 
     misce: {
@@ -451,7 +460,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'specimina',
         mutates: false,
         async: false,
-        py: (obj, args) => `random.sample(${obj}, ${args})`,
+        py: (obj, args) => `random.sample(${obj}, ${args[0]})`,
     },
 
     // -------------------------------------------------------------------------
@@ -491,7 +500,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         mutates: false,
         async: false,
         // count matching predicate
-        py: (obj, args) => `sum(1 for x in ${obj} if (${args})(x))`,
+        py: (obj, args) => `sum(1 for x in ${obj} if (${args[0]})(x))`,
     },
 };
 

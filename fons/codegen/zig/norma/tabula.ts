@@ -30,9 +30,12 @@
 
 /**
  * Generator function type for Zig collection methods.
+ *
  * WHY: The curator parameter allows methods to use the correct allocator.
+ * WHY: The args parameter is a string[] (not a joined string) to preserve
+ *      argument boundaries for multi-parameter lambdas.
  */
-export type ZigGenerator = (obj: string, args: string, curator: string) => string;
+export type ZigGenerator = (obj: string, args: string[], curator: string) => string;
 
 export interface TabulaMethod {
     latin: string;
@@ -54,11 +57,10 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         latin: 'pone',
         mutates: true,
         // WHY: put() can fail on OOM
-        // args format: "key, value" - need to split
         zig: (obj, args, curator) => {
-            const match = args.match(/^(.+?),\s*(.+)$/);
-            if (match) {
-                return `${obj}.put(${curator}, ${match[1]}, ${match[2]}) catch @panic("OOM")`;
+            // WHY: args is now an array, so direct access
+            if (args.length >= 2) {
+                return `${obj}.put(${curator}, ${args[0]}, ${args[1]}) catch @panic("OOM")`;
             }
             return `@compileError("pone requires two arguments: key, value")`;
         },
@@ -68,14 +70,14 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
     accipe: {
         latin: 'accipe',
         mutates: false,
-        zig: (obj, args) => `${obj}.get(${args})`,
+        zig: (obj, args) => `${obj}.get(${args[0]})`,
     },
 
     /** Check if key exists */
     habet: {
         latin: 'habet',
         mutates: false,
-        zig: (obj, args) => `${obj}.contains(${args})`,
+        zig: (obj, args) => `${obj}.contains(${args[0]})`,
     },
 
     /** Delete key (mutates) */
@@ -83,7 +85,7 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         latin: 'dele',
         mutates: true,
         // WHY: remove() returns bool indicating if key existed
-        zig: (obj, args) => `_ = ${obj}.remove(${args})`,
+        zig: (obj, args) => `_ = ${obj}.remove(${args[0]})`,
     },
 
     /** Get size */
@@ -144,11 +146,11 @@ export const TABULA_METHODS: Record<string, TabulaMethod> = {
         mutates: false,
         // WHY: Use orelse for default value
         zig: (obj, args) => {
-            const match = args.match(/^(.+?),\s*(.+)$/);
-            if (match) {
-                return `(${obj}.get(${match[1]}) orelse ${match[2]})`;
+            // WHY: args is now an array
+            if (args.length >= 2) {
+                return `(${obj}.get(${args[0]}) orelse ${args[1]})`;
             }
-            return `${obj}.get(${args})`;
+            return `${obj}.get(${args[0]})`;
         },
     },
 

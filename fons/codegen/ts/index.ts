@@ -102,6 +102,8 @@ import type {
     CuraBlock,
     CuraStatement,
     PraefixumExpression,
+    CollectionDSLTransform,
+    CollectionDSLExpression,
 } from '../../parser/ast';
 import type { CodegenOptions, RequiredFeatures } from '../types';
 import { createRequiredFeatures } from '../types';
@@ -974,8 +976,13 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         }
 
         // Standard for-of/for-in loop
-        const iterable = genExpression(node.iterable);
+        let iterable = genExpression(node.iterable);
         const keyword = node.kind === 'in' ? 'in' : 'of';
+
+        // Apply DSL transforms as method chain
+        if (node.transforms && node.transforms.length > 0) {
+            iterable = applyDSLTransforms(iterable, node.transforms);
+        }
 
         if (node.catchClause) {
             let result = `${ind()}try {\n`;
@@ -989,6 +996,45 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         }
 
         return `${ind()}for${awaitKeyword} (const ${varName} ${keyword} ${iterable}) ${body}`;
+    }
+
+    /**
+     * Apply DSL transforms as method calls.
+     *
+     * TRANSFORMS:
+     *   prima 5      -> .slice(0, 5)
+     *   ultima 3     -> .slice(-3)
+     *   summa        -> .reduce((a, b) => a + b, 0)
+     *
+     * WHY: DSL verbs desugar to norma method implementations.
+     */
+    function applyDSLTransforms(source: string, transforms: CollectionDSLTransform[]): string {
+        let result = source;
+
+        for (const transform of transforms) {
+            switch (transform.verb) {
+                case 'prima':
+                    // prima N -> .slice(0, N)
+                    if (transform.argument) {
+                        const n = genExpression(transform.argument);
+                        result = `${result}.slice(0, ${n})`;
+                    }
+                    break;
+                case 'ultima':
+                    // ultima N -> .slice(-N)
+                    if (transform.argument) {
+                        const n = genExpression(transform.argument);
+                        result = `${result}.slice(-${n})`;
+                    }
+                    break;
+                case 'summa':
+                    // summa -> .reduce((a, b) => a + b, 0)
+                    result = `${result}.reduce((a, b) => a + b, 0)`;
+                    break;
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -1529,6 +1575,8 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 return genEstExpression(node);
             case 'PraefixumExpression':
                 return genPraefixumExpression(node);
+            case 'CollectionDSLExpression':
+                return genCollectionDSLExpression(node);
             default:
                 throw new Error(`Unknown expression type: ${(node as any).type}`);
         }
@@ -1800,14 +1848,16 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
      * Lista methods (Latin array methods) are translated to JS equivalents.
      */
     function genCallExpression(node: CallExpression): string {
-        const args = node.arguments
-            .map(arg => {
-                if (arg.type === 'SpreadElement') {
-                    return `...${genExpression(arg.argument)}`;
-                }
-                return genExpression(arg);
-            })
-            .join(', ');
+        // WHY: Build args as array first, then join for regular calls.
+        // Collection method handlers receive the array to preserve argument
+        // boundaries (avoiding comma-in-lambda parsing issues).
+        const argsArray = node.arguments.map(arg => {
+            if (arg.type === 'SpreadElement') {
+                return `...${genExpression(arg.argument)}`;
+            }
+            return genExpression(arg);
+        });
+        const args = argsArray.join(', ');
 
         // Check for intrinsics (bare function calls)
         if (node.callee.type === 'Identifier') {
@@ -1831,11 +1881,13 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
             const collectionName = objType?.kind === 'generic' ? objType.name : null;
 
             // Dispatch based on resolved type
+            // WHY: Pass argsArray (not joined string) to method handlers
+            //      so they can correctly handle multi-param lambdas with commas.
             if (collectionName === 'tabula') {
                 const method = getTabulaMethod(methodName);
                 if (method) {
                     if (typeof method.ts === 'function') {
-                        return method.ts(obj, args);
+                        return method.ts(obj, argsArray);
                     }
                     return `${obj}.${method.ts}(${args})`;
                 }
@@ -1843,7 +1895,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 const method = getCopiaMethod(methodName);
                 if (method) {
                     if (typeof method.ts === 'function') {
-                        return method.ts(obj, args);
+                        return method.ts(obj, argsArray);
                     }
                     return `${obj}.${method.ts}(${args})`;
                 }
@@ -1851,7 +1903,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
                 const method = getListaMethod(methodName);
                 if (method) {
                     if (typeof method.ts === 'function') {
-                        return method.ts(obj, args);
+                        return method.ts(obj, argsArray);
                     }
                     return `${obj}.${method.ts}(${args})`;
                 }
@@ -1861,7 +1913,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
             const listaMethod = getListaMethod(methodName);
             if (listaMethod) {
                 if (typeof listaMethod.ts === 'function') {
-                    return listaMethod.ts(obj, args);
+                    return listaMethod.ts(obj, argsArray);
                 }
                 return `${obj}.${listaMethod.ts}(${args})`;
             }
@@ -2143,6 +2195,22 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         const argsText = args.join(', ');
 
         return `new ${callee}(${argsText})`;
+    }
+
+    /**
+     * Generate collection DSL expression.
+     *
+     * TRANSFORMS:
+     *   ex items prima 5       -> items.slice(0, 5)
+     *   ex items ultima 3      -> items.slice(-3)
+     *   ex prices summa        -> prices.reduce((a, b) => a + b, 0)
+     *   ex items prima 5, ultima 2 -> items.slice(0, 5).slice(-2)
+     *
+     * WHY: DSL expressions provide concise collection pipelines.
+     */
+    function genCollectionDSLExpression(node: CollectionDSLExpression): string {
+        const source = genExpression(node.source);
+        return applyDSLTransforms(source, node.transforms);
     }
 
     return genProgram(program);

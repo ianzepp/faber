@@ -287,3 +287,37 @@
       - '#include <numeric>'
   ts:
       - '.reduce('
+
+# =============================================================================
+# Collection DSL
+# =============================================================================
+
+# DSL prima in iteration context
+- name: 'DSL prima in iteration'
+  input: 'ex items prima 5 pro x { scribe x }'
+  ts:
+      - 'for (const x of items.slice(0, 5))'
+
+# DSL ultima in iteration context
+- name: 'DSL ultima in iteration'
+  input: 'ex items ultima 3 pro x { scribe x }'
+  ts:
+      - 'for (const x of items.slice(-3))'
+
+# DSL prima as expression
+- name: 'DSL prima as expression'
+  input: 'fixum top = ex items prima 5'
+  ts:
+      - 'const top = items.slice(0, 5)'
+
+# DSL summa as expression
+- name: 'DSL summa as expression'
+  input: 'fixum total = ex nums summa'
+  ts:
+      - 'const total = nums.reduce((a, b) => a + b, 0)'
+
+# DSL chained transforms
+- name: 'DSL chained transforms'
+  input: 'fixum result = ex items prima 10, ultima 3'
+  ts:
+      - 'const result = items.slice(0, 10).slice(-3)'

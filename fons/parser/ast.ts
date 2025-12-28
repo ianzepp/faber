@@ -729,6 +729,28 @@ export interface DumStatement extends BaseNode {
  *   de...pro  → for...in (TS), for...in keys (Py), iteration over keys (Zig)
  *   ex...fiet → for await...of (TS), async for (Py), N/A (Zig)
  */
+/**
+ * Collection DSL transform operation.
+ *
+ * GRAMMAR (in EBNF):
+ *   dslTransform := dslVerb dslArg?
+ *   dslVerb := 'prima' | 'ultima' | 'summa'
+ *   dslArg := expression
+ *
+ * WHY: DSL transforms provide concise syntax for collection operations.
+ *      They desugar to method calls during semantic analysis.
+ *
+ * Examples:
+ *   prima 5        -> .prima(5)
+ *   ultima 3       -> .ultima(3)
+ *   summa          -> .summa()
+ */
+export interface CollectionDSLTransform extends BaseNode {
+    type: 'CollectionDSLTransform';
+    verb: string;
+    argument?: Expression;
+}
+
 export interface IteratioStatement extends BaseNode {
     type: 'IteratioStatement';
     kind: 'in' | 'ex';
@@ -737,6 +759,7 @@ export interface IteratioStatement extends BaseNode {
     body: BlockStatement;
     async: boolean;
     catchClause?: CapeClause;
+    transforms?: CollectionDSLTransform[];
 }
 
 /**
@@ -1301,6 +1324,30 @@ export interface PraefixumExpression extends BaseNode {
     body: Expression | BlockStatement;
 }
 
+/**
+ * Collection DSL expression (ex source transforms... without iteration).
+ *
+ * GRAMMAR (in EBNF):
+ *   dslExpr := 'ex' expression dslTransform (',' dslTransform)*
+ *
+ * WHY: DSL expressions provide concise syntax for collection pipelines
+ *      when used in assignment context (no `pro` iteration binding).
+ *
+ * Examples:
+ *   fixum top5 = ex items prima 5
+ *   fixum total = ex prices summa
+ *   fixum last3 = ex items ultima 3
+ *
+ * Target mapping (desugared):
+ *   ex items prima 5 -> items.prima(5)
+ *   ex prices summa  -> prices.summa()
+ */
+export interface CollectionDSLExpression extends BaseNode {
+    type: 'CollectionDSLExpression';
+    source: Expression;
+    transforms: CollectionDSLTransform[];
+}
+
 // =============================================================================
 // EXPRESSION TYPES
 // =============================================================================
@@ -1330,7 +1377,8 @@ export type Expression =
     | NovumExpression
     | TemplateLiteral
     | LambdaExpression
-    | PraefixumExpression;
+    | PraefixumExpression
+    | CollectionDSLExpression;
 
 // ---------------------------------------------------------------------------
 // Primary Expressions

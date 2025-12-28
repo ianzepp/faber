@@ -36,10 +36,13 @@
 
 /**
  * Generator function type for Zig collection methods.
+ *
  * WHY: The curator parameter allows methods to use the correct allocator
  *      based on context (function parameter vs module-level arena).
+ * WHY: The args parameter is a string[] (not a joined string) to preserve
+ *      argument boundaries for multi-parameter lambdas.
  */
-export type ZigGenerator = (obj: string, args: string, curator: string) => string;
+export type ZigGenerator = (obj: string, args: string[], curator: string) => string;
 
 /**
  * Describes how to translate a Latin method to Zig.
@@ -81,7 +84,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'adde',
         mutates: true,
         // WHY: ArrayList.append() can fail on OOM, we catch and panic
-        zig: (obj, args, curator) => `${obj}.append(${curator}, ${args}) catch @panic("OOM")`,
+        zig: (obj, args, curator) => `${obj}.append(${curator}, ${args[0]}) catch @panic("OOM")`,
     },
 
     /** Add element to end (returns new list) - NOT IMPLEMENTED */
@@ -96,7 +99,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'praepone',
         mutates: true,
         // WHY: ArrayList.insert() at index 0 = prepend
-        zig: (obj, args, curator) => `${obj}.insert(${curator}, 0, ${args}) catch @panic("OOM")`,
+        zig: (obj, args, curator) => `${obj}.insert(${curator}, 0, ${args[0]}) catch @panic("OOM")`,
     },
 
     /** Add element to start (returns new list) - NOT IMPLEMENTED */
@@ -172,7 +175,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
     accipe: {
         latin: 'accipe',
         mutates: false,
-        zig: (obj, args) => `${obj}.items[${args}]`,
+        zig: (obj, args) => `${obj}.items[${args[0]}]`,
     },
 
     // -------------------------------------------------------------------------
@@ -202,14 +205,14 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'continet',
         mutates: false,
         // WHY: Zig has no built-in includes. Would need std.mem.indexOfScalar
-        zig: (obj, args) => `(std.mem.indexOfScalar(@TypeOf(${obj}.items[0]), ${obj}.items, ${args}) != null)`,
+        zig: (obj, args) => `(std.mem.indexOfScalar(@TypeOf(${obj}.items[0]), ${obj}.items, ${args[0]}) != null)`,
     },
 
     /** Find index of element */
     indiceDe: {
         latin: 'indiceDe',
         mutates: false,
-        zig: (obj, args) => `std.mem.indexOfScalar(@TypeOf(${obj}.items[0]), ${obj}.items, ${args})`,
+        zig: (obj, args) => `std.mem.indexOfScalar(@TypeOf(${obj}.items[0]), ${obj}.items, ${args[0]})`,
     },
 
     // -------------------------------------------------------------------------

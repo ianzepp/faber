@@ -52,7 +52,7 @@
 export interface KeywordEntry {
     latin: string;
     meaning: string;
-    category: 'control' | 'declaration' | 'operator' | 'value' | 'preposition' | 'modifier';
+    category: 'control' | 'declaration' | 'operator' | 'value' | 'preposition' | 'modifier' | 'dsl';
 }
 
 // =============================================================================
@@ -252,6 +252,16 @@ export const keywords: KeywordEntry[] = [
     // WHY: "ceteri" (the rest/others) for collecting remaining elements
     //      Latin ceteri = "the rest, the others, the remaining"
     { latin: 'ceteri', meaning: '...rest', category: 'operator' },
+
+    // ---------------------------------------------------------------------------
+    // Collection DSL Verbs
+    // ---------------------------------------------------------------------------
+
+    // WHY: DSL verbs for collection transforms in ex...pro statements
+    //      These provide concise syntax for common collection operations
+    { latin: 'prima', meaning: 'first n', category: 'dsl' },
+    { latin: 'ultima', meaning: 'last n', category: 'dsl' },
+    { latin: 'summa', meaning: 'sum', category: 'dsl' },
 ];
 
 // =============================================================================
