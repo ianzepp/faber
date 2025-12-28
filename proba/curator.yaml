@@ -10,18 +10,25 @@
   input: 'functio process(curator alloc) { }'
   zig:
       - 'fn process(alloc: std.mem.Allocator) void'
+  rs:
+      - 'fn process(alloc: curator)'
 
 # curator param with other params
 - name: 'curator with other params'
   input: 'functio build(curator mem, textus name) { }'
   zig:
       - 'fn build(mem: std.mem.Allocator, name: []const u8) void'
+  rs:
+      - 'fn build(mem: curator, name: &str)'
 
 # curator with return type
 - name: 'curator with return type'
   input: 'functio create(curator alloc) -> numerus { redde 42 }'
   zig:
       - 'fn create(alloc: std.mem.Allocator) i64'
+      - 'return 42;'
+  rs:
+      - 'fn create(alloc: curator) -> f64'
       - 'return 42;'
 
 # =============================================================================
@@ -37,6 +44,10 @@
       }
   zig:
       - 'items.append(memoria, 1)'
+  rs:
+      - 'fn build(memoria: curator)'
+      - 'let mut items = vec![]'
+      - 'items.adde(1)'
 
 # Default alloc used in main when no curator param
 - name: 'lista.adde uses default alloc'
@@ -45,6 +56,9 @@
       items.adde(1)
   zig:
       - 'items.append(alloc, 1)'
+  rs:
+      - 'let mut items = vec![]'
+      - 'items.adde(1)'
 
 # praepone also uses curator
 - name: 'lista.praepone uses curator param'
@@ -55,6 +69,10 @@
       }
   zig:
       - 'items.insert(mem, 0, 1)'
+  rs:
+      - 'fn build(mem: curator)'
+      - 'let mut items = vec![]'
+      - 'items.praepone(1)'
 
 # =============================================================================
 # Tabula Methods with Curator
@@ -74,6 +92,10 @@
   zig:
       - 'fn build(a: std.mem.Allocator)'
       - 'm.pone("key", 42)'
+  rs:
+      - 'fn build(a: curator)'
+      - 'let mut m = {}'
+      - 'm.pone(String::from("key"), 42)'
 
 # tabula.pone without type annotation - falls through to regular method call
 - name: 'tabula.pone uses default alloc'
@@ -82,6 +104,9 @@
       m.pone("key", 42)
   zig:
       - 'm.pone("key", 42)'
+  rs:
+      - 'let mut m = {}'
+      - 'm.pone(String::from("key"), 42)'
 
 # =============================================================================
 # Copia Methods with Curator
@@ -99,6 +124,10 @@
       }
   zig:
       - '.append(allocator, "item")'
+  rs:
+      - 'fn build(allocator: curator)'
+      - 'let mut s = {}'
+      - 's.adde(String::from("item"))'
 
 # copia.adde uses default alloc - falls back to lista.append
 - name: 'copia.adde uses default alloc'
@@ -107,6 +136,9 @@
       s.adde("item")
   zig:
       - '.append(alloc, "item")'
+  rs:
+      - 'let mut s = {}'
+      - 's.adde(String::from("item"))'
 
 # =============================================================================
 # Multiple Functions with Different Curators
@@ -126,6 +158,11 @@
   zig:
       - 'x.append(a, 1)'
       - 'y.append(b, 2)'
+  rs:
+      - 'fn first(a: curator)'
+      - 'x.adde(1)'
+      - 'fn second(b: curator)'
+      - 'y.adde(2)'
 
 # =============================================================================
 # Nested Scopes
@@ -142,6 +179,11 @@
       }
   zig:
       - 'items.append(mem, 1)'
+  rs:
+      - 'fn process(mem: curator)'
+      - 'let mut items = vec![]'
+      - 'if true'
+      - 'items.adde(1)'
 
 # Curator in loop body
 - name: 'curator in loop body'
@@ -155,6 +197,12 @@
       }
   zig:
       - 'items.append(mem, 1)'
+  rs:
+      - 'fn process(mem: curator)'
+      - 'let mut items = vec![]'
+      - 'while true'
+      - 'items.adde(1)'
+      - 'break'
 
 # =============================================================================
 # Array Literals with Curator
@@ -169,6 +217,10 @@
       }
   zig:
       - 'nums.append(m, 4)'
+  rs:
+      - 'fn build(m: curator)'
+      - 'let mut nums = vec![1, 2, 3]'
+      - 'nums.adde(4)'
 
 # Array literal in main uses default alloc
 - name: 'array literal uses default alloc'
@@ -177,6 +229,9 @@
       nums.adde(4)
   zig:
       - 'nums.append(alloc, 4)'
+  rs:
+      - 'let mut nums = vec![1, 2, 3]'
+      - 'nums.adde(4)'
 
 # =============================================================================
 # Curator Isolation Between Functions
@@ -191,6 +246,10 @@
       }
   zig:
       - 'items.append(alloc, 1)'
+  rs:
+      - 'fn noAlloc()'
+      - 'let mut items = vec![]'
+      - 'items.adde(1)'
 
 # After function with curator, next function without curator uses default
 - name: 'curator does not leak between functions'
@@ -206,3 +265,8 @@
   zig:
       - 'a.append(custom, 1)'
       - 'b.append(alloc, 2)'
+  rs:
+      - 'fn withCurator(custom: curator)'
+      - 'a.adde(1)'
+      - 'fn withoutCurator()'
+      - 'b.adde(2)'

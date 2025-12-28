@@ -23,6 +23,9 @@
   cpp:
       - 'try {'
       - 'catch (const std::exception& error)'
+  rs:
+      - '// tempta (try) - Rust uses Result<T, E> instead'
+      - 'riskyCode()'
 
 # demum is finally - runs regardless of exception
 - name: 'tempta with demum'
@@ -51,6 +54,9 @@
       - '~_ScopeGuard()'
       - '_ScopeGuard([&]{'
       - 'cleanup()'
+  rs:
+      - '// tempta (try) - Rust uses Result<T, E> instead'
+      - 'riskyCode()'
 
 # =============================================================================
 # Throw (iace)
@@ -68,6 +74,8 @@
       - 'throw std::runtime_error'
   zig:
       - 'return error.ErrorMessage'
+  rs:
+      - 'return Err(String::from("error message"))'
 
 # iace with new Error - translates constructor
 - name: 'iace with Error'
@@ -81,6 +89,8 @@
       - 'return error.Msg'
   cpp:
       - 'throw std::runtime_error(std::string("msg"));'
+  rs:
+      - 'return Err(Error::new())'
 
 # iace with variable - throws directly
 - name: 'iace variable'
@@ -94,6 +104,8 @@
       - 'return error.Err'
   cpp:
       - 'throw err;'
+  rs:
+      - 'return Err(err)'
 
 # =============================================================================
 # Panic (mori)
@@ -113,6 +125,8 @@
       - 'std::abort()'
   zig:
       - '@panic("something went wrong")'
+  rs:
+      - 'panic!(String::from("something went wrong"))'
 
 # =============================================================================
 # Fac Block
@@ -128,6 +142,9 @@
       - 'x = 1'
   zig:
       - 'var x: i64 = 1;'
+  rs:
+      - '{'
+      - 'let mut x = 1'
 
 # fac with cape wraps in try/catch
 - name: 'fac with cape'
@@ -142,3 +159,6 @@
       - 'x()'
       - 'except Exception as e:'
       - 'y()'
+  rs:
+      - '{'
+      - 'x()'

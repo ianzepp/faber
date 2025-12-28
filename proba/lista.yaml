@@ -15,6 +15,7 @@
       - '.push_back(1)'
   ts:
       - '.push('
+  skip: [rs]
 
 # addita returns a new list with the element appended (copy + push_back)
 - name: 'addita -> copy and push_back'
@@ -25,6 +26,7 @@
       - 'return v'
   ts:
       - '[...'
+  skip: [rs]
 
 # praepone inserts at the beginning
 - name: 'praepone -> insert at begin'
@@ -34,6 +36,7 @@
       - '.begin()'
   ts:
       - '.unshift('
+  skip: [rs]
 
 # =============================================================================
 # Removing Elements
@@ -47,6 +50,7 @@
       - '.pop_back()'
   ts:
       - '.pop('
+  skip: [rs]
 
 # decapita removes and returns the first element
 - name: 'decapita -> erase at begin'
@@ -56,6 +60,7 @@
       - '.erase('
   ts:
       - '.shift('
+  skip: [rs]
 
 # purga clears the entire list
 - name: 'purga -> clear'
@@ -64,6 +69,7 @@
       - '.clear()'
   ts:
       - '.length = 0'
+  skip: [rs]
 
 # =============================================================================
 # Accessing Elements
@@ -76,6 +82,7 @@
       - '.front()'
   ts:
       - '[0]'
+  skip: [rs]
 
 # ultimus returns the last element
 - name: 'ultimus -> back'
@@ -84,6 +91,7 @@
       - '.back()'
   ts:
       - '.at('
+  skip: [rs]
 
 # accipe returns element at index (bounds-checked)
 - name: 'accipe -> at'
@@ -92,6 +100,7 @@
       - '.at(0)'
   ts:
       - '[0]'
+  skip: [rs]
 
 # longitudo returns the size
 - name: 'longitudo -> size'
@@ -100,6 +109,7 @@
       - '.size()'
   ts:
       - '.length'
+  skip: [rs]
 
 # vacua returns whether the list is empty
 - name: 'vacua -> empty'
@@ -108,6 +118,7 @@
       - '.empty()'
   ts:
       - '.length === 0'
+  skip: [rs]
 
 # =============================================================================
 # Searching
@@ -121,6 +132,7 @@
       - '!= items.end()'
   ts:
       - '.includes('
+  skip: [rs]
 
 # indiceDe returns the index of an element
 - name: 'indiceDe -> std::find with distance'
@@ -130,6 +142,7 @@
       - 'std::distance('
   ts:
       - '.indexOf('
+  skip: [rs]
 
 # =============================================================================
 # Transformations (C++23 ranges)
@@ -143,6 +156,7 @@
       - 'std::ranges::to<std::vector>'
   ts:
       - '.filter('
+  skip: [rs]
 
 # mappata transforms elements using views::transform
 - name: 'mappata -> views::transform'
@@ -152,6 +166,7 @@
       - 'std::ranges::to<std::vector>'
   ts:
       - '.map('
+  skip: [rs]
 
 # inversa returns reversed copy
 - name: 'inversa -> views::reverse'
@@ -161,6 +176,7 @@
       - 'std::ranges::to<std::vector>'
   ts:
       - '.reverse('
+  skip: [rs]
 
 # prima takes first n elements
 - name: 'prima -> views::take'
@@ -170,6 +186,7 @@
       - 'std::ranges::to<std::vector>'
   ts:
       - '.slice('
+  skip: [rs]
 
 # omitte drops first n elements
 - name: 'omitte -> views::drop'
@@ -179,6 +196,7 @@
       - 'std::ranges::to<std::vector>'
   ts:
       - '.slice('
+  skip: [rs]
 
 # =============================================================================
 # Predicates
@@ -191,6 +209,7 @@
       - 'std::ranges::all_of('
   ts:
       - '.every('
+  skip: [rs]
 
 # aliquis checks if any element matches predicate
 - name: 'aliquis -> ranges::any_of'
@@ -199,6 +218,7 @@
       - 'std::ranges::any_of('
   ts:
       - '.some('
+  skip: [rs]
 
 # =============================================================================
 # Mutating Operations
@@ -211,6 +231,7 @@
       - 'std::ranges::sort(items)'
   ts:
       - '.sort('
+  skip: [rs]
 
 # inverte reverses the list in-place
 - name: 'inverte -> ranges::reverse'
@@ -219,6 +240,7 @@
       - 'std::ranges::reverse(items)'
   ts:
       - '.reverse('
+  skip: [rs]
 
 # =============================================================================
 # Numeric Aggregation
@@ -231,6 +253,7 @@
       - 'std::accumulate('
   ts:
       - '.reduce('
+  skip: [rs]
 
 # minimus returns the minimum element
 - name: 'minimus -> ranges::min_element'
@@ -239,6 +262,7 @@
       - 'std::ranges::min_element('
   ts:
       - 'Math.min(...'
+  skip: [rs]
 
 # maximus returns the maximum element
 - name: 'maximus -> ranges::max_element'
@@ -247,6 +271,7 @@
       - 'std::ranges::max_element('
   ts:
       - 'Math.max(...'
+  skip: [rs]
 
 # =============================================================================
 # Iteration
@@ -259,6 +284,7 @@
       - 'std::ranges::for_each('
   ts:
       - '.forEach('
+  skip: [rs]
 
 # =============================================================================
 # Header Includes
@@ -271,6 +297,7 @@
       - '#include <algorithm>'
   ts:
       - '.includes('
+  skip: [rs]
 
 # Ranges methods add ranges header
 - name: 'ranges methods add ranges header'
@@ -279,6 +306,7 @@
       - '#include <ranges>'
   ts:
       - '.filter('
+  skip: [rs]
 
 # Numeric methods add numeric header
 - name: 'numeric methods add numeric header'
@@ -287,6 +315,7 @@
       - '#include <numeric>'
   ts:
       - '.reduce('
+  skip: [rs]
 
 # =============================================================================
 # Collection DSL
@@ -297,27 +326,32 @@
   input: 'ex items prima 5 pro x { scribe x }'
   ts:
       - 'for (const x of items.slice(0, 5))'
+  skip: [rs]
 
 # DSL ultima in iteration context
 - name: 'DSL ultima in iteration'
   input: 'ex items ultima 3 pro x { scribe x }'
   ts:
       - 'for (const x of items.slice(-3))'
+  skip: [rs]
 
 # DSL prima as expression
 - name: 'DSL prima as expression'
   input: 'fixum top = ex items prima 5'
   ts:
       - 'const top = items.slice(0, 5)'
+  skip: [rs]
 
 # DSL summa as expression
 - name: 'DSL summa as expression'
   input: 'fixum total = ex nums summa'
   ts:
       - 'const total = nums.reduce((a, b) => a + b, 0)'
+  skip: [rs]
 
 # DSL chained transforms
 - name: 'DSL chained transforms'
   input: 'fixum result = ex items prima 10, ultima 3'
   ts:
       - 'const result = items.slice(0, 10).slice(-3)'
+  skip: [rs]

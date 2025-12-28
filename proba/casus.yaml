@@ -14,19 +14,25 @@
   py:
       - 'if True:'
       - 'print("yes")'
+  rs:
+      - 'if true'
+      - 'println!(String::from("yes"))'
 
 - name: 'lowercase fixum keyword'
   input: 'fixum x = 1'
   ts: 'const x = 1;'
   py: 'x = 1'
+  rs: 'let x = 1;'
 
 - name: 'lowercase varia keyword'
   input: 'varia y = 2'
   ts: 'let y = 2;'
   py: 'y = 2'
+  rs: 'let mut y = 2;'
 
 - name: 'lowercase functio keyword'
   input: 'functio greet() { redde "hello" }'
+  skip: [rs]
   ts:
       - 'function greet()'
       - 'return "hello"'
@@ -46,12 +52,17 @@
       - 'while'
       - 'i < 5'
       - 'i += 1'
+  rs:
+      - 'let mut i = 0'
+      - 'while (i < 5)'
+      - 'i += 1'
 
 - name: 'lowercase de-pro keywords'
   input: |
       de items pro item {
         scribe(item)
       }
+  skip: [rs]
   ts:
       - 'for (const item in items)'
       - 'console.log(item)'
@@ -68,29 +79,34 @@
   input: 'fixum SI = "signal intelligence"'
   ts: 'const SI = "signal intelligence";'
   py: 'SI = "signal intelligence"'
+  rs: 'let SI = String::from("signal intelligence");'
 
 # FIXUM is a valid identifier, not the 'const' keyword
 - name: 'FIXUM is identifier not keyword'
   input: 'fixum FIXUM = 42'
   ts: 'const FIXUM = 42;'
   py: 'FIXUM = 42'
+  rs: 'let FIXUM = 42;'
 
 # Mixed case identifiers work
 - name: 'Verum is identifier not keyword'
   input: 'fixum Verum = "truth"'
   ts: 'const Verum = "truth";'
   py: 'Verum = "truth"'
+  rs: 'let Verum = String::from("truth");'
 
 - name: 'VERUM is identifier not keyword'
   input: 'fixum VERUM = falsum'
   ts: 'const VERUM = false;'
   py: 'VERUM = False'
+  rs: 'let VERUM = false;'
 
 # DUM as identifier
 - name: 'DUM is identifier not keyword'
   input: 'fixum DUM = "while in Latin"'
   ts: 'const DUM = "while in Latin";'
   py: 'DUM = "while in Latin"'
+  rs: 'let DUM = String::from("while in Latin");'
 
 # =============================================================================
 # Types are lowercase only
@@ -101,32 +117,38 @@
   input: 'fixum textus msg = "hello"'
   ts: 'const msg: string = "hello";'
   py: 'msg: str = "hello"'
+  rs: 'let msg: String = String::from("hello");'
 
 - name: 'lowercase numerus type'
   input: 'fixum numerus count = 42'
   ts: 'const count: number = 42;'
   py: 'count: int = 42'
+  rs: 'let count: f64 = 42;'
 
 - name: 'lowercase bivalens type'
   input: 'fixum bivalens flag = verum'
   ts: 'const flag: boolean = true;'
   py: 'flag: bool = True'
+  rs: 'let flag: bool = true;'
 
 # Array syntax with lowercase types
 - name: 'lowercase array type'
   input: 'fixum numerus[] nums = [1, 2, 3]'
   ts: 'const nums: Array<number> = [1, 2, 3];'
   py: 'nums: list[int] = [1, 2, 3]'
+  rs: 'let nums: Vec<f64> = vec![1, 2, 3];'
 
 # Map with lowercase types
 - name: 'lowercase tabula type'
   input: 'fixum tabula<textus, numerus> scores = {}'
+  skip: [rs]
   ts: 'const scores: Map<string, number> = {};'
   py: 'scores: dict[str, int] = {}'
 
 # Set with lowercase types
 - name: 'lowercase copia type'
   input: 'fixum copia<textus> names = {}'
+  skip: [rs]
   ts: 'const names: Set<string> = {};'
   py: 'names: set[str] = {}'
 
@@ -139,18 +161,21 @@
   input: 'fixum TEXTUS = "text type name"'
   ts: 'const TEXTUS = "text type name";'
   py: 'TEXTUS = "text type name"'
+  rs: 'let TEXTUS = String::from("text type name");'
 
 # NUMERUS as constant identifier
 - name: 'NUMERUS is identifier not type'
   input: 'fixum NUMERUS = 123'
   ts: 'const NUMERUS = 123;'
   py: 'NUMERUS = 123'
+  rs: 'let NUMERUS = 123;'
 
 # Textus (PascalCase) as identifier
 - name: 'Textus is identifier not type'
   input: 'fixum Textus = "PascalCase"'
   ts: 'const Textus = "PascalCase";'
   py: 'Textus = "PascalCase"'
+  rs: 'let Textus = String::from("PascalCase");'
 
 # =============================================================================
 # Function names can use any case
@@ -158,6 +183,7 @@
 
 - name: 'PascalCase function name'
   input: 'functio GetUser() { redde "user" }'
+  skip: [rs]
   ts:
       - 'function GetUser()'
       - 'return "user"'
@@ -167,6 +193,7 @@
 
 - name: 'SCREAMING_SNAKE function name'
   input: 'functio GET_CONFIG() { redde {} }'
+  skip: [rs]
   ts:
       - 'function GET_CONFIG()'
       - 'return {}'
@@ -186,6 +213,9 @@
   py:
       - 'result'
       - 'True and False'
+  rs:
+      - 'let result'
+      - 'true && false'
 
 - name: 'lowercase aut operator'
   input: 'fixum result = verum aut falsum'
@@ -195,8 +225,12 @@
   py:
       - 'result'
       - 'True or False'
+  rs:
+      - 'let result'
+      - 'true || false'
 
 - name: 'lowercase non operator'
   input: 'fixum result = non verum'
   ts: 'const result = !true;'
   py: 'result = not True'
+  rs: 'let result = !true;'

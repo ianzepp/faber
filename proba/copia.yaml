@@ -13,6 +13,9 @@
       set.adde(5)
   cpp:
       - '.insert(5)'
+  rs:
+      - 'HashSet<f64>'
+      - '.adde(5)'
   ts:
       - '.add('
 
@@ -23,6 +26,9 @@
       set.habet(5)
   cpp:
       - '.contains(5)'
+  rs:
+      - 'HashSet<f64>'
+      - '.habet(5)'
   ts:
       - '.has('
 
@@ -33,6 +39,9 @@
       set.dele(5)
   cpp:
       - '.erase(5)'
+  rs:
+      - 'HashSet<f64>'
+      - '.dele(5)'
   ts:
       - '.delete('
 
@@ -43,6 +52,9 @@
       set.longitudo()
   cpp:
       - '.size()'
+  rs:
+      - 'HashSet<f64>'
+      - '.longitudo()'
   ts:
       - '.size'
 
@@ -53,6 +65,9 @@
       set.vacua()
   cpp:
       - '.empty()'
+  rs:
+      - 'HashSet<f64>'
+      - '.vacua()'
   ts:
       - '.size === 0'
 
@@ -63,6 +78,9 @@
       set.purga()
   cpp:
       - '.clear()'
+  rs:
+      - 'HashSet<f64>'
+      - '.purga()'
   ts:
       - '.clear('
 
@@ -79,6 +97,9 @@
   cpp:
       - 'std::unordered_set'
       - '.insert('
+  rs:
+      - 'HashSet<f64>'
+      - '.unio(setB)'
   ts:
       - '[...'
 
@@ -91,6 +112,9 @@
   cpp:
       - '.contains('
       - '.insert('
+  rs:
+      - 'HashSet<f64>'
+      - '.intersectio(setB)'
   ts:
       - '.filter('
 
@@ -103,6 +127,9 @@
   cpp:
       - '!'
       - '.contains('
+  rs:
+      - 'HashSet<f64>'
+      - '.differentia(setB)'
   ts:
       - '.filter('
 
@@ -115,6 +142,9 @@
   cpp:
       - '!'
       - '.contains('
+  rs:
+      - 'HashSet<f64>'
+      - '.symmetrica(setB)'
   ts:
       - '.filter('
 
@@ -131,6 +161,9 @@
   cpp:
       - 'std::ranges::all_of'
       - '.contains('
+  rs:
+      - 'HashSet<f64>'
+      - '.subcopia(setB)'
   ts:
       - '.every('
 
@@ -142,6 +175,9 @@
       setA.supercopia(setB)
   cpp:
       - 'std::ranges::all_of'
+  rs:
+      - 'HashSet<f64>'
+      - '.supercopia(setB)'
   ts:
       - '.every('
 
@@ -156,6 +192,9 @@
       set.inLista()
   cpp:
       - 'std::vector('
+  rs:
+      - 'HashSet<f64>'
+      - '.inLista()'
   ts:
       - '[...'
 
@@ -170,5 +209,8 @@
       set.perambula(pro x { scribe x })
   cpp:
       - 'std::ranges::for_each('
+  rs:
+      - 'HashSet<f64>'
+      - '.perambula(|x|'
   ts:
       - '.forEach('

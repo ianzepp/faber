@@ -23,6 +23,9 @@
   zig:
       - 'fn salve(nomen: anytype) void'
       - 'return nomen;'
+  rs:
+      - 'fn salve(nomen: _)'
+      - 'return nomen;'
 
 # -> specifies return type annotation
 - name: 'function with return type'
@@ -37,6 +40,9 @@
   zig:
       - 'fn greet() []const u8 {'
       - 'return "hello";'
+  rs:
+      - 'fn greet() -> String'
+      - 'return String::from("hello");'
 
 # =============================================================================
 # Async Functions
@@ -57,6 +63,9 @@
   cpp:
       - 'void fetch(auto url) {'
       - 'return data;'
+  rs:
+      - 'async fn fetch(url: _)'
+      - 'return data;'
 
 # fiet is async + return type (wraps in Promise/Awaitable)
 - name: 'async function with return type'
@@ -71,6 +80,9 @@
   cpp:
       - 'std::string fetch() {'
       - 'return std::string("data");'
+  rs:
+      - 'async fn fetch() -> String'
+      - 'return String::from("data");'
 
 # =============================================================================
 # Generator Functions
@@ -89,6 +101,9 @@
   cpp:
       - 'int64_t range() {'
       - 'return 1;'
+  rs:
+      - 'fn range() -> f64'
+      - 'return 1;'
 
 # fient is async generator (wraps in AsyncGenerator/AsyncIterator)
 - name: 'async generator function'
@@ -103,6 +118,9 @@
   cpp:
       - 'std::string stream() {'
       - 'return std::string("chunk");'
+  rs:
+      - 'async fn stream() -> String'
+      - 'return String::from("chunk");'
 
 # =============================================================================
 # Yield/Await
@@ -120,6 +138,9 @@
       - '_ = try 1;'
   cpp:
       - 'int64_t range() {'
+  rs:
+      - 'fn range() -> f64'
+      - '1.await;'
 
 # cede in async context becomes await
 - name: 'cede in async function'
@@ -133,6 +154,9 @@
   cpp:
       - 'std::string fetch() {'
       - 'getData();'
+  rs:
+      - 'async fn fetch() -> String'
+      - 'getData().await;'
 
 # =============================================================================
 # Arrow Functions
@@ -147,6 +171,7 @@
       - '[&](auto x) { return x; }'
   zig:
       - '_ = @compileError("Arrow functions not supported in Zig - use ''pro x -> Type: expr'' syntax");'
+  rs: '|x| x;'
 
 # Arrow with block body
 - name: 'arrow with block'
@@ -159,6 +184,9 @@
       - '_ = @compileError("Arrow functions not supported in Zig - use ''pro x -> Type: expr'' syntax");'
   cpp:
       - '[&](auto x) {'
+      - 'return x;'
+  rs:
+      - '|x| {'
       - 'return x;'
 
 # =============================================================================
@@ -174,6 +202,7 @@
       - '_ = @compileError("Lambda requires return type annotation for Zig target: pro x -> Type: expr");'
   cpp:
       - '[&](auto x) { return (x * 2); };'
+  rs: '|x| (x * 2);'
 
 # Multiple parameters separated by comma
 - name: 'multi param lambda'
@@ -184,6 +213,7 @@
       - '_ = @compileError("Lambda requires return type annotation for Zig target: pro x -> Type: expr");'
   cpp:
       - '[&](auto x, auto y) { return (x + y); };'
+  rs: '|x, y| (x + y);'
 
 # Zero parameters - empty param list
 - name: 'zero param lambda'
@@ -194,6 +224,7 @@
       - '_ = @compileError("Lambda requires return type annotation for Zig target: pro x -> Type: expr");'
   cpp:
       - '[&]() { return 42; };'
+  rs: '|| 42;'
 
 # Lambda assigned to variable
 - name: 'lambda in variable'
@@ -204,6 +235,7 @@
       - 'const double = @compileError("Lambda requires return type annotation for Zig target: pro x -> Type: expr");'
   cpp:
       - 'const auto double = [&](auto x) { return (x * 2); };'
+  rs: 'let double = |x| (x * 2);'
 
 # Lambda passed as callback argument
 - name: 'lambda as callback'
@@ -214,6 +246,7 @@
       - 'lambda x: (x > 0)'
   cpp:
       - '(items | std::views::filter([&](auto x) { return (x > 0); }) | std::ranges::to<std::vector>());'
+  rs: 'items.filtrata(|x| (x > 0));'
 
 # =============================================================================
 # Empty Blocks
@@ -230,3 +263,4 @@
       - 'fn noop() void {}'
   cpp:
       - 'void noop() {}'
+  rs: 'fn noop() {}'

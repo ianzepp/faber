@@ -12,6 +12,7 @@
   py: '(1 + 2)'
   cpp:
       - '(1 + 2)'
+  rs: '(1 + 2);'
   zig:
       - '(1 + 2)'
 
@@ -20,10 +21,11 @@
   input: 'salve(nomen)'
   ts: 'salve(nomen);'
   py: 'salve(nomen)'
-  zig:
-      - 'salve(nomen)'
   cpp:
       - 'salve(nomen);'
+  rs: 'salve(nomen);'
+  zig:
+      - 'salve(nomen)'
 
 # Method calls on objects
 - name: 'method call'
@@ -32,16 +34,18 @@
   py: 'lista.filter(f)'
   cpp:
       - 'lista.filter(f);'
+  rs: 'lista.filter(f);'
 
 # Property access via dot notation
 - name: 'member access'
   input: 'usuario.nomen'
   ts: 'usuario.nomen;'
   py: 'usuario.nomen'
-  zig:
-      - 'usuario.nomen'
   cpp:
       - 'usuario.nomen;'
+  rs: 'usuario.nomen;'
+  zig:
+      - 'usuario.nomen'
 
 # =============================================================================
 # Logical Operators
@@ -54,6 +58,7 @@
   py: '(a and b)'
   cpp:
       - '(a && b)'
+  rs: '(a && b);'
   zig:
       - '(a and b)'
 
@@ -64,6 +69,7 @@
   py: '(a or b)'
   cpp:
       - '(a || b)'
+  rs: '(a || b);'
   zig:
       - '(a or b)'
 
@@ -75,6 +81,7 @@
       - 'a if a is not None else b'
   cpp:
       - '(a != nullptr ? a : b);'
+  rs: '(a ?? b);'
 
 # vel chains left-to-right
 - name: 'vel chains correctly'
@@ -85,6 +92,7 @@
       - 'is not None'
   cpp:
       - '((a != nullptr ? a : b) != nullptr ? (a != nullptr ? a : b) : c);'
+  rs: '((a ?? b) ?? c);'
 
 # =============================================================================
 # Bitwise Operators
@@ -95,60 +103,66 @@
   input: '5 & 3'
   ts: '(5 & 3);'
   py: '(5 & 3)'
-  zig:
-      - '(5 & 3)'
   cpp:
       - '(5 & 3);'
+  rs: '(5 & 3);'
+  zig:
+      - '(5 & 3)'
 
 # Bitwise OR - same in both targets
 - name: 'bitwise OR'
   input: '5 | 3'
   ts: '(5 | 3);'
   py: '(5 | 3)'
-  zig:
-      - '(5 | 3)'
   cpp:
       - '(5 | 3);'
+  rs: '(5 | 3);'
+  zig:
+      - '(5 | 3)'
 
 # Bitwise XOR - same in both targets
 - name: 'bitwise XOR'
   input: '5 ^ 3'
   ts: '(5 ^ 3);'
   py: '(5 ^ 3)'
-  zig:
-      - '(5 ^ 3)'
   cpp:
       - '(5 ^ 3);'
+  rs: '(5 ^ 3);'
+  zig:
+      - '(5 ^ 3)'
 
 # Bitwise NOT - same in both targets
 - name: 'bitwise NOT'
   input: '~5'
   ts: '~5;'
   py: '~5'
-  zig:
-      - '~5'
   cpp:
       - '~5;'
+  rs: '~5;'
+  zig:
+      - '~5'
 
 # Left shift - same in both targets
 - name: 'left shift'
   input: '1 << 4'
   ts: '(1 << 4);'
   py: '(1 << 4)'
-  zig:
-      - '(1 << 4)'
   cpp:
       - '(1 << 4);'
+  rs: '(1 << 4);'
+  zig:
+      - '(1 << 4)'
 
 # Right shift - same in both targets
 - name: 'right shift'
   input: '16 >> 2'
   ts: '(16 >> 2);'
   py: '(16 >> 2)'
-  zig:
-      - '(16 >> 2)'
   cpp:
       - '(16 >> 2);'
+  rs: '(16 >> 2);'
+  zig:
+      - '(16 >> 2)'
 
 # =============================================================================
 # Compound Assignment
@@ -163,11 +177,14 @@
       - 'x += 1'
   py:
       - 'x += 1'
-  zig:
-      - 'var x: i64 = 0;'
-      - 'x += 1;'
   cpp:
       - 'auto x = 0;'
+      - 'x += 1;'
+  rs:
+      - 'let mut x = 0;'
+      - 'x += 1;'
+  zig:
+      - 'var x: i64 = 0;'
       - 'x += 1;'
 
 # -= operator - same in both targets
@@ -179,11 +196,14 @@
       - 'x -= 1'
   py:
       - 'x -= 1'
-  zig:
-      - 'var x: i64 = 10;'
-      - 'x -= 1;'
   cpp:
       - 'auto x = 10;'
+      - 'x -= 1;'
+  rs:
+      - 'let mut x = 10;'
+      - 'x -= 1;'
+  zig:
+      - 'var x: i64 = 10;'
       - 'x -= 1;'
 
 # &= bitwise AND assignment
@@ -195,12 +215,15 @@
       - 'flags &= 0x0F'
   py:
       - 'flags &= 0x0F'
-  zig:
-      - 'var flags: i64 = 0xFF;'
-      - 'flags &= 0x0F;'
   cpp:
       - 'auto flags = 255;'
       - 'flags &= 15;'
+  rs:
+      - 'let mut flags = 0xFF;'
+      - 'flags &= 0x0F;'
+  zig:
+      - 'var flags: i64 = 0xFF;'
+      - 'flags &= 0x0F;'
 
 # |= bitwise OR assignment
 - name: 'compound bitwise OR'
@@ -211,12 +234,15 @@
       - 'flags |= 0x01'
   py:
       - 'flags |= 0x01'
-  zig:
-      - 'var flags: i64 = 0;'
-      - 'flags |= 0x01;'
   cpp:
       - 'auto flags = 0;'
       - 'flags |= 1;'
+  rs:
+      - 'let mut flags = 0;'
+      - 'flags |= 0x01;'
+  zig:
+      - 'var flags: i64 = 0;'
+      - 'flags |= 0x01;'
 
 # =============================================================================
 # Ternary Operator
@@ -229,6 +255,8 @@
   py: '1 if True else 0'
   cpp:
       - '(true ? 1 : 0)'
+  rs:
+      - 'if true { 1 } else { 0 }'
   zig:
       - '_ = if (true) 1 else 0;'
 
@@ -237,20 +265,24 @@
   input: 'verum sic 1 secus 0'
   ts: 'true ? 1 : 0;'
   py: '1 if True else 0'
-  zig:
-      - '_ = if (true) 1 else 0;'
   cpp:
       - '(true ? 1 : 0);'
+  rs:
+      - 'if true { 1 } else { 0 }'
+  zig:
+      - '_ = if (true) 1 else 0;'
 
 # Ternary in variable initialization
 - name: 'ternary in variable'
   input: 'varia x = verum ? 1 : 0'
   ts: 'let x = true ? 1 : 0;'
   py: 'x = 1 if True else 0'
-  zig:
-      - 'var x: i64 = if (true) 1 else 0;'
   cpp:
       - 'auto x = (true ? 1 : 0);'
+  rs:
+      - 'let mut x = if true { 1 } else { 0 };'
+  zig:
+      - 'var x: i64 = if (true) 1 else 0;'
 
 # =============================================================================
 # Comparison Operators
@@ -263,6 +295,7 @@
   py: '(a == b)'
   cpp:
       - '(a == b)'
+  rs: '(a == b);'
 
 # Inequality - same in both targets
 - name: 'inequality'
@@ -271,6 +304,7 @@
   py: '(a != b)'
   cpp:
       - '(a != b)'
+  rs: '(a != b);'
 
 # Less than - same in both targets
 - name: 'less than'
@@ -279,6 +313,7 @@
   py: '(a < b)'
   cpp:
       - '(a < b);'
+  rs: '(a < b);'
 
 # Greater than - same in both targets
 - name: 'greater than'
@@ -287,6 +322,7 @@
   py: '(a > b)'
   cpp:
       - '(a > b);'
+  rs: '(a > b);'
 
 # =============================================================================
 # Spread Operator (sparge)
@@ -299,6 +335,9 @@
   py: 'combined = [*a, *b]'
   cpp:
       - 'const auto combined = std::vector{};'
+  rs:
+      - 'let combined = vec!'
+      - 'spread'
 
 # sparge in function calls
 - name: 'spread in function call'
@@ -307,6 +346,9 @@
   py: 'fn(*args)'
   cpp:
       - 'fn();'
+  rs:
+      - 'fn('
+      - 'spread'
 
 # sparge unpacks objects (... in TS, ** in Python)
 - name: 'spread in object'
@@ -315,6 +357,9 @@
   py: 'merged = {**defaults, "x": 1}'
   cpp:
       - 'const auto merged = {.x = 1};'
+  rs:
+      - 'let merged = {'
+      - '..defaults'
 
 # =============================================================================
 # Rest Operator (ceteri)
@@ -325,14 +370,16 @@
   input: 'fixum [first, ceteri rest] = items'
   ts: 'const [first, ...rest] = items;'
   py: 'first, *rest = items'
-  zig:
-      - 'const _tmp = items'
-      - 'const first = _tmp[0]'
-      - 'const rest = _tmp[1..]'
   cpp:
       - 'const auto& _tmp = items;'
       - 'const auto& first = _tmp[0];'
       - 'const auto rest = std::vector<decltype(_tmp)::value_type>(_tmp.begin() + 1, _tmp.end());'
+  rs:
+      - 'let [first, rest@..] = items;'
+  zig:
+      - 'const _tmp = items'
+      - 'const first = _tmp[0]'
+      - 'const rest = _tmp[1..]'
 
 # ceteri as function parameter collects variadic args
 - name: 'rest in function params'
@@ -343,6 +390,9 @@
       - '*nums: list[int]'
   cpp:
       - 'void sum(const std::vector<int64_t>& nums) {'
+      - 'return 0;'
+  rs:
+      - 'fn sum(nums: Vec<f64>)'
       - 'return 0;'
 
 # =============================================================================
@@ -357,6 +407,9 @@
       - 'user.name if user is not None else None'
   cpp:
       - '(user ? user->name : std::nullopt);'
+  rs:
+      - 'user.as_ref().map'
+      - '.name'
 
 # ?[ safely accesses array elements
 - name: 'optional computed access'
@@ -366,6 +419,7 @@
       - 'arr[0] if arr is not None else None'
   cpp:
       - '(arr ? (*arr)[0] : std::nullopt);'
+  rs: 'arr.get(0);'
 
 # ?( safely calls functions
 - name: 'optional call'
@@ -375,6 +429,9 @@
       - 'callback() if callback is not None else None'
   cpp:
       - '(callback ? (*callback)() : std::nullopt);'
+  rs:
+      - 'callback.map'
+      - 'f()'
 
 # =============================================================================
 # Non-null Assertion
@@ -387,6 +444,7 @@
   py: 'user.name'
   cpp:
       - 'user->name;'
+  rs: 'user.name;'
 
 # ![ asserts non-null then indexes
 - name: 'non-null computed access'
@@ -395,6 +453,7 @@
   py: 'arr[0]'
   cpp:
       - '(*arr)[0];'
+  rs: 'arr[0];'
 
 # =============================================================================
 # Computed Member Access
@@ -407,6 +466,7 @@
   py: 'obj[key]'
   cpp:
       - 'obj[key];'
+  rs: 'obj[key];'
 
 # Literal index access
 - name: 'computed access with literal'
@@ -415,6 +475,7 @@
   py: 'arr[0]'
   cpp:
       - 'arr[0];'
+  rs: 'arr[0];'
 
 # =============================================================================
 # Negative Indexing
@@ -425,10 +486,11 @@
   input: 'fixum x = nums[-1]'
   ts: 'const x = nums.at(-1);'
   py: 'x = nums[-1]'
-  zig:
-      - 'nums[nums.len - 1]'
   cpp:
       - 'const auto x = nums[nums.size() - 1];'
+  rs: 'let x = nums[-1];'
+  zig:
+      - 'nums[nums.len - 1]'
 
 # =============================================================================
 # Slicing
@@ -439,20 +501,24 @@
   input: 'fixum x = nums[1..3]'
   ts: 'const x = nums.slice(1, 3);'
   py: 'x = nums[1:3]'
-  zig:
-      - 'nums[1..3]'
   cpp:
       - 'const auto x = std::vector<typename decltype(nums)::value_type>(nums.begin() + 1, nums.begin() + 3);'
+  rs:
+      - 'let x = nums[(1..3)];'
+  zig:
+      - 'nums[1..3]'
 
 # Inclusive range slicing (usque operator) - end+1 for both targets
 - name: 'slice with inclusive range'
   input: 'fixum x = nums[0 usque 2]'
   ts: 'const x = nums.slice(0, 3);'
   py: 'x = nums[0:3]'
-  zig:
-      - 'nums[0..3]'
   cpp:
       - 'const auto x = std::vector<typename decltype(nums)::value_type>(nums.begin() + 0, nums.begin() + 3);'
+  rs:
+      - 'let x = nums[(0..=2)];'
+  zig:
+      - 'nums[0..3]'
 
 # =============================================================================
 # Type Cast (qua)
@@ -463,12 +529,14 @@
   input: 'fixum name = data qua textus'
   ts: 'const name = (data as string);'
   py: 'name = data'
+  rs: 'let name = data as String;'
 
 # Cast member expression
 - name: 'cast member expression'
   input: 'fixum body = response.body qua objectum'
   ts: 'const body = (response.body as object);'
   py: 'body = response.body'
+  rs: 'let body = response.body as objectum;'
 
 # =============================================================================
 # Type Check (est)
@@ -481,6 +549,8 @@
       - 'typeof x === "string"'
   py:
       - 'isinstance(x, str)'
+  rs:
+      - 'let check = matches!(x, textus);'
 
 # non est negates the check
 - name: 'non est negated'
@@ -489,6 +559,8 @@
       - 'typeof x !== "number"'
   py:
       - 'not isinstance(x, int)'
+  rs:
+      - 'let check = !matches!(x, numerus);'
 
 # est with user type uses instanceof
 - name: 'est with user type instanceof'
@@ -497,6 +569,8 @@
       - 'instanceof Persona'
   py:
       - 'isinstance(obj, Persona)'
+  rs:
+      - 'let check = matches!(obj, Persona);'
 
 # =============================================================================
 # Null Check Operators
@@ -509,11 +583,14 @@
       - '(x === null)'
   py:
       - '(x is None)'
-  zig:
-      - '(x == null)'
   cpp:
       - 'if (nihilx) {'
       - 'std::print("{}\n", std::string("null"));'
+  rs:
+      - 'if x.is_none()'
+      - 'println!'
+  zig:
+      - '(x == null)'
 
 # nonnihil unary checks if value is not null
 - name: 'nonnihil unary'
@@ -522,8 +599,11 @@
       - '(x !== null)'
   py:
       - '(x is not None)'
-  zig:
-      - '(x != null)'
   cpp:
       - 'if (nonnihilx) {'
       - 'std::print("{}\n", std::string("not null"));'
+  rs:
+      - 'if x.is_some()'
+      - 'println!'
+  zig:
+      - '(x != null)'

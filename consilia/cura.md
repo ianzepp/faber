@@ -1,8 +1,8 @@
 ---
 status: partial
 targets: [ts, zig]
-note: Parser/AST done; TS codegen done; Zig curatorStack partial; curatum not implemented
-updated: 2024-12
+note: Parser/AST done; TS codegen done; Zig curatorStack partial; grammar needs update for fit/fiet
+updated: 2025-12
 ---
 
 # Cura - Resource Management
@@ -146,7 +146,7 @@ functio buildList(curatum mem, textus prefix) -> textus[] {
 Override the allocator for a single call without modifying the callee:
 
 ```fab
-cura arena() fit temp {
+cura curator fit temp {
     // Everything here uses 'temp'
     fixum a = buildList("foo")
 
@@ -184,9 +184,9 @@ Most Faber code never mentions allocators at all. Just use `cura` blocks when yo
 
 ---
 
-## Resource Cleanup (Non-Allocator)
+## Sync Resources — `cura <expr> fit <binding>`
 
-`cura` isn't just for allocators. Any resource needing cleanup works:
+For sync resource acquisition (files, locks):
 
 ```fab
 cura aperi("data.bin") fit fd {
@@ -194,14 +194,6 @@ cura aperi("data.bin") fit fd {
     process(data)
 }
 // fd closed automatically
-```
-
-```fab
-cura connect(db_url) fit conn {
-    fixum users = conn.query("SELECT * FROM users")
-    redde users
-}
-// conn closed automatically
 ```
 
 ```fab
@@ -224,12 +216,39 @@ cura aperi("data.bin") fit fd {
 
 ---
 
-## The `curator` Interface
+## Async Resources — `cura <expr> fiet <binding>`
 
-Resources implement cleanup via the `curator` interface:
+For async resource acquisition (connections, transactions):
 
 ```fab
-pactum curator {
+cura connect(db_url) fiet conn {
+    fixum users = cede conn.query("SELECT * FROM users")
+    redde users
+}
+// conn closed automatically
+```
+
+Database transactions:
+
+```fab
+cura db.transactio fiet tx {
+    in tx.accounts muta "balance = balance - ?" (amount) ubi "id = ?" (fromId)
+    in tx.accounts muta "balance = balance + ?" (amount) ubi "id = ?" (toId)
+    in tx.transfers adde (fromId: fromId, toId: toId, amount: amount)
+}
+// commit on success, rollback on error
+```
+
+The `fiet` verb signals async acquisition. Cleanup is always synchronous — async cleanup creates ordering problems.
+
+---
+
+## The Solvable Interface
+
+Resources implement cleanup via the `solve` method:
+
+```fab
+pactum Solvable {
     functio solve() -> vacuum
 }
 ```
@@ -237,7 +256,7 @@ pactum curator {
 Custom resources:
 
 ```fab
-genus TempFile implet curator {
+genus TempFile implet Solvable {
     privatum path: textus
 
     functio solve() {
@@ -253,18 +272,13 @@ cura TempFile.create() fit tmp {
 
 ---
 
-## Async Resources
+## Summary
 
-`cura` works with async acquisition:
-
-```fab
-cura cede connect(db_url) fit conn {
-    fixum result = cede conn.query(sql)
-}
-// conn closed
-```
-
-Cleanup is always synchronous. Async cleanup creates ordering problems and most resources have sync close anyway.
+| Use Case       | Syntax                          | Binding          |
+| -------------- | ------------------------------- | ---------------- |
+| Allocator      | `cura curator fit arena`        | Strategy (stack) |
+| Sync resource  | `cura mutex.lock() fit guard`   | Handle           |
+| Async resource | `cura db.transactio fiet tx`    | Handle           |
 
 ---
 
@@ -272,17 +286,31 @@ Cleanup is always synchronous. Async cleanup creates ordering problems and most 
 
 ### TypeScript
 
+Sync resource (`cura X fit Y`):
+
 ```typescript
-const fd = await open('data.bin');
+const fd = open('data.bin');
 try {
-    const data = await read(fd, 1024);
+    const data = read(fd, 1024);
     process(data);
 } finally {
     fd.solve?.();
 }
 ```
 
-Allocator constructs (`curatum` params/callsites, allocator `cura` blocks) are stripped entirely.
+Async resource (`cura X fiet Y`):
+
+```typescript
+const conn = await connect(db_url);
+try {
+    const users = await conn.query("SELECT * FROM users");
+    return users;
+} finally {
+    conn.solve?.();
+}
+```
+
+Allocator constructs (`curatum` params/callsites, `cura curator` blocks) are stripped entirely.
 
 ### Python
 
@@ -323,13 +351,22 @@ The `curatorStack` determines which allocator name appears in generated code.
 
 ## Design Decisions
 
-### Why two mechanisms?
+### Why `fit` vs `fiet`?
 
-**`cura` blocks** handle 95% of cases — scoped resource lifetime with implicit allocator threading.
+Latin conjugation of `fio` ("to become"):
 
-**`curatum`** is the escape hatch for explicit control — either in function signatures (for library authors) or at callsites (for per-call overrides).
+- `fit` — present tense, "it becomes" (sync)
+- `fiet` — future tense, "it will become" (async)
 
-Most Faber code uses only `cura` blocks.
+The verb signals whether resource acquisition is sync or async. This replaces the earlier `cura cede` syntax with a more consistent approach.
+
+### Why `curator` for allocators?
+
+The keyword `curator` (steward, caretaker) comes from the same root as `cura` (care). For allocators, the binding name (`arena`, `page`, etc.) specifies the *strategy*, not just a variable name. The compiler maps strategies to target-specific implementations.
+
+### Why the binding is both on stack and available as variable?
+
+For allocators, most operations use the `curatorStack` implicitly — Faber code stays clean. But when calling Zig code directly (interop), you need explicit access to pass the allocator. The binding provides that escape hatch.
 
 ### Why implicit allocator threading?
 
@@ -355,6 +392,20 @@ Latin `solve` means "release, free" — fitting for releasing resources. Short a
 
 ## Implementation Notes
 
+### Grammar Update Needed
+
+The parser currently uses:
+
+```ebnf
+curaStmt := 'cura' 'cede'? expression 'fit' IDENTIFIER blockStmt catchClause?
+```
+
+Should become:
+
+```ebnf
+curaStmt := 'cura' expression ('fit' | 'fiet') IDENTIFIER blockStmt catchClause?
+```
+
 ### Zig Codegen
 
 The `curatorStack` tracks the active allocator name:
@@ -367,14 +418,11 @@ function getCurator(): string {
 }
 ```
 
-Currently pushes on:
+Push on:
 
+- `cura curator fit X` block entry (using the strategy name)
 - Function entry when a `curatum` param exists
-
-Needs to also push on:
-
-- `cura` block entry (using the binding name)
-- `curatum` callsite (for that call only)
+- `curatum` callsite (for that call only, then pop)
 
 ### GC Target Codegen
 
@@ -382,4 +430,5 @@ Simply ignore:
 
 - `curatum` parameters (strip from signature and callsites)
 - `curatum` callsite annotations (strip entirely)
-- Allocator-related `cura` blocks (generate normal try/finally for cleanup, ignore allocator aspect)
+- `cura curator` blocks (strip entirely — no allocator concept)
+- Other `cura` blocks: generate try/finally with solve?.() cleanup

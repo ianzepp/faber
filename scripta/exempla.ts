@@ -20,7 +20,7 @@ const EXEMPLA = join(ROOT, 'exempla');
 const OUTPUT = join(ROOT, 'opus', 'exempla');
 const FABER = join(ROOT, 'opus', 'faber');
 
-type Target = 'ts' | 'zig' | 'py';
+type Target = 'ts' | 'zig' | 'py' | 'rs';
 
 /**
  * Recursively find all .fab files in a directory
@@ -36,8 +36,7 @@ async function findFabFiles(dir: string): Promise<string[]> {
         if (stat.isDirectory()) {
             const subFiles = await findFabFiles(fullPath);
             files.push(...subFiles);
-        }
-        else if (entry.endsWith('.fab')) {
+        } else if (entry.endsWith('.fab')) {
             files.push(fullPath);
         }
     }
@@ -49,7 +48,7 @@ async function main() {
     const args = process.argv.slice(2);
     const targetArg = args.includes('-t') ? args[args.indexOf('-t') + 1] : 'ts';
 
-    const targets: Target[] = targetArg === 'all' ? ['ts', 'zig', 'py'] : [targetArg as Target];
+    const targets: Target[] = targetArg === 'all' ? ['ts', 'zig', 'py', 'rs'] : [targetArg as Target];
 
     // Always rebuild to avoid stale executable issues
     console.log('Building faber executable...');
@@ -68,7 +67,7 @@ async function main() {
         const subdir = dirname(relativePath);
 
         for (const target of targets) {
-            const ext = target === 'ts' ? 'ts' : target === 'py' ? 'py' : 'zig';
+            const ext = { ts: 'ts', py: 'py', zig: 'zig', rs: 'rs' }[target];
             const outputDir = join(OUTPUT, target, subdir);
             const output = join(outputDir, `${name}.${ext}`);
 
@@ -79,8 +78,7 @@ async function main() {
                 const result = await $`${FABER} compile ${file} -t ${target}`.quiet();
                 await Bun.write(output, result.stdout);
                 console.log(`  ${relativePath} -> opus/exempla/${target}/${subdir}/${name}.${ext}`);
-            }
-            catch (err: any) {
+            } catch (err: any) {
                 console.error(`  ${relativePath} [${target}] FAILED`);
                 if (err.stderr) console.error(err.stderr.toString());
                 failed++;
@@ -99,8 +97,7 @@ async function main() {
         try {
             await $`npx eslint ${join(OUTPUT, 'ts')}/**/*.ts`.quiet();
             console.log('  eslint: OK');
-        }
-        catch (err: any) {
+        } catch (err: any) {
             console.error('  eslint: FAILED');
             console.error(err.stdout?.toString() || err.stderr?.toString());
             process.exit(1);
@@ -121,8 +118,7 @@ async function main() {
             try {
                 await $`zig build-exe ${file} -femit-bin=${output}`.quiet();
                 console.log(`  ${relative(OUTPUT, file)}: OK`);
-            }
-            catch (err: any) {
+            } catch (err: any) {
                 console.error(`  ${relative(OUTPUT, file)}: FAILED`);
                 const errText = err.stderr?.toString() || '';
                 // Show first error only
@@ -150,9 +146,8 @@ async function main() {
                 const fullPath = join(dir, entry);
                 const stat = statSync(fullPath);
                 if (stat.isDirectory()) {
-                    files.push(...await findPyFiles(fullPath));
-                }
-                else if (entry.endsWith('.py')) {
+                    files.push(...(await findPyFiles(fullPath)));
+                } else if (entry.endsWith('.py')) {
                     files.push(fullPath);
                 }
             }
@@ -165,8 +160,7 @@ async function main() {
         for (const file of pyFiles) {
             try {
                 await $`python3 -m py_compile ${file}`.quiet();
-            }
-            catch (err: any) {
+            } catch (err: any) {
                 console.error(`  ${relative(OUTPUT, file)}: FAILED`);
                 const errText = err.stderr?.toString() || '';
                 if (errText) console.error(`    ${errText.trim()}`);
@@ -176,10 +170,56 @@ async function main() {
 
         if (pyFailed === 0) {
             console.log(`  py_compile: OK (${pyFiles.length} files)`);
-        }
-        else {
+        } else {
             console.log(`\n${pyFailed}/${pyFiles.length} Python file(s) failed syntax check.`);
             process.exit(1);
+        }
+    }
+
+    // Verify Rust output
+    if (targets.includes('rs')) {
+        console.log('Verifying Rust...');
+        const rsDir = join(OUTPUT, 'rs');
+
+        // Find all .rs files
+        const findRsFiles = async (dir: string): Promise<string[]> => {
+            const entries = await readdir(dir);
+            const files: string[] = [];
+            for (const entry of entries) {
+                const fullPath = join(dir, entry);
+                const stat = statSync(fullPath);
+                if (stat.isDirectory()) {
+                    files.push(...(await findRsFiles(fullPath)));
+                } else if (entry.endsWith('.rs')) {
+                    files.push(fullPath);
+                }
+            }
+            return files;
+        };
+
+        const rsFiles = await findRsFiles(rsDir);
+        let rsFailed = 0;
+
+        for (const file of rsFiles) {
+            try {
+                // WHY: --emit=metadata only checks syntax, doesn't generate code
+                // WHY: --edition=2021 matches Faber's target Rust edition
+                await $`rustc --emit=metadata --edition=2021 -o /dev/null ${file}`.quiet();
+                console.log(`  ${relative(OUTPUT, file)}: OK`);
+            } catch (err: any) {
+                console.error(`  ${relative(OUTPUT, file)}: FAILED`);
+                const errText = err.stderr?.toString() || '';
+                // Show first error only
+                const firstError = errText.split('\n').slice(0, 5).join('\n');
+                if (firstError) console.error(`    ${firstError}`);
+                rsFailed++;
+            }
+        }
+
+        if (rsFailed === 0) {
+            console.log(`  rustc: OK (${rsFiles.length} files)`);
+        } else {
+            console.log(`\n${rsFailed}/${rsFiles.length} Rust file(s) failed syntax check.`);
         }
     }
 

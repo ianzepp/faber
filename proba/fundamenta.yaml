@@ -14,6 +14,8 @@
       - 'const auto x = 1'
   zig:
       - 'const m_x = 1;'
+  rs:
+      - 'let x = 1;'
 
 # varia declares a mutable binding (let in TS, simple assignment in Python)
 - name: 'let declaration'
@@ -24,6 +26,8 @@
       - 'auto nomen = std::string("Marcus")'
   zig:
       - 'var nomen: []const u8 = "Marcus";'
+  rs:
+      - 'let mut nomen = String::from("Marcus");'
 
 # Type annotations are emitted in both targets
 - name: 'const with type annotation'
@@ -34,6 +38,8 @@
       - 'const int64_t x = 42'
   zig:
       - 'const m_x: i64 = 42;'
+  rs:
+      - 'let x: f64 = 42;'
 
 # figendum is fixum + implicit await (const with async initialization)
 - name: 'const with await'
@@ -52,6 +58,10 @@
       - 'std::string fetchData() {'
       - 'return std::string("data");'
       - 'auto data = fetchData();'
+  rs:
+      - 'async fn fetchData() -> String {'
+      - 'return String::from("data");'
+      - 'let data = fetchData().await;'
 
 # variandum is varia + implicit await (let with async initialization)
 - name: 'let with await'
@@ -70,6 +80,10 @@
       - 'int64_t getResult() {'
       - 'return 42;'
       - 'auto result = getResult();'
+  rs:
+      - 'async fn getResult() -> f64 {'
+      - 'return 42;'
+      - 'let mut result = getResult().await;'
 
 # =============================================================================
 # Special Expressions
@@ -82,6 +96,7 @@
   py: 'await fetch(url)'
   cpp:
       - 'fetch(url);'
+  skip: [rs]
 
 # novum creates a new instance (new keyword in TS, direct call in Python)
 - name: 'new expression'
@@ -92,6 +107,7 @@
       - 'erratum.init(message)'
   cpp:
       - 'erratum(message);'
+  skip: [rs]
 
 # =============================================================================
 # Boolean and Null Literals
@@ -106,6 +122,8 @@
       - 'true'
   cpp:
       - 'true'
+  rs:
+      - 'true;'
 
 # falsum is the false literal
 - name: 'false literal'
@@ -116,6 +134,8 @@
       - 'false'
   cpp:
       - 'false'
+  rs:
+      - 'false;'
 
 # nihil is the null literal (null in TS, None in Python)
 - name: 'null literal'
@@ -126,6 +146,8 @@
       - 'null'
   cpp:
       - 'nullptr'
+  rs:
+      - 'None;'
 
 # =============================================================================
 # Object Literals
@@ -140,6 +162,8 @@
       - 'const x = .{}'
   cpp:
       - 'const auto x = {};'
+  rs:
+      - 'let x = {};'
 
 # Object with properties - Python uses quoted keys
 - name: 'object with properties'
@@ -151,6 +175,9 @@
       - '.aetas = 30'
   cpp:
       - 'const auto user = {.nomen = std::string("Marcus"), .aetas = 30};'
+  rs:
+      - 'nomen: String::from("Marcus")'
+      - 'aetas: 30'
 
 # Object values can be expressions; verum becomes true/True
 - name: 'object with expression values'
@@ -169,6 +196,9 @@
       - 'const data = .{ .sum = (1 + 2), .active = true };'
   cpp:
       - 'const auto data = {.sum = (1 + 2), .active = true};'
+  rs:
+      - 'sum: (1 + 2)'
+      - 'active: true'
 
 # =============================================================================
 # Array Literals
@@ -183,6 +213,8 @@
       - 'const arr = .{}'
   cpp:
       - 'const auto arr = std::vector<int>{};'
+  rs:
+      - 'let arr = vec![];'
 
 # Array with elements
 - name: 'array with elements'
@@ -193,6 +225,8 @@
       - '.{ 1, 2, 3 }'
   cpp:
       - 'const auto nums = std::vector{1, 2, 3};'
+  rs:
+      - 'let nums = vec![1, 2, 3];'
 
 # =============================================================================
 # Hex Literals
@@ -207,6 +241,8 @@
       - 'const m_x = 0xFF;'
   cpp:
       - 'const auto x = 255;'
+  rs:
+      - 'let x = 0xFF;'
 
 # Hex in binary expressions
 - name: 'hex in expression'
@@ -217,6 +253,8 @@
       - '_ = (0xFF & 0x0F);'
   cpp:
       - '(255 & 15);'
+  rs:
+      - '(0xFF & 0x0F);'
 
 # BigInt hex literals (n suffix) - Python strips suffix since ints are arbitrary precision
 - name: 'hex bigint'
@@ -227,6 +265,8 @@
       - 'const m_big = 0xFFFFFFFFFF;'
   cpp:
       - 'const auto big = 1099511627775;'
+  rs:
+      - 'let big = 0xFFFFFFFFFFni128;'
 
 # Lowercase hex is preserved
 - name: 'lowercase hex'
@@ -237,6 +277,8 @@
       - 'const m_val = 0xabcdef;'
   cpp:
       - 'const auto val = 11259375;'
+  rs:
+      - 'let val = 0xabcdef;'
 
 # =============================================================================
 # Template Literals
@@ -251,6 +293,8 @@
       - 'const m_msg = "hello world";'
   cpp:
       - 'const auto msg = std::string(hello world);'
+  rs:
+      - 'let msg = format!("hello world");'
 
 # Template interpolation syntax differs between targets
 - name: 'template with interpolation'
@@ -267,6 +311,9 @@
   cpp:
       - 'const auto name = std::string("Marcus");'
       - 'const auto greeting = std::format(Hello, {}!, name);'
+  rs:
+      - 'let name = String::from("Marcus");'
+      - 'let greeting = format!("Hello, ${name}!");'
 
 # =============================================================================
 # Scribe Statements
@@ -279,6 +326,7 @@
   py: 'print(x)'
   cpp:
       - 'std::print'
+  skip: [rs]
 
 # Multiple arguments are comma-separated
 - name: 'scribe multiple args'
@@ -289,6 +337,8 @@
       - 'std::print("{} {} {}\n"'
   zig:
       - 'std.debug.print("{s} {s} {s}\n", .{ "a", "b", "c" });'
+  rs:
+      - 'println!'
 
 # Expressions are evaluated before printing
 - name: 'scribe with expression'
@@ -301,6 +351,7 @@
       - 'x + y'
   cpp:
       - 'std::print("{}\n", (x + y));'
+  skip: [rs]
 
 # =============================================================================
 # Includes (C++)
@@ -312,12 +363,16 @@
   cpp:
       - '#include <print>'
       - '#include <string>'
+  rs:
+      - 'println!'
 
 # adfirma adds cassert include
 - name: 'cpp optional includes added when used'
   input: 'adfirma verum'
   cpp:
       - '#include <cassert>'
+  rs:
+      - 'assert!(true);'
 
 # =============================================================================
 # Main Function (C++)
@@ -329,6 +384,8 @@
   cpp:
       - 'int main() {'
       - 'return 0;'
+  rs:
+      - 'println!'
 
 # Declarations appear outside main, before it
 - name: 'cpp declarations outside main'
@@ -340,3 +397,6 @@
   cpp:
       - 'void greet()'
       - 'int main() {'
+  rs:
+      - 'fn greet()'
+      - 'greet();'

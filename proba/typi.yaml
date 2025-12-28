@@ -14,6 +14,7 @@
       - 'const ID = []const u8'
   cpp:
       - 'using ID = std::string;'
+  rs: 'type ID = String;'
 
 # Generic type aliases preserve type parameters
 - name: 'generic type alias'
@@ -24,6 +25,7 @@
       - 'const StringList = [][]const u8;'
   cpp:
       - 'using StringList = std::vector<std::string>;'
+  rs: 'type StringList = Vec<String>;'
 
 # typeof captures the type of a value (TS only - Python uses Any)
 - name: 'typeof type alias'
@@ -41,6 +43,9 @@
   cpp:
       - 'using ConfigTypus = ignotum;'
       - 'const auto config = {.debug = true};'
+  rs:
+      - 'let config = { debug: true };'
+      - 'type ConfigTypus = ignotum;'
 
 # Numeric type parameters are ignored in TS (no fixed-width integers)
 - name: 'type with numeric parameter ignored'
@@ -51,6 +56,7 @@
       - 'const SmallNum = numerus;'
   cpp:
       - 'using SmallNum = int64_t<32>;'
+  rs: 'type SmallNum = f64<32>;'
 
 # Size type parameters (i32, u64) preserved but ignored in TS
 - name: 'type with size type parameter'
@@ -61,6 +67,7 @@
       - 'const Int32 = numerus;'
   cpp:
       - 'using Int32 = int64_t<i32>;'
+  rs: 'type Int32 = f64<i32>;'
 
 # =============================================================================
 # Primitive Type Mappings
@@ -75,6 +82,7 @@
       - 'const Ratio = f64;'
   cpp:
       - 'using Ratio = double;'
+  rs: 'type Ratio = f64;'
 
 # decimus is arbitrary precision decimal (requires import)
 - name: 'decimus maps to Decimal'
@@ -89,6 +97,7 @@
       - 'const Price = f128;'
   cpp:
       - 'using Price = double;'
+  rs: 'type Price = decimus;'
 
 # octeti is byte array
 - name: 'octeti maps to Uint8Array'
@@ -99,6 +108,7 @@
       - 'const Buffer = []u8;'
   cpp:
       - 'using Buffer = std::vector<uint8_t>;'
+  rs: 'type Buffer = Vec<u8>;'
 
 # magnus is arbitrary precision integer (bigint in TS, int in Python)
 - name: 'magnus maps to bigint'
@@ -109,6 +119,7 @@
       - 'const BigNum = i128;'
   cpp:
       - 'using BigNum = magnus;'
+  rs: 'type BigNum = i128;'
 
 # magnus variable with bigint literal
 - name: 'magnus variable with literal'
@@ -119,6 +130,7 @@
       - 'const m_huge: i128 = 99999999999999999999;'
   cpp:
       - 'const magnus huge = 99999999999999999999;'
+  rs: 'let huge: i128 = 99999999999999999999ni128;'
 
 # numquam is the never type (function never returns)
 - name: 'numquam maps to never'
@@ -133,6 +145,9 @@
   cpp:
       - 'numquam moritur() {'
       - 'throw Erratum(std::string("fatal"));'
+  rs:
+      - 'fn moritur() -> numquam {'
+      - 'return Err(Erratum::new());'
 
 # ignotum is the unknown type
 - name: 'ignotum maps to unknown'
@@ -143,6 +158,7 @@
       - 'const Mystery = anytype;'
   cpp:
       - 'using Mystery = ignotum;'
+  rs: 'type Mystery = ignotum;'
 
 # ignotum variable accepts any value
 - name: 'ignotum variable'
@@ -153,6 +169,7 @@
       - 'var x: anytype = 42;'
   cpp:
       - 'ignotum x = 42;'
+  rs: 'let mut x: ignotum = 42;'
 
 # =============================================================================
 # Union Types
@@ -167,6 +184,7 @@
       - 'anytype'
   cpp:
       - 'const union value = std::string("hello");'
+  rs: 'let value: union = String::from("hello");'
 
 # unio can have multiple members
 - name: 'union type with three members'
@@ -175,6 +193,7 @@
   py: 'value: str | int | None = None'
   cpp:
       - 'const union value = nullptr;'
+  rs: 'let value: union = None;'
 
 # Type alias with union type
 - name: 'type alias with union'
@@ -185,6 +204,7 @@
       - 'const Json = anytype'
   cpp:
       - 'using Json = union;'
+  rs: 'type Json = union;'
 
 # =============================================================================
 # Nullable Types
@@ -201,6 +221,7 @@
       - 'const m_name: ?[]const u8 = null;'
   cpp:
       - 'const std::optional<std::string> name = nullptr;'
+  rs: 'let name: Option<String> = None;'
 
 # =============================================================================
 # Enums (ordo)
@@ -214,6 +235,11 @@
       - 'class color(Enum):'
       - 'rubrum = auto()'
       - 'viridis = auto()'
+  rs:
+      - 'enum color {'
+      - 'rubrum,'
+      - 'viridis,'
+      - 'caeruleum,'
 
 # Enum with explicit numeric values
 - name: 'enum with numeric values'
@@ -223,6 +249,11 @@
       - 'class status(Enum):'
       - 'pendens = 0'
       - 'actum = 1'
+  rs:
+      - 'enum status {'
+      - 'pendens = 0,'
+      - 'actum = 1,'
+      - 'finitum = 2,'
 
 # Enum with string values
 - name: 'enum with string values'
@@ -232,6 +263,10 @@
       - 'class direction(Enum):'
       - 'north = "N"'
       - 'south = "S"'
+  rs:
+      - 'enum direction {'
+      - 'north = "N",'
+      - 'south = "S",'
 
 # Enum with mixed auto and explicit values
 - name: 'enum with mixed values'
@@ -242,6 +277,11 @@
       - 'a = auto()'
       - 'b = 5'
       - 'c = auto()'
+  rs:
+      - 'enum mixed {'
+      - 'a,'
+      - 'b = 5,'
+      - 'c,'
 
 # Accessing enum members via dot notation
 - name: 'enum member access'
@@ -254,6 +294,9 @@
   py:
       - 'class color(Enum):'
       - 'print(color.rubrum)'
+  rs:
+      - 'enum color {'
+      - 'println!(color.rubrum);'
 
 # =============================================================================
 # Type Checks (est)
@@ -266,6 +309,8 @@
       - 'typeof x === "string"'
   py:
       - 'isinstance(x, str)'
+  rs:
+      - 'matches!(x, textus)'
 
 # non est negates the type check
 - name: 'non est with primitive'
@@ -274,6 +319,8 @@
       - 'typeof x !== "number"'
   py:
       - 'not isinstance(x, int)'
+  rs:
+      - '!matches!(x, numerus)'
 
 # est with user type uses instanceof in both targets
 - name: 'est with user type'
@@ -282,3 +329,5 @@
       - 'instanceof Persona'
   py:
       - 'isinstance(obj, Persona)'
+  rs:
+      - 'matches!(obj, Persona)'

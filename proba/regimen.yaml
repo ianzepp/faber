@@ -21,6 +21,9 @@
       - 'if (true)'
   zig:
       - 'if (true)'
+  rs:
+      - 'if true'
+      - 'println!(String::from("yes"))'
 
 # aliter is the else keyword
 - name: 'if with else'
@@ -43,6 +46,9 @@
   zig:
       - 'if (false)'
       - '} else {'
+  rs:
+      - 'if false'
+      - '} else {'
 
 # aliter si chains become else if/elif
 - name: 'if-elif-else chain'
@@ -62,6 +68,10 @@
       - 'if ((x == 1)) {'
       - 'a();'
       - '} else if ((x == 2)) {'
+  rs:
+      - 'if (x == 1)'
+      - 'else if (x == 2)'
+      - 'else {'
 
 # sin is an alias for aliter si (else if)
 - name: 'sin alias for else-if'
@@ -77,6 +87,10 @@
       - 'if (x == 1):'
       - 'elif (x == 2):'
       - 'else:'
+  rs:
+      - 'if (x == 1)'
+      - 'else if (x == 2)'
+      - 'else {'
 
 # =============================================================================
 # While Loops
@@ -96,6 +110,8 @@
       - 'while (true)'
   zig:
       - 'while (true)'
+  rs:
+      - 'while true'
 
 # =============================================================================
 # For Loops
@@ -113,6 +129,8 @@
       - 'for numero in numeros:'
   cpp:
       - 'for (auto& numero : numeros)'
+  rs:
+      - 'for numero in numeros'
 
 # de...pro is for-in (iterate keys/indices)
 - name: 'for-in loop'
@@ -127,6 +145,8 @@
   cpp:
       - 'for (auto& item : lista) {'
       - 'std::print("{}\n", item);'
+  rs:
+      - 'for item in lista'
 
 # =============================================================================
 # Range Loops
@@ -148,6 +168,8 @@
       - 'var i: usize = 0'
       - 'while (i < 10)'
       - '(i += 1)'
+  rs:
+      - 'for i in 0..10'
 
 # per specifies step size
 - name: 'range with step'
@@ -165,6 +187,8 @@
   cpp:
       - 'for (int64_t i = 0; i < 10; i += 2) {'
       - 'std::print("{}\n", i);'
+  rs:
+      - 'for i in 0..10'
 
 # usque creates inclusive range (0 usque 10 = 0 to 10)
 - name: 'inclusive range loop'
@@ -180,6 +204,8 @@
       - 'for (int64_t i = 0; i <= 10; i += 1)'
   zig:
       - 'while (i <= 10)'
+  rs:
+      - 'for i in 0..=10'
 
 # =============================================================================
 # Break and Continue
@@ -198,6 +224,9 @@
   zig:
       - 'while (true) {'
       - 'break;'
+  rs:
+      - 'while true'
+      - 'break;'
 
 # perge is continue
 - name: 'continue statement'
@@ -211,6 +240,9 @@
       - 'continue'
   zig:
       - 'while (true) {'
+      - 'continue;'
+  rs:
+      - 'while true'
       - 'continue;'
 
 # =============================================================================
@@ -230,6 +262,9 @@
   cpp:
       - 'void f() {'
       - 'return 42;'
+  rs:
+      - 'fn f()'
+      - 'return 42;'
 
 # redde without value returns undefined/None
 - name: 'return without value'
@@ -247,6 +282,9 @@
   cpp:
       - 'void f() {'
       - 'return;'
+  rs:
+      - 'fn f()'
+      - 'return;'
 
 # =============================================================================
 # Assert
@@ -263,6 +301,7 @@
       - 'std.debug.assert'
   cpp:
       - 'assert((x > 0));'
+  rs: 'assert!((x > 0));'
 
 # adfirma with message includes that in the error
 - name: 'assert with message'
@@ -275,6 +314,8 @@
       - '@panic("x must be positive")'
   cpp:
       - 'assert(((x > 0)) && std::string("x must be positive"));'
+  rs:
+      - 'assert!((x > 0), String::from("x must be positive"))'
 
 # =============================================================================
 # Elige (Switch/Match)
@@ -301,6 +342,10 @@
       - 'switch (x) {'
       - 'case 1: {'
       - 'a();'
+  rs:
+      - 'match x'
+      - '1 => a()'
+      - '2 => b()'
 
 # aliter in elige is the default case
 - name: 'elige with default'
@@ -323,6 +368,10 @@
       - 'switch (x) {'
       - 'case 1: {'
       - 'a();'
+  rs:
+      - 'match x'
+      - '1 => a()'
+      - '_ => c()'
 
 # =============================================================================
 # Guard Statements
@@ -346,6 +395,9 @@
   cpp:
       - 'if ((x == nullptr)) {'
       - 'return;'
+  rs:
+      - 'if (x == None)'
+      - 'return;'
 
 # =============================================================================
 # Praefixum (Compile-time Blocks)
@@ -360,6 +412,8 @@
       - '(256 * 4)'
   zig:
       - 'comptime ((256 * 4))'
+  rs:
+      - 'let size = const { (256 * 4) }'
 
 # praefixum block form wraps in IIFE for compile-time evaluation
 - name: 'praefixum block form'
@@ -381,3 +435,7 @@
   zig:
       - 'comptime blk:'
       - 'break :blk (x * 2)'
+  rs:
+      - 'let result = const {'
+      - 'let mut x = 10'
+      - 'return (x * 2)'

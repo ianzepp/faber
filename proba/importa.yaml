@@ -14,6 +14,7 @@
       - 'const _@hono/hono = @import("@hono/hono");'
       - 'const Hono = _@hono/hono.Hono;'
       - 'const Context = _@hono/hono.Context;'
+  rs: 'use @hono/hono::{Hono, Context};'
 
 # Wildcard import
 - name: 'wildcard import'
@@ -24,6 +25,7 @@
   py: 'import @lodash/lodash'
   zig:
       - 'const @lodash/lodash = @import("@lodash/lodash");'
+  rs: 'use @lodash/lodash::*;'
 
 # =============================================================================
 # Norma Intrinsics (TS-specific)
@@ -40,6 +42,9 @@
   zig:
       - 'const _norma/tempus = @import("norma/tempus");'
       - 'const nunc = _norma/tempus.nunc;'
+  rs:
+      not_contains:
+          - 'use'
 
 # nunc() becomes Date.now() in TS
 - name: 'nunc compiles to Date.now'
@@ -60,6 +65,11 @@
       - 'const now = nunc();'
   cpp:
       - 'const auto now = nunc();'
+  rs:
+      contains:
+          - 'let now = nunc();'
+      not_contains:
+          - 'use'
 
 # SECUNDUM is a duration constant (1000ms)
 - name: 'SECUNDUM compiles to literal'
@@ -80,6 +90,11 @@
       - 'const sec = SECUNDUM;'
   cpp:
       - 'const auto sec = SECUNDUM;'
+  rs:
+      contains:
+          - 'let sec = SECUNDUM;'
+      not_contains:
+          - 'use'
 
 # dormi() becomes Promise with setTimeout
 - name: 'dormi compiles to Promise setTimeout'
@@ -106,6 +121,12 @@
   cpp:
       - 'void wait() {'
       - 'dormi((5 * SECUNDUM));'
+  rs:
+      contains:
+          - 'async fn wait() {'
+          - 'dormi((5 * SECUNDUM)).await;'
+      not_contains:
+          - 'use'
 
 # All duration constants compile to millisecond literals
 - name: 'duration constants compile to literals'
@@ -148,3 +169,12 @@
       - 'const auto a = MILLISECUNDUM;'
       - 'const auto b = SECUNDUM;'
       - 'const auto c = MINUTUM;'
+  rs:
+      contains:
+          - 'let a = MILLISECUNDUM;'
+          - 'let b = SECUNDUM;'
+          - 'let c = MINUTUM;'
+          - 'let d = HORA;'
+          - 'let e = DIES;'
+      not_contains:
+          - 'use'

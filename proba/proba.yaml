@@ -12,6 +12,9 @@
   ts:
       - 'describe("Suite"'
       - '() => {'
+  rs:
+      - '#[cfg(test)]'
+      - 'mod tests {'
 
 # probandum containing proba tests
 - name: 'probandum with proba'
@@ -22,6 +25,7 @@
   ts:
       - 'describe("Math"'
       - 'test("adds"'
+  skip: [rs]
 
 # Nested probandum blocks
 - name: 'nested probandum'
@@ -35,6 +39,14 @@
       - 'describe("Outer"'
       - 'describe("Inner"'
       - 'test("test"'
+  rs:
+      - '// Test suite: Outer'
+      - '#[cfg(test)]'
+      - 'mod tests {'
+      - '// Test suite: Inner'
+      - '#[test]'
+      - 'fn test()'
+      - 'assert!(true)'
 
 # =============================================================================
 # Proba (test)
@@ -46,18 +58,27 @@
   ts:
       - 'test("test name"'
       - '() => {'
+  rs:
+      - '#[test]'
+      - 'fn test_name()'
+      - 'assert!(true)'
 
 # proba omitte creates a skipped test
 - name: 'proba omitte'
   input: 'proba omitte "reason" "skipped" { adfirma verum }'
   ts:
       - 'test.skip("reason: skipped"'
+  rs:
+      - '#[ignore]'
+      - '#[test]'
+      - 'fn skipped()'
 
 # proba futurum creates a todo test
 - name: 'proba futurum'
   input: 'proba futurum "later" "pending" { }'
   ts:
       - 'test.todo("later: pending"'
+  rs: '// TODO: pending'
 
 # adfirma in proba generates assertion
 - name: 'proba with adfirma'
@@ -66,6 +87,7 @@
       - 'test("math"'
       - 'if (!('
       - 'throw new Error'
+  skip: [rs]
 
 # =============================================================================
 # Cura Ante/Post (beforeEach/afterEach)
@@ -80,6 +102,7 @@
   ts:
       - 'beforeEach(() => {'
       - 'x = 0'
+  skip: [rs]
 
 # cura ante omnia runs before all tests
 - name: 'cura ante omnia'
@@ -90,6 +113,7 @@
   ts:
       - 'beforeAll(() => {'
       - 'db = connect()'
+  skip: [rs]
 
 # cura post runs after each test
 - name: 'cura post'
@@ -100,6 +124,7 @@
   ts:
       - 'afterEach(() => {'
       - 'cleanup()'
+  skip: [rs]
 
 # cura post omnia runs after all tests
 - name: 'cura post omnia'
@@ -110,6 +135,7 @@
   ts:
       - 'afterAll(() => {'
       - 'db.close()'
+  skip: [rs]
 
 # =============================================================================
 # Full Test Suite
@@ -132,6 +158,7 @@
       - 'test("inserts"'
       - 'afterEach(() => {'
       - 'afterAll(() => {'
+  skip: [rs]
 
 # Multiple tests in one suite
 - name: 'multiple tests in suite'
@@ -145,6 +172,7 @@
       - 'test("adds"'
       - 'test("subtracts"'
       - 'test("multiplies"'
+  skip: [rs]
 
 # Mixed skip and todo tests
 - name: 'mixed skip and todo tests'
@@ -158,6 +186,15 @@
       - 'test("works"'
       - 'test.skip("broken: skip this"'
       - 'test.todo("later: todo this"'
+  rs:
+      - '#[cfg(test)]'
+      - 'mod tests {'
+      - '#[test]'
+      - 'fn works()'
+      - 'assert!(true)'
+      - '#[ignore]'
+      - 'fn skip_this()'
+      - '// TODO: todo this'
 
 # =============================================================================
 # Standalone proba and cura
@@ -168,12 +205,14 @@
   input: 'proba "standalone" { adfirma 1 est 1 }'
   ts:
       - 'test("standalone"'
+  skip: [rs]
 
 # cura at top level
 - name: 'cura at top level'
   input: 'cura ante { setup() }'
   ts:
       - 'beforeEach(() => {'
+  skip: [rs]
 
 # =============================================================================
 # Cura Statement (Resource Management)
@@ -188,6 +227,7 @@
       - 'lege(fd)'
       - 'finally {'
       - 'fd.solve?.()'
+  skip: [rs]
 
 # cura with async acquisition
 - name: 'cura with async'
@@ -197,6 +237,7 @@
       - 'try {'
       - 'finally {'
       - 'conn.solve?.()'
+  skip: [rs]
 
 # cura with cape adds catch block
 - name: 'cura with cape'
@@ -209,6 +250,7 @@
       - 'console.warn(err)'
       - 'finally {'
       - 'guard.solve?.()'
+  skip: [rs]
 
 # cura with method call resource
 - name: 'cura method call resource'
@@ -216,6 +258,7 @@
   ts:
       - 'const guard = mutex.lock()'
       - 'guard.solve?.()'
+  skip: [rs]
 
 # Nested cura statements
 - name: 'nested cura'
@@ -230,6 +273,7 @@
       - 'const output = aperi("output.txt")'
       - 'input.solve?.()'
       - 'output.solve?.()'
+  skip: [rs]
 
 # cura with async and cape
 - name: 'cura async with cape'
@@ -246,3 +290,4 @@
       - 'console.log("Error:", err)'
       - 'finally {'
       - 'conn.solve?.()'
+  skip: [rs]
