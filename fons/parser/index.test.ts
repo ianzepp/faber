@@ -3240,7 +3240,7 @@ describe('parser', () => {
             });
 
             test('cura with async acquisition', () => {
-                const { program } = parseCode('cura cede connect(url) fit conn { cede query(conn) }');
+                const { program } = parseCode('cura connect(url) fiet conn { cede query(conn) }');
                 const stmt = program!.body[0] as any;
 
                 expect(stmt.type).toBe('CuraStatement');
@@ -3286,7 +3286,7 @@ describe('parser', () => {
 
             test('cura with async and cape', () => {
                 const { program } = parseCode(`
-                    cura cede connect(db_url) fit conn {
+                    cura connect(db_url) fiet conn {
                         cede conn.query(sql)
                     } cape err {
                         scribe "Error:", err
@@ -3307,6 +3307,35 @@ describe('parser', () => {
 
                 expect(program!.body[0]!.type).toBe('CuraBlock');
                 expect(program!.body[1]!.type).toBe('CuraStatement');
+            });
+
+            test('cura with pro keyword (neutral binding)', () => {
+                const { program } = parseCode('cura mutex.lock() pro guard { counter += 1 }');
+                const stmt = program!.body[0] as any;
+
+                expect(stmt.type).toBe('CuraStatement');
+                expect(stmt.async).toBe(false);
+                expect(stmt.binding.name).toBe('guard');
+            });
+
+            test('cura with type annotation', () => {
+                const { program } = parseCode('cura aperi("config.json") fit File fd { lege(fd) }');
+                const stmt = program!.body[0] as any;
+
+                expect(stmt.type).toBe('CuraStatement');
+                expect(stmt.typeAnnotation).not.toBeUndefined();
+                expect(stmt.typeAnnotation.name).toBe('File');
+                expect(stmt.binding.name).toBe('fd');
+            });
+
+            test('cura with fiet and type annotation', () => {
+                const { program } = parseCode('cura connect(url) fiet Connection conn { query(conn) }');
+                const stmt = program!.body[0] as any;
+
+                expect(stmt.type).toBe('CuraStatement');
+                expect(stmt.async).toBe(true);
+                expect(stmt.typeAnnotation?.name).toBe('Connection');
+                expect(stmt.binding.name).toBe('conn');
             });
         });
     });

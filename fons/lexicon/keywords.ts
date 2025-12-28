@@ -118,6 +118,11 @@ export const keywords: KeywordEntry[] = [
     //      Used for test setup/teardown: cura ante { }, cura post { }
     //      Also for scoped resources: cura aperi "file" fit fd { }
     { latin: 'cura', meaning: 'care', category: 'control' },
+    // WHY: Curator kinds for cura statements - explicit resource type
+    //      arena = arena allocator (sand, open space)
+    //      page = page allocator (pagina)
+    { latin: 'arena', meaning: 'arena', category: 'control' },
+    { latin: 'page', meaning: 'page', category: 'control' },
     { latin: 'tempta', meaning: 'try', category: 'control' },
     { latin: 'cape', meaning: 'catch', category: 'control' },
     { latin: 'demum', meaning: 'finally', category: 'control' },

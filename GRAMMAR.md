@@ -995,19 +995,24 @@ cura post omnia { db.close() }
 ### Cura Statement
 
 ```ebnf
-curaStmt := 'cura' 'cede'? expression 'fit' IDENTIFIER blockStmt catchClause?
+curaStmt := 'cura' curatorKind? expression? ('pro' | 'fit' | 'fiet') typeAnnotation? IDENTIFIER blockStmt catchClause?
+curatorKind := 'arena' | 'page'
 ```
 
-> Latin "cura" (care) + "fit" (it becomes) for scoped resources.
-> Reads as: "Care for [resource] as [name] { use it }"
+> Latin "cura" (care) + binding verb for scoped resources.
+> - pro: neutral binding ("for")
+> - fit: sync binding ("it becomes")
+> - fiet: async binding ("it will become")
+> Curator kinds declare explicit allocator types (arena, page).
 > Guarantees cleanup via solve() on scope exit.
 
 **Examples:**
 
 ```fab
-cura aperi("data.bin") fit fd { lege(fd) }
-cura cede connect(url) fit conn { cede conn.query(sql) }
-cura mutex.lock() fit guard { counter += 1 } cape err { mone(err) }
+cura arena fit mem { ... }                    // arena allocator
+cura page fit mem { ... }                     // page allocator
+cura aperi("data.bin") fit fd { lege(fd) }   // generic resource
+cura connect(url) fiet conn { ... }          // async resource
 ```
 
 ### Block Statement

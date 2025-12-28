@@ -9,7 +9,7 @@
 #   cura post { ... }           -- afterEach (runs after each test)
 #   cura post omnia { ... }     -- afterAll (runs after all tests)
 #   cura resource fit binding { use } -- scoped resource with cleanup
-#   cura cede asyncRes fit binding { use } -- async scoped resource
+#   cura asyncRes fiet binding { use } -- async scoped resource
 #
 # Note: Only implemented for TS and Rust targets
 
@@ -115,10 +115,10 @@
       - "{"
       - "lege(fd);"
 
-# Async resource with cede
+# Async resource with fiet
 - name: cura with async resource
   faber: |
-    cura cede connect(url) fit conn {
+    cura connect(url) fiet conn {
       cede conn.query(sql)
     }
   expect:
@@ -241,7 +241,7 @@
 # Async resource with catch and multiple operations
 - name: async cura with cape and operations
   faber: |
-    cura cede acquire(lock) fit handle {
+    cura acquire(lock) fiet handle {
       varia data = cede fetch()
       process(data)
       redde data

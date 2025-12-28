@@ -142,6 +142,7 @@ import type {
     ProbaModifier,
     CuraBlock,
     CuraTiming,
+    CuratorKind,
     CuraStatement,
     PraefixumExpression,
     CollectionDSLTransform,
@@ -2874,30 +2875,64 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse cura statement (resource management).
      *
      * GRAMMAR:
-     *   curaStmt := 'cura' 'cede'? expression 'fit' IDENTIFIER blockStmt catchClause?
+     *   curaStmt := 'cura' curatorKind? expression? ('pro' | 'fit' | 'fiet') typeAnnotation? IDENTIFIER blockStmt catchClause?
+     *   curatorKind := 'arena' | 'page'
      *
-     * WHY: Latin "cura" (care) + "fit" (it becomes) for scoped resources.
-     *      Reads as: "Care for [resource] as [name] { use it }"
+     * WHY: Latin "cura" (care) + binding verb for scoped resources.
+     *      - pro: neutral binding ("for")
+     *      - fit: sync binding ("it becomes")
+     *      - fiet: async binding ("it will become")
+     *      Curator kinds declare explicit allocator types (arena, page).
      *      Guarantees cleanup via solve() on scope exit.
      *
      * Examples:
-     *   cura aperi("data.bin") fit fd { lege(fd) }
-     *   cura cede connect(url) fit conn { cede conn.query(sql) }
-     *   cura mutex.lock() fit guard { counter += 1 } cape err { mone(err) }
+     *   cura arena fit mem { ... }                    // arena allocator
+     *   cura page fit mem { ... }                     // page allocator
+     *   cura aperi("data.bin") fit fd { lege(fd) }   // generic resource
+     *   cura connect(url) fiet conn { ... }          // async resource
      */
     function parseCuraStatement(): CuraStatement {
         const position = peek().position;
 
         expectKeyword('cura', ParserErrorCode.ExpectedKeywordCura);
 
-        // Check for async acquisition: cura cede <expr>
-        const async = matchKeyword('cede');
+        // Check for curator kind: arena or page
+        // WHY: Explicit curator kinds declare allocator type for non-GC targets
+        let curatorKind: CuratorKind | undefined;
+        if (matchKeyword('arena')) {
+            curatorKind = 'arena';
+        } else if (matchKeyword('page')) {
+            curatorKind = 'page';
+        }
 
-        // Parse resource acquisition expression
-        const resource = parseExpression();
+        // Parse optional resource acquisition expression
+        // WHY: For arena/page, expression is optional (they create their own allocator)
+        //      For generic resources, expression is required
+        let resource: Expression | undefined;
+        if (!checkKeyword('pro') && !checkKeyword('fit') && !checkKeyword('fiet')) {
+            resource = parseExpression();
+        }
 
-        // Expect 'fit' keyword for binding
-        expectKeyword('fit', ParserErrorCode.ExpectedKeywordFit);
+        // Expect binding verb: pro, fit, or fiet
+        // WHY: pro is neutral, fit is sync, fiet is async (matches lambda syntax)
+        let async = false;
+        if (matchKeyword('pro')) {
+            async = false;
+        } else if (matchKeyword('fit')) {
+            async = false;
+        } else if (matchKeyword('fiet')) {
+            async = true;
+        } else {
+            reportError(ParserErrorCode.ExpectedKeywordFit, `expected 'pro', 'fit', or 'fiet', got '${peek().value}'`);
+        }
+
+        // Optional type annotation before binding identifier
+        // WHY: Allows explicit typing: cura aperi("file") fit File fd { ... }
+        // Detection: if two identifiers before '{', first is type, second is binding
+        let typeAnnotation: TypeAnnotation | undefined;
+        if (check('IDENTIFIER') && peek(1).type === 'IDENTIFIER') {
+            typeAnnotation = parseTypeAnnotation();
+        }
 
         // Parse binding identifier
         const binding = parseIdentifier();
@@ -2911,7 +2946,7 @@ export function parse(tokens: Token[]): ParserResult {
             catchClause = parseCapeClause();
         }
 
-        return { type: 'CuraStatement', resource, binding, async, body, catchClause, position };
+        return { type: 'CuraStatement', curatorKind, resource, binding, typeAnnotation, async, body, catchClause, position };
     }
 
     /**

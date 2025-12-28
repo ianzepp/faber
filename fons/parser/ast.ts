@@ -1193,6 +1193,16 @@ export interface ProbaStatement extends BaseNode {
 export type CuraTiming = 'ante' | 'post';
 
 /**
+ * Curator kinds for cura statements.
+ *
+ * WHY: Explicit curator kind declares resource management type.
+ *      - arena: Arena allocator (memory freed on scope exit)
+ *      - page: Page allocator (memory freed on scope exit)
+ *      - (future: curator, liber, transactio, mutex, conexio)
+ */
+export type CuratorKind = 'arena' | 'page';
+
+/**
  * Resource management / test setup-teardown block.
  *
  * GRAMMAR (in EBNF):
@@ -1232,33 +1242,42 @@ export interface CuraBlock extends BaseNode {
  * Resource management statement.
  *
  * GRAMMAR (in EBNF):
- *   curaStmt := 'cura' 'cede'? expression 'fit' IDENTIFIER blockStmt catchClause?
+ *   curaStmt := 'cura' curatorKind? expression? ('pro' | 'fit' | 'fiet') typeAnnotation? IDENTIFIER blockStmt catchClause?
+ *   curatorKind := 'arena' | 'page'
  *
- * INVARIANT: resource is the acquisition expression.
- * INVARIANT: binding is the identifier that receives the resource.
- * INVARIANT: async flag indicates whether acquisition uses cede (await).
+ * INVARIANT: curatorKind is optional; when present, declares allocator type.
+ * INVARIANT: resource is optional for allocator kinds (arena/page create their own).
+ * INVARIANT: binding is the identifier that receives the resource/allocator.
+ * INVARIANT: typeAnnotation is optional explicit type for the binding.
+ * INVARIANT: async flag indicates fiet (async) vs pro/fit (sync).
  * INVARIANT: body is the scoped block where resource is used.
  * INVARIANT: catchClause is optional error handling.
  *
- * WHY: Latin "cura" (care, concern) + "fit" (it becomes) for scoped resources.
- *      Reads as: "Care for [resource] as [name] { use it }"
+ * WHY: Latin "cura" (care, concern) + binding verb for scoped resources.
+ *      - pro: neutral binding ("for")
+ *      - fit: sync binding ("it becomes")
+ *      - fiet: async binding ("it will become")
  *      Guarantees cleanup via solve() on scope exit.
  *
  * Target mappings:
- *   TypeScript: try { } finally { binding.solve?.(); }
- *   Python:     with expr as binding: ...
- *   Zig:        defer binding.solve();
+ *   TypeScript: try { } finally { binding.solve?.(); } (allocators stripped)
+ *   Python:     with expr as binding: ... (allocators stripped)
+ *   Zig:        ArenaAllocator / PageAllocator with defer deinit()
  *   Rust:       RAII / Drop at scope end
  *
  * Examples:
- *   cura aperi("data.bin") fit fd { lege(fd) }
- *   cura cede connect(url) fit conn { cede conn.query(sql) }
- *   cura mutex.lock() fit guard { counter += 1 } cape err { mone(err) }
+ *   cura arena fit mem { ... }                    // arena allocator
+ *   cura page fit mem { ... }                     // page allocator
+ *   cura aperi("data.bin") fit fd { lege(fd) }   // generic resource
+ *   cura connect(url) fiet conn { ... }          // async resource
+ *   cura aperi("config.json") fit File fd { }    // with type annotation
  */
 export interface CuraStatement extends BaseNode {
     type: 'CuraStatement';
-    resource: Expression;
+    curatorKind?: CuratorKind;
+    resource?: Expression;
     binding: Identifier;
+    typeAnnotation?: TypeAnnotation;
     async: boolean;
     body: BlockStatement;
     catchClause?: CapeClause;

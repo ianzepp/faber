@@ -33,6 +33,7 @@ import { genIaceStatement } from './statements/iace';
 import { genScribeStatement } from './statements/scribe';
 import { genTemptaStatement } from './statements/tempta';
 import { genFacBlockStatement } from './statements/fac';
+import { genCuraStatement } from './statements/cura';
 
 // Expression handlers
 import { genIdentifier } from './expressions/identifier';
@@ -280,6 +281,8 @@ export class ZigGenerator {
                 return genTemptaStatement(node, this);
             case 'FacBlockStatement':
                 return genFacBlockStatement(node, this);
+            case 'CuraStatement':
+                return genCuraStatement(node, this);
             case 'BlockStatement':
                 return this.genBlockStatementContent(node);
             case 'ExpressionStatement':

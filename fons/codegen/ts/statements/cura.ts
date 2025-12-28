@@ -51,9 +51,16 @@ export function genCuraBlock(node: CuraBlock, g: TsGenerator, semi: boolean): st
 }
 
 export function genCuraStatement(node: CuraStatement, g: TsGenerator, semi: boolean): string {
+    // For allocator curator kinds (arena/page), just emit the block contents
+    // WHY: GC targets don't need allocator management, memory is automatic
+    if (node.curatorKind === 'arena' || node.curatorKind === 'page') {
+        return genBlockStatement(node.body, g);
+    }
+
+    // Generic resource management with try/finally
     const lines: string[] = [];
     const binding = node.binding.name;
-    const resource = g.genExpression(node.resource);
+    const resource = node.resource ? g.genExpression(node.resource) : 'undefined';
     const awaitPrefix = node.async ? 'await ' : '';
 
     // Opening block scope

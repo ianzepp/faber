@@ -27,8 +27,14 @@ export function genCuraBlock(node: CuraBlock, g: RsGenerator): string {
 }
 
 export function genCuraStatement(node: CuraStatement, g: RsGenerator): string {
+    // For allocator curator kinds (arena/page), just emit the block contents
+    // WHY: Rust has its own allocator mechanisms, we strip these for now
+    if (node.curatorKind === 'arena' || node.curatorKind === 'page') {
+        return genBlockStatement(node.body, g);
+    }
+
     const binding = node.binding.name;
-    const resource = g.genExpression(node.resource);
+    const resource = node.resource ? g.genExpression(node.resource) : 'Default::default()';
     const awaitSuffix = node.async ? '.await' : '';
     const body = genBlockStatement(node.body, g);
 
