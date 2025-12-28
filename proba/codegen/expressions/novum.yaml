@@ -1,0 +1,53 @@
+# Novum expressions - new/constructor calls
+# Maps Faber novum to target-language object instantiation
+#
+# Note: ts/py use exact match; rs/cpp/zig use contains (they wrap in main)
+
+- name: novum without arguments
+  faber: fixum p = novum Persona
+  expect:
+    ts: "const p = new Persona();"
+    py: "p = Persona()"
+    rs:
+      - "let p = Persona::new();"
+    cpp:
+      - "Persona{}"
+    zig:
+      - "Persona.init(.{})"
+
+- name: novum with positional arguments
+  faber: 'fixum e = novum Error("message")'
+  expect:
+    ts: 'const e = new Error("message");'
+    py: 'e = Error("message")'
+    rs:
+      - 'let e = Error::new();'
+    cpp:
+      - 'Error(std::string("message"))'
+    zig:
+      - 'Error.init("message")'
+
+- name: novum with object literal overrides
+  faber: 'fixum u = novum User { nomen: "Marcus", aetas: 30 }'
+  expect:
+    ts: 'const u = new User({ nomen: "Marcus", aetas: 30 });'
+    py: 'u = User({"nomen": "Marcus", "aetas": 30})'
+    rs:
+      - 'let u = User { nomen: String::from("Marcus"), aetas: 30 };'
+    cpp:
+      - 'User{.nomen = '
+      - '.aetas = 30}'
+    zig:
+      - 'User.init(.{ .nomen = "Marcus", .aetas = 30 })'
+
+- name: novum with single property override
+  faber: 'fixum item = novum Item { pretium: 99 }'
+  expect:
+    ts: 'const item = new Item({ pretium: 99 });'
+    py: 'item = Item({"pretium": 99})'
+    rs:
+      - 'let item = Item { pretium: 99 };'
+    cpp:
+      - 'Item{.pretium = 99}'
+    zig:
+      - 'Item.init(.{ .pretium = 99 })'

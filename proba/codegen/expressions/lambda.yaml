@@ -1,0 +1,62 @@
+# Lambda expressions - Latin pro syntax for lambdas
+# Maps Faber pro/redde to target-language lambda equivalents
+
+- name: single param lambda
+  faber: pro x redde x * 2
+  expect:
+    ts: "(x) => (x * 2);"
+    py: "lambda x: (x * 2)"
+    rs:
+      - "|x| (x * 2);"
+    cpp:
+      - "[&](auto x) { return (x * 2); };"
+    zig:
+      - "@compileError"
+
+- name: multi param lambda
+  faber: pro x, y redde x + y
+  expect:
+    ts: "(x, y) => (x + y);"
+    py: "lambda x, y: (x + y)"
+    rs:
+      - "|x, y| (x + y);"
+    cpp:
+      - "[&](auto x, auto y) { return (x + y); };"
+    zig:
+      - "@compileError"
+
+- name: zero param lambda
+  faber: pro redde 42
+  expect:
+    ts: "() => 42;"
+    py: "lambda : 42"
+    rs:
+      - "|| 42;"
+    cpp:
+      - "[&]() { return 42; };"
+    zig:
+      - "@compileError"
+
+- name: lambda in variable
+  faber: fixum double = pro x redde x * 2
+  expect:
+    ts: "const double = (x) => (x * 2);"
+    py: "double = lambda x: (x * 2)"
+    rs:
+      - "let double = |x| (x * 2);"
+    cpp:
+      - "const auto double = [&](auto x) { return (x * 2); };"
+    zig:
+      - "@compileError"
+
+- name: lambda as callback
+  faber: items.filtrata(pro x redde x > 0)
+  expect:
+    ts: "items.filter((x) => (x > 0));"
+    py:
+      - "filter"
+      - "lambda x: (x > 0)"
+    rs:
+      - "items.filtrata(|x| (x > 0));"
+    cpp:
+      - "(items | std::views::filter([&](auto x) { return (x > 0); }) | std::ranges::to<std::vector>());"

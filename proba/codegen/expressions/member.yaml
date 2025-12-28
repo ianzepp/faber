@@ -1,0 +1,67 @@
+# Member expressions - property access, computed access, optional chaining
+# Maps Faber member access to target-language equivalents
+
+- name: simple property access
+  faber: usuario.nomen
+  expect:
+    ts: "usuario.nomen;"
+    py: "usuario.nomen"
+    rs:
+      - "usuario.nomen;"
+    cpp:
+      - "usuario.nomen;"
+    zig:
+      - "usuario.nomen"
+
+- name: computed access with variable
+  faber: obj[key]
+  expect:
+    ts: "obj[key];"
+    py: "obj[key]"
+    rs:
+      - "obj[key];"
+    cpp:
+      - "obj[key];"
+
+- name: computed access with literal
+  faber: arr[0]
+  expect:
+    ts: "arr[0];"
+    py: "arr[0]"
+    rs:
+      - "arr[0];"
+    cpp:
+      - "arr[0];"
+
+- name: optional property access
+  faber: user?.name
+  expect:
+    ts: "user?.name;"
+    py:
+      - "user.name if user is not None else None"
+    rs:
+      - "user.as_ref().map"
+      - ".name"
+    cpp:
+      - "user ? user->name : std::nullopt"
+
+- name: optional computed access
+  faber: arr?[0]
+  expect:
+    ts: "arr?.[0];"
+    py:
+      - "arr[0] if arr is not None else None"
+    rs:
+      - "arr.get(0);"
+    cpp:
+      - "arr ? (*arr)[0] : std::nullopt"
+
+- name: non-null property access
+  faber: user!.name
+  expect:
+    ts: "user!.name;"
+    py: "user.name"
+    rs:
+      - "user.name;"
+    cpp:
+      - "user->name;"

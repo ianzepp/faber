@@ -1,0 +1,74 @@
+# Assignment expressions - simple and compound assignment
+# Maps Faber assignment syntax to target-language equivalents
+
+- name: simple assignment
+  faber: x = 5
+  expect:
+    ts: "x = 5;"
+    py: "x = 5"
+    rs:
+      - "x = 5;"
+    cpp:
+      - "x = 5;"
+    zig:
+      - "x = 5;"
+
+- name: addition assignment
+  faber: x += 1
+  expect:
+    ts: "x += 1;"
+    py: "x += 1"
+    rs:
+      - "x += 1;"
+    cpp:
+      - "x += 1;"
+    zig:
+      - "x += 1;"
+
+- name: subtraction assignment
+  faber: x -= 1
+  expect:
+    ts: "x -= 1;"
+    py: "x -= 1"
+    rs:
+      - "x -= 1;"
+    cpp:
+      - "x -= 1;"
+    zig:
+      - "x -= 1;"
+
+- name: multiplication assignment
+  faber: x *= 2
+  expect:
+    ts: "x *= 2;"
+    py: "x *= 2"
+    rs:
+      - "x *= 2;"
+    cpp:
+      - "x *= 2;"
+    zig:
+      - "x *= 2;"
+
+- name: division assignment
+  faber: x /= 2
+  expect:
+    ts: "x /= 2;"
+    py: "x /= 2"
+    rs:
+      - "x /= 2;"
+    cpp:
+      - "x /= 2;"
+    zig:
+      - "x /= 2;"
+
+- name: member assignment
+  faber: obj.prop = value
+  expect:
+    ts: "obj.prop = value;"
+    py: "obj.prop = value"
+    rs:
+      - "obj.prop = value;"
+    cpp:
+      - "obj.prop = value;"
+    zig:
+      - "obj.prop = value;"

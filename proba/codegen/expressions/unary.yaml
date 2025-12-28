@@ -1,0 +1,83 @@
+# Unary expressions - prefix and postfix operators
+# Maps Faber unary operators to target-language equivalents
+
+- name: logical not with non
+  faber: non verum
+  expect:
+    ts: "!true;"
+    py: "not True"
+    rs:
+      - "!true;"
+    cpp:
+      - "!true;"
+    zig:
+      - "!true"
+
+- name: bitwise not
+  faber: "~5"
+  expect:
+    ts: "~5;"
+    py: "~5"
+    rs:
+      - "~5;"
+    cpp:
+      - "~5;"
+    zig:
+      - "~5"
+
+- name: negation literal
+  faber: "-42"
+  expect:
+    ts: "-42;"
+    py: "-42"
+    rs:
+      - "-42;"
+    cpp:
+      - "-42;"
+    zig:
+      - "-42"
+
+- name: nihil null check
+  faber: |
+    si nihil x { scribe "null" }
+  expect:
+    ts:
+      - "(x === null)"
+    py:
+      - "(x is None)"
+    rs:
+      - "if x.is_none()"
+    cpp:
+      - "if (nihilx)"
+    zig:
+      - "(x == null)"
+
+- name: nonnihil not null check
+  faber: |
+    si nonnihil x { scribe "ok" }
+  expect:
+    ts:
+      - "(x !== null)"
+    py:
+      - "(x is not None)"
+    rs:
+      - "if x.is_some()"
+    cpp:
+      - "if (nonnihilx)"
+    zig:
+      - "(x != null)"
+
+- name: negativum less than zero
+  faber: |
+    si negativum x { scribe "negative" }
+  expect:
+    ts:
+      - "(x < 0)"
+    py:
+      - "(x < 0)"
+    rs:
+      - "negativumx"
+    cpp:
+      - "if ((x < 0))"
+    zig:
+      - "(x < 0)"

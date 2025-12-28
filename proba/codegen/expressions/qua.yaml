@@ -1,0 +1,46 @@
+# Qua expressions - type casting
+# Maps Faber qua to target-language type assertions/casts
+#
+# Note: ts/py use exact match; rs uses contains (it wraps in main)
+# Note: Python ignores type casts (dynamically typed)
+# Note: Faber uses Latin type names (textus, numerus, logicum) which get mapped
+
+- name: cast to string
+  faber: fixum name = data qua textus
+  expect:
+    ts: "const name = (data as string);"
+    py: "name = data"
+    rs:
+      - "let name = data as String;"
+
+- name: cast member expression
+  faber: fixum body = response.body qua objectum
+  expect:
+    ts: "const body = (response.body as object);"
+    py: "body = response.body"
+    rs:
+      - "let body = response.body as objectum;"
+
+- name: cast to number
+  faber: fixum num = input qua numerus
+  expect:
+    ts: "const num = (input as number);"
+    py: "num = input"
+    rs:
+      - "let num = input as f64;"
+
+- name: cast call result
+  faber: fixum result = getData() qua textus
+  expect:
+    ts: "const result = (getData() as string);"
+    py: "result = getData()"
+    rs:
+      - "let result = getData() as String;"
+
+- name: cast to boolean type
+  faber: fixum flag = value qua logicum
+  expect:
+    ts: "const flag = (value as logicum);"
+    py: "flag = value"
+    rs:
+      - "let flag = value as logicum;"

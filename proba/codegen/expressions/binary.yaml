@@ -1,0 +1,72 @@
+# Binary expressions - arithmetic, comparison, logical operators
+# Maps Faber binary operators to target-language equivalents
+
+- name: addition
+  faber: 1 + 2
+  expect:
+    ts: "(1 + 2);"
+    py: "(1 + 2)"
+    rs:
+      - "(1 + 2);"
+    cpp:
+      - "(1 + 2)"
+    zig:
+      - "(1 + 2)"
+
+- name: subtraction
+  faber: 5 - 3
+  expect:
+    ts: "(5 - 3);"
+    py: "(5 - 3)"
+    rs:
+      - "(5 - 3);"
+    cpp:
+      - "(5 - 3)"
+    zig:
+      - "(5 - 3)"
+
+- name: multiplication
+  faber: 4 * 2
+  expect:
+    ts: "(4 * 2);"
+    py: "(4 * 2)"
+    rs:
+      - "(4 * 2);"
+    cpp:
+      - "(4 * 2)"
+    zig:
+      - "(4 * 2)"
+
+- name: division
+  faber: 10 / 2
+  expect:
+    ts: "(10 / 2);"
+    py: "(10 / 2)"
+    rs:
+      - "(10 / 2);"
+    cpp:
+      - "(10 / 2)"
+    zig:
+      - "(10 / 2)"
+
+- name: equality comparison
+  faber: a == b
+  expect:
+    ts: "(a == b);"
+    py: "(a == b)"
+    rs:
+      - "(a == b);"
+    cpp:
+      - "(a == b)"
+
+- name: logical and with et
+  faber: a et b
+  expect:
+    ts: "(a && b);"
+    py: "(a and b)"
+    rs:
+      - "(a && b);"
+    cpp:
+      - "(a && b)"
+    zig:
+      - "(a and b)"

@@ -1,0 +1,78 @@
+# Object expressions - object literals
+# Maps Faber object syntax to target-language equivalents
+#
+# Note: ts/py use exact match; rs/cpp/zig use contains (they wrap in main)
+
+- name: empty object
+  faber: "fixum obj = {}"
+  expect:
+    ts: "const obj = {};"
+    py: "obj = {}"
+    rs:
+      - "let obj = {};"
+    cpp:
+      - "{}"
+    zig:
+      - ".{}"
+
+- name: object with string property
+  faber: |
+    fixum user = { nomen: "Marcus" }
+  expect:
+    ts: 'const user = { nomen: "Marcus" };'
+    py: 'user = {"nomen": "Marcus"}'
+    rs:
+      - 'nomen: String::from("Marcus")'
+    cpp:
+      - '.nomen = std::string("Marcus")'
+    zig:
+      - '.nomen = "Marcus"'
+
+- name: object with multiple properties
+  faber: |
+    fixum data = { x: 1, y: 2, z: 3 }
+  expect:
+    ts: "const data = { x: 1, y: 2, z: 3 };"
+    py: 'data = {"x": 1, "y": 2, "z": 3}'
+    rs:
+      - "x: 1"
+      - "y: 2"
+      - "z: 3"
+    cpp:
+      - ".x = 1"
+      - ".y = 2"
+      - ".z = 3"
+    zig:
+      - ".x = 1"
+      - ".y = 2"
+      - ".z = 3"
+
+- name: object with expression values
+  faber: |
+    fixum calc = { sum: 1 + 2, active: verum }
+  expect:
+    ts:
+      - "sum: (1 + 2)"
+      - "active: true"
+    py:
+      - '"sum": (1 + 2)'
+      - '"active": True'
+    rs:
+      - "sum: (1 + 2)"
+      - "active: true"
+    cpp:
+      - ".sum = (1 + 2)"
+      - ".active = true"
+    zig:
+      - ".sum = (1 + 2)"
+      - ".active = true"
+
+- name: object with spread
+  faber: |
+    fixum merged = { sparge defaults, extra: 42 }
+  expect:
+    ts: "const merged = { ...defaults, extra: 42 };"
+    py: 'merged = {**defaults, "extra": 42}'
+    rs:
+      - "..defaults"
+      - "extra: 42"

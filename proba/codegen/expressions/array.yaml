@@ -1,0 +1,48 @@
+# Array expressions - array literals and spread
+# Maps Faber array syntax to target-language equivalents
+
+- name: empty array
+  faber: fixum arr = []
+  expect:
+    ts: "const arr = [];"
+    py: "arr = []"
+    rs:
+      - "let arr = vec![];"
+    cpp:
+      - "const auto arr = std::vector<int>{};"
+    zig:
+      - "const arr = .{};"
+
+- name: array with elements
+  faber: fixum nums = [1, 2, 3]
+  expect:
+    ts: "const nums = [1, 2, 3];"
+    py: "nums = [1, 2, 3]"
+    rs:
+      - "let nums = vec![1, 2, 3];"
+    cpp:
+      - "const auto nums = std::vector{1, 2, 3};"
+    zig:
+      - ".{ 1, 2, 3 }"
+
+- name: array with string elements
+  faber: fixum names = ["a", "b", "c"]
+  expect:
+    ts: 'const names = ["a", "b", "c"];'
+    py: 'names = ["a", "b", "c"]'
+    rs:
+      - 'let names = vec![String::from("a"), String::from("b"), String::from("c")];'
+    cpp:
+      - 'std::vector{std::string("a"), std::string("b"), std::string("c")}'
+    zig:
+      - '.{ "a", "b", "c" }'
+
+- name: spread in array
+  faber: fixum combined = [sparge a, sparge b]
+  expect:
+    ts: "const combined = [...a, ...b];"
+    py: "combined = [*a, *b]"
+    rs:
+      - "let combined = vec!"
+    cpp:
+      - "const auto combined = std::vector{};"

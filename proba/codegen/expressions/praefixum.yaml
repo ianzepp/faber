@@ -1,0 +1,68 @@
+# Praefixum expressions - compile-time evaluation
+# Maps Faber praefixum to target-language compile-time constructs
+#
+# Note: ts/py use exact match; rs/cpp/zig use contains (they wrap in main)
+
+- name: praefixum expression form
+  faber: fixum size = praefixum(256 * 4)
+  expect:
+    ts: "const size = ((256 * 4));"
+    py: "size = ((256 * 4))"
+    rs:
+      - "let size = const { (256 * 4) };"
+    cpp:
+      - "(256 * 4)"
+    zig:
+      - "comptime ((256 * 4))"
+
+- name: praefixum simple arithmetic
+  faber: fixum val = praefixum(100 + 50)
+  expect:
+    ts: "const val = ((100 + 50));"
+    py: "val = ((100 + 50))"
+    rs:
+      - "let val = const { (100 + 50) };"
+    cpp:
+      - "(100 + 50)"
+    zig:
+      - "comptime ((100 + 50))"
+
+- name: praefixum with multiplication
+  faber: fixum buffer = praefixum(1024 * 8)
+  expect:
+    ts: "const buffer = ((1024 * 8));"
+    py: "buffer = ((1024 * 8))"
+    rs:
+      - "let buffer = const { (1024 * 8) };"
+    cpp:
+      - "(1024 * 8)"
+    zig:
+      - "comptime ((1024 * 8))"
+
+- name: praefixum block form
+  faber: |
+    fixum result = praefixum {
+      varia x = 10
+      redde x * 2
+    }
+  expect:
+    ts:
+      - "(() => {"
+      - "let x = 10"
+      - "return (x * 2)"
+      - "})()"
+    py:
+      - "__praefixum__"
+      - "x = 10"
+      - "(x * 2)"
+    rs:
+      - "const {"
+      - "let mut x = 10"
+    cpp:
+      - "[&]"
+      - "auto x = 10"
+      - "return (x * 2)"
+      - "}()"
+    zig:
+      - "comptime blk:"
+      - "break :blk (x * 2)"

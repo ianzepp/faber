@@ -1,0 +1,71 @@
+# Call expressions - function and method calls
+# Maps Faber call syntax to target-language equivalents
+
+- name: simple function call
+  faber: salve(nomen)
+  expect:
+    ts: "salve(nomen);"
+    py: "salve(nomen)"
+    rs:
+      - "salve(nomen);"
+    cpp:
+      - "salve(nomen);"
+    zig:
+      - "salve(nomen)"
+
+- name: function call with multiple args
+  faber: add(1, 2, 3)
+  expect:
+    ts: "add(1, 2, 3);"
+    py: "add(1, 2, 3)"
+    rs:
+      - "add(1, 2, 3);"
+    cpp:
+      - "add(1, 2, 3);"
+    zig:
+      - "add(1, 2, 3)"
+
+- name: method call on object
+  faber: lista.filter(f)
+  expect:
+    ts: "lista.filter(f);"
+    py: "lista.filter(f)"
+    rs:
+      - "lista.filter(f);"
+    cpp:
+      - "lista.filter(f);"
+
+- name: function call with spread
+  faber: fn(sparge args)
+  expect:
+    ts: "fn(...args);"
+    py: "fn(*args)"
+    rs:
+      - "fn("
+      - "spread"
+    cpp:
+      - "fn();"
+
+- name: optional call
+  faber: callback?()
+  expect:
+    ts: "callback?.();"
+    py:
+      - "callback() if callback is not None else None"
+    rs:
+      - "callback.map"
+    cpp:
+      - "callback"
+      - "std::nullopt"
+
+- name: nested function call
+  faber: outer(inner(x))
+  expect:
+    ts: "outer(inner(x));"
+    py: "outer(inner(x))"
+    rs:
+      - "outer(inner(x));"
+    cpp:
+      - "outer(inner(x));"
+    zig:
+      - "outer(inner(x))"

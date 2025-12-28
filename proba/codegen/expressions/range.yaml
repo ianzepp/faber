@@ -1,0 +1,51 @@
+# Range expressions - range literals as expressions
+# Maps Faber range syntax to target-language equivalents
+#
+# Note: ts/py use exact match; rs/cpp/zig use contains (they wrap in main)
+# Note: Range expressions outside for-loops compile to array/list creation
+
+- name: exclusive range
+  faber: fixum nums = 0..5
+  expect:
+    ts: "const nums = Array.from({length: 5 - 0}, (_, i) => 0 + i);"
+    py: "nums = list(range(0, 5))"
+    rs:
+      - "(0..5)"
+    cpp:
+      - "std::views::iota(0, 5 + 1)"
+
+- name: inclusive range with usque
+  faber: fixum nums = 0 usque 5
+  expect:
+    ts: "const nums = Array.from({length: 5 - 0 + 1}, (_, i) => 0 + i);"
+    py: "nums = list(range(0, 5 + 1))"
+    rs:
+      - "(0..=5)"
+    cpp:
+      - "std::views::iota(0, 5 + 1)"
+
+- name: range with variables
+  faber: fixum seq = start..end
+  expect:
+    ts: "const seq = Array.from({length: end - start}, (_, i) => start + i);"
+    py: "seq = list(range(start, end))"
+    rs:
+      - "(start..end)"
+    cpp:
+      - "std::views::iota(start, end + 1)"
+
+- name: range with step
+  faber: fixum evens = 0..10 per 2
+  expect:
+    ts: "const evens = Array.from({length: Math.ceil((10 - 0) / 2)}, (_, i) => 0 + i * 2);"
+    py: "evens = list(range(0, 10, 2))"
+    rs:
+      - "(0..10)"
+
+- name: inclusive range with step
+  faber: fixum odds = 1 usque 9 per 2
+  expect:
+    ts: "const odds = Array.from({length: Math.floor((9 - 1) / 2) + 1}, (_, i) => 1 + i * 2);"
+    py: "odds = list(range(1, 9 + 1, 2))"
+    rs:
+      - "(1..=9)"

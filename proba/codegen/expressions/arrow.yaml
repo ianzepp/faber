@@ -1,0 +1,67 @@
+# Arrow function expressions - JavaScript-style arrow syntax
+# Maps Faber arrow syntax to target-language equivalents
+
+- name: simple arrow identity
+  faber: (x) => x
+  expect:
+    ts: "(x) => x;"
+    py: "lambda x: x"
+    rs:
+      - "|x| x;"
+    cpp:
+      - "[&](auto x) { return x; }"
+    zig:
+      - "@compileError"
+
+- name: arrow with expression body
+  faber: (x) => x + 1
+  expect:
+    ts: "(x) => (x + 1);"
+    py: "lambda x: (x + 1)"
+    rs:
+      - "|x| (x + 1);"
+    cpp:
+      - "[&](auto x) { return (x + 1); }"
+    zig:
+      - "@compileError"
+
+- name: arrow with multiple params
+  faber: (x, y) => x + y
+  expect:
+    ts: "(x, y) => (x + y);"
+    py: "lambda x, y: (x + y)"
+    rs:
+      - "|x, y| (x + y);"
+    cpp:
+      - "[&](auto x, auto y) { return (x + y); }"
+    zig:
+      - "@compileError"
+
+- name: arrow with block body
+  faber: |
+    (x) => { redde x * 2 }
+  expect:
+    ts:
+      - "(x) =>"
+      - "return (x * 2);"
+    py: "lambda x: (x * 2)"
+    rs:
+      - "|x| {"
+      - "return (x * 2);"
+    cpp:
+      - "[&](auto x) {"
+      - "return (x * 2);"
+    zig:
+      - "@compileError"
+
+- name: arrow with no params
+  faber: () => 42
+  expect:
+    ts: "() => 42;"
+    py: "lambda : 42"
+    rs:
+      - "|| 42;"
+    cpp:
+      - "[&]() { return 42; }"
+    zig:
+      - "@compileError"

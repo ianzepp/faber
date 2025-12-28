@@ -1,0 +1,92 @@
+# Literal expressions - strings, numbers, hex, bigint, templates
+# Maps Faber literals to target-language equivalents
+#
+# Note: boolean/null literals are in identifier.yaml (verum, falsum, nihil)
+
+- name: string literal
+  faber: fixum s = "hello"
+  expect:
+    ts: 'const s = "hello";'
+    py: 's = "hello"'
+    rs:
+      - 'let s = String::from("hello");'
+    cpp:
+      - 'const auto s = std::string("hello");'
+    zig:
+      - 'const m_s = "hello";'
+
+- name: number literal
+  faber: fixum n = 42
+  expect:
+    ts: "const n = 42;"
+    py: "n = 42"
+    rs:
+      - "let n = 42;"
+    cpp:
+      - "const auto n = 42;"
+    zig:
+      - "const m_n = 42;"
+
+- name: hex literal
+  faber: fixum x = 0xFF
+  expect:
+    ts: "const x = 0xFF;"
+    py: "x = 0xFF"
+    rs:
+      - "let x = 0xFF;"
+    cpp:
+      - "const auto x = 255;"
+    zig:
+      - "const m_x = 0xFF;"
+
+- name: lowercase hex literal
+  faber: fixum val = 0xabcdef
+  expect:
+    ts: "const val = 0xabcdef;"
+    py: "val = 0xabcdef"
+    rs:
+      - "let val = 0xabcdef;"
+    cpp:
+      - "const auto val = 11259375;"
+    zig:
+      - "const m_val = 0xabcdef;"
+
+- name: bigint literal
+  faber: fixum big = 0xFFFFFFFFFFn
+  expect:
+    ts: "const big = 0xFFFFFFFFFFn;"
+    py: "big = 0xFFFFFFFFFF"
+    rs:
+      - "let big = 0xFFFFFFFFFFni128;"
+    cpp:
+      - "const auto big = 1099511627775;"
+    zig:
+      - "const m_big = 0xFFFFFFFFFF;"
+
+- name: template literal simple
+  faber: fixum msg = `hello world`
+  expect:
+    ts: "const msg = `hello world`;"
+    py: 'msg = f"hello world"'
+    rs:
+      - 'let msg = format!("hello world");'
+    cpp:
+      - "const auto msg = std::string(hello world);"
+    zig:
+      - 'const m_msg = "hello world";'
+
+- name: template with interpolation
+  faber: |
+    fixum name = "Marcus"
+    fixum greeting = `Hello, ${name}!`
+  expect:
+    ts:
+      - "const greeting = `Hello, ${name}!`"
+    py:
+      - 'greeting = f"Hello, ${name}!"'
+    rs:
+      - 'let greeting = format!("Hello, ${name}!");'
+    cpp:
+      - "const auto greeting = std::format(Hello, {}!, name);"
+    zig:
+      - 'const m_greeting = "Hello, ${name}!";'

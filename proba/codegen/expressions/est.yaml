@@ -1,0 +1,42 @@
+# Est expressions - type checking operator
+# Maps Faber "est" (is) to typeof/instanceof equivalents
+
+- name: est with primitive string
+  faber: fixum check = x est textus
+  expect:
+    ts:
+      - 'typeof x === "string"'
+    py:
+      - "isinstance(x, str)"
+    rs:
+      - "let check = matches!(x, textus);"
+
+- name: est with primitive number
+  faber: fixum check = x est numerus
+  expect:
+    ts:
+      - 'typeof x === "number"'
+    py:
+      - "isinstance(x, int)"
+    rs:
+      - "let check = matches!(x, numerus);"
+
+- name: non est negated check
+  faber: fixum check = x non est numerus
+  expect:
+    ts:
+      - 'typeof x !== "number"'
+    py:
+      - "not isinstance(x, int)"
+    rs:
+      - "let check = !matches!(x, numerus);"
+
+- name: est with user type
+  faber: fixum check = obj est Persona
+  expect:
+    ts:
+      - "instanceof Persona"
+    py:
+      - "isinstance(obj, Persona)"
+    rs:
+      - "let check = matches!(obj, Persona);"
