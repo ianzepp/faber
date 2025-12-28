@@ -1,0 +1,150 @@
+# Destructuring declarations - ex...fixum/varia/figendum/variandum
+# Maps Faber destructuring syntax to target-language equivalents
+#
+# Syntax:
+#   ex obj fixum field1, field2          -- extract multiple fields
+#   ex obj fixum field ut alias          -- extract with alias
+#   ex obj fixum field, ceteri rest      -- extract with rest
+#   ex promise figendum result           -- async destructuring
+
+# =============================================================================
+# Basic Object Destructuring
+# =============================================================================
+
+# Simple field extraction
+- name: extract two fields
+  faber: 'ex persona fixum nomen, aetas'
+  expect:
+    ts:
+      - 'const { nomen, aetas } = persona;'
+    py:
+      - 'nomen = persona["nomen"]'
+      - 'aetas = persona["aetas"]'
+    rs:
+      - 'let nomen = persona.nomen;'
+      - 'let aetas = persona.aetas;'
+    cpp:
+      - 'const auto& _tmp = persona;'
+      - 'const auto& nomen = _tmp.nomen;'
+      - 'const auto& aetas = _tmp.aetas;'
+    zig:
+      - 'const _tmp = persona;'
+      - 'const nomen = _tmp.nomen;'
+      - 'const aetas = _tmp.aetas;'
+
+# Mutable destructuring
+- name: extract with mutable binding
+  faber: 'ex config varia host, port'
+  expect:
+    ts:
+      - 'let { host, port } = config;'
+    py:
+      - 'host = config["host"]'
+      - 'port = config["port"]'
+    rs:
+      - 'let mut host = config.host;'
+      - 'let mut port = config.port;'
+    cpp:
+      - 'auto& _tmp = config;'
+      - 'auto& host = _tmp.host;'
+      - 'auto& port = _tmp.port;'
+    zig:
+      - 'const _tmp = config;'
+      - 'var host = _tmp.host;'
+      - 'var port = _tmp.port;'
+
+# =============================================================================
+# Destructuring with Aliases (ut)
+# =============================================================================
+
+# Extract field with alias
+- name: extract with alias
+  faber: 'ex persona fixum nomen ut n, aetas ut a'
+  expect:
+    ts:
+      - 'const { nomen: n, aetas: a } = persona;'
+    py:
+      - 'n = persona["nomen"]'
+      - 'a = persona["aetas"]'
+    rs:
+      - 'let n = persona.nomen;'
+      - 'let a = persona.aetas;'
+    cpp:
+      - 'const auto& _tmp = persona;'
+      - 'const auto& n = _tmp.nomen;'
+      - 'const auto& a = _tmp.aetas;'
+    zig:
+      - 'const _tmp = persona;'
+      - 'const n = _tmp.nomen;'
+      - 'const a = _tmp.aetas;'
+
+# =============================================================================
+# Destructuring with Rest (ceteri)
+# =============================================================================
+
+# Extract fields with rest
+- name: extract with rest pattern
+  faber: 'ex config fixum host, ceteri rest'
+  expect:
+    ts:
+      - 'const { host, ...rest } = config;'
+    py:
+      - 'host = config["host"]'
+      - 'rest = {k: v for k, v in config.items() if k not in ["host"]}'
+    rs:
+      - 'let host = config.host;'
+      - '// TODO: rest pattern requires type info'
+    cpp:
+      - 'const auto& _tmp = config;'
+      - 'const auto& host = _tmp.host;'
+      - '// TODO: rest pattern for rest'
+    zig:
+      - 'const _tmp = config;'
+      - 'const host = _tmp.host;'
+      - '// ceteri (rest) not supported in Zig: rest'
+
+# =============================================================================
+# Async Destructuring (figendum/variandum)
+# =============================================================================
+
+# Async immutable destructuring
+- name: async destructuring with figendum
+  faber: 'ex fetchUser() figendum nomen, email'
+  expect:
+    ts:
+      - 'const { nomen, email } = await fetchUser();'
+    py:
+      - 'nomen = (await fetchUser())["nomen"]'
+      - 'email = (await fetchUser())["email"]'
+    rs:
+      - 'let nomen = fetchUser().await.nomen;'
+      - 'let email = fetchUser().await.email;'
+    cpp:
+      - 'const auto& _tmp = fetchUser();'
+      - 'const auto& nomen = _tmp.nomen;'
+      - 'const auto& email = _tmp.email;'
+    zig:
+      - 'const _tmp = fetchUser();'
+      - 'const nomen = _tmp.nomen;'
+      - 'const email = _tmp.email;'
+
+# Async mutable destructuring
+- name: async destructuring with variandum
+  faber: 'ex getConfig() variandum host, port'
+  expect:
+    ts:
+      - 'let { host, port } = await getConfig();'
+    py:
+      - 'host = (await getConfig())["host"]'
+      - 'port = (await getConfig())["port"]'
+    rs:
+      - 'let mut host = getConfig().await.host;'
+      - 'let mut port = getConfig().await.port;'
+    cpp:
+      - 'auto& _tmp = getConfig();'
+      - 'auto& host = _tmp.host;'
+      - 'auto& port = _tmp.port;'
+    zig:
+      - 'const _tmp = getConfig();'
+      - 'var host = _tmp.host;'
+      - 'var port = _tmp.port;'

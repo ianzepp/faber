@@ -1,0 +1,54 @@
+# Continue statements - perge
+# Maps Faber continue syntax to target-language continue statements
+#
+# Syntax:
+#   perge  -- skips to next loop iteration
+
+# =============================================================================
+# Basic Continue
+# =============================================================================
+
+# Simple continue statement
+- name: simple continue
+  faber: 'perge'
+  expect:
+    ts:
+      - "continue;"
+    py:
+      - "continue"
+    rs:
+      - "continue;"
+    cpp:
+      - "continue;"
+    zig:
+      - "continue;"
+
+# Continue in loop context
+- name: continue in while loop
+  faber: |
+    dum verum {
+      si x < 0 {
+        perge
+      }
+    }
+  expect:
+    ts:
+      - "while (true)"
+      - "if ((x < 0))"
+      - "continue;"
+    py:
+      - "while True:"
+      - "if (x < 0):"
+      - "continue"
+    rs:
+      - "while true"
+      - "if (x < 0)"
+      - "continue;"
+    cpp:
+      - "while (true)"
+      - "if ((x < 0))"
+      - "continue;"
+    zig:
+      - "while (true)"
+      - "if ((x < 0))"
+      - "continue;"

@@ -1,0 +1,139 @@
+# Do-block statements - fac
+# Maps Faber do-block syntax to target-language scope blocks
+#
+# Syntax:
+#   fac { body }              -- scope block (IIFE-like)
+#   fac { body } cape e { }   -- scope block with error handling
+#
+# Target mappings:
+#   ts:  { body } or try { body } catch
+#   py:  body or try: body except
+#   rs:  { body } (no try-catch in Rust this way)
+#   cpp: { body } or try { body } catch
+#   zig: body (no traditional try-catch)
+
+# =============================================================================
+# Basic Do Block
+# =============================================================================
+
+# Simple scope block
+- name: simple fac block
+  faber: |
+    fac {
+      fixum x = 42
+    }
+  expect:
+    ts:
+      - "{"
+      - "const x = 42;"
+      - "}"
+    py:
+      - "x = 42"
+    rs:
+      - "{"
+      - "let x = 42;"
+      - "}"
+    cpp:
+      - "{"
+      - "const auto x = 42;"
+      - "}"
+    zig:
+      - "const x = 42;"
+
+# Do block with statement
+- name: fac block with statement
+  faber: 'fac { scribe "test" }'
+  expect:
+    ts:
+      - "{"
+      - 'console.log("test");'
+      - "}"
+    py:
+      - 'print("test")'
+    rs:
+      - "{"
+      - 'println!("{}", String::from("test"));'
+      - "}"
+    cpp:
+      - "{"
+      - 'std::print("{}\'
+      - 'n", std::string("test"));'
+      - "}"
+    zig:
+      - 'std.debug.print("{s}\'
+      - 'n", .{ "test" });'
+
+# =============================================================================
+# Do Block with Error Handling (cape)
+# =============================================================================
+
+# Do-catch block
+- name: fac with cape clause
+  faber: |
+    fac {
+      riskyCall()
+    } cape err {
+      scribe err
+    }
+  expect:
+    ts:
+      - "try {"
+      - "riskyCall();"
+      - "} catch (err) {"
+      - "console.log(err);"
+      - "}"
+    py:
+      - "try:"
+      - "riskyCall()"
+      - "except Exception as err:"
+      - "print(err)"
+    rs:
+      - "{"
+      - "riskyCall();"
+      - "}"
+    cpp:
+      - "try {"
+      - "riskyCall();"
+      - "}"
+      - "catch (const std::exception& err) {"
+      - "std::print"
+      - "}"
+    zig:
+      - "// fac block with catch"
+
+# Do-catch with multiple statements
+- name: fac with multiple statements and cape
+  faber: |
+    fac {
+      fixum x = compute()
+      redde x
+    } cape e {
+      redde nihil
+    }
+  expect:
+    ts:
+      - "try {"
+      - "const x = compute();"
+      - "return x;"
+      - "} catch (e) {"
+      - "return null;"
+      - "}"
+    py:
+      - "try:"
+      - "x = compute()"
+      - "return x"
+      - "except Exception as e:"
+      - "return None"
+    rs:
+      - "{"
+      - "let x = compute();"
+      - "return x;"
+      - "}"
+    cpp:
+      - "try {"
+      - "const auto x = compute();"
+      - "return x;"
+      - "}"
+      - "catch (const std::exception& e) {"
+      - "return"
+      - "}"

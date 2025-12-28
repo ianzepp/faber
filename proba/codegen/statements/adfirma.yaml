@@ -1,0 +1,96 @@
+# Assert statements - adfirma
+# Maps Faber assertion syntax to target-language assertions
+#
+# Syntax:
+#   adfirma test           -- asserts test is true
+#   adfirma test, "msg"    -- asserts test with custom message
+#
+# Target mappings:
+#   ts:  if (!test) throw Error
+#   py:  assert test [, msg]
+#   rs:  assert!(test [, msg])
+#   cpp: assert(test [&& msg])
+#   zig: std.debug.assert(test) or @panic(msg)
+
+# =============================================================================
+# Basic Assertions
+# =============================================================================
+
+# Simple assertion
+- name: assert simple condition
+  faber: 'adfirma x > 0'
+  expect:
+    ts:
+      - 'if (!((x > 0))) { throw new Error("Assertion failed: (x > 0)"); }'
+    py:
+      - "assert (x > 0)"
+    rs:
+      - "assert!((x > 0));"
+    cpp:
+      - "assert((x > 0));"
+    zig:
+      - "std.debug.assert((x > 0));"
+
+# Assertion with equality
+- name: assert equality
+  faber: 'adfirma result == 42'
+  expect:
+    ts:
+      - 'if (!((result == 42))) { throw new Error("Assertion failed: (result == 42)"); }'
+    py:
+      - "assert (result == 42)"
+    rs:
+      - "assert!((result == 42));"
+    cpp:
+      - "assert((result == 42));"
+    zig:
+      - "std.debug.assert((result == 42));"
+
+# Assertion with boolean literal
+- name: assert verum
+  faber: 'adfirma verum'
+  expect:
+    ts:
+      - 'if (!(true)) { throw new Error("Assertion failed: true"); }'
+    py:
+      - "assert True"
+    rs:
+      - "assert!(true);"
+    cpp:
+      - "assert(true);"
+    zig:
+      - "std.debug.assert(true);"
+
+# =============================================================================
+# Assertions with Custom Messages
+# =============================================================================
+
+# Assertion with custom message
+- name: assert with custom message
+  faber: 'adfirma x > 0, "x must be positive"'
+  expect:
+    ts:
+      - 'if (!((x > 0))) { throw new Error("x must be positive"); }'
+    py:
+      - 'assert (x > 0), "x must be positive"'
+    rs:
+      - 'assert!((x > 0), String::from("x must be positive"));'
+    cpp:
+      - 'assert(((x > 0)) && std::string("x must be positive"));'
+    zig:
+      - 'if (!((x > 0))) @panic("x must be positive");'
+
+# Assertion with variable message
+- name: assert with variable message
+  faber: 'adfirma valid, errorMsg'
+  expect:
+    ts:
+      - "if (!(valid)) { throw new Error(errorMsg); }"
+    py:
+      - "assert valid, errorMsg"
+    rs:
+      - "assert!(valid, errorMsg);"
+    cpp:
+      - "assert((valid) && errorMsg);"
+    zig:
+      - "if (!(valid)) @panic(errorMsg);"

@@ -1,0 +1,179 @@
+# Discerne statements - pattern matching on discretio tagged unions
+# Maps Faber discerne syntax to target-language pattern matching
+#
+# Syntax:
+#   discerne value {
+#     si VariantName { body }
+#     si VariantName pro field1, field2 { body }
+#   }
+#
+# Target mappings:
+#   TypeScript: if/else chain on tag property with destructuring
+#   Python: match/case (Python 3.10+)
+#   Rust: match expression
+#   C++: TODO placeholder (std::visit is complex)
+#   Zig: switch on tagged union
+
+# =============================================================================
+# Unit Variants
+# =============================================================================
+
+# Pattern matching unit variants (no bindings)
+- name: discerne with unit variants
+  faber: |
+    discerne status {
+      si Active { scribe "active" }
+      si Inactive { scribe "inactive" }
+    }
+  expect:
+    ts:
+      - "if (status.tag === 'Active')"
+      - 'console.log("active")'
+      - "else if (status.tag === 'Inactive')"
+      - 'console.log("inactive")'
+    py:
+      - "match status:"
+      - "case {'tag': 'Active'}:"
+      - 'print("active")'
+      - "case {'tag': 'Inactive'}:"
+      - 'print("inactive")'
+    rs:
+      - "match status"
+      - "Active =>"
+      - 'println!("{}", String::from("active"))'
+      - "Inactive =>"
+    cpp:
+      - "// TODO: discerne on status"
+      - "// si Active: { ... }"
+      - "// si Inactive: { ... }"
+    zig:
+      - "switch (status)"
+      - ".active =>"
+      - ".inactive =>"
+
+# =============================================================================
+# Variants with Bindings
+# =============================================================================
+
+# Pattern matching with field extraction
+- name: discerne with bindings
+  faber: |
+    discerne event {
+      si Click pro x, y {
+        scribe x
+        scribe y
+      }
+      si Quit {
+        scribe "quit"
+      }
+    }
+  expect:
+    ts:
+      - "if (event.tag === 'Click')"
+      - "const { x, y } = event;"
+      - "console.log(x)"
+      - "console.log(y)"
+      - "else if (event.tag === 'Quit')"
+      - 'console.log("quit")'
+    py:
+      - "match event:"
+      - "case {'tag': 'Click', x, y}:"
+      - "print(x)"
+      - "print(y)"
+      - "case {'tag': 'Quit'}:"
+      - 'print("quit")'
+    rs:
+      - "match event"
+      - "Click { x, y } =>"
+      - "println!"
+      - "Quit =>"
+    cpp:
+      - "// TODO: discerne on event"
+      - "// si Click: { ... }"
+      - "// si Quit: { ... }"
+    zig:
+      - "switch (event)"
+      - ".click => |payload|"
+      - "const x = payload.x;"
+      - "const y = payload.y;"
+      - ".quit =>"
+
+# =============================================================================
+# Single Binding
+# =============================================================================
+
+# Pattern match with single field binding
+- name: discerne with single binding
+  faber: |
+    discerne result {
+      si Success pro message {
+        scribe message
+      }
+      si Failure pro error {
+        mone error
+      }
+    }
+  expect:
+    ts:
+      - "if (result.tag === 'Success')"
+      - "const { message } = result;"
+      - "console.log(message)"
+      - "else if (result.tag === 'Failure')"
+      - "const { error } = result;"
+      - "console.warn(error)"
+    py:
+      - "match result:"
+      - "case {'tag': 'Success', message}:"
+      - "print(message)"
+      - "case {'tag': 'Failure', error}:"
+      - 'print("[WARN]", error)'
+    rs:
+      - "match result"
+      - "Success { message } =>"
+      - "Failure { error } =>"
+    cpp:
+      - "// TODO: discerne on result"
+    zig:
+      - "switch (result)"
+      - ".success => |payload|"
+      - "const message = payload.message;"
+
+# =============================================================================
+# Multiple Cases
+# =============================================================================
+
+# Three or more variant cases
+- name: discerne with multiple cases
+  faber: |
+    discerne action {
+      si Move pro x, y { scribe x }
+      si Rotate pro angle { scribe angle }
+      si Scale pro factor { scribe factor }
+      si Reset { scribe "reset" }
+    }
+  expect:
+    ts:
+      - "if (action.tag === 'Move')"
+      - "else if (action.tag === 'Rotate')"
+      - "else if (action.tag === 'Scale')"
+      - "else if (action.tag === 'Reset')"
+    py:
+      - "match action:"
+      - "case {'tag': 'Move', x, y}:"
+      - "case {'tag': 'Rotate', angle}:"
+      - "case {'tag': 'Scale', factor}:"
+      - "case {'tag': 'Reset'}:"
+    rs:
+      - "match action"
+      - "Move { x, y } =>"
+      - "Rotate { angle } =>"
+      - "Scale { factor } =>"
+      - "Reset =>"
+    cpp:
+      - "// TODO: discerne on action"
+    zig:
+      - "switch (action)"
+      - ".move => |payload|"
+      - ".rotate => |payload|"
+      - ".scale => |payload|"
+      - ".reset =>"

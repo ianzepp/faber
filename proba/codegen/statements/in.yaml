@@ -1,0 +1,131 @@
+# Mutation blocks - in
+# Maps Faber mutation block syntax to target-language equivalents
+#
+# Syntax:
+#   in object { field = value }         -- mutate object fields
+#   in object { field += value }        -- compound assignment
+#   in object { method() }              -- method calls allowed
+
+# =============================================================================
+# Basic Mutation Blocks
+# =============================================================================
+
+# Single field mutation
+- name: mutate single field
+  faber: 'in user { nomen = "Marcus" }'
+  expect:
+    ts:
+      - 'user.nomen = "Marcus";'
+    py:
+      - 'user.nomen = "Marcus"'
+    rs:
+      - 'user.nomen = String::from("Marcus");'
+    cpp:
+      - 'user.nomen = std::string("Marcus");'
+    zig:
+      - 'user.nomen = "Marcus";'
+
+# Multiple field mutations
+- name: mutate multiple fields
+  faber: |
+    in user {
+      nomen = "Marcus"
+      aetas = 42
+    }
+  expect:
+    ts:
+      - 'user.nomen = "Marcus";'
+      - 'user.aetas = 42;'
+    py:
+      - 'user.nomen = "Marcus"'
+      - 'user.aetas = 42'
+    rs:
+      - 'user.nomen = String::from("Marcus");'
+      - 'user.aetas = 42;'
+    cpp:
+      - 'user.nomen = std::string("Marcus");'
+      - 'user.aetas = 42;'
+    zig:
+      - 'user.nomen = "Marcus";'
+      - 'user.aetas = 42;'
+
+# =============================================================================
+# Compound Assignment Operators
+# =============================================================================
+
+# Increment field
+- name: increment field
+  faber: 'in stats { count += 1 }'
+  expect:
+    ts:
+      - 'stats.count += 1;'
+    py:
+      - 'stats.count += 1'
+    rs:
+      - 'stats.count = 1;'
+    cpp:
+      - 'stats.count += 1;'
+    zig:
+      - 'stats.count += 1;'
+
+# String concatenation
+- name: append to string field
+  faber: 'in message { text += " world" }'
+  expect:
+    ts:
+      - 'message.text += " world";'
+    py:
+      - 'message.text += " world"'
+    rs:
+      - 'message.text = String::from(" world");'
+    cpp:
+      - 'message.text += std::string(" world");'
+    zig:
+      - 'message.text += " world";'
+
+# =============================================================================
+# Nested Objects
+# =============================================================================
+
+# Mutate nested object via member access (left side is Identifier, not MemberExpression)
+- name: mutate through member access
+  faber: 'in config { server.port = 8080 }'
+  expect:
+    ts:
+      - 'server.port = 8080;'
+    py:
+      - 'server.port = 8080'
+    rs:
+      - 'server.port = 8080;'
+    cpp:
+      - 'server.port = 8080;'
+    zig:
+      - 'server.port = 8080;'
+
+# =============================================================================
+# Method Calls Inside Mutation Blocks
+# =============================================================================
+
+# Call method on mutated object (method calls not prefixed with context)
+- name: method call in mutation block
+  faber: |
+    in user {
+      nomen = "Marcus"
+      validate()
+    }
+  expect:
+    ts:
+      - 'user.nomen = "Marcus";'
+      - 'validate();'
+    py:
+      - 'user.nomen = "Marcus"'
+      - 'validate()'
+    rs:
+      - 'user.nomen = String::from("Marcus");'
+      - 'validate();'
+    cpp:
+      - 'user.nomen = std::string("Marcus");'
+      - 'validate();'
+    zig:
+      - 'user.nomen = "Marcus";'
+      - 'validate();'

@@ -1,0 +1,109 @@
+# Type alias declarations - typus
+# Maps Faber type alias syntax to target-language equivalents
+#
+# Syntax:
+#   typus Name = Type              -- basic type alias
+#   typus UserID = numerus         -- primitive alias
+#   typus ConfigType = typus obj   -- typeof expression
+
+# =============================================================================
+# Basic Type Aliases
+# =============================================================================
+
+# Simple type alias for string
+- name: type alias for string
+  faber: 'typus ID = textus'
+  expect:
+    ts:
+      - 'type ID = string;'
+    py:
+      - 'ID = str'
+    rs:
+      - 'type ID = String;'
+    cpp:
+      - 'using ID = std::string;'
+    zig:
+      - 'const ID = []const u8;'
+
+# Type alias for number
+- name: type alias for number
+  faber: 'typus Count = numerus'
+  expect:
+    ts:
+      - 'type Count = number;'
+    py:
+      - 'Count = int'
+    rs:
+      - 'type Count = f64;'
+    cpp:
+      - 'using Count = int64_t;'
+    zig:
+      - 'const Count = i64;'
+
+# Type alias for boolean
+- name: type alias for boolean
+  faber: 'typus Flag = bivalens'
+  expect:
+    ts:
+      - 'type Flag = boolean;'
+    py:
+      - 'Flag = bool'
+    rs:
+      - 'type Flag = bool;'
+    cpp:
+      - 'using Flag = bool;'
+    zig:
+      - 'const Flag = bool;'
+
+# =============================================================================
+# Generic Type Aliases
+# =============================================================================
+
+# Type alias for array/list
+- name: type alias for array
+  faber: 'typus Items = lista<textus>'
+  expect:
+    ts:
+      - 'type Items = Array<string>;'
+    py:
+      - 'Items = list[str]'
+    rs:
+      - 'type Items = Vec<String>;'
+    cpp:
+      - 'using Items = std::vector<std::string>;'
+    zig:
+      - 'const Items = [][]const u8;'
+
+# Type alias for map/dictionary (StringHashMap for string keys)
+- name: type alias for map
+  faber: 'typus Cache = tabula<textus, numerus>'
+  expect:
+    ts:
+      - 'type Cache = Map<string, number>;'
+    py:
+      - 'Cache = dict[str, int]'
+    rs:
+      - 'type Cache = HashMap<String, f64>;'
+    cpp:
+      - 'using Cache = std::unordered_map<std::string, int64_t>;'
+    zig:
+      - 'const Cache = std.StringHashMap(i64);'
+
+# =============================================================================
+# Typeof Aliases (TypeScript-specific feature)
+# =============================================================================
+
+# Type alias using typeof (not yet implemented for Python/Rust/C++/Zig, falls back to ignotum/anytype)
+- name: type alias with typeof
+  faber: 'typus ConfigType = typus config'
+  expect:
+    ts:
+      - 'type ConfigType = typeof config;'
+    py:
+      - 'ConfigType = Any'
+    rs:
+      - 'type ConfigType = ignotum;'
+    cpp:
+      - 'using ConfigType = ignotum;'
+    zig:
+      - 'const ConfigType = anytype;'

@@ -1,0 +1,151 @@
+# Pactum declarations - interface/protocol/trait definitions
+# Maps Faber pactum syntax to target-language interface mechanisms
+#
+# Syntax:
+#   pactum Name { functio methodName(params) -> returnType }
+#   pactum Name<T> { ... }  -- generic interfaces
+#
+# Target mappings:
+#   TypeScript: interface
+#   Python: Protocol (from typing)
+#   Rust: trait
+#   C++: concept (C++20)
+#   Zig: comment (duck typing)
+
+# =============================================================================
+# Simple Pactum
+# =============================================================================
+
+# Basic interface with one method
+- name: simple pactum with one method
+  faber: 'pactum Greeter { functio greet() -> textus }'
+  expect:
+    ts:
+      - "interface Greeter"
+      - "greet(): string"
+    py:
+      - "class Greeter(Protocol):"
+      - "def greet(self) -> str: ..."
+    rs:
+      - "trait Greeter"
+      - "fn greet(&self) -> String;"
+    cpp:
+      - "template<typename T>"
+      - "concept Greeter"
+      - "t.greet()"
+    zig:
+      - "// pactum Greeter"
+      - "//   requires fn greet() []const u8"
+
+# Multiple methods
+- name: pactum with multiple methods
+  faber: |
+    pactum Readable {
+      functio lege() -> textus
+      functio claude() -> vacuum
+    }
+  expect:
+    ts:
+      - "interface Readable"
+      - "lege(): string"
+      - "claude(): void"
+    py:
+      - "class Readable(Protocol):"
+      - "def lege(self) -> str: ..."
+      - "def claude(self) -> None: ..."
+    rs:
+      - "trait Readable"
+      - "fn lege(&self) -> String;"
+      - "fn claude(&self) -> ();"
+    cpp:
+      - "concept Readable"
+    zig:
+      - "// pactum Readable"
+
+# =============================================================================
+# Method Parameters
+# =============================================================================
+
+# Method with typed parameter
+- name: pactum method with parameter
+  faber: 'pactum Comparable { functio compare(numerus other) -> numerus }'
+  expect:
+    ts:
+      - "interface Comparable"
+      - "compare(other: number): number"
+    py:
+      - "class Comparable(Protocol):"
+      - "def compare(self, other: int) -> int: ..."
+    rs:
+      - "trait Comparable"
+      - "fn compare(&self, other: f64) -> f64;"
+    cpp:
+      - "concept Comparable"
+    zig:
+      - "// pactum Comparable"
+
+# =============================================================================
+# Type Parameters (Generics)
+# =============================================================================
+
+# Generic pactum with type parameter
+- name: pactum with type parameter
+  faber: 'pactum Container<T> { functio adde(T item) -> vacuum }'
+  expect:
+    ts:
+      - "interface Container<T>"
+      - "adde(item: T): void"
+    py:
+      - "class Container[T](Protocol):"
+      - "def adde(self, item: T) -> None: ..."
+    rs:
+      - "trait Container<T>"
+      - "fn adde(&self, item: T) -> ();"
+    cpp:
+      - "concept Container"
+    zig:
+      - "// pactum Container"
+
+# =============================================================================
+# Async Methods
+# =============================================================================
+
+# Async method (futura)
+- name: pactum with async method
+  faber: 'pactum Fetcher { futura functio fetch() -> textus }'
+  expect:
+    ts:
+      - "interface Fetcher"
+      - "fetch(): Promise<string>"
+    py:
+      - "class Fetcher(Protocol):"
+      - "async def fetch(self) -> Awaitable[str]: ..."
+    rs:
+      - "trait Fetcher"
+      - "async fn fetch(&self) -> String;"
+    cpp:
+      - "concept Fetcher"
+    zig:
+      - "// pactum Fetcher"
+
+# =============================================================================
+# Empty Pactum
+# =============================================================================
+
+# Empty pactum (marker interface)
+- name: empty pactum
+  faber: 'pactum Marker { }'
+  expect:
+    ts:
+      - "interface Marker {"
+      - "}"
+    py:
+      - "class Marker(Protocol):"
+      - "pass"
+    rs:
+      - "trait Marker {"
+      - "}"
+    cpp:
+      - "concept Marker"
+    zig:
+      - "// pactum Marker"

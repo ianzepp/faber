@@ -1,0 +1,233 @@
+# Si statements - conditionals
+# Maps Faber si/sin/aliter/secus to target if/elif/else
+#
+# Syntax:
+#   si condition { consequent }
+#   si condition { } aliter { alternate }
+#   si condition { } aliter si condition2 { }    -- literal style
+#   si condition { } sin condition2 { }          -- poetic style (sin = "but if")
+#   si condition { } secus { }                   -- poetic else (secus = "otherwise")
+#   si condition { } cape err { }                -- catch clause (ts/py only)
+#
+# Note: Rust omits parens around condition; Python uses elif and colon syntax
+
+# =============================================================================
+# Simple If
+# =============================================================================
+
+# Basic if with boolean literal
+- name: simple if with verum
+  faber: |
+    si verum {
+      scribe "yes"
+    }
+  expect:
+    ts:
+      - "if (true)"
+      - 'console.log("yes")'
+    py:
+      - "if True:"
+      - 'print("yes")'
+    rs:
+      - "if true"
+      - 'println!("{}", String::from("yes"))'
+    cpp:
+      - "if (true)"
+    zig:
+      - "if (true)"
+
+# If with comparison expression
+- name: if with comparison
+  faber: 'si x > 0 { scribe "positive" }'
+  expect:
+    ts:
+      - "if ((x > 0))"
+    py:
+      - "if (x > 0):"
+    rs:
+      - "if (x > 0)"
+    cpp:
+      - "if ((x > 0))"
+    zig:
+      - "if ((x > 0))"
+
+# =============================================================================
+# If-Else
+# =============================================================================
+
+# Basic if-else using aliter
+- name: if-else with aliter
+  faber: |
+    si falsum {
+      a()
+    }
+    aliter {
+      b()
+    }
+  expect:
+    ts:
+      - "if (false)"
+      - "} else {"
+    py:
+      - "if False:"
+      - "else:"
+    rs:
+      - "if false"
+      - "} else {"
+    cpp:
+      - "if (false)"
+      - "} else {"
+    zig:
+      - "if (false)"
+      - "} else {"
+
+# Poetic else using secus
+- name: if-else with secus (poetic)
+  faber: |
+    si falsum {
+      a()
+    }
+    secus {
+      b()
+    }
+  expect:
+    ts:
+      - "if (false)"
+      - "} else {"
+    py:
+      - "if False:"
+      - "else:"
+    rs:
+      - "if false"
+      - "} else {"
+    cpp:
+      - "if (false)"
+      - "} else {"
+    zig:
+      - "if (false)"
+      - "} else {"
+
+# =============================================================================
+# If-Elif-Else Chains
+# =============================================================================
+
+# Literal style: aliter si
+- name: if-elif-else with aliter si
+  faber: |
+    si x == 1 { a() }
+    aliter si x == 2 { b() }
+    aliter { c() }
+  expect:
+    ts:
+      - "if ((x == 1))"
+      - "else if ((x == 2))"
+      - "else {"
+    py:
+      - "if (x == 1):"
+      - "elif (x == 2):"
+      - "else:"
+    rs:
+      - "if (x == 1)"
+      - "else if (x == 2)"
+      - "else {"
+    cpp:
+      - "if ((x == 1))"
+      - "else if ((x == 2))"
+      - "else {"
+    zig:
+      - "if ((x == 1))"
+      - "else if ((x == 2))"
+      - "else {"
+
+# Poetic style: sin (= "but if")
+- name: if-elif-else with sin (poetic)
+  faber: |
+    si x == 1 { a() }
+    sin x == 2 { b() }
+    secus { c() }
+  expect:
+    ts:
+      - "if ((x == 1))"
+      - "else if ((x == 2))"
+      - "else {"
+    py:
+      - "if (x == 1):"
+      - "elif (x == 2):"
+      - "else:"
+    rs:
+      - "if (x == 1)"
+      - "else if (x == 2)"
+      - "else {"
+    cpp:
+      - "if ((x == 1))"
+      - "else if ((x == 2))"
+      - "else {"
+    zig:
+      - "if ((x == 1))"
+      - "else if ((x == 2))"
+      - "else {"
+
+# Mixed styles (allowed per grammar)
+- name: mixed literal and poetic style
+  faber: |
+    si x == 1 { a() }
+    sin x == 2 { b() }
+    aliter { c() }
+  expect:
+    ts:
+      - "if ((x == 1))"
+      - "else if ((x == 2))"
+      - "else {"
+    py:
+      - "if (x == 1):"
+      - "elif (x == 2):"
+      - "else:"
+
+# =============================================================================
+# Catch Clause (cape)
+# =============================================================================
+# si with cape wraps in try-catch (TypeScript/Python only)
+
+- name: if with cape clause
+  faber: |
+    si riskyCall() {
+      process()
+    } cape err {
+      handleError(err)
+    }
+  expect:
+    ts:
+      - "try {"
+      - "if (riskyCall())"
+      - "} catch (err)"
+      - "handleError(err)"
+    py:
+      - "try:"
+      - "if riskyCall():"
+      - "except Exception as err:"
+      - "handleError(err)"
+
+# =============================================================================
+# Nested Conditionals
+# =============================================================================
+
+- name: nested if statements
+  faber: |
+    si a {
+      si b {
+        inner()
+      }
+    }
+  expect:
+    ts:
+      - "if (a)"
+      - "if (b)"
+      - "inner()"
+    py:
+      - "if a:"
+      - "if b:"
+      - "inner()"
+    rs:
+      - "if a"
+      - "if b"
+      - "inner()"

@@ -1,0 +1,165 @@
+# Probandum statements - test suite/describe blocks
+# Maps Faber probandum syntax to target-language test grouping
+#
+# Syntax:
+#   probandum "suite name" {
+#     cura ante { setup }
+#     cura post { teardown }
+#     proba "test" { assertions }
+#     probandum "nested suite" { ... }
+#   }
+#
+# Target mappings:
+#   TypeScript: describe() with beforeEach/afterEach
+#   Rust: #[cfg(test)] mod tests { ... }
+#
+# Note: Only ts and rs have implementations currently
+
+# =============================================================================
+# Simple Probandum
+# =============================================================================
+
+# Basic test suite
+- name: simple probandum
+  faber: |
+    probandum "Calculator" {
+      proba "adds numbers" { adfirma verum }
+    }
+  expect:
+    ts:
+      - 'describe("Calculator", () => {'
+      - 'test("adds numbers", () =>'
+    rs:
+      - "// Test suite: Calculator"
+      - "#[cfg(test)]"
+      - "mod tests {"
+      - "#[test]"
+      - "fn adds_numbers()"
+
+# Multiple tests in suite
+- name: probandum with multiple tests
+  faber: |
+    probandum "Math" {
+      proba "adds" { adfirma verum }
+      proba "subtracts" { adfirma verum }
+    }
+  expect:
+    ts:
+      - 'describe("Math", () => {'
+      - 'test("adds", () =>'
+      - 'test("subtracts", () =>'
+    rs:
+      - "// Test suite: Math"
+      - "#[cfg(test)]"
+      - "mod tests {"
+      - "fn adds()"
+      - "fn subtracts()"
+
+# =============================================================================
+# Setup/Teardown (cura blocks)
+# =============================================================================
+
+# Suite with beforeEach setup
+- name: probandum with cura ante
+  faber: |
+    probandum "Lexer" {
+      cura ante { lexer = init() }
+      proba "parses" { adfirma verum }
+    }
+  expect:
+    ts:
+      - 'describe("Lexer", () => {'
+      - "beforeEach(() => {"
+      - "lexer = init()"
+      - 'test("parses", () =>'
+    rs:
+      - "// Test suite: Lexer"
+      - "#[cfg(test)]"
+      - "mod tests {"
+
+# Suite with afterEach teardown
+- name: probandum with cura post
+  faber: |
+    probandum "Database" {
+      cura post { cleanup() }
+      proba "inserts" { adfirma verum }
+    }
+  expect:
+    ts:
+      - 'describe("Database", () => {'
+      - "afterEach(() => {"
+      - "cleanup()"
+    rs:
+      - "// Test suite: Database"
+      - "#[cfg(test)]"
+
+# Suite with beforeAll and afterAll
+- name: probandum with cura ante omnia and post omnia
+  faber: |
+    probandum "Server" {
+      cura ante omnia { server = start() }
+      cura post omnia { server.stop() }
+      proba "responds" { adfirma verum }
+    }
+  expect:
+    ts:
+      - 'describe("Server", () => {'
+      - "beforeAll(() => {"
+      - "server = start()"
+      - "afterAll(() => {"
+      - "server.stop()"
+    rs:
+      - "// Test suite: Server"
+      - "#[cfg(test)]"
+
+# =============================================================================
+# Nested Suites
+# =============================================================================
+
+# Nested probandum
+- name: nested probandum
+  faber: |
+    probandum "Outer" {
+      probandum "Inner" {
+        proba "test" { adfirma verum }
+      }
+    }
+  expect:
+    ts:
+      - 'describe("Outer", () => {'
+      - 'describe("Inner", () => {'
+      - 'test("test", () =>'
+    rs:
+      - "// Test suite: Outer"
+      - "#[cfg(test)]"
+      - "mod tests {"
+      - "// Test suite: Inner"
+      - "#[cfg(test)]"
+      - "mod tests {"
+
+# =============================================================================
+# Mixed Content
+# =============================================================================
+
+# Suite with setup, teardown, and multiple tests
+- name: probandum with mixed content
+  faber: |
+    probandum "Complete" {
+      cura ante { setup() }
+      proba "first" { adfirma verum }
+      proba "second" { adfirma verum }
+      cura post { teardown() }
+    }
+  expect:
+    ts:
+      - 'describe("Complete", () => {'
+      - "beforeEach(() => {"
+      - "setup()"
+      - 'test("first", () =>'
+      - 'test("second", () =>'
+      - "afterEach(() => {"
+      - "teardown()"
+    rs:
+      - "// Test suite: Complete"
+      - "#[cfg(test)]"
+      - "mod tests {"

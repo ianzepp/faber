@@ -1,0 +1,288 @@
+# Function declarations - functio, futura, fiunt, fiet, fient
+# Maps Faber function syntax to target-language equivalents
+#
+# Syntax:
+#   functio name(params) -> ReturnType { body }
+#   futura functio name(params) { body }      -- async
+#   functio name() fiunt Type { body }        -- generator
+#   functio name() fiet Type { body }         -- async + return type
+#   functio name() fient Type { body }        -- async generator
+#
+# Note: ts/py use contains (function body spans lines); rs/cpp/zig also use contains
+
+# =============================================================================
+# Simple Functions
+# =============================================================================
+
+# Basic function with untyped parameter
+- name: simple function with param
+  faber: |
+    functio salve(nomen) {
+      redde nomen
+    }
+  expect:
+    ts:
+      - "function salve(nomen)"
+      - "return nomen;"
+    py:
+      - "def salve(nomen):"
+      - "return nomen"
+    rs:
+      - "fn salve(nomen: _)"
+      - "return nomen;"
+    cpp:
+      - "void salve(auto nomen)"
+      - "return nomen;"
+    zig:
+      - "fn salve(nomen: anytype) void"
+      - "return nomen;"
+
+# Function with explicit return type annotation
+- name: function with return type
+  faber: 'functio greet() -> textus { redde "hello" }'
+  expect:
+    ts:
+      - "function greet(): string"
+      - 'return "hello"'
+    py:
+      - "def greet() -> str:"
+      - 'return "hello"'
+    rs:
+      - "fn greet() -> String"
+      - 'return String::from("hello");'
+    cpp:
+      - "std::string greet()"
+      - 'return std::string("hello")'
+    zig:
+      - "fn greet() []const u8"
+      - 'return "hello";'
+
+# Empty function body - Python requires pass, others allow {}
+- name: empty function body
+  faber: "functio noop() {}"
+  expect:
+    ts: "function noop() {}"
+    py:
+      - "def noop():"
+      - "pass"
+    rs:
+      - "fn noop() {}"
+    cpp:
+      - "void noop() {}"
+    zig:
+      - "fn noop() void {}"
+
+# =============================================================================
+# Typed Parameters
+# =============================================================================
+
+# Function with typed parameter (type-first syntax)
+- name: typed parameter
+  faber: 'functio greet(textus name) { redde name }'
+  expect:
+    ts:
+      - "function greet(name: string)"
+    py:
+      - "def greet(name: str):"
+    rs:
+      - "fn greet(name: &str)"
+    cpp:
+      - "void greet(const std::string& name)"
+    zig:
+      - "fn greet(name: []const u8)"
+
+# Function with multiple typed parameters
+- name: multiple typed parameters
+  faber: 'functio add(numerus a, numerus b) -> numerus { redde a + b }'
+  expect:
+    ts:
+      - "function add(a: number, b: number): number"
+    py:
+      - "def add(a: int, b: int) -> int:"
+    rs:
+      - "fn add(a: f64, b: f64) -> f64"
+    cpp:
+      - "int64_t add(int64_t a, int64_t b)"
+    zig:
+      - "fn add(a: i64, b: i64) i64"
+
+# =============================================================================
+# Async Functions
+# =============================================================================
+
+# futura makes a function async
+- name: async function with futura
+  faber: |
+    futura functio fetch(url) {
+      redde data
+    }
+  expect:
+    ts:
+      - "async function fetch(url)"
+    py:
+      - "async def fetch(url):"
+    rs:
+      - "async fn fetch(url: _)"
+    cpp:
+      - "void fetch(auto url)"
+    zig:
+      - "!void"
+
+# fiet = async + return type (wraps in Promise/Awaitable)
+- name: async function with fiet return type
+  faber: 'functio fetch() fiet textus { redde "data" }'
+  expect:
+    ts:
+      - "async function fetch(): Promise<string>"
+    py:
+      - "async def fetch() -> Awaitable[str]:"
+    rs:
+      - "async fn fetch() -> String"
+    cpp:
+      - "std::string fetch()"
+    zig:
+      - "fn fetch() ![]const u8"
+
+# =============================================================================
+# Generator Functions
+# =============================================================================
+
+# fiunt makes a function a generator (wraps return in Generator/Iterator)
+- name: generator function with fiunt
+  faber: 'functio range() fiunt numerus { redde 1 }'
+  expect:
+    ts:
+      - "function* range(): Generator<number>"
+    py:
+      - "def range() -> Iterator[int]:"
+    rs:
+      - "fn range() -> f64"
+    cpp:
+      - "int64_t range()"
+    zig:
+      - "fn range() i64"
+
+# fient = async generator (wraps in AsyncGenerator/AsyncIterator)
+- name: async generator function with fient
+  faber: 'functio stream() fient textus { redde "chunk" }'
+  expect:
+    ts:
+      - "async function* stream(): AsyncGenerator<string>"
+    py:
+      - "async def stream() -> AsyncIterator[str]:"
+    rs:
+      - "async fn stream() -> String"
+    cpp:
+      - "std::string stream()"
+    zig:
+      - "fn stream() ![]const u8"
+
+# =============================================================================
+# Yield/Await (cede keyword)
+# =============================================================================
+
+# cede in generator context becomes yield
+- name: cede as yield in generator
+  faber: 'functio range() fiunt numerus { cede 1 }'
+  expect:
+    ts:
+      - "yield 1"
+    py:
+      - "yield 1"
+    rs:
+      - "1.await;"
+    cpp:
+      - "int64_t range()"
+    zig:
+      - "_ = try 1;"
+
+# cede in async context becomes await
+- name: cede as await in async function
+  faber: 'functio fetch() fiet textus { cede getData() }'
+  expect:
+    ts:
+      - "await getData()"
+    py:
+      - "await getData()"
+    rs:
+      - "getData().await;"
+    cpp:
+      - "getData();"
+    zig:
+      - "try getData()"
+
+# =============================================================================
+# Rest Parameters (ceteri)
+# =============================================================================
+
+# ceteri collects variadic arguments
+- name: rest parameter with ceteri
+  faber: 'functio sum(ceteri numerus[] nums) { redde 0 }'
+  expect:
+    ts:
+      - "...nums: Array<number>"
+    py:
+      - "*nums: list[int]"
+    rs:
+      - "fn sum(nums: Vec<f64>)"
+    cpp:
+      - "void sum(const std::vector<int64_t>& nums)"
+
+# =============================================================================
+# Parameter Prepositions (de, in, ex)
+# =============================================================================
+# de = from/concerning (borrowed, read-only)
+# in = in/into (mutable borrow)
+# ex = from/out of (source) -- not yet implemented in codegen
+#
+# These map to ownership semantics in systems languages:
+#   de -> Rust &T, C++ const T&, Zig []const T
+#   in -> Rust &mut T, C++ T&, Zig *T
+
+# de = borrowed, read-only parameter
+- name: de preposition (read-only borrow)
+  faber: 'functio process(de textus source) { redde source }'
+  expect:
+    ts:
+      - "function process(source: string)"
+    py:
+      - "def process(source: str):"
+    rs:
+      - "fn process(source: &str)"
+    cpp:
+      - "const std::string& source"
+    zig:
+      - "source: []const u8"
+
+# in = mutable borrow parameter
+- name: in preposition (mutable borrow)
+  faber: 'functio mutate(in textus target) { redde target }'
+  expect:
+    ts:
+      - "function mutate(target: string)"
+    py:
+      - "def mutate(target: str):"
+    rs:
+      - "fn mutate(target: &str)"
+    cpp:
+      - "std::string& target"
+    zig:
+      - "target: *[]u8"
+
+# Mixed: regular and prepositional parameters
+- name: mixed regular and prepositional parameters
+  faber: 'functio update(de textus source, in textus target) { redde target }'
+  expect:
+    ts:
+      - "function update(source: string, target: string)"
+    py:
+      - "def update(source: str, target: str):"
+    rs:
+      # Rust ignores prepositions - both become &str (default for textus)
+      - "fn update(source: &str, target: &str)"
+    cpp:
+      - "const std::string& source"
+      - "std::string& target"
+    zig:
+      - "source: []const u8"
+      - "target: *[]u8"

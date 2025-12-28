@@ -1,0 +1,328 @@
+# Elige statement - Switch/match on values
+# Maps Faber elige to target-specific switch or match expressions
+#
+# Syntax:
+#   elige discriminant {
+#     si value1 { consequent }
+#     si value2 { consequent }
+#     aliter { default }
+#   }
+#
+# Target behaviors:
+#   - TypeScript: if/else-if chain with === comparison
+#   - Python: match/case statement (Python 3.10+)
+#   - Rust: match expression
+#   - C++: switch statement with break
+#   - Zig: if/else-if chain (== or std.mem.eql for strings)
+
+# =============================================================================
+# Basic Elige with Cases
+# =============================================================================
+
+# Simple elige with numeric cases
+- name: elige with numeric cases
+  faber: |
+    elige x {
+      si 1 { a() }
+      si 2 { b() }
+    }
+  expect:
+    ts:
+      - "if (x === 1)"
+      - "a();"
+      - "else if (x === 2)"
+      - "b();"
+    py:
+      - "match x:"
+      - "case 1:"
+      - "a()"
+      - "case 2:"
+      - "b()"
+    rs:
+      - "match x {"
+      - "1 => a(),"
+      - "2 => b(),"
+    cpp:
+      - "switch (x) {"
+      - "case 1: {"
+      - "a();"
+      - "break;"
+      - "case 2: {"
+      - "b();"
+      - "break;"
+    zig:
+      - "if ((x == 1))"
+      - "a();"
+      - "else if ((x == 2))"
+      - "b();"
+
+# Elige with default case (aliter)
+- name: elige with default case
+  faber: |
+    elige status {
+      si 1 { active() }
+      aliter { inactive() }
+    }
+  expect:
+    ts:
+      - "if (status === 1)"
+      - "active();"
+      - "else {"
+      - "inactive();"
+    py:
+      - "match status:"
+      - "case 1:"
+      - "active()"
+      - "case _:"
+      - "inactive()"
+    rs:
+      - "match status {"
+      - "1 => active(),"
+      - "_ => inactive(),"
+    cpp:
+      - "switch (status) {"
+      - "case 1: {"
+      - "active();"
+      - "break;"
+      - "default: {"
+      - "inactive();"
+      - "break;"
+    zig:
+      - "if ((status == 1))"
+      - "active();"
+      - "else {"
+      - "inactive();"
+
+# =============================================================================
+# String Cases
+# =============================================================================
+
+# Elige with string literals
+- name: elige with string cases
+  faber: |
+    elige cmd {
+      si "start" { begin() }
+      si "stop" { end() }
+      aliter { unknown() }
+    }
+  expect:
+    ts:
+      - 'if (cmd === "start")'
+      - "begin();"
+      - 'else if (cmd === "stop")'
+      - "end();"
+      - "else {"
+      - "unknown();"
+    py:
+      - "match cmd:"
+      - 'case "start":'
+      - "begin()"
+      - 'case "stop":'
+      - "end()"
+      - "case _:"
+      - "unknown()"
+    rs:
+      - "match cmd {"
+      - 'String::from("start") => begin(),'
+      - 'String::from("stop") => end(),'
+      - "_ => unknown(),"
+    cpp:
+      - "switch (cmd) {"
+      - 'case std::string("start"): {'
+      - "begin();"
+      - 'case std::string("stop"): {'
+      - "end();"
+      - "default: {"
+      - "unknown();"
+    zig:
+      - 'if (std.mem.eql(u8, cmd, "start"))'
+      - "begin();"
+      - 'else if (std.mem.eql(u8, cmd, "stop"))'
+      - "end();"
+      - "else {"
+      - "unknown();"
+
+# =============================================================================
+# Multiple Statements in Cases
+# =============================================================================
+
+# Case with multiple statements
+- name: elige case with multiple statements
+  faber: |
+    elige mode {
+      si 1 {
+        varia x = init()
+        process(x)
+        redde x
+      }
+      aliter {
+        redde nihil
+      }
+    }
+  expect:
+    ts:
+      - "if (mode === 1)"
+      - "let x = init();"
+      - "process(x);"
+      - "return x;"
+      - "else {"
+      - "return null;"
+    py:
+      - "match mode:"
+      - "case 1:"
+      - "x = init()"
+      - "process(x)"
+      - "return x"
+      - "case _:"
+      - "return None"
+    rs:
+      - "match mode {"
+      - "1 => {"
+      - "let mut x = init();"
+      - "process(x);"
+      - "return x;"
+      - "_ => None,"
+    cpp:
+      - "switch (mode) {"
+      - "case 1: {"
+      - "auto x = init();"
+      - "process(x);"
+      - "return x;"
+      - "default: {"
+      - "return nullptr;"
+    zig:
+      - "if ((mode == 1))"
+      - "var x: anytype = init();"
+      - "process(x);"
+      - "return x;"
+      - "else {"
+      - "return null;"
+
+# =============================================================================
+# Elige with Expressions
+# =============================================================================
+
+# Discriminant is expression, not just variable
+- name: elige with expression discriminant
+  faber: |
+    elige getValue() {
+      si 0 { zero() }
+      si 1 { one() }
+    }
+  expect:
+    ts:
+      - "if (getValue() === 0)"
+      - "zero();"
+      - "else if (getValue() === 1)"
+      - "one();"
+    py:
+      - "match getValue():"
+      - "case 0:"
+      - "zero()"
+      - "case 1:"
+      - "one()"
+    rs:
+      - "match getValue() {"
+      - "0 => zero(),"
+      - "1 => one(),"
+    cpp:
+      - "switch (getValue()) {"
+      - "case 0: {"
+      - "zero();"
+      - "case 1: {"
+      - "one();"
+    zig:
+      - "if ((getValue() == 0))"
+      - "zero();"
+      - "else if ((getValue() == 1))"
+      - "one();"
+
+# =============================================================================
+# Elige with Cape (Catch Clause)
+# =============================================================================
+
+# Elige wrapped in try/catch
+- name: elige with cape clause
+  faber: |
+    elige riskyValue() {
+      si 1 { action() }
+    }
+    cape err {
+      handleError(err)
+    }
+  expect:
+    ts:
+      - "try {"
+      - "if (riskyValue() === 1)"
+      - "action();"
+      - "} catch (err) {"
+      - "handleError(err);"
+    py:
+      - "try:"
+      - "match riskyValue():"
+      - "case 1:"
+      - "action()"
+      - "except Exception as err:"
+      - "handleError(err)"
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Elige with only default case
+- name: elige with only default case
+  faber: |
+    elige x {
+      aliter { fallback() }
+    }
+  expect:
+    ts:
+      - "{"
+      - "fallback();"
+    py:
+      - "match x:"
+      - "case _:"
+      - "fallback()"
+    rs:
+      - "match x {"
+      - "_ => fallback(),"
+    cpp:
+      - "switch (x) {"
+      - "default: {"
+      - "fallback();"
+    zig:
+      - "{"
+      - "fallback();"
+
+# Empty case body
+- name: elige with empty case
+  faber: |
+    elige x {
+      si 1 { }
+      aliter { action() }
+    }
+  expect:
+    ts:
+      - "if (x === 1)"
+      - "else {"
+      - "action();"
+    py:
+      - "match x:"
+      - "case 1:"
+      - "pass"
+      - "case _:"
+      - "action()"
+    rs:
+      - "match x {"
+      - "1 => {},"
+      - "_ => action(),"
+    cpp:
+      - "switch (x) {"
+      - "case 1: {"
+      - "break;"
+      - "default: {"
+      - "action();"
+    zig:
+      - "if ((x == 1))"
+      - "else {"
+      - "action();"

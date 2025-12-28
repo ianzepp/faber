@@ -1,0 +1,239 @@
+# Genus declarations - class/struct data types
+# Maps Faber genus syntax to target-language classes/structs
+#
+# Syntax:
+#   genus Name { typeAnnotation fieldName: defaultValue }
+#   genus Name { functio methodName() { body } }
+#   genus Name { functio creo() { initialization } }
+#   genus Name implet Interface1, Interface2 { ... }
+#
+# Features:
+#   - Fields are public by default (struct semantics)
+#   - privatus modifier for private fields
+#   - generis modifier for static/class-level fields
+#   - Auto-merge constructor accepts overrides object
+#   - creo() method is post-initialization hook
+#   - Type parameters: genus Box<T> { T value }
+
+# =============================================================================
+# Simple Genus
+# =============================================================================
+
+# Basic struct with single field
+- name: simple genus with one field
+  faber: 'genus Persona { textus nomen }'
+  expect:
+    ts:
+      - "class Persona"
+      - "nomen: string"
+      - "constructor(overrides:"
+    py:
+      - "class Persona:"
+      - "nomen: str"
+      - "def __init__(self, overrides: dict = {}):"
+    rs:
+      - "struct Persona"
+      - "pub nomen: String,"
+    cpp:
+      - "struct Persona"
+      - "std::string nomen"
+    zig:
+      - "const Persona = struct"
+      - "nomen: []const u8"
+
+# Genus with multiple fields
+- name: genus with multiple fields
+  faber: |
+    genus Persona {
+      textus nomen
+      numerus aetas
+    }
+  expect:
+    ts:
+      - "class Persona"
+      - "nomen: string"
+      - "aetas: number"
+    py:
+      - "class Persona:"
+      - "nomen: str"
+      - "aetas: int"
+    rs:
+      - "struct Persona"
+      - "pub nomen: String,"
+      - "pub aetas: f64,"
+    cpp:
+      - "struct Persona"
+      - "std::string nomen"
+      - "int64_t aetas"
+    zig:
+      - "const Persona = struct"
+      - "nomen: []const u8"
+      - "aetas: i64"
+
+# =============================================================================
+# Field Defaults
+# =============================================================================
+
+# Fields with default values
+- name: genus with field defaults
+  faber: 'genus Config { textus nomen: "default" numerus port: 8080 }'
+  expect:
+    ts:
+      - "nomen: string = \"default\""
+      - "port: number = 8080"
+    py:
+      - "nomen: str = \"default\""
+      - "port: int = 8080"
+    rs:
+      - "struct Config"
+    cpp:
+      - 'std::string nomen = std::string("default")'
+      - "int64_t port = 8080"
+    zig:
+      - 'nomen: []const u8 = "default"'
+      - "port: i64 = 8080"
+
+# =============================================================================
+# Field Modifiers
+# =============================================================================
+
+# Private fields
+- name: genus with private field
+  faber: 'genus Persona { privatus textus secretum }'
+  expect:
+    ts:
+      - "private secretum: string"
+    py:
+      - "_secretum: str"
+    rs:
+      - "secretum: String,"
+    cpp:
+      - "std::string secretum"
+    zig:
+      - "secretum: []const u8"
+
+# Static fields
+- name: genus with static field
+  faber: 'genus Config { generis textus VERSION: "1.0" }'
+  expect:
+    ts:
+      - "static VERSION: string = \"1.0\""
+    py:
+      - 'VERSION: str = "1.0"'
+    rs:
+      - "struct Config"
+    cpp:
+      - "struct Config"
+    zig:
+      - "const Config = struct"
+
+# =============================================================================
+# Methods
+# =============================================================================
+
+# Simple method
+- name: genus with method
+  faber: |
+    genus Persona {
+      textus nomen
+      functio saluta() -> textus {
+        redde nomen
+      }
+    }
+  expect:
+    ts:
+      - "class Persona"
+      - "saluta(): string"
+      - "return nomen"
+    py:
+      - "class Persona:"
+      - "def saluta(self) -> str:"
+      - "return nomen"
+    rs:
+      - "struct Persona"
+      - "impl Persona"
+    cpp:
+      - "struct Persona"
+      - "std::string saluta()"
+    zig:
+      - "const Persona = struct"
+      - "pub fn saluta(self: *const Self)"
+
+# =============================================================================
+# Constructor (creo)
+# =============================================================================
+
+# Genus with creo initialization
+- name: genus with creo method
+  faber: |
+    genus Persona {
+      numerus aetas
+      functio creo() {
+        si aetas < 0 {
+          aetas = 0
+        }
+      }
+    }
+  expect:
+    ts:
+      - "class Persona"
+      - "private creo()"
+      - "this.creo()"
+    py:
+      - "class Persona:"
+      - "def _creo(self):"
+      - "self._creo()"
+    rs:
+      - "struct Persona"
+      - "impl Persona"
+      - "pub fn new()"
+    cpp:
+      - "struct Persona"
+      - "void _creo()"
+      - "_creo();"
+    zig:
+      - "const Persona = struct"
+      - "fn creo(self: *Self) void"
+      - "self.creo()"
+
+# =============================================================================
+# Type Parameters (Generics)
+# =============================================================================
+
+# Generic genus with type parameter
+- name: genus with type parameter
+  faber: 'genus Box<T> { T value }'
+  expect:
+    ts:
+      - "class Box<T>"
+      - "value: T"
+    py:
+      - "class Box[T]:"
+      - "value: T"
+    rs:
+      - "struct Box<T>"
+      - "pub value: T,"
+    cpp:
+      - "struct Box"
+    zig:
+      - "const Box = struct"
+      - "value: T"
+
+# =============================================================================
+# Implements (Interface Implementation)
+# =============================================================================
+
+# Genus implementing interface
+- name: genus implementing pactum
+  faber: 'genus Reader implet Legibilis { functio lege() -> textus { redde "" } }'
+  expect:
+    ts:
+      - "class Reader implements Legibilis"
+    py:
+      - "class Reader(Legibilis):"
+    rs:
+      - "struct Reader"
+    cpp:
+      - "struct Reader"
+    zig:
+      - "const Reader = struct"

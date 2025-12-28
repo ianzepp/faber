@@ -1,0 +1,109 @@
+# Console output statements - scribe/vide/mone
+# Maps Faber output keywords to target console/print functions
+#
+# Syntax:
+#   scribe args  -- console.log (normal output)
+#   vide args    -- console.debug (debug output)
+#   mone args    -- console.warn (warning output)
+#
+# Target mappings:
+#   ts:  console.log/debug/warn
+#   py:  print with [DEBUG]/[WARN] prefix
+#   rs:  println! with format string
+#   cpp: std::print with format string
+#   zig: std.debug.print with format string
+
+# =============================================================================
+# Basic Output (scribe)
+# =============================================================================
+
+# Print string literal
+- name: scribe with string literal
+  faber: 'scribe "hello"'
+  expect:
+    ts:
+      - 'console.log("hello");'
+    py:
+      - 'print("hello")'
+    rs:
+      - 'println!("{}", String::from("hello"));'
+    cpp:
+      - 'std::print("{}\n", std::string("hello"));'
+    zig:
+      - 'std.debug.print("{s}\n", .{ "hello" });'
+
+# Print variable
+- name: scribe with variable
+  faber: 'scribe x'
+  expect:
+    ts:
+      - "console.log(x);"
+    py:
+      - "print(x)"
+    rs:
+      - "println!(\"{}\", x);"
+    cpp:
+      - 'std::print("{}\'
+      - 'n", x);'
+    zig:
+      - 'std.debug.print("{any}\'
+      - 'n", .{ x });'
+
+# Print multiple arguments
+- name: scribe with multiple args
+  faber: 'scribe "value:", x'
+  expect:
+    ts:
+      - 'console.log("value:", x);'
+    py:
+      - 'print("value:", x)'
+    rs:
+      - 'println!("{} {}", String::from("value:"), x);'
+    cpp:
+      - 'std::print("{} {}\'
+      - 'n", std::string("value:"), x);'
+    zig:
+      - 'std.debug.print("{s} {any}\'
+      - 'n", .{ "value:", x });'
+
+# =============================================================================
+# Debug Output (vide)
+# =============================================================================
+
+# Debug print
+- name: vide with string
+  faber: 'vide "debug info"'
+  expect:
+    ts:
+      - 'console.debug("debug info");'
+    py:
+      - 'print("[DEBUG]", "debug info")'
+    rs:
+      - 'dbg!(String::from("debug info"));'
+    cpp:
+      - 'std::print("[DEBUG] {}\'
+      - 'n", std::string("debug info"));'
+    zig:
+      - 'std.debug.print("[DEBUG] {s}\'
+      - 'n", .{ "debug info" });'
+
+# =============================================================================
+# Warning Output (mone)
+# =============================================================================
+
+# Warning print
+- name: mone with string
+  faber: 'mone "warning message"'
+  expect:
+    ts:
+      - 'console.warn("warning message");'
+    py:
+      - 'print("[WARN]", "warning message")'
+    rs:
+      - 'println!("{}", String::from("warning message"));'
+    cpp:
+      - 'std::print("[WARN] {}\'
+      - 'n", std::string("warning message"));'
+    zig:
+      - 'std.debug.print("[WARN] {s}\'
+      - 'n", .{ "warning message" });'

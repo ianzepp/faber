@@ -1,0 +1,85 @@
+# Return statements - redde
+# Maps Faber return syntax to target-language return statements
+#
+# Syntax:
+#   redde expression  -- returns the expression value
+#   redde             -- returns without a value (void return)
+
+# =============================================================================
+# Basic Return
+# =============================================================================
+
+# Return with expression
+- name: return with value
+  faber: 'redde 42'
+  expect:
+    ts:
+      - "return 42;"
+    py:
+      - "return 42"
+    rs:
+      - "return 42;"
+    cpp:
+      - "return 42;"
+    zig:
+      - "return 42;"
+
+# Return with string
+- name: return with string
+  faber: 'redde "hello"'
+  expect:
+    ts:
+      - 'return "hello";'
+    py:
+      - 'return "hello"'
+    rs:
+      - 'return String::from("hello");'
+    cpp:
+      - 'return std::string("hello");'
+    zig:
+      - 'return "hello";'
+
+# Return with variable
+- name: return with identifier
+  faber: 'redde result'
+  expect:
+    ts:
+      - "return result;"
+    py:
+      - "return result"
+    rs:
+      - "return result;"
+    cpp:
+      - "return result;"
+    zig:
+      - "return result;"
+
+# Return with expression
+- name: return with binary expression
+  faber: 'redde x + y'
+  expect:
+    ts:
+      - "return (x + y);"
+    py:
+      - "return (x + y)"
+    rs:
+      - "return (x + y);"
+    cpp:
+      - "return (x + y);"
+    zig:
+      - "return (x + y);"
+
+# Void return (no value)
+- name: void return
+  faber: 'redde'
+  expect:
+    ts:
+      - "return;"
+    py:
+      - "return"
+    rs:
+      - "return;"
+    cpp:
+      - "return;"
+    zig:
+      - "return;"

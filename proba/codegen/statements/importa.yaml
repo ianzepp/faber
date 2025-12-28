@@ -1,0 +1,206 @@
+# Importa declaration - Module import statements
+# Maps Faber ex...importa to target-specific import syntax
+#
+# Syntax:
+#   ex source importa name1, name2
+#   ex source importa name ut alias
+#   ex source importa *
+#
+# Target behaviors:
+#   - TypeScript: import { } from ""; norma imports suppressed
+#   - Python: from import
+#   - Rust: use ::{}; norma imports suppressed
+#   - C++: Tracked for #include generation (rendered at top)
+#   - Zig: const _ = @import(); const name = _.name;
+
+# =============================================================================
+# External Package Imports
+# =============================================================================
+
+# Basic named imports
+- name: basic named imports
+  faber: 'ex "@hono/hono" importa Hono, Context'
+  expect:
+    ts:
+      - 'import { Hono, Context } from "@hono/hono";'
+    py:
+      - 'from @hono/hono import Hono, Context'
+    rs:
+      - 'use @hono/hono::{Hono, Context};'
+    cpp: []  # C++ renders includes at top of file, not inline
+    zig:
+      - 'const _@hono/hono = @import("@hono/hono");'
+      - 'const Hono = _@hono/hono.Hono;'
+      - 'const Context = _@hono/hono.Context;'
+
+# Single named import
+- name: single named import
+  faber: 'ex "lodash" importa map'
+  expect:
+    ts:
+      - 'import { map } from "lodash";'
+    py:
+      - 'from lodash import map'
+    rs:
+      - 'use lodash::map;'
+    cpp: []
+    zig:
+      - 'const _lodash = @import("lodash");'
+      - 'const map = _lodash.map;'
+
+# Wildcard import
+- name: wildcard import
+  faber: 'ex "@std/crypto" importa *'
+  expect:
+    ts:
+      - 'import * as @std/crypto from "@std/crypto";'
+    py:
+      - 'import @std/crypto'
+    rs:
+      - 'use @std/crypto::*;'
+    cpp: []
+    zig:
+      - 'const @std/crypto = @import("@std/crypto");'
+
+# =============================================================================
+# Import with Aliases (ut keyword)
+# =============================================================================
+
+# Single import with alias
+- name: import with alias
+  faber: 'ex "utils" importa helper ut h'
+  expect:
+    ts:
+      - 'import { helper as h } from "utils";'
+    py:
+      - 'from utils import helper as h'
+    rs:
+      - 'use utils::helper as h;'
+    cpp: []
+    zig:
+      - 'const _utils = @import("utils");'
+      - 'const h = _utils.helper;'
+
+# Multiple imports with mixed aliases
+- name: imports with mixed aliases
+  faber: 'ex "db" importa connect, query ut q, close'
+  expect:
+    ts:
+      - 'import { connect, query as q, close } from "db";'
+    py:
+      - 'from db import connect, query as q, close'
+    rs:
+      - 'use db::{connect, query as q, close};'
+    cpp: []
+    zig:
+      - 'const _db = @import("db");'
+      - 'const connect = _db.connect;'
+      - 'const q = _db.query;'
+      - 'const close = _db.close;'
+
+# =============================================================================
+# Norma Intrinsic Imports (TypeScript/Rust only)
+# =============================================================================
+
+# norma imports are suppressed in TS and Rust (handled as intrinsics)
+- name: norma import suppressed in ts and rs
+  faber: 'ex "norma/tempus" importa nunc, SECUNDUM'
+  expect:
+    ts: []  # Empty - norma imports are suppressed
+    py:
+      - 'from norma/tempus import nunc, SECUNDUM'
+    rs: []  # Empty - norma imports are suppressed
+    cpp: []
+    zig:
+      - 'const _norma/tempus = @import("norma/tempus");'
+      - 'const nunc = _norma/tempus.nunc;'
+      - 'const SECUNDUM = _norma/tempus.SECUNDUM;'
+
+# norma wildcard import
+- name: norma wildcard import
+  faber: 'ex "norma" importa *'
+  expect:
+    ts: []
+    py:
+      - 'import norma'
+    rs: []
+    cpp: []
+    zig:
+      - 'const norma = @import("norma");'
+
+# =============================================================================
+# Multiple Import Statements
+# =============================================================================
+
+# Two separate imports from different sources
+- name: multiple imports from different sources
+  faber: |
+    ex "@oak/oak" importa Application
+    ex "std/path" importa join, resolve
+  expect:
+    ts:
+      - 'import { Application } from "@oak/oak";'
+      - 'import { join, resolve } from "std/path";'
+    py:
+      - 'from @oak/oak import Application'
+      - 'from std/path import join, resolve'
+    rs:
+      - 'use @oak/oak::Application;'
+      - 'use std/path::{join, resolve};'
+    cpp: []
+    zig:
+      - 'const _@oak/oak = @import("@oak/oak");'
+      - 'const Application = _@oak/oak.Application;'
+      - 'const _std/path = @import("std/path");'
+      - 'const join = _std/path.join;'
+      - 'const resolve = _std/path.resolve;'
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Import with special characters in source
+- name: import with scoped package
+  faber: 'ex "@types/node" importa Process'
+  expect:
+    ts:
+      - 'import { Process } from "@types/node";'
+    py:
+      - 'from @types/node import Process'
+    rs:
+      - 'use @types/node::Process;'
+    cpp: []
+    zig:
+      - 'const _@types/node = @import("@types/node");'
+      - 'const Process = _@types/node.Process;'
+
+# Relative import path
+- name: relative import
+  faber: 'ex "./utils" importa helper'
+  expect:
+    ts:
+      - 'import { helper } from "./utils";'
+    py:
+      - 'from ./utils import helper'
+    rs:
+      - 'use ./utils::helper;'
+    cpp: []
+    zig:
+      - 'const _./utils = @import("./utils");'
+      - 'const helper = _./utils.helper;'
+
+# All names aliased
+- name: all imports aliased
+  faber: 'ex "lib" importa foo ut f, bar ut b'
+  expect:
+    ts:
+      - 'import { foo as f, bar as b } from "lib";'
+    py:
+      - 'from lib import foo as f, bar as b'
+    rs:
+      - 'use lib::{foo as f, bar as b};'
+    cpp: []
+    zig:
+      - 'const _lib = @import("lib");'
+      - 'const f = _lib.foo;'
+      - 'const b = _lib.bar;'

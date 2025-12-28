@@ -1,0 +1,104 @@
+# Proba statements - test case declarations
+# Maps Faber proba syntax to target-language test frameworks
+#
+# Syntax:
+#   proba "test description" { assertions }
+#   proba omitte "reason" { skipped test }
+#   proba futurum "reason" { todo test }
+#
+# Target mappings:
+#   TypeScript: test() / test.skip() / test.todo()
+#   Rust: #[test] / #[ignore] #[test] / // TODO:
+#
+# Note: Only ts and rs have implementations currently
+
+# =============================================================================
+# Simple Test
+# =============================================================================
+
+# Basic test case
+- name: simple proba
+  faber: 'proba "should work" { adfirma verum }'
+  expect:
+    ts:
+      - 'test("should work", () =>'
+      - "if (!(true))"
+    rs:
+      - "#[test]"
+      - "fn should_work()"
+      - "assert!(true);"
+
+# Test with multiple assertions
+- name: proba with multiple assertions
+  faber: |
+    proba "validates input" {
+      adfirma x > 0
+      adfirma y < 100
+    }
+  expect:
+    ts:
+      - 'test("validates input", () =>'
+    rs:
+      - "#[test]"
+      - "fn validates_input()"
+
+# =============================================================================
+# Skip Modifier (omitte)
+# =============================================================================
+
+# Skipped test with reason
+- name: proba omitte with reason
+  faber: 'proba omitte "blocked by #42" "skip this" { adfirma falsum }'
+  expect:
+    ts:
+      - 'test.skip("blocked by #42: skip this", () =>'
+    rs:
+      - "#[ignore]"
+      - "#[test]"
+      - "fn skip_this()"
+
+# =============================================================================
+# Todo Modifier (futurum)
+# =============================================================================
+
+# Todo test with reason
+- name: proba futurum with reason
+  faber: 'proba futurum "needs async support" "implement later" { adfirma verum }'
+  expect:
+    ts:
+      - 'test.todo("needs async support: implement later")'
+    rs:
+      - "// TODO: implement later"
+
+# Todo test without reason
+- name: proba futurum without test name
+  faber: 'proba futurum "implement later" { adfirma verum }'
+  expect:
+    ts:
+      - 'test.todo("implement later: ")'
+    rs:
+      - "// TODO:"
+
+# =============================================================================
+# Test Names
+# =============================================================================
+
+# Test with special characters in name (Rust sanitizes)
+- name: proba with special characters
+  faber: 'proba "handles user emails" { adfirma verum }'
+  expect:
+    ts:
+      - 'test("handles user emails"'
+    rs:
+      - "#[test]"
+      - "fn handles_user_emails()"
+
+# Test with spaces converted to underscores (Rust)
+- name: proba name conversion
+  faber: 'proba "converts to snake case" { adfirma verum }'
+  expect:
+    ts:
+      - 'test("converts to snake case"'
+    rs:
+      - "#[test]"
+      - "fn converts_to_snake_case()"

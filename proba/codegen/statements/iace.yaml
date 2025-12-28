@@ -1,0 +1,81 @@
+# Throw statements - iace/mori
+# Maps Faber throw syntax to target-language error handling
+#
+# Syntax:
+#   iace expression  -- throws recoverable error (can be caught)
+#   mori expression  -- throws fatal error (panic/unrecoverable)
+#
+# Target mappings:
+#   ts:  iace -> throw, mori -> throw new Panic()
+#   py:  iace -> raise Exception, mori -> raise SystemExit
+#   rs:  iace -> return Err(), mori -> panic!()
+#   cpp: iace -> throw runtime_error, mori -> abort()
+#   zig: iace -> return error.X, mori -> @panic()
+
+# =============================================================================
+# Recoverable Errors (iace)
+# =============================================================================
+
+# Throw string literal
+- name: throw string literal
+  faber: 'iace "error occurred"'
+  expect:
+    ts:
+      - 'throw "error occurred";'
+    py:
+      - 'raise Exception("error occurred")'
+    rs:
+      - 'return Err(String::from("error occurred"));'
+    cpp:
+      - 'throw std::runtime_error("error occurred");'
+    zig:
+      - 'return error.ErrorOccurred;'
+
+# Throw variable
+- name: throw variable
+  faber: 'iace err'
+  expect:
+    ts:
+      - "throw err;"
+    py:
+      - "raise err"
+    rs:
+      - "return Err(err);"
+    cpp:
+      - "throw err;"
+    zig:
+      - "return error.Err;"
+
+# =============================================================================
+# Fatal Errors (mori)
+# =============================================================================
+
+# Panic with string literal
+- name: panic with string literal
+  faber: 'mori "fatal error"'
+  expect:
+    ts:
+      - 'throw new Panic("fatal error");'
+    py:
+      - 'raise SystemExit("fatal error")'
+    rs:
+      - 'panic!(String::from("fatal error"));'
+    cpp:
+      - 'std::print(stderr, "FATAL: {}\n", "fatal error"); std::abort();'
+    zig:
+      - '@panic("fatal error");'
+
+# Panic with variable
+- name: panic with variable
+  faber: 'mori msg'
+  expect:
+    ts:
+      - "throw new Panic(String(msg));"
+    py:
+      - "raise SystemExit(msg)"
+    rs:
+      - "panic!(msg);"
+    cpp:
+      - 'std::print(stderr, "FATAL: {}\n", msg); std::abort();'
+    zig:
+      - "@panic(msg);"

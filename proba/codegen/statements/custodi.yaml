@@ -1,0 +1,294 @@
+# Custodi statement - Guard clauses for early exits
+# Maps Faber custodi to sequential if statements with early returns
+#
+# Syntax:
+#   custodi {
+#     si condition1 { earlyExit }
+#     si condition2 { earlyExit }
+#   }
+#
+# All targets compile to sequential if statements with early-exit bodies.
+# Common patterns: null checks, validation, preconditions
+
+# =============================================================================
+# Simple Guard Clauses
+# =============================================================================
+
+# Single guard clause with return
+- name: single guard with return
+  faber: |
+    custodi {
+      si x == nihil { redde }
+    }
+  expect:
+    ts:
+      - "if ((x == null))"
+      - "return;"
+    py:
+      - "if (x == None):"
+      - "return"
+    rs:
+      - "if (x == None)"
+      - "return;"
+    cpp:
+      - "if ((x == nullptr))"
+      - "return;"
+    zig:
+      - "if ((x == null))"
+      - "return;"
+
+# Multiple guard clauses
+- name: multiple guard clauses
+  faber: |
+    custodi {
+      si user == nihil { redde nihil }
+      si user.age < 0 { iace "Invalid age" }
+    }
+  expect:
+    ts:
+      - "if ((user == null))"
+      - "return null;"
+      - "if ((user.age < 0))"
+      - 'throw "Invalid age";'
+    py:
+      - "if (user == None):"
+      - "return None"
+      - "if (user.age < 0):"
+      - 'raise Exception("Invalid age")'
+    rs:
+      - "if (user == None)"
+      - "return None;"
+      - "if (user.age < 0)"
+      - 'return Err(String::from("Invalid age"));'
+    cpp:
+      - "if ((user == nullptr))"
+      - "return nullptr;"
+      - "if ((user.age < 0))"
+      - 'throw std::runtime_error("Invalid age");'
+    zig:
+      - "if ((user == null))"
+      - "return null;"
+      - "if ((user.age < 0))"
+      - "return error.InvalidAge;"
+
+# =============================================================================
+# Guard with Complex Conditions
+# =============================================================================
+
+# Guard with logical operators
+- name: guard with logical and
+  faber: |
+    custodi {
+      si x < 0 aut x > 100 { redde falsum }
+    }
+  expect:
+    ts:
+      - "if (((x < 0) || (x > 100)))"
+      - "return false;"
+    py:
+      - "if ((x < 0) or (x > 100)):"
+      - "return False"
+    rs:
+      - "if ((x < 0) || (x > 100))"
+      - "return false;"
+    cpp:
+      - "if (((x < 0) || (x > 100)))"
+      - "return false;"
+    zig:
+      - "if (((x < 0) or (x > 100)))"
+      - "return false;"
+
+# Guard with method call
+- name: guard with method call
+  faber: |
+    custodi {
+      si non isValid(data) { redde }
+    }
+  expect:
+    ts:
+      - "if (!isValid(data))"
+      - "return;"
+    py:
+      - "if not isValid(data):"
+      - "return"
+    rs:
+      - "if !isValid(data)"
+      - "return;"
+    cpp:
+      - "if (!isValid(data))"
+      - "return;"
+    zig:
+      - "if (!isValid(data))"
+      - "return;"
+
+# =============================================================================
+# Guard with Different Exit Strategies
+# =============================================================================
+
+# Guard with throw instead of return
+- name: guard with throw
+  faber: |
+    custodi {
+      si count < 1 { iace "Count must be positive" }
+    }
+  expect:
+    ts:
+      - "if ((count < 1))"
+      - 'throw "Count must be positive";'
+    py:
+      - "if (count < 1):"
+      - 'raise Exception("Count must be positive")'
+    rs:
+      - "if (count < 1)"
+      - 'return Err(String::from("Count must be positive"));'
+    cpp:
+      - "if ((count < 1))"
+      - 'throw std::runtime_error("Count must be positive");'
+    zig:
+      - "if ((count < 1))"
+      - "return error.CountMustBePositive;"
+
+# Guard with continue
+- name: guard with continue in loop
+  faber: |
+    dum verum {
+      custodi {
+        si skip { perge }
+      }
+      process()
+    }
+  expect:
+    ts:
+      - "while (true)"
+      - "if (skip)"
+      - "continue;"
+      - "process();"
+    py:
+      - "while True:"
+      - "if skip:"
+      - "continue"
+      - "process()"
+    rs:
+      - "while true"
+      - "if skip"
+      - "continue;"
+      - "process();"
+    cpp:
+      - "while (true)"
+      - "if (skip)"
+      - "continue;"
+      - "process();"
+    zig:
+      - "while (true)"
+      - "if (skip)"
+      - "continue;"
+      - "process();"
+
+# =============================================================================
+# Multiple Statements in Guard Body
+# =============================================================================
+
+# Guard with multiple exit statements
+- name: guard with multiple statements
+  faber: |
+    custodi {
+      si error {
+        mone "Error occurred"
+        cleanup()
+        redde nihil
+      }
+    }
+  expect:
+    ts:
+      - "if (error)"
+      - 'console.warn("Error occurred");'
+      - "cleanup();"
+      - "return null;"
+    py:
+      - "if error:"
+      - 'print("[WARN]", "Error occurred")'
+      - "cleanup()"
+      - "return None"
+    rs:
+      - "if error"
+      - 'println!("{}", String::from("Error occurred"));'
+      - "cleanup();"
+      - "return None;"
+    cpp:
+      - "if (error)"
+      - 'std::print("[WARN] {}\n", std::string("Error occurred"));'
+      - "cleanup();"
+      - "return nullptr;"
+    zig:
+      - "if (error)"
+      - 'std.debug.print("[WARN] {s}\n", .{ "Error occurred" });'
+      - "cleanup();"
+      - "return null;"
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Empty guard (should generate valid code but is unusual)
+- name: guard with empty body
+  faber: |
+    custodi {
+      si dangerous { }
+    }
+  expect:
+    ts:
+      - "if (dangerous) {}"
+    py:
+      - "if dangerous:"
+      - "pass"
+    rs:
+      - "if dangerous {}"
+    cpp:
+      - "if (dangerous) {}"
+    zig:
+      - "if (dangerous) {}"
+
+# Three guards in sequence
+- name: three sequential guards
+  faber: |
+    custodi {
+      si a { redde 1 }
+      si b { redde 2 }
+      si c { redde 3 }
+    }
+  expect:
+    ts:
+      - "if (a)"
+      - "return 1;"
+      - "if (b)"
+      - "return 2;"
+      - "if (c)"
+      - "return 3;"
+    py:
+      - "if a:"
+      - "return 1"
+      - "if b:"
+      - "return 2"
+      - "if c:"
+      - "return 3"
+    rs:
+      - "if a"
+      - "return 1;"
+      - "if b"
+      - "return 2;"
+      - "if c"
+      - "return 3;"
+    cpp:
+      - "if (a)"
+      - "return 1;"
+      - "if (b)"
+      - "return 2;"
+      - "if (c)"
+      - "return 3;"
+    zig:
+      - "if (a)"
+      - "return 1;"
+      - "if (b)"
+      - "return 2;"
+      - "if (c)"
+      - "return 3;"

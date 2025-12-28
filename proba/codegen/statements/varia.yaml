@@ -1,0 +1,195 @@
+# Variable declarations - varia, fixum, figendum, variandum
+# Maps Faber variable syntax to target-language equivalents
+#
+# Syntax:
+#   varia name = value           -- mutable binding
+#   fixum name = value           -- immutable binding
+#   varia Type name = value      -- typed mutable
+#   fixum Type name = value      -- typed immutable
+#   figendum name = asyncCall()  -- immutable + await
+#   variandum name = asyncCall() -- mutable + await
+#   fixum [a, b, c] = array      -- array destructuring
+#   fixum [a, ceteri rest] = arr -- array destructuring with rest
+#   fixum [_, b, _] = arr        -- array destructuring with skips
+
+# =============================================================================
+# Simple Variable Declarations
+# =============================================================================
+
+# Mutable variable without type
+- name: mutable variable without type
+  faber: 'varia x = 5'
+  expect:
+    ts:
+      - 'let x = 5;'
+    py:
+      - 'x = 5'
+    rs:
+      - 'let mut x = 5;'
+    cpp:
+      - 'auto x = 5;'
+    zig:
+      - 'var x: i64 = 5;'
+
+# Immutable variable without type (module-level for Zig)
+- name: immutable variable without type
+  faber: 'fixum y = 10'
+  expect:
+    ts:
+      - 'const y = 10;'
+    py:
+      - 'y = 10'
+    rs:
+      - 'let y = 10;'
+    cpp:
+      - 'const auto y = 10;'
+    zig:
+      - 'const m_y = 10;'
+
+# =============================================================================
+# Typed Variable Declarations
+# =============================================================================
+
+# Mutable typed variable
+- name: mutable typed variable
+  faber: 'varia numerus count = 0'
+  expect:
+    ts:
+      - 'let count: number = 0;'
+    py:
+      - 'count: int = 0'
+    rs:
+      - 'let mut count: f64 = 0;'
+    cpp:
+      - 'int64_t count = 0;'
+    zig:
+      - 'var count: i64 = 0;'
+
+# Immutable typed string (module-level for Zig)
+- name: immutable typed string
+  faber: 'fixum textus name = "Marcus"'
+  expect:
+    ts:
+      - 'const name: string = "Marcus";'
+    py:
+      - 'name: str = "Marcus"'
+    rs:
+      - 'let name: String = String::from("Marcus");'
+    cpp:
+      - 'const std::string name = std::string("Marcus");'
+    zig:
+      - 'const m_name: []const u8 = "Marcus";'
+
+# =============================================================================
+# Async Variable Declarations (figendum/variandum)
+# =============================================================================
+
+# Immutable async binding
+- name: immutable async binding (figendum)
+  faber: 'figendum data = fetchData()'
+  expect:
+    ts:
+      - 'const data = await fetchData();'
+    py:
+      - 'data = await fetchData()'
+    rs:
+      - 'let data = fetchData().await;'
+    cpp:
+      - 'auto data = fetchData();'
+    zig:
+      - 'const data = fetchData();'
+
+# Mutable async binding
+- name: mutable async binding (variandum)
+  faber: 'variandum result = getResult()'
+  expect:
+    ts:
+      - 'let result = await getResult();'
+    py:
+      - 'result = await getResult()'
+    rs:
+      - 'let mut result = getResult().await;'
+    cpp:
+      - 'auto result = getResult();'
+    zig:
+      - 'const result = getResult();'
+
+# =============================================================================
+# Array Destructuring
+# =============================================================================
+
+# Basic array destructuring
+- name: basic array destructuring
+  faber: 'fixum [a, b, c] = coords'
+  expect:
+    ts:
+      - 'const [a, b, c] = coords;'
+    py:
+      - 'a, b, c = coords'
+    rs:
+      - 'let [a, b, c] = coords;'
+    cpp:
+      - 'const auto& _tmp = coords;'
+      - 'const auto& a = _tmp[0];'
+      - 'const auto& b = _tmp[1];'
+      - 'const auto& c = _tmp[2];'
+    zig:
+      - 'const _tmp = coords;'
+      - 'const a = _tmp[0];'
+      - 'const b = _tmp[1];'
+      - 'const c = _tmp[2];'
+
+# Array destructuring with rest
+- name: array destructuring with rest
+  faber: 'fixum [first, ceteri rest] = items'
+  expect:
+    ts:
+      - 'const [first, ...rest] = items;'
+    py:
+      - 'first, *rest = items'
+    rs:
+      - 'let [first, rest@..] = items;'
+    cpp:
+      - 'const auto& _tmp = items;'
+      - 'const auto& first = _tmp[0];'
+      - 'const auto rest = std::vector<decltype(_tmp)::value_type>(_tmp.begin() + 1, _tmp.end());'
+    zig:
+      - 'const _tmp = items;'
+      - 'const first = _tmp[0];'
+      - 'const rest = _tmp[1..];'
+
+# Array destructuring with skips
+- name: array destructuring with skips
+  faber: 'fixum [_, second, _] = values'
+  expect:
+    ts:
+      - 'const [, second, ] = values;'
+    py:
+      - '_, second, _ = values'
+    rs:
+      - 'let [_, second, _] = values;'
+    cpp:
+      - 'const auto& _tmp = values;'
+      - 'const auto& second = _tmp[1];'
+    zig:
+      - 'const _tmp = values;'
+      - 'const second = _tmp[1];'
+
+# =============================================================================
+# Variables Without Initializers
+# =============================================================================
+
+# Variable declaration without init (TypeScript/Python allow undefined)
+- name: variable without initializer
+  faber: 'varia numerus counter'
+  expect:
+    ts:
+      - 'let counter: number;'
+    py:
+      - 'counter: int'
+    rs:
+      - 'let mut counter: f64;'
+    cpp:
+      - 'int64_t counter;'
+    zig:
+      - 'var counter: i64 = undefined;'

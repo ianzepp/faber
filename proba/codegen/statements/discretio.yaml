@@ -1,0 +1,163 @@
+# Discretio declarations - tagged union/sum types
+# Maps Faber discretio syntax to target-language discriminated unions
+#
+# Syntax:
+#   discretio Name { Variant1, Variant2 }
+#   discretio Name { Variant1 { fieldType fieldName }, Variant2 }
+#   discretio Name<T> { Some { T value }, None }
+#
+# Target mappings:
+#   TypeScript: discriminated union with 'tag' property
+#   Python: dataclasses with 'tag' property + Union type alias
+#   Rust: enum with struct variants
+#   C++: structs + std::variant
+#   Zig: union(enum) with struct payloads
+
+# =============================================================================
+# Simple Discretio
+# =============================================================================
+
+# Unit variants only (no payload)
+- name: discretio with unit variants
+  faber: 'discretio Status { Active, Inactive, Pending }'
+  expect:
+    ts:
+      - "type Status ="
+      - "{ tag: 'Active' }"
+      - "{ tag: 'Inactive' }"
+      - "{ tag: 'Pending' }"
+    py:
+      - "@dataclass"
+      - "class Status_Active:"
+      - "tag: str = 'Active'"
+      - "class Status_Inactive:"
+      - "class Status_Pending:"
+      - "Status = Status_Active | Status_Inactive | Status_Pending"
+    rs:
+      - "enum Status"
+      - "Active,"
+      - "Inactive,"
+      - "Pending,"
+    cpp:
+      - "struct Active {};"
+      - "struct Inactive {};"
+      - "struct Pending {};"
+      - "using Status = std::variant<Active, Inactive, Pending>;"
+    zig:
+      - "const Status = union(enum)"
+      - "active,"
+      - "inactive,"
+      - "pending,"
+
+# =============================================================================
+# Variants with Payloads
+# =============================================================================
+
+# Mixed unit and payload variants
+- name: discretio with payload variants
+  faber: |
+    discretio Event {
+      Click { numerus x, numerus y }
+      Keypress { textus key }
+      Quit
+    }
+  expect:
+    ts:
+      - "type Event ="
+      - "{ tag: 'Click'; x: number; y: number }"
+      - "{ tag: 'Keypress'; key: string }"
+      - "{ tag: 'Quit' }"
+    py:
+      - "@dataclass"
+      - "class Event_Click:"
+      - "tag: str = 'Click'"
+      - "x: int"
+      - "y: int"
+      - "class Event_Keypress:"
+      - "key: str"
+      - "class Event_Quit:"
+      - "Event = Event_Click | Event_Keypress | Event_Quit"
+    rs:
+      - "enum Event"
+      - "Click { x: f64, y: f64 },"
+      - "Keypress { key: String },"
+      - "Quit,"
+    cpp:
+      - "struct Click"
+      - "int64_t x;"
+      - "int64_t y;"
+      - "struct Keypress"
+      - "std::string key;"
+      - "struct Quit {};"
+      - "using Event = std::variant<Click, Keypress, Quit>;"
+    zig:
+      - "const Event = union(enum)"
+      - "click: struct { x: i64, y: i64 },"
+      - "keypress: struct { key: []const u8 },"
+      - "quit,"
+
+# =============================================================================
+# Generic Discretio
+# =============================================================================
+
+# Generic tagged union (Option<T> pattern)
+- name: discretio with type parameter
+  faber: |
+    discretio Option<T> {
+      Some { T value }
+      None
+    }
+  expect:
+    ts:
+      - "type Option<T> ="
+      - "{ tag: 'Some'; value: T }"
+      - "{ tag: 'None' }"
+    py:
+      - "@dataclass"
+      - "class Option_Some:"
+      - "value: T"
+      - "class Option_None:"
+      - "Option = Option_Some | Option_None"
+    rs:
+      - "enum Option<T>"
+      - "Some { value: T },"
+      - "None,"
+    cpp:
+      - "struct Some"
+      - "struct None {};"
+      - "using Option = std::variant<Some, None>;"
+    zig:
+      - "const Option = union(enum)"
+      - "some: struct { value: T },"
+      - "none,"
+
+# =============================================================================
+# Single Field Variant
+# =============================================================================
+
+# Variant with single field
+- name: discretio with single field variant
+  faber: 'discretio Result { Success { textus message }, Failure { textus error } }'
+  expect:
+    ts:
+      - "type Result ="
+      - "{ tag: 'Success'; message: string }"
+      - "{ tag: 'Failure'; error: string }"
+    py:
+      - "class Result_Success:"
+      - "message: str"
+      - "class Result_Failure:"
+      - "error: str"
+    rs:
+      - "enum Result"
+      - "Success { message: String },"
+      - "Failure { error: String },"
+    cpp:
+      - "struct Success"
+      - "std::string message;"
+      - "struct Failure"
+      - "std::string error;"
+    zig:
+      - "const Result = union(enum)"
+      - "success: struct { message: []const u8 },"
+      - "failure: struct { error: []const u8 },"

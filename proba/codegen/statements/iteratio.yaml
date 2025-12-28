@@ -1,0 +1,183 @@
+# For loops - ex...pro, de...pro
+# Maps Faber iteration syntax to target-language equivalents
+#
+# Syntax:
+#   ex iterable pro item { body }       -- for-of loop
+#   ex 0..10 pro i { body }             -- range loop (exclusive)
+#   ex 0 usque 10 pro i { body }        -- range loop (inclusive)
+#   ex 0..10 per 2 pro i { body }       -- range with step
+#   ex async fiet item { body }         -- async for-await
+
+# =============================================================================
+# Basic For-Of Loops
+# =============================================================================
+
+# Iterate over array
+- name: iterate over array
+  faber: 'ex items pro item { process(item) }'
+  expect:
+    ts:
+      - 'for (const item of items)'
+      - 'process(item)'
+    py:
+      - 'for item in items:'
+      - 'process(item)'
+    rs:
+      - 'for item in items'
+      - 'process(item);'
+    cpp:
+      - 'for (auto& item : items)'
+      - 'process(item);'
+    zig:
+      - 'for (items) |item|'
+      - 'process(item);'
+
+# =============================================================================
+# Range Loops
+# =============================================================================
+
+# Exclusive range (0..10 means 0-9)
+- name: exclusive range loop
+  faber: 'ex 0..10 pro i { scribe i }'
+  expect:
+    ts:
+      - 'for (let i = 0; i < 10; i++)'
+      - 'console.log(i)'
+    py:
+      - 'for i in range(0, 10):'
+      - 'print(i)'
+    rs:
+      - 'for i in 0..10'
+      - 'println!("{}", i)'
+    cpp:
+      - 'for (int64_t i = 0; i < 10; i += 1)'
+      - 'std::print'
+    zig:
+      - 'var i: usize = 0; while (i < 10) : (i += 1)'
+
+# Inclusive range (0 usque 10 means 0-10)
+- name: inclusive range loop
+  faber: 'ex 0 usque 10 pro i { scribe i }'
+  expect:
+    ts:
+      - 'for (let i = 0; i <= 10; i++)'
+      - 'console.log(i)'
+    py:
+      - 'for i in range(0, 10 + 1):'
+      - 'print(i)'
+    rs:
+      - 'for i in 0..=10'
+      - 'println!("{}", i)'
+    cpp:
+      - 'for (int64_t i = 0; i <= 10; i += 1)'
+      - 'std::print'
+    zig:
+      - 'var i: usize = 0; while (i <= 10) : (i += 1)'
+
+# Range with step
+- name: range loop with step
+  faber: 'ex 0..10 per 2 pro i { scribe i }'
+  expect:
+    ts:
+      - 'for (let i = 0; i < 10; i += 2)'
+      - 'console.log(i)'
+    py:
+      - 'for i in range(0, 10, 2):'
+      - 'print(i)'
+    rs:
+      - 'for i in 0..10'
+    cpp:
+      - 'for (int64_t i = 0; i < 10; i += 2)'
+      - 'std::print'
+    zig:
+      - 'var i: usize = 0; while (i < 10) : (i += 2)'
+
+# =============================================================================
+# Async Iteration (fiet)
+# =============================================================================
+
+# Async for-await-of
+- name: async for-await loop
+  faber: 'ex stream fiet chunk { process(chunk) }'
+  expect:
+    ts:
+      - 'for await (const chunk of stream)'
+      - 'process(chunk)'
+    py:
+      - 'async for chunk in stream:'
+      - 'process(chunk)'
+    rs:
+      - 'for chunk in stream'
+      - 'process(chunk);'
+    cpp:
+      - 'for (auto& chunk : stream)'
+      - 'process(chunk);'
+    zig:
+      - 'for (stream) |chunk|'
+      - 'process(chunk);'
+
+# =============================================================================
+# Break and Continue in Loops
+# =============================================================================
+
+# Loop with break
+- name: loop with break
+  faber: |
+    ex items pro item {
+      si done { rumpe }
+    }
+  expect:
+    ts:
+      - 'for (const item of items)'
+      - 'if (done)'
+      - 'break;'
+    py:
+      - 'for item in items:'
+      - 'if done:'
+      - 'break'
+    rs:
+      - 'for item in items'
+      - 'if done'
+      - 'break;'
+    cpp:
+      - 'for (auto& item : items)'
+      - 'if (done)'
+      - 'break;'
+    zig:
+      - 'for (items) |item|'
+      - 'if (done)'
+      - 'break;'
+
+# Loop with continue
+- name: loop with continue
+  faber: |
+    ex items pro item {
+      si skip { perge }
+      process(item)
+    }
+  expect:
+    ts:
+      - 'for (const item of items)'
+      - 'if (skip)'
+      - 'continue;'
+      - 'process(item)'
+    py:
+      - 'for item in items:'
+      - 'if skip:'
+      - 'continue'
+      - 'process(item)'
+    rs:
+      - 'for item in items'
+      - 'if skip'
+      - 'continue;'
+      - 'process(item);'
+    cpp:
+      - 'for (auto& item : items)'
+      - 'if (skip)'
+      - 'continue;'
+      - 'process(item);'
+    zig:
+      - 'for (items) |item|'
+      - 'if (skip)'
+      - 'continue;'
+      - 'process(item);'

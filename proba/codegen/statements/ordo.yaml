@@ -1,0 +1,130 @@
+# Ordo declarations - enumeration types
+# Maps Faber ordo syntax to target-language enums
+#
+# Syntax:
+#   ordo Name { Member1, Member2, Member3 }
+#   ordo Name { Member1 = value1, Member2 = value2 }
+#
+# Target mappings:
+#   TypeScript: enum
+#   Python: class extending Enum
+#   Rust: enum
+#   C++: enum class
+#   Zig: const ... = enum (lowercase members)
+
+# =============================================================================
+# Simple Ordo
+# =============================================================================
+
+# Basic enum without explicit values
+- name: simple ordo without values
+  faber: 'ordo Color { rubrum, viridis, caeruleum }'
+  expect:
+    ts:
+      - "enum Color"
+      - "rubrum, viridis, caeruleum"
+    py:
+      - "class Color(Enum):"
+      - "rubrum = auto()"
+      - "viridis = auto()"
+      - "caeruleum = auto()"
+    rs:
+      - "enum Color"
+      - "rubrum,"
+      - "viridis,"
+      - "caeruleum,"
+    cpp:
+      - "enum class Color"
+      - "rubrum, viridis, caeruleum"
+    zig:
+      - "const Color = enum"
+      - "rubrum,"
+      - "viridis,"
+      - "caeruleum,"
+
+# =============================================================================
+# Numeric Values
+# =============================================================================
+
+# Enum with explicit numeric values
+- name: ordo with numeric values
+  faber: 'ordo Status { pendens = 0, actum = 1, finitum = 2 }'
+  expect:
+    ts:
+      - "enum Status"
+      - "pendens = 0"
+      - "actum = 1"
+      - "finitum = 2"
+    py:
+      - "class Status(Enum):"
+      - "pendens = 0"
+      - "actum = 1"
+      - "finitum = 2"
+    rs:
+      - "enum Status"
+      - "pendens = 0,"
+      - "actum = 1,"
+      - "finitum = 2,"
+    cpp:
+      - "enum class Status"
+    zig:
+      - "const Status = enum"
+      - "pendens = 0,"
+      - "actum = 1,"
+      - "finitum = 2,"
+
+# =============================================================================
+# String Values
+# =============================================================================
+
+# Enum with string values (TypeScript/Python/Rust)
+- name: ordo with string values
+  faber: 'ordo Direction { north = "N", south = "S", east = "E", west = "W" }'
+  expect:
+    ts:
+      - "enum Direction"
+      - 'north = "N"'
+      - 'south = "S"'
+    py:
+      - "class Direction(Enum):"
+      - 'north = "N"'
+      - 'south = "S"'
+    rs:
+      - "enum Direction"
+      - 'north = "N",'
+      - 'south = "S",'
+    cpp:
+      - "enum class Direction"
+    zig:
+      - "const Direction = enum"
+
+# =============================================================================
+# Mixed Values
+# =============================================================================
+
+# Some members with values, some without
+- name: ordo with mixed values
+  faber: 'ordo Priority { low = 1, medium, high = 10 }'
+  expect:
+    ts:
+      - "enum Priority"
+      - "low = 1"
+      - "medium"
+      - "high = 10"
+    py:
+      - "class Priority(Enum):"
+      - "low = 1"
+      - "medium = auto()"
+      - "high = 10"
+    rs:
+      - "enum Priority"
+      - "low = 1,"
+      - "medium,"
+      - "high = 10,"
+    cpp:
+      - "enum class Priority"
+    zig:
+      - "const Priority = enum"
+      - "low = 1,"
+      - "medium,"
+      - "high = 10,"
