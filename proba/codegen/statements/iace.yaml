@@ -100,7 +100,7 @@
       ts:
           - 'throw `Failed to process ${item.id}`;'
       py:
-          - 'raise f"Failed to process ${item.id}"'
+          - 'raise f"Failed to process {item.id}"'
 
 # Throw in conditional
 - name: throw in conditional
@@ -122,7 +122,7 @@
       ts:
           - 'throw new Panic(String(`Critical failure at ${location}`));'
       py:
-          - 'raise SystemExit(f"Critical failure at ${location}")'
+          - 'raise SystemExit(f"Critical failure at {location}")'
 
 # Throw with variable (explicit edge case)
 - name: throw error message variable

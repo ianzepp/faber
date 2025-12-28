@@ -153,6 +153,37 @@ export class CppGenerator {
     }
 
     /**
+     * Generate an expression without outer parentheses.
+     *
+     * WHY: Binary expressions are wrapped in parens for safety, but in some
+     *      contexts (array index, RHS of assignment) the parens are unnecessary.
+     *      For binary expressions, this generates the expression flat without
+     *      wrapping parens, recursively stripping nested binary expression parens.
+     */
+    genBareExpression(node: Expression): string {
+        // For binary expressions, generate without outer parens
+        // and recursively generate operands bare to flatten chains like a + b + c
+        if (node.type === 'BinaryExpression') {
+            const left = this.genBareExpression(node.left);
+            const right = this.genBareExpression(node.right);
+
+            // Handle operator mapping for C++
+            let op = node.operator;
+            if (op === '===') op = '==';
+            else if (op === '!==') op = '!=';
+
+            // WHY: C++ has no ?? operator; use ternary with nullptr check
+            if (node.operator === '??') {
+                return `${left} != nullptr ? ${left} : ${right}`;
+            }
+
+            return `${left} ${op} ${right}`;
+        }
+
+        return this.genExpression(node);
+    }
+
+    /**
      * Generate an expression. Dispatches to specific gen* functions.
      */
     genExpression(node: Expression): string {

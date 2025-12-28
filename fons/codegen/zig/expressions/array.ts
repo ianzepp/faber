@@ -20,24 +20,17 @@ export function genArrayExpression(node: ArrayExpression, g: ZigGenerator): stri
         return '.{}';
     }
 
-    // Check if any elements are spread
-    const hasSpread = node.elements.some(el => el.type === 'SpreadElement');
-
-    if (hasSpread) {
-        // WHY: Zig doesn't have spread syntax. For comptime arrays, we use ++
-        // This is a simplification - runtime would need allocator
-        const parts = node.elements.map(el => {
+    // WHY: Zig tuple literals use .{ } syntax. Spread elements emit their
+    // argument directly - the ++ concatenation happens at the language level
+    // when needed, not in our codegen.
+    const elements = node.elements
+        .map(el => {
             if (el.type === 'SpreadElement') {
                 return g.genExpression(el.argument);
             }
-            // Wrap non-spread elements in array literal
-            return `.{ ${g.genExpression(el)} }`;
-        });
-
-        return parts.join(' ++ ');
-    }
-
-    const elements = node.elements.map(el => g.genExpression(el as Expression)).join(', ');
+            return g.genExpression(el as Expression);
+        })
+        .join(', ');
 
     return `.{ ${elements} }`;
 }

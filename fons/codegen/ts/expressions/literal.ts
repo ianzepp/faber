@@ -19,7 +19,9 @@ export function genLiteral(node: Literal, _g: TsGenerator): string {
     }
 
     if (typeof node.value === 'string') {
-        return JSON.stringify(node.value);
+        // WHY: Use raw to preserve escape sequences like \u0048, \n, \t as-is.
+        // JSON.stringify would double-escape backslashes.
+        return node.raw;
     }
 
     if (typeof node.value === 'boolean') {

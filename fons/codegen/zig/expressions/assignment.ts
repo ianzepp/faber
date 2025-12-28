@@ -10,7 +10,7 @@ import type { AssignmentExpression } from '../../../parser/ast';
 import type { ZigGenerator } from '../generator';
 
 export function genAssignmentExpression(node: AssignmentExpression, g: ZigGenerator): string {
-    const left = node.left.type === 'Identifier' ? node.left.name : g.genExpression(node.left);
+    const left = node.left.type === 'Identifier' ? node.left.name : g.genBareExpression(node.left);
 
-    return `${left} ${node.operator} ${g.genExpression(node.right)}`;
+    return `${left} ${node.operator} ${g.genBareExpression(node.right)}`;
 }

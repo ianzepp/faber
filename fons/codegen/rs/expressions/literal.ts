@@ -19,7 +19,9 @@ export function genLiteral(node: Literal, _g: RsGenerator): string {
     }
 
     if (typeof node.value === 'string') {
-        return `String::from(${JSON.stringify(node.value)})`;
+        // WHY: Use raw to preserve escape sequences like \u0048, \n, \t as-is.
+        // JSON.stringify would double-escape backslashes.
+        return `String::from(${node.raw})`;
     }
 
     if (typeof node.value === 'boolean') {

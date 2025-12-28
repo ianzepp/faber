@@ -83,7 +83,7 @@
       ts:
           - 'const greeting = `Hello, ${name}!`'
       py:
-          - 'greeting = f"Hello, ${name}!"'
+          - 'greeting = f"Hello, {name}!"'
       rs:
           - 'let greeting = format!("Hello, ${name}!");'
       cpp:
@@ -198,7 +198,7 @@
   faber: 'fixum msg = `result: ${compute(x + y)}`'
   expect:
       ts: 'const msg = `result: ${compute(x + y)}`;'
-      py: 'msg = f"result: ${compute(x + y)}"'
+      py: 'msg = f"result: {compute(x + y)}"'
       rs:
           - 'let msg = format!("result: ${compute(x + y)}");'
       cpp:

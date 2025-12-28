@@ -1295,13 +1295,14 @@ export function parse(tokens: Token[]): ParserResult {
      *
      * GRAMMAR:
      *   enumDecl := 'ordo' IDENTIFIER '{' enumMember (',' enumMember)* ','? '}'
-     *   enumMember := IDENTIFIER ('=' (NUMBER | STRING))?
+     *   enumMember := IDENTIFIER ('=' ('-'? NUMBER | STRING))?
      *
      * WHY: Latin 'ordo' (order/rank) for enumerated constants.
      *
      * Examples:
      *   ordo color { rubrum, viridis, caeruleum }
      *   ordo status { pendens = 0, actum = 1, finitum = 2 }
+     *   ordo offset { ante = -1, ad = 0, post = 1 }
      */
     function parseOrdoDeclaration(): OrdoDeclaration {
         const position = peek().position;
@@ -1321,17 +1322,27 @@ export function parse(tokens: Token[]): ParserResult {
             let value: Literal | undefined;
 
             if (match('EQUAL')) {
-                // Expect a literal value (number or string)
+                // Expect a literal value (number or string), with optional leading minus
+                const valuePosition = peek().position;
+                const isNegative = match('MINUS');
                 const valueTok = advance();
 
                 if (valueTok.type === 'NUMBER') {
+                    const numValue = Number(valueTok.value);
                     value = {
                         type: 'Literal',
-                        value: Number(valueTok.value),
-                        raw: valueTok.value,
-                        position: valueTok.position,
+                        value: isNegative ? -numValue : numValue,
+                        raw: isNegative ? `-${valueTok.value}` : valueTok.value,
+                        position: valuePosition,
                     };
                 } else if (valueTok.type === 'STRING') {
+                    if (isNegative) {
+                        errors.push({
+                            code: ParserErrorCode.UnexpectedToken,
+                            message: `Cannot use minus sign with string enum value`,
+                            position: valuePosition,
+                        });
+                    }
                     value = {
                         type: 'Literal',
                         value: valueTok.value,
@@ -3025,7 +3036,7 @@ export function parse(tokens: Token[]): ParserResult {
     function parseAssignment(): Expression {
         const expr = parseTernary();
 
-        if (match('EQUAL', 'PLUS_EQUAL', 'MINUS_EQUAL', 'STAR_EQUAL', 'SLASH_EQUAL', 'AMPERSAND_EQUAL', 'PIPE_EQUAL')) {
+        if (match('EQUAL', 'PLUS_EQUAL', 'MINUS_EQUAL', 'STAR_EQUAL', 'SLASH_EQUAL', 'PERCENT_EQUAL', 'AMPERSAND_EQUAL', 'PIPE_EQUAL')) {
             const operator = tokens[current - 1]!.value;
             const position = tokens[current - 1]!.position;
             const value = parseAssignment();
@@ -3967,7 +3978,7 @@ export function parse(tokens: Token[]): ParserResult {
                     } else {
                         elements.push(parseExpression());
                     }
-                } while (match('COMMA'));
+                } while (match('COMMA') && !check('RBRACKET'));
             }
 
             expect('RBRACKET', ParserErrorCode.ExpectedClosingBracket);

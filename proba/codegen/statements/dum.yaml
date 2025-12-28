@@ -35,19 +35,19 @@
   expect:
       ts:
           - 'while ((x > 0))'
-          - 'x = (x - 1)'
+          - 'x = x - 1'
       py:
           - 'while (x > 0):'
-          - 'x = (x - 1)'
+          - 'x = x - 1'
       rs:
           - 'while (x > 0)'
-          - 'x = (x - 1);'
+          - 'x = x - 1;'
       cpp:
           - 'while ((x > 0))'
-          - 'x = (x - 1);'
+          - 'x = x - 1;'
       zig:
           - 'while ((x > 0))'
-          - 'x = (x - 1);'
+          - 'x = x - 1;'
 
 # While with variable test
 - name: while with variable condition
@@ -227,20 +227,20 @@
           - 'while ((x > 0))'
           - 'while ((y > 0))'
           - 'process()'
-          - 'y = (y - 1)'
-          - 'x = (x - 1)'
+          - 'y = y - 1'
+          - 'x = x - 1'
       py:
           - 'while (x > 0):'
           - 'while (y > 0):'
           - 'process()'
-          - 'y = (y - 1)'
-          - 'x = (x - 1)'
+          - 'y = y - 1'
+          - 'x = x - 1'
       rs:
           - 'while (x > 0)'
           - 'while (y > 0)'
           - 'process();'
-          - 'y = (y - 1);'
-          - 'x = (x - 1);'
+          - 'y = y - 1;'
+          - 'x = x - 1;'
 
 # While with multiple conditions
 - name: while with multiple conditions
@@ -281,15 +281,15 @@
       ts:
           - 'while ((count > 0))'
           - 'console.log(count)'
-          - 'count = (count - 1)'
+          - 'count = count - 1'
       py:
           - 'while (count > 0):'
           - 'print(count)'
-          - 'count = (count - 1)'
+          - 'count = count - 1'
       rs:
           - 'while (count > 0)'
           - 'println!("{}", count)'
-          - 'count = (count - 1);'
+          - 'count = count - 1;'
 
 # While with perge and rumpe together
 - name: while with perge and rumpe together

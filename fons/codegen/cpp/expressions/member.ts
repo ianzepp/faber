@@ -30,7 +30,8 @@ export function genMemberExpression(node: MemberExpression, g: CppGenerator): st
             return `${obj}[${obj}.size() - ${absVal}]`;
         }
 
-        const prop = g.genExpression(node.property);
+        // WHY: Use genBareExpression to avoid unnecessary parens around index
+        const prop = g.genBareExpression(node.property);
         // WHY: For optional, use ternary with nullptr check
         if (node.optional) {
             g.includes.add('<optional>');

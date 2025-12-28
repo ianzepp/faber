@@ -31,7 +31,8 @@ export function genMemberExpression(node: MemberExpression, g: TsGenerator): str
             return `${obj}.at(${idx})`;
         }
 
-        const prop = g.genExpression(node.property);
+        // WHY: Use genBareExpression to avoid unnecessary parens around index
+        const prop = g.genBareExpression(node.property);
 
         // WHY: TypeScript requires ?. before [ for optional computed access
         if (node.optional) {

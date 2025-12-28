@@ -102,6 +102,7 @@ export type TokenType =
     | 'MINUS_EQUAL' // -=
     | 'STAR_EQUAL' // *=
     | 'SLASH_EQUAL' // /=
+    | 'PERCENT_EQUAL' // %=
     | 'AMPERSAND_EQUAL' // &=
     | 'PIPE_EQUAL' // |=
 

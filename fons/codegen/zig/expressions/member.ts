@@ -29,7 +29,8 @@ export function genMemberExpression(node: MemberExpression, g: ZigGenerator): st
             return `${obj}[${obj}.len - ${absVal}]`;
         }
 
-        const prop = `[${g.genExpression(node.property)}]`;
+        // WHY: Use genBareExpression to avoid unnecessary parens around index
+        const prop = `[${g.genBareExpression(node.property)}]`;
 
         // WHY: Zig's optional unwrap uses .? syntax
         if (node.nonNull) {

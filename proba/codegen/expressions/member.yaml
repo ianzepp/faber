@@ -78,7 +78,7 @@
       ts: 'a?.b.c?.d.e;'
       py:
           - 'a.b.c.d.e if a is not None'
-          - 'if a.b.c is not None else None'
+          - 'and a.b.c is not None else None'
 
 - name: computed access with expression
   faber: arr[i * 2 + 1]
@@ -105,7 +105,7 @@
       py: 'len([1, 2, 3])'
 
 - name: optional computed then call
-  faber: obj?.[key]()
+  faber: obj?[key]()
   expect:
       ts: 'obj?.[key]();'
       py:

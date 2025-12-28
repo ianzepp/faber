@@ -19,9 +19,9 @@ export function genLiteral(node: Literal, _g: ZigGenerator): string {
     }
 
     if (typeof node.value === 'string') {
-        // Escape special characters for Zig string literals
-        const escaped = node.value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
-        return `"${escaped}"`;
+        // WHY: Use raw to preserve escape sequences like \u0048, \n, \t as-is.
+        // Manual escaping would double-escape backslashes.
+        return node.raw;
     }
 
     if (typeof node.value === 'boolean') {

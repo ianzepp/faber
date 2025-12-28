@@ -87,6 +87,17 @@ export function genCallExpression(node: CallExpression, g: PyGenerator): string 
         }
     }
 
+    // WHY: Optional chaining on the callee (e.g., obj?[key]() or obj?.method())
+    //      requires wrapping the entire call in a conditional, not just the member access.
+    //      We detect optional member expressions and generate them without the wrapper,
+    //      then wrap the whole call expression instead.
+    if (node.callee.type === 'MemberExpression' && node.callee.optional) {
+        const obj = g.genExpression(node.callee.object);
+        const prop = node.callee.computed ? `[${g.genBareExpression(node.callee.property)}]` : `.${(node.callee.property as Identifier).name}`;
+
+        return `(${obj}${prop}(${args}) if ${obj} is not None else None)`;
+    }
+
     const callee = g.genExpression(node.callee);
 
     // WHY: Python has no native optional chaining; expand to conditional

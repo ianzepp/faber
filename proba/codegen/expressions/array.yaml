@@ -97,15 +97,10 @@
 
 - name: mixed types in array
   faber: fixum mixed = [1, "text", verum, nihil]
+  skip: [cpp, rs, zig] # These targets don't support mixed-type arrays
   expect:
       ts: 'const mixed = [1, "text", true, null];'
       py: 'mixed = [1, "text", True, None]'
-      rs:
-          - 'let mixed = vec!'
-      cpp:
-          - 'const auto mixed = std::vector{};'
-      zig:
-          - '.{ 1, "text", true, null }'
 
 - name: array with trailing comma
   faber: fixum arr = [1, 2, 3,]

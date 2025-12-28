@@ -48,6 +48,8 @@ export enum TokenizerErrorCode {
     UnterminatedTemplateString = 'L002',
     UnexpectedCharacter = 'L003',
     InvalidHexLiteral = 'L004',
+    InvalidBinaryLiteral = 'L005',
+    InvalidOctalLiteral = 'L006',
 }
 
 // =============================================================================
@@ -83,5 +85,13 @@ export const TOKENIZER_ERRORS = {
     [TokenizerErrorCode.InvalidHexLiteral]: {
         text: 'Invalid hex literal',
         help: 'Hex literals must have at least one digit after 0x prefix. Use 0x followed by hex digits (0-9, a-f, A-F).',
+    },
+    [TokenizerErrorCode.InvalidBinaryLiteral]: {
+        text: 'Invalid binary literal',
+        help: 'Binary literals must have at least one digit after 0b prefix. Use 0b followed by binary digits (0-1).',
+    },
+    [TokenizerErrorCode.InvalidOctalLiteral]: {
+        text: 'Invalid octal literal',
+        help: 'Octal literals must have at least one digit after 0o prefix. Use 0o followed by octal digits (0-7).',
     },
 } as const;

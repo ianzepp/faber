@@ -11,8 +11,8 @@ import type { AssignmentExpression } from '../../../parser/ast';
 import type { CppGenerator } from '../generator';
 
 export function genAssignmentExpression(node: AssignmentExpression, g: CppGenerator): string {
-    const left = node.left.type === 'Identifier' ? node.left.name : g.genExpression(node.left);
-    const right = g.genExpression(node.right);
+    const left = node.left.type === 'Identifier' ? node.left.name : g.genBareExpression(node.left);
+    const right = g.genBareExpression(node.right);
 
     return `${left} ${node.operator} ${right}`;
 }

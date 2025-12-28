@@ -73,7 +73,7 @@
   faber: fixum len = (data qua textus).length
   expect:
       ts: 'const len = (data as string).length;'
-      py: 'len = data.length'
+      py: 'len = len(data)'
       rs:
           - 'let len = data as String.length;'
 

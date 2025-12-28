@@ -140,7 +140,7 @@
       ts:
           - 'return `Hello ${name}!`;'
       py:
-          - 'return f"Hello ${name}!"'
+          - 'return f"Hello {name}!"'
 
 # Return with member access
 - name: return with member access

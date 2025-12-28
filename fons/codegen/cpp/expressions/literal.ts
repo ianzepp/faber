@@ -18,12 +18,26 @@ export function genLiteral(node: Literal, g: CppGenerator): string {
     }
 
     if (typeof node.value === 'string') {
-        // Use std::string literal
-        return `std::string("${node.value}")`;
+        // WHY: Use raw to preserve escape sequences like \u0048, \n, \t as-is.
+        // Manual escaping would double-escape backslashes.
+        return `std::string(${node.raw})`;
     }
 
     if (typeof node.value === 'boolean') {
         return node.value ? 'true' : 'false';
+    }
+
+    if (typeof node.value === 'number') {
+        // WHY: Scientific notation should preserve format (1.5e10), but hex/binary/octal
+        // are converted to decimal for C++ compatibility with older standards
+        const raw = node.raw;
+        // Check for scientific notation: contains 'e' or 'E' but NOT hex prefix
+        const isScientific = (raw.includes('e') || raw.includes('E')) && !raw.startsWith('0x') && !raw.startsWith('0X');
+        if (isScientific) {
+            return raw;
+        }
+        // Convert to decimal for hex (0x), binary (0b), octal (0o)
+        return String(node.value);
     }
 
     return String(node.value);

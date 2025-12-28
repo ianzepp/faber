@@ -25,9 +25,11 @@ describe('tokenizer', () => {
         });
 
         test('strings with escapes', () => {
+            // WHY: Escape sequences are preserved literally so they pass through
+            // to generated code unchanged (e.g., \n stays as \n, not newline char)
             const { tokens } = tokenize('"line1\\nline2"');
 
-            expect(tokens[0]!.value).toBe('line1\nline2');
+            expect(tokens[0]!.value).toBe('line1\\nline2');
         });
 
         test('template strings', () => {

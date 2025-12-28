@@ -137,7 +137,7 @@
       ts:
           - 'console.log(`Value: ${x}, Status: ${status}`);'
       py:
-          - 'print(f"Value: ${x}, Status: ${status}")'
+          - 'print(f"Value: {x}, Status: {status}")'
 
 # Scribe with expression
 - name: scribe with expression
@@ -173,7 +173,7 @@
       ts:
           - 'console.debug(`Debug: ${value}`);'
       py:
-          - 'print("[DEBUG]", f"Debug: ${value}")'
+          - 'print("[DEBUG]", f"Debug: {value}")'
 
 # Mone with expression
 - name: mone with expression

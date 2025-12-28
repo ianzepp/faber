@@ -15,7 +15,8 @@ export function genMemberExpression(node: MemberExpression, g: RsGenerator): str
     const obj = g.genExpression(node.object);
 
     if (node.computed) {
-        const prop = g.genExpression(node.property);
+        // WHY: Use genBareExpression to avoid unnecessary parens around index
+        const prop = g.genBareExpression(node.property);
         if (node.optional) {
             return `${obj}.get(${prop})`;
         }

@@ -175,6 +175,20 @@ export function tokenize(source: string): TokenizerResult {
     }
 
     /**
+     * Check if character is a binary digit (0-1).
+     */
+    function isBinaryDigit(char: string): boolean {
+        return char === '0' || char === '1';
+    }
+
+    /**
+     * Check if character is an octal digit (0-7).
+     */
+    function isOctalDigit(char: string): boolean {
+        return char >= '0' && char <= '7';
+    }
+
+    /**
      * Check if character can start an identifier.
      *
      * WHY: Allows underscore prefix (common in modern languages) while
@@ -196,11 +210,14 @@ export function tokenize(source: string): TokenizerResult {
     // ---------------------------------------------------------------------------
 
     /**
-     * Scan a number literal (integer, decimal, hex, or bigint).
+     * Scan a number literal (integer, decimal, hex, binary, octal, scientific, or bigint).
      *
-     * GRAMMAR: number = hex_literal | decimal_literal
-     *          hex_literal = '0' ('x' | 'X') hex_digit+
-     *          decimal_literal = digit+ ('.' digit+)? 'n'?
+     * GRAMMAR: number = hex_literal | binary_literal | octal_literal | decimal_literal
+     *          hex_literal = '0' ('x' | 'X') hex_digit+ 'n'?
+     *          binary_literal = '0' ('b' | 'B') binary_digit+ 'n'?
+     *          octal_literal = '0' ('o' | 'O') octal_digit+ 'n'?
+     *          decimal_literal = digit+ ('.' digit+)? exponent? 'n'?
+     *          exponent = ('e' | 'E') ('+' | '-')? digit+
      *
      * WHY: Numbers must be tokenized as a unit to distinguish from
      *      member access: 123.toString() vs 123.45
@@ -235,6 +252,58 @@ export function tokenize(source: string): TokenizerResult {
             return;
         }
 
+        // Check for binary prefix: 0b or 0B
+        if (peek() === '0' && (peek(1) === 'b' || peek(1) === 'B')) {
+            value += advance(); // 0
+            value += advance(); // b or B
+
+            // Must have at least one binary digit
+            if (!isBinaryDigit(peek())) {
+                addError(TokenizerErrorCode.InvalidBinaryLiteral, pos);
+                return;
+            }
+
+            while (isBinaryDigit(peek())) {
+                value += advance();
+            }
+
+            // Check for bigint suffix 'n'
+            if (peek() === 'n') {
+                advance();
+                addToken('BIGINT', value, pos);
+                return;
+            }
+
+            addToken('NUMBER', value, pos);
+            return;
+        }
+
+        // Check for octal prefix: 0o or 0O
+        if (peek() === '0' && (peek(1) === 'o' || peek(1) === 'O')) {
+            value += advance(); // 0
+            value += advance(); // o or O
+
+            // Must have at least one octal digit
+            if (!isOctalDigit(peek())) {
+                addError(TokenizerErrorCode.InvalidOctalLiteral, pos);
+                return;
+            }
+
+            while (isOctalDigit(peek())) {
+                value += advance();
+            }
+
+            // Check for bigint suffix 'n'
+            if (peek() === 'n') {
+                advance();
+                addToken('BIGINT', value, pos);
+                return;
+            }
+
+            addToken('NUMBER', value, pos);
+            return;
+        }
+
         // Decimal integer part
         while (isDigit(peek())) {
             value += advance();
@@ -246,6 +315,25 @@ export function tokenize(source: string): TokenizerResult {
 
             while (isDigit(peek())) {
                 value += advance();
+            }
+        }
+
+        // Scientific notation exponent (e.g., 1.5e10, 1e-5, 2.5E+3)
+        if (peek() === 'e' || peek() === 'E') {
+            const next = peek(1);
+            // Exponent must be followed by digit or sign then digit
+            if (isDigit(next) || ((next === '+' || next === '-') && isDigit(peek(2)))) {
+                value += advance(); // e or E
+
+                // Optional sign
+                if (peek() === '+' || peek() === '-') {
+                    value += advance();
+                }
+
+                // Exponent digits
+                while (isDigit(peek())) {
+                    value += advance();
+                }
             }
         }
 
@@ -397,29 +485,24 @@ export function tokenize(source: string): TokenizerResult {
             }
 
             if (peek() === '\\') {
-                advance();
+                // WHY: Preserve escape sequences literally rather than interpreting them.
+                // The target language runtime will interpret \n, \t, \uXXXX, etc.
+                // This ensures escape sequences pass through to generated code unchanged.
+                value += advance(); // backslash
 
-                const escaped = advance();
+                if (!isAtEnd() && peek() !== '\n') {
+                    const escaped = peek();
 
-                // Map escape sequences to their runtime equivalents
-                switch (escaped) {
-                    case 'n':
-                        value += '\n';
-                        break;
-                    case 't':
-                        value += '\t';
-                        break;
-                    case 'r':
-                        value += '\r';
-                        break;
-                    case '\\':
-                        value += '\\';
-                        break;
-                    case quote:
-                        value += quote;
-                        break;
-                    default:
-                        value += escaped; // Unknown escapes pass through
+                    // For \uXXXX, consume all 5 characters (u + 4 hex digits)
+                    if (escaped === 'u') {
+                        value += advance(); // u
+
+                        for (let i = 0; i < 4 && isHexDigit(peek()); i++) {
+                            value += advance();
+                        }
+                    } else {
+                        value += advance(); // the escaped character
+                    }
                 }
             } else {
                 value += advance();
@@ -727,7 +810,12 @@ export function tokenize(source: string): TokenizerResult {
                 break;
 
             case '%':
-                addToken('PERCENT', char, pos);
+                if (peek() === '=') {
+                    advance();
+                    addToken('PERCENT_EQUAL', '%=', pos);
+                } else {
+                    addToken('PERCENT', char, pos);
+                }
                 break;
 
             // WHY: = can be === (strict equality), == (equality), => (fat arrow), or = (assignment)

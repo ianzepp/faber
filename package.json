@@ -8,6 +8,7 @@
         "faber": "./fons/cli.ts"
     },
     "scripts": {
+        "faber": "bun ./fons/cli.ts",
         "build": "./scripta/build",
         "exempla": "bun ./scripta/exempla.ts",
         "grammar": "bun ./scripta/extract-grammar.ts",

@@ -157,6 +157,26 @@ export class RsGenerator {
     }
 
     /**
+     * Generate an expression without outer parentheses.
+     *
+     * WHY: Binary expressions are wrapped in parens for safety, but in some
+     *      contexts (array index, RHS of assignment) the parens are unnecessary.
+     *      For binary expressions, this generates the expression flat without
+     *      wrapping parens, recursively stripping nested binary expression parens.
+     */
+    genBareExpression(node: Expression): string {
+        // For binary expressions, generate without outer parens
+        // and recursively generate operands bare to flatten chains like a + b + c
+        if (node.type === 'BinaryExpression') {
+            const left = this.genBareExpression(node.left);
+            const right = this.genBareExpression(node.right);
+            return `${left} ${node.operator} ${right}`;
+        }
+
+        return this.genExpression(node);
+    }
+
+    /**
      * Generate an expression. Dispatches to specific gen* functions.
      */
     genExpression(node: Expression): string {

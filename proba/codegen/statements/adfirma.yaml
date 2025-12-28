@@ -136,7 +136,7 @@
       ts:
           - 'if (!((x > 0))) { throw new Error(`Expected positive, got ${x}`); }'
       py:
-          - 'assert (x > 0), f"Expected positive, got ${x}"'
+          - 'assert (x > 0), f"Expected positive, got {x}"'
       rs:
           - 'assert!((x > 0), format!("Expected positive, got ${x}"));'
       cpp:

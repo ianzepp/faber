@@ -293,6 +293,48 @@ export class ZigGenerator {
     }
 
     /**
+     * Generate an expression without outer parentheses.
+     *
+     * WHY: Binary expressions are wrapped in parens for safety, but in some
+     *      contexts (array index, RHS of assignment) the parens are unnecessary.
+     *      For binary expressions, this generates the expression flat without
+     *      wrapping parens, recursively stripping nested binary expression parens.
+     */
+    genBareExpression(node: Expression): string {
+        // For binary expressions, generate without outer parens
+        // and recursively generate operands bare to flatten chains like a + b + c
+        if (node.type === 'BinaryExpression') {
+            const left = this.genBareExpression(node.left);
+            const right = this.genBareExpression(node.right);
+
+            // Handle string concatenation with + operator
+            if (node.operator === '+' && (this.isStringType(node.left) || this.isStringType(node.right))) {
+                return `${left} ++ ${right}`;
+            }
+
+            // Handle string comparison
+            if ((node.operator === '==' || node.operator === '===') && (this.isStringType(node.left) || this.isStringType(node.right))) {
+                return `std.mem.eql(u8, ${left}, ${right})`;
+            }
+            if ((node.operator === '!=' || node.operator === '!==') && (this.isStringType(node.left) || this.isStringType(node.right))) {
+                return `!std.mem.eql(u8, ${left}, ${right})`;
+            }
+
+            // Handle operator mapping for Zig
+            let op = node.operator;
+            if (op === '&&') op = 'and';
+            else if (op === '||') op = 'or';
+            else if (op === '??') op = 'orelse';
+            else if (op === '===') op = '==';
+            else if (op === '!==') op = '!=';
+
+            return `${left} ${op} ${right}`;
+        }
+
+        return this.genExpression(node);
+    }
+
+    /**
      * Generate an expression. Dispatches to specific gen* functions.
      */
     genExpression(node: Expression): string {

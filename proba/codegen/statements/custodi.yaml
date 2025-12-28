@@ -304,7 +304,7 @@
           - 'if (!(user instanceof AuthenticatedUser))'
           - 'return null;'
       py:
-          - 'if (not isinstance(user, AuthenticatedUser)):'
+          - 'if not isinstance(user, AuthenticatedUser):'
           - 'return None'
 
 # Guard with rumpe (break) in loop context
@@ -402,6 +402,6 @@
           - 'def validate(input: str) -> str | None:'
           - 'if (input == None):'
           - 'return None'
-          - 'if (input.length == 0):'
+          - 'if (len(input) == 0):'
           - 'return None'
           - 'return input'
