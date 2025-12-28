@@ -66,14 +66,36 @@ The colon `:` is used only for default values in genus properties, not for type 
 
 ## Agent Delegation
 
-Delegate mechanical grunt work to sub-agents. The primary agent defines the _opus_ (the work) — clear specifications, test expectations, file locations — then dispatches `explore` or `general` agents to execute. Examples of grunt work:
+The primary agent is the general; sub-agents are infantry. Delegate execution to preserve context for design and judgment.
 
-- Migrating test cases between formats
-- Adding repetitive entries across multiple files
-- Bulk search-and-replace operations
-- Extracting patterns from existing code
+**When to delegate:**
 
-The primary agent's value is in design, judgment, and orchestration — not in typing out 70 collection method tests by hand.
+- Repetitive transformations across many files (extracting methods, migrations)
+- Tasks that follow a pattern already understood
+- Work that would bloat context with details you won't reference again
+- Parallelizable units (e.g., four codegens at once)
+
+**When NOT to delegate:**
+
+- Quick single-file edits (spinning up an agent costs more than doing it)
+- Tasks requiring judgment calls mid-execution
+- Exploratory work where the approach isn't yet clear
+
+**Briefing quality determines success.** Vague prompts return wrong results. Include:
+
+- Exact file paths (source, destination, references)
+- A working example to follow
+- Specific transformations required
+- What NOT to modify
+- Verification steps (e.g., "run `bun test` after")
+
+**Trust but verify.** After agents complete:
+
+- Type-check (`bun run tsc --noEmit`)
+- Run tests (`bun test`)
+- Fix issues yourself rather than re-delegating small repairs
+
+The trade-off is always: context cost of doing it yourself vs. effort to brief an agent properly.
 
 ## Communication Style
 
