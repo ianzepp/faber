@@ -1,8 +1,8 @@
 ---
 status: partial
 targets: [zig]
-note: Core language working; collections partial; `curator` and advanced features pending
-updated: 2024-12
+note: Core language working; collections partial; allocators (arena/page/curator) implemented
+updated: 2025-12
 ---
 
 # Zig Target
@@ -22,7 +22,7 @@ Zig is a systems programming target. Faber uses Latin prepositions (`de`, `in`) 
 | `novum .. de`          | Done    | `@hasField` pattern with `.{}` default                 |
 | Lambdas                | Done    | Anonymous struct `.call` pattern                       |
 | Error handling         | Done    | `mori` → `@panic`, `iace` → `return error.X` with `!T` |
-| Allocators             | Partial | Arena preamble; `curator` type designed                |
+| Allocators             | Done    | `cura arena/page`, `curator` type, curatorStack        |
 | `de`/`in` prepositions | Done    | `de` = borrowed/const, `in` = mutable pointer          |
 | Collections            | Partial | Core methods implemented, functional methods stubbed   |
 | Comptime               | Done    | `prae typus` → `comptime T: type`, `praefixum` blocks  |
@@ -98,10 +98,10 @@ pub fn main() void {
 
 ### Explicit Scopes
 
-`cura arena() fit X` creates nested allocator scope:
+`cura arena fit X` creates nested allocator scope:
 
 ```faber
-cura arena() fit temp {
+cura arena fit temp {
     varia scratch: numerus[] = []
     scratch.adde(42)
 }
@@ -140,22 +140,32 @@ fn buildList(memoria: std.mem.Allocator, prefix: []const u8) [][]const u8 {
 
 ### Codegen State
 
-Track active allocator name alongside indentation:
+The `ZigGenerator` class tracks the active allocator name via a stack:
 
 ```ts
-let depth = 0;
-let curator = 'alloc';
+class ZigGenerator {
+    depth = 0;
+    curatorStack: string[] = ['alloc'];  // default allocator
+
+    getCurator(): string {
+        return this.curatorStack[this.curatorStack.length - 1] ?? 'alloc';
+    }
+
+    pushCurator(name: string): void {
+        this.curatorStack.push(name);
+    }
+
+    popCurator(): void {
+        if (this.curatorStack.length > 1) {
+            this.curatorStack.pop();
+        }
+    }
+}
 ```
 
-Update when entering function with `curator` param or `cura arena()` block:
-
-```ts
-const curatorParam = node.params.find(p => p.typeAnnotation?.name.toLowerCase() === 'curator');
-const prevCurator = curator;
-curator = curatorParam?.name.name ?? 'alloc';
-// ... generate body
-curator = prevCurator;
-```
+Push on:
+- `cura arena/page fit X` block entry
+- Function entry when a `curator` param exists
 
 Method registry uses curator:
 
@@ -343,9 +353,8 @@ switch (event) {
 
 **High priority:**
 
-- `curator` type implementation
-- `cura arena()` codegen
 - Return type prepositions (`-> de textus`)
+- Generic resource `cura X fit Y` with `defer Y.solve()`
 
 **Medium priority:**
 
@@ -357,3 +366,9 @@ switch (event) {
 
 - Build.zig generation
 - Functional collection methods via loops
+
+## Recently Completed
+
+- `curator` type → `std.mem.Allocator`
+- `cura arena/page fit X` → ArenaAllocator/page_allocator
+- `curatorStack` for tracking active allocator in nested scopes

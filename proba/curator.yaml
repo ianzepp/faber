@@ -1,5 +1,6 @@
 # Curator - Allocator tracking codegen tests (Zig target)
 # Covers: curator type, allocator parameter detection, collection method allocator passing
+# Note: curator is a Zig-specific concept (std.mem.Allocator). GC languages skip these tests.
 
 # =============================================================================
 # Curator Type Mapping
@@ -12,6 +13,7 @@
       - 'fn process(alloc: std.mem.Allocator) void'
   rs:
       - 'fn process(alloc: curator)'
+  skip: [ts, py, cpp]
 
 # curator param with other params
 - name: 'curator with other params'
@@ -20,6 +22,7 @@
       - 'fn build(mem: std.mem.Allocator, name: []const u8) void'
   rs:
       - 'fn build(mem: curator, name: &str)'
+  skip: [ts, py, cpp]
 
 # curator with return type
 - name: 'curator with return type'
@@ -30,6 +33,7 @@
   rs:
       - 'fn create(alloc: curator) -> f64'
       - 'return 42;'
+  skip: [ts, py, cpp]
 
 # =============================================================================
 # Curator Tracking in Collection Methods
@@ -48,6 +52,7 @@
       - 'fn build(memoria: curator)'
       - 'let mut items = vec![]'
       - 'items.adde(1)'
+  skip: [ts, py, cpp]
 
 # Default alloc used in main when no curator param
 - name: 'lista.adde uses default alloc'
@@ -59,6 +64,7 @@
   rs:
       - 'let mut items = vec![]'
       - 'items.adde(1)'
+  skip: [ts, py, cpp]
 
 # praepone also uses curator
 - name: 'lista.praepone uses curator param'
@@ -73,6 +79,7 @@
       - 'fn build(mem: curator)'
       - 'let mut items = vec![]'
       - 'items.praepone(1)'
+  skip: [ts, py, cpp]
 
 # =============================================================================
 # Tabula Methods with Curator
@@ -96,6 +103,7 @@
       - 'fn build(a: curator)'
       - 'let mut m = {}'
       - 'm.pone(String::from("key"), 42)'
+  skip: [ts, py, cpp]
 
 # tabula.pone without type annotation - falls through to regular method call
 - name: 'tabula.pone uses default alloc'
@@ -107,6 +115,7 @@
   rs:
       - 'let mut m = {}'
       - 'm.pone(String::from("key"), 42)'
+  skip: [ts, py, cpp]
 
 # =============================================================================
 # Copia Methods with Curator
@@ -128,6 +137,7 @@
       - 'fn build(allocator: curator)'
       - 'let mut s = {}'
       - 's.adde(String::from("item"))'
+  skip: [ts, py, cpp]
 
 # copia.adde uses default alloc - falls back to lista.append
 - name: 'copia.adde uses default alloc'
@@ -139,6 +149,7 @@
   rs:
       - 'let mut s = {}'
       - 's.adde(String::from("item"))'
+  skip: [ts, py, cpp]
 
 # =============================================================================
 # Multiple Functions with Different Curators
@@ -163,6 +174,7 @@
       - 'x.adde(1)'
       - 'fn second(b: curator)'
       - 'y.adde(2)'
+  skip: [ts, py, cpp]
 
 # =============================================================================
 # Nested Scopes
@@ -184,6 +196,7 @@
       - 'let mut items = vec![]'
       - 'if true'
       - 'items.adde(1)'
+  skip: [ts, py, cpp]
 
 # Curator in loop body
 - name: 'curator in loop body'
@@ -203,6 +216,7 @@
       - 'while true'
       - 'items.adde(1)'
       - 'break'
+  skip: [ts, py, cpp]
 
 # =============================================================================
 # Array Literals with Curator
@@ -221,6 +235,7 @@
       - 'fn build(m: curator)'
       - 'let mut nums = vec![1, 2, 3]'
       - 'nums.adde(4)'
+  skip: [ts, py, cpp]
 
 # Array literal in main uses default alloc
 - name: 'array literal uses default alloc'
@@ -232,6 +247,7 @@
   rs:
       - 'let mut nums = vec![1, 2, 3]'
       - 'nums.adde(4)'
+  skip: [ts, py, cpp]
 
 # =============================================================================
 # Curator Isolation Between Functions
@@ -250,6 +266,7 @@
       - 'fn noAlloc()'
       - 'let mut items = vec![]'
       - 'items.adde(1)'
+  skip: [ts, py, cpp]
 
 # After function with curator, next function without curator uses default
 - name: 'curator does not leak between functions'
@@ -270,3 +287,4 @@
       - 'a.adde(1)'
       - 'fn withoutCurator()'
       - 'b.adde(2)'
+  skip: [ts, py, cpp]

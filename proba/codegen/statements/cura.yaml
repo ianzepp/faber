@@ -11,10 +11,12 @@
 #   cura resource fit binding { use } -- scoped resource with cleanup
 #   cura asyncRes fiet binding { use } -- async scoped resource
 #
-# Note: Only implemented for TS and Rust targets
+# Note: CuraBlock (test hooks) only implemented for TS and Rust.
+#       CuraStatement (resource management) also supports Zig.
 
 # =============================================================================
 # CuraBlock - Test Lifecycle Hooks
+# Note: Zig has no test framework with beforeEach/afterEach semantics
 # =============================================================================
 
 # cura ante becomes beforeEach in TS, comment in Rust
@@ -30,6 +32,7 @@
       rs:
           - '// setup_each:'
           - 'lexer = init();'
+  skip: [py, cpp, zig]
 
 # cura ante omnia becomes beforeAll in TS
 - name: cura ante omnia hook
@@ -44,6 +47,7 @@
       rs:
           - '// setup_all:'
           - 'db = connect();'
+  skip: [py, cpp, zig]
 
 # cura post becomes afterEach in TS
 - name: cura post hook
@@ -58,6 +62,7 @@
       rs:
           - '// teardown_each:'
           - 'cleanup();'
+  skip: [py, cpp, zig]
 
 # cura post omnia becomes afterAll in TS
 - name: cura post omnia hook
@@ -72,6 +77,7 @@
       rs:
           - '// teardown_all:'
           - 'db.close();'
+  skip: [py, cpp, zig]
 
 # Multiple statements in hook body
 - name: cura ante with multiple statements
@@ -91,9 +97,13 @@
           - '// setup_each:'
           - 'let mut lexer = Lexer::new();'
           - 'lexer.init();'
+  skip: [py, cpp, zig]
 
 # =============================================================================
 # CuraStatement - Scoped Resource Management
+# TS: try/finally with solve?.()
+# RS: let binding with scope-based drop
+# Zig: defer binding.solve()
 # =============================================================================
 
 # Basic scoped resource with fit binding
@@ -114,6 +124,11 @@
           - 'let fd = aperi(String::from("file.txt"));'
           - '{'
           - 'lege(fd);'
+      zig:
+          - 'const fd = aperi("file.txt");'
+          - 'defer fd.solve();'
+          - 'lege(fd);'
+  skip: [py, cpp]
 
 # Async resource with fiet
 - name: cura with async resource
@@ -133,6 +148,10 @@
           - 'let conn = connect(url).await;'
           - '{'
           - 'conn.query(sql).await;'
+      zig:
+          - 'const conn = try connect(url);'
+          - 'defer conn.solve();'
+  skip: [py, cpp]
 
 # Resource with catch clause
 - name: cura with cape clause
@@ -157,6 +176,11 @@
           - 'let r = resource();'
           - '{'
           - 'use(r);'
+      zig:
+          - 'const r = resource();'
+          - 'defer r.solve();'
+          - 'use(r);'
+  skip: [py, cpp]
 
 # Nested resource management
 - name: nested cura statements
@@ -182,6 +206,13 @@
           - 'let outFile = openFile(String::from("output.txt"));'
           - '{'
           - 'copy(inFile, outFile);'
+      zig:
+          - 'const inFile = openFile("input.txt");'
+          - 'defer inFile.solve();'
+          - 'const outFile = openFile("output.txt");'
+          - 'defer outFile.solve();'
+          - 'copy(inFile, outFile);'
+  skip: [py, cpp]
 
 # Multiple statements in resource body
 - name: cura with multiple body statements
@@ -206,6 +237,12 @@
           - 'counter += 1;'
           - 'println!'
           - 'return counter;'
+      zig:
+          - 'const guard = mutex.lock();'
+          - 'defer guard.solve();'
+          - 'counter += 1;'
+          - 'return counter;'
+  skip: [py, cpp]
 
 # Resource with complex expression
 - name: cura with complex resource expression
@@ -224,6 +261,10 @@
           - 'let db = Database::new();'
           - '{'
           - 'db.init();'
+      zig:
+          - 'defer db.solve();'
+          - 'db.init();'
+  skip: [py, cpp]
 
 # Empty resource body
 - name: cura with empty body
@@ -237,6 +278,10 @@
       rs:
           - 'let r = getResource();'
           - '{'
+      zig:
+          - 'const r = getResource();'
+          - 'defer r.solve();'
+  skip: [py, cpp]
 
 # Async resource with catch and multiple operations
 - name: async cura with cape and operations
@@ -268,6 +313,12 @@
           - 'let mut data = fetch().await;'
           - 'process(data);'
           - 'return data;'
+      zig:
+          - 'const handle = try acquire(lock);'
+          - 'defer handle.solve();'
+          - 'process(data);'
+          - 'return data;'
+  skip: [py, cpp]
 
 # =============================================================================
 # Curator Kinds - Allocators (arena, page)
@@ -291,6 +342,7 @@
           - 'var mem_arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);'
           - 'defer mem_arena.deinit();'
           - 'const mem = mem_arena.allocator();'
+  skip: [py, cpp]
 
 # Page allocator - TS/RS strip it (GC), Zig emits page_allocator
 - name: cura page basic
@@ -306,6 +358,7 @@
       zig:
           - 'const mem = std.heap.page_allocator;'
           - 'const buffer = allocate(1024);'
+  skip: [py, cpp]
 
 # Nested arena blocks
 - name: nested cura arena
@@ -325,6 +378,11 @@
           - 'process(a);'
           - 'let b = 2;'
           - 'process(b);'
+      rs:
+          - 'let mut a = 1;'
+          - 'process(a);'
+          - 'let mut b = 2;'
+          - 'process(b);'
       zig:
           - 'var outer_arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);'
           - 'defer outer_arena.deinit();'
@@ -332,6 +390,7 @@
           - 'var inner_arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);'
           - 'defer inner_arena.deinit();'
           - 'const inner = inner_arena.allocator();'
+  skip: [py, cpp]
 
 # Arena with pro binding (neutral)
 - name: cura arena with pro
@@ -342,8 +401,11 @@
   expect:
       ts:
           - 'process(alloc);'
+      rs:
+          - 'process(alloc);'
       zig:
           - 'var alloc_arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);'
           - 'defer alloc_arena.deinit();'
           - 'const alloc = alloc_arena.allocator();'
           - 'process(alloc);'
+  skip: [py, cpp]

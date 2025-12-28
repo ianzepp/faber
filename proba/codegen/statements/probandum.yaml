@@ -76,6 +76,7 @@
           - '// Test suite: Lexer'
           - '#[cfg(test)]'
           - 'mod tests {'
+  skip: [py, cpp, zig]
 
 # Suite with afterEach teardown
 - name: probandum with cura post
@@ -92,6 +93,7 @@
       rs:
           - '// Test suite: Database'
           - '#[cfg(test)]'
+  skip: [py, cpp, zig]
 
 # Suite with beforeAll and afterAll
 - name: probandum with cura ante omnia and post omnia
@@ -111,6 +113,7 @@
       rs:
           - '// Test suite: Server'
           - '#[cfg(test)]'
+  skip: [py, cpp, zig]
 
 # =============================================================================
 # Nested Suites

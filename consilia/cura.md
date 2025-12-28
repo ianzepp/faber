@@ -1,7 +1,8 @@
 ---
-status: design
+status: partial
 targets: [ts, py, zig, rs, cpp]
 updated: 2025-12
+note: arena/page allocators implemented; generic resource implemented; other curator kinds planned
 ---
 
 # Cura - Resource Management
@@ -33,28 +34,30 @@ For GC targets (TypeScript, Python), allocators are irrelevant. The compiler ign
 ## Syntax
 
 ```ebnf
-curaStmt := 'cura' curatorKind expression? ('fit' | 'fiet') typeAnnotation? IDENTIFIER blockStmt catchClause?
-curatorKind := 'curator' | 'arena' | 'page' | 'liber' | 'transactio' | 'mutex' | 'conexio'
+curaStmt := 'cura' curatorKind? expression? ('pro' | 'fit' | 'fiet') typeAnnotation? IDENTIFIER blockStmt catchClause?
+curatorKind := 'arena' | 'page'
 ```
 
-The curator kind is **required** — it declares what type of resource management is being performed. This follows the Zig philosophy that explicit intent aids readability and correctness.
+The curator kind is **optional**. When omitted, the resource expression is required and generic cleanup (`solve()`) is used. When present (`arena` or `page`), it declares an allocator scope.
 
-- `fit` — sync resource acquisition
-- `fiet` — async resource acquisition
+- `pro` / `fit` — sync resource binding
+- `fiet` — async resource binding
+
+**Note:** Additional curator kinds (`liber`, `transactio`, `mutex`, `conexio`) are designed but not yet implemented. Currently only `arena` and `page` are recognized.
 
 ---
 
 ## Well-Known Curators
 
-| Curator      | Latin meaning     | Use case              | Expression required? |
-| ------------ | ----------------- | --------------------- | -------------------- |
-| `curator`    | steward (generic) | Custom resource type  | yes                  |
-| `arena`      | sand, open space  | Arena allocator       | no                   |
-| `page`       | pagina            | Page allocator        | no                   |
-| `liber`      | book, document    | File handle           | yes                  |
-| `transactio` | transaction       | DB transaction        | yes                  |
-| `mutex`      | mutual exclusion  | Lock guard            | yes                  |
-| `conexio`    | connection        | Network/DB connection | yes                  |
+| Curator      | Latin meaning     | Use case              | Expression required? | Status      |
+| ------------ | ----------------- | --------------------- | -------------------- | ----------- |
+| (omitted)    | —                 | Generic resource      | yes                  | Implemented |
+| `arena`      | sand, open space  | Arena allocator       | no                   | Implemented |
+| `page`       | pagina            | Page allocator        | no                   | Implemented |
+| `liber`      | book, document    | File handle           | yes                  | Planned     |
+| `transactio` | transaction       | DB transaction        | yes                  | Planned     |
+| `mutex`      | mutual exclusion  | Lock guard            | yes                  | Planned     |
+| `conexio`    | connection        | Network/DB connection | yes                  | Planned     |
 
 ---
 
