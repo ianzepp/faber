@@ -2,11 +2,13 @@
  * Zig Code Generator - IteratioStatement (for loop)
  *
  * TRANSFORMS:
- *   ex 0..10 pro i { } -> var i: usize = 0; while (i < 10) : (i += 1) { }
- *   ex items pro item { } -> for (items) |item| { }
+ *   ex 0..10 pro i { }      -> for (0..10) |i| { }
+ *   ex 0 usque 10 pro i { } -> for (0..11) |i| { }  (inclusive adds 1)
+ *   ex 0..10 per 2 pro i {} -> while loop (Zig for doesn't support step)
+ *   ex items pro item { }   -> for (items) |item| { }
  *
- * TARGET: Zig uses for (slice) |item| for iteration over slices.
- *         For ranges, we use while loops since Zig doesn't have range syntax.
+ * TARGET: Zig 0.11+ supports for (start..end) |i| syntax for ranges.
+ *         Stepped ranges still require while loops.
  */
 
 import type { IteratioStatement } from '../../../parser/ast';
@@ -16,20 +18,24 @@ export function genIteratioStatement(node: IteratioStatement, g: ZigGenerator): 
     const varName = node.variable.name;
     const body = g.genBlockStatement(node.body);
 
-    // Handle range expressions with while loop
+    // Handle range expressions
     if (node.iterable.type === 'RangeExpression') {
         const range = node.iterable;
         const start = g.genExpression(range.start);
         const end = g.genExpression(range.end);
-        const cmp = range.inclusive ? '<=' : '<';
 
+        // Stepped ranges need while loops (Zig for doesn't support step)
         if (range.step) {
             const step = g.genExpression(range.step);
+            const cmp = range.inclusive ? '<=' : '<';
 
             return `${g.ind()}var ${varName}: usize = ${start}; while (${varName} ${cmp} ${end}) : (${varName} += ${step}) ${body}`;
         }
 
-        return `${g.ind()}var ${varName}: usize = ${start}; while (${varName} ${cmp} ${end}) : (${varName} += 1) ${body}`;
+        // Use native for (start..end) syntax (Zig 0.11+)
+        // Inclusive ranges need end + 1 since Zig ranges are exclusive
+        const endExpr = range.inclusive ? `${end} + 1` : end;
+        return `${g.ind()}for (${start}..${endExpr}) |${varName}| ${body}`;
     }
 
     const iterable = g.genExpression(node.iterable);
