@@ -6,35 +6,77 @@
 - name: boolean true
   faber: verum
   expect:
-    ts: "true;"
-    py: "True"
-    rs:
-      - "true;"
-    cpp:
-      - "true;"
-    zig:
-      - "true;"
+      ts: 'true;'
+      py: 'True'
+      rs:
+          - 'true;'
+      cpp:
+          - 'true;'
+      zig:
+          - 'true;'
 
 - name: boolean false
   faber: falsum
   expect:
-    ts: "false;"
-    py: "False"
-    rs:
-      - "false;"
-    cpp:
-      - "false;"
-    zig:
-      - "false;"
+      ts: 'false;'
+      py: 'False'
+      rs:
+          - 'false;'
+      cpp:
+          - 'false;'
+      zig:
+          - 'false;'
 
 - name: null literal
   faber: nihil
   expect:
-    ts: "null;"
-    py: "None"
-    rs:
-      - "None;"
-    cpp:
-      - "nullptr;"
-    zig:
-      - "null;"
+      ts: 'null;'
+      py: 'None'
+      rs:
+          - 'None;'
+      cpp:
+          - 'nullptr;'
+      zig:
+          - 'null;'
+
+- name: underscore prefix identifier
+  faber: fixum _private = 1
+  expect:
+      ts: 'const _private = 1;'
+      py: '_private = 1'
+
+- name: numeric suffix identifier
+  faber: fixum item1 = "first"
+  expect:
+      ts: 'const item1 = "first";'
+      py: 'item1 = "first"'
+
+- name: long identifier
+  faber: fixum veryLongIdentifierName = 1
+  expect:
+      ts: 'const veryLongIdentifierName = 1;'
+      py: 'veryLongIdentifierName = 1'
+
+- name: camelCase identifier
+  faber: fixum myVariableName = 42
+  expect:
+      ts: 'const myVariableName = 42;'
+      py: 'myVariableName = 42'
+
+- name: all caps identifier
+  faber: fixum MAX_VALUE = 100
+  expect:
+      ts: 'const MAX_VALUE = 100;'
+      py: 'MAX_VALUE = 100'
+
+- name: single letter identifier
+  faber: fixum x = 1
+  expect:
+      ts: 'const x = 1;'
+      py: 'x = 1'
+
+- name: latin-like identifier
+  faber: fixum verbum = "word"
+  expect:
+      ts: 'const verbum = "word";'
+      py: 'verbum = "word"'

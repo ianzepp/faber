@@ -8,39 +8,87 @@
 - name: cast to string
   faber: fixum name = data qua textus
   expect:
-    ts: "const name = (data as string);"
-    py: "name = data"
-    rs:
-      - "let name = data as String;"
+      ts: 'const name = (data as string);'
+      py: 'name = data'
+      rs:
+          - 'let name = data as String;'
 
 - name: cast member expression
   faber: fixum body = response.body qua objectum
   expect:
-    ts: "const body = (response.body as object);"
-    py: "body = response.body"
-    rs:
-      - "let body = response.body as objectum;"
+      ts: 'const body = (response.body as object);'
+      py: 'body = response.body'
+      rs:
+          - 'let body = response.body as objectum;'
 
 - name: cast to number
   faber: fixum num = input qua numerus
   expect:
-    ts: "const num = (input as number);"
-    py: "num = input"
-    rs:
-      - "let num = input as f64;"
+      ts: 'const num = (input as number);'
+      py: 'num = input'
+      rs:
+          - 'let num = input as f64;'
 
 - name: cast call result
   faber: fixum result = getData() qua textus
   expect:
-    ts: "const result = (getData() as string);"
-    py: "result = getData()"
-    rs:
-      - "let result = getData() as String;"
+      ts: 'const result = (getData() as string);'
+      py: 'result = getData()'
+      rs:
+          - 'let result = getData() as String;'
 
 - name: cast to boolean type
   faber: fixum flag = value qua logicum
   expect:
-    ts: "const flag = (value as logicum);"
-    py: "flag = value"
-    rs:
-      - "let flag = value as logicum;"
+      ts: 'const flag = (value as logicum);'
+      py: 'flag = value'
+      rs:
+          - 'let flag = value as logicum;'
+
+- name: cast to array type
+  faber: fixum items = data qua lista<textus>
+  expect:
+      ts: 'const items = (data as Array<string>);'
+      py: 'items = data'
+      rs:
+          - 'let items = data as Vec<String>;'
+
+- name: cast to user-defined type
+  faber: fixum user = obj qua UserType
+  expect:
+      ts: 'const user = (obj as UserType);'
+      py: 'user = obj'
+      rs:
+          - 'let user = obj as UserType;'
+
+- name: cast on optional chain
+  faber: fixum name = user?.name qua textus
+  expect:
+      ts: 'const name = (user?.name as string);'
+      py: 'name = (user.name if user is not None else None)'
+      rs:
+          - 'let name = user.as_ref().map(|x| x.name) as String;'
+
+- name: cast in expression
+  faber: fixum len = (data qua textus).length
+  expect:
+      ts: 'const len = (data as string).length;'
+      py: 'len = data.length'
+      rs:
+          - 'let len = data as String.length;'
+
+- name: cast with call result
+  faber: fixum str = getValue() qua textus
+  expect:
+      ts: 'const str = (getValue() as string);'
+      py: 'str = getValue()'
+      rs:
+          - 'let str = getValue() as String;'
+
+- name: cast to nullable
+  faber: fixum maybe = value qua numerus?
+  expect:
+      ts: 'const maybe = (value as number | null);'
+      py: 'maybe = value'
+      rs:
+          - 'let maybe = value as Option<f64>;'

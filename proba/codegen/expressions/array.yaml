@@ -4,45 +4,153 @@
 - name: empty array
   faber: fixum arr = []
   expect:
-    ts: "const arr = [];"
-    py: "arr = []"
-    rs:
-      - "let arr = vec![];"
-    cpp:
-      - "const auto arr = std::vector<int>{};"
-    zig:
-      - "const arr = .{};"
+      ts: 'const arr = [];'
+      py: 'arr = []'
+      rs:
+          - 'let arr = vec![];'
+      cpp:
+          - 'const auto arr = std::vector<int>{};'
+      zig:
+          - 'const arr = .{};'
 
 - name: array with elements
   faber: fixum nums = [1, 2, 3]
   expect:
-    ts: "const nums = [1, 2, 3];"
-    py: "nums = [1, 2, 3]"
-    rs:
-      - "let nums = vec![1, 2, 3];"
-    cpp:
-      - "const auto nums = std::vector{1, 2, 3};"
-    zig:
-      - ".{ 1, 2, 3 }"
+      ts: 'const nums = [1, 2, 3];'
+      py: 'nums = [1, 2, 3]'
+      rs:
+          - 'let nums = vec![1, 2, 3];'
+      cpp:
+          - 'const auto nums = std::vector{1, 2, 3};'
+      zig:
+          - '.{ 1, 2, 3 }'
 
 - name: array with string elements
   faber: fixum names = ["a", "b", "c"]
   expect:
-    ts: 'const names = ["a", "b", "c"];'
-    py: 'names = ["a", "b", "c"]'
-    rs:
-      - 'let names = vec![String::from("a"), String::from("b"), String::from("c")];'
-    cpp:
-      - 'std::vector{std::string("a"), std::string("b"), std::string("c")}'
-    zig:
-      - '.{ "a", "b", "c" }'
+      ts: 'const names = ["a", "b", "c"];'
+      py: 'names = ["a", "b", "c"]'
+      rs:
+          - 'let names = vec![String::from("a"), String::from("b"), String::from("c")];'
+      cpp:
+          - 'std::vector{std::string("a"), std::string("b"), std::string("c")}'
+      zig:
+          - '.{ "a", "b", "c" }'
 
 - name: spread in array
   faber: fixum combined = [sparge a, sparge b]
   expect:
-    ts: "const combined = [...a, ...b];"
-    py: "combined = [*a, *b]"
-    rs:
-      - "let combined = vec!"
-    cpp:
-      - "const auto combined = std::vector{};"
+      ts: 'const combined = [...a, ...b];'
+      py: 'combined = [*a, *b]'
+      rs:
+          - 'let combined = vec!'
+      cpp:
+          - 'const auto combined = std::vector{};'
+
+- name: deeply nested arrays (3 levels)
+  faber: fixum matrix = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
+  expect:
+      ts: 'const matrix = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]];'
+      py: 'matrix = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]'
+      rs:
+          - 'let matrix = vec![vec![vec![1, 2], vec![3, 4]], vec![vec![5, 6], vec![7, 8]]];'
+      cpp:
+          - 'const auto matrix = std::vector{std::vector{std::vector{1, 2}, std::vector{3, 4}}, std::vector{std::vector{5, 6}, std::vector{7, 8}}};'
+      zig:
+          - '.{ .{ .{ 1, 2 }, .{ 3, 4 } }, .{ .{ 5, 6 }, .{ 7, 8 } } }'
+
+- name: single element array
+  faber: fixum single = [42]
+  expect:
+      ts: 'const single = [42];'
+      py: 'single = [42]'
+      rs:
+          - 'let single = vec![42];'
+      cpp:
+          - 'const auto single = std::vector{42};'
+      zig:
+          - '.{ 42 }'
+
+- name: spread in middle of array
+  faber: fixum arr = [1, sparge middle, 2]
+  expect:
+      ts: 'const arr = [1, ...middle, 2];'
+      py: 'arr = [1, *middle, 2]'
+      rs:
+          - 'let arr = vec!'
+      cpp:
+          - 'const auto arr = std::vector{};'
+      zig:
+          - '.{ 1, middle, 2 }'
+
+- name: spread with function call
+  faber: fixum arr = [sparge getItems(), 99]
+  expect:
+      ts: 'const arr = [...getItems(), 99];'
+      py: 'arr = [*getItems(), 99]'
+      rs:
+          - 'let arr = vec!'
+      cpp:
+          - 'const auto arr = std::vector{};'
+      zig:
+          - '.{ getItems(), 99 }'
+
+- name: mixed types in array
+  faber: fixum mixed = [1, "text", verum, nihil]
+  expect:
+      ts: 'const mixed = [1, "text", true, null];'
+      py: 'mixed = [1, "text", True, None]'
+      rs:
+          - 'let mixed = vec!'
+      cpp:
+          - 'const auto mixed = std::vector{};'
+      zig:
+          - '.{ 1, "text", true, null }'
+
+- name: array with trailing comma
+  faber: fixum arr = [1, 2, 3,]
+  expect:
+      ts: 'const arr = [1, 2, 3];'
+      py: 'arr = [1, 2, 3]'
+      rs:
+          - 'let arr = vec![1, 2, 3];'
+      cpp:
+          - 'const auto arr = std::vector{1, 2, 3};'
+      zig:
+          - '.{ 1, 2, 3 }'
+
+- name: nested spread
+  faber: fixum arr = [[sparge inner], outer]
+  expect:
+      ts: 'const arr = [[...inner], outer];'
+      py: 'arr = [[*inner], outer]'
+      rs:
+          - 'let arr = vec!'
+      cpp:
+          - 'const auto arr = std::vector{};'
+      zig:
+          - '.{ .{ inner }, outer }'
+
+- name: array of arrays
+  faber: fixum grid = [[1, 2], [3, 4], [5, 6]]
+  expect:
+      ts: 'const grid = [[1, 2], [3, 4], [5, 6]];'
+      py: 'grid = [[1, 2], [3, 4], [5, 6]]'
+      rs:
+          - 'let grid = vec![vec![1, 2], vec![3, 4], vec![5, 6]];'
+      cpp:
+          - 'const auto grid = std::vector{std::vector{1, 2}, std::vector{3, 4}, std::vector{5, 6}};'
+      zig:
+          - '.{ .{ 1, 2 }, .{ 3, 4 }, .{ 5, 6 } }'
+
+- name: large array (many elements)
+  faber: fixum nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  expect:
+      ts: 'const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];'
+      py: 'nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]'
+      rs:
+          - 'let nums = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];'
+      cpp:
+          - 'const auto nums = std::vector{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};'
+      zig:
+          - '.{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }'

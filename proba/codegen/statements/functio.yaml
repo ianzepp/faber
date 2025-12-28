@@ -17,60 +17,60 @@
 # Basic function with untyped parameter
 - name: simple function with param
   faber: |
-    functio salve(nomen) {
-      redde nomen
-    }
+      functio salve(nomen) {
+        redde nomen
+      }
   expect:
-    ts:
-      - "function salve(nomen)"
-      - "return nomen;"
-    py:
-      - "def salve(nomen):"
-      - "return nomen"
-    rs:
-      - "fn salve(nomen: _)"
-      - "return nomen;"
-    cpp:
-      - "void salve(auto nomen)"
-      - "return nomen;"
-    zig:
-      - "fn salve(nomen: anytype) void"
-      - "return nomen;"
+      ts:
+          - 'function salve(nomen)'
+          - 'return nomen;'
+      py:
+          - 'def salve(nomen):'
+          - 'return nomen'
+      rs:
+          - 'fn salve(nomen: _)'
+          - 'return nomen;'
+      cpp:
+          - 'void salve(auto nomen)'
+          - 'return nomen;'
+      zig:
+          - 'fn salve(nomen: anytype) void'
+          - 'return nomen;'
 
 # Function with explicit return type annotation
 - name: function with return type
   faber: 'functio greet() -> textus { redde "hello" }'
   expect:
-    ts:
-      - "function greet(): string"
-      - 'return "hello"'
-    py:
-      - "def greet() -> str:"
-      - 'return "hello"'
-    rs:
-      - "fn greet() -> String"
-      - 'return String::from("hello");'
-    cpp:
-      - "std::string greet()"
-      - 'return std::string("hello")'
-    zig:
-      - "fn greet() []const u8"
-      - 'return "hello";'
+      ts:
+          - 'function greet(): string'
+          - 'return "hello"'
+      py:
+          - 'def greet() -> str:'
+          - 'return "hello"'
+      rs:
+          - 'fn greet() -> String'
+          - 'return String::from("hello");'
+      cpp:
+          - 'std::string greet()'
+          - 'return std::string("hello")'
+      zig:
+          - 'fn greet() []const u8'
+          - 'return "hello";'
 
 # Empty function body - Python requires pass, others allow {}
 - name: empty function body
-  faber: "functio noop() {}"
+  faber: 'functio noop() {}'
   expect:
-    ts: "function noop() {}"
-    py:
-      - "def noop():"
-      - "pass"
-    rs:
-      - "fn noop() {}"
-    cpp:
-      - "void noop() {}"
-    zig:
-      - "fn noop() void {}"
+      ts: 'function noop() {}'
+      py:
+          - 'def noop():'
+          - 'pass'
+      rs:
+          - 'fn noop() {}'
+      cpp:
+          - 'void noop() {}'
+      zig:
+          - 'fn noop() void {}'
 
 # =============================================================================
 # Typed Parameters
@@ -80,31 +80,31 @@
 - name: typed parameter
   faber: 'functio greet(textus name) { redde name }'
   expect:
-    ts:
-      - "function greet(name: string)"
-    py:
-      - "def greet(name: str):"
-    rs:
-      - "fn greet(name: &str)"
-    cpp:
-      - "void greet(const std::string& name)"
-    zig:
-      - "fn greet(name: []const u8)"
+      ts:
+          - 'function greet(name: string)'
+      py:
+          - 'def greet(name: str):'
+      rs:
+          - 'fn greet(name: &str)'
+      cpp:
+          - 'void greet(const std::string& name)'
+      zig:
+          - 'fn greet(name: []const u8)'
 
 # Function with multiple typed parameters
 - name: multiple typed parameters
   faber: 'functio add(numerus a, numerus b) -> numerus { redde a + b }'
   expect:
-    ts:
-      - "function add(a: number, b: number): number"
-    py:
-      - "def add(a: int, b: int) -> int:"
-    rs:
-      - "fn add(a: f64, b: f64) -> f64"
-    cpp:
-      - "int64_t add(int64_t a, int64_t b)"
-    zig:
-      - "fn add(a: i64, b: i64) i64"
+      ts:
+          - 'function add(a: number, b: number): number'
+      py:
+          - 'def add(a: int, b: int) -> int:'
+      rs:
+          - 'fn add(a: f64, b: f64) -> f64'
+      cpp:
+          - 'int64_t add(int64_t a, int64_t b)'
+      zig:
+          - 'fn add(a: i64, b: i64) i64'
 
 # =============================================================================
 # Async Functions
@@ -113,35 +113,35 @@
 # futura makes a function async
 - name: async function with futura
   faber: |
-    futura functio fetch(url) {
-      redde data
-    }
+      futura functio fetch(url) {
+        redde data
+      }
   expect:
-    ts:
-      - "async function fetch(url)"
-    py:
-      - "async def fetch(url):"
-    rs:
-      - "async fn fetch(url: _)"
-    cpp:
-      - "void fetch(auto url)"
-    zig:
-      - "!void"
+      ts:
+          - 'async function fetch(url)'
+      py:
+          - 'async def fetch(url):'
+      rs:
+          - 'async fn fetch(url: _)'
+      cpp:
+          - 'void fetch(auto url)'
+      zig:
+          - '!void'
 
 # fiet = async + return type (wraps in Promise/Awaitable)
 - name: async function with fiet return type
   faber: 'functio fetch() fiet textus { redde "data" }'
   expect:
-    ts:
-      - "async function fetch(): Promise<string>"
-    py:
-      - "async def fetch() -> Awaitable[str]:"
-    rs:
-      - "async fn fetch() -> String"
-    cpp:
-      - "std::string fetch()"
-    zig:
-      - "fn fetch() ![]const u8"
+      ts:
+          - 'async function fetch(): Promise<string>'
+      py:
+          - 'async def fetch() -> Awaitable[str]:'
+      rs:
+          - 'async fn fetch() -> String'
+      cpp:
+          - 'std::string fetch()'
+      zig:
+          - 'fn fetch() ![]const u8'
 
 # =============================================================================
 # Generator Functions
@@ -151,31 +151,31 @@
 - name: generator function with fiunt
   faber: 'functio range() fiunt numerus { redde 1 }'
   expect:
-    ts:
-      - "function* range(): Generator<number>"
-    py:
-      - "def range() -> Iterator[int]:"
-    rs:
-      - "fn range() -> f64"
-    cpp:
-      - "int64_t range()"
-    zig:
-      - "fn range() i64"
+      ts:
+          - 'function* range(): Generator<number>'
+      py:
+          - 'def range() -> Iterator[int]:'
+      rs:
+          - 'fn range() -> f64'
+      cpp:
+          - 'int64_t range()'
+      zig:
+          - 'fn range() i64'
 
 # fient = async generator (wraps in AsyncGenerator/AsyncIterator)
 - name: async generator function with fient
   faber: 'functio stream() fient textus { redde "chunk" }'
   expect:
-    ts:
-      - "async function* stream(): AsyncGenerator<string>"
-    py:
-      - "async def stream() -> AsyncIterator[str]:"
-    rs:
-      - "async fn stream() -> String"
-    cpp:
-      - "std::string stream()"
-    zig:
-      - "fn stream() ![]const u8"
+      ts:
+          - 'async function* stream(): AsyncGenerator<string>'
+      py:
+          - 'async def stream() -> AsyncIterator[str]:'
+      rs:
+          - 'async fn stream() -> String'
+      cpp:
+          - 'std::string stream()'
+      zig:
+          - 'fn stream() ![]const u8'
 
 # =============================================================================
 # Yield/Await (cede keyword)
@@ -185,31 +185,31 @@
 - name: cede as yield in generator
   faber: 'functio range() fiunt numerus { cede 1 }'
   expect:
-    ts:
-      - "yield 1"
-    py:
-      - "yield 1"
-    rs:
-      - "1.await;"
-    cpp:
-      - "int64_t range()"
-    zig:
-      - "_ = try 1;"
+      ts:
+          - 'yield 1'
+      py:
+          - 'yield 1'
+      rs:
+          - '1.await;'
+      cpp:
+          - 'int64_t range()'
+      zig:
+          - '_ = try 1;'
 
 # cede in async context becomes await
 - name: cede as await in async function
   faber: 'functio fetch() fiet textus { cede getData() }'
   expect:
-    ts:
-      - "await getData()"
-    py:
-      - "await getData()"
-    rs:
-      - "getData().await;"
-    cpp:
-      - "getData();"
-    zig:
-      - "try getData()"
+      ts:
+          - 'await getData()'
+      py:
+          - 'await getData()'
+      rs:
+          - 'getData().await;'
+      cpp:
+          - 'getData();'
+      zig:
+          - 'try getData()'
 
 # =============================================================================
 # Rest Parameters (ceteri)
@@ -219,14 +219,14 @@
 - name: rest parameter with ceteri
   faber: 'functio sum(ceteri numerus[] nums) { redde 0 }'
   expect:
-    ts:
-      - "...nums: Array<number>"
-    py:
-      - "*nums: list[int]"
-    rs:
-      - "fn sum(nums: Vec<f64>)"
-    cpp:
-      - "void sum(const std::vector<int64_t>& nums)"
+      ts:
+          - '...nums: Array<number>'
+      py:
+          - '*nums: list[int]'
+      rs:
+          - 'fn sum(nums: Vec<f64>)'
+      cpp:
+          - 'void sum(const std::vector<int64_t>& nums)'
 
 # =============================================================================
 # Parameter Prepositions (de, in, ex)
@@ -243,46 +243,241 @@
 - name: de preposition (read-only borrow)
   faber: 'functio process(de textus source) { redde source }'
   expect:
-    ts:
-      - "function process(source: string)"
-    py:
-      - "def process(source: str):"
-    rs:
-      - "fn process(source: &str)"
-    cpp:
-      - "const std::string& source"
-    zig:
-      - "source: []const u8"
+      ts:
+          - 'function process(source: string)'
+      py:
+          - 'def process(source: str):'
+      rs:
+          - 'fn process(source: &str)'
+      cpp:
+          - 'const std::string& source'
+      zig:
+          - 'source: []const u8'
 
 # in = mutable borrow parameter
 - name: in preposition (mutable borrow)
   faber: 'functio mutate(in textus target) { redde target }'
   expect:
-    ts:
-      - "function mutate(target: string)"
-    py:
-      - "def mutate(target: str):"
-    rs:
-      - "fn mutate(target: &str)"
-    cpp:
-      - "std::string& target"
-    zig:
-      - "target: *[]u8"
+      ts:
+          - 'function mutate(target: string)'
+      py:
+          - 'def mutate(target: str):'
+      rs:
+          - 'fn mutate(target: &str)'
+      cpp:
+          - 'std::string& target'
+      zig:
+          - 'target: *[]u8'
 
 # Mixed: regular and prepositional parameters
 - name: mixed regular and prepositional parameters
   faber: 'functio update(de textus source, in textus target) { redde target }'
   expect:
-    ts:
-      - "function update(source: string, target: string)"
-    py:
-      - "def update(source: str, target: str):"
-    rs:
-      # Rust ignores prepositions - both become &str (default for textus)
-      - "fn update(source: &str, target: &str)"
-    cpp:
-      - "const std::string& source"
-      - "std::string& target"
-    zig:
-      - "source: []const u8"
-      - "target: *[]u8"
+      ts:
+          - 'function update(source: string, target: string)'
+      py:
+          - 'def update(source: str, target: str):'
+      rs:
+          # Rust ignores prepositions - both become &str (default for textus)
+          - 'fn update(source: &str, target: &str)'
+      cpp:
+          - 'const std::string& source'
+          - 'std::string& target'
+      zig:
+          - 'source: []const u8'
+          - 'target: *[]u8'
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Function with default parameter value
+# WHY: Tests default parameter syntax (type name: value)
+# NOTE: Currently codegen doesn't emit function signature for expression-only mode
+- name: function with default parameter
+  faber: 'functio greet(textus name: "World") -> textus { redde name }'
+  expect:
+      ts:
+          - 'return name'
+      py:
+          - 'return name'
+      rs:
+          - 'return name'
+      cpp:
+          - 'return name'
+      zig:
+          - 'return name'
+
+# Recursive function (factorial)
+# WHY: Tests self-referential function calls
+- name: recursive function
+  faber: |
+      functio factorial(numerus n) -> numerus {
+        si n <= 1 {
+          redde 1
+        }
+        redde n * factorial(n - 1)
+      }
+  expect:
+      ts:
+          - 'function factorial(n: number): number'
+          - 'if ((n <= 1))'
+          - 'return 1'
+          - 'return (n * factorial((n - 1)))'
+      py:
+          - 'def factorial(n: int) -> int:'
+          - 'if (n <= 1):'
+          - 'return 1'
+          - 'return (n * factorial((n - 1)))'
+      rs:
+          - 'fn factorial(n: f64) -> f64'
+          - 'if (n <= 1)'
+          - 'return 1'
+          - 'return (n * factorial((n - 1)))'
+      cpp:
+          - 'int64_t factorial(int64_t n)'
+          - 'if ((n <= 1))'
+          - 'return 1'
+          - 'return (n * factorial((n - 1)))'
+      zig:
+          - 'fn factorial(n: i64) i64'
+          - 'if ((n <= 1))'
+          - 'return 1'
+          - 'return (n * factorial((n - 1)))'
+
+# Function with many parameters (6+)
+# WHY: Stress test for parameter lists
+- name: function with many parameters
+  faber: 'functio many(a, b, c, d, e, f) { redde a }'
+  expect:
+      ts:
+          - 'function many(a, b, c, d, e, f)'
+          - 'return a'
+      py:
+          - 'def many(a, b, c, d, e, f):'
+          - 'return a'
+      rs:
+          - 'fn many(a: _, b: _, c: _, d: _, e: _, f: _)'
+          - 'return a'
+      cpp:
+          - 'void many(auto a, auto b, auto c, auto d, auto e, auto f)'
+          - 'return a'
+      zig:
+          - 'fn many(a: anytype, b: anytype, c: anytype, d: anytype, e: anytype, f: anytype)'
+          - 'return a'
+
+# Generic function with type parameter
+# WHY: Tests generic/template syntax
+# NOTE: Generics may not be fully implemented in all targets
+- name: generic function
+  faber: 'functio identity<T>(T value) -> T { redde value }'
+  expect:
+      ts:
+          - 'return value'
+      py:
+          - 'return value'
+      rs:
+          - 'return value'
+      cpp:
+          - 'return value'
+      zig:
+          - 'return value'
+
+# Function returning lambda
+# WHY: Tests lambda expression as return value
+- name: function returning lambda
+  faber: 'functio makeAdder(numerus x) { redde pro y redde x + y }'
+  expect:
+      ts:
+          - 'function makeAdder(x: number)'
+          - 'return (y) => (x + y)'
+      py:
+          - 'def makeAdder(x: int):'
+          - 'return lambda y: (x + y)'
+      rs:
+          - 'fn makeAdder(x: f64)'
+          - 'return |y| (x + y)'
+      cpp:
+          - 'void makeAdder(int64_t x)'
+          - 'return [&](auto y) { return (x + y); }'
+      zig:
+          - 'fn makeAdder(x: i64)'
+          - '@compileError'
+
+# Nested function definition
+# WHY: Tests function declarations inside function bodies
+- name: nested function
+  faber: |
+      functio outer(numerus x) -> numerus {
+        functio inner(numerus y) -> numerus {
+          redde y * 2
+        }
+        redde inner(x)
+      }
+  expect:
+      ts:
+          - 'function outer(x: number): number'
+          - 'function inner(y: number): number'
+          - 'return (y * 2)'
+          - 'return inner(x)'
+      py:
+          - 'def outer(x: int) -> int:'
+          - 'def inner(y: int) -> int:'
+          - 'return (y * 2)'
+          - 'return inner(x)'
+      rs:
+          - 'fn outer(x: f64) -> f64'
+          - 'fn inner(y: f64) -> f64'
+          - 'return (y * 2)'
+          - 'return inner(x)'
+      cpp:
+          - 'int64_t outer(int64_t x)'
+          - 'int64_t inner(int64_t y)'
+          - 'return (y * 2)'
+          - 'return inner(x)'
+      zig:
+          - 'fn outer(x: i64) i64'
+          - 'fn inner(y: i64) i64'
+          - 'return (y * 2)'
+          - 'return inner(x)'
+
+# Function with optional (nullable) parameter
+# WHY: Tests nullable type syntax (textus?)
+- name: function with optional parameter
+  faber: 'functio process(textus? input) { redde input }'
+  expect:
+      ts:
+          - 'function process(input: string | null)'
+          - 'return input'
+      py:
+          - 'def process(input: str | None):'
+          - 'return input'
+      rs:
+          - 'fn process(input: Option<String>)'
+          - 'return input'
+      cpp:
+          - 'void process(std::optional<std::string> input)'
+          - 'return input'
+      zig:
+          - 'fn process(input: ?[]const u8)'
+          - 'return input'
+
+# Function with both regular and rest params
+# WHY: Tests mixed regular and variadic parameters
+- name: function with regular and rest params
+  faber: 'functio log(textus prefix, ceteri args) { scribe prefix }'
+  expect:
+      ts:
+          - 'function log(prefix: string, ...args)'
+          - 'console.log(prefix)'
+      py:
+          - 'def log(prefix: str, *args):'
+          - 'print(prefix)'
+      rs:
+          - 'println!("{}", prefix)'
+      cpp:
+          - 'void log(const std::string& prefix, auto args)'
+          - 'std::print("{}'
+      zig:
+          - 'fn log(prefix: []const u8, args: anytype)'
+          - 'std.debug.print("{s}'

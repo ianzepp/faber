@@ -21,46 +21,46 @@
 - name: basic named imports
   faber: 'ex "@hono/hono" importa Hono, Context'
   expect:
-    ts:
-      - 'import { Hono, Context } from "@hono/hono";'
-    py:
-      - 'from @hono/hono import Hono, Context'
-    rs:
-      - 'use @hono/hono::{Hono, Context};'
-    cpp: []  # C++ renders includes at top of file, not inline
-    zig:
-      - 'const _@hono/hono = @import("@hono/hono");'
-      - 'const Hono = _@hono/hono.Hono;'
-      - 'const Context = _@hono/hono.Context;'
+      ts:
+          - 'import { Hono, Context } from "@hono/hono";'
+      py:
+          - 'from @hono/hono import Hono, Context'
+      rs:
+          - 'use @hono/hono::{Hono, Context};'
+      cpp: [] # C++ renders includes at top of file, not inline
+      zig:
+          - 'const _@hono/hono = @import("@hono/hono");'
+          - 'const Hono = _@hono/hono.Hono;'
+          - 'const Context = _@hono/hono.Context;'
 
 # Single named import
 - name: single named import
   faber: 'ex "lodash" importa map'
   expect:
-    ts:
-      - 'import { map } from "lodash";'
-    py:
-      - 'from lodash import map'
-    rs:
-      - 'use lodash::map;'
-    cpp: []
-    zig:
-      - 'const _lodash = @import("lodash");'
-      - 'const map = _lodash.map;'
+      ts:
+          - 'import { map } from "lodash";'
+      py:
+          - 'from lodash import map'
+      rs:
+          - 'use lodash::map;'
+      cpp: []
+      zig:
+          - 'const _lodash = @import("lodash");'
+          - 'const map = _lodash.map;'
 
 # Wildcard import
 - name: wildcard import
   faber: 'ex "@std/crypto" importa *'
   expect:
-    ts:
-      - 'import * as @std/crypto from "@std/crypto";'
-    py:
-      - 'import @std/crypto'
-    rs:
-      - 'use @std/crypto::*;'
-    cpp: []
-    zig:
-      - 'const @std/crypto = @import("@std/crypto");'
+      ts:
+          - 'import * as @std/crypto from "@std/crypto";'
+      py:
+          - 'import @std/crypto'
+      rs:
+          - 'use @std/crypto::*;'
+      cpp: []
+      zig:
+          - 'const @std/crypto = @import("@std/crypto");'
 
 # =============================================================================
 # Import with Aliases (ut keyword)
@@ -70,33 +70,33 @@
 - name: import with alias
   faber: 'ex "utils" importa helper ut h'
   expect:
-    ts:
-      - 'import { helper as h } from "utils";'
-    py:
-      - 'from utils import helper as h'
-    rs:
-      - 'use utils::helper as h;'
-    cpp: []
-    zig:
-      - 'const _utils = @import("utils");'
-      - 'const h = _utils.helper;'
+      ts:
+          - 'import { helper as h } from "utils";'
+      py:
+          - 'from utils import helper as h'
+      rs:
+          - 'use utils::helper as h;'
+      cpp: []
+      zig:
+          - 'const _utils = @import("utils");'
+          - 'const h = _utils.helper;'
 
 # Multiple imports with mixed aliases
 - name: imports with mixed aliases
   faber: 'ex "db" importa connect, query ut q, close'
   expect:
-    ts:
-      - 'import { connect, query as q, close } from "db";'
-    py:
-      - 'from db import connect, query as q, close'
-    rs:
-      - 'use db::{connect, query as q, close};'
-    cpp: []
-    zig:
-      - 'const _db = @import("db");'
-      - 'const connect = _db.connect;'
-      - 'const q = _db.query;'
-      - 'const close = _db.close;'
+      ts:
+          - 'import { connect, query as q, close } from "db";'
+      py:
+          - 'from db import connect, query as q, close'
+      rs:
+          - 'use db::{connect, query as q, close};'
+      cpp: []
+      zig:
+          - 'const _db = @import("db");'
+          - 'const connect = _db.connect;'
+          - 'const q = _db.query;'
+          - 'const close = _db.close;'
 
 # =============================================================================
 # Norma Intrinsic Imports (TypeScript/Rust only)
@@ -106,27 +106,27 @@
 - name: norma import suppressed in ts and rs
   faber: 'ex "norma/tempus" importa nunc, SECUNDUM'
   expect:
-    ts: []  # Empty - norma imports are suppressed
-    py:
-      - 'from norma/tempus import nunc, SECUNDUM'
-    rs: []  # Empty - norma imports are suppressed
-    cpp: []
-    zig:
-      - 'const _norma/tempus = @import("norma/tempus");'
-      - 'const nunc = _norma/tempus.nunc;'
-      - 'const SECUNDUM = _norma/tempus.SECUNDUM;'
+      ts: [] # Empty - norma imports are suppressed
+      py:
+          - 'from norma/tempus import nunc, SECUNDUM'
+      rs: [] # Empty - norma imports are suppressed
+      cpp: []
+      zig:
+          - 'const _norma/tempus = @import("norma/tempus");'
+          - 'const nunc = _norma/tempus.nunc;'
+          - 'const SECUNDUM = _norma/tempus.SECUNDUM;'
 
 # norma wildcard import
 - name: norma wildcard import
   faber: 'ex "norma" importa *'
   expect:
-    ts: []
-    py:
-      - 'import norma'
-    rs: []
-    cpp: []
-    zig:
-      - 'const norma = @import("norma");'
+      ts: []
+      py:
+          - 'import norma'
+      rs: []
+      cpp: []
+      zig:
+          - 'const norma = @import("norma");'
 
 # =============================================================================
 # Multiple Import Statements
@@ -135,25 +135,25 @@
 # Two separate imports from different sources
 - name: multiple imports from different sources
   faber: |
-    ex "@oak/oak" importa Application
-    ex "std/path" importa join, resolve
+      ex "@oak/oak" importa Application
+      ex "std/path" importa join, resolve
   expect:
-    ts:
-      - 'import { Application } from "@oak/oak";'
-      - 'import { join, resolve } from "std/path";'
-    py:
-      - 'from @oak/oak import Application'
-      - 'from std/path import join, resolve'
-    rs:
-      - 'use @oak/oak::Application;'
-      - 'use std/path::{join, resolve};'
-    cpp: []
-    zig:
-      - 'const _@oak/oak = @import("@oak/oak");'
-      - 'const Application = _@oak/oak.Application;'
-      - 'const _std/path = @import("std/path");'
-      - 'const join = _std/path.join;'
-      - 'const resolve = _std/path.resolve;'
+      ts:
+          - 'import { Application } from "@oak/oak";'
+          - 'import { join, resolve } from "std/path";'
+      py:
+          - 'from @oak/oak import Application'
+          - 'from std/path import join, resolve'
+      rs:
+          - 'use @oak/oak::Application;'
+          - 'use std/path::{join, resolve};'
+      cpp: []
+      zig:
+          - 'const _@oak/oak = @import("@oak/oak");'
+          - 'const Application = _@oak/oak.Application;'
+          - 'const _std/path = @import("std/path");'
+          - 'const join = _std/path.join;'
+          - 'const resolve = _std/path.resolve;'
 
 # =============================================================================
 # Edge Cases
@@ -163,44 +163,148 @@
 - name: import with scoped package
   faber: 'ex "@types/node" importa Process'
   expect:
-    ts:
-      - 'import { Process } from "@types/node";'
-    py:
-      - 'from @types/node import Process'
-    rs:
-      - 'use @types/node::Process;'
-    cpp: []
-    zig:
-      - 'const _@types/node = @import("@types/node");'
-      - 'const Process = _@types/node.Process;'
+      ts:
+          - 'import { Process } from "@types/node";'
+      py:
+          - 'from @types/node import Process'
+      rs:
+          - 'use @types/node::Process;'
+      cpp: []
+      zig:
+          - 'const _@types/node = @import("@types/node");'
+          - 'const Process = _@types/node.Process;'
 
 # Relative import path
 - name: relative import
   faber: 'ex "./utils" importa helper'
   expect:
-    ts:
-      - 'import { helper } from "./utils";'
-    py:
-      - 'from ./utils import helper'
-    rs:
-      - 'use ./utils::helper;'
-    cpp: []
-    zig:
-      - 'const _./utils = @import("./utils");'
-      - 'const helper = _./utils.helper;'
+      ts:
+          - 'import { helper } from "./utils";'
+      py:
+          - 'from ./utils import helper'
+      rs:
+          - 'use ./utils::helper;'
+      cpp: []
+      zig:
+          - 'const _./utils = @import("./utils");'
+          - 'const helper = _./utils.helper;'
 
 # All names aliased
 - name: all imports aliased
   faber: 'ex "lib" importa foo ut f, bar ut b'
   expect:
-    ts:
-      - 'import { foo as f, bar as b } from "lib";'
-    py:
-      - 'from lib import foo as f, bar as b'
-    rs:
-      - 'use lib::{foo as f, bar as b};'
-    cpp: []
-    zig:
-      - 'const _lib = @import("lib");'
-      - 'const f = _lib.foo;'
-      - 'const b = _lib.bar;'
+      ts:
+          - 'import { foo as f, bar as b } from "lib";'
+      py:
+          - 'from lib import foo as f, bar as b'
+      rs:
+          - 'use lib::{foo as f, bar as b};'
+      cpp: []
+      zig:
+          - 'const _lib = @import("lib");'
+          - 'const f = _lib.foo;'
+          - 'const b = _lib.bar;'
+
+# Import with very long path
+- name: import with very long path
+  faber: 'ex "@organization/package-name/deeply/nested/module" importa thing'
+  expect:
+      ts:
+          - 'import { thing } from "@organization/package-name/deeply/nested/module";'
+      py:
+          - 'from @organization/package-name/deeply/nested/module import thing'
+      rs:
+          - 'use @organization/package-name/deeply/nested/module::thing;'
+      cpp: []
+      zig:
+          - 'const _@organization/package-name/deeply/nested/module = @import("@organization/package-name/deeply/nested/module");'
+          - 'const thing = _@organization/package-name/deeply/nested/module.thing;'
+
+# Import many named items (5+)
+- name: import many named items
+  faber: 'ex "utils" importa a, b, c, d, e, f'
+  expect:
+      ts:
+          - 'import { a, b, c, d, e, f } from "utils";'
+      py:
+          - 'from utils import a, b, c, d, e, f'
+      rs:
+          - 'use utils::{a, b, c, d, e, f};'
+      cpp: []
+      zig:
+          - 'const _utils = @import("utils");'
+          - 'const a = _utils.a;'
+          - 'const b = _utils.b;'
+          - 'const c = _utils.c;'
+          - 'const d = _utils.d;'
+          - 'const e = _utils.e;'
+          - 'const f = _utils.f;'
+
+# Import with multiple aliases
+- name: import with multiple aliases
+  faber: 'ex "mod" importa foo ut f, bar ut b, baz ut z'
+  expect:
+      ts:
+          - 'import { foo as f, bar as b, baz as z } from "mod";'
+      py:
+          - 'from mod import foo as f, bar as b, baz as z'
+      rs:
+          - 'use mod::{foo as f, bar as b, baz as z};'
+      cpp: []
+      zig:
+          - 'const _mod = @import("mod");'
+          - 'const f = _mod.foo;'
+          - 'const b = _mod.bar;'
+          - 'const z = _mod.baz;'
+
+# Import from parent directory
+- name: import from parent directory
+  faber: 'ex "../shared/utils" importa helper'
+  expect:
+      ts:
+          - 'import { helper } from "../shared/utils";'
+      py:
+          - 'from ../shared/utils import helper'
+      rs:
+          - 'use ../shared/utils::helper;'
+      cpp: []
+      zig:
+          - 'const _../shared/utils = @import("../shared/utils");'
+          - 'const helper = _../shared/utils.helper;'
+
+# Import from sibling directory
+- name: import from sibling directory
+  faber: 'ex "./sibling/module" importa Component'
+  expect:
+      ts:
+          - 'import { Component } from "./sibling/module";'
+      py:
+          - 'from ./sibling/module import Component'
+      rs:
+          - 'use ./sibling/module::Component;'
+      cpp: []
+      zig:
+          - 'const _./sibling/module = @import("./sibling/module");'
+          - 'const Component = _./sibling/module.Component;'
+
+# Multiple imports from same source
+- name: multiple imports from same source
+  faber: |
+      ex "common" importa foo
+      ex "common" importa bar
+  expect:
+      ts:
+          - 'import { foo } from "common";'
+          - 'import { bar } from "common";'
+      py:
+          - 'from common import foo'
+          - 'from common import bar'
+      rs:
+          - 'use common::foo;'
+          - 'use common::bar;'
+      cpp: []
+      zig:
+          - 'const _common = @import("common");'
+          - 'const foo = _common.foo;'
+          - 'const _common = @import("common");'
+          - 'const bar = _common.bar;'

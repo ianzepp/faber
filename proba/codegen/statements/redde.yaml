@@ -13,73 +13,155 @@
 - name: return with value
   faber: 'redde 42'
   expect:
-    ts:
-      - "return 42;"
-    py:
-      - "return 42"
-    rs:
-      - "return 42;"
-    cpp:
-      - "return 42;"
-    zig:
-      - "return 42;"
+      ts:
+          - 'return 42;'
+      py:
+          - 'return 42'
+      rs:
+          - 'return 42;'
+      cpp:
+          - 'return 42;'
+      zig:
+          - 'return 42;'
 
 # Return with string
 - name: return with string
   faber: 'redde "hello"'
   expect:
-    ts:
-      - 'return "hello";'
-    py:
-      - 'return "hello"'
-    rs:
-      - 'return String::from("hello");'
-    cpp:
-      - 'return std::string("hello");'
-    zig:
-      - 'return "hello";'
+      ts:
+          - 'return "hello";'
+      py:
+          - 'return "hello"'
+      rs:
+          - 'return String::from("hello");'
+      cpp:
+          - 'return std::string("hello");'
+      zig:
+          - 'return "hello";'
 
 # Return with variable
 - name: return with identifier
   faber: 'redde result'
   expect:
-    ts:
-      - "return result;"
-    py:
-      - "return result"
-    rs:
-      - "return result;"
-    cpp:
-      - "return result;"
-    zig:
-      - "return result;"
+      ts:
+          - 'return result;'
+      py:
+          - 'return result'
+      rs:
+          - 'return result;'
+      cpp:
+          - 'return result;'
+      zig:
+          - 'return result;'
 
 # Return with expression
 - name: return with binary expression
   faber: 'redde x + y'
   expect:
-    ts:
-      - "return (x + y);"
-    py:
-      - "return (x + y)"
-    rs:
-      - "return (x + y);"
-    cpp:
-      - "return (x + y);"
-    zig:
-      - "return (x + y);"
+      ts:
+          - 'return (x + y);'
+      py:
+          - 'return (x + y)'
+      rs:
+          - 'return (x + y);'
+      cpp:
+          - 'return (x + y);'
+      zig:
+          - 'return (x + y);'
 
 # Void return (no value)
 - name: void return
   faber: 'redde'
   expect:
-    ts:
-      - "return;"
-    py:
-      - "return"
-    rs:
-      - "return;"
-    cpp:
-      - "return;"
-    zig:
-      - "return;"
+      ts:
+          - 'return;'
+      py:
+          - 'return'
+      rs:
+          - 'return;'
+      cpp:
+          - 'return;'
+      zig:
+          - 'return;'
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Return with object literal
+- name: return with object literal
+  faber: 'redde { success: verum, data: result }'
+  expect:
+      ts:
+          - 'return { success: true, data: result };'
+      py:
+          - 'return {"success": True, "data": result}'
+
+# Return with array literal
+- name: return with array literal
+  faber: 'redde [a, b, c]'
+  expect:
+      ts:
+          - 'return [a, b, c];'
+      py:
+          - 'return [a, b, c]'
+
+# Return with lambda
+- name: return with lambda
+  faber: 'redde pro x redde x * 2'
+  expect:
+      ts:
+          - 'return (x) => (x * 2);'
+      py:
+          - 'return lambda x: (x * 2)'
+
+# Return with complex expression
+- name: return with complex expression
+  faber: 'redde a + b * c - d / e'
+  expect:
+      ts:
+          - 'return ((a + (b * c)) - (d / e));'
+      py:
+          - 'return ((a + (b * c)) - (d / e))'
+
+# Return with call chain
+- name: return with call chain
+  faber: 'redde items.filter(fn).map(fn2).first'
+  expect:
+      ts:
+          - 'return items.filter(fn).map(fn2).first;'
+      py:
+          - 'return items.filter(fn).map(fn2).first'
+
+# Return with template literal
+- name: return with template literal
+  faber: 'redde `Hello ${name}!`'
+  expect:
+      ts:
+          - 'return `Hello ${name}!`;'
+      py:
+          - 'return f"Hello ${name}!"'
+
+# Return with member access
+- name: return with member access
+  faber: 'redde obj.nested.value'
+  expect:
+      ts:
+          - 'return obj.nested.value;'
+      py:
+          - 'return obj.nested.value'
+
+# Return from nested block
+- name: return from nested block
+  faber: |
+      si x > 0 fac
+        redde x
+      fine
+  expect:
+      ts:
+          - 'if ((x > 0)) {'
+          - 'return x;'
+          - '}'
+      py:
+          - 'if (x > 0):'
+          - 'return x'

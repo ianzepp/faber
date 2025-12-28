@@ -4,71 +4,155 @@
 - name: simple assignment
   faber: x = 5
   expect:
-    ts: "x = 5;"
-    py: "x = 5"
-    rs:
-      - "x = 5;"
-    cpp:
-      - "x = 5;"
-    zig:
-      - "x = 5;"
+      ts: 'x = 5;'
+      py: 'x = 5'
+      rs:
+          - 'x = 5;'
+      cpp:
+          - 'x = 5;'
+      zig:
+          - 'x = 5;'
 
 - name: addition assignment
   faber: x += 1
   expect:
-    ts: "x += 1;"
-    py: "x += 1"
-    rs:
-      - "x += 1;"
-    cpp:
-      - "x += 1;"
-    zig:
-      - "x += 1;"
+      ts: 'x += 1;'
+      py: 'x += 1'
+      rs:
+          - 'x += 1;'
+      cpp:
+          - 'x += 1;'
+      zig:
+          - 'x += 1;'
 
 - name: subtraction assignment
   faber: x -= 1
   expect:
-    ts: "x -= 1;"
-    py: "x -= 1"
-    rs:
-      - "x -= 1;"
-    cpp:
-      - "x -= 1;"
-    zig:
-      - "x -= 1;"
+      ts: 'x -= 1;'
+      py: 'x -= 1'
+      rs:
+          - 'x -= 1;'
+      cpp:
+          - 'x -= 1;'
+      zig:
+          - 'x -= 1;'
 
 - name: multiplication assignment
   faber: x *= 2
   expect:
-    ts: "x *= 2;"
-    py: "x *= 2"
-    rs:
-      - "x *= 2;"
-    cpp:
-      - "x *= 2;"
-    zig:
-      - "x *= 2;"
+      ts: 'x *= 2;'
+      py: 'x *= 2'
+      rs:
+          - 'x *= 2;'
+      cpp:
+          - 'x *= 2;'
+      zig:
+          - 'x *= 2;'
 
 - name: division assignment
   faber: x /= 2
   expect:
-    ts: "x /= 2;"
-    py: "x /= 2"
-    rs:
-      - "x /= 2;"
-    cpp:
-      - "x /= 2;"
-    zig:
-      - "x /= 2;"
+      ts: 'x /= 2;'
+      py: 'x /= 2'
+      rs:
+          - 'x /= 2;'
+      cpp:
+          - 'x /= 2;'
+      zig:
+          - 'x /= 2;'
 
 - name: member assignment
   faber: obj.prop = value
   expect:
-    ts: "obj.prop = value;"
-    py: "obj.prop = value"
-    rs:
-      - "obj.prop = value;"
-    cpp:
-      - "obj.prop = value;"
-    zig:
-      - "obj.prop = value;"
+      ts: 'obj.prop = value;'
+      py: 'obj.prop = value'
+      rs:
+          - 'obj.prop = value;'
+      cpp:
+          - 'obj.prop = value;'
+      zig:
+          - 'obj.prop = value;'
+
+- name: modulo assignment
+  faber: x %= 3
+  expect:
+      ts: 'x %= 3;'
+      py: 'x %= 3'
+      rs:
+          - 'x %= 3;'
+      cpp:
+          - 'x %= 3;'
+      zig:
+          - 'x %= 3;'
+
+- name: deeply nested member assignment
+  faber: a.b.c.d.e = 5
+  expect:
+      ts: 'a.b.c.d.e = 5;'
+      py: 'a.b.c.d.e = 5'
+      rs:
+          - 'a.b.c.d.e = 5;'
+      cpp:
+          - 'a.b.c.d.e = 5;'
+      zig:
+          - 'a.b.c.d.e = 5;'
+
+- name: assignment to array index
+  faber: arr[i] = newValue
+  expect:
+      ts: 'arr[i] = newValue;'
+      py: 'arr[i] = newValue'
+      rs:
+          - 'arr[i] = newValue;'
+      cpp:
+          - 'arr[i] = newValue;'
+      zig:
+          - 'arr[i] = newValue;'
+
+- name: assignment with expression index
+  faber: arr[i + 1] = value
+  expect:
+      ts: 'arr[i + 1] = value;'
+      py: 'arr[i + 1] = value'
+      rs:
+          - 'arr[i + 1] = value;'
+      cpp:
+          - 'arr[i + 1] = value;'
+      zig:
+          - 'arr[i + 1] = value;'
+
+- name: assignment with call on right side
+  faber: result = compute()
+  expect:
+      ts: 'result = compute();'
+      py: 'result = compute()'
+      rs:
+          - 'result = compute();'
+      cpp:
+          - 'result = compute();'
+      zig:
+          - 'result = compute();'
+
+- name: assignment with binary expression
+  faber: total = a + b + c
+  expect:
+      ts: 'total = a + b + c;'
+      py: 'total = a + b + c'
+      rs:
+          - 'total = a + b + c;'
+      cpp:
+          - 'total = a + b + c;'
+      zig:
+          - 'total = a + b + c;'
+
+- name: compound with member
+  faber: obj.count += 1
+  expect:
+      ts: 'obj.count += 1;'
+      py: 'obj.count += 1'
+      rs:
+          - 'obj.count += 1;'
+      cpp:
+          - 'obj.count += 1;'
+      zig:
+          - 'obj.count += 1;'

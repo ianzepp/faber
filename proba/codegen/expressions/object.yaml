@@ -4,75 +4,116 @@
 # Note: ts/py use exact match; rs/cpp/zig use contains (they wrap in main)
 
 - name: empty object
-  faber: "fixum obj = {}"
+  faber: 'fixum obj = {}'
   expect:
-    ts: "const obj = {};"
-    py: "obj = {}"
-    rs:
-      - "let obj = {};"
-    cpp:
-      - "{}"
-    zig:
-      - ".{}"
+      ts: 'const obj = {};'
+      py: 'obj = {}'
+      rs:
+          - 'let obj = {};'
+      cpp:
+          - '{}'
+      zig:
+          - '.{}'
 
 - name: object with string property
   faber: |
-    fixum user = { nomen: "Marcus" }
+      fixum user = { nomen: "Marcus" }
   expect:
-    ts: 'const user = { nomen: "Marcus" };'
-    py: 'user = {"nomen": "Marcus"}'
-    rs:
-      - 'nomen: String::from("Marcus")'
-    cpp:
-      - '.nomen = std::string("Marcus")'
-    zig:
-      - '.nomen = "Marcus"'
+      ts: 'const user = { nomen: "Marcus" };'
+      py: 'user = {"nomen": "Marcus"}'
+      rs:
+          - 'nomen: String::from("Marcus")'
+      cpp:
+          - '.nomen = std::string("Marcus")'
+      zig:
+          - '.nomen = "Marcus"'
 
 - name: object with multiple properties
   faber: |
-    fixum data = { x: 1, y: 2, z: 3 }
+      fixum data = { x: 1, y: 2, z: 3 }
   expect:
-    ts: "const data = { x: 1, y: 2, z: 3 };"
-    py: 'data = {"x": 1, "y": 2, "z": 3}'
-    rs:
-      - "x: 1"
-      - "y: 2"
-      - "z: 3"
-    cpp:
-      - ".x = 1"
-      - ".y = 2"
-      - ".z = 3"
-    zig:
-      - ".x = 1"
-      - ".y = 2"
-      - ".z = 3"
+      ts: 'const data = { x: 1, y: 2, z: 3 };'
+      py: 'data = {"x": 1, "y": 2, "z": 3}'
+      rs:
+          - 'x: 1'
+          - 'y: 2'
+          - 'z: 3'
+      cpp:
+          - '.x = 1'
+          - '.y = 2'
+          - '.z = 3'
+      zig:
+          - '.x = 1'
+          - '.y = 2'
+          - '.z = 3'
 
 - name: object with expression values
   faber: |
-    fixum calc = { sum: 1 + 2, active: verum }
+      fixum calc = { sum: 1 + 2, active: verum }
   expect:
-    ts:
-      - "sum: (1 + 2)"
-      - "active: true"
-    py:
-      - '"sum": (1 + 2)'
-      - '"active": True'
-    rs:
-      - "sum: (1 + 2)"
-      - "active: true"
-    cpp:
-      - ".sum = (1 + 2)"
-      - ".active = true"
-    zig:
-      - ".sum = (1 + 2)"
-      - ".active = true"
+      ts:
+          - 'sum: (1 + 2)'
+          - 'active: true'
+      py:
+          - '"sum": (1 + 2)'
+          - '"active": True'
+      rs:
+          - 'sum: (1 + 2)'
+          - 'active: true'
+      cpp:
+          - '.sum = (1 + 2)'
+          - '.active = true'
+      zig:
+          - '.sum = (1 + 2)'
+          - '.active = true'
 
 - name: object with spread
   faber: |
-    fixum merged = { sparge defaults, extra: 42 }
+      fixum merged = { sparge defaults, extra: 42 }
   expect:
-    ts: "const merged = { ...defaults, extra: 42 };"
-    py: 'merged = {**defaults, "extra": 42}'
-    rs:
-      - "..defaults"
-      - "extra: 42"
+      ts: 'const merged = { ...defaults, extra: 42 };'
+      py: 'merged = {**defaults, "extra": 42}'
+      rs:
+          - '..defaults'
+          - 'extra: 42'
+
+- name: method in object (lambda as property)
+  faber: |
+      fixum obj = { greet: pro name redde name }
+  expect:
+      ts:
+          - 'greet: (name) => name'
+      py:
+          - '"greet": lambda name: name'
+
+- name: deeply nested objects (4 levels)
+  faber: |
+      fixum deep = { a: { b: { c: { d: 1 } } } }
+  expect:
+      ts: 'const deep = { a: { b: { c: { d: 1 } } } };'
+      py: 'deep = {"a": {"b": {"c": {"d": 1}}}}'
+
+- name: multiple spreads in object
+  faber: |
+      fixum obj = { a: 1, sparge middle, b: 2, sparge end }
+  expect:
+      ts: 'const obj = { a: 1, ...middle, b: 2, ...end };'
+      py: 'obj = {"a": 1, **middle, "b": 2, **end}'
+
+- name: object with many properties (6+)
+  faber: |
+      fixum obj = { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6 }
+  expect:
+      ts: 'const obj = { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6 };'
+      py: 'obj = {"a": 1, "b": 2, "c": 3, "d": 4, "e": 5, "f": 6}'
+
+- name: object with arithmetic expression values
+  faber: |
+      fixum obj = { sum: a + b, product: a * b }
+  expect:
+      ts:
+          - 'sum: (a + b)'
+          - 'product: (a * b)'
+      py:
+          - '"sum": (a + b)'
+          - '"product": (a * b)'

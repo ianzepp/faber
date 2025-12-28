@@ -6,48 +6,84 @@
 - name: novum without arguments
   faber: fixum p = novum Persona
   expect:
-    ts: "const p = new Persona();"
-    py: "p = Persona()"
-    rs:
-      - "let p = Persona::new();"
-    cpp:
-      - "Persona{}"
-    zig:
-      - "Persona.init(.{})"
+      ts: 'const p = new Persona();'
+      py: 'p = Persona()'
+      rs:
+          - 'let p = Persona::new();'
+      cpp:
+          - 'Persona{}'
+      zig:
+          - 'Persona.init(.{})'
 
 - name: novum with positional arguments
   faber: 'fixum e = novum Error("message")'
   expect:
-    ts: 'const e = new Error("message");'
-    py: 'e = Error("message")'
-    rs:
-      - 'let e = Error::new();'
-    cpp:
-      - 'Error(std::string("message"))'
-    zig:
-      - 'Error.init("message")'
+      ts: 'const e = new Error("message");'
+      py: 'e = Error("message")'
+      rs:
+          - 'let e = Error::new();'
+      cpp:
+          - 'Error(std::string("message"))'
+      zig:
+          - 'Error.init("message")'
 
 - name: novum with object literal overrides
   faber: 'fixum u = novum User { nomen: "Marcus", aetas: 30 }'
   expect:
-    ts: 'const u = new User({ nomen: "Marcus", aetas: 30 });'
-    py: 'u = User({"nomen": "Marcus", "aetas": 30})'
-    rs:
-      - 'let u = User { nomen: String::from("Marcus"), aetas: 30 };'
-    cpp:
-      - 'User{.nomen = '
-      - '.aetas = 30}'
-    zig:
-      - 'User.init(.{ .nomen = "Marcus", .aetas = 30 })'
+      ts: 'const u = new User({ nomen: "Marcus", aetas: 30 });'
+      py: 'u = User({"nomen": "Marcus", "aetas": 30})'
+      rs:
+          - 'let u = User { nomen: String::from("Marcus"), aetas: 30 };'
+      cpp:
+          - 'User{.nomen = '
+          - '.aetas = 30}'
+      zig:
+          - 'User.init(.{ .nomen = "Marcus", .aetas = 30 })'
 
 - name: novum with single property override
   faber: 'fixum item = novum Item { pretium: 99 }'
   expect:
-    ts: 'const item = new Item({ pretium: 99 });'
-    py: 'item = Item({"pretium": 99})'
-    rs:
-      - 'let item = Item { pretium: 99 };'
-    cpp:
-      - 'Item{.pretium = 99}'
-    zig:
-      - 'Item.init(.{ .pretium = 99 })'
+      ts: 'const item = new Item({ pretium: 99 });'
+      py: 'item = Item({"pretium": 99})'
+      rs:
+          - 'let item = Item { pretium: 99 };'
+      cpp:
+          - 'Item{.pretium = 99}'
+      zig:
+          - 'Item.init(.{ .pretium = 99 })'
+
+- name: novum with spread in overrides
+  faber: 'fixum u = novum User { sparge defaults, extra: 1 }'
+  expect:
+      ts: 'const u = new User({ ...defaults, extra: 1 });'
+      py: 'u = User({**defaults, "extra": 1})'
+
+- name: novum with nested object
+  faber: 'fixum c = novum Config { database: { host: "localhost" } }'
+  expect:
+      ts: 'const c = new Config({ database: { host: "localhost" } });'
+      py: 'c = Config({"database": {"host": "localhost"}})'
+
+- name: novum without parens (bare constructor)
+  faber: 'fixum e = novum Error'
+  expect:
+      ts: 'const e = new Error();'
+      py: 'e = Error()'
+
+- name: chained novum (nested constructor)
+  faber: 'fixum x = novum Outer(novum Inner())'
+  expect:
+      ts: 'const x = new Outer(new Inner());'
+      py: 'x = Outer(Inner())'
+
+- name: novum with many args
+  faber: 'fixum p = novum Point(1, 2, 3, 4)'
+  expect:
+      ts: 'const p = new Point(1, 2, 3, 4);'
+      py: 'p = Point(1, 2, 3, 4)'
+
+- name: novum with expression arg
+  faber: 'fixum r = novum Rectangle(width * 2, height * 2)'
+  expect:
+      ts: 'const r = new Rectangle((width * 2), (height * 2));'
+      py: 'r = Rectangle((width * 2), (height * 2))'

@@ -21,50 +21,50 @@
 - name: scribe with string literal
   faber: 'scribe "hello"'
   expect:
-    ts:
-      - 'console.log("hello");'
-    py:
-      - 'print("hello")'
-    rs:
-      - 'println!("{}", String::from("hello"));'
-    cpp:
-      - 'std::print("{}\n", std::string("hello"));'
-    zig:
-      - 'std.debug.print("{s}\n", .{ "hello" });'
+      ts:
+          - 'console.log("hello");'
+      py:
+          - 'print("hello")'
+      rs:
+          - 'println!("{}", String::from("hello"));'
+      cpp:
+          - 'std::print("{}\n", std::string("hello"));'
+      zig:
+          - 'std.debug.print("{s}\n", .{ "hello" });'
 
 # Print variable
 - name: scribe with variable
   faber: 'scribe x'
   expect:
-    ts:
-      - "console.log(x);"
-    py:
-      - "print(x)"
-    rs:
-      - "println!(\"{}\", x);"
-    cpp:
-      - 'std::print("{}\'
-      - 'n", x);'
-    zig:
-      - 'std.debug.print("{any}\'
-      - 'n", .{ x });'
+      ts:
+          - 'console.log(x);'
+      py:
+          - 'print(x)'
+      rs:
+          - 'println!("{}", x);'
+      cpp:
+          - 'std::print("{}\'
+          - 'n", x);'
+      zig:
+          - 'std.debug.print("{any}\'
+          - 'n", .{ x });'
 
 # Print multiple arguments
 - name: scribe with multiple args
   faber: 'scribe "value:", x'
   expect:
-    ts:
-      - 'console.log("value:", x);'
-    py:
-      - 'print("value:", x)'
-    rs:
-      - 'println!("{} {}", String::from("value:"), x);'
-    cpp:
-      - 'std::print("{} {}\'
-      - 'n", std::string("value:"), x);'
-    zig:
-      - 'std.debug.print("{s} {any}\'
-      - 'n", .{ "value:", x });'
+      ts:
+          - 'console.log("value:", x);'
+      py:
+          - 'print("value:", x)'
+      rs:
+          - 'println!("{} {}", String::from("value:"), x);'
+      cpp:
+          - 'std::print("{} {}\'
+          - 'n", std::string("value:"), x);'
+      zig:
+          - 'std.debug.print("{s} {any}\'
+          - 'n", .{ "value:", x });'
 
 # =============================================================================
 # Debug Output (vide)
@@ -74,18 +74,18 @@
 - name: vide with string
   faber: 'vide "debug info"'
   expect:
-    ts:
-      - 'console.debug("debug info");'
-    py:
-      - 'print("[DEBUG]", "debug info")'
-    rs:
-      - 'dbg!(String::from("debug info"));'
-    cpp:
-      - 'std::print("[DEBUG] {}\'
-      - 'n", std::string("debug info"));'
-    zig:
-      - 'std.debug.print("[DEBUG] {s}\'
-      - 'n", .{ "debug info" });'
+      ts:
+          - 'console.debug("debug info");'
+      py:
+          - 'print("[DEBUG]", "debug info")'
+      rs:
+          - 'dbg!(String::from("debug info"));'
+      cpp:
+          - 'std::print("[DEBUG] {}\'
+          - 'n", std::string("debug info"));'
+      zig:
+          - 'std.debug.print("[DEBUG] {s}\'
+          - 'n", .{ "debug info" });'
 
 # =============================================================================
 # Warning Output (mone)
@@ -95,15 +95,91 @@
 - name: mone with string
   faber: 'mone "warning message"'
   expect:
-    ts:
-      - 'console.warn("warning message");'
-    py:
-      - 'print("[WARN]", "warning message")'
-    rs:
-      - 'println!("{}", String::from("warning message"));'
-    cpp:
-      - 'std::print("[WARN] {}\'
-      - 'n", std::string("warning message"));'
-    zig:
-      - 'std.debug.print("[WARN] {s}\'
-      - 'n", .{ "warning message" });'
+      ts:
+          - 'console.warn("warning message");'
+      py:
+          - 'print("[WARN]", "warning message")'
+      rs:
+          - 'println!("{}", String::from("warning message"));'
+      cpp:
+          - 'std::print("[WARN] {}\'
+          - 'n", std::string("warning message"));'
+      zig:
+          - 'std.debug.print("[WARN] {s}\'
+          - 'n", .{ "warning message" });'
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Scribe with many arguments (5+)
+- name: scribe with many arguments
+  faber: 'scribe a, b, c, d, e, f'
+  expect:
+      ts:
+          - 'console.log(a, b, c, d, e, f);'
+      py:
+          - 'print(a, b, c, d, e, f)'
+
+# Scribe with object literal
+- name: scribe with object literal
+  faber: 'scribe { x: 1, y: 2 }'
+  expect:
+      ts:
+          - 'console.log({ x: 1, y: 2 });'
+      py:
+          - 'print({"x": 1, "y": 2})'
+
+# Scribe with template literal
+- name: scribe with template literal
+  faber: 'scribe `Value: ${x}, Status: ${status}`'
+  expect:
+      ts:
+          - 'console.log(`Value: ${x}, Status: ${status}`);'
+      py:
+          - 'print(f"Value: ${x}, Status: ${status}")'
+
+# Scribe with expression
+- name: scribe with expression
+  faber: 'scribe x * 2 + y'
+  expect:
+      ts:
+          - 'console.log(((x * 2) + y));'
+      py:
+          - 'print(((x * 2) + y))'
+
+# Scribe with member access
+- name: scribe with member access
+  faber: 'scribe obj.nested.value'
+  expect:
+      ts:
+          - 'console.log(obj.nested.value);'
+      py:
+          - 'print(obj.nested.value)'
+
+# Scribe with call result
+- name: scribe with call result
+  faber: 'scribe getData()'
+  expect:
+      ts:
+          - 'console.log(getData());'
+      py:
+          - 'print(getData())'
+
+# Vide with template
+- name: vide with template literal
+  faber: 'vide `Debug: ${value}`'
+  expect:
+      ts:
+          - 'console.debug(`Debug: ${value}`);'
+      py:
+          - 'print("[DEBUG]", f"Debug: ${value}")'
+
+# Mone with expression
+- name: mone with expression
+  faber: 'mone "Error:", err.message'
+  expect:
+      ts:
+          - 'console.warn("Error:", err.message);'
+      py:
+          - 'print("[WARN]", "Error:", err.message)'

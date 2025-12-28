@@ -20,80 +20,80 @@
 # Basic try/catch
 - name: tempta with cape
   faber: |
-    tempta {
-      riskyOperation()
-    }
-    cape err {
-      handleError(err)
-    }
+      tempta {
+        riskyOperation()
+      }
+      cape err {
+        handleError(err)
+      }
   expect:
-    ts:
-      - "try {"
-      - "riskyOperation();"
-      - "} catch (err) {"
-      - "handleError(err);"
-    py:
-      - "try:"
-      - "riskyOperation()"
-      - "except Exception as err:"
-      - "handleError(err)"
-    rs:
-      - "// tempta (try) - Rust uses Result<T, E> instead"
-      - "{"
-      - "riskyOperation();"
-    cpp:
-      - "try {"
-      - "riskyOperation();"
-      - "catch (const std::exception& err) {"
-      - "handleError(err);"
-    zig:
-      - "// try block"
-      - "riskyOperation();"
-      - "// catch handling would use: catch |err|"
+      ts:
+          - 'try {'
+          - 'riskyOperation();'
+          - '} catch (err) {'
+          - 'handleError(err);'
+      py:
+          - 'try:'
+          - 'riskyOperation()'
+          - 'except Exception as err:'
+          - 'handleError(err)'
+      rs:
+          - '// tempta (try) - Rust uses Result<T, E> instead'
+          - '{'
+          - 'riskyOperation();'
+      cpp:
+          - 'try {'
+          - 'riskyOperation();'
+          - 'catch (const std::exception& err) {'
+          - 'handleError(err);'
+      zig:
+          - '// try block'
+          - 'riskyOperation();'
+          - '// catch handling would use: catch |err|'
 
 # Multiple statements in try block
 - name: tempta with multiple statements
   faber: |
-    tempta {
-      varia x = compute()
-      process(x)
-      redde x
-    }
-    cape e {
-      redde nihil
-    }
+      tempta {
+        varia x = compute()
+        process(x)
+        redde x
+      }
+      cape e {
+        redde nihil
+      }
   expect:
-    ts:
-      - "try {"
-      - "let x = compute();"
-      - "process(x);"
-      - "return x;"
-      - "} catch (e) {"
-      - "return null;"
-    py:
-      - "try:"
-      - "x = compute()"
-      - "process(x)"
-      - "return x"
-      - "except Exception as e:"
-      - "return None"
-    rs:
-      - "// tempta (try) - Rust uses Result<T, E> instead"
-      - "let mut x = compute();"
-      - "process(x);"
-      - "return x;"
-    cpp:
-      - "try {"
-      - "auto x = compute();"
-      - "process(x);"
-      - "return x;"
-      - "catch (const std::exception& e) {"
-      - "return nullptr;"
-    zig:
-      - "// try block"
-      - "var x: anytype = compute();"
-      - "process(x);"
-      - "return x;"
+      ts:
+          - 'try {'
+          - 'let x = compute();'
+          - 'process(x);'
+          - 'return x;'
+          - '} catch (e) {'
+          - 'return null;'
+      py:
+          - 'try:'
+          - 'x = compute()'
+          - 'process(x)'
+          - 'return x'
+          - 'except Exception as e:'
+          - 'return None'
+      rs:
+          - '// tempta (try) - Rust uses Result<T, E> instead'
+          - 'let mut x = compute();'
+          - 'process(x);'
+          - 'return x;'
+      cpp:
+          - 'try {'
+          - 'auto x = compute();'
+          - 'process(x);'
+          - 'return x;'
+          - 'catch (const std::exception& e) {'
+          - 'return nullptr;'
+      zig:
+          - '// try block'
+          - 'var x: anytype = compute();'
+          - 'process(x);'
+          - 'return x;'
 
 # =============================================================================
 # Tempta with Demum (Try/Finally)
@@ -102,35 +102,35 @@
 # Try with finally only
 - name: tempta with demum only
   faber: |
-    tempta {
-      openResource()
-    }
-    demum {
-      cleanup()
-    }
+      tempta {
+        openResource()
+      }
+      demum {
+        cleanup()
+      }
   expect:
-    ts:
-      - "try {"
-      - "openResource();"
-      - "} finally {"
-      - "cleanup();"
-    py:
-      - "try:"
-      - "openResource()"
-      - "finally:"
-      - "cleanup()"
-    rs:
-      - "// tempta (try) - Rust uses Result<T, E> instead"
-      - "{"
-      - "openResource();"
-    cpp:
-      - "auto _demum_0 = _ScopeGuard"
-      - "cleanup()"
-      - "try {"
-      - "openResource();"
-    zig:
-      - "// try block"
-      - "openResource();"
+      ts:
+          - 'try {'
+          - 'openResource();'
+          - '} finally {'
+          - 'cleanup();'
+      py:
+          - 'try:'
+          - 'openResource()'
+          - 'finally:'
+          - 'cleanup()'
+      rs:
+          - '// tempta (try) - Rust uses Result<T, E> instead'
+          - '{'
+          - 'openResource();'
+      cpp:
+          - 'auto _demum_0 = _ScopeGuard'
+          - 'cleanup()'
+          - 'try {'
+          - 'openResource();'
+      zig:
+          - '// try block'
+          - 'openResource();'
 
 # =============================================================================
 # Tempta with Cape and Demum (Try/Catch/Finally)
@@ -139,93 +139,93 @@
 # Full try/catch/finally
 - name: tempta with cape and demum
   faber: |
-    tempta {
-      riskyCall()
-    }
-    cape err {
-      mone "Error:", err
-    }
-    demum {
-      cleanup()
-    }
+      tempta {
+        riskyCall()
+      }
+      cape err {
+        mone "Error:", err
+      }
+      demum {
+        cleanup()
+      }
   expect:
-    ts:
-      - "try {"
-      - "riskyCall();"
-      - "} catch (err) {"
-      - 'console.warn("Error:", err);'
-      - "} finally {"
-      - "cleanup();"
-    py:
-      - "try:"
-      - "riskyCall()"
-      - "except Exception as err:"
-      - 'print("[WARN]", "Error:", err)'
-      - "finally:"
-      - "cleanup()"
-    rs:
-      - "// tempta (try) - Rust uses Result<T, E> instead"
-      - "{"
-      - "riskyCall();"
-    cpp:
-      - "auto _demum_0 = _ScopeGuard"
-      - "cleanup()"
-      - "try {"
-      - "riskyCall();"
-      - "catch (const std::exception& err) {"
-    zig:
-      - "// try block"
-      - "riskyCall();"
+      ts:
+          - 'try {'
+          - 'riskyCall();'
+          - '} catch (err) {'
+          - 'console.warn("Error:", err);'
+          - '} finally {'
+          - 'cleanup();'
+      py:
+          - 'try:'
+          - 'riskyCall()'
+          - 'except Exception as err:'
+          - 'print("[WARN]", "Error:", err)'
+          - 'finally:'
+          - 'cleanup()'
+      rs:
+          - '// tempta (try) - Rust uses Result<T, E> instead'
+          - '{'
+          - 'riskyCall();'
+      cpp:
+          - 'auto _demum_0 = _ScopeGuard'
+          - 'cleanup()'
+          - 'try {'
+          - 'riskyCall();'
+          - 'catch (const std::exception& err) {'
+      zig:
+          - '// try block'
+          - 'riskyCall();'
 
 # Multiple statements in all blocks
 - name: tempta with multiple statements in all blocks
   faber: |
-    tempta {
-      varia fd = open()
-      write(fd, data)
-    }
-    cape e {
-      scribe "Failed"
-      iace e
-    }
-    demum {
-      close(fd)
-    }
+      tempta {
+        varia fd = open()
+        write(fd, data)
+      }
+      cape e {
+        scribe "Failed"
+        iace e
+      }
+      demum {
+        close(fd)
+      }
   expect:
-    ts:
-      - "try {"
-      - "let fd = open();"
-      - "write(fd, data);"
-      - "} catch (e) {"
-      - 'console.log("Failed");'
-      - "throw e;"
-      - "} finally {"
-      - "close(fd);"
-    py:
-      - "try:"
-      - "fd = open()"
-      - "write(fd, data)"
-      - "except Exception as e:"
-      - 'print("Failed")'
-      - "raise e"
-      - "finally:"
-      - "close(fd)"
-    rs:
-      - "// tempta (try) - Rust uses Result<T, E> instead"
-      - "{"
-      - "let mut fd = open();"
-      - "write(fd, data);"
-    cpp:
-      - "auto _demum_0 = _ScopeGuard"
-      - "close(fd)"
-      - "try {"
-      - "auto fd = open();"
-      - "write(fd, data);"
-      - "catch (const std::exception& e) {"
-    zig:
-      - "// try block"
-      - "var fd: anytype = open();"
-      - "write(fd, data);"
+      ts:
+          - 'try {'
+          - 'let fd = open();'
+          - 'write(fd, data);'
+          - '} catch (e) {'
+          - 'console.log("Failed");'
+          - 'throw e;'
+          - '} finally {'
+          - 'close(fd);'
+      py:
+          - 'try:'
+          - 'fd = open()'
+          - 'write(fd, data)'
+          - 'except Exception as e:'
+          - 'print("Failed")'
+          - 'raise e'
+          - 'finally:'
+          - 'close(fd)'
+      rs:
+          - '// tempta (try) - Rust uses Result<T, E> instead'
+          - '{'
+          - 'let mut fd = open();'
+          - 'write(fd, data);'
+      cpp:
+          - 'auto _demum_0 = _ScopeGuard'
+          - 'close(fd)'
+          - 'try {'
+          - 'auto fd = open();'
+          - 'write(fd, data);'
+          - 'catch (const std::exception& e) {'
+      zig:
+          - '// try block'
+          - 'var fd: anytype = open();'
+          - 'write(fd, data);'
 
 # =============================================================================
 # Edge Cases
@@ -234,103 +234,381 @@
 # Empty try block
 - name: tempta with empty try block
   faber: |
-    tempta { }
-    cape e { handle(e) }
+      tempta { }
+      cape e { handle(e) }
   expect:
-    ts:
-      - "try {}"
-      - "} catch (e) {"
-      - "handle(e);"
-    py:
-      - "try:"
-      - "pass"
-      - "except Exception as e:"
-      - "handle(e)"
-    rs:
-      - "// tempta (try) - Rust uses Result<T, E> instead"
-      - "{}"
-    cpp:
-      - "try {}"
-      - "catch (const std::exception& e) {"
-      - "handle(e);"
-    zig:
-      - "// try block"
+      ts:
+          - 'try {}'
+          - '} catch (e) {'
+          - 'handle(e);'
+      py:
+          - 'try:'
+          - 'pass'
+          - 'except Exception as e:'
+          - 'handle(e)'
+      rs:
+          - '// tempta (try) - Rust uses Result<T, E> instead'
+          - '{}'
+      cpp:
+          - 'try {}'
+          - 'catch (const std::exception& e) {'
+          - 'handle(e);'
+      zig:
+          - '// try block'
 
 # Empty catch block
 - name: tempta with empty catch block
   faber: |
-    tempta {
-      mayFail()
-    }
-    cape e { }
+      tempta {
+        mayFail()
+      }
+      cape e { }
   expect:
-    ts:
-      - "try {"
-      - "mayFail();"
-      - "} catch (e) {}"
-    py:
-      - "try:"
-      - "mayFail()"
-      - "except Exception as e:"
-      - "pass"
-    rs:
-      - "// tempta (try) - Rust uses Result<T, E> instead"
-      - "{"
-      - "mayFail();"
-    cpp:
-      - "try {"
-      - "mayFail();"
-      - "catch (const std::exception& e) {}"
-    zig:
-      - "// try block"
-      - "mayFail();"
+      ts:
+          - 'try {'
+          - 'mayFail();'
+          - '} catch (e) {}'
+      py:
+          - 'try:'
+          - 'mayFail()'
+          - 'except Exception as e:'
+          - 'pass'
+      rs:
+          - '// tempta (try) - Rust uses Result<T, E> instead'
+          - '{'
+          - 'mayFail();'
+      cpp:
+          - 'try {'
+          - 'mayFail();'
+          - 'catch (const std::exception& e) {}'
+      zig:
+          - '// try block'
+          - 'mayFail();'
 
 # Nested try blocks
 - name: nested tempta blocks
   faber: |
-    tempta {
       tempta {
-        innerRisky()
+        tempta {
+          innerRisky()
+        }
+        cape inner {
+          handleInner(inner)
+        }
       }
-      cape inner {
-        handleInner(inner)
+      cape outer {
+        handleOuter(outer)
       }
-    }
-    cape outer {
-      handleOuter(outer)
-    }
   expect:
-    ts:
-      - "try {"
-      - "try {"
-      - "innerRisky();"
-      - "} catch (inner) {"
-      - "handleInner(inner);"
-      - "} catch (outer) {"
-      - "handleOuter(outer);"
-    py:
-      - "try:"
-      - "try:"
-      - "innerRisky()"
-      - "except Exception as inner:"
-      - "handleInner(inner)"
-      - "except Exception as outer:"
-      - "handleOuter(outer)"
-    rs:
-      - "// tempta (try) - Rust uses Result<T, E> instead"
-      - "{"
-      - "// tempta (try) - Rust uses Result<T, E> instead"
-      - "{"
-      - "innerRisky();"
-    cpp:
-      - "try {"
-      - "try {"
-      - "innerRisky();"
-      - "catch (const std::exception& inner) {"
-      - "handleInner(inner);"
-      - "catch (const std::exception& outer) {"
-      - "handleOuter(outer);"
-    zig:
-      - "// try block"
-      - "// try block"
-      - "innerRisky();"
+      ts:
+          - 'try {'
+          - 'try {'
+          - 'innerRisky();'
+          - '} catch (inner) {'
+          - 'handleInner(inner);'
+          - '} catch (outer) {'
+          - 'handleOuter(outer);'
+      py:
+          - 'try:'
+          - 'try:'
+          - 'innerRisky()'
+          - 'except Exception as inner:'
+          - 'handleInner(inner)'
+          - 'except Exception as outer:'
+          - 'handleOuter(outer)'
+      rs:
+          - '// tempta (try) - Rust uses Result<T, E> instead'
+          - '{'
+          - '// tempta (try) - Rust uses Result<T, E> instead'
+          - '{'
+          - 'innerRisky();'
+      cpp:
+          - 'try {'
+          - 'try {'
+          - 'innerRisky();'
+          - 'catch (const std::exception& inner) {'
+          - 'handleInner(inner);'
+          - 'catch (const std::exception& outer) {'
+          - 'handleOuter(outer);'
+      zig:
+          - '// try block'
+          - '// try block'
+          - 'innerRisky();'
+
+# Rethrow caught error
+- name: tempta with rethrow
+  faber: |
+      tempta {
+        risky()
+      }
+      cape err {
+        log(err)
+        iace err
+      }
+  expect:
+      ts:
+          - 'try {'
+          - 'risky();'
+          - '} catch (err) {'
+          - 'log(err);'
+          - 'throw err;'
+      py:
+          - 'try:'
+          - 'risky()'
+          - 'except Exception as err:'
+          - 'log(err)'
+          - 'raise err'
+      rs:
+          - '// tempta (try) - Rust uses Result<T, E> instead'
+          - '{'
+          - 'risky();'
+      cpp:
+          - 'try {'
+          - 'risky();'
+          - 'catch (const std::exception& err) {'
+          - 'log(err);'
+          - 'throw err;'
+      zig:
+          - '// try block'
+          - 'risky();'
+
+# Return in finally block
+- name: tempta with return in finally
+  faber: |
+      tempta {
+        redde compute()
+      }
+      demum {
+        cleanup()
+      }
+  expect:
+      ts:
+          - 'try {'
+          - 'return compute();'
+          - '} finally {'
+          - 'cleanup();'
+      py:
+          - 'try:'
+          - 'return compute()'
+          - 'finally:'
+          - 'cleanup()'
+      rs:
+          - '// tempta (try) - Rust uses Result<T, E> instead'
+          - '{'
+          - 'return compute();'
+      cpp:
+          - 'auto _demum_0 = _ScopeGuard'
+          - 'cleanup()'
+          - 'try {'
+          - 'return compute();'
+      zig:
+          - '// try block'
+          - 'return compute();'
+
+# Tempta inside loop with break
+- name: tempta in loop with break
+  faber: |
+      dum verum {
+        tempta {
+          result = tryConnect()
+          rumpe
+        }
+        cape e {
+          scribe "Retrying..."
+        }
+      }
+  expect:
+      ts:
+          - 'while (true) {'
+          - 'try {'
+          - 'result = tryConnect();'
+          - 'break;'
+          - '} catch (e) {'
+          - 'console.log("Retrying...");'
+      py:
+          - 'while True:'
+          - 'try:'
+          - 'result = tryConnect()'
+          - 'break'
+          - 'except Exception as e:'
+          - 'print("Retrying...")'
+      rs:
+          - 'while true {'
+          - '// tempta (try) - Rust uses Result<T, E> instead'
+          - '{'
+          - 'result = tryConnect();'
+          - 'break;'
+      cpp:
+          - 'while (true) {'
+          - 'try {'
+          - 'result = tryConnect();'
+          - 'break;'
+          - 'catch (const std::exception& e) {'
+      zig:
+          - 'while (true) {'
+          - '// try block'
+          - 'result = tryConnect();'
+          - 'break;'
+
+# Multiple statements in all three blocks
+- name: tempta with multiple statements in each block
+  faber: |
+      tempta {
+        varia conn = openConnection()
+        varia data = fetchData(conn)
+        process(data)
+      }
+      cape err {
+        logError(err)
+        notifyAdmin(err)
+        redde nihil
+      }
+      demum {
+        closeConnection(conn)
+        releaseResources()
+      }
+  expect:
+      ts:
+          - 'try {'
+          - 'let conn = openConnection();'
+          - 'let data = fetchData(conn);'
+          - 'process(data);'
+          - '} catch (err) {'
+          - 'logError(err);'
+          - 'notifyAdmin(err);'
+          - 'return null;'
+          - '} finally {'
+          - 'closeConnection(conn);'
+          - 'releaseResources();'
+      py:
+          - 'try:'
+          - 'conn = openConnection()'
+          - 'data = fetchData(conn)'
+          - 'process(data)'
+          - 'except Exception as err:'
+          - 'logError(err)'
+          - 'notifyAdmin(err)'
+          - 'return None'
+          - 'finally:'
+          - 'closeConnection(conn)'
+          - 'releaseResources()'
+      rs:
+          - '// tempta (try) - Rust uses Result<T, E> instead'
+          - '{'
+          - 'let mut conn = openConnection();'
+          - 'let mut data = fetchData(conn);'
+          - 'process(data);'
+      cpp:
+          - 'auto _demum_0 = _ScopeGuard'
+          - 'closeConnection(conn)'
+          - 'releaseResources()'
+          - 'try {'
+          - 'auto conn = openConnection();'
+          - 'auto data = fetchData(conn);'
+          - 'process(data);'
+          - 'catch (const std::exception& err) {'
+          - 'logError(err);'
+          - 'notifyAdmin(err);'
+          - 'return nullptr;'
+      zig:
+          - '// try block'
+          - 'var conn: anytype = openConnection();'
+          - 'var data: anytype = fetchData(conn);'
+          - 'process(data);'
+
+# Deeply nested tempta blocks
+- name: deeply nested tempta blocks
+  faber: |
+      tempta {
+        tempta {
+          dangerousOp()
+        }
+        cape innerErr {
+          recoverInner(innerErr)
+        }
+      }
+      cape outerErr {
+        recoverOuter(outerErr)
+      }
+      demum {
+        finalCleanup()
+      }
+  expect:
+      ts:
+          - 'try {'
+          - 'try {'
+          - 'dangerousOp();'
+          - '} catch (innerErr) {'
+          - 'recoverInner(innerErr);'
+          - '} catch (outerErr) {'
+          - 'recoverOuter(outerErr);'
+          - '} finally {'
+          - 'finalCleanup();'
+      py:
+          - 'try:'
+          - 'try:'
+          - 'dangerousOp()'
+          - 'except Exception as innerErr:'
+          - 'recoverInner(innerErr)'
+          - 'except Exception as outerErr:'
+          - 'recoverOuter(outerErr)'
+          - 'finally:'
+          - 'finalCleanup()'
+      rs:
+          - '// tempta (try) - Rust uses Result<T, E> instead'
+          - '{'
+          - '// tempta (try) - Rust uses Result<T, E> instead'
+          - '{'
+          - 'dangerousOp();'
+      cpp:
+          - 'auto _demum_0 = _ScopeGuard'
+          - 'finalCleanup()'
+          - 'try {'
+          - 'try {'
+          - 'dangerousOp();'
+          - 'catch (const std::exception& innerErr) {'
+          - 'recoverInner(innerErr);'
+          - 'catch (const std::exception& outerErr) {'
+          - 'recoverOuter(outerErr);'
+      zig:
+          - '// try block'
+          - '// try block'
+          - 'dangerousOp();'
+
+# Condition inside catch block
+- name: tempta with condition in catch
+  faber: |
+      tempta {
+        riskyOperation()
+      }
+      cape err {
+        si err.recoverable {
+          recover()
+        }
+      }
+  expect:
+      ts:
+          - 'try {'
+          - 'riskyOperation();'
+          - '} catch (err) {'
+          - 'if (err.recoverable) {'
+          - 'recover();'
+      py:
+          - 'try:'
+          - 'riskyOperation()'
+          - 'except Exception as err:'
+          - 'if err.recoverable:'
+          - 'recover()'
+      rs:
+          - '// tempta (try) - Rust uses Result<T, E> instead'
+          - '{'
+          - 'riskyOperation();'
+      cpp:
+          - 'try {'
+          - 'riskyOperation();'
+          - 'catch (const std::exception& err) {'
+          - 'if (err.recoverable) {'
+          - 'recover();'
+      zig:
+          - '// try block'
+          - 'riskyOperation();'

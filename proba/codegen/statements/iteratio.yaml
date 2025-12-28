@@ -16,21 +16,21 @@
 - name: iterate over array
   faber: 'ex items pro item { process(item) }'
   expect:
-    ts:
-      - 'for (const item of items)'
-      - 'process(item)'
-    py:
-      - 'for item in items:'
-      - 'process(item)'
-    rs:
-      - 'for item in items'
-      - 'process(item);'
-    cpp:
-      - 'for (auto& item : items)'
-      - 'process(item);'
-    zig:
-      - 'for (items) |item|'
-      - 'process(item);'
+      ts:
+          - 'for (const item of items)'
+          - 'process(item)'
+      py:
+          - 'for item in items:'
+          - 'process(item)'
+      rs:
+          - 'for item in items'
+          - 'process(item);'
+      cpp:
+          - 'for (auto& item : items)'
+          - 'process(item);'
+      zig:
+          - 'for (items) |item|'
+          - 'process(item);'
 
 # =============================================================================
 # Range Loops
@@ -40,57 +40,57 @@
 - name: exclusive range loop
   faber: 'ex 0..10 pro i { scribe i }'
   expect:
-    ts:
-      - 'for (let i = 0; i < 10; i++)'
-      - 'console.log(i)'
-    py:
-      - 'for i in range(0, 10):'
-      - 'print(i)'
-    rs:
-      - 'for i in 0..10'
-      - 'println!("{}", i)'
-    cpp:
-      - 'for (int64_t i = 0; i < 10; i += 1)'
-      - 'std::print'
-    zig:
-      - 'var i: usize = 0; while (i < 10) : (i += 1)'
+      ts:
+          - 'for (let i = 0; i < 10; i++)'
+          - 'console.log(i)'
+      py:
+          - 'for i in range(0, 10):'
+          - 'print(i)'
+      rs:
+          - 'for i in 0..10'
+          - 'println!("{}", i)'
+      cpp:
+          - 'for (int64_t i = 0; i < 10; i += 1)'
+          - 'std::print'
+      zig:
+          - 'var i: usize = 0; while (i < 10) : (i += 1)'
 
 # Inclusive range (0 usque 10 means 0-10)
 - name: inclusive range loop
   faber: 'ex 0 usque 10 pro i { scribe i }'
   expect:
-    ts:
-      - 'for (let i = 0; i <= 10; i++)'
-      - 'console.log(i)'
-    py:
-      - 'for i in range(0, 10 + 1):'
-      - 'print(i)'
-    rs:
-      - 'for i in 0..=10'
-      - 'println!("{}", i)'
-    cpp:
-      - 'for (int64_t i = 0; i <= 10; i += 1)'
-      - 'std::print'
-    zig:
-      - 'var i: usize = 0; while (i <= 10) : (i += 1)'
+      ts:
+          - 'for (let i = 0; i <= 10; i++)'
+          - 'console.log(i)'
+      py:
+          - 'for i in range(0, 10 + 1):'
+          - 'print(i)'
+      rs:
+          - 'for i in 0..=10'
+          - 'println!("{}", i)'
+      cpp:
+          - 'for (int64_t i = 0; i <= 10; i += 1)'
+          - 'std::print'
+      zig:
+          - 'var i: usize = 0; while (i <= 10) : (i += 1)'
 
 # Range with step
 - name: range loop with step
   faber: 'ex 0..10 per 2 pro i { scribe i }'
   expect:
-    ts:
-      - 'for (let i = 0; i < 10; i += 2)'
-      - 'console.log(i)'
-    py:
-      - 'for i in range(0, 10, 2):'
-      - 'print(i)'
-    rs:
-      - 'for i in 0..10'
-    cpp:
-      - 'for (int64_t i = 0; i < 10; i += 2)'
-      - 'std::print'
-    zig:
-      - 'var i: usize = 0; while (i < 10) : (i += 2)'
+      ts:
+          - 'for (let i = 0; i < 10; i += 2)'
+          - 'console.log(i)'
+      py:
+          - 'for i in range(0, 10, 2):'
+          - 'print(i)'
+      rs:
+          - 'for i in 0..10'
+      cpp:
+          - 'for (int64_t i = 0; i < 10; i += 2)'
+          - 'std::print'
+      zig:
+          - 'var i: usize = 0; while (i < 10) : (i += 2)'
 
 # =============================================================================
 # Async Iteration (fiet)
@@ -100,21 +100,21 @@
 - name: async for-await loop
   faber: 'ex stream fiet chunk { process(chunk) }'
   expect:
-    ts:
-      - 'for await (const chunk of stream)'
-      - 'process(chunk)'
-    py:
-      - 'async for chunk in stream:'
-      - 'process(chunk)'
-    rs:
-      - 'for chunk in stream'
-      - 'process(chunk);'
-    cpp:
-      - 'for (auto& chunk : stream)'
-      - 'process(chunk);'
-    zig:
-      - 'for (stream) |chunk|'
-      - 'process(chunk);'
+      ts:
+          - 'for await (const chunk of stream)'
+          - 'process(chunk)'
+      py:
+          - 'async for chunk in stream:'
+          - 'process(chunk)'
+      rs:
+          - 'for chunk in stream'
+          - 'process(chunk);'
+      cpp:
+          - 'for (auto& chunk : stream)'
+          - 'process(chunk);'
+      zig:
+          - 'for (stream) |chunk|'
+          - 'process(chunk);'
 
 # =============================================================================
 # Break and Continue in Loops
@@ -123,61 +123,184 @@
 # Loop with break
 - name: loop with break
   faber: |
-    ex items pro item {
-      si done { rumpe }
-    }
+      ex items pro item {
+        si done { rumpe }
+      }
   expect:
-    ts:
-      - 'for (const item of items)'
-      - 'if (done)'
-      - 'break;'
-    py:
-      - 'for item in items:'
-      - 'if done:'
-      - 'break'
-    rs:
-      - 'for item in items'
-      - 'if done'
-      - 'break;'
-    cpp:
-      - 'for (auto& item : items)'
-      - 'if (done)'
-      - 'break;'
-    zig:
-      - 'for (items) |item|'
-      - 'if (done)'
-      - 'break;'
+      ts:
+          - 'for (const item of items)'
+          - 'if (done)'
+          - 'break;'
+      py:
+          - 'for item in items:'
+          - 'if done:'
+          - 'break'
+      rs:
+          - 'for item in items'
+          - 'if done'
+          - 'break;'
+      cpp:
+          - 'for (auto& item : items)'
+          - 'if (done)'
+          - 'break;'
+      zig:
+          - 'for (items) |item|'
+          - 'if (done)'
+          - 'break;'
 
 # Loop with continue
 - name: loop with continue
   faber: |
-    ex items pro item {
-      si skip { perge }
-      process(item)
-    }
+      ex items pro item {
+        si skip { perge }
+        process(item)
+      }
   expect:
-    ts:
-      - 'for (const item of items)'
-      - 'if (skip)'
-      - 'continue;'
-      - 'process(item)'
-    py:
-      - 'for item in items:'
-      - 'if skip:'
-      - 'continue'
-      - 'process(item)'
-    rs:
-      - 'for item in items'
-      - 'if skip'
-      - 'continue;'
-      - 'process(item);'
-    cpp:
-      - 'for (auto& item : items)'
-      - 'if (skip)'
-      - 'continue;'
-      - 'process(item);'
-    zig:
-      - 'for (items) |item|'
-      - 'if (skip)'
-      - 'continue;'
-      - 'process(item);'
+      ts:
+          - 'for (const item of items)'
+          - 'if (skip)'
+          - 'continue;'
+          - 'process(item)'
+      py:
+          - 'for item in items:'
+          - 'if skip:'
+          - 'continue'
+          - 'process(item)'
+      rs:
+          - 'for item in items'
+          - 'if skip'
+          - 'continue;'
+          - 'process(item);'
+      cpp:
+          - 'for (auto& item : items)'
+          - 'if (skip)'
+          - 'continue;'
+          - 'process(item);'
+      zig:
+          - 'for (items) |item|'
+          - 'if (skip)'
+          - 'continue;'
+          - 'process(item);'
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Iterate over string characters
+- name: iterate over string characters
+  faber: 'ex "hello" pro char { scribe char }'
+  expect:
+      ts:
+          - 'for (const char of "hello")'
+          - 'console.log(char)'
+      py:
+          - 'for char in "hello":'
+          - 'print(char)'
+
+# Nested iteration (2 levels)
+- name: nested iteration
+  faber: |
+      ex outer pro a {
+        ex inner pro b {
+          process(a, b)
+        }
+      }
+  expect:
+      ts:
+          - 'for (const a of outer)'
+          - 'for (const b of inner)'
+          - 'process(a, b)'
+      py:
+          - 'for a in outer:'
+          - 'for b in inner:'
+          - 'process(a, b)'
+
+# Iterate with descending range
+- name: descending range loop
+  faber: 'ex 10..0 per -1 pro i { scribe i }'
+  expect:
+      ts:
+          - 'for (let i = 10; i < 0; i += -1)'
+          - 'console.log(i)'
+      py:
+          - 'for i in range(10, 0, -1):'
+          - 'print(i)'
+
+# Iterate over member expression
+- name: iterate over member expression
+  faber: 'ex obj.items pro item { process(item) }'
+  expect:
+      ts:
+          - 'for (const item of obj.items)'
+          - 'process(item)'
+      py:
+          - 'for item in obj.items:'
+          - 'process(item)'
+
+# Iterate over function result
+- name: iterate over function result
+  faber: 'ex getItems() pro item { process(item) }'
+  expect:
+      ts:
+          - 'for (const item of getItems())'
+          - 'process(item)'
+      py:
+          - 'for item in getItems():'
+          - 'process(item)'
+
+# Iteration with rumpe in nested loop
+- name: break in nested loop
+  faber: |
+      ex outer pro a {
+        ex inner pro b {
+          si found { rumpe }
+        }
+      }
+  expect:
+      ts:
+          - 'for (const a of outer)'
+          - 'for (const b of inner)'
+          - 'if (found)'
+          - 'break;'
+      py:
+          - 'for a in outer:'
+          - 'for b in inner:'
+          - 'if found:'
+          - 'break'
+
+# Iteration with perge (continue with condition)
+- name: continue with condition
+  faber: 'ex items pro item { si item.skip { perge } process(item) }'
+  expect:
+      ts:
+          - 'for (const item of items)'
+          - 'if (item.skip)'
+          - 'continue;'
+          - 'process(item)'
+      py:
+          - 'for item in items:'
+          - 'if item.skip:'
+          - 'continue'
+          - 'process(item)'
+
+# Empty range iteration
+- name: empty range iteration
+  faber: 'ex 5..5 pro i { scribe i }'
+  expect:
+      ts:
+          - 'for (let i = 5; i < 5; i++)'
+          - 'console.log(i)'
+      py:
+          - 'for i in range(5, 5):'
+          - 'print(i)'
+
+# Large range iteration
+- name: large range iteration
+  faber: 'ex 0..1000 pro i { process(i) }'
+  expect:
+      ts:
+          - 'for (let i = 0; i < 1000; i++)'
+          - 'process(i)'
+      py:
+          - 'for i in range(0, 1000):'
+          - 'process(i)'

@@ -4,68 +4,128 @@
 - name: simple function call
   faber: salve(nomen)
   expect:
-    ts: "salve(nomen);"
-    py: "salve(nomen)"
-    rs:
-      - "salve(nomen);"
-    cpp:
-      - "salve(nomen);"
-    zig:
-      - "salve(nomen)"
+      ts: 'salve(nomen);'
+      py: 'salve(nomen)'
+      rs:
+          - 'salve(nomen);'
+      cpp:
+          - 'salve(nomen);'
+      zig:
+          - 'salve(nomen)'
 
 - name: function call with multiple args
   faber: add(1, 2, 3)
   expect:
-    ts: "add(1, 2, 3);"
-    py: "add(1, 2, 3)"
-    rs:
-      - "add(1, 2, 3);"
-    cpp:
-      - "add(1, 2, 3);"
-    zig:
-      - "add(1, 2, 3)"
+      ts: 'add(1, 2, 3);'
+      py: 'add(1, 2, 3)'
+      rs:
+          - 'add(1, 2, 3);'
+      cpp:
+          - 'add(1, 2, 3);'
+      zig:
+          - 'add(1, 2, 3)'
 
 - name: method call on object
   faber: lista.filter(f)
   expect:
-    ts: "lista.filter(f);"
-    py: "lista.filter(f)"
-    rs:
-      - "lista.filter(f);"
-    cpp:
-      - "lista.filter(f);"
+      ts: 'lista.filter(f);'
+      py: 'lista.filter(f)'
+      rs:
+          - 'lista.filter(f);'
+      cpp:
+          - 'lista.filter(f);'
 
 - name: function call with spread
   faber: fn(sparge args)
   expect:
-    ts: "fn(...args);"
-    py: "fn(*args)"
-    rs:
-      - "fn("
-      - "spread"
-    cpp:
-      - "fn();"
+      ts: 'fn(...args);'
+      py: 'fn(*args)'
+      rs:
+          - 'fn('
+          - 'spread'
+      cpp:
+          - 'fn();'
 
 - name: optional call
   faber: callback?()
   expect:
-    ts: "callback?.();"
-    py:
-      - "callback() if callback is not None else None"
-    rs:
-      - "callback.map"
-    cpp:
-      - "callback"
-      - "std::nullopt"
+      ts: 'callback?.();'
+      py:
+          - 'callback() if callback is not None else None'
+      rs:
+          - 'callback.map'
+      cpp:
+          - 'callback'
+          - 'std::nullopt'
 
 - name: nested function call
   faber: outer(inner(x))
   expect:
-    ts: "outer(inner(x));"
-    py: "outer(inner(x))"
-    rs:
-      - "outer(inner(x));"
-    cpp:
-      - "outer(inner(x));"
-    zig:
-      - "outer(inner(x))"
+      ts: 'outer(inner(x));'
+      py: 'outer(inner(x))'
+      rs:
+          - 'outer(inner(x));'
+      cpp:
+          - 'outer(inner(x));'
+      zig:
+          - 'outer(inner(x))'
+
+- name: deeply nested calls
+  faber: a(b(c(d(e(f())))))
+  expect:
+      ts: 'a(b(c(d(e(f())))));'
+      py: 'a(b(c(d(e(f())))))'
+
+- name: mixed spread and regular args
+  faber: fn(a, sparge b, c, sparge d)
+  expect:
+      ts: 'fn(a, ...b, c, ...d);'
+      py: 'fn(a, *b, c, *d)'
+
+- name: chained method calls
+  faber: obj.a().b().c().d()
+  expect:
+      ts: 'obj.a().b().c().d();'
+      py: 'obj.a().b().c().d()'
+
+- name: call with object literal argument
+  faber: 'fn({ x: 1, y: 2 })'
+  expect:
+      ts: 'fn({ x: 1, y: 2 });'
+      py: 'fn({"x": 1, "y": 2})'
+
+- name: call with lambda argument
+  faber: items.map(pro x redde x * 2)
+  expect:
+      ts: 'items.map((x) => (x * 2));'
+      py: 'items.map(lambda x: (x * 2))'
+
+- name: IIFE pattern
+  faber: ((x) => x * 2)(5)
+  expect:
+      ts:
+          - '(x) =>'
+          - '(x * 2)'
+          - '(5)'
+      py:
+          - 'lambda x:'
+          - '(x * 2)'
+          - '(5)'
+
+- name: call on computed member
+  faber: obj[methodName](args)
+  expect:
+      ts: 'obj[methodName](args);'
+      py: 'obj[methodName](args)'
+
+- name: empty call on method
+  faber: obj.method()
+  expect:
+      ts: 'obj.method();'
+      py: 'obj.method()'
+
+- name: call with single argument
+  faber: process(data)
+  expect:
+      ts: 'process(data);'
+      py: 'process(data)'

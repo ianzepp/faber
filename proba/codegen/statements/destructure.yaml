@@ -15,43 +15,43 @@
 - name: extract two fields
   faber: 'ex persona fixum nomen, aetas'
   expect:
-    ts:
-      - 'const { nomen, aetas } = persona;'
-    py:
-      - 'nomen = persona["nomen"]'
-      - 'aetas = persona["aetas"]'
-    rs:
-      - 'let nomen = persona.nomen;'
-      - 'let aetas = persona.aetas;'
-    cpp:
-      - 'const auto& _tmp = persona;'
-      - 'const auto& nomen = _tmp.nomen;'
-      - 'const auto& aetas = _tmp.aetas;'
-    zig:
-      - 'const _tmp = persona;'
-      - 'const nomen = _tmp.nomen;'
-      - 'const aetas = _tmp.aetas;'
+      ts:
+          - 'const { nomen, aetas } = persona;'
+      py:
+          - 'nomen = persona["nomen"]'
+          - 'aetas = persona["aetas"]'
+      rs:
+          - 'let nomen = persona.nomen;'
+          - 'let aetas = persona.aetas;'
+      cpp:
+          - 'const auto& _tmp = persona;'
+          - 'const auto& nomen = _tmp.nomen;'
+          - 'const auto& aetas = _tmp.aetas;'
+      zig:
+          - 'const _tmp = persona;'
+          - 'const nomen = _tmp.nomen;'
+          - 'const aetas = _tmp.aetas;'
 
 # Mutable destructuring
 - name: extract with mutable binding
   faber: 'ex config varia host, port'
   expect:
-    ts:
-      - 'let { host, port } = config;'
-    py:
-      - 'host = config["host"]'
-      - 'port = config["port"]'
-    rs:
-      - 'let mut host = config.host;'
-      - 'let mut port = config.port;'
-    cpp:
-      - 'auto& _tmp = config;'
-      - 'auto& host = _tmp.host;'
-      - 'auto& port = _tmp.port;'
-    zig:
-      - 'const _tmp = config;'
-      - 'var host = _tmp.host;'
-      - 'var port = _tmp.port;'
+      ts:
+          - 'let { host, port } = config;'
+      py:
+          - 'host = config["host"]'
+          - 'port = config["port"]'
+      rs:
+          - 'let mut host = config.host;'
+          - 'let mut port = config.port;'
+      cpp:
+          - 'auto& _tmp = config;'
+          - 'auto& host = _tmp.host;'
+          - 'auto& port = _tmp.port;'
+      zig:
+          - 'const _tmp = config;'
+          - 'var host = _tmp.host;'
+          - 'var port = _tmp.port;'
 
 # =============================================================================
 # Destructuring with Aliases (ut)
@@ -61,22 +61,22 @@
 - name: extract with alias
   faber: 'ex persona fixum nomen ut n, aetas ut a'
   expect:
-    ts:
-      - 'const { nomen: n, aetas: a } = persona;'
-    py:
-      - 'n = persona["nomen"]'
-      - 'a = persona["aetas"]'
-    rs:
-      - 'let n = persona.nomen;'
-      - 'let a = persona.aetas;'
-    cpp:
-      - 'const auto& _tmp = persona;'
-      - 'const auto& n = _tmp.nomen;'
-      - 'const auto& a = _tmp.aetas;'
-    zig:
-      - 'const _tmp = persona;'
-      - 'const n = _tmp.nomen;'
-      - 'const a = _tmp.aetas;'
+      ts:
+          - 'const { nomen: n, aetas: a } = persona;'
+      py:
+          - 'n = persona["nomen"]'
+          - 'a = persona["aetas"]'
+      rs:
+          - 'let n = persona.nomen;'
+          - 'let a = persona.aetas;'
+      cpp:
+          - 'const auto& _tmp = persona;'
+          - 'const auto& n = _tmp.nomen;'
+          - 'const auto& a = _tmp.aetas;'
+      zig:
+          - 'const _tmp = persona;'
+          - 'const n = _tmp.nomen;'
+          - 'const a = _tmp.aetas;'
 
 # =============================================================================
 # Destructuring with Rest (ceteri)
@@ -86,22 +86,22 @@
 - name: extract with rest pattern
   faber: 'ex config fixum host, ceteri rest'
   expect:
-    ts:
-      - 'const { host, ...rest } = config;'
-    py:
-      - 'host = config["host"]'
-      - 'rest = {k: v for k, v in config.items() if k not in ["host"]}'
-    rs:
-      - 'let host = config.host;'
-      - '// TODO: rest pattern requires type info'
-    cpp:
-      - 'const auto& _tmp = config;'
-      - 'const auto& host = _tmp.host;'
-      - '// TODO: rest pattern for rest'
-    zig:
-      - 'const _tmp = config;'
-      - 'const host = _tmp.host;'
-      - '// ceteri (rest) not supported in Zig: rest'
+      ts:
+          - 'const { host, ...rest } = config;'
+      py:
+          - 'host = config["host"]'
+          - 'rest = {k: v for k, v in config.items() if k not in ["host"]}'
+      rs:
+          - 'let host = config.host;'
+          - '// TODO: rest pattern requires type info'
+      cpp:
+          - 'const auto& _tmp = config;'
+          - 'const auto& host = _tmp.host;'
+          - '// TODO: rest pattern for rest'
+      zig:
+          - 'const _tmp = config;'
+          - 'const host = _tmp.host;'
+          - '// ceteri (rest) not supported in Zig: rest'
 
 # =============================================================================
 # Async Destructuring (figendum/variandum)
@@ -111,40 +111,224 @@
 - name: async destructuring with figendum
   faber: 'ex fetchUser() figendum nomen, email'
   expect:
-    ts:
-      - 'const { nomen, email } = await fetchUser();'
-    py:
-      - 'nomen = (await fetchUser())["nomen"]'
-      - 'email = (await fetchUser())["email"]'
-    rs:
-      - 'let nomen = fetchUser().await.nomen;'
-      - 'let email = fetchUser().await.email;'
-    cpp:
-      - 'const auto& _tmp = fetchUser();'
-      - 'const auto& nomen = _tmp.nomen;'
-      - 'const auto& email = _tmp.email;'
-    zig:
-      - 'const _tmp = fetchUser();'
-      - 'const nomen = _tmp.nomen;'
-      - 'const email = _tmp.email;'
+      ts:
+          - 'const { nomen, email } = await fetchUser();'
+      py:
+          - 'nomen = (await fetchUser())["nomen"]'
+          - 'email = (await fetchUser())["email"]'
+      rs:
+          - 'let nomen = fetchUser().await.nomen;'
+          - 'let email = fetchUser().await.email;'
+      cpp:
+          - 'const auto& _tmp = fetchUser();'
+          - 'const auto& nomen = _tmp.nomen;'
+          - 'const auto& email = _tmp.email;'
+      zig:
+          - 'const _tmp = fetchUser();'
+          - 'const nomen = _tmp.nomen;'
+          - 'const email = _tmp.email;'
 
 # Async mutable destructuring
 - name: async destructuring with variandum
   faber: 'ex getConfig() variandum host, port'
   expect:
-    ts:
-      - 'let { host, port } = await getConfig();'
-    py:
-      - 'host = (await getConfig())["host"]'
-      - 'port = (await getConfig())["port"]'
-    rs:
-      - 'let mut host = getConfig().await.host;'
-      - 'let mut port = getConfig().await.port;'
-    cpp:
-      - 'auto& _tmp = getConfig();'
-      - 'auto& host = _tmp.host;'
-      - 'auto& port = _tmp.port;'
-    zig:
-      - 'const _tmp = getConfig();'
-      - 'var host = _tmp.host;'
-      - 'var port = _tmp.port;'
+      ts:
+          - 'let { host, port } = await getConfig();'
+      py:
+          - 'host = (await getConfig())["host"]'
+          - 'port = (await getConfig())["port"]'
+      rs:
+          - 'let mut host = getConfig().await.host;'
+          - 'let mut port = getConfig().await.port;'
+      cpp:
+          - 'auto& _tmp = getConfig();'
+          - 'auto& host = _tmp.host;'
+          - 'auto& port = _tmp.port;'
+      zig:
+          - 'const _tmp = getConfig();'
+          - 'var host = _tmp.host;'
+          - 'var port = _tmp.port;'
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Destructure single field
+- name: destructure single field
+  faber: 'ex obj fixum singleField'
+  expect:
+      ts:
+          - 'const { singleField } = obj;'
+      py:
+          - 'singleField = obj["singleField"]'
+      rs:
+          - 'let singleField = obj.singleField;'
+      cpp:
+          - 'const auto& _tmp = obj;'
+          - 'const auto& singleField = _tmp.singleField;'
+      zig:
+          - 'const _tmp = obj;'
+          - 'const singleField = _tmp.singleField;'
+
+# Destructure from nested access
+- name: destructure from nested access
+  faber: 'ex response.data.user fixum name, email'
+  expect:
+      ts:
+          - 'const { name, email } = response.data.user;'
+      py:
+          - 'name = response.data.user["name"]'
+          - 'email = response.data.user["email"]'
+      rs:
+          - 'let name = response.data.user.name;'
+          - 'let email = response.data.user.email;'
+      cpp:
+          - 'const auto& _tmp = response.data.user;'
+          - 'const auto& name = _tmp.name;'
+          - 'const auto& email = _tmp.email;'
+      zig:
+          - 'const _tmp = response.data.user;'
+          - 'const name = _tmp.name;'
+          - 'const email = _tmp.email;'
+
+# Destructure function result
+- name: destructure function result
+  faber: 'ex getConfig() fixum host, port'
+  expect:
+      ts:
+          - 'const { host, port } = getConfig();'
+      py:
+          - 'host = getConfig()["host"]'
+          - 'port = getConfig()["port"]'
+      rs:
+          - 'let host = getConfig().host;'
+          - 'let port = getConfig().port;'
+      cpp:
+          - 'const auto& _tmp = getConfig();'
+          - 'const auto& host = _tmp.host;'
+          - 'const auto& port = _tmp.port;'
+      zig:
+          - 'const _tmp = getConfig();'
+          - 'const host = _tmp.host;'
+          - 'const port = _tmp.port;'
+
+# Mixed alias and regular
+- name: mixed alias and regular fields
+  faber: 'ex obj fixum a, b ut bee, c'
+  expect:
+      ts:
+          - 'const { a, b: bee, c } = obj;'
+      py:
+          - 'a = obj["a"]'
+          - 'bee = obj["b"]'
+          - 'c = obj["c"]'
+      rs:
+          - 'let a = obj.a;'
+          - 'let bee = obj.b;'
+          - 'let c = obj.c;'
+      cpp:
+          - 'const auto& _tmp = obj;'
+          - 'const auto& a = _tmp.a;'
+          - 'const auto& bee = _tmp.b;'
+          - 'const auto& c = _tmp.c;'
+      zig:
+          - 'const _tmp = obj;'
+          - 'const a = _tmp.a;'
+          - 'const bee = _tmp.b;'
+          - 'const c = _tmp.c;'
+
+# Destructure from computed access
+- name: destructure from computed access
+  faber: 'ex objects[0] fixum id, name'
+  expect:
+      ts:
+          - 'const { id, name } = objects[0];'
+      py:
+          - 'id = objects[0]["id"]'
+          - 'name = objects[0]["name"]'
+      rs:
+          - 'let id = objects[0].id;'
+          - 'let name = objects[0].name;'
+      cpp:
+          - 'const auto& _tmp = objects[0];'
+          - 'const auto& id = _tmp.id;'
+          - 'const auto& name = _tmp.name;'
+      zig:
+          - 'const _tmp = objects[0];'
+          - 'const id = _tmp.id;'
+          - 'const name = _tmp.name;'
+
+# Destructure with rest and alias
+- name: destructure with rest and alias
+  faber: 'ex obj fixum first ut f, ceteri rest'
+  expect:
+      ts:
+          - 'const { first: f, ...rest } = obj;'
+      py:
+          - 'f = obj["first"]'
+          - 'rest = {k: v for k, v in obj.items() if k not in ["first"]}'
+      rs:
+          - 'let f = obj.first;'
+          - '// TODO: rest pattern requires type info'
+      cpp:
+          - 'const auto& _tmp = obj;'
+          - 'const auto& f = _tmp.first;'
+          - '// TODO: rest pattern for rest'
+      zig:
+          - 'const _tmp = obj;'
+          - 'const f = _tmp.first;'
+          - '// ceteri (rest) not supported in Zig: rest'
+
+# Destructure many fields (5+)
+- name: destructure many fields
+  faber: 'ex config fixum a, b, c, d, e'
+  expect:
+      ts:
+          - 'const { a, b, c, d, e } = config;'
+      py:
+          - 'a = config["a"]'
+          - 'b = config["b"]'
+          - 'c = config["c"]'
+          - 'd = config["d"]'
+          - 'e = config["e"]'
+      rs:
+          - 'let a = config.a;'
+          - 'let b = config.b;'
+          - 'let c = config.c;'
+          - 'let d = config.d;'
+          - 'let e = config.e;'
+      cpp:
+          - 'const auto& _tmp = config;'
+          - 'const auto& a = _tmp.a;'
+          - 'const auto& b = _tmp.b;'
+          - 'const auto& c = _tmp.c;'
+          - 'const auto& d = _tmp.d;'
+          - 'const auto& e = _tmp.e;'
+      zig:
+          - 'const _tmp = config;'
+          - 'const a = _tmp.a;'
+          - 'const b = _tmp.b;'
+          - 'const c = _tmp.c;'
+          - 'const d = _tmp.d;'
+          - 'const e = _tmp.e;'
+
+# Mutable destructure with alias
+- name: mutable destructure with alias
+  faber: 'ex obj varia x ut ex, y ut why'
+  expect:
+      ts:
+          - 'let { x: ex, y: why } = obj;'
+      py:
+          - 'ex = obj["x"]'
+          - 'why = obj["y"]'
+      rs:
+          - 'let mut ex = obj.x;'
+          - 'let mut why = obj.y;'
+      cpp:
+          - 'auto& _tmp = obj;'
+          - 'auto& ex = _tmp.x;'
+          - 'auto& why = _tmp.y;'
+      zig:
+          - 'const _tmp = obj;'
+          - 'var ex = _tmp.x;'
+          - 'var why = _tmp.y;'

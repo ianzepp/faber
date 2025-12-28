@@ -20,27 +20,27 @@
 - name: simple ordo without values
   faber: 'ordo Color { rubrum, viridis, caeruleum }'
   expect:
-    ts:
-      - "enum Color"
-      - "rubrum, viridis, caeruleum"
-    py:
-      - "class Color(Enum):"
-      - "rubrum = auto()"
-      - "viridis = auto()"
-      - "caeruleum = auto()"
-    rs:
-      - "enum Color"
-      - "rubrum,"
-      - "viridis,"
-      - "caeruleum,"
-    cpp:
-      - "enum class Color"
-      - "rubrum, viridis, caeruleum"
-    zig:
-      - "const Color = enum"
-      - "rubrum,"
-      - "viridis,"
-      - "caeruleum,"
+      ts:
+          - 'enum Color'
+          - 'rubrum, viridis, caeruleum'
+      py:
+          - 'class Color(Enum):'
+          - 'rubrum = auto()'
+          - 'viridis = auto()'
+          - 'caeruleum = auto()'
+      rs:
+          - 'enum Color'
+          - 'rubrum,'
+          - 'viridis,'
+          - 'caeruleum,'
+      cpp:
+          - 'enum class Color'
+          - 'rubrum, viridis, caeruleum'
+      zig:
+          - 'const Color = enum'
+          - 'rubrum,'
+          - 'viridis,'
+          - 'caeruleum,'
 
 # =============================================================================
 # Numeric Values
@@ -50,28 +50,28 @@
 - name: ordo with numeric values
   faber: 'ordo Status { pendens = 0, actum = 1, finitum = 2 }'
   expect:
-    ts:
-      - "enum Status"
-      - "pendens = 0"
-      - "actum = 1"
-      - "finitum = 2"
-    py:
-      - "class Status(Enum):"
-      - "pendens = 0"
-      - "actum = 1"
-      - "finitum = 2"
-    rs:
-      - "enum Status"
-      - "pendens = 0,"
-      - "actum = 1,"
-      - "finitum = 2,"
-    cpp:
-      - "enum class Status"
-    zig:
-      - "const Status = enum"
-      - "pendens = 0,"
-      - "actum = 1,"
-      - "finitum = 2,"
+      ts:
+          - 'enum Status'
+          - 'pendens = 0'
+          - 'actum = 1'
+          - 'finitum = 2'
+      py:
+          - 'class Status(Enum):'
+          - 'pendens = 0'
+          - 'actum = 1'
+          - 'finitum = 2'
+      rs:
+          - 'enum Status'
+          - 'pendens = 0,'
+          - 'actum = 1,'
+          - 'finitum = 2,'
+      cpp:
+          - 'enum class Status'
+      zig:
+          - 'const Status = enum'
+          - 'pendens = 0,'
+          - 'actum = 1,'
+          - 'finitum = 2,'
 
 # =============================================================================
 # String Values
@@ -81,22 +81,22 @@
 - name: ordo with string values
   faber: 'ordo Direction { north = "N", south = "S", east = "E", west = "W" }'
   expect:
-    ts:
-      - "enum Direction"
-      - 'north = "N"'
-      - 'south = "S"'
-    py:
-      - "class Direction(Enum):"
-      - 'north = "N"'
-      - 'south = "S"'
-    rs:
-      - "enum Direction"
-      - 'north = "N",'
-      - 'south = "S",'
-    cpp:
-      - "enum class Direction"
-    zig:
-      - "const Direction = enum"
+      ts:
+          - 'enum Direction'
+          - 'north = "N"'
+          - 'south = "S"'
+      py:
+          - 'class Direction(Enum):'
+          - 'north = "N"'
+          - 'south = "S"'
+      rs:
+          - 'enum Direction'
+          - 'north = "N",'
+          - 'south = "S",'
+      cpp:
+          - 'enum class Direction'
+      zig:
+          - 'const Direction = enum'
 
 # =============================================================================
 # Mixed Values
@@ -106,25 +106,111 @@
 - name: ordo with mixed values
   faber: 'ordo Priority { low = 1, medium, high = 10 }'
   expect:
-    ts:
-      - "enum Priority"
-      - "low = 1"
-      - "medium"
-      - "high = 10"
-    py:
-      - "class Priority(Enum):"
-      - "low = 1"
-      - "medium = auto()"
-      - "high = 10"
-    rs:
-      - "enum Priority"
-      - "low = 1,"
-      - "medium,"
-      - "high = 10,"
-    cpp:
-      - "enum class Priority"
-    zig:
-      - "const Priority = enum"
-      - "low = 1,"
-      - "medium,"
-      - "high = 10,"
+      ts:
+          - 'enum Priority'
+          - 'low = 1'
+          - 'medium'
+          - 'high = 10'
+      py:
+          - 'class Priority(Enum):'
+          - 'low = 1'
+          - 'medium = auto()'
+          - 'high = 10'
+      rs:
+          - 'enum Priority'
+          - 'low = 1,'
+          - 'medium,'
+          - 'high = 10,'
+      cpp:
+          - 'enum class Priority'
+      zig:
+          - 'const Priority = enum'
+          - 'low = 1,'
+          - 'medium,'
+          - 'high = 10,'
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Ordo with single member
+- name: ordo with single member
+  faber: 'ordo Singleton { OnlyOne }'
+  expect:
+      ts:
+          - 'enum Singleton'
+          - 'OnlyOne'
+      py:
+          - 'class Singleton(Enum):'
+          - 'OnlyOne = auto()'
+
+# Ordo with many members (10+)
+- name: ordo with many members
+  faber: 'ordo Month { Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec }'
+  expect:
+      ts:
+          - 'enum Month'
+          - 'Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec'
+      py:
+          - 'class Month(Enum):'
+          - 'Jan = auto()'
+          - 'Dec = auto()'
+
+# Ordo with bitflag values
+- name: ordo with bitflag values
+  faber: 'ordo Flags { Read = 1, Write = 2, Execute = 4 }'
+  expect:
+      ts:
+          - 'enum Flags'
+          - 'Read = 1'
+          - 'Write = 2'
+          - 'Execute = 4'
+      py:
+          - 'class Flags(Enum):'
+          - 'Read = 1'
+          - 'Write = 2'
+          - 'Execute = 4'
+
+# Ordo with negative values
+- name: ordo with negative values
+  faber: 'ordo Offset { Before = -1, At = 0, After = 1 }'
+  expect:
+      ts:
+          - 'enum Offset'
+          - 'Before = -1'
+          - 'At = 0'
+          - 'After = 1'
+      py:
+          - 'class Offset(Enum):'
+          - 'Before = -1'
+          - 'At = 0'
+          - 'After = 1'
+
+# Ordo with large values
+- name: ordo with large values
+  faber: 'ordo HttpStatus { OK = 200, NotFound = 404, ServerError = 500 }'
+  expect:
+      ts:
+          - 'enum HttpStatus'
+          - 'OK = 200'
+          - 'NotFound = 404'
+          - 'ServerError = 500'
+      py:
+          - 'class HttpStatus(Enum):'
+          - 'OK = 200'
+          - 'NotFound = 404'
+          - 'ServerError = 500'
+
+# Ordo with sequential implicit values
+- name: ordo with sequential implicit values
+  faber: 'ordo Priority { Low, Medium, High, Critical }'
+  expect:
+      ts:
+          - 'enum Priority'
+          - 'Low, Medium, High, Critical'
+      py:
+          - 'class Priority(Enum):'
+          - 'Low = auto()'
+          - 'Medium = auto()'
+          - 'High = auto()'
+          - 'Critical = auto()'

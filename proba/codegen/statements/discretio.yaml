@@ -21,33 +21,33 @@
 - name: discretio with unit variants
   faber: 'discretio Status { Active, Inactive, Pending }'
   expect:
-    ts:
-      - "type Status ="
-      - "{ tag: 'Active' }"
-      - "{ tag: 'Inactive' }"
-      - "{ tag: 'Pending' }"
-    py:
-      - "@dataclass"
-      - "class Status_Active:"
-      - "tag: str = 'Active'"
-      - "class Status_Inactive:"
-      - "class Status_Pending:"
-      - "Status = Status_Active | Status_Inactive | Status_Pending"
-    rs:
-      - "enum Status"
-      - "Active,"
-      - "Inactive,"
-      - "Pending,"
-    cpp:
-      - "struct Active {};"
-      - "struct Inactive {};"
-      - "struct Pending {};"
-      - "using Status = std::variant<Active, Inactive, Pending>;"
-    zig:
-      - "const Status = union(enum)"
-      - "active,"
-      - "inactive,"
-      - "pending,"
+      ts:
+          - 'type Status ='
+          - "{ tag: 'Active' }"
+          - "{ tag: 'Inactive' }"
+          - "{ tag: 'Pending' }"
+      py:
+          - '@dataclass'
+          - 'class Status_Active:'
+          - "tag: str = 'Active'"
+          - 'class Status_Inactive:'
+          - 'class Status_Pending:'
+          - 'Status = Status_Active | Status_Inactive | Status_Pending'
+      rs:
+          - 'enum Status'
+          - 'Active,'
+          - 'Inactive,'
+          - 'Pending,'
+      cpp:
+          - 'struct Active {};'
+          - 'struct Inactive {};'
+          - 'struct Pending {};'
+          - 'using Status = std::variant<Active, Inactive, Pending>;'
+      zig:
+          - 'const Status = union(enum)'
+          - 'active,'
+          - 'inactive,'
+          - 'pending,'
 
 # =============================================================================
 # Variants with Payloads
@@ -56,45 +56,45 @@
 # Mixed unit and payload variants
 - name: discretio with payload variants
   faber: |
-    discretio Event {
-      Click { numerus x, numerus y }
-      Keypress { textus key }
-      Quit
-    }
+      discretio Event {
+        Click { numerus x, numerus y }
+        Keypress { textus key }
+        Quit
+      }
   expect:
-    ts:
-      - "type Event ="
-      - "{ tag: 'Click'; x: number; y: number }"
-      - "{ tag: 'Keypress'; key: string }"
-      - "{ tag: 'Quit' }"
-    py:
-      - "@dataclass"
-      - "class Event_Click:"
-      - "tag: str = 'Click'"
-      - "x: int"
-      - "y: int"
-      - "class Event_Keypress:"
-      - "key: str"
-      - "class Event_Quit:"
-      - "Event = Event_Click | Event_Keypress | Event_Quit"
-    rs:
-      - "enum Event"
-      - "Click { x: f64, y: f64 },"
-      - "Keypress { key: String },"
-      - "Quit,"
-    cpp:
-      - "struct Click"
-      - "int64_t x;"
-      - "int64_t y;"
-      - "struct Keypress"
-      - "std::string key;"
-      - "struct Quit {};"
-      - "using Event = std::variant<Click, Keypress, Quit>;"
-    zig:
-      - "const Event = union(enum)"
-      - "click: struct { x: i64, y: i64 },"
-      - "keypress: struct { key: []const u8 },"
-      - "quit,"
+      ts:
+          - 'type Event ='
+          - "{ tag: 'Click'; x: number; y: number }"
+          - "{ tag: 'Keypress'; key: string }"
+          - "{ tag: 'Quit' }"
+      py:
+          - '@dataclass'
+          - 'class Event_Click:'
+          - "tag: str = 'Click'"
+          - 'x: int'
+          - 'y: int'
+          - 'class Event_Keypress:'
+          - 'key: str'
+          - 'class Event_Quit:'
+          - 'Event = Event_Click | Event_Keypress | Event_Quit'
+      rs:
+          - 'enum Event'
+          - 'Click { x: f64, y: f64 },'
+          - 'Keypress { key: String },'
+          - 'Quit,'
+      cpp:
+          - 'struct Click'
+          - 'int64_t x;'
+          - 'int64_t y;'
+          - 'struct Keypress'
+          - 'std::string key;'
+          - 'struct Quit {};'
+          - 'using Event = std::variant<Click, Keypress, Quit>;'
+      zig:
+          - 'const Event = union(enum)'
+          - 'click: struct { x: i64, y: i64 },'
+          - 'keypress: struct { key: []const u8 },'
+          - 'quit,'
 
 # =============================================================================
 # Generic Discretio
@@ -103,33 +103,33 @@
 # Generic tagged union (Option<T> pattern)
 - name: discretio with type parameter
   faber: |
-    discretio Option<T> {
-      Some { T value }
-      None
-    }
+      discretio Option<T> {
+        Some { T value }
+        None
+      }
   expect:
-    ts:
-      - "type Option<T> ="
-      - "{ tag: 'Some'; value: T }"
-      - "{ tag: 'None' }"
-    py:
-      - "@dataclass"
-      - "class Option_Some:"
-      - "value: T"
-      - "class Option_None:"
-      - "Option = Option_Some | Option_None"
-    rs:
-      - "enum Option<T>"
-      - "Some { value: T },"
-      - "None,"
-    cpp:
-      - "struct Some"
-      - "struct None {};"
-      - "using Option = std::variant<Some, None>;"
-    zig:
-      - "const Option = union(enum)"
-      - "some: struct { value: T },"
-      - "none,"
+      ts:
+          - 'type Option<T> ='
+          - "{ tag: 'Some'; value: T }"
+          - "{ tag: 'None' }"
+      py:
+          - '@dataclass'
+          - 'class Option_Some:'
+          - 'value: T'
+          - 'class Option_None:'
+          - 'Option = Option_Some | Option_None'
+      rs:
+          - 'enum Option<T>'
+          - 'Some { value: T },'
+          - 'None,'
+      cpp:
+          - 'struct Some'
+          - 'struct None {};'
+          - 'using Option = std::variant<Some, None>;'
+      zig:
+          - 'const Option = union(enum)'
+          - 'some: struct { value: T },'
+          - 'none,'
 
 # =============================================================================
 # Single Field Variant
@@ -139,25 +139,141 @@
 - name: discretio with single field variant
   faber: 'discretio Result { Success { textus message }, Failure { textus error } }'
   expect:
-    ts:
-      - "type Result ="
-      - "{ tag: 'Success'; message: string }"
-      - "{ tag: 'Failure'; error: string }"
-    py:
-      - "class Result_Success:"
-      - "message: str"
-      - "class Result_Failure:"
-      - "error: str"
-    rs:
-      - "enum Result"
-      - "Success { message: String },"
-      - "Failure { error: String },"
-    cpp:
-      - "struct Success"
-      - "std::string message;"
-      - "struct Failure"
-      - "std::string error;"
-    zig:
-      - "const Result = union(enum)"
-      - "success: struct { message: []const u8 },"
-      - "failure: struct { error: []const u8 },"
+      ts:
+          - 'type Result ='
+          - "{ tag: 'Success'; message: string }"
+          - "{ tag: 'Failure'; error: string }"
+      py:
+          - 'class Result_Success:'
+          - 'message: str'
+          - 'class Result_Failure:'
+          - 'error: str'
+      rs:
+          - 'enum Result'
+          - 'Success { message: String },'
+          - 'Failure { error: String },'
+      cpp:
+          - 'struct Success'
+          - 'std::string message;'
+          - 'struct Failure'
+          - 'std::string error;'
+      zig:
+          - 'const Result = union(enum)'
+          - 'success: struct { message: []const u8 },'
+          - 'failure: struct { error: []const u8 },'
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Multiple type parameters
+- name: discretio with multiple type params
+  faber: 'discretio Either<L, R> { Left { L value }, Right { R value } }'
+  expect:
+      ts:
+          - 'type Either<L, R> ='
+          - "{ tag: 'Left'; value: L }"
+          - "{ tag: 'Right'; value: R }"
+      py:
+          - 'class Either_Left:'
+          - 'value: L'
+          - 'class Either_Right:'
+          - 'value: R'
+          - 'Either = Either_Left | Either_Right'
+
+# Variant with many fields (4+)
+- name: discretio with many fields per variant
+  faber: |
+      discretio Shape {
+        Rectangle { numerus x, numerus y, numerus width, numerus height }
+        Circle { numerus cx, numerus cy, numerus radius }
+      }
+  expect:
+      ts:
+          - 'type Shape ='
+          - "{ tag: 'Rectangle'; x: number; y: number; width: number; height: number }"
+          - "{ tag: 'Circle'; cx: number; cy: number; radius: number }"
+      py:
+          - 'class Shape_Rectangle:'
+          - 'x: int'
+          - 'y: int'
+          - 'width: int'
+          - 'height: int'
+          - 'class Shape_Circle:'
+          - 'cx: int'
+          - 'cy: int'
+          - 'radius: int'
+
+# Single variant only
+- name: discretio with single variant
+  faber: 'discretio Wrapper { Value { numerus x } }'
+  expect:
+      ts:
+          - 'type Wrapper ='
+          - "{ tag: 'Value'; x: number }"
+      py:
+          - 'class Wrapper_Value:'
+          - 'x: int'
+          - 'Wrapper = Wrapper_Value'
+
+# Mixed unit and payload variants
+- name: discretio with mixed unit and payload variants
+  faber: |
+      discretio Message {
+        Text { textus content }
+        Image { textus url, numerus width, numerus height }
+        Ping
+        Pong
+        Error { textus reason }
+      }
+  expect:
+      ts:
+          - 'type Message ='
+          - "{ tag: 'Text'; content: string }"
+          - "{ tag: 'Image'; url: string; width: number; height: number }"
+          - "{ tag: 'Ping' }"
+          - "{ tag: 'Pong' }"
+          - "{ tag: 'Error'; reason: string }"
+      py:
+          - 'class Message_Text:'
+          - 'content: str'
+          - 'class Message_Image:'
+          - 'url: str'
+          - 'width: int'
+          - 'height: int'
+          - 'class Message_Ping:'
+          - 'class Message_Pong:'
+          - 'class Message_Error:'
+          - 'reason: str'
+
+# Many variants (6+)
+- name: discretio with many variants
+  faber: |
+      discretio Day {
+        Monday
+        Tuesday
+        Wednesday
+        Thursday
+        Friday
+        Saturday
+        Sunday
+      }
+  expect:
+      ts:
+          - 'type Day ='
+          - "{ tag: 'Monday' }"
+          - "{ tag: 'Tuesday' }"
+          - "{ tag: 'Wednesday' }"
+          - "{ tag: 'Thursday' }"
+          - "{ tag: 'Friday' }"
+          - "{ tag: 'Saturday' }"
+          - "{ tag: 'Sunday' }"
+      py:
+          - 'class Day_Monday:'
+          - 'class Day_Tuesday:'
+          - 'class Day_Wednesday:'
+          - 'class Day_Thursday:'
+          - 'class Day_Friday:'
+          - 'class Day_Saturday:'
+          - 'class Day_Sunday:'
+          - 'Day = Day_Monday | Day_Tuesday | Day_Wednesday | Day_Thursday | Day_Friday | Day_Saturday | Day_Sunday'

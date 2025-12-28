@@ -4,64 +4,149 @@
 - name: simple arrow identity
   faber: (x) => x
   expect:
-    ts: "(x) => x;"
-    py: "lambda x: x"
-    rs:
-      - "|x| x;"
-    cpp:
-      - "[&](auto x) { return x; }"
-    zig:
-      - "@compileError"
+      ts: '(x) => x;'
+      py: 'lambda x: x'
+      rs:
+          - '|x| x;'
+      cpp:
+          - '[&](auto x) { return x; }'
+      zig:
+          - '@compileError'
 
 - name: arrow with expression body
   faber: (x) => x + 1
   expect:
-    ts: "(x) => (x + 1);"
-    py: "lambda x: (x + 1)"
-    rs:
-      - "|x| (x + 1);"
-    cpp:
-      - "[&](auto x) { return (x + 1); }"
-    zig:
-      - "@compileError"
+      ts: '(x) => (x + 1);'
+      py: 'lambda x: (x + 1)'
+      rs:
+          - '|x| (x + 1);'
+      cpp:
+          - '[&](auto x) { return (x + 1); }'
+      zig:
+          - '@compileError'
 
 - name: arrow with multiple params
   faber: (x, y) => x + y
   expect:
-    ts: "(x, y) => (x + y);"
-    py: "lambda x, y: (x + y)"
-    rs:
-      - "|x, y| (x + y);"
-    cpp:
-      - "[&](auto x, auto y) { return (x + y); }"
-    zig:
-      - "@compileError"
+      ts: '(x, y) => (x + y);'
+      py: 'lambda x, y: (x + y)'
+      rs:
+          - '|x, y| (x + y);'
+      cpp:
+          - '[&](auto x, auto y) { return (x + y); }'
+      zig:
+          - '@compileError'
 
 - name: arrow with block body
   faber: |
-    (x) => { redde x * 2 }
+      (x) => { redde x * 2 }
   expect:
-    ts:
-      - "(x) =>"
-      - "return (x * 2);"
-    py: "lambda x: (x * 2)"
-    rs:
-      - "|x| {"
-      - "return (x * 2);"
-    cpp:
-      - "[&](auto x) {"
-      - "return (x * 2);"
-    zig:
-      - "@compileError"
+      ts:
+          - '(x) =>'
+          - 'return (x * 2);'
+      py: 'lambda x: (x * 2)'
+      rs:
+          - '|x| {'
+          - 'return (x * 2);'
+      cpp:
+          - '[&](auto x) {'
+          - 'return (x * 2);'
+      zig:
+          - '@compileError'
 
 - name: arrow with no params
   faber: () => 42
   expect:
-    ts: "() => 42;"
-    py: "lambda : 42"
-    rs:
-      - "|| 42;"
-    cpp:
-      - "[&]() { return 42; }"
-    zig:
-      - "@compileError"
+      ts: '() => 42;'
+      py: 'lambda : 42'
+      rs:
+          - '|| 42;'
+      cpp:
+          - '[&]() { return 42; }'
+      zig:
+          - '@compileError'
+
+- name: arrow returning arrow (curried)
+  faber: (x) => (y) => x + y
+  expect:
+      ts: '(x) => (y) => (x + y);'
+      py: 'lambda x: lambda y: (x + y)'
+      rs:
+          - '|x| |y| (x + y);'
+      cpp:
+          - '[&](auto x) { return [&](auto y) { return (x + y); }; }'
+      zig:
+          - '@compileError'
+
+- name: arrow with typed params
+  faber: (numerus x, numerus y) => x + y
+  expect:
+      ts: '(x: number, y: number) => (x + y);'
+      py: 'lambda x, y: (x + y)'
+      rs:
+          - '|x, y| (x + y);'
+      cpp:
+          - '[&](int64_t x, int64_t y) { return (x + y); }'
+      zig:
+          - '@compileError'
+
+- name: arrow with rest param
+  faber: (x, ceteri rest) => rest
+  expect:
+      ts: '(x, ...rest) => rest;'
+      py: 'lambda x, rest: rest'
+      rs:
+          - '|x, rest| rest;'
+      cpp:
+          - '[&](auto x, auto rest) { return rest; }'
+      zig:
+          - '@compileError'
+
+- name: arrow with nested si block
+  faber: |
+      (x) => {
+        si x > 0 {
+          redde x
+        }
+      }
+  expect:
+      ts:
+          - '(x) =>'
+          - 'if ((x > 0))'
+          - 'return x;'
+      py:
+          - 'lambda x:'
+      rs:
+          - '|x| {'
+          - 'if (x > 0)'
+          - 'return x;'
+      cpp:
+          - '[&](auto x) {'
+          - 'if ((x > 0))'
+          - 'return x;'
+      zig:
+          - '@compileError'
+
+- name: arrow with member access
+  faber: (obj) => obj.value
+  expect:
+      ts: '(obj) => obj.value;'
+      py: 'lambda obj: obj.value'
+      rs:
+          - '|obj| obj.value;'
+      cpp:
+          - '[&](auto obj) { return obj.value; }'
+      zig:
+          - '@compileError'
+
+- name: arrow with call
+  faber: (x) => process(x)
+  expect:
+      ts: '(x) => process(x);'
+      py: 'lambda x: process(x)'
+      rs:
+          - '|x| process(x);'
+      cpp:
+          - '[&](auto x) { return process(x); }'
+      zig:
+          - '@compileError'

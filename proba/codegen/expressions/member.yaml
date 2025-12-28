@@ -4,64 +4,127 @@
 - name: simple property access
   faber: usuario.nomen
   expect:
-    ts: "usuario.nomen;"
-    py: "usuario.nomen"
-    rs:
-      - "usuario.nomen;"
-    cpp:
-      - "usuario.nomen;"
-    zig:
-      - "usuario.nomen"
+      ts: 'usuario.nomen;'
+      py: 'usuario.nomen'
+      rs:
+          - 'usuario.nomen;'
+      cpp:
+          - 'usuario.nomen;'
+      zig:
+          - 'usuario.nomen'
 
 - name: computed access with variable
   faber: obj[key]
   expect:
-    ts: "obj[key];"
-    py: "obj[key]"
-    rs:
-      - "obj[key];"
-    cpp:
-      - "obj[key];"
+      ts: 'obj[key];'
+      py: 'obj[key]'
+      rs:
+          - 'obj[key];'
+      cpp:
+          - 'obj[key];'
 
 - name: computed access with literal
   faber: arr[0]
   expect:
-    ts: "arr[0];"
-    py: "arr[0]"
-    rs:
-      - "arr[0];"
-    cpp:
-      - "arr[0];"
+      ts: 'arr[0];'
+      py: 'arr[0]'
+      rs:
+          - 'arr[0];'
+      cpp:
+          - 'arr[0];'
 
 - name: optional property access
   faber: user?.name
   expect:
-    ts: "user?.name;"
-    py:
-      - "user.name if user is not None else None"
-    rs:
-      - "user.as_ref().map"
-      - ".name"
-    cpp:
-      - "user ? user->name : std::nullopt"
+      ts: 'user?.name;'
+      py:
+          - 'user.name if user is not None else None'
+      rs:
+          - 'user.as_ref().map'
+          - '.name'
+      cpp:
+          - 'user ? user->name : std::nullopt'
 
 - name: optional computed access
   faber: arr?[0]
   expect:
-    ts: "arr?.[0];"
-    py:
-      - "arr[0] if arr is not None else None"
-    rs:
-      - "arr.get(0);"
-    cpp:
-      - "arr ? (*arr)[0] : std::nullopt"
+      ts: 'arr?.[0];'
+      py:
+          - 'arr[0] if arr is not None else None'
+      rs:
+          - 'arr.get(0);'
+      cpp:
+          - 'arr ? (*arr)[0] : std::nullopt'
 
 - name: non-null property access
   faber: user!.name
   expect:
-    ts: "user!.name;"
-    py: "user.name"
-    rs:
-      - "user.name;"
-    cpp:
-      - "user->name;"
+      ts: 'user!.name;'
+      py: 'user.name'
+      rs:
+          - 'user.name;'
+      cpp:
+          - 'user->name;'
+
+- name: very long member chain
+  faber: a.b.c.d.e.f.g
+  expect:
+      ts: 'a.b.c.d.e.f.g;'
+      py: 'a.b.c.d.e.f.g'
+
+- name: mixed optional and non-optional chain
+  faber: a?.b.c?.d.e
+  expect:
+      ts: 'a?.b.c?.d.e;'
+      py:
+          - 'a.b.c.d.e if a is not None'
+          - 'if a.b.c is not None else None'
+
+- name: computed access with expression
+  faber: arr[i * 2 + 1]
+  expect:
+      ts: 'arr[i * 2 + 1];'
+      py: 'arr[i * 2 + 1]'
+
+- name: computed access with string key
+  faber: obj["property-name"]
+  expect:
+      ts: 'obj["property-name"];'
+      py: 'obj["property-name"]'
+
+- name: member on string literal
+  faber: '"hello".length'
+  expect:
+      ts: '"hello".length;'
+      py: 'len("hello")'
+
+- name: member on array literal
+  faber: '[1, 2, 3].length'
+  expect:
+      ts: '[1, 2, 3].length;'
+      py: 'len([1, 2, 3])'
+
+- name: optional computed then call
+  faber: obj?.[key]()
+  expect:
+      ts: 'obj?.[key]();'
+      py:
+          - 'obj[key]() if obj is not None else None'
+
+- name: non-null after call
+  faber: getUser()!.name
+  expect:
+      ts: 'getUser()!.name;'
+      py: 'getUser().name'
+
+- name: computed with template
+  faber: obj[`key_${id}`]
+  expect:
+      ts: 'obj[`key_${id}`];'
+      py: 'obj[f"key_{id}"]'
+
+- name: double computed access
+  faber: matrix[i][j]
+  expect:
+      ts: 'matrix[i][j];'
+      py: 'matrix[i][j]'

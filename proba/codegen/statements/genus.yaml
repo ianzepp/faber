@@ -23,52 +23,52 @@
 - name: simple genus with one field
   faber: 'genus Persona { textus nomen }'
   expect:
-    ts:
-      - "class Persona"
-      - "nomen: string"
-      - "constructor(overrides:"
-    py:
-      - "class Persona:"
-      - "nomen: str"
-      - "def __init__(self, overrides: dict = {}):"
-    rs:
-      - "struct Persona"
-      - "pub nomen: String,"
-    cpp:
-      - "struct Persona"
-      - "std::string nomen"
-    zig:
-      - "const Persona = struct"
-      - "nomen: []const u8"
+      ts:
+          - 'class Persona'
+          - 'nomen: string'
+          - 'constructor(overrides:'
+      py:
+          - 'class Persona:'
+          - 'nomen: str'
+          - 'def __init__(self, overrides: dict = {}):'
+      rs:
+          - 'struct Persona'
+          - 'pub nomen: String,'
+      cpp:
+          - 'struct Persona'
+          - 'std::string nomen'
+      zig:
+          - 'const Persona = struct'
+          - 'nomen: []const u8'
 
 # Genus with multiple fields
 - name: genus with multiple fields
   faber: |
-    genus Persona {
-      textus nomen
-      numerus aetas
-    }
+      genus Persona {
+        textus nomen
+        numerus aetas
+      }
   expect:
-    ts:
-      - "class Persona"
-      - "nomen: string"
-      - "aetas: number"
-    py:
-      - "class Persona:"
-      - "nomen: str"
-      - "aetas: int"
-    rs:
-      - "struct Persona"
-      - "pub nomen: String,"
-      - "pub aetas: f64,"
-    cpp:
-      - "struct Persona"
-      - "std::string nomen"
-      - "int64_t aetas"
-    zig:
-      - "const Persona = struct"
-      - "nomen: []const u8"
-      - "aetas: i64"
+      ts:
+          - 'class Persona'
+          - 'nomen: string'
+          - 'aetas: number'
+      py:
+          - 'class Persona:'
+          - 'nomen: str'
+          - 'aetas: int'
+      rs:
+          - 'struct Persona'
+          - 'pub nomen: String,'
+          - 'pub aetas: f64,'
+      cpp:
+          - 'struct Persona'
+          - 'std::string nomen'
+          - 'int64_t aetas'
+      zig:
+          - 'const Persona = struct'
+          - 'nomen: []const u8'
+          - 'aetas: i64'
 
 # =============================================================================
 # Field Defaults
@@ -78,20 +78,20 @@
 - name: genus with field defaults
   faber: 'genus Config { textus nomen: "default" numerus port: 8080 }'
   expect:
-    ts:
-      - "nomen: string = \"default\""
-      - "port: number = 8080"
-    py:
-      - "nomen: str = \"default\""
-      - "port: int = 8080"
-    rs:
-      - "struct Config"
-    cpp:
-      - 'std::string nomen = std::string("default")'
-      - "int64_t port = 8080"
-    zig:
-      - 'nomen: []const u8 = "default"'
-      - "port: i64 = 8080"
+      ts:
+          - 'nomen: string = "default"'
+          - 'port: number = 8080'
+      py:
+          - 'nomen: str = "default"'
+          - 'port: int = 8080'
+      rs:
+          - 'struct Config'
+      cpp:
+          - 'std::string nomen = std::string("default")'
+          - 'int64_t port = 8080'
+      zig:
+          - 'nomen: []const u8 = "default"'
+          - 'port: i64 = 8080'
 
 # =============================================================================
 # Field Modifiers
@@ -101,31 +101,31 @@
 - name: genus with private field
   faber: 'genus Persona { privatus textus secretum }'
   expect:
-    ts:
-      - "private secretum: string"
-    py:
-      - "_secretum: str"
-    rs:
-      - "secretum: String,"
-    cpp:
-      - "std::string secretum"
-    zig:
-      - "secretum: []const u8"
+      ts:
+          - 'private secretum: string'
+      py:
+          - '_secretum: str'
+      rs:
+          - 'secretum: String,'
+      cpp:
+          - 'std::string secretum'
+      zig:
+          - 'secretum: []const u8'
 
 # Static fields
 - name: genus with static field
   faber: 'genus Config { generis textus VERSION: "1.0" }'
   expect:
-    ts:
-      - "static VERSION: string = \"1.0\""
-    py:
-      - 'VERSION: str = "1.0"'
-    rs:
-      - "struct Config"
-    cpp:
-      - "struct Config"
-    zig:
-      - "const Config = struct"
+      ts:
+          - 'static VERSION: string = "1.0"'
+      py:
+          - 'VERSION: str = "1.0"'
+      rs:
+          - 'struct Config'
+      cpp:
+          - 'struct Config'
+      zig:
+          - 'const Config = struct'
 
 # =============================================================================
 # Methods
@@ -134,30 +134,30 @@
 # Simple method
 - name: genus with method
   faber: |
-    genus Persona {
-      textus nomen
-      functio saluta() -> textus {
-        redde nomen
+      genus Persona {
+        textus nomen
+        functio saluta() -> textus {
+          redde nomen
+        }
       }
-    }
   expect:
-    ts:
-      - "class Persona"
-      - "saluta(): string"
-      - "return nomen"
-    py:
-      - "class Persona:"
-      - "def saluta(self) -> str:"
-      - "return nomen"
-    rs:
-      - "struct Persona"
-      - "impl Persona"
-    cpp:
-      - "struct Persona"
-      - "std::string saluta()"
-    zig:
-      - "const Persona = struct"
-      - "pub fn saluta(self: *const Self)"
+      ts:
+          - 'class Persona'
+          - 'saluta(): string'
+          - 'return nomen'
+      py:
+          - 'class Persona:'
+          - 'def saluta(self) -> str:'
+          - 'return nomen'
+      rs:
+          - 'struct Persona'
+          - 'impl Persona'
+      cpp:
+          - 'struct Persona'
+          - 'std::string saluta()'
+      zig:
+          - 'const Persona = struct'
+          - 'pub fn saluta(self: *const Self)'
 
 # =============================================================================
 # Constructor (creo)
@@ -166,35 +166,35 @@
 # Genus with creo initialization
 - name: genus with creo method
   faber: |
-    genus Persona {
-      numerus aetas
-      functio creo() {
-        si aetas < 0 {
-          aetas = 0
+      genus Persona {
+        numerus aetas
+        functio creo() {
+          si aetas < 0 {
+            aetas = 0
+          }
         }
       }
-    }
   expect:
-    ts:
-      - "class Persona"
-      - "private creo()"
-      - "this.creo()"
-    py:
-      - "class Persona:"
-      - "def _creo(self):"
-      - "self._creo()"
-    rs:
-      - "struct Persona"
-      - "impl Persona"
-      - "pub fn new()"
-    cpp:
-      - "struct Persona"
-      - "void _creo()"
-      - "_creo();"
-    zig:
-      - "const Persona = struct"
-      - "fn creo(self: *Self) void"
-      - "self.creo()"
+      ts:
+          - 'class Persona'
+          - 'private creo()'
+          - 'this.creo()'
+      py:
+          - 'class Persona:'
+          - 'def _creo(self):'
+          - 'self._creo()'
+      rs:
+          - 'struct Persona'
+          - 'impl Persona'
+          - 'pub fn new()'
+      cpp:
+          - 'struct Persona'
+          - 'void _creo()'
+          - '_creo();'
+      zig:
+          - 'const Persona = struct'
+          - 'fn creo(self: *Self) void'
+          - 'self.creo()'
 
 # =============================================================================
 # Type Parameters (Generics)
@@ -204,20 +204,20 @@
 - name: genus with type parameter
   faber: 'genus Box<T> { T value }'
   expect:
-    ts:
-      - "class Box<T>"
-      - "value: T"
-    py:
-      - "class Box[T]:"
-      - "value: T"
-    rs:
-      - "struct Box<T>"
-      - "pub value: T,"
-    cpp:
-      - "struct Box"
-    zig:
-      - "const Box = struct"
-      - "value: T"
+      ts:
+          - 'class Box<T>'
+          - 'value: T'
+      py:
+          - 'class Box[T]:'
+          - 'value: T'
+      rs:
+          - 'struct Box<T>'
+          - 'pub value: T,'
+      cpp:
+          - 'struct Box'
+      zig:
+          - 'const Box = struct'
+          - 'value: T'
 
 # =============================================================================
 # Implements (Interface Implementation)
@@ -227,13 +227,172 @@
 - name: genus implementing pactum
   faber: 'genus Reader implet Legibilis { functio lege() -> textus { redde "" } }'
   expect:
-    ts:
-      - "class Reader implements Legibilis"
-    py:
-      - "class Reader(Legibilis):"
-    rs:
-      - "struct Reader"
-    cpp:
-      - "struct Reader"
-    zig:
-      - "const Reader = struct"
+      ts:
+          - 'class Reader implements Legibilis'
+      py:
+          - 'class Reader(Legibilis):'
+      rs:
+          - 'struct Reader'
+      cpp:
+          - 'struct Reader'
+      zig:
+          - 'const Reader = struct'
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Genus with many fields (6+)
+- name: genus with many fields
+  faber: |
+      genus Entity {
+        textus id
+        textus nomen
+        numerus aetas
+        textus email
+        numerus createdAt
+        textus status
+      }
+  expect:
+      ts:
+          - 'class Entity'
+          - 'id: string'
+          - 'nomen: string'
+          - 'aetas: number'
+          - 'email: string'
+          - 'createdAt: number'
+          - 'status: string'
+      py:
+          - 'class Entity:'
+          - 'id: str'
+          - 'nomen: str'
+          - 'aetas: int'
+          - 'email: str'
+          - 'createdAt: int'
+          - 'status: str'
+
+# Genus with multiple methods
+- name: genus with multiple methods
+  faber: |
+      genus Calculator {
+        numerus value
+        functio add(numerus n) -> numerus {
+          redde value + n
+        }
+        functio subtract(numerus n) -> numerus {
+          redde value - n
+        }
+        functio reset() {
+          value = 0
+        }
+      }
+  expect:
+      ts:
+          - 'class Calculator'
+          - 'add(n: number): number'
+          - 'subtract(n: number): number'
+          - 'reset()'
+      py:
+          - 'class Calculator:'
+          - 'def add(self, n: int) -> int:'
+          - 'def subtract(self, n: int) -> int:'
+          - 'def reset(self):'
+
+# Genus with static method (generis)
+# WHY: generis modifier should produce static methods, but codegen may not support it yet
+- name: genus with static method
+  skip:
+      - ts
+      - py
+      - rs
+      - cpp
+      - zig
+  faber: |
+      genus Factory {
+        textus nomen
+        generis functio create() -> textus {
+          redde "created"
+        }
+      }
+  expect:
+      ts:
+          - 'class Factory'
+          - 'static create(): string'
+      py:
+          - 'class Factory:'
+          - '@classmethod'
+
+# Genus with nested method calls on ego
+- name: genus with nested ego method calls
+  faber: |
+      genus Node {
+        textus data
+        Node? parent
+        functio rootData() -> textus {
+          redde ego.parent.data
+        }
+      }
+  expect:
+      ts:
+          - 'class Node'
+          - 'parent: Node | null'
+          - 'rootData(): string'
+          - 'return this.parent.data'
+      py:
+          - 'class Node:'
+          - 'parent: Node | None'
+          - 'def rootData(self) -> str:'
+          - 'return self.parent.data'
+
+# Genus with computed method
+- name: genus with computed method
+  faber: |
+      genus Rectangle {
+        numerus width
+        numerus height
+        functio area() -> numerus {
+          redde width * height
+        }
+      }
+  expect:
+      ts:
+          - 'class Rectangle'
+          - 'width: number'
+          - 'height: number'
+          - 'area(): number'
+          - 'return (width * height)'
+      py:
+          - 'class Rectangle:'
+          - 'width: int'
+          - 'height: int'
+          - 'def area(self) -> int:'
+          - 'return (width * height)'
+
+# Genus implementing multiple interfaces
+- name: genus implementing multiple interfaces
+  faber: 'genus Service implet Readable, Writable { functio read() -> textus { redde "" } functio write(textus data) { } }'
+  expect:
+      ts:
+          - 'class Service implements Readable, Writable'
+      py:
+          - 'class Service(Readable, Writable):'
+
+# Empty genus (no fields or methods)
+- name: empty genus
+  faber: 'genus Empty { }'
+  expect:
+      ts:
+          - 'class Empty'
+      py:
+          - 'class Empty:'
+
+# Genus with generic type parameter
+- name: genus with generic type parameter
+  faber: 'genus Container<T> { T value }'
+  expect:
+      ts:
+          - 'class Container<T>'
+          - 'value: T'
+      py:
+          - 'class Container[T]:'
+          - 'value: T'

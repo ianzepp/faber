@@ -4,59 +4,142 @@
 - name: single param lambda
   faber: pro x redde x * 2
   expect:
-    ts: "(x) => (x * 2);"
-    py: "lambda x: (x * 2)"
-    rs:
-      - "|x| (x * 2);"
-    cpp:
-      - "[&](auto x) { return (x * 2); };"
-    zig:
-      - "@compileError"
+      ts: '(x) => (x * 2);'
+      py: 'lambda x: (x * 2)'
+      rs:
+          - '|x| (x * 2);'
+      cpp:
+          - '[&](auto x) { return (x * 2); };'
+      zig:
+          - '@compileError'
 
 - name: multi param lambda
   faber: pro x, y redde x + y
   expect:
-    ts: "(x, y) => (x + y);"
-    py: "lambda x, y: (x + y)"
-    rs:
-      - "|x, y| (x + y);"
-    cpp:
-      - "[&](auto x, auto y) { return (x + y); };"
-    zig:
-      - "@compileError"
+      ts: '(x, y) => (x + y);'
+      py: 'lambda x, y: (x + y)'
+      rs:
+          - '|x, y| (x + y);'
+      cpp:
+          - '[&](auto x, auto y) { return (x + y); };'
+      zig:
+          - '@compileError'
 
 - name: zero param lambda
   faber: pro redde 42
   expect:
-    ts: "() => 42;"
-    py: "lambda : 42"
-    rs:
-      - "|| 42;"
-    cpp:
-      - "[&]() { return 42; };"
-    zig:
-      - "@compileError"
+      ts: '() => 42;'
+      py: 'lambda : 42'
+      rs:
+          - '|| 42;'
+      cpp:
+          - '[&]() { return 42; };'
+      zig:
+          - '@compileError'
 
 - name: lambda in variable
   faber: fixum double = pro x redde x * 2
   expect:
-    ts: "const double = (x) => (x * 2);"
-    py: "double = lambda x: (x * 2)"
-    rs:
-      - "let double = |x| (x * 2);"
-    cpp:
-      - "const auto double = [&](auto x) { return (x * 2); };"
-    zig:
-      - "@compileError"
+      ts: 'const double = (x) => (x * 2);'
+      py: 'double = lambda x: (x * 2)'
+      rs:
+          - 'let double = |x| (x * 2);'
+      cpp:
+          - 'const auto double = [&](auto x) { return (x * 2); };'
+      zig:
+          - '@compileError'
 
 - name: lambda as callback
   faber: items.filtrata(pro x redde x > 0)
   expect:
-    ts: "items.filter((x) => (x > 0));"
-    py:
-      - "filter"
-      - "lambda x: (x > 0)"
-    rs:
-      - "items.filtrata(|x| (x > 0));"
-    cpp:
-      - "(items | std::views::filter([&](auto x) { return (x > 0); }) | std::ranges::to<std::vector>());"
+      ts: 'items.filter((x) => (x > 0));'
+      py:
+          - 'filter'
+          - 'lambda x: (x > 0)'
+      rs:
+          - 'items.filtrata(|x| (x > 0));'
+      cpp:
+          - '(items | std::views::filter([&](auto x) { return (x > 0); }) | std::ranges::to<std::vector>());'
+
+- name: lambda returning lambda (curried)
+  faber: fixum curry = pro x redde pro y redde x + y
+  expect:
+      ts: 'const curry = (x) => (y) => (x + y);'
+      py: 'curry = lambda x: lambda y: (x + y)'
+      rs:
+          - 'let curry = |x| |y| (x + y);'
+      cpp:
+          - 'const auto curry = [&](auto x) { return [&](auto y) { return (x + y); }; };'
+      zig:
+          - '@compileError'
+
+- name: lambda with block and multiple statements
+  faber: |
+      pro x {
+        varia r = x * 2
+        redde r
+      }
+  expect:
+      ts:
+          - '(x) => {'
+          - 'let r = (x * 2);'
+          - 'return r;'
+          - '}'
+      py:
+          - 'lambda x:'
+      rs:
+          - '|x| {'
+          - 'let mut r = (x * 2);'
+          - 'r'
+          - '}'
+      cpp:
+          - '[&](auto x) {'
+          - 'auto r = (x * 2);'
+          - 'return r;'
+          - '}'
+      zig:
+          - '@compileError'
+
+- name: triple nested lambda
+  faber: fixum nested = pro a redde pro b redde pro c redde a + b + c
+  expect:
+      ts: 'const nested = (a) => (b) => (c) => ((a + b) + c);'
+      py: 'nested = lambda a: lambda b: lambda c: ((a + b) + c)'
+      rs:
+          - 'let nested = |a| |b| |c| ((a + b) + c);'
+      cpp:
+          - 'const auto nested = [&](auto a) { return [&](auto b) { return [&](auto c) { return ((a + b) + c); }; }; };'
+      zig:
+          - '@compileError'
+
+- name: lambda capturing outer variable (closure)
+  faber: |
+      fixum multiplier = 3
+      fixum scale = pro x redde x * multiplier
+  expect:
+      ts:
+          - 'const multiplier = 3;'
+          - 'const scale = (x) => (x * multiplier);'
+      py:
+          - 'multiplier = 3'
+          - 'scale = lambda x: (x * multiplier)'
+      rs:
+          - 'let multiplier = 3;'
+          - 'let scale = |x| (x * multiplier);'
+      cpp:
+          - 'const auto multiplier = 3;'
+          - 'const auto scale = [&](auto x) { return (x * multiplier); };'
+      zig:
+          - '@compileError'
+
+- name: lambda immediately invoked
+  faber: fixum result = (pro x redde x * 2)(5)
+  expect:
+      ts: 'const result = (x) => (x * 2)(5);'
+      py: 'result = lambda x: (x * 2)(5)'
+      rs:
+          - 'let result = |x| (x * 2)(5);'
+      cpp:
+          - 'const auto result = [&](auto x) { return (x * 2); }(5);'
+      zig:
+          - '@compileError'

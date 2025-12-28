@@ -4,69 +4,213 @@
 - name: addition
   faber: 1 + 2
   expect:
-    ts: "(1 + 2);"
-    py: "(1 + 2)"
-    rs:
-      - "(1 + 2);"
-    cpp:
-      - "(1 + 2)"
-    zig:
-      - "(1 + 2)"
+      ts: '(1 + 2);'
+      py: '(1 + 2)'
+      rs:
+          - '(1 + 2);'
+      cpp:
+          - '(1 + 2)'
+      zig:
+          - '(1 + 2)'
 
 - name: subtraction
   faber: 5 - 3
   expect:
-    ts: "(5 - 3);"
-    py: "(5 - 3)"
-    rs:
-      - "(5 - 3);"
-    cpp:
-      - "(5 - 3)"
-    zig:
-      - "(5 - 3)"
+      ts: '(5 - 3);'
+      py: '(5 - 3)'
+      rs:
+          - '(5 - 3);'
+      cpp:
+          - '(5 - 3)'
+      zig:
+          - '(5 - 3)'
 
 - name: multiplication
   faber: 4 * 2
   expect:
-    ts: "(4 * 2);"
-    py: "(4 * 2)"
-    rs:
-      - "(4 * 2);"
-    cpp:
-      - "(4 * 2)"
-    zig:
-      - "(4 * 2)"
+      ts: '(4 * 2);'
+      py: '(4 * 2)'
+      rs:
+          - '(4 * 2);'
+      cpp:
+          - '(4 * 2)'
+      zig:
+          - '(4 * 2)'
 
 - name: division
   faber: 10 / 2
   expect:
-    ts: "(10 / 2);"
-    py: "(10 / 2)"
-    rs:
-      - "(10 / 2);"
-    cpp:
-      - "(10 / 2)"
-    zig:
-      - "(10 / 2)"
+      ts: '(10 / 2);'
+      py: '(10 / 2)'
+      rs:
+          - '(10 / 2);'
+      cpp:
+          - '(10 / 2)'
+      zig:
+          - '(10 / 2)'
 
 - name: equality comparison
   faber: a == b
   expect:
-    ts: "(a == b);"
-    py: "(a == b)"
-    rs:
-      - "(a == b);"
-    cpp:
-      - "(a == b)"
+      ts: '(a == b);'
+      py: '(a == b)'
+      rs:
+          - '(a == b);'
+      cpp:
+          - '(a == b)'
 
 - name: logical and with et
   faber: a et b
   expect:
-    ts: "(a && b);"
-    py: "(a and b)"
-    rs:
-      - "(a && b);"
-    cpp:
-      - "(a && b)"
-    zig:
-      - "(a and b)"
+      ts: '(a && b);'
+      py: '(a and b)'
+      rs:
+          - '(a && b);'
+      cpp:
+          - '(a && b)'
+      zig:
+          - '(a and b)'
+
+- name: operator precedence - multiplication before addition
+  faber: 1 + 2 * 3
+  expect:
+      ts: '(1 + (2 * 3));'
+      py: '(1 + (2 * 3))'
+      rs:
+          - '(1 + (2 * 3));'
+      cpp:
+          - '(1 + (2 * 3))'
+      zig:
+          - '(1 + (2 * 3))'
+
+- name: operator precedence with parentheses
+  faber: (1 + 2) * 3
+  expect:
+      ts: '((1 + 2) * 3);'
+      py: '((1 + 2) * 3)'
+      rs:
+          - '((1 + 2) * 3);'
+      cpp:
+          - '((1 + 2) * 3)'
+      zig:
+          - '((1 + 2) * 3)'
+
+- name: logical aut (OR) operator
+  faber: a aut b
+  expect:
+      ts: '(a || b);'
+      py: '(a or b)'
+      rs:
+          - '(a || b);'
+      cpp:
+          - '(a || b)'
+      zig:
+          - '(a or b)'
+
+- name: inequality comparison
+  faber: a != b
+  expect:
+      ts: '(a != b);'
+      py: '(a != b)'
+      rs:
+          - '(a != b);'
+      cpp:
+          - '(a != b)'
+      zig:
+          - '(a != b)'
+
+- name: less than or equal
+  faber: a <= b
+  expect:
+      ts: '(a <= b);'
+      py: '(a <= b)'
+      rs:
+          - '(a <= b);'
+      cpp:
+          - '(a <= b)'
+      zig:
+          - '(a <= b)'
+
+- name: greater than or equal
+  faber: a >= b
+  expect:
+      ts: '(a >= b);'
+      py: '(a >= b)'
+      rs:
+          - '(a >= b);'
+      cpp:
+          - '(a >= b)'
+      zig:
+          - '(a >= b)'
+
+- name: mixed logical operators (precedence)
+  faber: a et b aut c
+  expect:
+      ts: '((a && b) || c);'
+      py: '((a and b) or c)'
+      rs:
+          - '((a && b) || c);'
+      cpp:
+          - '((a && b) || c)'
+      zig:
+          - '((a and b) or c)'
+
+- name: chained comparisons pattern
+  faber: a < b et b < c
+  expect:
+      ts: '((a < b) && (b < c));'
+      py: '((a < b) and (b < c))'
+      rs:
+          - '((a < b) && (b < c));'
+      cpp:
+          - '((a < b) && (b < c))'
+      zig:
+          - '((a < b) and (b < c))'
+
+- name: deeply nested binary expressions
+  faber: ((a + b) * (c - d)) / ((e + f) - (g * h))
+  expect:
+      ts: '(((a + b) * (c - d)) / ((e + f) - (g * h)));'
+      py: '(((a + b) * (c - d)) / ((e + f) - (g * h)))'
+      rs:
+          - '(((a + b) * (c - d)) / ((e + f) - (g * h)));'
+      cpp:
+          - '(((a + b) * (c - d)) / ((e + f) - (g * h)))'
+      zig:
+          - '(((a + b) * (c - d)) / ((e + f) - (g * h)))'
+
+- name: string concatenation
+  faber: '"hello" + " " + "world"'
+  expect:
+      ts: '(("hello" + " ") + "world");'
+      py: '(("hello" + " ") + "world")'
+      rs:
+          - '((String::from("hello") + String::from(" ")) + String::from("world"));'
+      cpp:
+          - '((std::string("hello") + std::string(" ")) + std::string("world"))'
+      zig:
+          - '(("hello" ++ " ") ++ "world")'
+
+- name: modulo operator
+  faber: 10 % 3
+  expect:
+      ts: '(10 % 3);'
+      py: '(10 % 3)'
+      rs:
+          - '(10 % 3);'
+      cpp:
+          - '(10 % 3)'
+      zig:
+          - '(10 % 3)'
+
+- name: nullish coalescing (vel)
+  faber: value vel defaultValue
+  expect:
+      ts: '(value ?? defaultValue);'
+      py: '(value if value is not None else defaultValue)'
+      rs:
+          - '(value ?? defaultValue);'
+      cpp:
+          - '(value != nullptr ? value : defaultValue)'
+      zig:
+          - '(value orelse defaultValue)'

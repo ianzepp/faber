@@ -4,39 +4,98 @@
 - name: est with primitive string
   faber: fixum check = x est textus
   expect:
-    ts:
-      - 'typeof x === "string"'
-    py:
-      - "isinstance(x, str)"
-    rs:
-      - "let check = matches!(x, textus);"
+      ts:
+          - 'typeof x === "string"'
+      py:
+          - 'isinstance(x, str)'
+      rs:
+          - 'let check = matches!(x, textus);'
 
 - name: est with primitive number
   faber: fixum check = x est numerus
   expect:
-    ts:
-      - 'typeof x === "number"'
-    py:
-      - "isinstance(x, int)"
-    rs:
-      - "let check = matches!(x, numerus);"
+      ts:
+          - 'typeof x === "number"'
+      py:
+          - 'isinstance(x, int)'
+      rs:
+          - 'let check = matches!(x, numerus);'
 
 - name: non est negated check
   faber: fixum check = x non est numerus
   expect:
-    ts:
-      - 'typeof x !== "number"'
-    py:
-      - "not isinstance(x, int)"
-    rs:
-      - "let check = !matches!(x, numerus);"
+      ts:
+          - 'typeof x !== "number"'
+      py:
+          - 'not isinstance(x, int)'
+      rs:
+          - 'let check = !matches!(x, numerus);'
 
 - name: est with user type
   faber: fixum check = obj est Persona
   expect:
-    ts:
-      - "instanceof Persona"
-    py:
-      - "isinstance(obj, Persona)"
-    rs:
-      - "let check = matches!(obj, Persona);"
+      ts:
+          - 'instanceof Persona'
+      py:
+          - 'isinstance(obj, Persona)'
+      rs:
+          - 'let check = matches!(obj, Persona);'
+
+- name: est with array type
+  faber: fixum check = x est lista<numerus>
+  expect:
+      ts:
+          - 'Array.isArray(x)'
+      py:
+          - 'isinstance(x, list)'
+
+- name: est with nullable type
+  faber: fixum check = x est textus?
+  expect:
+      ts:
+          - 'typeof x === "string" || x === null'
+      py:
+          - 'isinstance(x, str) or x is None'
+
+- name: chained est checks
+  faber: x est numerus et x > 0
+  expect:
+      ts:
+          - 'typeof x === "number"'
+          - 'x > 0'
+      py:
+          - 'isinstance(x, int)'
+          - 'x > 0'
+
+- name: est in conditional
+  faber: |
+      si data est textus { scribe data }
+  expect:
+      ts:
+          - 'if (typeof data === "string")'
+      py:
+          - 'if isinstance(data, str)'
+
+- name: est with nihil
+  faber: fixum isNull = x est nihil
+  expect:
+      ts:
+          - 'x === null'
+      py:
+          - 'x is None'
+
+- name: est with bivalens
+  faber: fixum isBool = x est bivalens
+  expect:
+      ts:
+          - 'typeof x === "boolean"'
+      py:
+          - 'isinstance(x, bool)'
+
+- name: non est with primitive
+  faber: fixum notNum = x non est numerus
+  expect:
+      ts:
+          - 'typeof x !== "number"'
+      py:
+          - 'not isinstance(x, int)'

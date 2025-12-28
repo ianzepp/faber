@@ -20,47 +20,47 @@
 - name: simple pactum with one method
   faber: 'pactum Greeter { functio greet() -> textus }'
   expect:
-    ts:
-      - "interface Greeter"
-      - "greet(): string"
-    py:
-      - "class Greeter(Protocol):"
-      - "def greet(self) -> str: ..."
-    rs:
-      - "trait Greeter"
-      - "fn greet(&self) -> String;"
-    cpp:
-      - "template<typename T>"
-      - "concept Greeter"
-      - "t.greet()"
-    zig:
-      - "// pactum Greeter"
-      - "//   requires fn greet() []const u8"
+      ts:
+          - 'interface Greeter'
+          - 'greet(): string'
+      py:
+          - 'class Greeter(Protocol):'
+          - 'def greet(self) -> str: ...'
+      rs:
+          - 'trait Greeter'
+          - 'fn greet(&self) -> String;'
+      cpp:
+          - 'template<typename T>'
+          - 'concept Greeter'
+          - 't.greet()'
+      zig:
+          - '// pactum Greeter'
+          - '//   requires fn greet() []const u8'
 
 # Multiple methods
 - name: pactum with multiple methods
   faber: |
-    pactum Readable {
-      functio lege() -> textus
-      functio claude() -> vacuum
-    }
+      pactum Readable {
+        functio lege() -> textus
+        functio claude() -> vacuum
+      }
   expect:
-    ts:
-      - "interface Readable"
-      - "lege(): string"
-      - "claude(): void"
-    py:
-      - "class Readable(Protocol):"
-      - "def lege(self) -> str: ..."
-      - "def claude(self) -> None: ..."
-    rs:
-      - "trait Readable"
-      - "fn lege(&self) -> String;"
-      - "fn claude(&self) -> ();"
-    cpp:
-      - "concept Readable"
-    zig:
-      - "// pactum Readable"
+      ts:
+          - 'interface Readable'
+          - 'lege(): string'
+          - 'claude(): void'
+      py:
+          - 'class Readable(Protocol):'
+          - 'def lege(self) -> str: ...'
+          - 'def claude(self) -> None: ...'
+      rs:
+          - 'trait Readable'
+          - 'fn lege(&self) -> String;'
+          - 'fn claude(&self) -> ();'
+      cpp:
+          - 'concept Readable'
+      zig:
+          - '// pactum Readable'
 
 # =============================================================================
 # Method Parameters
@@ -70,19 +70,19 @@
 - name: pactum method with parameter
   faber: 'pactum Comparable { functio compare(numerus other) -> numerus }'
   expect:
-    ts:
-      - "interface Comparable"
-      - "compare(other: number): number"
-    py:
-      - "class Comparable(Protocol):"
-      - "def compare(self, other: int) -> int: ..."
-    rs:
-      - "trait Comparable"
-      - "fn compare(&self, other: f64) -> f64;"
-    cpp:
-      - "concept Comparable"
-    zig:
-      - "// pactum Comparable"
+      ts:
+          - 'interface Comparable'
+          - 'compare(other: number): number'
+      py:
+          - 'class Comparable(Protocol):'
+          - 'def compare(self, other: int) -> int: ...'
+      rs:
+          - 'trait Comparable'
+          - 'fn compare(&self, other: f64) -> f64;'
+      cpp:
+          - 'concept Comparable'
+      zig:
+          - '// pactum Comparable'
 
 # =============================================================================
 # Type Parameters (Generics)
@@ -92,19 +92,19 @@
 - name: pactum with type parameter
   faber: 'pactum Container<T> { functio adde(T item) -> vacuum }'
   expect:
-    ts:
-      - "interface Container<T>"
-      - "adde(item: T): void"
-    py:
-      - "class Container[T](Protocol):"
-      - "def adde(self, item: T) -> None: ..."
-    rs:
-      - "trait Container<T>"
-      - "fn adde(&self, item: T) -> ();"
-    cpp:
-      - "concept Container"
-    zig:
-      - "// pactum Container"
+      ts:
+          - 'interface Container<T>'
+          - 'adde(item: T): void'
+      py:
+          - 'class Container[T](Protocol):'
+          - 'def adde(self, item: T) -> None: ...'
+      rs:
+          - 'trait Container<T>'
+          - 'fn adde(&self, item: T) -> ();'
+      cpp:
+          - 'concept Container'
+      zig:
+          - '// pactum Container'
 
 # =============================================================================
 # Async Methods
@@ -114,19 +114,19 @@
 - name: pactum with async method
   faber: 'pactum Fetcher { futura functio fetch() -> textus }'
   expect:
-    ts:
-      - "interface Fetcher"
-      - "fetch(): Promise<string>"
-    py:
-      - "class Fetcher(Protocol):"
-      - "async def fetch(self) -> Awaitable[str]: ..."
-    rs:
-      - "trait Fetcher"
-      - "async fn fetch(&self) -> String;"
-    cpp:
-      - "concept Fetcher"
-    zig:
-      - "// pactum Fetcher"
+      ts:
+          - 'interface Fetcher'
+          - 'fetch(): Promise<string>'
+      py:
+          - 'class Fetcher(Protocol):'
+          - 'async def fetch(self) -> Awaitable[str]: ...'
+      rs:
+          - 'trait Fetcher'
+          - 'async fn fetch(&self) -> String;'
+      cpp:
+          - 'concept Fetcher'
+      zig:
+          - '// pactum Fetcher'
 
 # =============================================================================
 # Empty Pactum
@@ -136,16 +136,172 @@
 - name: empty pactum
   faber: 'pactum Marker { }'
   expect:
-    ts:
-      - "interface Marker {"
-      - "}"
-    py:
-      - "class Marker(Protocol):"
-      - "pass"
-    rs:
-      - "trait Marker {"
-      - "}"
-    cpp:
-      - "concept Marker"
-    zig:
-      - "// pactum Marker"
+      ts:
+          - 'interface Marker {'
+          - '}'
+      py:
+          - 'class Marker(Protocol):'
+          - 'pass'
+      rs:
+          - 'trait Marker {'
+          - '}'
+      cpp:
+          - 'concept Marker'
+      zig:
+          - '// pactum Marker'
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Pactum with getter method (simulates property access)
+- name: pactum with getter method
+  faber: |
+      pactum Entity {
+        functio id() -> textus
+      }
+  expect:
+      ts:
+          - 'interface Entity'
+          - 'id(): string'
+      py:
+          - 'class Entity(Protocol):'
+          - 'def id(self) -> str: ...'
+      rs:
+          - 'trait Entity'
+          - 'fn id(&self) -> String;'
+      cpp:
+          - 'concept Entity'
+      zig:
+          - '// pactum Entity'
+
+# Pactum with multiple type parameters
+- name: pactum with multiple type parameters
+  faber: 'pactum Mapper<K, V> { functio map(K key) -> V }'
+  expect:
+      ts:
+          - 'interface Mapper<K, V>'
+          - 'map(key: K): V'
+      py:
+          - 'class Mapper[K, V](Protocol):'
+          - 'def map(self, key: K) -> V: ...'
+      rs:
+          - 'trait Mapper<K, V>'
+          - 'fn map(&self, key: K) -> V;'
+      cpp:
+          - 'concept Mapper'
+      zig:
+          - '// pactum Mapper'
+
+# Pactum with many methods
+- name: pactum with many methods
+  faber: |
+      pactum Repository {
+        functio crea() -> vacuum
+        functio lege() -> textus
+        functio renova() -> vacuum
+        functio dele() -> vacuum
+        functio inveni() -> textus
+      }
+  expect:
+      ts:
+          - 'interface Repository'
+          - 'crea(): void'
+          - 'lege(): string'
+          - 'renova(): void'
+          - 'dele(): void'
+          - 'inveni(): string'
+      py:
+          - 'class Repository(Protocol):'
+          - 'def crea(self) -> None: ...'
+          - 'def lege(self) -> str: ...'
+          - 'def renova(self) -> None: ...'
+          - 'def dele(self) -> None: ...'
+          - 'def inveni(self) -> str: ...'
+      rs:
+          - 'trait Repository'
+          - 'fn crea(&self) -> ();'
+          - 'fn lege(&self) -> String;'
+          - 'fn renova(&self) -> ();'
+          - 'fn dele(&self) -> ();'
+          - 'fn inveni(&self) -> String;'
+      cpp:
+          - 'concept Repository'
+      zig:
+          - '// pactum Repository'
+
+# Pactum with mixed async and sync methods
+- name: pactum with mixed async and sync methods
+  faber: |
+      pactum DataService {
+        functio sync() -> textus
+        futura functio async() -> textus
+      }
+  expect:
+      ts:
+          - 'interface DataService'
+          - 'sync(): string'
+          - 'async(): Promise<string>'
+      py:
+          - 'class DataService(Protocol):'
+          - 'def sync(self) -> str: ...'
+          - 'async def async(self) -> Awaitable[str]: ...'
+      rs:
+          - 'trait DataService'
+          - 'fn sync(&self) -> String;'
+          - 'async fn async(&self) -> String;'
+      cpp:
+          - 'concept DataService'
+      zig:
+          - '// pactum DataService'
+
+# Pactum with generic constraint
+- name: pactum with generic constraint
+  faber: 'pactum Comparable<T> { functio compare(T other) -> numerus }'
+  expect:
+      ts:
+          - 'interface Comparable<T>'
+          - 'compare(other: T): number'
+      py:
+          - 'class Comparable[T](Protocol):'
+          - 'def compare(self, other: T) -> int: ...'
+      rs:
+          - 'trait Comparable<T>'
+          - 'fn compare(&self, other: T) -> f64;'
+      cpp:
+          - 'concept Comparable'
+      zig:
+          - '// pactum Comparable'
+
+# Pactum with void and value-returning methods
+- name: pactum with void and value-returning methods
+  faber: |
+      pactum Service {
+        functio start() -> vacuum
+        functio status() -> textus
+        functio stop() -> vacuum
+        functio config() -> textus
+      }
+  expect:
+      ts:
+          - 'interface Service'
+          - 'start(): void'
+          - 'status(): string'
+          - 'stop(): void'
+          - 'config(): string'
+      py:
+          - 'class Service(Protocol):'
+          - 'def start(self) -> None: ...'
+          - 'def status(self) -> str: ...'
+          - 'def stop(self) -> None: ...'
+          - 'def config(self) -> str: ...'
+      rs:
+          - 'trait Service'
+          - 'fn start(&self) -> ();'
+          - 'fn status(&self) -> String;'
+          - 'fn stop(&self) -> ();'
+          - 'fn config(&self) -> String;'
+      cpp:
+          - 'concept Service'
+      zig:
+          - '// pactum Service'

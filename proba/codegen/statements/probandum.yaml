@@ -22,38 +22,38 @@
 # Basic test suite
 - name: simple probandum
   faber: |
-    probandum "Calculator" {
-      proba "adds numbers" { adfirma verum }
-    }
+      probandum "Calculator" {
+        proba "adds numbers" { adfirma verum }
+      }
   expect:
-    ts:
-      - 'describe("Calculator", () => {'
-      - 'test("adds numbers", () =>'
-    rs:
-      - "// Test suite: Calculator"
-      - "#[cfg(test)]"
-      - "mod tests {"
-      - "#[test]"
-      - "fn adds_numbers()"
+      ts:
+          - 'describe("Calculator", () => {'
+          - 'test("adds numbers", () =>'
+      rs:
+          - '// Test suite: Calculator'
+          - '#[cfg(test)]'
+          - 'mod tests {'
+          - '#[test]'
+          - 'fn adds_numbers()'
 
 # Multiple tests in suite
 - name: probandum with multiple tests
   faber: |
-    probandum "Math" {
-      proba "adds" { adfirma verum }
-      proba "subtracts" { adfirma verum }
-    }
+      probandum "Math" {
+        proba "adds" { adfirma verum }
+        proba "subtracts" { adfirma verum }
+      }
   expect:
-    ts:
-      - 'describe("Math", () => {'
-      - 'test("adds", () =>'
-      - 'test("subtracts", () =>'
-    rs:
-      - "// Test suite: Math"
-      - "#[cfg(test)]"
-      - "mod tests {"
-      - "fn adds()"
-      - "fn subtracts()"
+      ts:
+          - 'describe("Math", () => {'
+          - 'test("adds", () =>'
+          - 'test("subtracts", () =>'
+      rs:
+          - '// Test suite: Math'
+          - '#[cfg(test)]'
+          - 'mod tests {'
+          - 'fn adds()'
+          - 'fn subtracts()'
 
 # =============================================================================
 # Setup/Teardown (cura blocks)
@@ -62,55 +62,55 @@
 # Suite with beforeEach setup
 - name: probandum with cura ante
   faber: |
-    probandum "Lexer" {
-      cura ante { lexer = init() }
-      proba "parses" { adfirma verum }
-    }
+      probandum "Lexer" {
+        cura ante { lexer = init() }
+        proba "parses" { adfirma verum }
+      }
   expect:
-    ts:
-      - 'describe("Lexer", () => {'
-      - "beforeEach(() => {"
-      - "lexer = init()"
-      - 'test("parses", () =>'
-    rs:
-      - "// Test suite: Lexer"
-      - "#[cfg(test)]"
-      - "mod tests {"
+      ts:
+          - 'describe("Lexer", () => {'
+          - 'beforeEach(() => {'
+          - 'lexer = init()'
+          - 'test("parses", () =>'
+      rs:
+          - '// Test suite: Lexer'
+          - '#[cfg(test)]'
+          - 'mod tests {'
 
 # Suite with afterEach teardown
 - name: probandum with cura post
   faber: |
-    probandum "Database" {
-      cura post { cleanup() }
-      proba "inserts" { adfirma verum }
-    }
+      probandum "Database" {
+        cura post { cleanup() }
+        proba "inserts" { adfirma verum }
+      }
   expect:
-    ts:
-      - 'describe("Database", () => {'
-      - "afterEach(() => {"
-      - "cleanup()"
-    rs:
-      - "// Test suite: Database"
-      - "#[cfg(test)]"
+      ts:
+          - 'describe("Database", () => {'
+          - 'afterEach(() => {'
+          - 'cleanup()'
+      rs:
+          - '// Test suite: Database'
+          - '#[cfg(test)]'
 
 # Suite with beforeAll and afterAll
 - name: probandum with cura ante omnia and post omnia
   faber: |
-    probandum "Server" {
-      cura ante omnia { server = start() }
-      cura post omnia { server.stop() }
-      proba "responds" { adfirma verum }
-    }
+      probandum "Server" {
+        cura ante omnia { server = start() }
+        cura post omnia { server.stop() }
+        proba "responds" { adfirma verum }
+      }
   expect:
-    ts:
-      - 'describe("Server", () => {'
-      - "beforeAll(() => {"
-      - "server = start()"
-      - "afterAll(() => {"
-      - "server.stop()"
-    rs:
-      - "// Test suite: Server"
-      - "#[cfg(test)]"
+      ts:
+          - 'describe("Server", () => {'
+          - 'beforeAll(() => {'
+          - 'server = start()'
+          - 'afterAll(() => {'
+          - 'server.stop()'
+      rs:
+          - '// Test suite: Server'
+          - '#[cfg(test)]'
 
 # =============================================================================
 # Nested Suites
@@ -119,23 +119,23 @@
 # Nested probandum
 - name: nested probandum
   faber: |
-    probandum "Outer" {
-      probandum "Inner" {
-        proba "test" { adfirma verum }
+      probandum "Outer" {
+        probandum "Inner" {
+          proba "test" { adfirma verum }
+        }
       }
-    }
   expect:
-    ts:
-      - 'describe("Outer", () => {'
-      - 'describe("Inner", () => {'
-      - 'test("test", () =>'
-    rs:
-      - "// Test suite: Outer"
-      - "#[cfg(test)]"
-      - "mod tests {"
-      - "// Test suite: Inner"
-      - "#[cfg(test)]"
-      - "mod tests {"
+      ts:
+          - 'describe("Outer", () => {'
+          - 'describe("Inner", () => {'
+          - 'test("test", () =>'
+      rs:
+          - '// Test suite: Outer'
+          - '#[cfg(test)]'
+          - 'mod tests {'
+          - '// Test suite: Inner'
+          - '#[cfg(test)]'
+          - 'mod tests {'
 
 # =============================================================================
 # Mixed Content
@@ -144,22 +144,131 @@
 # Suite with setup, teardown, and multiple tests
 - name: probandum with mixed content
   faber: |
-    probandum "Complete" {
-      cura ante { setup() }
-      proba "first" { adfirma verum }
-      proba "second" { adfirma verum }
-      cura post { teardown() }
-    }
+      probandum "Complete" {
+        cura ante { setup() }
+        proba "first" { adfirma verum }
+        proba "second" { adfirma verum }
+        cura post { teardown() }
+      }
   expect:
-    ts:
-      - 'describe("Complete", () => {'
-      - "beforeEach(() => {"
-      - "setup()"
-      - 'test("first", () =>'
-      - 'test("second", () =>'
-      - "afterEach(() => {"
-      - "teardown()"
-    rs:
-      - "// Test suite: Complete"
-      - "#[cfg(test)]"
-      - "mod tests {"
+      ts:
+          - 'describe("Complete", () => {'
+          - 'beforeEach(() => {'
+          - 'setup()'
+          - 'test("first", () =>'
+          - 'test("second", () =>'
+          - 'afterEach(() => {'
+          - 'teardown()'
+      rs:
+          - '// Test suite: Complete'
+          - '#[cfg(test)]'
+          - 'mod tests {'
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Deeply nested suites (3 levels)
+- name: deeply nested probandum (3 levels)
+  faber: |
+      probandum "Level1" {
+        probandum "Level2" {
+          probandum "Level3" {
+            proba "deep test" { adfirma verum }
+          }
+        }
+      }
+  expect:
+      ts:
+          - 'describe("Level1", () => {'
+          - 'describe("Level2", () => {'
+          - 'describe("Level3", () => {'
+          - 'test("deep test", () =>'
+      rs:
+          - '// Test suite: Level1'
+          - '// Test suite: Level2'
+          - '// Test suite: Level3'
+          - 'fn deep_test()'
+
+# Suite with many tests (5+)
+- name: probandum with many tests
+  faber: |
+      probandum "ManyTests" {
+        proba "test1" { adfirma verum }
+        proba "test2" { adfirma verum }
+        proba "test3" { adfirma verum }
+        proba "test4" { adfirma verum }
+        proba "test5" { adfirma verum }
+      }
+  expect:
+      ts:
+          - 'describe("ManyTests", () => {'
+          - 'test("test1", () =>'
+          - 'test("test2", () =>'
+          - 'test("test3", () =>'
+          - 'test("test4", () =>'
+          - 'test("test5", () =>'
+      rs:
+          - '// Test suite: ManyTests'
+          - 'fn test1()'
+          - 'fn test2()'
+          - 'fn test3()'
+          - 'fn test4()'
+          - 'fn test5()'
+
+# Suite with setup initializing shared state
+- name: probandum with setup initializing state
+  faber: |
+      probandum "SharedState" {
+        cura ante { counter = 0 }
+        proba "increments" { counter = counter + 1 }
+        proba "checks value" { adfirma counter == 0 }
+      }
+  expect:
+      ts:
+          - 'describe("SharedState", () => {'
+          - 'beforeEach(() => {'
+          - 'counter = 0'
+          - 'test("increments", () =>'
+          - 'test("checks value", () =>'
+      rs:
+          - '// Test suite: SharedState'
+          - '#[cfg(test)]'
+          - 'mod tests {'
+
+# Suite with all hook types
+- name: probandum with all hook types
+  faber: |
+      probandum "AllHooks" {
+        cura ante omnia { globalSetup() }
+        cura ante { eachSetup() }
+        proba "runs" { adfirma verum }
+        cura post { eachTeardown() }
+        cura post omnia { globalTeardown() }
+      }
+  expect:
+      ts:
+          - 'describe("AllHooks", () => {'
+          - 'beforeAll(() => {'
+          - 'globalSetup()'
+          - 'beforeEach(() => {'
+          - 'eachSetup()'
+          - 'test("runs", () =>'
+          - 'afterEach(() => {'
+          - 'eachTeardown()'
+          - 'afterAll(() => {'
+          - 'globalTeardown()'
+      rs:
+          - '// Test suite: AllHooks'
+          - '#[cfg(test)]'
+          - 'mod tests {'
+
+# Empty suite
+- name: empty probandum
+  faber: probandum "Empty" { }
+  expect:
+      ts:
+          - 'describe("Empty", () => {'
+      rs:
+          - '// Test suite: Empty'
+          - '#[cfg(test)]'

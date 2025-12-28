@@ -7,45 +7,93 @@
 - name: exclusive range
   faber: fixum nums = 0..5
   expect:
-    ts: "const nums = Array.from({length: 5 - 0}, (_, i) => 0 + i);"
-    py: "nums = list(range(0, 5))"
-    rs:
-      - "(0..5)"
-    cpp:
-      - "std::views::iota(0, 5 + 1)"
+      ts: 'const nums = Array.from({length: 5 - 0}, (_, i) => 0 + i);'
+      py: 'nums = list(range(0, 5))'
+      rs:
+          - '(0..5)'
+      cpp:
+          - 'std::views::iota(0, 5 + 1)'
 
 - name: inclusive range with usque
   faber: fixum nums = 0 usque 5
   expect:
-    ts: "const nums = Array.from({length: 5 - 0 + 1}, (_, i) => 0 + i);"
-    py: "nums = list(range(0, 5 + 1))"
-    rs:
-      - "(0..=5)"
-    cpp:
-      - "std::views::iota(0, 5 + 1)"
+      ts: 'const nums = Array.from({length: 5 - 0 + 1}, (_, i) => 0 + i);'
+      py: 'nums = list(range(0, 5 + 1))'
+      rs:
+          - '(0..=5)'
+      cpp:
+          - 'std::views::iota(0, 5 + 1)'
 
 - name: range with variables
   faber: fixum seq = start..end
   expect:
-    ts: "const seq = Array.from({length: end - start}, (_, i) => start + i);"
-    py: "seq = list(range(start, end))"
-    rs:
-      - "(start..end)"
-    cpp:
-      - "std::views::iota(start, end + 1)"
+      ts: 'const seq = Array.from({length: end - start}, (_, i) => start + i);'
+      py: 'seq = list(range(start, end))'
+      rs:
+          - '(start..end)'
+      cpp:
+          - 'std::views::iota(start, end + 1)'
 
 - name: range with step
   faber: fixum evens = 0..10 per 2
   expect:
-    ts: "const evens = Array.from({length: Math.ceil((10 - 0) / 2)}, (_, i) => 0 + i * 2);"
-    py: "evens = list(range(0, 10, 2))"
-    rs:
-      - "(0..10)"
+      ts: 'const evens = Array.from({length: Math.ceil((10 - 0) / 2)}, (_, i) => 0 + i * 2);'
+      py: 'evens = list(range(0, 10, 2))'
+      rs:
+          - '(0..10)'
 
 - name: inclusive range with step
   faber: fixum odds = 1 usque 9 per 2
   expect:
-    ts: "const odds = Array.from({length: Math.floor((9 - 1) / 2) + 1}, (_, i) => 1 + i * 2);"
-    py: "odds = list(range(1, 9 + 1, 2))"
-    rs:
-      - "(1..=9)"
+      ts: 'const odds = Array.from({length: Math.floor((9 - 1) / 2) + 1}, (_, i) => 1 + i * 2);'
+      py: 'odds = list(range(1, 9 + 1, 2))'
+      rs:
+          - '(1..=9)'
+
+- name: range with negative step
+  faber: fixum countdown = 10..0 per -1
+  expect:
+      ts: 'const countdown = Array.from({length: Math.ceil((0 - 10) / -1)}, (_, i) => 10 + i * -1);'
+      py: 'countdown = list(range(10, 0, -1))'
+
+- name: range with expression bounds
+  faber: fixum seq = (start + 1)..(end - 1)
+  expect:
+      ts: 'const seq = Array.from({length: (end - 1) - (start + 1)}, (_, i) => (start + 1) + i);'
+      py: 'seq = list(range((start + 1), (end - 1)))'
+
+- name: range with zero length (same start/end)
+  faber: fixum empty = 5..5
+  expect:
+      ts: 'const empty = Array.from({length: 5 - 5}, (_, i) => 5 + i);'
+      py: 'empty = list(range(5, 5))'
+
+- name: range with member expression bounds
+  faber: fixum seq = config.start..config.end
+  expect:
+      ts: 'const seq = Array.from({length: config.end - config.start}, (_, i) => config.start + i);'
+      py: 'seq = list(range(config.start, config.end))'
+
+- name: range with call bounds
+  faber: fixum seq = getStart()..getEnd()
+  expect:
+      ts: 'const seq = Array.from({length: getEnd() - getStart()}, (_, i) => getStart() + i);'
+      py: 'seq = list(range(getStart(), getEnd()))'
+
+- name: large range
+  faber: fixum big = 0..10000
+  expect:
+      ts: 'const big = Array.from({length: 10000 - 0}, (_, i) => 0 + i);'
+      py: 'big = list(range(0, 10000))'
+
+- name: range with large step
+  faber: fixum evens = 0..100 per 10
+  expect:
+      ts: 'const evens = Array.from({length: Math.ceil((100 - 0) / 10)}, (_, i) => 0 + i * 10);'
+      py: 'evens = list(range(0, 100, 10))'
+
+- name: inclusive range with step (edge)
+  faber: fixum seq = 0 usque 10 per 2
+  expect:
+      ts: 'const seq = Array.from({length: Math.floor((10 - 0) / 2) + 1}, (_, i) => 0 + i * 2);'
+      py: 'seq = list(range(0, 10 + 1, 2))'

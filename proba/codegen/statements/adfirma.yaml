@@ -20,46 +20,46 @@
 - name: assert simple condition
   faber: 'adfirma x > 0'
   expect:
-    ts:
-      - 'if (!((x > 0))) { throw new Error("Assertion failed: (x > 0)"); }'
-    py:
-      - "assert (x > 0)"
-    rs:
-      - "assert!((x > 0));"
-    cpp:
-      - "assert((x > 0));"
-    zig:
-      - "std.debug.assert((x > 0));"
+      ts:
+          - 'if (!((x > 0))) { throw new Error("Assertion failed: (x > 0)"); }'
+      py:
+          - 'assert (x > 0)'
+      rs:
+          - 'assert!((x > 0));'
+      cpp:
+          - 'assert((x > 0));'
+      zig:
+          - 'std.debug.assert((x > 0));'
 
 # Assertion with equality
 - name: assert equality
   faber: 'adfirma result == 42'
   expect:
-    ts:
-      - 'if (!((result == 42))) { throw new Error("Assertion failed: (result == 42)"); }'
-    py:
-      - "assert (result == 42)"
-    rs:
-      - "assert!((result == 42));"
-    cpp:
-      - "assert((result == 42));"
-    zig:
-      - "std.debug.assert((result == 42));"
+      ts:
+          - 'if (!((result == 42))) { throw new Error("Assertion failed: (result == 42)"); }'
+      py:
+          - 'assert (result == 42)'
+      rs:
+          - 'assert!((result == 42));'
+      cpp:
+          - 'assert((result == 42));'
+      zig:
+          - 'std.debug.assert((result == 42));'
 
 # Assertion with boolean literal
 - name: assert verum
   faber: 'adfirma verum'
   expect:
-    ts:
-      - 'if (!(true)) { throw new Error("Assertion failed: true"); }'
-    py:
-      - "assert True"
-    rs:
-      - "assert!(true);"
-    cpp:
-      - "assert(true);"
-    zig:
-      - "std.debug.assert(true);"
+      ts:
+          - 'if (!(true)) { throw new Error("Assertion failed: true"); }'
+      py:
+          - 'assert True'
+      rs:
+          - 'assert!(true);'
+      cpp:
+          - 'assert(true);'
+      zig:
+          - 'std.debug.assert(true);'
 
 # =============================================================================
 # Assertions with Custom Messages
@@ -69,28 +69,137 @@
 - name: assert with custom message
   faber: 'adfirma x > 0, "x must be positive"'
   expect:
-    ts:
-      - 'if (!((x > 0))) { throw new Error("x must be positive"); }'
-    py:
-      - 'assert (x > 0), "x must be positive"'
-    rs:
-      - 'assert!((x > 0), String::from("x must be positive"));'
-    cpp:
-      - 'assert(((x > 0)) && std::string("x must be positive"));'
-    zig:
-      - 'if (!((x > 0))) @panic("x must be positive");'
+      ts:
+          - 'if (!((x > 0))) { throw new Error("x must be positive"); }'
+      py:
+          - 'assert (x > 0), "x must be positive"'
+      rs:
+          - 'assert!((x > 0), String::from("x must be positive"));'
+      cpp:
+          - 'assert(((x > 0)) && std::string("x must be positive"));'
+      zig:
+          - 'if (!((x > 0))) @panic("x must be positive");'
 
 # Assertion with variable message
 - name: assert with variable message
   faber: 'adfirma valid, errorMsg'
   expect:
-    ts:
-      - "if (!(valid)) { throw new Error(errorMsg); }"
-    py:
-      - "assert valid, errorMsg"
-    rs:
-      - "assert!(valid, errorMsg);"
-    cpp:
-      - "assert((valid) && errorMsg);"
-    zig:
-      - "if (!(valid)) @panic(errorMsg);"
+      ts:
+          - 'if (!(valid)) { throw new Error(errorMsg); }'
+      py:
+          - 'assert valid, errorMsg'
+      rs:
+          - 'assert!(valid, errorMsg);'
+      cpp:
+          - 'assert((valid) && errorMsg);'
+      zig:
+          - 'if (!(valid)) @panic(errorMsg);'
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Complex condition with multiple logical operators
+- name: assert complex condition
+  faber: 'adfirma x > 0 et x < 100 et x != 50'
+  expect:
+      ts:
+          - 'if (!((((x > 0) && (x < 100)) && (x != 50)))) { throw new Error("Assertion failed: (((x > 0) && (x < 100)) && (x != 50))"); }'
+      py:
+          - 'assert (((x > 0) and (x < 100)) and (x != 50))'
+      rs:
+          - 'assert!((((x > 0) && (x < 100)) && (x != 50)));'
+      cpp:
+          - 'assert((((x > 0) && (x < 100)) && (x != 50)));'
+      zig:
+          - 'std.debug.assert((((x > 0) and (x < 100)) and (x != 50)));'
+
+# Assertion with call expression
+- name: assert call expression
+  faber: 'adfirma isValid(data)'
+  expect:
+      ts:
+          - 'if (!(isValid(data))) { throw new Error("Assertion failed: isValid(data)"); }'
+      py:
+          - 'assert isValid(data)'
+      rs:
+          - 'assert!(isValid(data));'
+      cpp:
+          - 'assert(isValid(data));'
+      zig:
+          - 'std.debug.assert(isValid(data));'
+
+# Assertion with template message
+- name: assert with template message
+  faber: 'adfirma x > 0, `Expected positive, got ${x}`'
+  expect:
+      ts:
+          - 'if (!((x > 0))) { throw new Error(`Expected positive, got ${x}`); }'
+      py:
+          - 'assert (x > 0), f"Expected positive, got ${x}"'
+      rs:
+          - 'assert!((x > 0), format!("Expected positive, got ${x}"));'
+      cpp:
+          - 'std::format(Expected positive, got {}, x)'
+      zig:
+          - 'if (!((x > 0))) @panic("Expected positive, got ${x}");'
+
+# Assertion with falsum (always fails)
+- name: assert falsum
+  faber: 'adfirma falsum'
+  expect:
+      ts:
+          - 'if (!(false)) { throw new Error("Assertion failed: false"); }'
+      py:
+          - 'assert False'
+      rs:
+          - 'assert!(false);'
+      cpp:
+          - 'assert(false);'
+      zig:
+          - 'std.debug.assert(false);'
+
+# Assertion with member expression
+- name: assert member expression
+  faber: 'adfirma user.isActive et user.hasPermission'
+  expect:
+      ts:
+          - 'if (!((user.isActive && user.hasPermission))) { throw new Error("Assertion failed: (user.isActive && user.hasPermission)"); }'
+      py:
+          - 'assert (user.isActive and user.hasPermission)'
+      rs:
+          - 'assert!((user.isActive && user.hasPermission));'
+      cpp:
+          - 'assert((user.isActive && user.hasPermission));'
+      zig:
+          - 'std.debug.assert((user.isActive and user.hasPermission));'
+
+# Assertion with negation
+- name: assert negation
+  faber: 'adfirma non isEmpty(list)'
+  expect:
+      ts:
+          - 'if (!(!isEmpty(list))) { throw new Error("Assertion failed: !isEmpty(list)"); }'
+      py:
+          - 'assert not isEmpty(list)'
+      rs:
+          - 'assert!(!isEmpty(list));'
+      cpp:
+          - 'assert(!isEmpty(list));'
+      zig:
+          - 'std.debug.assert(!isEmpty(list));'
+
+# Assertion with comparison chain
+- name: assert comparison chain
+  faber: 'adfirma a < b et b < c'
+  expect:
+      ts:
+          - 'if (!(((a < b) && (b < c)))) { throw new Error("Assertion failed: ((a < b) && (b < c))"); }'
+      py:
+          - 'assert ((a < b) and (b < c))'
+      rs:
+          - 'assert!(((a < b) && (b < c)));'
+      cpp:
+          - 'assert(((a < b) && (b < c)));'
+      zig:
+          - 'std.debug.assert(((a < b) and (b < c)));'

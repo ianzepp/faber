@@ -14,46 +14,46 @@
 - name: type alias for string
   faber: 'typus ID = textus'
   expect:
-    ts:
-      - 'type ID = string;'
-    py:
-      - 'ID = str'
-    rs:
-      - 'type ID = String;'
-    cpp:
-      - 'using ID = std::string;'
-    zig:
-      - 'const ID = []const u8;'
+      ts:
+          - 'type ID = string;'
+      py:
+          - 'ID = str'
+      rs:
+          - 'type ID = String;'
+      cpp:
+          - 'using ID = std::string;'
+      zig:
+          - 'const ID = []const u8;'
 
 # Type alias for number
 - name: type alias for number
   faber: 'typus Count = numerus'
   expect:
-    ts:
-      - 'type Count = number;'
-    py:
-      - 'Count = int'
-    rs:
-      - 'type Count = f64;'
-    cpp:
-      - 'using Count = int64_t;'
-    zig:
-      - 'const Count = i64;'
+      ts:
+          - 'type Count = number;'
+      py:
+          - 'Count = int'
+      rs:
+          - 'type Count = f64;'
+      cpp:
+          - 'using Count = int64_t;'
+      zig:
+          - 'const Count = i64;'
 
 # Type alias for boolean
 - name: type alias for boolean
   faber: 'typus Flag = bivalens'
   expect:
-    ts:
-      - 'type Flag = boolean;'
-    py:
-      - 'Flag = bool'
-    rs:
-      - 'type Flag = bool;'
-    cpp:
-      - 'using Flag = bool;'
-    zig:
-      - 'const Flag = bool;'
+      ts:
+          - 'type Flag = boolean;'
+      py:
+          - 'Flag = bool'
+      rs:
+          - 'type Flag = bool;'
+      cpp:
+          - 'using Flag = bool;'
+      zig:
+          - 'const Flag = bool;'
 
 # =============================================================================
 # Generic Type Aliases
@@ -63,31 +63,31 @@
 - name: type alias for array
   faber: 'typus Items = lista<textus>'
   expect:
-    ts:
-      - 'type Items = Array<string>;'
-    py:
-      - 'Items = list[str]'
-    rs:
-      - 'type Items = Vec<String>;'
-    cpp:
-      - 'using Items = std::vector<std::string>;'
-    zig:
-      - 'const Items = [][]const u8;'
+      ts:
+          - 'type Items = Array<string>;'
+      py:
+          - 'Items = list[str]'
+      rs:
+          - 'type Items = Vec<String>;'
+      cpp:
+          - 'using Items = std::vector<std::string>;'
+      zig:
+          - 'const Items = [][]const u8;'
 
 # Type alias for map/dictionary (StringHashMap for string keys)
 - name: type alias for map
   faber: 'typus Cache = tabula<textus, numerus>'
   expect:
-    ts:
-      - 'type Cache = Map<string, number>;'
-    py:
-      - 'Cache = dict[str, int]'
-    rs:
-      - 'type Cache = HashMap<String, f64>;'
-    cpp:
-      - 'using Cache = std::unordered_map<std::string, int64_t>;'
-    zig:
-      - 'const Cache = std.StringHashMap(i64);'
+      ts:
+          - 'type Cache = Map<string, number>;'
+      py:
+          - 'Cache = dict[str, int]'
+      rs:
+          - 'type Cache = HashMap<String, f64>;'
+      cpp:
+          - 'using Cache = std::unordered_map<std::string, int64_t>;'
+      zig:
+          - 'const Cache = std.StringHashMap(i64);'
 
 # =============================================================================
 # Typeof Aliases (TypeScript-specific feature)
@@ -97,13 +97,91 @@
 - name: type alias with typeof
   faber: 'typus ConfigType = typus config'
   expect:
-    ts:
-      - 'type ConfigType = typeof config;'
-    py:
-      - 'ConfigType = Any'
-    rs:
-      - 'type ConfigType = ignotum;'
-    cpp:
-      - 'using ConfigType = ignotum;'
-    zig:
-      - 'const ConfigType = anytype;'
+      ts:
+          - 'type ConfigType = typeof config;'
+      py:
+          - 'ConfigType = Any'
+      rs:
+          - 'type ConfigType = ignotum;'
+      cpp:
+          - 'using ConfigType = ignotum;'
+      zig:
+          - 'const ConfigType = anytype;'
+
+# =============================================================================
+# Union Type Aliases
+# =============================================================================
+
+# Type alias for union type
+- name: type alias for union
+  faber: 'typus StringOrNumber = textus | numerus'
+  expect:
+      ts:
+          - 'type StringOrNumber = string | number;'
+      py:
+          - 'StringOrNumber = str | int'
+
+# =============================================================================
+# Function Type Aliases
+# =============================================================================
+
+# Type alias for function type
+- name: type alias for function type
+  faber: 'typus Handler = (textus, numerus) -> vacuum'
+  expect:
+      ts:
+          - 'type Handler = (arg0: string, arg1: number) => void;'
+      py:
+          - 'Handler = Callable[[str, int], None]'
+
+# =============================================================================
+# Nullable Type Aliases
+# =============================================================================
+
+# Type alias for nullable type
+- name: type alias for nullable
+  faber: 'typus OptionalString = textus?'
+  expect:
+      ts:
+          - 'type OptionalString = string | null;'
+      py:
+          - 'OptionalString = str | None'
+
+# =============================================================================
+# Array Type Aliases
+# =============================================================================
+
+# Type alias for list/array (additional test case)
+- name: type alias for string list
+  faber: 'typus StringList = lista<textus>'
+  expect:
+      ts:
+          - 'type StringList = Array<string>;'
+      py:
+          - 'StringList = list[str]'
+
+# =============================================================================
+# Generic Type Aliases with Multiple Parameters
+# =============================================================================
+
+# Type alias with multiple generic parameters
+- name: type alias with multiple generics
+  faber: 'typus Pair<A, B> = (A, B)'
+  expect:
+      ts:
+          - 'type Pair<A, B> = [A, B];'
+      py:
+          - 'Pair = tuple[A, B]'
+
+# =============================================================================
+# Object Shape Type Aliases
+# =============================================================================
+
+# Type alias for object shape
+- name: type alias for object shape
+  faber: 'typus Config = { host: textus, port: numerus }'
+  expect:
+      ts:
+          - 'type Config = { host: string; port: number };'
+      py:
+          - 'Config = TypedDict("Config", {"host": str, "port": int})'

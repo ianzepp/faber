@@ -6,87 +6,238 @@
 - name: string literal
   faber: fixum s = "hello"
   expect:
-    ts: 'const s = "hello";'
-    py: 's = "hello"'
-    rs:
-      - 'let s = String::from("hello");'
-    cpp:
-      - 'const auto s = std::string("hello");'
-    zig:
-      - 'const m_s = "hello";'
+      ts: 'const s = "hello";'
+      py: 's = "hello"'
+      rs:
+          - 'let s = String::from("hello");'
+      cpp:
+          - 'const auto s = std::string("hello");'
+      zig:
+          - 'const m_s = "hello";'
 
 - name: number literal
   faber: fixum n = 42
   expect:
-    ts: "const n = 42;"
-    py: "n = 42"
-    rs:
-      - "let n = 42;"
-    cpp:
-      - "const auto n = 42;"
-    zig:
-      - "const m_n = 42;"
+      ts: 'const n = 42;'
+      py: 'n = 42'
+      rs:
+          - 'let n = 42;'
+      cpp:
+          - 'const auto n = 42;'
+      zig:
+          - 'const m_n = 42;'
 
 - name: hex literal
   faber: fixum x = 0xFF
   expect:
-    ts: "const x = 0xFF;"
-    py: "x = 0xFF"
-    rs:
-      - "let x = 0xFF;"
-    cpp:
-      - "const auto x = 255;"
-    zig:
-      - "const m_x = 0xFF;"
+      ts: 'const x = 0xFF;'
+      py: 'x = 0xFF'
+      rs:
+          - 'let x = 0xFF;'
+      cpp:
+          - 'const auto x = 255;'
+      zig:
+          - 'const m_x = 0xFF;'
 
 - name: lowercase hex literal
   faber: fixum val = 0xabcdef
   expect:
-    ts: "const val = 0xabcdef;"
-    py: "val = 0xabcdef"
-    rs:
-      - "let val = 0xabcdef;"
-    cpp:
-      - "const auto val = 11259375;"
-    zig:
-      - "const m_val = 0xabcdef;"
+      ts: 'const val = 0xabcdef;'
+      py: 'val = 0xabcdef'
+      rs:
+          - 'let val = 0xabcdef;'
+      cpp:
+          - 'const auto val = 11259375;'
+      zig:
+          - 'const m_val = 0xabcdef;'
 
 - name: bigint literal
   faber: fixum big = 0xFFFFFFFFFFn
   expect:
-    ts: "const big = 0xFFFFFFFFFFn;"
-    py: "big = 0xFFFFFFFFFF"
-    rs:
-      - "let big = 0xFFFFFFFFFFni128;"
-    cpp:
-      - "const auto big = 1099511627775;"
-    zig:
-      - "const m_big = 0xFFFFFFFFFF;"
+      ts: 'const big = 0xFFFFFFFFFFn;'
+      py: 'big = 0xFFFFFFFFFF'
+      rs:
+          - 'let big = 0xFFFFFFFFFFni128;'
+      cpp:
+          - 'const auto big = 1099511627775;'
+      zig:
+          - 'const m_big = 0xFFFFFFFFFF;'
 
 - name: template literal simple
   faber: fixum msg = `hello world`
   expect:
-    ts: "const msg = `hello world`;"
-    py: 'msg = f"hello world"'
-    rs:
-      - 'let msg = format!("hello world");'
-    cpp:
-      - "const auto msg = std::string(hello world);"
-    zig:
-      - 'const m_msg = "hello world";'
+      ts: 'const msg = `hello world`;'
+      py: 'msg = f"hello world"'
+      rs:
+          - 'let msg = format!("hello world");'
+      cpp:
+          - 'const auto msg = std::string(hello world);'
+      zig:
+          - 'const m_msg = "hello world";'
 
 - name: template with interpolation
   faber: |
-    fixum name = "Marcus"
-    fixum greeting = `Hello, ${name}!`
+      fixum name = "Marcus"
+      fixum greeting = `Hello, ${name}!`
   expect:
-    ts:
-      - "const greeting = `Hello, ${name}!`"
-    py:
-      - 'greeting = f"Hello, ${name}!"'
-    rs:
-      - 'let greeting = format!("Hello, ${name}!");'
-    cpp:
-      - "const auto greeting = std::format(Hello, {}!, name);"
-    zig:
-      - 'const m_greeting = "Hello, ${name}!";'
+      ts:
+          - 'const greeting = `Hello, ${name}!`'
+      py:
+          - 'greeting = f"Hello, ${name}!"'
+      rs:
+          - 'let greeting = format!("Hello, ${name}!");'
+      cpp:
+          - 'const auto greeting = std::format(Hello, {}!, name);'
+      zig:
+          - 'const m_greeting = "Hello, ${name}!";'
+
+- name: negative number literal
+  faber: fixum neg = -42
+  expect:
+      ts: 'const neg = -42;'
+      py: 'neg = -42'
+      rs:
+          - 'let neg = -42;'
+      cpp:
+          - 'const auto neg = -42;'
+      zig:
+          - 'const m_neg = -42;'
+
+- name: floating point literal
+  faber: fixum pi = 3.14159
+  expect:
+      ts: 'const pi = 3.14159;'
+      py: 'pi = 3.14159'
+      rs:
+          - 'let pi = 3.14159;'
+      cpp:
+          - 'const auto pi = 3.14159;'
+      zig:
+          - 'const m_pi = 3.14159;'
+
+- name: scientific notation
+  faber: fixum big = 1.5e10
+  expect:
+      ts: 'const big = 1.5e10;'
+      py: 'big = 1.5e10'
+      rs:
+          - 'let big = 1.5e10;'
+      cpp:
+          - 'const auto big = 1.5e10;'
+      zig:
+          - 'const m_big = 1.5e10;'
+
+- name: binary literal
+  faber: fixum bits = 0b1010
+  expect:
+      ts: 'const bits = 0b1010;'
+      py: 'bits = 0b1010'
+      rs:
+          - 'let bits = 0b1010;'
+      cpp:
+          - 'const auto bits = 10;'
+      zig:
+          - 'const m_bits = 0b1010;'
+
+- name: octal literal
+  faber: fixum oct = 0o755
+  expect:
+      ts: 'const oct = 0o755;'
+      py: 'oct = 0o755'
+      rs:
+          - 'let oct = 0o755;'
+      cpp:
+          - 'const auto oct = 493;'
+      zig:
+          - 'const m_oct = 0o755;'
+
+- name: string with escape sequences
+  faber: fixum escaped = "line1\nline2\ttabbed"
+  expect:
+      ts: 'const escaped = "line1\nline2\ttabbed";'
+      py: 'escaped = "line1\nline2\ttabbed"'
+      rs:
+          - 'let escaped = String::from("line1\nline2\ttabbed");'
+      cpp:
+          - 'const auto escaped = std::string("line1\nline2\ttabbed");'
+      zig:
+          - 'const m_escaped = "line1\nline2\ttabbed";'
+
+- name: empty string
+  faber: fixum empty = ""
+  expect:
+      ts: 'const empty = "";'
+      py: 'empty = ""'
+      rs:
+          - 'let empty = String::from("");'
+      cpp:
+          - 'const auto empty = std::string("");'
+      zig:
+          - 'const m_empty = "";'
+
+- name: multiline template literal
+  faber: |
+      fixum multi = `line one
+      line two
+      line three`
+  expect:
+      ts:
+          - 'const multi = `line one'
+          - 'line two'
+          - 'line three`;'
+      py:
+          - 'multi = f"line one'
+      rs:
+          - 'let multi = format!("line one'
+      cpp:
+          - 'const auto multi = std::string(line one'
+      zig:
+          - 'const m_multi = "line one'
+
+- name: template with complex interpolation
+  faber: 'fixum msg = `result: ${compute(x + y)}`'
+  expect:
+      ts: 'const msg = `result: ${compute(x + y)}`;'
+      py: 'msg = f"result: ${compute(x + y)}"'
+      rs:
+          - 'let msg = format!("result: ${compute(x + y)}");'
+      cpp:
+          - 'const auto msg = std::format(result: {}, compute(x + y));'
+      zig:
+          - 'const m_msg = "result: ${compute(x + y)}";'
+
+- name: very large integer
+  faber: fixum huge = 9007199254740991
+  expect:
+      ts: 'const huge = 9007199254740991;'
+      py: 'huge = 9007199254740991'
+      rs:
+          - 'let huge = 9007199254740991;'
+      cpp:
+          - 'const auto huge = 9007199254740991;'
+      zig:
+          - 'const m_huge = 9007199254740991;'
+
+- name: unicode escape in string
+  faber: fixum unicode = "\u0048ello"
+  expect:
+      ts: 'const unicode = "\u0048ello";'
+      py: 'unicode = "\u0048ello"'
+      rs:
+          - 'let unicode = String::from("\u0048ello");'
+      cpp:
+          - 'const auto unicode = std::string("\u0048ello");'
+      zig:
+          - 'const m_unicode = "\u0048ello";'
+
+- name: single character string
+  faber: fixum char = "x"
+  expect:
+      ts: 'const char = "x";'
+      py: 'char = "x"'
+      rs:
+          - 'let char = String::from("x");'
+      cpp:
+          - 'const auto char = std::string("x");'
+      zig:
+          - 'const m_char = "x";'

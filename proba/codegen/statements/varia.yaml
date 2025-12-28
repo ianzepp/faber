@@ -20,31 +20,31 @@
 - name: mutable variable without type
   faber: 'varia x = 5'
   expect:
-    ts:
-      - 'let x = 5;'
-    py:
-      - 'x = 5'
-    rs:
-      - 'let mut x = 5;'
-    cpp:
-      - 'auto x = 5;'
-    zig:
-      - 'var x: i64 = 5;'
+      ts:
+          - 'let x = 5;'
+      py:
+          - 'x = 5'
+      rs:
+          - 'let mut x = 5;'
+      cpp:
+          - 'auto x = 5;'
+      zig:
+          - 'var x: i64 = 5;'
 
 # Immutable variable without type (module-level for Zig)
 - name: immutable variable without type
   faber: 'fixum y = 10'
   expect:
-    ts:
-      - 'const y = 10;'
-    py:
-      - 'y = 10'
-    rs:
-      - 'let y = 10;'
-    cpp:
-      - 'const auto y = 10;'
-    zig:
-      - 'const m_y = 10;'
+      ts:
+          - 'const y = 10;'
+      py:
+          - 'y = 10'
+      rs:
+          - 'let y = 10;'
+      cpp:
+          - 'const auto y = 10;'
+      zig:
+          - 'const m_y = 10;'
 
 # =============================================================================
 # Typed Variable Declarations
@@ -54,31 +54,31 @@
 - name: mutable typed variable
   faber: 'varia numerus count = 0'
   expect:
-    ts:
-      - 'let count: number = 0;'
-    py:
-      - 'count: int = 0'
-    rs:
-      - 'let mut count: f64 = 0;'
-    cpp:
-      - 'int64_t count = 0;'
-    zig:
-      - 'var count: i64 = 0;'
+      ts:
+          - 'let count: number = 0;'
+      py:
+          - 'count: int = 0'
+      rs:
+          - 'let mut count: f64 = 0;'
+      cpp:
+          - 'int64_t count = 0;'
+      zig:
+          - 'var count: i64 = 0;'
 
 # Immutable typed string (module-level for Zig)
 - name: immutable typed string
   faber: 'fixum textus name = "Marcus"'
   expect:
-    ts:
-      - 'const name: string = "Marcus";'
-    py:
-      - 'name: str = "Marcus"'
-    rs:
-      - 'let name: String = String::from("Marcus");'
-    cpp:
-      - 'const std::string name = std::string("Marcus");'
-    zig:
-      - 'const m_name: []const u8 = "Marcus";'
+      ts:
+          - 'const name: string = "Marcus";'
+      py:
+          - 'name: str = "Marcus"'
+      rs:
+          - 'let name: String = String::from("Marcus");'
+      cpp:
+          - 'const std::string name = std::string("Marcus");'
+      zig:
+          - 'const m_name: []const u8 = "Marcus";'
 
 # =============================================================================
 # Async Variable Declarations (figendum/variandum)
@@ -88,31 +88,31 @@
 - name: immutable async binding (figendum)
   faber: 'figendum data = fetchData()'
   expect:
-    ts:
-      - 'const data = await fetchData();'
-    py:
-      - 'data = await fetchData()'
-    rs:
-      - 'let data = fetchData().await;'
-    cpp:
-      - 'auto data = fetchData();'
-    zig:
-      - 'const data = fetchData();'
+      ts:
+          - 'const data = await fetchData();'
+      py:
+          - 'data = await fetchData()'
+      rs:
+          - 'let data = fetchData().await;'
+      cpp:
+          - 'auto data = fetchData();'
+      zig:
+          - 'const data = fetchData();'
 
 # Mutable async binding
 - name: mutable async binding (variandum)
   faber: 'variandum result = getResult()'
   expect:
-    ts:
-      - 'let result = await getResult();'
-    py:
-      - 'result = await getResult()'
-    rs:
-      - 'let mut result = getResult().await;'
-    cpp:
-      - 'auto result = getResult();'
-    zig:
-      - 'const result = getResult();'
+      ts:
+          - 'let result = await getResult();'
+      py:
+          - 'result = await getResult()'
+      rs:
+          - 'let mut result = getResult().await;'
+      cpp:
+          - 'auto result = getResult();'
+      zig:
+          - 'const result = getResult();'
 
 # =============================================================================
 # Array Destructuring
@@ -122,58 +122,58 @@
 - name: basic array destructuring
   faber: 'fixum [a, b, c] = coords'
   expect:
-    ts:
-      - 'const [a, b, c] = coords;'
-    py:
-      - 'a, b, c = coords'
-    rs:
-      - 'let [a, b, c] = coords;'
-    cpp:
-      - 'const auto& _tmp = coords;'
-      - 'const auto& a = _tmp[0];'
-      - 'const auto& b = _tmp[1];'
-      - 'const auto& c = _tmp[2];'
-    zig:
-      - 'const _tmp = coords;'
-      - 'const a = _tmp[0];'
-      - 'const b = _tmp[1];'
-      - 'const c = _tmp[2];'
+      ts:
+          - 'const [a, b, c] = coords;'
+      py:
+          - 'a, b, c = coords'
+      rs:
+          - 'let [a, b, c] = coords;'
+      cpp:
+          - 'const auto& _tmp = coords;'
+          - 'const auto& a = _tmp[0];'
+          - 'const auto& b = _tmp[1];'
+          - 'const auto& c = _tmp[2];'
+      zig:
+          - 'const _tmp = coords;'
+          - 'const a = _tmp[0];'
+          - 'const b = _tmp[1];'
+          - 'const c = _tmp[2];'
 
 # Array destructuring with rest
 - name: array destructuring with rest
   faber: 'fixum [first, ceteri rest] = items'
   expect:
-    ts:
-      - 'const [first, ...rest] = items;'
-    py:
-      - 'first, *rest = items'
-    rs:
-      - 'let [first, rest@..] = items;'
-    cpp:
-      - 'const auto& _tmp = items;'
-      - 'const auto& first = _tmp[0];'
-      - 'const auto rest = std::vector<decltype(_tmp)::value_type>(_tmp.begin() + 1, _tmp.end());'
-    zig:
-      - 'const _tmp = items;'
-      - 'const first = _tmp[0];'
-      - 'const rest = _tmp[1..];'
+      ts:
+          - 'const [first, ...rest] = items;'
+      py:
+          - 'first, *rest = items'
+      rs:
+          - 'let [first, rest@..] = items;'
+      cpp:
+          - 'const auto& _tmp = items;'
+          - 'const auto& first = _tmp[0];'
+          - 'const auto rest = std::vector<decltype(_tmp)::value_type>(_tmp.begin() + 1, _tmp.end());'
+      zig:
+          - 'const _tmp = items;'
+          - 'const first = _tmp[0];'
+          - 'const rest = _tmp[1..];'
 
 # Array destructuring with skips
 - name: array destructuring with skips
   faber: 'fixum [_, second, _] = values'
   expect:
-    ts:
-      - 'const [, second, ] = values;'
-    py:
-      - '_, second, _ = values'
-    rs:
-      - 'let [_, second, _] = values;'
-    cpp:
-      - 'const auto& _tmp = values;'
-      - 'const auto& second = _tmp[1];'
-    zig:
-      - 'const _tmp = values;'
-      - 'const second = _tmp[1];'
+      ts:
+          - 'const [, second, ] = values;'
+      py:
+          - '_, second, _ = values'
+      rs:
+          - 'let [_, second, _] = values;'
+      cpp:
+          - 'const auto& _tmp = values;'
+          - 'const auto& second = _tmp[1];'
+      zig:
+          - 'const _tmp = values;'
+          - 'const second = _tmp[1];'
 
 # =============================================================================
 # Variables Without Initializers
@@ -183,13 +183,105 @@
 - name: variable without initializer
   faber: 'varia numerus counter'
   expect:
-    ts:
-      - 'let counter: number;'
-    py:
-      - 'counter: int'
-    rs:
-      - 'let mut counter: f64;'
-    cpp:
-      - 'int64_t counter;'
-    zig:
-      - 'var counter: i64 = undefined;'
+      ts:
+          - 'let counter: number;'
+      py:
+          - 'counter: int'
+      rs:
+          - 'let mut counter: f64;'
+      cpp:
+          - 'int64_t counter;'
+      zig:
+          - 'var counter: i64 = undefined;'
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Declaration with complex chained expression
+- name: declaration with complex chained expression
+  faber: 'fixum result = items.filter(fn).map(fn2).first'
+  expect:
+      ts:
+          - 'const result = items.filter(fn).map(fn2).first;'
+      py:
+          - 'result = items.filter(fn).map(fn2).first'
+
+# Declaration with nullish coalescing
+- name: declaration with nullish coalescing
+  faber: 'fixum name = input vel "default"'
+  expect:
+      ts:
+          - 'const name = (input ?? "default");'
+      py:
+          - 'name = (input if input is not None else "default")'
+
+# Destructure with many elements (5+)
+- name: destructure with many elements
+  faber: 'fixum [a, b, c, d, e] = values'
+  expect:
+      ts:
+          - 'const [a, b, c, d, e] = values;'
+      py:
+          - 'a, b, c, d, e = values'
+
+# Declaration with spread copy (array)
+- name: declaration with array spread copy
+  faber: 'fixum copy = [sparge original]'
+  expect:
+      ts:
+          - 'const copy = [...original];'
+      py:
+          - 'copy = [*original]'
+
+# Declaration with object spread copy
+- name: declaration with object spread copy
+  faber: 'fixum copy = { sparge original }'
+  expect:
+      ts:
+          - 'const copy = { ...original };'
+      py:
+          - 'copy = {**original}'
+
+# Multiple declarations in sequence
+- name: multiple declarations in sequence
+  faber: |
+      fixum a = 1
+      fixum b = 2
+      fixum c = 3
+  expect:
+      ts:
+          - 'const a = 1;'
+          - 'const b = 2;'
+          - 'const c = 3;'
+      py:
+          - 'a = 1'
+          - 'b = 2'
+          - 'c = 3'
+
+# Declaration with binary expression
+- name: declaration with binary expression
+  faber: 'fixum sum = a + b + c'
+  expect:
+      ts:
+          - 'const sum = ((a + b) + c);'
+      py:
+          - 'sum = ((a + b) + c)'
+
+# Declaration with lambda
+- name: declaration with lambda
+  faber: 'fixum fn = pro x redde x * 2'
+  expect:
+      ts:
+          - 'const fn = (x) => (x * 2);'
+      py:
+          - 'fn = lambda x: (x * 2)'
+
+# Declaration with function call
+- name: declaration with function call
+  faber: 'fixum data = fetchData()'
+  expect:
+      ts:
+          - 'const data = fetchData();'
+      py:
+          - 'data = fetchData()'

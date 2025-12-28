@@ -20,27 +20,27 @@
 - name: simple proba
   faber: 'proba "should work" { adfirma verum }'
   expect:
-    ts:
-      - 'test("should work", () =>'
-      - "if (!(true))"
-    rs:
-      - "#[test]"
-      - "fn should_work()"
-      - "assert!(true);"
+      ts:
+          - 'test("should work", () =>'
+          - 'if (!(true))'
+      rs:
+          - '#[test]'
+          - 'fn should_work()'
+          - 'assert!(true);'
 
 # Test with multiple assertions
 - name: proba with multiple assertions
   faber: |
-    proba "validates input" {
-      adfirma x > 0
-      adfirma y < 100
-    }
+      proba "validates input" {
+        adfirma x > 0
+        adfirma y < 100
+      }
   expect:
-    ts:
-      - 'test("validates input", () =>'
-    rs:
-      - "#[test]"
-      - "fn validates_input()"
+      ts:
+          - 'test("validates input", () =>'
+      rs:
+          - '#[test]'
+          - 'fn validates_input()'
 
 # =============================================================================
 # Skip Modifier (omitte)
@@ -50,12 +50,12 @@
 - name: proba omitte with reason
   faber: 'proba omitte "blocked by #42" "skip this" { adfirma falsum }'
   expect:
-    ts:
-      - 'test.skip("blocked by #42: skip this", () =>'
-    rs:
-      - "#[ignore]"
-      - "#[test]"
-      - "fn skip_this()"
+      ts:
+          - 'test.skip("blocked by #42: skip this", () =>'
+      rs:
+          - '#[ignore]'
+          - '#[test]'
+          - 'fn skip_this()'
 
 # =============================================================================
 # Todo Modifier (futurum)
@@ -65,19 +65,19 @@
 - name: proba futurum with reason
   faber: 'proba futurum "needs async support" "implement later" { adfirma verum }'
   expect:
-    ts:
-      - 'test.todo("needs async support: implement later")'
-    rs:
-      - "// TODO: implement later"
+      ts:
+          - 'test.todo("needs async support: implement later")'
+      rs:
+          - '// TODO: implement later'
 
 # Todo test without reason
 - name: proba futurum without test name
   faber: 'proba futurum "implement later" { adfirma verum }'
   expect:
-    ts:
-      - 'test.todo("implement later: ")'
-    rs:
-      - "// TODO:"
+      ts:
+          - 'test.todo("implement later: ")'
+      rs:
+          - '// TODO:'
 
 # =============================================================================
 # Test Names
@@ -87,18 +87,108 @@
 - name: proba with special characters
   faber: 'proba "handles user emails" { adfirma verum }'
   expect:
-    ts:
-      - 'test("handles user emails"'
-    rs:
-      - "#[test]"
-      - "fn handles_user_emails()"
+      ts:
+          - 'test("handles user emails"'
+      rs:
+          - '#[test]'
+          - 'fn handles_user_emails()'
 
 # Test with spaces converted to underscores (Rust)
 - name: proba name conversion
   faber: 'proba "converts to snake case" { adfirma verum }'
   expect:
-    ts:
-      - 'test("converts to snake case"'
-    rs:
-      - "#[test]"
-      - "fn converts_to_snake_case()"
+      ts:
+          - 'test("converts to snake case"'
+      rs:
+          - '#[test]'
+          - 'fn converts_to_snake_case()'
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Test with setup in body
+- name: proba with setup in body
+  faber: |
+      proba "with setup" {
+        varia counter = 0
+        counter += 1
+        adfirma counter == 1
+      }
+  expect:
+      ts:
+          - 'test("with setup", () =>'
+          - 'let counter = 0'
+          - 'counter += 1'
+          - 'if (!((counter == 1)))'
+      rs:
+          - '#[test]'
+          - 'fn with_setup()'
+          - 'let mut counter = 0'
+          - 'counter += 1'
+
+# Test with multiple assertion types
+- name: proba with multiple assertion types
+  faber: |
+      proba "multiple checks" {
+        adfirma x == 5
+        adfirma y != 0
+        adfirma z >= 10
+      }
+  expect:
+      ts:
+          - 'test("multiple checks", () =>'
+          - 'if (!((x == 5)))'
+          - 'if (!((y != 0)))'
+          - 'if (!((z >= 10)))'
+      rs:
+          - '#[test]'
+          - 'fn multiple_checks()'
+
+# Test with complex assertion
+- name: proba with complex assertion
+  faber: 'proba "complex" { adfirma x > 0 et x < 100 }'
+  expect:
+      ts:
+          - 'test("complex", () =>'
+          - 'if (!(((x > 0) && (x < 100))))'
+      rs:
+          - '#[test]'
+          - 'fn complex()'
+          - 'assert!(((x > 0) && (x < 100)));'
+
+# Test with function call in assertion
+- name: proba with function call assertion
+  faber: 'proba "call" { adfirma isValid(data) }'
+  expect:
+      ts:
+          - 'test("call", () =>'
+          - 'if (!(isValid(data)))'
+      rs:
+          - '#[test]'
+          - 'fn call()'
+          - 'assert!(isValid(data));'
+
+# Test with member access assertion
+- name: proba with member access assertion
+  faber: 'proba "member" { adfirma user.isActive }'
+  expect:
+      ts:
+          - 'test("member", () =>'
+          - 'if (!(user.isActive))'
+      rs:
+          - '#[test]'
+          - 'fn member()'
+          - 'assert!(user.isActive);'
+
+# Test with negated assertion
+- name: proba with negated assertion
+  faber: 'proba "negated" { adfirma non isEmpty(list) }'
+  expect:
+      ts:
+          - 'test("negated", () =>'
+          - 'if (!(!isEmpty(list)))'
+      rs:
+          - '#[test]'
+          - 'fn negated()'
+          - 'assert!(!isEmpty(list));'

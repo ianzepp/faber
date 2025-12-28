@@ -14,60 +14,60 @@
 - name: while with boolean
   faber: 'dum verum { scribe "loop" }'
   expect:
-    ts:
-      - 'while (true)'
-      - 'console.log("loop")'
-    py:
-      - 'while True:'
-      - 'print("loop")'
-    rs:
-      - 'while true'
-      - 'println!("{}", String::from("loop"))'
-    cpp:
-      - 'while (true)'
-      - 'std::print'
-    zig:
-      - 'while (true)'
+      ts:
+          - 'while (true)'
+          - 'console.log("loop")'
+      py:
+          - 'while True:'
+          - 'print("loop")'
+      rs:
+          - 'while true'
+          - 'println!("{}", String::from("loop"))'
+      cpp:
+          - 'while (true)'
+          - 'std::print'
+      zig:
+          - 'while (true)'
 
 # While with comparison
 - name: while with comparison
   faber: 'dum x > 0 { x = x - 1 }'
   expect:
-    ts:
-      - 'while ((x > 0))'
-      - 'x = (x - 1)'
-    py:
-      - 'while (x > 0):'
-      - 'x = (x - 1)'
-    rs:
-      - 'while (x > 0)'
-      - 'x = (x - 1);'
-    cpp:
-      - 'while ((x > 0))'
-      - 'x = (x - 1);'
-    zig:
-      - 'while ((x > 0))'
-      - 'x = (x - 1);'
+      ts:
+          - 'while ((x > 0))'
+          - 'x = (x - 1)'
+      py:
+          - 'while (x > 0):'
+          - 'x = (x - 1)'
+      rs:
+          - 'while (x > 0)'
+          - 'x = (x - 1);'
+      cpp:
+          - 'while ((x > 0))'
+          - 'x = (x - 1);'
+      zig:
+          - 'while ((x > 0))'
+          - 'x = (x - 1);'
 
 # While with variable test
 - name: while with variable condition
   faber: 'dum running { process() }'
   expect:
-    ts:
-      - 'while (running)'
-      - 'process()'
-    py:
-      - 'while running:'
-      - 'process()'
-    rs:
-      - 'while running'
-      - 'process();'
-    cpp:
-      - 'while (running)'
-      - 'process();'
-    zig:
-      - 'while (running)'
-      - 'process();'
+      ts:
+          - 'while (running)'
+          - 'process()'
+      py:
+          - 'while running:'
+          - 'process()'
+      rs:
+          - 'while running'
+          - 'process();'
+      cpp:
+          - 'while (running)'
+          - 'process();'
+      zig:
+          - 'while (running)'
+          - 'process();'
 
 # =============================================================================
 # While with Break/Continue
@@ -76,64 +76,64 @@
 # While with break
 - name: while with break
   faber: |
-    dum verum {
-      si done { rumpe }
-    }
+      dum verum {
+        si done { rumpe }
+      }
   expect:
-    ts:
-      - 'while (true)'
-      - 'if (done)'
-      - 'break;'
-    py:
-      - 'while True:'
-      - 'if done:'
-      - 'break'
-    rs:
-      - 'while true'
-      - 'if done'
-      - 'break;'
-    cpp:
-      - 'while (true)'
-      - 'if (done)'
-      - 'break;'
-    zig:
-      - 'while (true)'
-      - 'if (done)'
-      - 'break;'
+      ts:
+          - 'while (true)'
+          - 'if (done)'
+          - 'break;'
+      py:
+          - 'while True:'
+          - 'if done:'
+          - 'break'
+      rs:
+          - 'while true'
+          - 'if done'
+          - 'break;'
+      cpp:
+          - 'while (true)'
+          - 'if (done)'
+          - 'break;'
+      zig:
+          - 'while (true)'
+          - 'if (done)'
+          - 'break;'
 
 # While with continue
 - name: while with continue
   faber: |
-    dum running {
-      si skip { perge }
-      work()
-    }
+      dum running {
+        si skip { perge }
+        work()
+      }
   expect:
-    ts:
-      - 'while (running)'
-      - 'if (skip)'
-      - 'continue;'
-      - 'work()'
-    py:
-      - 'while running:'
-      - 'if skip:'
-      - 'continue'
-      - 'work()'
-    rs:
-      - 'while running'
-      - 'if skip'
-      - 'continue;'
-      - 'work();'
-    cpp:
-      - 'while (running)'
-      - 'if (skip)'
-      - 'continue;'
-      - 'work();'
-    zig:
-      - 'while (running)'
-      - 'if (skip)'
-      - 'continue;'
-      - 'work();'
+      ts:
+          - 'while (running)'
+          - 'if (skip)'
+          - 'continue;'
+          - 'work()'
+      py:
+          - 'while running:'
+          - 'if skip:'
+          - 'continue'
+          - 'work()'
+      rs:
+          - 'while running'
+          - 'if skip'
+          - 'continue;'
+          - 'work();'
+      cpp:
+          - 'while (running)'
+          - 'if (skip)'
+          - 'continue;'
+          - 'work();'
+      zig:
+          - 'while (running)'
+          - 'if (skip)'
+          - 'continue;'
+          - 'work();'
 
 # =============================================================================
 # While with Catch Clause (TypeScript/Python only)
@@ -142,30 +142,193 @@
 # While with catch clause
 - name: while with catch clause
   faber: |
-    dum hasNext() {
-      processItem()
-    } cape err {
-      handleError(err)
-    }
+      dum hasNext() {
+        processItem()
+      } cape err {
+        handleError(err)
+      }
   expect:
-    ts:
-      - 'try {'
-      - 'while (hasNext())'
-      - 'processItem()'
-      - '} catch (err)'
-      - 'handleError(err)'
-    py:
-      - 'try:'
-      - 'while hasNext():'
-      - 'processItem()'
-      - 'except Exception as err:'
-      - 'handleError(err)'
-    rs:
-      - 'while hasNext()'
-      - 'processItem();'
-    cpp:
-      - 'while (hasNext())'
-      - 'processItem();'
-    zig:
-      - 'while (hasNext())'
-      - 'processItem();'
+      ts:
+          - 'try {'
+          - 'while (hasNext())'
+          - 'processItem()'
+          - '} catch (err)'
+          - 'handleError(err)'
+      py:
+          - 'try:'
+          - 'while hasNext():'
+          - 'processItem()'
+          - 'except Exception as err:'
+          - 'handleError(err)'
+      rs:
+          - 'while hasNext()'
+          - 'processItem();'
+      cpp:
+          - 'while (hasNext())'
+          - 'processItem();'
+      zig:
+          - 'while (hasNext())'
+          - 'processItem();'
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# While with complex exit condition
+- name: while with complex exit condition
+  faber: |
+      dum verum {
+        process()
+        si done { rumpe }
+      }
+  expect:
+      ts:
+          - 'while (true)'
+          - 'process()'
+          - 'if (done)'
+          - 'break;'
+      py:
+          - 'while True:'
+          - 'process()'
+          - 'if done:'
+          - 'break'
+      rs:
+          - 'while true'
+          - 'process();'
+          - 'if done'
+          - 'break;'
+
+# While with iterator pattern
+- name: while with iterator pattern
+  faber: 'dum iterator.hasNext() { process(iterator.next()) }'
+  expect:
+      ts:
+          - 'while (iterator.hasNext())'
+          - 'process(iterator.next())'
+      py:
+          - 'while iterator.hasNext():'
+          - 'process(iterator.next())'
+      rs:
+          - 'while iterator.hasNext()'
+          - 'process(iterator.next());'
+
+# Nested while loops
+- name: nested while loops
+  faber: |
+      dum x > 0 {
+        dum y > 0 {
+          process()
+          y = y - 1
+        }
+        x = x - 1
+      }
+  expect:
+      ts:
+          - 'while ((x > 0))'
+          - 'while ((y > 0))'
+          - 'process()'
+          - 'y = (y - 1)'
+          - 'x = (x - 1)'
+      py:
+          - 'while (x > 0):'
+          - 'while (y > 0):'
+          - 'process()'
+          - 'y = (y - 1)'
+          - 'x = (x - 1)'
+      rs:
+          - 'while (x > 0)'
+          - 'while (y > 0)'
+          - 'process();'
+          - 'y = (y - 1);'
+          - 'x = (x - 1);'
+
+# While with multiple conditions
+- name: while with multiple conditions
+  faber: 'dum x > 0 et y < 100 { process() }'
+  expect:
+      ts:
+          - 'while (((x > 0) && (y < 100)))'
+          - 'process()'
+      py:
+          - 'while ((x > 0) and (y < 100)):'
+          - 'process()'
+      rs:
+          - 'while ((x > 0) && (y < 100))'
+          - 'process();'
+
+# While with method call condition
+- name: while with method call condition
+  faber: 'dum queue.nonEmpty() { process(queue.pop()) }'
+  expect:
+      ts:
+          - 'while (queue.nonEmpty())'
+          - 'process(queue.pop())'
+      py:
+          - 'while queue.nonEmpty():'
+          - 'process(queue.pop())'
+      rs:
+          - 'while queue.nonEmpty()'
+          - 'process(queue.pop());'
+
+# While with decrement (countdown pattern)
+- name: while with decrement
+  faber: |
+      dum count > 0 {
+        scribe count
+        count = count - 1
+      }
+  expect:
+      ts:
+          - 'while ((count > 0))'
+          - 'console.log(count)'
+          - 'count = (count - 1)'
+      py:
+          - 'while (count > 0):'
+          - 'print(count)'
+          - 'count = (count - 1)'
+      rs:
+          - 'while (count > 0)'
+          - 'println!("{}", count)'
+          - 'count = (count - 1);'
+
+# While with perge and rumpe together
+- name: while with perge and rumpe together
+  faber: |
+      dum verum {
+        si skip { perge }
+        si done { rumpe }
+        process()
+      }
+  expect:
+      ts:
+          - 'while (true)'
+          - 'if (skip)'
+          - 'continue;'
+          - 'if (done)'
+          - 'break;'
+          - 'process()'
+      py:
+          - 'while True:'
+          - 'if skip:'
+          - 'continue'
+          - 'if done:'
+          - 'break'
+          - 'process()'
+      rs:
+          - 'while true'
+          - 'if skip'
+          - 'continue;'
+          - 'if done'
+          - 'break;'
+          - 'process();'
+
+# Empty while body
+- name: empty while body
+  faber: 'dum condition { }'
+  expect:
+      ts:
+          - 'while (condition)'
+      py:
+          - 'while condition:'
+      rs:
+          - 'while condition'

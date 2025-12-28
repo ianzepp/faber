@@ -20,31 +20,31 @@
 - name: throw string literal
   faber: 'iace "error occurred"'
   expect:
-    ts:
-      - 'throw "error occurred";'
-    py:
-      - 'raise Exception("error occurred")'
-    rs:
-      - 'return Err(String::from("error occurred"));'
-    cpp:
-      - 'throw std::runtime_error("error occurred");'
-    zig:
-      - 'return error.ErrorOccurred;'
+      ts:
+          - 'throw "error occurred";'
+      py:
+          - 'raise Exception("error occurred")'
+      rs:
+          - 'return Err(String::from("error occurred"));'
+      cpp:
+          - 'throw std::runtime_error("error occurred");'
+      zig:
+          - 'return error.ErrorOccurred;'
 
 # Throw variable
 - name: throw variable
   faber: 'iace err'
   expect:
-    ts:
-      - "throw err;"
-    py:
-      - "raise err"
-    rs:
-      - "return Err(err);"
-    cpp:
-      - "throw err;"
-    zig:
-      - "return error.Err;"
+      ts:
+          - 'throw err;'
+      py:
+          - 'raise err'
+      rs:
+          - 'return Err(err);'
+      cpp:
+          - 'throw err;'
+      zig:
+          - 'return error.Err;'
 
 # =============================================================================
 # Fatal Errors (mori)
@@ -54,28 +54,90 @@
 - name: panic with string literal
   faber: 'mori "fatal error"'
   expect:
-    ts:
-      - 'throw new Panic("fatal error");'
-    py:
-      - 'raise SystemExit("fatal error")'
-    rs:
-      - 'panic!(String::from("fatal error"));'
-    cpp:
-      - 'std::print(stderr, "FATAL: {}\n", "fatal error"); std::abort();'
-    zig:
-      - '@panic("fatal error");'
+      ts:
+          - 'throw new Panic("fatal error");'
+      py:
+          - 'raise SystemExit("fatal error")'
+      rs:
+          - 'panic!(String::from("fatal error"));'
+      cpp:
+          - 'std::print(stderr, "FATAL: {}\n", "fatal error"); std::abort();'
+      zig:
+          - '@panic("fatal error");'
 
 # Panic with variable
 - name: panic with variable
   faber: 'mori msg'
   expect:
-    ts:
-      - "throw new Panic(String(msg));"
-    py:
-      - "raise SystemExit(msg)"
-    rs:
-      - "panic!(msg);"
-    cpp:
-      - 'std::print(stderr, "FATAL: {}\n", msg); std::abort();'
-    zig:
-      - "@panic(msg);"
+      ts:
+          - 'throw new Panic(String(msg));'
+      py:
+          - 'raise SystemExit(msg)'
+      rs:
+          - 'panic!(msg);'
+      cpp:
+          - 'std::print(stderr, "FATAL: {}\n", msg); std::abort();'
+      zig:
+          - '@panic(msg);'
+
+# =============================================================================
+# Edge Cases
+# =============================================================================
+
+# Throw with Error constructor
+- name: throw with error constructor
+  faber: 'iace novum Error("message")'
+  expect:
+      ts:
+          - 'throw new Error("message");'
+      py:
+          - 'raise Exception("message")'
+
+# Throw with template message
+- name: throw with template message
+  faber: 'iace `Failed to process ${item.id}`'
+  expect:
+      ts:
+          - 'throw `Failed to process ${item.id}`;'
+      py:
+          - 'raise f"Failed to process ${item.id}"'
+
+# Throw in conditional
+- name: throw in conditional
+  faber: |
+      si nihil data { iace "Data required" }
+  expect:
+      ts:
+          - 'if ((data === null)) {'
+          - 'throw "Data required";'
+          - '}'
+      py:
+          - 'if (data is None):'
+          - 'raise Exception("Data required")'
+
+# Panic with template
+- name: panic with template message
+  faber: 'mori `Critical failure at ${location}`'
+  expect:
+      ts:
+          - 'throw new Panic(String(`Critical failure at ${location}`));'
+      py:
+          - 'raise SystemExit(f"Critical failure at ${location}")'
+
+# Throw with variable (explicit edge case)
+- name: throw error message variable
+  faber: 'iace errorMessage'
+  expect:
+      ts:
+          - 'throw errorMessage;'
+      py:
+          - 'raise errorMessage'
+
+# Throw with concatenated message
+- name: throw concatenated message
+  faber: 'iace "Error: " + message'
+  expect:
+      ts:
+          - 'throw ("Error: " + message);'
+      py:
+          - 'raise ("Error: " + message)'
