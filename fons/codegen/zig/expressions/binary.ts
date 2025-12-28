@@ -40,6 +40,17 @@ export function genBinaryExpression(node: BinaryExpression, g: ZigGenerator): st
         return `!std.mem.eql(u8, ${left}, ${right})`;
     }
 
+    // Handle integer division - Zig requires explicit truncating division for signed ints
+    // WHY: Zig's / operator doesn't work with signed integers, must use @divTrunc
+    if (node.operator === '/') {
+        return `@divTrunc(${left}, ${right})`;
+    }
+
+    // Handle modulo - Zig requires @mod or @rem for signed integers
+    if (node.operator === '%') {
+        return `@mod(${left}, ${right})`;
+    }
+
     const op = mapOperator(node.operator);
 
     return `(${left} ${op} ${right})`;

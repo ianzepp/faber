@@ -59,7 +59,7 @@
       cpp:
           - 'x /= 2;'
       zig:
-          - 'x /= 2;'
+          - 'x = @divTrunc(x, 2)'
 
 - name: member assignment
   faber: obj.prop = value
@@ -83,7 +83,7 @@
       cpp:
           - 'x %= 3;'
       zig:
-          - 'x %= 3;'
+          - 'x = @mod(x, 3)'
 
 - name: deeply nested member assignment
   faber: a.b.c.d.e = 5

@@ -47,7 +47,7 @@
       cpp:
           - '(10 / 2)'
       zig:
-          - '(10 / 2)'
+          - '@divTrunc(10, 2)'
 
 - name: equality comparison
   faber: a == b
@@ -177,7 +177,7 @@
       cpp:
           - '(((a + b) * (c - d)) / ((e + f) - (g * h)))'
       zig:
-          - '(((a + b) * (c - d)) / ((e + f) - (g * h)))'
+          - '@divTrunc(((a + b) * (c - d)), ((e + f) - (g * h)))'
 
 - name: string concatenation
   faber: '"hello" + " " + "world"'
@@ -201,7 +201,7 @@
       cpp:
           - '(10 % 3)'
       zig:
-          - '(10 % 3)'
+          - '@mod(10, 3)'
 
 - name: nullish coalescing (vel)
   faber: value vel defaultValue

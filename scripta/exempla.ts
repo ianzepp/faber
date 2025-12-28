@@ -87,8 +87,7 @@ async function main() {
     }
 
     if (failed > 0) {
-        console.log(`\n${failed} compilation(s) failed.`);
-        process.exit(1);
+        console.log(`\n${failed} parser/codegen failure(s) - continuing to verify generated files...`);
     }
 
     // Lint TypeScript output
@@ -107,8 +106,21 @@ async function main() {
     // Compile Zig output
     if (targets.includes('zig')) {
         console.log('Compiling Zig...');
-        const zigFiles = await findFabFiles(join(OUTPUT, 'zig'));
-        const zigSources = zigFiles.filter(f => f.endsWith('.zig'));
+        const findZigFiles = async (dir: string): Promise<string[]> => {
+            const entries = await readdir(dir);
+            const files: string[] = [];
+            for (const entry of entries) {
+                const fullPath = join(dir, entry);
+                const stat = statSync(fullPath);
+                if (stat.isDirectory()) {
+                    files.push(...(await findZigFiles(fullPath)));
+                } else if (entry.endsWith('.zig')) {
+                    files.push(fullPath);
+                }
+            }
+            return files;
+        };
+        const zigSources = await findZigFiles(join(OUTPUT, 'zig'));
         let zigFailed = 0;
 
         for (const file of zigSources) {
