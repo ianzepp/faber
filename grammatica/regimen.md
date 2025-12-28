@@ -288,6 +288,47 @@ ex persona fixum nomen ut n          // object destructuring with alias
 ex persona fixum nomen, ceteri rest  // object destructuring with rest
 ex coords fixum [x, y, z]            // array destructuring
 ex fetchData() figendum result       // async destructuring
+
+llection DSL forms:
+ex items prima 5 pro item { }        // iteration with transforms
+ex items prima 5, ultima 2 pro x {}  // multiple transforms
+```
+
+### D S L Transforms
+
+```ebnf
+dslTransforms := dslTransform (',' dslTransform)*
+dslTransform := dslVerb expression?
+dslVerb := 'prima' | 'ultima' | 'summa'
+```
+
+> DSL provides concise syntax for common collection operations.
+> Transforms chain with commas: prima 5, ultima 3
+
+**Examples:**
+
+```fab
+prima 5           -> first 5 elements
+ultima 3          -> last 3 elements
+summa             -> sum (no argument)
+prima 5, ultima 2 -> first 5, then last 2 of those
+```
+
+### Collection D S L Expression
+
+```ebnf
+dslExpr := 'ex' expression dslTransform (',' dslTransform)*
+```
+
+> When 'ex' appears in expression context with DSL verbs (not pro/fit/fiet),
+> it creates a collection pipeline expression that can be assigned.
+
+**Examples:**
+
+```fab
+fixum top5 = ex items prima 5
+fixum total = ex prices summa
+fixum result = ex items prima 10, ultima 3
 ```
 
 ### De Statement

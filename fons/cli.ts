@@ -421,8 +421,7 @@ for (let i = 1; i < args.length; i++) {
 
     if (arg === '-o' || arg === '--output') {
         outputFile = args[++i];
-    }
-    else if (arg === '-t' || arg === '--target') {
+    } else if (arg === '-t' || arg === '--target') {
         const t = args[++i];
 
         if (!t || !VALID_TARGETS.includes(t as (typeof VALID_TARGETS)[number])) {
@@ -431,15 +430,12 @@ for (let i = 1; i < args.length; i++) {
         }
 
         target = t as CodegenTarget;
-    }
-    else if (arg === '-c' || arg === '--check') {
+    } else if (arg === '-c' || arg === '--check') {
         checkOnly = true;
-    }
-    else if (!arg.startsWith('-') || arg === '-') {
+    } else if (!arg.startsWith('-') || arg === '-') {
         // Non-option arg is the file, or explicit '-' for stdin
         inputFile = arg;
-    }
-    else {
+    } else {
         console.error(`Error: Unknown option '${arg}'`);
         process.exit(1);
     }

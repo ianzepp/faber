@@ -31,7 +31,7 @@ function genPactumMethod(node: PactumMethod, g: RsGenerator): string {
     const asyncMod = node.async ? 'async ' : '';
     const name = node.name.name;
     const params = ['&self', ...node.params.map(p => g.genParameter(p))].join(', ');
-    let returnType = node.returnType ? ` -> ${g.genType(node.returnType)}` : '';
+    const returnType = node.returnType ? ` -> ${g.genType(node.returnType)}` : '';
 
     return `${g.ind()}${asyncMod}fn ${name}(${params})${returnType};`;
 }
