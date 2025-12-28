@@ -5,7 +5,7 @@ note: Database query DSL design. Not yet implemented.
 updated: 2025-12
 ---
 
-# Tabularium - Database Query DSL
+# Arca - Database Query DSL
 
 ## Overview
 
