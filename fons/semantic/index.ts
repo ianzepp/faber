@@ -1540,7 +1540,14 @@ export function analyze(program: Program): SemanticResult {
 
     function analyzeCuraStatement(node: CuraStatement): void {
         // Resource binding statement - analyze resource and define binding
-        const resourceType = resolveExpression(node.resource);
+        // WHY: For allocator curator kinds (arena/page), resource is optional
+        let resourceType: SemanticType;
+        if (node.resource) {
+            resourceType = resolveExpression(node.resource);
+        } else {
+            // Allocator binding - type is "allocator" (opaque for GC targets)
+            resourceType = { kind: 'user', name: 'Allocator', nullable: false };
+        }
 
         define({
             name: node.binding.name,

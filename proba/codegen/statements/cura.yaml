@@ -268,3 +268,82 @@
           - 'let mut data = fetch().await;'
           - 'process(data);'
           - 'return data;'
+
+# =============================================================================
+# Curator Kinds - Allocators (arena, page)
+# =============================================================================
+
+# Arena allocator - TS/RS strip it (GC), Zig emits ArenaAllocator
+- name: cura arena basic
+  faber: |
+      cura arena fit mem {
+        varia x = 42
+        process(x)
+      }
+  expect:
+      ts:
+          - 'let x = 42;'
+          - 'process(x);'
+      rs:
+          - 'let mut x = 42;'
+          - 'process(x);'
+      zig:
+          - 'var mem_arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);'
+          - 'defer mem_arena.deinit();'
+          - 'const mem = mem_arena.allocator();'
+
+# Page allocator - TS/RS strip it (GC), Zig emits page_allocator
+- name: cura page basic
+  faber: |
+      cura page fit mem {
+        fixum buffer = allocate(1024)
+      }
+  expect:
+      ts:
+          - 'const buffer = allocate(1024);'
+      rs:
+          - 'let buffer = allocate(1024);'
+      zig:
+          - 'const mem = std.heap.page_allocator;'
+          - 'const buffer = allocate(1024);'
+
+# Nested arena blocks
+- name: nested cura arena
+  faber: |
+      cura arena fit outer {
+        varia a = 1
+        process(a)
+        cura arena fit inner {
+          varia b = 2
+          process(b)
+        }
+        process(a)
+      }
+  expect:
+      ts:
+          - 'let a = 1;'
+          - 'process(a);'
+          - 'let b = 2;'
+          - 'process(b);'
+      zig:
+          - 'var outer_arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);'
+          - 'defer outer_arena.deinit();'
+          - 'const outer = outer_arena.allocator();'
+          - 'var inner_arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);'
+          - 'defer inner_arena.deinit();'
+          - 'const inner = inner_arena.allocator();'
+
+# Arena with pro binding (neutral)
+- name: cura arena with pro
+  faber: |
+      cura arena pro alloc {
+        process(alloc)
+      }
+  expect:
+      ts:
+          - 'process(alloc);'
+      zig:
+          - 'var alloc_arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);'
+          - 'defer alloc_arena.deinit();'
+          - 'const alloc = alloc_arena.allocator();'
+          - 'process(alloc);'
