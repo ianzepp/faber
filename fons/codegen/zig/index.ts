@@ -97,6 +97,7 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
             lines.push(`${g.ind()}var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);`);
             lines.push(`${g.ind()}defer arena.deinit();`);
             lines.push(`${g.ind()}const alloc = arena.allocator();`);
+            lines.push(`${g.ind()}_ = alloc; // silence unused warning until needed`);
             lines.push('');
         }
 

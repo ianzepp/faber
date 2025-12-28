@@ -25,11 +25,19 @@ export function genIteratioStatement(node: IteratioStatement, g: ZigGenerator): 
         const end = g.genExpression(range.end);
 
         // Stepped ranges need while loops (Zig for doesn't support step)
+        // WHY: Wrap in block to scope the loop variable, avoiding redeclaration
         if (range.step) {
             const step = g.genExpression(range.step);
             const cmp = range.inclusive ? '<=' : '<';
 
-            return `${g.ind()}var ${varName}: usize = ${start}; while (${varName} ${cmp} ${end}) : (${varName} += ${step}) ${body}`;
+            const lines: string[] = [];
+            lines.push(`${g.ind()}{`);
+            g.depth++;
+            lines.push(`${g.ind()}var ${varName}: usize = ${start};`);
+            lines.push(`${g.ind()}while (${varName} ${cmp} ${end}) : (${varName} += ${step}) ${body}`);
+            g.depth--;
+            lines.push(`${g.ind()}}`);
+            return lines.join('\n');
         }
 
         // Use native for (start..end) syntax (Zig 0.11+)
