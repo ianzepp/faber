@@ -1,0 +1,37 @@
+/**
+ * Rust Code Generator - CuraBlock and CuraStatement
+ *
+ * CuraBlock TRANSFORMS:
+ *   cura ante omnia { ... }
+ *   -> // setup_all: { ... }
+ *
+ * CuraStatement TRANSFORMS:
+ *   cura res = Resource.new() { ... }
+ *   -> let res = Resource::new();
+ *      { ... }
+ *
+ * WHY: Rust tests don't have setup/teardown hooks like Jest.
+ *      We emit as helper functions or comments.
+ * WHY: Rust uses RAII for resource management, so we emit a scoped block.
+ */
+
+import type { CuraBlock, CuraStatement } from '../../../parser/ast';
+import type { RsGenerator } from '../generator';
+import { genBlockStatement } from './functio';
+
+export function genCuraBlock(node: CuraBlock, g: RsGenerator): string {
+    const timing = node.timing === 'ante' ? 'setup' : 'teardown';
+    const scope = node.omnia ? 'all' : 'each';
+
+    return `${g.ind()}// ${timing}_${scope}: ${genBlockStatement(node.body, g)}`;
+}
+
+export function genCuraStatement(node: CuraStatement, g: RsGenerator): string {
+    const binding = node.binding.name;
+    const resource = g.genExpression(node.resource);
+    const awaitSuffix = node.async ? '.await' : '';
+    const body = genBlockStatement(node.body, g);
+
+    // Rust uses RAII, but we can emit a scoped block
+    return `${g.ind()}let ${binding} = ${resource}${awaitSuffix};\n${g.ind()}${body}`;
+}
