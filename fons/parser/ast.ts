@@ -394,15 +394,21 @@ export interface FunctioDeclaration extends BaseNode {
  *   ex (from)  → param (TS/Py), source semantics
  *   ceteri     → ...rest (TS), *args (Py), slice (Zig)
  *
+ * Dual naming (Swift-style external/internal):
+ *   'ut' introduces an internal alias: name is external (callsite), alias is internal (body).
+ *   textus location ut loc    -> caller uses 'location', body uses 'loc'
+ *
  * Examples:
  *   textus nomen              -> regular param
  *   de textus source          -> borrowed/read-only param
  *   in lista<T> items         -> mutable borrow param
  *   ceteri lista<textus> args -> rest param (...args: string[])
+ *   textus location ut loc    -> dual naming (external: location, internal: loc)
  */
 export interface Parameter extends BaseNode {
     type: 'Parameter';
     name: Identifier;
+    alias?: Identifier;
     typeAnnotation?: TypeAnnotation;
     case?: Case;
     preposition?: string;
@@ -423,6 +429,7 @@ export interface Parameter extends BaseNode {
  *
  * WHY: Enables creating named type aliases for complex types.
  *      When RHS is `typus identifier`, extracts the type of a value.
+ *
  *
  * Examples:
  *   typus ID = textus

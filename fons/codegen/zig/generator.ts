@@ -474,9 +474,11 @@ export class ZigGenerator {
      *
      * WHY: Zig requires type annotations on all parameters.
      *      Rest parameters use ... prefix syntax.
+     *      Dual naming (textus location ut loc) uses internal name (alias) in generated code.
      */
     genParameter(node: Parameter): string {
-        const name = node.name.name;
+        // Use alias (internal name) if present, otherwise external name
+        const name = node.alias?.name ?? node.name.name;
         const preposition = node.preposition;
         const type = node.typeAnnotation ? this.genTypeWithPreposition(node.typeAnnotation, preposition) : 'anytype';
         return `${name}: ${type}`;

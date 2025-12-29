@@ -255,9 +255,11 @@ export class CppGenerator {
      *      Latin prepositions encode reference semantics:
      *      de = "from/concerning" = const reference (read-only)
      *      in = "into" = mutable reference (will be modified)
+     *      Dual naming (textus location ut loc) uses internal name (alias) in generated code.
      */
     genParameter(node: Parameter): string {
-        const name = node.name.name;
+        // Use alias (internal name) if present, otherwise external name
+        const name = node.alias?.name ?? node.name.name;
         const preposition = node.preposition;
 
         if (node.typeAnnotation) {

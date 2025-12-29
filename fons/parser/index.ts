@@ -1251,7 +1251,15 @@ export function parse(tokens: Token[]): ParserResult {
 
         const name = parseIdentifier();
 
-        return { type: 'Parameter', name, typeAnnotation, preposition, rest, position };
+        // Check for dual naming: 'ut' introduces internal alias
+        // textus location ut loc -> external: location, internal: loc
+        let alias: Identifier | undefined;
+        if (checkKeyword('ut')) {
+            advance(); // consume 'ut'
+            alias = parseIdentifier();
+        }
+
+        return { type: 'Parameter', name, alias, typeAnnotation, preposition, rest, position };
     }
 
     /**

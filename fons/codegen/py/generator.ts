@@ -258,9 +258,13 @@ export class PyGenerator {
 
     /**
      * Generate function parameter.
+     *
+     * WHY: Dual naming (textus location ut loc) uses internal name (alias) in generated code.
+     *      The external name is for callsite documentation only.
      */
     genParameter(node: Parameter): string {
-        const name = node.name.name;
+        // Use alias (internal name) if present, otherwise external name
+        const name = node.alias?.name ?? node.name.name;
         const typeAnno = node.typeAnnotation ? `: ${this.genType(node.typeAnnotation)}` : '';
         const prefix = node.rest ? '*' : '';
         return `${prefix}${name}${typeAnno}`;

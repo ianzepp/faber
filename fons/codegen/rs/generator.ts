@@ -243,9 +243,11 @@ export class RsGenerator {
      *
      * WHY: Rust uses name: Type syntax like Latin.
      *      References (&) and mutability (mut) depend on usage.
+     *      Dual naming (textus location ut loc) uses internal name (alias) in generated code.
      */
     genParameter(node: Parameter): string {
-        const name = node.name.name;
+        // Use alias (internal name) if present, otherwise external name
+        const name = node.alias?.name ?? node.name.name;
         const type = node.typeAnnotation ? this.genType(node.typeAnnotation) : '_';
 
         // WHY: Strings typically passed as &str for borrowing

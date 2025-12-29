@@ -1,6 +1,6 @@
 # Functiones
 
-Design decisions for function declarations, parameters, and call syntax. For ownership prepositions (`de`, `in`) and the `pro` internal name keyword, see `praepositiones.md`.
+Design decisions for function declarations, parameters, and call syntax. For ownership prepositions (`de`, `in`), see `praepositiones.md`.
 
 ## Status
 
@@ -9,7 +9,7 @@ Design decisions for function declarations, parameters, and call syntax. For own
 | Basic functions        | Done        | `functio name() { }`                |
 | Typed parameters       | Done        | `functio f(textus name) { }`        |
 | Ownership prepositions | Done        | `de`/`in` for borrow semantics      |
-| Dual parameter naming  | Not started | Swift-style external/internal names |
+| Dual parameter naming  | Done        | Swift-style external/internal names |
 | Default values (`vel`) | Not started | `textus name vel "default"`         |
 
 ## Dual Parameter Naming
@@ -21,10 +21,10 @@ func greet(at location: String) { print(location) }
 greet(at: "Rome")  // callsite uses "at"
 ```
 
-Faber adopts this with `pro` as the internal name introducer:
+Faber adopts this with `ut` (as) for aliasing the internal name:
 
 ```fab
-functio greet(textus location pro loc) {
+functio greet(textus location ut loc) {
     scribe loc  // internal name
 }
 
@@ -34,7 +34,7 @@ greet(location: "Roma")  // external name at callsite
 ### Full Syntax
 
 ```ebnf
-parameter := preposition? typeAnnotation externalName ('pro' internalName)?
+parameter := preposition? typeAnnotation externalName ('ut' internalName)?
 preposition := 'ad' | 'de' | 'in' | 'ex'
 ```
 
@@ -45,7 +45,7 @@ See `praepositiones.md` for the complete preposition system.
 Ownership prepositions combine naturally:
 
 ```fab
-functio processPoints(de Point[] points pro p1, in Point[] targets pro p2) {
+functio processPoints(de Point[] points ut p1, in Point[] targets ut p2) {
     // p1 is borrowed (read-only)
     // p2 is mutably borrowed
     ex p1 pro point {
@@ -54,16 +54,24 @@ functio processPoints(de Point[] points pro p1, in Point[] targets pro p2) {
 }
 ```
 
-### Why `pro`?
+### Why `ut`?
 
-Latin `pro` means "for" or "on behalf of" — the internal name stands _for_ the external one. This parallels the iteration syntax (`ex items pro item`) where `pro` introduces a binding.
+Latin `ut` means "as" — the external name is known internally _as_ the internal name. This unifies aliasing across the language:
+
+- **Imports:** `ex norma importa scribe ut s`
+- **Destructuring:** `ex persona fixum nomen ut n`
+- **Parameters:** `textus location ut loc`
+
+All three express the same concept: "X, known locally as Y."
+
+> **Historical note:** Earlier designs used `pro` for parameter aliasing because `ut` was reserved for type casting. When `qua` took over casting (`x qua numerus`), `ut` became available for aliasing, enabling this unified syntax.
 
 ### Callsite Syntax
 
 Named arguments at callsites use the external name:
 
 ```fab
-functio move(de Point[] from pro source, in Point[] to pro dest) {
+functio move(de Point[] from ut source, in Point[] to ut dest) {
     // ...
 }
 
@@ -72,7 +80,7 @@ move(from: points, to: targets)
 
 ### When Internal Name is Omitted
 
-If `pro internalName` is omitted, the external name serves both roles (current behavior):
+If `ut internalName` is omitted, the external name serves both roles (current behavior):
 
 ```fab
 functio greet(textus name) {
@@ -116,7 +124,7 @@ greet("Marcus")  // "Salve, Marcus"
 Default comes after the internal name binding:
 
 ```fab
-functio greet(textus location pro loc vel "Roma") {
+functio greet(textus location ut loc vel "Roma") {
     scribe loc
 }
 ```
@@ -124,7 +132,7 @@ functio greet(textus location pro loc vel "Roma") {
 ### Full Syntax
 
 ```ebnf
-parameter := preposition? typeAnnotation externalName ('pro' internalName)? ('vel' defaultValue)?
+parameter := preposition? typeAnnotation externalName ('ut' internalName)? ('vel' defaultValue)?
 ```
 
 ### Ownership Restriction

@@ -482,3 +482,67 @@
       zig:
           - 'fn log(prefix: []const u8, args: anytype)'
           - 'std.debug.print("{s}'
+
+# =============================================================================
+# Dual Parameter Naming (ut alias)
+# =============================================================================
+# Swift-style external/internal naming: textus location ut loc
+# External name (location) is for callsite, internal name (loc) is used in body.
+# All targets use the internal name in generated code.
+
+# Basic dual naming - internal name used in body
+- name: dual parameter naming with ut
+  faber: 'functio greet(textus location ut loc) { scribe loc }'
+  expect:
+      ts:
+          - 'function greet(loc: string)'
+          - 'console.log(loc)'
+      py:
+          - 'def greet(loc: str):'
+          - 'print(loc)'
+      rs:
+          - 'fn greet(loc: &str)'
+          - 'println!("{}", loc)'
+      cpp:
+          - 'void greet(const std::string& loc)'
+          - 'std::print("{}'
+      zig:
+          - 'fn greet(loc: []const u8)'
+          - 'std.debug.print("{any}'
+
+# Dual naming with preposition
+- name: dual parameter naming with preposition
+  faber: 'functio process(de textus source ut src) { redde src }'
+  expect:
+      ts:
+          - 'function process(src: string)'
+          - 'return src'
+      py:
+          - 'def process(src: str):'
+          - 'return src'
+      rs:
+          - 'fn process(src: &str)'
+          - 'return src'
+      cpp:
+          - 'const std::string& src'
+          - 'return src'
+      zig:
+          - 'src: []const u8'
+          - 'return src'
+
+# Mixed aliased and non-aliased params
+- name: mixed aliased and non-aliased parameters
+  faber: 'functio copy(textus from ut source, textus to) { scribe source }'
+  expect:
+      ts:
+          - 'function copy(source: string, to: string)'
+          - 'console.log(source)'
+      py:
+          - 'def copy(source: str, to: str):'
+          - 'print(source)'
+      rs:
+          - 'fn copy(source: &str, to: &str)'
+      cpp:
+          - 'void copy(const std::string& source, const std::string& to)'
+      zig:
+          - 'fn copy(source: []const u8, to: []const u8)'

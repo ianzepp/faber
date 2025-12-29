@@ -1097,6 +1097,11 @@ function printParameter(path: AstPath<AstNode>, options: FaberOptions, print: (p
     const node = path.getValue() as any;
     const parts: Doc[] = [];
 
+    // Rest parameter prefix
+    if (node.rest) {
+        parts.push('ceteri ');
+    }
+
     // Preposition
     if (node.preposition) {
         parts.push(node.preposition, ' ');
@@ -1107,8 +1112,13 @@ function printParameter(path: AstPath<AstNode>, options: FaberOptions, print: (p
         parts.push(path.call(print, 'typeAnnotation'), ' ');
     }
 
-    // Name
+    // Name (external name)
     parts.push(path.call(print, 'name'));
+
+    // Alias (internal name) - dual parameter naming: textus location ut loc
+    if (node.alias) {
+        parts.push(' ut ', path.call(print, 'alias'));
+    }
 
     return parts;
 }

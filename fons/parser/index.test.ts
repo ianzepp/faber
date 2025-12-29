@@ -464,6 +464,66 @@ describe('parser', () => {
 
             expect(errors.length).toBeGreaterThan(0);
         });
+
+        test('function with dual parameter naming (ut alias)', () => {
+            const { program } = parseCode(`
+        functio greet(textus location ut loc) {
+          scribe(loc)
+        }
+      `);
+            const fn = program!.body[0] as any;
+
+            expect(fn.params[0].name.name).toBe('location');
+            expect(fn.params[0].alias.name).toBe('loc');
+            expect(fn.params[0].typeAnnotation.name).toBe('textus');
+        });
+
+        test('function with dual naming and preposition', () => {
+            const { program, errors } = parseCode(`
+        functio process(de lista<Point> points ut p1, in lista<Point> targets ut p2) {
+          scribe(p1)
+        }
+      `);
+            expect(errors).toHaveLength(0);
+            const fn = program!.body[0] as any;
+
+            expect(fn.params[0].preposition).toBe('de');
+            expect(fn.params[0].typeAnnotation.name).toBe('lista');
+            expect(fn.params[0].name.name).toBe('points');
+            expect(fn.params[0].alias.name).toBe('p1');
+
+            expect(fn.params[1].preposition).toBe('in');
+            expect(fn.params[1].typeAnnotation.name).toBe('lista');
+            expect(fn.params[1].name.name).toBe('targets');
+            expect(fn.params[1].alias.name).toBe('p2');
+        });
+
+        test('function with mixed aliased and non-aliased params', () => {
+            const { program, errors } = parseCode(`
+        functio move(de lista<Point> from ut source, in lista<Point> to) {
+          scribe(source)
+        }
+      `);
+            expect(errors).toHaveLength(0);
+            const fn = program!.body[0] as any;
+
+            expect(fn.params[0].name.name).toBe('from');
+            expect(fn.params[0].alias.name).toBe('source');
+            expect(fn.params[1].name.name).toBe('to');
+            expect(fn.params[1].alias).toBeUndefined();
+        });
+
+        test('function param without alias has undefined alias', () => {
+            const { program } = parseCode(`
+        functio greet(textus name) {
+          scribe(name)
+        }
+      `);
+            const fn = program!.body[0] as any;
+
+            expect(fn.params[0].name.name).toBe('name');
+            expect(fn.params[0].alias).toBeUndefined();
+        });
     });
 
     describe('if statements', () => {
