@@ -148,6 +148,8 @@ export class CppGenerator {
                 return this.genBlockStatementContent(node);
             case 'ExpressionStatement':
                 return `${this.ind()}${this.genExpression(node.expression)};`;
+            case 'AdStatement':
+                throw new Error('AdStatement codegen not implemented for C++');
             default:
                 throw new Error(`Unknown statement type: ${(node as any).type}`);
         }

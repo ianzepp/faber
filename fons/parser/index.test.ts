@@ -3601,5 +3601,199 @@ describe('parser', () => {
                 expect(stmt.typeofTarget.name).toBe('x');
             });
         });
+
+        describe('ad statements (dispatch)', () => {
+            describe('fire and forget', () => {
+                test('no arguments', () => {
+                    const { program, errors } = parseCode('ad "console:log" ()');
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.type).toBe('AdStatement');
+                    expect(stmt.target).toBe('console:log');
+                    expect(stmt.arguments).toHaveLength(0);
+                    expect(stmt.binding).toBeUndefined();
+                    expect(stmt.body).toBeUndefined();
+                });
+
+                test('single argument', () => {
+                    const { program, errors } = parseCode('ad "console:log" ("hello")');
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.type).toBe('AdStatement');
+                    expect(stmt.arguments).toHaveLength(1);
+                    expect(stmt.arguments[0].value).toBe('hello');
+                });
+
+                test('multiple arguments', () => {
+                    const { program, errors } = parseCode('ad "console:log" ("a", "b", 123)');
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.arguments).toHaveLength(3);
+                });
+
+                test('spread argument', () => {
+                    const { program, errors } = parseCode('ad "console:log" (sparge args)');
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.arguments).toHaveLength(1);
+                    expect(stmt.arguments[0].type).toBe('SpreadElement');
+                });
+            });
+
+            describe('sync binding (fit)', () => {
+                test('fit with type and binding', () => {
+                    const { program, errors } = parseCode('ad "fasciculus:lege" ("file.txt") fit textus pro content { }');
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.type).toBe('AdStatement');
+                    expect(stmt.binding).toBeDefined();
+                    expect(stmt.binding.type).toBe('AdBinding');
+                    expect(stmt.binding.verb).toBe('fit');
+                    expect(stmt.binding.typeAnnotation.name).toBe('textus');
+                    expect(stmt.binding.name.name).toBe('content');
+                    expect(stmt.body).toBeDefined();
+                });
+
+                test('fit with block body', () => {
+                    const { program, errors } = parseCode(`
+                        ad "fasciculus:lege" ("file.txt") fit textus pro content {
+                            scribe content
+                        }
+                    `);
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.body.body).toHaveLength(1);
+                    expect(stmt.body.body[0].type).toBe('ScribeStatement');
+                });
+
+                test('fit with generic type', () => {
+                    const { program, errors } = parseCode('ad "db:query" (sql) fit lista<User> pro users { }');
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.binding.typeAnnotation.name).toBe('lista');
+                    expect(stmt.binding.typeAnnotation.typeParameters).toHaveLength(1);
+                });
+
+                test('fit with nullable type', () => {
+                    const { program, errors } = parseCode('ad "cache:get" (key) fit textus? pro value { }');
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.binding.typeAnnotation.nullable).toBe(true);
+                });
+            });
+
+            describe('async binding (fiet)', () => {
+                test('fiet with type and binding', () => {
+                    const { program, errors } = parseCode('ad "http:get" (url) fiet Response pro response { }');
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.binding.verb).toBe('fiet');
+                    expect(stmt.binding.typeAnnotation.name).toBe('Response');
+                    expect(stmt.binding.name.name).toBe('response');
+                });
+            });
+
+            describe('plural binding (fiunt/fient)', () => {
+                test('fiunt for sync plural', () => {
+                    const { program, errors } = parseCode('ad "file:lines" (path) fiunt textus pro line { }');
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.binding.verb).toBe('fiunt');
+                });
+
+                test('fient for async plural', () => {
+                    const { program, errors } = parseCode('ad "http:batch" (urls) fient Response pro responses { }');
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.binding.verb).toBe('fient');
+                });
+            });
+
+            describe('type inference (pro without verb)', () => {
+                test('pro without explicit verb defaults to fit', () => {
+                    const { program, errors } = parseCode('ad "target" (args) pro result { }');
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.binding.verb).toBe('fit');
+                    expect(stmt.binding.typeAnnotation).toBeUndefined();
+                    expect(stmt.binding.name.name).toBe('result');
+                });
+            });
+
+            describe('alias (ut)', () => {
+                test('fit with ut alias', () => {
+                    const { program, errors } = parseCode('ad "target" (args) fit Type pro result ut r { }');
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.binding.name.name).toBe('result');
+                    expect(stmt.binding.alias.name).toBe('r');
+                });
+
+                test('fiet with ut alias', () => {
+                    const { program, errors } = parseCode('ad "http:get" (url) fiet Response pro response ut res { }');
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.binding.alias.name).toBe('res');
+                });
+            });
+
+            describe('error handling (cape)', () => {
+                test('cape clause after body', () => {
+                    const { program, errors } = parseCode(`
+                        ad "target" (x) fit Type pro r {
+                            scribe r
+                        } cape err {
+                            scribe err
+                        }
+                    `);
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.catchClause).toBeDefined();
+                    expect(stmt.catchClause.type).toBe('CapeClause');
+                    expect(stmt.catchClause.param.name).toBe('err');
+                });
+            });
+
+            describe('target patterns', () => {
+                test('stdlib target (module:method)', () => {
+                    const { program, errors } = parseCode('ad "fasciculus:lege" ("file.txt")');
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.target).toBe('fasciculus:lege');
+                });
+
+                test('URL target (https)', () => {
+                    const { program, errors } = parseCode('ad "https://api.example.com/users" ("GET")');
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.target).toBe('https://api.example.com/users');
+                });
+
+                test('package target', () => {
+                    const { program, errors } = parseCode('ad "hono/Hono" ()');
+
+                    expect(errors).toHaveLength(0);
+                    const stmt = program!.body[0] as any;
+                    expect(stmt.target).toBe('hono/Hono');
+                });
+            });
+        });
     });
 });

@@ -95,6 +95,7 @@ export enum ParserErrorCode {
     ExpectedKeywordProba = 'P045',
     ExpectedKeywordCura = 'P046',
     ExpectedKeywordAnteOrPost = 'P047',
+    ExpectedKeywordAd = 'P052',
 
     // Module/source errors (P050-P059)
     ExpectedModuleName = 'P050',
@@ -311,6 +312,10 @@ export const PARSER_ERRORS = {
     [ParserErrorCode.ExpectedKeywordAnteOrPost]: {
         text: "Expected 'ante' (before) or 'post' (after)",
         help: "After 'cura', specify timing: 'ante' (before) or 'post' (after)",
+    },
+    [ParserErrorCode.ExpectedKeywordAd]: {
+        text: "Expected dispatch keyword 'ad' (to/toward)",
+        help: "Dispatch statements use 'ad': ad \"target\" (args) fit Type pro name { ... }",
     },
 
     // Module/source errors

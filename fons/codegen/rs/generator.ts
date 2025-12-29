@@ -152,6 +152,8 @@ export class RsGenerator {
                 return genCuraBlock(node, this);
             case 'CuraStatement':
                 return genCuraStatement(node, this);
+            case 'AdStatement':
+                throw new Error('AdStatement codegen not implemented for Rust');
             default:
                 throw new Error(`Unknown statement type: ${(node as any).type}`);
         }

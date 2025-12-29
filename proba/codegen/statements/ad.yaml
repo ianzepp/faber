@@ -1,0 +1,109 @@
+# Ad statement error tests (errata)
+# Tests for parser error handling on malformed ad statements
+#
+# Happy path tests are in fons/parser/index.test.ts since they verify
+# AST structure, not codegen output (codegen is not yet implemented).
+
+# =============================================================================
+# Parser Errors - Missing/Invalid Target
+# =============================================================================
+
+- name: error - missing target string
+  faber: 'ad (args)'
+  errata:
+    - 'Parse errors'
+    - 'Expected string literal'
+
+- name: error - target is number not string
+  faber: 'ad 123 (args)'
+  errata:
+    - 'Parse errors'
+    - 'Expected string literal'
+
+- name: error - target is identifier not string
+  faber: 'ad target (args)'
+  errata:
+    - 'Parse errors'
+    - 'Expected string literal'
+
+# =============================================================================
+# Parser Errors - Argument List
+# =============================================================================
+
+- name: error - missing opening paren
+  faber: 'ad "target" args)'
+  errata:
+    - 'Parse errors'
+    - "Expected '('"
+
+- name: error - missing closing paren
+  faber: 'ad "target" (args'
+  errata:
+    - 'Parse errors'
+    - "Expected ')'"
+
+- name: error - missing paren entirely
+  faber: 'ad "target"'
+  errata:
+    - 'Parse errors'
+    - "Expected '('"
+
+# =============================================================================
+# Parser Errors - Binding Clause
+# =============================================================================
+
+- name: error - missing pro keyword in binding
+  faber: 'ad "target" (args) fit textus content { }'
+  errata:
+    - 'Parse errors'
+    - "Expected 'pro'"
+
+- name: error - missing binding name after pro
+  faber: 'ad "target" (args) fit textus pro { }'
+  errata:
+    - 'Parse errors'
+    - 'Expected identifier'
+
+- name: error - missing binding name after pro (no block)
+  faber: 'ad "target" (args) fit textus pro'
+  errata:
+    - 'Parse errors'
+    - 'Expected identifier'
+
+- name: error - ut without alias name
+  faber: 'ad "target" (args) fit Type pro name ut { }'
+  errata:
+    - 'Parse errors'
+    - 'Expected identifier'
+
+# =============================================================================
+# Parser Errors - Block
+# =============================================================================
+
+- name: error - missing block closing brace
+  faber: 'ad "target" (args) fit textus pro content { scribe content'
+  errata:
+    - 'Parse errors'
+    - "Expected '}'"
+
+# =============================================================================
+# Parser Errors - Cape Clause
+# =============================================================================
+
+- name: error - cape without error binding name
+  faber: 'ad "target" (args) fit Type pro r { } cape { }'
+  errata:
+    - 'Parse errors'
+    - 'Expected identifier'
+
+- name: error - cape without block
+  faber: 'ad "target" (args) fit Type pro r { } cape err'
+  errata:
+    - 'Parse errors'
+    - "Expected '{'"
+
+- name: error - cape with missing closing brace
+  faber: 'ad "target" (args) fit Type pro r { } cape err { scribe err'
+  errata:
+    - 'Parse errors'
+    - "Expected '}'"

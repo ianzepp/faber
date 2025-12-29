@@ -144,6 +144,9 @@ import type {
     CuraTiming,
     CuratorKind,
     CuraStatement,
+    AdStatement,
+    AdBinding,
+    AdBindingVerb,
     PraefixumExpression,
     CollectionDSLTransform,
     CollectionDSLExpression,
@@ -678,6 +681,12 @@ export function parse(tokens: Token[]): ParserResult {
         // Individual test: proba "name" { ... }
         if (checkKeyword('proba')) {
             return parseProbaStatement();
+        }
+
+        // Dispatch statement
+        // ad "target" (args) [binding]? [block]? [cape]?
+        if (checkKeyword('ad')) {
+            return parseAdStatement();
         }
 
         // Resource management / test setup-teardown
@@ -2808,6 +2817,116 @@ export function parse(tokens: Token[]): ParserResult {
         const body = parseBlockStatement();
 
         return { type: 'ProbaStatement', name, modifier, modifierReason, body, position };
+    }
+
+    /**
+     * Parse ad statement (dispatch).
+     *
+     * GRAMMAR:
+     *   adStmt := 'ad' STRING '(' argumentList ')' adBinding? blockStmt? catchClause?
+     *   adBinding := adBindingVerb typeAnnotation? 'pro' IDENTIFIER ('ut' IDENTIFIER)?
+     *   adBindingVerb := 'fit' | 'fiet' | 'fiunt' | 'fient'
+     *   argumentList := (expression (',' expression)*)?
+     *
+     * WHY: Latin 'ad' (to/toward) dispatches to named endpoints:
+     *      - Stdlib syscalls: "fasciculus:lege", "console:log"
+     *      - External packages: "hono/Hono"
+     *      - Remote services: "https://api.example.com/users"
+     *
+     * Binding verbs encode sync/async and single/plural:
+     *      - fit: sync, single ("it becomes")
+     *      - fiet: async, single ("it will become")
+     *      - fiunt: sync, plural ("they become")
+     *      - fient: async, plural ("they will become")
+     *
+     * Examples:
+     *   ad "console:log" ("hello")                           // fire-and-forget
+     *   ad "fasciculus:lege" ("file.txt") fit textus pro c { }  // sync binding
+     *   ad "http:get" (url) fiet Response pro r { }          // async binding
+     *   ad "http:batch" (urls) fient Response[] pro rs { }   // async plural
+     */
+    function parseAdStatement(): AdStatement {
+        const position = peek().position;
+
+        expectKeyword('ad', ParserErrorCode.ExpectedKeywordAd);
+
+        // Parse target string
+        const targetToken = expect('STRING', ParserErrorCode.ExpectedString);
+        const target = targetToken.value;
+
+        // Parse argument list: (args...)
+        expect('LPAREN', ParserErrorCode.ExpectedOpeningParen);
+        const args: (Expression | SpreadElement)[] = [];
+        if (!check('RPAREN')) {
+            do {
+                if (matchKeyword('sparge')) {
+                    const argument = parseExpression();
+                    args.push({ type: 'SpreadElement', argument, position: argument.position });
+                }
+                else {
+                    args.push(parseExpression());
+                }
+            } while (match('COMMA'));
+        }
+        expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
+
+        // Parse optional binding clause
+        // Binding starts with: fit | fiet | fiunt | fient | pro (type inference)
+        let binding: AdBinding | undefined;
+        if (checkKeyword('fit') || checkKeyword('fiet') || checkKeyword('fiunt') || checkKeyword('fient') || checkKeyword('pro')) {
+            const bindingPosition = peek().position;
+
+            // Parse binding verb (default to 'fit' if only 'pro' is used)
+            let verb: AdBindingVerb = 'fit';
+            if (matchKeyword('fit')) {
+                verb = 'fit';
+            }
+            else if (matchKeyword('fiet')) {
+                verb = 'fiet';
+            }
+            else if (matchKeyword('fiunt')) {
+                verb = 'fiunt';
+            }
+            else if (matchKeyword('fient')) {
+                verb = 'fient';
+            }
+            // If 'pro' is next without verb, verb defaults to 'fit'
+
+            // Parse optional type annotation before 'pro'
+            // Detection: if identifier before 'pro', it's a type
+            let typeAnnotation: TypeAnnotation | undefined;
+            if (check('IDENTIFIER') && !checkKeyword('pro')) {
+                typeAnnotation = parseTypeAnnotation();
+            }
+
+            // Expect 'pro' keyword
+            expectKeyword('pro', ParserErrorCode.ExpectedKeywordPro);
+
+            // Parse binding name
+            const name = parseIdentifier();
+
+            // Parse optional alias: ut alias
+            let alias: Identifier | undefined;
+            if (matchKeyword('ut')) {
+                alias = parseIdentifier();
+            }
+
+            binding = { type: 'AdBinding', verb, typeAnnotation, name, alias, position: bindingPosition };
+        }
+
+        // Parse optional body block
+        let body: BlockStatement | undefined;
+        if (check('LBRACE')) {
+            body = parseBlockStatement();
+        }
+
+        // Parse optional catch clause
+        let catchClause: CapeClause | undefined;
+        if (checkKeyword('cape')) {
+            catchClause = parseCapeClause();
+        }
+
+        return { type: 'AdStatement', target, arguments: args, binding, body, catchClause, position };
     }
 
     /**

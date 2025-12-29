@@ -288,6 +288,8 @@ export class ZigGenerator {
                 return this.genBlockStatementContent(node);
             case 'ExpressionStatement':
                 return this.genExpressionStatement(node);
+            case 'AdStatement':
+                throw new Error('AdStatement codegen not implemented for Zig');
             default:
                 throw new Error(`Unknown statement type: ${(node as any).type}`);
         }

@@ -169,6 +169,8 @@ export class TsGenerator {
                 return genCuraBlock(node, this, this.semi);
             case 'CuraStatement':
                 return genCuraStatement(node, this, this.semi);
+            case 'AdStatement':
+                throw new Error('AdStatement codegen not implemented for TypeScript');
             default:
                 throw new Error(`Unknown statement type: ${(node as any).type}`);
         }
