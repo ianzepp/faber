@@ -352,84 +352,21 @@ switch (event) {
 
 ## Current Blockers
 
-Tested against `exempla/` files: **8/47 compile successfully** (2025-12).
-
-| Blocker                           | Files | Fix                                                | Priority |
-| --------------------------------- | ----- | -------------------------------------------------- | -------- |
-| Array literals `.{}` not iterable | ~10   | **RESOLVED** - Use `qua T[]` or prefix type        | Done     |
-| String concat `++` at runtime     | ~8    | **RESOLVED** - Use `scriptum()`                    | Done     |
-| Unused function parameters        | ~8    | Prefix with `_` or add `_ = param;`                | Medium   |
-| `var` never mutated               | ~3    | Fix source: use `fixum` instead of `varia`         | N/A      |
-| Lambda return type required       | ~2    | Emit `@compileError` or infer from context         | Low      |
-| `verum`/`falsum` in type context  | ~2    | Map to `true`/`false` in all contexts              | Low      |
-| Generic `discretio`               | ~1    | Needs comptime function wrapper; non-generic works | Deferred |
-
-### Array Literals (RESOLVED)
-
-**Problem:** `.{ 1, 2, 3 }` creates a tuple (comptime-only), not an iterable array.
-
-**Solution:** Provide element type via `qua` cast or prefix type annotation:
-
-```faber
-// Option 1: qua cast (postfix type)
-fixum nums = [1, 2, 3] qua numerus[]
-
-// Option 2: prefix type annotation
-fixum numerus[] nums = [1, 2, 3]
-```
-
-```zig
-// Both generate proper array syntax:
-const nums = [_]i64{ 1, 2, 3 };
-for (nums) |n| { ... }  // works
-```
-
-Without type information, untyped array literals still emit `.{}` which only works at comptime.
-
-### String Concatenation (RESOLVED)
-
-**Problem:** `++` is comptime-only. Runtime concat needs allocator.
-
-**Solution:** Use `scriptum()` for formatted strings. String `+` on Zig target now throws a compile error with guidance.
-
-```faber
-// Error: String concatenation with '+' is not supported for Zig target
-fixum greeting = "Hello, " + name
-
-// Correct: Use scriptum()
-fixum greeting = scriptum("Hello, {s}!", name)
-```
-
-```zig
-// Generated output
-const greeting = std.fmt.allocPrint(alloc, "Hello, {s}!", .{name}) catch @panic("OOM");
-```
-
-Format strings pass through verbatim - users must use Zig format specifiers (`{s}` for strings, `{d}` for integers, `{any}` for unknown).
+| Blocker                    | Files | Fix                                                | Priority |
+| -------------------------- | ----- | -------------------------------------------------- | -------- |
+| Unused function parameters | ~8    | Prefix with `_` or add `_ = param;`                | Medium   |
+| Lambda return type         | ~2    | Emit `@compileError` or infer from context         | Low      |
+| Generic `discretio`        | ~1    | Needs comptime function wrapper; non-generic works | Deferred |
 
 ### Unused Parameters
 
 **Problem:** Zig errors on unused function parameters.
 
 ```zig
-// Current (broken)
 fn foo(x: i64, y: i64) i64 { return x; }  // error: unused parameter 'y'
-
-// Needed
-fn foo(x: i64, _: i64) i64 { return x; }  // or use _ = y;
 ```
 
 **Fix:** Either prefix unused params with `_` in codegen, or add `_ = param;` statements. Requires tracking which params are actually used in the body.
-
-### Var Never Mutated
-
-**Problem:** Zig errors on `var` that's never reassigned.
-
-```zig
-var x: i64 = 5;  // error: local variable is never mutated
-```
-
-**Fix:** This is a source error, not a codegen issue. If the programmer wrote `varia` but never mutates the variable, the Faber source is wrong - use `fixum` instead. Zig correctly enforces what should be true across all targets.
 
 ## Future Work
 
