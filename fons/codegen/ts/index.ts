@@ -90,7 +90,7 @@ function genPreamble(g: TsGenerator): string {
     }
 
     // WHY: Flumina (streams-first) requires Responsum type, respond helpers, and ut* boundary helpers
-    // Helper naming: ut + verb (utFit, utFiunt, utFiet, utFient) = "as [verb]"
+    // Helper naming: as + verb (asFit, asFiunt, asFiet, asFient) = "as [verb]"
     if (g.features.flumina) {
         definitions.push(`type Responsum<T = unknown> =
   | { op: 'bene'; data: T }
@@ -105,7 +105,7 @@ const respond = {
   item: <T>(data: T): Responsum<T> => ({ op: 'res', data }),
 };
 
-function utFit<T>(gen: () => Generator<Responsum<T>>): T {
+function asFit<T>(gen: () => Generator<Responsum<T>>): T {
   for (const resp of gen()) {
     if (resp.op === 'bene') return resp.data;
     if (resp.op === 'error') throw new Error(\`\${resp.code}: \${resp.message}\`);
@@ -113,7 +113,7 @@ function utFit<T>(gen: () => Generator<Responsum<T>>): T {
   throw new Error('EPROTO: No terminal response');
 }
 
-function* utFiunt<T>(gen: Generator<Responsum<T>>): Generator<T> {
+function* asFiunt<T>(gen: Generator<Responsum<T>>): Generator<T> {
   for (const resp of gen) {
     if (resp.op === 'res') yield resp.data;
     else if (resp.op === 'error') throw new Error(\`\${resp.code}: \${resp.message}\`);
@@ -122,7 +122,7 @@ function* utFiunt<T>(gen: Generator<Responsum<T>>): Generator<T> {
   }
 }
 
-async function utFiet<T>(gen: () => AsyncGenerator<Responsum<T>>): Promise<T> {
+async function asFiet<T>(gen: () => AsyncGenerator<Responsum<T>>): Promise<T> {
   for await (const resp of gen()) {
     if (resp.op === 'bene') return resp.data;
     if (resp.op === 'error') throw new Error(\`\${resp.code}: \${resp.message}\`);
@@ -130,7 +130,7 @@ async function utFiet<T>(gen: () => AsyncGenerator<Responsum<T>>): Promise<T> {
   throw new Error('EPROTO: No terminal response');
 }
 
-async function* utFient<T>(gen: AsyncGenerator<Responsum<T>>): AsyncGenerator<T> {
+async function* asFient<T>(gen: AsyncGenerator<Responsum<T>>): AsyncGenerator<T> {
   for await (const resp of gen) {
     if (resp.op === 'res') yield resp.data;
     else if (resp.op === 'error') throw new Error(\`\${resp.code}: \${resp.message}\`);

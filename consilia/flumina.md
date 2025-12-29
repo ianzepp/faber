@@ -22,10 +22,10 @@ Flumina makes streams the fundamental execution model. All verb-syntax functions
 
 | Verb    | Sync/Async | Cardinality | Boundary    | Return Type         |
 | ------- | ---------- | ----------- | ----------- | ------------------- |
-| `fit`   | sync       | single      | `utFit()`   | `T`                 |
-| `fiunt` | sync       | multi       | `utFiunt()` | `Generator<T>`      |
-| `fiet`  | async      | single      | `utFiet()`  | `Promise<T>`        |
-| `fient` | async      | multi       | `utFient()` | `AsyncGenerator<T>` |
+| `fit`   | sync       | single      | `asFit()`   | `T`                 |
+| `fiunt` | sync       | multi       | `asFiunt()` | `Generator<T>`      |
+| `fiet`  | async      | single      | `asFiet()`  | `Promise<T>`        |
+| `fient` | async      | multi       | `asFient()` | `AsyncGenerator<T>` |
 
 The `->` arrow syntax bypasses the protocol entirely for zero-overhead direct returns.
 
@@ -34,10 +34,10 @@ The `->` arrow syntax bypasses the protocol entirely for zero-overhead direct re
 **Verb syntax** (this document — stream protocol, Responsum wrapper):
 
 ```fab
-functio getId() fit textus { redde "abc" }        // sync, single (utFit)
-functio items() fiunt numerus { cede 1; cede 2 }  // sync, multi (utFiunt)
-functio fetch() fiet textus { redde data }        // async, single (utFiet)
-functio stream() fient textus { cede data }       // async, multi (utFient)
+functio getId() fit textus { redde "abc" }        // sync, single (asFit)
+functio items() fiunt numerus { cede 1; cede 2 }  // sync, multi (asFiunt)
+functio fetch() fiet textus { redde data }        // async, single (asFiet)
+functio stream() fient textus { cede data }       // async, multi (asFient)
 ```
 
 **Arrow syntax** (see async.md — direct returns, traditional semantics):
@@ -87,7 +87,7 @@ Compiles to:
 
 ```typescript
 function getId(): string {
-    return utFit(function* () {
+    return asFit(function* () {
         yield respond.ok('abc');
     });
 }
@@ -106,7 +106,7 @@ Compiles to:
 
 ```typescript
 function* items(): Generator<number> {
-    yield* utFiunt(
+    yield* asFiunt(
         (function* () {
             yield respond.item(1);
             yield respond.item(2);
@@ -128,7 +128,7 @@ Compiles to:
 
 ```typescript
 async function fetchData(): Promise<string> {
-    return await utFiet(async function* () {
+    return await asFiet(async function* () {
         yield respond.ok(await getData());
     });
 }
@@ -148,7 +148,7 @@ Compiles to:
 
 ```typescript
 async function* fetchAll(urls: Array<string>): AsyncGenerator<string> {
-    yield* utFient(
+    yield* asFient(
         (async function* () {
             for (const url of urls) {
                 yield respond.item(await fetch(url));
@@ -161,11 +161,11 @@ async function* fetchAll(urls: Array<string>): AsyncGenerator<string> {
 
 ## Boundary Helpers
 
-The `ut*` helpers convert internal protocol to external values:
+The `as*` helpers convert internal protocol to external values:
 
 ```typescript
-// utFit: sync single-value
-function utFit<T>(gen: () => Generator<Responsum<T>>): T {
+// asFit: sync single-value
+function asFit<T>(gen: () => Generator<Responsum<T>>): T {
     for (const resp of gen()) {
         if (resp.op === 'bene') return resp.data;
         if (resp.op === 'error') throw new Error(`${resp.code}: ${resp.message}`);
@@ -173,8 +173,8 @@ function utFit<T>(gen: () => Generator<Responsum<T>>): T {
     throw new Error('EPROTO: No terminal response');
 }
 
-// utFiunt: sync multi-value
-function* utFiunt<T>(gen: Generator<Responsum<T>>): Generator<T> {
+// asFiunt: sync multi-value
+function* asFiunt<T>(gen: Generator<Responsum<T>>): Generator<T> {
     for (const resp of gen) {
         if (resp.op === 'res') yield resp.data;
         else if (resp.op === 'error') throw new Error(`${resp.code}: ${resp.message}`);
@@ -183,11 +183,11 @@ function* utFiunt<T>(gen: Generator<Responsum<T>>): Generator<T> {
     }
 }
 
-// utFiet: async single-value
-async function utFiet<T>(gen: () => AsyncGenerator<Responsum<T>>): Promise<T> { ... }
+// asFiet: async single-value
+async function asFiet<T>(gen: () => AsyncGenerator<Responsum<T>>): Promise<T> { ... }
 
-// utFient: async multi-value
-async function* utFient<T>(gen: AsyncGenerator<Responsum<T>>): AsyncGenerator<T> { ... }
+// asFient: async multi-value
+async function* asFient<T>(gen: AsyncGenerator<Responsum<T>>): AsyncGenerator<T> { ... }
 ```
 
 ## Error Handling
@@ -213,7 +213,7 @@ functio validate(numerus x) fit numerus {
 
 | File                                    | Purpose                                                    |
 | --------------------------------------- | ---------------------------------------------------------- |
-| `fons/codegen/ts/index.ts`              | Preamble with `Responsum`, `respond`, `ut*` helpers        |
+| `fons/codegen/ts/index.ts`              | Preamble with `Responsum`, `respond`, `as*` helpers        |
 | `fons/codegen/ts/generator.ts`          | Context flags: `inFlumina`, `inFiunt`, `inFiet`, `inFient` |
 | `fons/codegen/ts/statements/functio.ts` | Verb detection, wrapper generation                         |
 | `fons/codegen/ts/statements/redde.ts`   | `yield respond.ok()` in flumina context                    |
@@ -247,7 +247,7 @@ fn numeri(emit: *const fn(Responsum(i64)) void) void {
 1. **Protocol is internal**: Callers see raw values, not `Responsum`
 2. **`->` bypasses protocol**: Zero overhead for simple functions
 3. **`mori` bypasses protocol**: Panics are fatal, not recoverable
-4. **Helpers named `ut*`**: Latin consistency (`ut` = "as")
+4. **Helpers named `as*`**: English prefix for target-language readability
 5. **Backpressure deferred**: Pull-based generators have implicit backpressure
 
 ## References

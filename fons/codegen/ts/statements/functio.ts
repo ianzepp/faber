@@ -77,10 +77,10 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: TsGenerator):
         g.inFlumina = prevInFlumina;
         g.inGenerator = prevInGenerator;
 
-        // WHY: Wrap body in utFit(function* () { ... }) for Responsum protocol
+        // WHY: Wrap body in asFit(function* () { ... }) for Responsum protocol
         const ind = g.ind();
         return `${ind}function ${name}${typeParams}(${params})${returnType} {
-${ind}  return utFit(function* () {
+${ind}  return asFit(function* () {
 ${innerBody}
 ${ind}  });
 ${ind}}`;
@@ -100,11 +100,11 @@ ${ind}}`;
         g.inFiunt = prevInFiunt;
         g.inGenerator = prevInGenerator;
 
-        // WHY: Wrap body in utFiunt((function* () { ... yield respond.done(); })()) for Responsum protocol
+        // WHY: Wrap body in asFiunt((function* () { ... yield respond.done(); })()) for Responsum protocol
         // The implicit respond.done() signals stream completion
         const ind = g.ind();
         return `${ind}function* ${name}${typeParams}(${params})${returnType} {
-${ind}  yield* utFiunt((function* () {
+${ind}  yield* asFiunt((function* () {
 ${innerBody}
 ${ind}    yield respond.done();
 ${ind}  })());
@@ -126,10 +126,10 @@ ${ind}}`;
         g.inFlumina = prevInFlumina;
         g.inGenerator = prevInGenerator;
 
-        // WHY: Wrap body in utFiet(async function* () { ... }) for async Responsum protocol
+        // WHY: Wrap body in asFiet(async function* () { ... }) for async Responsum protocol
         const ind = g.ind();
         return `${ind}async function ${name}${typeParams}(${params})${returnType} {
-${ind}  return await utFiet(async function* () {
+${ind}  return await asFiet(async function* () {
 ${innerBody}
 ${ind}  });
 ${ind}}`;
@@ -149,10 +149,10 @@ ${ind}}`;
         g.inFient = prevInFient;
         g.inGenerator = prevInGenerator;
 
-        // WHY: Wrap body in utFient((async function* () { ... yield respond.done(); })()) for async Responsum protocol
+        // WHY: Wrap body in asFient((async function* () { ... yield respond.done(); })()) for async Responsum protocol
         const ind = g.ind();
         return `${ind}async function* ${name}${typeParams}(${params})${returnType} {
-${ind}  yield* utFient((async function* () {
+${ind}  yield* asFient((async function* () {
 ${innerBody}
 ${ind}    yield respond.done();
 ${ind}  })());

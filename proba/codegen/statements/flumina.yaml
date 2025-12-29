@@ -1,9 +1,9 @@
 # Flumina (streams-first) - fit/fiunt/fiet/fient functions with Responsum protocol
 # Maps Faber verbs to generator-wrapped ut* helpers:
-#   fit   -> utFit()   (sync single-value)
-#   fiunt -> utFiunt() (sync multi-value)
-#   fiet  -> utFiet()  (async single-value)
-#   fient -> utFient() (async multi-value)
+#   fit   -> asFit()   (sync single-value)
+#   fiunt -> asFiunt() (sync multi-value)
+#   fiet  -> asFiet()  (async single-value)
+#   fient -> asFient() (async multi-value)
 #
 # - redde becomes yield respond.ok(value)
 # - cede becomes yield respond.item(value)
@@ -24,7 +24,7 @@
       ts:
           contains:
               - 'function getId(): string'
-              - 'return utFit(function* ()'
+              - 'return asFit(function* ()'
               - 'yield respond.ok("abc")'
 
 - name: fit function with redde and param
@@ -37,7 +37,7 @@
       ts:
           contains:
               - 'function greet(name: string): string'
-              - 'return utFit(function* ()'
+              - 'return asFit(function* ()'
               - 'yield respond.ok(name)'
 
 - name: fit function with no return value
@@ -136,7 +136,7 @@
               - 'async function fetchData(): Promise<string>'
               - 'return "data"'
           not_contains:
-              - 'utFit'
+              - 'asFit'
               - 'respond.ok'
 
 # =============================================================================
@@ -154,7 +154,7 @@
       ts:
           contains:
               - 'function* items(): Generator<number>'
-              - 'yield* utFiunt('
+              - 'yield* asFiunt('
               - 'yield respond.item(1)'
               - 'yield respond.item(2)'
               - 'yield respond.done()'
@@ -252,7 +252,7 @@
       ts:
           contains:
               - 'async function fetchData(): Promise<string>'
-              - 'return await utFiet(async function* ()'
+              - 'return await asFiet(async function* ()'
               - 'yield respond.ok("data")'
 
 - name: fiet function with cede and redde
@@ -266,7 +266,7 @@
       ts:
           contains:
               - 'async function fetchAndReturn(): Promise<string>'
-              - 'utFiet(async function* ()'
+              - 'asFiet(async function* ()'
               - 'await getData()'
               - 'yield respond.ok(result)'
 
@@ -311,7 +311,7 @@
       ts:
           contains:
               - 'async function* fetchItems(): AsyncGenerator<string>'
-              - 'yield* utFient('
+              - 'yield* asFient('
               - 'yield respond.item(await fetch("a"))'
               - 'yield respond.item(await fetch("b"))'
               - 'yield respond.done()'
