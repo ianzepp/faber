@@ -16,6 +16,33 @@ Flumina makes streams the fundamental execution model. All `fit`/`fiunt`/`fiet`/
 
 The `->` arrow syntax bypasses the protocol entirely for zero-overhead direct returns.
 
+### Two Syntax Patterns
+
+**Verb syntax** (stream protocol, Responsum wrapper):
+
+```fab
+functio getId() fit textus { redde "abc" }     // sync, single (utFit)
+functio items() fiunt numerus { cede 1; cede 2 }  // sync, multi (utFiunt)
+functio fetch() fiet textus { redde data }     // async, single (utFiet)
+functio stream() fient textus { cede data }    // async, multi (utFient)
+```
+
+**Arrow syntax** (direct returns, traditional semantics):
+
+```fab
+functio getId() -> textus { redde "abc" }            // sync, direct return
+futura functio fetch() -> textus { redde data }      // async, direct return
+cursor functio items() -> numerus { cede 1; cede 2 } // sync, traditional yield
+futura cursor functio stream() -> textus { cede data } // async, traditional async yield
+```
+
+**Important**: `futura`/`cursor` prefixes cannot be combined with verbs:
+
+- ✗ `futura functio f() fit T` (ERROR: prefixes only with arrow)
+- ✗ `cursor functio f() fiunt T` (ERROR: prefixes only with arrow)
+- ✓ `functio f() fiet T` (verb carries semantic info)
+- ✓ `futura functio f() -> T` (arrow uses prefix semantics)
+
 ## The Responsum Protocol
 
 All yields produce a `Responsum` with an `op` field:

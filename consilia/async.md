@@ -29,27 +29,32 @@ Grammar encodes both dimensions:
 - **Tense**: present (sync) vs future (async)
 - **Number**: singular (return once) vs plural (yield many)
 
-### Compatibility with Prefixes
+### Syntax Patterns
 
-The `->` arrow and `futura`/`cursor` prefixes remain valid. Either mechanism works:
+Two separate syntax patterns for async functions:
 
-| Syntax                           | Semantics                           |
+**Arrow syntax** (direct returns, traditional semantics):
+| Syntax | Semantics |
 | -------------------------------- | ----------------------------------- |
-| `functio f() -> T`               | sync, single (default)              |
-| `functio f() fit T`              | sync, single (explicit)             |
-| `functio f() fiet T`             | async, single                       |
-| `functio f() fiunt T`            | sync, generator                     |
-| `functio f() fient T`            | async, generator                    |
-| `futura functio f() -> T`        | async, single (prefix determines)   |
-| `cursor functio f() -> T`        | sync, generator (prefix determines) |
-| `futura cursor functio f() -> T` | async, generator                    |
+| `functio f() -> T` | sync, single (default) |
+| `futura functio f() -> T` | async, single (Promise<T>) |
+| `cursor functio f() -> T` | sync, generator (yield) |
+| `futura cursor functio f() -> T` | async, generator (AsyncGenerator) |
 
-**Validation**: If both prefix and verb are used, they must agree:
+**Verb syntax** (stream protocol via Responsum):
+| Syntax | Semantics |
+| -------------------------------- | ----------------------------------- |
+| `functio f() fit T` | sync, single (Responsum protocol) |
+| `functio f() fiet T` | async, single (Responsum protocol) |
+| `functio f() fiunt T` | sync, generator (Responsum protocol) |
+| `functio f() fient T` | async, generator (Responsum protocol)|
 
-- `futura functio f() fit T` - ERROR: `fit` (sync) contradicts `futura` (async)
-- `cursor functio f() fit T` - ERROR: `fit` (single) contradicts `cursor` (generator)
-- `futura functio f() fiet T` - OK: redundant but valid
-- `cursor functio f() fiunt T` - OK: redundant but valid
+**Validation**: Prefixes (`futura`/`cursor`) cannot be combined with verbs:
+
+- `futura functio f() fit T` - ERROR: prefixes only work with arrow syntax
+- `cursor functio f() fiunt T` - ERROR: prefixes only work with arrow syntax
+- `functio f() fiet T` - OK: verb carries semantic information
+- `futura functio f() -> T` - OK: arrow uses prefix semantics
 
 ---
 

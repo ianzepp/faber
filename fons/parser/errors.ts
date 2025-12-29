@@ -112,6 +112,7 @@ export enum ParserErrorCode {
 
     // Generic errors (P190-P199)
     GenericError = 'P190',
+    PrefixVerbConflict = 'P191',
 
     // Declaration errors (P200-P299)
     MissingFunctioName = 'P200',
@@ -315,7 +316,7 @@ export const PARSER_ERRORS = {
     },
     [ParserErrorCode.ExpectedKeywordAd]: {
         text: "Expected dispatch keyword 'ad' (to/toward)",
-        help: "Dispatch statements use 'ad': ad \"target\" (args) fit Type pro name { ... }",
+        help: 'Dispatch statements use \'ad\': ad "target" (args) fit Type pro name { ... }',
     },
 
     // Module/source errors
@@ -362,6 +363,10 @@ export const PARSER_ERRORS = {
     [ParserErrorCode.GenericError]: {
         text: 'Syntax error',
         help: 'Check the code structure for syntax errors.',
+    },
+    [ParserErrorCode.PrefixVerbConflict]: {
+        text: 'Cannot combine futura/cursor with fit/fiet/fiunt/fient',
+        help: "Verbs (fit/fiet/fiunt/fient) use the stream protocol and cannot be combined with futura/cursor prefixes. Use '->' arrow with futura/cursor for traditional async/generator returns.",
     },
 
     // Declaration errors

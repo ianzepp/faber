@@ -150,7 +150,7 @@ typeParamDecl := 'prae' 'typus' IDENTIFIER
 
 ```ebnf
 enumDecl := 'ordo' IDENTIFIER '{' enumMember (',' enumMember)* ','? '}'
-enumMember := IDENTIFIER ('=' (NUMBER | STRING))?
+enumMember := IDENTIFIER ('=' ('-'? NUMBER | STRING))?
 ```
 
 > Latin 'ordo' (order/rank) for enumerated constants.
@@ -160,6 +160,7 @@ enumMember := IDENTIFIER ('=' (NUMBER | STRING))?
 ```fab
 ordo color { rubrum, viridis, caeruleum }
 ordo status { pendens = 0, actum = 1, finitum = 2 }
+ordo offset { ante = -1, ad = 0, post = 1 }
 ```
 
 ### Discretio Declaration
@@ -542,6 +543,35 @@ proba omitte "blocked by #42" { ... }
 proba futurum "needs async support" { ... }
 ```
 
+### Ad Statement
+
+```ebnf
+adStmt := 'ad' STRING '(' argumentList ')' adBinding? blockStmt? catchClause?
+adBinding := adBindingVerb typeAnnotation? 'pro' IDENTIFIER ('ut' IDENTIFIER)?
+adBindingVerb := 'fit' | 'fiet' | 'fiunt' | 'fient'
+argumentList := (expression (',' expression)*)?
+```
+
+> Latin 'ad' (to/toward) dispatches to named endpoints:
+> - Stdlib syscalls: "fasciculus:lege", "console:log"
+> - External packages: "hono/Hono"
+> - Remote services: "https://api.example.com/users"
+> 
+> Binding verbs encode sync/async and single/plural:
+> - fit: sync, single ("it becomes")
+> - fiet: async, single ("it will become")
+> - fiunt: sync, plural ("they become")
+> - fient: async, plural ("they will become")
+
+**Examples:**
+
+```fab
+ad "console:log" ("hello")                           // fire-and-forget
+ad "fasciculus:lege" ("file.txt") fit textus pro c { }  // sync binding
+ad "http:get" (url) fiet Response pro r { }          // async binding
+ad "http:batch" (urls) fient Response[] pro rs { }   // async plural
+```
+
 ### Cura Block
 
 ```ebnf
@@ -659,6 +689,25 @@ fixum table = praefixum {
     ex 0..10 pro i { result.adde(i * i) }
     redde result
 }
+```
+
+### Scriptum Expression
+
+```ebnf
+scriptumExpr := 'scriptum' '(' STRING (',' expression)* ')'
+```
+
+> "scriptum" (that which has been written) is the perfect passive participle
+> of scribere. While scribe outputs to console, scriptum returns a formatted string.
+> 
+> Format string is passed through verbatim to target. User must use target-appropriate
+> placeholders ({} for Zig/Rust, %s/%d for C++, etc.). Faber does not translate.
+
+**Examples:**
+
+```fab
+scriptum("Hello, {}", name)
+scriptum("{} + {} = {}", a, b, a + b)
 ```
 
 ### Qua Expression

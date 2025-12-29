@@ -1096,27 +1096,19 @@ export function parse(tokens: Token[]): ParserResult {
             returnVerb = 'fient';
         }
 
-        // Validate prefix/verb agreement
-        // If verb specifies sync (fit/fiunt) but prefix says async (futura) = error
-        // If verb specifies single (fit/fiet) but prefix says generator (cursor) = error
-        if (verbAsync === false && prefixAsync) {
+        // Validate: futura/cursor prefixes cannot be used with fit/fiet/fiunt/fient verbs
+        // Verbs are exclusively for stream protocol; prefixes work only with arrow syntax
+        if (returnVerb !== 'arrow' && (prefixAsync || prefixGenerator)) {
             errors.push({
-                code: ParserErrorCode.GenericError,
-                message: 'fit/fiunt (sync) contradicts futura (async)',
-                position,
-            });
-        }
-        if (verbGenerator === false && prefixGenerator) {
-            errors.push({
-                code: ParserErrorCode.GenericError,
-                message: 'fit/fiet (single) contradicts cursor (generator)',
+                code: ParserErrorCode.PrefixVerbConflict,
+                message: 'Cannot combine futura/cursor with fit/fiet/fiunt/fient',
                 position,
             });
         }
 
-        // Merge semantics: verb takes precedence if specified, otherwise use prefix
-        const async = verbAsync ?? prefixAsync;
-        const generator = verbGenerator ?? prefixGenerator;
+        // Merge semantics: verb determines behavior, otherwise use prefix
+        const async: boolean = returnVerb === undefined ? prefixAsync : returnVerb === 'arrow' ? prefixAsync : verbAsync!;
+        const generator: boolean = returnVerb === undefined ? prefixGenerator : returnVerb === 'arrow' ? prefixGenerator : verbGenerator!;
 
         const body = parseBlockStatement();
 
@@ -1665,40 +1657,40 @@ export function parse(tokens: Token[]): ParserResult {
             let returnType: TypeAnnotation | undefined;
             let verbAsync: boolean | undefined;
             let verbGenerator: boolean | undefined;
+            let returnVerb: ReturnVerb | undefined;
 
             // Parse return type with arrow or verb form
             if (match('THIN_ARROW')) {
                 returnType = parseTypeAnnotation();
+                returnVerb = 'arrow';
             } else if (matchKeyword('fit')) {
                 returnType = parseTypeAnnotation();
                 verbAsync = false;
                 verbGenerator = false;
+                returnVerb = 'fit';
             } else if (matchKeyword('fiet')) {
                 returnType = parseTypeAnnotation();
                 verbAsync = true;
                 verbGenerator = false;
+                returnVerb = 'fiet';
             } else if (matchKeyword('fiunt')) {
                 returnType = parseTypeAnnotation();
                 verbAsync = false;
                 verbGenerator = true;
+                returnVerb = 'fiunt';
             } else if (matchKeyword('fient')) {
                 returnType = parseTypeAnnotation();
                 verbAsync = true;
                 verbGenerator = true;
+                returnVerb = 'fient';
             }
 
-            // Validate prefix/verb agreement
-            if (verbAsync === false && prefixAsync) {
+            // Validate: futura/cursor prefixes cannot be used with fit/fiet/fiunt/fient verbs
+            // Verbs are exclusively for stream protocol; prefixes work only with arrow syntax
+            if (returnVerb !== 'arrow' && (prefixAsync || prefixGenerator)) {
                 errors.push({
-                    code: ParserErrorCode.GenericError,
-                    message: 'fit/fiunt (sync) contradicts futura (async)',
-                    position,
-                });
-            }
-            if (verbGenerator === false && prefixGenerator) {
-                errors.push({
-                    code: ParserErrorCode.GenericError,
-                    message: 'fit/fiet (single) contradicts cursor (generator)',
+                    code: ParserErrorCode.PrefixVerbConflict,
+                    message: 'Cannot combine futura/cursor with fit/fiet/fiunt/fient',
                     position,
                 });
             }
@@ -1711,8 +1703,8 @@ export function parse(tokens: Token[]): ParserResult {
                 params,
                 returnType,
                 body,
-                async: verbAsync ?? prefixAsync,
-                generator: verbGenerator ?? prefixGenerator,
+                async: returnVerb === undefined ? prefixAsync : returnVerb === 'arrow' ? prefixAsync : verbAsync!,
+                generator: returnVerb === undefined ? prefixGenerator : returnVerb === 'arrow' ? prefixGenerator : verbGenerator!,
                 position,
             };
 
@@ -1838,40 +1830,40 @@ export function parse(tokens: Token[]): ParserResult {
         let returnType: TypeAnnotation | undefined;
         let verbAsync: boolean | undefined;
         let verbGenerator: boolean | undefined;
+        let returnVerb: ReturnVerb | undefined;
 
         // Parse return type with arrow or verb form
         if (match('THIN_ARROW')) {
             returnType = parseTypeAnnotation();
+            returnVerb = 'arrow';
         } else if (matchKeyword('fit')) {
             returnType = parseTypeAnnotation();
             verbAsync = false;
             verbGenerator = false;
+            returnVerb = 'fit';
         } else if (matchKeyword('fiet')) {
             returnType = parseTypeAnnotation();
             verbAsync = true;
             verbGenerator = false;
+            returnVerb = 'fiet';
         } else if (matchKeyword('fiunt')) {
             returnType = parseTypeAnnotation();
             verbAsync = false;
             verbGenerator = true;
+            returnVerb = 'fiunt';
         } else if (matchKeyword('fient')) {
             returnType = parseTypeAnnotation();
             verbAsync = true;
             verbGenerator = true;
+            returnVerb = 'fient';
         }
 
-        // Validate prefix/verb agreement
-        if (verbAsync === false && prefixAsync) {
+        // Validate: futura/cursor prefixes cannot be used with fit/fiet/fiunt/fient verbs
+        // Verbs are exclusively for stream protocol; prefixes work only with arrow syntax
+        if (returnVerb !== 'arrow' && (prefixAsync || prefixGenerator)) {
             errors.push({
-                code: ParserErrorCode.GenericError,
-                message: 'fit/fiunt (sync) contradicts futura (async)',
-                position,
-            });
-        }
-        if (verbGenerator === false && prefixGenerator) {
-            errors.push({
-                code: ParserErrorCode.GenericError,
-                message: 'fit/fiet (single) contradicts cursor (generator)',
+                code: ParserErrorCode.PrefixVerbConflict,
+                message: 'Cannot combine futura/cursor with fit/fiet/fiunt/fient',
                 position,
             });
         }
@@ -1881,8 +1873,8 @@ export function parse(tokens: Token[]): ParserResult {
             name,
             params,
             returnType,
-            async: verbAsync ?? prefixAsync,
-            generator: verbGenerator ?? prefixGenerator,
+            async: returnVerb === undefined ? prefixAsync : returnVerb === 'arrow' ? prefixAsync : verbAsync!,
+            generator: returnVerb === undefined ? prefixGenerator : returnVerb === 'arrow' ? prefixGenerator : verbGenerator!,
             position,
         };
     }

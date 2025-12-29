@@ -2328,32 +2328,46 @@ describe('parser', () => {
             expect(errors.length).toBeGreaterThan(0);
         });
 
-        test('futura with fit contradicts (sync vs async)', () => {
+        test('futura with fit is not allowed (prefixes only work with arrow)', () => {
             const { errors } = parseCode('futura functio f() fit textus { redde "x" }');
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0]!.message).toContain('contradicts');
+            expect(errors[0]!.message).toContain('Cannot combine futura/cursor');
         });
 
-        test('cursor with fit contradicts (single vs generator)', () => {
+        test('cursor with fit is not allowed (prefixes only work with arrow)', () => {
             const { errors } = parseCode('cursor functio f() fit textus { redde "x" }');
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0]!.message).toContain('contradicts');
+            expect(errors[0]!.message).toContain('Cannot combine futura/cursor');
         });
 
-        test('futura with fiunt contradicts (sync generator vs async)', () => {
+        test('futura with fiunt is not allowed (prefixes only work with arrow)', () => {
             const { errors } = parseCode('futura functio f() fiunt numerus { redde 1 }');
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0]!.message).toContain('contradicts');
+            expect(errors[0]!.message).toContain('Cannot combine futura/cursor');
         });
 
-        test('cursor with fiet contradicts (single async vs generator)', () => {
+        test('cursor with fiet is not allowed (prefixes only work with arrow)', () => {
             const { errors } = parseCode('cursor functio f() fiet textus { redde "x" }');
 
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors[0]!.message).toContain('contradicts');
+            expect(errors[0]!.message).toContain('Cannot combine futura/cursor');
+        });
+
+        test('futura with fiet is not allowed (redundant combinations rejected)', () => {
+            const { errors } = parseCode('futura functio f() fiet textus { redde "x" }');
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors[0]!.message).toContain('Cannot combine futura/cursor');
+        });
+
+        test('cursor with fiunt is not allowed (redundant combinations rejected)', () => {
+            const { errors } = parseCode('cursor functio f() fiunt numerus { redde 1 }');
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors[0]!.message).toContain('Cannot combine futura/cursor');
         });
 
         // Unsupported operators from other languages
