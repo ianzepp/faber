@@ -40,6 +40,13 @@
  *         exact: "const x = (1 + 2);"
  *     skip: [cpp]  # optional: skip specific targets
  *
+ * ERROR TEST FORMAT (errata)
+ *   - name: error test
+ *     faber: 'invalid code'
+ *     errata: true                    # any error
+ *     errata: 'exact error message'   # exact match
+ *     errata: ['fragment1', 'frag2']  # all fragments must be present
+ *
  * EXPECTATION FORMATS
  *   string          Exact match (after trimming)
  *   string[]        All fragments must be present (contains)
@@ -94,6 +101,9 @@ interface TargetExpectation {
     exact?: string;
 }
 
+// Error expectation: true (any error), string (exact), or string[] (contains all)
+type ErrataExpectation = true | string | string[];
+
 // Legacy format: input + top-level target keys
 interface LegacyTestCase {
     name: string;
@@ -104,13 +114,14 @@ interface LegacyTestCase {
     cpp?: string | string[] | TargetExpectation;
     rs?: string | string[] | TargetExpectation;
     skip?: Target[];
+    errata?: ErrataExpectation;
 }
 
 // New format: faber + expect object
 interface ModernTestCase {
     name: string;
     faber: string;
-    expect: {
+    expect?: {
         ts?: string | string[] | TargetExpectation;
         py?: string | string[] | TargetExpectation;
         zig?: string | string[] | TargetExpectation;
@@ -118,12 +129,13 @@ interface ModernTestCase {
         rs?: string | string[] | TargetExpectation;
     };
     skip?: Target[];
+    errata?: ErrataExpectation;
 }
 
 type TestCase = LegacyTestCase | ModernTestCase;
 
 function isModernTestCase(tc: TestCase): tc is ModernTestCase {
-    return 'faber' in tc && 'expect' in tc;
+    return 'faber' in tc;
 }
 
 function getInput(tc: TestCase): string {
@@ -131,11 +143,16 @@ function getInput(tc: TestCase): string {
 }
 
 function getExpectation(tc: TestCase, target: Target): string | string[] | TargetExpectation | undefined {
-    return isModernTestCase(tc) ? tc.expect[target] : tc[target];
+    return isModernTestCase(tc) ? tc.expect?.[target] : tc[target];
+}
+
+function hasErrata(tc: TestCase): tc is TestCase & { errata: ErrataExpectation } {
+    return 'errata' in tc && tc.errata !== undefined;
 }
 
 /**
  * Compile Faber source to target language.
+ * Lenient mode: ignores semantic errors (for snippet tests with undefined vars).
  */
 function compile(code: string, target: Target = 'ts'): string {
     const { tokens } = tokenize(code);
@@ -150,6 +167,31 @@ function compile(code: string, target: Target = 'ts'): string {
 }
 
 /**
+ * Compile Faber source strictly - throws on any parse or semantic error.
+ * Used for errata tests that expect compilation to fail.
+ */
+function compileStrict(code: string): void {
+    const { tokens } = tokenize(code);
+    const { program, errors: parseErrors } = parse(tokens);
+
+    if (parseErrors.length > 0) {
+        const messages = parseErrors.map(e => `${e.code}: ${e.message}`).join('; ');
+        throw new Error(`Parse errors: ${messages}`);
+    }
+
+    if (!program) {
+        throw new Error('Parse failed: no program');
+    }
+
+    const { program: analyzedProgram, errors: semanticErrors } = analyze(program);
+
+    if (semanticErrors.length > 0) {
+        const messages = semanticErrors.map(e => `${e.code}: ${e.message}`).join('; ');
+        throw new Error(`Semantic errors: ${messages}`);
+    }
+}
+
+/**
  * Check if output matches expectation.
  * - String: exact match (after trimming)
  * - Array: all fragments must be present (contains)
@@ -158,11 +200,13 @@ function compile(code: string, target: Target = 'ts'): string {
 function checkOutput(output: string, expected: string | string[] | TargetExpectation): void {
     if (typeof expected === 'string') {
         expect(output.trim()).toBe(expected);
-    } else if (Array.isArray(expected)) {
+    }
+    else if (Array.isArray(expected)) {
         for (const fragment of expected) {
             expect(output).toContain(fragment);
         }
-    } else {
+    }
+    else {
         // Object form with contains/not_contains/exact
         if (expected.exact !== undefined) {
             expect(output.trim()).toBe(expected.exact);
@@ -176,6 +220,29 @@ function checkOutput(output: string, expected: string | string[] | TargetExpecta
             for (const fragment of expected.not_contains) {
                 expect(output).not.toContain(fragment);
             }
+        }
+    }
+}
+
+/**
+ * Check if error matches errata expectation.
+ * - true: any error is acceptable
+ * - String: exact match on error message
+ * - Array: all fragments must be present in error message
+ */
+function checkErrata(error: unknown, expected: ErrataExpectation): void {
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (expected === true) {
+        // Any error is fine
+        return;
+    }
+    else if (typeof expected === 'string') {
+        expect(message).toBe(expected);
+    }
+    else {
+        for (const fragment of expected) {
+            expect(message).toContain(fragment);
         }
     }
 }
@@ -200,9 +267,37 @@ function runTestFile(filePath: string, suiteName: string): void {
     const cases: TestCase[] = parseYaml(content);
 
     describe(suiteName, () => {
+        // Errata tests: expect compilation to fail
+        describe('errata', () => {
+            for (const tc of cases) {
+                if (!hasErrata(tc)) continue;
+
+                test(tc.name, () => {
+                    testsRun.add(testKey(suiteName, tc.name));
+                    const input = getInput(tc);
+
+                    try {
+                        compileStrict(input.trim());
+                        throw new Error('Expected compilation to fail, but it succeeded');
+                    }
+                    catch (error) {
+                        // Don't catch our own "expected to fail" error
+                        if (error instanceof Error && error.message.includes('Expected compilation to fail')) {
+                            throw error;
+                        }
+                        checkErrata(error, tc.errata);
+                    }
+                });
+            }
+        });
+
+        // Per-target output tests
         for (const target of TARGETS) {
             describe(target, () => {
                 for (const tc of cases) {
+                    // Skip errata tests in per-target loop
+                    if (hasErrata(tc)) continue;
+
                     const expected = getExpectation(tc, target);
                     const isSkipped = tc.skip?.includes(target);
 
@@ -235,6 +330,9 @@ function runTestFile(filePath: string, suiteName: string): void {
 
         // In strict mode, add a test that fails if any targets are missing
         for (const tc of cases) {
+            // Skip errata tests from coverage enforcement
+            if (hasErrata(tc)) continue;
+
             if (shouldEnforceStrict(suiteName, tc.name)) {
                 const missingTargets = TARGETS.filter(t => {
                     const exp = getExpectation(tc, t);

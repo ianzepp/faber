@@ -1,0 +1,23 @@
+# Test errata functionality
+# Errata tests verify that invalid code produces expected errors
+
+# =============================================================================
+# Parse Errors
+# =============================================================================
+
+- name: parser error on malformed function (any error)
+  faber: 'functio bad( {}'
+  errata: true
+
+- name: parser error with fragment match
+  faber: 'functio bad( {}'
+  errata:
+    - 'Parse errors'
+    - 'P010'
+    - "Expected identifier"
+
+- name: missing closing brace
+  faber: 'functio test() { redde 1'
+  errata:
+    - 'Parse errors'
+    - "Expected '}'"
