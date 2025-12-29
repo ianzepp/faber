@@ -89,6 +89,30 @@ function genPreamble(g: TsGenerator): string {
         definitions.push('class Panic extends Error { name = "Panic"; }');
     }
 
+    // WHY: Flumina (streams-first) requires Responsum type, respond helpers, and drain()
+    if (g.features.flumina) {
+        definitions.push(`type Responsum<T = unknown> =
+  | { op: 'bene'; data: T }
+  | { op: 'error'; code: string; message: string }
+  | { op: 'factum' }
+  | { op: 'res'; data: T };
+
+const respond = {
+  ok: <T>(data: T): Responsum<T> => ({ op: 'bene', data }),
+  error: (code: string, message: string): Responsum<never> => ({ op: 'error', code, message }),
+  done: (): Responsum<never> => ({ op: 'factum' }),
+  item: <T>(data: T): Responsum<T> => ({ op: 'res', data }),
+};
+
+function drain<T>(gen: () => Generator<Responsum<T>>): T {
+  for (const resp of gen()) {
+    if (resp.op === 'bene') return resp.data;
+    if (resp.op === 'error') throw new Error(\`\${resp.code}: \${resp.message}\`);
+  }
+  throw new Error('EPROTO: No terminal response');
+}`);
+    }
+
     const lines = [...imports, ...definitions];
     return lines.length > 0 ? lines.join('\n') + '\n\n' : '';
 }

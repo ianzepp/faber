@@ -7,6 +7,10 @@
  *   mori "message" -> throw new Panic("message")
  *   mori error     -> throw new Panic(String(error))
  *
+ * FLUMINA (streams-first):
+ *   iace "message" (in fit) -> yield respond.error("EFAIL", "message"); return;
+ *   mori "message" (in fit) -> throw new Panic("message") (unchanged - panics are fatal)
+ *
  * WHY: mori indicates unrecoverable errors (like Rust's panic! or Zig's @panic).
  *      Using a dedicated Panic class allows catching panics separately from
  *      regular errors if needed, and makes stack traces clearer.
@@ -18,6 +22,7 @@ import type { TsGenerator } from '../generator';
 export function genIaceStatement(node: IaceStatement, g: TsGenerator, semi: boolean): string {
     const expr = g.genExpression(node.argument);
 
+    // WHY: mori (fatal) always throws, even in flumina mode - panics are non-recoverable
     if (node.fatal) {
         // Track that we need the Panic class in preamble
         g.features.panic = true;
@@ -28,6 +33,19 @@ export function genIaceStatement(node: IaceStatement, g: TsGenerator, semi: bool
         }
         // Other expressions: convert to string
         return `${g.ind()}throw new Panic(String(${expr}))${semi ? ';' : ''}`;
+    }
+
+    // WHY: In flumina mode, iace yields an error response and exits the generator
+    if (g.inFlumina) {
+        // Extract message for error response
+        let message: string;
+        if (node.argument.type === 'Literal' && typeof node.argument.value === 'string') {
+            message = JSON.stringify(node.argument.value);
+        } else {
+            // For non-string expressions, convert to string
+            message = `String(${expr})`;
+        }
+        return `${g.ind()}yield respond.error("EFAIL", ${message})${semi ? ';' : ''}\n${g.ind()}return${semi ? ';' : ''}`;
     }
 
     return `${g.ind()}throw ${expr}${semi ? ';' : ''}`;

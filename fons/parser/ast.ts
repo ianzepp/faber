@@ -329,6 +329,18 @@ export interface TypeParameterDeclaration extends BaseNode {
 }
 
 /**
+ * Return type verb used in function declaration.
+ *
+ * WHY: Distinguishes between direct return (`->`) and stream protocol (`fit`/`fiet`/`fiunt`/`fient`).
+ *      - `arrow`: Direct return, no protocol overhead
+ *      - `fit`: Sync single-value stream (flumina protocol)
+ *      - `fiet`: Async single-value stream
+ *      - `fiunt`: Sync multi-value stream (generator)
+ *      - `fient`: Async multi-value stream (async generator)
+ */
+export type ReturnVerb = 'arrow' | 'fit' | 'fiet' | 'fiunt' | 'fient';
+
+/**
  * Function declaration statement.
  *
  * GRAMMAR (in EBNF):
@@ -359,6 +371,7 @@ export interface FunctioDeclaration extends BaseNode {
     async: boolean;
     generator: boolean;
     isConstructor?: boolean;
+    returnVerb?: ReturnVerb; // WHY: Tracks syntax used for return type (-> vs fit/fiet/fiunt/fient)
 }
 
 /**

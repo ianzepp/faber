@@ -1,6 +1,6 @@
 # Flumina: Streams-First Architecture
 
-**Status:** Exploratory
+**Status:** Phase 1 Complete
 **Inspiration:** Monk OS syscall architecture
 
 ## Vision
@@ -13,7 +13,7 @@ Make streams the fundamental execution model in Faber. Every function is a gener
 - Error handling
 - Backpressure
 
-The goal: streams-first should feel *natural*, not like extra work.
+The goal: streams-first should feel _natural_, not like extra work.
 
 ## The Response Protocol
 
@@ -21,16 +21,16 @@ Inspired by Monk OS, all yields produce a `Responsum` with an `op` field signali
 
 ### Response Operations
 
-| Op | Latin | Terminal | Purpose |
-|----|-------|----------|---------|
-| `ok` | `bene` | yes | Single value, stream ends |
-| `error` | `error` | yes | Failure, stream ends |
-| `done` | `factum` | yes | Multi-value complete, stream ends |
-| `redirect` | `refer` | yes | Go elsewhere, stream ends |
-| `item` | `res` | no | One item of many, continue |
-| `data` | `bytes` | no | Binary chunk, continue |
-| `event` | `eventum` | no | Notification, continue |
-| `progress` | `progressus` | no | Status update, continue |
+| Op         | Latin        | Terminal | Purpose                           |
+| ---------- | ------------ | -------- | --------------------------------- |
+| `ok`       | `bene`       | yes      | Single value, stream ends         |
+| `error`    | `error`      | yes      | Failure, stream ends              |
+| `done`     | `factum`     | yes      | Multi-value complete, stream ends |
+| `redirect` | `refer`      | yes      | Go elsewhere, stream ends         |
+| `item`     | `res`        | no       | One item of many, continue        |
+| `data`     | `bytes`      | no       | Binary chunk, continue            |
+| `event`    | `eventum`    | no       | Notification, continue            |
+| `progress` | `progressus` | no       | Status update, continue           |
 
 **Terminal ops** (`bene`, `error`, `factum`, `refer`) signal "no more responses."
 **Non-terminal ops** (`res`, `bytes`, `eventum`, `progressus`) signal "more may follow."
@@ -61,23 +61,23 @@ unio Responsum {
 
 ### Current Model
 
-| Verb | Async | Generator | Meaning |
-|------|-------|-----------|---------|
-| `fit` / `->` | no | no | Returns single value |
-| `fiet` | yes | no | Returns promise of single value |
-| `fiunt` | no | yes | Yields multiple values |
-| `fient` | yes | yes | Async generator |
+| Verb         | Async | Generator | Meaning                         |
+| ------------ | ----- | --------- | ------------------------------- |
+| `fit` / `->` | no    | no        | Returns single value            |
+| `fiet`       | yes   | no        | Returns promise of single value |
+| `fiunt`      | no    | yes       | Yields multiple values          |
+| `fient`      | yes   | yes       | Async generator                 |
 
 ### Proposed Model
 
-All functions are generators internally. The verb indicates *expected cardinality*:
+All functions are generators internally. The verb indicates _expected cardinality_:
 
-| Verb | Cardinality | Internal Behavior |
-|------|-------------|-------------------|
-| `fit` | exactly one | yields `bene(value)` |
-| `fiet` | exactly one (async) | awaits, then yields `bene(value)` |
-| `fiunt` | zero or more | yields `res(value)` per item, then `factum()` |
-| `fient` | zero or more (async) | async yields `res(value)` per item |
+| Verb    | Cardinality          | Internal Behavior                             |
+| ------- | -------------------- | --------------------------------------------- |
+| `fit`   | exactly one          | yields `bene(value)`                          |
+| `fiet`  | exactly one (async)  | awaits, then yields `bene(value)`             |
+| `fiunt` | zero or more         | yields `res(value)` per item, then `factum()` |
+| `fient` | zero or more (async) | async yields `res(value)` per item            |
 
 ### Syntax Mapping
 
@@ -104,12 +104,12 @@ functio mightFail() fit textus {
 
 ### Keywords
 
-| Faber | Purpose | Response Op |
-|-------|---------|-------------|
-| `redde x` | Return single value | `bene(x)` |
-| `cede x` | Yield one of many | `res(x)` |
-| `iace err` | Throw/raise error | `error(code, msg)` |
-| (implicit) | End of `fiunt` function | `factum()` |
+| Faber      | Purpose                 | Response Op        |
+| ---------- | ----------------------- | ------------------ |
+| `redde x`  | Return single value     | `bene(x)`          |
+| `cede x`   | Yield one of many       | `res(x)`           |
+| `iace err` | Throw/raise error       | `error(code, msg)` |
+| (implicit) | End of `fiunt` function | `factum()`         |
 
 ## Consumption Patterns
 
@@ -173,13 +173,13 @@ The `cede*` operator (like `yield*`) forwards an entire stream transparently.
 ```typescript
 // fit function
 async function* getId(): AsyncGenerator<Response> {
-    yield respond.ok("abc");
+    yield respond.ok('abc');
 }
 
 // fiunt function
 async function* getItems(): AsyncGenerator<Response> {
-    yield respond.item("a");
-    yield respond.item("b");
+    yield respond.item('a');
+    yield respond.item('b');
     yield respond.done();
 }
 ```
@@ -313,13 +313,198 @@ ex stream pro resp {
 }
 ```
 
-## Next Steps
+## Design Decisions
 
-1. **Prototype** — Implement `Responsum` type and `responde` helper in norma/
-2. **Syntax** — Decide on `cede*` for stream forwarding
-3. **Codegen** — TypeScript target first (native generators)
-4. **Optimization** — `fit` functions compile to regular returns when possible
-5. **Backpressure** — Design runtime protocol (or defer to target)
+### Generator-Everywhere, Not Async-Everywhere
+
+The model is **sync generators** for `fit`/`fiunt`, **async generators** for `fiet`/`fient`. Async is orthogonal to streaming.
+
+| Verb    | Sync/Async | Mechanism                     |
+| ------- | ---------- | ----------------------------- |
+| `fit`   | sync       | `function*` yields once       |
+| `fiet`  | async      | `async function*` yields once |
+| `fiunt` | sync       | `function*` yields many       |
+| `fient` | async      | `async function*` yields many |
+
+### The File I/O Analogy
+
+The mental model: sync file I/O blocks while the underlying library collects chunks, then returns the whole thing. `fit` does the same — the generator is internal plumbing, not exposed API.
+
+- **Caller sees values, not `Responsum`** — `fixum x = getId()` just works
+- **Generator is implementation detail** — The runtime drains internally
+- **Protocol is uniform** — Everything speaks `Responsum` under the hood
+
+### Runtime Helper Approach
+
+Protocol logic lives in `norma/flumina.ts`, not inlined in each function. Reasons:
+
+1. **Single source of truth** — Protocol changes update one place
+2. **Backpressure ready** — Future enhancements don't require re-codegen
+3. **Clean output** — Generated code stays readable
+4. **Consistent debugging** — Stack traces point to `drain()`
+
+## Implementation Plan
+
+### Phase 1: `fit` Functions (TS Target Only) — COMPLETE
+
+**Status:** Implemented and tested.
+
+**Scope:** Only `fit` verb triggers flumina; `->` arrow syntax uses direct return.
+
+#### Syntax Distinction
+
+| Syntax | Semantics       | Codegen                                       | Use Case                              |
+| ------ | --------------- | --------------------------------------------- | ------------------------------------- |
+| `->`   | Direct return   | `return x`                                    | Simple functions, hot paths, interop  |
+| `fit`  | Stream protocol | `drain(function* () { yield respond.ok(x) })` | Functions that benefit from streaming |
+
+This allows developers to opt-in to the streaming protocol when needed, while keeping zero overhead for simple functions.
+
+```fab
+// Direct return - no protocol overhead
+functio fast() -> textus { redde "abc" }
+
+// Stream protocol - backpressure ready
+functio streamed() fit textus { redde "abc" }
+```
+
+#### AST Changes
+
+Added `returnVerb` field to `FunctioDeclaration`:
+
+```typescript
+type ReturnVerb = 'arrow' | 'fit' | 'fiet' | 'fiunt' | 'fient';
+
+interface FunctioDeclaration {
+    // ... existing fields ...
+    returnVerb?: ReturnVerb;
+}
+```
+
+#### Preamble (emitted when `features.flumina` is set)
+
+```typescript
+type Responsum<T = unknown> = { op: 'bene'; data: T } | { op: 'error'; code: string; message: string } | { op: 'factum' } | { op: 'res'; data: T };
+
+const respond = {
+    ok: <T>(data: T): Responsum<T> => ({ op: 'bene', data }),
+    error: (code: string, message: string): Responsum<never> => ({ op: 'error', code, message }),
+    done: (): Responsum<never> => ({ op: 'factum' }),
+    item: <T>(data: T): Responsum<T> => ({ op: 'res', data }),
+};
+
+function drain<T>(gen: () => Generator<Responsum<T>>): T {
+    for (const resp of gen()) {
+        if (resp.op === 'bene') return resp.data;
+        if (resp.op === 'error') throw new Error(`${resp.code}: ${resp.message}`);
+    }
+    throw new Error('EPROTO: No terminal response');
+}
+```
+
+#### Transformations
+
+| Faber Input                       | Current TS Output                 | Phase 1 TS Output                                                            |
+| --------------------------------- | --------------------------------- | ---------------------------------------------------------------------------- |
+| `functio foo() fit T { redde x }` | `function foo(): T { return x; }` | `function foo(): T { return drain(function* () { yield respond.ok(x); }); }` |
+| `redde x` (in `fit`)              | `return x;`                       | `yield respond.ok(x);`                                                       |
+| `redde` (in `fit`, no value)      | `return;`                         | `yield respond.ok(undefined);`                                               |
+| `iace "msg"` (in `fit`)           | `throw "msg";`                    | `yield respond.error("EFAIL", "msg"); return;`                               |
+| `mori "msg"` (in `fit`)           | `throw new Panic("msg");`         | `throw new Panic("msg");` (unchanged — panics are fatal)                     |
+
+#### Files to Modify
+
+| File                                    | Change                                                                                          |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `fons/codegen/types.ts`                 | Add `flumina: boolean` to `RequiredFeatures`                                                    |
+| `fons/codegen/ts/index.ts`              | Add flumina preamble generation                                                                 |
+| `fons/codegen/ts/generator.ts`          | Add `inFlumina: boolean` context flag                                                           |
+| `fons/codegen/ts/statements/functio.ts` | Detect `fit` (sync, non-generator), set `inFlumina`, wrap body in `drain(function* () { ... })` |
+| `fons/codegen/ts/statements/redde.ts`   | If `inFlumina`: emit `yield respond.ok(...)`                                                    |
+| `fons/codegen/ts/statements/iace.ts`    | If `inFlumina` and not `fatal`: emit `yield respond.error(...); return;`                        |
+| `fons/parser/ast.ts`                    | Add `ReturnVerb` type and `returnVerb` field to `FunctioDeclaration`                            |
+| `fons/parser/index.ts`                  | Track which return syntax was used (`->` vs `fit`/`fiet`/`fiunt`/`fient`)                       |
+
+#### Tests to Add
+
+New file: `proba/codegen/statements/flumina.yaml`
+
+```yaml
+- name: fit function with redde
+  faber: |
+      functio getId() fit textus {
+        redde "abc"
+      }
+  expect:
+      ts:
+          contains:
+              - 'function getId(): string'
+              - 'return drain(function* ()'
+              - 'yield respond.ok("abc")'
+
+- name: fit function with iace
+  faber: |
+      functio mightFail() fit textus {
+        iace "not found"
+      }
+  expect:
+      ts:
+          contains:
+              - 'yield respond.error("EFAIL", "not found")'
+              - 'return;'
+
+- name: mori unchanged in fit
+  faber: |
+      functio mustWork() fit textus {
+        mori "fatal"
+      }
+  expect:
+      ts:
+          contains:
+              - 'throw new Panic("fatal")'
+          not_contains:
+              - 'respond.error'
+```
+
+#### Call Sites Unchanged
+
+```faber
+fixum x = getId()
+```
+
+Compiles to:
+
+```typescript
+const x = getId();
+```
+
+No `unwrap()`, no ceremony. The `drain()` is inside `getId()`.
+
+#### Implementation Notes
+
+- Only `fit` verb triggers flumina — `->` arrow syntax uses direct return
+- Async functions (`fiet`) are NOT yet transformed (Phase 3)
+- Generator functions (`fiunt`) are NOT yet transformed (Phase 2)
+- Nested `fit` functions inside another `fit` also become flumina-style
+- The `inFlumina` context flag tracks whether we're inside a `fit` function body
+- The `returnVerb` field in the AST preserves which syntax was used
+
+### Phase 2: `fiunt` Functions (Deferred)
+
+Decision pending: Does caller see `Responsum<T>` or raw `T`?
+
+Options:
+
+- **A)** `fiunt` yields raw `T`, protocol is internal only
+- **B)** `fiunt` yields `Responsum<T>`, caller uses `collect()` or iterates with protocol awareness
+
+### Phase 3: Async Variants (Deferred)
+
+`fiet` and `fient` follow same pattern with `async function*`.
+
+### Phase 4: Other Targets (Deferred)
+
+Zig/Rust/C++ require different strategies (state machines, callbacks, etc.).
 
 ## References
 

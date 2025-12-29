@@ -83,6 +83,7 @@ import type {
     ImportaDeclaration,
     VariaDeclaration,
     FunctioDeclaration,
+    ReturnVerb,
     GenusDeclaration,
     FieldDeclaration,
     PactumDeclaration,
@@ -1065,28 +1066,34 @@ export function parse(tokens: Token[]): ParserResult {
         let returnType: TypeAnnotation | undefined;
         let verbAsync: boolean | undefined;
         let verbGenerator: boolean | undefined;
+        let returnVerb: ReturnVerb | undefined;
 
         // Parse return type with arrow or verb form
         // Verb forms: fit (sync, single), fiet (async, single), fiunt (sync, generator), fient (async, generator)
+        // WHY: Track which syntax was used - arrow (direct return) vs verb (stream protocol)
         if (match('THIN_ARROW')) {
             returnType = parseTypeAnnotation();
-            // Arrow is neutral - semantics from prefix only
+            returnVerb = 'arrow';
         } else if (matchKeyword('fit')) {
             returnType = parseTypeAnnotation();
             verbAsync = false;
             verbGenerator = false;
+            returnVerb = 'fit';
         } else if (matchKeyword('fiet')) {
             returnType = parseTypeAnnotation();
             verbAsync = true;
             verbGenerator = false;
+            returnVerb = 'fiet';
         } else if (matchKeyword('fiunt')) {
             returnType = parseTypeAnnotation();
             verbAsync = false;
             verbGenerator = true;
+            returnVerb = 'fiunt';
         } else if (matchKeyword('fient')) {
             returnType = parseTypeAnnotation();
             verbAsync = true;
             verbGenerator = true;
+            returnVerb = 'fient';
         }
 
         // Validate prefix/verb agreement
@@ -1122,6 +1129,7 @@ export function parse(tokens: Token[]): ParserResult {
             body,
             async,
             generator,
+            returnVerb,
             position,
         };
     }
@@ -2862,8 +2870,7 @@ export function parse(tokens: Token[]): ParserResult {
                 if (matchKeyword('sparge')) {
                     const argument = parseExpression();
                     args.push({ type: 'SpreadElement', argument, position: argument.position });
-                }
-                else {
+                } else {
                     args.push(parseExpression());
                 }
             } while (match('COMMA'));
@@ -2880,14 +2887,11 @@ export function parse(tokens: Token[]): ParserResult {
             let verb: AdBindingVerb = 'fit';
             if (matchKeyword('fit')) {
                 verb = 'fit';
-            }
-            else if (matchKeyword('fiet')) {
+            } else if (matchKeyword('fiet')) {
                 verb = 'fiet';
-            }
-            else if (matchKeyword('fiunt')) {
+            } else if (matchKeyword('fiunt')) {
                 verb = 'fiunt';
-            }
-            else if (matchKeyword('fient')) {
+            } else if (matchKeyword('fient')) {
                 verb = 'fient';
             }
             // If 'pro' is next without verb, verb defaults to 'fit'

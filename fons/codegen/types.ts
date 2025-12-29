@@ -74,6 +74,9 @@ export interface RequiredFeatures {
 
     // Dataclasses (Python)
     dataclass: boolean; // discretio - needs dataclass import
+
+    // Flumina (streams-first)
+    flumina: boolean; // fit functions using Responsum protocol
 }
 
 /**
@@ -92,6 +95,7 @@ export function createRequiredFeatures(): RequiredFeatures {
         enum: false,
         praefixum: false,
         dataclass: false,
+        flumina: false,
     };
 }
 

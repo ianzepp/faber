@@ -6,19 +6,28 @@
  *   futura functio f(): numerus -> async function f(): Promise<number>
  *   cursor functio f(): numerus -> function* f(): Generator<number>
  *   futura cursor functio f(): numerus -> async function* f(): AsyncGenerator<number>
+ *
+ * FLUMINA (streams-first):
+ *   functio f() fit T { redde x } -> function f(): T { return drain(function* () { yield respond.ok(x); }); }
+ *
+ * WHY: `fit` verb triggers flumina (stream protocol), `->` uses direct return.
+ *      This allows opt-in streaming for functions that benefit from the protocol,
+ *      while keeping zero overhead for simple functions using `->`.
  */
 
 import type { FunctioDeclaration, BlockStatement } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
 
 export function genFunctioDeclaration(node: FunctioDeclaration, g: TsGenerator): string {
-    const async = node.async ? 'async ' : '';
-    const star = node.generator ? '*' : '';
     const name = node.name.name;
     const params = node.params.map(p => g.genParameter(p)).join(', ');
 
     // Generate type parameters: prae typus T -> <T>
     const typeParams = node.typeParams ? g.genTypeParams(node.typeParams) : '';
+
+    // WHY: Only `fit` verb triggers flumina, not `->` arrow syntax
+    // This allows developers to opt-in to streaming protocol when needed
+    const useFlumina = node.returnVerb === 'fit' && !node.isConstructor;
 
     // Wrap return type based on async/generator semantics
     let returnType = '';
@@ -31,14 +40,45 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: TsGenerator):
         } else if (node.async) {
             baseType = `Promise<${baseType}>`;
         }
+        // WHY: fit functions keep their original return type (drain unwraps internally)
         returnType = `: ${baseType}`;
     }
 
-    // Track generator context for cede -> yield vs await
+    // Track context for nested statement generation
     const prevInGenerator = g.inGenerator;
+    const prevInFlumina = g.inFlumina;
+
     g.inGenerator = node.generator;
+
+    if (useFlumina) {
+        // WHY: Enable flumina mode so redde/iace emit yield respond.ok/error
+        g.inFlumina = true;
+        g.features.flumina = true;
+
+        // Generate inner body statements
+        g.depth++;
+        const innerBody = node.body.body.map(stmt => g.genStatement(stmt)).join('\n');
+        g.depth--;
+
+        g.inFlumina = prevInFlumina;
+        g.inGenerator = prevInGenerator;
+
+        // WHY: Wrap body in drain(function* () { ... }) for Responsum protocol
+        const ind = g.ind();
+        return `${ind}function ${name}${typeParams}(${params})${returnType} {
+${ind}  return drain(function* () {
+${innerBody}
+${ind}  });
+${ind}}`;
+    }
+
+    // Non-flumina path: arrow syntax, async, generator, or constructor
+    const async = node.async ? 'async ' : '';
+    const star = node.generator ? '*' : '';
     const body = genBlockStatement(node.body, g);
+
     g.inGenerator = prevInGenerator;
+    g.inFlumina = prevInFlumina;
 
     return `${g.ind()}${async}function${star} ${name}${typeParams}(${params})${returnType} ${body}`;
 }

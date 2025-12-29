@@ -86,6 +86,7 @@ const typeMap: Record<string, string> = {
 export class TsGenerator {
     depth = 0;
     inGenerator = false;
+    inFlumina = false; // WHY: Track if we're inside a fit function body for Responsum protocol
     features: RequiredFeatures;
     semi: boolean;
 

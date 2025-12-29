@@ -1,0 +1,154 @@
+# Flumina (streams-first) - fit functions with Responsum protocol
+# Maps Faber fit functions to generator-wrapped drain() pattern
+#
+# Phase 1: TS target only
+# - fit functions wrap body in drain(function* () { ... })
+# - redde becomes yield respond.ok(value)
+# - iace becomes yield respond.error(...); return;
+# - mori remains throw new Panic(...) (panics are fatal)
+
+# =============================================================================
+# Basic fit Functions
+# =============================================================================
+
+- name: fit function with redde
+  faber: |
+      functio getId() fit textus {
+        redde "abc"
+      }
+  skip: [py, rs, cpp, zig]
+  expect:
+      ts:
+          contains:
+              - 'function getId(): string'
+              - 'return drain(function* ()'
+              - 'yield respond.ok("abc")'
+
+- name: fit function with redde and param
+  faber: |
+      functio greet(textus name) fit textus {
+        redde name
+      }
+  skip: [py, rs, cpp, zig]
+  expect:
+      ts:
+          contains:
+              - 'function greet(name: string): string'
+              - 'return drain(function* ()'
+              - 'yield respond.ok(name)'
+
+- name: fit function with no return value
+  faber: |
+      functio doWork() fit vacuum {
+        redde
+      }
+  skip: [py, rs, cpp, zig]
+  expect:
+      ts:
+          contains:
+              - 'function doWork(): void'
+              - 'yield respond.ok(undefined)'
+
+# =============================================================================
+# Error Handling
+# =============================================================================
+
+- name: fit function with iace
+  faber: |
+      functio mightFail() fit textus {
+        iace "not found"
+      }
+  skip: [py, rs, cpp, zig]
+  expect:
+      ts:
+          contains:
+              - 'yield respond.error("EFAIL", "not found")'
+              - 'return;'
+          not_contains:
+              - 'throw "not found"'
+
+- name: fit function with mori unchanged
+  faber: |
+      functio mustWork() fit textus {
+        mori "fatal error"
+      }
+  skip: [py, rs, cpp, zig]
+  expect:
+      ts:
+          contains:
+              - 'throw new Panic("fatal error")'
+          not_contains:
+              - 'respond.error'
+
+# =============================================================================
+# Control Flow
+# =============================================================================
+
+- name: fit function with conditional return
+  faber: |
+      functio check(bivalens ok) fit textus {
+        si ok {
+          redde "success"
+        }
+        redde "failure"
+      }
+  skip: [py, rs, cpp, zig]
+  expect:
+      ts:
+          contains:
+              - 'function check(ok: boolean): string'
+              - 'if (ok)'
+              - 'yield respond.ok("success")'
+              - 'yield respond.ok("failure")'
+
+- name: fit function with conditional error
+  faber: |
+      functio validate(numerus x) fit numerus {
+        si x < 0 {
+          iace "negative not allowed"
+        }
+        redde x
+      }
+  skip: [py, rs, cpp, zig]
+  expect:
+      ts:
+          contains:
+              - 'yield respond.error("EFAIL", "negative not allowed")'
+              - 'return;'
+              - 'yield respond.ok(x)'
+
+# =============================================================================
+# Non-flumina Functions (should NOT be transformed)
+# =============================================================================
+
+- name: async function not transformed
+  faber: |
+      futura functio fetchData() fiet textus {
+        redde "data"
+      }
+  skip: [py, rs, cpp, zig]
+  expect:
+      ts:
+          contains:
+              - 'async function fetchData(): Promise<string>'
+              - 'return "data"'
+          not_contains:
+              - 'drain'
+              - 'respond.ok'
+
+- name: generator function not transformed
+  faber: |
+      functio items() fiunt numerus {
+        cede 1
+        cede 2
+      }
+  skip: [py, rs, cpp, zig]
+  expect:
+      ts:
+          contains:
+              - 'function* items(): Generator<number>'
+              - 'yield 1'
+              - 'yield 2'
+          not_contains:
+              - 'drain'
+              - 'respond'
