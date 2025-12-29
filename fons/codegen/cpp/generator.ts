@@ -278,8 +278,10 @@ export class CppGenerator {
                 return `${type}& ${name}${defaultVal}`;
             }
 
-            // Default: pass strings and vectors by const reference
-            if (type === 'std::string' || type.startsWith('std::vector')) {
+            // Default: pass complex types by const reference
+            // WHY: Strings, vectors, sets, maps, and other STL containers should
+            //      be passed by const ref to avoid expensive copies.
+            if (this.isComplexType(type)) {
                 return `const ${type}& ${name}${defaultVal}`;
             }
 
@@ -361,5 +363,31 @@ export class CppGenerator {
         }
 
         return null;
+    }
+
+    /**
+     * Check if a C++ type should be passed by const reference.
+     *
+     * WHY: STL containers and strings are expensive to copy. Pass by const ref
+     *      unless explicitly mutating (in preposition).
+     */
+    private isComplexType(type: string): boolean {
+        // Primitive types that should be passed by value
+        const valueTypes = ['int', 'int64_t', 'double', 'bool', 'char', 'void', 'auto'];
+        if (valueTypes.includes(type)) {
+            return false;
+        }
+
+        // STL containers and string should be passed by const ref
+        if (type === 'std::string') return true;
+        if (type.startsWith('std::vector')) return true;
+        if (type.startsWith('std::unordered_set')) return true;
+        if (type.startsWith('std::unordered_map')) return true;
+        if (type.startsWith('std::optional')) return true;
+        if (type.startsWith('std::array')) return true;
+
+        // User-defined types (anything not in valueTypes) - pass by const ref
+        // WHY: Unknown types are likely structs/classes that benefit from ref passing
+        return true;
     }
 }

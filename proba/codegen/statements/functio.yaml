@@ -106,6 +106,141 @@
       zig:
           - 'fn add(a: i64, b: i64) i64'
 
+# Function with user-defined array type parameter (Point[] syntax)
+- name: user-defined array type parameter
+  faber: 'functio process(Point[] points) { scribe points }'
+  expect:
+      ts:
+          - 'function process(points: Array<Point>)'
+      py:
+          - 'def process(points: list[Point]):'
+      rs:
+          - 'fn process(points: Vec<Point>)'
+      cpp:
+          - 'void process(const std::vector<Point>& points)'
+      zig:
+          - 'fn process(points: []Point)'
+
+# Nested array type (matrix)
+- name: nested array type parameter
+  faber: 'functio process(textus[][] matrix) { scribe matrix }'
+  expect:
+      ts:
+          - 'function process(matrix: Array<Array<string>>)'
+      py:
+          - 'def process(matrix: list[list[str]]):'
+      rs:
+          - 'fn process(matrix: Vec<Vec<String>>)'
+      cpp:
+          - 'void process(const std::vector<std::vector<std::string>>& matrix)'
+      zig:
+          - 'fn process(matrix: [][][]const u8)'
+
+# Array type with de preposition (borrowed)
+- name: array type with de preposition
+  faber: 'functio read(de Point[] points) { scribe points }'
+  expect:
+      ts:
+          - 'function read(points: Array<Point>)'
+      py:
+          - 'def read(points: list[Point]):'
+      rs:
+          - 'fn read(points: Vec<Point>)'
+      cpp:
+          - 'void read(const std::vector<Point>& points)'
+      zig:
+          - 'fn read(points: []const Point)'
+
+# Array type with in preposition (mutable borrow)
+- name: array type with in preposition
+  faber: 'functio modify(in numerus[] items) { scribe items }'
+  expect:
+      ts:
+          - 'function modify(items: Array<number>)'
+      py:
+          - 'def modify(items: list[int]):'
+      rs:
+          - 'fn modify(items: Vec<i64>)'
+      cpp:
+          - 'void modify(std::vector<int64_t>& items)'
+      zig:
+          - 'fn modify(items: *std.ArrayList(i64))'
+
+# Array type with ut alias
+- name: array type with ut alias
+  faber: 'functio process(Point[] points ut p) { scribe p }'
+  expect:
+      ts:
+          - 'function process(p: Array<Point>)'
+      py:
+          - 'def process(p: list[Point]):'
+      rs:
+          - 'fn process(p: Vec<Point>)'
+      cpp:
+          - 'void process(const std::vector<Point>& p)'
+      zig:
+          - 'fn process(p: []Point)'
+
+# Array type with vel default
+- name: array type with vel default
+  faber: 'functio process(textus[] items vel []) { scribe items }'
+  expect:
+      ts:
+          - 'function process(items: Array<string> = [])'
+      py:
+          - 'def process(items: list[str] = []):'
+      rs:
+          - 'fn process(items: Vec<String>)'
+      cpp:
+          - 'void process(const std::vector<std::string>& items = {})'
+      zig:
+          - 'fn process(items: [][]const u8)'
+
+# Generic type with array type parameter (copia<textus[]>)
+- name: generic type with array type parameter
+  faber: 'functio process(copia<textus[]> items) { scribe items }'
+  expect:
+      ts:
+          - 'function process(items: Set<Array<string>>)'
+      py:
+          - 'def process(items: set[list[str]]):'
+      rs:
+          - 'fn process(items: HashSet<Vec<String>>)'
+      cpp:
+          - 'void process(const std::unordered_set<std::vector<std::string>>& items)'
+      zig:
+          - 'fn process(items: std.AutoHashMap([][]const u8, void))'
+
+# Map type with array value (tabula<textus, numerus[]>)
+- name: map type with array value
+  faber: 'functio process(tabula<textus, numerus[]> map) { scribe map }'
+  expect:
+      ts:
+          - 'function process(map: Map<string, Array<number>>)'
+      py:
+          - 'def process(map: dict[str, list[int]]):'
+      rs:
+          - 'fn process(map: HashMap<String, Vec<i64>>)'
+      cpp:
+          - 'void process(const std::unordered_map<std::string, std::vector<int64_t>>& map)'
+      zig:
+          - 'fn process(map: std.StringHashMap([]i64))'
+
+# Array of generic type (copia<textus>[])
+- name: array of generic type
+  faber: 'functio process(copia<textus>[] items) { scribe items }'
+  expect:
+      ts:
+          - 'function process(items: Array<Set<string>>)'
+      py:
+          - 'def process(items: list[set[str]]):'
+      rs:
+          - 'fn process(items: Vec<HashSet<String>>)'
+      cpp:
+          - 'void process(const std::vector<std::unordered_set<std::string>>& items)'
+      zig:
+          - 'fn process(items: []std.StringHashMap(void))'
+
 # =============================================================================
 # Async Functions
 # =============================================================================
@@ -457,7 +592,7 @@
           - 'fn process(input: Option<String>)'
           - 'return input'
       cpp:
-          - 'void process(std::optional<std::string> input)'
+          - 'void process(const std::optional<std::string>& input)'
           - 'return input'
       zig:
           - 'fn process(input: ?[]const u8)'

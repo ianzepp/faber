@@ -9,7 +9,7 @@
       rs:
           - 'let arr = vec![];'
       cpp:
-          - 'const auto arr = std::vector<int>{};'
+          - 'const auto arr = {};'
       zig:
           - 'const arr = .{};'
 
@@ -45,7 +45,8 @@
       rs:
           - 'let combined = vec!'
       cpp:
-          - 'const auto combined = std::vector{};'
+          # TODO: C++ spread is broken - should expand a and b into combined
+          - 'const auto combined = {};'
 
 - name: deeply nested arrays (3 levels)
   faber: fixum matrix = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
@@ -79,7 +80,8 @@
       rs:
           - 'let arr = vec!'
       cpp:
-          - 'const auto arr = std::vector{};'
+          # TODO: C++ spread is broken - should be {1, ...middle, 2}
+          - 'const auto arr = {};'
       zig:
           - '.{ 1, middle, 2 }'
 
@@ -91,7 +93,8 @@
       rs:
           - 'let arr = vec!'
       cpp:
-          - 'const auto arr = std::vector{};'
+          # TODO: C++ spread is broken - should expand getItems() result
+          - 'const auto arr = {};'
       zig:
           - '.{ getItems(), 99 }'
 
@@ -122,7 +125,8 @@
       rs:
           - 'let arr = vec!'
       cpp:
-          - 'const auto arr = std::vector{};'
+          # TODO: C++ spread is broken - should expand inner into nested array
+          - 'const auto arr = {};'
       zig:
           - '.{ .{ inner }, outer }'
 

@@ -3,7 +3,10 @@
  *
  * TRANSFORMS:
  *   [1, 2, 3] -> std::vector{1, 2, 3}
- *   []        -> std::vector<int>{}
+ *   []        -> {}
+ *
+ * WHY: Empty arrays use {} (brace initialization) to let C++ infer type from context.
+ *      This works for default parameters, assignments, and return statements.
  */
 
 import type { ArrayExpression, Expression } from '../../../parser/ast';
@@ -22,15 +25,16 @@ function containsSpread(node: ArrayExpression): boolean {
 export function genArrayExpression(node: ArrayExpression, g: CppGenerator): string {
     g.includes.add('<vector>');
 
+    // WHY: Empty array uses {} for type inference from context
     if (node.elements.length === 0) {
-        return 'std::vector<int>{}';
+        return '{}';
     }
 
-    // WHY: Spread elements require runtime iteration in C++. When present
-    // (even nested), we generate an empty vector as the base. The caller
-    // is responsible for inserting spread elements via insert() calls.
+    // TODO: Spread elements require runtime iteration in C++.
+    // Currently broken - just outputs {} and drops the spread.
+    // Proper fix: generate vector with insert() calls for spread elements.
     if (containsSpread(node)) {
-        return 'std::vector{}';
+        return '{}';
     }
 
     const elements = node.elements.map(el => g.genExpression(el as Expression)).join(', ');
