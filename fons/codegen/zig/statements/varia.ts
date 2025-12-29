@@ -77,6 +77,28 @@ export function genVariaDeclaration(node: VariaDeclaration, g: ZigGenerator): st
         typeAnno = `: ${g.inferZigType(node.init)}`;
     }
 
+    // EDGE: Array literal with type annotation needs [_]T{} syntax
+    // WHY: Zig's .{} creates a tuple, not an iterable array. With explicit
+    //      element type from annotation, we can emit proper array syntax.
+    const isArrayType = node.typeAnnotation && (node.typeAnnotation.arrayShorthand || node.typeAnnotation.name === 'lista');
+
+    if (node.init?.type === 'ArrayExpression' && isArrayType) {
+        const elementTypeNode = node.typeAnnotation!.typeParameters?.[0];
+        if (elementTypeNode && elementTypeNode.type === 'TypeAnnotation') {
+            const elementType = g.genType(elementTypeNode);
+            const elements = node.init.elements
+                .map(el => {
+                    if (el.type === 'SpreadElement') {
+                        return g.genExpression(el.argument);
+                    }
+                    return g.genExpression(el);
+                })
+                .join(', ');
+            // No type annotation needed when using [_]T{} syntax
+            return `${g.ind()}${kind} ${zigName} = [_]${elementType}{ ${elements} };`;
+        }
+    }
+
     const init = node.init ? ` = ${g.genExpression(node.init)}` : ' = undefined';
 
     return `${g.ind()}${kind} ${zigName}${typeAnno}${init};`;

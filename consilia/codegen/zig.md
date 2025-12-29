@@ -354,31 +354,37 @@ switch (event) {
 
 Tested against `exempla/` files: **8/47 compile successfully** (2025-12).
 
-| Blocker                           | Files | Fix                                            | Priority |
-| --------------------------------- | ----- | ---------------------------------------------- | -------- |
-| Array literals `.{}` not iterable | ~10   | Use `[_]T{}` for arrays, `.{}` only for tuples | High     |
-| String concat `++` at runtime     | ~8    | **RESOLVED** - Use `scriptum()`                | Done     |
-| Unused function parameters        | ~8    | Prefix with `_` or add `_ = param;`            | Medium   |
-| `var` never mutated               | ~3    | Fix source: use `fixum` instead of `varia`     | N/A      |
-| Lambda return type required       | ~2    | Emit `@compileError` or infer from context     | Low      |
-| `verum`/`falsum` in type context  | ~2    | Map to `true`/`false` in all contexts          | Low      |
-| `discretio` field syntax          | ~1    | Fix colon vs equals in union fields            | Low      |
+| Blocker                           | Files | Fix                                                | Priority |
+| --------------------------------- | ----- | -------------------------------------------------- | -------- |
+| Array literals `.{}` not iterable | ~10   | **RESOLVED** - Use `qua T[]` or prefix type        | Done     |
+| String concat `++` at runtime     | ~8    | **RESOLVED** - Use `scriptum()`                    | Done     |
+| Unused function parameters        | ~8    | Prefix with `_` or add `_ = param;`                | Medium   |
+| `var` never mutated               | ~3    | Fix source: use `fixum` instead of `varia`         | N/A      |
+| Lambda return type required       | ~2    | Emit `@compileError` or infer from context         | Low      |
+| `verum`/`falsum` in type context  | ~2    | Map to `true`/`false` in all contexts              | Low      |
+| Generic `discretio`               | ~1    | Needs comptime function wrapper; non-generic works | Deferred |
 
-### Array Literals
+### Array Literals (RESOLVED)
 
 **Problem:** `.{ 1, 2, 3 }` creates a tuple (comptime-only), not an iterable array.
 
-```zig
-// Current (broken)
-const numbers = .{ 1, 2, 3 };
-for (numbers) |n| { }  // error: unable to resolve comptime value
+**Solution:** Provide element type via `qua` cast or prefix type annotation:
 
-// Needed
-const numbers = [_]i64{ 1, 2, 3 };
-for (&numbers) |n| { }  // works
+```faber
+// Option 1: qua cast (postfix type)
+fixum nums = [1, 2, 3] qua numerus[]
+
+// Option 2: prefix type annotation
+fixum numerus[] nums = [1, 2, 3]
 ```
 
-**Fix:** Detect array literal context and emit `[_]T{}` syntax. Requires knowing element type.
+```zig
+// Both generate proper array syntax:
+const nums = [_]i64{ 1, 2, 3 };
+for (nums) |n| { ... }  // works
+```
+
+Without type information, untyped array literals still emit `.{}` which only works at comptime.
 
 ### String Concatenation (RESOLVED)
 

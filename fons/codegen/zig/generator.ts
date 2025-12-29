@@ -396,10 +396,34 @@ export class ZigGenerator {
      * TRANSFORMS:
      *   x qua numerus -> @as(i64, x)
      *   data qua textus -> @as([]const u8, data)
+     *   [1, 2, 3] qua numerus[] -> [_]i64{ 1, 2, 3 }
      *
      * TARGET: Zig uses @as(T, x) builtin for type coercion.
+     *
+     * EDGE: Array literals need special handling - Zig can't @as to a slice,
+     *       must use [_]T{} syntax for proper array type.
      */
     genQuaExpression(node: import('../../parser/ast').QuaExpression): string {
+        // EDGE: Array literal with type cast needs [_]T{} syntax, not @as
+        // WHY: arrayShorthand means it was parsed as T[] syntax, name will be 'lista'
+        const isArrayType = node.targetType.arrayShorthand || node.targetType.name === 'lista';
+
+        if (node.expression.type === 'ArrayExpression' && isArrayType) {
+            const elementTypeNode = node.targetType.typeParameters?.[0];
+            if (elementTypeNode && elementTypeNode.type === 'TypeAnnotation') {
+                const elementType = this.genType(elementTypeNode);
+                const elements = node.expression.elements
+                    .map(el => {
+                        if (el.type === 'SpreadElement') {
+                            return this.genExpression(el.argument);
+                        }
+                        return this.genExpression(el);
+                    })
+                    .join(', ');
+                return `[_]${elementType}{ ${elements} }`;
+            }
+        }
+
         const expr = this.genExpression(node.expression);
         const targetType = this.genType(node.targetType);
         return `@as(${targetType}, ${expr})`;
