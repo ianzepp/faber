@@ -119,6 +119,23 @@ function* flow<T>(gen: Generator<Responsum<T>>): Generator<T> {
     else if (resp.op === 'factum') return;
     else if (resp.op === 'bene') { yield resp.data; return; }
   }
+}
+
+async function drainAsync<T>(gen: () => AsyncGenerator<Responsum<T>>): Promise<T> {
+  for await (const resp of gen()) {
+    if (resp.op === 'bene') return resp.data;
+    if (resp.op === 'error') throw new Error(\`\${resp.code}: \${resp.message}\`);
+  }
+  throw new Error('EPROTO: No terminal response');
+}
+
+async function* flowAsync<T>(gen: AsyncGenerator<Responsum<T>>): AsyncGenerator<T> {
+  for await (const resp of gen) {
+    if (resp.op === 'res') yield resp.data;
+    else if (resp.op === 'error') throw new Error(\`\${resp.code}: \${resp.message}\`);
+    else if (resp.op === 'factum') return;
+    else if (resp.op === 'bene') { yield resp.data; return; }
+  }
 }`);
     }
 

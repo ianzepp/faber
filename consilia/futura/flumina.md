@@ -1,6 +1,6 @@
 # Flumina: Streams-First Architecture
 
-**Status:** Phase 2 Complete
+**Status:** Phase 3 Complete
 **Inspiration:** Monk OS syscall architecture
 
 ## Vision
@@ -675,9 +675,84 @@ Extend `proba/codegen/statements/flumina.yaml`:
               - 'yield respond.error("EFAIL", "error")'
 ```
 
-### Phase 3: Async Variants (Deferred)
+### Phase 3: Async Variants (TS Target Only) — COMPLETE
 
-`fiet` and `fient` follow same pattern with `async function*` and async versions of `drain()`/`flow()`.
+**Status:** Implemented and tested.
+
+`fiet` and `fient` follow the same pattern as `fit` and `fiunt`, but with async generators.
+
+#### Preamble Additions
+
+```typescript
+async function drainAsync<T>(gen: () => AsyncGenerator<Responsum<T>>): Promise<T> {
+    for await (const resp of gen()) {
+        if (resp.op === 'bene') return resp.data;
+        if (resp.op === 'error') throw new Error(`${resp.code}: ${resp.message}`);
+    }
+    throw new Error('EPROTO: No terminal response');
+}
+
+async function* flowAsync<T>(gen: AsyncGenerator<Responsum<T>>): AsyncGenerator<T> {
+    for await (const resp of gen) {
+        if (resp.op === 'res') yield resp.data;
+        else if (resp.op === 'error') throw new Error(`${resp.code}: ${resp.message}`);
+        else if (resp.op === 'factum') return;
+        else if (resp.op === 'bene') {
+            yield resp.data;
+            return;
+        }
+    }
+}
+```
+
+#### Transformations
+
+| Verb    | Internal                      | Boundary       | External Type       |
+| ------- | ----------------------------- | -------------- | ------------------- |
+| `fit`   | `yield respond.ok(x)`         | `drain()`      | `T`                 |
+| `fiunt` | `yield respond.item(x)`       | `flow()`       | `Generator<T>`      |
+| `fiet`  | `yield respond.ok(x)`         | `drainAsync()` | `Promise<T>`        |
+| `fient` | `yield respond.item(await x)` | `flowAsync()`  | `AsyncGenerator<T>` |
+
+#### Examples
+
+```fab
+// fiet: async single-value
+functio fetchData() fiet textus {
+    redde cede getData()
+}
+// Compiles to:
+// async function fetchData(): Promise<string> {
+//   return await drainAsync(async function* () {
+//     yield respond.ok(await getData());
+//   });
+// }
+
+// fient: async multi-value
+functio fetchAll(lista<textus> urls) fient textus {
+    ex urls pro url {
+        cede fetch(url)
+    }
+}
+// Compiles to:
+// async function* fetchAll(urls: Array<string>): AsyncGenerator<string> {
+//   yield* flowAsync((async function* () {
+//     for (const url of urls) {
+//       yield respond.item(await fetch(url));
+//     }
+//     yield respond.done();
+//   })());
+// }
+```
+
+#### Files Modified
+
+| File                                    | Change                                         |
+| --------------------------------------- | ---------------------------------------------- |
+| `fons/codegen/ts/index.ts`              | Added `drainAsync()` and `flowAsync()` helpers |
+| `fons/codegen/ts/generator.ts`          | Added `inFiet` and `inFient` context flags     |
+| `fons/codegen/ts/statements/functio.ts` | Handle `fiet` and `fient` verbs                |
+| `fons/codegen/ts/statements/iace.ts`    | Extended to handle `fiet`/`fient` contexts     |
 
 ### Phase 4: Other Targets (Deferred)
 

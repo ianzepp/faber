@@ -88,6 +88,8 @@ export class TsGenerator {
     inGenerator = false;
     inFlumina = false; // WHY: Track if we're inside a fit function body for Responsum protocol
     inFiunt = false; // WHY: Track if we're inside a fiunt function body for flow() protocol
+    inFiet = false; // WHY: Track if we're inside a fiet function body for async Responsum protocol
+    inFient = false; // WHY: Track if we're inside a fient function body for async flow() protocol
     features: RequiredFeatures;
     semi: boolean;
 
@@ -235,6 +237,10 @@ export class TsGenerator {
                 // WHY: In fiunt context, cede yields respond.item() for Responsum protocol
                 if (this.inFiunt) {
                     return `yield respond.item(${this.genExpression(node.argument)})`;
+                }
+                // WHY: In fient context, cede yields respond.item() but awaits the value first
+                if (this.inFient) {
+                    return `yield respond.item(await ${this.genExpression(node.argument)})`;
                 }
                 // WHY: cede maps to yield in generators, await in async functions
                 return `${this.inGenerator ? 'yield' : 'await'} ${this.genExpression(node.argument)}`;

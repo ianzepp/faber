@@ -36,8 +36,8 @@ export function genIaceStatement(node: IaceStatement, g: TsGenerator, semi: bool
         return `${g.ind()}throw new Panic(String(${expr}))${semi ? ';' : ''}`;
     }
 
-    // WHY: In flumina/fiunt mode, iace yields an error response and exits the generator
-    if (g.inFlumina || g.inFiunt) {
+    // WHY: In flumina/fiunt/fiet/fient mode, iace yields an error response and exits the generator
+    if (g.inFlumina || g.inFiunt || g.inFiet || g.inFient) {
         // Extract message for error response
         let message: string;
         if (node.argument.type === 'Literal' && typeof node.argument.value === 'string') {

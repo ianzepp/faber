@@ -121,9 +121,9 @@
 # Non-flumina Functions (should NOT be transformed)
 # =============================================================================
 
-- name: async function not transformed
+- name: arrow async function not transformed
   faber: |
-      futura functio fetchData() fiet textus {
+      futura functio fetchData() -> textus {
         redde "data"
       }
   skip: [py, rs, cpp, zig]
@@ -233,4 +233,113 @@
               - 'while ('
               - 'i < n'
               - 'yield respond.item(i)'
+              - 'yield respond.done()'
+
+# =============================================================================
+# fiet Functions (async single-value streams with Responsum protocol)
+# =============================================================================
+
+- name: fiet function with redde
+  faber: |
+      functio fetchData() fiet textus {
+        redde "data"
+      }
+  skip: [py, rs, cpp, zig]
+  expect:
+      ts:
+          contains:
+              - 'async function fetchData(): Promise<string>'
+              - 'return await drainAsync(async function* ()'
+              - 'yield respond.ok("data")'
+
+- name: fiet function with cede and redde
+  faber: |
+      functio fetchAndReturn() fiet textus {
+        fixum result = cede getData()
+        redde result
+      }
+  skip: [py, rs, cpp, zig]
+  expect:
+      ts:
+          contains:
+              - 'async function fetchAndReturn(): Promise<string>'
+              - 'drainAsync(async function* ()'
+              - 'await getData()'
+              - 'yield respond.ok(result)'
+
+- name: fiet function with iace
+  faber: |
+      functio mightFail() fiet textus {
+        iace "network error"
+      }
+  skip: [py, rs, cpp, zig]
+  expect:
+      ts:
+          contains:
+              - 'async function mightFail(): Promise<string>'
+              - 'yield respond.error("EFAIL", "network error")'
+              - 'return;'
+
+- name: fiet function with mori unchanged
+  faber: |
+      functio mustWork() fiet textus {
+        mori "fatal"
+      }
+  skip: [py, rs, cpp, zig]
+  expect:
+      ts:
+          contains:
+              - 'throw new Panic("fatal")'
+          not_contains:
+              - 'respond.error'
+
+# =============================================================================
+# fient Functions (async multi-value streams with Responsum protocol)
+# =============================================================================
+
+- name: fient function with cede
+  faber: |
+      functio fetchItems() fient textus {
+        cede fetch("a")
+        cede fetch("b")
+      }
+  skip: [py, rs, cpp, zig]
+  expect:
+      ts:
+          contains:
+              - 'async function* fetchItems(): AsyncGenerator<string>'
+              - 'yield* flowAsync('
+              - 'yield respond.item(await fetch("a"))'
+              - 'yield respond.item(await fetch("b"))'
+              - 'yield respond.done()'
+
+- name: fient function with iace
+  faber: |
+      functio fetchMayFail() fient textus {
+        cede fetch("a")
+        iace "failed"
+      }
+  skip: [py, rs, cpp, zig]
+  expect:
+      ts:
+          contains:
+              - 'async function* fetchMayFail(): AsyncGenerator<string>'
+              - 'yield respond.item(await fetch("a"))'
+              - 'yield respond.error("EFAIL", "failed")'
+              - 'return;'
+
+- name: fient function with loop
+  faber: |
+      functio fetchAll(lista<textus> urls) fient textus {
+        ex urls pro url {
+          cede fetch(url)
+        }
+      }
+  skip: [py, rs, cpp, zig]
+  expect:
+      ts:
+          contains:
+              - 'async function* fetchAll(urls: Array<string>): AsyncGenerator<string>'
+              - 'for (const url of urls)'
+              - 'yield respond.item(await fetch(url))'
               - 'yield respond.done()'
