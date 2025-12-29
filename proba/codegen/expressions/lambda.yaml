@@ -1,6 +1,40 @@
 # Lambda expressions - Latin pro syntax for lambdas
 # Maps Faber pro/redde to target-language lambda equivalents
 
+- name: lambda with return type (expression body)
+  faber: 'pro x -> numerus: x * 2'
+  expect:
+      ts: '(x): number => (x * 2);'
+      py: 'lambda x: (x * 2)'
+      rs:
+          - '|x| -> i64 { (x * 2) };'
+      cpp:
+          - '[&](auto x) -> int64_t { return (x * 2); };'
+      zig:
+          - 'struct { fn call(x: anytype) i64 { return (x * 2); } }.call'
+
+- name: lambda with return type (block body)
+  faber: |
+      pro x -> numerus {
+          redde x * 2
+      }
+  expect:
+      ts:
+          - '(x): number =>'
+          - 'return (x * 2);'
+      py:
+          - 'lambda x:'
+      rs:
+          - '|x| -> i64 {'
+          - 'return (x * 2);'
+      cpp:
+          - '[&](auto x) -> int64_t {'
+          - 'return (x * 2);'
+      zig:
+          - 'struct { fn call(x: anytype) i64 {'
+          - 'return (x * 2);'
+          - '} }.call'
+
 - name: single param lambda
   faber: pro x redde x * 2
   expect:

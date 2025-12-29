@@ -18,24 +18,21 @@ import type { LambdaExpression, Expression } from '../../../parser/ast';
 import type { ZigGenerator } from '../generator';
 
 export function genLambdaExpression(node: LambdaExpression, g: ZigGenerator): string {
-    // WHY: Zig doesn't support first-class functions with inferred return types.
-    // With an explicit return type, we can generate valid Zig code.
+    // GUARD: No return type - Zig can't infer lambda return types
     if (!node.returnType) {
         return `@compileError("Lambda requires return type annotation for Zig target: pro x -> Type: expr")`;
     }
 
-    // Build parameter list - lambda params are just Identifiers
     const params = node.params.map(p => `${p.name}: anytype`).join(', ');
     const returnType = g.genType(node.returnType);
 
+    // GUARD: Block body - generate full function block
     if (node.body.type === 'BlockStatement') {
         const body = g.genBlockStatement(node.body);
-
         return `struct { fn call(${params}) ${returnType} ${body} }.call`;
     }
 
-    // Expression body
+    // Expression body - wrap in return statement
     const body = g.genExpression(node.body as Expression);
-
     return `struct { fn call(${params}) ${returnType} { return ${body}; } }.call`;
 }
