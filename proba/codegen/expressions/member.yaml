@@ -71,6 +71,8 @@
   expect:
       ts: 'a.b.c.d.e.f.g;'
       py: 'a.b.c.d.e.f.g'
+      zig:
+          - 'a.b.c.d.e.f.g'
 
 - name: mixed optional and non-optional chain
   faber: a?.b.c?.d.e
@@ -85,12 +87,16 @@
   expect:
       ts: 'arr[i * 2 + 1];'
       py: 'arr[i * 2 + 1]'
+      zig:
+          - 'arr[i * 2 + 1]'
 
 - name: computed access with string key
   faber: obj["property-name"]
   expect:
       ts: 'obj["property-name"];'
       py: 'obj["property-name"]'
+      zig:
+          - 'obj["property-name"]'
 
 - name: member on string literal
   faber: '"hello".length'
@@ -128,3 +134,5 @@
   expect:
       ts: 'matrix[i][j];'
       py: 'matrix[i][j]'
+      zig:
+          - 'matrix[i][j]'

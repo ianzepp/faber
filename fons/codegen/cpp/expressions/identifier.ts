@@ -2,27 +2,19 @@
  * C++23 Code Generator - Identifier
  *
  * TRANSFORMS:
- *   verum   -> true
- *   falsum  -> false
- *   nihil   -> nullptr
- *   ego     -> this
- *   other   -> other
+ *   ego   -> this
+ *   other -> other
+ *
+ * NOTE: verum/falsum/nihil are parsed as Literals, not Identifiers,
+ *       so they're handled by literal.ts, not here.
  */
 
 import type { Identifier } from '../../../parser/ast';
 import type { CppGenerator } from '../generator';
 
-export function genIdentifier(node: Identifier, g: CppGenerator): string {
-    switch (node.name) {
-        case 'verum':
-            return 'true';
-        case 'falsum':
-            return 'false';
-        case 'nihil':
-            return 'nullptr';
-        case 'ego':
-            return 'this';
-        default:
-            return node.name;
+export function genIdentifier(node: Identifier, _g: CppGenerator): string {
+    if (node.name === 'ego') {
+        return 'this';
     }
+    return node.name;
 }

@@ -34,6 +34,8 @@
           - 'lista.filter(f);'
       cpp:
           - 'lista.filter(f);'
+      zig:
+          - 'lista.filter(f)'
 
 - name: function call with spread
   faber: fn(sparge args)
@@ -45,6 +47,8 @@
           - 'spread'
       cpp:
           - 'fn();'
+      zig:
+          - '@compileError'
 
 - name: optional call
   faber: callback?()
@@ -57,6 +61,9 @@
       cpp:
           - 'callback'
           - 'std::nullopt'
+      zig:
+          - 'if (callback)'
+          - 'else null'
 
 - name: nested function call
   faber: outer(inner(x))
@@ -75,6 +82,8 @@
   expect:
       ts: 'a(b(c(d(e(f())))));'
       py: 'a(b(c(d(e(f())))))'
+      zig:
+          - 'a(b(c(d(e(f())))))'
 
 - name: mixed spread and regular args
   faber: fn(a, sparge b, c, sparge d)
@@ -87,6 +96,8 @@
   expect:
       ts: 'obj.a().b().c().d();'
       py: 'obj.a().b().c().d()'
+      zig:
+          - 'obj.a().b().c().d()'
 
 - name: call with object literal argument
   faber: 'fn({ x: 1, y: 2 })'
@@ -123,9 +134,13 @@
   expect:
       ts: 'obj.method();'
       py: 'obj.method()'
+      zig:
+          - 'obj.method()'
 
 - name: call with single argument
   faber: process(data)
   expect:
       ts: 'process(data);'
       py: 'process(data)'
+      zig:
+          - 'process(data)'
