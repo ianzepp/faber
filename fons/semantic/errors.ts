@@ -45,6 +45,8 @@ export enum SemanticErrorCode {
     NoTypeOrInitializer = 'S006',
     NotExportedFromModule = 'S007',
     IncompatibleComparison = 'S008',
+    CedeOutsideAsyncOrGenerator = 'S009',
+    AwaitOutsideAsync = 'S010',
 }
 
 // =============================================================================
@@ -89,5 +91,13 @@ export const SEMANTIC_ERRORS = {
     [SemanticErrorCode.IncompatibleComparison]: {
         text: (leftType: string, rightType: string, operator: string) => `Cannot compare '${leftType}' with '${rightType}' using '${operator}'`,
         help: 'Comparison operators require operands of the same type. Both sides must be numbers or both must be strings.',
+    },
+    [SemanticErrorCode.CedeOutsideAsyncOrGenerator]: {
+        text: () => "'cede' requires an async or generator function context",
+        help: "Use 'fiet' for async functions, 'fiunt' for generators, or 'fient' for async generators.",
+    },
+    [SemanticErrorCode.AwaitOutsideAsync]: {
+        text: (keyword: string) => `'${keyword}' requires an async function context`,
+        help: "Use 'fiet' or 'fient' to declare an async function.",
     },
 } as const;

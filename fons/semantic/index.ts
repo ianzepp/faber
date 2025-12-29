@@ -247,6 +247,8 @@ export function analyze(program: Program): SemanticResult {
     const errors: SemanticError[] = [];
     let currentScope: Scope = createGlobalScope();
     let currentFunctionReturnType: SemanticType | null = null;
+    let currentFunctionAsync = false;
+    let currentFunctionGenerator = false;
 
     defineBuiltins();
 
@@ -1042,6 +1044,12 @@ export function analyze(program: Program): SemanticResult {
     }
 
     function resolveAwait(node: CedeExpression): SemanticType {
+        // Validate context: cede requires async or generator
+        if (!currentFunctionAsync && !currentFunctionGenerator) {
+            const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.CedeOutsideAsyncOrGenerator];
+            error(`${text()}\n${help}`, node.position);
+        }
+
         const argType = resolveExpression(node.argument);
 
         // If awaiting a Promise, unwrap it
@@ -1243,6 +1251,12 @@ export function analyze(program: Program): SemanticResult {
     }
 
     function analyzeVariaDeclaration(node: VariaDeclaration): void {
+        // Validate async binding context: figendum/variandum require async
+        if ((node.kind === 'figendum' || node.kind === 'variandum') && !currentFunctionAsync) {
+            const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.AwaitOutsideAsync];
+            error(`${text(node.kind)}\n${help}`, node.position);
+        }
+
         // Handle array destructuring pattern
         if (node.name.type === 'ArrayPattern') {
             if (node.init) {
@@ -1325,9 +1339,14 @@ export function analyze(program: Program): SemanticResult {
         // Analyze function body in new scope
         enterScope('function');
 
+        // Save and set function context
         const previousReturnType = currentFunctionReturnType;
+        const previousAsync = currentFunctionAsync;
+        const previousGenerator = currentFunctionGenerator;
 
         currentFunctionReturnType = returnType;
+        currentFunctionAsync = node.async;
+        currentFunctionGenerator = node.generator;
 
         // Define parameters
         for (let i = 0; i < node.params.length; i++) {
@@ -1344,7 +1363,10 @@ export function analyze(program: Program): SemanticResult {
 
         analyzeBlock(node.body);
 
+        // Restore function context
         currentFunctionReturnType = previousReturnType;
+        currentFunctionAsync = previousAsync;
+        currentFunctionGenerator = previousGenerator;
         exitScope();
 
         node.resolvedType = fnType;

@@ -21,3 +21,45 @@
   errata:
     - 'Parse errors'
     - "Expected '}'"
+
+# =============================================================================
+# Semantic Errors - cede context
+# =============================================================================
+
+# cede requires async or generator context
+- name: cede in sync non-generator function
+  faber: 'functio bad() fit numerus { cede 1 }'
+  errata:
+    - 'Semantic errors'
+    - "'cede' requires an async or generator function context"
+
+- name: cede at top level (outside function)
+  faber: 'cede 1'
+  errata:
+    - 'Semantic errors'
+    - "'cede' requires"
+
+# =============================================================================
+# Semantic Errors - figendum/variandum context
+# =============================================================================
+
+# figendum requires async context
+- name: figendum in sync function
+  faber: 'functio bad() -> vacuum { figendum x = 1 }'
+  errata:
+    - 'Semantic errors'
+    - "'figendum' requires an async function context"
+
+# variandum requires async context
+- name: variandum in sync function
+  faber: 'functio bad() -> vacuum { variandum x = 1 }'
+  errata:
+    - 'Semantic errors'
+    - "'variandum' requires an async function context"
+
+# figendum in generator (not async) should also error
+- name: figendum in generator without async
+  faber: 'functio bad() fiunt numerus { figendum x = 1 }'
+  errata:
+    - 'Semantic errors'
+    - "'figendum' requires an async function context"
