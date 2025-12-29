@@ -1,65 +1,319 @@
 # Test errata functionality
 # Errata tests verify that invalid code produces expected errors
+#
+# Format:
+#   errata: true                    - any error is acceptable
+#   errata: 'exact message'         - exact match
+#   errata: ['frag1', 'frag2']      - all fragments must be present
 
 # =============================================================================
-# Parse Errors
+# Tokenizer Errors (L-prefix)
 # =============================================================================
 
-- name: parser error on malformed function (any error)
-  faber: 'functio bad( {}'
-  errata: true
+- name: L001 unterminated string
+  faber: 'fixum x = "hello'
+  errata:
+    - 'Tokenizer errors'
+    - 'L001'
+    - 'Unterminated string'
 
-- name: parser error with fragment match
-  faber: 'functio bad( {}'
+# =============================================================================
+# Parse Errors - Token Expectations (P001-P014)
+# =============================================================================
+
+- name: P001 missing closing paren in function call
+  faber: 'f(a, b'
   errata:
     - 'Parse errors'
-    - 'P010'
-    - "Expected identifier"
+    - "Expected ')'"
 
-- name: missing closing brace
+- name: P001 missing closing paren in grouped expression
+  faber: 'fixum x = (1 + 2'
+  errata:
+    - "Expected ')'"
+
+- name: P002 missing closing brace in function
   faber: 'functio test() { redde 1'
   errata:
     - 'Parse errors'
     - "Expected '}'"
 
+- name: P002 missing closing brace in si block
+  faber: 'si verum { scribe("yes")'
+  errata:
+    - "Expected '}'"
+
+- name: P003 missing closing bracket in array
+  faber: 'fixum arr = [1, 2, 3'
+  errata:
+    - "Expected ']'"
+
+- name: P004 missing closing angle in generic
+  faber: 'fixum lista<numerus x = []'
+  errata:
+    - "Expected '>'"
+
+- name: P008 missing opening brace in function body
+  faber: 'functio f() redde 1'
+  errata:
+    - "Expected '{'"
+
+- name: P008 missing opening brace in si block
+  faber: 'si verum redde 1'
+  errata:
+    - "Expected '{'"
+
+- name: P010 expected identifier got keyword
+  faber: 'functio si() { }'
+  errata:
+    - 'Expected identifier'
+
+- name: P010 expected identifier in parameter
+  faber: 'functio f(123) { }'
+  errata:
+    - 'Expected identifier'
+
 # =============================================================================
-# Semantic Errors - cede context
+# Parse Errors - Keyword Expectations (P020-P049)
 # =============================================================================
 
-# cede requires async or generator context
-- name: cede in sync non-generator function
+- name: P028 for loop missing pro
+  faber: 'ex items { }'
+  errata:
+    - "Expected 'pro'"
+
+# =============================================================================
+# Parse Errors - Invalid Constructs (P100-P106)
+# =============================================================================
+
+- name: P100 invalid assignment to literal
+  faber: '1 = x'
+  errata:
+    - 'Invalid assignment target'
+
+- name: P100 invalid assignment to binary expression
+  faber: 'x + y = 5'
+  errata:
+    - 'Invalid assignment target'
+
+- name: P100 invalid assignment to string
+  faber: '"hello" = x'
+  errata:
+    - 'Invalid assignment target'
+
+# =============================================================================
+# Parse Errors - Declaration Errors (P200-P205)
+# =============================================================================
+
+# These produce P010 "Expected identifier" rather than specific "requires a name" errors
+- name: P200 function missing name
+  faber: 'functio() { }'
+  errata:
+    - 'Parse errors'
+    - 'P010'
+    - "Expected identifier"
+
+- name: P202 genus missing name
+  faber: 'genus { textus nomen }'
+  errata:
+    - 'Parse errors'
+    - 'P010'
+    - "Expected identifier"
+
+- name: P203 pactum missing name
+  faber: 'pactum { }'
+  errata:
+    - 'Parse errors'
+    - 'P010'
+    - "Expected identifier"
+
+- name: P205 variable missing name
+  faber: 'varia = 5'
+  errata:
+    - 'Parse errors'
+    - 'P010'
+    - "Expected identifier"
+
+# =============================================================================
+# Semantic Errors - S001 Undefined Variable
+# =============================================================================
+
+- name: S001 undefined variable in expression
+  faber: 'fixum x = unknownVar'
+  errata:
+    - 'Semantic errors'
+    - "Undefined variable 'unknownVar'"
+
+- name: S001 undefined variable in function call
+  faber: 'scribe(missingVar)'
+  errata:
+    - 'Semantic errors'
+    - "Undefined variable 'missingVar'"
+
+- name: S001 undefined function
+  faber: 'unknownFunc()'
+  errata:
+    - 'Semantic errors'
+    - "Undefined variable 'unknownFunc'"
+
+# =============================================================================
+# Semantic Errors - S002 Already Defined
+# =============================================================================
+
+- name: S002 duplicate variable in same scope
+  faber: |
+    varia x = 1
+    varia x = 2
+  errata:
+    - 'Semantic errors'
+    - "is already defined"
+
+- name: S002 duplicate function
+  faber: |
+    functio f() { }
+    functio f() { }
+  errata:
+    - 'Semantic errors'
+    - "is already defined"
+
+# =============================================================================
+# Semantic Errors - S003 Immutable Assignment
+# =============================================================================
+
+- name: S003 reassign fixum variable
+  faber: |
+    fixum x = 5
+    x = 10
+  errata:
+    - 'Semantic errors'
+    - "Cannot assign to immutable variable"
+
+- name: S003 reassign fixum in loop
+  faber: |
+    fixum counter = 0
+    dum counter < 10 { counter = counter + 1 }
+  errata:
+    - 'Semantic errors'
+    - "Cannot assign to immutable variable"
+
+# =============================================================================
+# Semantic Errors - S004 Type Mismatch
+# =============================================================================
+
+- name: S004 assign string to number variable
+  faber: |
+    varia numerus x = 5
+    x = "hello"
+  errata:
+    - 'Semantic errors'
+    - "is not assignable to type"
+
+- name: S004 initialize with wrong type
+  faber: 'fixum numerus x = "text"'
+  errata:
+    - 'Semantic errors'
+    - "is not assignable to type"
+
+# =============================================================================
+# Semantic Errors - S005 Return Type Mismatch
+# =============================================================================
+
+- name: S005 return number from string function
+  faber: |
+    functio greet() -> textus {
+      redde 42
+    }
+  errata:
+    - 'Semantic errors'
+    - "is not assignable to function return type"
+
+- name: S005 return string from number function
+  faber: |
+    functio count() -> numerus {
+      redde "five"
+    }
+  errata:
+    - 'Semantic errors'
+    - "is not assignable to function return type"
+
+# =============================================================================
+# Semantic Errors - S006 No Type or Initializer
+# =============================================================================
+
+- name: S006 variable without type or init
+  faber: 'varia x'
+  errata:
+    - 'Semantic errors'
+    - "has no type annotation or initializer"
+
+- name: S006 fixum without type or init
+  faber: 'fixum y'
+  errata:
+    - 'Semantic errors'
+    - "has no type annotation or initializer"
+
+# =============================================================================
+# Semantic Errors - S008 Incompatible Comparison
+# =============================================================================
+
+- name: S008 compare number with string using less than
+  faber: 'fixum result = 5 < "text"'
+  errata:
+    - 'Semantic errors'
+    - "Cannot compare"
+
+- name: S008 compare string with number using greater than
+  faber: 'fixum result = "hello" > 10'
+  errata:
+    - 'Semantic errors'
+    - "Cannot compare"
+
+# =============================================================================
+# Semantic Errors - S009 Cede Outside Async/Generator
+# =============================================================================
+
+- name: S009 cede in sync non-generator function
   faber: 'functio bad() fit numerus { cede 1 }'
   errata:
     - 'Semantic errors'
     - "'cede' requires an async or generator function context"
 
-- name: cede at top level (outside function)
+- name: S009 cede at top level
   faber: 'cede 1'
   errata:
     - 'Semantic errors'
     - "'cede' requires"
 
+- name: S009 cede in plain function with arrow return
+  faber: 'functio bad() -> numerus { cede 1 }'
+  errata:
+    - 'Semantic errors'
+    - "'cede' requires"
+
 # =============================================================================
-# Semantic Errors - figendum/variandum context
+# Semantic Errors - S010 Await Outside Async
 # =============================================================================
 
-# figendum requires async context
-- name: figendum in sync function
+- name: S010 figendum in sync function
   faber: 'functio bad() -> vacuum { figendum x = 1 }'
   errata:
     - 'Semantic errors'
     - "'figendum' requires an async function context"
 
-# variandum requires async context
-- name: variandum in sync function
+- name: S010 variandum in sync function
   faber: 'functio bad() -> vacuum { variandum x = 1 }'
   errata:
     - 'Semantic errors'
     - "'variandum' requires an async function context"
 
-# figendum in generator (not async) should also error
-- name: figendum in generator without async
+- name: S010 figendum in generator (not async)
   faber: 'functio bad() fiunt numerus { figendum x = 1 }'
   errata:
     - 'Semantic errors'
     - "'figendum' requires an async function context"
+
+- name: S010 figendum at top level
+  faber: 'figendum x = 1'
+  errata:
+    - 'Semantic errors'
+    - "'figendum' requires"

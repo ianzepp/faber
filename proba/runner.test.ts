@@ -167,11 +167,17 @@ function compile(code: string, target: Target = 'ts'): string {
 }
 
 /**
- * Compile Faber source strictly - throws on any parse or semantic error.
+ * Compile Faber source strictly - throws on any tokenizer, parse, or semantic error.
  * Used for errata tests that expect compilation to fail.
  */
 function compileStrict(code: string): void {
-    const { tokens } = tokenize(code);
+    const { tokens, errors: tokenErrors } = tokenize(code);
+
+    if (tokenErrors.length > 0) {
+        const messages = tokenErrors.map(e => `${e.code}: ${e.text}`).join('; ');
+        throw new Error(`Tokenizer errors: ${messages}`);
+    }
+
     const { program, errors: parseErrors } = parse(tokens);
 
     if (parseErrors.length > 0) {
