@@ -46,7 +46,7 @@
       cpp:
           - 'const auto y = 10;'
       zig:
-          - 'const m_y = 10;'
+          - 'const y = 10;'
       fab:
           - 'fixum y = 10'
 
@@ -84,7 +84,7 @@
       cpp:
           - 'const std::string name = std::string("Marcus");'
       zig:
-          - 'const m_name: []const u8 = "Marcus";'
+          - 'const name: []const u8 = "Marcus";'
       fab:
           - 'fixum textus name = "Marcus"'
 

@@ -81,9 +81,6 @@ export class ZigGenerator {
     depth = 0;
     inGenerator = false;
 
-    // Track module-level constants (comptime values)
-    moduleConstants = new Set<string>();
-
     // Track active allocator name for collection operations
     curatorStack: string[] = ['alloc'];
 
@@ -117,24 +114,6 @@ export class ZigGenerator {
         if (this.curatorStack.length > 1) {
             this.curatorStack.pop();
         }
-    }
-
-    // -------------------------------------------------------------------------
-    // Module constants tracking
-    // -------------------------------------------------------------------------
-
-    /**
-     * Check if a name is a module-level constant.
-     */
-    hasModuleConstant(name: string): boolean {
-        return this.moduleConstants.has(name);
-    }
-
-    /**
-     * Add a module-level constant.
-     */
-    addModuleConstant(name: string): void {
-        this.moduleConstants.add(name);
     }
 
     // -------------------------------------------------------------------------

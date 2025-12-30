@@ -3,7 +3,6 @@
  *
  * TRANSFORMS:
  *   name -> name (unchanged)
- *   name -> m_name (for module constants to avoid shadowing)
  *   PI -> std.math.pi
  *   E -> std.math.e
  *   TAU -> std.math.tau
@@ -19,6 +18,9 @@ import { getMathesisConstant } from '../norma/mathesis';
 import { getTempusConstant } from '../norma/tempus';
 
 export function genIdentifier(node: Identifier, g: ZigGenerator): string {
+    // Suppress unused parameter warning
+    void g;
+
     // Check for mathesis constants (PI, E, TAU)
     const mathesisConst = getMathesisConstant(node.name);
     if (mathesisConst) {
@@ -31,9 +33,5 @@ export function genIdentifier(node: Identifier, g: ZigGenerator): string {
         return tempusConst;
     }
 
-    // Use m_ prefix for module constants to match declaration
-    if (g.hasModuleConstant(node.name)) {
-        return `m_${node.name}`;
-    }
     return node.name;
 }

@@ -13,7 +13,7 @@
       cpp:
           - 'const auto s = std::string("hello");'
       zig:
-          - 'const m_s = "hello";'
+          - 'const s = "hello";'
       fab:
           - 'fixum s = "hello"'
 
@@ -27,7 +27,7 @@
       cpp:
           - 'const auto n = 42;'
       zig:
-          - 'const m_n = 42;'
+          - 'const n = 42;'
       fab:
           - 'fixum n = 42'
 
@@ -41,7 +41,7 @@
       cpp:
           - 'const auto x = 255;'
       zig:
-          - 'const m_x = 0xFF;'
+          - 'const x = 0xFF;'
       fab:
           - 'fixum x = 0xFF'
 
@@ -55,7 +55,7 @@
       cpp:
           - 'const auto val = 11259375;'
       zig:
-          - 'const m_val = 0xabcdef;'
+          - 'const val = 0xabcdef;'
       fab:
           - 'fixum val = 0xabcdef'
 
@@ -69,7 +69,7 @@
       cpp:
           - 'const auto big = 1099511627775;'
       zig:
-          - 'const m_big = 0xFFFFFFFFFF;'
+          - 'const big = 0xFFFFFFFFFF;'
       fab:
           - 'fixum big = 0xFFFFFFFFFFn'
 
@@ -83,7 +83,7 @@
       cpp:
           - 'const auto msg = std::string(hello world);'
       zig:
-          - 'const m_msg = "hello world";'
+          - 'const msg = "hello world";'
       fab:
           - 'fixum msg = `hello world`'
 
@@ -101,7 +101,7 @@
       cpp:
           - 'const auto greeting = std::format(Hello, {}!, name);'
       zig:
-          - 'const m_greeting = "Hello, ${name}!";'
+          - 'const greeting = "Hello, ${name}!";'
       fab:
           - 'fixum name = "Marcus"'
           - 'fixum greeting = `Hello, ${name}!`'
@@ -116,7 +116,7 @@
       cpp:
           - 'const auto neg = -42;'
       zig:
-          - 'const m_neg = -42;'
+          - 'const neg = -42;'
       fab:
           - 'fixum neg = -42'
 
@@ -130,7 +130,7 @@
       cpp:
           - 'const auto pi = 3.14159;'
       zig:
-          - 'const m_pi = 3.14159;'
+          - 'const pi = 3.14159;'
       fab:
           - 'fixum pi = 3.14159'
 
@@ -144,7 +144,7 @@
       cpp:
           - 'const auto big = 1.5e10;'
       zig:
-          - 'const m_big = 1.5e10;'
+          - 'const big = 1.5e10;'
       fab:
           - 'fixum big = 1.5e10'
 
@@ -158,7 +158,7 @@
       cpp:
           - 'const auto bits = 10;'
       zig:
-          - 'const m_bits = 0b1010;'
+          - 'const bits = 0b1010;'
       fab:
           - 'fixum bits = 0b1010'
 
@@ -172,7 +172,7 @@
       cpp:
           - 'const auto oct = 493;'
       zig:
-          - 'const m_oct = 0o755;'
+          - 'const oct = 0o755;'
       fab:
           - 'fixum oct = 0o755'
 
@@ -186,7 +186,7 @@
       cpp:
           - 'const auto escaped = std::string("line1\nline2\ttabbed");'
       zig:
-          - 'const m_escaped = "line1\nline2\ttabbed";'
+          - 'const escaped = "line1\nline2\ttabbed";'
       fab:
           - 'fixum escaped = "line1\nline2\ttabbed"'
 
@@ -200,7 +200,7 @@
       cpp:
           - 'const auto empty = std::string("");'
       zig:
-          - 'const m_empty = "";'
+          - 'const empty = "";'
       fab:
           - 'fixum empty = ""'
 
@@ -221,7 +221,7 @@
       cpp:
           - 'const auto multi = std::string(line one'
       zig:
-          - 'const m_multi = "line one'
+          - 'const multi = "line one'
       fab:
           - 'fixum multi = `line one'
           - 'line two'
@@ -237,7 +237,7 @@
       cpp:
           - 'const auto msg = std::format(result: {}, compute(x + y));'
       zig:
-          - 'const m_msg = "result: ${compute(x + y)}";'
+          - 'const msg = "result: ${compute(x + y)}";'
       fab:
           - 'fixum msg = `result: ${compute(x + y)}`'
 
@@ -251,7 +251,7 @@
       cpp:
           - 'const auto huge = 9007199254740991;'
       zig:
-          - 'const m_huge = 9007199254740991;'
+          - 'const huge = 9007199254740991;'
       fab:
           - 'fixum huge = 9007199254740991'
 
@@ -265,7 +265,7 @@
       cpp:
           - 'const auto unicode = std::string("\u0048ello");'
       zig:
-          - 'const m_unicode = "\u0048ello";'
+          - 'const unicode = "\u0048ello";'
       fab:
           - 'fixum unicode = "\u0048ello"'
 
@@ -279,6 +279,6 @@
       cpp:
           - 'const auto char = std::string("x");'
       zig:
-          - 'const m_char = "x";'
+          - 'const char = "x";'
       fab:
           - 'fixum char = "x"'

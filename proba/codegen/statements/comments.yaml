@@ -32,9 +32,8 @@
           - '// This is a comment'
           - 'const auto x = 5'
       zig:
-          # Zig prefixes module-level constants with m_
           - '// This is a comment'
-          - 'const m_x = 5'
+          - 'const x = 5'
       fab:
           - '// This is a comment'
           - 'fixum x = 5'
@@ -76,8 +75,7 @@
       cpp:
           - 'const auto z = 42; // magic number'
       zig:
-          # Zig prefixes module-level constants with m_
-          - 'const m_z = 42; // magic number'
+          - 'const z = 42; // magic number'
       fab:
           - 'fixum z = 42 // magic number'
 
