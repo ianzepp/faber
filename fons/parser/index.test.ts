@@ -2159,6 +2159,78 @@ describe('parser', () => {
             expect(decl.init.transforms[0].verb).toBe('prima');
             expect(decl.init.transforms[0].argument.value).toBe(2);
         });
+
+        test('ab with multiple transforms', () => {
+            const { program } = parseCode('fixum result = ab items visible, prima 10, ultima 3');
+            const decl = program!.body[0] as any;
+
+            expect(decl.init.type).toBe('AbExpression');
+            expect(decl.init.filter.condition.name).toBe('visible');
+            expect(decl.init.transforms).toHaveLength(2);
+            expect(decl.init.transforms[0].verb).toBe('prima');
+            expect(decl.init.transforms[1].verb).toBe('ultima');
+        });
+
+        test('ab with ubi and transforms', () => {
+            const { program } = parseCode('fixum top = ab users ubi score > 50, prima 5');
+            const decl = program!.body[0] as any;
+
+            expect(decl.init.type).toBe('AbExpression');
+            expect(decl.init.filter.hasUbi).toBe(true);
+            expect(decl.init.filter.condition.type).toBe('BinaryExpression');
+            expect(decl.init.transforms).toHaveLength(1);
+            expect(decl.init.transforms[0].verb).toBe('prima');
+        });
+
+        test('ab with complex ubi condition', () => {
+            const { program } = parseCode('fixum result = ab users ubi aetas >= 18 et activus');
+            const decl = program!.body[0] as any;
+
+            expect(decl.init.type).toBe('AbExpression');
+            expect(decl.init.filter.hasUbi).toBe(true);
+            expect(decl.init.filter.condition.type).toBe('BinaryExpression');
+            expect(decl.init.filter.condition.operator).toBe('&&');
+        });
+
+        test('ab with member expression source', () => {
+            const { program } = parseCode('fixum active = ab data.users activus');
+            const decl = program!.body[0] as any;
+
+            expect(decl.init.type).toBe('AbExpression');
+            expect(decl.init.source.type).toBe('MemberExpression');
+            expect(decl.init.source.object.name).toBe('data');
+            expect(decl.init.source.property.name).toBe('users');
+        });
+
+        test('ab with call expression source', () => {
+            const { program } = parseCode('fixum active = ab getUsers() activus');
+            const decl = program!.body[0] as any;
+
+            expect(decl.init.type).toBe('AbExpression');
+            expect(decl.init.source.type).toBe('CallExpression');
+            expect(decl.init.source.callee.name).toBe('getUsers');
+        });
+
+        test('ab without filter (just source)', () => {
+            const { program } = parseCode('fixum all = ab users, prima 5');
+            const decl = program!.body[0] as any;
+
+            expect(decl.init.type).toBe('AbExpression');
+            expect(decl.init.source.name).toBe('users');
+            expect(decl.init.filter).toBeUndefined();
+            expect(decl.init.transforms).toHaveLength(1);
+        });
+
+        test('ab with summa transform', () => {
+            const { program } = parseCode('fixum total = ab prices valid, summa');
+            const decl = program!.body[0] as any;
+
+            expect(decl.init.type).toBe('AbExpression');
+            expect(decl.init.filter.condition.name).toBe('valid');
+            expect(decl.init.transforms).toHaveLength(1);
+            expect(decl.init.transforms[0].verb).toBe('summa');
+            expect(decl.init.transforms[0].argument).toBeUndefined();
+        });
     });
 
     describe('edge cases - empty constructs', () => {

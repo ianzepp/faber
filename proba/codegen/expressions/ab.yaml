@@ -4,6 +4,7 @@
 # Note: ab is the dedicated DSL entry point for filtering
 # ex remains unchanged for iteration/import/destructuring
 
+# Boolean property shorthand
 - name: ab with boolean property shorthand
   faber: fixum active = ab users activus
   expect:
@@ -16,14 +17,72 @@
       ts: 'const clean = users.filter(_x => !(_x.banned));'
   skip: [py, rs, cpp, zig, fab]
 
-- name: ab with transforms
+# Transform chaining
+- name: ab with prima transform
   faber: fixum top2 = ab users activus, prima 2
   expect:
       ts: 'const top2 = users.filter(_x => _x.activus).slice(0, 2);'
   skip: [py, rs, cpp, zig, fab]
 
-- name: ab with negated property and transforms
+- name: ab with ultima transform
   faber: fixum result = ab items non hidden, ultima 5
   expect:
       ts: 'const result = items.filter(_x => !(_x.hidden)).slice(-5);'
+  skip: [py, rs, cpp, zig, fab]
+
+- name: ab with summa transform
+  faber: fixum total = ab prices valid, summa
+  expect:
+      ts: 'const total = prices.filter(_x => _x.valid).reduce((a, b) => a + b, 0);'
+  skip: [py, rs, cpp, zig, fab]
+
+- name: ab with multiple transforms
+  faber: fixum result = ab items visible, prima 10, ultima 3
+  expect:
+      ts: 'const result = items.filter(_x => _x.visible).slice(0, 10).slice(-3);'
+  skip: [py, rs, cpp, zig, fab]
+
+# Complex sources
+- name: ab with member expression source
+  faber: fixum active = ab data.users activus
+  expect:
+      ts: 'const active = data.users.filter(_x => _x.activus);'
+  skip: [py, rs, cpp, zig, fab]
+
+- name: ab with call expression source
+  faber: fixum active = ab getUsers() activus
+  expect:
+      ts: 'const active = getUsers().filter(_x => _x.activus);'
+  skip: [py, rs, cpp, zig, fab]
+
+- name: ab with indexed source
+  faber: fixum active = ab groups[0] activus
+  expect:
+      ts: 'const active = groups[0].filter(_x => _x.activus);'
+  skip: [py, rs, cpp, zig, fab]
+
+# No filter (just transforms)
+- name: ab without filter just transforms
+  faber: fixum top = ab items, prima 5
+  expect:
+      ts: 'const top = items.slice(0, 5);'
+  skip: [py, rs, cpp, zig, fab]
+
+- name: ab without filter multiple transforms
+  faber: fixum result = ab nums, prima 10, summa
+  expect:
+      ts: 'const result = nums.slice(0, 10).reduce((a, b) => a + b, 0);'
+  skip: [py, rs, cpp, zig, fab]
+
+# Negation variations
+- name: ab negated with transforms
+  faber: fixum result = ab users non suspended, prima 20
+  expect:
+      ts: 'const result = users.filter(_x => !(_x.suspended)).slice(0, 20);'
+  skip: [py, rs, cpp, zig, fab]
+
+- name: ab negated with multiple transforms
+  faber: fixum result = ab items non archived, prima 50, ultima 10
+  expect:
+      ts: 'const result = items.filter(_x => !(_x.archived)).slice(0, 50).slice(-10);'
   skip: [py, rs, cpp, zig, fab]
