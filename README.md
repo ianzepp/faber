@@ -436,26 +436,26 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 | Feature                    | TypeScript | Zig | Python | Rust | C++23 |
 | -------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `pavimentum(x)` (floor)    |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `tectum(x)` (ceiling)      |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `radix(x)` (sqrt)          |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `potentia(x, n)` (pow)     |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `absolutum(x)` (abs)       |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `signum(x)` (sign)         |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `rotundum(x)` (round)      |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `truncatum(x)` (trunc)     |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `logarithmus(x)` (log)     |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `logarithmus10(x)` (log10) |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `exponens(x)` (exp)        |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `sinus(x)` (sin)           |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `cosinus(x)` (cos)         |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `tangens(x)` (tan)         |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `minimus(a, b)` (min)      |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `maximus(a, b)` (max)      |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `constringens(x, lo, hi)`  |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `PI` (constant)            |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `E` (constant)             |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `TAU` (constant)           |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
+| `pavimentum(x)` (floor)    |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `tectum(x)` (ceiling)      |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `radix(x)` (sqrt)          |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `potentia(x, n)` (pow)     |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `absolutum(x)` (abs)       |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `signum(x)` (sign)         |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `rotundum(x)` (round)      |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `truncatum(x)` (trunc)     |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `logarithmus(x)` (log)     |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `logarithmus10(x)` (log10) |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `exponens(x)` (exp)        |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `sinus(x)` (sin)           |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `cosinus(x)` (cos)         |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `tangens(x)` (tan)         |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `minimus(a, b)` (min)      |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `maximus(a, b)` (max)      |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `constringens(x, lo, hi)`  |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `PI` (constant)            |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `E` (constant)             |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
+| `TAU` (constant)           |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
 
 ## Stdlib: Random (aleator)
 

@@ -21,6 +21,7 @@ import type { ZigGenerator } from '../generator';
 import { getListaMethod } from '../norma/lista';
 import { getTabulaMethod } from '../norma/tabula';
 import { getCopiaMethod } from '../norma/copia';
+import { getMathesisFunction } from '../norma/mathesis';
 
 export function genCallExpression(node: CallExpression, g: ZigGenerator): string {
     // Helper to generate argument, handling spread
@@ -70,6 +71,15 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
             // LIMITATION: Zig stdin reading is complex. This is a simplified version
             // that reads one line. For robust input, user should use std.io directly.
             return `(std.io.getStdIn().reader().readUntilDelimiterOrEof(buf, '\\n') catch "") orelse ""`;
+        }
+
+        // Check mathesis functions (ex "norma/mathesis" importa pavimentum, etc.)
+        const mathesisFunc = getMathesisFunction(name);
+        if (mathesisFunc) {
+            if (typeof mathesisFunc.zig === 'function') {
+                return mathesisFunc.zig(argsArray);
+            }
+            return mathesisFunc.zig;
         }
     }
 

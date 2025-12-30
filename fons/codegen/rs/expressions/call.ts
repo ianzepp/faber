@@ -16,6 +16,7 @@ import type { RsGenerator } from '../generator';
 // Collection method registries
 import { getListaMethod } from '../norma/lista';
 import { getCopiaMethod } from '../norma/copia';
+import { getMathesisFunction } from '../norma/mathesis';
 
 /**
  * Rust I/O intrinsic mappings.
@@ -72,6 +73,15 @@ export function genCallExpression(node: CallExpression, g: RsGenerator): string 
         const intrinsic = RS_INTRINSICS[name];
         if (intrinsic) {
             return intrinsic(argsArray);
+        }
+
+        // Check mathesis functions (ex "norma/mathesis" importa pavimentum, etc.)
+        const mathesisFunc = getMathesisFunction(name);
+        if (mathesisFunc) {
+            if (typeof mathesisFunc.rs === 'function') {
+                return mathesisFunc.rs(argsArray);
+            }
+            return mathesisFunc.rs;
         }
     }
 
