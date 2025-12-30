@@ -1210,24 +1210,28 @@ Data structures: classes (genus), objects, member access, and instantiation.
 ### Genus Declaration
 
 ```ebnf
-genusDecl := 'genus' IDENTIFIER typeParams? ('implet' IDENTIFIER (',' IDENTIFIER)*)? '{' genusMember* '}'
+genusDecl := 'abstractus'? 'genus' IDENTIFIER typeParams? ('sub' IDENTIFIER)? ('implet' IDENTIFIER (',' IDENTIFIER)*)? '{' genusMember* '}'
 typeParams := '<' IDENTIFIER (',' IDENTIFIER)* '>'
 genusMember := fieldDecl | methodDecl
 ```
 
 > Latin 'genus' (kind/type) for data structures.
+> 'sub' (under) for inheritance - child is under parent.
 > 'implet' (fulfills) for implementing pactum interfaces.
+> 'abstractus' for abstract classes that cannot be instantiated.
 
 ### Genus Member
 
 ```ebnf
 genusMember := fieldDecl | methodDecl
-fieldDecl := 'privatus'? 'generis'? typeAnnotation IDENTIFIER (':' expression)?
-methodDecl := 'privatus'? 'generis'? ('futura' | 'cursor')* 'functio' ...
+fieldDecl := ('privatus' | 'protectus')? 'generis'? typeAnnotation IDENTIFIER (':' expression)?
+methodDecl := ('privatus' | 'protectus')? 'generis'? 'abstractus'? ('futura' | 'cursor')* 'functio' ...
 ```
 
 > Distinguishes between fields and methods by looking for 'functio' keyword.
 > Fields are public by default (struct semantics), use 'privatus' for private.
+> 'protectus' for protected visibility (subclass access).
+> 'abstractus' for abstract methods (no body, must be overridden).
 
 ### Pactum Declaration
 
