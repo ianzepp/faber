@@ -1,0 +1,117 @@
+// =============================================================================
+// REGIMEN - Entry Point (initium)
+// =============================================================================
+//
+// The initium block defines the program entry point. Code inside initium
+// becomes the main function in compiled targets.
+//
+// GRAMMAR:
+// initium { <body> }
+//
+// TARGET OUTPUT:
+// TypeScript: body emitted at top level (no wrapper)
+// Python:     if __name__ == "__main__":
+// Rust:       fn main() { }
+// C++:        int main() { return 0; }
+// Zig:        pub fn main() void { }
+//
+// ETYMOLOGY:
+// initium: "beginning, start, entrance" (from inire - to go into)
+//
+// WHY "initium":
+// - Direct Latin for "beginning" - the program's starting point
+// - Distinguishes entry point from arbitrary top-level code
+// - Required for targets that need explicit main (Zig, Rust, C++)
+
+// =============================================================================
+// BASIC INITIUM
+// =============================================================================
+
+initium {
+    scribe "Salve, Munde!"
+}
+
+// =============================================================================
+// INITIUM WITH DECLARATIONS
+// =============================================================================
+
+// Functions and constants can be defined outside initium
+// They become module-level declarations in the output
+
+functio greet(textus name) -> textus {
+    redde scriptum("Salve, {}!", name)
+}
+
+fixum VERSION = "1.0.0"
+
+initium {
+    scribe greet("Marcus")
+    scribe "Version:", VERSION
+}
+
+// =============================================================================
+// INITIUM WITH SETUP LOGIC
+// =============================================================================
+
+functio initialize() {
+    scribe "Initializing..."
+}
+
+functio cleanup() {
+    scribe "Cleaning up..."
+}
+
+functio run() {
+    scribe "Running main logic..."
+}
+
+initium {
+    initialize()
+    run()
+    cleanup()
+}
+
+// =============================================================================
+// INITIUM WITH CONTROL FLOW
+// =============================================================================
+
+functio processArgs() -> bivalens {
+    // Simulate argument processing
+    redde verum
+}
+
+initium {
+    si processArgs() {
+        scribe "Arguments valid"
+    }
+    aliter {
+        scribe "Invalid arguments"
+    }
+}
+
+// =============================================================================
+// INITIUM WITH LOOPS
+// =============================================================================
+
+initium {
+    ex [1, 2, 3, 4, 5] pro n {
+        scribe "Processing:", n
+    }
+}
+
+// =============================================================================
+// INITIUM WITH ERROR HANDLING
+// =============================================================================
+
+functio riskyOperation() {
+    iace "Something went wrong"
+}
+
+initium {
+    tempta {
+        riskyOperation()
+    }
+    cape err {
+        scribe "Error:", err
+    }
+}
