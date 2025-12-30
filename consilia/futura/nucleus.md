@@ -403,17 +403,19 @@ async function run<T>(gen: AsyncIterable<Responsum<T>>): Promise<T> {
 }
 ```
 
-**Direct codegen (`ad!`) is the escape hatch, not the default:**
+**Arrow binding (`->`) is the escape hatch, not the default:**
 
 ```fab
 // Default: protocol (observable, consistent)
 ad "fasciculus:lege" ("file.txt") fiet textus pro content
 
 // Escape hatch: direct (fast, loses observability)
-ad! "fasciculus:lege" ("file.txt") fiet textus pro content
+ad "fasciculus:lege" ("file.txt") -> textus pro content
 ```
 
-Direct codegen bypasses dispatcher for performance-critical hot paths. Most code should use protocol for consistency and debuggability.
+Arrow binding bypasses protocol for performance-critical hot paths, but only works on TS/Python. Zig/Rust/C++ reject arrow binding with error P192.
+
+Most code should use verb binding (`fiet`/`fiunt`/`fient`) for consistency and debuggability.
 
 ### Rust
 
@@ -801,21 +803,22 @@ Future consideration: Allow `importa` to bring in typed syscall handlers at comp
 
 ### 5. Direct Codegen Escape Hatch
 
-**Decision**: Opt-in via `ad!` syntax.
+**Decision**: Opt-in via arrow binding (`->`), consistent with `functio` syntax.
 
 ```fab
-// Standard: via dispatcher (observable, testable)
+// Standard: via protocol (observable, testable)
 ad "fasciculus:lege" ("file.txt") fiet textus pro content
 
-// Direct: bypass dispatcher (fast, less observable)
-ad! "fasciculus:lege" ("file.txt") fiet textus pro content
+// Direct: bypass protocol (fast, less observable)
+ad "fasciculus:lege" ("file.txt") -> textus pro content
 ```
 
-**Rationale**: Default should be observable/testable. Performance-critical paths can opt out explicitly.
+**Rationale**: Reuses existing arrow vs verb distinction from function declarations. No new syntax needed.
 
 **Trade-offs**:
-- `ad!` bypasses logging, metrics, mocking
-- Some targets may not support bypass (falls back to dispatcher)
+- Arrow bypasses logging, metrics, mocking
+- Arrow only works on TS/Python (compile error on Zig/Rust/C++)
+- Verb binding works on all targets
 
 ---
 

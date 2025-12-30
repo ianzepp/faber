@@ -24,8 +24,8 @@ Universal dispatch for stdlib, external packages, and remote services.
 
 ```ebnf
 adStmt := 'ad' target '(' args ')' bindingClause? block?
-bindingClause := fitKeyword typeAnnotation? 'pro' IDENTIFIER ('ut' IDENTIFIER)?
-fitKeyword := 'fit' | 'fiet' | 'fiunt' | 'fient'
+bindingClause := bindingKeyword typeAnnotation? 'pro' IDENTIFIER ('ut' IDENTIFIER)?
+bindingKeyword := '->' | 'fit' | 'fiet' | 'fiunt' | 'fient'
 target := STRING
 ```
 
@@ -33,12 +33,38 @@ The `pro` preposition introduces the binding (consistent with iteration/lambda b
 
 ## Binding Keywords
 
-| Keyword | Meaning             | Number   |
-| ------- | ------------------- | -------- |
-| `fit`   | becomes (sync)      | singular |
-| `fiet`  | will become (async) | singular |
-| `fiunt` | become (sync)       | plural   |
-| `fient` | will become (async) | plural   |
+| Keyword | Meaning             | Number   | Protocol | Target Support |
+| ------- | ------------------- | -------- | -------- | -------------- |
+| `->`    | native return       | singular | No       | TS/Python only |
+| `fit`   | becomes (sync)      | singular | Yes      | All            |
+| `fiet`  | will become (async) | singular | Yes      | All            |
+| `fiunt` | become (sync)       | plural   | Yes      | All            |
+| `fient` | will become (async) | plural   | Yes      | All            |
+
+### Arrow vs Verb Binding
+
+The binding keyword determines whether the call uses the Responsum protocol:
+
+```fab
+// Arrow: direct native call, no protocol wrapping
+ad "fasciculus:lege" ("file.txt") -> textus pro content { ... }
+
+// Verb: protocol-wrapped, consistent across all targets
+ad "fasciculus:lege" ("file.txt") fiet textus pro content { ... }
+```
+
+**Arrow (`->`)** bypasses the Responsum protocol and emits target-native code:
+- TypeScript: `await fs.readFile('file.txt', 'utf-8')`
+- Python: `await aiofiles.open('file.txt').read()`
+- Zig/Rust/C++: **Compile error** (no native async)
+
+**Verbs (`fit`/`fiet`/`fiunt`/`fient`)** use the Responsum protocol:
+- Uniform dispatch via syscall table
+- Explicit terminal semantics (`.ok`, `.done`, `.err`)
+- Cross-target consistency
+- Observable/traceable
+
+This mirrors `functio` declarations, where arrow syntax uses native async and verb syntax uses protocol.
 
 ## Examples
 
@@ -179,14 +205,39 @@ ad "http:get" (url) fiet Response pro response { ... }
 
 ## Codegen Strategy
 
-**Decision: Direct codegen, no runtime proxy.**
+**Decision: Protocol by default, direct as escape hatch.**
 
-Two approaches were considered:
+The binding keyword determines codegen strategy:
 
-### Option A: Direct Codegen
+### Verb Binding (Protocol)
 
 ```fab
 ad "https://api.example.com/users" ("GET") fiet Response pro r { }
+```
+
+Becomes (TypeScript):
+
+```ts
+const r = await run(dispatch('caelum:request', 'https://api.example.com/users', 'GET'));
+```
+
+Becomes (Zig):
+
+```zig
+var future = caelum.request("https://api.example.com/users", .GET);
+const r = try executor.run(&future);
+```
+
+Uses Responsum protocol for:
+- Uniform dispatch via syscall table
+- Cross-target consistency
+- Observable/traceable execution
+- Explicit error handling (`.err` variant)
+
+### Arrow Binding (Direct)
+
+```fab
+ad "https://api.example.com/users" ("GET") -> Response pro r { }
 ```
 
 Becomes (TypeScript):
@@ -197,47 +248,36 @@ const r = await fetch('https://api.example.com/users', { method: 'GET' });
 
 Becomes (Zig):
 
-```zig
-const r = try std.http.Client.fetch(allocator, "https://api.example.com/users", .{ .method = .GET });
+```
+Error P192: Arrow binding not supported for Zig target. Use `fiet` instead.
 ```
 
-### Option B: Runtime Syscall Proxy
+Bypasses protocol for:
+- Performance-critical hot paths
+- Interop with native libraries
+- Targets with native async (TS, Python)
 
-```fab
-ad "https://api.example.com/users" ("GET") fiet Response pro r { }
-```
+### Comparison
 
-Becomes (TypeScript):
+| Aspect          | Arrow (`->`)          | Verb (`fiet`)              |
+| --------------- | --------------------- | -------------------------- |
+| Performance     | Native, zero overhead | Protocol overhead          |
+| Observability   | None                  | Logging, metrics, tracing  |
+| Cross-target    | TS/Python only        | All targets                |
+| Error handling  | Native exceptions     | Responsum `.err` values    |
+| Mocking/testing | Target-specific       | Swap dispatcher handler    |
 
-```ts
-const r = await __fab_syscall('caelum:request', 'https://api.example.com/users', 'GET');
-```
+### Per-Target Support
 
-### Analysis
+| Target     | Arrow (`->`) | Verb (`fiet`) |
+| ---------- | ------------ | ------------- |
+| TypeScript | ✓ Native     | ✓ Protocol    |
+| Python     | ✓ Native     | ✓ Protocol    |
+| Zig        | ✗ Error      | ✓ Protocol    |
+| Rust       | ✗ Error      | ✓ Protocol    |
+| C++        | ✗ Error      | ✓ Protocol    |
 
-| Aspect          | Direct codegen        | Syscall proxy        |
-| --------------- | --------------------- | -------------------- |
-| Performance     | Native, zero overhead | One indirection      |
-| Bundle size     | Only what you use     | Runtime included     |
-| Debugging       | Clear stack traces    | Extra frame          |
-| Extensibility   | Compile-time only     | Runtime registration |
-| Mocking/testing | Harder                | Swap the handler     |
-
-### Per-Target Fit
-
-| Target     | Direct codegen | Syscall proxy         |
-| ---------- | -------------- | --------------------- |
-| TypeScript | Natural        | Fine (dynamic)        |
-| Python     | Natural        | Fine (dynamic)        |
-| Zig        | Natural        | Fighting the language |
-| Rust       | Natural        | Awkward type erasure  |
-| C++        | Natural        | Verbose               |
-
-**Zig problems with proxy:** Return type would need `anytype` at runtime; string dispatch prevents comptime type checking; args tuple needs type erasure; allocator passing becomes awkward. Zig's philosophy is "no hidden runtime."
-
-**Rust problems with proxy:** Needs turbofish or trait object for return type; args as tuple requires `Box<dyn Any>` or macro magic; lifetime annotations get messy.
-
-**Conclusion:** Direct codegen always. Runtime interception (logging, mocking) is a target-specific debug feature, not a language primitive.
+**Recommendation:** Use verb binding (`fiet`/`fiunt`/`fient`) by default for consistency and observability. Use arrow binding (`->`) only for performance-critical paths on TS/Python targets.
 
 ## Relation to Imports
 
