@@ -397,17 +397,291 @@ switch (future.poll(&ctx)) {
 2. Rust — state machines like Zig, or native async
 3. C++ — coroutines or callback-based
 
-## Open Questions
+---
 
-1. **Allocator threading** — How does Zig's allocator flow through the executor? Per-request? Global?
+## Lessons from Monk OS
 
-2. **Cancellation** — When a future is dropped, how do we cancel pending I/O? Add `.cancelled` to Responsum?
+Analysis of Monk OS source code revealed patterns, concerns, and opportunities relevant to Nucleus.
 
-3. **Nested composition** — State machine A calls state machine B. Does A store B inline or by pointer?
+### What Monk Solved
 
-4. **User-defined syscalls** — Can users register custom handlers in the syscall table?
+#### 1. Worker Boundary Isolation
 
-5. **Direct codegen escape hatch** — For performance-critical paths, bypass the dispatcher entirely?
+Monk uses Bun Workers for process isolation, requiring message passing across thread boundaries:
+
+```typescript
+// Monk: Every syscall crosses Worker boundary
+worker.postMessage({
+    type: 'syscall:request',
+    id: requestId,
+    name: 'file:read',
+    args: [fd, 4096],
+});
+```
+
+**Faber's advantage**: Compiles to native code in single address space. Direct function calls, no serialization overhead.
+
+#### 2. Streaming Backpressure
+
+Monk implements ping/ack protocol with per-stream timers:
+
+```typescript
+// Monk: setInterval per active syscall stream
+stream.pingTimer = setInterval(() => {
+    self.postMessage({
+        type: 'syscall:ping',
+        id,
+        processed: stream.processed,
+    });
+}, 100);
+```
+
+**Side effect**: 1000 concurrent syscalls = 1000 active timers. GC pressure.
+
+**Faber's advantage**: Use language-native generator pause/resume. No timers needed for native targets.
+
+#### 3. Request Correlation
+
+Monk uses UUID v4 for request IDs (128-bit, cryptographically unique):
+
+```typescript
+const id = crypto.randomUUID();
+pending.set(id, { stream });
+```
+
+**Trade-off**: 16 bytes per ID vs 8 bytes. String allocation + hashing overhead.
+
+**Faber's decision**: Use 64-bit counter for Zig/Rust/C++ (simpler, faster). UUID acceptable for TS/Python.
+
+#### 4. Handle Abstraction
+
+Monk's unified interface is clean and worth adopting:
+
+```typescript
+interface Handle {
+    readonly id: string;
+    readonly type: HandleType;
+    exec(msg: Message): AsyncIterable<Response>;
+    close(): Promise<void>;
+}
+```
+
+**Adopted**: Nucleus mirrors this pattern with vtable for Zig.
+
+### Concerns Discovered
+
+#### 1. Partial Results on Midstream Error
+
+```typescript
+// Handler yields 100 items, then crashes
+yield respond.item(item1);   // Consumer sees this
+yield respond.item(item2);   // Consumer sees this
+// ... 98 more items ...
+// CRASH
+yield respond.error('...'); // Consumer sees this AFTER 100 items
+```
+
+**Problem**: Consumer has already processed partial results before error arrives.
+
+**Nucleus decision**: Document that consumers must handle partial results. Consider adding `.partial_error` variant that includes count of successful items.
+
+#### 2. Nested Cancellation Leaks
+
+```typescript
+// Outer handler uses inner syscall
+async *handler() {
+    for await (const item of syscall('inner')) {
+        yield respond.item(item);
+        // If cancelled here, inner stream.pingTimer not cleared!
+    }
+}
+```
+
+**Problem**: Cleanup only happens for outermost stream.
+
+**Nucleus decision**: For native targets, use RAII/defer patterns. Each stream cleans itself on scope exit.
+
+#### 3. Stall Detection False Positives
+
+Monk aborts streams after 5s without ping. Slow networks can trigger false timeouts.
+
+**Nucleus decision**: Make stall timeout configurable per-syscall. Network ops get longer timeout than file ops.
+
+### Opportunities for Simplification
+
+| Monk Complexity | Faber Simplification |
+|-----------------|---------------------|
+| Message serialization across Workers | Direct function calls |
+| Per-stream ping timers | Language-native yield/suspend |
+| Virtual process validation | Trust OS process isolation |
+| UUID request IDs | 64-bit counter (native targets) |
+| Runtime syscall dispatch | Compile-time dispatch (Zig comptime) |
+| Per-syscall auth checking | Entry-point or compile-time auth |
+
+### HAL Device Model
+
+Monk's 17-device HAL is worth adopting selectively:
+
+| Device | Faber Equivalent | Priority |
+|--------|------------------|----------|
+| `block` | `fasciculus` (files) | High |
+| `network` | `caelum` (network) | High |
+| `timer` | `tempus` | High |
+| `entropy` | `aleator` | Medium |
+| `crypto` | `crypto` | Medium |
+| `storage` | EMS-style (future) | Low |
+| `console` | `scriba` | High |
+
+---
+
+## Design Decisions
+
+Based on Monk analysis, the following open questions are resolved:
+
+### 1. Allocator Threading (Zig)
+
+**Decision**: Per-request allocator, inherited from parent.
+
+```zig
+pub fn poll(self: *FetchFuture, ctx: *ExecutorContext) Responsum(Response) {
+    // ctx.allocator inherited from parent future or executor
+    const result = try ctx.allocator.alloc(u8, size);
+    // ...
+}
+```
+
+**Rationale**: Matches Monk's per-Worker heap isolation. Avoids global lock contention.
+
+### 2. Cancellation
+
+**Decision**: Out-of-band signal (like Monk), not Responsum variant.
+
+```zig
+// Executor signals cancellation via context flag
+if (ctx.cancelled) {
+    // Cleanup and exit
+    return .done;
+}
+```
+
+**Rationale**: Adding `.cancelled` to Responsum complicates every switch statement. Separate signal is cleaner.
+
+For streaming consumers, provide explicit cancel:
+
+```fab
+ad "fasciculus:lege" ("large.bin") fiunt bytes pro chunk {
+    si chunk.size > MAX {
+        exi  // Break from stream (triggers cleanup)
+    }
+}
+```
+
+### 3. Nested Composition
+
+**Decision**: Inline for small futures (< 256 bytes), pointer for large.
+
+```zig
+// Small future: inline
+const OuterFuture = struct {
+    inner: InnerFuture,  // Inline, no allocation
+    // ...
+};
+
+// Large future: pointer
+const OuterFuture = struct {
+    inner_ptr: *LargeFuture,  // Heap-allocated
+    // ...
+};
+```
+
+**Rationale**: Inline avoids allocation overhead for common case. Pointer prevents bloat for complex compositions.
+
+**Implementation**: Compiler tracks future sizes during codegen. Threshold configurable.
+
+### 4. User-Defined Syscalls
+
+**Decision**: Not in v1. Compile-time syscall table only.
+
+**Rationale**: Runtime registration requires:
+- Type erasure (fighting Zig/Rust)
+- Dynamic dispatch overhead
+- Security concerns (arbitrary code execution)
+
+Future consideration: Allow `importa` to bring in typed syscall handlers at compile time.
+
+### 5. Direct Codegen Escape Hatch
+
+**Decision**: Opt-in via `ad!` syntax.
+
+```fab
+// Standard: via dispatcher (observable, testable)
+ad "fasciculus:lege" ("file.txt") fiet textus pro content
+
+// Direct: bypass dispatcher (fast, less observable)
+ad! "fasciculus:lege" ("file.txt") fiet textus pro content
+```
+
+**Rationale**: Default should be observable/testable. Performance-critical paths can opt out explicitly.
+
+**Trade-offs**:
+- `ad!` bypasses logging, metrics, mocking
+- Some targets may not support bypass (falls back to dispatcher)
+
+---
+
+## Additional Concerns
+
+### Byte-Based Backpressure
+
+Current design uses item count (gap = sent - acked). For large-object streams, consider memory-aware backpressure:
+
+```zig
+const BackpressureConfig = struct {
+    max_items: u32 = 1000,        // Item count limit
+    max_bytes: usize = 100_MB,    // Memory limit
+};
+```
+
+**Recommendation**: Add optional `max_bytes` for syscalls that stream large chunks (file reads, network buffers).
+
+### Process Isolation
+
+Monk uses Workers for isolation. Faber compiles to native code without Worker boundaries.
+
+**Options for isolation**:
+1. **None** — Single process, shared memory (fastest, least safe)
+2. **OS processes** — Use `processus:genera` to spawn isolated processes
+3. **WASM sandboxing** — Future consideration for untrusted code
+
+**v1 decision**: No built-in isolation. Users who need it use OS processes.
+
+### Auth Consolidation
+
+Monk checks auth on every syscall (lazy expiry). This is scattered and inefficient.
+
+**Faber approach**: Check auth at entry points, not per-syscall.
+
+```fab
+// Auth middleware wraps entire handler
+@requiresAuth
+functio protectedEndpoint() fiet Response {
+    // Auth already validated
+}
+```
+
+Compiler injects auth check at function entry, not inside dispatcher.
+
+---
+
+## Open Questions (Remaining)
+
+1. **Error context enrichment** — Should `.err` include stack trace or causality chain? Performance vs debuggability trade-off.
+
+2. **Streaming timeout configuration** — Per-syscall or global? How to specify in Faber syntax?
+
+3. **Future size threshold** — 256 bytes for inline composition is arbitrary. Profile real-world futures to tune.
+
+4. **Cross-target consistency** — How much divergence is acceptable between targets? (e.g., TS uses UUID, Zig uses counter)
 
 ## References
 
