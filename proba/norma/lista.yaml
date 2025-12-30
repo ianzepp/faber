@@ -17,6 +17,8 @@
       - '.push('
   rs:
       - '.push(1)'
+  zig:
+      - '.append(alloc, 1)'
   fab:
       - 'items.adde(1)'
 
@@ -45,6 +47,8 @@
       - '.unshift('
   rs:
       - '.insert(0, 1)'
+  zig:
+      - '.insert(alloc, 0, 1)'
   fab:
       - 'items.praepone(1)'
 
@@ -62,6 +66,8 @@
       - '.pop('
   rs:
       - '.pop()'
+  zig:
+      - '.pop()'
   fab:
       - 'items.remove()'
 
@@ -75,6 +81,8 @@
       - '.shift('
   rs:
       - '.remove(0)'
+  zig:
+      - '.orderedRemove(0)'
   fab:
       - 'items.decapita()'
 
@@ -87,6 +95,8 @@
       - '.length = 0'
   rs:
       - '.clear()'
+  zig:
+      - '.clearRetainingCapacity()'
   fab:
       - 'items.purga()'
 
@@ -103,6 +113,8 @@
       - '[0]'
   rs:
       - '.first()'
+  zig:
+      - '.items[0]'
   fab:
       - 'items.primus()'
 
@@ -115,6 +127,8 @@
       - '.at('
   rs:
       - '.last()'
+  zig:
+      - '.items[items.items.len - 1]'
   fab:
       - 'items.ultimus()'
 
@@ -127,6 +141,8 @@
       - '[0]'
   rs:
       - '.get(0)'
+  zig:
+      - '.items[0]'
   fab:
       - 'items.accipe(0)'
 
@@ -139,6 +155,8 @@
       - '.length'
   rs:
       - '.len()'
+  zig:
+      - '.items.len'
   fab:
       - 'items.longitudo()'
 
@@ -151,6 +169,8 @@
       - '.length === 0'
   rs:
       - '.is_empty()'
+  zig:
+      - '.items.len == 0'
   fab:
       - 'items.vacua()'
 
@@ -168,6 +188,9 @@
       - '.includes('
   rs:
       - '.contains(&5)'
+  zig:
+      - 'std.mem.indexOfScalar'
+      - '!= null'
   fab:
       - 'items.continet(5)'
 
@@ -181,6 +204,8 @@
       - '.indexOf('
   rs:
       - '.iter().position(|e| e == &5)'
+  zig:
+      - 'std.mem.indexOfScalar'
   fab:
       - 'items.indiceDe(5)'
 
@@ -199,6 +224,11 @@
   rs:
       - '.iter().filter('
       - '.cloned().collect'
+  zig:
+      - 'blk:'
+      - 'var result = std.ArrayList'
+      - 'for (items.items)'
+      - 'result.append'
   fab:
       - 'items.filtrata(pro x: x > 0)'
 
@@ -213,6 +243,11 @@
   rs:
       - '.iter().map('
       - '.collect'
+  zig:
+      - 'blk:'
+      - 'var result = std.ArrayList'
+      - 'for (items.items)'
+      - 'result.append'
   fab:
       - 'items.mappata(pro x: x * 2)'
 
@@ -227,6 +262,11 @@
   rs:
       - '.iter().rev()'
       - '.cloned().collect'
+  zig:
+      - 'blk:'
+      - 'var result = std.ArrayList'
+      - 'while (i > 0)'
+      - 'result.append'
   fab:
       - 'items.inversa()'
 
@@ -241,6 +281,10 @@
   rs:
       - '.iter().take(5)'
       - '.cloned().collect'
+  zig:
+      - 'blk:'
+      - '@min(5'
+      - 'var result = std.ArrayList'
   fab:
       - 'items.prima(5)'
 
@@ -255,6 +299,10 @@
   rs:
       - '.iter().skip(2)'
       - '.cloned().collect'
+  zig:
+      - 'blk:'
+      - '@min(2'
+      - 'var result = std.ArrayList'
   fab:
       - 'items.omitte(2)'
 
@@ -271,6 +319,11 @@
       - '.every('
   rs:
       - '.iter().all('
+  zig:
+      - 'blk:'
+      - 'for (items.items)'
+      - 'break :blk false'
+      - 'break :blk true'
   fab:
       - 'items.omnes(pro x: x > 0)'
 
@@ -283,6 +336,11 @@
       - '.some('
   rs:
       - '.iter().any('
+  zig:
+      - 'blk:'
+      - 'for (items.items)'
+      - 'break :blk true'
+      - 'break :blk false'
   fab:
       - 'items.aliquis(pro x: x > 0)'
 
@@ -299,6 +357,8 @@
       - '.sort('
   rs:
       - '.sort()'
+  zig:
+      - 'std.mem.sort'
   fab:
       - 'items.ordina()'
 
@@ -311,6 +371,8 @@
       - '.reverse('
   rs:
       - '.reverse()'
+  zig:
+      - 'std.mem.reverse'
   fab:
       - 'items.inverte()'
 
@@ -327,6 +389,11 @@
       - '.reduce('
   rs:
       - '.iter().sum'
+  zig:
+      - 'blk:'
+      - 'var sum'
+      - 'for (nums.items)'
+      - 'sum +='
   fab:
       - 'nums.summa()'
 
@@ -339,6 +406,8 @@
       - 'Math.min(...'
   rs:
       - '.iter().min()'
+  zig:
+      - 'std.mem.min'
   fab:
       - 'nums.minimus()'
 
@@ -351,6 +420,8 @@
       - 'Math.max(...'
   rs:
       - '.iter().max()'
+  zig:
+      - 'std.mem.max'
   fab:
       - 'nums.maximus()'
 
@@ -367,6 +438,8 @@
       - '.forEach('
   rs:
       - '.iter().for_each('
+  zig:
+      - 'for (items.items)'
   fab:
       - 'items.perambula(pro x { scribe x })'
 
@@ -385,6 +458,7 @@
       - '.contains(&5)'
   fab:
       - 'items.continet(5)'
+  skip: [zig] # Zig uses @import("std"), no header system
 
 # Ranges methods add ranges header
 - name: 'ranges methods add ranges header'
@@ -397,6 +471,7 @@
       - '.iter().filter('
   fab:
       - 'items.filtrata(pro x: x > 0)'
+  skip: [zig] # Zig uses @import("std"), no header system
 
 # Numeric methods add numeric header
 - name: 'numeric methods add numeric header'
@@ -409,6 +484,7 @@
       - '.iter().sum'
   fab:
       - 'nums.summa()'
+  skip: [zig] # Zig uses @import("std"), no header system
 
 # =============================================================================
 # Collection DSL

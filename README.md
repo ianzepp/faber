@@ -138,7 +138,7 @@ console.log(salve(nomen));
 | Python     |   604 |  80%   |
 | Rust       |   573 |  76%   |
 | C++23      |   468 |  62%   |
-| Zig        |   443 |  59%   |
+| Zig        |   468 |  62%   |
 
 > Status % = passing tests / TypeScript baseline. Run `bun test proba/runner.test.ts -t "@<target>"` to verify (e.g., `-t "@zig"`).
 
@@ -489,26 +489,26 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `vacua` (is empty)           |    [x]     | [x] |  [x]   | [x]  |  [x]  |
 | `continet` (includes)        |    [x]     | [x] |  [x]   | [x]  |  [x]  |
 | `indiceDe` (indexOf)         |    [x]     | [x] |  [x]   | [x]  |  [x]  |
-| `inveni` (find)              |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `inveniIndicem` (findIndex)  |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `filtrata` (filter)          |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `mappata` (map)              |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `reducta` (reduce)           |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `inveni` (find)              |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `inveniIndicem` (findIndex)  |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `filtrata` (filter)          |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `mappata` (map)              |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `reducta` (reduce)           |    [x]     | [x] |  [x]   | [x]  |  [x]  |
 | `explanata` (flatMap)        |    [x]     | [-] |  [x]   | [x]  |  [x]  |
 | `plana` (flat)               |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `inversa` (reverse copy)     |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `ordinata` (sort copy)       |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `sectio` (slice)             |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `prima` (take first n)       |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `ultima` (take last n)       |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `omitte` (skip first n)      |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `omnes` (every)              |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `aliquis` (some)             |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `inversa` (reverse copy)     |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `ordinata` (sort copy)       |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `sectio` (slice)             |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `prima` (take first n)       |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `ultima` (take last n)       |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `omitte` (skip first n)      |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `omnes` (every)              |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `aliquis` (some)             |    [x]     | [x] |  [x]   | [x]  |  [x]  |
 | `coniunge` (join)            |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `perambula` (forEach)        |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `perambula` (forEach)        |    [x]     | [x] |  [x]   | [x]  |  [x]  |
 | `filtra` (filter in-place)   |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `ordina` (sort in-place)     |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `inverte` (reverse in-place) |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `ordina` (sort in-place)     |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `inverte` (reverse in-place) |    [x]     | [x] |  [x]   | [x]  |  [x]  |
 | `congrega` (groupBy)         |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
 | `unica` (unique)             |    [x]     | [-] |  [x]   | [x]  |  [x]  |
 | `planaOmnia` (flattenDeep)   |    [x]     | [-] |  [ ]   | [ ]  |  [~]  |
@@ -518,13 +518,13 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `misce` (shuffle)            |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
 | `specimen` (sample one)      |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
 | `specimina` (sample n)       |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `summa` (sum)                |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `medium` (average)           |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `minimus` (min)              |    [x]     | [-] |  [x]   | [x]  |  [x]  |
-| `maximus` (max)              |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `summa` (sum)                |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `medium` (average)           |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `minimus` (min)              |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `maximus` (max)              |    [x]     | [x] |  [x]   | [x]  |  [x]  |
 | `minimusPer` (minBy)         |    [x]     | [-] |  [ ]   | [x]  |  [x]  |
 | `maximusPer` (maxBy)         |    [x]     | [-] |  [ ]   | [x]  |  [x]  |
-| `numera` (count)             |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `numera` (count)             |    [x]     | [x] |  [x]   | [x]  |  [x]  |
 
 ## Tabula (Map) Methods
 
