@@ -44,7 +44,7 @@ export interface ListaMethod {
     rs: string | RsGenerator;
 }
 
-type RsGenerator = (obj: string, args: string) => string;
+type RsGenerator = (obj: string, args: string[]) => string;
 
 // =============================================================================
 // METHOD REGISTRY
@@ -71,7 +71,7 @@ export const LISTA_METHODS: Record<string, ListaMethod> = {
         latin: 'addita',
         mutates: false,
         async: false,
-        rs: (obj, args) => `{ let mut v = ${obj}.clone(); v.push(${args}); v }`,
+        rs: (obj, args) => `{ let mut v = ${obj}.clone(); v.push(${args[0]}); v }`,
     },
 
     // TODO: Implement remaining methods
