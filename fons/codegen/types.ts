@@ -98,6 +98,9 @@ export interface RequiredFeatures {
 
     // Warnings (Python) - needs import warnings for _mone
     warnings: boolean;
+
+    // Time (Python) - needs import time for norma/tempus
+    time: boolean;
 }
 
 /**
@@ -124,6 +127,7 @@ export function createRequiredFeatures(): RequiredFeatures {
         secrets: false,
         sys: false,
         warnings: false,
+        time: false,
     };
 }
 

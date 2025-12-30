@@ -19,6 +19,30 @@ import { getMathesisFunction } from '../norma/mathesis';
 import { getAleatorFunction } from '../norma/aleator';
 
 /**
+ * Python tempus (time) intrinsics.
+ *
+ * WHY: Time functions require the `time` module.
+ */
+const PY_TEMPUS: Record<string, (args: string[], g: PyGenerator) => string> = {
+    nunc: (_, g) => {
+        g.features.time = true;
+        return `int(time.time() * 1000)`;
+    },
+    nunc_nano: (_, g) => {
+        g.features.time = true;
+        return `time.time_ns()`;
+    },
+    nunc_secunda: (_, g) => {
+        g.features.time = true;
+        return `int(time.time())`;
+    },
+    dormi: (args, g) => {
+        g.features.time = true;
+        return `time.sleep(${args[0]} / 1000)`;
+    },
+};
+
+/**
  * Python I/O intrinsic handler.
  *
  * WHY: I/O intrinsics need to set feature flags for imports.
@@ -99,6 +123,12 @@ export function genCallExpression(node: CallExpression, g: PyGenerator): string 
                 return aleatorFunc.py(argsArray);
             }
             return aleatorFunc.py;
+        }
+
+        // Check tempus functions (ex "norma/tempus" importa nunc, dormi, etc.)
+        const tempusFunc = PY_TEMPUS[name];
+        if (tempusFunc) {
+            return tempusFunc(argsArray, g);
         }
     }
 

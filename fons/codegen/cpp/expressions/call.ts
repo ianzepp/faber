@@ -21,6 +21,30 @@ import { getCopiaMethod, getCopiaHeaders } from '../norma/copia';
 import { getMathesisFunction, getMathesisHeaders } from '../norma/mathesis';
 
 /**
+ * C++23 tempus (time) intrinsic mappings.
+ *
+ * WHY: Time functions use <chrono> for time points and <thread> for sleep.
+ */
+const CPP_TEMPUS: Record<string, { cpp: string | ((args: string[]) => string); headers: string[] }> = {
+    nunc: {
+        cpp: 'std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()',
+        headers: ['<chrono>'],
+    },
+    nunc_nano: {
+        cpp: 'std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count()',
+        headers: ['<chrono>'],
+    },
+    nunc_secunda: {
+        cpp: 'std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()',
+        headers: ['<chrono>'],
+    },
+    dormi: {
+        cpp: (args: string[]) => `std::this_thread::sleep_for(std::chrono::milliseconds(${args[0]}))`,
+        headers: ['<chrono>', '<thread>'],
+    },
+};
+
+/**
  * C++23 I/O intrinsic mappings.
  *
  * WHY: Maps Latin I/O intrinsics to C++ equivalents.
@@ -94,6 +118,18 @@ export function genCallExpression(node: CallExpression, g: CppGenerator): string
                 return mathesisFunc.cpp(argsArray);
             }
             return mathesisFunc.cpp;
+        }
+
+        // Check tempus functions (ex "norma/tempus" importa nunc, dormi, etc.)
+        const tempusFunc = CPP_TEMPUS[name];
+        if (tempusFunc) {
+            for (const header of tempusFunc.headers) {
+                g.includes.add(header);
+            }
+            if (typeof tempusFunc.cpp === 'function') {
+                return tempusFunc.cpp(argsArray);
+            }
+            return tempusFunc.cpp;
         }
     }
 

@@ -124,6 +124,11 @@ function genPreamble(g: PyGenerator): string {
         imports.push('import warnings');
     }
 
+    // Tempus (time) module
+    if (g.features.time) {
+        imports.push('import time');
+    }
+
     // WHY: praefixum blocks need a helper that executes code via exec()
     // with a restricted set of builtins (mimicking compile-time constraints)
     if (g.features.praefixum) {
