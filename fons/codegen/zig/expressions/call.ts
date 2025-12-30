@@ -23,6 +23,7 @@ import { getTabulaMethod } from '../norma/tabula';
 import { getCopiaMethod } from '../norma/copia';
 import { getMathesisFunction } from '../norma/mathesis';
 import { getTempusFunction } from '../norma/tempus';
+import { getAleatorFunction } from '../norma/aleator';
 
 export function genCallExpression(node: CallExpression, g: ZigGenerator): string {
     // Helper to generate argument, handling spread
@@ -90,6 +91,16 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
                 return tempusFunc.zig(argsArray);
             }
             return tempusFunc.zig;
+        }
+
+        // Check aleator functions (ex "norma/aleator" importa fractus, inter, etc.)
+        const aleatorFunc = getAleatorFunction(name);
+        if (aleatorFunc) {
+            const curator = g.getCurator();
+            if (typeof aleatorFunc.zig === 'function') {
+                return aleatorFunc.zig(argsArray, curator);
+            }
+            return aleatorFunc.zig;
         }
     }
 

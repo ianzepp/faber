@@ -19,6 +19,7 @@ import { getCopiaMethod } from '../norma/copia';
 import { getTabulaMethod } from '../norma/tabula';
 import { getMathesisFunction } from '../norma/mathesis';
 import { getTempusFunction } from '../norma/tempus';
+import { getAleatorFunction } from '../norma/aleator';
 
 /**
  * Rust I/O intrinsic mappings.
@@ -93,6 +94,15 @@ export function genCallExpression(node: CallExpression, g: RsGenerator): string 
                 return tempusFunc.rs(argsArray);
             }
             return tempusFunc.rs;
+        }
+
+        // Check aleator functions (ex "norma/aleator" importa fractus, inter, etc.)
+        const aleatorFunc = getAleatorFunction(name);
+        if (aleatorFunc) {
+            if (typeof aleatorFunc.rs === 'function') {
+                return aleatorFunc.rs(argsArray);
+            }
+            return aleatorFunc.rs;
         }
     }
 

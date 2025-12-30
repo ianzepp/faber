@@ -461,13 +461,13 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 | Feature                       | TypeScript | Zig | Python | Rust | C++23 |
 | ----------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `fractus()` (random 0-1)      |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `inter(min, max)` (int)       |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `octeti(n)` (random bytes)    |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `uuid()` (UUID v4)            |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `selige(lista)` (random pick) |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `misce(lista)` (shuffle copy) |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
-| `semen(n)` (seed)             |    [x]     | [ ] |  [x]   | [ ]  |  [ ]  |
+| `fractus()` (random 0-1)      |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `inter(min, max)` (int)       |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `octeti(n)` (random bytes)    |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `uuid()` (UUID v4)            |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `selige(lista)` (random pick) |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `misce(lista)` (shuffle copy) |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `semen(n)` (seed)             |    [x]     | [x] |  [x]   | [x]  |  [x]  |
 
 ## Lista (Array) Methods
 
@@ -574,11 +574,11 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 | Feature                  | TypeScript | Zig | Python | Rust | C++23 |
 | ------------------------ | :--------: | :-: | :----: | :--: | :---: |
-| `nunc()` (current epoch) |    [x]     | [x] |  [ ]   | [x]  |  [ ]  |
-| `nunc_nano()` (nanos)    |    [x]     | [x] |  [ ]   | [x]  |  [ ]  |
-| `nunc_secunda()` (secs)  |    [x]     | [x] |  [ ]   | [x]  |  [ ]  |
-| `dormi ms` (sleep)       |    [x]     | [x] |  [ ]   | [x]  |  [ ]  |
-| Duration constants       |    [x]     | [x] |  [ ]   | [x]  |  [ ]  |
+| `nunc()` (current epoch) |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `nunc_nano()` (nanos)    |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `nunc_secunda()` (secs)  |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `dormi ms` (sleep)       |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| Duration constants       |    [x]     | [x] |  [x]   | [x]  |  [x]  |
 
 ## Stdlib: File I/O (solum)
 

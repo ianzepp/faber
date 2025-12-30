@@ -13,6 +13,16 @@
       py:
           - 'import random'
           - 'x = random.random()'
+      cpp:
+          - '#include <random>'
+          - 'std::random_device rd'
+          - 'std::mt19937 gen(rd())'
+          - 'std::uniform_real_distribution<> dis(0.0, 1.0)'
+      rs:
+          - 'let x = rand::random::<f64>();'
+      zig:
+          - 'std.rand.DefaultPrng'
+          - '.float(f64)'
 
 - name: inter (random integer in range)
   faber: |
@@ -23,6 +33,14 @@
       py:
           - 'import random'
           - 'x = random.randint(1, 100)'
+      cpp:
+          - '#include <random>'
+          - 'std::uniform_int_distribution<> dis(1, 100)'
+      rs:
+          - 'let x = rand::thread_rng().gen_range(1..=100);'
+      zig:
+          - 'std.rand.DefaultPrng'
+          - 'intRangeAtMost(i64, 1, 100)'
 
 - name: octeti (random bytes)
   faber: |
@@ -32,6 +50,16 @@
       py:
           - 'import secrets'
           - 'bytes = secrets.token_bytes(16)'
+      cpp:
+          - '#include <random>'
+          - '#include <vector>'
+          - 'std::vector<uint8_t> bytes(16)'
+          - 'std::random_device rd'
+      rs:
+          - 'let bytes = { let mut bytes = vec![0u8; 16]'
+          - 'rand::thread_rng().fill(&mut bytes[..])'
+      zig:
+          - 'std.crypto.random.bytes'
 
 - name: uuid (UUID v4)
   faber: |
@@ -41,6 +69,15 @@
       py:
           - 'import uuid'
           - 'id = str(uuid.uuid4())'
+      cpp:
+          - '#include <random>'
+          - '#include <string>'
+          - 'std::string uuid'
+      rs:
+          - 'let id = uuid::Uuid::new_v4().to_string();'
+      zig:
+          - 'std.crypto.random.bytes'
+          - 'var buf: [36]u8'
 
 # =============================================================================
 # Collection Operations
@@ -54,6 +91,14 @@
       py:
           - 'import random'
           - 'item = random.choice(items)'
+      cpp:
+          - '#include <random>'
+          - 'std::uniform_int_distribution<size_t> dis(0, items.size() - 1)'
+      rs:
+          - 'let item = items.choose(&mut rand::thread_rng()).unwrap().clone();'
+      zig:
+          - 'std.rand.DefaultPrng'
+          - 'uintLessThan(usize, items.len)'
 
 - name: misce (shuffle list)
   faber: |
@@ -68,6 +113,16 @@
       py:
           - 'import random'
           - 'shuffled = random.sample(items, len(items))'
+      cpp:
+          - '#include <random>'
+          - '#include <algorithm>'
+          - 'auto v = items'
+          - 'std::ranges::shuffle(v, gen)'
+      rs:
+          - 'let shuffled = { let mut v = items.clone(); v.shuffle(&mut rand::thread_rng()); v };'
+      zig:
+          - 'std.rand.DefaultPrng'
+          - '.shuffle'
 
 # =============================================================================
 # Seeding
@@ -82,6 +137,15 @@
       py:
           - 'import random'
           - 'random.seed(42)'
+      cpp:
+          - 'seed(42)'
+          - 'C++ requires explicit generator management'
+      rs:
+          - 'seed(42)'
+          - 'rand::SeedableRng'
+      zig:
+          - 'seed(42)'
+          - 'Zig requires explicit PRNG state management'
 
 # =============================================================================
 # Combined Usage
@@ -102,3 +166,17 @@
           - 'die1 = random.randint(1, 6)'
           - 'die2 = random.randint(1, 6)'
           - 'total = (die1 + die2)'
+      cpp:
+          - '#include <random>'
+          - 'std::uniform_int_distribution<> dis(1, 6)'
+          - 'const auto die1'
+          - 'const auto die2'
+          - 'const auto total = (die1 + die2)'
+      rs:
+          - 'let die1 = rand::thread_rng().gen_range(1..=6);'
+          - 'let die2 = rand::thread_rng().gen_range(1..=6);'
+          - 'let total = (die1 + die2);'
+      zig:
+          - 'std.rand.DefaultPrng'
+          - 'intRangeAtMost(i64, 1, 6)'
+          - 'const total'

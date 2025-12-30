@@ -19,6 +19,7 @@ import { getListaMethod, getListaHeaders } from '../norma/lista';
 import { getTabulaMethod, getTabulaHeaders } from '../norma/tabula';
 import { getCopiaMethod, getCopiaHeaders } from '../norma/copia';
 import { getMathesisFunction, getMathesisHeaders } from '../norma/mathesis';
+import { getAleatorFunction, getAleatorHeaders } from '../norma/aleator';
 
 /**
  * C++23 tempus (time) intrinsic mappings.
@@ -130,6 +131,18 @@ export function genCallExpression(node: CallExpression, g: CppGenerator): string
                 return tempusFunc.cpp(argsArray);
             }
             return tempusFunc.cpp;
+        }
+
+        // Check aleator functions (ex "norma/aleator" importa fractus, inter, etc.)
+        const aleatorFunc = getAleatorFunction(name);
+        if (aleatorFunc) {
+            for (const header of getAleatorHeaders(name)) {
+                g.includes.add(header);
+            }
+            if (typeof aleatorFunc.cpp === 'function') {
+                return aleatorFunc.cpp(argsArray);
+            }
+            return aleatorFunc.cpp;
         }
     }
 
