@@ -247,6 +247,15 @@ const BUILTIN_TYPE_NAMES = new Set(builtinTypes.map(t => t.nominative ?? compute
 export function parse(tokens: Token[]): ParserResult {
     const errors: ParserError[] = [];
     let current = 0;
+    let uniqueIdCounter = 0;
+
+    /**
+     * Generate a unique identifier for synthetic bindings.
+     * WHY: Used for auto-generated names (e.g., cura arena {} without explicit binding).
+     */
+    function genUniqueId(prefix: string): string {
+        return `_${prefix}_${uniqueIdCounter++}`;
+    }
 
     // ---------------------------------------------------------------------------
     // Comment Collection
@@ -3336,33 +3345,49 @@ export function parse(tokens: Token[]): ParserResult {
         // WHY: For arena/page, expression is optional (they create their own allocator)
         //      For generic resources, expression is required
         let resource: Expression | undefined;
-        if (!checkKeyword('pro') && !checkKeyword('fit') && !checkKeyword('fiet')) {
+        if (!checkKeyword('pro') && !checkKeyword('fit') && !checkKeyword('fiet') && !check('LBRACE')) {
             resource = parseExpression();
         }
 
-        // Expect binding verb: pro, fit, or fiet
+        // Optional binding verb: pro, fit, or fiet
         // WHY: pro is neutral, fit is sync, fiet is async (matches lambda syntax)
+        // WHY: If no verb, auto-generate binding name for convenience (cura arena { })
         let async = false;
+        let hasBinding = false;
         if (matchKeyword('pro')) {
             async = false;
+            hasBinding = true;
         } else if (matchKeyword('fit')) {
             async = false;
+            hasBinding = true;
         } else if (matchKeyword('fiet')) {
             async = true;
-        } else {
-            reportError(ParserErrorCode.ExpectedKeywordFit, `expected 'pro', 'fit', or 'fiet', got '${peek().value}'`);
+            hasBinding = true;
         }
 
-        // Optional type annotation before binding identifier
-        // WHY: Allows explicit typing: cura aperi("file") fit File fd { ... }
-        // Detection: if two identifiers before '{', first is type, second is binding
         let typeAnnotation: TypeAnnotation | undefined;
-        if (check('IDENTIFIER') && peek(1).type === 'IDENTIFIER') {
-            typeAnnotation = parseTypeAnnotation();
-        }
+        let binding: Identifier;
 
-        // Parse binding identifier
-        const binding = parseIdentifier();
+        if (hasBinding) {
+            // Optional type annotation before binding identifier
+            // WHY: Allows explicit typing: cura aperi("file") fit File fd { ... }
+            // Detection: if two identifiers before '{', first is type, second is binding
+            if (check('IDENTIFIER') && peek(1).type === 'IDENTIFIER') {
+                typeAnnotation = parseTypeAnnotation();
+            }
+
+            // Parse binding identifier
+            binding = parseIdentifier();
+        } else {
+            // Auto-generate binding name
+            // WHY: Allows concise syntax: cura arena { } without explicit name
+            const prefix = curatorKind ?? 'cura';
+            binding = {
+                type: 'Identifier',
+                name: genUniqueId(prefix),
+                position: peek().position,
+            };
+        }
 
         // Parse body block
         const body = parseBlockStatement();

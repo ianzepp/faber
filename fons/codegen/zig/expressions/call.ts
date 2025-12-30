@@ -96,9 +96,10 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
         }
 
         // Check aleator functions (ex "norma/aleator" importa fractus, inter, etc.)
+        // WHY: Aleator functions have fallback allocators, so don't require cura block
         const aleatorFunc = getAleatorFunction(name);
         if (aleatorFunc) {
-            const curator = g.getCurator();
+            const curator = g.getCuratorOrUndefined();
             if (typeof aleatorFunc.zig === 'function') {
                 return aleatorFunc.zig(argsArray, curator);
             }
@@ -119,14 +120,13 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
         const collectionName = objType?.kind === 'generic' ? objType.name : null;
 
         // Dispatch based on resolved type
-        // WHY: Pass current curator to method generators that need allocator
-        const curator = g.getCurator();
-
+        // WHY: Only fetch curator when we have a known collection method that needs it
         if (collectionName === 'tabula') {
             const method = getTabulaMethod(methodName);
             if (method) {
                 // WHY: Flag features so preamble includes Tabula and arena setup
                 g.features.tabula = true;
+                const curator = g.getCurator();
                 if (typeof method.zig === 'function') {
                     return method.zig(obj, argsArray, curator);
                 }
@@ -137,6 +137,7 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
             if (method) {
                 // WHY: Flag features so preamble includes Copia and arena setup
                 g.features.copia = true;
+                const curator = g.getCurator();
                 if (typeof method.zig === 'function') {
                     return method.zig(obj, argsArray, curator);
                 }
@@ -147,6 +148,7 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
             if (method) {
                 // WHY: Flag features so preamble includes Lista and arena setup
                 g.features.lista = true;
+                const curator = g.getCurator();
                 if (typeof method.zig === 'function') {
                     return method.zig(obj, argsArray, curator);
                 }
@@ -160,6 +162,7 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
             // WHY: Flag features so preamble includes Lista and arena setup in main()
             // Without this, code like `items.adde(alloc, 1)` would reference undefined alloc
             g.features.lista = true;
+            const curator = g.getCurator();
             if (typeof listaMethod.zig === 'function') {
                 return listaMethod.zig(obj, argsArray, curator);
             }

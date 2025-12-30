@@ -66,17 +66,16 @@
       - 'varia items = []'
       - 'items.adde(1)'
 
-# Default alloc used in main - Lista methods receive 'alloc' (default curator)
-- name: 'lista.adde uses default alloc'
+# Without curator param, GC languages work but Zig requires cura block
+# WHY: Zig has no implicit global allocator; skip Zig for this test
+- name: 'lista.adde without curator param'
   input: |
       varia items = []
       items.adde(1)
-  zig:
-      - 'items.adde(alloc, 1)'
   rs:
       - 'let mut items = vec![]'
       - 'items.push(1)'
-  skip: [ts, py, cpp]
+  skip: [ts, py, cpp, zig]
   fab:
       - 'varia items = []'
       - 'items.adde(1)'
@@ -128,17 +127,17 @@
       - 'varia m = {}'
       - 'm.pone("key", 42)'
 
-# tabula.pone without type annotation - falls through to regular method call
-- name: 'tabula.pone uses default alloc'
+# tabula.pone without type annotation - tabula isn't detected, falls through
+# WHY: Without type annotation, {} is inferred as objectum, not tabula
+# WHY: Skip Zig - without curator, allocating ops fail
+- name: 'tabula.pone without type annotation'
   input: |
       varia m = {}
       m.pone("key", 42)
-  zig:
-      - 'm.pone("key", 42)'
   rs:
       - 'let mut m = {}'
       - 'm.pone(String::from("key"), 42)'
-  skip: [ts, py, cpp]
+  skip: [ts, py, cpp, zig]
   fab:
       - 'varia m = {}'
       - 'm.pone("key", 42)'
@@ -170,17 +169,15 @@
       - 'varia s = {}'
       - 's.adde("item")'
 
-# copia.adde uses default alloc - falls back to lista.adde
-- name: 'copia.adde uses default alloc'
+# copia.adde without curator param - skip Zig (requires cura block)
+- name: 'copia.adde without curator param'
   input: |
       varia s = {}
       s.adde("item")
-  zig:
-      - '.adde(alloc, "item")'
   rs:
       - 'let mut s = {}'
       - 's.push(String::from("item"))'
-  skip: [ts, py, cpp]
+  skip: [ts, py, cpp, zig]
   fab:
       - 'varia s = {}'
       - 's.adde("item")'
@@ -293,17 +290,15 @@
       - 'varia nums = [1, 2, 3]'
       - 'nums.adde(4)'
 
-# Array literal in main - methods receive default 'alloc'
-- name: 'array literal uses default alloc'
+# Array literal without curator param - skip Zig (requires cura block)
+- name: 'array literal without curator param'
   input: |
       varia nums = [1, 2, 3]
       nums.adde(4)
-  zig:
-      - 'nums.adde(alloc, 4)'
   rs:
       - 'let mut nums = vec![1, 2, 3]'
       - 'nums.push(4)'
-  skip: [ts, py, cpp]
+  skip: [ts, py, cpp, zig]
   fab:
       - 'varia nums = [1, 2, 3]'
       - 'nums.adde(4)'
@@ -312,26 +307,24 @@
 # Curator Isolation Between Functions
 # =============================================================================
 
-# Function without curator - methods receive default 'alloc'
-- name: 'function without curator uses default'
+# Function without curator param - skip Zig (requires cura block)
+- name: 'function without curator param'
   input: |
       functio noAlloc() {
         varia items = []
         items.adde(1)
       }
-  zig:
-      - 'items.adde(alloc, 1)'
   rs:
       - 'fn noAlloc()'
       - 'let mut items = vec![]'
       - 'items.push(1)'
-  skip: [ts, py, cpp]
+  skip: [ts, py, cpp, zig]
   fab:
       - 'functio noAlloc() {'
       - 'varia items = []'
       - 'items.adde(1)'
 
-# After function with curator, next function without curator - curator resets
+# Curator isolation between functions - skip Zig (second function has no allocator)
 - name: 'curator does not leak between functions'
   input: |
       functio withCurator(curator custom) {
@@ -342,15 +335,12 @@
         varia b = []
         b.adde(2)
       }
-  zig:
-      - 'a.adde(custom, 1)'
-      - 'b.adde(alloc, 2)'
   rs:
       - 'fn withCurator(custom: curator)'
       - 'a.push(1)'
       - 'fn withoutCurator()'
       - 'b.push(2)'
-  skip: [ts, py, cpp]
+  skip: [ts, py, cpp, zig]
   fab:
       - 'functio withCurator(curator custom) {'
       - 'varia a = []'

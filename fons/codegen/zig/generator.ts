@@ -83,7 +83,8 @@ export class ZigGenerator {
     inGenerator = false;
 
     // Track active allocator name for collection operations
-    curatorStack: string[] = ['alloc'];
+    // WHY: Empty by default - allocating operations require explicit cura blocks
+    curatorStack: string[] = [];
 
     // Track features used for preamble generation
     features: RequiredFeatures = createRequiredFeatures();
@@ -96,9 +97,25 @@ export class ZigGenerator {
 
     /**
      * Get the current active allocator name.
+     * WHY: Throws if no cura block is active — allocating operations
+     *      require an explicit allocator in Zig.
      */
     getCurator(): string {
-        return this.curatorStack[this.curatorStack.length - 1] ?? 'alloc';
+        const curator = this.curatorStack[this.curatorStack.length - 1];
+        if (!curator) {
+            throw new Error(
+                `Allocator required but no cura block is active. ` + `Wrap allocating operations in: cura <allocator> fit <name> { ... }`,
+            );
+        }
+        return curator;
+    }
+
+    /**
+     * Get the current active allocator name, or undefined if none active.
+     * WHY: Used by operations that have a fallback allocator (e.g., aleator functions).
+     */
+    getCuratorOrUndefined(): string | undefined {
+        return this.curatorStack[this.curatorStack.length - 1];
     }
 
     /**
@@ -112,7 +129,7 @@ export class ZigGenerator {
      * Pop the current allocator from the stack.
      */
     popCurator(): void {
-        if (this.curatorStack.length > 1) {
+        if (this.curatorStack.length > 0) {
             this.curatorStack.pop();
         }
     }
