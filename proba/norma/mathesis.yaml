@@ -17,6 +17,9 @@
           - 'let x = (3.7 as f64).floor();'
       zig:
           - 'const x = @floor(3.7);'
+      cpp:
+          - '#include <cmath>'
+          - 'const auto x = std::floor(3.7);'
 
 - name: tectum (ceiling)
   faber: |
@@ -30,6 +33,9 @@
           - 'let x = (3.2 as f64).ceil();'
       zig:
           - 'const x = @ceil(3.2);'
+      cpp:
+          - '#include <cmath>'
+          - 'const auto x = std::ceil(3.2);'
 
 - name: rotundum (round)
   faber: |
@@ -41,6 +47,9 @@
           - 'let x = (3.5 as f64).round();'
       zig:
           - 'const x = @round(3.5);'
+      cpp:
+          - '#include <cmath>'
+          - 'const auto x = std::round(3.5);'
 
 - name: truncatum (truncate)
   faber: |
@@ -54,6 +63,9 @@
           - 'let x = (3.9 as f64).trunc();'
       zig:
           - 'const x = @trunc(3.9);'
+      cpp:
+          - '#include <cmath>'
+          - 'const auto x = std::trunc(3.9);'
 
 # =============================================================================
 # Powers and Roots
@@ -71,6 +83,9 @@
           - 'let x = (16 as f64).sqrt();'
       zig:
           - 'const x = @sqrt(16);'
+      cpp:
+          - '#include <cmath>'
+          - 'const auto x = std::sqrt(16);'
 
 - name: potentia (pow)
   faber: |
@@ -84,6 +99,9 @@
           - 'let x = (2 as f64).powf(8 as f64);'
       zig:
           - 'const x = std.math.pow(f64, 2, 8);'
+      cpp:
+          - '#include <cmath>'
+          - 'const auto x = std::pow(2, 8);'
 
 - name: logarithmus (natural log)
   faber: |
@@ -97,6 +115,9 @@
           - 'let x = (10 as f64).ln();'
       zig:
           - 'const x = @log(10);'
+      cpp:
+          - '#include <cmath>'
+          - 'const auto x = std::log(10);'
 
 - name: logarithmus10 (log base 10)
   faber: |
@@ -110,6 +131,9 @@
           - 'let x = (100 as f64).log10();'
       zig:
           - 'const x = @log10(100);'
+      cpp:
+          - '#include <cmath>'
+          - 'const auto x = std::log10(100);'
 
 - name: exponens (e^x)
   faber: |
@@ -123,6 +147,9 @@
           - 'let x = (1 as f64).exp();'
       zig:
           - 'const x = @exp(1);'
+      cpp:
+          - '#include <cmath>'
+          - 'const auto x = std::exp(1);'
 
 # =============================================================================
 # Trigonometry
@@ -140,6 +167,9 @@
           - 'let x = (0 as f64).sin();'
       zig:
           - 'const x = @sin(0);'
+      cpp:
+          - '#include <cmath>'
+          - 'const auto x = std::sin(0);'
 
 - name: cosinus (cos)
   faber: |
@@ -153,6 +183,9 @@
           - 'let x = (0 as f64).cos();'
       zig:
           - 'const x = @cos(0);'
+      cpp:
+          - '#include <cmath>'
+          - 'const auto x = std::cos(0);'
 
 - name: tangens (tan)
   faber: |
@@ -166,6 +199,9 @@
           - 'let x = (0 as f64).tan();'
       zig:
           - 'const x = @tan(0);'
+      cpp:
+          - '#include <cmath>'
+          - 'const auto x = std::tan(0);'
 
 # =============================================================================
 # Absolute and Sign
@@ -181,6 +217,9 @@
           - 'let x = (-5 as f64).abs();'
       zig:
           - 'const x = @abs(-5);'
+      cpp:
+          - '#include <cmath>'
+          - 'const auto x = std::abs(-5);'
 
 - name: signum (sign)
   faber: |
@@ -193,6 +232,8 @@
           - 'let x = (-5 as f64).signum();'
       zig:
           - 'const x = std.math.sign(-5);'
+      cpp:
+          - 'const auto x = ((-5 > 0) - (-5 < 0));'
 
 # =============================================================================
 # Min/Max/Clamp
@@ -208,6 +249,9 @@
           - 'let x = (3 as f64).min(7 as f64);'
       zig:
           - 'const x = @min(3, 7);'
+      cpp:
+          - '#include <algorithm>'
+          - 'const auto x = std::min(3, 7);'
 
 - name: maximus (max)
   faber: |
@@ -219,6 +263,9 @@
           - 'let x = (3 as f64).max(7 as f64);'
       zig:
           - 'const x = @max(3, 7);'
+      cpp:
+          - '#include <algorithm>'
+          - 'const auto x = std::max(3, 7);'
 
 - name: constringens (clamp)
   faber: |
@@ -230,6 +277,9 @@
           - 'let x = (5 as f64).clamp(0 as f64, 10 as f64);'
       zig:
           - 'const x = std.math.clamp(5, 0, 10);'
+      cpp:
+          - '#include <algorithm>'
+          - 'const auto x = std::clamp(5, 0, 10);'
 
 # =============================================================================
 # Constants
@@ -247,6 +297,9 @@
           - 'let x = std::f64::consts::PI;'
       zig:
           - 'const x = std.math.pi;'
+      cpp:
+          - '#include <numbers>'
+          - 'const auto x = std::numbers::pi;'
 
 - name: E constant
   faber: |
@@ -260,6 +313,9 @@
           - 'let x = std::f64::consts::E;'
       zig:
           - 'const x = std.math.e;'
+      cpp:
+          - '#include <numbers>'
+          - 'const auto x = std::numbers::e;'
 
 - name: TAU constant
   faber: |
@@ -273,6 +329,9 @@
           - 'let x = std::f64::consts::TAU;'
       zig:
           - 'const x = std.math.tau;'
+      cpp:
+          - '#include <numbers>'
+          - 'const auto x = (std::numbers::pi * 2);'
 
 # =============================================================================
 # Combined Usage
@@ -290,6 +349,10 @@
           - 'import math'
           - 'r = 5'
           - 'area = ((math.pi * r) * r)'
+      cpp:
+          - '#include <numbers>'
+          - 'const auto r = 5;'
+          - 'const auto area = ((std::numbers::pi * r) * r);'
 
 - name: pythagorean theorem with radix
   faber: |
@@ -306,3 +369,8 @@
           - 'a = 3'
           - 'b = 4'
           - 'c = math.sqrt(((a * a) + (b * b)))'
+      cpp:
+          - '#include <cmath>'
+          - 'const auto a = 3;'
+          - 'const auto b = 4;'
+          - 'const auto c = std::sqrt(((a * a) + (b * b)));'

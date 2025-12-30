@@ -18,6 +18,7 @@ import type { CppGenerator } from '../generator';
 import { getListaMethod, getListaHeaders } from '../norma/lista';
 import { getTabulaMethod, getTabulaHeaders } from '../norma/tabula';
 import { getCopiaMethod, getCopiaHeaders } from '../norma/copia';
+import { getMathesisFunction, getMathesisHeaders } from '../norma/mathesis';
 
 /**
  * C++23 I/O intrinsic mappings.
@@ -76,9 +77,23 @@ export function genCallExpression(node: CallExpression, g: CppGenerator): string
 
     // Check for intrinsics (bare function calls)
     if (node.callee.type === 'Identifier') {
-        const intrinsicResult = genIntrinsic(node.callee.name, argsArray, g);
+        const name = node.callee.name;
+
+        const intrinsicResult = genIntrinsic(name, argsArray, g);
         if (intrinsicResult) {
             return intrinsicResult;
+        }
+
+        // Check mathesis functions (ex "norma/mathesis" importa pavimentum, etc.)
+        const mathesisFunc = getMathesisFunction(name);
+        if (mathesisFunc) {
+            for (const header of getMathesisHeaders(name)) {
+                g.includes.add(header);
+            }
+            if (typeof mathesisFunc.cpp === 'function') {
+                return mathesisFunc.cpp(argsArray);
+            }
+            return mathesisFunc.cpp;
         }
     }
 
