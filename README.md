@@ -473,58 +473,58 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 | Latin                        | TypeScript | Zig | Python | Rust | C++23 |
 | ---------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `adde` (push)                |    [x]     | [x] |  [x]   | [~]  |  [x]  |
-| `addita` (push copy)         |    [x]     | [-] |  [x]   | [~]  |  [x]  |
-| `praepone` (unshift)         |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `praeposita` (unshift copy)  |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `remove` (pop)               |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `remota` (pop copy)          |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `decapita` (shift)           |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `decapitata` (shift copy)    |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `purga` (clear)              |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `primus` (first)             |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `ultimus` (last)             |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `accipe` (at index)          |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `longitudo` (length)         |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `vacua` (is empty)           |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `continet` (includes)        |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `indiceDe` (indexOf)         |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `inveni` (find)              |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `inveniIndicem` (findIndex)  |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `filtrata` (filter)          |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `mappata` (map)              |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `reducta` (reduce)           |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `explanata` (flatMap)        |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `plana` (flat)               |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `inversa` (reverse copy)     |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `ordinata` (sort copy)       |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `sectio` (slice)             |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `prima` (take first n)       |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `ultima` (take last n)       |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `omitte` (skip first n)      |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `omnes` (every)              |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `aliquis` (some)             |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `coniunge` (join)            |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `perambula` (forEach)        |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
+| `adde` (push)                |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `addita` (push copy)         |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `praepone` (unshift)         |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `praeposita` (unshift copy)  |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `remove` (pop)               |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `remota` (pop copy)          |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `decapita` (shift)           |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `decapitata` (shift copy)    |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `purga` (clear)              |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `primus` (first)             |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `ultimus` (last)             |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `accipe` (at index)          |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `longitudo` (length)         |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `vacua` (is empty)           |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `continet` (includes)        |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `indiceDe` (indexOf)         |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `inveni` (find)              |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `inveniIndicem` (findIndex)  |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `filtrata` (filter)          |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `mappata` (map)              |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `reducta` (reduce)           |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `explanata` (flatMap)        |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `plana` (flat)               |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `inversa` (reverse copy)     |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `ordinata` (sort copy)       |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `sectio` (slice)             |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `prima` (take first n)       |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `ultima` (take last n)       |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `omitte` (skip first n)      |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `omnes` (every)              |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `aliquis` (some)             |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `coniunge` (join)            |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `perambula` (forEach)        |    [x]     | [-] |  [x]   | [x]  |  [x]  |
 | `filtra` (filter in-place)   |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `ordina` (sort in-place)     |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `inverte` (reverse in-place) |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
+| `ordina` (sort in-place)     |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `inverte` (reverse in-place) |    [x]     | [-] |  [x]   | [x]  |  [x]  |
 | `congrega` (groupBy)         |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `unica` (unique)             |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
+| `unica` (unique)             |    [x]     | [-] |  [x]   | [x]  |  [x]  |
 | `planaOmnia` (flattenDeep)   |    [x]     | [-] |  [ ]   | [ ]  |  [~]  |
-| `fragmenta` (chunk)          |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
+| `fragmenta` (chunk)          |    [x]     | [-] |  [x]   | [x]  |  [x]  |
 | `densa` (compact)            |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `partire` (partition)        |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
+| `partire` (partition)        |    [x]     | [-] |  [x]   | [x]  |  [x]  |
 | `misce` (shuffle)            |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
 | `specimen` (sample one)      |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
 | `specimina` (sample n)       |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `summa` (sum)                |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `medium` (average)           |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `minimus` (min)              |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `maximus` (max)              |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `minimusPer` (minBy)         |    [x]     | [-] |  [ ]   | [ ]  |  [x]  |
-| `maximusPer` (maxBy)         |    [x]     | [-] |  [ ]   | [ ]  |  [x]  |
-| `numera` (count)             |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
+| `summa` (sum)                |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `medium` (average)           |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `minimus` (min)              |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `maximus` (max)              |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `minimusPer` (minBy)         |    [x]     | [-] |  [ ]   | [x]  |  [x]  |
+| `maximusPer` (maxBy)         |    [x]     | [-] |  [ ]   | [x]  |  [x]  |
+| `numera` (count)             |    [x]     | [-] |  [x]   | [x]  |  [x]  |
 
 ## Tabula (Map) Methods
 
