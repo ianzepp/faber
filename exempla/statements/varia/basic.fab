@@ -1,0 +1,31 @@
+// Basic varia and fixum declarations
+//
+// varia <name> = <expr>   -- mutable binding
+// fixum <name> = <expr>   -- immutable binding
+
+initium {
+    // Mutable variable with varia
+    varia counter = 0
+    scribe counter
+
+    counter = 1
+    scribe counter
+
+    counter = counter + 10
+    scribe counter
+
+    // Immutable variable with fixum
+    fixum greeting = "Salve, Mundus!"
+    scribe greeting
+
+    // Multiple declarations
+    fixum x = 10
+    fixum y = 20
+    fixum sum = x + y
+    scribe sum
+
+    // Mutable reassignment
+    varia message = "Hello"
+    message = "Goodbye"
+    scribe message
+}

@@ -1,0 +1,49 @@
+// Test modifiers: omitte (skip) and futurum (todo)
+//
+// proba omitte "reason" "name" { body }
+// proba futurum "reason" "name" { body }
+
+// Skip a test with reason and name
+proba omitte "blocked by issue #42" "database connection test" {
+    adfirma falsum
+}
+
+// Todo test with reason and name
+proba futurum "needs async support" "async file operations" {
+    adfirma verum
+}
+
+// Regular test alongside modifiers
+proba "this test runs normally" {
+    adfirma 1 + 1 == 2
+}
+
+// Multiple skipped tests
+proba omitte "flaky on CI" "network timeout test" {
+    adfirma falsum
+}
+
+proba omitte "platform specific" "windows-only behavior" {
+    adfirma falsum
+}
+
+// Multiple todo tests
+proba futurum "needs new API" "graphql mutations" {
+    adfirma verum
+}
+
+proba futurum "depends on feature X" "caching layer" {
+    adfirma verum
+}
+
+// Skipped test with complex body
+proba omitte "external service down" "api integration" {
+    fixum status = 500
+    adfirma status == 200
+}
+
+// Todo test with setup
+proba futurum "needs database fixtures" "user creation flow" {
+    varia userId = 0
+    adfirma userId > 0
+}

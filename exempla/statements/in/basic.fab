@@ -1,0 +1,47 @@
+// Basic in (mutation block) statements
+//
+// in <object> { <assignments> }
+
+initium {
+    // Create an object with initial values
+    varia user = { nomen: "", aetas: 0, active: falsum }
+
+    // Mutation block: set multiple fields at once
+    in user {
+        nomen = "Marcus"
+        aetas = 42
+        active = verum
+    }
+
+    scribe user.nomen
+    scribe user.aetas
+
+    // Single-line mutation block
+    varia stats = { count: 0 }
+    in stats { count = 1 }
+
+    scribe stats.count
+
+    // Mutation with computed values
+    fixum width = 10
+    fixum height = 20
+    varia rect = { w: 0, h: 0, area: 0 }
+
+    in rect {
+        w = width
+        h = height
+        area = width * height
+    }
+
+    scribe rect.area
+
+    // Nested object mutation
+    varia config = { server: { host: "", port: 0 } }
+
+    in config.server {
+        host = "localhost"
+        port = 8080
+    }
+
+    scribe config.server.host
+}

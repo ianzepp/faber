@@ -1,0 +1,59 @@
+// Genus with methods using ego (self) reference
+//
+// genus <Name> {
+//     <type> <property>
+//     functio <method>() -> <type> { ... ego.<property> ... }
+// }
+
+genus Rectangle {
+    numerus width: 1
+    numerus height: 1
+
+    functio area() -> numerus {
+        redde ego.width * ego.height
+    }
+
+    functio perimeter() -> numerus {
+        redde 2 * (ego.width + ego.height)
+    }
+
+    functio isSquare() -> bivalens {
+        redde ego.width == ego.height
+    }
+}
+
+genus Counter {
+    numerus count: 0
+
+    functio increment() {
+        ego.count = ego.count + 1
+    }
+
+    functio getValue() -> numerus {
+        redde ego.count
+    }
+}
+
+initium {
+    // Methods that return values
+    fixum rect = novum Rectangle {
+        width: 10,
+        height: 5
+    }
+
+    scribe rect.area()
+    scribe rect.perimeter()
+    scribe rect.isSquare()
+
+    // Methods that modify state
+    varia counter = novum Counter
+
+    scribe counter.getValue()
+
+    counter.increment()
+    scribe counter.getValue()
+
+    counter.increment()
+    counter.increment()
+    scribe counter.getValue()
+}

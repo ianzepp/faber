@@ -1,0 +1,25 @@
+// Basic fac (do) scope blocks
+//
+// fac { <body> }
+
+initium {
+    // Simple scope block
+    fac {
+        fixum x = 42
+        scribe x
+    }
+
+    // Scope block isolates variables
+    fac {
+        fixum message = "Hello from fac block"
+        scribe message
+    }
+
+    // Multiple statements in scope
+    fac {
+        fixum a = 10
+        fixum b = 20
+        fixum sum = a + b
+        scribe sum
+    }
+}

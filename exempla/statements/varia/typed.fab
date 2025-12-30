@@ -1,0 +1,43 @@
+// Typed variable declarations
+//
+// varia <type> <name> = <expr>   -- typed mutable
+// fixum <type> <name> = <expr>   -- typed immutable
+
+initium {
+    // Typed immutable declarations
+    fixum numerus age = 30
+    fixum textus name = "Marcus"
+    fixum bivalens active = verum
+
+    scribe age
+    scribe name
+    scribe active
+
+    // Typed mutable declarations
+    varia numerus count = 0
+    varia textus status = "pending"
+    varia bivalens running = falsum
+
+    scribe count
+    scribe status
+    scribe running
+
+    // Reassign mutable typed variables
+    count = 100
+    status = "complete"
+    running = verum
+
+    scribe count
+    scribe status
+    scribe running
+
+    // Fractional numbers
+    fixum fractus pi = 3.14159
+    varia fractus rate = 0.05
+
+    scribe pi
+    scribe rate
+
+    rate = 0.10
+    scribe rate
+}

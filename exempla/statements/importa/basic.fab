@@ -1,0 +1,32 @@
+// Import statements (importa)
+//
+// ex <source> importa <names>           - named imports
+// ex <source> importa <name> ut <alias> - import with alias
+// ex <source> importa *                 - wildcard import
+
+// Named imports
+ex "lodash" importa map
+ex "@hono/hono" importa Hono, Context
+ex "utils" importa helper ut h
+ex "db" importa connect, query ut q, close
+
+// Wildcard import
+ex "@std/crypto" importa *
+
+// Multiple imports from different sources
+ex "@oak/oak" importa Application
+ex "std/path" importa join, resolve
+
+// Relative imports
+ex "./utils" importa helper
+ex "../shared/utils" importa formatter
+
+// Many named items
+ex "helpers" importa a, b, c, d, e, f
+
+// Multiple aliases
+ex "mod" importa foo ut f, bar ut b, baz ut z
+
+initium {
+    scribe "Import statements are declarations at module scope"
+}

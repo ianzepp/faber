@@ -1,0 +1,36 @@
+// Basic redde (return) statements
+//
+// redde <expression>   -- return a value
+// redde                -- void return
+
+functio add(numerus a, numerus b) fit numerus {
+    redde a + b
+}
+
+functio greet(textus name) fit textus {
+    redde "Hello, " + name
+}
+
+functio getFortyTwo() fit numerus {
+    redde 42
+}
+
+functio doNothing() fit vacuum {
+    redde
+}
+
+functio earlyExit(numerus x) fit numerus {
+    si x < 0 {
+        redde 0
+    }
+    redde x * 2
+}
+
+initium {
+    scribe add(10, 20)
+    scribe greet("World")
+    scribe getFortyTwo()
+    doNothing()
+    scribe earlyExit(-5)
+    scribe earlyExit(10)
+}

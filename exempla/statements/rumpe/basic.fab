@@ -1,0 +1,33 @@
+// Break (rumpe) in loops
+//
+// rumpe exits the innermost loop immediately
+
+initium {
+    // Break when reaching 5
+    varia i = 0
+
+    dum i < 10 {
+        si i == 5 {
+            rumpe
+        }
+        scribe i
+        i = i + 1
+    }
+
+    // Break in nested loop (exits inner only)
+    varia outer = 0
+
+    dum outer < 3 {
+        varia inner = 0
+
+        dum inner < 10 {
+            si inner == 2 {
+                rumpe
+            }
+            scribe scriptum("outer={}, inner={}", outer, inner)
+            inner = inner + 1
+        }
+
+        outer = outer + 1
+    }
+}

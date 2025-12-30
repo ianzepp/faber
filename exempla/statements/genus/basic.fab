@@ -1,0 +1,48 @@
+// Basic genus (class/struct) with properties
+//
+// genus <Name> {
+//     <type> <property>
+//     <type> <property>: <default>
+// }
+
+genus Punctum {
+    numerus x
+    numerus y
+}
+
+genus Persona {
+    textus nomen
+    numerus aetas: 0
+    bivalens activus: verum
+}
+
+initium {
+    // Instantiate with all required fields
+    fixum p = novum Punctum {
+        x: 10,
+        y: 20
+    }
+
+    scribe p.x
+    scribe p.y
+
+    // Instantiate with required + optional defaults
+    fixum marcus = novum Persona {
+        nomen: "Marcus"
+    }
+
+    scribe marcus.nomen
+    scribe marcus.aetas
+    scribe marcus.activus
+
+    // Override defaults
+    fixum julia = novum Persona {
+        nomen: "Julia",
+        aetas: 25,
+        activus: falsum
+    }
+
+    scribe julia.nomen
+    scribe julia.aetas
+    scribe julia.activus
+}

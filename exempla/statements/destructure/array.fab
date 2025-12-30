@@ -1,0 +1,63 @@
+// Array destructuring patterns
+//
+// fixum [a, b, c] = array         -- destructure into immutable bindings
+// varia [x, y, z] = array         -- destructure into mutable bindings
+// fixum [first, ceteri rest] = arr -- with rest pattern
+// fixum [_, second, _] = arr      -- skip elements with underscore
+
+initium {
+    // Basic array destructuring
+    fixum numbers = [1, 2, 3]
+    fixum [a, b, c] = numbers
+
+    scribe a
+    scribe b
+    scribe c
+
+    // Destructure inline array literal
+    fixum [first, second, third] = [10, 20, 30]
+
+    scribe first
+    scribe second
+    scribe third
+
+    // Mutable destructuring with varia
+    fixum coords = [100, 200]
+    varia [x, y] = coords
+
+    scribe x
+    scribe y
+
+    x = x + 50
+    y = y + 50
+
+    scribe x
+    scribe y
+
+    // Partial destructuring (fewer variables than elements)
+    fixum values = [1, 2, 3, 4, 5]
+    fixum [one, two] = values
+
+    scribe one
+    scribe two
+
+    // Rest pattern with ceteri
+    fixum items = [1, 2, 3, 4, 5]
+    fixum [head, ceteri tail] = items
+
+    scribe head
+    scribe tail
+
+    // Skip elements with underscore
+    fixum triple = [10, 20, 30]
+    fixum [_, middle, _] = triple
+
+    scribe middle
+
+    // Nested arrays
+    fixum matrix = [[1, 2], [3, 4]]
+    fixum [row1, row2] = matrix
+
+    scribe row1
+    scribe row2
+}

@@ -1,0 +1,32 @@
+// Basic pactum (interface) definition and implementation
+//
+// pactum <Name> { functio <method>(<params>) -> <returnType> }
+// genus <Name> implet <Pactum> { <implementation> }
+
+pactum Drawable {
+    functio draw() -> vacuum
+}
+
+genus Circle implet Drawable {
+    numerus radius: 10
+
+    functio draw() {
+        scribe scriptum("Drawing circle with radius {}", ego.radius)
+    }
+}
+
+genus Square implet Drawable {
+    numerus side: 5
+
+    functio draw() {
+        scribe scriptum("Drawing square with side {}", ego.side)
+    }
+}
+
+initium {
+    fixum circle = novum Circle { radius: 25 }
+    fixum square = novum Square { side: 15 }
+
+    circle.draw()
+    square.draw()
+}

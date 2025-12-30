@@ -1,0 +1,44 @@
+// Basic proba (test) statements
+//
+// proba "name" { body }
+
+// Simple test with single assertion
+proba "one plus one equals two" {
+    adfirma 1 + 1 == 2
+}
+
+// Test with multiple assertions
+proba "validates arithmetic" {
+    adfirma 2 + 2 == 4
+    adfirma 10 - 3 == 7
+    adfirma 3 * 4 == 12
+}
+
+// Test with variables
+proba "string concatenation works" {
+    fixum greeting = "hello"
+    fixum name = "world"
+    fixum result = scriptum("{} {}", greeting, name)
+    adfirma result == "hello world"
+}
+
+// Test boolean conditions
+proba "comparison operators" {
+    fixum x = 10
+    adfirma x > 5
+    adfirma x < 20
+    adfirma x >= 10
+    adfirma x <= 10
+}
+
+// Test with negation
+proba "negated assertions" {
+    adfirma non falsum
+    adfirma non (1 == 2)
+}
+
+// Test with complex logical assertion
+proba "complex assertion" {
+    fixum x = 50
+    adfirma x > 0 et x < 100
+}

@@ -1,0 +1,37 @@
+// Continue (perge) in loops
+//
+// perge skips to the next iteration of the innermost loop
+
+initium {
+    // Skip even numbers
+    varia i = 0
+
+    dum i < 10 {
+        i = i + 1
+
+        si i % 2 == 0 {
+            perge
+        }
+
+        scribe i
+    }
+
+    // Continue in nested loop (affects inner only)
+    varia outer = 0
+
+    dum outer < 3 {
+        varia inner = 0
+
+        dum inner < 5 {
+            inner = inner + 1
+
+            si inner == 3 {
+                perge
+            }
+
+            scribe scriptum("outer={}, inner={}", outer, inner)
+        }
+
+        outer = outer + 1
+    }
+}

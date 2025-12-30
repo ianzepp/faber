@@ -1,0 +1,31 @@
+// Basic discretio (discriminated union/tagged union)
+//
+// discretio Name {
+//     Variant1 { type field1, type field2 }
+//     Variant2 { type field }
+//     Variant3
+// }
+
+// Discretio with payload variants
+discretio Result {
+    Success { textus message }
+    Failure { textus error }
+}
+
+// Discretio with mixed unit and payload variants
+discretio Event {
+    Click { numerus x, numerus y }
+    Keypress { textus key }
+    Quit
+}
+
+// Discretio with many fields per variant
+discretio Shape {
+    Rectangle { numerus x, numerus y, numerus width, numerus height }
+    Circle { numerus cx, numerus cy, numerus radius }
+    Point { numerus x, numerus y }
+}
+
+initium {
+    scribe "Discretio types defined"
+}

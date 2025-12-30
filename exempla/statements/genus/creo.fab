@@ -1,0 +1,62 @@
+// Genus with constructor hook (creo)
+//
+// genus <Name> {
+//     <type> <property>: <default>
+//     functio creo() { ... }
+// }
+//
+// creo() runs after defaults and overrides are merged.
+// Use for validation, clamping, or derived initialization.
+
+genus BoundedValue {
+    numerus value: 0
+
+    functio creo() {
+        si ego.value < 0 {
+            ego.value = 0
+        }
+
+        si ego.value > 100 {
+            ego.value = 100
+        }
+    }
+
+    functio getValue() -> numerus {
+        redde ego.value
+    }
+}
+
+genus Circle {
+    numerus radius: 1
+    numerus diameter: 0
+    numerus area: 0
+
+    functio creo() {
+        ego.diameter = ego.radius * 2
+        ego.area = 3.14159 * ego.radius * ego.radius
+    }
+}
+
+initium {
+    // Validation in creo
+    fixum normal = novum BoundedValue {
+        value: 50
+    }
+
+    scribe normal.getValue()
+
+    fixum clamped = novum BoundedValue {
+        value: 200
+    }
+
+    scribe clamped.getValue()
+
+    // Derived initialization in creo
+    fixum c = novum Circle {
+        radius: 5
+    }
+
+    scribe c.radius
+    scribe c.diameter
+    scribe c.area
+}
