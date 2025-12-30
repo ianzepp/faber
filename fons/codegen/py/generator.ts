@@ -34,6 +34,7 @@ import { genIaceStatement } from './statements/iace';
 import { genScribeStatement } from './statements/scribe';
 import { genTemptaStatement } from './statements/tempta';
 import { genFacBlockStatement } from './statements/fac';
+import { genInitiumStatement } from './statements/initium';
 
 // Expression handlers
 import { genIdentifier } from './expressions/identifier';
@@ -172,6 +173,8 @@ export class PyGenerator {
                 return genTemptaStatement(node, this);
             case 'FacBlockStatement':
                 return genFacBlockStatement(node, this);
+            case 'InitiumStatement':
+                return genInitiumStatement(node, this);
             case 'BlockStatement':
                 return this.genBlockStatementContent(node);
             case 'ExpressionStatement':

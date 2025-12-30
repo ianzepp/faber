@@ -149,7 +149,8 @@ export type Statement =
     | ProbaStatement
     | CuraBlock
     | CuraStatement
-    | AdStatement;
+    | AdStatement
+    | InitiumStatement;
 
 // ---------------------------------------------------------------------------
 // Import/Export Declarations
@@ -1079,6 +1080,41 @@ export interface PergeStatement extends BaseNode {
 export interface BlockStatement extends BaseNode {
     type: 'BlockStatement';
     body: Statement[];
+}
+
+/**
+ * Entry point statement.
+ *
+ * GRAMMAR (in EBNF):
+ *   initiumStmt := 'initium' blockStmt
+ *
+ * INVARIANT: body is always a BlockStatement.
+ *
+ * WHY: Latin 'initium' (beginning) marks the program entry point.
+ *      This is a pure structural marker — it does not inject magic.
+ *      Source is responsible for setup (allocators via cura, etc.).
+ *
+ * Target mappings:
+ *   TypeScript: top-level statements (no wrapper needed)
+ *   Python:     if __name__ == "__main__": ...
+ *   Zig:        pub fn main() void { ... }
+ *   Rust:       fn main() { ... }
+ *   C++:        int main() { ... }
+ *
+ * Examples:
+ *   initium {
+ *       scribe "Hello"
+ *   }
+ *
+ *   initium {
+ *       cura arena fit alloc {
+ *           // allocator-scoped work
+ *       }
+ *   }
+ */
+export interface InitiumStatement extends BaseNode {
+    type: 'InitiumStatement';
+    body: BlockStatement;
 }
 
 // ---------------------------------------------------------------------------

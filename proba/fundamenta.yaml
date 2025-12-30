@@ -69,33 +69,66 @@
   fab: 'adfirma verum'
 
 # =============================================================================
-# Main Function (C++)
+# Entry Point (initium)
 # =============================================================================
 
-# Runtime code is wrapped in main function
-- name: 'cpp runtime code wrapped in main'
-  input: 'scribe "hello"'
+# initium generates target-appropriate main function
+- name: 'initium generates main function'
+  input: |
+      initium {
+        scribe "hello"
+      }
+  ts:
+      - 'console.log("hello")'
+  py:
+      - 'if __name__ == "__main__":'
+      - 'print("hello")'
   cpp:
       - 'int main() {'
+      - 'std::print'
       - 'return 0;'
   rs:
+      - 'fn main() {'
       - 'println!'
-  fab: 'scribe "hello"'
+  zig:
+      - 'pub fn main() void {'
+      - 'std.debug.print'
+  fab:
+      - 'initium {'
+      - 'scribe "hello"'
 
-# Declarations appear outside main, before it
-- name: 'cpp declarations outside main'
+# Declarations outside initium, call inside
+- name: 'declarations outside initium'
   input: |
       functio greet() {
         scribe "hi"
       }
-      greet()
+      initium {
+        greet()
+      }
+  ts:
+      - 'function greet()'
+      - 'console.log("hi")'
+      - 'greet();'
+  py:
+      - 'def greet():'
+      - 'print("hi")'
+      - 'if __name__ == "__main__":'
+      - 'greet()'
   cpp:
-      - 'void greet()'
+      - 'void greet() {'
       - 'int main() {'
+      - 'greet();'
   rs:
-      - 'fn greet()'
+      - 'fn greet() {'
+      - 'fn main() {'
+      - 'greet();'
+  zig:
+      - 'fn greet() void {'
+      - 'pub fn main() void {'
       - 'greet();'
   fab:
       - 'functio greet() {'
       - 'scribe "hi"'
+      - 'initium {'
       - 'greet()'

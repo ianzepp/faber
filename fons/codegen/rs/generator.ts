@@ -37,6 +37,7 @@ import { genExpressionStatement } from './statements/expression';
 import { genProbandumStatement } from './statements/probandum';
 import { genProbaStatement } from './statements/proba';
 import { genCuraBlock, genCuraStatement } from './statements/cura';
+import { genInitiumStatement } from './statements/initium';
 
 // Expression handlers
 import { genIdentifier } from './expressions/identifier';
@@ -179,6 +180,8 @@ export class RsGenerator {
                 return genCuraBlock(node, this);
             case 'CuraStatement':
                 return genCuraStatement(node, this);
+            case 'InitiumStatement':
+                return genInitiumStatement(node, this);
             case 'AdStatement':
                 throw new Error('AdStatement codegen not implemented for Rust');
             default:

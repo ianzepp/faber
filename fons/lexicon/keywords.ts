@@ -166,6 +166,9 @@ export const keywords: KeywordEntry[] = [
     // WHY: "discerne" (distinguish!) for variant matching - pairs with discretio
     //      Imperative of discernere (to separate, distinguish)
     { latin: 'discerne', meaning: 'match variant', category: 'control' },
+    // WHY: "initium" (beginning) for program entry point - marks main function
+    //      From initium (neuter noun) = beginning, start, origin
+    { latin: 'initium', meaning: 'main/entry', category: 'control' },
 
     // ---------------------------------------------------------------------------
     // Modifiers

@@ -8,11 +8,13 @@
  * ARCHITECTURE
  * ============
  * This module transforms a validated Latin AST into C++23 source code.
- * C++23 provides modern features that map well to Latin constructs:
- * - std::print for output (replaces iostream verbosity)
- * - std::expected<T,E> for error handling (aligns with Rust's Result)
- * - Concepts for interfaces (cleaner than abstract classes)
- * - Range-based for with views
+ * The generator performs faithful translation — source structure maps
+ * directly to output structure.
+ *
+ * Key principles:
+ * - No magic: if source has no initium, output has no main()
+ * - Statements emit in source order
+ * - Source is responsible for valid C++ structure
  *
  * Key transformations:
  * - varia -> auto (mutable by default in C++)
@@ -20,6 +22,7 @@
  * - functio -> function definition
  * - genus -> struct (public by default, simpler than class)
  * - pactum -> concept (C++20)
+ * - initium -> int main() { }
  * - si/aliter -> if/else
  * - elige -> switch
  * - ex...pro -> range-based for
@@ -31,17 +34,18 @@
  * INPUT/OUTPUT CONTRACT
  * =====================
  * INPUT:  Program AST node with Latin keywords and type names
- * OUTPUT: Valid C++23 source code string
+ * OUTPUT: C++23 source code string (validity depends on source structure)
  * ERRORS: Throws on unsupported AST node types
  *
  * INVARIANTS
  * ==========
- * INV-1: Generated code is syntactically valid C++23
+ * INV-1: Generated code preserves source structure
  * INV-2: All Latin type names are mapped to STL equivalents
  * INV-3: 4-space indentation (common C++ convention)
+ * INV-4: No implicit main() generation — source must define entry point
  */
 
-import type { Program, Statement } from '../../parser/ast';
+import type { Program } from '../../parser/ast';
 import type { CodegenOptions } from '../types';
 import { CppGenerator } from './generator';
 import { genPreamble } from './preamble';
@@ -52,6 +56,9 @@ import { genPreamble } from './preamble';
  * TRANSFORMS:
  *   Program AST -> C++23 source code string
  *
+ * WHY: Faithful translation — source structure determines output structure.
+ * If source needs a main(), source must define initium { }.
+ *
  * @param program - Validated AST from parser
  * @param options - Formatting configuration
  * @returns C++23 source code
@@ -59,63 +66,11 @@ import { genPreamble } from './preamble';
 export function generateCpp(program: Program, options: CodegenOptions = {}): string {
     const g = new CppGenerator(options.indent ?? '    ');
 
-    // Separate declarations from runtime statements
-    const declarations: Statement[] = [];
-    const runtime: Statement[] = [];
-
-    for (const stmt of program.body) {
-        if (isDeclaration(stmt)) {
-            declarations.push(stmt);
-        } else {
-            runtime.push(stmt);
-        }
-    }
-
-    const lines: string[] = [];
-
-    // Generate declarations first (functions, classes, etc.)
-    for (const stmt of declarations) {
-        lines.push(g.genStatement(stmt));
-    }
-
-    // Wrap runtime code in main()
-    if (runtime.length > 0) {
-        if (declarations.length > 0) {
-            lines.push('');
-        }
-
-        lines.push('int main() {');
-        g.depth++;
-
-        for (const stmt of runtime) {
-            lines.push(g.genStatement(stmt));
-        }
-
-        lines.push(`${g.ind()}return 0;`);
-        g.depth--;
-        lines.push('}');
-    }
+    // Generate all statements in source order
+    const statements = program.body.map(stmt => g.genStatement(stmt));
 
     // Build preamble (includes + helpers)
     const preamble = genPreamble(g.includes, g.needsScopeGuard);
 
-    return preamble + lines.join('\n');
-}
-
-/**
- * Check if a statement is a declaration (vs runtime code).
- */
-function isDeclaration(node: Statement): boolean {
-    switch (node.type) {
-        case 'FunctioDeclaration':
-        case 'GenusDeclaration':
-        case 'PactumDeclaration':
-        case 'TypeAliasDeclaration':
-        case 'OrdoDeclaration':
-        case 'DiscretioDeclaration':
-            return true;
-        // Top-level const could be declaration, but we'll put in main for simplicity
-        default:
-            return false;
-    }
+    return preamble + statements.join('\n');
 }

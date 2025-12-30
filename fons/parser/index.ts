@@ -829,6 +829,11 @@ export function parse(tokens: Token[]): ParserResult {
             return parseCura();
         }
 
+        // Entry point statement: initium { }
+        if (checkKeyword('initium')) {
+            return parseInitiumStatement();
+        }
+
         if (check('LBRACE')) {
             return parseBlockStatement();
         }
@@ -3356,6 +3361,37 @@ export function parse(tokens: Token[]): ParserResult {
         }
 
         return { type: 'CuraStatement', curatorKind, resource, binding, typeAnnotation, async, body, catchClause, position };
+    }
+
+    /**
+     * Parse initium (entry point) statement.
+     *
+     * GRAMMAR:
+     *   initiumStmt := 'initium' blockStmt
+     *
+     * WHY: 'initium' (beginning) marks the program entry point.
+     *      This is a pure structural marker with no magic injection.
+     *      The source is responsible for any setup (allocators via cura, etc.).
+     *
+     * Examples:
+     *   initium {
+     *       scribe "Hello"
+     *   }
+     *
+     *   initium {
+     *       cura arena fit alloc {
+     *           // allocator-scoped work
+     *       }
+     *   }
+     */
+    function parseInitiumStatement(): import('./ast').InitiumStatement {
+        const position = peek().position;
+
+        expectKeyword('initium', ParserErrorCode.ExpectedKeywordInitium);
+
+        const body = parseBlockStatement();
+
+        return { type: 'InitiumStatement', body, position };
     }
 
     /**
