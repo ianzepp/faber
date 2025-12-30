@@ -530,25 +530,25 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 | Latin                      | TypeScript | Zig | Python | Rust | C++23 |
 | -------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `pone` (set)               |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `accipe` (get)             |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `habet` (has)              |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `dele` (delete)            |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `longitudo` (size)         |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `vacua` (isEmpty)          |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `purga` (clear)            |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `claves` (keys)            |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `valores` (values)         |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `paria` (entries)          |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `accipeAut` (getOrDefault) |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
+| `pone` (set)               |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `accipe` (get)             |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `habet` (has)              |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `dele` (delete)            |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `longitudo` (size)         |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `vacua` (isEmpty)          |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `purga` (clear)            |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `claves` (keys)            |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `valores` (values)         |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `paria` (entries)          |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `accipeAut` (getOrDefault) |    [x]     | [x] |  [x]   | [x]  |  [x]  |
 | `selige` (pick)            |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
 | `omitte` (omit)            |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `confla` (merge)           |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
+| `confla` (merge)           |    [x]     | [-] |  [x]   | [x]  |  [x]  |
 | `inversa` (invert)         |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
 | `mappaValores` (mapValues) |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
 | `mappaClaves` (mapKeys)    |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `inLista` (toArray)        |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `inObjectum` (toObject)    |    [x]     | [-] |  [x]   | [ ]  |  [-]  |
+| `inLista` (toArray)        |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `inObjectum` (toObject)    |    [x]     | [-] |  [x]   | [-]  |  [-]  |
 
 ## Copia (Set) Methods
 
