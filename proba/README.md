@@ -20,10 +20,16 @@ proba/
 ├── codegen/
 │   ├── expressions/           # Expression codegen tests (call.yaml, binary.yaml, ...)
 │   └── statements/            # Statement codegen tests (si.yaml, functio.yaml, ...)
-├── lista.yaml                 # Standard library: list methods
-├── tabula.yaml                # Standard library: map/dict methods
-├── copia.yaml                 # Standard library: string methods
-├── casus.yaml                 # Standard library: pattern matching
+├── norma/                     # Standard library tests
+│   ├── aleator.yaml           # Random number generation
+│   ├── copia.yaml             # Set methods
+│   ├── lista.yaml             # List/array methods
+│   ├── mathesis.yaml          # Math functions
+│   └── tabula.yaml            # Map/dict methods
+├── casus.yaml                 # Error handling (tempta/cape/iace)
+├── curator.yaml               # Resource management (cura...fit)
+├── fundamenta.yaml            # Primitives and literals
+├── typi.yaml                  # Type system
 └── ...
 ```
 
@@ -37,23 +43,23 @@ Each YAML file contains an array of test cases:
 # Modern format (preferred)
 - name: descriptive test name
   faber: |
-    fixum x = 1 + 2
+      fixum x = 1 + 2
   expect:
-    ts: "const x = (1 + 2);"
-    py: "x = (1 + 2)"
-    rs: ["let x", "(1 + 2)"]
-    cpp:
-      contains: ["const auto x"]
-      not_contains: ["var"]
-    zig:
-      exact: "const x = (1 + 2);"
-  skip: [cpp]  # optional: skip specific targets
+      ts: 'const x = (1 + 2);'
+      py: 'x = (1 + 2)'
+      rs: ['let x', '(1 + 2)']
+      cpp:
+          contains: ['const auto x']
+          not_contains: ['var']
+      zig:
+          exact: 'const x = (1 + 2);'
+  skip: [cpp] # optional: skip specific targets
 
 # Legacy format (still supported)
 - name: test name
-  input: "fixum x = 1"
-  ts: "const x = 1;"
-  py: "x = 1"
+  input: 'fixum x = 1'
+  ts: 'const x = 1;'
+  py: 'x = 1'
 ```
 
 ### Input Fields
@@ -65,18 +71,19 @@ Each YAML file contains an array of test cases:
 
 ### Expectation Formats
 
-| Format                                    | Behavior                         |
-| ----------------------------------------- | -------------------------------- |
-| `string`                                  | Exact match (after trimming)     |
-| `string[]`                                | All fragments must be present    |
-| `{ exact: string }`                       | Exact match                      |
-| `{ contains: string[] }`                  | All fragments must be present    |
-| `{ not_contains: string[] }`              | Fragments must NOT be present    |
-| `{ contains: [...], not_contains: [...]}` | Combined inclusion/exclusion     |
+| Format                                    | Behavior                      |
+| ----------------------------------------- | ----------------------------- |
+| `string`                                  | Exact match (after trimming)  |
+| `string[]`                                | All fragments must be present |
+| `{ exact: string }`                       | Exact match                   |
+| `{ contains: string[] }`                  | All fragments must be present |
+| `{ not_contains: string[] }`              | Fragments must NOT be present |
+| `{ contains: [...], not_contains: [...]}` | Combined inclusion/exclusion  |
 
 ### Targets
 
 Tests can specify expectations for any combination of:
+
 - `ts` - TypeScript
 - `py` - Python
 - `rs` - Rust
@@ -92,27 +99,27 @@ Test that invalid code produces expected errors:
 
 ```yaml
 - name: undefined variable
-  faber: "fixum x = unknownVar"
+  faber: 'fixum x = unknownVar'
   errata:
-    - "Semantic errors"
-    - "Undefined variable"
+      - 'Semantic errors'
+      - 'Undefined variable'
 
 - name: any tokenizer error
   faber: 'fixum x = "unterminated'
-  errata: true  # any error is acceptable
+  errata: true # any error is acceptable
 
 - name: exact error message
-  faber: "bad code"
+  faber: 'bad code'
   errata: "Parse errors: P001: Expected ')'"
 ```
 
 ### Errata Formats
 
-| Format     | Behavior                              |
-| ---------- | ------------------------------------- |
-| `true`     | Any error is acceptable               |
-| `string`   | Exact match on error message          |
-| `string[]` | All fragments must appear in message  |
+| Format     | Behavior                             |
+| ---------- | ------------------------------------ |
+| `true`     | Any error is acceptable              |
+| `string`   | Exact match on error message         |
+| `string[]` | All fragments must appear in message |
 
 Errata tests use strict compilation (tokenizer + parser + semantic errors all cause failure).
 
@@ -122,8 +129,8 @@ Errata tests use strict compilation (tokenizer + parser + semantic errors all ca
 2. **Parsing**: Loads each file as an array of test cases
 3. **Grouping**: Creates a describe block per file, nested by target
 4. **Execution**: For each test case:
-   - Errata tests: Compile strictly, expect failure, validate error message
-   - Normal tests: Compile leniently (ignores undefined vars in snippets), check output
+    - Errata tests: Compile strictly, expect failure, validate error message
+    - Normal tests: Compile leniently (ignores undefined vars in snippets), check output
 5. **Coverage**: After all tests, prints missing expectations by target
 
 ### Test Execution Flow
@@ -165,6 +172,7 @@ Use `COVERAGE_DETAILS=1` for per-suite breakdown with specific test names.
 5. Run `bun test -t "your test name"` to verify
 
 Example workflow:
+
 ```bash
 # Add test to proba/codegen/expressions/call.yaml
 # Run just that test
