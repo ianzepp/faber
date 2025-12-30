@@ -554,21 +554,21 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 | Latin                         | TypeScript | Zig | Python | Rust | C++23 |
 | ----------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `adde` (add)                  |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `habet` (has)                 |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `dele` (delete)               |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `longitudo` (size)            |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `vacua` (isEmpty)             |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `purga` (clear)               |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `unio` (union)                |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `intersectio` (intersection)  |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `differentia` (difference)    |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `symmetrica` (symmetric diff) |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `subcopia` (isSubset)         |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `supercopia` (isSuperset)     |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
-| `inLista` (toArray)           |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
+| `adde` (add)                  |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `habet` (has)                 |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `dele` (delete)               |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `longitudo` (size)            |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `vacua` (isEmpty)             |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `purga` (clear)               |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `unio` (union)                |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `intersectio` (intersection)  |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `differentia` (difference)    |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `symmetrica` (symmetric diff) |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `subcopia` (isSubset)         |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `supercopia` (isSuperset)     |    [x]     | [-] |  [x]   | [x]  |  [x]  |
+| `inLista` (toArray)           |    [x]     | [-] |  [x]   | [x]  |  [x]  |
 | `valores` (values)            |    [x]     | [x] |  [x]   | [ ]  |  [x]  |
-| `perambula` (forEach)         |    [x]     | [-] |  [x]   | [ ]  |  [x]  |
+| `perambula` (forEach)         |    [x]     | [-] |  [x]   | [x]  |  [x]  |
 
 ## Stdlib: Time (tempus)
 
