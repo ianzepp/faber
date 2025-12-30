@@ -1683,7 +1683,8 @@ export type Expression =
     | PraefixumExpression
     | CollectionDSLExpression
     | AbExpression
-    | ScriptumExpression;
+    | ScriptumExpression
+    | RegexLiteral;
 
 // ---------------------------------------------------------------------------
 // Primary Expressions
@@ -1754,6 +1755,40 @@ export interface Literal extends BaseNode {
 export interface TemplateLiteral extends BaseNode {
     type: 'TemplateLiteral';
     raw: string;
+}
+
+/**
+ * Regex literal expression.
+ *
+ * GRAMMAR (in EBNF):
+ *   regexLiteral := 'sed' STRING IDENTIFIER?
+ *
+ * INVARIANT: pattern is the regex pattern string (without quotes).
+ * INVARIANT: flags is the optional flags identifier (i, m, s, x, u combinations).
+ *
+ * WHY: "sed" (the Unix stream editor) is synonymous with pattern matching.
+ *      The pattern string is passed through verbatim to the target - Faber
+ *      does not validate regex syntax (that's the target compiler's job).
+ *
+ * No "g" flag: Global matching (first vs all) is determined by the method
+ * called (quaere vs para), not by the regex pattern itself.
+ *
+ * Target mappings:
+ *   TypeScript: /pattern/flags (native regex literal)
+ *   Python:     re.compile(r'(?flags)pattern')
+ *   Rust:       Regex::new(r"(?flags)pattern")
+ *   C++:        std::regex("pattern") (flags not supported inline)
+ *   Zig:        "(?flags)pattern" (string for external library)
+ *
+ * Examples:
+ *   sed "\\d+"           -> pattern="\\d+", flags=""
+ *   sed "hello" i        -> pattern="hello", flags="i"
+ *   sed "^start" im      -> pattern="^start", flags="im"
+ */
+export interface RegexLiteral extends BaseNode {
+    type: 'RegexLiteral';
+    pattern: string;
+    flags: string;
 }
 
 /**

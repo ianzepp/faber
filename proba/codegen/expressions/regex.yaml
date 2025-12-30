@@ -1,0 +1,79 @@
+# Regex literal expressions - sed keyword
+# Maps Faber regex literals to target-language equivalents
+
+- name: simple regex pattern
+  faber: 'fixum pattern = sed "\d+"'
+  expect:
+      ts: 'const pattern = /\d+/;'
+      py:
+          - 'import re'
+          - "pattern = re.compile(r'\\d+')"
+      rs:
+          - 'use regex::Regex;'
+          - 'let pattern = Regex::new(r"\d+").unwrap();'
+      cpp:
+          - 'const auto pattern = std::regex("\\d+");'
+      zig:
+          - 'const pattern = "\\d+";'
+      fab:
+          - 'fixum pattern = sed "\d+"'
+
+- name: regex with case insensitive flag
+  faber: fixum word = sed "hello" i
+  expect:
+      ts: 'const word = /hello/i;'
+      py:
+          - "word = re.compile(r'(?i)hello')"
+      rs:
+          - 'let word = Regex::new(r"(?i)hello").unwrap();'
+      cpp:
+          - 'const auto word = std::regex("hello");'
+      zig:
+          - 'const word = "(?i)hello";'
+      fab:
+          - 'fixum word = sed "hello" i'
+
+- name: regex with multiple flags
+  faber: fixum lines = sed "^start" im
+  expect:
+      ts: 'const lines = /^start/im;'
+      py:
+          - "lines = re.compile(r'(?im)^start')"
+      rs:
+          - 'let lines = Regex::new(r"(?im)^start").unwrap();'
+      cpp:
+          - 'const auto lines = std::regex("^start");'
+      zig:
+          - 'const lines = "(?im)^start";'
+      fab:
+          - 'fixum lines = sed "^start" im'
+
+- name: regex with forward slashes
+  faber: fixum paths = sed "/usr/local/.*"
+  expect:
+      ts: 'const paths = /\/usr\/local\/.*/;'
+      py:
+          - "paths = re.compile(r'/usr/local/.*')"
+      rs:
+          - 'let paths = Regex::new(r"/usr/local/.*").unwrap();'
+      cpp:
+          - 'const auto paths = std::regex("/usr/local/.*");'
+      zig:
+          - 'const paths = "/usr/local/.*";'
+      fab:
+          - 'fixum paths = sed "/usr/local/.*"'
+
+- name: email pattern
+  faber: fixum email = sed "[^@]+@[^@]+"
+  expect:
+      ts: 'const email = /[^@]+@[^@]+/;'
+      py:
+          - "email = re.compile(r'[^@]+@[^@]+')"
+      rs:
+          - 'let email = Regex::new(r"[^@]+@[^@]+").unwrap();'
+      cpp:
+          - 'const auto email = std::regex("[^@]+@[^@]+");'
+      zig:
+          - 'const email = "[^@]+@[^@]+";'
+      fab:
+          - 'fixum email = sed "[^@]+@[^@]+"'

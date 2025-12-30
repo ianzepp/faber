@@ -93,6 +93,10 @@ function genPreamble(g: PyGenerator): string {
         imports.push('from decimal import Decimal');
     }
 
+    if (g.features.usesRegex) {
+        imports.push('import re');
+    }
+
     // WHY: praefixum blocks need a helper that executes code via exec()
     // with a restricted set of builtins (mimicking compile-time constraints)
     if (g.features.praefixum) {

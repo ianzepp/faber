@@ -155,6 +155,7 @@ import type {
     CollectionDSLExpression,
     AbExpression,
     ScriptumExpression,
+    RegexLiteral,
 } from './ast';
 import { builtinTypes } from '../lexicon/types-builtin';
 import { ParserErrorCode, PARSER_ERRORS } from './errors';
@@ -2447,6 +2448,51 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     /**
+     * Parse regex literal expression.
+     *
+     * GRAMMAR:
+     *   regexLiteral := 'sed' STRING IDENTIFIER?
+     *
+     * WHY: 'sed' (the Unix stream editor) is synonymous with pattern matching.
+     *      The pattern string is passed through verbatim to the target.
+     *      Flags are a bare identifier after the pattern (no comma).
+     *
+     * Examples:
+     *   sed "\\d+"           // pattern only
+     *   sed "hello" i        // case insensitive
+     *   sed "^start" im      // multiple flags
+     */
+    function parseRegexLiteral(): RegexLiteral {
+        const position = peek().position;
+
+        expectKeyword('sed', ParserErrorCode.UnexpectedToken);
+
+        if (!check('STRING')) {
+            error(ParserErrorCode.ExpectedStringAfterSed);
+            // Return minimal node to continue parsing
+            return { type: 'RegexLiteral', pattern: '', flags: '', position };
+        }
+
+        const patternToken = advance();
+        const pattern = patternToken.value;
+
+        // Parse optional flags identifier
+        // WHY: Flags are bare identifier (no comma) to distinguish from next argument
+        // Only match if it looks like flags (letters only, no comma before it)
+        let flags = '';
+        if (check('IDENTIFIER') && !check('COMMA')) {
+            const flagsToken = peek();
+            // Only consume if it looks like valid flags (letters only)
+            if (/^[imsxu]+$/.test(flagsToken.value)) {
+                advance();
+                flags = flagsToken.value;
+            }
+        }
+
+        return { type: 'RegexLiteral', pattern, flags, position };
+    }
+
+    /**
      * Parse 'de' statement (for-in loop).
      *
      * GRAMMAR:
@@ -4340,6 +4386,12 @@ export function parse(tokens: Token[]): ParserResult {
             return parseAbExpression();
         }
 
+        // Regex literal: sed "pattern" flags?
+        // GRAMMAR: regexLiteral := 'sed' STRING IDENTIFIER?
+        if (checkKeyword('sed')) {
+            return parseRegexLiteral();
+        }
+
         // Number literal (decimal or hex)
         if (check('NUMBER')) {
             const token = advance();
@@ -4591,6 +4643,9 @@ export function parse(tokens: Token[]): ParserResult {
 
     /**
      * Parse identifier or keyword as a name.
+     *
+     * GRAMMAR:
+     *   identifierOrKeyword := IDENTIFIER | KEYWORD
      *
      * WHY: Import specifiers can be keywords (ex norma importa scribe).
      *      In this context, 'scribe' is a valid name, not a statement keyword.

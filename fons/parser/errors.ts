@@ -100,6 +100,7 @@ export enum ParserErrorCode {
     // Module/source errors (P050-P059)
     ExpectedModuleName = 'P050',
     ExpectedString = 'P051',
+    ExpectedStringAfterSed = 'P053',
 
     // Invalid construct errors (P100-P199)
     InvalidAssignmentTarget = 'P100',
@@ -327,6 +328,10 @@ export const PARSER_ERRORS = {
     [ParserErrorCode.ExpectedString]: {
         text: 'Expected string literal',
         help: 'A quoted string is required here (exempli gratia: "test name").',
+    },
+    [ParserErrorCode.ExpectedStringAfterSed]: {
+        text: "Expected pattern string after 'sed'",
+        help: 'Regex literals require a pattern string: sed "\\\\d+" or sed "hello" i',
     },
 
     // Invalid construct errors

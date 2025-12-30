@@ -77,6 +77,9 @@ export interface RequiredFeatures {
 
     // Flumina (streams-first)
     flumina: boolean; // fit functions using Responsum protocol
+
+    // Regex
+    usesRegex: boolean; // sed literals - needs re import (Python) or regex crate (Rust)
 }
 
 /**
@@ -96,6 +99,7 @@ export function createRequiredFeatures(): RequiredFeatures {
         praefixum: false,
         dataclass: false,
         flumina: false,
+        usesRegex: false,
     };
 }
 

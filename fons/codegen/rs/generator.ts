@@ -6,7 +6,7 @@
  */
 
 import type { Statement, Expression, BlockStatement, Parameter, TypeAnnotation, TypeParameter, BaseNode } from '../../parser/ast';
-import { COMMENT_SYNTAX, formatLeadingComments, formatTrailingComments } from '../types';
+import { COMMENT_SYNTAX, formatLeadingComments, formatTrailingComments, createRequiredFeatures } from '../types';
 
 // Statement handlers
 import { genImportaDeclaration } from './statements/importa';
@@ -56,6 +56,7 @@ import { genQuaExpression } from './expressions/qua';
 import { genEstExpression } from './expressions/est';
 import { genPraefixumExpression } from './expressions/praefixum';
 import { genScriptumExpression } from './expressions/scriptum';
+import { genRegexLiteral } from './expressions/regex';
 
 /**
  * Map Latin type names to Rust type names.
@@ -78,6 +79,7 @@ const typeMap: Record<string, string> = {
 export class RsGenerator {
     depth = 0;
     inGenerator = false;
+    features = createRequiredFeatures();
 
     constructor(public indent: string = '    ') {}
 
@@ -251,6 +253,8 @@ export class RsGenerator {
                 return genPraefixumExpression(node, this);
             case 'ScriptumExpression':
                 return genScriptumExpression(node, this);
+            case 'RegexLiteral':
+                return genRegexLiteral(node, this);
             default:
                 throw new Error(`Unknown expression type: ${(node as any).type}`);
         }

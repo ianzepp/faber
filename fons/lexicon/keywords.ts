@@ -289,6 +289,15 @@ export const keywords: KeywordEntry[] = [
     { latin: 'ordina', meaning: 'sort', category: 'dsl' },
     { latin: 'collige', meaning: 'pluck', category: 'dsl' },
     { latin: 'grupa', meaning: 'group by', category: 'dsl' },
+
+    // ---------------------------------------------------------------------------
+    // Regex DSL
+    // ---------------------------------------------------------------------------
+
+    // WHY: "sed" (the Unix stream editor) is synonymous with pattern matching.
+    //      The Latin word "sed" means "but" — semantically unrelated, but the
+    //      Unix association makes it instantly recognizable for regex patterns.
+    { latin: 'sed', meaning: 'regex', category: 'dsl' },
 ];
 
 // =============================================================================

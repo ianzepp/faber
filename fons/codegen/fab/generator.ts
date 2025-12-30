@@ -73,6 +73,7 @@ import { genEstExpression } from './expressions/est';
 import { genPraefixumExpression } from './expressions/praefixum';
 import { genScriptumExpression } from './expressions/scriptum';
 import { genCollectionDSLExpression } from './expressions/collection-dsl';
+import { genRegexLiteral } from './expressions/regex';
 
 export class FabGenerator {
     depth = 0;
@@ -234,6 +235,8 @@ export class FabGenerator {
                 return genScriptumExpression(node, this);
             case 'CollectionDSLExpression':
                 return genCollectionDSLExpression(node, this);
+            case 'RegexLiteral':
+                return genRegexLiteral(node, this);
             default:
                 throw new Error(`Unknown expression type: ${(node as any).type}`);
         }

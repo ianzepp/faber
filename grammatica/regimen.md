@@ -332,6 +332,47 @@ fixum total = ex prices summa
 fixum result = ex items prima 10, ultima 3
 ```
 
+### Ab Expression
+
+```ebnf
+abExpr := 'ab' expression filter? (',' transform)*
+filter := ['non'] ('ubi' condition | identifier)
+condition := expression
+```
+
+> 'ab' (away from) is the dedicated DSL entry point for filtering.
+> The 'ex' preposition remains unchanged for iteration/import/destructuring.
+> Include/exclude is handled via 'non' keyword.
+
+**Examples:**
+
+```fab
+ab users activus                     // boolean property shorthand
+ab users non banned                  // negated boolean property
+ab users ubi aetas >= 18             // condition with ubi
+ab users non ubi banned et suspended // negated compound condition
+ab users activus, prima 10           // filter + transforms
+ab users activus pro user { }        // iteration form
+```
+
+### Regex Literal
+
+```ebnf
+regexLiteral := 'sed' STRING IDENTIFIER?
+```
+
+> 'sed' (the Unix stream editor) is synonymous with pattern matching.
+> The pattern string is passed through verbatim to the target.
+> Flags are a bare identifier after the pattern (no comma).
+
+**Examples:**
+
+```fab
+sed "\\d+"           // pattern only
+sed "hello" i        // case insensitive
+sed "^start" im      // multiple flags
+```
+
 ### De Statement
 
 ```ebnf
@@ -742,6 +783,15 @@ newExpr := 'novum' IDENTIFIER ('(' argumentList ')')? (objectLiteral | 'de' expr
 lambdaExpr := ('pro' | 'fit' | 'fiet') params? ((':' | 'redde') expression | blockStmt)
 params := IDENTIFIER (',' IDENTIFIER)*
 ```
+
+### Identifier Or Keyword
+
+```ebnf
+identifierOrKeyword := IDENTIFIER | KEYWORD
+```
+
+> Import specifiers can be keywords (ex norma importa scribe).
+> In this context, 'scribe' is a valid name, not a statement keyword.
 
 ---
 

@@ -53,6 +53,7 @@ import { genNovumExpression } from './expressions/novum';
 import { genEstExpression } from './expressions/est';
 import { genPraefixumExpression } from './expressions/praefixum';
 import { genScriptumExpression } from './expressions/scriptum';
+import { genRegexLiteral } from './expressions/regex';
 
 /**
  * Map Latin type names to Zig types.
@@ -414,6 +415,8 @@ export class ZigGenerator {
                 return genPraefixumExpression(node, this);
             case 'ScriptumExpression':
                 return genScriptumExpression(node, this);
+            case 'RegexLiteral':
+                return genRegexLiteral(node, this);
             default:
                 throw new Error(`Unknown expression type: ${(node as any).type}`);
         }

@@ -1,6 +1,6 @@
 ---
-status: planned
-note: Design complete; tokenizer/parser/codegen not yet implemented
+status: implemented
+note: Core regex literals implemented; string methods (quaere, para, muta, mutaOmnes, probat) not yet implemented
 updated: 2025-01
 ---
 

@@ -67,6 +67,7 @@ import { genPraefixumExpression } from './expressions/praefixum';
 import { genScriptumExpression } from './expressions/scriptum';
 import { genCollectionDSLExpression } from './expressions/collection-dsl';
 import { genAbExpression } from './expressions/ab';
+import { genRegexLiteral } from './expressions/regex';
 
 /**
  * Map Latin type names to TypeScript types.
@@ -301,6 +302,8 @@ export class TsGenerator {
                 return genCollectionDSLExpression(node, this);
             case 'AbExpression':
                 return genAbExpression(node, this);
+            case 'RegexLiteral':
+                return genRegexLiteral(node, this);
             default:
                 throw new Error(`Unknown expression type: ${(node as any).type}`);
         }

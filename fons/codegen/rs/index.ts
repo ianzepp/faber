@@ -82,23 +82,32 @@ export function generateRs(program: Program, options: CodegenOptions = {}): stri
         }
     }
 
-    const lines: string[] = [];
+    const bodyLines: string[] = [];
 
     // Emit top-level declarations (functions, structs, traits, etc.)
-    lines.push(...topLevel.map(stmt => g.genStatement(stmt)));
+    bodyLines.push(...topLevel.map(stmt => g.genStatement(stmt)));
 
     // WHY: Only emit main() if there's runtime code to execute
     if (runtime.length > 0) {
         if (topLevel.length > 0) {
-            lines.push('');
+            bodyLines.push('');
         }
 
-        lines.push('fn main() {');
+        bodyLines.push('fn main() {');
         g.depth++;
-        lines.push(...runtime.map(stmt => g.genStatement(stmt)));
+        bodyLines.push(...runtime.map(stmt => g.genStatement(stmt)));
         g.depth--;
-        lines.push('}');
+        bodyLines.push('}');
     }
+
+    // Generate preamble AFTER traversal so features are populated
+    const lines: string[] = [];
+    const preamble = genPreamble(g);
+    if (preamble) {
+        lines.push(preamble);
+        lines.push('');
+    }
+    lines.push(...bodyLines);
 
     return lines.join('\n');
 }
@@ -174,4 +183,20 @@ function isConstValue(node: Expression): boolean {
     }
 
     return false;
+}
+
+/**
+ * Generate Rust preamble (use statements) based on features used.
+ *
+ * WHY: Rust requires explicit use statements for external crates.
+ *      Only emit use statements for features actually used.
+ */
+function genPreamble(g: RsGenerator): string {
+    const uses: string[] = [];
+
+    if (g.features.usesRegex) {
+        uses.push('use regex::Regex;');
+    }
+
+    return uses.join('\n');
 }
