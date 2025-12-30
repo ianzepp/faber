@@ -18,6 +18,7 @@ Features are classified by severity:
 | TS Feature | Severity | Notes |
 |------------|----------|-------|
 | `extends` (class inheritance) | Synthesize | Use `sub` keyword. Target-gated: TS/Py/C++ only; error on Rust/Zig. |
+| `super()` calls | Synthesize | Use `supra()`. Target-gated: TS/Py/C++ only. |
 | `abstract class` | Synthesize | Use `abstractus genus`. Target-gated: TS/Py/C++ only. |
 | `abstract method` | Synthesize | Use `abstractus functio`. Target-gated: TS/Py/C++ only. |
 | `protected` modifier | Synthesize | Use `protectus`. Target-gated: TS/Py/C++ only. |

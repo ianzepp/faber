@@ -101,7 +101,7 @@ genus Dog sub Animal {
     protectus textus name
 
     functio creo(textus name) {
-        super()
+        supra()
         ego.name = name
     }
 
