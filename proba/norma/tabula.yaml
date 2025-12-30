@@ -18,6 +18,8 @@
   rs:
       - 'HashMap<String, i64>'
       - '.insert('
+  zig:
+      - '.pone(alloc, "key", 42)'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.pone("key", 42)'
@@ -34,6 +36,8 @@
   rs:
       - 'HashMap<String, i64>'
       - '.get(&String::from("key")'
+  zig:
+      - '.accipe("key")'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.accipe("key")'
@@ -50,6 +54,8 @@
   rs:
       - 'HashMap<String, i64>'
       - '.contains_key(&String::from("key")'
+  zig:
+      - '.habet("key")'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.habet("key")'
@@ -66,6 +72,8 @@
   rs:
       - 'HashMap<String, i64>'
       - '.remove(&String::from("key")'
+  zig:
+      - '.dele("key")'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.dele("key")'
@@ -82,6 +90,8 @@
   rs:
       - 'HashMap<String, i64>'
       - '.len()'
+  zig:
+      - '.longitudo()'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.longitudo()'
@@ -98,6 +108,8 @@
   rs:
       - 'HashMap<String, i64>'
       - '.is_empty()'
+  zig:
+      - '.vacua()'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.vacua()'
@@ -114,6 +126,8 @@
   rs:
       - 'HashMap<String, i64>'
       - '.clear()'
+  zig:
+      - '.purga()'
   fab:
       - 'varia tabula<textus, numerus> map = {}'
       - 'map.purga()'
@@ -134,6 +148,8 @@
   rs:
       - 'HashMap<String, i64>'
       - '.keys()'
+  zig:
+      - '.claves()'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.claves()'
@@ -150,6 +166,8 @@
   rs:
       - 'HashMap<String, i64>'
       - '.values()'
+  zig:
+      - '.valores()'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.valores()'
@@ -172,6 +190,8 @@
       - 'HashMap<String, i64>'
       - '.get(&String::from("key")'
       - '.unwrap_or(0)'
+  zig:
+      - '.accipeAut("key", 0)'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.accipeAut("key", 0)'

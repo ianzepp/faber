@@ -17,11 +17,11 @@
 import type { CallExpression, Expression, SpreadElement, Identifier } from '../../../parser/ast';
 import type { ZigGenerator } from '../generator';
 
-// WHY: Unified registry for lista methods (Phase 1 of stdlib refactor)
+// WHY: Unified registries for collection methods (stdlib refactor)
 import { getListaMethod } from '../../lista';
+import { getTabulaMethod } from '../../tabula';
 
 // Collection method registries (will be unified in future phases)
-import { getTabulaMethod } from '../norma/tabula';
 import { getCopiaMethod } from '../norma/copia';
 import { getMathesisFunction } from '../norma/mathesis';
 import { getTempusFunction } from '../norma/tempus';

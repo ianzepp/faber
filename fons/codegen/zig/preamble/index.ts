@@ -18,6 +18,7 @@ const SUBSIDIA_PATH = join(__dirname, '../../../../subsidia/zig');
 
 // Read preamble files once at module load
 const LISTA = readFileSync(join(SUBSIDIA_PATH, 'lista.zig'), 'utf-8');
+const TABULA = readFileSync(join(SUBSIDIA_PATH, 'tabula.zig'), 'utf-8');
 
 /**
  * Generate preamble based on features used.
@@ -35,6 +36,12 @@ export function genPreamble(features: RequiredFeatures): string {
     if (features.lista) {
         lines.push('');
         lines.push(LISTA);
+    }
+
+    // Add Tabula type when tabula collections are used
+    if (features.tabula) {
+        lines.push('');
+        lines.push(TABULA);
     }
 
     return lines.join('\n') + '\n';
