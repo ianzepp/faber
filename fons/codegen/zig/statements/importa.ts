@@ -19,7 +19,9 @@ export function genImportaDeclaration(node: ImportaDeclaration, g: ZigGenerator)
     const source = node.source;
 
     if (node.wildcard) {
-        return `${g.ind()}const ${source} = @import("${source}");`;
+        // WHY: Use explicit alias if provided, otherwise use source as name
+        const alias = node.wildcardAlias?.name ?? source;
+        return `${g.ind()}const ${alias} = @import("${source}");`;
     }
 
     // WHY: Import module once with underscore prefix, then bind specific names

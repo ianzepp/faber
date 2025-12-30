@@ -88,15 +88,47 @@ async function main() {
         console.log(`\n${failed} parser/codegen failure(s) - continuing to verify generated files...`);
     }
 
-    // Lint TypeScript output
+    // Verify TypeScript output compiles
     if (targets.includes('ts')) {
-        console.log('Linting TypeScript...');
-        try {
-            await $`npx eslint ${join(OUTPUT, 'ts')}/**/*.ts`.quiet();
-            console.log('  eslint: OK');
-        } catch (err: any) {
-            console.error('  eslint: FAILED');
-            console.error(err.stdout?.toString() || err.stderr?.toString());
+        console.log('Verifying TypeScript...');
+        const tsDir = join(OUTPUT, 'ts');
+
+        // Find all .ts files
+        const findTsFiles = async (dir: string): Promise<string[]> => {
+            const entries = await readdir(dir);
+            const files: string[] = [];
+            for (const entry of entries) {
+                const fullPath = join(dir, entry);
+                const stat = statSync(fullPath);
+                if (stat.isDirectory()) {
+                    files.push(...(await findTsFiles(fullPath)));
+                } else if (entry.endsWith('.ts')) {
+                    files.push(fullPath);
+                }
+            }
+            return files;
+        };
+
+        const tsFiles = await findTsFiles(tsDir);
+        let tsFailed = 0;
+
+        for (const file of tsFiles) {
+            try {
+                // WHY: --no-bundle just type-checks without bundling
+                await $`bun build --no-bundle ${file}`.quiet();
+            } catch (err: any) {
+                console.error(`  ${relative(OUTPUT, file)}: FAILED`);
+                const errText = err.stderr?.toString() || '';
+                const firstError = errText.split('\n').slice(0, 3).join('\n');
+                if (firstError) console.error(`    ${firstError}`);
+                tsFailed++;
+            }
+        }
+
+        if (tsFailed === 0) {
+            console.log(`  bun build: OK (${tsFiles.length} files)`);
+        } else {
+            console.log(`\n${tsFailed}/${tsFiles.length} TypeScript file(s) failed to compile.`);
             process.exit(1);
         }
     }

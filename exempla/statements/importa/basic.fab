@@ -2,7 +2,7 @@
 //
 // ex <source> importa <names>           - named imports
 // ex <source> importa <name> ut <alias> - import with alias
-// ex <source> importa *                 - wildcard import
+// ex <source> importa * ut <alias>      - wildcard import with alias
 
 // Named imports
 ex "lodash" importa map
@@ -10,8 +10,8 @@ ex "@hono/hono" importa Hono, Context
 ex "utils" importa helper ut h
 ex "db" importa connect, query ut q, close
 
-// Wildcard import
-ex "@std/crypto" importa *
+// Wildcard import (alias required for TypeScript target)
+ex "@std/crypto" importa * ut crypto
 
 // Multiple imports from different sources
 ex "@oak/oak" importa Application

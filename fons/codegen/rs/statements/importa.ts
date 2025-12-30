@@ -19,7 +19,8 @@ export function genImportaDeclaration(node: ImportaDeclaration, g: RsGenerator):
     }
 
     if (node.wildcard) {
-        return `${g.ind()}use ${source}::*;`;
+        const alias = node.wildcardAlias ? ` as ${node.wildcardAlias.name}` : '';
+        return `${g.ind()}use ${source}::*${alias};`;
     }
 
     // WHY: ImportSpecifier has imported/local - emit "imported as local" when different

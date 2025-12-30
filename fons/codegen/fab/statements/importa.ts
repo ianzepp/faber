@@ -12,7 +12,8 @@ export function genImportaDeclaration(node: ImportaDeclaration, g: FabGenerator)
     const source = node.source.includes('/') ? `"${node.source}"` : node.source;
 
     if (node.wildcard) {
-        return `${g.ind()}ex ${source} importa *`;
+        const alias = node.wildcardAlias ? ` ut ${node.wildcardAlias.name}` : '';
+        return `${g.ind()}ex ${source} importa *${alias}`;
     }
 
     const specifiers = node.specifiers.map(spec => {

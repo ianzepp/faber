@@ -52,12 +52,12 @@
       fab:
           - 'importa { map } ex "lodash"'
 
-# Wildcard import
+# Wildcard import (without alias - passes through literally)
 - name: wildcard import
   faber: 'ex "@std/crypto" importa *'
   expect:
       ts:
-          - 'import * as @std/crypto from "@std/crypto";'
+          - 'import * from "@std/crypto";'
       py:
           - 'import @std/crypto'
       rs:
@@ -66,7 +66,23 @@
       zig:
           - 'const @std/crypto = @import("@std/crypto");'
       fab:
-          - 'importa * ut @std/crypto ex "@std/crypto"'
+          - 'importa * ex "@std/crypto"'
+
+# Wildcard import with alias (required for TypeScript)
+- name: wildcard import with alias
+  faber: 'ex "@std/crypto" importa * ut crypto'
+  expect:
+      ts:
+          - 'import * as crypto from "@std/crypto";'
+      py:
+          - 'import @std/crypto as crypto'
+      rs:
+          - 'use @std/crypto::* as crypto;'
+      cpp: []
+      zig:
+          - 'const crypto = @import("@std/crypto");'
+      fab:
+          - 'importa * ut crypto ex "@std/crypto"'
 
 # =============================================================================
 # Import with Aliases (ut keyword)
@@ -140,7 +156,7 @@
       zig:
           - 'const norma = @import("norma");'
       fab:
-          - 'importa * ut norma ex "norma"'
+          - 'importa * ex "norma"'
 
 # =============================================================================
 # Multiple Import Statements

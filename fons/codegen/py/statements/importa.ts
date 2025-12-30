@@ -22,7 +22,8 @@ export function genImportaDeclaration(node: ImportaDeclaration, g: PyGenerator):
     const source = node.source;
 
     if (node.wildcard) {
-        return `${g.ind()}import ${source}`;
+        const alias = node.wildcardAlias ? ` as ${node.wildcardAlias.name}` : '';
+        return `${g.ind()}import ${source}${alias}`;
     }
 
     // WHY: ImportSpecifier has imported/local - emit "imported as local" when different

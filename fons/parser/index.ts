@@ -923,7 +923,12 @@ export function parse(tokens: Token[]): ParserResult {
         expectKeyword('importa', ParserErrorCode.ExpectedKeywordImporta);
 
         if (match('STAR')) {
-            return { type: 'ImportaDeclaration', source, specifiers: [], wildcard: true, position };
+            // Optional alias: ex "source" importa * ut alias
+            let wildcardAlias: Identifier | undefined;
+            if (matchKeyword('ut')) {
+                wildcardAlias = parseIdentifier();
+            }
+            return { type: 'ImportaDeclaration', source, specifiers: [], wildcard: true, wildcardAlias, position };
         }
 
         const specifiers: ImportSpecifier[] = [];
@@ -979,6 +984,14 @@ export function parse(tokens: Token[]): ParserResult {
         if (check('LBRACKET')) {
             name = parseArrayPattern();
         } else if (isTypeName(peek())) {
+            // Builtin type: fixum numerus x = 42
+            typeAnnotation = parseTypeAnnotation();
+            name = parseIdentifier();
+        } else if (check('IDENTIFIER') && peek(1).type === 'IDENTIFIER') {
+            // Custom type: fixum UserId id = 42
+            // WHY: Two consecutive identifiers means first is type, second is name.
+            // This handles user-defined types (typus aliases) without requiring
+            // two-pass parsing or explicit type markers.
             typeAnnotation = parseTypeAnnotation();
             name = parseIdentifier();
         } else {

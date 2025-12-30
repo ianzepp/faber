@@ -21,7 +21,11 @@ export function genImportaDeclaration(node: ImportaDeclaration, g: TsGenerator, 
     }
 
     if (node.wildcard) {
-        return `${g.ind()}import * as ${source} from "${source}"${semi ? ';' : ''}`;
+        // WHY: Pass through literally. If TS requires an alias and none provided,
+        // the TS compiler will error - that's the developer's responsibility.
+        const alias = node.wildcardAlias?.name ?? '';
+        const asClause = alias ? ` as ${alias}` : '';
+        return `${g.ind()}import *${asClause} from "${source}"${semi ? ';' : ''}`;
     }
 
     // WHY: ImportSpecifier has imported/local - emit "imported as local" when different

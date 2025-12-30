@@ -193,12 +193,14 @@ export interface ImportSpecifier extends BaseNode {
  *   ex norma importa scribe ut s          -> source="norma", specifiers=[{scribe,s}]
  *   ex "norma/tempus" importa nunc        -> source="norma/tempus", specifiers=[{nunc,nunc}]
  *   ex norma importa *                    -> source="norma", wildcard=true
+ *   ex "crypto" importa * ut crypto       -> source="crypto", wildcard=true, wildcardAlias="crypto"
  */
 export interface ImportaDeclaration extends BaseNode {
     type: 'ImportaDeclaration';
     source: string;
     specifiers: ImportSpecifier[];
     wildcard: boolean;
+    wildcardAlias?: Identifier;
 }
 
 /**
