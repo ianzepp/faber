@@ -125,6 +125,8 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
         if (collectionName === 'tabula') {
             const method = getTabulaMethod(methodName);
             if (method) {
+                // WHY: Flag features so preamble includes Tabula and arena setup
+                g.features.tabula = true;
                 if (typeof method.zig === 'function') {
                     return method.zig(obj, argsArray, curator);
                 }
@@ -133,6 +135,8 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
         } else if (collectionName === 'copia') {
             const method = getCopiaMethod(methodName);
             if (method) {
+                // WHY: Flag features so preamble includes Copia and arena setup
+                g.features.copia = true;
                 if (typeof method.zig === 'function') {
                     return method.zig(obj, argsArray, curator);
                 }
@@ -141,6 +145,8 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
         } else if (collectionName === 'lista') {
             const method = getListaMethod(methodName);
             if (method) {
+                // WHY: Flag features so preamble includes Lista and arena setup
+                g.features.lista = true;
                 if (typeof method.zig === 'function') {
                     return method.zig(obj, argsArray, curator);
                 }
@@ -151,6 +157,9 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
         // Fallback: no type info or unknown type - try lista (most common)
         const listaMethod = getListaMethod(methodName);
         if (listaMethod) {
+            // WHY: Flag features so preamble includes Lista and arena setup in main()
+            // Without this, code like `items.adde(alloc, 1)` would reference undefined alloc
+            g.features.lista = true;
             if (typeof listaMethod.zig === 'function') {
                 return listaMethod.zig(obj, argsArray, curator);
             }

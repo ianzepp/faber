@@ -15,9 +15,12 @@
 
 import type { CallExpression, Expression, Identifier } from '../../../parser/ast';
 import type { CppGenerator } from '../generator';
-import { getListaMethod, getListaHeaders } from '../norma/lista';
-import { getTabulaMethod, getTabulaHeaders } from '../norma/tabula';
-import { getCopiaMethod, getCopiaHeaders } from '../norma/copia';
+
+// WHY: Unified registries for collection methods (stdlib refactor)
+import { getListaMethod } from '../../lista';
+import { getTabulaMethod } from '../../tabula';
+import { getCopiaMethod } from '../../copia';
+
 import { getMathesisFunction, getMathesisHeaders } from '../norma/mathesis';
 import { getAleatorFunction, getAleatorHeaders } from '../norma/aleator';
 
@@ -158,12 +161,10 @@ export function genCallExpression(node: CallExpression, g: CppGenerator): string
         const collectionName = objType?.kind === 'generic' ? objType.name : null;
 
         // Dispatch based on resolved type
+        // TODO: Add header tracking to unified registries (currently C++ headers are not tracked)
         if (collectionName === 'tabula') {
             const method = getTabulaMethod(methodName);
             if (method) {
-                for (const header of getTabulaHeaders(methodName)) {
-                    g.includes.add(header);
-                }
                 if (typeof method.cpp === 'function') {
                     return method.cpp(obj, argsArray);
                 }
@@ -172,9 +173,6 @@ export function genCallExpression(node: CallExpression, g: CppGenerator): string
         } else if (collectionName === 'copia') {
             const method = getCopiaMethod(methodName);
             if (method) {
-                for (const header of getCopiaHeaders(methodName)) {
-                    g.includes.add(header);
-                }
                 if (typeof method.cpp === 'function') {
                     return method.cpp(obj, argsArray);
                 }
@@ -183,9 +181,6 @@ export function genCallExpression(node: CallExpression, g: CppGenerator): string
         } else if (collectionName === 'lista') {
             const method = getListaMethod(methodName);
             if (method) {
-                for (const header of getListaHeaders(methodName)) {
-                    g.includes.add(header);
-                }
                 if (typeof method.cpp === 'function') {
                     return method.cpp(obj, argsArray);
                 }
@@ -196,9 +191,6 @@ export function genCallExpression(node: CallExpression, g: CppGenerator): string
         // Fallback: no type info - try lista (most common)
         const listaMethod = getListaMethod(methodName);
         if (listaMethod) {
-            for (const header of getListaHeaders(methodName)) {
-                g.includes.add(header);
-            }
             if (typeof listaMethod.cpp === 'function') {
                 return listaMethod.cpp(obj, argsArray);
             }

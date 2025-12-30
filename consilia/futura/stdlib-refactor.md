@@ -427,16 +427,25 @@ This could be wired up to auto-generate arena in main().
 - [x] Add Zig expectations to `proba/norma/copia.yaml`
 - [x] Run tests (3563 total pass)
 
+### Phase 3: Other Targets (completed 2025-12-30)
+
+- [x] Add ts, py, rs, cpp entries to `fons/codegen/lista.ts`
+- [x] Add ts, py, rs, cpp entries to `fons/codegen/tabula.ts`
+- [x] Add ts, py, rs, cpp entries to `fons/codegen/copia.ts`
+- [x] Update each target's `expressions/call.ts` to import from unified registries
+- [x] Add standard headers to C++ preamble (algorithm, numeric, ranges, vector)
+- [x] Delete old per-target `norma/{lista,tabula,copia}.ts` files (12 files)
+- [x] Run tests (3563 pass)
+
 ### Deferred
 
-- [ ] Fix default allocator bug (auto-generate arena in main)
+- [x] Fix default allocator bug (auto-generate arena in main) — 2025-12-30: Always emit arena allocator in main() unconditionally. Simpler than detecting collection usage, and `_ = alloc` silences unused warning. Also set features flags in call.ts when collection methods are called (still needed for preamble Lista/Tabula/Copia inclusion).
 - [ ] Update README.md status table
-- [ ] Phase 3: Other targets
-- [ ] Phase 4: Cleanup old norma files
+- [ ] Phase 4: Cleanup remaining norma files (aleator, mathesis, tempus)
 
 ### Future: Package-based Import (Phase 5)
 
-Currently, subsidia/*.zig files are injected into the preamble of every generated file. This works but bloats output. The goal is to allow importing from a package instead:
+Currently, subsidia/\*.zig files are injected into the preamble of every generated file. This works but bloats output. The goal is to allow importing from a package instead:
 
 ```zig
 // Current (preamble injection - 300+ lines per file)
@@ -463,29 +472,30 @@ subsidia/zig/
 
 1. **Single-file compilation** (test runner, quick scripts):
    Use Zig's `-M` module flag:
-   ```bash
-   zig build-exe output.zig --mod faber::/path/to/subsidia/zig/mod.zig -femit-bin=output
-   ```
+
+    ```bash
+    zig build-exe output.zig --mod faber::/path/to/subsidia/zig/mod.zig -femit-bin=output
+    ```
 
 2. **Build.zig projects** (real applications):
    Add faber as a dependency in `build.zig.zon`:
-   ```zig
-   .dependencies = .{
-       .faber = .{
-           .url = "https://github.com/ianzepp/faber-romanus/archive/v1.0.0.tar.gz",
-           .hash = "...",
-       },
-   },
-   ```
-   Then in code: `const faber = @import("faber");`
+    ```zig
+    .dependencies = .{
+        .faber = .{
+            .url = "https://github.com/ianzepp/faber-romanus/archive/v1.0.0.tar.gz",
+            .hash = "...",
+        },
+    },
+    ```
+    Then in code: `const faber = @import("faber");`
 
 **Implementation steps:**
 
 - [ ] Update `scripta/exempla.ts` to use `--mod` flag instead of preamble injection:
-  ```typescript
-  const SUBSIDIA = join(ROOT, 'subsidia', 'zig', 'mod.zig');
-  await $`zig build-exe ${file} --mod faber::${SUBSIDIA} -femit-bin=${output}`.quiet();
-  ```
+    ```typescript
+    const SUBSIDIA = join(ROOT, 'subsidia', 'zig', 'mod.zig');
+    await $`zig build-exe ${file} --mod faber::${SUBSIDIA} -femit-bin=${output}`.quiet();
+    ```
 - [ ] Update preamble generator to emit `@import("faber")` instead of inline definitions
 - [ ] Add CLI flag `--emit-single` to preserve current inline behavior if needed
 - [ ] Test with Zig 0.11+ (module flag syntax may vary)

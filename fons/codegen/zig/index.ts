@@ -46,7 +46,7 @@
 import type { Program, Statement, Expression } from '../../parser/ast';
 import type { CodegenOptions } from '../types';
 import { ZigGenerator } from './generator';
-import { genPreamble, usesCollections } from './preamble';
+import { genPreamble } from './preamble';
 
 /**
  * Generate Zig source code from a Latin AST.
@@ -81,24 +81,19 @@ export function generateZig(program: Program, options: CodegenOptions = {}): str
 
     // WHY: Only emit main() if there's runtime code to execute
     if (runtime.length > 0) {
-        // Second pass: generate runtime code inside main() context
-        // Must happen AFTER depth is incremented for proper indentation
         lines.push('pub fn main() void {');
         g.depth++;
 
-        // WHY: Emit arena allocator preamble when collections are used
-        // We need to generate runtime code first to detect collection usage,
-        // but we need depth set first for indentation. Generate to temp array.
+        // WHY: Always provide default allocator in main() so curatorStack['alloc'] is valid.
+        // Arena allocator is cheap (just page_allocator wrapper) and Zig optimizes if unused.
+        // Using _ = alloc silences "unused variable" warning when no collections are used.
+        lines.push(`${g.ind()}var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);`);
+        lines.push(`${g.ind()}defer arena.deinit();`);
+        lines.push(`${g.ind()}const alloc = arena.allocator();`);
+        lines.push(`${g.ind()}_ = alloc;`);
+        lines.push('');
+
         const runtimeCode = runtime.map(stmt => g.genStatement(stmt));
-
-        if (usesCollections(g.features)) {
-            lines.push(`${g.ind()}var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);`);
-            lines.push(`${g.ind()}defer arena.deinit();`);
-            lines.push(`${g.ind()}const alloc = arena.allocator();`);
-            lines.push(`${g.ind()}_ = alloc; // silence unused warning until needed`);
-            lines.push('');
-        }
-
         lines.push(...runtimeCode);
         g.depth--;
         lines.push('}');

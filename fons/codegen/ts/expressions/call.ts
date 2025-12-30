@@ -15,9 +15,12 @@
 
 import type { CallExpression, Identifier } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
-import { getListaMethod } from '../norma/lista';
-import { getTabulaMethod } from '../norma/tabula';
-import { getCopiaMethod } from '../norma/copia';
+
+// WHY: Unified registries for collection methods (stdlib refactor)
+import { getListaMethod } from '../../lista';
+import { getTabulaMethod } from '../../tabula';
+import { getCopiaMethod } from '../../copia';
+
 import { getMathesisFunction } from '../norma/mathesis';
 import { getAleatorFunction } from '../norma/aleator';
 

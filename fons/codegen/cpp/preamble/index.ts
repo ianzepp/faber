@@ -23,10 +23,14 @@ const SCOPE_GUARD = readFileSync(join(__dirname, 'scopeguard.txt'), 'utf-8');
 export function genPreamble(includes: Set<string>, needsScopeGuard: boolean): string {
     const parts: string[] = [];
 
-    // Always include these for basic functionality
-    includes.add('<print>');
-    includes.add('<string>');
+    // Always include standard headers - real applications need these anyway
+    includes.add('<algorithm>');
     includes.add('<cstdint>');
+    includes.add('<numeric>');
+    includes.add('<print>');
+    includes.add('<ranges>');
+    includes.add('<string>');
+    includes.add('<vector>');
 
     const sorted = Array.from(includes).sort();
     parts.push(sorted.map(h => `#include ${h}`).join('\n'));
