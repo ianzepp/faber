@@ -1,0 +1,24 @@
+// Basic adfirma (assert) statements
+//
+// adfirma <condition>
+// adfirma <condition>, "error message"
+
+initium {
+    fixum x = 10
+
+    // Simple assertion without message
+    adfirma x > 0
+
+    // Assertion with custom error message
+    adfirma x == 10, "x must equal 10"
+
+    // Multiple assertions
+    fixum name = "Marcus"
+    adfirma name == "Marcus"
+    adfirma name != "", "name must not be empty"
+
+    // Boolean assertions
+    fixum active = verum
+    adfirma active
+    adfirma active == verum, "must be active"
+}

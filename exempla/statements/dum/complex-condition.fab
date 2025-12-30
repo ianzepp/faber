@@ -1,0 +1,29 @@
+// Dum with compound conditions
+//
+// dum <cond1> et <cond2> { }   -- both must be true
+// dum <cond1> aut <cond2> { }  -- either must be true
+
+initium {
+    // Using "et" (and) - loop while running AND attempts < limit
+    varia bivalens running = verum
+    varia numerus attempts = 0
+
+    dum running et attempts < 5 {
+        scribe "Attempt:", attempts
+        attempts = attempts + 1
+
+        si attempts >= 3 {
+            running = falsum
+        }
+    }
+
+    // Using "aut" (or) - loop while either condition holds
+    varia numerus a = 5
+    varia numerus b = 3
+
+    dum a > 0 aut b > 0 {
+        scribe "a:", a, "b:", b
+        a = a - 1
+        b = b - 1
+    }
+}

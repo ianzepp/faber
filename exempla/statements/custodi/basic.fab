@@ -1,0 +1,56 @@
+// Basic custodi (guard clause) statement
+//
+// custodi { si <condition> { <early-return> } }
+//
+// Groups early-exit checks at function start to separate
+// validation from main logic.
+
+functio divide(a, b) -> numerus {
+    custodi {
+        si b == 0 {
+            redde 0
+        }
+    }
+
+    redde a / b
+}
+
+functio processValue(x) -> numerus {
+    custodi {
+        si x < 0 {
+            redde -1
+        }
+        si x > 100 {
+            redde -1
+        }
+    }
+
+    // Main logic, clearly separated from guards
+    redde x * 2
+}
+
+functio clamp(value, min, max) -> numerus {
+    custodi {
+        si value < min {
+            redde min
+        }
+        si value > max {
+            redde max
+        }
+    }
+
+    redde value
+}
+
+initium {
+    scribe divide(10, 2)
+    scribe divide(10, 0)
+
+    scribe processValue(50)
+    scribe processValue(-10)
+    scribe processValue(150)
+
+    scribe clamp(5, 0, 10)
+    scribe clamp(-5, 0, 10)
+    scribe clamp(15, 0, 10)
+}

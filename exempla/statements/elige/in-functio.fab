@@ -1,0 +1,57 @@
+// Elige with early returns in functions
+//
+// elige <expr> {
+//     si <value> { redde ... }
+//     si <value> { redde ... }
+// }
+
+functio getGreeting(textus language) fit textus {
+    elige language {
+        si "latin" {
+            redde "Salve"
+        }
+        si "english" {
+            redde "Hello"
+        }
+        si "spanish" {
+            redde "Hola"
+        }
+        si "french" {
+            redde "Bonjour"
+        }
+    }
+
+    redde "Hi"
+}
+
+functio getHttpMessage(numerus code) fit textus {
+    elige code {
+        si 200 {
+            redde "OK"
+        }
+        si 201 {
+            redde "Created"
+        }
+        si 400 {
+            redde "Bad Request"
+        }
+        si 404 {
+            redde "Not Found"
+        }
+        si 500 {
+            redde "Internal Server Error"
+        }
+    }
+
+    redde "Unknown"
+}
+
+initium {
+    scribe getGreeting("latin")
+    scribe getGreeting("spanish")
+    scribe getGreeting("unknown")
+
+    scribe getHttpMessage(200)
+    scribe getHttpMessage(404)
+    scribe getHttpMessage(999)
+}

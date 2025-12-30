@@ -1,0 +1,60 @@
+// Elige with default case (aliter)
+//
+// elige <expr> {
+//     si <value> { <body> }
+//     aliter { <default> }
+// }
+
+initium {
+    // aliter handles unmatched cases
+    fixum day = "wednesday"
+
+    elige day {
+        si "monday" {
+            scribe "Start of week"
+        }
+        si "friday" {
+            scribe "End of week"
+        }
+        aliter {
+            scribe "Midweek"
+        }
+    }
+
+    // aliter with error handling
+    fixum command = "unknown"
+
+    elige command {
+        si "start" {
+            scribe "Starting..."
+        }
+        si "stop" {
+            scribe "Stopping..."
+        }
+        si "restart" {
+            scribe "Restarting..."
+        }
+        aliter {
+            scribe "Unknown command"
+        }
+    }
+
+    // Multiple statements in aliter
+    fixum level = 99
+
+    elige level {
+        si 1 {
+            scribe "Beginner"
+        }
+        si 2 {
+            scribe "Intermediate"
+        }
+        si 3 {
+            scribe "Advanced"
+        }
+        aliter {
+            scribe "Custom level"
+            scribe scriptum("Level: {}", level)
+        }
+    }
+}

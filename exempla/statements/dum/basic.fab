@@ -1,0 +1,22 @@
+// Basic dum (while) loop with counter
+//
+// dum <condition> { <body> }
+
+initium {
+    varia numerus counter = 0
+
+    dum counter < 5 {
+        scribe counter
+        counter = counter + 1
+    }
+
+    // Countdown example
+    varia numerus countdown = 3
+
+    dum countdown > 0 {
+        scribe "Countdown:", countdown
+        countdown = countdown - 1
+    }
+
+    scribe "Done!"
+}

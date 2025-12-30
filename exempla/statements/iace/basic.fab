@@ -1,0 +1,34 @@
+// Basic iace (throw) statement
+//
+// iace <expression>
+
+initium {
+    // Throw with string literal
+    tempta {
+        iace "Something went wrong"
+    }
+    cape err {
+        scribe "Caught:", err
+    }
+
+    // Throw with formatted message
+    fixum code = 404
+    tempta {
+        iace scriptum("Error code: {}", code)
+    }
+    cape err {
+        scribe "Caught:", err
+    }
+
+    // Throw from conditional
+    fixum value = -5
+    tempta {
+        si value < 0 {
+            iace "Value must be non-negative"
+        }
+        scribe "Value is valid"
+    }
+    cape err {
+        scribe "Validation failed:", err
+    }
+}

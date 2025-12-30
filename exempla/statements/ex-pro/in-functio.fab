@@ -1,0 +1,49 @@
+// Using ex...pro inside functions
+
+// Sum all numbers in an array
+functio sumArray(numerus[] nums) -> numerus {
+    varia numerus total = 0
+
+    ex nums pro n {
+        total = total + n
+    }
+
+    redde total
+}
+
+// Find the maximum value
+functio maxValue(numerus[] nums) -> numerus {
+    varia numerus max = nums[0]
+
+    ex nums pro n {
+        si n > max {
+            max = n
+        }
+    }
+
+    redde max
+}
+
+// Count items matching a condition
+functio countAbove(numerus[] nums, numerus threshold) -> numerus {
+    varia numerus count = 0
+
+    ex nums pro n {
+        si n > threshold {
+            count = count + 1
+        }
+    }
+
+    redde count
+}
+
+initium {
+    fixum numbers = [1, 2, 3, 4, 5]
+
+    scribe sumArray(numbers)
+    scribe maxValue(numbers)
+    scribe countAbove(numbers, 3)
+
+    scribe sumArray([10, 20, 30])
+    scribe maxValue([5, 12, 8, 20, 3])
+}

@@ -1,0 +1,31 @@
+// While loops inside functions
+
+functio factorial(numerus n) -> numerus {
+    varia numerus result = 1
+    varia numerus current = n
+
+    dum current > 1 {
+        result = result * current
+        current = current - 1
+    }
+
+    redde result
+}
+
+functio nextPowerOf2(numerus n) -> numerus {
+    varia numerus power = 1
+
+    dum power <= n {
+        power = power * 2
+    }
+
+    redde power
+}
+
+initium {
+    scribe "5! =", factorial(5)
+    scribe "10! =", factorial(10)
+
+    scribe "Next power of 2 after 100:", nextPowerOf2(100)
+    scribe "Next power of 2 after 1000:", nextPowerOf2(1000)
+}

@@ -1,0 +1,65 @@
+// Input validation patterns with custodi
+//
+// Use custodi to group related precondition checks.
+// Each guard should return early or throw on invalid input.
+
+functio processAge(age) -> textus {
+    custodi {
+        si age < 0 {
+            redde "Invalid: negative age"
+        }
+        si age > 150 {
+            redde "Invalid: age too high"
+        }
+    }
+
+    si age < 18 {
+        redde "Minor"
+    }
+    aliter {
+        redde "Adult"
+    }
+}
+
+functio createUser(name, email, age) -> textus {
+    custodi {
+        si name == nihil aut name == "" {
+            redde "Error: name required"
+        }
+        si email == nihil aut email == "" {
+            redde "Error: email required"
+        }
+        si age < 13 {
+            redde "Error: must be 13 or older"
+        }
+        si age > 120 {
+            redde "Error: invalid age"
+        }
+    }
+
+    redde scriptum("User created: {}", name)
+}
+
+// Guards can throw instead of returning
+functio sqrt(n) -> numerus {
+    custodi {
+        si n < 0 {
+            iace "Cannot compute square root of negative number"
+        }
+    }
+
+    redde n
+}
+
+initium {
+    scribe processAge(-5)
+    scribe processAge(200)
+    scribe processAge(25)
+    scribe processAge(12)
+
+    scribe createUser("Marcus", "marcus@roma.com", 30)
+    scribe createUser("", "test@test.com", 25)
+    scribe createUser("Julia", "julia@roma.com", 10)
+
+    scribe sqrt(16)
+}

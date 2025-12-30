@@ -1,0 +1,52 @@
+// Basic elige (switch) statement
+//
+// elige <expr> {
+//     si <value> { <body> }
+//     si <value> { <body> }
+// }
+
+initium {
+    // String matching
+    fixum status = "active"
+
+    elige status {
+        si "pending" {
+            scribe "Waiting..."
+        }
+        si "active" {
+            scribe "Running"
+        }
+        si "done" {
+            scribe "Completed"
+        }
+    }
+
+    // Number matching
+    fixum code = 200
+
+    elige code {
+        si 200 {
+            scribe "OK"
+        }
+        si 404 {
+            scribe "Not Found"
+        }
+        si 500 {
+            scribe "Server Error"
+        }
+    }
+
+    // Multiple statements per case
+    fixum mode = "production"
+
+    elige mode {
+        si "development" {
+            scribe "Dev mode enabled"
+            scribe "Verbose logging on"
+        }
+        si "production" {
+            scribe "Production mode"
+            scribe "Optimizations enabled"
+        }
+    }
+}

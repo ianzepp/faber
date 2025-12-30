@@ -1,0 +1,31 @@
+// Ranges with step using per
+//
+// ex <start>..<end> per <step> pro <item> { }
+// ex <start> usque <end> per <step> pro <item> { }
+
+initium {
+    // Step by 2 (exclusive: 0, 2, 4, 6, 8)
+    ex 0..10 per 2 pro i {
+        scribe i
+    }
+
+    // Step by 2 (inclusive: 0, 2, 4, 6, 8, 10)
+    ex 0 usque 10 per 2 pro i {
+        scribe i
+    }
+
+    // Step by 3
+    ex 0..15 per 3 pro i {
+        scribe i
+    }
+
+    // Countdown with negative step
+    ex 10..0 per -1 pro i {
+        scribe i
+    }
+
+    // Countdown by 2
+    ex 10..0 per -2 pro i {
+        scribe i
+    }
+}

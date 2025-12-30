@@ -1,0 +1,27 @@
+// Nested ex...pro loops
+
+initium {
+    // Nested array iteration
+    fixum rows = [1, 2, 3]
+    fixum cols = ["A", "B", "C"]
+
+    ex rows pro row {
+        ex cols pro col {
+            scribe row, col
+        }
+    }
+
+    // Multiplication table
+    ex 1..4 pro i {
+        ex 1..4 pro j {
+            scribe i, "*", j, "=", i * j
+        }
+    }
+
+    // Nested ranges
+    ex 0..3 pro x {
+        ex 0..3 pro y {
+            scribe x, y
+        }
+    }
+}
