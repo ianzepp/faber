@@ -15,9 +15,10 @@
       - '.push_back(1)'
   ts:
       - '.push('
+  rs:
+      - '.push(1)'
   fab:
       - 'items.adde(1)'
-  skip: [rs]
 
 # addita returns a new list with the element appended (copy + push_back)
 - name: 'addita -> copy and push_back'
@@ -28,9 +29,11 @@
       - 'return v'
   ts:
       - '[...'
+  rs:
+      - 'let mut v = items.clone()'
+      - 'v.push(1)'
   fab:
       - 'items.addita(1)'
-  skip: [rs]
 
 # praepone inserts at the beginning
 - name: 'praepone -> insert at begin'
@@ -40,9 +43,10 @@
       - '.begin()'
   ts:
       - '.unshift('
+  rs:
+      - '.insert(0, 1)'
   fab:
       - 'items.praepone(1)'
-  skip: [rs]
 
 # =============================================================================
 # Removing Elements
@@ -56,9 +60,10 @@
       - '.pop_back()'
   ts:
       - '.pop('
+  rs:
+      - '.pop()'
   fab:
       - 'items.remove()'
-  skip: [rs]
 
 # decapita removes and returns the first element
 - name: 'decapita -> erase at begin'
@@ -68,9 +73,10 @@
       - '.erase('
   ts:
       - '.shift('
+  rs:
+      - '.remove(0)'
   fab:
       - 'items.decapita()'
-  skip: [rs]
 
 # purga clears the entire list
 - name: 'purga -> clear'
@@ -79,9 +85,10 @@
       - '.clear()'
   ts:
       - '.length = 0'
+  rs:
+      - '.clear()'
   fab:
       - 'items.purga()'
-  skip: [rs]
 
 # =============================================================================
 # Accessing Elements
@@ -94,9 +101,10 @@
       - '.front()'
   ts:
       - '[0]'
+  rs:
+      - '.first()'
   fab:
       - 'items.primus()'
-  skip: [rs]
 
 # ultimus returns the last element
 - name: 'ultimus -> back'
@@ -105,9 +113,10 @@
       - '.back()'
   ts:
       - '.at('
+  rs:
+      - '.last()'
   fab:
       - 'items.ultimus()'
-  skip: [rs]
 
 # accipe returns element at index (bounds-checked)
 - name: 'accipe -> at'
@@ -116,9 +125,10 @@
       - '.at(0)'
   ts:
       - '[0]'
+  rs:
+      - '.get(0)'
   fab:
       - 'items.accipe(0)'
-  skip: [rs]
 
 # longitudo returns the size
 - name: 'longitudo -> size'
@@ -127,9 +137,10 @@
       - '.size()'
   ts:
       - '.length'
+  rs:
+      - '.len()'
   fab:
       - 'items.longitudo()'
-  skip: [rs]
 
 # vacua returns whether the list is empty
 - name: 'vacua -> empty'
@@ -138,9 +149,10 @@
       - '.empty()'
   ts:
       - '.length === 0'
+  rs:
+      - '.is_empty()'
   fab:
       - 'items.vacua()'
-  skip: [rs]
 
 # =============================================================================
 # Searching
@@ -154,9 +166,10 @@
       - '!= items.end()'
   ts:
       - '.includes('
+  rs:
+      - '.contains(&5)'
   fab:
       - 'items.continet(5)'
-  skip: [rs]
 
 # indiceDe returns the index of an element
 - name: 'indiceDe -> std::find with distance'
@@ -166,9 +179,10 @@
       - 'std::distance('
   ts:
       - '.indexOf('
+  rs:
+      - '.iter().position(|e| e == &5)'
   fab:
       - 'items.indiceDe(5)'
-  skip: [rs]
 
 # =============================================================================
 # Transformations (C++23 ranges)
@@ -182,9 +196,11 @@
       - 'std::ranges::to<std::vector>'
   ts:
       - '.filter('
+  rs:
+      - '.iter().filter('
+      - '.cloned().collect'
   fab:
       - 'items.filtrata(pro x: x > 0)'
-  skip: [rs]
 
 # mappata transforms elements using views::transform
 - name: 'mappata -> views::transform'
@@ -194,9 +210,11 @@
       - 'std::ranges::to<std::vector>'
   ts:
       - '.map('
+  rs:
+      - '.iter().map('
+      - '.collect'
   fab:
       - 'items.mappata(pro x: x * 2)'
-  skip: [rs]
 
 # inversa returns reversed copy
 - name: 'inversa -> views::reverse'
@@ -206,9 +224,11 @@
       - 'std::ranges::to<std::vector>'
   ts:
       - '.reverse('
+  rs:
+      - '.iter().rev()'
+      - '.cloned().collect'
   fab:
       - 'items.inversa()'
-  skip: [rs]
 
 # prima takes first n elements
 - name: 'prima -> views::take'
@@ -218,9 +238,11 @@
       - 'std::ranges::to<std::vector>'
   ts:
       - '.slice('
+  rs:
+      - '.iter().take(5)'
+      - '.cloned().collect'
   fab:
       - 'items.prima(5)'
-  skip: [rs]
 
 # omitte drops first n elements
 - name: 'omitte -> views::drop'
@@ -230,9 +252,11 @@
       - 'std::ranges::to<std::vector>'
   ts:
       - '.slice('
+  rs:
+      - '.iter().skip(2)'
+      - '.cloned().collect'
   fab:
       - 'items.omitte(2)'
-  skip: [rs]
 
 # =============================================================================
 # Predicates
@@ -245,9 +269,10 @@
       - 'std::ranges::all_of('
   ts:
       - '.every('
+  rs:
+      - '.iter().all('
   fab:
       - 'items.omnes(pro x: x > 0)'
-  skip: [rs]
 
 # aliquis checks if any element matches predicate
 - name: 'aliquis -> ranges::any_of'
@@ -256,9 +281,10 @@
       - 'std::ranges::any_of('
   ts:
       - '.some('
+  rs:
+      - '.iter().any('
   fab:
       - 'items.aliquis(pro x: x > 0)'
-  skip: [rs]
 
 # =============================================================================
 # Mutating Operations
@@ -271,9 +297,10 @@
       - 'std::ranges::sort(items)'
   ts:
       - '.sort('
+  rs:
+      - '.sort()'
   fab:
       - 'items.ordina()'
-  skip: [rs]
 
 # inverte reverses the list in-place
 - name: 'inverte -> ranges::reverse'
@@ -282,9 +309,10 @@
       - 'std::ranges::reverse(items)'
   ts:
       - '.reverse('
+  rs:
+      - '.reverse()'
   fab:
       - 'items.inverte()'
-  skip: [rs]
 
 # =============================================================================
 # Numeric Aggregation
@@ -297,9 +325,10 @@
       - 'std::accumulate('
   ts:
       - '.reduce('
+  rs:
+      - '.iter().sum'
   fab:
       - 'nums.summa()'
-  skip: [rs]
 
 # minimus returns the minimum element
 - name: 'minimus -> ranges::min_element'
@@ -308,9 +337,10 @@
       - 'std::ranges::min_element('
   ts:
       - 'Math.min(...'
+  rs:
+      - '.iter().min()'
   fab:
       - 'nums.minimus()'
-  skip: [rs]
 
 # maximus returns the maximum element
 - name: 'maximus -> ranges::max_element'
@@ -319,9 +349,10 @@
       - 'std::ranges::max_element('
   ts:
       - 'Math.max(...'
+  rs:
+      - '.iter().max()'
   fab:
       - 'nums.maximus()'
-  skip: [rs]
 
 # =============================================================================
 # Iteration
@@ -334,9 +365,10 @@
       - 'std::ranges::for_each('
   ts:
       - '.forEach('
+  rs:
+      - '.iter().for_each('
   fab:
       - 'items.perambula(pro x { scribe x })'
-  skip: [rs]
 
 # =============================================================================
 # Header Includes
@@ -349,9 +381,10 @@
       - '#include <algorithm>'
   ts:
       - '.includes('
+  rs:
+      - '.contains(&5)'
   fab:
       - 'items.continet(5)'
-  skip: [rs]
 
 # Ranges methods add ranges header
 - name: 'ranges methods add ranges header'
@@ -360,9 +393,10 @@
       - '#include <ranges>'
   ts:
       - '.filter('
+  rs:
+      - '.iter().filter('
   fab:
       - 'items.filtrata(pro x: x > 0)'
-  skip: [rs]
 
 # Numeric methods add numeric header
 - name: 'numeric methods add numeric header'
@@ -371,9 +405,10 @@
       - '#include <numeric>'
   ts:
       - '.reduce('
+  rs:
+      - '.iter().sum'
   fab:
       - 'nums.summa()'
-  skip: [rs]
 
 # =============================================================================
 # Collection DSL

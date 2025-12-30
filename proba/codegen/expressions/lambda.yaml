@@ -109,7 +109,7 @@
           - 'filter'
           - 'lambda x: (x > 0)'
       rs:
-          - 'items.filtrata(|x| (x > 0));'
+          - '.iter().filter(|x| (x > 0)).cloned().collect::<Vec<_>>()'
       cpp:
           - '(items | std::views::filter([&](auto x) { return (x > 0); }) | std::ranges::to<std::vector>());'
       fab:
