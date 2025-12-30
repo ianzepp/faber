@@ -50,6 +50,11 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: PyGenerator):
     const prevInGenerator = g.inGenerator;
     g.inGenerator = node.generator;
 
+    // Guard: abstract methods not yet supported
+    if (!node.body) {
+        throw new Error('Abstract methods not yet supported for Python target');
+    }
+
     const header = `${g.ind()}${asyncMod}def ${name}(${params})${returnType}:`;
     g.depth++;
     const body = g.genBlockStatementContent(node.body);

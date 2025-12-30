@@ -25,10 +25,12 @@ import { genBlockStatement, genMethodDeclaration } from './functio';
 export function genGenusDeclaration(node: GenusDeclaration, g: TsGenerator, semi: boolean): string {
     const name = node.name.name;
     const typeParams = node.typeParameters ? `<${node.typeParameters.map(p => p.name).join(', ')}>` : '';
+    const ext = node.extends ? ` extends ${node.extends.name}` : '';
     const impl = node.implements ? ` implements ${node.implements.map(i => i.name).join(', ')}` : '';
+    const abstractMod = node.isAbstract ? 'abstract ' : '';
 
     const lines: string[] = [];
-    lines.push(`${g.ind()}class ${name}${typeParams}${impl} {`);
+    lines.push(`${g.ind()}${abstractMod}class ${name}${typeParams}${ext}${impl} {`);
 
     g.depth++;
 
@@ -107,7 +109,7 @@ function genAutoMergeConstructor(node: GenusDeclaration, g: TsGenerator, semi: b
  *      ego (this) already has merged field values. No args needed.
  */
 function genCreoMethod(node: FunctioDeclaration, g: TsGenerator): string {
-    const body = genBlockStatement(node.body, g);
+    const body = node.body ? genBlockStatement(node.body, g) : '{}';
     return `${g.ind()}private creo() ${body}`;
 }
 
@@ -143,10 +145,10 @@ function genFieldDeclaration(node: FieldDeclaration, g: TsGenerator, semi: boole
         return lines.join('\n');
     }
 
-    // Regular fields - public by default (struct semantics), private with 'privatus'
-    const visibility = node.isPrivate ? 'private ' : '';
+    // Regular fields - public by default (struct semantics)
+    const visibilityMod = node.visibility === 'private' ? 'private ' : node.visibility === 'protected' ? 'protected ' : '';
     const staticMod = node.isStatic ? 'static ' : '';
     const init = node.init ? ` = ${g.genExpression(node.init)}` : '';
 
-    return `${g.ind()}${visibility}${staticMod}${name}: ${type}${init}${semi ? ';' : ''}`;
+    return `${g.ind()}${visibilityMod}${staticMod}${name}: ${type}${init}${semi ? ';' : ''}`;
 }

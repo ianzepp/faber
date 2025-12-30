@@ -54,7 +54,7 @@ export function genGenusDeclaration(node: GenusDeclaration, g: RsGenerator): str
  * Generate field declaration within a struct.
  */
 function genFieldDeclaration(node: FieldDeclaration, g: RsGenerator): string {
-    const visibility = node.isPrivate ? '' : 'pub ';
+    const visibility = node.visibility === 'private' ? '' : 'pub ';
     const name = node.name.name;
     const type = g.genType(node.fieldType);
 

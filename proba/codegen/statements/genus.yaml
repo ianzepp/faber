@@ -396,3 +396,69 @@
       py:
           - 'class Container[T]:'
           - 'value: T'
+
+# =============================================================================
+# Inheritance (sub)
+# =============================================================================
+
+# Genus extending another genus
+- name: genus with sub inheritance
+  faber: 'genus Employee sub Persona { textus title }'
+  expect:
+      ts:
+          - 'class Employee extends Persona'
+          - 'title: string'
+
+# Genus with sub and implet
+- name: genus with sub and implet
+  faber: 'genus Manager sub Employee implet Leader { functio lead() { } }'
+  expect:
+      ts:
+          - 'class Manager extends Employee implements Leader'
+          - 'lead()'
+
+# =============================================================================
+# Abstract Classes and Methods
+# =============================================================================
+
+# Abstract genus
+- name: abstract genus with abstract method
+  faber: 'abstractus genus Animal { abstractus functio speak() -> textus }'
+  expect:
+      ts:
+          - 'abstract class Animal'
+          - 'abstract speak(): string'
+
+# Concrete genus extending abstract
+- name: genus extending abstract class
+  faber: |
+      genus Dog sub Animal {
+        functio speak() -> textus {
+          redde "woof"
+        }
+      }
+  expect:
+      ts:
+          - 'class Dog extends Animal'
+          - 'speak(): string'
+          - 'return "woof"'
+
+# =============================================================================
+# Protected Fields and Methods
+# =============================================================================
+
+# Protected field
+- name: genus with protected field
+  faber: 'genus Animal { protectus textus species }'
+  expect:
+      ts:
+          - 'class Animal'
+          - 'protected species: string'
+
+# Protected method
+- name: genus with protected method
+  faber: 'genus Animal { protectus functio internal() { } }'
+  expect:
+      ts:
+          - 'class Animal'
+          - 'protected internal()'

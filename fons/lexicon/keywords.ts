@@ -189,6 +189,15 @@ export const keywords: KeywordEntry[] = [
     { latin: 'generis', meaning: 'static', category: 'modifier' },
     // WHY: "implet" (fulfills) for implementing interfaces
     { latin: 'implet', meaning: 'implements', category: 'modifier' },
+    // WHY: "sub" (under) for class inheritance - child is "under" parent
+    //      Target-gated: TS/Py/C++ only; error on Rust/Zig (no class inheritance)
+    { latin: 'sub', meaning: 'extends', category: 'modifier' },
+    // WHY: "abstractus" for abstract classes and methods
+    //      Target-gated: TS/Py/C++ only; error on Rust/Zig
+    { latin: 'abstractus', meaning: 'abstract', category: 'modifier' },
+    // WHY: "protectus" for protected visibility (between private and public)
+    //      Target-gated: TS/Py/C++ only; error on Rust/Zig
+    { latin: 'protectus', meaning: 'protected', category: 'modifier' },
 
     // ---------------------------------------------------------------------------
     // Operators

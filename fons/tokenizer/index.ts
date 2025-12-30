@@ -68,7 +68,7 @@
  * @module tokenizer
  */
 
-import type { Token, TokenType, Position, TokenizerResult, TokenizerError } from './types';
+import type { Token, TokenType, Position, TokenizerResult, TokenizerError, CommentTokenType } from './types';
 import { isKeyword, getKeyword } from '../lexicon';
 import { TokenizerErrorCode, TOKENIZER_ERRORS } from './errors';
 
@@ -406,12 +406,18 @@ export function tokenize(source: string): TokenizerResult {
                     comment += advance();
                 }
 
-                // FUTURE: Emit comment tokens for documentation tooling
-                // addToken("COMMENT", comment.trim(), pos)
+                // Emit COMMENT token for comment preservation
+                addToken('COMMENT', comment.trim(), pos, undefined, 'line');
             } else if (char === '/' && peek(1) === '*') {
                 // Multi-line comment can span multiple lines (C style)
+                const pos = position();
+                let comment = '';
+
                 advance(); // /
                 advance(); // *
+
+                // Check for doc comment: /** ... */
+                const isDoc = peek() === '*' && peek(1) !== '/';
 
                 // True while comment is not terminated
                 const notCommentEnd = () => !isAtEnd() && !(peek() === '*' && peek(1) === '/');
@@ -422,13 +428,17 @@ export function tokenize(source: string): TokenizerResult {
                         lineStart = current + 1;
                     }
 
-                    advance();
+                    comment += advance();
                 }
 
                 if (!isAtEnd()) {
                     advance(); // *
                     advance(); // /
                 }
+
+                // Emit COMMENT token with appropriate type
+                const commentType: CommentTokenType = isDoc ? 'doc' : 'block';
+                addToken('COMMENT', comment.trim(), pos, undefined, commentType);
             } else {
                 break;
             }
@@ -446,9 +456,10 @@ export function tokenize(source: string): TokenizerResult {
      * @param value - Original source text of token
      * @param pos - Source position where token started
      * @param keyword - For KEYWORD tokens, the specific Latin keyword
+     * @param commentType - For COMMENT tokens, the comment style (line/block/doc)
      */
-    function addToken(type: TokenType, value: string, pos: Position, keyword?: string): void {
-        tokens.push({ type, value, position: pos, keyword });
+    function addToken(type: TokenType, value: string, pos: Position, keyword?: string, commentType?: CommentTokenType): void {
+        tokens.push({ type, value, position: pos, keyword, commentType });
     }
 
     // =============================================================================

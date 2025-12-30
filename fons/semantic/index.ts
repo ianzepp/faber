@@ -1375,7 +1375,10 @@ export function analyze(program: Program): SemanticResult {
             });
         }
 
-        analyzeBlock(node.body);
+        // Abstract methods have no body
+        if (node.body) {
+            analyzeBlock(node.body);
+        }
 
         // Restore function context
         currentFunctionReturnType = previousReturnType;

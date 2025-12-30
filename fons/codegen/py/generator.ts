@@ -5,9 +5,9 @@
  * Individual gen* functions are in separate files under statements/ and expressions/.
  */
 
-import type { Statement, Expression, BlockStatement, Parameter, TypeAnnotation, TypeParameter } from '../../parser/ast';
+import type { Statement, Expression, BlockStatement, Parameter, TypeAnnotation, TypeParameter, BaseNode } from '../../parser/ast';
 import type { RequiredFeatures } from '../types';
-import { createRequiredFeatures } from '../types';
+import { createRequiredFeatures, COMMENT_SYNTAX, formatLeadingComments, formatTrailingComments } from '../types';
 
 // Statement handlers
 import { genImportaDeclaration } from './statements/importa';
@@ -95,9 +95,33 @@ export class PyGenerator {
     }
 
     /**
+     * Format leading comments for a node.
+     */
+    leadingComments(node: BaseNode): string {
+        return formatLeadingComments(node, COMMENT_SYNTAX.py, this.ind());
+    }
+
+    /**
+     * Format trailing comments for a node.
+     */
+    trailingComments(node: BaseNode): string {
+        return formatTrailingComments(node, COMMENT_SYNTAX.py);
+    }
+
+    /**
      * Generate a statement. Dispatches to specific gen* functions.
      */
     genStatement(node: Statement): string {
+        const leading = this.leadingComments(node);
+        const trailing = this.trailingComments(node);
+        const stmt = this.genStatementContent(node);
+        return `${leading}${stmt}${trailing}`;
+    }
+
+    /**
+     * Generate statement content without comments.
+     */
+    private genStatementContent(node: Statement): string {
         switch (node.type) {
             case 'ImportaDeclaration':
                 return genImportaDeclaration(node, this);

@@ -148,6 +148,11 @@ function genCreoMethod(node: FunctioDeclaration, g: PyGenerator): string {
     lines.push(`${g.ind()}def _creo(self):`);
     g.depth++;
 
+    // Guard: abstract methods not yet supported
+    if (!node.body) {
+        throw new Error('Abstract methods not yet supported for Python target');
+    }
+
     if (node.body.body.length === 0) {
         lines.push(`${g.ind()}pass`);
     } else {
@@ -168,7 +173,7 @@ function genFieldDeclaration(node: FieldDeclaration, g: PyGenerator): string {
 
     // Python doesn't have private/static modifiers in the same way
     // Use underscore prefix convention for private
-    const prefix = node.isPrivate ? '_' : '';
+    const prefix = node.visibility === 'private' ? '_' : '';
 
     return `${g.ind()}${prefix}${name}: ${type}${init}`;
 }
@@ -248,6 +253,11 @@ function genMethodDeclaration(node: FunctioDeclaration, g: PyGenerator): string 
 
     const prevInGenerator = g.inGenerator;
     g.inGenerator = node.generator;
+
+    // Guard: abstract methods not yet supported
+    if (!node.body) {
+        throw new Error('Abstract methods not yet supported for Python target');
+    }
 
     const header = `${g.ind()}${asyncMod}def ${name}(${params})${returnType}:`;
     g.depth++;

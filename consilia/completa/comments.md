@@ -1,37 +1,41 @@
 # Comment Preservation
 
+**STATUS: IMPLEMENTED**
+
 Preserve comments through the parse → AST → codegen pipeline.
 
 ## Current State
 
-Comments are **not preserved**:
+Comments are now preserved through the full pipeline:
 
-1. **Tokenizer**: Recognizes `//` and `/* */` but discards them
-   ```ts
-   // fons/tokenizer/index.ts:409-410
-   // FUTURE: Emit comment tokens for documentation tooling
-   // addToken("COMMENT", comment.trim(), pos)
-   ```
+1. **Tokenizer**: Emits COMMENT tokens with type info (line/block/doc)
 
-2. **AST**: No comment fields on nodes
-   ```ts
-   // fons/parser/ast.ts
-   export interface BaseNode {
-       position: Position;
-       resolvedType?: SemanticType;
-       // No leadingComments/trailingComments
-   }
-   ```
+    ```ts
+    // fons/tokenizer/index.ts - COMMENT tokens now emitted
+    addToken('COMMENT', comment.trim(), pos, undefined, 'line');
+    ```
 
-3. **Codegen**: Cannot emit comments since they don't exist in AST
+2. **AST**: BaseNode includes leadingComments and trailingComments
+
+    ```ts
+    // fons/parser/ast.ts
+    export interface BaseNode {
+        position: Position;
+        resolvedType?: SemanticType;
+        leadingComments?: Comment[];
+        trailingComments?: Comment[];
+    }
+    ```
+
+3. **Codegen**: All targets emit comments via shared helpers in `fons/codegen/types.ts`
 
 ## Use Cases
 
-| Pipeline | Priority | Notes |
-|----------|----------|-------|
-| TS → Faber | High | Preserve developer documentation during migration |
-| Faber → Faber (formatter) | High | Essential for formatting |
-| Faber → TS/Py/etc. | Medium | Nice to have for generated code |
+| Pipeline                  | Priority | Notes                                             |
+| ------------------------- | -------- | ------------------------------------------------- |
+| TS → Faber                | High     | Preserve developer documentation during migration |
+| Faber → Faber (formatter) | High     | Essential for formatting                          |
+| Faber → TS/Py/etc.        | Medium   | Nice to have for generated code                   |
 
 ## Proposed Design
 
@@ -45,11 +49,11 @@ interface Comment {
 }
 ```
 
-| Type | Syntax | Special Handling |
-|------|--------|------------------|
-| `line` | `// ...` | Single line |
-| `block` | `/* ... */` | Multi-line |
-| `doc` | `/** ... */` | Documentation, may parse structured content |
+| Type    | Syntax       | Special Handling                            |
+| ------- | ------------ | ------------------------------------------- |
+| `line`  | `// ...`     | Single line                                 |
+| `block` | `/* ... */`  | Multi-line                                  |
+| `doc`   | `/** ... */` | Documentation, may parse structured content |
 
 ### AST Changes
 
@@ -71,10 +75,14 @@ export interface BaseNode {
 3. Preserve original formatting/whitespace
 
 ```ts
-addToken('COMMENT', {
-    type: 'line',
-    value: comment.trim(),
-}, pos);
+addToken(
+    'COMMENT',
+    {
+        type: 'line',
+        value: comment.trim(),
+    },
+    pos,
+);
 ```
 
 ### Parser Changes
@@ -95,14 +103,14 @@ function attachComments(node: BaseNode, tokens: Token[]) {
 
 Each target generator emits comments in target syntax:
 
-| Target | Line | Block |
-|--------|------|-------|
-| Faber | `// ...` | `/* ... */` |
-| TS | `// ...` | `/* ... */` |
-| Python | `# ...` | `""" ... """` |
-| Rust | `// ...` | `/* ... */` |
-| C++ | `// ...` | `/* ... */` |
-| Zig | `// ...` | N/A (line only) |
+| Target | Line     | Block           |
+| ------ | -------- | --------------- |
+| Faber  | `// ...` | `/* ... */`     |
+| TS     | `// ...` | `/* ... */`     |
+| Python | `# ...`  | `""" ... """`   |
+| Rust   | `// ...` | `/* ... */`     |
+| C++    | `// ...` | `/* ... */`     |
+| Zig    | `// ...` | N/A (line only) |
 
 ## Implementation Steps
 
@@ -172,7 +180,7 @@ genus User {
 ```ts
 // User represents a registered user
 class User {
-    nomen: string;  // display name
+    nomen: string; // display name
 
     /*
      * Create a new user with validation

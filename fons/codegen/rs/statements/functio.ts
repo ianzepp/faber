@@ -23,6 +23,10 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: RsGenerator):
         returnType = ` -> ${g.genType(node.returnType)}`;
     }
 
+    if (!node.body) {
+        throw new Error('Abstract methods not supported for Rust target');
+    }
+
     const body = genBlockStatement(node.body, g);
 
     return `${g.ind()}${asyncMod}fn ${name}${typeParams}(${params})${returnType} ${body}`;
@@ -39,6 +43,10 @@ export function genMethodDeclaration(node: FunctioDeclaration, g: RsGenerator): 
     let returnType = '';
     if (node.returnType) {
         returnType = ` -> ${g.genType(node.returnType)}`;
+    }
+
+    if (!node.body) {
+        throw new Error('Abstract methods not supported for Rust target');
     }
 
     const body = genBlockStatement(node.body, g);

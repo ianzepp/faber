@@ -348,8 +348,10 @@ function printFunctioDeclaration(path: AstPath<AstNode>, options: FaberOptions, 
         parts.push(' -> ', path.call(print, 'returnType'));
     }
 
-    // Body
-    parts.push(' ', path.call(print, 'body'));
+    // Body (optional for abstract methods)
+    if (node.body) {
+        parts.push(' ', path.call(print, 'body'));
+    }
 
     return parts;
 }

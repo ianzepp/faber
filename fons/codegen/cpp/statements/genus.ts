@@ -129,6 +129,10 @@ function genAutoMergeConstructor(node: GenusDeclaration, g: CppGenerator): strin
  *      avoid conflicts with user-defined methods.
  */
 function genCreoMethod(node: FunctioDeclaration, g: CppGenerator): string {
+    if (!node.body) {
+        throw new Error('Abstract methods not yet supported for C++ target');
+    }
+
     const lines: string[] = [];
 
     lines.push(`${g.ind()}void _creo() {`);
@@ -150,6 +154,10 @@ function genCreoMethod(node: FunctioDeclaration, g: CppGenerator): string {
  * Generate method declaration.
  */
 function genMethodDeclaration(node: FunctioDeclaration, g: CppGenerator): string {
+    if (!node.body) {
+        throw new Error('Abstract methods not yet supported for C++ target');
+    }
+
     const name = node.name.name;
     const params = node.params.map(p => g.genParameter(p)).join(', ');
     const returnType = node.returnType ? g.genType(node.returnType) : 'void';

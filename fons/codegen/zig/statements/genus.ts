@@ -136,6 +136,11 @@ function genStructInit(node: GenusDeclaration, g: ZigGenerator): string {
  *   -> fn creo(self: *Self) void { if (self.aetas < 0) { self.aetas = 0; } }
  */
 function genCreoMethod(node: FunctioDeclaration, g: ZigGenerator): string {
+    // EDGE: Abstract methods have no body - Zig doesn't support abstract methods
+    if (!node.body) {
+        throw new Error('Abstract methods not supported for Zig target');
+    }
+
     const lines: string[] = [];
 
     lines.push(`${g.ind()}fn creo(self: *Self) void {`);
@@ -163,6 +168,11 @@ function genCreoMethod(node: FunctioDeclaration, g: ZigGenerator): string {
  * EDGE: anytype is not valid as a return type in Zig.
  */
 function genStructMethod(node: FunctioDeclaration, g: ZigGenerator): string {
+    // EDGE: Abstract methods have no body - Zig doesn't support abstract methods
+    if (!node.body) {
+        throw new Error('Abstract methods not supported for Zig target');
+    }
+
     const name = node.name.name;
     const params = node.params.map(p => g.genParameter(p));
     const returnType = node.returnType ? g.genType(node.returnType) : 'void';

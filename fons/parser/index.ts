@@ -80,10 +80,12 @@ import type {
     Program,
     Statement,
     Expression,
+    Comment,
     ImportaDeclaration,
     VariaDeclaration,
     FunctioDeclaration,
     ReturnVerb,
+    Visibility,
     GenusDeclaration,
     FieldDeclaration,
     PactumDeclaration,
@@ -245,17 +247,95 @@ export function parse(tokens: Token[]): ParserResult {
     let current = 0;
 
     // ---------------------------------------------------------------------------
+    // Comment Collection
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Buffer for comments collected before the next node.
+     *
+     * WHY: Comments are collected as we encounter them during parsing,
+     *      then attached to the next AST node as leadingComments.
+     */
+    let pendingComments: Comment[] = [];
+
+    /**
+     * Convert a COMMENT token to a Comment AST node.
+     */
+    function tokenToComment(token: Token): Comment {
+        return {
+            type: token.commentType ?? 'line',
+            value: token.value,
+            position: token.position,
+        };
+    }
+
+    /**
+     * Consume all pending COMMENT tokens and add to pendingComments buffer.
+     *
+     * WHY: Called before parsing any statement or significant expression
+     *      to collect comments that should be attached as leadingComments.
+     */
+    function collectComments(): void {
+        while (tokens[current]?.type === 'COMMENT') {
+            pendingComments.push(tokenToComment(tokens[current]!));
+            current++;
+        }
+    }
+
+    /**
+     * Consume pending comments and return them, clearing the buffer.
+     *
+     * WHY: Called when creating an AST node to attach collected comments.
+     */
+    function consumePendingComments(): Comment[] | undefined {
+        if (pendingComments.length === 0) {
+            return undefined;
+        }
+        const comments = pendingComments;
+        pendingComments = [];
+        return comments;
+    }
+
+    /**
+     * Check for trailing comment on the same line after current position.
+     *
+     * WHY: Trailing comments are on the same line as the node, after its content.
+     *      Example: `fixum x = 5  // this is a trailing comment`
+     */
+    function collectTrailingComment(nodeLine: number): Comment[] | undefined {
+        // Check if there's a comment immediately after (on the same line)
+        if (tokens[current]?.type === 'COMMENT' && tokens[current]!.position.line === nodeLine) {
+            const comment = tokenToComment(tokens[current]!);
+            current++;
+            return [comment];
+        }
+        return undefined;
+    }
+
+    // ---------------------------------------------------------------------------
     // Token Navigation Helpers
     // ---------------------------------------------------------------------------
 
     /**
-     * Look ahead at token without consuming.
+     * Look ahead at token without consuming, skipping COMMENT tokens.
      *
      * INVARIANT: Returns EOF token if offset goes beyond end.
      */
     function peek(offset = 0): Token {
-        // EDGE: Tokenizer always produces at least an EOF token
-        return tokens[current + offset] ?? tokens[tokens.length - 1]!;
+        // Skip COMMENT tokens when peeking
+        let pos = current;
+        let skipped = 0;
+        while (pos < tokens.length && tokens[pos]!.type === 'COMMENT') {
+            pos++;
+        }
+        while (skipped < offset && pos < tokens.length) {
+            pos++;
+            while (pos < tokens.length && tokens[pos]!.type === 'COMMENT') {
+                pos++;
+            }
+            skipped++;
+        }
+        return tokens[pos] ?? tokens[tokens.length - 1]!;
     }
 
     /**
@@ -266,11 +346,12 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     /**
-     * Consume and return current token.
+     * Consume and return current token, skipping COMMENT tokens.
      *
      * INVARIANT: Never advances past EOF.
      */
     function advance(): Token {
+        collectComments(); // Consume any comment tokens first
         if (!isAtEnd()) {
             current++;
         }
@@ -546,6 +627,27 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     /**
+     * Attach comments to a statement node.
+     *
+     * WHY: Centralizes comment attachment logic for all statement types.
+     *
+     * @param stmt - The statement to attach comments to
+     * @returns The statement with comments attached
+     */
+    function attachComments<T extends Statement>(stmt: T): T {
+        const leading = consumePendingComments();
+        if (leading) {
+            stmt.leadingComments = leading;
+        }
+        // Check for trailing comment on the same line
+        const trailing = collectTrailingComment(stmt.position.line);
+        if (trailing) {
+            stmt.trailingComments = trailing;
+        }
+        return stmt;
+    }
+
+    /**
      * Parse any statement by dispatching to specific parser.
      *
      * GRAMMAR:
@@ -555,6 +657,20 @@ export function parse(tokens: Token[]): ParserResult {
      * WHY: Uses lookahead to determine statement type via keyword inspection.
      */
     function parseStatement(): Statement {
+        // Collect any leading comments before parsing the statement
+        collectComments();
+
+        // Parse the statement and attach comments
+        const stmt = parseStatementWithoutComments();
+        return attachComments(stmt);
+    }
+
+    /**
+     * Parse statement without comment attachment (internal helper).
+     *
+     * WHY: Separates statement dispatch from comment handling for cleaner code.
+     */
+    function parseStatementWithoutComments(): Statement {
         // Distinguish 'ex norma importa' (import), 'ex items pro n' (for-loop),
         // and 'ex response fixum { }' (destructuring)
         if (checkKeyword('ex')) {
@@ -595,6 +711,19 @@ export function parse(tokens: Token[]): ParserResult {
 
         if (checkKeyword('ordo')) {
             return parseOrdoDeclaration();
+        }
+
+        if (checkKeyword('abstractus')) {
+            advance(); // consume 'abstractus'
+            if (checkKeyword('genus')) {
+                return parseGenusDeclaration(true);
+            }
+            // If not genus, error
+            errors.push({
+                code: ParserErrorCode.UnexpectedToken,
+                message: `Expected 'genus' after 'abstractus', got ${peek().type}`,
+                position: peek().position,
+            });
         }
 
         if (checkKeyword('genus')) {
@@ -1525,14 +1654,16 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse genus (struct) declaration.
      *
      * GRAMMAR:
-     *   genusDecl := 'genus' IDENTIFIER typeParams? ('implet' IDENTIFIER (',' IDENTIFIER)*)? '{' genusMember* '}'
+     *   genusDecl := 'abstractus'? 'genus' IDENTIFIER typeParams? ('sub' IDENTIFIER)? ('implet' IDENTIFIER (',' IDENTIFIER)*)? '{' genusMember* '}'
      *   typeParams := '<' IDENTIFIER (',' IDENTIFIER)* '>'
      *   genusMember := fieldDecl | methodDecl
      *
      * WHY: Latin 'genus' (kind/type) for data structures.
+     *      'sub' (under) for inheritance - child is under parent.
      *      'implet' (fulfills) for implementing pactum interfaces.
+     *      'abstractus' for abstract classes that cannot be instantiated.
      */
-    function parseGenusDeclaration(): GenusDeclaration {
+    function parseGenusDeclaration(isAbstract = false): GenusDeclaration {
         const position = peek().position;
 
         expectKeyword('genus', ParserErrorCode.ExpectedKeywordGenus);
@@ -1550,6 +1681,13 @@ export function parse(tokens: Token[]): ParserResult {
             } while (match('COMMA'));
 
             expect('GREATER', ParserErrorCode.ExpectedClosingAngle);
+        }
+
+        // Parse optional 'sub' clause (inheritance)
+        let extendsClause: Identifier | undefined;
+
+        if (matchKeyword('sub')) {
+            extendsClause = parseIdentifier();
         }
 
         // Parse optional 'implet' clause
@@ -1609,7 +1747,9 @@ export function parse(tokens: Token[]): ParserResult {
             type: 'GenusDeclaration',
             name,
             typeParameters,
+            extends: extendsClause,
             implements: implementsList,
+            isAbstract,
             fields,
             constructor: constructorMethod,
             methods,
@@ -1622,19 +1762,22 @@ export function parse(tokens: Token[]): ParserResult {
      *
      * GRAMMAR:
      *   genusMember := fieldDecl | methodDecl
-     *   fieldDecl := 'privatus'? 'generis'? typeAnnotation IDENTIFIER (':' expression)?
-     *   methodDecl := 'privatus'? 'generis'? ('futura' | 'cursor')* 'functio' ...
+     *   fieldDecl := ('privatus' | 'protectus')? 'generis'? typeAnnotation IDENTIFIER (':' expression)?
+     *   methodDecl := ('privatus' | 'protectus')? 'generis'? 'abstractus'? ('futura' | 'cursor')* 'functio' ...
      *
      * WHY: Distinguishes between fields and methods by looking for 'functio' keyword.
      * WHY: Fields are public by default (struct semantics), use 'privatus' for private.
+     * WHY: 'protectus' for protected visibility (subclass access).
+     * WHY: 'abstractus' for abstract methods (no body, must be overridden).
      */
     function parseGenusMember(): FieldDeclaration | FunctioDeclaration {
         const position = peek().position;
 
         // Parse modifiers
-        let isPrivate = false;
+        let visibility: Visibility = 'public';
         let isStatic = false;
         let isReactive = false;
+        let isAbstract = false;
         let prefixAsync = false;
         let prefixGenerator = false;
 
@@ -1642,7 +1785,9 @@ export function parse(tokens: Token[]): ParserResult {
         matchKeyword('publicus');
 
         if (matchKeyword('privatus')) {
-            isPrivate = true;
+            visibility = 'private';
+        } else if (matchKeyword('protectus')) {
+            visibility = 'protected';
         }
 
         if (matchKeyword('generis')) {
@@ -1651,6 +1796,10 @@ export function parse(tokens: Token[]): ParserResult {
 
         if (matchKeyword('nexum')) {
             isReactive = true;
+        }
+
+        if (matchKeyword('abstractus')) {
+            isAbstract = true;
         }
 
         // Parse function modifiers (futura = async, cursor = generator)
@@ -1715,7 +1864,11 @@ export function parse(tokens: Token[]): ParserResult {
                 });
             }
 
-            const body = parseBlockStatement();
+            // Abstract methods have no body
+            let body: BlockStatement | undefined;
+            if (!isAbstract) {
+                body = parseBlockStatement();
+            }
 
             const method: FunctioDeclaration = {
                 type: 'FunctioDeclaration',
@@ -1725,6 +1878,8 @@ export function parse(tokens: Token[]): ParserResult {
                 body,
                 async: returnVerb === undefined ? prefixAsync : returnVerb === 'arrow' ? prefixAsync : verbAsync!,
                 generator: returnVerb === undefined ? prefixGenerator : returnVerb === 'arrow' ? prefixGenerator : verbGenerator!,
+                isAbstract: isAbstract || undefined,
+                visibility: visibility !== 'public' ? visibility : undefined,
                 position,
             };
 
@@ -1752,7 +1907,7 @@ export function parse(tokens: Token[]): ParserResult {
             name: fieldName,
             fieldType,
             init,
-            isPrivate,
+            visibility,
             isStatic,
             isReactive,
             position,

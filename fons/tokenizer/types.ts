@@ -148,6 +148,19 @@ export interface Position {
 // =============================================================================
 
 /**
+ * Comment type for COMMENT tokens.
+ *
+ * WHY: Distinguishes between comment styles for proper target-specific emission.
+ *
+ * | Type  | Syntax      | Purpose                            |
+ * |-------|-------------|------------------------------------|
+ * | line  | // ...      | Single-line comment                |
+ * | block | slash-star  | Multi-line block comment           |
+ * | doc   | slash-star2 | Documentation comment (JSDoc-like) |
+ */
+export type CommentTokenType = 'line' | 'block' | 'doc';
+
+/**
  * A single lexical token with source position.
  *
  * WHY: value field preserves original source text for:
@@ -156,12 +169,14 @@ export interface Position {
  *      - Template string interpolation
  *
  * INVARIANT: If type === "KEYWORD", keyword field must be populated
+ * INVARIANT: If type === "COMMENT", commentType field must be populated
  */
 export interface Token {
     type: TokenType;
     value: string; // Original source text of this token
     position: Position; // Source location for error reporting
     keyword?: string; // For KEYWORD tokens: the specific Latin keyword
+    commentType?: CommentTokenType; // For COMMENT tokens: line, block, or doc
 }
 
 // =============================================================================

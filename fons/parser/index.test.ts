@@ -1233,14 +1233,14 @@ describe('parser', () => {
             const { program } = parseCode('genus persona { privatus textus nomen }');
             const genus = program!.body[0] as any;
 
-            expect(genus.fields[0].isPrivate).toBe(true);
+            expect(genus.fields[0].visibility).toBe('private');
         });
 
         test('genus field is public by default', () => {
             const { program } = parseCode('genus persona { textus nomen }');
             const genus = program!.body[0] as any;
 
-            expect(genus.fields[0].isPrivate).toBe(false);
+            expect(genus.fields[0].visibility).toBe('public');
         });
 
         test('genus with static field', () => {
@@ -1295,7 +1295,7 @@ describe('parser', () => {
             const { program } = parseCode('genus widget { privatus nexum numerus value: 0 }');
             const genus = program!.body[0] as any;
 
-            expect(genus.fields[0].isPrivate).toBe(true);
+            expect(genus.fields[0].visibility).toBe('private');
             expect(genus.fields[0].isReactive).toBe(true);
         });
 
@@ -1321,6 +1321,64 @@ describe('parser', () => {
             expect(genus.fields[0].isReactive).toBe(false);
             expect(genus.fields[1].isReactive).toBe(true);
             expect(genus.fields[2].isReactive).toBe(false);
+        });
+
+        test('genus with sub (inheritance)', () => {
+            const { program } = parseCode('genus employee sub persona { textus title }');
+            const genus = program!.body[0] as any;
+
+            expect(genus.type).toBe('GenusDeclaration');
+            expect(genus.name.name).toBe('employee');
+            expect(genus.extends.name).toBe('persona');
+            expect(genus.fields).toHaveLength(1);
+        });
+
+        test('genus with sub and implet', () => {
+            const { program } = parseCode('genus employee sub persona implet worker { textus title }');
+            const genus = program!.body[0] as any;
+
+            expect(genus.extends.name).toBe('persona');
+            expect(genus.implements).toHaveLength(1);
+            expect(genus.implements[0].name).toBe('worker');
+        });
+
+        test('abstractus genus', () => {
+            const { program } = parseCode('abstractus genus animal { abstractus functio speak() -> textus }');
+            const genus = program!.body[0] as any;
+
+            expect(genus.type).toBe('GenusDeclaration');
+            expect(genus.isAbstract).toBe(true);
+            expect(genus.name.name).toBe('animal');
+            expect(genus.methods).toHaveLength(1);
+            expect(genus.methods[0].isAbstract).toBe(true);
+            expect(genus.methods[0].body).toBeUndefined();
+        });
+
+        test('genus with protected field', () => {
+            const { program } = parseCode('genus animal { protectus textus species }');
+            const genus = program!.body[0] as any;
+
+            expect(genus.fields[0].visibility).toBe('protected');
+        });
+
+        test('genus with protected method', () => {
+            const { program } = parseCode('genus animal { protectus functio internal() { redde nihil } }');
+            const genus = program!.body[0] as any;
+
+            expect(genus.methods[0].visibility).toBe('protected');
+        });
+
+        test('genus extending abstract class', () => {
+            const { program } = parseCode(`
+                abstractus genus animal { abstractus functio speak() -> textus }
+                genus dog sub animal { functio speak() -> textus { redde "woof" } }
+            `);
+            const abstractGenus = program!.body[0] as any;
+            const concreteGenus = program!.body[1] as any;
+
+            expect(abstractGenus.isAbstract).toBe(true);
+            expect(concreteGenus.isAbstract).toBe(false);
+            expect(concreteGenus.extends.name).toBe('animal');
         });
     });
 

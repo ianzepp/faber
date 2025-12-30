@@ -42,6 +42,40 @@ import type { Case, Number as GramNumber } from '../lexicon/types';
 import type { SemanticType } from '../semantic/types';
 
 // =============================================================================
+// COMMENT TYPES
+// =============================================================================
+
+/**
+ * Comment type discriminator.
+ *
+ * WHY: Distinguishes between comment styles for proper target-specific emission.
+ *
+ * | Type  | Syntax      | Purpose                            |
+ * |-------|-------------|------------------------------------|
+ * | line  | // ...      | Single-line comment                |
+ * | block | slash-star  | Multi-line block comment           |
+ * | doc   | slash-star2 | Documentation comment (JSDoc-like) |
+ */
+export type CommentType = 'line' | 'block' | 'doc';
+
+/**
+ * Comment node attached to AST nodes.
+ *
+ * INVARIANT: value contains comment text without delimiters.
+ * INVARIANT: position points to the start of the comment in source.
+ *
+ * WHY: Comments are preserved through the pipeline for:
+ *      - Source-to-source transformation (formatting)
+ *      - Code generation with documentation
+ *      - IDE tooling and documentation extraction
+ */
+export interface Comment {
+    type: CommentType;
+    value: string;
+    position: Position;
+}
+
+// =============================================================================
 // BASE TYPES
 // =============================================================================
 
@@ -52,10 +86,16 @@ import type { SemanticType } from '../semantic/types';
  *
  * The resolvedType field is populated by the semantic analyzer and used by
  * code generators to make type-aware decisions.
+ *
+ * Comments are attached during parsing:
+ * - leadingComments: comments appearing before this node (on previous lines)
+ * - trailingComments: comments on the same line after this node
  */
 export interface BaseNode {
     position: Position;
     resolvedType?: SemanticType;
+    leadingComments?: Comment[];
+    trailingComments?: Comment[];
 }
 
 /**
@@ -344,22 +384,26 @@ export type ReturnVerb = 'arrow' | 'fit' | 'fiet' | 'fiunt' | 'fient';
  * Function declaration statement.
  *
  * GRAMMAR (in EBNF):
- *   funcDecl := 'futura'? 'functio' IDENTIFIER '(' paramList ')' ('->' typeAnnotation)? blockStmt
+ *   funcDecl := 'abstractus'? 'futura'? 'functio' IDENTIFIER '(' paramList ')' ('->' typeAnnotation)? blockStmt?
  *   paramList := (typeParamDecl ',')* (parameter (',' parameter)*)?
  *
  * INVARIANT: async flag set by presence of 'futura' keyword.
  * INVARIANT: params is always an array (empty if no parameters).
  * INVARIANT: typeParams contains compile-time type parameters (prae typus T).
+ * INVARIANT: isAbstract is true for abstract methods (no body).
+ * INVARIANT: body is optional only when isAbstract is true.
  *
  * Target mappings:
- *   functio        → function (TS), def (Py), fn (Zig), fn (Rust)
- *   futura functio → async function (TS), async def (Py), fn returning !T (Zig)
- *   cursor functio → function* (TS), generator def (Py), N/A (Zig)
+ *   functio           → function (TS), def (Py), fn (Zig), fn (Rust)
+ *   futura functio    → async function (TS), async def (Py), fn returning !T (Zig)
+ *   cursor functio    → function* (TS), generator def (Py), N/A (Zig)
+ *   abstractus functio → abstract method (TS), @abstractmethod (Py), ERROR (Zig/Rust)
  *
  * Examples:
  *   functio salve(nomen: textus) -> textus { ... }
  *   futura functio cede() { ... }
  *   functio max(prae typus T, T a, T b) -> T { ... }
+ *   abstractus functio speak() -> textus
  */
 export interface FunctioDeclaration extends BaseNode {
     type: 'FunctioDeclaration';
@@ -367,10 +411,12 @@ export interface FunctioDeclaration extends BaseNode {
     typeParams?: TypeParameterDeclaration[];
     params: Parameter[];
     returnType?: TypeAnnotation;
-    body: BlockStatement;
+    body?: BlockStatement;
     async: boolean;
     generator: boolean;
     isConstructor?: boolean;
+    isAbstract?: boolean;
+    visibility?: Visibility;
     returnVerb?: ReturnVerb; // WHY: Tracks syntax used for return type (-> vs fit/fiet/fiunt/fient)
 }
 
@@ -577,13 +623,23 @@ export interface DiscretioDeclaration extends BaseNode {
 // ---------------------------------------------------------------------------
 
 /**
+ * Visibility level for genus members.
+ *
+ * WHY: Three-level visibility matching TypeScript/C++/Python:
+ *   - public: accessible from anywhere (default, struct semantics)
+ *   - protected: accessible from class and subclasses
+ *   - private: accessible only within the class
+ */
+export type Visibility = 'public' | 'protected' | 'private';
+
+/**
  * Field declaration within a genus.
  *
  * GRAMMAR (in EBNF):
- *   fieldDecl := 'privatus'? 'generis'? 'nexum'? typeAnnotation IDENTIFIER (':' expression)?
+ *   fieldDecl := ('privatus' | 'protectus')? 'generis'? 'nexum'? typeAnnotation IDENTIFIER (':' expression)?
  *
  * INVARIANT: typeAnnotation uses Latin word order (type before name).
- * INVARIANT: isPrivate defaults to false (public by default, struct semantics).
+ * INVARIANT: visibility defaults to 'public' (struct semantics).
  * INVARIANT: isStatic is true when 'generis' modifier present.
  * INVARIANT: isReactive is true when 'nexum' modifier present.
  *
@@ -595,6 +651,7 @@ export interface DiscretioDeclaration extends BaseNode {
  * Examples:
  *   textus nomen                    -> public field (default)
  *   privatus textus nomen           -> private field
+ *   protectus textus nomen          -> protected field
  *   numerus aetas: 0                -> field with default
  *   generis fixum PI: 3.14159       -> static constant
  *   nexum numerus count: 0          -> reactive field (triggers pingo on change)
@@ -604,7 +661,7 @@ export interface FieldDeclaration extends BaseNode {
     name: Identifier;
     fieldType: TypeAnnotation;
     init?: Expression;
-    isPrivate: boolean;
+    visibility: Visibility;
     isStatic: boolean;
     isReactive: boolean; // nexum fields trigger re-render on change
 }
@@ -613,7 +670,7 @@ export interface FieldDeclaration extends BaseNode {
  * Genus (struct/class) declaration.
  *
  * GRAMMAR (in EBNF):
- *   genusDecl := 'genus' IDENTIFIER typeParams? ('implet' IDENTIFIER (',' IDENTIFIER)*)? '{' genusMember* '}'
+ *   genusDecl := 'abstractus'? 'genus' IDENTIFIER typeParams? ('sub' IDENTIFIER)? ('implet' IDENTIFIER (',' IDENTIFIER)*)? '{' genusMember* '}'
  *   genusMember := fieldDecl | methodDecl
  *   typeParams := '<' IDENTIFIER (',' IDENTIFIER)* '>'
  *
@@ -621,14 +678,19 @@ export interface FieldDeclaration extends BaseNode {
  * INVARIANT: fields contains all field declarations.
  * INVARIANT: methods contains all method declarations (FunctioDeclaration with implicit ego).
  * INVARIANT: implements lists pactum names this genus fulfills.
+ * INVARIANT: extends is the parent class (single inheritance only).
+ * INVARIANT: isAbstract is true when 'abstractus' modifier present.
  *
  * WHY: Latin 'genus' (kind/type) for data structures with fields and methods.
- *      No inheritance - composition and pactum (interfaces) only.
+ * WHY: 'sub' (under) for inheritance - child class is "under" parent.
+ * WHY: 'abstractus' for classes that cannot be instantiated directly.
  *
  * Target mappings:
- *   genus  → class (TS), class (Py), struct (Zig), struct (Rust)
- *   implet → implements (TS), Protocol (Py), comptime duck typing (Zig), impl Trait (Rust)
- *   ego    → this (TS), self (Py), self (Zig), self (Rust)
+ *   genus     → class (TS), class (Py), struct (Zig), struct (Rust)
+ *   sub       → extends (TS), inherits (Py), ERROR (Zig/Rust - no class inheritance)
+ *   implet    → implements (TS), Protocol (Py), comptime duck typing (Zig), impl Trait (Rust)
+ *   abstractus → abstract class (TS), ABC (Py), ERROR (Zig/Rust)
+ *   ego       → this (TS), self (Py), self (Zig), self (Rust)
  *
  * Examples:
  *   genus persona {
@@ -640,12 +702,22 @@ export interface FieldDeclaration extends BaseNode {
  *       textus nomen
  *       functio sequens() -> textus? { ... }
  *   }
+ *
+ *   genus employee sub persona {
+ *       textus title
+ *   }
+ *
+ *   abstractus genus animal {
+ *       abstractus functio speak() -> textus
+ *   }
  */
 export interface GenusDeclaration extends BaseNode {
     type: 'GenusDeclaration';
     name: Identifier;
     typeParameters?: Identifier[];
+    extends?: Identifier;
     implements?: Identifier[];
+    isAbstract: boolean;
     fields: FieldDeclaration[];
     constructor?: FunctioDeclaration;
     methods: FunctioDeclaration[];

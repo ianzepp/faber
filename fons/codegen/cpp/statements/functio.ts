@@ -10,6 +10,10 @@ import type { FunctioDeclaration, BlockStatement } from '../../../parser/ast';
 import type { CppGenerator } from '../generator';
 
 export function genFunctioDeclaration(node: FunctioDeclaration, g: CppGenerator): string {
+    if (!node.body) {
+        throw new Error('Abstract methods not yet supported for C++ target');
+    }
+
     const name = node.name.name;
     const params = node.params.map(p => g.genParameter(p)).join(', ');
     const returnType = node.returnType ? g.genType(node.returnType) : 'void';

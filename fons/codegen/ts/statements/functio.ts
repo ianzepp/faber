@@ -28,6 +28,12 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: TsGenerator):
     // Generate type parameters: prae typus T -> <T>
     const typeParams = node.typeParams ? g.genTypeParams(node.typeParams) : '';
 
+    // Handle abstract methods (no body)
+    if (node.isAbstract || !node.body) {
+        const returnType = node.returnType ? `: ${g.genType(node.returnType)}` : '';
+        return `${g.ind()}abstract ${name}${typeParams}(${params})${returnType};`;
+    }
+
     // WHY: Each verb triggers its corresponding helper:
     // fit -> drain() (sync single), fiunt -> flow() (sync multi)
     // fiet -> drainAsync() (async single), fient -> flowAsync() (async multi)
@@ -193,8 +199,6 @@ export function genBlockStatement(node: BlockStatement, g: TsGenerator): string 
  * Generate method declaration within a class.
  */
 export function genMethodDeclaration(node: FunctioDeclaration, g: TsGenerator): string {
-    const asyncMod = node.async ? 'async ' : '';
-    const star = node.generator ? '*' : '';
     const name = node.name.name;
     const params = node.params.map(p => g.genParameter(p)).join(', ');
 
@@ -212,11 +216,21 @@ export function genMethodDeclaration(node: FunctioDeclaration, g: TsGenerator): 
         returnType = `: ${baseType}`;
     }
 
+    // Handle abstract methods (no body)
+    if (node.isAbstract || !node.body) {
+        const visibilityMod = node.visibility === 'protected' ? 'protected ' : '';
+        return `${g.ind()}${visibilityMod}abstract ${name}(${params})${returnType};`;
+    }
+
+    const asyncMod = node.async ? 'async ' : '';
+    const star = node.generator ? '*' : '';
+    const visibilityMod = node.visibility === 'private' ? 'private ' : node.visibility === 'protected' ? 'protected ' : '';
+
     // Track generator context for cede -> yield vs await
     const prevInGenerator = g.inGenerator;
     g.inGenerator = node.generator;
     const body = genBlockStatement(node.body, g);
     g.inGenerator = prevInGenerator;
 
-    return `${g.ind()}${asyncMod}${star}${name}(${params})${returnType} ${body}`;
+    return `${g.ind()}${visibilityMod}${asyncMod}${star}${name}(${params})${returnType} ${body}`;
 }

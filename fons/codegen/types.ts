@@ -126,3 +126,98 @@ export interface CodegenOptions {
      */
     semicolons?: boolean;
 }
+
+// =============================================================================
+// COMMENT FORMATTING
+// =============================================================================
+
+import type { Comment, BaseNode } from '../parser/ast';
+
+/**
+ * Comment syntax configuration per target.
+ *
+ * WHY: Different targets have different comment syntax:
+ *      - TS/Rust/C++: // line and slash-star block
+ *      - Python: # line and """ block
+ *      - Zig: // line only (no block comments)
+ */
+export interface CommentSyntax {
+    line: string; // Line comment prefix (e.g., '//', '#')
+    blockStart: string | null; // Block comment start (e.g., '/*', '"""') or null if not supported
+    blockEnd: string | null; // Block comment end (e.g., '*/', '"""') or null if not supported
+}
+
+/**
+ * Comment syntax for each target.
+ */
+export const COMMENT_SYNTAX: Record<CodegenTarget, CommentSyntax> = {
+    ts: { line: '//', blockStart: '/*', blockEnd: '*/' },
+    py: { line: '#', blockStart: '"""', blockEnd: '"""' },
+    rs: { line: '//', blockStart: '/*', blockEnd: '*/' },
+    cpp: { line: '//', blockStart: '/*', blockEnd: '*/' },
+    zig: { line: '//', blockStart: null, blockEnd: null }, // Zig has no block comments
+};
+
+/**
+ * Format a single comment for a target.
+ *
+ * @param comment - The comment to format
+ * @param syntax - The comment syntax for the target
+ * @param indent - Current indentation string
+ * @returns Formatted comment string(s)
+ */
+export function formatComment(comment: Comment, syntax: CommentSyntax, indent: string): string {
+    if (comment.type === 'line') {
+        return `${indent}${syntax.line} ${comment.value}`;
+    }
+
+    // Block or doc comment
+    if (syntax.blockStart && syntax.blockEnd) {
+        // Multi-line block comment
+        const lines = comment.value.split('\n');
+        if (lines.length === 1) {
+            return `${indent}${syntax.blockStart} ${comment.value.trim()} ${syntax.blockEnd}`;
+        }
+        // Multi-line: preserve formatting
+        const result = [`${indent}${syntax.blockStart}`];
+        for (const line of lines) {
+            result.push(`${indent} ${line.trim()}`);
+        }
+        result.push(`${indent} ${syntax.blockEnd}`);
+        return result.join('\n');
+    }
+
+    // Target doesn't support block comments (e.g., Zig) - convert to line comments
+    const lines = comment.value.split('\n');
+    return lines.map(line => `${indent}${syntax.line} ${line.trim()}`).join('\n');
+}
+
+/**
+ * Format leading comments for a node.
+ *
+ * @param node - The AST node
+ * @param syntax - The comment syntax for the target
+ * @param indent - Current indentation string
+ * @returns Formatted leading comments with trailing newline, or empty string
+ */
+export function formatLeadingComments(node: BaseNode, syntax: CommentSyntax, indent: string): string {
+    if (!node.leadingComments || node.leadingComments.length === 0) {
+        return '';
+    }
+    return node.leadingComments.map(c => formatComment(c, syntax, indent)).join('\n') + '\n';
+}
+
+/**
+ * Format trailing comments for a node.
+ *
+ * @param node - The AST node
+ * @param syntax - The comment syntax for the target
+ * @returns Formatted trailing comments with leading space, or empty string
+ */
+export function formatTrailingComments(node: BaseNode, syntax: CommentSyntax): string {
+    if (!node.trailingComments || node.trailingComments.length === 0) {
+        return '';
+    }
+    // Trailing comments go on the same line, so no indent
+    return node.trailingComments.map(c => ` ${syntax.line} ${c.value}`).join('');
+}

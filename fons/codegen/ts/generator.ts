@@ -5,9 +5,18 @@
  * Individual gen* functions are in separate files under statements/ and expressions/.
  */
 
-import type { Statement, Expression, BlockStatement, Parameter, TypeAnnotation, TypeParameter, TypeParameterDeclaration } from '../../parser/ast';
+import type {
+    Statement,
+    Expression,
+    BlockStatement,
+    Parameter,
+    TypeAnnotation,
+    TypeParameter,
+    TypeParameterDeclaration,
+    BaseNode,
+} from '../../parser/ast';
 import type { RequiredFeatures } from '../types';
-import { createRequiredFeatures } from '../types';
+import { createRequiredFeatures, COMMENT_SYNTAX, formatLeadingComments, formatTrailingComments } from '../types';
 
 // Statement handlers
 import { genImportaDeclaration } from './statements/importa';
@@ -109,9 +118,40 @@ export class TsGenerator {
     }
 
     /**
+     * Format leading comments for a node.
+     *
+     * WHY: Comments attached to AST nodes are emitted before the node content.
+     */
+    leadingComments(node: BaseNode): string {
+        return formatLeadingComments(node, COMMENT_SYNTAX.ts, this.ind());
+    }
+
+    /**
+     * Format trailing comments for a node.
+     *
+     * WHY: Trailing comments appear on the same line after the node content.
+     */
+    trailingComments(node: BaseNode): string {
+        return formatTrailingComments(node, COMMENT_SYNTAX.ts);
+    }
+
+    /**
      * Generate a statement. Dispatches to specific gen* functions.
+     *
+     * WHY: Wraps statement generation with comment emission. Leading comments
+     *      appear before the statement, trailing comments on the same line.
      */
     genStatement(node: Statement): string {
+        const leading = this.leadingComments(node);
+        const trailing = this.trailingComments(node);
+        const stmt = this.genStatementContent(node);
+        return `${leading}${stmt}${trailing}`;
+    }
+
+    /**
+     * Generate statement content without comments.
+     */
+    private genStatementContent(node: Statement): string {
         switch (node.type) {
             case 'ImportaDeclaration':
                 return genImportaDeclaration(node, this, this.semi);

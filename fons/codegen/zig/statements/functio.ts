@@ -19,6 +19,11 @@ import type { ZigGenerator } from '../generator';
 export function genFunctioDeclaration(node: FunctioDeclaration, g: ZigGenerator): string {
     const name = node.name.name;
 
+    // EDGE: Abstract methods have no body - Zig doesn't support abstract methods
+    if (!node.body) {
+        throw new Error('Abstract methods not supported for Zig target');
+    }
+
     // Generate type parameters as comptime T: type
     const typeParams = node.typeParams?.map(tp => genTypeParameter(tp)) ?? [];
 
