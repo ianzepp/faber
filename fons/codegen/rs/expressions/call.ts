@@ -16,6 +16,7 @@ import type { RsGenerator } from '../generator';
 // Collection method registries
 import { getListaMethod } from '../norma/lista';
 import { getCopiaMethod } from '../norma/copia';
+import { getTabulaMethod } from '../norma/tabula';
 import { getMathesisFunction } from '../norma/mathesis';
 import { getTempusFunction } from '../norma/tempus';
 
@@ -108,6 +109,14 @@ export function genCallExpression(node: CallExpression, g: RsGenerator): string 
         // Dispatch based on resolved type
         if (collectionName === 'copia') {
             const method = getCopiaMethod(methodName);
+            if (method) {
+                if (typeof method.rs === 'function') {
+                    return method.rs(obj, argsArray);
+                }
+                return `${obj}.${method.rs}(${args})`;
+            }
+        } else if (collectionName === 'tabula') {
+            const method = getTabulaMethod(methodName);
             if (method) {
                 if (typeof method.rs === 'function') {
                     return method.rs(obj, argsArray);

@@ -16,7 +16,8 @@
   ts:
       - '.set('
   rs:
-      - '.pone('
+      - 'HashMap<String, i64>'
+      - '.insert('
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.pone("key", 42)'
@@ -31,7 +32,8 @@
   ts:
       - '.get('
   rs:
-      - '.accipe('
+      - 'HashMap<String, i64>'
+      - '.get(&String::from("key")'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.accipe("key")'
@@ -46,7 +48,8 @@
   ts:
       - '.has('
   rs:
-      - '.habet('
+      - 'HashMap<String, i64>'
+      - '.contains_key(&String::from("key")'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.habet("key")'
@@ -61,7 +64,8 @@
   ts:
       - '.delete('
   rs:
-      - '.dele('
+      - 'HashMap<String, i64>'
+      - '.remove(&String::from("key")'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.dele("key")'
@@ -76,7 +80,8 @@
   ts:
       - '.size'
   rs:
-      - '.longitudo()'
+      - 'HashMap<String, i64>'
+      - '.len()'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.longitudo()'
@@ -91,7 +96,8 @@
   ts:
       - '.size === 0'
   rs:
-      - '.vacua()'
+      - 'HashMap<String, i64>'
+      - '.is_empty()'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.vacua()'
@@ -106,7 +112,8 @@
   ts:
       - '.clear('
   rs:
-      - '.purga()'
+      - 'HashMap<String, i64>'
+      - '.clear()'
   fab:
       - 'varia tabula<textus, numerus> map = {}'
       - 'map.purga()'
@@ -125,7 +132,8 @@
   ts:
       - '.keys('
   rs:
-      - '.claves()'
+      - 'HashMap<String, i64>'
+      - '.keys()'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.claves()'
@@ -140,7 +148,8 @@
   ts:
       - '.values('
   rs:
-      - '.valores()'
+      - 'HashMap<String, i64>'
+      - '.values()'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.valores()'
@@ -160,7 +169,9 @@
   ts:
       - '.get('
   rs:
-      - '.accipeAut('
+      - 'HashMap<String, i64>'
+      - '.get(&String::from("key")'
+      - '.unwrap_or(0)'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.accipeAut("key", 0)'
@@ -176,7 +187,8 @@
   ts:
       - '[...'
   rs:
-      - '.confla(other)'
+      - 'HashMap<String, i64>'
+      - '.extend(other.iter()'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'fixum tabula<textus, numerus> other = {}'
@@ -192,7 +204,8 @@
   ts:
       - '[...'
   rs:
-      - '.inLista()'
+      - 'HashMap<String, i64>'
+      - '.iter().map(|(k, v)| (k.clone(), v.clone())).collect::<Vec<_>>()'
   fab:
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.inLista()'
