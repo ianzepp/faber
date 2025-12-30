@@ -72,25 +72,25 @@ All syscalls return `Responsum<T>` — a tagged union describing the result:
 **TypeScript:**
 
 ```typescript
-type FaberError = {
+type ResponsumError = {
     code: string;
     message: string;
     details?: unknown;
-    cause?: FaberError;
+    cause?: ResponsumError;
 };
 
-type Responsum<T> = { op: 'pending' } | { op: 'ok'; data: T } | { op: 'item'; data: T } | { op: 'done' } | { op: 'err'; error: FaberError };
+type Responsum<T> = { op: 'pending' } | { op: 'ok'; data: T } | { op: 'item'; data: T } | { op: 'done' } | { op: 'err'; error: ResponsumError };
 ```
 
 **Zig:**
 
 ```zig
-const FaberError = struct {
+const ResponsumError = struct {
     code: []const u8,
     message: []const u8,
     // Optional enrichment (best-effort per target/runtime)
     details: ?[]const u8 = null,
-    cause: ?*const FaberError = null,
+    cause: ?*const ResponsumError = null,
 };
 
 fn Responsum(comptime T: type) type {
@@ -99,7 +99,7 @@ fn Responsum(comptime T: type) type {
         ok: T,
         item: T,
         done,
-        err: FaberError,
+        err: ResponsumError,
     };
 }
 ```
@@ -275,7 +275,7 @@ pub fn run(comptime T: type, future: *Future(T)) !T {
                 ctx.deliver_result(completed.id, completed.result);
             },
             .ok => |value| return value,
-            .err => |e| return error.FaberError,
+            .err => |e| return error.ResponsumError,
             .item, .done => unreachable, // single-value future
         }
     }
@@ -291,7 +291,7 @@ async function run<T>(gen: AsyncIterable<Responsum<T>>): Promise<T> {
             case 'ok':
                 return resp.data;
             case 'err':
-                throw new FaberError(resp.error);
+                throw new ResponsumError(resp.error);
             case 'pending':
                 continue; // implicit in async iteration
             case 'item':
@@ -468,7 +468,7 @@ async function run<T>(gen: AsyncIterable<Responsum<T>>): Promise<T> {
             case 'ok':
                 return resp.data;
             case 'err':
-                throw new FaberError(resp.error);
+                throw new ResponsumError(resp.error);
             case 'item':
                 continue;
             case 'done':
@@ -499,13 +499,13 @@ Most code should use verb binding (`fiet`/`fiunt`/`fient`) for consistency and d
 
 Use native `async fn` with Responsum mapped to Rust idioms:
 
-| Responsum  | Rust                           |
-| ---------- | ------------------------------ |
-| `.ok(T)`   | `Poll::Ready(Ok(T))`           |
-| `.err(E)`  | `Poll::Ready(Err(FaberError))` |
-| `.pending` | `Poll::Pending`                |
-| `.item(T)` | `Some(Ok(T))` via Stream       |
-| `.done`    | `None` via Stream              |
+| Responsum  | Rust                               |
+| ---------- | ---------------------------------- |
+| `.ok(T)`   | `Poll::Ready(Ok(T))`               |
+| `.err(E)`  | `Poll::Ready(Err(ResponsumError))` |
+| `.pending` | `Poll::Pending`                    |
+| `.item(T)` | `Some(Ok(T))` via Stream           |
+| `.done`    | `None` via Stream                  |
 
 ```fab
 functio fetch(textus url) fiet Response {
@@ -517,7 +517,7 @@ functio fetch(textus url) fiet Response {
 Becomes:
 
 ```rust
-pub async fn fetch(url: &str) -> Result<Response, FaberError> {
+pub async fn fetch(url: &str) -> Result<Response, ResponsumError> {
     let resp = caelum::request(url, "GET").await?;
     Ok(resp)
 }
@@ -528,7 +528,7 @@ Rust's compiler generates state machines for `async fn`. No manual state machine
 For streaming (`fiunt`/`fient`):
 
 ```rust
-pub fn items() -> impl Stream<Item = Result<Item, FaberError>> {
+pub fn items() -> impl Stream<Item = Result<Item, ResponsumError>> {
     async_stream::stream! {
         yield Ok(item1);
         yield Ok(item2);
