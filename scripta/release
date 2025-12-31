@@ -6,11 +6,13 @@ cd "$(dirname "$0")/.."
 
 # Parse arguments
 BUMP="minor"
+FORCE=false
 for arg in "$@"; do
     case $arg in
         --major) BUMP="major" ;;
         --minor) BUMP="minor" ;;
         --patch) BUMP="patch" ;;
+        --force) FORCE=true ;;
         *) echo "Unknown argument: $arg"; exit 1 ;;
     esac
 done
@@ -27,7 +29,11 @@ if [[ -n $(git status --porcelain) ]]; then
 fi
 
 echo "=== Running tests ==="
-bun test
+if [[ "$FORCE" == true ]]; then
+    bun test || echo "Warning: Tests failed but --force was specified, continuing..."
+else
+    bun test
+fi
 
 echo "=== Building faber ==="
 bun run build
