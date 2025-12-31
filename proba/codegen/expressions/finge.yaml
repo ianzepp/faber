@@ -1,0 +1,128 @@
+# Finge expressions - discretio variant construction
+# Maps Faber finge syntax to target-language variant instantiation
+#
+# Syntax:
+#   finge Variant { field: value }
+#   finge Variant { field: value } qua DiscretioType
+#   finge Variant qua DiscretioType
+#
+# Target mappings:
+#   TypeScript: { tag: 'Variant', field: value }
+#   Python: DiscretioType_Variant(field=value)
+#   Rust: DiscretioType::Variant { field: value }
+#   C++: Variant{.field = value}
+#   Zig: DiscretioType{ .variant = .{ .field = value } }
+
+# =============================================================================
+# Payload Variants with Explicit Type
+# =============================================================================
+
+- name: finge payload variant with qua
+  faber: 'fixum e = finge Click { x: 10, y: 20 } qua Event'
+  expect:
+      ts:
+          - "{ tag: 'Click', x: 10, y: 20 }"
+      py:
+          - 'Event_Click(x=10, y=20)'
+      rs:
+          - 'Event::Click { x: 10, y: 20 }'
+      cpp:
+          - 'Click{.x = 10, .y = 20}'
+      zig:
+          - 'Event{ .click = .{ .x = 10, .y = 20 } }'
+      fab:
+          - 'finge Click { x: 10, y: 20 } qua Event'
+
+# =============================================================================
+# Unit Variants (No Payload)
+# =============================================================================
+
+- name: finge unit variant with qua
+  faber: 'fixum s = finge Active qua Status'
+  expect:
+      ts:
+          - "{ tag: 'Active' }"
+      py:
+          - 'Status_Active()'
+      rs:
+          - 'Status::Active'
+      cpp:
+          - 'Active{}'
+      zig:
+          - 'Status.active'
+      fab:
+          - 'finge Active qua Status'
+
+# =============================================================================
+# Variants without Explicit Type (Type Inferred)
+# =============================================================================
+
+- name: finge payload variant without qua
+  faber: 'fixum e = finge Click { x: 5, y: 15 }'
+  expect:
+      ts:
+          - "{ tag: 'Click', x: 5, y: 15 }"
+      py:
+          - 'Click(x=5, y=15)'
+      rs:
+          - 'Click { x: 5, y: 15 }'
+      cpp:
+          - 'Click{.x = 5, .y = 15}'
+      zig:
+          - '.{ .click = .{ .x = 5, .y = 15 } }'
+      fab:
+          - 'finge Click { x: 5, y: 15 }'
+
+- name: finge unit variant without qua
+  faber: 'fixum s = finge Pending'
+  expect:
+      ts:
+          - "{ tag: 'Pending' }"
+      py:
+          - 'Pending()'
+      rs:
+          - 'Pending'
+      cpp:
+          - 'Pending{}'
+      zig:
+          - '.pending'
+      fab:
+          - 'finge Pending'
+
+# =============================================================================
+# Single Field Variants
+# =============================================================================
+
+- name: finge single field variant
+  faber: 'fixum r = finge Success { message: "done" } qua Result'
+  expect:
+      ts:
+          - "{ tag: 'Success', message: \"done\" }"
+      py:
+          - 'Result_Success(message="done")'
+      rs:
+          - 'Result::Success { message: String::from("done") }'
+      cpp:
+          - 'Success{.message = std::string("done")}'
+      zig:
+          - 'Result{ .success = .{ .message = "done" } }'
+      fab:
+          - 'finge Success { message: "done" } qua Result'
+
+# =============================================================================
+# Expression Fields
+# =============================================================================
+
+- name: finge with expression fields
+  faber: 'fixum e = finge Move { x: a + b, y: c * 2 } qua Action'
+  expect:
+      ts:
+          - "{ tag: 'Move', x: (a + b), y: (c * 2) }"
+      py:
+          - 'Action_Move(x=(a + b), y=(c * 2))'
+      rs:
+          - 'Action::Move { x: (a + b), y: (c * 2) }'
+      cpp:
+          - 'Move{.x = (a + b), .y = (c * 2)}'
+      fab:
+          - 'finge Move { x: a + b, y: c * 2 } qua Action'

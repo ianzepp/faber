@@ -52,6 +52,7 @@ import { genMemberExpression } from './expressions/member';
 import { genLambdaExpression } from './expressions/lambda';
 import { genAssignmentExpression } from './expressions/assignment';
 import { genNovumExpression } from './expressions/novum';
+import { genFingeExpression } from './expressions/finge';
 import { genEstExpression } from './expressions/est';
 import { genPraefixumExpression } from './expressions/praefixum';
 import { genScriptumExpression } from './expressions/scriptum';
@@ -269,6 +270,8 @@ export class PyGenerator {
                 return `${this.inGenerator ? 'yield' : 'await'} ${this.genExpression(node.argument)}`;
             case 'NovumExpression':
                 return genNovumExpression(node, this);
+            case 'FingeExpression':
+                return genFingeExpression(node, this);
             case 'ConditionalExpression':
                 return `${this.genExpression(node.consequent)} if ${this.genExpression(node.test)} else ${this.genExpression(node.alternate)}`;
             case 'QuaExpression':

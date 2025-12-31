@@ -163,6 +163,10 @@ export const keywords: KeywordEntry[] = [
     { latin: 'variandum', meaning: 'let await', category: 'declaration' },
     { latin: 'functio', meaning: 'function', category: 'declaration' },
     { latin: 'novum', meaning: 'new', category: 'declaration' },
+    // WHY: "finge" (imperative of fingere - to form, shape, mold) for discretio variant construction
+    //      Distinct from novum (object instantiation) - finge shapes data into a specific variant form
+    //      Usage: finge Click { x: 10, y: 20 } qua Event
+    { latin: 'finge', meaning: 'form variant', category: 'declaration' },
     { latin: 'importa', meaning: 'import', category: 'declaration' },
     { latin: 'exporta', meaning: 'export', category: 'declaration' },
     { latin: 'typus', meaning: 'type', category: 'declaration' },

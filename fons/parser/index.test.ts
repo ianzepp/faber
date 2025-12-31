@@ -1119,6 +1119,47 @@ describe('parser', () => {
         });
     });
 
+    describe('finge expression', () => {
+        test('finge unit variant', () => {
+            const { program } = parseCode('finge Active');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('FingeExpression');
+            expect(expr.variant.name).toBe('Active');
+            expect(expr.fields).toBeUndefined();
+            expect(expr.discretioType).toBeUndefined();
+        });
+
+        test('finge unit variant with qua', () => {
+            const { program } = parseCode('finge Active qua Status');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('FingeExpression');
+            expect(expr.variant.name).toBe('Active');
+            expect(expr.discretioType.name).toBe('Status');
+        });
+
+        test('finge payload variant', () => {
+            const { program } = parseCode('finge Click { x: 10, y: 20 }');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('FingeExpression');
+            expect(expr.variant.name).toBe('Click');
+            expect(expr.fields.type).toBe('ObjectExpression');
+            expect(expr.fields.properties).toHaveLength(2);
+        });
+
+        test('finge payload variant with qua', () => {
+            const { program } = parseCode('finge Click { x: 10, y: 20 } qua Event');
+            const expr = (program!.body[0] as any).expression;
+
+            expect(expr.type).toBe('FingeExpression');
+            expect(expr.variant.name).toBe('Click');
+            expect(expr.fields.type).toBe('ObjectExpression');
+            expect(expr.discretioType.name).toBe('Event');
+        });
+    });
+
     describe('try/catch/finally', () => {
         test('tempta/cape', () => {
             const { program } = parseCode(`

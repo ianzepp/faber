@@ -1796,6 +1796,7 @@ export type Expression =
     | ConditionalExpression
     | CedeExpression
     | NovumExpression
+    | FingeExpression
     | TemplateLiteral
     | LambdaExpression
     | PraefixumExpression
@@ -2281,6 +2282,38 @@ export interface NovumExpression extends BaseNode {
     callee: Identifier;
     arguments: (Expression | SpreadElement)[];
     withExpression?: Expression;
+}
+
+/**
+ * Discretio variant construction expression.
+ *
+ * GRAMMAR (in EBNF):
+ *   fingeExpr := 'finge' IDENTIFIER ('{' fieldList '}')? ('qua' IDENTIFIER)?
+ *
+ * WHY: Latin 'finge' (imperative of fingere - to form, shape, mold) for
+ *      constructing discretio variants. Distinct from novum (object instantiation).
+ *
+ * The variant name comes first, optional fields in braces, optional qua for
+ * explicit discretio type when not inferrable from context.
+ *
+ * Examples:
+ *   finge Click { x: 10, y: 20 }           - payload variant, type inferred
+ *   finge Click { x: 10, y: 20 } qua Event - payload variant, explicit type
+ *   finge Active                            - unit variant, type inferred
+ *   finge Active qua Status                 - unit variant, explicit type
+ *
+ * Target mappings:
+ *   TS:   { tag: 'Click', x: 10, y: 20 }
+ *   Py:   Event_Click(x=10, y=20)
+ *   Rust: Event::Click { x: 10, y: 20 }
+ *   Zig:  Event{ .click = .{ .x = 10, .y = 20 } }
+ *   C++:  Click{.x = 10, .y = 20}
+ */
+export interface FingeExpression extends BaseNode {
+    type: 'FingeExpression';
+    variant: Identifier;
+    fields?: ObjectExpression;
+    discretioType?: Identifier;
 }
 
 // =============================================================================

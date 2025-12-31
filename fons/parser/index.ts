@@ -120,6 +120,7 @@ import type {
     TypeParameterDeclaration,
     CapeClause,
     NovumExpression,
+    FingeExpression,
     TypeAliasDeclaration,
     OrdoDeclaration,
     OrdoMember,
@@ -4004,13 +4005,14 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse unary expression.
      *
      * GRAMMAR:
-     *   unary := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'novum') unary | cast
+     *   unary := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'novum' | 'finge') unary | cast
      *
      * PRECEDENCE: Higher than binary operators, lower than cast/call/member access.
      *
      * WHY: Latin 'non' (not), 'nulla' (none/empty), 'nonnulla' (some/non-empty),
      *      'nihil' (is null), 'nonnihil' (is not null),
-     *      'negativum' (< 0), 'positivum' (> 0), 'cede' (await), 'novum' (new).
+     *      'negativum' (< 0), 'positivum' (> 0), 'cede' (await), 'novum' (new),
+     *      'finge' (form variant).
      */
     function parseUnary(): Expression {
         // WHY: Prefix ! is removed to make room for non-null assertion (postfix !.)
@@ -4117,6 +4119,10 @@ export function parse(tokens: Token[]): ParserResult {
 
         if (matchKeyword('novum')) {
             return parseNovumExpression();
+        }
+
+        if (matchKeyword('finge')) {
+            return parseFingeExpression();
         }
 
         if (matchKeyword('praefixum')) {
@@ -4311,6 +4317,47 @@ export function parse(tokens: Token[]): ParserResult {
         }
 
         return { type: 'NovumExpression', callee, arguments: args, withExpression, position };
+    }
+
+    /**
+     * Parse discretio variant construction expression.
+     *
+     * GRAMMAR:
+     *   fingeExpr := 'finge' IDENTIFIER ('{' fieldList '}')? ('qua' IDENTIFIER)?
+     *
+     * WHY: Latin 'finge' (form/shape) for constructing discretio variants.
+     *      Variant name comes first, optional fields in braces, optional qua for
+     *      explicit discretio type when not inferrable from context.
+     *
+     * Examples:
+     *   finge Click { x: 10, y: 20 }           - payload variant
+     *   finge Click { x: 10, y: 20 } qua Event - with explicit type
+     *   finge Active                            - unit variant
+     *   finge Active qua Status                 - unit variant with explicit type
+     */
+    function parseFingeExpression(): FingeExpression {
+        const position = tokens[current - 1]!.position;
+        const variant = parseIdentifier();
+
+        let fields: ObjectExpression | undefined;
+
+        // Check for payload fields: finge Click { x: 10, y: 20 }
+        if (check('LBRACE')) {
+            const fieldsExpr = parsePrimary();
+
+            if (fieldsExpr.type === 'ObjectExpression') {
+                fields = fieldsExpr;
+            }
+        }
+
+        let discretioType: Identifier | undefined;
+
+        // Check for explicit type: finge Click { } qua Event
+        if (matchKeyword('qua')) {
+            discretioType = parseIdentifier();
+        }
+
+        return { type: 'FingeExpression', variant, fields, discretioType, position };
     }
 
     /**

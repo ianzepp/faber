@@ -70,6 +70,7 @@ import type {
     AssignmentExpression,
     CedeExpression,
     NovumExpression,
+    FingeExpression,
     ArrayExpression,
     TypeAnnotation,
     IaceStatement,
@@ -710,6 +711,9 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             case 'NovumExpression':
                 return resolveNew(node);
 
+            case 'FingeExpression':
+                return resolveFingeExpression(node);
+
             case 'ConditionalExpression':
                 return resolveConditional(node);
 
@@ -1229,6 +1233,30 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         node.resolvedType = type;
 
         return type;
+    }
+
+    function resolveFingeExpression(node: FingeExpression): SemanticType {
+        // Resolve field values if present
+        if (node.fields) {
+            resolveObjectExpression(node.fields);
+        }
+
+        // WHY: If explicit discretioType is provided via qua, use it
+        //      Otherwise, type must be inferred from context (variable declaration, return type, etc.)
+        //      For now, we use the explicit type or mark as unknown for later inference
+        if (node.discretioType) {
+            const type = userType(node.discretioType.name);
+
+            node.resolvedType = type;
+
+            return type;
+        }
+
+        // TODO: Infer discretio type from context (variable declaration, return type, etc.)
+        //       For now, mark as unknown - codegen will still work with explicit qua types
+        node.resolvedType = UNKNOWN;
+
+        return UNKNOWN;
     }
 
     function resolveConditional(node: Expression & { type: 'ConditionalExpression' }): SemanticType {

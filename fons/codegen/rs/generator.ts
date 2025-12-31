@@ -53,6 +53,7 @@ import { genMemberExpression } from './expressions/member';
 import { genLambdaExpression } from './expressions/lambda';
 import { genAssignmentExpression } from './expressions/assignment';
 import { genNovumExpression } from './expressions/novum';
+import { genFingeExpression } from './expressions/finge';
 import { genQuaExpression } from './expressions/qua';
 import { genEstExpression } from './expressions/est';
 import { genPraefixumExpression } from './expressions/praefixum';
@@ -246,6 +247,8 @@ export class RsGenerator {
                 return `${this.genExpression(node.argument)}.await`;
             case 'NovumExpression':
                 return genNovumExpression(node, this);
+            case 'FingeExpression':
+                return genFingeExpression(node, this);
             case 'ConditionalExpression':
                 return `if ${this.genExpression(node.test)} { ${this.genExpression(node.consequent)} } else { ${this.genExpression(node.alternate)} }`;
             case 'QuaExpression':
