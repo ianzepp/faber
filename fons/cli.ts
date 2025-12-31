@@ -37,6 +37,7 @@
  * @module cli
  */
 
+import { resolve } from 'node:path';
 import { tokenize } from './tokenizer';
 import { parse } from './parser';
 import { analyze } from './semantic';
@@ -222,7 +223,9 @@ async function compile(inputFile: string, target: CodegenTarget, outputFile?: st
     // Semantic Analysis
     // ---------------------------------------------------------------------------
 
-    const { errors: semanticErrors } = analyze(program);
+    // WHY: Pass absolute file path to enable local import resolution
+    const filePath = inputFile !== '-' ? resolve(inputFile) : undefined;
+    const { errors: semanticErrors } = analyze(program, { filePath });
 
     if (semanticErrors.length > 0) {
         console.error('Semantic errors:');
@@ -321,7 +324,9 @@ async function check(inputFile: string, target?: CodegenTarget): Promise<void> {
     let semanticErrors: { message: string; position: { line: number; column: number } }[] = [];
 
     if (program) {
-        const result = analyze(program);
+        // WHY: Pass absolute file path to enable local import resolution
+        const filePath = inputFile !== '-' ? resolve(inputFile) : undefined;
+        const result = analyze(program, { filePath });
 
         semanticErrors = result.errors;
     }

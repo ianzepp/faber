@@ -1,0 +1,14 @@
+/// Example of local file imports
+
+// Import specific symbols from local file
+ex "./utils" importa greet, ANSWER, Point
+
+// Use the imported function
+fixum textus message = greet("World")
+scribe message
+
+// Use the imported constant
+scribe scriptum("The answer is {}", ANSWER)
+
+// Use the imported genus
+fixum Point p = { x: 10, y: 20 } qua Point

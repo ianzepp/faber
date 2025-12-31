@@ -30,7 +30,7 @@ function analyzeSource(source: string): {
     const types = new Map<string, SemanticType>();
 
     for (const stmt of program.body) {
-        if (stmt.type === 'VariaDeclaration' && stmt.resolvedType) {
+        if (stmt.type === 'VariaDeclaration' && stmt.resolvedType && stmt.name.type === 'Identifier') {
             types.set(stmt.name.name, stmt.resolvedType);
         }
     }
@@ -658,6 +658,141 @@ describe('Semantic Analyzer', () => {
 
             expect(errors.length).toBeGreaterThan(0);
             expect(errors[0]!.message).toContain('already defined');
+        });
+    });
+
+    describe('Local Module Imports', () => {
+        // These tests use actual files from exempla/statements/importa-local/
+        const testDir = 'exempla/statements/importa-local';
+
+        it('resolves local import and adds symbols to scope', async () => {
+            const { resolve } = await import('path');
+            const { readFileSync } = await import('fs');
+
+            const mainPath = resolve(`${testDir}/main.fab`);
+            const source = readFileSync(mainPath, 'utf-8');
+            const { tokens } = tokenize(source);
+            const { program } = parse(tokens);
+
+            if (!program) {
+                throw new Error('Parse failed');
+            }
+
+            const result = analyze(program, { filePath: mainPath });
+
+            // Should have no errors - all imports should resolve
+            expect(result.errors).toHaveLength(0);
+        });
+
+        it('reports error for non-existent module', async () => {
+            const { resolve } = await import('path');
+
+            // Create a temporary source that imports non-existent file
+            const source = `ex "./nonexistent" importa foo`;
+            const { tokens } = tokenize(source);
+            const { program } = parse(tokens);
+
+            if (!program) {
+                throw new Error('Parse failed');
+            }
+
+            // Use the testDir as base so relative paths work
+            const fakePath = resolve(`${testDir}/test.fab`);
+            const result = analyze(program, { filePath: fakePath });
+
+            expect(result.errors.length).toBeGreaterThan(0);
+            expect(result.errors[0]!.message).toContain('Cannot find module');
+        });
+
+        it('reports error for non-exported symbol', async () => {
+            const { resolve } = await import('path');
+
+            // Import a non-existent export from utils.fab
+            const source = `ex "./utils" importa nonexistentFunction`;
+            const { tokens } = tokenize(source);
+            const { program } = parse(tokens);
+
+            if (!program) {
+                throw new Error('Parse failed');
+            }
+
+            const fakePath = resolve(`${testDir}/test.fab`);
+            const result = analyze(program, { filePath: fakePath });
+
+            expect(result.errors.length).toBeGreaterThan(0);
+            expect(result.errors[0]!.message).toContain('is not exported');
+        });
+
+        it('detects circular imports', async () => {
+            const { resolve } = await import('path');
+            const { writeFileSync, unlinkSync } = await import('fs');
+
+            // Create temporary circular import files
+            const cycleAPath = resolve(`${testDir}/cycle-a-test.fab`);
+            const cycleBPath = resolve(`${testDir}/cycle-b-test.fab`);
+
+            writeFileSync(cycleAPath, `ex "./cycle-b-test" importa funcB\nfunctio funcA() -> vacuum { scribe "A" }`);
+            writeFileSync(cycleBPath, `ex "./cycle-a-test" importa funcA\nfunctio funcB() -> vacuum { scribe "B" }`);
+
+            try {
+                const source = `ex "./cycle-b-test" importa funcB`;
+                const { tokens } = tokenize(source);
+                const { program } = parse(tokens);
+
+                if (!program) {
+                    throw new Error('Parse failed');
+                }
+
+                const result = analyze(program, { filePath: cycleAPath });
+
+                expect(result.errors.length).toBeGreaterThan(0);
+                expect(result.errors[0]!.message).toContain('Circular import');
+            } finally {
+                // Clean up
+                unlinkSync(cycleAPath);
+                unlinkSync(cycleBPath);
+            }
+        });
+
+        it('caches parsed modules (diamond dependencies)', async () => {
+            const { resolve } = await import('path');
+            const { writeFileSync, unlinkSync } = await import('fs');
+
+            // Create diamond dependency:
+            // main -> a, b
+            // a -> shared
+            // b -> shared
+            const sharedPath = resolve(`${testDir}/shared-test.fab`);
+            const aPath = resolve(`${testDir}/a-test.fab`);
+            const bPath = resolve(`${testDir}/b-test.fab`);
+            const mainPath = resolve(`${testDir}/main-test.fab`);
+
+            writeFileSync(sharedPath, `functio shared() -> vacuum { scribe "shared" }`);
+            writeFileSync(aPath, `ex "./shared-test" importa shared\nfunctio a() -> vacuum { shared() }`);
+            writeFileSync(bPath, `ex "./shared-test" importa shared\nfunctio b() -> vacuum { shared() }`);
+            writeFileSync(mainPath, `ex "./a-test" importa a\nex "./b-test" importa b\na()\nb()`);
+
+            try {
+                const { readFileSync } = await import('fs');
+                const source = readFileSync(mainPath, 'utf-8');
+                const { tokens } = tokenize(source);
+                const { program } = parse(tokens);
+
+                if (!program) {
+                    throw new Error('Parse failed');
+                }
+
+                const result = analyze(program, { filePath: mainPath });
+
+                // Should succeed - diamond dependencies are OK with caching
+                expect(result.errors).toHaveLength(0);
+            } finally {
+                // Clean up
+                unlinkSync(sharedPath);
+                unlinkSync(aPath);
+                unlinkSync(bPath);
+                unlinkSync(mainPath);
+            }
         });
     });
 });

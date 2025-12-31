@@ -16,6 +16,12 @@
 // =============================================================================
 // Forward declarations for statement parsers
 // (Each is defined in its own file within sententia/)
+//
+// NOTE: These can be replaced with proper imports once the modules are complete:
+//   ex "./actio" importa parseReddeSententia, parseRumpeSententia, ...
+//   ex "./error" importa parseTemptaSententia, parseFacSententia, ...
+//   ex "./massa" importa parseMassaSententia, parseExpressiaSententia
+//   ex "./varia" importa parseVariaSententia
 // =============================================================================
 
 // Action statements (actio.fab)

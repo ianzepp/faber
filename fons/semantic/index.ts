@@ -113,6 +113,7 @@ import {
     isAssignableTo,
 } from './types';
 import { SemanticErrorCode, SEMANTIC_ERRORS } from './errors';
+import { isLocalImport, resolveModule, createModuleContext, type ModuleContext, type ModuleExports } from './modules';
 
 // =============================================================================
 // TYPES
@@ -132,6 +133,16 @@ export interface SemanticError {
 export interface SemanticResult {
     program: Program;
     errors: SemanticError[];
+}
+
+/**
+ * Options for semantic analysis.
+ */
+export interface AnalyzeOptions {
+    /** Absolute path to the file being analyzed (enables local imports) */
+    filePath?: string;
+    /** Module context for caching and cycle detection (created automatically if filePath provided) */
+    moduleContext?: ModuleContext;
 }
 
 // =============================================================================
@@ -307,13 +318,25 @@ const NORMA_SUBMODULES: Record<string, Record<string, { type: SemanticType; kind
 
 /**
  * Perform semantic analysis on a program.
+ *
+ * @param program - The parsed AST
+ * @param options - Optional settings for local import resolution
  */
-export function analyze(program: Program): SemanticResult {
+export function analyze(program: Program, options: AnalyzeOptions = {}): SemanticResult {
     const errors: SemanticError[] = [];
     let currentScope: Scope = createGlobalScope();
     let currentFunctionReturnType: SemanticType | null = null;
     let currentFunctionAsync = false;
     let currentFunctionGenerator = false;
+
+    // WHY: Create module context for local import resolution if file path provided
+    const moduleContext: ModuleContext | undefined = options.moduleContext ?? (options.filePath ? createModuleContext(options.filePath) : undefined);
+
+    // WHY: Mark the current file as "in progress" for circular import detection
+    // Without this, imports of the entry file wouldn't be detected as cycles
+    if (moduleContext && options.filePath) {
+        moduleContext.inProgress.add(moduleContext.basePath);
+    }
 
     defineBuiltins();
 
@@ -399,25 +422,41 @@ export function analyze(program: Program): SemanticResult {
     /**
      * Analyze import declaration and add symbols to scope.
      *
-     * WHY: Recognizes 'norma' base library and 'norma/*' submodules.
-     *      Other modules pass through without type info for external JS/TS modules.
+     * Resolution order:
+     * 1. 'norma' base library -> compiler intrinsics
+     * 2. 'norma/*' submodules -> compiler intrinsics
+     * 3. Local imports ('./' or '../') -> parse and extract exports
+     * 4. Other modules -> pass through to target language
      */
     function analyzeImportaDeclaration(node: ImportaDeclaration): void {
-        // Determine which export map to use
-        let exports: Record<string, { type: SemanticType; kind: 'function' | 'variable' }> | undefined;
         const moduleName = node.source;
 
-        if (node.source === 'norma') {
-            exports = NORMA_EXPORTS;
-        } else if (node.source in NORMA_SUBMODULES) {
-            exports = NORMA_SUBMODULES[node.source];
-        } else {
-            // Unknown module - imports pass through without type info
-            // WHY: Allows importing from external JS/TS modules
+        // Check for norma stdlib first
+        if (moduleName === 'norma') {
+            analyzeNormaImport(node, NORMA_EXPORTS);
             return;
         }
 
-        if (node.wildcard && exports) {
+        if (moduleName in NORMA_SUBMODULES) {
+            analyzeNormaImport(node, NORMA_SUBMODULES[moduleName]!);
+            return;
+        }
+
+        // Check for local file imports
+        if (isLocalImport(moduleName) && moduleContext) {
+            analyzeLocalImport(node);
+            return;
+        }
+
+        // WHY: External packages pass through without type info
+        // Target language compiler will validate them
+    }
+
+    /**
+     * Handle imports from norma stdlib.
+     */
+    function analyzeNormaImport(node: ImportaDeclaration, exports: Record<string, { type: SemanticType; kind: 'function' | 'variable' }>): void {
+        if (node.wildcard) {
             // ex norma importa * - add all exports to scope
             for (const [name, { type, kind }] of Object.entries(exports)) {
                 currentScope.symbols.set(name, {
@@ -428,15 +467,10 @@ export function analyze(program: Program): SemanticResult {
                     position: node.position,
                 });
             }
-
             return;
         }
 
         // ex norma importa scribe, series - add specific exports
-        if (!exports) {
-            return;
-        }
-
         for (const specifier of node.specifiers) {
             const importedName = specifier.imported.name;
             const localName = specifier.local.name;
@@ -444,9 +478,7 @@ export function analyze(program: Program): SemanticResult {
 
             if (!exportInfo) {
                 const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.NotExportedFromModule];
-
-                error(`${text(importedName, moduleName)}\n${help}`, specifier.position);
-
+                error(`${text(importedName, node.source)}\n${help}`, specifier.position);
                 continue;
             }
 
@@ -454,6 +486,77 @@ export function analyze(program: Program): SemanticResult {
                 name: localName,
                 type: exportInfo.type,
                 kind: exportInfo.kind,
+                mutable: false,
+                position: specifier.position,
+            });
+        }
+    }
+
+    /**
+     * Handle imports from local .fab files.
+     */
+    function analyzeLocalImport(node: ImportaDeclaration): void {
+        if (!moduleContext) {
+            return;
+        }
+
+        const result = resolveModule(node.source, moduleContext);
+
+        if (!result.ok) {
+            // Map module error to semantic error
+            switch (result.error) {
+                case 'not_found': {
+                    const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.ModuleNotFound];
+                    error(`${text(node.source)}\n${help}`, node.position);
+                    break;
+                }
+                case 'cycle': {
+                    const { help } = SEMANTIC_ERRORS[SemanticErrorCode.CircularImport];
+                    // WHY: result.message already contains the full cycle path
+                    error(`${result.message}\n${help}`, node.position);
+                    break;
+                }
+                case 'parse_error': {
+                    const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.ModuleParseError];
+                    error(`${text(node.source)}: ${result.message}\n${help}`, node.position);
+                    break;
+                }
+            }
+            return;
+        }
+
+        const moduleExports = result.module.exports;
+
+        if (node.wildcard) {
+            // ex "./utils" importa * - add all exports to scope
+            for (const [name, exportInfo] of moduleExports) {
+                currentScope.symbols.set(name, {
+                    name,
+                    type: exportInfo.type,
+                    kind: exportInfo.kind === 'function' || exportInfo.kind === 'variable' ? exportInfo.kind : 'variable',
+                    mutable: false,
+                    position: node.position,
+                });
+            }
+            return;
+        }
+
+        // ex "./utils" importa foo, bar - add specific exports
+        for (const specifier of node.specifiers) {
+            const importedName = specifier.imported.name;
+            const localName = specifier.local.name;
+            const exportInfo = moduleExports.get(importedName);
+
+            if (!exportInfo) {
+                const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.NotExportedFromModule];
+                error(`${text(importedName, node.source)}\n${help}`, specifier.position);
+                continue;
+            }
+
+            currentScope.symbols.set(localName, {
+                name: localName,
+                type: exportInfo.type,
+                kind: exportInfo.kind === 'function' || exportInfo.kind === 'variable' ? exportInfo.kind : 'variable',
                 mutable: false,
                 position: specifier.position,
             });

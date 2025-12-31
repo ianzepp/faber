@@ -48,6 +48,10 @@ export enum SemanticErrorCode {
     CedeOutsideAsyncOrGenerator = 'S009',
     AwaitOutsideAsync = 'S010',
     DefaultWithBorrowedParam = 'S011',
+    // Import resolution errors
+    ModuleNotFound = 'S012',
+    CircularImport = 'S013',
+    ModuleParseError = 'S014',
 }
 
 // =============================================================================
@@ -104,5 +108,17 @@ export const SEMANTIC_ERRORS = {
     [SemanticErrorCode.DefaultWithBorrowedParam]: {
         text: (preposition: string) => `Cannot use default value with '${preposition}' (borrowed) parameter`,
         help: "Default values require owned parameters. Remove the 'de' or 'in' preposition, or remove the default value.",
+    },
+    [SemanticErrorCode.ModuleNotFound]: {
+        text: (path: string) => `Cannot find module '${path}'`,
+        help: 'Verify the file path is correct and the file exists. Relative paths are resolved from the importing file.',
+    },
+    [SemanticErrorCode.CircularImport]: {
+        text: (path: string, cycle: string) => `Circular import detected: ${cycle}`,
+        help: 'Break the cycle by restructuring your modules or using forward declarations for types.',
+    },
+    [SemanticErrorCode.ModuleParseError]: {
+        text: (path: string) => `Failed to parse module '${path}'`,
+        help: 'Fix the syntax errors in the imported module before importing it.',
     },
 } as const;

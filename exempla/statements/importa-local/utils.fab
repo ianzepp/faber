@@ -1,0 +1,15 @@
+/// Example utility module for local import testing
+
+/// A simple greeting function
+functio greet(textus name) -> textus {
+    redde scriptum("Hello, {}!", name)
+}
+
+/// A constant value
+fixum numerus ANSWER = 42
+
+/// A genus for testing
+genus Point {
+    numerus x
+    numerus y
+}
