@@ -74,6 +74,8 @@ export interface FunctionType extends BaseType {
     parameterTypes: SemanticType[];
     returnType: SemanticType;
     async: boolean;
+    /** WHY: True if function has a curator param - calls need allocator injection */
+    hasCuratorParam?: boolean;
 }
 
 /**
@@ -169,8 +171,8 @@ export function genericType(name: string, typeParameters: SemanticType[], nullab
 /**
  * Create a function type.
  */
-export function functionType(parameterTypes: SemanticType[], returnType: SemanticType, async = false): FunctionType {
-    return { kind: 'function', parameterTypes, returnType, async };
+export function functionType(parameterTypes: SemanticType[], returnType: SemanticType, async = false, hasCuratorParam = false): FunctionType {
+    return { kind: 'function', parameterTypes, returnType, async, hasCuratorParam };
 }
 
 /**

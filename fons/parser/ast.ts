@@ -2118,6 +2118,8 @@ export interface CallExpression extends BaseNode {
     arguments: (Expression | SpreadElement)[];
     optional?: boolean;
     nonNull?: boolean;
+    /** WHY: Set by semantic analyzer when callee has curator param - codegen injects allocator */
+    needsCurator?: boolean;
 }
 
 /**

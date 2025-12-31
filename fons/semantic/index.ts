@@ -84,6 +84,9 @@ import type {
     CuraStatement,
     DiscretioDeclaration,
     CollectionDSLExpression,
+    IncipitStatement,
+    IncipietStatement,
+    AdStatement,
 } from '../parser/ast';
 import type { Position } from '../tokenizer/types';
 import type { Scope, Symbol } from './scope';
@@ -678,6 +681,11 @@ export function analyze(program: Program): SemanticResult {
                 node.resolvedType = TEXTUS;
                 return TEXTUS;
 
+            case 'RegexLiteral':
+                // WHY: Regex literals have no sub-expressions to resolve
+                node.resolvedType = userType('Regex');
+                return node.resolvedType;
+
             default: {
                 const _exhaustive: never = node;
 
@@ -932,6 +940,11 @@ export function analyze(program: Program): SemanticResult {
 
         // If callee is a function type, return its return type
         if (calleeType.kind === 'function') {
+            // WHY: Mark call for curator injection if function has curator param
+            if (calleeType.hasCuratorParam) {
+                node.needsCurator = true;
+            }
+
             node.resolvedType = calleeType.returnType;
 
             return calleeType.returnType;
@@ -1309,6 +1322,18 @@ export function analyze(program: Program): SemanticResult {
                 analyzeDestructureDeclaration(node);
                 break;
 
+            case 'IncipitStatement':
+                analyzeIncipitStatement(node);
+                break;
+
+            case 'IncipietStatement':
+                analyzeIncipietStatement(node);
+                break;
+
+            case 'AdStatement':
+                analyzeAdStatement(node);
+                break;
+
             default: {
                 const _exhaustive: never = node;
                 break;
@@ -1405,7 +1430,10 @@ export function analyze(program: Program): SemanticResult {
         const paramTypes: SemanticType[] = node.params.map(p => (p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN));
         const returnType = node.returnType ? resolveTypeAnnotation(node.returnType) : VACUUM;
 
-        const fnType = functionType(paramTypes, returnType, node.async);
+        // WHY: Detect curator param for allocator injection at call sites
+        const hasCuratorParam = node.params.some(p => p.typeAnnotation?.name.toLowerCase() === 'curator');
+
+        const fnType = functionType(paramTypes, returnType, node.async, hasCuratorParam);
 
         // Define function in current scope
         define({
@@ -1680,6 +1708,70 @@ export function analyze(program: Program): SemanticResult {
         enterScope();
         analyzeBlock(node.body);
         exitScope();
+
+        if (node.catchClause) {
+            analyzeCapeClause(node.catchClause);
+        }
+    }
+
+    function analyzeIncipitStatement(node: IncipitStatement): void {
+        // WHY: Entry point contains either a body block or ergo-chained statement
+        enterScope('function');
+        if (node.body) {
+            analyzeBlock(node.body);
+        }
+        if (node.ergoStatement) {
+            analyzeStatement(node.ergoStatement);
+        }
+        exitScope();
+    }
+
+    function analyzeIncipietStatement(node: IncipietStatement): void {
+        // WHY: Async entry point - same as incipit but marks async context
+        enterScope('function');
+        const previousAsync = currentFunctionAsync;
+        currentFunctionAsync = true;
+
+        if (node.body) {
+            analyzeBlock(node.body);
+        }
+        if (node.ergoStatement) {
+            analyzeStatement(node.ergoStatement);
+        }
+
+        currentFunctionAsync = previousAsync;
+        exitScope();
+    }
+
+    function analyzeAdStatement(node: AdStatement): void {
+        // WHY: Ad (goto-like label target) with optional binding and body
+        for (const arg of node.arguments) {
+            if (arg.type === 'SpreadElement') {
+                resolveExpression(arg.argument);
+            } else {
+                resolveExpression(arg);
+            }
+        }
+
+        if (node.binding) {
+            enterScope();
+            // Define the binding variable if present
+            define({
+                name: node.binding.name.name,
+                type: UNKNOWN,
+                kind: 'variable',
+                mutable: false,
+                position: node.binding.position,
+            });
+            if (node.body) {
+                analyzeBlock(node.body);
+            }
+            exitScope();
+        } else if (node.body) {
+            enterScope();
+            analyzeBlock(node.body);
+            exitScope();
+        }
 
         if (node.catchClause) {
             analyzeCapeClause(node.catchClause);

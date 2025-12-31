@@ -126,7 +126,7 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
             if (method) {
                 // WHY: Flag features so preamble includes Tabula and arena setup
                 g.features.tabula = true;
-                const curator = g.getCurator();
+                const curator = method.needsAlloc ? g.getCurator() : '';
                 if (typeof method.zig === 'function') {
                     return method.zig(obj, argsArray, curator);
                 }
@@ -137,7 +137,7 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
             if (method) {
                 // WHY: Flag features so preamble includes Copia and arena setup
                 g.features.copia = true;
-                const curator = g.getCurator();
+                const curator = method.needsAlloc ? g.getCurator() : '';
                 if (typeof method.zig === 'function') {
                     return method.zig(obj, argsArray, curator);
                 }
@@ -148,7 +148,7 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
             if (method) {
                 // WHY: Flag features so preamble includes Lista and arena setup
                 g.features.lista = true;
-                const curator = g.getCurator();
+                const curator = method.needsAlloc ? g.getCurator() : '';
                 if (typeof method.zig === 'function') {
                     return method.zig(obj, argsArray, curator);
                 }
@@ -162,7 +162,8 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
             // WHY: Flag features so preamble includes Lista and arena setup in main()
             // Without this, code like `items.adde(alloc, 1)` would reference undefined alloc
             g.features.lista = true;
-            const curator = g.getCurator();
+            // WHY: Only fetch curator if method actually needs allocator
+            const curator = listaMethod.needsAlloc ? g.getCurator() : '';
             if (typeof listaMethod.zig === 'function') {
                 return listaMethod.zig(obj, argsArray, curator);
             }
@@ -172,17 +173,25 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
 
     const callee = g.genExpression(node.callee);
 
+    // WHY: Inject curator (allocator) for functions marked by semantic analyzer
+    // Functions with 'curator' param type get allocator auto-injected at call sites
+    let finalArgs = args;
+    if (node.needsCurator) {
+        const curator = g.getCurator();
+        finalArgs = args ? `${args}, ${curator}` : curator;
+    }
+
     // WHY: Optional call in Zig requires if-else pattern
     if (node.optional) {
-        return `(if (${callee}) |_fn| _fn(${args}) else null)`;
+        return `(if (${callee}) |_fn| _fn(${finalArgs}) else null)`;
     }
 
     // WHY: Non-null assertion unwraps optional function before calling
     if (node.nonNull) {
-        return `${callee}.?(${args})`;
+        return `${callee}.?(${finalArgs})`;
     }
 
-    return `${callee}(${args})`;
+    return `${callee}(${finalArgs})`;
 }
 
 /**
