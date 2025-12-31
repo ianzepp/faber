@@ -3,46 +3,46 @@
 // WHY: Every AST node needs position info for error messages.
 //      Comments attach to nodes for formatting preservation.
 
-// NOTE: Position duplicated until module imports work.
-genus Position {
-    numerus line
-    numerus column
-    numerus offset
+// NOTE: Locus duplicated until module imports work.
+genus Locus {
+    numerus linea
+    numerus columna
+    numerus index
 }
 
 /// Comment type enumeration
-ordo CommentType {
-    Line      // // comment
-    Block     // /* comment */
-    Doc       // /// comment
+ordo NotaGenus {
+    Linea      // // comment
+    Massa      // /* comment */
+    Docens     // /// comment
 }
 
 /// A source code comment
-genus Comment {
-    CommentType kind
-    textus value
-    Position position
+genus Nota {
+    NotaGenus species
+    textus valor
+    Locus locus
 }
 
 /// Base fields present on all AST nodes
 /// WHY: Every node tracks position for error messages,
 ///      and may have leading/trailing comments for formatting.
-genus BaseNode {
-    Position position
-    lista<Comment>? leadingComments
-    lista<Comment>? trailingComments
+genus NodusRadix {
+    Locus locus
+    lista<Nota>? notaePrae      // leading comments
+    lista<Nota>? notaePost      // trailing comments
 }
 
 /// Root node of the AST - represents an entire source file
-genus Program {
-    Position position
-    lista<Comment>? leadingComments
-    lista<Comment>? trailingComments
-    lista<Statement> body
+genus Programma {
+    Locus locus
+    lista<Nota>? notaePrae
+    lista<Nota>? notaePost
+    lista<Sententia> corpus     // body of statements
 }
 
-// Forward declaration - Statement will be defined in sententia/index.fab
+// Forward declaration - Sententia will be defined in sententia/index.fab
 // For now, use a placeholder to allow compilation
-discretio Statement {
-    Placeholder { }
+discretio Sententia {
+    Locus { }
 }

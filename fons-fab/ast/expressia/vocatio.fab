@@ -1,74 +1,74 @@
 // Call and member access expressions
 //
 // WHY: Function calls and property access are fundamental operations.
-//      CallExpression: foo(x, y)
-//      MemberExpression: obj.prop, arr[0]
+//      VocatioExpressia: foo(x, y)
+//      MembrumExpressia: obj.prop, arr[0]
 
-genus Position {
-    numerus line
-    numerus column
-    numerus offset
+genus Locus {
+    numerus linea
+    numerus columna
+    numerus index
 }
 
 // Forward declaration
-discretio Expression {
-    Placeholder { }
+discretio Expressia {
+    Locus { }
 }
 
 /// Function/method call expression
 /// Examples: foo(1, 2), obj.method(), await fetch()
-genus CallExpression {
-    Position position
-    Expression callee          // what's being called
-    lista<Expression> arguments
-    bivalens optional          // ?. optional call
+genus VocatioExpressia {
+    Locus locus
+    Expressia vocatum        // what's being called (callee)
+    lista<Expressia> argumenta
+    bivalens optivum         // ?. optional call
 }
 
 /// Member access expression
 /// Examples: obj.prop, arr[0], obj?.prop, obj!.prop
-genus MemberExpression {
-    Position position
-    Expression object          // the object being accessed
-    Expression property        // property name or index
-    bivalens computed          // true for arr[0], false for obj.prop
-    bivalens optional          // true for ?.
-    bivalens nonNull           // true for !.
+genus MembrumExpressia {
+    Locus locus
+    Expressia obiectum       // the object being accessed
+    Expressia proprietas     // property name or index
+    bivalens computatum      // true for arr[0], false for obj.prop
+    bivalens optivum         // true for ?.
+    bivalens nonNullum       // true for !.
 }
 
 /// New instance creation
 /// Example: novum Person de { name: "Alice" }
-genus NovumExpression {
-    Position position
-    Expression callee          // the type/constructor
-    lista<Expression> arguments
-    Expression? initializer    // optional 'de { ... }' object
+genus NovumExpressia {
+    Locus locus
+    Expressia vocatum        // the type/constructor
+    lista<Expressia> argumenta
+    Expressia? initor        // optional 'de { ... }' object
 }
 
 /// Await expression (cede in Faber)
 /// Example: cede fetchData()
-genus CedeExpression {
-    Position position
-    Expression argument
+genus CedeExpressia {
+    Locus locus
+    Expressia argumentum
 }
 
 /// Scriptum (format string) expression
 /// Example: scriptum("Hello, {}!", name)
-genus ScriptumExpression {
-    Position position
-    textus template
-    lista<Expression> arguments
+genus ScriptumExpressia {
+    Locus locus
+    textus exemplar          // template
+    lista<Expressia> argumenta
 }
 
 /// Lege (stdin read) expression
 /// Example: lege()
-genus LegeExpression {
-    Position position
+genus LegeExpressia {
+    Locus locus
 }
 
 /// Ab (from/pipe) expression for collection operations
 /// Example: items ab filtrata(pro x: x > 0) ab mappata(pro x: x * 2)
-genus AbExpression {
-    Position position
-    Expression source
-    Expression transform
+genus AbExpressia {
+    Locus locus
+    Expressia fons           // source
+    Expressia transformatio
 }

@@ -1,31 +1,31 @@
 // Identifier expressions
 //
 // WHY: Identifiers are the most basic named references in code.
-//      EgoExpression represents 'ego' (self/this).
+//      EgoExpressia represents 'ego' (self/this).
 
-genus Position {
-    numerus line
-    numerus column
-    numerus offset
+genus Locus {
+    numerus linea
+    numerus columna
+    numerus index
 }
 
 /// An identifier - a named reference
-genus Identifier {
-    Position position
-    textus name
+genus Nomen {
+    Locus locus
+    textus valor
 }
 
 /// Self-reference expression ('ego' in Faber, 'this' in JS, 'self' in Rust)
-genus EgoExpression {
-    Position position
+genus EgoExpressia {
+    Locus locus
 }
 
 /// Create an identifier
-functio identifier(textus name, Position pos) fit Identifier {
-    redde { position: pos, name: name } qua Identifier
+functio nomen(textus valor, Locus locus) fit Nomen {
+    redde { locus: locus, valor: valor } qua Nomen
 }
 
 /// Create an ego expression
-functio egoExpr(Position pos) fit EgoExpression {
-    redde { position: pos } qua EgoExpression
+functio egoExpr(Locus locus) fit EgoExpressia {
+    redde { locus: locus } qua EgoExpressia
 }

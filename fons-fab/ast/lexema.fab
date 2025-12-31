@@ -3,18 +3,18 @@
 // WHY: The tokenizer produces a stream of tokens that the parser consumes.
 //      Each token has a type, value, and position.
 //
-// NOTE: Position is duplicated here until module imports work in bootstrap.
-//       See position.fab for the canonical definition.
+// NOTE: Locus is duplicated here until module imports work in bootstrap.
+//       See positio.fab for the canonical definition.
 
-/// A single point in source code (duplicated from position.fab)
-genus Position {
-    numerus line      // 1-based line number
-    numerus column    // 1-based column number  
-    numerus offset    // 0-based byte offset from start
+/// A single point in source code (duplicated from positio.fab)
+genus Locus {
+    numerus linea      // 1-based line number
+    numerus columna    // 1-based column number  
+    numerus index      // 0-based byte offset from start
 }
 
 /// Token type enumeration
-ordo TokenType {
+ordo SymbolumGenus {
     // Literals
     Numerus       // integer literal: 42
     Fractus       // float literal: 3.14
@@ -26,102 +26,102 @@ ordo TokenType {
     Nihil         // null
     
     // Identifiers and keywords
-    Identifier    // user-defined name
-    Keyword       // reserved word (value contains which)
+    Nomen         // user-defined name
+    Verbum        // reserved word (valor contains which)
     
     // Grouping
-    ParenLeft     // (
-    ParenRight    // )
-    BraceLeft     // {
-    BraceRight    // }
-    BracketLeft   // [
-    BracketRight  // ]
+    ParensSin     // (
+    ParensDex     // )
+    UncusSin      // {
+    UncusDex      // }
+    AngulusSin    // [
+    AngulusDex    // ]
     
     // Operators - arithmetic
     Plus          // +
     Minus         // -
-    Star          // *
-    Slash         // /
-    Percent       // %
+    Stella        // *
+    Virgula       // /
+    Centum        // %
     
     // Operators - comparison
-    Equal         // =
-    EqualEqual    // ==
-    EqualEqualEqual // ===
-    BangEqual     // !=
-    BangEqualEqual  // !==
-    Less          // <
-    LessEqual     // <=
-    Greater       // >
-    GreaterEqual  // >=
+    Aequum        // =
+    AequumBis     // ==
+    AequumTer     // ===
+    NonAequum     // !=
+    NonAequumBis  // !==
+    Minor         // <
+    MinorAequum   // <=
+    Maior         // >
+    MaiorAequum   // >=
     
     // Operators - logical
-    Bang          // !
-    AmpAmp        // &&
-    PipePipe      // ||
-    Question      // ?
-    QuestionQuestion // ??
-    QuestionDot   // ?.
-    BangDot       // !.
+    Non           // !
+    EtEt          // &&
+    VelVel        // ||
+    Rogatio       // ?
+    RogatioBis    // ??
+    RogatioPunctum    // ?.
+    NonPunctum        // !.
     
     // Operators - bitwise
-    Amp           // &
-    Pipe          // |
-    Caret         // ^
-    Tilde         // ~
-    LessLess      // <<
-    GreaterGreater // >>
-    GreaterGreaterGreater // >>>
+    Et            // &
+    Vel           // |
+    Apex          // ^
+    Unda          // ~
+    MinorBis      // <<
+    MaiorBis      // >>
+    MaiorTer      // >>>
     
     // Punctuation
-    Comma         // ,
-    Dot           // .
+    Coma          // ,
+    Punctum       // .
     Colon         // :
-    Semicolon     // ;
-    Arrow         // ->
-    FatArrow      // =>
-    DotDot        // ..
-    DotDotDot     // ...
+    PunctumColon  // ;
+    Sagitta       // ->
+    SagittaCrassa // =>
+    PunctumBis    // ..
+    PunctumTer    // ...
     
     // Comments (preserved for formatting)
-    LineComment   // // comment
-    BlockComment  // /* comment */
-    DocComment    // /// comment
+    NotaLinea     // // comment
+    NotaMassa     // /* comment */
+    NotaDocens    // /// comment
     
     // Special
-    EOF           // end of file
-    Invalid       // lexer error token
+    Finis         // end of file
+    Malum         // lexer error token
 }
 
 /// A single token from the source
-genus Token {
-    TokenType type
-    textus value       // raw text of the token
-    Position position
-    textus? keyword    // if type == Keyword, which keyword
+genus Symbolum {
+    SymbolumGenus species
+    textus valor       // raw text of the token
+    Locus locus
+    textus? verbum     // if species == Verbum, which keyword
 }
 
 /// Create a token
-functio token(TokenType kind, textus value, Position position) fit Token {
-    redde { type: kind, value: value, position: position, keyword: nihil } qua Token
+functio symbolum(SymbolumGenus species, textus valor, Locus locus) fit Symbolum {
+    redde { species: species, valor: valor, locus: locus, verbum: nihil } qua Symbolum
 }
 
 /// Create a keyword token
-functio keywordToken(textus keyword, Position position) fit Token {
+functio symbolumVerbum(textus verbum, Locus locus) fit Symbolum {
     redde { 
-        type: TokenType.Keyword, 
-        value: keyword, 
-        position: position, 
-        keyword: keyword 
-    } qua Token
+        species: SymbolumGenus.Verbum, 
+        valor: verbum, 
+        locus: locus, 
+        verbum: verbum 
+    } qua Symbolum
 }
 
 /// Check if token is a specific keyword
-functio isKeyword(Token tok, textus kw) fit bivalens {
-    redde tok.type == TokenType.Keyword && tok.keyword == kw
+functio estVerbum(Symbolum sym, textus verbum) fit bivalens {
+    redde sym.species == SymbolumGenus.Verbum && sym.verbum == verbum
 }
 
 /// Check if token is EOF
-functio isEOF(Token tok) fit bivalens {
-    redde tok.type == TokenType.EOF
+functio estFinis(Symbolum sym) fit bivalens {
+    redde sym.species == SymbolumGenus.Finis
 }

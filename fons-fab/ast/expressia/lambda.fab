@@ -4,41 +4,41 @@
 //      Faber syntax: pro x: x * 2
 //      Faber syntax: pro x, y: x + y
 
-genus Position {
-    numerus line
-    numerus column
-    numerus offset
+genus Locus {
+    numerus linea
+    numerus columna
+    numerus index
 }
 
 // Forward declarations
-discretio Expression {
-    Placeholder { }
+discretio Expressia {
+    Locus { }
 }
 
-genus Identifier {
-    Position position
-    textus name
+genus Nomen {
+    Locus locus
+    textus valor
 }
 
-genus TypeAnnotation {
-    Position position
-    textus name
-    bivalens nullable
+genus TypusAdnotatio {
+    Locus locus
+    textus nomen
+    bivalens nullabile
 }
 
 /// Lambda expression (anonymous function)
 /// Example: pro x: x * 2
 /// Example: pro x, y: x + y
-genus LambdaExpression {
-    Position position
-    lista<LambdaParam> params
-    Expression body           // single expression, not block
-    TypeAnnotation? returnType
+genus LambdaExpressia {
+    Locus locus
+    lista<LambdaParametrum> parametra
+    Expressia corpus         // single expression body
+    TypusAdnotatio? typusReditus    // return type
 }
 
-/// Lambda parameter (simplified vs full Parameter)
-genus LambdaParam {
-    Position position
-    Identifier name
-    TypeAnnotation? typeAnnotation
+/// Lambda parameter (simplified vs full Parametrum)
+genus LambdaParametrum {
+    Locus locus
+    Nomen nomen
+    TypusAdnotatio? typusAdnotatio
 }

@@ -1,52 +1,52 @@
 // Collection literal expressions
 //
 // WHY: Array and object literals create data structures inline.
-//      ArrayExpression: [1, 2, 3]
-//      ObjectExpression: { name: "Alice", age: 30 }
+//      SeriesExpressia: [1, 2, 3]
+//      ObiectumExpressia: { name: "Alice", age: 30 }
 
-genus Position {
-    numerus line
-    numerus column
-    numerus offset
+genus Locus {
+    numerus linea
+    numerus columna
+    numerus index
 }
 
 // Forward declarations
-discretio Expression {
-    Placeholder { }
+discretio Expressia {
+    Locus { }
 }
 
-genus Identifier {
-    Position position
-    textus name
+genus Nomen {
+    Locus locus
+    textus valor
 }
 
 /// Array literal expression
 /// Example: [1, 2, 3], [], [a, ...rest]
-genus ArrayExpression {
-    Position position
-    lista<Expression> elements    // includes SpreadElement for ...x
+genus SeriesExpressia {
+    Locus locus
+    lista<Expressia> elementa    // includes DispersioElementum for ...x
 }
 
 /// Object literal expression  
 /// Example: { name: "Alice", age: 30 }
-genus ObjectExpression {
-    Position position
-    lista<ObjectProperty> properties
+genus ObiectumExpressia {
+    Locus locus
+    lista<ObiectumProprietas> proprietates
 }
 
 /// A property in an object literal
 /// Example: name: "Alice", or shorthand: name
-genus ObjectProperty {
-    Position position
-    Expression key             // usually Identifier or Literal
-    Expression value
-    bivalens shorthand         // true for { name } meaning { name: name }
-    bivalens computed          // true for { [expr]: value }
+genus ObiectumProprietas {
+    Locus locus
+    Expressia clavis         // key - usually Nomen or Littera
+    Expressia valor
+    bivalens brevitas        // true for { name } meaning { name: name }
+    bivalens computatum      // true for { [expr]: value }
 }
 
 /// Spread element in array or object
 /// Example: ...items, ...rest
-genus SpreadElement {
-    Position position
-    Expression argument
+genus DispersioElementum {
+    Locus locus
+    Expressia argumentum
 }

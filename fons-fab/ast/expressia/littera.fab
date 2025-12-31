@@ -3,14 +3,14 @@
 // WHY: Literals represent constant values in source code -
 //      numbers, strings, booleans, null.
 
-genus Position {
-    numerus line
-    numerus column
-    numerus offset
+genus Locus {
+    numerus linea
+    numerus columna
+    numerus index
 }
 
 /// Literal value type - what kind of constant this is
-ordo LiteralKind {
+ordo LitteraGenus {
     Numerus    // integer: 42
     Fractus    // float: 3.14
     Textus     // string: "hello"
@@ -20,31 +20,31 @@ ordo LiteralKind {
 }
 
 /// A literal value expression
-genus Literal {
-    Position position
-    LiteralKind kind
-    textus raw           // original source text
+genus Littera {
+    Locus locus
+    LitteraGenus species
+    textus crudus           // original source text
     // WHY: Actual value stored as text to avoid union complexity.
-    //      Parser/semantic can interpret based on kind.
+    //      Parser/semantic can interpret based on species.
 }
 
 /// A template literal with interpolations
 /// Example: `Hello, ${name}!`
-genus TemplateLiteral {
-    Position position
-    lista<textus> quasis       // static string parts
-    lista<Expression> expressions  // interpolated expressions
+genus LitteraExemplar {
+    Locus locus
+    lista<textus> partes       // static string parts
+    lista<Expressia> expressiae    // interpolated expressions
 }
 
 /// A regex literal
 /// Example: sed "pattern" flags
-genus RegexLiteral {
-    Position position
-    textus pattern
-    textus flags
+genus LitteraRegex {
+    Locus locus
+    textus forma         // pattern
+    textus vexilla       // flags
 }
 
-// Forward declaration for Expression
-discretio Expression {
-    Placeholder { }
+// Forward declaration for Expressia
+discretio Expressia {
+    Locus { }
 }

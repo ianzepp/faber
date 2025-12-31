@@ -5,46 +5,46 @@
 //
 // NOTE: Each type's full fields are defined in their respective files.
 
-genus Position {
-    numerus line
-    numerus column
-    numerus offset
+genus Locus {
+    numerus linea
+    numerus columna
+    numerus index
 }
 
 /// Expression type discriminant
-ordo ExpressionKind {
+ordo ExpressiaGenus {
     // nomen.fab - identifiers
-    Identifier
-    EgoExpression
+    Nomen
+    EgoExpressia
     
     // littera.fab - literals  
-    Literal
-    TemplateLiteral
-    RegexLiteral
+    Littera
+    LitteraExemplar
+    LitteraRegex
     
     // operatio.fab - operations
-    BinaryExpression
-    UnaryExpression
-    AssignmentExpression
-    ConditionalExpression
-    RangeExpression
-    QuaExpression
-    EstExpression
+    BinariaExpressia
+    UnariaExpressia
+    AssignatioExpressia
+    CondicioExpressia
+    AmbitusExpressia
+    QuaExpressia
+    EstExpressia
     
     // vocatio.fab - calls
-    CallExpression
-    MemberExpression
-    NovumExpression
-    CedeExpression
-    ScriptumExpression
-    LegeExpression
-    AbExpression
+    VocatioExpressia
+    MembrumExpressia
+    NovumExpressia
+    CedeExpressia
+    ScriptumExpressia
+    LegeExpressia
+    AbExpressia
     
     // collectio.fab - collections
-    ArrayExpression
-    ObjectExpression
-    SpreadElement
+    SeriesExpressia
+    ObiectumExpressia
+    DispersioElementum
     
     // lambda.fab
-    LambdaExpression
+    LambdaExpressia
 }

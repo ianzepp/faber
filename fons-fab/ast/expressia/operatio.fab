@@ -4,81 +4,81 @@
 //      Binary: a + b, a == b, a && b
 //      Unary: -x, !x
 
-genus Position {
-    numerus line
-    numerus column
-    numerus offset
+genus Locus {
+    numerus linea
+    numerus columna
+    numerus index
 }
 
 // Forward declaration
-discretio Expression {
-    Placeholder { }
+discretio Expressia {
+    Locus { }
 }
 
 /// Binary expression - two operands with an operator
 /// Examples: a + b, x == y, foo && bar
-genus BinaryExpression {
-    Position position
-    Expression left
-    textus operator    // +, -, *, /, %, ==, !=, <, >, <=, >=, &&, ||, ??, etc.
-    Expression right
+genus BinariaExpressia {
+    Locus locus
+    Expressia sinister       // left operand
+    textus signum            // +, -, *, /, %, ==, !=, <, >, <=, >=, &&, ||, ??, etc.
+    Expressia dexter         // right operand
 }
 
 /// Unary expression - one operand with a prefix operator
 /// Examples: -x, !flag, ~bits
-genus UnaryExpression {
-    Position position
-    textus operator    // -, !, ~
-    Expression argument
+genus UnariaExpressia {
+    Locus locus
+    textus signum            // -, !, ~
+    Expressia argumentum
 }
 
 /// Assignment expression
 /// Examples: x = 5, obj.prop = value
-genus AssignmentExpression {
-    Position position
-    Expression left     // must be assignable (identifier, member, etc.)
-    textus operator     // =, +=, -=, *=, /=, etc.
-    Expression right
+genus AssignatioExpressia {
+    Locus locus
+    Expressia sinister       // must be assignable (identifier, member, etc.)
+    textus signum            // =, +=, -=, *=, /=, etc.
+    Expressia dexter
 }
 
 /// Conditional (ternary) expression
 /// Faber: condition sic consequent secus alternate
 /// JS: condition ? consequent : alternate
-genus ConditionalExpression {
-    Position position
-    Expression condition
-    Expression consequent
-    Expression alternate
+genus CondicioExpressia {
+    Locus locus
+    Expressia condicio
+    Expressia consequens
+    Expressia alternans
 }
 
 /// Range expression for slicing and iteration
 /// Examples: 1..10 (exclusive), 1 usque 10 (inclusive)
-genus RangeExpression {
-    Position position
-    Expression start
-    Expression end
-    bivalens inclusive   // true for 'usque', false for '..'
+genus AmbitusExpressia {
+    Locus locus
+    Expressia initium
+    Expressia finis
+    bivalens inclusivum      // true for 'usque', false for '..'
 }
 
 /// Type cast expression
 /// Example: value qua numerus
-genus QuaExpression {
-    Position position
-    Expression expression
-    TypeAnnotation targetType
+genus QuaExpressia {
+    Locus locus
+    Expressia expressia
+    TypusAdnotatio scopus    // target type
 }
 
 /// Type check expression
 /// Example: value est numerus
-genus EstExpression {
-    Position position
-    Expression expression
-    TypeAnnotation targetType
+genus EstExpressia {
+    Locus locus
+    Expressia expressia
+    TypusAdnotatio scopus    // target type
 }
 
-// Forward declaration for TypeAnnotation
-genus TypeAnnotation {
-    Position position
-    textus name
-    bivalens nullable
+// Forward declaration for TypusAdnotatio
+genus TypusAdnotatio {
+    Locus locus
+    textus nomen
+    bivalens nullabile
 }
