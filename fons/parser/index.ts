@@ -1060,13 +1060,13 @@ export function parse(tokens: Token[]): ParserResult {
                 rest = true;
             }
 
-            const key = parseIdentifier();
+            const key = parseIdentifierOrKeyword();
 
             let value = key;
 
             // Check for rename: { nomen: localName } (not valid with ceteri)
             if (match('COLON') && !rest) {
-                value = parseIdentifier();
+                value = parseIdentifierOrKeyword();
             }
 
             properties.push({
@@ -1414,14 +1414,14 @@ export function parse(tokens: Token[]): ParserResult {
             typeAnnotation = parseTypeAnnotation();
         }
 
-        const name = parseIdentifier();
+        const name = parseIdentifierOrKeyword();
 
         // Check for dual naming: 'ut' introduces internal alias
         // textus location ut loc -> external: location, internal: loc
         let alias: Identifier | undefined;
         if (checkKeyword('ut')) {
             advance(); // consume 'ut'
-            alias = parseIdentifier();
+            alias = parseIdentifierOrKeyword();
         }
 
         // Check for default value: 'vel' introduces default expression
@@ -1924,7 +1924,7 @@ export function parse(tokens: Token[]): ParserResult {
 
         // Otherwise it's a field: type name with optional ':' default
         const fieldType = parseTypeAnnotation();
-        const fieldName = parseIdentifier();
+        const fieldName = parseIdentifierOrKeyword();
 
         let init: Expression | undefined;
 
@@ -2290,7 +2290,7 @@ export function parse(tokens: Token[]): ParserResult {
             error(ParserErrorCode.ExpectedKeywordPro);
         }
 
-        const variable = parseIdentifier();
+        const variable = parseIdentifierOrKeyword();
 
         // Parse body: block or ergo one-liner
         let body: BlockStatement;
@@ -2555,7 +2555,7 @@ export function parse(tokens: Token[]): ParserResult {
             error(ParserErrorCode.ExpectedKeywordPro);
         }
 
-        const variable = parseIdentifier();
+        const variable = parseIdentifierOrKeyword();
 
         // Parse body: block or ergo one-liner
         let body: BlockStatement;
@@ -2740,13 +2740,13 @@ export function parse(tokens: Token[]): ParserResult {
 
                 advance(); // consume 'si'
 
-                const variant = parseIdentifier();
+                const variant = parseIdentifierOrKeyword();
 
                 // Parse optional bindings: pro x, y, z
                 const bindings: Identifier[] = [];
                 if (matchKeyword('pro')) {
                     do {
-                        bindings.push(parseIdentifier());
+                        bindings.push(parseIdentifierOrKeyword());
                     } while (match('COMMA'));
                 }
 
@@ -2993,7 +2993,7 @@ export function parse(tokens: Token[]): ParserResult {
 
         expectKeyword('cape', ParserErrorCode.ExpectedKeywordCape);
 
-        const param = parseIdentifier();
+        const param = parseIdentifierOrKeyword();
         const body = parseBlockStatement();
 
         return { type: 'CapeClause', param, body, position };
@@ -4618,7 +4618,7 @@ export function parse(tokens: Token[]): ParserResult {
                                 position: propPosition,
                             };
                         } else {
-                            key = parseIdentifier();
+                            key = parseIdentifierOrKeyword();
                         }
 
                         expect('COLON', ParserErrorCode.ExpectedColon);
@@ -4686,7 +4686,7 @@ export function parse(tokens: Token[]): ParserResult {
         if (!check('COLON') && !check('LBRACE') && !check('THIN_ARROW')) {
             // Parse parameters until we hit :, ->, or {
             do {
-                params.push(parseIdentifier());
+                params.push(parseIdentifierOrKeyword());
             } while (match('COMMA'));
         }
 

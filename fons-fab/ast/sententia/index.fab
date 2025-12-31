@@ -43,7 +43,7 @@ ordo SententiaGenus {
     // error.fab - error handling
     TemptaSententia
     IaceSententia
-    FacMassaSententia
+    FacSententia
     AdfirmaSententia
     
     // actio.fab - actions

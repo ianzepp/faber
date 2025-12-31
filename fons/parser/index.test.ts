@@ -474,10 +474,13 @@ describe('parser', () => {
             expect(errors.length).toBeGreaterThan(0);
         });
 
-        test('Fail when preposition appears without type or name', () => {
-            const { errors } = parseCode('functio f(ad) {}');
+        test('Allow keyword as parameter name (contextual keywords)', () => {
+            // WHY: Keywords are valid identifiers in unambiguous contexts like parameter names
+            const { program, errors } = parseCode('functio f(ad) {}');
 
-            expect(errors.length).toBeGreaterThan(0);
+            expect(errors.length).toBe(0);
+            const fn = program!.body[0] as any;
+            expect(fn.params[0].name.name).toBe('ad');
         });
 
         test('function with dual parameter naming (ut alias)', () => {

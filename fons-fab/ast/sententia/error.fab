@@ -55,7 +55,7 @@ genus IaceSententia {
 
 /// Fac block (explicit scope)
 /// Example: fac { ... } cape err { ... }
-genus FacMassaSententia {
+genus FacSententia {
     Locus locus
     MassaSententia corpus
     CapeClausula? capeClausula
