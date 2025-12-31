@@ -3,13 +3,12 @@
 /// Prefix operators: non, -, ~, cede, novum, etc.
 /// Postfix operators: qua (type cast), call, member access
 ///
-/// STATUS: Resolvitor conversion in progress
-/// BLOCKED: Same type system issue as binaria.fab
-///
 /// GRAMMAR:
-///   unary := ('non' | '-' | '~' | 'nulla' | 'nonnulla' | ...) unary | cast
-///   cast := call ('qua' typeAnnotation)*
-///   call := primary (callSuffix | memberSuffix | ...)*
+///   unary := ('non' | '-' | '~' | 'cede' | 'novum') unary | postfix
+///   postfix := primary (callSuffix | memberSuffix | quaSuffix)*
+///   callSuffix := '(' arguments ')'
+///   memberSuffix := '.' IDENTIFIER | '[' expr ']'
+///   quaSuffix := 'qua' typeAnnotation
 ///
 /// LATIN VOCABULARY:
 /// - unaria = unary
@@ -18,61 +17,183 @@
 /// - novum = new
 /// - qua = as (type cast)
 
-ex "../resolvitor" importa Resolvitor, Expressia, TypusAnnotatio, MassaSententia
+ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
+ex "../../ast/expressia" importa Expressia
+ex "../../ast/typus" importa TypusAnnotatio
 ex "../../ast/lexema" importa SymbolumGenus
 ex "../errores" importa ParserErrorCodice
+ex "./primaria" importa parsePrimaria
 
-/// UnariaExpressia - unary expression AST node
-genus UnariaExpressia {
-    Locus locus
-    textus signum
-    Expressia argumentum
-    bivalens praefixum
-}
-
-/// CedeExpressia - await expression AST node
-genus CedeExpressia {
-    Locus locus
-    Expressia argumentum
-}
-
-/// QuaExpressia - type cast expression AST node
-genus QuaExpressia {
-    Locus locus
-    Expressia expressia
-    TypusAnnotatio adnotatio
-}
-
-/// VocatioExpressia - function call expression AST node
-genus VocatioExpressia {
-    Locus locus
-    Expressia vocans
-    lista<Expressia> argumenta
-}
-
-/// MembrumExpressia - member access expression AST node
-genus MembrumExpressia {
-    Locus locus
-    Expressia obiectum
-    Expressia proprietas
-    bivalens computatum
-    bivalens optionale
-}
-
-// TODO: Implement once type system issue is resolved
-
-/// Parse unary expression (stub)
+/// Parse unary expression
+///
+/// GRAMMAR: unary := prefixOp unary | postfix
 functio parseUnaria(Resolvitor r) -> Expressia {
-    redde r.expressia()
+    fixum p = r.parser()
+    fixum locus = p.specta(0).locus
+    
+    // Check for prefix operators
+    si p.congruetVerbum("non") aut p.congruet(SymbolumGenus.Non) {
+        fixum argumentum = parseUnaria(r)
+        redde finge UnariaExpressia {
+            locus: locus,
+            signum: "!",
+            argumentum: argumentum
+        } qua Expressia
+    }
+    
+    si p.congruet(SymbolumGenus.Minus) {
+        fixum argumentum = parseUnaria(r)
+        redde finge UnariaExpressia {
+            locus: locus,
+            signum: "-",
+            argumentum: argumentum
+        } qua Expressia
+    }
+    
+    si p.congruet(SymbolumGenus.Tilde) {
+        fixum argumentum = parseUnaria(r)
+        redde finge UnariaExpressia {
+            locus: locus,
+            signum: "~",
+            argumentum: argumentum
+        } qua Expressia
+    }
+    
+    // Await expression
+    si p.congruetVerbum("cede") {
+        fixum argumentum = parseUnaria(r)
+        redde finge CedeExpressia {
+            locus: locus,
+            argumentum: argumentum
+        } qua Expressia
+    }
+    
+    // New expression
+    si p.congruetVerbum("novum") {
+        fixum vocatum = parseUnaria(r)
+        
+        // Check for constructor call
+        varia argumenta = [] qua lista<Expressia>
+        si p.congruet(SymbolumGenus.ParensSin) {
+            argumenta = parseArgumenta(r)
+            p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+        }
+        
+        redde finge NovumExpressia {
+            locus: locus,
+            vocatum: vocatum,
+            argumenta: argumenta,
+            initor: nihil
+        } qua Expressia
+    }
+    
+    // No prefix operator - parse postfix
+    redde parsePostfix(r)
 }
 
-/// Parse type cast expression (stub)
-functio parseQua(Resolvitor r) -> Expressia {
-    redde r.expressia()
+/// Parse postfix expression (call, member, type cast)
+///
+/// GRAMMAR: postfix := primary (callSuffix | memberSuffix | quaSuffix)*
+functio parsePostfix(Resolvitor r) -> Expressia {
+    fixum p = r.parser()
+    varia expressia = parsePrimaria(r)
+    
+    // Loop to handle chained postfix operations
+    dum verum {
+        fixum locus = p.specta(0).locus
+        
+        // Function call: expr(args)
+        si p.congruet(SymbolumGenus.ParensSin) {
+            fixum argumenta = parseArgumenta(r)
+            p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+            
+            expressia = finge VocatioExpressia {
+                locus: locus,
+                vocatum: expressia,
+                argumenta: argumenta,
+                optivum: falsum
+            } qua Expressia
+            perge
+        }
+        
+        // Member access: expr.property
+        si p.congruet(SymbolumGenus.Punctum) {
+            fixum propSymbolum = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            fixum proprietas = finge Nomen {
+                locus: propSymbolum.locus,
+                valor: propSymbolum.valor
+            } qua Expressia
+            
+            expressia = finge MembrumExpressia {
+                locus: locus,
+                obiectum: expressia,
+                proprietas: proprietas,
+                computatum: falsum,
+                optivum: falsum,
+                nonNullum: falsum
+            } qua Expressia
+            perge
+        }
+        
+        // Computed member access: expr[index]
+        si p.congruet(SymbolumGenus.AngulusSin) {
+            fixum proprietas = r.expressia()
+            p.expecta(SymbolumGenus.AngulusDex, ParserErrorCodice.ExpectaturAngulusDex)
+            
+            expressia = finge MembrumExpressia {
+                locus: locus,
+                obiectum: expressia,
+                proprietas: proprietas,
+                computatum: verum,
+                optivum: falsum,
+                nonNullum: falsum
+            } qua Expressia
+            perge
+        }
+        
+        // Type cast: expr qua Type
+        si p.congruetVerbum("qua") {
+            fixum scopus = r.adnotatio()
+            
+            expressia = finge QuaExpressia {
+                locus: locus,
+                expressia: expressia,
+                scopus: scopus
+            } qua Expressia
+            perge
+        }
+        
+        // No more postfix operators
+        rumpe
+    }
+    
+    redde expressia
 }
 
-/// Parse call/member expression (stub)
-functio parseVocatio(Resolvitor r) -> Expressia {
-    redde r.expressia()
+/// Parse function call arguments
+///
+/// GRAMMAR: arguments := (expression (',' expression)*)?
+functio parseArgumenta(Resolvitor r) -> lista<Expressia> {
+    fixum p = r.parser()
+    varia argumenta = [] qua lista<Expressia>
+    
+    // Check for empty arguments
+    si p.proba(SymbolumGenus.ParensDex) {
+        redde argumenta
+    }
+    
+    // Parse first argument
+    argumenta.adde(r.expressia())
+    
+    // Parse remaining comma-separated arguments
+    dum p.congruet(SymbolumGenus.Virgula) {
+        // Allow trailing comma
+        si p.proba(SymbolumGenus.ParensDex) {
+            rumpe
+        }
+        argumenta.adde(r.expressia())
+    }
+    
+    redde argumenta
 }

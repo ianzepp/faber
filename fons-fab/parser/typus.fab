@@ -23,8 +23,9 @@
 /// - parametra = parameters
 /// - nullabilis = nullable
 
-ex "./resolvitor" importa Resolvitor, TypusAnnotatio
+ex "./resolvitor" importa Resolvitor
 ex "../ast/positio" importa Locus
+ex "../ast/typus" importa TypusAnnotatio
 ex "../ast/lexema" importa SymbolumGenus
 ex "./errores" importa ParserErrorCodice
 

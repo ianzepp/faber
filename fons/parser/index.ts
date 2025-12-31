@@ -999,8 +999,10 @@ export function parse(tokens: Token[]): ParserResult {
         // Array destructuring pattern: fixum [a, b] = arr
         if (check('LBRACKET')) {
             name = parseArrayPattern();
-        } else if (isTypeName(peek())) {
+        } else if (isTypeName(peek()) && peek(1).type !== 'EQUAL') {
             // Builtin type: fixum numerus x = 42
+            // WHY: Check peek(1) !== '=' to allow type names as variable names.
+            //      "fixum textus = x" means textus is the variable, not a type annotation.
             typeAnnotation = parseTypeAnnotation();
             name = parseIdentifierOrKeyword();
         } else if (check('IDENTIFIER') && peek(1).type === 'IDENTIFIER') {

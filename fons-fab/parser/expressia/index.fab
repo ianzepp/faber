@@ -30,18 +30,17 @@
 /// - unaria = unary
 /// - primaria = primary
 
-ex "../resolvitor" importa Resolvitor, Expressia
+ex "../resolvitor" importa Resolvitor
+ex "../../ast/expressia" importa Expressia
+
+// Import expression parsers
+ex "./binaria" importa parseAssignatio
 
 /// Parse an expression (entry point)
 ///
 /// Top-level expression delegates to assignment (lowest precedence).
 /// All expression parsing flows through this function.
-///
-/// NOTE: This calls r.expressia() which will eventually route through
-/// the ResolvitorImpl to parseAssignatio in binaria.fab.
-/// For now, this file just provides the entry point signature.
 functio parseExpressia(Resolvitor r) -> Expressia {
-    // Delegate to the expression pipeline via Resolvitor
-    // The actual chain is: expressia -> assignatio -> condicio -> ... -> primaria
-    redde r.expressia()
+    // Delegate to assignment parser (lowest precedence)
+    redde parseAssignatio(r)
 }

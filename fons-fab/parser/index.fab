@@ -5,9 +5,6 @@
 /// Transforms token stream from lexical analyzer into Abstract Syntax Tree.
 /// Uses predictive parsing with one token of lookahead.
 ///
-/// STATUS: Resolvitor conversion in progress
-/// This file will contain ResolvitorImpl once the pattern is fully wired.
-///
 /// INVARIANTS:
 /// - Never throws exceptions - collects errors and continues
 /// - Synchronizes at statement boundaries after errors
@@ -22,12 +19,17 @@
 
 ex "./nucleus" importa Parser, novumParser
 ex "./errores" importa ParserError, ParserErrorCodice
-ex "./resolvitor" importa Resolvitor, Expressia, Sententia, MassaSententia, TypusAnnotatio
+ex "./resolvitor" importa Resolvitor
 ex "../ast/positio" importa Locus
+ex "../ast/expressia" importa Expressia
+ex "../ast/sententia" importa Sententia
+ex "../ast/typus" importa TypusAnnotatio
 ex "../ast/lexema" importa Symbolum
 
-// Import statement parsers
-ex "./sententia/massa" importa Programma, parseProgramma
+// Import parsing functions
+ex "./sententia/massa" importa Programma, parseProgramma, parseMassaSententia, parseExpressiaSententia
+ex "./expressia/primaria" importa parsePrimaria
+ex "./typus" importa parseTypusAnnotatio
 
 /// Result of parsing
 genus ParserResultatum {
@@ -35,12 +37,44 @@ genus ParserResultatum {
     lista<ParserError> errores  // Parse errors encountered
 }
 
-// TODO: Define ResolvitorImpl genus that implements pactum Resolvitor
-// This will wire up all the parsing functions:
-//   - expressia() -> calls parseExpressia
-//   - sententia() -> calls parseSententia  
-//   - massa() -> calls parseMassaSententia
-//   - adnotatio() -> calls parseTypusAnnotatio
+/// ResolvitorImpl - concrete implementation of pactum Resolvitor
+///
+/// Wires up all parsing functions so they can call each other
+/// through the Resolvitor interface without circular imports.
+genus ResolvitorImpl implet Resolvitor {
+    Parser p
+    
+    functio parser() -> Parser {
+        redde ego.p
+    }
+    
+    functio expressia() -> Expressia {
+        // Entry point for expression parsing
+        // TODO: Route to full expression parser (assignatio -> ... -> primaria)
+        redde parsePrimaria(ego)
+    }
+    
+    functio sententia() -> Sententia {
+        // Entry point for statement parsing
+        // TODO: Route to statement dispatcher
+        redde parseExpressiaSententia(ego)
+    }
+    
+    functio massa() -> Sententia {
+        // Parse block statement
+        redde parseMassaSententia(ego)
+    }
+    
+    functio adnotatio() -> TypusAnnotatio {
+        // Parse type annotation
+        redde parseTypusAnnotatio(ego)
+    }
+}
+
+/// Create a new ResolvitorImpl
+functio novumResolvitor(Parser p) -> ResolvitorImpl {
+    redde { p: p } qua ResolvitorImpl
+}
 
 /// Parse a token stream into an AST
 ///
@@ -49,18 +83,16 @@ genus ParserResultatum {
 functio resolvere(lista<Symbolum> symbola) -> ParserResultatum {
     // Create parser state
     fixum p = novumParser(symbola)
-
-    // TODO: Create ResolvitorImpl wrapping p
-    // For now, we can't call parseProgramma because it needs Resolvitor
+    
+    // Create Resolvitor to wire up parsing functions
+    fixum r = novumResolvitor(p)
 
     // Try to parse the program
     tempta {
-        // TODO: Replace with actual parsing once ResolvitorImpl exists
-        // fixum r = novum ResolvitorImpl { parser: p }
-        // fixum programma = parseProgramma(r)
+        fixum programma = parseProgramma(r)
         
         redde {
-            programma: nihil,
+            programma: programma,
             errores: p.errores
         } qua ParserResultatum
     } cape e {

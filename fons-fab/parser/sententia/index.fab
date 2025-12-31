@@ -3,10 +3,6 @@
 /// Central dispatcher for parsing statements based on leading keyword.
 /// Handles comment attachment and error recovery.
 ///
-/// STATUS: Resolvitor conversion in progress
-/// BLOCKED: Same type system issue as expression parsers.
-///          Statement types need to be variants of Sententia discretio.
-///
 /// GRAMMAR:
 ///   statement := importDecl | varDecl | funcDecl | typeAliasDecl | ifStmt
 ///              | whileStmt | forStmt | returnStmt | throwStmt | tryStmt
@@ -17,39 +13,132 @@
 /// - declara = declare
 /// - imperium = control (command)
 
-ex "../resolvitor" importa Resolvitor, Sententia, Expressia, MassaSententia
+ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
+ex "../../ast/expressia" importa Expressia
+ex "../../ast/sententia" importa Sententia, ScribeGradus
 ex "../../ast/lexema" importa SymbolumGenus
 ex "../errores" importa ParserErrorCodice
 
 // Import statement parsers from submodules
-// These are defined in actio.fab, error.fab, massa.fab, varia.fab
-// TODO: Add proper imports once those modules export their functions
+ex "./actio" importa parseReddeSententia, parseRumpeSententia, parsePergeSententia, parseIaceSententia, parseScribeSententia
+ex "./declara" importa parseFunctioDeclaratio, parseGenusDeclaratio, parsePactumDeclaratio, parseOrdoDeclaratio, parseDiscretioDeclaratio, parseTypusAliasDeclaratio, parseImportaSententia
+ex "./error" importa parseTemptaSententia, parseFacSententia, parseAdfirmaSententia
+ex "./imperium" importa parseSiSententia, parseDumSententia, parseExSententia, parseDeSententia
+ex "./massa" importa parseMassaSententia, parseExpressiaSententia
+ex "./varia" importa parseVariaSententia
 
-/// Parse a statement with comment attachment
+/// Parse a statement
 ///
-/// Entry point for statement parsing. Collects comments before
-/// parsing, then attaches them to the resulting statement.
+/// Main dispatcher that routes to appropriate parser based on leading token.
 functio parseSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
+    fixum sym = p.specta(0)
     
-    // Collect any leading comments before parsing
-    p.colligeNotas()
-
-    // Parse the statement via Resolvitor
-    // The actual dispatch will be done by ResolvitorImpl
-    redde r.sententia()
+    // Block statement
+    si sym.species === SymbolumGenus.UncusSin {
+        redde parseMassaSententia(r)
+    }
+    
+    // Keyword-based dispatch
+    si sym.species === SymbolumGenus.Verbum {
+        fixum verbum = sym.verbum
+        
+        // Variable declarations
+        si verbum === "varia" aut verbum === "fixum" aut verbum === "figendum" aut verbum === "variandum" {
+            redde parseVariaSententia(r)
+        }
+        
+        // Return statement
+        si verbum === "redde" {
+            redde parseReddeSententia(r)
+        }
+        
+        // Break/continue
+        si verbum === "rumpe" {
+            redde parseRumpeSententia(r)
+        }
+        si verbum === "perge" {
+            redde parsePergeSententia(r)
+        }
+        
+        // Throw/panic
+        si verbum === "iace" {
+            redde parseIaceSententia(r, falsum)
+        }
+        si verbum === "mori" {
+            redde parseIaceSententia(r, verum)
+        }
+        
+        // Output statements
+        si verbum === "scribe" {
+            redde parseScribeSententia(r, ScribeGradus.Scribe)
+        }
+        si verbum === "vide" {
+            redde parseScribeSententia(r, ScribeGradus.Vide)
+        }
+        si verbum === "mone" {
+            redde parseScribeSententia(r, ScribeGradus.Mone)
+        }
+        
+        // Error handling
+        si verbum === "tempta" {
+            redde parseTemptaSententia(r)
+        }
+        si verbum === "fac" {
+            redde parseFacSententia(r)
+        }
+        si verbum === "adfirma" {
+            redde parseAdfirmaSententia(r)
+        }
+        
+        // Control flow
+        si verbum === "si" {
+            redde parseSiSententia(r)
+        }
+        si verbum === "dum" {
+            redde parseDumSententia(r)
+        }
+        si verbum === "ex" {
+            // Look ahead: ex (IDENTIFIER|STRING) importa -> import
+            // Otherwise it's a for-of loop
+            fixum nextSym = p.specta(1)
+            si (nextSym.species === SymbolumGenus.Nomen aut nextSym.species === SymbolumGenus.Textus) {
+                fixum afterSym = p.specta(2)
+                si afterSym.species === SymbolumGenus.Verbum et afterSym.verbum === "importa" {
+                    redde parseImportaSententia(r)
+                }
+            }
+            redde parseExSententia(r)
+        }
+        si verbum === "de" {
+            redde parseDeSententia(r)
+        }
+        
+        // Declarations
+        si verbum === "functio" {
+            redde parseFunctioDeclaratio(r)
+        }
+        si verbum === "genus" {
+            redde parseGenusDeclaratio(r)
+        }
+        si verbum === "pactum" {
+            redde parsePactumDeclaratio(r)
+        }
+        si verbum === "ordo" {
+            redde parseOrdoDeclaratio(r)
+        }
+        si verbum === "discretio" {
+            redde parseDiscretioDeclaratio(r)
+        }
+        si verbum === "typus" {
+            redde parseTypusAliasDeclaratio(r)
+        }
+        
+        // TODO: Add remaining statement parsers
+        // elige, discerne, custodi, probandum, proba, incipit, incipiet, cura, ad, importa
+    }
+    
+    // Fall through to expression statement
+    redde parseExpressiaSententia(r)
 }
-
-/// Attach pending comments to a statement (stub)
-///
-/// Collects leading comments that were buffered before the statement,
-/// and trailing comments that appear on the same line after.
-functio adiungNotae(Resolvitor r, Sententia s) -> Sententia {
-    // TODO: Implement comment attachment
-    redde s
-}
-
-// TODO: Implement parseSententiaSineNotis once type system issue is resolved
-// This is the main dispatcher that checks for keywords and routes to
-// appropriate parsers (parseVariaSententia, parseTemptaSententia, etc.)

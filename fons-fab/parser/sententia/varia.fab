@@ -15,217 +15,36 @@
 /// - ceteri = the rest (rest pattern)
 /// - omissum = omitted/skipped (placeholder _)
 
-ex "../resolvitor" importa Resolvitor, Expressia, TypusAnnotatio
+ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
+ex "../../ast/expressia" importa Expressia
+ex "../../ast/sententia" importa Sententia, VariaGenus
+ex "../../ast/typus" importa TypusAnnotatio
 ex "../../ast/lexema" importa SymbolumGenus
 ex "../errores" importa ParserErrorCodice
 
-/// Nomen - identifier AST node
-genus Nomen {
-    Locus locus
-    textus valor
-}
-
-/// VariaGenus - variable declaration kind
-ordo VariaGenus {
-    Varia,
-    Fixum,
-    Figendum,
-    Variandum
-}
-
-/// ObiectumFormaProprietas - object destructuring property
-genus ObiectumFormaProprietas {
-    Locus locus
-    Nomen clavis
-    Nomen valor
-    bivalens residuum
-}
-
-/// ObiectumForma - object destructuring pattern
-genus ObiectumForma {
-    Locus locus
-    lista<ObiectumFormaProprietas> proprietates
-}
-
-/// SeriesFormaElementum - array destructuring element
-genus SeriesFormaElementum {
-    Locus locus
-    Nomen nomen
-    bivalens omissum
-    bivalens residuum
-}
-
-/// SeriesForma - array destructuring pattern
-genus SeriesForma {
-    Locus locus
-    lista<SeriesFormaElementum> elementa
-}
-
-/// VariaSententia - variable declaration AST node
-genus VariaSententia {
-    Locus locus
-    VariaGenus modus
-    Nomen? nomen
-    SeriesForma? seriesForma
-    TypusAnnotatio? adnotatio
-    Expressia? initium
-}
-
 /// Parse an identifier (simple name reference)
-functio parseNomen(Resolvitor r) -> Nomen {
+functio parseNomen(Resolvitor r) -> textus {
     fixum p = r.parser()
     fixum symbolum = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-    redde {
-        locus: symbolum.locus,
-        valor: symbolum.valor
-    } qua Nomen
+    redde symbolum.valor
 }
 
 /// Parse identifier or keyword (for import specifiers, property names)
 /// Keywords like 'scribe' can be valid identifiers in some contexts
-functio parseNomenVelVerbum(Resolvitor r) -> Nomen {
+functio parseNomenVelVerbum(Resolvitor r) -> textus {
     fixum p = r.parser()
     fixum s = p.specta(0)
 
     si s.species === SymbolumGenus.Nomen aut s.species === SymbolumGenus.Verbum {
         p.procede()
-        redde {
-            locus: s.locus,
-            valor: s.valor
-        } qua Nomen
+        redde s.valor
     }
 
     // Error: expected identifier
     p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("got '{}'", s.valor))
     p.procede()
-    redde {
-        locus: s.locus,
-        valor: s.valor
-    } qua Nomen
-}
-
-/// Parse object destructuring pattern
-///
-/// GRAMMAR: objectPattern := '{' patternProperty (',' patternProperty)* '}'
-///
-/// Examples:
-///   { nomen, aetas }              -> extract nomen and aetas
-///   { nomen: localName }          -> rename nomen to localName
-///   { nomen, ceteri rest }        -> extract nomen, collect rest in 'rest'
-functio parseObiectumForma(Resolvitor r) -> ObiectumForma {
-    fixum p = r.parser()
-    fixum locus = p.specta(0).locus
-
-    // Expect opening brace
-    p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
-
-    varia proprietates = [] qua lista<ObiectumFormaProprietas>
-
-    // Parse properties until closing brace
-    dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
-        fixum propLocus = p.specta(0).locus
-
-        // Check for rest pattern: ceteri restName
-        varia residuum = falsum
-        si p.congruetVerbum("ceteri") {
-            residuum = verum
-        }
-
-        // Parse key identifier
-        fixum clavis = parseNomenVelVerbum(r)
-
-        // Default value is same as key (shorthand)
-        varia valor = clavis
-
-        // Check for rename: { nomen: localName }
-        // Not valid with ceteri rest pattern
-        si p.congruet(SymbolumGenus.Colon) et non residuum {
-            valor = parseNomenVelVerbum(r)
-        }
-
-        proprietates.adde({
-            locus: propLocus,
-            clavis: clavis,
-            valor: valor,
-            residuum: residuum
-        } qua ObiectumFormaProprietas)
-
-        // Expect comma or closing brace
-        si non p.proba(SymbolumGenus.UncusDex) {
-            p.expecta(SymbolumGenus.Virgula, ParserErrorCodice.ExpectaturVirgula)
-        }
-    }
-
-    // Expect closing brace
-    p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
-
-    redde {
-        locus: locus,
-        proprietates: proprietates
-    } qua ObiectumForma
-}
-
-/// Parse array destructuring pattern
-///
-/// GRAMMAR: arrayPattern := '[' arrayPatternElement (',' arrayPatternElement)* ']'
-///
-/// Examples:
-///   [a, b, c]              -> extract first three elements
-///   [first, ceteri rest]   -> extract first, collect rest
-///   [_, second, _]         -> skip first and third
-functio parseSeriesForma(Resolvitor r) -> SeriesForma {
-    fixum p = r.parser()
-    fixum locus = p.specta(0).locus
-
-    // Expect opening bracket
-    p.expecta(SymbolumGenus.QuadratusSin, ParserErrorCodice.ExpectaturQuadratusSin)
-
-    varia elementa = [] qua lista<SeriesFormaElementum>
-
-    // Parse elements until closing bracket
-    dum non p.proba(SymbolumGenus.QuadratusDex) et non p.estFinis() {
-        fixum elemLocus = p.specta(0).locus
-
-        // Check for rest pattern: ceteri restName
-        varia residuum = falsum
-        si p.congruetVerbum("ceteri") {
-            residuum = verum
-        }
-
-        // Check for skip pattern: _
-        si non residuum et p.proba(SymbolumGenus.Nomen) et p.specta(0).valor === "_" {
-            p.procede()  // consume '_'
-            elementa.adde({
-                locus: elemLocus,
-                nomen: { locus: elemLocus, valor: "_" } qua Nomen,
-                omissum: verum,
-                residuum: falsum
-            } qua SeriesFormaElementum)
-        } secus {
-            // Regular binding or rest binding
-            fixum nomen = parseNomen(r)
-            elementa.adde({
-                locus: elemLocus,
-                nomen: nomen,
-                omissum: falsum,
-                residuum: residuum
-            } qua SeriesFormaElementum)
-        }
-
-        // Expect comma or closing bracket
-        si non p.proba(SymbolumGenus.QuadratusDex) {
-            p.expecta(SymbolumGenus.Virgula, ParserErrorCodice.ExpectaturVirgula)
-        }
-    }
-
-    // Expect closing bracket
-    p.expecta(SymbolumGenus.QuadratusDex, ParserErrorCodice.ExpectaturQuadratusDex)
-
-    redde {
-        locus: locus,
-        elementa: elementa
-    } qua SeriesForma
+    redde s.valor
 }
 
 /// Parse variable declaration
@@ -235,20 +54,20 @@ functio parseSeriesForma(Resolvitor r) -> SeriesForma {
 /// Supports:
 /// - Type inference: fixum x = 42
 /// - Type-first: fixum numerus x = 42
-/// - Array destructuring: fixum [a, b] = coords
-functio parseVariaSententia(Resolvitor r) -> VariaSententia {
+/// - Array destructuring: fixum [a, b] = coords (TODO)
+functio parseVariaSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
 
     // Get declaration kind from keyword
     fixum verbum = p.specta(0).verbum
-    varia modus = VariaGenus.Varia
+    varia species = VariaGenus.Varia
 
     elige verbum {
-        si "varia" { modus = VariaGenus.Varia }
-        si "fixum" { modus = VariaGenus.Fixum }
-        si "figendum" { modus = VariaGenus.Figendum }
-        si "variandum" { modus = VariaGenus.Variandum }
+        si "varia" { species = VariaGenus.Varia }
+        si "fixum" { species = VariaGenus.Fixum }
+        si "figendum" { species = VariaGenus.Figendum }
+        si "variandum" { species = VariaGenus.Variandum }
     }
 
     // Consume the keyword
@@ -258,13 +77,11 @@ functio parseVariaSententia(Resolvitor r) -> VariaSententia {
     // Determine what follows: type, name, or destructuring pattern
     // -------------------------------------------------------------------------
     varia adnotatio = nihil qua TypusAnnotatio?
-    varia nomen = nihil qua Nomen?
-    varia seriesForma = nihil qua SeriesForma?
+    varia nomen = ""
 
-    si p.proba(SymbolumGenus.QuadratusSin) {
-        // Array destructuring: fixum [a, b] = arr
-        seriesForma = parseSeriesForma(r)
-    } sin p.estTypusNomen(p.specta(0)) {
+    // TODO: Handle array destructuring [a, b] = arr
+
+    si p.estTypusNomen(p.specta(0)) {
         // Builtin type: fixum numerus x = 42
         adnotatio = r.adnotatio()
         nomen = parseNomen(r)
@@ -281,18 +98,17 @@ functio parseVariaSententia(Resolvitor r) -> VariaSententia {
     // -------------------------------------------------------------------------
     // Parse optional initializer
     // -------------------------------------------------------------------------
-    varia initium = nihil qua Expressia?
+    varia valor = nihil qua Expressia?
 
     si p.congruet(SymbolumGenus.Aequale) {
-        initium = r.expressia()
+        valor = r.expressia()
     }
 
-    redde {
+    redde finge VariaSententia {
         locus: locus,
-        modus: modus,
+        species: species,
         nomen: nomen,
-        seriesForma: seriesForma,
-        adnotatio: adnotatio,
-        initium: initium
-    } qua VariaSententia
+        typus: adnotatio,
+        valor: valor
+    } qua Sententia
 }

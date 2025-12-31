@@ -1,0 +1,688 @@
+/// Declaration Statement Parsers
+///
+/// Handles: functio, genus, pactum, ordo, discretio, typus, importa
+///
+/// GRAMMAR:
+///   functioDecl := 'functio' IDENT '(' params? ')' returnType? blockStmt
+///   genusDecl := 'genus' IDENT genericParams? ('sub' IDENT)? ('implet' IDENT+)? '{' members '}'
+///   pactumDecl := 'pactum' IDENT genericParams? '{' methods '}'
+///   ordoDecl := 'ordo' IDENT '{' members '}'
+///   discretioDecl := 'discretio' IDENT genericParams? '{' variants '}'
+///   typusDecl := 'typus' IDENT '=' type
+///   importaDecl := 'ex' STRING 'importa' specifiers
+///
+/// LATIN VOCABULARY:
+/// - functio = function
+/// - genus = kind/class/struct
+/// - pactum = agreement/interface
+/// - ordo = order/enum
+/// - discretio = distinction/tagged union
+/// - typus = type alias
+/// - importa = import
+
+ex "../resolvitor" importa Resolvitor
+ex "../../ast/positio" importa Locus
+ex "../../ast/expressia" importa Expressia
+ex "../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, CampusDeclaratio, PactumMethodus, OrdoMembrum, VariansDeclaratio, VariansCampus, Visibilitas, ReddeVerbum, ImportaSpecificator
+ex "../../ast/typus" importa TypusAnnotatio
+ex "../../ast/lexema" importa SymbolumGenus
+ex "../errores" importa ParserErrorCodice
+ex "./massa" importa parseMassaSententia
+
+/// Parse function declaration
+///
+/// GRAMMAR: 
+///   functioDecl := 'functio' IDENT genericParams? '(' params? ')' returnType? blockStmt?
+///   returnType := '->' type | 'fit' type | 'fiet' type | 'fiunt' type | 'fient' type
+///
+/// Examples:
+///   functio salve() { scribe "hello" }
+///   functio add(numerus a, numerus b) -> numerus { redde a + b }
+///   functio greet(textus name) fit textus { redde scriptum("Hello, {}!", name) }
+functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
+    fixum p = r.parser()
+    fixum locus = p.specta(0).locus
+    
+    // Consume 'functio'
+    p.expectaVerbum("functio", ParserErrorCodice.ExpectaturFunctio)
+    
+    // Parse function name
+    fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    fixum nomen = nomenSym.valor
+    
+    // Optional generic parameters: prae typus T, U
+    varia generaParametra = nihil qua lista<TypusParametrum>?
+    si p.probaVerbum("prae") {
+        generaParametra = parseTypusParametra(r)
+    }
+    
+    // Parse parameters
+    p.expecta(SymbolumGenus.ParensSin, ParserErrorCodice.ExpectaturParensSin)
+    fixum parametra = parseParametra(r)
+    p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+    
+    // Parse return type
+    varia typusReditus = nihil qua TypusAnnotatio?
+    varia asynca = falsum
+    varia generator = falsum
+    varia reddeVerbum = nihil qua ReddeVerbum?
+    
+    si p.congruet(SymbolumGenus.Sagitta) {
+        reddeVerbum = ReddeVerbum.Sagitta
+        typusReditus = r.adnotatio()
+    } aliter si p.probaVerbum("fit") {
+        reddeVerbum = ReddeVerbum.Fit
+        typusReditus = r.adnotatio()
+    } aliter si p.probaVerbum("fiet") {
+        reddeVerbum = ReddeVerbum.Fiet
+        asynca = verum
+        typusReditus = r.adnotatio()
+    } aliter si p.probaVerbum("fiunt") {
+        reddeVerbum = ReddeVerbum.Fiunt
+        generator = verum
+        typusReditus = r.adnotatio()
+    } aliter si p.probaVerbum("fient") {
+        reddeVerbum = ReddeVerbum.Fient
+        asynca = verum
+        generator = verum
+        typusReditus = r.adnotatio()
+    }
+    
+    // Parse body (optional for abstract methods)
+    varia corpus = nihil qua Sententia?
+    si p.proba(SymbolumGenus.UncusSin) {
+        corpus = parseMassaSententia(r)
+    }
+    
+    redde finge FunctioDeclaratio {
+        locus: locus,
+        nomen: nomen,
+        generaParametra: generaParametra,
+        parametra: parametra,
+        typusReditus: typusReditus,
+        corpus: corpus,
+        asynca: asynca,
+        generator: generator,
+        abstracta: falsum,
+        constructor: falsum,
+        visibilitas: nihil,
+        reddeVerbum: reddeVerbum
+    } qua Sententia
+}
+
+/// Parse genus (class/struct) declaration
+///
+/// GRAMMAR:
+///   genusDecl := 'genus' IDENT genericParams? ('sub' IDENT)? ('implet' IDENT+)? '{' members '}'
+///
+/// Examples:
+///   genus Persona { textus nomen, numerus aetas }
+///   genus Cursor<T> { varia index = 0 }
+///   genus Admin sub Persona implet Serializable { ... }
+functio parseGenusDeclaratio(Resolvitor r) -> Sententia {
+    fixum p = r.parser()
+    fixum locus = p.specta(0).locus
+    
+    // Consume 'genus'
+    p.expectaVerbum("genus", ParserErrorCodice.ExpectaturGenus)
+    
+    // Parse name
+    fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    fixum nomen = nomenSym.valor
+    
+    // Optional generic parameters
+    varia generaParametra = nihil qua lista<textus>?
+    si p.congruet(SymbolumGenus.Minor) {
+        generaParametra = parseGenericaNomina(r)
+    }
+    
+    // Optional extends
+    varia extendit = nihil qua textus?
+    si p.probaVerbum("sub") {
+        fixum parentSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        extendit = parentSym.valor
+    }
+    
+    // Optional implements
+    varia implet = nihil qua lista<textus>?
+    si p.probaVerbum("implet") {
+        implet = [] qua lista<textus>
+        fac {
+            fixum ifaceSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            implet.adde(ifaceSym.valor)
+        } dum p.congruet(SymbolumGenus.Virgula)
+    }
+    
+    // Parse body
+    p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
+    
+    varia campi = [] qua lista<CampusDeclaratio>
+    varia methodi = [] qua lista<Sententia>
+    varia constructor = nihil qua Sententia?
+    
+    dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
+        // Parse visibility modifier
+        varia visibilitas = Visibilitas.Publica
+        si p.probaVerbum("privatus") {
+            visibilitas = Visibilitas.Privata
+        } aliter si p.probaVerbum("protectus") {
+            visibilitas = Visibilitas.Protecta
+        }
+        
+        // Check for static modifier
+        varia staticum = falsum
+        si p.probaVerbum("generis") {
+            staticum = verum
+        }
+        
+        // Check if this is a method or field
+        si p.probaVerbum("functio") {
+            // Method - backtrack and parse as full function
+            // For now, simplified: just parse the function
+            fixum methodLocus = p.specta(-1).locus
+            fixum methodNomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            fixum methodNomen = methodNomenSym.valor
+            
+            p.expecta(SymbolumGenus.ParensSin, ParserErrorCodice.ExpectaturParensSin)
+            fixum params = parseParametra(r)
+            p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+            
+            varia retTypus = nihil qua TypusAnnotatio?
+            si p.congruet(SymbolumGenus.Sagitta) aut p.probaVerbum("fit") {
+                retTypus = r.adnotatio()
+            }
+            
+            fixum body = parseMassaSententia(r)
+            
+            methodi.adde(finge FunctioDeclaratio {
+                locus: methodLocus,
+                nomen: methodNomen,
+                generaParametra: nihil,
+                parametra: params,
+                typusReditus: retTypus,
+                corpus: body,
+                asynca: falsum,
+                generator: falsum,
+                abstracta: falsum,
+                constructor: falsum,
+                visibilitas: visibilitas,
+                reddeVerbum: nihil
+            } qua Sententia)
+        } aliter {
+            // Field: type name or name: default
+            fixum campusLocus = p.specta(0).locus
+            fixum typusAnnotatio = r.adnotatio()
+            fixum campusNomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            fixum campusNomen = campusNomenSym.valor
+            
+            varia valor = nihil qua Expressia?
+            si p.congruet(SymbolumGenus.Colon) {
+                valor = r.expressia()
+            }
+            
+            campi.adde({
+                locus: campusLocus,
+                nomen: campusNomen,
+                typus: typusAnnotatio,
+                valor: valor,
+                visibilitas: visibilitas,
+                staticum: staticum,
+                reactivum: falsum
+            } qua CampusDeclaratio)
+        }
+        
+        // Optional comma/semicolon between members
+        p.congruet(SymbolumGenus.Virgula)
+        p.congruet(SymbolumGenus.Semicolon)
+    }
+    
+    p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
+    
+    redde finge GenusDeclaratio {
+        locus: locus,
+        nomen: nomen,
+        generaParametra: generaParametra,
+        extendit: extendit,
+        implet: implet,
+        abstractum: falsum,
+        campi: campi,
+        constructor: constructor,
+        methodi: methodi
+    } qua Sententia
+}
+
+/// Parse pactum (interface) declaration
+///
+/// GRAMMAR: pactumDecl := 'pactum' IDENT genericParams? '{' methods '}'
+///
+/// Examples:
+///   pactum Iterabilis { functio sequens() fit T? }
+///   pactum Comparabilis<T> { functio compara(T alius) fit numerus }
+functio parsePactumDeclaratio(Resolvitor r) -> Sententia {
+    fixum p = r.parser()
+    fixum locus = p.specta(0).locus
+    
+    // Consume 'pactum'
+    p.expectaVerbum("pactum", ParserErrorCodice.ExpectaturPactum)
+    
+    // Parse name
+    fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    fixum nomen = nomenSym.valor
+    
+    // Optional generic parameters
+    varia generaParametra = nihil qua lista<textus>?
+    si p.congruet(SymbolumGenus.Minor) {
+        generaParametra = parseGenericaNomina(r)
+    }
+    
+    // Parse body
+    p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
+    
+    varia methodi = [] qua lista<PactumMethodus>
+    
+    dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
+        // Each method: functio name(params) returnType
+        p.expectaVerbum("functio", ParserErrorCodice.ExpectaturFunctio)
+        
+        fixum methodLocus = p.specta(-1).locus
+        fixum methodNomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        fixum methodNomen = methodNomenSym.valor
+        
+        p.expecta(SymbolumGenus.ParensSin, ParserErrorCodice.ExpectaturParensSin)
+        fixum params = parseParametra(r)
+        p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+        
+        varia typusReditus = nihil qua TypusAnnotatio?
+        varia asynca = falsum
+        varia generator = falsum
+        
+        si p.congruet(SymbolumGenus.Sagitta) aut p.probaVerbum("fit") {
+            typusReditus = r.adnotatio()
+        } aliter si p.probaVerbum("fiet") {
+            asynca = verum
+            typusReditus = r.adnotatio()
+        } aliter si p.probaVerbum("fiunt") {
+            generator = verum
+            typusReditus = r.adnotatio()
+        } aliter si p.probaVerbum("fient") {
+            asynca = verum
+            generator = verum
+            typusReditus = r.adnotatio()
+        }
+        
+        methodi.adde({
+            locus: methodLocus,
+            nomen: methodNomen,
+            parametra: params,
+            typusReditus: typusReditus,
+            asynca: asynca,
+            generator: generator
+        } qua PactumMethodus)
+        
+        // Optional separator
+        p.congruet(SymbolumGenus.Virgula)
+        p.congruet(SymbolumGenus.Semicolon)
+    }
+    
+    p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
+    
+    redde finge PactumDeclaratio {
+        locus: locus,
+        nomen: nomen,
+        generaParametra: generaParametra,
+        methodi: methodi
+    } qua Sententia
+}
+
+/// Parse ordo (enum) declaration
+///
+/// GRAMMAR: ordoDecl := 'ordo' IDENT '{' (IDENT ('=' value)?)* '}'
+///
+/// Examples:
+///   ordo Color { Rubrum, Viridis, Caeruleum }
+///   ordo Status { Pendens = 0, Actum = 1, Completum = 2 }
+functio parseOrdoDeclaratio(Resolvitor r) -> Sententia {
+    fixum p = r.parser()
+    fixum locus = p.specta(0).locus
+    
+    // Consume 'ordo'
+    p.expectaVerbum("ordo", ParserErrorCodice.ExpectaturOrdo)
+    
+    // Parse name
+    fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    fixum nomen = nomenSym.valor
+    
+    // Parse body
+    p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
+    
+    varia membra = [] qua lista<OrdoMembrum>
+    
+    dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
+        fixum membrumLocus = p.specta(0).locus
+        fixum membrumNomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        fixum membrumNomen = membrumNomenSym.valor
+        
+        varia valor = nihil qua textus?
+        si p.congruet(SymbolumGenus.Aequale) {
+            // Parse value (number or string)
+            fixum valorSym = p.procede()
+            valor = valorSym.valor
+        }
+        
+        membra.adde({
+            locus: membrumLocus,
+            nomen: membrumNomen,
+            valor: valor
+        } qua OrdoMembrum)
+        
+        // Optional comma
+        p.congruet(SymbolumGenus.Virgula)
+    }
+    
+    p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
+    
+    redde finge OrdoDeclaratio {
+        locus: locus,
+        nomen: nomen,
+        membra: membra
+    } qua Sententia
+}
+
+/// Parse discretio (tagged union) declaration
+///
+/// GRAMMAR: discretioDecl := 'discretio' IDENT genericParams? '{' variants '}'
+///
+/// Examples:
+///   discretio Option<T> { Aliquid { T valor }, Nihil }
+///   discretio Event { Click { numerus x, numerus y }, Quit }
+functio parseDiscretioDeclaratio(Resolvitor r) -> Sententia {
+    fixum p = r.parser()
+    fixum locus = p.specta(0).locus
+    
+    // Consume 'discretio'
+    p.expectaVerbum("discretio", ParserErrorCodice.ExpectaturDiscretio)
+    
+    // Parse name
+    fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    fixum nomen = nomenSym.valor
+    
+    // Optional generic parameters
+    varia generaParametra = nihil qua lista<textus>?
+    si p.congruet(SymbolumGenus.Minor) {
+        generaParametra = parseGenericaNomina(r)
+    }
+    
+    // Parse body
+    p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
+    
+    varia variantes = [] qua lista<VariansDeclaratio>
+    
+    dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
+        fixum variansLocus = p.specta(0).locus
+        fixum variansNomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        fixum variansNomen = variansNomenSym.valor
+        
+        varia campi = [] qua lista<VariansCampus>
+        
+        // Optional fields in braces
+        si p.congruet(SymbolumGenus.UncusSin) {
+            dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
+                fixum campusLocus = p.specta(0).locus
+                fixum campusTypus = r.adnotatio()
+                fixum campusNomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+                fixum campusNomen = campusNomenSym.valor
+                
+                campi.adde({
+                    locus: campusLocus,
+                    nomen: campusNomen,
+                    typus: campusTypus
+                } qua VariansCampus)
+                
+                p.congruet(SymbolumGenus.Virgula)
+            }
+            p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
+        }
+        
+        variantes.adde({
+            locus: variansLocus,
+            nomen: variansNomen,
+            campi: campi
+        } qua VariansDeclaratio)
+        
+        // Optional comma between variants
+        p.congruet(SymbolumGenus.Virgula)
+    }
+    
+    p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
+    
+    redde finge DiscretioDeclaratio {
+        locus: locus,
+        nomen: nomen,
+        generaParametra: generaParametra,
+        variantes: variantes
+    } qua Sententia
+}
+
+/// Parse type alias declaration
+///
+/// GRAMMAR: typusDecl := 'typus' IDENT '=' type
+///
+/// Examples:
+///   typus ID = textus
+///   typus Callback = functio(numerus) -> vacuum
+functio parseTypusAliasDeclaratio(Resolvitor r) -> Sententia {
+    fixum p = r.parser()
+    fixum locus = p.specta(0).locus
+    
+    // Consume 'typus'
+    p.expectaVerbum("typus", ParserErrorCodice.ExpectaturTypus)
+    
+    // Parse name
+    fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    fixum nomen = nomenSym.valor
+    
+    // Expect '='
+    p.expecta(SymbolumGenus.Aequale, ParserErrorCodice.ExpectaturAequale)
+    
+    // Parse type
+    fixum typus = r.adnotatio()
+    
+    redde finge TypusAliasDeclaratio {
+        locus: locus,
+        nomen: nomen,
+        typus: typus,
+        scopusNomen: nihil
+    } qua Sententia
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/// Parse function parameters
+functio parseParametra(Resolvitor r) -> lista<Parametrum> {
+    fixum p = r.parser()
+    varia parametra = [] qua lista<Parametrum>
+    
+    si p.proba(SymbolumGenus.ParensDex) {
+        redde parametra
+    }
+    
+    fac {
+        fixum paramLocus = p.specta(0).locus
+        
+        // Check for rest parameter
+        varia residuum = falsum
+        si p.probaVerbum("ceteri") {
+            residuum = verum
+        }
+        
+        // Check for preposition (de, in, ex)
+        varia praepositio = nihil qua textus?
+        si p.probaVerbum("de") {
+            praepositio = "de"
+        } aliter si p.probaVerbum("in") {
+            praepositio = "in"
+        } aliter si p.probaVerbum("ex") {
+            praepositio = "ex"
+        }
+        
+        // Parse type (optional if no type annotation)
+        varia paramTypus = nihil qua TypusAnnotatio?
+        si p.proba(SymbolumGenus.Nomen) et p.proba(SymbolumGenus.Nomen, 1) {
+            // Two identifiers: first is type
+            paramTypus = r.adnotatio()
+        }
+        
+        // Parse name
+        fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        fixum nomen = nomenSym.valor
+        
+        // Optional alias: ut alias
+        varia paramAlias = nihil qua textus?
+        si p.probaVerbum("ut") {
+            fixum aliasSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            paramAlias = aliasSym.valor
+        }
+        
+        // Optional default: vel value
+        varia praedefinitum = nihil qua Expressia?
+        si p.probaVerbum("vel") {
+            praedefinitum = r.expressia()
+        }
+        
+        parametra.adde({
+            locus: paramLocus,
+            nomen: nomen,
+            alias: paramAlias,
+            typus: paramTypus,
+            praedefinitum: praedefinitum,
+            praepositio: praepositio,
+            residuum: residuum
+        } qua Parametrum)
+        
+    } dum p.congruet(SymbolumGenus.Virgula)
+    
+    redde parametra
+}
+
+/// Parse compile-time type parameters (prae typus T, U)
+functio parseTypusParametra(Resolvitor r) -> lista<TypusParametrum> {
+    fixum p = r.parser()
+    varia parametra = [] qua lista<TypusParametrum>
+    
+    // Already consumed 'prae', expect 'typus'
+    p.expectaVerbum("typus", ParserErrorCodice.ExpectaturTypus)
+    
+    fac {
+        fixum paramLocus = p.specta(0).locus
+        fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        
+        parametra.adde({
+            locus: paramLocus,
+            nomen: nomenSym.valor
+        } qua TypusParametrum)
+    } dum p.congruet(SymbolumGenus.Virgula)
+    
+    redde parametra
+}
+
+/// Parse generic type names in angle brackets: <T, U>
+functio parseGenericaNomina(Resolvitor r) -> lista<textus> {
+    fixum p = r.parser()
+    varia nomina = [] qua lista<textus>
+    
+    // Already consumed '<'
+    fac {
+        fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        nomina.adde(nomenSym.valor)
+    } dum p.congruet(SymbolumGenus.Virgula)
+    
+    p.expecta(SymbolumGenus.Maior, ParserErrorCodice.ExpectaturMaior)
+    
+    redde nomina
+}
+
+/// Parse import declaration
+///
+/// GRAMMAR: 
+///   importaDecl := 'ex' (STRING | IDENT) 'importa' specifiers
+///   specifiers := specifier (',' specifier)*
+///   specifier := IDENT ('ut' IDENT)?
+///              | '*' ('ut' IDENT)?
+///              | 'ceteri' IDENT
+///
+/// Examples:
+///   ex "norma/mathesis" importa sinus, cosinus
+///   ex norma importa scribe ut s
+///   ex "./utils" importa * ut utils
+functio parseImportaSententia(Resolvitor r) -> Sententia {
+    fixum p = r.parser()
+    fixum locus = p.specta(0).locus
+    
+    // Consume 'ex'
+    p.expectaVerbum("ex", ParserErrorCodice.ExpectaturEx)
+    
+    // Parse source (string or identifier for norma modules)
+    varia fons = ""
+    si p.proba(SymbolumGenus.Textus) {
+        fixum fonsSym = p.procede()
+        fons = fonsSym.valor
+    } aliter {
+        fixum fonsSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        fons = fonsSym.valor
+    }
+    
+    // Expect 'importa'
+    p.expectaVerbum("importa", ParserErrorCodice.ExpectaturImporta)
+    
+    // Check for wildcard import: * or * ut alias
+    varia totum = falsum
+    varia totumAlias = nihil qua textus?
+    varia specificatores = [] qua lista<ImportaSpecificator>
+    
+    si p.congruet(SymbolumGenus.Asteriscum) {
+        totum = verum
+        si p.probaVerbum("ut") {
+            fixum aliasSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            totumAlias = aliasSym.valor
+        }
+    } aliter {
+        // Parse named specifiers
+        fac {
+            fixum specLocus = p.specta(0).locus
+            
+            // Check for rest: ceteri name
+            varia residuum = falsum
+            si p.probaVerbum("ceteri") {
+                residuum = verum
+            }
+            
+            fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            fixum importatum = nomenSym.valor
+            varia locale = importatum
+            
+            // Optional alias: ut localName
+            si p.probaVerbum("ut") {
+                fixum aliasSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+                locale = aliasSym.valor
+            }
+            
+            specificatores.adde({
+                locus: specLocus,
+                importatum: importatum,
+                locale: locale,
+                residuum: residuum
+            } qua ImportaSpecificator)
+            
+        } dum p.congruet(SymbolumGenus.Virgula)
+    }
+    
+    redde finge ImportaSententia {
+        locus: locus,
+        fons: fons,
+        specificatores: specificatores,
+        totum: totum,
+        totumAlias: totumAlias
+    } qua Sententia
+}
