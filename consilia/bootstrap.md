@@ -54,7 +54,7 @@ These features are non-negotiable for a working compiler.
 | `tabula<K,V>` (maps)       |        [x]         | Symbol tables, keyword lookups        |
 | String concatenation       |        [~]         | Output building (needs allocator)     |
 | `scriptum()` formatting    |        [x]         | Error messages, code output           |
-| File I/O                   |        [ ]         | Read source, write output             |
+| I/O streams                |        [x]         | stdin/stdout/stderr all work          |
 | Basic error handling       |        [~]         | `iace`/`mori` work, `tempta` doesn't  |
 
 ### P1: Highly Desirable
@@ -174,28 +174,38 @@ ex items pro x {
 
 **Required for:** Symbol tables, keyword lookups, scope management. All needs covered.
 
-### 4. File I/O (HIGH)
+### 4. I/O Streams (SOLVED)
 
-**Problem:** No `solum` (file) stdlib implemented for any target.
+**Problem:** Compiler needs to read input and write output.
 
-**Current state:** Completely missing.
+**Solution:** Use stdin/stdout instead of file I/O. Simpler and more Unix-idiomatic.
 
-**Required for:** Read source files, write output.
+| Stream | Faber    | Zig Output                              | Status |
+| ------ | -------- | --------------------------------------- | :----: |
+| stdout | `scribe` | `stdout.print(...)`                     |  [x]   |
+| stderr | `mone`   | `stderr.print("[WARN] ...")`            |  [x]   |
+| stdin  | `lege()` | `stdin.readAllAlloc(alloc, max)`        |  [x]   |
 
-**Solution:** Implement minimal Zig file operations:
+**Usage:**
 
 ```faber
-// Required operations
-fixum source = solum.lege("input.fab")      // -> []const u8
-solum.scribe("output.zig", code)            // -> void
-````
+// Read all input from stdin
+fixum source = lege()
 
-Maps to:
+// Write output to stdout
+scribe output
 
-```zig
-const source = try std.fs.cwd().readFileAlloc(alloc, "input.fab", max_size);
-try std.fs.cwd().writeFile("output.zig", code);
+// Warnings to stderr
+mone "Parse error at line 42"
 ```
+
+**Invocation:**
+
+```bash
+cat input.fab | faber compile -t zig > output.zig
+```
+
+File I/O (`solum` module) is deferred — not needed for bootstrap.
 
 ### 5. Error Collection (MEDIUM)
 
@@ -290,11 +300,11 @@ Explicitly excluded from bootstrap:
 - [x] `tabula<textus, T>` with iteration (`claves()`, `valores()`, `paria()` work)
 - [ ] Fix unused parameter warnings
 
-### Phase 3: I/O
+### Phase 3: I/O (Complete)
 
-- [ ] `solum.lege()` - read file to string
-- [ ] `solum.scribe()` - write string to file
-- [ ] Command-line argument access
+- [x] `scribe` → stdout
+- [x] `mone` → stderr
+- [x] `lege()` → stdin
 
 ### Phase 4: Error Handling
 
@@ -315,7 +325,7 @@ Explicitly excluded from bootstrap:
 Bootstrap is ready when:
 
 1. **P0 features have Zig test coverage** - Add `zig:` expectations to remaining tests
-2. **File I/O works** - Can read `.fab` and write `.zig`
+2. **I/O works** - stdin/stdout/stderr functional
 3. **Error collection works** - Can report multiple parse errors
 4. **Self-compile succeeds** - `faber compile fons/*.fab -t zig` produces valid Zig
 5. **Output compiles** - `zig build` succeeds on generated code
@@ -346,3 +356,5 @@ This moves complexity from inline codegen to a testable Zig library. See `consil
 | 2025-12-28 | Require explicit `cura` blocks   | Zig needs allocator for all heap ops   |
 | 2025-12-30 | Remove arrow syntax from lambdas | Simplify to `pro x: expr` only         |
 | 2025-12-30 | Lambda type inference            | Semantic analysis provides return type |
+| 2025-12-30 | stdin/stdout over file I/O       | Simpler, more Unix-idiomatic           |
+````
