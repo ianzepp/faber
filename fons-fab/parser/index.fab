@@ -1,0 +1,92 @@
+/// Parser - Recursive Descent Parser for Latin Source Code
+///
+/// COMPILER PHASE: Syntactic
+///
+/// Transforms token stream from lexical analyzer into Abstract Syntax Tree.
+/// Uses predictive parsing with one token of lookahead.
+///
+/// INVARIANTS:
+/// - Never throws exceptions - collects errors and continues
+/// - Synchronizes at statement boundaries after errors
+/// - All AST nodes include position for error reporting
+/// - Empty input produces valid Program with empty body
+/// - Maintains single token lookahead
+///
+/// ERROR RECOVERY:
+/// When a parse error occurs:
+/// 1. Record error with message and position
+/// 2. Call synchrona() to skip tokens until statement boundary
+/// 3. Resume parsing at next statement
+/// 4. Return partial AST with collected errors
+///
+/// LATIN VOCABULARY:
+/// - parse = resolvere (to resolve/analyze)
+/// - resultatum = result
+/// - programma = program
+/// - errores = errors
+
+/// Result of parsing
+genus ParserResultatum {
+    Programma? programma        // AST root (nil on catastrophic failure)
+    lista<ParserError> errores  // Parse errors encountered
+}
+
+/// Parse a token stream into an AST
+///
+/// Main entry point for the parser.
+/// Creates a Parser instance and parses the program.
+///
+/// RETURNS:
+/// - programma: AST root node, or nil on catastrophic failure
+/// - errores: List of parse errors (may be non-empty even with valid AST)
+functio resolvere(lista<Symbolum> symbola) -> ParserResultatum {
+    // Create parser state
+    fixum p = novumParser(symbola)
+
+    // Try to parse the program
+    tempta {
+        fixum programma = parseProgramma(p)
+
+        redde {
+            programma: programma,
+            errores: p.errores
+        } qua ParserResultatum
+    } cape e {
+        // Catastrophic failure - return nil program with errors
+        redde {
+            programma: nihil,
+            errores: p.errores
+        } qua ParserResultatum
+    }
+}
+
+/// Convenience function: lex and parse source text
+///
+/// Combines lexical analysis and parsing into single call.
+/// Useful for simple use cases where intermediate tokens aren't needed.
+functio compila(textus fons) -> ParserResultatum {
+    // Lex the source
+    fixum lexorResultatum = lexare(fons)
+
+    // Check for lexer errors
+    si lexorResultatum.errores.longitudo > 0 {
+        // Convert lexer errors to parser errors for uniform handling
+        varia errores = [] qua lista<ParserError>
+
+        ex lexorResultatum.errores pro e {
+            errores.adde({
+                codice: ParserErrorCodice.ErrorGeneralis,
+                nuntius: e.nuntius,
+                locus: e.locus
+            } qua ParserError)
+        }
+
+        redde {
+            programma: nihil,
+            errores: errores
+        } qua ParserResultatum
+    }
+
+    // Parse the tokens
+    redde resolvere(lexorResultatum.symbola)
+}

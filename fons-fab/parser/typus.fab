@@ -1,0 +1,174 @@
+/// Type Annotation Parser
+///
+/// Parses type annotations in the Faber language.
+/// Handles generics, nullable types, union types, and array shorthand.
+///
+/// GRAMMAR:
+///   typeAnnotation := ('de' | 'in')? IDENTIFIER typeParams? '?'? arrayBrackets*
+///   typeParams := '<' typeParameter (',' typeParameter)* '>'
+///   typeParameter := typeAnnotation | NUMBER | MODIFIER
+///   arrayBrackets := '[]' '?'?
+///
+/// EXAMPLES:
+///   textus                    -> simple type
+///   lista<numerus>            -> generic type
+///   textus?                   -> nullable type
+///   numerus[]                 -> array shorthand (desugars to lista<numerus>)
+///   unio<textus, numerus>     -> union type
+///   de textus                 -> borrowed type (preposition)
+///
+/// LATIN VOCABULARY:
+/// - typus = type
+/// - annotatio = annotation
+/// - parametra = parameters
+/// - nullabilis = nullable
+
+/// Parse a type annotation
+/// Handles generics, nullable, array shorthand, and union types
+functio parseTypusAnnotatio(Parser p) -> TypusAnnotatio {
+    fixum locus = p.specta(0).locus
+
+    // -------------------------------------------------------------------------
+    // Check for borrow preposition (de/in for ownership semantics)
+    // -------------------------------------------------------------------------
+    varia praepositio = nihil qua textus?
+
+    si p.estPraepositio(p.specta(0)) {
+        praepositio = p.procede().verbum
+    }
+
+    // -------------------------------------------------------------------------
+    // Parse type name (identifier or keyword like nihil/textus)
+    // -------------------------------------------------------------------------
+    varia nomen = "" qua textus
+
+    si p.proba(SymbolumGenus.Nomen) {
+        // Regular identifier (Persona, MyType, etc.)
+        nomen = p.procede().valor
+    } sin p.proba(SymbolumGenus.Verbum) {
+        // Keywords can be type names (nihil, textus, numerus, etc.)
+        nomen = p.procede().valor
+    } secus {
+        // Error: expected type name
+        p.renuncia(ParserErrorCodice.ExpectaturTypusNomen, scriptum("got '{}'", p.specta(0).valor))
+        nomen = p.specta(0).valor
+        p.procede()  // Skip to avoid infinite loop
+    }
+
+    // -------------------------------------------------------------------------
+    // Parse optional type parameters: <T, U, ...>
+    // -------------------------------------------------------------------------
+    varia typusParametra = nihil qua lista<TypusParametrum>?
+
+    si p.congruet(SymbolumGenus.Minor) {
+        typusParametra = []
+
+        // Parse comma-separated type parameters
+        fac {
+            si p.proba(SymbolumGenus.Numerus) {
+                // Numeric literal parameter (e.g., numerus<32>)
+                fixum numSymbolum = p.procede()
+
+                // Create literal for numeric type parameter
+                fixum littera = {
+                    locus: numSymbolum.locus,
+                    species: LitteraGenus.Numerus,
+                    crudus: numSymbolum.valor
+                } qua Littera
+
+                // Wrap in TypusParametrum.Littera variant
+                typusParametra!.adde(TypusParametrum.Littera { littera: littera })
+            } secus {
+                // Recursive type annotation parameter
+                fixum param = parseTypusAnnotatio(p)
+
+                // Wrap in TypusParametrum.Typus variant
+                typusParametra!.adde(TypusParametrum.Typus { typus: param })
+            }
+        } dum p.congruet(SymbolumGenus.Virgula)
+
+        // Expect closing angle bracket
+        p.expecta(SymbolumGenus.Maior, ParserErrorCodice.ExpectaturAngulusDex)
+    }
+
+    // -------------------------------------------------------------------------
+    // Parse optional nullable marker: ?
+    // -------------------------------------------------------------------------
+    varia nullabilis = falsum
+
+    si p.congruet(SymbolumGenus.Interrogatio) {
+        nullabilis = verum
+    }
+
+    // -------------------------------------------------------------------------
+    // Handle unio<A, B> -> union type
+    // Union types use type parameters as union members
+    // -------------------------------------------------------------------------
+    si nomen === "unio" et nonnihil typusParametra et typusParametra!.longitudo > 0 {
+        // Extract TypeAnnotation members from union (skip literals)
+        varia membra = [] qua lista<TypusAnnotatio>
+
+        ex typusParametra! pro param {
+            // Pattern match on TypusParametrum variant
+            discerne param {
+                si Typus pro typus {
+                    membra.adde(typus)
+                }
+                si Littera {
+                    // Skip literal parameters in unions
+                }
+            }
+        }
+
+        redde {
+            locus: locus,
+            nomen: "union",
+            typusParametra: nihil,
+            nullabilis: nullabilis,
+            unio: membra,
+            compendiumSeries: falsum,
+            praepositio: praepositio
+        } qua TypusAnnotatio
+    }
+
+    // -------------------------------------------------------------------------
+    // Build base type result
+    // -------------------------------------------------------------------------
+    varia resultatum = {
+        locus: locus,
+        nomen: nomen,
+        typusParametra: typusParametra,
+        nullabilis: nullabilis,
+        unio: nihil,
+        compendiumSeries: falsum,
+        praepositio: praepositio
+    } qua TypusAnnotatio
+
+    // -------------------------------------------------------------------------
+    // Handle array shorthand: T[] -> lista<T>
+    // Each [] wraps in lista, preserving arrayShorthand flag for round-trip
+    // -------------------------------------------------------------------------
+    dum p.proba(SymbolumGenus.QuadratusSin) et p.specta(1).species === SymbolumGenus.QuadratusDex {
+        p.procede()  // [
+        p.procede()  // ]
+
+        // Check for nullable array: []?
+        varia arrayNullabilis = falsum
+        si p.congruet(SymbolumGenus.Interrogatio) {
+            arrayNullabilis = verum
+        }
+
+        // Wrap in lista<...> with shorthand flag
+        resultatum = {
+            locus: locus,
+            nomen: "lista",
+            typusParametra: [TypusParametrum.Typus { typus: resultatum }],
+            nullabilis: arrayNullabilis,
+            unio: nihil,
+            compendiumSeries: verum,
+            praepositio: nihil
+        } qua TypusAnnotatio
+    }
+
+    redde resultatum
+}

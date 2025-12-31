@@ -1852,7 +1852,8 @@ export function parse(tokens: Token[]): ParserResult {
         if (checkKeyword('functio')) {
             expectKeyword('functio', ParserErrorCode.ExpectedKeywordFunctio);
 
-            const methodName = parseIdentifier();
+            // WHY: Method names can be keywords in unambiguous contexts
+            const methodName = parseIdentifierOrKeyword();
 
             expect('LPAREN', ParserErrorCode.ExpectedOpeningParen);
 
@@ -4648,6 +4649,26 @@ export function parse(tokens: Token[]): ParserResult {
         // Identifier
         if (check('IDENTIFIER')) {
             return parseIdentifier();
+        }
+
+        // Keywords used as identifiers in expression context
+        // WHY: Keywords like 'typus', 'genus', 'proba' can be variable names
+        //      when they appear in expression position (not starting a statement)
+        if (check('KEYWORD')) {
+            const kw = peek().keyword ?? '';
+            // Reject statement-starting keywords that would never be variable names
+            const statementKeywords = [
+                'si', 'sin', 'aliter', 'secus', 'dum', 'ex', 'de', 'in',
+                'redde', 'rumpe', 'perge', 'iace', 'mori',
+                'tempta', 'cape', 'demum', 'fac',
+                'scribe', 'vide', 'mone', 'adfirma',
+                'custodi', 'elige', 'discerne',
+                'cura', 'ad', 'incipit', 'incipiet',
+                'probandum', 'praepara', 'praeparabit', 'postpara', 'postparabit',
+            ];
+            if (!statementKeywords.includes(kw)) {
+                return parseIdentifierOrKeyword();
+            }
         }
 
         error(ParserErrorCode.UnexpectedToken, `token '${peek().value}'`);

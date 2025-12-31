@@ -1,0 +1,407 @@
+/// Primary Expression Parsers
+///
+/// Terminals and grouping: literals, identifiers, parenthesized expressions,
+/// arrays, objects, lambdas.
+///
+/// GRAMMAR:
+///   primary := IDENTIFIER | NUMBER | STRING | TEMPLATE_STRING
+///            | 'ego' | 'verum' | 'falsum' | 'nihil'
+///            | '(' expression ')' | arrayLiteral | objectLiteral
+///            | lambdaExpression
+///
+/// LATIN VOCABULARY:
+/// - primaria = primary
+/// - littera = literal
+/// - nomen = identifier/name
+/// - ego = self/this
+/// - verum = true
+/// - falsum = false
+/// - nihil = null
+/// - series = array
+/// - obiectum = object
+/// - lambda = lambda/arrow function
+
+// Forward declarations
+functio parseExpressia(Parser p) -> Expressia
+
+/// Parse primary expression
+///
+/// Handles literals, identifiers, grouping, arrays, objects.
+functio parsePrimaria(Parser p) -> Expressia {
+    fixum symbolum = p.specta(0)
+    fixum locus = symbolum.locus
+
+    // -------------------------------------------------------------------------
+    // Literals
+    // -------------------------------------------------------------------------
+
+    si p.proba(SymbolumGenus.Numerus) {
+        p.procede()
+        redde {
+            locus: locus,
+            species: LitteraGenus.Numerus,
+            crudus: symbolum.valor
+        } qua Littera
+    }
+
+    si p.proba(SymbolumGenus.Textus) {
+        p.procede()
+        redde {
+            locus: locus,
+            species: LitteraGenus.Textus,
+            crudus: symbolum.valor
+        } qua Littera
+    }
+
+    si p.proba(SymbolumGenus.Exemplar) {
+        p.procede()
+        // Template literals are more complex - need to parse interpolations
+        // TODO: Parse template parts and expressions
+        redde {
+            locus: locus,
+            species: LitteraGenus.Textus,
+            crudus: symbolum.valor
+        } qua Littera
+    }
+
+    // -------------------------------------------------------------------------
+    // Boolean and null literals
+    // -------------------------------------------------------------------------
+
+    si p.congruetVerbum("verum") {
+        redde {
+            locus: locus,
+            species: LitteraGenus.Verum,
+            crudus: "verum"
+        } qua Littera
+    }
+
+    si p.congruetVerbum("falsum") {
+        redde {
+            locus: locus,
+            species: LitteraGenus.Falsum,
+            crudus: "falsum"
+        } qua Littera
+    }
+
+    si p.congruetVerbum("nihil") {
+        redde {
+            locus: locus,
+            species: LitteraGenus.Nihil,
+            crudus: "nihil"
+        } qua Littera
+    }
+
+    // -------------------------------------------------------------------------
+    // Self reference
+    // -------------------------------------------------------------------------
+
+    si p.congruetVerbum("ego") {
+        redde {
+            locus: locus
+        } qua EgoExpressia
+    }
+
+    // -------------------------------------------------------------------------
+    // Identifier
+    // -------------------------------------------------------------------------
+
+    si p.proba(SymbolumGenus.Nomen) {
+        p.procede()
+        redde {
+            locus: locus,
+            valor: symbolum.valor
+        } qua Nomen
+    }
+
+    // -------------------------------------------------------------------------
+    // Regex literal: sed "pattern" flags
+    // -------------------------------------------------------------------------
+
+    si p.congruetVerbum("sed") {
+        redde parseRegexLitterale(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Lambda expressions: pro x: expr or pro x { }
+    // -------------------------------------------------------------------------
+
+    si p.probaVerbum("pro") aut p.probaVerbum("fit") aut p.probaVerbum("fiet") {
+        redde parseLambdaExpressia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Array literal: [a, b, c]
+    // -------------------------------------------------------------------------
+
+    si p.proba(SymbolumGenus.QuadratusSin) {
+        redde parseSeriesLitterale(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Object literal: { a: 1, b: 2 }
+    // -------------------------------------------------------------------------
+
+    si p.proba(SymbolumGenus.UncusSin) {
+        redde parseObiectumLitterale(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Parenthesized expression or arrow function
+    // -------------------------------------------------------------------------
+
+    si p.congruet(SymbolumGenus.ParensSin) {
+        fixum expr = parseExpressia(p)
+        p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+        redde expr
+    }
+
+    // -------------------------------------------------------------------------
+    // DSL expressions: ab users ubi ... or ex items prima 5
+    // -------------------------------------------------------------------------
+
+    si p.probaVerbum("ab") {
+        redde parseAbExpressia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Error: unexpected token
+    // -------------------------------------------------------------------------
+
+    p.renuncia(ParserErrorCodice.InexpectatumSymbolum, scriptum("got '{}'", symbolum.valor))
+    p.procede()
+
+    // Return error placeholder
+    redde {
+        locus: locus,
+        species: LitteraGenus.Nihil,
+        crudus: "nihil"
+    } qua Littera
+}
+
+/// Parse array literal
+///
+/// GRAMMAR: arrayLiteral := '[' (expression (',' expression)*)? ']'
+functio parseSeriesLitterale(Parser p) -> SeriesExpressia {
+    fixum locus = p.specta(0).locus
+    p.expecta(SymbolumGenus.QuadratusSin, ParserErrorCodice.ExpectaturQuadratusSin)
+
+    varia elementa = [] qua lista<Expressia>
+
+    // Parse elements until closing bracket
+    si non p.proba(SymbolumGenus.QuadratusDex) {
+        // First element
+        // TODO: Handle spread operator (sparge)
+        elementa.adde(parseExpressia(p))
+
+        // Remaining elements
+        dum p.congruet(SymbolumGenus.Virgula) {
+            // Allow trailing comma
+            si p.proba(SymbolumGenus.QuadratusDex) {
+                rumpe
+            }
+            elementa.adde(parseExpressia(p))
+        }
+    }
+
+    p.expecta(SymbolumGenus.QuadratusDex, ParserErrorCodice.ExpectaturQuadratusDex)
+
+    redde {
+        locus: locus,
+        elementa: elementa
+    } qua SeriesExpressia
+}
+
+/// Parse object literal
+///
+/// GRAMMAR: objectLiteral := '{' (property (',' property)*)? '}'
+functio parseObiectumLitterale(Parser p) -> ObiectumExpressia {
+    fixum locus = p.specta(0).locus
+    p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
+
+    varia proprietates = [] qua lista<ObiectumProprietas>
+
+    // Parse properties until closing brace
+    si non p.proba(SymbolumGenus.UncusDex) {
+        proprietates.adde(parseObiectumProprietas(p))
+
+        dum p.congruet(SymbolumGenus.Virgula) {
+            // Allow trailing comma
+            si p.proba(SymbolumGenus.UncusDex) {
+                rumpe
+            }
+            proprietates.adde(parseObiectumProprietas(p))
+        }
+    }
+
+    p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
+
+    redde {
+        locus: locus,
+        proprietates: proprietates
+    } qua ObiectumExpressia
+}
+
+/// Parse object property
+///
+/// GRAMMAR: property := IDENTIFIER (':' expression)? | '[' expression ']' ':' expression
+functio parseObiectumProprietas(Parser p) -> ObiectumProprietas {
+    fixum locus = p.specta(0).locus
+
+    // Check for computed property: [expr]: value
+    si p.congruet(SymbolumGenus.QuadratusSin) {
+        fixum clavis = parseExpressia(p)
+        p.expecta(SymbolumGenus.QuadratusDex, ParserErrorCodice.ExpectaturQuadratusDex)
+        p.expecta(SymbolumGenus.Colon, ParserErrorCodice.ExpectaturColon)
+        fixum valor = parseExpressia(p)
+
+        redde {
+            locus: locus,
+            clavis: clavis,
+            valor: valor,
+            computatum: verum,
+            compendium: falsum
+        } qua ObiectumProprietas
+    }
+
+    // Regular property: key: value or shorthand: key
+    fixum clavisSymbolum = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    fixum clavis = {
+        locus: clavisSymbolum.locus,
+        valor: clavisSymbolum.valor
+    } qua Nomen
+
+    // Check for shorthand syntax: { x } instead of { x: x }
+    si p.proba(SymbolumGenus.Virgula) aut p.proba(SymbolumGenus.UncusDex) {
+        redde {
+            locus: locus,
+            clavis: clavis,
+            valor: clavis,
+            computatum: falsum,
+            compendium: verum
+        } qua ObiectumProprietas
+    }
+
+    // Full syntax: key: value
+    p.expecta(SymbolumGenus.Colon, ParserErrorCodice.ExpectaturColon)
+    fixum valor = parseExpressia(p)
+
+    redde {
+        locus: locus,
+        clavis: clavis,
+        valor: valor,
+        computatum: falsum,
+        compendium: falsum
+    } qua ObiectumProprietas
+}
+
+/// Parse regex literal
+///
+/// GRAMMAR: regexLiteral := 'sed' STRING IDENTIFIER?
+functio parseRegexLitterale(Parser p) -> LitteraRegex {
+    fixum locus = p.symbola[p.index - 1].locus  // Position of 'sed'
+
+    // Expect pattern string
+    si non p.proba(SymbolumGenus.Textus) {
+        p.renuncia(ParserErrorCodice.ExpectaturTextusPostSed, scriptum("got '{}'", p.specta(0).valor))
+    }
+
+    fixum formaSymbolum = p.procede()
+    fixum forma = formaSymbolum.valor
+
+    // Optional flags (bare identifier)
+    varia vexilla = nihil qua textus?
+
+    si p.proba(SymbolumGenus.Nomen) {
+        vexilla = p.procede().valor
+    }
+
+    redde {
+        locus: locus,
+        forma: forma,
+        vexilla: vexilla
+    } qua LitteraRegex
+}
+
+/// Parse lambda expression
+///
+/// GRAMMAR: lambdaExpr := ('pro' | 'fit' | 'fiet') params? ('->' type)? (':' expr | block)
+functio parseLambdaExpressia(Parser p) -> LambdaExpressia {
+    fixum locus = p.specta(0).locus
+
+    // Consume the introducer keyword
+    varia asynca = falsum
+    si p.congruetVerbum("fiet") {
+        asynca = verum
+    } secus {
+        p.congruetVerbum("pro") aut p.congruetVerbum("fit")
+    }
+
+    // Parse optional parameter list
+    varia parametra = [] qua lista<LambdaParametrum>
+
+    // Parameters can be:
+    // - Single identifier: pro x: expr
+    // - Multiple: pro x, y: expr
+    // - With parens: pro (x, y): expr
+    si p.proba(SymbolumGenus.Nomen) {
+        // Single or comma-separated parameters
+        fac {
+            fixum nomenSymbolum = p.procede()
+            parametra.adde({
+                locus: nomenSymbolum.locus,
+                nomen: { locus: nomenSymbolum.locus, valor: nomenSymbolum.valor } qua Nomen
+            } qua LambdaParametrum)
+        } dum p.congruet(SymbolumGenus.Virgula) et p.proba(SymbolumGenus.Nomen)
+    }
+
+    // Parse optional return type
+    varia typusReditus = nihil qua TypusAnnotatio?
+
+    si p.congruet(SymbolumGenus.Sagitta) {
+        typusReditus = parseTypusAnnotatio(p)
+    }
+
+    // Parse body: either : expr or { block }
+    varia corpus = nihil qua Expressia
+
+    si p.congruet(SymbolumGenus.Colon) {
+        // Expression body
+        corpus = parseExpressia(p)
+    } sin p.proba(SymbolumGenus.UncusSin) {
+        // Block body
+        corpus = parseMassaSententia(p) qua Expressia
+    } secus {
+        p.renuncia(ParserErrorCodice.ExpectaturColon, "lambda requires body")
+    }
+
+    redde {
+        locus: locus,
+        parametra: parametra,
+        typusReditus: typusReditus,
+        corpus: corpus,
+        asynca: asynca
+    } qua LambdaExpressia
+}
+
+/// Parse ab expression (filter/transform DSL)
+///
+/// GRAMMAR: abExpr := 'ab' expression filter? (',' transform)*
+functio parseAbExpressia(Parser p) -> AbExpressia {
+    fixum locus = p.specta(0).locus
+    p.procede()  // consume 'ab'
+
+    // Parse source expression
+    fixum fons = parseExpressia(p)
+
+    // TODO: Parse filter and transforms
+
+    redde {
+        locus: locus,
+        fons: fons
+    } qua AbExpressia
+}
+
+// Forward declarations for functions used above
+functio parseTypusAnnotatio(Parser p) -> TypusAnnotatio
+functio parseMassaSententia(Parser p) -> MassaSententia

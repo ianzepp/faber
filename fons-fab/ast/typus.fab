@@ -1,0 +1,109 @@
+/// Type System AST Nodes
+///
+/// Type annotations, type parameters, and related constructs.
+///
+/// LATIN VOCABULARY:
+/// - typus = type
+/// - adnotatio = annotation
+/// - parametrum = parameter
+/// - nullabilis = nullable
+/// - unio = union
+/// - praepositio = preposition (de/in for borrow semantics)
+/// - compendium = shorthand
+/// - series = array/list
+
+// Forward declaration for position
+genus Locus {
+    numerus linea
+    numerus columna
+    numerus index
+}
+
+// Forward declaration for literals (used as type parameters)
+ordo LitteraGenus {
+    Numerus
+    Fractus
+    Textus
+    Verum
+    Falsum
+    Nihil
+}
+
+genus Littera {
+    Locus locus
+    LitteraGenus species
+    textus crudus           // Raw text representation
+}
+
+/// Type parameter in generic types
+/// Can be a type annotation or a literal value (for numeric params like numerus<32>)
+discretio TypusParametrum {
+    /// Type annotation parameter: lista<textus>
+    Typus {
+        TypusAnnotatio typus
+    }
+    /// Literal parameter: numerus<32>
+    Littera {
+        Littera littera
+    }
+}
+
+/// Type annotation
+///
+/// Represents a type reference with optional generics, nullable, and union.
+///
+/// EXAMPLES:
+///   textus                    -> nomen="textus"
+///   lista<numerus>            -> nomen="lista", typusParametra=[numerus]
+///   textus?                   -> nomen="textus", nullabilis=true
+///   numerus[]                 -> nomen="lista", typusParametra=[numerus], compendiumSeries=true
+///   unio<A, B>                -> nomen="union", unio=[A, B]
+///   de textus                 -> nomen="textus", praepositio="de"
+genus TypusAnnotatio {
+    Locus locus
+    textus nomen                            // Type name (textus, lista, Persona, etc.)
+    lista<TypusParametrum>? typusParametra  // Generic type parameters
+    bivalens nullabilis                     // true if T? syntax
+    lista<TypusAnnotatio>? unio             // Union members for unio<A, B>
+    bivalens compendiumSeries               // true if T[] shorthand syntax
+    textus? praepositio                     // de (borrowed) or in (mutable)
+}
+
+/// Factory: create simple type annotation
+functio typusSimplicis(textus nomen, Locus locus) -> TypusAnnotatio {
+    redde {
+        locus: locus,
+        nomen: nomen,
+        typusParametra: nihil,
+        nullabilis: falsum,
+        unio: nihil,
+        compendiumSeries: falsum,
+        praepositio: nihil
+    } qua TypusAnnotatio
+}
+
+/// Factory: create nullable type annotation
+functio typusNullabilis(textus nomen, Locus locus) -> TypusAnnotatio {
+    redde {
+        locus: locus,
+        nomen: nomen,
+        typusParametra: nihil,
+        nullabilis: verum,
+        unio: nihil,
+        compendiumSeries: falsum,
+        praepositio: nihil
+    } qua TypusAnnotatio
+}
+
+/// Factory: create generic type annotation
+functio typusGenericus(textus nomen, lista<TypusParametrum> parametra, Locus locus) -> TypusAnnotatio {
+    redde {
+        locus: locus,
+        nomen: nomen,
+        typusParametra: parametra,
+        nullabilis: falsum,
+        unio: nihil,
+        compendiumSeries: falsum,
+        praepositio: nihil
+    } qua TypusAnnotatio
+}

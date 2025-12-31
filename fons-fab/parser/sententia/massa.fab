@@ -1,0 +1,109 @@
+/// Block and Program Parsers
+///
+/// Top-level program parsing and block statement handling.
+///
+/// GRAMMAR:
+///   program := statement*
+///   blockStmt := '{' statement* '}'
+///   exprStmt := expression
+///
+/// LATIN VOCABULARY:
+/// - programma = program
+/// - massa = block/mass (a body of statements)
+/// - sententia = statement
+/// - expressia = expression
+
+// Forward declarations
+functio parseSententia(Parser p) -> Sententia
+functio parseExpressia(Parser p) -> Expressia
+
+/// Parse a block statement
+///
+/// GRAMMAR: blockStmt := '{' statement* '}'
+///
+/// Consumes opening brace, parses statements until closing brace.
+/// Handles optional semicolons between statements.
+functio parseMassaSententia(Parser p) -> MassaSententia {
+    fixum locus = p.specta(0).locus
+
+    // Expect opening brace
+    p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
+
+    varia corpus = [] qua lista<Sententia>
+
+    // Parse statements until closing brace or end
+    dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
+        // Skip optional semicolons between statements
+        dum p.congruet(SymbolumGenus.Semicolon) {
+            // Continue skipping
+        }
+
+        // Check again after skipping semicolons
+        si p.proba(SymbolumGenus.UncusDex) aut p.estFinis() {
+            rumpe
+        }
+
+        // Parse the next statement
+        corpus.adde(parseSententia(p))
+    }
+
+    // Expect closing brace
+    p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
+
+    redde {
+        locus: locus,
+        corpus: corpus
+    } qua MassaSententia
+}
+
+/// Parse an expression statement
+///
+/// GRAMMAR: exprStmt := expression
+///
+/// Wraps a standalone expression as a statement.
+functio parseExpressiaSententia(Parser p) -> ExpressiaSententia {
+    fixum locus = p.specta(0).locus
+    fixum expressia = parseExpressia(p)
+
+    redde {
+        locus: locus,
+        expressia: expressia
+    } qua ExpressiaSententia
+}
+
+/// Parse top-level program
+///
+/// GRAMMAR: program := statement*
+///
+/// Parses statements until end of input.
+/// Uses error recovery to handle malformed statements.
+functio parseProgramma(Parser p) -> Programma {
+    fixum locus = p.specta(0).locus
+    varia corpus = [] qua lista<Sententia>
+
+    // Parse statements until end of input
+    dum non p.estFinis() {
+        // Skip optional semicolons between statements
+        dum p.congruet(SymbolumGenus.Semicolon) {
+            // Continue skipping
+        }
+
+        // Check again after skipping
+        si p.estFinis() {
+            rumpe
+        }
+
+        // Try to parse statement with error recovery
+        tempta {
+            corpus.adde(parseSententia(p))
+        } cape e {
+            // Error recovery: skip to next statement boundary
+            p.synchrona()
+        }
+    }
+
+    redde {
+        locus: locus,
+        corpus: corpus
+    } qua Programma
+}

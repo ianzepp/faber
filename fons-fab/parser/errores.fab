@@ -1,0 +1,338 @@
+/// Parser Error Catalog
+///
+/// Centralized error definitions for syntactic analysis phase.
+/// Each error has a unique P-prefixed code, descriptive text, and help.
+///
+/// Error code ranges:
+/// - P001-P099: Token expectation (missing delimiters, keywords)
+/// - P100-P199: Invalid syntax (assignment targets, expressions)
+/// - P200-P299: Declaration errors (missing names, types)
+/// - P300-P399: Statement structure (incomplete constructs)
+///
+/// INVARIANTS:
+/// - Every ParserErrorCodice has entry in nuntiumErroris()
+/// - Error codes are P-prefixed and sequentially numbered
+/// - textus is concise, auxilium provides remediation guidance
+
+/// Parser error codes with P prefix
+ordo ParserErrorCodice {
+    // Token expectation errors (P001-P099)
+    ExpectaturParensDex = "P001",
+    ExpectaturUncusDex = "P002",
+    ExpectaturQuadratusDex = "P003",
+    ExpectaturAngulusDex = "P004",
+    ExpectaturVirgula = "P005",
+    ExpectaturColon = "P006",
+    ExpectaturAequale = "P007",
+    ExpectaturUncusSin = "P008",
+    ExpectaturParensSin = "P009",
+    ExpectaturQuadratusSin = "P014",
+    ExpectaturNomen = "P010",
+    ExpectaturTypusNomen = "P011",
+    ExpectaturSagitta = "P012",
+
+    // Keyword expectation errors (P020-P049)
+    ExpectaturEx = "P020",
+    ExpectaturImporta = "P021",
+    ExpectaturFunctio = "P022",
+    ExpectaturGenus = "P023",
+    ExpectaturPactum = "P024",
+    ExpectaturTypus = "P025",
+    ExpectaturSi = "P026",
+    ExpectaturDum = "P027",
+    ExpectaturPro = "P028",
+    ExpectaturIn = "P029",
+    ExpectaturDe = "P043",
+    ExpectaturElige = "P030",
+    ExpectaturCustodi = "P031",
+    ExpectaturAdfirma = "P032",
+    ExpectaturRedde = "P033",
+    ExpectaturIace = "P034",
+    ExpectaturScribe = "P035",
+    ExpectaturTempta = "P036",
+    ExpectaturCape = "P037",
+    ExpectaturAliter = "P038",
+    ExpectaturSecus = "P039",
+    ExpectaturFac = "P040",
+    ExpectaturFit = "P041",
+    ExpectaturOrdo = "P042",
+    ExpectaturDiscretio = "P048",
+    ExpectaturDiscerne = "P049",
+    ExpectaturProbandum = "P044",
+    ExpectaturProba = "P045",
+    ExpectaturCura = "P046",
+    ExpectaturAnteVelPost = "P047",
+    ExpectaturAd = "P052",
+    ExpectaturIncipit = "P054",
+    ExpectaturIncipiet = "P055",
+
+    // Module/source errors (P050-P059)
+    ExpectaturModulusNomen = "P050",
+    ExpectaturTextus = "P051",
+    ExpectaturTextusPostSed = "P053",
+
+    // Invalid construct errors (P100-P199)
+    InvalidumAssignatio = "P100",
+    InvalidumExDeInitium = "P101",
+    InvalidumEligeCasusInitium = "P102",
+    InvalidumDiscerneCasusInitium = "P106",
+    InvalidumCustodiClausulaInitium = "P103",
+    InexpectatumSymbolum = "P104",
+    ExpectaturUncusVelParens = "P105",
+
+    // Generic errors (P190-P199)
+    ErrorGeneralis = "P190",
+    ConflictumPraefixumVerbum = "P191",
+
+    // Declaration errors (P200-P299)
+    DeestFunctioNomen = "P200",
+    DeestParametrumNomen = "P201",
+    DeestGenusNomen = "P202",
+    DeestPactumNomen = "P203",
+    DeestTypusNomen = "P204",
+    DeestVariaNomen = "P205"
+}
+
+/// Error message with help text
+genus ParserErrorNuntius {
+    textus textus       // Brief error message
+    textus auxilium     // Extended help text
+}
+
+/// Get error message for a given error code
+functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
+    elige codice {
+        // Token expectation errors
+        si ParserErrorCodice.ExpectaturParensDex {
+            redde { textus: "Expected ')'", auxilium: "Parentheses must be balanced." } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturUncusDex {
+            redde { textus: "Expected '}'", auxilium: "Braces must be balanced." } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturQuadratusDex {
+            redde { textus: "Expected ']'", auxilium: "Brackets must be balanced." } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturAngulusDex {
+            redde { textus: "Expected '>'", auxilium: "Type parameters must be closed." } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturVirgula {
+            redde { textus: "Expected ','", auxilium: "Use commas to separate list items." } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturColon {
+            redde { textus: "Expected ':'", auxilium: "Use colon for key:value or ternary alternate." } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturAequale {
+            redde { textus: "Expected '='", auxilium: "Use equals for assignments and type aliases." } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturUncusSin {
+            redde { textus: "Expected '{'", auxilium: "Block statements require opening brace." } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturParensSin {
+            redde { textus: "Expected '('", auxilium: "Function calls require opening parenthesis." } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturQuadratusSin {
+            redde { textus: "Expected '['", auxilium: "Array patterns require opening bracket." } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturNomen {
+            redde { textus: "Expected identifier", auxilium: "Identifier required here." } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturTypusNomen {
+            redde { textus: "Expected type name", auxilium: "Type annotation required." } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturSagitta {
+            redde { textus: "Expected '->'", auxilium: "Use arrow for return type." } qua ParserErrorNuntius
+        }
+
+        // Keyword expectation errors
+        si ParserErrorCodice.ExpectaturEx {
+            redde { textus: "Expected 'ex'", auxilium: "For-of loops: ex lista pro item { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturImporta {
+            redde { textus: "Expected 'importa'", auxilium: "Imports: ex norma importa scribe" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturFunctio {
+            redde { textus: "Expected 'functio'", auxilium: "Functions: functio nomen() { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturGenus {
+            redde { textus: "Expected 'genus'", auxilium: "Classes: genus Persona { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturPactum {
+            redde { textus: "Expected 'pactum'", auxilium: "Interfaces: pactum Legibilis { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturTypus {
+            redde { textus: "Expected 'typus'", auxilium: "Type aliases: typus ID = textus" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturSi {
+            redde { textus: "Expected 'si'", auxilium: "Conditionals: si x > 0 { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturDum {
+            redde { textus: "Expected 'dum'", auxilium: "While loops: dum verum { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturPro {
+            redde { textus: "Expected 'pro'", auxilium: "For loops: ex lista pro item { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturIn {
+            redde { textus: "Expected 'in'", auxilium: "Mutation: in object { prop = val }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturDe {
+            redde { textus: "Expected 'de'", auxilium: "For-in: de tabula pro clavis { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturElige {
+            redde { textus: "Expected 'elige'", auxilium: "Switch: elige status { si x { } }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturCustodi {
+            redde { textus: "Expected 'custodi'", auxilium: "Guards: custodi { si err { } }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturAdfirma {
+            redde { textus: "Expected 'adfirma'", auxilium: "Assert: adfirma x > 0" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturRedde {
+            redde { textus: "Expected 'redde'", auxilium: "Return: redde valor" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturIace {
+            redde { textus: "Expected 'iace'", auxilium: "Throw: iace error" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturScribe {
+            redde { textus: "Expected 'scribe'", auxilium: "Print: scribe 'hello'" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturTempta {
+            redde { textus: "Expected 'tempta'", auxilium: "Try: tempta { } cape e { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturCape {
+            redde { textus: "Expected 'cape'", auxilium: "Catch: cape erratum { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturAliter {
+            redde { textus: "Expected 'aliter'", auxilium: "Else: si x { } aliter { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturSecus {
+            redde { textus: "Expected 'secus'", auxilium: "Ternary: verum sic 1 secus 0" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturFac {
+            redde { textus: "Expected 'fac'", auxilium: "Block scope: fac { } cape { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturFit {
+            redde { textus: "Expected 'fit'", auxilium: "Return type: functio f() fit T { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturOrdo {
+            redde { textus: "Expected 'ordo'", auxilium: "Enum: ordo Color { R, G, B }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturDiscretio {
+            redde { textus: "Expected 'discretio'", auxilium: "Tagged union: discretio Event { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturDiscerne {
+            redde { textus: "Expected 'discerne'", auxilium: "Match: discerne e { si Click { } }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturProbandum {
+            redde { textus: "Expected 'probandum'", auxilium: "Test suite: probandum 'name' { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturProba {
+            redde { textus: "Expected 'proba'", auxilium: "Test case: proba 'name' { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturCura {
+            redde { textus: "Expected 'cura'", auxilium: "Resource: cura res fit h { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturAnteVelPost {
+            redde { textus: "Expected 'ante' or 'post'", auxilium: "Timing: ante (before) or post (after)" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturAd {
+            redde { textus: "Expected 'ad'", auxilium: "Dispatch: ad 'target' (args) { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturIncipit {
+            redde { textus: "Expected 'incipit'", auxilium: "Entry: incipit { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturIncipiet {
+            redde { textus: "Expected 'incipiet'", auxilium: "Async entry: incipiet { }" } qua ParserErrorNuntius
+        }
+
+        // Module/source errors
+        si ParserErrorCodice.ExpectaturModulusNomen {
+            redde { textus: "Expected module name", auxilium: "ex norma importa scribe" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturTextus {
+            redde { textus: "Expected string literal", auxilium: "A quoted string is required." } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturTextusPostSed {
+            redde { textus: "Expected pattern after 'sed'", auxilium: "Regex: sed '\\d+' i" } qua ParserErrorNuntius
+        }
+
+        // Invalid construct errors
+        si ParserErrorCodice.InvalidumAssignatio {
+            redde { textus: "Invalid assignment target", auxilium: "Only identifiers/members can be assigned." } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.InvalidumExDeInitium {
+            redde { textus: "For loop requires 'ex' or 'de'", auxilium: "ex items pro i { } or de obj pro k { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.InvalidumEligeCasusInitium {
+            redde { textus: "Switch cases need 'si' or 'aliter'", auxilium: "elige x { si 1 { } aliter { } }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.InvalidumDiscerneCasusInitium {
+            redde { textus: "Match cases need 'si'", auxilium: "discerne e { si Variant { } }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.InvalidumCustodiClausulaInitium {
+            redde { textus: "Guard clauses need 'si'", auxilium: "custodi { si err { redde } }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.InexpectatumSymbolum {
+            redde { textus: "Unexpected token", auxilium: "Check for syntax errors." } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ExpectaturUncusVelParens {
+            redde { textus: "Expected '{' or '('", auxilium: "praefixum { } or praefixum(expr)" } qua ParserErrorNuntius
+        }
+
+        // Generic errors
+        si ParserErrorCodice.ErrorGeneralis {
+            redde { textus: "Syntax error", auxilium: "Check code structure." } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.ConflictumPraefixumVerbum {
+            redde { textus: "Cannot combine futura/cursor with fit/fiet", auxilium: "Use arrow with futura/cursor." } qua ParserErrorNuntius
+        }
+
+        // Declaration errors
+        si ParserErrorCodice.DeestFunctioNomen {
+            redde { textus: "Function requires name", auxilium: "functio nomen() { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.DeestParametrumNomen {
+            redde { textus: "Parameter requires name", auxilium: "functio f(textus nomen)" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.DeestGenusNomen {
+            redde { textus: "Genus requires name", auxilium: "genus Persona { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.DeestPactumNomen {
+            redde { textus: "Pactum requires name", auxilium: "pactum Legibilis { }" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.DeestTypusNomen {
+            redde { textus: "Typus requires name", auxilium: "typus ID = textus" } qua ParserErrorNuntius
+        }
+        si ParserErrorCodice.DeestVariaNomen {
+            redde { textus: "Variable requires name", auxilium: "varia x = 5" } qua ParserErrorNuntius
+        }
+
+        // Default fallback
+        aliter {
+            redde { textus: "Unknown error", auxilium: "" } qua ParserErrorNuntius
+        }
+    }
+}
+
+/// Structured parser error with source location
+genus ParserError {
+    ParserErrorCodice codice    // Error code for programmatic handling
+    textus nuntius              // Human-readable message
+    Locus locus                 // Source position
+}
+
+/// Create a parser error at given location
+functio error(ParserErrorCodice codice, Locus locus, textus? contextus) -> ParserError {
+    fixum nuntium = nuntiumErroris(codice)
+    varia msg = nuntium.textus
+
+    // Append context if provided
+    si nonnihil contextus {
+        msg = scriptum("{}: {}", msg, contextus)
+    }
+
+    redde {
+        codice: codice,
+        nuntius: msg,
+        locus: locus
+    } qua ParserError
+}

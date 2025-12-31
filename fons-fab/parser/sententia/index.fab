@@ -1,0 +1,379 @@
+/// Statement Dispatcher
+///
+/// Central dispatcher for parsing statements based on leading keyword.
+/// Handles comment attachment and error recovery.
+///
+/// GRAMMAR:
+///   statement := importDecl | varDecl | funcDecl | typeAliasDecl | ifStmt
+///              | whileStmt | forStmt | returnStmt | throwStmt | tryStmt
+///              | blockStmt | exprStmt | ...
+///
+/// LATIN VOCABULARY:
+/// - sententia = statement (sentence/thought)
+/// - declara = declare
+/// - imperium = control (command)
+
+// =============================================================================
+// Forward declarations for statement parsers
+// (Each is defined in its own file within sententia/)
+// =============================================================================
+
+// Action statements (actio.fab)
+functio parseReddeSententia(Parser p) -> ReddeSententia
+functio parseRumpeSententia(Parser p) -> RumpeSententia
+functio parsePergeSententia(Parser p) -> PergeSententia
+functio parseIaceSententia(Parser p, bivalens fatalis) -> IaceSententia
+functio parseScribeSententia(Parser p, ScribeGradus gradus) -> ScribeSententia
+
+// Error handling (error.fab)
+functio parseTemptaSententia(Parser p) -> TemptaSententia
+functio parseFacSententia(Parser p) -> FacSententia
+functio parseAdfirmaSententia(Parser p) -> AdfirmaSententia
+
+// Block statements (massa.fab)
+functio parseMassaSententia(Parser p) -> MassaSententia
+functio parseExpressiaSententia(Parser p) -> ExpressiaSententia
+
+// Variable declarations (varia.fab)
+functio parseVariaSententia(Parser p) -> VariaSententia
+
+// TODO: These parsers will be added in subsequent files
+// functio parseImportaSententia(Parser p) -> ImportaSententia
+// functio parseFunctioDeclaratio(Parser p) -> FunctioDeclaratio
+// functio parseTypusAliasDeclaratio(Parser p) -> TypusAliasDeclaratio
+// functio parseOrdoDeclaratio(Parser p) -> OrdoDeclaratio
+// functio parseGenusDeclaratio(Parser p, bivalens abstractus) -> GenusDeclaratio
+// functio parsePactumDeclaratio(Parser p) -> PactumDeclaratio
+// functio parseDiscretioDeclaratio(Parser p) -> DiscretioDeclaratio
+// functio parseSiSententia(Parser p) -> SiSententia
+// functio parseDumSententia(Parser p) -> DumSententia
+// functio parseExSententia(Parser p) -> Sententia
+// functio parseDeSententia(Parser p) -> IteratioSententia
+// functio parseInSententia(Parser p) -> InSententia
+// functio parseEligeSententia(Parser p) -> EligeSententia
+// functio parseDiscerneSententia(Parser p) -> DiscerneSententia
+// functio parseCustodiSententia(Parser p) -> CustodiSententia
+
+/// Attach pending comments to a statement
+///
+/// Collects leading comments that were buffered before the statement,
+/// and trailing comments that appear on the same line after.
+functio adiungNotae(Parser p, Sententia s) -> Sententia {
+    // Get leading comments from buffer
+    fixum ducentesNotae = p.consumeNotas()
+
+    // Get trailing comment on same line
+    fixum trahentesNotae = p.colligeNotamTrahentem(s.locus.linea)
+
+    // Attach to statement
+    // TODO: Need to update AST to include comment fields
+    // s.ducentesNotae = ducentesNotae
+    // s.trahentesNotae = trahentesNotae
+
+    redde s
+}
+
+/// Parse a statement with comment attachment
+///
+/// Entry point for statement parsing. Collects comments before
+/// parsing, then attaches them to the resulting statement.
+functio parseSententia(Parser p) -> Sententia {
+    // Collect any leading comments before parsing
+    p.colligeNotas()
+
+    // Parse the statement
+    fixum sententia = parseSententiaSineNotis(p)
+
+    // Attach comments
+    redde adiungNotae(p, sententia)
+}
+
+/// Parse statement without comment handling (internal dispatcher)
+///
+/// Dispatches to appropriate parser based on leading keyword.
+/// This is the main switch for statement type detection.
+functio parseSententiaSineNotis(Parser p) -> Sententia {
+    // -------------------------------------------------------------------------
+    // Import or for-loop: 'ex'
+    // ex norma importa ...  -> import
+    // ex items pro n { }    -> for-loop
+    // ex obj fixum { }      -> destructuring
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("ex") {
+        // Look ahead to distinguish import from for-loop
+        fixum sequensSpecies = p.specta(1).species
+        fixum tertiumVerbum = p.specta(2).verbum
+
+        // ex (IDENTIFIER|STRING) importa -> import
+        si (sequensSpecies === SymbolumGenus.Nomen aut sequensSpecies === SymbolumGenus.Textus) et tertiumVerbum === "importa" {
+            // TODO: return parseImportaSententia(p)
+            redde parseExpressiaSententia(p)
+        }
+
+        // Otherwise: for-loop or destructuring
+        // TODO: return parseExSententia(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // For-in loop: 'de'
+    // de tabula pro k { }
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("de") {
+        // TODO: return parseDeSententia(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Mutation block: 'in'
+    // in user { }
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("in") {
+        // TODO: return parseInSententia(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Variable declarations: varia, fixum, figendum, variandum
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("varia") aut p.probaVerbum("fixum") aut p.probaVerbum("figendum") aut p.probaVerbum("variandum") {
+        redde parseVariaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Function declaration: functio
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("functio") {
+        // TODO: return parseFunctioDeclaratio(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Type alias: typus
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("typus") {
+        // TODO: return parseTypusAliasDeclaratio(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Enum: ordo
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("ordo") {
+        // TODO: return parseOrdoDeclaratio(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Abstract class: abstractus genus
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("abstractus") {
+        p.procede()  // consume 'abstractus'
+        si p.probaVerbum("genus") {
+            // TODO: return parseGenusDeclaratio(p, verum)
+            redde parseExpressiaSententia(p)
+        }
+        // Error: expected 'genus' after 'abstractus'
+        p.renuncia(ParserErrorCodice.ExpectaturGenus, scriptum("got '{}'", p.specta(0).valor))
+    }
+
+    // -------------------------------------------------------------------------
+    // Class: genus
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("genus") {
+        // TODO: return parseGenusDeclaratio(p, falsum)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Interface: pactum
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("pactum") {
+        // TODO: return parsePactumDeclaratio(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Tagged union: discretio
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("discretio") {
+        // TODO: return parseDiscretioDeclaratio(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Conditional: si
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("si") {
+        // TODO: return parseSiSententia(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // While loop: dum
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("dum") {
+        // TODO: return parseDumSententia(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Switch: elige
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("elige") {
+        // TODO: return parseEligeSententia(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Pattern match: discerne
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("discerne") {
+        // TODO: return parseDiscerneSententia(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Guard clauses: custodi
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("custodi") {
+        // TODO: return parseCustodiSententia(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Assert: adfirma
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("adfirma") {
+        redde parseAdfirmaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Return: redde
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("redde") {
+        redde parseReddeSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Break: rumpe
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("rumpe") {
+        redde parseRumpeSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Continue: perge
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("perge") {
+        redde parsePergeSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Throw: iace (recoverable)
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("iace") {
+        redde parseIaceSententia(p, falsum)
+    }
+
+    // -------------------------------------------------------------------------
+    // Panic: mori (fatal)
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("mori") {
+        redde parseIaceSententia(p, verum)
+    }
+
+    // -------------------------------------------------------------------------
+    // Output: scribe, vide, mone
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("scribe") {
+        redde parseScribeSententia(p, ScribeGradus.Scribe)
+    }
+
+    si p.probaVerbum("vide") {
+        redde parseScribeSententia(p, ScribeGradus.Vide)
+    }
+
+    si p.probaVerbum("mone") {
+        redde parseScribeSententia(p, ScribeGradus.Mone)
+    }
+
+    // -------------------------------------------------------------------------
+    // Try-catch: tempta
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("tempta") {
+        redde parseTemptaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Explicit block: fac { }
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("fac") et p.specta(1).species === SymbolumGenus.UncusSin {
+        redde parseFacSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Test suite: probandum
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("probandum") {
+        // TODO: return parseProbandumSententia(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Test case: proba
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("proba") {
+        // TODO: return parseProbaSententia(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Dispatch: ad
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("ad") {
+        // TODO: return parseAdSententia(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Test setup/teardown: praepara, praeparabit, postpara, postparabit
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("praepara") aut p.probaVerbum("praeparabit") aut p.probaVerbum("postpara") aut p.probaVerbum("postparabit") {
+        // TODO: return parsePraeparaMassa(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Resource management: cura
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("cura") {
+        // TODO: return parseCuraSententia(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Entry point: incipit (sync), incipiet (async)
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("incipit") {
+        // TODO: return parseIncipitSententia(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    si p.probaVerbum("incipiet") {
+        // TODO: return parseIncipietSententia(p)
+        redde parseExpressiaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Bare block: { }
+    // -------------------------------------------------------------------------
+    si p.proba(SymbolumGenus.UncusSin) {
+        redde parseMassaSententia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Default: expression statement
+    // -------------------------------------------------------------------------
+    redde parseExpressiaSententia(p)
+}

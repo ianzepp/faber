@@ -1,0 +1,67 @@
+/// Expression Parser Entry Point
+///
+/// Top-level expression parsing using precedence climbing.
+/// Entry point delegates to assignment (lowest precedence).
+///
+/// PRECEDENCE HIERARCHY (lowest to highest):
+/// 1. Assignment (=, +=, -=, etc.)
+/// 2. Ternary (? : or sic/secus)
+/// 3. Logical OR (|| or aut) / Nullish (?? or vel)
+/// 4. Logical AND (&& or et)
+/// 5. Equality (==, !=, ===, !==, est)
+/// 6. Comparison (<, >, <=, >=)
+/// 7. Bitwise OR (|)
+/// 8. Bitwise XOR (^)
+/// 9. Bitwise AND (&)
+/// 10. Shift (<<, >>)
+/// 11. Range (.., ante, usque)
+/// 12. Additive (+, -)
+/// 13. Multiplicative (*, /, %)
+/// 14. Unary (non, -, ~, cede, novum, etc.)
+/// 15. Cast (qua)
+/// 16. Call/Member (., [], ())
+/// 17. Primary (literals, identifiers, grouping)
+///
+/// LATIN VOCABULARY:
+/// - expressia = expression
+/// - assignatio = assignment
+/// - condicio = condition
+/// - binaria = binary
+/// - unaria = unary
+/// - primaria = primary
+
+// =============================================================================
+// Forward declarations for sub-parsers
+// (Each defined in its own file)
+// =============================================================================
+
+// Binary operators (binaria.fab)
+functio parseAssignatio(Parser p) -> Expressia
+functio parseCondicio(Parser p) -> Expressia
+functio parseAut(Parser p) -> Expressia
+functio parseEt(Parser p) -> Expressia
+functio parseAequitas(Parser p) -> Expressia
+functio parseComparatio(Parser p) -> Expressia
+functio parseBitVel(Parser p) -> Expressia
+functio parseBitXor(Parser p) -> Expressia
+functio parseBitEt(Parser p) -> Expressia
+functio parseMutatio(Parser p) -> Expressia
+functio parseAmbitus(Parser p) -> Expressia
+functio parseAdditiva(Parser p) -> Expressia
+functio parseMultiplicativa(Parser p) -> Expressia
+
+// Unary and postfix (unaria.fab)
+functio parseUnaria(Parser p) -> Expressia
+functio parseQua(Parser p) -> Expressia
+functio parseVocatio(Parser p) -> Expressia
+
+// Primary (primaria.fab)
+functio parsePrimaria(Parser p) -> Expressia
+
+/// Parse an expression (entry point)
+///
+/// Top-level expression delegates to assignment (lowest precedence).
+/// All expression parsing flows through this function.
+functio parseExpressia(Parser p) -> Expressia {
+    redde parseAssignatio(p)
+}

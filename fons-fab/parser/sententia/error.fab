@@ -1,0 +1,145 @@
+/// Error Handling Statement Parsers
+///
+/// Try-catch-finally and related error handling constructs.
+///
+/// GRAMMAR:
+///   tryStmt := 'tempta' blockStmt ('cape' IDENTIFIER blockStmt)? ('demum' blockStmt)?
+///   catchClause := 'cape' IDENTIFIER blockStmt
+///   facBlockStmt := 'fac' blockStmt ('cape' IDENTIFIER blockStmt)?
+///   assertStmt := 'adfirma' expression (',' expression)?
+///
+/// LATIN VOCABULARY:
+/// - tempta = try/attempt
+/// - cape = catch/seize
+/// - demum = finally (at last)
+/// - fac = do/make
+/// - adfirma = affirm/assert
+
+// External dependencies (defined in other files):
+// - parseExpressia(Parser p) -> Expressia
+// - parseMassaSententia(Parser p) -> MassaSententia
+
+/// Parse catch clause
+///
+/// GRAMMAR: catchClause := 'cape' IDENTIFIER blockStmt
+///
+/// Binds the caught error to the identifier.
+functio parseCapeClausula(Parser p) -> CapeClausula {
+    fixum locus = p.specta(0).locus
+
+    // Consume 'cape' keyword
+    p.expectaVerbum("cape", ParserErrorCodice.ExpectaturCape)
+
+    // Parse error binding identifier
+    fixum nomenSymbolum = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    fixum nomen = {
+        locus: nomenSymbolum.locus,
+        valor: nomenSymbolum.valor
+    } qua Nomen
+
+    // Parse the handler block
+    fixum corpus = parseMassaSententia(p)
+
+    redde {
+        locus: locus,
+        nomen: nomen,
+        corpus: corpus
+    } qua CapeClausula
+}
+
+/// Parse try-catch-finally statement
+///
+/// GRAMMAR: tryStmt := 'tempta' blockStmt ('cape' IDENTIFIER blockStmt)? ('demum' blockStmt)?
+///
+/// Both cape and demum are optional, but at least one should be present
+/// for the statement to be useful.
+functio parseTemptaSententia(Parser p) -> TemptaSententia {
+    fixum locus = p.specta(0).locus
+
+    // Consume 'tempta' keyword
+    p.expectaVerbum("tempta", ParserErrorCodice.ExpectaturTempta)
+
+    // Parse the try block
+    fixum massa = parseMassaSententia(p)
+
+    // Parse optional catch clause
+    varia tractator = nihil qua CapeClausula?
+
+    si p.probaVerbum("cape") {
+        tractator = parseCapeClausula(p)
+    }
+
+    // Parse optional finally block
+    varia finaliter = nihil qua MassaSententia?
+
+    si p.congruetVerbum("demum") {
+        finaliter = parseMassaSententia(p)
+    }
+
+    redde {
+        locus: locus,
+        massa: massa,
+        tractator: tractator,
+        finaliter: finaliter
+    } qua TemptaSententia
+}
+
+/// Parse fac block statement
+///
+/// GRAMMAR: facBlockStmt := 'fac' blockStmt ('cape' IDENTIFIER blockStmt)?
+///
+/// Creates explicit scope boundary with optional error handling.
+/// Useful for:
+/// - Scoped variable declarations
+/// - Grouping operations with shared error handling
+/// - IIFE-like constructs
+functio parseFacSententia(Parser p) -> FacSententia {
+    fixum locus = p.specta(0).locus
+
+    // Consume 'fac' keyword
+    p.expectaVerbum("fac", ParserErrorCodice.ExpectaturFac)
+
+    // Parse the block
+    fixum massa = parseMassaSententia(p)
+
+    // Parse optional catch clause
+    varia tractator = nihil qua CapeClausula?
+
+    si p.probaVerbum("cape") {
+        tractator = parseCapeClausula(p)
+    }
+
+    redde {
+        locus: locus,
+        massa: massa,
+        tractator: tractator
+    } qua FacSententia
+}
+
+/// Parse assert statement
+///
+/// GRAMMAR: assertStmt := 'adfirma' expression (',' expression)?
+///
+/// Runtime invariant check. Optional second expression is error message.
+functio parseAdfirmaSententia(Parser p) -> AdfirmaSententia {
+    fixum locus = p.specta(0).locus
+
+    // Consume 'adfirma' keyword
+    p.expectaVerbum("adfirma", ParserErrorCodice.ExpectaturAdfirma)
+
+    // Parse the condition expression
+    fixum condicio = parseExpressia(p)
+
+    // Parse optional message expression
+    varia nuntius = nihil qua Expressia?
+
+    si p.congruet(SymbolumGenus.Virgula) {
+        nuntius = parseExpressia(p)
+    }
+
+    redde {
+        locus: locus,
+        condicio: condicio,
+        nuntius: nuntius
+    } qua AdfirmaSententia
+}

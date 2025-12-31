@@ -1,0 +1,479 @@
+/// Unary and Postfix Expression Parsers
+///
+/// Prefix operators: non, -, ~, cede, novum, etc.
+/// Postfix operators: qua (type cast), call, member access
+///
+/// GRAMMAR:
+///   unary := ('non' | '-' | '~' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' |
+///             'negativum' | 'positivum' | 'cede' | 'novum') unary | cast
+///   cast := call ('qua' typeAnnotation)*
+///   call := primary (callSuffix | memberSuffix | optionalSuffix | nonNullSuffix)*
+///
+/// LATIN VOCABULARY:
+/// - unaria = unary
+/// - non = not
+/// - nulla = empty/none
+/// - nonnulla = not empty/some
+/// - nihil = null
+/// - nonnihil = not null
+/// - negativum = negative
+/// - positivum = positive
+/// - cede = yield/await
+/// - novum = new
+/// - qua = as (type cast)
+
+// Forward declarations
+functio parseTypusAnnotatio(Parser p) -> TypusAnnotatio
+functio parseExpressia(Parser p) -> Expressia
+functio parseMassaSententia(Parser p) -> MassaSententia
+functio parseVocatio(Parser p) -> Expressia
+functio parsePrimaria(Parser p) -> Expressia
+
+/// Parse unary expression
+///
+/// Handles prefix operators: non, -, ~, cede, novum, etc.
+functio parseUnaria(Parser p) -> Expressia {
+    // -------------------------------------------------------------------------
+    // 'non' - logical not
+    // -------------------------------------------------------------------------
+    si p.congruetVerbum("non") {
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum argumentum = parseUnaria(p)
+
+        redde {
+            locus: locus,
+            signum: "!",
+            argumentum: argumentum,
+            praefixum: verum
+        } qua UnariaExpressia
+    }
+
+    // -------------------------------------------------------------------------
+    // '-' - numeric negation
+    // -------------------------------------------------------------------------
+    si p.congruet(SymbolumGenus.Minus) {
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum argumentum = parseUnaria(p)
+
+        redde {
+            locus: locus,
+            signum: "-",
+            argumentum: argumentum,
+            praefixum: verum
+        } qua UnariaExpressia
+    }
+
+    // -------------------------------------------------------------------------
+    // '~' - bitwise not
+    // -------------------------------------------------------------------------
+    si p.congruet(SymbolumGenus.Tilde) {
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum argumentum = parseUnaria(p)
+
+        redde {
+            locus: locus,
+            signum: "~",
+            argumentum: argumentum,
+            praefixum: verum
+        } qua UnariaExpressia
+    }
+
+    // -------------------------------------------------------------------------
+    // 'nulla' - emptiness check
+    // -------------------------------------------------------------------------
+    si p.congruetVerbum("nulla") {
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum argumentum = parseUnaria(p)
+
+        redde {
+            locus: locus,
+            signum: "nulla",
+            argumentum: argumentum,
+            praefixum: verum
+        } qua UnariaExpressia
+    }
+
+    // -------------------------------------------------------------------------
+    // 'nonnulla' - non-emptiness check
+    // -------------------------------------------------------------------------
+    si p.congruetVerbum("nonnulla") {
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum argumentum = parseUnaria(p)
+
+        redde {
+            locus: locus,
+            signum: "nonnulla",
+            argumentum: argumentum,
+            praefixum: verum
+        } qua UnariaExpressia
+    }
+
+    // -------------------------------------------------------------------------
+    // 'nihil' - null check (prefix form: nihil x)
+    // Must check that it's followed by an operand, not used as literal
+    // -------------------------------------------------------------------------
+    si p.probaVerbum("nihil") {
+        fixum sequens = p.specta(1)
+        fixum estOperandum = sequens.species === SymbolumGenus.Nomen aut
+                             (sequens.species === SymbolumGenus.Verbum et
+                              (sequens.verbum === "verum" aut sequens.verbum === "falsum" aut
+                               sequens.verbum === "nihil" aut sequens.verbum === "ego" aut
+                               sequens.verbum === "non" aut sequens.verbum === "novum" aut
+                               sequens.verbum === "cede"))
+
+        si estOperandum {
+            p.procede()  // consume 'nihil'
+            fixum locus = p.symbola[p.index - 1].locus
+            fixum argumentum = parseUnaria(p)
+
+            redde {
+                locus: locus,
+                signum: "nihil",
+                argumentum: argumentum,
+                praefixum: verum
+            } qua UnariaExpressia
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // 'nonnihil' - not-null check
+    // -------------------------------------------------------------------------
+    si p.congruetVerbum("nonnihil") {
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum argumentum = parseUnaria(p)
+
+        redde {
+            locus: locus,
+            signum: "nonnihil",
+            argumentum: argumentum,
+            praefixum: verum
+        } qua UnariaExpressia
+    }
+
+    // -------------------------------------------------------------------------
+    // 'negativum' - less than zero check
+    // -------------------------------------------------------------------------
+    si p.congruetVerbum("negativum") {
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum argumentum = parseUnaria(p)
+
+        redde {
+            locus: locus,
+            signum: "negativum",
+            argumentum: argumentum,
+            praefixum: verum
+        } qua UnariaExpressia
+    }
+
+    // -------------------------------------------------------------------------
+    // 'positivum' - greater than zero check
+    // -------------------------------------------------------------------------
+    si p.congruetVerbum("positivum") {
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum argumentum = parseUnaria(p)
+
+        redde {
+            locus: locus,
+            signum: "positivum",
+            argumentum: argumentum,
+            praefixum: verum
+        } qua UnariaExpressia
+    }
+
+    // -------------------------------------------------------------------------
+    // 'cede' - await
+    // -------------------------------------------------------------------------
+    si p.congruetVerbum("cede") {
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum argumentum = parseUnaria(p)
+
+        redde {
+            locus: locus,
+            argumentum: argumentum
+        } qua CedeExpressia
+    }
+
+    // -------------------------------------------------------------------------
+    // 'novum' - constructor call
+    // -------------------------------------------------------------------------
+    si p.congruetVerbum("novum") {
+        redde parseNovumExpressia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // 'praefixum' - compile-time evaluation
+    // -------------------------------------------------------------------------
+    si p.congruetVerbum("praefixum") {
+        redde parsePraefixumExpressia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // 'scriptum' - format string
+    // -------------------------------------------------------------------------
+    si p.congruetVerbum("scriptum") {
+        redde parseScriptumExpressia(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // 'lege' - read stdin
+    // -------------------------------------------------------------------------
+    si p.congruetVerbum("lege") {
+        redde parseLegeExpressia(p)
+    }
+
+    // Fall through to type cast
+    redde parseQua(p)
+}
+
+/// Parse novum (new) expression
+///
+/// GRAMMAR: newExpr := 'novum' IDENTIFIER ('(' argumentList ')')? (objectLiteral | 'de' expression)?
+functio parseNovumExpressia(Parser p) -> NovumExpressia {
+    fixum locus = p.symbola[p.index - 1].locus  // Position of 'novum'
+
+    // Parse class name
+    fixum nomenSymbolum = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    fixum nomen = {
+        locus: nomenSymbolum.locus,
+        valor: nomenSymbolum.valor
+    } qua Nomen
+
+    // Parse optional constructor arguments
+    varia argumenta = nihil qua lista<Expressia>?
+
+    si p.congruet(SymbolumGenus.ParensSin) {
+        argumenta = parseArgumenta(p)
+        p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+    }
+
+    // Parse optional property overrides
+    // Either inline object literal or 'de' expression
+    varia proprietates = nihil qua ObiectumExpressia?
+
+    si p.proba(SymbolumGenus.UncusSin) {
+        proprietates = parseObiectumLitterale(p)
+    } sin p.congruetVerbum("de") {
+        // TODO: Parse 'de' expression for dynamic overrides
+    }
+
+    redde {
+        locus: locus,
+        nomen: nomen,
+        argumenta: argumenta,
+        proprietates: proprietates
+    } qua NovumExpressia
+}
+
+/// Parse praefixum (comptime) expression
+///
+/// GRAMMAR: praefixumExpr := 'praefixum' (blockStmt | '(' expression ')')
+functio parsePraefixumExpressia(Parser p) -> PraefixumExpressia {
+    fixum locus = p.symbola[p.index - 1].locus  // Position of 'praefixum'
+
+    varia corpus = nihil qua Expressia  // Will be either block or expression
+
+    si p.proba(SymbolumGenus.UncusSin) {
+        // Block form: praefixum { ... }
+        corpus = parseMassaSententia(p) qua Expressia
+    } sin p.congruet(SymbolumGenus.ParensSin) {
+        // Expression form: praefixum(expr)
+        corpus = parseExpressia(p)
+        p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+    } secus {
+        p.renuncia(ParserErrorCodice.ExpectaturUncusVelParens, scriptum("got '{}'", p.specta(0).valor))
+    }
+
+    redde {
+        locus: locus,
+        corpus: corpus
+    } qua PraefixumExpressia
+}
+
+/// Parse scriptum (format string) expression
+///
+/// GRAMMAR: scriptumExpr := 'scriptum' '(' STRING (',' expression)* ')'
+functio parseScriptumExpressia(Parser p) -> ScriptumExpressia {
+    fixum locus = p.symbola[p.index - 1].locus  // Position of 'scriptum'
+
+    p.expecta(SymbolumGenus.ParensSin, ParserErrorCodice.ExpectaturParensSin)
+
+    // First argument must be format string
+    si non p.proba(SymbolumGenus.Textus) {
+        p.renuncia(ParserErrorCodice.ExpectaturTextus, "scriptum requires format string")
+    }
+
+    fixum formaSymbolum = p.procede()
+    fixum forma = formaSymbolum.valor
+
+    // Parse additional arguments
+    varia argumenta = [] qua lista<Expressia>
+
+    dum p.congruet(SymbolumGenus.Virgula) {
+        argumenta.adde(parseExpressia(p))
+    }
+
+    p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+
+    redde {
+        locus: locus,
+        forma: forma,
+        argumenta: argumenta
+    } qua ScriptumExpressia
+}
+
+/// Parse lege (read stdin) expression
+///
+/// GRAMMAR: legeExpr := 'lege' '(' ')'
+functio parseLegeExpressia(Parser p) -> LegeExpressia {
+    fixum locus = p.symbola[p.index - 1].locus  // Position of 'lege'
+
+    p.expecta(SymbolumGenus.ParensSin, ParserErrorCodice.ExpectaturParensSin)
+    p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+
+    redde {
+        locus: locus
+    } qua LegeExpressia
+}
+
+/// Parse type cast expression
+///
+/// GRAMMAR: castExpr := call ('qua' typeAnnotation)*
+functio parseQua(Parser p) -> Expressia {
+    varia expr = parseVocatio(p)
+
+    dum p.congruetVerbum("qua") {
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum typus = parseTypusAnnotatio(p)
+
+        expr = {
+            locus: locus,
+            expressia: expr,
+            typus: typus
+        } qua QuaExpressia
+    }
+
+    redde expr
+}
+
+/// Parse call/member access expression
+///
+/// GRAMMAR: call := primary (callSuffix | memberSuffix | optionalSuffix | nonNullSuffix)*
+functio parseVocatio(Parser p) -> Expressia {
+    varia expr = parsePrimaria(p)
+
+    // Loop to handle chained access: obj.prop.method().field
+    dum verum {
+        si p.congruet(SymbolumGenus.ParensSin) {
+            // Function call: expr(args)
+            fixum locus = p.symbola[p.index - 1].locus
+            fixum argumenta = parseArgumenta(p)
+            p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+
+            expr = {
+                locus: locus,
+                vocans: expr,
+                argumenta: argumenta
+            } qua VocatioExpressia
+        } sin p.congruet(SymbolumGenus.Punctum) {
+            // Member access: expr.prop
+            fixum locus = p.symbola[p.index - 1].locus
+            fixum nomenSymbolum = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            fixum proprietas = {
+                locus: nomenSymbolum.locus,
+                valor: nomenSymbolum.valor
+            } qua Nomen
+
+            expr = {
+                locus: locus,
+                obiectum: expr,
+                proprietas: proprietas,
+                computatum: falsum,
+                optionale: falsum
+            } qua MembrumExpressia
+        } sin p.congruet(SymbolumGenus.QuadratusSin) {
+            // Computed access: expr[key]
+            fixum locus = p.symbola[p.index - 1].locus
+            fixum proprietas = parseExpressia(p)
+            p.expecta(SymbolumGenus.QuadratusDex, ParserErrorCodice.ExpectaturQuadratusDex)
+
+            expr = {
+                locus: locus,
+                obiectum: expr,
+                proprietas: proprietas,
+                computatum: verum,
+                optionale: falsum
+            } qua MembrumExpressia
+        } sin p.congruet(SymbolumGenus.InterrogatioPunctum) {
+            // Optional chaining: expr?.prop
+            fixum locus = p.symbola[p.index - 1].locus
+            fixum nomenSymbolum = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            fixum proprietas = {
+                locus: nomenSymbolum.locus,
+                valor: nomenSymbolum.valor
+            } qua Nomen
+
+            expr = {
+                locus: locus,
+                obiectum: expr,
+                proprietas: proprietas,
+                computatum: falsum,
+                optionale: verum
+            } qua MembrumExpressia
+        } sin p.congruet(SymbolumGenus.ExclamatioPunctum) {
+            // Non-null assertion: expr!.prop
+            fixum locus = p.symbola[p.index - 1].locus
+            fixum nomenSymbolum = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            fixum proprietas = {
+                locus: nomenSymbolum.locus,
+                valor: nomenSymbolum.valor
+            } qua Nomen
+
+            // TODO: Add non-null assertion flag to MembrumExpressia
+            expr = {
+                locus: locus,
+                obiectum: expr,
+                proprietas: proprietas,
+                computatum: falsum,
+                optionale: falsum
+            } qua MembrumExpressia
+        } secus {
+            rumpe
+        }
+    }
+
+    redde expr
+}
+
+/// Parse argument list for function calls
+functio parseArgumenta(Parser p) -> lista<Expressia> {
+    varia argumenta = [] qua lista<Expressia>
+
+    // Empty argument list
+    si p.proba(SymbolumGenus.ParensDex) {
+        redde argumenta
+    }
+
+    // First argument
+    // TODO: Handle spread operator (sparge)
+    argumenta.adde(parseExpressia(p))
+
+    // Remaining arguments
+    dum p.congruet(SymbolumGenus.Virgula) {
+        argumenta.adde(parseExpressia(p))
+    }
+
+    redde argumenta
+}
+
+/// Parse object literal (for novum overrides)
+functio parseObiectumLitterale(Parser p) -> ObiectumExpressia {
+    // TODO: Implement object literal parsing
+    fixum locus = p.specta(0).locus
+    p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
+    p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
+
+    redde {
+        locus: locus,
+        proprietates: []
+    } qua ObiectumExpressia
+}

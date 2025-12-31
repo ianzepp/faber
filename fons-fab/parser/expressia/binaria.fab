@@ -1,0 +1,416 @@
+/// Binary Expression Parsers
+///
+/// Operators: assignment, ternary, logical, comparison, bitwise, arithmetic.
+/// Uses precedence climbing with left-to-right associativity (except assignment/ternary).
+///
+/// GRAMMAR:
+///   assignment := ternary (('=' | '+=' | '-=' | ...) assignment)?
+///   ternary := or (('?' expr ':' | 'sic' expr 'secus') ternary)?
+///   or := and (('||' | 'aut' | 'vel') and)*
+///   and := equality (('&&' | 'et') equality)*
+///   equality := comparison (('==' | '!=' | '===' | '!==' | 'est') comparison)*
+///   comparison := bitwiseOr (('<' | '>' | '<=' | '>=') bitwiseOr)*
+///   ...
+///
+/// LATIN VOCABULARY:
+/// - assignatio = assignment
+/// - condicio = condition
+/// - aut = or (logical)
+/// - vel = or (nullish coalescing)
+/// - et = and
+/// - aequitas = equality
+/// - comparatio = comparison
+/// - ambitus = range
+
+// Forward declarations
+functio parseTypusAnnotatio(Parser p) -> TypusAnnotatio
+functio parseExpressia(Parser p) -> Expressia
+functio parseUnaria(Parser p) -> Expressia
+
+/// Parse assignment expression
+///
+/// GRAMMAR: assignment := ternary (('=' | '+=' | '-=' | ...) assignment)?
+/// Right-associative via recursion.
+functio parseAssignatio(Parser p) -> Expressia {
+    fixum expr = parseCondicio(p)
+
+    // Check for assignment operators
+    si p.congruet(SymbolumGenus.Aequale) aut
+       p.congruet(SymbolumGenus.PlusAequale) aut
+       p.congruet(SymbolumGenus.MinusAequale) aut
+       p.congruet(SymbolumGenus.StellaAequale) aut
+       p.congruet(SymbolumGenus.VirgulaAequale) aut
+       p.congruet(SymbolumGenus.PercentumAequale) aut
+       p.congruet(SymbolumGenus.AmpersandAequale) aut
+       p.congruet(SymbolumGenus.TubusAequale) {
+
+        // Get the operator that was just consumed
+        fixum signum = p.symbola[p.index - 1].valor
+        fixum locus = p.symbola[p.index - 1].locus
+
+        // Right side (recursive for right-associativity)
+        fixum valor = parseAssignatio(p)
+
+        // Validate left side is valid lvalue
+        // TODO: Check expr.type for Identifier or MemberExpression
+        redde {
+            locus: locus,
+            signum: signum,
+            sinister: expr,
+            dexter: valor
+        } qua AssignatioExpressia
+    }
+
+    redde expr
+}
+
+/// Parse ternary conditional expression
+///
+/// GRAMMAR: ternary := or (('?' expr ':' | 'sic' expr 'secus') ternary)?
+/// Supports both symbolic (? :) and Latin (sic secus) forms.
+functio parseCondicio(Parser p) -> Expressia {
+    fixum proba = parseAut(p)
+    fixum locus = proba.locus
+
+    // Symbolic ternary: condition ? consequent : alternate
+    si p.congruet(SymbolumGenus.Interrogatio) {
+        fixum consequens = parseExpressia(p)
+
+        si non p.congruet(SymbolumGenus.Colon) {
+            p.renuncia(ParserErrorCodice.ExpectaturColon, scriptum("got '{}'", p.specta(0).valor))
+        }
+
+        fixum alternatum = parseCondicio(p)
+
+        redde {
+            locus: locus,
+            proba: proba,
+            consequens: consequens,
+            alternatum: alternatum
+        } qua CondicioExpressia
+    }
+
+    // Latin ternary: condition sic consequent secus alternate
+    si p.congruetVerbum("sic") {
+        fixum consequens = parseExpressia(p)
+
+        si non p.congruetVerbum("secus") {
+            p.renuncia(ParserErrorCodice.ExpectaturSecus, scriptum("got '{}'", p.specta(0).valor))
+        }
+
+        fixum alternatum = parseCondicio(p)
+
+        redde {
+            locus: locus,
+            proba: proba,
+            consequens: consequens,
+            alternatum: alternatum
+        } qua CondicioExpressia
+    }
+
+    redde proba
+}
+
+/// Parse logical OR and nullish coalescing
+///
+/// GRAMMAR: or := and (('||' | 'aut') and)* | and ('vel' and)*
+/// Cannot mix aut/|| with vel without parentheses.
+functio parseAut(Parser p) -> Expressia {
+    varia sinister = parseEt(p)
+
+    // Track operator kind to prevent mixing
+    varia operatorisGenus = nihil qua textus?
+
+    dum verum {
+        varia estLogicaAut = falsum
+        varia estVel = falsum
+
+        si p.congruet(SymbolumGenus.TubusTubus) aut p.congruetVerbum("aut") {
+            estLogicaAut = verum
+        } sin p.congruetVerbum("vel") {
+            estVel = verum
+        } secus {
+            rumpe
+        }
+
+        fixum currentGenus = estLogicaAut sic "logical" secus "nullish"
+
+        // Check for mixing || with ??
+        si nonnihil operatorisGenus et operatorisGenus !== currentGenus {
+            p.renuncia(ParserErrorCodice.ErrorGeneralis, "Cannot mix 'vel' and 'aut' without parentheses")
+        }
+
+        operatorisGenus = currentGenus
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum signum = estLogicaAut sic "||" secus "??"
+        fixum dexter = parseEt(p)
+
+        sinister = {
+            locus: locus,
+            signum: signum,
+            sinister: sinister,
+            dexter: dexter
+        } qua BinariaExpressia
+    }
+
+    redde sinister
+}
+
+/// Parse logical AND
+///
+/// GRAMMAR: and := equality (('&&' | 'et') equality)*
+functio parseEt(Parser p) -> Expressia {
+    varia sinister = parseAequitas(p)
+
+    dum p.congruet(SymbolumGenus.AmpersandAmpersand) aut p.congruetVerbum("et") {
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum dexter = parseAequitas(p)
+
+        sinister = {
+            locus: locus,
+            signum: "&&",
+            sinister: sinister,
+            dexter: dexter
+        } qua BinariaExpressia
+    }
+
+    redde sinister
+}
+
+/// Parse equality expressions
+///
+/// GRAMMAR: equality := comparison (('==' | '!=' | '===' | '!==' | 'est') comparison)*
+/// 'est' means type check (instanceof/typeof)
+functio parseAequitas(Parser p) -> Expressia {
+    varia sinister = parseComparatio(p)
+
+    dum verum {
+        varia signum = "" qua textus
+        varia locus = p.specta(0).locus
+
+        si p.congruet(SymbolumGenus.AequaleAequale) {
+            signum = "=="
+        } sin p.congruet(SymbolumGenus.ExclamatioAequale) {
+            signum = "!="
+        } sin p.congruet(SymbolumGenus.AequaleAequaleAequale) {
+            signum = "==="
+        } sin p.congruet(SymbolumGenus.ExclamatioAequaleAequale) {
+            signum = "!=="
+        } sin p.probaVerbum("non") et p.specta(1).verbum === "est" {
+            // 'non est' - negated type check
+            p.procede()  // consume 'non'
+            p.procede()  // consume 'est'
+            fixum typusTarget = parseTypusAnnotatio(p)
+            sinister = {
+                locus: locus,
+                expressia: sinister,
+                typusTarget: typusTarget,
+                negatum: verum
+            } qua EstExpressia
+            perge
+        } sin p.congruetVerbum("est") {
+            // 'est' - type check
+            fixum typusTarget = parseTypusAnnotatio(p)
+            sinister = {
+                locus: locus,
+                expressia: sinister,
+                typusTarget: typusTarget,
+                negatum: falsum
+            } qua EstExpressia
+            perge
+        } secus {
+            rumpe
+        }
+
+        fixum dexter = parseComparatio(p)
+        sinister = {
+            locus: locus,
+            signum: signum,
+            sinister: sinister,
+            dexter: dexter
+        } qua BinariaExpressia
+    }
+
+    redde sinister
+}
+
+/// Parse comparison expressions
+///
+/// GRAMMAR: comparison := bitwiseOr (('<' | '>' | '<=' | '>=') bitwiseOr)*
+functio parseComparatio(Parser p) -> Expressia {
+    varia sinister = parseBitVel(p)
+
+    dum p.congruet(SymbolumGenus.Minor) aut p.congruet(SymbolumGenus.MinorAequale) aut
+        p.congruet(SymbolumGenus.Maior) aut p.congruet(SymbolumGenus.MaiorAequale) {
+
+        fixum signum = p.symbola[p.index - 1].valor
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum dexter = parseBitVel(p)
+
+        sinister = {
+            locus: locus,
+            signum: signum,
+            sinister: sinister,
+            dexter: dexter
+        } qua BinariaExpressia
+    }
+
+    redde sinister
+}
+
+/// Parse bitwise OR
+functio parseBitVel(Parser p) -> Expressia {
+    varia sinister = parseBitXor(p)
+
+    dum p.congruet(SymbolumGenus.Tubus) {
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum dexter = parseBitXor(p)
+
+        sinister = {
+            locus: locus,
+            signum: "|",
+            sinister: sinister,
+            dexter: dexter
+        } qua BinariaExpressia
+    }
+
+    redde sinister
+}
+
+/// Parse bitwise XOR
+functio parseBitXor(Parser p) -> Expressia {
+    varia sinister = parseBitEt(p)
+
+    dum p.congruet(SymbolumGenus.Circumflexus) {
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum dexter = parseBitEt(p)
+
+        sinister = {
+            locus: locus,
+            signum: "^",
+            sinister: sinister,
+            dexter: dexter
+        } qua BinariaExpressia
+    }
+
+    redde sinister
+}
+
+/// Parse bitwise AND
+functio parseBitEt(Parser p) -> Expressia {
+    varia sinister = parseMutatio(p)
+
+    dum p.congruet(SymbolumGenus.Ampersand) {
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum dexter = parseMutatio(p)
+
+        sinister = {
+            locus: locus,
+            signum: "&",
+            sinister: sinister,
+            dexter: dexter
+        } qua BinariaExpressia
+    }
+
+    redde sinister
+}
+
+/// Parse shift expressions
+functio parseMutatio(Parser p) -> Expressia {
+    varia sinister = parseAmbitus(p)
+
+    dum p.congruet(SymbolumGenus.MinorMinor) aut p.congruet(SymbolumGenus.MaiorMaior) {
+        fixum signum = p.symbola[p.index - 1].valor
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum dexter = parseAmbitus(p)
+
+        sinister = {
+            locus: locus,
+            signum: signum,
+            sinister: sinister,
+            dexter: dexter
+        } qua BinariaExpressia
+    }
+
+    redde sinister
+}
+
+/// Parse range expressions
+///
+/// GRAMMAR: range := additive (('..' | 'ante' | 'usque') additive ('per' additive)?)?
+/// - '..' and 'ante': exclusive end (0..10 = 0-9)
+/// - 'usque': inclusive end (0 usque 10 = 0-10)
+/// - 'per': step (0..10 per 2 = 0,2,4,6,8)
+functio parseAmbitus(Parser p) -> Expressia {
+    fixum initium = parseAdditiva(p)
+
+    // Check for range operators
+    varia inclusivum = falsum
+
+    si p.congruet(SymbolumGenus.PunctumPunctum) {
+        inclusivum = falsum
+    } sin p.congruetVerbum("ante") {
+        inclusivum = falsum
+    } sin p.congruetVerbum("usque") {
+        inclusivum = verum
+    } secus {
+        redde initium
+    }
+
+    fixum locus = p.symbola[p.index - 1].locus
+    fixum finis = parseAdditiva(p)
+
+    // Optional step
+    varia gradus = nihil qua Expressia?
+    si p.congruetVerbum("per") {
+        gradus = parseAdditiva(p)
+    }
+
+    redde {
+        locus: locus,
+        initium: initium,
+        finis: finis,
+        gradus: gradus,
+        inclusivum: inclusivum
+    } qua AmbitusExpressia
+}
+
+/// Parse additive expressions (+, -)
+functio parseAdditiva(Parser p) -> Expressia {
+    varia sinister = parseMultiplicativa(p)
+
+    dum p.congruet(SymbolumGenus.Plus) aut p.congruet(SymbolumGenus.Minus) {
+        fixum signum = p.symbola[p.index - 1].valor
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum dexter = parseMultiplicativa(p)
+
+        sinister = {
+            locus: locus,
+            signum: signum,
+            sinister: sinister,
+            dexter: dexter
+        } qua BinariaExpressia
+    }
+
+    redde sinister
+}
+
+/// Parse multiplicative expressions (*, /, %)
+functio parseMultiplicativa(Parser p) -> Expressia {
+    varia sinister = parseUnaria(p)
+
+    dum p.congruet(SymbolumGenus.Stella) aut p.congruet(SymbolumGenus.Virgula) aut p.congruet(SymbolumGenus.Percentum) {
+        fixum signum = p.symbola[p.index - 1].valor
+        fixum locus = p.symbola[p.index - 1].locus
+        fixum dexter = parseUnaria(p)
+
+        sinister = {
+            locus: locus,
+            signum: signum,
+            sinister: sinister,
+            dexter: dexter
+        } qua BinariaExpressia
+    }
+
+    redde sinister
+}

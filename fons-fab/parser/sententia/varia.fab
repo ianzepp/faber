@@ -1,0 +1,241 @@
+/// Variable Declaration Parsers
+///
+/// Variable declarations, destructuring patterns, and related constructs.
+///
+/// GRAMMAR:
+///   varDecl := ('varia' | 'fixum' | 'figendum' | 'variandum') typeAnnotation? IDENTIFIER ('=' expression)?
+///   arrayPattern := '[' arrayPatternElement (',' arrayPatternElement)* ']'
+///   objectPattern := '{' patternProperty (',' patternProperty)* '}'
+///
+/// LATIN VOCABULARY:
+/// - varia = variable (let it vary)
+/// - fixum = fixed (const)
+/// - figendum = to be fixed (const + await)
+/// - variandum = to be varied (let + await)
+/// - ceteri = the rest (rest pattern)
+/// - omissum = omitted/skipped (placeholder _)
+
+// Forward declarations
+functio parseExpressia(Parser p) -> Expressia
+functio parseTypusAnnotatio(Parser p) -> TypusAnnotatio
+functio parseNomen(Parser p) -> Nomen
+
+/// Parse an identifier (simple name reference)
+functio parseNomen(Parser p) -> Nomen {
+    fixum symbolum = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    redde {
+        locus: symbolum.locus,
+        valor: symbolum.valor
+    } qua Nomen
+}
+
+/// Parse identifier or keyword (for import specifiers, property names)
+/// Keywords like 'scribe' can be valid identifiers in some contexts
+functio parseNomenVelVerbum(Parser p) -> Nomen {
+    fixum s = p.specta(0)
+
+    si s.species === SymbolumGenus.Nomen aut s.species === SymbolumGenus.Verbum {
+        p.procede()
+        redde {
+            locus: s.locus,
+            valor: s.valor
+        } qua Nomen
+    }
+
+    // Error: expected identifier
+    p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("got '{}'", s.valor))
+    p.procede()
+    redde {
+        locus: s.locus,
+        valor: s.valor
+    } qua Nomen
+}
+
+/// Parse object destructuring pattern
+///
+/// GRAMMAR: objectPattern := '{' patternProperty (',' patternProperty)* '}'
+///
+/// Examples:
+///   { nomen, aetas }              -> extract nomen and aetas
+///   { nomen: localName }          -> rename nomen to localName
+///   { nomen, ceteri rest }        -> extract nomen, collect rest in 'rest'
+functio parseObiectumForma(Parser p) -> ObiectumForma {
+    fixum locus = p.specta(0).locus
+
+    // Expect opening brace
+    p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
+
+    varia proprietates = [] qua lista<ObiectumFormaProprietas>
+
+    // Parse properties until closing brace
+    dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
+        fixum propLocus = p.specta(0).locus
+
+        // Check for rest pattern: ceteri restName
+        varia residuum = falsum
+        si p.congruetVerbum("ceteri") {
+            residuum = verum
+        }
+
+        // Parse key identifier
+        fixum clavis = parseNomenVelVerbum(p)
+
+        // Default value is same as key (shorthand)
+        varia valor = clavis
+
+        // Check for rename: { nomen: localName }
+        // Not valid with ceteri rest pattern
+        si p.congruet(SymbolumGenus.Colon) et non residuum {
+            valor = parseNomenVelVerbum(p)
+        }
+
+        proprietates.adde({
+            locus: propLocus,
+            clavis: clavis,
+            valor: valor,
+            residuum: residuum
+        } qua ObiectumFormaProprietas)
+
+        // Expect comma or closing brace
+        si non p.proba(SymbolumGenus.UncusDex) {
+            p.expecta(SymbolumGenus.Virgula, ParserErrorCodice.ExpectaturVirgula)
+        }
+    }
+
+    // Expect closing brace
+    p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
+
+    redde {
+        locus: locus,
+        proprietates: proprietates
+    } qua ObiectumForma
+}
+
+/// Parse array destructuring pattern
+///
+/// GRAMMAR: arrayPattern := '[' arrayPatternElement (',' arrayPatternElement)* ']'
+///
+/// Examples:
+///   [a, b, c]              -> extract first three elements
+///   [first, ceteri rest]   -> extract first, collect rest
+///   [_, second, _]         -> skip first and third
+functio parseSeriesForma(Parser p) -> SeriesForma {
+    fixum locus = p.specta(0).locus
+
+    // Expect opening bracket
+    p.expecta(SymbolumGenus.QuadratusSin, ParserErrorCodice.ExpectaturQuadratusSin)
+
+    varia elementa = [] qua lista<SeriesFormaElementum>
+
+    // Parse elements until closing bracket
+    dum non p.proba(SymbolumGenus.QuadratusDex) et non p.estFinis() {
+        fixum elemLocus = p.specta(0).locus
+
+        // Check for rest pattern: ceteri restName
+        varia residuum = falsum
+        si p.congruetVerbum("ceteri") {
+            residuum = verum
+        }
+
+        // Check for skip pattern: _
+        si non residuum et p.proba(SymbolumGenus.Nomen) et p.specta(0).valor === "_" {
+            p.procede()  // consume '_'
+            elementa.adde({
+                locus: elemLocus,
+                nomen: { locus: elemLocus, valor: "_" } qua Nomen,
+                omissum: verum,
+                residuum: falsum
+            } qua SeriesFormaElementum)
+        } secus {
+            // Regular binding or rest binding
+            fixum nomen = parseNomen(p)
+            elementa.adde({
+                locus: elemLocus,
+                nomen: nomen,
+                omissum: falsum,
+                residuum: residuum
+            } qua SeriesFormaElementum)
+        }
+
+        // Expect comma or closing bracket
+        si non p.proba(SymbolumGenus.QuadratusDex) {
+            p.expecta(SymbolumGenus.Virgula, ParserErrorCodice.ExpectaturVirgula)
+        }
+    }
+
+    // Expect closing bracket
+    p.expecta(SymbolumGenus.QuadratusDex, ParserErrorCodice.ExpectaturQuadratusDex)
+
+    redde {
+        locus: locus,
+        elementa: elementa
+    } qua SeriesForma
+}
+
+/// Parse variable declaration
+///
+/// GRAMMAR: varDecl := ('varia'|'fixum'|'figendum'|'variandum') type? name ('=' expr)?
+///
+/// Supports:
+/// - Type inference: fixum x = 42
+/// - Type-first: fixum numerus x = 42
+/// - Array destructuring: fixum [a, b] = coords
+functio parseVariaSententia(Parser p) -> VariaSententia {
+    fixum locus = p.specta(0).locus
+
+    // Get declaration kind from keyword
+    fixum verbum = p.specta(0).verbum
+    varia variaGenus = VariaGenus.Varia
+
+    elige verbum {
+        si "varia" { variaGenus = VariaGenus.Varia }
+        si "fixum" { variaGenus = VariaGenus.Fixum }
+        si "figendum" { variaGenus = VariaGenus.Figendum }
+        si "variandum" { variaGenus = VariaGenus.Variandum }
+    }
+
+    // Consume the keyword
+    p.procede()
+
+    // -------------------------------------------------------------------------
+    // Determine what follows: type, name, or destructuring pattern
+    // -------------------------------------------------------------------------
+    varia typus = nihil qua TypusAnnotatio?
+    varia nomen = nihil qua Nomen?
+    varia seriesForma = nihil qua SeriesForma?
+
+    si p.proba(SymbolumGenus.QuadratusSin) {
+        // Array destructuring: fixum [a, b] = arr
+        seriesForma = parseSeriesForma(p)
+    } sin p.estTypusNomen(p.specta(0)) {
+        // Builtin type: fixum numerus x = 42
+        typus = parseTypusAnnotatio(p)
+        nomen = parseNomen(p)
+    } sin p.proba(SymbolumGenus.Nomen) et p.specta(1).species === SymbolumGenus.Nomen {
+        // Two identifiers: first is type, second is name
+        // Handles user-defined types: fixum UserId id = 42
+        typus = parseTypusAnnotatio(p)
+        nomen = parseNomen(p)
+    } secus {
+        // Just a name (type inference): fixum x = 42
+        nomen = parseNomen(p)
+    }
+
+    // -------------------------------------------------------------------------
+    // Parse optional initializer
+    // -------------------------------------------------------------------------
+    varia initium = nihil qua Expressia?
+
+    si p.congruet(SymbolumGenus.Aequale) {
+        initium = parseExpressia(p)
+    }
+
+    redde {
+        locus: locus,
+        genus: variaGenus,
+        nomen: nomen,
+        seriesForma: seriesForma,
+        typus: typus,
+        initium: initium
+    } qua VariaSententia
+}

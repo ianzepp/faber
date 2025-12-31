@@ -1,0 +1,136 @@
+/// Action Statement Parsers
+///
+/// Simple action statements: redde, rumpe, perge, iace, scribe.
+/// These are the smallest, most self-contained statement parsers.
+///
+/// GRAMMAR:
+///   returnStmt := 'redde' expression?
+///   breakStmt := 'rumpe'
+///   continueStmt := 'perge'
+///   throwStmt := ('iace' | 'mori') expression
+///   outputStmt := ('scribe' | 'vide' | 'mone') expression (',' expression)*
+///
+/// LATIN VOCABULARY:
+/// - redde = return (give back)
+/// - rumpe = break
+/// - perge = continue (proceed)
+/// - iace = throw
+/// - mori = die/panic
+/// - scribe = write/log
+/// - vide = see/debug
+/// - mone = warn
+
+// Forward declaration for expression parsing
+// (will be provided by expression parser module)
+functio parseExpressia(Parser p) -> Expressia
+
+/// Parse return statement
+///
+/// GRAMMAR: returnStmt := 'redde' expression?
+///
+/// Return value is optional - bare 'redde' returns void.
+/// Doesn't consume expression if next token is closing brace.
+functio parseReddeSententia(Parser p) -> ReddeSententia {
+    fixum locus = p.specta(0).locus
+
+    // Consume 'redde' keyword
+    p.expectaVerbum("redde", ParserErrorCodice.ExpectaturRedde)
+
+    // Check if there's a return value
+    // Don't parse expression if we hit closing brace or end
+    varia argumentum = nihil qua Expressia?
+
+    si non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
+        argumentum = parseExpressia(p)
+    }
+
+    redde {
+        locus: locus,
+        argumentum: argumentum
+    } qua ReddeSententia
+}
+
+/// Parse break statement
+///
+/// GRAMMAR: breakStmt := 'rumpe'
+///
+/// Exits the innermost loop.
+functio parseRumpeSententia(Parser p) -> RumpeSententia {
+    fixum locus = p.specta(0).locus
+
+    // Consume 'rumpe' keyword (already validated by caller)
+    p.procede()
+
+    redde {
+        locus: locus
+    } qua RumpeSententia
+}
+
+/// Parse continue statement
+///
+/// GRAMMAR: continueStmt := 'perge'
+///
+/// Skips to next loop iteration.
+functio parsePergeSententia(Parser p) -> PergeSententia {
+    fixum locus = p.specta(0).locus
+
+    // Consume 'perge' keyword (already validated by caller)
+    p.procede()
+
+    redde {
+        locus: locus
+    } qua PergeSententia
+}
+
+/// Parse throw/panic statement
+///
+/// GRAMMAR: throwStmt := ('iace' | 'mori') expression
+///
+/// Two severity levels:
+/// - iace (throw): recoverable, can be caught
+/// - mori (die): fatal/panic, unrecoverable
+functio parseIaceSententia(Parser p, bivalens fatalis) -> IaceSententia {
+    fixum locus = p.specta(0).locus
+
+    // Consume keyword (iace or mori, already validated by caller)
+    p.procede()
+
+    // Parse the error expression
+    fixum argumentum = parseExpressia(p)
+
+    redde {
+        locus: locus,
+        fatalis: fatalis,
+        argumentum: argumentum
+    } qua IaceSententia
+}
+
+/// Parse output statement (scribe/vide/mone)
+///
+/// GRAMMAR: outputStmt := ('scribe' | 'vide' | 'mone') expression (',' expression)*
+///
+/// Maps to console output:
+/// - scribe → console.log
+/// - vide → console.debug
+/// - mone → console.warn
+functio parseScribeSententia(Parser p, ScribeGradus gradus) -> ScribeSententia {
+    fixum locus = p.specta(0).locus
+
+    // Consume keyword (already validated by caller)
+    p.procede()
+
+    // Parse first argument (required)
+    varia argumenta = [] qua lista<Expressia>
+    argumenta.adde(parseExpressia(p))
+
+    // Parse additional comma-separated arguments
+    dum p.congruet(SymbolumGenus.Virgula) {
+        argumenta.adde(parseExpressia(p))
+    }
+
+    redde {
+        locus: locus,
+        gradus: gradus,
+        argumenta: argumenta
+    } qua ScribeSententia
+}
