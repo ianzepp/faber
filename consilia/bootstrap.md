@@ -55,24 +55,24 @@ These features are non-negotiable for a working compiler.
 | String concatenation       |        [~]         | Output building (needs allocator)     |
 | `scriptum()` formatting    |        [x]         | Error messages, code output           |
 | I/O streams                |        [x]         | stdin/stdout/stderr all work          |
-| Basic error handling       |        [~]         | `iace`/`mori` work, `tempta` doesn't  |
+| Basic error handling       |        [x]         | `iace`/`mori` work; see §5 for design |
 
 ### P1: Highly Desirable
 
 Would make the bootstrap significantly cleaner.
 
-| Feature                   | Current Zig Status | Notes                               |
-| ------------------------- | :----------------: | ----------------------------------- |
-| Object destructuring      |        [x]         | Cleaner AST unpacking               |
-| Array destructuring       |        [x]         | Multi-value returns                 |
-| `copia<T>` (sets)         |        [~]         | Keyword sets, visited node tracking |
-| `cura...fit` (resources)  |        [x]         | Allocator scoping                   |
-| `custodi` (guard clauses) |        [x]         | Early returns in parser             |
-| `fac...cape` (scoped try) |        [x]         | Local error handling                |
-| `adfirma` (assert)        |        [x]         | Invariant checks                    |
-| Default parameter values  |        [ ]         | Parser options (can work around)    |
-| `prae` (comptime params)  |        [x]         | Generic type functions              |
-| `typus` (type aliases)    |        [x]         | Cleaner type names                  |
+| Feature                   | Current Zig Status | Notes                                 |
+| ------------------------- | :----------------: | ------------------------------------- |
+| Object destructuring      |        [x]         | Cleaner AST unpacking                 |
+| Array destructuring       |        [x]         | Multi-value returns                   |
+| `copia<T>` (sets)         |        [~]         | Keyword sets, visited node tracking   |
+| `cura...fit` (resources)  |        [x]         | Allocator scoping                     |
+| `custodi` (guard clauses) |        [x]         | Early returns in parser               |
+| `fac...cape` (scoped try) |        [~]         | Emits comment; use Zig idiom instead  |
+| `adfirma` (assert)        |        [x]         | Invariant checks                      |
+| Default parameter values  |        [~]         | Faber has `vel`; Zig fix is ~20 lines |
+| `prae` (comptime params)  |        [x]         | Generic type functions                |
+| `typus` (type aliases)    |        [x]         | Cleaner type names                    |
 
 ### P2: Nice to Have
 
@@ -103,7 +103,7 @@ Features explicitly not needed for bootstrap.
 | Compression           | No compressed I/O           |
 | Database              | No persistence              |
 
-## Critical Gaps to Address
+## Implementation Notes
 
 ### 1. String Operations (SOLVED)
 
@@ -207,21 +207,38 @@ cat input.fab | faber compile -t zig > output.zig
 
 File I/O (`solum` module) is deferred — not needed for bootstrap.
 
-### 5. Error Collection (MEDIUM)
+### 5. Error Handling (DESIGN DECISION)
 
-**Problem:** `tempta...cape` not implemented for Zig (emits `[-]`).
+**Problem:** `tempta...cape` maps poorly to Zig's error model.
 
-**Current state:** `iace` and `mori` work. No structured error recovery.
+**Current state:** Zig codegen emits comments for `tempta`/`fac...cape` blocks because Zig uses error unions (`!T`) and `catch` on expressions, not try/catch blocks. This is intentional, not a gap.
 
-**Required for:** Parser error recovery, collecting multiple errors.
+**Why this is fine for bootstrap:**
 
-**Solution for bootstrap:** Use Zig's native error handling:
+Zig's error model is fundamentally different:
+- Functions return `!T` (value or error)
+- Errors are caught at expression level: `riskyCall() catch |err| { ... }`
+- No exception unwinding — errors are explicit values
 
-- Functions return `!T` (error union)
-- Collect errors in a `lista<Error>` passed as parameter
-- Use `catch` at call sites to accumulate
+The bootstrap compiler should use Zig-idiomatic patterns:
 
-This matches Zig idiom better than exception-style `tempta/cape`.
+```faber
+// Instead of tempta/cape, use error-returning functions
+functio parseToken() fit Token! {
+    custodi source[current] != nihil aliter iace ParseError.UnexpectedEnd
+    // ... parsing logic
+}
+
+// Collect errors in a lista passed as parameter
+functio parse(lista<ParseError> errors) fit Program {
+    fixum token = parseToken() cape err {
+        errors.adde(err)
+        redde nihil
+    }
+}
+```
+
+The `!` suffix on return types and `cape` on expressions (not blocks) would need implementation, but the current `iace`/`mori` + `lista<Error>` pattern works.
 
 ### 6. Unused Parameters (LOW)
 
@@ -306,17 +323,235 @@ Explicitly excluded from bootstrap:
 - [x] `mone` → stderr
 - [x] `lege()` → stdin
 
-### Phase 4: Error Handling
+### Phase 4: Error Handling (Deferred)
 
-- [ ] Error collection pattern (lista-based)
-- [ ] Clean `!T` return type inference
-- [ ] `fac...cape` scoped error handling
+Zig error handling is fundamentally different from try/catch. The `tempta`/`fac...cape` constructs emit comments intentionally. For bootstrap, use:
+
+- [x] `iace` / `mori` — work correctly
+- [x] `lista<Error>` accumulation — works with existing collection support
+- [ ] Expression-level `cape` — would need `expr cape err { }` syntax (optional)
+- [ ] `!T` return type suffix — would enable Zig error unions (optional)
+
+The current primitives are sufficient for bootstrap. Zig-idiomatic error handling can be added later.
 
 ### Phase 5: Bootstrap
 
-- [ ] Rewrite `fons/` in Faber using bootstrap subset
-- [ ] Compile Faber compiler to Zig
-- [ ] Self-host: compiled Zig compiler compiles itself
+See detailed analysis below.
+
+- [ ] **5a:** Core types — AST nodes, Token, SemanticType as `genus`/`discretio`
+- [ ] **5b:** Tokenizer — Refactor closures → struct (~1,200 lines)
+- [ ] **5c:** Parser — Largest module (~5,000 lines), complex state
+- [ ] **5d:** Semantic — Symbol tables, type checking (~2,000 lines)
+- [ ] **5e:** Codegen (Zig only) — Handler functions (~3,500 lines)
+- [ ] **5f:** CLI — Arg parsing, orchestration (~600 lines)
+- [ ] **5g:** Integration — Compile, debug, iterate until self-hosting
+
+## Phase 5 Detailed Analysis
+
+### Source Code Metrics
+
+| Module | Lines (non-test) | Files | Purpose |
+|--------|------------------|-------|---------|
+| `parser/` | 7,630 | 4 | AST types (2,318) + parser (4,905) |
+| `semantic/` | 2,630 | 4 | Type checking, scope binding |
+| `tokenizer/` | 1,223 | 3 | Lexical analysis |
+| `lexicon/` | ~1,400 | 6 | Keywords, types, nouns |
+| `codegen/zig/` | 3,528 | ~50 | Zig-only codegen |
+| `prettier/` | 1,618 | 5 | Formatter (skip for bootstrap) |
+| `cli.ts` | 583 | 1 | Entry point |
+| **Bootstrap total** | **~17,000** | | Excluding prettier, other targets |
+
+### AST Complexity
+
+| Type | Count | Notes |
+|------|-------|-------|
+| Statement variants | 34 | Large `discretio` needed |
+| Expression variants | 26 | Another large `discretio` |
+| Supporting types | ~14 | Parameters, patterns, etc. |
+| **Total AST nodes** | **~74** | All need `genus` definitions |
+
+Parser has ~65 parsing functions. Semantic analyzer has ~30 analysis functions.
+
+### Structural Refactoring Required
+
+**1. Closure-Heavy Design → Struct Methods**
+
+All three core modules use nested functions closing over mutable state:
+
+```typescript
+// Current TypeScript pattern
+function tokenize(source: string) {
+    let current = 0;
+    let tokens: Token[] = [];
+    function advance() { return source[current++]; }
+    // ... 20+ nested functions
+}
+```
+
+Must become explicit struct with methods:
+
+```faber
+genus Tokenizer {
+    textus source
+    numerus current
+    lista<Token> tokens
+
+    publicum functio advance() fit textus {
+        fixum c = ego.source[ego.current]
+        ego.current = ego.current + 1
+        redde c
+    }
+}
+```
+
+This is mechanical but touches every function in tokenizer, parser, and semantic modules.
+
+**2. Large Discriminated Unions**
+
+TypeScript uses discriminated unions with `type` field:
+
+```typescript
+type Statement = ImportaDeclaration | VariaDeclaration | ... // 34 types
+switch (node.type) {
+    case 'ImportaDeclaration': ...
+}
+```
+
+Faber equivalent using `ordo` + `discretio`:
+
+```faber
+ordo NodeKind {
+    ImportaDeclaration
+    VariaDeclaration
+    // ... 34 members
+}
+
+discretio Statement {
+    ImportaDeclaration { specifiers: lista<ImportSpecifier>, ... }
+    VariaDeclaration { name: textus, init: Expression?, ... }
+    // ... 34 variants
+}
+```
+
+Works but verbose. Consider grouping into categories (declarations, control flow, etc.) for ergonomics.
+
+**3. Property Optionality**
+
+TypeScript: `returnType?: TypeAnnotation`
+
+Faber: Use nullable `T?` types with explicit null checks:
+
+```faber
+genus FunctioDeclaration {
+    TypeAnnotation? returnType  // nullable
+}
+
+// Usage requires explicit check
+si node.returnType != nihil {
+    fixum rt = node.returnType!  // force unwrap after check
+}
+```
+
+**4. No Literal String Types**
+
+TypeScript discriminants like `type: 'Identifier'` become enum values:
+
+```faber
+ordo NodeKind {
+    Identifier
+    BinaryExpression
+    CallExpression
+    // ... 60+ members
+}
+```
+
+### What Ports Easily
+
+| Feature | Notes |
+|---------|-------|
+| Tokenizer (no regex) | Already uses char-by-char, range checks |
+| Switch dispatch | `elige` maps directly |
+| Error accumulation | `lista<Error>` pattern works |
+| Symbol tables | `tabula<textus, Symbol>` ready |
+| Recursive tree walking | Standard recursion |
+| stdin/stdout I/O | `lege()`/`scribe` implemented |
+
+### Blocking Issues
+
+| Issue | Severity | Fix |
+|-------|----------|-----|
+| Default parameters | Low | ~20 line codegen fix (see below) |
+| Regex (1 use) | Low | Replace with character loop |
+| String `.trim()` | Low | Implement as helper function |
+| `tempta...cape` | N/A | Not a gap; use `iace`/`mori` + `lista<Error>` |
+
+**Default parameters:** Faber supports `vel` for defaults:
+
+```faber
+functio greet(textus name vel "World") fit textus { ... }
+```
+
+TypeScript emits `name: string = "World"` correctly. **Zig codegen currently ignores `vel`** because Zig doesn't have default parameter syntax. However, this is a **~20 line codegen fix**:
+
+```zig
+// Faber: functio peek(numerus offset vel 0) fit Token
+// Current Zig output (wrong): fn peek(offset: i64) Token { ... }
+// Fixed Zig output:
+fn peek(offset_param: ?i64) Token {
+    const offset = offset_param orelse 0;
+    // ... rest of body
+}
+```
+
+The fix: in `genFunctioDeclaration`, detect params with `defaultValue`, emit them as optional (`?T`), and inject `const name = name_param orelse <default>;` at the start of the body. Not a blocker.
+
+### Effort Estimate
+
+| Phase | Scope | Days |
+|-------|-------|------|
+| 5a: Core Types | AST nodes, Token, types as `genus`/`discretio` | 2-3 |
+| 5b: Tokenizer | Refactor closures → struct | 2-3 |
+| 5c: Parser | Largest module, complex state | 5-7 |
+| 5d: Semantic | Symbol tables, type checking | 3-4 |
+| 5e: Codegen | Zig handlers only | 4-5 |
+| 5f: CLI | Arg parsing, orchestration | 1 |
+| 5g: Integration | Debug, iterate | 3-5 |
+| **Total** | | **20-28 days** |
+
+### Recommended Bootstrap Strategy
+
+**Minimal viable compiler first:**
+
+1. **Skip `prettier/`** — Not needed for compilation
+2. **Skip other codegen targets** — Only emit Zig
+3. **Defer semantic analysis** — Emit untyped Zig initially, let Zig compiler catch type errors
+4. **Add semantics incrementally** — Once basic pipeline works
+
+This reduces initial scope to ~12,000 lines (tokenizer + parser + zig codegen + cli).
+
+**Incremental self-hosting:**
+
+1. Write Faber source for one module (e.g., tokenizer)
+2. Compile to Zig using TypeScript compiler
+3. Verify Zig output compiles and runs correctly
+4. Repeat for parser, then codegen
+5. Once all modules work, compile the Faber compiler with itself
+
+**Parallel development path:**
+
+```
+TypeScript compiler (existing)
+        ↓ compiles
+Faber source (new)
+        ↓ produces
+Zig source
+        ↓ zig build
+Native binary
+        ↓ compiles (same Faber source)
+Zig source (must match above)
+```
+
+Round-trip verification: both compilers produce identical Zig output.
 
 ## Metrics for Readiness
 
@@ -357,4 +592,5 @@ This moves complexity from inline codegen to a testable Zig library. See `consil
 | 2025-12-30 | Remove arrow syntax from lambdas | Simplify to `pro x: expr` only         |
 | 2025-12-30 | Lambda type inference            | Semantic analysis provides return type |
 | 2025-12-30 | stdin/stdout over file I/O       | Simpler, more Unix-idiomatic           |
+| 2025-12-30 | Phase 5 detailed analysis        | ~17k lines, 20-28 days estimated       |
 ````
