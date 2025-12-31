@@ -3,6 +3,8 @@
 /// Centralized error definitions for lexical analysis.
 /// Each error has a code (L-prefix), text, and help message.
 
+ex "../ast/positio" importa Locus
+
 /// Error codes for lexical failures
 /// L-prefix distinguishes from parser (P) and semantic (S) errors
 ordo LexorErrorCodice {

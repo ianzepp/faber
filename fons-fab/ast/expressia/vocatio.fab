@@ -4,11 +4,7 @@
 //      VocatioExpressia: foo(x, y)
 //      MembrumExpressia: obj.prop, arr[0]
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 // Forward declaration
 discretio Expressia {

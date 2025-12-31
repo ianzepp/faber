@@ -3,11 +3,7 @@
 // WHY: The parser produces statements that can be any of these types.
 //      Using an ordo enum for discriminant.
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 /// Statement type discriminant
 ordo SententiaGenus {

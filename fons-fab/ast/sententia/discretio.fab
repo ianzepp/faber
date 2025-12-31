@@ -3,11 +3,7 @@
 // WHY: Tagged unions enable type-safe variants with payloads.
 //      Each variant has a compiler-managed tag for pattern matching.
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 genus Nomen {
     Locus locus

@@ -3,11 +3,7 @@
 // WHY: Actions perform side effects or control flow jumps.
 //      Includes print, return, break, continue.
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 // Forward declarations
 discretio Expressia {

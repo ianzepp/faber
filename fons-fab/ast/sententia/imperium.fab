@@ -3,11 +3,7 @@
 // WHY: Control flow directs program execution.
 //      Includes conditionals, loops, switch, pattern matching.
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 // Forward declarations
 discretio Expressia {

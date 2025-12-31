@@ -3,11 +3,7 @@
 // WHY: Identifiers are the most basic named references in code.
 //      EgoExpressia represents 'ego' (self/this).
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 /// An identifier - a named reference
 genus Nomen {

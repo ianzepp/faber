@@ -5,11 +5,7 @@
 //
 // NOTE: Each type's full fields are defined in their respective files.
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 /// Expression type discriminant
 ordo ExpressiaGenus {

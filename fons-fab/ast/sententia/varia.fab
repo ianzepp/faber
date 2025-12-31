@@ -3,11 +3,7 @@
 // WHY: Variable declarations bind values to names.
 //      Supports const (fixum), let (varia), and async variants.
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 // Forward declarations
 discretio Expressia {

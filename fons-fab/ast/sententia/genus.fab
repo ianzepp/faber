@@ -3,11 +3,7 @@
 // WHY: Genus defines data structures with fields and methods.
 //      Supports inheritance, interfaces, abstract classes.
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 // Forward declarations
 discretio Expressia {

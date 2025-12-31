@@ -4,11 +4,7 @@
 //      Faber syntax: pro x: x * 2
 //      Faber syntax: pro x, y: x + y
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 // Forward declarations
 discretio Expressia {

@@ -3,12 +3,7 @@
 // WHY: Every AST node needs position info for error messages.
 //      Comments attach to nodes for formatting preservation.
 
-// NOTE: Locus duplicated until module imports work.
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "./positio" importa Locus
 
 /// Comment type enumeration
 ordo NotaGenus {

@@ -3,11 +3,7 @@
 // WHY: Test declarations define test suites and individual tests.
 //      Supports setup/teardown, skip, todo.
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 // Forward declarations
 discretio Sententia {

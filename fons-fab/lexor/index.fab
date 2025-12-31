@@ -28,6 +28,10 @@
 /// - numerus = number
 /// - fractus = float (broken number)
 
+ex "../ast/positio" importa Locus
+ex "../ast/lexema" importa Symbolum, SymbolumGenus
+ex "./errores" importa LexorError, LexorErrorCodice
+
 /// Result of lexical analysis
 genus LexorResultatum {
     lista<Symbolum> symbola       // Token stream (ends with Finis)
@@ -740,16 +744,12 @@ genus Lexor {
 /// Never throws - all errors collected in resultatum.errores.
 ///
 /// Usage:
-///   cura arena fit alloc {
-///       fixum result = lexare("si verum { scribe 42 }")
-///       ex result.symbola pro sym { ... }
-///   }
+///   fixum result = lexare("si verum { scribe 42 }")
+///   ex result.symbola pro sym { ... }
 ///
-/// The `curata alloc` modifier declares this function receives an allocator.
-/// Call sites must be inside a `cura` block; the allocator is auto-injected.
-functio lexare(textus fons) curata alloc -> LexorResultatum {
+functio lexare(textus fons) -> LexorResultatum {
     // Initialize scanner state
-    varia lexor = Lexor.init(alloc, {
+    varia lexor = Lexor.init({
         fons: fons,             // Source text to tokenize
         index: 0,               // Start at beginning
         linea: 1,               // Lines are 1-based

@@ -3,11 +3,7 @@
 // WHY: Functions are the primary unit of behavior.
 //      Supports sync/async, generators, type parameters.
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 // Forward declarations
 discretio Expressia {

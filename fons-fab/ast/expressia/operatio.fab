@@ -4,11 +4,7 @@
 //      Binary: a + b, a == b, a && b
 //      Unary: -x, !x
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 // Forward declaration
 discretio Expressia {

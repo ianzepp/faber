@@ -3,11 +3,7 @@
 // WHY: Error handling enables graceful failure recovery.
 //      Supports try/catch/finally and throw/panic.
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 // Forward declarations
 discretio Expressia {

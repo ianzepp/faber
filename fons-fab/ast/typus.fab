@@ -12,12 +12,7 @@
 /// - compendium = shorthand
 /// - series = array/list
 
-// Forward declaration for position
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "./positio" importa Locus
 
 // Forward declaration for literals (used as type parameters)
 ordo LitteraGenus {
@@ -40,11 +35,11 @@ genus Littera {
 discretio TypusParametrum {
     /// Type annotation parameter: lista<textus>
     Typus {
-        TypusAnnotatio typus
+        TypusAnnotatio adnotatio
     }
     /// Literal parameter: numerus<32>
     Littera {
-        Littera littera
+        Littera valor
     }
 }
 

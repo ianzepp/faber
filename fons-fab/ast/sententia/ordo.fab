@@ -3,11 +3,7 @@
 // WHY: Enums define a fixed set of named constants.
 //      Supports numeric and string values.
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 genus Nomen {
     Locus locus

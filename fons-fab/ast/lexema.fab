@@ -2,16 +2,8 @@
 //
 // WHY: The tokenizer produces a stream of tokens that the parser consumes.
 //      Each token has a type, value, and position.
-//
-// NOTE: Locus is duplicated here until module imports work in bootstrap.
-//       See positio.fab for the canonical definition.
 
-/// A single point in source code (duplicated from positio.fab)
-genus Locus {
-    numerus linea      // 1-based line number
-    numerus columna    // 1-based column number  
-    numerus index      // 0-based byte offset from start
-}
+ex "./positio" importa Locus
 
 /// Token type enumeration
 ordo SymbolumGenus {

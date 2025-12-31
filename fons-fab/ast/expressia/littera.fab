@@ -3,11 +3,7 @@
 // WHY: Literals represent constant values in source code -
 //      numbers, strings, booleans, null.
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 /// Literal value type - what kind of constant this is
 ordo LitteraGenus {

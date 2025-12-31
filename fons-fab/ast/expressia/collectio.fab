@@ -4,11 +4,7 @@
 //      SeriesExpressia: [1, 2, 3]
 //      ObiectumExpressia: { name: "Alice", age: 30 }
 
-genus Locus {
-    numerus linea
-    numerus columna
-    numerus index
-}
+ex "../positio" importa Locus
 
 // Forward declarations
 discretio Expressia {
