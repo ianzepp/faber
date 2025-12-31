@@ -388,24 +388,31 @@ export type ReturnVerb = 'arrow' | 'fit' | 'fiet' | 'fiunt' | 'fient';
  * Function declaration statement.
  *
  * GRAMMAR (in EBNF):
- *   funcDecl := 'abstractus'? 'futura'? 'functio' IDENTIFIER '(' paramList ')' ('->' typeAnnotation)? blockStmt?
+ *   funcDecl := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? blockStmt?
  *   paramList := (typeParamDecl ',')* (parameter (',' parameter)*)?
+ *   funcModifier := 'futura' | 'cursor' | 'curata' IDENTIFIER
+ *   returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
  *
- * INVARIANT: async flag set by presence of 'futura' keyword.
+ * INVARIANT: async flag set by presence of 'futura' modifier or fiet/fient verb.
+ * INVARIANT: generator flag set by presence of 'cursor' modifier or fiunt/fient verb.
  * INVARIANT: params is always an array (empty if no parameters).
  * INVARIANT: typeParams contains compile-time type parameters (prae typus T).
  * INVARIANT: isAbstract is true for abstract methods (no body).
  * INVARIANT: body is optional only when isAbstract is true.
+ * INVARIANT: curatorName is set when 'curata NAME' modifier present.
  *
  * Target mappings:
- *   functio           → function (TS), def (Py), fn (Zig), fn (Rust)
- *   futura functio    → async function (TS), async def (Py), fn returning !T (Zig)
- *   cursor functio    → function* (TS), generator def (Py), N/A (Zig)
- *   abstractus functio → abstract method (TS), @abstractmethod (Py), ERROR (Zig/Rust)
+ *   functio                    → function (TS), def (Py), fn (Zig), fn (Rust)
+ *   functio() futura           → async function (TS), async def (Py), fn returning !T (Zig)
+ *   functio() cursor           → function* (TS), generator def (Py), N/A (Zig)
+ *   functio() curata alloc     → function with allocator context (Zig)
+ *   abstractus functio         → abstract method (TS), @abstractmethod (Py), ERROR (Zig/Rust)
  *
  * Examples:
- *   functio salve(nomen: textus) -> textus { ... }
- *   futura functio cede() { ... }
+ *   functio salve(textus nomen) -> textus { ... }
+ *   functio fetch(textus url) futura -> Response { ... }
+ *   functio range(numerus n) cursor -> numerus { ... }
+ *   functio alloc(textus s) curata alloc -> T { ... }
  *   functio max(prae typus T, T a, T b) -> T { ... }
  *   abstractus functio speak() -> textus
  */
@@ -418,6 +425,7 @@ export interface FunctioDeclaration extends BaseNode {
     body?: BlockStatement;
     async: boolean;
     generator: boolean;
+    curatorName?: string; // WHY: Allocator binding name from 'curata NAME' modifier
     isConstructor?: boolean;
     isAbstract?: boolean;
     visibility?: Visibility;
@@ -743,6 +751,10 @@ export interface PactumDeclaration extends BaseNode {
 
 /**
  * Pactum method signature (no body, contract only).
+ *
+ * GRAMMAR:
+ *   pactumMethod := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause?
+ *   funcModifier := 'futura' | 'cursor' | 'curata' IDENTIFIER
  */
 export interface PactumMethod extends BaseNode {
     type: 'PactumMethod';
@@ -751,6 +763,7 @@ export interface PactumMethod extends BaseNode {
     returnType?: TypeAnnotation;
     async: boolean;
     generator: boolean;
+    curatorName?: string;
 }
 
 // ---------------------------------------------------------------------------

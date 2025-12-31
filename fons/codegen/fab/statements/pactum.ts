@@ -23,18 +23,23 @@ export function genPactumDeclaration(node: PactumDeclaration, g: FabGenerator): 
     for (const method of node.methods) {
         const mParts: string[] = [];
 
+        mParts.push('functio');
+        mParts.push(method.name.name);
+
+        const params = method.params.map(p => g.genParameter(p)).join(', ');
+        mParts[mParts.length - 1] += `(${params})`;
+
+        // Function modifiers (after params): futura, cursor, curata NAME
         if (method.async) {
             mParts.push('futura');
         }
         if (method.generator) {
             mParts.push('cursor');
         }
-
-        mParts.push('functio');
-        mParts.push(method.name.name);
-
-        const params = method.params.map(p => g.genParameter(p)).join(', ');
-        mParts[mParts.length - 1] += `(${params})`;
+        if (method.curatorName) {
+            mParts.push('curata');
+            mParts.push(method.curatorName);
+        }
 
         if (method.returnType) {
             mParts.push('->');

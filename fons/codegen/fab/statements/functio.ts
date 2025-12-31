@@ -2,9 +2,10 @@
  * Faber Code Generator - FunctioDeclaration
  *
  * TRANSFORMS:
- *   FunctioDeclaration -> functio name(params) -> returnType { body }
+ *   FunctioDeclaration -> functio name(params) modifier* -> returnType { body }
  *
- * STYLE: Uses -> for return type (canonical), not fit/fiet/fiunt/fient
+ * STYLE: Modifiers (futura, cursor, curata) come after params, before return type.
+ *        Uses -> for return type (canonical), not fit/fiet/fiunt/fient
  */
 
 import type { FunctioDeclaration, BlockStatement } from '../../../parser/ast';
@@ -13,19 +14,9 @@ import type { FabGenerator } from '../generator';
 export function genFunctioDeclaration(node: FunctioDeclaration, g: FabGenerator): string {
     const parts: string[] = [];
 
-    // Abstract modifier
+    // Abstract modifier (stays at front - it's a declaration modifier, not a function modifier)
     if (node.isAbstract) {
         parts.push('abstractus');
-    }
-
-    // Async modifier
-    if (node.async) {
-        parts.push('futura');
-    }
-
-    // Generator modifier
-    if (node.generator) {
-        parts.push('cursor');
     }
 
     parts.push('functio');
@@ -39,6 +30,18 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: FabGenerator)
     // Parameters
     const params = node.params.map(p => g.genParameter(p)).join(', ');
     parts[parts.length - 1] += `(${typeParams}${params})`;
+
+    // Function modifiers (after params): futura, cursor, curata NAME
+    if (node.async) {
+        parts.push('futura');
+    }
+    if (node.generator) {
+        parts.push('cursor');
+    }
+    if (node.curatorName) {
+        parts.push('curata');
+        parts.push(node.curatorName);
+    }
 
     // Return type (canonical: use -> arrow syntax)
     if (node.returnType) {

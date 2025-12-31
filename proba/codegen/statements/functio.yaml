@@ -1,12 +1,14 @@
-# Function declarations - functio, futura, fiunt, fiet, fient
+# Function declarations - functio with modifiers futura, cursor, curata
 # Maps Faber function syntax to target-language equivalents
 #
 # Syntax:
 #   functio name(params) -> ReturnType { body }
-#   futura functio name(params) { body }      -- async
-#   functio name() fiunt Type { body }        -- generator
-#   functio name() fiet Type { body }         -- async + return type
-#   functio name() fient Type { body }        -- async generator
+#   functio name(params) futura { body }         -- async (modifier after params)
+#   functio name(params) cursor -> Type { body } -- generator
+#   functio name(params) curata alloc -> Type    -- managed (allocator context)
+#   functio name() fiet Type { body }            -- async via verb (implies futura)
+#   functio name() fiunt Type { body }           -- generator via verb (implies cursor)
+#   functio name() fient Type { body }           -- async generator via verb
 #
 # Note: ts/py use contains (function body spans lines); rs/cpp/zig also use contains
 
@@ -286,10 +288,10 @@
 # Async Functions
 # =============================================================================
 
-# futura makes a function async
+# futura modifier makes a function async
 - name: async function with futura
   faber: |
-      futura functio fetch(url) {
+      functio fetch(url) futura {
         redde data
       }
   expect:
@@ -304,7 +306,7 @@
       zig:
           - '!void'
       fab:
-          - 'futura functio fetch(url)'
+          - 'functio fetch(url) futura'
           - 'redde data'
 
 # fiet = async + return type (wraps in Promise/Awaitable)
@@ -344,7 +346,7 @@
       zig:
           - 'fn range() i64'
       fab:
-          - 'cursor functio range() -> numerus'
+          - 'functio range() cursor -> numerus'
           - 'redde 1'
 
 # fient = async generator (wraps in AsyncGenerator/AsyncIterator)
@@ -362,7 +364,7 @@
       zig:
           - 'fn stream() ![]const u8'
       fab:
-          - 'futura cursor functio stream() -> textus'
+          - 'functio stream() futura cursor -> textus'
           - 'redde "chunk"'
 
 # =============================================================================

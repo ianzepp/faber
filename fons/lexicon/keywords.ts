@@ -197,6 +197,10 @@ export const keywords: KeywordEntry[] = [
     { latin: 'praefixum', meaning: 'comptime block', category: 'modifier' },
     // WHY: "cursor" (runner) for generator/iterator functions
     { latin: 'cursor', meaning: 'generator', category: 'modifier' },
+    // WHY: "curata" (managed, feminine past participle of curare) for allocator context
+    //      Function is "under management" - receives allocator from caller
+    //      Usage: functio f() curata alloc -> T { ... }
+    { latin: 'curata', meaning: 'managed (allocator)', category: 'modifier' },
     // WHY: "publicus/privatus" for visibility - default is public (struct semantics)
     { latin: 'publicus', meaning: 'public', category: 'modifier' },
     { latin: 'privatus', meaning: 'private', category: 'modifier' },

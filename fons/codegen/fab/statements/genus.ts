@@ -116,26 +116,16 @@ function genCreoDeclaration(node: FunctioDeclaration, g: FabGenerator): string {
 function genMethodDeclaration(node: FunctioDeclaration, g: FabGenerator): string {
     const parts: string[] = [];
 
-    // Visibility
+    // Visibility (stays at front - declaration modifier)
     if (node.visibility === 'private') {
         parts.push('privatus');
     } else if (node.visibility === 'protected') {
         parts.push('protectus');
     }
 
-    // Abstract
+    // Abstract (stays at front - declaration modifier)
     if (node.isAbstract) {
         parts.push('abstractus');
-    }
-
-    // Async
-    if (node.async) {
-        parts.push('futura');
-    }
-
-    // Generator
-    if (node.generator) {
-        parts.push('cursor');
     }
 
     parts.push('functio');
@@ -144,6 +134,18 @@ function genMethodDeclaration(node: FunctioDeclaration, g: FabGenerator): string
     // Parameters
     const params = node.params.map(p => g.genParameter(p)).join(', ');
     parts[parts.length - 1] += `(${params})`;
+
+    // Function modifiers (after params): futura, cursor, curata NAME
+    if (node.async) {
+        parts.push('futura');
+    }
+    if (node.generator) {
+        parts.push('cursor');
+    }
+    if (node.curatorName) {
+        parts.push('curata');
+        parts.push(node.curatorName);
+    }
 
     // Return type
     if (node.returnType) {

@@ -616,8 +616,6 @@ export function parse(tokens: Token[]): ParserResult {
                 checkKeyword('privatus') ||
                 checkKeyword('generis') ||
                 checkKeyword('nexum') ||
-                checkKeyword('futura') ||
-                checkKeyword('cursor') ||
                 // Type keywords that could start a field
                 checkKeyword('textus') ||
                 checkKeyword('numerus') ||
@@ -712,7 +710,7 @@ export function parse(tokens: Token[]): ParserResult {
             return parseVariaDeclaration();
         }
 
-        if (checkKeyword('functio') || checkKeyword('futura') || checkKeyword('cursor')) {
+        if (checkKeyword('functio')) {
             return parseFunctioDeclaration();
         }
 
@@ -1168,35 +1166,41 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse function declaration.
      *
      * GRAMMAR:
-     *   funcDecl := ('futura' | 'cursor')* 'functio' IDENTIFIER '(' paramList ')' returnClause? blockStmt
+     *   funcDecl := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? blockStmt
      *   paramList := (typeParamDecl ',')* (parameter (',' parameter)*)?
      *   typeParamDecl := 'prae' 'typus' IDENTIFIER
+     *   funcModifier := 'futura' | 'cursor' | 'curata' IDENTIFIER
      *   returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
      *
-     * WHY: Arrow syntax for return types: "functio greet(textus name) -> textus"
-     *      'futura' prefix marks async functions (future/promise-based).
-     *      'cursor' prefix marks generator functions (yield-based).
+     * WHY: All function declarations start with 'functio' for consistent parsing.
+     *      Modifiers come after the parameter list, before the return clause.
+     *      'futura' marks async functions (future/promise-based).
+     *      'cursor' marks generator functions (yield-based).
+     *      'curata NAME' marks managed functions (receives allocator as NAME).
      *
      * TYPE PARAMETERS: 'prae typus T' declares compile-time type parameters.
      *      functio max(prae typus T, T a, T b) -> T { ... }
      *      Maps to: <T> (TS/Rust), TypeVar (Py), comptime T: type (Zig)
      *
      * RETURN TYPE VERBS: Latin verb forms encode async/generator semantics directly:
-     *      '->'    neutral arrow (semantics from prefix only)
+     *      '->'    neutral arrow (semantics from modifier only)
      *      'fit'   "it becomes" - sync, returns single value
      *      'fiet'  "it will become" - async, returns Promise<T>
      *      'fiunt' "they become" - sync generator, yields multiple values
      *      'fient' "they will become" - async generator, yields Promise values
      *
-     * When using verb forms, the futura/cursor prefix is NOT required - the verb
-     * itself carries the semantic information. The prefix becomes redundant:
-     *      functio compute() -> numerus { ... }    // arrow: sync by default
-     *      functio compute() fit numerus { ... }   // verb: explicitly sync
-     *      functio fetch() fiet textus { ... }     // verb implies async (no futura needed)
-     *      functio items() fiunt numerus { ... }   // verb implies generator (no cursor needed)
-     *      functio stream() fient datum { ... }    // verb implies async generator
+     * When using verb forms, the futura/cursor modifier is NOT required - the verb
+     * itself carries the semantic information. The modifier becomes redundant:
+     *      functio compute() -> numerus { ... }         // arrow: sync by default
+     *      functio compute() fit numerus { ... }        // verb: explicitly sync
+     *      functio fetch() futura -> textus { ... }     // modifier: async
+     *      functio fetch() fiet textus { ... }          // verb implies async
+     *      functio items() cursor -> numerus { ... }    // modifier: generator
+     *      functio items() fiunt numerus { ... }        // verb implies generator
+     *      functio stream() fient datum { ... }         // verb implies async generator
+     *      functio alloc(textus s) curata a -> T { ... } // managed, allocator bound as 'a'
      *
-     * Prefix is still allowed for emphasis, but verb/prefix conflicts are errors.
+     * Modifier is still allowed for emphasis, but verb/modifier conflicts are errors.
      *
      * NOT SUPPORTED (will produce parser errors):
      *   - TS-style param annotation: functio f(x: textus) (use: functio f(textus x))
@@ -1205,18 +1209,6 @@ export function parse(tokens: Token[]): ParserResult {
      */
     function parseFunctioDeclaration(): FunctioDeclaration {
         const position = peek().position;
-
-        // Parse optional prefixes (futura = async, cursor = generator)
-        let prefixAsync = false;
-        let prefixGenerator = false;
-
-        while (checkKeyword('futura') || checkKeyword('cursor')) {
-            if (matchKeyword('futura')) {
-                prefixAsync = true;
-            } else if (matchKeyword('cursor')) {
-                prefixGenerator = true;
-            }
-        }
 
         expectKeyword('functio', ParserErrorCode.ExpectedKeywordFunctio);
 
@@ -1228,6 +1220,23 @@ export function parse(tokens: Token[]): ParserResult {
         const { typeParams, params } = parseTypeAndParameterList();
 
         expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
+
+        // Parse optional modifiers after params: futura, cursor, curata NAME
+        let modifierAsync = false;
+        let modifierGenerator = false;
+        let curatorName: string | undefined;
+
+        while (checkKeyword('futura') || checkKeyword('cursor') || checkKeyword('curata')) {
+            if (matchKeyword('futura')) {
+                modifierAsync = true;
+            } else if (matchKeyword('cursor')) {
+                modifierGenerator = true;
+            } else if (matchKeyword('curata')) {
+                // curata requires an identifier for the allocator binding name
+                const curatorIdent = parseIdentifier();
+                curatorName = curatorIdent.name;
+            }
+        }
 
         let returnType: TypeAnnotation | undefined;
         let verbAsync: boolean | undefined;
@@ -1262,19 +1271,19 @@ export function parse(tokens: Token[]): ParserResult {
             returnVerb = 'fient';
         }
 
-        // Validate: futura/cursor prefixes cannot be used with fit/fiet/fiunt/fient verbs
-        // Verbs are exclusively for stream protocol; prefixes work only with arrow syntax
-        if (returnVerb !== 'arrow' && (prefixAsync || prefixGenerator)) {
+        // Validate: futura/cursor modifiers cannot be used with fit/fiet/fiunt/fient verbs
+        // Verbs are exclusively for stream protocol; modifiers work only with arrow syntax
+        if (returnVerb !== 'arrow' && returnVerb !== undefined && (modifierAsync || modifierGenerator)) {
             errors.push({
                 code: ParserErrorCode.PrefixVerbConflict,
-                message: 'Cannot combine futura/cursor with fit/fiet/fiunt/fient',
+                message: 'Cannot combine futura/cursor modifiers with fit/fiet/fiunt/fient verbs',
                 position,
             });
         }
 
-        // Merge semantics: verb determines behavior, otherwise use prefix
-        const async: boolean = returnVerb === undefined ? prefixAsync : returnVerb === 'arrow' ? prefixAsync : verbAsync!;
-        const generator: boolean = returnVerb === undefined ? prefixGenerator : returnVerb === 'arrow' ? prefixGenerator : verbGenerator!;
+        // Merge semantics: verb determines behavior, otherwise use modifier
+        const async: boolean = returnVerb === undefined ? modifierAsync : returnVerb === 'arrow' ? modifierAsync : verbAsync!;
+        const generator: boolean = returnVerb === undefined ? modifierGenerator : returnVerb === 'arrow' ? modifierGenerator : verbGenerator!;
 
         const body = parseBlockStatement();
 
@@ -1287,6 +1296,7 @@ export function parse(tokens: Token[]): ParserResult {
             body,
             async,
             generator,
+            curatorName,
             returnVerb,
             position,
         };
@@ -1800,7 +1810,8 @@ export function parse(tokens: Token[]): ParserResult {
      * GRAMMAR:
      *   genusMember := fieldDecl | methodDecl
      *   fieldDecl := ('privatus' | 'protectus')? 'generis'? typeAnnotation IDENTIFIER (':' expression)?
-     *   methodDecl := ('privatus' | 'protectus')? 'generis'? 'abstractus'? ('futura' | 'cursor')* 'functio' ...
+     *   methodDecl := ('privatus' | 'protectus')? 'generis'? 'abstractus'? 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? blockStmt?
+     *   funcModifier := 'futura' | 'cursor' | 'curata' IDENTIFIER
      *
      * WHY: Distinguishes between fields and methods by looking for 'functio' keyword.
      * WHY: Fields are public by default (struct semantics), use 'privatus' for private.
@@ -1815,8 +1826,6 @@ export function parse(tokens: Token[]): ParserResult {
         let isStatic = false;
         let isReactive = false;
         let isAbstract = false;
-        let prefixAsync = false;
-        let prefixGenerator = false;
 
         // Skip 'publicus' (no-op, fields are public by default)
         matchKeyword('publicus');
@@ -1839,15 +1848,6 @@ export function parse(tokens: Token[]): ParserResult {
             isAbstract = true;
         }
 
-        // Parse function modifiers (futura = async, cursor = generator)
-        while (checkKeyword('futura') || checkKeyword('cursor')) {
-            if (matchKeyword('futura')) {
-                prefixAsync = true;
-            } else if (matchKeyword('cursor')) {
-                prefixGenerator = true;
-            }
-        }
-
         // If we see 'functio', it's a method
         if (checkKeyword('functio')) {
             expectKeyword('functio', ParserErrorCode.ExpectedKeywordFunctio);
@@ -1859,6 +1859,22 @@ export function parse(tokens: Token[]): ParserResult {
             const params = parseParameterList();
 
             expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
+
+            // Parse optional modifiers after params: futura, cursor, curata NAME
+            let modifierAsync = false;
+            let modifierGenerator = false;
+            let curatorName: string | undefined;
+
+            while (checkKeyword('futura') || checkKeyword('cursor') || checkKeyword('curata')) {
+                if (matchKeyword('futura')) {
+                    modifierAsync = true;
+                } else if (matchKeyword('cursor')) {
+                    modifierGenerator = true;
+                } else if (matchKeyword('curata')) {
+                    const curatorIdent = parseIdentifier();
+                    curatorName = curatorIdent.name;
+                }
+            }
 
             let returnType: TypeAnnotation | undefined;
             let verbAsync: boolean | undefined;
@@ -1891,12 +1907,11 @@ export function parse(tokens: Token[]): ParserResult {
                 returnVerb = 'fient';
             }
 
-            // Validate: futura/cursor prefixes cannot be used with fit/fiet/fiunt/fient verbs
-            // Verbs are exclusively for stream protocol; prefixes work only with arrow syntax
-            if (returnVerb !== 'arrow' && (prefixAsync || prefixGenerator)) {
+            // Validate: futura/cursor modifiers cannot be used with fit/fiet/fiunt/fient verbs
+            if (returnVerb !== 'arrow' && returnVerb !== undefined && (modifierAsync || modifierGenerator)) {
                 errors.push({
                     code: ParserErrorCode.PrefixVerbConflict,
-                    message: 'Cannot combine futura/cursor with fit/fiet/fiunt/fient',
+                    message: 'Cannot combine futura/cursor modifiers with fit/fiet/fiunt/fient verbs',
                     position,
                 });
             }
@@ -1913,8 +1928,9 @@ export function parse(tokens: Token[]): ParserResult {
                 params,
                 returnType,
                 body,
-                async: returnVerb === undefined ? prefixAsync : returnVerb === 'arrow' ? prefixAsync : verbAsync!,
-                generator: returnVerb === undefined ? prefixGenerator : returnVerb === 'arrow' ? prefixGenerator : verbGenerator!,
+                async: returnVerb === undefined ? modifierAsync : returnVerb === 'arrow' ? modifierAsync : verbAsync!,
+                generator: returnVerb === undefined ? modifierGenerator : returnVerb === 'arrow' ? modifierGenerator : verbGenerator!,
+                curatorName,
                 isAbstract: isAbstract || undefined,
                 visibility: visibility !== 'public' ? visibility : undefined,
                 position,
@@ -2008,7 +2024,8 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse interface method signature.
      *
      * GRAMMAR:
-     *   pactumMethod := ('futura' | 'cursor')* 'functio' IDENTIFIER '(' paramList ')' returnClause?
+     *   pactumMethod := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause?
+     *   funcModifier := 'futura' | 'cursor' | 'curata' IDENTIFIER
      *   returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
      *
      * WHY: Method signatures without bodies. Same syntax as function declarations
@@ -2016,18 +2033,6 @@ export function parse(tokens: Token[]): ParserResult {
      */
     function parsePactumMethod(): PactumMethod {
         const position = peek().position;
-
-        // Parse optional prefixes (futura = async, cursor = generator)
-        let prefixAsync = false;
-        let prefixGenerator = false;
-
-        while (checkKeyword('futura') || checkKeyword('cursor')) {
-            if (matchKeyword('futura')) {
-                prefixAsync = true;
-            } else if (matchKeyword('cursor')) {
-                prefixGenerator = true;
-            }
-        }
 
         expectKeyword('functio', ParserErrorCode.ExpectedKeywordFunctio);
 
@@ -2038,6 +2043,22 @@ export function parse(tokens: Token[]): ParserResult {
         const params = parseParameterList();
 
         expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
+
+        // Parse optional modifiers after params: futura, cursor, curata NAME
+        let modifierAsync = false;
+        let modifierGenerator = false;
+        let curatorName: string | undefined;
+
+        while (checkKeyword('futura') || checkKeyword('cursor') || checkKeyword('curata')) {
+            if (matchKeyword('futura')) {
+                modifierAsync = true;
+            } else if (matchKeyword('cursor')) {
+                modifierGenerator = true;
+            } else if (matchKeyword('curata')) {
+                const curatorIdent = parseIdentifier();
+                curatorName = curatorIdent.name;
+            }
+        }
 
         let returnType: TypeAnnotation | undefined;
         let verbAsync: boolean | undefined;
@@ -2070,12 +2091,11 @@ export function parse(tokens: Token[]): ParserResult {
             returnVerb = 'fient';
         }
 
-        // Validate: futura/cursor prefixes cannot be used with fit/fiet/fiunt/fient verbs
-        // Verbs are exclusively for stream protocol; prefixes work only with arrow syntax
-        if (returnVerb !== 'arrow' && (prefixAsync || prefixGenerator)) {
+        // Validate: futura/cursor modifiers cannot be used with fit/fiet/fiunt/fient verbs
+        if (returnVerb !== 'arrow' && returnVerb !== undefined && (modifierAsync || modifierGenerator)) {
             errors.push({
                 code: ParserErrorCode.PrefixVerbConflict,
-                message: 'Cannot combine futura/cursor with fit/fiet/fiunt/fient',
+                message: 'Cannot combine futura/cursor modifiers with fit/fiet/fiunt/fient verbs',
                 position,
             });
         }
@@ -2085,8 +2105,9 @@ export function parse(tokens: Token[]): ParserResult {
             name,
             params,
             returnType,
-            async: returnVerb === undefined ? prefixAsync : returnVerb === 'arrow' ? prefixAsync : verbAsync!,
-            generator: returnVerb === undefined ? prefixGenerator : returnVerb === 'arrow' ? prefixGenerator : verbGenerator!,
+            async: returnVerb === undefined ? modifierAsync : returnVerb === 'arrow' ? modifierAsync : verbAsync!,
+            generator: returnVerb === undefined ? modifierGenerator : returnVerb === 'arrow' ? modifierGenerator : verbGenerator!,
+            curatorName,
             position,
         };
     }

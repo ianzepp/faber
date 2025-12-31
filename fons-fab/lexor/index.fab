@@ -745,8 +745,9 @@ genus Lexor {
 ///       ex result.symbola pro sym { ... }
 ///   }
 ///
-/// NOTE: `curator alloc` is auto-injected at call sites from enclosing cura block
-functio lexare(curator alloc, textus fons) -> LexorResultatum {
+/// The `curata alloc` modifier declares this function receives an allocator.
+/// Call sites must be inside a `cura` block; the allocator is auto-injected.
+functio lexare(textus fons) curata alloc -> LexorResultatum {
     // Initialize scanner state
     varia lexor = Lexor.init(alloc, {
         fons: fons,             // Source text to tokenize

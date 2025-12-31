@@ -154,8 +154,8 @@ describe('prettier plugin', () => {
         });
 
         test('async function', async () => {
-            const result = await format('futura functio fetch() { redde cede getData() }');
-            expect(result).toContain('futura functio fetch()');
+            const result = await format('functio fetch() futura { redde cede getData() }');
+            expect(result).toContain('functio fetch()');
         });
 
         test('import declaration', async () => {

@@ -601,33 +601,38 @@ This moves complexity from inline codegen to a testable Zig library. See `consil
 
 These patterns emerged during bootstrap implementation and should guide remaining phases.
 
-### Pattern 1: `curator alloc` Parameter Convention
+### Pattern 1: `curata` Function Modifier
 
-Functions needing heap allocation declare `curator alloc` as a parameter. The semantic analyzer detects this, and call sites auto-inject the allocator from the current `cura` block:
+Functions needing heap allocation use the `curata NAME` modifier after the parameter list. This declares that the function receives an allocator bound to NAME. Call sites must be inside a `cura` block:
 
 ```faber
-functio lexare(curator alloc, textus fons) -> LexorResultatum {
+functio lexare(textus fons) curata alloc -> LexorResultatum {
     // alloc is available here and passed to collection operations
     varia lista<Symbolum> symbola = [] qua lista<Symbolum>
     symbola.adde(symbolum)  // alloc auto-threaded
 }
 
-// Call site - alloc injected automatically
+// Call site - alloc injected automatically from cura block
 incipit ergo cura arena fit alloc {
     fixum result = lexare("source code")  // alloc from cura block
 }
 ```
 
+The modifier position (after params, before return type) matches `futura` and `cursor`:
+- `functio fetch(textus url) futura -> Response` — async
+- `functio range(numerus n) cursor -> numerus` — generator  
+- `functio lexare(textus fons) curata alloc -> LexorResultatum` — managed
+
 ### Pattern 2: Struct `init()` with Allocator
 
-For structs containing collections (`lista`, `tabula`, `copia`), use explicit `init()` that takes the allocator:
+For structs containing collections (`lista`, `tabula`, `copia`), use explicit `init()` that takes the allocator. The `init()` method uses `curata` to receive the allocator:
 
 ```faber
 genus Lexor {
     textus fons
     lista<Symbolum> symbola
     
-    publicum functio init(curator alloc, textus fons) -> Lexor {
+    publicum functio init(textus fons) curata alloc -> Lexor {
         redde Lexor.{
             fons: fons,
             symbola: [] qua lista<Symbolum>
@@ -635,8 +640,8 @@ genus Lexor {
     }
 }
 
-// Usage
-varia lexor = Lexor.init(alloc, fons)
+// Usage - alloc comes from enclosing cura block
+varia lexor = Lexor.init(fons)
 ```
 
 The Zig codegen automatically:
