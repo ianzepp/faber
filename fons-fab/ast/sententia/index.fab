@@ -54,7 +54,7 @@ ordo SententiaGenus {
     ExpressiaSententia
     IncipitSententia
     IncipietSententia
-    CuraMassa
+    PraeparaMassa
     CuraSententia
     AdSententia
     

@@ -19,8 +19,21 @@ genus MassaSententia {
     lista<Sententia> corpus
 }
 
-genus CuraMassa {
+/// Timing for praepara/postpara blocks
+ordo PraeparaTempus {
+    Praepara    // before (setup)
+    Postpara    // after (teardown)
+}
+
+/// Test setup/teardown block
+/// Example: praepara { lexer = init() }
+/// Example: praeparabit omnia { db = cede connect() }
+genus PraeparaMassa {
     Locus locus
+    PraeparaTempus tempus
+    bivalens async
+    bivalens omnia
+    MassaSententia corpus
 }
 
 /// Test modifier
@@ -44,5 +57,5 @@ genus ProbaSententia {
 genus ProbandumSententia {
     Locus locus
     textus nomen
-    lista<Sententia> corpus      // CuraMassa, ProbandumSententia, ProbaSententia
+    lista<Sententia> corpus      // PraeparaMassa, ProbandumSententia, ProbaSententia
 }
