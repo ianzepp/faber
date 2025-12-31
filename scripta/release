@@ -39,7 +39,7 @@ echo "=== Building faber ==="
 bun run build
 
 echo "=== Verifying exempla ==="
-bun run build:exempla
+bun run verify:exempla
 
 # Read current version
 CURRENT=$(jq -r .version package.json)
