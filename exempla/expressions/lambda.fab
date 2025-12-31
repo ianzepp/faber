@@ -1,26 +1,27 @@
 // Lambda expressions (arrow functions)
-// Pattern: pro param redde expr
+// Pattern: pro param: expr
+// Pattern: pro param -> <type>: expr
 
 incipit {
     // Simple lambda with single parameter
-    fixum double = pro x redde x * 2
+    fixum double = pro x: x * 2
     scribe(double(5))
 
     // Multi-parameter lambda
-    fixum add = pro a, b redde a + b
+    fixum add = pro a, b -> numerus: a + b
     scribe(add(3, 4))
 
     // Lambda with array map
     fixum numbers = [1, 2, 3]
-    fixum doubled = numbers.map(pro x redde x * 2)
+    fixum doubled = numbers.map(pro x: x * 2)
     scribe(doubled)
 
     // Lambda with array filter
-    fixum evens = numbers.filter(pro x redde x % 2 == 0)
+    fixum evens = numbers.filter(pro x: x % 2 == 0)
     scribe(evens)
 
     // Lambda stored and reused
-    fixum isPositive = pro n redde n > 0
+    fixum isPositive = pro n -> bivalens: n > 0
     scribe(isPositive(10))
     scribe(isPositive(-5))
 }
