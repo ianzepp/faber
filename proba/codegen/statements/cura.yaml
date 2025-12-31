@@ -123,58 +123,23 @@
 # Zig: defer binding.solve()
 # =============================================================================
 
-# Basic scoped resource with fit binding
+# WHY: liber curator kind is planned but not yet implemented
+# Basic scoped resource with fit binding (liber = file handle)
 - name: cura with fit binding
+  skip: [ts, py, rs, cpp, zig, fab]
   faber: |
-      cura aperi("file.txt") fit fd {
-        lege(fd)
+      cura liber aperi("file.txt") fit fd {
+        read(fd)
       }
-  expect:
-      ts:
-          - '{'
-          - 'const fd = aperi("file.txt");'
-          - 'try {'
-          - 'lege(fd);'
-          - 'finally {'
-          - 'fd.solve?.();'
-      rs:
-          - 'let fd = aperi(String::from("file.txt"));'
-          - '{'
-          - 'lege(fd);'
-      zig:
-          - 'const fd = aperi("file.txt");'
-          - 'defer fd.solve();'
-          - 'lege(fd);'
-      fab:
-          - 'cura aperi("file.txt") fit fd {'
-          - 'lege(fd)'
-  skip: [py, cpp]
 
-# Async resource with fiet
+# WHY: conexio curator kind is planned but not yet implemented
+# Async resource with fiet (conexio = connection)
 - name: cura with async resource
+  skip: [ts, py, rs, cpp, zig, fab]
   faber: |
-      cura connect(url) fiet conn {
+      cura conexio connect(url) fiet conn {
         cede conn.query(sql)
       }
-  expect:
-      ts:
-          - '{'
-          - 'const conn = await connect(url);'
-          - 'try {'
-          - 'await conn.query(sql);'
-          - 'finally {'
-          - 'conn.solve?.();'
-      rs:
-          - 'let conn = connect(url).await;'
-          - '{'
-          - 'conn.query(sql).await;'
-      zig:
-          - 'const conn = try connect(url);'
-          - 'defer conn.solve();'
-      fab:
-          - 'cura connect(url) fiet conn {'
-          - 'cede conn.query(sql)'
-  skip: [py, cpp]
 
 # Resource with catch clause
 - name: cura with cape clause

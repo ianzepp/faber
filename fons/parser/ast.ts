@@ -1253,6 +1253,25 @@ export interface ScriptumExpression extends BaseNode {
 }
 
 /**
+ * Read input expression.
+ *
+ * GRAMMAR (in EBNF):
+ *   legeExpr := 'lege' '(' ')'
+ *
+ * Reads all input from stdin as a string.
+ *
+ * Target mappings:
+ *   lege() → await Bun.stdin.text() (TS)
+ *   lege() → sys.stdin.read() (Py)
+ *   lege() → stdin.readAllAlloc(alloc, max) (Zig)
+ *   lege() → std::cin (C++)
+ *   lege() → std::io::stdin().read_to_string() (Rust)
+ */
+export interface LegeExpression extends BaseNode {
+    type: 'LegeExpression';
+}
+
+/**
  * Try-catch-finally statement.
  *
  * GRAMMAR (in EBNF):
@@ -1763,6 +1782,7 @@ export type Expression =
     | CollectionDSLExpression
     | AbExpression
     | ScriptumExpression
+    | LegeExpression
     | RegexLiteral;
 
 // ---------------------------------------------------------------------------

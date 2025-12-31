@@ -174,6 +174,8 @@ export function faberPrint(path: AstPath<AstNode>, options: FaberOptions, print:
             return printPraefixumExpression(path, options, print);
         case 'ScriptumExpression':
             return printScriptumExpression(path, options, print);
+        case 'LegeExpression':
+            return 'lege()';
         case 'CollectionDSLExpression':
             return printCollectionDSLExpression(path, options, print);
         case 'EstExpression':

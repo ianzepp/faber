@@ -102,9 +102,10 @@ export interface RequiredFeatures {
     // Time (Python) - needs import time for norma/tempus
     time: boolean;
 
-    // I/O streams (Zig) - needs stdout/stderr writer setup
+    // I/O streams (Zig) - needs stdout/stderr/stdin setup
     stdout: boolean;
     stderr: boolean;
+    stdin: boolean;
 }
 
 /**
@@ -134,6 +135,7 @@ export function createRequiredFeatures(): RequiredFeatures {
         time: false,
         stdout: false,
         stderr: false,
+        stdin: false,
     };
 }
 

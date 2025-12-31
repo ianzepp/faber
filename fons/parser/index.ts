@@ -154,6 +154,7 @@ import type {
     CollectionDSLExpression,
     AbExpression,
     ScriptumExpression,
+    LegeExpression,
     RegexLiteral,
 } from './ast';
 import { builtinTypes } from '../lexicon/types-builtin';
@@ -4114,6 +4115,10 @@ export function parse(tokens: Token[]): ParserResult {
             return parseScriptumExpression();
         }
 
+        if (matchKeyword('lege')) {
+            return parseLegeExpression();
+        }
+
         return parseQuaExpression();
     }
 
@@ -4204,6 +4209,23 @@ export function parse(tokens: Token[]): ParserResult {
         expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
 
         return { type: 'ScriptumExpression', format, arguments: args, position };
+    }
+
+    /**
+     * Parse stdin read expression.
+     *
+     * GRAMMAR:
+     *   legeExpr := 'lege' '(' ')'
+     *
+     * Reads all input from stdin. No arguments - always reads everything.
+     */
+    function parseLegeExpression(): LegeExpression {
+        const position = tokens[current - 1]!.position; // Position of 'lege' we just consumed
+
+        expect('LPAREN', ParserErrorCode.ExpectedOpeningParen);
+        expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
+
+        return { type: 'LegeExpression', position };
     }
 
     /**

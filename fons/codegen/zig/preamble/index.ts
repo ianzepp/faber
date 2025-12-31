@@ -47,6 +47,9 @@ export function genPreamble(features: RequiredFeatures): string {
     if (features.stderr) {
         lines.push('const stderr = std.io.getStdErr().writer();');
     }
+    if (features.stdin) {
+        lines.push('const stdin = std.io.getStdIn().reader();');
+    }
 
     return lines.join('\n') + '\n';
 }

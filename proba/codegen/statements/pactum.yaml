@@ -41,24 +41,25 @@
           - 'functio greet() -> textus'
 
 # Multiple methods
+# WHY: 'lege' is now a reserved keyword for stdin reading, using 'accipe' (receive) instead
 - name: pactum with multiple methods
   faber: |
       pactum Readable {
-        functio lege() -> textus
+        functio accipe() -> textus
         functio claude() -> vacuum
       }
   expect:
       ts:
           - 'interface Readable'
-          - 'lege(): string'
+          - 'accipe(): string'
           - 'claude(): void'
       py:
           - 'class Readable(Protocol):'
-          - 'def lege(self) -> str: ...'
+          - 'def accipe(self) -> str: ...'
           - 'def claude(self) -> None: ...'
       rs:
           - 'trait Readable'
-          - 'fn lege(&self) -> String;'
+          - 'fn accipe(&self) -> String;'
           - 'fn claude(&self) -> ();'
       cpp:
           - 'concept Readable'
@@ -66,7 +67,7 @@
           - '// pactum Readable'
       fab:
           - 'pactum Readable'
-          - 'functio lege() -> textus'
+          - 'functio accipe() -> textus'
           - 'functio claude() -> vacuum'
 
 # =============================================================================
@@ -217,12 +218,13 @@
           - 'pactum Mapper<K, V>'
           - 'functio map(K key) -> V'
 
-# Pactum with many methods
+# Pactum with many methods (CRUD operations)
+# WHY: 'lege' is now a reserved keyword for stdin reading, using 'accipe' (receive) instead
 - name: pactum with many methods
   faber: |
       pactum Repository {
         functio crea() -> vacuum
-        functio lege() -> textus
+        functio accipe() -> textus
         functio renova() -> vacuum
         functio dele() -> vacuum
         functio inveni() -> textus
@@ -231,21 +233,21 @@
       ts:
           - 'interface Repository'
           - 'crea(): void'
-          - 'lege(): string'
+          - 'accipe(): string'
           - 'renova(): void'
           - 'dele(): void'
           - 'inveni(): string'
       py:
           - 'class Repository(Protocol):'
           - 'def crea(self) -> None: ...'
-          - 'def lege(self) -> str: ...'
+          - 'def accipe(self) -> str: ...'
           - 'def renova(self) -> None: ...'
           - 'def dele(self) -> None: ...'
           - 'def inveni(self) -> str: ...'
       rs:
           - 'trait Repository'
           - 'fn crea(&self) -> ();'
-          - 'fn lege(&self) -> String;'
+          - 'fn accipe(&self) -> String;'
           - 'fn renova(&self) -> ();'
           - 'fn dele(&self) -> ();'
           - 'fn inveni(&self) -> String;'
@@ -256,7 +258,7 @@
       fab:
           - 'pactum Repository'
           - 'functio crea() -> vacuum'
-          - 'functio lege() -> textus'
+          - 'functio accipe() -> textus'
           - 'functio renova() -> vacuum'
           - 'functio dele() -> vacuum'
           - 'functio inveni() -> textus'

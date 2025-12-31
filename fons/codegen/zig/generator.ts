@@ -54,6 +54,7 @@ import { genNovumExpression } from './expressions/novum';
 import { genEstExpression } from './expressions/est';
 import { genPraefixumExpression } from './expressions/praefixum';
 import { genScriptumExpression } from './expressions/scriptum';
+import { genLegeExpression } from './expressions/lege';
 import { genRegexLiteral } from './expressions/regex';
 
 /**
@@ -423,6 +424,8 @@ export class ZigGenerator {
                 return genPraefixumExpression(node, this);
             case 'ScriptumExpression':
                 return genScriptumExpression(node, this);
+            case 'LegeExpression':
+                return genLegeExpression(node, this);
             case 'RegexLiteral':
                 return genRegexLiteral(node, this);
             default:

@@ -677,6 +677,11 @@ export function analyze(program: Program): SemanticResult {
                 node.resolvedType = TEXTUS;
                 return TEXTUS;
 
+            case 'LegeExpression':
+                // WHY: lege() reads stdin and returns textus
+                node.resolvedType = TEXTUS;
+                return TEXTUS;
+
             case 'RegexLiteral':
                 // WHY: Regex literals have no sub-expressions to resolve
                 node.resolvedType = userType('Regex');
