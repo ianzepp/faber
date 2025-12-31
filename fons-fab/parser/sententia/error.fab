@@ -15,16 +15,53 @@
 /// - fac = do/make
 /// - adfirma = affirm/assert
 
-// External dependencies (defined in other files):
-// - parseExpressia(Parser p) -> Expressia
-// - parseMassaSententia(Parser p) -> MassaSententia
+ex "../resolvitor" importa Resolvitor, Expressia, Sententia, MassaSententia
+ex "../../ast/positio" importa Locus
+ex "../../ast/lexema" importa SymbolumGenus
+ex "../errores" importa ParserErrorCodice
+
+/// Nomen - identifier AST node
+genus Nomen {
+    Locus locus
+    textus valor
+}
+
+/// CapeClausula - catch clause AST node
+genus CapeClausula {
+    Locus locus
+    Nomen nomen
+    MassaSententia corpus
+}
+
+/// TemptaSententia - try-catch-finally AST node
+genus TemptaSententia {
+    Locus locus
+    MassaSententia massa
+    CapeClausula? tractator
+    MassaSententia? finaliter
+}
+
+/// FacSententia - fac block AST node
+genus FacSententia {
+    Locus locus
+    MassaSententia massa
+    CapeClausula? tractator
+}
+
+/// AdfirmaSententia - assert AST node
+genus AdfirmaSententia {
+    Locus locus
+    Expressia condicio
+    Expressia? nuntius
+}
 
 /// Parse catch clause
 ///
 /// GRAMMAR: catchClause := 'cape' IDENTIFIER blockStmt
 ///
 /// Binds the caught error to the identifier.
-functio parseCapeClausula(Parser p) -> CapeClausula {
+functio parseCapeClausula(Resolvitor r) -> CapeClausula {
+    fixum p = r.parser()
     fixum locus = p.specta(0).locus
 
     // Consume 'cape' keyword
@@ -38,7 +75,7 @@ functio parseCapeClausula(Parser p) -> CapeClausula {
     } qua Nomen
 
     // Parse the handler block
-    fixum corpus = parseMassaSententia(p)
+    fixum corpus = r.massa()
 
     redde {
         locus: locus,
@@ -53,27 +90,28 @@ functio parseCapeClausula(Parser p) -> CapeClausula {
 ///
 /// Both cape and demum are optional, but at least one should be present
 /// for the statement to be useful.
-functio parseTemptaSententia(Parser p) -> TemptaSententia {
+functio parseTemptaSententia(Resolvitor r) -> TemptaSententia {
+    fixum p = r.parser()
     fixum locus = p.specta(0).locus
 
     // Consume 'tempta' keyword
     p.expectaVerbum("tempta", ParserErrorCodice.ExpectaturTempta)
 
     // Parse the try block
-    fixum massa = parseMassaSententia(p)
+    fixum massa = r.massa()
 
     // Parse optional catch clause
     varia tractator = nihil qua CapeClausula?
 
     si p.probaVerbum("cape") {
-        tractator = parseCapeClausula(p)
+        tractator = parseCapeClausula(r)
     }
 
     // Parse optional finally block
     varia finaliter = nihil qua MassaSententia?
 
     si p.congruetVerbum("demum") {
-        finaliter = parseMassaSententia(p)
+        finaliter = r.massa()
     }
 
     redde {
@@ -93,20 +131,21 @@ functio parseTemptaSententia(Parser p) -> TemptaSententia {
 /// - Scoped variable declarations
 /// - Grouping operations with shared error handling
 /// - IIFE-like constructs
-functio parseFacSententia(Parser p) -> FacSententia {
+functio parseFacSententia(Resolvitor r) -> FacSententia {
+    fixum p = r.parser()
     fixum locus = p.specta(0).locus
 
     // Consume 'fac' keyword
     p.expectaVerbum("fac", ParserErrorCodice.ExpectaturFac)
 
     // Parse the block
-    fixum massa = parseMassaSententia(p)
+    fixum massa = r.massa()
 
     // Parse optional catch clause
     varia tractator = nihil qua CapeClausula?
 
     si p.probaVerbum("cape") {
-        tractator = parseCapeClausula(p)
+        tractator = parseCapeClausula(r)
     }
 
     redde {
@@ -121,20 +160,21 @@ functio parseFacSententia(Parser p) -> FacSententia {
 /// GRAMMAR: assertStmt := 'adfirma' expression (',' expression)?
 ///
 /// Runtime invariant check. Optional second expression is error message.
-functio parseAdfirmaSententia(Parser p) -> AdfirmaSententia {
+functio parseAdfirmaSententia(Resolvitor r) -> AdfirmaSententia {
+    fixum p = r.parser()
     fixum locus = p.specta(0).locus
 
     // Consume 'adfirma' keyword
     p.expectaVerbum("adfirma", ParserErrorCodice.ExpectaturAdfirma)
 
     // Parse the condition expression
-    fixum condicio = parseExpressia(p)
+    fixum condicio = r.expressia()
 
     // Parse optional message expression
     varia nuntius = nihil qua Expressia?
 
     si p.congruet(SymbolumGenus.Virgula) {
-        nuntius = parseExpressia(p)
+        nuntius = r.expressia()
     }
 
     redde {

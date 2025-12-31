@@ -1,31 +1,24 @@
-/// Resolvitor - Parser Context with Recursive Function Pointers
+/// Resolvitor - Parser Interface for Mutual Recursion
 ///
 /// Solves mutual recursion between expression and statement parsers.
 /// Each parsing function receives a Resolvitor instead of raw Parser,
-/// and calls through function pointers for cross-module parsing.
+/// and calls methods for cross-module parsing.
 ///
 /// WHY: Expression parsers need to parse blocks (for lambdas), and
 ///      statement parsers need to parse expressions. This creates
-///      circular imports. By using function pointers wired at runtime,
-///      each module only depends on Resolvitor, not on each other.
+///      circular imports. By using a pactum (interface), each module
+///      depends only on Resolvitor, not on each other.
 ///
-/// ZIG COMPATIBILITY: Compiles to struct with function pointers.
-///   const Resolvitor = struct {
-///       p: *Parser,
-///       expressia: *const fn(*Resolvitor) Expressia,
-///       sententia: *const fn(*Resolvitor) Sententia,
-///       massa: *const fn(*Resolvitor) MassaSententia,
-///       typus: *const fn(*Resolvitor) TypusAnnotatio,
-///   };
+/// The concrete implementation (ResolvitorImpl) is defined in index.fab,
+/// which imports all the actual parsing functions.
 ///
 /// LATIN: resolvitor = "one who resolves/parses"
 
 ex "./nucleus" importa Parser
 ex "../ast/positio" importa Locus
 
-// Forward declarations for AST types returned by function pointers.
+// Forward declarations for AST types used in method signatures.
 // These are minimal stubs - the real types live in ast/.
-// WHY: We only need the type names for signatures, not full definitions.
 
 discretio Expressia {
     Vacua { }
@@ -45,21 +38,18 @@ genus TypusAnnotatio {
     textus nomen
 }
 
-/// Parser context with function pointers for mutual recursion.
+/// Parser interface for cross-module parsing.
 ///
 /// Usage in parsing functions:
 ///   functio parseFoo(Resolvitor r) -> Foo {
-///       fixum expr = r.expressia(r)    // parse expression
-///       fixum block = r.massa(r)       // parse block
+///       fixum expr = r.expressia()    // parse expression
+///       fixum block = r.massa()       // parse block
 ///       ...
 ///   }
-genus Resolvitor {
-    Parser p                                          // Underlying parser state
-    
-    // Function pointers - wired up in index.fab
-    // Each takes Resolvitor (for further recursion) and returns AST node
-    functio(Resolvitor) -> Expressia expressia        // Parse any expression
-    functio(Resolvitor) -> Sententia sententia        // Parse any statement
-    functio(Resolvitor) -> MassaSententia massa       // Parse block { ... }
-    functio(Resolvitor) -> TypusAnnotatio typus       // Parse type annotation
+pactum Resolvitor {
+    functio parser() -> Parser
+    functio expressia() -> Expressia
+    functio sententia() -> Sententia
+    functio massa() -> MassaSententia
+    functio adnotatio() -> TypusAnnotatio
 }
