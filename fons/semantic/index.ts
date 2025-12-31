@@ -11,11 +11,19 @@
  * It resolves types, builds symbol tables, validates type compatibility,
  * and annotates AST nodes with resolved type information.
  *
- * The analyzer walks the AST in a single pass:
- * 1. Statements are processed to build symbol tables
- * 2. Expressions are typed bottom-up
- * 3. Type errors are collected (not thrown) for multi-error reporting
- * 4. AST nodes are annotated with resolvedType field
+ * The analyzer uses a three-phase approach to enable forward references:
+ *
+ * Phase 1a - Predeclaration:
+ *   All top-level names (functions, types, etc.) are registered with
+ *   placeholder types. This makes names visible before bodies are analyzed.
+ *
+ * Phase 1b - Signature Resolution:
+ *   Type annotations are resolved now that all names exist. Placeholder
+ *   types are updated to their real types.
+ *
+ * Phase 2 - Body Analysis:
+ *   Function bodies and other statements are analyzed with the complete
+ *   symbol table. Expressions are typed, compatibility is checked.
  *
  * Key responsibilities:
  * - Variable type resolution (from annotation or initializer inference)
@@ -90,7 +98,7 @@ import type {
 } from '../parser/ast';
 import type { Position } from '../tokenizer/types';
 import type { Scope, Symbol } from './scope';
-import { createGlobalScope, createScope, defineSymbol, lookupSymbol } from './scope';
+import { createGlobalScope, createScope, defineSymbol, lookupSymbol, lookupSymbolLocal, updateSymbolType } from './scope';
 import type { SemanticType, FunctionType } from './types';
 import {
     genericType,
@@ -329,6 +337,9 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
     let currentFunctionReturnType: SemanticType | null = null;
     let currentFunctionAsync = false;
     let currentFunctionGenerator = false;
+
+    // WHY: Track type aliases currently being resolved to detect cycles
+    const resolvingTypeAliases = new Set<string>();
 
     // WHY: Create module context for local import resolution if file path provided
     const moduleContext: ModuleContext | undefined = options.moduleContext ?? (options.filePath ? createModuleContext(options.filePath) : undefined);
@@ -614,6 +625,13 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         const typeAlias = lookupSymbol(currentScope, node.name);
 
         if (typeAlias && typeAlias.kind === 'type') {
+            // WHY: Detect circular type alias references
+            if (resolvingTypeAliases.has(node.name)) {
+                error(`Circular type alias: '${node.name}' references itself`, node.position);
+
+                return UNKNOWN;
+            }
+
             if (node.nullable && !typeAlias.type.nullable) {
                 return { ...typeAlias.type, nullable: true };
             }
@@ -1526,14 +1544,16 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
         const fnType = functionType(paramTypes, returnType, node.async, hasCuratorParam);
 
-        // Define function in current scope
-        define({
-            name: node.name.name,
-            type: fnType,
-            kind: 'function',
-            mutable: false,
-            position: node.position,
-        });
+        // WHY: Skip define if predeclared (two-pass analysis)
+        if (!lookupSymbolLocal(currentScope, node.name.name)) {
+            define({
+                name: node.name.name,
+                type: fnType,
+                kind: 'function',
+                mutable: false,
+                position: node.position,
+            });
+        }
 
         // Analyze function body in new scope
         enterScope('function');
@@ -1583,14 +1603,16 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
     function analyzeTypeAliasDeclaration(node: TypeAliasDeclaration): void {
         const type = resolveTypeAnnotation(node.typeAnnotation);
 
-        // WHY: Type aliases are stored as "type" symbols to distinguish from variables
-        define({
-            name: node.name.name,
-            type,
-            kind: 'type',
-            mutable: false,
-            position: node.position,
-        });
+        // WHY: Skip define if predeclared (two-pass analysis)
+        if (!lookupSymbolLocal(currentScope, node.name.name)) {
+            define({
+                name: node.name.name,
+                type,
+                kind: 'type',
+                mutable: false,
+                position: node.position,
+            });
+        }
 
         node.resolvedType = type;
         node.name.resolvedType = type;
@@ -1609,23 +1631,28 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         for (const member of node.members) {
             // Determine member type from value or default to numerus
             let memberType: SemanticType = NUMERUS;
+
             if (member.value) {
                 if (typeof member.value.value === 'string') {
                     memberType = TEXTUS;
                 }
             }
+
             members.set(member.name.name, memberType);
         }
 
         const type = enumType(node.name.name, members);
 
-        define({
-            name: node.name.name,
-            type,
-            kind: 'enum',
-            mutable: false,
-            position: node.position,
-        });
+        // WHY: Skip define if predeclared (two-pass analysis)
+        if (!lookupSymbolLocal(currentScope, node.name.name)) {
+            define({
+                name: node.name.name,
+                type,
+                kind: 'enum',
+                mutable: false,
+                position: node.position,
+            });
+        }
 
         node.resolvedType = type;
         node.name.resolvedType = type;
@@ -1646,9 +1673,11 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         // Process fields
         for (const field of node.fields) {
             const fieldType = resolveTypeAnnotation(field.fieldType);
+
             if (field.isStatic) {
                 staticFields.set(field.name.name, fieldType);
-            } else {
+            }
+            else {
                 fields.set(field.name.name, fieldType);
             }
         }
@@ -1664,13 +1693,16 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
         const type = genusType(node.name.name, fields, methods, staticFields, staticMethods);
 
-        define({
-            name: node.name.name,
-            type,
-            kind: 'genus',
-            mutable: false,
-            position: node.position,
-        });
+        // WHY: Skip define if predeclared (two-pass analysis)
+        if (!lookupSymbolLocal(currentScope, node.name.name)) {
+            define({
+                name: node.name.name,
+                type,
+                kind: 'genus',
+                mutable: false,
+                position: node.position,
+            });
+        }
 
         node.resolvedType = type;
         node.name.resolvedType = type;
@@ -1694,13 +1726,16 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
         const type = pactumType(node.name.name, methods);
 
-        define({
-            name: node.name.name,
-            type,
-            kind: 'pactum',
-            mutable: false,
-            position: node.position,
-        });
+        // WHY: Skip define if predeclared (two-pass analysis)
+        if (!lookupSymbolLocal(currentScope, node.name.name)) {
+            define({
+                name: node.name.name,
+                type,
+                kind: 'pactum',
+                mutable: false,
+                position: node.position,
+            });
+        }
 
         node.resolvedType = type;
         node.name.resolvedType = type;
@@ -1717,13 +1752,16 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         // Register the discretio as a user-defined type
         const type = userType(node.name.name);
 
-        define({
-            name: node.name.name,
-            type,
-            kind: 'type', // WHY: discretio is a type definition
-            mutable: false,
-            position: node.position,
-        });
+        // WHY: Skip define if predeclared (two-pass analysis)
+        if (!lookupSymbolLocal(currentScope, node.name.name)) {
+            define({
+                name: node.name.name,
+                type,
+                kind: 'type', // WHY: discretio is a type definition
+                mutable: false,
+                position: node.position,
+            });
+        }
 
         node.resolvedType = type;
         node.name.resolvedType = type;
@@ -2094,9 +2132,276 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
     }
 
     // ---------------------------------------------------------------------------
-    // Main Analysis
+    // Two-Pass Analysis: Predeclaration
     // ---------------------------------------------------------------------------
 
+    /**
+     * Predeclare a top-level statement by registering its name with a placeholder type.
+     *
+     * WHY: This enables forward references within a file. All names are visible
+     *      before any bodies are analyzed.
+     */
+    function predeclareStatement(stmt: Statement): void {
+        switch (stmt.type) {
+            case 'FunctioDeclaration': {
+                // WHY: Use placeholder types for params/return since referenced types
+                // may not be defined yet. Real types are resolved in Phase 1b.
+                const paramTypes: SemanticType[] = stmt.params.map(() => UNKNOWN);
+                const returnType = stmt.returnType ? UNKNOWN : VACUUM;
+                const isAsync = stmt.returnVerb === 'fiet' || stmt.returnVerb === 'fient';
+                const fnType = functionType(paramTypes, returnType, isAsync);
+
+                define({
+                    name: stmt.name.name,
+                    type: fnType,
+                    kind: 'function',
+                    mutable: false,
+                    position: stmt.position,
+                });
+                break;
+            }
+
+            case 'GenusDeclaration': {
+                // WHY: Create shell type - fields/methods resolved in Phase 1b
+                const type = genusType(stmt.name.name, new Map(), new Map(), new Map(), new Map());
+
+                define({
+                    name: stmt.name.name,
+                    type,
+                    kind: 'genus',
+                    mutable: false,
+                    position: stmt.position,
+                });
+                break;
+            }
+
+            case 'PactumDeclaration': {
+                // WHY: Create shell type - methods resolved in Phase 1b
+                const type = pactumType(stmt.name.name, new Map());
+
+                define({
+                    name: stmt.name.name,
+                    type,
+                    kind: 'pactum',
+                    mutable: false,
+                    position: stmt.position,
+                });
+                break;
+            }
+
+            case 'OrdoDeclaration': {
+                // WHY: Enum members don't reference other types, so we can fully resolve here
+                const members = new Map<string, SemanticType>();
+
+                for (const member of stmt.members) {
+                    let memberType: SemanticType = NUMERUS;
+
+                    if (member.value) {
+                        if (typeof member.value.value === 'string') {
+                            memberType = TEXTUS;
+                        }
+                    }
+
+                    members.set(member.name.name, memberType);
+                }
+
+                const type = enumType(stmt.name.name, members);
+
+                define({
+                    name: stmt.name.name,
+                    type,
+                    kind: 'enum',
+                    mutable: false,
+                    position: stmt.position,
+                });
+                break;
+            }
+
+            case 'DiscretioDeclaration': {
+                // WHY: Register discretio as user type - full variant resolution is TODO
+                const type = userType(stmt.name.name);
+
+                define({
+                    name: stmt.name.name,
+                    type,
+                    kind: 'type',
+                    mutable: false,
+                    position: stmt.position,
+                });
+                break;
+            }
+
+            case 'TypeAliasDeclaration': {
+                // WHY: Type alias may reference forward types, use UNKNOWN placeholder
+                define({
+                    name: stmt.name.name,
+                    type: UNKNOWN,
+                    kind: 'type',
+                    mutable: false,
+                    position: stmt.position,
+                });
+                break;
+            }
+
+            // Other statement types don't need predeclaration
+            default:
+                break;
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Two-Pass Analysis: Signature Resolution
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Resolve signatures for predeclared symbols.
+     *
+     * WHY: Now that all names exist, we can resolve type annotations that
+     *      reference forward-declared types. This updates the placeholder
+     *      types to their real types.
+     */
+    function resolveSignature(stmt: Statement): void {
+        switch (stmt.type) {
+            case 'FunctioDeclaration': {
+                const paramTypes: SemanticType[] = stmt.params.map(p =>
+                    p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN
+                );
+                const returnType = stmt.returnType ? resolveTypeAnnotation(stmt.returnType) : VACUUM;
+                const hasCuratorParam = stmt.params.some(
+                    p => p.typeAnnotation?.name.toLowerCase() === 'curator'
+                );
+                const fnType = functionType(paramTypes, returnType, stmt.async, hasCuratorParam);
+
+                updateSymbolType(currentScope, stmt.name.name, fnType);
+                break;
+            }
+
+            case 'GenusDeclaration': {
+                const fields = new Map<string, SemanticType>();
+                const methods = new Map<string, FunctionType>();
+                const staticFields = new Map<string, SemanticType>();
+                const staticMethods = new Map<string, FunctionType>();
+
+                for (const field of stmt.fields) {
+                    const fieldType = resolveTypeAnnotation(field.fieldType);
+
+                    if (field.isStatic) {
+                        staticFields.set(field.name.name, fieldType);
+                    }
+                    else {
+                        fields.set(field.name.name, fieldType);
+                    }
+                }
+
+                for (const method of stmt.methods) {
+                    const paramTypes = method.params.map(p =>
+                        p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN
+                    );
+                    const returnType = method.returnType ? resolveTypeAnnotation(method.returnType) : VACUUM;
+                    const fnType = functionType(paramTypes, returnType, method.async);
+
+                    methods.set(method.name.name, fnType);
+                }
+
+                const type = genusType(stmt.name.name, fields, methods, staticFields, staticMethods);
+
+                updateSymbolType(currentScope, stmt.name.name, type);
+                break;
+            }
+
+            case 'PactumDeclaration': {
+                const methods = new Map<string, FunctionType>();
+
+                for (const method of stmt.methods) {
+                    const paramTypes = method.params.map(p =>
+                        p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN
+                    );
+                    const returnType = method.returnType ? resolveTypeAnnotation(method.returnType) : VACUUM;
+                    const fnType = functionType(paramTypes, returnType, method.async);
+
+                    methods.set(method.name.name, fnType);
+                }
+
+                const type = pactumType(stmt.name.name, methods);
+
+                updateSymbolType(currentScope, stmt.name.name, type);
+                break;
+            }
+
+            case 'TypeAliasDeclaration': {
+                // WHY: Track resolution to detect cycles (A -> B -> A)
+                resolvingTypeAliases.add(stmt.name.name);
+                const type = resolveTypeAnnotation(stmt.typeAnnotation);
+                resolvingTypeAliases.delete(stmt.name.name);
+
+                updateSymbolType(currentScope, stmt.name.name, type);
+                break;
+            }
+
+            // OrdoDeclaration and DiscretioDeclaration are fully resolved in predeclare
+            // Other statement types don't need signature resolution
+            default:
+                break;
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Main Analysis (Three-Phase)
+    // ---------------------------------------------------------------------------
+
+    // Phase 1a: Predeclare all top-level names with placeholder types
+    // WHY: Enables forward references - all names are visible before body analysis
+    for (const stmt of program.body) {
+        predeclareStatement(stmt);
+    }
+
+    // Phase 1b: Resolve signatures with real types
+    // WHY: Now that all names exist, type annotations can reference forward types
+    for (const stmt of program.body) {
+        resolveSignature(stmt);
+    }
+
+    // Phase 1c: Iteratively resolve type aliases until fixed point
+    // WHY: Type alias chains like "A = B; B = C; C = numerus" need multiple passes
+    //      when aliases are defined in forward-reference order
+    let typeAliasProgress = true;
+
+    while (typeAliasProgress) {
+        typeAliasProgress = false;
+
+        for (const stmt of program.body) {
+            if (stmt.type === 'TypeAliasDeclaration') {
+                const symbol = lookupSymbolLocal(currentScope, stmt.name.name);
+
+                if (symbol && symbol.type.kind === 'unknown') {
+                    // Try to resolve again
+                    resolvingTypeAliases.add(stmt.name.name);
+                    const type = resolveTypeAnnotation(stmt.typeAnnotation);
+                    resolvingTypeAliases.delete(stmt.name.name);
+
+                    if (type.kind !== 'unknown') {
+                        updateSymbolType(currentScope, stmt.name.name, type);
+                        typeAliasProgress = true;
+                    }
+                }
+            }
+        }
+    }
+
+    // Phase 1d: Detect type alias cycles (aliases that couldn't be resolved)
+    // WHY: Circular aliases like "typus A = B; typus B = A" both remain UNKNOWN
+    for (const stmt of program.body) {
+        if (stmt.type === 'TypeAliasDeclaration') {
+            const symbol = lookupSymbolLocal(currentScope, stmt.name.name);
+
+            if (symbol && symbol.type.kind === 'unknown') {
+                error(`Circular type alias: '${stmt.name.name}' cannot be resolved`, stmt.position);
+            }
+        }
+    }
+
+    // Phase 2: Analyze bodies with complete symbol table
+    // WHY: Full type checking with all symbols and types available
     for (const stmt of program.body) {
         analyzeStatement(stmt);
     }

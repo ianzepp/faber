@@ -132,3 +132,132 @@
       - 'scribe "hi"'
       - 'incipit {'
       - 'greet()'
+
+# =============================================================================
+# Forward References (Two-Pass Semantic Analysis)
+# =============================================================================
+
+# Function B calls function A, but A is defined later in the file
+- name: 'forward function reference'
+  input: |
+      functio b() {
+        a()
+      }
+      functio a() {
+        scribe "hello"
+      }
+      incipit {
+        b()
+      }
+  ts:
+      - 'function b()'
+      - 'a();'
+      - 'function a()'
+      - 'console.log("hello")'
+      - 'b();'
+  py:
+      - 'def b():'
+      - 'a()'
+      - 'def a():'
+      - 'print("hello")'
+      - 'b()'
+  cpp:
+      - 'void b() {'
+      - 'a();'
+      - 'void a() {'
+      - 'int main() {'
+  rs:
+      - 'fn b() {'
+      - 'a();'
+      - 'fn a() {'
+      - 'fn main() {'
+  zig:
+      - 'fn b() void {'
+      - 'a();'
+      - 'fn a() void {'
+      - 'pub fn main() void {'
+  fab:
+      - 'functio b() {'
+      - 'a()'
+      - 'functio a() {'
+      - 'scribe "hello"'
+      - 'incipit {'
+      - 'b()'
+
+# Mutual recursion: isEven calls isOdd and vice versa
+- name: 'mutual recursion'
+  input: |
+      functio isEven(numerus n) fit bivalens {
+        si n == 0 { redde verum }
+        redde isOdd(n - 1)
+      }
+      functio isOdd(numerus n) fit bivalens {
+        si n == 0 { redde falsum }
+        redde isEven(n - 1)
+      }
+  ts:
+      - 'function isEven(n: number): boolean'
+      - 'isOdd((n - 1))'
+      - 'function isOdd(n: number): boolean'
+      - 'isEven((n - 1))'
+  py:
+      - 'def isEven(n: int) -> bool:'
+      - 'isOdd((n - 1))'
+      - 'def isOdd(n: int) -> bool:'
+      - 'isEven((n - 1))'
+  cpp:
+      - 'bool isEven(int64_t n) {'
+      - 'return isOdd((n - 1));'
+      - 'bool isOdd(int64_t n) {'
+      - 'return isEven((n - 1));'
+  rs:
+      - 'fn isEven(n: i64) -> bool {'
+      - 'return isOdd((n - 1));'
+      - 'fn isOdd(n: i64) -> bool {'
+      - 'return isEven((n - 1));'
+  zig:
+      - 'fn isEven(n: i64) bool {'
+      - 'return isOdd((n - 1));'
+      - 'fn isOdd(n: i64) bool {'
+      - 'return isEven((n - 1));'
+  fab:
+      - 'functio isEven(numerus n) fit bivalens {'
+      - 'redde isOdd(n - 1)'
+      - 'functio isOdd(numerus n) fit bivalens {'
+      - 'redde isEven(n - 1)'
+
+# Forward type reference: function uses genus defined later
+- name: 'forward type reference in function param'
+  input: |
+      functio process(User u) fit textus {
+        redde u.name
+      }
+      genus User {
+        textus name
+      }
+  ts:
+      - 'function process(u: User): string'
+      - 'u.name'
+      - 'class User {'
+      - 'name: string;'
+  py:
+      - 'def process(u: User) -> str:'
+      - 'u.name'
+      - 'class User:'
+  cpp:
+      - 'std::string process(const User& u) {'
+      - 'return u.name;'
+      - 'struct User {'
+  rs:
+      - 'fn process(u: User) -> String {'
+      - 'return u.name;'
+      - 'struct User {'
+  zig:
+      - 'fn process(u: User)'
+      - 'return u.name;'
+      - 'const User = struct {'
+  fab:
+      - 'functio process(User u) fit textus {'
+      - 'redde u.name'
+      - 'genus User {'
+      - 'textus name'

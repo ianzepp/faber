@@ -132,6 +132,26 @@ export function lookupSymbolLocal(scope: Scope, name: string): Symbol | null {
 }
 
 /**
+ * Update an existing symbol's type in the current scope.
+ *
+ * WHY: Two-pass analysis predeclares symbols with placeholder types,
+ *      then refines them with real types in a second pass.
+ *
+ * @returns true if symbol was updated, false if not found
+ */
+export function updateSymbolType(scope: Scope, name: string, type: SemanticType): boolean {
+    const symbol = scope.symbols.get(name);
+
+    if (symbol) {
+        symbol.type = type;
+
+        return true;
+    }
+
+    return false;
+}
+
+/**
  * Find the enclosing function scope.
  *
  * WHY: Needed for return type checking.

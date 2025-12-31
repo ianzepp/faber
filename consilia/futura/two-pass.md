@@ -1,6 +1,6 @@
 ---
-status: planned
-note: Architectural design for forward references and throwability propagation; not yet implemented
+status: partial
+note: Phase 0/1 (forward references) implemented 2025-12; Phase 3 (throwability) remains planned
 updated: 2025-12
 ---
 
@@ -281,14 +281,14 @@ If function return inference becomes a goal later, it likely requires:
 
 ## Migration Plan (Revised)
 
-0. MVP: Predeclare top-level functions only (hoisting)
-1. Add an internal “predeclare” pass in `fons/semantic/index.ts`
-2. Split type-shape resolution into a signatures-only phase (no bodies)
-3. Run existing body analysis as Phase 2
+0. ~~MVP: Predeclare top-level functions only (hoisting)~~ ✓ Done
+1. ~~Add an internal "predeclare" pass in `fons/semantic/index.ts`~~ ✓ Done
+2. ~~Split type-shape resolution into a signatures-only phase (no bodies)~~ ✓ Done
+3. ~~Run existing body analysis as Phase 2~~ ✓ Done
 4. Add call graph collection during Phase 2
 5. Add throwability computation as Phase 3 (uncaught edges)
 6. Teach Zig codegen to rely on semantic `canThrow` instead of AST scanning
-7. Add tests mirroring the cases below
+7. ~~Add tests mirroring the cases below~~ ✓ Done (forward refs, mutual recursion, forward types)
 
 ## Testing (Revised)
 
