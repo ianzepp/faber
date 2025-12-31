@@ -110,12 +110,6 @@ functio parseBinaria(Resolvitor r) -> Expressia {
 | Codegen (TS)      | `fons/codegen/ts/`     | ~2,000      | TS target only        |
 | CLI               | `fons/cli.ts`          | ~600        | Entry point           |
 
-## Gotchas
-
-### Keyword Conflicts
-
-`typus` and `genus` are keywords and cannot be used as variable/field names. Use alternatives like `adnotatio` (for type annotation) and `modus` (for declaration kind).
-
 ## Bootstrap Strategy
 
 ### Phase 1: Parser (`fons-fab/parser/`) — 60% COMPLETE
@@ -272,10 +266,10 @@ parser/
 ### Session 3: Resolvitor Pattern
 
 1. **Pactum solves circular deps** — The `pactum Resolvitor` pattern cleanly separates interface from implementation.
-2. **Keyword conflicts** — Avoid `typus`, `genus` as identifiers; use `adnotatio`, `modus`.
-3. **`finge` enables discretio AST** — With `finge ... qua Expressia|Sententia`, the bootstrap can return real discretio variants.
-4. **Two-pass semantic analysis** — Functions can now be called before definition (forward references work).
-5. **`fac...dum` for do-while** — Use `fac { body } dum condition` for loops that execute at least once.
+2. **`finge` enables discretio AST** — With `finge ... qua Expressia|Sententia`, the bootstrap can return real discretio variants.
+3. **Two-pass semantic analysis** — Functions can now be called before definition (forward references work).
+4. **`fac...dum` for do-while** — Use `fac { body } dum condition` for loops that execute at least once.
+5. **Keywords as identifiers** — Keywords like `typus`, `genus` can be used as variable/field names.
 
 ## Build Commands
 
