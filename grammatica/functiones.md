@@ -28,14 +28,6 @@ parameter := ('de' | 'in' | 'ex')? (typeAnnotation IDENTIFIER | IDENTIFIER)
 > in = in/into (mutable borrow),
 > ex = from/out of (source)
 
-### Arrow Function
-
-```ebnf
-arrowFunction := '(' paramList ')' '=>' (expression | blockStmt)
-```
-
-> Called after detecting '() =>' pattern in parsePrimary.
-
 ---
 
 *Generated from `fons/parser/index.ts` — do not edit directly.*

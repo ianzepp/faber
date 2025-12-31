@@ -28,7 +28,8 @@ genusMember := fieldDecl | methodDecl
 ```ebnf
 genusMember := fieldDecl | methodDecl
 fieldDecl := ('privatus' | 'protectus')? 'generis'? typeAnnotation IDENTIFIER (':' expression)?
-methodDecl := ('privatus' | 'protectus')? 'generis'? 'abstractus'? ('futura' | 'cursor')* 'functio' ...
+methodDecl := ('privatus' | 'protectus')? 'generis'? 'abstractus'? 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? blockStmt?
+funcModifier := 'futura' | 'cursor' | 'curata' IDENTIFIER
 ```
 
 > Distinguishes between fields and methods by looking for 'functio' keyword.
@@ -56,7 +57,8 @@ pactum Mappabilis<T, U> { functio mappa(T valor) -> U }
 ### Pactum Method
 
 ```ebnf
-pactumMethod := ('futura' | 'cursor')* 'functio' IDENTIFIER '(' paramList ')' returnClause?
+pactumMethod := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause?
+funcModifier := 'futura' | 'cursor' | 'curata' IDENTIFIER
 returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
 ```
 

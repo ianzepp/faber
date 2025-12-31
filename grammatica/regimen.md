@@ -92,36 +92,42 @@ T SUPPORTED:
 ### Functio Declaration
 
 ```ebnf
-funcDecl := ('futura' | 'cursor')* 'functio' IDENTIFIER '(' paramList ')' returnClause? blockStmt
+funcDecl := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? blockStmt
 paramList := (typeParamDecl ',')* (parameter (',' parameter)*)?
 typeParamDecl := 'prae' 'typus' IDENTIFIER
+funcModifier := 'futura' | 'cursor' | 'curata' IDENTIFIER
 returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
 ```
 
-> Arrow syntax for return types: "functio greet(textus name) -> textus"
-> 'futura' prefix marks async functions (future/promise-based).
-> 'cursor' prefix marks generator functions (yield-based).
+> All function declarations start with 'functio' for consistent parsing.
+> Modifiers come after the parameter list, before the return clause.
+> 'futura' marks async functions (future/promise-based).
+> 'cursor' marks generator functions (yield-based).
+> 'curata NAME' marks managed functions (receives allocator as NAME).
 > 
 > TYPE PARAMETERS: 'prae typus T' declares compile-time type parameters.
 > functio max(prae typus T, T a, T b) -> T { ... }
 > Maps to: <T> (TS/Rust), TypeVar (Py), comptime T: type (Zig)
 > 
 > RETURN TYPE VERBS: Latin verb forms encode async/generator semantics directly:
-> '->'    neutral arrow (semantics from prefix only)
+> '->'    neutral arrow (semantics from modifier only)
 > 'fit'   "it becomes" - sync, returns single value
 > 'fiet'  "it will become" - async, returns Promise<T>
 > 'fiunt' "they become" - sync generator, yields multiple values
 > 'fient' "they will become" - async generator, yields Promise values
 > 
-> When using verb forms, the futura/cursor prefix is NOT required - the verb
-> itself carries the semantic information. The prefix becomes redundant:
-> functio compute() -> numerus { ... }    // arrow: sync by default
-> functio compute() fit numerus { ... }   // verb: explicitly sync
-> functio fetch() fiet textus { ... }     // verb implies async (no futura needed)
-> functio items() fiunt numerus { ... }   // verb implies generator (no cursor needed)
-> functio stream() fient datum { ... }    // verb implies async generator
+> When using verb forms, the futura/cursor modifier is NOT required - the verb
+> itself carries the semantic information. The modifier becomes redundant:
+> functio compute() -> numerus { ... }         // arrow: sync by default
+> functio compute() fit numerus { ... }        // verb: explicitly sync
+> functio fetch() futura -> textus { ... }     // modifier: async
+> functio fetch() fiet textus { ... }          // verb implies async
+> functio items() cursor -> numerus { ... }    // modifier: generator
+> functio items() fiunt numerus { ... }        // verb implies generator
+> functio stream() fient datum { ... }         // verb implies async generator
+> functio alloc(textus s) curata a -> T { ... } // managed, allocator bound as 'a'
 > 
-> Prefix is still allowed for emphasis, but verb/prefix conflicts are errors.
+> Modifier is still allowed for emphasis, but verb/modifier conflicts are errors.
 > 
 > NOT SUPPORTED (will produce parser errors):
 > - TS-style param annotation: functio f(x: textus) (use: functio f(textus x))
@@ -561,7 +567,7 @@ probandumBody := (curaBlock | probandumDecl | probaStmt)*
 
 ```fab
 probandum "Tokenizer" {
-    cura ante { lexer = init() }
+    praepara { lexer = init() }
     proba "parses numbers" { ... }
 }
 ```
@@ -613,26 +619,24 @@ ad "http:get" (url) fiet Response pro r { }          // async binding
 ad "http:batch" (urls) fient Response[] pro rs { }   // async plural
 ```
 
-### Cura Block
+### Praepara Block
 
 ```ebnf
-curaBlock := 'cura' ('ante' | 'post') 'omnia'? blockStmt
+praeparaBlock := ('praepara' | 'praeparabit' | 'postpara' | 'postparabit') 'omnia'? blockStmt
 ```
 
-> Latin "cura" (care, concern) for test resource management.
-> In test context:
-> cura ante { } = beforeEach (care before each test)
-> cura ante omnia { } = beforeAll (care before all tests)
-> cura post { } = afterEach (care after each test)
-> cura post omnia { } = afterAll (care after all tests)
+> Latin "praepara" (prepare!) for test setup, "postpara" (cleanup!) for teardown.
+> Uses -bit suffix for async (future tense), matching fit/fiet pattern.
 
 **Examples:**
 
 ```fab
-cura ante { lexer = init() }
-cura ante omnia { db = connect() }
-cura post { cleanup() }
-cura post omnia { db.close() }
+praepara { lexer = init() }
+praepara omnia { db = connect() }
+praeparabit omnia { db = cede connect() }
+postpara { cleanup() }
+postpara omnia { db.close() }
+postparabit omnia { cede db.close() }
 ```
 
 ### Cura Statement
@@ -798,6 +802,12 @@ scriptum("Hello, {}", name)
 scriptum("{} + {} = {}", a, b, a + b)
 ```
 
+### Lege Expression
+
+```ebnf
+legeExpr := 'lege' '(' ')'
+```
+
 ### Qua Expression
 
 ```ebnf
@@ -827,7 +837,7 @@ newExpr := 'novum' IDENTIFIER ('(' argumentList ')')? (objectLiteral | 'de' expr
 ### Lambda Expression
 
 ```ebnf
-lambdaExpr := ('pro' | 'fit' | 'fiet') params? ((':' | 'redde') expression | blockStmt)
+lambdaExpr := ('pro' | 'fit' | 'fiet') params? ('->' type)? (':' expression | blockStmt)
 params := IDENTIFIER (',' IDENTIFIER)*
 ```
 
