@@ -55,7 +55,7 @@ genus VariaSententia {
     Locus locus
     VariaGenus species
     Nomen nomen              // simple name or pattern
-    TypusAdnotatio? typusAdnotatio
+    TypusAdnotatio? typus
     Expressia? valor         // initializer
 }
 

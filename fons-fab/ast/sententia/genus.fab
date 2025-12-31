@@ -43,7 +43,7 @@ ordo Visibilitas {
 genus CampusDeclaratio {
     Locus locus
     Nomen nomen
-    TypusAdnotatio typusAdnotatio
+    TypusAdnotatio typus
     Expressia? valor         // default value
     Visibilitas visibilitas
     bivalens staticum        // generis (static)
@@ -57,7 +57,7 @@ genus GenusDeclaratio {
     Nomen nomen
     lista<Nomen>? generaParametra
     Nomen? extendit          // sub Parent
-    lista<Nomen>? impletLista    // implet Interface
+    lista<Nomen>? implet         // implet Interface
     bivalens abstractum
     lista<CampusDeclaratio> campi
     FunctioDeclaratio? constructor
@@ -88,7 +88,7 @@ genus PactumDeclaratio {
 genus TypusAliasDeclaratio {
     Locus locus
     Nomen nomen
-    TypusAdnotatio typusAdnotatio
+    TypusAdnotatio typus
     Nomen? scopusNomen       // for typeof: typus X = typus y
 }
 

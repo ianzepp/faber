@@ -41,8 +41,8 @@ genus CapeClausula {
 genus TemptaSententia {
     Locus locus
     MassaSententia corpus
-    CapeClausula? capeClausula
-    MassaSententia? demumCorpus    // finally
+    CapeClausula? cape
+    MassaSententia? demum          // finally
 }
 
 /// Throw statement
@@ -58,7 +58,7 @@ genus IaceSententia {
 genus FacSententia {
     Locus locus
     MassaSententia corpus
-    CapeClausula? capeClausula
+    CapeClausula? cape
 }
 
 /// Assert statement

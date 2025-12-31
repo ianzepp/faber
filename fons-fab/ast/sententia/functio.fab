@@ -57,8 +57,8 @@ genus TypusParametrum {
 genus Parametrum {
     Locus locus
     Nomen nomen
-    Nomen? aliasNomen        // ut alias
-    TypusAdnotatio? typusAdnotatio
+    Nomen? alias             // ut alias
+    TypusAdnotatio? typus
     Expressia? praedefinitum // vel default
     textus? praepositio      // de, in, ex
     bivalens residuum        // ceteri (rest)

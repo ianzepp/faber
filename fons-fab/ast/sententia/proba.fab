@@ -31,7 +31,7 @@ ordo PraeparaTempus {
 genus PraeparaMassa {
     Locus locus
     PraeparaTempus tempus
-    bivalens async
+    bivalens asynca
     bivalens omnia
     MassaSententia corpus
 }

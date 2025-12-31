@@ -41,7 +41,7 @@ genus SiSententia {
     Expressia condicio
     MassaSententia consequens
     Sententia? alternans     // MassaSententia or SiSententia
-    CapeClausula? capeClausula
+    CapeClausula? cape
 }
 
 /// While loop
@@ -50,7 +50,7 @@ genus DumSententia {
     Locus locus
     Expressia condicio
     MassaSententia corpus
-    CapeClausula? capeClausula
+    CapeClausula? cape
 }
 
 /// Iteration kind
@@ -68,7 +68,7 @@ genus IteratioSententia {
     Expressia iterabile
     MassaSententia corpus
     bivalens asynca
-    CapeClausula? capeClausula
+    CapeClausula? cape
 }
 
 /// With statement (mutation block)
@@ -93,7 +93,7 @@ genus EligeSententia {
     Expressia discriminans
     lista<EligeCasus> casus
     MassaSententia? praedefinitum  // aliter/secus
-    CapeClausula? capeClausula
+    CapeClausula? cape
 }
 
 /// Variant case for pattern matching

@@ -85,7 +85,7 @@ genus ExpressiaSententia {
 genus IncipitSententia {
     Locus locus
     MassaSententia? corpus
-    Sententia? ergoSententia // incipit ergo ...
+    Sententia? ergo          // incipit ergo ...
 }
 
 /// Entry point (async)
@@ -93,7 +93,7 @@ genus IncipitSententia {
 genus IncipietSententia {
     Locus locus
     MassaSententia? corpus
-    Sententia? ergoSententia
+    Sententia? ergo
 }
 
 /// Curator kind
@@ -102,20 +102,7 @@ ordo CuratorGenus {
     Pagina     // page allocator
 }
 
-/// Cura timing (test context)
-ordo CuraTempus {
-    Ante       // before
-    Post       // after
-}
-
-/// Resource management block (test context)
-/// Example: cura ante { setup() }
-genus CuraMassa {
-    Locus locus
-    CuraTempus tempus
-    bivalens proOmnibus      // ante omnia / post omnia
-    MassaSententia corpus
-}
+/// NOTE: PraeparaMassa moved to proba.fab
 
 /// Resource management statement
 /// Example: cura arena fit mem { ... }
@@ -124,10 +111,10 @@ genus CuraSententia {
     CuratorGenus? curatorSpecies
     Expressia? res           // resource expression
     Nomen vinculum           // binding name
-    TypusAdnotatio? typusAdnotatio
+    TypusAdnotatio? typus
     bivalens asynca
     MassaSententia corpus
-    CapeClausula? capeClausula
+    CapeClausula? cape
 }
 
 /// Ad binding verb
@@ -142,9 +129,9 @@ ordo AdVerbumVinculandi {
 genus AdVinculum {
     Locus locus
     AdVerbumVinculandi verbum
-    TypusAdnotatio? typusAdnotatio
+    TypusAdnotatio? typus
     Nomen nomen
-    Nomen? aliasNomen
+    Nomen? alias
 }
 
 /// Ad (dispatch) statement
@@ -155,5 +142,5 @@ genus AdSententia {
     lista<Expressia> argumenta
     AdVinculum? vinculum
     MassaSententia? corpus
-    CapeClausula? capeClausula
+    CapeClausula? cape
 }

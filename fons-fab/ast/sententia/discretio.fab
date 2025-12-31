@@ -25,7 +25,7 @@ genus TypusAdnotatio {
 genus VariansCampus {
     Locus locus
     Nomen nomen
-    TypusAdnotatio typusAdnotatio
+    TypusAdnotatio typus
 }
 
 /// Variant declaration within discretio

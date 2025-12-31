@@ -40,5 +40,5 @@ genus LambdaExpressia {
 genus LambdaParametrum {
     Locus locus
     Nomen nomen
-    TypusAdnotatio? typusAdnotatio
+    TypusAdnotatio? typus
 }
