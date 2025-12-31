@@ -338,8 +338,8 @@ The current primitives are sufficient for bootstrap. Zig-idiomatic error handlin
 
 See detailed analysis below.
 
-- [ ] **5a:** Core types — AST nodes, Token, SemanticType as `genus`/`discretio`
-- [ ] **5b:** Tokenizer — Refactor closures → struct (~1,200 lines)
+- [x] **5a:** Core types — AST nodes, Token, SemanticType as `genus`/`discretio`
+- [x] **5b:** Tokenizer — Refactor closures → struct (~1,200 lines)
 - [ ] **5c:** Parser — Largest module (~5,000 lines), complex state
 - [ ] **5d:** Semantic — Symbol tables, type checking (~2,000 lines)
 - [ ] **5e:** Codegen (Zig only) — Handler functions (~3,500 lines)
@@ -555,7 +555,7 @@ Round-trip verification: both compilers produce identical Zig output.
 
 ## Metrics for Readiness
 
-**Current state:** 474 Zig tests pass (0 failures). Test coverage is 61% (385 Zig expectations vs 632 TypeScript expectations). Tests without Zig expectations are skipped, not failed.
+**Current state:** 476 Zig tests pass (0 failures). Test coverage is 61% (385 Zig expectations vs 632 TypeScript expectations). Tests without Zig expectations are skipped, not failed.
 
 Bootstrap is ready when:
 
@@ -593,4 +593,198 @@ This moves complexity from inline codegen to a testable Zig library. See `consil
 | 2025-12-30 | Lambda type inference            | Semantic analysis provides return type |
 | 2025-12-30 | stdin/stdout over file I/O       | Simpler, more Unix-idiomatic           |
 | 2025-12-30 | Phase 5 detailed analysis        | ~17k lines, 20-28 days estimated       |
+| 2025-12-31 | Complete Phase 5a (AST types)    | 20 files in `fons-fab/ast/`            |
+| 2025-12-31 | Complete Phase 5b (Tokenizer)    | `fons-fab/lexicon/` + `fons-fab/lexor/`|
+| 2025-12-31 | `genus` self.alloc pattern       | Collections in structs get auto-alloc  |
+
+## Key Implementation Patterns (from Phase 5a/5b)
+
+These patterns emerged during bootstrap implementation and should guide remaining phases.
+
+### Pattern 1: `curator alloc` Parameter Convention
+
+Functions needing heap allocation declare `curator alloc` as a parameter. The semantic analyzer detects this, and call sites auto-inject the allocator from the current `cura` block:
+
+```faber
+functio lexare(curator alloc, textus fons) -> LexorResultatum {
+    // alloc is available here and passed to collection operations
+    varia lista<Symbolum> symbola = [] qua lista<Symbolum>
+    symbola.adde(symbolum)  // alloc auto-threaded
+}
+
+// Call site - alloc injected automatically
+incipit ergo cura arena fit alloc {
+    fixum result = lexare("source code")  // alloc from cura block
+}
+```
+
+### Pattern 2: Struct `init()` with Allocator
+
+For structs containing collections (`lista`, `tabula`, `copia`), use explicit `init()` that takes the allocator:
+
+```faber
+genus Lexor {
+    textus fons
+    lista<Symbolum> symbola
+    
+    publicum functio init(curator alloc, textus fons) -> Lexor {
+        redde Lexor.{
+            fons: fons,
+            symbola: [] qua lista<Symbolum>
+        }
+    }
+}
+
+// Usage
+varia lexor = Lexor.init(alloc, fons)
+```
+
+The Zig codegen automatically:
+- Adds `alloc: std.mem.Allocator` field to structs with collections
+- `init()` stores the allocator as first operation
+- Methods access `self.alloc` for collection operations
+
+### Pattern 3: Closure → Genus Refactoring
+
+TypeScript's closure-based modules become `genus` with methods. All state moves to struct fields:
+
+```typescript
+// TypeScript (before)
+function tokenize(source: string) {
+    let current = 0;
+    function advance() { return source[current++]; }
+    function peek() { return source[current]; }
+    // ... many nested functions
+}
+```
+
+```faber
+// Faber (after)
+genus Lexor {
+    textus fons
+    numerus index
+    
+    publicum functio procede() -> textus {
+        fixum c = ego.fons[ego.index]
+        ego.index = ego.index + 1
+        redde c
+    }
+    
+    publicum functio specta() -> textus {
+        redde ego.fons[ego.index]
+    }
+}
+```
+
+### Pattern 4: Latin Naming Convention
+
+All bootstrap code uses Latin identifiers, following the AST module convention:
+
+| English | Latin | Usage |
+|---------|-------|-------|
+| `peek` | `specta` | Look without consuming |
+| `advance` | `procede` | Move forward |
+| `current` | `index` | Current position |
+| `tokens` | `symbola` | Token list |
+| `source` | `fons` | Source text |
+| `error` | `error` | Error (Latin origin) |
+| `new` | `novum` | Constructor (but reserved) |
+
+**Note:** `novum` is a keyword in Faber - use `init` for constructor methods.
+
+### Pattern 5: Result Types for Error Handling
+
+Instead of exceptions, return result types containing either success or errors:
+
+```faber
+genus LexorResultatum {
+    lista<Symbolum> symbola
+    lista<LexorError> errores
+    bivalens successum
+}
+
+functio lexare(curator alloc, textus fons) -> LexorResultatum {
+    varia errores = [] qua lista<LexorError>
+    varia symbola = [] qua lista<Symbolum>
+    
+    // ... tokenization logic, accumulate errors
+    
+    redde LexorResultatum.{
+        symbola: symbola,
+        errores: errores,
+        successum: errores.longitudo == 0
+    }
+}
+```
+
+### Pattern 6: Switch via `elige` for Keyword Lookup
+
+Large keyword tables use `elige` which compiles to efficient switch statements:
+
+```faber
+functio estVerbum(textus verbum) -> SymbolumGenus? {
+    elige verbum {
+        si "si" { redde SymbolumGenus.Si }
+        si "aliter" { redde SymbolumGenus.Aliter }
+        si "dum" { redde SymbolumGenus.Dum }
+        // ... 80+ keywords
+        secus { redde nihil }
+    }
+}
+```
+
+This avoids `tabula` allocation for static lookups.
+
+## Current Bootstrap Structure
+
+```
+fons-fab/
+├── ast/                    # Phase 5a - COMPLETE (20 files)
+│   ├── positio.fab         # Locus, Tractus (position types)
+│   ├── lexema.fab          # Symbolum, SymbolumGenus (token types)
+│   ├── radix.fab           # Programma root node
+│   ├── sententia/          # Statement AST nodes (12 files)
+│   │   ├── importa.fab     # Import declarations
+│   │   ├── varia.fab       # Variable declarations
+│   │   ├── functio.fab     # Function declarations
+│   │   └── ...
+│   └── expressia/          # Expression AST nodes (6 files)
+│       ├── litteralis.fab  # Literals
+│       ├── binarius.fab    # Binary expressions
+│       └── ...
+├── lexicon/                # Phase 5b - COMPLETE
+│   └── verba.fab           # estVerbum() keyword lookup (no heap)
+└── lexor/                  # Phase 5b - COMPLETE
+    ├── errores.fab         # LexorErrorCodice enum + helpers
+    └── index.fab           # Lexor genus + lexare() entry point
+```
+
+## Codegen Fixes Applied
+
+During Phase 5b, these Zig codegen issues were discovered and fixed:
+
+### Fix 1: Default Curator in Methods
+
+**Problem:** `getCurator()` threw errors when generating method bodies at module level (before any `cura` block established context).
+
+**Solution:** Return `'alloc'` as default instead of throwing. Zig compiler catches missing allocators at actual call sites.
+
+```typescript
+// fons/codegen/zig/generator.ts
+getCurator(): string {
+    const curator = this.curatorStack[this.curatorStack.length - 1];
+    return curator ?? 'alloc';  // Was: throw Error(...)
+}
+```
+
+### Fix 2: Self-Allocator Pattern for Genus
+
+**Problem:** Methods inside a `genus` with `lista<>` fields couldn't access an allocator for collection operations.
+
+**Solution:** Structs with collection fields automatically:
+1. Add `alloc: std.mem.Allocator` field
+2. `init()` takes allocator as first param and stores it
+3. Methods push `self.alloc` onto curatorStack during codegen
+
+This is implemented in `fons/codegen/zig/statements/genus.ts`.
 ````
