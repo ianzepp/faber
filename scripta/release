@@ -39,7 +39,11 @@ echo "=== Building faber ==="
 bun run build
 
 echo "=== Verifying exempla ==="
-bun run verify:exempla
+if [[ "$FORCE" == true ]]; then
+    bun run verify:exempla || echo "Warning: Exempla verification failed but --force was specified, continuing..."
+else
+    bun run verify:exempla
+fi
 
 # Read current version
 CURRENT=$(jq -r .version package.json)
