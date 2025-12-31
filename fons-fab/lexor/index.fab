@@ -624,14 +624,14 @@ genus Lexor {
 /// Main entry point: tokenize source code
 /// NOTE: curator alloc is auto-injected at call sites from cura block
 functio lexare(curator alloc, textus fons) -> LexorResultatum {
-    varia lexor = {
+    varia lexor = Lexor.init(alloc, {
         fons: fons,
         index: 0,
         linea: 1,
         columnaInitium: 0,
         symbola: [] qua lista<Symbolum>,
         errores: [] qua lista<LexorError>
-    } qua Lexor
+    })
     
     redde lexor.scanOmnia()
 }
