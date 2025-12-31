@@ -658,6 +658,53 @@ cura aperi("data.bin") fit fd { lege(fd) }   // generic resource
 cura connect(url) fiet conn { ... }          // async resource
 ```
 
+### Incipit Statement
+
+```ebnf
+incipitStmt := 'incipit' (blockStmt | 'ergo' statement)
+```
+
+> 'incipit' (it begins) marks the program entry point.
+> This is a pure structural marker with no magic injection.
+> The source is responsible for any setup (allocators via cura, etc.).
+> 
+> The 'ergo' (therefore) form chains to a single statement, typically
+> a cura block for allocator setup. This avoids extra nesting.
+
+**Examples:**
+
+```fab
+incipit {
+    scribe "Hello"
+}
+
+incipit ergo cura arena {
+```
+
+### Incipiet Statement
+
+```ebnf
+incipietStmt := 'incipiet' (blockStmt | 'ergo' statement)
+```
+
+> 'incipiet' (it will begin) marks the async program entry point.
+> Mirrors the fit/fiet pattern: present for sync, future for async.
+> 
+> The 'ergo' form chains to a single statement for concise setup.
+
+**Examples:**
+
+```fab
+incipiet {
+    fixum data = cede fetchData()
+    scribe data
+}
+
+incipiet ergo cura arena {
+    fixum data = cede fetchData()
+}
+```
+
 ### Block Statement
 
 ```ebnf
