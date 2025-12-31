@@ -129,27 +129,12 @@
           - '})'
 
 - name: call with lambda argument
-  faber: items.map(pro x redde x * 2)
+  faber: 'items.map(pro x: x * 2)'
   expect:
       ts: 'items.map((x) => (x * 2));'
       py: 'items.map(lambda x: (x * 2))'
       fab:
-          - 'items.map(pro x redde x * 2)'
-
-- name: IIFE pattern
-  faber: ((x) => x * 2)(5)
-  expect:
-      ts:
-          - '(x) =>'
-          - '(x * 2)'
-          - '(5)'
-      py:
-          - 'lambda x:'
-          - '(x * 2)'
-          - '(5)'
-      fab:
-          - 'pro x redde x * 2'
-          - '(5)'
+          - 'items.map(pro x: x * 2)'
 
 - name: call on computed member
   faber: obj[methodName](args)

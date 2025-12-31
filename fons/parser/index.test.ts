@@ -1061,25 +1061,6 @@ describe('parser', () => {
         });
     });
 
-    describe('arrow functions', () => {
-        test('simple arrow function', () => {
-            const { program } = parseCode('(x) => x');
-            const expr = (program!.body[0] as any).expression;
-
-            expect(expr.type).toBe('ArrowFunctionExpression');
-            expect(expr.params).toHaveLength(1);
-            expect(expr.body.name).toBe('x');
-        });
-
-        test('arrow function with block', () => {
-            const { program } = parseCode('(x) => { redde x }');
-            const expr = (program!.body[0] as any).expression;
-
-            expect(expr.type).toBe('ArrowFunctionExpression');
-            expect(expr.body.type).toBe('BlockStatement');
-        });
-    });
-
     describe('await expression', () => {
         test('cede', () => {
             const { program } = parseCode('cede fetch(url)');
@@ -2855,7 +2836,7 @@ describe('parser', () => {
 
         describe('pro expression (lambda)', () => {
             test('single param lambda', () => {
-                const { program } = parseCode('pro x redde x * 2');
+                const { program } = parseCode('pro x: x * 2');
                 const expr = (program!.body[0] as any).expression;
 
                 expect(expr.type).toBe('LambdaExpression');
@@ -2866,7 +2847,7 @@ describe('parser', () => {
             });
 
             test('multi param lambda', () => {
-                const { program } = parseCode('pro a, b redde a + b');
+                const { program } = parseCode('pro a, b: a + b');
                 const expr = (program!.body[0] as any).expression;
 
                 expect(expr.type).toBe('LambdaExpression');
@@ -2876,7 +2857,7 @@ describe('parser', () => {
             });
 
             test('zero param lambda', () => {
-                const { program } = parseCode('pro redde 42');
+                const { program } = parseCode('pro: 42');
                 const expr = (program!.body[0] as any).expression;
 
                 expect(expr.type).toBe('LambdaExpression');
@@ -2885,7 +2866,7 @@ describe('parser', () => {
             });
 
             test('lambda in variable declaration', () => {
-                const { program } = parseCode('fixum double = pro x redde x * 2');
+                const { program } = parseCode('fixum double = pro x: x * 2');
                 const decl = program!.body[0] as any;
 
                 expect(decl.type).toBe('VariaDeclaration');
@@ -2893,7 +2874,7 @@ describe('parser', () => {
             });
 
             test('nested lambdas', () => {
-                const { program } = parseCode('pro x redde pro y redde x + y');
+                const { program } = parseCode('pro x: pro y: x + y');
                 const expr = (program!.body[0] as any).expression;
 
                 expect(expr.type).toBe('LambdaExpression');

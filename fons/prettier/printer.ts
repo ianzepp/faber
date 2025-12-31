@@ -160,8 +160,6 @@ export function faberPrint(path: AstPath<AstNode>, options: FaberOptions, print:
             return printCallExpression(path, options, print);
         case 'MemberExpression':
             return printMemberExpression(path, options, print);
-        case 'ArrowFunctionExpression':
-            return printArrowFunctionExpression(path, options, print);
         case 'AssignmentExpression':
             return printAssignmentExpression(path, options, print);
         case 'ConditionalExpression':
@@ -548,17 +546,23 @@ function printFacBlockStatement(path: AstPath<AstNode>, options: FaberOptions, p
 
 function printLambdaExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
     const node = path.getValue() as any;
-    const parts: Doc[] = ['pro '];
+    const parts: Doc[] = ['pro'];
 
     if (node.params.length > 0) {
         const params = path.map(print, 'params');
-        parts.push(join(', ', params), ' ');
+        parts.push(' ', join(', ', params));
+    }
+
+    // Optional return type: pro x -> numerus: expr
+    if (node.returnType) {
+        parts.push(' -> ', path.call(print, 'returnType'));
     }
 
     if (node.body.type === 'BlockStatement') {
-        parts.push(path.call(print, 'body'));
+        parts.push(' ', path.call(print, 'body'));
     } else {
-        parts.push('redde ', path.call(print, 'body'));
+        // Expression form uses colon: pro x: expr
+        parts.push(': ', path.call(print, 'body'));
     }
 
     return parts;
@@ -958,37 +962,6 @@ function printMemberExpression(path: AstPath<AstNode>, options: FaberOptions, pr
     }
 
     return [path.call(print, 'object'), '.', path.call(print, 'property')];
-}
-
-function printArrowFunctionExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {
-    const node = path.getValue() as any;
-    const parts: Doc[] = [];
-
-    // Parameters
-    const params = path.map(print, 'params');
-    const threshold = getBreakThreshold(options);
-
-    if (params.length >= threshold) {
-        parts.push(group(['(', indent([softline, join([',', line], params)]), softline, ')']));
-    } else if (params.length === 1 && !node.params[0].typeAnnotation) {
-        // Single param without type can omit parens
-        parts.push(params[0]);
-    } else if (params.length > 0) {
-        parts.push('(', join(', ', params), ')');
-    } else {
-        parts.push('()');
-    }
-
-    parts.push(' => ');
-
-    // Body
-    if (node.body.type === 'BlockStatement') {
-        parts.push(path.call(print, 'body'));
-    } else {
-        parts.push(path.call(print, 'body'));
-    }
-
-    return parts;
 }
 
 function printAssignmentExpression(path: AstPath<AstNode>, options: FaberOptions, print: (path: AstPath<AstNode>) => Doc): Doc {

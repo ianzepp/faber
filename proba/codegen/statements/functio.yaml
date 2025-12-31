@@ -607,7 +607,7 @@
 # Function returning lambda
 # WHY: Tests lambda expression as return value
 - name: function returning lambda
-  faber: 'functio makeAdder(numerus x) { redde pro y redde x + y }'
+  faber: 'functio makeAdder(numerus x) { redde pro y: x + y }'
   expect:
       ts:
           - 'function makeAdder(x: number)'
@@ -623,10 +623,10 @@
           - 'return [&](auto y) { return (x + y); }'
       zig:
           - 'fn makeAdder(x: i64)'
-          - '@compileError'
+          - 'struct { fn call(y: anytype) i64 { return (x + y); } }.call'
       fab:
           - 'functio makeAdder(numerus x)'
-          - 'redde pro y redde x + y'
+          - 'redde pro y: x + y'
 
 # Nested function definition
 # WHY: Tests function declarations inside function bodies

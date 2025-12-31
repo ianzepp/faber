@@ -1608,22 +1608,22 @@ export interface AdStatement extends BaseNode {
  * Pro expression (lambda/anonymous function).
  *
  * GRAMMAR (in EBNF):
- *   lambdaExpr := 'pro' params? ('->' typeAnnotation)? (':' expression | 'redde' expression | blockStmt)
+ *   lambdaExpr := 'pro' params? ('->' typeAnnotation)? (':' expression | blockStmt)
  *   params := IDENTIFIER (',' IDENTIFIER)*
  *
  * INVARIANT: params is always an array (empty for zero-arg lambdas).
  * INVARIANT: async inferred from presence of cede in block body.
  * INVARIANT: returnType is optional - required for Zig target.
  *
- * WHY: Latin 'pro' (for) + 'redde' (return) creates lambda syntax.
- *      Expression form: "for x, return x * 2"
- *      Block form: "for x { ... }" for multi-statement bodies
- *      Return type mirrors function syntax: "pro x -> numerus: x * 2"
+ * WHY: Latin 'pro' (for) creates lambda syntax.
+ *      Expression form uses colon: "pro x: x * 2"
+ *      Block form uses braces: "pro x { ... }" for multi-statement bodies
+ *      Return type uses thin arrow: "pro x -> numerus: x * 2"
  *
  * Examples:
- *   pro x redde x * 2          -> (x) => x * 2
- *   pro x, y redde x + y       -> (x, y) => x + y
- *   pro redde 42               -> () => 42
+ *   pro x: x * 2               -> (x) => x * 2
+ *   pro x, y: x + y            -> (x, y) => x + y
+ *   pro: 42                    -> () => 42
  *   pro x { redde x * 2 }      -> (x) => { return x * 2; }
  *   pro { scribe "hi" }        -> () => { console.log("hi"); }
  *   pro x -> numerus: x * 2    -> (x): number => x * 2 (typed return)
@@ -1753,7 +1753,6 @@ export type Expression =
     | QuaExpression
     | CallExpression
     | MemberExpression
-    | ArrowFunctionExpression
     | AssignmentExpression
     | ConditionalExpression
     | CedeExpression
@@ -2158,26 +2157,6 @@ export interface MemberExpression extends BaseNode {
 // ---------------------------------------------------------------------------
 // Function Expressions
 // ---------------------------------------------------------------------------
-
-/**
- * Arrow function expression.
- *
- * GRAMMAR (in EBNF):
- *   arrowFuncExpr := '(' paramList ')' '=>' (expression | blockStmt)
- *
- * INVARIANT: body is Expression for concise form, BlockStatement for full form.
- * INVARIANT: params follows same structure as FunctioDeclaration.
- *
- * Examples:
- *   (x) => x + 1
- *   (x, y) => { redde x + y }
- */
-export interface ArrowFunctionExpression extends BaseNode {
-    type: 'ArrowFunctionExpression';
-    params: Parameter[];
-    body: Expression | BlockStatement;
-    async: boolean;
-}
 
 // ---------------------------------------------------------------------------
 // Assignment and Conditional

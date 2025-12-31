@@ -91,14 +91,14 @@
 
 - name: method in object (lambda as property)
   faber: |
-      fixum obj = { greet: pro name redde name }
+      fixum obj = { greet: pro name: name }
   expect:
       ts:
           - 'greet: (name) => name'
       py:
           - '"greet": lambda name: name'
       fab:
-          - 'greet: pro name redde name'
+          - 'greet: pro name: name'
 
 - name: deeply nested objects (4 levels)
   faber: |

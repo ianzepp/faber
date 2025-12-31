@@ -165,12 +165,6 @@ describe('tokenizer', () => {
             expect(tokens.map(t => t.type)).toEqual(['IDENTIFIER', 'LEFT_SHIFT', 'IDENTIFIER', 'LESS', 'IDENTIFIER', 'EOF']);
         });
 
-        test('arrow operator', () => {
-            const { tokens } = tokenize('=>');
-
-            expect(tokens[0]!.type).toBe('ARROW');
-        });
-
         test('assignment', () => {
             const { tokens } = tokenize('=');
 
@@ -271,12 +265,6 @@ describe('tokenizer', () => {
             expect(tokens[0]!.keyword).toBe('si');
             expect(tokens[2]!.type).toBe('KEYWORD'); // et
             expect(tokens[2]!.keyword).toBe('et');
-        });
-
-        test('arrow function', () => {
-            const { tokens } = tokenize('(x) => x * 2');
-
-            expect(tokens.map(t => t.type)).toEqual(['LPAREN', 'IDENTIFIER', 'RPAREN', 'ARROW', 'IDENTIFIER', 'STAR', 'NUMBER', 'EOF']);
         });
     });
 

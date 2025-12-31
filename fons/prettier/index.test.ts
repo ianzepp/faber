@@ -263,13 +263,8 @@ describe('prettier plugin', () => {
         });
 
         test('pro lambda expression', async () => {
-            const result = await format('fixum double = pro x redde x * 2');
-            expect(result).toContain('pro x redde x * 2');
-        });
-
-        test('arrow function', async () => {
-            const result = await format('fixum add = (a, b) => a + b');
-            expect(result).toContain('(a, b) => a + b');
+            const result = await format('fixum double = pro x: x * 2');
+            expect(result).toContain('pro x: x * 2');
         });
     });
 

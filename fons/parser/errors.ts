@@ -62,7 +62,6 @@ export enum ParserErrorCode {
     ExpectedIdentifier = 'P010',
     ExpectedTypeName = 'P011',
     ExpectedThinArrow = 'P012',
-    ExpectedArrow = 'P013',
 
     // Keyword expectation errors (P020-P049)
     ExpectedKeywordEx = 'P020',
@@ -190,10 +189,6 @@ export const PARSER_ERRORS = {
     [ParserErrorCode.ExpectedThinArrow]: {
         text: "Expected '->'",
         help: 'Use thin arrow (->) to specify return type (exempli gratia: functio salve() -> textus).',
-    },
-    [ParserErrorCode.ExpectedArrow]: {
-        text: "Expected '=>'",
-        help: 'Arrow functions require => between parameters and body (exempli gratia: (x) => x + 1).',
     },
 
     // Keyword expectation errors

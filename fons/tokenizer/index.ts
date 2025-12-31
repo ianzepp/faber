@@ -838,9 +838,6 @@ export function tokenize(source: string): TokenizerResult {
                 } else if (peek() === '=') {
                     advance();
                     addToken('EQUAL_EQUAL', '==', pos);
-                } else if (peek() === '>') {
-                    advance();
-                    addToken('ARROW', '=>', pos);
                 } else {
                     addToken('EQUAL', char, pos);
                 }

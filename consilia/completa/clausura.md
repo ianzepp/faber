@@ -10,22 +10,22 @@ Latin: _clausura_ (from _claudere_, to close) — a closure, enclosure.
 
 ## Implementation Status
 
-| Feature                           |  TypeScript  |    Python    |     Zig      |     Rust     |              C++23              | Notes                          |
-| --------------------------------- | :----------: | :----------: | :----------: | :----------: | :-----------------------------: | ------------------------------ |
-| `pro x redde expr` expression     |   [x] Done   |   [x] Done   | [~] Partial  | [ ] Not Done |            [x] Done             | Single-expression lambda       |
-| `pro x: expr` shorthand           |   [x] Done   |   [x] Done   | [~] Partial  | [ ] Not Done |            [x] Done             | `:` as alias for `redde`       |
-| `pro x, y redde expr` multi-param |   [x] Done   |   [x] Done   | [~] Partial  | [ ] Not Done |            [x] Done             | Multiple parameters            |
-| `pro redde expr` zero-param       |   [x] Done   |   [x] Done   | [~] Partial  | [ ] Not Done |            [x] Done             | No parameters                  |
-| `pro x { body }` block            |   [x] Done   |   [x] Done   | [~] Partial  | [ ] Not Done |            [x] Done             | Multi-statement body           |
-| `pro { body }` zero-param block   |   [x] Done   |   [x] Done   | [~] Partial  | [ ] Not Done |            [x] Done             | No parameters, block body      |
-| Nested lambdas                    |   [x] Done   |   [x] Done   | [ ] Not Done | [ ] Not Done |            [x] Done             | `pro x: pro y: x + y`          |
-| Captures                          |   [x] Done   |   [x] Done   | [ ] Not Done |   [x] Done   | Implicit capture of outer scope |
-| `(x) => expr` JS-style            |   [x] Done   |   [x] Done   | [~] Partial  | [ ] Not Done |            [x] Done             | Alternative syntax             |
-| `fiet x: expr` async lambda       |   [x] Done   |   [x] Done   | [ ] Not Done | [ ] Not Done |            [x] Done             | Async closure with verb form   |
-| `fiet x { body }` async block     |   [x] Done   |   [x] Done   | [ ] Not Done | [ ] Not Done |            [x] Done             | Async block closure            |
-| Generator lambdas                 |     [-]      |     [-]      |     [-]      |     [-]      |               [-]               | Use named functions instead    |
-| Typed parameters                  | [ ] Not Done | [ ] Not Done | [ ] Not Done | [ ] Not Done |          [ ] Not Done           | Future: `pro numerus x: x * 2` |
-| Return type annotation            |   [x] Done   |   [-] N/A    |   [x] Done   | [ ] Not Done |            [x] Done             | `pro x -> numerus: x * 2`      |
+| Feature                           | TypeScript |  Python  |     Zig      |     Rust     |              C++23              | Notes                     |
+| --------------------------------- | :--------: | :------: | :----------: | :----------: | :-----------------------------: | ------------------------- |
+| `pro x redde expr` expression     |  [x] Done  | [x] Done | [~] Partial  | [ ] Not Done |            [x] Done             | Single-expression lambda  |
+| `pro x: expr` shorthand           |  [x] Done  | [x] Done | [~] Partial  | [ ] Not Done |            [x] Done             | `:` as alias for `redde`  |
+| `pro x, y redde expr` multi-param |  [x] Done  | [x] Done | [~] Partial  | [ ] Not Done |            [x] Done             | Multiple parameters       |
+| `pro redde expr` zero-param       |  [x] Done  | [x] Done | [~] Partial  | [ ] Not Done |            [x] Done             | No parameters             |
+| `pro x { body }` block            |  [x] Done  | [x] Done | [~] Partial  | [ ] Not Done |            [x] Done             | Multi-statement body      |
+| `pro { body }` zero-param block   |  [x] Done  | [x] Done | [~] Partial  | [ ] Not Done |            [x] Done             | No parameters, block body |
+| Nested lambdas                    |  [x] Done  | [x] Done | [ ] Not Done | [ ] Not Done |            [x] Done             | `pro x: pro y: x + y`     |
+| Captures                          |  [x] Done  | [x] Done | [ ] Not Done |   [x] Done   | Implicit capture of outer scope |
+
+| `fiet x: expr` async lambda | [x] Done | [x] Done | [ ] Not Done | [ ] Not Done | [x] Done | Async closure with verb form |
+| `fiet x { body }` async block | [x] Done | [x] Done | [ ] Not Done | [ ] Not Done | [x] Done | Async block closure |
+| Generator lambdas | [-] | [-] | [-] | [-] | [-] | Use named functions instead |
+| Typed parameters | [ ] Not Done | [ ] Not Done | [ ] Not Done | [ ] Not Done | [ ] Not Done | Future: `pro numerus x: x * 2` |
+| Return type annotation | [x] Done | [-] N/A | [x] Done | [ ] Not Done | [x] Done | `pro x -> numerus: x * 2` |
 
 ---
 
@@ -34,15 +34,13 @@ Latin: _clausura_ (from _claudere_, to close) — a closure, enclosure.
 ### Expression Lambda
 
 ```
-pro <params> redde <expr>
-pro <params>: <expr>        // shorthand
+pro <params>: <expr>
 ```
 
-Single expression, implicit return. The `redde` keyword makes the return explicit; `:` is a shorthand alias.
+Single expression, implicit return. The colon separates parameters from the body.
 
 ```
-pro x redde x * 2           // (x) => x * 2
-pro x: x * 2                // equivalent shorthand
+pro x: x * 2                // (x) => x * 2
 pro a, b: a + b             // (a, b) => a + b
 pro: 42                     // () => 42
 ```
@@ -66,7 +64,7 @@ pro user {
 
 ```
 // Expression
-pro redde 42
+pro: 42
 
 // Block
 pro {
@@ -80,7 +78,6 @@ For targets that require explicit return types (e.g., Zig), use `-> Type` after 
 
 ```
 pro <params> -> <type>: <expr>
-pro <params> -> <type> redde <expr>
 pro <params> -> <type> { <body> }
 ```
 
@@ -299,20 +296,16 @@ fixum doubled = numbers.mappata(pro x: x * factor)
 
 ## Alternative Syntax
 
-JS-style arrow functions are also supported:
+The `pro...` forms are preferred for consistency with Latin style.
 
 ```
 // These are all equivalent:
 pro x: x * 2        // shorthand (preferred)
 pro x redde x * 2   // explicit
-(x) => x * 2        // JS-style
 
 // Block form:
 pro x { redde x * 2 }
-(x) => { redde x * 2 }
 ```
-
-The `pro...` forms are preferred for consistency with Latin style.
 
 ---
 

@@ -284,15 +284,6 @@ describe('Semantic Analyzer', () => {
         });
     });
 
-    describe('Arrow Functions', () => {
-        it('resolves arrow function type', () => {
-            const source = `varia add = (numerus a, numerus b) => a + b`;
-            const { errors } = analyzeSource(source);
-
-            expect(errors).toHaveLength(0);
-        });
-    });
-
     describe('nulla/nonnulla operators', () => {
         it('nulla resolves to bivalens type', () => {
             const source = `

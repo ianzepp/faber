@@ -346,16 +346,14 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 ## Lambda Syntax
 
-| Feature                         | TypeScript | Zig | Python | Rust | C++23 |
-| ------------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `pro x redde expr` (expression) |    [x]     | [~] |  [~]   | [x]  |  [ ]  |
-| `pro x: expr` (colon shorthand) |    [x]     | [~] |  [~]   | [x]  |  [ ]  |
-| `pro x { body }` (block)        |    [x]     | [~] |  [~]   | [x]  |  [ ]  |
-| `pro redde expr` (zero-param)   |    [x]     | [~] |  [~]   | [x]  |  [ ]  |
-| `pro x -> T: expr` (ret. type)  |    [x]     | [x] |  [-]   | [x]  |  [x]  |
-| `fit x: expr` (sync binding)    |    [x]     | [~] |  [~]   | [x]  |  [ ]  |
-| `(x) => expr` (JS-style)        |    [x]     | [~] |  [~]   | [x]  |  [x]  |
-| `per property` (shorthand)      |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Feature                        | TypeScript | Zig | Python | Rust | C++23 |
+| ------------------------------ | :--------: | :-: | :----: | :--: | :---: |
+| `pro x: expr` (expression)     |    [x]     | [~] |  [~]   | [x]  |  [ ]  |
+| `pro x { body }` (block)       |    [x]     | [~] |  [~]   | [x]  |  [ ]  |
+| `pro: expr` (zero-param)       |    [x]     | [~] |  [~]   | [x]  |  [ ]  |
+| `pro x -> T: expr` (ret. type) |    [x]     | [x] |  [-]   | [x]  |  [x]  |
+| `fit x: expr` (sync binding)   |    [x]     | [~] |  [~]   | [x]  |  [ ]  |
+| `per property` (shorthand)     |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
 
 ## OOP Features (genus/pactum)
 

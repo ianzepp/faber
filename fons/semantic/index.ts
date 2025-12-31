@@ -67,7 +67,6 @@ import type {
     UnaryExpression,
     CallExpression,
     MemberExpression,
-    ArrowFunctionExpression,
     AssignmentExpression,
     CedeExpression,
     NovumExpression,
@@ -599,9 +598,6 @@ export function analyze(program: Program): SemanticResult {
             case 'MemberExpression':
                 return resolveMemberExpression(node);
 
-            case 'ArrowFunctionExpression':
-                return resolveArrowFunction(node);
-
             case 'AssignmentExpression':
                 return resolveAssignment(node);
 
@@ -1020,49 +1016,8 @@ export function analyze(program: Program): SemanticResult {
         return UNKNOWN;
     }
 
-    function resolveArrowFunction(node: ArrowFunctionExpression): SemanticType {
-        enterScope('function');
-
-        // Define parameters
-        const paramTypes: SemanticType[] = [];
-
-        for (const param of node.params) {
-            const paramType = param.typeAnnotation ? resolveTypeAnnotation(param.typeAnnotation) : UNKNOWN;
-
-            paramTypes.push(paramType);
-            define({
-                name: param.name.name,
-                type: paramType,
-                kind: 'parameter',
-                mutable: false,
-                position: param.position,
-            });
-        }
-
-        // Resolve body
-        let returnType: SemanticType;
-
-        if (node.body.type === 'BlockStatement') {
-            analyzeBlock(node.body);
-            returnType = VACUUM;
-        } else {
-            returnType = resolveExpression(node.body as Expression);
-        }
-
-        exitScope();
-
-        const fnType = functionType(paramTypes, returnType, node.async);
-
-        node.resolvedType = fnType;
-
-        return fnType;
-    }
-
     /**
      * Resolve lambda expression (pro ... redde or pro ... { }).
-     *
-     * WHY: LambdaExpression is simpler than ArrowFunction - params are just
-     *      identifiers (no type annotations). Body can be expression or block.
      */
     function resolveLambdaExpression(node: LambdaExpression): SemanticType {
         enterScope('function');

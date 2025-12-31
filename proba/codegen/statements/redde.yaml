@@ -122,14 +122,14 @@
 
 # Return with lambda
 - name: return with lambda
-  faber: 'redde pro x redde x * 2'
+  faber: 'redde pro x: x * 2'
   expect:
       ts:
           - 'return (x) => (x * 2);'
       py:
           - 'return lambda x: (x * 2)'
       fab:
-          - 'redde pro x redde x * 2'
+          - 'redde pro x: x * 2'
 
 # Return with complex expression
 - name: return with complex expression

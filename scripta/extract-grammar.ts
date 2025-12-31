@@ -41,7 +41,6 @@ const CATEGORY_MAP: Record<string, string> = {
     parseFunctionDeclaration: 'functiones',
     parseParameterList: 'functiones',
     parseParameter: 'functiones',
-    parseArrowFunction: 'functiones',
     parseProExpression: 'functiones',
 
     // regimen - control flow

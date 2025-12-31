@@ -48,7 +48,6 @@ import { genBinaryExpression } from './expressions/binary';
 import { genUnaryExpression } from './expressions/unary';
 import { genCallExpression } from './expressions/call';
 import { genMemberExpression } from './expressions/member';
-import { genArrowFunction } from './expressions/arrow';
 import { genLambdaExpression } from './expressions/lambda';
 import { genAssignmentExpression } from './expressions/assignment';
 import { genNovumExpression } from './expressions/novum';
@@ -405,8 +404,6 @@ export class ZigGenerator {
                 return genCallExpression(node, this);
             case 'MemberExpression':
                 return genMemberExpression(node, this);
-            case 'ArrowFunctionExpression':
-                return genArrowFunction(node, this);
             case 'LambdaExpression':
                 return genLambdaExpression(node, this);
             case 'AssignmentExpression':

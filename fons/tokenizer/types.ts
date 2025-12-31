@@ -48,8 +48,7 @@
  * DESIGN: Keywords use a single KEYWORD type with optional keyword field
  *         to decouple tokenizer from the evolving Latin lexicon.
  *
- * DESIGN: ARROW (=>) and THIN_ARROW (->) are distinct to support both
- *         fat arrow functions (modern style) and type annotations (Zig-like).
+ * DESIGN: THIN_ARROW (->) is used for type annotations (Zig-like return types).
  */
 export type TokenType =
     // ---------------------------------------------------------------------------
@@ -86,7 +85,6 @@ export type TokenType =
     | 'GREATER_EQUAL' // >=
     | 'AND' // &&
     | 'OR' // ||
-    | 'ARROW' // => (fat arrow for lambdas)
     | 'THIN_ARROW' // -> (type annotations, Zig-style returns)
     | 'DOT' // .
     | 'DOT_DOT' // .. (range operator)

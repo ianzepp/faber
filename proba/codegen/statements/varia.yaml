@@ -306,14 +306,14 @@
 
 # Declaration with lambda
 - name: declaration with lambda
-  faber: 'fixum fn = pro x redde x * 2'
+  faber: 'fixum fn = pro x: x * 2'
   expect:
       ts:
           - 'const fn = (x) => (x * 2);'
       py:
           - 'fn = lambda x: (x * 2)'
       fab:
-          - 'fixum fn = pro x redde x * 2'
+          - 'fixum fn = pro x: x * 2'
 
 # Declaration with function call
 - name: declaration with function call

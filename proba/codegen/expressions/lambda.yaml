@@ -1,5 +1,5 @@
 # Lambda expressions - Latin pro syntax for lambdas
-# Maps Faber pro/redde to target-language lambda equivalents
+# Maps Faber pro: syntax to target-language lambda equivalents
 
 - name: lambda with return type (expression body)
   faber: 'pro x -> numerus: x * 2'
@@ -42,7 +42,7 @@
           - 'redde x * 2'
 
 - name: single param lambda
-  faber: pro x redde x * 2
+  faber: 'pro x: x * 2'
   expect:
       ts: '(x) => (x * 2);'
       py: 'lambda x: (x * 2)'
@@ -57,7 +57,7 @@
           - 'x * 2'
 
 - name: multi param lambda
-  faber: pro x, y redde x + y
+  faber: 'pro x, y: x + y'
   expect:
       ts: '(x, y) => (x + y);'
       py: 'lambda x, y: (x + y)'
@@ -72,7 +72,7 @@
           - 'x + y'
 
 - name: zero param lambda
-  faber: pro redde 42
+  faber: 'pro: 42'
   expect:
       ts: '() => 42;'
       py: 'lambda : 42'
@@ -87,7 +87,7 @@
           - '42'
 
 - name: lambda in variable
-  faber: fixum double = pro x redde x * 2
+  faber: 'fixum double = pro x: x * 2'
   expect:
       ts: 'const double = (x) => (x * 2);'
       py: 'double = lambda x: (x * 2)'
@@ -102,7 +102,7 @@
           - 'x * 2'
 
 - name: lambda as callback
-  faber: items.filtrata(pro x redde x > 0)
+  faber: 'items.filtrata(pro x: x > 0)'
   expect:
       ts: 'items.filter((x) => (x > 0));'
       py:
@@ -117,7 +117,7 @@
           - 'x > 0'
 
 - name: lambda returning lambda (curried)
-  faber: fixum curry = pro x redde pro y redde x + y
+  faber: 'fixum curry = pro x: pro y: x + y'
   expect:
       ts: 'const curry = (x) => (y) => (x + y);'
       py: 'curry = lambda x: lambda y: (x + y)'
@@ -169,7 +169,7 @@
           - 'redde r'
 
 - name: triple nested lambda
-  faber: fixum nested = pro a redde pro b redde pro c redde a + b + c
+  faber: 'fixum nested = pro a: pro b: pro c: a + b + c'
   expect:
       ts: 'const nested = (a) => (b) => (c) => ((a + b) + c);'
       py: 'nested = lambda a: lambda b: lambda c: ((a + b) + c)'
@@ -189,7 +189,7 @@
 - name: lambda capturing outer variable (closure)
   faber: |
       fixum multiplier = 3
-      fixum scale = pro x redde x * multiplier
+      fixum scale = pro x: x * multiplier
   expect:
       ts:
           - 'const multiplier = 3;'
@@ -213,7 +213,7 @@
           - 'x * multiplier'
 
 - name: lambda immediately invoked
-  faber: fixum result = (pro x redde x * 2)(5)
+  faber: 'fixum result = (pro x: x * 2)(5)'
   expect:
       ts: 'const result = (x) => (x * 2)(5);'
       py: 'result = lambda x: (x * 2)(5)'

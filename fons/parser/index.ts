@@ -114,7 +114,6 @@ import type {
     ExpressionStatement,
     Identifier,
     EgoExpression,
-    ArrowFunctionExpression,
     Parameter,
     TypeAnnotation,
     TypeParameter,
@@ -4614,42 +4613,8 @@ export function parse(tokens: Token[]): ParserResult {
             return { type: 'ObjectExpression', properties, position };
         }
 
-        // Parenthesized expression or arrow function
+        // Parenthesized (grouped) expression
         if (match('LPAREN')) {
-            // Could be arrow function: (x) => ...
-            // Or grouped expression: (a + b)
-            // Peek ahead to see if this is an arrow function
-
-            // Simple heuristic: if we see ) => then it's an arrow function
-            const startPos = current;
-            let parenDepth = 1;
-
-            while (parenDepth > 0 && !isAtEnd()) {
-                if (check('LPAREN')) {
-                    parenDepth++;
-                }
-
-                if (check('RPAREN')) {
-                    parenDepth--;
-                }
-
-                if (parenDepth > 0) {
-                    advance();
-                }
-            }
-
-            if (check('RPAREN')) {
-                advance(); // consume )
-                if (check('ARROW')) {
-                    // It's an arrow function, backtrack and parse properly
-                    current = startPos;
-
-                    return parseArrowFunction(position);
-                }
-            }
-
-            // Not an arrow function, backtrack and parse as grouped expression
-            current = startPos;
             const expr = parseExpression();
 
             expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
@@ -4666,53 +4631,26 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     /**
-     * Parse arrow function expression.
-     *
-     * GRAMMAR:
-     *   arrowFunction := '(' paramList ')' '=>' (expression | blockStmt)
-     *
-     * WHY: Called after detecting '() =>' pattern in parsePrimary.
-     */
-    function parseArrowFunction(position: Position): ArrowFunctionExpression {
-        const params = parseParameterList();
-
-        expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
-
-        expect('ARROW', ParserErrorCode.ExpectedArrow);
-
-        let body: Expression | BlockStatement;
-
-        if (check('LBRACE')) {
-            body = parseBlockStatement();
-        } else {
-            body = parseExpression();
-        }
-
-        return { type: 'ArrowFunctionExpression', params, body, async: false, position };
-    }
-
-    /**
      * Parse lambda expression (anonymous function).
      *
      * GRAMMAR:
-     *   lambdaExpr := ('pro' | 'fit' | 'fiet') params? ((':' | 'redde') expression | blockStmt)
+     *   lambdaExpr := ('pro' | 'fit' | 'fiet') params? ('->' type)? (':' expression | blockStmt)
      *   params := IDENTIFIER (',' IDENTIFIER)*
      *
      * Three keyword forms with different semantics:
      *   - 'pro' / 'fit': sync lambda (pro is casual, fit is explicit verb form)
      *   - 'fiet': async lambda (future tense verb form)
      *
-     * The ':' and 'redde' forms are INTERCHANGEABLE - use whichever reads better:
-     *      pro x: x * 2        ≡  pro x redde x * 2      -> (x) => x * 2
-     *      fiet x: expr        ≡  fiet x redde expr      -> async (x) => expr
-     *      pro: 42             ≡  pro redde 42           -> () => 42
-     *      pro x, y: x + y     ≡  pro x, y redde x + y   -> (x, y) => x + y
+     * Expression form (colon required):
+     *      pro x: x * 2              -> (x) => x * 2
+     *      pro: 42                   -> () => 42
+     *      pro x, y: x + y           -> (x, y) => x + y
+     *      pro x -> numerus: x * 2   -> (x): number => x * 2
+     *      fiet x: expr              -> async (x) => expr
      *
      * Block form (for multi-statement bodies):
      *      pro x { redde x * 2 }     -> (x) => { return x * 2; }
      *      fiet c { cede fetch() }   -> async (c) => { await fetch(); }
-     *
-     * Style guidance: Use ':' for short expressions, 'redde' for clarity in complex cases.
      */
     function parseLambdaExpression(async: boolean): LambdaExpression {
         const position = peek().position;
@@ -4722,9 +4660,9 @@ export function parse(tokens: Token[]): ParserResult {
 
         const params: Identifier[] = [];
 
-        // Check for immediate redde, :, ->, or { (zero-param lambda)
-        if (!checkKeyword('redde') && !check('COLON') && !check('LBRACE') && !check('THIN_ARROW')) {
-            // Parse parameters until we hit redde, :, ->, or {
+        // Check for immediate :, ->, or { (zero-param lambda)
+        if (!check('COLON') && !check('LBRACE') && !check('THIN_ARROW')) {
+            // Parse parameters until we hit :, ->, or {
             do {
                 params.push(parseIdentifier());
             } while (match('COMMA'));
@@ -4742,12 +4680,9 @@ export function parse(tokens: Token[]): ParserResult {
         if (check('LBRACE')) {
             // Block form: pro x { ... } or pro x -> T { ... }
             body = parseBlockStatement();
-        } else if (match('COLON')) {
-            // Expression shorthand: pro x: expr or pro x -> T: expr
-            body = parseExpression();
         } else {
-            // Expression form: pro x redde expr or pro x -> T redde expr
-            expectKeyword('redde', ParserErrorCode.ExpectedKeywordRedde);
+            // Expression form: pro x: expr or pro x -> T: expr
+            expect('COLON', ParserErrorCode.ExpectedColon);
             body = parseExpression();
         }
 
