@@ -1330,26 +1330,31 @@ export interface CapeClause extends BaseNode {
 // ---------------------------------------------------------------------------
 
 /**
- * Fac block statement (explicit scope block).
+ * Fac block statement (explicit scope block or do-while loop).
  *
  * GRAMMAR (in EBNF):
- *   facBlockStmt := 'fac' blockStmt ('cape' IDENTIFIER blockStmt)?
+ *   facBlockStmt := 'fac' blockStmt ('cape' IDENTIFIER blockStmt)? ('dum' expression)?
  *
  * INVARIANT: body is always a BlockStatement.
  * INVARIANT: catchClause is optional - for error handling.
+ * INVARIANT: test is optional - when present, creates do-while loop.
  *
  * WHY: Latin 'fac' (do!) creates an explicit scope boundary.
  *      Unlike `si verum { }`, this communicates intent clearly.
  *      When paired with 'cape', provides error boundary semantics.
+ *      When paired with 'dum', creates do-while loop (body executes first).
  *
  * Examples:
  *   fac { riskyOperation() }
  *   fac { riskyOperation() } cape err { handleError(err) }
+ *   fac { process() } dum hasMore()
+ *   fac { process() } cape err { log(err) } dum hasMore()
  */
 export interface FacBlockStatement extends BaseNode {
     type: 'FacBlockStatement';
     body: BlockStatement;
     catchClause?: CapeClause;
+    test?: Expression;
 }
 
 // ---------------------------------------------------------------------------

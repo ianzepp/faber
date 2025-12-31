@@ -543,6 +543,10 @@ function printFacBlockStatement(path: AstPath<AstNode>, options: FaberOptions, p
         parts.push(hardline, path.call(print, 'catchClause'));
     }
 
+    if (node.test) {
+        parts.push(' dum ', path.call(print, 'test'));
+    }
+
     return parts;
 }
 

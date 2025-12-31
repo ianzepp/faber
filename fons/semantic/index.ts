@@ -2040,9 +2040,10 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
     }
 
     /**
-     * Analyze fac block statement (explicit scope block).
+     * Analyze fac block statement (explicit scope block or do-while loop).
      *
      * WHY: fac creates an explicit scope. With cape, it's like try-catch.
+     *      With dum, it's a do-while loop (body executes first).
      */
     function analyzeFacBlockStatement(node: FacBlockStatement): void {
         enterScope();
@@ -2051,6 +2052,10 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
         if (node.catchClause) {
             analyzeCapeClause(node.catchClause);
+        }
+
+        if (node.test) {
+            resolveExpression(node.test);
         }
     }
 

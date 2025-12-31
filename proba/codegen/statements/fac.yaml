@@ -1,16 +1,18 @@
 # Do-block statements - fac
-# Maps Faber do-block syntax to target-language scope blocks
+# Maps Faber do-block syntax to target-language scope blocks and do-while loops
 #
 # Syntax:
-#   fac { body }              -- scope block (IIFE-like)
-#   fac { body } cape e { }   -- scope block with error handling
+#   fac { body }                    -- scope block (IIFE-like)
+#   fac { body } cape e { }         -- scope block with error handling
+#   fac { body } dum cond           -- do-while loop
+#   fac { body } cape e { } dum c   -- do-while with error handling
 #
 # Target mappings:
-#   ts:  { body } or try { body } catch
-#   py:  body or try: body except
-#   rs:  { body } (no try-catch in Rust this way)
-#   cpp: { body } or try { body } catch
-#   zig: body (no traditional try-catch)
+#   ts:  { body } or try { body } catch or do { } while ()
+#   py:  body or try: body except or while True: body if not: break
+#   rs:  { body } or loop { body if !cond break }
+#   cpp: { body } or try { body } catch or do { } while ()
+#   zig: body or while (true) { body if (!cond) break }
 
 # =============================================================================
 # Basic Do Block
@@ -158,3 +160,116 @@
           - '} cape e {'
           - 'redde nihil'
           - '}'
+
+# =============================================================================
+# Do-While Loop (fac...dum)
+# =============================================================================
+
+# Simple do-while
+- name: simple do-while loop
+  faber: |
+      fac {
+        process()
+      } dum hasMore()
+  expect:
+      ts:
+          - 'do {'
+          - 'process();'
+          - '} while (hasMore());'
+      py:
+          - 'while True:'
+          - 'process()'
+          - 'if not (hasMore()):'
+          - 'break'
+      rs:
+          - 'loop {'
+          - 'process();'
+          - 'if !(hasMore()) {'
+          - 'break;'
+          - '}'
+          - '}'
+      cpp:
+          - 'do {'
+          - 'process();'
+          - '} while (hasMore());'
+      zig:
+          - 'while (true) {'
+          - 'process();'
+          - 'if (!(hasMore())) break;'
+          - '}'
+      fab:
+          - 'fac {'
+          - 'process()'
+          - '} dum hasMore()'
+
+# Do-while with comparison
+- name: do-while with comparison condition
+  faber: 'fac { x = x + 1 } dum x < 10'
+  expect:
+      ts:
+          - 'do {'
+          - 'x = x + 1;'
+          - '} while ((x < 10));'
+      py:
+          - 'while True:'
+          - 'x = x + 1'
+          - 'if not ((x < 10)):'
+          - 'break'
+      rs:
+          - 'loop {'
+          - 'x = x + 1;'
+          - 'if !((x < 10)) {'
+          - 'break;'
+          - '}'
+      cpp:
+          - 'do {'
+          - 'x = x + 1;'
+          - '} while ((x < 10));'
+      zig:
+          - 'while (true) {'
+          - 'x = x + 1;'
+          - 'if (!((x < 10))) break;'
+          - '}'
+      fab:
+          - 'fac {'
+          - 'x = x + 1'
+          - '} dum x < 10'
+
+# Do-while with cape (error handling)
+- name: do-while with error handling
+  faber: |
+      fac {
+        tryOperation()
+      } cape e {
+        scribe e
+      } dum shouldRetry()
+  expect:
+      ts:
+          - 'try {'
+          - 'do {'
+          - 'tryOperation();'
+          - '} while (shouldRetry());'
+          - '} catch (e) {'
+          - 'console.log(e);'
+          - '}'
+      py:
+          - 'try:'
+          - 'while True:'
+          - 'tryOperation()'
+          - 'if not (shouldRetry()):'
+          - 'break'
+          - 'except Exception as e:'
+          - 'print(e)'
+      cpp:
+          - 'try {'
+          - 'do {'
+          - 'tryOperation();'
+          - '} while (shouldRetry());'
+          - '}'
+          - 'catch (const std::exception& e) {'
+      fab:
+          - 'fac {'
+          - 'tryOperation()'
+          - '} cape e {'
+          - 'scribe e'
+          - '} dum shouldRetry()'

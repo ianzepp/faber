@@ -3027,21 +3027,26 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     /**
-     * Parse fac block statement (explicit scope block).
+     * Parse fac block statement (explicit scope block or do-while loop).
      *
      * GRAMMAR:
-     *   facBlockStmt := 'fac' blockStmt ('cape' IDENTIFIER blockStmt)?
+     *   facBlockStmt := 'fac' blockStmt ('cape' IDENTIFIER blockStmt)? ('dum' expression)?
      *
      * WHY: 'fac' (do/make) creates an explicit scope boundary for grouping
      *      statements with optional error handling via 'cape' (catch).
+     *      When followed by 'dum', creates a do-while loop where the body
+     *      executes at least once before the condition is checked.
      *      Useful for:
      *      - Scoped variable declarations
      *      - Grouping related operations with shared error handling
      *      - Creating IIFE-like constructs
+     *      - Do-while loops (body executes first, then condition checked)
      *
      * Examples:
      *   fac { fixum x = computeValue() }
      *   fac { riskyOperation() } cape e { scribe e }
+     *   fac { process() } dum hasMore()
+     *   fac { process() } cape e { log(e) } dum hasMore()
      */
     function parseFacBlockStatement(): FacBlockStatement {
         const position = peek().position;
@@ -3051,12 +3056,17 @@ export function parse(tokens: Token[]): ParserResult {
         const body = parseBlockStatement();
 
         let catchClause: CapeClause | undefined;
+        let test: Expression | undefined;
 
         if (checkKeyword('cape')) {
             catchClause = parseCapeClause();
         }
 
-        return { type: 'FacBlockStatement', body, catchClause, position };
+        if (matchKeyword('dum')) {
+            test = parseExpression();
+        }
+
+        return { type: 'FacBlockStatement', body, catchClause, test, position };
     }
 
     // ---------------------------------------------------------------------------
