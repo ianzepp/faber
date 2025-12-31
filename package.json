@@ -1,48 +1,48 @@
 {
-    "name": "faber-romanus",
-    "version": "0.5.0",
-    "description": "A Latin-to-JavaScript transpiler - The Roman Craftsman",
-    "module": "index.ts",
-    "type": "module",
-    "bin": {
-        "faber": "./fons/cli.ts"
-    },
-    "scripts": {
-        "faber": "bun ./fons/cli.ts",
-        "build": "./scripta/build",
-        "exempla": "bun ./scripta/exempla.ts",
-        "grammar": "bun ./scripta/extract-grammar.ts",
-        "lint": "./scripta/lint",
-        "lint:fix": "./scripta/lint --fix",
-        "misc:ast": "bun ./scripta/misc-ast-sync.ts",
-        "misc:tree-sitter": "bun ./scripta/misc-tree-sitter.ts",
-        "prettier": "./scripta/prettier",
-        "prettier:check": "./scripta/prettier --check",
-        "release": "./scripta/release",
-        "sanity": "bun ./scripta/sanity.ts",
-        "test": "./scripta/test",
-        "use": "./scripta/use",
-        "verify:exempla": "bun ./scripta/verify-exempla.ts"
-    },
-    "devDependencies": {
-        "@eslint/js": "^9.39.2",
-        "@types/bun": "latest",
-        "eslint": "^9.39.2",
-        "eslint-config-prettier": "^10.1.8",
-        "prettier": "^3.7.4",
-        "typescript-eslint": "^8.50.0"
-    },
-    "peerDependencies": {
-        "typescript": "^5.9.3"
-    },
-    "keywords": [
-        "latin",
-        "transpiler",
-        "compiler",
-        "javascript"
-    ],
-    "license": "MIT",
-    "dependencies": {
-        "yaml": "^2.8.2"
-    }
+  "name": "faber-romanus",
+  "version": "0.6.0",
+  "description": "A Latin-to-JavaScript transpiler - The Roman Craftsman",
+  "module": "index.ts",
+  "type": "module",
+  "bin": {
+    "faber": "./fons/cli.ts"
+  },
+  "scripts": {
+    "faber": "bun ./fons/cli.ts",
+    "build": "./scripta/build",
+    "exempla": "bun ./scripta/exempla.ts",
+    "grammar": "bun ./scripta/extract-grammar.ts",
+    "lint": "./scripta/lint",
+    "lint:fix": "./scripta/lint --fix",
+    "misc:ast": "bun ./scripta/misc-ast-sync.ts",
+    "misc:tree-sitter": "bun ./scripta/misc-tree-sitter.ts",
+    "prettier": "./scripta/prettier",
+    "prettier:check": "./scripta/prettier --check",
+    "release": "./scripta/release",
+    "sanity": "bun ./scripta/sanity.ts",
+    "test": "./scripta/test",
+    "use": "./scripta/use",
+    "verify:exempla": "bun ./scripta/verify-exempla.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/bun": "latest",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.7.4",
+    "typescript-eslint": "^8.50.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "latin",
+    "transpiler",
+    "compiler",
+    "javascript"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "yaml": "^2.8.2"
+  }
 }
