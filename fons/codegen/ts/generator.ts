@@ -47,6 +47,7 @@ import { genProbandumStatement } from './statements/probandum';
 import { genProbaStatement } from './statements/proba';
 import { genCuraBlock, genCuraStatement } from './statements/cura';
 import { genIncipitStatement } from './statements/incipit';
+import { genIncipietStatement } from './statements/incipiet';
 
 // Expression handlers
 import { genIdentifier } from './expressions/identifier';
@@ -218,6 +219,8 @@ export class TsGenerator {
                 return genCuraStatement(node, this, this.semi);
             case 'IncipitStatement':
                 return genIncipitStatement(node, this);
+            case 'IncipietStatement':
+                return genIncipietStatement(node, this);
             case 'AdStatement':
                 throw new Error('AdStatement codegen not implemented for TypeScript');
             default:

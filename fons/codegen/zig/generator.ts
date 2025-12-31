@@ -36,6 +36,7 @@ import { genTemptaStatement } from './statements/tempta';
 import { genFacBlockStatement } from './statements/fac';
 import { genCuraStatement } from './statements/cura';
 import { genIncipitStatement } from './statements/incipit';
+import { genIncipietStatement } from './statements/incipiet';
 
 // Expression handlers
 import { genIdentifier } from './expressions/identifier';
@@ -314,6 +315,8 @@ export class ZigGenerator {
                 return genCuraStatement(node, this);
             case 'IncipitStatement':
                 return genIncipitStatement(node, this);
+            case 'IncipietStatement':
+                return genIncipietStatement(node, this);
             case 'BlockStatement':
                 return this.genBlockStatementContent(node);
             case 'ExpressionStatement':

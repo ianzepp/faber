@@ -838,9 +838,12 @@ export function parse(tokens: Token[]): ParserResult {
             return parseCura();
         }
 
-        // Entry point statement: incipit { }
+        // Entry point statements: incipit { } (sync) or incipiet { } (async)
         if (checkKeyword('incipit')) {
             return parseIncipitStatement();
+        }
+        if (checkKeyword('incipiet')) {
+            return parseIncipietStatement();
         }
 
         if (check('LBRACE')) {
@@ -3405,31 +3408,79 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse incipit (entry point) statement.
      *
      * GRAMMAR:
-     *   incipitStmt := 'incipit' blockStmt
+     *   incipitStmt := 'incipit' (blockStmt | 'ergo' statement)
      *
-     * WHY: 'incipit' (beginning) marks the program entry point.
+     * WHY: 'incipit' (it begins) marks the program entry point.
      *      This is a pure structural marker with no magic injection.
      *      The source is responsible for any setup (allocators via cura, etc.).
+     *
+     *      The 'ergo' (therefore) form chains to a single statement, typically
+     *      a cura block for allocator setup. This avoids extra nesting.
      *
      * Examples:
      *   incipit {
      *       scribe "Hello"
      *   }
      *
-     *   incipit {
-     *       cura arena fit alloc {
-     *           // allocator-scoped work
-     *       }
+     *   incipit ergo cura arena {
+     *       // allocator-scoped work, one-liner header
      *   }
+     *
+     *   incipit ergo runMain()
      */
     function parseIncipitStatement(): import('./ast').IncipitStatement {
         const position = peek().position;
 
         expectKeyword('incipit', ParserErrorCode.ExpectedKeywordIncipit);
 
+        // Check for ergo form: incipit ergo <statement>
+        if (checkKeyword('ergo')) {
+            advance(); // consume 'ergo'
+            const ergoStatement = parseStatement();
+            return { type: 'IncipitStatement', ergoStatement, position };
+        }
+
         const body = parseBlockStatement();
 
         return { type: 'IncipitStatement', body, position };
+    }
+
+    /**
+     * Parse incipiet (async entry point) statement.
+     *
+     * GRAMMAR:
+     *   incipietStmt := 'incipiet' (blockStmt | 'ergo' statement)
+     *
+     * WHY: 'incipiet' (it will begin) marks the async program entry point.
+     *      Mirrors the fit/fiet pattern: present for sync, future for async.
+     *
+     *      The 'ergo' form chains to a single statement for concise setup.
+     *
+     * Examples:
+     *   incipiet {
+     *       fixum data = cede fetchData()
+     *       scribe data
+     *   }
+     *
+     *   incipiet ergo cura arena {
+     *       fixum data = cede fetchData()
+     *   }
+     */
+    function parseIncipietStatement(): import('./ast').IncipietStatement {
+        const position = peek().position;
+
+        expectKeyword('incipiet', ParserErrorCode.ExpectedKeywordIncipiet);
+
+        // Check for ergo form: incipiet ergo <statement>
+        if (checkKeyword('ergo')) {
+            advance(); // consume 'ergo'
+            const ergoStatement = parseStatement();
+            return { type: 'IncipietStatement', ergoStatement, position };
+        }
+
+        const body = parseBlockStatement();
+
+        return { type: 'IncipietStatement', body, position };
     }
 
     /**

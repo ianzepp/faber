@@ -30,7 +30,7 @@ export function genCuraStatement(node: CuraStatement, g: RsGenerator): string {
     // For allocator curator kinds (arena/page), just emit the block contents
     // WHY: Rust has its own allocator mechanisms, we strip these for now
     if (node.curatorKind === 'arena' || node.curatorKind === 'page') {
-        return genBlockStatement(node.body, g);
+        return g.genBlockStatementContent(node.body);
     }
 
     const binding = node.binding.name;

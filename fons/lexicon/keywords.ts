@@ -166,9 +166,11 @@ export const keywords: KeywordEntry[] = [
     // WHY: "discerne" (distinguish!) for variant matching - pairs with discretio
     //      Imperative of discernere (to separate, distinguish)
     { latin: 'discerne', meaning: 'match variant', category: 'control' },
-    // WHY: "incipit" (beginning) for program entry point - marks main function
-    //      From incipit (neuter noun) = beginning, start, origin
+    // WHY: "incipit" (it begins) for program entry point - marks main function
+    //      From incipere (to begin), third person singular present active indicative
+    //      "incipiet" (it will begin) is the async variant, mirroring fit/fiet pattern
     { latin: 'incipit', meaning: 'main/entry', category: 'control' },
+    { latin: 'incipiet', meaning: 'async main/entry', category: 'control' },
 
     // ---------------------------------------------------------------------------
     // Modifiers

@@ -150,7 +150,8 @@ export type Statement =
     | CuraBlock
     | CuraStatement
     | AdStatement
-    | IncipitStatement;
+    | IncipitStatement
+    | IncipietStatement;
 
 // ---------------------------------------------------------------------------
 // Import/Export Declarations
@@ -1085,16 +1086,19 @@ export interface BlockStatement extends BaseNode {
 }
 
 /**
- * Entry point statement.
+ * Entry point statement (sync).
  *
  * GRAMMAR (in EBNF):
- *   incipitStmt := 'incipit' blockStmt
+ *   incipitStmt := 'incipit' (blockStmt | 'ergo' statement)
  *
- * INVARIANT: body is always a BlockStatement.
+ * INVARIANT: body is always a BlockStatement OR erpiStatement is set.
  *
- * WHY: Latin 'incipit' (beginning) marks the program entry point.
+ * WHY: Latin 'incipit' (it begins) marks the sync program entry point.
  *      This is a pure structural marker — it does not inject magic.
  *      Source is responsible for setup (allocators via cura, etc.).
+ *
+ *      The 'ergo' (therefore) form chains to a single statement, typically
+ *      a cura block for allocator setup. This avoids extra nesting.
  *
  * Target mappings:
  *   TypeScript: top-level statements (no wrapper needed)
@@ -1108,15 +1112,53 @@ export interface BlockStatement extends BaseNode {
  *       scribe "Hello"
  *   }
  *
- *   incipit {
- *       cura arena fit alloc {
- *           // allocator-scoped work
- *       }
+ *   incipit ergo cura arena {
+ *       // allocator-scoped work, one-liner header
  *   }
+ *
+ *   incipit ergo runMain()
  */
 export interface IncipitStatement extends BaseNode {
     type: 'IncipitStatement';
-    body: BlockStatement;
+    body?: BlockStatement;
+    ergoStatement?: Statement;
+}
+
+/**
+ * Entry point statement (async).
+ *
+ * GRAMMAR (in EBNF):
+ *   incipietStmt := 'incipiet' (blockStmt | 'ergo' statement)
+ *
+ * INVARIANT: body is always a BlockStatement OR ergoStatement is set.
+ *
+ * WHY: Latin 'incipiet' (it will begin) marks the async program entry point.
+ *      Mirrors the fit/fiet pattern: present tense for sync, future for async.
+ *
+ *      The 'ergo' (therefore) form chains to a single statement, typically
+ *      a cura block for allocator setup.
+ *
+ * Target mappings:
+ *   TypeScript: (async () => { ... })()
+ *   Python:     asyncio.run(main()) with async def main()
+ *   Rust:       #[tokio::main] async fn main() { ... }
+ *   C++:        int main() { std::async(...).get(); }
+ *   Zig:        Not supported (Zig has no async main)
+ *
+ * Examples:
+ *   incipiet {
+ *       fixum data = cede fetchData()
+ *       scribe data
+ *   }
+ *
+ *   incipiet ergo cura arena {
+ *       fixum data = cede fetchData()
+ *   }
+ */
+export interface IncipietStatement extends BaseNode {
+    type: 'IncipietStatement';
+    body?: BlockStatement;
+    ergoStatement?: Statement;
 }
 
 // ---------------------------------------------------------------------------

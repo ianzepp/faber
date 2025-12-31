@@ -97,6 +97,7 @@ export enum ParserErrorCode {
     ExpectedKeywordAnteOrPost = 'P047',
     ExpectedKeywordAd = 'P052',
     ExpectedKeywordIncipit = 'P054',
+    ExpectedKeywordIncipiet = 'P055',
 
     // Module/source errors (P050-P059)
     ExpectedModuleName = 'P050',
@@ -321,8 +322,12 @@ export const PARSER_ERRORS = {
         help: 'Dispatch statements use \'ad\': ad "target" (args) fit Type pro name { ... }',
     },
     [ParserErrorCode.ExpectedKeywordIncipit]: {
-        text: "Expected entry point keyword 'incipit' (beginning)",
+        text: "Expected entry point keyword 'incipit' (it begins)",
         help: 'Entry point blocks use \'incipit\': incipit { scribe "Hello" }',
+    },
+    [ParserErrorCode.ExpectedKeywordIncipiet]: {
+        text: "Expected async entry point keyword 'incipiet' (it will begin)",
+        help: "Async entry point blocks use 'incipiet': incipiet { cede fetchData() }",
     },
 
     // Module/source errors
