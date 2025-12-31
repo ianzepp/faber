@@ -1,0 +1,52 @@
+// Collection literal expressions
+//
+// WHY: Array and object literals create data structures inline.
+//      ArrayExpression: [1, 2, 3]
+//      ObjectExpression: { name: "Alice", age: 30 }
+
+genus Position {
+    numerus line
+    numerus column
+    numerus offset
+}
+
+// Forward declarations
+discretio Expression {
+    Placeholder { }
+}
+
+genus Identifier {
+    Position position
+    textus name
+}
+
+/// Array literal expression
+/// Example: [1, 2, 3], [], [a, ...rest]
+genus ArrayExpression {
+    Position position
+    lista<Expression> elements    // includes SpreadElement for ...x
+}
+
+/// Object literal expression  
+/// Example: { name: "Alice", age: 30 }
+genus ObjectExpression {
+    Position position
+    lista<ObjectProperty> properties
+}
+
+/// A property in an object literal
+/// Example: name: "Alice", or shorthand: name
+genus ObjectProperty {
+    Position position
+    Expression key             // usually Identifier or Literal
+    Expression value
+    bivalens shorthand         // true for { name } meaning { name: name }
+    bivalens computed          // true for { [expr]: value }
+}
+
+/// Spread element in array or object
+/// Example: ...items, ...rest
+genus SpreadElement {
+    Position position
+    Expression argument
+}

@@ -1,0 +1,50 @@
+// Expression union type
+//
+// WHY: The parser produces expressions that can be any of these types.
+//      Using an ordo enum for discriminant + separate genus for each type.
+//
+// NOTE: Each type's full fields are defined in their respective files.
+
+genus Position {
+    numerus line
+    numerus column
+    numerus offset
+}
+
+/// Expression type discriminant
+ordo ExpressionKind {
+    // nomen.fab - identifiers
+    Identifier
+    EgoExpression
+    
+    // littera.fab - literals  
+    Literal
+    TemplateLiteral
+    RegexLiteral
+    
+    // operatio.fab - operations
+    BinaryExpression
+    UnaryExpression
+    AssignmentExpression
+    ConditionalExpression
+    RangeExpression
+    QuaExpression
+    EstExpression
+    
+    // vocatio.fab - calls
+    CallExpression
+    MemberExpression
+    NovumExpression
+    CedeExpression
+    ScriptumExpression
+    LegeExpression
+    AbExpression
+    
+    // collectio.fab - collections
+    ArrayExpression
+    ObjectExpression
+    SpreadElement
+    
+    // lambda.fab
+    LambdaExpression
+}

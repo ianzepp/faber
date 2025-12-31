@@ -1,0 +1,44 @@
+// Lambda expression
+//
+// WHY: Anonymous functions for callbacks and functional operations.
+//      Faber syntax: pro x: x * 2
+//      Faber syntax: pro x, y: x + y
+
+genus Position {
+    numerus line
+    numerus column
+    numerus offset
+}
+
+// Forward declarations
+discretio Expression {
+    Placeholder { }
+}
+
+genus Identifier {
+    Position position
+    textus name
+}
+
+genus TypeAnnotation {
+    Position position
+    textus name
+    bivalens nullable
+}
+
+/// Lambda expression (anonymous function)
+/// Example: pro x: x * 2
+/// Example: pro x, y: x + y
+genus LambdaExpression {
+    Position position
+    lista<LambdaParam> params
+    Expression body           // single expression, not block
+    TypeAnnotation? returnType
+}
+
+/// Lambda parameter (simplified vs full Parameter)
+genus LambdaParam {
+    Position position
+    Identifier name
+    TypeAnnotation? typeAnnotation
+}

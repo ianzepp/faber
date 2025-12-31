@@ -1,0 +1,84 @@
+// Binary and unary operation expressions
+//
+// WHY: Operators combine expressions into new values.
+//      Binary: a + b, a == b, a && b
+//      Unary: -x, !x
+
+genus Position {
+    numerus line
+    numerus column
+    numerus offset
+}
+
+// Forward declaration
+discretio Expression {
+    Placeholder { }
+}
+
+/// Binary expression - two operands with an operator
+/// Examples: a + b, x == y, foo && bar
+genus BinaryExpression {
+    Position position
+    Expression left
+    textus operator    // +, -, *, /, %, ==, !=, <, >, <=, >=, &&, ||, ??, etc.
+    Expression right
+}
+
+/// Unary expression - one operand with a prefix operator
+/// Examples: -x, !flag, ~bits
+genus UnaryExpression {
+    Position position
+    textus operator    // -, !, ~
+    Expression argument
+}
+
+/// Assignment expression
+/// Examples: x = 5, obj.prop = value
+genus AssignmentExpression {
+    Position position
+    Expression left     // must be assignable (identifier, member, etc.)
+    textus operator     // =, +=, -=, *=, /=, etc.
+    Expression right
+}
+
+/// Conditional (ternary) expression
+/// Faber: condition sic consequent secus alternate
+/// JS: condition ? consequent : alternate
+genus ConditionalExpression {
+    Position position
+    Expression condition
+    Expression consequent
+    Expression alternate
+}
+
+/// Range expression for slicing and iteration
+/// Examples: 1..10 (exclusive), 1 usque 10 (inclusive)
+genus RangeExpression {
+    Position position
+    Expression start
+    Expression end
+    bivalens inclusive   // true for 'usque', false for '..'
+}
+
+/// Type cast expression
+/// Example: value qua numerus
+genus QuaExpression {
+    Position position
+    Expression expression
+    TypeAnnotation targetType
+}
+
+/// Type check expression
+/// Example: value est numerus
+genus EstExpression {
+    Position position
+    Expression expression
+    TypeAnnotation targetType
+}
+
+// Forward declaration for TypeAnnotation
+genus TypeAnnotation {
+    Position position
+    textus name
+    bivalens nullable
+}
