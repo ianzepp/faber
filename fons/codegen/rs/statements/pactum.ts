@@ -8,6 +8,7 @@
 
 import type { PactumDeclaration, PactumMethod } from '../../../parser/ast';
 import type { RsGenerator } from '../generator';
+import { isAsyncFromAnnotations } from '../../types';
 
 export function genPactumDeclaration(node: PactumDeclaration, g: RsGenerator): string {
     const name = node.name.name;
@@ -28,7 +29,8 @@ export function genPactumDeclaration(node: PactumDeclaration, g: RsGenerator): s
 }
 
 function genPactumMethod(node: PactumMethod, g: RsGenerator): string {
-    const asyncMod = node.async ? 'async ' : '';
+    const isAsync = node.async || isAsyncFromAnnotations(node.annotations);
+    const asyncMod = isAsync ? 'async ' : '';
     const name = node.name.name;
     const params = ['&self', ...node.params.map(p => g.genParameter(p))].join(', ');
     const returnType = node.returnType ? ` -> ${g.genType(node.returnType)}` : '';

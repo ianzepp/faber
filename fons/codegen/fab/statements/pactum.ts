@@ -21,6 +21,21 @@ export function genPactumDeclaration(node: PactumDeclaration, g: FabGenerator): 
 
     g.depth++;
     for (const method of node.methods) {
+        // Build annotation modifiers
+        const annotationMods: string[] = [];
+
+        if (method.async) {
+            annotationMods.push('futura');
+        }
+        if (method.generator) {
+            annotationMods.push('cursor');
+        }
+
+        // Emit annotation line if we have modifiers
+        if (annotationMods.length > 0) {
+            lines.push(`${g.ind()}@ ${annotationMods.join(' ')}`);
+        }
+
         const mParts: string[] = [];
 
         mParts.push('functio');
@@ -29,13 +44,7 @@ export function genPactumDeclaration(node: PactumDeclaration, g: FabGenerator): 
         const params = method.params.map(p => g.genParameter(p)).join(', ');
         mParts[mParts.length - 1] += `(${params})`;
 
-        // Function modifiers (after params): futura, cursor, curata NAME
-        if (method.async) {
-            mParts.push('futura');
-        }
-        if (method.generator) {
-            mParts.push('cursor');
-        }
+        // curata NAME stays inline (binds a name)
         if (method.curatorName) {
             mParts.push('curata');
             mParts.push(method.curatorName);

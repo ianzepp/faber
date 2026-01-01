@@ -11,9 +11,11 @@
 
 import type { FunctioDeclaration, BlockStatement } from '../../../parser/ast';
 import type { RsGenerator } from '../generator';
+import { isAsyncFromAnnotations } from '../../types';
 
 export function genFunctioDeclaration(node: FunctioDeclaration, g: RsGenerator): string {
-    const asyncMod = node.async ? 'async ' : '';
+    const isAsync = node.async || isAsyncFromAnnotations(node.annotations);
+    const asyncMod = isAsync ? 'async ' : '';
     const name = node.name.name;
     const params = node.params.map(p => g.genParameter(p)).join(', ');
     const typeParams = node.typeParams ? `<${node.typeParams.map(tp => tp.name.name).join(', ')}>` : '';
@@ -36,7 +38,8 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: RsGenerator):
  * Generate method declaration within an impl block.
  */
 export function genMethodDeclaration(node: FunctioDeclaration, g: RsGenerator): string {
-    const asyncMod = node.async ? 'async ' : '';
+    const isAsync = node.async || isAsyncFromAnnotations(node.annotations);
+    const asyncMod = isAsync ? 'async ' : '';
     const name = node.name.name;
     const params = ['&self', ...node.params.map(p => g.genParameter(p))].join(', ');
 

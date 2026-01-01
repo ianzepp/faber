@@ -114,19 +114,37 @@ function genCreoDeclaration(node: FunctioDeclaration, g: FabGenerator): string {
 }
 
 function genMethodDeclaration(node: FunctioDeclaration, g: FabGenerator): string {
-    const parts: string[] = [];
+    const lines: string[] = [];
 
-    // Visibility (stays at front - declaration modifier)
+    // Build annotation modifiers
+    const annotationMods: string[] = [];
+
+    // Visibility
     if (node.visibility === 'private') {
-        parts.push('privatus');
+        annotationMods.push('privata');
     } else if (node.visibility === 'protected') {
-        parts.push('protectus');
+        annotationMods.push('protecta');
     }
 
-    // Abstract (stays at front - declaration modifier)
+    // Abstract
     if (node.isAbstract) {
-        parts.push('abstractus');
+        annotationMods.push('abstracta');
     }
+
+    // Async/generator
+    if (node.async) {
+        annotationMods.push('futura');
+    }
+    if (node.generator) {
+        annotationMods.push('cursor');
+    }
+
+    // Emit annotation line if we have modifiers
+    if (annotationMods.length > 0) {
+        lines.push(`${g.ind()}@ ${annotationMods.join(' ')}`);
+    }
+
+    const parts: string[] = [];
 
     parts.push('functio');
     parts.push(node.name.name);
@@ -135,13 +153,7 @@ function genMethodDeclaration(node: FunctioDeclaration, g: FabGenerator): string
     const params = node.params.map(p => g.genParameter(p)).join(', ');
     parts[parts.length - 1] += `(${params})`;
 
-    // Function modifiers (after params): futura, cursor, curata NAME
-    if (node.async) {
-        parts.push('futura');
-    }
-    if (node.generator) {
-        parts.push('cursor');
-    }
+    // curata NAME stays inline (binds a name)
     if (node.curatorName) {
         parts.push('curata');
         parts.push(node.curatorName);
@@ -158,5 +170,7 @@ function genMethodDeclaration(node: FunctioDeclaration, g: FabGenerator): string
         parts.push(genBlockStatement(node.body, g));
     }
 
-    return `${g.ind()}${parts.join(' ')}`;
+    lines.push(`${g.ind()}${parts.join(' ')}`);
+
+    return lines.join('\n');
 }

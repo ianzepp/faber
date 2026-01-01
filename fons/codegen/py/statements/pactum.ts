@@ -13,6 +13,7 @@
 
 import type { PactumDeclaration, PactumMethod } from '../../../parser/ast';
 import type { PyGenerator } from '../generator';
+import { isAsyncFromAnnotations, isGeneratorFromAnnotations } from '../../types';
 
 export function genPactumDeclaration(node: PactumDeclaration, g: PyGenerator): string {
     const name = node.name.name;
@@ -41,16 +42,20 @@ export function genPactumDeclaration(node: PactumDeclaration, g: PyGenerator): s
  *      Python requires `self` as first parameter for instance methods.
  */
 function genPactumMethod(node: PactumMethod, g: PyGenerator): string {
-    const asyncMod = node.async ? 'async ' : '';
+    // Derive async/generator from annotations OR node properties
+    const isAsync = node.async || isAsyncFromAnnotations(node.annotations);
+    const isGenerator = node.generator || isGeneratorFromAnnotations(node.annotations);
+
+    const asyncMod = isAsync ? 'async ' : '';
     const name = node.name.name;
     const params = ['self', ...node.params.map(p => g.genParameter(p))].join(', ');
 
     let returnType = node.returnType ? g.genType(node.returnType) : 'None';
-    if (node.async && node.generator) {
+    if (isAsync && isGenerator) {
         returnType = `AsyncIterator[${returnType}]`;
-    } else if (node.generator) {
+    } else if (isGenerator) {
         returnType = `Iterator[${returnType}]`;
-    } else if (node.async) {
+    } else if (isAsync) {
         returnType = `Awaitable[${returnType}]`;
     }
 

@@ -17,9 +17,14 @@
 
 import type { FunctioDeclaration } from '../../../parser/ast';
 import type { PyGenerator } from '../generator';
+import { isAsyncFromAnnotations, isGeneratorFromAnnotations } from '../../types';
 
 export function genFunctioDeclaration(node: FunctioDeclaration, g: PyGenerator): string {
-    const asyncMod = node.async ? 'async ' : '';
+    // Derive async/generator from annotations OR node properties
+    const isAsync = node.async || isAsyncFromAnnotations(node.annotations);
+    const isGenerator = node.generator || isGeneratorFromAnnotations(node.annotations);
+
+    const asyncMod = isAsync ? 'async ' : '';
     const name = node.name.name;
     const params = node.params.map(p => g.genParameter(p)).join(', ');
 
@@ -36,11 +41,11 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: PyGenerator):
     let returnType = '';
     if (node.returnType) {
         let baseType = g.genType(node.returnType);
-        if (node.async && node.generator) {
+        if (isAsync && isGenerator) {
             baseType = `AsyncIterator[${baseType}]`;
-        } else if (node.generator) {
+        } else if (isGenerator) {
             baseType = `Iterator[${baseType}]`;
-        } else if (node.async) {
+        } else if (isAsync) {
             baseType = `Awaitable[${baseType}]`;
         }
         returnType = ` -> ${baseType}`;
@@ -48,7 +53,7 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: PyGenerator):
 
     // Track generator context for cede -> yield vs await
     const prevInGenerator = g.inGenerator;
-    g.inGenerator = node.generator;
+    g.inGenerator = isGenerator;
 
     // Guard: abstract methods not yet supported
     if (!node.body) {

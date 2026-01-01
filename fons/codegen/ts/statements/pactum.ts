@@ -11,7 +11,7 @@
 
 import type { PactumDeclaration, PactumMethod } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
-import { getVisibilityFromAnnotations } from '../../types';
+import { getVisibilityFromAnnotations, isAsyncFromAnnotations, isGeneratorFromAnnotations } from '../../types';
 
 export function genPactumDeclaration(node: PactumDeclaration, g: TsGenerator, semi: boolean): string {
     const name = node.name.name;
@@ -41,12 +41,16 @@ function genPactumMethod(node: PactumMethod, g: TsGenerator, semi: boolean): str
     const params = node.params.map(p => g.genParameter(p)).join(', ');
     let returnType = node.returnType ? g.genType(node.returnType) : 'void';
 
+    // Derive async/generator from annotations OR node properties
+    const isAsync = node.async || isAsyncFromAnnotations(node.annotations);
+    const isGenerator = node.generator || isGeneratorFromAnnotations(node.annotations);
+
     // Wrap return type based on async/generator semantics
-    if (node.async && node.generator) {
+    if (isAsync && isGenerator) {
         returnType = `AsyncGenerator<${returnType}>`;
-    } else if (node.generator) {
+    } else if (isGenerator) {
         returnType = `Generator<${returnType}>`;
-    } else if (node.async) {
+    } else if (isAsync) {
         returnType = `Promise<${returnType}>`;
     }
 

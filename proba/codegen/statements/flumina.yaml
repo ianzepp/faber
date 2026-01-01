@@ -158,7 +158,8 @@
 
 - name: arrow async function not transformed
   faber: |
-      functio fetchData() futura -> textus {
+      @ futura
+      functio fetchData() -> textus {
         redde "data"
       }
   skip: [py, rs, cpp, zig]
@@ -172,7 +173,8 @@
               - 'respond.ok'
       fab:
           contains:
-              - 'functio fetchData() futura -> textus'
+              - '@ futura'
+              - 'functio fetchData() -> textus'
               - 'redde "data"'
 
 # =============================================================================

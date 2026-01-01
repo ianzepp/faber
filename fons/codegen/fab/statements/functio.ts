@@ -2,22 +2,51 @@
  * Faber Code Generator - FunctioDeclaration
  *
  * TRANSFORMS:
- *   FunctioDeclaration -> functio name(params) modifier* -> returnType { body }
+ *   FunctioDeclaration -> @ annotations \n functio name(params) curata NAME? -> returnType { body }
  *
- * STYLE: Modifiers (futura, cursor, curata) come after params, before return type.
+ * STYLE: Modifiers (futura, cursor) are emitted as @ annotations on preceding line.
+ *        curata NAME stays inline (it binds a name).
  *        Uses -> for return type (canonical), not fit/fiet/fiunt/fient
  */
 
 import type { FunctioDeclaration, BlockStatement } from '../../../parser/ast';
 import type { FabGenerator } from '../generator';
+import { isAsyncFromAnnotations, isGeneratorFromAnnotations } from '../../types';
 
 export function genFunctioDeclaration(node: FunctioDeclaration, g: FabGenerator): string {
-    const parts: string[] = [];
+    const lines: string[] = [];
 
-    // Abstract modifier (stays at front - it's a declaration modifier, not a function modifier)
-    if (node.isAbstract) {
-        parts.push('abstractus');
+    // Build annotation modifiers
+    // WHY: Combine existing annotations with async/generator derived from node properties
+    const annotationMods: string[] = [];
+
+    // Preserve existing annotations
+    if (node.annotations) {
+        for (const ann of node.annotations) {
+            annotationMods.push(...ann.modifiers);
+        }
     }
+
+    // Add futura/cursor if async/generator (and not already in annotations)
+    const hasAsyncAnnotation = isAsyncFromAnnotations(node.annotations);
+    const hasGeneratorAnnotation = isGeneratorFromAnnotations(node.annotations);
+
+    if (node.async && !hasAsyncAnnotation) {
+        annotationMods.push('futura');
+    }
+    if (node.generator && !hasGeneratorAnnotation) {
+        annotationMods.push('cursor');
+    }
+    if (node.isAbstract && !annotationMods.some(m => m.startsWith('abstract'))) {
+        annotationMods.push('abstracta');
+    }
+
+    // Emit annotation line if we have modifiers
+    if (annotationMods.length > 0) {
+        lines.push(`${g.ind()}@ ${annotationMods.join(' ')}`);
+    }
+
+    const parts: string[] = [];
 
     parts.push('functio');
 
@@ -31,13 +60,7 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: FabGenerator)
     const params = node.params.map(p => g.genParameter(p)).join(', ');
     parts[parts.length - 1] += `(${typeParams}${params})`;
 
-    // Function modifiers (after params): futura, cursor, curata NAME
-    if (node.async) {
-        parts.push('futura');
-    }
-    if (node.generator) {
-        parts.push('cursor');
-    }
+    // curata NAME stays inline (binds a name, not a simple modifier)
     if (node.curatorName) {
         parts.push('curata');
         parts.push(node.curatorName);
@@ -54,7 +77,9 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: FabGenerator)
         parts.push(genBlockStatement(node.body, g));
     }
 
-    return `${g.ind()}${parts.join(' ')}`;
+    lines.push(`${g.ind()}${parts.join(' ')}`);
+
+    return lines.join('\n');
 }
 
 /**

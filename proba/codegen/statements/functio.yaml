@@ -288,10 +288,11 @@
 # Async Functions
 # =============================================================================
 
-# futura modifier makes a function async
-- name: async function with futura
+# @ futura annotation makes a function async
+- name: async function with futura annotation
   faber: |
-      functio fetch(url) futura {
+      @ futura
+      functio fetch(url) {
         redde data
       }
   expect:
@@ -306,7 +307,8 @@
       zig:
           - '!void'
       fab:
-          - 'functio fetch(url) futura'
+          - '@ futura'
+          - 'functio fetch(url)'
           - 'redde data'
 
 # fiet = async + return type (wraps in Promise/Awaitable)

@@ -15,6 +15,7 @@
 
 import type { FunctioDeclaration, BlockStatement, Statement, TypeParameterDeclaration } from '../../../parser/ast';
 import type { ZigGenerator } from '../generator';
+import { isAsyncFromAnnotations } from '../../types';
 
 export function genFunctioDeclaration(node: FunctioDeclaration, g: ZigGenerator): string {
     const name = node.name.name;
@@ -44,7 +45,8 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: ZigGenerator)
     // WHY: Functions containing `iace` need error union return type
     // TARGET: Async in Zig also uses error unions (!T)
     const hasIace = blockContainsIace(node.body);
-    const needsErrorUnion = node.async || hasIace;
+    const isAsync = node.async || isAsyncFromAnnotations(node.annotations);
+    const needsErrorUnion = isAsync || hasIace;
     const retType = needsErrorUnion ? `!${returnType}` : returnType;
 
     // WHY: Track curator parameter for collection allocator calls

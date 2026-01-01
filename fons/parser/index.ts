@@ -1319,21 +1319,13 @@ export function parse(tokens: Token[]): ParserResult {
 
         expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
 
-        // Parse optional modifiers after params: futura, cursor, curata NAME
-        let modifierAsync = false;
-        let modifierGenerator = false;
+        // Parse optional curata NAME binding (allocator for Zig)
+        // WHY: futura/cursor moved to @ annotations; curata stays inline because it binds a name
         let curatorName: string | undefined;
 
-        while (checkKeyword('futura') || checkKeyword('cursor') || checkKeyword('curata')) {
-            if (matchKeyword('futura')) {
-                modifierAsync = true;
-            } else if (matchKeyword('cursor')) {
-                modifierGenerator = true;
-            } else if (matchKeyword('curata')) {
-                // curata requires an identifier for the allocator binding name
-                const curatorIdent = parseIdentifier();
-                curatorName = curatorIdent.name;
-            }
+        if (matchKeyword('curata')) {
+            const curatorIdent = parseIdentifier();
+            curatorName = curatorIdent.name;
         }
 
         let returnType: TypeAnnotation | undefined;
@@ -1369,19 +1361,10 @@ export function parse(tokens: Token[]): ParserResult {
             returnVerb = 'fient';
         }
 
-        // Validate: futura/cursor modifiers cannot be used with fit/fiet/fiunt/fient verbs
-        // Verbs are exclusively for stream protocol; modifiers work only with arrow syntax
-        if (returnVerb !== 'arrow' && returnVerb !== undefined && (modifierAsync || modifierGenerator)) {
-            errors.push({
-                code: ParserErrorCode.PrefixVerbConflict,
-                message: 'Cannot combine futura/cursor modifiers with fit/fiet/fiunt/fient verbs',
-                position,
-            });
-        }
-
-        // Merge semantics: verb determines behavior, otherwise use modifier
-        const async: boolean = returnVerb === undefined ? modifierAsync : returnVerb === 'arrow' ? modifierAsync : verbAsync!;
-        const generator: boolean = returnVerb === undefined ? modifierGenerator : returnVerb === 'arrow' ? modifierGenerator : verbGenerator!;
+        // Derive async/generator from verb form (annotations handled in codegen/semantic)
+        // WHY: futura/cursor inline modifiers removed - use @ futura / @ cursor annotations instead
+        const async: boolean = verbAsync ?? false;
+        const generator: boolean = verbGenerator ?? false;
 
         const body = parseBlockStatement();
 
@@ -1948,20 +1931,13 @@ export function parse(tokens: Token[]): ParserResult {
 
             expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
 
-            // Parse optional modifiers after params: futura, cursor, curata NAME
-            let modifierAsync = false;
-            let modifierGenerator = false;
+            // Parse optional curata NAME binding (allocator for Zig)
+            // WHY: futura/cursor moved to @ annotations; curata stays inline because it binds a name
             let curatorName: string | undefined;
 
-            while (checkKeyword('futura') || checkKeyword('cursor') || checkKeyword('curata')) {
-                if (matchKeyword('futura')) {
-                    modifierAsync = true;
-                } else if (matchKeyword('cursor')) {
-                    modifierGenerator = true;
-                } else if (matchKeyword('curata')) {
-                    const curatorIdent = parseIdentifier();
-                    curatorName = curatorIdent.name;
-                }
+            if (matchKeyword('curata')) {
+                const curatorIdent = parseIdentifier();
+                curatorName = curatorIdent.name;
             }
 
             let returnType: TypeAnnotation | undefined;
@@ -1995,15 +1971,6 @@ export function parse(tokens: Token[]): ParserResult {
                 returnVerb = 'fient';
             }
 
-            // Validate: futura/cursor modifiers cannot be used with fit/fiet/fiunt/fient verbs
-            if (returnVerb !== 'arrow' && returnVerb !== undefined && (modifierAsync || modifierGenerator)) {
-                errors.push({
-                    code: ParserErrorCode.PrefixVerbConflict,
-                    message: 'Cannot combine futura/cursor modifiers with fit/fiet/fiunt/fient verbs',
-                    position,
-                });
-            }
-
             // Abstract methods (from annotation) have no body
             const isAbstract = annotations.some(a => a.modifiers.some(m => m === 'abstractum' || m === 'abstracta' || m === 'abstractus'));
 
@@ -2018,8 +1985,8 @@ export function parse(tokens: Token[]): ParserResult {
                 params,
                 returnType,
                 body,
-                async: returnVerb === undefined ? modifierAsync : returnVerb === 'arrow' ? modifierAsync : verbAsync!,
-                generator: returnVerb === undefined ? modifierGenerator : returnVerb === 'arrow' ? modifierGenerator : verbGenerator!,
+                async: verbAsync ?? false,
+                generator: verbGenerator ?? false,
                 curatorName,
                 isAbstract: isAbstract || undefined,
                 position,
@@ -2138,20 +2105,13 @@ export function parse(tokens: Token[]): ParserResult {
 
         expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
 
-        // Parse optional modifiers after params: futura, cursor, curata NAME
-        let modifierAsync = false;
-        let modifierGenerator = false;
+        // Parse optional curata NAME binding (allocator for Zig)
+        // WHY: futura/cursor moved to @ annotations; curata stays inline because it binds a name
         let curatorName: string | undefined;
 
-        while (checkKeyword('futura') || checkKeyword('cursor') || checkKeyword('curata')) {
-            if (matchKeyword('futura')) {
-                modifierAsync = true;
-            } else if (matchKeyword('cursor')) {
-                modifierGenerator = true;
-            } else if (matchKeyword('curata')) {
-                const curatorIdent = parseIdentifier();
-                curatorName = curatorIdent.name;
-            }
+        if (matchKeyword('curata')) {
+            const curatorIdent = parseIdentifier();
+            curatorName = curatorIdent.name;
         }
 
         let returnType: TypeAnnotation | undefined;
@@ -2185,22 +2145,13 @@ export function parse(tokens: Token[]): ParserResult {
             returnVerb = 'fient';
         }
 
-        // Validate: futura/cursor modifiers cannot be used with fit/fiet/fiunt/fient verbs
-        if (returnVerb !== 'arrow' && returnVerb !== undefined && (modifierAsync || modifierGenerator)) {
-            errors.push({
-                code: ParserErrorCode.PrefixVerbConflict,
-                message: 'Cannot combine futura/cursor modifiers with fit/fiet/fiunt/fient verbs',
-                position,
-            });
-        }
-
         return {
             type: 'PactumMethod',
             name,
             params,
             returnType,
-            async: returnVerb === undefined ? modifierAsync : returnVerb === 'arrow' ? modifierAsync : verbAsync!,
-            generator: returnVerb === undefined ? modifierGenerator : returnVerb === 'arrow' ? modifierGenerator : verbGenerator!,
+            async: verbAsync ?? false,
+            generator: verbGenerator ?? false,
             curatorName,
             position,
             annotations: annotations.length > 0 ? annotations : undefined,

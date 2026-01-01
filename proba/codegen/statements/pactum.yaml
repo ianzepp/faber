@@ -124,9 +124,13 @@
 # Async Methods
 # =============================================================================
 
-# Async method (futura modifier after params)
+# Async method (@ futura annotation)
 - name: pactum with async method
-  faber: 'pactum Fetcher { functio fetch() futura -> textus }'
+  faber: |
+      pactum Fetcher {
+          @ futura
+          functio fetch() -> textus
+      }
   expect:
       ts:
           - 'interface Fetcher'
@@ -143,7 +147,8 @@
           - '// pactum Fetcher'
       fab:
           - 'pactum Fetcher'
-          - 'functio fetch() futura -> textus'
+          - '@ futura'
+          - 'functio fetch() -> textus'
 
 # =============================================================================
 # Empty Pactum
@@ -268,7 +273,8 @@
   faber: |
       pactum DataService {
         functio sync() -> textus
-        functio async() futura -> textus
+        @ futura
+        functio async() -> textus
       }
   expect:
       ts:
@@ -290,7 +296,8 @@
       fab:
           - 'pactum DataService'
           - 'functio sync() -> textus'
-          - 'functio async() futura -> textus'
+          - '@ futura'
+          - 'functio async() -> textus'
 
 # Pactum with generic constraint
 - name: pactum with generic constraint
