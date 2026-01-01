@@ -42,8 +42,6 @@ import { tokenize } from './tokenizer';
 import { parse } from './parser';
 import { analyze } from './semantic';
 import { generate, type CodegenTarget } from './codegen';
-import * as prettier from 'prettier';
-import prettierPlugin from './prettier/index.ts';
 
 // =============================================================================
 // CONSTANTS
@@ -453,45 +451,9 @@ async function verifyWithTarget(code: string, target: CodegenTarget, displayName
  * @param inputFile - Path to .fab source file
  * @param checkOnly - If true, check formatting without writing
  */
-async function format(inputFile: string, checkOnly: boolean): Promise<void> {
-    const source = await readSource(inputFile);
-    const displayName = getDisplayName(inputFile);
-    const isStdin = inputFile === '-';
-
-    try {
-        const formatted = await prettier.format(source, {
-            parser: 'faber',
-            plugins: [prettierPlugin],
-            tabWidth: 4,
-            useTabs: false,
-            printWidth: 100,
-        });
-
-        if (isStdin) {
-            // For stdin, just output the formatted code
-            console.log(formatted);
-        } else if (checkOnly) {
-            if (source === formatted) {
-                console.log(`${displayName}: Formatted`);
-            } else {
-                console.log(`${displayName}: Needs formatting`);
-                process.exit(1);
-            }
-        } else {
-            if (source === formatted) {
-                console.log(`${displayName}: Already formatted`);
-            } else {
-                await Bun.write(inputFile, formatted);
-                console.log(`${displayName}: Formatted`);
-            }
-        }
-    } catch (err) {
-        console.error(`${displayName}: Format error`);
-        if (err instanceof Error) {
-            console.error(`  ${err.message}`);
-        }
-        process.exit(1);
-    }
+async function format(_inputFile: string, _checkOnly: boolean): Promise<void> {
+    console.error('Format command is temporarily disabled (prettier plugin archived)');
+    process.exit(1);
 }
 
 // =============================================================================
