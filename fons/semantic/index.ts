@@ -1287,11 +1287,12 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             resolveObjectExpression(node.fields);
         }
 
-        // WHY: If explicit discretioType is provided via qua, use it
-        //      Otherwise, type must be inferred from context (variable declaration, return type, etc.)
-        //      For now, we use the explicit type or mark as unknown for later inference
+        // WHY: If explicit discretioType is provided via qua, look up the actual type
+        //      from the symbol table to get the full discretio type (not just userType).
+        //      This ensures type compatibility with function return types.
         if (node.discretioType) {
-            const type = userType(node.discretioType.name);
+            const symbol = lookupSymbol(currentScope, node.discretioType.name);
+            const type = symbol?.type ?? userType(node.discretioType.name);
 
             node.resolvedType = type;
 

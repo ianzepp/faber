@@ -929,5 +929,30 @@ describe('Semantic Analyzer', () => {
             // Should succeed - alias binding gives access to variant fields
             expect(result.errors).toHaveLength(0);
         });
+
+        it('allows returning finge variant with qua cast to discretio return type', () => {
+            // BUG: finge ... qua Result was creating userType('Result') instead of
+            // looking up the actual discretioType from the symbol table, causing
+            // type mismatch with function return type 'discretio Result'
+            const source = `
+                discretio Result {
+                    Ok { numerus value }
+                    Err { textus message }
+                }
+
+                functio makeOk(numerus n) -> Result {
+                    redde finge Ok { value: n } qua Result
+                }
+
+                functio makeErr(textus msg) -> Result {
+                    redde finge Err { message: msg } qua Result
+                }
+            `;
+
+            const { errors } = analyzeSource(source);
+
+            // Should succeed - finge ... qua Result should match discretio Result
+            expect(errors).toHaveLength(0);
+        });
     });
 });
