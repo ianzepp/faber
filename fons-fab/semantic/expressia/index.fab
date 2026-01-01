@@ -1,0 +1,156 @@
+# Expression Resolution - Main Dispatcher
+#
+# Routes expression AST nodes to their appropriate resolution functions.
+# Each resolver returns the inferred SemanticTypus.
+#
+# Uses the Resolvitor pactum to break circular imports.
+
+ex "../resolvitor" importa Resolvitor
+ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, BIVALENS, NIHIL, IGNOTUM
+ex "../typi" importa usitatumTypus, genericumTypus
+ex "../../ast/expressia" importa Expressia
+
+# Import resolvers - no circular dependency since they only use Resolvitor
+ex "./primaria" importa resolveNomen, resolveLittera, resolveSeries, resolveObiectum
+ex "./binaria" importa resolveBinaria
+ex "./unaria" importa resolveUnaria
+ex "./vocatio" importa resolveVocatio, resolveMembrum
+ex "./alia" importa resolveLambda, resolveFingeExpr, resolveCedeExpr, resolveNovumExpr, resolveCondicio
+
+# =============================================================================
+# MAIN DISPATCHER
+# =============================================================================
+
+# Resolve any expression and return its semantic type
+@ publica
+functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
+    discerne expr {
+        # Identifiers (variable references)
+        si Nomen {
+            redde resolveNomen(r, expr)
+        }
+
+        # Literals (numbers, strings, booleans)
+        si Littera {
+            redde resolveLittera(r, expr)
+        }
+
+        # Template literals (interpolated strings)
+        si TemplateLittera {
+            redde TEXTUS
+        }
+
+        # Binary expressions (+, -, *, /, ==, etc.)
+        si Binaria {
+            redde resolveBinaria(r, expr)
+        }
+
+        # Unary expressions (!, -, non, etc.)
+        si Unaria {
+            redde resolveUnaria(r, expr)
+        }
+
+        # Function calls
+        si Vocatio {
+            redde resolveVocatio(r, expr)
+        }
+
+        # Member access (obj.prop)
+        si Membrum {
+            redde resolveMembrum(r, expr)
+        }
+
+        # Assignment (x = value)
+        si Assignatio pro as {
+            redde resolveAssignatio(r, as)
+        }
+
+        # Await expression (cede)
+        si Cede {
+            redde resolveCedeExpr(r, expr)
+        }
+
+        # New expression (novum)
+        si Novum {
+            redde resolveNovumExpr(r, expr)
+        }
+
+        # Tagged union construction (finge)
+        si Finge {
+            redde resolveFingeExpr(r, expr)
+        }
+
+        # Ternary conditional
+        si Condicio {
+            redde resolveCondicio(r, expr)
+        }
+
+        # Range expression (1..10)
+        si Tractus {
+            redde genericumTypus("lista", [NUMERUS], falsum)
+        }
+
+        # Object literal { key: value }
+        si Obiectum {
+            redde resolveObiectum(r, expr)
+        }
+
+        # Array literal [1, 2, 3]
+        si Series {
+            redde resolveSeries(r, expr)
+        }
+
+        # Lambda expression (pro x: x + 1)
+        si Lambda {
+            redde resolveLambda(r, expr)
+        }
+
+        # Self reference (ego/hoc)
+        si Ego {
+            # ego type depends on enclosing class context
+            redde IGNOTUM
+        }
+
+        # Type cast (expr qua Type)
+        si Qua pro q {
+            r.expressia(q.expressia)
+            # TODO: resolve type annotation
+            redde IGNOTUM
+        }
+
+        # Type check (expr est Type)
+        si Est {
+            redde BIVALENS
+        }
+
+        # Format string (scriptum)
+        si Scriptum pro s {
+            ex s.argumenta pro arg {
+                r.expressia(arg)
+            }
+            redde TEXTUS
+        }
+
+        # Read stdin (lege)
+        si Lege {
+            redde TEXTUS
+        }
+
+        # Regex literal
+        si Regex {
+            redde usitatumTypus("Regex", falsum)
+        }
+    }
+
+    redde IGNOTUM
+}
+
+# =============================================================================
+# HELPER RESOLVERS (inline for simple cases)
+# =============================================================================
+
+# Resolve assignment expression
+functio resolveAssignatio(Resolvitor r, Expressia assignatioExpr) -> SemanticTypus {
+    # TODO: Check mutability, resolve target and value
+    redde IGNOTUM
+}

@@ -1,0 +1,552 @@
+# Semantic Types - Type System Definitions
+#
+# This module defines the type system used during semantic analysis. Types are
+# resolved from Latin type annotations and inferred from expressions.
+
+# =============================================================================
+# SEMANTIC TYPE (Discriminated Union)
+# =============================================================================
+
+# SemanticTypus is a discretio covering all possible types in the type system.
+# Each variant carries specific metadata for its kind.
+
+@ publicum
+discretio SemanticTypus {
+    # Primitive types (textus, numerus, fractus, decimus, magnus, bivalens, nihil, vacuum, octeti)
+    Primitivum {
+        textus nomen           # "textus" | "numerus" | "fractus" | etc.
+        bivalens nullabilis    # T? types
+        numerus? amplitudo     # Bit width for numerus<32>, etc.
+    }
+
+    # Generic types (lista<T>, tabula<K,V>, promissum<T>)
+    Genericum {
+        textus nomen                       # "lista" | "tabula" | etc.
+        lista<SemanticTypus> parametri     # Type parameters
+        bivalens nullabilis
+    }
+
+    # Function types
+    Functio {
+        lista<SemanticTypus> parametriTypi     # Parameter types
+        SemanticTypus reditusTypus             # Return type
+        bivalens asyncronum                    # async function?
+        bivalens habetCuratorem                # Has curator param?
+    }
+
+    # Union types (A | B | C)
+    Unio {
+        lista<SemanticTypus> typi
+    }
+
+    # Unknown type for unresolved/error cases
+    Ignotum {
+        textus? ratio      # Optional reason for being unknown
+    }
+
+    # User-defined type (class, interface, etc.)
+    Usitatum {
+        textus nomen
+        bivalens nullabilis
+    }
+
+    # Enum type (ordo) with named members
+    Ordo {
+        textus nomen
+        tabula<textus, SemanticTypus> membra
+        bivalens nullabilis
+    }
+
+    # Genus (class/struct) with fields and methods
+    Genus {
+        textus nomen
+        tabula<textus, SemanticTypus> agri              # Fields
+        tabula<textus, SemanticTypus> methodi           # Methods (FunctionType)
+        tabula<textus, SemanticTypus> agriStatici       # Static fields
+        tabula<textus, SemanticTypus> methodiStatici    # Static methods
+        bivalens nullabilis
+    }
+
+    # Pactum (interface/protocol) with method signatures
+    Pactum {
+        textus nomen
+        tabula<textus, SemanticTypus> methodi           # Methods (FunctionType)
+        bivalens nullabilis
+    }
+}
+
+# =============================================================================
+# TYPE CONSTRUCTORS
+# =============================================================================
+
+# Create a primitive type
+@ publica
+functio primitivumTypus(textus nomen, bivalens nullabilis) -> SemanticTypus {
+    redde finge Primitivum {
+        nomen: nomen,
+        nullabilis: nullabilis,
+        amplitudo: nihil
+    } qua SemanticTypus
+}
+
+# Create a primitive type with size
+@ publica
+functio primitivumTypusCumAmplitudine(textus nomen, numerus amplitudo, bivalens nullabilis) -> SemanticTypus {
+    redde finge Primitivum {
+        nomen: nomen,
+        nullabilis: nullabilis,
+        amplitudo: amplitudo
+    } qua SemanticTypus
+}
+
+# Create a generic type
+@ publica
+functio genericumTypus(textus nomen, lista<SemanticTypus> parametri, bivalens nullabilis) -> SemanticTypus {
+    redde finge Genericum {
+        nomen: nomen,
+        parametri: parametri,
+        nullabilis: nullabilis
+    } qua SemanticTypus
+}
+
+# Create a function type
+@ publica
+functio functioTypus(
+    lista<SemanticTypus> parametriTypi,
+    SemanticTypus reditusTypus,
+    bivalens asyncronum,
+    bivalens habetCuratorem
+) -> SemanticTypus {
+    redde finge Functio {
+        parametriTypi: parametriTypi,
+        reditusTypus: reditusTypus,
+        asyncronum: asyncronum,
+        habetCuratorem: habetCuratorem
+    } qua SemanticTypus
+}
+
+# Create a union type
+@ publica
+functio unioTypus(lista<SemanticTypus> typi) -> SemanticTypus {
+    redde finge Unio { typi: typi } qua SemanticTypus
+}
+
+# Create an unknown type
+@ publica
+functio ignotumTypus(textus? ratio) -> SemanticTypus {
+    redde finge Ignotum { ratio: ratio } qua SemanticTypus
+}
+
+# Create a user-defined type
+@ publica
+functio usitatumTypus(textus nomen, bivalens nullabilis) -> SemanticTypus {
+    redde finge Usitatum {
+        nomen: nomen,
+        nullabilis: nullabilis
+    } qua SemanticTypus
+}
+
+# Create an enum type
+@ publica
+functio ordoTypus(textus nomen, tabula<textus, SemanticTypus> membra, bivalens nullabilis) -> SemanticTypus {
+    redde finge Ordo {
+        nomen: nomen,
+        membra: membra,
+        nullabilis: nullabilis
+    } qua SemanticTypus
+}
+
+# Create a genus type
+@ publica
+functio genusTypus(
+    textus nomen,
+    tabula<textus, SemanticTypus> agri,
+    tabula<textus, SemanticTypus> methodi,
+    tabula<textus, SemanticTypus> agriStatici,
+    tabula<textus, SemanticTypus> methodiStatici,
+    bivalens nullabilis
+) -> SemanticTypus {
+    redde finge Genus {
+        nomen: nomen,
+        agri: agri,
+        methodi: methodi,
+        agriStatici: agriStatici,
+        methodiStatici: methodiStatici,
+        nullabilis: nullabilis
+    } qua SemanticTypus
+}
+
+# Create a pactum type
+@ publica
+functio pactumTypus(textus nomen, tabula<textus, SemanticTypus> methodi, bivalens nullabilis) -> SemanticTypus {
+    redde finge Pactum {
+        nomen: nomen,
+        methodi: methodi,
+        nullabilis: nullabilis
+    } qua SemanticTypus
+}
+
+# =============================================================================
+# COMMON TYPE CONSTANTS
+# =============================================================================
+
+@ publicum
+fixum TEXTUS = primitivumTypus("textus", falsum)
+
+@ publicum
+fixum NUMERUS = primitivumTypus("numerus", falsum)
+
+@ publicum
+fixum FRACTUS = primitivumTypus("fractus", falsum)
+
+@ publicum
+fixum DECIMUS = primitivumTypus("decimus", falsum)
+
+@ publicum
+fixum MAGNUS = primitivumTypus("magnus", falsum)
+
+@ publicum
+fixum BIVALENS = primitivumTypus("bivalens", falsum)
+
+@ publicum
+fixum NIHIL = primitivumTypus("nihil", falsum)
+
+@ publicum
+fixum VACUUM = primitivumTypus("vacuum", falsum)
+
+@ publicum
+fixum OCTETI = primitivumTypus("octeti", falsum)
+
+@ publicum
+fixum IGNOTUM = ignotumTypus(nihil)
+
+# =============================================================================
+# TYPE UTILITIES
+# =============================================================================
+
+# Check if two types are equal
+@ publica
+functio typiAequales(SemanticTypus a, SemanticTypus b) -> bivalens {
+    # Compare by variant tag and key fields
+    discerne a {
+        si Primitivum pro pa {
+            discerne b {
+                si Primitivum pro pb {
+                    redde pa.nomen == pb.nomen
+                }
+            }
+            redde falsum
+        }
+
+        si Genericum pro ga {
+            discerne b {
+                si Genericum pro gb {
+                    si ga.nomen != gb.nomen {
+                        redde falsum
+                    }
+                    si ga.parametri.longitudo != gb.parametri.longitudo {
+                        redde falsum
+                    }
+                    # Check each type parameter
+                    varia i = 0
+                    ex ga.parametri pro t {
+                        si non typiAequales(t, gb.parametri[i]) {
+                            redde falsum
+                        }
+                        i = i + 1
+                    }
+                    redde verum
+                }
+            }
+            redde falsum
+        }
+
+        si Functio pro fa {
+            discerne b {
+                si Functio pro fb {
+                    si fa.asyncronum != fb.asyncronum {
+                        redde falsum
+                    }
+                    si fa.parametriTypi.longitudo != fb.parametriTypi.longitudo {
+                        redde falsum
+                    }
+                    si non typiAequales(fa.reditusTypus, fb.reditusTypus) {
+                        redde falsum
+                    }
+                    # Check each parameter type
+                    varia i = 0
+                    ex fa.parametriTypi pro t {
+                        si non typiAequales(t, fb.parametriTypi[i]) {
+                            redde falsum
+                        }
+                        i = i + 1
+                    }
+                    redde verum
+                }
+            }
+            redde falsum
+        }
+
+        si Unio pro ua {
+            discerne b {
+                si Unio pro ub {
+                    si ua.typi.longitudo != ub.typi.longitudo {
+                        redde falsum
+                    }
+                    varia i = 0
+                    ex ua.typi pro t {
+                        si non typiAequales(t, ub.typi[i]) {
+                            redde falsum
+                        }
+                        i = i + 1
+                    }
+                    redde verum
+                }
+            }
+            redde falsum
+        }
+
+        si Ignotum {
+            discerne b {
+                si Ignotum {
+                    redde verum
+                }
+            }
+            redde falsum
+        }
+
+        si Usitatum pro usa {
+            discerne b {
+                si Usitatum pro usb {
+                    redde usa.nomen == usb.nomen
+                }
+            }
+            redde falsum
+        }
+
+        si Ordo pro oa {
+            discerne b {
+                si Ordo pro ob {
+                    redde oa.nomen == ob.nomen
+                }
+            }
+            redde falsum
+        }
+
+        si Genus pro gea {
+            discerne b {
+                si Genus pro geb {
+                    redde gea.nomen == geb.nomen
+                }
+            }
+            redde falsum
+        }
+
+        si Pactum pro paa {
+            discerne b {
+                si Pactum pro pab {
+                    redde paa.nomen == pab.nomen
+                }
+            }
+            redde falsum
+        }
+    }
+
+    redde falsum
+}
+
+# Check if a type is assignable to another type
+@ publica
+functio assignabileAd(SemanticTypus fons, SemanticTypus scopus) -> bivalens {
+    # Unknown is assignable to anything
+    discerne fons {
+        si Ignotum {
+            redde verum
+        }
+    }
+
+    discerne scopus {
+        si Ignotum {
+            redde verum
+        }
+    }
+
+    # nihil is assignable to nullable types
+    discerne fons {
+        si Primitivum pro p {
+            si p.nomen == "nihil" {
+                discerne scopus {
+                    si Primitivum pro sp {
+                        redde sp.nullabilis
+                    }
+                    si Genericum pro sg {
+                        redde sg.nullabilis
+                    }
+                    si Usitatum pro su {
+                        redde su.nullabilis
+                    }
+                    si Ordo pro so {
+                        redde so.nullabilis
+                    }
+                    si Genus pro sge {
+                        redde sge.nullabilis
+                    }
+                    si Pactum pro spa {
+                        redde spa.nullabilis
+                    }
+                }
+                redde falsum
+            }
+        }
+    }
+
+    # Numeric type promotion: numerus -> fractus, numerus -> decimus
+    discerne fons {
+        si Primitivum pro pf {
+            discerne scopus {
+                si Primitivum pro ps {
+                    si estNumericum(pf.nomen) et estNumericum(ps.nomen) {
+                        redde verum
+                    }
+                }
+            }
+        }
+    }
+
+    # Check if source is in target union
+    discerne scopus {
+        si Unio pro u {
+            ex u.typi pro t {
+                si assignabileAd(fons, t) {
+                    redde verum
+                }
+            }
+            redde falsum
+        }
+    }
+
+    # Source union must have all types assignable to target
+    discerne fons {
+        si Unio pro u {
+            ex u.typi pro t {
+                si non assignabileAd(t, scopus) {
+                    redde falsum
+                }
+            }
+            redde verum
+        }
+    }
+
+    # Otherwise check equality
+    redde typiAequales(fons, scopus)
+}
+
+# Helper: check if type name is numeric
+functio estNumericum(textus nomen) -> bivalens {
+    redde nomen == "numerus" aut nomen == "fractus" aut nomen == "decimus"
+}
+
+# Format a type for error messages
+@ publica
+functio formaTypum(SemanticTypus t) -> textus {
+    discerne t {
+        si Primitivum pro p {
+            varia resultatum = p.nomen
+            si p.amplitudo != nihil {
+                resultatum = scriptum("{}<{}>", resultatum, p.amplitudo)
+            }
+            si p.nullabilis {
+                resultatum = resultatum + "?"
+            }
+            redde resultatum
+        }
+
+        si Genericum pro g {
+            varia parametri = ""
+            varia i = 0
+            ex g.parametri pro t {
+                si i > 0 {
+                    parametri = parametri + ", "
+                }
+                parametri = parametri + formaTypum(t)
+                i = i + 1
+            }
+            varia resultatum = scriptum("{}<{}>", g.nomen, parametri)
+            si g.nullabilis {
+                resultatum = resultatum + "?"
+            }
+            redde resultatum
+        }
+
+        si Functio pro f {
+            varia parametri = ""
+            varia i = 0
+            ex f.parametriTypi pro t {
+                si i > 0 {
+                    parametri = parametri + ", "
+                }
+                parametri = parametri + formaTypum(t)
+                i = i + 1
+            }
+            varia asyncPraefix = ""
+            si f.asyncronum {
+                asyncPraefix = "futura "
+            }
+            redde scriptum("{}({}) -> {}", asyncPraefix, parametri, formaTypum(f.reditusTypus))
+        }
+
+        si Unio pro u {
+            varia resultatum = ""
+            varia i = 0
+            ex u.typi pro t {
+                si i > 0 {
+                    resultatum = resultatum + " | "
+                }
+                resultatum = resultatum + formaTypum(t)
+                i = i + 1
+            }
+            redde resultatum
+        }
+
+        si Ignotum pro ig {
+            si ig.ratio != nihil {
+                redde scriptum("ignotum({})", ig.ratio)
+            }
+            redde "ignotum"
+        }
+
+        si Usitatum pro u {
+            varia resultatum = u.nomen
+            si u.nullabilis {
+                resultatum = resultatum + "?"
+            }
+            redde resultatum
+        }
+
+        si Ordo pro o {
+            varia resultatum = scriptum("ordo {}", o.nomen)
+            si o.nullabilis {
+                resultatum = resultatum + "?"
+            }
+            redde resultatum
+        }
+
+        si Genus pro g {
+            varia resultatum = scriptum("genus {}", g.nomen)
+            si g.nullabilis {
+                resultatum = resultatum + "?"
+            }
+            redde resultatum
+        }
+
+        si Pactum pro p {
+            varia resultatum = scriptum("pactum {}", p.nomen)
+            si p.nullabilis {
+                resultatum = resultatum + "?"
+            }
+            redde resultatum
+        }
+    }
+
+    redde "ignotum"
+}

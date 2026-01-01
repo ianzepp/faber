@@ -1,0 +1,162 @@
+# Semantic Analyzer - Entry Point
+#
+# Performs semantic analysis on the AST produced by the parser.
+# Resolves types, builds symbol tables, validates type compatibility.
+#
+# Uses a multi-pass approach for forward references:
+# Phase 1: Predeclaration - register all top-level names
+# Phase 2: Body analysis - analyze function bodies and statements
+
+ex "./resolvitor" importa Resolvitor
+ex "./nucleus" importa Analyzator, SemanticResultatum, novumAnalyzator
+ex "./typi" importa SemanticTypus
+ex "./expressia/index" importa resolveExpressia
+ex "./sententia/index" importa analyzeSententia
+ex "../ast/radix" importa Programma
+ex "../ast/expressia" importa Expressia
+ex "../ast/sententia" importa Sententia
+
+# =============================================================================
+# RESOLVITOR IMPLEMENTATION
+# =============================================================================
+
+# Concrete implementation of the Resolvitor pactum
+genus Resolvitor implet Resolvitor {
+    Analyzator a
+
+    functio analyzator() -> Analyzator {
+        redde ego.a
+    }
+
+    functio expressia(Expressia expr) -> SemanticTypus {
+        redde resolveExpressia(ego qua Resolvitor, expr)
+    }
+
+    functio sententia(Sententia stmt) -> vacuum {
+        analyzeSententia(ego qua Resolvitor, stmt)
+    }
+}
+
+# Create a new Resolvitor
+functio novumResolvitor(Analyzator a) -> Resolvitor {
+    redde { a: a } qua Resolvitor
+}
+
+# =============================================================================
+# MAIN ENTRY POINT
+# =============================================================================
+
+# Perform semantic analysis on a program
+@ publica
+functio analyze(Programma programma) -> SemanticResultatum {
+    # Create analyzer state
+    fixum a = novumAnalyzator()
+    fixum r = novumResolvitor(a)
+
+    # Phase 1: Predeclare all top-level names
+    # (allows forward references)
+    ex programma.corpus pro stmt {
+        predeclare(r, stmt)
+    }
+
+    # Phase 2: Analyze all statements
+    ex programma.corpus pro stmt {
+        r.sententia(stmt)
+    }
+
+    # Return result
+    redde {
+        programma: programma,
+        errores: a.errores
+    } qua SemanticResultatum
+}
+
+# =============================================================================
+# PREDECLARATION
+# =============================================================================
+
+# Predeclare a top-level statement (Phase 1)
+# Registers names with placeholder types for forward reference support
+functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
+    ex "./typi" importa IGNOTUM, VACUUM, functioTypus, usitatumTypus
+    ex "./scopus" importa SymbolumSpecies
+
+    fixum a = r.analyzator()
+
+    discerne stmt {
+        # Function declaration - register name with function type
+        si FunctioDeclaratio pro f {
+            # Build placeholder function type
+            varia paramTypi = [] qua lista<SemanticTypus>
+            ex f.parametra pro param {
+                paramTypi.adde(IGNOTUM)
+            }
+            fixum fnTypus = functioTypus(paramTypi, VACUUM, f.asyncronum, falsum)
+
+            a.scopus.symbola[f.nomen] = {
+                nomen: f.nomen,
+                semanticTypus: fnTypus,
+                species: SymbolumSpecies.Functio,
+                mutabilis: falsum,
+                locus: f.locus
+            }
+        }
+
+        # Genus declaration - register name with user type
+        si GenusDeclaratio pro g {
+            a.scopus.symbola[g.nomen] = {
+                nomen: g.nomen,
+                semanticTypus: usitatumTypus(g.nomen, falsum),
+                species: SymbolumSpecies.Genus,
+                mutabilis: falsum,
+                locus: g.locus
+            }
+        }
+
+        # Pactum declaration - register name with user type
+        si PactumDeclaratio pro p {
+            a.scopus.symbola[p.nomen] = {
+                nomen: p.nomen,
+                semanticTypus: usitatumTypus(p.nomen, falsum),
+                species: SymbolumSpecies.Pactum,
+                mutabilis: falsum,
+                locus: p.locus
+            }
+        }
+
+        # Ordo declaration - register name with user type
+        si OrdoDeclaratio pro o {
+            a.scopus.symbola[o.nomen] = {
+                nomen: o.nomen,
+                semanticTypus: usitatumTypus(o.nomen, falsum),
+                species: SymbolumSpecies.Ordo,
+                mutabilis: falsum,
+                locus: o.locus
+            }
+        }
+
+        # Discretio declaration - register name with user type
+        si DiscretioDeclaratio pro d {
+            a.scopus.symbola[d.nomen] = {
+                nomen: d.nomen,
+                semanticTypus: usitatumTypus(d.nomen, falsum),
+                species: SymbolumSpecies.TypusAlias,
+                mutabilis: falsum,
+                locus: d.locus
+            }
+        }
+
+        # Typus alias - register name with user type
+        si TypusAlias pro t {
+            a.scopus.symbola[t.nomen] = {
+                nomen: t.nomen,
+                semanticTypus: usitatumTypus(t.nomen, falsum),
+                species: SymbolumSpecies.TypusAlias,
+                mutabilis: falsum,
+                locus: t.locus
+            }
+        }
+
+        # Other statements don't need predeclaration
+    }
+}

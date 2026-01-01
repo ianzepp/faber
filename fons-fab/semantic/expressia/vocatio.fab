@@ -1,0 +1,125 @@
+# Call and Member Expression Resolution
+#
+# Handles: function calls, method calls, member access
+
+ex "../resolvitor" importa Resolvitor
+ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, BIVALENS, IGNOTUM
+ex "../../ast/expressia" importa Expressia
+
+# =============================================================================
+# CALL EXPRESSION RESOLUTION
+# =============================================================================
+
+# Resolve a function call expression
+@ publica
+functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
+    discerne vocatioExpr {
+        si Vocatio pro v {
+            fixum vocatusTypus = r.expressia(v.vocatus)
+
+            # Resolve all arguments
+            ex v.argumenta pro arg {
+                r.expressia(arg)
+            }
+
+            # If callee is a function type, return its return type
+            discerne vocatusTypus {
+                si Functio pro f {
+                    redde f.reditusTypus
+                }
+            }
+
+            # Otherwise unknown
+            redde IGNOTUM
+        }
+    }
+
+    redde IGNOTUM
+}
+
+# =============================================================================
+# MEMBER EXPRESSION RESOLUTION
+# =============================================================================
+
+# Resolve a member access expression (obj.prop or obj[key])
+@ publica
+functio resolveMembrum(Resolvitor r, Expressia membrumExpr) -> SemanticTypus {
+    discerne membrumExpr {
+        si Membrum pro m {
+            fixum obiectumTypus = r.expressia(m.obiectum)
+
+            # If computed access (obj[key]), resolve the key
+            si m.computatum {
+                r.expressia(m.proprietas)
+            }
+
+            # Handle known collection methods
+            discerne obiectumTypus {
+                si Genericum pro g {
+                    # lista methods
+                    si g.nomen == "lista" {
+                        discerne m.proprietas {
+                            si Nomen pro n {
+                                # lista.longitudo -> numerus
+                                si n.nomen == "longitudo" {
+                                    redde NUMERUS
+                                }
+                                # lista.primus, lista.ultimus -> element type
+                                si n.nomen == "primus" aut n.nomen == "ultimus" {
+                                    si g.parametri.longitudo > 0 {
+                                        redde g.parametri[0]
+                                    }
+                                }
+                                # lista.vacua -> bivalens
+                                si n.nomen == "vacua" {
+                                    redde BIVALENS
+                                }
+                            }
+                        }
+
+                        # Indexed access: lista[i] -> element type
+                        si m.computatum et g.parametri.longitudo > 0 {
+                            redde g.parametri[0]
+                        }
+                    }
+                }
+
+                si Primitivum pro p {
+                    si p.nomen == "textus" {
+                        discerne m.proprietas {
+                            si Nomen pro n {
+                                si n.nomen == "longitudo" {
+                                    redde NUMERUS
+                                }
+                            }
+                        }
+                        # Indexed access: textus[i] -> textus (single char)
+                        si m.computatum {
+                            redde TEXTUS
+                        }
+                    }
+                }
+
+                # Genus type - look up field/method
+                si Genus pro ge {
+                    discerne m.proprietas {
+                        si Nomen pro n {
+                            # Check fields
+                            si ge.agri.habet(n.nomen) {
+                                redde ge.agri[n.nomen]
+                            }
+                            # Check methods
+                            si ge.methodi.habet(n.nomen) {
+                                redde ge.methodi[n.nomen]
+                            }
+                        }
+                    }
+                }
+            }
+
+            redde IGNOTUM
+        }
+    }
+
+    redde IGNOTUM
+}

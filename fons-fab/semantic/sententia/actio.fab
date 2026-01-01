@@ -1,0 +1,90 @@
+# Action Statement Analysis
+#
+# Handles: redde, iace, scribe, adfirma
+
+ex "../resolvitor" importa Resolvitor
+ex "../typi" importa SemanticTypus, formaTypum, assignabileAd
+ex "../errores" importa returnTypeMismatchError
+ex "../../ast/sententia" importa Sententia
+
+# =============================================================================
+# RETURN
+# =============================================================================
+
+# Analyze redde (return) statement
+@ publica
+functio analyzeRedde(Resolvitor r, Sententia reddeStmt) -> vacuum {
+    fixum a = r.analyzator()
+
+    discerne reddeStmt {
+        si Redde pro rd {
+            # Resolve return value if present
+            si nonnihil rd.valor {
+                fixum valorTypus = r.expressia(rd.valor qua Expressia)
+
+                # Check against function return type
+                si nonnihil a.currentFunctioReditus {
+                    si non assignabileAd(valorTypus, a.currentFunctioReditus qua SemanticTypus) {
+                        fixum err = returnTypeMismatchError(
+                            formaTypum(valorTypus),
+                            formaTypum(a.currentFunctioReditus qua SemanticTypus)
+                        )
+                        a.error(err.textus, rd.locus)
+                    }
+                }
+            }
+        }
+    }
+}
+
+# =============================================================================
+# THROW
+# =============================================================================
+
+# Analyze iace (throw) statement
+@ publica
+functio analyzeIace(Resolvitor r, Sententia iaceStmt) -> vacuum {
+    discerne iaceStmt {
+        si Iace pro i {
+            # Resolve thrown expression
+            r.expressia(i.valor)
+        }
+    }
+}
+
+# =============================================================================
+# OUTPUT
+# =============================================================================
+
+# Analyze scribe/vide/mone statement
+@ publica
+functio analyzeScribe(Resolvitor r, Sententia scribeStmt) -> vacuum {
+    discerne scribeStmt {
+        si Scribe pro s {
+            # Resolve all arguments
+            ex s.argumenta pro arg {
+                r.expressia(arg)
+            }
+        }
+    }
+}
+
+# =============================================================================
+# ASSERTION
+# =============================================================================
+
+# Analyze adfirma (assert) statement
+@ publica
+functio analyzeAdfirma(Resolvitor r, Sententia adfirmaStmt) -> vacuum {
+    discerne adfirmaStmt {
+        si Adfirma pro adf {
+            # Resolve condition
+            r.expressia(adf.conditio)
+
+            # Resolve message if present
+            si nonnihil adf.nuntius {
+                r.expressia(adf.nuntius qua Expressia)
+            }
+        }
+    }
+}

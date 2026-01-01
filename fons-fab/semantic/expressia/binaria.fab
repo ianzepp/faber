@@ -1,0 +1,115 @@
+# Binary Expression Resolution
+#
+# Handles: arithmetic (+, -, *, /, %), comparison (<, >, ==), logical (et, aut)
+
+ex "../resolvitor" importa Resolvitor
+ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, BIVALENS, IGNOTUM, formaTypum
+ex "../errores" importa incompatibleComparisonError
+ex "../../ast/expressia" importa Expressia
+
+# =============================================================================
+# BINARY EXPRESSION RESOLUTION
+# =============================================================================
+
+# Resolve a binary expression
+@ publica
+functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
+    fixum a = r.analyzator()
+
+    discerne binariaExpr {
+        si Binaria pro b {
+            fixum sinisterTypus = r.expressia(b.sinister)
+            fixum dexterTypus = r.expressia(b.dexter)
+
+            # Arithmetic operators: +, -, *, /, %
+            si estArithmeticum(b.signum) {
+                # String concatenation with +
+                si b.signum == "+" {
+                    discerne sinisterTypus {
+                        si Primitivum pro p {
+                            si p.nomen == "textus" {
+                                redde TEXTUS
+                            }
+                        }
+                    }
+                }
+
+                # Numeric arithmetic - preserve type when both operands match
+                discerne sinisterTypus {
+                    si Primitivum pro ps {
+                        discerne dexterTypus {
+                            si Primitivum pro pd {
+                                si estNumericum(ps.nomen) et estNumericum(pd.nomen) {
+                                    # Same type: preserve it
+                                    si ps.nomen == pd.nomen {
+                                        redde sinisterTypus
+                                    }
+                                    # Mixed numeric: use left type
+                                    redde sinisterTypus
+                                }
+                            }
+                        }
+                    }
+                }
+
+                # Default to numerus
+                redde NUMERUS
+            }
+
+            # Comparison operators: <, >, <=, >=
+            si estComparatio(b.signum) {
+                # Check for incompatible comparison
+                discerne sinisterTypus {
+                    si Primitivum pro ps {
+                        discerne dexterTypus {
+                            si Primitivum pro pd {
+                                si ps.nomen != pd.nomen {
+                                    fixum err = incompatibleComparisonError(
+                                        formaTypum(sinisterTypus),
+                                        formaTypum(dexterTypus),
+                                        b.signum
+                                    )
+                                    a.error(err.textus, b.locus)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                redde BIVALENS
+            }
+
+            # Equality operators: ==, !=
+            si b.signum == "==" aut b.signum == "!=" {
+                redde BIVALENS
+            }
+
+            # Logical operators: &&, ||, et, aut
+            si estLogicum(b.signum) {
+                redde BIVALENS
+            }
+        }
+    }
+
+    redde IGNOTUM
+}
+
+# =============================================================================
+# HELPERS
+# =============================================================================
+
+functio estArithmeticum(textus signum) -> bivalens {
+    redde signum == "+" aut signum == "-" aut signum == "*" aut signum == "/" aut signum == "%"
+}
+
+functio estComparatio(textus signum) -> bivalens {
+    redde signum == "<" aut signum == ">" aut signum == "<=" aut signum == ">="
+}
+
+functio estLogicum(textus signum) -> bivalens {
+    redde signum == "&&" aut signum == "||" aut signum == "et" aut signum == "aut"
+}
+
+functio estNumericum(textus nomen) -> bivalens {
+    redde nomen == "numerus" aut nomen == "fractus" aut nomen == "decimus" aut nomen == "magnus"
+}

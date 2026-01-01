@@ -1,0 +1,166 @@
+# Other Expression Resolution
+#
+# Handles: lambda, finge, cede (await), novum (new), conditional
+
+ex "../resolvitor" importa Resolvitor
+ex "../typi" importa SemanticTypus, IGNOTUM, VACUUM
+ex "../typi" importa functioTypus, usitatumTypus, genericumTypus
+ex "../scopus" importa ScopusSpecies, SymbolumSpecies
+ex "../errores" importa cedeOutsideAsyncError
+ex "../../ast/expressia" importa Expressia
+
+# =============================================================================
+# LAMBDA EXPRESSION RESOLUTION
+# =============================================================================
+
+# Resolve a lambda expression (pro x: x + 1)
+@ publica
+functio resolveLambda(Resolvitor r, Expressia lambdaExpr) -> SemanticTypus {
+    fixum a = r.analyzator()
+
+    discerne lambdaExpr {
+        si Lambda pro l {
+            # Enter function scope for parameters
+            a.intraScopum(ScopusSpecies.Functio)
+
+            # Define parameters in scope
+            ex l.parametra pro param {
+                fixum paramTypus = IGNOTUM  # TODO: resolve param type annotation
+                a.scopus.symbola[param.nomen] = {
+                    nomen: param.nomen,
+                    semanticTypus: paramTypus,
+                    species: SymbolumSpecies.Parametrum,
+                    mutabilis: falsum,
+                    locus: param.locus
+                }
+            }
+
+            # Resolve body expression
+            fixum reditusTypus = r.expressia(l.corpus)
+
+            # Exit function scope
+            a.exiScopum()
+
+            # Build function type
+            varia paramTypi = [] qua lista<SemanticTypus>
+            ex l.parametra pro param {
+                paramTypi.adde(IGNOTUM)
+            }
+
+            redde functioTypus(paramTypi, reditusTypus, falsum, falsum)
+        }
+    }
+
+    redde IGNOTUM
+}
+
+# =============================================================================
+# FINGE EXPRESSION RESOLUTION
+# =============================================================================
+
+# Resolve a finge expression (tagged union construction)
+@ publica
+functio resolveFingeExpr(Resolvitor r, Expressia fingeExpr) -> SemanticTypus {
+    discerne fingeExpr {
+        si Finge pro f {
+            # Resolve all field values
+            ex f.agri pro agrum {
+                r.expressia(agrum.valor)
+            }
+
+            # The type comes from the qua clause
+            si nonnihil f.quaTypus {
+                redde usitatumTypus(f.quaTypus qua textus, falsum)
+            }
+
+            # Otherwise use the variant name as the type
+            redde usitatumTypus(f.variansNomen, falsum)
+        }
+    }
+
+    redde IGNOTUM
+}
+
+# =============================================================================
+# CEDE (AWAIT) EXPRESSION RESOLUTION
+# =============================================================================
+
+# Resolve a cede (await) expression
+@ publica
+functio resolveCedeExpr(Resolvitor r, Expressia cedeExpr) -> SemanticTypus {
+    fixum a = r.analyzator()
+
+    discerne cedeExpr {
+        si Cede pro c {
+            fixum promissumTypus = r.expressia(c.expressia)
+
+            # Check we're in an async context
+            si non a.currentFunctioAsync et non a.currentFunctioGenerator {
+                fixum err = cedeOutsideAsyncError()
+                a.error(err.textus, c.locus)
+            }
+
+            # Unwrap promissum<T> to T
+            discerne promissumTypus {
+                si Genericum pro g {
+                    si g.nomen == "promissum" et g.parametri.longitudo > 0 {
+                        redde g.parametri[0]
+                    }
+                }
+            }
+
+            redde promissumTypus
+        }
+    }
+
+    redde IGNOTUM
+}
+
+# =============================================================================
+# NOVUM (NEW) EXPRESSION RESOLUTION
+# =============================================================================
+
+# Resolve a novum (new) expression
+@ publica
+functio resolveNovumExpr(Resolvitor r, Expressia novumExpr) -> SemanticTypus {
+    discerne novumExpr {
+        si Novum pro n {
+            # Resolve constructor arguments
+            ex n.argumenta pro arg {
+                r.expressia(arg)
+            }
+
+            # The type is the class being instantiated
+            discerne n.vocatus {
+                si Nomen pro nom {
+                    redde usitatumTypus(nom.nomen, falsum)
+                }
+            }
+
+            redde IGNOTUM
+        }
+    }
+
+    redde IGNOTUM
+}
+
+# =============================================================================
+# CONDITIONAL EXPRESSION RESOLUTION
+# =============================================================================
+
+# Resolve a ternary conditional expression
+@ publica
+functio resolveCondicio(Resolvitor r, Expressia condicioExpr) -> SemanticTypus {
+    discerne condicioExpr {
+        si Condicio pro c {
+            r.expressia(c.conditio)
+            fixum consequensTypus = r.expressia(c.consequens)
+            r.expressia(c.alternans)
+
+            # Return the consequent type (simplification)
+            redde consequensTypus
+        }
+    }
+
+    redde IGNOTUM
+}

@@ -1,0 +1,66 @@
+# Unary Expression Resolution
+#
+# Handles: negation (-, !), null checks (nulla, nonnulla)
+
+ex "../resolvitor" importa Resolvitor
+ex "../typi" importa SemanticTypus, NUMERUS, BIVALENS, IGNOTUM
+ex "../../ast/expressia" importa Expressia
+
+# =============================================================================
+# UNARY EXPRESSION RESOLUTION
+# =============================================================================
+
+# Resolve a unary expression
+@ publica
+functio resolveUnaria(Resolvitor r, Expressia unariaExpr) -> SemanticTypus {
+    discerne unariaExpr {
+        si Unaria pro u {
+            fixum argTypus = r.expressia(u.argumentum)
+
+            # Logical negation: !, non
+            si u.signum == "!" aut u.signum == "non" {
+                redde BIVALENS
+            }
+
+            # Null checks: nulla (is null/empty), nonnulla (is not null/non-empty)
+            si u.signum == "nulla" aut u.signum == "nonnulla" {
+                redde BIVALENS
+            }
+
+            # Null check operators: nihil, nonnihil
+            si u.signum == "nihil" aut u.signum == "nonnihil" {
+                redde BIVALENS
+            }
+
+            # Numeric negation - preserve the numeric type
+            si u.signum == "-" {
+                discerne argTypus {
+                    si Primitivum pro p {
+                        si estNumericum(p.nomen) {
+                            redde argTypus
+                        }
+                    }
+                }
+                redde NUMERUS
+            }
+
+            # Bitwise NOT (~)
+            si u.signum == "~" {
+                redde NUMERUS
+            }
+
+            # Default: preserve argument type
+            redde argTypus
+        }
+    }
+
+    redde IGNOTUM
+}
+
+# =============================================================================
+# HELPERS
+# =============================================================================
+
+functio estNumericum(textus nomen) -> bivalens {
+    redde nomen == "numerus" aut nomen == "fractus" aut nomen == "decimus" aut nomen == "magnus"
+}

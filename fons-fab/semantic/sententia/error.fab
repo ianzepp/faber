@@ -1,0 +1,123 @@
+# Error Handling Statement Analysis
+#
+# Handles: tempta/cape, fac...dum, cura
+
+ex "../resolvitor" importa Resolvitor
+ex "../typi" importa IGNOTUM
+ex "../scopus" importa ScopusSpecies, SymbolumSpecies
+ex "../../ast/sententia" importa Sententia
+
+# =============================================================================
+# TRY-CATCH
+# =============================================================================
+
+# Analyze tempta (try) statement
+@ publica
+functio analyzeTempta(Resolvitor r, Sententia temptaStmt) -> vacuum {
+    fixum a = r.analyzator()
+
+    discerne temptaStmt {
+        si Tempta pro t {
+            # Analyze try block
+            r.sententia(t.corpus)
+
+            # Analyze each catch clause
+            ex t.capeClausulae pro cape {
+                # Enter scope for catch parameter
+                a.intraScopum(ScopusSpecies.Massa)
+
+                # Define error parameter
+                a.scopus.symbola[cape.parametrum] = {
+                    nomen: cape.parametrum,
+                    semanticTypus: IGNOTUM,  # Error type
+                    species: SymbolumSpecies.Variabilis,
+                    mutabilis: falsum,
+                    locus: cape.locus
+                }
+
+                # Analyze catch body
+                r.sententia(cape.corpus)
+
+                a.exiScopum()
+            }
+
+            # Analyze finally block if present
+            si nonnihil t.demum {
+                r.sententia(t.demum qua Sententia)
+            }
+        }
+    }
+}
+
+# =============================================================================
+# DO-WHILE
+# =============================================================================
+
+# Analyze fac...dum (do-while) statement
+@ publica
+functio analyzeFac(Resolvitor r, Sententia facStmt) -> vacuum {
+    discerne facStmt {
+        si Fac pro f {
+            # Analyze body first (executed at least once)
+            r.sententia(f.corpus)
+
+            # Analyze condition
+            r.expressia(f.conditio)
+
+            # Analyze catch clause if present
+            # (fac can have catch for loop errors)
+            si nonnihil f.capeClausula {
+                fixum a = r.analyzator()
+                fixum cape = f.capeClausula
+
+                a.intraScopum(ScopusSpecies.Massa)
+
+                a.scopus.symbola[cape.parametrum] = {
+                    nomen: cape.parametrum,
+                    semanticTypus: IGNOTUM,
+                    species: SymbolumSpecies.Variabilis,
+                    mutabilis: falsum,
+                    locus: cape.locus
+                }
+
+                r.sententia(cape.corpus)
+
+                a.exiScopum()
+            }
+        }
+    }
+}
+
+# =============================================================================
+# RESOURCE MANAGEMENT
+# =============================================================================
+
+# Analyze cura (resource scope) statement
+@ publica
+functio analyzeCura(Resolvitor r, Sententia curaStmt) -> vacuum {
+    fixum a = r.analyzator()
+
+    discerne curaStmt {
+        si Cura pro c {
+            # Analyze resource expression
+            fixum resourceTypus = r.expressia(c.fons)
+
+            # Enter scope for resource binding
+            a.intraScopum(ScopusSpecies.Massa)
+
+            # Define resource variable
+            a.scopus.symbola[c.variaNomen] = {
+                nomen: c.variaNomen,
+                semanticTypus: resourceTypus,
+                species: SymbolumSpecies.Variabilis,
+                mutabilis: falsum,
+                locus: c.locus
+            }
+
+            # Analyze body
+            r.sententia(c.corpus)
+
+            a.exiScopum()
+        }
+    }
+}

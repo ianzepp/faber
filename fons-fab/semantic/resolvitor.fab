@@ -1,0 +1,37 @@
+# Resolvitor - Semantic Resolver Interface for Mutual Recursion
+#
+# Solves mutual recursion between expression and statement analyzers.
+# Each analysis function receives a Resolvitor to call back for
+# sub-expressions and sub-statements.
+#
+# WHY: Expression analyzers may need to analyze nested statements (lambdas),
+#      and statement analyzers need to analyze expressions. Using a pactum
+#      breaks the circular import cycle.
+#
+# LATIN: resolvitor = "one who resolves"
+
+ex "./nucleus" importa Analyzator
+ex "./typi" importa SemanticTypus
+ex "../ast/expressia" importa Expressia
+ex "../ast/sententia" importa Sententia
+
+# Semantic resolver interface for cross-module analysis.
+#
+# Usage in analysis functions:
+#   functio analyzeXxx(Resolvitor r, Xxx node) -> SemanticTypus {
+#       fixum a = r.analyzator()           # get analyzer state
+#       fixum t = r.expressia(subExpr)     # analyze expression
+#       r.sententia(subStmt)               # analyze statement
+#       ...
+#   }
+@ publicum
+pactum Resolvitor {
+    # Get the underlying analyzer state
+    functio analyzator() -> Analyzator
+
+    # Analyze an expression and return its type
+    functio expressia(Expressia expr) -> SemanticTypus
+
+    # Analyze a statement
+    functio sententia(Sententia stmt) -> vacuum
+}

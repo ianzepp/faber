@@ -1,0 +1,168 @@
+# Semantic Error Catalog
+#
+# This module defines all error codes and messages for the semantic analysis
+# phase. Each error has a unique code, user-facing text, and helpful guidance.
+
+# =============================================================================
+# ERROR CODES
+# =============================================================================
+
+# Semantic error codes.
+# S-prefix identifies semantic phase errors at a glance.
+@ publicus
+ordo SemanticErrorCodice {
+    UndefinedVariable       # S001: Undefined variable
+    AlreadyDefined          # S002: Already defined in scope
+    ImmutableAssignment     # S003: Cannot assign to immutable
+    TypeMismatch            # S004: Type mismatch
+    ReturnTypeMismatch      # S005: Return type mismatch
+    NoTypeOrInitializer     # S006: Variable needs type or initializer
+    NotExportedFromModule   # S007: Name not exported from module
+    IncompatibleComparison  # S008: Cannot compare these types
+    CedeOutsideAsync        # S009: cede requires async/generator
+    AwaitOutsideAsync       # S010: await requires async
+    DefaultWithBorrowedParam # S011: Cannot use default with borrowed param
+    ModuleNotFound          # S012: Cannot find module
+    CircularImport          # S013: Circular import detected
+    ModuleParseError        # S014: Failed to parse module
+}
+
+# =============================================================================
+# ERROR MESSAGE STRUCTURE
+# =============================================================================
+
+# Error message with text and help
+genus SemanticErrorNuntius {
+    textus textus      # User-facing error message
+    textus auxilium    # Helpful guidance
+}
+
+# =============================================================================
+# ERROR MESSAGE FUNCTIONS
+# =============================================================================
+
+# Get error message for undefined variable
+@ publica
+functio undefinedVariableError(textus nomen) -> SemanticErrorNuntius {
+    redde {
+        textus: scriptum("Undefined variable '{}'", nomen),
+        auxilium: "Variables must be declared with 'varia' or 'fixum' before use"
+    } qua SemanticErrorNuntius
+}
+
+# Get error message for already defined
+@ publica
+functio alreadyDefinedError(textus nomen, numerus linea) -> SemanticErrorNuntius {
+    redde {
+        textus: scriptum("'{}' is already defined at line {}", nomen, linea),
+        auxilium: "Each name can only be defined once in the same scope. Use a different name or assign to the existing variable."
+    } qua SemanticErrorNuntius
+}
+
+# Get error message for immutable assignment
+@ publica
+functio immutableAssignmentError(textus nomen) -> SemanticErrorNuntius {
+    redde {
+        textus: scriptum("Cannot assign to immutable variable '{}'", nomen),
+        auxilium: "Variables declared with 'fixum' cannot be reassigned. Use 'varia' for mutable variables."
+    } qua SemanticErrorNuntius
+}
+
+# Get error message for type mismatch
+@ publica
+functio typeMismatchError(textus sourceType, textus targetType) -> SemanticErrorNuntius {
+    redde {
+        textus: scriptum("Type '{}' is not assignable to type '{}'", sourceType, targetType),
+        auxilium: "Ensure the types are compatible. You may need a type conversion or to change the variable type."
+    } qua SemanticErrorNuntius
+}
+
+# Get error message for return type mismatch
+@ publica
+functio returnTypeMismatchError(textus returnType, textus functionType) -> SemanticErrorNuntius {
+    redde {
+        textus: scriptum("Return type '{}' is not assignable to function return type '{}'", returnType, functionType),
+        auxilium: "The returned value must match the function return type annotation."
+    } qua SemanticErrorNuntius
+}
+
+# Get error message for no type or initializer
+@ publica
+functio noTypeOrInitializerError(textus nomen) -> SemanticErrorNuntius {
+    redde {
+        textus: scriptum("Variable '{}' has no type annotation or initializer", nomen),
+        auxilium: "Variables must have either a type annotation (e.g., 'numerus x') or an initializer (e.g., 'varia x = 5')."
+    } qua SemanticErrorNuntius
+}
+
+# Get error message for not exported from module
+@ publica
+functio notExportedFromModuleError(textus nomen, textus modulus) -> SemanticErrorNuntius {
+    redde {
+        textus: scriptum("'{}' is not exported from '{}'", nomen, modulus),
+        auxilium: "Check the module documentation for available exports. You may have a typo in the import name."
+    } qua SemanticErrorNuntius
+}
+
+# Get error message for incompatible comparison
+@ publica
+functio incompatibleComparisonError(textus leftType, textus rightType, textus operator) -> SemanticErrorNuntius {
+    redde {
+        textus: scriptum("Cannot compare '{}' with '{}' using '{}'", leftType, rightType, operator),
+        auxilium: "Comparison operators require operands of the same type. Both sides must be numbers or both must be strings."
+    } qua SemanticErrorNuntius
+}
+
+# Get error message for cede outside async
+@ publica
+functio cedeOutsideAsyncError() -> SemanticErrorNuntius {
+    redde {
+        textus: "'cede' requires an async or generator function context",
+        auxilium: "Use 'fiet' for async functions, 'fiunt' for generators, or 'fient' for async generators."
+    } qua SemanticErrorNuntius
+}
+
+# Get error message for await outside async
+@ publica
+functio awaitOutsideAsyncError(textus keyword) -> SemanticErrorNuntius {
+    redde {
+        textus: scriptum("'{}' requires an async function context", keyword),
+        auxilium: "Use 'fiet' or 'fient' to declare an async function."
+    } qua SemanticErrorNuntius
+}
+
+# Get error message for default with borrowed param
+@ publica
+functio defaultWithBorrowedParamError(textus preposition) -> SemanticErrorNuntius {
+    redde {
+        textus: scriptum("Cannot use default value with '{}' (borrowed) parameter", preposition),
+        auxilium: "Default values require owned parameters. Remove the 'de' or 'in' preposition, or remove the default value."
+    } qua SemanticErrorNuntius
+}
+
+# Get error message for module not found
+@ publica
+functio moduleNotFoundError(textus path) -> SemanticErrorNuntius {
+    redde {
+        textus: scriptum("Cannot find module '{}'", path),
+        auxilium: "Verify the file path is correct and the file exists. Relative paths are resolved from the importing file."
+    } qua SemanticErrorNuntius
+}
+
+# Get error message for circular import
+@ publica
+functio circularImportError(textus path, textus cycle) -> SemanticErrorNuntius {
+    redde {
+        textus: scriptum("Circular import detected: {}", cycle),
+        auxilium: "Break the cycle by restructuring your modules or using forward declarations for types."
+    } qua SemanticErrorNuntius
+}
+
+# Get error message for module parse error
+@ publica
+functio moduleParseError(textus path) -> SemanticErrorNuntius {
+    redde {
+        textus: scriptum("Failed to parse module '{}'", path),
+        auxilium: "Fix the syntax errors in the imported module before importing it."
+    } qua SemanticErrorNuntius
+}

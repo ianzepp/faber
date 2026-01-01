@@ -1,0 +1,182 @@
+# Semantic Analyzer - Core State and Infrastructure
+#
+# This module provides the core Analyzator genus that manages semantic analysis.
+# The analyzer uses a multi-pass approach:
+#
+# Phase 1a - Predeclaration:
+#   All top-level names are registered with placeholder types.
+#
+# Phase 1b - Signature Resolution:
+#   Type annotations are resolved now that all names exist.
+#
+# Phase 2 - Body Analysis:
+#   Function bodies and statements are analyzed with complete symbol table.
+
+ex "./typi" importa SemanticTypus, TEXTUS, NUMERUS, FRACTUS, BIVALENS, NIHIL, VACUUM, IGNOTUM
+ex "./typi" importa primitivumTypus, genericumTypus, functioTypus, usitatumTypus
+ex "./typi" importa formaTypum, assignabileAd, typiAequales
+ex "./scopus" importa Scopus, Symbolum, SymbolumSpecies, ScopusSpecies
+ex "./scopus" importa creaScopumGlobalem, creaScopum, definieSymbolum, quaereSymbolum
+ex "./errores" importa SemanticErrorCodice, SemanticErrorNuntius
+ex "../ast/positio" importa Locus
+ex "../ast/radix" importa Programma
+ex "../ast/sententia" importa Sententia
+ex "../ast/expressia" importa Expressia
+
+# =============================================================================
+# SEMANTIC ERROR
+# =============================================================================
+
+# A semantic error with source location
+@ publicum
+genus SemanticError {
+    textus nuntius
+    Locus locus
+}
+
+# =============================================================================
+# ANALYSIS RESULT
+# =============================================================================
+
+# Result of semantic analysis
+@ publicum
+genus SemanticResultatum {
+    Programma programma
+    lista<SemanticError> errores
+}
+
+# =============================================================================
+# LATIN TYPE MAPPING
+# =============================================================================
+
+# Map Latin type name to semantic type
+@ publica
+functio latinTypusAd(textus nomen) -> SemanticTypus {
+    elige nomen {
+        si "textus" { redde TEXTUS }
+        si "numerus" { redde NUMERUS }
+        si "fractus" { redde FRACTUS }
+        si "bivalens" { redde BIVALENS }
+        si "nihil" { redde NIHIL }
+        si "vacuum" { redde VACUUM }
+    }
+    redde IGNOTUM
+}
+
+# Check if a type name is a generic type (lista, tabula, etc.)
+@ publica
+functio estGenericusTypus(textus nomen) -> bivalens {
+    redde nomen == "lista" aut nomen == "tabula" aut nomen == "copia" aut nomen == "promissum" aut nomen == "cursor" aut nomen == "fluxus"
+}
+
+# =============================================================================
+# ANALYZER STATE
+# =============================================================================
+
+# The semantic analyzer state
+@ publicum
+genus Analyzator {
+    # Collected errors
+    lista<SemanticError> errores
+
+    # Current scope chain
+    Scopus scopus
+
+    # Current function context (for return type checking)
+    SemanticTypus? currentFunctioReditus
+    bivalens currentFunctioAsync
+    bivalens currentFunctioGenerator
+
+    # Type aliases being resolved (for cycle detection)
+    lista<textus> resolvendoTypusAliases
+
+    # ==========================================================================
+    # ERROR REPORTING
+    # ==========================================================================
+
+    # Report a semantic error
+    functio error(textus nuntius, Locus locus) {
+        ego.errores.adde({
+            nuntius: nuntius,
+            locus: locus
+        } qua SemanticError)
+    }
+
+    # ==========================================================================
+    # SCOPE MANAGEMENT
+    # ==========================================================================
+
+    # Enter a new scope
+    functio intraScopum(ScopusSpecies species) {
+        ego.scopus = creaScopum(ego.scopus, species)
+    }
+
+    # Exit the current scope
+    functio exiScopum() {
+        si nonnihil ego.scopus.parens {
+            ego.scopus = ego.scopus.parens qua Scopus
+        }
+    }
+
+    # Define a symbol in current scope, reporting error if duplicate
+    functio definie(Symbolum symbolum) {
+        fixum err = definieSymbolum(ego.scopus, symbolum)
+        si nonnihil err {
+            ego.error(err qua textus, symbolum.locus)
+        }
+    }
+
+    # Look up a symbol in scope chain
+    functio quaere(textus nomen) -> Symbolum? {
+        redde quaereSymbolum(ego.scopus, nomen)
+    }
+
+    # ==========================================================================
+    # BUILTINS
+    # ==========================================================================
+
+    # Define built-in functions (intrinsics) in global scope
+    functio definieIntrinsica() {
+        fixum builtinLocus = { linea: 0, columna: 0, index: 0 } qua Locus
+
+        # I/O Intrinsics (always available - prefixed with _ for internal use)
+        ego.definieIntrinsicaFunctio("_scribe", [], VACUUM, builtinLocus)
+        ego.definieIntrinsicaFunctio("_vide", [], VACUUM, builtinLocus)
+        ego.definieIntrinsicaFunctio("_mone", [], VACUUM, builtinLocus)
+        ego.definieIntrinsicaFunctio("_lege", [], TEXTUS, builtinLocus)
+    }
+
+    # Helper to define a single intrinsic function
+    functio definieIntrinsicaFunctio(textus nomen, lista<SemanticTypus> parametri, SemanticTypus reditus, Locus locus) {
+        fixum typusFunctionis = functioTypus(parametri, reditus, falsum, falsum)
+        ego.scopus.symbola[nomen] = {
+            nomen: nomen,
+            semanticTypus: typusFunctionis,
+            species: SymbolumSpecies.Functio,
+            mutabilis: falsum,
+            locus: locus
+        } qua Symbolum
+    }
+}
+
+# =============================================================================
+# FACTORY
+# =============================================================================
+
+# Create a new analyzer
+@ publica
+functio novumAnalyzator() -> Analyzator {
+    fixum analyzator = {
+        errores: [] qua lista<SemanticError>,
+        scopus: creaScopumGlobalem(),
+        currentFunctioReditus: nihil,
+        currentFunctioAsync: falsum,
+        currentFunctioGenerator: falsum,
+        resolvendoTypusAliases: [] qua lista<textus>
+    } qua Analyzator
+
+    # Define built-in intrinsics
+    analyzator.definieIntrinsica()
+
+    redde analyzator
+}

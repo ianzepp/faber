@@ -1,0 +1,223 @@
+# Control Flow Statement Analysis
+#
+# Handles: si, dum, ex/de...pro, elige, discerne, custodi
+
+ex "../resolvitor" importa Resolvitor
+ex "../typi" importa SemanticTypus, IGNOTUM
+ex "../scopus" importa ScopusSpecies, SymbolumSpecies
+ex "../../ast/sententia" importa Sententia
+
+# =============================================================================
+# CONDITIONAL
+# =============================================================================
+
+# Analyze si (if) statement
+@ publica
+functio analyzeSi(Resolvitor r, Sententia siStmt) -> vacuum {
+    discerne siStmt {
+        si Si pro s {
+            # Analyze condition
+            r.expressia(s.conditio)
+
+            # Analyze consequent
+            r.sententia(s.consequens)
+
+            # Analyze alternate (sin/secus) if present
+            si nonnihil s.alternans {
+                r.sententia(s.alternans qua Sententia)
+            }
+        }
+    }
+}
+
+# =============================================================================
+# LOOPS
+# =============================================================================
+
+# Analyze dum (while) statement
+@ publica
+functio analyzeDum(Resolvitor r, Sententia dumStmt) -> vacuum {
+    discerne dumStmt {
+        si Dum pro d {
+            # Analyze condition
+            r.expressia(d.conditio)
+
+            # Analyze body
+            r.sententia(d.corpus)
+        }
+    }
+}
+
+# Analyze iteratio (ex/de...pro) statement
+@ publica
+functio analyzeIteratio(Resolvitor r, Sententia iteratioStmt) -> vacuum {
+    fixum a = r.analyzator()
+
+    discerne iteratioStmt {
+        si Iteratio pro i {
+            # Analyze source expression
+            fixum sourceTypus = r.expressia(i.fons)
+
+            # Enter block scope for loop variable
+            a.intraScopum(ScopusSpecies.Massa)
+
+            # Infer loop variable type from source
+            varia elemTypus = IGNOTUM qua SemanticTypus
+            discerne sourceTypus {
+                si Genericum pro g {
+                    si g.nomen == "lista" et g.parametri.longitudo > 0 {
+                        elemTypus = g.parametri[0]
+                    }
+                }
+            }
+
+            # Define loop variable
+            a.scopus.symbola[i.variaNomen] = {
+                nomen: i.variaNomen,
+                semanticTypus: elemTypus,
+                species: SymbolumSpecies.Variabilis,
+                mutabilis: falsum,
+                locus: i.locus
+            }
+
+            # Define index variable if present
+            si nonnihil i.indexNomen {
+                ex "../typi" importa NUMERUS
+                a.scopus.symbola[i.indexNomen qua textus] = {
+                    nomen: i.indexNomen qua textus,
+                    semanticTypus: NUMERUS,
+                    species: SymbolumSpecies.Variabilis,
+                    mutabilis: falsum,
+                    locus: i.locus
+                }
+            }
+
+            # Analyze body
+            r.sententia(i.corpus)
+
+            # Exit scope
+            a.exiScopum()
+        }
+    }
+}
+
+# Analyze in (for-in keys) statement
+@ publica
+functio analyzeIn(Resolvitor r, Sententia inStmt) -> vacuum {
+    fixum a = r.analyzator()
+
+    discerne inStmt {
+        si In pro i {
+            # Analyze source expression
+            r.expressia(i.fons)
+
+            # Enter block scope
+            a.intraScopum(ScopusSpecies.Massa)
+
+            # Define key variable (always textus for object keys)
+            ex "../typi" importa TEXTUS
+            a.scopus.symbola[i.variaNomen] = {
+                nomen: i.variaNomen,
+                semanticTypus: TEXTUS,
+                species: SymbolumSpecies.Variabilis,
+                mutabilis: falsum,
+                locus: i.locus
+            }
+
+            # Analyze body
+            r.sententia(i.corpus)
+
+            # Exit scope
+            a.exiScopum()
+        }
+    }
+}
+
+# =============================================================================
+# PATTERN MATCHING
+# =============================================================================
+
+# Analyze elige (switch) statement
+@ publica
+functio analyzeElige(Resolvitor r, Sententia eligeStmt) -> vacuum {
+    discerne eligeStmt {
+        si Elige pro e {
+            # Analyze discriminant
+            r.expressia(e.discriminans)
+
+            # Analyze each case
+            ex e.casus pro casus {
+                # Analyze case test
+                r.expressia(casus.proba)
+
+                # Analyze case body
+                ex casus.corpus pro stmt {
+                    r.sententia(stmt)
+                }
+            }
+
+            # Analyze default (aliter) if present
+            si nonnihil e.aliter {
+                ex e.aliter qua lista<Sententia> pro stmt {
+                    r.sententia(stmt)
+                }
+            }
+        }
+    }
+}
+
+# Analyze discerne (pattern match) statement
+@ publica
+functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
+    fixum a = r.analyzator()
+
+    discerne discerneStmt {
+        si Discerne pro d {
+            # Analyze discriminant
+            fixum discTypus = r.expressia(d.discriminans)
+
+            # Analyze each variant case
+            ex d.casus pro casus {
+                # Enter scope for pattern bindings
+                a.intraScopum(ScopusSpecies.Massa)
+
+                # Define bound variable if present
+                si nonnihil casus.vinculumNomen {
+                    a.scopus.symbola[casus.vinculumNomen qua textus] = {
+                        nomen: casus.vinculumNomen qua textus,
+                        semanticTypus: IGNOTUM,  # TODO: infer from variant
+                        species: SymbolumSpecies.Variabilis,
+                        mutabilis: falsum,
+                        locus: casus.locus
+                    }
+                }
+
+                # Analyze case body
+                ex casus.corpus pro stmt {
+                    r.sententia(stmt)
+                }
+
+                a.exiScopum()
+            }
+        }
+    }
+}
+
+# Analyze custodi (guard) statement
+@ publica
+functio analyzeCustodi(Resolvitor r, Sententia custodiStmt) -> vacuum {
+    discerne custodiStmt {
+        si Custodi pro c {
+            # Analyze each guard clause
+            ex c.clausulae pro clausula {
+                # Analyze condition
+                r.expressia(clausula.conditio)
+
+                # Analyze body
+                ex clausula.corpus pro stmt {
+                    r.sententia(stmt)
+                }
+            }
+        }
+    }
+}

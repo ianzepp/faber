@@ -1,0 +1,132 @@
+# Primary Expression Resolution
+#
+# Handles: identifiers, literals, arrays, objects
+
+ex "../resolvitor" importa Resolvitor
+ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, FRACTUS, BIVALENS, NIHIL, IGNOTUM
+ex "../typi" importa genericumTypus
+ex "../scopus" importa quaereSymbolum
+ex "../errores" importa undefinedVariableError
+ex "../../ast/expressia" importa Expressia, LitteraGenus
+
+# =============================================================================
+# IDENTIFIER RESOLUTION
+# =============================================================================
+
+# Resolve an identifier (variable reference)
+@ publica
+functio resolveNomen(Resolvitor r, Expressia nomenExpr) -> SemanticTypus {
+    fixum a = r.analyzator()
+
+    discerne nomenExpr {
+        si Nomen pro n {
+            # Handle Latin boolean/null keywords
+            si n.nomen == "verum" aut n.nomen == "falsum" {
+                redde BIVALENS
+            }
+
+            si n.nomen == "nihil" {
+                redde NIHIL
+            }
+
+            # Look up in symbol table
+            fixum symbolum = quaereSymbolum(a.scopus, n.nomen)
+
+            si nihil symbolum {
+                fixum err = undefinedVariableError(n.nomen)
+                a.error(err.textus, n.locus)
+                redde IGNOTUM
+            }
+
+            redde symbolum.semanticTypus
+        }
+    }
+
+    redde IGNOTUM
+}
+
+# =============================================================================
+# LITERAL RESOLUTION
+# =============================================================================
+
+# Resolve a literal value
+@ publica
+functio resolveLittera(Resolvitor r, Expressia litteraExpr) -> SemanticTypus {
+    discerne litteraExpr {
+        si Littera pro l {
+            elige l.species {
+                si LitteraGenus.Numerus {
+                    redde NUMERUS
+                }
+                si LitteraGenus.Fractus {
+                    redde FRACTUS
+                }
+                si LitteraGenus.Textus {
+                    redde TEXTUS
+                }
+                si LitteraGenus.Verum {
+                    redde BIVALENS
+                }
+                si LitteraGenus.Falsum {
+                    redde BIVALENS
+                }
+                si LitteraGenus.Nihil {
+                    redde NIHIL
+                }
+            }
+        }
+    }
+
+    redde IGNOTUM
+}
+
+# =============================================================================
+# ARRAY RESOLUTION
+# =============================================================================
+
+# Resolve an array literal [1, 2, 3]
+@ publica
+functio resolveSeries(Resolvitor r, Expressia seriesExpr) -> SemanticTypus {
+    discerne seriesExpr {
+        si Series pro s {
+            # Empty array: lista<ignotum>
+            si s.elementa.longitudo == 0 {
+                redde genericumTypus("lista", [IGNOTUM], falsum)
+            }
+
+            # Resolve first element to infer type
+            fixum primumTypus = r.expressia(s.elementa[0])
+
+            # Resolve all other elements
+            ex s.elementa pro elem {
+                r.expressia(elem)
+            }
+
+            redde genericumTypus("lista", [primumTypus], falsum)
+        }
+    }
+
+    redde IGNOTUM
+}
+
+# =============================================================================
+# OBJECT RESOLUTION
+# =============================================================================
+
+# Resolve an object literal { key: value }
+@ publica
+functio resolveObiectum(Resolvitor r, Expressia obiectumExpr) -> SemanticTypus {
+    discerne obiectumExpr {
+        si Obiectum pro o {
+            # Resolve each property value
+            ex o.proprietates pro prop {
+                r.expressia(prop.valor)
+            }
+
+            # Object literals have unknown structural type for now
+            redde IGNOTUM
+        }
+    }
+
+    redde IGNOTUM
+}

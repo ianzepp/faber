@@ -105,11 +105,10 @@ functio parseBinaria(Resolvitor r) -> Expressia {
 
 ### Remaining Modules
 
-| Module   | Source             | Est. Lines | Notes                 |
-| -------- | ------------------ | ---------- | --------------------- |
-| Semantic | `fons/semantic/`   | ~2,600     | Type checking, scopes |
-| Codegen  | `fons/codegen/ts/` | ~2,000     | TS target only        |
-| CLI      | `fons/cli.ts`      | ~600       | Entry point           |
+| Module  | Source             | Est. Lines | Notes          |
+| ------- | ------------------ | ---------- | -------------- |
+| Codegen | `fons/codegen/ts/` | ~2,000     | TS target only |
+| CLI     | `fons/cli.ts`      | ~600       | Entry point    |
 
 ## Bootstrap Strategy
 
@@ -125,13 +124,22 @@ functio parseBinaria(Resolvitor r) -> Expressia {
 
 **27 files, all compiling successfully.**
 
-### Phase 2: Semantic Analyzer (`fons-fab/semantic/`)
+### Phase 2: Semantic Analyzer (`fons-fab/semantic/`) — COMPLETE
 
 Port `fons/semantic/`:
 
-1. Symbol tables using `tabula<textus, Symbol>`
-2. Scope stack management
-3. Type inference and checking
+1. ✅ Type system (`typi.fab`) — SemanticTypus discretio, constructors, utilities
+2. ✅ Error catalog (`errores.fab`) — Error codes and message functions
+3. ✅ Scope management (`scopus.fab`) — Symbol tables, scope chain
+4. ✅ Analyzer state (`nucleus.fab`) — Analyzator genus with scope/error state
+5. ✅ Resolvitor interface (`resolvitor.fab`) — Breaks circular imports
+6. ✅ Expression resolution (`expressia/`) — Type inference for all expressions
+7. ✅ Statement analysis (`sententia/`) — Type checking for all statements
+8. ✅ Entry point (`index.fab`) — Main `analyze()` function
+
+**17 files (~2,000 lines), all compiling successfully.**
+
+Note: Module resolution (`modules.ts`) skipped — requires file I/O not yet in Faber.
 
 ### Phase 3: TypeScript Codegen (`fons-fab/codegen/ts/`)
 
@@ -324,7 +332,7 @@ diff -r opus/ opus2/  # Should be identical
 | Phase       | Scope        | Est. Days      | Status      |
 | ----------- | ------------ | -------------- | ----------- |
 | Parser      | ~6,259 lines | 5-7            | ✅ Complete |
-| Semantic    | ~2,600 lines | 3-4            | Not started |
+| Semantic    | ~2,000 lines | 3-4            | ✅ Complete |
 | Codegen     | ~2,000 lines | 3-4            | Not started |
 | CLI         | ~600 lines   | 1              | Not started |
 | Integration | Debug, iter  | 2-3            | Not started |
@@ -332,6 +340,5 @@ diff -r opus/ opus2/  # Should be identical
 
 ## Next Steps
 
-1. **Begin Phase 2: Semantic Analyzer** — Port `fons/semantic/` to Faber
-2. **Phase 3: TypeScript Codegen** — Port `fons/codegen/ts/` to Faber
-3. **Phase 4: CLI** — Create `fons-fab/cli.fab` entry point
+1. **Phase 3: TypeScript Codegen** — Port `fons/codegen/ts/` to Faber
+2. **Phase 4: CLI** — Create `fons-fab/cli.fab` entry point
