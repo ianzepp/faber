@@ -94,12 +94,12 @@ genus Symbolum {
 }
 
 /// Create a token
-functio symbolum(SymbolumGenus species, textus valor, Locus locus) fit Symbolum {
+functio symbolum(SymbolumGenus species, textus valor, Locus locus) -> Symbolum {
     redde { species: species, valor: valor, locus: locus, verbum: nihil } qua Symbolum
 }
 
 /// Create a keyword token
-functio symbolumVerbum(textus verbum, Locus locus) fit Symbolum {
+functio symbolumVerbum(textus verbum, Locus locus) -> Symbolum {
     redde { 
         species: SymbolumGenus.Verbum, 
         valor: verbum, 
@@ -109,11 +109,11 @@ functio symbolumVerbum(textus verbum, Locus locus) fit Symbolum {
 }
 
 /// Check if token is a specific keyword
-functio estVerbum(Symbolum sym, textus verbum) fit bivalens {
+functio estVerbum(Symbolum sym, textus verbum) -> bivalens {
     redde sym.species == SymbolumGenus.Verbum && sym.verbum == verbum
 }
 
 /// Check if token is EOF
-functio estFinis(Symbolum sym) fit bivalens {
+functio estFinis(Symbolum sym) -> bivalens {
     redde sym.species == SymbolumGenus.Finis
 }

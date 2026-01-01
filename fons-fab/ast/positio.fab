@@ -17,16 +17,16 @@ genus Tractus {
 }
 
 /// Create a position from components
-functio locus(numerus linea, numerus columna, numerus index) fit Locus {
+functio locus(numerus linea, numerus columna, numerus index) -> Locus {
     redde { linea: linea, columna: columna, index: index } qua Locus
 }
 
 /// Create a span from two positions
-functio tractus(Locus initium, Locus finis) fit Tractus {
+functio tractus(Locus initium, Locus finis) -> Tractus {
     redde { initium: initium, finis: finis } qua Tractus
 }
 
 /// Create a zero-length span at a position
-functio tractusAd(Locus loc) fit Tractus {
+functio tractusAd(Locus loc) -> Tractus {
     redde { initium: loc, finis: loc } qua Tractus
 }
