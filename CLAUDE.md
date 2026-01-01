@@ -99,6 +99,36 @@ Faber uses a consistent `keyword expr VERB name { body }` pattern:
 | `fiunt` |  no   |    yes    | "they become"      |
 | `fient` |  yes  |    yes    | "they will become" |
 
+### Parameter Modifiers
+
+Function parameters follow the pattern: `[preposition] [si] [ceteri] type name [ut alias] [vel default]`
+
+| Modifier | Position | Purpose | Example |
+| -------- | -------- | ------- | ------- |
+| `de`     | prefix   | borrowed, read-only | `de textus source` |
+| `in`     | prefix   | mutable borrow | `in lista<T> items` |
+| `si`     | after preposition | optional parameter | `si numerus depth` |
+| `ceteri` | after si | rest/variadic | `ceteri textus[] args` |
+| `ut`     | after name | internal alias | `textus location ut loc` |
+| `vel`    | after name/alias | default value | `si numerus page vel 1` |
+
+**Optional parameters (`si`):**
+- Without `vel`: type becomes nullable, caller can omit, body receives `nihil`
+- With `vel`: parameter has default value, type stays as declared
+- Required params cannot follow optional (except `ceteri`)
+- Borrowed params (`de`/`in`) cannot have `vel` defaults
+
+```fab
+# Optional without default (receives nihil if omitted)
+functio greet(textus name, si textus title) -> textus
+
+# Optional with default
+functio paginate(si numerus page vel 1, si numerus limit vel 10) -> textus
+
+# Borrowed optional (no default allowed)
+functio analyze(textus source, de si numerus depth) -> numerus
+```
+
 ### String Formatting
 
 Use `scriptum()` for formatted strings (required for Zig, works on all targets):
