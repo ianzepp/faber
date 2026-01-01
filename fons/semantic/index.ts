@@ -2072,7 +2072,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         }
 
         for (const caseNode of node.cases) {
-            // Variant matching: si VariantName pro bindings { ... }
+            // Variant matching: si VariantName (ut alias | pro bindings)? { ... }
             // WHY: VariantCase introduces bindings into scope
             enterScope();
 
@@ -2080,23 +2080,39 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             const variantName = caseNode.variant.name;
             const variantInfo = discretio?.variants.get(variantName);
 
-            // Define each binding as a variable in this scope
-            for (let i = 0; i < caseNode.bindings.length; i++) {
-                const binding = caseNode.bindings[i]!;
-
-                // Infer type from variant field at same position
-                const fieldType = variantInfo?.fields[i]?.type ?? UNKNOWN;
-
+            if (caseNode.alias) {
+                // Alias binding: si Click ut c { ... }
+                // Bind the whole variant to the alias name
+                // WHY: The alias gets the discriminant type (the whole discretio)
+                //      so c.x, c.y work via member access
                 define({
-                    name: binding.name,
-                    type: fieldType,
+                    name: caseNode.alias.name,
+                    type: discriminantType,
                     kind: 'variable',
-                    mutable: false, // Pattern bindings are immutable
+                    mutable: false,
                     position: caseNode.position,
                 });
 
-                // Also set the resolved type on the binding identifier
-                binding.resolvedType = fieldType;
+                caseNode.alias.resolvedType = discriminantType;
+            } else {
+                // Positional bindings: si Click pro x, y { ... }
+                for (let i = 0; i < caseNode.bindings.length; i++) {
+                    const binding = caseNode.bindings[i]!;
+
+                    // Infer type from variant field at same position
+                    const fieldType = variantInfo?.fields[i]?.type ?? UNKNOWN;
+
+                    define({
+                        name: binding.name,
+                        type: fieldType,
+                        kind: 'variable',
+                        mutable: false, // Pattern bindings are immutable
+                        position: caseNode.position,
+                    });
+
+                    // Also set the resolved type on the binding identifier
+                    binding.resolvedType = fieldType;
+                }
             }
 
             analyzeBlock(caseNode.consequent);

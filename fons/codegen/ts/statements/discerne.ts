@@ -2,6 +2,9 @@
  * TypeScript Code Generator - DiscerneStatement
  *
  * TRANSFORMS:
+ *   discerne event { si Click ut c { use(c.x) } }
+ *   -> if (event.tag === 'Click') { const c = event; use(c.x); }
+ *
  *   discerne event { si Click pro x, y { use(x, y) } si Quit { exit() } }
  *   -> if (event.tag === 'Click') { const { x, y } = event; use(x, y); }
  *      else if (event.tag === 'Quit') { exit(); }
@@ -11,7 +14,6 @@
 
 import type { DiscerneStatement, Identifier } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
-import { genBlockStatement } from './functio';
 
 export function genDiscerneStatement(node: DiscerneStatement, g: TsGenerator): string {
     const discriminant = g.genExpression(node.discriminant);
@@ -22,13 +24,17 @@ export function genDiscerneStatement(node: DiscerneStatement, g: TsGenerator): s
         const caseNode = node.cases[i]!;
         const keyword = i === 0 ? 'if' : 'else if';
 
-        // Variant matching: si VariantName pro bindings { ... }
+        // Variant matching: si VariantName (ut alias | pro bindings)? { ... }
         const variantName = caseNode.variant.name;
         result += `${g.ind()}${keyword} (${discriminant}.tag === '${variantName}') {\n`;
         g.depth++;
 
-        // Destructure bindings if any
-        if (caseNode.bindings.length > 0) {
+        // Alias binding: si Click ut c { ... }
+        if (caseNode.alias) {
+            result += `${g.ind()}const ${caseNode.alias.name} = ${discriminant};\n`;
+        }
+        // Destructure bindings: si Click pro x, y { ... }
+        else if (caseNode.bindings.length > 0) {
             const bindingNames = caseNode.bindings.map((b: Identifier) => b.name).join(', ');
             result += `${g.ind()}const { ${bindingNames} } = ${discriminant};\n`;
         }

@@ -996,22 +996,26 @@ export interface DiscerneStatement extends BaseNode {
  * Variant case for pattern matching (part of discerne statement).
  *
  * GRAMMAR (in EBNF):
- *   variantCase := 'si' IDENTIFIER ('pro' IDENTIFIER (',' IDENTIFIER)*)? blockStmt
+ *   variantCase := 'si' IDENTIFIER ('ut' IDENTIFIER | 'pro' IDENTIFIER (',' IDENTIFIER)*)? blockStmt
  *
  * INVARIANT: variant is the variant name to match (e.g., Click, Keypress).
- * INVARIANT: bindings are field names to bind (empty for unit variants).
+ * INVARIANT: Either alias OR bindings is used, not both.
  * INVARIANT: consequent is the block to execute on match.
  *
- * WHY: 'si' (if) for conditional variant match, 'pro' (for) to introduce bindings.
+ * WHY: 'si' (if) for conditional variant match.
+ *      'ut' (as) binds the whole variant to a name.
+ *      'pro' (for) destructures fields positionally.
  *
  * Examples:
- *   si Click pro x, y { ... }  -> variant=Click, bindings=[x, y]
+ *   si Click ut c { ... }       -> variant=Click, alias=c (bind whole variant)
+ *   si Click pro x, y { ... }   -> variant=Click, bindings=[x, y] (destructure)
  *   si Keypress pro key { ... } -> variant=Keypress, bindings=[key]
- *   si Quit { ... }             -> variant=Quit, bindings=[]
+ *   si Quit { ... }             -> variant=Quit, no bindings
  */
 export interface VariantCase extends BaseNode {
     type: 'VariantCase';
     variant: Identifier;
+    alias?: Identifier;
     bindings: Identifier[];
     consequent: BlockStatement;
 }

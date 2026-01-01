@@ -896,5 +896,38 @@ describe('Semantic Analyzer', () => {
 
             expect(result.errors).toHaveLength(0);
         });
+
+        it('supports alias binding with ut syntax', () => {
+            const source = `
+                discretio Event {
+                    Click { numerus x, numerus y }
+                    Quit
+                }
+
+                functio handle(Event e) -> numerus {
+                    discerne e {
+                        si Click ut c {
+                            # c is the whole variant, access fields via c.x, c.y
+                            redde c.x + c.y
+                        }
+                        si Quit {
+                            redde 0
+                        }
+                    }
+                }
+            `;
+
+            const { tokens } = tokenize(source);
+            const { program } = parse(tokens);
+
+            if (!program) {
+                throw new Error('Parse failed');
+            }
+
+            const result = analyze(program);
+
+            // Should succeed - alias binding gives access to variant fields
+            expect(result.errors).toHaveLength(0);
+        });
     });
 });

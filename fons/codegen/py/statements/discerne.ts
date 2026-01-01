@@ -5,12 +5,15 @@
  *
  * TRANSFORMS:
  *   discerne event {
+ *     si Click ut c { ... }
  *     si Click pro x, y { ... }
  *     si Quit { ... }
  *   }
  *   ->
  *   match event:
- *       case {'tag': 'Click', x, y}:
+ *       case {'tag': 'Click'} as c:
+ *           ...
+ *       case {'tag': 'Click', 'x': x, 'y': y}:
  *           ...
  *       case {'tag': 'Quit'}:
  *           ...
@@ -29,14 +32,20 @@ export function genDiscerneStatement(node: DiscerneStatement, g: PyGenerator): s
     g.depth++;
 
     for (const caseNode of node.cases) {
-        // Variant matching: si VariantName pro bindings { ... }
+        // Variant matching: si VariantName (ut alias | pro bindings)? { ... }
         const variantName = caseNode.variant.name;
-        if (caseNode.bindings.length > 0) {
+
+        if (caseNode.alias) {
+            // Alias binding: si Click ut c { ... }
+            lines.push(`${g.ind()}case {'tag': '${variantName}'} as ${caseNode.alias.name}:`);
+        } else if (caseNode.bindings.length > 0) {
+            // Positional bindings: si Click pro x, y { ... }
             const bindingNames = caseNode.bindings.map((b: Identifier) => b.name).join(', ');
             lines.push(`${g.ind()}case {'tag': '${variantName}', ${bindingNames}}:`);
         } else {
             lines.push(`${g.ind()}case {'tag': '${variantName}'}:`);
         }
+
         g.depth++;
         lines.push(g.genBlockStatementContent(caseNode.consequent));
         g.depth--;

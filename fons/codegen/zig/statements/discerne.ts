@@ -2,8 +2,11 @@
  * Zig Code Generator - DiscerneStatement (pattern matching on variants)
  *
  * TRANSFORMS:
+ *   discerne event { si Click ut c { use(c.x) } }
+ *   -> switch (event) { .click => |c| { use(c.x); } }
+ *
  *   discerne event { si Click pro x, y { use(x, y) } si Quit { exit() } }
- *   -> switch (event) { .click => |c| { use(c.x, c.y); }, .quit => { exit(); } }
+ *   -> switch (event) { .click => |payload| { const x = payload.x; ... }, .quit => { exit(); } }
  *
  * WHY: Zig's switch on tagged unions is idiomatic and efficient.
  */
@@ -20,8 +23,20 @@ export function genDiscerneStatement(node: DiscerneStatement, g: ZigGenerator): 
     for (const caseNode of node.cases) {
         const variantName = caseNode.variant.name.toLowerCase();
 
-        if (caseNode.bindings.length > 0) {
-            // Capture payload: .click => |c| { ... }
+        if (caseNode.alias) {
+            // Alias binding: si Click ut c { ... } -> .click => |c| { ... }
+            result += `${g.ind()}.${variantName} => |${caseNode.alias.name}| {\n`;
+            g.depth++;
+
+            for (const stmt of caseNode.consequent.body) {
+                result += g.genStatement(stmt) + '\n';
+            }
+
+            g.depth--;
+            result += `${g.ind()}},\n`;
+        } else if (caseNode.bindings.length > 0) {
+            // Positional bindings: si Click pro x, y { ... }
+            // Capture payload and destructure
             result += `${g.ind()}.${variantName} => |payload| {\n`;
             g.depth++;
 
@@ -37,7 +52,7 @@ export function genDiscerneStatement(node: DiscerneStatement, g: ZigGenerator): 
             g.depth--;
             result += `${g.ind()}},\n`;
         } else {
-            // No payload: .quit => { ... }
+            // No bindings: .quit => { ... }
             result += `${g.ind()}.${variantName} => {\n`;
             g.depth++;
 

@@ -2,7 +2,7 @@
  * C++23 Code Generator - DiscerneStatement
  *
  * TRANSFORMS:
- *   discerne event { si Click { ... } si Quit { ... } }
+ *   discerne event { si Click ut c { ... } si Click pro x, y { ... } si Quit { ... } }
  *   -> TODO: std::visit pattern matching
  *
  * NOTE: C++ variant matching with std::visit is complex.
@@ -19,7 +19,14 @@ export function genDiscerneStatement(node: DiscerneStatement, g: CppGenerator): 
     lines.push(`${g.ind()}// TODO: discerne on ${discriminant} - implement std::visit for C++`);
 
     for (const caseNode of node.cases) {
-        lines.push(`${g.ind()}// si ${caseNode.variant.name}: { ... }`);
+        if (caseNode.alias) {
+            lines.push(`${g.ind()}// si ${caseNode.variant.name} ut ${caseNode.alias.name}: { ... }`);
+        } else if (caseNode.bindings.length > 0) {
+            const bindings = caseNode.bindings.map(b => b.name).join(', ');
+            lines.push(`${g.ind()}// si ${caseNode.variant.name} pro ${bindings}: { ... }`);
+        } else {
+            lines.push(`${g.ind()}// si ${caseNode.variant.name}: { ... }`);
+        }
     }
 
     return lines.join('\n');

@@ -2807,16 +2807,22 @@ export function parse(tokens: Token[]): ParserResult {
 
         while (hasMoreCases()) {
             if (checkKeyword('si')) {
-                // Variant case: si VariantName pro bindings { ... }
+                // Variant case: si VariantName (ut alias | pro bindings)? { ... }
                 const casePosition = peek().position;
 
                 advance(); // consume 'si'
 
                 const variant = parseIdentifierOrKeyword();
 
-                // Parse optional bindings: pro x, y, z
+                // Parse optional alias (ut) or bindings (pro)
+                let alias: Identifier | undefined;
                 const bindings: Identifier[] = [];
-                if (matchKeyword('pro')) {
+
+                if (matchKeyword('ut')) {
+                    // Alias binding: si Click ut c { ... }
+                    alias = parseIdentifierOrKeyword();
+                } else if (matchKeyword('pro')) {
+                    // Positional bindings: si Click pro x, y { ... }
                     do {
                         bindings.push(parseIdentifierOrKeyword());
                     } while (match('COMMA'));
@@ -2824,7 +2830,7 @@ export function parse(tokens: Token[]): ParserResult {
 
                 const consequent = parseBlockStatement();
 
-                cases.push({ type: 'VariantCase', variant, bindings, consequent, position: casePosition });
+                cases.push({ type: 'VariantCase', variant, alias, bindings, consequent, position: casePosition });
             } else {
                 error(ParserErrorCode.InvalidDiscerneCaseStart);
                 break;

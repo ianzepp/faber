@@ -95,7 +95,7 @@
           - 'Quit =>'
       cpp:
           - '// TODO: discerne on event'
-          - '// si Click: { ... }'
+          - '// si Click pro x, y: { ... }'
           - '// si Quit: { ... }'
       zig:
           - 'switch (event)'
@@ -156,6 +156,53 @@
           - 'scribe message'
           - 'si Failure pro error'
           - 'mone error'
+
+# =============================================================================
+# Alias Binding (ut)
+# =============================================================================
+
+# Pattern matching with alias binding - bind whole variant to a name
+- name: discerne with alias binding
+  faber: |
+      discerne event {
+        si Click ut c {
+          scribe c.x
+          scribe c.y
+        }
+        si Quit {
+          scribe "quit"
+        }
+      }
+  expect:
+      ts:
+          - "if (event.tag === 'Click')"
+          - 'const c = event;'
+          - 'console.log(c.x)'
+          - 'console.log(c.y)'
+          - "else if (event.tag === 'Quit')"
+      py:
+          - 'match event:'
+          - "case {'tag': 'Click'} as c:"
+          - 'print(c.x)'
+          - 'print(c.y)'
+      rs:
+          - 'match event'
+          - 'c @ Click { .. } =>'
+          - 'Quit =>'
+      cpp:
+          - '// TODO: discerne on event'
+          - '// si Click ut c: { ... }'
+          - '// si Quit: { ... }'
+      zig:
+          - 'switch (event)'
+          - '.click => |c|'
+          - '.quit =>'
+      fab:
+          - 'discerne event'
+          - 'si Click ut c'
+          - 'scribe c.x'
+          - 'scribe c.y'
+          - 'si Quit'
 
 # =============================================================================
 # Multiple Cases
