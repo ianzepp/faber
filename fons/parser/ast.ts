@@ -503,6 +503,7 @@ export interface TypeAliasDeclaration extends BaseNode {
     name: Identifier;
     typeAnnotation: TypeAnnotation;
     typeofTarget?: Identifier;
+    annotations?: Annotation[];
 }
 
 // ---------------------------------------------------------------------------

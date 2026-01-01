@@ -10,9 +10,14 @@
 
 import type { DiscretioDeclaration } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
+import { getVisibilityFromAnnotations } from '../../types';
 
 export function genDiscretioDeclaration(node: DiscretioDeclaration, g: TsGenerator): string {
     const name = node.name.name;
+
+    // Module-level: export when public
+    const visibility = getVisibilityFromAnnotations(node.annotations);
+    const exportMod = visibility === 'public' ? 'export ' : '';
 
     // Generate type parameters if present
     let typeParams = '';
@@ -39,5 +44,5 @@ export function genDiscretioDeclaration(node: DiscretioDeclaration, g: TsGenerat
         return `{ tag: '${variantName}'; ${fields.join('; ')} }`;
     });
 
-    return `${g.ind()}type ${name}${typeParams} = ${variants.join(' | ')};`;
+    return `${g.ind()}${exportMod}type ${name}${typeParams} = ${variants.join(' | ')};`;
 }

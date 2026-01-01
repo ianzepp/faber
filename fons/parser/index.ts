@@ -765,7 +765,8 @@ export function parse(tokens: Token[]): ParserResult {
                 stmt.type === 'GenusDeclaration' ||
                 stmt.type === 'PactumDeclaration' ||
                 stmt.type === 'OrdoDeclaration' ||
-                stmt.type === 'DiscretioDeclaration'
+                stmt.type === 'DiscretioDeclaration' ||
+                stmt.type === 'TypeAliasDeclaration'
             ) {
                 stmt.annotations = annotations;
             } else {

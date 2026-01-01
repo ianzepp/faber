@@ -29,6 +29,10 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: TsGenerator):
     // Generate type parameters: prae typus T -> <T>
     const typeParams = node.typeParams ? g.genTypeParams(node.typeParams) : '';
 
+    // Module-level: export when public (inClass is false for top-level functions)
+    const visibility = getVisibilityFromAnnotations(node.annotations);
+    const exportMod = !g.inClass && visibility === 'public' ? 'export ' : '';
+
     // Handle abstract methods (no body)
     if (node.isAbstract || !node.body) {
         const returnType = node.returnType ? `: ${g.genType(node.returnType)}` : '';
@@ -86,7 +90,7 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: TsGenerator):
 
         // WHY: Wrap body in asFit(function* () { ... }) for Responsum protocol
         const ind = g.ind();
-        return `${ind}function ${name}${typeParams}(${params})${returnType} {
+        return `${ind}${exportMod}function ${name}${typeParams}(${params})${returnType} {
 ${ind}  return asFit(function* () {
 ${innerBody}
 ${ind}  });
@@ -110,7 +114,7 @@ ${ind}}`;
         // WHY: Wrap body in asFiunt((function* () { ... yield respond.done(); })()) for Responsum protocol
         // The implicit respond.done() signals stream completion
         const ind = g.ind();
-        return `${ind}function* ${name}${typeParams}(${params})${returnType} {
+        return `${ind}${exportMod}function* ${name}${typeParams}(${params})${returnType} {
 ${ind}  yield* asFiunt((function* () {
 ${innerBody}
 ${ind}    yield respond.done();
@@ -135,7 +139,7 @@ ${ind}}`;
 
         // WHY: Wrap body in asFiet(async function* () { ... }) for async Responsum protocol
         const ind = g.ind();
-        return `${ind}async function ${name}${typeParams}(${params})${returnType} {
+        return `${ind}${exportMod}async function ${name}${typeParams}(${params})${returnType} {
 ${ind}  return await asFiet(async function* () {
 ${innerBody}
 ${ind}  });
@@ -158,7 +162,7 @@ ${ind}}`;
 
         // WHY: Wrap body in asFient((async function* () { ... yield respond.done(); })()) for async Responsum protocol
         const ind = g.ind();
-        return `${ind}async function* ${name}${typeParams}(${params})${returnType} {
+        return `${ind}${exportMod}async function* ${name}${typeParams}(${params})${returnType} {
 ${ind}  yield* asFient((async function* () {
 ${innerBody}
 ${ind}    yield respond.done();
@@ -177,7 +181,7 @@ ${ind}}`;
     g.inFiet = prevInFiet;
     g.inFient = prevInFient;
 
-    return `${g.ind()}${async}function${star} ${name}${typeParams}(${params})${returnType} ${body}`;
+    return `${g.ind()}${exportMod}${async}function${star} ${name}${typeParams}(${params})${returnType} ${body}`;
 }
 
 /**

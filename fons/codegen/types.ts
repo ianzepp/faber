@@ -184,10 +184,10 @@ import type { Comment, BaseNode, Annotation, Visibility } from '../parser/ast';
  *      map to the same semantic meaning. This normalizes to English visibility.
  *
  * @param annotations - Array of annotations from an AST node
- * @returns Visibility level, or 'public' if not specified
+ * @returns Visibility level, or 'private' if not specified
  */
 export function getVisibilityFromAnnotations(annotations?: Annotation[]): Visibility {
-    if (!annotations) return 'public';
+    if (!annotations) return 'private';
 
     for (const ann of annotations) {
         for (const mod of ann.modifiers) {
@@ -197,7 +197,7 @@ export function getVisibilityFromAnnotations(annotations?: Annotation[]): Visibi
         }
     }
 
-    return 'public';
+    return 'private';
 }
 
 /**

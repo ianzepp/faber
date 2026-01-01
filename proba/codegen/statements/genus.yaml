@@ -8,8 +8,9 @@
 #   genus Name implet Interface1, Interface2 { ... }
 #
 # Features:
-#   - Fields are public by default (struct semantics)
-#   - privatus modifier for private fields
+#   - Fields and methods are private by default
+#   - @ publicum annotation for public visibility
+#   - @ protectum annotation for protected visibility
 #   - generis modifier for static/class-level fields
 #   - Auto-merge constructor accepts overrides object
 #   - creo() method is post-initialization hook
@@ -25,7 +26,7 @@
   expect:
       ts:
           - 'class Persona'
-          - 'nomen: string'
+          - 'private nomen: string'
           - 'constructor(overrides:'
       py:
           - 'class Persona:'

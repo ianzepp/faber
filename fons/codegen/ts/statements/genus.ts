@@ -30,10 +30,15 @@ export function genGenusDeclaration(node: GenusDeclaration, g: TsGenerator, semi
     const impl = node.implements ? ` implements ${node.implements.map(i => i.name).join(', ')}` : '';
     const abstractMod = isAbstractFromAnnotations(node.annotations) ? 'abstract ' : '';
 
+    // Module-level: export when public
+    const visibility = getVisibilityFromAnnotations(node.annotations);
+    const exportMod = !g.inClass && visibility === 'public' ? 'export ' : '';
+
     const lines: string[] = [];
-    lines.push(`${g.ind()}${abstractMod}class ${name}${typeParams}${ext}${impl} {`);
+    lines.push(`${g.ind()}${exportMod}${abstractMod}class ${name}${typeParams}${ext}${impl} {`);
 
     g.depth++;
+    g.inClass = true;
 
     const sections: string[][] = [];
 
@@ -60,6 +65,7 @@ export function genGenusDeclaration(node: GenusDeclaration, g: TsGenerator, semi
         lines.push(...section);
     });
 
+    g.inClass = false;
     g.depth--;
     lines.push(`${g.ind()}}`);
 

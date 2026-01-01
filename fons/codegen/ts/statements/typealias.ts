@@ -12,17 +12,22 @@
 
 import type { TypeAliasDeclaration } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
+import { getVisibilityFromAnnotations } from '../../types';
 
 export function genTypeAliasDeclaration(node: TypeAliasDeclaration, g: TsGenerator, semi: boolean): string {
     const name = node.name.name;
 
+    // Module-level: export when public
+    const visibility = getVisibilityFromAnnotations(node.annotations);
+    const exportMod = visibility === 'public' ? 'export ' : '';
+
     // Check for typeof form: `typus X = typus y`
     if (node.typeofTarget) {
         const target = node.typeofTarget.name;
-        return `${g.ind()}type ${name} = typeof ${target}${semi ? ';' : ''}`;
+        return `${g.ind()}${exportMod}type ${name} = typeof ${target}${semi ? ';' : ''}`;
     }
 
     const typeAnno = g.genType(node.typeAnnotation);
 
-    return `${g.ind()}type ${name} = ${typeAnno}${semi ? ';' : ''}`;
+    return `${g.ind()}${exportMod}type ${name} = ${typeAnno}${semi ? ';' : ''}`;
 }

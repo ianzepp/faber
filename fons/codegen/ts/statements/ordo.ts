@@ -11,9 +11,14 @@
 
 import type { OrdoDeclaration } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
+import { getVisibilityFromAnnotations } from '../../types';
 
 export function genOrdoDeclaration(node: OrdoDeclaration, g: TsGenerator): string {
     const name = node.name.name;
+
+    // Module-level: export when public
+    const visibility = getVisibilityFromAnnotations(node.annotations);
+    const exportMod = visibility === 'public' ? 'export ' : '';
 
     const members = node.members.map(member => {
         const memberName = member.name.name;
@@ -26,5 +31,5 @@ export function genOrdoDeclaration(node: OrdoDeclaration, g: TsGenerator): strin
         return memberName;
     });
 
-    return `${g.ind()}enum ${name} { ${members.join(', ')} }`;
+    return `${g.ind()}${exportMod}enum ${name} { ${members.join(', ')} }`;
 }

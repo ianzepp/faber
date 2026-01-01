@@ -11,13 +11,19 @@
 
 import type { PactumDeclaration, PactumMethod } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
+import { getVisibilityFromAnnotations } from '../../types';
 
 export function genPactumDeclaration(node: PactumDeclaration, g: TsGenerator, semi: boolean): string {
     const name = node.name.name;
     const typeParams = node.typeParameters ? `<${node.typeParameters.map(p => p.name).join(', ')}>` : '';
+
+    // Module-level: export when public
+    const visibility = getVisibilityFromAnnotations(node.annotations);
+    const exportMod = visibility === 'public' ? 'export ' : '';
+
     const lines: string[] = [];
 
-    lines.push(`${g.ind()}interface ${name}${typeParams} {`);
+    lines.push(`${g.ind()}${exportMod}interface ${name}${typeParams} {`);
     g.depth++;
 
     for (const method of node.methods) {

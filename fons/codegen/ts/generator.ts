@@ -104,6 +104,7 @@ export class TsGenerator {
     inFiunt = false; // WHY: Track if we're inside a fiunt function body for flow() protocol
     inFiet = false; // WHY: Track if we're inside a fiet function body for async Responsum protocol
     inFient = false; // WHY: Track if we're inside a fient function body for async flow() protocol
+    inClass = false; // WHY: Track if we're inside a class body (for visibility handling)
     features: RequiredFeatures;
     semi: boolean;
 

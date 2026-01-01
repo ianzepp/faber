@@ -17,11 +17,16 @@
 
 import type { VariaDeclaration } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
+import { getVisibilityFromAnnotations } from '../../types';
 
 export function genVariaDeclaration(node: VariaDeclaration, g: TsGenerator, semi: boolean): string {
     // Map kind to JS keyword and determine if async
     const isAsync = node.kind === 'figendum' || node.kind === 'variandum';
     const kind = node.kind === 'varia' || node.kind === 'variandum' ? 'let' : 'const';
+
+    // Module-level: export when public
+    const visibility = getVisibilityFromAnnotations(node.annotations);
+    const exportMod = !g.inClass && visibility === 'public' ? 'export ' : '';
 
     let name: string;
 
@@ -53,5 +58,5 @@ export function genVariaDeclaration(node: VariaDeclaration, g: TsGenerator, semi
         init = isAsync ? ` = await ${expr}` : ` = ${expr}`;
     }
 
-    return `${g.ind()}${kind} ${name}${typeAnno}${init}${semi ? ';' : ''}`;
+    return `${g.ind()}${exportMod}${kind} ${name}${typeAnno}${init}${semi ? ';' : ''}`;
 }
