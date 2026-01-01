@@ -176,7 +176,7 @@ For simple value matching (not variant extraction), use `elige`:
 elige status {
     si "pending" { ... }      // value match (string)
     si "active" { ... }
-    aliter { ... }
+    secus { ... }
 }
 ```
 

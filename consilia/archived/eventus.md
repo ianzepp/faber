@@ -138,7 +138,7 @@ futura functio eventLoop() {
         elige cmd.type {
             si "start" { start() }
             si "stop" { rumpe }
-            aliter { scribe "Unknown:", cmd }
+            secus { scribe "Unknown:", cmd }
         }
     }
 }

@@ -590,9 +590,9 @@ function printSiStatement(path: AstPath<AstNode>, options: FaberOptions, print: 
     // Else clause - Stroustrup style (else on new line)
     if (node.alternate) {
         if (node.alternate.type === 'SiStatement') {
-            parts.push(hardline, 'aliter ', path.call(print, 'alternate'));
+            parts.push(hardline, 'secus ', path.call(print, 'alternate'));
         } else {
-            parts.push(hardline, 'aliter ', path.call(print, 'alternate'));
+            parts.push(hardline, 'secus ', path.call(print, 'alternate'));
         }
     }
 
@@ -638,7 +638,7 @@ function printEligeStatement(path: AstPath<AstNode>, options: FaberOptions, prin
         }, 'cases');
 
         if (node.defaultCase) {
-            caseParts.push(hardline, 'aliter ', path.call(print, 'defaultCase'));
+            caseParts.push(hardline, 'secus ', path.call(print, 'defaultCase'));
         }
 
         parts.push(indent(caseParts), hardline);

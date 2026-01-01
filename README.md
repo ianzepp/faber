@@ -232,9 +232,8 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | Feature                       | TypeScript | Zig | Python | Rust | C++23 |
 | ----------------------------- | :--------: | :-: | :----: | :--: | :---: |
 | `si` (if)                     |    [x]     | [x] |  [x]   | [x]  |  [x]  |
-| `aliter` (else)               |    [x]     | [x] |  [x]   | [x]  |  [x]  |
-| `aliter si` (else if)         |    [x]     | [x] |  [x]   | [x]  |  [x]  |
-| `sin` (else if, poetic)       |    [x]     | [ ] |  [x]   | [x]  |  [ ]  |
+| `secus` (else)               |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| `sin` (else if)         |    [x]     | [x] |  [x]   | [x]  |  [x]  |
 | `dum` (while)                 |    [x]     | [x] |  [x]   | [x]  |  [x]  |
 | `ex...pro` (for-of)           |    [x]     | [x] |  [x]   | [x]  |  [x]  |
 | `ex...fit` (for-of verb form) |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
@@ -248,7 +247,7 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 | `in` (mutation block)         |    [x]     | [x] |  [x]   | [x]  |  [ ]  |
 | `elige` (switch)              |    [x]     | [x] |  [x]   | [x]  |  [x]  |
 | Switch cases (`si`)           |    [x]     | [x] |  [x]   | [x]  |  [x]  |
-| Switch default (`aliter`)     |    [x]     | [x] |  [x]   | [x]  |  [x]  |
+| Switch default (`secus`)     |    [x]     | [x] |  [x]   | [x]  |  [x]  |
 | `discerne` (pattern match)    |    [x]     | [x] |  [x]   | [x]  |  [~]  |
 | `secus` (else/ternary alt)    |    [x]     | [ ] |  [x]   | [x]  |  [ ]  |
 | `fac` (do/block)              |    [x]     | [x] |  [x]   | [x]  |  [x]  |

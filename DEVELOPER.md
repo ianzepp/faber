@@ -88,7 +88,7 @@ const MAX_NESTING_DEPTH = 1000;
  * Token types for Latin keywords.
  * WHY: Separate from identifiers to enable O(1) keyword lookup.
  */
-const KEYWORDS = new Set(['si', 'aliter', 'dum', 'redde']);
+const KEYWORDS = new Set(['si', 'secus', 'dum', 'redde']);
 ```
 
 ---
@@ -230,8 +230,8 @@ function parseStatement(): Statement {
 "Unexpected token"
 
 // GOOD: Actionable error that teaches Latin syntax
-"Expected 'aliter' or end of statement after si-block. " +
-"In Latin, 'aliter' (else) must immediately follow the closing brace."
+"Expected 'secus' or end of statement after si-block. " +
+"In Latin, 'secus' (else) must immediately follow the closing brace."
 ```
 
 ---

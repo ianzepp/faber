@@ -1,12 +1,12 @@
-// Elige with default case (aliter)
+// Elige with default case (secus)
 //
 // elige <expr> {
 //     si <value> { <body> }
-//     aliter { <default> }
+//     secus { <default> }
 // }
 
 incipit ergo cura arena {
-    // aliter handles unmatched cases
+    // secus handles unmatched cases
     fixum day = "wednesday"
 
     elige day {
@@ -16,12 +16,12 @@ incipit ergo cura arena {
         si "friday" {
             scribe "End of week"
         }
-        aliter {
+        secus {
             scribe "Midweek"
         }
     }
 
-    // aliter with error handling
+    // secus with error handling
     fixum command = "unknown"
 
     elige command {
@@ -34,12 +34,12 @@ incipit ergo cura arena {
         si "restart" {
             scribe "Restarting..."
         }
-        aliter {
+        secus {
             scribe "Unknown command"
         }
     }
 
-    // Multiple statements in aliter
+    // Multiple statements in secus
     fixum level = 99
 
     elige level {
@@ -52,7 +52,7 @@ incipit ergo cura arena {
         si 3 {
             scribe "Advanced"
         }
-        aliter {
+        secus {
             scribe "Custom level"
             scribe scriptum("Level: {}", level)
         }

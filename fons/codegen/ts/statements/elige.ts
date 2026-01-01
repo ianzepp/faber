@@ -2,7 +2,7 @@
  * TypeScript Code Generator - EligeStatement
  *
  * TRANSFORMS:
- *   elige x { si 1 { a() } si 2 { b() } aliter { c() } }
+ *   elige x { si 1 { a() } si 2 { b() } secus { c() } }
  *   -> if (x === 1) { a(); } else if (x === 2) { b(); } else { c(); }
  *
  * WHY: Always emit if/else for all targets. Simpler codegen, no type

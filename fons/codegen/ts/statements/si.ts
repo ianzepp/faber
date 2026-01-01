@@ -3,7 +3,7 @@
  *
  * TRANSFORMS:
  *   si (conditio) { ... } -> if (conditio) { ... }
- *   si (conditio) { ... } aliter { ... } -> if (conditio) { ... } else { ... }
+ *   si (conditio) { ... } secus { ... } -> if (conditio) { ... } else { ... }
  *
  * WHY: Latin if-statements can have optional catch clauses for exception handling.
  *      When present, we wrap the entire if in a try-catch block.

@@ -83,7 +83,6 @@ export enum ParserErrorCode {
     ExpectedKeywordScribe = 'P035',
     ExpectedKeywordTempta = 'P036',
     ExpectedKeywordCape = 'P037',
-    ExpectedKeywordAliter = 'P038',
     ExpectedKeywordSecus = 'P039',
     ExpectedKeywordFac = 'P040',
     ExpectedKeywordFit = 'P041',
@@ -268,13 +267,9 @@ export const PARSER_ERRORS = {
         text: "Expected catch keyword 'cape' (seize)",
         help: "Catch clauses use 'cape' (seize/capture) keyword: cape erratum { ... }",
     },
-    [ParserErrorCode.ExpectedKeywordAliter]: {
-        text: "Expected else keyword 'aliter' (otherwise)",
-        help: "Else clauses and switch defaults use 'aliter' (otherwise): si x { ... } aliter { ... }",
-    },
     [ParserErrorCode.ExpectedKeywordSecus]: {
         text: "Expected 'secus' (otherwise)",
-        help: "Latin ternary expressions use 'secus' (otherwise) after 'sic' (thus): verum sic 1 secus 0",
+        help: "Use 'secus' for else clauses (si x { } secus { }), switch defaults, and ternary alternates (sic x secus y)",
     },
     [ParserErrorCode.ExpectedKeywordFac]: {
         text: "Expected do keyword 'fac'",
@@ -349,8 +344,8 @@ export const PARSER_ERRORS = {
         help: "For loops start with 'ex' (for-of) or 'de' (for-in): ex items pro item { ... } or de tabula pro clavis { ... }",
     },
     [ParserErrorCode.InvalidEligeCaseStart]: {
-        text: "Switch 'elige' cases must start with 'si' or 'aliter'",
-        help: "Switch cases start with 'si' for value matching or 'aliter' for default: elige x { si 1 { ... } aliter { ... } }. For variant matching, use 'discerne' instead.",
+        text: "Switch 'elige' cases must start with 'si' or 'secus'",
+        help: "Switch cases start with 'si' for value matching or 'secus' for default: elige x { si 1 { ... } secus { ... } }. For variant matching, use 'discerne' instead.",
     },
     [ParserErrorCode.InvalidDiscerneCaseStart]: {
         text: "Match 'discerne' cases must start with 'si'",

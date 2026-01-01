@@ -1,7 +1,7 @@
 /**
  * Faber Code Generator - SiStatement
  *
- * STYLE: Uses sin/secus (canonical), not aliter si/aliter
+ * STYLE: Uses sin/secus (canonical), not sin/secus
  */
 
 import type { SiStatement } from '../../../parser/ast';

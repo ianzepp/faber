@@ -330,7 +330,7 @@ functio parseArgs(textus[] args) {
     elige {
         command est "build" => handleBuild(flags)
         command est "test" => handleTest(flags)
-        aliter => scribe "Unknown command:", command
+        secus => scribe "Unknown command:", command
     }
 }
 ```

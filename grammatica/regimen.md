@@ -216,7 +216,7 @@ Quit                            -> unit variant (no payload)
 
 ```ebnf
 ifStmt := 'si' expression (blockStmt | 'ergo' statement) ('cape' IDENTIFIER blockStmt)? (elseClause | 'sin' ifStmt)?
-elseClause := ('aliter' | 'secus') (ifStmt | blockStmt | statement)
+elseClause := ('secus' | 'secus') (ifStmt | blockStmt | statement)
 ```
 
 > 'cape' (catch/seize) clause allows error handling within conditionals.
@@ -224,10 +224,10 @@ elseClause := ('aliter' | 'secus') (ifStmt | blockStmt | statement)
 > 
 > TWO STYLE OPTIONS (both supported, can be mixed within the same chain):
 > 
-> Literal style: si / aliter si / aliter
+> Literal style: si / sin / secus
 > si x > 0 { positive() }
-> aliter si x < 0 { negative() }
-> aliter { zero() }
+> sin x < 0 { negative() }
+> secus { zero() }
 > 
 > Poetic style: si / sin / secus
 > si x > 0 { positive() }
@@ -235,15 +235,15 @@ elseClause := ('aliter' | 'secus') (ifStmt | blockStmt | statement)
 > secus { zero() }            // "secus" = "otherwise"
 > 
 > Keywords are interchangeable at each branch point:
-> - 'aliter si' ≡ 'sin' (else-if)
-> - 'aliter' ≡ 'secus' (else)
-> - Mixed: si ... sin ... aliter { } is valid
+> - 'sin' ≡ 'sin' (else-if)
+> - 'secus' ≡ 'secus' (else)
+> - Mixed: si ... sin ... secus { } is valid
 
 **Examples:**
 
 ```fab
 si x > 5 ergo scribe("big")
-si x > 5 { scribe("big") } aliter scribe("small")
+si x > 5 { scribe("big") } secus scribe("small")
 si x < 0 { ... } sin x == 0 { ... } secus { ... }
 ```
 
@@ -416,11 +416,11 @@ in user { nomen = "Marcus" }  // mutation block
 ```ebnf
 eligeStmt := 'elige' expression '{' eligeCase* defaultCase? '}' catchClause?
 eligeCase := 'si' expression (blockStmt | 'ergo' expression)
-defaultCase := ('aliter' | 'secus') (blockStmt | statement)
+defaultCase := ('secus' | 'secus') (blockStmt | statement)
 ```
 
 > 'elige' (choose) for value-based switch.
-> 'ergo' (therefore) for one-liners, 'aliter'/'secus' (otherwise) for default.
+> 'ergo' (therefore) for one-liners, 'secus'/'secus' (otherwise) for default.
 > For variant matching on discretio types, use 'discerne' instead.
 
 **Examples:**
@@ -429,7 +429,7 @@ defaultCase := ('aliter' | 'secus') (blockStmt | statement)
 elige status {
     si "pending" ergo scribe("waiting")
     si "active" { processActive() }
-    aliter iace "Unknown status"
+    secus iace "Unknown status"
 }
 ```
 

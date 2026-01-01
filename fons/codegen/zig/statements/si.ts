@@ -3,7 +3,7 @@
  *
  * TRANSFORMS:
  *   si x > 0 { a() } -> if (x > 0) { a(); }
- *   si x > 0 { a() } aliter { b() } -> if (x > 0) { a(); } else { b(); }
+ *   si x > 0 { a() } secus { b() } -> if (x > 0) { a(); } else { b(); }
  *   si x > 0 { a() } aut si y > 0 { b() } -> if (x > 0) { a(); } else if (y > 0) { b(); }
  *
  * TARGET: Zig uses if/else keywords like most languages.

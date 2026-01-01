@@ -23,7 +23,7 @@
  * - genus -> struct (public by default, simpler than class)
  * - pactum -> concept (C++20)
  * - incipit -> int main() { }
- * - si/aliter -> if/else
+ * - si/secus -> if/else
  * - elige -> switch
  * - ex...pro -> range-based for
  * - scribe -> std::print

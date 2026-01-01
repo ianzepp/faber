@@ -43,7 +43,7 @@ These features are non-negotiable for a working compiler.
 | `discretio` (tagged union) |        [x]         | AST node variants                     |
 | `functio` (functions)      |        [x]         | Every compiler pass                   |
 | Methods on `genus`         |        [x]         | Parser methods, generator methods     |
-| `si`/`aliter` (if/else)    |        [x]         | Conditional logic everywhere          |
+| `si`/`secus` (if/else)    |        [x]         | Conditional logic everywhere          |
 | `dum` (while)              |        [x]         | Token scanning loops                  |
 | `ex...pro` (for-of)        |        [x]         | Iterating AST children, token streams |
 | `elige` (switch)           |        [x]         | Node type dispatch (critical)         |
@@ -225,7 +225,7 @@ The bootstrap compiler should use Zig-idiomatic patterns:
 ```faber
 // Instead of tempta/cape, use error-returning functions
 functio parseToken() fit Token! {
-    custodi source[current] != nihil aliter iace ParseError.UnexpectedEnd
+    custodi source[current] != nihil secus iace ParseError.UnexpectedEnd
     // ... parsing logic
 }
 
@@ -266,7 +266,7 @@ Types:       textus, numerus, bivalens, nihil, T?, vacuum
 Statements:  varia, fixum
              functio (sync only, no async/generators)
              incipit (entry point, required for Zig)
-             si/aliter, dum, ex...pro, de...pro
+             si/secus, dum, ex...pro, de...pro
              elige, discerne
              redde, rumpe, perge
              iace, mori, adfirma
@@ -730,7 +730,7 @@ Large keyword tables use `elige` which compiles to efficient switch statements:
 functio estVerbum(textus verbum) -> SymbolumGenus? {
     elige verbum {
         si "si" { redde SymbolumGenus.Si }
-        si "aliter" { redde SymbolumGenus.Aliter }
+        si "secus" { redde SymbolumGenus.Secus }
         si "dum" { redde SymbolumGenus.Dum }
         // ... 80+ keywords
         secus { redde nihil }

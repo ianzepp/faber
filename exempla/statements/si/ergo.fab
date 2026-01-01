@@ -1,7 +1,7 @@
 // One-liner conditionals with ergo
 //
 // si <condition> ergo <statement>
-// si <condition> ergo <statement> aliter <statement>
+// si <condition> ergo <statement> secus <statement>
 //
 // ergo = "therefore, thus" (logical consequence)
 
@@ -13,11 +13,11 @@ incipit {
 
     // One-liner if-else
     fixum age = 25
-    si age >= 18 ergo scribe "Adult" aliter scribe "Minor"
+    si age >= 18 ergo scribe "Adult" secus scribe "Minor"
 
     // Multiple conditions
     fixum score = 85
-    si score >= 90 ergo scribe "A" aliter scribe "Not A"
+    si score >= 90 ergo scribe "A" secus scribe "Not A"
 
     // Simple validation
     fixum valid = verum

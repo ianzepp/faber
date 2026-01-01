@@ -44,7 +44,7 @@ C++23 shares ownership concerns with Zig and Rust. Faber uses a **unified approa
 | `ego`                   | `this->` or `self`                         | Via reference capture                           |
 | `novum`                 | direct construction                        | No `new` for stack, `std::make_unique` for heap |
 | `novum X {}`            | Designated initializers                    | C++20 designated init                           |
-| `si`/`aliter`           | `if`/`else`                                | Direct                                          |
+| `si`/`secus`           | `if`/`else`                                | Direct                                          |
 | `dum`                   | `while`                                    | Direct                                          |
 | `ex...pro`              | range-for                                  | `for (auto x : items)`                          |
 | `elige`                 | `switch` or if-chain                       | Limited pattern matching                        |
@@ -485,7 +485,7 @@ auto shared = std::make_shared<Persona>();  // Shared ownership
 | ---------------------- | --------------- | ----------------------------------------- |
 | Variables              | Implemented     | `auto` / `const auto`                     |
 | Functions              | Implemented     | Trailing return type                      |
-| Control flow           | Implemented     | `si`/`aliter`, `dum`, `ex...pro`, `elige` |
+| Control flow           | Implemented     | `si`/`secus`, `dum`, `ex...pro`, `elige` |
 | `genus`                | Implemented     | struct with fields, methods               |
 | `pactum`               | Implemented     | C++20 concepts                            |
 | Error handling         | **Implemented** | `tempta`/`cape`/`demum` via RAII          |

@@ -225,7 +225,7 @@ describe('parseVerb', () => {
 describe('keywords', () => {
     test('recognizes control flow keywords', () => {
         expect(isKeyword('si')).toBe(true);
-        expect(isKeyword('aliter')).toBe(true);
+        expect(isKeyword('secus')).toBe(true);
         expect(isKeyword('dum')).toBe(true);
         expect(isKeyword('redde')).toBe(true);
     });

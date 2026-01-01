@@ -60,9 +60,9 @@ describe('prettier plugin', () => {
         });
 
         test('if-else statement', async () => {
-            const result = await format('si x > 0 { scribe "pos" } aliter { scribe "neg" }');
+            const result = await format('si x > 0 { scribe "pos" } secus { scribe "neg" }');
             expect(result).toContain('si x > 0');
-            expect(result).toContain('aliter');
+            expect(result).toContain('secus');
         });
 
         test('while loop', async () => {
@@ -76,7 +76,7 @@ describe('prettier plugin', () => {
         });
 
         test('switch statement', async () => {
-            const result = await format('elige x { si 1 { scribe "one" } aliter { scribe "other" } }');
+            const result = await format('elige x { si 1 { scribe "one" } secus { scribe "other" } }');
             expect(result).toContain('elige x');
             expect(result).toContain('si 1');
         });

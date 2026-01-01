@@ -8,11 +8,11 @@ incipit {
         si hasPermission {
             scribe "Access granted"
         }
-        aliter {
+        secus {
             scribe "Permission denied"
         }
     }
-    aliter {
+    secus {
         scribe "Please log in"
     }
 }

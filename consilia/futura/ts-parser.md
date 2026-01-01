@@ -302,7 +302,7 @@ class FaberGenerator extends BaseGenerator {
     visitSiStatement(node: SiStatement): string {
         const test = this.visitExpression(node.test);
         const consequent = this.visitBlock(node.consequent);
-        const alternate = node.alternate ? ` aliter ${this.visitStatement(node.alternate)}` : '';
+        const alternate = node.alternate ? ` secus ${this.visitStatement(node.alternate)}` : '';
         return `si ${test} ${consequent}${alternate}`;
     }
 

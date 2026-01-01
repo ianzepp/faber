@@ -23,7 +23,7 @@
  * - genus -> struct + impl
  * - pactum -> trait
  * - incipit -> fn main()
- * - si/aliter -> if/else if/else
+ * - si/secus -> if/else if/else
  * - elige -> match
  * - ex...pro -> for...in
  * - scribe -> println!/print!

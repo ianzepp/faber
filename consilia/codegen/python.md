@@ -30,7 +30,7 @@ Python is a high-priority compilation target for Faber due to its accessibility 
 | `ego`                   | `self`                   | Explicit in method signatures                     |
 | `novum`                 | direct call              | No `new` keyword: `Class()` not `new Class()`     |
 | `novum X {}`            | `Class({})`              | Constructor with dict overrides                   |
-| `si`/`aliter`           | `if`/`elif`/`else`       | Note: `aliter si` -> `elif`                       |
+| `si`/`secus`           | `if`/`elif`/`else`       | Note: `sin` -> `elif`                       |
 | `dum`                   | `while`                  | While loop                                        |
 | `ex...pro`              | `for...in`               | Iteration                                         |
 | `elige`                 | `match`                  | Pattern matching (3.10+)                          |

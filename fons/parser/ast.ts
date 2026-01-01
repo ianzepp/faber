@@ -787,7 +787,7 @@ export interface ExpressionStatement extends BaseNode {
  * Conditional (if) statement.
  *
  * GRAMMAR (in EBNF):
- *   ifStmt := 'si' expression blockStmt ('cape' IDENTIFIER blockStmt)? ('aliter' (ifStmt | blockStmt))?
+ *   ifStmt := 'si' expression blockStmt ('cape' IDENTIFIER blockStmt)? ('secus' (ifStmt | blockStmt))?
  *
  * INVARIANT: catchClause is unique to Latin - allows error handling within conditionals.
  * INVARIANT: alternate can be BlockStatement (else) or SiStatement (else if chain).
@@ -798,8 +798,8 @@ export interface ExpressionStatement extends BaseNode {
  * Examples:
  *   si x > 0 { ... }
  *   si x > 0 { ... } cape erratum { ... }
- *   si x > 0 { ... } aliter { ... }
- *   si x > 0 { ... } aliter si x < 0 { ... } aliter { ... }
+ *   si x > 0 { ... } secus { ... }
+ *   si x > 0 { ... } sin x < 0 { ... } secus { ... }
  */
 export interface SiStatement extends BaseNode {
     type: 'SiStatement';
@@ -909,7 +909,7 @@ export interface InStatement extends BaseNode {
  * GRAMMAR (in EBNF):
  *   eligeStmt := 'elige' expression '{' eligeCase* defaultCase? '}' catchClause?
  *   eligeCase := 'si' expression (blockStmt | 'ergo' expression)
- *   defaultCase := ('aliter' | 'secus') (blockStmt | statement)
+ *   defaultCase := ('secus' | 'secus') (blockStmt | statement)
  *
  * WHY: Latin 'elige' (choose) for value-based switch.
  *      Use 'discerne' for variant pattern matching on discretio types.
@@ -918,7 +918,7 @@ export interface InStatement extends BaseNode {
  *   elige status {
  *       si "pending" { processPending() }
  *       si "active" { processActive() }
- *       aliter { processDefault() }
+ *       secus { processDefault() }
  *   }
  */
 export interface EligeStatement extends BaseNode {

@@ -1,7 +1,7 @@
-// si-aliter (if-else) conditionals
+// si-secus (if-else) conditionals
 //
-// si <condition> { <body> } aliter { <body> }
-// si <cond1> { } aliter si <cond2> { } aliter { }
+// si <condition> { <body> } secus { <body> }
+// si <cond1> { } sin <cond2> { } secus { }
 
 incipit {
     // Simple if-else
@@ -10,7 +10,7 @@ incipit {
     si score >= 90 {
         scribe "Grade: A"
     }
-    aliter {
+    secus {
         scribe "Grade: B or lower"
     }
 
@@ -21,7 +21,7 @@ incipit {
         scribe "Hot"
         scribe "Stay hydrated"
     }
-    aliter {
+    secus {
         scribe "Comfortable"
         scribe "Enjoy the weather"
     }
@@ -32,16 +32,16 @@ incipit {
     si grade >= 90 {
         scribe "A - Excellent"
     }
-    aliter si grade >= 80 {
+    sin grade >= 80 {
         scribe "B - Good"
     }
-    aliter si grade >= 70 {
+    sin grade >= 70 {
         scribe "C - Satisfactory"
     }
-    aliter si grade >= 60 {
+    sin grade >= 60 {
         scribe "D - Passing"
     }
-    aliter {
+    secus {
         scribe "F - Failing"
     }
 }

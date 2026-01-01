@@ -4,13 +4,13 @@
 /// Uses switch-based lookup (no heap allocation).
 
 /// Check if a word is a reserved keyword
-/// 
+///
 /// NOTE: This list must stay synchronized with fons/lexicon/keywords.ts
 functio estVerbum(textus v) -> bivalens {
     elige v {
         // Imperium - control flow
         si "si" { redde verum }
-        si "aliter" { redde verum }
+        si "secus" { redde verum }
         si "sin" { redde verum }
         si "secus" { redde verum }
         si "dum" { redde verum }
@@ -26,7 +26,7 @@ functio estVerbum(textus v) -> bivalens {
         si "discerne" { redde verum }
         si "incipit" { redde verum }
         si "incipiet" { redde verum }
-        
+
         // Imperium - testing
         si "probandum" { redde verum }
         si "proba" { redde verum }
@@ -48,7 +48,7 @@ functio estVerbum(textus v) -> bivalens {
         si "lege" { redde verum }
         si "scriptum" { redde verum }
         si "cede" { redde verum }
-        
+
         // Declaratio - declarations
         si "varia" { redde verum }
         si "fixum" { redde verum }
@@ -63,7 +63,7 @@ functio estVerbum(textus v) -> bivalens {
         si "pactum" { redde verum }
         si "ordo" { redde verum }
         si "discretio" { redde verum }
-        
+
         // Modificator - modifiers
         si "futura" { redde verum }
         si "prae" { redde verum }
@@ -81,7 +81,7 @@ functio estVerbum(textus v) -> bivalens {
         si "omitte" { redde verum }
         si "futurum" { redde verum }
         si "omnia" { redde verum }
-        
+
         // Operator - operators
         si "et" { redde verum }
         si "aut" { redde verum }
@@ -103,12 +103,12 @@ functio estVerbum(textus v) -> bivalens {
         si "nonnihil" { redde verum }
         si "negativum" { redde verum }
         si "positivum" { redde verum }
-        
+
         // Valor - literal values
         si "verum" { redde verum }
         si "falsum" { redde verum }
         si "ego" { redde verum }
-        
+
         // Praepositio - prepositions
         si "de" { redde verum }
         si "in" { redde verum }
@@ -117,7 +117,7 @@ functio estVerbum(textus v) -> bivalens {
         si "per" { redde verum }
         si "qua" { redde verum }
         si "ut" { redde verum }
-        
+
         // Dsl - domain specific
         si "ab" { redde verum }
         si "ubi" { redde verum }
@@ -128,7 +128,7 @@ functio estVerbum(textus v) -> bivalens {
         si "collige" { redde verum }
         si "grupa" { redde verum }
         si "sed" { redde verum }
-        
-        aliter { redde falsum }
+
+        secus { redde falsum }
     }
 }

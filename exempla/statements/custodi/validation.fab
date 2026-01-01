@@ -16,7 +16,7 @@ functio processAge(age) -> textus {
     si age < 18 {
         redde "Minor"
     }
-    aliter {
+    secus {
         redde "Adult"
     }
 }

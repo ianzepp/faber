@@ -31,8 +31,8 @@ Output uses canonical Faber style:
 | Construct | Output | Avoid |
 |-----------|--------|-------|
 | if | `si` | — |
-| else-if | `sin` | `aliter si` |
-| else | `secus` | `aliter` |
+| else-if | `sin` | `sin` |
+| else | `secus` | `secus` |
 
 ### Operators
 

@@ -14,7 +14,7 @@
  * - Programmatic code generation
  *
  * The generator produces canonical Faber style:
- * - si/sin/secus (not aliter si/aliter)
+ * - si/sin/secus (not sin/secus)
  * - &&/|| (not et/aut), non (not !)
  * - -> for return type (not fit/fiet/fiunt/fient)
  * - pro x: expr for lambdas (not pro x redde expr)

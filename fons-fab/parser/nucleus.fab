@@ -414,7 +414,7 @@ genus Parser {
             si "promissum" { redde verum }
             si "cursor" { redde verum }
             si "unio" { redde verum }
-            aliter { redde falsum }
+            secus { redde falsum }
         }
     }
 
@@ -429,7 +429,7 @@ genus Parser {
             si "de" { redde verum }
             si "in" { redde verum }
             si "ex" { redde verum }
-            aliter { redde falsum }
+            secus { redde falsum }
         }
     }
 }

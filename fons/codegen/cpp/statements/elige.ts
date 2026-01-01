@@ -2,7 +2,7 @@
  * C++23 Code Generator - EligeStatement
  *
  * TRANSFORMS:
- *   elige x { si 1 { ... } si 2 { ... } aliter { ... } }
+ *   elige x { si 1 { ... } si 2 { ... } secus { ... } }
  *   -> switch (x) { case 1: { ... break; } case 2: { ... break; } default: { ... break; } }
  */
 

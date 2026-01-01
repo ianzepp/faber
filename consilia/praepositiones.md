@@ -110,7 +110,7 @@ functio first(de textus a, de textus b) -> de textus ex a {
 
 // Multiple sources - return could borrow from either
 functio pick(de textus a, de textus b, bivalens flag) -> de textus ex a, b {
-    si flag { redde a } aliter { redde b }
+    si flag { redde a } secus { redde b }
 }
 ```
 

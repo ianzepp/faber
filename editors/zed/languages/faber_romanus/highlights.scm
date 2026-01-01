@@ -11,7 +11,7 @@
 ; ==============================================================================
 
 "si" @keyword.control.conditional
-"aliter" @keyword.control.conditional
+"secus" @keyword.control.conditional
 "ergo" @keyword.control.conditional
 
 "dum" @keyword.control.repeat

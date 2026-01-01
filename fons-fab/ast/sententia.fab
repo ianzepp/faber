@@ -207,17 +207,17 @@ discretio Sententia {
     // -------------------------------------------------------------------------
     // Block
     // -------------------------------------------------------------------------
-    
+
     /// Block of statements (sequence in braces)
     MassaSententia {
         Locus locus
         lista<Sententia> corpus
     }
-    
+
     // -------------------------------------------------------------------------
     // Variable Declarations
     // -------------------------------------------------------------------------
-    
+
     /// Variable declaration
     /// Examples: varia x = 5, fixum nomen = "Marcus"
     VariaSententia {
@@ -227,7 +227,7 @@ discretio Sententia {
         TypusAnnotatio? typus
         Expressia? valor
     }
-    
+
     /// Import declaration
     /// Example: ex norma importa scribe, lege
     ImportaSententia {
@@ -237,7 +237,7 @@ discretio Sententia {
         bivalens totum           // true for wildcard *
         textus? totumAlias       // alias for * ut name
     }
-    
+
     /// Destructure declaration
     /// Example: ex persona fixum nomen, aetas
     DestructuraSententia {
@@ -246,11 +246,11 @@ discretio Sententia {
         VariaGenus species
         lista<ImportaSpecificator> specificatores
     }
-    
+
     // -------------------------------------------------------------------------
     // Function Declaration
     // -------------------------------------------------------------------------
-    
+
     /// Function declaration
     /// Example: functio salve(textus nomen) fit textus { ... }
     FunctioDeclaratio {
@@ -267,11 +267,11 @@ discretio Sententia {
         Visibilitas? visibilitas
         ReddeVerbum? reddeVerbum
     }
-    
+
     // -------------------------------------------------------------------------
     // Type Declarations
     // -------------------------------------------------------------------------
-    
+
     /// Genus (struct/class) declaration
     /// Example: genus Persona { textus nomen }
     GenusDeclaratio {
@@ -285,7 +285,7 @@ discretio Sententia {
         Sententia? constructor   // FunctioDeclaratio
         lista<Sententia> methodi // lista<FunctioDeclaratio>
     }
-    
+
     /// Pactum (interface) declaration
     /// Example: pactum Iterabilis { functio sequens() fit T? }
     PactumDeclaratio {
@@ -294,7 +294,7 @@ discretio Sententia {
         lista<textus>? generaParametra
         lista<PactumMethodus> methodi
     }
-    
+
     /// Type alias declaration
     /// Example: typus ID = textus
     TypusAliasDeclaratio {
@@ -303,7 +303,7 @@ discretio Sententia {
         TypusAnnotatio typus
         textus? scopusNomen      // for typeof: typus X = typus y
     }
-    
+
     /// Ordo (enum) declaration
     /// Example: ordo Color { Rubrum, Viridis, Caeruleum }
     OrdoDeclaratio {
@@ -311,7 +311,7 @@ discretio Sententia {
         textus nomen
         lista<OrdoMembrum> membra
     }
-    
+
     /// Discretio (tagged union) declaration
     /// Example: discretio Event { Click { numerus x }, Quit }
     DiscretioDeclaratio {
@@ -320,13 +320,13 @@ discretio Sententia {
         lista<textus>? generaParametra
         lista<VariansDeclaratio> variantes
     }
-    
+
     // -------------------------------------------------------------------------
     // Control Flow
     // -------------------------------------------------------------------------
-    
+
     /// Conditional statement
-    /// Example: si x > 0 { ... } aliter { ... }
+    /// Example: si x > 0 { ... } secus { ... }
     SiSententia {
         Locus locus
         Expressia condicio
@@ -334,7 +334,7 @@ discretio Sententia {
         Sententia? alternans     // MassaSententia or SiSententia
         CapeClausula? cape
     }
-    
+
     /// While loop
     /// Example: dum x > 0 { ... }
     DumSententia {
@@ -343,7 +343,7 @@ discretio Sententia {
         Sententia corpus         // MassaSententia
         CapeClausula? cape
     }
-    
+
     /// For loop (iteration)
     /// Example: ex items pro item { ... }
     IteratioSententia {
@@ -355,7 +355,7 @@ discretio Sententia {
         bivalens asynca
         CapeClausula? cape
     }
-    
+
     /// With statement (mutation block)
     /// Example: in user { nomen = "Marcus" }
     InSententia {
@@ -363,17 +363,17 @@ discretio Sententia {
         Expressia obiectum
         Sententia corpus         // MassaSententia
     }
-    
+
     /// Switch statement
     /// Example: elige status { si "pending" { ... } }
     EligeSententia {
         Locus locus
         Expressia discriminans
         lista<EligeCasus> casus
-        Sententia? praedefinitum // MassaSententia (aliter/secus)
+        Sententia? praedefinitum // MassaSententia (secus default)
         CapeClausula? cape
     }
-    
+
     /// Pattern matching statement
     /// Example: discerne event { si Click pro x, y { ... } }
     DiscerneSententia {
@@ -381,18 +381,18 @@ discretio Sententia {
         Expressia discriminans
         lista<VariansCasus> casus
     }
-    
+
     /// Guard statement
     /// Example: custodi { si x == nihil { redde nihil } }
     CustodiSententia {
         Locus locus
         lista<CustodiClausula> clausulae
     }
-    
+
     // -------------------------------------------------------------------------
     // Error Handling
     // -------------------------------------------------------------------------
-    
+
     /// Try-catch-finally
     /// Example: tempta { ... } cape err { ... } demum { ... }
     TemptaSententia {
@@ -401,7 +401,7 @@ discretio Sententia {
         CapeClausula? cape
         Sententia? demum         // MassaSententia (finally)
     }
-    
+
     /// Throw statement
     /// Example: iace "error", mori "fatal"
     IaceSententia {
@@ -409,7 +409,7 @@ discretio Sententia {
         bivalens fatale          // mori vs iace
         Expressia argumentum
     }
-    
+
     /// Explicit scope block (or do-while)
     /// Example: fac { ... } or fac { ... } dum condition
     FacSententia {
@@ -418,7 +418,7 @@ discretio Sententia {
         CapeClausula? cape
         Expressia? condicio      // for do-while: fac { } dum cond
     }
-    
+
     /// Assert statement
     /// Example: adfirma x > 0, "x must be positive"
     AdfirmaSententia {
@@ -426,11 +426,11 @@ discretio Sententia {
         Expressia condicio
         Expressia? nuntius       // optional message
     }
-    
+
     // -------------------------------------------------------------------------
     // Actions
     // -------------------------------------------------------------------------
-    
+
     /// Print statement
     /// Example: scribe "hello", vide value, mone "warning"
     ScribeSententia {
@@ -438,32 +438,32 @@ discretio Sententia {
         ScribeGradus gradus
         lista<Expressia> argumenta
     }
-    
+
     /// Return statement
     /// Example: redde 42, redde
     ReddeSententia {
         Locus locus
         Expressia? valor
     }
-    
+
     /// Break statement
     /// Example: rumpe
     RumpeSententia {
         Locus locus
     }
-    
+
     /// Continue statement
     /// Example: perge
     PergeSententia {
         Locus locus
     }
-    
+
     /// Expression statement (expression used as statement)
     ExpressiaSententia {
         Locus locus
         Expressia expressia
     }
-    
+
     /// Entry point (sync)
     /// Example: incipit { scribe "Hello" }
     IncipitSententia {
@@ -471,7 +471,7 @@ discretio Sententia {
         Sententia? corpus        // MassaSententia
         Sententia? ergo          // incipit ergo ...
     }
-    
+
     /// Entry point (async)
     /// Example: incipiet { cede fetch() }
     IncipietSententia {
@@ -479,7 +479,7 @@ discretio Sententia {
         Sententia? corpus        // MassaSententia
         Sententia? ergo
     }
-    
+
     /// Resource management statement
     /// Example: cura arena fit mem { ... }
     CuraSententia {
@@ -492,7 +492,7 @@ discretio Sententia {
         Sententia corpus         // MassaSententia
         CapeClausula? cape
     }
-    
+
     /// Dispatch statement
     /// Example: ad "fasciculus:lege" ("file.txt") fit textus pro content { ... }
     AdSententia {
@@ -503,11 +503,11 @@ discretio Sententia {
         Sententia? corpus        // MassaSententia
         CapeClausula? cape
     }
-    
+
     // -------------------------------------------------------------------------
     // Tests
     // -------------------------------------------------------------------------
-    
+
     /// Test suite
     /// Example: probandum "Tokenizer" { proba "..." { } }
     ProbandumSententia {
@@ -515,7 +515,7 @@ discretio Sententia {
         textus nomen
         lista<Sententia> corpus  // PraeparaMassa, ProbandumSententia, ProbaSententia
     }
-    
+
     /// Test case
     /// Example: proba "parses integers" { adfirma ... }
     ProbaSententia {
@@ -525,7 +525,7 @@ discretio Sententia {
         textus? ratioModificatoris   // reason for skip/todo
         Sententia corpus         // MassaSententia
     }
-    
+
     /// Test setup/teardown block
     /// Example: praepara { lexer = init() }
     PraeparaMassa {

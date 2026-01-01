@@ -9,7 +9,6 @@ This document is designed for both human readers and LLM code generation. When g
 **Style preferences:**
 
 - PREFER Latin keywords over symbols: `et` over `&&`, `aut` over `||`, `non` over `!`
-- PREFER `si`/`sin`/`secus` (poetic) or `si`/`aliter si`/`aliter` (literal) consistently
 - PREFER `pro x: expr` for short lambdas, `pro x redde expr` when clarity helps
 - ALWAYS use type-first syntax: `textus nomen` not `nomen: textus`
 - NEVER use JavaScript/TypeScript/Python syntax where Faber has its own
@@ -18,7 +17,7 @@ This document is designed for both human readers and LLM code generation. When g
 
 - `return` instead of `redde`
 - `const`/`let` instead of `fixum`/`varia`
-- `if`/`else` instead of `si`/`aliter`
+- `if`/`else` instead of `si`/`secus`
 - `for...of` instead of `ex...pro`
 - `string`/`number`/`boolean` instead of `textus`/`numerus`/`bivalens`
 - `null` instead of `nihil`
@@ -83,7 +82,7 @@ This document is designed for both human readers and LLM code generation. When g
 
 **Control flow:**
 
-- `si` / `sin` / `aliter` / `secus` — if / else-if / else
+- `si` / `sin` / `secus` / `secus` — if / else-if / else
 - `dum` — while
 - `ex...pro` — for-of (iteration)
 - `de...pro` — for-in (keys)

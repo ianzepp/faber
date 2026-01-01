@@ -2,7 +2,7 @@
  * Rust Code Generator - EligeStatement
  *
  * TRANSFORMS:
- *   elige x { quando 1: ..., quando 2: ..., aliter: ... }
+ *   elige x { quando 1: ..., quando 2: ..., secus: ... }
  *   -> match x { 1 => ..., 2 => ..., _ => ... }
  */
 

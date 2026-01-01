@@ -53,7 +53,6 @@ ordo ParserErrorCodice {
     ExpectaturScribe = "P035",
     ExpectaturTempta = "P036",
     ExpectaturCape = "P037",
-    ExpectaturAliter = "P038",
     ExpectaturSecus = "P039",
     ExpectaturFac = "P040",
     ExpectaturFit = "P041",
@@ -203,11 +202,8 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
         si ParserErrorCodice.ExpectaturCape {
             redde { textus: "Expected 'cape'", auxilium: "Catch: cape erratum { }" } qua ParserErrorNuntius
         }
-        si ParserErrorCodice.ExpectaturAliter {
-            redde { textus: "Expected 'aliter'", auxilium: "Else: si x { } aliter { }" } qua ParserErrorNuntius
-        }
         si ParserErrorCodice.ExpectaturSecus {
-            redde { textus: "Expected 'secus'", auxilium: "Ternary: verum sic 1 secus 0" } qua ParserErrorNuntius
+            redde { textus: "Expected 'secus'", auxilium: "Else/ternary: si x { } secus { }, sic x secus y" } qua ParserErrorNuntius
         }
         si ParserErrorCodice.ExpectaturFac {
             redde { textus: "Expected 'fac'", auxilium: "Block scope: fac { } cape { }" } qua ParserErrorNuntius
@@ -265,7 +261,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde { textus: "For loop requires 'ex' or 'de'", auxilium: "ex items pro i { } or de obj pro k { }" } qua ParserErrorNuntius
         }
         si ParserErrorCodice.InvalidumEligeCasusInitium {
-            redde { textus: "Switch cases need 'si' or 'aliter'", auxilium: "elige x { si 1 { } aliter { } }" } qua ParserErrorNuntius
+            redde { textus: "Switch cases need 'si' or 'secus'", auxilium: "elige x { si 1 { } secus { } }" } qua ParserErrorNuntius
         }
         si ParserErrorCodice.InvalidumDiscerneCasusInitium {
             redde { textus: "Match cases need 'si'", auxilium: "discerne e { si Variant { } }" } qua ParserErrorNuntius
@@ -309,7 +305,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
         }
 
         // Default fallback
-        aliter {
+        secus {
             redde { textus: "Unknown error", auxilium: "" } qua ParserErrorNuntius
         }
     }

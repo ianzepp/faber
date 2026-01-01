@@ -1,12 +1,12 @@
 # Si statements - conditionals
-# Maps Faber si/sin/aliter/secus to target if/elif/else
+# Maps Faber si/sin/secus to target if/elif/else
 #
 # Syntax:
 #   si condition { consequent }
-#   si condition { } aliter { alternate }
-#   si condition { } aliter si condition2 { }    -- literal style
-#   si condition { } sin condition2 { }          -- poetic style (sin = "but if")
-#   si condition { } secus { }                   -- poetic else (secus = "otherwise")
+#   si condition { } secus { alternate }
+#   si condition { } sin condition2 { }    -- literal style
+#   si condition { } sin condition2 { }
+#   si condition { } secus { }
 #   si condition { } cape err { }                -- catch clause (ts/py only)
 #
 # Note: Rust omits parens around condition; Python uses elif and colon syntax
@@ -61,13 +61,13 @@
 # If-Else
 # =============================================================================
 
-# Basic if-else using aliter
-- name: if-else with aliter
+# Basic if-else using secus
+- name: if-else with secus
   faber: |
       si falsum {
         a()
       }
-      aliter {
+      secus {
         b()
       }
   expect:
@@ -127,12 +127,12 @@
 # If-Elif-Else Chains
 # =============================================================================
 
-# Literal style: aliter si
-- name: if-elif-else with aliter si
+# Literal style: sin
+- name: if-elif-else with sin
   faber: |
       si x == 1 { a() }
-      aliter si x == 2 { b() }
-      aliter { c() }
+      sin x == 2 { b() }
+      secus { c() }
   expect:
       ts:
           - 'if ((x == 1))'
@@ -202,7 +202,7 @@
   faber: |
       si x == 1 { a() }
       sin x == 2 { b() }
-      aliter { c() }
+      secus { c() }
   expect:
       ts:
           - 'if ((x == 1))'
@@ -473,7 +473,7 @@
 # =============================================================================
 
 - name: empty if body with else
-  faber: 'si condition { } aliter { fallback() }'
+  faber: 'si condition { } secus { fallback() }'
   expect:
       ts:
           - 'if (condition)'

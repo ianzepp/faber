@@ -625,12 +625,12 @@ describe('parser', () => {
             expect(stmt.test.value).toBe(true);
         });
 
-        test('if with aliter', () => {
+        test('if with secus', () => {
             const { program } = parseCode(`
         si falsum {
           scribe("yes")
         }
-        aliter {
+        secus {
           scribe("no")
         }
       `);
@@ -1740,8 +1740,8 @@ describe('parser', () => {
             expect(stmt.consequent.body[0]!.type).toBe('ScribeStatement');
         });
 
-        test('si with ergo and aliter', () => {
-            const { program } = parseCode('si x > 5 ergo scribe "big" aliter scribe "small"');
+        test('si with ergo and secus', () => {
+            const { program } = parseCode('si x > 5 ergo scribe "big" secus scribe "small"');
             const stmt = program!.body[0] as any;
 
             expect(stmt.type).toBe('SiStatement');
@@ -1756,7 +1756,7 @@ describe('parser', () => {
             const { program } = parseCode(`
                 si x < 0 { redde "negative" }
                 sin x == 0 { redde "zero" }
-                aliter { redde "positive" }
+                secus { redde "positive" }
             `);
             const stmt = program!.body[0] as any;
 
@@ -2328,7 +2328,7 @@ describe('parser', () => {
         });
 
         test('if with empty blocks', () => {
-            const { program } = parseCode('si verum { } aliter { }');
+            const { program } = parseCode('si verum { } secus { }');
             const stmt = program!.body[0] as any;
 
             expect(stmt.type).toBe('SiStatement');

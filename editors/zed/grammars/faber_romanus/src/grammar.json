@@ -1229,7 +1229,7 @@
       "members": [
         {
           "type": "STRING",
-          "value": "aliter"
+          "value": "secus"
         },
         {
           "type": "CHOICE",
@@ -1591,7 +1591,7 @@
       "members": [
         {
           "type": "STRING",
-          "value": "aliter"
+          "value": "secus"
         },
         {
           "type": "CHOICE",

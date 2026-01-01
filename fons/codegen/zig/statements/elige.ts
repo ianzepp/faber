@@ -2,10 +2,10 @@
  * Zig Code Generator - EligeStatement (switch on values)
  *
  * TRANSFORMS:
- *   elige x { si 1 { a() } si 2 { b() } aliter { c() } }
+ *   elige x { si 1 { a() } si 2 { b() } secus { c() } }
  *   -> if (x == 1) { a(); } else if (x == 2) { b(); } else { c(); }
  *
- *   elige status { si "pending" { ... } aliter { ... } }
+ *   elige status { si "pending" { ... } secus { ... } }
  *   -> if (std.mem.eql(u8, status, "pending")) { ... } else { ... }
  *
  * WHY: For value matching, use if-else chains since Zig switch

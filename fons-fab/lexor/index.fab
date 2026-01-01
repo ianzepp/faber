@@ -179,13 +179,13 @@ genus Lexor {
                 ego.procede()
             }
             // Handle newline - update line tracking
-            aliter si c == "\n" {
+            sin c == "\n" {
                 ego.procede()
                 ego.linea = ego.linea + 1
                 ego.columnaInitium = ego.index
             }
             // Single-line comment: // ... until newline
-            aliter si c == "/" et ego.specta(1) == "/" {
+            sin c == "/" et ego.specta(1) == "/" {
                 fixum loc = ego.locus()
                 varia textus nota = ""      // nota = "note/comment"
 
@@ -201,7 +201,7 @@ genus Lexor {
                 ego.addeSymbolum(SymbolumGenus.NotaLinea, nota, loc)
             }
             // Multi-line comment: /* ... */ or doc comment: /** ... */
-            aliter si c == "/" et ego.specta(1) == "*" {
+            sin c == "/" et ego.specta(1) == "*" {
                 fixum loc = ego.locus()
                 varia textus nota = ""
 
@@ -232,7 +232,7 @@ genus Lexor {
                 ego.addeSymbolum(species, nota, loc)
             }
             // Not whitespace or comment - stop skipping
-            aliter {
+            secus {
                 rumpe
             }
         }
@@ -421,13 +421,13 @@ genus Lexor {
                         }
                     }
                     // Other escapes: \n, \t, \", etc. - just consume the char
-                    aliter {
+                    secus {
                         valor = valor + ego.procede()
                     }
                 }
             }
             // Regular character - consume and add to value
-            aliter {
+            secus {
                 valor = valor + ego.procede()
             }
         }
@@ -460,12 +460,12 @@ genus Lexor {
                 valor = valor + ego.procede()
             }
             // Escape sequences in templates
-            aliter si ego.specta(0) == "\\" {
+            sin ego.specta(0) == "\\" {
                 ego.procede()  // Skip backslash
                 valor = valor + ego.procede()  // Keep escaped char
             }
             // Interpolation: ${...} - capture entire expression including nested braces
-            aliter si ego.specta(0) == "$" et ego.specta(1) == "{" {
+            sin ego.specta(0) == "$" et ego.specta(1) == "{" {
                 valor = valor + ego.procede()  // Consume '$'
                 valor = valor + ego.procede()  // Consume '{'
 
@@ -483,7 +483,7 @@ genus Lexor {
                 }
             }
             // Regular template character
-            aliter {
+            secus {
                 valor = valor + ego.procede()
             }
         }
@@ -515,7 +515,7 @@ genus Lexor {
         // estVerbum() is defined in lexicon/verba.fab
         si estVerbum(valor) {
             ego.addeVerbum(valor, loc)
-        } aliter {
+        } secus {
             // Nomen = identifier token (variable name, function name, etc.)
             ego.addeSymbolum(SymbolumGenus.Nomen, valor, loc)
         }
@@ -593,10 +593,10 @@ genus Lexor {
                     si ego.specta(0) == "." {
                         ego.procede()
                         ego.addeSymbolum(SymbolumGenus.PunctumTer, "...", loc)  // spread/rest
-                    } aliter {
+                    } secus {
                         ego.addeSymbolum(SymbolumGenus.PunctumBis, "..", loc)   // range
                     }
-                } aliter {
+                } secus {
                     ego.addeSymbolum(SymbolumGenus.Punctum, c, loc)             // member access
                 }
             }
@@ -612,7 +612,7 @@ genus Lexor {
                 si ego.specta(0) == ">" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.Sagitta, "->", loc)  // sagitta = arrow
-                } aliter {
+                } secus {
                     ego.addeSymbolum(SymbolumGenus.Minus, c, loc)
                 }
             }
@@ -623,13 +623,13 @@ genus Lexor {
                     ego.procede()
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.AequumTer, "===", loc)      // strict equality
-                } aliter si ego.specta(0) == "=" {
+                } sin ego.specta(0) == "=" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.AequumBis, "==", loc)       // equality
-                } aliter si ego.specta(0) == ">" {
+                } sin ego.specta(0) == ">" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.SagittaCrassa, "=>", loc)   // fat arrow (crassa = thick)
-                } aliter {
+                } secus {
                     ego.addeSymbolum(SymbolumGenus.Aequum, c, loc)             // assignment
                 }
             }
@@ -640,13 +640,13 @@ genus Lexor {
                     ego.procede()
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.NonAequumBis, "!==", loc)   // strict inequality
-                } aliter si ego.specta(0) == "=" {
+                } sin ego.specta(0) == "=" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.NonAequum, "!=", loc)       // inequality
-                } aliter si ego.specta(0) == "." {
+                } sin ego.specta(0) == "." {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.NonPunctum, "!.", loc)      // non-null assertion access
-                } aliter {
+                } secus {
                     ego.addeSymbolum(SymbolumGenus.Non, c, loc)                // logical not
                 }
             }
@@ -656,10 +656,10 @@ genus Lexor {
                 si ego.specta(0) == "<" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.MinorBis, "<<", loc)        // left shift
-                } aliter si ego.specta(0) == "=" {
+                } sin ego.specta(0) == "=" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.MinorAequum, "<=", loc)     // less or equal
-                } aliter {
+                } secus {
                     ego.addeSymbolum(SymbolumGenus.Minor, c, loc)              // less than
                 }
             }
@@ -670,13 +670,13 @@ genus Lexor {
                     ego.procede()
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.MaiorTer, ">>>", loc)       // unsigned right shift
-                } aliter si ego.specta(0) == ">" {
+                } sin ego.specta(0) == ">" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.MaiorBis, ">>", loc)        // right shift
-                } aliter si ego.specta(0) == "=" {
+                } sin ego.specta(0) == "=" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.MaiorAequum, ">=", loc)     // greater or equal
-                } aliter {
+                } secus {
                     ego.addeSymbolum(SymbolumGenus.Maior, c, loc)              // greater than
                 }
             }
@@ -686,7 +686,7 @@ genus Lexor {
                 si ego.specta(0) == "&" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.EtEt, "&&", loc)            // logical and
-                } aliter {
+                } secus {
                     ego.addeSymbolum(SymbolumGenus.Et, c, loc)                 // bitwise and
                 }
             }
@@ -694,7 +694,7 @@ genus Lexor {
                 si ego.specta(0) == "|" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.VelVel, "||", loc)          // logical or
-                } aliter {
+                } secus {
                     ego.addeSymbolum(SymbolumGenus.Vel, c, loc)                // bitwise or
                 }
             }
@@ -704,7 +704,7 @@ genus Lexor {
             si "~" { ego.addeSymbolum(SymbolumGenus.Unda, c, loc) }   // bitwise not (unda = wave)
 
             // ---- Unknown character ----
-            aliter {
+            secus {
                 ego.addeErrorem(LexorErrorCodice.SignumInopinatum, loc)
             }
         }

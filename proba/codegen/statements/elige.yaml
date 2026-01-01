@@ -5,7 +5,7 @@
 #   elige discriminant {
 #     si value1 { consequent }
 #     si value2 { consequent }
-#     aliter { default }
+#     secus { default }
 #   }
 #
 # Target behaviors:
@@ -62,12 +62,12 @@
           - 'si 2'
           - 'b()'
 
-# Elige with default case (aliter)
+# Elige with default case (secus)
 - name: elige with default case
   faber: |
       elige status {
         si 1 { active() }
-        aliter { inactive() }
+        secus { inactive() }
       }
   expect:
       ts:
@@ -102,7 +102,7 @@
           - 'elige status'
           - 'si 1'
           - 'active()'
-          - 'aliter'
+          - 'secus'
           - 'inactive()'
 
 # =============================================================================
@@ -115,7 +115,7 @@
       elige cmd {
         si "start" { begin() }
         si "stop" { end() }
-        aliter { unknown() }
+        secus { unknown() }
       }
   expect:
       ts:
@@ -159,7 +159,7 @@
           - 'begin()'
           - 'si "stop"'
           - 'end()'
-          - 'aliter'
+          - 'secus'
           - 'unknown()'
 
 # =============================================================================
@@ -175,7 +175,7 @@
           process(x)
           redde x
         }
-        aliter {
+        secus {
           redde nihil
         }
       }
@@ -223,7 +223,7 @@
           - 'varia x = init()'
           - 'process(x)'
           - 'redde x'
-          - 'aliter'
+          - 'secus'
           - 'redde nihil'
 
 # =============================================================================
@@ -313,7 +313,7 @@
 - name: elige with only default case
   faber: |
       elige x {
-        aliter { fallback() }
+        secus { fallback() }
       }
   expect:
       ts:
@@ -335,7 +335,7 @@
           - 'fallback();'
       fab:
           - 'elige x'
-          - 'aliter'
+          - 'secus'
           - 'fallback()'
 
 # Empty case body
@@ -343,7 +343,7 @@
   faber: |
       elige x {
         si 1 { }
-        aliter { action() }
+        secus { action() }
       }
   expect:
       ts:
@@ -373,7 +373,7 @@
       fab:
           - 'elige x'
           - 'si 1'
-          - 'aliter'
+          - 'secus'
           - 'action()'
 
 # Elige with many cases (10+)
@@ -392,7 +392,7 @@
         si 10 { redde "Oct" }
         si 11 { redde "Nov" }
         si 12 { redde "Dec" }
-        aliter { redde "Unknown" }
+        secus { redde "Unknown" }
       }
   expect:
       ts:
@@ -431,7 +431,7 @@
           - 'redde "Jan"'
           - 'si 12'
           - 'redde "Dec"'
-          - 'aliter'
+          - 'secus'
           - 'redde "Unknown"'
 
 # Elige as potential expression (return in every case)
@@ -441,7 +441,7 @@
         si 1 { redde "low" }
         si 2 { redde "medium" }
         si 3 { redde "high" }
-        aliter { redde "unknown" }
+        secus { redde "unknown" }
       }
   expect:
       ts:
@@ -487,7 +487,7 @@
           - 'redde "medium"'
           - 'si 3'
           - 'redde "high"'
-          - 'aliter'
+          - 'secus'
           - 'redde "unknown"'
 
 # Elige with boolean cases
@@ -529,7 +529,7 @@
         si 1 {
           si x > 0 {
             positive()
-          } aliter {
+          } secus {
             nonPositive()
           }
         }
@@ -577,7 +577,7 @@
           - 'si 1'
           - 'si x > 0'
           - 'positive()'
-          - 'aliter'
+          - 'secus'
           - 'nonPositive()'
           - 'si 2'
           - 'action()'

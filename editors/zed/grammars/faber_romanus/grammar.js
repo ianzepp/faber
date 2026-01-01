@@ -183,8 +183,8 @@ module.exports = grammar({
                 optional(seq('->', field('return_type', $.type_annotation))),
             ),
 
-        // If: si condition { } [cape err { }] [aliter { }]
-        // Or: si condition ergo statement [aliter ...]
+        // If: si condition { } [cape err { }] [secus { }]
+        // Or: si condition ergo statement [secus ...]
         if_statement: $ =>
             prec.right(
                 choice(
@@ -207,7 +207,7 @@ module.exports = grammar({
                 ),
             ),
 
-        else_clause: $ => seq('aliter', choice($.if_statement, $.block_statement, $._statement)),
+        else_clause: $ => seq('secus', choice($.if_statement, $.block_statement, $._statement)),
 
         // While: dum condition { } [cape err { }]
         // Or: dum condition ergo statement
@@ -239,7 +239,7 @@ module.exports = grammar({
                 ),
             ),
 
-        // Switch: elige expr { si val ergo/{ } ... aliter { } }
+        // Switch: elige expr { si val ergo/{ } ... secus { } }
         switch_statement: $ =>
             seq(
                 'elige',
@@ -257,7 +257,7 @@ module.exports = grammar({
                 seq('si', field('test', $._expression), 'ergo', field('consequent', $._statement)),
             ),
 
-        switch_default: $ => seq('aliter', choice($.block_statement, $._statement)),
+        switch_default: $ => seq('secus', choice($.block_statement, $._statement)),
 
         // Guard: custodi { si cond { } ... }
         guard_statement: $ => seq('custodi', '{', repeat($.guard_clause), '}'),

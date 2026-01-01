@@ -30,7 +30,7 @@ TypeScript is the primary compilation target for Faber. The language design was 
 | `ego`                   | `this`                  | Self reference                                   |
 | `novum`                 | `new`                   | Object construction                              |
 | `novum X {}`            | `new X({})`             | Constructor with overrides                       |
-| `si`/`aliter`           | `if`/`else`             | Conditionals                                     |
+| `si`/`secus`           | `if`/`else`             | Conditionals                                     |
 | `dum`                   | `while`                 | While loop                                       |
 | `ex...pro`              | `for...of`              | Iteration                                        |
 | `elige`                 | `if/else` chain         | See `principles.md` — always if/else, not switch |

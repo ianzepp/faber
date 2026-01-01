@@ -17,7 +17,7 @@
  * - futura functio -> async def
  * - genus -> class with dataclass-like pattern
  * - pactum -> typing.Protocol
- * - si/aliter -> if/elif/else
+ * - si/secus -> if/elif/else
  * - elige -> match/case (Python 3.10+)
  * - ex...pro -> for...in
  * - scribe -> print()

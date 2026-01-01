@@ -3,7 +3,7 @@
  *
  * TRANSFORMS:
  *   si x > 0 { ... } -> if (x > 0) { ... }
- *   si x > 0 { ... } aliter { ... } -> if (x > 0) { ... } else { ... }
+ *   si x > 0 { ... } secus { ... } -> if (x > 0) { ... } else { ... }
  *   si x > 0 { ... } alioqui y > 0 { ... } -> if (x > 0) { ... } else if (y > 0) { ... }
  */
 

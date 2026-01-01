@@ -3,7 +3,7 @@
 /// Handles: si, dum, ex, de (conditionals and loops)
 ///
 /// GRAMMAR:
-///   siStmt := 'si' expr blockStmt ('aliter' 'si' expr blockStmt)* ('aliter' blockStmt)?
+///   siStmt := 'si' expr blockStmt ('secus' 'si' expr blockStmt)* ('secus' blockStmt)?
 ///           | 'si' expr blockStmt 'cape' IDENT blockStmt
 ///   dumStmt := 'dum' expr blockStmt ('cape' IDENT blockStmt)?
 ///   exStmt := 'ex' expr 'pro' IDENT blockStmt ('cape' IDENT blockStmt)?
@@ -11,7 +11,7 @@
 ///
 /// LATIN VOCABULARY:
 /// - si = if
-/// - aliter = else  
+/// - secus = else
 /// - sin = else if
 /// - dum = while
 /// - ex = from (iterate values)
@@ -29,62 +29,62 @@ ex "./massa" importa parseMassaSententia
 
 /// Parse if statement
 ///
-/// GRAMMAR: 
-///   siStmt := 'si' expr blockStmt ('aliter' 'si' expr blockStmt)* ('aliter' blockStmt)?
+/// GRAMMAR:
+///   siStmt := 'si' expr blockStmt ('secus' 'si' expr blockStmt)* ('secus' blockStmt)?
 ///           | 'si' expr blockStmt 'cape' IDENT blockStmt
 ///
 /// Examples:
 ///   si x > 0 { scribe "positive" }
-///   si x > 0 { ... } aliter { ... }
-///   si x > 0 { ... } aliter si x < 0 { ... } aliter { ... }
+///   si x > 0 { ... } secus { ... }
+///   si x > 0 { ... } sin x < 0 { ... } secus { ... }
 ///   si fetch() cape err { handle(err) }
 functio parseSiSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
-    
+
     // Consume 'si'
     p.expectaVerbum("si", ParserErrorCodice.ExpectaturSi)
-    
+
     // Parse condition
     fixum condicio = r.expressia()
-    
+
     // Parse consequent block
     fixum consequens = parseMassaSententia(r)
-    
+
     // Check for optional catch (si expr { } cape err { })
     varia cape = nihil qua CapeClausula?
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
     }
-    
+
     // Check for else/else-if chain
     varia alternans = nihil qua Sententia?
-    
-    si p.probaVerbum("aliter") {
-        // Check if this is 'aliter si' (else if)
+
+    si p.probaVerbum("secus") {
+        // Check if this is 'sin' (else if)
         si p.probaVerbum("si") {
             // Recurse - but we already consumed 'si', need to back up
             // Actually, let's handle else-if differently
         }
         alternans = parseMassaSententia(r)
     }
-    
+
     // Also check for 'sin' (else if shorthand)
     si p.probaVerbum("sin") {
         // Parse the rest as another si statement
         fixum siLocus = p.specta(-1).locus
         fixum siCondicio = r.expressia()
         fixum siConsequens = parseMassaSententia(r)
-        
+
         // Recursively check for more else-if or else
         varia siAlternans = nihil qua Sententia?
-        si p.probaVerbum("aliter") {
+        si p.probaVerbum("secus") {
             siAlternans = parseMassaSententia(r)
-        } aliter si p.probaVerbum("sin") {
+        } sin p.probaVerbum("sin") {
             // Need to handle nested sin - for now, parse as expression statement
             // TODO: proper recursive handling
         }
-        
+
         alternans = finge SiSententia {
             locus: siLocus,
             condicio: siCondicio,
@@ -93,7 +93,7 @@ functio parseSiSententia(Resolvitor r) -> Sententia {
             cape: nihil
         } qua Sententia
     }
-    
+
     redde finge SiSententia {
         locus: locus,
         condicio: condicio,
@@ -113,22 +113,22 @@ functio parseSiSententia(Resolvitor r) -> Sententia {
 functio parseDumSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
-    
+
     // Consume 'dum'
     p.expectaVerbum("dum", ParserErrorCodice.ExpectaturDum)
-    
+
     // Parse condition
     fixum condicio = r.expressia()
-    
+
     // Parse body
     fixum corpus = parseMassaSententia(r)
-    
+
     // Optional catch
     varia cape = nihil qua CapeClausula?
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
     }
-    
+
     redde finge DumSententia {
         locus: locus,
         condicio: condicio,
@@ -147,29 +147,29 @@ functio parseDumSententia(Resolvitor r) -> Sententia {
 functio parseExSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
-    
+
     // Consume 'ex'
     p.expectaVerbum("ex", ParserErrorCodice.ExpectaturEx)
-    
+
     // Parse iterable expression
     fixum iterabile = r.expressia()
-    
+
     // Expect 'pro'
     p.expectaVerbum("pro", ParserErrorCodice.ExpectaturPro)
-    
+
     // Parse variable name
     fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
     fixum variabilis = nomenSym.valor
-    
+
     // Parse body
     fixum corpus = parseMassaSententia(r)
-    
+
     // Optional catch
     varia cape = nihil qua CapeClausula?
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
     }
-    
+
     redde finge IteratioSententia {
         locus: locus,
         species: IteratioGenus.Ex,
@@ -190,29 +190,29 @@ functio parseExSententia(Resolvitor r) -> Sententia {
 functio parseDeSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
-    
+
     // Consume 'de'
     p.expectaVerbum("de", ParserErrorCodice.ExpectaturDe)
-    
+
     // Parse iterable expression
     fixum iterabile = r.expressia()
-    
+
     // Expect 'pro'
     p.expectaVerbum("pro", ParserErrorCodice.ExpectaturPro)
-    
+
     // Parse variable name
     fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
     fixum variabilis = nomenSym.valor
-    
+
     // Parse body
     fixum corpus = parseMassaSententia(r)
-    
+
     // Optional catch
     varia cape = nihil qua CapeClausula?
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
     }
-    
+
     redde finge IteratioSententia {
         locus: locus,
         species: IteratioGenus.De,
@@ -232,14 +232,14 @@ functio parseDeSententia(Resolvitor r) -> Sententia {
 functio parseCapeClausula(Resolvitor r) -> CapeClausula {
     fixum p = r.parser()
     fixum locus = p.specta(-1).locus  // 'cape' already consumed
-    
+
     // Parse error binding name
     fixum paramSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
     fixum param = paramSym.valor
-    
+
     // Parse catch body
     fixum corpus = parseMassaSententia(r)
-    
+
     redde {
         locus: locus,
         param: param,

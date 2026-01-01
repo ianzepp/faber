@@ -30,7 +30,7 @@ Prefer simple, uniform codegen over target-specific optimizations. Downstream co
 elige status {
     si 0 { pending() }
     si 1 { active() }
-    aliter { unknown() }
+    secus { unknown() }
 }
 ```
 
