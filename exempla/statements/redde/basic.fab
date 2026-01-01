@@ -1,5 +1,5 @@
 # Basic redde (return) statements
-//
+#
 # redde <expression>   -- return a value
 # redde                -- void return
 

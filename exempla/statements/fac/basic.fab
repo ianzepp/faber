@@ -1,5 +1,5 @@
 # Basic fac (do) scope blocks
-//
+#
 # fac { <body> }
 
 incipit {

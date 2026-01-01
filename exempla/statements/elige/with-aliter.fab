@@ -1,5 +1,5 @@
 # Elige with default case (secus)
-//
+#
 # elige <expr> {
 #     si <value> { <body> }
 #     secus { <default> }

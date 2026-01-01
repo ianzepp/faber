@@ -1,8 +1,8 @@
 # One-liner conditionals with ergo
-//
+#
 # si <condition> ergo <statement>
 # si <condition> ergo <statement> secus <statement>
-//
+#
 # ergo = "therefore, thus" (logical consequence)
 
 incipit {

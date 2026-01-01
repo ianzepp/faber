@@ -1,5 +1,5 @@
 # Genus with methods using ego (self) reference
-//
+#
 # genus <Name> {
 #     <type> <property>
 #     functio <method>() -> <type> { ... ego.<property> ... }

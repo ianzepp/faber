@@ -1,5 +1,5 @@
 # Error handling in functions
-//
+#
 # Functions can use tempta-cape to handle errors internally
 # or let errors propagate to callers
 

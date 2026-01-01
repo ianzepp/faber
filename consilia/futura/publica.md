@@ -1,6 +1,6 @@
 # Notae: Annotation-Based Modifiers
 
-Use `#` to enter annotation mode. Everything after `#` until newline is metadata (notae) that modifies the following declaration.
+Use `@` to enter annotation mode. Everything after `@` until newline is metadata (notae) that modifies the following declaration. The `#` character is reserved exclusively for line comments.
 
 ## Rationale
 
@@ -82,15 +82,15 @@ functio fetch() cura alloc -> Data { }
 
 All gender variants are semantically equivalent — `publicum`, `publica`, and `publicus` all mean "public." The compiler accepts any form for any declaration.
 
-However, *correct* Latin uses gender agreement. The preferred forms:
+However, _correct_ Latin uses gender agreement. The preferred forms:
 
-| Declaration | Gender | public | private | protected | abstract |
-|-------------|--------|--------|---------|-----------|----------|
-| `genus` | neuter | `publicum` | `privatum` | `protectum` | `abstractum` |
-| `pactum` | neuter | `publicum` | `privatum` | `protectum` | — |
-| `functio` | feminine | `publica` | `privata` | `protecta` | `abstracta` |
-| `ordo` | masculine | `publicus` | `privatus` | `protectus` | — |
-| field | neuter | `publicum` | `privatum` | `protectum` | — |
+| Declaration | Gender    | public     | private    | protected   | abstract     |
+| ----------- | --------- | ---------- | ---------- | ----------- | ------------ |
+| `genus`     | neuter    | `publicum` | `privatum` | `protectum` | `abstractum` |
+| `pactum`    | neuter    | `publicum` | `privatum` | `protectum` | —            |
+| `functio`   | feminine  | `publica`  | `privata`  | `protecta`  | `abstracta`  |
+| `ordo`      | masculine | `publicus` | `privatus` | `protectus` | —            |
+| field       | neuter    | `publicum` | `privatum` | `protectum` | —            |
 
 Async/generator modifiers on functions also use feminine: `futura`, `cursor`.
 
@@ -212,6 +212,7 @@ function validateAnnotations(decl: Declaration): void {
 Extract visibility from annotations and emit target-appropriate code:
 
 **TypeScript:**
+
 ```typescript
 const visibility = getVisibility(node.annotations);
 const exportKeyword = visibility === 'public' ? 'export ' : '';
@@ -350,15 +351,18 @@ functio internalHelper() -> vacuum {
 1. **Annotation arguments**: Should annotations support arguments? E.g., `@ obsoletum("Use V2")` or `@ obsoletum "Use V2"`
 
 2. **Multi-line annotations**: Allow annotations to span lines with continuation?
-   ```fab
-   @ publicum
-   @ obsoletum "Use V2"
-   genus OldThing { }
-   ```
-   vs
-   ```fab
-   @ publicum obsoletum("Use V2")
-   genus OldThing { }
-   ```
+
+    ```fab
+    @ publicum
+    @ obsoletum "Use V2"
+    genus OldThing { }
+    ```
+
+    vs
+
+    ```fab
+    @ publicum obsoletum("Use V2")
+    genus OldThing { }
+    ```
 
 3. **Contextual keywords**: Annotation words should not be reserved globally — `publicum` should be valid as an identifier elsewhere.

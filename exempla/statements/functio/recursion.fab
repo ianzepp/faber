@@ -1,5 +1,5 @@
 # Recursive functions
-//
+#
 # Functions that call themselves with a base case
 
 # Factorial: n! = n * (n-1)!

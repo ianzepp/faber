@@ -1,10 +1,10 @@
 # Genus with constructor hook (creo)
-//
+#
 # genus <Name> {
 #     <type> <property>: <default>
 #     functio creo() { ... }
 # }
-//
+#
 # creo() runs after defaults and overrides are merged.
 # Use for validation, clamping, or derived initialization.
 

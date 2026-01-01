@@ -1,5 +1,5 @@
 # Basic tempta-cape (try-catch) with iace (throw)
-//
+#
 # tempta { <body> }
 # cape <errorName> { <handler> }
 # iace <expression>

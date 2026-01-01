@@ -1,5 +1,5 @@
 # Break (rumpe) in loops
-//
+#
 # rumpe exits the innermost loop immediately
 
 incipit ergo cura arena {

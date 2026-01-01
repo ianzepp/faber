@@ -1,5 +1,5 @@
 # Basic varia and fixum declarations
-//
+#
 # varia <name> = <expr>   -- mutable binding
 # fixum <name> = <expr>   -- immutable binding
 

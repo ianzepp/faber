@@ -1,5 +1,5 @@
 # Fac blocks with error handling (cape)
-//
+#
 # fac { <body> } cape <error> { <handler> }
 
 incipit {

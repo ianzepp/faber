@@ -1,5 +1,5 @@
 # Test modifiers: omitte (skip) and futurum (todo)
-//
+#
 # proba omitte "reason" "name" { body }
 # proba futurum "reason" "name" { body }
 

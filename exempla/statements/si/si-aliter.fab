@@ -1,5 +1,5 @@
 # si-secus (if-else) conditionals
-//
+#
 # si <condition> { <body> } secus { <body> }
 # si <cond1> { } sin <cond2> { } secus { }
 

@@ -1,5 +1,5 @@
 # Basic elige (switch) statement
-//
+#
 # elige <expr> {
 #     si <value> { <body> }
 #     si <value> { <body> }

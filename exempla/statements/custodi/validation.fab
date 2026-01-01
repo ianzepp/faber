@@ -1,5 +1,5 @@
 # Input validation patterns with custodi
-//
+#
 # Use custodi to group related precondition checks.
 # Each guard should return early or throw on invalid input.
 

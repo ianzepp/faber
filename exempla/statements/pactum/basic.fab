@@ -1,5 +1,5 @@
 # Basic pactum (interface) definition and implementation
-//
+#
 # pactum <Name> { functio <method>(<params>) -> <returnType> }
 # genus <Name> implet <Pactum> { <implementation> }
 

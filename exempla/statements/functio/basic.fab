@@ -1,5 +1,5 @@
 # Basic function declarations
-//
+#
 # functio <name>() { <body> }
 # functio <name>() -> <type> { <body> }
 

@@ -1,5 +1,5 @@
 # Assertions in functions for preconditions and postconditions
-//
+#
 # adfirma <condition>
 # adfirma <condition>, "error message"
 

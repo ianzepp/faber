@@ -1,5 +1,5 @@
 # Basic iace (throw) statement
-//
+#
 # iace <expression>
 
 incipit {

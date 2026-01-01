@@ -1,5 +1,5 @@
 # Basic de...pro (for-in) key iteration
-//
+#
 # de <object> pro <key> { <body> }
 # de <array> pro <index> { <body> }
 

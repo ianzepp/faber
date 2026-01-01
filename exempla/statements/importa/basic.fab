@@ -1,5 +1,5 @@
 # Import statements (importa)
-//
+#
 # ex <source> importa <names>           - named imports
 # ex <source> importa <name> ut <alias> - import with alias
 # ex <source> importa * ut <alias>      - wildcard import with alias

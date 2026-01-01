@@ -1,5 +1,5 @@
 # Strict equality with est
-//
+#
 # est = "is" (strict equality, like ===)
 # Used for null checks and boolean comparisons
 

@@ -1,5 +1,5 @@
 # Continue (perge) in loops
-//
+#
 # perge skips to the next iteration of the innermost loop
 
 incipit ergo cura arena {

@@ -1,7 +1,7 @@
 # Basic custodi (guard clause) statement
-//
+#
 # custodi { si <condition> { <early-return> } }
-//
+#
 # Groups early-exit checks at function start to separate
 # validation from main logic.
 

@@ -1,5 +1,5 @@
 # Typed variable declarations
-//
+#
 # varia <type> <name> = <expr>   -- typed mutable
 # fixum <type> <name> = <expr>   -- typed immutable
 

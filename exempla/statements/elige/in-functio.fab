@@ -1,5 +1,5 @@
 # Elige with early returns in functions
-//
+#
 # elige <expr> {
 #     si <value> { redde ... }
 #     si <value> { redde ... }

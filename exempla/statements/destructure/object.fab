@@ -1,5 +1,5 @@
 # Object destructuring patterns
-//
+#
 # ex obj fixum field1, field2     -- extract fields into immutable bindings
 # ex obj varia field1, field2     -- extract into mutable bindings
 # ex obj fixum field ut alias     -- extract with alias (rename)

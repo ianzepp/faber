@@ -1,5 +1,5 @@
 # Basic discretio (discriminated union/tagged union)
-//
+#
 # discretio Name {
 #     Variant1 { type field1, type field2 }
 #     Variant2 { type field }

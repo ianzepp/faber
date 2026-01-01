@@ -1,5 +1,5 @@
 # Functions with typed parameters
-//
+#
 # functio <name>(type param, type param) -> type { <body> }
 
 # Single typed parameter

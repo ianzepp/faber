@@ -1,5 +1,5 @@
 # Basic adfirma (assert) statements
-//
+#
 # adfirma <condition>
 # adfirma <condition>, "error message"
 

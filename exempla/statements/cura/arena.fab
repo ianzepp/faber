@@ -1,7 +1,7 @@
 # Arena allocator scope
-//
+#
 # cura arena fit <identifier> { <body> }
-//
+#
 # Arena allocators provide fast allocation with bulk deallocation.
 # All memory is freed when the scope exits.
 # On GC targets (TS, Python), allocator blocks are ignored.

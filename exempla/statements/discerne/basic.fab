@@ -1,5 +1,5 @@
 # Pattern matching with discerne (discriminate/distinguish)
-//
+#
 # discerne <value> {
 #     si <Variant> { <body> }
 #     si <Variant> pro <bindings> { <body> }

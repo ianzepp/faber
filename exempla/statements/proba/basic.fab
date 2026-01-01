@@ -1,5 +1,5 @@
 # Basic proba (test) statements
-//
+#
 # proba "name" { body }
 
 # Simple test with single assertion

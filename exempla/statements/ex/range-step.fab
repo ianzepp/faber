@@ -1,5 +1,5 @@
 # Ranges with step using per
-//
+#
 # ex <start>..<end> per <step> pro <item> { }
 # ex <start> usque <end> per <step> pro <item> { }
 

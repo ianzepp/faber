@@ -1,5 +1,5 @@
 # Basic ordo (enum) declaration
-//
+#
 # ordo Name { Member1, Member2, Member3 }
 # ordo Name { Member1 = value1, Member2 = value2 }
 

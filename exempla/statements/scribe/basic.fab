@@ -1,5 +1,5 @@
 # Basic scribe (print) statements
-//
+#
 # scribe <expr>
 # scribe <expr>, <expr>, ...
 

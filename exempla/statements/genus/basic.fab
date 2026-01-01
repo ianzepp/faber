@@ -1,5 +1,5 @@
 # Basic genus (class/struct) with properties
-//
+#
 # genus <Name> {
 #     <type> <property>
 #     <type> <property>: <default>

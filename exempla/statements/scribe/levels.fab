@@ -1,5 +1,5 @@
 # Output statements with different log levels
-//
+#
 # scribe <expr>  -> console.log (standard output)
 # vide <expr>    -> console.debug (debug output)
 # mone <expr>    -> console.warn (warning output)

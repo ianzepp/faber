@@ -1,5 +1,5 @@
 # Basic in (mutation block) statements
-//
+#
 # in <object> { <assignments> }
 
 incipit {

@@ -1,5 +1,5 @@
 # Iterating over arrays with ex...pro
-//
+#
 # ex <collection> pro <item> { <body> }
 
 incipit {
