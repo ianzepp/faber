@@ -123,6 +123,33 @@ import {
 } from './types';
 import { SemanticErrorCode, SEMANTIC_ERRORS } from './errors';
 import { isLocalImport, resolveModule, createModuleContext, type ModuleContext, type ModuleExports } from './modules';
+import type { Annotation } from '../parser/ast';
+
+// =============================================================================
+// ANNOTATION HELPERS
+// =============================================================================
+
+/**
+ * Check if annotations include async modifier (futura).
+ */
+function isAsyncFromAnnotations(annotations?: Annotation[]): boolean {
+    if (!annotations) return false;
+    for (const ann of annotations) {
+        if (ann.modifiers.includes('futura')) return true;
+    }
+    return false;
+}
+
+/**
+ * Check if annotations include generator modifier (cursor).
+ */
+function isGeneratorFromAnnotations(annotations?: Annotation[]): boolean {
+    if (!annotations) return false;
+    for (const ann of annotations) {
+        if (ann.modifiers.includes('cursor')) return true;
+    }
+    return false;
+}
 
 // =============================================================================
 // TYPES
@@ -1564,8 +1591,8 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         const previousGenerator = currentFunctionGenerator;
 
         currentFunctionReturnType = returnType;
-        currentFunctionAsync = node.async;
-        currentFunctionGenerator = node.generator;
+        currentFunctionAsync = node.async || isAsyncFromAnnotations(node.annotations);
+        currentFunctionGenerator = node.generator || isGeneratorFromAnnotations(node.annotations);
 
         // Define parameters (use alias if present for internal name)
         for (let i = 0; i < node.params.length; i++) {
@@ -1676,8 +1703,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
             if (field.isStatic) {
                 staticFields.set(field.name.name, fieldType);
-            }
-            else {
+            } else {
                 fields.set(field.name.name, fieldType);
             }
         }
@@ -2263,13 +2289,9 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
     function resolveSignature(stmt: Statement): void {
         switch (stmt.type) {
             case 'FunctioDeclaration': {
-                const paramTypes: SemanticType[] = stmt.params.map(p =>
-                    p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN
-                );
+                const paramTypes: SemanticType[] = stmt.params.map(p => (p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN));
                 const returnType = stmt.returnType ? resolveTypeAnnotation(stmt.returnType) : VACUUM;
-                const hasCuratorParam = stmt.params.some(
-                    p => p.typeAnnotation?.name.toLowerCase() === 'curator'
-                );
+                const hasCuratorParam = stmt.params.some(p => p.typeAnnotation?.name.toLowerCase() === 'curator');
                 const fnType = functionType(paramTypes, returnType, stmt.async, hasCuratorParam);
 
                 updateSymbolType(currentScope, stmt.name.name, fnType);
@@ -2287,16 +2309,13 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
                     if (field.isStatic) {
                         staticFields.set(field.name.name, fieldType);
-                    }
-                    else {
+                    } else {
                         fields.set(field.name.name, fieldType);
                     }
                 }
 
                 for (const method of stmt.methods) {
-                    const paramTypes = method.params.map(p =>
-                        p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN
-                    );
+                    const paramTypes = method.params.map(p => (p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN));
                     const returnType = method.returnType ? resolveTypeAnnotation(method.returnType) : VACUUM;
                     const fnType = functionType(paramTypes, returnType, method.async);
 
@@ -2313,9 +2332,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
                 const methods = new Map<string, FunctionType>();
 
                 for (const method of stmt.methods) {
-                    const paramTypes = method.params.map(p =>
-                        p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN
-                    );
+                    const paramTypes = method.params.map(p => (p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN));
                     const returnType = method.returnType ? resolveTypeAnnotation(method.returnType) : VACUUM;
                     const fnType = functionType(paramTypes, returnType, method.async);
 

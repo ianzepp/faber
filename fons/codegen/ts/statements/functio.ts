@@ -20,7 +20,13 @@
 
 import type { FunctioDeclaration, BlockStatement } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
-import { getVisibilityFromAnnotations, isAbstractFromAnnotations } from '../../types';
+import {
+    getVisibilityFromAnnotations,
+    isAbstractFromAnnotations,
+    isAsyncFromAnnotations,
+    isGeneratorFromAnnotations,
+    isStaticFromAnnotations,
+} from '../../types';
 
 export function genFunctioDeclaration(node: FunctioDeclaration, g: TsGenerator): string {
     const name = node.name.name;
@@ -32,6 +38,11 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: TsGenerator):
     // Module-level: export when public (inClass is false for top-level functions)
     const visibility = getVisibilityFromAnnotations(node.annotations);
     const exportMod = !g.inClass && visibility === 'public' ? 'export ' : '';
+
+    // Derive async/generator from annotations OR node properties
+    // WHY: @ futura and @ cursor annotations are equivalent to inline futura/cursor modifiers
+    const isAsync = node.async || isAsyncFromAnnotations(node.annotations);
+    const isGenerator = node.generator || isGeneratorFromAnnotations(node.annotations);
 
     // Handle abstract methods (no body)
     if (node.isAbstract || !node.body) {
@@ -51,15 +62,15 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: TsGenerator):
     let returnType = '';
     if (node.returnType) {
         let baseType = g.genType(node.returnType);
-        if (node.async && node.generator) {
+        if (isAsync && isGenerator) {
             baseType = `AsyncGenerator<${baseType}>`;
-        } else if (node.generator || useFiunt) {
+        } else if (isGenerator || useFiunt) {
             // WHY: fiunt functions return Generator<T> (flow() unwraps internally)
             baseType = `Generator<${baseType}>`;
         } else if (useFient) {
             // WHY: fient functions return AsyncGenerator<T> (flowAsync() unwraps internally)
             baseType = `AsyncGenerator<${baseType}>`;
-        } else if (node.async || useFiet) {
+        } else if (isAsync || useFiet) {
             // WHY: fiet functions return Promise<T> (drainAsync() unwraps internally)
             baseType = `Promise<${baseType}>`;
         }
@@ -73,7 +84,7 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: TsGenerator):
     const prevInFiet = g.inFiet;
     const prevInFient = g.inFient;
 
-    g.inGenerator = node.generator;
+    g.inGenerator = isGenerator;
 
     if (useFit) {
         // WHY: Enable flumina mode so redde/iace emit yield respond.ok/error
@@ -171,8 +182,8 @@ ${ind}}`;
     }
 
     // Non-flumina path: arrow syntax, async, generator, or constructor
-    const async = node.async ? 'async ' : '';
-    const star = node.generator ? '*' : '';
+    const asyncMod = isAsync ? 'async ' : '';
+    const star = isGenerator ? '*' : '';
     const body = genBlockStatement(node.body, g);
 
     g.inGenerator = prevInGenerator;
@@ -181,7 +192,7 @@ ${ind}}`;
     g.inFiet = prevInFiet;
     g.inFient = prevInFient;
 
-    return `${g.ind()}${exportMod}${async}function${star} ${name}${typeParams}(${params})${returnType} ${body}`;
+    return `${g.ind()}${exportMod}${asyncMod}function${star} ${name}${typeParams}(${params})${returnType} ${body}`;
 }
 
 /**
@@ -207,15 +218,19 @@ export function genMethodDeclaration(node: FunctioDeclaration, g: TsGenerator): 
     const name = node.name.name;
     const params = node.params.map(p => g.genParameter(p)).join(', ');
 
+    // Derive async/generator from annotations OR node properties
+    const isAsync = node.async || isAsyncFromAnnotations(node.annotations);
+    const isGenerator = node.generator || isGeneratorFromAnnotations(node.annotations);
+
     // Wrap return type based on async/generator semantics
     let returnType = '';
     if (node.returnType) {
         let baseType = g.genType(node.returnType);
-        if (node.async && node.generator) {
+        if (isAsync && isGenerator) {
             baseType = `AsyncGenerator<${baseType}>`;
-        } else if (node.generator) {
+        } else if (isGenerator) {
             baseType = `Generator<${baseType}>`;
-        } else if (node.async) {
+        } else if (isAsync) {
             baseType = `Promise<${baseType}>`;
         }
         returnType = `: ${baseType}`;
@@ -231,15 +246,17 @@ export function genMethodDeclaration(node: FunctioDeclaration, g: TsGenerator): 
         return `${g.ind()}${visibilityMod}abstract ${name}(${params})${returnType};`;
     }
 
-    const asyncMod = node.async ? 'async ' : '';
-    const star = node.generator ? '*' : '';
+    const asyncMod = isAsync ? 'async ' : '';
+    const star = isGenerator ? '*' : '';
     const visibilityMod = visibility === 'private' ? 'private ' : visibility === 'protected' ? 'protected ' : '';
+    const isStatic = isStaticFromAnnotations(node.annotations);
+    const staticMod = isStatic ? 'static ' : '';
 
     // Track generator context for cede -> yield vs await
     const prevInGenerator = g.inGenerator;
-    g.inGenerator = node.generator;
+    g.inGenerator = isGenerator;
     const body = genBlockStatement(node.body, g);
     g.inGenerator = prevInGenerator;
 
-    return `${g.ind()}${visibilityMod}${asyncMod}${star}${name}(${params})${returnType} ${body}`;
+    return `${g.ind()}${visibilityMod}${staticMod}${asyncMod}${star}${name}(${params})${returnType} ${body}`;
 }

@@ -251,6 +251,22 @@ export function isGeneratorFromAnnotations(annotations?: Annotation[]): boolean 
 }
 
 /**
+ * Check if annotations include static modifier.
+ *
+ * @param annotations - Array of annotations from an AST node
+ * @returns true if generis is present
+ */
+export function isStaticFromAnnotations(annotations?: Annotation[]): boolean {
+    if (!annotations) return false;
+
+    for (const ann of annotations) {
+        if (ann.modifiers.includes('generis')) return true;
+    }
+
+    return false;
+}
+
+/**
  * Comment syntax configuration per target.
  *
  * WHY: Different targets have different comment syntax:

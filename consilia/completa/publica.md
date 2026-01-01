@@ -186,7 +186,7 @@ function getVisibility(annotations: Annotation[]): Visibility {
             if (['protectum', 'protecta', 'protectus'].includes(note)) return 'protected';
         }
     }
-    return 'public'; // default
+    return 'private'; // default - explicit @ publicum required for exports
 }
 ```
 

@@ -21,7 +21,7 @@
 import type { GenusDeclaration, FunctioDeclaration, FieldDeclaration } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
 import { genBlockStatement, genMethodDeclaration } from './functio';
-import { getVisibilityFromAnnotations, isAbstractFromAnnotations } from '../../types';
+import { getVisibilityFromAnnotations, isAbstractFromAnnotations, isStaticFromAnnotations } from '../../types';
 
 export function genGenusDeclaration(node: GenusDeclaration, g: TsGenerator, semi: boolean): string {
     const name = node.name.name;
@@ -81,8 +81,11 @@ export function genGenusDeclaration(node: GenusDeclaration, g: TsGenerator, semi
 function genAutoMergeConstructor(node: GenusDeclaration, g: TsGenerator, semi: boolean): string {
     const lines: string[] = [];
 
+    // Filter out static fields - they don't belong in constructor
+    const instanceFields = node.fields.filter(f => !f.isStatic && !isStaticFromAnnotations(f.annotations));
+
     // Build overrides type: { fieldName?: fieldType, ... }
-    const overrideProps = node.fields.map(f => {
+    const overrideProps = instanceFields.map(f => {
         const fieldName = f.name.name;
         const fieldType = g.genType(f.fieldType);
         return `${fieldName}?: ${fieldType}`;
@@ -93,7 +96,7 @@ function genAutoMergeConstructor(node: GenusDeclaration, g: TsGenerator, semi: b
     g.depth++;
 
     // Apply each override if provided
-    for (const field of node.fields) {
+    for (const field of instanceFields) {
         const fieldName = field.name.name;
         lines.push(`${g.ind()}if (overrides.${fieldName} !== undefined) { this.${fieldName} = overrides.${fieldName}${semi ? ';' : ''} }`);
     }
@@ -152,10 +155,11 @@ function genFieldDeclaration(node: FieldDeclaration, g: TsGenerator, semi: boole
         return lines.join('\n');
     }
 
-    // Regular fields - public by default (struct semantics)
+    // Regular fields - private by default
     const visibility = getVisibilityFromAnnotations(node.annotations);
     const visibilityMod = visibility === 'private' ? 'private ' : visibility === 'protected' ? 'protected ' : '';
-    const staticMod = node.isStatic ? 'static ' : '';
+    const isStatic = node.isStatic || isStaticFromAnnotations(node.annotations);
+    const staticMod = isStatic ? 'static ' : '';
     const init = node.init ? ` = ${g.genExpression(node.init)}` : '';
 
     return `${g.ind()}${visibilityMod}${staticMod}${name}: ${type}${init}${semi ? ';' : ''}`;
