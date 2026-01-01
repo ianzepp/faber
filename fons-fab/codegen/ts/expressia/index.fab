@@ -1,0 +1,315 @@
+# TypeScript Expression Generator - Dispatch to expression handlers
+#
+# Routes expression AST nodes to their specific generators.
+# Uses scriptum() for string formatting for consistency.
+
+ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas
+ex "../../../ast/typus" importa TypusAnnotatio
+ex "../nucleus" importa TsGenerator
+ex "../typus" importa genTypus
+
+# =============================================================================
+# EXPRESSION DISPATCH
+# =============================================================================
+
+# Generate TypeScript code for an expression
+@ publica
+functio genExpressia(Expressia expr, TsGenerator g) -> textus {
+    discerne expr {
+        # Identifiers
+        si Nomen pro locus, valor {
+            redde valor qua textus
+        }
+
+        si EgoExpressia {
+            redde "this"
+        }
+
+        # Literals
+        si Littera pro locus, species, crudus {
+            redde genLittera(species qua LitteraGenus, crudus qua textus)
+        }
+
+        si LitteraExemplar pro locus, partes, expressiae {
+            redde genLitteraExemplar(partes qua lista<textus>, expressiae qua lista<Expressia>, g)
+        }
+
+        si LitteraRegex pro locus, forma, vexilla {
+            g.features.usesRegex = verum
+            redde scriptum("/{}/{}", forma, vexilla)
+        }
+
+        # Binary and unary
+        si BinariaExpressia pro locus, sinister, signum, dexter {
+            redde scriptum("({} {} {})", genExpressia(sinister, g), signum, genExpressia(dexter, g))
+        }
+
+        si UnariaExpressia pro unariaLocus, unariaSigNum, unariaArg {
+            redde scriptum("{}{}", unariaSigNum, genExpressia(unariaArg, g))
+        }
+
+        si AssignatioExpressia pro locus, sinister, signum, dexter {
+            redde scriptum("{} {} {}", genExpressia(sinister, g), signum, genExpressia(dexter, g))
+        }
+
+        si CondicioExpressia pro locus, condicio, consequens, alternans {
+            redde scriptum("{} ? {} : {}", genExpressia(condicio, g), genExpressia(consequens, g), genExpressia(alternans, g))
+        }
+
+        si AmbitusExpressia pro locus, initium, finis, inclusivum {
+            # Range expressions become array generation
+            redde scriptum("[{}, {}]", genExpressia(initium, g), genExpressia(finis, g))
+        }
+
+        si QuaExpressia pro locus, expressia, scopus {
+            redde scriptum("{} as {}", genExpressia(expressia, g), genTypus(scopus qua TypusAnnotatio, g))
+        }
+
+        si EstExpressia pro locus, expressia, scopus {
+            redde genEstExpressia(expressia, scopus qua TypusAnnotatio, g)
+        }
+
+        si CatenaExpressia pro locus, fons, gradus {
+            # Collection DSL chains - TODO: implement properly
+            redde genExpressia(fons, g)
+        }
+
+        si PraefixumExpressia pro locus, corpus {
+            # Compile-time evaluation - in TS, just evaluate the expression
+            redde genExpressia(corpus, g)
+        }
+
+        # Calls and member access
+        si VocatioExpressia pro locus, vocatum, argumenta, optivum {
+            varia args = [] qua lista<textus>
+            ex (argumenta qua lista<Expressia>) pro arg {
+                args.adde(genExpressia(arg, g))
+            }
+            fixum optMark = (optivum qua bivalens) sic "?." secus ""
+            redde scriptum("{}{}({})", genExpressia(vocatum, g), optMark, args.iunge(", "))
+        }
+
+        si MembrumExpressia pro locus, obiectum, proprietas, computatum, optivum, nonNullum {
+            fixum obj = genExpressia(obiectum, g)
+            si computatum qua bivalens {
+                fixum idx = genExpressia(proprietas, g)
+                si optivum qua bivalens {
+                    redde scriptum("{}?.[{}]", obj, idx)
+                }
+                redde scriptum("{}[{}]", obj, idx)
+            }
+            # Dot access
+            fixum prop = genExpressia(proprietas, g)
+            si optivum qua bivalens {
+                redde scriptum("{}?.{}", obj, prop)
+            }
+            si nonNullum qua bivalens {
+                redde scriptum("{}!.{}", obj, prop)
+            }
+            redde scriptum("{}.{}", obj, prop)
+        }
+
+        si NovumExpressia pro locus, vocatum, argumenta, initor {
+            varia args = [] qua lista<textus>
+            ex (argumenta qua lista<Expressia>) pro arg {
+                args.adde(genExpressia(arg, g))
+            }
+            varia result = scriptum("new {}({})", genExpressia(vocatum, g), args.iunge(", "))
+            si nonnihil initor {
+                result = scriptum("{} /* initor: {} */", result, genExpressia(initor, g))
+            }
+            redde result
+        }
+
+        si CedeExpressia pro locus, argumentum {
+            # cede maps to yield in generators, await in async functions
+            si g.inFiunt {
+                redde scriptum("yield respond.item({})", genExpressia(argumentum, g))
+            }
+            si g.inFient {
+                redde scriptum("yield respond.item(await {})", genExpressia(argumentum, g))
+            }
+            si g.inGenerator {
+                redde scriptum("yield {}", genExpressia(argumentum, g))
+            }
+            redde scriptum("await {}", genExpressia(argumentum, g))
+        }
+
+        si ScriptumExpressia pro locus, exemplar, argumenta {
+            redde genScriptum(exemplar qua textus, argumenta qua lista<Expressia>, g)
+        }
+
+        si LegeExpressia pro locus, modus {
+            si (modus qua textus) == "line" {
+                redde "await _readline()"
+            }
+            redde "await _read()"
+        }
+
+        si AbExpressia pro locus, fons, transformatio {
+            redde scriptum("{}.{}", genExpressia(fons, g), genExpressia(transformatio, g))
+        }
+
+        # Collections
+        si SeriesExpressia pro locus, elementa {
+            varia items = [] qua lista<textus>
+            ex (elementa qua lista<Expressia>) pro elem {
+                items.adde(genExpressia(elem, g))
+            }
+            redde scriptum("[{}]", items.iunge(", "))
+        }
+
+        si ObiectumExpressia pro locus, proprietates {
+            redde genObiectum(proprietates qua lista<ObiectumProprietas>, g)
+        }
+
+        si DispersioElementum pro locus, argumentum {
+            redde scriptum("...{}", genExpressia(argumentum, g))
+        }
+
+        # Lambda
+        si LambdaExpressia pro locus, parametra, corpus, typusReditus {
+            ex "../../../ast/expressia" importa LambdaParametrum
+            varia params = [] qua lista<textus>
+            ex (parametra qua lista<LambdaParametrum>) pro p {
+                si nonnihil p.typus {
+                    params.adde(scriptum("{}: {}", p.nomen, genTypus(p.typus qua TypusAnnotatio, g)))
+                } secus {
+                    params.adde(p.nomen)
+                }
+            }
+            varia retType = ""
+            si nonnihil typusReditus {
+                retType = scriptum(": {}", genTypus(typusReditus qua TypusAnnotatio, g))
+            }
+            redde scriptum("({}){} => {}", params.iunge(", "), retType, genExpressia(corpus, g))
+        }
+
+        # Discretio construction
+        si FingeExpressia pro locus, variansNomen, campi, scopus {
+            # finge Click { x: 10 } qua Event -> { tag: 'Click', x: 10 }
+            varia props = [] qua lista<textus>
+            props.adde(scriptum("tag: '{}'", variansNomen))
+            ex (campi qua lista<ObiectumProprietas>) pro campo {
+                fixum key = genExpressia(campo.clavis, g)
+                fixum val = genExpressia(campo.valor, g)
+                props.adde(scriptum("{}: {}", key, val))
+            }
+            redde scriptum("{{ {} }}", props.iunge(", "))
+        }
+    }
+
+    # Fallback - should not reach here
+    redde "/* unknown expression */"
+}
+
+# =============================================================================
+# LITERAL HELPERS
+# =============================================================================
+
+# Generate literal value
+functio genLittera(LitteraGenus species, textus crudus) -> textus {
+    si species == LitteraGenus.Verum {
+        redde "true"
+    }
+    si species == LitteraGenus.Falsum {
+        redde "false"
+    }
+    si species == LitteraGenus.Nihil {
+        redde "null"
+    }
+    # Numerus, Fractus, Textus all pass through raw value
+    redde crudus
+}
+
+# Generate template literal
+functio genLitteraExemplar(lista<textus> partes, lista<Expressia> expressiae, TsGenerator g) -> textus {
+    varia result = "`"
+    varia i = 0
+    ex partes pro pars {
+        result = scriptum("{}{}", result, pars)
+        si i < expressiae.numerus() {
+            # Use ${{}} - the {{ and }} escape to literal { and }
+            result = scriptum("{}${{{}}}", result, genExpressia(expressiae[i], g))
+        }
+        i = i + 1
+    }
+    result = scriptum("{}`", result)
+    redde result
+}
+
+# =============================================================================
+# COMPLEX EXPRESSION HELPERS
+# =============================================================================
+
+# Generate est (type check) expression
+functio genEstExpressia(Expressia expr, TypusAnnotatio scopus, TsGenerator g) -> textus {
+    fixum val = genExpressia(expr, g)
+
+    # Primitive type checks use typeof
+    si scopus.nomen == "textus" {
+        redde scriptum("typeof {} === 'string'", val)
+    }
+    si scopus.nomen == "numerus" aut scopus.nomen == "fractus" {
+        redde scriptum("typeof {} === 'number'", val)
+    }
+    si scopus.nomen == "bivalens" {
+        redde scriptum("typeof {} === 'boolean'", val)
+    }
+    si scopus.nomen == "nihil" {
+        redde scriptum("{} === null", val)
+    }
+
+    # User-defined types use instanceof
+    redde scriptum("{} instanceof {}", val, scopus.nomen)
+}
+
+# Generate scriptum (format string) expression
+functio genScriptum(textus exemplar, lista<Expressia> argumenta, TsGenerator g) -> textus {
+    # Convert scriptum("Hello, {}!", name) to template literal
+    # Simple approach: replace {} with ${arg} in sequence
+    varia result = "`"
+    varia argIndex = 0
+    varia i = 0
+
+    dum i < exemplar.longitudo() {
+        fixum c = exemplar[i]
+        si c == "{" et i + 1 < exemplar.longitudo() et exemplar[i + 1] == "}" {
+            # Found {} placeholder
+            si argIndex < argumenta.numerus() {
+                result = scriptum("{}${{{}}}", result, genExpressia(argumenta[argIndex], g))
+                argIndex = argIndex + 1
+            }
+            i = i + 2
+        } secus {
+            result = scriptum("{}{}", result, c)
+            i = i + 1
+        }
+    }
+
+    result = scriptum("{}`", result)
+    redde result
+}
+
+# Generate object literal
+functio genObiectum(lista<ObiectumProprietas> proprietates, TsGenerator g) -> textus {
+    si proprietates.numerus() == 0 {
+        redde "{}"
+    }
+
+    varia props = [] qua lista<textus>
+    ex proprietates pro prop {
+        si prop.brevitas {
+            # Shorthand: { name } -> { name }
+            props.adde(genExpressia(prop.clavis, g))
+        } sin prop.computatum {
+            # Computed: { [expr]: value }
+            props.adde(scriptum("[{}]: {}", genExpressia(prop.clavis, g), genExpressia(prop.valor, g)))
+        } secus {
+            # Normal: { key: value }
+            props.adde(scriptum("{}: {}", genExpressia(prop.clavis, g), genExpressia(prop.valor, g)))
+        }
+    }
+
+    redde scriptum("{{ {} }}", props.iunge(", "))
+}

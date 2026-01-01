@@ -1,0 +1,130 @@
+# TypeScript Type Mapping - Latin types to TypeScript types
+#
+# Maps Latin type names to their TypeScript equivalents.
+
+ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum
+ex "./nucleus" importa TsGenerator
+
+# =============================================================================
+# TYPE MAPPING
+# =============================================================================
+
+# Map a Latin type name to TypeScript type name
+@ publica
+functio mappaNomenTypi(textus nomen) -> textus {
+    elige nomen {
+        # Primitives
+        si "textus" { redde "string" }
+        si "numerus" { redde "number" }
+        si "fractus" { redde "number" }
+        si "decimus" { redde "Decimal" }
+        si "magnus" { redde "bigint" }
+        si "bivalens" { redde "boolean" }
+        si "nihil" { redde "null" }
+        si "vacuum" { redde "void" }
+        si "numquam" { redde "never" }
+
+        # Binary
+        si "octeti" { redde "Uint8Array" }
+
+        # Collections
+        si "lista" { redde "Array" }
+        si "tabula" { redde "Map" }
+        si "copia" { redde "Set" }
+
+        # Async
+        si "promissum" { redde "Promise" }
+
+        # Error
+        si "erratum" { redde "Error" }
+
+        # Iterator
+        si "cursor" { redde "Iterator" }
+
+        # Object
+        si "objectum" { redde "object" }
+        si "object" { redde "object" }
+
+        # Unknown
+        si "ignotum" { redde "unknown" }
+    }
+
+    # User-defined type: pass through unchanged
+    redde nomen
+}
+
+# =============================================================================
+# TYPE GENERATION
+# =============================================================================
+
+# Generate TypeScript type from type annotation
+@ publica
+functio genTypus(TypusAnnotatio adnotatio, TsGenerator g) -> textus {
+    # Track feature usage for preamble
+    si adnotatio.nomen == "decimus" aut adnotatio.nomen == "decim" {
+        g.features.decimal = verum
+    }
+
+    # Map Latin type name to TypeScript
+    fixum base = mappaNomenTypi(adnotatio.nomen)
+
+    # Build result with generics
+    varia result = base
+
+    si nonnihil adnotatio.typusParametra {
+        fixum parametra = adnotatio.typusParametra qua lista<TypusParametrum>
+        si parametra.numerus() > 0 {
+            varia params = [] qua lista<textus>
+            ex parametra pro param {
+                fixum paramStr = genTypusParametrum(param, g)
+                si nonnihil paramStr {
+                    params.adde(paramStr qua textus)
+                }
+            }
+            si params.numerus() > 0 {
+                result = result + "<" + params.iunge(", ") + ">"
+            }
+        }
+    }
+
+    # Handle nullable: textus? -> string | null
+    si adnotatio.nullabilis {
+        result = result + " | null"
+    }
+
+    # Handle union types
+    si nonnihil adnotatio.unio {
+        fixum unioTypi = adnotatio.unio qua lista<TypusAnnotatio>
+        si unioTypi.numerus() > 0 {
+            varia parts = [] qua lista<textus>
+            ex unioTypi pro u {
+                parts.adde(genTypus(u, g))
+            }
+            result = parts.iunge(" | ")
+        }
+    }
+
+    redde result
+}
+
+# Generate a single type parameter
+@ publica
+functio genTypusParametrum(TypusParametrum param, TsGenerator g) -> textus? {
+    discerne param {
+        si Typus pro adnotatio {
+            redde genTypus(adnotatio, g)
+        }
+        si Littera pro valor {
+            # Ignore numeric parameters (e.g., numerus<32>)
+            redde nihil
+        }
+    }
+    redde nihil
+}
+
+# Generate type parameter declarations for generics
+# Example: <T, U, V>
+@ publica
+functio genTypusParametra(lista<textus> parametra) -> textus {
+    redde "<" + parametra.iunge(", ") + ">"
+}

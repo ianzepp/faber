@@ -1,0 +1,129 @@
+# Code Generation Types - Configuration and shared types
+#
+# This module defines shared types used across all code generators.
+# Simplified for bootstrap: only TS-relevant features tracked.
+
+# =============================================================================
+# REQUIRED FEATURES
+# =============================================================================
+
+# Features used in source code that require preamble setup.
+#
+# WHY: Different targets need different setup code (imports, includes, class
+#      definitions) based on which language features are actually used.
+#      Tracking usage allows minimal, tree-shakeable preambles.
+@ publicum
+genus RequiredFeatures {
+    # Error handling
+    bivalens panic           # mori used - needs Panic class
+
+    # Collections
+    bivalens lista           # lista<T> or array methods
+    bivalens tabula          # tabula<K,V>
+    bivalens copia           # copia<T>
+
+    # Async/generators
+    bivalens async           # futura, cede, promissum
+    bivalens asyncIterator   # fiet, async for
+    bivalens generator       # cursor, fiunt
+
+    # Numeric types
+    bivalens decimal         # decimus - needs decimal.js import
+
+    # Flumina (streams)
+    bivalens flumina         # fit functions using Responsum protocol
+
+    # Regex
+    bivalens usesRegex       # sed literals
+}
+
+# Create a RequiredFeatures with all flags false
+@ publica
+functio creaRequiredFeatures() -> RequiredFeatures {
+    redde {
+        panic: falsum,
+        lista: falsum,
+        tabula: falsum,
+        copia: falsum,
+        async: falsum,
+        asyncIterator: falsum,
+        generator: falsum,
+        decimal: falsum,
+        flumina: falsum,
+        usesRegex: falsum
+    } qua RequiredFeatures
+}
+
+# =============================================================================
+# CODEGEN OPTIONS
+# =============================================================================
+
+# Configuration options for code generation
+@ publicum
+genus CodegenOptions {
+    # Indentation string (default: 2 spaces for TS)
+    textus indentum
+
+    # Whether to emit semicolons (TS only, ignored by Zig)
+    bivalens semicolons
+}
+
+# Create default codegen options
+@ publica
+functio creaCodegenOptions() -> CodegenOptions {
+    redde {
+        indentum: "  ",
+        semicolons: verum
+    } qua CodegenOptions
+}
+
+# =============================================================================
+# VISIBILITY UTILITIES
+# =============================================================================
+
+# Extract visibility from annotation modifiers
+# Returns: "public", "private", or "protected"
+@ publica
+functio visibilitasEx(lista<textus> modifiers) -> textus {
+    ex modifiers pro mod {
+        si mod == "publicum" aut mod == "publica" aut mod == "publicus" {
+            redde "public"
+        }
+        si mod == "privatum" aut mod == "privata" aut mod == "privatus" {
+            redde "private"
+        }
+        si mod == "protectum" aut mod == "protecta" aut mod == "protectus" {
+            redde "protected"
+        }
+    }
+    redde "private"
+}
+
+# Check if modifiers include abstract
+@ publica
+functio estAbstractum(lista<textus> modifiers) -> bivalens {
+    ex modifiers pro mod {
+        si mod == "abstractum" aut mod == "abstracta" aut mod == "abstractus" {
+            redde verum
+        }
+    }
+    redde falsum
+}
+
+# Check if modifiers include async (futura)
+@ publica
+functio estFutura(lista<textus> modifiers) -> bivalens {
+    redde modifiers.continet("futura")
+}
+
+# Check if modifiers include generator (cursor)
+@ publica
+functio estCursor(lista<textus> modifiers) -> bivalens {
+    redde modifiers.continet("cursor")
+}
+
+# Check if modifiers include static (generis)
+@ publica
+functio estGeneris(lista<textus> modifiers) -> bivalens {
+    redde modifiers.continet("generis")
+}
