@@ -1,9 +1,9 @@
-// Basic custodi (guard clause) statement
+# Basic custodi (guard clause) statement
 //
-// custodi { si <condition> { <early-return> } }
+# custodi { si <condition> { <early-return> } }
 //
-// Groups early-exit checks at function start to separate
-// validation from main logic.
+# Groups early-exit checks at function start to separate
+# validation from main logic.
 
 functio divide(a, b) -> numerus {
     custodi {
@@ -25,7 +25,7 @@ functio processValue(x) -> numerus {
         }
     }
 
-    // Main logic, clearly separated from guards
+    # Main logic, clearly separated from guards
     redde x * 2
 }
 

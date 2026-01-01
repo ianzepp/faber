@@ -254,12 +254,12 @@ Given these gaps, recommended approach:
 The semantic analyzer doesn't resolve imports from other files.
 
 ```fab
-// rivus/lexicon/nomina.fab
+# rivus/lexicon/nomina.fab
 ex "./typi" importa declinatio, genera, casus, numerositas
 
-// Later:
+# Later:
 si decl est declinatio.prima { ... }
-//              ^^^^^^^^^^^ "Undefined variable 'declinatio'"
+#              ^^^^^^^^^^^ "Undefined variable 'declinatio'"
 ```
 
 The parser creates an `ImportDeclaration` AST node, but the semantic analyzer doesn't:
@@ -285,7 +285,7 @@ Object/array literals don't infer types from annotations:
 fixum verbum_clavis[] verba = [
     { latinum: "si", ... }
 ]
-// Error: Type 'objectum[]' is not assignable to 'verbum_clavis[]'
+# Error: Type 'objectum[]' is not assignable to 'verbum_clavis[]'
 ```
 
 The analyzer infers `objectum[]` from the literal instead of using the declared type.
@@ -298,7 +298,7 @@ Same issue with Map initialization:
 fixum tabula<textus, casus_numerus[]> terminationes = novum tabula de {
     "a": [...]
 }
-// Error: Type 'tabula' is not assignable to 'tabula<textus, casus_numerus[]>'
+# Error: Type 'tabula' is not assignable to 'tabula<textus, casus_numerus[]>'
 ```
 
 ### Naming Conventions

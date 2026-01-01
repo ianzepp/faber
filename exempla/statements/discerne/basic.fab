@@ -1,11 +1,11 @@
-// Pattern matching with discerne (discriminate/distinguish)
+# Pattern matching with discerne (discriminate/distinguish)
 //
-// discerne <value> {
-//     si <Variant> { <body> }
-//     si <Variant> pro <bindings> { <body> }
-// }
+# discerne <value> {
+#     si <Variant> { <body> }
+#     si <Variant> pro <bindings> { <body> }
+# }
 
-// Define discretio (tagged union) types
+# Define discretio (tagged union) types
 discretio Status {
     Active,
     Inactive,
@@ -18,7 +18,7 @@ discretio Event {
     Quit
 }
 
-// Functions demonstrating discerne
+# Functions demonstrating discerne
 functio describe_status(Status s) -> textus {
     discerne s {
         si Active { redde "active" }

@@ -67,7 +67,7 @@ Zig is a systems programming target. Faber uses Latin prepositions (`de`, `in`) 
 
 ### Examples
 
-```faber
+```fab
 functio process(numerus x) -> numerus { redde x * 2 }
 functio length(de textus source) -> numerus { redde source.longitudo }
 functio append(in numerus[] items, numerus value) { items.adde(value) }
@@ -100,7 +100,7 @@ pub fn main() void {
 
 `cura arena fit X` creates nested allocator scope:
 
-```faber
+```fab
 cura arena fit temp {
     varia scratch: numerus[] = []
     scratch.adde(42)
@@ -122,7 +122,7 @@ cura arena fit temp {
 
 Functions needing an allocator declare a `curator` parameter:
 
-```faber
+```fab
 functio buildList(curator memoria, textus prefix) -> textus[] {
     varia items: textus[] = []
     items.adde(prefix)
@@ -230,7 +230,7 @@ Uses `std.AutoHashMap(T, void)` as a set.
 
 Functions containing `iace` get error union return types (`!T`). Error messages convert to PascalCase:
 
-```faber
+```fab
 functio fetch(textus url) -> textus {
     si timeout { iace "connection timeout" }
     redde data
@@ -248,7 +248,7 @@ fn fetch(url: []const u8) ![]const u8 {
 
 Lambdas compile to anonymous struct functions:
 
-```faber
+```fab
 pro x redde x * 2
 ```
 
@@ -262,7 +262,7 @@ struct { fn call(x: i64) i64 { return x * 2; } }.call
 
 `prae typus T` becomes `comptime T: type`:
 
-```faber
+```fab
 functio max(prae typus T, T a, T b) -> T {
     redde a > b sic a secus b
 }
@@ -278,7 +278,7 @@ fn max(comptime T: type, a: T, b: T) T {
 
 `praefixum { }` becomes `comptime blk: { }`:
 
-```faber
+```fab
 fixum table = praefixum {
     varia result = []
     ex 0..10 pro i { result.adde(i * i) }
@@ -298,7 +298,7 @@ const table = comptime blk: {
 
 `discretio` maps to `union(enum)`:
 
-```faber
+```fab
 discretio Event {
     Click { numerus x, numerus y }
     Keypress { textus key }

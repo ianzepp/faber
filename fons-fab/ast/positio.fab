@@ -1,32 +1,32 @@
-// Position and Span types for source location tracking
+# Position and Span types for source location tracking
 //
-// WHY: Every AST node and token needs location info for error messages.
-//      Locus is a single point; Tractus is a range.
+# WHY: Every AST node and token needs location info for error messages.
+#      Locus is a single point; Tractus is a range.
 
-/// A single point in source code
+# A single point in source code
 genus Locus {
-    numerus linea      // 1-based line number
-    numerus columna    // 1-based column number
-    numerus index      // 0-based byte offset from start
+    numerus linea      # 1-based line number
+    numerus columna    # 1-based column number
+    numerus index      # 0-based byte offset from start
 }
 
-/// A range in source code (start inclusive, end exclusive)
+# A range in source code (start inclusive, end exclusive)
 genus Tractus {
     Locus initium
     Locus finis
 }
 
-/// Create a position from components
+# Create a position from components
 functio locus(numerus linea, numerus columna, numerus index) -> Locus {
     redde { linea: linea, columna: columna, index: index } qua Locus
 }
 
-/// Create a span from two positions
+# Create a span from two positions
 functio tractus(Locus initium, Locus finis) -> Tractus {
     redde { initium: initium, finis: finis } qua Tractus
 }
 
-/// Create a zero-length span at a position
+# Create a zero-length span at a position
 functio tractusAd(Locus loc) -> Tractus {
     redde { initium: loc, finis: loc } qua Tractus
 }

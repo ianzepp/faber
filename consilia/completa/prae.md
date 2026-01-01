@@ -113,7 +113,7 @@ Everything inside `praefixum` must be evaluable at compile time:
 - Only literals, constants, and pure computation
 
 ```fab
-// Valid - pure computation
+# Valid - pure computation
 fixum table = praefixum {
     varia result = []
     ex 0..10 pro i {
@@ -122,14 +122,14 @@ fixum table = praefixum {
     redde result
 }
 
-// Invalid - runtime value
+# Invalid - runtime value
 functio compute(numerus n) -> numerus {
-    redde praefixum(n * 2)  // ERROR: n is runtime
+    redde praefixum(n * 2)  # ERROR: n is runtime
 }
 
-// Invalid - I/O
+# Invalid - I/O
 fixum data = praefixum {
-    scribe "computing..."  // ERROR: I/O not allowed
+    scribe "computing..."  # ERROR: I/O not allowed
     redde 42
 }
 ```
@@ -162,8 +162,8 @@ functio clamp(prae typus T, T value, T min, T max) -> T {
     redde value
 }
 
-fixum x = clamp(numerus, 150, 0, 100)  // 100
-fixum y = clamp(fractus, 3.5, 0.0, 1.0)  // 1.0
+fixum x = clamp(numerus, 150, 0, 100)  # 100
+fixum y = clamp(fractus, 3.5, 0.0, 1.0)  # 1.0
 ```
 
 ### Conditional Compilation
@@ -191,7 +191,7 @@ praefixum {
 The `proba ex` syntax for table-driven tests is implicitly `praefixum`:
 
 ```fab
-// This table is evaluated at compile time
+# This table is evaluated at compile time
 proba "parse" ex [
     { input: "42", expect: 42 },
     { input: "-7", expect: -7 },
@@ -387,7 +387,7 @@ For `prae typus`:
 
 ```fab
 fixum bad = praefixum {
-    varia x = 1 / 0  // ERROR: Division by zero at compile time
+    varia x = 1 / 0  # ERROR: Division by zero at compile time
     redde x
 }
 ```
@@ -402,7 +402,7 @@ Should `praefixum` blocks have a recursion/iteration limit to prevent infinite c
 
 ```fab
 fixum infinite = praefixum {
-    dum verum { }  // Infinite loop at compile time
+    dum verum { }  # Infinite loop at compile time
     redde 0
 }
 ```
@@ -421,7 +421,7 @@ Can `praefixum` blocks reference constants from other modules?
 ex "./config" importa BASE_SIZE
 
 fixum table = praefixum {
-    // Can we use BASE_SIZE here?
+    # Can we use BASE_SIZE here?
 }
 ```
 
@@ -437,7 +437,7 @@ praefixum functio factorial(numerus n) -> numerus {
     redde n * factorial(n - 1)
 }
 
-fixum fact10 = factorial(10)  // Evaluated at compile time
+fixum fact10 = factorial(10)  # Evaluated at compile time
 ```
 
 Recommendation: Consider for v2. For now, inline `praefixum` blocks suffice.

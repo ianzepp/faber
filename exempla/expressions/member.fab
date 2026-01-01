@@ -1,35 +1,35 @@
-// Member access expressions: dot, bracket, chained, optional
+# Member access expressions: dot, bracket, chained, optional
 
 incipit {
-    // Object with dot access
+    # Object with dot access
     fixum point = { x: 10, y: 20 }
     scribe point.x
     scribe point.y
 
-    // Array with bracket access
+    # Array with bracket access
     fixum numbers = [1, 2, 3]
     scribe numbers[0]
     scribe numbers[2]
 
-    // Object with bracket access (string key)
+    # Object with bracket access (string key)
     fixum config = { name: "test", value: 42 }
     scribe config["name"]
     scribe config["value"]
 
-    // Chained member access
+    # Chained member access
     fixum nested = { outer: { inner: { deep: "found" } } }
     scribe nested.outer.inner.deep
 
-    // Mixed dot and bracket access
+    # Mixed dot and bracket access
     fixum data = { items: ["first", "second", "third"] }
     scribe data.items[0]
     scribe data.items[2]
 
-    // Optional chaining
+    # Optional chaining
     fixum maybe = { present: { value: 100 } }
     scribe maybe?.present?.value
 
-    // Optional chaining with nihil
+    # Optional chaining with nihil
     fixum empty = nihil
     scribe empty?.missing
 }

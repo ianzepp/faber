@@ -1,7 +1,7 @@
-// Strict equality with est
+# Strict equality with est
 //
-// est = "is" (strict equality, like ===)
-// Useful for null checks and type-safe comparisons
+# est = "is" (strict equality, like ===)
+# Useful for null checks and type-safe comparisons
 
 functio checkValue(x) -> textus {
     si x est nihil { redde "is null" }

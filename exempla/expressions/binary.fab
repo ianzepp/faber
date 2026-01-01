@@ -1,7 +1,7 @@
-// Binary expressions: arithmetic, comparison, logical, nullish
+# Binary expressions: arithmetic, comparison, logical, nullish
 
 incipit {
-    // Arithmetic operators
+    # Arithmetic operators
     fixum sum = 10 + 5
     scribe sum
 
@@ -17,7 +17,7 @@ incipit {
     fixum rem = 10 % 3
     scribe rem
 
-    // Comparison operators
+    # Comparison operators
     fixum isEqual = 10 == 10
     scribe isEqual
 
@@ -36,14 +36,14 @@ incipit {
     fixum isGreaterOrEqual = 10 >= 10
     scribe isGreaterOrEqual
 
-    // Logical operators
+    # Logical operators
     fixum both = verum et verum
     scribe both
 
     fixum either = falsum aut verum
     scribe either
 
-    // Nullish coalescing
+    # Nullish coalescing
     fixum textus? maybeName = nihil
     fixum name = maybeName vel "default"
     scribe name

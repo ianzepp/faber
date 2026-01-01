@@ -1,24 +1,24 @@
-// Basic function declarations
+# Basic function declarations
 //
-// functio <name>() { <body> }
-// functio <name>() -> <type> { <body> }
+# functio <name>() { <body> }
+# functio <name>() -> <type> { <body> }
 
-// Function with no parameters, no return
+# Function with no parameters, no return
 functio saluta() {
     scribe "Salve, Mundus!"
 }
 
-// Function with parameter, no explicit return type
+# Function with parameter, no explicit return type
 functio dic(verbum) {
     scribe verbum
 }
 
-// Function with return type
+# Function with return type
 functio nomen() -> textus {
     redde "Marcus Aurelius"
 }
 
-// Function with parameter and return type
+# Function with parameter and return type
 functio duplica(n) -> numerus {
     redde n * 2
 }

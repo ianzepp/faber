@@ -1,4 +1,4 @@
-// Type casting with qua: converts values between types
+# Type casting with qua: converts values between types
 
 functio getData() -> lista<numerus> {
     redde [1, 2, 3]
@@ -13,41 +13,41 @@ functio getValue() -> numerus {
 }
 
 incipit {
-    // Cast to string
+    # Cast to string
     fixum data = 42
     fixum asText = data qua textus
     scribe asText
 
-    // Cast to number
+    # Cast to number
     fixum input = "100"
     fixum asNum = input qua numerus
     scribe asNum
 
-    // Cast to boolean
+    # Cast to boolean
     fixum value = 1
     fixum asBool = value qua bivalens
     scribe asBool
 
-    // Cast to nullable type
+    # Cast to nullable type
     fixum num = 10
     fixum maybe = num qua numerus?
     scribe maybe
 
-    // Cast to array type
+    # Cast to array type
     fixum raw = getData()
     fixum items = raw qua lista<textus>
     scribe items
 
-    // Cast with member access
+    # Cast with member access
     fixum response = getResponse()
     fixum body = response.body qua textus
     scribe body
 
-    // Cast call result directly
+    # Cast call result directly
     fixum result = getValue() qua textus
     scribe result
 
-    // Cast in parenthesized expression for chaining
+    # Cast in parenthesized expression for chaining
     fixum len = (data qua textus).length
     scribe len
 }

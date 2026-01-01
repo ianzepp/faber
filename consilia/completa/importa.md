@@ -19,7 +19,7 @@ Faber's import system handles two categories differently:
 
 External packages are passed through to the target language unchanged:
 
-```faber
+```fab
 ex "@hono/hono" importa Hono, Context
 ex "pg" importa Pool
 ```
@@ -37,7 +37,7 @@ The compiler does not validate external imports. Type checking happens in the ta
 
 The `norma` stdlib is compiler-handled. No runtime files are shipped.
 
-```faber
+```fab
 ex "norma/tempus" importa dormi, SECUNDUM
 cede dormi(5 * SECUNDUM)
 ```
@@ -112,16 +112,16 @@ const TS_INTRINSICS = {
 
 `arca/norma/*.fab` documents the stdlib API in Faber syntax:
 
-```faber
-// arca/norma/tempus.fab
+```fab
+# arca/norma/tempus.fab
 
-// Get current time in milliseconds since epoch
+# Get current time in milliseconds since epoch
 functio nunc() -> numerus
 
-// Sleep for specified milliseconds
+# Sleep for specified milliseconds
 futura functio dormi(numerus ms) -> vacuum
 
-// Duration constants
+# Duration constants
 fixum SECUNDUM = 1000
 fixum MINUTUM = 60000
 ```

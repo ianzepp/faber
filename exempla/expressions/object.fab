@@ -1,30 +1,30 @@
-// Object literal expressions
+# Object literal expressions
 
 incipit {
-    // Empty object
+    # Empty object
     fixum empty = {}
     scribe(empty)
 
-    // Simple object with numeric values
+    # Simple object with numeric values
     fixum point = { x: 10, y: 20 }
     scribe(point)
 
-    // String keys
+    # String keys
     fixum value = 42
     fixum withStringKey = { "key": value }
     scribe(withStringKey)
 
-    // Properties from variables
+    # Properties from variables
     fixum name = "Marcus"
     fixum age = 30
     fixum person = { name: name, age: age }
     scribe(person)
 
-    // Nested objects
+    # Nested objects
     fixum nested = { outer: { inner: 1 } }
     scribe(nested)
 
-    // Spread operator
+    # Spread operator
     fixum base = { a: 1, b: 2 }
     fixum extended = { sparge base, c: 3 }
     scribe(extended)

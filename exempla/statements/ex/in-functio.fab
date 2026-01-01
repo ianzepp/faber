@@ -1,6 +1,6 @@
-// Using ex...pro inside functions
+# Using ex...pro inside functions
 
-// Sum all numbers in an array
+# Sum all numbers in an array
 functio sumArray(numerus[] nums) -> numerus {
     varia numerus total = 0
 
@@ -11,7 +11,7 @@ functio sumArray(numerus[] nums) -> numerus {
     redde total
 }
 
-// Find the maximum value
+# Find the maximum value
 functio maxValue(numerus[] nums) -> numerus {
     varia numerus max = nums[0]
 
@@ -24,7 +24,7 @@ functio maxValue(numerus[] nums) -> numerus {
     redde max
 }
 
-// Count items matching a condition
+# Count items matching a condition
 functio countAbove(numerus[] nums, numerus threshold) -> numerus {
     varia numerus count = 0
 

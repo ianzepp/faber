@@ -225,16 +225,16 @@ fiet { body }             // async () => { body }
 ### Examples
 
 ```fab
-// Async HTTP handler
+# Async HTTP handler
 app.post("/users", fiet c {
     fixum body = cede c.req.json()
     redde c.json(body)
 })
 
-// Async map operation
+# Async map operation
 fixum results = urls.mappata(fiet url: cede fetch(url))
 
-// Async with multiple awaits
+# Async with multiple awaits
 fetchData().then(fiet data {
     fixum processed = cede transform(data)
     redde cede save(processed)
@@ -261,10 +261,10 @@ The `pro` keyword remains as the casual/default form for sync lambdas:
 The `futura` prefix is reserved for function declarations. Lambdas use verb conjugation instead:
 
 ```fab
-// Functions use prefix
+# Functions use prefix
 futura functio fetch() -> textus { ... }
 
-// Lambdas use verb form
+# Lambdas use verb form
 fiet url: cede fetch(url)
 ```
 

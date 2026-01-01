@@ -1,7 +1,7 @@
-// Finge (variant construction) expressions
-// Creates discretio variant instances
+# Finge (variant construction) expressions
+# Creates discretio variant instances
 
-// Define discretio types
+# Define discretio types
 discretio Status {
     Active,
     Inactive,
@@ -20,16 +20,16 @@ discretio Result {
 }
 
 incipit {
-    // Unit variants with explicit type
+    # Unit variants with explicit type
     fixum Status s1 = finge Active qua Status
     fixum Status s2 = finge Pending qua Status
 
-    // Payload variants with explicit type
+    # Payload variants with explicit type
     fixum Event e1 = finge Click { x: 100, y: 200 } qua Event
     fixum Event e2 = finge Keypress { key: "Enter" } qua Event
     fixum Event e3 = finge Quit qua Event
 
-    // Result variants
+    # Result variants
     fixum Result r1 = finge Success { message: "Operation completed" } qua Result
     fixum Result r2 = finge Failure { error: "Something went wrong" } qua Result
 

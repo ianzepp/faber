@@ -16,8 +16,8 @@ Mathematical functions and constants. Unlike I/O intrinsics (`_scribe`, etc.), m
 ```fab
 ex "norma/mathesis" importa pavimentum, radix, PI
 
-fixum x = pavimentum(3.7)      // 3
-fixum y = radix(16)            // 4
+fixum x = pavimentum(3.7)      # 3
+fixum y = radix(16)            # 4
 fixum area = PI * r * r
 ```
 

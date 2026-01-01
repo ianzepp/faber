@@ -134,9 +134,9 @@ Each target generator emits comments in target syntax:
 ### Input (Faber)
 
 ```fab
-// User represents a registered user
+# User represents a registered user
 genus User {
-    textus nomen  // display name
+    textus nomen  # display name
 
     /*
      * Create a new user with validation

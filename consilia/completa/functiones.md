@@ -25,10 +25,10 @@ Faber adopts this with `ut` (as) for aliasing the internal name:
 
 ```fab
 functio greet(textus location ut loc) {
-    scribe loc  // internal name
+    scribe loc  # internal name
 }
 
-greet(location: "Roma")  // external name at callsite
+greet(location: "Roma")  # external name at callsite
 ```
 
 ### Full Syntax
@@ -46,8 +46,8 @@ Ownership prepositions combine naturally:
 
 ```fab
 functio processPoints(de Point[] points ut p1, in Point[] targets ut p2) {
-    // p1 is borrowed (read-only)
-    // p2 is mutably borrowed
+    # p1 is borrowed (read-only)
+    # p2 is mutably borrowed
     ex p1 pro point {
         p2.adde(point)
     }
@@ -72,7 +72,7 @@ Named arguments at callsites use the external name:
 
 ```fab
 functio move(de Point[] from ut source, in Point[] to ut dest) {
-    // ...
+    # ...
 }
 
 move(from: points, to: targets)
@@ -84,7 +84,7 @@ If `ut internalName` is omitted, the external name serves both roles (current be
 
 ```fab
 functio greet(textus name) {
-    scribe name  // same name internally
+    scribe name  # same name internally
 }
 ```
 
@@ -109,8 +109,8 @@ functio greet(textus name vel "Mundus") {
     scribe "Salve, " + name
 }
 
-greet()          // "Salve, Mundus"
-greet("Marcus")  // "Salve, Marcus"
+greet()          # "Salve, Mundus"
+greet("Marcus")  # "Salve, Marcus"
 ```
 
 ### Why `vel`?
@@ -140,14 +140,14 @@ parameter := preposition? typeAnnotation externalName ('ut' internalName)? ('vel
 Default values only make sense for **owned** parameters. Borrowed (`de`) and mutable (`in`) parameters require the caller to provide a value:
 
 ```fab
-// Valid - owned with default
+# Valid - owned with default
 functio greet(textus name vel "Mundus")
 
-// Invalid - borrowed can't have default (no owned storage for default)
-functio greet(de textus displayName ut name vel "Mundus")  // error
+# Invalid - borrowed can't have default (no owned storage for default)
+functio greet(de textus displayName ut name vel "Mundus")  # error
 
-// Invalid - mutable borrow can't have default (nothing to mutate)
-functio process(in numerus[] items vel [])  // error
+# Invalid - mutable borrow can't have default (nothing to mutate)
+functio process(in numerus[] items vel [])  # error
 ```
 
 **Rationale:** A borrowed parameter means "the caller passes a reference to something they own." A default would require the function to own that default value, contradicting the borrow semantics.

@@ -1,9 +1,9 @@
-// Genus with methods using ego (self) reference
+# Genus with methods using ego (self) reference
 //
-// genus <Name> {
-//     <type> <property>
-//     functio <method>() -> <type> { ... ego.<property> ... }
-// }
+# genus <Name> {
+#     <type> <property>
+#     functio <method>() -> <type> { ... ego.<property> ... }
+# }
 
 genus Rectangle {
     numerus width: 1
@@ -35,7 +35,7 @@ genus Counter {
 }
 
 incipit {
-    // Methods that return values
+    # Methods that return values
     fixum rect = novum Rectangle {
         width: 10,
         height: 5
@@ -45,7 +45,7 @@ incipit {
     scribe rect.perimeter()
     scribe rect.isSquare()
 
-    // Methods that modify state
+    # Methods that modify state
     varia counter = novum Counter
 
     scribe counter.getValue()

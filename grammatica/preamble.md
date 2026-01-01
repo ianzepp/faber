@@ -167,7 +167,7 @@ Common array methods (see README for complete list):
 ## Complete Program Example
 
 ```fab
-// A simple API handler demonstrating multiple features
+# A simple API handler demonstrating multiple features
 ex hono importa Hono, Context
 
 genus UserService {
@@ -199,7 +199,7 @@ fixum app = novum Hono()
 
 app.get("/users/:id", futura functio(Context ctx) {
     fixum id = ctx.param("id") qua numerus
-    fixum service = novum UserService("https://api.example.com")
+    fixum service = novum UserService("https:#api.example.com")
     fixum user = cede service.fetch(id)
 
     si user === nihil {

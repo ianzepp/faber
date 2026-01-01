@@ -92,8 +92,8 @@ Same as iteration transforms, but assigned instead of iterated. Context (assignm
 
 ```fab
 ex response fixum status, data
-ex response fixum status ut s, data ut d   // with aliases
-ex fetchData() figendum result             // await + destructure
+ex response fixum status ut s, data ut d   # with aliases
+ex fetchData() figendum result             # await + destructure
 ```
 
 Extract fields **from** an object/expression. Uses brace-less syntax matching imports.
@@ -103,12 +103,12 @@ Extract fields **from** an object/expression. Uses brace-less syntax matching im
 When a function returns a borrowed value (`de` return type), and multiple parameters are borrowed, `ex` specifies which parameter(s) the return borrows from:
 
 ```fab
-// Single source - return borrows from 'a'
+# Single source - return borrows from 'a'
 functio first(de textus a, de textus b) -> de textus ex a {
     redde a
 }
 
-// Multiple sources - return could borrow from either
+# Multiple sources - return could borrow from either
 functio pick(de textus a, de textus b, bivalens flag) -> de textus ex a, b {
     si flag { redde a } secus { redde b }
 }
@@ -169,7 +169,7 @@ Iterate over keys **concerning** an object. Contrast with `ex`, which iterates v
 
 ```fab
 functio process(de textus input) {
-    // input is borrowed, read-only
+    # input is borrowed, read-only
     scribe(input)
 }
 ```
@@ -288,7 +288,7 @@ Dispatch **to** a stdlib module method. The target string follows `module:method
 ### HTTP (Protocol Sugar) — Future
 
 ```fab
-ad "https://api.example.com/users" ("GET") fiet Response pro resp {
+ad "https:#api.example.com/users" ("GET") fiet Response pro resp {
     scribe(resp.status)
 }
 ```
@@ -362,7 +362,7 @@ discerne event {
 ### Response Binding
 
 ```fab
-ad "https://api.example.com/users" ("GET") fiet Response pro resp {
+ad "https:#api.example.com/users" ("GET") fiet Response pro resp {
     scribe(resp.status)
 }
 ```
@@ -411,8 +411,8 @@ Extract field `nomen` and bind it **as** `n`. Note the brace-less syntax — des
 
 ```fab
 functio move(de Point[] from ut source, in Point[] to ut dest) {
-    // 'source' and 'dest' are internal names
-    // 'from' and 'to' are external (callsite) names
+    # 'source' and 'dest' are internal names
+    # 'from' and 'to' are external (callsite) names
 }
 ```
 
@@ -464,16 +464,16 @@ Treat the result **as** `textus`. (Type assertion, not conversion.)
 The same preposition means different things based on position:
 
 ```fab
-// 'ex' at statement start = iteration/import
+# 'ex' at statement start = iteration/import
 ex items pro item { }
 
-// 'pro' after 'ex' = iteration binding
+# 'pro' after 'ex' = iteration binding
 ex items pro item { }
 
-// 'pro' at expression start = lambda
+# 'pro' at expression start = lambda
 pro x: x + 1
 
-// 'pro' after 'si' in discerne = variant field binding
+# 'pro' after 'si' in discerne = variant field binding
 discerne event { si Click pro x, y { } }
 ```
 
@@ -486,19 +486,19 @@ This mirrors Latin, where word order is flexible because declensions carry gramm
 Prepositions compose naturally:
 
 ```fab
-// Iterate from source, binding as name
+# Iterate from source, binding as name
 ex items pro item { }
 
-// Borrow from caller, rename internally
+# Borrow from caller, rename internally
 functio f(de textus external ut internal) { }
 
-// Import and rename
+# Import and rename
 ex norma importa scribe ut s { }
 
-// Extract from source into bindings (brace-less)
+# Extract from source into bindings (brace-less)
 ex response fixum status, data
 
-// Send to destination, bind response
+# Send to destination, bind response
 ad url ("GET") fiet Response pro resp { }
 ```
 

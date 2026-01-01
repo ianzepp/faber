@@ -1,16 +1,16 @@
-// Regex literals using sed keyword
-// Syntax: sed "pattern" [flags]
+# Regex literals using sed keyword
+# Syntax: sed "pattern" [flags]
 
 incipit {
-    // Simple patterns
+    # Simple patterns
     fixum digits = sed "\d+"
     fixum word = sed "\w+"
 
-    // With flags (i = case insensitive, m = multiline)
+    # With flags (i = case insensitive, m = multiline)
     fixum insensitive = sed "hello" i
     fixum multiline = sed "^start" im
 
-    // Complex patterns
+    # Complex patterns
     fixum email = sed "[^@]+@[^@]+"
     fixum paths = sed "/usr/local/.*"
 }

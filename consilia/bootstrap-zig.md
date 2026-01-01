@@ -115,8 +115,8 @@ Features explicitly not needed for bootstrap.
 
 **Solution:** Already implemented correctly. Use `scriptum()` exclusively for all string building:
 
-```faber
-// Instead of: fixum msg = "Error at " + line + ":" + col
+```fab
+# Instead of: fixum msg = "Error at " + line + ":" + col
 fixum msg = scriptum("Error at {}:{}", line, col)
 ```
 
@@ -135,7 +135,7 @@ The bootstrap compiler must be written using `scriptum()` for all string constru
 
 **Example of current output:**
 
-```faber
+```fab
 varia lista<numerus> nums = [1, 2, 3, 4, 5]
 fixum filtered = nums.filtrata(pro x: x > 2)
 ```
@@ -149,7 +149,7 @@ Lambda syntax uses colon (`pro x: expr`), not arrow. Return type is inferred fro
 
 **Imperative alternative** (also works, sometimes clearer):
 
-```faber
+```fab
 varia numerus[] filtered = [] qua numerus[]
 ex items pro x {
     si x > 0 { filtered.adde(x) }
@@ -188,14 +188,14 @@ ex items pro x {
 
 **Usage:**
 
-```faber
-// Read all input from stdin
+```fab
+# Read all input from stdin
 fixum source = lege()
 
-// Write output to stdout
+# Write output to stdout
 scribe output
 
-// Warnings to stderr
+# Warnings to stderr
 mone "Parse error at line 42"
 ```
 
@@ -222,14 +222,14 @@ Zig's error model is fundamentally different:
 
 The bootstrap compiler should use Zig-idiomatic patterns:
 
-```faber
-// Instead of tempta/cape, use error-returning functions
+```fab
+# Instead of tempta/cape, use error-returning functions
 functio parseToken() fit Token! {
     custodi source[current] != nihil secus iace ParseError.UnexpectedEnd
-    // ... parsing logic
+    # ... parsing logic
 }
 
-// Collect errors in a lista passed as parameter
+# Collect errors in a lista passed as parameter
 functio parse(lista<ParseError> errors) fit Program {
     fixum token = parseToken() cape err {
         errors.adde(err)
@@ -390,7 +390,7 @@ function tokenize(source: string) {
 
 Must become explicit struct with methods:
 
-```faber
+```fab
 genus Tokenizer {
     textus source
     numerus current
@@ -419,17 +419,17 @@ switch (node.type) {
 
 Faber equivalent using `ordo` + `discretio`:
 
-```faber
+```fab
 ordo NodeKind {
     ImportaDeclaration
     VariaDeclaration
-    // ... 34 members
+    # ... 34 members
 }
 
 discretio Statement {
     ImportaDeclaration { specifiers: lista<ImportSpecifier>, ... }
     VariaDeclaration { name: textus, init: Expression?, ... }
-    // ... 34 variants
+    # ... 34 variants
 }
 ```
 
@@ -441,14 +441,14 @@ TypeScript: `returnType?: TypeAnnotation`
 
 Faber: Use nullable `T?` types with explicit null checks:
 
-```faber
+```fab
 genus FunctioDeclaration {
-    TypeAnnotation? returnType  // nullable
+    TypeAnnotation? returnType  # nullable
 }
 
-// Usage requires explicit check
+# Usage requires explicit check
 si node.returnType != nihil {
-    fixum rt = node.returnType!  // force unwrap after check
+    fixum rt = node.returnType!  # force unwrap after check
 }
 ```
 
@@ -456,12 +456,12 @@ si node.returnType != nihil {
 
 TypeScript discriminants like `type: 'Identifier'` become enum values:
 
-```faber
+```fab
 ordo NodeKind {
     Identifier
     BinaryExpression
     CallExpression
-    // ... 60+ members
+    # ... 60+ members
 }
 ```
 
@@ -487,7 +487,7 @@ ordo NodeKind {
 
 **Default parameters:** Faber supports `vel` for defaults:
 
-```faber
+```fab
 functio greet(textus name vel "World") fit textus { ... }
 ```
 
@@ -605,16 +605,16 @@ These patterns emerged during bootstrap implementation and should guide remainin
 
 Functions needing heap allocation use the `curata NAME` modifier after the parameter list. This declares that the function receives an allocator bound to NAME. Call sites must be inside a `cura` block:
 
-```faber
+```fab
 functio lexare(textus fons) curata alloc -> LexorResultatum {
-    // alloc is available here and passed to collection operations
+    # alloc is available here and passed to collection operations
     varia lista<Symbolum> symbola = [] qua lista<Symbolum>
-    symbola.adde(symbolum)  // alloc auto-threaded
+    symbola.adde(symbolum)  # alloc auto-threaded
 }
 
-// Call site - alloc injected automatically from cura block
+# Call site - alloc injected automatically from cura block
 incipit ergo cura arena fit alloc {
-    fixum result = lexare("source code")  // alloc from cura block
+    fixum result = lexare("source code")  # alloc from cura block
 }
 ```
 
@@ -627,7 +627,7 @@ The modifier position (after params, before return type) matches `futura` and `c
 
 For structs containing collections (`lista`, `tabula`, `copia`), use explicit `init()` that takes the allocator. The `init()` method uses `curata` to receive the allocator:
 
-```faber
+```fab
 genus Lexor {
     textus fons
     lista<Symbolum> symbola
@@ -640,7 +640,7 @@ genus Lexor {
     }
 }
 
-// Usage - alloc comes from enclosing cura block
+# Usage - alloc comes from enclosing cura block
 varia lexor = Lexor.init(fons)
 ```
 
@@ -663,8 +663,8 @@ function tokenize(source: string) {
 }
 ```
 
-```faber
-// Faber (after)
+```fab
+# Faber (after)
 genus Lexor {
     textus fons
     numerus index
@@ -701,7 +701,7 @@ All bootstrap code uses Latin identifiers, following the AST module convention:
 
 Instead of exceptions, return result types containing either success or errors:
 
-```faber
+```fab
 genus LexorResultatum {
     lista<Symbolum> symbola
     lista<LexorError> errores
@@ -712,7 +712,7 @@ functio lexare(curator alloc, textus fons) -> LexorResultatum {
     varia errores = [] qua lista<LexorError>
     varia symbola = [] qua lista<Symbolum>
     
-    // ... tokenization logic, accumulate errors
+    # ... tokenization logic, accumulate errors
     
     redde LexorResultatum.{
         symbola: symbola,
@@ -726,13 +726,13 @@ functio lexare(curator alloc, textus fons) -> LexorResultatum {
 
 Large keyword tables use `elige` which compiles to efficient switch statements:
 
-```faber
+```fab
 functio estVerbum(textus verbum) -> SymbolumGenus? {
     elige verbum {
         si "si" { redde SymbolumGenus.Si }
         si "secus" { redde SymbolumGenus.Secus }
         si "dum" { redde SymbolumGenus.Dum }
-        // ... 80+ keywords
+        # ... 80+ keywords
         secus { redde nihil }
     }
 }

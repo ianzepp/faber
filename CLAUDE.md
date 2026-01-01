@@ -139,12 +139,12 @@ See `proba/README.md` for test framework details. Structure mirrors codegen:
 Faber uses **type-first** syntax, not TypeScript-style `name: Type`:
 
 ```fab
-// Correct
+# Correct
 textus nomen
 numerus aetas
 functio greet(textus name) -> textus
 
-// Wrong (not Faber syntax)
+# Wrong (not Faber syntax)
 nomen: textus
 aetas: numerus
 functio greet(name: textus): textus
@@ -162,6 +162,18 @@ The colon `:` is used only for default values in genus properties, not for type 
 
 **Error Handling**: Never crash on malformed input. Collect errors and continue.
 
+## Design Philosophy
+
+When evaluating syntax decisions, adopt the "Latin professor meets gen-z autistic programmer" frame:
+
+- **Latin professor**: Does the grammar follow authentic Latin patterns? Adjective-noun agreement, word order, proper declension. If something is grammatically wrong, it should itch.
+- **Gen-z autistic programmer**: Is the syntax consistent and predictable? Does the pattern work everywhere? Are there special cases that break the mental model?
+
+Both must be satisfied. A syntax that's grammatically correct Latin but inconsistent as a programming language fails. A syntax that's perfectly regular but butchers Latin also fails.
+
+Example: Visibility modifiers use postfix position (`genus Foo publicum`) because Latin places adjectives after nouns AND it keeps the declaration keyword in column 0 for predictable parsing. Gender agreement (`publica` for feminine `functio`, `publicum` for neuter `genus`) because it's correct Latin AND the suffix carries semantic signal — like `getUser()` vs `getUsers()`.
+
 ## Communication Style
 
 Sporadically include Latin phrases (e.g., "Opus perfectum est", "Bene factum").
+.

@@ -1,22 +1,22 @@
-/// Primary Expression Parsers
+# Primary Expression Parsers
 ///
-/// Terminals and grouping: literals, identifiers, parenthesized expressions,
-/// arrays, objects, lambdas.
+# Terminals and grouping: literals, identifiers, parenthesized expressions,
+# arrays, objects, lambdas.
 ///
-/// GRAMMAR:
-///   primary := IDENTIFIER | NUMBER | STRING | TEMPLATE_STRING
-///            | 'ego' | 'verum' | 'falsum' | 'nihil'
-///            | '(' expression ')' | arrayLiteral | objectLiteral
-///            | lambdaExpression
+# GRAMMAR:
+#   primary := IDENTIFIER | NUMBER | STRING | TEMPLATE_STRING
+#            | 'ego' | 'verum' | 'falsum' | 'nihil'
+#            | '(' expression ')' | arrayLiteral | objectLiteral
+#            | lambdaExpression
 ///
-/// LATIN VOCABULARY:
-/// - primaria = primary
-/// - littera = literal
-/// - nomen = identifier/name
-/// - ego = self/this
-/// - verum = true
-/// - falsum = false
-/// - nihil = null
+# LATIN VOCABULARY:
+# - primaria = primary
+# - littera = literal
+# - nomen = identifier/name
+# - ego = self/this
+# - verum = true
+# - falsum = false
+# - nihil = null
 
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
@@ -24,16 +24,16 @@ ex "../../ast/expressia" importa Expressia, LitteraGenus
 ex "../../ast/lexema" importa SymbolumGenus
 ex "../errores" importa ParserErrorCodice
 
-/// Parse primary expression
+# Parse primary expression
 ///
-/// Handles terminals: literals, identifiers, ego, grouped expressions.
-/// Currently a partial implementation - covers the most common cases.
+# Handles terminals: literals, identifiers, ego, grouped expressions.
+# Currently a partial implementation - covers the most common cases.
 functio parsePrimaria(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum sym = p.specta(0)
     fixum locus = sym.locus
 
-    // Numeric literal
+    # Numeric literal
     si sym.species == SymbolumGenus.Numerus {
         p.procede()
         redde finge Littera {
@@ -43,7 +43,7 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
         } qua Expressia
     }
 
-    // Float literal
+    # Float literal
     si sym.species == SymbolumGenus.Fractus {
         p.procede()
         redde finge Littera {
@@ -53,7 +53,7 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
         } qua Expressia
     }
 
-    // String literal
+    # String literal
     si sym.species == SymbolumGenus.Textus {
         p.procede()
         redde finge Littera {
@@ -63,7 +63,7 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
         } qua Expressia
     }
 
-    // Boolean: verum
+    # Boolean: verum
     si sym.species == SymbolumGenus.Verum {
         p.procede()
         redde finge Littera {
@@ -73,7 +73,7 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
         } qua Expressia
     }
 
-    // Boolean: falsum
+    # Boolean: falsum
     si sym.species == SymbolumGenus.Falsum {
         p.procede()
         redde finge Littera {
@@ -83,7 +83,7 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
         } qua Expressia
     }
 
-    // Null: nihil
+    # Null: nihil
     si sym.species == SymbolumGenus.Nihil {
         p.procede()
         redde finge Littera {
@@ -93,7 +93,7 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
         } qua Expressia
     }
 
-    // Identifier
+    # Identifier
     si sym.species == SymbolumGenus.Nomen {
         p.procede()
         redde finge Nomen {
@@ -102,7 +102,7 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
         } qua Expressia
     }
 
-    // Self reference: ego
+    # Self reference: ego
     si p.probaVerbum("ego") {
         p.procede()
         redde finge EgoExpressia {
@@ -110,7 +110,7 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
         } qua Expressia
     }
 
-    // Grouped expression: ( expr )
+    # Grouped expression: ( expr )
     si sym.species == SymbolumGenus.ParensSin {
         p.procede()
         fixum expr = r.expressia()
@@ -118,22 +118,22 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
         redde expr
     }
 
-    // Array literal: [ ... ]
+    # Array literal: [ ... ]
     si sym.species == SymbolumGenus.AngulusSin {
         redde parseSeriesExpressia(r)
     }
 
-    // Object literal: { ... }
+    # Object literal: { ... }
     si sym.species == SymbolumGenus.UncusSin {
         redde parseObiectumExpressia(r)
     }
 
-    // Lambda: pro x: expr
+    # Lambda: pro x: expr
     si p.probaVerbum("pro") {
         redde parseLambdaExpressia(r)
     }
 
-    // Fallback: report error and return placeholder
+    # Fallback: report error and return placeholder
     p.renuncia(ParserErrorCodice.ExpectaturExpressia, locus)
     redde finge Nomen {
         locus: locus,
@@ -141,9 +141,9 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
     } qua Expressia
 }
 
-/// Parse array literal
+# Parse array literal
 ///
-/// GRAMMAR: arrayLiteral := '[' (expression (',' expression)*)? ']'
+# GRAMMAR: arrayLiteral := '[' (expression (',' expression)*)? ']'
 functio parseSeriesExpressia(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
@@ -156,7 +156,7 @@ functio parseSeriesExpressia(Resolvitor r) -> Expressia {
         elementa.adde(r.expressia())
 
         dum p.congruet(SymbolumGenus.Virgula) {
-            // Allow trailing comma
+            # Allow trailing comma
             si p.proba(SymbolumGenus.AngulusDex) {
                 rumpe
             }
@@ -172,17 +172,17 @@ functio parseSeriesExpressia(Resolvitor r) -> Expressia {
     } qua Expressia
 }
 
-/// Parse object literal
+# Parse object literal
 ///
-/// GRAMMAR: objectLiteral := '{' (property (',' property)*)? '}'
-///          property := (IDENTIFIER | STRING | '[' expr ']') ':' expression
-///                    | IDENTIFIER  // shorthand
+# GRAMMAR: objectLiteral := '{' (property (',' property)*)? '}'
+#          property := (IDENTIFIER | STRING | '[' expr ']') ':' expression
+#                    | IDENTIFIER  # shorthand
 functio parseObiectumExpressia(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
 
-    // TODO: Full object literal parsing
-    // For now, just consume braces and return empty object
+    # TODO: Full object literal parsing
+    # For now, just consume braces and return empty object
     p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
     p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
 
@@ -192,16 +192,16 @@ functio parseObiectumExpressia(Resolvitor r) -> Expressia {
     } qua Expressia
 }
 
-/// Parse lambda expression
+# Parse lambda expression
 ///
-/// GRAMMAR: lambdaExpr := 'pro' params? (':' expression | blockStmt)
-///          params := IDENTIFIER (',' IDENTIFIER)*
+# GRAMMAR: lambdaExpr := 'pro' params? (':' expression | blockStmt)
+#          params := IDENTIFIER (',' IDENTIFIER)*
 functio parseLambdaExpressia(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
 
-    // TODO: Full lambda parsing
-    // For now, just consume 'pro' and return placeholder
+    # TODO: Full lambda parsing
+    # For now, just consume 'pro' and return placeholder
     p.expectaVerbum("pro", ParserErrorCodice.ExpectaturPro)
 
     redde finge Nomen {

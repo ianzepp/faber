@@ -1,296 +1,296 @@
-// Expression AST - All expression types as a unified discretio
+# Expression AST - All expression types as a unified discretio
 //
-// WHY: Single file defines all expression variants for pattern matching.
-//      Parsers construct variants with `finge VariantName { ... } qua Expressia`.
+# WHY: Single file defines all expression variants for pattern matching.
+#      Parsers construct variants with `finge VariantName { ... } qua Expressia`.
 
 ex "./positio" importa Locus
 ex "./typus" importa TypusAnnotatio
 
-// ============================================================================
-// SUPPORTING TYPES
-// ============================================================================
+# ============================================================================
+# SUPPORTING TYPES
+# ============================================================================
 
-/// Literal value type - what kind of constant this is
+# Literal value type - what kind of constant this is
 ordo LitteraGenus {
-    Numerus    // integer: 42
-    Fractus    // float: 3.14
-    Textus     // string: "hello"
-    Verum      // true
-    Falsum     // false
-    Nihil      // null
+    Numerus    # integer: 42
+    Fractus    # float: 3.14
+    Textus     # string: "hello"
+    Verum      # true
+    Falsum     # false
+    Nihil      # null
 }
 
-/// Object property in object literal
-/// Example: name: "Alice", or shorthand: name
+# Object property in object literal
+# Example: name: "Alice", or shorthand: name
 genus ObiectumProprietas {
     Locus locus
-    Expressia clavis         // key - usually Nomen or Littera
+    Expressia clavis         # key - usually Nomen or Littera
     Expressia valor
-    bivalens brevitas        // true for { name } meaning { name: name }
-    bivalens computatum      // true for { [expr]: value }
+    bivalens brevitas        # true for { name } meaning { name: name }
+    bivalens computatum      # true for { [expr]: value }
 }
 
-/// Lambda parameter (simplified vs full Parametrum)
-/// Example: pro x, y: x + y
+# Lambda parameter (simplified vs full Parametrum)
+# Example: pro x, y: x + y
 genus LambdaParametrum {
     Locus locus
     textus nomen
     TypusAnnotatio? typus
 }
 
-/// Chain step for collection DSL
-/// Examples: prima 5, ultima 3, summa, ordina per nomen
+# Chain step for collection DSL
+# Examples: prima 5, ultima 3, summa, ordina per nomen
 genus CatenaGradus {
     Locus locus
-    textus verbum            // prima, ultima, summa, ordina, collige, grupa
-    Expressia? argumentum    // optional argument (5 in "prima 5")
+    textus verbum            # prima, ultima, summa, ordina, collige, grupa
+    Expressia? argumentum    # optional argument (5 in "prima 5")
 }
 
-// ============================================================================
-// EXPRESSIA DISCRETIO
-// ============================================================================
+# ============================================================================
+# EXPRESSIA DISCRETIO
+# ============================================================================
 
-/// All expression types as a tagged union
+# All expression types as a tagged union
 ///
-/// Each variant contains its fields directly. Use `finge` to construct:
-///   finge Nomen { locus: loc, valor: "x" } qua Expressia
-///   finge Littera { locus: loc, species: LitteraGenus.Numerus, crudus: "42" } qua Expressia
+# Each variant contains its fields directly. Use `finge` to construct:
+#   finge Nomen { locus: loc, valor: "x" } qua Expressia
+#   finge Littera { locus: loc, species: LitteraGenus.Numerus, crudus: "42" } qua Expressia
 discretio Expressia {
-    // -------------------------------------------------------------------------
-    // Identifiers
-    // -------------------------------------------------------------------------
-    
-    /// Simple identifier - a named reference
-    /// Example: x, nomen, calculateTotal
+    # -------------------------------------------------------------------------
+    # Identifiers
+    # -------------------------------------------------------------------------
+
+    # Simple identifier - a named reference
+    # Example: x, nomen, calculateTotal
     Nomen {
         Locus locus
         textus valor
     }
-    
-    /// Self-reference expression ('ego' in Faber, 'this' in JS, 'self' in Rust/Py)
+
+    # Self-reference expression ('ego' in Faber, 'this' in JS, 'self' in Rust/Py)
     EgoExpressia {
         Locus locus
     }
-    
-    // -------------------------------------------------------------------------
-    // Literals
-    // -------------------------------------------------------------------------
-    
-    /// Literal constant value
-    /// Examples: 42, 3.14, "hello", verum, falsum, nihil
+
+    # -------------------------------------------------------------------------
+    # Literals
+    # -------------------------------------------------------------------------
+
+    # Literal constant value
+    # Examples: 42, 3.14, "hello", verum, falsum, nihil
     Littera {
         Locus locus
         LitteraGenus species
-        textus crudus           // original source text
+        textus crudus           # original source text
     }
-    
-    /// Template literal with interpolations
-    /// Example: `Hello, ${name}!`
+
+    # Template literal with interpolations
+    # Example: `Hello, ${name}!`
     LitteraExemplar {
         Locus locus
-        lista<textus> partes       // static string parts
-        lista<Expressia> expressiae    // interpolated expressions
+        lista<textus> partes       # static string parts
+        lista<Expressia> expressiae    # interpolated expressions
     }
-    
-    /// Regex literal
-    /// Example: sed "pattern" flags
+
+    # Regex literal
+    # Example: sed "pattern" flags
     LitteraRegex {
         Locus locus
-        textus forma         // pattern
-        textus vexilla       // flags
+        textus forma         # pattern
+        textus vexilla       # flags
     }
-    
-    // -------------------------------------------------------------------------
-    // Binary and Unary Operations
-    // -------------------------------------------------------------------------
-    
-    /// Binary expression - two operands with an operator
-    /// Examples: a + b, x == y, foo && bar
+
+    # -------------------------------------------------------------------------
+    # Binary and Unary Operations
+    # -------------------------------------------------------------------------
+
+    # Binary expression - two operands with an operator
+    # Examples: a + b, x == y, foo && bar
     BinariaExpressia {
         Locus locus
-        Expressia sinister       // left operand
-        textus signum            // +, -, *, /, %, ==, !=, <, >, <=, >=, &&, ||, ??
-        Expressia dexter         // right operand
+        Expressia sinister       # left operand
+        textus signum            # +, -, *, /, %, ==, !=, <, >, <=, >=, &&, ||, ??
+        Expressia dexter         # right operand
     }
-    
-    /// Unary expression - one operand with a prefix operator
-    /// Examples: -x, !flag, ~bits
+
+    # Unary expression - one operand with a prefix operator
+    # Examples: -x, !flag, ~bits
     UnariaExpressia {
         Locus locus
-        textus signum            // -, !, ~
+        textus signum            # -, !, ~
         Expressia argumentum
     }
-    
-    /// Assignment expression
-    /// Examples: x = 5, obj.prop = value
+
+    # Assignment expression
+    # Examples: x = 5, obj.prop = value
     AssignatioExpressia {
         Locus locus
-        Expressia sinister       // must be assignable (identifier, member, etc.)
-        textus signum            // =, +=, -=, *=, /=, etc.
+        Expressia sinister       # must be assignable (identifier, member, etc.)
+        textus signum            # =, +=, -=, *=, /=, etc.
         Expressia dexter
     }
-    
-    /// Conditional (ternary) expression
-    /// Faber: condition sic consequent secus alternate
-    /// JS: condition ? consequent : alternate
+
+    # Conditional (ternary) expression
+    # Faber: condition sic consequent secus alternate
+    # JS: condition ? consequent : alternate
     CondicioExpressia {
         Locus locus
         Expressia condicio
         Expressia consequens
         Expressia alternans
     }
-    
-    /// Range expression for slicing and iteration
-    /// Examples: 1..10 (exclusive), 1 usque 10 (inclusive)
+
+    # Range expression for slicing and iteration
+    # Examples: 1..10 (exclusive), 1 usque 10 (inclusive)
     AmbitusExpressia {
         Locus locus
         Expressia initium
         Expressia finis
-        bivalens inclusivum      // true for 'usque', false for '..'
+        bivalens inclusivum      # true for 'usque', false for '..'
     }
-    
-    /// Type cast expression
-    /// Example: value qua numerus
+
+    # Type cast expression
+    # Example: value qua numerus
     QuaExpressia {
         Locus locus
         Expressia expressia
-        TypusAnnotatio scopus    // target type
+        TypusAnnotatio scopus    # target type
     }
-    
-    /// Type check expression
-    /// Example: value est numerus
+
+    # Type check expression
+    # Example: value est numerus
     EstExpressia {
         Locus locus
         Expressia expressia
-        TypusAnnotatio scopus    // type to check against
+        TypusAnnotatio scopus    # type to check against
     }
-    
-    /// Chain expression (collection DSL pipeline)
-    /// Example: ex items prima 5, ex prices summa
+
+    # Chain expression (collection DSL pipeline)
+    # Example: ex items prima 5, ex prices summa
     CatenaExpressia {
         Locus locus
-        Expressia fons           // source collection
+        Expressia fons           # source collection
         lista<CatenaGradus> gradus
     }
-    
-    /// Compile-time expression
-    /// Example: praefixum { ... }
+
+    # Compile-time expression
+    # Example: praefixum { ... }
     PraefixumExpressia {
         Locus locus
         Expressia corpus
     }
-    
-    // -------------------------------------------------------------------------
-    // Calls and Member Access
-    // -------------------------------------------------------------------------
-    
-    /// Function/method call expression
-    /// Examples: foo(1, 2), obj.method(), await fetch()
+
+    # -------------------------------------------------------------------------
+    # Calls and Member Access
+    # -------------------------------------------------------------------------
+
+    # Function/method call expression
+    # Examples: foo(1, 2), obj.method(), await fetch()
     VocatioExpressia {
         Locus locus
-        Expressia vocatum        // what's being called (callee)
+        Expressia vocatum        # what's being called (callee)
         lista<Expressia> argumenta
-        bivalens optivum         // ?. optional call
+        bivalens optivum         # ?. optional call
     }
-    
-    /// Member access expression
-    /// Examples: obj.prop, arr[0], obj?.prop, obj!.prop
+
+    # Member access expression
+    # Examples: obj.prop, arr[0], obj?.prop, obj!.prop
     MembrumExpressia {
         Locus locus
-        Expressia obiectum       // the object being accessed
-        Expressia proprietas     // property name or index
-        bivalens computatum      // true for arr[0], false for obj.prop
-        bivalens optivum         // true for ?.
-        bivalens nonNullum       // true for !.
+        Expressia obiectum       # the object being accessed
+        Expressia proprietas     # property name or index
+        bivalens computatum      # true for arr[0], false for obj.prop
+        bivalens optivum         # true for ?.
+        bivalens nonNullum       # true for !.
     }
-    
-    /// New instance creation
-    /// Example: novum Person de { name: "Alice" }
+
+    # New instance creation
+    # Example: novum Person de { name: "Alice" }
     NovumExpressia {
         Locus locus
-        Expressia vocatum        // the type/constructor
+        Expressia vocatum        # the type/constructor
         lista<Expressia> argumenta
-        Expressia? initor        // optional 'de { ... }' object
+        Expressia? initor        # optional 'de { ... }' object
     }
-    
-    /// Await expression (cede in Faber)
-    /// Example: cede fetchData()
+
+    # Await expression (cede in Faber)
+    # Example: cede fetchData()
     CedeExpressia {
         Locus locus
         Expressia argumentum
     }
-    
-    /// Scriptum (format string) expression
-    /// Example: scriptum("Hello, {}!", name)
+
+    # Scriptum (format string) expression
+    # Example: scriptum("Hello, {}!", name)
     ScriptumExpressia {
         Locus locus
-        textus exemplar          // format template
+        textus exemplar          # format template
         lista<Expressia> argumenta
     }
-    
-    /// Lege (stdin read) expression
-    /// Example: lege()
+
+    # Lege (stdin read) expression
+    # Example: lege()
     LegeExpressia {
         Locus locus
     }
-    
-    /// Ab (from/pipe) expression for collection operations
-    /// Example: items ab filtrata(pro x: x > 0) ab mappata(pro x: x * 2)
+
+    # Ab (from/pipe) expression for collection operations
+    # Example: items ab filtrata(pro x: x > 0) ab mappata(pro x: x * 2)
     AbExpressia {
         Locus locus
-        Expressia fons           // source
+        Expressia fons           # source
         Expressia transformatio
     }
-    
-    // -------------------------------------------------------------------------
-    // Collections
-    // -------------------------------------------------------------------------
-    
-    /// Array literal expression
-    /// Example: [1, 2, 3], [], [a, ...rest]
+
+    # -------------------------------------------------------------------------
+    # Collections
+    # -------------------------------------------------------------------------
+
+    # Array literal expression
+    # Example: [1, 2, 3], [], [a, ...rest]
     SeriesExpressia {
         Locus locus
-        lista<Expressia> elementa    // includes DispersioElementum for spread
+        lista<Expressia> elementa    # includes DispersioElementum for spread
     }
-    
-    /// Object literal expression
-    /// Example: { name: "Alice", age: 30 }
+
+    # Object literal expression
+    # Example: { name: "Alice", age: 30 }
     ObiectumExpressia {
         Locus locus
         lista<ObiectumProprietas> proprietates
     }
-    
-    /// Spread element in array or object
-    /// Example: ...items, ...rest (sparge in Faber)
+
+    # Spread element in array or object
+    # Example: ...items, ...rest (sparge in Faber)
     DispersioElementum {
         Locus locus
         Expressia argumentum
     }
-    
-    // -------------------------------------------------------------------------
-    // Lambda
-    // -------------------------------------------------------------------------
-    
-    /// Lambda expression (anonymous function)
-    /// Example: pro x: x * 2
-    /// Example: pro x, y: x + y
+
+    # -------------------------------------------------------------------------
+    # Lambda
+    # -------------------------------------------------------------------------
+
+    # Lambda expression (anonymous function)
+    # Example: pro x: x * 2
+    # Example: pro x, y: x + y
     LambdaExpressia {
         Locus locus
         lista<LambdaParametrum> parametra
-        Expressia corpus         // single expression body
-        TypusAnnotatio? typusReditus    // optional return type
+        Expressia corpus         # single expression body
+        TypusAnnotatio? typusReditus    # optional return type
     }
-    
-    // -------------------------------------------------------------------------
-    // Discretio Construction
-    // -------------------------------------------------------------------------
-    
-    /// Construct a discretio variant
-    /// Example: finge Click { x: 10, y: 20 } qua Event
+
+    # -------------------------------------------------------------------------
+    # Discretio Construction
+    # -------------------------------------------------------------------------
+
+    # Construct a discretio variant
+    # Example: finge Click { x: 10, y: 20 } qua Event
     FingeExpressia {
         Locus locus
-        textus variansNomen      // variant name (e.g., "Click")
+        textus variansNomen      # variant name (e.g., "Click")
         lista<ObiectumProprietas> campi
-        TypusAnnotatio? scopus   // qua Type
+        TypusAnnotatio? scopus   # qua Type
     }
 }

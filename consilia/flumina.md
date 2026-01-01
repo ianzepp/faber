@@ -34,19 +34,19 @@ The `->` arrow syntax bypasses the protocol entirely for zero-overhead direct re
 **Verb syntax** (this document — stream protocol, Responsum wrapper):
 
 ```fab
-functio getId() fit textus { redde "abc" }        // sync, single (asFit)
-functio items() fiunt numerus { cede 1; cede 2 }  // sync, multi (asFiunt)
-functio fetch() fiet textus { redde data }        // async, single (asFiet)
-functio stream() fient textus { cede data }       // async, multi (asFient)
+functio getId() fit textus { redde "abc" }        # sync, single (asFit)
+functio items() fiunt numerus { cede 1; cede 2 }  # sync, multi (asFiunt)
+functio fetch() fiet textus { redde data }        # async, single (asFiet)
+functio stream() fient textus { cede data }       # async, multi (asFient)
 ```
 
 **Arrow syntax** (see async.md — direct returns, traditional semantics):
 
 ```fab
-functio getId() -> textus { redde "abc" }              // sync, direct return
-futura functio fetch() -> textus { redde data }        // async, direct return
-cursor functio items() -> numerus { cede 1; cede 2 }   // sync, traditional yield
-futura cursor functio stream() -> textus { cede data } // async, traditional async yield
+functio getId() -> textus { redde "abc" }              # sync, direct return
+futura functio fetch() -> textus { redde data }        # async, direct return
+cursor functio items() -> numerus { cede 1; cede 2 }   # sync, traditional yield
+futura cursor functio stream() -> textus { cede data } # async, traditional async yield
 ```
 
 ## The Responsum Protocol
@@ -198,10 +198,10 @@ async function* asFient<T>(gen: AsyncGenerator<Responsum<T>>): AsyncGenerator<T>
 ```fab
 functio validate(numerus x) fit numerus {
     si x < 0 {
-        iace "negative not allowed"  // -> yield respond.error(...)
+        iace "negative not allowed"  # -> yield respond.error(...)
     }
     si x > 1000 {
-        mori "value too large"       // -> throw new Panic(...)
+        mori "value too large"       # -> throw new Panic(...)
     }
     redde x
 }

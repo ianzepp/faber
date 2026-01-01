@@ -1,9 +1,9 @@
-// Fac blocks with error handling (cape)
+# Fac blocks with error handling (cape)
 //
-// fac { <body> } cape <error> { <handler> }
+# fac { <body> } cape <error> { <handler> }
 
 incipit {
-    // Basic fac with cape for error handling
+    # Basic fac with cape for error handling
     fac {
         fixum x = 10
         scribe x
@@ -11,7 +11,7 @@ incipit {
         scribe err
     }
 
-    // Scope block that might throw
+    # Scope block that might throw
     fac {
         fixum value = 42
         scribe value

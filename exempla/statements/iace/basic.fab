@@ -1,9 +1,9 @@
-// Basic iace (throw) statement
+# Basic iace (throw) statement
 //
-// iace <expression>
+# iace <expression>
 
 incipit {
-    // Throw with string literal
+    # Throw with string literal
     tempta {
         iace "Something went wrong"
     }
@@ -11,7 +11,7 @@ incipit {
         scribe "Caught:", err
     }
 
-    // Throw with formatted message
+    # Throw with formatted message
     fixum code = 404
     tempta {
         iace scriptum("Error code: {}", code)
@@ -20,7 +20,7 @@ incipit {
         scribe "Caught:", err
     }
 
-    // Throw from conditional
+    # Throw from conditional
     fixum value = -5
     tempta {
         si value < 0 {

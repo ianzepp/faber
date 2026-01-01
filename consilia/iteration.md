@@ -52,11 +52,11 @@ The binding keyword encodes sync/async:
 | `fiet`  | will become (async) | `for await...of` |
 
 ```fab
-// Sync (equivalent)
+# Sync (equivalent)
 ex items pro item { scribe item }
 ex items fit item { scribe item }
 
-// Async
+# Async
 ex stream fiet chunk { scribe chunk }
 ```
 
@@ -109,19 +109,19 @@ Three range operators with different end semantics:
 
 ```fab
 ex 0..5 pro n {
-    scribe n  // 0, 1, 2, 3, 4
+    scribe n  # 0, 1, 2, 3, 4
 }
 
 ex 0 usque 5 pro n {
-    scribe n  // 0, 1, 2, 3, 4, 5
+    scribe n  # 0, 1, 2, 3, 4, 5
 }
 
 ex 0..10 per 2 pro n {
-    scribe n  // 0, 2, 4, 6, 8
+    scribe n  # 0, 2, 4, 6, 8
 }
 
 ex 0 usque 10 per 2 pro n {
-    scribe n  // 0, 2, 4, 6, 8, 10
+    scribe n  # 0, 2, 4, 6, 8, 10
 }
 ```
 
@@ -297,7 +297,7 @@ Works with ranges too:
 
 ```fab
 ex 0..10 pro (i, n) {
-    // i and n are the same for ranges
+    # i and n are the same for ranges
 }
 ```
 

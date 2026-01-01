@@ -1,17 +1,17 @@
-/// Block and Program Parsers
+# Block and Program Parsers
 ///
-/// Top-level program parsing and block statement handling.
+# Top-level program parsing and block statement handling.
 ///
-/// GRAMMAR:
-///   program := statement*
-///   blockStmt := '{' statement* '}'
-///   exprStmt := expression
+# GRAMMAR:
+#   program := statement*
+#   blockStmt := '{' statement* '}'
+#   exprStmt := expression
 ///
-/// LATIN VOCABULARY:
-/// - programma = program
-/// - massa = block/mass (a body of statements)
-/// - sententia = statement
-/// - expressia = expression
+# LATIN VOCABULARY:
+# - programma = program
+# - massa = block/mass (a body of statements)
+# - sententia = statement
+# - expressia = expression
 
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
@@ -20,45 +20,45 @@ ex "../../ast/sententia" importa Sententia
 ex "../../ast/lexema" importa SymbolumGenus
 ex "../errores" importa ParserErrorCodice
 
-/// Programma - top-level program AST node
-/// NOTE: This is separate from Sententia since it's the root
+# Programma - top-level program AST node
+# NOTE: This is separate from Sententia since it's the root
 genus Programma {
     Locus locus
     lista<Sententia> corpus
 }
 
-/// Parse a block statement
+# Parse a block statement
 ///
-/// GRAMMAR: blockStmt := '{' statement* '}'
+# GRAMMAR: blockStmt := '{' statement* '}'
 ///
-/// Consumes opening brace, parses statements until closing brace.
-/// Handles optional semicolons between statements.
+# Consumes opening brace, parses statements until closing brace.
+# Handles optional semicolons between statements.
 functio parseMassaSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
 
-    // Expect opening brace
+    # Expect opening brace
     p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
 
     varia corpus = [] qua lista<Sententia>
 
-    // Parse statements until closing brace or end
+    # Parse statements until closing brace or end
     dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
-        // Skip optional semicolons between statements
+        # Skip optional semicolons between statements
         dum p.congruet(SymbolumGenus.Semicolon) {
-            // Continue skipping
+            # Continue skipping
         }
 
-        // Check again after skipping semicolons
+        # Check again after skipping semicolons
         si p.proba(SymbolumGenus.UncusDex) aut p.estFinis() {
             rumpe
         }
 
-        // Parse the next statement
+        # Parse the next statement
         corpus.adde(r.sententia())
     }
 
-    // Expect closing brace
+    # Expect closing brace
     p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
 
     redde finge MassaSententia {
@@ -67,11 +67,11 @@ functio parseMassaSententia(Resolvitor r) -> Sententia {
     } qua Sententia
 }
 
-/// Parse an expression statement
+# Parse an expression statement
 ///
-/// GRAMMAR: exprStmt := expression
+# GRAMMAR: exprStmt := expression
 ///
-/// Wraps a standalone expression as a statement.
+# Wraps a standalone expression as a statement.
 functio parseExpressiaSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
@@ -83,34 +83,34 @@ functio parseExpressiaSententia(Resolvitor r) -> Sententia {
     } qua Sententia
 }
 
-/// Parse top-level program
+# Parse top-level program
 ///
-/// GRAMMAR: program := statement*
+# GRAMMAR: program := statement*
 ///
-/// Parses statements until end of input.
-/// Uses error recovery to handle malformed statements.
+# Parses statements until end of input.
+# Uses error recovery to handle malformed statements.
 functio parseProgramma(Resolvitor r) -> Programma {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
     varia corpus = [] qua lista<Sententia>
 
-    // Parse statements until end of input
+    # Parse statements until end of input
     dum non p.estFinis() {
-        // Skip optional semicolons between statements
+        # Skip optional semicolons between statements
         dum p.congruet(SymbolumGenus.Semicolon) {
-            // Continue skipping
+            # Continue skipping
         }
 
-        // Check again after skipping
+        # Check again after skipping
         si p.estFinis() {
             rumpe
         }
 
-        // Try to parse statement with error recovery
+        # Try to parse statement with error recovery
         tempta {
             corpus.adde(r.sententia())
         } cape e {
-            // Error recovery: skip to next statement boundary
+            # Error recovery: skip to next statement boundary
             p.synchrona()
         }
     }

@@ -16,7 +16,7 @@
  * - Multi-character operators (==, !=, <=, >=, &&, ||, =>, ->)
  * - String literals with escape sequences (", ', `)
  * - Template strings with interpolation tracking
- * - Single-line comments (# shell style, // C++ style) and block comments
+ * - Single-line comments (# only)
  * - Latin keywords identified via the lexicon module
  *
  * The scanner never throws on invalid input. Instead, it collects errors
@@ -61,8 +61,8 @@
  * '&' -> '&&' | '&'
  * '|' -> '||' | '|'
  * '-' -> '->' | '-'
- * '/' -> '//' comment | '/*' comment | '/'
  * '#' -> comment (to end of line)
+ * '/' -> '/'
  * '^' -> '^'
  * '~' -> '~'
  *
@@ -392,25 +392,8 @@ export function tokenize(source: string): TokenizerResult {
                 advance();
                 line++;
                 lineStart = current;
-            } else if (char === '/' && peek(1) === '/') {
-                // Single-line comment extends to end of line (C++ style)
-                const pos = position();
-                let comment = '';
-
-                advance(); // /
-                advance(); // /
-
-                // True while there's more comment content on this line
-                const hasCommentContent = () => !isAtEnd() && peek() !== '\n';
-
-                while (hasCommentContent()) {
-                    comment += advance();
-                }
-
-                // Emit COMMENT token for comment preservation
-                addToken('COMMENT', comment.trim(), pos, undefined, 'line');
             } else if (char === '#') {
-                // Single-line comment extends to end of line (shell/Python style)
+                // Single-line comment extends to end of line
                 const pos = position();
                 let comment = '';
 
@@ -425,37 +408,6 @@ export function tokenize(source: string): TokenizerResult {
 
                 // Emit COMMENT token for comment preservation
                 addToken('COMMENT', comment.trim(), pos, undefined, 'line');
-            } else if (char === '/' && peek(1) === '*') {
-                // Multi-line comment can span multiple lines (C style)
-                const pos = position();
-                let comment = '';
-
-                advance(); // /
-                advance(); // *
-
-                // Check for doc comment: /** ... */
-                const isDoc = peek() === '*' && peek(1) !== '/';
-
-                // True while comment is not terminated
-                const notCommentEnd = () => !isAtEnd() && !(peek() === '*' && peek(1) === '/');
-
-                while (notCommentEnd()) {
-                    if (peek() === '\n') {
-                        line++;
-                        lineStart = current + 1;
-                    }
-
-                    comment += advance();
-                }
-
-                if (!isAtEnd()) {
-                    advance(); // *
-                    advance(); // /
-                }
-
-                // Emit COMMENT token with appropriate type
-                const commentType: CommentTokenType = isDoc ? 'doc' : 'block';
-                addToken('COMMENT', comment.trim(), pos, undefined, commentType);
             } else {
                 break;
             }

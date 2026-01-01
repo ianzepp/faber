@@ -41,14 +41,14 @@ A point in time as milliseconds since Unix epoch. Lightweight, no timezone.
 ```fab
 ex "norma/tempus" importa momentum
 
-fixum now = momentum.nunc()           // current instant (ms)
+fixum now = momentum.nunc()           # current instant (ms)
 fixum later = momentum.nunc()
-fixum elapsed = later - now           // duratio
+fixum elapsed = later - now           # duratio
 
-// Comparison
+# Comparison
 si later > now { scribe "time passed" }
 
-// Arithmetic with duratio
+# Arithmetic with duratio
 fixum future = now + duratio.secunda(5)
 ```
 
@@ -72,20 +72,20 @@ Calendar datetime with year, month, day, hour, minute, second. Timezone-aware.
 ```fab
 ex "norma/tempus" importa tempus
 
-fixum now = tempus.nunc()             // current datetime (local TZ)
-fixum today = tempus.hodie()          // current date at midnight
-fixum utc = tempus.nunc_utc()         // current datetime (UTC)
+fixum now = tempus.nunc()             # current datetime (local TZ)
+fixum today = tempus.hodie()          # current date at midnight
+fixum utc = tempus.nunc_utc()         # current datetime (UTC)
 
-// Access fields
-scribe now.annus                      // 2025
-scribe now.mensis                     // 12
-scribe now.dies                       // 27
-scribe now.hora                       // 14
-scribe now.minutum                    // 30
-scribe now.secundum                   // 45
+# Access fields
+scribe now.annus                      # 2025
+scribe now.mensis                     # 12
+scribe now.dies                       # 27
+scribe now.hora                       # 14
+scribe now.minutum                    # 30
+scribe now.secundum                   # 45
 
-// Day of week (1=Monday, 7=Sunday)
-scribe now.dies_hebdomadis            // 6 (Saturday)
+# Day of week (1=Monday, 7=Sunday)
+scribe now.dies_hebdomadis            # 6 (Saturday)
 ```
 
 ### tempus Fields
@@ -106,16 +106,16 @@ scribe now.dies_hebdomadis            // 6 (Saturday)
 ### tempus Constructors
 
 ```fab
-// From fields
-fixum t = tempus.ex(2025, 12, 25)                    // Dec 25, 2025 midnight
-fixum t = tempus.ex(2025, 12, 25, 14, 30, 0)         // Dec 25, 2025 14:30:00
+# From fields
+fixum t = tempus.ex(2025, 12, 25)                    # Dec 25, 2025 midnight
+fixum t = tempus.ex(2025, 12, 25, 14, 30, 0)         # Dec 25, 2025 14:30:00
 
-// From epoch
+# From epoch
 fixum t = tempus.ex_momento(momentum.nunc())
 
-// From string
+# From string
 fixum t = tempus.para("2025-12-25", "YYYY-MM-DD")
-fixum t = tempus.para("2025-12-25T14:30:00Z")        // ISO 8601 auto-detected
+fixum t = tempus.para("2025-12-25T14:30:00Z")        # ISO 8601 auto-detected
 ```
 
 ### tempus Methods
@@ -143,20 +143,20 @@ A length of time, independent of calendar. Used for arithmetic and delays.
 ```fab
 ex "norma/tempus" importa duratio
 
-// Named constructors
-fixum d = duratio.milli(500)          // 500 milliseconds
-fixum d = duratio.secunda(5)          // 5 seconds
-fixum d = duratio.minuta(2)           // 2 minutes
-fixum d = duratio.hora(1)             // 1 hour
-fixum d = duratio.dies(7)             // 7 days
+# Named constructors
+fixum d = duratio.milli(500)          # 500 milliseconds
+fixum d = duratio.secunda(5)          # 5 seconds
+fixum d = duratio.minuta(2)           # 2 minutes
+fixum d = duratio.hora(1)             # 1 hour
+fixum d = duratio.dies(7)             # 7 days
 
-// Arithmetic
-fixum total = duratio.hora(1) + duratio.minuta(30)   // 1h 30m
+# Arithmetic
+fixum total = duratio.hora(1) + duratio.minuta(30)   # 1h 30m
 
-// Access components
-scribe total.in_secundis              // 5400
-scribe total.in_minutis               // 90
-scribe total.in_horis                 // 1.5
+# Access components
+scribe total.in_secundis              # 5400
+scribe total.in_minutis               # 90
+scribe total.in_horis                 # 1.5
 ```
 
 ### duratio Constructors
@@ -185,10 +185,10 @@ scribe total.in_horis                 // 1.5
 fixum a = duratio.secunda(30)
 fixum b = duratio.secunda(20)
 
-fixum sum = a + b                     // 50 seconds
-fixum diff = a - b                    // 10 seconds
-fixum doubled = a * 2                 // 60 seconds
-fixum halved = a / 2                  // 15 seconds
+fixum sum = a + b                     # 50 seconds
+fixum diff = a - b                    # 10 seconds
+fixum doubled = a * 2                 # 60 seconds
+fixum halved = a / 2                  # 15 seconds
 ```
 
 ---
@@ -199,11 +199,11 @@ Convenience constants for common durations:
 
 ```fab
 ex "norma/tempus" importa {
-    MILLISECUNDUM,    // duratio.milli(1)
-    SECUNDUM,         // duratio.secunda(1)
-    MINUTUM,          // duratio.minuta(1)
-    HORA,             // duratio.hora(1)
-    DIES              // duratio.dies(1)
+    MILLISECUNDUM,    # duratio.milli(1)
+    SECUNDUM,         # duratio.secunda(1)
+    MINUTUM,          # duratio.minuta(1)
+    HORA,             # duratio.hora(1)
+    DIES              # duratio.dies(1)
 }
 
 cede dormi(5 * SECUNDUM)
@@ -217,11 +217,11 @@ cede dormi(HORA + 30 * MINUTUM)
 ```fab
 ex "norma/tempus" importa dormi, SECUNDUM
 
-// Sleep for duration
+# Sleep for duration
 cede dormi(duratio.secunda(5))
-cede dormi(5 * SECUNDUM)              // same thing
+cede dormi(5 * SECUNDUM)              # same thing
 
-// Sleep until instant
+# Sleep until instant
 cede dormi_usque(target)
 ```
 
@@ -239,10 +239,10 @@ ex "norma/tempus" importa tempus
 
 fixum now = tempus.nunc()
 
-scribe now.forma("YYYY-MM-DD")            // "2025-12-27"
-scribe now.forma("HH:mm:ss")              // "14:30:45"
-scribe now.forma("YYYY-MM-DD HH:mm:ss")   // "2025-12-27 14:30:45"
-scribe now.forma()                        // ISO 8601 default
+scribe now.forma("YYYY-MM-DD")            # "2025-12-27"
+scribe now.forma("HH:mm:ss")              # "14:30:45"
+scribe now.forma("YYYY-MM-DD HH:mm:ss")   # "2025-12-27 14:30:45"
+scribe now.forma()                        # ISO 8601 default
 ```
 
 ### Format Tokens
@@ -270,15 +270,15 @@ scribe now.forma()                        // ISO 8601 default
 ```fab
 ex "norma/tempus" importa tempus
 
-// With explicit format
+# With explicit format
 fixum t = tempus.para("2025-12-25", "YYYY-MM-DD")
 
-// ISO 8601 auto-detected
+# ISO 8601 auto-detected
 fixum t = tempus.para("2025-12-25T14:30:00Z")
 fixum t = tempus.para("2025-12-25T14:30:00+05:00")
 
-// Returns nihil on failure
-fixum t = tempus.para("invalid")      // nihil
+# Returns nihil on failure
+fixum t = tempus.para("invalid")      # nihil
 ```
 
 ---
@@ -288,13 +288,13 @@ fixum t = tempus.para("invalid")      // nihil
 ```fab
 ex "norma/tempus" importa tempus
 
-fixum now = tempus.nunc()                     // local timezone
+fixum now = tempus.nunc()                     # local timezone
 fixum tokyo = now.in_zona("Asia/Tokyo")
 fixum utc = now.in_zona("UTC")
 
-scribe now.zona                               // "America/New_York"
-scribe tokyo.zona                             // "Asia/Tokyo"
-scribe tokyo.hora                             // different hour
+scribe now.zona                               # "America/New_York"
+scribe tokyo.zona                             # "Asia/Tokyo"
+scribe tokyo.hora                             # different hour
 ```
 
 IANA timezone names are used (e.g., "America/New_York", "Europe/London", "Asia/Tokyo").
@@ -308,7 +308,7 @@ ex "norma/tempus" importa momentum
 
 fixum start = momentum.nunc()
 
-// ... do work ...
+# ... do work ...
 
 fixum elapsed = momentum.nunc() - start
 

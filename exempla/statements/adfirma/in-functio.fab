@@ -1,22 +1,22 @@
-// Assertions in functions for preconditions and postconditions
+# Assertions in functions for preconditions and postconditions
 //
-// adfirma <condition>
-// adfirma <condition>, "error message"
+# adfirma <condition>
+# adfirma <condition>, "error message"
 
-// Precondition: validate input at function start
+# Precondition: validate input at function start
 functio divide(numerus a, numerus b) fit numerus {
     adfirma b != 0, "divisor must not be zero"
     redde a / b
 }
 
-// Multiple preconditions
+# Multiple preconditions
 functio calculateAge(numerus birthYear, numerus currentYear) fit numerus {
     adfirma birthYear > 0, "birth year must be positive"
     adfirma currentYear >= birthYear, "current year must be >= birth year"
     redde currentYear - birthYear
 }
 
-// Postcondition: validate result before returning
+# Postcondition: validate result before returning
 functio absoluteValue(numerus n) fit numerus {
     varia result = n
     si n < 0 {

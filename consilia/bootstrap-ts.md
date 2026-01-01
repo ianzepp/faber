@@ -47,7 +47,7 @@ Rewrite the Faber compiler in Faber, targeting TypeScript/Bun.
 
 The mutual recursion problem between expression and statement parsers was solved using a `pactum Resolvitor` interface:
 
-```faber
+```fab
 pactum Resolvitor {
     functio parser() -> Parser
     functio expressia() -> Expressia
@@ -63,15 +63,15 @@ Parsing functions receive `Resolvitor r` and call `r.expressia()`, `r.sententia(
 
 Use `finge` to construct discretio variants:
 
-```faber
+```fab
 discretio Expressia {
     Binaria { Locus locus, textus signum, Expressia sinister, Expressia dexter }
     Littera { Locus locus, LitteraGenus species, textus crudus }
-    // ...
+    # ...
 }
 
 functio parseBinaria(Resolvitor r) -> Expressia {
-    // ...
+    # ...
     redde finge Binaria { locus: l, signum: s, sinister: a, dexter: b } qua Expressia
 }
 ```
@@ -144,11 +144,11 @@ Skip other targets (py, rs, cpp, zig, fab) — they can be added later.
 
 Minimal CLI:
 
-```faber
+```fab
 functio main(lista<textus> args) -> numerus {
-    fixum source = lege()  // stdin
+    fixum source = lege()  # stdin
     fixum result = compile(source)
-    scribe result          // stdout
+    scribe result          # stdout
     redde 0
 }
 ```
@@ -166,7 +166,7 @@ functio main(lista<textus> args) -> numerus {
 
 Mutual recursion solved via interface:
 
-```faber
+```fab
 ex "./resolvitor" importa Resolvitor, Expressia
 
 functio parseCondicio(Resolvitor r) -> Expressia {
@@ -174,8 +174,8 @@ functio parseCondicio(Resolvitor r) -> Expressia {
     fixum test = parseAut(r)
 
     si p.congruetVerbum("sic") {
-        fixum consequens = r.expressia()  // Cross-module call via Resolvitor
-        // ...
+        fixum consequens = r.expressia()  # Cross-module call via Resolvitor
+        # ...
     }
 }
 ```
@@ -194,8 +194,8 @@ function parse(tokens: Token[]) {
 }
 ```
 
-```faber
-// Faber
+```fab
+# Faber
 genus Parser {
     lista<Symbolum> symbola
     numerus index

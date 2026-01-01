@@ -1,38 +1,38 @@
-// Base AST node types shared by all nodes
+# Base AST node types shared by all nodes
 //
-// WHY: Every AST node needs position info for error messages.
-//      Comments attach to nodes for formatting preservation.
+# WHY: Every AST node needs position info for error messages.
+#      Comments attach to nodes for formatting preservation.
 
 ex "./positio" importa Locus
 ex "./sententia" importa Sententia
 
-/// Comment type enumeration
+# Comment type enumeration
 ordo NotaGenus {
-    Linea      // // comment
-    Massa      // /* comment */
-    Docens     // /// comment
+    Linea      # # comment
+    Massa      # /* comment */
+    Docens     # # comment
 }
 
-/// A source code comment
+# A source code comment
 genus Nota {
     NotaGenus species
     textus valor
     Locus locus
 }
 
-/// Base fields present on all AST nodes
-/// WHY: Every node tracks position for error messages,
-///      and may have leading/trailing comments for formatting.
+# Base fields present on all AST nodes
+# WHY: Every node tracks position for error messages,
+#      and may have leading/trailing comments for formatting.
 genus NodusRadix {
     Locus locus
-    lista<Nota>? notaePrae      // leading comments
-    lista<Nota>? notaePost      // trailing comments
+    lista<Nota>? notaePrae      # leading comments
+    lista<Nota>? notaePost      # trailing comments
 }
 
-/// Root node of the AST - represents an entire source file
+# Root node of the AST - represents an entire source file
 genus Programma {
     Locus locus
     lista<Nota>? notaePrae
     lista<Nota>? notaePost
-    lista<Sententia> corpus     // body of statements
+    lista<Sententia> corpus     # body of statements
 }

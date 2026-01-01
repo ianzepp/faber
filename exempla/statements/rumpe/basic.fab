@@ -1,9 +1,9 @@
-// Break (rumpe) in loops
+# Break (rumpe) in loops
 //
-// rumpe exits the innermost loop immediately
+# rumpe exits the innermost loop immediately
 
 incipit ergo cura arena {
-    // Break when reaching 5
+    # Break when reaching 5
     varia i = 0
 
     dum i < 10 {
@@ -14,7 +14,7 @@ incipit ergo cura arena {
         i = i + 1
     }
 
-    // Break in nested loop (exits inner only)
+    # Break in nested loop (exits inner only)
     varia outer = 0
 
     dum outer < 3 {

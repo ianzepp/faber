@@ -1,9 +1,9 @@
-// Elige with early returns in functions
+# Elige with early returns in functions
 //
-// elige <expr> {
-//     si <value> { redde ... }
-//     si <value> { redde ... }
-// }
+# elige <expr> {
+#     si <value> { redde ... }
+#     si <value> { redde ... }
+# }
 
 functio getGreeting(textus language) fit textus {
     elige language {

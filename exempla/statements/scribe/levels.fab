@@ -1,22 +1,22 @@
-// Output statements with different log levels
+# Output statements with different log levels
 //
-// scribe <expr>  -> console.log (standard output)
-// vide <expr>    -> console.debug (debug output)
-// mone <expr>    -> console.warn (warning output)
+# scribe <expr>  -> console.log (standard output)
+# vide <expr>    -> console.debug (debug output)
+# mone <expr>    -> console.warn (warning output)
 
 incipit {
     fixum status = "running"
     fixum count = 42
 
-    // Standard output (console.log)
+    # Standard output (console.log)
     scribe "Application started"
     scribe "Status:", status
 
-    // Debug output (console.debug)
+    # Debug output (console.debug)
     vide "Debug: entering main loop"
     vide "Debug: count =", count
 
-    // Warning output (console.warn)
+    # Warning output (console.warn)
     mone "Warning: deprecated feature used"
     mone "Warning: count exceeds threshold:", count
 }

@@ -1,6 +1,6 @@
-// Basic si (if) conditionals
+# Basic si (if) conditionals
 //
-// si <condition> { <body> }
+# si <condition> { <body> }
 
 incipit {
     fixum x = 10
@@ -13,7 +13,7 @@ incipit {
         scribe "x is greater than 20"
     }
 
-    // Multiple statements in block
+    # Multiple statements in block
     fixum age = 25
 
     si age >= 18 {

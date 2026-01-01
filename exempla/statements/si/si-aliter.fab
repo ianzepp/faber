@@ -1,10 +1,10 @@
-// si-secus (if-else) conditionals
+# si-secus (if-else) conditionals
 //
-// si <condition> { <body> } secus { <body> }
-// si <cond1> { } sin <cond2> { } secus { }
+# si <condition> { <body> } secus { <body> }
+# si <cond1> { } sin <cond2> { } secus { }
 
 incipit {
-    // Simple if-else
+    # Simple if-else
     fixum score = 85
 
     si score >= 90 {
@@ -14,7 +14,7 @@ incipit {
         scribe "Grade: B or lower"
     }
 
-    // Multiple statements in branches
+    # Multiple statements in branches
     fixum temperature = 22
 
     si temperature > 30 {
@@ -26,7 +26,7 @@ incipit {
         scribe "Enjoy the weather"
     }
 
-    // If-else-if chain
+    # If-else-if chain
     fixum grade = 75
 
     si grade >= 90 {

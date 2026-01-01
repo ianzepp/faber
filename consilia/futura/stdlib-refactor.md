@@ -36,7 +36,7 @@ When Faber code does:
 cura arena fit outer {
     fixum lista<numerus> items = [1, 2, 3]
     cura arena fit inner {
-        // inner allocator on curatorStack, but items.addita() uses outer
+        # inner allocator on curatorStack, but items.addita() uses outer
         fixum newItems = items.addita(4)
     }
 }

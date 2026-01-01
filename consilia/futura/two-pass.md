@@ -56,7 +56,7 @@ Any type alias remaining at UNKNOWN after iteration is flagged as circular:
 
 ```fab
 typus A = B
-typus B = A  // Both flagged: "Circular type alias: 'X' cannot be resolved"
+typus B = A  # Both flagged: "Circular type alias: 'X' cannot be resolved"
 ```
 
 Direct self-references (`typus A = A`) are caught earlier via `resolvingTypeAliases` tracking.
@@ -111,7 +111,7 @@ genus User {
 typus A = B
 typus B = C
 typus C = numerus
-fixum A x = 42  // Works: A resolves to numerus
+fixum A x = 42  # Works: A resolves to numerus
 ```
 
 ## Remaining Work: Throwability Propagation
@@ -120,7 +120,7 @@ fixum A x = 42  // Works: A resolves to numerus
 
 ```fab
 functio a() { iace "error" }
-functio b() { a() }  // b also throws, but semantics doesn't know this
+functio b() { a() }  # b also throws, but semantics doesn't know this
 ```
 
 For Zig (and potentially Rust/C++), the compiler needs transitive throwability information.

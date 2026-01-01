@@ -4,10 +4,10 @@
 # - Leading comments appear before the statement
 # - Trailing comments appear on the same line after the statement
 #
-# Target syntax:
-#   ts/rs/cpp: // line, /* block */
-#   py: # line, """ block """
-#   zig: // line only (no block comments)
+# Faber uses # for all comments. Target syntax:
+#   ts/rs/cpp/zig: //
+#   py: #
+#   fab: #
 
 # =============================================================================
 # Leading Line Comments
@@ -16,7 +16,7 @@
 # Single leading comment
 - name: leading line comment
   faber: |
-      // This is a comment
+      # This is a comment
       fixum x = 5
   expect:
       ts:
@@ -35,14 +35,14 @@
           - '// This is a comment'
           - 'const x = 5'
       fab:
-          - '// This is a comment'
+          - '# This is a comment'
           - 'fixum x = 5'
 
 # Multiple leading comments
 - name: multiple leading comments
   faber: |
-      // First comment
-      // Second comment
+      # First comment
+      # Second comment
       fixum y = 10
   expect:
       ts:
@@ -54,8 +54,8 @@
           - '# Second comment'
           - 'y = 10'
       fab:
-          - '// First comment'
-          - '// Second comment'
+          - '# First comment'
+          - '# Second comment'
           - 'fixum y = 10'
 
 # =============================================================================
@@ -64,7 +64,7 @@
 
 # Trailing comment on same line
 - name: trailing line comment
-  faber: 'fixum z = 42  // magic number'
+  faber: 'fixum z = 42  # magic number'
   expect:
       ts:
           - 'const z = 42; // magic number'
@@ -77,58 +77,63 @@
       zig:
           - 'const z = 42; // magic number'
       fab:
-          - 'fixum z = 42 // magic number'
+          - 'fixum z = 42 # magic number'
 
 # =============================================================================
-# Block Comments
+# Multi-line Comments
 # =============================================================================
 
-# Block comment
-- name: block comment
+# Multiple comment lines
+- name: multi-line comment
   faber: |
-      /* This is a block comment */
+      # This is line one
+      # This is line two
       fixum a = 1
   expect:
       ts:
-          - '/* This is a block comment */'
+          - '// This is line one'
+          - '// This is line two'
           - 'const a = 1'
       py:
-          - '"""'
-          - 'This is a block comment'
-          - '"""'
+          - '# This is line one'
+          - '# This is line two'
+          - 'a = 1'
       rs:
-          - '/* This is a block comment */'
+          - '// This is line one'
+          - '// This is line two'
       cpp:
-          - '/* This is a block comment */'
+          - '// This is line one'
+          - '// This is line two'
       zig:
-          - '// This is a block comment'
+          - '// This is line one'
+          - '// This is line two'
       fab:
-          - '/* This is a block comment */'
+          - '# This is line one'
+          - '# This is line two'
           - 'fixum a = 1'
 
 # =============================================================================
-# Doc Comments
+# Comments on Functions
 # =============================================================================
 
-# Documentation comment
-- name: doc comment on function
+# Comment before function
+- name: comment on function
   faber: |
-      /** Greets the user */
+      # Greets the user
       functio greet() {
           scribe "Hello"
       }
   expect:
       ts:
           contains:
-              - '/* * Greets the user */'
+              - '// Greets the user'
               - 'function greet()'
       py:
           contains:
-              - '"""'
-              - 'Greets the user'
+              - '# Greets the user'
               - 'def greet():'
       fab:
-          - '/** Greets the user */'
+          - '# Greets the user'
           - 'functio greet()'
 
 # =============================================================================
@@ -138,7 +143,7 @@
 # Comment before if statement
 - name: comment before if
   faber: |
-      // Check condition
+      # Check condition
       si verum {
           scribe "yes"
       }
@@ -150,5 +155,5 @@
           - '# Check condition'
           - 'if True:'
       fab:
-          - '// Check condition'
+          - '# Check condition'
           - 'si verum'

@@ -167,7 +167,7 @@ Common array methods (see README for complete list):
 ## Complete Program Example
 
 ```fab
-// A simple API handler demonstrating multiple features
+# A simple API handler demonstrating multiple features
 ex hono importa Hono, Context
 
 genus UserService {
@@ -199,7 +199,7 @@ fixum app = novum Hono()
 
 app.get("/users/:id", futura functio(Context ctx) {
     fixum id = ctx.param("id") qua numerus
-    fixum service = novum UserService("https://api.example.com")
+    fixum service = novum UserService("https:#api.example.com")
     fixum user = cede service.fetch(id)
 
     si user === nihil {
@@ -241,14 +241,14 @@ patternProperty := 'ceteri'? IDENTIFIER (':' IDENTIFIER)?
 **Examples:**
 
 ```fab
-{ nomen, aetas }              // extract nomen and aetas
-{ nomen: localName, aetas }   // rename nomen to localName
-{ nomen, ceteri rest }        // extract nomen, collect rest
+{ nomen, aetas }              # extract nomen and aetas
+{ nomen: localName, aetas }   # rename nomen to localName
+{ nomen, ceteri rest }        # extract nomen, collect rest
 
 T SUPPORTED (will produce parser errors):
-{ ...rest }    // JS spread syntax
-{ *rest }      // Python unpack syntax
-{ **rest }     // Python kwargs syntax
+{ ...rest }    # JS spread syntax
+{ *rest }      # Python unpack syntax
+{ **rest }     # Python kwargs syntax
 ```
 
 ---
@@ -272,7 +272,7 @@ typeAliasDecl := 'typus' IDENTIFIER '=' typeAnnotation
 ```fab
 typus ID = textus
 typus UserID = numerus<32, Naturalis>
-typus ConfigTypus = typus config    // typeof
+typus ConfigTypus = typus config    # typeof
 ```
 
 ### Type Annotation
@@ -313,9 +313,9 @@ ternary := or (('?' expression ':' | 'sic' expression 'secus') ternary)?
 **Examples:**
 
 ```fab
-verum ? 1 : 0              // symbolic style
-verum sic 1 secus 0        // Latin style
-a ? b ? c : d : e          // nested (right-associative)
+verum ? 1 : 0              # symbolic style
+verum sic 1 secus 0        # Latin style
+a ? b ? c : d : e          # nested (right-associative)
 ```
 
 ### Or
@@ -499,13 +499,13 @@ arrayPatternElement := '_' | 'ceteri'? IDENTIFIER
 **Examples:**
 
 ```fab
-[a, b, c]                 // extract first three elements
-[first, ceteri rest]     // extract first, collect rest
-[_, second, _]           // skip first and third, extract second
+[a, b, c]                 # extract first three elements
+[first, ceteri rest]     # extract first, collect rest
+[_, second, _]           # skip first and third, extract second
 
 T SUPPORTED:
-[...rest]                // JS spread syntax
-[*rest]                  // Python unpack syntax
+[...rest]                # JS spread syntax
+[*rest]                  # Python unpack syntax
 ```
 
 ### Functio Declaration
@@ -537,14 +537,14 @@ returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
 > 
 > When using verb forms, the futura/cursor modifier is NOT required - the verb
 > itself carries the semantic information. The modifier becomes redundant:
-> functio compute() -> numerus { ... }         // arrow: sync by default
-> functio compute() fit numerus { ... }        // verb: explicitly sync
-> functio fetch() futura -> textus { ... }     // modifier: async
-> functio fetch() fiet textus { ... }          // verb implies async
-> functio items() cursor -> numerus { ... }    // modifier: generator
-> functio items() fiunt numerus { ... }        // verb implies generator
-> functio stream() fient datum { ... }         // verb implies async generator
-> functio alloc(textus s) curata a -> T { ... } // managed, allocator bound as 'a'
+> functio compute() -> numerus { ... }         # arrow: sync by default
+> functio compute() fit numerus { ... }        # verb: explicitly sync
+> functio fetch() futura -> textus { ... }     # modifier: async
+> functio fetch() fiet textus { ... }          # verb implies async
+> functio items() cursor -> numerus { ... }    # modifier: generator
+> functio items() fiunt numerus { ... }        # verb implies generator
+> functio stream() fient datum { ... }         # verb implies async generator
+> functio alloc(textus s) curata a -> T { ... } # managed, allocator bound as 'a'
 > 
 > Modifier is still allowed for emphasis, but verb/modifier conflicts are errors.
 > 
@@ -650,8 +650,8 @@ elseClause := ('secus' | 'secus') (ifStmt | blockStmt | statement)
 > 
 > Poetic style: si / sin / secus
 > si x > 0 { positive() }
-> sin x < 0 { negative() }    // "sin" = "but if" (classical Latin)
-> secus { zero() }            // "secus" = "otherwise"
+> sin x < 0 { negative() }    # "sin" = "but if" (classical Latin)
+> secus { zero() }            # "secus" = "otherwise"
 > 
 > Keywords are interchangeable at each branch point:
 > - 'sin' ≡ 'sin' (else-if)
@@ -707,17 +707,17 @@ specifier := 'ceteri'? IDENTIFIER ('ut' IDENTIFIER)?
 **Examples:**
 
 ```fab
-ex numeri pro n { ... }              // for-loop (sync)
-ex numeri fiet n { ... }             // for-await-of loop (async)
-ex persona fixum nomen, aetas        // object destructuring
-ex persona fixum nomen ut n          // object destructuring with alias
-ex persona fixum nomen, ceteri rest  // object destructuring with rest
-ex coords fixum [x, y, z]            // array destructuring
-ex fetchData() figendum result       // async destructuring
+ex numeri pro n { ... }              # for-loop (sync)
+ex numeri fiet n { ... }             # for-await-of loop (async)
+ex persona fixum nomen, aetas        # object destructuring
+ex persona fixum nomen ut n          # object destructuring with alias
+ex persona fixum nomen, ceteri rest  # object destructuring with rest
+ex coords fixum [x, y, z]            # array destructuring
+ex fetchData() figendum result       # async destructuring
 
 llection DSL forms:
-ex items prima 5 pro item { }        // iteration with transforms
-ex items prima 5, ultima 2 pro x {}  // multiple transforms
+ex items prima 5 pro item { }        # iteration with transforms
+ex items prima 5, ultima 2 pro x {}  # multiple transforms
 ```
 
 ### D S L Transforms
@@ -772,12 +772,12 @@ condition := expression
 **Examples:**
 
 ```fab
-ab users activus                     // boolean property shorthand
-ab users non banned                  // negated boolean property
-ab users ubi aetas >= 18             // condition with ubi
-ab users non ubi banned et suspended // negated compound condition
-ab users activus, prima 10           // filter + transforms
-ab users activus pro user { }        // iteration form
+ab users activus                     # boolean property shorthand
+ab users non banned                  # negated boolean property
+ab users ubi aetas >= 18             # condition with ubi
+ab users non ubi banned et suspended # negated compound condition
+ab users activus, prima 10           # filter + transforms
+ab users activus pro user { }        # iteration form
 ```
 
 ### Regex Literal
@@ -793,9 +793,9 @@ regexLiteral := 'sed' STRING IDENTIFIER?
 **Examples:**
 
 ```fab
-sed "\\d+"           // pattern only
-sed "hello" i        // case insensitive
-sed "^start" im      // multiple flags
+sed "\\d+"           # pattern only
+sed "hello" i        # case insensitive
+sed "^start" im      # multiple flags
 ```
 
 ### De Statement
@@ -811,8 +811,8 @@ deStmt := 'de' expression ('pro' | 'fit' | 'fiet') IDENTIFIER
 **Examples:**
 
 ```fab
-de tabula pro clavis { ... }  // from table, for each key
-de object pro k ergo scribe k // one-liner form
+de tabula pro clavis { ... }  # from table, for each key
+de object pro k ergo scribe k # one-liner form
 ```
 
 ### In Statement
@@ -827,7 +827,7 @@ inStmt := 'in' expression blockStmt
 **Examples:**
 
 ```fab
-in user { nomen = "Marcus" }  // mutation block
+in user { nomen = "Marcus" }  # mutation block
 ```
 
 ### Elige Statement
@@ -1032,10 +1032,10 @@ argumentList := (expression (',' expression)*)?
 **Examples:**
 
 ```fab
-ad "console:log" ("hello")                           // fire-and-forget
-ad "fasciculus:lege" ("file.txt") fit textus pro c { }  // sync binding
-ad "http:get" (url) fiet Response pro r { }          // async binding
-ad "http:batch" (urls) fient Response[] pro rs { }   // async plural
+ad "console:log" ("hello")                           # fire-and-forget
+ad "fasciculus:lege" ("file.txt") fit textus pro c { }  # sync binding
+ad "http:get" (url) fiet Response pro r { }          # async binding
+ad "http:batch" (urls) fient Response[] pro rs { }   # async plural
 ```
 
 ### Praepara Block
@@ -1075,10 +1075,10 @@ curatorKind := 'arena' | 'page'
 **Examples:**
 
 ```fab
-cura arena fit mem { ... }                    // arena allocator
-cura page fit mem { ... }                     // page allocator
-cura aperi("data.bin") fit fd { lege(fd) }   // generic resource
-cura connect(url) fiet conn { ... }          // async resource
+cura arena fit mem { ... }                    # arena allocator
+cura page fit mem { ... }                     # page allocator
+cura aperi("data.bin") fit fd { lege(fd) }   # generic resource
+cura connect(url) fiet conn { ... }          # async resource
 ```
 
 ### Incipit Statement

@@ -1,22 +1,22 @@
-// Basic type aliases
+# Basic type aliases
 //
-// typus Name = Type
+# typus Name = Type
 
-// Primitive type aliases
+# Primitive type aliases
 typus UserId = numerus
 typus Username = textus
 typus IsActive = bivalens
 
-// Generic type aliases
+# Generic type aliases
 typus Names = lista<textus>
 typus Scores = lista<numerus>
 typus UserCache = tabula<textus, numerus>
 
-// Nullable type alias
+# Nullable type alias
 typus OptionalName = textus?
 
 incipit {
-    // Using the type aliases
+    # Using the type aliases
     fixum UserId id = 42
     fixum Username name = "Marcus"
     fixum IsActive active = verum
@@ -25,7 +25,7 @@ incipit {
     scribe name
     scribe active
 
-    // Using generic type aliases
+    # Using generic type aliases
     fixum Names friends = ["Gaius", "Lucius", "Titus"]
     scribe friends
 

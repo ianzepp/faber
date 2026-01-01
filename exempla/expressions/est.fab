@@ -1,30 +1,30 @@
-// Strict equality with est
+# Strict equality with est
 //
-// est = "is" (strict equality, like ===)
-// Used for null checks and boolean comparisons
+# est = "is" (strict equality, like ===)
+# Used for null checks and boolean comparisons
 
 incipit {
-    // Null checking
+    # Null checking
     fixum numerus? maybeValue = nihil
     fixum isNull = maybeValue est nihil
     scribe isNull
 
-    // Boolean true check
+    # Boolean true check
     fixum enabled = verum
     fixum isTrue = enabled est verum
     scribe isTrue
 
-    // Boolean false check
+    # Boolean false check
     fixum disabled = falsum
     fixum isFalse = disabled est falsum
     scribe isFalse
 
-    // Chained with logical operators
+    # Chained with logical operators
     fixum textus? name = nihil
     fixum needsDefault = name est nihil et enabled est verum
     scribe needsDefault
 
-    // Parenthesized for clarity
+    # Parenthesized for clarity
     fixum bothNull = (maybeValue est nihil) et (name est nihil)
     scribe bothNull
 }

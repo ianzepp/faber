@@ -138,19 +138,19 @@ de <connection> [apud <table>] quaere [fields] [ubi "clause" (params)] [transfor
 ### Examples
 
 ```fab
-// Select all columns
+# Select all columns
 de db.users quaere fiet user { }
 
-// Select specific columns
+# Select specific columns
 de db.users quaere nomen, email fiet user { }
 
-// With WHERE clause
+# With WHERE clause
 de db.users quaere ubi "active = ?" (verum) fiet user { }
 
-// With columns and WHERE
+# With columns and WHERE
 de db.users quaere nomen ubi "role = ?" ("admin") fiet user { }
 
-// With DSL transforms
+# With DSL transforms
 de db.logs quaere ubi "level = ?" ("error") prima 100 fiet log { }
 ```
 
@@ -201,7 +201,7 @@ Mismatch between placeholders and arguments is a compile-time error:
 
 ```fab
 de db.users quaere ubi "a = ? AND b = ?" (onlyOne)
-// Error: 2 placeholders, 1 argument
+# Error: 2 placeholders, 1 argument
 ```
 
 ---
@@ -255,10 +255,10 @@ Collection DSL transforms can follow the query:
 | `summa`    | —              | Client-side aggregation  |
 
 ```fab
-// Server-side LIMIT
+# Server-side LIMIT
 de db.logs quaere ubi "level = ?" ("error") prima 100 fiet log { }
 
-// Pagination
+# Pagination
 de db.users quaere omitte 20, prima 10 fiet user { }
 ```
 
@@ -272,8 +272,8 @@ The `de` preposition enforces read-only access. Query results are borrowed, not 
 
 ```fab
 de db.users quaere fiet user {
-    scribe user.nomen      // OK: reading
-    user.nomen = "new"     // Error: cannot mutate borrowed value
+    scribe user.nomen      # OK: reading
+    user.nomen = "new"     # Error: cannot mutate borrowed value
 }
 ```
 
@@ -295,13 +295,13 @@ The `in` preposition provides mutable database operations. This mirrors in-memor
 ### Update (muta)
 
 ```fab
-// Update with WHERE clause
+# Update with WHERE clause
 in db.users muta "status = ?" ("active") ubi "id = ?" (userId)
 
-// Update multiple fields
+# Update multiple fields
 in db.users muta "status = ?, updated_at = ?" ("active", now) ubi "role = ?" ("pending")
 
-// Raw SQL update
+# Raw SQL update
 in db sql "UPDATE users SET status = ? WHERE id = ?" ("active", userId)
 ```
 
@@ -310,16 +310,16 @@ The `muta` verb (Latin: "change") generates UPDATE statements.
 ### Insert (adde)
 
 ```fab
-// Insert with field values
+# Insert with field values
 in db.users adde (nomen: "Marcus", email: "marcus@roma.it")
 
-// Insert multiple rows
+# Insert multiple rows
 in db.users adde [
     (nomen: "Marcus", email: "marcus@roma.it"),
     (nomen: "Julia", email: "julia@roma.it")
 ]
 
-// Raw SQL insert
+# Raw SQL insert
 in db sql "INSERT INTO users (name, email) VALUES (?, ?)" ("Marcus", "marcus@roma.it")
 ```
 
@@ -328,13 +328,13 @@ The `adde` verb (Latin: "add") generates INSERT statements. Matches the collecti
 ### Delete (dele)
 
 ```fab
-// Delete with WHERE clause
+# Delete with WHERE clause
 in db.users dele ubi "status = ?" ("inactive")
 
-// Delete by ID
+# Delete by ID
 in db.users dele ubi "id = ?" (userId)
 
-// Raw SQL delete
+# Raw SQL delete
 in db sql "DELETE FROM users WHERE id = ?" (userId)
 ```
 
@@ -353,10 +353,10 @@ The `dele` verb (Latin: "remove") generates DELETE statements. Matches the colle
 Mutations can return affected row count or inserted IDs:
 
 ```fab
-// Get affected count
+# Get affected count
 fixum count = in db.users muta "status = ?" ("active") ubi "role = ?" ("pending")
 
-// Get inserted ID (if supported by driver)
+# Get inserted ID (if supported by driver)
 fixum id = in db.users adde (nomen: "Marcus", email: "marcus@roma.it")
 ```
 
@@ -381,13 +381,13 @@ in <connection> sql "raw SQL" (params)
 To prevent accidental mass updates/deletes, `muta` and `dele` require `ubi` clause by default:
 
 ```fab
-// Error: WHERE clause required
-in db.users dele  // Compile error: dele requires ubi clause
+# Error: WHERE clause required
+in db.users dele  # Compile error: dele requires ubi clause
 
-// OK: explicit "all rows" intent
+# OK: explicit "all rows" intent
 in db.users dele ubi "1 = 1" ()
 
-// OK: with condition
+# OK: with condition
 in db.users dele ubi "status = ?" ("inactive")
 ```
 
@@ -398,13 +398,13 @@ in db.users dele ubi "status = ?" ("inactive")
 Connection management is outside the query DSL scope. Assumed patterns:
 
 ```fab
-// Connection passed in or configured
-fixum db = connecta("postgres://...")
+# Connection passed in or configured
+fixum db = connecta("postgres:#...")
 
-// Queries use the connection
+# Queries use the connection
 de db.users quaere fiet user { }
 
-// Mutations use the connection
+# Mutations use the connection
 in db.users adde (nomen: "Marcus", email: "marcus@roma.it")
 ```
 
@@ -414,16 +414,16 @@ Transaction blocks use `cura transactio ... fiet` to acquire a transaction handl
 
 ```fab
 cura transactio db.begin() fiet tx {
-    // Read within transaction
+    # Read within transaction
     de tx.accounts quaere ubi "id = ?" (fromId) fiet from {
         fixum balance = from.balance
     }
 
-    // Write within transaction
+    # Write within transaction
     in tx.accounts muta "balance = balance - ?" (amount) ubi "id = ?" (fromId)
     in tx.accounts muta "balance = balance + ?" (amount) ubi "id = ?" (toId)
 
-    // Insert audit log
+    # Insert audit log
     in tx.transfers adde (fromId: fromId, toId: toId, amount: amount)
 }
 ```
@@ -464,7 +464,7 @@ import arca.lite
 
 functio main() {
     cura arca.lite.aperi("data.db") fit db {
-        // db is available for queries/mutations
+        # db is available for queries/mutations
         de db.users quaere fit user {
             scribe user.nomen
         }
@@ -512,7 +512,7 @@ genus User {
     bivalens active
 }
 
-// Compiler validates field names
+# Compiler validates field names
 de db.users quaere nomen, email ubi "active = ?" (verum) fiet User user { }
 ```
 

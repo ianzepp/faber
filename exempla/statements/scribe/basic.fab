@@ -1,26 +1,26 @@
-// Basic scribe (print) statements
+# Basic scribe (print) statements
 //
-// scribe <expr>
-// scribe <expr>, <expr>, ...
+# scribe <expr>
+# scribe <expr>, <expr>, ...
 
 incipit {
-    // Simple string output
+    # Simple string output
     scribe "Hello, world!"
 
-    // Variable output
+    # Variable output
     fixum nomen = "Marcus"
     scribe nomen
 
-    // Multiple arguments
+    # Multiple arguments
     fixum aetas = 30
     scribe "Name:", nomen
     scribe "Age:", aetas
 
-    // Expressions
+    # Expressions
     fixum x = 10
     fixum y = 20
     scribe "Sum:", x + y
 
-    // Multiple values in one statement
+    # Multiple values in one statement
     scribe "Coordinates:", x, y
 }

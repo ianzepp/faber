@@ -1,28 +1,28 @@
-/// Lexor Error Codes and Messages
+# Lexor Error Codes and Messages
 ///
-/// Centralized error definitions for lexical analysis.
-/// Each error has a code (L-prefix), text, and help message.
+# Centralized error definitions for lexical analysis.
+# Each error has a code (L-prefix), text, and help message.
 
 ex "../ast/positio" importa Locus
 
-/// Error codes for lexical failures
-/// L-prefix distinguishes from parser (P) and semantic (S) errors
+# Error codes for lexical failures
+# L-prefix distinguishes from parser (P) and semantic (S) errors
 ordo LexorErrorCodice {
-    TextusNonClausa           // L001: Unterminated string
-    ExemplarNonClausum        // L002: Unterminated template string
-    SignumInopinatum          // L003: Unexpected character
-    NumerusHexMalus           // L004: Invalid hex literal
-    NumerusBinariusMalus      // L005: Invalid binary literal
-    NumerusOctalisMalus       // L006: Invalid octal literal
+    TextusNonClausa           # L001: Unterminated string
+    ExemplarNonClausum        # L002: Unterminated template string
+    SignumInopinatum          # L003: Unexpected character
+    NumerusHexMalus           # L004: Invalid hex literal
+    NumerusBinariusMalus      # L005: Invalid binary literal
+    NumerusOctalisMalus       # L006: Invalid octal literal
 }
 
-/// Structured error message
+# Structured error message
 genus LexorErrorNuntius {
-    textus textus             // Brief error message
-    textus auxilium           // Detailed help text
+    textus textus             # Brief error message
+    textus auxilium           # Detailed help text
 }
 
-/// Get error message for a code
+# Get error message for a code
 functio nuntiumErroris(LexorErrorCodice codice) -> LexorErrorNuntius {
     elige codice {
         si LexorErrorCodice.TextusNonClausa {
@@ -62,15 +62,15 @@ functio nuntiumErroris(LexorErrorCodice codice) -> LexorErrorNuntius {
             } qua LexorErrorNuntius
         }
     }
-    
-    // Fallback (should never reach)
+
+    # Fallback (should never reach)
     redde {
         textus: "Error ignotus",
         auxilium: "Unknown error occurred."
     } qua LexorErrorNuntius
 }
 
-/// A lexical error with position
+# A lexical error with position
 genus LexorError {
     LexorErrorCodice codice
     textus textus
@@ -78,7 +78,7 @@ genus LexorError {
     Locus locus
 }
 
-/// Create an error at a position
+# Create an error at a position
 functio error(LexorErrorCodice codice, Locus locus) -> LexorError {
     fixum nuntius = nuntiumErroris(codice)
     redde {

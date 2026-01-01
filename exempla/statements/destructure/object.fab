@@ -1,26 +1,26 @@
-// Object destructuring patterns
+# Object destructuring patterns
 //
-// ex obj fixum field1, field2     -- extract fields into immutable bindings
-// ex obj varia field1, field2     -- extract into mutable bindings
-// ex obj fixum field ut alias     -- extract with alias (rename)
-// ex obj fixum field, ceteri rest -- extract with rest pattern
+# ex obj fixum field1, field2     -- extract fields into immutable bindings
+# ex obj varia field1, field2     -- extract into mutable bindings
+# ex obj fixum field ut alias     -- extract with alias (rename)
+# ex obj fixum field, ceteri rest -- extract with rest pattern
 
 incipit {
-    // Basic field extraction
+    # Basic field extraction
     fixum person = { name: "Marcus", age: 30, city: "Roma" }
     ex person fixum name, age
 
     scribe name
     scribe age
 
-    // Extract with alias using 'ut'
+    # Extract with alias using 'ut'
     fixum user = { name: "Julia", email: "julia@roma.com" }
     ex user fixum name ut userName, email ut userEmail
 
     scribe userName
     scribe userEmail
 
-    // Mutable destructuring with varia
+    # Mutable destructuring with varia
     fixum data = { count: 100, active: verum }
     ex data varia count, active
 
@@ -33,7 +33,7 @@ incipit {
     scribe count
     scribe active
 
-    // Mixed alias and regular fields
+    # Mixed alias and regular fields
     fixum config = { host: "localhost", port: 8080, secure: verum }
     ex config fixum host, port ut serverPort, secure
 
@@ -41,21 +41,21 @@ incipit {
     scribe serverPort
     scribe secure
 
-    // Rest pattern with ceteri
+    # Rest pattern with ceteri
     fixum fullUser = { id: 1, name: "Gaius", email: "g@roma.com", role: "admin" }
     ex fullUser fixum id, ceteri details
 
     scribe id
     scribe details
 
-    // Destructure from nested access
+    # Destructure from nested access
     fixum response = { data: { user: { name: "Claudia", verified: verum } } }
     ex response.data.user fixum name ut nestedName, verified
 
     scribe nestedName
     scribe verified
 
-    // Single field extraction
+    # Single field extraction
     fixum settings = { theme: "dark", lang: "la" }
     ex settings fixum theme
 

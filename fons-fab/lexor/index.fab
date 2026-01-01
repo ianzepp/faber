@@ -1,64 +1,64 @@
-/// Lexor - Lexical Analyzer
+# Lexor - Lexical Analyzer
 ///
-/// Transforms raw Latin source text into a stream of typed tokens.
-/// Single-pass scanner operating as a finite state machine.
+# Transforms raw Latin source text into a stream of typed tokens.
+# Single-pass scanner operating as a finite state machine.
 ///
-/// INVARIANTS:
-/// - Token stream always ends with exactly one Finis token
-/// - Position tracking never goes backwards
-/// - Never throws - all errors collected in resultatum.errores
+# INVARIANTS:
+# - Token stream always ends with exactly one Finis token
+# - Position tracking never goes backwards
+# - Never throws - all errors collected in resultatum.errores
 ///
-/// LATIN VOCABULARY:
-/// - lexor = lexer (one who reads)
-/// - symbolum = token (a sign/symbol)
-/// - fons = source (fountain/spring)
-/// - locus = position (place)
-/// - linea = line
-/// - columna = column
-/// - specta = peek (look at)
-/// - procede = advance (go forward)
-/// - lege = read/scan
-/// - adde = add
-/// - omitte = skip
-/// - spatium = whitespace (space)
-/// - finis = end
-/// - verbum = keyword (word)
-/// - nomen = identifier (name)
-/// - textus = string
-/// - numerus = number
-/// - fractus = float (broken number)
+# LATIN VOCABULARY:
+# - lexor = lexer (one who reads)
+# - symbolum = token (a sign/symbol)
+# - fons = source (fountain/spring)
+# - locus = position (place)
+# - linea = line
+# - columna = column
+# - specta = peek (look at)
+# - procede = advance (go forward)
+# - lege = read/scan
+# - adde = add
+# - omitte = skip
+# - spatium = whitespace (space)
+# - finis = end
+# - verbum = keyword (word)
+# - nomen = identifier (name)
+# - textus = string
+# - numerus = number
+# - fractus = float (broken number)
 
 ex "../ast/positio" importa Locus
 ex "../ast/lexema" importa Symbolum, SymbolumGenus
 ex "./errores" importa LexorError, LexorErrorCodice
 
-/// Result of lexical analysis
+# Result of lexical analysis
 genus LexorResultatum {
-    lista<Symbolum> symbola       // Token stream (ends with Finis)
-    lista<LexorError> errores     // Errors encountered
+    lista<Symbolum> symbola       # Token stream (ends with Finis)
+    lista<LexorError> errores     # Errors encountered
 }
 
-/// Lexical scanner state machine
+# Lexical scanner state machine
 ///
-/// The Lexor maintains all state needed to scan source text:
-/// - Current position (index) and line tracking
-/// - Output accumulator for tokens (symbola)
-/// - Error accumulator for malformed input (errores)
+# The Lexor maintains all state needed to scan source text:
+# - Current position (index) and line tracking
+# - Output accumulator for tokens (symbola)
+# - Error accumulator for malformed input (errores)
 genus Lexor {
-    textus fons                   // fons = "source" - the input text
-    numerus index                 // Current byte offset in fons
-    numerus linea                 // Current line number (1-based)
-    numerus columnaInitium        // Byte offset where current line starts
-    lista<Symbolum> symbola       // symbola = "tokens" - output accumulator
-    lista<LexorError> errores     // Accumulated lexical errors
+    textus fons                   # fons = "source" - the input text
+    numerus index                 # Current byte offset in fons
+    numerus linea                 # Current line number (1-based)
+    numerus columnaInitium        # Byte offset where current line starts
+    lista<Symbolum> symbola       # symbola = "tokens" - output accumulator
+    lista<LexorError> errores     # Accumulated lexical errors
 
-    // =========================================================================
-    // Position Tracking
-    // locus() captures current position for token/error locations
-    // =========================================================================
+    # =========================================================================
+    # Position Tracking
+    # locus() captures current position for token/error locations
+    # =========================================================================
 
-    /// locus = "place" - capture current source position
-    /// Returns a Locus struct with line, column, and byte offset
+    # locus = "place" - capture current source position
+    # Returns a Locus struct with line, column, and byte offset
     functio locus() -> Locus {
         redde {
             linea: ego.linea,
@@ -67,14 +67,14 @@ genus Lexor {
         } qua Locus
     }
 
-    // =========================================================================
-    // Character Navigation
-    // Core primitives: specta (peek), procede (advance), estFinis (at end?)
-    // =========================================================================
+    # =========================================================================
+    # Character Navigation
+    # Core primitives: specta (peek), procede (advance), estFinis (at end?)
+    # =========================================================================
 
-    /// specta = "look at" - peek ahead without consuming
-    /// distantia = lookahead distance (0 = current char, 1 = next, etc.)
-    /// Returns empty string if past end of input
+    # specta = "look at" - peek ahead without consuming
+    # distantia = lookahead distance (0 = current char, 1 = next, etc.)
+    # Returns empty string if past end of input
     functio specta(numerus distantia) -> textus {
         fixum pos = ego.index + distantia
         si pos >= ego.fons.longitudo {
@@ -83,61 +83,61 @@ genus Lexor {
         redde ego.fons[pos]
     }
 
-    /// procede = "go forward" - consume current char and advance
-    /// Returns the consumed character
+    # procede = "go forward" - consume current char and advance
+    # Returns the consumed character
     functio procede() -> textus {
         fixum c = ego.fons[ego.index]
         ego.index = ego.index + 1
         redde c
     }
 
-    /// estFinis = "is it the end?" - check if all input consumed
+    # estFinis = "is it the end?" - check if all input consumed
     functio estFinis() -> bivalens {
         redde ego.index >= ego.fons.longitudo
     }
 
-    // =========================================================================
-    // Character Predicates
-    // All return bivalens (boolean): est = "is it?", digitus = "digit", etc.
-    // =========================================================================
+    # =========================================================================
+    # Character Predicates
+    # All return bivalens (boolean): est = "is it?", digitus = "digit", etc.
+    # =========================================================================
 
-    /// estDigitus = "is it a digit?" - decimal 0-9
+    # estDigitus = "is it a digit?" - decimal 0-9
     functio estDigitus(textus c) -> bivalens {
         redde c >= "0" et c <= "9"
     }
 
-    /// estDigitusHex = "is it a hex digit?" - 0-9, a-f, A-F
+    # estDigitusHex = "is it a hex digit?" - 0-9, a-f, A-F
     functio estDigitusHex(textus c) -> bivalens {
         redde ego.estDigitus(c) aut (c >= "a" et c <= "f") aut (c >= "A" et c <= "F")
     }
 
-    /// estDigitusBinarius = "is it a binary digit?" - 0 or 1
+    # estDigitusBinarius = "is it a binary digit?" - 0 or 1
     functio estDigitusBinarius(textus c) -> bivalens {
         redde c == "0" aut c == "1"
     }
 
-    /// estDigitusOctalis = "is it an octal digit?" - 0-7
+    # estDigitusOctalis = "is it an octal digit?" - 0-7
     functio estDigitusOctalis(textus c) -> bivalens {
         redde c >= "0" et c <= "7"
     }
 
-    /// estLittera = "is it a letter?" - identifier start char (a-z, A-Z, _)
+    # estLittera = "is it a letter?" - identifier start char (a-z, A-Z, _)
     functio estLittera(textus c) -> bivalens {
         redde (c >= "a" et c <= "z") aut (c >= "A" et c <= "Z") aut c == "_"
     }
 
-    /// estLitteraVelDigitus = "is it a letter or digit?" - identifier continuation
+    # estLitteraVelDigitus = "is it a letter or digit?" - identifier continuation
     functio estLitteraVelDigitus(textus c) -> bivalens {
         redde ego.estLittera(c) aut ego.estDigitus(c)
     }
 
-    // =========================================================================
-    // Token and Error Collection
-    // adde = "add" - append to output lists
-    // =========================================================================
+    # =========================================================================
+    # Token and Error Collection
+    # adde = "add" - append to output lists
+    # =========================================================================
 
-    /// addeSymbolum = "add a token" - append token to output stream
-    /// species = token type, valor = lexeme text, locus = source position
+    # addeSymbolum = "add a token" - append token to output stream
+    # species = token type, valor = lexeme text, locus = source position
     functio addeSymbolum(SymbolumGenus species, textus valor, Locus locus) -> vacuum {
         ego.symbola.adde({
             species: species,
@@ -147,8 +147,8 @@ genus Lexor {
         } qua Symbolum)
     }
 
-    /// addeVerbum = "add a keyword" - special case for reserved words
-    /// verbum = "word" - the keyword text (e.g., "si", "functio")
+    # addeVerbum = "add a keyword" - special case for reserved words
+    # verbum = "word" - the keyword text (e.g., "si", "functio")
     functio addeVerbum(textus verbum, Locus locus) -> vacuum {
         ego.symbola.adde({
             species: SymbolumGenus.Verbum,
@@ -158,62 +158,62 @@ genus Lexor {
         } qua Symbolum)
     }
 
-    /// addeErrorem = "add an error" - record lexical error without stopping
+    # addeErrorem = "add an error" - record lexical error without stopping
     functio addeErrorem(LexorErrorCodice codice, Locus locus) -> vacuum {
         ego.errores.adde(error(codice, locus))
     }
 
-    // =========================================================================
-    // Whitespace and Comment Handling
-    // omitte = "skip", spatium = "space/whitespace", nota = "comment/note"
-    // =========================================================================
+    # =========================================================================
+    # Whitespace and Comment Handling
+    # omitte = "skip", spatium = "space/whitespace", nota = "comment/note"
+    # =========================================================================
 
-    /// omitteSpatium = "skip whitespace" - consume spaces, tabs, newlines, comments
-    /// Comments are preserved as tokens (NotaLinea, NotaMassa, NotaDocens)
+    # omitteSpatium = "skip whitespace" - consume spaces, tabs, newlines, comments
+    # Comments are preserved as tokens (NotaLinea, NotaMassa, NotaDocens)
     functio omitteSpatium() -> vacuum {
         dum non ego.estFinis() {
             fixum c = ego.specta(0)
 
-            // Skip horizontal whitespace (space, tab, carriage return)
+            # Skip horizontal whitespace (space, tab, carriage return)
             si c == " " aut c == "\t" aut c == "\r" {
                 ego.procede()
             }
-            // Handle newline - update line tracking
+            # Handle newline - update line tracking
             sin c == "\n" {
                 ego.procede()
                 ego.linea = ego.linea + 1
                 ego.columnaInitium = ego.index
             }
-            // Single-line comment: // ... until newline
+            # Single-line comment: # ... until newline
             sin c == "/" et ego.specta(1) == "/" {
                 fixum loc = ego.locus()
-                varia textus nota = ""      // nota = "note/comment"
+                varia textus nota = ""      # nota = "note/comment"
 
-                ego.procede()  // consume first /
-                ego.procede()  // consume second /
+                ego.procede()  # consume first /
+                ego.procede()  # consume second /
 
-                // Collect comment text until end of line
+                # Collect comment text until end of line
                 dum non ego.estFinis() et ego.specta(0) != "\n" {
                     nota = nota + ego.procede()
                 }
 
-                // NotaLinea = single-line comment token
+                # NotaLinea = single-line comment token
                 ego.addeSymbolum(SymbolumGenus.NotaLinea, nota, loc)
             }
-            // Multi-line comment: /* ... */ or doc comment: /** ... */
+            # Multi-line comment: /* ... */ or doc comment: /** ... */
             sin c == "/" et ego.specta(1) == "*" {
                 fixum loc = ego.locus()
                 varia textus nota = ""
 
-                ego.procede()  // consume /
-                ego.procede()  // consume *
+                ego.procede()  # consume /
+                ego.procede()  # consume *
 
-                // estDocens = "is it a doc comment?" - check for /** pattern
+                # estDocens = "is it a doc comment?" - check for /** pattern
                 fixum estDocens = ego.specta(0) == "*" et ego.specta(1) != "/"
 
-                // Collect until closing */
+                # Collect until closing */
                 dum non ego.estFinis() et non (ego.specta(0) == "*" et ego.specta(1) == "/") {
-                    // Track newlines inside multi-line comments
+                    # Track newlines inside multi-line comments
                     si ego.specta(0) == "\n" {
                         ego.linea = ego.linea + 1
                         ego.columnaInitium = ego.index + 1
@@ -221,52 +221,52 @@ genus Lexor {
                     nota = nota + ego.procede()
                 }
 
-                // Consume closing */ if not at EOF
+                # Consume closing */ if not at EOF
                 si non ego.estFinis() {
-                    ego.procede()  // consume *
-                    ego.procede()  // consume /
+                    ego.procede()  # consume *
+                    ego.procede()  # consume /
                 }
 
-                // NotaDocens = doc comment, NotaMassa = block comment
+                # NotaDocens = doc comment, NotaMassa = block comment
                 fixum species = estDocens sic SymbolumGenus.NotaDocens secus SymbolumGenus.NotaMassa
                 ego.addeSymbolum(species, nota, loc)
             }
-            // Not whitespace or comment - stop skipping
+            # Not whitespace or comment - stop skipping
             secus {
                 rumpe
             }
         }
     }
 
-    // =========================================================================
-    // Literal Scanning
-    // lege = "read/scan", numerus = "number", textus = "string"
-    // =========================================================================
+    # =========================================================================
+    # Literal Scanning
+    # lege = "read/scan", numerus = "number", textus = "string"
+    # =========================================================================
 
-    /// legeNumerum = "scan a number" - handles all numeric literal formats
-    /// Supports: decimal (42), hex (0xFF), binary (0b101), octal (0o77),
-    ///           float (3.14), scientific (1e10), bigint suffix (42n)
+    # legeNumerum = "scan a number" - handles all numeric literal formats
+    # Supports: decimal (42), hex (0xFF), binary (0b101), octal (0o77),
+    #           float (3.14), scientific (1e10), bigint suffix (42n)
     functio legeNumerum() -> vacuum {
         fixum loc = ego.locus()
-        varia textus valor = ""     // valor = "value" - accumulated digits
+        varia textus valor = ""     # valor = "value" - accumulated digits
 
-        // ---- Hex literal: 0x or 0X ----
+        # ---- Hex literal: 0x or 0X ----
         si ego.specta(0) == "0" et (ego.specta(1) == "x" aut ego.specta(1) == "X") {
-            valor = valor + ego.procede()  // consume '0'
-            valor = valor + ego.procede()  // consume 'x'
+            valor = valor + ego.procede()  # consume '0'
+            valor = valor + ego.procede()  # consume 'x'
 
-            // Must have at least one hex digit after prefix
+            # Must have at least one hex digit after prefix
             si non ego.estDigitusHex(ego.specta(0)) {
                 ego.addeErrorem(LexorErrorCodice.NumerusHexMalus, loc)
                 redde
             }
 
-            // Consume all hex digits
+            # Consume all hex digits
             dum ego.estDigitusHex(ego.specta(0)) {
                 valor = valor + ego.procede()
             }
 
-            // Optional bigint suffix 'n' (e.g., 0xFFn)
+            # Optional bigint suffix 'n' (e.g., 0xFFn)
             si ego.specta(0) == "n" {
                 ego.procede()
                 ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
@@ -277,23 +277,23 @@ genus Lexor {
             redde
         }
 
-        // ---- Binary literal: 0b or 0B ----
+        # ---- Binary literal: 0b or 0B ----
         si ego.specta(0) == "0" et (ego.specta(1) == "b" aut ego.specta(1) == "B") {
-            valor = valor + ego.procede()  // consume '0'
-            valor = valor + ego.procede()  // consume 'b'
+            valor = valor + ego.procede()  # consume '0'
+            valor = valor + ego.procede()  # consume 'b'
 
-            // Must have at least one binary digit
+            # Must have at least one binary digit
             si non ego.estDigitusBinarius(ego.specta(0)) {
                 ego.addeErrorem(LexorErrorCodice.NumerusBinariusMalus, loc)
                 redde
             }
 
-            // Consume all binary digits
+            # Consume all binary digits
             dum ego.estDigitusBinarius(ego.specta(0)) {
                 valor = valor + ego.procede()
             }
 
-            // Optional bigint suffix
+            # Optional bigint suffix
             si ego.specta(0) == "n" {
                 ego.procede()
                 ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
@@ -304,23 +304,23 @@ genus Lexor {
             redde
         }
 
-        // ---- Octal literal: 0o or 0O ----
+        # ---- Octal literal: 0o or 0O ----
         si ego.specta(0) == "0" et (ego.specta(1) == "o" aut ego.specta(1) == "O") {
-            valor = valor + ego.procede()  // consume '0'
-            valor = valor + ego.procede()  // consume 'o'
+            valor = valor + ego.procede()  # consume '0'
+            valor = valor + ego.procede()  # consume 'o'
 
-            // Must have at least one octal digit
+            # Must have at least one octal digit
             si non ego.estDigitusOctalis(ego.specta(0)) {
                 ego.addeErrorem(LexorErrorCodice.NumerusOctalisMalus, loc)
                 redde
             }
 
-            // Consume all octal digits
+            # Consume all octal digits
             dum ego.estDigitusOctalis(ego.specta(0)) {
                 valor = valor + ego.procede()
             }
 
-            // Optional bigint suffix
+            # Optional bigint suffix
             si ego.specta(0) == "n" {
                 ego.procede()
                 ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
@@ -331,88 +331,88 @@ genus Lexor {
             redde
         }
 
-        // ---- Decimal literal ----
-        // Consume integer part (digits before decimal point)
+        # ---- Decimal literal ----
+        # Consume integer part (digits before decimal point)
         dum ego.estDigitus(ego.specta(0)) {
             valor = valor + ego.procede()
         }
 
-        // Check for fractional part: must be "." followed by digit
-        // (distinguishes 42.method() from 42.5)
+        # Check for fractional part: must be "." followed by digit
+        # (distinguishes 42.method() from 42.5)
         si ego.specta(0) == "." et ego.estDigitus(ego.specta(1)) {
-            valor = valor + ego.procede()  // consume '.'
+            valor = valor + ego.procede()  # consume '.'
 
-            // Consume fractional digits
+            # Consume fractional digits
             dum ego.estDigitus(ego.specta(0)) {
                 valor = valor + ego.procede()
             }
 
-            // Fractus = float type token
+            # Fractus = float type token
             ego.addeSymbolum(SymbolumGenus.Fractus, valor, loc)
             redde
         }
 
-        // Check for scientific notation: e or E followed by optional sign and digits
+        # Check for scientific notation: e or E followed by optional sign and digits
         si ego.specta(0) == "e" aut ego.specta(0) == "E" {
             fixum next = ego.specta(1)
-            // Valid: 1e5, 1e+5, 1e-5
+            # Valid: 1e5, 1e+5, 1e-5
             si ego.estDigitus(next) aut ((next == "+" aut next == "-") et ego.estDigitus(ego.specta(2))) {
-                valor = valor + ego.procede()  // consume 'e'
+                valor = valor + ego.procede()  # consume 'e'
 
-                // Consume optional sign
+                # Consume optional sign
                 si ego.specta(0) == "+" aut ego.specta(0) == "-" {
                     valor = valor + ego.procede()
                 }
 
-                // Consume exponent digits
+                # Consume exponent digits
                 dum ego.estDigitus(ego.specta(0)) {
                     valor = valor + ego.procede()
                 }
 
-                // Scientific notation is always float
+                # Scientific notation is always float
                 ego.addeSymbolum(SymbolumGenus.Fractus, valor, loc)
                 redde
             }
         }
 
-        // Check for bigint suffix on decimal
+        # Check for bigint suffix on decimal
         si ego.specta(0) == "n" {
             ego.procede()
             ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
             redde
         }
 
-        // Plain decimal integer
+        # Plain decimal integer
         ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
     }
 
-    /// legeTextum = "scan a string" - handles single and double quoted strings
-    /// clausa = "closing" - the quote character that ends this string
-    /// Preserves escape sequences (backslash + char) in the output
+    # legeTextum = "scan a string" - handles single and double quoted strings
+    # clausa = "closing" - the quote character that ends this string
+    # Preserves escape sequences (backslash + char) in the output
     functio legeTextum(textus clausa) -> vacuum {
         fixum loc = ego.locus()
-        varia textus valor = ""     // Accumulates string content (without quotes)
+        varia textus valor = ""     # Accumulates string content (without quotes)
 
-        ego.procede()  // Consume opening quote
+        ego.procede()  # Consume opening quote
 
-        // Scan until closing quote or end of input
+        # Scan until closing quote or end of input
         dum non ego.estFinis() et ego.specta(0) != clausa {
-            // Error: newline in non-template string
+            # Error: newline in non-template string
             si ego.specta(0) == "\n" {
                 ego.addeErrorem(LexorErrorCodice.TextusNonClausa, loc)
                 redde
             }
 
-            // Handle escape sequences: preserve backslash + escaped char
+            # Handle escape sequences: preserve backslash + escaped char
             si ego.specta(0) == "\\" {
-                valor = valor + ego.procede()  // Consume and keep backslash
+                valor = valor + ego.procede()  # Consume and keep backslash
 
                 si non ego.estFinis() et ego.specta(0) != "\n" {
                     fixum escaped = ego.specta(0)
 
-                    // Unicode escape \uXXXX - consume u + up to 4 hex digits
+                    # Unicode escape \uXXXX - consume u + up to 4 hex digits
                     si escaped == "u" {
-                        valor = valor + ego.procede()  // Consume 'u'
+                        valor = valor + ego.procede()  # Consume 'u'
 
                         varia numerus i = 0
                         dum i < 4 et ego.estDigitusHex(ego.specta(0)) {
@@ -420,56 +420,56 @@ genus Lexor {
                             i = i + 1
                         }
                     }
-                    // Other escapes: \n, \t, \", etc. - just consume the char
+                    # Other escapes: \n, \t, \", etc. - just consume the char
                     secus {
                         valor = valor + ego.procede()
                     }
                 }
             }
-            // Regular character - consume and add to value
+            # Regular character - consume and add to value
             secus {
                 valor = valor + ego.procede()
             }
         }
 
-        // Error: reached EOF without closing quote
+        # Error: reached EOF without closing quote
         si ego.estFinis() {
             ego.addeErrorem(LexorErrorCodice.TextusNonClausa, loc)
             redde
         }
 
-        ego.procede()  // Consume closing quote
+        ego.procede()  # Consume closing quote
 
         ego.addeSymbolum(SymbolumGenus.Textus, valor, loc)
     }
 
-    /// legeExemplar = "scan a template" - handles backtick template strings
-    /// exemplar = "template" - template strings with interpolation
-    /// Unlike regular strings, templates can span multiple lines and contain ${...}
+    # legeExemplar = "scan a template" - handles backtick template strings
+    # exemplar = "template" - template strings with interpolation
+    # Unlike regular strings, templates can span multiple lines and contain ${...}
     functio legeExemplar() -> vacuum {
         fixum loc = ego.locus()
         varia textus valor = ""
 
-        ego.procede()  // Consume opening backtick
+        ego.procede()  # Consume opening backtick
 
         dum non ego.estFinis() et ego.specta(0) != "`" {
-            // Template strings CAN span lines (unlike regular strings)
+            # Template strings CAN span lines (unlike regular strings)
             si ego.specta(0) == "\n" {
                 ego.linea = ego.linea + 1
                 ego.columnaInitium = ego.index + 1
                 valor = valor + ego.procede()
             }
-            // Escape sequences in templates
+            # Escape sequences in templates
             sin ego.specta(0) == "\\" {
-                ego.procede()  // Skip backslash
-                valor = valor + ego.procede()  // Keep escaped char
+                ego.procede()  # Skip backslash
+                valor = valor + ego.procede()  # Keep escaped char
             }
-            // Interpolation: ${...} - capture entire expression including nested braces
+            # Interpolation: ${...} - capture entire expression including nested braces
             sin ego.specta(0) == "$" et ego.specta(1) == "{" {
-                valor = valor + ego.procede()  // Consume '$'
-                valor = valor + ego.procede()  // Consume '{'
+                valor = valor + ego.procede()  # Consume '$'
+                valor = valor + ego.procede()  # Consume '{'
 
-                // Track brace depth to handle nested objects/blocks
+                # Track brace depth to handle nested objects/blocks
                 varia numerus depth = 1
 
                 dum non ego.estFinis() et depth > 0 {
@@ -482,249 +482,249 @@ genus Lexor {
                     valor = valor + ego.procede()
                 }
             }
-            // Regular template character
+            # Regular template character
             secus {
                 valor = valor + ego.procede()
             }
         }
 
-        // Error: reached EOF without closing backtick
+        # Error: reached EOF without closing backtick
         si ego.estFinis() {
             ego.addeErrorem(LexorErrorCodice.ExemplarNonClausum, loc)
             redde
         }
 
-        ego.procede()  // Consume closing backtick
+        ego.procede()  # Consume closing backtick
 
         ego.addeSymbolum(SymbolumGenus.Textus, valor, loc)
     }
 
-    /// legeNomen = "scan a name" - handles identifiers and keywords
-    /// nomen = "name" - user-defined identifiers
-    /// verbum = "word" - reserved keywords (si, functio, genus, etc.)
+    # legeNomen = "scan a name" - handles identifiers and keywords
+    # nomen = "name" - user-defined identifiers
+    # verbum = "word" - reserved keywords (si, functio, genus, etc.)
     functio legeNomen() -> vacuum {
         fixum loc = ego.locus()
         varia textus valor = ""
 
-        // Consume all identifier characters (letters, digits, underscore)
+        # Consume all identifier characters (letters, digits, underscore)
         dum ego.estLitteraVelDigitus(ego.specta(0)) {
             valor = valor + ego.procede()
         }
 
-        // Check if the identifier is a reserved keyword
-        // estVerbum() is defined in lexicon/verba.fab
+        # Check if the identifier is a reserved keyword
+        # estVerbum() is defined in lexicon/verba.fab
         si estVerbum(valor) {
             ego.addeVerbum(valor, loc)
         } secus {
-            // Nomen = identifier token (variable name, function name, etc.)
+            # Nomen = identifier token (variable name, function name, etc.)
             ego.addeSymbolum(SymbolumGenus.Nomen, valor, loc)
         }
     }
 
-    // =========================================================================
-    // Main Scanner Dispatch
-    // legeSymbolum = "scan one token" - the core dispatch loop
-    // =========================================================================
+    # =========================================================================
+    # Main Scanner Dispatch
+    # legeSymbolum = "scan one token" - the core dispatch loop
+    # =========================================================================
 
-    /// legeSymbolum = "scan a token" - main dispatch: determine token type and delegate
-    /// Called repeatedly by scanOmnia() until input exhausted
+    # legeSymbolum = "scan a token" - main dispatch: determine token type and delegate
+    # Called repeatedly by scanOmnia() until input exhausted
     functio legeSymbolum() -> vacuum {
-        // First skip any whitespace and comments
+        # First skip any whitespace and comments
         ego.omitteSpatium()
 
-        // Check if we've reached the end
+        # Check if we've reached the end
         si ego.estFinis() {
             redde
         }
 
         fixum loc = ego.locus()
-        fixum c = ego.specta(0)     // Current character (not consumed yet)
+        fixum c = ego.specta(0)     # Current character (not consumed yet)
 
-        // ---- Dispatch by first character ----
+        # ---- Dispatch by first character ----
 
-        // Numeric literal: starts with digit
+        # Numeric literal: starts with digit
         si ego.estDigitus(c) {
             ego.legeNumerum()
             redde
         }
 
-        // Identifier or keyword: starts with letter or underscore
+        # Identifier or keyword: starts with letter or underscore
         si ego.estLittera(c) {
             ego.legeNomen()
             redde
         }
 
-        // String literal: single or double quote
+        # String literal: single or double quote
         si c == "\"" aut c == "'" {
             ego.legeTextum(c)
             redde
         }
 
-        // Template string: backtick
+        # Template string: backtick
         si c == "`" {
             ego.legeExemplar()
             redde
         }
 
-        // ---- Operators and punctuation ----
-        // For these, we consume the first char then check for multi-char tokens
+        # ---- Operators and punctuation ----
+        # For these, we consume the first char then check for multi-char tokens
         ego.procede()
 
         elige c {
-            // ---- Grouping delimiters ----
-            // Sin = sinister (left), Dex = dexter (right)
-            si "(" { ego.addeSymbolum(SymbolumGenus.ParensSin, c, loc) }    // left paren
-            si ")" { ego.addeSymbolum(SymbolumGenus.ParensDex, c, loc) }    // right paren
-            si "{" { ego.addeSymbolum(SymbolumGenus.UncusSin, c, loc) }     // left brace (uncus = hook)
-            si "}" { ego.addeSymbolum(SymbolumGenus.UncusDex, c, loc) }     // right brace
-            si "[" { ego.addeSymbolum(SymbolumGenus.AngulusSin, c, loc) }   // left bracket (angulus = angle)
-            si "]" { ego.addeSymbolum(SymbolumGenus.AngulusDex, c, loc) }   // right bracket
+            # ---- Grouping delimiters ----
+            # Sin = sinister (left), Dex = dexter (right)
+            si "(" { ego.addeSymbolum(SymbolumGenus.ParensSin, c, loc) }    # left paren
+            si ")" { ego.addeSymbolum(SymbolumGenus.ParensDex, c, loc) }    # right paren
+            si "{" { ego.addeSymbolum(SymbolumGenus.UncusSin, c, loc) }     # left brace (uncus = hook)
+            si "}" { ego.addeSymbolum(SymbolumGenus.UncusDex, c, loc) }     # right brace
+            si "[" { ego.addeSymbolum(SymbolumGenus.AngulusSin, c, loc) }   # left bracket (angulus = angle)
+            si "]" { ego.addeSymbolum(SymbolumGenus.AngulusDex, c, loc) }   # right bracket
 
-            // ---- Punctuation ----
-            si "," { ego.addeSymbolum(SymbolumGenus.Coma, c, loc) }         // comma
-            si ";" { ego.addeSymbolum(SymbolumGenus.PunctumColon, c, loc) } // semicolon
-            si ":" { ego.addeSymbolum(SymbolumGenus.Colon, c, loc) }        // colon
-            si "?" { ego.addeSymbolum(SymbolumGenus.Rogatio, c, loc) }      // question mark (rogatio = question)
+            # ---- Punctuation ----
+            si "," { ego.addeSymbolum(SymbolumGenus.Coma, c, loc) }         # comma
+            si ";" { ego.addeSymbolum(SymbolumGenus.PunctumColon, c, loc) } # semicolon
+            si ":" { ego.addeSymbolum(SymbolumGenus.Colon, c, loc) }        # colon
+            si "?" { ego.addeSymbolum(SymbolumGenus.Rogatio, c, loc) }      # question mark (rogatio = question)
 
-            // ---- Dot operators: . or .. or ... ----
+            # ---- Dot operators: . or .. or ... ----
             si "." {
                 si ego.specta(0) == "." {
                     ego.procede()
                     si ego.specta(0) == "." {
                         ego.procede()
-                        ego.addeSymbolum(SymbolumGenus.PunctumTer, "...", loc)  // spread/rest
+                        ego.addeSymbolum(SymbolumGenus.PunctumTer, "...", loc)  # spread/rest
                     } secus {
-                        ego.addeSymbolum(SymbolumGenus.PunctumBis, "..", loc)   // range
+                        ego.addeSymbolum(SymbolumGenus.PunctumBis, "..", loc)   # range
                     }
                 } secus {
-                    ego.addeSymbolum(SymbolumGenus.Punctum, c, loc)             // member access
+                    ego.addeSymbolum(SymbolumGenus.Punctum, c, loc)             # member access
                 }
             }
 
-            // ---- Arithmetic operators ----
+            # ---- Arithmetic operators ----
             si "+" { ego.addeSymbolum(SymbolumGenus.Plus, c, loc) }
-            si "*" { ego.addeSymbolum(SymbolumGenus.Stella, c, loc) }   // stella = star
-            si "/" { ego.addeSymbolum(SymbolumGenus.Virgula, c, loc) }  // virgula = slash
-            si "%" { ego.addeSymbolum(SymbolumGenus.Centum, c, loc) }   // centum = percent
+            si "*" { ego.addeSymbolum(SymbolumGenus.Stella, c, loc) }   # stella = star
+            si "/" { ego.addeSymbolum(SymbolumGenus.Virgula, c, loc) }  # virgula = slash
+            si "%" { ego.addeSymbolum(SymbolumGenus.Centum, c, loc) }   # centum = percent
 
-            // ---- Minus: - or -> (arrow) ----
+            # ---- Minus: - or -> (arrow) ----
             si "-" {
                 si ego.specta(0) == ">" {
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.Sagitta, "->", loc)  // sagitta = arrow
+                    ego.addeSymbolum(SymbolumGenus.Sagitta, "->", loc)  # sagitta = arrow
                 } secus {
                     ego.addeSymbolum(SymbolumGenus.Minus, c, loc)
                 }
             }
 
-            // ---- Equals: = or == or === or => ----
+            # ---- Equals: = or == or === or => ----
             si "=" {
                 si ego.specta(0) == "=" et ego.specta(1) == "=" {
                     ego.procede()
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.AequumTer, "===", loc)      // strict equality
+                    ego.addeSymbolum(SymbolumGenus.AequumTer, "===", loc)      # strict equality
                 } sin ego.specta(0) == "=" {
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.AequumBis, "==", loc)       // equality
+                    ego.addeSymbolum(SymbolumGenus.AequumBis, "==", loc)       # equality
                 } sin ego.specta(0) == ">" {
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.SagittaCrassa, "=>", loc)   // fat arrow (crassa = thick)
+                    ego.addeSymbolum(SymbolumGenus.SagittaCrassa, "=>", loc)   # fat arrow (crassa = thick)
                 } secus {
-                    ego.addeSymbolum(SymbolumGenus.Aequum, c, loc)             // assignment
+                    ego.addeSymbolum(SymbolumGenus.Aequum, c, loc)             # assignment
                 }
             }
 
-            // ---- Bang: ! or != or !== or !. ----
+            # ---- Bang: ! or != or !== or !. ----
             si "!" {
                 si ego.specta(0) == "=" et ego.specta(1) == "=" {
                     ego.procede()
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.NonAequumBis, "!==", loc)   // strict inequality
+                    ego.addeSymbolum(SymbolumGenus.NonAequumBis, "!==", loc)   # strict inequality
                 } sin ego.specta(0) == "=" {
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.NonAequum, "!=", loc)       // inequality
+                    ego.addeSymbolum(SymbolumGenus.NonAequum, "!=", loc)       # inequality
                 } sin ego.specta(0) == "." {
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.NonPunctum, "!.", loc)      // non-null assertion access
+                    ego.addeSymbolum(SymbolumGenus.NonPunctum, "!.", loc)      # non-null assertion access
                 } secus {
-                    ego.addeSymbolum(SymbolumGenus.Non, c, loc)                // logical not
+                    ego.addeSymbolum(SymbolumGenus.Non, c, loc)                # logical not
                 }
             }
 
-            // ---- Less than: < or << or <= ----
+            # ---- Less than: < or << or <= ----
             si "<" {
                 si ego.specta(0) == "<" {
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.MinorBis, "<<", loc)        // left shift
+                    ego.addeSymbolum(SymbolumGenus.MinorBis, "<<", loc)        # left shift
                 } sin ego.specta(0) == "=" {
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.MinorAequum, "<=", loc)     // less or equal
+                    ego.addeSymbolum(SymbolumGenus.MinorAequum, "<=", loc)     # less or equal
                 } secus {
-                    ego.addeSymbolum(SymbolumGenus.Minor, c, loc)              // less than
+                    ego.addeSymbolum(SymbolumGenus.Minor, c, loc)              # less than
                 }
             }
 
-            // ---- Greater than: > or >> or >>> or >= ----
+            # ---- Greater than: > or >> or >>> or >= ----
             si ">" {
                 si ego.specta(0) == ">" et ego.specta(1) == ">" {
                     ego.procede()
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.MaiorTer, ">>>", loc)       // unsigned right shift
+                    ego.addeSymbolum(SymbolumGenus.MaiorTer, ">>>", loc)       # unsigned right shift
                 } sin ego.specta(0) == ">" {
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.MaiorBis, ">>", loc)        // right shift
+                    ego.addeSymbolum(SymbolumGenus.MaiorBis, ">>", loc)        # right shift
                 } sin ego.specta(0) == "=" {
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.MaiorAequum, ">=", loc)     // greater or equal
+                    ego.addeSymbolum(SymbolumGenus.MaiorAequum, ">=", loc)     # greater or equal
                 } secus {
-                    ego.addeSymbolum(SymbolumGenus.Maior, c, loc)              // greater than
+                    ego.addeSymbolum(SymbolumGenus.Maior, c, loc)              # greater than
                 }
             }
 
-            // ---- Logical operators: & && | || ----
+            # ---- Logical operators: & && | || ----
             si "&" {
                 si ego.specta(0) == "&" {
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.EtEt, "&&", loc)            // logical and
+                    ego.addeSymbolum(SymbolumGenus.EtEt, "&&", loc)            # logical and
                 } secus {
-                    ego.addeSymbolum(SymbolumGenus.Et, c, loc)                 // bitwise and
+                    ego.addeSymbolum(SymbolumGenus.Et, c, loc)                 # bitwise and
                 }
             }
             si "|" {
                 si ego.specta(0) == "|" {
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.VelVel, "||", loc)          // logical or
+                    ego.addeSymbolum(SymbolumGenus.VelVel, "||", loc)          # logical or
                 } secus {
-                    ego.addeSymbolum(SymbolumGenus.Vel, c, loc)                // bitwise or
+                    ego.addeSymbolum(SymbolumGenus.Vel, c, loc)                # bitwise or
                 }
             }
 
-            // ---- Bitwise operators ----
-            si "^" { ego.addeSymbolum(SymbolumGenus.Apex, c, loc) }   // bitwise xor (apex = point/tip)
-            si "~" { ego.addeSymbolum(SymbolumGenus.Unda, c, loc) }   // bitwise not (unda = wave)
+            # ---- Bitwise operators ----
+            si "^" { ego.addeSymbolum(SymbolumGenus.Apex, c, loc) }   # bitwise xor (apex = point/tip)
+            si "~" { ego.addeSymbolum(SymbolumGenus.Unda, c, loc) }   # bitwise not (unda = wave)
 
-            // ---- Unknown character ----
+            # ---- Unknown character ----
             secus {
                 ego.addeErrorem(LexorErrorCodice.SignumInopinatum, loc)
             }
         }
     }
 
-    // =========================================================================
-    // Main Entry Point
-    // scanOmnia = "scan everything" - processes entire input
-    // =========================================================================
+    # =========================================================================
+    # Main Entry Point
+    # scanOmnia = "scan everything" - processes entire input
+    # =========================================================================
 
-    /// scanOmnia = "scan all" - main loop: tokenize entire input
-    /// Returns LexorResultatum with token stream and any errors
+    # scanOmnia = "scan all" - main loop: tokenize entire input
+    # Returns LexorResultatum with token stream and any errors
     functio scanOmnia() -> LexorResultatum {
-        // Scan tokens until end of input
+        # Scan tokens until end of input
         dum non ego.estFinis() {
             ego.legeSymbolum()
         }
 
-        // Always append Finis (EOF) sentinel token
-        // Parser relies on this to detect end of input
+        # Always append Finis (EOF) sentinel token
+        # Parser relies on this to detect end of input
         ego.addeSymbolum(SymbolumGenus.Finis, "", ego.locus())
 
         redde {
@@ -734,30 +734,30 @@ genus Lexor {
     }
 }
 
-// =============================================================================
-// Public API
-// =============================================================================
+# =============================================================================
+# Public API
+# =============================================================================
 
-/// lexare = "to tokenize" - main entry point for lexical analysis
+# lexare = "to tokenize" - main entry point for lexical analysis
 ///
-/// Takes source text, returns token stream + errors.
-/// Never throws - all errors collected in resultatum.errores.
+# Takes source text, returns token stream + errors.
+# Never throws - all errors collected in resultatum.errores.
 ///
-/// Usage:
-///   fixum result = lexare("si verum { scribe 42 }")
-///   ex result.symbola pro sym { ... }
+# Usage:
+#   fixum result = lexare("si verum { scribe 42 }")
+#   ex result.symbola pro sym { ... }
 ///
 functio lexare(textus fons) -> LexorResultatum {
-    // Initialize scanner state
+    # Initialize scanner state
     varia lexor = Lexor.init({
-        fons: fons,             // Source text to tokenize
-        index: 0,               // Start at beginning
-        linea: 1,               // Lines are 1-based
-        columnaInitium: 0,      // First line starts at offset 0
-        symbola: [] qua lista<Symbolum>,    // Empty token list
-        errores: [] qua lista<LexorError>   // Empty error list
+        fons: fons,             # Source text to tokenize
+        index: 0,               # Start at beginning
+        linea: 1,               # Lines are 1-based
+        columnaInitium: 0,      # First line starts at offset 0
+        symbola: [] qua lista<Symbolum>,    # Empty token list
+        errores: [] qua lista<LexorError>   # Empty error list
     })
 
-    // Run the scanner and return results
+    # Run the scanner and return results
     redde lexor.scanOmnia()
 }

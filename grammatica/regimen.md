@@ -80,13 +80,13 @@ arrayPatternElement := '_' | 'ceteri'? IDENTIFIER
 **Examples:**
 
 ```fab
-[a, b, c]                 // extract first three elements
-[first, ceteri rest]     // extract first, collect rest
-[_, second, _]           // skip first and third, extract second
+[a, b, c]                 # extract first three elements
+[first, ceteri rest]     # extract first, collect rest
+[_, second, _]           # skip first and third, extract second
 
 T SUPPORTED:
-[...rest]                // JS spread syntax
-[*rest]                  // Python unpack syntax
+[...rest]                # JS spread syntax
+[*rest]                  # Python unpack syntax
 ```
 
 ### Functio Declaration
@@ -288,17 +288,17 @@ specifier := 'ceteri'? IDENTIFIER ('ut' IDENTIFIER)?
 **Examples:**
 
 ```fab
-ex numeri pro n { ... }              // for-loop (sync)
-ex numeri fiet n { ... }             // for-await-of loop (async)
-ex persona fixum nomen, aetas        // object destructuring
-ex persona fixum nomen ut n          // object destructuring with alias
-ex persona fixum nomen, ceteri rest  // object destructuring with rest
-ex coords fixum [x, y, z]            // array destructuring
-ex fetchData() figendum result       // async destructuring
+ex numeri pro n { ... }              # for-loop (sync)
+ex numeri fiet n { ... }             # for-await-of loop (async)
+ex persona fixum nomen, aetas        # object destructuring
+ex persona fixum nomen ut n          # object destructuring with alias
+ex persona fixum nomen, ceteri rest  # object destructuring with rest
+ex coords fixum [x, y, z]            # array destructuring
+ex fetchData() figendum result       # async destructuring
 
 llection DSL forms:
-ex items prima 5 pro item { }        // iteration with transforms
-ex items prima 5, ultima 2 pro x {}  // multiple transforms
+ex items prima 5 pro item { }        # iteration with transforms
+ex items prima 5, ultima 2 pro x {}  # multiple transforms
 ```
 
 ### D S L Transforms
@@ -353,12 +353,12 @@ condition := expression
 **Examples:**
 
 ```fab
-ab users activus                     // boolean property shorthand
-ab users non banned                  // negated boolean property
-ab users ubi aetas >= 18             // condition with ubi
-ab users non ubi banned et suspended // negated compound condition
-ab users activus, prima 10           // filter + transforms
-ab users activus pro user { }        // iteration form
+ab users activus                     # boolean property shorthand
+ab users non banned                  # negated boolean property
+ab users ubi aetas >= 18             # condition with ubi
+ab users non ubi banned et suspended # negated compound condition
+ab users activus, prima 10           # filter + transforms
+ab users activus pro user { }        # iteration form
 ```
 
 ### Regex Literal
@@ -374,9 +374,9 @@ regexLiteral := 'sed' STRING IDENTIFIER?
 **Examples:**
 
 ```fab
-sed "\\d+"           // pattern only
-sed "hello" i        // case insensitive
-sed "^start" im      // multiple flags
+sed "\\d+"           # pattern only
+sed "hello" i        # case insensitive
+sed "^start" im      # multiple flags
 ```
 
 ### De Statement
@@ -392,8 +392,8 @@ deStmt := 'de' expression ('pro' | 'fit' | 'fiet') IDENTIFIER
 **Examples:**
 
 ```fab
-de tabula pro clavis { ... }  // from table, for each key
-de object pro k ergo scribe k // one-liner form
+de tabula pro clavis { ... }  # from table, for each key
+de object pro k ergo scribe k # one-liner form
 ```
 
 ### In Statement
@@ -408,7 +408,7 @@ inStmt := 'in' expression blockStmt
 **Examples:**
 
 ```fab
-in user { nomen = "Marcus" }  // mutation block
+in user { nomen = "Marcus" }  # mutation block
 ```
 
 ### Elige Statement
@@ -613,10 +613,10 @@ argumentList := (expression (',' expression)*)?
 **Examples:**
 
 ```fab
-ad "console:log" ("hello")                           // fire-and-forget
-ad "fasciculus:lege" ("file.txt") fit textus pro c { }  // sync binding
-ad "http:get" (url) fiet Response pro r { }          // async binding
-ad "http:batch" (urls) fient Response[] pro rs { }   // async plural
+ad "console:log" ("hello")                           # fire-and-forget
+ad "fasciculus:lege" ("file.txt") fit textus pro c { }  # sync binding
+ad "http:get" (url) fiet Response pro r { }          # async binding
+ad "http:batch" (urls) fient Response[] pro rs { }   # async plural
 ```
 
 ### Praepara Block
@@ -656,10 +656,10 @@ curatorKind := 'arena' | 'page'
 **Examples:**
 
 ```fab
-cura arena fit mem { ... }                    // arena allocator
-cura page fit mem { ... }                     // page allocator
-cura aperi("data.bin") fit fd { lege(fd) }   // generic resource
-cura connect(url) fiet conn { ... }          // async resource
+cura arena fit mem { ... }                    # arena allocator
+cura page fit mem { ... }                     # page allocator
+cura aperi("data.bin") fit fd { lege(fd) }   # generic resource
+cura connect(url) fiet conn { ... }          # async resource
 ```
 
 ### Incipit Statement

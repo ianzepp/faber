@@ -46,10 +46,10 @@ The `pro` preposition introduces the binding (consistent with iteration/lambda b
 The binding keyword determines whether the call uses the Responsum protocol:
 
 ```fab
-// Arrow: direct native call, no protocol wrapping
+# Arrow: direct native call, no protocol wrapping
 ad "fasciculus:lege" ("file.txt") -> textus pro content { ... }
 
-// Verb: protocol-wrapped, consistent across all targets
+# Verb: protocol-wrapped, consistent across all targets
 ad "fasciculus:lege" ("file.txt") fiet textus pro content { ... }
 ```
 
@@ -121,10 +121,10 @@ ad "log:info" ("Application started")
 If the syscall table defines the return type, the type annotation is optional:
 
 ```fab
-// Explicit type
+# Explicit type
 ad "fasciculus:lege" ("file.txt") fit textus pro content { ... }
 
-// Inferred from syscall table
+# Inferred from syscall table
 ad "fasciculus:lege" ("file.txt") pro content { ... }
 ```
 
@@ -147,30 +147,30 @@ The target string is matched against a syscall table with pattern registration. 
 URLs are syntactic sugar. The compiler prepends the URL to the args and rewrites to the registered handler:
 
 ```fab
-// What you write
-ad "https://api.example.com/users" ("GET") fiet Response pro r { }
-ad "https://api.example.com/users" ("POST", body) fiet Response pro r { }
+# What you write
+ad "https:#api.example.com/users" ("GET") fiet Response pro r { }
+ad "https:#api.example.com/users" ("POST", body) fiet Response pro r { }
 
-// What the compiler rewrites to
-ad "caelum:request" ("https://api.example.com/users", "GET") fiet Response pro r { }
-ad "caelum:request" ("https://api.example.com/users", "POST", body) fiet Response pro r { }
+# What the compiler rewrites to
+ad "caelum:request" ("https:#api.example.com/users", "GET") fiet Response pro r { }
+ad "caelum:request" ("https:#api.example.com/users", "POST", body) fiet Response pro r { }
 ```
 
 The args pass through unchanged with the URL prepended. The stdlib handler defines its signature:
 
 ```fab
-// HTTP - args are (method, body?, headers?)
-ad "https://api.example.com/users" ("GET") fiet Response pro r { }
-ad "https://api.example.com/users" ("POST", body, headers) fiet Response pro r { }
+# HTTP - args are (method, body?, headers?)
+ad "https:#api.example.com/users" ("GET") fiet Response pro r { }
+ad "https:#api.example.com/users" ("POST", body, headers) fiet Response pro r { }
 
-// File - args are (mode, content?)
-ad "file:///etc/hosts" ("r") fit textus pro content { }
-ad "file:///tmp/out" ("w", content) fit pro ok { }
+# File - args are (mode, content?)
+ad "file:#/etc/hosts" ("r") fit textus pro content { }
+ad "file:#/tmp/out" ("w", content) fit pro ok { }
 
-// WebSocket - args are (options?)
-ad "wss://stream.example.com" () fiet Socket pro ws { }
+# WebSocket - args are (options?)
+ad "wss:#stream.example.com" () fiet Socket pro ws { }
 
-// Explicit stdlib call (equivalent)
+# Explicit stdlib call (equivalent)
 ad "caelum:request" (url, "GET") fiet Response pro r { }
 ```
 
@@ -190,10 +190,10 @@ ad "caelum:request" (url, "GET") fiet Response pro r { }
 The `ad` binding mirrors function declaration syntax:
 
 ```fab
-// Declaration: defines return type
+# Declaration: defines return type
 functio fetch(textus url) fiet Response
 
-// Dispatch: binds result with same keywords
+# Dispatch: binds result with same keywords
 ad "http:get" (url) fiet Response pro response { ... }
 ```
 
@@ -212,7 +212,7 @@ The binding keyword determines codegen strategy:
 ### Verb Binding (Protocol)
 
 ```fab
-ad "https://api.example.com/users" ("GET") fiet Response pro r { }
+ad "https:#api.example.com/users" ("GET") fiet Response pro r { }
 ```
 
 Becomes (TypeScript):
@@ -237,7 +237,7 @@ Uses Responsum protocol for:
 ### Arrow Binding (Direct)
 
 ```fab
-ad "https://api.example.com/users" ("GET") -> Response pro r { }
+ad "https:#api.example.com/users" ("GET") -> Response pro r { }
 ```
 
 Becomes (TypeScript):
@@ -284,7 +284,7 @@ Bypasses protocol for:
 `importa` brings in types and interfaces. `ad` dispatches to implementations:
 
 ```fab
-importa { App, Context } de "hono"  // types only
+importa { App, Context } de "hono"  # types only
 
 ad "hono/Hono" () fit App pro app {
     app.get("/") fit Context pro c {
@@ -300,7 +300,7 @@ ad "hono/Hono" () fit App pro app {
 3. Streaming results — does `pro` bind each item as it arrives?
 
 ```fab
-ad "wss://stream.example.com/events" () pro Event pro event {
+ad "wss:#stream.example.com/events" () pro Event pro event {
     scribe event.data
 }
 ```

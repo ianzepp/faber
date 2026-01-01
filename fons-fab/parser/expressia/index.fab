@@ -1,46 +1,46 @@
-/// Expression Parser Entry Point
+# Expression Parser Entry Point
 ///
-/// Top-level expression parsing using precedence climbing.
-/// Entry point delegates to assignment (lowest precedence).
+# Top-level expression parsing using precedence climbing.
+# Entry point delegates to assignment (lowest precedence).
 ///
-/// PRECEDENCE HIERARCHY (lowest to highest):
-/// 1. Assignment (=, +=, -=, etc.)
-/// 2. Ternary (? : or sic/secus)
-/// 3. Logical OR (|| or aut) / Nullish (?? or vel)
-/// 4. Logical AND (&& or et)
-/// 5. Equality (==, !=, ===, !==, est)
-/// 6. Comparison (<, >, <=, >=)
-/// 7. Bitwise OR (|)
-/// 8. Bitwise XOR (^)
-/// 9. Bitwise AND (&)
-/// 10. Shift (<<, >>)
-/// 11. Range (.., ante, usque)
-/// 12. Additive (+, -)
-/// 13. Multiplicative (*, /, %)
-/// 14. Unary (non, -, ~, cede, novum, etc.)
-/// 15. Cast (qua)
-/// 16. Call/Member (., [], ())
-/// 17. Primary (literals, identifiers, grouping)
+# PRECEDENCE HIERARCHY (lowest to highest):
+# 1. Assignment (=, +=, -=, etc.)
+# 2. Ternary (? : or sic/secus)
+# 3. Logical OR (|| or aut) / Nullish (?? or vel)
+# 4. Logical AND (&& or et)
+# 5. Equality (==, !=, ===, !==, est)
+# 6. Comparison (<, >, <=, >=)
+# 7. Bitwise OR (|)
+# 8. Bitwise XOR (^)
+# 9. Bitwise AND (&)
+# 10. Shift (<<, >>)
+# 11. Range (.., ante, usque)
+# 12. Additive (+, -)
+# 13. Multiplicative (*, /, %)
+# 14. Unary (non, -, ~, cede, novum, etc.)
+# 15. Cast (qua)
+# 16. Call/Member (., [], ())
+# 17. Primary (literals, identifiers, grouping)
 ///
-/// LATIN VOCABULARY:
-/// - expressia = expression
-/// - assignatio = assignment
-/// - condicio = condition
-/// - binaria = binary
-/// - unaria = unary
-/// - primaria = primary
+# LATIN VOCABULARY:
+# - expressia = expression
+# - assignatio = assignment
+# - condicio = condition
+# - binaria = binary
+# - unaria = unary
+# - primaria = primary
 
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/expressia" importa Expressia
 
-// Import expression parsers
+# Import expression parsers
 ex "./binaria" importa parseAssignatio
 
-/// Parse an expression (entry point)
+# Parse an expression (entry point)
 ///
-/// Top-level expression delegates to assignment (lowest precedence).
-/// All expression parsing flows through this function.
+# Top-level expression delegates to assignment (lowest precedence).
+# All expression parsing flows through this function.
 functio parseExpressia(Resolvitor r) -> Expressia {
-    // Delegate to assignment parser (lowest precedence)
+    # Delegate to assignment parser (lowest precedence)
     redde parseAssignatio(r)
 }

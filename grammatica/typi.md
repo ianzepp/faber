@@ -23,7 +23,7 @@ typeAliasDecl := 'typus' IDENTIFIER '=' typeAnnotation
 ```fab
 typus ID = textus
 typus UserID = numerus<32, Naturalis>
-typus ConfigTypus = typus config    // typeof
+typus ConfigTypus = typus config    # typeof
 ```
 
 ### Type Annotation

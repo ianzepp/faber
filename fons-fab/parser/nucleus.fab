@@ -1,67 +1,67 @@
-/// Parser Nucleus - Core State and Navigation Primitives
+# Parser Nucleus - Core State and Navigation Primitives
 ///
-/// The Parser genus maintains all state for recursive descent parsing:
-/// - Token stream and current position
-/// - Comment accumulator for AST attachment
-/// - Error accumulator for diagnostics
-/// - Unique ID generator for synthetic bindings
+# The Parser genus maintains all state for recursive descent parsing:
+# - Token stream and current position
+# - Comment accumulator for AST attachment
+# - Error accumulator for diagnostics
+# - Unique ID generator for synthetic bindings
 ///
-/// INVARIANTS:
-/// - Token stream always ends with Finis token
-/// - Position never advances past Finis
-/// - Never throws - all errors collected in errores
-/// - Comments collected and attached to next AST node
+# INVARIANTS:
+# - Token stream always ends with Finis token
+# - Position never advances past Finis
+# - Never throws - all errors collected in errores
+# - Comments collected and attached to next AST node
 ///
-/// LATIN VOCABULARY:
-/// - nucleus = core/kernel
-/// - symbola = tokens
-/// - index = current position
-/// - specta = peek (look at)
-/// - procede = advance (go forward)
-/// - proba = check (test)
-/// - congruet = match (agree with)
-/// - expecta = expect (wait for)
-/// - renuncia = report (announce back)
-/// - synchrona = synchronize
-/// - notae = comments (marks/notes)
+# LATIN VOCABULARY:
+# - nucleus = core/kernel
+# - symbola = tokens
+# - index = current position
+# - specta = peek (look at)
+# - procede = advance (go forward)
+# - proba = check (test)
+# - congruet = match (agree with)
+# - expecta = expect (wait for)
+# - renuncia = report (announce back)
+# - synchrona = synchronize
+# - notae = comments (marks/notes)
 
 ex "../ast/lexema" importa Symbolum, SymbolumGenus
 ex "../ast/radix" importa Nota, NotaGenus
 ex "../ast/positio" importa Locus
 ex "./errores" importa ParserError, ParserErrorCodice, error
 
-/// Parser state machine
+# Parser state machine
 ///
-/// Maintains token stream position, accumulated errors, and pending comments.
-/// All parsing methods operate on this shared state.
+# Maintains token stream position, accumulated errors, and pending comments.
+# All parsing methods operate on this shared state.
 genus Parser {
-    lista<Symbolum> symbola       // Token stream from lexer
-    numerus index                 // Current position in token stream
-    numerus idUnicum              // Counter for unique ID generation
-    lista<ParserError> errores    // Accumulated parse errors
-    lista<Nota> notaePendentes    // Comments awaiting attachment
+    lista<Symbolum> symbola       # Token stream from lexer
+    numerus index                 # Current position in token stream
+    numerus idUnicum              # Counter for unique ID generation
+    lista<ParserError> errores    # Accumulated parse errors
+    lista<Nota> notaePendentes    # Comments awaiting attachment
 
-    // =========================================================================
-    // Unique ID Generation
-    // For synthetic bindings (e.g., anonymous cura blocks)
-    // =========================================================================
+    # =========================================================================
+    # Unique ID Generation
+    # For synthetic bindings (e.g., anonymous cura blocks)
+    # =========================================================================
 
-    /// Generate unique identifier for synthetic bindings
-    /// Returns: _prefix_N where N is incremented each call
+    # Generate unique identifier for synthetic bindings
+    # Returns: _prefix_N where N is incremented each call
     functio generaId(textus prae) -> textus {
         fixum id = scriptum("_{}_{}", prae, ego.idUnicum)
         ego.idUnicum = ego.idUnicum + 1
         redde id
     }
 
-    // =========================================================================
-    // Comment Collection
-    // Comments are collected during parsing and attached to AST nodes
-    // =========================================================================
+    # =========================================================================
+    # Comment Collection
+    # Comments are collected during parsing and attached to AST nodes
+    # =========================================================================
 
-    /// Convert a comment token to a Nota AST node
+    # Convert a comment token to a Nota AST node
     functio symbolumAdNotam(Symbolum s) -> Nota {
-        // Determine comment type from token species
+        # Determine comment type from token species
         varia notaGenus = NotaGenus.Linea
         si s.species === SymbolumGenus.NotaMassa {
             notaGenus = NotaGenus.Massa
@@ -76,39 +76,39 @@ genus Parser {
         } qua Nota
     }
 
-    /// Consume all pending comment tokens into buffer
-    /// Called before parsing statements/expressions to collect leading comments
+    # Consume all pending comment tokens into buffer
+    # Called before parsing statements/expressions to collect leading comments
     functio colligeNotas() -> vacuum {
-        // Keep consuming while current token is a comment
+        # Keep consuming while current token is a comment
         dum ego.index < ego.symbola.longitudo {
             fixum s = ego.symbola[ego.index]
 
-            // Check if this is a comment token
+            # Check if this is a comment token
             si s.species !== SymbolumGenus.NotaLinea et s.species !== SymbolumGenus.NotaMassa et s.species !== SymbolumGenus.NotaDocens {
                 rumpe
             }
 
-            // Convert and buffer the comment
+            # Convert and buffer the comment
             ego.notaePendentes.adde(ego.symbolumAdNotam(s))
             ego.index = ego.index + 1
         }
     }
 
-    /// Consume pending comments buffer and return them
-    /// Called when creating AST node to attach as leading comments
+    # Consume pending comments buffer and return them
+    # Called when creating AST node to attach as leading comments
     functio consumeNotas() -> lista<Nota>? {
         si ego.notaePendentes.longitudo === 0 {
             redde nihil
         }
 
-        // Take the pending list and replace with empty
+        # Take the pending list and replace with empty
         fixum notae = ego.notaePendentes
         ego.notaePendentes = []
         redde notae
     }
 
-    /// Check for trailing comment on same line after current position
-    /// Returns comment if found on same line as node, nil otherwise
+    # Check for trailing comment on same line after current position
+    # Returns comment if found on same line as node, nil otherwise
     functio colligeNotamTrahentem(numerus lineaNodi) -> lista<Nota>? {
         si ego.index >= ego.symbola.longitudo {
             redde nihil
@@ -116,7 +116,7 @@ genus Parser {
 
         fixum s = ego.symbola[ego.index]
 
-        // Check if comment token on same line
+        # Check if comment token on same line
         fixum estNota = s.species === SymbolumGenus.NotaLinea aut s.species === SymbolumGenus.NotaMassa aut s.species === SymbolumGenus.NotaDocens
 
         si estNota et s.locus.linea === lineaNodi {
@@ -127,20 +127,20 @@ genus Parser {
         redde nihil
     }
 
-    // =========================================================================
-    // Token Navigation
-    // Core primitives: specta (peek), procede (advance), estFinis (at end?)
-    // =========================================================================
+    # =========================================================================
+    # Token Navigation
+    # Core primitives: specta (peek), procede (advance), estFinis (at end?)
+    # =========================================================================
 
-    /// Look ahead at token without consuming, skipping comment tokens
-    /// distantia = lookahead offset (0 = current, 1 = next, etc.)
-    /// Returns Finis token if offset goes beyond stream end
+    # Look ahead at token without consuming, skipping comment tokens
+    # distantia = lookahead offset (0 = current, 1 = next, etc.)
+    # Returns Finis token if offset goes beyond stream end
     functio specta(numerus distantia) -> Symbolum {
-        // Start from current position
+        # Start from current position
         varia pos = ego.index
         varia skipped = 0
 
-        // Skip initial comment tokens
+        # Skip initial comment tokens
         dum pos < ego.symbola.longitudo {
             fixum s = ego.symbola[pos]
             si s.species !== SymbolumGenus.NotaLinea et s.species !== SymbolumGenus.NotaMassa et s.species !== SymbolumGenus.NotaDocens {
@@ -149,11 +149,11 @@ genus Parser {
             pos = pos + 1
         }
 
-        // Skip 'distantia' non-comment tokens
+        # Skip 'distantia' non-comment tokens
         dum skipped < distantia et pos < ego.symbola.longitudo {
             pos = pos + 1
 
-            // Skip any comments after advancing
+            # Skip any comments after advancing
             dum pos < ego.symbola.longitudo {
                 fixum s = ego.symbola[pos]
                 si s.species !== SymbolumGenus.NotaLinea et s.species !== SymbolumGenus.NotaMassa et s.species !== SymbolumGenus.NotaDocens {
@@ -165,22 +165,22 @@ genus Parser {
             skipped = skipped + 1
         }
 
-        // Return token at position, or last token (Finis) if past end
+        # Return token at position, or last token (Finis) if past end
         si pos < ego.symbola.longitudo {
             redde ego.symbola[pos]
         }
         redde ego.symbola[ego.symbola.longitudo - 1]
     }
 
-    /// Check if at end of token stream (current token is Finis)
+    # Check if at end of token stream (current token is Finis)
     functio estFinis() -> bivalens {
         redde ego.specta(0).species === SymbolumGenus.Finis
     }
 
-    /// Get the previous token (the one most recently consumed)
-    /// WHY: After congruet() matches and advances, we often need the matched token's
-    ///      position or value. This avoids needing specta(-1).
-    /// EDGE: Returns first token if called before any advance (index=0)
+    # Get the previous token (the one most recently consumed)
+    # WHY: After congruet() matches and advances, we often need the matched token's
+    #      position or value. This avoids needing specta(-1).
+    # EDGE: Returns first token if called before any advance (index=0)
     functio praevius() -> Symbolum {
         si ego.index > 0 {
             redde ego.symbola[ego.index - 1]
@@ -188,42 +188,42 @@ genus Parser {
         redde ego.symbola[0]
     }
 
-    /// Consume and return current token, collecting comments first
-    /// Never advances past Finis token
+    # Consume and return current token, collecting comments first
+    # Never advances past Finis token
     functio procede() -> Symbolum {
-        // Collect any comment tokens first
+        # Collect any comment tokens first
         ego.colligeNotas()
 
-        // Don't advance past end
+        # Don't advance past end
         si ego.estFinis() {
             redde ego.symbola[ego.index]
         }
 
-        // Return current and advance
+        # Return current and advance
         fixum s = ego.symbola[ego.index]
         ego.index = ego.index + 1
         redde s
     }
 
-    // =========================================================================
-    // Token Predicates
-    // proba = check without consuming, congruet = check and consume
-    // =========================================================================
+    # =========================================================================
+    # Token Predicates
+    # proba = check without consuming, congruet = check and consume
+    # =========================================================================
 
-    /// Check if current token matches given type without consuming
+    # Check if current token matches given type without consuming
     functio proba(SymbolumGenus species) -> bivalens {
         redde ego.specta(0).species === species
     }
 
-    /// Check if current token is a specific keyword without consuming
-    /// Keywords are stored in token.verbum field
+    # Check if current token is a specific keyword without consuming
+    # Keywords are stored in token.verbum field
     functio probaVerbum(textus verbum) -> bivalens {
         fixum s = ego.specta(0)
         redde s.species === SymbolumGenus.Verbum et s.verbum === verbum
     }
 
-    /// Match and consume token if type matches
-    /// Returns true if matched and consumed, false otherwise
+    # Match and consume token if type matches
+    # Returns true if matched and consumed, false otherwise
     functio congruet(SymbolumGenus species) -> bivalens {
         si ego.proba(species) {
             ego.procede()
@@ -232,8 +232,8 @@ genus Parser {
         redde falsum
     }
 
-    /// Match and consume token if keyword matches
-    /// Returns true if matched and consumed, false otherwise
+    # Match and consume token if keyword matches
+    # Returns true if matched and consumed, false otherwise
     functio congruetVerbum(textus verbum) -> bivalens {
         si ego.probaVerbum(verbum) {
             ego.procede()
@@ -242,8 +242,8 @@ genus Parser {
         redde falsum
     }
 
-    /// Match any of several token types, consuming if matched
-    /// Returns true if any matched, false otherwise
+    # Match any of several token types, consuming if matched
+    # Returns true if any matched, false otherwise
     functio congruetAliquod(lista<SymbolumGenus> species) -> bivalens {
         ex species pro s {
             si ego.proba(s) {
@@ -254,37 +254,37 @@ genus Parser {
         redde falsum
     }
 
-    // =========================================================================
-    // Error Handling
-    // renuncia = report error, expecta = require token or error
-    // =========================================================================
+    # =========================================================================
+    # Error Handling
+    # renuncia = report error, expecta = require token or error
+    # =========================================================================
 
-    /// Report error at current position
-    /// contextus = optional additional context (e.g., "got 'x'")
+    # Report error at current position
+    # contextus = optional additional context (e.g., "got 'x'")
     functio renuncia(ParserErrorCodice codice, textus? contextus) -> vacuum {
         fixum s = ego.specta(0)
         fixum err = error(codice, s.locus, contextus)
         ego.errores.adde(err)
     }
 
-    /// Expect specific token type or record error
-    /// Returns matched token if found, synthetic token after advancing if not
-    /// Advances past unexpected token to prevent infinite loops
+    # Expect specific token type or record error
+    # Returns matched token if found, synthetic token after advancing if not
+    # Advances past unexpected token to prevent infinite loops
     functio expecta(SymbolumGenus species, ParserErrorCodice codice) -> Symbolum {
         si ego.proba(species) {
             redde ego.procede()
         }
 
-        // Record error with context
+        # Record error with context
         fixum s = ego.specta(0)
         ego.renuncia(codice, scriptum("got '{}'", s.valor))
 
-        // Advance past unexpected token (unless at end)
+        # Advance past unexpected token (unless at end)
         si non ego.estFinis() {
             ego.procede()
         }
 
-        // Return synthetic token with expected type but actual position
+        # Return synthetic token with expected type but actual position
         redde {
             species: species,
             valor: "",
@@ -293,23 +293,23 @@ genus Parser {
         } qua Symbolum
     }
 
-    /// Expect specific keyword or record error
-    /// Returns matched token if found, synthetic token after advancing if not
+    # Expect specific keyword or record error
+    # Returns matched token if found, synthetic token after advancing if not
     functio expectaVerbum(textus verbum, ParserErrorCodice codice) -> Symbolum {
         si ego.probaVerbum(verbum) {
             redde ego.procede()
         }
 
-        // Record error with context
+        # Record error with context
         fixum s = ego.specta(0)
         ego.renuncia(codice, scriptum("got '{}'", s.valor))
 
-        // Advance past unexpected token
+        # Advance past unexpected token
         si non ego.estFinis() {
             ego.procede()
         }
 
-        // Return synthetic keyword token
+        # Return synthetic keyword token
         redde {
             species: SymbolumGenus.Verbum,
             valor: verbum,
@@ -318,20 +318,20 @@ genus Parser {
         } qua Symbolum
     }
 
-    // =========================================================================
-    // Error Recovery
-    // synchrona = skip to next statement boundary after error
-    // =========================================================================
+    # =========================================================================
+    # Error Recovery
+    # synchrona = skip to next statement boundary after error
+    # =========================================================================
 
-    /// Skip tokens until reaching a statement boundary keyword
-    /// Called after catching parse error to resume at known-good state
+    # Skip tokens until reaching a statement boundary keyword
+    # Called after catching parse error to resume at known-good state
     functio synchrona() -> vacuum {
-        // Skip current problematic token
+        # Skip current problematic token
         ego.procede()
 
-        // Keep advancing until we hit a statement-starting keyword
+        # Keep advancing until we hit a statement-starting keyword
         dum non ego.estFinis() {
-            // Check for statement-starting keywords
+            # Check for statement-starting keywords
             si ego.probaVerbum("functio") aut
                ego.probaVerbum("varia") aut
                ego.probaVerbum("fixum") aut
@@ -357,33 +357,33 @@ genus Parser {
         }
     }
 
-    /// Synchronize within genus body (for field/method recovery)
-    /// Looks for field types, method declarations, or closing brace
+    # Synchronize within genus body (for field/method recovery)
+    # Looks for field types, method declarations, or closing brace
     functio synchronaGenusMembrum() -> vacuum {
         ego.procede()
 
         dum non ego.estFinis() {
-            // Stop at closing brace (end of genus)
+            # Stop at closing brace (end of genus)
             si ego.proba(SymbolumGenus.UncusDex) {
                 redde
             }
 
-            // Stop at visibility modifiers
+            # Stop at visibility modifiers
             si ego.probaVerbum("privatus") aut ego.probaVerbum("protectus") {
                 redde
             }
 
-            // Stop at static modifier
+            # Stop at static modifier
             si ego.probaVerbum("generis") {
                 redde
             }
 
-            // Stop at method declaration
+            # Stop at method declaration
             si ego.probaVerbum("functio") {
                 redde
             }
 
-            // Stop at abstract modifier
+            # Stop at abstract modifier
             si ego.probaVerbum("abstractus") {
                 redde
             }
@@ -392,20 +392,20 @@ genus Parser {
         }
     }
 
-    // =========================================================================
-    // Type Helpers
-    // Predicates for type-first syntax disambiguation
-    // =========================================================================
+    # =========================================================================
+    # Type Helpers
+    # Predicates for type-first syntax disambiguation
+    # =========================================================================
 
-    /// Check if token is a builtin type name
-    /// Used to distinguish "fixum textus nomen" from "fixum nomen"
+    # Check if token is a builtin type name
+    # Used to distinguish "fixum textus nomen" from "fixum nomen"
     functio estTypusNomen(Symbolum s) -> bivalens {
         si s.species !== SymbolumGenus.Nomen {
             redde falsum
         }
 
-        // Check against builtin type names
-        // TODO: This should use a proper type registry
+        # Check against builtin type names
+        # TODO: This should use a proper type registry
         elige s.valor {
             si "textus" { redde verum }
             si "numerus" { redde verum }
@@ -429,8 +429,8 @@ genus Parser {
         }
     }
 
-    /// Check if token is a preposition used in parameters
-    /// de = borrowed/read-only, in = mutable borrow, ex = source
+    # Check if token is a preposition used in parameters
+    # de = borrowed/read-only, in = mutable borrow, ex = source
     functio estPraepositio(Symbolum s) -> bivalens {
         si s.species !== SymbolumGenus.Verbum {
             redde falsum
@@ -444,16 +444,16 @@ genus Parser {
         }
     }
 
-    /// Check if token is an assignment operator
-    /// Includes = and compound assignments (+=, -=, *=, /=, %=, &=, |=)
-    /// TODO: Add compound assignment tokens to lexer (PlusAequum, etc.)
+    # Check if token is an assignment operator
+    # Includes = and compound assignments (+=, -=, *=, /=, %=, &=, |=)
+    # TODO: Add compound assignment tokens to lexer (PlusAequum, etc.)
     functio estAssignatioSignum(Symbolum s) -> bivalens {
-        // For now, only simple assignment is supported
+        # For now, only simple assignment is supported
         redde s.species === SymbolumGenus.Aequum
     }
 }
 
-/// Create a new parser for the given token stream
+# Create a new parser for the given token stream
 functio novumParser(lista<Symbolum> symbola) -> Parser {
     redde {
         symbola: symbola,

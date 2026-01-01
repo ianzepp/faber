@@ -484,10 +484,10 @@ async function run<T>(gen: AsyncIterable<Responsum<T>>): Promise<T> {
 **Arrow binding (`->`) is the escape hatch, not the default:**
 
 ```fab
-// Default: protocol (observable, consistent)
+# Default: protocol (observable, consistent)
 ad "fasciculus:lege" ("file.txt") fiet textus pro content
 
-// Escape hatch: direct (fast, loses observability)
+# Escape hatch: direct (fast, loses observability)
 ad "fasciculus:lege" ("file.txt") -> textus pro content
 ```
 
@@ -854,7 +854,7 @@ For streaming consumers, provide explicit cancel:
 ```fab
 ad "fasciculus:lege" ("large.bin") fiunt bytes pro chunk {
     si chunk.size > MAX {
-        exi  // Break from stream (triggers cleanup)
+        exi  # Break from stream (triggers cleanup)
     }
 }
 ```
@@ -898,10 +898,10 @@ Future consideration: Allow `importa` to bring in typed syscall handlers at comp
 **Decision**: Opt-in via arrow binding (`->`), consistent with `functio` syntax.
 
 ```fab
-// Standard: via protocol (observable, testable)
+# Standard: via protocol (observable, testable)
 ad "fasciculus:lege" ("file.txt") fiet textus pro content
 
-// Direct: bypass protocol (fast, less observable)
+# Direct: bypass protocol (fast, less observable)
 ad "fasciculus:lege" ("file.txt") -> textus pro content
 ```
 
@@ -949,10 +949,10 @@ Monk checks auth on every syscall (lazy expiry). This is scattered and inefficie
 **Faber approach**: Check auth at entry points, not per-syscall.
 
 ```fab
-// Auth middleware wraps entire handler
+# Auth middleware wraps entire handler
 @requiresAuth
 functio protectedEndpoint() fiet Response {
-    // Auth already validated
+    # Auth already validated
 }
 ```
 

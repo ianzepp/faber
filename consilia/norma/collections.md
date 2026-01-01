@@ -142,9 +142,9 @@ Method dispatch uses `resolvedType` from semantic analysis to correctly route ov
 
 **Negative indices** access elements from the end:
 
-```faber
-fixum last = nums[-1]      // last element
-fixum secondLast = nums[-2] // second to last
+```fab
+fixum last = nums[-1]      # last element
+fixum secondLast = nums[-2] # second to last
 ```
 
 Target mappings:
@@ -156,11 +156,11 @@ Target mappings:
 
 **Slicing** uses range syntax inside brackets:
 
-```faber
-fixum slice = nums[1..3]       // elements 1, 2 (exclusive end)
-fixum slice = nums[1 usque 3]  // elements 1, 2, 3 (inclusive end)
-fixum tail = nums[-3..-1]      // last 3 except final
-fixum tail = nums[-3 usque -1] // last 3 elements (to end)
+```fab
+fixum slice = nums[1..3]       # elements 1, 2 (exclusive end)
+fixum slice = nums[1 usque 3]  # elements 1, 2, 3 (inclusive end)
+fixum tail = nums[-3..-1]      # last 3 except final
+fixum tail = nums[-3 usque -1] # last 3 elements (to end)
 ```
 
 Target mappings:
@@ -276,14 +276,14 @@ Originally excluded because without rest syntax, it's limited to fixed-length pa
 
 ### Basic Syntax
 
-```faber
+```fab
 fixum coords = [10, 20, 30]
 
-// Extract by position
+# Extract by position
 ex coords fixum [x, y, z]
-scribe x  // 10
-scribe y  // 20
-scribe z  // 30
+scribe x  # 10
+scribe y  # 20
+scribe z  # 30
 ```
 
 Parallels object destructuring: `ex obj fixum { a, b }` vs `ex arr fixum [a, b]`
@@ -292,38 +292,38 @@ Parallels object destructuring: `ex obj fixum { a, b }` vs `ex arr fixum [a, b]`
 
 The primary use case—split head from tail:
 
-```faber
+```fab
 fixum items = [1, 2, 3, 4, 5]
 
-// First element + rest
+# First element + rest
 ex items fixum [first, ceteri rest]
-scribe first  // 1
-scribe rest   // [2, 3, 4, 5]
+scribe first  # 1
+scribe rest   # [2, 3, 4, 5]
 
-// First two + rest
+# First two + rest
 ex items fixum [a, b, ceteri tail]
-scribe a     // 1
-scribe b     // 2
-scribe tail  // [3, 4, 5]
+scribe a     # 1
+scribe b     # 2
+scribe tail  # [3, 4, 5]
 ```
 
 ### Practical Examples
 
 **Recursive list processing:**
 
-```faber
+```fab
 functio sum(numerus[] nums) -> numerus {
     si nums.vacua() { redde 0 }
     ex nums fixum [head, ceteri tail]
     redde head + sum(tail)
 }
 
-scribe sum([1, 2, 3, 4, 5])  // 15
+scribe sum([1, 2, 3, 4, 5])  # 15
 ```
 
 **Command argument parsing:**
 
-```faber
+```fab
 functio parseArgs(textus[] args) {
     ex args fixum [command, ceteri flags]
 
@@ -337,46 +337,46 @@ functio parseArgs(textus[] args) {
 
 **Tuple-style returns:**
 
-```faber
+```fab
 functio divide(numerus a, numerus b) -> numerus[] {
     redde [a / b, a % b]
 }
 
 ex divide(17, 5) fixum [quotient, remainder]
-scribe quotient   // 3
-scribe remainder  // 2
+scribe quotient   # 3
+scribe remainder  # 2
 ```
 
 **Swapping values:**
 
-```faber
+```fab
 varia a = 1
 varia b = 2
 [a, b] = [b, a]
-scribe a  // 2
-scribe b  // 1
+scribe a  # 2
+scribe b  # 1
 ```
 
 ### Skipping Elements
 
 Use `_` (underscore) to skip positions:
 
-```faber
+```fab
 fixum data = [1, 2, 3, 4, 5]
 
-ex data fixum [_, second, _]     // skip first and third
-ex data fixum [_, _, third]      // skip first two
-ex data fixum [first, _, _, fourth]  // skip middle
+ex data fixum [_, second, _]     # skip first and third
+ex data fixum [_, _, third]      # skip first two
+ex data fixum [first, _, _, fourth]  # skip middle
 ```
 
 ### Mutable Bindings
 
 Use `varia` for mutable destructured values:
 
-```faber
+```fab
 ex coords varia [x, y, z]
 x = x + 10
-scribe x  // 20
+scribe x  # 20
 ```
 
 ### Comparison with Object Destructuring

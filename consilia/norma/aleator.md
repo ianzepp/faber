@@ -16,9 +16,9 @@ Random number generation: floats, integers, bytes, UUIDs, and collection operati
 ```fab
 ex "norma/aleator" importa fractus, numerus, elige
 
-fixum f = fractus()              // 0.0 <= f < 1.0
-fixum n = numerus(1, 100)        // 1 <= n <= 100
-fixum item = elige(items)        // random element from list
+fixum f = fractus()              # 0.0 <= f < 1.0
+fixum n = numerus(1, 100)        # 1 <= n <= 100
+fixum item = elige(items)        # random element from list
 ```
 
 ## Etymology

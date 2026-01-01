@@ -1,21 +1,21 @@
-/// Parser - Recursive Descent Parser for Latin Source Code
+# Parser - Recursive Descent Parser for Latin Source Code
 ///
-/// COMPILER PHASE: Syntactic
+# COMPILER PHASE: Syntactic
 ///
-/// Transforms token stream from lexical analyzer into Abstract Syntax Tree.
-/// Uses predictive parsing with one token of lookahead.
+# Transforms token stream from lexical analyzer into Abstract Syntax Tree.
+# Uses predictive parsing with one token of lookahead.
 ///
-/// INVARIANTS:
-/// - Never throws exceptions - collects errors and continues
-/// - Synchronizes at statement boundaries after errors
-/// - All AST nodes include position for error reporting
-/// - Empty input produces valid Program with empty body
+# INVARIANTS:
+# - Never throws exceptions - collects errors and continues
+# - Synchronizes at statement boundaries after errors
+# - All AST nodes include position for error reporting
+# - Empty input produces valid Program with empty body
 ///
-/// LATIN VOCABULARY:
-/// - parse = resolvere (to resolve/analyze)
-/// - resultatum = result
-/// - programma = program
-/// - errores = errors
+# LATIN VOCABULARY:
+# - parse = resolvere (to resolve/analyze)
+# - resultatum = result
+# - programma = program
+# - errores = errors
 
 ex "./nucleus" importa Parser, novumParser
 ex "./errores" importa ParserError, ParserErrorCodice
@@ -26,78 +26,78 @@ ex "../ast/sententia" importa Sententia
 ex "../ast/typus" importa TypusAnnotatio
 ex "../ast/lexema" importa Symbolum
 
-// Import parsing functions
+# Import parsing functions
 ex "./sententia/massa" importa Programma, parseProgramma, parseMassaSententia
 ex "./sententia/index" importa parseSententia
 ex "./expressia/binaria" importa parseAssignatio
 ex "./typus" importa parseTypusAnnotatio
 
-/// Result of parsing
+# Result of parsing
 genus ParserResultatum {
-    Programma? programma        // AST root (nil on catastrophic failure)
-    lista<ParserError> errores  // Parse errors encountered
+    Programma? programma        # AST root (nil on catastrophic failure)
+    lista<ParserError> errores  # Parse errors encountered
 }
 
-/// Parsator - concrete implementation of pactum Resolvitor
+# Parsator - concrete implementation of pactum Resolvitor
 ///
-/// Wires up all parsing functions so they can call each other
-/// through the Resolvitor interface without circular imports.
+# Wires up all parsing functions so they can call each other
+# through the Resolvitor interface without circular imports.
 ///
-/// LATIN: parsator = "one who parses" (agent noun)
+# LATIN: parsator = "one who parses" (agent noun)
 genus Parsator implet Resolvitor {
     Parser p
-    
+
     functio parser() -> Parser {
         redde ego.p
     }
-    
+
     functio expressia() -> Expressia {
-        // Full expression parser starting at assignment (highest precedence entry)
+        # Full expression parser starting at assignment (highest precedence entry)
         redde parseAssignatio(ego)
     }
-    
+
     functio sententia() -> Sententia {
-        // Statement dispatcher routes to appropriate parser
+        # Statement dispatcher routes to appropriate parser
         redde parseSententia(ego)
     }
-    
+
     functio massa() -> Sententia {
-        // Parse block statement
+        # Parse block statement
         redde parseMassaSententia(ego)
     }
-    
+
     functio adnotatio() -> TypusAnnotatio {
-        // Parse type annotation
+        # Parse type annotation
         redde parseTypusAnnotatio(ego)
     }
 }
 
-/// Create a new Parsator
+# Create a new Parsator
 functio novumParsator(Parser p) -> Parsator {
     redde { p: p } qua Parsator
 }
 
-/// Parse a token stream into an AST
+# Parse a token stream into an AST
 ///
-/// Main entry point for the parser.
-/// Creates a Parser instance and parses the program.
+# Main entry point for the parser.
+# Creates a Parser instance and parses the program.
 functio resolvere(lista<Symbolum> symbola) -> ParserResultatum {
-    // Create parser state
+    # Create parser state
     fixum p = novumParser(symbola)
-    
-    // Create Parsator to wire up parsing functions
+
+    # Create Parsator to wire up parsing functions
     fixum r = novumParsator(p)
 
-    // Try to parse the program
+    # Try to parse the program
     tempta {
         fixum programma = parseProgramma(r)
-        
+
         redde {
             programma: programma,
             errores: p.errores
         } qua ParserResultatum
     } cape e {
-        // Catastrophic failure - return nil program with errors
+        # Catastrophic failure - return nil program with errors
         redde {
             programma: nihil,
             errores: p.errores

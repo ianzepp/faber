@@ -1,11 +1,11 @@
-// Basic tempta-cape (try-catch) with iace (throw)
+# Basic tempta-cape (try-catch) with iace (throw)
 //
-// tempta { <body> }
-// cape <errorName> { <handler> }
-// iace <expression>
+# tempta { <body> }
+# cape <errorName> { <handler> }
+# iace <expression>
 
 incipit {
-    // Basic try-catch
+    # Basic try-catch
     tempta {
         scribe "Attempting operation..."
         iace "Something went wrong"
@@ -15,7 +15,7 @@ incipit {
         scribe "Caught error:", err
     }
 
-    // tempta-cape-demum (try-catch-finally)
+    # tempta-cape-demum (try-catch-finally)
     tempta {
         scribe "Opening resource..."
         iace "Failed to open"
@@ -27,7 +27,7 @@ incipit {
         scribe "Cleanup: always runs"
     }
 
-    // demum without cape
+    # demum without cape
     tempta {
         scribe "Operation succeeds"
     }
@@ -35,7 +35,7 @@ incipit {
         scribe "Cleanup runs anyway"
     }
 
-    // Nested tempta blocks
+    # Nested tempta blocks
     tempta {
         scribe "Outer try"
 

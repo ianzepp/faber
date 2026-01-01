@@ -79,13 +79,13 @@ In `futura functio`: awaits a promise.
 In `cursor functio`: yields a value.
 
 ```fab
-// Async context - await
+# Async context - await
 futura functio getData() -> textus {
     fixum result = cede fetch(url)
     redde result
 }
 
-// Generator context - yield
+# Generator context - yield
 cursor functio items() -> numerus {
     cede 1
     cede 2
@@ -100,8 +100,8 @@ cursor functio items() -> numerus {
 Gerundive forms with implicit await:
 
 ```fab
-figendum data = fetchData(url)   // immutable, implicit await
-variandum result = fetchInitial() // mutable, implicit await
+figendum data = fetchData(url)   # immutable, implicit await
+variandum result = fetchInitial() # mutable, implicit await
 ```
 
 Equivalent to `fixum x = cede y()` and `varia x = cede y()`. The gerundive signals futurity — the value will be fixed/varied once the operation completes.

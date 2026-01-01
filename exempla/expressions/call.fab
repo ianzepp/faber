@@ -1,4 +1,4 @@
-// Call expressions: simple, with arguments, method calls, chaining, spread
+# Call expressions: simple, with arguments, method calls, chaining, spread
 
 functio greet() {
     scribe "Salve!"
@@ -31,29 +31,29 @@ genus Calculator {
 }
 
 incipit {
-    // Simple call (no arguments)
+    # Simple call (no arguments)
     greet()
 
-    // Call with arguments
+    # Call with arguments
     fixum sum = add(10, 20)
-    scribe sum  // 30
+    scribe sum  # 30
 
-    // Multiple arguments
+    # Multiple arguments
     fixum product = multiply(5, 6)
-    scribe product  // 30
+    scribe product  # 30
 
-    // Method call on object
+    # Method call on object
     varia calc = novum Calculator()
     calc.setValue(10)
-    scribe calc.getResult()  // 10
+    scribe calc.getResult()  # 10
 
-    // Chained method calls
+    # Chained method calls
     varia calc2 = novum Calculator()
     fixum result = calc2.setValue(5).double().double().getResult()
-    scribe result  // 20
+    scribe result  # 20
 
-    // Call with spread operator
+    # Call with spread operator
     fixum numerus[] numbers = [3, 7]
     fixum spreadSum = add(sparge numbers)
-    scribe spreadSum  // 10
+    scribe spreadSum  # 10
 }

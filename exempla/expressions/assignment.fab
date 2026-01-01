@@ -1,28 +1,28 @@
-// Assignment expressions
-// Simple and compound assignment operators
+# Assignment expressions
+# Simple and compound assignment operators
 
 incipit {
     varia numerus x = 10
 
-    // Simple assignment
+    # Simple assignment
     x = 20
-    scribe x  // 20
+    scribe x  # 20
 
-    // Compound assignments
+    # Compound assignments
     x += 5
-    scribe x  // 25
+    scribe x  # 25
 
     x -= 10
-    scribe x  // 15
+    scribe x  # 15
 
     x *= 2
-    scribe x  // 30
+    scribe x  # 30
 
     x /= 3
-    scribe x  // 10
+    scribe x  # 10
 
-    // String concatenation
+    # String concatenation
     varia textus s = "hello"
     s += " world"
-    scribe s  // hello world
+    scribe s  # hello world
 }

@@ -1,31 +1,31 @@
-// Range expressions with ex...pro
+# Range expressions with ex...pro
 //
-// ex <start>..<end> pro <item> { }      // exclusive (end not included)
-// ex <start> ante <end> pro <item> { }  // explicit exclusive
-// ex <start> usque <end> pro <item> { } // inclusive (end included)
+# ex <start>..<end> pro <item> { }      # exclusive (end not included)
+# ex <start> ante <end> pro <item> { }  # explicit exclusive
+# ex <start> usque <end> pro <item> { } # inclusive (end included)
 
 incipit {
-    // Basic range (exclusive: 0, 1, 2, 3, 4)
+    # Basic range (exclusive: 0, 1, 2, 3, 4)
     ex 0..5 pro i {
         scribe i
     }
 
-    // Explicit exclusive with ante (same as ..)
+    # Explicit exclusive with ante (same as ..)
     ex 0 ante 5 pro i {
         scribe i
     }
 
-    // Inclusive range with usque (0, 1, 2, 3, 4, 5)
+    # Inclusive range with usque (0, 1, 2, 3, 4, 5)
     ex 0 usque 5 pro i {
         scribe i
     }
 
-    // Range starting from non-zero
+    # Range starting from non-zero
     ex 5..10 pro i {
         scribe i
     }
 
-    // Countdown (negative direction)
+    # Countdown (negative direction)
     ex 5..0 pro i {
         scribe i
     }

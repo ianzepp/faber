@@ -1,47 +1,47 @@
-/// Resolvitor - Parser Interface for Mutual Recursion
+# Resolvitor - Parser Interface for Mutual Recursion
 ///
-/// Solves mutual recursion between expression and statement parsers.
-/// Each parsing function receives a Resolvitor instead of raw Parser,
-/// and calls methods for cross-module parsing.
+# Solves mutual recursion between expression and statement parsers.
+# Each parsing function receives a Resolvitor instead of raw Parser,
+# and calls methods for cross-module parsing.
 ///
-/// WHY: Expression parsers need to parse blocks (for lambdas), and
-///      statement parsers need to parse expressions. This creates
-///      circular imports. By using a pactum (interface), each module
-///      depends only on Resolvitor, not on each other.
+# WHY: Expression parsers need to parse blocks (for lambdas), and
+#      statement parsers need to parse expressions. This creates
+#      circular imports. By using a pactum (interface), each module
+#      depends only on Resolvitor, not on each other.
 ///
-/// The concrete implementation (ResolvitorImpl) is defined in index.fab,
-/// which imports all the actual parsing functions.
+# The concrete implementation (ResolvitorImpl) is defined in index.fab,
+# which imports all the actual parsing functions.
 ///
-/// LATIN: resolvitor = "one who resolves/parses"
+# LATIN: resolvitor = "one who resolves/parses"
 
 ex "./nucleus" importa Parser
 ex "../ast/expressia" importa Expressia
 ex "../ast/sententia" importa Sententia
 ex "../ast/typus" importa TypusAnnotatio
 
-/// Parser interface for cross-module parsing.
+# Parser interface for cross-module parsing.
 ///
-/// Usage in parsing functions:
-///   functio parseFoo(Resolvitor r) -> Foo {
-///       fixum p = r.parser()           // get parser state
-///       fixum expr = r.expressia()     // parse expression
-///       fixum block = r.massa()        // parse block
-///       fixum typ = r.adnotatio()      // parse type annotation
-///       ...
-///   }
+# Usage in parsing functions:
+#   functio parseFoo(Resolvitor r) -> Foo {
+#       fixum p = r.parser()           # get parser state
+#       fixum expr = r.expressia()     # parse expression
+#       fixum block = r.massa()        # parse block
+#       fixum typ = r.adnotatio()      # parse type annotation
+#       ...
+#   }
 pactum Resolvitor {
-    /// Get the underlying parser state
+    # Get the underlying parser state
     functio parser() -> Parser
-    
-    /// Parse an expression (handles precedence)
+
+    # Parse an expression (handles precedence)
     functio expressia() -> Expressia
-    
-    /// Parse a single statement
+
+    # Parse a single statement
     functio sententia() -> Sententia
-    
-    /// Parse a block of statements (MassaSententia)
+
+    # Parse a block of statements (MassaSententia)
     functio massa() -> Sententia
-    
-    /// Parse a type annotation
+
+    # Parse a type annotation
     functio adnotatio() -> TypusAnnotatio
 }

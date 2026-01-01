@@ -1,7 +1,7 @@
-// Basic redde (return) statements
+# Basic redde (return) statements
 //
-// redde <expression>   -- return a value
-// redde                -- void return
+# redde <expression>   -- return a value
+# redde                -- void return
 
 functio add(numerus a, numerus b) fit numerus {
     redde a + b

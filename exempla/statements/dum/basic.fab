@@ -1,6 +1,6 @@
-// Basic dum (while) loop with counter
+# Basic dum (while) loop with counter
 //
-// dum <condition> { <body> }
+# dum <condition> { <body> }
 
 incipit {
     varia numerus counter = 0
@@ -10,7 +10,7 @@ incipit {
         counter = counter + 1
     }
 
-    // Countdown example
+    # Countdown example
     varia numerus countdown = 3
 
     dum countdown > 0 {

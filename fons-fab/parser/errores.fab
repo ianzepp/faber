@@ -1,24 +1,24 @@
-/// Parser Error Catalog
+# Parser Error Catalog
 ///
-/// Centralized error definitions for syntactic analysis phase.
-/// Each error has a unique P-prefixed code, descriptive text, and help.
+# Centralized error definitions for syntactic analysis phase.
+# Each error has a unique P-prefixed code, descriptive text, and help.
 ///
-/// Error code ranges:
-/// - P001-P099: Token expectation (missing delimiters, keywords)
-/// - P100-P199: Invalid syntax (assignment targets, expressions)
-/// - P200-P299: Declaration errors (missing names, types)
-/// - P300-P399: Statement structure (incomplete constructs)
+# Error code ranges:
+# - P001-P099: Token expectation (missing delimiters, keywords)
+# - P100-P199: Invalid syntax (assignment targets, expressions)
+# - P200-P299: Declaration errors (missing names, types)
+# - P300-P399: Statement structure (incomplete constructs)
 ///
-/// INVARIANTS:
-/// - Every ParserErrorCodice has entry in nuntiumErroris()
-/// - Error codes are P-prefixed and sequentially numbered
-/// - textus is concise, auxilium provides remediation guidance
+# INVARIANTS:
+# - Every ParserErrorCodice has entry in nuntiumErroris()
+# - Error codes are P-prefixed and sequentially numbered
+# - textus is concise, auxilium provides remediation guidance
 
 ex "../ast/positio" importa Locus
 
-/// Parser error codes with P prefix
+# Parser error codes with P prefix
 ordo ParserErrorCodice {
-    // Token expectation errors (P001-P099)
+    # Token expectation errors (P001-P099)
     ExpectaturParensDex = "P001",
     ExpectaturUncusDex = "P002",
     ExpectaturQuadratusDex = "P003",
@@ -33,7 +33,7 @@ ordo ParserErrorCodice {
     ExpectaturTypusNomen = "P011",
     ExpectaturSagitta = "P012",
 
-    // Keyword expectation errors (P020-P049)
+    # Keyword expectation errors (P020-P049)
     ExpectaturEx = "P020",
     ExpectaturImporta = "P021",
     ExpectaturFunctio = "P022",
@@ -67,12 +67,12 @@ ordo ParserErrorCodice {
     ExpectaturIncipit = "P054",
     ExpectaturIncipiet = "P055",
 
-    // Module/source errors (P050-P059)
+    # Module/source errors (P050-P059)
     ExpectaturModulusNomen = "P050",
     ExpectaturTextus = "P051",
     ExpectaturTextusPostSed = "P053",
 
-    // Invalid construct errors (P100-P199)
+    # Invalid construct errors (P100-P199)
     InvalidumAssignatio = "P100",
     InvalidumExDeInitium = "P101",
     InvalidumEligeCasusInitium = "P102",
@@ -81,11 +81,11 @@ ordo ParserErrorCodice {
     InexpectatumSymbolum = "P104",
     ExpectaturUncusVelParens = "P105",
 
-    // Generic errors (P190-P199)
+    # Generic errors (P190-P199)
     ErrorGeneralis = "P190",
     ConflictumPraefixumVerbum = "P191",
 
-    // Declaration errors (P200-P299)
+    # Declaration errors (P200-P299)
     DeestFunctioNomen = "P200",
     DeestParametrumNomen = "P201",
     DeestGenusNomen = "P202",
@@ -94,16 +94,16 @@ ordo ParserErrorCodice {
     DeestVariaNomen = "P205"
 }
 
-/// Error message with help text
+# Error message with help text
 genus ParserErrorNuntius {
-    textus textus       // Brief error message
-    textus auxilium     // Extended help text
+    textus textus       # Brief error message
+    textus auxilium     # Extended help text
 }
 
-/// Get error message for a given error code
+# Get error message for a given error code
 functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
     elige codice {
-        // Token expectation errors
+        # Token expectation errors
         si ParserErrorCodice.ExpectaturParensDex {
             redde { textus: "Expected ')'", auxilium: "Parentheses must be balanced." } qua ParserErrorNuntius
         }
@@ -144,7 +144,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde { textus: "Expected '->'", auxilium: "Use arrow for return type." } qua ParserErrorNuntius
         }
 
-        // Keyword expectation errors
+        # Keyword expectation errors
         si ParserErrorCodice.ExpectaturEx {
             redde { textus: "Expected 'ex'", auxilium: "For-of loops: ex lista pro item { }" } qua ParserErrorNuntius
         }
@@ -242,7 +242,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde { textus: "Expected 'incipiet'", auxilium: "Async entry: incipiet { }" } qua ParserErrorNuntius
         }
 
-        // Module/source errors
+        # Module/source errors
         si ParserErrorCodice.ExpectaturModulusNomen {
             redde { textus: "Expected module name", auxilium: "ex norma importa scribe" } qua ParserErrorNuntius
         }
@@ -253,7 +253,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde { textus: "Expected pattern after 'sed'", auxilium: "Regex: sed '\\d+' i" } qua ParserErrorNuntius
         }
 
-        // Invalid construct errors
+        # Invalid construct errors
         si ParserErrorCodice.InvalidumAssignatio {
             redde { textus: "Invalid assignment target", auxilium: "Only identifiers/members can be assigned." } qua ParserErrorNuntius
         }
@@ -276,7 +276,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde { textus: "Expected '{' or '('", auxilium: "praefixum { } or praefixum(expr)" } qua ParserErrorNuntius
         }
 
-        // Generic errors
+        # Generic errors
         si ParserErrorCodice.ErrorGeneralis {
             redde { textus: "Syntax error", auxilium: "Check code structure." } qua ParserErrorNuntius
         }
@@ -284,7 +284,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde { textus: "Cannot combine futura/cursor with fit/fiet", auxilium: "Use arrow with futura/cursor." } qua ParserErrorNuntius
         }
 
-        // Declaration errors
+        # Declaration errors
         si ParserErrorCodice.DeestFunctioNomen {
             redde { textus: "Function requires name", auxilium: "functio nomen() { }" } qua ParserErrorNuntius
         }
@@ -304,26 +304,26 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde { textus: "Variable requires name", auxilium: "varia x = 5" } qua ParserErrorNuntius
         }
 
-        // Default fallback
+        # Default fallback
         secus {
             redde { textus: "Unknown error", auxilium: "" } qua ParserErrorNuntius
         }
     }
 }
 
-/// Structured parser error with source location
+# Structured parser error with source location
 genus ParserError {
-    ParserErrorCodice codice    // Error code for programmatic handling
-    textus nuntius              // Human-readable message
-    Locus locus                 // Source position
+    ParserErrorCodice codice    # Error code for programmatic handling
+    textus nuntius              # Human-readable message
+    Locus locus                 # Source position
 }
 
-/// Create a parser error at given location
+# Create a parser error at given location
 functio error(ParserErrorCodice codice, Locus locus, textus? contextus) -> ParserError {
     fixum nuntium = nuntiumErroris(codice)
     varia msg = nuntium.textus
 
-    // Append context if provided
+    # Append context if provided
     si nonnihil contextus {
         msg = scriptum("{}: {}", msg, contextus)
     }

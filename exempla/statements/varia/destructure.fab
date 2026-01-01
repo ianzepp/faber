@@ -1,10 +1,10 @@
-// Array destructuring declarations
+# Array destructuring declarations
 //
-// fixum [a, b, c] = array   -- destructure into immutable bindings
-// varia [x, y, z] = array   -- destructure into mutable bindings
+# fixum [a, b, c] = array   -- destructure into immutable bindings
+# varia [x, y, z] = array   -- destructure into mutable bindings
 
 incipit {
-    // Basic array destructuring
+    # Basic array destructuring
     fixum numbers = [1, 2, 3]
     fixum [a, b, c] = numbers
 
@@ -12,14 +12,14 @@ incipit {
     scribe b
     scribe c
 
-    // Destructure inline array
+    # Destructure inline array
     fixum [first, second, third] = [10, 20, 30]
 
     scribe first
     scribe second
     scribe third
 
-    // Mutable destructuring
+    # Mutable destructuring
     fixum coords = [100, 200]
     varia [x, y] = coords
 
@@ -32,14 +32,14 @@ incipit {
     scribe x
     scribe y
 
-    // Destructure with fewer variables (partial)
+    # Destructure with fewer variables (partial)
     fixum values = [1, 2, 3, 4, 5]
     fixum [one, two] = values
 
     scribe one
     scribe two
 
-    // Nested arrays
+    # Nested arrays
     fixum matrix = [[1, 2], [3, 4]]
     fixum [row1, row2] = matrix
 

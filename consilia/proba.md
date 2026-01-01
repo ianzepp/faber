@@ -75,10 +75,10 @@ proba "equality" {
 }
 
 proba "unary checks" {
-    adfirma value nonnulla          // not null
-    adfirma count positivum         // > 0
-    adfirma balance negativum       // < 0
-    adfirma items nulla             // empty/null
+    adfirma value nonnulla          # not null
+    adfirma count positivum         # > 0
+    adfirma balance negativum       # < 0
+    adfirma items nulla             # empty/null
 }
 
 proba "comparisons" {
@@ -96,10 +96,10 @@ No special matcher API - assertions use the same operators as regular code.
 
 ```fab
 adfirma result est 42
-// Failure: result (41) non est 42
+# Failure: result (41) non est 42
 
 adfirma result est 42, "parsed value"
-// Failure: parsed value: 41 non est 42
+# Failure: parsed value: 41 non est 42
 ```
 
 Optional second argument provides a label. Both sides of comparisons are shown in output.
@@ -108,11 +108,11 @@ Optional second argument provides a label. Both sides of comparisons are shown i
 
 ```fab
 proba omitte "blocked by issue #42" "test name" {
-    // skipped - not executed
+    # skipped - not executed
 }
 
 proba futurum "needs new parser feature" "test name" {
-    // todo - marked pending
+    # todo - marked pending
 }
 ```
 
@@ -122,10 +122,10 @@ Modifier comes after `proba`, then reason string, then test name string.
 
 ```fab
 probandum "Database" {
-    cura ante omnia { db = connect() }   // once before all tests
-    cura ante { db.reset() }             // before each test
-    cura post { db.rollback() }          // after each test
-    cura post omnia { db.close() }       // once after all tests
+    cura ante omnia { db = connect() }   # once before all tests
+    cura ante { db.reset() }             # before each test
+    cura post { db.rollback() }          # after each test
+    cura post omnia { db.close() }       # once after all tests
 
     proba "inserts" { ... }
     proba "updates" { ... }
@@ -271,7 +271,7 @@ Current design assumes explicit - the compiler generates the runner as part of o
 Tests are async by default. Should there be a default timeout?
 
 ```fab
-proba "slow operation" tempora 5000 {  // 5 second timeout?
+proba "slow operation" tempora 5000 {  # 5 second timeout?
     cede slowOperation()
 }
 ```

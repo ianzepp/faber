@@ -63,18 +63,18 @@ lege <path> ut <format>
 **Examples:**
 
 ```fab
-// Read as text (default)
+# Read as text (default)
 fixum readme = lege "README.md"
 
-// Read with format parsing
+# Read with format parsing
 fixum config = lege "config.json" ut json
 fixum settings = lege "settings.toml" ut toml
 fixum records = lege "data.csv" ut csv
 
-// Read as raw bytes
+# Read as raw bytes
 fixum raw = lege "image.png" ut octeti
 
-// Read as lines
+# Read as lines
 fixum lines = lege "data.txt" ut lineae
 ex lines pro linea {
     scribe linea
@@ -104,14 +104,14 @@ inscribe <path> ut <format>, <data>
 **Examples:**
 
 ```fab
-// Write text
+# Write text
 inscribe "output.txt", "Hello, world!"
 
-// Write with format serialization
+# Write with format serialization
 inscribe "config.json" ut json, { version: 1, debug: verum }
 inscribe "data.csv" ut csv, rows
 
-// Write lines
+# Write lines
 inscribe "output.txt" ut lineae, ["first", "second", "third"]
 ```
 
@@ -149,9 +149,9 @@ aperi <path>, <options>
 
 ```fab
 {
-    modus: "r" | "w" | "rw" | "a",  // read/write/readwrite/append
-    crea: bivalens,                  // create if missing
-    trunca: bivalens                 // truncate existing
+    modus: "r" | "w" | "rw" | "a",  # read/write/readwrite/append
+    crea: bivalens,                  # create if missing
+    trunca: bivalens                 # truncate existing
 }
 ```
 
@@ -180,7 +180,7 @@ fixum fd = aperi "data.bin"
 varia buffer: octeti = nova octeti(1024)
 fixum n = lege fd, buffer
 
-// Or read into new buffer
+# Or read into new buffer
 fixum data = lege fd, 1024
 ```
 
@@ -220,9 +220,9 @@ quaere <fd>, <offset>, <origin>
 **Examples:**
 
 ```fab
-quaere fd, 0                    // seek to start
-quaere fd, 100                  // seek to position 100
-quaere fd, -10, finis           // 10 bytes before end
+quaere fd, 0                    # seek to start
+quaere fd, 100                  # seek to position 100
+quaere fd, -10, finis           # 10 bytes before end
 ```
 
 ### Closing
@@ -242,15 +242,15 @@ cura aperi "data.bin" fit fd {
     fixum data = lege fd, 1024
     process(data)
 }
-// fd automatically closed
+# fd automatically closed
 
-// With error handling
+# With error handling
 cura aperi "data.bin" fit fd {
     inscribe fd, data
 } cape err {
     mone "Write failed:", err
 }
-// fd still closed even on error
+# fd still closed even on error
 ```
 
 ---
@@ -261,8 +261,8 @@ Formats are types implementing the `formator` interface:
 
 ```fab
 pactum formator<T> {
-    functio verte(T data) -> octeti       // turn data into octets
-    functio reverte(octeti input) -> T    // turn octets back into data
+    functio verte(T data) -> octeti       # turn data into octets
+    functio reverte(octeti input) -> T    # turn octets back into data
 }
 ```
 
@@ -274,12 +274,12 @@ pactum formator<T> {
 **Standard formatters:**
 
 ```fab
-// Encoding formatters
-genus Textus implet formator<textus> { }   // UTF-8 encode/decode
-genus Octeti implet formator<octeti> { }   // identity (passthrough)
-genus Lineae implet formator<textus[]> { } // join/split on \n
+# Encoding formatters
+genus Textus implet formator<textus> { }   # UTF-8 encode/decode
+genus Octeti implet formator<octeti> { }   # identity (passthrough)
+genus Lineae implet formator<textus[]> { } # join/split on \n
 
-// Structured formats
+# Structured formats
 genus JSON implet formator<object> { }
 genus TOML implet formator<object> { }
 genus CSV implet formator<object[]> { }
@@ -290,11 +290,11 @@ genus CSV implet formator<object[]> { }
 ```fab
 genus MyFormat implet formator<MyData> {
     functio verte(MyData data) -> octeti {
-        // serialize to octets
+        # serialize to octets
     }
 
     functio reverte(octeti input) -> MyData {
-        // parse from octets
+        # parse from octets
     }
 }
 
@@ -305,13 +305,13 @@ fixum data = lege "data.custom" ut formatter
 **How `ut` expands:**
 
 ```fab
-// lege "config.json" ut json
-// expands to:
+# lege "config.json" ut json
+# expands to:
 fixum raw = lege "config.json" ut octeti
 fixum config = json.reverte(raw)
 
-// inscribe "out.json" ut json, data
-// expands to:
+# inscribe "out.json" ut json, data
+# expands to:
 fixum serialized = json.verte(data)
 inscribe "out.json" ut octeti, serialized
 ```
@@ -353,9 +353,9 @@ ex "norma/solum" importa { duplica }
 duplica("source.txt", "dest.txt")
 duplica("config.json", "/backup/config.json")
 
-// With options
+# With options
 duplica("source.txt", "dest.txt", {
-    rescribe: verum    // overwrite if exists
+    rescribe: verum    # overwrite if exists
 })
 ```
 
@@ -376,12 +376,12 @@ ex "norma/solum" importa { inspice }
 
 fixum info = inspice("data.bin")
 
-scribe info.magnitudo          // size in bytes
-scribe info.creatum            // creation time
-scribe info.mutatum            // modification time
-scribe info.accessum           // access time
-scribe info.genus              // "file" | "directory" | "symlink"
-scribe info.modus              // permissions (octal)
+scribe info.magnitudo          # size in bytes
+scribe info.creatum            # creation time
+scribe info.mutatum            # modification time
+scribe info.accessum           # access time
+scribe info.genus              # "file" | "directory" | "symlink"
+scribe info.modus              # permissions (octal)
 ```
 
 ### Truncate
@@ -389,8 +389,8 @@ scribe info.modus              // permissions (octal)
 ```fab
 ex "norma/solum" importa { trunca }
 
-trunca("log.txt", 0)           // empty the file
-trunca("data.bin", 1024)       // truncate to 1KB
+trunca("log.txt", 0)           # empty the file
+trunca("data.bin", 1024)       # truncate to 1KB
 ```
 
 ### Touch
@@ -398,8 +398,8 @@ trunca("data.bin", 1024)       // truncate to 1KB
 ```fab
 ex "norma/solum" importa { tange }
 
-tange("file.txt")              // create if missing, update mtime if exists
-tange("marker.lock")           // create empty marker file
+tange("file.txt")              # create if missing, update mtime if exists
+tange("marker.lock")           # create empty marker file
 ```
 
 ---
@@ -412,9 +412,9 @@ tange("marker.lock")           // create empty marker file
 ex "norma/solum" importa { crea }
 
 crea("new-folder")
-crea("/tmp/deeply/nested/path")    // creates parents automatically
+crea("/tmp/deeply/nested/path")    # creates parents automatically
 
-// With options
+# With options
 crea("secure-dir", { modus: 0o700 })
 ```
 
@@ -424,15 +424,15 @@ crea("secure-dir", { modus: 0o700 })
 ex "norma/solum" importa { elenca }
 
 fixum entries = elenca(".")
-// ["file1.txt", "file2.txt", "subdir"]
+# ["file1.txt", "file2.txt", "subdir"]
 
 ex elenca("/home/user") pro entry {
     scribe entry
 }
 
-// With options
+# With options
 fixum files = elenca(".", {
-    occulta: verum     // include hidden files
+    occulta: verum     # include hidden files
 })
 ```
 
@@ -441,23 +441,23 @@ fixum files = elenca(".", {
 ```fab
 ex "norma/solum" importa { ambula }
 
-// Iterate all files recursively
+# Iterate all files recursively
 ex ambula("src") pro path {
     scribe path
 }
-// "src/main.fab"
-// "src/lib/utils.fab"
+# "src/main.fab"
+# "src/lib/utils.fab"
 
-// With filter
+# With filter
 ex ambula("src", { glob: "*.fab" }) pro path {
     compile(path)
 }
 
-// With options
+# With options
 ex ambula(".", {
     glob: "*.md",
-    sequere_symbola: falsum,    // don't follow symlinks
-    max_altitudo: 3              // max depth
+    sequere_symbola: falsum,    # don't follow symlinks
+    max_altitudo: 3              # max depth
 }) pro path {
     process(path)
 }
@@ -468,11 +468,11 @@ ex ambula(".", {
 ```fab
 ex "norma/solum" importa { vacua }
 
-vacua("empty-dir")             // fails if not empty
+vacua("empty-dir")             # fails if not empty
 
-// Remove directory and contents
+# Remove directory and contents
 ex "norma/solum" importa { dele_arbor }
-dele_arbor("dir-with-contents")  // recursive delete
+dele_arbor("dir-with-contents")  # recursive delete
 ```
 
 ---
@@ -482,27 +482,27 @@ dele_arbor("dir-with-contents")  // recursive delete
 ```fab
 ex "norma/solum" importa { via }
 
-// Join paths
+# Join paths
 fixum path = via.iunge("src", "lib", "utils.fab")
-// "src/lib/utils.fab"
+# "src/lib/utils.fab"
 
-// Parse path
+# Parse path
 fixum p = via.parse("/home/user/file.txt")
-scribe p.radix          // "/"
-scribe p.dir            // "/home/user"
-scribe p.basis          // "file.txt"
-scribe p.nomen          // "file"
-scribe p.extensio       // ".txt"
+scribe p.radix          # "/"
+scribe p.dir            # "/home/user"
+scribe p.basis          # "file.txt"
+scribe p.nomen          # "file"
+scribe p.extensio       # ".txt"
 
-// Resolve relative paths
+# Resolve relative paths
 fixum abs = via.resolve("../sibling/file.txt")
 
-// Normalize
+# Normalize
 fixum clean = via.norma("src/../lib/./utils.fab")
-// "lib/utils.fab"
+# "lib/utils.fab"
 
-// Home directory
-fixum home = via.domus()           // "/home/user"
+# Home directory
+fixum home = via.domus()           # "/home/user"
 fixum config = via.iunge(via.domus(), ".config", "app")
 ```
 
@@ -521,14 +521,14 @@ fixum config = lege "~/.config/app.json" ut json
 ```fab
 ex "norma/solum" importa { necte, lege_nexum }
 
-// Create symlink
+# Create symlink
 necte("actual-file.txt", "link.txt")
 
-// Read symlink target
+# Read symlink target
 fixum target = lege_nexum("link.txt")
-// "actual-file.txt"
+# "actual-file.txt"
 
-// Check if symlink
+# Check if symlink
 fixum info = inspice("link.txt")
 si info.genus == "symlink" {
     scribe "It's a link to:", lege_nexum("link.txt")
@@ -542,12 +542,12 @@ si info.genus == "symlink" {
 ```fab
 ex "norma/solum" importa { modus }
 
-// Get permissions
-fixum m = modus("script.sh")      // 0o755
+# Get permissions
+fixum m = modus("script.sh")      # 0o755
 
-// Set permissions
-modus("script.sh", 0o755)         // rwxr-xr-x
-modus("secret.key", 0o600)        // rw-------
+# Set permissions
+modus("script.sh", 0o755)         # rwxr-xr-x
+modus("secret.key", 0o600)        # rw-------
 ```
 
 ---
@@ -557,19 +557,19 @@ modus("secret.key", 0o600)        // rw-------
 ```fab
 ex "norma/solum" importa { temporarium }
 
-// Create temp file
+# Create temp file
 cura temporarium() fit tmp {
     inscribe tmp.path, "temporary data"
     fixum data = lege tmp.path
 }
-// tmp file automatically deleted
+# tmp file automatically deleted
 
-// With prefix
+# With prefix
 cura temporarium({ praefixum: "cache-" }) fit tmp {
-    // tmp.path = "/tmp/cache-abc123"
+    # tmp.path = "/tmp/cache-abc123"
 }
 
-// Temp directory
+# Temp directory
 cura temporarium({ genus: "dir" }) fit tmp_dir {
     crea(via.iunge(tmp_dir.path, "subdir"))
 }
@@ -584,13 +584,13 @@ cura temporarium({ genus: "dir" }) fit tmp_dir {
 High-level operations are async by default on async-capable targets:
 
 ```fab
-// Using explicit cede
+# Using explicit cede
 futura functio loadConfig() -> object {
     fixum config = cede lege "config.json" ut json
     redde config
 }
 
-// Using figendum (implicit await)
+# Using figendum (implicit await)
 futura functio loadConfig() -> object {
     figendum config = lege "config.json" ut json
     redde config
@@ -602,9 +602,9 @@ futura functio loadConfig() -> object {
 Low-level operations are sync by default:
 
 ```fab
-fixum fd = aperi "file.bin"    // sync open
-fixum data = lege fd, 1024     // sync read
-claude fd                       // sync close
+fixum fd = aperi "file.bin"    # sync open
+fixum data = lege fd, 1024     # sync read
+claude fd                       # sync close
 ```
 
 ---

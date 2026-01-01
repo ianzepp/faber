@@ -1,30 +1,30 @@
-// Unary operators: negation, logical not, and null/sign checks
+# Unary operators: negation, logical not, and null/sign checks
 
 incipit {
-    // Numeric negation
+    # Numeric negation
     fixum x = 5
     fixum neg = -x
-    scribe neg  // -5
+    scribe neg  # -5
 
-    // Logical negation
+    # Logical negation
     fixum flag = verum
     fixum notFlag = non flag
-    scribe notFlag  // falsum
+    scribe notFlag  # falsum
 
-    // Positive/negative checks
+    # Positive/negative checks
     fixum a = 10
     fixum b = -3
-    scribe positivum a   // verum
-    scribe negativum a   // falsum
-    scribe positivum b   // falsum
-    scribe negativum b   // verum
+    scribe positivum a   # verum
+    scribe negativum a   # falsum
+    scribe positivum b   # falsum
+    scribe negativum b   # verum
 
-    // Null checks
+    # Null checks
     fixum textus? maybe = nihil
-    scribe nulla maybe      // verum (is null)
-    scribe nonnulla maybe   // falsum (is not null)
+    scribe nulla maybe      # verum (is null)
+    scribe nonnulla maybe   # falsum (is not null)
 
     fixum textus? present = "salve"
-    scribe nulla present    // falsum
-    scribe nonnulla present // verum
+    scribe nulla present    # falsum
+    scribe nonnulla present # verum
 }

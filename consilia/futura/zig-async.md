@@ -12,11 +12,11 @@ Faber has two syntax systems for async/generators. Only verb syntax is supported
 | `fit`/`fiet`/`fiunt`/`fient` | **Supported** | Compiles to state machine |
 
 ```fab
-// Error on Zig target:
+# Error on Zig target:
 futura functio fetch() -> textus { ... }
 cursor functio items() -> numerus { ... }
 
-// Supported on all targets including Zig:
+# Supported on all targets including Zig:
 functio fetch() fiet textus { ... }
 functio items() fiunt numerus { ... }
 ```
@@ -207,13 +207,13 @@ pub fn block_on(comptime T: type, future: anytype) !T {
 The state machine `union(enum)` is structurally identical to `discretio`:
 
 ```fab
-// User-defined discretio
+# User-defined discretio
 discretio Event {
     Click { numerus x, numerus y }
     Quit
 }
 
-// Compiler-generated for async
+# Compiler-generated for async
 discretio FetchState {
     Start { textus url }
     AwaitingGet { textus url }
@@ -345,10 +345,10 @@ const IoOp = union(enum) {
 The document uses `cede` for two distinct operations:
 
 ```fab
-// In fiet: await-like (waiting for a result)
+# In fiet: await-like (waiting for a result)
 fixum resp = cede http.get(url)
 
-// In fiunt: yield-like (producing a value)
+# In fiunt: yield-like (producing a value)
 cede i
 ```
 
@@ -364,7 +364,7 @@ Consider:
 functio example() fiet textus {
     varia x = "hello"
     fixum resp = cede fetch()
-    x = "goodbye"  // mutation after suspend
+    x = "goodbye"  # mutation after suspend
     redde x
 }
 ```

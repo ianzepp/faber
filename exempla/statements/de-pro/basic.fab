@@ -1,29 +1,29 @@
-// Basic de...pro (for-in) key iteration
+# Basic de...pro (for-in) key iteration
 //
-// de <object> pro <key> { <body> }
-// de <array> pro <index> { <body> }
+# de <object> pro <key> { <body> }
+# de <array> pro <index> { <body> }
 
 incipit ergo cura arena {
-    // Iterate over object keys
+    # Iterate over object keys
     fixum persona = { nomen: "Marcus", aetas: 30, urbs: "Roma" }
 
     de persona pro clavis {
         scribe clavis
     }
 
-    // Access values using the key
+    # Access values using the key
     de persona pro clavis {
         scribe scriptum("{}: {}", clavis, persona[clavis])
     }
 
-    // Iterate over array indices
+    # Iterate over array indices
     fixum numeri = [10, 20, 30]
 
     de numeri pro index {
         scribe scriptum("Index {}: {}", index, numeri[index])
     }
 
-    // One-liner form with ergo
+    # One-liner form with ergo
     fixum data = { alpha: 1, beta: 2 }
     de data pro k ergo scribe k
 }

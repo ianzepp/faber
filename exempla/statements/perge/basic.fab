@@ -1,9 +1,9 @@
-// Continue (perge) in loops
+# Continue (perge) in loops
 //
-// perge skips to the next iteration of the innermost loop
+# perge skips to the next iteration of the innermost loop
 
 incipit ergo cura arena {
-    // Skip even numbers
+    # Skip even numbers
     varia i = 0
 
     dum i < 10 {
@@ -16,7 +16,7 @@ incipit ergo cura arena {
         scribe i
     }
 
-    // Continue in nested loop (affects inner only)
+    # Continue in nested loop (affects inner only)
     varia outer = 0
 
     dum outer < 3 {

@@ -1,17 +1,17 @@
 
-// Iterating over fiunt/fient function returns with ex...pro
+# Iterating over fiunt/fient function returns with ex...pro
 //
-// This demonstrates that fiunt/fient functions produce iterable results
-// that can be consumed with ex...pro loops
+# This demonstrates that fiunt/fient functions produce iterable results
+# that can be consumed with ex...pro loops
 
-// Multi-value sync function that yields values via cede
+# Multi-value sync function that yields values via cede
 functio rangeSync(numerus n) fiunt numerus {
     ex 0..n pro i {
         cede i
     }
 }
 
-// Multi-value async function that yields values via cede
+# Multi-value async function that yields values via cede
 functio rangeAsync(numerus n) fient numerus {
     ex 0..n pro i {
         cede i
@@ -19,13 +19,13 @@ functio rangeAsync(numerus n) fient numerus {
 }
 
 incipit {
-    // Iterate over sync fiunt function results
+    # Iterate over sync fiunt function results
     scribe "Sync fiunt iteration:"
     ex rangeSync(3) pro num {
         scribe scriptum("  num: {num}")
     }
 
-    // Collect all results from fiunt function
+    # Collect all results from fiunt function
     varia syncResults = []
     ex rangeSync(5) pro num {
         syncResults.adde(num * 2)
@@ -33,8 +33,8 @@ incipit {
     scribe("Sync collected:")
     scribe(syncResults)
 
-    // Note: Async iteration would require async context
-    // ex rangeAsync(3) fiunt num {
-    //     scribe num
-    // }
+    # Note: Async iteration would require async context
+    # ex rangeAsync(3) fiunt num {
+    #     scribe num
+    # }
 }

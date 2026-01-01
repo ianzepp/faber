@@ -10,7 +10,7 @@ Regex literals use the `sed` keyword with a string pattern and optional flags.
 
 ## Syntax
 
-```faber
+```fab
 sed "pattern"
 sed "pattern" flags
 ```
@@ -29,10 +29,10 @@ sed "pattern" flags
 
 Flags are optional, specified as a bare identifier after the pattern:
 
-```faber
-sed "pattern"           // no flags
-sed "pattern" i         // case insensitive
-sed "pattern" ims       // multiple flags
+```fab
+sed "pattern"           # no flags
+sed "pattern" i         # case insensitive
+sed "pattern" ims       # multiple flags
 ```
 
 | Flag | Meaning                                      |
@@ -47,17 +47,17 @@ sed "pattern" ims       // multiple flags
 
 ## Examples
 
-```faber
-// Simple patterns
+```fab
+# Simple patterns
 fixum digits = sed "\d+"
 fixum email = sed "[^@]+@[^@]+"
 fixum paths = sed "/usr/local/.*"
 
-// With flags
+# With flags
 fixum word = sed "hello" i
 fixum lines = sed "^start" im
 
-// In method calls — no ambiguity (flags before comma)
+# In method calls — no ambiguity (flags before comma)
 fixum found = text.quaere(sed "\d+")
 fixum result = text.muta(sed "old" i, "new")
 fixum matches = text.para(sed "\w+")
@@ -145,11 +145,11 @@ The parser recognizes:
 
 No comma between pattern and flags. This distinguishes flags from the next method argument.
 
-```faber
-// Unambiguous parsing:
+```fab
+# Unambiguous parsing:
 text.muta(sed "old" i, "new")
-//        ^^^^^^^^^^  ^^^^^
-//        regex arg   string arg
+#        ^^^^^^^^^^  ^^^^^
+#        regex arg   string arg
 ```
 
 ## AST
@@ -176,20 +176,20 @@ For now, regex literals are expressions with inferred type. Type name can be dec
 
 Regex operations on strings. The method determines iteration behavior (first match vs all matches), not the regex flags.
 
-```faber
-// Search — find first match
+```fab
+# Search — find first match
 fixum found = text.quaere(sed "\d+")
 
-// Replace first — substitute first match
+# Replace first — substitute first match
 fixum result = text.muta(sed "old", "new")
 
-// Replace all — substitute all matches
+# Replace all — substitute all matches
 fixum result = text.mutaOmnes(sed "old", "new")
 
-// Match all — return all matches
+# Match all — return all matches
 fixum matches = text.para(sed "\w+")
 
-// Test — boolean check
+# Test — boolean check
 fixum valid = text.probat(sed "^\d{4}$")
 ```
 

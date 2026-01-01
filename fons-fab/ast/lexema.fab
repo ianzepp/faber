@@ -1,119 +1,119 @@
-// Token types and Token structure for lexical analysis
+# Token types and Token structure for lexical analysis
 //
-// WHY: The tokenizer produces a stream of tokens that the parser consumes.
-//      Each token has a type, value, and position.
+# WHY: The tokenizer produces a stream of tokens that the parser consumes.
+#      Each token has a type, value, and position.
 
 ex "./positio" importa Locus
 
-/// Token type enumeration
+# Token type enumeration
 ordo SymbolumGenus {
-    // Literals
-    Numerus       // integer literal: 42
-    Fractus       // float literal: 3.14
-    Textus        // string literal: "hello"
-    
-    // Boolean/null literals (as tokens, not keywords)
-    Verum         // true
-    Falsum        // false
-    Nihil         // null
-    
-    // Identifiers and keywords
-    Nomen         // user-defined name
-    Verbum        // reserved word (valor contains which)
-    
-    // Grouping
-    ParensSin     // (
-    ParensDex     // )
-    UncusSin      // {
-    UncusDex      // }
-    AngulusSin    // [
-    AngulusDex    // ]
-    
-    // Operators - arithmetic
-    Plus          // +
-    Minus         // -
-    Stella        // *
-    Virgula       // /
-    Centum        // %
-    
-    // Operators - comparison
-    Aequum        // =
-    AequumBis     // ==
-    AequumTer     // ===
-    NonAequum     // !=
-    NonAequumBis  // !==
-    Minor         // <
-    MinorAequum   // <=
-    Maior         // >
-    MaiorAequum   // >=
-    
-    // Operators - logical
-    Non           // !
-    EtEt          // &&
-    VelVel        // ||
-    Rogatio       // ?
-    RogatioBis    // ??
-    RogatioPunctum    // ?.
-    NonPunctum        // !.
-    
-    // Operators - bitwise
-    Et            // &
-    Vel           // |
-    Apex          // ^
-    Unda          // ~
-    MinorBis      // <<
-    MaiorBis      // >>
-    MaiorTer      // >>>
-    
-    // Punctuation
-    Coma          // ,
-    Punctum       // .
-    Colon         // :
-    PunctumColon  // ;
-    Sagitta       // ->
-    SagittaCrassa // =>
-    PunctumBis    // ..
-    PunctumTer    // ...
-    
-    // Comments (preserved for formatting)
-    NotaLinea     // // comment
-    NotaMassa     // /* comment */
-    NotaDocens    // /// comment
-    
-    // Special
-    Finis         // end of file
-    Malum         // lexer error token
+    # Literals
+    Numerus       # integer literal: 42
+    Fractus       # float literal: 3.14
+    Textus        # string literal: "hello"
+
+    # Boolean/null literals (as tokens, not keywords)
+    Verum         # true
+    Falsum        # false
+    Nihil         # null
+
+    # Identifiers and keywords
+    Nomen         # user-defined name
+    Verbum        # reserved word (valor contains which)
+
+    # Grouping
+    ParensSin     # (
+    ParensDex     # )
+    UncusSin      # {
+    UncusDex      # }
+    AngulusSin    # [
+    AngulusDex    # ]
+
+    # Operators - arithmetic
+    Plus          # +
+    Minus         # -
+    Stella        # *
+    Virgula       # /
+    Centum        # %
+
+    # Operators - comparison
+    Aequum        # =
+    AequumBis     # ==
+    AequumTer     # ===
+    NonAequum     # !=
+    NonAequumBis  # !==
+    Minor         # <
+    MinorAequum   # <=
+    Maior         # >
+    MaiorAequum   # >=
+
+    # Operators - logical
+    Non           # !
+    EtEt          # &&
+    VelVel        # ||
+    Rogatio       # ?
+    RogatioBis    # ??
+    RogatioPunctum    # ?.
+    NonPunctum        # !.
+
+    # Operators - bitwise
+    Et            # &
+    Vel           # |
+    Apex          # ^
+    Unda          # ~
+    MinorBis      # <<
+    MaiorBis      # >>
+    MaiorTer      # >>>
+
+    # Punctuation
+    Coma          # ,
+    Punctum       # .
+    Colon         # :
+    PunctumColon  # ;
+    Sagitta       # ->
+    SagittaCrassa # =>
+    PunctumBis    # ..
+    PunctumTer    # ...
+
+    # Comments (preserved for formatting)
+    NotaLinea     # # comment
+    NotaMassa     # /* comment */
+    NotaDocens    # # comment
+
+    # Special
+    Finis         # end of file
+    Malum         # lexer error token
 }
 
-/// A single token from the source
+# A single token from the source
 genus Symbolum {
     SymbolumGenus species
-    textus valor       // raw text of the token
+    textus valor       # raw text of the token
     Locus locus
-    textus? verbum     // if species == Verbum, which keyword
+    textus? verbum     # if species == Verbum, which keyword
 }
 
-/// Create a token
+# Create a token
 functio symbolum(SymbolumGenus species, textus valor, Locus locus) -> Symbolum {
     redde { species: species, valor: valor, locus: locus, verbum: nihil } qua Symbolum
 }
 
-/// Create a keyword token
+# Create a keyword token
 functio symbolumVerbum(textus verbum, Locus locus) -> Symbolum {
-    redde { 
-        species: SymbolumGenus.Verbum, 
-        valor: verbum, 
-        locus: locus, 
-        verbum: verbum 
+    redde {
+        species: SymbolumGenus.Verbum,
+        valor: verbum,
+        locus: locus,
+        verbum: verbum
     } qua Symbolum
 }
 
-/// Check if token is a specific keyword
+# Check if token is a specific keyword
 functio estVerbum(Symbolum sym, textus verbum) -> bivalens {
     redde sym.species == SymbolumGenus.Verbum && sym.verbum == verbum
 }
 
-/// Check if token is EOF
+# Check if token is EOF
 functio estFinis(Symbolum sym) -> bivalens {
     redde sym.species == SymbolumGenus.Finis
 }

@@ -101,10 +101,10 @@ Complete reference of all operators in Faber Romanus.
 
 **Nullish vs Falsy:** `vel` only triggers on `nihil`, not on `0`, `""`, or `falsum`.
 
-```faber
-0 vel 5           // 0 (not nihil)
-"" vel "default"  // "" (not nihil)
-nihil vel 5       // 5
+```fab
+0 vel 5           # 0 (not nihil)
+"" vel "default"  # "" (not nihil)
+nihil vel 5       # 5
 ```
 
 ---
@@ -140,11 +140,11 @@ nihil vel 5       // 5
 |          | `usque` | Range (up to)  | Inclusive |
 |          | `per`   | Step modifier  | N/A       |
 
-```faber
-0..10           // 0, 1, 2, ..., 9
-0 ante 10       // 0, 1, 2, ..., 9
-0 usque 10      // 0, 1, 2, ..., 10
-0..10 per 2     // 0, 2, 4, 6, 8
+```fab
+0..10           # 0, 1, 2, ..., 9
+0 ante 10       # 0, 1, 2, ..., 9
+0 usque 10      # 0, 1, 2, ..., 10
+0..10 per 2     # 0, 2, 4, 6, 8
 ```
 
 ---
@@ -156,17 +156,17 @@ nihil vel 5       // 5
 | `sparge` | Spread elements | `[sparge a, sparge b]`   |
 | `ceteri` | Rest parameters | `functio f(ceteri args)` |
 
-```faber
-// Array spread
+```fab
+# Array spread
 fixum combined = [sparge first, sparge second]
 
-// Object spread
+# Object spread
 fixum merged = { sparge defaults, timeout: 5000 }
 
-// Call spread
+# Call spread
 add(sparge nums)
 
-// Rest parameters
+# Rest parameters
 functio sum(ceteri numerus[] nums) -> numerus
 ```
 
@@ -179,7 +179,7 @@ functio sum(ceteri numerus[] nums) -> numerus
 | `condition ? then : else`       | Standard ternary |
 | `condition sic then secus else` | Latin ternary    |
 
-```faber
+```fab
 fixum max = a > b ? a : b
 fixum max = a > b sic a secus b
 ```
@@ -197,11 +197,11 @@ fixum max = a > b sic a secus b
 
 These expand to inline checks:
 
-```faber
-nulla x        // x == null || x.length === 0 || ...
-nonnulla x     // x != null && x.length > 0 && ...
-negativum x    // x < 0
-positivum x    // x > 0
+```fab
+nulla x        # x == null || x.length === 0 || ...
+nonnulla x     # x != null && x.length > 0 && ...
+negativum x    # x < 0
+positivum x    # x > 0
 ```
 
 ---

@@ -1,17 +1,17 @@
-/// Statement Dispatcher
+# Statement Dispatcher
 ///
-/// Central dispatcher for parsing statements based on leading keyword.
-/// Handles comment attachment and error recovery.
+# Central dispatcher for parsing statements based on leading keyword.
+# Handles comment attachment and error recovery.
 ///
-/// GRAMMAR:
-///   statement := importDecl | varDecl | funcDecl | typeAliasDecl | ifStmt
-///              | whileStmt | forStmt | returnStmt | throwStmt | tryStmt
-///              | blockStmt | exprStmt | ...
+# GRAMMAR:
+#   statement := importDecl | varDecl | funcDecl | typeAliasDecl | ifStmt
+#              | whileStmt | forStmt | returnStmt | throwStmt | tryStmt
+#              | blockStmt | exprStmt | ...
 ///
-/// LATIN VOCABULARY:
-/// - sententia = statement (sentence/thought)
-/// - declara = declare
-/// - imperium = control (command)
+# LATIN VOCABULARY:
+# - sententia = statement (sentence/thought)
+# - declara = declare
+# - imperium = control (command)
 
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
@@ -20,7 +20,7 @@ ex "../../ast/sententia" importa Sententia, ScribeGradus
 ex "../../ast/lexema" importa SymbolumGenus
 ex "../errores" importa ParserErrorCodice
 
-// Import statement parsers from submodules
+# Import statement parsers from submodules
 ex "./actio" importa parseReddeSententia, parseRumpeSententia, parsePergeSententia, parseIaceSententia, parseScribeSententia
 ex "./declara" importa parseFunctioDeclaratio, parseGenusDeclaratio, parsePactumDeclaratio, parseOrdoDeclaratio, parseDiscretioDeclaratio, parseTypusAliasDeclaratio, parseImportaSententia
 ex "./error" importa parseTemptaSententia, parseFacSententia, parseAdfirmaSententia
@@ -28,49 +28,49 @@ ex "./imperium" importa parseSiSententia, parseDumSententia, parseExSententia, p
 ex "./massa" importa parseMassaSententia, parseExpressiaSententia
 ex "./varia" importa parseVariaSententia
 
-/// Parse a statement
+# Parse a statement
 ///
-/// Main dispatcher that routes to appropriate parser based on leading token.
+# Main dispatcher that routes to appropriate parser based on leading token.
 functio parseSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum sym = p.specta(0)
-    
-    // Block statement
+
+    # Block statement
     si sym.species === SymbolumGenus.UncusSin {
         redde parseMassaSententia(r)
     }
-    
-    // Keyword-based dispatch
+
+    # Keyword-based dispatch
     si sym.species === SymbolumGenus.Verbum {
         fixum verbum = sym.verbum
-        
-        // Variable declarations
+
+        # Variable declarations
         si verbum === "varia" aut verbum === "fixum" aut verbum === "figendum" aut verbum === "variandum" {
             redde parseVariaSententia(r)
         }
-        
-        // Return statement
+
+        # Return statement
         si verbum === "redde" {
             redde parseReddeSententia(r)
         }
-        
-        // Break/continue
+
+        # Break/continue
         si verbum === "rumpe" {
             redde parseRumpeSententia(r)
         }
         si verbum === "perge" {
             redde parsePergeSententia(r)
         }
-        
-        // Throw/panic
+
+        # Throw/panic
         si verbum === "iace" {
             redde parseIaceSententia(r, falsum)
         }
         si verbum === "mori" {
             redde parseIaceSententia(r, verum)
         }
-        
-        // Output statements
+
+        # Output statements
         si verbum === "scribe" {
             redde parseScribeSententia(r, ScribeGradus.Scribe)
         }
@@ -80,8 +80,8 @@ functio parseSententia(Resolvitor r) -> Sententia {
         si verbum === "mone" {
             redde parseScribeSententia(r, ScribeGradus.Mone)
         }
-        
-        // Error handling
+
+        # Error handling
         si verbum === "tempta" {
             redde parseTemptaSententia(r)
         }
@@ -91,8 +91,8 @@ functio parseSententia(Resolvitor r) -> Sententia {
         si verbum === "adfirma" {
             redde parseAdfirmaSententia(r)
         }
-        
-        // Control flow
+
+        # Control flow
         si verbum === "si" {
             redde parseSiSententia(r)
         }
@@ -100,8 +100,8 @@ functio parseSententia(Resolvitor r) -> Sententia {
             redde parseDumSententia(r)
         }
         si verbum === "ex" {
-            // Look ahead: ex (IDENTIFIER|STRING) importa -> import
-            // Otherwise it's a for-of loop
+            # Look ahead: ex (IDENTIFIER|STRING) importa -> import
+            # Otherwise it's a for-of loop
             fixum nextSym = p.specta(1)
             si (nextSym.species === SymbolumGenus.Nomen aut nextSym.species === SymbolumGenus.Textus) {
                 fixum afterSym = p.specta(2)
@@ -114,8 +114,8 @@ functio parseSententia(Resolvitor r) -> Sententia {
         si verbum === "de" {
             redde parseDeSententia(r)
         }
-        
-        // Declarations
+
+        # Declarations
         si verbum === "functio" {
             redde parseFunctioDeclaratio(r)
         }
@@ -134,11 +134,11 @@ functio parseSententia(Resolvitor r) -> Sententia {
         si verbum === "typus" {
             redde parseTypusAliasDeclaratio(r)
         }
-        
-        // TODO: Add remaining statement parsers
-        // elige, discerne, custodi, probandum, proba, incipit, incipiet, cura, ad, importa
+
+        # TODO: Add remaining statement parsers
+        # elige, discerne, custodi, probandum, proba, incipit, incipiet, cura, ad, importa
     }
-    
-    // Fall through to expression statement
+
+    # Fall through to expression statement
     redde parseExpressiaSententia(r)
 }

@@ -174,7 +174,7 @@ For simple value matching (not variant extraction), use `elige`:
 
 ```fab
 elige status {
-    si "pending" { ... }      // value match (string)
+    si "pending" { ... }      # value match (string)
     si "active" { ... }
     secus { ... }
 }
@@ -192,7 +192,7 @@ elige status {
 #### TypeScript Output
 
 ```fab
-// Faber source:
+# Faber source:
 discerne event {
     si Click pro x, y { scribe "clicked at " + x + ", " + y }
     si Keypress pro key { scribe "pressed " + key }
@@ -225,7 +225,7 @@ switch (event.tag) {
 #### Zig Output
 
 ```fab
-// Faber source:
+# Faber source:
 discerne event {
     si Click pro x, y { scribe "clicked at " + x + ", " + y }
     si Keypress pro key { scribe "pressed " + key }
@@ -260,7 +260,7 @@ switch (event) {
 #### Rust Output
 
 ```fab
-// Faber source:
+# Faber source:
 discerne event {
     si Click pro x, y { scribe "clicked at " + x + ", " + y }
     si Keypress pro key { scribe "pressed " + key }

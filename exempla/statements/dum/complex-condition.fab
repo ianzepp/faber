@@ -1,10 +1,10 @@
-// Dum with compound conditions
+# Dum with compound conditions
 //
-// dum <cond1> et <cond2> { }   -- both must be true
-// dum <cond1> aut <cond2> { }  -- either must be true
+# dum <cond1> et <cond2> { }   -- both must be true
+# dum <cond1> aut <cond2> { }  -- either must be true
 
 incipit {
-    // Using "et" (and) - loop while running AND attempts < limit
+    # Using "et" (and) - loop while running AND attempts < limit
     varia bivalens running = verum
     varia numerus attempts = 0
 
@@ -17,7 +17,7 @@ incipit {
         }
     }
 
-    // Using "aut" (or) - loop while either condition holds
+    # Using "aut" (or) - loop while either condition holds
     varia numerus a = 5
     varia numerus b = 3
 

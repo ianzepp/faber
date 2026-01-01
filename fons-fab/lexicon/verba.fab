@@ -1,14 +1,14 @@
-/// Verba - Latin reserved words
+# Verba - Latin reserved words
 ///
-/// Keyword recognition for the lexer.
-/// Uses switch-based lookup (no heap allocation).
+# Keyword recognition for the lexer.
+# Uses switch-based lookup (no heap allocation).
 
-/// Check if a word is a reserved keyword
+# Check if a word is a reserved keyword
 ///
-/// NOTE: This list must stay synchronized with fons/lexicon/keywords.ts
+# NOTE: This list must stay synchronized with fons/lexicon/keywords.ts
 functio estVerbum(textus v) -> bivalens {
     elige v {
-        // Imperium - control flow
+        # Imperium - control flow
         si "si" { redde verum }
         si "secus" { redde verum }
         si "sin" { redde verum }
@@ -27,7 +27,7 @@ functio estVerbum(textus v) -> bivalens {
         si "incipit" { redde verum }
         si "incipiet" { redde verum }
 
-        // Imperium - testing
+        # Imperium - testing
         si "probandum" { redde verum }
         si "proba" { redde verum }
         si "praepara" { redde verum }
@@ -49,7 +49,7 @@ functio estVerbum(textus v) -> bivalens {
         si "scriptum" { redde verum }
         si "cede" { redde verum }
 
-        // Declaratio - declarations
+        # Declaratio - declarations
         si "varia" { redde verum }
         si "fixum" { redde verum }
         si "figendum" { redde verum }
@@ -64,7 +64,7 @@ functio estVerbum(textus v) -> bivalens {
         si "ordo" { redde verum }
         si "discretio" { redde verum }
 
-        // Modificator - modifiers
+        # Modificator - modifiers
         si "futura" { redde verum }
         si "prae" { redde verum }
         si "praefixum" { redde verum }
@@ -82,7 +82,7 @@ functio estVerbum(textus v) -> bivalens {
         si "futurum" { redde verum }
         si "omnia" { redde verum }
 
-        // Operator - operators
+        # Operator - operators
         si "et" { redde verum }
         si "aut" { redde verum }
         si "non" { redde verum }
@@ -104,12 +104,12 @@ functio estVerbum(textus v) -> bivalens {
         si "negativum" { redde verum }
         si "positivum" { redde verum }
 
-        // Valor - literal values
+        # Valor - literal values
         si "verum" { redde verum }
         si "falsum" { redde verum }
         si "ego" { redde verum }
 
-        // Praepositio - prepositions
+        # Praepositio - prepositions
         si "de" { redde verum }
         si "in" { redde verum }
         si "ex" { redde verum }
@@ -118,7 +118,7 @@ functio estVerbum(textus v) -> bivalens {
         si "qua" { redde verum }
         si "ut" { redde verum }
 
-        // Dsl - domain specific
+        # Dsl - domain specific
         si "ab" { redde verum }
         si "ubi" { redde verum }
         si "prima" { redde verum }

@@ -1,7 +1,7 @@
-// Entry point with functions defined outside
+# Entry point with functions defined outside
 //
-// Functions declared outside incipit become module-level declarations.
-// The incipit block calls them as needed.
+# Functions declared outside incipit become module-level declarations.
+# The incipit block calls them as needed.
 
 functio greet(textus name) -> textus {
     redde scriptum("Salve, {}!", name)

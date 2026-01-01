@@ -1,19 +1,19 @@
-/// Variable Declaration Parsers
+# Variable Declaration Parsers
 ///
-/// Variable declarations, destructuring patterns, and related constructs.
+# Variable declarations, destructuring patterns, and related constructs.
 ///
-/// GRAMMAR:
-///   varDecl := ('varia' | 'fixum' | 'figendum' | 'variandum') typeAnnotation? IDENTIFIER ('=' expression)?
-///   arrayPattern := '[' arrayPatternElement (',' arrayPatternElement)* ']'
-///   objectPattern := '{' patternProperty (',' patternProperty)* '}'
+# GRAMMAR:
+#   varDecl := ('varia' | 'fixum' | 'figendum' | 'variandum') typeAnnotation? IDENTIFIER ('=' expression)?
+#   arrayPattern := '[' arrayPatternElement (',' arrayPatternElement)* ']'
+#   objectPattern := '{' patternProperty (',' patternProperty)* '}'
 ///
-/// LATIN VOCABULARY:
-/// - varia = variable (let it vary)
-/// - fixum = fixed (const)
-/// - figendum = to be fixed (const + await)
-/// - variandum = to be varied (let + await)
-/// - ceteri = the rest (rest pattern)
-/// - omissum = omitted/skipped (placeholder _)
+# LATIN VOCABULARY:
+# - varia = variable (let it vary)
+# - fixum = fixed (const)
+# - figendum = to be fixed (const + await)
+# - variandum = to be varied (let + await)
+# - ceteri = the rest (rest pattern)
+# - omissum = omitted/skipped (placeholder _)
 
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
@@ -23,15 +23,15 @@ ex "../../ast/typus" importa TypusAnnotatio
 ex "../../ast/lexema" importa SymbolumGenus
 ex "../errores" importa ParserErrorCodice
 
-/// Parse an identifier (simple name reference)
+# Parse an identifier (simple name reference)
 functio parseNomen(Resolvitor r) -> textus {
     fixum p = r.parser()
     fixum symbolum = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
     redde symbolum.valor
 }
 
-/// Parse identifier or keyword (for import specifiers, property names)
-/// Keywords like 'scribe' can be valid identifiers in some contexts
+# Parse identifier or keyword (for import specifiers, property names)
+# Keywords like 'scribe' can be valid identifiers in some contexts
 functio parseNomenVelVerbum(Resolvitor r) -> textus {
     fixum p = r.parser()
     fixum s = p.specta(0)
@@ -41,25 +41,25 @@ functio parseNomenVelVerbum(Resolvitor r) -> textus {
         redde s.valor
     }
 
-    // Error: expected identifier
+    # Error: expected identifier
     p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("got '{}'", s.valor))
     p.procede()
     redde s.valor
 }
 
-/// Parse variable declaration
+# Parse variable declaration
 ///
-/// GRAMMAR: varDecl := ('varia'|'fixum'|'figendum'|'variandum') type? name ('=' expr)?
+# GRAMMAR: varDecl := ('varia'|'fixum'|'figendum'|'variandum') type? name ('=' expr)?
 ///
-/// Supports:
-/// - Type inference: fixum x = 42
-/// - Type-first: fixum numerus x = 42
-/// - Array destructuring: fixum [a, b] = coords (TODO)
+# Supports:
+# - Type inference: fixum x = 42
+# - Type-first: fixum numerus x = 42
+# - Array destructuring: fixum [a, b] = coords (TODO)
 functio parseVariaSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
 
-    // Get declaration kind from keyword
+    # Get declaration kind from keyword
     fixum verbum = p.specta(0).verbum
     varia species = VariaGenus.Varia
 
@@ -70,34 +70,34 @@ functio parseVariaSententia(Resolvitor r) -> Sententia {
         si "variandum" { species = VariaGenus.Variandum }
     }
 
-    // Consume the keyword
+    # Consume the keyword
     p.procede()
 
-    // -------------------------------------------------------------------------
-    // Determine what follows: type, name, or destructuring pattern
-    // -------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # Determine what follows: type, name, or destructuring pattern
+    # -------------------------------------------------------------------------
     varia adnotatio = nihil qua TypusAnnotatio?
     varia nomen = ""
 
-    // TODO: Handle array destructuring [a, b] = arr
+    # TODO: Handle array destructuring [a, b] = arr
 
     si p.estTypusNomen(p.specta(0)) {
-        // Builtin type: fixum numerus x = 42
+        # Builtin type: fixum numerus x = 42
         adnotatio = r.adnotatio()
         nomen = parseNomen(r)
     } sin p.proba(SymbolumGenus.Nomen) et p.specta(1).species === SymbolumGenus.Nomen {
-        // Two identifiers: first is type, second is name
-        // Handles user-defined types: fixum UserId id = 42
+        # Two identifiers: first is type, second is name
+        # Handles user-defined types: fixum UserId id = 42
         adnotatio = r.adnotatio()
         nomen = parseNomen(r)
     } secus {
-        // Just a name (type inference): fixum x = 42
+        # Just a name (type inference): fixum x = 42
         nomen = parseNomen(r)
     }
 
-    // -------------------------------------------------------------------------
-    // Parse optional initializer
-    // -------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # Parse optional initializer
+    # -------------------------------------------------------------------------
     varia valor = nihil qua Expressia?
 
     si p.congruet(SymbolumGenus.Aequale) {

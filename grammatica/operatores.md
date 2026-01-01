@@ -28,9 +28,9 @@ ternary := or (('?' expression ':' | 'sic' expression 'secus') ternary)?
 **Examples:**
 
 ```fab
-verum ? 1 : 0              // symbolic style
-verum sic 1 secus 0        // Latin style
-a ? b ? c : d : e          // nested (right-associative)
+verum ? 1 : 0              # symbolic style
+verum sic 1 secus 0        # Latin style
+a ? b ? c : d : e          # nested (right-associative)
 ```
 
 ### Or

@@ -1,8 +1,8 @@
-// Recursive functions
+# Recursive functions
 //
-// Functions that call themselves with a base case
+# Functions that call themselves with a base case
 
-// Factorial: n! = n * (n-1)!
+# Factorial: n! = n * (n-1)!
 functio factorial(numerus n) -> numerus {
     si n <= 1 {
         redde 1
@@ -10,7 +10,7 @@ functio factorial(numerus n) -> numerus {
     redde n * factorial(n - 1)
 }
 
-// Fibonacci: fib(n) = fib(n-1) + fib(n-2)
+# Fibonacci: fib(n) = fib(n-1) + fib(n-2)
 functio fibonacci(numerus n) -> numerus {
     si n <= 0 {
         redde 0
@@ -21,7 +21,7 @@ functio fibonacci(numerus n) -> numerus {
     redde fibonacci(n - 1) + fibonacci(n - 2)
 }
 
-// Sum from 1 to n
+# Sum from 1 to n
 functio summatio(numerus n) -> numerus {
     si n <= 0 {
         redde 0
@@ -30,18 +30,18 @@ functio summatio(numerus n) -> numerus {
 }
 
 incipit {
-    // Factorial examples
+    # Factorial examples
     scribe factorial(0)
     scribe factorial(1)
     scribe factorial(5)
     scribe factorial(10)
 
-    // Fibonacci examples
+    # Fibonacci examples
     scribe fibonacci(0)
     scribe fibonacci(1)
     scribe fibonacci(10)
 
-    // Sum examples
+    # Sum examples
     scribe summatio(5)
     scribe summatio(10)
 }

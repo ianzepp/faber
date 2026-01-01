@@ -1,20 +1,20 @@
-// Arena allocator scope
+# Arena allocator scope
 //
-// cura arena fit <identifier> { <body> }
+# cura arena fit <identifier> { <body> }
 //
-// Arena allocators provide fast allocation with bulk deallocation.
-// All memory is freed when the scope exits.
-// On GC targets (TS, Python), allocator blocks are ignored.
+# Arena allocators provide fast allocation with bulk deallocation.
+# All memory is freed when the scope exits.
+# On GC targets (TS, Python), allocator blocks are ignored.
 
 incipit {
     cura arena fit mem {
-        // All allocations in this block use the arena
+        # All allocations in this block use the arena
         varia textus[] items = ["hello", "world"]
         scribe items
     }
-    // Arena freed, all allocations released
+    # Arena freed, all allocations released
 
-    // Page allocator variant
+    # Page allocator variant
     cura page fit pageMem {
         scribe "Using page allocator"
     }

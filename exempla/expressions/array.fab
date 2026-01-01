@@ -1,27 +1,27 @@
-// Array literal expressions: empty, typed, nested, and spread
+# Array literal expressions: empty, typed, nested, and spread
 
 incipit {
-    // Empty array
+    # Empty array
     fixum empty = []
 
-    // Number array
+    # Number array
     fixum numbers = [1, 2, 3, 4, 5]
 
-    // String array
+    # String array
     fixum names = ["Marcus", "Julia", "Gaius"]
 
-    // Boolean array
+    # Boolean array
     fixum flags = [verum, falsum, verum]
 
-    // Nested arrays
+    # Nested arrays
     fixum matrix = [[1, 2], [3, 4], [5, 6]]
 
-    // Spread operator: combine arrays
+    # Spread operator: combine arrays
     fixum first = [1, 2, 3]
     fixum second = [4, 5, 6]
     fixum combined = [sparge first, sparge second]
 
-    // Spread with additional elements
+    # Spread with additional elements
     fixum extended = [0, sparge first, 99]
 
     scribe numbers

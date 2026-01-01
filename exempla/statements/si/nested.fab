@@ -1,4 +1,4 @@
-// Nested si conditionals
+# Nested si conditionals
 
 incipit {
     fixum isLoggedIn = verum

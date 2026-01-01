@@ -1,19 +1,19 @@
-/// Binary Expression Parsers
+# Binary Expression Parsers
 ///
-/// Operators: assignment, ternary, logical, comparison, bitwise, arithmetic.
-/// Uses precedence climbing with left-to-right associativity (except assignment/ternary).
+# Operators: assignment, ternary, logical, comparison, bitwise, arithmetic.
+# Uses precedence climbing with left-to-right associativity (except assignment/ternary).
 ///
-/// GRAMMAR:
-///   assignment := ternary (('=' | '+=' | '-=' | ...) assignment)?
-///   ternary := or (('?' expr ':' | 'sic' expr 'secus') ternary)?
-///   or := and (('||' | 'aut' | 'vel') and)*
-///   ... etc
+# GRAMMAR:
+#   assignment := ternary (('=' | '+=' | '-=' | ...) assignment)?
+#   ternary := or (('?' expr ':' | 'sic' expr 'secus') ternary)?
+#   or := and (('||' | 'aut' | 'vel') and)*
+#   ... etc
 ///
-/// LATIN VOCABULARY:
-/// - assignatio = assignment
-/// - condicio = condition
-/// - aut = or (logical)
-/// - et = and
+# LATIN VOCABULARY:
+# - assignatio = assignment
+# - condicio = condition
+# - aut = or (logical)
+# - et = and
 
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
@@ -23,25 +23,25 @@ ex "../../ast/lexema" importa SymbolumGenus
 ex "../errores" importa ParserErrorCodice
 ex "./unaria" importa parseUnaria
 
-/// Parse assignment expression
+# Parse assignment expression
 ///
-/// GRAMMAR: assignment := ternary (('=' | '+=' | '-=' | ...) assignment)?
+# GRAMMAR: assignment := ternary (('=' | '+=' | '-=' | ...) assignment)?
 ///
-/// Assignment is right-associative: a = b = c parses as a = (b = c)
+# Assignment is right-associative: a = b = c parses as a = (b = c)
 functio parseAssignatio(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
-    
-    // Parse left side (could be ternary or lower)
+
+    # Parse left side (could be ternary or lower)
     varia sinister = parseCondicio(r)
-    
-    // Check for assignment operator
+
+    # Check for assignment operator
     si p.estAssignatioSignum(p.specta(0)) {
         fixum signum = p.procede().valor
-        
-        // Right-associative: recurse into assignment
+
+        # Right-associative: recurse into assignment
         fixum dexter = parseAssignatio(r)
-        
+
         redde finge AssignatioExpressia {
             locus: locus,
             sinister: sinister,
@@ -49,29 +49,29 @@ functio parseAssignatio(Resolvitor r) -> Expressia {
             dexter: dexter
         } qua Expressia
     }
-    
+
     redde sinister
 }
 
-/// Parse ternary conditional expression
+# Parse ternary conditional expression
 ///
-/// GRAMMAR: ternary := or (('sic' expr 'secus' | '?' expr ':') ternary)?
+# GRAMMAR: ternary := or (('sic' expr 'secus' | '?' expr ':') ternary)?
 ///
-/// Latin: condicio sic consequens secus alternans
-/// JS:    condicio ? consequens : alternans
+# Latin: condicio sic consequens secus alternans
+# JS:    condicio ? consequens : alternans
 functio parseCondicio(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
-    
-    // Parse condition
+
+    # Parse condition
     varia condicio = parseAut(r)
-    
-    // Check for ternary operator (sic/secus or ?/:)
+
+    # Check for ternary operator (sic/secus or ?/:)
     si p.congruetVerbum("sic") {
         fixum consequens = r.expressia()
         p.expectaVerbum("secus", ParserErrorCodice.ExpectaturSecus)
         fixum alternans = parseCondicio(r)
-        
+
         redde finge CondicioExpressia {
             locus: locus,
             condicio: condicio,
@@ -79,12 +79,12 @@ functio parseCondicio(Resolvitor r) -> Expressia {
             alternans: alternans
         } qua Expressia
     }
-    
+
     si p.congruet(SymbolumGenus.Rogatio) {
         fixum consequens = r.expressia()
         p.expecta(SymbolumGenus.Colon, ParserErrorCodice.ExpectaturColon)
         fixum alternans = parseCondicio(r)
-        
+
         redde finge CondicioExpressia {
             locus: locus,
             condicio: condicio,
@@ -92,23 +92,23 @@ functio parseCondicio(Resolvitor r) -> Expressia {
             alternans: alternans
         } qua Expressia
     }
-    
+
     redde condicio
 }
 
-/// Parse logical OR expression
+# Parse logical OR expression
 ///
-/// GRAMMAR: or := and (('||' | 'aut' | '??') and)*
+# GRAMMAR: or := and (('||' | 'aut' | '??') and)*
 functio parseAut(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseEt(r)
-    
+
     dum p.congruet(SymbolumGenus.VelVel) aut p.congruetVerbum("aut") aut p.congruet(SymbolumGenus.RogatioBis) {
         fixum operatorSym = p.praevius()
         fixum locus = operatorSym.locus
         fixum signum = operatorSym.valor
         fixum dexter = parseEt(r)
-        
+
         sinister = finge BinariaExpressia {
             locus: locus,
             sinister: sinister,
@@ -116,23 +116,23 @@ functio parseAut(Resolvitor r) -> Expressia {
             dexter: dexter
         } qua Expressia
     }
-    
+
     redde sinister
 }
 
-/// Parse logical AND expression
+# Parse logical AND expression
 ///
-/// GRAMMAR: and := equality (('&&' | 'et') equality)*
+# GRAMMAR: and := equality (('&&' | 'et') equality)*
 functio parseEt(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseAequale(r)
-    
+
     dum p.congruet(SymbolumGenus.EtEt) aut p.congruetVerbum("et") {
         fixum operatorSym = p.praevius()
         fixum locus = operatorSym.locus
         fixum signum = operatorSym.valor
         fixum dexter = parseAequale(r)
-        
+
         sinister = finge BinariaExpressia {
             locus: locus,
             sinister: sinister,
@@ -140,23 +140,23 @@ functio parseEt(Resolvitor r) -> Expressia {
             dexter: dexter
         } qua Expressia
     }
-    
+
     redde sinister
 }
 
-/// Parse equality expression
+# Parse equality expression
 ///
-/// GRAMMAR: equality := comparison (('==' | '!=' | '===' | '!==' | 'est') comparison)*
+# GRAMMAR: equality := comparison (('==' | '!=' | '===' | '!==' | 'est') comparison)*
 functio parseAequale(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseComparatio(r)
-    
+
     dum p.congruet(SymbolumGenus.AequumBis) aut p.congruet(SymbolumGenus.NonAequum) aut p.congruet(SymbolumGenus.AequumTer) aut p.congruet(SymbolumGenus.NonAequumBis) {
         fixum operatorSym = p.praevius()
         fixum locus = operatorSym.locus
         fixum signum = operatorSym.valor
         fixum dexter = parseComparatio(r)
-        
+
         sinister = finge BinariaExpressia {
             locus: locus,
             sinister: sinister,
@@ -164,35 +164,35 @@ functio parseAequale(Resolvitor r) -> Expressia {
             dexter: dexter
         } qua Expressia
     }
-    
-    // Handle 'est' type check
+
+    # Handle 'est' type check
     si p.congruetVerbum("est") {
         fixum locus = p.praevius().locus
         fixum scopus = r.adnotatio()
-        
+
         redde finge EstExpressia {
             locus: locus,
             expressia: sinister,
             scopus: scopus
         } qua Expressia
     }
-    
+
     redde sinister
 }
 
-/// Parse comparison expression
+# Parse comparison expression
 ///
-/// GRAMMAR: comparison := additive (('<' | '>' | '<=' | '>=') additive)*
+# GRAMMAR: comparison := additive (('<' | '>' | '<=' | '>=') additive)*
 functio parseComparatio(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseAdditio(r)
-    
+
     dum p.congruet(SymbolumGenus.Minor) aut p.congruet(SymbolumGenus.Maior) aut p.congruet(SymbolumGenus.MinorAequum) aut p.congruet(SymbolumGenus.MaiorAequum) {
         fixum operatorSym = p.praevius()
         fixum locus = operatorSym.locus
         fixum signum = operatorSym.valor
         fixum dexter = parseAdditio(r)
-        
+
         sinister = finge BinariaExpressia {
             locus: locus,
             sinister: sinister,
@@ -200,23 +200,23 @@ functio parseComparatio(Resolvitor r) -> Expressia {
             dexter: dexter
         } qua Expressia
     }
-    
+
     redde sinister
 }
 
-/// Parse additive expression
+# Parse additive expression
 ///
-/// GRAMMAR: additive := multiplicative (('+' | '-') multiplicative)*
+# GRAMMAR: additive := multiplicative (('+' | '-') multiplicative)*
 functio parseAdditio(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseMultiplicatio(r)
-    
+
     dum p.congruet(SymbolumGenus.Plus) aut p.congruet(SymbolumGenus.Minus) {
         fixum operatorSym = p.praevius()
         fixum locus = operatorSym.locus
         fixum signum = operatorSym.valor
         fixum dexter = parseMultiplicatio(r)
-        
+
         sinister = finge BinariaExpressia {
             locus: locus,
             sinister: sinister,
@@ -224,23 +224,23 @@ functio parseAdditio(Resolvitor r) -> Expressia {
             dexter: dexter
         } qua Expressia
     }
-    
+
     redde sinister
 }
 
-/// Parse multiplicative expression
+# Parse multiplicative expression
 ///
-/// GRAMMAR: multiplicative := unary (('*' | '/' | '%') unary)*
+# GRAMMAR: multiplicative := unary (('*' | '/' | '%') unary)*
 functio parseMultiplicatio(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseUnaria(r)
-    
+
     dum p.congruet(SymbolumGenus.Stella) aut p.congruet(SymbolumGenus.Virgula) aut p.congruet(SymbolumGenus.Centum) {
         fixum operatorSym = p.praevius()
         fixum locus = operatorSym.locus
         fixum signum = operatorSym.valor
         fixum dexter = parseUnaria(r)
-        
+
         sinister = finge BinariaExpressia {
             locus: locus,
             sinister: sinister,
@@ -248,6 +248,6 @@ functio parseMultiplicatio(Resolvitor r) -> Expressia {
             dexter: dexter
         } qua Expressia
     }
-    
+
     redde sinister
 }

@@ -1,21 +1,21 @@
-// Basic fac (do) scope blocks
+# Basic fac (do) scope blocks
 //
-// fac { <body> }
+# fac { <body> }
 
 incipit {
-    // Simple scope block
+    # Simple scope block
     fac {
         fixum x = 42
         scribe x
     }
 
-    // Scope block isolates variables
+    # Scope block isolates variables
     fac {
         fixum message = "Hello from fac block"
         scribe message
     }
 
-    // Multiple statements in scope
+    # Multiple statements in scope
     fac {
         fixum a = 10
         fixum b = 20

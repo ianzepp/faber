@@ -1,124 +1,124 @@
-// Statement AST - All statement types as a unified discretio
+# Statement AST - All statement types as a unified discretio
 //
-// WHY: Single file defines all statement variants for pattern matching.
-//      Parsers construct variants with `finge VariantName { ... } qua Sententia`.
+# WHY: Single file defines all statement variants for pattern matching.
+#      Parsers construct variants with `finge VariantName { ... } qua Sententia`.
 
 ex "./positio" importa Locus
 ex "./typus" importa TypusAnnotatio
 ex "./expressia" importa Expressia
 
-// ============================================================================
-// SUPPORTING ENUMS
-// ============================================================================
+# ============================================================================
+# SUPPORTING ENUMS
+# ============================================================================
 
-/// Variable declaration kind
+# Variable declaration kind
 ordo VariaGenus {
-    Varia       // mutable: let
-    Fixum       // immutable: const
-    Figendum    // immutable async: const x = await ...
-    Variandum   // mutable async: let x = await ...
+    Varia       # mutable: let
+    Fixum       # immutable: const
+    Figendum    # immutable async: const x = await ...
+    Variandum   # mutable async: let x = await ...
 }
 
-/// Visibility level for members
+# Visibility level for members
 ordo Visibilitas {
-    Publica       // public (default)
-    Protecta      // protected
-    Privata       // private
+    Publica       # public (default)
+    Protecta      # protected
+    Privata       # private
 }
 
-/// Return type verb
+# Return type verb
 ordo ReddeVerbum {
-    Sagitta       // -> (arrow)
-    Fit           // sync single
-    Fiet          // async single
-    Fiunt         // sync generator
-    Fient         // async generator
+    Sagitta       # -> (arrow)
+    Fit           # sync single
+    Fiet          # async single
+    Fiunt         # sync generator
+    Fient         # async generator
 }
 
-/// Output level for scribe/vide/mone
+# Output level for scribe/vide/mone
 ordo ScribeGradus {
-    Scribe     // console.log
-    Vide       // console.debug
-    Mone       // console.warn
+    Scribe     # console.log
+    Vide       # console.debug
+    Mone       # console.warn
 }
 
-/// Iteration kind
+# Iteration kind
 ordo IteratioGenus {
-    Ex      // iterate values (for...of)
-    De      // iterate keys (for...in)
+    Ex      # iterate values (for...of)
+    De      # iterate keys (for...in)
 }
 
-/// Curator kind for cura statements
+# Curator kind for cura statements
 ordo CuratorGenus {
-    Arena      // arena allocator
-    Pagina     // page allocator
+    Arena      # arena allocator
+    Pagina     # page allocator
 }
 
-/// Ad binding verb
+# Ad binding verb
 ordo AdVerbumVinculandi {
-    Fit        // sync single
-    Fiet       // async single
-    Fiunt      // sync plural
-    Fient      // async plural
+    Fit        # sync single
+    Fiet       # async single
+    Fiunt      # sync plural
+    Fient      # async plural
 }
 
-/// Praepara/postpara timing
+# Praepara/postpara timing
 ordo PraeparaTempus {
-    Praepara    // before (setup)
-    Postpara    // after (teardown)
+    Praepara    # before (setup)
+    Postpara    # after (teardown)
 }
 
-/// Proba modifier
+# Proba modifier
 ordo ProbaModificator {
-    Omitte     // skip
-    Futurum    // todo
+    Omitte     # skip
+    Futurum    # todo
 }
 
-// ============================================================================
-// SUPPORTING GENUS TYPES
-// ============================================================================
+# ============================================================================
+# SUPPORTING GENUS TYPES
+# ============================================================================
 
-/// Import specifier with optional alias
-/// Example: scribe, scribe ut s
+# Import specifier with optional alias
+# Example: scribe, scribe ut s
 genus ImportaSpecificator {
     Locus locus
-    textus importatum         // imported name
-    textus locale             // local binding name
-    bivalens residuum         // true for ceteri (rest)
+    textus importatum         # imported name
+    textus locale             # local binding name
+    bivalens residuum         # true for ceteri (rest)
 }
 
-/// Function parameter
-/// Example: textus nomen, de lista<T> items, ceteri args
+# Function parameter
+# Example: textus nomen, de lista<T> items, ceteri args
 genus Parametrum {
     Locus locus
     textus nomen
-    textus? alias             // ut alias
+    textus? alias             # ut alias
     TypusAnnotatio? typus
-    Expressia? praedefinitum  // vel default
-    textus? praepositio       // de, in, ex
-    bivalens residuum         // ceteri (rest)
+    Expressia? praedefinitum  # vel default
+    textus? praepositio       # de, in, ex
+    bivalens residuum         # ceteri (rest)
 }
 
-/// Compile-time type parameter
-/// Example: prae typus T
+# Compile-time type parameter
+# Example: prae typus T
 genus TypusParametrum {
     Locus locus
     textus nomen
 }
 
-/// Field declaration within genus
-/// Example: textus nomen, privatus numerus aetas: 0
+# Field declaration within genus
+# Example: textus nomen, privatus numerus aetas: 0
 genus CampusDeclaratio {
     Locus locus
     textus nomen
     TypusAnnotatio typus
-    Expressia? valor          // default value
+    Expressia? valor          # default value
     Visibilitas visibilitas
-    bivalens staticum         // generis (static)
-    bivalens reactivum        // nexum (reactive)
+    bivalens staticum         # generis (static)
+    bivalens reactivum        # nexum (reactive)
 }
 
-/// Pactum method signature (interface method)
+# Pactum method signature (interface method)
 genus PactumMethodus {
     Locus locus
     textus nomen
@@ -128,64 +128,64 @@ genus PactumMethodus {
     bivalens generator
 }
 
-/// Ordo (enum) member
-/// Example: Rubrum, Actum = 1, Septentrio = "north"
+# Ordo (enum) member
+# Example: Rubrum, Actum = 1, Septentrio = "north"
 genus OrdoMembrum {
     Locus locus
     textus nomen
-    textus? valor             // optional explicit value
+    textus? valor             # optional explicit value
 }
 
-/// Variant field in discretio
-/// Example: numerus x, textus key
+# Variant field in discretio
+# Example: numerus x, textus key
 genus VariansCampus {
     Locus locus
     textus nomen
     TypusAnnotatio typus
 }
 
-/// Variant declaration within discretio
-/// Example: Click { numerus x, numerus y }, Quit
+# Variant declaration within discretio
+# Example: Click { numerus x, numerus y }, Quit
 genus VariansDeclaratio {
     Locus locus
     textus nomen
-    lista<VariansCampus> campi   // empty for unit variants
+    lista<VariansCampus> campi   # empty for unit variants
 }
 
-/// Elige (switch) case
+# Elige (switch) case
 genus EligeCasus {
     Locus locus
     Expressia condicio
-    Sententia consequens         // MassaSententia
+    Sententia consequens         # MassaSententia
 }
 
-/// Variant case for discerne (pattern matching)
-/// Example: si Click pro x, y { ... }
+# Variant case for discerne (pattern matching)
+# Example: si Click pro x, y { ... }
 genus VariansCasus {
     Locus locus
     textus variansNomen
-    lista<textus> vincula        // field bindings
-    Sententia consequens         // MassaSententia
+    lista<textus> vincula        # field bindings
+    Sententia consequens         # MassaSententia
 }
 
-/// Guard clause
-/// Example: si x == nihil { redde nihil }
+# Guard clause
+# Example: si x == nihil { redde nihil }
 genus CustodiClausula {
     Locus locus
     Expressia condicio
-    Sententia consequens         // MassaSententia
+    Sententia consequens         # MassaSententia
 }
 
-/// Catch clause
-/// Example: cape err { handleError(err) }
+# Catch clause
+# Example: cape err { handleError(err) }
 genus CapeClausula {
     Locus locus
     textus param
-    Sententia corpus             // MassaSententia
+    Sententia corpus             # MassaSententia
 }
 
-/// Ad binding clause
-/// Example: fit textus pro content
+# Ad binding clause
+# Example: fit textus pro content
 genus AdVinculum {
     Locus locus
     AdVerbumVinculandi verbum
@@ -194,32 +194,32 @@ genus AdVinculum {
     textus? alias
 }
 
-// ============================================================================
-// SENTENTIA DISCRETIO
-// ============================================================================
+# ============================================================================
+# SENTENTIA DISCRETIO
+# ============================================================================
 
-/// All statement types as a tagged union
+# All statement types as a tagged union
 ///
-/// Each variant contains its fields directly. Use `finge` to construct:
-///   finge MassaSententia { locus: loc, corpus: stmts } qua Sententia
-///   finge VariaSententia { ... } qua Sententia
+# Each variant contains its fields directly. Use `finge` to construct:
+#   finge MassaSententia { locus: loc, corpus: stmts } qua Sententia
+#   finge VariaSententia { ... } qua Sententia
 discretio Sententia {
-    // -------------------------------------------------------------------------
-    // Block
-    // -------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # Block
+    # -------------------------------------------------------------------------
 
-    /// Block of statements (sequence in braces)
+    # Block of statements (sequence in braces)
     MassaSententia {
         Locus locus
         lista<Sententia> corpus
     }
 
-    // -------------------------------------------------------------------------
-    // Variable Declarations
-    // -------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # Variable Declarations
+    # -------------------------------------------------------------------------
 
-    /// Variable declaration
-    /// Examples: varia x = 5, fixum nomen = "Marcus"
+    # Variable declaration
+    # Examples: varia x = 5, fixum nomen = "Marcus"
     VariaSententia {
         Locus locus
         VariaGenus species
@@ -228,66 +228,66 @@ discretio Sententia {
         Expressia? valor
     }
 
-    /// Import declaration
-    /// Example: ex norma importa scribe, lege
+    # Import declaration
+    # Example: ex norma importa scribe, lege
     ImportaSententia {
         Locus locus
-        textus fons              // source path/module
+        textus fons              # source path/module
         lista<ImportaSpecificator> specificatores
-        bivalens totum           // true for wildcard *
-        textus? totumAlias       // alias for * ut name
+        bivalens totum           # true for wildcard *
+        textus? totumAlias       # alias for * ut name
     }
 
-    /// Destructure declaration
-    /// Example: ex persona fixum nomen, aetas
+    # Destructure declaration
+    # Example: ex persona fixum nomen, aetas
     DestructuraSententia {
         Locus locus
-        Expressia fons           // source expression
+        Expressia fons           # source expression
         VariaGenus species
         lista<ImportaSpecificator> specificatores
     }
 
-    // -------------------------------------------------------------------------
-    // Function Declaration
-    // -------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # Function Declaration
+    # -------------------------------------------------------------------------
 
-    /// Function declaration
-    /// Example: functio salve(textus nomen) fit textus { ... }
+    # Function declaration
+    # Example: functio salve(textus nomen) fit textus { ... }
     FunctioDeclaratio {
         Locus locus
         textus nomen
         lista<TypusParametrum>? generaParametra
         lista<Parametrum> parametra
         TypusAnnotatio? typusReditus
-        Sententia? corpus        // MassaSententia
+        Sententia? corpus        # MassaSententia
         bivalens asynca
         bivalens generator
         bivalens abstracta
-        bivalens structor       // WHY: "constructor" is a JS reserved word
+        bivalens structor       # WHY: "constructor" is a JS reserved word
         Visibilitas? visibilitas
         ReddeVerbum? reddeVerbum
     }
 
-    // -------------------------------------------------------------------------
-    // Type Declarations
-    // -------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # Type Declarations
+    # -------------------------------------------------------------------------
 
-    /// Genus (struct/class) declaration
-    /// Example: genus Persona { textus nomen }
+    # Genus (struct/class) declaration
+    # Example: genus Persona { textus nomen }
     GenusDeclaratio {
         Locus locus
         textus nomen
         lista<textus>? generaParametra
-        textus? extendit         // sub Parent
-        lista<textus>? implet    // implet Interface
+        textus? extendit         # sub Parent
+        lista<textus>? implet    # implet Interface
         bivalens abstractum
         lista<CampusDeclaratio> campi
-        Sententia? structor      // FunctioDeclaratio (WHY: "constructor" is JS reserved)
-        lista<Sententia> methodi // lista<FunctioDeclaratio>
+        Sententia? structor      # FunctioDeclaratio (WHY: "constructor" is JS reserved)
+        lista<Sententia> methodi # lista<FunctioDeclaratio>
     }
 
-    /// Pactum (interface) declaration
-    /// Example: pactum Iterabilis { functio sequens() fit T? }
+    # Pactum (interface) declaration
+    # Example: pactum Iterabilis { functio sequens() fit T? }
     PactumDeclaratio {
         Locus locus
         textus nomen
@@ -295,25 +295,25 @@ discretio Sententia {
         lista<PactumMethodus> methodi
     }
 
-    /// Type alias declaration
-    /// Example: typus ID = textus
+    # Type alias declaration
+    # Example: typus ID = textus
     TypusAliasDeclaratio {
         Locus locus
         textus nomen
         TypusAnnotatio typus
-        textus? scopusNomen      // for typeof: typus X = typus y
+        textus? scopusNomen      # for typeof: typus X = typus y
     }
 
-    /// Ordo (enum) declaration
-    /// Example: ordo Color { Rubrum, Viridis, Caeruleum }
+    # Ordo (enum) declaration
+    # Example: ordo Color { Rubrum, Viridis, Caeruleum }
     OrdoDeclaratio {
         Locus locus
         textus nomen
         lista<OrdoMembrum> membra
     }
 
-    /// Discretio (tagged union) declaration
-    /// Example: discretio Event { Click { numerus x }, Quit }
+    # Discretio (tagged union) declaration
+    # Example: discretio Event { Click { numerus x }, Quit }
     DiscretioDeclaratio {
         Locus locus
         textus nomen
@@ -321,218 +321,218 @@ discretio Sententia {
         lista<VariansDeclaratio> variantes
     }
 
-    // -------------------------------------------------------------------------
-    // Control Flow
-    // -------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # Control Flow
+    # -------------------------------------------------------------------------
 
-    /// Conditional statement
-    /// Example: si x > 0 { ... } secus { ... }
+    # Conditional statement
+    # Example: si x > 0 { ... } secus { ... }
     SiSententia {
         Locus locus
         Expressia condicio
-        Sententia consequens     // MassaSententia
-        Sententia? alternans     // MassaSententia or SiSententia
+        Sententia consequens     # MassaSententia
+        Sententia? alternans     # MassaSententia or SiSententia
         CapeClausula? cape
     }
 
-    /// While loop
-    /// Example: dum x > 0 { ... }
+    # While loop
+    # Example: dum x > 0 { ... }
     DumSententia {
         Locus locus
         Expressia condicio
-        Sententia corpus         // MassaSententia
+        Sententia corpus         # MassaSententia
         CapeClausula? cape
     }
 
-    /// For loop (iteration)
-    /// Example: ex items pro item { ... }
+    # For loop (iteration)
+    # Example: ex items pro item { ... }
     IteratioSententia {
         Locus locus
         IteratioGenus species
         textus variabilis
         Expressia iterabile
-        Sententia corpus         // MassaSententia
+        Sententia corpus         # MassaSententia
         bivalens asynca
         CapeClausula? cape
     }
 
-    /// With statement (mutation block)
-    /// Example: in user { nomen = "Marcus" }
+    # With statement (mutation block)
+    # Example: in user { nomen = "Marcus" }
     InSententia {
         Locus locus
         Expressia obiectum
-        Sententia corpus         // MassaSententia
+        Sententia corpus         # MassaSententia
     }
 
-    /// Switch statement
-    /// Example: elige status { si "pending" { ... } }
+    # Switch statement
+    # Example: elige status { si "pending" { ... } }
     EligeSententia {
         Locus locus
         Expressia discriminans
         lista<EligeCasus> casus
-        Sententia? praedefinitum // MassaSententia (secus default)
+        Sententia? praedefinitum # MassaSententia (secus default)
         CapeClausula? cape
     }
 
-    /// Pattern matching statement
-    /// Example: discerne event { si Click pro x, y { ... } }
+    # Pattern matching statement
+    # Example: discerne event { si Click pro x, y { ... } }
     DiscerneSententia {
         Locus locus
         Expressia discriminans
         lista<VariansCasus> casus
     }
 
-    /// Guard statement
-    /// Example: custodi { si x == nihil { redde nihil } }
+    # Guard statement
+    # Example: custodi { si x == nihil { redde nihil } }
     CustodiSententia {
         Locus locus
         lista<CustodiClausula> clausulae
     }
 
-    // -------------------------------------------------------------------------
-    // Error Handling
-    // -------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # Error Handling
+    # -------------------------------------------------------------------------
 
-    /// Try-catch-finally
-    /// Example: tempta { ... } cape err { ... } demum { ... }
+    # Try-catch-finally
+    # Example: tempta { ... } cape err { ... } demum { ... }
     TemptaSententia {
         Locus locus
-        Sententia corpus         // MassaSententia
+        Sententia corpus         # MassaSententia
         CapeClausula? cape
-        Sententia? demum         // MassaSententia (finally)
+        Sententia? demum         # MassaSententia (finally)
     }
 
-    /// Throw statement
-    /// Example: iace "error", mori "fatal"
+    # Throw statement
+    # Example: iace "error", mori "fatal"
     IaceSententia {
         Locus locus
-        bivalens fatale          // mori vs iace
+        bivalens fatale          # mori vs iace
         Expressia argumentum
     }
 
-    /// Explicit scope block (or do-while)
-    /// Example: fac { ... } or fac { ... } dum condition
+    # Explicit scope block (or do-while)
+    # Example: fac { ... } or fac { ... } dum condition
     FacSententia {
         Locus locus
-        Sententia corpus         // MassaSententia
+        Sententia corpus         # MassaSententia
         CapeClausula? cape
-        Expressia? condicio      // for do-while: fac { } dum cond
+        Expressia? condicio      # for do-while: fac { } dum cond
     }
 
-    /// Assert statement
-    /// Example: adfirma x > 0, "x must be positive"
+    # Assert statement
+    # Example: adfirma x > 0, "x must be positive"
     AdfirmaSententia {
         Locus locus
         Expressia condicio
-        Expressia? nuntius       // optional message
+        Expressia? nuntius       # optional message
     }
 
-    // -------------------------------------------------------------------------
-    // Actions
-    // -------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # Actions
+    # -------------------------------------------------------------------------
 
-    /// Print statement
-    /// Example: scribe "hello", vide value, mone "warning"
+    # Print statement
+    # Example: scribe "hello", vide value, mone "warning"
     ScribeSententia {
         Locus locus
         ScribeGradus gradus
         lista<Expressia> argumenta
     }
 
-    /// Return statement
-    /// Example: redde 42, redde
+    # Return statement
+    # Example: redde 42, redde
     ReddeSententia {
         Locus locus
         Expressia? valor
     }
 
-    /// Break statement
-    /// Example: rumpe
+    # Break statement
+    # Example: rumpe
     RumpeSententia {
         Locus locus
     }
 
-    /// Continue statement
-    /// Example: perge
+    # Continue statement
+    # Example: perge
     PergeSententia {
         Locus locus
     }
 
-    /// Expression statement (expression used as statement)
+    # Expression statement (expression used as statement)
     ExpressiaSententia {
         Locus locus
         Expressia expressia
     }
 
-    /// Entry point (sync)
-    /// Example: incipit { scribe "Hello" }
+    # Entry point (sync)
+    # Example: incipit { scribe "Hello" }
     IncipitSententia {
         Locus locus
-        Sententia? corpus        // MassaSententia
-        Sententia? ergo          // incipit ergo ...
+        Sententia? corpus        # MassaSententia
+        Sententia? ergo          # incipit ergo ...
     }
 
-    /// Entry point (async)
-    /// Example: incipiet { cede fetch() }
+    # Entry point (async)
+    # Example: incipiet { cede fetch() }
     IncipietSententia {
         Locus locus
-        Sententia? corpus        // MassaSententia
+        Sententia? corpus        # MassaSententia
         Sententia? ergo
     }
 
-    /// Resource management statement
-    /// Example: cura arena fit mem { ... }
+    # Resource management statement
+    # Example: cura arena fit mem { ... }
     CuraSententia {
         Locus locus
         CuratorGenus? curatorSpecies
-        Expressia? res           // resource expression
-        textus vinculum          // binding name
+        Expressia? res           # resource expression
+        textus vinculum          # binding name
         TypusAnnotatio? typus
         bivalens asynca
-        Sententia corpus         // MassaSententia
+        Sententia corpus         # MassaSententia
         CapeClausula? cape
     }
 
-    /// Dispatch statement
-    /// Example: ad "fasciculus:lege" ("file.txt") fit textus pro content { ... }
+    # Dispatch statement
+    # Example: ad "fasciculus:lege" ("file.txt") fit textus pro content { ... }
     AdSententia {
         Locus locus
-        textus scopus            // target string
+        textus scopus            # target string
         lista<Expressia> argumenta
         AdVinculum? vinculum
-        Sententia? corpus        // MassaSententia
+        Sententia? corpus        # MassaSententia
         CapeClausula? cape
     }
 
-    // -------------------------------------------------------------------------
-    // Tests
-    // -------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # Tests
+    # -------------------------------------------------------------------------
 
-    /// Test suite
-    /// Example: probandum "Tokenizer" { proba "..." { } }
+    # Test suite
+    # Example: probandum "Tokenizer" { proba "..." { } }
     ProbandumSententia {
         Locus locus
         textus nomen
-        lista<Sententia> corpus  // PraeparaMassa, ProbandumSententia, ProbaSententia
+        lista<Sententia> corpus  # PraeparaMassa, ProbandumSententia, ProbaSententia
     }
 
-    /// Test case
-    /// Example: proba "parses integers" { adfirma ... }
+    # Test case
+    # Example: proba "parses integers" { adfirma ... }
     ProbaSententia {
         Locus locus
         textus nomen
         ProbaModificator? modificator
-        textus? ratioModificatoris   // reason for skip/todo
-        Sententia corpus         // MassaSententia
+        textus? ratioModificatoris   # reason for skip/todo
+        Sententia corpus         # MassaSententia
     }
 
-    /// Test setup/teardown block
-    /// Example: praepara { lexer = init() }
+    # Test setup/teardown block
+    # Example: praepara { lexer = init() }
     PraeparaMassa {
         Locus locus
         PraeparaTempus tempus
         bivalens asynca
         bivalens omnia
-        Sententia corpus         // MassaSententia
+        Sententia corpus         # MassaSententia
     }
 }

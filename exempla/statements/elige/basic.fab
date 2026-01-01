@@ -1,12 +1,12 @@
-// Basic elige (switch) statement
+# Basic elige (switch) statement
 //
-// elige <expr> {
-//     si <value> { <body> }
-//     si <value> { <body> }
-// }
+# elige <expr> {
+#     si <value> { <body> }
+#     si <value> { <body> }
+# }
 
 incipit {
-    // String matching
+    # String matching
     fixum status = "active"
 
     elige status {
@@ -21,7 +21,7 @@ incipit {
         }
     }
 
-    // Number matching
+    # Number matching
     fixum code = 200
 
     elige code {
@@ -36,7 +36,7 @@ incipit {
         }
     }
 
-    // Multiple statements per case
+    # Multiple statements per case
     fixum mode = "production"
 
     elige mode {

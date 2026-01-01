@@ -1,23 +1,23 @@
-/// Control Flow Statement Parsers
+# Control Flow Statement Parsers
 ///
-/// Handles: si, dum, ex, de (conditionals and loops)
+# Handles: si, dum, ex, de (conditionals and loops)
 ///
-/// GRAMMAR:
-///   siStmt := 'si' expr blockStmt ('secus' 'si' expr blockStmt)* ('secus' blockStmt)?
-///           | 'si' expr blockStmt 'cape' IDENT blockStmt
-///   dumStmt := 'dum' expr blockStmt ('cape' IDENT blockStmt)?
-///   exStmt := 'ex' expr 'pro' IDENT blockStmt ('cape' IDENT blockStmt)?
-///   deStmt := 'de' expr 'pro' IDENT blockStmt ('cape' IDENT blockStmt)?
+# GRAMMAR:
+#   siStmt := 'si' expr blockStmt ('secus' 'si' expr blockStmt)* ('secus' blockStmt)?
+#           | 'si' expr blockStmt 'cape' IDENT blockStmt
+#   dumStmt := 'dum' expr blockStmt ('cape' IDENT blockStmt)?
+#   exStmt := 'ex' expr 'pro' IDENT blockStmt ('cape' IDENT blockStmt)?
+#   deStmt := 'de' expr 'pro' IDENT blockStmt ('cape' IDENT blockStmt)?
 ///
-/// LATIN VOCABULARY:
-/// - si = if
-/// - secus = else
-/// - sin = else if
-/// - dum = while
-/// - ex = from (iterate values)
-/// - de = from (iterate keys)
-/// - pro = for
-/// - cape = catch
+# LATIN VOCABULARY:
+# - si = if
+# - secus = else
+# - sin = else if
+# - dum = while
+# - ex = from (iterate values)
+# - de = from (iterate keys)
+# - pro = for
+# - cape = catch
 
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
@@ -27,62 +27,62 @@ ex "../../ast/lexema" importa SymbolumGenus
 ex "../errores" importa ParserErrorCodice
 ex "./massa" importa parseMassaSententia
 
-/// Parse if statement
+# Parse if statement
 ///
-/// GRAMMAR:
-///   siStmt := 'si' expr blockStmt ('secus' 'si' expr blockStmt)* ('secus' blockStmt)?
-///           | 'si' expr blockStmt 'cape' IDENT blockStmt
+# GRAMMAR:
+#   siStmt := 'si' expr blockStmt ('secus' 'si' expr blockStmt)* ('secus' blockStmt)?
+#           | 'si' expr blockStmt 'cape' IDENT blockStmt
 ///
-/// Examples:
-///   si x > 0 { scribe "positive" }
-///   si x > 0 { ... } secus { ... }
-///   si x > 0 { ... } sin x < 0 { ... } secus { ... }
-///   si fetch() cape err { handle(err) }
+# Examples:
+#   si x > 0 { scribe "positive" }
+#   si x > 0 { ... } secus { ... }
+#   si x > 0 { ... } sin x < 0 { ... } secus { ... }
+#   si fetch() cape err { handle(err) }
 functio parseSiSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
 
-    // Consume 'si'
+    # Consume 'si'
     p.expectaVerbum("si", ParserErrorCodice.ExpectaturSi)
 
-    // Parse condition
+    # Parse condition
     fixum condicio = r.expressia()
 
-    // Parse consequent block
+    # Parse consequent block
     fixum consequens = parseMassaSententia(r)
 
-    // Check for optional catch (si expr { } cape err { })
+    # Check for optional catch (si expr { } cape err { })
     varia cape = nihil qua CapeClausula?
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
     }
 
-    // Check for else/else-if chain
+    # Check for else/else-if chain
     varia alternans = nihil qua Sententia?
 
     si p.probaVerbum("secus") {
-        // Check if this is 'sin' (else if)
+        # Check if this is 'sin' (else if)
         si p.probaVerbum("si") {
-            // Recurse - but we already consumed 'si', need to back up
-            // Actually, let's handle else-if differently
+            # Recurse - but we already consumed 'si', need to back up
+            # Actually, let's handle else-if differently
         }
         alternans = parseMassaSententia(r)
     }
 
-    // Also check for 'sin' (else if shorthand)
+    # Also check for 'sin' (else if shorthand)
     si p.probaVerbum("sin") {
-        // Parse the rest as another si statement
+        # Parse the rest as another si statement
         fixum siLocus = p.specta(-1).locus
         fixum siCondicio = r.expressia()
         fixum siConsequens = parseMassaSententia(r)
 
-        // Recursively check for more else-if or else
+        # Recursively check for more else-if or else
         varia siAlternans = nihil qua Sententia?
         si p.probaVerbum("secus") {
             siAlternans = parseMassaSententia(r)
         } sin p.probaVerbum("sin") {
-            // Need to handle nested sin - for now, parse as expression statement
-            // TODO: proper recursive handling
+            # Need to handle nested sin - for now, parse as expression statement
+            # TODO: proper recursive handling
         }
 
         alternans = finge SiSententia {
@@ -103,27 +103,27 @@ functio parseSiSententia(Resolvitor r) -> Sententia {
     } qua Sententia
 }
 
-/// Parse while statement
+# Parse while statement
 ///
-/// GRAMMAR: dumStmt := 'dum' expr blockStmt ('cape' IDENT blockStmt)?
+# GRAMMAR: dumStmt := 'dum' expr blockStmt ('cape' IDENT blockStmt)?
 ///
-/// Examples:
-///   dum x > 0 { x = x - 1 }
-///   dum iter.sequens() cape err { handle(err) }
+# Examples:
+#   dum x > 0 { x = x - 1 }
+#   dum iter.sequens() cape err { handle(err) }
 functio parseDumSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
 
-    // Consume 'dum'
+    # Consume 'dum'
     p.expectaVerbum("dum", ParserErrorCodice.ExpectaturDum)
 
-    // Parse condition
+    # Parse condition
     fixum condicio = r.expressia()
 
-    // Parse body
+    # Parse body
     fixum corpus = parseMassaSententia(r)
 
-    // Optional catch
+    # Optional catch
     varia cape = nihil qua CapeClausula?
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
@@ -137,34 +137,34 @@ functio parseDumSententia(Resolvitor r) -> Sententia {
     } qua Sententia
 }
 
-/// Parse for-of loop (iterate values)
+# Parse for-of loop (iterate values)
 ///
-/// GRAMMAR: exStmt := 'ex' expr 'pro' IDENT blockStmt ('cape' IDENT blockStmt)?
+# GRAMMAR: exStmt := 'ex' expr 'pro' IDENT blockStmt ('cape' IDENT blockStmt)?
 ///
-/// Examples:
-///   ex items pro item { scribe item }
-///   ex 0 ante 10 pro i { scribe i }
+# Examples:
+#   ex items pro item { scribe item }
+#   ex 0 ante 10 pro i { scribe i }
 functio parseExSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
 
-    // Consume 'ex'
+    # Consume 'ex'
     p.expectaVerbum("ex", ParserErrorCodice.ExpectaturEx)
 
-    // Parse iterable expression
+    # Parse iterable expression
     fixum iterabile = r.expressia()
 
-    // Expect 'pro'
+    # Expect 'pro'
     p.expectaVerbum("pro", ParserErrorCodice.ExpectaturPro)
 
-    // Parse variable name
+    # Parse variable name
     fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
     fixum variabilis = nomenSym.valor
 
-    // Parse body
+    # Parse body
     fixum corpus = parseMassaSententia(r)
 
-    // Optional catch
+    # Optional catch
     varia cape = nihil qua CapeClausula?
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
@@ -181,33 +181,33 @@ functio parseExSententia(Resolvitor r) -> Sententia {
     } qua Sententia
 }
 
-/// Parse for-in loop (iterate keys)
+# Parse for-in loop (iterate keys)
 ///
-/// GRAMMAR: deStmt := 'de' expr 'pro' IDENT blockStmt ('cape' IDENT blockStmt)?
+# GRAMMAR: deStmt := 'de' expr 'pro' IDENT blockStmt ('cape' IDENT blockStmt)?
 ///
-/// Examples:
-///   de obiectum pro clavis { scribe clavis }
+# Examples:
+#   de obiectum pro clavis { scribe clavis }
 functio parseDeSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.specta(0).locus
 
-    // Consume 'de'
+    # Consume 'de'
     p.expectaVerbum("de", ParserErrorCodice.ExpectaturDe)
 
-    // Parse iterable expression
+    # Parse iterable expression
     fixum iterabile = r.expressia()
 
-    // Expect 'pro'
+    # Expect 'pro'
     p.expectaVerbum("pro", ParserErrorCodice.ExpectaturPro)
 
-    // Parse variable name
+    # Parse variable name
     fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
     fixum variabilis = nomenSym.valor
 
-    // Parse body
+    # Parse body
     fixum corpus = parseMassaSententia(r)
 
-    // Optional catch
+    # Optional catch
     varia cape = nihil qua CapeClausula?
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
@@ -224,20 +224,20 @@ functio parseDeSententia(Resolvitor r) -> Sententia {
     } qua Sententia
 }
 
-/// Parse catch clause
+# Parse catch clause
 ///
-/// GRAMMAR: capeClause := 'cape' IDENT blockStmt
+# GRAMMAR: capeClause := 'cape' IDENT blockStmt
 ///
-/// Example: cape err { handle(err) }
+# Example: cape err { handle(err) }
 functio parseCapeClausula(Resolvitor r) -> CapeClausula {
     fixum p = r.parser()
-    fixum locus = p.specta(-1).locus  // 'cape' already consumed
+    fixum locus = p.specta(-1).locus  # 'cape' already consumed
 
-    // Parse error binding name
+    # Parse error binding name
     fixum paramSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
     fixum param = paramSym.valor
 
-    // Parse catch body
+    # Parse catch body
     fixum corpus = parseMassaSententia(r)
 
     redde {

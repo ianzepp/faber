@@ -20,12 +20,12 @@ Filtering is fundamentally about separation: selecting items "away from" a colle
 ### Iteration with Filter
 
 ```fab
-// Keep matching
+# Keep matching
 ab users ubi activus pro user {
     scribe(user.nomen)
 }
 
-// Exclude matching
+# Exclude matching
 ab users non ubi banned pro user {
     scribe(user.nomen)
 }
@@ -45,10 +45,10 @@ fixum clean = ab users non ubi banned
 When filtering on a boolean property, `ubi` is optional:
 
 ```fab
-// Full form
+# Full form
 fixum active = ab users ubi activus
 
-// Shorthand
+# Shorthand
 fixum active = ab users activus
 fixum clean = ab users non banned
 ```
@@ -68,7 +68,7 @@ For non-boolean conditions, use `ubi` with an expression:
 fixum adults = ab users ubi aetas >= 18
 fixum teens = ab users ubi aetas >= 13 et aetas < 18
 
-// Complex conditions
+# Complex conditions
 fixum eligible = ab users ubi activus et verificatus
 fixum excluded = ab users non ubi activus et verificatus
 ```
@@ -82,7 +82,7 @@ The placement of `non` determines what gets negated:
 ### Single Condition — Equivalent
 
 ```fab
-// These produce the same result
+# These produce the same result
 ab users non ubi banned pro user { }
 ab users ubi non banned pro user { }
 ```
@@ -92,15 +92,15 @@ Both keep users where `banned` is false.
 ### Multiple Conditions — Different
 
 ```fab
-// Outer non: negate entire expression (De Morgan applies)
+# Outer non: negate entire expression (De Morgan applies)
 ab users non ubi banned et suspended pro user { }
-// Result: !(banned && suspended) → !banned || !suspended
-// Keeps: users who are not banned, OR not suspended, OR neither
+# Result: !(banned && suspended) → !banned || !suspended
+# Keeps: users who are not banned, OR not suspended, OR neither
 
-// Inner non: negate individual terms
+# Inner non: negate individual terms
 ab users ubi non banned et non suspended pro user { }
-// Result: !banned && !suspended
-// Keeps: users who are neither banned nor suspended
+# Result: !banned && !suspended
+# Keeps: users who are neither banned nor suspended
 ```
 
 ### Summary
@@ -138,7 +138,7 @@ Sort direction:
 
 ```fab
 fixum sorted = ab items, ordina per pretium descendens
-fixum sorted = ab items, ordina per nomen  // ascendens default
+fixum sorted = ab items, ordina per nomen  # ascendens default
 ```
 
 ---

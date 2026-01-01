@@ -52,13 +52,13 @@ ausculta <event-name>
 Returns `fluxus<T>` (AsyncIterator). Use with `fiet` for async iteration:
 
 ```
-// Using fixum
+# Using fixum
 fixum stream = ausculta "userAction"
 ex stream fiet event {
     scribe event
 }
 
-// Using figendum (equivalent, more natural Latin)
+# Using figendum (equivalent, more natural Latin)
 figendum stream = ausculta "userAction"
 ex stream fiet event {
     scribe event
@@ -151,7 +151,7 @@ futura functio monitor() {
     fixum errors = ausculta "error"
     fixum warnings = ausculta "warning"
 
-    // Process errors with priority
+    # Process errors with priority
     ex errors fiet err {
         handleError(err)
     }

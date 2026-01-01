@@ -1,8 +1,8 @@
-// Nested allocator scopes
+# Nested allocator scopes
 //
-// cura arena fit <outer> { cura arena fit <inner> { } }
+# cura arena fit <outer> { cura arena fit <inner> { } }
 //
-// Allocator scopes can nest. Inner scopes free before outer scopes.
+# Allocator scopes can nest. Inner scopes free before outer scopes.
 
 incipit {
     cura arena fit outer {
@@ -12,10 +12,10 @@ incipit {
             varia textus[] b = ["two"]
             scribe "Inner:", b
         }
-        // inner freed here
+        # inner freed here
 
         a.adde("three")
         scribe "Outer:", a
     }
-    // outer freed here
+    # outer freed here
 }

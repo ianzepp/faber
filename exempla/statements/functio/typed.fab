@@ -1,28 +1,28 @@
-// Functions with typed parameters
+# Functions with typed parameters
 //
-// functio <name>(type param, type param) -> type { <body> }
+# functio <name>(type param, type param) -> type { <body> }
 
-// Single typed parameter
+# Single typed parameter
 functio quadratum(numerus n) -> numerus {
     redde n * n
 }
 
-// Multiple typed parameters
+# Multiple typed parameters
 functio adde(numerus a, numerus b) -> numerus {
     redde a + b
 }
 
-// Mixed types
+# Mixed types
 functio describe(textus nomen, numerus aetas) -> textus {
     redde scriptum("{} habet {} annos", nomen, aetas)
 }
 
-// Boolean parameter and return
+# Boolean parameter and return
 functio nega(bivalens valor) -> bivalens {
     redde non valor
 }
 
-// Function with fractus (float) type
+# Function with fractus (float) type
 functio media(fractus a, fractus b) -> fractus {
     redde (a + b) / 2.0
 }

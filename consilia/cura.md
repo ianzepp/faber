@@ -71,7 +71,7 @@ cura arena fit mem {
     items.adde("hello")
     items.adde("world")
 }
-// mem freed, all allocations released
+# mem freed, all allocations released
 
 cura page fit mem {
     fixum buffer = allocate(1024)
@@ -89,11 +89,11 @@ cura arena fit outer {
         varia b: textus[] = []
         b.adde("two")
     }
-    // inner freed
+    # inner freed
 
     a.adde("three")
 }
-// outer freed
+# outer freed
 ```
 
 ### Files
@@ -103,10 +103,10 @@ cura liber aperi("data.txt") fit fd {
     fixum data = lege(fd)
     process(data)
 }
-// fd closed automatically
+# fd closed automatically
 
 cura liber aperi("config.json") fit File fd {
-    // explicit type annotation
+    # explicit type annotation
     fixum config = parse(fd)
 }
 ```
@@ -118,7 +118,7 @@ cura conexio db.connect(url) fiet conn {
     fixum users = cede conn.query("SELECT * FROM users")
     redde users
 }
-// conn closed automatically
+# conn closed automatically
 ```
 
 ### Transactions
@@ -128,7 +128,7 @@ cura transactio conn.begin() fiet tx {
     tx.execute("INSERT INTO users (name) VALUES (?)", name)
     tx.execute("UPDATE stats SET count = count + 1")
 }
-// commit on success, rollback on error
+# commit on success, rollback on error
 ```
 
 ### Locks
@@ -137,7 +137,7 @@ cura transactio conn.begin() fiet tx {
 cura mutex lock.acquire() fit guard {
     shared_counter += 1
 }
-// lock released automatically
+# lock released automatically
 ```
 
 ### Generic (custom curator)
@@ -146,7 +146,7 @@ cura mutex lock.acquire() fit guard {
 cura curator TempFile.create() fit tmp {
     inscribe(tmp.path, data)
 }
-// tmp.solve() called on exit
+# tmp.solve() called on exit
 ```
 
 ### Error handling
@@ -157,7 +157,7 @@ cura liber aperi("data.txt") fit fd {
 } cape err {
     mone("Operation failed:", err)
 }
-// fd still closed
+# fd still closed
 ```
 
 ---
@@ -186,7 +186,7 @@ genus TempFile implet Curator {
 cura curator TempFile.create() fit tmp {
     inscribe(tmp.path, data)
 }
-// temp file deleted via solve()
+# temp file deleted via solve()
 ```
 
 ---
@@ -222,8 +222,8 @@ Override the allocator for a single call:
 
 ```fab
 cura arena fit temp {
-    fixum a = buildList("foo")              // uses temp
-    fixum b = buildList("bar") curatum other // uses other
+    fixum a = buildList("foo")              # uses temp
+    fixum b = buildList("bar") curatum other # uses other
 }
 ```
 
@@ -241,9 +241,9 @@ cura arena fit temp {
 Outside any `cura` block, there's an implicit default allocator. For Zig, this maps to a global arena or page allocator. For GC targets, it's ignored.
 
 ```fab
-// Top-level code, no explicit cura block
+# Top-level code, no explicit cura block
 varia items: textus[] = []
-items.adde("hello")           // uses default allocator
+items.adde("hello")           # uses default allocator
 ```
 
 Most Faber code never mentions allocators at all.

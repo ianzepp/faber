@@ -1,4 +1,4 @@
-// While loops inside functions
+# While loops inside functions
 
 functio factorial(numerus n) -> numerus {
     varia numerus result = 1

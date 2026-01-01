@@ -1,18 +1,18 @@
-// Basic ordo (enum) declaration
+# Basic ordo (enum) declaration
 //
-// ordo Name { Member1, Member2, Member3 }
-// ordo Name { Member1 = value1, Member2 = value2 }
+# ordo Name { Member1, Member2, Member3 }
+# ordo Name { Member1 = value1, Member2 = value2 }
 
 ordo Color { rubrum, viridis, caeruleum }
 
 ordo Status { pendens = 0, actum = 1, finitum = 2 }
 
 incipit {
-    // Using enum values
+    # Using enum values
     fixum color = Color.rubrum
     fixum status = Status.actum
 
-    // Switch on enum
+    # Switch on enum
     elige color {
         si Color.rubrum {
             scribe "Red"
@@ -25,7 +25,7 @@ incipit {
         }
     }
 
-    // Switch on enum with numeric values
+    # Switch on enum with numeric values
     elige status {
         si Status.pendens {
             scribe "Pending"

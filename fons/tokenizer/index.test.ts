@@ -205,28 +205,12 @@ describe('tokenizer', () => {
     });
 
     describe('comments', () => {
-        test('single-line comments are emitted as COMMENT tokens', () => {
-            const { tokens } = tokenize('fixum // this is a comment\nnomen');
+        test('line comments are emitted as COMMENT tokens', () => {
+            const { tokens } = tokenize('fixum # this is a comment\nnomen');
 
             expect(tokens.map(t => t.type)).toEqual(['KEYWORD', 'COMMENT', 'IDENTIFIER', 'EOF']);
             expect(tokens[1]!.commentType).toBe('line');
             expect(tokens[1]!.value).toBe('this is a comment');
-        });
-
-        test('multi-line comments are emitted as COMMENT tokens', () => {
-            const { tokens } = tokenize('fixum /* comment */ nomen');
-
-            expect(tokens.map(t => t.type)).toEqual(['KEYWORD', 'COMMENT', 'IDENTIFIER', 'EOF']);
-            expect(tokens[1]!.commentType).toBe('block');
-            expect(tokens[1]!.value).toBe('comment');
-        });
-
-        test('doc comments are emitted with doc type', () => {
-            const { tokens } = tokenize('/** This is a doc comment */\nfunctio');
-
-            expect(tokens[0]!.type).toBe('COMMENT');
-            expect(tokens[0]!.commentType).toBe('doc');
-            expect(tokens[0]!.value).toBe('* This is a doc comment');
         });
     });
 
@@ -334,7 +318,7 @@ describe('tokenizer', () => {
         });
 
         test('only comments', () => {
-            const { tokens } = tokenize('// comment\n/* block */');
+            const { tokens } = tokenize('# comment\n# another');
 
             expect(tokens).toHaveLength(3); // 2 COMMENT + EOF
             expect(tokens[0]!.type).toBe('COMMENT');
@@ -537,44 +521,28 @@ describe('tokenizer', () => {
     });
 
     describe('edge cases - comment variations', () => {
-        test('single-line comment at end of file', () => {
-            const { tokens } = tokenize('fixum x = 5 // comment');
+        test('comment at end of file', () => {
+            const { tokens } = tokenize('fixum x = 5 # comment');
 
             expect(tokens[tokens.length - 1]!.type).toBe('EOF');
             // Comment should be emitted before EOF
             expect(tokens[tokens.length - 2]!.type).toBe('COMMENT');
         });
 
-        test('multi-line comment with nested slashes', () => {
-            const { tokens } = tokenize('/* // not a comment */');
-
-            expect(tokens).toHaveLength(2); // COMMENT + EOF
-            expect(tokens[0]!.type).toBe('COMMENT');
-            expect(tokens[0]!.value).toBe('// not a comment');
-        });
-
         test('comment with special chars', () => {
-            const { tokens } = tokenize('// @#$%^&*()');
+            const { tokens } = tokenize('# @$%^&*()');
 
             expect(tokens).toHaveLength(2); // COMMENT + EOF
             expect(tokens[0]!.type).toBe('COMMENT');
-            expect(tokens[0]!.value).toBe('@#$%^&*()');
+            expect(tokens[0]!.value).toBe('@$%^&*()');
         });
 
         test('adjacent comments', () => {
-            const { tokens } = tokenize('// comment1\n// comment2');
+            const { tokens } = tokenize('# comment1\n# comment2');
 
             expect(tokens).toHaveLength(3); // 2 COMMENT + EOF
             expect(tokens[0]!.type).toBe('COMMENT');
             expect(tokens[1]!.type).toBe('COMMENT');
-        });
-
-        test('block comment spanning multiple lines', () => {
-            const { tokens } = tokenize('/* line1\nline2\nline3 */');
-
-            expect(tokens).toHaveLength(2); // COMMENT + EOF
-            expect(tokens[0]!.type).toBe('COMMENT');
-            expect(tokens[0]!.commentType).toBe('block');
         });
     });
 });
