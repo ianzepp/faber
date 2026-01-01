@@ -142,6 +142,9 @@ export const keywords: KeywordEntry[] = [
     { latin: 'vide', meaning: 'debug', category: 'control' },
     { latin: 'mone', meaning: 'warn', category: 'control' },
     { latin: 'lege', meaning: 'read', category: 'control' },
+    // WHY: "lineam" (accusative of linea) = "a line"
+    //      Used with lege: lege lineam = read one line from stdin
+    { latin: 'lineam', meaning: 'line', category: 'control' },
     // WHY: "scriptum" (that which has been written) for string formatting
     //      Perfect passive participle of scribere - the noun form of the action
     //      scribe = write to output, scriptum = create a formatted string

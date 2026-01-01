@@ -229,9 +229,10 @@ discretio Expressia {
     }
 
     # Lege (stdin read) expression
-    # Example: lege()
+    # Example: lege (read all), lege lineam (read one line)
     LegeExpressia {
         Locus locus
+        textus modus              # "all" | "line"
     }
 
     # Ab (from/pipe) expression for collection operations

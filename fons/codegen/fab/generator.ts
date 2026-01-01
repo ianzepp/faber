@@ -243,6 +243,8 @@ export class FabGenerator {
                 return genCollectionDSLExpression(node, this);
             case 'RegexLiteral':
                 return genRegexLiteral(node, this);
+            case 'LegeExpression':
+                return node.mode === 'line' ? 'lege lineam' : 'lege';
             default:
                 throw new Error(`Unknown expression type: ${(node as any).type}`);
         }

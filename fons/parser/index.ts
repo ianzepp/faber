@@ -4277,17 +4277,19 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse stdin read expression.
      *
      * GRAMMAR:
-     *   legeExpr := 'lege' '(' ')'
+     *   legeExpr := 'lege' ('lineam')?
      *
-     * Reads all input from stdin. No arguments - always reads everything.
+     * Reads from stdin:
+     *   lege        → read all input until EOF
+     *   lege lineam → read one line
      */
     function parseLegeExpression(): LegeExpression {
         const position = tokens[current - 1]!.position; // Position of 'lege' we just consumed
 
-        expect('LPAREN', ParserErrorCode.ExpectedOpeningParen);
-        expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
+        // Check for 'lineam' modifier
+        const mode = matchKeyword('lineam') ? 'line' : 'all';
 
-        return { type: 'LegeExpression', position };
+        return { type: 'LegeExpression', mode, position };
     }
 
     /**

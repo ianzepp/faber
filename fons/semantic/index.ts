@@ -830,7 +830,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
                 return TEXTUS;
 
             case 'LegeExpression':
-                // WHY: lege() reads stdin and returns textus
+                // WHY: lege (all) and lege lineam (one line) both return textus
                 node.resolvedType = TEXTUS;
                 return TEXTUS;
 

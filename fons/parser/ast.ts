@@ -1300,19 +1300,29 @@ export interface ScriptumExpression extends BaseNode {
  * Read input expression.
  *
  * GRAMMAR (in EBNF):
- *   legeExpr := 'lege' '(' ')'
+ *   legeExpr := 'lege' ('lineam')?
  *
- * Reads all input from stdin as a string.
+ * Reads from stdin as a string.
+ *   lege        → read all input until EOF
+ *   lege lineam → read one line
  *
- * Target mappings:
- *   lege() → await Bun.stdin.text() (TS)
- *   lege() → sys.stdin.read() (Py)
- *   lege() → stdin.readAllAlloc(alloc, max) (Zig)
- *   lege() → std::cin (C++)
- *   lege() → std::io::stdin().read_to_string() (Rust)
+ * Target mappings (mode: 'all'):
+ *   lege → await Bun.stdin.text() (TS)
+ *   lege → sys.stdin.read() (Py)
+ *   lege → stdin.readAllAlloc(alloc, max) (Zig)
+ *   lege → std::cin (C++)
+ *   lege → std::io::stdin().read_to_string() (Rust)
+ *
+ * Target mappings (mode: 'line'):
+ *   lege lineam → (await readline()).trim() (TS)
+ *   lege lineam → input() (Py)
+ *   lege lineam → stdin.readUntilDelimiter('\n') (Zig)
+ *   lege lineam → std::getline(std::cin, line) (C++)
+ *   lege lineam → std::io::stdin().read_line() (Rust)
  */
 export interface LegeExpression extends BaseNode {
     type: 'LegeExpression';
+    mode: 'all' | 'line';
 }
 
 /**
