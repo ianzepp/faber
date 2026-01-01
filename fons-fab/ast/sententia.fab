@@ -263,7 +263,7 @@ discretio Sententia {
         bivalens asynca
         bivalens generator
         bivalens abstracta
-        bivalens constructor
+        bivalens structor       // WHY: "constructor" is a JS reserved word
         Visibilitas? visibilitas
         ReddeVerbum? reddeVerbum
     }
@@ -282,7 +282,7 @@ discretio Sententia {
         lista<textus>? implet    // implet Interface
         bivalens abstractum
         lista<CampusDeclaratio> campi
-        Sententia? constructor   // FunctioDeclaratio
+        Sententia? structor      // FunctioDeclaratio (WHY: "constructor" is JS reserved)
         lista<Sententia> methodi // lista<FunctioDeclaratio>
     }
 

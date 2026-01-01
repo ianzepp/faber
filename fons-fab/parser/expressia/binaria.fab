@@ -80,7 +80,7 @@ functio parseCondicio(Resolvitor r) -> Expressia {
         } qua Expressia
     }
     
-    si p.congruet(SymbolumGenus.Interrogatio) {
+    si p.congruet(SymbolumGenus.Rogatio) {
         fixum consequens = r.expressia()
         p.expecta(SymbolumGenus.Colon, ParserErrorCodice.ExpectaturColon)
         fixum alternans = parseCondicio(r)
@@ -103,9 +103,10 @@ functio parseAut(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseEt(r)
     
-    dum p.congruet(SymbolumGenus.AutAut) aut p.congruetVerbum("aut") aut p.congruet(SymbolumGenus.InterrogatioInterrogatio) {
-        fixum locus = p.specta(-1).locus
-        fixum signum = p.specta(-1).valor
+    dum p.congruet(SymbolumGenus.VelVel) aut p.congruetVerbum("aut") aut p.congruet(SymbolumGenus.RogatioBis) {
+        fixum operatorSym = p.praevius()
+        fixum locus = operatorSym.locus
+        fixum signum = operatorSym.valor
         fixum dexter = parseEt(r)
         
         sinister = finge BinariaExpressia {
@@ -127,8 +128,9 @@ functio parseEt(Resolvitor r) -> Expressia {
     varia sinister = parseAequale(r)
     
     dum p.congruet(SymbolumGenus.EtEt) aut p.congruetVerbum("et") {
-        fixum locus = p.specta(-1).locus
-        fixum signum = p.specta(-1).valor
+        fixum operatorSym = p.praevius()
+        fixum locus = operatorSym.locus
+        fixum signum = operatorSym.valor
         fixum dexter = parseAequale(r)
         
         sinister = finge BinariaExpressia {
@@ -149,9 +151,10 @@ functio parseAequale(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseComparatio(r)
     
-    dum p.congruet(SymbolumGenus.AequaleAequale) aut p.congruet(SymbolumGenus.NonAequale) aut p.congruet(SymbolumGenus.AequaleAequaleAequale) aut p.congruet(SymbolumGenus.NonAequaleAequale) {
-        fixum locus = p.specta(-1).locus
-        fixum signum = p.specta(-1).valor
+    dum p.congruet(SymbolumGenus.AequumBis) aut p.congruet(SymbolumGenus.NonAequum) aut p.congruet(SymbolumGenus.AequumTer) aut p.congruet(SymbolumGenus.NonAequumBis) {
+        fixum operatorSym = p.praevius()
+        fixum locus = operatorSym.locus
+        fixum signum = operatorSym.valor
         fixum dexter = parseComparatio(r)
         
         sinister = finge BinariaExpressia {
@@ -164,7 +167,7 @@ functio parseAequale(Resolvitor r) -> Expressia {
     
     // Handle 'est' type check
     si p.congruetVerbum("est") {
-        fixum locus = p.specta(-1).locus
+        fixum locus = p.praevius().locus
         fixum scopus = r.adnotatio()
         
         redde finge EstExpressia {
@@ -184,9 +187,10 @@ functio parseComparatio(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseAdditio(r)
     
-    dum p.congruet(SymbolumGenus.Minor) aut p.congruet(SymbolumGenus.Maior) aut p.congruet(SymbolumGenus.MinorAequale) aut p.congruet(SymbolumGenus.MaiorAequale) {
-        fixum locus = p.specta(-1).locus
-        fixum signum = p.specta(-1).valor
+    dum p.congruet(SymbolumGenus.Minor) aut p.congruet(SymbolumGenus.Maior) aut p.congruet(SymbolumGenus.MinorAequum) aut p.congruet(SymbolumGenus.MaiorAequum) {
+        fixum operatorSym = p.praevius()
+        fixum locus = operatorSym.locus
+        fixum signum = operatorSym.valor
         fixum dexter = parseAdditio(r)
         
         sinister = finge BinariaExpressia {
@@ -208,8 +212,9 @@ functio parseAdditio(Resolvitor r) -> Expressia {
     varia sinister = parseMultiplicatio(r)
     
     dum p.congruet(SymbolumGenus.Plus) aut p.congruet(SymbolumGenus.Minus) {
-        fixum locus = p.specta(-1).locus
-        fixum signum = p.specta(-1).valor
+        fixum operatorSym = p.praevius()
+        fixum locus = operatorSym.locus
+        fixum signum = operatorSym.valor
         fixum dexter = parseMultiplicatio(r)
         
         sinister = finge BinariaExpressia {
@@ -230,9 +235,10 @@ functio parseMultiplicatio(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseUnaria(r)
     
-    dum p.congruet(SymbolumGenus.Asteriscum) aut p.congruet(SymbolumGenus.Virgula) aut p.congruet(SymbolumGenus.Centum) {
-        fixum locus = p.specta(-1).locus
-        fixum signum = p.specta(-1).valor
+    dum p.congruet(SymbolumGenus.Stella) aut p.congruet(SymbolumGenus.Virgula) aut p.congruet(SymbolumGenus.Centum) {
+        fixum operatorSym = p.praevius()
+        fixum locus = operatorSym.locus
+        fixum signum = operatorSym.valor
         fixum dexter = parseUnaria(r)
         
         sinister = finge BinariaExpressia {

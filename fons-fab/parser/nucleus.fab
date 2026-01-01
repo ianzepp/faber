@@ -177,6 +177,17 @@ genus Parser {
         redde ego.specta(0).species === SymbolumGenus.Finis
     }
 
+    /// Get the previous token (the one most recently consumed)
+    /// WHY: After congruet() matches and advances, we often need the matched token's
+    ///      position or value. This avoids needing specta(-1).
+    /// EDGE: Returns first token if called before any advance (index=0)
+    functio praevius() -> Symbolum {
+        si ego.index > 0 {
+            redde ego.symbola[ego.index - 1]
+        }
+        redde ego.symbola[0]
+    }
+
     /// Consume and return current token, collecting comments first
     /// Never advances past Finis token
     functio procede() -> Symbolum {
@@ -200,7 +211,7 @@ genus Parser {
     // =========================================================================
 
     /// Check if current token matches given type without consuming
-    functio estSpecies(SymbolumGenus species) -> bivalens {
+    functio proba(SymbolumGenus species) -> bivalens {
         redde ego.specta(0).species === species
     }
 
@@ -431,6 +442,14 @@ genus Parser {
             si "ex" { redde verum }
             secus { redde falsum }
         }
+    }
+
+    /// Check if token is an assignment operator
+    /// Includes = and compound assignments (+=, -=, *=, /=, %=, &=, |=)
+    /// TODO: Add compound assignment tokens to lexer (PlusAequum, etc.)
+    functio estAssignatioSignum(Symbolum s) -> bivalens {
+        // For now, only simple assignment is supported
+        redde s.species === SymbolumGenus.Aequum
     }
 }
 

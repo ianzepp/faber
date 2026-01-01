@@ -27,8 +27,9 @@ ex "../ast/typus" importa TypusAnnotatio
 ex "../ast/lexema" importa Symbolum
 
 // Import parsing functions
-ex "./sententia/massa" importa Programma, parseProgramma, parseMassaSententia, parseExpressiaSententia
-ex "./expressia/primaria" importa parsePrimaria
+ex "./sententia/massa" importa Programma, parseProgramma, parseMassaSententia
+ex "./sententia/index" importa parseSententia
+ex "./expressia/binaria" importa parseAssignatio
 ex "./typus" importa parseTypusAnnotatio
 
 /// Result of parsing
@@ -37,11 +38,13 @@ genus ParserResultatum {
     lista<ParserError> errores  // Parse errors encountered
 }
 
-/// ResolvitorImpl - concrete implementation of pactum Resolvitor
+/// Parsator - concrete implementation of pactum Resolvitor
 ///
 /// Wires up all parsing functions so they can call each other
 /// through the Resolvitor interface without circular imports.
-genus ResolvitorImpl implet Resolvitor {
+///
+/// LATIN: parsator = "one who parses" (agent noun)
+genus Parsator implet Resolvitor {
     Parser p
     
     functio parser() -> Parser {
@@ -49,15 +52,13 @@ genus ResolvitorImpl implet Resolvitor {
     }
     
     functio expressia() -> Expressia {
-        // Entry point for expression parsing
-        // TODO: Route to full expression parser (assignatio -> ... -> primaria)
-        redde parsePrimaria(ego)
+        // Full expression parser starting at assignment (highest precedence entry)
+        redde parseAssignatio(ego)
     }
     
     functio sententia() -> Sententia {
-        // Entry point for statement parsing
-        // TODO: Route to statement dispatcher
-        redde parseExpressiaSententia(ego)
+        // Statement dispatcher routes to appropriate parser
+        redde parseSententia(ego)
     }
     
     functio massa() -> Sententia {
@@ -71,9 +72,9 @@ genus ResolvitorImpl implet Resolvitor {
     }
 }
 
-/// Create a new ResolvitorImpl
-functio novumResolvitor(Parser p) -> ResolvitorImpl {
-    redde { p: p } qua ResolvitorImpl
+/// Create a new Parsator
+functio novumParsator(Parser p) -> Parsator {
+    redde { p: p } qua Parsator
 }
 
 /// Parse a token stream into an AST
@@ -84,8 +85,8 @@ functio resolvere(lista<Symbolum> symbola) -> ParserResultatum {
     // Create parser state
     fixum p = novumParser(symbola)
     
-    // Create Resolvitor to wire up parsing functions
-    fixum r = novumResolvitor(p)
+    // Create Parsator to wire up parsing functions
+    fixum r = novumParsator(p)
 
     // Try to parse the program
     tempta {
