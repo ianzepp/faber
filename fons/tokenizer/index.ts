@@ -16,7 +16,7 @@
  * - Multi-character operators (==, !=, <=, >=, &&, ||, =>, ->)
  * - String literals with escape sequences (", ', `)
  * - Template strings with interpolation tracking
- * - Single and multi-line comments (C++ and C style)
+ * - Single-line comments (# shell style, // C++ style) and block comments
  * - Latin keywords identified via the lexicon module
  *
  * The scanner never throws on invalid input. Instead, it collects errors
@@ -62,6 +62,7 @@
  * '|' -> '||' | '|'
  * '-' -> '->' | '-'
  * '/' -> '//' comment | '/*' comment | '/'
+ * '#' -> comment (to end of line)
  * '^' -> '^'
  * '~' -> '~'
  *
@@ -398,6 +399,22 @@ export function tokenize(source: string): TokenizerResult {
 
                 advance(); // /
                 advance(); // /
+
+                // True while there's more comment content on this line
+                const hasCommentContent = () => !isAtEnd() && peek() !== '\n';
+
+                while (hasCommentContent()) {
+                    comment += advance();
+                }
+
+                // Emit COMMENT token for comment preservation
+                addToken('COMMENT', comment.trim(), pos, undefined, 'line');
+            } else if (char === '#') {
+                // Single-line comment extends to end of line (shell/Python style)
+                const pos = position();
+                let comment = '';
+
+                advance(); // #
 
                 // True while there's more comment content on this line
                 const hasCommentContent = () => !isAtEnd() && peek() !== '\n';
