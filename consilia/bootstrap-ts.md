@@ -11,13 +11,16 @@ Rewrite the Faber compiler in Faber, targeting TypeScript/Bun.
 
 ## Current State
 
-**No blocking issues remain.** All previously identified blockers have been resolved:
+**Phase 3 (Codegen) in progress.** Previously identified blockers resolved, new workarounds needed:
 
 - ✅ Mutual recursion → solved with `pactum Resolvitor`
 - ✅ Discretio instantiation → solved with `finge` keyword
 - ✅ Function hoisting → solved with two-pass semantic analysis
 - ✅ Do-while loops → implemented as `fac { } dum condition`
 - ✅ AST as discretio → unified `Expressia` (24 variants) and `Sententia` (31 variants)
+- ⚠️ Method call return types → workaround with `scriptum()` formatting
+- ⚠️ Discerne binding types → workaround with explicit casts
+- ⚠️ Nullable parameters → use `ignotum` type instead of `Type?`
 
 ### Compiles Successfully
 
@@ -141,15 +144,26 @@ Port `fons/semantic/`:
 
 Note: Module resolution (`modules.ts`) skipped — requires file I/O not yet in Faber.
 
-### Phase 3: TypeScript Codegen (`fons-fab/codegen/ts/`)
+### Phase 3: TypeScript Codegen (`fons-fab/codegen/ts/`) — IN PROGRESS
 
 Port only the TS target from `fons/codegen/ts/`:
 
-1. Generator class with state (`depth`, `inGenerator`, `inFlumina`, etc.)
-2. Statement generators (one file per statement type)
-3. Expression generators (one file per expression type)
-4. Type emission (Latin → TypeScript type mapping)
-5. Preamble generation based on `RequiredFeatures`
+1. ✅ Generator class with state (`depth`, `inGenerator`, `inFlumina`, etc.) — `nucleus.fab`
+2. ✅ Type emission (Latin → TypeScript type mapping) — `typus.fab`
+3. ✅ Expression dispatcher — `expressia/index.fab`
+4. 🔄 Statement dispatcher — `sententia/index.fab` (needs workarounds for semantic bugs)
+5. ⬚ Public API entry point — `index.fab`
+6. ⬚ Preamble generation based on `RequiredFeatures`
+
+**Files created:**
+
+| File                             | Status | Notes                                   |
+| -------------------------------- | ------ | --------------------------------------- |
+| `codegen/typi.fab`               | ✅     | RequiredFeatures, CodegenOptions, utils |
+| `codegen/ts/nucleus.fab`         | ✅     | TsGenerator genus with state            |
+| `codegen/ts/typus.fab`           | ✅     | Latin → TS type mapping                 |
+| `codegen/ts/expressia/index.fab` | ✅     | All 24 expression types handled         |
+| `codegen/ts/sententia/index.fab` | ✅     | Uses scriptum() for all formatting      |
 
 **Architecture decisions:**
 
@@ -157,6 +171,7 @@ Port only the TS target from `fons/codegen/ts/`:
 - **Drop `semi` parameter** — Hardcode semicolons; no Faber code uses configurable semicolons
 - **Simplify `RequiredFeatures`** — Keep: `lista`, `tabula`, `copia`, `flumina`, `decimal`, `regex`. Drop Python/C++ specific fields.
 - **Port as-is first** — Refactor after bootstrap works, not before
+- **Use `ignotum` for nullable params** — Faber doesn't support `Type?` in parameter position, use `ignotum` and cast inside function
 
 **Target languages (post-bootstrap):**
 
@@ -323,6 +338,15 @@ parser/
 4. **Entry points and resources** — incipit/incipiet for program entry, cura for resource management with automatic cleanup.
 5. **27 files total** — Parser phase complete with full coverage of Faber syntax needed for self-hosting.
 
+### Session 6: Codegen Started
+
+1. **Method call return types broken** — `g.ind()` where `ind() -> textus` incorrectly infers as `numerus`. Workaround: use `scriptum()` for all string formatting instead of concatenation with method calls.
+2. **Discerne bindings typed as unknown** — Pattern matching `si Variant pro a, b, c { }` gives bindings type `unknown`, not field types. Workaround: cast bindings explicitly `a qua textus`.
+3. **No nullable function parameters** — `Type?` syntax only valid for fields and return types, not parameters. Use `ignotum` type and cast inside function.
+4. **Disabled prettier** — Removed archived prettier import from CLI; `faber format` returns "not implemented" for now.
+5. **Use scriptum() everywhere** — Instead of string concatenation like `g.ind() + "if (" + cond + ")"`, use `scriptum("{}if ({})", g.ind(), cond)`. This avoids the method call return type bug entirely and produces cleaner code.
+6. **Scriptum brace escaping** — Use `{{` for literal `{` and `}}` for literal `}`. Example: `scriptum("{{ {} }}", val)` produces `{ value }`. This is needed when generating JS object literals or destructuring.
+
 ## Build Commands
 
 ```bash
@@ -349,20 +373,22 @@ diff -r opus/ opus2/  # Should be identical
 
 ## Timeline
 
-| Phase       | Scope        | Est. Days      | Status      |
-| ----------- | ------------ | -------------- | ----------- |
-| Parser      | ~6,259 lines | 5-7            | ✅ Complete |
-| Semantic    | ~2,000 lines | 3-4            | ✅ Complete |
-| Codegen     | ~2,000 lines | 3-4            | Not started |
-| CLI         | ~600 lines   | 1              | Not started |
-| Integration | Debug, iter  | 2-3            | Not started |
-| **Total**   |              | **14-19 days** |             |
+| Phase       | Scope        | Est. Days      | Status         |
+| ----------- | ------------ | -------------- | -------------- |
+| Parser      | ~6,259 lines | 5-7            | ✅ Complete    |
+| Semantic    | ~2,000 lines | 3-4            | ✅ Complete    |
+| Codegen     | ~2,000 lines | 3-4            | 🔄 In progress |
+| CLI         | ~600 lines   | 1              | Not started    |
+| Integration | Debug, iter  | 2-3            | Not started    |
+| **Total**   |              | **14-19 days** |                |
 
 ## Next Steps
 
-1. **Phase 3: TypeScript Codegen** — Port `fons/codegen/ts/` to Faber
-2. **Phase 4: CLI** — Create `fons-fab/cli.fab` entry point
-3. **Post-bootstrap cleanup** — Remove Python and C++ targets from `fons/codegen/`
+1. **Fix sententia/index.fab** — Add `indent()` helper calls to work around method return type bug
+2. **Create codegen/ts/index.fab** — Public API entry point
+3. **Verify all codegen files compile** — Currently 4/5 compile
+4. **Phase 4: CLI** — Create `fons-fab/cli.fab` entry point
+5. **Post-bootstrap cleanup** — Remove Python and C++ targets from `fons/codegen/`
 
 ## Design Decisions Log
 
