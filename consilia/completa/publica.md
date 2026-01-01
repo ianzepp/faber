@@ -314,6 +314,9 @@ genus User implet Serializable {
     @ privatum
     textus passwordHash  # never expose this
 
+    @ privatum generis
+    numerus instanceCount: 0  # class-level counter
+
     # Serialize to JSON-like format
     @ publica
     functio serialize() -> textus {
@@ -325,6 +328,12 @@ genus User implet Serializable {
     @ privata
     functio hashPassword(textus plain) -> textus {
         # implementation here
+    }
+
+    # Get total instances created
+    @ publica generis
+    functio getInstanceCount() -> numerus {
+        redde User.instanceCount
     }
 }
 
