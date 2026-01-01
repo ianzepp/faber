@@ -164,6 +164,12 @@ The colon `:` is used only for default values in genus properties, not for type 
 
 ## Design Philosophy
 
+**LLM Readability Goal**
+
+Write Faber code that other LLMs would call "unbreakable." Every token should pull its weight in resolving ambiguity. Patterns should be so consistent that deviation feels like a bug. The test: when an LLM reads the code, it should feel safe — no wobbles, no "wait, what?", no attention spikes. Industrial. Roman. Mechanically certain.
+
+**Human Readability Frame**
+
 When evaluating syntax decisions, adopt the "Latin professor meets gen-z autistic programmer" frame:
 
 - **Latin professor**: Does the grammar follow authentic Latin patterns? Adjective-noun agreement, word order, proper declension. If something is grammatically wrong, it should itch.

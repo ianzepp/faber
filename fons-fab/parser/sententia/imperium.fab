@@ -72,7 +72,7 @@ functio parseSiSententia(Resolvitor r) -> Sententia {
     # Also check for 'sin' (else if shorthand)
     si p.probaVerbum("sin") {
         # Parse the rest as another si statement
-        fixum siLocus = p.specta(-1).locus
+        fixum siLocus = p.specta(0).locus
         fixum siCondicio = r.expressia()
         fixum siConsequens = parseMassaSententia(r)
 
@@ -231,7 +231,7 @@ functio parseDeSententia(Resolvitor r) -> Sententia {
 # Example: cape err { handle(err) }
 functio parseCapeClausula(Resolvitor r) -> CapeClausula {
     fixum p = r.parser()
-    fixum locus = p.specta(-1).locus  # 'cape' already consumed
+    fixum locus = p.praevius().locus  # 'cape' already consumed
 
     # Parse error binding name
     fixum paramSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)

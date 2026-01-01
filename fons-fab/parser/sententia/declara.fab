@@ -179,7 +179,7 @@ functio parseGenusDeclaratio(Resolvitor r) -> Sententia {
         si p.probaVerbum("functio") {
             # Method - backtrack and parse as full function
             # For now, simplified: just parse the function
-            fixum methodLocus = p.specta(-1).locus
+            fixum methodLocus = p.specta(0).locus
             fixum methodNomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
             fixum methodNomen = methodNomenSym.valor
 
@@ -284,7 +284,7 @@ functio parsePactumDeclaratio(Resolvitor r) -> Sententia {
         # Each method: functio name(params) returnType
         p.expectaVerbum("functio", ParserErrorCodice.ExpectaturFunctio)
 
-        fixum methodLocus = p.specta(-1).locus
+        fixum methodLocus = p.praevius().locus
         fixum methodNomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
         fixum methodNomen = methodNomenSym.valor
 

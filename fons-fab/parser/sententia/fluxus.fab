@@ -55,11 +55,8 @@ functio parseEligeSententia(Resolvitor r) -> Sententia {
     dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
         # Check for 'si' case
         si p.probaVerbum("si") {
-            fixum casusLocus = p.specta(-1).locus
-            p.procede()  # Already checked with probaVerbum
-
-            # Consume 'si'
-            # p.expectaVerbum("si", ParserErrorCodice.ExpectaturSi)
+            fixum casusLocus = p.specta(0).locus
+            p.procede()
 
             # Parse condition expression
             fixum condicio = r.expressia()
