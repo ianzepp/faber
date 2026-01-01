@@ -35,6 +35,8 @@ The workflow: LLM writes Faber → Human approves → Compiler emits production 
 
 **Semantics, not syntax.** Latin keywords encode meaning: `fixum` (fixed/immutable) vs `varia` (variable/mutable), `cede` (yield/await), `redde` (give back/return). The code reads like intent, not implementation.
 
+**Cross-model validation.** We asked GPT, Gemini, and Claude to independently review Faber source code and describe how it "feels" to read. All three converged on the same observations: "low-entropy", "predictable", "industrial", "Roman". The verb conjugation system (`fit`/`fiet`/`fiunt`/`fient`) encoding async/generator semantics was called "fascinating" — it eliminates modifier stacking while preserving clarity. When three competing model families agree that code is "unbreakable", that's signal.
+
 ## Principles
 
 **LLM-First, Human-Readable.** The language is optimized for LLMs to write and humans to review. Not the other way around. Humans don't type Faber; they approve it.
