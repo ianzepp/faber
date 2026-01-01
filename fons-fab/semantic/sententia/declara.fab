@@ -29,7 +29,7 @@ functio analyzeVariaDeclaratio(Resolvitor r, Sententia variaStmt) -> vacuum {
                 resolvedTypus = IGNOTUM
             }
             sin nonnihil v.init {
-                resolvedTypus = r.expressia(v.init qua Expressia)
+                resolvedTypus = r.expressia(v.init)
             }
             secus {
                 fixum err = noTypeOrInitializerError(v.nomen)
@@ -38,7 +38,7 @@ functio analyzeVariaDeclaratio(Resolvitor r, Sententia variaStmt) -> vacuum {
 
             # Check initializer type compatibility
             si nonnihil v.typusAnnotatio et nonnihil v.init {
-                fixum initTypus = r.expressia(v.init qua Expressia)
+                fixum initTypus = r.expressia(v.init)
                 si non assignabileAd(initTypus, resolvedTypus) {
                     fixum err = typeMismatchError(formaTypum(initTypus), formaTypum(resolvedTypus))
                     a.error(err.textus, v.locus)

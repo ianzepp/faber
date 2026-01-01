@@ -20,7 +20,7 @@ functio analyzeRedde(Resolvitor r, Sententia reddeStmt) -> vacuum {
         si Redde pro rd {
             # Resolve return value if present
             si nonnihil rd.valor {
-                fixum valorTypus = r.expressia(rd.valor qua Expressia)
+                fixum valorTypus = r.expressia(rd.valor)
 
                 # Check against function return type
                 si nonnihil a.currentFunctioReditus {
@@ -83,7 +83,7 @@ functio analyzeAdfirma(Resolvitor r, Sententia adfirmaStmt) -> vacuum {
 
             # Resolve message if present
             si nonnihil adf.nuntius {
-                r.expressia(adf.nuntius qua Expressia)
+                r.expressia(adf.nuntius)
             }
         }
     }
