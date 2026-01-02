@@ -350,8 +350,10 @@ equality := comparison (('==' | '!=' | '===' | '!==' | 'est' | 'non' 'est') comp
 ### Comparison
 
 ```ebnf
-comparison := bitwiseOr (('<' | '>' | '<=' | '>=') bitwiseOr)*
+comparison := bitwiseOr (('<' | '>' | '<=' | '>=' | 'intra' | 'inter') bitwiseOr)*
 ```
+
+> intra/inter at comparison level - same precedence as relational operators
 
 ### Range
 
@@ -856,21 +858,21 @@ in user { nomen = "Marcus" }  // mutation block
 
 ```ebnf
 eligeStmt := 'elige' expression '{' eligeCase* defaultCase? '}' catchClause?
-eligeCase := 'si' expression (blockStmt | 'ergo' expression)
-defaultCase := ('secus' | 'secus') (blockStmt | statement)
+eligeCase := 'casu' expression (blockStmt | 'ergo' expression)
+defaultCase := 'ceterum' (blockStmt | statement)
 ```
 
 > 'elige' (choose) for value-based switch.
-> 'ergo' (therefore) for one-liners, 'secus'/'secus' (otherwise) for default.
+> 'ergo' (therefore) for one-liners, 'ceterum' (otherwise) for default.
 > For variant matching on discretio types, use 'discerne' instead.
 
 **Examples:**
 
 ```fab
 elige status {
-    si "pending" ergo scribe("waiting")
-    si "active" { processActive() }
-    secus iace "Unknown status"
+    casu "pending" ergo scribe("waiting")
+    casu "active" { processActive() }
+    ceterum iace "Unknown status"
 }
 ```
 
@@ -878,19 +880,19 @@ elige status {
 
 ```ebnf
 discerneStmt := 'discerne' expression '{' variantCase* '}'
-variantCase := 'si' IDENTIFIER ('pro' IDENTIFIER (',' IDENTIFIER)*)? blockStmt
+variantCase := 'casu' IDENTIFIER (('ut' IDENTIFIER) | ('pro' IDENTIFIER (',' IDENTIFIER)*))? blockStmt
 ```
 
 > 'discerne' (distinguish!) pairs with 'discretio' (the tagged union type).
-> Uses 'si' for conditional match, 'pro' to introduce bindings.
+> Uses 'casu' for match arms, 'ut' to bind whole variants, and 'pro' to introduce positional bindings.
 
 **Examples:**
 
 ```fab
 discerne event {
-    si Click pro x, y { scribe "clicked at " + x + ", " + y }
-    si Keypress pro key { scribe "pressed " + key }
-    si Quit { mori "goodbye" }
+    casu Click pro x, y { scribe "clicked at " + x + ", " + y }
+    casu Keypress pro key { scribe "pressed " + key }
+    casu Quit { mori "goodbye" }
 }
 ```
 
