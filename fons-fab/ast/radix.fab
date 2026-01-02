@@ -7,6 +7,7 @@ ex "./positio" importa Locus
 ex "./sententia" importa Sententia
 
 # Comment type enumeration
+@ publicum
 ordo NotaGenus {
     Linea      # # comment
     Massa      # /* comment */

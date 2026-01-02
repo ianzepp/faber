@@ -17,6 +17,7 @@
 ex "../ast/positio" importa Locus
 
 # Parser error codes with P prefix
+@ publicum
 ordo ParserErrorCodice {
     # Token expectation errors (P001-P099)
     ExpectaturParensDex = "P001",

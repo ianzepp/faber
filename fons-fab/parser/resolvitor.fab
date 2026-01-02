@@ -29,6 +29,7 @@ ex "../ast/typus" importa TypusAnnotatio
 #       fixum typ = r.adnotatio()      # parse type annotation
 #       ...
 #   }
+@ publicum
 pactum Resolvitor {
     # Get the underlying parser state
     functio parser() -> Parser

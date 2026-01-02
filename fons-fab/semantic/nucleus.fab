@@ -103,6 +103,7 @@ genus Analyzator {
     # ==========================================================================
 
     # Report a semantic error
+    @ publica
     functio error(textus nuntius, Locus locus) {
         ego.errores.adde({
             nuntius: nuntius,
@@ -115,11 +116,13 @@ genus Analyzator {
     # ==========================================================================
 
     # Enter a new scope
+    @ publica
     functio intraScopum(ScopusSpecies species) {
         ego.scopus = creaScopum(ego.scopus, species)
     }
 
     # Exit the current scope
+    @ publica
     functio exiScopum() {
         si nonnihil ego.scopus.parens {
             ego.scopus = ego.scopus.parens qua Scopus
@@ -127,6 +130,7 @@ genus Analyzator {
     }
 
     # Define a symbol in current scope, reporting error if duplicate
+    @ publica
     functio definie(Symbolum symbolum) {
         fixum err = definieSymbolum(ego.scopus, symbolum)
         si nonnihil err {
@@ -135,6 +139,7 @@ genus Analyzator {
     }
 
     # Look up a symbol in scope chain
+    @ publica
     functio quaere(textus nomen) -> Symbolum? {
         redde quaereSymbolum(ego.scopus, nomen)
     }
@@ -144,6 +149,7 @@ genus Analyzator {
     # ==========================================================================
 
     # Define built-in functions (intrinsics) in global scope
+    @ publica
     functio definieIntrinsica() {
         fixum builtinLocus = { linea: 0, columna: 0, index: 0 } qua Locus
 
@@ -155,6 +161,7 @@ genus Analyzator {
     }
 
     # Helper to define a single intrinsic function
+    @ publica
     functio definieIntrinsicaFunctio(textus nomen, lista<SemanticTypus> parametri, SemanticTypus reditus, Locus locus) {
         fixum typusFunctionis = functioTypus(parametri, reditus, falsum, falsum)
         ego.scopus.symbola[nomen] = {
