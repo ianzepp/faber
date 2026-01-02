@@ -262,7 +262,7 @@ genus Parser {
 
     # Report error at current position
     # contextus = optional additional context (e.g., "got 'x'")
-    functio renuncia(ParserErrorCodice codice, textus? contextus) -> vacuum {
+    functio renuncia(ParserErrorCodice codice, si textus contextus) -> vacuum {
         fixum s = ego.specta(0)
         fixum err = error(codice, s.locus, contextus)
         ego.errores.adde(err)

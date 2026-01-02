@@ -319,7 +319,7 @@ genus ParserError {
 }
 
 # Create a parser error at given location
-functio error(ParserErrorCodice codice, Locus locus, textus? contextus) -> ParserError {
+functio error(ParserErrorCodice codice, Locus locus, si textus contextus) -> ParserError {
     fixum nuntium = nuntiumErroris(codice)
     varia msg = nuntium.textus
 
