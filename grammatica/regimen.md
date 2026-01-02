@@ -10,6 +10,12 @@ Control flow: conditionals, loops, guards, assertions, and program structure.
 
 ## Syntax
 
+### Annotation
+
+```ebnf
+annotation := '@' IDENTIFIER (expression)?
+```
+
 ### Program
 
 ```ebnf

@@ -436,6 +436,12 @@ parameter := ('de' | 'in' | 'ex')? 'si'? 'ceteri'? (typeAnnotation IDENTIFIER | 
 
 Control flow: conditionals, loops, guards, assertions, and program structure.
 
+### Annotation
+
+```ebnf
+annotation := '@' IDENTIFIER (expression)?
+```
+
 ### Program
 
 ```ebnf
