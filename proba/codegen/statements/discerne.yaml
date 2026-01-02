@@ -3,8 +3,8 @@
 #
 # Syntax:
 #   discerne value {
-#     si VariantName { body }
-#     si VariantName pro field1, field2 { body }
+#     casu VariantName { body }
+#     casu VariantName pro field1, field2 { body }
 #   }
 #
 # Target mappings:
@@ -22,8 +22,8 @@
 - name: discerne with unit variants
   faber: |
       discerne status {
-        si Active { scribe "active" }
-        si Inactive { scribe "inactive" }
+        casu Active { scribe "active" }
+        casu Inactive { scribe "inactive" }
       }
   expect:
       ts:
@@ -44,16 +44,16 @@
           - 'Inactive =>'
       cpp:
           - '// TODO: discerne on status'
-          - '// si Active: { ... }'
-          - '// si Inactive: { ... }'
+          - '// casu Active: { ... }'
+          - '// casu Inactive: { ... }'
       zig:
           - 'switch (status)'
           - '.active =>'
           - '.inactive =>'
       fab:
           - 'discerne status'
-          - 'si Active'
-          - 'si Inactive'
+          - 'casu Active'
+          - 'casu Inactive'
           - 'scribe "active"'
           - 'scribe "inactive"'
 
@@ -65,11 +65,11 @@
 - name: discerne with bindings
   faber: |
       discerne event {
-        si Click pro x, y {
+        casu Click pro x, y {
           scribe x
           scribe y
         }
-        si Quit {
+        casu Quit {
           scribe "quit"
         }
       }
@@ -95,8 +95,8 @@
           - 'Quit =>'
       cpp:
           - '// TODO: discerne on event'
-          - '// si Click pro x, y: { ... }'
-          - '// si Quit: { ... }'
+          - '// casu Click pro x, y: { ... }'
+          - '// casu Quit: { ... }'
       zig:
           - 'switch (event)'
           - '.click => |payload|'
@@ -105,10 +105,10 @@
           - '.quit =>'
       fab:
           - 'discerne event'
-          - 'si Click pro x, y'
+          - 'casu Click pro x, y'
           - 'scribe x'
           - 'scribe y'
-          - 'si Quit'
+          - 'casu Quit'
           - 'scribe "quit"'
 
 # =============================================================================
@@ -119,10 +119,10 @@
 - name: discerne with single binding
   faber: |
       discerne result {
-        si Success pro message {
+        casu Success pro message {
           scribe message
         }
-        si Failure pro error {
+        casu Failure pro error {
           mone error
         }
       }
@@ -152,9 +152,9 @@
           - 'const message = payload.message;'
       fab:
           - 'discerne result'
-          - 'si Success pro message'
+          - 'casu Success pro message'
           - 'scribe message'
-          - 'si Failure pro error'
+          - 'casu Failure pro error'
           - 'mone error'
 
 # =============================================================================
@@ -165,11 +165,11 @@
 - name: discerne with alias binding
   faber: |
       discerne event {
-        si Click ut c {
+        casu Click ut c {
           scribe c.x
           scribe c.y
         }
-        si Quit {
+        casu Quit {
           scribe "quit"
         }
       }
@@ -191,18 +191,18 @@
           - 'Quit =>'
       cpp:
           - '// TODO: discerne on event'
-          - '// si Click ut c: { ... }'
-          - '// si Quit: { ... }'
+          - '// casu Click ut c: { ... }'
+          - '// casu Quit: { ... }'
       zig:
           - 'switch (event)'
           - '.click => |c|'
           - '.quit =>'
       fab:
           - 'discerne event'
-          - 'si Click ut c'
+          - 'casu Click ut c'
           - 'scribe c.x'
           - 'scribe c.y'
-          - 'si Quit'
+          - 'casu Quit'
 
 # =============================================================================
 # Multiple Cases
@@ -212,10 +212,10 @@
 - name: discerne with multiple cases
   faber: |
       discerne action {
-        si Move pro x, y { scribe x }
-        si Rotate pro angle { scribe angle }
-        si Scale pro factor { scribe factor }
-        si Reset { scribe "reset" }
+        casu Move pro x, y { scribe x }
+        casu Rotate pro angle { scribe angle }
+        casu Scale pro factor { scribe factor }
+        casu Reset { scribe "reset" }
       }
   expect:
       ts:
@@ -245,8 +245,8 @@
           - '.reset =>'
       fab:
           - 'discerne action'
-          - 'si Move pro x, y'
-          - 'si Rotate pro angle'
-          - 'si Scale pro factor'
-          - 'si Reset'
+          - 'casu Move pro x, y'
+          - 'casu Rotate pro angle'
+          - 'casu Scale pro factor'
+          - 'casu Reset'
           - 'scribe "reset"'

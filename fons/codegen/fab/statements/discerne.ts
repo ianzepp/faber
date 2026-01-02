@@ -13,14 +13,14 @@ export function genDiscerneStatement(node: DiscerneStatement, g: FabGenerator): 
     g.depth++;
     for (const c of node.cases) {
         if (c.alias) {
-            // Alias binding: si Click ut c { ... }
-            lines.push(`${g.ind()}si ${c.variant.name} ut ${c.alias.name} ${genBlockStatement(c.consequent, g)}`);
+            // Alias binding: casu Click ut c { ... }
+            lines.push(`${g.ind()}casu ${c.variant.name} ut ${c.alias.name} ${genBlockStatement(c.consequent, g)}`);
         } else if (c.bindings.length > 0) {
-            // Positional bindings: si Click pro x, y { ... }
+            // Positional bindings: casu Click pro x, y { ... }
             const bindings = c.bindings.map(b => b.name).join(', ');
-            lines.push(`${g.ind()}si ${c.variant.name} pro ${bindings} ${genBlockStatement(c.consequent, g)}`);
+            lines.push(`${g.ind()}casu ${c.variant.name} pro ${bindings} ${genBlockStatement(c.consequent, g)}`);
         } else {
-            lines.push(`${g.ind()}si ${c.variant.name} ${genBlockStatement(c.consequent, g)}`);
+            lines.push(`${g.ind()}casu ${c.variant.name} ${genBlockStatement(c.consequent, g)}`);
         }
     }
     g.depth--;

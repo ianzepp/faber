@@ -1,8 +1,9 @@
 # Basic elige (switch) statement
 #
 # elige <expr> {
-#     si <value> { <body> }
-#     si <value> { <body> }
+#     casu <value> { <body> }
+#     casu <value> { <body> }
+#     ceterum { <body> }
 # }
 
 incipit {
@@ -10,13 +11,13 @@ incipit {
     fixum status = "active"
 
     elige status {
-        si "pending" {
+        casu "pending" {
             scribe "Waiting..."
         }
-        si "active" {
+        casu "active" {
             scribe "Running"
         }
-        si "done" {
+        casu "done" {
             scribe "Completed"
         }
     }
@@ -25,13 +26,13 @@ incipit {
     fixum code = 200
 
     elige code {
-        si 200 {
+        casu 200 {
             scribe "OK"
         }
-        si 404 {
+        casu 404 {
             scribe "Not Found"
         }
-        si 500 {
+        casu 500 {
             scribe "Server Error"
         }
     }
@@ -40,11 +41,11 @@ incipit {
     fixum mode = "production"
 
     elige mode {
-        si "development" {
+        casu "development" {
             scribe "Dev mode enabled"
             scribe "Verbose logging on"
         }
-        si "production" {
+        casu "production" {
             scribe "Production mode"
             scribe "Optimizations enabled"
         }

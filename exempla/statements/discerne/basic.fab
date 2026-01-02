@@ -1,8 +1,9 @@
 # Pattern matching with discerne (discriminate/distinguish)
 #
 # discerne <value> {
-#     si <Variant> { <body> }
-#     si <Variant> pro <bindings> { <body> }
+#     casu <Variant> { <body> }
+#     casu <Variant> ut <alias> { <body> }
+#     casu <Variant> pro <bindings> { <body> }
 # }
 
 # Define discretio (tagged union) types
@@ -21,21 +22,21 @@ discretio Event {
 # Functions demonstrating discerne
 functio describe_status(Status s) -> textus {
     discerne s {
-        si Active { redde "active" }
-        si Inactive { redde "inactive" }
-        si Pending { redde "pending" }
+        casu Active { redde "active" }
+        casu Inactive { redde "inactive" }
+        casu Pending { redde "pending" }
     }
 }
 
 functio handle_event(Event e) -> nihil {
     discerne e {
-        si Click pro x, y {
+        casu Click pro x, y {
             scribe scriptum("Clicked at {}, {}", x, y)
         }
-        si Keypress pro key {
+        casu Keypress pro key {
             scribe scriptum("Key: {}", key)
         }
-        si Quit {
+        casu Quit {
             scribe "quit"
         }
     }

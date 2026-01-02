@@ -14,26 +14,26 @@ incipit {
 
     # Switch on enum
     elige color {
-        si Color.rubrum {
+        casu Color.rubrum {
             scribe "Red"
         }
-        si Color.viridis {
+        casu Color.viridis {
             scribe "Green"
         }
-        si Color.caeruleum {
+        casu Color.caeruleum {
             scribe "Blue"
         }
     }
 
     # Switch on enum with numeric values
     elige status {
-        si Status.pendens {
+        casu Status.pendens {
             scribe "Pending"
         }
-        si Status.actum {
+        casu Status.actum {
             scribe "Active"
         }
-        si Status.finitum {
+        casu Status.finitum {
             scribe "Finished"
         }
     }

@@ -82,6 +82,8 @@ export const keywords: KeywordEntry[] = [
     { latin: 'fac', meaning: 'do', category: 'control' },
     { latin: 'pro', meaning: 'for', category: 'control' },
     { latin: 'elige', meaning: 'switch', category: 'control' },
+    { latin: 'casu', meaning: 'case', category: 'control' },
+    { latin: 'ceterum', meaning: 'default/otherwise', category: 'control' },
     { latin: 'ergo', meaning: 'then', category: 'control' },
     { latin: 'nulla', meaning: 'none/empty', category: 'operator' },
     { latin: 'nonnulla', meaning: 'some/non-empty', category: 'operator' },

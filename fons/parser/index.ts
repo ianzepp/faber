@@ -2733,18 +2733,18 @@ export function parse(tokens: Token[]): ParserResult {
      *
      * GRAMMAR:
      *   eligeStmt := 'elige' expression '{' eligeCase* defaultCase? '}' catchClause?
-     *   eligeCase := 'si' expression (blockStmt | 'ergo' expression)
-     *   defaultCase := ('secus' | 'secus') (blockStmt | statement)
+     *   eligeCase := 'casu' expression (blockStmt | 'ergo' expression)
+     *   defaultCase := 'ceterum' (blockStmt | statement)
      *
      * WHY: 'elige' (choose) for value-based switch.
-     *      'ergo' (therefore) for one-liners, 'secus'/'secus' (otherwise) for default.
+     *      'ergo' (therefore) for one-liners, 'ceterum' (otherwise) for default.
      *      For variant matching on discretio types, use 'discerne' instead.
      *
      * Example:
      *   elige status {
-     *       si "pending" ergo scribe("waiting")
-     *       si "active" { processActive() }
-     *       secus iace "Unknown status"
+     *       casu "pending" ergo scribe("waiting")
+     *       casu "active" { processActive() }
+     *       ceterum iace "Unknown status"
      *   }
      */
     function parseEligeStatement(): EligeStatement {
@@ -2759,8 +2759,8 @@ export function parse(tokens: Token[]): ParserResult {
         const cases: EligeCasus[] = [];
         let defaultCase: BlockStatement | undefined;
 
-        // Helper: parse 'si' case body (requires ergo or block)
-        function parseSiBody(): BlockStatement {
+        // Helper: parse 'casu' case body (requires ergo or block)
+        function parseCasuBody(): BlockStatement {
             if (matchKeyword('ergo')) {
                 const stmtPos = peek().position;
                 const stmt = parseStatement();
@@ -2773,8 +2773,8 @@ export function parse(tokens: Token[]): ParserResult {
             return parseBlockStatement();
         }
 
-        // Helper: parse 'secus' body (block or direct statement, no ergo needed)
-        function parseSecusBody(): BlockStatement {
+        // Helper: parse 'ceterum' body (block or direct statement, no ergo needed)
+        function parseCeterumBody(): BlockStatement {
             if (check('LBRACE')) {
                 return parseBlockStatement();
             }
@@ -2791,20 +2791,20 @@ export function parse(tokens: Token[]): ParserResult {
         const hasMoreCases = () => !check('RBRACE') && !isAtEnd();
 
         while (hasMoreCases()) {
-            if (checkKeyword('si')) {
-                // Value case: si expression { ... }
+            if (checkKeyword('casu')) {
+                // Value case: casu expression { ... }
                 const casePosition = peek().position;
 
-                expectKeyword('si', ParserErrorCode.ExpectedKeywordSi);
+                expectKeyword('casu', ParserErrorCode.ExpectedKeywordCasu);
 
                 const test = parseExpression();
-                const consequent = parseSiBody();
+                const consequent = parseCasuBody();
 
                 cases.push({ type: 'EligeCasus', test, consequent, position: casePosition });
-            } else if (checkKeyword('secus')) {
-                advance(); // consume secus
+            } else if (checkKeyword('ceterum')) {
+                advance(); // consume ceterum
 
-                defaultCase = parseSecusBody();
+                defaultCase = parseCeterumBody();
                 break; // Default must be last
             } else {
                 error(ParserErrorCode.InvalidEligeCaseStart);
@@ -2828,16 +2828,16 @@ export function parse(tokens: Token[]): ParserResult {
      *
      * GRAMMAR:
      *   discerneStmt := 'discerne' expression '{' variantCase* '}'
-     *   variantCase := 'si' IDENTIFIER ('pro' IDENTIFIER (',' IDENTIFIER)*)? blockStmt
+     *   variantCase := 'casu' IDENTIFIER (('ut' IDENTIFIER) | ('pro' IDENTIFIER (',' IDENTIFIER)*))? blockStmt
      *
      * WHY: 'discerne' (distinguish!) pairs with 'discretio' (the tagged union type).
-     *      Uses 'si' for conditional match, 'pro' to introduce bindings.
+     *      Uses 'casu' for match arms, 'ut' to bind whole variants, and 'pro' to introduce positional bindings.
      *
      * Example:
      *   discerne event {
-     *       si Click pro x, y { scribe "clicked at " + x + ", " + y }
-     *       si Keypress pro key { scribe "pressed " + key }
-     *       si Quit { mori "goodbye" }
+     *       casu Click pro x, y { scribe "clicked at " + x + ", " + y }
+     *       casu Keypress pro key { scribe "pressed " + key }
+     *       casu Quit { mori "goodbye" }
      *   }
      */
     function parseDiscerneStatement(): DiscerneStatement {
@@ -2855,11 +2855,11 @@ export function parse(tokens: Token[]): ParserResult {
         const hasMoreCases = () => !check('RBRACE') && !isAtEnd();
 
         while (hasMoreCases()) {
-            if (checkKeyword('si')) {
-                // Variant case: si VariantName (ut alias | pro bindings)? { ... }
+            if (checkKeyword('casu')) {
+                // Variant case: casu VariantName (ut alias | pro bindings)? { ... }
                 const casePosition = peek().position;
 
-                advance(); // consume 'si'
+                expectKeyword('casu', ParserErrorCode.ExpectedKeywordCasu);
 
                 const variant = parseIdentifierOrKeyword();
 
@@ -2868,10 +2868,10 @@ export function parse(tokens: Token[]): ParserResult {
                 const bindings: Identifier[] = [];
 
                 if (matchKeyword('ut')) {
-                    // Alias binding: si Click ut c { ... }
+                    // Alias binding: casu Click ut c { ... }
                     alias = parseIdentifierOrKeyword();
                 } else if (matchKeyword('pro')) {
-                    // Positional bindings: si Click pro x, y { ... }
+                    // Positional bindings: casu Click pro x, y { ... }
                     do {
                         bindings.push(parseIdentifierOrKeyword());
                     } while (match('COMMA'));

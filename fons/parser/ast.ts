@@ -950,17 +950,17 @@ export interface InStatement extends BaseNode {
  *
  * GRAMMAR (in EBNF):
  *   eligeStmt := 'elige' expression '{' eligeCase* defaultCase? '}' catchClause?
- *   eligeCase := 'si' expression (blockStmt | 'ergo' expression)
- *   defaultCase := ('secus' | 'secus') (blockStmt | statement)
+ *   eligeCase := 'casu' expression (blockStmt | 'ergo' expression)
+ *   defaultCase := 'ceterum' (blockStmt | statement)
  *
  * WHY: Latin 'elige' (choose) for value-based switch.
  *      Use 'discerne' for variant pattern matching on discretio types.
  *
  * Example:
  *   elige status {
- *       si "pending" { processPending() }
- *       si "active" { processActive() }
- *       secus { processDefault() }
+ *       casu "pending" { processPending() }
+ *       casu "active" { processActive() }
+ *       ceterum { processDefault() }
  *   }
  */
 export interface EligeStatement extends BaseNode {
@@ -985,16 +985,16 @@ export interface EligeCasus extends BaseNode {
  *
  * GRAMMAR (in EBNF):
  *   discerneStmt := 'discerne' expression '{' variantCase* '}'
- *   variantCase := 'si' IDENTIFIER ('pro' IDENTIFIER (',' IDENTIFIER)*)? blockStmt
+ *   variantCase := 'casu' IDENTIFIER (('ut' IDENTIFIER) | ('pro' IDENTIFIER (',' IDENTIFIER)*))? blockStmt
  *
  * WHY: 'discerne' (distinguish!) pairs with 'discretio' (the tagged union type).
- *      Uses 'si' for conditional match, 'pro' for bindings.
+ *      Uses 'casu' for match arms, 'ut' to bind whole variants, and 'pro' for positional bindings.
  *
  * Example:
  *   discerne event {
- *       si Click pro x, y { scribe "clicked at " + x + ", " + y }
- *       si Keypress pro key { scribe "pressed " + key }
- *       si Quit { mori "goodbye" }
+ *       casu Click pro x, y { scribe "clicked at " + x + ", " + y }
+ *       casu Keypress pro key { scribe "pressed " + key }
+ *       casu Quit { mori "goodbye" }
  *   }
  */
 export interface DiscerneStatement extends BaseNode {
@@ -1007,21 +1007,21 @@ export interface DiscerneStatement extends BaseNode {
  * Variant case for pattern matching (part of discerne statement).
  *
  * GRAMMAR (in EBNF):
- *   variantCase := 'si' IDENTIFIER ('ut' IDENTIFIER | 'pro' IDENTIFIER (',' IDENTIFIER)*)? blockStmt
+ *   variantCase := 'casu' IDENTIFIER ('ut' IDENTIFIER | 'pro' IDENTIFIER (',' IDENTIFIER)*)? blockStmt
  *
  * INVARIANT: variant is the variant name to match (e.g., Click, Keypress).
  * INVARIANT: Either alias OR bindings is used, not both.
  * INVARIANT: consequent is the block to execute on match.
  *
- * WHY: 'si' (if) for conditional variant match.
+ * WHY: 'casu' (in the case of) for variant match arms.
  *      'ut' (as) binds the whole variant to a name.
  *      'pro' (for) destructures fields positionally.
  *
  * Examples:
- *   si Click ut c { ... }       -> variant=Click, alias=c (bind whole variant)
- *   si Click pro x, y { ... }   -> variant=Click, bindings=[x, y] (destructure)
- *   si Keypress pro key { ... } -> variant=Keypress, bindings=[key]
- *   si Quit { ... }             -> variant=Quit, no bindings
+ *   casu Click ut c { ... }       -> variant=Click, alias=c (bind whole variant)
+ *   casu Click pro x, y { ... }   -> variant=Click, bindings=[x, y] (destructure)
+ *   casu Keypress pro key { ... } -> variant=Keypress, bindings=[key]
+ *   casu Quit { ... }             -> variant=Quit, no bindings
  */
 export interface VariantCase extends BaseNode {
     type: 'VariantCase';

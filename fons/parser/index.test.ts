@@ -1703,7 +1703,7 @@ describe('parser', () => {
         test('throw in switch case', () => {
             const { program } = parseCode(`
                 elige x {
-                    si 1 { iace "invalid" }
+                    casu 1 { iace "invalid" }
                 }
             `);
             const switchStmt = program!.body[0] as any;
@@ -2660,7 +2660,7 @@ describe('parser', () => {
         });
 
         test('incomplete switch case', () => {
-            const { errors } = parseCode('elige x { si }');
+            const { errors } = parseCode('elige x { casu }');
 
             expect(errors.length).toBeGreaterThan(0);
         });
@@ -3831,8 +3831,8 @@ describe('parser', () => {
             test('variant case pattern matching with discerne', () => {
                 const { program, errors } = parseCode(`
                     discerne event {
-                        si Click pro x, y { scribe x }
-                        si Quit { mori "goodbye" }
+                        casu Click pro x, y { scribe x }
+                        casu Quit { mori "goodbye" }
                     }
                 `);
 
@@ -3842,7 +3842,7 @@ describe('parser', () => {
                 expect(discerneStmt.type).toBe('DiscerneStatement');
                 expect(discerneStmt.cases).toHaveLength(2);
 
-                // First case: si Click pro x, y
+                // First case: casu Click pro x, y
                 const clickCase = discerneStmt.cases[0];
                 expect(clickCase.type).toBe('VariantCase');
                 expect(clickCase.variant.name).toBe('Click');
@@ -3850,7 +3850,7 @@ describe('parser', () => {
                 expect(clickCase.bindings[0].name).toBe('x');
                 expect(clickCase.bindings[1].name).toBe('y');
 
-                // Second case: si Quit (no bindings)
+                // Second case: casu Quit (no bindings)
                 const quitCase = discerneStmt.cases[1];
                 expect(quitCase.type).toBe('VariantCase');
                 expect(quitCase.variant.name).toBe('Quit');

@@ -76,6 +76,8 @@ export enum ParserErrorCode {
     ExpectedKeywordIn = 'P029',
     ExpectedKeywordDe = 'P043',
     ExpectedKeywordElige = 'P030',
+    ExpectedKeywordCasu = 'P038',
+    ExpectedKeywordCeterum = 'P056',
     ExpectedKeywordCustodi = 'P031',
     ExpectedKeywordAdfirma = 'P032',
     ExpectedKeywordRedde = 'P033',
@@ -217,7 +219,7 @@ export const PARSER_ERRORS = {
     },
     [ParserErrorCode.ExpectedKeywordSi]: {
         text: "Expected condition keyword 'si' (if)",
-        help: "Conditional statements and switch cases use 'si' (if): si x > 0 { ... }",
+        help: "Conditional statements use 'si' (if): si x > 0 { ... }",
     },
     [ParserErrorCode.ExpectedKeywordDum]: {
         text: "Expected while keyword 'dum'",
@@ -237,7 +239,15 @@ export const PARSER_ERRORS = {
     },
     [ParserErrorCode.ExpectedKeywordElige]: {
         text: "Expected switch keyword 'elige' (choose)",
-        help: "Switch statements use 'elige' (choose) keyword: elige status { si 'active' { ... } }",
+        help: "Switch statements use 'elige' (choose) keyword: elige status { casu 'active' { ... } }",
+    },
+    [ParserErrorCode.ExpectedKeywordCasu]: {
+        text: "Expected case keyword 'casu'",
+        help: "Switch cases and match arms use 'casu': elige status { casu 'active' { ... } }",
+    },
+    [ParserErrorCode.ExpectedKeywordCeterum]: {
+        text: "Expected default keyword 'ceterum' (otherwise)",
+        help: "Switch defaults use 'ceterum': elige status { casu 'active' { ... } ceterum { ... } }",
     },
     [ParserErrorCode.ExpectedKeywordCustodi]: {
         text: "Expected guard keyword 'custodi'",
@@ -269,7 +279,7 @@ export const PARSER_ERRORS = {
     },
     [ParserErrorCode.ExpectedKeywordSecus]: {
         text: "Expected 'secus' (otherwise)",
-        help: "Use 'secus' for else clauses (si x { } secus { }), switch defaults, and ternary alternates (sic x secus y)",
+        help: "Use 'secus' for else clauses (si x { } secus { }) and ternary alternates (sic x secus y)",
     },
     [ParserErrorCode.ExpectedKeywordFac]: {
         text: "Expected do keyword 'fac'",
@@ -289,7 +299,7 @@ export const PARSER_ERRORS = {
     },
     [ParserErrorCode.ExpectedKeywordDiscerne]: {
         text: "Expected match keyword 'discerne' (distinguish)",
-        help: "Variant matching uses 'discerne' (distinguish!): discerne event { si Click pro x, y { ... } }",
+        help: "Variant matching uses 'discerne' (distinguish!): discerne event { casu Click pro x, y { ... } }",
     },
     [ParserErrorCode.ExpectedKeywordProbandum]: {
         text: "Expected test suite keyword 'probandum'",
@@ -344,12 +354,12 @@ export const PARSER_ERRORS = {
         help: "For loops start with 'ex' (for-of) or 'de' (for-in): ex items pro item { ... } or de tabula pro clavis { ... }",
     },
     [ParserErrorCode.InvalidEligeCaseStart]: {
-        text: "Switch 'elige' cases must start with 'si' or 'secus'",
-        help: "Switch cases start with 'si' for value matching or 'secus' for default: elige x { si 1 { ... } secus { ... } }. For variant matching, use 'discerne' instead.",
+        text: "Switch 'elige' cases must start with 'casu' or 'ceterum'",
+        help: "Switch cases start with 'casu' for value matching or 'ceterum' for default: elige x { casu 1 { ... } ceterum { ... } }. For variant matching, use 'discerne' instead.",
     },
     [ParserErrorCode.InvalidDiscerneCaseStart]: {
-        text: "Match 'discerne' cases must start with 'si'",
-        help: "Variant cases start with 'si' followed by variant name: discerne event { si Click pro x, y { ... } si Quit { ... } }",
+        text: "Match 'discerne' cases must start with 'casu'",
+        help: "Variant cases start with 'casu' followed by variant name: discerne event { casu Click pro x, y { ... } casu Quit { ... } }",
     },
     [ParserErrorCode.InvalidCustodiClauseStart]: {
         text: "Guard 'custodi' clauses must start with 'si'",

@@ -3,9 +3,9 @@
 #
 # Syntax:
 #   elige discriminant {
-#     si value1 { consequent }
-#     si value2 { consequent }
-#     secus { default }
+#     casu value1 { consequent }
+#     casu value2 { consequent }
+#     ceterum { default }
 #   }
 #
 # Target behaviors:
@@ -23,8 +23,8 @@
 - name: elige with numeric cases
   faber: |
       elige x {
-        si 1 { a() }
-        si 2 { b() }
+        casu 1 { a() }
+        casu 2 { b() }
       }
   expect:
       ts:
@@ -57,17 +57,17 @@
           - 'b();'
       fab:
           - 'elige x'
-          - 'si 1'
+          - 'casu 1'
           - 'a()'
-          - 'si 2'
+          - 'casu 2'
           - 'b()'
 
-# Elige with default case (secus)
+# Elige with default case (ceterum)
 - name: elige with default case
   faber: |
       elige status {
-        si 1 { active() }
-        secus { inactive() }
+        casu 1 { active() }
+        ceterum { inactive() }
       }
   expect:
       ts:
@@ -100,9 +100,9 @@
           - 'inactive();'
       fab:
           - 'elige status'
-          - 'si 1'
+          - 'casu 1'
           - 'active()'
-          - 'secus'
+          - 'ceterum'
           - 'inactive()'
 
 # =============================================================================
@@ -113,9 +113,9 @@
 - name: elige with string cases
   faber: |
       elige cmd {
-        si "start" { begin() }
-        si "stop" { end() }
-        secus { unknown() }
+        casu "start" { begin() }
+        casu "stop" { end() }
+        ceterum { unknown() }
       }
   expect:
       ts:
@@ -155,11 +155,11 @@
           - 'unknown();'
       fab:
           - 'elige cmd'
-          - 'si "start"'
+          - 'casu "start"'
           - 'begin()'
-          - 'si "stop"'
+          - 'casu "stop"'
           - 'end()'
-          - 'secus'
+          - 'ceterum'
           - 'unknown()'
 
 # =============================================================================
@@ -170,12 +170,12 @@
 - name: elige case with multiple statements
   faber: |
       elige mode {
-        si 1 {
+        casu 1 {
           varia x = init()
           process(x)
           redde x
         }
-        secus {
+        ceterum {
           redde nihil
         }
       }
@@ -219,11 +219,11 @@
           - 'return null;'
       fab:
           - 'elige mode'
-          - 'si 1'
+          - 'casu 1'
           - 'varia x = init()'
           - 'process(x)'
           - 'redde x'
-          - 'secus'
+          - 'ceterum'
           - 'redde nihil'
 
 # =============================================================================
@@ -234,8 +234,8 @@
 - name: elige with expression discriminant
   faber: |
       elige getValue() {
-        si 0 { zero() }
-        si 1 { one() }
+        casu 0 { zero() }
+        casu 1 { one() }
       }
   expect:
       ts:
@@ -266,9 +266,9 @@
           - 'one();'
       fab:
           - 'elige getValue()'
-          - 'si 0'
+          - 'casu 0'
           - 'zero()'
-          - 'si 1'
+          - 'casu 1'
           - 'one()'
 
 # =============================================================================
@@ -279,7 +279,7 @@
 - name: elige with cape clause
   faber: |
       elige riskyValue() {
-        si 1 { action() }
+        casu 1 { action() }
       }
       cape err {
         handleError(err)
@@ -300,7 +300,7 @@
           - 'handleError(err)'
       fab:
           - 'elige riskyValue()'
-          - 'si 1'
+          - 'casu 1'
           - 'action()'
           - 'cape err'
           - 'handleError(err)'
@@ -313,7 +313,7 @@
 - name: elige with only default case
   faber: |
       elige x {
-        secus { fallback() }
+        ceterum { fallback() }
       }
   expect:
       ts:
@@ -335,15 +335,15 @@
           - 'fallback();'
       fab:
           - 'elige x'
-          - 'secus'
+          - 'ceterum'
           - 'fallback()'
 
 # Empty case body
 - name: elige with empty case
   faber: |
       elige x {
-        si 1 { }
-        secus { action() }
+        casu 1 { }
+        ceterum { action() }
       }
   expect:
       ts:
@@ -372,27 +372,27 @@
           - 'action();'
       fab:
           - 'elige x'
-          - 'si 1'
-          - 'secus'
+          - 'casu 1'
+          - 'ceterum'
           - 'action()'
 
 # Elige with many cases (10+)
 - name: elige with many cases month mapping
   faber: |
       elige month {
-        si 1 { redde "Jan" }
-        si 2 { redde "Feb" }
-        si 3 { redde "Mar" }
-        si 4 { redde "Apr" }
-        si 5 { redde "May" }
-        si 6 { redde "Jun" }
-        si 7 { redde "Jul" }
-        si 8 { redde "Aug" }
-        si 9 { redde "Sep" }
-        si 10 { redde "Oct" }
-        si 11 { redde "Nov" }
-        si 12 { redde "Dec" }
-        secus { redde "Unknown" }
+        casu 1 { redde "Jan" }
+        casu 2 { redde "Feb" }
+        casu 3 { redde "Mar" }
+        casu 4 { redde "Apr" }
+        casu 5 { redde "May" }
+        casu 6 { redde "Jun" }
+        casu 7 { redde "Jul" }
+        casu 8 { redde "Aug" }
+        casu 9 { redde "Sep" }
+        casu 10 { redde "Oct" }
+        casu 11 { redde "Nov" }
+        casu 12 { redde "Dec" }
+        ceterum { redde "Unknown" }
       }
   expect:
       ts:
@@ -427,21 +427,21 @@
           - 'return std::string("Unknown");'
       fab:
           - 'elige month'
-          - 'si 1'
+          - 'casu 1'
           - 'redde "Jan"'
-          - 'si 12'
+          - 'casu 12'
           - 'redde "Dec"'
-          - 'secus'
+          - 'ceterum'
           - 'redde "Unknown"'
 
 # Elige as potential expression (return in every case)
 - name: elige with return in every case
   faber: |
       elige level {
-        si 1 { redde "low" }
-        si 2 { redde "medium" }
-        si 3 { redde "high" }
-        secus { redde "unknown" }
+        casu 1 { redde "low" }
+        casu 2 { redde "medium" }
+        casu 3 { redde "high" }
+        ceterum { redde "unknown" }
       }
   expect:
       ts:
@@ -481,18 +481,18 @@
           - 'return std::string("unknown");'
       fab:
           - 'elige level'
-          - 'si 1'
+          - 'casu 1'
           - 'redde "low"'
-          - 'si 2'
+          - 'casu 2'
           - 'redde "medium"'
-          - 'si 3'
+          - 'casu 3'
           - 'redde "high"'
-          - 'secus'
+          - 'ceterum'
           - 'redde "unknown"'
 
 # Elige with boolean cases
 - name: elige with boolean cases
-  faber: 'elige flag { si verum { yes() } si falsum { no() } }'
+  faber: 'elige flag { casu verum { yes() } casu falsum { no() } }'
   expect:
       ts:
           - 'if (flag === true)'
@@ -517,23 +517,23 @@
           - 'no();'
       fab:
           - 'elige flag'
-          - 'si verum'
+          - 'casu verum'
           - 'yes()'
-          - 'si falsum'
+          - 'casu falsum'
           - 'no()'
 
 # Elige with nested conditionals
 - name: elige with nested si inside case
   faber: |
       elige mode {
-        si 1 {
+        casu 1 {
           si x > 0 {
             positive()
           } secus {
             nonPositive()
           }
         }
-        si 2 {
+        casu 2 {
           action()
         }
       }
@@ -574,17 +574,17 @@
           - 'action();'
       fab:
           - 'elige mode'
-          - 'si 1'
+          - 'casu 1'
           - 'si x > 0'
           - 'positive()'
           - 'secus'
           - 'nonPositive()'
-          - 'si 2'
+          - 'casu 2'
           - 'action()'
 
 # Elige with member expression discriminant
 - name: elige with member expression discriminant
-  faber: 'elige obj.status { si 1 { active() } si 0 { inactive() } }'
+  faber: 'elige obj.status { casu 1 { active() } casu 0 { inactive() } }'
   expect:
       ts:
           - 'if (obj.status === 1)'
@@ -609,18 +609,18 @@
           - 'inactive();'
       fab:
           - 'elige obj.status'
-          - 'si 1'
+          - 'casu 1'
           - 'active()'
-          - 'si 0'
+          - 'casu 0'
           - 'inactive()'
 
 # Elige with call returning each case
 - name: elige with function calls returning in cases
   faber: |
       elige priority {
-        si 1 { redde getLow() }
-        si 2 { redde getMedium() }
-        si 3 { redde getHigh() }
+        casu 1 { redde getLow() }
+        casu 2 { redde getMedium() }
+        casu 3 { redde getHigh() }
       }
   expect:
       ts:
@@ -653,16 +653,16 @@
           - 'return getHigh();'
       fab:
           - 'elige priority'
-          - 'si 1'
+          - 'casu 1'
           - 'redde getLow()'
-          - 'si 2'
+          - 'casu 2'
           - 'redde getMedium()'
-          - 'si 3'
+          - 'casu 3'
           - 'redde getHigh()'
 
 # Consecutive elige statements (single-line avoids parser issue with multiline consecutive elige)
 - name: consecutive elige statements
-  faber: "elige a { si 1 { first() } si 2 { second() } }\nelige b { si 3 { third() } si 4 { fourth() } }"
+  faber: "elige a { casu 1 { first() } casu 2 { second() } }\nelige b { casu 3 { third() } casu 4 { fourth() } }"
   expect:
       ts:
           - 'if (a === 1)'
@@ -704,12 +704,12 @@
           - 'fourth();'
       fab:
           - 'elige a'
-          - 'si 1'
+          - 'casu 1'
           - 'first()'
-          - 'si 2'
+          - 'casu 2'
           - 'second()'
           - 'elige b'
-          - 'si 3'
+          - 'casu 3'
           - 'third()'
-          - 'si 4'
+          - 'casu 4'
           - 'fourth()'

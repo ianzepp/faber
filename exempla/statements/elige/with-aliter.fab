@@ -1,58 +1,58 @@
-# Elige with default case (secus)
+# Elige with default case (ceterum)
 #
 # elige <expr> {
-#     si <value> { <body> }
-#     secus { <default> }
+#     casu <value> { <body> }
+#     ceterum { <default> }
 # }
 
 incipit ergo cura arena {
-    # secus handles unmatched cases
+    # ceterum handles unmatched cases
     fixum day = "wednesday"
 
     elige day {
-        si "monday" {
+        casu "monday" {
             scribe "Start of week"
         }
-        si "friday" {
+        casu "friday" {
             scribe "End of week"
         }
-        secus {
+        ceterum {
             scribe "Midweek"
         }
     }
 
-    # secus with error handling
+    # ceterum with error handling
     fixum command = "unknown"
 
     elige command {
-        si "start" {
+        casu "start" {
             scribe "Starting..."
         }
-        si "stop" {
+        casu "stop" {
             scribe "Stopping..."
         }
-        si "restart" {
+        casu "restart" {
             scribe "Restarting..."
         }
-        secus {
+        ceterum {
             scribe "Unknown command"
         }
     }
 
-    # Multiple statements in secus
+    # Multiple statements in ceterum
     fixum level = 99
 
     elige level {
-        si 1 {
+        casu 1 {
             scribe "Beginner"
         }
-        si 2 {
+        casu 2 {
             scribe "Intermediate"
         }
-        si 3 {
+        casu 3 {
             scribe "Advanced"
         }
-        secus {
+        ceterum {
             scribe "Custom level"
             scribe scriptum("Level: {}", level)
         }

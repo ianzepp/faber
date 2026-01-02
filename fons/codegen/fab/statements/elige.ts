@@ -12,11 +12,11 @@ export function genEligeStatement(node: EligeStatement, g: FabGenerator): string
 
     g.depth++;
     for (const c of node.cases) {
-        lines.push(`${g.ind()}si ${g.genExpression(c.test)} ${genBlockStatement(c.consequent, g)}`);
+        lines.push(`${g.ind()}casu ${g.genExpression(c.test)} ${genBlockStatement(c.consequent, g)}`);
     }
 
     if (node.defaultCase) {
-        lines.push(`${g.ind()}secus ${genBlockStatement(node.defaultCase, g)}`);
+        lines.push(`${g.ind()}ceterum ${genBlockStatement(node.defaultCase, g)}`);
     }
     g.depth--;
 

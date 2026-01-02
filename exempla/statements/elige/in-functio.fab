@@ -1,22 +1,23 @@
 # Elige with early returns in functions
 #
 # elige <expr> {
-#     si <value> { redde ... }
-#     si <value> { redde ... }
+#     casu <value> { redde ... }
+#     casu <value> { redde ... }
+#     ceterum { redde ... }
 # }
 
 functio getGreeting(textus language) fit textus {
     elige language {
-        si "latin" {
+        casu "latin" {
             redde "Salve"
         }
-        si "english" {
+        casu "english" {
             redde "Hello"
         }
-        si "spanish" {
+        casu "spanish" {
             redde "Hola"
         }
-        si "french" {
+        casu "french" {
             redde "Bonjour"
         }
     }
@@ -26,19 +27,19 @@ functio getGreeting(textus language) fit textus {
 
 functio getHttpMessage(numerus code) fit textus {
     elige code {
-        si 200 {
+        casu 200 {
             redde "OK"
         }
-        si 201 {
+        casu 201 {
             redde "Created"
         }
-        si 400 {
+        casu 400 {
             redde "Bad Request"
         }
-        si 404 {
+        casu 404 {
             redde "Not Found"
         }
-        si 500 {
+        casu 500 {
             redde "Internal Server Error"
         }
     }

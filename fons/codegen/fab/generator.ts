@@ -5,7 +5,7 @@
  * Primary use case: TS-to-Faber transformation, refactoring tools.
  *
  * STYLE GUIDE (canonical output):
- * - Control flow: si/sin/secus (not sin/secus)
+ * - Control flow: si/sin/secus for conditionals; casu/ceterum for elige/discerne
  * - Operators: &&/|| (not et/aut), non (not !)
  * - Functions: -> for return type (not fit/fiet/fiunt/fient)
  * - Lambdas: pro x: expr (not pro x redde expr)
