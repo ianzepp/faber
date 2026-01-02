@@ -105,12 +105,12 @@ genus Lexor {
 
     # estDigitus = "is it a digit?" - decimal 0-9
     functio estDigitus(textus c) -> bivalens {
-        redde c >= "0" et c <= "9"
+        redde c intra "0" usque "9"
     }
 
     # estDigitusHex = "is it a hex digit?" - 0-9, a-f, A-F
     functio estDigitusHex(textus c) -> bivalens {
-        redde ego.estDigitus(c) aut (c >= "a" et c <= "f") aut (c >= "A" et c <= "F")
+        redde ego.estDigitus(c) aut (c intra "a" usque "f") aut (c intra "A" usque "F")
     }
 
     # estDigitusBinarius = "is it a binary digit?" - 0 or 1
@@ -120,12 +120,12 @@ genus Lexor {
 
     # estDigitusOctalis = "is it an octal digit?" - 0-7
     functio estDigitusOctalis(textus c) -> bivalens {
-        redde c >= "0" et c <= "7"
+        redde c intra "0" usque "7"
     }
 
     # estLittera = "is it a letter?" - identifier start char (a-z, A-Z, _)
     functio estLittera(textus c) -> bivalens {
-        redde (c >= "a" et c <= "z") aut (c >= "A" et c <= "Z") aut c == "_"
+        redde (c intra "a" usque "z") aut (c intra "A" usque "Z") aut c == "_"
     }
 
     # estLitteraVelDigitus = "is it a letter or digit?" - identifier continuation
