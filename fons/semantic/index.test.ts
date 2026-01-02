@@ -807,13 +807,13 @@ describe('Semantic Analyzer', () => {
 
                 functio handle(Event e) -> vacuum {
                     discerne e {
-                        si Click pro a, b {
+                        casu Click pro a, b {
                             varia numerus sum = a + b
                         }
-                        si Keypress pro k {
+                        casu Keypress pro k {
                             varia textus msg = k
                         }
-                        si Quit {
+                        casu Quit {
                             redde
                         }
                     }
@@ -841,7 +841,7 @@ describe('Semantic Analyzer', () => {
 
                 functio handle(Event e) -> vacuum {
                     discerne e {
-                        si Click pro a, b {
+                        casu Click pro a, b {
                             # a is numerus, cannot assign to textus
                             varia textus wrong = a
                         }
@@ -874,11 +874,11 @@ describe('Semantic Analyzer', () => {
 
                 functio unwrap(Option opt) -> numerus {
                     discerne opt {
-                        si Some pro v {
+                        casu Some pro v {
                             # v should be numerus
                             redde v
                         }
-                        si None {
+                        casu None {
                             redde 0
                         }
                     }
@@ -906,11 +906,11 @@ describe('Semantic Analyzer', () => {
 
                 functio handle(Event e) -> numerus {
                     discerne e {
-                        si Click ut c {
+                        casu Click ut c {
                             # c is the whole variant, access fields via c.x, c.y
                             redde c.x + c.y
                         }
-                        si Quit {
+                        casu Quit {
                             redde 0
                         }
                     }
