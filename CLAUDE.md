@@ -1,153 +1,60 @@
 # Faber Romanus
 
-A Latin programming language compiler. "The Roman Craftsman."
+A Latin programming language compiler ("The Roman Craftsman").
 
-## Quick Reference
+## Quick Rules (CRITICAL)
+
+- **Type-first syntax**: `textus name` not `name: textus`
+- **Check grammar first**: Never assume syntax exists - verify in `grammatica/*.md`
+- **No invented syntax**: Don't create variations (e.g., no `Type?` for nullable)
+- **Empty collections need explicit types**: `[] qua lista<T>`, `{} qua tabula<K,V>`
+- **Use `ignotum` for nullable params**, not invented suffixes
+- **Banned keyword**: `cum` (Latin "with" - English homograph)
+- **Column 0 keywords**: Declaration keywords (`functio`, `genus`, etc.) must start at column 0
+
+## Commands
 
 ### Faber CLI
 
-| Command                                   | Purpose                            |
-| ----------------------------------------- | ---------------------------------- |
-| `bun run faber compile <file.fab>`        | Compile to TypeScript (default)    |
-| `bun run faber compile <file.fab> -t py`  | Compile to Python                  |
-| `bun run faber compile <file.fab> -t zig` | Compile to Zig                     |
-| `bun run faber compile <file.fab> -t rs`  | Compile to Rust                    |
-| `bun run faber compile <file.fab> -t cpp` | Compile to C++                     |
-| `bun run faber compile <file.fab> -t fab` | Emit canonical Faber source        |
-| `bun run faber run <file.fab>`            | Compile and execute (TS only)      |
-| `bun run faber check <file.fab>`          | Check for errors without compiling |
-| `bun run faber format <file.fab>`         | Format source file                 |
-
-### Development Scripts
-
-| Command                  | Purpose                            |
-| ------------------------ | ---------------------------------- |
-| `bun test`               | Run all tests                      |
-| `bun test -t "pattern"`  | Run tests matching pattern         |
-| `bun test --coverage`    | Run tests with line coverage       |
-| `bun run sanity`         | Check feature test coverage exists |
-| `bun run lint`           | Lint TypeScript source             |
-| `bun run lint:fix`       | Lint with auto-fix                 |
-| `bun run prettier`       | Format code                        |
-| `bun run prettier:check` | Check formatting                   |
-
-### Build & Release
-
-| Command                     | Purpose                                |
-| --------------------------- | -------------------------------------- |
-| `bun run build`             | Build faber executable to `opus/`      |
-| `bun run exempla`           | Compile all `exempla/*.fab` to `opus/` |
-| `bun run exempla -- -t all` | Compile exempla to all targets         |
-| `bun run verify:exempla`    | Verify exempla compile correctly       |
-| `bun run grammar`           | Regenerate `GRAMMAR.md` from parser    |
-| `bun run release`           | Release new version                    |
-
-### Misc Tools
-
-| Command                    | Purpose                                        |
-| -------------------------- | ---------------------------------------------- |
-| `bun run misc:ast`         | Check prettier/tree-sitter cover all AST nodes |
-| `bun run misc:tree-sitter` | Regenerate and verify tree-sitter parser       |
-
-## Grammar
-
-See `GRAMMAR.md` for the complete syntax reference. It is auto-generated from parser source comments via `bun run grammar`.
-
-**Never assume Faber syntax.** Before writing `.fab` code:
-
-1. Check `grammatica/*.md` for the relevant grammar rules
-2. Look at existing `.fab` files in `exempla/` or `fons-fab/` for patterns
-3. Validate with `bun run faber check <file.fab>` before committing
-
-Common pitfalls:
-- Don't invent syntax (e.g., `Type?` for nullable) — verify it exists first
-- Empty collections need explicit types: `[] qua lista<T>`, `{} qua tabula<K,V>`
-- Use `ignotum` for parameters that may be null, not invented suffixes
-
-### Primitive Types
-
-| Faber      | TypeScript | Python  | Zig          | C++            | Rust     |
-| ---------- | ---------- | ------- | ------------ | -------------- | -------- |
-| `textus`   | `string`   | `str`   | `[]const u8` | `std::string`  | `String` |
-| `numerus`  | `number`   | `int`   | `i64`        | `int64_t`      | `i64`    |
-| `fractus`  | `number`   | `float` | `f64`        | `double`       | `f64`    |
-| `bivalens` | `boolean`  | `bool`  | `bool`       | `bool`         | `bool`   |
-| `nihil`    | `null`     | `None`  | `null`       | `std::nullopt` | `None`   |
-| `vacuum`   | `void`     | `None`  | `void`       | `void`         | `()`     |
-
-### Block Syntax Patterns
-
-Faber uses a consistent `keyword expr VERB name { body }` pattern:
-
-| Construct       | Syntax                                    | Purpose        |
-| --------------- | ----------------------------------------- | -------------- |
-| `ex...pro`      | `ex items pro item { }`                   | iterate values |
-| `de...pro`      | `de obj pro key { }`                      | iterate keys   |
-| `cura...fit`    | `cura resource fit handle { }`            | resource scope |
-| `tempta...cape` | `tempta { } cape err { }`                 | error handling |
-| `dum`           | `dum condition { }`                       | while loop     |
-| `si`            | `si condition { }`                        | conditional    |
-| `elige`         | `elige value { si case { } }`             | switch         |
-| `discerne`      | `discerne value { si Variant pro x { } }` | pattern match  |
-
-### Return Type Verbs
-
-| Verb    | Async | Generator | Meaning            |
-| ------- | :---: | :-------: | ------------------ |
-| `fit`   |  no   |    no     | "it becomes"       |
-| `fiet`  |  yes  |    no     | "it will become"   |
-| `fiunt` |  no   |    yes    | "they become"      |
-| `fient` |  yes  |    yes    | "they will become" |
-
-### String Formatting
-
-Use `scriptum()` for formatted strings (required for Zig, works on all targets):
-
-```fab
-fixum greeting = scriptum("Hello, {}!", name)
+```
+bun run faber compile <file.fab>      # TS (default)
+bun run faber compile <file.fab> -t py | zig | rs | cpp | fab
+bun run faber run <file.fab>          # Compile & execute (TS only)
+bun run faber check <file.fab>        # Validate syntax
+bun run faber format <file.fab>       # Format source
 ```
 
-| Target | Output                                             |
-| ------ | -------------------------------------------------- |
-| TS     | `` `Hello, ${name}!` ``                            |
-| Python | `"Hello, {}!".format(name)`                        |
-| Rust   | `format!("Hello, {}!", name)`                      |
-| C++    | `std::format("Hello, {}!", name)`                  |
-| Zig    | `std.fmt.allocPrint(alloc, "Hello, {}!", .{name})` |
-
-Format strings pass through verbatim — use target-appropriate placeholders.
-
-## Directory Structure
-
-- `fons/` — compiler source (lexicon, tokenizer, parser, semantic, codegen)
-- `proba/` — tests mirroring fons/ structure
-- `exempla/` — example .fab programs
-- `consilia/` — design documents (not authoritative)
-- `grammatica/` — auto-generated grammar docs
-
-### Codegen Layout
+### Development
 
 ```
-fons/codegen/
-├── index.ts              # Router: dispatches to target generators
-├── types.ts              # Shared types (CodegenTarget, RequiredFeatures)
-└── <target>/             # ts, py, rs, cpp, zig, fab
-    ├── index.ts          # Public API for target
-    ├── generator.ts      # Main generator class
-    ├── expressions/      # Expression handlers (binary.ts, call.ts, etc.)
-    ├── statements/       # Statement handlers (si.ts, functio.ts, etc.)
-    └── norma/            # Standard library helpers (lista.ts, etc.)
+bun test                              # Run all tests
+bun test -t "pattern"                 # Filter tests
+bun test --coverage                   # With coverage
+bun run lint                          # Lint TS source
+bun run lint:fix                      # Lint with auto-fix
+bun run sanity                        # Verify test coverage
+bun run grammar                       # Regenerate GRAMMAR.md
 ```
 
-### Test Layout
+### Build
 
-See `proba/README.md` for test framework details. Structure mirrors codegen:
+```
+bun run build                         # Build faber executable to opus/
+bun run exempla                       # Compile exempla/*.fab to opus/
+bun run exempla -- -t all             # Compile to all targets
+bun run release                       # Release new version
+```
 
-- `fons/codegen/<target>/statements/si.ts` → `proba/codegen/statements/si.yaml`
+### Tools
 
-## Syntax Reminder
+```
+bun run misc:ast                      # Check AST node coverage
+bun run misc:tree-sitter              # Regenerate tree-sitter parser
+```
 
-Faber uses **type-first** syntax, not TypeScript-style `name: Type`:
+## Syntax Patterns
+
+### Type Declarations
 
 ```fab
 # Correct
@@ -155,42 +62,125 @@ textus nomen
 numerus aetas
 functio greet(textus name) -> textus
 
-# Wrong (not Faber syntax)
+# Wrong (not Faber)
 nomen: textus
-aetas: numerus
 functio greet(name: textus): textus
+
+# Colon used only for defaults in genus
+genus Persona
+    textus nomen: "Anonymous"
 ```
 
-The colon `:` is used only for default values in genus properties, not for type annotations.
+### Block Syntax
 
-## Banned Keywords
+```
+ex...pro        # ex items pro item { }         - iterate values
+de...pro        # de obj pro key { }            - iterate keys
+cura...fit      # cura r fit h { }              - resource scope
+tempta...cape   # tempta { } cape err { }       - error handling
+dum             # dum cond { }                  - while loop
+si              # si cond { }                   - conditional
+elige           # elige val { si case { } }     - switch
+discerne        # discern val { si Var { } }    - pattern match
+```
 
-- `cum` — The Latin preposition "with" is permanently banned due to its English homograph.
+### Return Type Verbs
+
+```
+fit    # becomes (sync)
+fiet   # will become (async)
+fiunt  # become (sync generator)
+fient  # will become (async generator)
+```
+
+### String Formatting
+
+Use `scriptum()` for formatted strings (required for Zig, works everywhere):
+
+```fab
+fixum greeting = scriptum("Hello, {}!", name)
+```
+
+Output varies by target:
+- TS: `` `Hello, ${name}!` ``
+- Python: `"Hello, {}!".format(name)`
+- C++/Rust/Zig: `format(...)` family
+
+## Grammar Reference
+
+See `GRAMMAR.md` or `grammatica/*.md` for complete syntax reference. Never assume syntax - always verify:
+
+```
+bun run faber check <file.fab>  # Validate before committing
+```
+
+**Common pitfalls:**
+- Empty collections need explicit types
+- Use `ignotum` for nullable parameters
+- Browse `exempla/` and `fons-fab/` for patterns
+
+## Primitive Types
+
+| Faber      | TS        | Python  | Zig          | C++            | Rust     |
+| ---------- | --------- | ------- | ------------ | -------------- | -------- |
+| `textus`   | `string`  | `str`   | `[]const u8` | `std::string`  | `String` |
+| `numerus`  | `number`  | `int`   | `i64`        | `int64_t`      | `i64`    |
+| `fractus`  | `number`  | `float` | `f64`        | `double`       | `f64`    |
+| `bivalens` | `boolean` | `bool`  | `bool`       | `bool`         | `bool`   |
+| `nihil`    | `null`    | `None`  | `null`       | `nullopt`      | `None`   |
+| `vacuum`   | `void`    | `None`  | `void`       | `void`         | `()`     |
+
+## Directory Structure
+
+```
+fons/           # Compiler source (lexicon, tokenizer, parser, semantic, codegen)
+proba/          # Tests mirroring fons/ structure
+exempla/        # Example .fab programs
+consilia/       # Design documents
+grammatica/     # Auto-generated grammar docs
+fons-fab/       # Faber implementation of compiler
+norma/          # Standard library modules
+```
+
+### Codegen Layout
+
+```
+fons/codegen/
+├── index.ts              # Router
+├── types.ts              # Shared types
+└── <target>/             # ts, py, rs, cpp, zig, fab
+    ├── index.ts          # Public API
+    ├── generator.ts      # Main generator
+    ├── expressions/      # Expression handlers
+    ├── statements/       # Statement handlers
+    └── norma/            # Standard library
+```
+
+## Design Principles
+
+- **LLM-readable**: Write unbreakable code - patterns so consistent deviation feels like a bug
+- **Latin correctness**: Grammar follows authentic Latin patterns (adjective-noun agreement, declension)
+- **Consistent syntax**: Patterns must work everywhere, no special cases
+- **Mechanically certain**: Every token resolves ambiguity
+- **Industrial quality**: No wobbles, no surprises, no attention spikes
+
+**Example**: Postfix visibility modifiers (`genus Foo publicum`) because Latin puts adjectives after nouns AND keeps declaration keywords at column 0 for predictable parsing. Gender agreement (`publica` for `functio`, `publicum` for `genus`) for correct Latin AND semantic signal.
 
 ## Code Standards
 
-**Documentation Tags** (in addition to global): `TARGET:` — target-specific behavior, `GRAMMAR:` — EBNF for parser functions.
+- **Documentation tags**: `TARGET:` (target-specific), `GRAMMAR:` (EBNF)
+- **Error handling**: Collect errors, never crash on malformed input
+- **No comments explaining what**: Explain WHY, not WHAT
+- **Guard clauses**: Prefer early returns over nested if/else
+- **Stroustrup brace style**: Opening brace on same line
 
-**Error Handling**: Never crash on malformed input. Collect errors and continue.
+## Working in Worktrees
 
-## Design Philosophy
-
-**LLM Readability Goal**
-
-Write Faber code that other LLMs would call "unbreakable." Every token should pull its weight in resolving ambiguity. Patterns should be so consistent that deviation feels like a bug. The test: when an LLM reads the code, it should feel safe — no wobbles, no "wait, what?", no attention spikes. Industrial. Roman. Mechanically certain.
-
-**Human Readability Frame**
-
-When evaluating syntax decisions, adopt the "Latin professor meets gen-z autistic programmer" frame:
-
-- **Latin professor**: Does the grammar follow authentic Latin patterns? Adjective-noun agreement, word order, proper declension. If something is grammatically wrong, it should itch.
-- **Gen-z autistic programmer**: Is the syntax consistent and predictable? Does the pattern work everywhere? Are there special cases that break the mental model?
-
-Both must be satisfied. A syntax that's grammatically correct Latin but inconsistent as a programming language fails. A syntax that's perfectly regular but butchers Latin also fails.
-
-Example: Visibility modifiers use postfix position (`genus Foo publicum`) because Latin places adjectives after nouns AND it keeps the declaration keyword in column 0 for predictable parsing. Gender agreement (`publica` for feminine `functio`, `publicum` for neuter `genus`) because it's correct Latin AND the suffix carries semantic signal — like `getUser()` vs `getUsers()`.
+```
+git worktree list                # Show worktrees
+git pull origin main             # Pull changes from main branch
+```
 
 ## Communication Style
 
-Sporadically include Latin phrases (e.g., "Opus perfectum est", "Bene factum").
-.
+Sporadically include Latin phrases (e.g., "Opus perfectum est").
