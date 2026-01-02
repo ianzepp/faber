@@ -18,32 +18,30 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: FabGenerator)
 
     // Build annotation modifiers
     // WHY: Combine existing annotations with async/generator derived from node properties
-    const annotationMods: string[] = [];
-
-    // Preserve existing annotations
+    // Preserve existing annotations (one per line)
     if (node.annotations) {
         for (const ann of node.annotations) {
-            annotationMods.push(...ann.modifiers);
+            if (ann.argument) {
+                lines.push(`${g.ind()}@ ${ann.name} ${g.genExpression(ann.argument)}`);
+            } else {
+                lines.push(`${g.ind()}@ ${ann.name}`);
+            }
         }
     }
 
     // Add futura/cursor if async/generator (and not already in annotations)
     const hasAsyncAnnotation = isAsyncFromAnnotations(node.annotations);
     const hasGeneratorAnnotation = isGeneratorFromAnnotations(node.annotations);
+    const hasAbstractAnnotation = node.annotations?.some(a => a.name.startsWith('abstract'));
 
     if (node.async && !hasAsyncAnnotation) {
-        annotationMods.push('futura');
+        lines.push(`${g.ind()}@ futura`);
     }
     if (node.generator && !hasGeneratorAnnotation) {
-        annotationMods.push('cursor');
+        lines.push(`${g.ind()}@ cursor`);
     }
-    if (node.isAbstract && !annotationMods.some(m => m.startsWith('abstract'))) {
-        annotationMods.push('abstracta');
-    }
-
-    // Emit annotation line if we have modifiers
-    if (annotationMods.length > 0) {
-        lines.push(`${g.ind()}@ ${annotationMods.join(' ')}`);
+    if (node.isAbstract && !hasAbstractAnnotation) {
+        lines.push(`${g.ind()}@ abstracta`);
     }
 
     const parts: string[] = [];

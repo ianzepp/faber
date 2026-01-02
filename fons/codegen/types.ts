@@ -193,11 +193,9 @@ export function getVisibilityFromAnnotations(annotations?: Annotation[]): Visibi
     if (!annotations) return 'private';
 
     for (const ann of annotations) {
-        for (const mod of ann.modifiers) {
-            if (mod === 'publicum' || mod === 'publica' || mod === 'publicus') return 'public';
-            if (mod === 'privatum' || mod === 'privata' || mod === 'privatus') return 'private';
-            if (mod === 'protectum' || mod === 'protecta' || mod === 'protectus') return 'protected';
-        }
+        if (ann.name === 'publicum' || ann.name === 'publica' || ann.name === 'publicus') return 'public';
+        if (ann.name === 'privatum' || ann.name === 'privata' || ann.name === 'privatus') return 'private';
+        if (ann.name === 'protectum' || ann.name === 'protecta' || ann.name === 'protectus') return 'protected';
     }
 
     return 'private';
@@ -213,9 +211,7 @@ export function isAbstractFromAnnotations(annotations?: Annotation[]): boolean {
     if (!annotations) return false;
 
     for (const ann of annotations) {
-        for (const mod of ann.modifiers) {
-            if (mod === 'abstractum' || mod === 'abstracta' || mod === 'abstractus') return true;
-        }
+        if (ann.name === 'abstractum' || ann.name === 'abstracta' || ann.name === 'abstractus') return true;
     }
 
     return false;
@@ -231,7 +227,7 @@ export function isAsyncFromAnnotations(annotations?: Annotation[]): boolean {
     if (!annotations) return false;
 
     for (const ann of annotations) {
-        if (ann.modifiers.includes('futura')) return true;
+        if (ann.name === 'futura') return true;
     }
 
     return false;
@@ -247,7 +243,7 @@ export function isGeneratorFromAnnotations(annotations?: Annotation[]): boolean 
     if (!annotations) return false;
 
     for (const ann of annotations) {
-        if (ann.modifiers.includes('cursor')) return true;
+        if (ann.name === 'cursor') return true;
     }
 
     return false;
@@ -263,7 +259,7 @@ export function isStaticFromAnnotations(annotations?: Annotation[]): boolean {
     if (!annotations) return false;
 
     for (const ann of annotations) {
-        if (ann.modifiers.includes('generis')) return true;
+        if (ann.name === 'generis') return true;
     }
 
     return false;

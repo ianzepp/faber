@@ -11,44 +11,64 @@ Rewrite the Faber compiler in Faber, targeting TypeScript/Bun.
 
 ## Current State
 
-**Phase 3 (Codegen) in progress.** Previously identified blockers resolved, new workarounds needed:
+**Phase 4 (Integration) in progress.** All 51 files compile to TypeScript (~11,090 lines total). TypeScript type-checking has 299 errors remaining.
+
+### Solved Blockers
 
 - ✅ Mutual recursion → solved with `pactum Resolvitor`
 - ✅ Discretio instantiation → solved with `finge` keyword
 - ✅ Function hoisting → solved with two-pass semantic analysis
 - ✅ Do-while loops → implemented as `fac { } dum condition`
 - ✅ AST as discretio → unified `Expressia` (24 variants) and `Sententia` (31 variants)
+- ✅ Discretio return type mismatch → fixed in semantic analyzer
+- ✅ Discerne binding types → fixed with `si Variant ut x` syntax (binds whole variant); 652 occurrences migrated from `pro` to `ut`
+- ✅ Missing exports → added `@ publicum` to `discretio` and `ordo` declarations
+- ✅ Incorrect enum names → fixed `SymbolumGenus` members (e.g., `Semicolon` → `PunctumColon`)
+- ✅ Stdlib method names → fixed to match registry (e.g., `.iunge()` → `.coniunge()`, `.numerus()` → `.longitudo()`)
+
+### Active Workarounds
+
 - ⚠️ Method call return types → workaround with `scriptum()` formatting
-- ⚠️ Discerne binding types → workaround with explicit casts
 - ⚠️ Nullable parameters → use `ignotum` type instead of `Type?`
 
-### Compiles Successfully
+### Module Status
 
-| Module               | Location                 | Files | Status                     |
-| -------------------- | ------------------------ | ----- | -------------------------- |
-| AST types            | `fons-fab/ast/`          | 6     | Complete (discretio-based) |
-| Lexer                | `fons-fab/lexor/`        | 2     | Complete                   |
-| Keywords             | `fons-fab/lexicon/`      | 1     | Complete                   |
-| Parser errors        | `parser/errores.fab`     | 1     | Complete                   |
-| Parser core          | `parser/nucleus.fab`     | 1     | Complete                   |
-| Resolvitor interface | `parser/resolvitor.fab`  | 1     | Complete                   |
-| Type parser          | `parser/typus.fab`       | 1     | Complete                   |
-| Parser entry         | `parser/index.fab`       | 1     | Complete (Parsator wired)  |
-| Statement dispatch   | `sententia/index.fab`    | 1     | Complete                   |
-| Declarations         | `sententia/declara.fab`  | 1     | Complete                   |
-| Control flow         | `sententia/imperium.fab` | 1     | Complete                   |
-| Pattern matching     | `sententia/fluxus.fab`   | 1     | Complete                   |
-| Entry/resources      | `sententia/initus.fab`   | 1     | Complete                   |
-| Action statements    | `sententia/actio.fab`    | 1     | Complete                   |
-| Error statements     | `sententia/error.fab`    | 1     | Complete                   |
-| Block/program        | `sententia/massa.fab`    | 1     | Complete                   |
-| Variable decls       | `sententia/varia.fab`    | 1     | Complete                   |
-| Expression entry     | `expressia/index.fab`    | 1     | Complete                   |
-| Binary operators     | `expressia/binaria.fab`  | 1     | Complete                   |
-| Unary/postfix        | `expressia/unaria.fab`   | 1     | Complete                   |
-| Primary expressions  | `expressia/primaria.fab` | 1     | Complete                   |
+| Module    | Location             |  Files |      Lines | Status                        |
+| --------- | -------------------- | -----: | ---------: | ----------------------------- |
+| AST       | `fons-fab/ast/`      |      6 |      1,112 | ✅ Complete (discretio-based) |
+| Lexicon   | `fons-fab/lexicon/`  |      1 |        221 | ✅ Complete                   |
+| Lexor     | `fons-fab/lexor/`    |      2 |        853 | ✅ Complete                   |
+| Parser    | `fons-fab/parser/`   |     18 |      4,134 | ✅ Complete                   |
+| Semantic  | `fons-fab/semantic/` |     17 |      2,844 | ✅ Complete                   |
+| Codegen   | `fons-fab/codegen/`  |      6 |      1,859 | ✅ Complete                   |
+| CLI       | `fons-fab/cli.fab`   |      1 |         67 | ✅ Complete                   |
+| **Total** |                      | **51** | **11,090** | **All files compile**         |
 
-**All 27 fons-fab files compile successfully (~6,259 lines).**
+### TypeScript Type-Check Status
+
+**299 errors remaining** (down from 358). Compile to `opus/bootstrap/` and check with:
+
+```bash
+cd opus/bootstrap && npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler cli.ts
+```
+
+#### Error Categories
+
+1. **Missing exports (~24 errors):** Some `genus` and `ordo` declarations need `@ publicum`
+    - `genus Resolvitor` in `parser/resolvitor.fab`
+    - `ordo ParserErrorCodice` in `parser/errores.fab`
+    - `ordo LexorErrorCodice` in `lexor/errores.fab`
+
+2. **Private method accessibility (~22 errors):** Methods on `Analyzator` class are private but called from other files
+    - `intraScopum`, `exiScopum`, `error` in `semantic/nucleus.fab`
+
+3. **Discriminated union narrowing (~70+ errors):** Pattern matching with `discerne`/`si...ut` doesn't narrow TypeScript types correctly
+    - Properties like `signum`, `locus`, `corpus` show as "does not exist on type 'never'"
+
+4. **Missing tabula method (~4 errors):** `habet` method not in `fons/codegen/tabula.ts` registry
+    - Should map to `.has()`
+
+5. **Import placement (~5 errors):** Imports generated inside functions instead of at module top
 
 ### Resolvitor Pattern
 
@@ -83,12 +103,16 @@ functio parseBinaria(Resolvitor r) -> Expressia {
 }
 ```
 
-### Remaining Parser Work
+### Parser (Complete)
 
-**Fully implemented:**
+All 18 parser files compile successfully:
 
 - `parser/index.fab` - Parsator (Resolvitor implementation), entry point
+- `parser/nucleus.fab` - Core Parser genus with token stream state
+- `parser/errores.fab` - Error codes and reporting
+- `parser/resolvitor.fab` - Resolvitor pactum for mutual recursion
 - `parser/typus.fab` - Type annotations with generics, nullable, array shorthand
+- `expressia/index.fab` - Expression entry point
 - `expressia/binaria.fab` - Full precedence chain (assignment → ternary → logical → comparison → arithmetic)
 - `expressia/unaria.fab` - Prefix operators (non, -, ~, cede, novum), postfix (call, member, qua)
 - `expressia/primaria.fab` - Literals, identifiers, ego, arrays, objects, lambdas, grouped expressions
@@ -97,7 +121,10 @@ functio parseBinaria(Resolvitor r) -> Expressia {
 - `sententia/imperium.fab` - si/sin/secus, dum, ex...pro, de...pro
 - `sententia/actio.fab` - redde, rumpe, perge, iace, scribe/vide/mone
 - `sententia/error.fab` - tempta/cape/demum, fac...dum, adfirma
+- `sententia/fluxus.fab` - elige (switch), discerne (pattern match), custodi (guard)
+- `sententia/initus.fab` - incipit/incipiet (entry points), cura (resources), ad (dispatch)
 - `sententia/massa.fab` - Block parsing, program parsing
+- `sententia/varia.fab` - Variable declarations, destructuring
 - `sententia/varia.fab` - Variable declarations, destructuring
 - `sententia/fluxus.fab` - elige (switch), discerne (pattern match), custodi (guard)
 - `sententia/initus.fab` - incipit/incipiet (entry points), cura (resources), ad (dispatch)
@@ -106,12 +133,38 @@ functio parseBinaria(Resolvitor r) -> Expressia {
 
 - Testing: `probandum`, `proba`, `praepara` (not needed for bootstrap)
 
-### Remaining Modules
+### Semantic (17 files, all compile)
 
-| Module  | Source             | Est. Lines | Notes          |
-| ------- | ------------------ | ---------- | -------------- |
-| Codegen | `fons/codegen/ts/` | ~2,000     | TS target only |
-| CLI     | `fons/cli.ts`      | ~600       | Entry point    |
+All 17 semantic files compile successfully.
+
+Files:
+
+- `index.fab`, `nucleus.fab`, `errores.fab`, `scopus.fab`, `typi.fab`, `resolvitor.fab`
+- `expressia/`: `index.fab`, `alia.fab`, `binaria.fab`, `primaria.fab`, `unaria.fab`, `vocatio.fab`
+- `sententia/`: `index.fab`, `actio.fab`, `declara.fab`, `error.fab`, `imperium.fab`
+
+Note: Module resolution (`modules.ts`) skipped — requires file I/O not yet in Faber.
+
+### Codegen (6 files, complete)
+
+| File                             | Status | Notes                                   |
+| -------------------------------- | ------ | --------------------------------------- |
+| `codegen/typi.fab`               | ✅     | RequiredFeatures, CodegenOptions, utils |
+| `codegen/ts/nucleus.fab`         | ✅     | TsGenerator genus with state            |
+| `codegen/ts/typus.fab`           | ✅     | Latin → TS type mapping                 |
+| `codegen/ts/expressia/index.fab` | ✅     | All 24 expression types handled         |
+| `codegen/ts/sententia/index.fab` | ✅     | Uses scriptum() for all formatting      |
+| `codegen/ts/index.fab`           | ✅     | Public API entry point                  |
+
+### CLI (1 file, complete)
+
+| File      | Status | Notes                       |
+| --------- | ------ | --------------------------- |
+| `cli.fab` | ✅     | Minimal stdin→stdout driver |
+
+### Remaining Work
+
+Fix TypeScript type-check errors (299 remaining). See "TypeScript Type-Check Status" section above.
 
 ## Bootstrap Strategy
 
@@ -125,7 +178,7 @@ functio parseBinaria(Resolvitor r) -> Expressia {
 6. ✅ Statement dispatcher and all statement parsers
 7. ✅ Pattern matching (elige, discerne, custodi), entry points (incipit, incipiet), resources (cura, ad)
 
-**27 files, all compiling successfully.**
+**18 files (4,134 lines), all compiling successfully.**
 
 ### Phase 2: Semantic Analyzer (`fons-fab/semantic/`) — COMPLETE
 
@@ -140,30 +193,19 @@ Port `fons/semantic/`:
 7. ✅ Statement analysis (`sententia/`) — Type checking for all statements
 8. ✅ Entry point (`index.fab`) — Main `analyze()` function
 
-**17 files (~2,000 lines), all compiling successfully.**
+**17 files (2,844 lines), all compile successfully.**
 
-Note: Module resolution (`modules.ts`) skipped — requires file I/O not yet in Faber.
-
-### Phase 3: TypeScript Codegen (`fons-fab/codegen/ts/`) — IN PROGRESS
+### Phase 3: TypeScript Codegen (`fons-fab/codegen/ts/`) — COMPLETE
 
 Port only the TS target from `fons/codegen/ts/`:
 
 1. ✅ Generator class with state (`depth`, `inGenerator`, `inFlumina`, etc.) — `nucleus.fab`
 2. ✅ Type emission (Latin → TypeScript type mapping) — `typus.fab`
 3. ✅ Expression dispatcher — `expressia/index.fab`
-4. 🔄 Statement dispatcher — `sententia/index.fab` (needs workarounds for semantic bugs)
-5. ⬚ Public API entry point — `index.fab`
-6. ⬚ Preamble generation based on `RequiredFeatures`
+4. ✅ Statement dispatcher — `sententia/index.fab` (uses scriptum() workaround)
+5. ✅ Public API entry point — `index.fab`
 
-**Files created:**
-
-| File                             | Status | Notes                                   |
-| -------------------------------- | ------ | --------------------------------------- |
-| `codegen/typi.fab`               | ✅     | RequiredFeatures, CodegenOptions, utils |
-| `codegen/ts/nucleus.fab`         | ✅     | TsGenerator genus with state            |
-| `codegen/ts/typus.fab`           | ✅     | Latin → TS type mapping                 |
-| `codegen/ts/expressia/index.fab` | ✅     | All 24 expression types handled         |
-| `codegen/ts/sententia/index.fab` | ✅     | Uses scriptum() for all formatting      |
+**6 files (1,859 lines), all compile successfully.**
 
 **Architecture decisions:**
 
@@ -186,25 +228,17 @@ Port only the TS target from `fons/codegen/ts/`:
 
 After bootstrap: remove `fons/codegen/py/` and `fons/codegen/cpp/`.
 
-### Phase 4: CLI (`fons-fab/cli.fab`)
+### Phase 4: CLI (`fons-fab/cli.fab`) — COMPLETE
 
-Minimal CLI:
+Minimal stdin→stdout compiler driver. **67 lines.**
 
-```fab
-functio main(lista<textus> args) -> numerus {
-    fixum source = lege()  # stdin
-    fixum result = compile(source)
-    scribe result          # stdout
-    redde 0
-}
-```
+### Phase 5: Integration — IN PROGRESS
 
-### Phase 5: Integration
-
-1. Compile `fons-fab/*.fab` with TS compiler → `opus/*.ts`
-2. Run with Bun, verify it compiles test files correctly
-3. Self-compile: use Faber compiler to compile itself
-4. Verify round-trip: both compilers produce identical output
+1. ✅ Compile `fons-fab/*.fab` with TS compiler → `opus/bootstrap/*.ts`
+2. 🔄 Fix TypeScript type-check errors (299 remaining)
+3. ⬚ Run with Bun, verify it compiles test files correctly
+4. ⬚ Self-compile: use Faber compiler to compile itself
+5. ⬚ Verify round-trip: both compilers produce identical output
 
 ## Key Patterns
 
@@ -347,21 +381,50 @@ parser/
 5. **Use scriptum() everywhere** — Instead of string concatenation like `g.ind() + "if (" + cond + ")"`, use `scriptum("{}if ({})", g.ind(), cond)`. This avoids the method call return type bug entirely and produces cleaner code.
 6. **Scriptum brace escaping** — Use `{{` for literal `{` and `}}` for literal `}`. Example: `scriptum("{{ {} }}", val)` produces `{ value }`. This is needed when generating JS object literals or destructuring.
 
+### Session 7: Bootstrap Verification
+
+1. **Actual file count is 49** — Not 27 as previously documented. Includes 6 AST, 1 lexicon, 2 lexor, 18 parser, 17 semantic, 5 codegen.
+2. **Total ~10,644 lines** — Previous estimates were understated.
+3. **All 49 files compile** — Discretio return type bug was fixed.
+4. **Discretio return type bug (fixed)** — Functions returning `finge Variant {...} qua Discretio` were failing type checking. The semantic analyzer now correctly recognizes that `Discretio` and `discretio Discretio` are the same type.
+5. **Missing `ts/index.fab`** — Codegen entry point not yet created.
+
+### Session 8: Discerne Binding Semantics
+
+1. **`pro` vs `ut` clarified** — `si Variant pro x, y` extracts fields positionally (x=first field, y=second). `si Variant ut v` binds the whole variant for `v.field` access.
+2. **Bootstrap was using `pro` incorrectly** — 652 occurrences of `si Variant pro x { x.field }` needed to be `si Variant ut x { x.field }`.
+3. **Codegen updated** — `discerne.ts` now correctly generates `const x = e.fieldName;` for `pro` bindings when type info is available, falls back to `const { x } = e;` (assumes binding name matches field name) when type info is unavailable.
+4. **All fons-fab files migrated** — Changed `pro` to `ut` for single-binding patterns that access fields on the binding.
+
+### Session 9: TypeScript Type-Checking
+
+1. **All 51 files now compile** — Added `ts/index.fab` and `cli.fab` to complete the bootstrap source.
+2. **TypeScript type-checking started** — Compiling to `opus/bootstrap/` and running `tsc --noEmit` reveals 299 type errors.
+3. **Export annotations needed** — `discretio` and `ordo` declarations need `@ publicum` to generate TypeScript `export`.
+4. **Enum member names must match exactly** — `SymbolumGenus.Semicolon` doesn't exist; the enum defines `PunctumColon`. Latin consistency matters.
+5. **Stdlib method names from registry** — Collection methods like `.iunge()` don't exist; must use registry names (`.coniunge()`). Check `fons/codegen/lista.ts` and `fons/codegen/tabula.ts` for valid method names.
+6. **Discriminated union narrowing issue** — TypeScript's type narrowing with `discerne`/`si...ut` doesn't work as expected; many "property does not exist on type 'never'" errors suggest the codegen for pattern matching needs review.
+7. **Private method accessibility** — Methods defined in a `genus` are private by default; external callers get "property is private" errors. May need `@ publicum` on methods or architectural changes.
+
 ## Build Commands
 
 ```bash
-# Check all parser files compile
-for f in fons-fab/parser/**/*.fab; do bun run faber check "$f"; done
+# Compile all fons-fab files to opus/bootstrap/
+for f in fons-fab/**/*.fab; do
+  outfile="opus/bootstrap/${f#fons-fab/}"; outfile="${outfile%.fab}.ts"
+  mkdir -p "$(dirname "$outfile")"
+  bun run faber compile "$f" -o "$outfile"
+done
 
-# Compile bootstrap to TypeScript
-bun run faber compile fons-fab/**/*.fab -t ts -o opus/
+# TypeScript type-check (299 errors remaining)
+cd opus/bootstrap && npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler cli.ts
 
-# Run compiled compiler
-bun opus/cli.ts < input.fab > output.ts
+# Run compiled compiler (once type-checking passes)
+bun opus/bootstrap/cli.ts < input.fab > output.ts
 
 # Self-compile (once working)
-bun opus/cli.ts < fons-fab/**/*.fab > opus2/
-diff -r opus/ opus2/  # Should be identical
+bun opus/bootstrap/cli.ts < fons-fab/**/*.fab > opus2/
+diff -r opus/bootstrap/ opus2/  # Should be identical
 ```
 
 ## Success Criteria
@@ -373,22 +436,22 @@ diff -r opus/ opus2/  # Should be identical
 
 ## Timeline
 
-| Phase       | Scope        | Est. Days      | Status         |
-| ----------- | ------------ | -------------- | -------------- |
-| Parser      | ~6,259 lines | 5-7            | ✅ Complete    |
-| Semantic    | ~2,000 lines | 3-4            | ✅ Complete    |
-| Codegen     | ~2,000 lines | 3-4            | 🔄 In progress |
-| CLI         | ~600 lines   | 1              | Not started    |
-| Integration | Debug, iter  | 2-3            | Not started    |
-| **Total**   |              | **14-19 days** |                |
+| Phase     | Actual Lines | Status                        |
+| --------- | -----------: | ----------------------------- |
+| AST       |        1,112 | ✅ Complete (6 files)         |
+| Lexicon   |          221 | ✅ Complete (1 file)          |
+| Lexor     |          853 | ✅ Complete (2 files)         |
+| Parser    |        4,134 | ✅ Complete (18 files)        |
+| Semantic  |        2,844 | ✅ Complete (17 files)        |
+| Codegen   |        1,859 | ✅ Complete (6 files)         |
+| CLI       |           67 | ✅ Complete (1 file)          |
+| **Total** |   **11,090** | **51/51 files compile to TS** |
 
 ## Next Steps
 
-1. **Fix sententia/index.fab** — Add `indent()` helper calls to work around method return type bug
-2. **Create codegen/ts/index.fab** — Public API entry point
-3. **Verify all codegen files compile** — Currently 4/5 compile
-4. **Phase 4: CLI** — Create `fons-fab/cli.fab` entry point
-5. **Post-bootstrap cleanup** — Remove Python and C++ targets from `fons/codegen/`
+1. **Fix TypeScript type-check errors** — 299 errors remaining (see error categories above)
+2. **Integration testing** — Run bootstrap compiler, verify it produces correct output
+3. **Self-compilation** — Compile fons-fab with itself, verify round-trip
 
 ## Design Decisions Log
 

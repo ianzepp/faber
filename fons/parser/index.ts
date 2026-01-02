@@ -500,29 +500,56 @@ export function parse(tokens: Token[]): ParserResult {
         throw new Error(PARSER_ERRORS[code].text);
     }
 
+    /**
+     * Parse a single annotation.
+     *
+     * GRAMMAR:
+     *   annotation := '@' IDENTIFIER (expression)?
+     *
+     * Each @ starts exactly one annotation. The first identifier is the
+     * annotation name, followed by an optional argument expression.
+     *
+     * Examples:
+     *   @ publicum
+     *   @ ad "users:list"
+     *   @ ad sed "users/\w+"
+     */
     function parseAnnotation(): Annotation {
         const position = peek().position;
         const startLine = position.line;
         advance(); // consume '@'
 
-        const modifiers: string[] = [];
-
-        // Collect identifiers on the same line as @
-        while ((check('IDENTIFIER') || check('KEYWORD')) && peek().position.line === startLine) {
-            modifiers.push(advance().value);
-        }
-
-        if (modifiers.length === 0) {
+        // First token must be identifier or keyword on the same line (the annotation name)
+        if ((!check('IDENTIFIER') && !check('KEYWORD')) || peek().position.line !== startLine) {
             errors.push({
                 code: ParserErrorCode.UnexpectedToken,
-                message: `Expected modifier after '@', got '${peek().value}'`,
-                position: peek().position,
+                message: `Expected annotation name after '@', got '${peek().value}'`,
+                position,
             });
+            return {
+                type: 'Annotation',
+                name: '',
+                position,
+            };
+        }
+
+        const name = advance().value;
+
+        // Check for optional argument on the same line
+        let argument: Expression | undefined;
+        if (!isAtEnd() && peek().position.line === startLine) {
+            // Only parse argument if there's something on the same line
+            // that isn't the start of a new statement
+            const next = peek();
+            if (next.type === 'STRING' || next.type === 'IDENTIFIER' || next.type === 'KEYWORD') {
+                argument = parseExpression();
+            }
         }
 
         return {
             type: 'Annotation',
-            modifiers,
+            name,
+            argument,
             position,
         };
     }
@@ -1994,7 +2021,7 @@ export function parse(tokens: Token[]): ParserResult {
             }
 
             // Abstract methods (from annotation) have no body
-            const isAbstract = annotations.some(a => a.modifiers.some(m => m === 'abstractum' || m === 'abstracta' || m === 'abstractus'));
+            const isAbstract = annotations.some(a => a.name === 'abstractum' || a.name === 'abstracta' || a.name === 'abstractus');
 
             let body: BlockStatement | undefined;
             if (!isAbstract) {

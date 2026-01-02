@@ -653,14 +653,15 @@ export type Visibility = 'public' | 'protected' | 'private';
  * Annotation (nota) for modifying declarations.
  *
  * GRAMMAR (in EBNF):
- *   annotation := '@' IDENTIFIER+
+ *   annotation := '@' IDENTIFIER (STRING | expression)?
  *
- * INVARIANT: modifiers is a non-empty array of identifier names.
+ * INVARIANT: Each annotation has exactly one name (first identifier after @).
  * INVARIANT: Annotations must appear on their own line before a declaration.
+ * INVARIANT: One annotation per @ line.
  *
  * WHY: Annotations provide a clean way to attach metadata to declarations
- *      without cluttering the declaration syntax itself. All modifiers
- *      (visibility, async, abstract) move to annotations.
+ *      without cluttering the declaration syntax itself. Each annotation
+ *      is one per line with a single name and optional argument.
  *
  * Gender agreement: All gender variants are semantically equivalent.
  *   publicum/publica/publicus → public
@@ -669,12 +670,16 @@ export type Visibility = 'public' | 'protected' | 'private';
  *
  * Examples:
  *   @ publicum
- *   @ publica futura
- *   @ privatum abstractum
+ *   @ abstractum
+ *   @ ad "users:list"
+ *   @ ad sed "users/\w+"
  */
 export interface Annotation extends BaseNode {
     type: 'Annotation';
-    modifiers: string[];
+    /** The annotation name (first identifier after @) */
+    name: string;
+    /** Optional argument (string literal, sed pattern, or expression) */
+    argument?: Expression;
 }
 
 /**

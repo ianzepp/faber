@@ -164,9 +164,7 @@ function genFieldDeclaration(node: FieldDeclaration, g: TsGenerator, semi: boole
     // WHY: If field has no annotation, getVisibilityFromAnnotations returns 'private'.
     //      But we want to inherit from class. Check if field has any annotations.
     const hasFieldVisibility = node.annotations?.some(ann =>
-        ann.modifiers.some(m =>
-            ['publicum', 'publica', 'publicus', 'privatum', 'privata', 'privatus', 'protectum', 'protecta', 'protectus'].includes(m),
-        ),
+        ['publicum', 'publica', 'publicus', 'privatum', 'privata', 'privatus', 'protectum', 'protecta', 'protectus'].includes(ann.name),
     );
     const effectiveVisibility = hasFieldVisibility ? fieldVisibility : classVisibility;
 

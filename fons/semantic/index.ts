@@ -136,7 +136,7 @@ import type { Annotation } from '../parser/ast';
 function isAsyncFromAnnotations(annotations?: Annotation[]): boolean {
     if (!annotations) return false;
     for (const ann of annotations) {
-        if (ann.modifiers.includes('futura')) return true;
+        if (ann.name === 'futura') return true;
     }
     return false;
 }
@@ -147,7 +147,7 @@ function isAsyncFromAnnotations(annotations?: Annotation[]): boolean {
 function isGeneratorFromAnnotations(annotations?: Annotation[]): boolean {
     if (!annotations) return false;
     for (const ann of annotations) {
-        if (ann.modifiers.includes('cursor')) return true;
+        if (ann.name === 'cursor') return true;
     }
     return false;
 }
