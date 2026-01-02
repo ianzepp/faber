@@ -4,7 +4,7 @@ Rewrite the Faber compiler in Faber, targeting TypeScript/Bun.
 
 ## Current State
 
-**Phase 0 (Syntax Modernization) in progress.** Updating fons-fab source to use modern syntax (`casu`/`ceterum`, `intra`/`inter`).
+**Phase 0 (Syntax Modernization) complete.** All fons-fab source updated to modern syntax. Phase 1 (TypeScript Compilation) ready to begin.
 
 | Module    | Location             |  Files |      Lines |
 | --------- | -------------------- | -----: | ---------: |
@@ -17,21 +17,23 @@ Rewrite the Faber compiler in Faber, targeting TypeScript/Bun.
 | CLI       | `fons-fab/cli.fab`   |      1 |         67 |
 | **Total** |                      | **51** | **11,090** |
 
-### Bootstrap Blockers (Critical Path)
+### Bootstrap Progress
 
-**P0 - Syntax Modernization**
+**✅ Phase 0 Complete - Syntax Modernization** (commits 5ea0b64, 3eb1309, 49fd9d0)
 
-- fons/ compiler now requires `casu`/`ceterum` syntax for `elige`/`discerne` (commit c217493)
-- fons-fab/ still uses old `si` syntax → parse errors prevent compilation
-- Must update ~85 elige/discerne statements across all modules
-- Add missing operators: `intra`, `inter` (commit 4ebac0b)
+- ✅ Added keywords: `casu`, `ceterum`, `intra`, `inter`, `finge`
+- ✅ Converted ~85 elige/discerne statements across 24 files
+- ✅ All 51 fons-fab files compile successfully
+- ✅ Verification: `bun run faber compile fons-fab/cli.fab` succeeds
 
-**P1 - Module System**
+**🔄 Phase 1 In Progress - TypeScript Compilation**
+
+**P0 - Module System** (blocking TypeScript execution)
 
 - Import/export codegen must work correctly
 - 51 files with cross-module dependencies require proper `import` statement generation
 
-**P2 - TypeScript Type Errors (299 remaining)**
+**P1 - TypeScript Type Errors** (299 remaining)
 
 ```bash
 cd opus/bootstrap && npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler cli.ts
@@ -60,29 +62,31 @@ cd opus/bootstrap && npx tsc --noEmit --skipLibCheck --target ES2022 --module ES
 
 ## Bootstrap Phases
 
-### Phase 0: Syntax Modernization (Current)
+### Phase 0: Syntax Modernization ✅ COMPLETE
 
 **Goal**: Update fons-fab source to use modern syntax so fons/ compiler can parse it
 
 **Tasks**:
 
-1. Add `casu`, `ceterum`, `intra`, `inter` keywords to `fons-fab/lexicon/verba.fab`
-2. Update `fons-fab/lexor/` to tokenize new keywords
-3. Replace `si` → `casu` in all `elige`/`discerne` blocks (~85 statements)
-4. Replace `secus` → `ceterum` in `elige` default cases
-5. Verify: `bun run faber compile fons-fab/cli.fab` succeeds
+1. ✅ Add `casu`, `ceterum`, `intra`, `inter` keywords to `fons-fab/lexicon/verba.fab`
+2. ✅ Update `fons-fab/lexor/` to tokenize new keywords
+3. ✅ Replace `si` → `casu` in all `elige`/`discerne` blocks (~85 statements)
+4. ✅ Replace `secus` → `ceterum` in `elige` default cases
+5. ✅ Verify: `bun run faber compile fons-fab/cli.fab` succeeds
 
-### Phase 1: TypeScript Compilation
+**Results**: 24 files modified, ~537 lines changed (commits 5ea0b64, 3eb1309, 49fd9d0)
+
+### Phase 1: TypeScript Compilation (Current)
 
 **Goal**: All 51 files compile to TypeScript without type errors
 
 **Tasks**:
 
-1. Fix module import codegen (imports must appear at top of file)
-2. Fix discriminated union type narrowing in `discerne` codegen
-3. Add missing `@ publicum` exports
-4. Implement comment preservation in TS codegen
-5. Verify: `cd opus/bootstrap && npx tsc --noEmit cli.ts` passes
+1. ⏳ Fix module import codegen (imports must appear at top of file)
+2. ⏳ Fix discriminated union type narrowing in `discerne` codegen
+3. ⏳ Add missing `@ publicum` exports
+4. ⏳ Implement comment preservation in TS codegen
+5. ⏳ Verify: `cd opus/bootstrap && npx tsc --noEmit cli.ts` passes
 
 ### Phase 2: Self-Compilation (TypeScript)
 
