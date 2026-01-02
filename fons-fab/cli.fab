@@ -1,0 +1,67 @@
+# CLI - Command-line interface for bootstrap Faber compiler
+#
+# Minimal stdin-to-stdout compiler for bootstrap testing.
+# Reads Faber source from stdin, writes TypeScript to stdout.
+#
+# Usage: bun opus/cli.js < input.fab > output.ts
+
+ex "./lexor/index" importa lexare, LexorResultatum
+ex "./parser/index" importa resolvere, ParserResultatum
+ex "./semantic/index" importa analyze
+ex "./semantic/nucleus" importa SemanticResultatum
+ex "./codegen/ts/index" importa generateTs
+ex "./ast/radix" importa Programma
+
+# =============================================================================
+# MAIN ENTRY POINT
+# =============================================================================
+
+incipit {
+    # Read source from stdin
+    fixum source = lege
+
+    # Lexical analysis
+    fixum lexResult = lexare(source)
+
+    si lexResult.errores.longitudo > 0 {
+        mone "Lexor errors:"
+        ex lexResult.errores pro err {
+            mone scriptum("  {}:{} - {}", err.locus.linea, err.locus.columna, err.nuntius)
+        }
+        # Exit with error (no explicit exit in Faber yet)
+        redde
+    }
+
+    # Parsing
+    fixum parseResult = resolvere(lexResult.symbola)
+
+    si parseResult.errores.longitudo > 0 {
+        mone "Parser errors:"
+        ex parseResult.errores pro err {
+            mone scriptum("  {}:{} - {}", err.locus.linea, err.locus.columna, err.nuntius)
+        }
+        redde
+    }
+
+    si parseResult.programma est nihil {
+        mone "Failed to parse program"
+        redde
+    }
+
+    # Semantic analysis
+    fixum semResult = analyze(parseResult.programma qua Programma)
+
+    si semResult.errores.longitudo > 0 {
+        mone "Semantic errors:"
+        ex semResult.errores pro err {
+            mone scriptum("  {}:{} - {}", err.locus.linea, err.locus.columna, err.nuntius)
+        }
+        redde
+    }
+
+    # Code generation
+    fixum output = generateTs((parseResult.programma qua Programma).corpus)
+
+    # Write to stdout
+    scribe output
+}
