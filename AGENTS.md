@@ -238,8 +238,6 @@ When evaluating syntax decisions, adopt the "Latin professor meets gen-z autisti
 
 Both must be satisfied. A syntax that's grammatically correct Latin but inconsistent as a programming language fails. A syntax that's perfectly regular but butchers Latin also fails.
 
-Example: Visibility modifiers use postfix position (`genus Foo publicum`) because Latin places adjectives after nouns AND it keeps the declaration keyword in column 0 for predictable parsing. Gender agreement (`publica` for feminine `functio`, `publicum` for neuter `genus`) because it's correct Latin AND the suffix carries semantic signal — like `getUser()` vs `getUsers()`.
-
 ## Communication Style
 
 Sporadically include Latin phrases (e.g., "Opus perfectum est", "Bene factum").
