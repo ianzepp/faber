@@ -115,7 +115,7 @@ genus Lexor {
 
     # estDigitusBinarius = "is it a binary digit?" - 0 or 1
     functio estDigitusBinarius(textus c) -> bivalens {
-        redde c == "0" aut c == "1"
+        redde c inter ["0", "1"]
     }
 
     # estDigitusOctalis = "is it an octal digit?" - 0-7
@@ -177,7 +177,7 @@ genus Lexor {
             fixum c = ego.specta(0)
 
             # Skip horizontal whitespace (space, tab, carriage return)
-            si c == " " aut c == "\t" aut c == "\r" {
+            si c inter [" ", "\t", "\r"] {
                 ego.procede()
             }
             # Handle newline - update line tracking

@@ -81,7 +81,7 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
             }
 
             # Equality operators: ==, !=
-            si b.signum == "==" aut b.signum == "!=" {
+            si b.signum inter ["==", "!="] {
                 redde BIVALENS
             }
 
@@ -101,20 +101,20 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
 
 @ publica
 functio estArithmeticum(textus signum) -> bivalens {
-    redde signum == "+" aut signum == "-" aut signum == "*" aut signum == "/" aut signum == "%"
+    redde signum inter ["+", "-", "*", "/", "%"]
 }
 
 @ publica
 functio estComparatio(textus signum) -> bivalens {
-    redde signum == "<" aut signum == ">" aut signum == "<=" aut signum == ">="
+    redde signum inter ["<", ">", "<=", ">="]
 }
 
 @ publica
 functio estLogicum(textus signum) -> bivalens {
-    redde signum == "&&" aut signum == "||" aut signum == "et" aut signum == "aut"
+    redde signum inter ["&&", "||", "et", "aut"]
 }
 
 @ publica
 functio estNumericum(textus nomen) -> bivalens {
-    redde nomen == "numerus" aut nomen == "fractus" aut nomen == "decimus" aut nomen == "magnus"
+    redde nomen inter ["numerus", "fractus", "decimus", "magnus"]
 }

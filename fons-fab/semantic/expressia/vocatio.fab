@@ -67,7 +67,7 @@ functio resolveMembrum(Resolvitor r, Expressia membrumExpr) -> SemanticTypus {
                                     redde NUMERUS
                                 }
                                 # lista.primus, lista.ultimus -> element type
-                                si n.nomen == "primus" aut n.nomen == "ultimus" {
+                                si n.nomen inter ["primus", "ultimus"] {
                                     si g.parametri.longitudo() > 0 {
                                         redde g.parametri[0]
                                     }

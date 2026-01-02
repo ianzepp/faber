@@ -456,7 +456,7 @@ functio assignabileAd(SemanticTypus fons, SemanticTypus scopus) -> bivalens {
 # Helper: check if type name is numeric
 @ publica
 functio estNumericum(textus nomen) -> bivalens {
-    redde nomen == "numerus" aut nomen == "fractus" aut nomen == "decimus"
+    redde nomen inter ["numerus", "fractus", "decimus"]
 }
 
 # Format a type for error messages

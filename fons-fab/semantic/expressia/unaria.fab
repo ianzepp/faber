@@ -19,17 +19,17 @@ functio resolveUnaria(Resolvitor r, Expressia unariaExpr) -> SemanticTypus {
             fixum argTypus = r.expressia(u.argumentum)
 
             # Logical negation: !, non
-            si u.signum == "!" aut u.signum == "non" {
+            si u.signum inter ["!", "non"] {
                 redde BIVALENS
             }
 
             # Null checks: nulla (is null/empty), nonnulla (is not null/non-empty)
-            si u.signum == "nulla" aut u.signum == "nonnulla" {
+            si u.signum inter ["nulla", "nonnulla"] {
                 redde BIVALENS
             }
 
             # Null check operators: nihil, nonnihil
-            si u.signum == "nihil" aut u.signum == "nonnihil" {
+            si u.signum inter ["nihil", "nonnihil"] {
                 redde BIVALENS
             }
 
@@ -64,5 +64,5 @@ functio resolveUnaria(Resolvitor r, Expressia unariaExpr) -> SemanticTypus {
 
 @ publica
 functio estNumericum(textus nomen) -> bivalens {
-    redde nomen == "numerus" aut nomen == "fractus" aut nomen == "decimus" aut nomen == "magnus"
+    redde nomen inter ["numerus", "fractus", "decimus", "magnus"]
 }

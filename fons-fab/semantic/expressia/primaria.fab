@@ -22,7 +22,7 @@ functio resolveNomen(Resolvitor r, Expressia nomenExpr) -> SemanticTypus {
     discerne nomenExpr {
         casu Nomen ut n {
             # Handle Latin boolean/null keywords
-            si n.nomen == "verum" aut n.nomen == "falsum" {
+            si n.nomen inter ["verum", "falsum"] {
                 redde BIVALENS
             }
 

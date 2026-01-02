@@ -48,7 +48,7 @@ functio parseSententia(Resolvitor r) -> Sententia {
         fixum verbum = sym.verbum
 
         # Variable declarations
-        si verbum === "varia" aut verbum === "fixum" aut verbum === "figendum" aut verbum === "variandum" {
+        si verbum inter ["varia", "fixum", "figendum", "variandum"] {
             redde parseVariaSententia(r)
         }
 

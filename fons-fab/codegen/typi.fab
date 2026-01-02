@@ -93,13 +93,13 @@ functio creaCodegenOptions() -> CodegenOptions {
 @ publica
 functio visibilitasEx(lista<textus> modifiers) -> textus {
     ex modifiers pro mod {
-        si mod == "publicum" aut mod == "publica" aut mod == "publicus" {
+        si mod inter ["publicum", "publica", "publicus"] {
             redde "public"
         }
-        si mod == "privatum" aut mod == "privata" aut mod == "privatus" {
+        si mod inter ["privatum", "privata", "privatus"] {
             redde "private"
         }
-        si mod == "protectum" aut mod == "protecta" aut mod == "protectus" {
+        si mod inter ["protectum", "protecta", "protectus"] {
             redde "protected"
         }
     }
@@ -111,7 +111,7 @@ functio visibilitasEx(lista<textus> modifiers) -> textus {
 @ publica
 functio estAbstractum(lista<textus> modifiers) -> bivalens {
     ex modifiers pro mod {
-        si mod == "abstractum" aut mod == "abstracta" aut mod == "abstractus" {
+        si mod inter ["abstractum", "abstracta", "abstractus"] {
             redde verum
         }
     }

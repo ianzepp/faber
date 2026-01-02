@@ -72,7 +72,7 @@ functio latinTypusAd(textus nomen) -> SemanticTypus {
 @ publica
 @ publica
 functio estGenericusTypus(textus nomen) -> bivalens {
-    redde nomen == "lista" aut nomen == "tabula" aut nomen == "copia" aut nomen == "promissum" aut nomen == "cursor" aut nomen == "fluxus"
+    redde nomen inter ["lista", "tabula", "copia", "promissum", "cursor", "fluxus"]
 }
 
 # =============================================================================
