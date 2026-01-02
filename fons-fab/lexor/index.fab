@@ -575,21 +575,21 @@ genus Lexor {
         elige c {
             # ---- Grouping delimiters ----
             # Sin = sinister (left), Dex = dexter (right)
-            si "(" { ego.addeSymbolum(SymbolumGenus.ParensSin, c, loc) }    # left paren
-            si ")" { ego.addeSymbolum(SymbolumGenus.ParensDex, c, loc) }    # right paren
-            si "{" { ego.addeSymbolum(SymbolumGenus.UncusSin, c, loc) }     # left brace (uncus = hook)
-            si "}" { ego.addeSymbolum(SymbolumGenus.UncusDex, c, loc) }     # right brace
-            si "[" { ego.addeSymbolum(SymbolumGenus.AngulusSin, c, loc) }   # left bracket (angulus = angle)
-            si "]" { ego.addeSymbolum(SymbolumGenus.AngulusDex, c, loc) }   # right bracket
+            casu "(" { ego.addeSymbolum(SymbolumGenus.ParensSin, c, loc) }    # left paren
+            casu ")" { ego.addeSymbolum(SymbolumGenus.ParensDex, c, loc) }    # right paren
+            casu "{" { ego.addeSymbolum(SymbolumGenus.UncusSin, c, loc) }     # left brace (uncus = hook)
+            casu "}" { ego.addeSymbolum(SymbolumGenus.UncusDex, c, loc) }     # right brace
+            casu "[" { ego.addeSymbolum(SymbolumGenus.AngulusSin, c, loc) }   # left bracket (angulus = angle)
+            casu "]" { ego.addeSymbolum(SymbolumGenus.AngulusDex, c, loc) }   # right bracket
 
             # ---- Punctuation ----
-            si "," { ego.addeSymbolum(SymbolumGenus.Coma, c, loc) }         # comma
-            si ";" { ego.addeSymbolum(SymbolumGenus.PunctumColon, c, loc) } # semicolon
-            si ":" { ego.addeSymbolum(SymbolumGenus.Colon, c, loc) }        # colon
-            si "?" { ego.addeSymbolum(SymbolumGenus.Rogatio, c, loc) }      # question mark (rogatio = question)
+            casu "," { ego.addeSymbolum(SymbolumGenus.Coma, c, loc) }         # comma
+            casu ";" { ego.addeSymbolum(SymbolumGenus.PunctumColon, c, loc) } # semicolon
+            casu ":" { ego.addeSymbolum(SymbolumGenus.Colon, c, loc) }        # colon
+            casu "?" { ego.addeSymbolum(SymbolumGenus.Rogatio, c, loc) }      # question mark (rogatio = question)
 
             # ---- Dot operators: . or .. or ... ----
-            si "." {
+            casu "." {
                 si ego.specta(0) == "." {
                     ego.procede()
                     si ego.specta(0) == "." {
@@ -604,13 +604,13 @@ genus Lexor {
             }
 
             # ---- Arithmetic operators ----
-            si "+" { ego.addeSymbolum(SymbolumGenus.Plus, c, loc) }
-            si "*" { ego.addeSymbolum(SymbolumGenus.Stella, c, loc) }   # stella = star
-            si "/" { ego.addeSymbolum(SymbolumGenus.Virgula, c, loc) }  # virgula = slash
-            si "%" { ego.addeSymbolum(SymbolumGenus.Centum, c, loc) }   # centum = percent
+            casu "+" { ego.addeSymbolum(SymbolumGenus.Plus, c, loc) }
+            casu "*" { ego.addeSymbolum(SymbolumGenus.Stella, c, loc) }   # stella = star
+            casu "/" { ego.addeSymbolum(SymbolumGenus.Virgula, c, loc) }  # virgula = slash
+            casu "%" { ego.addeSymbolum(SymbolumGenus.Centum, c, loc) }   # centum = percent
 
             # ---- Minus: - or -> (arrow) ----
-            si "-" {
+            casu "-" {
                 si ego.specta(0) == ">" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.Sagitta, "->", loc)  # sagitta = arrow
@@ -620,7 +620,7 @@ genus Lexor {
             }
 
             # ---- Equals: = or == or === or => ----
-            si "=" {
+            casu "=" {
                 si ego.specta(0) == "=" et ego.specta(1) == "=" {
                     ego.procede()
                     ego.procede()
@@ -637,7 +637,7 @@ genus Lexor {
             }
 
             # ---- Bang: ! or != or !== or !. ----
-            si "!" {
+            casu "!" {
                 si ego.specta(0) == "=" et ego.specta(1) == "=" {
                     ego.procede()
                     ego.procede()
@@ -654,7 +654,7 @@ genus Lexor {
             }
 
             # ---- Less than: < or << or <= ----
-            si "<" {
+            casu "<" {
                 si ego.specta(0) == "<" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.MinorBis, "<<", loc)        # left shift
@@ -667,7 +667,7 @@ genus Lexor {
             }
 
             # ---- Greater than: > or >> or >>> or >= ----
-            si ">" {
+            casu ">" {
                 si ego.specta(0) == ">" et ego.specta(1) == ">" {
                     ego.procede()
                     ego.procede()
@@ -684,7 +684,7 @@ genus Lexor {
             }
 
             # ---- Logical operators: & && | || ----
-            si "&" {
+            casu "&" {
                 si ego.specta(0) == "&" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.EtEt, "&&", loc)            # logical and
@@ -692,7 +692,7 @@ genus Lexor {
                     ego.addeSymbolum(SymbolumGenus.Et, c, loc)                 # bitwise and
                 }
             }
-            si "|" {
+            casu "|" {
                 si ego.specta(0) == "|" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.VelVel, "||", loc)          # logical or
@@ -702,11 +702,11 @@ genus Lexor {
             }
 
             # ---- Bitwise operators ----
-            si "^" { ego.addeSymbolum(SymbolumGenus.Apex, c, loc) }   # bitwise xor (apex = point/tip)
-            si "~" { ego.addeSymbolum(SymbolumGenus.Unda, c, loc) }   # bitwise not (unda = wave)
+            casu "^" { ego.addeSymbolum(SymbolumGenus.Apex, c, loc) }   # bitwise xor (apex = point/tip)
+            casu "~" { ego.addeSymbolum(SymbolumGenus.Unda, c, loc) }   # bitwise not (unda = wave)
 
             # ---- Unknown character ----
-            secus {
+            ceterum {
                 ego.addeErrorem(LexorErrorCodice.SignumInopinatum, loc)
             }
         }

@@ -13,128 +13,132 @@
 functio estVerbum(textus v) -> bivalens {
     elige v {
         # Imperium - control flow
-        si "si" { redde verum }
-        si "secus" { redde verum }
-        si "sin" { redde verum }
-        si "secus" { redde verum }
-        si "dum" { redde verum }
-        si "fac" { redde verum }
-        si "pro" { redde verum }
-        si "elige" { redde verum }
-        si "ergo" { redde verum }
-        si "rumpe" { redde verum }
-        si "perge" { redde verum }
-        si "redde" { redde verum }
-        si "custodi" { redde verum }
-        si "adfirma" { redde verum }
-        si "discerne" { redde verum }
-        si "incipit" { redde verum }
-        si "incipiet" { redde verum }
+        casu "si" { redde verum }
+        casu "secus" { redde verum }
+        casu "sin" { redde verum }
+        casu "casu" { redde verum }
+        casu "ceterum" { redde verum }
+        casu "dum" { redde verum }
+        casu "fac" { redde verum }
+        casu "pro" { redde verum }
+        casu "elige" { redde verum }
+        casu "ergo" { redde verum }
+        casu "rumpe" { redde verum }
+        casu "perge" { redde verum }
+        casu "redde" { redde verum }
+        casu "custodi" { redde verum }
+        casu "adfirma" { redde verum }
+        casu "discerne" { redde verum }
+        casu "incipit" { redde verum }
+        casu "incipiet" { redde verum }
 
         # Imperium - testing
-        si "probandum" { redde verum }
-        si "proba" { redde verum }
-        si "praepara" { redde verum }
-        si "praeparabit" { redde verum }
-        si "postpara" { redde verum }
-        si "postparabit" { redde verum }
-        si "cura" { redde verum }
-        si "arena" { redde verum }
-        si "page" { redde verum }
-        si "tempta" { redde verum }
-        si "cape" { redde verum }
-        si "demum" { redde verum }
-        si "iace" { redde verum }
-        si "mori" { redde verum }
-        si "scribe" { redde verum }
-        si "vide" { redde verum }
-        si "mone" { redde verum }
-        si "lege" { redde verum }
-        si "lineam" { redde verum }
-        si "scriptum" { redde verum }
-        si "cede" { redde verum }
+        casu "probandum" { redde verum }
+        casu "proba" { redde verum }
+        casu "praepara" { redde verum }
+        casu "praeparabit" { redde verum }
+        casu "postpara" { redde verum }
+        casu "postparabit" { redde verum }
+        casu "cura" { redde verum }
+        casu "arena" { redde verum }
+        casu "page" { redde verum }
+        casu "tempta" { redde verum }
+        casu "cape" { redde verum }
+        casu "demum" { redde verum }
+        casu "iace" { redde verum }
+        casu "mori" { redde verum }
+        casu "scribe" { redde verum }
+        casu "vide" { redde verum }
+        casu "mone" { redde verum }
+        casu "lege" { redde verum }
+        casu "lineam" { redde verum }
+        casu "scriptum" { redde verum }
+        casu "cede" { redde verum }
 
         # Declaratio - declarations
-        si "varia" { redde verum }
-        si "fixum" { redde verum }
-        si "figendum" { redde verum }
-        si "variandum" { redde verum }
-        si "functio" { redde verum }
-        si "novum" { redde verum }
-        si "importa" { redde verum }
-        si "exporta" { redde verum }
-        si "typus" { redde verum }
-        si "genus" { redde verum }
-        si "pactum" { redde verum }
-        si "ordo" { redde verum }
-        si "discretio" { redde verum }
+        casu "varia" { redde verum }
+        casu "fixum" { redde verum }
+        casu "figendum" { redde verum }
+        casu "variandum" { redde verum }
+        casu "functio" { redde verum }
+        casu "novum" { redde verum }
+        casu "finge" { redde verum }
+        casu "importa" { redde verum }
+        casu "exporta" { redde verum }
+        casu "typus" { redde verum }
+        casu "genus" { redde verum }
+        casu "pactum" { redde verum }
+        casu "ordo" { redde verum }
+        casu "discretio" { redde verum }
 
         # Modificator - modifiers
-        si "futura" { redde verum }
-        si "prae" { redde verum }
-        si "praefixum" { redde verum }
-        si "cursor" { redde verum }
-        si "curata" { redde verum }
-        si "publicus" { redde verum }
-        si "privatus" { redde verum }
-        si "generis" { redde verum }
-        si "implet" { redde verum }
-        si "sub" { redde verum }
-        si "abstractus" { redde verum }
-        si "protectus" { redde verum }
-        si "nexum" { redde verum }
-        si "omitte" { redde verum }
-        si "futurum" { redde verum }
-        si "omnia" { redde verum }
+        casu "futura" { redde verum }
+        casu "prae" { redde verum }
+        casu "praefixum" { redde verum }
+        casu "cursor" { redde verum }
+        casu "curata" { redde verum }
+        casu "publicus" { redde verum }
+        casu "privatus" { redde verum }
+        casu "generis" { redde verum }
+        casu "implet" { redde verum }
+        casu "sub" { redde verum }
+        casu "abstractus" { redde verum }
+        casu "protectus" { redde verum }
+        casu "nexum" { redde verum }
+        casu "omitte" { redde verum }
+        casu "futurum" { redde verum }
+        casu "omnia" { redde verum }
 
         # Operator - operators
-        si "et" { redde verum }
-        si "aut" { redde verum }
-        si "non" { redde verum }
-        si "est" { redde verum }
-        si "sic" { redde verum }
-        si "fit" { redde verum }
-        si "fiet" { redde verum }
-        si "fiunt" { redde verum }
-        si "fient" { redde verum }
-        si "vel" { redde verum }
-        si "ante" { redde verum }
-        si "usque" { redde verum }
-        si "sparge" { redde verum }
-        si "ceteri" { redde verum }
-        si "nulla" { redde verum }
-        si "nonnulla" { redde verum }
-        si "nihil" { redde verum }
-        si "nonnihil" { redde verum }
-        si "negativum" { redde verum }
-        si "positivum" { redde verum }
+        casu "et" { redde verum }
+        casu "aut" { redde verum }
+        casu "non" { redde verum }
+        casu "est" { redde verum }
+        casu "sic" { redde verum }
+        casu "fit" { redde verum }
+        casu "fiet" { redde verum }
+        casu "fiunt" { redde verum }
+        casu "fient" { redde verum }
+        casu "vel" { redde verum }
+        casu "ante" { redde verum }
+        casu "usque" { redde verum }
+        casu "intra" { redde verum }
+        casu "inter" { redde verum }
+        casu "sparge" { redde verum }
+        casu "ceteri" { redde verum }
+        casu "nulla" { redde verum }
+        casu "nonnulla" { redde verum }
+        casu "nihil" { redde verum }
+        casu "nonnihil" { redde verum }
+        casu "negativum" { redde verum }
+        casu "positivum" { redde verum }
 
         # Valor - literal values
-        si "verum" { redde verum }
-        si "falsum" { redde verum }
-        si "ego" { redde verum }
+        casu "verum" { redde verum }
+        casu "falsum" { redde verum }
+        casu "ego" { redde verum }
 
         # Praepositio - prepositions
-        si "de" { redde verum }
-        si "in" { redde verum }
-        si "ex" { redde verum }
-        si "ad" { redde verum }
-        si "per" { redde verum }
-        si "qua" { redde verum }
-        si "ut" { redde verum }
+        casu "de" { redde verum }
+        casu "in" { redde verum }
+        casu "ex" { redde verum }
+        casu "ad" { redde verum }
+        casu "per" { redde verum }
+        casu "qua" { redde verum }
+        casu "ut" { redde verum }
 
         # Dsl - domain specific
-        si "ab" { redde verum }
-        si "ubi" { redde verum }
-        si "prima" { redde verum }
-        si "ultima" { redde verum }
-        si "summa" { redde verum }
-        si "ordina" { redde verum }
-        si "collige" { redde verum }
-        si "grupa" { redde verum }
-        si "sed" { redde verum }
+        casu "ab" { redde verum }
+        casu "ubi" { redde verum }
+        casu "prima" { redde verum }
+        casu "ultima" { redde verum }
+        casu "summa" { redde verum }
+        casu "ordina" { redde verum }
+        casu "collige" { redde verum }
+        casu "grupa" { redde verum }
+        casu "sed" { redde verum }
 
-        secus { redde falsum }
+        ceterum { redde falsum }
     }
 }
 
@@ -147,55 +151,55 @@ functio estVerbum(textus v) -> bivalens {
 functio estVerbumSententiae(textus v) -> bivalens {
     elige v {
         # Declarations
-        si "functio" { redde verum }
-        si "varia" { redde verum }
-        si "fixum" { redde verum }
-        si "figendum" { redde verum }
-        si "variandum" { redde verum }
-        si "typus" { redde verum }
-        si "ordo" { redde verum }
-        si "genus" { redde verum }
-        si "pactum" { redde verum }
-        si "discretio" { redde verum }
+        casu "functio" { redde verum }
+        casu "varia" { redde verum }
+        casu "fixum" { redde verum }
+        casu "figendum" { redde verum }
+        casu "variandum" { redde verum }
+        casu "typus" { redde verum }
+        casu "ordo" { redde verum }
+        casu "genus" { redde verum }
+        casu "pactum" { redde verum }
+        casu "discretio" { redde verum }
 
         # Control flow
-        si "si" { redde verum }
-        si "dum" { redde verum }
-        si "ex" { redde verum }
-        si "de" { redde verum }
-        si "elige" { redde verum }
-        si "discerne" { redde verum }
-        si "custodi" { redde verum }
-        si "fac" { redde verum }
-        si "in" { redde verum }
+        casu "si" { redde verum }
+        casu "dum" { redde verum }
+        casu "ex" { redde verum }
+        casu "de" { redde verum }
+        casu "elige" { redde verum }
+        casu "discerne" { redde verum }
+        casu "custodi" { redde verum }
+        casu "fac" { redde verum }
+        casu "in" { redde verum }
 
         # Actions
-        si "redde" { redde verum }
-        si "rumpe" { redde verum }
-        si "perge" { redde verum }
-        si "scribe" { redde verum }
-        si "vide" { redde verum }
-        si "mone" { redde verum }
-        si "adfirma" { redde verum }
-        si "iace" { redde verum }
-        si "mori" { redde verum }
-        si "cede" { redde verum }
+        casu "redde" { redde verum }
+        casu "rumpe" { redde verum }
+        casu "perge" { redde verum }
+        casu "scribe" { redde verum }
+        casu "vide" { redde verum }
+        casu "mone" { redde verum }
+        casu "adfirma" { redde verum }
+        casu "iace" { redde verum }
+        casu "mori" { redde verum }
+        casu "cede" { redde verum }
 
         # Error handling
-        si "tempta" { redde verum }
-        si "cura" { redde verum }
+        casu "tempta" { redde verum }
+        casu "cura" { redde verum }
 
         # Entry points
-        si "incipit" { redde verum }
-        si "incipiet" { redde verum }
+        casu "incipit" { redde verum }
+        casu "incipiet" { redde verum }
 
         # Testing
-        si "probandum" { redde verum }
-        si "proba" { redde verum }
-        si "praepara" { redde verum }
-        si "postpara" { redde verum }
+        casu "probandum" { redde verum }
+        casu "proba" { redde verum }
+        casu "praepara" { redde verum }
+        casu "postpara" { redde verum }
 
-        secus { redde falsum }
+        ceterum { redde falsum }
     }
 }
 
@@ -207,18 +211,18 @@ functio estVerbumSententiae(textus v) -> bivalens {
 functio estVerbumGeneris(textus v) -> bivalens {
     elige v {
         # Method declaration
-        si "functio" { redde verum }
+        casu "functio" { redde verum }
 
         # Visibility modifiers (precede fields/methods)
-        si "privatus" { redde verum }
-        si "protectus" { redde verum }
+        casu "privatus" { redde verum }
+        casu "protectus" { redde verum }
 
         # Static modifier
-        si "generis" { redde verum }
+        casu "generis" { redde verum }
 
         # Abstract modifier
-        si "abstractus" { redde verum }
+        casu "abstractus" { redde verum }
 
-        secus { redde falsum }
+        ceterum { redde falsum }
     }
 }

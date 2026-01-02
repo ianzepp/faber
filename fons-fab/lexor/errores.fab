@@ -27,37 +27,37 @@ genus LexorErrorNuntius {
 @ publica
 functio nuntiumErroris(LexorErrorCodice codice) -> LexorErrorNuntius {
     elige codice {
-        si LexorErrorCodice.TextusNonClausa {
+        casu LexorErrorCodice.TextusNonClausa {
             redde {
                 textus: "Textus non clausa",
                 auxilium: "String literals must be closed on the same line. Use backticks for multi-line."
             } qua LexorErrorNuntius
         }
-        si LexorErrorCodice.ExemplarNonClausum {
+        casu LexorErrorCodice.ExemplarNonClausum {
             redde {
                 textus: "Exemplar non clausum",
                 auxilium: "Template strings must end with a closing backtick."
             } qua LexorErrorNuntius
         }
-        si LexorErrorCodice.SignumInopinatum {
+        casu LexorErrorCodice.SignumInopinatum {
             redde {
                 textus: "Signum inopinatum",
                 auxilium: "This character is not valid in Latin syntax."
             } qua LexorErrorNuntius
         }
-        si LexorErrorCodice.NumerusHexMalus {
+        casu LexorErrorCodice.NumerusHexMalus {
             redde {
                 textus: "Numerus hex malus",
                 auxilium: "Hex literals must have at least one digit after 0x prefix."
             } qua LexorErrorNuntius
         }
-        si LexorErrorCodice.NumerusBinariusMalus {
+        casu LexorErrorCodice.NumerusBinariusMalus {
             redde {
                 textus: "Numerus binarius malus",
                 auxilium: "Binary literals must have at least one digit after 0b prefix."
             } qua LexorErrorNuntius
         }
-        si LexorErrorCodice.NumerusOctalisMalus {
+        casu LexorErrorCodice.NumerusOctalisMalus {
             redde {
                 textus: "Numerus octalis malus",
                 auxilium: "Octal literals must have at least one digit after 0o prefix."
