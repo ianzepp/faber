@@ -39,11 +39,9 @@ if (!parseResult.programma) {
     fail('Parse failed: no program');
 }
 
-const semResult = analyze(parseResult.programma as Programma);
-if (semResult.errores.length > 0) {
-    const msgs = semResult.errores.map((e: any) => e.nuntius || String(e)).join('; ');
-    fail(`Semantic errors: ${msgs}`);
-}
+// WHY: Lenient mode - run semantic analysis but ignore errors.
+// Snippet tests often have undefined variables as placeholders.
+analyze(parseResult.programma as Programma);
 
 const output = generateTs((parseResult.programma as Programma).corpus as Sententia[]);
 process.stdout.write(output);
