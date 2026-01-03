@@ -4,7 +4,7 @@ Rewrite the Faber compiler in Faber, targeting TypeScript/Bun.
 
 ## Current State
 
-**Phase 0 (Syntax Modernization) complete.** All fons-fab source updated to modern syntax. Phase 1 (TypeScript Compilation) ready to begin.
+**Phase 0 (Syntax Modernization) complete.** All fons-fab source updated to modern syntax. Phase 1 (TypeScript Compilation) is in progress.
 
 | Module    | Location             |  Files |      Lines |
 | --------- | -------------------- | -----: | ---------: |
@@ -28,6 +28,15 @@ Rewrite the Faber compiler in Faber, targeting TypeScript/Bun.
 
 **🔄 Phase 1 In Progress - TypeScript Compilation**
 
+Recent progress:
+
+- ✅ TS codegen: lower `tabula[key]` to `Map.get/set` (b92ef64)
+- ✅ Align fons-fab field names with AST, fix scope handling (ef1d259)
+    - Rename `AngulusSin/Dex` → `QuadratusSin/Dex` (brackets are square)
+    - Replace `tabula.habet()` with `nonnihil tabula[key]`
+    - Add missing scope enter/exit in `analyzeIn`
+    - Hoist imports to file level (fix import-in-function)
+
 **P0 - Module System** (blocking TypeScript execution)
 
 - Import/export codegen must work correctly
@@ -39,13 +48,12 @@ Rewrite the Faber compiler in Faber, targeting TypeScript/Bun.
 cd opus/bootstrap && npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler cli.ts
 ```
 
-| Category                        | Count | Fix                                                       |
-| ------------------------------- | ----: | --------------------------------------------------------- |
-| Discriminated union narrowing   |   ~70 | Review `discerne` codegen — types not narrowing correctly |
-| Missing exports                 |   ~24 | Add `@ publicum` to `genus`/`ordo` declarations           |
-| Private method accessibility    |   ~22 | Add `@ publicum` to methods or refactor architecture      |
-| Missing `tabula.habet()` method |    ~4 | Add `habet` → `.has()` to `fons/codegen/tabula.ts`        |
-| Import placement                |    ~5 | Fix codegen placing imports inside functions              |
+| Category                      | Count | Fix                                                       |
+| ----------------------------- | ----: | --------------------------------------------------------- |
+| Discriminated union narrowing |   ~70 | Review `discerne` codegen — types not narrowing correctly |
+| Missing exports               |   ~24 | Add `@ publicum` to `genus`/`ordo` declarations           |
+| Private method accessibility  |   ~22 | Add `@ publicum` to methods or refactor architecture      |
+| Import placement              |     0 | Hoisted imports to file level (ef1d259)                   |
 
 **P3 - Comment Preservation**
 
@@ -82,11 +90,12 @@ cd opus/bootstrap && npx tsc --noEmit --skipLibCheck --target ES2022 --module ES
 
 **Tasks**:
 
-1. ⏳ Fix module import codegen (imports must appear at top of file)
-2. ⏳ Fix discriminated union type narrowing in `discerne` codegen
-3. ⏳ Add missing `@ publicum` exports
-4. ⏳ Implement comment preservation in TS codegen
-5. ⏳ Verify: `cd opus/bootstrap && npx tsc --noEmit cli.ts` passes
+1. ✅ Lower `tabula[key]` indexing to `Map.get/set` (b92ef64)
+2. ✅ Fix import placement — imports hoisted to file level (ef1d259)
+3. ⏳ Fix discriminated union type narrowing in `discerne` codegen
+4. ⏳ Add missing `@ publicum` exports
+5. ⏳ Implement comment preservation in TS codegen
+6. ⏳ Verify: `cd opus/bootstrap && npx tsc --noEmit cli.ts` passes
 
 ### Phase 2: Self-Compilation (TypeScript)
 
