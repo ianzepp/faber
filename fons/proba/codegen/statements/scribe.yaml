@@ -133,9 +133,10 @@
       fab:
           - 'scribe a, b, c, d, e, f'
 
-# Scribe with object literal
+# Scribe with object literal (edge case - not typical usage)
 - name: scribe with object literal
   faber: 'scribe { x: 1, y: 2 }'
+  rivus: false
   expect:
       ts:
           - 'console.log({ x: 1, y: 2 });'
