@@ -139,7 +139,7 @@ functio parseScribeSententia(Resolvitor r, ScribeGradus gradus) -> Sententia {
     argumenta.adde(r.expressia())
 
     # Parse additional comma-separated arguments
-    dum p.congruet(SymbolumGenus.Virgula) {
+    dum p.congruet(SymbolumGenus.Coma) {
         argumenta.adde(r.expressia())
     }
 
