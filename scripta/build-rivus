@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Build rivus (bootstrap compiler) from fons-fab source using faber
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+echo "Building rivus (bootstrap compiler)..."
+
+# Compile all fons-fab files to opus/bootstrap
+for f in fons-fab/**/*.fab; do
+    outfile="opus/bootstrap/${f#fons-fab/}"
+    outfile="${outfile%.fab}.ts"
+    mkdir -p "$(dirname "$outfile")"
+    bun run faber compile "$f" -o "$outfile"
+done
+
+echo "Built: opus/bootstrap/ ($(find opus/bootstrap -name '*.ts' | wc -l | tr -d ' ') files)"
+
+# Type-check
+echo "Type-checking..."
+cd opus/bootstrap
+npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler cli.ts
+echo "Type-check passed"

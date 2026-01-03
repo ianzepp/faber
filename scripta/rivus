@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Rivus - Bootstrap compiler CLI wrapper
+#
+# Provides faber-compatible interface for the bootstrap compiler.
+# Currently supports: compile <file> [-o output]
+#
+# Usage:
+#   bun run rivus compile input.fab           # Output to stdout
+#   bun run rivus compile input.fab -o out.ts # Output to file
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+if [[ $# -lt 1 ]]; then
+    echo "Usage: rivus <command> [options]" >&2
+    echo "" >&2
+    echo "Commands:" >&2
+    echo "  compile <file> [-o output]   Compile .fab file to TypeScript" >&2
+    echo "  check <file>                 Check syntax (not implemented)" >&2
+    exit 1
+fi
+
+command="$1"
+shift
+
+case "$command" in
+    compile)
+        if [[ $# -lt 1 ]]; then
+            echo "Error: compile requires a file argument" >&2
+            exit 1
+        fi
+        
+        input="$1"
+        shift
+        
+        output=""
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                -o|--output)
+                    output="$2"
+                    shift 2
+                    ;;
+                *)
+                    echo "Unknown option: $1" >&2
+                    exit 1
+                    ;;
+            esac
+        done
+        
+        if [[ -n "$output" ]]; then
+            bun opus/bootstrap/cli.ts < "$input" > "$output"
+            echo "Compiled: $input -> $output (ts)"
+        else
+            bun opus/bootstrap/cli.ts < "$input"
+        fi
+        ;;
+    
+    check)
+        echo "Error: check command not yet implemented in rivus" >&2
+        exit 1
+        ;;
+    
+    *)
+        echo "Unknown command: $command" >&2
+        exit 1
+        ;;
+esac
