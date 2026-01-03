@@ -14,7 +14,9 @@ A Latin programming language compiler ("The Roman Craftsman").
 
 ## Commands
 
-### Faber CLI
+### Faber CLI (Primary Compiler)
+
+The TypeScript implementation in `fons/primus/` - use this for all daily development:
 
 ```
 bun run faber compile <file.fab>      # TS (default)
@@ -24,13 +26,36 @@ bun run faber check <file.fab>        # Validate syntax
 bun run faber format <file.fab>       # Format source
 ```
 
+### Rivus CLI (Bootstrap Compiler)
+
+The Faber implementation in `fons/proprius/` - Faber compiler written in Faber itself.
+Must be built first with `bun run build:rivus` before use:
+
+```
+bun run build:rivus                   # Build bootstrap compiler to opus/bootstrap/
+bun run rivus compile <file.fab>      # Compile using bootstrap (TS only)
+bun run rivus compile <file.fab> -o out.ts
+```
+
+**When to use Rivus:**
+
+- Testing that Faber can compile itself
+- Verifying bootstrap compiler correctness
+- Dogfooding language features
+
+**When to use Faber (default):**
+
+- All normal development
+- Multi-target compilation (py, zig, rs, cpp)
+- Faster iteration (no rebuild needed)
+
 ### Development
 
 ```
 bun test                              # Run all tests
 bun test -t "pattern"                 # Filter tests
 bun test --coverage                   # With coverage
-bun run lint                          # Lint TS source
+bun run lint                          # Lint TS source (fons/primus)
 bun run lint:fix                      # Lint with auto-fix
 bun run sanity                        # Verify test coverage
 bun run grammar                       # Regenerate GRAMMAR.md
@@ -40,7 +65,8 @@ bun run grammar                       # Regenerate GRAMMAR.md
 
 ```
 bun run build                         # Build faber executable to opus/
-bun run exempla                       # Compile exempla/*.fab to opus/
+bun run build:rivus                   # Build rivus (bootstrap) to opus/bootstrap/
+bun run exempla                       # Compile fons/exempla/*.fab to opus/
 bun run exempla -- -t all             # Compile to all targets
 bun run release                       # Release new version
 ```
