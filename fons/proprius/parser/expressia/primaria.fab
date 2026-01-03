@@ -137,6 +137,9 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
 
     # Fallback: report error and return placeholder
     p.renuncia(ParserErrorCodice.ExpectaturExpressia, scriptum("got '{}'", sym.valor))
+    si non p.estFinis() {
+        p.procede()
+    }
     redde finge Nomen {
         locus: locus,
         valor: ""

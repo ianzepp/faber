@@ -14,13 +14,7 @@ import { parse as parseYaml } from 'yaml';
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, basename } from 'path';
 
-import { lexare } from '../../opus/bootstrap/lexor/index';
-import { resolvere } from '../../opus/bootstrap/parser/index';
-import { analyze } from '../../opus/bootstrap/semantic/index';
-import { generateTs } from '../../opus/bootstrap/codegen/ts/index';
-
-import type { Programma } from '../../opus/bootstrap/ast/radix';
-import type { Sententia } from '../../opus/bootstrap/ast/sententia';
+import { fileURLToPath } from 'url';
 
 // =============================================================================
 // TYPES
@@ -88,33 +82,74 @@ function shouldSkip(tc: TestCase): boolean {
 // COMPILER
 // =============================================================================
 
-function compile(code: string): string {
-    const lexResult = lexare(code);
+const repoRoot = join(import.meta.dir, '..', '..');
+const compileScript = fileURLToPath(new URL('./rivus-compile.ts', import.meta.url));
+const COMPILE_TIMEOUT_MS = 3500;
 
-    if (lexResult.errores.length > 0) {
-        const msgs = lexResult.errores.map((e: any) => e.textus || String(e)).join('; ');
-        throw new Error(`Lexor errors: ${msgs}`);
+async function readTextWithTimeout(
+    stream: ReadableStream,
+    timeoutMs: number,
+    label: string,
+): Promise<string> {
+    const timer = setTimeout(() => {
+        try {
+            stream.cancel(`${label} read timeout`);
+        } catch {}
+    }, timeoutMs);
+
+    try {
+        return await new Response(stream).text();
+    } finally {
+        clearTimeout(timer);
     }
+}
 
-    const parseResult = resolvere(lexResult.symbola);
+async function compile(code: string, timeoutMs: number = COMPILE_TIMEOUT_MS): Promise<string> {
+    const proc = Bun.spawn({
+        cmd: ['bun', compileScript],
+        cwd: repoRoot,
+        stdin: 'pipe',
+        stdout: 'pipe',
+        stderr: 'pipe',
+    });
 
-    if (parseResult.errores.length > 0) {
-        const msgs = parseResult.errores.map((e: any) => e.nuntius || String(e)).join('; ');
-        throw new Error(`Parser errors: ${msgs}`);
+    proc.stdin.write(code);
+    proc.stdin.end();
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+            try {
+                proc.kill('SIGKILL');
+            } catch {}
+            try {
+                proc.stdout.cancel('compile timeout');
+            } catch {}
+            try {
+                proc.stderr.cancel('compile timeout');
+            } catch {}
+            reject(new Error(`Timeout after ${timeoutMs}ms`));
+        }, timeoutMs);
+    });
+
+    const exitCode = await Promise.race([proc.exited, timeout]).finally(() => {
+        if (timeoutId !== undefined) {
+            clearTimeout(timeoutId);
+        }
+    });
+    const [stdout, stderr] = await Promise.all([
+        readTextWithTimeout(proc.stdout, 250, 'stdout'),
+        readTextWithTimeout(proc.stderr, 250, 'stderr'),
+    ]);
+
+    const errText = stderr.trim();
+    if (exitCode !== 0) {
+        throw new Error(errText || `Compile failed (exit ${exitCode})`);
     }
-
-    if (!parseResult.programma) {
-        throw new Error('Parse failed: no program');
+    if (errText.length > 0) {
+        throw new Error(errText);
     }
-
-    const semResult = analyze(parseResult.programma as Programma);
-
-    if (semResult.errores.length > 0) {
-        const msgs = semResult.errores.map((e: any) => e.nuntius || String(e)).join('; ');
-        throw new Error(`Semantic errors: ${msgs}`);
-    }
-
-    return generateTs((parseResult.programma as Programma).corpus as Sententia[]);
+    return stdout;
 }
 
 // =============================================================================
@@ -213,15 +248,19 @@ for (const { file, cases } of yamlFiles) {
                 continue;
             }
 
-            test(`${tc.name} @ts`, () => {
+            test(`${tc.name} @ts`, async () => {
                 const input = getInput(tc);
 
                 if (hasErrata(tc)) {
-                    // Expect compilation to fail
-                    expect(() => compile(input.trim())).toThrow();
+                    try {
+                        await compile(input.trim());
+                        throw new Error('Expected compilation to fail');
+                    } catch (error: any) {
+                        checkErrata(tc, error);
+                    }
                 } else {
                     // Expect compilation to succeed and match
-                    const output = compile(input.trim());
+                    const output = await compile(input.trim());
                     checkOutput(output, expectation!);
                 }
             });
