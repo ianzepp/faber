@@ -65,6 +65,16 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
         } qua Expressia
     }
 
+    # Template literal
+    si sym.species == SymbolumGenus.Exemplar {
+        p.procede()
+        redde finge Littera {
+            locus: locus,
+            species: LitteraGenus.Exemplar,
+            crudus: sym.valor
+        } qua Expressia
+    }
+
     # Boolean: verum
     si p.probaVerbum("verum") {
         p.procede()

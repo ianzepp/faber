@@ -12,6 +12,7 @@ ordo SymbolumGenus {
     Numerus       # integer literal: 42
     Fractus       # float literal: 3.14
     Textus        # string literal: "hello"
+    Exemplar      # template literal: `hello ${x}`
 
     # Boolean/null literals (as tokens, not keywords)
     Verum         # true

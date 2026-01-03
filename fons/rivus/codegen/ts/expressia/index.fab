@@ -253,6 +253,10 @@ functio genLittera(LitteraGenus species, textus crudus) -> textus {
         # String literals need quotes - lexer strips them
         redde scriptum("\"§\"", crudus)
     }
+    si species == LitteraGenus.Exemplar {
+        # Template literals need backticks - lexer strips them
+        redde "`" + crudus + "`"
+    }
     # Numerus, Fractus pass through raw value
     redde crudus
 }

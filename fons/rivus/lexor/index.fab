@@ -499,7 +499,7 @@ genus Lexor {
 
         ego.procede()  # Consume closing backtick
 
-        ego.addeSymbolum(SymbolumGenus.Textus, valor, loc)
+        ego.addeSymbolum(SymbolumGenus.Exemplar, valor, loc)
     }
 
     # legeNomen = "scan a name" - handles identifiers and keywords

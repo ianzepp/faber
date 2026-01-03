@@ -16,6 +16,7 @@ ordo LitteraGenus {
     Numerus    # integer: 42
     Fractus    # float: 3.14
     Textus     # string: "hello"
+    Exemplar   # template: `hello ${x}`
     Verum      # true
     Falsum     # false
     Nihil      # null
