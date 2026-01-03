@@ -46,6 +46,7 @@ interface ModernTestCase {
     };
     skip?: string[];
     errata?: ErrataExpectation;
+    rivus?: boolean;
 }
 
 type TestCase = LegacyTestCase | ModernTestCase;
@@ -75,7 +76,9 @@ function hasErrata(tc: TestCase): boolean {
 }
 
 function shouldSkip(tc: TestCase): boolean {
-    return tc.skip?.includes('ts') ?? false;
+    if (tc.skip?.includes('ts')) return true;
+    if (isModernTestCase(tc) && tc.rivus === false) return true;
+    return false;
 }
 
 // =============================================================================

@@ -3,12 +3,15 @@
 #
 # Note: scribe/vide/mone (statement forms) are tested in statements/scribe.yaml
 # This file tests the _prefixed intrinsic function calls.
+#
+# rivus: false - rivus doesn't implement intrinsic functions, only statement forms
 
 # =============================================================================
 # _scribe - Standard output (console.log equivalent)
 # =============================================================================
 
 - name: _scribe with single string
+  rivus: false
   faber: '_scribe("hello")'
   expect:
       ts:
@@ -27,6 +30,7 @@
           - '_scribe("hello")'
 
 - name: _scribe with variable
+  rivus: false
   faber: '_scribe(x)'
   expect:
       ts:
@@ -44,6 +48,7 @@
           - '_scribe(x)'
 
 - name: _scribe with multiple args
+  rivus: false
   faber: '_scribe("a", "b", "c")'
   expect:
       ts:
@@ -65,6 +70,7 @@
 # =============================================================================
 
 - name: _vide with string
+  rivus: false
   faber: '_vide("debug")'
   expect:
       ts:
@@ -84,6 +90,7 @@
           - '_vide("debug")'
 
 - name: _vide with variable
+  rivus: false
   faber: '_vide(val)'
   expect:
       ts:
@@ -109,6 +116,7 @@
 # =============================================================================
 
 - name: _mone with string
+  rivus: false
   faber: '_mone("warning!")'
   expect:
       ts:
@@ -128,6 +136,7 @@
           - '_mone("warning!")'
 
 - name: _mone with variable
+  rivus: false
   faber: '_mone(msg)'
   expect:
       ts:
@@ -153,6 +162,7 @@
 # =============================================================================
 
 - name: _lege basic
+  rivus: false
   faber: 'fixum input = _lege()'
   expect:
       ts:
@@ -175,6 +185,7 @@
 # =============================================================================
 
 - name: _lege in function call
+  rivus: false
   faber: 'process(_lege())'
   expect:
       ts:
