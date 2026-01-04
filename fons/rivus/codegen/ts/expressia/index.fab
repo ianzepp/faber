@@ -38,7 +38,9 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
 
         casu LitteraRegex ut e {
             g.features.usesRegex = verum
-            redde scriptum("/§/§", e.forma, e.vexilla)
+            # WHY: Escape '/' so JS regex literals stay valid.
+            fixum pattern = escapaRegex(e.forma)
+            redde scriptum("/§/§", pattern, e.vexilla)
         }
 
         # Binary and unary
@@ -323,6 +325,22 @@ functio genLittera(LitteraGenus species, textus crudus) -> textus {
     }
     # Numerus, Fractus pass through raw value
     redde crudus
+}
+
+# Escape forward slashes for JS regex literals.
+functio escapaRegex(textus pattern) -> textus {
+    varia result = ""
+    varia i = 0
+    dum i < pattern.longitudo() {
+        fixum c = pattern[i]
+        si c == "/" {
+            result = result + "\\/"
+        } secus {
+            result = result + c
+        }
+        i += 1
+    }
+    redde result
 }
 
 # =============================================================================
