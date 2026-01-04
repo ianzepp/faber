@@ -8,6 +8,12 @@
 
 ex "../ast/lexema" importa VerbumId
 
+@ publicum
+ordo Dialectus {
+    Latinus
+    Anglicus
+}
+
 # Check if a word is a reserved keyword
 #
 # NOTE: This list must stay synchronized with fons/lexicon/keywords.ts
@@ -150,7 +156,17 @@ functio estVerbum(textus v) -> bivalens {
 # WHY: Enables dialect spellings (e.g., English keywords) without changing
 #      downstream parsing/codegen logic.
 @ publica
-functio verbumId(textus v) -> VerbumId? {
+functio verbumId(textus v, si Dialectus dialectus) -> VerbumId? {
+    si nonnihil dialectus et dialectus === Dialectus.Anglicus {
+        elige v {
+            casu "becomes" { redde VerbumId.Fit }
+            casu "will_become" { redde VerbumId.Fiet }
+            casu "become_each" { redde VerbumId.Fiunt }
+            casu "will_become_each" { redde VerbumId.Fient }
+            ceterum { }
+        }
+    }
+
     elige v {
         casu "fit" { redde VerbumId.Fit }
         casu "fiet" { redde VerbumId.Fiet }

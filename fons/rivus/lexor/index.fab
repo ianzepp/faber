@@ -30,7 +30,7 @@
 
 ex "../ast/positio" importa Locus
 ex "../ast/lexema" importa Symbolum, SymbolumGenus, VerbumId
-ex "../lexicon/verba" importa estVerbum, verbumId
+ex "../lexicon/verba" importa Dialectus, estVerbum, verbumId
 ex "./errores" importa LexorError, LexorErrorCodice, error
 
 # Result of lexical analysis
@@ -54,6 +54,7 @@ genus Lexor {
     numerus columnaInitium        # Byte offset where current line starts
     lista<Symbolum> symbola       # symbola = "tokens" - output accumulator
     lista<LexorError> errores     # Accumulated lexical errors
+    Dialectus dialectus          # Keyword spelling dialect
 
     # =========================================================================
     # Position Tracking
@@ -542,8 +543,9 @@ genus Lexor {
 
         # Check if the identifier is a reserved keyword
         # estVerbum() is defined in lexicon/verba.fab
-        si estVerbum(valor) {
-            ego.addeVerbum(valor, loc, verbumId(valor))
+        fixum id = verbumId(valor, ego.dialectus)
+        si estVerbum(valor) aut nonnihil id {
+            ego.addeVerbum(valor, loc, id)
         } secus {
             # Nomen = identifier token (variable name, function name, etc.)
             ego.addeSymbolum(SymbolumGenus.Nomen, valor, loc)
@@ -824,15 +826,21 @@ genus Lexor {
 #   ex result.symbola pro sym { ... }
 #
 @ publica
-functio lexare(textus fons) -> LexorResultatum {
+functio lexare(textus fons, si Dialectus dialectus) -> LexorResultatum {
     # Initialize scanner state
+    varia dialectusActualis = Dialectus.Latinus
+    si nonnihil dialectus {
+        dialectusActualis = dialectus
+    }
+
     varia lexor = {
         fons: fons,             # Source text to tokenize
         index: 0,               # Start at beginning
         linea: 1,               # Lines are 1-based
         columnaInitium: 0,      # First line starts at offset 0
         symbola: [] qua lista<Symbolum>,    # Empty token list
-        errores: [] qua lista<LexorError>   # Empty error list
+        errores: [] qua lista<LexorError>,  # Empty error list
+        dialectus: dialectusActualis        # Keyword spelling dialect
     } qua Lexor
 
     # Run the scanner and return results
