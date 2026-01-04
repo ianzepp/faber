@@ -198,11 +198,11 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
             ex (e.argumenta qua lista<Expressia>) pro arg {
                 args.adde(genExpressia(arg, g))
             }
-            varia result = scriptum("new §(§)", genExpressia(e.vocatum, g), args.coniunge(", "))
+            # WHY: novum supports optional override object as a final argument.
             si nonnihil e.initor {
-                result = scriptum("§ /* initor: § */", result, genExpressia(e.initor, g))
+                args.adde(genExpressia(e.initor, g))
             }
-            redde result
+            redde scriptum("new §(§)", genExpressia(e.vocatum, g), args.coniunge(", "))
         }
 
         casu CedeExpressia ut e {
@@ -449,7 +449,10 @@ functio genObiectum(lista<ObiectumProprietas> proprietates, TsGenerator g) -> te
 
     varia props = [] qua lista<textus>
     ex proprietates pro prop {
-        si prop.brevitas {
+        si prop.dispersum {
+            # WHY: Spread properties lower to ...expr in JS object literals.
+            props.adde(scriptum("...§", genExpressia(prop.valor, g)))
+        } sin prop.brevitas {
             # Shorthand: { name } -> { name }
             props.adde(genExpressia(prop.clavis, g))
         } sin prop.computatum {

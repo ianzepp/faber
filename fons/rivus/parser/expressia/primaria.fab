@@ -275,7 +275,8 @@ functio parseObiectumExpressia(Resolvitor r) -> Expressia {
                     clavis: argumentum,
                     valor: argumentum,
                     brevitas: falsum,
-                    computatum: falsum
+                    computatum: falsum,
+                    dispersum: verum
                 } qua ObiectumProprietas)
             } secus {
                 # Parse the key
@@ -316,7 +317,8 @@ functio parseObiectumExpressia(Resolvitor r) -> Expressia {
                         clavis: clavis,
                         valor: valor,
                         brevitas: falsum,
-                        computatum: computatum
+                        computatum: computatum,
+                        dispersum: falsum
                     } qua ObiectumProprietas)
                 } secus {
                     # Shorthand: { name } means { name: name }
@@ -326,7 +328,8 @@ functio parseObiectumExpressia(Resolvitor r) -> Expressia {
                         clavis: clavis,
                         valor: clavis,
                         brevitas: verum,
-                        computatum: falsum
+                        computatum: falsum,
+                        dispersum: falsum
                     } qua ObiectumProprietas)
                 }
             }
@@ -441,7 +444,8 @@ functio parseFingeExpressia(Resolvitor r) -> Expressia {
                     clavis: clavis,
                     valor: valor,
                     brevitas: brevitas,
-                    computatum: falsum
+                    computatum: falsum,
+                    dispersum: falsum
                 } qua ObiectumProprietas)
             } dum p.congruet(SymbolumGenus.Coma)
         }

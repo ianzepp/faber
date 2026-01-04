@@ -114,21 +114,7 @@ functio parseUnaria(Resolvitor r) -> Expressia {
 
     # New expression
     si p.congruetVerbum("novum") {
-        fixum vocatum = parseUnaria(r)
-
-        # Check for constructor call
-        varia argumenta = [] qua lista<Expressia>
-        si p.congruet(SymbolumGenus.ParensSin) {
-            argumenta = parseArgumenta(r)
-            p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
-        }
-
-        redde finge NovumExpressia {
-            locus: locus,
-            vocatum: vocatum,
-            argumenta: argumenta,
-            initor: nihil
-        } qua Expressia
+        redde parseNovumExpressia(r, locus)
     }
 
     # No prefix operator - parse postfix
@@ -320,6 +306,43 @@ functio parsePostfix(Resolvitor r) -> Expressia {
     }
 
     redde expressia
+}
+
+# Parse novum (constructor) expression
+#
+# GRAMMAR:
+#   novumExpr := 'novum' IDENTIFIER ('(' arguments ')')? ('de' expr | objectLiteral)?
+#
+# WHY: novum binds to the constructor name, not to a call expression.
+@ publica
+functio parseNovumExpressia(Resolvitor r, Locus locus) -> Expressia {
+    fixum p = r.parser()
+
+    # Constructor name
+    fixum vocatum = parseNomenVelVerbum(r)
+
+    # Optional arguments
+    varia argumenta = [] qua lista<Expressia>
+    si p.congruet(SymbolumGenus.ParensSin) {
+        argumenta = parseArgumenta(r)
+        p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+    }
+
+    # Optional overrides: { ... } or de expr
+    varia initor = nihil qua Expressia?
+    si p.proba(SymbolumGenus.UncusSin) {
+        initor = parsePrimaria(r)
+    } sin p.probaVerbum("de") {
+        p.procede()
+        initor = r.expressia()
+    }
+
+    redde finge NovumExpressia {
+        locus: locus,
+        vocatum: vocatum,
+        argumenta: argumenta,
+        initor: initor
+    } qua Expressia
 }
 
 # Parse function call arguments

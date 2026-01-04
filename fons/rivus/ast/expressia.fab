@@ -31,6 +31,7 @@ genus ObiectumProprietas {
     Expressia valor
     bivalens brevitas        # true for { name } meaning { name: name }
     bivalens computatum      # true for { [expr]: value }
+    bivalens dispersum       # true for { sparge expr }
 }
 
 # Lambda parameter (simplified vs full Parametrum)
