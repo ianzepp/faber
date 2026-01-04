@@ -451,7 +451,27 @@ functio genEstExpressiaCum(Expressia expr, TypusAnnotatio scopus, TsGenerator g,
 # Recognizes both {} (traditional) and § (section sign, preferred) as placeholders
 @ publica
 functio genScriptum(textus exemplar, lista<Expressia> argumenta, TsGenerator g) -> textus {
-    # Convert scriptum("Hello, §!", name) or scriptum("Hello, §!", name) to template literal
+    # WHY: No-arg scriptum should emit a plain string literal (no template).
+    si argumenta.longitudo() == 0 {
+        varia unescaped = ""
+        varia i = 0
+        dum i < exemplar.longitudo() {
+            fixum c = exemplar[i]
+            si c == "{" et i + 1 < exemplar.longitudo() et exemplar[i + 1] == "{" {
+                unescaped = unescaped + "{"
+                i = i + 2
+            } sin c == "}" et i + 1 < exemplar.longitudo() et exemplar[i + 1] == "}" {
+                unescaped = unescaped + "}"
+                i = i + 2
+            } secus {
+                unescaped = unescaped + c
+                i += 1
+            }
+        }
+        redde scriptum("\"§\"", unescaped)
+    }
+
+    # Convert scriptum("Hello, §!", name) or scriptum("Hello, {}!", name) to template literal
     varia result = "`"
     varia argIndex = 0
     varia i = 0
@@ -460,18 +480,36 @@ functio genScriptum(textus exemplar, lista<Expressia> argumenta, TsGenerator g) 
         fixum c = exemplar[i]
         si c == "§" {
             # § placeholder (section sign, preferred)
-            si argIndex < argumenta.longitudo() {
-                result = result + "${" + genExpressia(argumenta[argIndex], g) + "}"
-                argIndex += 1
-            }
+            fixum arg = argIndex < argumenta.longitudo() sic genExpressia(argumenta[argIndex], g) secus "undefined"
+            result = result + "${" + arg + "}"
+            argIndex += 1
             i += 1
-        } sin c == "{" et i + 1 < exemplar.longitudo() et exemplar[i + 1] == "}" {
-            # {} placeholder (traditional)
-            si argIndex < argumenta.longitudo() {
-                result = result + "${" + genExpressia(argumenta[argIndex], g) + "}"
+        } sin c == "{" {
+            si i + 1 < exemplar.longitudo() et exemplar[i + 1] == "{" {
+                # {{ -> literal {
+                result = result + "{"
+                i = i + 2
+            } sin i + 1 < exemplar.longitudo() et exemplar[i + 1] == "}" {
+                # {} placeholder (traditional)
+                fixum arg = argIndex < argumenta.longitudo() sic genExpressia(argumenta[argIndex], g) secus "undefined"
+                result = result + "${" + arg + "}"
                 argIndex += 1
+                i = i + 2
+            } secus {
+                # Lone { passes through
+                result = result + "{"
+                i += 1
             }
-            i = i + 2
+        } sin c == "}" {
+            si i + 1 < exemplar.longitudo() et exemplar[i + 1] == "}" {
+                # }} -> literal }
+                result = result + "}"
+                i = i + 2
+            } secus {
+                # Lone } passes through
+                result = result + "}"
+                i += 1
+            }
         } secus {
             result = result + c
             i += 1
