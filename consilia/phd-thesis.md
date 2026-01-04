@@ -406,3 +406,107 @@ Get Claim C (multi-target semantic preservation) working first. That's pure engi
 ### Summary
 
 The document is honest about what Faber Romanus is and isn't, and sets up a framework where you can win even if Latin turns out to be irrelevant. The main risk is overcommitting to the full research protocol before the tooling is ready. Stabilize the compiler, then run the experiments.
+
+## GLM-4.7: Notes
+
+### 1. Strategic Assessment: IR Framing is Correct
+
+The IR framing is the right move. "TypeScript in a toga" was always a weak argument; "LLM-friendly IR" is a defensible market position. The workflow claim (LLM drafts → human audits → compiler emits) separates you from every mainstream language.
+
+- **Verdict:** Keep this central. This is the strongest differentiator.
+
+### 2. Critical Gaps
+
+**Task suite definition is missing.** Claims A and B are impossible without specifying what you're measuring. Algorithm challenges? Real-world patterns? API integrations? The distribution heavily influences your results - a suite of simple algorithms will favor regular structure; real-world CRUD might favor library knowledge.
+
+**No statistical power analysis.** 10-30 tasks in Phase 3 is noise. With 3+ conditions (Faber-Latin, Faber-English, Faber-Symbols, direct TS), you'll need more to detect meaningful differences. Power analysis should drive sample size, not convenience.
+
+**Model drift is unaddressed.** Silent updates happen. "temperature=0" is not determinism. You need version locking or at least documented model snapshots for reproducibility.
+
+### 3. Claim Prioritization
+
+Deprioritize Claim B (reviewability). It's the hardest to measure, the noisiest (human skill varies wildly), and the least critical to the core value prop. Focus on A (LLM reliability) and C (multi-target semantics) first.
+
+Claim C should be completed before any LLM experiments. It's pure engineering - no models, no cost, just compiler correctness. Build credibility on the thing you control.
+
+### 4. Implementation Reality Check
+
+Faber-English is non-trivial. The ablation seems simple ("same grammar, different keywords") but requires maintaining parallel keyword sets through tokenizer → parser → diagnostics → codegen. 1-3 weeks is optimistic unless you've already architected for keyword abstraction.
+
+The harness is the real deliverable, but its scope is undefined. Does it handle:
+
+- Prompt logging and versioning?
+- Automatic recompilation when compiler changes?
+- Regression tracking across runs?
+- A/B testing of different prompt strategies?
+
+**Recommendation:** Start with a minimal harness that just compiles/tests, measure baseline success rates, then iterate. Don't overbuild before you know what works.
+
+### 5. The "Who Is the Audience?" Section is Insightful
+
+The long-term question - whether LLMs would voluntarily choose a low-entropy IR - is the most interesting speculative claim. That's testable once you have the harness: give models a choice and measure preference. That paper would get attention.
+
+### Summary
+
+The framework is sound. The failure taxonomy is genuinely useful. The main risk is overcommitting to the full research protocol before the tooling is stable. Stabilize the compiler (Claim C), build a minimal harness, measure baseline, then iterate. Don't try to prove everything at once.
+
+## GPT-5.2: Notes
+
+### 1. The Document’s Center of Gravity is Right
+
+Treating Faber as an **LLM-oriented intermediate representation** (not “a Latin language”) is the correct keystone. It sets a win condition you can actually deliver: deterministic compilation + measurable deltas in failure/repair rates.
+
+- **Verdict:** Keep the IR framing as the first sentence of any public pitch.
+
+### 2. Narrow to Two Primary Claims (A + C)
+
+Claim B (human reviewability) is high-cost, high-noise, and easy to argue with. Unless you have a concrete driver (security audits, compliance review, regulated codebases), it should be optional.
+
+- **Recommendation:** Make Claims A and C primary, and treat B as a “later study” or replace it with a smaller, mechanically-gradeable proxy (e.g., type inference questions, control-flow questions, seeded bug localization with fixed time budget).
+
+### 3. Write Down the “Benchmark Contract” Explicitly
+
+Right now the document implies a harness, but the key missing piece is the contract that prevents critics (and future-you) from accidentally moving the goalposts.
+
+The contract should specify:
+
+- **Task suite distribution:** what categories exist, what is excluded, and why.
+- **Tool/feedback policy:** whether compiler errors are provided, whether tests are provided, and how many repair iterations are allowed.
+- **Prompt protocol:** template, constraints, and any few-shot examples.
+- **Stopping rules:** success/failure, max tokens/time, and retry budget.
+
+If these aren’t frozen, “repair cost” becomes a measurement of prompt engineering and diagnostic verbosity instead of IR quality.
+
+### 4. Split the Hypothesis into “Structure” vs “Vocabulary”
+
+You already have the right ablation idea; make the causal story even more explicit:
+
+- **H1 (structure/regularity):** same grammar/AST discipline reduces errors.
+- **H2 (Latin priors):** Latin-ish vocabulary improves reliability beyond structure.
+
+`Faber-English` is not just “nice to have”; it’s the only clean test of H2.
+
+### 5. Make Reproducibility Concrete (What Gets Logged)
+
+“Rerunnable” needs to mean: someone can run the same harness and get comparable aggregates, even if individual generations differ.
+
+At minimum, log per-run:
+
+- Compiler git SHA, harness git SHA
+- Model identifier + timestamp (and region/provider if relevant)
+- Prompt, raw model output, normalized source
+- All tool outputs (compiler diagnostics, test output)
+- Outcome bucket + iteration count
+
+A simple `jsonl` log format becomes a serious artifact quickly.
+
+### 6. Faber-English Implementation: Avoid a Parallel Compiler
+
+The risk is accidentally forking the language into two first-class dialects.
+
+- **Recommendation:** implement a single canonical token/AST pipeline, with a thin “dialect vocabulary table” at the tokenizer/parser boundary.
+- **EDGE:** diagnostics should remain canonical (Latin) internally, but the harness can optionally post-process messages for the English condition so error-message familiarity doesn’t become an untracked confound.
+
+### Summary
+
+The plan is solid and defensible. The highest-value improvements are (1) freezing the benchmark contract, (2) sequencing Claim C before any model runs, and (3) treating `Faber-English` as a first-class experimental control without letting it become a second language.
