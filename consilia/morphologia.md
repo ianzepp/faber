@@ -714,6 +714,242 @@ Mapping _Present Participle_ (adjective: "reading [thing]") to _Generator_ (iter
 ### Summary of Recommendations
 
 1.  **Strict Type Binding:** Do not implement global stem registries. Morphology dispatch must be scoped to the specific type definition (via `@ radix` or similar).
-2.  **Explicit Control Flow:** `filtrabit` should return a `Promise`/`Future`, not auto-await. The user must write `cede lista.filtrabit(...)` or `figendum x = lista.filtrabit(...)`. This preserves the "Mechanically Certain" principle.
+2.  **Explicit Control Flow:** `filtrabit` should return a `Promise`/`Future`, not auto-await. The user must still write `cede lista.filtrabit(...)` or `figendum x = lista.filtrabit(...)`. This preserves the "Mechanically Certain" principle.
 3.  **Democratize Morphology:** Ensure the `@ radix` annotation is robust enough for user-land code, preventing the standard library from feeling "magical."
 4.  **Irregularity Strategy:** Embrace Latin irregularity. If `fero` is the verb, allow defining `latus` as the participle stem explicitly in the annotation, rather than trying to algorithmically derive it.
+
+---
+
+## GLM 4.7 Notes
+
+**Verdict:** Morphologia is a **strong concept** aligned with the Latin-first thesis, but has **critical implementation issues** that violate core principles. The idea is sound — POC needs fundamental fixes.
+
+### Strengths
+
+#### 1. Deeply Latin
+
+Verb conjugation encoding mutation/async/generator semantics is authentically Latin and mechanically certain. The mapping is elegant:
+
+| Form                                | Latin Meaning    | Code Semantics     |
+| ----------------------------------- | ---------------- | ------------------ |
+| `-a/-e/-i` (imperative)             | "do this!"       | Sync, mutates      |
+| `-ata/-ita` (perfect participle)    | "done"           | Sync, returns new  |
+| `-abit/-ebit` (future indicative)   | "will do"        | Async, mutates     |
+| `-atura/-itura` (future participle) | "will have done" | Async, returns new |
+
+This is not "naming convention pretending to be Latin" — it leverages actual grammatical structure. The correspondence between tense/aspect and execution model is conceptually sound.
+
+#### 2. IO Domain Excellence
+
+The real payoff is IO types where **every operation has 3-4 natural variants**:
+
+```faber
+solum.lege(path)      # sync read
+solum.leget(path)     # async read (Promise)
+solum.legens(path)    # streaming read (Generator)
+```
+
+This solves a real problem elegantly — no more `fs.readFileSync` vs `fs.readFile` vs `fs.createReadStream` inconsistency. The design correctly identifies that "collections benefit modestly" — morphology's power is in IO-bound domains where async/streaming is the norm.
+
+#### 3. Consistent Pattern
+
+Learn conjugation once, apply everywhere. No memorizing `sort`/`sorted`, `reverse`/`reversed`, `readFileSync`/`readFile`. This is exactly what "LLM-readable" promises — patterns so consistent deviation feels like a bug.
+
+#### 4. Preserves User Flexibility
+
+Morphology for Latin stdlib + `fit`/`fiet`/`fiunt`/`fient` for user code is the right boundary. User code uses English/German/Arbitrary names anyway — morphology wouldn't apply. The design correctly refuses to deprecate return verbs (morphologia.md:314-315).
+
+---
+
+### Critical Issues
+
+#### 1. Hidden `await` Violates "Mechanically Certain"
+
+**POC generates hidden `await` in async variants** (radices.fab:31, 84, 91):
+
+```faber
+# POC does this:
+genAdd: scriptum("await (async () => {{ §.push(§); }})()", ...)
+```
+
+This bypasses explicit `figendum`/`cede` semantics and can generate invalid JS in non-async contexts. The GPT notes correctly flag this ("Avoid hidden await in codegen"). **Async semantics must be explicit.**
+
+**Fix:** Morphology determines return type (`Promise<T>` vs `T`), but awaiting remains explicit via `figendum`/`cede`. The function body shouldn't emit `await`. The "verb form determines behavior" principle should mean "determines what object I get back," not "injects invisible control flow."
+
+---
+
+#### 2. Stem Irregularity Violates "Mechanically Certain"
+
+The design admits stems need manual mapping (morphologia.fab:139-151):
+
+```faber
+casu "invert" reddit verum    # present: inverte
+casu "invers" reddit verum    # participle: inversa
+casu "inver" reddit verum     # participle with -sa: inversa
+```
+
+This contradicts the "mechanically certain" principle — compiler should deduce stems, not maintain manual mapping tables.
+
+**Concern:** If every irregular verb needs hardcoded handling, the system isn't actually parsing Latin morphology. It's pattern-matching on known forms. The proposal claims morphological dispatch, but implementation is lookup table dispatch.
+
+**Question:** Why can't stem be derived from function name without a registry? `inverte` → strip `-e` → `invert-`, `inversa` → strip `-a` → `invers-`. The irregularity is in the ending, not the stem. Latin has systematic conjugation patterns — why is stem irregularity handled manually?
+
+---
+
+#### 3. Partial Coverage Creates Inconsistency
+
+Only **7 of 78 collection methods** have full imperative/participle pairs:
+
+| Category        | Count | Morphology                |
+| --------------- | ----- | ------------------------- |
+| Full pairs      | 7     | `filtra`/`filtrata`       |
+| Mutate-only     | 9     | `adde` (no `addita`???)   |
+| Participle-only | 20    | `mappata` (no `mappa`???) |
+| Read-only       | 42    | `longitudo`               |
+
+This creates cognitive load: which methods support morphology? Which don't? A "mechanically certain" system should not have arbitrary gaps.
+
+**Concern:** The proposal says "collections benefit modestly" — but then why include them at all? If the system is **designed for IO domains**, why half-implement collections? This is the worst of both worlds: complexity of partial implementation without full payoff.
+
+**Option 1:** Drop collection morphology entirely. Keep collections using explicit `fit`/`fiet`/`fiunt`/`fient` for method bodies. Focus morphology on types where it provides full coverage (solum, caelum, arca, nucleus).
+
+**Option 2:** Complete the implementation. Implement missing `addita`, `mappa`, `reducta` variants. Either commit fully or not at all — partial coverage undermines the "consistent pattern" strength.
+
+---
+
+#### 4. Two Parallel Async Systems
+
+**Both coexist simultaneously** (morphologia.md:266-302):
+
+| Context              | Async Mechanism                         |
+| -------------------- | --------------------------------------- |
+| Stdlib (Latin names) | Morphology (`-atura`, `-abit`, `-ens`)  |
+| User code            | Return verbs (`fiet`, `fiunt`, `fient`) |
+
+```faber
+# STDLIB
+lista.filtratura(predicate)   # -atura → async
+
+# USER CODE
+functio fetch() fiet User     # fiet → async
+```
+
+While justified (user names aren't Latin), this creates **two ways to express the same concept**. The design correctly refuses to deprecate return verbs, but this is a **semantic split**, not a clean boundary.
+
+**Concern:** What if a stdlib method calls a user-defined function? Do async semantics compose? The design mentions Zig state machine composition (morphologia.md:513) but doesn't resolve how `fiet` function calling `filtratura` method handles two async encoding systems.
+
+**Question:** How do morphology-based calls inside `fiet` functions compose? If both generate `Future` structs for Zig, do they use the same state machine pattern? Does the compiler unify them, or are they separate `Future` types that can't interoperate?
+
+---
+
+#### 5. Generator Semantics Are Weak
+
+Present participle (`-ans`/`-ens`) for generators is **linguistically tenuous**:
+
+- `legens` = "reading" (present participle) → streaming/generator?
+- Latin uses present participle for ongoing action, but not typically for "producing items one at a time"
+
+The design questions whether this is the right mapping (morphologia.md:620). Latin has richer aspectual distinctions — is present participle truly the best fit for generators?
+
+**Option:** Consider gerund (`legendi` = "for reading") or a different aspectual form if present participle feels weak. However, adding too many verb forms erodes the "consistent pattern" strength. The current choice may be "good enough" but should be explicitly justified in grammar docs.
+
+---
+
+#### 6. Annotation Syntax Must Not Drift
+
+GPT notes correctly warn: "Avoid `@ radix(...)` drift — a prior attempt with parentheses was reverted."
+
+**Concern:** If `@ radix` supports both comma-separated line form and parenthesized form, parsers will diverge over time. Choose **one** syntax and stick to it.
+
+The preferred form (line-based) is cleaner:
+
+```faber
+@ radix imperativus, perfectum, futurum_activum
+functio filtra<T>(...) fit vacuum { ... }
+```
+
+Parenthesized form creates ambiguity: is it `@ radix(imperativus, perfectum)` or `@ radix(imperativus perfectum)`? Line-based avoids this parsing complexity.
+
+---
+
+### Open Questions
+
+#### 1. Stem Derivation vs Registry
+
+Why not derive stems algorithmically instead of maintaining `estRadixListae()` registries? Irregular stems (`invert-` vs `invers-`) are suffix changes, not arbitrary mutations. Latin conjugation is systematic — first conjugation verbs always have `-a` imperatives and `-ata` perfect participles. Why manually encode what grammar defines?
+
+**Alternative approach:** Define conjugation patterns by conjugation class (1st, 2nd, 3rd, 3rd-io, 4th) rather than per-verb stems. Let compiler conjugate verbs by class. This would be truly "mechanically certain" — no manual stem mapping needed.
+
+#### 2. Validation Strategy with `@ radix`
+
+How does `@ radix` interact with morphology? Does compiler validate that `filtra` actually implements `imperativus` variant, or does it just generate variants automatically?
+
+**Scenario:** If I write:
+
+```faber
+@ radix(imperativus)
+functio filtra<T>(pred: functio(T) fit bivalens) fit vacuum { ... }
+```
+
+Does this mean:
+
+- "This function implements imperative variant only, compiler won't generate others"? OR
+- "This function defines the implementation, compiler generates all declared variants from this body"?
+
+Current POC doesn't show this validation. Without clear semantics, `@ radix` becomes annotation soup rather than a contract.
+
+#### 3. Zig Async Composition
+
+The design mentions "nested futures" and state machine composition (morphologia.md:513). How do morphology-based calls inside `fiet` functions compose?
+
+```faber
+# What happens here?
+functio processUser(id: numerus) fiet User {
+    fixum user = cede arca.quaeret(id)  # morphology: future participle
+    fixum posts = cede solum.legens(user.posts)  # morphology: present participle
+    redde user
+}
+```
+
+Do both `quaeret` and `legens` generate the same `Future` struct pattern? Can `cede` await either one uniformly? Or are there separate state machine types that don't interoperate?
+
+The design claims "morphology and return verbs compile to the same state machine pattern" (morphologia.md:466-484) but doesn't show code. This is a critical gap — Zig has no native async, so composition must be explicit.
+
+#### 4. Irregular Verb Strategy
+
+The design mentions irregular participles like `fero` → `latus` (morphologia.md:622). Will you handle all Latin irregular verbs, or restrict to regular verbs only?
+
+**Concern:** If you manually handle irregulars, you're maintaining a table of exceptions. This defeats the "mechanically certain" principle. If you restrict to regular verbs only, you lose authentic Latin — `fero` is common enough that users will want it.
+
+**Alternative:** Allow users to declare irregular stems explicitly:
+
+```faber
+# User defines irregularity mapping
+@ radix stems(fero, lat) imperativus, perfectum
+functio fere<T>(items: lista<T>) fit vacuum { ... }
+```
+
+This shifts complexity to users but keeps compiler simple and mechanical.
+
+#### 5. Partial Methods Rationale
+
+Why include collection morphology with only 7 full pairs? Either drop it (collections use explicit verbs) or complete it (implement missing `addita`, `mappa` variants).
+
+**Counter-argument:** Maybe partial coverage is intentional — morphology only for "high-value" operations (filter, sort, map) where API proliferation is worst. Less common operations (`decapita`, `praepone`) use explicit methods.
+
+**Rebuttal:** But this creates an inconsistent mental model. Why does `filtra` have morphology but `decapita` doesn't? Both are collection operations. Users have to memorize which methods support morphology. This erodes the "consistent pattern" strength.
+
+**Recommendation:** Be explicit about this in docs. If partial coverage is intentional, justify which operations get morphology and which don't. Don't leave it as arbitrary gaps.
+
+---
+
+### Summary of Concerns
+
+1. **Hidden `await` in POC** violates mechanical certainty — must fix before expanding
+2. **Manual stem registries** contradict algorithmic parsing — why not derive stems?
+3. **Partial collection coverage** creates inconsistency — commit fully or not at all
+4. **Two parallel async systems** create semantic split — how do they compose?
+5. **Weak generator semantics** — is present participle truly the best mapping?
+6. **Annotation drift risk** — choose one syntax and enforce it
+
+The core insight (Latin conjugation encodes semantic axes) is brilliant. The implementation strategy needs to respect the same principles it claims to embody.
