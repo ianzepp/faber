@@ -17,7 +17,7 @@ ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
 ex "../../ast/expressia" importa Expressia
 ex "../../ast/sententia" importa Sententia, ScribeGradus
-ex "../../ast/lexema" importa SymbolumGenus
+ex "../../ast/lexema" importa SymbolumGenus, VerbumId
 ex "../errores" importa ParserErrorCodice
 
 # Import statement parsers from submodules
@@ -46,141 +46,141 @@ functio parseSententia(Resolvitor r) -> Sententia {
 
     # Keyword-based dispatch
     si sym.species === SymbolumGenus.Verbum {
-        fixum verbum = sym.verbum
+        fixum verbumId = sym.verbumId
 
         # Variable declarations
-        si verbum inter ["varia", "fixum", "figendum", "variandum"] {
+        si verbumId inter [VerbumId.Varia, VerbumId.Fixum, VerbumId.Figendum, VerbumId.Variandum] {
             redde parseVariaSententia(r)
         }
 
         # Return statement
-        si verbum === "redde" {
+        si verbumId === VerbumId.Redde {
             redde parseReddeSententia(r)
         }
 
         # Break/continue
-        si verbum === "rumpe" {
+        si verbumId === VerbumId.Rumpe {
             redde parseRumpeSententia(r)
         }
-        si verbum === "perge" {
+        si verbumId === VerbumId.Perge {
             redde parsePergeSententia(r)
         }
 
         # Throw/panic
-        si verbum === "iace" {
+        si verbumId === VerbumId.Iace {
             redde parseIaceSententia(r, falsum)
         }
-        si verbum === "mori" {
+        si verbumId === VerbumId.Mori {
             redde parseIaceSententia(r, verum)
         }
 
         # Output statements
-        si verbum === "scribe" {
+        si verbumId === VerbumId.Scribe {
             redde parseScribeSententia(r, ScribeGradus.Scribe)
         }
-        si verbum === "vide" {
+        si verbumId === VerbumId.Vide {
             redde parseScribeSententia(r, ScribeGradus.Vide)
         }
-        si verbum === "mone" {
+        si verbumId === VerbumId.Mone {
             redde parseScribeSententia(r, ScribeGradus.Mone)
         }
 
         # Error handling
-        si verbum === "tempta" {
+        si verbumId === VerbumId.Tempta {
             redde parseTemptaSententia(r)
         }
-        si verbum === "fac" {
+        si verbumId === VerbumId.Fac {
             redde parseFacSententia(r)
         }
-        si verbum === "adfirma" {
+        si verbumId === VerbumId.Adfirma {
             redde parseAdfirmaSententia(r)
         }
 
         # Control flow
-        si verbum === "si" {
+        si verbumId === VerbumId.Si {
             redde parseSiSententia(r)
         }
-        si verbum === "dum" {
+        si verbumId === VerbumId.Dum {
             redde parseDumSententia(r)
         }
-        si verbum === "ex" {
+        si verbumId === VerbumId.Ex {
             # Look ahead: ex (IDENTIFIER|STRING) importa -> import
             # Otherwise it's a for-of loop
             fixum nextSym = p.specta(1)
             si (nextSym.species === SymbolumGenus.Nomen aut nextSym.species === SymbolumGenus.Textus) {
                 fixum afterSym = p.specta(2)
-                si afterSym.species === SymbolumGenus.Verbum et afterSym.verbum === "importa" {
+                si afterSym.species === SymbolumGenus.Verbum et afterSym.verbumId === VerbumId.Importa {
                     redde parseImportaSententia(r)
                 }
             }
             redde parseExSententia(r)
         }
-        si verbum === "de" {
+        si verbumId === VerbumId.De {
             redde parseDeSententia(r)
         }
 
         # Declarations
-        si verbum === "functio" {
+        si verbumId === VerbumId.Functio {
             redde parseFunctioDeclaratio(r)
         }
-        si verbum === "genus" {
+        si verbumId === VerbumId.Genus {
             redde parseGenusDeclaratio(r, falsum)
         }
-        si verbum === "abstractus" {
+        si verbumId === VerbumId.Abstractus {
             # WHY: Allow abstract genus modifier before the declaration keyword.
-            si p.specta(1).species == SymbolumGenus.Verbum et p.specta(1).verbum == "genus" {
+            si p.specta(1).species == SymbolumGenus.Verbum et p.specta(1).verbumId == VerbumId.Genus {
                 p.procede()
                 redde parseGenusDeclaratio(r, verum)
             }
         }
-        si verbum === "pactum" {
+        si verbumId === VerbumId.Pactum {
             redde parsePactumDeclaratio(r)
         }
-        si verbum === "ordo" {
+        si verbumId === VerbumId.Ordo {
             redde parseOrdoDeclaratio(r)
         }
-        si verbum === "discretio" {
+        si verbumId === VerbumId.Discretio {
             redde parseDiscretioDeclaratio(r)
         }
-        si verbum === "typus" {
+        si verbumId === VerbumId.Typus {
             redde parseTypusAliasDeclaratio(r)
         }
 
         # Pattern matching and flow control
-        si verbum === "elige" {
+        si verbumId === VerbumId.Elige {
             redde parseEligeSententia(r)
         }
-        si verbum === "discerne" {
+        si verbumId === VerbumId.Discerne {
             redde parseDiscerneSententia(r)
         }
-        si verbum === "custodi" {
+        si verbumId === VerbumId.Custodi {
             redde parseCustodiSententia(r)
         }
 
         # Entry points
-        si verbum === "incipit" {
+        si verbumId === VerbumId.Incipit {
             redde parseIncipitSententia(r)
         }
-        si verbum === "incipiet" {
+        si verbumId === VerbumId.Incipiet {
             redde parseIncipietSententia(r)
         }
 
         # Resource management and dispatch
-        si verbum === "cura" {
+        si verbumId === VerbumId.Cura {
             redde parseCuraSententia(r)
         }
-        si verbum === "ad" {
+        si verbumId === VerbumId.Ad {
             redde parseAdSententia(r)
         }
 
         # Testing
-        si verbum === "probandum" {
+        si verbumId === VerbumId.Probandum {
             redde parseProbandumSententia(r)
         }
-        si verbum === "proba" {
+        si verbumId === VerbumId.Proba {
             redde parseProbaSententia(r)
         }
-        si verbum inter ["praepara", "praeparabit", "postpara", "postparabit"] {
+        si verbumId inter [VerbumId.Praepara, VerbumId.Praeparabit, VerbumId.Postpara, VerbumId.Postparabit] {
             # WHY: Allow hooks at top level for test files.
             redde parsePraeparaMassa(r)
         }

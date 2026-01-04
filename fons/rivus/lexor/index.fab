@@ -30,7 +30,7 @@
 
 ex "../ast/positio" importa Locus
 ex "../ast/lexema" importa Symbolum, SymbolumGenus, VerbumId
-ex "../lexicon/verba" importa Dialectus, estVerbum, verbumId
+ex "../lexicon/verba" importa Dialectus, verbumId
 ex "./errores" importa LexorError, LexorErrorCodice, error
 
 # Result of lexical analysis
@@ -542,9 +542,9 @@ genus Lexor {
         }
 
         # Check if the identifier is a reserved keyword
-        # estVerbum() is defined in lexicon/verba.fab
+        # verbumId() is defined in lexicon/verba.fab
         fixum id = verbumId(valor, ego.dialectus)
-        si estVerbum(valor) aut nonnihil id {
+        si nonnihil id {
             ego.addeVerbum(valor, loc, id)
         } secus {
             # Nomen = identifier token (variable name, function name, etc.)

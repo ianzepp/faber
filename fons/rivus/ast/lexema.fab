@@ -101,10 +101,132 @@ ordo SymbolumGenus {
 #      internal meaning.
 @ publicum
 ordo VerbumId {
+    # Imperium - control flow
+    Si
+    Secus
+    Sin
+    Casu
+    Ceterum
+    Dum
+    Fac
+    Pro
+    Elige
+    Ergo
+    Rumpe
+    Perge
+    Redde
+    Reddit
+    Custodi
+    Adfirma
+    Discerne
+    Incipit
+    Incipiet
+
+    # Imperium - testing
+    Probandum
+    Proba
+    Praepara
+    Praeparabit
+    Postpara
+    Postparabit
+    Cura
+    Arena
+    Pagina
+    Tempta
+    Cape
+    Demum
+    Iace
+    Mori
+    Scribe
+    Vide
+    Mone
+    Lege
+    Lineam
+    Scriptum
+    Cede
+
+    # Declaratio - declarations
+    Varia
+    Fixum
+    Figendum
+    Variandum
+    Functio
+    Novum
+    Finge
+    Importa
+    Exporta
+    Typus
+    Genus
+    Pactum
+    Ordo
+    Discretio
+
+    # Modificator - modifiers
+    Futura
+    Prae
+    Praefixum
+    Cursor
+    Curata
+    Publicus
+    Privatus
+    Generis
+    Implet
+    Sub
+    Abstractus
+    Protectus
+    Nexum
+    Omitte
+    Futurum
+    Omnia
+
+    # Operator - operators
+    Et
+    Aut
+    Non
+    Est
+    Sic
     Fit
     Fiet
     Fiunt
     Fient
+    Vel
+    Ante
+    Usque
+    Intra
+    Inter
+    Sparge
+    Ceteri
+    Nulla
+    Nonnulla
+    Nihil
+    Nonnihil
+    Negativum
+    Positivum
+
+    # Valor - literal values
+    Verum
+    Falsum
+    Ego
+
+    # Praepositio - prepositions
+    De
+    In
+    Ex
+    Ad
+    Per
+    Qua
+    Ut
+
+    # Dsl - domain specific
+    Ab
+    Ubi
+    Prima
+    Ultima
+    Summa
+    Ordina
+    Collige
+    Grupa
+    Sed
 }
 
 # A single token from the source
