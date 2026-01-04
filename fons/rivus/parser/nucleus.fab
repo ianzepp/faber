@@ -452,8 +452,18 @@ genus Parser {
     # Includes = and compound assignments (+=, -=, *=, /=, %=, &=, |=)
     @ publica
     functio estAssignatioSignum(Symbolum s) -> bivalens {
-        # For now, only simple assignment is supported
-        redde s.species === SymbolumGenus.Aequum
+        # WHY: Compound assignment shares assignment precedence and associativity.
+        elige s.species {
+            casu SymbolumGenus.Aequum reddit verum
+            casu SymbolumGenus.PlusAequum reddit verum
+            casu SymbolumGenus.MinusAequum reddit verum
+            casu SymbolumGenus.StellaAequum reddit verum
+            casu SymbolumGenus.VirgulaAequum reddit verum
+            casu SymbolumGenus.CentumAequum reddit verum
+            casu SymbolumGenus.EtAequum reddit verum
+            casu SymbolumGenus.VelAequum reddit verum
+            ceterum reddit falsum
+        }
     }
 }
 

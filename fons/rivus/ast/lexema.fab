@@ -37,6 +37,11 @@ ordo SymbolumGenus {
     Stella        # *
     Virgula       # /
     Centum        # %
+    PlusAequum    # +=
+    MinusAequum   # -=
+    StellaAequum  # *=
+    VirgulaAequum # /=
+    CentumAequum  # %=
 
     # Operators - comparison
     Aequum        # =
@@ -66,6 +71,8 @@ ordo SymbolumGenus {
     MinorBis      # <<
     MaiorBis      # >>
     MaiorTer      # >>>
+    EtAequum      # &=
+    VelAequum     # |=
 
     # Punctuation
     Coma          # ,

@@ -627,16 +627,48 @@ genus Lexor {
             }
 
             # ---- Arithmetic operators ----
-            casu "+" { ego.addeSymbolum(SymbolumGenus.Plus, c, loc) }
-            casu "*" { ego.addeSymbolum(SymbolumGenus.Stella, c, loc) }   # stella = star
-            casu "/" { ego.addeSymbolum(SymbolumGenus.Virgula, c, loc) }  # virgula = slash
-            casu "%" { ego.addeSymbolum(SymbolumGenus.Centum, c, loc) }   # centum = percent
+            casu "+" {
+                # WHY: Compound assignments are single tokens (+=, -=, etc.).
+                si ego.specta(0) == "=" {
+                    ego.procede()
+                    ego.addeSymbolum(SymbolumGenus.PlusAequum, "+=", loc)
+                } secus {
+                    ego.addeSymbolum(SymbolumGenus.Plus, c, loc)
+                }
+            }
+            casu "*" {
+                si ego.specta(0) == "=" {
+                    ego.procede()
+                    ego.addeSymbolum(SymbolumGenus.StellaAequum, "*=", loc)
+                } secus {
+                    ego.addeSymbolum(SymbolumGenus.Stella, c, loc)   # stella = star
+                }
+            }
+            casu "/" {
+                si ego.specta(0) == "=" {
+                    ego.procede()
+                    ego.addeSymbolum(SymbolumGenus.VirgulaAequum, "/=", loc)
+                } secus {
+                    ego.addeSymbolum(SymbolumGenus.Virgula, c, loc)  # virgula = slash
+                }
+            }
+            casu "%" {
+                si ego.specta(0) == "=" {
+                    ego.procede()
+                    ego.addeSymbolum(SymbolumGenus.CentumAequum, "%=", loc)
+                } secus {
+                    ego.addeSymbolum(SymbolumGenus.Centum, c, loc)   # centum = percent
+                }
+            }
 
-            # ---- Minus: - or -> (arrow) ----
+            # ---- Minus: - or -> (arrow) or -= ----
             casu "-" {
                 si ego.specta(0) == ">" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.Sagitta, "->", loc)  # sagitta = arrow
+                } sin ego.specta(0) == "=" {
+                    ego.procede()
+                    ego.addeSymbolum(SymbolumGenus.MinusAequum, "-=", loc)
                 } secus {
                     ego.addeSymbolum(SymbolumGenus.Minus, c, loc)
                 }
@@ -706,11 +738,14 @@ genus Lexor {
                 }
             }
 
-            # ---- Logical operators: & && | || ----
+            # ---- Logical operators: & && | || and compound forms ----
             casu "&" {
                 si ego.specta(0) == "&" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.EtEt, "&&", loc)            # logical and
+                } sin ego.specta(0) == "=" {
+                    ego.procede()
+                    ego.addeSymbolum(SymbolumGenus.EtAequum, "&=", loc)
                 } secus {
                     ego.addeSymbolum(SymbolumGenus.Et, c, loc)                 # bitwise and
                 }
@@ -719,6 +754,9 @@ genus Lexor {
                 si ego.specta(0) == "|" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.VelVel, "||", loc)          # logical or
+                } sin ego.specta(0) == "=" {
+                    ego.procede()
+                    ego.addeSymbolum(SymbolumGenus.VelAequum, "|=", loc)
                 } secus {
                     ego.addeSymbolum(SymbolumGenus.Vel, c, loc)                # bitwise or
                 }
