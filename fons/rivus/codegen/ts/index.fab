@@ -10,6 +10,7 @@
 ex "../../ast/sententia" importa Sententia
 ex "./nucleus" importa TsGenerator, creaTsGenerator
 ex "./sententia/index" importa genSententia
+ex "./preamble/index" importa genPreamble
 
 # =============================================================================
 # PUBLIC API
@@ -26,5 +27,10 @@ functio generateTs(lista<Sententia> corpus) -> textus {
         lines.adde(genSententia(stmt, g))
     }
 
-    redde lines.coniunge("\n")
+    fixum preamble = genPreamble(g.features)
+    fixum body = lines.coniunge("\n")
+    si preamble == "" {
+        redde body
+    }
+    redde scriptum("§§", preamble, body)
 }

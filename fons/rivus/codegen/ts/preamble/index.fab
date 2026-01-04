@@ -1,0 +1,21 @@
+# TypeScript Preamble Generator
+#
+# Assembles preamble snippets based on features used.
+
+ex "../../typi" importa RequiredFeatures
+
+fixum FLUMINA = "type Responsum<T = unknown> =\n  | { op: 'bene'; data: T }\n  | { op: 'error'; code: string; message: string }\n  | { op: 'factum' }\n  | { op: 'res'; data: T };\n\nconst respond = {\n  ok: <T>(data: T): Responsum<T> => ({ op: 'bene', data }),\n  error: (code: string, message: string): Responsum<never> => ({ op: 'error', code, message }),\n  done: (): Responsum<never> => ({ op: 'factum' }),\n  item: <T>(data: T): Responsum<T> => ({ op: 'res', data }),\n};\n\nfunction asFit<T>(gen: () => Generator<Responsum<T>>): T {\n  for (const resp of gen()) {\n    if (resp.op === 'bene') return resp.data;\n    if (resp.op === 'error') throw new Error(`${resp.code}: ${resp.message}`);\n  }\n  throw new Error('EPROTO: No terminal response');\n}\n\nfunction* asFiunt<T>(gen: Generator<Responsum<T>>): Generator<T> {\n  for (const resp of gen) {\n    if (resp.op === 'res') yield resp.data;\n    else if (resp.op === 'error') throw new Error(`${resp.code}: ${resp.message}`);\n    else if (resp.op === 'factum') return;\n    else if (resp.op === 'bene') { yield resp.data; return; }\n  }\n}\n\nasync function asFiet<T>(gen: () => AsyncGenerator<Responsum<T>>): Promise<T> {\n  for await (const resp of gen()) {\n    if (resp.op === 'bene') return resp.data;\n    if (resp.op === 'error') throw new Error(`${resp.code}: ${resp.message}`);\n  }\n  throw new Error('EPROTO: No terminal response');\n}\n\nasync function* asFient<T>(gen: AsyncGenerator<Responsum<T>>): AsyncGenerator<T> {\n  for await (const resp of gen) {\n    if (resp.op === 'res') yield resp.data;\n    else if (resp.op === 'error') throw new Error(`${resp.code}: ${resp.message}`);\n    else if (resp.op === 'factum') return;\n    else if (resp.op === 'bene') { yield resp.data; return; }\n  }\n}\n"
+
+@ publica
+functio genPreamble(RequiredFeatures features) -> textus {
+    varia definitions = [] qua lista<textus>
+
+    si features.flumina {
+        definitions.adde(FLUMINA)
+    }
+
+    si definitions.longitudo() == 0 {
+        redde ""
+    }
+    redde scriptum("§\n\n", definitions.coniunge("\n"))
+}

@@ -404,6 +404,9 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
             g.inFiet = rv == ReddeVerbum.Fiet
             g.inFiunt = rv == ReddeVerbum.Fiunt
             g.inFient = rv == ReddeVerbum.Fient
+            si g.inFlumina aut g.inFiet aut g.inFiunt aut g.inFient {
+                g.features.flumina = verum
+            }
         }
 
         g.intraProfundum()
