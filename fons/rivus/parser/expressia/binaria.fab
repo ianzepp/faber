@@ -176,15 +176,15 @@ functio parseAequale(Resolvitor r) -> Expressia {
         p.procede()
         fixum locus = p.praevius().locus
         fixum scopus = r.adnotatio()
-        fixum estExpr = finge EstExpressia {
-            locus: locus,
-            expressia: sinister,
-            scopus: scopus
-        } qua Expressia
         redde finge UnariaExpressia {
             locus: locus,
             signum: "!",
-            argumentum: estExpr
+            # WHY: Inline to keep contextual typing for Expressia union.
+            argumentum: finge EstExpressia {
+                locus: locus,
+                expressia: sinister,
+                scopus: scopus
+            } qua Expressia
         } qua Expressia
     }
 

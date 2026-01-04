@@ -426,7 +426,8 @@ functio parseFingeExpressia(Resolvitor r) -> Expressia {
                     valor: nomenSym.valor
                 } qua Expressia
 
-                varia valor = clavis
+                # WHY: Preserve Expressia union type when assigning later expressions.
+                varia Expressia valor = clavis
                 varia brevitas = verum
 
                 si p.congruet(SymbolumGenus.Colon) {
