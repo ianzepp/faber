@@ -955,6 +955,7 @@ export interface InStatement extends BaseNode {
  *
  * WHY: Latin 'elige' (choose) for value-based switch.
  *      Use 'discerne' for variant pattern matching on discretio types.
+ * NOTE: Codegen always lowers elige to if/else chains (no switch).
  *
  * Example:
  *   elige status {

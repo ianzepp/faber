@@ -68,10 +68,15 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
         fixum stmt = parseSententiaSineNotis(r)
 
         ex annotationes pro a {
-            si a == "futura" {
-                discerne stmt {
-                    casu FunctioDeclaratio ut f {
+            discerne stmt {
+                casu FunctioDeclaratio ut f {
+                    si a == "futura" {
                         f.asynca = verum
+                    }
+                }
+                casu GenusDeclaratio ut g {
+                    si a inter ["abstractum", "abstracta", "abstractus"] {
+                        g.abstractum = verum
                     }
                 }
             }

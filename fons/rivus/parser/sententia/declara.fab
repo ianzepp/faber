@@ -144,14 +144,14 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
 
     # Optional extends
     varia extendit = nihil qua textus?
-    si p.probaVerbum("sub") {
+    si p.congruetVerbum("sub") {
         fixum parentSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
         extendit = parentSym.valor
     }
 
     # Optional implements
     varia implet = nihil qua lista<textus>?
-    si p.probaVerbum("implet") {
+    si p.congruetVerbum("implet") {
         implet = [] qua lista<textus>
         fac {
             fixum ifaceSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
@@ -167,28 +167,55 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
     varia structor = nihil qua Sententia?
 
     dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
+        # Parse annotations for visibility/abstract
+        varia annotationes = [] qua lista<textus>
+        dum p.congruet(SymbolumGenus.At) {
+            annotationes.adde(parseNomenVelVerbum(r))
+        }
+
         # Parse visibility modifier
-        varia visibilitas = Visibilitas.Publica
-        si p.probaVerbum("privatus") {
+        varia visibilitas = Visibilitas.Privata
+        varia visibilitasExplicita = falsum
+        ex annotationes pro a {
+            si a inter ["publicum", "publica", "publicus"] {
+                visibilitas = Visibilitas.Publica
+                visibilitasExplicita = verum
+            } sin a inter ["protectum", "protecta", "protectus"] {
+                visibilitas = Visibilitas.Protecta
+                visibilitasExplicita = verum
+            } sin a inter ["privatum", "privata", "privatus"] {
+                visibilitas = Visibilitas.Privata
+                visibilitasExplicita = verum
+            }
+        }
+        si p.congruetVerbum("publicus") {
+            visibilitas = Visibilitas.Publica
+            visibilitasExplicita = verum
+        } sin p.congruetVerbum("privatus") {
             visibilitas = Visibilitas.Privata
-        } sin p.probaVerbum("protectus") {
+            visibilitasExplicita = verum
+        } sin p.congruetVerbum("protectus") {
             visibilitas = Visibilitas.Protecta
+            visibilitasExplicita = verum
         }
 
         # Check for static modifier
         varia staticum = falsum
-        si p.probaVerbum("generis") {
+        si p.congruetVerbum("generis") {
             staticum = verum
         }
 
         # Check for reactive modifier
         varia reactivum = falsum
-        si p.probaVerbum("nexum") {
+        si p.congruetVerbum("nexum") {
             reactivum = verum
         }
 
         # Check if this is a method or field
         si p.probaVerbum("functio") {
+            si non visibilitasExplicita {
+                visibilitas = Visibilitas.Publica
+            }
             # WHY: Methods use full functio syntax but remain inside genus.
             p.procede()
             fixum methodLocus = p.locusActualis()
@@ -225,6 +252,15 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
             }
 
             varia estStructor = methodNomen == "creo"
+            varia abstracta = falsum
+            ex annotationes pro a {
+                si a inter ["abstractum", "abstracta", "abstractus"] {
+                    abstracta = verum
+                }
+            }
+            si estStructor {
+                visibilitas = Visibilitas.Privata
+            }
 
             methodi.adde(finge FunctioDeclaratio {
                 locus: methodLocus,
@@ -235,7 +271,7 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
                 corpus: body,
                 asynca: asynca,
                 generator: generator,
-                abstracta: falsum,
+                abstracta: abstracta,
                 structor: estStructor,
                 visibilitas: visibilitas,
                 reddeVerbum: nihil
