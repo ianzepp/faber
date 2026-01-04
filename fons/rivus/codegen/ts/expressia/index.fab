@@ -3,7 +3,7 @@
 # Routes expression AST nodes to their specific generators.
 # Uses scriptum() for string formatting for consistency.
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum, AmbitusExpressia
+ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum
 ex "../../../ast/typus" importa TypusAnnotatio
 ex "../nucleus" importa TsGenerator
 ex "../typus" importa genTypus
