@@ -587,7 +587,15 @@ genus Lexor {
             casu "," { ego.addeSymbolum(SymbolumGenus.Coma, c, loc) }         # comma
             casu ";" { ego.addeSymbolum(SymbolumGenus.PunctumColon, c, loc) } # semicolon
             casu ":" { ego.addeSymbolum(SymbolumGenus.Colon, c, loc) }        # colon
-            casu "?" { ego.addeSymbolum(SymbolumGenus.Rogatio, c, loc) }      # question mark (rogatio = question)
+            casu "?" {
+                # WHY: Distinguish ?? (nullish) from ? (ternary/optional chain)
+                si ego.specta(0) == "?" {
+                    ego.procede()
+                    ego.addeSymbolum(SymbolumGenus.RogatioBis, "??", loc)
+                } secus {
+                    ego.addeSymbolum(SymbolumGenus.Rogatio, c, loc)      # question mark (rogatio = question)
+                }
+            }
 
             # ---- Dot operators: . or .. or ... ----
             casu "." {

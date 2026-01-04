@@ -23,6 +23,7 @@ ex "../../ast/positio" importa Locus
 ex "../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum
 ex "../../ast/typus" importa TypusAnnotatio
 ex "../../ast/lexema" importa SymbolumGenus
+ex "../../ast/sententia" importa Sententia
 ex "../errores" importa ParserErrorCodice
 
 # Parse primary expression
@@ -150,6 +151,26 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
         redde parseFingeExpressia(r)
     }
 
+    # Praefixum (compile-time) expression
+    si p.probaVerbum("praefixum") {
+        redde parsePraefixumExpressia(r)
+    }
+
+    # Scriptum (format string)
+    si p.probaVerbum("scriptum") {
+        redde parseScriptumExpressia(r)
+    }
+
+    # Lege (stdin read)
+    si p.probaVerbum("lege") {
+        redde parseLegeExpressia(r)
+    }
+
+    # Regex literal: sed "pattern" flags?
+    si p.probaVerbum("sed") {
+        redde parseRegexExpressia(r)
+    }
+
     # Fallback: report error and return placeholder
     p.renuncia(ParserErrorCodice.ExpectaturExpressia, scriptum("got '§'", sym.valor))
     si non p.estFinis() {
@@ -174,14 +195,14 @@ functio parseSeriesExpressia(Resolvitor r) -> Expressia {
     varia elementa = [] qua lista<Expressia>
 
     si non p.proba(SymbolumGenus.QuadratusDex) {
-        elementa.adde(r.expressia())
+        elementa.adde(parseElementumSeries(r))
 
         dum p.congruet(SymbolumGenus.Coma) {
             # Allow trailing comma
             si p.proba(SymbolumGenus.QuadratusDex) {
                 rumpe
             }
-            elementa.adde(r.expressia())
+            elementa.adde(parseElementumSeries(r))
         }
     }
 
@@ -191,6 +212,25 @@ functio parseSeriesExpressia(Resolvitor r) -> Expressia {
         locus: locus,
         elementa: elementa
     } qua Expressia
+}
+
+# Parse a single array element (supports sparge)
+@ publica
+functio parseElementumSeries(Resolvitor r) -> Expressia {
+    fixum p = r.parser()
+    fixum locus = p.locusActualis()
+
+    si p.probaVerbum("sparge") {
+        # WHY: Spread elements lower to DispersioElementum for codegen
+        p.procede()
+        fixum argumentum = r.expressia()
+        redde finge DispersioElementum {
+            locus: locus,
+            argumentum: argumentum
+        } qua Expressia
+    }
+
+    redde r.expressia()
 }
 
 # Parse object literal
@@ -417,5 +457,142 @@ functio parseFingeExpressia(Resolvitor r) -> Expressia {
         variansNomen: variansNomen,
         campi: campi,
         scopus: scopus
+    } qua Expressia
+}
+
+# Parse praefixum expression
+#
+# GRAMMAR: praefixum (blockStmt | '(' expression ')')
+@ publica
+functio parsePraefixumExpressia(Resolvitor r) -> Expressia {
+    fixum p = r.parser()
+    fixum locus = p.locusActualis()
+
+    p.expectaVerbum("praefixum", ParserErrorCodice.ExpectaturExpressia)
+
+    varia corpus = nihil qua Expressia?
+
+    si p.proba(SymbolumGenus.UncusSin) {
+        # WHY: Block form is allowed in grammar, but AST expects an expression.
+        fixum massa = r.massa()
+        corpus = exMassaExpressia(massa, locus)
+    } sin p.congruet(SymbolumGenus.ParensSin) {
+        corpus = r.expressia()
+        p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+    } secus {
+        p.renuncia(ParserErrorCodice.ExpectaturUncusVelParens, scriptum("got '§'", p.specta(0).valor))
+        corpus = finge Littera {
+            locus: locus,
+            species: LitteraGenus.Nihil,
+            crudus: "nihil"
+        } qua Expressia
+    }
+
+    redde finge PraefixumExpressia {
+        locus: locus,
+        corpus: corpus
+    } qua Expressia
+}
+
+# Extract an expression from a block, preferring trailing redde/expr
+@ publica
+functio exMassaExpressia(Sententia massa, Locus locus) -> Expressia {
+    # WHY: Blocks are statements; we salvage the last expression when present.
+    discerne massa {
+        casu MassaSententia ut m {
+            si m.corpus.longitudo() > 0 {
+                fixum ult = m.corpus[m.corpus.longitudo() - 1]
+                discerne ult {
+                    casu ReddeSententia ut r {
+                        si nonnihil r.valor {
+                            redde r.valor
+                        }
+                    }
+                    casu ExpressiaSententia ut e {
+                        redde e.expressia
+                    }
+                }
+            }
+        }
+    }
+
+    redde finge Littera {
+        locus: locus,
+        species: LitteraGenus.Nihil,
+        crudus: "nihil"
+    } qua Expressia
+}
+
+# Parse scriptum expression
+#
+# GRAMMAR: scriptum '(' STRING (',' expression)* ')'
+@ publica
+functio parseScriptumExpressia(Resolvitor r) -> Expressia {
+    fixum p = r.parser()
+    fixum locus = p.locusActualis()
+
+    p.expectaVerbum("scriptum", ParserErrorCodice.ExpectaturExpressia)
+    p.expecta(SymbolumGenus.ParensSin, ParserErrorCodice.ExpectaturParensSin)
+
+    fixum exemplarSym = p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextus)
+    fixum exemplar = exemplarSym.valor
+
+    varia argumenta = [] qua lista<Expressia>
+    dum p.congruet(SymbolumGenus.Coma) {
+        argumenta.adde(r.expressia())
+    }
+
+    p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+
+    redde finge ScriptumExpressia {
+        locus: locus,
+        exemplar: exemplar,
+        argumenta: argumenta
+    } qua Expressia
+}
+
+# Parse lege expression
+#
+# GRAMMAR: lege ('lineam')?
+@ publica
+functio parseLegeExpressia(Resolvitor r) -> Expressia {
+    fixum p = r.parser()
+    fixum locus = p.locusActualis()
+
+    p.expectaVerbum("lege", ParserErrorCodice.ExpectaturExpressia)
+
+    varia modus = "all" qua textus
+    si p.probaVerbum("lineam") {
+        p.procede()
+        modus = "line"
+    }
+
+    redde finge LegeExpressia {
+        locus: locus,
+        modus: modus
+    } qua Expressia
+}
+
+# Parse regex literal
+#
+# GRAMMAR: sed STRING IDENTIFIER?
+@ publica
+functio parseRegexExpressia(Resolvitor r) -> Expressia {
+    fixum p = r.parser()
+    fixum locus = p.locusActualis()
+
+    p.expectaVerbum("sed", ParserErrorCodice.ExpectaturExpressia)
+
+    fixum patternSym = p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextusPostSed)
+    varia vexilla = "" qua textus
+
+    si p.proba(SymbolumGenus.Nomen) aut p.proba(SymbolumGenus.Verbum) {
+        vexilla = p.procede().valor
+    }
+
+    redde finge LitteraRegex {
+        locus: locus,
+        forma: patternSym.valor,
+        vexilla: vexilla
     } qua Expressia
 }
