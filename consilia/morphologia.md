@@ -658,3 +658,62 @@ casu VocatioExpressia ut e {
 - **Avoid hidden `await` in codegen**: The current Rivus POC emits `await` inside generated expressions for async morphology variants. This can generate invalid JS in non-async contexts and bypass existing “await outside async” checks. Prefer: morphology determines return type (Promise vs value), but awaiting remains explicit via `figendum`/`variandum` (and `cede` inside `fiet`/`fient`).
 
 - **Irregular stems**: The POC already hints at stem irregularity (e.g., `invert-` vs `invers-`). If morphology is driven by declared stems, allow a declaration to pin the canonical stem (or list alternate stems) rather than relying purely on stripping suffixes.
+
+## Gemini 3 Opinion: Morphologia & The Latin-First Thesis
+
+**Verdict:** The proposal is **strongly aligned** with the language's core thesis. It leverages Latin's high-density inflectional grammar to solve a real engineering problem (API proliferation). However, the implementation strategy carries significant risks regarding type safety and ecosystem bifurcation that must be addressed to maintain the "industrial quality" principle.
+
+### 1. The Strong Case: Latin Grammar as a Compression Algorithm
+
+The core insight—that Latin conjugation encodes the _exact_ semantic axes modern programming struggles with (Sync/Async, Mutate/Copy)—is brilliant.
+
+- **Authenticity:** Using _Future Indicative_ (`-abit`) for async mutation ("it will do X") and _Future Participle_ (`-atura`) for async result ("about to produce X") isn't just a naming convention; it's syntactically truthful.
+- **Economy:** It reduces API surface area. Instead of learning 4 methods (`sort`, `toSorted`, `sortAsync`, `toSortedAsync`), the user learns 1 root (`ordin-`) and applies standard grammar. This is the definition of a "Latin-first" advantage.
+
+### 2. Critical Flaw: Lexical Dispatch vs. Type Safety
+
+The current POC (and to some extent the proposal) relies on **lexical dispatch**.
+
+- **The Risk:** In `fons/rivus/codegen/ts/expressia/index.fab`, dispatch happens if `parseMethodum` finds a valid stem _regardless of the object's type_.
+- **Scenario:** If a user defines `genus Calculator` with a method `adde(n: numerus)`, the compiler currently sees `add-` + imperative. It checks `estRadixListae("add")` -> true. It then generates `calculator.push(n)`, which will crash at runtime.
+- **Requirement:** Morphology **must** be tied to the type system. The compiler cannot assume `adde` implies `lista`. It must verify the receiver is a type that _opted in_ to the `add-` stem via `@ radix`.
+
+### 3. The "Hidden Await" Danger
+
+The proposal notes this in "GPT Notes", but it bears repeating: **morphology cannot auto-inject `await`**.
+
+- **The Problem:** If `solum.leget(path)` compiles to `await fs.readFile(...)`, using it in a synchronous `fit` function creates invalid TypeScript (`await` is only valid in `async` functions).
+- **The Fix:** Morphology should determine the **Return Type** (e.g., returns `Future<T>`), not the control flow. The user must still explicitly handle the async result (using `cede` or assigning to `figendum`). The "verb form determines behavior" principle should mean "determines what object I get back," not "injects invisible control flow."
+
+### 4. The Ecosystem Bifurcation (Stdlib vs. User)
+
+The proposal accepts a split world:
+
+- **Stdlib:** Elegant Latin morphology (`solum.leget`).
+- **User Code:** Clunky auxiliary verbs (`functio fetch() fiet User`).
+
+**Criticism:** This weakens the thesis. If Latin is the "interface for humans," users should be able to write Latin-interface code.
+
+- **Suggestion:** Allow users to define morphology mapping for their own types easily.
+    ```faber
+    genus Repository {
+        # Maps 'quaer-' stem to this implementation
+        @ radix(quaer-, futurum_indicativum)
+        functio findUser(id) { ... }
+    }
+    ```
+    If the language treats Latin morphology as a privileged feature of the standard library only, it becomes a "magic" system rather than a language feature.
+
+### 5. Generator Semantics (`-ans`/`-ens`)
+
+Mapping _Present Participle_ (adjective: "reading [thing]") to _Generator_ (iterator) is acceptable but slightly loose.
+
+- **Latin Nuance:** A participle describes a state. `legens` = "one who is reading".
+- **Alternative:** The _Gerund_ (`-endum`) might be more "process-oriented" ("for reading"), but the Participle is likely the best pragmatic fit for "a thing that yields values." Sticking with `-ans/-ens` is defensible.
+
+### Summary of Recommendations
+
+1.  **Strict Type Binding:** Do not implement global stem registries. Morphology dispatch must be scoped to the specific type definition (via `@ radix` or similar).
+2.  **Explicit Control Flow:** `filtrabit` should return a `Promise`/`Future`, not auto-await. The user must write `cede lista.filtrabit(...)` or `figendum x = lista.filtrabit(...)`. This preserves the "Mechanically Certain" principle.
+3.  **Democratize Morphology:** Ensure the `@ radix` annotation is robust enough for user-land code, preventing the standard library from feeling "magical."
+4.  **Irregularity Strategy:** Embrace Latin irregularity. If `fero` is the verb, allow defining `latus` as the participle stem explicitly in the annotation, rather than trying to algorithmically derive it.
