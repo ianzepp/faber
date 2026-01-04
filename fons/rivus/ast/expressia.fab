@@ -152,6 +152,7 @@ discretio Expressia {
         Locus locus
         Expressia initium
         Expressia finis
+        Expressia? gradus
         bivalens inclusivum      # true for 'usque', false for '..'
     }
 

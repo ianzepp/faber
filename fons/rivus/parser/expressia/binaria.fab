@@ -106,7 +106,7 @@ functio parseAut(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseEt(r)
 
-    dum p.congruet(SymbolumGenus.VelVel) aut p.congruetVerbum("aut") aut p.congruet(SymbolumGenus.RogatioBis) {
+    dum p.congruet(SymbolumGenus.VelVel) aut p.congruetVerbum("aut") aut p.congruet(SymbolumGenus.RogatioBis) aut p.congruetVerbum("vel") {
         fixum operatorSym = p.praevius()
         fixum locus = operatorSym.locus
         fixum signum = operatorSym.valor
@@ -170,6 +170,24 @@ functio parseAequale(Resolvitor r) -> Expressia {
         } qua Expressia
     }
 
+    # Handle 'non est' type check
+    si p.probaVerbum("non") et p.specta(1).species == SymbolumGenus.Verbum et p.specta(1).verbum == "est" {
+        p.procede()
+        p.procede()
+        fixum locus = p.praevius().locus
+        fixum scopus = r.adnotatio()
+        fixum estExpr = finge EstExpressia {
+            locus: locus,
+            expressia: sinister,
+            scopus: scopus
+        } qua Expressia
+        redde finge UnariaExpressia {
+            locus: locus,
+            signum: "!",
+            argumentum: estExpr
+        } qua Expressia
+    }
+
     # Handle 'est' type check
     si p.congruetVerbum("est") {
         fixum locus = p.praevius().locus
@@ -191,13 +209,13 @@ functio parseAequale(Resolvitor r) -> Expressia {
 @ publica
 functio parseComparatio(Resolvitor r) -> Expressia {
     fixum p = r.parser()
-    varia sinister = parseAdditio(r)
+    varia sinister = parseAmbitus(r)
 
-    dum p.congruet(SymbolumGenus.Minor) aut p.congruet(SymbolumGenus.Maior) aut p.congruet(SymbolumGenus.MinorAequum) aut p.congruet(SymbolumGenus.MaiorAequum) {
+    dum p.congruet(SymbolumGenus.Minor) aut p.congruet(SymbolumGenus.Maior) aut p.congruet(SymbolumGenus.MinorAequum) aut p.congruet(SymbolumGenus.MaiorAequum) aut p.congruetVerbum("intra") aut p.congruetVerbum("inter") {
         fixum operatorSym = p.praevius()
         fixum locus = operatorSym.locus
         fixum signum = operatorSym.valor
-        fixum dexter = parseAdditio(r)
+        fixum dexter = parseAmbitus(r)
 
         sinister = finge BinariaExpressia {
             locus: locus,
@@ -208,6 +226,52 @@ functio parseComparatio(Resolvitor r) -> Expressia {
     }
 
     redde sinister
+}
+
+# Parse range expression
+#
+# GRAMMAR: range := additive (('..' | 'ante' | 'usque') additive ('per' additive)?)?
+@ publica
+functio parseAmbitus(Resolvitor r) -> Expressia {
+    fixum p = r.parser()
+    fixum locus = p.locusActualis()
+    varia initium = parseAdditio(r)
+
+    varia inclusivum = falsum
+    varia habetAmbitum = falsum
+
+    si p.congruet(SymbolumGenus.PunctumBis) {
+        habetAmbitum = verum
+        inclusivum = falsum
+    } sin p.probaVerbum("ante") {
+        p.procede()
+        habetAmbitum = verum
+        inclusivum = falsum
+    } sin p.probaVerbum("usque") {
+        p.procede()
+        habetAmbitum = verum
+        inclusivum = verum
+    }
+
+    si habetAmbitum {
+        fixum finis = parseAdditio(r)
+        varia gradus = nihil qua Expressia?
+
+        si p.probaVerbum("per") {
+            p.procede()
+            gradus = parseAdditio(r)
+        }
+
+        redde finge AmbitusExpressia {
+            locus: locus,
+            initium: initium,
+            finis: finis,
+            gradus: gradus,
+            inclusivum: inclusivum
+        } qua Expressia
+    }
+
+    redde initium
 }
 
 # Parse additive expression

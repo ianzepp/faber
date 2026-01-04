@@ -21,7 +21,7 @@ ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
 ex "../../ast/expressia" importa Expressia
 ex "../../ast/typus" importa TypusAnnotatio
-ex "../../ast/lexema" importa SymbolumGenus
+ex "../../ast/lexema" importa Symbolum, SymbolumGenus
 ex "../errores" importa ParserErrorCodice
 ex "./primaria" importa parsePrimaria
 
@@ -32,6 +32,28 @@ ex "./primaria" importa parsePrimaria
 functio parseUnaria(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
+    fixum prox = p.specta(1)
+
+    functio estInitiumExpressiae(Symbolum s) -> bivalens {
+        si s.species inter [
+            SymbolumGenus.Nomen,
+            SymbolumGenus.Numerus,
+            SymbolumGenus.Fractus,
+            SymbolumGenus.Textus,
+            SymbolumGenus.Exemplar,
+            SymbolumGenus.ParensSin,
+            SymbolumGenus.QuadratusSin,
+            SymbolumGenus.UncusSin
+        ] {
+            redde verum
+        }
+
+        si s.species == SymbolumGenus.Verbum {
+            redde verum
+        }
+
+        redde falsum
+    }
 
     # Check for prefix operators
     si p.congruetVerbum("non") aut p.congruet(SymbolumGenus.Non) {
@@ -57,6 +79,26 @@ functio parseUnaria(Resolvitor r) -> Expressia {
         redde finge UnariaExpressia {
             locus: locus,
             signum: "~",
+            argumentum: argumentum
+        } qua Expressia
+    }
+
+    si p.probaVerbum("nulla") aut p.probaVerbum("nonnulla") aut p.probaVerbum("nonnihil") aut p.probaVerbum("negativum") aut p.probaVerbum("positivum") {
+        fixum signum = p.procede().verbum
+        fixum argumentum = parseUnaria(r)
+        redde finge UnariaExpressia {
+            locus: locus,
+            signum: signum,
+            argumentum: argumentum
+        } qua Expressia
+    }
+
+    si p.probaVerbum("nihil") et estInitiumExpressiae(prox) {
+        p.procede()
+        fixum argumentum = parseUnaria(r)
+        redde finge UnariaExpressia {
+            locus: locus,
+            signum: "nihil",
             argumentum: argumentum
         } qua Expressia
     }

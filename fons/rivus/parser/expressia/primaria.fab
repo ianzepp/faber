@@ -145,6 +145,11 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
         redde parseLambdaExpressia(r)
     }
 
+    # Discretio construction: finge Variant { ... } qua Type
+    si p.probaVerbum("finge") {
+        redde parseFingeExpressia(r)
+    }
+
     # Fallback: report error and return placeholder
     p.renuncia(ParserErrorCodice.ExpectaturExpressia, scriptum("got '§'", sym.valor))
     si non p.estFinis() {
@@ -350,5 +355,67 @@ functio parseLambdaExpressia(Resolvitor r) -> Expressia {
         parametra: parametra,
         corpus: corpus,
         typusReditus: typusReditus
+    } qua Expressia
+}
+
+# Parse finge (discretio construction) expression
+#
+# GRAMMAR:
+#   fingeExpr := 'finge' IDENTIFIER ('{' fields? '}')? ('qua' typeAnnotation)?
+#   field := IDENTIFIER (':' expression)?
+@ publica
+functio parseFingeExpressia(Resolvitor r) -> Expressia {
+    fixum p = r.parser()
+    fixum locus = p.locusActualis()
+
+    p.expectaVerbum("finge", ParserErrorCodice.ExpectaturExpressia)
+
+    fixum variansSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    fixum variansNomen = variansSym.valor
+
+    varia campi = [] qua lista<ObiectumProprietas>
+
+    si p.congruet(SymbolumGenus.UncusSin) {
+        si non p.proba(SymbolumGenus.UncusDex) {
+            fac {
+                fixum campusLocus = p.locusActualis()
+
+                fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+                fixum clavis = finge Nomen {
+                    locus: nomenSym.locus,
+                    valor: nomenSym.valor
+                } qua Expressia
+
+                varia valor = clavis
+                varia brevitas = verum
+
+                si p.congruet(SymbolumGenus.Colon) {
+                    valor = r.expressia()
+                    brevitas = falsum
+                }
+
+                campi.adde({
+                    locus: campusLocus,
+                    clavis: clavis,
+                    valor: valor,
+                    brevitas: brevitas,
+                    computatum: falsum
+                } qua ObiectumProprietas)
+            } dum p.congruet(SymbolumGenus.Coma)
+        }
+
+        p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
+    }
+
+    varia scopus = nihil qua TypusAnnotatio?
+    si p.congruetVerbum("qua") {
+        scopus = r.adnotatio()
+    }
+
+    redde finge FingeExpressia {
+        locus: locus,
+        variansNomen: variansNomen,
+        campi: campi,
+        scopus: scopus
     } qua Expressia
 }
