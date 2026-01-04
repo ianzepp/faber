@@ -23,6 +23,154 @@ functio estVerbum(textus v) -> bivalens {
     redde id != nihil
 }
 
+# Map a Faber (Latin surface) keyword spelling to canonical identity
+@ publica
+functio verbumFaberId(textus v) -> VerbumId? {
+    elige v {
+        # Imperium - control flow
+        casu "si" reddit VerbumId.Si
+        casu "secus" reddit VerbumId.Secus
+        casu "sin" reddit VerbumId.Sin
+        casu "casu" reddit VerbumId.Casu
+        casu "ceterum" reddit VerbumId.Ceterum
+        casu "dum" reddit VerbumId.Dum
+        casu "fac" reddit VerbumId.Fac
+        casu "pro" reddit VerbumId.Pro
+        casu "elige" reddit VerbumId.Elige
+        casu "ergo" reddit VerbumId.Ergo
+        casu "rumpe" reddit VerbumId.Rumpe
+        casu "perge" reddit VerbumId.Perge
+        casu "redde" reddit VerbumId.Redde
+        casu "reddit" reddit VerbumId.Reddit
+        casu "custodi" reddit VerbumId.Custodi
+        casu "adfirma" reddit VerbumId.Adfirma
+        casu "discerne" reddit VerbumId.Discerne
+        casu "incipit" reddit VerbumId.Incipit
+        casu "incipiet" reddit VerbumId.Incipiet
+
+        # Imperium - testing
+        casu "probandum" reddit VerbumId.Probandum
+        casu "proba" reddit VerbumId.Proba
+        casu "praepara" reddit VerbumId.Praepara
+        casu "praeparabit" reddit VerbumId.Praeparabit
+        casu "postpara" reddit VerbumId.Postpara
+        casu "postparabit" reddit VerbumId.Postparabit
+        casu "cura" reddit VerbumId.Cura
+        casu "arena" reddit VerbumId.Arena
+        casu "page" reddit VerbumId.Pagina
+        casu "pagina" reddit VerbumId.Pagina
+        casu "tempta" reddit VerbumId.Tempta
+        casu "cape" reddit VerbumId.Cape
+        casu "demum" reddit VerbumId.Demum
+        casu "iace" reddit VerbumId.Iace
+        casu "mori" reddit VerbumId.Mori
+        casu "scribe" reddit VerbumId.Scribe
+        casu "vide" reddit VerbumId.Vide
+        casu "mone" reddit VerbumId.Mone
+        casu "lege" reddit VerbumId.Lege
+        casu "lineam" reddit VerbumId.Lineam
+        casu "scriptum" reddit VerbumId.Scriptum
+        casu "cede" reddit VerbumId.Cede
+
+        # Declaratio - declarations
+        casu "varia" reddit VerbumId.Varia
+        casu "fixum" reddit VerbumId.Fixum
+        casu "figendum" reddit VerbumId.Figendum
+        casu "variandum" reddit VerbumId.Variandum
+        casu "functio" reddit VerbumId.Functio
+        casu "novum" reddit VerbumId.Novum
+        casu "finge" reddit VerbumId.Finge
+        casu "importa" reddit VerbumId.Importa
+        casu "exporta" reddit VerbumId.Exporta
+        casu "typus" reddit VerbumId.Typus
+        casu "genus" reddit VerbumId.Genus
+        casu "pactum" reddit VerbumId.Pactum
+        casu "ordo" reddit VerbumId.Ordo
+        casu "discretio" reddit VerbumId.Discretio
+
+        # Modificator - modifiers
+        casu "futura" reddit VerbumId.Futura
+        casu "prae" reddit VerbumId.Prae
+        casu "praefixum" reddit VerbumId.Praefixum
+        casu "cursor" reddit VerbumId.Cursor
+        casu "curata" reddit VerbumId.Curata
+        casu "publicus" reddit VerbumId.Publicus
+        casu "privatus" reddit VerbumId.Privatus
+        casu "generis" reddit VerbumId.Generis
+        casu "implet" reddit VerbumId.Implet
+        casu "sub" reddit VerbumId.Sub
+        casu "abstractus" reddit VerbumId.Abstractus
+        casu "protectus" reddit VerbumId.Protectus
+        casu "nexum" reddit VerbumId.Nexum
+        casu "omitte" reddit VerbumId.Omitte
+        casu "futurum" reddit VerbumId.Futurum
+        casu "omnia" reddit VerbumId.Omnia
+
+        # Operator - operators
+        casu "et" reddit VerbumId.Et
+        casu "aut" reddit VerbumId.Aut
+        casu "non" reddit VerbumId.Non
+        casu "est" reddit VerbumId.Est
+        casu "sic" reddit VerbumId.Sic
+        casu "fit" reddit VerbumId.Fit
+        casu "fiet" reddit VerbumId.Fiet
+        casu "fiunt" reddit VerbumId.Fiunt
+        casu "fient" reddit VerbumId.Fient
+        casu "vel" reddit VerbumId.Vel
+        casu "ante" reddit VerbumId.Ante
+        casu "usque" reddit VerbumId.Usque
+        casu "intra" reddit VerbumId.Intra
+        casu "inter" reddit VerbumId.Inter
+        casu "sparge" reddit VerbumId.Sparge
+        casu "ceteri" reddit VerbumId.Ceteri
+        casu "nulla" reddit VerbumId.Nulla
+        casu "nonnulla" reddit VerbumId.Nonnulla
+        casu "nihil" reddit VerbumId.Nihil
+        casu "nonnihil" reddit VerbumId.Nonnihil
+        casu "negativum" reddit VerbumId.Negativum
+        casu "positivum" reddit VerbumId.Positivum
+
+        # Valor - literal values
+        casu "verum" reddit VerbumId.Verum
+        casu "falsum" reddit VerbumId.Falsum
+        casu "ego" reddit VerbumId.Ego
+
+        # Praepositio - prepositions
+        casu "de" reddit VerbumId.De
+        casu "in" reddit VerbumId.In
+        casu "ex" reddit VerbumId.Ex
+        casu "ad" reddit VerbumId.Ad
+        casu "per" reddit VerbumId.Per
+        casu "qua" reddit VerbumId.Qua
+        casu "ut" reddit VerbumId.Ut
+
+        # Dsl - domain specific
+        casu "ab" reddit VerbumId.Ab
+        casu "ubi" reddit VerbumId.Ubi
+        casu "prima" reddit VerbumId.Prima
+        casu "ultima" reddit VerbumId.Ultima
+        casu "summa" reddit VerbumId.Summa
+        casu "ordina" reddit VerbumId.Ordina
+        casu "collige" reddit VerbumId.Collige
+        casu "grupa" reddit VerbumId.Grupa
+        casu "sed" reddit VerbumId.Sed
+
+        ceterum reddit nihil
+    }
+}
+
+# Map an English keyword spelling to canonical identity
+@ publica
+functio verbumAnglicusId(textus v) -> VerbumId? {
+    elige v {
+        casu "becomes" reddit VerbumId.Fit
+        casu "will_become" reddit VerbumId.Fiet
+        casu "become_each" reddit VerbumId.Fiunt
+        casu "will_become_each" reddit VerbumId.Fient
+        ceterum reddit nihil
+    }
+}
+
 # Map surface keyword spelling to canonical identity
 #
 # WHY: Enables dialect spellings (e.g., English keywords) without changing
@@ -30,146 +178,11 @@ functio estVerbum(textus v) -> bivalens {
 @ publica
 functio verbumId(textus v, si Dialectus dialectus) -> VerbumId? {
     si nonnihil dialectus et dialectus === Dialectus.Anglicus {
-        elige v {
-            casu "becomes" { redde VerbumId.Fit }
-            casu "will_become" { redde VerbumId.Fiet }
-            casu "become_each" { redde VerbumId.Fiunt }
-            casu "will_become_each" { redde VerbumId.Fient }
-            ceterum { }
-        }
+        fixum id = verbumAnglicusId(v)
+        si id != nihil reddit id
     }
 
-    elige v {
-        # Imperium - control flow
-        casu "si" { redde VerbumId.Si }
-        casu "secus" { redde VerbumId.Secus }
-        casu "sin" { redde VerbumId.Sin }
-        casu "casu" { redde VerbumId.Casu }
-        casu "ceterum" { redde VerbumId.Ceterum }
-        casu "dum" { redde VerbumId.Dum }
-        casu "fac" { redde VerbumId.Fac }
-        casu "pro" { redde VerbumId.Pro }
-        casu "elige" { redde VerbumId.Elige }
-        casu "ergo" { redde VerbumId.Ergo }
-        casu "rumpe" { redde VerbumId.Rumpe }
-        casu "perge" { redde VerbumId.Perge }
-        casu "redde" { redde VerbumId.Redde }
-        casu "reddit" { redde VerbumId.Reddit }
-        casu "custodi" { redde VerbumId.Custodi }
-        casu "adfirma" { redde VerbumId.Adfirma }
-        casu "discerne" { redde VerbumId.Discerne }
-        casu "incipit" { redde VerbumId.Incipit }
-        casu "incipiet" { redde VerbumId.Incipiet }
-
-        # Imperium - testing
-        casu "probandum" { redde VerbumId.Probandum }
-        casu "proba" { redde VerbumId.Proba }
-        casu "praepara" { redde VerbumId.Praepara }
-        casu "praeparabit" { redde VerbumId.Praeparabit }
-        casu "postpara" { redde VerbumId.Postpara }
-        casu "postparabit" { redde VerbumId.Postparabit }
-        casu "cura" { redde VerbumId.Cura }
-        casu "arena" { redde VerbumId.Arena }
-        casu "page" { redde VerbumId.Pagina }
-        casu "pagina" { redde VerbumId.Pagina }
-        casu "tempta" { redde VerbumId.Tempta }
-        casu "cape" { redde VerbumId.Cape }
-        casu "demum" { redde VerbumId.Demum }
-        casu "iace" { redde VerbumId.Iace }
-        casu "mori" { redde VerbumId.Mori }
-        casu "scribe" { redde VerbumId.Scribe }
-        casu "vide" { redde VerbumId.Vide }
-        casu "mone" { redde VerbumId.Mone }
-        casu "lege" { redde VerbumId.Lege }
-        casu "lineam" { redde VerbumId.Lineam }
-        casu "scriptum" { redde VerbumId.Scriptum }
-        casu "cede" { redde VerbumId.Cede }
-
-        # Declaratio - declarations
-        casu "varia" { redde VerbumId.Varia }
-        casu "fixum" { redde VerbumId.Fixum }
-        casu "figendum" { redde VerbumId.Figendum }
-        casu "variandum" { redde VerbumId.Variandum }
-        casu "functio" { redde VerbumId.Functio }
-        casu "novum" { redde VerbumId.Novum }
-        casu "finge" { redde VerbumId.Finge }
-        casu "importa" { redde VerbumId.Importa }
-        casu "exporta" { redde VerbumId.Exporta }
-        casu "typus" { redde VerbumId.Typus }
-        casu "genus" { redde VerbumId.Genus }
-        casu "pactum" { redde VerbumId.Pactum }
-        casu "ordo" { redde VerbumId.Ordo }
-        casu "discretio" { redde VerbumId.Discretio }
-
-        # Modificator - modifiers
-        casu "futura" { redde VerbumId.Futura }
-        casu "prae" { redde VerbumId.Prae }
-        casu "praefixum" { redde VerbumId.Praefixum }
-        casu "cursor" { redde VerbumId.Cursor }
-        casu "curata" { redde VerbumId.Curata }
-        casu "publicus" { redde VerbumId.Publicus }
-        casu "privatus" { redde VerbumId.Privatus }
-        casu "generis" { redde VerbumId.Generis }
-        casu "implet" { redde VerbumId.Implet }
-        casu "sub" { redde VerbumId.Sub }
-        casu "abstractus" { redde VerbumId.Abstractus }
-        casu "protectus" { redde VerbumId.Protectus }
-        casu "nexum" { redde VerbumId.Nexum }
-        casu "omitte" { redde VerbumId.Omitte }
-        casu "futurum" { redde VerbumId.Futurum }
-        casu "omnia" { redde VerbumId.Omnia }
-
-        # Operator - operators
-        casu "et" { redde VerbumId.Et }
-        casu "aut" { redde VerbumId.Aut }
-        casu "non" { redde VerbumId.Non }
-        casu "est" { redde VerbumId.Est }
-        casu "sic" { redde VerbumId.Sic }
-        casu "fit" { redde VerbumId.Fit }
-        casu "fiet" { redde VerbumId.Fiet }
-        casu "fiunt" { redde VerbumId.Fiunt }
-        casu "fient" { redde VerbumId.Fient }
-        casu "vel" { redde VerbumId.Vel }
-        casu "ante" { redde VerbumId.Ante }
-        casu "usque" { redde VerbumId.Usque }
-        casu "intra" { redde VerbumId.Intra }
-        casu "inter" { redde VerbumId.Inter }
-        casu "sparge" { redde VerbumId.Sparge }
-        casu "ceteri" { redde VerbumId.Ceteri }
-        casu "nulla" { redde VerbumId.Nulla }
-        casu "nonnulla" { redde VerbumId.Nonnulla }
-        casu "nihil" { redde VerbumId.Nihil }
-        casu "nonnihil" { redde VerbumId.Nonnihil }
-        casu "negativum" { redde VerbumId.Negativum }
-        casu "positivum" { redde VerbumId.Positivum }
-
-        # Valor - literal values
-        casu "verum" { redde VerbumId.Verum }
-        casu "falsum" { redde VerbumId.Falsum }
-        casu "ego" { redde VerbumId.Ego }
-
-        # Praepositio - prepositions
-        casu "de" { redde VerbumId.De }
-        casu "in" { redde VerbumId.In }
-        casu "ex" { redde VerbumId.Ex }
-        casu "ad" { redde VerbumId.Ad }
-        casu "per" { redde VerbumId.Per }
-        casu "qua" { redde VerbumId.Qua }
-        casu "ut" { redde VerbumId.Ut }
-
-        # Dsl - domain specific
-        casu "ab" { redde VerbumId.Ab }
-        casu "ubi" { redde VerbumId.Ubi }
-        casu "prima" { redde VerbumId.Prima }
-        casu "ultima" { redde VerbumId.Ultima }
-        casu "summa" { redde VerbumId.Summa }
-        casu "ordina" { redde VerbumId.Ordina }
-        casu "collige" { redde VerbumId.Collige }
-        casu "grupa" { redde VerbumId.Grupa }
-        casu "sed" { redde VerbumId.Sed }
-
-        ceterum { redde nihil }
-    }
+    redde verbumFaberId(v)
 }
 
 # Check if a word starts a statement (for error recovery sync points)
