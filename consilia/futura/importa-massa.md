@@ -158,3 +158,79 @@ A practical migration path:
 - Phase 1: accept both styles, but add a lint/formatter warning for imports outside the block.
 - Phase 2: add a compiler flag to enforce strict mode.
 - Phase 3: flip the default once the ecosystem migrates.
+
+---
+
+## Analysis: Real-World Impact (2026-01-04)
+
+Analyzed all 52 `.fab` files in `fons/rivus/` to assess actual benefit vs. cost.
+
+### Import Patterns Observed
+
+**By directory depth:**
+- Top-level (cli.fab): 6 imports, all `./` or `./subdir/`
+- Second-level (parser/index.fab): 8-9 imports, mix of `./` and `../ast/*`
+- Third-level (parser/sententia/index.fab): 23 imports, mix of `../` and `../../ast/*`
+- Fourth-level (codegen/ts/sententia/index.fab): 10 imports, heavy `../../../ast/*`
+
+**Common pattern (most files):**
+Files typically import from 2-3 different relative depths simultaneously:
+- Same-directory siblings (no prefix or `./`)
+- Parent-level utilities (`../resolvitor`, `../typi`, `../errores`)
+- Ancestor AST types (`../../ast/*` or `../../../ast/*`)
+
+A single `radix` cannot address this mixed-depth pattern.
+
+### Where `radix` Would Help
+
+**3-5 files** out of 52 total - specifically the deepest codegen files.
+
+Example: codegen/ts/sententia/index.fab has 7 imports from `../../../ast/*` that could use radix, but also has 3 imports from `../` that cannot. Even in the "best case," radix only helps ~60% of imports in that file.
+
+### What Already Works
+
+1. **Imports are naturally grouped** - Every file examined has all imports at the top before code. No "scattered imports" problem exists.
+
+2. **`ex` disambiguation is clear** - In parser/sententia/index.fab:146-172, the lookahead logic cleanly differentiates:
+   - `ex "..." importa` (import)
+   - `ex items pro item` (iteration)
+   - `ex obj fixum a, b` (destructure)
+
+   Context makes the meaning immediately obvious when reading code.
+
+3. **Import counts are reasonable** - Range: 3-23 imports per file. Median: 6-8. Not overwhelming.
+
+### Cost-Benefit Analysis
+
+**Gains:**
+- Visual import region (but already achieved informally)
+- Shorter paths in <10% of files (saves ~6 characters per import)
+- De-overload one of three `ex` contexts (but disambiguation already works)
+
+**Costs:**
+- Breaking change requiring rewrite of all existing files
+- Ceremony tax - every file needs wrapper even for 2 imports
+- Rigidity - must be first, exactly one, no imports elsewhere, compile errors during rapid prototyping
+- Implementation complexity - new AST node, validation, lowering, diagnostics
+- Doesn't fit mixed-depth import pattern (the common case)
+
+### Alternatives
+
+**For grouped imports:**
+Lint/format rule. Zero breaking changes, achieves 90% of readability benefit.
+
+**For deep relative paths:**
+Module path mapping (like TypeScript's `paths` in tsconfig). One config file, helps all files uniformly.
+
+**For `ex` overloading:**
+Surgical fix: make `importa` the primary keyword (`importa "..." ut Foo` or `importa ex "..." ut Foo`). Removes import from `ex` context entirely without requiring block syntax.
+
+### Recommendation
+
+The proposal is a **heavy architectural solution to a lightweight style preference**. Real-world analysis shows:
+- Problem affects <10% of codebase
+- Even where applicable, benefit is marginal
+- Common pattern (mixed depths) doesn't fit the solution
+- Simpler alternatives achieve similar outcomes without breaking changes
+
+For a 52-file bootstrap compiler, the ROI doesn't justify the mandatory ceremony and breaking change. Consider whether other language features would deliver more value to actual codebases.
