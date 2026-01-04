@@ -476,15 +476,16 @@ functio parsePraefixumExpressia(Resolvitor r) -> Expressia {
 
     p.expectaVerbum("praefixum", ParserErrorCodice.ExpectaturExpressia)
 
-    varia corpus = nihil qua Expressia?
+    varia corpus = nihil qua ignotum?
 
     si p.proba(SymbolumGenus.UncusSin) {
         # WHY: Block form is allowed in grammar, but AST expects an expression.
         fixum massa = r.massa()
-        corpus = exMassaExpressia(massa, locus)
+        corpus = massa
     } sin p.congruet(SymbolumGenus.ParensSin) {
-        corpus = r.expressia()
+        fixum expr = r.expressia()
         p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+        corpus = expr
     } secus {
         p.renuncia(ParserErrorCodice.ExpectaturUncusVelParens, scriptum("got '§'", p.specta(0).valor))
         corpus = finge Littera {

@@ -4,6 +4,7 @@
 # Uses scriptum() for string formatting for consistency.
 
 ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum
+ex "../../../ast/sententia" importa Sententia, VariaGenus
 ex "../../../ast/typus" importa TypusAnnotatio
 ex "../nucleus" importa TsGenerator
 ex "../typus" importa genTypus
@@ -141,8 +142,18 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
         }
 
         casu PraefixumExpressia ut e {
-            # Compile-time evaluation - in TS, just evaluate the expression
-            redde genExpressia(e.corpus, g)
+            # Compile-time evaluation - in TS, wrap in IIFE for block form.
+            fixum corpus = e.corpus qua Sententia
+            discerne corpus {
+                casu MassaSententia ut m {
+                    g.intraProfundum()
+                    fixum body = genPraefixumMassa(m.corpus, g)
+                    g.exiProfundum()
+                    redde scriptum("(() => {\n§\n§})()", body, g.ind())
+                }
+            }
+            # Fallback: expression form.
+            redde scriptum("(§)", genExpressia(e.corpus qua Expressia, g))
         }
 
         # Calls and member access
@@ -341,6 +352,51 @@ functio escapaRegex(textus pattern) -> textus {
         i += 1
     }
     redde result
+}
+
+# Minimal statement lowering for praefixum blocks (avoid codegen cycles).
+functio genPraefixumMassa(lista<Sententia> corpus, TsGenerator g) -> textus {
+    si corpus.longitudo() == 0 {
+        redde ""
+    }
+    varia lines = [] qua lista<textus>
+    ex corpus pro stmt {
+        lines.adde(genPraefixumSententia(stmt, g))
+    }
+    redde lines.coniunge("\n")
+}
+
+functio genPraefixumSententia(Sententia stmt, TsGenerator g) -> textus {
+    discerne stmt {
+        casu VariaSententia ut s {
+            fixum keyword = s.species == VariaGenus.Fixum aut s.species == VariaGenus.Figendum sic "const" secus "let"
+            fixum asyncPrefix = s.species == VariaGenus.Figendum aut s.species == VariaGenus.Variandum sic "await " secus ""
+            varia result = scriptum("§§ §", g.ind(), keyword, s.nomen)
+
+            si nonnihil s.typus {
+                result = scriptum("§: §", result, genTypus(s.typus qua TypusAnnotatio, g))
+            }
+
+            si nonnihil s.valor {
+                result = scriptum("§ = §§", result, asyncPrefix, genExpressia(s.valor qua Expressia, g))
+            }
+
+            redde scriptum("§;", result)
+        }
+
+        casu ReddeSententia ut s {
+            si nonnihil s.valor {
+                redde scriptum("§return §;", g.ind(), genExpressia(s.valor qua Expressia, g))
+            }
+            redde scriptum("§return;", g.ind())
+        }
+
+        casu ExpressiaSententia ut s {
+            redde scriptum("§§;", g.ind(), genExpressia(s.expressia, g))
+        }
+    }
+
+    redde scriptum("§/* praefixum: unsupported statement */", g.ind())
 }
 
 # =============================================================================

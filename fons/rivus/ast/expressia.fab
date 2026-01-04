@@ -185,7 +185,7 @@ discretio Expressia {
     # Example: praefixum { ... }
     PraefixumExpressia {
         Locus locus
-        Expressia corpus
+        ignotum corpus
     }
 
     # -------------------------------------------------------------------------
