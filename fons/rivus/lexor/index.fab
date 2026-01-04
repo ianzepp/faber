@@ -286,6 +286,7 @@ genus Lexor {
             # Optional bigint suffix 'n' (e.g., 0xFFn)
             si ego.specta(0) == "n" {
                 ego.procede()
+                valor = valor + "n"
                 ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
                 redde
             }
@@ -313,6 +314,7 @@ genus Lexor {
             # Optional bigint suffix
             si ego.specta(0) == "n" {
                 ego.procede()
+                valor = valor + "n"
                 ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
                 redde
             }
@@ -340,6 +342,7 @@ genus Lexor {
             # Optional bigint suffix
             si ego.specta(0) == "n" {
                 ego.procede()
+                valor = valor + "n"
                 ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
                 redde
             }
@@ -354,6 +357,8 @@ genus Lexor {
             valor = valor + ego.procede()
         }
 
+        varia estFractus = falsum
+
         # Check for fractional part: must be "." followed by digit
         # (distinguishes 42.method() from 42.5)
         si ego.specta(0) == "." et ego.estDigitus(ego.specta(1)) {
@@ -364,9 +369,7 @@ genus Lexor {
                 valor = valor + ego.procede()
             }
 
-            # Fractus = float type token
-            ego.addeSymbolum(SymbolumGenus.Fractus, valor, loc)
-            redde
+            estFractus = verum
         }
 
         # Check for scientific notation: e or E followed by optional sign and digits
@@ -375,6 +378,7 @@ genus Lexor {
             # Valid: 1e5, 1e+5, 1e-5
             si ego.estDigitus(next) aut ((next == "+" aut next == "-") et ego.estDigitus(ego.specta(2))) {
                 valor = valor + ego.procede()  # consume 'e'
+                estFractus = verum
 
                 # Consume optional sign
                 si ego.specta(0) == "+" aut ego.specta(0) == "-" {
@@ -395,12 +399,18 @@ genus Lexor {
         # Check for bigint suffix on decimal
         si ego.specta(0) == "n" {
             ego.procede()
+            # WHY: Preserve bigint suffix for TS codegen parity.
+            valor = valor + "n"
             ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
             redde
         }
 
         # Plain decimal integer
-        ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
+        si estFractus {
+            ego.addeSymbolum(SymbolumGenus.Fractus, valor, loc)
+        } secus {
+            ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
+        }
     }
 
     # legeTextum = "scan a string" - handles single and double quoted strings
