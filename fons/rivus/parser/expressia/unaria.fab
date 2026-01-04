@@ -200,6 +200,19 @@ functio parsePostfix(Resolvitor r) -> Expressia {
         # Non-null chaining: !. ![ !(
         # WHY: '!' alone is not supported, only non-null accessors
         # ---------------------------------------------------------------
+        si p.congruet(SymbolumGenus.NonPunctum) {
+            fixum proprietas = parseNomenVelVerbum(r)
+            expressia = finge MembrumExpressia {
+                locus: locus,
+                obiectum: expressia,
+                proprietas: proprietas,
+                computatum: falsum,
+                optivum: falsum,
+                nonNullum: verum
+            } qua Expressia
+            perge
+        }
+
         si p.proba(SymbolumGenus.Non) et estAccessorInitium(p.specta(1)) {
             p.procede()
 

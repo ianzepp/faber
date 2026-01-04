@@ -142,7 +142,8 @@ functio parseCuraSententia(Resolvitor r) -> Sententia {
     si p.probaVerbum("arena") {
         p.procede()
         curatorSpecies = CuratorGenus.Arena
-    } sin p.probaVerbum("pagina") {
+    } sin p.probaVerbum("page") aut p.probaVerbum("pagina") {
+        # WHY: Grammar uses "page"; accept "pagina" for backward compatibility.
         p.procede()
         curatorSpecies = CuratorGenus.Pagina
     }

@@ -28,6 +28,7 @@ ex "../../ast/typus" importa TypusAnnotatio
 ex "../../ast/lexema" importa SymbolumGenus
 ex "../errores" importa ParserErrorCodice
 ex "./massa" importa parseMassaSententia
+ex "./varia" importa parseNomenVelVerbum
 
 # Parse function declaration
 #
@@ -121,7 +122,7 @@ functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
 #   genus Cursor<T> { varia index = 0 }
 #   genus Admin sub Persona implet Serializable { ... }
 @ publica
-functio parseGenusDeclaratio(Resolvitor r) -> Sententia {
+functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -177,24 +178,50 @@ functio parseGenusDeclaratio(Resolvitor r) -> Sententia {
             staticum = verum
         }
 
+        # Check for reactive modifier
+        varia reactivum = falsum
+        si p.probaVerbum("nexum") {
+            reactivum = verum
+        }
+
         # Check if this is a method or field
         si p.probaVerbum("functio") {
-            # Method - backtrack and parse as full function
-            # For now, simplified: just parse the function
+            # WHY: Methods use full functio syntax but remain inside genus.
+            p.procede()
             fixum methodLocus = p.locusActualis()
-            fixum methodNomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-            fixum methodNomen = methodNomenSym.valor
+            fixum methodNomen = parseNomenVelVerbum(r)
 
             p.expecta(SymbolumGenus.ParensSin, ParserErrorCodice.ExpectaturParensSin)
             fixum params = parseParametra(r)
             p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
 
             varia retTypus = nihil qua TypusAnnotatio?
-            si p.congruet(SymbolumGenus.Sagitta) aut p.probaVerbum("fit") {
+            varia asynca = falsum
+            varia generator = falsum
+
+            si p.congruet(SymbolumGenus.Sagitta) {
+                retTypus = r.adnotatio()
+            } sin p.probaVerbum("fit") {
+                retTypus = r.adnotatio()
+            } sin p.probaVerbum("fiet") {
+                asynca = verum
+                retTypus = r.adnotatio()
+            } sin p.probaVerbum("fiunt") {
+                generator = verum
+                retTypus = r.adnotatio()
+            } sin p.probaVerbum("fient") {
+                asynca = verum
+                generator = verum
                 retTypus = r.adnotatio()
             }
 
-            fixum body = parseMassaSententia(r)
+            varia body = nihil qua Sententia?
+            si p.proba(SymbolumGenus.UncusSin) {
+                # WHY: Abstract methods omit bodies inside abstract genera.
+                body = parseMassaSententia(r)
+            }
+
+            varia estStructor = methodNomen == "creo"
 
             methodi.adde(finge FunctioDeclaratio {
                 locus: methodLocus,
@@ -203,10 +230,10 @@ functio parseGenusDeclaratio(Resolvitor r) -> Sententia {
                 parametra: params,
                 typusReditus: retTypus,
                 corpus: body,
-                asynca: falsum,
-                generator: falsum,
+                asynca: asynca,
+                generator: generator,
                 abstracta: falsum,
-                structor: falsum,
+                structor: estStructor,
                 visibilitas: visibilitas,
                 reddeVerbum: nihil
             } qua Sententia)
@@ -214,8 +241,7 @@ functio parseGenusDeclaratio(Resolvitor r) -> Sententia {
             # Field: type name or name: default
             fixum campusLocus = p.locusActualis()
             fixum typusAnnotatio = r.adnotatio()
-            fixum campusNomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-            fixum campusNomen = campusNomenSym.valor
+            fixum campusNomen = parseNomenVelVerbum(r)
 
             varia valor = nihil qua Expressia?
             si p.congruet(SymbolumGenus.Colon) {
@@ -229,7 +255,7 @@ functio parseGenusDeclaratio(Resolvitor r) -> Sententia {
                 valor: valor,
                 visibilitas: visibilitas,
                 staticum: staticum,
-                reactivum: falsum
+                reactivum: reactivum
             } qua CampusDeclaratio)
         }
 
@@ -246,7 +272,7 @@ functio parseGenusDeclaratio(Resolvitor r) -> Sententia {
         generaParametra: generaParametra,
         extendit: extendit,
         implet: implet,
-        abstractum: falsum,
+        abstractum: abstractum,
         campi: campi,
         structor: structor,
         methodi: methodi

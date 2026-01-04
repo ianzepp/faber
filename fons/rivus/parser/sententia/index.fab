@@ -123,7 +123,14 @@ functio parseSententia(Resolvitor r) -> Sententia {
             redde parseFunctioDeclaratio(r)
         }
         si verbum === "genus" {
-            redde parseGenusDeclaratio(r)
+            redde parseGenusDeclaratio(r, falsum)
+        }
+        si verbum === "abstractus" {
+            # WHY: Allow abstract genus modifier before the declaration keyword.
+            si p.specta(1).species == SymbolumGenus.Verbum et p.specta(1).verbum == "genus" {
+                p.procede()
+                redde parseGenusDeclaratio(r, verum)
+            }
         }
         si verbum === "pactum" {
             redde parsePactumDeclaratio(r)

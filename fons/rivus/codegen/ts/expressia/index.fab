@@ -3,7 +3,7 @@
 # Routes expression AST nodes to their specific generators.
 # Uses scriptum() for string formatting for consistency.
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum
+ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum, AmbitusExpressia
 ex "../../../ast/typus" importa TypusAnnotatio
 ex "../nucleus" importa TsGenerator
 ex "../typus" importa genTypus
@@ -43,7 +43,36 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
 
         # Binary and unary
         casu BinariaExpressia ut e {
-            redde scriptum("(§ § §)", genExpressia(e.sinister, g), e.signum, genExpressia(e.dexter, g))
+            fixum sinister = genExpressia(e.sinister, g)
+            fixum dexter = genExpressia(e.dexter, g)
+            varia signum = e.signum qua textus
+
+            # WHY: Normalize keyword operators to JS equivalents.
+            elige signum {
+                casu "et" { signum = "&&" }
+                casu "aut" { signum = "||" }
+                casu "vel" { signum = "??" }
+            }
+
+            # WHY: Range containment has target-specific lowering.
+            si signum == "intra" {
+                discerne e.dexter {
+                    casu AmbitusExpressia ut r {
+                        fixum initium = genExpressia(r.initium, g)
+                        fixum finis = genExpressia(r.finis, g)
+                        fixum op = (r.inclusivum qua bivalens) sic "<=" secus "<"
+                        redde scriptum("(§ >= § && § § §)", sinister, initium, sinister, op, finis)
+                    }
+                }
+                redde scriptum("(§ intra §)", sinister, dexter)
+            }
+
+            # WHY: Set membership lowers to includes() in TS.
+            si signum == "inter" {
+                redde scriptum("§.includes(§)", dexter, sinister)
+            }
+
+            redde scriptum("(§ § §)", sinister, signum, dexter)
         }
 
         casu UnariaExpressia ut e {
