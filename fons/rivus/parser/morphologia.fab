@@ -150,17 +150,3 @@ functio estRadixListae(textus radix) fit bivalens {
         ceterum reddit falsum
     }
 }
-
-# Validate a list of declared conjugations
-@ publica
-functio validaRadices(lista<textus> radices) fit bivalens {
-    ex radices pro radix {
-        si radix != "imperativus" et
-           radix != "perfectum" et
-           radix != "futurum_activum" et
-           radix != "futurum_indicativum" {
-            redde falsum
-        }
-    }
-    redde verum
-}

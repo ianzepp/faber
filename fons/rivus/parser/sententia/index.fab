@@ -20,14 +20,6 @@ ex "../../ast/sententia" importa Sententia, ScribeGradus
 ex "../../ast/lexema" importa SymbolumGenus, VerbumId
 ex "../../ast/radix" importa NodusRadix
 ex "../errores" importa ParserErrorCodice
-ex "../morphologia" importa validaRadices
-
-# Internal structure for parsing annotations
-@ publicum
-genus AnnotatioData {
-    textus nomen
-    lista<textus>? args
-}
 
 # Import statement parsers from submodules
 ex "./actio" importa parseReddeSententia, parseRumpeSententia, parsePergeSententia, parseIaceSententia, parseScribeSententia
@@ -68,22 +60,9 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
 
     # Annotation prefix (e.g. `@ futura`)
     si sym.species === SymbolumGenus.At {
-        varia annotationes = [] qua lista<AnnotatioData>
+        varia annotationes = [] qua lista<textus>
         dum p.congruet(SymbolumGenus.At) {
-            fixum nomen = parseNomenVelVerbum(r)
-            varia args = nihil qua lista<textus>?
-
-            si p.congruet(SymbolumGenus.ParensSin) {
-                args = [] qua lista<textus>
-                si non p.proba(SymbolumGenus.ParensDex) {
-                    fac {
-                        args.adde(parseNomenVelVerbum(r))
-                    } dum p.congruet(SymbolumGenus.Coma)
-                }
-                p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
-            }
-
-            annotationes.adde({ nomen: nomen, args: args } qua AnnotatioData)
+            annotationes.adde(parseNomenVelVerbum(r))
         }
 
         fixum stmt = parseSententiaSineNotis(r)
@@ -91,19 +70,12 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
         ex annotationes pro a {
             discerne stmt {
                 casu FunctioDeclaratio ut f {
-                    si a.nomen == "futura" {
+                    si a == "futura" {
                         f.asynca = verum
-                    }
-                    si a.nomen == "radix" et nonnihil a.args {
-                        si validaRadices(a.args) {
-                            f.radices = a.args
-                        } secus {
-                            p.renuncia(ParserErrorCodice.InvalidumAnnotatio, "Invalid radix annotation arguments")
-                        }
                     }
                 }
                 casu GenusDeclaratio ut g {
-                    si a.nomen inter ["abstractum", "abstracta", "abstractus"] {
+                    si a inter ["abstractum", "abstracta", "abstractus"] {
                         g.abstractum = verum
                     }
                 }

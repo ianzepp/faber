@@ -30,8 +30,6 @@ ex "../errores" importa ParserErrorCodice
 ex "./massa" importa parseMassaSententia
 ex "./varia" importa parseNomenVelVerbum
 
-ex "../morphologia" importa validaRadices
-
 # Parse function declaration
 #
 # GRAMMAR:
@@ -113,8 +111,7 @@ functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
         abstracta: falsum,
         structor: falsum,
         visibilitas: nihil,
-        reddeVerbum: reddeVerbum,
-        radices: nihil
+        reddeVerbum: reddeVerbum
     } qua Sententia
 }
 
@@ -277,8 +274,7 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
                 abstracta: abstracta,
                 structor: estStructor,
                 visibilitas: visibilitas,
-                reddeVerbum: nihil,
-                radices: nihil
+                reddeVerbum: nihil
             } qua Sententia)
         } secus {
             # Field: type name or name: default
@@ -355,37 +351,14 @@ functio parsePactumDeclaratio(Resolvitor r) -> Sententia {
     dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
         # Optional annotations (e.g., @ futura)
         varia annotationes = [] qua lista<textus>
-        varia radices = nihil qua lista<textus>?
-
         dum p.congruet(SymbolumGenus.At) {
             fixum a = p.specta(0)
-            varia nomen = ""
-
             si a.species === SymbolumGenus.Nomen aut a.species === SymbolumGenus.Verbum {
                 p.procede()
-                nomen = a.valor
-                annotationes.adde(nomen)
+                annotationes.adde(a.valor)
             } secus {
                 p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("got '§'", a.valor))
                 p.procede()
-            }
-
-            si nomen == "radix" {
-                si p.congruet(SymbolumGenus.ParensSin) {
-                    fixum args = [] qua lista<textus>
-                    si non p.proba(SymbolumGenus.ParensDex) {
-                        fac {
-                            args.adde(parseNomenVelVerbum(r))
-                        } dum p.congruet(SymbolumGenus.Coma)
-                    }
-                    p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
-
-                    si validaRadices(args) {
-                        radices = args
-                    } secus {
-                        p.renuncia(ParserErrorCodice.InvalidumAnnotatio, "Invalid radix annotation arguments")
-                    }
-                }
             }
         }
 
@@ -430,8 +403,7 @@ functio parsePactumDeclaratio(Resolvitor r) -> Sententia {
             parametra: params,
             typusReditus: typusReditus,
             asynca: asynca,
-            generator: generator,
-            radices: radices
+            generator: generator
         } qua PactumMethodus)
 
         # Optional separator

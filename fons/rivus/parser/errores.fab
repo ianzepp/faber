@@ -82,7 +82,6 @@ ordo ParserErrorCodice {
     InexpectatumSymbolum = "P104",
     ExpectaturUncusVelParens = "P105",
     ExpectaturExpressia = "P107",
-    InvalidumAnnotatio = "P108",
 
     # Generic errors (P190-P199)
     ErrorGeneralis = "P190",
@@ -283,9 +282,6 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
         }
         casu ParserErrorCodice.ExpectaturExpressia {
             redde { textus: "Expected expression", auxilium: "Provide an expression or value here." } qua ParserErrorNuntius
-        }
-        casu ParserErrorCodice.InvalidumAnnotatio {
-            redde { textus: "Invalid annotation", auxilium: "Check annotation arguments." } qua ParserErrorNuntius
         }
 
         # Generic errors

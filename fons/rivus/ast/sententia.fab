@@ -151,7 +151,6 @@ genus PactumMethodus {
     TypusAnnotatio? typusReditus
     bivalens asynca
     bivalens generator
-    lista<textus>? radices
 }
 
 # Ordo (enum) member
@@ -311,7 +310,6 @@ discretio Sententia {
         bivalens structor       # WHY: "constructor" is a JS reserved word
         Visibilitas? visibilitas
         ReddeVerbum? reddeVerbum
-        lista<textus>? radices   # @ radix(imperativus, perfectum, ...)
     }
 
     # -------------------------------------------------------------------------
