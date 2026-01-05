@@ -864,7 +864,7 @@ legeExpr := 'lege' ('lineam')?
 ### Qua Expression
 
 ```ebnf
-castExpr := call ('qua' typeAnnotation)*
+castExpr := call ('qua' typeAnnotation | 'innatum' typeAnnotation)*
 ```
 
 > Latin 'qua' (as, in the capacity of) for type assertions.
@@ -874,6 +874,38 @@ castExpr := call ('qua' typeAnnotation)*
 > - Zig: @as(T, x)
 > - Rust: x as T
 > - C++: static_cast<T>(x)
+> 
+> Latin 'innatum' (inborn, innate) for native type construction.
+> Unlike qua, this constructs the native representation of the type.
+> Used for tabula<K,V> and lista<T> which need proper initialization.
+> 
+> Empty tabula:
+> - TypeScript: {} innatum tabula<K,V> -> new Map<K,V>()
+> - Python: {} innatum tabula<K,V> -> {}
+> - Zig: {} innatum tabula<K,V> -> std.AutoHashMap(...).init(allocator)
+> - Rust: {} innatum tabula<K,V> -> HashMap::new()
+> - C++: {} innatum tabula<K,V> -> std::map<K,V>{}
+> 
+> Tabula with values:
+> - TypeScript: {a: 1, b: 2} innatum tabula<textus,numerus> -> new Map([["a", 1], ["b", 2]])
+> - Python: {a: 1, b: 2} innatum tabula<textus,numerus> -> {"a": 1, "b": 2}
+> - Zig: {a: 1, b: 2} innatum tabula -> blk: { var _m = ...; _m.put("a", 1); ... }
+> - Rust: {a: 1, b: 2} innatum tabula<textus,numerus> -> HashMap::from([("a", 1), ("b", 2)])
+> - C++: {a: 1, b: 2} innatum tabula<textus,numerus> -> std::map{{"a", 1}, {"b", 2}}
+> 
+> Empty lista:
+> - TypeScript: [] innatum lista<T> -> ([] as T[])
+> - Python: [] innatum lista<T> -> []
+> - Zig: [] innatum lista<T> -> Lista(T).init(allocator)
+> - Rust: [] innatum lista<T> -> Vec::new()
+> - C++: [] innatum lista<T> -> std::vector<T>{}
+> 
+> Lista with values:
+> - TypeScript: [1, 2, 3] innatum lista<numerus> -> [1, 2, 3]
+> - Python: [1, 2, 3] innatum lista<numerus> -> [1, 2, 3]
+> - Zig: [1, 2, 3] innatum lista -> blk: { var _l = ...; _l.append(1); ... }
+> - Rust: [1, 2, 3] innatum lista<numerus> -> vec![1, 2, 3]
+> - C++: [1, 2, 3] innatum lista<numerus> -> std::vector{1, 2, 3}
 
 ### Novum Expression
 

@@ -10,12 +10,18 @@
 ex "../../../ast/sententia" importa ImportaSpecificator, VariaGenus, SeriesDestructuraElementum
 ex "../../../ast/expressia" importa Expressia
 ex "../nucleus" importa TsGenerator
+ex "../../../semantic/modulus" importa estNormaImportum
 
 # External declaration - implementation lives in index.fab
 ex "../expressia/index" importa genExpressia
 
 @ publica
 functio genImporta(textus fons, lista<ImportaSpecificator> specificatores, bivalens totum, ignotum totumAlias, TsGenerator g) -> textus {
+    # Skip norma imports - they are compiler intrinsics, not real modules
+    si estNormaImportum(fons) {
+        redde ""
+    }
+
     si totum {
         si nonnihil totumAlias {
             redde scriptum("§import * as § from \"§\";", g.ind(), totumAlias qua textus, fons)

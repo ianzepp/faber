@@ -110,8 +110,8 @@ unary := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'neg
 
 > Latin 'non' (not), 'nulla' (none/empty), 'nonnulla' (some/non-empty),
 > 'nihil' (is null), 'nonnihil' (is not null),
-> 'negativum' (< 0), 'positivum' (> 0), 'cede' (await), 'novum' (new),
-> 'finge' (form variant).
+> 'negativum' (< 0), 'positivum' (> 0),
+> 'cede' (await), 'novum' (new), 'finge' (form variant).
 
 ---
 

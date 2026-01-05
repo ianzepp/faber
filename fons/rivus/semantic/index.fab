@@ -6,6 +6,7 @@ ex "./resolvitor" importa Resolvitor
 ex "./nucleus" importa Analyzator, SemanticResultatum, novumAnalyzator
 ex "./typi" importa SemanticTypus, IGNOTUM, VACUUM, functioTypus, usitatumTypus
 ex "./scopus" importa Symbolum, SymbolumSpecies
+ex "./modulus" importa estLocaleImportum, estNormaImportum, resolveModulum, ModulusExportum
 ex "./expressia/index" importa resolveExpressia
 ex "./sententia/index" importa analyzeSententia
 ex "../ast/radix" importa Programma
@@ -49,10 +50,11 @@ functio novumResolvitor(Analyzator a) -> Resolvitor {
 # ============================================================================
 
 # Perform semantic analysis on a program
+# viaIngressus: optional path to the entry file (needed for local import resolution)
 @ publica
-functio analyze(Programma programma) -> SemanticResultatum {
+functio analyze(Programma programma, textus? viaIngressus) -> SemanticResultatum {
     # Create analyzer state
-    fixum a = novumAnalyzator()
+    fixum a = novumAnalyzator(viaIngressus)
     fixum r = novumResolvitor(a)
 
     # Phase 1: Predeclare all top-level names
@@ -178,6 +180,75 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                 mutabilis: falsum,
                 locus: t.locus
             } qua Symbolum)
+        }
+
+        # Import declaration - resolve module and register symbols
+        casu ImportaSententia ut imp {
+            # Skip norma imports (handled by intrinsics)
+            si estNormaImportum(imp.fons) {
+                # Norma symbols are defined via definieIntrinsica()
+                # No additional work needed
+            }
+            # Handle local file imports
+            sin estLocaleImportum(imp.fons) {
+                # Need file path context for resolution
+                si nihil a.viaIngressus {
+                    a.error(scriptum("Cannot resolve local import without file context: §", imp.fons), imp.locus)
+                } secus {
+                    fixum modulus = resolveModulum(
+                        imp.fons,
+                        a.viaIngressus qua textus,
+                        a.modulusCache,
+                        a.modulusInProgressu
+                    )
+
+                    si nihil modulus {
+                        a.error(scriptum("Module not found: §", imp.fons), imp.locus)
+                    } secus {
+                        # Wildcard import: ex "./x" importa * ut alias
+                        si imp.totum {
+                            si nonnihil imp.totumAlias {
+                                # Define namespace alias
+                                a.definie({
+                                    nomen: imp.totumAlias qua textus,
+                                    semanticTypus: IGNOTUM,
+                                    species: SymbolumSpecies.Variabilis,
+                                    mutabilis: falsum,
+                                    locus: imp.locus
+                                } qua Symbolum)
+                            }
+                            # Also add all individual exports to scope
+                            de modulus.exporta pro nomen {
+                                fixum exportum = modulus.exporta[nomen] qua ModulusExportum
+                                a.definie({
+                                    nomen: exportum.nomen,
+                                    semanticTypus: exportum.typus,
+                                    species: exportum.species,
+                                    mutabilis: falsum,
+                                    locus: exportum.locus
+                                } qua Symbolum)
+                            }
+                        } secus {
+                            # Named imports: ex "./x" importa foo, bar ut b
+                            ex imp.specificatores pro spec {
+                                si nonnihil modulus.exporta[spec.importatum] {
+                                    fixum exportum = modulus.exporta[spec.importatum] qua ModulusExportum
+                                    a.definie({
+                                        nomen: spec.locale,  # Use local alias if provided
+                                        semanticTypus: exportum.typus,
+                                        species: exportum.species,
+                                        mutabilis: falsum,
+                                        locus: spec.locus
+                                    } qua Symbolum)
+                                } secus {
+                                    a.error(scriptum("'§' is not exported from '§'", spec.importatum, imp.fons), spec.locus)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            # External package imports pass through to codegen unchanged
         }
 
         # Other statements don't need predeclaration

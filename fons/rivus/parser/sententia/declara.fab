@@ -845,13 +845,6 @@ functio parseImportaSententia(Resolvitor r) -> Sententia {
         fac {
             fixum specLocus = p.locusActualis()
 
-            # Check for rest: ceteri name
-            varia residuum = falsum
-            si p.probaVerbum("ceteri") {
-                residuum = verum
-                p.procede()
-            }
-
             fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
             fixum importatum = nomenSym.valor
             varia locale = importatum
@@ -867,7 +860,7 @@ functio parseImportaSententia(Resolvitor r) -> Sententia {
                 locus: specLocus,
                 importatum: importatum,
                 locale: locale,
-                residuum: residuum
+                residuum: falsum
             } qua ImportaSpecificator)
 
         } dum p.congruet(SymbolumGenus.Coma)

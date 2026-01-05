@@ -8,6 +8,7 @@ ex "./typi" importa formaTypum, assignabileAd, typiAequales
 ex "./scopus" importa Scopus, Symbolum, SymbolumSpecies, ScopusSpecies
 ex "./scopus" importa creaScopumGlobalem, creaScopum, definieSymbolum, quaereSymbolum
 ex "./errores" importa SemanticErrorCodice, SemanticErrorNuntius
+ex "./modulus" importa ModulusResolutum
 ex "../ast/positio" importa Locus
 ex "../ast/radix" importa Programma
 ex "../ast/sententia" importa Sententia
@@ -73,6 +74,9 @@ genus Analyzator {
     bivalens currentFunctioGenerator                                      # in generator function?
     lista<textus> resolvendoTypusAliases                                  # cycle detection
     tabula<textus, tabula<textus, lista<textus> > > morphologiaRegistra   # receiver -> stem -> forms
+    textus? viaIngressus                                                  # entry file path for module resolution
+    tabula<textus, ModulusResolutum> modulusCache                         # module cache (path -> resolved)
+    copia<textus> modulusInProgressu                                      # cycle detection for imports
 
     # ========================================================================
     # ERROR REPORTING
@@ -212,7 +216,7 @@ genus Analyzator {
 
 # Create a new analyzer
 @ publica
-functio novumAnalyzator() -> Analyzator {
+functio novumAnalyzator(textus? viaIngressus) -> Analyzator {
     fixum analyzator = {
         errores: [] innatum lista<SemanticError>,
         scopus: creaScopumGlobalem(),
@@ -220,7 +224,10 @@ functio novumAnalyzator() -> Analyzator {
         currentFunctioAsync: falsum,
         currentFunctioGenerator: falsum,
         resolvendoTypusAliases: [] innatum lista<textus>,
-        morphologiaRegistra: {} innatum tabula<textus, tabula<textus, lista<textus> > >
+        morphologiaRegistra: {} innatum tabula<textus, tabula<textus, lista<textus> > >,
+        viaIngressus: viaIngressus,
+        modulusCache: {} innatum tabula<textus, ModulusResolutum>,
+        modulusInProgressu: {} qua copia<textus>
     } qua Analyzator
 
     # Define built-in intrinsics

@@ -1,9 +1,10 @@
 # CLI - Command-line interface for bootstrap Faber compiler
 #
 # Minimal stdin-to-stdout compiler for bootstrap testing.
-# Reads Faber source from stdin, writes TypeScript to stdout.
+# Reads file path as first line, then Faber source from stdin.
+# Writes TypeScript to stdout.
 #
-# Usage: bun opus/bootstrap/cli.js < input.fab > output.ts
+# Usage: { echo "/path/to/file.fab"; cat file.fab } | bun opus/rivus/fons/ts/cli.ts
 #
 # For Zig output, use the test script pattern or import generateZig directly.
 
@@ -19,8 +20,22 @@ ex "./ast/radix" importa Programma
 # =============================================================================
 
 incipiet {
-    # Read source from stdin
-    fixum source = lege
+    # Read all stdin: first line is file path, rest is source
+    fixum input = lege
+    fixum newlineIndex = input.indexOf("\n")
+
+    # Extract file path (first line) and source (rest)
+    varia viaIngressus = nihil qua textus?
+    varia source = input
+
+    si newlineIndex > 0 {
+        fixum firstLine = input.substring(0, newlineIndex)
+        # Check if first line looks like a file path (starts with / or ./)
+        si firstLine.startsWith("/") aut firstLine.startsWith("./") {
+            viaIngressus = firstLine
+            source = input.substring(newlineIndex + 1)
+        }
+    }
 
     # Lexical analysis
     fixum lexResult = lexare(source)
@@ -51,7 +66,7 @@ incipiet {
     }
 
     # Semantic analysis
-    fixum semResult = analyze(parseResult.programma qua Programma)
+    fixum semResult = analyze(parseResult.programma qua Programma, viaIngressus)
 
     si semResult.errores.longitudo() > 0 {
         mone "Semantic errors:"

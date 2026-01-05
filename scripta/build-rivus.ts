@@ -141,6 +141,31 @@ async function main() {
         process.exit(1);
     }
 
+    // Inject extern implementations for module resolution (TypeScript only)
+    if (target === 'ts') {
+        const modulusPath = join(outputDir, 'semantic', 'modulus.ts');
+        let modulusContent = await Bun.file(modulusPath).text();
+
+        // Replace declare statements with actual implementations
+        const externImpls = `
+// FILE I/O IMPLEMENTATIONS (injected by build-rivus.ts)
+import { readFileSync, existsSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+const _readFileSync = (via: string): string => readFileSync(via, 'utf-8');
+const _existsSync = (via: string): boolean => existsSync(via);
+const _dirname = (via: string): string => dirname(via);
+const _resolve = (basis: string, relativum: string): string => resolve(basis, relativum);
+`;
+
+        // Remove declare statements and add implementations after imports
+        modulusContent = modulusContent.replace(
+            /declare function _readFileSync.*?;\ndeclare function _existsSync.*?;\ndeclare function _dirname.*?;\ndeclare function _resolve.*?;/s,
+            externImpls.trim()
+        );
+
+        await Bun.write(modulusPath, modulusContent);
+    }
+
     // Type-check and compile (TypeScript only)
     if (target === 'ts') {
         process.stdout.write('Type-checking... ');

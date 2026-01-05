@@ -47,11 +47,14 @@ case "$command" in
             esac
         done
         
+        # Get absolute path for module resolution
+        abs_input="$(cd "$(dirname "$input")" && pwd)/$(basename "$input")"
+
         if [[ -n "$output" ]]; then
-            bun opus/rivus/fons/ts/cli.ts < "$input" > "$output"
+            { echo "$abs_input"; cat "$input"; } | bun opus/rivus/fons/ts/cli.ts > "$output"
             echo "Compiled: $input -> $output (ts)"
         else
-            bun opus/rivus/fons/ts/cli.ts < "$input"
+            { echo "$abs_input"; cat "$input"; } | bun opus/rivus/fons/ts/cli.ts
         fi
         ;;
     
