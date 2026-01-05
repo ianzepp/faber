@@ -1,19 +1,31 @@
 # Binary Expression Parsers
 #
-# Operators: assignment, ternary, logical, comparison, bitwise, arithmetic.
+# Operators: assignment, ternary, logical, bitwise, comparison, shift, arithmetic.
 # Uses precedence climbing with left-to-right associativity (except assignment/ternary).
 #
-# GRAMMAR:
+# GRAMMAR (low to high precedence):
 #   assignment := ternary (('=' | '+=' | '-=' | ...) assignment)?
 #   ternary := or (('?' expr ':' | 'sic' expr 'secus') ternary)?
 #   or := and (('||' | 'aut' | 'vel') and)*
-#   ... etc
+#   and := bitwiseOr (('&&' | 'et') bitwiseOr)*
+#   bitwiseOr := bitwiseXor ('|' bitwiseXor)*
+#   bitwiseXor := bitwiseAnd ('^' bitwiseAnd)*
+#   bitwiseAnd := equality ('&' equality)*
+#   equality := comparison (('==' | '!=' | 'est') comparison)*
+#   comparison := shift (('<' | '>') shift)*
+#   shift := range (('<<' | '>>' | '>>>') range)*
+#   range := additive (('..' | 'ante' | 'usque') additive)?
+#   additive := multiplicative (('+' | '-') multiplicative)*
+#   multiplicative := unary (('*' | '/' | '%') unary)*
 #
 # LATIN VOCABULARY:
 # - assignatio = assignment
 # - condicio = condition
 # - aut = or (logical)
-# - et = and
+# - et = and (logical)
+# - vel = bitwise or
+# - apex = bitwise xor
+# - translatio = shift
 
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
@@ -142,13 +154,88 @@ functio parseAut(Resolvitor r) -> Expressia {
 
 # Parse logical AND expression
 #
-# GRAMMAR: and := equality (('&&' | 'et') equality)*
+# GRAMMAR: and := bitwiseOr (('&&' | 'et') bitwiseOr)*
 @ publica
 functio parseEt(Resolvitor r) -> Expressia {
     fixum p = r.parser()
-    varia sinister = parseAequale(r)
+    varia sinister = parseBitVel(r)
 
     dum p.congruet(SymbolumGenus.EtEt) aut p.congruetVerbum("et") {
+        fixum operatorSym = p.praevius()
+        fixum locus = operatorSym.locus
+        fixum signum = operatorSym.valor
+        fixum dexter = parseBitVel(r)
+
+        sinister = finge BinariaExpressia {
+            locus: locus,
+            sinister: sinister,
+            signum: signum,
+            dexter: dexter
+        } qua Expressia
+    }
+
+    redde sinister
+}
+
+# Parse bitwise OR expression
+#
+# GRAMMAR: bitwiseOr := bitwiseXor ('|' bitwiseXor)*
+@ publica
+functio parseBitVel(Resolvitor r) -> Expressia {
+    fixum p = r.parser()
+    varia sinister = parseBitApex(r)
+
+    dum p.congruet(SymbolumGenus.Vel) {
+        fixum operatorSym = p.praevius()
+        fixum locus = operatorSym.locus
+        fixum signum = operatorSym.valor
+        fixum dexter = parseBitApex(r)
+
+        sinister = finge BinariaExpressia {
+            locus: locus,
+            sinister: sinister,
+            signum: signum,
+            dexter: dexter
+        } qua Expressia
+    }
+
+    redde sinister
+}
+
+# Parse bitwise XOR expression
+#
+# GRAMMAR: bitwiseXor := bitwiseAnd ('^' bitwiseAnd)*
+@ publica
+functio parseBitApex(Resolvitor r) -> Expressia {
+    fixum p = r.parser()
+    varia sinister = parseBitEt(r)
+
+    dum p.congruet(SymbolumGenus.Apex) {
+        fixum operatorSym = p.praevius()
+        fixum locus = operatorSym.locus
+        fixum signum = operatorSym.valor
+        fixum dexter = parseBitEt(r)
+
+        sinister = finge BinariaExpressia {
+            locus: locus,
+            sinister: sinister,
+            signum: signum,
+            dexter: dexter
+        } qua Expressia
+    }
+
+    redde sinister
+}
+
+# Parse bitwise AND expression
+#
+# GRAMMAR: bitwiseAnd := equality ('&' equality)*
+@ publica
+functio parseBitEt(Resolvitor r) -> Expressia {
+    fixum p = r.parser()
+    varia sinister = parseAequale(r)
+
+    dum p.congruet(SymbolumGenus.Et) {
         fixum operatorSym = p.praevius()
         fixum locus = operatorSym.locus
         fixum signum = operatorSym.valor
@@ -222,13 +309,38 @@ functio parseAequale(Resolvitor r) -> Expressia {
 
 # Parse comparison expression
 #
-# GRAMMAR: comparison := additive (('<' | '>' | '<=' | '>=') additive)*
+# GRAMMAR: comparison := shift (('<' | '>' | '<=' | '>=') shift)*
 @ publica
 functio parseComparatio(Resolvitor r) -> Expressia {
     fixum p = r.parser()
-    varia sinister = parseAmbitus(r)
+    varia sinister = parseTranslatio(r)
 
     dum p.congruet(SymbolumGenus.Minor) aut p.congruet(SymbolumGenus.Maior) aut p.congruet(SymbolumGenus.MinorAequum) aut p.congruet(SymbolumGenus.MaiorAequum) aut p.congruetVerbum("intra") aut p.congruetVerbum("inter") {
+        fixum operatorSym = p.praevius()
+        fixum locus = operatorSym.locus
+        fixum signum = operatorSym.valor
+        fixum dexter = parseTranslatio(r)
+
+        sinister = finge BinariaExpressia {
+            locus: locus,
+            sinister: sinister,
+            signum: signum,
+            dexter: dexter
+        } qua Expressia
+    }
+
+    redde sinister
+}
+
+# Parse shift expression
+#
+# GRAMMAR: shift := range (('<<' | '>>' | '>>>') range)*
+@ publica
+functio parseTranslatio(Resolvitor r) -> Expressia {
+    fixum p = r.parser()
+    varia sinister = parseAmbitus(r)
+
+    dum p.congruet(SymbolumGenus.MinorBis) aut p.congruet(SymbolumGenus.MaiorBis) aut p.congruet(SymbolumGenus.MaiorTer) {
         fixum operatorSym = p.praevius()
         fixum locus = operatorSym.locus
         fixum signum = operatorSym.valor
