@@ -1,20 +1,63 @@
 /**
  * TypeScript Preamble Generator
  *
- * Reads preamble snippets from .txt files and assembles them based on features used.
+ * Assembles preamble snippets based on features used.
  */
 
-import { readFileSync } from 'fs';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
 import type { RequiredFeatures } from '../../types';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const PANIC = `class Panic extends Error {
+  name = "Panic";
+}`;
 
-// Read preamble files once at module load
-const PANIC = readFileSync(join(__dirname, 'panic.txt'), 'utf-8');
-const DECIMAL = readFileSync(join(__dirname, 'decimal.txt'), 'utf-8');
-const FLUMINA = readFileSync(join(__dirname, 'flumina.txt'), 'utf-8');
+const DECIMAL = `import type Decimal from 'decimal.js';`;
+
+const FLUMINA = `type Responsum<T = unknown> =
+  | { op: 'bene'; data: T }
+  | { op: 'error'; code: string; message: string }
+  | { op: 'factum' }
+  | { op: 'res'; data: T };
+
+const respond = {
+  ok: <T>(data: T): Responsum<T> => ({ op: 'bene', data }),
+  error: (code: string, message: string): Responsum<never> => ({ op: 'error', code, message }),
+  done: (): Responsum<never> => ({ op: 'factum' }),
+  item: <T>(data: T): Responsum<T> => ({ op: 'res', data }),
+};
+
+function asFit<T>(gen: () => Generator<Responsum<T>>): T {
+  for (const resp of gen()) {
+    if (resp.op === 'bene') return resp.data;
+    if (resp.op === 'error') throw new Error(\`\${resp.code}: \${resp.message}\`);
+  }
+  throw new Error('EPROTO: No terminal response');
+}
+
+function* asFiunt<T>(gen: Generator<Responsum<T>>): Generator<T> {
+  for (const resp of gen) {
+    if (resp.op === 'res') yield resp.data;
+    else if (resp.op === 'error') throw new Error(\`\${resp.code}: \${resp.message}\`);
+    else if (resp.op === 'factum') return;
+    else if (resp.op === 'bene') { yield resp.data; return; }
+  }
+}
+
+async function asFiet<T>(gen: () => AsyncGenerator<Responsum<T>>): Promise<T> {
+  for await (const resp of gen()) {
+    if (resp.op === 'bene') return resp.data;
+    if (resp.op === 'error') throw new Error(\`\${resp.code}: \${resp.message}\`);
+  }
+  throw new Error('EPROTO: No terminal response');
+}
+
+async function* asFient<T>(gen: AsyncGenerator<Responsum<T>>): AsyncGenerator<T> {
+  for await (const resp of gen) {
+    if (resp.op === 'res') yield resp.data;
+    else if (resp.op === 'error') throw new Error(\`\${resp.code}: \${resp.message}\`);
+    else if (resp.op === 'factum') return;
+    else if (resp.op === 'bene') { yield resp.data; return; }
+  }
+}`;
 
 /**
  * Generate preamble based on features used.

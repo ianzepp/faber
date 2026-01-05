@@ -4,14 +4,11 @@
  * Generates #include directives and helper definitions based on features used.
  */
 
-import { readFileSync } from 'fs';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-// Read preamble files once at module load
-const SCOPE_GUARD = readFileSync(join(__dirname, 'scopeguard.txt'), 'utf-8');
+const SCOPE_GUARD = `template<typename F>
+struct _ScopeGuard {
+    F fn;
+    ~_ScopeGuard() { fn(); }
+};`;
 
 /**
  * Generate preamble based on includes and flags.

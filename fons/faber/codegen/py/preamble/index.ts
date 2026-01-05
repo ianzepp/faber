@@ -1,18 +1,16 @@
 /**
  * Python Preamble Generator
  *
- * Reads preamble snippets from .txt files and assembles them based on features used.
+ * Assembles preamble snippets based on features used.
  */
 
-import { readFileSync } from 'fs';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
 import type { RequiredFeatures } from '../../types';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-// Read preamble files once at module load
-const PRAEFIXUM = readFileSync(join(__dirname, 'praefixum.txt'), 'utf-8');
+const PRAEFIXUM = `def __praefixum__(code):
+    __globals__ = {"range": range, "len": len, "list": list, "dict": dict, "int": int, "float": float, "str": str, "bool": bool, "abs": abs, "min": min, "max": max, "sum": sum}
+    __locals__ = {}
+    exec(code, __globals__, __locals__)
+    return __locals__.get('__result__')`;
 
 /**
  * Generate preamble based on features used.

@@ -1,5 +1,0 @@
-def __praefixum__(code):
-    __globals__ = {"range": range, "len": len, "list": list, "dict": dict, "int": int, "float": float, "str": str, "bool": bool, "abs": abs, "min": min, "max": max, "sum": sum}
-    __locals__ = {}
-    exec(code, __globals__, __locals__)
-    return __locals__.get('__result__')
