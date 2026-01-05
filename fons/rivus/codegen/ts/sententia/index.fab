@@ -515,7 +515,7 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
             fixum ind = g.ind()
             result = scriptum("§ {\n§  yield* asFient((async function* () {\n§\n§  })());\n§}", result, ind, body, ind, ind)
         } sin body == "" {
-            result = scriptum("§ {{}}", result)
+            result = scriptum("§ {}", result)
         } secus {
             result = scriptum("§ {\n§\n§}", result, body, g.ind())
         }
@@ -1051,8 +1051,7 @@ functio genCustodi(lista<CustodiClausula> clausulae, TsGenerator g) -> textus {
 
         si vacuus {
             # WHY: Empty guard bodies should compact to {} with no blank line.
-            # WHY: Use {{}} so scriptum emits literal braces with no placeholder.
-            result = scriptum("§§if (§) {{}}\n", result, g.ind(), genExpressia(clausula.condicio, g))
+            result = scriptum("§§if (§) {}\n", result, g.ind(), genExpressia(clausula.condicio, g))
             perge
         }
 
@@ -1068,13 +1067,12 @@ functio genCustodi(lista<CustodiClausula> clausulae, TsGenerator g) -> textus {
         }
         si body == "" aut body == nihil aut body == "undefined" {
             # WHY: Defensive fallback if empty bodies stringify poorly.
-            # WHY: Use {{}} so scriptum emits literal braces with no placeholder.
-            result = scriptum("§§if (§) {{}}\n", result, g.ind(), genExpressia(clausula.condicio, g))
+            result = scriptum("§§if (§) {}\n", result, g.ind(), genExpressia(clausula.condicio, g))
             g.exiProfundum()
             perge
         }
         g.exiProfundum()
-        result = scriptum("§§if (§) {{\n§\n§}}\n", result, g.ind(), genExpressia(clausula.condicio, g), body, g.ind())
+        result = scriptum("§§if (§) {\n§\n§}\n", result, g.ind(), genExpressia(clausula.condicio, g), body, g.ind())
     }
     redde result
 }
@@ -1091,9 +1089,9 @@ functio genTempta(Sententia corpus, ignotum cape, ignotum demum, TsGenerator g) 
 
     varia result = ""
     si tryBody == "" {
-        result = scriptum("§try {{}}", g.ind())
+        result = scriptum("§try {}", g.ind())
     } secus {
-        result = scriptum("§try {{\n§\n§}}", g.ind(), tryBody, g.ind())
+        result = scriptum("§try {\n§\n§}", g.ind(), tryBody, g.ind())
     }
 
     si nonnihil cape {
@@ -1102,9 +1100,9 @@ functio genTempta(Sententia corpus, ignotum cape, ignotum demum, TsGenerator g) 
         fixum catchBody = genSententia(capeClausula.corpus, g)
         g.exiProfundum()
         si catchBody == "" {
-            result = scriptum("§ catch (§) {{}}", result, capeClausula.param)
+            result = scriptum("§ catch (§) {}", result, capeClausula.param)
         } secus {
-            result = scriptum("§ catch (§) {{\n§\n§}}", result, capeClausula.param, catchBody, g.ind())
+            result = scriptum("§ catch (§) {\n§\n§}", result, capeClausula.param, catchBody, g.ind())
         }
     }
 
@@ -1113,9 +1111,9 @@ functio genTempta(Sententia corpus, ignotum cape, ignotum demum, TsGenerator g) 
         fixum finallyBody = genSententia(demum qua Sententia, g)
         g.exiProfundum()
         si finallyBody == "" {
-            result = scriptum("§ finally {{}}", result)
+            result = scriptum("§ finally {}", result)
         } secus {
-            result = scriptum("§ finally {{\n§\n§}}", result, finallyBody, g.ind())
+            result = scriptum("§ finally {\n§\n§}", result, finallyBody, g.ind())
         }
     }
 
@@ -1301,9 +1299,9 @@ functio genCura(ignotum curatorSpecies, ignotum res, textus vinculum, Sententia 
     fixum tryBody = genSententia(corpus, g)
     g.exiProfundum()
     si tryBody == "" {
-        result = scriptum("§§try {{}}\n", result, g.ind())
+        result = scriptum("§§try {}\n", result, g.ind())
     } secus {
-        result = scriptum("§§try {{\n§\n§}}\n", result, g.ind(), tryBody, g.ind())
+        result = scriptum("§§try {\n§\n§}\n", result, g.ind(), tryBody, g.ind())
     }
 
     # Optional catch clause
@@ -1313,19 +1311,19 @@ functio genCura(ignotum curatorSpecies, ignotum res, textus vinculum, Sententia 
         g.intraProfundum()
         fixum catchBody = genSententia(capeClause.corpus, g)
         g.exiProfundum()
-        result = scriptum("§§catch (§) {{\n§\n§}}\n", result, g.ind(), catchParam, catchBody, g.ind())
+        result = scriptum("§§catch (§) {\n§\n§}\n", result, g.ind(), catchParam, catchBody, g.ind())
     }
 
     # Finally block with solve?.()
-    result = scriptum("§§finally {{\n", result, g.ind())
+    result = scriptum("§§finally {\n", result, g.ind())
     g.intraProfundum()
     fixum cleanup = scriptum("§.solve?.();", vinculum)
     result = scriptum("§§§\n", result, g.ind(), cleanup)
     g.exiProfundum()
-    result = scriptum("§§}}\n", result, g.ind())
+    result = scriptum("§§}\n", result, g.ind())
 
     g.exiProfundum()
-    result = scriptum("§§}}", result, g.ind())
+    result = scriptum("§§}", result, g.ind())
 
     redde result
 }

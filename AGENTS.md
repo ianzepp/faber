@@ -131,7 +131,7 @@ fient  # will become (async generator)
 Use `scriptum()` for formatted strings (required for Zig, works everywhere):
 
 ```fab
-fixum greeting = scriptum("Hello, {}!", name)
+fixum greeting = scriptum("Hello, §!", name)
 ```
 
 Output varies by target:

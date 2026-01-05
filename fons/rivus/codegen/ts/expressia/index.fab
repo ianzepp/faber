@@ -367,7 +367,7 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
                     fixum body = genPraefixumMassa(m.corpus, g)
                     g.exiProfundum()
                     si body == "" {
-                        redde scriptum("(§)§ => {{}}", params.coniunge(", "), retType)
+                        redde scriptum("(§)§ => {}", params.coniunge(", "), retType)
                     }
                     redde scriptum("(§)§ => {\n§\n§}", params.coniunge(", "), retType, body, g.ind())
                 }

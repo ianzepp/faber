@@ -1291,20 +1291,19 @@ export interface ScribeStatement extends BaseNode {
  *      of scribere. While scribe outputs to console, scriptum returns a formatted string.
  *      This is the expression counterpart to the scribe statement.
  *
- * WHY: Format string is passed through verbatim to target. User must use target-appropriate
- *      placeholders ({} for Zig/Rust, %s/%d for C++, etc.). Faber does not translate.
+ * WHY: The § placeholder is converted to target-appropriate format specifiers.
  *
  * Target mappings:
- *   scriptum("Hello, {}", name) →
- *     Zig:  std.fmt.allocPrint(alloc, "Hello, {}", .{name})
+ *   scriptum("Hello, §", name) →
+ *     TS:   `Hello, ${name}`
+ *     Py:   "Hello, {}".format(name)
  *     Rust: format!("Hello, {}", name)
  *     C++:  std::format("Hello, {}", name)
- *     Py:   "Hello, {}".format(name)
- *     TS:   interpolation or runtime helper
+ *     Zig:  std.fmt.allocPrint(alloc, "Hello, {any}", .{name})
  *
  * Examples:
- *   scriptum("Hello, {}", name)
- *   scriptum("{} + {} = {}", a, b, a + b)
+ *   scriptum("Hello, §", name)
+ *   scriptum("§ + § = §", a, b, a + b)
  */
 export interface ScriptumExpression extends BaseNode {
     type: 'ScriptumExpression';

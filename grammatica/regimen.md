@@ -818,15 +818,17 @@ scriptumExpr := 'scriptum' '(' STRING (',' expression)* ')'
 
 > "scriptum" (that which has been written) is the perfect passive participle
 > of scribere. While scribe outputs to console, scriptum returns a formatted string.
-> 
-> Format string is passed through verbatim to target. User must use target-appropriate
-> placeholders ({} for Zig/Rust, %s/%d for C++, etc.). Faber does not translate.
+>
+> The § placeholder is converted to target-appropriate format specifiers:
+> - TS: `${arg}` in template literal
+> - Python/Rust/C++: `{}`
+> - Zig: `{any}`
 
 **Examples:**
 
 ```fab
-scriptum("Hello, {}", name)
-scriptum("{} + {} = {}", a, b, a + b)
+scriptum("Hello, §", name)
+scriptum("§ + § = §", a, b, a + b)
 ```
 
 ### Lege Expression

@@ -257,5 +257,5 @@ functio genLambda(lista<LambdaParametrum> parametra, ignotum corpus, ZigGenerato
         }
     }
 
-    redde scriptum("struct { fn f(§) void {{}} }.f", params.coniunge(", "))
+    redde scriptum("struct { fn f(§) void {} }.f", params.coniunge(", "))
 }

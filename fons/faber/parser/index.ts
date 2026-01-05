@@ -4391,12 +4391,11 @@ export function parse(tokens: Token[]): ParserResult {
      * WHY: "scriptum" (that which has been written) is the perfect passive participle
      *      of scribere. While scribe outputs to console, scriptum returns a formatted string.
      *
-     * WHY: Format string is passed through verbatim to target. User must use target-appropriate
-     *      placeholders ({} for Zig/Rust, %s/%d for C++, etc.). Faber does not translate.
+     * WHY: The § placeholder is converted to target-appropriate format specifiers.
      *
      * Examples:
-     *   scriptum("Hello, {}", name)
-     *   scriptum("{} + {} = {}", a, b, a + b)
+     *   scriptum("Hello, §", name)
+     *   scriptum("§ + § = §", a, b, a + b)
      */
     function parseScriptumExpression(): ScriptumExpression {
         const position = tokens[current - 1]!.position; // Position of 'scriptum' we just consumed

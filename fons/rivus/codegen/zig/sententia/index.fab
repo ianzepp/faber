@@ -158,7 +158,7 @@ functio genFunctio(textus nomen, lista<Parametrum> parametra, ignotum typusRedit
         g.exiProfundum()
 
         si body == "" {
-            result = scriptum("§ {{}}", result)
+            result = scriptum("§ {}", result)
         } secus {
             result = scriptum("§ {\n§\n§}", result, body, g.ind())
         }
