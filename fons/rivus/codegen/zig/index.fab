@@ -1,0 +1,29 @@
+# Zig Code Generator - Public API
+#
+# Entry point for generating Zig from Faber AST.
+# Orchestrates statement generation.
+
+ex "../../ast/sententia" importa Sententia
+ex "./nucleus" importa ZigGenerator, creaZigGenerator
+
+# =============================================================================
+# PUBLIC API
+# =============================================================================
+
+# Generate Zig source code from a list of statements
+@ publica
+functio generateZig(lista<Sententia> corpus) -> textus {
+    fixum g = creaZigGenerator()
+
+    # Generate body from statements
+    varia lines = [] qua lista<textus>
+    ex corpus pro stmt {
+        # TODO: genSententia not yet implemented
+        lines.adde("// TODO: statement codegen")
+    }
+
+    fixum body = lines.coniunge("\n")
+
+    # TODO: Add preamble generation (std imports, Responsum type, etc.)
+    redde body
+}

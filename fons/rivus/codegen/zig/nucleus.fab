@@ -1,0 +1,124 @@
+# Zig Code Generator - Core generator state
+#
+# This module provides the ZigGenerator genus that holds shared state
+# for Zig code generation. Individual gen* functions will be in
+# separate files under sententia/ and expressia/.
+
+ex "../typi" importa RequiredFeatures, creaRequiredFeatures
+
+# =============================================================================
+# ZIG GENERATOR
+# =============================================================================
+
+# Core generator state for Zig output.
+#
+# WHY: Holds indentation state, allocator tracking, feature tracking,
+#      and context flags shared across all statement/expression generators.
+@ publicum
+genus ZigGenerator {
+    # Indentation depth (number of levels)
+    numerus profunditas
+
+    # Indentation unit (4 spaces for Zig convention)
+    textus indentum
+
+    # Allocator stack for curator tracking
+    # WHY: Zig requires explicit allocators. cura blocks push/pop allocator
+    #      names so nested code can reference the current allocator.
+    lista<textus> curatores
+
+    # Features used that need preamble setup
+    RequiredFeatures requisita
+
+    # Whether we're inside a fit function body (Responsum protocol)
+    bivalens inFlumina
+
+    # Whether we're inside a fiunt function body (generator state machine)
+    bivalens inFiunt
+
+    # Whether we're inside a fiet function body (async state machine)
+    bivalens inFiet
+
+    # Whether we're inside a fient function body (async generator state machine)
+    bivalens inFient
+
+    # ==========================================================================
+    # INDENTATION
+    # ==========================================================================
+
+    # Generate indentation string for current depth
+    @ publica
+    functio ind() -> textus {
+        varia result = ""
+        varia i = 0
+        dum i < ego.profunditas {
+            result = result + ego.indentum
+            i += 1
+        }
+        redde result
+    }
+
+    # Increment depth
+    @ publica
+    functio intraProfundum() {
+        ego.profunditas += 1
+    }
+
+    # Decrement depth
+    @ publica
+    functio exiProfundum() {
+        ego.profunditas -= 1
+    }
+
+    # ==========================================================================
+    # CURATOR (ALLOCATOR) MANAGEMENT
+    # ==========================================================================
+
+    # Get the current active allocator name.
+    # WHY: Returns 'alloc' as default - method bodies are generated at module
+    #      level before any cura block, but will be called from within one at
+    #      runtime. The Zig compiler will error if 'alloc' is not in scope.
+    @ publica
+    functio curator() -> textus {
+        si ego.curatores.longitudo() > 0 {
+            redde ego.curatores[ego.curatores.longitudo() - 1]
+        }
+        redde "alloc"
+    }
+
+    # Push a new allocator name onto the stack.
+    # WHY: Called when entering a cura block to make the allocator available
+    #      to nested code (scriptum, lista operations, etc.)
+    @ publica
+    functio imponeCuratorem(textus nomen) {
+        ego.curatores.adde(nomen)
+    }
+
+    # Pop the current allocator from the stack.
+    # WHY: Called when exiting a cura block to restore the previous allocator.
+    @ publica
+    functio deponeCuratorem() {
+        si ego.curatores.longitudo() > 0 {
+            ego.curatores.remove()
+        }
+    }
+}
+
+# =============================================================================
+# FACTORY
+# =============================================================================
+
+# Create a new ZigGenerator with default settings
+@ publica
+functio creaZigGenerator() -> ZigGenerator {
+    redde {
+        profunditas: 0,
+        indentum: "    ",
+        curatores: [] qua lista<textus>,
+        requisita: creaRequiredFeatures(),
+        inFlumina: falsum,
+        inFiunt: falsum,
+        inFiet: falsum,
+        inFient: falsum
+    } qua ZigGenerator
+}

@@ -1,0 +1,180 @@
+# Zig Type Mapping - Latin types to Zig types
+#
+# Maps Latin type names to their Zig equivalents.
+
+ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum
+ex "./nucleus" importa ZigGenerator
+
+# =============================================================================
+# TYPE MAPPING
+# =============================================================================
+
+# Map a Latin type name to Zig type name
+@ publica
+functio mappaNomenTypi(textus nomen) -> textus {
+    elige nomen {
+        # Primitives
+        casu "textus" reddit "[]const u8"
+        casu "numerus" reddit "i64"
+        casu "fractus" reddit "f64"
+        casu "decimus" reddit "f128"
+        casu "magnus" reddit "i128"
+        casu "bivalens" reddit "bool"
+        casu "nihil" reddit "void"
+        casu "vacuum" reddit "void"
+        casu "numquam" reddit "noreturn"
+
+        # Binary
+        casu "octeti" reddit "[]u8"
+
+        # Meta types
+        casu "objectum" reddit "anytype"
+        casu "ignotum" reddit "anytype"
+
+        # Memory management
+        casu "curator" reddit "std.mem.Allocator"
+    }
+
+    # User-defined type: pass through unchanged
+    redde nomen
+}
+
+# =============================================================================
+# TYPE GENERATION
+# =============================================================================
+
+# Generate Zig type from type annotation
+@ publica
+functio genTypus(TypusAnnotatio adnotatio, ZigGenerator g) -> textus {
+    fixum nomen = adnotatio.nomen
+
+    # Handle union types - Zig doesn't have untagged unions
+    si nonnihil adnotatio.unio {
+        fixum unioTypi = adnotatio.unio qua lista<TypusAnnotatio>
+        si unioTypi.longitudo() > 0 {
+            redde "anytype"
+        }
+    }
+
+    # Handle generic types
+    si nonnihil adnotatio.typusParametra {
+        fixum parametra = adnotatio.typusParametra qua lista<TypusParametrum>
+        si parametra.longitudo() > 0 {
+            fixum result = genTypusGenericus(nomen, parametra, adnotatio.nullabilis, g)
+            redde result
+        }
+    }
+
+    # Map Latin type name to Zig
+    fixum base = mappaNomenTypi(nomen)
+
+    # Handle nullable: textus? -> ?[]const u8
+    si adnotatio.nullabilis {
+        redde scriptum("?§", base)
+    }
+
+    redde base
+}
+
+# Generate generic type (lista<T>, tabula<K,V>, etc.)
+functio genTypusGenericus(textus nomen, lista<TypusParametrum> parametra, bivalens nullabilis, ZigGenerator g) -> textus {
+    varia result = ""
+
+    elige nomen {
+        casu "lista" {
+            g.requisita.lista = verum
+            fixum elemTypus = parametra[0]
+            discerne elemTypus {
+                casu Typus ut t {
+                    fixum inner = genTypus(t.adnotatio, g)
+                    result = scriptum("Lista(§)", inner)
+                }
+            }
+            si result == "" {
+                result = "Lista(anytype)"
+            }
+        }
+
+        casu "tabula" {
+            g.requisita.tabula = verum
+            si parametra.longitudo() >= 2 {
+                varia keyZig = "anytype"
+                varia valZig = "anytype"
+
+                discerne parametra[0] {
+                    casu Typus ut t {
+                        keyZig = genTypus(t.adnotatio, g)
+                    }
+                }
+                discerne parametra[1] {
+                    casu Typus ut t {
+                        valZig = genTypus(t.adnotatio, g)
+                    }
+                }
+
+                si keyZig == "[]const u8" {
+                    result = scriptum("std.StringHashMap(§)", valZig)
+                } secus {
+                    result = scriptum("std.AutoHashMap(§, §)", keyZig, valZig)
+                }
+            } secus {
+                result = "std.AutoHashMap(anytype, anytype)"
+            }
+        }
+
+        casu "copia" {
+            g.requisita.copia = verum
+            fixum elemTypus = parametra[0]
+            varia inner = "anytype"
+            discerne elemTypus {
+                casu Typus ut t {
+                    inner = genTypus(t.adnotatio, g)
+                }
+            }
+
+            si inner == "[]const u8" {
+                result = "std.StringHashMap(void)"
+            } secus {
+                result = scriptum("std.AutoHashMap(§, void)", inner)
+            }
+        }
+
+        casu "promissum" {
+            g.requisita.async = verum
+            fixum innerTypus = parametra[0]
+            varia inner = "anytype"
+            discerne innerTypus {
+                casu Typus ut t {
+                    inner = genTypus(t.adnotatio, g)
+                }
+            }
+            result = scriptum("!§", inner)
+        }
+    }
+
+    # Default case: user-defined type, pass through
+    si result == "" {
+        result = nomen
+    }
+
+    si nullabilis {
+        redde scriptum("?§", result)
+    }
+
+    redde result
+}
+
+# Generate a single type parameter
+@ publica
+functio genTypusParametrum(TypusParametrum param, ZigGenerator g) -> textus? {
+    discerne param {
+        casu Typus ut p {
+            redde genTypus(p.adnotatio, g)
+        }
+        casu Littera {
+            # Numeric parameters become comptime values
+            redde nihil
+        }
+    }
+    redde nihil
+}
