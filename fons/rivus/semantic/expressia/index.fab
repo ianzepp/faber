@@ -7,13 +7,14 @@ ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, BIVALENS, NIHIL, IGNOTUM
 ex "../typi" importa usitatumTypus, genericumTypus
 ex "../typi" importa formaTypum, assignabileAd
 ex "../errores" importa immutableAssignmentError, typeMismatchError, undefinedVariableError
-ex "../../ast/expressia" importa Expressia
+ex "../../ast/expressia" importa Expressia, CatenaGradus
 
 ex "./primaria" importa resolveNomen, resolveLittera, resolveSeries, resolveObiectum
 ex "./binaria" importa resolveBinaria
 ex "./unaria" importa resolveUnaria
 ex "./vocatio" importa resolveVocatio, resolveMembrum
 ex "./alia" importa resolveLambda, resolveFingeExpr, resolveCedeExpr, resolveNovumExpr, resolveCondicio
+ex "../sententia/declara" importa resolveTypusAnnotatio
 
 # ============================================================================
 # MAIN DISPATCHER
@@ -112,8 +113,9 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
         # Type cast (expr qua Type)
         casu QuaExpressia ut q {
             r.expressia(q.expressia)
-            # TODO: resolve type annotation
-            redde IGNOTUM
+            # Resolve target type annotation and return it
+            fixum targetTypus = resolveTypusAnnotatio(r, q.scopus)
+            redde targetTypus
         }
 
         # Type check (expr est Type)
@@ -137,6 +139,31 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
         # Regex literal
         casu LitteraRegex {
             redde usitatumTypus("Regex", falsum)
+        }
+
+        # Collection DSL pipeline (ex items prima 5)
+        casu CatenaExpressia ut c {
+            # WHY: DSL expressions resolve to source type after transforms.
+            # Most operations (prima, ultima, ordina) preserve element type.
+            # summa would change to numerus, but basic inference returns source type.
+            fixum fonsTypus = r.expressia(c.fons)
+            redde fonsTypus
+        }
+
+        # Filter DSL (ab items activus)
+        casu AbExpressia ut abExpr {
+            # WHY: Filtering doesn't change element type, only reduces collection.
+            fixum fonsTypus = r.expressia(abExpr.fons)
+
+            # Resolve filter condition if present (ubi form)
+            si nonnihil abExpr.filtrum {
+                fixum filtrum = abExpr.filtrum
+                si filtrum.habetUbi {
+                    r.expressia(filtrum.condicio)
+                }
+            }
+
+            redde fonsTypus
         }
     }
 

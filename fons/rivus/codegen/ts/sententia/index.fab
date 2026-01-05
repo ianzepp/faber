@@ -188,7 +188,7 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
         }
 
         casu AdSententia {
-            redde scriptum("§/* ad statement not implemented for TS */", g.ind())
+            redde scriptum("§throw new Error(\"ad statement not implemented\");", g.ind())
         }
 
         # Tests

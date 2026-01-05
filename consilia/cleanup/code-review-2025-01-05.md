@@ -460,13 +460,15 @@ Both exist and represent the `nihil` keyword, but serve different purposes.
 
 ### P1 — Important (Should Fix Soon)
 
-3. **Complete type inference for all expression types**
+3. ~~**Complete type inference for all expression types**~~ **FIXED 2025-01-05**
    - Files: `semantic/expressia/*.fab`
    - Reason: Type errors go undetected
+   - Resolution: Added handlers for CatenaExpressia (collection DSL) and AbExpressia (filter DSL). Fixed lambda parameter type resolution from annotations. Fixed QuaExpressia to resolve target type.
 
-4. **Implement missing DSL expressions in codegen**
+4. ~~**Implement missing DSL expressions in codegen**~~ **FIXED 2025-01-05**
    - Files: `codegen/ts/sententia/index.fab`
    - Reason: ad statement produces broken output
+   - Resolution: Changed to generate runtime error throw instead of comment.
 
 ### P2 — Should Fix (Plan to Address)
 

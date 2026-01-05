@@ -7,8 +7,10 @@ ex "../typi" importa SemanticTypus, IGNOTUM, VACUUM
 ex "../typi" importa functioTypus, usitatumTypus, genericumTypus
 ex "../scopus" importa ScopusSpecies, SymbolumSpecies
 ex "../errores" importa cedeOutsideAsyncError
+ex "../sententia/declara" importa resolveTypusAnnotatio
 ex "../../ast/expressia" importa Expressia
 ex "../../ast/sententia" importa Sententia
+ex "../../ast/typus" importa TypusAnnotatio
 
 # ============================================================================
 # LAMBDA EXPRESSION RESOLUTION
@@ -24,9 +26,16 @@ functio resolveLambda(Resolvitor r, Expressia lambdaExpr) -> SemanticTypus {
             # Enter function scope for parameters
             a.intraScopum(ScopusSpecies.Functio)
 
-            # Define parameters in scope
+            # Define parameters in scope with resolved types
+            varia paramTypi = [] qua lista<SemanticTypus>
             ex l.parametra pro param {
-                fixum paramTypus = IGNOTUM  # TODO: resolve param type annotation
+                # Resolve parameter type from annotation if present
+                varia paramTypus = IGNOTUM qua SemanticTypus
+                si nonnihil param.typus {
+                    paramTypus = resolveTypusAnnotatio(r, param.typus qua TypusAnnotatio)
+                }
+                paramTypi.adde(paramTypus)
+
                 a.scopus.symbola[param.nomen] = {
                     nomen: param.nomen,
                     semanticTypus: paramTypus,
@@ -66,12 +75,7 @@ functio resolveLambda(Resolvitor r, Expressia lambdaExpr) -> SemanticTypus {
             # Exit function scope
             a.exiScopum()
 
-            # Build function type
-            varia paramTypi = [] qua lista<SemanticTypus>
-            ex l.parametra pro param {
-                paramTypi.adde(IGNOTUM)
-            }
-
+            # Build function type using resolved parameter types
             redde functioTypus(paramTypi, reditusTypus, falsum, falsum)
         }
     }

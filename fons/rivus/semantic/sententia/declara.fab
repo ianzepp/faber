@@ -13,6 +13,7 @@ ex "../errores" importa noTypeOrInitializerError, typeMismatchError, awaitOutsid
 ex "../../ast/sententia" importa Sententia, VariaGenus
 ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum
 
+@ publica
 functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> SemanticTypus {
     # WHY: Self-hosting needs full type annotation resolution for the compiler itself
     # (AST nodes, generics, and nullable types).
