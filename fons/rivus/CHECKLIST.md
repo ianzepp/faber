@@ -2,13 +2,13 @@
 
 | Target     | Tests | Status |
 | ---------- | ----: | :----: |
-| TypeScript |     0 |   0%   |
+| TypeScript |   741 |  100%  |
 | Python     |     0 |   0%   |
 | Rust       |     0 |   0%   |
 | C++23      |     0 |   0%   |
 | Zig        |     0 |   0%   |
 
-> Status % = passing tests / TypeScript baseline. Run `bun test proba/runner.test.ts -t "@rivus @<target>"` to verify (e.g., `-t "@rivus @zig"`).
+> Status % = passing tests / TypeScript baseline (741). Run `bun test proba/runner.test.ts -t "@rivus @<target>"` to verify. 35 tests skipped (intrinsic I/O functions, deferred).
 
 Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not applicable, `[c]` convention (no compiler support needed)
 
@@ -16,270 +16,270 @@ Status key: `[x]` implemented, `[~]` partial, `[ ]` not implemented, `[-]` not a
 
 | Feature                   | TypeScript | Zig | Python | Rust | C++23 |
 | ------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `textus` (string)         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `numerus` (integer)       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `fractus` (float)         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `decimus` (decimal)       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `magnus` (bigint)         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `bivalens` (boolean)      |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `nihil` (null)            |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `vacuum` (void)           |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `numquam` (never)         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `octeti` (bytes)          |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `objectum` (object)       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `lista<T>` (array)        |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `tabula<K,V>` (map)       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `copia<T>` (set)          |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `series<T...>` (tuple)    |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `promissum<T>` (promise)  |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `erratum` (error)         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `cursor<T>` (iterator)    |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `ignotum` (unknown)       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `textus` (string)         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `numerus` (integer)       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `fractus` (float)         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `decimus` (decimal)       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `magnus` (bigint)         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `bivalens` (boolean)      |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `nihil` (null)            |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `vacuum` (void)           |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `numquam` (never)         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `octeti` (bytes)          |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `objectum` (object)       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `lista<T>` (array)        |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `tabula<K,V>` (map)       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `copia<T>` (set)          |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `series<T...>` (tuple)    |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `promissum<T>` (promise)  |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `erratum` (error)         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `cursor<T>` (iterator)    |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `ignotum` (unknown)       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
 | `curator` (allocator)     |    [-]     | [ ] |  [-]   | [-]  |  [-]  |
-| Nullable types (`T?`)     |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Union types (`unio<A,B>`) |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Generic type params       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Type aliases (`typus`)    |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| typeof (`typus` RHS)      |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Nullable types (`T?`)     |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Union types (`unio<A,B>`) |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Generic type params       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Type aliases (`typus`)    |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| typeof (`typus` RHS)      |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
 
 ## Variable Declarations
 
 | Feature                      | TypeScript | Zig | Python | Rust | C++23 |
 | ---------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `varia` (mutable)            |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `fixum` (immutable)          |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `figendum` (async immutable) |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `variandum` (async mutable)  |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `nexum` (reactive field)     |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Type annotations             |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Object destructuring         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Array destructuring          |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Rest in destructuring        |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Skip pattern (`_`)           |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Negative indices `[-1]`      |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Slicing `[1..3]`             |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Inclusive slicing (`usque`)  |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Initializer expressions      |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `varia` (mutable)            |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `fixum` (immutable)          |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `figendum` (async immutable) |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `variandum` (async mutable)  |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `nexum` (reactive field)     |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Type annotations             |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Object destructuring         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Array destructuring          |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Rest in destructuring        |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Skip pattern (`_`)           |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Negative indices `[-1]`      |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Slicing `[1..3]`             |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Inclusive slicing (`usque`)  |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Initializer expressions      |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
 
 ## Enum & Tagged Union Declarations
 
 | Feature                    | TypeScript | Zig | Python | Rust | C++23 |
 | -------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `ordo` (enum)              |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Enum variants              |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Enum with values           |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `discretio` (tagged union) |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Variant fields             |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Generic discretio          |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `discerne` (variant match) |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `ordo` (enum)              |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Enum variants              |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Enum with values           |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `discretio` (tagged union) |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Variant fields             |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Generic discretio          |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `discerne` (variant match) |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
 
 ## Function Declarations
 
 | Feature                            | TypeScript | Zig | Python | Rust | C++23 |
 | ---------------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| Basic functions (`functio`)        |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Parameters                         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Parameter type annotations         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Parameter aliasing (`ut`)          |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Parameter defaults (`vel`)         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Parameter prepositions (`de`/`in`) |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Rest parameters (`ceteri`)         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Return type annotation (`->`)      |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `futura` (async prefix)            |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `cursor` (generator prefix)        |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Async generator                    |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Arrow functions                    |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `fit T` (sync return)              |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `fiet T` (async return)            |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `fiunt T` (generator return)       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `fient T` (async generator return) |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `prae` (comptime type param)       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Basic functions (`functio`)        |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Parameters                         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Parameter type annotations         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Parameter aliasing (`ut`)          |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Parameter defaults (`vel`)         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Parameter prepositions (`de`/`in`) |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Rest parameters (`ceteri`)         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Return type annotation (`->`)      |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `futura` (async prefix)            |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `cursor` (generator prefix)        |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Async generator                    |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Arrow functions                    |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `fit T` (sync return)              |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `fiet T` (async return)            |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `fiunt T` (generator return)       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `fient T` (async generator return) |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `prae` (comptime type param)       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
 
 ## Control Flow Statements
 
 | Feature                       | TypeScript | Zig | Python | Rust | C++23 |
 | ----------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `si` (if)                     |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `secus` (else)                |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `sin` (else if)               |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `dum` (while)                 |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `ex...pro` (for-of)           |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `ex...fit` (for-of verb form) |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `ex...fiet` (async for)       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `ex...pro (i, n)` (indexed)   |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `de...pro` (for-in)           |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Range `..` (exclusive)        |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Range `ante` (exclusive)      |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Range `usque` (inclusive)     |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Range with step (`per`)       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `in` (mutation block)         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `elige` (switch)              |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Switch cases (`si`)           |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Switch default (`secus`)      |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `discerne` (pattern match)    |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `secus` (else/ternary alt)    |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `fac` (do/block)              |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `ergo` (then, one-liner)      |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `rumpe` (break)               |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `perge` (continue)            |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `custodi` (guard)             |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `cura` (resource management)  |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `praefixum` (comptime block)  |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Catch on control flow         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `si` (if)                     |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `secus` (else)                |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `sin` (else if)               |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `dum` (while)                 |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `ex...pro` (for-of)           |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `ex...fit` (for-of verb form) |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `ex...fiet` (async for)       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `ex...pro (i, n)` (indexed)   |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `de...pro` (for-in)           |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Range `..` (exclusive)        |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Range `ante` (exclusive)      |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Range `usque` (inclusive)     |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Range with step (`per`)       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `in` (mutation block)         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `elige` (switch)              |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Switch cases (`si`)           |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Switch default (`secus`)      |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `discerne` (pattern match)    |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `secus` (else/ternary alt)    |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `fac` (do/block)              |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `ergo` (then, one-liner)      |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `rumpe` (break)               |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `perge` (continue)            |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `custodi` (guard)             |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `cura` (resource management)  |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `praefixum` (comptime block)  |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Catch on control flow         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
 
 ## Return/Exit Statements
 
 | Feature            | TypeScript | Zig | Python | Rust | C++23 |
 | ------------------ | :--------: | :-: | :----: | :--: | :---: |
-| `redde` (return)   |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `redde` with value |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `redde` void       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `redde` (return)   |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `redde` with value |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `redde` void       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
 
 ## Exception Handling
 
 | Feature              | TypeScript | Zig | Python | Rust | C++23 |
 | -------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `tempta` (try)       |    [ ]     | [-] |  [ ]   | [ ]  |  [ ]  |
-| `cape` (catch)       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `demum` (finally)    |    [ ]     | [-] |  [ ]   | [-]  |  [ ]  |
-| `fac...cape` (block) |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `iace` (throw)       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `adfirma` (assert)   |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Assert with message  |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `mori` (panic/fatal) |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `tempta` (try)       |    [x]     | [-] |  [ ]   | [ ]  |  [ ]  |
+| `cape` (catch)       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `demum` (finally)    |    [x]     | [-] |  [ ]   | [-]  |  [ ]  |
+| `fac...cape` (block) |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `iace` (throw)       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `adfirma` (assert)   |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Assert with message  |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `mori` (panic/fatal) |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
 
 ## Output/Debug/Events
 
 | Feature            | TypeScript | Zig | Python | Rust | C++23 |
 | ------------------ | :--------: | :-: | :----: | :--: | :---: |
-| `scribe` statement |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `vide` (debug)     |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `mone` (warn)      |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Multiple args      |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `scribe` statement |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `vide` (debug)     |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `mone` (warn)      |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Multiple args      |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
 
 ## Expressions
 
 | Feature                             | TypeScript | Zig | Python | Rust | C++23 |
 | ----------------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| Identifiers                         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `ego` (this/self)                   |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Boolean literals (`verum`/`falsum`) |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `nihil` literal                     |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| String literals                     |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Number literals                     |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Hex literals (`0xFF`)               |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Binary literals (`0b1010`)          |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Octal literals (`0o755`)            |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| BigInt literals (`123n`)            |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Template literals                   |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `scriptum()` format strings         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Regex literals (`sed`)              |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Array literals                      |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Array spread (`sparge`)             |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Object literals                     |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Object spread (`sparge`)            |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Binary operators                    |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Comparison operators                |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Logical operators                   |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Bitwise operators                   |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Unary operators                     |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `nulla` (is empty)                  |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `nonnulla` (has content)            |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `nihil x` (is null)                 |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `nonnihil x` (is not null)          |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `negativum` (is negative)           |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `positivum` (is positive)           |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Member access (`.`)                 |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Optional chaining (`?.`)            |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Non-null assertion (`!.`)           |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Computed access (`[]`)              |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Function calls                      |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Call spread (`sparge`)              |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Method calls                        |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Assignment                          |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Compound assignment (`+=`, etc.)    |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Conditional (ternary)               |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `sic`/`secus` ternary syntax        |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `cede` (await/yield)                |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `novum` (new)                       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `novum...de` (new with props)       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `===` / `est` (strict equality)     |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `!==` / `non est` (strict ineq.)    |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `est` (instanceof/typeof)           |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `qua` (type cast)                   |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `aut` (logical or)                  |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `vel` (nullish coalescing)          |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `praefixum` (comptime expr)         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Identifiers                         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `ego` (this/self)                   |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Boolean literals (`verum`/`falsum`) |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `nihil` literal                     |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| String literals                     |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Number literals                     |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Hex literals (`0xFF`)               |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Binary literals (`0b1010`)          |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Octal literals (`0o755`)            |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| BigInt literals (`123n`)            |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Template literals                   |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `scriptum()` format strings         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Regex literals (`sed`)              |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Array literals                      |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Array spread (`sparge`)             |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Object literals                     |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Object spread (`sparge`)            |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Binary operators                    |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Comparison operators                |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Logical operators                   |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Bitwise operators                   |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Unary operators                     |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `nulla` (is empty)                  |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `nonnulla` (has content)            |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `nihil x` (is null)                 |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `nonnihil x` (is not null)          |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `negativum` (is negative)           |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `positivum` (is positive)           |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Member access (`.`)                 |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Optional chaining (`?.`)            |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Non-null assertion (`!.`)           |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Computed access (`[]`)              |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Function calls                      |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Call spread (`sparge`)              |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Method calls                        |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Assignment                          |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Compound assignment (`+=`, etc.)    |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Conditional (ternary)               |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `sic`/`secus` ternary syntax        |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `cede` (await/yield)                |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `novum` (new)                       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `novum...de` (new with props)       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `===` / `est` (strict equality)     |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `!==` / `non est` (strict ineq.)    |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `est` (instanceof/typeof)           |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `qua` (type cast)                   |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `aut` (logical or)                  |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `vel` (nullish coalescing)          |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `praefixum` (comptime expr)         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
 
 ## Lambda Syntax
 
 | Feature                        | TypeScript | Zig | Python | Rust | C++23 |
 | ------------------------------ | :--------: | :-: | :----: | :--: | :---: |
-| `pro x: expr` (expression)     |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `pro x { body }` (block)       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `pro: expr` (zero-param)       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `pro x -> T: expr` (ret. type) |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `fit x: expr` (sync binding)   |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `per property` (shorthand)     |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `pro x: expr` (expression)     |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `pro x { body }` (block)       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `pro: expr` (zero-param)       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `pro x -> T: expr` (ret. type) |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `fit x: expr` (sync binding)   |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `per property` (shorthand)     |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
 
 ## OOP Features (genus/pactum)
 
 | Feature                   | TypeScript | Zig | Python | Rust | C++23 |
 | ------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `genus` declaration       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Field declarations        |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Field defaults            |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `nexum` (reactive field)  |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Static fields (`generis`) |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `@ privatum` (private)    |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `@ protectum` (protected) |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `creo` (constructor hook) |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `genus` declaration       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Field declarations        |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Field defaults            |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `nexum` (reactive field)  |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Static fields (`generis`) |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `@ privatum` (private)    |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `@ protectum` (protected) |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `creo` (constructor hook) |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
 | `deleo` (destructor)      |    [c]     | [c] |  [c]   | [c]  |  [c]  |
 | `pingo` (render method)   |    [c]     | [c] |  [c]   | [c]  |  [c]  |
-| Auto-merge constructor    |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Methods                   |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Async methods             |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Generator methods         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `sub` (extends)           |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `implet` (implements)     |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Multiple `implet`         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `@ abstractum` class      |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `@ abstracta` method      |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `aperit` (index sig)      |    [ ]     | [-] |  [-]   | [-]  |  [-]  |
-| Generic classes           |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `pactum` declaration      |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Interface methods         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Auto-merge constructor    |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Methods                   |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Async methods             |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Generator methods         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `sub` (extends)           |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `implet` (implements)     |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Multiple `implet`         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `@ abstractum` class      |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `@ abstracta` method      |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `aperit` (index sig)      |    [x]     | [-] |  [-]   | [-]  |  [-]  |
+| Generic classes           |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `pactum` declaration      |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Interface methods         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
 
 ## Import/Export
 
 | Feature                        | TypeScript | Zig | Python | Rust | C++23 |
 | ------------------------------ | :--------: | :-: | :----: | :--: | :---: |
-| `ex...importa` (named imports) |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `ex...importa *` (wildcard)    |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `ut` alias (import renaming)   |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `ex...importa` (named imports) |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `ex...importa *` (wildcard)    |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `ut` alias (import renaming)   |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
 
 ## Testing
 
 | Feature                         | TypeScript | Zig | Python | Rust | C++23 |
 | ------------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `proba` (test case)             |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `probandum` (test suite)        |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `cura ante` (beforeEach)        |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `cura post` (afterEach)         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `cura ante omnia` (beforeAll)   |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `cura post omnia` (afterAll)    |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `omitte` modifier (skip)        |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `solum` modifier (only)         |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| `futurum` modifier (todo)       |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Table-driven tests (`proba ex`) |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `proba` (test case)             |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `probandum` (test suite)        |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `cura ante` (beforeEach)        |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `cura post` (afterEach)         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `cura ante omnia` (beforeAll)   |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `cura post omnia` (afterAll)    |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `omitte` modifier (skip)        |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `solum` modifier (only)         |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| `futurum` modifier (todo)       |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Table-driven tests (`proba ex`) |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
 
 ## Preamble / Prologue
 
 | Feature                 | TypeScript | Zig | Python | Rust | C++23 |
 | ----------------------- | :--------: | :-: | :----: | :--: | :---: |
-| Preamble infrastructure |    [ ]     | [ ] |  [ ]   | [ ]  |  [ ]  |
-| Panic class/import      |    [ ]     | [-] |  [ ]   | [-]  |  [-]  |
-| Decimal import          |    [ ]     | [-] |  [ ]   | [-]  |  [-]  |
+| Preamble infrastructure |    [x]     | [ ] |  [ ]   | [ ]  |  [ ]  |
+| Panic class/import      |    [x]     | [-] |  [ ]   | [-]  |  [-]  |
+| Decimal import          |    [x]     | [-] |  [ ]   | [-]  |  [-]  |
 | Enum import             |    [-]     | [-] |  [ ]   | [-]  |  [-]  |
 | Regex import            |    [-]     | [-] |  [ ]   | [ ]  |  [-]  |
 | Collection imports      |    [-]     | [ ] |  [ ]   | [ ]  |  [-]  |
