@@ -109,4 +109,4 @@ identifier := IDENTIFIER
 
 ---
 
-*Generated from `fons/parser/index.ts` — do not edit directly.*
+*Generated from `fons/faber/parser/index.ts` — do not edit directly.*
