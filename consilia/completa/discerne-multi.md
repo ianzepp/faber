@@ -1,5 +1,15 @@
 # Multi-Discriminant Pattern Matching
 
+## Status
+
+**Implemented:** 2025-01-04
+
+Multi-discriminant pattern matching is fully implemented in the parser, analyzer, and Zig codegen:
+- Parser supports comma-separated discriminants and patterns with arity validation
+- Analyzer checks variant types and binding scopes for all patterns
+- Exhaustiveness checking validates all discriminant combinations are covered
+- Zig codegen emits nested if/else chains with tagged union checks
+
 ## Summary
 
 Extend `discerne` to match multiple values simultaneously, reducing nesting when comparing two or more typed values.
@@ -189,5 +199,5 @@ The `custodi` block signals "preconditions checked here" — once past it, the L
 
 ## Related
 
-- `casu`/`ceterum` keywords: see `consilia/futura/casu-ceterum.md`
+- `casu`/`ceterum` keywords: see `consilia/completa/casu-ceterum.md`
 - `custodi` with `ergo`: allowing `si ... ergo` inside `custodi` blocks (nice-to-have)
