@@ -3,7 +3,9 @@
 # Minimal stdin-to-stdout compiler for bootstrap testing.
 # Reads Faber source from stdin, writes TypeScript to stdout.
 #
-# Usage: bun opus/cli.js < input.fab > output.ts
+# Usage: bun opus/bootstrap/cli.js < input.fab > output.ts
+#
+# For Zig output, use the test script pattern or import generateZig directly.
 
 ex "./lexor/index" importa lexare, LexorResultatum
 ex "./parser/index" importa resolvere, ParserResultatum
