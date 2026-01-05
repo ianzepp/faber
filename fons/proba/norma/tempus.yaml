@@ -1,3 +1,6 @@
+# File-level metadata: skip in rivus tests (stdlib not yet implemented)
+- rivus: false
+
 # Tempus - Time stdlib functions
 # Tests for norma/tempus module functions and constants
 

@@ -1,3 +1,6 @@
+# File-level metadata: skip in rivus tests (stdlib not yet implemented)
+- rivus: false
+
 # Tabula - Map/dictionary collection method codegen tests
 # Covers: pone, accipe, habet, dele, longitudo, vacua, purga, claves, valores,
 #         accipeAut, confla, inLista

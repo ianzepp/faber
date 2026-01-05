@@ -165,8 +165,12 @@ function checkErrata(tc: TestCase, error: Error): void {
 // YAML LOADING
 // =============================================================================
 
-function loadYamlFiles(dir: string): { file: string; cases: TestCase[] }[] {
-    const results: { file: string; cases: TestCase[] }[] = [];
+interface FileMetadata {
+    rivus?: boolean;
+}
+
+function loadYamlFiles(dir: string): { file: string; cases: TestCase[]; meta?: FileMetadata }[] {
+    const results: { file: string; cases: TestCase[]; meta?: FileMetadata }[] = [];
 
     function walk(d: string) {
         for (const entry of readdirSync(d)) {
@@ -177,9 +181,21 @@ function loadYamlFiles(dir: string): { file: string; cases: TestCase[] }[] {
                 walk(path);
             } else if (entry.endsWith('.yaml') || entry.endsWith('.yml')) {
                 const content = readFileSync(path, 'utf-8');
-                const cases = parseYaml(content) as TestCase[];
-                if (Array.isArray(cases)) {
-                    results.push({ file: path, cases });
+                const parsed = parseYaml(content);
+
+                // Support file-level metadata: first entry with rivus: false and no name
+                if (Array.isArray(parsed)) {
+                    let cases = parsed as TestCase[];
+                    let meta: FileMetadata | undefined;
+
+                    // Check if first entry is metadata (has rivus but no name/input/faber)
+                    const first = cases[0] as any;
+                    if (first && 'rivus' in first && !('name' in first) && !('input' in first) && !('faber' in first)) {
+                        meta = { rivus: first.rivus };
+                        cases = cases.slice(1);
+                    }
+
+                    results.push({ file: path, cases, meta });
                 }
             }
         }
@@ -196,8 +212,14 @@ function loadYamlFiles(dir: string): { file: string; cases: TestCase[] }[] {
 const probaDir = join(import.meta.dir, '.');
 const yamlFiles = loadYamlFiles(probaDir);
 
-for (const { file, cases } of yamlFiles) {
+for (const { file, cases, meta } of yamlFiles) {
     const suiteName = basename(file, '.yaml');
+
+    // Skip entire file if file-level rivus: false
+    if (meta?.rivus === false) {
+        describe.skip(`[rivus] ${suiteName}`, () => {});
+        continue;
+    }
 
     describe(`[rivus] ${suiteName}`, () => {
         for (const tc of cases) {

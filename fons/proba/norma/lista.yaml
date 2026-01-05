@@ -1,3 +1,6 @@
+# File-level metadata: skip in rivus tests (stdlib not yet implemented)
+- rivus: false
+
 # Lista - List/vector collection method codegen tests
 # Covers: adde, addita, praepone, remove, decapita, purga, primus, ultimus,
 #         accipe, longitudo, vacua, continet, indiceDe, filtrata, mappata,

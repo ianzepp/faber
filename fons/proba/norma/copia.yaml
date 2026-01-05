@@ -1,3 +1,6 @@
+# File-level metadata: skip in rivus tests (stdlib not yet implemented)
+- rivus: false
+
 # Copia - Set collection method codegen tests
 # Covers: adde, habet, dele, longitudo, vacua, purga, unio, intersectio,
 #         differentia, symmetrica, subcopia, supercopia, inLista, perambula

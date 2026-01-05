@@ -1,3 +1,6 @@
+# File-level metadata: skip in rivus tests (stdlib not yet implemented)
+- rivus: false
+
 # Mathesis - Math stdlib functions
 # Tests for norma/mathesis module functions and constants
 
