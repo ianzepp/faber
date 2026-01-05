@@ -1,13 +1,42 @@
 ---
-status: planned
-updated: 2026-01
+status: completed
+updated: 2026-01-05
 ---
 
 # Rivus Module Resolution
 
-Rivus needs local file import resolution to enable multi-file compilation. This document defines the complete implementation plan based on faber's proven approach and peer review feedback.
+Rivus now supports local file import resolution for multi-file compilation. This document describes the implemented design based on faber's proven approach.
 
-## Problem Statement
+## Implementation Summary
+
+All steps from the migration plan were completed:
+
+| Step | Description | Status |
+|------|-------------|--------|
+| 0 | Plumb file path into CLI + semantic | ✓ |
+| 1 | Add `ModulusExportum`, `ModulusResolutum` types | ✓ |
+| 2 | Add file I/O extern declarations | ✓ |
+| 3 | Implement `estLocaleImportum`, `resolveViaModuli` | ✓ |
+| 4 | Implement `extraheExporta` | ✓ |
+| 5 | Implement `resolveModulum` with cache/cycle | ✓ |
+| 6 | Integrate `ImportaSententia` into `predeclare()` | ✓ |
+| 7 | Fix parser to reject `ceteri` in imports | ✓ |
+| 8 | Fix codegen to skip `norma` imports | ✓ |
+
+**Key files created/modified:**
+- `fons/rivus/semantic/modulus.fab` - new module resolution core
+- `fons/rivus/semantic/systema.ts` - extern implementations for file I/O
+- `fons/rivus/semantic/nucleus.fab` - added `viaIngressus`, cache fields to Analyzator
+- `fons/rivus/semantic/index.fab` - integrated import predeclaration
+- `fons/rivus/parser/sententia/declara.fab` - removed ceteri from imports
+- `fons/rivus/codegen/ts/sententia/importa.fab` - skip norma imports
+- `fons/rivus/cli.fab` - reads file path from stdin
+- `scripta/rivus` - passes file path via stdin
+- `scripta/build-rivus.ts` - injects extern implementations post-build
+
+---
+
+## Original Problem Statement
 
 The exempla `statements/importa-local/main.fab` fails because rivus parses the `importa` statement but doesn't resolve symbols from the imported file:
 
@@ -598,7 +627,7 @@ If module resolution works correctly:
 
 ---
 
-Opus nondum perfectum est, sed via clara est.
+Opus perfectum est.
 
 ---
 
