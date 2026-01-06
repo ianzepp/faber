@@ -52,6 +52,7 @@ import { genLambdaExpression } from './expressions/lambda';
 import { genAssignmentExpression } from './expressions/assignment';
 import { genNovumExpression } from './expressions/novum';
 import { genFingeExpression } from './expressions/finge';
+import { genConversionExpression } from './expressions/conversio';
 import { genEstExpression } from './expressions/est';
 import { genPraefixumExpression } from './expressions/praefixum';
 import { genScriptumExpression } from './expressions/scriptum';
@@ -419,6 +420,8 @@ export class ZigGenerator {
                 return this.genQuaExpression(node);
             case 'InnatumExpression':
                 return this.genInnatumExpression(node);
+            case 'ConversionExpression':
+                return genConversionExpression(node, this);
             case 'EstExpression':
                 return genEstExpression(node, this);
             case 'PraefixumExpression':

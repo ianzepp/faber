@@ -299,13 +299,9 @@ export interface ConversionExpression extends BaseNode {
   - Set `node.resolvedType`
 
 ### Phase 5: Codegen — TypeScript (primary target)
-- [ ] `fons/faber/codegen/ts/expressions/conversio.ts` — Create new file with `genConversionExpression()`
-- [ ] `fons/faber/codegen/ts/generator.ts` — Add dispatch case (~line 316):
-  ```typescript
-  case 'ConversionExpression':
-      return genConversionExpression(node, this);
-  ```
-- [ ] TypeScript codegen mapping:
+- [x] `fons/faber/codegen/ts/expressions/conversio.ts` — Create new file with `genConversionExpression()`
+- [x] `fons/faber/codegen/ts/generator.ts` — Add dispatch case (~line 318)
+- [x] TypeScript codegen mapping:
   | Faber | TypeScript |
   |-------|------------|
   | `x numeratum` | `parseInt(x, 10)` |
@@ -322,28 +318,28 @@ Each target requires two changes:
 2. Add dispatch case in `generator.ts`
 
 **Rust:**
-- [ ] `fons/faber/codegen/rs/expressions/conversio.ts`
-- [ ] `fons/faber/codegen/rs/generator.ts` — add dispatch
+- [x] `fons/faber/codegen/rs/expressions/conversio.ts`
+- [x] `fons/faber/codegen/rs/generator.ts` — add dispatch (~line 260)
 - Pattern: `.parse::<T>().unwrap()` / `.unwrap_or(f)` / `from_str_radix()`
 
 **Python:**
-- [ ] `fons/faber/codegen/py/expressions/conversio.ts`
-- [ ] `fons/faber/codegen/py/generator.ts` — add dispatch
+- [x] `fons/faber/codegen/py/expressions/conversio.ts`
+- [x] `fons/faber/codegen/py/generator.ts` — add dispatch (~line 285)
 - Pattern: `int()` / `float()` / `str()` / `bool()` with optional base
 
 **C++:**
-- [ ] `fons/faber/codegen/cpp/expressions/conversio.ts`
-- [ ] `fons/faber/codegen/cpp/generator.ts` — add dispatch
+- [x] `fons/faber/codegen/cpp/expressions/conversio.ts`
+- [x] `fons/faber/codegen/cpp/generator.ts` — add dispatch (~line 317)
 - Pattern: `std::stoll()` / `std::stod()` / `std::to_string()` / IIFE for fallback
 
 **Zig:**
-- [ ] `fons/faber/codegen/zig/expressions/conversio.ts`
-- [ ] `fons/faber/codegen/zig/generator.ts` — add dispatch
+- [x] `fons/faber/codegen/zig/expressions/conversio.ts`
+- [x] `fons/faber/codegen/zig/generator.ts` — add dispatch (~line 423)
 - Pattern: `std.fmt.parseInt()` / `parseFloat()` with `catch` for fallback
 
 **Faber (identity):**
-- [ ] `fons/faber/codegen/fab/expressions/conversio.ts`
-- [ ] `fons/faber/codegen/fab/generator.ts` — add dispatch
+- [x] `fons/faber/codegen/fab/expressions/conversio.ts`
+- [x] `fons/faber/codegen/fab/generator.ts` — add dispatch (~line 240)
 - Pattern: Re-emit `x numeratum`, `x numeratum vel f`, etc.
 
 ### Phase 7: Tests
