@@ -20,15 +20,15 @@ genus lista { }
 @ verte py "append"
 @ verte rs "push"
 @ verte cpp "push_back"
-@ verte zig (ego, elem, alloc) -> "S.adde(S, S)"
+@ verte zig (ego, elem, alloc) -> "§.adde(§, §)"
 @ externa
 functio adde()
 
 # Add element to end (returns new list)
-@ verte ts (ego, elem) -> "[...S, S]"
-@ verte py (ego, elem) -> "[*S, S]"
-@ verte rs (ego, elem) -> "{ let mut v = S.clone(); v.push(S); v }"
-@ verte cpp (ego, elem) -> "[&]{ auto v = S; v.push_back(S); return v; }()"
-@ verte zig (ego, elem, alloc) -> "S.addita(S, S)"
+@ verte ts (ego, elem) -> "[...§, §]"
+@ verte py (ego, elem) -> "[*§, §]"
+@ verte rs (ego, elem) -> "{ let mut v = §.clone(); v.push(§); v }"
+@ verte cpp (ego, elem) -> "[&]{ auto v = §; v.push_back(§); return v; }()"
+@ verte zig (ego, elem, alloc) -> "§.addita(§, §)"
 @ externa
 functio addita()

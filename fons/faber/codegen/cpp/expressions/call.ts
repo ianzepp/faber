@@ -21,6 +21,9 @@ import { getListaMethod } from '../../lista';
 import { getTabulaMethod } from '../../tabula';
 import { getCopiaMethod } from '../../copia';
 
+// WHY: Norma registry for annotation-driven codegen
+import { getNormaTranslation, applyNormaTemplate } from '../../norma-registry';
+
 import { getMathesisFunction, getMathesisHeaders } from '../norma/mathesis';
 import { getAleatorFunction, getAleatorHeaders } from '../norma/aleator';
 
@@ -179,6 +182,18 @@ export function genCallExpression(node: CallExpression, g: CppGenerator): string
                 return `${obj}.${method.cpp}(${args})`;
             }
         } else if (collectionName === 'lista') {
+            // Try norma registry first (annotation-driven codegen)
+            const norma = getNormaTranslation('cpp', 'lista', methodName);
+            if (norma) {
+                if (norma.method) {
+                    return `${obj}.${norma.method}(${args})`;
+                }
+                if (norma.template && norma.params) {
+                    return applyNormaTemplate(norma.template, [...norma.params], obj, [...argsArray]);
+                }
+            }
+
+            // Fallback to hardcoded registry
             const method = getListaMethod(methodName);
             if (method) {
                 if (typeof method.cpp === 'function') {
@@ -188,7 +203,17 @@ export function genCallExpression(node: CallExpression, g: CppGenerator): string
             }
         }
 
-        // Fallback: no type info - try lista (most common)
+        // Fallback: no type info - try norma first, then lista
+        const normaFallback = getNormaTranslation('cpp', 'lista', methodName);
+        if (normaFallback) {
+            if (normaFallback.method) {
+                return `${obj}.${normaFallback.method}(${args})`;
+            }
+            if (normaFallback.template && normaFallback.params) {
+                return applyNormaTemplate(normaFallback.template, [...normaFallback.params], obj, [...argsArray]);
+            }
+        }
+
         const listaMethod = getListaMethod(methodName);
         if (listaMethod) {
             if (typeof listaMethod.cpp === 'function') {

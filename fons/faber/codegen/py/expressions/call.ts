@@ -18,6 +18,9 @@ import { getListaMethod } from '../../lista';
 import { getTabulaMethod } from '../../tabula';
 import { getCopiaMethod } from '../../copia';
 
+// WHY: Norma registry for annotation-driven codegen
+import { getNormaTranslation, applyNormaTemplate } from '../../norma-registry';
+
 import { getMathesisFunction } from '../norma/mathesis';
 import { getAleatorFunction } from '../norma/aleator';
 
@@ -142,7 +145,18 @@ export function genCallExpression(node: CallExpression, g: PyGenerator): string 
         const methodName = (node.callee.property as Identifier).name;
         const obj = g.genExpression(node.callee.object);
 
-        // Try lista methods
+        // Try norma registry first (annotation-driven codegen)
+        const norma = getNormaTranslation('py', 'lista', methodName);
+        if (norma) {
+            if (norma.method) {
+                return `${obj}.${norma.method}(${args})`;
+            }
+            if (norma.template && norma.params) {
+                return applyNormaTemplate(norma.template, [...norma.params], obj, [...argsArray]);
+            }
+        }
+
+        // Fallback to hardcoded lista methods
         const listaMethod = getListaMethod(methodName);
         if (listaMethod) {
             if (typeof listaMethod.py === 'function') {

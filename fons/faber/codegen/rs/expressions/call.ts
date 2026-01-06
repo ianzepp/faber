@@ -18,6 +18,9 @@ import { getListaMethod } from '../../lista';
 import { getCopiaMethod } from '../../copia';
 import { getTabulaMethod } from '../../tabula';
 
+// WHY: Norma registry for annotation-driven codegen
+import { getNormaTranslation, applyNormaTemplate } from '../../norma-registry';
+
 import { getMathesisFunction } from '../norma/mathesis';
 import { getTempusFunction } from '../norma/tempus';
 import { getAleatorFunction } from '../norma/aleator';
@@ -135,6 +138,18 @@ export function genCallExpression(node: CallExpression, g: RsGenerator): string 
                 return `${obj}.${method.rs}(${args})`;
             }
         } else if (collectionName === 'lista') {
+            // Try norma registry first (annotation-driven codegen)
+            const norma = getNormaTranslation('rs', 'lista', methodName);
+            if (norma) {
+                if (norma.method) {
+                    return `${obj}.${norma.method}(${args})`;
+                }
+                if (norma.template && norma.params) {
+                    return applyNormaTemplate(norma.template, [...norma.params], obj, [...argsArray]);
+                }
+            }
+
+            // Fallback to hardcoded registry
             const method = getListaMethod(methodName);
             if (method) {
                 if (typeof method.rs === 'function') {
@@ -144,7 +159,17 @@ export function genCallExpression(node: CallExpression, g: RsGenerator): string 
             }
         }
 
-        // Fallback: no type info or unknown type - try lista (most common)
+        // Fallback: no type info or unknown type - try norma first, then lista
+        const normaFallback = getNormaTranslation('rs', 'lista', methodName);
+        if (normaFallback) {
+            if (normaFallback.method) {
+                return `${obj}.${normaFallback.method}(${args})`;
+            }
+            if (normaFallback.template && normaFallback.params) {
+                return applyNormaTemplate(normaFallback.template, [...normaFallback.params], obj, [...argsArray]);
+            }
+        }
+
         const listaMethod = getListaMethod(methodName);
         if (listaMethod) {
             if (typeof listaMethod.rs === 'function') {

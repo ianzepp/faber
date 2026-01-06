@@ -22,6 +22,9 @@ import { getListaMethod } from '../../lista';
 import { getTabulaMethod } from '../../tabula';
 import { getCopiaMethod } from '../../copia';
 
+// WHY: Norma registry for annotation-driven codegen
+import { getNormaTranslation, applyNormaTemplate } from '../../norma-registry';
+
 // Collection method registries (will be unified in future phases)
 import { getMathesisFunction } from '../norma/mathesis';
 import { getTempusFunction } from '../norma/tempus';
@@ -144,6 +147,24 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
                 return `${obj}.${method.zig}(${args})`;
             }
         } else if (collectionName === 'lista') {
+            // Try norma registry first (annotation-driven codegen)
+            const norma = getNormaTranslation('zig', 'lista', methodName);
+            if (norma) {
+                g.features.lista = true;
+                if (norma.template && norma.params) {
+                    // WHY: Zig templates may include 'alloc' param - check if curator needed
+                    const needsAlloc = norma.params.includes('alloc');
+                    const curator = needsAlloc ? g.getCurator() : '';
+                    // Add curator to args for template substitution
+                    const templateArgs = needsAlloc ? [...argsArray, curator] : [...argsArray];
+                    return applyNormaTemplate(norma.template, [...norma.params], obj, templateArgs);
+                }
+                if (norma.method) {
+                    return `${obj}.${norma.method}(${args})`;
+                }
+            }
+
+            // Fallback to hardcoded registry
             const method = getListaMethod(methodName);
             if (method) {
                 // WHY: Flag features so preamble includes Lista and arena setup
@@ -156,7 +177,21 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
             }
         }
 
-        // Fallback: no type info or unknown type - try lista (most common)
+        // Fallback: no type info or unknown type - try norma first, then lista
+        const normaFallback = getNormaTranslation('zig', 'lista', methodName);
+        if (normaFallback) {
+            g.features.lista = true;
+            if (normaFallback.template && normaFallback.params) {
+                const needsAlloc = normaFallback.params.includes('alloc');
+                const curator = needsAlloc ? g.getCurator() : '';
+                const templateArgs = needsAlloc ? [...argsArray, curator] : [...argsArray];
+                return applyNormaTemplate(normaFallback.template, [...normaFallback.params], obj, templateArgs);
+            }
+            if (normaFallback.method) {
+                return `${obj}.${normaFallback.method}(${args})`;
+            }
+        }
+
         const listaMethod = getListaMethod(methodName);
         if (listaMethod) {
             // WHY: Flag features so preamble includes Lista and arena setup in main()
