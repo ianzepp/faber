@@ -541,18 +541,22 @@ fixum s = 42 textatum vel "default"  # warning: vel clause has no effect
 
 ## Rivus Implementation
 
+**Status: Complete**
+
 The Rivus compiler (bootstrap compiler written in Faber) requires parallel changes to support conversio. Unlike Faber (TypeScript), Rivus uses `.fab` files with `discretio` (tagged unions) instead of interfaces.
 
-### Files to Modify
+### Files Modified
 
-| Component | File | Location | Changes |
-|-----------|------|----------|---------|
-| **Lexicon enum** | `fons/rivus/ast/lexema.fab` | ~line 262 | Add `Numeratum`, `Fractatum`, `Textatum`, `Bivalentum` to `VerbumId` enum |
-| **Keywords** | `fons/rivus/lexicon/verba.fab` | ~line 149 | Add keyword→VerbumId mappings in `verbumFaberId()` |
-| **AST** | `fons/rivus/ast/expressia.fab` | ~line 190 | Add `ConversionExpressia` variant to `Expressia` discretio |
-| **Parser** | `fons/rivus/parser/expressia/unaria.fab` | ~line 350 | Extend `parsePostfix()` after `qua` case |
-| **Semantic** | `fons/rivus/semantic/expressia/index.fab` | ~line 114 | Add case in expression dispatch |
-| **Codegen** | `fons/rivus/codegen/ts/expressia/index.fab` | ~line 170 | Add TS generation logic |
+| Component | File | Changes |
+|-----------|------|---------|
+| **Lexicon enum** | `fons/rivus/ast/lexema.fab` | Added `Numeratum`, `Fractatum`, `Textatum`, `Bivalentum` to `VerbumId` enum |
+| **Keywords** | `fons/rivus/lexicon/verba.fab` | Added keyword→VerbumId mappings in `verbumFaberId()` |
+| **AST** | `fons/rivus/ast/expressia.fab` | Added `ConversioExpressia` variant to `Expressia` discretio |
+| **Parser** | `fons/rivus/parser/expressia/unaria.fab` | Extended `parsePostfix()` after `qua` case |
+| **Semantic** | `fons/rivus/semantic/expressia/index.fab` | Added case in expression dispatch |
+| **Codegen** | `fons/rivus/codegen/ts/expressia/index.fab` | Added TS generation logic |
+
+**Note:** Radix types (`Hex`, `Oct`, `Bin`, `Dec`) are parsed as identifiers rather than keywords to avoid breaking existing code that uses those names as enum members or variables.
 
 ### AST Variant
 

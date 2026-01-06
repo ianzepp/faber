@@ -321,4 +321,20 @@ discretio Expressia {
         lista<ObiectumProprietas> campi
         TypusAnnotatio? scopus   # qua Type
     }
+
+    # -------------------------------------------------------------------------
+    # Type Conversion
+    # -------------------------------------------------------------------------
+
+    # Type conversion expression
+    # Examples: "42" numeratum, "3.14" fractatum, 42 textatum, x bivalentum
+    #           "ff" numeratum<i32, Hex>, input numeratum vel 0
+    ConversioExpressia {
+        Locus locus
+        Expressia expressia
+        textus signum              # "numeratum" | "fractatum" | "textatum" | "bivalentum"
+        TypusAnnotatio? scopusTypus    # optional target type (i32, u64, etc.)
+        textus? radix              # optional: "Dec" | "Hex" | "Oct" | "Bin"
+        Expressia? fallback        # optional vel fallback
+    }
 }

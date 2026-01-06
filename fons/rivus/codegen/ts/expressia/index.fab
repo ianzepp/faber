@@ -397,6 +397,49 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
             }
             redde scriptum("{{ § }}", props.coniunge(", "))
         }
+
+        # Type conversion
+        casu ConversioExpressia ut conv {
+            fixum src = genExpressia(conv.expressia, g)
+
+            elige conv.signum qua textus {
+                casu "numeratum" {
+                    # Determine radix: Hex=16, Oct=8, Bin=2, Dec/default=10
+                    varia radixNum = "10"
+                    si nonnihil conv.radix {
+                        elige conv.radix qua textus {
+                            casu "Hex" { radixNum = "16" }
+                            casu "Oct" { radixNum = "8" }
+                            casu "Bin" { radixNum = "2" }
+                        }
+                    }
+
+                    si nonnihil conv.fallback {
+                        fixum fb = genExpressia(conv.fallback qua Expressia, g)
+                        redde scriptum("(parseInt(§, §) || §)", src, radixNum, fb)
+                    }
+                    redde scriptum("parseInt(§, §)", src, radixNum)
+                }
+
+                casu "fractatum" {
+                    si nonnihil conv.fallback {
+                        fixum fb = genExpressia(conv.fallback qua Expressia, g)
+                        redde scriptum("(parseFloat(§) || §)", src, fb)
+                    }
+                    redde scriptum("parseFloat(§)", src)
+                }
+
+                casu "textatum" {
+                    redde scriptum("String(§)", src)
+                }
+
+                casu "bivalentum" {
+                    redde scriptum("Boolean(§)", src)
+                }
+            }
+
+            redde scriptum("/* unknown conversion: § */", conv.signum)
+        }
     }
 
     # Fallback - should not reach here

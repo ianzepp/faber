@@ -8,6 +8,7 @@ ex "../typi" importa usitatumTypus, genericumTypus
 ex "../typi" importa formaTypum, assignabileAd
 ex "../errores" importa immutableAssignmentError, typeMismatchError, undefinedVariableError
 ex "../../ast/expressia" importa Expressia, CatenaGradus
+ex "../../ast/typus" importa TypusAnnotatio
 
 ex "./primaria" importa resolveNomen, resolveLittera, resolveSeries, resolveObiectum
 ex "./binaria" importa resolveBinaria
@@ -164,6 +165,31 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
             }
 
             redde fonsTypus
+        }
+
+        # Type conversion (numeratum, fractatum, textatum, bivalentum)
+        casu ConversioExpressia ut c {
+            r.expressia(c.expressia)
+
+            # Resolve fallback if present
+            si nonnihil c.fallback {
+                r.expressia(c.fallback qua Expressia)
+            }
+
+            # Resolve target type if present
+            si nonnihil c.scopusTypus {
+                resolveTypusAnnotatio(r, c.scopusTypus qua TypusAnnotatio)
+            }
+
+            # Return type depends on conversion operator
+            elige c.signum qua textus {
+                casu "numeratum" reddit NUMERUS
+                casu "fractatum" reddit usitatumTypus("fractus", falsum)
+                casu "textatum" reddit TEXTUS
+                casu "bivalentum" reddit BIVALENS
+            }
+
+            redde IGNOTUM
         }
     }
 

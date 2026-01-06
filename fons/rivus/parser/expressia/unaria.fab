@@ -358,6 +358,43 @@ functio parsePostfix(Resolvitor r) -> Expressia {
             perge
         }
 
+        # Type conversion: expr numeratum, expr fractatum, expr textatum, expr bivalentum
+        si p.probaVerbum("numeratum") aut p.probaVerbum("fractatum") aut
+           p.probaVerbum("textatum") aut p.probaVerbum("bivalentum") {
+            fixum signum = p.procede().verbum
+            varia scopusTypus = nihil qua TypusAnnotatio?
+            varia radix = nihil qua textus?
+            varia fallback = nihil qua Expressia?
+
+            # Type params for numeratum/fractatum only: <i32, Hex>
+            si (signum == "numeratum" aut signum == "fractatum") et p.congruet(SymbolumGenus.Minor) {
+                scopusTypus = r.adnotatio()
+                si p.congruet(SymbolumGenus.Coma) {
+                    fixum radixSym = p.specta(0)
+                    # Radix types are parsed as identifiers, not keywords
+                    si radixSym.species == SymbolumGenus.Nomen et radixSym.valor inter ["Dec", "Hex", "Oct", "Bin"] {
+                        radix = p.procede().valor
+                    }
+                }
+                p.expecta(SymbolumGenus.Maior, ParserErrorCodice.ExpectaturAngulusDex)
+            }
+
+            # Fallback clause: vel expr
+            si p.congruetVerbum("vel") {
+                fallback = parseUnaria(r)
+            }
+
+            expressia = finge ConversioExpressia {
+                locus: locus,
+                expressia: expressia,
+                signum: signum,
+                scopusTypus: scopusTypus,
+                radix: radix,
+                fallback: fallback
+            } qua Expressia
+            perge
+        }
+
         # No more postfix operators
         rumpe
     }
