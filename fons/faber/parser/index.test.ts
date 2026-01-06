@@ -4288,4 +4288,171 @@ describe('parser', () => {
             expect(decl.methods[0].annotations[0].name).toBe('publica');
         });
     });
+
+    describe('stdlib annotations', () => {
+        test('@ innatum with multiple target mappings', () => {
+            const { program, errors } = parseCode(`
+                @ innatum ts "Array", py "list", zig "Lista"
+                genus lista<T> { }
+            `);
+
+            expect(errors).toHaveLength(0);
+            const decl = program!.body[0] as any;
+            expect(decl.type).toBe('GenusDeclaration');
+            expect(decl.annotations).toHaveLength(1);
+            const ann = decl.annotations[0];
+            expect(ann.name).toBe('innatum');
+            expect(ann.targetMappings).toBeDefined();
+            expect(ann.targetMappings.get('ts')).toBe('Array');
+            expect(ann.targetMappings.get('py')).toBe('list');
+            expect(ann.targetMappings.get('zig')).toBe('Lista');
+        });
+
+        test('@ innatum with single target', () => {
+            const { program, errors } = parseCode(`
+                @ innatum rs "Vec"
+                genus lista<T> { }
+            `);
+
+            expect(errors).toHaveLength(0);
+            const ann = (program!.body[0] as any).annotations[0];
+            expect(ann.name).toBe('innatum');
+            expect(ann.targetMappings.get('rs')).toBe('Vec');
+        });
+
+        test('@ subsidia with single target path', () => {
+            const { program, errors } = parseCode(`
+                @ subsidia zig "subsidia/zig/lista.zig"
+                genus lista<T> { }
+            `);
+
+            expect(errors).toHaveLength(0);
+            const ann = (program!.body[0] as any).annotations[0];
+            expect(ann.name).toBe('subsidia');
+            expect(ann.targetMappings.get('zig')).toBe('subsidia/zig/lista.zig');
+        });
+
+        test('@ subsidia with multiple targets', () => {
+            const { program, errors } = parseCode(`
+                @ subsidia zig "subsidia/zig/lista.zig", rs "subsidia/rs/lista.rs"
+                genus lista<T> { }
+            `);
+
+            expect(errors).toHaveLength(0);
+            const ann = (program!.body[0] as any).annotations[0];
+            expect(ann.targetMappings.get('zig')).toBe('subsidia/zig/lista.zig');
+            expect(ann.targetMappings.get('rs')).toBe('subsidia/rs/lista.rs');
+        });
+
+        test('@ radix with stem and forms', () => {
+            const { program, errors } = parseCode(`
+                @ radix filtr, imperativus, perfectum
+                functio filtra(items) fit vacuum { }
+            `);
+
+            expect(errors).toHaveLength(0);
+            const ann = (program!.body[0] as any).annotations[0];
+            expect(ann.name).toBe('radix');
+            expect(ann.radixForms).toEqual(['filtr', 'imperativus', 'perfectum']);
+        });
+
+        test('@ radix with single stem', () => {
+            const { program, errors } = parseCode(`
+                @ radix add
+                functio adde(items, elem) fit vacuum { }
+            `);
+
+            expect(errors).toHaveLength(0);
+            const ann = (program!.body[0] as any).annotations[0];
+            expect(ann.radixForms).toEqual(['add']);
+        });
+
+        test('@ verte with simple method name', () => {
+            const { program, errors } = parseCode(`
+                @ verte ts "push"
+                functio adde(items, elem) fit vacuum { }
+            `);
+
+            expect(errors).toHaveLength(0);
+            const ann = (program!.body[0] as any).annotations[0];
+            expect(ann.name).toBe('verte');
+            expect(ann.verteTarget).toBe('ts');
+            expect(ann.verteMethod).toBe('push');
+            expect(ann.verteParams).toBeUndefined();
+            expect(ann.verteTemplate).toBeUndefined();
+        });
+
+        test('@ verte with template and params', () => {
+            const { program, errors } = parseCode(`
+                @ verte ts (ego, elem) -> "[...§, §]"
+                functio addita(items, elem) fit items { }
+            `);
+
+            expect(errors).toHaveLength(0);
+            const ann = (program!.body[0] as any).annotations[0];
+            expect(ann.name).toBe('verte');
+            expect(ann.verteTarget).toBe('ts');
+            expect(ann.verteParams).toEqual(['ego', 'elem']);
+            expect(ann.verteTemplate).toBe('[...§, §]');
+            expect(ann.verteMethod).toBeUndefined();
+        });
+
+        test('@ verte with single param template', () => {
+            const { program, errors } = parseCode(`
+                @ verte py (ego) -> "len(§)"
+                functio longitudo(items) fit numerus { redde 0 }
+            `);
+
+            expect(errors).toHaveLength(0);
+            const ann = (program!.body[0] as any).annotations[0];
+            expect(ann.verteTarget).toBe('py');
+            expect(ann.verteParams).toEqual(['ego']);
+            expect(ann.verteTemplate).toBe('len(§)');
+        });
+
+        test('@ verte with allocator param (zig)', () => {
+            const { program, errors } = parseCode(`
+                @ verte zig (ego, elem, alloc) -> "§.adde(§, §)"
+                functio adde(items, elem) fit vacuum { }
+            `);
+
+            expect(errors).toHaveLength(0);
+            const ann = (program!.body[0] as any).annotations[0];
+            expect(ann.verteTarget).toBe('zig');
+            expect(ann.verteParams).toEqual(['ego', 'elem', 'alloc']);
+            expect(ann.verteTemplate).toBe('§.adde(§, §)');
+        });
+
+        test('multiple stdlib annotations on same declaration', () => {
+            const { program, errors } = parseCode(`
+                @ radix add, imperativus, perfectum
+                @ verte ts "push"
+                @ verte py "append"
+                @ verte rs "push"
+                functio adde(items, elem) fit vacuum { }
+            `);
+
+            expect(errors).toHaveLength(0);
+            const decl = program!.body[0] as any;
+            expect(decl.annotations).toHaveLength(4);
+            expect(decl.annotations[0].name).toBe('radix');
+            expect(decl.annotations[1].verteTarget).toBe('ts');
+            expect(decl.annotations[2].verteTarget).toBe('py');
+            expect(decl.annotations[3].verteTarget).toBe('rs');
+        });
+
+        test('combined innatum, subsidia, and verte on genus', () => {
+            const { program, errors } = parseCode(`
+                @ innatum ts "Array", py "list"
+                @ subsidia zig "subsidia/zig/lista.zig"
+                genus lista<T> { }
+            `);
+
+            expect(errors).toHaveLength(0);
+            const decl = program!.body[0] as any;
+            expect(decl.annotations).toHaveLength(2);
+            expect(decl.annotations[0].name).toBe('innatum');
+            expect(decl.annotations[1].name).toBe('subsidia');
+        });
+    });
 });

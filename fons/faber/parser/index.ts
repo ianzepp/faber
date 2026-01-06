@@ -507,6 +507,12 @@ export function parse(tokens: Token[]): ParserResult {
      *
      * GRAMMAR:
      *   annotation := '@' IDENTIFIER (expression)?
+     *              | '@' 'innatum' targetMapping (',' targetMapping)*
+     *              | '@' 'subsidia' targetMapping (',' targetMapping)*
+     *              | '@' 'radix' IDENTIFIER (',' IDENTIFIER)*
+     *              | '@' 'verte' IDENTIFIER (STRING | '(' paramList ')' '->' STRING)
+     *
+     *   targetMapping := IDENTIFIER STRING
      *
      * Each @ starts exactly one annotation. The first identifier is the
      * annotation name, followed by an optional argument expression.
@@ -515,6 +521,11 @@ export function parse(tokens: Token[]): ParserResult {
      *   @ publicum
      *   @ ad "users:list"
      *   @ ad sed "users/\w+"
+     *   @ innatum ts "Array", py "list", zig "Lista"
+     *   @ subsidia zig "subsidia/zig/lista.zig"
+     *   @ radix filtr, imperativus, perfectum
+     *   @ verte ts "push"
+     *   @ verte ts (ego, elem) -> "[...§, §]"
      */
     function parseAnnotation(): Annotation {
         const position = peek().position;
@@ -537,7 +548,18 @@ export function parse(tokens: Token[]): ParserResult {
 
         const name = advance().value;
 
-        // Check for optional argument on the same line
+        // Handle specialized annotation types
+        if (name === 'innatum' || name === 'subsidia') {
+            return parseTargetMappingAnnotation(name, position, startLine);
+        }
+        else if (name === 'radix') {
+            return parseRadixAnnotation(position, startLine);
+        }
+        else if (name === 'verte') {
+            return parseVerteAnnotation(position, startLine);
+        }
+
+        // Check for optional argument on the same line (standard annotation)
         let argument: Expression | undefined;
         if (!isAtEnd() && peek().position.line === startLine) {
             // Only parse argument if there's something on the same line
@@ -552,6 +574,213 @@ export function parse(tokens: Token[]): ParserResult {
             type: 'Annotation',
             name,
             argument,
+            position,
+        };
+    }
+
+    /**
+     * Parse @ innatum or @ subsidia annotation with target-to-value mappings.
+     *
+     * GRAMMAR:
+     *   targetMappingAnnotation := targetMapping (',' targetMapping)*
+     *   targetMapping := IDENTIFIER STRING
+     *
+     * Example:
+     *   @ innatum ts "Array", py "list", zig "Lista"
+     *   @ subsidia zig "subsidia/zig/lista.zig"
+     */
+    function parseTargetMappingAnnotation(name: string, position: Position, startLine: number): Annotation {
+        const targetMappings = new Map<string, string>();
+
+        // Parse first mapping (required)
+        if (!isAtEnd() && peek().position.line === startLine && (check('IDENTIFIER') || check('KEYWORD'))) {
+            do {
+                // Parse target identifier (ts, py, rs, cpp, zig)
+                if ((!check('IDENTIFIER') && !check('KEYWORD')) || peek().position.line !== startLine) {
+                    errors.push({
+                        code: ParserErrorCode.UnexpectedToken,
+                        message: `Expected target identifier in @${name} annotation, got '${peek().value}'`,
+                        position: peek().position,
+                    });
+                    break;
+                }
+                const target = advance().value;
+
+                // Parse value string
+                if (!check('STRING') || peek().position.line !== startLine) {
+                    errors.push({
+                        code: ParserErrorCode.UnexpectedToken,
+                        message: `Expected string value after '${target}' in @${name} annotation, got '${peek().value}'`,
+                        position: peek().position,
+                    });
+                    break;
+                }
+                const value = advance().value;
+
+                targetMappings.set(target, value);
+            } while (!isAtEnd() && peek().position.line === startLine && match('COMMA'));
+        }
+
+        return {
+            type: 'Annotation',
+            name,
+            targetMappings,
+            position,
+        };
+    }
+
+    /**
+     * Parse @ radix annotation with stem and form identifiers.
+     *
+     * GRAMMAR:
+     *   radixAnnotation := IDENTIFIER (',' IDENTIFIER)*
+     *
+     * Example:
+     *   @ radix filtr, imperativus, perfectum
+     *
+     * First identifier is the stem, rest are valid morphological forms.
+     */
+    function parseRadixAnnotation(position: Position, startLine: number): Annotation {
+        const radixForms: string[] = [];
+
+        // Parse comma-separated identifiers
+        if (!isAtEnd() && peek().position.line === startLine && (check('IDENTIFIER') || check('KEYWORD'))) {
+            do {
+                if ((!check('IDENTIFIER') && !check('KEYWORD')) || peek().position.line !== startLine) {
+                    errors.push({
+                        code: ParserErrorCode.UnexpectedToken,
+                        message: `Expected identifier in @radix annotation, got '${peek().value}'`,
+                        position: peek().position,
+                    });
+                    break;
+                }
+                radixForms.push(advance().value);
+            } while (!isAtEnd() && peek().position.line === startLine && match('COMMA'));
+        }
+
+        if (radixForms.length === 0) {
+            errors.push({
+                code: ParserErrorCode.UnexpectedToken,
+                message: `@radix annotation requires at least a stem identifier`,
+                position,
+            });
+        }
+
+        return {
+            type: 'Annotation',
+            name: 'radix',
+            radixForms,
+            position,
+        };
+    }
+
+    /**
+     * Parse @ verte annotation with target and either method name or template.
+     *
+     * GRAMMAR:
+     *   verteAnnotation := IDENTIFIER (STRING | '(' paramList ')' '->' STRING)
+     *   paramList := IDENTIFIER (',' IDENTIFIER)*
+     *
+     * Examples:
+     *   @ verte ts "push"
+     *   @ verte ts (ego, elem) -> "[...§, §]"
+     */
+    function parseVerteAnnotation(position: Position, startLine: number): Annotation {
+        // Parse target identifier (ts, py, rs, cpp, zig)
+        if ((!check('IDENTIFIER') && !check('KEYWORD')) || peek().position.line !== startLine) {
+            errors.push({
+                code: ParserErrorCode.UnexpectedToken,
+                message: `Expected target identifier in @verte annotation, got '${peek().value}'`,
+                position: peek().position,
+            });
+            return {
+                type: 'Annotation',
+                name: 'verte',
+                position,
+            };
+        }
+        const verteTarget = advance().value;
+
+        // Check for template form: (params) -> "template"
+        if (check('LPAREN') && peek().position.line === startLine) {
+            advance(); // consume '('
+
+            const verteParams: string[] = [];
+
+            // Parse parameter list
+            if (!check('RPAREN')) {
+                do {
+                    if ((!check('IDENTIFIER') && !check('KEYWORD')) || peek().position.line !== startLine) {
+                        errors.push({
+                            code: ParserErrorCode.UnexpectedToken,
+                            message: `Expected parameter name in @verte template, got '${peek().value}'`,
+                            position: peek().position,
+                        });
+                        break;
+                    }
+                    verteParams.push(advance().value);
+                } while (match('COMMA'));
+            }
+
+            expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
+
+            // Expect -> arrow
+            if (!match('THIN_ARROW')) {
+                errors.push({
+                    code: ParserErrorCode.UnexpectedToken,
+                    message: `Expected '->' after parameters in @verte template, got '${peek().value}'`,
+                    position: peek().position,
+                });
+            }
+
+            // Parse template string
+            if (!check('STRING') || peek().position.line !== startLine) {
+                errors.push({
+                    code: ParserErrorCode.UnexpectedToken,
+                    message: `Expected template string in @verte annotation, got '${peek().value}'`,
+                    position: peek().position,
+                });
+                return {
+                    type: 'Annotation',
+                    name: 'verte',
+                    verteTarget,
+                    verteParams,
+                    position,
+                };
+            }
+            const verteTemplate = advance().value;
+
+            return {
+                type: 'Annotation',
+                name: 'verte',
+                verteTarget,
+                verteParams,
+                verteTemplate,
+                position,
+            };
+        }
+
+        // Simple method form: "methodName"
+        if (!check('STRING') || peek().position.line !== startLine) {
+            errors.push({
+                code: ParserErrorCode.UnexpectedToken,
+                message: `Expected method name string or template in @verte annotation, got '${peek().value}'`,
+                position: peek().position,
+            });
+            return {
+                type: 'Annotation',
+                name: 'verte',
+                verteTarget,
+                position,
+            };
+        }
+        const verteMethod = advance().value;
+
+        return {
+            type: 'Annotation',
+            name: 'verte',
+            verteTarget,
+            verteMethod,
             position,
         };
     }

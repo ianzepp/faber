@@ -654,6 +654,12 @@ export type Visibility = 'public' | 'protected' | 'private';
  *
  * GRAMMAR (in EBNF):
  *   annotation := '@' IDENTIFIER (STRING | expression)?
+ *              | '@' 'innatum' targetMapping (',' targetMapping)*
+ *              | '@' 'subsidia' targetMapping (',' targetMapping)*
+ *              | '@' 'radix' IDENTIFIER (',' IDENTIFIER)*
+ *              | '@' 'verte' IDENTIFIER (STRING | '(' paramList ')' '->' STRING)
+ *
+ *   targetMapping := IDENTIFIER STRING
  *
  * INVARIANT: Each annotation has exactly one name (first identifier after @).
  * INVARIANT: Annotations must appear on their own line before a declaration.
@@ -673,6 +679,11 @@ export type Visibility = 'public' | 'protected' | 'private';
  *   @ abstractum
  *   @ ad "users:list"
  *   @ ad sed "users/\w+"
+ *   @ innatum ts "Array", py "list", zig "Lista"
+ *   @ subsidia zig "subsidia/zig/lista.zig"
+ *   @ radix filtr, imperativus, perfectum
+ *   @ verte ts "push"
+ *   @ verte ts (ego, elem) -> "[...§, §]"
  */
 export interface Annotation extends BaseNode {
     type: 'Annotation';
@@ -680,6 +691,42 @@ export interface Annotation extends BaseNode {
     name: string;
     /** Optional argument (string literal, sed pattern, or expression) */
     argument?: Expression;
+
+    /**
+     * For @ innatum and @ subsidia: target-to-value mappings.
+     * Example: { ts: "Array", py: "list", zig: "Lista" }
+     */
+    targetMappings?: Map<string, string>;
+
+    /**
+     * For @ radix: stem and valid morphological forms.
+     * First element is the stem, rest are form names.
+     * Example: ["filtr", "imperativus", "perfectum"]
+     */
+    radixForms?: string[];
+
+    /**
+     * For @ verte: the target language (ts, py, rs, cpp, zig).
+     */
+    verteTarget?: string;
+
+    /**
+     * For @ verte with simple method: the method name.
+     * Example: "push" for `@ verte ts "push"`
+     */
+    verteMethod?: string;
+
+    /**
+     * For @ verte with template: parameter names.
+     * Example: ["ego", "elem"] for `@ verte ts (ego, elem) -> "..."`
+     */
+    verteParams?: string[];
+
+    /**
+     * For @ verte with template: the template string with § placeholders.
+     * Example: "[...§, §]" for `@ verte ts (ego, elem) -> "[...§, §]"`
+     */
+    verteTemplate?: string;
 }
 
 /**
