@@ -32,3 +32,435 @@ functio adde()
 @ verte zig (ego, elem, alloc) -> "§.addita(§, §)"
 @ externa
 functio addita()
+
+# Add element to start (mutates)
+@ radix praepon, imperativus, perfectum
+@ verte ts "unshift"
+@ verte py (ego, elem) -> "§.insert(0, §)"
+@ verte rs (ego, elem) -> "§.insert(0, §)"
+@ verte cpp (ego, elem) -> "§.insert(§.begin(), §)"
+@ verte zig (ego, elem, alloc) -> "§.praepone(§, §)"
+@ externa
+functio praepone()
+
+# Add element to start (returns new list)
+@ verte ts (ego, elem) -> "[§1, ...§0]"
+@ verte py (ego, elem) -> "[§1, *§0]"
+@ verte rs (ego, elem) -> "{ let mut v = vec![§1]; v.extend(§0.iter().cloned()); v }"
+@ verte cpp (ego, elem) -> "[&]{ auto v = §0; v.insert(v.begin(), §1); return v; }()"
+@ verte zig (ego, elem, alloc) -> "§.praeposita(§, §)"
+@ externa
+functio praeposita()
+
+# =============================================================================
+# REMOVING ELEMENTS
+# =============================================================================
+
+# Remove and return last element (mutates)
+@ radix remov, imperativus, perfectum
+@ verte ts "pop"
+@ verte py "pop"
+@ verte rs (ego) -> "§.pop()"
+@ verte cpp (ego) -> "[&]{ auto v = §.back(); §.pop_back(); return v; }()"
+@ verte zig (ego) -> "§.remove()"
+@ externa
+functio remove()
+
+# Remove last element (returns new list)
+@ verte ts (ego) -> "§.slice(0, -1)"
+@ verte py (ego) -> "§[:-1]"
+@ verte rs (ego) -> "§[..§.len().saturating_sub(1)].to_vec()"
+@ verte cpp (ego) -> "std::vector(§.begin(), §.end() - 1)"
+@ verte zig (ego, alloc) -> "§.remota(§)"
+@ externa
+functio remota()
+
+# Remove and return first element (mutates)
+@ radix decapit, imperativus, perfectum
+@ verte ts "shift"
+@ verte py (ego) -> "§.pop(0)"
+@ verte rs (ego) -> "§.remove(0)"
+@ verte cpp (ego) -> "[&]{ auto v = §.front(); §.erase(§.begin()); return v; }()"
+@ verte zig (ego) -> "§.decapita()"
+@ externa
+functio decapita()
+
+# Remove first element (returns new list)
+@ verte ts (ego) -> "§.slice(1)"
+@ verte py (ego) -> "§[1:]"
+@ verte rs (ego) -> "§[1..].to_vec()"
+@ verte cpp (ego) -> "std::vector(§.begin() + 1, §.end())"
+@ verte zig (ego, alloc) -> "§.decapitata(§)"
+@ externa
+functio decapitata()
+
+# Clear all elements (mutates)
+@ verte ts (ego) -> "§.length = 0"
+@ verte py "clear"
+@ verte rs "clear"
+@ verte cpp "clear"
+@ verte zig (ego) -> "§.purga()"
+@ externa
+functio purga()
+
+# =============================================================================
+# ACCESSING ELEMENTS
+# =============================================================================
+
+# Get first element
+@ verte ts (ego) -> "§[0]"
+@ verte py (ego) -> "§[0]"
+@ verte rs (ego) -> "§.first()"
+@ verte cpp (ego) -> "§.front()"
+@ verte zig (ego) -> "§.primus()"
+@ externa
+functio primus()
+
+# Get last element
+@ verte ts (ego) -> "§.at(-1)"
+@ verte py (ego) -> "§[-1]"
+@ verte rs (ego) -> "§.last()"
+@ verte cpp (ego) -> "§.back()"
+@ verte zig (ego) -> "§.ultimus()"
+@ externa
+functio ultimus()
+
+# Get element at index
+@ verte ts (ego, idx) -> "§[§]"
+@ verte py (ego, idx) -> "§[§]"
+@ verte rs (ego, idx) -> "§.get(§)"
+@ verte cpp (ego, idx) -> "§.at(§)"
+@ verte zig (ego, idx) -> "§.accipe(§)"
+@ externa
+functio accipe()
+
+# =============================================================================
+# PROPERTIES
+# =============================================================================
+
+# Get length
+@ verte ts (ego) -> "§.length"
+@ verte py (ego) -> "len(§)"
+@ verte rs (ego) -> "§.len()"
+@ verte cpp (ego) -> "§.size()"
+@ verte zig (ego) -> "§.longitudo()"
+@ externa
+functio longitudo()
+
+# Check if empty
+@ verte ts (ego) -> "§.length === 0"
+@ verte py (ego) -> "len(§) == 0"
+@ verte rs (ego) -> "§.is_empty()"
+@ verte cpp (ego) -> "§.empty()"
+@ verte zig (ego) -> "§.vacua()"
+@ externa
+functio vacua()
+
+# =============================================================================
+# SEARCHING
+# =============================================================================
+
+# Check if contains element
+@ verte ts "includes"
+@ verte py (ego, elem) -> "(§ in §)"
+@ verte rs (ego, elem) -> "§.contains(&§)"
+@ verte cpp (ego, elem) -> "(std::find(§.begin(), §.end(), §) != §.end())"
+@ verte zig (ego, elem) -> "§.continet(§)"
+@ externa
+functio continet()
+
+# Find index of element
+@ verte ts "indexOf"
+@ verte py (ego, elem) -> "§.index(§)"
+@ verte rs (ego, elem) -> "§.iter().position(|e| e == &§)"
+@ verte cpp (ego, elem) -> "[&]{ auto it = std::find(§.begin(), §.end(), §); return it != §.end() ? std::distance(§.begin(), it) : -1; }()"
+@ verte zig (ego, elem) -> "§.indiceDe(§)"
+@ externa
+functio indiceDe()
+
+# Find first element matching predicate
+@ verte ts "find"
+@ verte py (ego, pred) -> "next(filter(§, §), None)"
+@ verte rs (ego, pred) -> "§.iter().find(§)"
+@ verte cpp (ego, pred) -> "*std::find_if(§.begin(), §.end(), §)"
+@ verte zig (ego, pred) -> "§.inveni(§)"
+@ externa
+functio inveni()
+
+# Find index of first element matching predicate
+@ verte ts "findIndex"
+@ verte py (ego, pred) -> "next((i for i, x in enumerate(§) if (§)(x)), -1)"
+@ verte rs (ego, pred) -> "§.iter().position(§)"
+@ verte cpp (ego, pred) -> "[&]{ auto it = std::find_if(§.begin(), §.end(), §); return it != §.end() ? std::distance(§.begin(), it) : -1; }()"
+@ verte zig (ego, pred) -> "§.inveniIndicem(§)"
+@ externa
+functio inveniIndicem()
+
+# =============================================================================
+# PREDICATES
+# =============================================================================
+
+# Check if all elements match predicate
+@ verte ts "every"
+@ verte py (ego, pred) -> "all(map(§, §))"
+@ verte rs (ego, pred) -> "§.iter().all(§)"
+@ verte cpp (ego, pred) -> "std::ranges::all_of(§, §)"
+@ verte zig (ego, pred) -> "§.omnes(§)"
+@ externa
+functio omnes()
+
+# Check if any element matches predicate
+@ verte ts "some"
+@ verte py (ego, pred) -> "any(map(§, §))"
+@ verte rs (ego, pred) -> "§.iter().any(§)"
+@ verte cpp (ego, pred) -> "std::ranges::any_of(§, §)"
+@ verte zig (ego, pred) -> "§.aliquis(§)"
+@ externa
+functio aliquis()
+
+# =============================================================================
+# FUNCTIONAL METHODS (return new list)
+# =============================================================================
+
+# Filter elements (returns new list)
+@ radix filtr, imperativus, perfectum
+@ verte ts "filter"
+@ verte py (ego, pred) -> "list(filter(§, §))"
+@ verte rs (ego, pred) -> "§.iter().filter(§).cloned().collect::<Vec<_>>()"
+@ verte cpp (ego, pred) -> "(§ | std::views::filter(§) | std::ranges::to<std::vector>())"
+@ verte zig (ego, pred, alloc) -> "§.filtrata(§, §)"
+@ externa
+functio filtrata()
+
+# Map elements (returns new list)
+@ verte ts "map"
+@ verte py (ego, fn) -> "list(map(§, §))"
+@ verte rs (ego, fn) -> "§.iter().map(§).collect::<Vec<_>>()"
+@ verte cpp (ego, fn) -> "(§ | std::views::transform(§) | std::ranges::to<std::vector>())"
+@ verte zig (ego, fn, alloc) -> "§.mappata(§, §)"
+@ externa
+functio mappata()
+
+# Flat map (map + flatten one level)
+@ verte ts "flatMap"
+@ verte py (ego, fn) -> "[y for x in § for y in (§)(x)]"
+@ verte rs (ego, fn) -> "§.iter().flat_map(§).collect::<Vec<_>>()"
+@ verte cpp (ego, fn) -> "(§ | std::views::transform(§) | std::views::join | std::ranges::to<std::vector>())"
+@ externa
+functio explanata()
+
+# Flatten one level
+@ verte ts "flat"
+@ verte py (ego) -> "[y for x in § for y in x]"
+@ verte rs (ego) -> "§.iter().flatten().cloned().collect::<Vec<_>>()"
+@ verte cpp (ego) -> "(§ | std::views::join | std::ranges::to<std::vector>())"
+@ externa
+functio plana()
+
+# Reverse (returns new list)
+@ radix invert, imperativus, perfectum
+@ verte ts (ego) -> "[...§].reverse()"
+@ verte py (ego) -> "§[::-1]"
+@ verte rs (ego) -> "§.iter().rev().cloned().collect::<Vec<_>>()"
+@ verte cpp (ego) -> "(§ | std::views::reverse | std::ranges::to<std::vector>())"
+@ verte zig (ego, alloc) -> "§.inversa(§)"
+@ externa
+functio inversa()
+
+# Sort (returns new list)
+@ radix ordin, imperativus, perfectum
+@ verte ts (ego) -> "[...§].sort()"
+@ verte py (ego) -> "sorted(§)"
+@ verte rs (ego) -> "{ let mut v = §.clone(); v.sort(); v }"
+@ verte cpp (ego) -> "[&]{ auto v = §; std::ranges::sort(v); return v; }()"
+@ verte zig (ego, alloc) -> "§.ordinata(§)"
+@ externa
+functio ordinata()
+
+# Slice - take elements from start to end
+@ verte ts "slice"
+@ verte py (ego, start, end) -> "§[§:§]"
+@ verte rs (ego, start, end) -> "§[§..§].to_vec()"
+@ verte cpp (ego, start, end) -> "std::vector(§.begin() + §, §.begin() + §)"
+@ verte zig (ego, start, end, alloc) -> "§.sectio(§, §, §)"
+@ externa
+functio sectio()
+
+# NOTE: prima, ultima, omitte are reserved keywords - handled by lista.ts fallback
+
+# Reduce to single value
+@ verte ts "reduce"
+@ verte py (ego, fn, init) -> "functools.reduce(§, §, §)"
+@ verte rs (ego, fn, init) -> "§.iter().fold(§, §)"
+@ verte cpp (ego, fn, init) -> "std::ranges::fold_left(§, §, §)"
+@ verte zig (ego, fn, init) -> "§.reducta(§, §)"
+@ externa
+functio reducta()
+
+# =============================================================================
+# MUTATING OPERATIONS
+# =============================================================================
+
+# Filter in place (mutates)
+@ verte ts (ego, pred) -> "(() => { for (let i = §.length - 1; i >= 0; i--) { if (!(§)(§[i])) §.splice(i, 1); } })()"
+@ verte py (ego, pred) -> "§[:] = [x for x in § if (§)(x)]"
+@ verte cpp (ego, pred) -> "§.erase(std::remove_if(§.begin(), §.end(), [&](auto& x) { return !(§)(x); }), §.end())"
+@ externa
+functio filtra()
+
+# NOTE: ordina is a reserved keyword - handled by lista.ts fallback
+
+# Reverse in place (mutates)
+@ verte ts "reverse"
+@ verte py (ego) -> "§.reverse()"
+@ verte rs (ego) -> "§.reverse()"
+@ verte cpp (ego) -> "std::ranges::reverse(§)"
+@ verte zig (ego) -> "§.inverte()"
+@ externa
+functio inverte()
+
+# =============================================================================
+# ITERATION
+# =============================================================================
+
+# Iterate with callback
+@ verte ts "forEach"
+@ verte py (ego, fn) -> "[(§)(x) for x in §]"
+@ verte rs (ego, fn) -> "§.iter().for_each(§)"
+@ verte cpp (ego, fn) -> "std::ranges::for_each(§, §)"
+@ verte zig (ego, fn) -> "§.perambula(§)"
+@ externa
+functio perambula()
+
+# Join elements to string
+@ verte ts "join"
+@ verte py (ego, sep) -> "§.join(§)"
+@ verte rs (ego, sep) -> "§.join(§)"
+@ verte cpp (ego, sep) -> "[&]{ std::string r; for (size_t i = 0; i < §.size(); ++i) { if (i > 0) r += §; r += §[i]; } return r; }()"
+@ externa
+functio coniunge()
+
+# =============================================================================
+# AGGREGATION
+# =============================================================================
+
+# NOTE: summa is a reserved keyword - handled by lista.ts fallback
+
+# Average of numeric elements
+@ verte ts (ego) -> "(§.reduce((a, b) => a + b, 0) / §.length)"
+@ verte py (ego) -> "(sum(§) / len(§))"
+@ verte rs (ego) -> "(§.iter().sum::<i64>() as f64 / §.len() as f64)"
+@ verte cpp (ego) -> "(std::accumulate(§.begin(), §.end(), 0.0) / §.size())"
+@ verte zig (ego) -> "§.medium()"
+@ externa
+functio medium()
+
+# Minimum value
+@ verte ts (ego) -> "Math.min(...§)"
+@ verte py (ego) -> "min(§)"
+@ verte rs (ego) -> "§.iter().min()"
+@ verte cpp (ego) -> "*std::ranges::min_element(§)"
+@ verte zig (ego) -> "§.minimus()"
+@ externa
+functio minimus()
+
+# Maximum value
+@ verte ts (ego) -> "Math.max(...§)"
+@ verte py (ego) -> "max(§)"
+@ verte rs (ego) -> "§.iter().max()"
+@ verte cpp (ego) -> "*std::ranges::max_element(§)"
+@ verte zig (ego) -> "§.maximus()"
+@ externa
+functio maximus()
+
+# Minimum by key function
+@ verte ts (ego, fn) -> "§.reduce((min, x) => (§)(x) < (§)(min) ? x : min)"
+@ verte rs (ego, fn) -> "§.iter().min_by_key(§)"
+@ verte cpp (ego, fn) -> "*std::ranges::min_element(§, [&](auto& a, auto& b) { return (§)(a) < (§)(b); })"
+@ externa
+functio minimusPer()
+
+# Maximum by key function
+@ verte ts (ego, fn) -> "§.reduce((max, x) => (§)(x) > (§)(max) ? x : max)"
+@ verte rs (ego, fn) -> "§.iter().max_by_key(§)"
+@ verte cpp (ego, fn) -> "*std::ranges::max_element(§, [&](auto& a, auto& b) { return (§)(a) < (§)(b); })"
+@ externa
+functio maximusPer()
+
+# Count elements matching predicate
+@ verte ts (ego, pred) -> "§.filter(§).length"
+@ verte py (ego, pred) -> "sum(1 for x in § if (§)(x))"
+@ verte rs (ego, pred) -> "§.iter().filter(§).count()"
+@ verte cpp (ego, pred) -> "std::ranges::count_if(§, §)"
+@ verte zig (ego, pred) -> "§.numera(§)"
+@ externa
+functio numera()
+
+# =============================================================================
+# LODASH-INSPIRED METHODS
+# =============================================================================
+
+# Group by key function
+@ verte ts (ego, fn) -> "Object.groupBy(§, §)"
+@ verte py (ego, fn) -> "{k: list(g) for k, g in itertools.groupby(sorted(§, key=§), key=§)}"
+@ verte cpp (ego, fn) -> "[&]{ std::unordered_map<decltype((§)(§[0])), std::vector<decltype(§[0])>> m; for (auto& x : §) m[(§)(x)].push_back(x); return m; }()"
+@ externa
+functio congrega()
+
+# Remove duplicates
+@ verte ts (ego) -> "[...new Set(§)]"
+@ verte py (ego) -> "list(dict.fromkeys(§))"
+@ verte rs (ego) -> "{ let mut seen = std::collections::HashSet::new(); §.iter().filter(|x| seen.insert((*x).clone())).cloned().collect::<Vec<_>>() }"
+@ verte cpp (ego) -> "[&]{ std::unordered_set<decltype(§[0])> s(§.begin(), §.end()); return std::vector(s.begin(), s.end()); }()"
+@ externa
+functio unica()
+
+# Flatten all levels
+@ verte ts (ego) -> "§.flat(Infinity)"
+@ verte cpp (ego) -> "(§ | std::views::join | std::ranges::to<std::vector>())"
+@ externa
+functio planaOmnia()
+
+# Split into chunks of size n
+@ verte ts (ego, n) -> "Array.from({ length: Math.ceil(§.length / §) }, (_, i) => §.slice(i * §, i * § + §))"
+@ verte py (ego, n) -> "[§[i:i+§] for i in range(0, len(§), §)]"
+@ verte rs (ego, n) -> "§.chunks(§).map(|c| c.to_vec()).collect::<Vec<_>>()"
+@ verte cpp (ego, n) -> "(§ | std::views::chunk(§) | std::ranges::to<std::vector<std::vector<decltype(§[0])>>>())"
+@ externa
+functio fragmenta()
+
+# Remove falsy values
+@ verte ts (ego) -> "§.filter(Boolean)"
+@ verte py (ego) -> "[x for x in § if x]"
+@ verte cpp (ego) -> "(§ | std::views::filter([](auto& x) { return static_cast<bool>(x); }) | std::ranges::to<std::vector>())"
+@ externa
+functio densa()
+
+# Partition by predicate -> [truthy, falsy]
+@ verte ts (ego, pred) -> "§.reduce(([t, f], x) => (§)(x) ? [[...t, x], f] : [t, [...f, x]], [[], []])"
+@ verte py (ego, pred) -> "[[x for x in § if (§)(x)], [x for x in § if not (§)(x)]]"
+@ verte rs (ego, pred) -> "§.iter().cloned().partition::<Vec<_>, _>(§)"
+@ verte cpp (ego, pred) -> "[&]{ std::vector<decltype(§[0])> t, f; for (auto& x : §) ((§)(x) ? t : f).push_back(x); return std::make_pair(t, f); }()"
+@ externa
+functio partire()
+
+# Shuffle (returns new list)
+@ verte ts (ego) -> "(() => { const a = [...§]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; })()"
+@ verte py (ego) -> "random.shuffle(§)"
+@ verte cpp (ego) -> "[&]{ auto v = §; std::random_device rd; std::mt19937 g(rd()); std::ranges::shuffle(v, g); return v; }()"
+@ externa
+functio misce()
+
+# Random element
+@ verte ts (ego) -> "§[Math.floor(Math.random() * §.length)]"
+@ verte py (ego) -> "random.choice(§)"
+@ verte cpp (ego) -> "§[std::random_device{}() % §.size()]"
+@ externa
+functio specimen()
+
+# Random n elements
+@ verte ts (ego, n) -> "(() => { const a = [...§]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, §); })()"
+@ verte py (ego, n) -> "random.sample(§, §)"
+@ verte cpp (ego, n) -> "[&]{ auto v = §; std::random_device rd; std::mt19937 g(rd()); std::ranges::shuffle(v, g); v.resize(std::min(§, v.size())); return v; }()"
+@ externa
+functio specimina()

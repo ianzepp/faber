@@ -99,11 +99,21 @@ export function applyNormaTemplate(
         }
     }
 
-    // Replace S placeholders positionally
+    // Replace § placeholders - supports both positional and indexed
+    // §  = next value (implicit positional)
+    // §0, §1, etc. = explicit index into values array
     let result = template;
-    let idx = 0;
-    // WHY: Use regex to replace each S one at a time
-    result = result.replace(/S/g, () => values[idx++] || '');
+    let implicitIdx = 0;
+
+    result = result.replace(/§(\d+)?/g, (_, indexStr) => {
+        if (indexStr !== undefined) {
+            // Explicit index: §0, §1, etc.
+            const idx = parseInt(indexStr, 10);
+            return values[idx] || '';
+        }
+        // Implicit positional: plain §
+        return values[implicitIdx++] || '';
+    });
 
     return result;
 }
