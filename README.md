@@ -1,17 +1,21 @@
 # Faber Romanus
 
-**The Roman Craftsman** — A Latin programming language that compiles to TypeScript, Python, Zig, C++, or Rust.
+**The Roman Craftsman** — An LLM-oriented intermediate representation that compiles to Zig, Rust, C++, TypeScript, or Python.
+
+**[faberlang.dev](https://faberlang.dev)** — Official project website
 
 ## The Problem
 
-LLMs write code. Humans review it. But the target languages — especially systems languages like Zig, C++, and Rust — are hard for both:
+LLMs write code. Humans review it. But systems languages — Zig, Rust, C++ — are hard for both:
 
 - **LLMs struggle with symbol-dense syntax.** Lifetimes, borrow checkers, template metaprogramming, `&&` vs `&`, `->` vs `.` — these create semantic chaos that increases error rates.
-- **Humans can't skim generated code.** Reviewing 50 lines of Rust requires understanding Rust. You can't quickly verify "yes, that logic looks right" without parsing the syntax mentally.
+- **Humans can't skim generated code.** Reviewing 50 lines of Rust requires understanding Rust. You can't verify "yes, that logic looks right" without parsing the syntax mentally.
+
+You don't need an IR to generate TypeScript. You need one to generate Rust without lifetime annotation chaos.
 
 ## The Solution
 
-Faber Romanus is a **human-readable intermediate language** for LLM-generated code.
+Faber Romanus is an **intermediate representation** optimized for LLM generation and human review.
 
 ```
 ex items pro item {
@@ -21,21 +25,52 @@ ex items pro item {
 }
 ```
 
-- **LLMs write Latin.** Word-based, consistent syntax. No lifetime annotations, no pointer semantics, no template noise. One language regardless of compile target.
-- **Humans skim Latin.** You see `si` (if), `pro` (for), `scribe` (print). You don't need to know Zig to verify the loop logic is correct.
-- **Compiler emits target code.** TypeScript, Python, Zig, C++, or Rust. The generated code is what actually runs — you never read it.
+- **LLMs write Faber.** Word-based, regular syntax. No lifetime annotations, no pointer semantics, no template noise. One language regardless of compile target.
+- **Humans skim Faber.** You see `si` (if), `pro` (for), `scribe` (print). You don't need to know Zig to verify the loop logic is correct.
+- **Compiler emits target code.** Zig, Rust, C++, TypeScript, or Python. The generated code is what actually runs — you never need to read it.
 
-The workflow: LLM writes Faber → Human approves → Compiler emits production code.
+The workflow: LLM drafts Faber → Human approves → Compiler emits production code.
 
 ## Why It Works
 
-**No ecosystem problem.** Faber compiles to the target language, so you use its libraries directly. `ex hono importa Hono` becomes `import { Hono } from 'hono'`. No need to rewrite npm/PyPI/crates.io packages in Latin.
+**No ecosystem problem.** Faber compiles to the target language, so you use its libraries directly. `ex hono importa Hono` becomes `import { Hono } from 'hono'`. No need to rewrite npm/PyPI/crates.io in a new language.
 
-**Grammar designed for LLMs.** The [EBNF.md](EBNF.md) specification is built for LLM consumption: formal grammar, type tables, keyword references, and style guides. An LLM can read it once and generate valid Faber immediately.
+**Grammar designed for LLMs.** The [EBNF.md](EBNF.md) specification is built for LLM consumption: formal grammar, type tables, keyword mappings. Trials show models achieve 96-98% accuracy after reading the grammar specification alone — no prose documentation required.
 
-**Semantics, not syntax.** Latin keywords encode meaning: `fixum` (fixed/immutable) vs `varia` (variable/mutable), `cede` (yield/await), `redde` (give back/return). The code reads like intent, not implementation.
+**Regular structure.** Type-first declarations, consistent block patterns, no operator overloading. The regularity may matter more than the vocabulary — a hypothesis we're testing with ablations (same grammar, English keywords).
 
-**Cross-model validation.** We asked GPT, Gemini, and Claude to independently review Faber source code and describe how it "feels" to read. All three converged on the same observations: "low-entropy", "predictable", "industrial", "Roman". The verb conjugation system (`fit`/`fiet`/`fiunt`/`fient`) encoding async/generator semantics was called "fascinating" — it eliminates modifier stacking while preserving clarity. When three competing model families agree that code is "unbreakable", that's signal.
+**Semantic vocabulary.** Latin keywords encode intent: `fixum` (fixed/immutable) vs `varia` (variable/mutable), `cede` (yield/await), `redde` (give back/return). Whether this helps beyond structure is an open question, but it makes code skimmable for humans unfamiliar with the target language.
+
+## Research & Evidence
+
+The [probationes](probationes/) research harness tests Faber's learnability with reproducible evaluation: falsifiable claims, controlled comparisons, automated grading.
+
+### Trial Results (Framework 1.1)
+
+~13,000 trials across 17 models, testing Faber↔TypeScript translation tasks:
+
+| Finding | Result |
+|---------|--------|
+| **Faber is learnable** | 11 of 12 models achieve 86%+ accuracy with grammar-only context |
+| **Grammar beats prose** | Formal EBNF (87%) matches verbose docs (87%), outperforms minimal (83%) |
+| **Reading > Writing** | Models score 90-95% on Faber→TS but 54-65% on TS→Faber |
+| **Coding models are cost-effective** | qwen3-coder (96%) matches gpt-4o (98%) at 1/10th cost |
+
+Top performers with grammar-only context:
+
+| Model | Accuracy |
+|-------|----------|
+| gpt-4o | 98% |
+| claude-3.5-sonnet | 98% |
+| qwen3-coder | 96% |
+| llama-3.1-70b | 95% |
+| deepseek-v3.1 | 95% |
+
+**What this validates**: LLMs can learn Faber syntax from a formal grammar specification. TypeScript was used for grading (mature tooling), but the value proposition is strongest for systems languages where direct generation is error-prone.
+
+**Open questions**: Do Latin keywords help, or is it just the regular structure? (Faber-English ablation planned.) How do error rates compare for Faber→Zig vs direct Zig generation?
+
+See [probationes/docs/framework-1.1-results.md](probationes/docs/framework-1.1-results.md) for methodology, or [probationes/thesis.md](probationes/thesis.md) for the research strategy.
 
 ## Principles
 
