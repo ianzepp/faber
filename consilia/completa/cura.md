@@ -1,8 +1,16 @@
 ---
-status: partial
-targets: [ts, py, zig, rs, cpp]
-updated: 2025-12
-note: arena/page allocators implemented; generic resource implemented; other curator kinds planned
+status: completed
+updated: 2026-01-06
+note: Core cura mechanism fully implemented. Well-known curator kinds (liber, transactio, mutex, conexio) will be added as standard library features, not language changes.
+implemented:
+  - cura statement syntax and semantics (all targets)
+  - Generic resource management with solve() cleanup
+  - Arena allocators (zig only; stripped on GC targets)
+  - Page allocators (zig only; stripped on GC targets)
+  - Curator type annotations (zig, rs)
+  - fit/fiet binding (sync/async)
+  - Catch clause support
+tests: 12 tests covering arena, page, generic resources
 ---
 
 # Cura - Resource Management

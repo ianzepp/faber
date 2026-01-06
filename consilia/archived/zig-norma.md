@@ -1,3 +1,10 @@
+---
+status: superseded
+updated: 2026-01-06
+note: Implemented but architecture evolved. Runtime at fons/subsidia/zig/ (not runtime/). Uses per-method allocators and norma-faber annotations instead of simplified TypeScript registries.
+see: consilia/completa/norma-faber.md, consilia/archived/stdlib-refactor.md
+---
+
 # Zig Native Runtime Library
 
 Replace inline Zig code generation with a proper Zig runtime library that gets copied alongside compiled output.

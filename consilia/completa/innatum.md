@@ -1,8 +1,20 @@
+---
+status: completed
+updated: 2026-01-06
+note: innatum keyword fully implemented for all targets with comprehensive test coverage
+implemented:
+  - innatum keyword and syntax
+  - Empty collection construction ({} innatum tabula, [] innatum lista)
+  - Non-empty collection construction
+  - All targets (ts, py, rs, cpp, zig)
+tests: 8 tests covering empty/non-empty lista and tabula
+---
+
 # innatum - Native Type Construction
 
 ## Summary
 
-Add `innatum` keyword for constructing native/builtin types with target-appropriate initialization.
+The `innatum` keyword constructs native/builtin types with target-appropriate initialization.
 
 ## Motivation
 

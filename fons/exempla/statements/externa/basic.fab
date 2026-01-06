@@ -1,0 +1,30 @@
+# External declarations with @ externa
+#
+# Mark declarations as externally provided (by runtime, FFI, or linker)
+# No initializer or body required
+#
+# Target output:
+#   TypeScript: declare const/function
+#   Zig: extern var/fn
+
+# Runtime globals (TypeScript/Bun)
+@ externa
+fixum ignotum Bun
+
+@ externa
+fixum ignotum process
+
+# External functions
+@ externa
+functio require(textus path) -> ignotum
+
+# Use the external declarations
+incipit {
+    # Access runtime globals
+    fixum args = process.argv qua lista<textus>
+    scribe "Args:", args.longitudo()
+
+    # Check runtime
+    fixum runtime = Bun.version qua textus
+    scribe "Bun version:", runtime
+}

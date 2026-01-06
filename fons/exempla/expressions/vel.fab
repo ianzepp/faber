@@ -1,0 +1,50 @@
+# Nullish coalescing with vel
+#
+# vel (??) returns right side only if left is nihil
+# Different from logical || which triggers on all falsy values
+#
+# Syntax:
+#   value vel default
+#   value ?? default
+
+incipit {
+    # Basic nullish coalescing
+    fixum textus? name = nihil
+    fixum display = name vel "Anonymous"
+    scribe display  # "Anonymous"
+
+    # With non-null value
+    fixum textus? actualName = "Marcus"
+    fixum displayName = actualName vel "Anonymous"
+    scribe displayName  # "Marcus"
+
+    # Difference from logical or: vel only checks nihil
+    fixum zero = 0
+    fixum emptyStr = ""
+    fixum falseBool = falsum
+
+    # vel preserves falsy non-null values
+    scribe zero vel 999        # 0 (not nihil)
+    scribe emptyStr vel "def"  # "" (not nihil)
+    scribe falseBool vel verum # falsum (not nihil)
+
+    # Symbolic syntax (equivalent)
+    fixum result2 = name vel "Default"
+    scribe result2
+
+    # Chaining
+    fixum textus? a = nihil
+    fixum textus? b = nihil
+    fixum textus? c = "found"
+    fixum first = a vel b vel c vel "none"
+    scribe first  # "found"
+
+    # With conversion operators
+    fixum input = "abc"
+    fixum num = input numeratum vel 0
+    scribe num  # 0 (parse failed, uses default)
+
+    fixum validInput = "42"
+    fixum validNum = validInput numeratum vel 0
+    scribe validNum  # 42
+}

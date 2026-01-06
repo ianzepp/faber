@@ -1,3 +1,9 @@
+---
+status: archived
+updated: 2026-01-06
+note: Reference document for hypothetical TS-to-Faber migration tool. Rivus bootstrap was written from scratch in Faber instead of auto-migrating from TS.
+---
+
 # TypeScript Language Gaps
 
 This document catalogs TypeScript language features that cannot be directly transformed to Faber. These represent the "error cases" for a TS-to-Faber migration tool.

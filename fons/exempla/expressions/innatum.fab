@@ -1,0 +1,39 @@
+# Native type construction with innatum
+#
+# innatum constructs proper native instances of builtin types
+# Unlike qua (type assertion), innatum creates the native representation
+#
+# Syntax:
+#   {} innatum tabula<K, V>  -> new Map() in TS, HashMap in Rust, etc.
+#   [] innatum lista<T>      -> proper array/vector initialization
+
+incipit {
+    # Empty tabula (Map)
+    varia cache = {} innatum tabula<textus, numerus>
+    cache["foo"] = 42
+    cache["bar"] = 99
+    scribe cache["foo"]  # 42
+
+    # Empty lista (Array)
+    varia items = [] innatum lista<textus>
+    items.adde("alpha")
+    items.adde("beta")
+    scribe items.longitudo()  # 2
+
+    # Non-empty tabula with initial values
+    fixum scores = { alice: 95, bob: 87 } innatum tabula<textus, numerus>
+    scribe scores["alice"]  # 95
+
+    # Non-empty lista
+    fixum nums = [1, 2, 3] innatum lista<numerus>
+    scribe nums.primus()  # 1
+
+    # Why innatum is needed:
+    # Without innatum, {} is just an object literal, not a Map
+    # varia broken = {} qua tabula<textus, numerus>
+    # broken["key"] = 1  # Error: Map methods don't exist
+
+    # With innatum, we get the native Map instance
+    varia working = {} innatum tabula<textus, numerus>
+    working["key"] = 1  # Works: properly constructed Map
+}

@@ -1,7 +1,20 @@
 ---
-status: partial
-note: Forward references implemented 2025-12; throwability propagation remains planned
-updated: 2025-12
+status: completed
+updated: 2026-01-06
+note: Multi-phase semantic analysis fully implemented. Forward references and type alias resolution working. Throwability propagation remains future work.
+implemented:
+  - Phase 1a: Predeclaration (functions, genus, pactum, ordo, discretio, type aliases)
+  - Phase 1b: Signature resolution
+  - Phase 1c: Type alias fixed-point iteration
+  - Phase 1d: Circular type alias detection
+  - Phase 2: Body analysis with complete symbol table
+  - Forward function references
+  - Mutual recursion
+  - Forward type references
+tests: 3 tests in fundamenta.yaml (forward function, mutual recursion, forward type)
+future:
+  - Phase 3: Effect analysis (throwability propagation for Zig/Rust)
+  - Type inference across functions
 ---
 
 # Two-Pass Semantic Analysis

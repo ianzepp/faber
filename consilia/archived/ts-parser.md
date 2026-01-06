@@ -1,3 +1,9 @@
+---
+status: archived
+updated: 2026-01-06
+note: Design for hypothetical TS→Faber transpiler. The fab codegen target exists (Faber→Faber formatter), but TS parser was never built. Rivus was written from scratch instead.
+---
+
 # TypeScript to Faber Parser
 
 This document describes the architecture for a TypeScript-to-Faber transpiler that uses the existing Faber AST and codegen infrastructure.

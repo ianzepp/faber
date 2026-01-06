@@ -1,0 +1,57 @@
+# Type conversion operators
+#
+# Faber provides explicit conversion operators for primitive types:
+#   numeratum  - parse to integer
+#   fractatum  - parse to float
+#   textatum   - convert to string
+#   bivalentum - convert to boolean
+#
+# Optional: vel (nullish coalescing) for fallback on parse failure
+
+incipit {
+    # numeratum - parse string to integer
+    fixum age = "42" numeratum
+    scribe age  # 42
+
+    # With fallback on parse failure
+    fixum invalid = "abc" numeratum vel 0
+    scribe invalid  # 0 (parse failed, uses fallback)
+
+    # fractatum - parse string to float
+    fixum price = "19.99" fractatum
+    scribe price  # 19.99
+
+    # With fallback
+    fixum badPrice = "not-a-number" fractatum vel 0.0
+    scribe badPrice  # 0.0
+
+    # textatum - convert to string
+    fixum count = 42
+    fixum countStr = count textatum
+    scribe countStr  # "42"
+
+    fixum flag = verum
+    fixum flagStr = flag textatum
+    scribe flagStr  # "true"
+
+    # bivalentum - convert to boolean
+    fixum zero = 0
+    fixum zeroAsBool = zero bivalentum
+    scribe zeroAsBool  # falsum
+
+    fixum nonZero = 42
+    fixum nonZeroAsBool = nonZero bivalentum
+    scribe nonZeroAsBool  # verum
+
+    # Chaining conversions
+    fixum input = "123"
+    fixum doubled = (input numeratum) * 2
+    scribe doubled  # 246
+
+    # Radix types (Hex, Oct, Bin, Dec)
+    fixum hex = "FF" numeratum<Hex>
+    scribe hex  # 255
+
+    fixum octal = "755" numeratum<Oct>
+    scribe octal  # 493
+}

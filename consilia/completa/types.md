@@ -1,8 +1,28 @@
 ---
-status: partial
-targets: [ts, py, zig, cpp]
-note: Core types implemented; `series` tuples, `aperit` index signatures, value semantics are planned
-updated: 2024-12
+status: completed
+updated: 2026-01-06
+note: Core type system fully implemented for TypeScript. series, aperit, and value semantics remain unimplemented across all targets.
+implemented:
+  - genus declarations (all targets)
+  - pactum interfaces (all targets)
+  - implet implementation (ts, py, zig, rs)
+  - Field defaults with colon syntax
+  - Field visibility (@ privatum)
+  - Method visibility (@ privata)
+  - generis static members
+  - Type parameters (generics)
+  - ego self-reference
+  - creo constructor hook
+  - novum instantiation
+  - novum...de construction from source
+  - Object destructuring
+  - numquam (never type)
+  - typeof with typus (ts only, partial py)
+  - Primitive types (textus, numerus, fractus, bivalens, nihil, vacuum, etc.)
+not_implemented:
+  - series<T...> tuple types (design only)
+  - aperit index signatures (design only)
+  - Value semantics (future)
 ---
 
 # Types Design

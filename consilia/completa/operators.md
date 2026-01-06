@@ -1,7 +1,24 @@
 ---
-status: implemented
-targets: [ts, py, zig]
-updated: 2024-12
+status: completed
+updated: 2026-01-06
+note: Core operators fully implemented. Binary literals and sed regex remain design-only.
+implemented:
+  - Arithmetic: +, -, *, /, % (all targets)
+  - Comparison: ==, !=, <, >, <=, >=, est (===), non est (!==)
+  - Logical: &&/et, ||/aut, !/non, vel (??)
+  - Bitwise: &, |, ^, ~, <<, >> (grammar complete, limited tests)
+  - Assignment: =, +=, -=, *=, /=, &=, |= (compound tested: ts, py, zig, rs)
+  - Unary: nihil, nonnihil, negativum (tested); nulla, nonnulla, positivum (in grammar, untested)
+  - Range: .., ante, usque, per
+  - Range/set operators: intra, inter
+  - Type cast: qua
+  - Spread/rest: sparge, ceteri
+  - Ternary: ?: and sic...secus
+not_implemented:
+  - Binary literals (0b1010)
+  - sed regex literals
+  - est for type checking (separate from equality)
+  - verum x, falsum x (in Zig only)
 ---
 
 # Operators Reference
@@ -45,7 +62,9 @@ Complete reference of all operators in Faber Romanus.
 | `%`         | Modulo                   | `7 % 3` | `1`    |
 | `-` (unary) | Negation                 | `-5`    | `-5`   |
 
-**Not supported:** `++`, `--`, `+=`, `-=`, `*=`, `/=`, `**` (exponentiation)
+**Note:** Compound assignment (`+=`, `-=`, `*=`, `/=`) is supported. See Assignment section.
+
+**Not supported:** `++`, `--`, `**` (exponentiation)
 
 ---
 
@@ -89,7 +108,7 @@ Complete reference of all operators in Faber Romanus.
 
 **Design decision:** No Latin keywords for bitwise operators. These are low-level operations that don't map naturally to spoken language.
 
-**Not supported:** `>>>` (unsigned right shift), `&=`, `|=`, `^=`, `<<=`, `>>=`
+**Note:** `&=` and `|=` are supported (see Assignment section). Other bitwise compound assignments (`^=`, `<<=`, `>>=`) and unsigned right shift (`>>>`) are not supported.
 
 ---
 
@@ -218,7 +237,7 @@ positivum x    # x > 0
 | `&=`     | Bitwise AND and assign | `flags &= mask`  |
 | `\|=`    | Bitwise OR and assign  | `flags \|= flag` |
 
-**Not supported:** `%=`, `^=`, `<<=`, `>>=`, `++`, `--`
+**Not supported:** `%=`, `^=`, `<<=`, `>>=`, `++`, `--` (increment/decrement)
 
 ---
 
@@ -261,11 +280,15 @@ positivum x    # x > 0
 
 ## Not Yet Implemented
 
-| Feature                  | Description                        | Status        |
-| ------------------------ | ---------------------------------- | ------------- |
-| `sed /pattern/`          | Regex literals                     | Design only   |
-| `est` (type check)       | `x est textus` → typeof/instanceof | Design only   |
-| Binary literals          | `0b1010`                           | Not supported |
-| `>>>`                    | Unsigned right shift               | Not planned   |
-| `++`, `--`               | Increment/decrement                | Not planned   |
-| `%=`, `^=`, `<<=`, `>>=` | Additional compound                | Not planned   |
+| Feature                       | Description                        | Status             |
+| ----------------------------- | ---------------------------------- | ------------------ |
+| `sed /pattern/`               | Regex literals                     | Design only        |
+| `est` (type check)            | `x est textus` → typeof/instanceof | Design only        |
+| Binary literals               | `0b1010`                           | Not supported      |
+| `verum x`, `falsum x`         | Is true/false checks               | Zig only           |
+| `nulla`, `nonnulla` operators | Is empty/has content               | Grammar only       |
+| `positivum` operator          | Is positive                        | Grammar only       |
+| `>>>` unsigned right shift    | Unsigned right shift               | Not planned        |
+| `++`, `--` increment          | Increment/decrement                | Not planned        |
+| `%=`, `^=`, `<<=`, `>>=`      | Additional compound assignment     | Not planned        |
+| `**` exponentiation           | Power operator                     | Not planned        |

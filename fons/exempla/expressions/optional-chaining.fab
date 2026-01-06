@@ -1,0 +1,50 @@
+# Optional chaining with ?.
+#
+# Safely access nested properties that might be null/undefined
+#
+# Syntax:
+#   object?.property
+#   object?[index]
+
+genus Address {
+    textus city
+    textus? state
+}
+
+genus User {
+    textus name
+    Address? address
+}
+
+incipit {
+    # User with full address
+    fixum alice = novum User {
+        name: "Alice",
+        address: novum Address { city: "Roma", state: "Italia" }
+    }
+
+    # Optional chaining prevents errors when properties might be nihil
+    fixum city = alice?.address?.city
+    scribe city  # "Roma"
+
+    fixum state = alice?.address?.state
+    scribe state  # "Italia"
+
+    # User with no address
+    fixum bob = novum User { name: "Bob" }
+    fixum bobCity = bob?.address?.city
+    scribe bobCity  # nihil (no error thrown)
+
+    # Chaining through multiple levels
+    fixum bobState = bob?.address?.state
+    scribe bobState  # nihil
+
+    # Optional array access
+    fixum items = ["a", "b", "c"]
+    scribe items?[0]  # "a"
+    scribe items?[10] # undefined/nihil (out of bounds)
+
+    # Combining with vel for defaults
+    fixum defaultCity = bob?.address?.city vel "Unknown"
+    scribe defaultCity  # "Unknown"
+}

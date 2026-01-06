@@ -9,22 +9,29 @@ fons/                   # Source code ("fons" = source/spring)
 ├── faber/              # Reference compiler (TypeScript)
 │   │                   # Uses mixed Latin/English identifiers
 │   ├── codegen/        # Code generators by target
+│   │   ├── norma-registry.gen.ts  # Generated from fons/norma/*.fab
 │   │   └── <target>/   # ts, py, rs, cpp, zig, fab
 │   │       ├── index.ts
 │   │       ├── generator.ts
 │   │       ├── expressions/
 │   │       ├── statements/
-│   │       └── norma/  # Standard library codegen
+│   │       ├── preamble/   # Target-specific preamble generation
+│   │       └── norma/      # Legacy stdlib codegen (partial)
 │   ├── lexicon/        # Lexer/tokenizer
 │   ├── parser/         # Parser and AST
 │   ├── semantic/       # Type checking and analysis
 │   └── shared/         # Shared utilities
 ├── rivus/              # Bootstrap compiler (Faber source)
 │   │                   # Uses Latin exclusively - compiler written in Faber
+│   ├── ast/            # AST type definitions (.fab)
 │   ├── lexicon/        # Lexer modules (.fab)
+│   ├── lexor/          # Lexer implementation (.fab)
 │   ├── parser/         # Parser modules (.fab)
 │   ├── semantic/       # Semantic analysis (.fab)
 │   └── codegen/        # Code generation (.fab)
+│       ├── norma-registry.gen.fab  # Generated from fons/norma/*.fab
+│       ├── ts/         # TypeScript codegen
+│       └── zig/        # Zig codegen (partial)
 ├── proba/              # Shared test suite for both compilers
 │   │                   # Maintains feature sync between faber and rivus
 │   ├── parser/         # Parser tests
@@ -32,6 +39,7 @@ fons/                   # Source code ("fons" = source/spring)
 │   └── codegen/        # Codegen tests by target
 ├── exempla/            # Example .fab programs
 ├── grammatica/         # Language documentation (prose tutorials)
+├── norma/              # Standard library definitions with codegen annotations
 └── subsidia/           # Helper utilities (e.g., Zig runtime)
 
 opus/                   # Build outputs ("opus" = work/product)
@@ -47,7 +55,6 @@ consilia/               # Design documents ("consilia" = plans/advice)
 └── cleanup/            # Refactoring notes
 
 probationes/            # LLM research harness (learnability trials)
-norma/                  # Standard library modules
 scripta/                # Build and utility scripts
 editors/                # Editor integrations (syntax highlighting, etc.)
 archivum/               # Historical/archived materials
@@ -58,7 +65,7 @@ archivum/               # Historical/archived materials
 - **Type-first syntax**: `textus name` not `name: textus`
 - **Check grammar first**: Never assume syntax exists - verify in `EBNF.md` or `fons/grammatica/*.md`
 - **No invented syntax**: Don't create variations (e.g., no `Type?` for nullable)
-- **Empty collections need explicit types**: `[] qua lista<T>`, `{} qua tabula<K,V>`
+- **Empty collections need explicit types**: `[] innatum lista<T>`, `{} innatum tabula<K,V>`
 - **Use `ignotum` for nullable params**, not invented suffixes
 - **Banned keyword**: `cum` (Latin "with" - English homograph)
 - **Column 0 keywords**: Declaration keywords (`functio`, `genus`, etc.) must start at column 0
@@ -205,7 +212,7 @@ bun run faber check <file.fab>  # Validate before committing
 
 **Common pitfalls:**
 
-- Empty collections need explicit types
+- Empty collections need explicit types (`[] innatum lista<T>`)
 - Use `ignotum` for nullable parameters
 - Browse `fons/exempla/` and `fons/rivus/` for patterns
 

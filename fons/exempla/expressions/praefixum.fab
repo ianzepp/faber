@@ -1,0 +1,33 @@
+# Compile-time evaluation with praefixum
+#
+# praefixum evaluates expressions at compile time
+# Values are computed during compilation, not runtime
+#
+# Syntax:
+#   praefixum(expression)
+#   praefixum { block }
+
+incipit {
+    # Compile-time constant expression
+    fixum PI = praefixum(3.14159)
+    fixum TAU = praefixum(2 * 3.14159)
+
+    # Compile-time computation
+    fixum DAYS_IN_YEAR = praefixum(365)
+    fixum HOURS_IN_YEAR = praefixum(365 * 24)
+    fixum SECONDS_IN_YEAR = praefixum(365 * 24 * 60 * 60)
+
+    scribe "Days:", DAYS_IN_YEAR
+    scribe "Hours:", HOURS_IN_YEAR
+    scribe "Seconds:", SECONDS_IN_YEAR
+
+    # Compile-time block
+    fixum STATUS_CODES = praefixum({
+        ok: 200,
+        created: 201,
+        notFound: 404,
+        error: 500
+    })
+
+    scribe "OK code:", STATUS_CODES.ok
+}

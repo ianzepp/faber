@@ -62,11 +62,12 @@ annotation   := '@' IDENTIFIER+ | stdlibAnnotation
 ### Stdlib Annotations
 
 ```ebnf
-stdlibAnnotation := innatumAnnotation | subsidiaAnnotation | radixAnnotation | verteAnnotation
+stdlibAnnotation := innatumAnnotation | subsidiaAnnotation | radixAnnotation | verteAnnotation | externaAnnotation
 innatumAnnotation := '@' 'innatum' targetMapping (',' targetMapping)*
 subsidiaAnnotation := '@' 'subsidia' targetMapping (',' targetMapping)*
 radixAnnotation := '@' 'radix' IDENTIFIER (',' IDENTIFIER)*
 verteAnnotation := '@' 'verte' IDENTIFIER (STRING | '(' IDENTIFIER (',' IDENTIFIER)* ')' '->' STRING)
+externaAnnotation := '@' 'externa'
 targetMapping := IDENTIFIER STRING
 ```
 
@@ -74,6 +75,7 @@ targetMapping := IDENTIFIER STRING
 - `@ subsidia` specifies external implementation files
 - `@ radix` declares morphological stem and valid verb forms
 - `@ verte` defines codegen transformation (method name or template)
+- `@ externa` marks declarations as externally provided (no initializer/body required)
 
 - `sub` = extends, `implet` = implements
 - `generis` = static, `nexum` = bound/property
@@ -346,6 +348,8 @@ adBinding     := adBindingVerb typeAnnotation? 'pro' IDENTIFIER ('ut' IDENTIFIER
 adBindingVerb := 'fit' | 'fiet' | 'fiunt' | 'fient'
 ```
 
+**Note:** `ad` statement is parsed but codegen is not yet implemented. See `consilia/futura/ad.md`.
+
 ---
 
 ## DSL Transforms
@@ -359,6 +363,8 @@ dslVerb      := 'prima' | 'ultima' | 'summa'
 abExpr := 'ab' expression filter? (',' dslTransform)*
 filter := 'non'? ('ubi' condition | IDENTIFIER)
 ```
+
+**Note:** Collection DSL transforms (`prima`, `ultima`, `summa`) are implemented for TypeScript target only. Other targets not yet supported.
 
 ---
 

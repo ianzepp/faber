@@ -1,7 +1,23 @@
 ---
-status: implemented
-targets: [ts, py, zig, cpp]
-updated: 2024-12
+status: completed
+updated: 2026-01-06
+note: Core iteration mechanisms fully implemented. Pipeline transforms, indexed iteration, and yield delegation remain unimplemented.
+implemented:
+  - ex...pro/fit/fiet loops (for-of) - all targets
+  - de...pro loops (for-in) - ts, py, zig, rs
+  - Range operators (.., ante, usque, per) - all targets
+  - dum while loops - all targets
+  - Generators (fiunt/fient) - ts, py
+  - cursor prefix - ts
+  - cede (yield/await) - ts, py
+  - ergo one-liner - all targets
+  - cape error handling on loops - all targets
+  - rumpe (break) / perge (continue) - all targets
+not_implemented:
+  - Pipeline per transforms (design only)
+  - Indexed iteration (i, n) tuple binding
+  - cede ex delegation (yield* equivalent)
+  - Labeled loops
 ---
 
 # Iteration Design

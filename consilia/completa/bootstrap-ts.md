@@ -1,10 +1,21 @@
+---
+status: completed
+updated: 2026-01-06
+note: Historical document describing bootstrap phases. Project completed and renamed to "Rivus"
+see: fons/rivus/CHECKLIST.md for current implementation status
+---
+
 # Bootstrap: Self-Hosted Faber Compiler (TypeScript Target)
 
 Rewrite the Faber compiler in Faber, targeting TypeScript/Bun.
 
-## Current State
+## Status Summary (2026-01-06)
 
-**Phase 1 (TypeScript Compilation) complete.** All 51 fons-fab files compile to TypeScript with zero type errors. Phase 2 (Self-Compilation) ready to begin.
+**COMPLETED.** The bootstrap compiler "Rivus" is now at `fons/rivus/` with 107 .fab source files (originally 51 in this document). TypeScript target fully implemented with 741 tests passing (100%). Output location: `opus/rivus/fons/ts/` (108 TypeScript files). Zig target partially implemented. CLI: `bun run build:rivus` to build, `bun run rivus compile <file.fab>` to use.
+
+This document describes the historical development phases. Paths reference the original `fons-fab/` location which has been renamed to `fons/rivus/`.
+
+## Current State (Historical - Phase 1)
 
 | Module    | Location             |  Files |      Lines |
 | --------- | -------------------- | -----: | ---------: |

@@ -1,7 +1,7 @@
 ---
 status: philosophy
-note: Foundational design document; not a feature spec
-updated: 2024-12
+updated: 2026-01-06
+note: Foundational design philosophy and project vision. Not a feature spec or implementation plan.
 ---
 
 # Faber Romanus: Statement of Purpose

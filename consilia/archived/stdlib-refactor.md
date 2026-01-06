@@ -1,3 +1,10 @@
+---
+status: superseded
+updated: 2026-01-06
+note: Phases 1-3 completed (unified registries, allocator threading, subsidia files). Superseded by norma-faber.md approach (stdlib defined in .fab source with annotations).
+see: consilia/completa/norma-faber.md
+---
+
 # Stdlib Refactor
 
 Restructure standard library code generation to use external runtime libraries and a unified method registry.

@@ -1,3 +1,19 @@
+---
+status: completed
+updated: 2026-01-06
+note: @ externa annotation fully implemented for TypeScript and Zig targets. No tests yet.
+implemented:
+  - @ externa annotation parsing
+  - TypeScript codegen (declare const/function)
+  - Zig codegen (extern var/fn)
+  - Semantic validation (skip missing init/body errors)
+not_implemented:
+  - Python, Rust, C++ targets
+  - Test coverage
+  - Conditional compilation (@ externa(ts) vs @ externa(zig))
+  - C FFI annotations (@ c_string)
+---
+
 # Externa Declarations
 
 External declarations tell the compiler "this symbol exists but is provided elsewhere" - by the runtime, FFI, or linker.

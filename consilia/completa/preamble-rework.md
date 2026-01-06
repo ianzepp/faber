@@ -1,3 +1,17 @@
+---
+status: completed
+updated: 2026-01-06
+note: Core goals achieved. All targets have preamble/ directories and use RequiredFeatures. Preambles organized as constants in index.ts (not individual files per snippet).
+implemented:
+  - preamble/ directories for all targets (ts, py, rs, cpp, zig)
+  - RequiredFeatures standardized across all targets
+  - Zig uses subsidia/zig/ external files (not inline snippets)
+  - Feature-driven preamble generation
+not_as_designed:
+  - Preambles are constants in preamble/index.ts, not separate files (panic.ts, flumina.ts)
+  - C++ uses RequiredFeatures but also maintains includes Set for headers
+---
+
 # Preamble Rework
 
 Restructure preamble generation to use external files and standardize detection across all targets.

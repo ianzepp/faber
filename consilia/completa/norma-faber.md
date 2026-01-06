@@ -1,3 +1,21 @@
+---
+status: completed
+updated: 2026-01-06
+note: Standard library annotation system fully implemented. lista migration complete (47 methods, 144 tests passing).
+implemented:
+  - All 4 stdlib annotations (@ innatum, @ subsidia, @ radix, @ verte)
+  - Build-time registry generation (bun run build:norma)
+  - All 5 targets (ts, py, rs, cpp, zig)
+  - Indexed placeholders (§0, §1) for arg reordering
+  - Complete lista.fab with 47 methods
+  - Morphology validation (receiver-bound)
+remaining:
+  - tabula.fab and copia.fab migrations (lista is complete template)
+  - Phase 5: Full morphology validation at all call sites
+  - Phase 6: Subsidia fallback for complex implementations
+  - Phase 7: Real morphology for IO (solum, caelum, arca)
+---
+
 # norma-faber - Standard Library in Faber Source
 
 Define the standard library as Faber source files with codegen annotations, replacing scattered TypeScript registries.

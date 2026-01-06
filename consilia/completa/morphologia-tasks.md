@@ -1,3 +1,10 @@
+---
+status: completed
+updated: 2026-01-06
+note: Milestone 1 completed - receiver-bound morphology dispatch implemented in Rivus for lista.filtra/filtrata
+see: morphologia.md for design documentation
+---
+
 # morphologia-tasks.md
 
 This file is a task brief for implementing **Morphologia** in the **Rivus** compiler only.

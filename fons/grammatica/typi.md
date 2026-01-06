@@ -203,7 +203,7 @@ fixum textus? name = getOptionalName()
 si name est nihil {
     scribe "No name provided"
 }
-aliter {
+secus {
     scribe name.longitudo()
 }
 ```
@@ -237,14 +237,22 @@ fixum lista<textus> names = ["Marcus", "Julia", "Gaius"]
 fixum lista<numerus> scores = [100, 95, 87]
 ```
 
-Array shorthand uses brackets with type parameter:
+Array shorthand uses brackets after the type:
 
 ```fab
 fixum textus[] names = ["Marcus", "Julia", "Gaius"]
-fixum numerus[] empty = []
 ```
 
 The shorthand `textus[]` is equivalent to `lista<textus>`.
+
+For empty collections, use `innatum` to construct the native type:
+
+```fab
+varia items = [] innatum lista<textus>
+varia cache = {} innatum tabula<textus, numerus>
+```
+
+Without `innatum`, empty literals lack methods. The `innatum` keyword (Latin "inborn") creates proper native instances---`new Map()` in TypeScript, `HashMap` in Rust, etc.
 
 Access elements by index:
 
@@ -390,7 +398,7 @@ fixum unio<textus, numerus> value = getValue()
 si value est numerus {
     scribe value * 2
 }
-aliter si value est textus {
+sin value est textus {
     scribe value.longitudo()
 }
 ```
@@ -446,7 +454,7 @@ fixum textus? name = getOptionalName()
 si name est nihil {
     scribe "No name"
 }
-aliter {
+secus {
     scribe name
 }
 ```

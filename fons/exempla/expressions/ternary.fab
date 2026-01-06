@@ -1,0 +1,44 @@
+# Ternary conditional expressions
+#
+# Two syntaxes (equivalent):
+#   condition ? then : else
+#   condition sic then secus else
+#
+# Latin: sic = "thus/so", secus = "otherwise"
+
+incipit {
+    fixum age = 25
+
+    # Symbolic ternary
+    fixum status = age >= 18 ? "adult" : "minor"
+    scribe status  # "adult"
+
+    # Latin ternary
+    fixum statusLatin = age >= 18 sic "adult" secus "minor"
+    scribe statusLatin  # "adult"
+
+    # Nested ternary
+    fixum score = 85
+    fixum grade = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : "F"
+    scribe grade  # "B"
+
+    # Latin nested (reads more clearly)
+    fixum gradeLatin =
+        score >= 90 sic "A" secus
+        score >= 80 sic "B" secus
+        score >= 70 sic "C" secus "F"
+    scribe gradeLatin  # "B"
+
+    # In expressions
+    fixum max = age > 30 ? age : 30
+    scribe "Max:", max
+
+    # With nullish values
+    fixum textus? maybe = nihil
+    fixum result = maybe != nihil ? maybe : "default"
+    scribe result  # "default"
+
+    # Prefer sic/secus for clarity
+    fixum readable = age >= 21 sic "can drink" secus "cannot drink"
+    scribe readable
+}

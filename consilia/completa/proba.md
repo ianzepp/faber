@@ -1,7 +1,21 @@
 ---
-status: implemented
-targets: [ts]
-updated: 2024-12
+status: completed
+updated: 2026-01-06
+note: Core test syntax fully implemented for TypeScript. Table-driven tests not implemented.
+implemented:
+  - probandum suites (nested)
+  - proba test cases
+  - proba omitte (skip)
+  - proba futurum (todo)
+  - praepara/postpara (beforeEach/afterEach)
+  - praepara/postpara omnia (beforeAll/afterAll)
+  - praeparabit/postparabit (async hooks)
+  - adfirma assertions
+  - TypeScript codegen
+not_implemented:
+  - Table-driven tests (proba ex [...] pro)
+  - solum modifier (only)
+  - Non-TS targets (py, zig, rs, cpp)
 ---
 
 # Proba: Test Syntax for Faber
@@ -10,21 +24,23 @@ Test framework syntax for self-hosted compiler testing in rivus/.
 
 ## Implementation Status
 
-| Feature              | Status   | Notes                         |
-| -------------------- | -------- | ----------------------------- |
-| `probandum` suites   | Done     | Nested suites supported       |
-| `proba` test cases   | Done     | Basic test declarations       |
-| `proba omitte`       | Done     | Skip with reason              |
-| `proba futurum`      | Done     | Todo with reason              |
-| `cura ante/post`     | Done     | Setup/teardown blocks         |
-| `cura ... omnia`     | Done     | Before/after all              |
-| `adfirma` assertions | Done     | Already existed               |
-| Table-driven tests   | Phase 2  | `proba ex [...] pro { }`      |
-| TypeScript codegen   | Done     | describe/test/beforeEach/etc. |
-| Python codegen       | Not Done | —                             |
-| Zig codegen          | Not Done | —                             |
-| Rust codegen         | Not Done | —                             |
-| C++ codegen          | Not Done | —                             |
+| Feature                  | Status   | Notes                         |
+| ------------------------ | -------- | ----------------------------- |
+| `probandum` suites       | Done     | Nested suites supported       |
+| `proba` test cases       | Done     | Basic test declarations       |
+| `proba omitte`           | Done     | Skip with reason              |
+| `proba futurum`          | Done     | Todo with reason              |
+| `praepara/postpara`      | Done     | Setup/teardown blocks         |
+| `praeparabit/postparabit`| Done     | Async setup/teardown          |
+| `... omnia`              | Done     | Before/after all              |
+| `adfirma` assertions     | Done     | Already existed               |
+| `solum` modifier         | Not Done | Only run this test (planned)  |
+| Table-driven tests       | Not Done | `proba ex [...] pro { }`      |
+| TypeScript codegen       | Done     | describe/test/beforeEach/etc. |
+| Rust codegen             | Partial  | Basic test/suite support      |
+| Python codegen           | Not Done | —                             |
+| Zig codegen              | Not Done | —                             |
+| C++ codegen              | Not Done | —                             |
 
 ## Keywords
 
@@ -34,10 +50,12 @@ Test framework syntax for self-hosted compiler testing in rivus/.
 | Test        | `proba "name" { }`                  | `test()`                  |
 | Skip        | `proba omitte "reason" "name" { }`  | `test.skip()`             |
 | Todo        | `proba futurum "reason" "name" { }` | `test.todo()`             |
-| Before each | `cura ante { }`                     | `beforeEach()`            |
-| Before all  | `cura ante omnia { }`               | `beforeAll()`             |
-| After each  | `cura post { }`                     | `afterEach()`             |
-| After all   | `cura post omnia { }`               | `afterAll()`              |
+| Before each | `praepara { }`                      | `beforeEach()`            |
+| Before all  | `praepara omnia { }`                | `beforeAll()`             |
+| After each  | `postpara { }`                      | `afterEach()`             |
+| After all   | `postpara omnia { }`                | `afterAll()`              |
+| Async before| `praeparabit { }` / `praeparabit omnia { }` | `beforeEach(async)`/`beforeAll(async)` |
+| Async after | `postparabit { }` / `postparabit omnia { }` | `afterEach(async)`/`afterAll(async)` |
 | Assertion   | `adfirma expr`                      | `expect(expr).toBe(true)` |
 
 ## Etymology
@@ -46,9 +64,10 @@ Test framework syntax for self-hosted compiler testing in rivus/.
 - **proba** - imperative of `probare`: "test!" / "prove!"
 - **omitte** - imperative of `omittere`: "skip!" / "omit!"
 - **futurum** - neuter noun: "the future" / "pending"
-- **cura** - noun: "care, concern" — resource management keyword
-- **ante** - preposition: "before"
-- **post** - preposition: "after" (used as identifier after `cura`)
+- **praepara** - "prepare!" (beforeEach)
+- **praeparabit** - "will prepare" (async beforeEach)
+- **postpara** - "prepare after" (afterEach)
+- **postparabit** - "will prepare after" (async afterEach)
 - **omnia** - neuter plural: "all things"
 
 ## Syntax
@@ -122,22 +141,28 @@ Modifier comes after `proba`, then reason string, then test name string.
 
 ```fab
 probandum "Database" {
-    cura ante omnia { db = connect() }   # once before all tests
-    cura ante { db.reset() }             # before each test
-    cura post { db.rollback() }          # after each test
-    cura post omnia { db.close() }       # once after all tests
+    praepara omnia { db = connect() }   # once before all tests
+    praepara { db.reset() }             # before each test
+    postpara { db.rollback() }          # after each test
+    postpara omnia { db.close() }       # once after all tests
 
     proba "inserts" { ... }
     proba "updates" { ... }
 }
 ```
 
-Uses `cura` (care) keyword for resource management, consistent with the general
-resource management design in `consilia/cura.md`. The `ante`/`post` timing
-specifier follows, with optional `omnia` for "all" vs "each" semantics.
+Uses dedicated test hook keywords `praepara`/`postpara` with optional `omnia` modifier for "all" vs "each" semantics.
 
-Design note: `post` is recognized as an identifier (not keyword) after `cura`
-to avoid conflicts with method names like `post()` for HTTP operations.
+For async hooks, use the future-tense variants:
+
+```fab
+probandum "AsyncDatabase" {
+    praeparabit omnia { db = cede connect() }   # async beforeAll
+    postparabit omnia { cede db.close() }       # async afterAll
+
+    proba "queries" { ... }
+}
+```
 
 ### Async Tests
 

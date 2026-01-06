@@ -109,6 +109,7 @@ Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, �
 | `fiunt T` (generator return)       |    ●     | ○ |  ○   | ○  |  ○  |
 | `fient T` (async generator return) |    ●     | ○ |  ○   | ○  |  ○  |
 | `prae` (comptime type param)       |    ●     | ○ |  ○   | ○  |  ○  |
+| `@ externa` (external decl)        |    ●     | ● |  ○   | ○  |  ○  |
 
 ## Control Flow Statements
 
@@ -135,6 +136,7 @@ Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, �
 | `secus` (else/ternary alt)    |    ●     | ● |  ○   | ○  |  ○  |
 | `fac` (do/block)              |    ●     | ○ |  ○   | ○  |  ○  |
 | `ergo` (then, one-liner)      |    ●     | ○ |  ○   | ○  |  ○  |
+| `reddit` (then return)        |    ●     | ● |  ○   | ○  |  ○  |
 | `rumpe` (break)               |    ●     | ● |  ○   | ○  |  ○  |
 | `perge` (continue)            |    ●     | ● |  ○   | ○  |  ○  |
 | `custodi` (guard)             |    ●     | ○ |  ○   | ○  |  ○  |
@@ -195,6 +197,8 @@ Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, �
 | Object spread (`sparge`)            |    ●     | ○ |  ○   | ○  |  ○  |
 | Binary operators                    |    ●     | ● |  ○   | ○  |  ○  |
 | Comparison operators                |    ●     | ● |  ○   | ○  |  ○  |
+| `intra` (range containment)         |    ●     | ● |  ○   | ○  |  ○  |
+| `inter` (set membership)            |    ●     | ● |  ○   | ○  |  ○  |
 | Logical operators                   |    ●     | ● |  ○   | ○  |  ○  |
 | Bitwise operators                   |    ●     | ○ |  ○   | ○  |  ○  |
 | Unary operators                     |    ●     | ● |  ○   | ○  |  ○  |
@@ -224,6 +228,7 @@ Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, �
 | `!==` / `non est` (strict ineq.)    |    ●     | ○ |  ○   | ○  |  ○  |
 | `est` (instanceof/typeof)           |    ●     | ○ |  ○   | ○  |  ○  |
 | `qua` (type cast)                   |    ●     | ● |  ○   | ○  |  ○  |
+| `innatum` (native construction)     |    ●     | ● |  ○   | ○  |  ○  |
 | `numeratum` (to integer)            |    ●     | ○ |  ○   | ○  |  ○  |
 | `fractatum` (to float)              |    ●     | ○ |  ○   | ○  |  ○  |
 | `textatum` (to string)              |    ●     | ○ |  ○   | ○  |  ○  |
@@ -285,14 +290,16 @@ Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, �
 | ------------------------------- | :--------: | :-: | :----: | :--: | :---: |
 | `proba` (test case)             |    ●     | ○ |  ○   | ○  |  ○  |
 | `probandum` (test suite)        |    ●     | ○ |  ○   | ○  |  ○  |
-| `cura ante` (beforeEach)        |    ●     | ○ |  ○   | ○  |  ○  |
-| `cura post` (afterEach)         |    ●     | ○ |  ○   | ○  |  ○  |
-| `cura ante omnia` (beforeAll)   |    ●     | ○ |  ○   | ○  |  ○  |
-| `cura post omnia` (afterAll)    |    ●     | ○ |  ○   | ○  |  ○  |
+| `praepara` (beforeEach)         |    ●     | ○ |  ○   | ○  |  ○  |
+| `postpara` (afterEach)          |    ●     | ○ |  ○   | ○  |  ○  |
+| `praepara omnia` (beforeAll)    |    ●     | ○ |  ○   | ○  |  ○  |
+| `postpara omnia` (afterAll)     |    ●     | ○ |  ○   | ○  |  ○  |
+| `praeparabit` (async beforeEach)|    ●     | ○ |  ○   | ○  |  ○  |
+| `postparabit` (async afterEach) |    ●     | ○ |  ○   | ○  |  ○  |
 | `omitte` modifier (skip)        |    ●     | ○ |  ○   | ○  |  ○  |
-| `solum` modifier (only)         |    ●     | ○ |  ○   | ○  |  ○  |
+| `solum` modifier (only)         |    ○     | ○ |  ○   | ○  |  ○  |
 | `futurum` modifier (todo)       |    ●     | ○ |  ○   | ○  |  ○  |
-| Table-driven tests (`proba ex`) |    ●     | ○ |  ○   | ○  |  ○  |
+| Table-driven tests (`proba ex`) |    ○     | ○ |  ○   | ○  |  ○  |
 
 ## Preamble / Prologue
 

@@ -1,0 +1,24 @@
+# Read input with lege
+#
+# lege reads from stdin
+# lege lineam reads a single line
+#
+# Note: lege is an intrinsic function that varies by target
+
+incipit {
+    # Read a line from stdin
+    scribe "Enter your name:"
+    fixum name = lege lineam
+    scribe "Hello,", name
+
+    # Read multiple lines
+    scribe "Enter your age:"
+    fixum ageInput = lege lineam
+    fixum age = ageInput numeratum vel 0
+
+    si age >= 18 {
+        scribe name, "is an adult"
+    } secus {
+        scribe name, "is a minor"
+    }
+}

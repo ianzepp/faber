@@ -1,8 +1,20 @@
+---
+status: completed
+updated: 2026-01-06
+note: reddit keyword fully implemented as syntactic sugar for ergo redde
+implemented:
+  - reddit keyword in lexicon
+  - Parser support in all contexts (si, dum, ex/de loops, elige, discerne, incipit/incipiet, custodi)
+  - All targets (ts, py, rs, cpp, zig)
+  - Comprehensive test coverage
+tests: 8 tests covering si, elige, loops, discerne, incipit, sin/secus chains
+---
+
 # Reddit Keyword - Therefore-Return Syntax
 
 ## Overview
 
-Add `reddit` keyword as syntactic sugar for `ergo redde` - a single keyword meaning "therefore return this expression."
+The `reddit` keyword provides syntactic sugar for `ergo redde` - a single keyword meaning "therefore return this expression."
 
 ## Motivation
 

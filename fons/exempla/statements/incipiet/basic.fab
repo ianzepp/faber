@@ -1,0 +1,33 @@
+# Async program entry point with incipiet
+#
+# incipiet creates an async entry point
+# Use when your program needs to await async operations
+#
+# Syntax:
+#   incipiet { <async body> }
+#   incipiet ergo <statement>
+#   incipiet reddit <expression>
+
+# Helper async function
+functio fetchData() fiet textus {
+    # Simulates async operation
+    redde "data loaded"
+}
+
+functio processData(textus data) fiet numerus {
+    redde data.longitudo()
+}
+
+# Async entry point
+incipiet {
+    scribe "Starting async program..."
+
+    # Await async functions with cede
+    fixum data = cede fetchData()
+    scribe "Received:", data
+
+    fixum length = cede processData(data)
+    scribe "Length:", length
+
+    scribe "Program complete"
+}

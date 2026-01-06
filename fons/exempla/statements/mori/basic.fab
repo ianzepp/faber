@@ -1,0 +1,41 @@
+# Fatal errors with mori (panic)
+#
+# mori is for unrecoverable errors (panic/fatal)
+# iace is for recoverable errors (throw/catch)
+#
+# Difference:
+#   iace - can be caught with cape
+#   mori - terminates program immediately
+
+functio divide(numerus a, numerus b) -> fractus {
+    # Use mori for invariant violations
+    si b == 0 {
+        mori "Division by zero is a fatal error"
+    }
+    redde a / b
+}
+
+functio accessArray(lista<numerus> items, numerus index) -> numerus {
+    # Bounds check with panic
+    si index < 0 aut index >= items.longitudo() {
+        mori "Index out of bounds"
+    }
+    redde items[index]
+}
+
+incipit {
+    # Normal operation
+    fixum result = divide(10, 2)
+    scribe "Result:", result  # 5.0
+
+    # This would panic (uncomment to test):
+    # fixum bad = divide(10, 0)  # Fatal: Division by zero
+
+    # Array access
+    fixum nums = [1, 2, 3]
+    fixum val = accessArray(nums, 1)
+    scribe "Value:", val  # 2
+
+    # This would panic (uncomment to test):
+    # fixum bad = accessArray(nums, 10)  # Fatal: Index out of bounds
+}
