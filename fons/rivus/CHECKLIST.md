@@ -559,28 +559,7 @@ The Nucleus is Faber's micro-kernel runtime providing unified I/O dispatch, mess
 | AsyncContext executor      |    ○     | ○ |  ○   | ○  |  ○  |
 | State machine codegen      |    —     | ○ |  —   | ○  |  ○  |
 
-The Responsum protocol defines a tagged union for all syscall results:
-
-| Variant    | Meaning                           |
-| ---------- | --------------------------------- |
-| `.pending` | Operation in progress, poll again |
-| `.ok(T)`   | Single value, terminal            |
-| `.item(T)` | One of many values, non-terminal  |
-| `.done`    | Stream complete, terminal         |
-| `.err(E)`  | Error, terminal                   |
-
-Syscall namespaces (Latin names for stdlib modules):
-
-| Namespace    | Domain  | Example Syscalls                  |
-| ------------ | ------- | --------------------------------- |
-| `fasciculus` | Files   | `lege`, `scribe`, `tolle`         |
-| `caelum`     | Network | `request`, `websocket`, `listen`  |
-| `tempus`     | Time    | `dormi`, `nunc`, `intervallum`    |
-| `memoria`    | Memory  | `alloca`, `libera` (Zig/Rust/C++) |
-| `processus`  | Process | `genera`, `occide`, `expecta`     |
-| `canalis`    | Channel | `crea`, `mitte`, `recipe`         |
-| `aleator`    | Random  | `numerus`, `bytes`, `uuid`        |
-| `crypto`     | Crypto  | `hash`, `signa`, `verifica`       |
+The Responsum protocol defines a tagged union for all syscall results.
 
 ---
 
