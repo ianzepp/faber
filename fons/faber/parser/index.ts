@@ -750,6 +750,15 @@ export function parse(tokens: Token[]): ParserResult {
             }
             const verteTemplate = advance().value;
 
+            // Reject multiple targets on one line (use separate @ verte for each)
+            if (check('COMMA') && peek().position.line === startLine) {
+                errors.push({
+                    code: ParserErrorCode.UnexpectedToken,
+                    message: `@verte allows only one target per line; use separate @verte annotations`,
+                    position: peek().position,
+                });
+            }
+
             return {
                 type: 'Annotation',
                 name: 'verte',
@@ -775,6 +784,15 @@ export function parse(tokens: Token[]): ParserResult {
             };
         }
         const verteMethod = advance().value;
+
+        // Reject multiple targets on one line (use separate @ verte for each)
+        if (check('COMMA') && peek().position.line === startLine) {
+            errors.push({
+                code: ParserErrorCode.UnexpectedToken,
+                message: `@verte allows only one target per line; use separate @verte annotations`,
+                position: peek().position,
+            });
+        }
 
         return {
             type: 'Annotation',

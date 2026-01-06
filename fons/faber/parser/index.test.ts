@@ -4454,5 +4454,25 @@ describe('parser', () => {
             expect(decl.annotations[0].name).toBe('innatum');
             expect(decl.annotations[1].name).toBe('subsidia');
         });
+
+        test('@ verte rejects multiple targets on one line', () => {
+            const { errors } = parseCode(`
+                @ verte ts "push", py "append"
+                functio adde(items, elem) fit vacuum { }
+            `);
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors[0].message).toContain('one target per line');
+        });
+
+        test('@ verte template rejects multiple targets on one line', () => {
+            const { errors } = parseCode(`
+                @ verte ts (ego) -> "§.length", py (ego) -> "len(§)"
+                functio longitudo(items) fit numerus { redde 0 }
+            `);
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors[0].message).toContain('one target per line');
+        });
     });
 });
