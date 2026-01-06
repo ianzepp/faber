@@ -11,6 +11,7 @@
         "faber": "bun ./fons/faber/cli.ts",
         "rivus": "./scripta/rivus",
         "build:faber": "bun ./scripta/build-faber.ts",
+        "build:norma": "bun ./scripta/build-norma.ts",
         "build:rivus": "bun ./scripta/build-rivus.ts",
         "build:exempla": "bun ./scripta/build-exempla.ts",
         "exempla": "bun ./scripta/exempla.ts",

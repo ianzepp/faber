@@ -1,12 +1,12 @@
 /**
  * Norma Registry - Loads stdlib definitions from fons/norma/*.fab
  *
- * VERTICAL SLICE: Proves annotation-driven codegen works.
- * Currently uses hardcoded data to avoid circular dependencies.
- * TODO: Load from norma/*.fab files at build time, not runtime.
- *
+ * Data is generated at build time by: bun run build:norma
  * See consilia/futura/norma-faber.md for the full design.
  */
+
+// WHY: Import generated registry data (avoids circular dependency with parser)
+import { registry } from './norma-registry.gen';
 
 // =============================================================================
 // TYPES
@@ -41,48 +41,6 @@ export interface NormaCollection {
     /** Methods defined for this collection */
     methods: Map<string, NormaMethod>;
 }
-
-// =============================================================================
-// HARDCODED REGISTRY (vertical slice - avoids circular dependency)
-// =============================================================================
-// TODO: Generate this from norma/*.fab at build time, not runtime
-
-/** Global registry - hardcoded for vertical slice */
-const registry: Map<string, NormaCollection> = new Map([
-    ['lista', {
-        name: 'lista',
-        innatum: new Map([
-            ['ts', 'Array'],
-            ['py', 'list'],
-            ['rs', 'Vec'],
-            ['cpp', 'std::vector'],
-            ['zig', 'Lista'],
-        ]),
-        methods: new Map([
-            ['adde', {
-                name: 'adde',
-                translations: new Map([
-                    ['ts', { method: 'push' }],
-                    ['py', { method: 'append' }],
-                    ['rs', { method: 'push' }],
-                    ['cpp', { method: 'push_back' }],
-                    ['zig', { template: '§.adde(§, §)', params: ['ego', 'elem', 'alloc'] }],
-                ]),
-                radixForms: ['add', 'imperativus', 'perfectum'],
-            }],
-            ['addita', {
-                name: 'addita',
-                translations: new Map([
-                    ['ts', { template: '[...§, §]', params: ['ego', 'elem'] }],
-                    ['py', { template: '[*§, §]', params: ['ego', 'elem'] }],
-                    ['rs', { template: '{ let mut v = §.clone(); v.push(§); v }', params: ['ego', 'elem'] }],
-                    ['cpp', { template: '[&]{ auto v = §; v.push_back(§); return v; }()', params: ['ego', 'elem'] }],
-                    ['zig', { template: '§.addita(§, §)', params: ['ego', 'elem', 'alloc'] }],
-                ]),
-            }],
-        ]),
-    }],
-]);
 
 // =============================================================================
 // LOOKUP API
