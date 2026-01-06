@@ -1,13 +1,16 @@
 // JSONL logging for raw responses and graded results
 
 import { appendFileSync, mkdirSync } from 'fs'
+import { join } from 'path'
 import type { RawResponse, GradedResult } from './types'
+
+const ROOT = join(import.meta.dir, '..')
 
 export class Logger {
   private runDir: string
 
   constructor(runId: string) {
-    this.runDir = `results/${runId}`
+    this.runDir = join(ROOT, 'results', runId)
   }
 
   async init() {

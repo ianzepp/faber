@@ -9,7 +9,10 @@ import { callModel } from './api'
 import { gradeTask } from './grader'
 import { $ } from 'bun'
 import { appendFileSync, mkdirSync, existsSync } from 'fs'
+import { join } from 'path'
 import type { Task, Model, PipelineResult, TransitionType } from './types'
+
+const ROOT = join(import.meta.dir, '..')
 
 async function getGitSha(): Promise<string | undefined> {
   try {
@@ -164,7 +167,7 @@ async function main() {
 
   // Setup output
   const runId = `pipeline-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}`
-  const resultsDir = `results/${runId}`
+  const resultsDir = join(ROOT, 'results', runId)
 
   if (!existsSync(resultsDir)) {
     mkdirSync(resultsDir, { recursive: true })

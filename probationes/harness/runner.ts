@@ -9,8 +9,11 @@ import { gradeTask } from './grader'
 import { Logger } from './logger'
 import { analyzeResults } from './analyzer'
 import { writeFileSync } from 'fs'
+import { join } from 'path'
 import { $ } from 'bun'
 import type { RawResponse, Summary, Task, Model, TransitionType, GradedResult } from './types'
+
+const ROOT = join(import.meta.dir, '..')
 
 async function getGitSha(): Promise<string | undefined> {
   try {
@@ -407,8 +410,8 @@ async function main() {
     try {
       if (verbose) console.log('Generating AI analysis...')
       const analysis = await analyzeResults(runId)
-      writeFileSync(`results/${runId}/analysis.md`, analysis)
-      console.log(`Analysis: results/${runId}/analysis.md`)
+      writeFileSync(join(ROOT, 'results', runId, 'analysis.md'), analysis)
+      console.log(`Analysis: probationes/results/${runId}/analysis.md`)
     } catch (error) {
       console.error('Failed to generate analysis:', error)
     }

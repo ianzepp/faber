@@ -1,13 +1,16 @@
 // Post-trial analysis using AI
 
 import { readFileSync } from 'fs'
+import { join } from 'path'
 import { callModel } from './api'
 import type { RawResponse, GradedResult, ErrorType } from './types'
 
+const ROOT = join(import.meta.dir, '..')
+
 export async function analyzeResults(runId: string): Promise<string> {
   // Load results
-  const rawFile = readFileSync(`results/${runId}/raw_responses.jsonl`, 'utf-8')
-  const gradedFile = readFileSync(`results/${runId}/graded_results.jsonl`, 'utf-8')
+  const rawFile = readFileSync(join(ROOT, 'results', runId, 'raw_responses.jsonl'), 'utf-8')
+  const gradedFile = readFileSync(join(ROOT, 'results', runId, 'graded_results.jsonl'), 'utf-8')
 
   const rawLines = rawFile.trim().split('\n').filter(l => l).map(line => JSON.parse(line) as RawResponse)
   const gradedLines = gradedFile.trim().split('\n').filter(l => l).map(line => JSON.parse(line) as GradedResult)
