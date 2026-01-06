@@ -344,7 +344,7 @@ Each target requires two changes:
 
 ### Phase 7: Tests
 
-- [ ] `fons/proba/codegen/expressions/conversio.yaml` — Create test file
+- [x] `fons/proba/codegen/expressions/conversio.yaml` — Create test file (57 tests pass)
 
 **Test file structure** (follows `qua.yaml` and `innatum.yaml` patterns):
 

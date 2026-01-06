@@ -1,0 +1,195 @@
+# Conversio expressions - type conversion operators
+# Maps Faber numeratum/fractatum/textatum/bivalentum to target conversions
+#
+# Note: ts/py use exact match; rs uses contains (it wraps in main)
+# Note: Rust bivalentum assumes numeric input (compares to 0)
+
+# === numeratum (to integer) ===
+
+- name: basic numeratum
+  source: fixum n = "42" numeratum
+  expect:
+      ts: 'const n = parseInt("42", 10);'
+      py: 'n = int("42")'
+      rs:
+          - 'parse::<i64>().unwrap()'
+      cpp:
+          - 'std::stoll'
+      zig:
+          - 'std.fmt.parseInt(i64, "42", 10)'
+      fab:
+          - 'fixum n = "42" numeratum'
+
+- name: numeratum with fallback
+  source: fixum n = input numeratum vel 0
+  expect:
+      ts: 'const n = (parseInt(input, 10) || 0);'
+      py:
+          - "int(input)"
+          - "else 0"
+      rs:
+          - '.parse::<i64>().unwrap_or(0)'
+      cpp:
+          - 'try { return std::stoll(input)'
+          - 'catch(...) { return'
+      zig:
+          - 'std.fmt.parseInt(i64, input, 10) catch 0'
+      fab:
+          - 'fixum n = input numeratum vel 0'
+
+- name: numeratum with type param
+  source: fixum n = "42" numeratum<i32>
+  expect:
+      ts: 'const n = parseInt("42", 10);'
+      rs:
+          - 'parse::<i32>().unwrap()'
+      zig:
+          - 'std.fmt.parseInt(i32, "42", 10)'
+      fab:
+          - 'fixum n = "42" numeratum<i32>'
+
+- name: numeratum with hex radix
+  source: fixum n = "ff" numeratum<i32, Hex>
+  expect:
+      ts: 'const n = parseInt("ff", 16);'
+      py: 'n = int("ff", 16)'
+      rs:
+          - 'i32::from_str_radix'
+          - '"ff"'
+          - '16'
+      cpp:
+          - 'std::stoll'
+          - 'nullptr, 16'
+      zig:
+          - 'std.fmt.parseInt(i32, "ff", 16)'
+      fab:
+          - 'fixum n = "ff" numeratum<i32, Hex>'
+
+- name: numeratum with binary radix
+  source: fixum n = "101" numeratum<u8, Bin>
+  expect:
+      ts: 'const n = parseInt("101", 2);'
+      py: 'n = int("101", 2)'
+      rs:
+          - 'from_str_radix'
+          - '"101"'
+          - '2'
+      zig:
+          - 'std.fmt.parseInt'
+          - '"101"'
+          - '2'
+      fab:
+          - 'fixum n = "101" numeratum<u8, Bin>'
+
+- name: numeratum with octal radix
+  source: fixum n = "777" numeratum<i32, Oct>
+  expect:
+      ts: 'const n = parseInt("777", 8);'
+      py: 'n = int("777", 8)'
+      rs:
+          - 'from_str_radix'
+          - '"777"'
+          - '8'
+      zig:
+          - 'std.fmt.parseInt'
+          - '"777"'
+          - '8'
+      fab:
+          - 'fixum n = "777" numeratum<i32, Oct>'
+
+# === fractatum (to float) ===
+
+- name: basic fractatum
+  source: fixum f = "3.14" fractatum
+  expect:
+      ts: 'const f = parseFloat("3.14");'
+      py: 'f = float("3.14")'
+      rs:
+          - 'parse::<f64>().unwrap()'
+      cpp:
+          - 'std::stod'
+      zig:
+          - 'std.fmt.parseFloat(f64, "3.14")'
+      fab:
+          - 'fixum f = "3.14" fractatum'
+
+- name: fractatum with fallback
+  source: fixum f = input fractatum vel 0.0
+  expect:
+      ts: 'const f = (parseFloat(input) || 0.0);'
+      rs:
+          - '.parse::<f64>().unwrap_or(0.0)'
+      cpp:
+          - 'try { return std::stod(input)'
+          - 'catch(...)'
+      zig:
+          - 'std.fmt.parseFloat(f64, input) catch 0'
+      fab:
+          - 'fixum f = input fractatum vel 0.0'
+
+# === textatum (to string) ===
+
+- name: number to string
+  source: fixum s = 42 textatum
+  expect:
+      ts: 'const s = String(42);'
+      py: 's = str(42)'
+      rs:
+          - '42.to_string()'
+      cpp:
+          - 'std::to_string(42)'
+      zig:
+          - 'std.fmt.allocPrint'
+          - '42'
+      fab:
+          - 'fixum s = 42 textatum'
+
+- name: variable to string
+  source: fixum s = value textatum
+  expect:
+      ts: 'const s = String(value);'
+      py: 's = str(value)'
+      rs:
+          - 'value.to_string()'
+      cpp:
+          - 'std::to_string(value)'
+      fab:
+          - 'fixum s = value textatum'
+
+# === bivalentum (to boolean) ===
+
+- name: number to boolean
+  source: fixum b = 42 bivalentum
+  expect:
+      ts: 'const b = Boolean(42);'
+      py: 'b = bool(42)'
+      rs:
+          - '42 != 0'
+      cpp:
+          - 'static_cast<bool>(42)'
+      zig:
+          - '42 != 0'
+      fab:
+          - 'fixum b = 42 bivalentum'
+
+- name: string to boolean
+  source: fixum b = "hello" bivalentum
+  expect:
+      ts: 'const b = Boolean("hello");'
+      py: 'b = bool("hello")'
+      cpp:
+          - 'static_cast<bool>'
+      fab:
+          - 'fixum b = "hello" bivalentum'
+
+# === chaining ===
+
+- name: conversion chain
+  source: fixum s = "42" numeratum textatum
+  expect:
+      ts: 'const s = String(parseInt("42", 10));'
+      py: 's = str(int("42"))'
+      rs:
+          - '.to_string()'
+      fab:
+          - 'fixum s = "42" numeratum textatum'
