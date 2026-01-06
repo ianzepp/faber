@@ -1,4 +1,10 @@
-# Implementation Status
+# Faber
+
+The reference compiler for the Faber Romanus programming language, implemented in TypeScript. Faber ("craftsman" in Latin) is the primary compiler used for all daily development, supporting multi-target code generation to TypeScript, Python, Rust, Zig, and C++.
+
+This compiler uses mixed Latin/English identifiers in its implementation, prioritizing clarity for contributors familiar with TypeScript conventions while maintaining the project's Latin aesthetic in user-facing APIs.
+
+## Implementation Status
 
 | Target     | Tests | Status |
 | ---------- | ----: | :----: |

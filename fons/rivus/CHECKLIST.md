@@ -1,4 +1,10 @@
-# Implementation Status
+# Rivus
+
+The bootstrap compiler for Faber Romanus, written entirely in Faber itself. Rivus ("stream" in Latin) demonstrates that Faber is self-hosting: the language can compile its own compiler. This serves as both a proof of concept and a comprehensive test of the language's expressiveness.
+
+Unlike the reference compiler, Rivus uses Latin exclusively in its source code, serving as a showcase for writing substantial programs in pure Faber. The bootstrap compiler currently targets TypeScript output, with Zig support in development.
+
+## Implementation Status
 
 | Target     | Tests | Status |
 | ---------- | ----: | :----: |
