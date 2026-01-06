@@ -96,7 +96,15 @@ ordo ParserErrorCodice {
     DeestVariaNomen = "P205",
 
     # Annotation errors (P300-P399)
-    InvalidaRadixForma = "P300"
+    InvalidaRadixForma = "P300",
+    ExpectaturTargetNomen = "P301",
+    ExpectaturTargetValor = "P302",
+    ExpectaturVerteTarget = "P303",
+    ExpectaturVerteMethodAutTemplate = "P304",
+    ExpectaturVerteSagitta = "P305",
+    ExpectaturVerteTemplate = "P306",
+    VerteMultiplicemTargets = "P307",
+    ExpectaturVerteParam = "P308"
 }
 
 # Error message with help text
@@ -320,6 +328,30 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
         }
         casu ParserErrorCodice.InvalidaRadixForma {
             redde creoNuntium("Unknown radix form", "Use: imperativus, perfectum, futurum_indicativum, futurum_activum")
+        }
+        casu ParserErrorCodice.ExpectaturTargetNomen {
+            redde creoNuntium("Expected target name", "@ innatum ts 'Array', @ subsidia zig 'file.zig'")
+        }
+        casu ParserErrorCodice.ExpectaturTargetValor {
+            redde creoNuntium("Expected string value after target", "@ innatum ts 'Array'")
+        }
+        casu ParserErrorCodice.ExpectaturVerteTarget {
+            redde creoNuntium("Expected target in @verte", "@ verte ts 'push'")
+        }
+        casu ParserErrorCodice.ExpectaturVerteMethodAutTemplate {
+            redde creoNuntium("Expected method name or template in @verte", "@ verte ts 'push' or @ verte ts (ego) -> '...'")
+        }
+        casu ParserErrorCodice.ExpectaturVerteSagitta {
+            redde creoNuntium("Expected '->' after parameters in @verte", "@ verte ts (ego, elem) -> '...'")
+        }
+        casu ParserErrorCodice.ExpectaturVerteTemplate {
+            redde creoNuntium("Expected template string in @verte", "@ verte ts (ego) -> '[...S]'")
+        }
+        casu ParserErrorCodice.VerteMultiplicemTargets {
+            redde creoNuntium("@verte allows only one target per line", "Use separate @verte annotations")
+        }
+        casu ParserErrorCodice.ExpectaturVerteParam {
+            redde creoNuntium("Expected parameter name in @verte template", "@ verte ts (ego, elem) -> '...'")
         }
 
         # Default fallback

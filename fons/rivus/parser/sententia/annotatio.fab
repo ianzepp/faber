@@ -6,14 +6,29 @@
 #   annotation := '@' IDENTIFIER arguments?
 #   arguments := IDENTIFIER (',' IDENTIFIER)*  (same line only)
 #
+# STDLIB ANNOTATIONS:
+#   innatumAnnotation := '@' 'innatum' targetMapping (',' targetMapping)*
+#   subsidiaAnnotation := '@' 'subsidia' targetMapping (',' targetMapping)*
+#   radixAnnotation := '@' 'radix' IDENTIFIER (',' IDENTIFIER)*
+#   verteAnnotation := '@' 'verte' IDENTIFIER (STRING | '(' IDENTIFIER (',' IDENTIFIER)* ')' '->' STRING)
+#   targetMapping := IDENTIFIER STRING
+#
 # Examples:
 #   @ futura                         -> marks function as async
-#   @ radix imperativus, perfectum   -> verb morphology forms
+#   @ radix filtr, imperativus, perfectum -> verb morphology forms
 #   @ publica                        -> visibility modifier
 #   @ externa                        -> external declaration
+#   @ innatum ts "Array", py "list"  -> native type mapping
+#   @ subsidia zig "file.zig"        -> external implementation file
+#   @ verte ts "push"                -> simple method rename
+#   @ verte ts (ego, elem) -> "[...S, S]" -> template transformation
 #
 # LATIN VOCABULARY:
 # - annotatio = annotation/note
+# - innatum = inborn/native
+# - subsidia = supports/implementation
+# - radix = root/stem
+# - verte = turn/transform
 
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
@@ -25,30 +40,268 @@ ex "../errores" importa ParserErrorCodice
 # ============================================================================
 
 # Parsed annotation with optional arguments
+#
+# EXTENDED FIELDS for stdlib annotations:
+# - targetMappings: for @ innatum and @ subsidia (target -> value mapping)
+# - radixForms: for @ radix (stem + morphological forms)
+# - verteTarget: for @ verte (target language)
+# - verteMethod: for @ verte simple form (method name)
+# - verteParams: for @ verte template form (parameter list)
+# - verteTemplate: for @ verte template form (template string)
 @ publicum
 genus Annotatio {
     Locus locus
     textus nomen                # annotation name (e.g., "futura", "radix")
     lista<textus> argumenta     # optional arguments (e.g., ["imperativus"])
+
+    # For @ innatum and @ subsidia: target-to-value mappings
+    # Example: { ts: "Array", py: "list", zig: "Lista" }
+    tabula<textus, textus>? targetMappings
+
+    # For @ radix: stem and valid morphological forms
+    # First element is the stem, rest are form names
+    # Example: ["filtr", "imperativus", "perfectum"]
+    lista<textus>? radixForms
+
+    # For @ verte: the target language (ts, py, rs, cpp, zig)
+    textus? verteTarget
+
+    # For @ verte with simple method: the method name
+    # Example: "push" for `@ verte ts "push"`
+    textus? verteMethod
+
+    # For @ verte with template: parameter names
+    # Example: ["ego", "elem"] for `@ verte ts (ego, elem) -> "..."`
+    lista<textus>? verteParams
+
+    # For @ verte with template: the template string with S placeholders
+    # Example: "[...S, S]" for `@ verte ts (ego, elem) -> "[...S, S]"`
+    textus? verteTemplate
 }
 
 # ============================================================================
 # HELPERS
 # ============================================================================
 
-# Check if a string is a valid verb form for @ radix
-functio estFormaRadix(textus forma) -> bivalens {
-    redde forma inter ["imperativus", "perfectum", "futurum_indicativum", "futurum_activum"]
+# Check if token is identifier or keyword (both valid for annotation names)
+functio estNomenAutVerbum(SymbolumGenus species) -> bivalens {
+    redde species == SymbolumGenus.Nomen aut species == SymbolumGenus.Verbum
 }
 
 # ============================================================================
-# PARSER
+# STDLIB ANNOTATION PARSERS
+# ============================================================================
+
+# Parse @ innatum or @ subsidia: target-to-value mappings
+# Grammar: targetMapping (',' targetMapping)*
+# Example: @ innatum ts "Array", py "list", zig "Lista"
+functio parseTargetMappingAnnotation(Resolvitor r, textus nomen, Locus locus, numerus linea) -> Annotatio {
+    fixum p = r.parser()
+    varia targetMappings = {} innatum tabula<textus, textus>
+
+    # Parse first mapping (required)
+    si non p.estFinis() et p.specta(0).locus.linea == linea et estNomenAutVerbum(p.specta(0).species) {
+        fac {
+            # Parse target identifier (ts, py, rs, cpp, zig)
+            si non estNomenAutVerbum(p.specta(0).species) aut p.specta(0).locus.linea != linea {
+                p.renuncia(ParserErrorCodice.ExpectaturTargetNomen, scriptum("got '§'", p.specta(0).valor))
+                rumpe
+            }
+            fixum target = p.specta(0).valor
+            p.procede()
+
+            # Parse value string
+            si p.specta(0).species != SymbolumGenus.Textus aut p.specta(0).locus.linea != linea {
+                p.renuncia(ParserErrorCodice.ExpectaturTargetValor, scriptum("after '§'", target))
+                rumpe
+            }
+            fixum valor = p.specta(0).valor
+            p.procede()
+
+            targetMappings.pone(target, valor)
+        } dum non p.estFinis() et p.specta(0).locus.linea == linea et p.congruet(SymbolumGenus.Coma)
+    }
+
+    redde {
+        locus: locus,
+        nomen: nomen,
+        argumenta: [] innatum lista<textus>,
+        targetMappings: targetMappings,
+        radixForms: nihil,
+        verteTarget: nihil,
+        verteMethod: nihil,
+        verteParams: nihil,
+        verteTemplate: nihil
+    } qua Annotatio
+}
+
+# Parse @ radix: stem and morphological forms
+# Grammar: IDENTIFIER (',' IDENTIFIER)*
+# Example: @ radix filtr, imperativus, perfectum
+# Note: First identifier is stem, rest are form names (no validation)
+functio parseRadixAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annotatio {
+    fixum p = r.parser()
+    varia radixForms = [] innatum lista<textus>
+
+    # Parse comma-separated identifiers
+    si non p.estFinis() et p.specta(0).locus.linea == linea et estNomenAutVerbum(p.specta(0).species) {
+        fac {
+            si non estNomenAutVerbum(p.specta(0).species) aut p.specta(0).locus.linea != linea {
+                p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("got '§'", p.specta(0).valor))
+                rumpe
+            }
+            radixForms.adde(p.specta(0).valor)
+            p.procede()
+        } dum non p.estFinis() et p.specta(0).locus.linea == linea et p.congruet(SymbolumGenus.Coma)
+    }
+
+    redde {
+        locus: locus,
+        nomen: "radix",
+        argumenta: [] innatum lista<textus>,
+        targetMappings: nihil,
+        radixForms: radixForms,
+        verteTarget: nihil,
+        verteMethod: nihil,
+        verteParams: nihil,
+        verteTemplate: nihil
+    } qua Annotatio
+}
+
+# Parse @ verte: codegen transformation
+# Grammar: IDENTIFIER (STRING | '(' IDENTIFIER (',' IDENTIFIER)* ')' '->' STRING)
+# Examples:
+#   @ verte ts "push"
+#   @ verte ts (ego, elem) -> "[...S, S]"
+functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annotatio {
+    fixum p = r.parser()
+
+    # Parse target identifier (ts, py, rs, cpp, zig)
+    si non estNomenAutVerbum(p.specta(0).species) aut p.specta(0).locus.linea != linea {
+        p.renuncia(ParserErrorCodice.ExpectaturVerteTarget, scriptum("got '§'", p.specta(0).valor))
+        redde {
+            locus: locus,
+            nomen: "verte",
+            argumenta: [] innatum lista<textus>,
+            targetMappings: nihil,
+            radixForms: nihil,
+            verteTarget: nihil,
+            verteMethod: nihil,
+            verteParams: nihil,
+            verteTemplate: nihil
+        } qua Annotatio
+    }
+    fixum verteTarget = p.specta(0).valor
+    p.procede()
+
+    # Check for template form: (params) -> "template"
+    si p.specta(0).species == SymbolumGenus.ParensSin et p.specta(0).locus.linea == linea {
+        p.procede()  # consume '('
+
+        varia verteParams = [] innatum lista<textus>
+
+        # Parse parameter list
+        si p.specta(0).species != SymbolumGenus.ParensDex {
+            fac {
+                si non estNomenAutVerbum(p.specta(0).species) aut p.specta(0).locus.linea != linea {
+                    p.renuncia(ParserErrorCodice.ExpectaturVerteParam, scriptum("got '§'", p.specta(0).valor))
+                    rumpe
+                }
+                verteParams.adde(p.specta(0).valor)
+                p.procede()
+            } dum p.congruet(SymbolumGenus.Coma)
+        }
+
+        # Expect closing paren
+        si non p.congruet(SymbolumGenus.ParensDex) {
+            p.renuncia(ParserErrorCodice.ExpectaturParensDex, "")
+        }
+
+        # Expect -> arrow
+        si non p.congruet(SymbolumGenus.Sagitta) {
+            p.renuncia(ParserErrorCodice.ExpectaturVerteSagitta, scriptum("got '§'", p.specta(0).valor))
+        }
+
+        # Parse template string
+        si p.specta(0).species != SymbolumGenus.Textus aut p.specta(0).locus.linea != linea {
+            p.renuncia(ParserErrorCodice.ExpectaturVerteTemplate, scriptum("got '§'", p.specta(0).valor))
+            redde {
+                locus: locus,
+                nomen: "verte",
+                argumenta: [] innatum lista<textus>,
+                targetMappings: nihil,
+                radixForms: nihil,
+                verteTarget: verteTarget,
+                verteMethod: nihil,
+                verteParams: verteParams,
+                verteTemplate: nihil
+            } qua Annotatio
+        }
+        fixum verteTemplate = p.specta(0).valor
+        p.procede()
+
+        # Reject multiple targets on one line
+        si p.specta(0).species == SymbolumGenus.Coma et p.specta(0).locus.linea == linea {
+            p.renuncia(ParserErrorCodice.VerteMultiplicemTargets, "")
+        }
+
+        redde {
+            locus: locus,
+            nomen: "verte",
+            argumenta: [] innatum lista<textus>,
+            targetMappings: nihil,
+            radixForms: nihil,
+            verteTarget: verteTarget,
+            verteMethod: nihil,
+            verteParams: verteParams,
+            verteTemplate: verteTemplate
+        } qua Annotatio
+    }
+
+    # Simple method form: "methodName"
+    si p.specta(0).species != SymbolumGenus.Textus aut p.specta(0).locus.linea != linea {
+        p.renuncia(ParserErrorCodice.ExpectaturVerteMethodAutTemplate, scriptum("got '§'", p.specta(0).valor))
+        redde {
+            locus: locus,
+            nomen: "verte",
+            argumenta: [] innatum lista<textus>,
+            targetMappings: nihil,
+            radixForms: nihil,
+            verteTarget: verteTarget,
+            verteMethod: nihil,
+            verteParams: nihil,
+            verteTemplate: nihil
+        } qua Annotatio
+    }
+    fixum verteMethod = p.specta(0).valor
+    p.procede()
+
+    # Reject multiple targets on one line
+    si p.specta(0).species == SymbolumGenus.Coma et p.specta(0).locus.linea == linea {
+        p.renuncia(ParserErrorCodice.VerteMultiplicemTargets, "")
+    }
+
+    redde {
+        locus: locus,
+        nomen: "verte",
+        argumenta: [] innatum lista<textus>,
+        targetMappings: nihil,
+        radixForms: nihil,
+        verteTarget: verteTarget,
+        verteMethod: verteMethod,
+        verteParams: nihil,
+        verteTemplate: nihil
+    } qua Annotatio
+}
+
+# ============================================================================
+# MAIN PARSER
 # ============================================================================
 
 # Parse all annotations at current position
 #
 # Consumes @ directives until a non-@ token is found.
-# For @ radix, collects comma-separated form names on the same line.
+# Dispatches to specialized parsers for stdlib annotations.
 @ publica
 functio parseAnnotationes(Resolvitor r) -> lista<Annotatio> {
     fixum p = r.parser()
@@ -60,47 +313,42 @@ functio parseAnnotationes(Resolvitor r) -> lista<Annotatio> {
         fixum sym = p.specta(0)
 
         varia nomen = ""
-        si sym.species == SymbolumGenus.Nomen aut sym.species == SymbolumGenus.Verbum {
+        si estNomenAutVerbum(sym.species) {
             p.procede()
             nomen = sym.valor
         } secus {
             p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("got '§'", sym.valor))
             p.procede()
+            perge
         }
 
-        varia argumenta = [] innatum lista<textus>
+        # Dispatch to specialized parsers for stdlib annotations
+        si nomen == "innatum" aut nomen == "subsidia" {
+            annotationes.adde(parseTargetMappingAnnotation(r, nomen, locus, linea))
+            perge
+        }
 
         si nomen == "radix" {
-            dum non p.estFinis() {
-                fixum next = p.specta(0)
-                si next.locus.linea != linea {
-                    rumpe
-                }
-
-                si next.species == SymbolumGenus.Coma {
-                    p.procede()
-                    perge
-                }
-
-                si next.species == SymbolumGenus.Nomen aut next.species == SymbolumGenus.Verbum {
-                    p.procede()
-                    si estFormaRadix(next.valor) {
-                        argumenta.adde(next.valor)
-                    } secus {
-                        p.renuncia(ParserErrorCodice.InvalidaRadixForma, scriptum("got '§'", next.valor))
-                    }
-                    perge
-                }
-
-                p.renuncia(ParserErrorCodice.InvalidaRadixForma, scriptum("got '§'", next.valor))
-                p.procede()
-            }
+            annotationes.adde(parseRadixAnnotation(r, locus, linea))
+            perge
         }
 
+        si nomen == "verte" {
+            annotationes.adde(parseVerteAnnotation(r, locus, linea))
+            perge
+        }
+
+        # Standard annotation: just the name, no special processing
         annotationes.adde({
             locus: locus,
             nomen: nomen,
-            argumenta: argumenta
+            argumenta: [] innatum lista<textus>,
+            targetMappings: nihil,
+            radixForms: nihil,
+            verteTarget: nihil,
+            verteMethod: nihil,
+            verteParams: nihil,
+            verteTemplate: nihil
         } qua Annotatio)
     }
 
