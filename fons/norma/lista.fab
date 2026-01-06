@@ -20,7 +20,7 @@ genus lista { }
 @ verte py "append"
 @ verte rs "push"
 @ verte cpp "push_back"
-@ verte zig (ego, elem, alloc) -> "§.adde(§, §)"
+@ verte zig (ego, elem, alloc) -> "§0.adde(§2, §1)"
 @ externa
 functio adde()
 
@@ -29,7 +29,7 @@ functio adde()
 @ verte py (ego, elem) -> "[*§, §]"
 @ verte rs (ego, elem) -> "{ let mut v = §.clone(); v.push(§); v }"
 @ verte cpp (ego, elem) -> "[&]{ auto v = §; v.push_back(§); return v; }()"
-@ verte zig (ego, elem, alloc) -> "§.addita(§, §)"
+@ verte zig (ego, elem, alloc) -> "§0.addita(§2, §1)"
 @ externa
 functio addita()
 
@@ -39,7 +39,7 @@ functio addita()
 @ verte py (ego, elem) -> "§.insert(0, §)"
 @ verte rs (ego, elem) -> "§.insert(0, §)"
 @ verte cpp (ego, elem) -> "§.insert(§.begin(), §)"
-@ verte zig (ego, elem, alloc) -> "§.praepone(§, §)"
+@ verte zig (ego, elem, alloc) -> "§0.praepone(§2, §1)"
 @ externa
 functio praepone()
 
@@ -48,7 +48,7 @@ functio praepone()
 @ verte py (ego, elem) -> "[§1, *§0]"
 @ verte rs (ego, elem) -> "{ let mut v = vec![§1]; v.extend(§0.iter().cloned()); v }"
 @ verte cpp (ego, elem) -> "[&]{ auto v = §0; v.insert(v.begin(), §1); return v; }()"
-@ verte zig (ego, elem, alloc) -> "§.praeposita(§, §)"
+@ verte zig (ego, elem, alloc) -> "§0.praeposita(§2, §1)"
 @ externa
 functio praeposita()
 
@@ -162,36 +162,36 @@ functio vacua()
 
 # Check if contains element
 @ verte ts "includes"
-@ verte py (ego, elem) -> "(§ in §)"
-@ verte rs (ego, elem) -> "§.contains(&§)"
-@ verte cpp (ego, elem) -> "(std::find(§.begin(), §.end(), §) != §.end())"
+@ verte py (ego, elem) -> "(§1 in §0)"
+@ verte rs (ego, elem) -> "§0.contains(&§1)"
+@ verte cpp (ego, elem) -> "(std::find(§0.begin(), §0.end(), §1) != §0.end())"
 @ verte zig (ego, elem) -> "§.continet(§)"
 @ externa
 functio continet()
 
 # Find index of element
 @ verte ts "indexOf"
-@ verte py (ego, elem) -> "§.index(§)"
-@ verte rs (ego, elem) -> "§.iter().position(|e| e == &§)"
-@ verte cpp (ego, elem) -> "[&]{ auto it = std::find(§.begin(), §.end(), §); return it != §.end() ? std::distance(§.begin(), it) : -1; }()"
+@ verte py (ego, elem) -> "§0.index(§1)"
+@ verte rs (ego, elem) -> "§0.iter().position(|e| e == &§1)"
+@ verte cpp (ego, elem) -> "[&]{ auto it = std::find(§0.begin(), §0.end(), §1); return it != §0.end() ? std::distance(§0.begin(), it) : -1; }()"
 @ verte zig (ego, elem) -> "§.indiceDe(§)"
 @ externa
 functio indiceDe()
 
 # Find first element matching predicate
 @ verte ts "find"
-@ verte py (ego, pred) -> "next(filter(§, §), None)"
-@ verte rs (ego, pred) -> "§.iter().find(§)"
-@ verte cpp (ego, pred) -> "*std::find_if(§.begin(), §.end(), §)"
+@ verte py (ego, pred) -> "next(filter(§1, §0), None)"
+@ verte rs (ego, pred) -> "§0.iter().find(§1)"
+@ verte cpp (ego, pred) -> "*std::find_if(§0.begin(), §0.end(), §1)"
 @ verte zig (ego, pred) -> "§.inveni(§)"
 @ externa
 functio inveni()
 
 # Find index of first element matching predicate
 @ verte ts "findIndex"
-@ verte py (ego, pred) -> "next((i for i, x in enumerate(§) if (§)(x)), -1)"
-@ verte rs (ego, pred) -> "§.iter().position(§)"
-@ verte cpp (ego, pred) -> "[&]{ auto it = std::find_if(§.begin(), §.end(), §); return it != §.end() ? std::distance(§.begin(), it) : -1; }()"
+@ verte py (ego, pred) -> "next((i for i, x in enumerate(§0) if (§1)(x)), -1)"
+@ verte rs (ego, pred) -> "§0.iter().position(§1)"
+@ verte cpp (ego, pred) -> "[&]{ auto it = std::find_if(§0.begin(), §0.end(), §1); return it != §0.end() ? std::distance(§0.begin(), it) : -1; }()"
 @ verte zig (ego, pred) -> "§.inveniIndicem(§)"
 @ externa
 functio inveniIndicem()
@@ -228,7 +228,7 @@ functio aliquis()
 @ verte py (ego, pred) -> "list(filter(§, §))"
 @ verte rs (ego, pred) -> "§.iter().filter(§).cloned().collect::<Vec<_>>()"
 @ verte cpp (ego, pred) -> "(§ | std::views::filter(§) | std::ranges::to<std::vector>())"
-@ verte zig (ego, pred, alloc) -> "§.filtrata(§, §)"
+@ verte zig (ego, pred, alloc) -> "§0.filtrata(§2, §1)"
 @ externa
 functio filtrata()
 
@@ -237,7 +237,7 @@ functio filtrata()
 @ verte py (ego, fn) -> "list(map(§, §))"
 @ verte rs (ego, fn) -> "§.iter().map(§).collect::<Vec<_>>()"
 @ verte cpp (ego, fn) -> "(§ | std::views::transform(§) | std::ranges::to<std::vector>())"
-@ verte zig (ego, fn, alloc) -> "§.mappata(§, §)"
+@ verte zig (ego, fn, alloc) -> "§0.mappata(§2, §1)"
 @ externa
 functio mappata()
 

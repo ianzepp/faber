@@ -3,9 +3,10 @@
 # Generates template literals with interpolation.
 #
 # TRANSFORMS:
-#   scriptum("Hello §!", name) -> `Hello ${name}!`
-#   scriptum("x = §", x)       -> `x = ${x}`
-#   scriptum("no args")        -> "no args"
+#   scriptum("Hello §!", name)      -> `Hello ${name}!`
+#   scriptum("x = §", x)            -> `x = ${x}`
+#   scriptum("§1 before §0", a, b)  -> `${b} before ${a}` (indexed)
+#   scriptum("no args")             -> "no args"
 
 ex "../../../ast/expressia" importa Expressia
 ex "../nucleus" importa TsGenerator
@@ -14,7 +15,7 @@ ex "../nucleus" importa TsGenerator
 ex "./index" importa genExpressia
 
 # Generate scriptum (format string) expression
-# Uses section sign as placeholder
+# Supports both § (positional) and §0, §1, etc. (indexed) placeholders
 @ publica
 functio genScriptum(textus exemplar, lista<Expressia> argumenta, TsGenerator g) -> textus {
     # WHY: No-arg scriptum should emit a plain string literal (no template).
@@ -24,15 +25,36 @@ functio genScriptum(textus exemplar, lista<Expressia> argumenta, TsGenerator g) 
 
     # Convert scriptum("Hello, !", name) to template literal
     varia result = "`"
-    varia argIndex = 0
+    varia implicitIdx = 0
     varia i = 0
 
     dum i < exemplar.longitudo() {
         fixum c = exemplar[i]
         si c == "§" {
-            fixum arg = argIndex < argumenta.longitudo() sic genExpressia(argumenta[argIndex], g) secus "undefined"
+            # Check for explicit index (§0, §1, etc.)
+            varia explicitIdxNum = 0
+            varia hasExplicitIdx = falsum
+            dum i + 1 < exemplar.longitudo() {
+                fixum nextChar = exemplar[i + 1]
+                si nextChar >= "0" et nextChar <= "9" {
+                    # WHY: Build number digit by digit: explicitIdxNum * 10 + digit
+                    fixum digit = nextChar.charCodeAt(0) - 48  # '0' is char code 48
+                    explicitIdxNum = explicitIdxNum * 10 + digit
+                    hasExplicitIdx = verum
+                    i += 1
+                } secus {
+                    rumpe
+                }
+            }
+
+            # Use explicit index if provided, otherwise implicit
+            fixum idx = hasExplicitIdx sic explicitIdxNum secus implicitIdx
+            si non hasExplicitIdx {
+                implicitIdx += 1
+            }
+
+            fixum arg = idx < argumenta.longitudo() sic genExpressia(argumenta[idx], g) secus "undefined"
             result = result + "${" + arg + "}"
-            argIndex += 1
         } secus {
             result = result + c
         }

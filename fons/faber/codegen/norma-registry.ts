@@ -84,17 +84,14 @@ export function applyNormaTemplate(
     args: string[],
 ): string {
     // Build value map: ego -> obj, other params -> args
+    // WHY: Zig codegen passes curator as last arg when template has 'alloc' param
     const values: string[] = [];
     for (const param of params) {
         if (param === 'ego') {
             values.push(obj);
         }
-        else if (param === 'alloc') {
-            // WHY: Allocator is handled specially by Zig codegen, skip for now
-            values.push('allocator');
-        }
         else {
-            // Take next arg
+            // Take next arg (includes 'alloc' - curator passed by Zig codegen)
             values.push(args.shift() || '');
         }
     }

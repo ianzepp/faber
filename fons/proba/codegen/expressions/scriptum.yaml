@@ -104,3 +104,73 @@
           - 'std.fmt.allocPrint(alloc, "Hello, {any}!", .{ name }) catch @panic("OOM")'
       fab:
           - 'scriptum("Hello, §!", name)'
+
+# Indexed placeholder tests (§0, §1, etc.)
+
+- name: scriptum with indexed placeholders in order
+  source: 'scriptum("§0 and §1", a, b)'
+  wrap: 'cura arena fit alloc { $ }'
+  expect:
+      ts:
+          - '`${a} and ${b}`'
+      py:
+          - '"{0} and {1}".format(a, b)'
+      rs:
+          - 'format!("{0} and {1}", a, b)'
+      cpp:
+          - 'std::format("{0} and {1}", a, b)'
+      zig:
+          - 'std.fmt.allocPrint(alloc, "{any} and {any}", .{ a, b }) catch @panic("OOM")'
+      fab:
+          - 'scriptum("§0 and §1", a, b)'
+
+- name: scriptum with indexed placeholders reversed
+  source: 'scriptum("§1 before §0", a, b)'
+  wrap: 'cura arena fit alloc { $ }'
+  expect:
+      ts:
+          - '`${b} before ${a}`'
+      py:
+          - '"{1} before {0}".format(a, b)'
+      rs:
+          - 'format!("{1} before {0}", a, b)'
+      cpp:
+          - 'std::format("{1} before {0}", a, b)'
+      zig:
+          - 'std.fmt.allocPrint(alloc, "{any} before {any}", .{ b, a }) catch @panic("OOM")'
+      fab:
+          - 'scriptum("§1 before §0", a, b)'
+
+- name: scriptum with mixed implicit and indexed placeholders
+  source: 'scriptum("§ then §1 then §0", a, b)'
+  wrap: 'cura arena fit alloc { $ }'
+  expect:
+      ts:
+          - '`${a} then ${b} then ${a}`'
+      py:
+          - '"{} then {1} then {0}".format(a, b)'
+      rs:
+          - 'format!("{} then {1} then {0}", a, b)'
+      cpp:
+          - 'std::format("{} then {1} then {0}", a, b)'
+      zig:
+          - 'std.fmt.allocPrint(alloc, "{any} then {any} then {any}", .{ a, b, a }) catch @panic("OOM")'
+      fab:
+          - 'scriptum("§ then §1 then §0", a, b)'
+
+- name: scriptum with repeated indexed placeholder
+  source: 'scriptum("§0 + §0 = §1", x, y)'
+  wrap: 'cura arena fit alloc { $ }'
+  expect:
+      ts:
+          - '`${x} + ${x} = ${y}`'
+      py:
+          - '"{0} + {0} = {1}".format(x, y)'
+      rs:
+          - 'format!("{0} + {0} = {1}", x, y)'
+      cpp:
+          - 'std::format("{0} + {0} = {1}", x, y)'
+      zig:
+          - 'std.fmt.allocPrint(alloc, "{any} + {any} = {any}", .{ x, x, y }) catch @panic("OOM")'
+      fab:
+          - 'scriptum("§0 + §0 = §1", x, y)'
