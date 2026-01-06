@@ -493,6 +493,119 @@ With build-time generation and all targets wired, the workflow is now:
 
 ---
 
+## Development Workflow
+
+Step-by-step process for adding methods to the norma system.
+
+### 1. Add annotations to lista.fab
+
+Edit `fons/norma/lista.fab`. Each method needs:
+
+```faber
+# Optional: morphology declaration (for validation)
+@ radix <stem>, <valid_forms>
+
+# Required: one @ verte per target
+@ verte ts "nativeMethod"                           # simple rename
+@ verte ts (ego, arg) -> "template with § placeholders"  # template form
+@ verte zig (ego, arg, alloc) -> "§.method(§, §)"  # zig needs alloc param
+
+# Required: mark as external (no body)
+@ externa
+functio methodName()
+```
+
+**Template rules:**
+- `§` is a positional placeholder (replaced in order)
+- `ego` = the receiver object (e.g., `items` in `items.adde(4)`)
+- `alloc` = allocator (Zig only, injected by codegen)
+- Other params = call arguments in order
+
+### 2. Regenerate the registry
+
+```bash
+bun run build:norma
+```
+
+Output:
+```
+Found 1 norma file(s): lista.fab
+  lista.fab: lista with N method(s)
+Generated: .../norma-registry.gen.ts
+Generated: .../norma-registry.gen.fab
+```
+
+### 3. Test with inline Faber code
+
+Quick test pattern - pipe Faber code directly to compiler:
+
+```bash
+# Test single target
+echo 'incipit { varia x = [1]; x.adde(2) }' | ./opus/bin/faber compile -t ts
+
+# Test all targets in sequence
+for t in ts py rs cpp zig; do
+  echo "--- $t ---"
+  echo 'incipit { varia x = [1]; x.adde(2) }' | ./opus/bin/faber compile -t $t
+done
+```
+
+### 4. Verify output
+
+**Expected patterns by target:**
+
+| Target | `adde` (mutating) | `addita` (returns new) |
+|--------|-------------------|------------------------|
+| ts | `x.push(2)` | `[...x, 2]` |
+| py | `x.append(2)` | `[*x, 2]` |
+| rs | `x.push(2)` | `{ let mut v = x.clone(); v.push(2); v }` |
+| cpp | `x.push_back(2)` | `[&]{ auto v = x; v.push_back(2); return v; }()` |
+| zig | `x.adde(alloc, 2)` | `x.addita(alloc, 2)` |
+
+### 5. Check for parse/type errors
+
+```bash
+# Validate the .fab file parses
+./opus/bin/faber check fons/norma/lista.fab
+
+# Check TypeScript types (no norma-related errors)
+npx tsc --noEmit 2>&1 | grep -i norma
+```
+
+### 6. Test with a .fab file (optional)
+
+For more complex testing, create a temp file:
+
+```bash
+cat > /tmp/test.fab << 'EOF'
+incipit {
+    varia items = [1, 2, 3]
+    items.adde(4)
+    fixum extended = items.addita(5)
+    scribe items
+    scribe extended
+}
+EOF
+
+./opus/bin/faber compile /tmp/test.fab -t ts
+```
+
+### Common Issues
+
+**"0 methods found"**: Check that:
+- `genus lista { }` appears before `functio` declarations
+- `genus` has `@ innatum` annotation
+- `functio` has at least one `@ verte` annotation
+
+**Template not substituting**: Check that:
+- Using `§` not `S` for placeholders
+- Param count matches placeholder count
+- `ego` is first param for receiver
+
+**Zig allocator undefined**: The test code needs a `cura` block to provide allocator context, or method is being called outside allocation scope.
+
+---
+
 ## Open Questions
 
 1. **Error messages**: When `@ verte` missing for a target, what error? Suggest adding annotation?
