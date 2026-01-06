@@ -49,10 +49,10 @@ fixum n = "42" numeratum<i32>          # signed 32-bit
 fixum n = "42" numeratum<u64>          # unsigned 64-bit
 fixum big = "12345678901234" numeratum<magnus>  # bigint
 
-# Radix (base) for parsing
-fixum hex = "ff" numeratum<i32, 16>    # 255 (hex)
-fixum bin = "101" numeratum<u8, 2>     # 5 (binary)
-fixum oct = "777" numeratum<i32, 8>    # 511 (octal)
+# Radix (base) for parsing using predefined types
+fixum hex = "ff" numeratum<i32, Hex>   # 255 (hex)
+fixum bin = "101" numeratum<u8, Bin>   # 5 (binary)
+fixum oct = "777" numeratum<i32, Oct>  # 511 (octal)
 
 # Number to string (infallible)
 fixum s = 42 textatum                  # "42"
@@ -108,14 +108,18 @@ conversionOp := ('numeratum' | 'fractatum') typeParams?
               | 'textatum'
               | 'bivalentum'
 
-typeParams := '<' typeAnnotation (',' NUMBER)? '>'
+typeParams := '<' typeAnnotation (',' radixType)? '>'
+
+radixType := 'Dec' | 'Hex' | 'Oct' | 'Bin'
 ```
 
 The `vel` clause is part of the conversion production, binding to the immediately following expression. Any subsequent `vel` is the binary nullish-coalescing operator at lower precedence.
 
 For `numeratum` and `fractatum`, optional type parameters specify:
 1. First parameter: target subtype (`i32`, `u64`, `magnus`, etc.)
-2. Second parameter: radix for parsing (10 = decimal, 16 = hex, 2 = binary, 8 = octal)
+2. Second parameter: radix type (`Dec` = decimal, `Hex` = hexadecimal, `Bin` = binary, `Oct` = octal)
+
+**Note on destructuring:** The examples show conversion operators in destructuring patterns (e.g., `port numeratum`). This requires extending the destructuring grammar to support conversion as part of binding patterns.
 
 ## Codegen
 
@@ -126,7 +130,7 @@ For `numeratum` and `fractatum`, optional type parameters specify:
 | `"42" numeratum` | `parseInt("42", 10)` | `int("42")` | `"42".parse::<i64>().unwrap()` | `std::stoll("42")` | `std.fmt.parseInt(i64, "42", 10) catch unreachable` |
 | `"42" numeratum vel 0` | `parseInt("42", 10) \|\| 0` | `int("42") if "42".isdigit() else 0` | `"42".parse::<i64>().unwrap_or(0)` | `[&]{ try { return std::stoll("42"); } catch(...) { return 0; } }()` | `std.fmt.parseInt(i64, "42", 10) catch 0` |
 | `"42" numeratum<i32>` | `parseInt("42", 10)` | `int("42")` | `"42".parse::<i32>().unwrap()` | `std::stoi("42")` | `std.fmt.parseInt(i32, "42", 10) catch unreachable` |
-| `"ff" numeratum<i32, 16>` | `parseInt("ff", 16)` | `int("ff", 16)` | `i32::from_str_radix("ff", 16).unwrap()` | `std::stoi("ff", nullptr, 16)` | `std.fmt.parseInt(i32, "ff", 16) catch unreachable` |
+| `"ff" numeratum<i32, Hex>` | `parseInt("ff", 16)` | `int("ff", 16)` | `i32::from_str_radix("ff", 16).unwrap()` | `std::stoi("ff", nullptr, 16)` | `std.fmt.parseInt(i32, "ff", 16) catch unreachable` |
 | `"big" numeratum<magnus>` | `BigInt("big")` | `int("big")` | `"big".parse::<num_bigint::BigInt>().unwrap()` | `boost::multiprecision::cpp_int("big")` | `std.math.big.Int.init(...)` |
 
 ### fractatum (string/value to float)
@@ -157,8 +161,9 @@ Follows `nonnulla` semantics: returns `verum` if the value is non-null AND non-e
 | `"hi" bivalentum` | `Boolean("hi")` | `bool("hi")` | `!s.is_empty()` | `!s.empty()` | `s.len != 0` |
 | `[] bivalentum` | `arr.length > 0` | `bool([])` | `!v.is_empty()` | `!v.empty()` | `v.items.len != 0` |
 | `nihil bivalentum` | `x != null` | `x is not None` | `x.is_some()` | `x.has_value()` | `x != null` |
+| `obj bivalentum` | `obj != null` | `obj is not None` | `obj.is_some()` | `obj.has_value()` | `obj != null` |
 
-Note: `bivalentum` is infallible - no `vel` clause needed. Semantics match the existing `nonnulla` unary operator.
+Note: `bivalentum` is infallible - no `vel` clause needed. Semantics match the existing `nonnulla` unary operator. For user-defined objects, `bivalentum` returns `verum` if non-null (same as `nonnulla`).
 
 ## Semantics
 
@@ -170,6 +175,7 @@ Note: `bivalentum` is infallible - no `vel` clause needed. Semantics match the e
 | `numerus` | identity | widen | format | non-zero |
 | `fractus` | truncate | identity | format | non-zero |
 | `bivalens` | 0/1 | 0.0/1.0 | "verum"/"falsum" | identity |
+| `genus` (object) | error | error | format | non-null |
 
 ### Error Handling
 
@@ -207,6 +213,8 @@ export interface ConversionExpression extends BaseNode {
     type: 'ConversionExpression';
     expression: Expression;
     conversion: 'numeratum' | 'fractatum' | 'textatum' | 'bivalentum';
+    targetType?: TypeAnnotation;  // e.g., i32, u64, magnus
+    radix?: 'Dec' | 'Hex' | 'Oct' | 'Bin';
     fallback?: Expression;  // present if 'vel' clause
 }
 ```
@@ -222,6 +230,10 @@ Add to `fons/faber/lexicon/keywords.ts`:
 { latin: 'fractatum', meaning: 'to float', category: 'operator' },
 { latin: 'textatum', meaning: 'to string', category: 'operator' },
 { latin: 'bivalentum', meaning: 'to boolean', category: 'operator' },
+{ latin: 'Hex', meaning: 'hexadecimal radix', category: 'type' },
+{ latin: 'Oct', meaning: 'octal radix', category: 'type' },
+{ latin: 'Bin', meaning: 'binary radix', category: 'type' },
+{ latin: 'Dec', meaning: 'decimal radix', category: 'type' },
 ```
 
 ### Phase 2: Parser
@@ -232,7 +244,18 @@ In the cast parsing section of `fons/faber/parser/index.ts`, add after `innatum`
 else if (matchKeyword('numeratum') || matchKeyword('fractatum') ||
          matchKeyword('textatum') || matchKeyword('bivalentum')) {
     const conversion = previous().value;
+    let targetType: TypeAnnotation | undefined;
+    let radix: string | undefined;
     let fallback: Expression | undefined;
+
+    // Parse optional type parameters for numeratum/fractatum
+    if ((conversion === 'numeratum' || conversion === 'fractatum') && match('<')) {
+        targetType = parseTypeAnnotation();
+        if (match(',')) {
+            radix = consume(['Hex', 'Oct', 'Bin', 'Dec']).value;
+        }
+        consume('>');
+    }
 
     if (matchKeyword('vel')) {
         fallback = parseUnary();  // or appropriate precedence
@@ -242,6 +265,8 @@ else if (matchKeyword('numeratum') || matchKeyword('fractatum') ||
         type: 'ConversionExpression',
         expression: expr,
         conversion,
+        targetType,
+        radix,
         fallback,
         position: expr.position
     };
@@ -283,11 +308,13 @@ fixum s = 42 textatum vel "default"  # warning: vel clause has no effect
 
 1. **`bivalentum` follows `nonnulla` semantics**: The existing `nonnulla` unary operator checks for non-null AND non-empty. `bivalentum` applies the same logic for type conversion consistency.
 
-2. **Radix as second type parameter**: Rather than a separate keyword (`radice 16`) or auto-detection from prefixes (`0xff`), radix is the optional second parameter in `numeratum<type, radix>`. This keeps the syntax compact and follows existing type parameter conventions.
+2. **Radix as predefined types**: Rather than literal numbers (`16`, `2`, `8`) or auto-detection from prefixes (`0xff`), radix uses predefined type names: `Hex`, `Oct`, `Bin`, `Dec`. This keeps angle brackets pure types (no mixed literals) and provides readable, self-documenting syntax.
 
 3. **Type parameter for numeric subtypes**: Instead of separate keywords (`magnatum`, `i32atum`), we use `numeratum<magnus>` and `numeratum<i32>`. This scales to any numeric subtype without keyword proliferation.
 
 4. **`vel` as separate token**: The fallback clause uses the existing `vel` keyword as a separate token (`numeratum vel 0`) rather than a suffix (`numeratumVel`), maintaining consistency with `vel`'s use as nullish coalescing.
+
+5. **`bivalentum` on objects**: User-defined objects (`genus`) converted via `bivalentum` return `verum` if non-null, matching `nonnulla` semantics. Objects cannot be converted via `numeratum` or `fractatum` (compile error).
 
 ## Related
 
