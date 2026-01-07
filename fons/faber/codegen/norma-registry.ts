@@ -55,11 +55,7 @@ export interface NormaCollection {
  * @param method Method name (adde, filtrata, etc.)
  * @returns Translation if found, undefined otherwise
  */
-export function getNormaTranslation(
-    target: string,
-    collection: string,
-    method: string,
-): VerteTranslation | undefined {
+export function getNormaTranslation(target: string, collection: string, method: string): VerteTranslation | undefined {
     const coll = registry.get(collection);
     if (!coll) return undefined;
 
@@ -78,20 +74,14 @@ export function getNormaTranslation(
  * @param args The argument expressions
  * @returns Generated code string
  */
-export function applyNormaTemplate(
-    template: string,
-    params: string[],
-    obj: string,
-    args: string[],
-): string {
+export function applyNormaTemplate(template: string, params: string[], obj: string, args: string[]): string {
     // Build value map: ego -> obj, other params -> args
     // WHY: Zig codegen passes curator as last arg when template has 'alloc' param
     const values: string[] = [];
     for (const param of params) {
         if (param === 'ego') {
             values.push(obj);
-        }
-        else {
+        } else {
             // Take next arg (includes 'alloc' - curator passed by Zig codegen)
             values.push(args.shift() || '');
         }
@@ -119,11 +109,7 @@ export function applyNormaTemplate(
 /**
  * Check if a method has a norma definition for the given target.
  */
-export function hasNormaMethod(
-    target: string,
-    collection: string,
-    method: string,
-): boolean {
+export function hasNormaMethod(target: string, collection: string, method: string): boolean {
     return getNormaTranslation(target, collection, method) !== undefined;
 }
 
@@ -146,12 +132,7 @@ export function getNormaCollections(): string[] {
  * @param args The argument expressions
  * @returns Generated code string, or undefined if not found
  */
-export function applyNormaModuleCall(
-    target: string,
-    module: string,
-    func: string,
-    args: string[],
-): string | undefined {
+export function applyNormaModuleCall(target: string, module: string, func: string, args: string[]): string | undefined {
     const translation = getNormaTranslation(target, module, func);
     if (!translation?.template || !translation?.params) {
         return undefined;
@@ -195,10 +176,7 @@ export interface MorphologyValidation {
  *
  * @returns radixForms array if method has @ radix, undefined otherwise
  */
-export function getNormaRadixForms(
-    collection: string,
-    method: string,
-): string[] | undefined {
+export function getNormaRadixForms(collection: string, method: string): string[] | undefined {
     const coll = registry.get(collection);
     if (!coll) return undefined;
 
@@ -225,10 +203,7 @@ export type ReceiverOwnership = 'de' | 'in' | undefined;
  * @param methodName Method being called
  * @returns 'in' for mutating, 'de' for non-mutating, undefined if unknown
  */
-export function getReceiverOwnership(
-    collection: string,
-    methodName: string,
-): ReceiverOwnership {
+export function getReceiverOwnership(collection: string, methodName: string): ReceiverOwnership {
     const coll = registry.get(collection);
     if (!coll) return undefined;
 
@@ -237,7 +212,7 @@ export function getReceiverOwnership(
 
     // If method has radixForms, use stem-guided parsing
     if (method.radixForms && method.radixForms.length > 0) {
-        const stem = method.radixForms[0];
+        const stem = method.radixForms[0]!;
         const parsed = parseMethodumWithStem(methodName, stem);
         if (parsed) {
             // mutare=true forms need mutable receiver
@@ -270,10 +245,7 @@ export function getReceiverOwnership(
  * @param methodName Method being called (filtrata, adde, etc.)
  * @returns Validation result with error message if invalid
  */
-export function validateMorphology(
-    collection: string,
-    methodName: string,
-): MorphologyValidation {
+export function validateMorphology(collection: string, methodName: string): MorphologyValidation {
     const coll = registry.get(collection);
     if (!coll) {
         // Not a stdlib collection - skip validation
@@ -285,7 +257,7 @@ export function validateMorphology(
     if (directMethod) {
         // Method exists - if it has radixForms, validate the morphology
         if (directMethod.radixForms) {
-            const declaredStem = directMethod.radixForms[0];
+            const declaredStem = directMethod.radixForms[0]!;
             const declaredForms = directMethod.radixForms.slice(1);
 
             // WHY: Use stem-guided parsing first. The greedy parser can misparse
@@ -323,7 +295,7 @@ export function validateMorphology(
     for (const method of coll.methods.values()) {
         if (!method.radixForms) continue;
 
-        const declaredStem = method.radixForms[0];
+        const declaredStem = method.radixForms[0]!;
         const declaredForms = method.radixForms.slice(1);
 
         // Try stem-guided parsing
