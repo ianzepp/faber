@@ -46,8 +46,64 @@ import type {
     TypeAliasDeclaration,
     VariaDeclaration,
 } from '../parser/ast';
-import type { SemanticType, FunctionType } from './types';
-import { functionType, UNKNOWN, VACUUM, userType, enumType, genusType, pactumType } from './types';
+import type { SemanticType, FunctionType, PrimitiveType } from './types';
+import { functionType, UNKNOWN, VACUUM, userType, enumType, genusType, pactumType, genericType, primitiveType } from './types';
+import type { TypeAnnotation } from '../parser/ast';
+
+// =============================================================================
+// TYPE RESOLUTION (SIMPLIFIED FOR MODULE EXPORTS)
+// =============================================================================
+
+/**
+ * Latin primitive type names for module-level type resolution.
+ */
+const LATIN_PRIMITIVES: Record<string, PrimitiveType['name']> = {
+    textus: 'textus',
+    numerus: 'numerus',
+    fractus: 'fractus',
+    decimus: 'decimus',
+    magnus: 'magnus',
+    bivalens: 'bivalens',
+    nihil: 'nihil',
+    vacuum: 'vacuum',
+    octeti: 'octeti',
+};
+
+/**
+ * Generic collection type names.
+ */
+const GENERIC_TYPES = new Set(['lista', 'tabula', 'copia', 'promissum', 'cursor', 'fluxus']);
+
+/**
+ * Resolve a TypeAnnotation to a SemanticType (simplified for module exports).
+ *
+ * WHY: Module exports need type info for cross-file field access resolution.
+ *      This is a simplified resolver that handles common cases without full
+ *      semantic analysis infrastructure.
+ */
+function resolveTypeSimple(node: TypeAnnotation): SemanticType {
+    const name = node.name.toLowerCase();
+
+    // Check for primitives
+    if (name in LATIN_PRIMITIVES) {
+        return primitiveType(LATIN_PRIMITIVES[name]!, node.nullable);
+    }
+
+    // Check for generics (lista<T>, tabula<K,V>, etc.)
+    if (GENERIC_TYPES.has(name)) {
+        const params =
+            node.typeParameters?.map(tp => {
+                if (tp.type === 'TypeAnnotation') {
+                    return resolveTypeSimple(tp);
+                }
+                return UNKNOWN;
+            }) ?? [];
+        return genericType(name, params, node.nullable);
+    }
+
+    // User-defined type (genus, pactum, etc.)
+    return userType(node.name, node.nullable);
+}
 
 // =============================================================================
 // TYPES
@@ -190,12 +246,12 @@ function extractStatementExport(stmt: Statement): ModuleExport | null {
  * Extract export from function declaration.
  */
 function extractFunctioExport(stmt: FunctioDeclaration): ModuleExport {
-    // WHY: Build function type from parameters and return type
-    // For now, use UNKNOWN for parameter types since we don't have full type resolution here
-    // The semantic analyzer will provide accurate types when the import is used
+    // WHY: Build function type from parameters and return type.
+    // Parameter types use UNKNOWN since full resolution isn't needed for most cases.
+    // Return types ARE resolved so that callers can access fields on the result.
     const paramTypes: SemanticType[] = stmt.params.map(() => UNKNOWN);
 
-    const returnType = stmt.returnType ? UNKNOWN : VACUUM;
+    const returnType = stmt.returnType ? resolveTypeSimple(stmt.returnType) : VACUUM;
     const isAsync = stmt.returnVerb === 'fiet' || stmt.returnVerb === 'fient';
 
     return {
@@ -209,10 +265,20 @@ function extractFunctioExport(stmt: FunctioDeclaration): ModuleExport {
  * Extract export from genus (class) declaration.
  */
 function extractGenusExport(stmt: GenusDeclaration): ModuleExport {
-    // WHY: Create a genus type placeholder - full type resolution happens during semantic analysis
+    // WHY: Extract field types for cross-module field access resolution.
+    // Without this, chained member expressions like `result.errors.longitudo()`
+    // fail because the semantic analyzer can't resolve the field type.
+    const fields = new Map<string, SemanticType>();
+
+    for (const field of stmt.fields) {
+        if (!field.isStatic) {
+            fields.set(field.name.name, resolveTypeSimple(field.fieldType));
+        }
+    }
+
     return {
         name: stmt.name.name,
-        type: genusType(stmt.name.name, new Map(), new Map(), new Map(), new Map()),
+        type: genusType(stmt.name.name, fields, new Map(), new Map(), new Map()),
         kind: 'genus',
     };
 }

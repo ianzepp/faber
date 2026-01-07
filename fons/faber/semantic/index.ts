@@ -1363,6 +1363,28 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             }
         }
 
+        // WHY: Handle user types by looking up the genus definition in scope.
+        // This supports cross-module field access where the type is imported.
+        if (objectType.kind === 'user' && !node.computed) {
+            const symbol = lookupSymbol(currentScope, objectType.name);
+            if (symbol && symbol.type.kind === 'genus') {
+                const genusType = symbol.type;
+                const propName = (node.property as Identifier).name;
+
+                const fieldType = genusType.fields.get(propName);
+                if (fieldType) {
+                    node.resolvedType = fieldType;
+                    return fieldType;
+                }
+
+                const methodType = genusType.methods.get(propName);
+                if (methodType) {
+                    node.resolvedType = methodType;
+                    return methodType;
+                }
+            }
+        }
+
         // Unknown property - return unknown for permissive behavior
         node.resolvedType = UNKNOWN;
         return UNKNOWN;

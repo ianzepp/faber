@@ -228,8 +228,8 @@ function generateFaberCode(collections: CollectionDef[]): string {
                 }
                 else if (trans.template && trans.params) {
                     const paramsStr = trans.params.map(p => `"${p}"`).join(', ');
-                    const templateEsc = trans.template.replace(/"/g, '\\"');
-                    lines.push(`                        casu "${target}" reddit novum VerteTranslation { template: "${templateEsc}", params: [${paramsStr}] }`);
+                    // WHY: Templates already have proper escaping from parser (preserves \" as-is)
+                    lines.push(`                        casu "${target}" reddit novum VerteTranslation { template: "${trans.template}", params: [${paramsStr}] }`);
                 }
             }
 
