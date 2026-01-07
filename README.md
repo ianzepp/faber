@@ -84,10 +84,11 @@ See [probationes/docs/framework-1.1-results.md](probationes/docs/framework-1.1-r
 
 ```bash
 bun install
-bun run fons/cli.ts compile exempla/fundamenta/salve.fab        # TypeScript (default)
-bun run fons/cli.ts compile exempla/fundamenta/salve.fab -t zig # Zig
-bun run fons/cli.ts run exempla/fundamenta/salve.fab            # Compile and run
-bun test                                                         # Run tests
+bun run build                                             # Build the compiler
+bun run faber compile exempla/fundamenta/salve.fab        # TypeScript (default)
+bun run faber compile exempla/fundamenta/salve.fab -t zig # Zig
+bun run faber run exempla/fundamenta/salve.fab            # Compile and run
+bun test                                                  # Run tests
 ```
 
 ## Project Stats
