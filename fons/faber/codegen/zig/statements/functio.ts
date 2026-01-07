@@ -31,6 +31,12 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: ZigGenerator)
     // Generate regular parameters
     const regularParams = node.params.map(p => g.genParameter(p));
 
+    // WHY: curata NAME syntax adds allocator parameter at end
+    // This is cleaner than adding curator as a regular param
+    if (node.curatorName) {
+        regularParams.push(`${node.curatorName}: std.mem.Allocator`);
+    }
+
     // Combine: type params first, then regular params
     const allParams = [...typeParams, ...regularParams].join(', ');
 
@@ -53,15 +59,16 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: ZigGenerator)
     // Find curator param: type annotation name is 'curator'
     const curatorParam = node.params.find(p => p.typeAnnotation?.name.toLowerCase() === 'curator');
 
-    // Push curator name onto stack if present
-    if (curatorParam) {
-        g.pushCurator(curatorParam.name.name);
+    // Push curator name onto stack if present (from param or curata syntax)
+    const curatorName = node.curatorName ?? curatorParam?.name.name;
+    if (curatorName) {
+        g.pushCurator(curatorName);
     }
 
     const body = g.genBlockStatement(node.body);
 
     // Pop curator from stack after generating body
-    if (curatorParam) {
+    if (curatorName) {
         g.popCurator();
     }
 

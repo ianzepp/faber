@@ -56,12 +56,20 @@ export function genVariaDeclaration(node: VariaDeclaration, g: ZigGenerator): st
     const name = node.name.name;
 
     // TARGET: Zig requires explicit types for var, we infer if not provided
+    // EDGE: anytype is not valid for variable type annotations in Zig.
+    //       If type is anytype, omit annotation and let Zig infer.
     let typeAnno = '';
 
     if (node.typeAnnotation) {
-        typeAnno = `: ${g.genType(node.typeAnnotation)}`;
+        const type = g.genType(node.typeAnnotation);
+        if (type !== 'anytype') {
+            typeAnno = `: ${type}`;
+        }
     } else if (kind === 'var' && node.init) {
-        typeAnno = `: ${g.inferZigType(node.init)}`;
+        const type = g.inferZigType(node.init);
+        if (type !== 'anytype') {
+            typeAnno = `: ${type}`;
+        }
     }
 
     // EDGE: Array literal with lista<T> type needs Lista(T) construction

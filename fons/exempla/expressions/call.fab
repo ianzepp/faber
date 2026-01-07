@@ -30,7 +30,7 @@ genus Calculator {
     }
 }
 
-incipit {
+incipit ergo cura arena fit alloc {
     # Simple call (no arguments)
     greet()
 

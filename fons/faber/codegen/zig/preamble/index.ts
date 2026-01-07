@@ -40,15 +40,24 @@ export function genPreamble(features: RequiredFeatures): string {
         }
     }
 
-    // Set up I/O streams if used
+    // Set up I/O helper functions if used
+    // WHY: Zig 0.15 "Writergate" changed the I/O API - can't have module-level writers
     if (features.stdout) {
-        lines.push('const stdout = std.io.getStdOut().writer();');
+        lines.push('');
+        lines.push('fn print(comptime fmt: []const u8, args: anytype) void {');
+        lines.push('    var w = std.fs.File.stdout().writer(&.{});');
+        lines.push('    w.interface.print(fmt, args) catch {};');
+        lines.push('}');
     }
     if (features.stderr) {
-        lines.push('const stderr = std.io.getStdErr().writer();');
+        lines.push('');
+        lines.push('fn eprint(comptime fmt: []const u8, args: anytype) void {');
+        lines.push('    var w = std.fs.File.stderr().writer(&.{});');
+        lines.push('    w.interface.print(fmt, args) catch {};');
+        lines.push('}');
     }
     if (features.stdin) {
-        lines.push('const stdin = std.io.getStdIn().reader();');
+        lines.push('const stdin = std.fs.File.stdin();');
     }
 
     return lines.join('\n') + '\n';

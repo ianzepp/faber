@@ -372,6 +372,30 @@ fixum doubled = numbers.map(pro x: x * 2)
 fixum sum = numbers.reduce(0, pro acc, x: acc + x)
 ```
 
+## Allocator Binding with curata
+
+The `curata` modifier (Latin "cared for," from _curare_ "to care for") declares that a function requires an allocator. This is essential for Zig targets where memory allocation is explicit:
+
+```fab
+functio greet(textus name) curata alloc -> textus {
+    redde scriptum("Hello, §!", name)
+}
+```
+
+The allocator name following `curata` becomes available within the function body for operations requiring allocation (string formatting, collection creation, etc.).
+
+At call sites, the allocator is automatically injected when calling from within a `cura` block:
+
+```fab
+incipit ergo cura arena fit alloc {
+    scribe greet("World")  # alloc auto-injected
+}
+```
+
+The `curata` modifier keeps the function signature clean—the allocator is a resource concern, not a semantic parameter. Callers within a `cura` block don't need to pass it explicitly; the compiler threads it through.
+
+For TypeScript targets, `curata` has no effect since JavaScript handles memory automatically.
+
 ## Ownership Prepositions in Parameters
 
 Latin prepositions indicate how parameters are passed and what the function may do with them:
@@ -408,7 +432,7 @@ Faber's function system balances Latin linguistic authenticity with practical pr
 - Type-first parameters with `ut` aliasing
 - `si` for optional, `vel` for defaults, `ceteri` for rest
 - Arrow `->` for direct returns, verb forms for stream protocol
-- `futura` and `cursor` modifiers, or `fiet`/`fiunt`/`fient` verbs
+- `futura`, `cursor`, and `curata` modifiers, or `fiet`/`fiunt`/`fient` verbs
 - `cede` for await (async) or yield (generator)
 - `prae typus` for generics
 - `pro` for lambdas with optional `fiet` for async

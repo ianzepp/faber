@@ -31,10 +31,10 @@ functio describe_status(Status s) -> textus {
 functio handle_event(Event e) -> nihil {
     discerne e {
         casu Click pro x, y {
-            scribe scriptum("Clicked at §, §", x, y)
+            scribe "Clicked at:", x, y
         }
         casu Keypress pro key {
-            scribe scriptum("Key: §", key)
+            scribe "Key:", key
         }
         casu Quit {
             scribe "quit"

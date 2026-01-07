@@ -1719,7 +1719,8 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         const returnType = node.returnType ? resolveTypeAnnotation(node.returnType) : VACUUM;
 
         // WHY: Detect curator param for allocator injection at call sites
-        const hasCuratorParam = node.params.some(p => p.typeAnnotation?.name.toLowerCase() === 'curator');
+        // Check both explicit curator param type and curata NAME syntax
+        const hasCuratorParam = !!node.curatorName || node.params.some(p => p.typeAnnotation?.name.toLowerCase() === 'curator');
 
         const fnType = functionType(paramTypes, returnType, node.async, hasCuratorParam);
 
@@ -2572,7 +2573,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             case 'FunctioDeclaration': {
                 const paramTypes: SemanticType[] = stmt.params.map(p => (p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN));
                 const returnType = stmt.returnType ? resolveTypeAnnotation(stmt.returnType) : VACUUM;
-                const hasCuratorParam = stmt.params.some(p => p.typeAnnotation?.name.toLowerCase() === 'curator');
+                const hasCuratorParam = !!stmt.curatorName || stmt.params.some(p => p.typeAnnotation?.name.toLowerCase() === 'curator');
                 const fnType = functionType(paramTypes, returnType, stmt.async, hasCuratorParam);
 
                 updateSymbolType(currentScope, stmt.name.name, fnType);

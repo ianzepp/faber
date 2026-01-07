@@ -37,13 +37,13 @@ export function genScribeStatement(node: ScribeStatement, g: ZigGenerator): stri
     if (node.level === 'warn') {
         g.features.stderr = true;
         const format = '[WARN] ' + (formatParts.length > 0 ? formatParts.join(' ') : '') + '\\n';
-        return `${g.ind()}stderr.print("${format}", .{${argsStr}}) catch {};`;
+        return `${g.ind()}eprint("${format}", .{${argsStr}});`;
     }
 
     // scribe -> stdout (normal output)
     g.features.stdout = true;
     const format = (formatParts.length > 0 ? formatParts.join(' ') : '') + '\\n';
-    return `${g.ind()}stdout.print("${format}", .{${argsStr}}) catch {};`;
+    return `${g.ind()}print("${format}", .{${argsStr}});`;
 }
 
 /**

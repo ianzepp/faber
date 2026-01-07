@@ -38,9 +38,11 @@ export function genConversionExpression(node: ConversionExpression, g: ZigGenera
             return `std.fmt.parseFloat(${targetType}, ${expr}) ${catchClause}`;
         }
 
-        case 'textatum':
+        case 'textatum': {
             // WHY: Zig requires allocator for string formatting
-            return `std.fmt.allocPrint(allocator, "{}", .{${expr}})`;
+            const curator = g.getCurator();
+            return `std.fmt.allocPrint(${curator}, "{}", .{${expr}})`;
+        }
 
         case 'bivalentum':
             // WHY: Zig has no truthiness, need explicit comparison

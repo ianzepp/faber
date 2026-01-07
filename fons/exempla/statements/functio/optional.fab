@@ -7,7 +7,7 @@
 #   parameter := (preposition)? 'si'? type name ('ut' alias)? ('vel' default)?
 
 # Optional parameter without default (receives nihil if omitted)
-functio greet(textus nomen, si textus titulus) -> textus {
+functio greet(textus nomen, si textus titulus) curata alloc -> textus {
     si titulus est nihil {
         redde scriptum("Salve, §!", nomen)
     }
@@ -15,24 +15,24 @@ functio greet(textus nomen, si textus titulus) -> textus {
 }
 
 # Optional parameter with default value
-functio paginate(si numerus pagina vel 1, si numerus per_pagina vel 10) -> textus {
+functio paginate(si numerus pagina vel 1, si numerus per_pagina vel 10) curata alloc -> textus {
     redde scriptum("Page § with § items", pagina, per_pagina)
 }
 
 # Preposition with optional: de si (borrowed, optional without default)
 functio analyze(textus source, de si numerus depth) -> numerus {
     si depth est nihil {
-        redde 3
+        redde source.longitudo()
     }
     redde depth
 }
 
 # Mixed required and optional parameters
-functio createUser(textus nomen, si numerus aetas vel 0, si bivalens activus vel verum) -> textus {
+functio createUser(textus nomen, si numerus aetas vel 0, si bivalens activus vel verum) curata alloc -> textus {
     redde scriptum("User: §, age: §, active: §", nomen, aetas, activus)
 }
 
-incipit {
+incipit ergo cura arena fit alloc {
     # Without optional arg
     scribe greet("Marcus")
 

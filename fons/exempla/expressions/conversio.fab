@@ -8,7 +8,7 @@
 #
 # Optional: vel (nullish coalescing) for fallback on parse failure
 
-incipit {
+incipit ergo cura arena fit alloc {
     # numeratum - parse string to integer
     fixum age = "42" numeratum
     scribe age  # 42

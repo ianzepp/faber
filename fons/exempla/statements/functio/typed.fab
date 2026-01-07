@@ -12,8 +12,8 @@ functio adde(numerus a, numerus b) -> numerus {
     redde a + b
 }
 
-# Mixed types
-functio describe(textus nomen, numerus aetas) -> textus {
+# Mixed types with allocator (curata) for string formatting
+functio describe(textus nomen, numerus aetas) curata alloc -> textus {
     redde scriptum("§ habet § annos", nomen, aetas)
 }
 
@@ -27,7 +27,7 @@ functio media(fractus a, fractus b) -> fractus {
     redde (a + b) / 2.0
 }
 
-incipit {
+incipit ergo cura arena fit alloc {
     scribe quadratum(7)
 
     scribe adde(100, 200)

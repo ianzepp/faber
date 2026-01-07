@@ -26,6 +26,7 @@ incipit {
 
     # Spread operator
     fixum base = { a: 1, b: 2 }
+    scribe(base)
     fixum extended = { sparge base, c: 3 }
     scribe(extended)
 }

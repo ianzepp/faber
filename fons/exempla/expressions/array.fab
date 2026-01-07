@@ -24,8 +24,11 @@ incipit {
     # Spread with additional elements
     fixum extended = [0, sparge first, 99]
 
+    scribe empty
     scribe numbers
     scribe names
+    scribe flags
     scribe matrix
     scribe combined
+    scribe extended
 }

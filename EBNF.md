@@ -48,6 +48,7 @@ lambdaExpr   := ('pro' | 'fit' | 'fiet') params? ('->' type)? (':' expression | 
 - Return verbs: `fit` (sync), `fiet` (async), `fiunt` (generator), `fient` (async generator)
 - Parameter prefixes: `de` (read), `in` (mutate), `ex` (consume)
 - `si` marks optional, `ceteri` marks rest parameter
+- `curata NAME` declares allocator requirement; NAME is auto-injected at call sites within `cura` blocks
 
 ### Classes
 

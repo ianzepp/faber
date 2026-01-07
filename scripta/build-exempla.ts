@@ -10,7 +10,7 @@
  *   bun run build:exempla -c rivus -t all    # rivus, all targets
  */
 
-import { mkdir, readdir, stat } from 'fs/promises';
+import { mkdir, readdir, rm, stat } from 'fs/promises';
 import { basename, dirname, join, relative } from 'path';
 import { $ } from 'bun';
 
@@ -81,6 +81,12 @@ async function findFiles(dir: string, ext: string): Promise<string[]> {
 async function compileExempla(compiler: Compiler, targets: Target[]): Promise<{ total: number; failed: number }> {
     const compilerBin = join(ROOT, 'opus', 'bin', compiler);
     const fabFiles = await findFiles(EXEMPLA_SOURCE, '.fab');
+
+    // Clear output directories for each target to ensure fresh builds
+    for (const target of targets) {
+        const targetDir = join(EXEMPLA_OUTPUT, target);
+        await rm(targetDir, { recursive: true, force: true });
+    }
 
     let failed = 0;
 

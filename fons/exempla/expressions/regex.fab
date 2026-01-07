@@ -13,4 +13,11 @@ incipit {
     # Complex patterns
     fixum email = sed "[^@]+@[^@]+"
     fixum paths = sed "/usr/local/.*"
+
+    scribe digits
+    scribe word
+    scribe insensitive
+    scribe multiline
+    scribe email
+    scribe paths
 }

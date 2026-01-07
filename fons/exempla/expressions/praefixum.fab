@@ -9,8 +9,10 @@
 
 incipit {
     # Compile-time constant expression
-    fixum PI = praefixum(3.14159)
-    fixum TAU = praefixum(2 * 3.14159)
+    fixum myPi = praefixum(3.14159)
+    fixum myTau = praefixum(2 * 3.14159)
+    scribe "myPi:", myPi
+    scribe "myTau:", myTau
 
     # Compile-time computation
     fixum DAYS_IN_YEAR = praefixum(365)

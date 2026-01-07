@@ -3,12 +3,15 @@
 # Import specific symbols from local file
 ex "./utils" importa greet, ANSWER, Point
 
-# Use the imported function
-fixum textus message = greet("World")
-scribe message
+incipit ergo cura arena fit alloc {
+    # Use the imported function (alloc auto-injected)
+    fixum textus message = greet("World")
+    scribe message
 
-# Use the imported constant
-scribe scriptum("The answer is §", ANSWER)
+    # Use the imported constant
+    scribe "The answer is:", ANSWER
 
-# Use the imported genus
-fixum Point p = { x: 10, y: 20 } qua Point
+    # Use the imported genus
+    fixum Point p = { x: 10, y: 20 } qua Point
+    scribe "Point x:", p.x
+}

@@ -20,4 +20,14 @@ incipit {
     # Template literals
     fixum name = "Mundus"
     fixum message = `Hello ${name}`
+
+    scribe integer
+    scribe decimal
+    scribe negative
+    scribe greeting
+    scribe single
+    scribe yes
+    scribe no
+    scribe nothing
+    scribe message
 }

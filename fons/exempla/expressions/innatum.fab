@@ -7,7 +7,7 @@
 #   {} innatum tabula<K, V>  -> new Map() in TS, HashMap in Rust, etc.
 #   [] innatum lista<T>      -> proper array/vector initialization
 
-incipit {
+incipit ergo cura arena fit alloc {
     # Empty tabula (Map)
     varia cache = {} innatum tabula<textus, numerus>
     cache["foo"] = 42
