@@ -7,6 +7,7 @@
 
 // WHY: Import generated registry data (avoids circular dependency with parser)
 import { registry } from './norma-registry.gen';
+import { parseMethodum, parseMethodumWithStem } from './morphology';
 
 // =============================================================================
 // TYPES
@@ -172,4 +173,127 @@ export function applyNormaModuleCall(
     });
 
     return result;
+}
+
+// =============================================================================
+// MORPHOLOGY VALIDATION
+// =============================================================================
+
+/** Result of morphology validation */
+export interface MorphologyValidation {
+    valid: boolean;
+    /** Error message if invalid */
+    error?: string;
+    /** Parsed stem (if morphology recognized) */
+    stem?: string;
+    /** Parsed form (if morphology recognized) */
+    form?: string;
+}
+
+/**
+ * Get the radixForms for a method in a collection.
+ *
+ * @returns radixForms array if method has @ radix, undefined otherwise
+ */
+export function getNormaRadixForms(
+    collection: string,
+    method: string,
+): string[] | undefined {
+    const coll = registry.get(collection);
+    if (!coll) return undefined;
+
+    const m = coll.methods.get(method);
+    if (!m) return undefined;
+
+    return m.radixForms;
+}
+
+/**
+ * Validate morphology for a method call on a stdlib collection.
+ *
+ * Validation only runs when:
+ * 1. The collection is in the stdlib (norma registry)
+ * 2. The method (or a related stem) has @ radix defined
+ *
+ * @param collection Collection name (lista, tabula, copia, etc.)
+ * @param methodName Method being called (filtrata, adde, etc.)
+ * @returns Validation result with error message if invalid
+ */
+export function validateMorphology(
+    collection: string,
+    methodName: string,
+): MorphologyValidation {
+    const coll = registry.get(collection);
+    if (!coll) {
+        // Not a stdlib collection - skip validation
+        return { valid: true };
+    }
+
+    // Check if method exists directly
+    const directMethod = coll.methods.get(methodName);
+    if (directMethod) {
+        // Method exists - if it has radixForms, validate the morphology
+        if (directMethod.radixForms) {
+            const declaredStem = directMethod.radixForms[0];
+            const declaredForms = directMethod.radixForms.slice(1);
+
+            // WHY: Use stem-guided parsing first. The greedy parser can misparse
+            // words like 'decapita' as 'decap' + '-ita' instead of 'decapit' + '-a'.
+            const parsed = parseMethodumWithStem(methodName, declaredStem) || parseMethodum(methodName);
+            if (parsed) {
+                // Check stem matches (should always match with stem-guided parsing)
+                if (parsed.stem !== declaredStem) {
+                    return {
+                        valid: false,
+                        error: `Morphology mismatch: '${methodName}' has stem '${parsed.stem}', expected '${declaredStem}'`,
+                        stem: parsed.stem,
+                        form: parsed.form,
+                    };
+                }
+
+                // Check form is declared
+                if (!declaredForms.includes(parsed.form)) {
+                    return {
+                        valid: false,
+                        error: `Morphology form '${parsed.form}' not declared for stem '${declaredStem}'. Valid forms: ${declaredForms.join(', ')}`,
+                        stem: parsed.stem,
+                        form: parsed.form,
+                    };
+                }
+            }
+        }
+        // Method exists and passes validation (or has no radixForms)
+        return { valid: true };
+    }
+
+    // Method doesn't exist directly - try parsing morphology to find related stem
+    // WHY: Check all methods with radixForms to see if this could be an undeclared
+    // form of a known verb stem. Use stem-guided parsing to handle ambiguous cases.
+    for (const method of coll.methods.values()) {
+        if (!method.radixForms) continue;
+
+        const declaredStem = method.radixForms[0];
+        const declaredForms = method.radixForms.slice(1);
+
+        // Try stem-guided parsing
+        const parsed = parseMethodumWithStem(methodName, declaredStem);
+        if (parsed) {
+            // Found a stem match - check if form is declared
+            if (!declaredForms.includes(parsed.form)) {
+                return {
+                    valid: false,
+                    error: `Unknown method '${methodName}': stem '${parsed.stem}' exists but form '${parsed.form}' is not declared. Valid forms: ${declaredForms.join(', ')}`,
+                    stem: parsed.stem,
+                    form: parsed.form,
+                };
+            }
+            // Form is declared but method not registered - should not happen
+            // (if form is declared, the method should exist). Pass through.
+            break;
+        }
+    }
+
+    // Method doesn't exist and no morphology match - let it pass through
+    // WHY: Could be a user-defined method or extension. Codegen will handle.
+    return { valid: true };
 }

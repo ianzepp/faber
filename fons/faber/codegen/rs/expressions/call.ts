@@ -16,7 +16,7 @@ import type { CallExpression, Identifier } from '../../../parser/ast';
 import type { RsGenerator } from '../generator';
 
 // WHY: Unified norma registry for all stdlib translations (from .fab files)
-import { getNormaTranslation, applyNormaTemplate, applyNormaModuleCall } from '../../norma-registry';
+import { getNormaTranslation, applyNormaTemplate, applyNormaModuleCall, validateMorphology } from '../../norma-registry';
 
 /**
  * Rust I/O intrinsic mappings.
@@ -95,6 +95,12 @@ export function genCallExpression(node: CallExpression, g: RsGenerator): string 
 
         // Try norma registry for the resolved collection type
         if (collectionName) {
+            // WHY: Validate morphology before translation. Catches undefined forms.
+            const validation = validateMorphology(collectionName, methodName);
+            if (!validation.valid) {
+                return `/* MORPHOLOGY: ${validation.error} */ ${obj}.${methodName}(${args})`;
+            }
+
             const norma = getNormaTranslation('rs', collectionName, methodName);
             if (norma) {
                 if (norma.method) {

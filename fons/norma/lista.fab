@@ -258,7 +258,8 @@ functio explanata((T) -> lista<U> fn) -> lista<U>
 functio plana() -> lista<T>
 
 # Reverse (returns new list)
-@ radix invert, imperativus, perfectum
+# WHY: Latin "invertere" has irregular participle "inversus" with stem "inver-"
+@ radix inver, perfectum
 @ verte ts (ego) -> "[...§].reverse()"
 @ verte py (ego) -> "§[::-1]"
 @ verte rs (ego) -> "§.iter().rev().cloned().collect::<Vec<_>>()"

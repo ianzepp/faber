@@ -160,6 +160,35 @@ Function return types use Latin verb forms of `fio` ("to become") to encode asyn
 
 The verb alone carries the semantic — no `futura` or `cursor` prefix needed. Arrow syntax (`->`) is also supported but requires explicit prefixes for async/generator behavior.
 
+## Method Morphology
+
+Standard library methods use Latin verb conjugations to encode behavior. Instead of separate names like `filter`/`filterAsync`/`filterNew`, Faber uses different endings on the same stem:
+
+| Form | Ending | Behavior | Example |
+|------|--------|----------|---------|
+| **Imperative** | -a/-e/-i | Mutates in place, sync | `adde`, `filtra` |
+| **Perfect** | -ata/-ita/-sa | Returns new value, sync | `addita`, `filtrata`, `inversa` |
+| **Future Indicative** | -abit/-ebit | Mutates in place, async | `filtrabit`, `scribet` |
+| **Future Active** | -atura/-itura | Returns new value, async | `filtratura` |
+| **Present Participle** | -ans/-ens | Streaming/generator | `filtrans`, `legens` |
+
+**Collections** use morphology for mutation vs allocation:
+
+```fab
+lista.adde(x)       # mutates list, adds x
+lista.addita(x)     # returns NEW list with x added
+```
+
+**I/O operations** use morphology for sync vs async vs streaming:
+
+```fab
+solum.lege(path)    # sync read (imperative)
+solum.leget(path)   # async read (future)
+solum.legens(path)  # streaming read (participle)
+```
+
+The compiler validates morphology: if you call `lista.additura(x)` but only imperative and perfect forms are declared, you get a warning. See [fons/grammatica/morphologia.md](fons/grammatica/morphologia.md) for the complete specification.
+
 ## Example
 
 ```fab

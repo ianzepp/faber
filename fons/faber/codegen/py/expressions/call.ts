@@ -15,7 +15,7 @@ import type { CallExpression, Identifier } from '../../../parser/ast';
 import type { PyGenerator } from '../generator';
 
 // WHY: Unified norma registry for all stdlib translations (from .fab files)
-import { getNormaTranslation, applyNormaTemplate, applyNormaModuleCall } from '../../norma-registry';
+import { getNormaTranslation, applyNormaTemplate, applyNormaModuleCall, validateMorphology } from '../../norma-registry';
 
 /**
  * Python I/O intrinsic handler.
@@ -103,6 +103,12 @@ export function genCallExpression(node: CallExpression, g: PyGenerator): string 
 
         // Try norma registry for the resolved collection type
         if (collectionName) {
+            // WHY: Validate morphology before translation. Catches undefined forms.
+            const validation = validateMorphology(collectionName, methodName);
+            if (!validation.valid) {
+                return `# MORPHOLOGY: ${validation.error}\n${obj}.${methodName}(${args})`;
+            }
+
             const norma = getNormaTranslation('py', collectionName, methodName);
             if (norma) {
                 if (norma.method) {
