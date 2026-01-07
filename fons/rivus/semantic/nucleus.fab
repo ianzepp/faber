@@ -73,7 +73,7 @@ genus Analyzator {
     bivalens currentFunctioAsync                                          # in async function?
     bivalens currentFunctioGenerator                                      # in generator function?
     lista<textus> resolvendoTypusAliases                                  # cycle detection
-    tabula<textus, tabula<textus, lista<textus> > > morphologiaRegistra   # receiver -> stem -> forms
+    tabula<textus, tabula<textus, lista<textus>>> morphologiaRegistra   # receiver -> stem -> forms
     textus? viaIngressus                                                  # entry file path for module resolution
     tabula<textus, ModulusResolutum> modulusCache                         # module cache (path -> resolved)
     copia<textus> modulusInProgressu                                      # cycle detection for imports
@@ -187,7 +187,7 @@ genus Analyzator {
     @ publica
     functio addeMorphologiam(textus recipiens, textus radix, lista<textus> formae) -> vacuum {
         si nihil ego.morphologiaRegistra[recipiens] {
-            ego.morphologiaRegistra[recipiens] = {} innatum tabula<textus, lista<textus> >
+            ego.morphologiaRegistra[recipiens] = {} innatum tabula<textus, lista<textus>>
         }
 
         fixum perRecipiens = ego.morphologiaRegistra[recipiens]
@@ -224,7 +224,7 @@ functio novumAnalyzator(textus? viaIngressus) -> Analyzator {
         currentFunctioAsync: falsum,
         currentFunctioGenerator: falsum,
         resolvendoTypusAliases: [] innatum lista<textus>,
-        morphologiaRegistra: {} innatum tabula<textus, tabula<textus, lista<textus> > >,
+        morphologiaRegistra: {} innatum tabula<textus, tabula<textus, lista<textus>>>,
         viaIngressus: viaIngressus,
         modulusCache: {} innatum tabula<textus, ModulusResolutum>,
         modulusInProgressu: {} qua copia<textus>
