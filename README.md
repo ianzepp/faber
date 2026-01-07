@@ -90,6 +90,23 @@ bun run fons/cli.ts run exempla/fundamenta/salve.fab            # Compile and ru
 bun test                                                         # Run tests
 ```
 
+## Project Stats
+
+| Component | Lines | Files | Description |
+|-----------|------:|------:|-------------|
+| **Compiler (faber)** | 34,208 | 334 | Reference compiler in TypeScript |
+| **Bootstrap (rivus)** | 23,236 | 204 | Self-hosting compiler in Faber |
+| **Tests** | 7,128 | — | Test infrastructure |
+| **Test Specs** | 18,271 | — | YAML test definitions (3,267 passing) |
+| **Core Phases** | 9,392 | 3 | Tokenizer, parser, semantic analyzer |
+| **Codegen** | 17,592 | 314 | Code generators for 6 targets |
+| **Documentation** | 4,189 | — | Grammar spec + prose tutorials |
+| **Examples** | 286 | 4 | Sample Faber programs |
+| **Research** | 2,087 | — | LLM learnability harness |
+| **Total** | **108,997** | **859** | Complete implementation |
+
+**Compilation Targets:** TypeScript, Zig, Python, Rust, C++, Faber (round-trip)
+
 ## Block Syntax Patterns
 
 Faber uses a consistent `keyword expr VERB name { body }` pattern for scoped constructs:
