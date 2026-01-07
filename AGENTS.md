@@ -60,19 +60,23 @@ editors/                # Editor integrations (syntax highlighting, etc.)
 archivum/               # Historical/archived materials
 ```
 
-## Quick Rules (CRITICAL)
+## CRITICAL RULES
 
-- **Type-first syntax**: `textus name` not `name: textus`
-- **Check grammar first**: Never assume syntax exists - verify in `EBNF.md` or `fons/grammatica/*.md`
-- **No invented syntax**: Don't create variations (e.g., no `Type?` for nullable)
-- **Empty collections need explicit types**: `[] innatum lista<T>`, `{} innatum tabula<K,V>`
-- **Use `ignotum` for nullable params**, not invented suffixes
-- **Banned keyword**: `cum` (Latin "with" - English homograph)
-- **Column 0 keywords**: Declaration keywords (`functio`, `genus`, etc.) must start at column 0
+1. **Type-first syntax**: `textus name` not `name: textus`
+2. **Verify grammar**: Check `EBNF.md` before assuming syntax exists
+3. **No invented syntax**: No `Type?`, no made-up suffixes
+4. **Banned keyword**: `cum` (English homograph)
+5. **Nullable params**: Use `ignotum`, not invented patterns
+6. **Run scripts via bun**: `bun run faber` not `./scripta/faber`
+7. **Correctness over completion**: Explicit over convenient
+8. **Fix root causes**: Don't paper over problems with workarounds
+
+## GRAMMAR RULES
+
+- Empty collections need explicit types: `[] innatum lista<T>`, `{} innatum tabula<K,V>`
+- No fallback guessing in codegen: Missing type info = upstream bug to fix
 
 ## Commands
-
-**Always use `bun run <script>` instead of `./scripta/<script>`** - direct invocation doesn't set up the environment properly. For example, use `bun run typecheck` not `./scripta/typecheck`.
 
 ### Faber CLI (Primary Compiler)
 
@@ -204,17 +208,7 @@ Output varies by target:
 
 ## Grammar Reference
 
-See `EBNF.md` for the formal language specification, or `fons/grammatica/*.md` for prose tutorials. Never assume syntax - always verify:
-
-```
-bun run faber check <file.fab>  # Validate before committing
-```
-
-**Common pitfalls:**
-
-- Empty collections need explicit types (`[] innatum lista<T>`)
-- Use `ignotum` for nullable parameters
-- Browse `fons/exempla/` and `fons/rivus/` for patterns
+See `EBNF.md` for the formal specification, `fons/grammatica/*.md` for prose tutorials, and `fons/exempla/` or `fons/rivus/` for working examples.
 
 ## Primitive Types
 
@@ -229,13 +223,9 @@ bun run faber check <file.fab>  # Validate before committing
 
 ## Design Principles
 
-- **LLM-readable**: Write unbreakable code - patterns so consistent deviation feels like a bug
-- **Latin correctness**: Grammar follows authentic Latin patterns (adjective-noun agreement, declension)
-- **Consistent syntax**: Patterns must work everywhere, no special cases
-- **Mechanically certain**: Every token resolves ambiguity
-- **Industrial quality**: No wobbles, no surprises, no attention spikes
-
-**Example**: Postfix visibility modifiers (`genus Foo publicum`) because Latin puts adjectives after nouns AND keeps declaration keywords at column 0 for predictable parsing. Gender agreement (`publica` for `functio`, `publicum` for `genus`) for correct Latin AND semantic signal.
+- **LLM-readable**: Patterns so consistent that deviation feels like a bug
+- **Latin correctness**: Authentic Latin grammar (adjective-noun agreement, declension)
+- **Mechanically certain**: Every token resolves ambiguity, no special cases
 
 ## Code Standards
 
