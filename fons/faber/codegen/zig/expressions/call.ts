@@ -12,23 +12,15 @@
  *
  * LIMITATION: Zig doesn't support spread in function calls. Would require
  *             comptime tuple unpacking or @call with .args tuple.
+ *
+ * Collection methods are translated via the unified norma registry.
  */
 
 import type { CallExpression, Expression, SpreadElement, Identifier } from '../../../parser/ast';
 import type { ZigGenerator } from '../generator';
 
-// WHY: Unified registries for collection methods (stdlib refactor)
-import { getListaMethod } from '../../lista';
-import { getTabulaMethod } from '../../tabula';
-import { getCopiaMethod } from '../../copia';
-
-// WHY: Norma registry for annotation-driven codegen
-import { getNormaTranslation, applyNormaTemplate } from '../../norma-registry';
-
-// Collection method registries (will be unified in future phases)
-import { getMathesisFunction } from '../norma/mathesis';
-import { getTempusFunction } from '../norma/tempus';
-import { getAleatorFunction } from '../norma/aleator';
+// WHY: Unified norma registry for all stdlib translations (from .fab files)
+import { getNormaTranslation, applyNormaTemplate, applyNormaModuleCall } from '../../norma-registry';
 
 export function genCallExpression(node: CallExpression, g: ZigGenerator): string {
     // Helper to generate argument, handling spread
@@ -80,129 +72,57 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
             return `(std.io.getStdIn().reader().readUntilDelimiterOrEof(buf, '\\n') catch "") orelse ""`;
         }
 
-        // Check mathesis functions (ex "norma/mathesis" importa pavimentum, etc.)
-        const mathesisFunc = getMathesisFunction(name);
-        if (mathesisFunc) {
-            if (typeof mathesisFunc.zig === 'function') {
-                return mathesisFunc.zig(argsArray);
+        // Check norma module functions (mathesis, tempus, aleator)
+        for (const module of ['mathesis', 'tempus', 'aleator']) {
+            const call = applyNormaModuleCall('zig', module, name, [...argsArray]);
+            if (call) {
+                return call;
             }
-            return mathesisFunc.zig;
-        }
-
-        // Check tempus functions (ex "norma/tempus" importa nunc, dormi, etc.)
-        const tempusFunc = getTempusFunction(name);
-        if (tempusFunc) {
-            if (typeof tempusFunc.zig === 'function') {
-                return tempusFunc.zig(argsArray);
-            }
-            return tempusFunc.zig;
-        }
-
-        // Check aleator functions (ex "norma/aleator" importa fractus, inter, etc.)
-        // WHY: Aleator functions have fallback allocators, so don't require cura block
-        const aleatorFunc = getAleatorFunction(name);
-        if (aleatorFunc) {
-            const curator = g.getCuratorOrUndefined();
-            if (typeof aleatorFunc.zig === 'function') {
-                return aleatorFunc.zig(argsArray, curator);
-            }
-            return aleatorFunc.zig;
         }
     }
 
     // Check for collection methods (method calls on lista/tabula/copia)
-    // WHY: Latin collection methods map to Zig stdlib ArrayList/HashMap operations
-    // WHY: Pass argsArray (not joined string) to method handlers
-    //      so they can correctly handle multi-param lambdas with commas.
     if (node.callee.type === 'MemberExpression' && !node.callee.computed) {
         const methodName = (node.callee.property as Identifier).name;
         const obj = g.genExpression(node.callee.object);
 
-        // Use semantic type info to dispatch to correct collection registry
+        // WHY: Use semantic type info to dispatch to correct collection registry.
         const objType = node.callee.object.resolvedType;
         const collectionName = objType?.kind === 'generic' ? objType.name : null;
 
-        // Dispatch based on resolved type
-        // WHY: Only fetch curator when we have a known collection method that needs it
-        if (collectionName === 'tabula') {
-            const method = getTabulaMethod(methodName);
-            if (method) {
-                // WHY: Flag features so preamble includes Tabula and arena setup
-                g.features.tabula = true;
-                const curator = method.needsAlloc ? g.getCurator() : '';
-                if (typeof method.zig === 'function') {
-                    return method.zig(obj, argsArray, curator);
-                }
-                return `${obj}.${method.zig}(${args})`;
-            }
-        } else if (collectionName === 'copia') {
-            const method = getCopiaMethod(methodName);
-            if (method) {
-                // WHY: Flag features so preamble includes Copia and arena setup
-                g.features.copia = true;
-                const curator = method.needsAlloc ? g.getCurator() : '';
-                if (typeof method.zig === 'function') {
-                    return method.zig(obj, argsArray, curator);
-                }
-                return `${obj}.${method.zig}(${args})`;
-            }
-        } else if (collectionName === 'lista') {
-            // Try norma registry first (annotation-driven codegen)
-            const norma = getNormaTranslation('zig', 'lista', methodName);
-            if (norma) {
-                g.features.lista = true;
-                if (norma.template && norma.params) {
-                    // WHY: Zig templates may include 'alloc' param - check if curator needed
-                    const needsAlloc = norma.params.includes('alloc');
-                    const curator = needsAlloc ? g.getCurator() : '';
-                    // Add curator to args for template substitution
-                    const templateArgs = needsAlloc ? [...argsArray, curator] : [...argsArray];
-                    return applyNormaTemplate(norma.template, [...norma.params], obj, templateArgs);
-                }
-                if (norma.method) {
-                    return `${obj}.${norma.method}(${args})`;
-                }
-            }
+        // Helper to apply norma translation with allocator handling
+        const applyZigNorma = (coll: string, method: string): string | null => {
+            const norma = getNormaTranslation('zig', coll, method);
+            if (!norma) return null;
 
-            // Fallback to hardcoded registry
-            const method = getListaMethod(methodName);
-            if (method) {
-                // WHY: Flag features so preamble includes Lista and arena setup
-                g.features.lista = true;
-                const curator = method.needsAlloc ? g.getCurator() : '';
-                if (typeof method.zig === 'function') {
-                    return method.zig(obj, argsArray, curator);
-                }
-                return `${obj}.${method.zig}(${args})`;
-            }
-        }
+            // Flag features for preamble
+            if (coll === 'lista') g.features.lista = true;
+            else if (coll === 'tabula') g.features.tabula = true;
+            else if (coll === 'copia') g.features.copia = true;
 
-        // Fallback: no type info or unknown type - try norma first, then lista
-        const normaFallback = getNormaTranslation('zig', 'lista', methodName);
-        if (normaFallback) {
-            g.features.lista = true;
-            if (normaFallback.template && normaFallback.params) {
-                const needsAlloc = normaFallback.params.includes('alloc');
+            if (norma.template && norma.params) {
+                // WHY: Zig templates may include 'alloc' param - check if curator needed
+                const needsAlloc = norma.params.includes('alloc');
                 const curator = needsAlloc ? g.getCurator() : '';
                 const templateArgs = needsAlloc ? [...argsArray, curator] : [...argsArray];
-                return applyNormaTemplate(normaFallback.template, [...normaFallback.params], obj, templateArgs);
+                return applyNormaTemplate(norma.template, [...norma.params], obj, templateArgs);
             }
-            if (normaFallback.method) {
-                return `${obj}.${normaFallback.method}(${args})`;
+            if (norma.method) {
+                return `${obj}.${norma.method}(${args})`;
             }
+            return null;
+        };
+
+        // Try norma registry for the resolved collection type
+        if (collectionName) {
+            const result = applyZigNorma(collectionName, methodName);
+            if (result) return result;
         }
 
-        const listaMethod = getListaMethod(methodName);
-        if (listaMethod) {
-            // WHY: Flag features so preamble includes Lista and arena setup in main()
-            // Without this, code like `items.adde(alloc, 1)` would reference undefined alloc
-            g.features.lista = true;
-            // WHY: Only fetch curator if method actually needs allocator
-            const curator = listaMethod.needsAlloc ? g.getCurator() : '';
-            if (typeof listaMethod.zig === 'function') {
-                return listaMethod.zig(obj, argsArray, curator);
-            }
-            return `${obj}.${listaMethod.zig}(${args})`;
+        // Fallback: no type info - try all collection types
+        for (const coll of ['lista', 'tabula', 'copia']) {
+            const result = applyZigNorma(coll, methodName);
+            if (result) return result;
         }
     }
 

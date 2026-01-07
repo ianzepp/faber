@@ -11,20 +11,26 @@
 
 import type { Identifier } from '../../../parser/ast';
 import type { RsGenerator } from '../generator';
-import { getMathesisConstant } from '../norma/mathesis';
-import { getTempusConstant } from '../norma/tempus';
+
+// WHY: Constants are inlined for simplicity. These match the .fab definitions.
+const RS_CONSTANTS: Record<string, string> = {
+    // mathesis constants
+    PI: 'std::f64::consts::PI',
+    E: 'std::f64::consts::E',
+    TAU: 'std::f64::consts::TAU',
+    // tempus duration constants (milliseconds)
+    MILLISECUNDUM: '1_i64',
+    SECUNDUM: '1000_i64',
+    MINUTUM: '60000_i64',
+    HORA: '3600000_i64',
+    DIES: '86400000_i64',
+};
 
 export function genIdentifier(node: Identifier, _g: RsGenerator): string {
-    // Check for mathesis constants (PI, E, TAU)
-    const mathesisConst = getMathesisConstant(node.name);
-    if (mathesisConst) {
-        return mathesisConst;
-    }
-
-    // Check for tempus constants (MILLISECUNDUM, SECUNDUM, MINUTUM, HORA, DIES)
-    const tempusConst = getTempusConstant(node.name);
-    if (tempusConst) {
-        return tempusConst;
+    // Check for constants (mathesis + tempus)
+    const constant = RS_CONSTANTS[node.name];
+    if (constant) {
+        return constant;
     }
 
     return node.name;

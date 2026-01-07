@@ -10,43 +10,26 @@
  *   f(sparge nums) -> f(...nums)
  *
  * Intrinsics are mapped to target-specific implementations.
- * Lista methods (Latin array methods) are translated to JS equivalents.
+ * Collection methods are translated via the unified norma registry.
  */
 
 import type { CallExpression, Identifier } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
 
-// WHY: Unified registries for collection methods (stdlib refactor)
-import { getListaMethod } from '../../lista';
-import { getTabulaMethod } from '../../tabula';
-import { getCopiaMethod } from '../../copia';
-
-// WHY: Norma registry for annotation-driven codegen (vertical slice)
+// WHY: Unified norma registry for all stdlib translations (from .fab files)
 import { getNormaTranslation, applyNormaTemplate, applyNormaModuleCall } from '../../norma-registry';
-
-import { getAleatorFunction } from '../norma/aleator';
 
 /**
  * TypeScript intrinsic mappings.
  *
- * Maps Latin intrinsic names to TypeScript/JavaScript equivalents.
- *
- * Two categories:
- * - _prefixed: Internal intrinsics called from arca/norma/index.fab
- * - unprefixed: Direct stdlib functions (norma/tempus, etc.)
+ * Maps Latin I/O intrinsic names to TypeScript/JavaScript equivalents.
+ * These are always available without imports.
  */
 const TS_INTRINSICS: Record<string, (args: string) => string> = {
-    // I/O intrinsics (always available)
     _scribe: args => `console.log(${args})`,
     _vide: args => `console.debug(${args})`,
     _mone: args => `console.warn(${args})`,
     _lege: () => `prompt() ?? ""`,
-
-    // norma/tempus - Time functions
-    nunc: () => `Date.now()`,
-    nunc_nano: () => `BigInt(Date.now()) * 1000000n`,
-    nunc_secunda: () => `Math.floor(Date.now() / 1000)`,
-    dormi: args => `new Promise(r => setTimeout(r, ${args}))`,
 };
 
 export function genCallExpression(node: CallExpression, g: TsGenerator): string {
@@ -88,36 +71,29 @@ export function genCallExpression(node: CallExpression, g: TsGenerator): string 
     if (node.callee.type === 'Identifier') {
         const name = node.callee.name;
 
-        // Check hardcoded intrinsics first
+        // Check I/O intrinsics first (always available)
         const intrinsic = TS_INTRINSICS[name];
         if (intrinsic) {
             return intrinsic(args);
         }
 
-        // Check norma module functions (mathesis, solum, etc.)
+        // Check norma module functions (mathesis, solum, aleator, tempus)
         // WHY: These are imported via `ex "norma/mathesis" importa pavimentum`
-        const mathesisCall = applyNormaModuleCall('ts', 'mathesis', name, [...argsArray]);
-        if (mathesisCall) {
-            return mathesisCall;
+        for (const module of ['mathesis', 'tempus', 'aleator']) {
+            const call = applyNormaModuleCall('ts', module, name, [...argsArray]);
+            if (call) {
+                return call;
+            }
         }
 
+        // Check solum separately for feature flagging
         const solumCall = applyNormaModuleCall('ts', 'solum', name, [...argsArray]);
         if (solumCall) {
-            // WHY: Mark fs/path as required for preamble imports
             g.features.fs = true;
             if (['iunge', 'dir', 'basis', 'extensio', 'resolve'].includes(name)) {
                 g.features.nodePath = true;
             }
             return solumCall;
-        }
-
-        // Check aleator functions (ex "norma/aleator" importa fractus, etc.)
-        const aleatorFunc = getAleatorFunction(name);
-        if (aleatorFunc) {
-            if (typeof aleatorFunc.ts === 'function') {
-                return aleatorFunc.ts(argsArray);
-            }
-            return aleatorFunc.ts;
         }
     }
 
@@ -132,28 +108,9 @@ export function genCallExpression(node: CallExpression, g: TsGenerator): string 
         const objType = node.callee.object.resolvedType;
         const collectionName = objType?.kind === 'generic' ? objType.name : null;
 
-        // Dispatch based on resolved type
-        // WHY: Pass argsArray (not joined string) to method handlers
-        //      so they can correctly handle multi-param lambdas with commas.
-        if (collectionName === 'tabula') {
-            const method = getTabulaMethod(methodName);
-            if (method) {
-                if (typeof method.ts === 'function') {
-                    return method.ts(obj, argsArray);
-                }
-                return `${obj}.${method.ts}(${args})`;
-            }
-        } else if (collectionName === 'copia') {
-            const method = getCopiaMethod(methodName);
-            if (method) {
-                if (typeof method.ts === 'function') {
-                    return method.ts(obj, argsArray);
-                }
-                return `${obj}.${method.ts}(${args})`;
-            }
-        } else if (collectionName === 'lista') {
-            // WHY: Check norma registry first (annotation-driven codegen)
-            const norma = getNormaTranslation('ts', 'lista', methodName);
+        // Try norma registry for the resolved collection type
+        if (collectionName) {
+            const norma = getNormaTranslation('ts', collectionName, methodName);
             if (norma) {
                 if (norma.method) {
                     return `${obj}.${norma.method}(${args})`;
@@ -162,34 +119,19 @@ export function genCallExpression(node: CallExpression, g: TsGenerator): string 
                     return applyNormaTemplate(norma.template, [...norma.params], obj, [...argsArray]);
                 }
             }
+        }
 
-            // Fallback to hardcoded registry
-            const method = getListaMethod(methodName);
-            if (method) {
-                if (typeof method.ts === 'function') {
-                    return method.ts(obj, argsArray);
+        // Fallback: no type info - try all collection types
+        for (const coll of ['lista', 'tabula', 'copia']) {
+            const norma = getNormaTranslation('ts', coll, methodName);
+            if (norma) {
+                if (norma.method) {
+                    return `${obj}.${norma.method}(${args})`;
                 }
-                return `${obj}.${method.ts}(${args})`;
+                if (norma.template && norma.params) {
+                    return applyNormaTemplate(norma.template, [...norma.params], obj, [...argsArray]);
+                }
             }
-        }
-
-        // Fallback: no type info or unknown type - try norma first, then lista
-        const normaFallback = getNormaTranslation('ts', 'lista', methodName);
-        if (normaFallback) {
-            if (normaFallback.method) {
-                return `${obj}.${normaFallback.method}(${args})`;
-            }
-            if (normaFallback.template && normaFallback.params) {
-                return applyNormaTemplate(normaFallback.template, [...normaFallback.params], obj, [...argsArray]);
-            }
-        }
-
-        const listaMethod = getListaMethod(methodName);
-        if (listaMethod) {
-            if (typeof listaMethod.ts === 'function') {
-                return listaMethod.ts(obj, argsArray);
-            }
-            return `${obj}.${listaMethod.ts}(${args})`;
         }
     }
 

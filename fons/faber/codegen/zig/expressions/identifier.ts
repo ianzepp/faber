@@ -14,23 +14,26 @@
 
 import type { Identifier } from '../../../parser/ast';
 import type { ZigGenerator } from '../generator';
-import { getMathesisConstant } from '../norma/mathesis';
-import { getTempusConstant } from '../norma/tempus';
 
-export function genIdentifier(node: Identifier, g: ZigGenerator): string {
-    // Suppress unused parameter warning
-    void g;
+// WHY: Constants are inlined for simplicity. These match the .fab definitions.
+const ZIG_CONSTANTS: Record<string, string> = {
+    // mathesis constants
+    PI: 'std.math.pi',
+    E: 'std.math.e',
+    TAU: 'std.math.tau',
+    // tempus duration constants (milliseconds)
+    MILLISECUNDUM: '1',
+    SECUNDUM: '1000',
+    MINUTUM: '60000',
+    HORA: '3600000',
+    DIES: '86400000',
+};
 
-    // Check for mathesis constants (PI, E, TAU)
-    const mathesisConst = getMathesisConstant(node.name);
-    if (mathesisConst) {
-        return mathesisConst;
-    }
-
-    // Check for tempus constants (MILLISECUNDUM, SECUNDUM, MINUTUM, HORA, DIES)
-    const tempusConst = getTempusConstant(node.name);
-    if (tempusConst) {
-        return tempusConst;
+export function genIdentifier(node: Identifier, _g: ZigGenerator): string {
+    // Check for constants (mathesis + tempus)
+    const constant = ZIG_CONSTANTS[node.name];
+    if (constant) {
+        return constant;
     }
 
     return node.name;

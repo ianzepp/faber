@@ -11,43 +11,28 @@
  *   _vide(x)           -> std::cerr << "[DEBUG] " << x << std::endl
  *   _mone(x)           -> std::cerr << "[WARN] " << x << std::endl
  *   _lege()            -> std::getline(std::cin, ...)
+ *
+ * Collection methods are translated via the unified norma registry.
  */
 
 import type { CallExpression, Expression, Identifier } from '../../../parser/ast';
 import type { CppGenerator } from '../generator';
 
-// WHY: Unified registries for collection methods (stdlib refactor)
-import { getListaMethod } from '../../lista';
-import { getTabulaMethod } from '../../tabula';
-import { getCopiaMethod } from '../../copia';
+// WHY: Unified norma registry for all stdlib translations (from .fab files)
+import { getNormaTranslation, applyNormaTemplate, applyNormaModuleCall } from '../../norma-registry';
 
-// WHY: Norma registry for annotation-driven codegen
-import { getNormaTranslation, applyNormaTemplate } from '../../norma-registry';
-
-import { getMathesisFunction, getMathesisHeaders } from '../norma/mathesis';
-import { getAleatorFunction, getAleatorHeaders } from '../norma/aleator';
-
-/**
- * C++23 tempus (time) intrinsic mappings.
- *
- * WHY: Time functions use <chrono> for time points and <thread> for sleep.
- */
-const CPP_TEMPUS: Record<string, { cpp: string | ((args: string[]) => string); headers: string[] }> = {
-    nunc: {
-        cpp: 'std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()',
-        headers: ['<chrono>'],
+// WHY: C++ requires header tracking for imports. Map module/function to headers.
+const CPP_HEADERS: Record<string, Record<string, string[]>> = {
+    mathesis: {
+        _default: ['<cmath>'],
     },
-    nunc_nano: {
-        cpp: 'std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count()',
-        headers: ['<chrono>'],
+    tempus: {
+        _default: ['<chrono>'],
+        dormi: ['<chrono>', '<thread>'],
     },
-    nunc_secunda: {
-        cpp: 'std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()',
-        headers: ['<chrono>'],
-    },
-    dormi: {
-        cpp: (args: string[]) => `std::this_thread::sleep_for(std::chrono::milliseconds(${args[0]}))`,
-        headers: ['<chrono>', '<thread>'],
+    aleator: {
+        _default: ['<random>'],
+        uuid: ['<random>', '<string>'],
     },
 };
 
@@ -115,40 +100,20 @@ export function genCallExpression(node: CallExpression, g: CppGenerator): string
             return intrinsicResult;
         }
 
-        // Check mathesis functions (ex "norma/mathesis" importa pavimentum, etc.)
-        const mathesisFunc = getMathesisFunction(name);
-        if (mathesisFunc) {
-            for (const header of getMathesisHeaders(name)) {
-                g.includes.add(header);
+        // Check norma module functions (mathesis, tempus, aleator)
+        for (const module of ['mathesis', 'tempus', 'aleator']) {
+            const call = applyNormaModuleCall('cpp', module, name, [...argsArray]);
+            if (call) {
+                // Add required headers
+                const moduleHeaders = CPP_HEADERS[module];
+                if (moduleHeaders) {
+                    const headers = moduleHeaders[name] || moduleHeaders._default || [];
+                    for (const header of headers) {
+                        g.includes.add(header);
+                    }
+                }
+                return call;
             }
-            if (typeof mathesisFunc.cpp === 'function') {
-                return mathesisFunc.cpp(argsArray);
-            }
-            return mathesisFunc.cpp;
-        }
-
-        // Check tempus functions (ex "norma/tempus" importa nunc, dormi, etc.)
-        const tempusFunc = CPP_TEMPUS[name];
-        if (tempusFunc) {
-            for (const header of tempusFunc.headers) {
-                g.includes.add(header);
-            }
-            if (typeof tempusFunc.cpp === 'function') {
-                return tempusFunc.cpp(argsArray);
-            }
-            return tempusFunc.cpp;
-        }
-
-        // Check aleator functions (ex "norma/aleator" importa fractus, inter, etc.)
-        const aleatorFunc = getAleatorFunction(name);
-        if (aleatorFunc) {
-            for (const header of getAleatorHeaders(name)) {
-                g.includes.add(header);
-            }
-            if (typeof aleatorFunc.cpp === 'function') {
-                return aleatorFunc.cpp(argsArray);
-            }
-            return aleatorFunc.cpp;
         }
     }
 
@@ -158,32 +123,12 @@ export function genCallExpression(node: CallExpression, g: CppGenerator): string
         const obj = g.genExpression(node.callee.object);
 
         // WHY: Use semantic type info to dispatch to correct collection registry.
-        // This prevents method name collisions (e.g., accipe means different
-        // things for lista vs tabula).
         const objType = node.callee.object.resolvedType;
         const collectionName = objType?.kind === 'generic' ? objType.name : null;
 
-        // Dispatch based on resolved type
-        // TODO: Add header tracking to unified registries (currently C++ headers are not tracked)
-        if (collectionName === 'tabula') {
-            const method = getTabulaMethod(methodName);
-            if (method) {
-                if (typeof method.cpp === 'function') {
-                    return method.cpp(obj, argsArray);
-                }
-                return `${obj}.${method.cpp}(${args})`;
-            }
-        } else if (collectionName === 'copia') {
-            const method = getCopiaMethod(methodName);
-            if (method) {
-                if (typeof method.cpp === 'function') {
-                    return method.cpp(obj, argsArray);
-                }
-                return `${obj}.${method.cpp}(${args})`;
-            }
-        } else if (collectionName === 'lista') {
-            // Try norma registry first (annotation-driven codegen)
-            const norma = getNormaTranslation('cpp', 'lista', methodName);
+        // Try norma registry for the resolved collection type
+        if (collectionName) {
+            const norma = getNormaTranslation('cpp', collectionName, methodName);
             if (norma) {
                 if (norma.method) {
                     return `${obj}.${norma.method}(${args})`;
@@ -192,34 +137,19 @@ export function genCallExpression(node: CallExpression, g: CppGenerator): string
                     return applyNormaTemplate(norma.template, [...norma.params], obj, [...argsArray]);
                 }
             }
+        }
 
-            // Fallback to hardcoded registry
-            const method = getListaMethod(methodName);
-            if (method) {
-                if (typeof method.cpp === 'function') {
-                    return method.cpp(obj, argsArray);
+        // Fallback: no type info - try all collection types
+        for (const coll of ['lista', 'tabula', 'copia']) {
+            const norma = getNormaTranslation('cpp', coll, methodName);
+            if (norma) {
+                if (norma.method) {
+                    return `${obj}.${norma.method}(${args})`;
                 }
-                return `${obj}.${method.cpp}(${args})`;
+                if (norma.template && norma.params) {
+                    return applyNormaTemplate(norma.template, [...norma.params], obj, [...argsArray]);
+                }
             }
-        }
-
-        // Fallback: no type info - try norma first, then lista
-        const normaFallback = getNormaTranslation('cpp', 'lista', methodName);
-        if (normaFallback) {
-            if (normaFallback.method) {
-                return `${obj}.${normaFallback.method}(${args})`;
-            }
-            if (normaFallback.template && normaFallback.params) {
-                return applyNormaTemplate(normaFallback.template, [...normaFallback.params], obj, [...argsArray]);
-            }
-        }
-
-        const listaMethod = getListaMethod(methodName);
-        if (listaMethod) {
-            if (typeof listaMethod.cpp === 'function') {
-                return listaMethod.cpp(obj, argsArray);
-            }
-            return `${obj}.${listaMethod.cpp}(${args})`;
         }
     }
 

@@ -8,22 +8,15 @@
  *   _vide(x) -> eprintln!("[DEBUG] {}", x)
  *   _mone(x) -> eprintln!("[WARN] {}", x)
  *   _lege() -> std::io::stdin().read_line(...)
+ *
+ * Collection methods are translated via the unified norma registry.
  */
 
 import type { CallExpression, Identifier } from '../../../parser/ast';
 import type { RsGenerator } from '../generator';
 
-// WHY: Unified registries for collection methods (stdlib refactor)
-import { getListaMethod } from '../../lista';
-import { getCopiaMethod } from '../../copia';
-import { getTabulaMethod } from '../../tabula';
-
-// WHY: Norma registry for annotation-driven codegen
-import { getNormaTranslation, applyNormaTemplate } from '../../norma-registry';
-
-import { getMathesisFunction } from '../norma/mathesis';
-import { getTempusFunction } from '../norma/tempus';
-import { getAleatorFunction } from '../norma/aleator';
+// WHY: Unified norma registry for all stdlib translations (from .fab files)
+import { getNormaTranslation, applyNormaTemplate, applyNormaModuleCall } from '../../norma-registry';
 
 /**
  * Rust I/O intrinsic mappings.
@@ -82,64 +75,27 @@ export function genCallExpression(node: CallExpression, g: RsGenerator): string 
             return intrinsic(argsArray);
         }
 
-        // Check mathesis functions (ex "norma/mathesis" importa pavimentum, etc.)
-        const mathesisFunc = getMathesisFunction(name);
-        if (mathesisFunc) {
-            if (typeof mathesisFunc.rs === 'function') {
-                return mathesisFunc.rs(argsArray);
+        // Check norma module functions (mathesis, tempus, aleator)
+        for (const module of ['mathesis', 'tempus', 'aleator']) {
+            const call = applyNormaModuleCall('rs', module, name, [...argsArray]);
+            if (call) {
+                return call;
             }
-            return mathesisFunc.rs;
-        }
-
-        // Check tempus functions (ex "norma/tempus" importa nunc, dormi, etc.)
-        const tempusFunc = getTempusFunction(name);
-        if (tempusFunc) {
-            if (typeof tempusFunc.rs === 'function') {
-                return tempusFunc.rs(argsArray);
-            }
-            return tempusFunc.rs;
-        }
-
-        // Check aleator functions (ex "norma/aleator" importa fractus, inter, etc.)
-        const aleatorFunc = getAleatorFunction(name);
-        if (aleatorFunc) {
-            if (typeof aleatorFunc.rs === 'function') {
-                return aleatorFunc.rs(argsArray);
-            }
-            return aleatorFunc.rs;
         }
     }
 
-    // Check for collection methods (method calls on lista/copia)
-    // WHY: Use semantic type info to dispatch to correct collection registry
+    // Check for collection methods (method calls on lista/tabula/copia)
     if (node.callee.type === 'MemberExpression' && !node.callee.computed) {
         const methodName = (node.callee.property as Identifier).name;
         const obj = g.genExpression(node.callee.object);
 
-        // Use semantic type info to dispatch to correct collection
+        // WHY: Use semantic type info to dispatch to correct collection registry.
         const objType = node.callee.object.resolvedType;
         const collectionName = objType?.kind === 'generic' ? objType.name : null;
 
-        // Dispatch based on resolved type
-        if (collectionName === 'copia') {
-            const method = getCopiaMethod(methodName);
-            if (method) {
-                if (typeof method.rs === 'function') {
-                    return method.rs(obj, argsArray);
-                }
-                return `${obj}.${method.rs}(${args})`;
-            }
-        } else if (collectionName === 'tabula') {
-            const method = getTabulaMethod(methodName);
-            if (method) {
-                if (typeof method.rs === 'function') {
-                    return method.rs(obj, argsArray);
-                }
-                return `${obj}.${method.rs}(${args})`;
-            }
-        } else if (collectionName === 'lista') {
-            // Try norma registry first (annotation-driven codegen)
-            const norma = getNormaTranslation('rs', 'lista', methodName);
+        // Try norma registry for the resolved collection type
+        if (collectionName) {
+            const norma = getNormaTranslation('rs', collectionName, methodName);
             if (norma) {
                 if (norma.method) {
                     return `${obj}.${norma.method}(${args})`;
@@ -148,34 +104,19 @@ export function genCallExpression(node: CallExpression, g: RsGenerator): string 
                     return applyNormaTemplate(norma.template, [...norma.params], obj, [...argsArray]);
                 }
             }
+        }
 
-            // Fallback to hardcoded registry
-            const method = getListaMethod(methodName);
-            if (method) {
-                if (typeof method.rs === 'function') {
-                    return method.rs(obj, argsArray);
+        // Fallback: no type info - try all collection types
+        for (const coll of ['lista', 'tabula', 'copia']) {
+            const norma = getNormaTranslation('rs', coll, methodName);
+            if (norma) {
+                if (norma.method) {
+                    return `${obj}.${norma.method}(${args})`;
                 }
-                return `${obj}.${method.rs}(${args})`;
+                if (norma.template && norma.params) {
+                    return applyNormaTemplate(norma.template, [...norma.params], obj, [...argsArray]);
+                }
             }
-        }
-
-        // Fallback: no type info or unknown type - try norma first, then lista
-        const normaFallback = getNormaTranslation('rs', 'lista', methodName);
-        if (normaFallback) {
-            if (normaFallback.method) {
-                return `${obj}.${normaFallback.method}(${args})`;
-            }
-            if (normaFallback.template && normaFallback.params) {
-                return applyNormaTemplate(normaFallback.template, [...normaFallback.params], obj, [...argsArray]);
-            }
-        }
-
-        const listaMethod = getListaMethod(methodName);
-        if (listaMethod) {
-            if (typeof listaMethod.rs === 'function') {
-                return listaMethod.rs(obj, argsArray);
-            }
-            return `${obj}.${listaMethod.rs}(${args})`;
         }
     }
 

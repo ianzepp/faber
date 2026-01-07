@@ -8,45 +8,14 @@
  *   f(sparge nums) -> f(*nums)
  *
  * WHY: Python uses * for unpacking iterables in function calls.
+ * Collection methods are translated via the unified norma registry.
  */
 
-import type { CallExpression, Expression, Identifier } from '../../../parser/ast';
+import type { CallExpression, Identifier } from '../../../parser/ast';
 import type { PyGenerator } from '../generator';
 
-// WHY: Unified registries for collection methods (stdlib refactor)
-import { getListaMethod } from '../../lista';
-import { getTabulaMethod } from '../../tabula';
-import { getCopiaMethod } from '../../copia';
-
-// WHY: Norma registry for annotation-driven codegen
-import { getNormaTranslation, applyNormaTemplate } from '../../norma-registry';
-
-import { getMathesisFunction } from '../norma/mathesis';
-import { getAleatorFunction } from '../norma/aleator';
-
-/**
- * Python tempus (time) intrinsics.
- *
- * WHY: Time functions require the `time` module.
- */
-const PY_TEMPUS: Record<string, (args: string[], g: PyGenerator) => string> = {
-    nunc: (_, g) => {
-        g.features.time = true;
-        return `int(time.time() * 1000)`;
-    },
-    nunc_nano: (_, g) => {
-        g.features.time = true;
-        return `time.time_ns()`;
-    },
-    nunc_secunda: (_, g) => {
-        g.features.time = true;
-        return `int(time.time())`;
-    },
-    dormi: (args, g) => {
-        g.features.time = true;
-        return `time.sleep(${args[0]} / 1000)`;
-    },
-};
+// WHY: Unified norma registry for all stdlib translations (from .fab files)
+import { getNormaTranslation, applyNormaTemplate, applyNormaModuleCall } from '../../norma-registry';
 
 /**
  * Python I/O intrinsic handler.
@@ -101,86 +70,61 @@ export function genCallExpression(node: CallExpression, g: PyGenerator): string 
             return intrinsicResult;
         }
 
-        // Check mathesis functions (ex "norma/mathesis" importa pavimentum, etc.)
-        const mathesisFunc = getMathesisFunction(name);
-        if (mathesisFunc) {
-            if (mathesisFunc.requiresMath) {
-                g.features.math = true;
+        // Check norma module functions (mathesis, tempus, aleator)
+        // WHY: Feature flags for Python imports are set based on module
+        for (const module of ['mathesis', 'tempus', 'aleator']) {
+            const call = applyNormaModuleCall('py', module, name, [...argsArray]);
+            if (call) {
+                // Set feature flags for Python imports
+                if (module === 'mathesis') {
+                    g.features.math = true;
+                }
+                else if (module === 'tempus') {
+                    g.features.time = true;
+                }
+                else if (module === 'aleator') {
+                    g.features.random = true;
+                    if (name === 'uuid') g.features.uuid = true;
+                    if (name === 'octeti') g.features.secrets = true;
+                }
+                return call;
             }
-            if (typeof mathesisFunc.py === 'function') {
-                return mathesisFunc.py(argsArray);
-            }
-            return mathesisFunc.py;
-        }
-
-        // Check aleator functions (ex "norma/aleator" importa fractus, etc.)
-        const aleatorFunc = getAleatorFunction(name);
-        if (aleatorFunc) {
-            if (aleatorFunc.requiresRandom) {
-                g.features.random = true;
-            }
-            if (aleatorFunc.requiresUuid) {
-                g.features.uuid = true;
-            }
-            if (aleatorFunc.requiresSecrets) {
-                g.features.secrets = true;
-            }
-            if (typeof aleatorFunc.py === 'function') {
-                return aleatorFunc.py(argsArray);
-            }
-            return aleatorFunc.py;
-        }
-
-        // Check tempus functions (ex "norma/tempus" importa nunc, dormi, etc.)
-        const tempusFunc = PY_TEMPUS[name];
-        if (tempusFunc) {
-            return tempusFunc(argsArray, g);
         }
     }
 
     // Check for collection methods (lista, tabula, copia)
-    // WHY: Pass argsArray (not joined string) to method handlers
-    //      so they can correctly handle multi-param lambdas with commas.
     if (node.callee.type === 'MemberExpression' && !node.callee.computed) {
         const methodName = (node.callee.property as Identifier).name;
         const obj = g.genExpression(node.callee.object);
 
-        // Try norma registry first (annotation-driven codegen)
-        const norma = getNormaTranslation('py', 'lista', methodName);
-        if (norma) {
-            if (norma.method) {
-                return `${obj}.${norma.method}(${args})`;
-            }
-            if (norma.template && norma.params) {
-                return applyNormaTemplate(norma.template, [...norma.params], obj, [...argsArray]);
+        // WHY: Use semantic type info to dispatch to correct collection registry.
+        const objType = node.callee.object.resolvedType;
+        const collectionName = objType?.kind === 'generic' ? objType.name : null;
+
+        // Try norma registry for the resolved collection type
+        if (collectionName) {
+            const norma = getNormaTranslation('py', collectionName, methodName);
+            if (norma) {
+                if (norma.method) {
+                    return `${obj}.${norma.method}(${args})`;
+                }
+                if (norma.template && norma.params) {
+                    return applyNormaTemplate(norma.template, [...norma.params], obj, [...argsArray]);
+                }
             }
         }
 
-        // Fallback to hardcoded lista methods
-        const listaMethod = getListaMethod(methodName);
-        if (listaMethod) {
-            if (typeof listaMethod.py === 'function') {
-                return listaMethod.py(obj, argsArray);
+        // Fallback: no type info - try all collection types
+        for (const coll of ['lista', 'tabula', 'copia']) {
+            const norma = getNormaTranslation('py', coll, methodName);
+            if (norma) {
+                if (norma.method) {
+                    return `${obj}.${norma.method}(${args})`;
+                }
+                if (norma.template && norma.params) {
+                    return applyNormaTemplate(norma.template, [...norma.params], obj, [...argsArray]);
+                }
             }
-            return `${obj}.${listaMethod.py}(${args})`;
-        }
-
-        // Try tabula methods
-        const tabulaMethod = getTabulaMethod(methodName);
-        if (tabulaMethod) {
-            if (typeof tabulaMethod.py === 'function') {
-                return tabulaMethod.py(obj, argsArray);
-            }
-            return `${obj}.${tabulaMethod.py}(${args})`;
-        }
-
-        // Try copia methods
-        const copiaMethod = getCopiaMethod(methodName);
-        if (copiaMethod) {
-            if (typeof copiaMethod.py === 'function') {
-                return copiaMethod.py(obj, argsArray);
-            }
-            return `${obj}.${copiaMethod.py}(${args})`;
         }
     }
 

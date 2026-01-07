@@ -15,20 +15,19 @@
 
 import type { Identifier } from '../../../parser/ast';
 import type { CppGenerator } from '../generator';
-import { getMathesisConstant, getMathesisHeaders } from '../norma/mathesis';
 
-/**
- * C++ tempus (time) duration constants.
- *
- * WHY: Duration constants are in milliseconds, same as TypeScript.
- *      Use int64_t for consistent sizing with chrono duration counts.
- */
-const CPP_TEMPUS_CONSTANTS: Record<string, string> = {
-    MILLISECUNDUM: '1LL',
-    SECUNDUM: '1000LL',
-    MINUTUM: '60000LL',
-    HORA: '3600000LL',
-    DIES: '86400000LL',
+// WHY: Constants are inlined for simplicity. These match the .fab definitions.
+const CPP_CONSTANTS: Record<string, { value: string; headers?: string[] }> = {
+    // mathesis constants
+    PI: { value: 'std::numbers::pi', headers: ['<numbers>'] },
+    E: { value: 'std::numbers::e', headers: ['<numbers>'] },
+    TAU: { value: '(std::numbers::pi * 2)', headers: ['<numbers>'] },
+    // tempus duration constants (milliseconds)
+    MILLISECUNDUM: { value: '1LL' },
+    SECUNDUM: { value: '1000LL' },
+    MINUTUM: { value: '60000LL' },
+    HORA: { value: '3600000LL' },
+    DIES: { value: '86400000LL' },
 };
 
 export function genIdentifier(node: Identifier, g: CppGenerator): string {
@@ -36,19 +35,15 @@ export function genIdentifier(node: Identifier, g: CppGenerator): string {
         return 'this';
     }
 
-    // Check tempus constants (MILLISECUNDUM, SECUNDUM, etc.)
-    const tempusConst = CPP_TEMPUS_CONSTANTS[node.name];
-    if (tempusConst) {
-        return tempusConst;
-    }
-
-    // Check mathesis constants (PI, E, TAU)
-    const mathConst = getMathesisConstant(node.name);
-    if (mathConst) {
-        for (const header of getMathesisHeaders(node.name)) {
-            g.includes.add(header);
+    // Check for constants (mathesis + tempus)
+    const constant = CPP_CONSTANTS[node.name];
+    if (constant) {
+        if (constant.headers) {
+            for (const header of constant.headers) {
+                g.includes.add(header);
+            }
         }
-        return mathConst.cpp;
+        return constant.value;
     }
 
     return node.name;
