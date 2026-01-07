@@ -1924,6 +1924,7 @@ export type Expression =
     | QuaExpression
     | InnatumExpression
     | ConversionExpression
+    | ShiftExpression
     | CallExpression
     | MemberExpression
     | AssignmentExpression
@@ -2332,6 +2333,32 @@ export interface ConversionExpression extends BaseNode {
     targetType?: TypeAnnotation;
     radix?: 'Dec' | 'Hex' | 'Oct' | 'Bin';
     fallback?: Expression;
+}
+
+/**
+ * Bit shift expression.
+ *
+ * GRAMMAR (in EBNF):
+ *   shiftExpr := expression ('dextratum' | 'sinistratum') expression
+ *
+ * SEMANTICS:
+ *   - dextratum: shift right (>>)
+ *   - sinistratum: shift left (<<)
+ *
+ * WHY: Using Latin keywords instead of << and >> tokens avoids ambiguity
+ *      with nested generics like lista<lista<T>>. The -atum suffix follows
+ *      the conversion operator pattern (numeratum, textatum, etc.).
+ *
+ * EXAMPLES:
+ *   x dextratum 3       // x >> 3
+ *   1 sinistratum n     // 1 << n
+ *   (a dextratum 8) et 0xff  // (a >> 8) & 0xff
+ */
+export interface ShiftExpression extends BaseNode {
+    type: 'ShiftExpression';
+    expression: Expression;
+    direction: 'dextratum' | 'sinistratum';
+    amount: Expression;
 }
 
 // ---------------------------------------------------------------------------

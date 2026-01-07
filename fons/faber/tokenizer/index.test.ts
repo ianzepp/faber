@@ -131,12 +131,21 @@ describe('tokenizer', () => {
             expect(tokens.map(t => t.type)).toEqual(['AMPERSAND', 'PIPE', 'CARET', 'TILDE', 'EOF']);
         });
 
-        test('shift operators', () => {
-            const { tokens } = tokenize('<< >>');
+        test('consecutive angle brackets (nested generics)', () => {
+            // WHY: >> should tokenize as two separate > tokens to support nested generics
+            // Bit shift operations use dextratum/sinistratum keywords instead
+            const { tokens } = tokenize('lista<lista<T>>');
 
-            expect(tokens.map(t => t.type)).toEqual(['LEFT_SHIFT', 'RIGHT_SHIFT', 'EOF']);
-            expect(tokens[0]!.value).toBe('<<');
-            expect(tokens[1]!.value).toBe('>>');
+            expect(tokens.map(t => t.type)).toEqual([
+                'IDENTIFIER',
+                'LESS',
+                'IDENTIFIER',
+                'LESS',
+                'IDENTIFIER',
+                'GREATER',
+                'GREATER',
+                'EOF',
+            ]);
         });
 
         test('bitwise vs logical distinction', () => {
@@ -159,10 +168,19 @@ describe('tokenizer', () => {
             ]);
         });
 
-        test('shift vs comparison distinction', () => {
+        test('consecutive less-than operators', () => {
+            // WHY: << is no longer a single token - each < is separate
             const { tokens } = tokenize('a << b < c');
 
-            expect(tokens.map(t => t.type)).toEqual(['IDENTIFIER', 'LEFT_SHIFT', 'IDENTIFIER', 'LESS', 'IDENTIFIER', 'EOF']);
+            expect(tokens.map(t => t.type)).toEqual([
+                'IDENTIFIER',
+                'LESS',
+                'LESS',
+                'IDENTIFIER',
+                'LESS',
+                'IDENTIFIER',
+                'EOF',
+            ]);
         });
 
         test('assignment', () => {

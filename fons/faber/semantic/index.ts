@@ -923,6 +923,17 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
                 return resultType;
             }
 
+            case 'ShiftExpression': {
+                // WHY: Bit shift operators preserve the type of the shifted expression
+                // x dextratum 3 → x >> 3, x sinistratum 3 → x << 3
+                const exprType = resolveExpression(node.expression);
+                resolveExpression(node.amount);
+
+                // Result type is the same as the expression being shifted
+                node.resolvedType = exprType;
+                return exprType;
+            }
+
             case 'PraefixumExpression':
                 // WHY: praefixum is compile-time evaluated, return underlying type
                 if (node.body.type === 'BlockStatement') {

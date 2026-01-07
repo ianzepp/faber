@@ -11,53 +11,54 @@ functio fragmenta(numerus n) -> lista<lista<T>>
 # Error: Expected '>', got '>>'
 ```
 
-## Current Behavior
+## Solution
 
-The lexer greedily consumes `>>` as one token:
-- `lista<lista<T>>` becomes tokens: `lista`, `<`, `lista`, `<`, `T`, `>>`
-- Parser expects `>` but gets `>>`
-
-## Required Behavior
-
-Context-aware tokenization or parser-level splitting:
+Remove `<<` and `>>` as tokens entirely. Replace bit shift operations with Latin postfix operators:
 
 ```fab
-# Should work:
+x dextratum 3      # x >> 3 (shift right)
+x sinistratum 3    # x << 3 (shift left)
+```
+
+This eliminates the ambiguity completely — `>` is always a single token.
+
+## Rationale
+
+1. **Bit shifting is rare** — most application code never uses it
+2. **Nested generics are common** — `lista<lista<T>>`, `tabula<K, lista<V>>`
+3. **Consistent vocabulary** — `-atum` suffix matches `numeratum`, `fractatum`, `textatum`
+4. **No context tracking** — lexer stays simple, no parser token splitting needed
+
+## Syntax
+
+```
+shiftExpr := expression ('dextratum' | 'sinistratum') expression
+```
+
+Examples:
+```fab
+flags dextratum 4           # flags >> 4
+1 sinistratum n             # 1 << n
+(x dextratum 8) et 0xff     # (x >> 8) & 0xff
+```
+
+## Implementation
+
+1. Remove `<<` (`LEFT_SHIFT`) and `>>` (`RIGHT_SHIFT`) from lexer
+2. Add `dextratum` and `sinistratum` as operator keywords
+3. Parse as binary postfix operators (like `numeratum` with `vel`)
+4. Codegen emits `(expr >> amount)` or `(expr << amount)`
+
+## Result
+
+Nested generics work without any special handling:
+
+```fab
 lista<lista<T>>
 tabula<textus, lista<numerus>>
 lista<lista<lista<T>>>
+functio fragmenta(numerus n) -> lista<lista<T>>
 ```
-
-## Solutions
-
-### Option A: Lexer Lookahead
-When inside generic context, tokenize `>` individually even when followed by `>`.
-
-### Option B: Parser Token Splitting
-Parser splits `>>` into two `>` tokens when parsing generic type parameters.
-
-### Option C: Whitespace Convention
-Require space: `lista<lista<T> >` (ugly, not recommended)
-
-## Recommendation
-
-**Option B (Parser Token Splitting)** is cleanest:
-- Lexer stays simple
-- Parser already knows it's in generic context
-- Common approach (C++11 solved this same problem)
-
-## Implementation Notes
-
-- Track generic depth in parser
-- When expecting `>` and see `>>`, consume as single `>` and leave synthetic `>` for next iteration
-- Same applies to `>>>` in triple-nested generics
-
-## Use Cases
-
-1. `lista<lista<T>>` - nested lists
-2. `tabula<K, lista<V>>` - map of lists
-3. `lista<tabula<K, V>>` - list of maps
-4. Return types in lista.fab: `fragmenta() -> lista<lista<T>>`
 
 ## Related
 

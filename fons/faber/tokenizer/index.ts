@@ -56,8 +56,8 @@
  * OPERATOR LOOKAHEAD:
  * '=' -> '===' | '==' | '=>' | '='
  * '!' -> '!==' | '!=' | '!'
- * '<' -> '<<' | '<=' | '<'
- * '>' -> '>>' | '>=' | '>'
+ * '<' -> '<=' | '<'
+ * '>' -> '>=' | '>'
  * '&' -> '&&' | '&'
  * '|' -> '||' | '|'
  * '-' -> '->' | '-'
@@ -833,29 +833,27 @@ export function tokenize(source: string): TokenizerResult {
 
                 break;
 
-            // WHY: < can be << (left shift), <= (less or equal), or < (less than)
+            // WHY: < can be <= (less or equal) or < (less than)
+            // NOTE: << removed - use sinistratum keyword for left shift
             case '<':
-                if (peek() === '<') {
-                    advance();
-                    addToken('LEFT_SHIFT', '<<', pos);
-                } else if (peek() === '=') {
+                if (peek() === '=') {
                     advance();
                     addToken('LESS_EQUAL', '<=', pos);
-                } else {
+                }
+                else {
                     addToken('LESS', char, pos);
                 }
 
                 break;
 
-            // WHY: > can be >> (right shift), >= (greater or equal), or > (greater than)
+            // WHY: > can be >= (greater or equal) or > (greater than)
+            // NOTE: >> removed - use dextratum keyword for right shift
             case '>':
-                if (peek() === '>') {
-                    advance();
-                    addToken('RIGHT_SHIFT', '>>', pos);
-                } else if (peek() === '=') {
+                if (peek() === '=') {
                     advance();
                     addToken('GREATER_EQUAL', '>=', pos);
-                } else {
+                }
+                else {
                     addToken('GREATER', char, pos);
                 }
 

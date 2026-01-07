@@ -296,6 +296,12 @@ export const keywords: KeywordEntry[] = [
     { latin: 'fractatum', meaning: 'to float', category: 'operator' },
     { latin: 'textatum', meaning: 'to string', category: 'operator' },
     { latin: 'bivalentum', meaning: 'to boolean', category: 'operator' },
+    // WHY: Bit shift operators use -atum suffix for consistency with conversion operators
+    //      dextratum = "shifted right", sinistratum = "shifted left"
+    //      Binary postfix: x dextratum 3 → x >> 3
+    //      This avoids << and >> token ambiguity with nested generics
+    { latin: 'dextratum', meaning: 'shift right (>>)', category: 'operator' },
+    { latin: 'sinistratum', meaning: 'shift left (<<)', category: 'operator' },
     // WHY: "ut" (as) for aliasing in imports and destructuring
     //      ex norma importa scribe ut s
     //      ex persona fixum nomen ut n

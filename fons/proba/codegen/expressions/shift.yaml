@@ -1,0 +1,127 @@
+# Shift expressions - bit shift operators
+# Maps Faber dextratum/sinistratum to target >> and << operators
+#
+# dextratum = shift right (>>)
+# sinistratum = shift left (<<)
+
+# === dextratum (shift right) ===
+
+- name: basic shift right
+  source: fixum r = x dextratum 3
+  expect:
+      ts: 'const r = (x >> 3);'
+      py: 'r = (x >> 3)'
+      rs:
+          - '(x >> 3)'
+      cpp:
+          - '(x >> 3)'
+      zig:
+          - '(x >> 3)'
+      fab:
+          - 'fixum r = x dextratum 3'
+
+- name: shift right with literal
+  source: fixum r = 256 dextratum 4
+  expect:
+      ts: 'const r = (256 >> 4);'
+      py: 'r = (256 >> 4)'
+      rs:
+          - '(256 >> 4)'
+      cpp:
+          - '(256 >> 4)'
+      zig:
+          - '(256 >> 4)'
+      fab:
+          - 'fixum r = 256 dextratum 4'
+
+- name: shift right with variable amount
+  source: fixum r = value dextratum n
+  expect:
+      ts: 'const r = (value >> n);'
+      py: 'r = (value >> n)'
+      rs:
+          - '(value >> n)'
+      cpp:
+          - '(value >> n)'
+      zig:
+          - '(value >> n)'
+      fab:
+          - 'fixum r = value dextratum n'
+
+# === sinistratum (shift left) ===
+
+- name: basic shift left
+  source: fixum r = x sinistratum 3
+  expect:
+      ts: 'const r = (x << 3);'
+      py: 'r = (x << 3)'
+      rs:
+          - '(x << 3)'
+      cpp:
+          - '(x << 3)'
+      zig:
+          - '(x << 3)'
+      fab:
+          - 'fixum r = x sinistratum 3'
+
+- name: shift left with literal
+  source: fixum r = 1 sinistratum 8
+  expect:
+      ts: 'const r = (1 << 8);'
+      py: 'r = (1 << 8)'
+      rs:
+          - '(1 << 8)'
+      cpp:
+          - '(1 << 8)'
+      zig:
+          - '(1 << 8)'
+      fab:
+          - 'fixum r = 1 sinistratum 8'
+
+- name: shift left with variable amount
+  source: fixum r = value sinistratum n
+  expect:
+      ts: 'const r = (value << n);'
+      py: 'r = (value << n)'
+      rs:
+          - '(value << n)'
+      cpp:
+          - '(value << n)'
+      zig:
+          - '(value << n)'
+      fab:
+          - 'fixum r = value sinistratum n'
+
+# === combined with other operators ===
+
+- name: shift in expression with bitwise and
+  source: fixum mask = (x dextratum 8) et 0xff
+  expect:
+      ts:
+          - '(x >> 8)'
+          - '0xff'
+      py:
+          - '(x >> 8)'
+          - '0xff'
+      rs:
+          - '(x >> 8)'
+      cpp:
+          - '(x >> 8)'
+      zig:
+          - '(x >> 8)'
+      fab:
+          - 'fixum mask = (x dextratum 8) et 0xff'
+
+- name: parenthesized chained shifts
+  source: fixum r = (x dextratum 4) sinistratum 2
+  expect:
+      ts: 'const r = ((x >> 4) << 2);'
+      py: 'r = ((x >> 4) << 2)'
+      rs:
+          - '((x >> 4) << 2)'
+      cpp:
+          - '((x >> 4) << 2)'
+      zig:
+          - '((x >> 4) << 2)'
+      fab:
+          - 'fixum r = (x dextratum 4) sinistratum 2'

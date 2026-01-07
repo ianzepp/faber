@@ -94,8 +94,6 @@ export type TokenType =
     | 'AMPERSAND' // & (bitwise AND)
     | 'CARET' // ^ (bitwise XOR)
     | 'TILDE' // ~ (bitwise NOT)
-    | 'LEFT_SHIFT' // <<
-    | 'RIGHT_SHIFT' // >>
     | 'PLUS_EQUAL' // +=
     | 'MINUS_EQUAL' // -=
     | 'STAR_EQUAL' // *=

@@ -143,6 +143,7 @@ import type {
     QuaExpression,
     InnatumExpression,
     ConversionExpression,
+    ShiftExpression,
     EstExpression,
     ProbandumStatement,
     ProbaStatement,
@@ -4412,36 +4413,18 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse bitwise AND expression.
      *
      * GRAMMAR:
-     *   bitwiseAnd := shift ('&' shift)*
+     *   bitwiseAnd := range ('&' range)*
      *
-     * PRECEDENCE: Lower than shift, higher than bitwise XOR.
+     * PRECEDENCE: Lower than range, higher than bitwise XOR.
+     *
+     * NOTE: Bit shift operators (<< and >>) were removed from the lexer to avoid
+     *       ambiguity with nested generics. Shift operations now use the postfix
+     *       keywords dextratum/sinistratum, parsed in parseQuaExpression.
      */
     function parseBitwiseAnd(): Expression {
-        let left = parseShift();
-
-        while (match('AMPERSAND')) {
-            const operator = tokens[current - 1]!.value;
-            const position = tokens[current - 1]!.position;
-            const right = parseShift();
-
-            left = { type: 'BinaryExpression', operator, left, right, position };
-        }
-
-        return left;
-    }
-
-    /**
-     * Parse shift expression.
-     *
-     * GRAMMAR:
-     *   shift := range (('<<' | '>>') range)*
-     *
-     * PRECEDENCE: Lower than range, higher than bitwise AND.
-     */
-    function parseShift(): Expression {
         let left = parseRange();
 
-        while (match('LEFT_SHIFT', 'RIGHT_SHIFT')) {
+        while (match('AMPERSAND')) {
             const operator = tokens[current - 1]!.value;
             const position = tokens[current - 1]!.position;
             const right = parseRange();
@@ -4897,7 +4880,8 @@ export function parse(tokens: Token[]): ParserResult {
 
         while (matchKeyword('qua') || matchKeyword('innatum') ||
                matchKeyword('numeratum') || matchKeyword('fractatum') ||
-               matchKeyword('textatum') || matchKeyword('bivalentum')) {
+               matchKeyword('textatum') || matchKeyword('bivalentum') ||
+               matchKeyword('dextratum') || matchKeyword('sinistratum')) {
             const keyword = tokens[current - 1]!.value;
             const position = tokens[current - 1]!.position;
 
@@ -4918,6 +4902,19 @@ export function parse(tokens: Token[]): ParserResult {
                     targetType,
                     position,
                 } as InnatumExpression;
+            }
+            else if (keyword === 'dextratum' || keyword === 'sinistratum') {
+                // Bit shift operators: x dextratum 3 → x >> 3, x sinistratum 3 → x << 3
+                const direction = keyword as ShiftExpression['direction'];
+                const amount = parseUnary();
+
+                expr = {
+                    type: 'ShiftExpression',
+                    expression: expr,
+                    direction,
+                    amount,
+                    position,
+                } as ShiftExpression;
             }
             else {
                 // Conversion operators: numeratum, fractatum, textatum, bivalentum

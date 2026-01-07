@@ -52,6 +52,7 @@ import { genAssignmentExpression } from './expressions/assignment';
 import { genNovumExpression } from './expressions/novum';
 import { genFingeExpression } from './expressions/finge';
 import { genConversionExpression } from './expressions/conversio';
+import { genShiftExpression } from './expressions/shift';
 import { genEstExpression } from './expressions/est';
 import { genPraefixumExpression } from './expressions/praefixum';
 import { genScriptumExpression } from './expressions/scriptum';
@@ -316,6 +317,8 @@ export class CppGenerator {
             }
             case 'ConversionExpression':
                 return genConversionExpression(node, this);
+            case 'ShiftExpression':
+                return genShiftExpression(node, this);
             case 'EstExpression':
                 return genEstExpression(node, this);
             case 'PraefixumExpression':

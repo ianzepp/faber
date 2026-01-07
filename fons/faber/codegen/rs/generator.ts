@@ -57,6 +57,7 @@ import { genFingeExpression } from './expressions/finge';
 import { genQuaExpression } from './expressions/qua';
 import { genInnatumExpression } from './expressions/innatum';
 import { genConversionExpression } from './expressions/conversio';
+import { genShiftExpression } from './expressions/shift';
 import { genEstExpression } from './expressions/est';
 import { genPraefixumExpression } from './expressions/praefixum';
 import { genScriptumExpression } from './expressions/scriptum';
@@ -259,6 +260,8 @@ export class RsGenerator {
                 return genInnatumExpression(node, this);
             case 'ConversionExpression':
                 return genConversionExpression(node, this);
+            case 'ShiftExpression':
+                return genShiftExpression(node, this);
             case 'EstExpression':
                 return genEstExpression(node, this);
             case 'PraefixumExpression':
