@@ -11,7 +11,7 @@
 
 import type { Identifier } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
-import { getMathesisConstant } from '../norma/mathesis';
+import { applyNormaModuleCall } from '../../norma-registry';
 
 /**
  * TypeScript constant intrinsics.
@@ -35,8 +35,9 @@ export function genIdentifier(node: Identifier, _g: TsGenerator): string {
         return constant;
     }
 
-    // Check for mathesis constants (PI, E, TAU)
-    const mathesisConst = getMathesisConstant(node.name);
+    // Check for mathesis constants (PI, E, TAU) via norma registry
+    // WHY: These are zero-arg functions that act as constants
+    const mathesisConst = applyNormaModuleCall('ts', 'mathesis', node.name, []);
     if (mathesisConst) {
         return mathesisConst;
     }

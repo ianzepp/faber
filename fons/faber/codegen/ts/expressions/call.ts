@@ -22,9 +22,8 @@ import { getTabulaMethod } from '../../tabula';
 import { getCopiaMethod } from '../../copia';
 
 // WHY: Norma registry for annotation-driven codegen (vertical slice)
-import { getNormaTranslation, applyNormaTemplate } from '../../norma-registry';
+import { getNormaTranslation, applyNormaTemplate, applyNormaModuleCall } from '../../norma-registry';
 
-import { getMathesisFunction } from '../norma/mathesis';
 import { getAleatorFunction } from '../norma/aleator';
 
 /**
@@ -95,13 +94,21 @@ export function genCallExpression(node: CallExpression, g: TsGenerator): string 
             return intrinsic(args);
         }
 
-        // Check mathesis functions (ex "norma/mathesis" importa pavimentum, etc.)
-        const mathesisFunc = getMathesisFunction(name);
-        if (mathesisFunc) {
-            if (typeof mathesisFunc.ts === 'function') {
-                return mathesisFunc.ts(argsArray);
+        // Check norma module functions (mathesis, solum, etc.)
+        // WHY: These are imported via `ex "norma/mathesis" importa pavimentum`
+        const mathesisCall = applyNormaModuleCall('ts', 'mathesis', name, [...argsArray]);
+        if (mathesisCall) {
+            return mathesisCall;
+        }
+
+        const solumCall = applyNormaModuleCall('ts', 'solum', name, [...argsArray]);
+        if (solumCall) {
+            // WHY: Mark fs/path as required for preamble imports
+            g.features.fs = true;
+            if (['iunge', 'dir', 'basis', 'extensio', 'resolve'].includes(name)) {
+                g.features.nodePath = true;
             }
-            return mathesisFunc.ts;
+            return solumCall;
         }
 
         // Check aleator functions (ex "norma/aleator" importa fractus, etc.)

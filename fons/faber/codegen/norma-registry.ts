@@ -132,3 +132,44 @@ export function hasNormaMethod(
 export function getNormaCollections(): string[] {
     return Array.from(registry.keys());
 }
+
+/**
+ * Apply a norma module function call (no receiver object).
+ *
+ * For module functions like mathesis.pavimentum(x) or solum.lege(path),
+ * there's no 'ego' receiver - just direct function arguments.
+ *
+ * @param target Target language (ts, py, rs, cpp, zig)
+ * @param module Module name (mathesis, solum, etc.)
+ * @param func Function name (pavimentum, lege, etc.)
+ * @param args The argument expressions
+ * @returns Generated code string, or undefined if not found
+ */
+export function applyNormaModuleCall(
+    target: string,
+    module: string,
+    func: string,
+    args: string[],
+): string | undefined {
+    const translation = getNormaTranslation(target, module, func);
+    if (!translation?.template || !translation?.params) {
+        return undefined;
+    }
+
+    // For module functions, params map directly to args (no ego)
+    const values = [...args];
+
+    // Replace § placeholders
+    let result = translation.template;
+    let implicitIdx = 0;
+
+    result = result.replace(/§(\d+)?/g, (_, indexStr) => {
+        if (indexStr !== undefined) {
+            const idx = parseInt(indexStr, 10);
+            return values[idx] || '';
+        }
+        return values[implicitIdx++] || '';
+    });
+
+    return result;
+}

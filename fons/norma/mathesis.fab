@@ -1,0 +1,214 @@
+# mathesis.fab - Standard Library Math Functions
+#
+# Pure math functions - no side effects, no allocators needed.
+
+# =============================================================================
+# TYPE MAPPING
+# =============================================================================
+
+@ innatum ts "Math", py "math", rs "f64", cpp "std::cmath", zig "std.math"
+genus mathesis { }
+
+# =============================================================================
+# ROUNDING
+# =============================================================================
+
+# Floor - round down to nearest integer
+@ verte ts (x) -> "Math.floor(§)"
+@ verte py (x) -> "math.floor(§)"
+@ verte rs (x) -> "§.floor()"
+@ verte cpp (x) -> "std::floor(§)"
+@ verte zig (x) -> "@floor(§)"
+@ externa
+functio pavimentum()
+
+# Ceiling - round up to nearest integer
+@ verte ts (x) -> "Math.ceil(§)"
+@ verte py (x) -> "math.ceil(§)"
+@ verte rs (x) -> "§.ceil()"
+@ verte cpp (x) -> "std::ceil(§)"
+@ verte zig (x) -> "@ceil(§)"
+@ externa
+functio tectum()
+
+# Round to nearest integer
+@ verte ts (x) -> "Math.round(§)"
+@ verte py (x) -> "round(§)"
+@ verte rs (x) -> "§.round()"
+@ verte cpp (x) -> "std::round(§)"
+@ verte zig (x) -> "@round(§)"
+@ externa
+functio rotundum()
+
+# Truncate - remove fractional part
+@ verte ts (x) -> "Math.trunc(§)"
+@ verte py (x) -> "math.trunc(§)"
+@ verte rs (x) -> "§.trunc()"
+@ verte cpp (x) -> "std::trunc(§)"
+@ verte zig (x) -> "@trunc(§)"
+@ externa
+functio truncatum()
+
+# =============================================================================
+# POWERS AND ROOTS
+# =============================================================================
+
+# Square root
+@ verte ts (x) -> "Math.sqrt(§)"
+@ verte py (x) -> "math.sqrt(§)"
+@ verte rs (x) -> "§.sqrt()"
+@ verte cpp (x) -> "std::sqrt(§)"
+@ verte zig (x) -> "@sqrt(§)"
+@ externa
+functio radix()
+
+# Power - base raised to exponent
+@ verte ts (base, exp) -> "Math.pow(§, §)"
+@ verte py (base, exp) -> "math.pow(§, §)"
+@ verte rs (base, exp) -> "§.powf(§)"
+@ verte cpp (base, exp) -> "std::pow(§, §)"
+@ verte zig (base, exp) -> "std.math.pow(§, §)"
+@ externa
+functio potentia()
+
+# Natural logarithm (base e)
+@ verte ts (x) -> "Math.log(§)"
+@ verte py (x) -> "math.log(§)"
+@ verte rs (x) -> "§.ln()"
+@ verte cpp (x) -> "std::log(§)"
+@ verte zig (x) -> "@log(§)"
+@ externa
+functio logarithmus()
+
+# Base-10 logarithm
+@ verte ts (x) -> "Math.log10(§)"
+@ verte py (x) -> "math.log10(§)"
+@ verte rs (x) -> "§.log10()"
+@ verte cpp (x) -> "std::log10(§)"
+@ verte zig (x) -> "std.math.log10(§)"
+@ externa
+functio logarithmus10()
+
+# Exponential (e^x)
+@ verte ts (x) -> "Math.exp(§)"
+@ verte py (x) -> "math.exp(§)"
+@ verte rs (x) -> "§.exp()"
+@ verte cpp (x) -> "std::exp(§)"
+@ verte zig (x) -> "@exp(§)"
+@ externa
+functio exponens()
+
+# =============================================================================
+# TRIGONOMETRY
+# =============================================================================
+
+# Sine
+@ verte ts (x) -> "Math.sin(§)"
+@ verte py (x) -> "math.sin(§)"
+@ verte rs (x) -> "§.sin()"
+@ verte cpp (x) -> "std::sin(§)"
+@ verte zig (x) -> "@sin(§)"
+@ externa
+functio sinus()
+
+# Cosine
+@ verte ts (x) -> "Math.cos(§)"
+@ verte py (x) -> "math.cos(§)"
+@ verte rs (x) -> "§.cos()"
+@ verte cpp (x) -> "std::cos(§)"
+@ verte zig (x) -> "@cos(§)"
+@ externa
+functio cosinus()
+
+# Tangent
+@ verte ts (x) -> "Math.tan(§)"
+@ verte py (x) -> "math.tan(§)"
+@ verte rs (x) -> "§.tan()"
+@ verte cpp (x) -> "std::tan(§)"
+@ verte zig (x) -> "@tan(§)"
+@ externa
+functio tangens()
+
+# =============================================================================
+# ABSOLUTE AND SIGN
+# =============================================================================
+
+# Absolute value
+@ verte ts (x) -> "Math.abs(§)"
+@ verte py (x) -> "abs(§)"
+@ verte rs (x) -> "§.abs()"
+@ verte cpp (x) -> "std::abs(§)"
+@ verte zig (x) -> "@abs(§)"
+@ externa
+functio absolutum()
+
+# Sign (-1, 0, or 1)
+@ verte ts (x) -> "Math.sign(§)"
+@ verte py (x) -> "(1 if § > 0 else (-1 if § < 0 else 0))"
+@ verte rs (x) -> "§.signum()"
+@ verte cpp (x) -> "((§ > 0) - (§ < 0))"
+@ verte zig (x) -> "std.math.sign(§)"
+@ externa
+functio signum()
+
+# =============================================================================
+# MIN / MAX / CLAMP
+# =============================================================================
+
+# Minimum of two values
+@ verte ts (a, b) -> "Math.min(§, §)"
+@ verte py (a, b) -> "min(§, §)"
+@ verte rs (a, b) -> "§.min(§)"
+@ verte cpp (a, b) -> "std::min(§, §)"
+@ verte zig (a, b) -> "@min(§, §)"
+@ externa
+functio minimus()
+
+# Maximum of two values
+@ verte ts (a, b) -> "Math.max(§, §)"
+@ verte py (a, b) -> "max(§, §)"
+@ verte rs (a, b) -> "§.max(§)"
+@ verte cpp (a, b) -> "std::max(§, §)"
+@ verte zig (a, b) -> "@max(§, §)"
+@ externa
+functio maximus()
+
+# Clamp value between min and max
+@ verte ts (x, lo, hi) -> "Math.min(Math.max(§, §), §)"
+@ verte py (x, lo, hi) -> "max(§1, min(§0, §2))"
+@ verte rs (x, lo, hi) -> "§.clamp(§, §)"
+@ verte cpp (x, lo, hi) -> "std::clamp(§, §, §)"
+@ verte zig (x, lo, hi) -> "std.math.clamp(§, §, §)"
+@ externa
+functio constringens()
+
+# =============================================================================
+# CONSTANTS
+# =============================================================================
+
+# Pi (3.14159...)
+@ verte ts () -> "Math.PI"
+@ verte py () -> "math.pi"
+@ verte rs () -> "std::f64::consts::PI"
+@ verte cpp () -> "M_PI"
+@ verte zig () -> "std.math.pi"
+@ externa
+functio PI()
+
+# Euler's number e (2.71828...)
+@ verte ts () -> "Math.E"
+@ verte py () -> "math.e"
+@ verte rs () -> "std::f64::consts::E"
+@ verte cpp () -> "M_E"
+@ verte zig () -> "std.math.e"
+@ externa
+functio E()
+
+# Tau (2 * Pi)
+@ verte ts () -> "(Math.PI * 2)"
+@ verte py () -> "(math.pi * 2)"
+@ verte rs () -> "std::f64::consts::TAU"
+@ verte cpp () -> "(M_PI * 2)"
+@ verte zig () -> "(std.math.pi * 2)"
+@ externa
+functio TAU()

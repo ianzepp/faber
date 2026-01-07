@@ -212,8 +212,8 @@ functio deleArborem()
 # =============================================================================
 
 # Join path segments
-@ verte ts (...parts) -> "path.join(...§)"
-@ verte py (...parts) -> "os.path.join(*§)"
+@ verte ts (parts) -> "path.join(...§)"
+@ verte py (parts) -> "os.path.join(*§)"
 @ verte zig (parts) -> "solum.iunge(§)"
 @ externa
 functio iunge()

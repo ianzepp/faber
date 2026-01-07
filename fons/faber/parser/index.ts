@@ -1587,7 +1587,8 @@ export function parse(tokens: Token[]): ParserResult {
 
         expectKeyword('functio', ParserErrorCode.ExpectedKeywordFunctio);
 
-        const name = parseIdentifier();
+        // WHY: Allow keywords as function names (e.g., stdlib's `functio lege()`)
+        const name = parseIdentifierOrKeyword();
 
         expect('LPAREN', ParserErrorCode.ExpectedOpeningParen);
 
@@ -1853,7 +1854,8 @@ export function parse(tokens: Token[]): ParserResult {
 
         expectKeyword('typus', ParserErrorCode.ExpectedKeywordTypus);
 
-        const name = parseIdentifier();
+        // WHY: Allow keywords as type names for consistency with genus methods
+        const name = parseIdentifierOrKeyword();
 
         expect('EQUAL', ParserErrorCode.ExpectedEqual);
 
@@ -2401,7 +2403,8 @@ export function parse(tokens: Token[]): ParserResult {
 
         expectKeyword('functio', ParserErrorCode.ExpectedKeywordFunctio);
 
-        const name = parseIdentifier();
+        // WHY: Allow keywords as method names for consistency with genus methods
+        const name = parseIdentifierOrKeyword();
 
         expect('LPAREN', ParserErrorCode.ExpectedOpeningParen);
 

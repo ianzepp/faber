@@ -357,12 +357,60 @@ const NORMA_ALEATOR_EXPORTS: Record<string, { type: SemanticType; kind: 'functio
 };
 
 /**
+ * Norma/solum module exports.
+ *
+ * Local I/O operations: file reading/writing, path utilities.
+ * When `ex "norma/solum" importa X` is encountered, these symbols are added to scope.
+ */
+const NORMA_SOLUM_EXPORTS: Record<string, { type: SemanticType; kind: 'function' | 'variable' }> = {
+    // Reading - streaming
+    legens: { type: functionType([TEXTUS], UNKNOWN), kind: 'function' },
+    // Reading - batch
+    leget: { type: functionType([TEXTUS], genericType('promissum', [TEXTUS])), kind: 'function' },
+    lege: { type: functionType([TEXTUS], TEXTUS), kind: 'function' },
+    // Stdin
+    ausculta: { type: functionType([], UNKNOWN), kind: 'function' },
+    hauri: { type: functionType([], TEXTUS), kind: 'function' },
+    // Writing - streaming
+    scribens: { type: functionType([TEXTUS], UNKNOWN), kind: 'function' },
+    // Writing - batch
+    scribet: { type: functionType([TEXTUS, TEXTUS], genericType('promissum', [VACUUM])), kind: 'function' },
+    inscribe: { type: functionType([TEXTUS, TEXTUS], VACUUM), kind: 'function' },
+    // Appending
+    apponet: { type: functionType([TEXTUS, TEXTUS], genericType('promissum', [VACUUM])), kind: 'function' },
+    appone: { type: functionType([TEXTUS, TEXTUS], VACUUM), kind: 'function' },
+    // File info
+    exstat: { type: functionType([TEXTUS], BIVALENS), kind: 'function' },
+    inspice: { type: functionType([TEXTUS], UNKNOWN), kind: 'function' },
+    // File operations
+    dele: { type: functionType([TEXTUS], genericType('promissum', [VACUUM])), kind: 'function' },
+    duplica: { type: functionType([TEXTUS, TEXTUS], genericType('promissum', [VACUUM])), kind: 'function' },
+    move: { type: functionType([TEXTUS, TEXTUS], genericType('promissum', [VACUUM])), kind: 'function' },
+    trunca: { type: functionType([TEXTUS, NUMERUS], genericType('promissum', [VACUUM])), kind: 'function' },
+    tange: { type: functionType([TEXTUS], genericType('promissum', [VACUUM])), kind: 'function' },
+    // Directory operations
+    crea: { type: functionType([TEXTUS], genericType('promissum', [VACUUM])), kind: 'function' },
+    elenca: { type: functionType([TEXTUS], genericType('promissum', [genericType('lista', [TEXTUS])])), kind: 'function' },
+    ambula: { type: functionType([TEXTUS], UNKNOWN), kind: 'function' },
+    vacua: { type: functionType([TEXTUS], genericType('promissum', [VACUUM])), kind: 'function' },
+    deleArborem: { type: functionType([TEXTUS], genericType('promissum', [VACUUM])), kind: 'function' },
+    // Path utilities
+    iunge: { type: functionType([genericType('lista', [TEXTUS])], TEXTUS), kind: 'function' },
+    dir: { type: functionType([TEXTUS], TEXTUS), kind: 'function' },
+    basis: { type: functionType([TEXTUS], TEXTUS), kind: 'function' },
+    extensio: { type: functionType([TEXTUS], TEXTUS), kind: 'function' },
+    resolve: { type: functionType([TEXTUS], TEXTUS), kind: 'function' },
+    domus: { type: functionType([], TEXTUS), kind: 'function' },
+};
+
+/**
  * Map of all norma submodule exports.
  */
 const NORMA_SUBMODULES: Record<string, Record<string, { type: SemanticType; kind: 'function' | 'variable' }>> = {
     'norma/tempus': NORMA_TEMPUS_EXPORTS,
     'norma/mathesis': NORMA_MATHESIS_EXPORTS,
     'norma/aleator': NORMA_ALEATOR_EXPORTS,
+    'norma/solum': NORMA_SOLUM_EXPORTS,
 };
 
 // =============================================================================

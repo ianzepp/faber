@@ -12,6 +12,10 @@ const PANIC = `class Panic extends Error {
 
 const DECIMAL = `import type Decimal from 'decimal.js';`;
 
+const FS = `import * as fs from 'fs';`;
+
+const NODE_PATH = `import * as path from 'path';`;
+
 const FLUMINA = `type Responsum<T = unknown> =
   | { op: 'bene'; data: T }
   | { op: 'error'; code: string; message: string }
@@ -71,6 +75,14 @@ export function genPreamble(features: RequiredFeatures): string {
 
     if (features.decimal) {
         imports.push(DECIMAL);
+    }
+
+    if (features.fs) {
+        imports.push(FS);
+    }
+
+    if (features.nodePath) {
+        imports.push(NODE_PATH);
     }
 
     if (features.panic) {

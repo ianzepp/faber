@@ -106,6 +106,10 @@ export interface RequiredFeatures {
     stdout: boolean;
     stderr: boolean;
     stdin: boolean;
+
+    // Node.js modules (TS) - needs import statements
+    fs: boolean; // norma/solum - needs import * as fs from 'fs'
+    nodePath: boolean; // norma/solum path utils - needs import * as path from 'path'
 }
 
 /**
@@ -136,6 +140,8 @@ export function createRequiredFeatures(): RequiredFeatures {
         stdout: false,
         stderr: false,
         stdin: false,
+        fs: false,
+        nodePath: false,
     };
 }
 
