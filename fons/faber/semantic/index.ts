@@ -350,7 +350,7 @@ const NORMA_ALEATOR_EXPORTS: Record<string, { type: SemanticType; kind: 'functio
 
     // Collection operations (generic - takes lista<T>, returns T or lista<T>)
     selige: { type: functionType([UNKNOWN], UNKNOWN), kind: 'function' },
-    misce: { type: functionType([UNKNOWN], UNKNOWN), kind: 'function' },
+    miscita: { type: functionType([UNKNOWN], UNKNOWN), kind: 'function' },
 
     // Seeding
     semen: { type: functionType([NUMERUS], VACUUM), kind: 'function' },

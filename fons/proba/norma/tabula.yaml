@@ -3,7 +3,7 @@
 
 # Tabula - Map/dictionary collection method codegen tests
 # Covers: pone, accipe, habet, dele, longitudo, vacua, purga, claves, valores,
-#         accipeAut, confla, inLista
+#         accipeAut, conflata, inLista
 
 # =============================================================================
 # Core Operations
@@ -200,12 +200,12 @@
       - 'fixum tabula<textus, numerus> map = {}'
       - 'map.accipeAut("key", 0)'
 
-# confla merges another map into this one
-- name: 'confla -> merge maps'
+# conflata merges maps (returns new map)
+- name: 'conflata -> merge maps'
   source: |
       varia tabula<textus, numerus> map = {}
       varia tabula<textus, numerus> other = {}
-      map.confla(other)
+      map.conflata(other)
   cpp:
       - 'for (auto& [k, v]'
   ts:
@@ -214,11 +214,11 @@
       - 'HashMap<String, i64>'
       - '.extend(other.iter()'
   zig:
-      - '.confla(&other)'
+      - '.conflata(&other)'
   fab:
       - 'varia tabula<textus, numerus> map = {}'
       - 'varia tabula<textus, numerus> other = {}'
-      - 'map.confla(other)'
+      - 'map.conflata(other)'
 
 # inLista converts map entries to a vector
 - name: 'inLista -> vector from map'

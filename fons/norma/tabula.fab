@@ -15,6 +15,7 @@ genus tabula { }
 # =============================================================================
 
 # Set key-value pair (mutates)
+@ radix pon, imperativus
 @ verte ts "set"
 @ verte py (ego, k, v) -> "§0[§1] = §2"
 @ verte rs (ego, k, v) -> "§0.insert(§1, §2)"
@@ -51,6 +52,7 @@ functio accipeAut(K clavis, V defalta) -> V
 functio habet(K clavis) -> bivalens
 
 # Delete key (mutates)
+@ radix del, imperativus
 @ verte ts "delete"
 @ verte py (ego, k) -> "del §0[§1]"
 @ verte rs (ego, k) -> "§0.remove(&§1)"
@@ -78,6 +80,7 @@ functio longitudo() -> numerus
 functio vacua() -> bivalens
 
 # Clear all entries (mutates)
+@ radix purg, imperativus
 @ verte ts "clear"
 @ verte py "clear"
 @ verte rs "clear"
@@ -122,29 +125,34 @@ functio paria() -> cursor<par<K, V>>
 # =============================================================================
 
 # Keep only specified keys (returns new map)
+@ radix select, perfectum
 @ verte ts (ego, claves) -> "new Map([...§0].filter(([k]) => [§1].flat().includes(k)))"
 @ verte py (ego, claves) -> "{k: v for k, v in §0.items() if k in [§1]}"
-@ verte zig (ego, claves) -> "@compileError(\"selige not implemented for Zig - use explicit loop\")"
+@ verte zig (ego, claves) -> "@compileError(\"selecta not implemented for Zig - use explicit loop\")"
 @ externa
-functio selige(lista<K> claves) -> tabula<K, V>
+functio selecta(lista<K> claves) -> tabula<K, V>
 
 # Remove specified keys (returns new map)
+# WHY: Latin omittere → omissus. Stem is 'omis', participle ending is '-sa'
+@ radix omis, perfectum
 @ verte ts (ego, claves) -> "new Map([...§0].filter(([k]) => ![§1].flat().includes(k)))"
 @ verte py (ego, claves) -> "{k: v for k, v in §0.items() if k not in [§1]}"
-@ verte zig (ego, claves) -> "@compileError(\"omitte not implemented for Zig - use explicit loop\")"
+@ verte zig (ego, claves) -> "@compileError(\"omissa not implemented for Zig - use explicit loop\")"
 @ externa
-functio omitte(lista<K> claves) -> tabula<K, V>
+functio omissa(lista<K> claves) -> tabula<K, V>
 
 # Merge maps (returns new map)
+@ radix confl, perfectum
 @ verte ts (ego, alia) -> "new Map([...§0, ...§1])"
 @ verte py (ego, alia) -> "{**§0, **§1}"
 @ verte rs (ego, alia) -> "{ let mut m = §0.clone(); m.extend(§1.iter().map(|(k, v)| (k.clone(), v.clone()))); m }"
 @ verte cpp (ego, alia) -> "[&]{ auto r = §0; for (auto& [k, v] : §1) r[k] = v; return r; }()"
-@ verte zig (ego, alia) -> "§0.confla(&§1)"
+@ verte zig (ego, alia) -> "§0.conflata(&§1)"
 @ externa
-functio confla(tabula<K, V> alia) -> tabula<K, V>
+functio conflata(tabula<K, V> alia) -> tabula<K, V>
 
 # Swap keys and values (returns new map)
+@ radix inver, perfectum
 @ verte ts (ego) -> "new Map([...§].map(([k, v]) => [v, k]))"
 @ verte py (ego) -> "{v: k for k, v in §.items()}"
 @ verte zig (ego) -> "@compileError(\"inversa not implemented for Zig - use explicit loop\")"

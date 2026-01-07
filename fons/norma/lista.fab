@@ -95,6 +95,7 @@ functio decapita() -> T?
 functio decapitata() -> lista<T>
 
 # Clear all elements (mutates)
+@ radix purg, imperativus
 @ verte ts (ego) -> "§.length = 0"
 @ verte py "clear"
 @ verte rs "clear"
@@ -233,6 +234,7 @@ functio aliquis((T) -> bivalens pred) -> bivalens
 functio filtrata((T) -> bivalens pred) -> lista<T>
 
 # Map elements (returns new list)
+@ radix mapp, perfectum
 @ verte ts "map"
 @ verte py (ego, fn) -> "list(map(§, §))"
 @ verte rs (ego, fn) -> "§.iter().map(§).collect::<Vec<_>>()"
@@ -242,6 +244,7 @@ functio filtrata((T) -> bivalens pred) -> lista<T>
 functio mappata((T) -> U fn) -> lista<U>
 
 # Flat map (map + flatten one level)
+@ radix explan, perfectum
 @ verte ts "flatMap"
 @ verte py (ego, fn) -> "[y for x in § for y in (§)(x)]"
 @ verte rs (ego, fn) -> "§.iter().flat_map(§).collect::<Vec<_>>()"
@@ -306,15 +309,18 @@ functio prima(numerus n) -> lista<T>
 functio ultima(numerus n) -> lista<T>
 
 # Drop first n elements (returns new list)
+# WHY: Latin omittere → omissus. Stem is 'omis', participle ending is '-sa'
+@ radix omis, perfectum
 @ verte ts (ego, n) -> "§.slice(§)"
 @ verte py (ego, n) -> "§[§:]"
 @ verte rs (ego, n) -> "§.iter().skip(§).cloned().collect::<Vec<_>>()"
 @ verte cpp (ego, n) -> "(§ | std::views::drop(§) | std::ranges::to<std::vector>())"
-@ verte zig (ego, n, alloc) -> "§0.omitte(§2, §1)"
+@ verte zig (ego, n, alloc) -> "§0.omissa(§2, §1)"
 @ externa
-functio omitte(numerus n) -> lista<T>
+functio omissa(numerus n) -> lista<T>
 
 # Reduce to single value
+@ radix reduc, perfectum
 @ verte ts "reduce"
 @ verte py (ego, fn, init) -> "functools.reduce(§, §, §)"
 @ verte rs (ego, fn, init) -> "§.iter().fold(§, §)"
@@ -328,6 +334,7 @@ functio reducta((U, T) -> U fn, U init) -> U
 # =============================================================================
 
 # Filter in place (mutates)
+@ radix filtr, imperativus, perfectum
 @ verte ts (ego, pred) -> "(() => { for (let i = §.length - 1; i >= 0; i--) { if (!(§)(§[i])) §.splice(i, 1); } })()"
 @ verte py (ego, pred) -> "§[:] = [x for x in § if (§)(x)]"
 @ verte cpp (ego, pred) -> "§.erase(std::remove_if(§.begin(), §.end(), [&](auto& x) { return !(§)(x); }), §.end())"
@@ -335,6 +342,7 @@ functio reducta((U, T) -> U fn, U init) -> U
 functio filtra((T) -> bivalens pred) -> vacuum
 
 # Sort in place (mutates)
+@ radix ordin, imperativus, perfectum
 @ verte ts (ego) -> "§.sort()"
 @ verte py (ego) -> "§.sort()"
 @ verte rs (ego) -> "§.sort()"
@@ -344,6 +352,8 @@ functio filtra((T) -> bivalens pred) -> vacuum
 functio ordina() -> vacuum
 
 # Reverse in place (mutates)
+# WHY: Different stem from 'inversa' due to Latin irregular participle
+@ radix invert, imperativus
 @ verte ts "reverse"
 @ verte py (ego) -> "§.reverse()"
 @ verte rs (ego) -> "§.reverse()"
@@ -485,11 +495,12 @@ functio densa() -> lista<T>
 functio partire((T) -> bivalens pred) -> lista<lista<T>>
 
 # Shuffle (returns new list)
+@ radix misc, perfectum
 @ verte ts (ego) -> "(() => { const a = [...§]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; })()"
 @ verte py (ego) -> "random.shuffle(§)"
 @ verte cpp (ego) -> "[&]{ auto v = §; std::random_device rd; std::mt19937 g(rd()); std::ranges::shuffle(v, g); return v; }()"
 @ externa
-functio misce() -> lista<T>
+functio miscita() -> lista<T>
 
 # Random element
 @ verte ts (ego) -> "§[Math.floor(Math.random() * §.length)]"

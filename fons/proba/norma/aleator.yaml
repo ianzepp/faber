@@ -108,10 +108,10 @@
           - 'std.rand.DefaultPrng'
           - 'uintLessThan(usize, items.len)'
 
-- name: misce (shuffle list)
+- name: miscita (shuffle list)
   source: |
       fixum items = [1, 2, 3, 4, 5]
-      fixum shuffled = misce(items)
+      fixum shuffled = miscita(items)
   expect:
       ts:
           contains:

@@ -77,7 +77,8 @@ functio scribens()
 functio scribet()
 
 # Sync batch write (derived)
-@ radix scrib, imperativus
+# WHY: Different stem - inscribere vs scribere
+@ radix inscrib, imperativus
 @ verte ts (path, data) -> "fs.writeFileSync(§, §)"
 @ verte py (path, data) -> "open(§, 'w').write(§)"
 @ verte zig (path, data) -> "solum.inscribe(§, §)"

@@ -15,6 +15,7 @@ genus copia { }
 # =============================================================================
 
 # Add element (mutates)
+@ radix add, imperativus
 @ verte ts "add"
 @ verte py "add"
 @ verte rs "insert"
@@ -33,6 +34,7 @@ functio adde(T elem) -> vacuum
 functio habet(T elem) -> bivalens
 
 # Delete element (mutates)
+@ radix del, imperativus
 @ verte ts "delete"
 @ verte py "discard"
 @ verte rs (ego, elem) -> "§0.remove(&§1)"
@@ -60,6 +62,7 @@ functio longitudo() -> numerus
 functio vacua() -> bivalens
 
 # Clear all elements (mutates)
+@ radix purg, imperativus
 @ verte ts "clear"
 @ verte py "clear"
 @ verte rs "clear"

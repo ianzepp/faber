@@ -4,7 +4,7 @@
 # Lista - List/vector collection method codegen tests
 # Covers: adde, addita, praepone, remove, decapita, purga, primus, ultimus,
 #         accipe, longitudo, vacua, continet, indiceDe, filtrata, mappata,
-#         inversa, prima, omitte, omnes, aliquis, ordina, inverte, summa,
+#         inversa, prima, omissa, omnes, aliquis, ordina, inverte, summa,
 #         minimus, maximus, perambula
 
 # =============================================================================
@@ -339,11 +339,11 @@
       - 'fixum items = [1, 2, 3]'
       - 'items.prima(5)'
 
-# omitte drops first n elements
-- name: 'omitte -> views::drop'
+# omissa drops first n elements (returns new list)
+- name: 'omissa -> views::drop'
   source: |
       fixum items = [1, 2, 3]
-      items.omitte(2)
+      items.omissa(2)
   wrap: 'cura arena fit alloc { $ }'
   cpp:
       - 'std::views::drop(2)'
@@ -354,10 +354,10 @@
       - '.iter().skip(2)'
       - '.cloned().collect'
   zig:
-      - '.omitte(alloc, 2)'
+      - '.omissa(alloc, 2)'
   fab:
       - 'fixum items = [1, 2, 3]'
-      - 'items.omitte(2)'
+      - 'items.omissa(2)'
 
 # =============================================================================
 # Predicates

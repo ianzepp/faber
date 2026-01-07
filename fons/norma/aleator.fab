@@ -65,13 +65,14 @@ functio selige(lista<T> lista) -> T
 
 # Shuffled copy of list
 # WHY: Use §0 for multi-use - implicit § increments each use
+@ radix misc, perfectum
 @ verte ts (lista) -> "(() => { const a = [...§0]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; })()"
 @ verte py (lista) -> "random.sample(§0, len(§0))"
 @ verte rs (lista) -> "{ let mut v = §0.clone(); v.shuffle(&mut rand::thread_rng()); v }"
 @ verte cpp (lista) -> "[&]{ auto v = §0; std::random_device rd; std::mt19937 gen(rd()); std::ranges::shuffle(v, gen); return v; }()"
 @ verte zig (lista, alloc) -> "blk: { var seed: u64 = undefined; std.crypto.random.bytes(std.mem.asBytes(&seed)); var prng = std.rand.DefaultPrng.init(seed); var copy = §1.dupe(@TypeOf(§0[0]), §0) catch unreachable; prng.random().shuffle(@TypeOf(copy[0]), copy); break :blk copy; }"
 @ externa
-functio misce(lista<T> lista) -> lista<T>
+functio miscita(lista<T> lista) -> lista<T>
 
 # =============================================================================
 # SEEDING
