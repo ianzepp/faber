@@ -1,5 +1,5 @@
 import { test, expect, describe } from 'bun:test';
-import { validateMorphology, getNormaTranslation, getNormaRadixForms } from './norma-registry';
+import { validateMorphology, getNormaTranslation, getNormaRadixForms, getReceiverOwnership } from './norma-registry';
 
 describe('norma-registry', () => {
     describe('getNormaTranslation', () => {
@@ -126,6 +126,50 @@ describe('norma-registry', () => {
                 const result = validateMorphology('lista', 'customMethod');
 
                 expect(result.valid).toBe(true);
+            });
+        });
+    });
+
+    describe('getReceiverOwnership', () => {
+        describe('mutating methods (imperativus) return "in"', () => {
+            test('lista.adde -> in (mutates)', () => {
+                expect(getReceiverOwnership('lista', 'adde')).toBe('in');
+            });
+
+            test('lista.filtra -> in (mutates)', () => {
+                expect(getReceiverOwnership('lista', 'filtra')).toBe('in');
+            });
+
+            test('lista.ordina -> in (mutates)', () => {
+                expect(getReceiverOwnership('lista', 'ordina')).toBe('in');
+            });
+        });
+
+        describe('non-mutating methods (perfectum) return "de"', () => {
+            test('lista.addita -> de (returns new)', () => {
+                expect(getReceiverOwnership('lista', 'addita')).toBe('de');
+            });
+
+            test('lista.filtrata -> de (returns new)', () => {
+                expect(getReceiverOwnership('lista', 'filtrata')).toBe('de');
+            });
+
+            test('lista.ordinata -> de (returns new)', () => {
+                expect(getReceiverOwnership('lista', 'ordinata')).toBe('de');
+            });
+
+            test('lista.inversa -> de (returns new)', () => {
+                expect(getReceiverOwnership('lista', 'inversa')).toBe('de');
+            });
+        });
+
+        describe('unknown methods return undefined', () => {
+            test('unknown collection -> undefined', () => {
+                expect(getReceiverOwnership('unknown', 'adde')).toBeUndefined();
+            });
+
+            test('unknown method -> undefined', () => {
+                expect(getReceiverOwnership('lista', 'unknownMethod')).toBeUndefined();
             });
         });
     });

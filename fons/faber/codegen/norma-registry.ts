@@ -208,6 +208,57 @@ export function getNormaRadixForms(
     return m.radixForms;
 }
 
+/** Receiver ownership for method calls */
+export type ReceiverOwnership = 'de' | 'in' | undefined;
+
+/**
+ * Get the implied receiver ownership for a stdlib method.
+ *
+ * WHY: Latin morphology encodes mutation semantics:
+ *   - imperativus (adde, filtra) → mutates receiver → 'in' (&mut self)
+ *   - perfectum (addita, filtrata) → returns new → 'de' (&self)
+ *   - futurum_indicativum (addebit) → async mutates → 'in'
+ *   - futurum_activum (additura) → async returns new → 'de'
+ *   - participium_praesens (addens) → streaming → 'de'
+ *
+ * @param collection Collection name (lista, tabula, copia, etc.)
+ * @param methodName Method being called
+ * @returns 'in' for mutating, 'de' for non-mutating, undefined if unknown
+ */
+export function getReceiverOwnership(
+    collection: string,
+    methodName: string,
+): ReceiverOwnership {
+    const coll = registry.get(collection);
+    if (!coll) return undefined;
+
+    const method = coll.methods.get(methodName);
+    if (!method) return undefined;
+
+    // If method has radixForms, use stem-guided parsing
+    if (method.radixForms && method.radixForms.length > 0) {
+        const stem = method.radixForms[0];
+        const parsed = parseMethodumWithStem(methodName, stem);
+        if (parsed) {
+            // mutare=true forms need mutable receiver
+            if (parsed.flags.mutare) {
+                return 'in';
+            }
+            // mutare=false forms only need immutable receiver
+            return 'de';
+        }
+    }
+
+    // Fallback: try parsing without stem hint
+    const parsed = parseMethodum(methodName);
+    if (parsed) {
+        return parsed.flags.mutare ? 'in' : 'de';
+    }
+
+    // Unknown morphology - no ownership inference
+    return undefined;
+}
+
 /**
  * Validate morphology for a method call on a stdlib collection.
  *
