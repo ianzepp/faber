@@ -140,6 +140,46 @@ solum.legens(path)    // streaming read (Generator)
 
 The pattern is **consistent across all domains**. Learn the conjugation once, apply everywhere.
 
+### Async-Generator-First Implementation
+
+For IO types, the **generator form is the base implementation**. Sync and async-batch variants are derived:
+
+```
+legens (async generator)     ← Base implementation (streaming)
+    ↓ collect stream
+leget (async batch)          ← Derived (returns complete data)
+    ↓ block until complete
+lege (sync batch)            ← Derived (blocks, returns complete data)
+```
+
+**Why this inversion matters:**
+
+1. **Streaming is the primitive**: You can always derive batch from stream (collect), but not vice versa
+2. **Memory efficiency**: Streaming doesn't require loading everything into memory
+3. **Buffer management**: Base impl manages fixed buffers internally; derived forms handle allocation
+4. **Zig 0.15 alignment**: The new buffer-based I/O API naturally fits streaming patterns
+
+**Implementation pattern:**
+
+```zig
+// legens - base: streams chunks through fixed internal buffer
+pub fn legens(path: []const u8) ChunkIterator {
+    // Fixed buffer, yields slices, caller processes each chunk
+}
+
+// leget - derived: collect stream into allocated memory
+pub fn leget(alloc: Allocator, path: []const u8) Future([]u8) {
+    // Internally: iterate legens(), append chunks to growing buffer
+}
+
+// lege - derived: block and collect
+pub fn lege(alloc: Allocator, path: []const u8) []u8 {
+    // Internally: poll leget() to completion, return result
+}
+```
+
+See `consilia/futura/async-generator.md` for the full design.
+
 ---
 
 ## Collection Methods Analysis
