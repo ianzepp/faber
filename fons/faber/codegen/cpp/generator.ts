@@ -416,6 +416,14 @@ export class CppGenerator {
      * Generate type annotation from Latin type.
      */
     genType(node: TypeAnnotation): string {
+        // Handle function types: (T, U) -> V => std::function<V(T, U)>
+        if (node.parameterTypes && node.returnType) {
+            this.includes.add('<functional>');
+            const params = node.parameterTypes.map(p => this.genType(p)).join(', ');
+            const ret = this.genType(node.returnType);
+            return `std::function<${ret}(${params})>`;
+        }
+
         // Map Latin type name to C++ type
         const base = typeMap[node.name] ?? node.name;
 

@@ -689,6 +689,13 @@ export class ZigGenerator {
      * Generate type annotation from Latin type.
      */
     genType(node: TypeAnnotation): string {
+        // Handle function types: (T, U) -> V => *const fn(T, U) V
+        if (node.parameterTypes && node.returnType) {
+            const params = node.parameterTypes.map(p => this.genType(p)).join(', ');
+            const ret = this.genType(node.returnType);
+            return `*const fn(${params}) ${ret}`;
+        }
+
         const name = node.name;
 
         // Handle union types - Zig doesn't have untagged unions

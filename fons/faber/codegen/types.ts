@@ -69,6 +69,9 @@ export interface RequiredFeatures {
     // Enums
     enum: boolean; // ordo - needs Enum import (Python)
 
+    // Callable (Python) - for function type annotations
+    callable: boolean; // (T) -> U type annotations - needs Callable import
+
     // Compile-time evaluation
     praefixum: boolean; // praefixum blocks - needs __praefixum__ helper (Python)
 
@@ -126,6 +129,7 @@ export function createRequiredFeatures(): RequiredFeatures {
         generator: false,
         decimal: false,
         enum: false,
+        callable: false,
         praefixum: false,
         dataclass: false,
         flumina: false,

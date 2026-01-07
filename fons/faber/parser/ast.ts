@@ -2573,8 +2573,11 @@ export type TypeParameter = TypeAnnotation | Literal;
  * Type annotation for variables, parameters, and return types.
  *
  * GRAMMAR (in EBNF):
- *   typeAnnotation := ('de' | 'in')? IDENTIFIER typeParams? '?'? arrayBrackets*
+ *   typeAnnotation := functionType | namedType
+ *   functionType := '(' typeList? ')' '->' typeAnnotation
+ *   namedType := ('de' | 'in')? IDENTIFIER typeParams? '?'? arrayBrackets*
  *   typeParams := '<' typeParameter (',' typeParameter)* '>'
+ *   typeList := typeAnnotation (',' typeAnnotation)*
  *
  * INVARIANT: name is the base type name (textus, numerus, etc.).
  * INVARIANT: nullable indicates optional type with '?'.
@@ -2583,6 +2586,7 @@ export type TypeParameter = TypeAnnotation | Literal;
  * INVARIANT: preposition encodes ownership for systems targets (Rust/Zig):
  *            de = borrowed/read-only (&T, []const u8)
  *            in = mutable borrow (&mut T, *T)
+ * INVARIANT: parameterTypes + returnType indicate a function type (name='')
  *
  * Examples:
  *   textus -> name="textus"
@@ -2593,6 +2597,8 @@ export type TypeParameter = TypeAnnotation | Literal;
  *   unio<textus, numerus> -> name="union", union=[{name="textus"}, {name="numerus"}]
  *   de textus -> name="textus", preposition="de" (borrowed)
  *   in textus -> name="textus", preposition="in" (mutable borrow)
+ *   (T) -> bivalens -> name="", parameterTypes=[T], returnType=bivalens
+ *   (A, B) -> C -> name="", parameterTypes=[A, B], returnType=C
  */
 export interface TypeAnnotation extends BaseNode {
     type: 'TypeAnnotation';
@@ -2602,4 +2608,6 @@ export interface TypeAnnotation extends BaseNode {
     union?: TypeAnnotation[];
     arrayShorthand?: boolean; // true if parsed from [] syntax (e.g., numerus[] vs lista<numerus>)
     preposition?: string; // 'de' (borrowed) or 'in' (mutable) for systems targets
+    parameterTypes?: TypeAnnotation[]; // for function types: (T, U) -> V
+    returnType?: TypeAnnotation; // for function types: (T, U) -> V
 }

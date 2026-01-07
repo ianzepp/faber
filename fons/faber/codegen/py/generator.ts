@@ -339,6 +339,14 @@ export class PyGenerator {
      * Generate type annotation from Latin type.
      */
     genType(node: TypeAnnotation): string {
+        // Handle function types: (T, U) -> V => Callable[[T, U], V]
+        if (node.parameterTypes && node.returnType) {
+            this.features.callable = true;
+            const params = node.parameterTypes.map(p => this.genType(p)).join(', ');
+            const ret = this.genType(node.returnType);
+            return `Callable[[${params}], ${ret}]`;
+        }
+
         // Track feature usage for preamble
         if (node.name === 'decimus' || node.name === 'decim') {
             this.features.decimal = true;

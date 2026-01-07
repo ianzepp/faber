@@ -335,6 +335,13 @@ export class FabGenerator {
      * Generate type annotation.
      */
     genType(node: TypeAnnotation): string {
+        // Handle function types: (T, U) -> V
+        if (node.parameterTypes && node.returnType) {
+            const params = node.parameterTypes.map(p => this.genType(p)).join(', ');
+            const ret = this.genType(node.returnType);
+            return `(${params}) -> ${ret}`;
+        }
+
         // Handle union types
         if (node.union && node.union.length > 0) {
             return `unio<${node.union.map(t => this.genType(t)).join(', ')}>`;

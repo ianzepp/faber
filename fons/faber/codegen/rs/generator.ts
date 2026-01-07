@@ -396,6 +396,13 @@ export class RsGenerator {
      * Generate type annotation from Latin type.
      */
     genType(node: TypeAnnotation): string {
+        // Handle function types: (T, U) -> V => impl Fn(T, U) -> V
+        if (node.parameterTypes && node.returnType) {
+            const params = node.parameterTypes.map(p => this.genType(p)).join(', ');
+            const ret = this.genType(node.returnType);
+            return `impl Fn(${params}) -> ${ret}`;
+        }
+
         // Map Latin type name to Rust type
         const base = typeMap[node.name] ?? node.name;
 

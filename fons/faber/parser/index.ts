@@ -1796,8 +1796,10 @@ export function parse(tokens: Token[]): ParserResult {
         // If we see IDENT followed by IDENT, first is type, second is name.
         // If we see IDENT followed by <, it's a generic type.
         // If we see IDENT followed by [, it's an array type (e.g., Point[]).
+        // If we see (, it's a function type: (T) -> U
         const hasTypeAnnotation =
             isTypeName(peek()) ||
+            check('LPAREN') || // function type: (T) -> U
             (check('IDENTIFIER') && peek(1).type === 'IDENTIFIER') ||
             (check('IDENTIFIER') && peek(1).type === 'LESS') ||
             (check('IDENTIFIER') && peek(1).type === 'LBRACKET');
@@ -5565,6 +5567,32 @@ export function parse(tokens: Token[]): ParserResult {
      */
     function parseTypeAnnotation(): TypeAnnotation {
         const position = peek().position;
+
+        // Check for function type: (T, U) -> V
+        // WHY: Function types in parameter positions enable higher-order functions
+        //      e.g., functio filtrata((T) -> bivalens pred) -> lista<T>
+        if (match('LPAREN')) {
+            const parameterTypes: TypeAnnotation[] = [];
+
+            if (!check('RPAREN')) {
+                do {
+                    parameterTypes.push(parseTypeAnnotation());
+                } while (match('COMMA'));
+            }
+
+            expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
+            expect('THIN_ARROW', ParserErrorCode.ExpectedThinArrow);
+
+            const returnType = parseTypeAnnotation();
+
+            return {
+                type: 'TypeAnnotation',
+                name: '',
+                parameterTypes,
+                returnType,
+                position,
+            };
+        }
 
         // Check for borrow preposition (de/in for ownership semantics)
         let preposition: string | undefined;

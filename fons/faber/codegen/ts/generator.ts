@@ -382,6 +382,13 @@ export class TsGenerator {
      * Generate type annotation from Latin type.
      */
     genType(node: TypeAnnotation): string {
+        // Handle function types: (T, U) -> V => (arg0: T, arg1: U) => V
+        if (node.parameterTypes && node.returnType) {
+            const params = node.parameterTypes.map((p, i) => `arg${i}: ${this.genType(p)}`).join(', ');
+            const ret = this.genType(node.returnType);
+            return `(${params}) => ${ret}`;
+        }
+
         // Track feature usage for preamble
         if (node.name === 'decimus' || node.name === 'decim') {
             this.features.decimal = true;

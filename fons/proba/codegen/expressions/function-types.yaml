@@ -1,0 +1,119 @@
+# Function type annotations in parameter positions
+# Maps Faber function type syntax to target-language equivalents
+#
+# Syntax:
+#   (T) -> U           -- single param function type
+#   (T, U) -> V        -- multi param function type
+#   ((A) -> B) -> C    -- nested function types
+#
+# Use cases:
+#   - Higher-order functions (map, filter, reduce)
+#   - Callbacks and event handlers
+#   - Function composition
+
+# =============================================================================
+# Basic Function Type Parameters
+# =============================================================================
+
+- name: predicate parameter
+  source: |
+      functio filtrata((T) -> bivalens pred) -> T {
+        redde pred
+      }
+  expect:
+      ts:
+          - 'function filtrata(pred: (arg0: T) => boolean): T'
+      py:
+          - 'def filtrata(pred: Callable[[T], bool]) -> T:'
+      rs:
+          - 'fn filtrata(pred: impl Fn(T) -> bool) -> T'
+      cpp:
+          - 'filtrata(const std::function<bool(T)>& pred)'
+      zig:
+          - 'fn filtrata(pred: *const fn(T) bool) T'
+      fab:
+          - 'functio filtrata((T) -> bivalens pred) -> T'
+
+- name: transformer parameter
+  source: |
+      functio mappata((T) -> U transformer) -> U {
+        redde transformer
+      }
+  expect:
+      ts:
+          - 'function mappata(transformer: (arg0: T) => U): U'
+      py:
+          - 'def mappata(transformer: Callable[[T], U]) -> U:'
+      rs:
+          - 'fn mappata(transformer: impl Fn(T) -> U) -> U'
+      cpp:
+          - 'mappata(const std::function<U(T)>& transformer)'
+      zig:
+          - 'fn mappata(transformer: *const fn(T) U) U'
+      fab:
+          - 'functio mappata((T) -> U transformer) -> U'
+
+- name: multi-param function type
+  source: |
+      functio reducta((U, T) -> U fn, U init) -> U {
+        redde init
+      }
+  expect:
+      ts:
+          - 'function reducta(fn: (arg0: U, arg1: T) => U, init: U): U'
+      py:
+          - 'def reducta(fn: Callable[[U, T], U], init: U) -> U:'
+      rs:
+          - 'fn reducta(fn: impl Fn(U, T) -> U, init: U) -> U'
+      cpp:
+          - 'reducta(const std::function<U(U, T)>& fn'
+      zig:
+          - 'fn reducta(fn: *const fn(U, T) U, init: U) U'
+      fab:
+          - 'functio reducta((U, T) -> U fn, U init) -> U'
+
+# =============================================================================
+# Function Type Returns
+# =============================================================================
+
+- name: function returning function type
+  source: |
+      functio compose((A) -> B f, (B) -> C g) -> (A) -> C {
+        redde f
+      }
+  expect:
+      ts:
+          - 'function compose(f: (arg0: A) => B, g: (arg0: B) => C): (arg0: A) => C'
+      py:
+          - 'def compose(f: Callable[[A], B], g: Callable[[B], C]) -> Callable[[A], C]:'
+      rs:
+          - 'fn compose(f: impl Fn(A) -> B, g: impl Fn(B) -> C) -> impl Fn(A) -> C'
+      cpp:
+          - 'std::function<C(A)> compose(const std::function<B(A)>& f, const std::function<C(B)>& g)'
+      zig:
+          - 'fn compose(f: *const fn(A) B, g: *const fn(B) C) *const fn(A) C'
+      fab:
+          - 'functio compose((A) -> B f, (B) -> C g) -> (A) -> C'
+
+# =============================================================================
+# Void/Vacuum Return Types
+# =============================================================================
+
+- name: callback with no return
+  source: |
+      functio forEach((T) -> vacuum callback) -> vacuum {
+        redde nihil
+      }
+  expect:
+      ts:
+          - 'function forEach(callback: (arg0: T) => void): void'
+      py:
+          - 'def forEach(callback: Callable[[T], None]) -> None:'
+      rs:
+          - 'fn forEach(callback: impl Fn(T) -> ())'
+      cpp:
+          - 'forEach(const std::function<void(T)>& callback)'
+      zig:
+          - 'fn forEach(callback: *const fn(T) void) void'
+      fab:
+          - 'functio forEach((T) -> vacuum callback) -> vacuum'

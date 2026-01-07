@@ -30,6 +30,10 @@ export function genPreamble(features: RequiredFeatures): string {
         imports.push('from decimal import Decimal');
     }
 
+    if (features.callable) {
+        imports.push('from typing import Callable');
+    }
+
     if (features.usesRegex) {
         imports.push('import re');
     }
