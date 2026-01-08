@@ -60,6 +60,14 @@ function initSchema(db: Database): void {
       verifier_latency_ms INTEGER,
       total_latency_ms INTEGER,
 
+      -- Token tracking
+      drafter_tokens_in INTEGER,
+      drafter_tokens_out INTEGER,
+      verifier_tokens_in INTEGER,
+      verifier_tokens_out INTEGER,
+      total_tokens_in INTEGER,
+      total_tokens_out INTEGER,
+
       PRIMARY KEY (run_id, task_id, model, n_shot, dialect, context)
     );
 
@@ -114,7 +122,10 @@ function importRun(db: Database, runId: string): { trials: number; raw: number }
         verifier_model, drafter_correct, drafter_error_type,
         verifier_correct, verifier_error_type, transition,
         drafter_cost, verifier_cost, total_cost,
-        drafter_latency_ms, verifier_latency_ms, total_latency_ms
+        drafter_latency_ms, verifier_latency_ms, total_latency_ms,
+        drafter_tokens_in, drafter_tokens_out,
+        verifier_tokens_in, verifier_tokens_out,
+        total_tokens_in, total_tokens_out
       ) VALUES (
         $run_id, $task_id, $model, $n_shot, $dialect, $context,
         $timestamp, $framework_version, $git_sha,
@@ -122,7 +133,10 @@ function importRun(db: Database, runId: string): { trials: number; raw: number }
         $verifier_model, $drafter_correct, $drafter_error_type,
         $verifier_correct, $verifier_error_type, $transition,
         $drafter_cost, $verifier_cost, $total_cost,
-        $drafter_latency_ms, $verifier_latency_ms, $total_latency_ms
+        $drafter_latency_ms, $verifier_latency_ms, $total_latency_ms,
+        $drafter_tokens_in, $drafter_tokens_out,
+        $verifier_tokens_in, $verifier_tokens_out,
+        $total_tokens_in, $total_tokens_out
       )
     `)
 
@@ -157,6 +171,12 @@ function importRun(db: Database, runId: string): { trials: number; raw: number }
         $drafter_latency_ms: r.drafter_latency_ms ?? null,
         $verifier_latency_ms: r.verifier_latency_ms ?? null,
         $total_latency_ms: r.total_latency_ms ?? null,
+        $drafter_tokens_in: r.drafter_tokens_in ?? null,
+        $drafter_tokens_out: r.drafter_tokens_out ?? null,
+        $verifier_tokens_in: r.verifier_tokens_in ?? null,
+        $verifier_tokens_out: r.verifier_tokens_out ?? null,
+        $total_tokens_in: r.total_tokens_in ?? null,
+        $total_tokens_out: r.total_tokens_out ?? null,
       })
       trialsImported++
     }

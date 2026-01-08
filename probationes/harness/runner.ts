@@ -311,6 +311,8 @@ async function main() {
               // Pipeline fields (only set if verifier is used)
               let verifierCost: number | undefined
               let verifierLatency: number | undefined
+              let verifierTokensIn: number | undefined
+              let verifierTokensOut: number | undefined
               let verifierCorrect: boolean | undefined
               let verifierErrorType = drafterGrade.error_type
               let transition: TransitionType | undefined
@@ -328,6 +330,8 @@ async function main() {
 
                 verifierCost = computeCost(verifierModel, verifierApiResponse.tokens_in, verifierApiResponse.tokens_out)
                 verifierLatency = verifierApiResponse.latency_ms
+                verifierTokensIn = verifierApiResponse.tokens_in
+                verifierTokensOut = verifierApiResponse.tokens_out
                 finalResponse = verifierApiResponse.content
 
                 // Grade verifier response
@@ -397,6 +401,13 @@ async function main() {
                 drafter_latency_ms: verifierModel ? drafterLatency : undefined,
                 verifier_latency_ms: verifierLatency,
                 total_latency_ms: verifierModel ? trialLatency : undefined,
+                // Token tracking
+                drafter_tokens_in: verifierModel ? drafterTokensIn : undefined,
+                drafter_tokens_out: verifierModel ? drafterTokensOut : undefined,
+                verifier_tokens_in: verifierTokensIn,
+                verifier_tokens_out: verifierTokensOut,
+                total_tokens_in: verifierModel ? drafterTokensIn + (verifierTokensIn ?? 0) : undefined,
+                total_tokens_out: verifierModel ? drafterTokensOut + (verifierTokensOut ?? 0) : undefined,
               }
               await logger.logGraded(gradedResult)
 

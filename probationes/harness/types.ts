@@ -97,6 +97,14 @@ export interface GradedResult {
   drafter_latency_ms?: number
   verifier_latency_ms?: number
   total_latency_ms?: number
+
+  // Token tracking
+  drafter_tokens_in?: number
+  drafter_tokens_out?: number
+  verifier_tokens_in?: number
+  verifier_tokens_out?: number
+  total_tokens_in?: number
+  total_tokens_out?: number
 }
 
 export type ErrorType =
