@@ -1366,6 +1366,13 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         // Regular member access on an instance
         const objectType = resolveExpression(node.object);
 
+        // WHY: For computed (indexed) access, resolve the property expression.
+        // Example: items[idx] - need to resolve the expression used as index.
+        // Without this, nested expressions like items[other.longitudo()] fail.
+        if (node.computed) {
+            resolveExpression(node.property);
+        }
+
         // If object is a genus instance, check for fields/methods
         if (objectType.kind === 'genus' && !node.computed) {
             const propName = (node.property as Identifier).name;
@@ -1383,7 +1390,18 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             }
         }
 
-        // WHY: Handle user types by looking up the genus definition in scope.
+        // If object is a pactum instance, check for methods
+        if (objectType.kind === 'pactum' && !node.computed) {
+            const propName = (node.property as Identifier).name;
+
+            const methodType = objectType.methods.get(propName);
+            if (methodType) {
+                node.resolvedType = methodType;
+                return methodType;
+            }
+        }
+
+        // WHY: Handle user types by looking up the genus/pactum definition in scope.
         // This supports cross-module field access where the type is imported.
         if (objectType.kind === 'user' && !node.computed) {
             const symbol = lookupSymbol(currentScope, objectType.name);
@@ -1402,6 +1420,36 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
                     node.resolvedType = methodType;
                     return methodType;
                 }
+            }
+
+            // Handle pactum types imported from other modules
+            if (symbol && symbol.type.kind === 'pactum') {
+                const pactumType = symbol.type;
+                const propName = (node.property as Identifier).name;
+
+                const methodType = pactumType.methods.get(propName);
+                if (methodType) {
+                    node.resolvedType = methodType;
+                    return methodType;
+                }
+            }
+        }
+
+        // WHY: For computed (indexed) access on generic collections, return element type.
+        // Example: lista<textus>[0] -> textus, tabula<textus, numerus>["key"] -> numerus
+        if (node.computed && objectType.kind === 'generic') {
+            const collectionName = objectType.name.toLowerCase();
+            if ((collectionName === 'lista' || collectionName === 'copia') && objectType.typeParameters.length >= 1) {
+                // lista<T>[idx] and copia<T>[idx] return T
+                const elementType = objectType.typeParameters[0]!;
+                node.resolvedType = elementType;
+                return elementType;
+            }
+            if (collectionName === 'tabula' && objectType.typeParameters.length >= 2) {
+                // tabula<K, V>[key] returns V
+                const valueType = objectType.typeParameters[1]!;
+                node.resolvedType = valueType;
+                return valueType;
             }
         }
 

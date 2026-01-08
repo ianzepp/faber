@@ -285,11 +285,25 @@ function extractGenusExport(stmt: GenusDeclaration): ModuleExport {
 
 /**
  * Extract export from pactum (interface) declaration.
+ *
+ * WHY: Extract method signatures for cross-module method call resolution.
+ * Without this, accessing methods through imported pactum types fails because
+ * the semantic analyzer can't resolve the method return types.
  */
 function extractPactumExport(stmt: PactumDeclaration): ModuleExport {
+    const methods = new Map<string, FunctionType>();
+
+    for (const method of stmt.methods) {
+        // Parameter types use UNKNOWN since full resolution isn't needed for most cases
+        const paramTypes: SemanticType[] = method.params.map(() => UNKNOWN);
+        const returnType = method.returnType ? resolveTypeSimple(method.returnType) : VACUUM;
+        const fnType = functionType(paramTypes, returnType, method.async);
+        methods.set(method.name.name, fnType);
+    }
+
     return {
         name: stmt.name.name,
-        type: pactumType(stmt.name.name, new Map()),
+        type: pactumType(stmt.name.name, methods),
         kind: 'pactum',
     };
 }
