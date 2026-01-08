@@ -24,9 +24,9 @@ functio absolutum() -> numerus
 
 # Sign (-1, 0, or 1)
 @ verte ts (ego) -> "Math.sign(§)"
-@ verte py (ego) -> "((§>0)-(§<0))"
+@ verte py (ego) -> "((§0>0)-(§0<0))"
 @ verte rs (ego) -> "§.signum()"
-@ verte cpp (ego) -> "((§ > 0) - (§ < 0))"
+@ verte cpp (ego) -> "((§0 > 0) - (§0 < 0))"
 @ verte zig (ego) -> "std.math.sign(§)"
 @ externa
 functio signum() -> numerus

@@ -144,9 +144,9 @@ functio absolutum(fractus x) -> fractus
 
 # Sign (-1, 0, or 1)
 @ verte ts (x) -> "Math.sign(§)"
-@ verte py (x) -> "(1 if § > 0 else (-1 if § < 0 else 0))"
+@ verte py (x) -> "(1 if §0 > 0 else (-1 if §0 < 0 else 0))"
 @ verte rs (x) -> "§.signum()"
-@ verte cpp (x) -> "((§ > 0) - (§ < 0))"
+@ verte cpp (x) -> "((§0 > 0) - (§0 < 0))"
 @ verte zig (x) -> "std.math.sign(§)"
 @ externa
 functio signum(fractus x) -> numerus
