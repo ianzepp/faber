@@ -15,7 +15,7 @@ genus caelum { }
 # =============================================================================
 
 # HTTP response (returned by client requests)
-pactum responsum {
+pactum Replicatio {
     functio status() -> numerus
     functio corpus() -> textus
     functio capita() -> tabula<textus, textus>
@@ -23,7 +23,7 @@ pactum responsum {
 }
 
 # HTTP request (received by server handlers)
-pactum rogatum {
+pactum Rogatio {
     functio modus() -> textus
     functio via() -> textus
     functio corpus() -> textus
@@ -31,9 +31,9 @@ pactum rogatum {
 }
 
 # HTTP server instance
-pactum servitor {
-    functio exspecta(numerus portus) fiet vacuum
-    functio siste() fiet vacuum
+pactum Servitor {
+    functio exspecta(numerus portus) -> vacuum
+    functio siste() -> vacuum
 }
 
 # =============================================================================
@@ -49,7 +49,7 @@ pactum servitor {
 @ verte cpp (url) -> "caelum::pete(§)"
 @ verte zig (url) -> "caelum.pete(§)"
 @ externa
-functio pete(textus url) -> responsum
+functio pete(textus url) -> Replicatio
 
 # POST request with body
 @ radix mitt, imperativus
@@ -60,7 +60,7 @@ functio pete(textus url) -> responsum
 @ verte cpp (url, corpus) -> "caelum::mitte(§, §)"
 @ verte zig (url, corpus) -> "caelum.mitte(§, §)"
 @ externa
-functio mitte(textus url, textus corpus) -> responsum
+functio mitte(textus url, textus corpus) -> Replicatio
 
 # PUT request with body
 @ radix pon, imperativus
@@ -71,7 +71,7 @@ functio mitte(textus url, textus corpus) -> responsum
 @ verte cpp (url, corpus) -> "caelum::pone(§, §)"
 @ verte zig (url, corpus) -> "caelum.pone(§, §)"
 @ externa
-functio pone(textus url, textus corpus) -> responsum
+functio pone(textus url, textus corpus) -> Replicatio
 
 # DELETE request
 @ radix del, imperativus
@@ -82,7 +82,7 @@ functio pone(textus url, textus corpus) -> responsum
 @ verte cpp (url) -> "caelum::dele(§)"
 @ verte zig (url) -> "caelum.dele(§)"
 @ externa
-functio dele(textus url) -> responsum
+functio dele(textus url) -> Replicatio
 
 # PATCH request with body
 @ radix mut, imperativus
@@ -93,7 +93,7 @@ functio dele(textus url) -> responsum
 @ verte cpp (url, corpus) -> "caelum::muta(§, §)"
 @ verte zig (url, corpus) -> "caelum.muta(§, §)"
 @ externa
-functio muta(textus url, textus corpus) -> responsum
+functio muta(textus url, textus corpus) -> Replicatio
 
 # =============================================================================
 # HTTP CLIENT - Advanced Requests
@@ -111,7 +111,7 @@ functio muta(textus url, textus corpus) -> responsum
 @ verte cpp (modus, url, capita, corpus) -> "caelum::roga(§, §, §, §)"
 @ verte zig (modus, url, capita, corpus) -> "caelum.roga(§, §, §, §)"
 @ externa
-functio roga(textus modus, textus url, tabula<textus, textus> capita, textus corpus) -> responsum
+functio roga(textus modus, textus url, tabula<textus, textus> capita, textus corpus) -> Replicatio
 
 # =============================================================================
 # HTTP CLIENT - Convenience Variants with Headers
@@ -126,7 +126,7 @@ functio roga(textus modus, textus url, tabula<textus, textus> capita, textus cor
 @ verte cpp (url, capita) -> "caelum::pete_cum(§, §)"
 @ verte zig (url, capita) -> "caelum.peteCum(§, §)"
 @ externa
-functio peteCum(textus url, tabula<textus, textus> capita) -> responsum
+functio peteCum(textus url, tabula<textus, textus> capita) -> Replicatio
 
 # POST with custom headers
 @ radix mitt, imperativus
@@ -137,7 +137,7 @@ functio peteCum(textus url, tabula<textus, textus> capita) -> responsum
 @ verte cpp (url, corpus, capita) -> "caelum::mitte_cum(§, §, §)"
 @ verte zig (url, corpus, capita) -> "caelum.mitteCum(§, §, §)"
 @ externa
-functio mitteCum(textus url, textus corpus, tabula<textus, textus> capita) -> responsum
+functio mitteCum(textus url, textus corpus, tabula<textus, textus> capita) -> Replicatio
 
 # =============================================================================
 # HTTP SERVER
@@ -150,7 +150,7 @@ functio mitteCum(textus url, textus corpus, tabula<textus, textus> capita) -> re
 @ verte cpp (handler) -> "caelum::crea_servitorem(§)"
 @ verte zig (handler) -> "caelum.creaServitorem(§)"
 @ externa
-functio creaServitorem((rogatum) -> responsum handler) -> servitor
+functio creaServitorem((Rogatio) -> Replicatio handler) -> Servitor
 
 # Start server listening on port
 @ futura
@@ -160,7 +160,7 @@ functio creaServitorem((rogatum) -> responsum handler) -> servitor
 @ verte cpp (s, portus) -> "§0.exspecta(§1)"
 @ verte zig (s, portus) -> "§0.exspecta(§1)"
 @ externa
-functio exspecta(servitor s, numerus portus) -> vacuum
+functio exspecta(Servitor s, numerus portus) -> vacuum
 
 # Stop server
 @ futura
@@ -170,44 +170,44 @@ functio exspecta(servitor s, numerus portus) -> vacuum
 @ verte cpp (s) -> "§.siste()"
 @ verte zig (s) -> "§.siste()"
 @ externa
-functio siste(servitor s) -> vacuum
+functio siste(Servitor s) -> vacuum
 
 # =============================================================================
 # RESPONSE BUILDERS (for server handlers)
 # =============================================================================
 
 # Create response with status, headers, and body
-@ verte ts (status, capita, corpus) -> "caelum.responsum(§, §, §)"
-@ verte py (status, capita, corpus) -> "caelum.responsum(§, §, §)"
-@ verte rs (status, capita, corpus) -> "caelum::responsum(§, §, §)"
-@ verte cpp (status, capita, corpus) -> "caelum::responsum(§, §, §)"
-@ verte zig (status, capita, corpus) -> "caelum.responsum(§, §, §)"
+@ verte ts (status, capita, corpus) -> "caelum.replicatio(§, §, §)"
+@ verte py (status, capita, corpus) -> "caelum.replicatio(§, §, §)"
+@ verte rs (status, capita, corpus) -> "caelum::replicatio(§, §, §)"
+@ verte cpp (status, capita, corpus) -> "caelum::replicatio(§, §, §)"
+@ verte zig (status, capita, corpus) -> "caelum.replicatio(§, §, §)"
 @ externa
-functio responsum(numerus status, tabula<textus, textus> capita, textus corpus) -> responsum
+functio replicatio(numerus status, tabula<textus, textus> capita, textus corpus) -> Replicatio
 
 # Create simple text response (200 OK)
-@ verte ts (corpus) -> "caelum.responde(§)"
-@ verte py (corpus) -> "caelum.responde(§)"
-@ verte rs (corpus) -> "caelum::responde(§)"
-@ verte cpp (corpus) -> "caelum::responde(§)"
-@ verte zig (corpus) -> "caelum.responde(§)"
+@ verte ts (corpus) -> "caelum.replica(§)"
+@ verte py (corpus) -> "caelum.replica(§)"
+@ verte rs (corpus) -> "caelum::replica(§)"
+@ verte cpp (corpus) -> "caelum::replica(§)"
+@ verte zig (corpus) -> "caelum.replica(§)"
 @ externa
-functio responde(textus corpus) -> responsum
+functio replica(textus corpus) -> Replicatio
 
 # Create JSON response (200 OK, Content-Type: application/json)
-@ verte ts (corpus) -> "caelum.respondeJSON(§)"
-@ verte py (corpus) -> "caelum.responde_json(§)"
-@ verte rs (corpus) -> "caelum::responde_json(§)"
-@ verte cpp (corpus) -> "caelum::responde_json(§)"
-@ verte zig (corpus) -> "caelum.respondeJSON(§)"
+@ verte ts (corpus) -> "caelum.replicaJSON(§)"
+@ verte py (corpus) -> "caelum.replica_json(§)"
+@ verte rs (corpus) -> "caelum::replica_json(§)"
+@ verte cpp (corpus) -> "caelum::replica_json(§)"
+@ verte zig (corpus) -> "caelum.replicaJSON(§)"
 @ externa
-functio respondeJSON(textus corpus) -> responsum
+functio replicaJSON(textus corpus) -> Replicatio
 
 # Create error response
-@ verte ts (status, corpus) -> "caelum.respondeErrorem(§, §)"
-@ verte py (status, corpus) -> "caelum.responde_errorem(§, §)"
-@ verte rs (status, corpus) -> "caelum::responde_errorem(§, §)"
-@ verte cpp (status, corpus) -> "caelum::responde_errorem(§, §)"
-@ verte zig (status, corpus) -> "caelum.respondeErrorem(§, §)"
+@ verte ts (status, corpus) -> "caelum.replicaErrorem(§, §)"
+@ verte py (status, corpus) -> "caelum.replica_errorem(§, §)"
+@ verte rs (status, corpus) -> "caelum::replica_errorem(§, §)"
+@ verte cpp (status, corpus) -> "caelum::replica_errorem(§, §)"
+@ verte zig (status, corpus) -> "caelum.replicaErrorem(§, §)"
 @ externa
-functio respondeErrorem(numerus status, textus corpus) -> responsum
+functio replicaErrorem(numerus status, textus corpus) -> Replicatio
