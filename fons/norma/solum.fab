@@ -24,11 +24,12 @@ functio legens(textus path) -> cursor<octeti>
 
 # Async batch read (derived: collect stream)
 @ radix leg, futurum_indicativum
+@ futura
 @ verte ts (path) -> "fs.promises.readFile(§, 'utf-8')"
 @ verte py (path) -> "aiofiles.open(§).read()"
 @ verte zig (path, alloc) -> "solum.leget(§1, §0)"
 @ externa
-functio leget(textus path) fiet textus
+functio leget(textus path) -> textus
 
 # Sync batch read (derived: block + collect)
 @ radix leg, imperativus
@@ -70,11 +71,12 @@ functio scribens(textus path) -> cursor<octeti>
 
 # Async batch write (derived)
 @ radix scrib, futurum_indicativum
+@ futura
 @ verte ts (path, data) -> "fs.promises.writeFile(§, §)"
 @ verte py (path, data) -> "aiofiles.open(§, 'w').write(§)"
 @ verte zig (path, data) -> "solum.scribet(§, §)"
 @ externa
-functio scribet(textus path, textus data) fiet vacuum
+functio scribet(textus path, textus data) -> vacuum
 
 # Sync batch write (derived)
 # WHY: Different stem - inscribere vs scribere
@@ -91,11 +93,12 @@ functio inscribe(textus path, textus data) -> vacuum
 
 # Async append
 @ radix appon, futurum_indicativum
+@ futura
 @ verte ts (path, data) -> "fs.promises.appendFile(§, §)"
 @ verte py (path, data) -> "aiofiles.open(§, 'a').write(§)"
 @ verte zig (path, data) -> "solum.apponet(§, §)"
 @ externa
-functio apponet(textus path, textus data) fiet vacuum
+functio apponet(textus path, textus data) -> vacuum
 
 # Sync append
 @ radix appon, imperativus
@@ -117,11 +120,12 @@ functio appone(textus path, textus data) -> vacuum
 functio exstat(textus path) -> bivalens
 
 # Get file info (async)
+@ futura
 @ verte ts (path) -> "fs.promises.stat(§)"
 @ verte py (path) -> "os.stat(§)"
 @ verte zig (path) -> "solum.inspice(§)"
 @ externa
-functio inspice(textus path) fiet status
+functio inspice(textus path) -> status
 
 # =============================================================================
 # FILE OPERATIONS
@@ -129,41 +133,46 @@ functio inspice(textus path) fiet status
 
 # Delete file
 @ radix del, futurum_indicativum, imperativus
+@ futura
 @ verte ts (path) -> "fs.promises.unlink(§)"
 @ verte py (path) -> "os.remove(§)"
 @ verte zig (path) -> "solum.dele(§)"
 @ externa
-functio dele(textus path) fiet vacuum
+functio dele(textus path) -> vacuum
 
 # Copy file
 @ radix duplic, futurum_indicativum, imperativus
+@ futura
 @ verte ts (src, dest) -> "fs.promises.copyFile(§, §)"
 @ verte py (src, dest) -> "shutil.copy2(§, §)"
 @ verte zig (src, dest) -> "solum.duplica(§, §)"
 @ externa
-functio duplica(textus src, textus dest) fiet vacuum
+functio duplica(textus src, textus dest) -> vacuum
 
 # Move/rename
 @ radix mov, futurum_indicativum, imperativus
+@ futura
 @ verte ts (src, dest) -> "fs.promises.rename(§, §)"
 @ verte py (src, dest) -> "shutil.move(§, §)"
 @ verte zig (src, dest) -> "solum.move(§, §)"
 @ externa
-functio move(textus src, textus dest) fiet vacuum
+functio move(textus src, textus dest) -> vacuum
 
 # Truncate
+@ futura
 @ verte ts (path, size) -> "fs.promises.truncate(§, §)"
 @ verte py (path, size) -> "os.truncate(§, §)"
 @ verte zig (path, size) -> "solum.trunca(§, §)"
 @ externa
-functio trunca(textus path, numerus size) fiet vacuum
+functio trunca(textus path, numerus size) -> vacuum
 
 # Touch (create/update mtime)
+@ futura
 @ verte ts (path) -> "fs.promises.utimes(§, Date.now(), Date.now())"
 @ verte py (path) -> "pathlib.Path(§).touch()"
 @ verte zig (path) -> "solum.tange(§)"
 @ externa
-functio tange(textus path) fiet vacuum
+functio tange(textus path) -> vacuum
 
 # =============================================================================
 # DIRECTORY OPERATIONS
@@ -171,19 +180,21 @@ functio tange(textus path) fiet vacuum
 
 # Create directory (recursive)
 @ radix cre, futurum_indicativum, imperativus
+@ futura
 @ verte ts (path) -> "fs.promises.mkdir(§, { recursive: true })"
 @ verte py (path) -> "os.makedirs(§, exist_ok=True)"
 @ verte zig (path) -> "solum.crea(§)"
 @ externa
-functio crea(textus path) fiet vacuum
+functio crea(textus path) -> vacuum
 
 # List directory (returns lista<textus>)
 @ radix elenc, participium_praesens, futurum_indicativum, imperativus
+@ futura
 @ verte ts (path) -> "fs.promises.readdir(§)"
 @ verte py (path) -> "os.listdir(§)"
 @ verte zig (path, alloc) -> "solum.elenca(§1, §0)"
 @ externa
-functio elenca(textus path) fiet lista<textus>
+functio elenca(textus path) -> lista<textus>
 
 # Walk directory tree (streaming - always generator)
 @ radix ambul, participium_praesens
@@ -195,18 +206,20 @@ functio ambula(textus path) -> cursor<textus>
 
 # Remove empty directory
 @ radix vacu, futurum_indicativum, imperativus
+@ futura
 @ verte ts (path) -> "fs.promises.rmdir(§)"
 @ verte py (path) -> "os.rmdir(§)"
 @ verte zig (path) -> "solum.vacua(§)"
 @ externa
-functio vacua(textus path) fiet vacuum
+functio vacua(textus path) -> vacuum
 
 # Remove directory tree (recursive delete)
+@ futura
 @ verte ts (path) -> "fs.promises.rm(§, { recursive: true })"
 @ verte py (path) -> "shutil.rmtree(§)"
 @ verte zig (path) -> "solum.deleArborem(§)"
 @ externa
-functio deleArborem(textus path) fiet vacuum
+functio deleArborem(textus path) -> vacuum
 
 # =============================================================================
 # PATH UTILITIES

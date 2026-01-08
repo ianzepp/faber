@@ -41,49 +41,59 @@ pactum servitor {
 # =============================================================================
 
 # GET request
+@ radix pet, imperativus
+@ futura
 @ verte ts (url) -> "caelum.pete(§)"
 @ verte py (url) -> "caelum.pete(§)"
 @ verte rs (url) -> "caelum::pete(§)"
 @ verte cpp (url) -> "caelum::pete(§)"
 @ verte zig (url) -> "caelum.pete(§)"
 @ externa
-functio pete(textus url) fiet responsum
+functio pete(textus url) -> responsum
 
 # POST request with body
+@ radix mitt, imperativus
+@ futura
 @ verte ts (url, corpus) -> "caelum.mitte(§, §)"
 @ verte py (url, corpus) -> "caelum.mitte(§, §)"
 @ verte rs (url, corpus) -> "caelum::mitte(§, §)"
 @ verte cpp (url, corpus) -> "caelum::mitte(§, §)"
 @ verte zig (url, corpus) -> "caelum.mitte(§, §)"
 @ externa
-functio mitte(textus url, textus corpus) fiet responsum
+functio mitte(textus url, textus corpus) -> responsum
 
 # PUT request with body
+@ radix pon, imperativus
+@ futura
 @ verte ts (url, corpus) -> "caelum.pone(§, §)"
 @ verte py (url, corpus) -> "caelum.pone(§, §)"
 @ verte rs (url, corpus) -> "caelum::pone(§, §)"
 @ verte cpp (url, corpus) -> "caelum::pone(§, §)"
 @ verte zig (url, corpus) -> "caelum.pone(§, §)"
 @ externa
-functio pone(textus url, textus corpus) fiet responsum
+functio pone(textus url, textus corpus) -> responsum
 
 # DELETE request
+@ radix del, imperativus
+@ futura
 @ verte ts (url) -> "caelum.dele(§)"
 @ verte py (url) -> "caelum.dele(§)"
 @ verte rs (url) -> "caelum::dele(§)"
 @ verte cpp (url) -> "caelum::dele(§)"
 @ verte zig (url) -> "caelum.dele(§)"
 @ externa
-functio dele(textus url) fiet responsum
+functio dele(textus url) -> responsum
 
 # PATCH request with body
+@ radix mut, imperativus
+@ futura
 @ verte ts (url, corpus) -> "caelum.muta(§, §)"
 @ verte py (url, corpus) -> "caelum.muta(§, §)"
 @ verte rs (url, corpus) -> "caelum::muta(§, §)"
 @ verte cpp (url, corpus) -> "caelum::muta(§, §)"
 @ verte zig (url, corpus) -> "caelum.muta(§, §)"
 @ externa
-functio muta(textus url, textus corpus) fiet responsum
+functio muta(textus url, textus corpus) -> responsum
 
 # =============================================================================
 # HTTP CLIENT - Advanced Requests
@@ -93,35 +103,41 @@ functio muta(textus url, textus corpus) fiet responsum
 # modus: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS
 # capita: request headers
 # corpus: request body (optional, use "" for none)
+@ radix rog, imperativus
+@ futura
 @ verte ts (modus, url, capita, corpus) -> "caelum.roga(§, §, §, §)"
 @ verte py (modus, url, capita, corpus) -> "caelum.roga(§, §, §, §)"
 @ verte rs (modus, url, capita, corpus) -> "caelum::roga(§, §, §, §)"
 @ verte cpp (modus, url, capita, corpus) -> "caelum::roga(§, §, §, §)"
 @ verte zig (modus, url, capita, corpus) -> "caelum.roga(§, §, §, §)"
 @ externa
-functio roga(textus modus, textus url, tabula<textus, textus> capita, textus corpus) fiet responsum
+functio roga(textus modus, textus url, tabula<textus, textus> capita, textus corpus) -> responsum
 
 # =============================================================================
 # HTTP CLIENT - Convenience Variants with Headers
 # =============================================================================
 
 # GET with custom headers
+@ radix pet, imperativus
+@ futura
 @ verte ts (url, capita) -> "caelum.peteCum(§, §)"
 @ verte py (url, capita) -> "caelum.pete_cum(§, §)"
 @ verte rs (url, capita) -> "caelum::pete_cum(§, §)"
 @ verte cpp (url, capita) -> "caelum::pete_cum(§, §)"
 @ verte zig (url, capita) -> "caelum.peteCum(§, §)"
 @ externa
-functio peteCum(textus url, tabula<textus, textus> capita) fiet responsum
+functio peteCum(textus url, tabula<textus, textus> capita) -> responsum
 
 # POST with custom headers
+@ radix mitt, imperativus
+@ futura
 @ verte ts (url, corpus, capita) -> "caelum.mitteCum(§, §, §)"
 @ verte py (url, corpus, capita) -> "caelum.mitte_cum(§, §, §)"
 @ verte rs (url, corpus, capita) -> "caelum::mitte_cum(§, §, §)"
 @ verte cpp (url, corpus, capita) -> "caelum::mitte_cum(§, §, §)"
 @ verte zig (url, corpus, capita) -> "caelum.mitteCum(§, §, §)"
 @ externa
-functio mitteCum(textus url, textus corpus, tabula<textus, textus> capita) fiet responsum
+functio mitteCum(textus url, textus corpus, tabula<textus, textus> capita) -> responsum
 
 # =============================================================================
 # HTTP SERVER
@@ -137,22 +153,24 @@ functio mitteCum(textus url, textus corpus, tabula<textus, textus> capita) fiet 
 functio creaServitorem((rogatum) -> responsum handler) -> servitor
 
 # Start server listening on port
+@ futura
 @ verte ts (s, portus) -> "§0.exspecta(§1)"
 @ verte py (s, portus) -> "§0.exspecta(§1)"
 @ verte rs (s, portus) -> "§0.exspecta(§1)"
 @ verte cpp (s, portus) -> "§0.exspecta(§1)"
 @ verte zig (s, portus) -> "§0.exspecta(§1)"
 @ externa
-functio exspecta(servitor s, numerus portus) fiet vacuum
+functio exspecta(servitor s, numerus portus) -> vacuum
 
 # Stop server
+@ futura
 @ verte ts (s) -> "§.siste()"
 @ verte py (s) -> "§.siste()"
 @ verte rs (s) -> "§.siste()"
 @ verte cpp (s) -> "§.siste()"
 @ verte zig (s) -> "§.siste()"
 @ externa
-functio siste(servitor s) fiet vacuum
+functio siste(servitor s) -> vacuum
 
 # =============================================================================
 # RESPONSE BUILDERS (for server handlers)
