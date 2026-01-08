@@ -90,6 +90,13 @@ export function genCallExpression(node: CallExpression, g: ZigGenerator): string
         const objType = node.callee.object.resolvedType;
         const collectionName = objType?.kind === 'generic' ? objType.name : null;
 
+        // WHY: Skip stdlib check entirely for user-defined types. User genus methods
+        // should never match stdlib collections, even if method names coincide.
+        if (objType?.kind === 'user') {
+            // Pass through to normal method call emission below
+            return `${obj}.${methodName}(${args})`;
+        }
+
         // Helper to apply norma translation with allocator handling
         const applyZigNorma = (coll: string, method: string): string | null => {
             const norma = getNormaTranslation('zig', coll, method);

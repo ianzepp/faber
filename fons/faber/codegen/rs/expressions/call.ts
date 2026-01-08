@@ -93,6 +93,13 @@ export function genCallExpression(node: CallExpression, g: RsGenerator): string 
         const objType = node.callee.object.resolvedType;
         const collectionName = objType?.kind === 'generic' ? objType.name : null;
 
+        // WHY: Skip stdlib check entirely for user-defined types. User genus methods
+        // should never match stdlib collections, even if method names coincide.
+        if (objType?.kind === 'user') {
+            // Pass through to normal method call emission below
+            return `${obj}.${methodName}(${args})`;
+        }
+
         // Try norma registry for the resolved collection type
         if (collectionName) {
             // WHY: Validate morphology before translation. Catches undefined forms.

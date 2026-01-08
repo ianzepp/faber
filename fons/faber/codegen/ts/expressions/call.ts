@@ -115,6 +115,13 @@ export function genCallExpression(node: CallExpression, g: TsGenerator): string 
         const collectionName = objType?.kind === 'generic' ? objType.name :
                                objType?.kind === 'primitive' ? objType.name : null;
 
+        // WHY: Skip stdlib check entirely for user-defined types. User genus methods
+        // should never match stdlib collections, even if method names coincide.
+        if (objType?.kind === 'user') {
+            // Pass through to normal method call emission below
+            return `${obj}.${methodName}(${args})`;
+        }
+
         // STRICT: No fallback guessing. If this method name is known to norma
         // for receiver types but we can't resolve the receiver type, emit an
         // actionable compiler error.
