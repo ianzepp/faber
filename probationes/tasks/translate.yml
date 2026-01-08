@@ -132,7 +132,7 @@ tasks:
     category: functions
     goal: "Translate functio definition and call"
     input_faber: |
-      functio double(n: numerus) -> numerus {
+      functio double(numerus n) -> numerus {
         redde n * 2
       }
       scribe(double(7))
@@ -144,7 +144,7 @@ tasks:
     goal: "Translate function with string return"
     input: |
       function greet(name: string): string {
-        return "Hello, " + name
+        return `Hello, ${name}`
       }
       console.log(greet("World"))
     expected_output: "Hello, World"
@@ -154,8 +154,8 @@ tasks:
     category: functions
     goal: "Translate functio with textus return"
     input_faber: |
-      functio greet(name: textus) -> textus {
-        redde "Hello, " + name
+      functio greet(textus name) -> textus {
+        redde scriptum("Hello, §", name)
       }
       scribe(greet("World"))
     expected_output: "Hello, World"

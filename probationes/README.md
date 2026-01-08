@@ -14,7 +14,7 @@ Tests whether models can learn Faber syntax and semantics from limited context. 
 # Prerequisites (from faber-romanus root)
 export OPENROUTER_API_KEY="your-key"
 
-# Run a single model test (672 trials: 4 contexts × 4 n-shots × 42 tasks)
+# Run a single model test (1,900 trials: 5 contexts × 4 n-shots × 95 tasks)
 bun run trial --model gpt-3.5-turbo
 
 # Run with specific settings
@@ -47,7 +47,7 @@ All tasks produce verifiable output for automated grading:
 | `predict_output` | Predict what Faber code outputs | `scribe(42)` → `42` |
 | `complete_code` | Fill in missing keyword | `___ x = 5` → `fixum` |
 
-**42 tasks total** across categories: declarations, conditionals, functions, loops, arithmetic, boolean.
+**95 tasks total** across categories: declarations, conditionals, functions, loops, arithmetic, boolean, error_handling, control_flow, data_structures, types, operators, strings, modules, entry_point.
 
 ## Three-Level Grading
 

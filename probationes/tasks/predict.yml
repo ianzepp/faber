@@ -90,8 +90,8 @@ tasks:
     category: functions
     goal: "Predict output of function call"
     input_faber: |
-      functio greet(name: textus) -> textus {
-        redde "Hello, " + name
+      functio greet(textus name) -> textus {
+        redde scriptum("Hello, §", name)
       }
       scribe(greet("World"))
     expected_output: "Hello, World"
@@ -101,7 +101,7 @@ tasks:
     category: functions
     goal: "Predict output of math function"
     input_faber: |
-      functio square(n: numerus) -> numerus {
+      functio square(numerus n) -> numerus {
         redde n * n
       }
       scribe(square(5))

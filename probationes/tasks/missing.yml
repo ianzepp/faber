@@ -1,0 +1,432 @@
+# Missing Grammar Constructs: High-priority coverage additions
+# These test language features not yet covered in existing task files
+
+tasks:
+  # === Error Handling (tempta...cape) ===
+
+  - id: ts_to_faber_try_catch
+    type: translate_ts_to_faber
+    category: error_handling
+    goal: "Translate try-catch block"
+    difficulty: medium
+    input: |
+      function safeParse(s: string): number {
+        try {
+          return parseInt(s)
+        } catch (e) {
+          return 0
+        }
+      }
+      console.log(safeParse("42"))
+    expected_output: "42"
+
+  - id: faber_to_ts_tempta_cape
+    type: translate_faber_to_ts
+    category: error_handling
+    goal: "Translate tempta...cape block"
+    difficulty: medium
+    input_faber: |
+      functio safeParse(textus s) -> numerus {
+        tempta {
+          redde numeratum(s)
+        } cape e {
+          redde 0
+        }
+      }
+      scribe(safeParse("42"))
+    expected_output: "42"
+
+  - id: predict_error_handling
+    type: predict_output
+    category: error_handling
+    goal: "Predict output when error is caught"
+    difficulty: medium
+    input_faber: |
+      varia result = 0
+      tempta {
+        result = 10
+      } cape e {
+        result = 99
+      }
+      scribe(result)
+    expected_output: "10"
+
+  # === Switch Statements (elige...casu) ===
+
+  - id: ts_to_faber_switch
+    type: translate_ts_to_faber
+    category: control_flow
+    goal: "Translate switch statement with multiple cases"
+    difficulty: medium
+    input: |
+      function classify(n: number): string {
+        switch (n) {
+          case 1:
+            return "one"
+          case 2:
+            return "two"
+          default:
+            return "other"
+        }
+      }
+      console.log(classify(2))
+    expected_output: "two"
+
+  - id: faber_to_ts_elige
+    type: translate_faber_to_ts
+    category: control_flow
+    goal: "Translate elige statement with casu"
+    difficulty: medium
+    input_faber: |
+      functio classify(numerus n) -> textus {
+        elige n {
+          casu 1 reddit "one"
+          casu 2 reddit "two"
+          ceterum reddit "other"
+        }
+      }
+      scribe(classify(2))
+    expected_output: "two"
+
+  - id: predict_switch_default
+    type: predict_output
+    category: control_flow
+    goal: "Predict output when default case is hit"
+    difficulty: medium
+    input_faber: |
+      fixum x = 5
+      elige x {
+        casu 1 reddit scribe("one")
+        casu 2 reddit scribe("two")
+        ceterum scribe("other")
+      }
+    expected_output: "other"
+
+  # === Object Literals ===
+
+  - id: ts_to_faber_object_literal
+    type: translate_ts_to_faber
+    category: data_structures
+    goal: "Translate object literal"
+    difficulty: easy
+    input: |
+      const obj = { x: 10, y: 20 }
+      console.log(obj.x)
+    expected_output: "10"
+
+  - id: faber_to_ts_object_literal
+    type: translate_faber_to_ts
+    category: data_structures
+    goal: "Translate object literal in Faber"
+    difficulty: easy
+    input_faber: |
+      fixum obj = { x: 10, y: 20 }
+      scribe(obj.x)
+    expected_output: "10"
+
+  # === Destructuring ===
+
+  - id: ts_to_faber_array_destructure
+    type: translate_ts_to_faber
+    category: data_structures
+    goal: "Translate array destructuring"
+    difficulty: medium
+    input: |
+      const [a, b] = [1, 2]
+      console.log(a)
+      console.log(b)
+    expected_output: "1\n2"
+
+  - id: faber_to_ts_array_destructure
+    type: translate_faber_to_ts
+    category: data_structures
+    goal: "Translate array destructuring in Faber"
+    difficulty: medium
+    input_faber: |
+      fixum [a, b] = [1, 2]
+      scribe(a)
+      scribe(b)
+    expected_output: "1\n2"
+
+  - id: ts_to_faber_object_destructure
+    type: translate_ts_to_faber
+    category: data_structures
+    goal: "Translate object destructuring"
+    difficulty: medium
+    input: |
+      const { x, y } = { x: 5, y: 10 }
+      console.log(x)
+      console.log(y)
+    expected_output: "5\n10"
+
+  - id: faber_to_ts_object_destructure
+    type: translate_faber_to_ts
+    category: data_structures
+    goal: "Translate object destructuring in Faber"
+    difficulty: medium
+    input_faber: |
+      fixum { x, y } = { x: 5, y: 10 }
+      scribe(x)
+      scribe(y)
+    expected_output: "5\n10"
+
+  # === For-in Loops (de...pro) ===
+
+  - id: ts_to_faber_for_in
+    type: translate_ts_to_faber
+    category: loops
+    goal: "Translate for-in loop over object keys"
+    difficulty: medium
+    input: |
+      const obj = { a: 1, b: 2 }
+      for (const key in obj) {
+        console.log(key)
+      }
+    expected_output: "a\nb"
+
+  - id: faber_to_ts_de_pro
+    type: translate_faber_to_ts
+    category: loops
+    goal: "Translate de...pro loop over keys"
+    difficulty: medium
+    input_faber: |
+      fixum obj = { a: 1, b: 2 }
+      de obj pro key {
+        scribe(key)
+      }
+    expected_output: "a\nb"
+
+  # === Ternary / Inline Conditional (sic...secus) ===
+
+  - id: ts_to_faber_ternary
+    type: translate_ts_to_faber
+    category: conditionals
+    goal: "Translate ternary operator"
+    difficulty: medium
+    input: |
+      const x = 10
+      const result = x > 5 ? "big" : "small"
+      console.log(result)
+    expected_output: "big"
+
+  - id: faber_to_ts_sic_secus
+    type: translate_faber_to_ts
+    category: conditionals
+    goal: "Translate sic...secus inline conditional"
+    difficulty: medium
+    input_faber: |
+      fixum x = 10
+      fixum result = x > 5 sic "big" secus "small"
+      scribe(result)
+    expected_output: "big"
+
+  # === Type Casts (qua) ===
+
+  - id: ts_to_faber_type_cast
+    type: translate_ts_to_faber
+    category: types
+    goal: "Translate type assertion/cast"
+    difficulty: medium
+    input: |
+      const x = "42" as any
+      const n = x as number
+      console.log(n)
+    expected_output: "42"
+
+  - id: faber_to_ts_qua_cast
+    type: translate_faber_to_ts
+    category: types
+    goal: "Translate qua type cast"
+    difficulty: medium
+    input_faber: |
+      fixum x = "42" qua ignotum
+      fixum n = x qua textus
+      scribe(n)
+    expected_output: "42"
+
+  # === Nullish Coalescing (vel) ===
+
+  - id: ts_to_faber_nullish_coalescing
+    type: translate_ts_to_faber
+    category: operators
+    goal: "Translate nullish coalescing operator"
+    difficulty: medium
+    input: |
+      const x = null
+      const result = x ?? 42
+      console.log(result)
+    expected_output: "42"
+
+  - id: faber_to_ts_vel_coalescing
+    type: translate_faber_to_ts
+    category: operators
+    goal: "Translate vel nullish coalescing"
+    difficulty: medium
+    input_faber: |
+      fixum x = nihil
+      fixum result = x vel 42
+      scribe(result)
+    expected_output: "42"
+
+  # === String Interpolation with scriptum() ===
+
+  - id: ts_to_faber_template_string
+    type: translate_ts_to_faber
+    category: strings
+    goal: "Translate template string to scriptum()"
+    difficulty: easy
+    input: |
+      const name = "Alice"
+      const age = 30
+      console.log(`Name: ${name}, Age: ${age}`)
+    expected_output: "Name: Alice, Age: 30"
+
+  - id: faber_to_ts_scriptum
+    type: translate_faber_to_ts
+    category: strings
+    goal: "Translate scriptum() to template string"
+    difficulty: easy
+    input_faber: |
+      fixum name = "Alice"
+      fixum age = 30
+      scribe(scriptum("Name: §, Age: §", name, age))
+    expected_output: "Name: Alice, Age: 30"
+
+  # === Imports (ex...importa) ===
+
+  - id: ts_to_faber_import
+    type: translate_ts_to_faber
+    category: modules
+    goal: "Translate named import statement"
+    difficulty: easy
+    input: |
+      import { add } from "./math"
+    expected: |
+      ex "./math" importa add
+
+  - id: faber_to_ts_importa
+    type: translate_faber_to_ts
+    category: modules
+    goal: "Translate ex...importa to import"
+    difficulty: easy
+    input_faber: |
+      ex "./math" importa add
+    expected: |
+      import { add } from "./math"
+
+  # === Entry Point (incipit) ===
+
+  - id: faber_entry_point
+    type: predict_output
+    category: entry_point
+    goal: "Predict output with incipit entry point"
+    difficulty: easy
+    input_faber: |
+      functio greet() -> vacuum {
+        scribe("Hello")
+      }
+
+      incipit {
+        greet()
+      }
+    expected_output: "Hello"
+
+  # === Range Operators ===
+
+  - id: faber_range_operator
+    type: predict_output
+    category: operators
+    goal: "Predict output with range operator"
+    difficulty: medium
+    input_faber: |
+      ex 1..3 pro n {
+        scribe(n)
+      }
+    expected_output: "1\n2\n3"
+
+  - id: faber_range_usque
+    type: predict_output
+    category: operators
+    goal: "Predict output with usque (inclusive range)"
+    difficulty: medium
+    input_faber: |
+      ex 1 usque 3 pro n {
+        scribe(n)
+      }
+    expected_output: "1\n2\n3"
+
+  # === Optional Chaining ===
+
+  - id: ts_to_faber_optional_chaining
+    type: translate_ts_to_faber
+    category: operators
+    goal: "Translate optional chaining operator"
+    difficulty: medium
+    input: |
+      const obj = { a: { b: 42 } }
+      console.log(obj?.a?.b)
+    expected_output: "42"
+
+  - id: faber_to_ts_optional_chaining
+    type: translate_faber_to_ts
+    category: operators
+    goal: "Translate ?. optional chaining in Faber"
+    difficulty: medium
+    input_faber: |
+      fixum obj = { a: { b: 42 } }
+      scribe(obj?.a?.b)
+    expected_output: "42"
+
+  # === Array Indexing ===
+
+  - id: predict_array_index
+    type: predict_output
+    category: data_structures
+    goal: "Predict output of array indexing"
+    difficulty: easy
+    input_faber: |
+      fixum arr = [10, 20, 30]
+      scribe(arr[1])
+    expected_output: "20"
+
+  - id: ts_to_faber_array_index
+    type: translate_ts_to_faber
+    category: data_structures
+    goal: "Translate array indexing"
+    difficulty: easy
+    input: |
+      const arr = [5, 10, 15]
+      console.log(arr[0])
+    expected_output: "5"
+
+  # === Lambda Expressions (pro / fit) ===
+
+  - id: ts_to_faber_arrow_function
+    type: translate_ts_to_faber
+    category: functions
+    goal: "Translate arrow function to lambda"
+    difficulty: medium
+    input: |
+      const double = (n: number) => n * 2
+      console.log(double(5))
+    expected_output: "10"
+
+  - id: faber_to_ts_lambda_pro
+    type: translate_faber_to_ts
+    category: functions
+    goal: "Translate pro lambda to arrow function"
+    difficulty: medium
+    input_faber: |
+      fixum double = pro (numerus n): n * 2
+      scribe(double(5))
+    expected_output: "10"
+
+  - id: predict_lambda_fit
+    type: predict_output
+    category: functions
+    goal: "Predict output with fit lambda (returns value)"
+    difficulty: medium
+    input_faber: |
+      fixum square = fit (numerus n): n * n
+      scribe(square(4))
+    expected_output: "16"

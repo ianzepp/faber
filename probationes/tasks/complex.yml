@@ -166,7 +166,7 @@ tasks:
       const words = ["hello", "world", "test"]
       let result = ""
       for (const w of words) {
-        result = result + w + " "
+        result = `${result}${w} `
       }
       console.log(result)
     expected_output: "hello world test "
