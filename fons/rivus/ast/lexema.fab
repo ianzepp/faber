@@ -243,6 +243,8 @@ ordo VerbumId {
     Nonnihil
     Negativum
     Positivum
+    Dextratum
+    Sinistratum
 
     # -------------------------------------------------------------------------
     # Literal Values

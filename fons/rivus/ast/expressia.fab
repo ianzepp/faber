@@ -163,6 +163,15 @@ discretio Expressia {
         Expressia alternans
     }
 
+    # Bit shift expression
+    # Examples: x dextratum 3 -> x >> 3, x sinistratum 3 -> x << 3
+    TranslatioExpressia {
+        Locus locus
+        Expressia expressia          # the value being shifted
+        textus directio              # "dextratum" | "sinistratum"
+        Expressia quantitas          # shift amount
+    }
+
     # Range expression for slicing and iteration
     # Examples: 1..10 (exclusive), 1 usque 10 (inclusive)
     AmbitusExpressia {

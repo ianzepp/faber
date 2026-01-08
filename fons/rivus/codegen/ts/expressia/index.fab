@@ -440,6 +440,14 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
 
             redde scriptum("/* unknown conversion: § */", conv.signum)
         }
+
+        # Bit shift expression
+        casu TranslatioExpressia ut t {
+            fixum expr = genExpressia(t.expressia, g)
+            fixum amount = genExpressia(t.quantitas, g)
+            fixum op = (t.directio qua textus) == "dextratum" sic ">>" secus "<<"
+            redde scriptum("(§ § §)", expr, op, amount)
+        }
     }
 
     # Fallback - should not reach here

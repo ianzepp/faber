@@ -136,6 +136,8 @@ functio verbumFaberId(textus v) -> VerbumId? {
         casu "nonnihil" reddit VerbumId.Nonnihil
         casu "negativum" reddit VerbumId.Negativum
         casu "positivum" reddit VerbumId.Positivum
+        casu "dextratum" reddit VerbumId.Dextratum
+        casu "sinistratum" reddit VerbumId.Sinistratum
 
         # ---- Literal Values ----
         casu "ego" reddit VerbumId.Ego
