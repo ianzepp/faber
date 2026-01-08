@@ -38,9 +38,50 @@ interface CLIArgs {
   passes?: number
 }
 
+function showHelp(): void {
+  console.log(`
+Usage: bun run trial [options]
+
+Options:
+  --model <pattern>     Model ID or glob (e.g., "gpt-4o", "llama-*")
+  --verifier <id>       Pipeline mode: verify/refine with this model
+  --task <pattern>      Filter tasks by ID (glob pattern)
+  --category <name>     Filter tasks by category
+  --n-shot <values>     Comma-separated n-shot values (e.g., "0,1,3")
+  --context <level>     Context level: examples-only, minimal, basic, complete
+  --dialect <name>      Filter by dialect
+  --passes <n>          Multi-pass refinement (drafter retries n times)
+  --verbose, -v         Show per-trial details instead of dots
+  --help, -h            Show this help message
+
+Examples:
+  bun run trial --model gpt-4o-mini --verbose
+  bun run trial --model gpt-4o --n-shot 1,3 --category functions
+  bun run trial --model llama-3-8b --verifier gpt-4o
+
+Output:
+  .  pass
+  x  fail
+  E  error
+  +  recovered (pipeline: drafter failed, verifier fixed)
+  -  damaged (pipeline: drafter passed, verifier broke)
+
+Results saved to: probationes/results/{run-id}/
+
+IMPORTANT: Trials cost money (API calls). Always specify --model to avoid
+running all models. Use --task or --category to limit scope.
+`)
+  process.exit(0)
+}
+
 function parseArgs(): CLIArgs {
   const args: CLIArgs = {}
   const argv = process.argv.slice(2)
+
+  // Show help if no args or --help
+  if (argv.length === 0 || argv.includes('--help') || argv.includes('-h')) {
+    showHelp()
+  }
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]
