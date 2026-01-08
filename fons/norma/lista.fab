@@ -285,8 +285,8 @@ functio ordinata() -> lista<T>
 @ verte ts "slice"
 @ verte py (ego, start, end) -> "§[§:§]"
 @ verte rs (ego, start, end) -> "§[§..§].to_vec()"
-@ verte cpp (ego, start, end) -> "std::vector(§.begin() + §, §.begin() + §)"
-@ verte zig (ego, start, end, alloc) -> "§.sectio(§, §, §)"
+@ verte cpp (ego, start, end) -> "std::vector(§0.begin() + §1, §0.begin() + §2)"
+@ verte zig (ego, start, end, alloc) -> "§0.sectio(§3, §1, §2)"
 @ externa
 functio sectio(numerus start, numerus end) -> lista<T>
 
