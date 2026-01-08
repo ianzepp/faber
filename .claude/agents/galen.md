@@ -1,5 +1,5 @@
 ---
-name: test-fixer
+name: galen
 description: "Use this agent when unit tests are failing and need diagnosis or repair. Operates in two modes: research (diagnose and report) or resolution (fix test-side issues only). Never modifies production code—if code is wrong and tests are right, it reports back.\n\n<example>\nContext: Tests failing after a refactor.\nuser: \"Tests are failing after my parser changes\"\nassistant: \"I'll launch the test-fixer agent to diagnose those failures.\"\n<Task tool call to test-fixer agent with research prompt>\n</example>\n\n<example>\nContext: User wants tests actually fixed.\nuser: \"Fix the failing tests in fons/proba/codegen/\"\nassistant: \"I'll use the test-fixer agent in resolution mode to fix test-side issues.\"\n<Task tool call to test-fixer agent with fix prompt>\n</example>\n\n<example>\nContext: CI is red.\nuser: \"CI failed, can you figure out what's wrong?\"\nassistant: \"Let me have the test-fixer agent investigate.\"\n<Task tool call to test-fixer agent with research prompt>\n</example>"
 model: sonnet
 color: amber

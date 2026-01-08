@@ -1,5 +1,5 @@
 ---
-name: typescript-fixer
+name: titus
 description: "Use this agent to fix TypeScript and linter errors in bulk. Delegate when you encounter multiple TS errors that would consume significant context to fix manually. The agent fixes root causes (not symptoms), re-runs typecheck to verify, and escalates issues it cannot properly resolve.\n\n<example>\nContext: Typecheck shows 15 errors after a refactor.\nuser: \"Fix the typescript errors\"\nassistant: \"I'll delegate these to the typescript-fixer agent to resolve them systematically.\"\n<commentary>\nMultiple TS errors are a good delegation target—the agent will fix them and return a summary.\n</commentary>\n</example>\n\n<example>\nContext: User wants errors fixed in a specific directory only.\nuser: \"Fix the type errors in fons/faber/parser/\"\nassistant: \"I'll use the typescript-fixer agent to fix errors in that directory.\"\n<commentary>\nScoped error fixing is supported—specify the subset in the prompt.\n</commentary>\n</example>"
 model: sonnet
 color: blue

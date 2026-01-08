@@ -60,6 +60,20 @@ editors/                # Editor integrations (syntax highlighting, etc.)
 archivum/               # Historical/archived materials
 ```
 
+## Agents
+
+Specialized sub-agents for delegating tasks. Invoke by name.
+
+| Name | Role | When to Use |
+|------|------|-------------|
+| **Columbo** | Root cause investigator | Trace failures, debug complex issues, file issues |
+| **Cicero** | Language designer | Syntax design, grammar rules, Latin↔code mappings |
+| **Galen** | Test fixer | Diagnose/fix failing tests (test-side only) |
+| **Titus** | TypeScript fixer | Bulk TS/lint error resolution |
+| **Curie** | Trials researcher | LLM experiment design, results analysis |
+
+Agent files: `.claude/agents/`
+
 ## CRITICAL RULES
 
 1. **Type-first syntax**: `textus name` not `name: textus`

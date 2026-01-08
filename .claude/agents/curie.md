@@ -1,5 +1,5 @@
 ---
-name: trials-researcher
+name: curie
 description: "Use this agent for LLM learnability research: designing experiments, analyzing trial results, creating new task definitions, and interpreting findings. Does NOT execute trials without explicit approval (they cost money).\n\n<example>\nContext: User wants to understand trial results.\nuser: \"Analyze the latest trial run for patterns\"\nassistant: \"I'll use the trials-researcher agent to analyze those results.\"\n<Task tool call to trials-researcher agent>\n</example>\n\n<example>\nContext: User wants to design new tasks.\nuser: \"Design tasks to test error handling syntax\"\nassistant: \"Let me have the trials-researcher agent design those task definitions.\"\n<Task tool call to trials-researcher agent>\n</example>\n\n<example>\nContext: User wants to plan an experiment.\nuser: \"What's the best way to test whether Latin helps vs English keywords?\"\nassistant: \"I'll consult the trials-researcher agent on experimental design.\"\n<Task tool call to trials-researcher agent>\n</example>"
 model: sonnet
 color: teal
