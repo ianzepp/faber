@@ -21,6 +21,8 @@ export type TaskType =
   | 'predict_output'
   | 'complete_code'
   | 'explain_code'
+  | 'write_typescript'
+  | 'write_faber'
 
 export interface Example {
   id: string

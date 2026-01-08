@@ -77,6 +77,14 @@ export async function gradeTask(
       result = await gradeCompletion(task, cleaned)
       break
 
+    case 'write_typescript':
+      result = await gradeTypeScript(cleaned, task.expected_output)
+      break
+
+    case 'write_faber':
+      result = await gradeFaber(cleaned, task.expected_output)
+      break
+
     default:
       result = {
         level_a: false,

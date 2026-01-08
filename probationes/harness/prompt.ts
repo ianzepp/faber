@@ -298,6 +298,16 @@ ${template}
 
 Provide only the missing keyword or expression that replaces ___, no explanation.`
 
+    case 'write_typescript':
+      return `${goalLine}
+
+Write the TypeScript code. Provide only the code, no explanation.`
+
+    case 'write_faber':
+      return `${goalLine}
+
+Write the Faber code. Provide only the code, no explanation.`
+
     default:
       return ''
   }

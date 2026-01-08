@@ -14,6 +14,7 @@ export async function loadTasks(): Promise<Task[]> {
     'tasks/predict.yml',
     'tasks/complete.yml',
     'tasks/complex.yml',
+    'tasks/control.yml',
   ]
 
   for (const file of taskFiles) {

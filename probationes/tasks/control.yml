@@ -1,0 +1,171 @@
+# Control Tasks: Baseline Algorithm Tests
+# These test algorithmic capability independent of Faber syntax
+# Comparing write_typescript vs translate_ts_to_faber isolates the language factor
+
+tasks:
+  # === Binary Search Control ===
+
+  - id: control_ts_binary_search
+    type: write_typescript
+    category: control
+    goal: |
+      Write a binary search function in TypeScript.
+      The function should:
+      - Take an array of numbers and a target number
+      - Return the index of the target, or -1 if not found
+      - Use iterative (not recursive) binary search
+      Then call it with binarySearch([1, 3, 5, 7, 9, 11], 7) and log the result.
+    expected_output: "3"
+
+  - id: control_faber_binary_search
+    type: write_faber
+    category: control
+    goal: |
+      Write a binary search function in Faber (Latin programming language).
+      The function should:
+      - Take an array of numbers and a target number
+      - Return the index of the target, or -1 if not found
+      - Use iterative (not recursive) binary search
+      Then call it with the array [1, 3, 5, 7, 9, 11] and target 7, and print the result.
+
+      Key Faber syntax:
+      - functio name(Type param): ReturnType { }
+      - varia x = value (mutable), fixum x = value (const)
+      - dum (condition) { } for while loops
+      - si (condition) { } aut { } for if/else
+      - scriptum(value) to print
+      - lista[index] for array access
+      - .longitudo for array length
+    expected_output: "3"
+
+  # === GCD Control ===
+
+  - id: control_ts_gcd
+    type: write_typescript
+    category: control
+    goal: |
+      Write a GCD (greatest common divisor) function in TypeScript using the Euclidean algorithm.
+      The function should take two numbers and return their GCD.
+      Then call it with gcd(48, 18) and log the result.
+    expected_output: "6"
+
+  - id: control_faber_gcd
+    type: write_faber
+    category: control
+    goal: |
+      Write a GCD (greatest common divisor) function in Faber (Latin programming language) using the Euclidean algorithm.
+      The function should take two numbers and return their GCD.
+      Then call it with gcd(48, 18) and print the result.
+
+      Key Faber syntax:
+      - functio name(Type param): ReturnType { }
+      - varia x = value (mutable)
+      - dum (condition) { } for while loops
+      - scriptum(value) to print
+    expected_output: "6"
+
+  # === Fibonacci Control ===
+
+  - id: control_ts_fibonacci
+    type: write_typescript
+    category: control
+    goal: |
+      Write a recursive fibonacci function in TypeScript.
+      The function should take n and return the nth fibonacci number (0-indexed, so fib(0)=0, fib(1)=1).
+      Then call it with fib(10) and log the result.
+    expected_output: "55"
+
+  - id: control_faber_fibonacci
+    type: write_faber
+    category: control
+    goal: |
+      Write a recursive fibonacci function in Faber (Latin programming language).
+      The function should take n and return the nth fibonacci number (0-indexed).
+      Then call it with fib(10) and print the result.
+
+      Key Faber syntax:
+      - functio name(numerus n): numerus { } for number->number function
+      - si (condition) { } for if
+      - redde value to return
+      - scriptum(value) to print
+    expected_output: "55"
+
+  # === Prime Check Control ===
+
+  - id: control_ts_prime
+    type: write_typescript
+    category: control
+    goal: |
+      Write a function to check if a number is prime in TypeScript.
+      The function should return true if prime, false otherwise.
+      Then call it with isPrime(17) and log the result.
+    expected_output: "true"
+
+  - id: control_faber_prime
+    type: write_faber
+    category: control
+    goal: |
+      Write a function to check if a number is prime in Faber (Latin programming language).
+      The function should return verum if prime, falsum otherwise.
+      Then call it with isPrime(17) and print the result.
+
+      Key Faber syntax:
+      - functio name(numerus n): veritas { } for number->boolean function
+      - verum/falsum for true/false
+      - dum (condition) { } for while
+      - si (condition) { } for if
+      - redde value to return
+      - scriptum(value) to print
+    expected_output: "true"
+
+  # === FizzBuzz Control ===
+
+  - id: control_ts_fizzbuzz
+    type: write_typescript
+    category: control
+    goal: |
+      Write a fizzbuzz function in TypeScript.
+      Given n, return "FizzBuzz" if divisible by 15, "Fizz" if by 3, "Buzz" if by 5, else the number as string.
+      Then call it with fizzbuzz(15) and log the result.
+    expected_output: "FizzBuzz"
+
+  - id: control_faber_fizzbuzz
+    type: write_faber
+    category: control
+    goal: |
+      Write a fizzbuzz function in Faber (Latin programming language).
+      Given n, return "FizzBuzz" if divisible by 15, "Fizz" if by 3, "Buzz" if by 5, else the number as string.
+      Then call it with fizzbuzz(15) and print the result.
+
+      Key Faber syntax:
+      - functio name(numerus n): scriptum { } for number->string function
+      - si (condition) { } aut si (condition) { } aut { } for if/else if/else
+      - n % 15 == 0 for modulo check
+      - redde "string" to return
+      - scriptum(value) to print
+    expected_output: "FizzBuzz"
+
+  # === Find Max Control ===
+
+  - id: control_ts_find_max
+    type: write_typescript
+    category: control
+    goal: |
+      Write a function to find the maximum value in an array in TypeScript.
+      Then call it with findMax([3, 1, 4, 1, 5, 9, 2, 6]) and log the result.
+    expected_output: "9"
+
+  - id: control_faber_find_max
+    type: write_faber
+    category: control
+    goal: |
+      Write a function to find the maximum value in an array in Faber (Latin programming language).
+      Then call it with findMax([3, 1, 4, 1, 5, 9, 2, 6]) and print the result.
+
+      Key Faber syntax:
+      - functio name(lista[numerus] nums): numerus { }
+      - pro (numerus n ex nums) { } for for-each loop
+      - si (condition) { } for if
+      - redde value to return
+      - scriptum(value) to print
+    expected_output: "9"

@@ -1,7 +1,7 @@
 # Model configurations for OpenRouter
 
 # Framework version - bump when tasks, grading logic, or prompts change
-framework_version: "2.0"
+framework_version: "2.1"
 
 models:
   # Baseline models
@@ -21,26 +21,20 @@ models:
   - id: llama-3.2-1b
     provider: openrouter
     name: meta-llama/llama-3.2-1b-instruct
-    cost_per_1m_input: 0.027
+    cost_per_1m_input: 0.03
     cost_per_1m_output: 0.20
-
-  - id: gemma-2b
-    provider: openrouter
-    name: google/gemma-3n-e2b-it:free
-    cost_per_1m_input: 0.0
-    cost_per_1m_output: 0.0
 
   - id: llama-3.2-3b
     provider: openrouter
-    name: meta-llama/llama-3.2-3b-instruct:free
-    cost_per_1m_input: 0.0
-    cost_per_1m_output: 0.0
+    name: meta-llama/llama-3.2-3b-instruct
+    cost_per_1m_input: 0.02
+    cost_per_1m_output: 0.02
 
   - id: mistral-7b
     provider: openrouter
-    name: mistralai/mistral-7b-instruct:free
-    cost_per_1m_input: 0.0
-    cost_per_1m_output: 0.0
+    name: mistralai/mistral-7b-instruct
+    cost_per_1m_input: 0.03
+    cost_per_1m_output: 0.05
 
   - id: llama-3.1-8b
     provider: openrouter
@@ -143,12 +137,6 @@ models:
     cost_per_1m_input: 0.10
     cost_per_1m_output: 0.10
 
-  - id: glm-4-flash
-    provider: openrouter
-    name: zhipu/glm-4-flash
-    cost_per_1m_input: 0.00
-    cost_per_1m_output: 0.00
-
   # Coding-focused models
   - id: deepseek-v3.1
     provider: openrouter
@@ -179,6 +167,199 @@ models:
     name: inception/mercury-coder
     cost_per_1m_input: 0.25
     cost_per_1m_output: 1.00
+
+  # Kimi (Moonshot AI)
+  - id: kimi-k2-thinking
+    provider: openrouter
+    name: moonshotai/kimi-k2-thinking
+    cost_per_1m_input: 0.32
+    cost_per_1m_output: 0.48
+
+  - id: kimi-k2
+    provider: openrouter
+    name: moonshotai/kimi-k2
+    cost_per_1m_input: 0.50
+    cost_per_1m_output: 2.40
+
+  # Google Gemini series
+  - id: gemini-2.5-flash-lite
+    provider: openrouter
+    name: google/gemini-2.5-flash-lite
+    cost_per_1m_input: 0.10
+    cost_per_1m_output: 0.40
+
+  - id: gemini-2.5-flash
+    provider: openrouter
+    name: google/gemini-2.5-flash
+    cost_per_1m_input: 0.30
+    cost_per_1m_output: 2.50
+
+  - id: gemini-2.5-pro
+    provider: openrouter
+    name: google/gemini-2.5-pro
+    cost_per_1m_input: 1.25
+    cost_per_1m_output: 10.00
+
+  - id: gemini-3-flash-preview
+    provider: openrouter
+    name: google/gemini-3-flash-preview
+    cost_per_1m_input: 0.50
+    cost_per_1m_output: 3.00
+
+  - id: gemini-3-pro-preview
+    provider: openrouter
+    name: google/gemini-3-pro-preview
+    cost_per_1m_input: 2.00
+    cost_per_1m_output: 12.00
+
+  # Google Gemma (paid tiers)
+  - id: gemma-3-12b
+    provider: openrouter
+    name: google/gemma-3-12b-it
+    cost_per_1m_input: 0.03
+    cost_per_1m_output: 0.10
+
+  - id: gemma-3-27b
+    provider: openrouter
+    name: google/gemma-3-27b-it
+    cost_per_1m_input: 0.04
+    cost_per_1m_output: 0.06
+
+  # DeepSeek reasoning/newer
+  - id: deepseek-v3.2
+    provider: openrouter
+    name: deepseek/deepseek-v3.2
+    cost_per_1m_input: 0.25
+    cost_per_1m_output: 0.38
+
+  - id: deepseek-r1
+    provider: openrouter
+    name: deepseek/deepseek-r1-0528
+    cost_per_1m_input: 0.40
+    cost_per_1m_output: 1.75
+
+  - id: deepseek-r1-distill-70b
+    provider: openrouter
+    name: deepseek/deepseek-r1-distill-llama-70b
+    cost_per_1m_input: 0.03
+    cost_per_1m_output: 0.11
+
+  - id: deepseek-r1-distill-32b
+    provider: openrouter
+    name: deepseek/deepseek-r1-distill-qwen-32b
+    cost_per_1m_input: 0.27
+    cost_per_1m_output: 0.27
+
+  # Microsoft reasoning
+  - id: phi-4-reasoning-plus
+    provider: openrouter
+    name: microsoft/phi-4-reasoning-plus
+    cost_per_1m_input: 0.07
+    cost_per_1m_output: 0.35
+
+  - id: phi-4-multimodal
+    provider: openrouter
+    name: microsoft/phi-4-multimodal-instruct
+    cost_per_1m_input: 0.05
+    cost_per_1m_output: 0.10
+
+  # Mistral (paid)
+  - id: mistral-small-3.1
+    provider: openrouter
+    name: mistralai/mistral-small-3.1-24b-instruct
+    cost_per_1m_input: 0.03
+    cost_per_1m_output: 0.11
+
+  - id: mistral-nemo
+    provider: openrouter
+    name: mistralai/mistral-nemo
+    cost_per_1m_input: 0.02
+    cost_per_1m_output: 0.04
+
+  - id: devstral
+    provider: openrouter
+    name: mistralai/devstral-2512
+    cost_per_1m_input: 0.05
+    cost_per_1m_output: 0.22
+
+  # Meta Llama 3.3
+  - id: llama-3.3-70b
+    provider: openrouter
+    name: meta-llama/llama-3.3-70b-instruct
+    cost_per_1m_input: 0.10
+    cost_per_1m_output: 0.10
+
+  # Qwen thinking/reasoning
+  - id: qwen3-30b-thinking
+    provider: openrouter
+    name: qwen/qwen3-30b-a3b-thinking-2507
+    cost_per_1m_input: 0.05
+    cost_per_1m_output: 0.34
+
+  - id: qwen3-235b-thinking
+    provider: openrouter
+    name: qwen/qwen3-235b-a22b-thinking-2507
+    cost_per_1m_input: 0.11
+    cost_per_1m_output: 0.60
+
+  # Baidu ERNIE
+  - id: ernie-4.5-thinking
+    provider: openrouter
+    name: baidu/ernie-4.5-21b-a3b-thinking
+    cost_per_1m_input: 0.07
+    cost_per_1m_output: 0.28
+
+  # Amazon Nova
+  - id: nova-micro
+    provider: openrouter
+    name: amazon/nova-micro-v1
+    cost_per_1m_input: 0.04
+    cost_per_1m_output: 0.14
+
+  - id: nova-lite
+    provider: openrouter
+    name: amazon/nova-lite-v1
+    cost_per_1m_input: 0.06
+    cost_per_1m_output: 0.24
+
+  # Cohere
+  - id: command-r-plus
+    provider: openrouter
+    name: cohere/command-r-plus-08-2024
+    cost_per_1m_input: 2.50
+    cost_per_1m_output: 10.00
+
+  - id: command-r7b
+    provider: openrouter
+    name: cohere/command-r7b-12-2024
+    cost_per_1m_input: 0.04
+    cost_per_1m_output: 0.15
+
+  # ByteDance Seed
+  - id: seed-1.6-flash
+    provider: openrouter
+    name: bytedance-seed/seed-1.6-flash
+    cost_per_1m_input: 0.08
+    cost_per_1m_output: 0.30
+
+  - id: seed-1.6
+    provider: openrouter
+    name: bytedance-seed/seed-1.6
+    cost_per_1m_input: 0.25
+    cost_per_1m_output: 2.00
+
+  # xAI Grok
+  - id: grok-3-mini
+    provider: openrouter
+    name: x-ai/grok-3-mini-beta
+    cost_per_1m_input: 0.30
+    cost_per_1m_output: 0.50
+
+  - id: grok-3
+    provider: openrouter
+    name: x-ai/grok-3-beta
+    cost_per_1m_input: 3.00
+    cost_per_1m_output: 15.00
 
 # Trial configuration
 trials:
