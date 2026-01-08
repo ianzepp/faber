@@ -20,7 +20,7 @@ genus mathesis { }
 @ verte cpp (x) -> "std::floor(§)"
 @ verte zig (x) -> "@floor(§)"
 @ externa
-functio pavimentum()
+functio pavimentum(fractus x) -> numerus
 
 # Ceiling - round up to nearest integer
 @ verte ts (x) -> "Math.ceil(§)"
@@ -29,7 +29,7 @@ functio pavimentum()
 @ verte cpp (x) -> "std::ceil(§)"
 @ verte zig (x) -> "@ceil(§)"
 @ externa
-functio tectum()
+functio tectum(fractus x) -> numerus
 
 # Round to nearest integer
 @ verte ts (x) -> "Math.round(§)"
@@ -38,7 +38,7 @@ functio tectum()
 @ verte cpp (x) -> "std::round(§)"
 @ verte zig (x) -> "@round(§)"
 @ externa
-functio rotundum()
+functio rotundum(fractus x) -> numerus
 
 # Truncate - remove fractional part
 @ verte ts (x) -> "Math.trunc(§)"
@@ -47,7 +47,7 @@ functio rotundum()
 @ verte cpp (x) -> "std::trunc(§)"
 @ verte zig (x) -> "@trunc(§)"
 @ externa
-functio truncatum()
+functio truncatum(fractus x) -> numerus
 
 # =============================================================================
 # POWERS AND ROOTS
@@ -60,7 +60,7 @@ functio truncatum()
 @ verte cpp (x) -> "std::sqrt(§)"
 @ verte zig (x) -> "@sqrt(§)"
 @ externa
-functio radix()
+functio radix(fractus x) -> fractus
 
 # Power - base raised to exponent
 @ verte ts (base, exp) -> "Math.pow(§, §)"
@@ -69,7 +69,7 @@ functio radix()
 @ verte cpp (base, exp) -> "std::pow(§, §)"
 @ verte zig (base, exp) -> "std.math.pow(§, §)"
 @ externa
-functio potentia()
+functio potentia(fractus base, fractus exp) -> fractus
 
 # Natural logarithm (base e)
 @ verte ts (x) -> "Math.log(§)"
@@ -78,7 +78,7 @@ functio potentia()
 @ verte cpp (x) -> "std::log(§)"
 @ verte zig (x) -> "@log(§)"
 @ externa
-functio logarithmus()
+functio logarithmus(fractus x) -> fractus
 
 # Base-10 logarithm
 @ verte ts (x) -> "Math.log10(§)"
@@ -87,7 +87,7 @@ functio logarithmus()
 @ verte cpp (x) -> "std::log10(§)"
 @ verte zig (x) -> "std.math.log10(§)"
 @ externa
-functio logarithmus10()
+functio logarithmus10(fractus x) -> fractus
 
 # Exponential (e^x)
 @ verte ts (x) -> "Math.exp(§)"
@@ -96,7 +96,7 @@ functio logarithmus10()
 @ verte cpp (x) -> "std::exp(§)"
 @ verte zig (x) -> "@exp(§)"
 @ externa
-functio exponens()
+functio exponens(fractus x) -> fractus
 
 # =============================================================================
 # TRIGONOMETRY
@@ -109,7 +109,7 @@ functio exponens()
 @ verte cpp (x) -> "std::sin(§)"
 @ verte zig (x) -> "@sin(§)"
 @ externa
-functio sinus()
+functio sinus(fractus x) -> fractus
 
 # Cosine
 @ verte ts (x) -> "Math.cos(§)"
@@ -118,7 +118,7 @@ functio sinus()
 @ verte cpp (x) -> "std::cos(§)"
 @ verte zig (x) -> "@cos(§)"
 @ externa
-functio cosinus()
+functio cosinus(fractus x) -> fractus
 
 # Tangent
 @ verte ts (x) -> "Math.tan(§)"
@@ -127,7 +127,7 @@ functio cosinus()
 @ verte cpp (x) -> "std::tan(§)"
 @ verte zig (x) -> "@tan(§)"
 @ externa
-functio tangens()
+functio tangens(fractus x) -> fractus
 
 # =============================================================================
 # ABSOLUTE AND SIGN
@@ -140,7 +140,7 @@ functio tangens()
 @ verte cpp (x) -> "std::abs(§)"
 @ verte zig (x) -> "@abs(§)"
 @ externa
-functio absolutum()
+functio absolutum(fractus x) -> fractus
 
 # Sign (-1, 0, or 1)
 @ verte ts (x) -> "Math.sign(§)"
@@ -149,7 +149,7 @@ functio absolutum()
 @ verte cpp (x) -> "((§ > 0) - (§ < 0))"
 @ verte zig (x) -> "std.math.sign(§)"
 @ externa
-functio signum()
+functio signum(fractus x) -> numerus
 
 # =============================================================================
 # MIN / MAX / CLAMP
@@ -162,7 +162,7 @@ functio signum()
 @ verte cpp (a, b) -> "std::min(§, §)"
 @ verte zig (a, b) -> "@min(§, §)"
 @ externa
-functio minimus()
+functio minimus(fractus a, fractus b) -> fractus
 
 # Maximum of two values
 @ verte ts (a, b) -> "Math.max(§, §)"
@@ -171,7 +171,7 @@ functio minimus()
 @ verte cpp (a, b) -> "std::max(§, §)"
 @ verte zig (a, b) -> "@max(§, §)"
 @ externa
-functio maximus()
+functio maximus(fractus a, fractus b) -> fractus
 
 # Clamp value between min and max
 @ verte ts (x, lo, hi) -> "Math.min(Math.max(§, §), §)"
@@ -180,7 +180,7 @@ functio maximus()
 @ verte cpp (x, lo, hi) -> "std::clamp(§, §, §)"
 @ verte zig (x, lo, hi) -> "std.math.clamp(§, §, §)"
 @ externa
-functio constringens()
+functio constringens(fractus x, fractus lo, fractus hi) -> fractus
 
 # =============================================================================
 # CONSTANTS
@@ -193,7 +193,7 @@ functio constringens()
 @ verte cpp () -> "M_PI"
 @ verte zig () -> "std.math.pi"
 @ externa
-functio PI()
+functio PI() -> fractus
 
 # Euler's number e (2.71828...)
 @ verte ts () -> "Math.E"
@@ -202,7 +202,7 @@ functio PI()
 @ verte cpp () -> "M_E"
 @ verte zig () -> "std.math.e"
 @ externa
-functio E()
+functio E() -> fractus
 
 # Tau (2 * Pi)
 @ verte ts () -> "(Math.PI * 2)"
@@ -211,4 +211,4 @@ functio E()
 @ verte cpp () -> "(M_PI * 2)"
 @ verte zig () -> "(std.math.pi * 2)"
 @ externa
-functio TAU()
+functio TAU() -> fractus

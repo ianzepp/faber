@@ -64,7 +64,7 @@ functio dormi(numerus ms) -> vacuum
 @ verte cpp () -> "1"
 @ verte zig () -> "1"
 @ externa
-functio MILLISECUNDUM()
+functio MILLISECUNDUM() -> numerus
 
 # 1 second = 1000 ms
 @ verte ts () -> "1000"
@@ -73,7 +73,7 @@ functio MILLISECUNDUM()
 @ verte cpp () -> "1000"
 @ verte zig () -> "1000"
 @ externa
-functio SECUNDUM()
+functio SECUNDUM() -> numerus
 
 # 1 minute = 60000 ms
 @ verte ts () -> "60000"
@@ -82,7 +82,7 @@ functio SECUNDUM()
 @ verte cpp () -> "60000"
 @ verte zig () -> "60000"
 @ externa
-functio MINUTUM()
+functio MINUTUM() -> numerus
 
 # 1 hour = 3600000 ms
 @ verte ts () -> "3600000"
@@ -91,7 +91,7 @@ functio MINUTUM()
 @ verte cpp () -> "3600000"
 @ verte zig () -> "3600000"
 @ externa
-functio HORA()
+functio HORA() -> numerus
 
 # 1 day = 86400000 ms
 @ verte ts () -> "86400000"
@@ -100,4 +100,4 @@ functio HORA()
 @ verte cpp () -> "86400000"
 @ verte zig () -> "86400000"
 @ externa
-functio DIES()
+functio DIES() -> numerus

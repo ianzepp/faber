@@ -20,7 +20,7 @@ genus solum { }
 @ verte py (path) -> "open(§, 'rb')"
 @ verte zig (path) -> "solum.legens(§)"
 @ externa
-functio legens()
+functio legens(textus path) -> cursor<octeti>
 
 # Async batch read (derived: collect stream)
 @ radix leg, futurum_indicativum
@@ -28,7 +28,7 @@ functio legens()
 @ verte py (path) -> "aiofiles.open(§).read()"
 @ verte zig (path, alloc) -> "solum.leget(§1, §0)"
 @ externa
-functio leget()
+functio leget(textus path) fiet textus
 
 # Sync batch read (derived: block + collect)
 @ radix leg, imperativus
@@ -36,7 +36,7 @@ functio leget()
 @ verte py (path) -> "open(§).read()"
 @ verte zig (path, alloc) -> "solum.lege(§1, §0)"
 @ externa
-functio lege()
+functio lege(textus path) -> textus
 
 # =============================================================================
 # READING - Stdin
@@ -47,14 +47,14 @@ functio lege()
 @ verte py () -> "sys.stdin"
 @ verte zig () -> "solum.ausculta()"
 @ externa
-functio ausculta()
+functio ausculta() -> cursor<textus>
 
 # Read all stdin (batch)
 @ verte ts () -> "fs.readFileSync(0, 'utf-8')"
 @ verte py () -> "sys.stdin.read()"
 @ verte zig (alloc) -> "solum.hauri(§)"
 @ externa
-functio hauri()
+functio hauri() -> textus
 
 # =============================================================================
 # WRITING
@@ -66,7 +66,7 @@ functio hauri()
 @ verte py (path) -> "open(§, 'wb')"
 @ verte zig (path) -> "solum.scribens(§)"
 @ externa
-functio scribens()
+functio scribens(textus path) -> cursor<octeti>
 
 # Async batch write (derived)
 @ radix scrib, futurum_indicativum
@@ -74,7 +74,7 @@ functio scribens()
 @ verte py (path, data) -> "aiofiles.open(§, 'w').write(§)"
 @ verte zig (path, data) -> "solum.scribet(§, §)"
 @ externa
-functio scribet()
+functio scribet(textus path, textus data) fiet vacuum
 
 # Sync batch write (derived)
 # WHY: Different stem - inscribere vs scribere
@@ -83,7 +83,7 @@ functio scribet()
 @ verte py (path, data) -> "open(§, 'w').write(§)"
 @ verte zig (path, data) -> "solum.inscribe(§, §)"
 @ externa
-functio inscribe()
+functio inscribe(textus path, textus data) -> vacuum
 
 # =============================================================================
 # APPENDING
@@ -95,7 +95,7 @@ functio inscribe()
 @ verte py (path, data) -> "aiofiles.open(§, 'a').write(§)"
 @ verte zig (path, data) -> "solum.apponet(§, §)"
 @ externa
-functio apponet()
+functio apponet(textus path, textus data) fiet vacuum
 
 # Sync append
 @ radix appon, imperativus
@@ -103,7 +103,7 @@ functio apponet()
 @ verte py (path, data) -> "open(§, 'a').write(§)"
 @ verte zig (path, data) -> "solum.appone(§, §)"
 @ externa
-functio appone()
+functio appone(textus path, textus data) -> vacuum
 
 # =============================================================================
 # FILE INFO
@@ -114,14 +114,14 @@ functio appone()
 @ verte py (path) -> "os.path.exists(§)"
 @ verte zig (path) -> "solum.exstat(§)"
 @ externa
-functio exstat()
+functio exstat(textus path) -> bivalens
 
 # Get file info (async)
 @ verte ts (path) -> "fs.promises.stat(§)"
 @ verte py (path) -> "os.stat(§)"
 @ verte zig (path) -> "solum.inspice(§)"
 @ externa
-functio inspice()
+functio inspice(textus path) fiet status
 
 # =============================================================================
 # FILE OPERATIONS
@@ -133,7 +133,7 @@ functio inspice()
 @ verte py (path) -> "os.remove(§)"
 @ verte zig (path) -> "solum.dele(§)"
 @ externa
-functio dele()
+functio dele(textus path) fiet vacuum
 
 # Copy file
 @ radix duplic, futurum_indicativum, imperativus
@@ -141,7 +141,7 @@ functio dele()
 @ verte py (src, dest) -> "shutil.copy2(§, §)"
 @ verte zig (src, dest) -> "solum.duplica(§, §)"
 @ externa
-functio duplica()
+functio duplica(textus src, textus dest) fiet vacuum
 
 # Move/rename
 @ radix mov, futurum_indicativum, imperativus
@@ -149,21 +149,21 @@ functio duplica()
 @ verte py (src, dest) -> "shutil.move(§, §)"
 @ verte zig (src, dest) -> "solum.move(§, §)"
 @ externa
-functio move()
+functio move(textus src, textus dest) fiet vacuum
 
 # Truncate
 @ verte ts (path, size) -> "fs.promises.truncate(§, §)"
 @ verte py (path, size) -> "os.truncate(§, §)"
 @ verte zig (path, size) -> "solum.trunca(§, §)"
 @ externa
-functio trunca()
+functio trunca(textus path, numerus size) fiet vacuum
 
 # Touch (create/update mtime)
 @ verte ts (path) -> "fs.promises.utimes(§, Date.now(), Date.now())"
 @ verte py (path) -> "pathlib.Path(§).touch()"
 @ verte zig (path) -> "solum.tange(§)"
 @ externa
-functio tange()
+functio tange(textus path) fiet vacuum
 
 # =============================================================================
 # DIRECTORY OPERATIONS
@@ -175,7 +175,7 @@ functio tange()
 @ verte py (path) -> "os.makedirs(§, exist_ok=True)"
 @ verte zig (path) -> "solum.crea(§)"
 @ externa
-functio crea()
+functio crea(textus path) fiet vacuum
 
 # List directory (returns lista<textus>)
 @ radix elenc, participium_praesens, futurum_indicativum, imperativus
@@ -183,7 +183,7 @@ functio crea()
 @ verte py (path) -> "os.listdir(§)"
 @ verte zig (path, alloc) -> "solum.elenca(§1, §0)"
 @ externa
-functio elenca()
+functio elenca(textus path) fiet lista<textus>
 
 # Walk directory tree (streaming - always generator)
 @ radix ambul, participium_praesens
@@ -191,7 +191,7 @@ functio elenca()
 @ verte py (path) -> "os.walk(§)"
 @ verte zig (path) -> "solum.ambula(§)"
 @ externa
-functio ambula()
+functio ambula(textus path) -> cursor<textus>
 
 # Remove empty directory
 @ radix vacu, futurum_indicativum, imperativus
@@ -199,14 +199,14 @@ functio ambula()
 @ verte py (path) -> "os.rmdir(§)"
 @ verte zig (path) -> "solum.vacua(§)"
 @ externa
-functio vacua()
+functio vacua(textus path) fiet vacuum
 
 # Remove directory tree (recursive delete)
 @ verte ts (path) -> "fs.promises.rm(§, { recursive: true })"
 @ verte py (path) -> "shutil.rmtree(§)"
 @ verte zig (path) -> "solum.deleArborem(§)"
 @ externa
-functio deleArborem()
+functio deleArborem(textus path) fiet vacuum
 
 # =============================================================================
 # PATH UTILITIES
@@ -217,39 +217,39 @@ functio deleArborem()
 @ verte py (parts) -> "os.path.join(*§)"
 @ verte zig (parts) -> "solum.iunge(§)"
 @ externa
-functio iunge()
+functio iunge(lista<textus> parts) -> textus
 
 # Get directory part
 @ verte ts (path) -> "path.dirname(§)"
 @ verte py (path) -> "os.path.dirname(§)"
 @ verte zig (path) -> "solum.dir(§)"
 @ externa
-functio dir()
+functio dir(textus path) -> textus
 
 # Get filename part
 @ verte ts (path) -> "path.basename(§)"
 @ verte py (path) -> "os.path.basename(§)"
 @ verte zig (path) -> "solum.basis(§)"
 @ externa
-functio basis()
+functio basis(textus path) -> textus
 
 # Get extension
 @ verte ts (path) -> "path.extname(§)"
 @ verte py (path) -> "os.path.splitext(§)[1]"
 @ verte zig (path) -> "solum.extensio(§)"
 @ externa
-functio extensio()
+functio extensio(textus path) -> textus
 
 # Resolve to absolute
 @ verte ts (path) -> "path.resolve(§)"
 @ verte py (path) -> "os.path.abspath(§)"
 @ verte zig (path, alloc) -> "solum.resolve(§1, §0)"
 @ externa
-functio resolve()
+functio resolve(textus path) -> textus
 
 # Home directory
 @ verte ts () -> "os.homedir()"
 @ verte py () -> "os.path.expanduser('~')"
 @ verte zig () -> "solum.domus()"
 @ externa
-functio domus()
+functio domus() -> textus
