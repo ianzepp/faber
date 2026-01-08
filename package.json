@@ -32,7 +32,8 @@
         "use": "./scripta/use",
         "verify:exempla": "bun ./scripta/verify-exempla.ts",
         "trial": "bun run probationes/harness/runner.ts",
-        "trial:pipeline": "bun run probationes/harness/pipeline-runner.ts"
+        "trial:pipeline": "bun run probationes/harness/pipeline-runner.ts",
+        "trial:db": "bun run probationes/harness/db.ts"
     },
     "devDependencies": {
         "@eslint/js": "^9.39.2",
