@@ -451,10 +451,10 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
 
         # Bit shift expression
         casu TranslatioExpressia ut t {
-            fixum expr = genExpressia(t.expressia, g)
+            fixum shifted = genExpressia(t.expressia, g)
             fixum amount = genExpressia(t.quantitas, g)
             fixum op = (t.directio qua textus) == "dextratum" sic ">>" secus "<<"
-            redde scriptum("(§ § §)", expr, op, amount)
+            redde scriptum("(§ § §)", shifted, op, amount)
         }
     }
 

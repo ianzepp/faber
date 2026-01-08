@@ -172,7 +172,10 @@ genus Analyzator {
 
     @ publica
     functio habetMorphologiam(textus recipiens) -> bivalens {
-        redde nonnihil ego.morphologiaRegistra[recipiens]
+        si nihil ego.morphologiaRegistra[recipiens] {
+            redde falsum
+        }
+        redde verum
     }
 
     @ publica

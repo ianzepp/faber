@@ -24,79 +24,86 @@ export interface Transactio {
 // =============================================================================
 // POSTGRESQL DRIVER
 // =============================================================================
+//
+// NOTE: PostgreSQL support requires the 'pg' package to be installed.
+// Install with: bun add pg @types/pg
+//
+// Commented out until pg is added as a dependency.
 
-import pg from "pg";
+// import pg from "pg";
+//
+// class PgConnexio implements Connexio {
+//     private pool: pg.Pool;
+//
+//     constructor(url: string) {
+//         this.pool = new pg.Pool({ connectionString: url });
+//     }
+//
+//     async *lege(sql: string, params: unknown[]): AsyncIterable<Record<string, unknown>> {
+//         const client = await this.pool.connect();
+//         try {
+//             const result = await client.query(sql, params);
+//             for (const row of result.rows) {
+//                 yield row;
+//             }
+//         }
+//         finally {
+//             client.release();
+//         }
+//     }
+//
+//     async muta(sql: string, params: unknown[]): Promise<number> {
+//         const result = await this.pool.query(sql, params);
+//         return result.rowCount ?? 0;
+//     }
+//
+//     async incipe(): Promise<Transactio> {
+//         const client = await this.pool.connect();
+//         await client.query("BEGIN");
+//         return new PgTransactio(client);
+//     }
+//
+//     claude(): void {
+//         this.pool.end();
+//     }
+// }
+//
+// class PgTransactio implements Transactio {
+//     constructor(private client: pg.PoolClient) {}
+//
+//     async *lege(sql: string, params: unknown[]): AsyncIterable<Record<string, unknown>> {
+//         const result = await this.client.query(sql, params);
+//         for (const row of result.rows) {
+//             yield row;
+//         }
+//     }
+//
+//     async muta(sql: string, params: unknown[]): Promise<number> {
+//         const result = await this.client.query(sql, params);
+//         return result.rowCount ?? 0;
+//     }
+//
+//     async committe(): Promise<void> {
+//         try {
+//             await this.client.query("COMMIT");
+//         }
+//         finally {
+//             this.client.release();
+//         }
+//     }
+//
+//     async reverte(): Promise<void> {
+//         try {
+//             await this.client.query("ROLLBACK");
+//         }
+//         finally {
+//             this.client.release();
+//         }
+//     }
+// }
+
 import { Database } from "bun:sqlite";
-
-class PgConnexio implements Connexio {
-    private pool: pg.Pool;
-
-    constructor(url: string) {
-        this.pool = new pg.Pool({ connectionString: url });
-    }
-
-    async *lege(sql: string, params: unknown[]): AsyncIterable<Record<string, unknown>> {
-        const client = await this.pool.connect();
-        try {
-            const result = await client.query(sql, params);
-            for (const row of result.rows) {
-                yield row;
-            }
-        }
-        finally {
-            client.release();
-        }
-    }
-
-    async muta(sql: string, params: unknown[]): Promise<number> {
-        const result = await this.pool.query(sql, params);
-        return result.rowCount ?? 0;
-    }
-
-    async incipe(): Promise<Transactio> {
-        const client = await this.pool.connect();
-        await client.query("BEGIN");
-        return new PgTransactio(client);
-    }
-
-    claude(): void {
-        this.pool.end();
-    }
-}
-
-class PgTransactio implements Transactio {
-    constructor(private client: pg.PoolClient) {}
-
-    async *lege(sql: string, params: unknown[]): AsyncIterable<Record<string, unknown>> {
-        const result = await this.client.query(sql, params);
-        for (const row of result.rows) {
-            yield row;
-        }
-    }
-
-    async muta(sql: string, params: unknown[]): Promise<number> {
-        const result = await this.client.query(sql, params);
-        return result.rowCount ?? 0;
-    }
-
-    async committe(): Promise<void> {
-        try {
-            await this.client.query("COMMIT");
-        }
-        finally {
-            this.client.release();
-        }
-    }
-
-    async reverte(): Promise<void> {
-        try {
-            await this.client.query("ROLLBACK");
-        }
-        finally {
-            this.client.release();
-        }
-    }
-}
+import type { SQLQueryBindings } from "bun:sqlite";
 
 // =============================================================================
 // SQLITE DRIVER (Bun native)
@@ -111,14 +118,18 @@ class SqliteConnexio implements Connexio {
 
     async *lege(sql: string, params: unknown[]): AsyncIterable<Record<string, unknown>> {
         const stmt = this.db.prepare(sql);
-        for (const row of stmt.all(...params)) {
+        // WHY: Bun.SQLite expects SQLQueryBindings[], but our interface uses unknown[] to match .fab definition
+        const bindings = params as SQLQueryBindings[];
+        for (const row of stmt.all(...bindings)) {
             yield row as Record<string, unknown>;
         }
     }
 
     async muta(sql: string, params: unknown[]): Promise<number> {
         const stmt = this.db.prepare(sql);
-        const result = stmt.run(...params);
+        // WHY: Bun.SQLite expects SQLQueryBindings[], but our interface uses unknown[] to match .fab definition
+        const bindings = params as SQLQueryBindings[];
+        const result = stmt.run(...bindings);
         return result.changes;
     }
 
@@ -137,14 +148,18 @@ class SqliteTransactio implements Transactio {
 
     async *lege(sql: string, params: unknown[]): AsyncIterable<Record<string, unknown>> {
         const stmt = this.db.prepare(sql);
-        for (const row of stmt.all(...params)) {
+        // WHY: Bun.SQLite expects SQLQueryBindings[], but our interface uses unknown[] to match .fab definition
+        const bindings = params as SQLQueryBindings[];
+        for (const row of stmt.all(...bindings)) {
             yield row as Record<string, unknown>;
         }
     }
 
     async muta(sql: string, params: unknown[]): Promise<number> {
         const stmt = this.db.prepare(sql);
-        const result = stmt.run(...params);
+        // WHY: Bun.SQLite expects SQLQueryBindings[], but our interface uses unknown[] to match .fab definition
+        const bindings = params as SQLQueryBindings[];
+        const result = stmt.run(...bindings);
         return result.changes;
     }
 
@@ -167,7 +182,7 @@ export async function connecta(url: string): Promise<Connexio> {
     switch (scheme) {
         case "postgres":
         case "postgresql":
-            return new PgConnexio(url);
+            throw new Error("PostgreSQL driver not yet implemented - install 'pg' package and uncomment PgConnexio");
 
         case "mysql":
             throw new Error("MySQL driver not yet implemented");
