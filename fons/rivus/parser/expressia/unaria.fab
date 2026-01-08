@@ -395,6 +395,20 @@ functio parsePostfix(Resolvitor r) -> Expressia {
             perge
         }
 
+        # Bit shift: expr dextratum n, expr sinistratum n
+        si p.probaVerbum("dextratum") aut p.probaVerbum("sinistratum") {
+            fixum directio = p.procede().verbum
+            fixum quantitas = parseUnaria(r)
+
+            expressia = finge TranslatioExpressia {
+                locus: locus,
+                expressia: expressia,
+                directio: directio,
+                quantitas: quantitas
+            } qua Expressia
+            perge
+        }
+
         # No more postfix operators
         rumpe
     }
