@@ -2,10 +2,11 @@
 #
 # Routes expression AST nodes to their specific generators.
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum
+ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum, MorphologiaInvocatio
 ex "../../../ast/typus" importa TypusAnnotatio
 ex "../nucleus" importa ZigGenerator
 ex "../typus" importa genTypus
+ex "../../norma-registry.gen" importa getNormaTranslation, VerteTranslation
 
 # Import extracted generators
 ex "./littera" importa genLittera
@@ -115,6 +116,42 @@ functio genExpressia(Expressia expr, ZigGenerator g) -> textus {
             ex (e.argumenta qua lista<Expressia>) pro arg {
                 args.adde(genExpressia(arg, g))
             }
+
+            # WHY: Check for stdlib method translation via norma-registry.
+            discerne e.vocatum {
+                casu MembrumExpressia ut m {
+                    si non (m.computatum qua bivalens) {
+                        discerne m.proprietas {
+                            casu Nomen ut prop {
+                                fixum methodNomen = prop.valor qua textus
+                                fixum obj = genExpressia(m.obiectum, g)
+
+                                # WHY: Try norma translation if we have receiver type info.
+                                si nonnihil e.morphologia {
+                                    fixum recipiens = (e.morphologia qua MorphologiaInvocatio).recipiens
+                                    fixum translation = getNormaTranslation("zig", recipiens, methodNomen)
+
+                                    si nonnihil translation {
+                                        # Simple method rename: use translated method name
+                                        si nonnihil translation.method {
+                                            redde scriptum("§.§(§)", obj, translation.method, args.coniunge(", "))
+                                        }
+
+                                        # Template-based translation
+                                        si nonnihil translation.template et nonnihil translation.params {
+                                            redde applyNormaTemplate(translation.template qua textus, translation.params qua lista<textus>, obj, args, g)
+                                        }
+                                    }
+                                }
+                            }
+                            casu _ { }
+                        }
+                    }
+                }
+                casu _ { }
+            }
+
+            # Default: pass through as-is
             redde scriptum("§(§)", genExpressia(e.vocatum, g), args.coniunge(", "))
         }
 
@@ -164,4 +201,107 @@ functio genExpressia(Expressia expr, ZigGenerator g) -> textus {
 
     # Fallback
     redde "undefined"
+}
+
+# =============================================================================
+# NORMA TRANSLATION HELPERS
+# =============================================================================
+
+# Apply a norma template translation with parameter substitution.
+# WHY: Zig norma templates use § placeholders and often include 'alloc' parameter.
+# - 'ego' maps to the receiver object
+# - 'alloc' maps to the current allocator (from cura block or default)
+# - Other params consume args in order
+# - §0, §1 etc. are explicit indices into the values array
+# - Plain § uses implicit positional indexing
+functio applyNormaTemplate(textus template, lista<textus> params, textus obj, lista<textus> args, ZigGenerator g) -> textus {
+    # Build values array: ego -> obj, alloc -> allocator, other params -> args
+    varia values = [] innatum lista<textus>
+    varia argIdx = 0
+    ex params pro param {
+        si param == "ego" {
+            values.adde(obj)
+        } sin param == "alloc" {
+            # WHY: Use curator (allocator) from cura block if available,
+            # otherwise the default allocator ('alloc' or fallback).
+            values.adde(g.curator())
+        } secus {
+            si argIdx < args.longitudo() {
+                values.adde(args[argIdx])
+                argIdx += 1
+            } secus {
+                values.adde("")
+            }
+        }
+    }
+
+    # Replace § placeholders
+    varia result = ""
+    varia i = 0
+    varia implicitIdx = 0
+
+    dum i < template.longitudo() {
+        fixum c = template[i]
+        si c == "§" {
+            # Check for explicit index (§0, §1, etc.)
+            si i + 1 < template.longitudo() {
+                fixum next = template[i + 1]
+                si next >= "0" et next <= "9" {
+                    # Parse the index
+                    varia idxStr = ""
+                    varia j = i + 1
+                    dum j < template.longitudo() {
+                        fixum digit = template[j]
+                        si digit >= "0" et digit <= "9" {
+                            idxStr = idxStr + digit
+                            j += 1
+                        } secus {
+                            rumpe
+                        }
+                    }
+                    fixum idx = legeNumerusTextus(idxStr)
+                    si idx < values.longitudo() {
+                        result = result + values[idx]
+                    }
+                    i = j
+                    perge
+                }
+            }
+            # Implicit positional: plain §
+            si implicitIdx < values.longitudo() {
+                result = result + values[implicitIdx]
+            }
+            implicitIdx += 1
+            i += 1
+        } secus {
+            result = result + c
+            i += 1
+        }
+    }
+
+    redde result
+}
+
+functio legeNumerusTextus(textus crudus) -> numerus {
+    varia result = 0
+    varia i = 0
+    dum i < crudus.longitudo() {
+        fixum c = crudus.sectio(i, i + 1)
+        varia digit = 0
+        elige c {
+            casu "0" { digit = 0 }
+            casu "1" { digit = 1 }
+            casu "2" { digit = 2 }
+            casu "3" { digit = 3 }
+            casu "4" { digit = 4 }
+            casu "5" { digit = 5 }
+            casu "6" { digit = 6 }
+            casu "7" { digit = 7 }
+            casu "8" { digit = 8 }
+            casu "9" { digit = 9 }
+        }
+        result = result * 10 + digit
+        i += 1
+    }
+    redde result
 }
