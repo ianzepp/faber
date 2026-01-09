@@ -5,6 +5,7 @@
 ex "../resolvitor" importa Resolvitor
 ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, BIVALENS, IGNOTUM
 ex "../errores" importa morphologiaRadixNonDeclarataError, morphologiaFormaNonPermissaError
+ex "../scopus" importa quaereSymbolum
 ex "../../ast/expressia" importa Expressia, MorphologiaInvocatio
 ex "../../parser/morphologia" importa parseMethodum, formaExFlagga
 
@@ -211,6 +212,42 @@ functio resolveMembrum(Resolvitor r, Expressia membrumExpr) -> SemanticTypus {
                         casu _ { }
                     }
                 }
+
+                # Usitatum (user-defined type name) - look up full type from symbol table
+                # WHY: Variables declared with user-defined types store Usitatum (just the name).
+                # We need to look up the actual Genus definition to access its fields.
+                casu Usitatum ut u {
+                    fixum symbolum = quaereSymbolum(r.analyzator().scopus, u.nomen)
+                    si nonnihil symbolum {
+                        discerne symbolum.semanticTypus {
+                            casu Genus ut ge {
+                                discerne m.proprietas {
+                                    casu Nomen ut n {
+                                        si nonnihil ge.agri[n.valor] {
+                                            redde ge.agri[n.valor]
+                                        }
+                                        si nonnihil ge.methodi[n.valor] {
+                                            redde ge.methodi[n.valor]
+                                        }
+                                    }
+                                    casu _ { }
+                                }
+                            }
+                            casu Pactum ut pa {
+                                discerne m.proprietas {
+                                    casu Nomen ut n {
+                                        si nonnihil pa.methodi[n.valor] {
+                                            redde pa.methodi[n.valor]
+                                        }
+                                    }
+                                    casu _ { }
+                                }
+                            }
+                            casu _ { }
+                        }
+                    }
+                }
+
                 casu _ { }
             }
 

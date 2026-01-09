@@ -125,6 +125,24 @@ functio analyzeSententia(Resolvitor r, Sententia stmt) -> vacuum {
             }
         }
 
+        # Entry point (incipit form)
+        casu IncipitSententia ut i {
+            # WHY: Recursively analyze the incipiet body so method calls get
+            # their morphologia resolved for norma translation.
+            si nonnihil i.corpus {
+                r.sententia(i.corpus)
+            }
+        }
+
+        # Entry point (incipiet form)
+        casu IncipietSententia ut i {
+            # WHY: Recursively analyze the incipiet body so method calls get
+            # their morphologia resolved for norma translation.
+            si nonnihil i.corpus {
+                r.sententia(i.corpus)
+            }
+        }
+
         # Expression statement
         casu ExpressiaSententia ut e {
             r.expressia(e.expressia)
