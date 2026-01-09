@@ -6,6 +6,29 @@ A Latin programming language compiler ("The Roman Craftsman").
 
 See `EBNF.md` for the formal specification, `fons/grammatica/*.md` for prose tutorials, and `fons/exempla/` or `fons/rivus/` for working examples.
 
+## Stdlib (norma)
+
+**The stdlib is fully implemented via `fons/norma/*.fab`.** These files define all collection methods (`lista.adde`, `tabula.pone`, `textus.longitudo`, etc.) with `@ verte` annotations that specify translations per target:
+
+```fab
+# From fons/norma/lista.fab
+@ verte ts "push"
+@ verte py "append"
+@ verte rs "push"
+@ verte zig (ego, elem, alloc) -> "§0.adde(§2, §1)"
+functio adde(T elem) -> vacuum
+```
+
+**Build pipeline:**
+1. `fons/norma/*.fab` → `bun run build:norma` → `norma-registry.gen.ts` (for faber) and `norma-registry.gen.fab` (for rivus)
+2. Codegen calls `getNormaTranslation(target, type, method)` to get the translation
+3. Method calls like `myList.adde(x)` become `myList.push(x)` in TypeScript output
+
+**Runtime libraries** for targets that need them live in `fons/subsidia/`:
+- `subsidia/zig/` - `Lista`, `Tabula`, `Copia` wrappers with Latin method names
+- `subsidia/cpp/` - Helper functions for complex operations
+- `subsidia/rs/` - Helper functions for complex operations
+
 ## Project Layout
 
 ```
