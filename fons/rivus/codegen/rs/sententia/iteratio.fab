@@ -1,0 +1,29 @@
+# Rust Statement Generator - For Loops
+
+ex "../../../ast/sententia" importa Sententia, IteratioGenus
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa RsGenerator
+ex "../expressia/index" importa genExpressia
+ex "./index" importa genSententia
+
+@ publica
+functio genIteratio(IteratioGenus species, textus variabilis, ignotum iterabile, Sententia corpus, bivalens asynca, ignotum cape, RsGenerator g) -> textus {
+    g.intraProfundum()
+    fixum body = genSententia(corpus, g)
+    g.exiProfundum()
+
+    fixum iter = genExpressia(iterabile qua Expressia, g)
+
+    si species == IteratioGenus.De {
+        si body == "" { redde scriptum("§for § in §.keys() {{}}", g.ind(), variabilis, iter) }
+        redde scriptum("§for § in §.keys() {{\n§\n§}}", g.ind(), variabilis, iter, body, g.ind())
+    }
+
+    si asynca {
+        si body == "" { redde scriptum("§while let Some(§) = §.next().await {{}}", g.ind(), variabilis, iter) }
+        redde scriptum("§while let Some(§) = §.next().await {{\n§\n§}}", g.ind(), variabilis, iter, body, g.ind())
+    }
+
+    si body == "" { redde scriptum("§for § in § {{}}", g.ind(), variabilis, iter) }
+    redde scriptum("§for § in § {{\n§\n§}}", g.ind(), variabilis, iter, body, g.ind())
+}

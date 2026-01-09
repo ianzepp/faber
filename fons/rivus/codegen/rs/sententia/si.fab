@@ -1,0 +1,36 @@
+# Rust Statement Generator - Conditionals
+
+ex "../../../ast/sententia" importa Sententia, CapeClausula
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa RsGenerator
+ex "../expressia/index" importa genExpressia
+ex "./index" importa genSententia
+
+@ publica
+functio genSi(Expressia condicio, Sententia consequens, ignotum alternans, ignotum cape, RsGenerator g) -> textus {
+    g.intraProfundum()
+    fixum consBody = genSententia(consequens, g)
+    g.exiProfundum()
+
+    varia result = scriptum("§if § {{\n§\n§}}", g.ind(), genExpressia(condicio, g), consBody, g.ind())
+
+    varia next = alternans
+    dum nonnihil next {
+        fixum stmt = next qua Sententia
+        si stmt.tag == "SiSententia" {
+            fixum s = stmt
+            g.intraProfundum()
+            fixum body = genSententia(s.consequens, g)
+            g.exiProfundum()
+            result = scriptum("§ else if § {{\n§\n§}}", result, genExpressia(s.condicio, g), body, g.ind())
+            next = s.alternans
+            perge
+        }
+        g.intraProfundum()
+        fixum body = genSententia(stmt, g)
+        g.exiProfundum()
+        result = scriptum("§ else {{\n§\n§}}", result, body, g.ind())
+        next = nihil
+    }
+    redde result
+}

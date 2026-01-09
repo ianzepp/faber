@@ -1,0 +1,23 @@
+# Rust Statement Generator - While Loops
+
+ex "../../../ast/sententia" importa Sententia
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa RsGenerator
+ex "../expressia/index" importa genExpressia
+ex "./index" importa genSententia
+
+@ publica
+functio genDum(ignotum condicio, Sententia corpus, ignotum cape, RsGenerator g) -> textus {
+    g.intraProfundum()
+    fixum body = genSententia(corpus, g)
+    g.exiProfundum()
+
+    si condicio == nihil {
+        si body == "" { redde scriptum("§loop {{}}", g.ind()) }
+        redde scriptum("§loop {{\n§\n§}}", g.ind(), body, g.ind())
+    }
+
+    fixum cond = genExpressia(condicio qua Expressia, g)
+    si body == "" { redde scriptum("§while § {{}}", g.ind(), cond) }
+    redde scriptum("§while § {{\n§\n§}}", g.ind(), cond, body, g.ind())
+}

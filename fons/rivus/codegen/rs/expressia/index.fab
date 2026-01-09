@@ -1,0 +1,227 @@
+# Rust Expression Generator - Dispatch
+
+ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum, MorphologiaInvocatio
+ex "../../../ast/sententia" importa Sententia, VariaGenus
+ex "../../../ast/typus" importa TypusAnnotatio, TypusParametrum
+ex "../nucleus" importa RsGenerator
+ex "../typus" importa genTypus
+ex "../../norma-registry.gen" importa getNormaTranslation, VerteTranslation
+ex "./littera" importa genLittera, genLitteraExemplar
+ex "./scriptum" importa genScriptum
+ex "./obiectum" importa genObiectum
+
+@ publica
+functio genExpressia(Expressia expr, RsGenerator g) -> textus {
+    discerne expr {
+        casu Nomen ut e { redde e.valor qua textus }
+        casu EgoExpressia { redde "self" }
+        casu Littera ut e { redde genLittera(e.species qua LitteraGenus, e.crudus qua textus) }
+        casu LitteraExemplar ut e {
+            redde genLitteraExemplar(e.partes qua lista<textus>, e.expressiae qua lista<Expressia>, g)
+        }
+        casu LitteraRegex ut e {
+            g.requisita.usesRegex = verum
+            redde scriptum("Regex::new(r\"§\").unwrap()", e.forma)
+        }
+
+        casu BinariaExpressia ut e {
+            fixum sinister = genExpressia(e.sinister, g)
+            fixum dexter = genExpressia(e.dexter, g)
+            varia signum = e.signum qua textus
+            elige signum {
+                casu "et" { signum = "&&" }
+                casu "aut" { signum = "||" }
+                casu "vel" { redde scriptum("§.unwrap_or(§)", sinister, dexter) }
+            }
+            si signum == "inter" {
+                redde scriptum("§.contains(&§)", dexter, sinister)
+            }
+            redde scriptum("(§ § §)", sinister, signum, dexter)
+        }
+
+        casu UnariaExpressia ut e {
+            fixum arg = genExpressia(e.argumentum, g)
+            elige e.signum qua textus {
+                casu "nihil" reddit scriptum("§.is_none()", arg)
+                casu "nonnihil" reddit scriptum("§.is_some()", arg)
+                casu "negativum" reddit scriptum("(§ < 0)", arg)
+                casu "positivum" reddit scriptum("(§ > 0)", arg)
+            }
+            redde scriptum("§§", e.signum, arg)
+        }
+
+        casu AssignatioExpressia ut e {
+            redde scriptum("§ § §", genExpressia(e.sinister, g), e.signum, genExpressia(e.dexter, g))
+        }
+
+        casu CondicioExpressia ut e {
+            redde scriptum("if § {{ § }} else {{ § }}", genExpressia(e.condicio, g), genExpressia(e.consequens, g), genExpressia(e.alternans, g))
+        }
+
+        casu AmbitusExpressia ut e {
+            fixum initium = genExpressia(e.initium, g)
+            fixum finis = genExpressia(e.finis, g)
+            si e.inclusivum qua bivalens { redde scriptum("§..=§", initium, finis) }
+            redde scriptum("§..§", initium, finis)
+        }
+
+        casu QuaExpressia ut e {
+            redde scriptum("(§ as §)", genExpressia(e.expressia, g), genTypus(e.scopus qua TypusAnnotatio, g))
+        }
+
+        casu InnatumExpressia ut e {
+            fixum typusNomen = (e.scopus qua TypusAnnotatio).nomen qua textus
+            si typusNomen == "tabula" {
+                g.requisita.tabula = verum
+                redde "HashMap::new()"
+            }
+            si typusNomen == "lista" {
+                g.requisita.lista = verum
+                redde "Vec::new()"
+            }
+            si typusNomen == "copia" {
+                g.requisita.copia = verum
+                redde "HashSet::new()"
+            }
+            redde genExpressia(e.expressia, g)
+        }
+
+        casu VocatioExpressia ut e {
+            varia args = [] innatum lista<textus>
+            ex (e.argumenta qua lista<Expressia>) pro arg {
+                args.adde(genExpressia(arg, g))
+            }
+            discerne e.vocatum {
+                casu MembrumExpressia ut m {
+                    si non (m.computatum qua bivalens) {
+                        discerne m.proprietas {
+                            casu Nomen ut prop {
+                                fixum methodNomen = prop.valor qua textus
+                                fixum obj = genExpressia(m.obiectum, g)
+                                si nonnihil e.morphologia {
+                                    fixum recipiens = (e.morphologia qua MorphologiaInvocatio).recipiens
+                                    fixum translation = getNormaTranslation("rs", recipiens, methodNomen)
+                                    si nonnihil translation {
+                                        si nonnihil translation.method {
+                                            redde scriptum("§.§(§)", obj, translation.method, args.coniunge(", "))
+                                        }
+                                        si nonnihil translation.template et nonnihil translation.params {
+                                            redde applyNormaTemplate(translation.template qua textus, translation.params qua lista<textus>, obj, args)
+                                        }
+                                    }
+                                }
+                            }
+                            casu _ { }
+                        }
+                    }
+                }
+                casu _ { }
+            }
+            redde scriptum("§(§)", genExpressia(e.vocatum, g), args.coniunge(", "))
+        }
+
+        casu MembrumExpressia ut e {
+            fixum obj = genExpressia(e.obiectum, g)
+            si e.computatum qua bivalens {
+                fixum idx = genExpressia(e.proprietas, g)
+                si e.optivum qua bivalens { redde scriptum("§.get(&§)", obj, idx) }
+                redde scriptum("§[§]", obj, idx)
+            }
+            fixum prop = genExpressia(e.proprietas, g)
+            redde scriptum("§.§", obj, prop)
+        }
+
+        casu NovumExpressia ut e {
+            varia args = [] innatum lista<textus>
+            ex (e.argumenta qua lista<Expressia>) pro arg {
+                args.adde(genExpressia(arg, g))
+            }
+            redde scriptum("§::new(§)", genExpressia(e.vocatum, g), args.coniunge(", "))
+        }
+
+        casu CedeExpressia ut e {
+            redde scriptum("§.await", genExpressia(e.argumentum, g))
+        }
+
+        casu ScriptumExpressia ut e {
+            redde genScriptum(e.exemplar qua textus, e.argumenta qua lista<Expressia>, g)
+        }
+
+        casu SeriesExpressia ut e {
+            varia items = [] innatum lista<textus>
+            ex (e.elementa qua lista<Expressia>) pro elem {
+                items.adde(genExpressia(elem, g))
+            }
+            redde scriptum("vec![§]", items.coniunge(", "))
+        }
+
+        casu ObiectumExpressia ut e {
+            redde genObiectum(e.proprietates qua lista<ObiectumProprietas>, g)
+        }
+
+        casu LambdaExpressia ut e {
+            varia params = [] innatum lista<textus>
+            ex (e.parametra qua lista<LambdaParametrum>) pro p {
+                si nonnihil p.typus {
+                    params.adde(scriptum("§: §", p.nomen, genTypus(p.typus qua TypusAnnotatio, g)))
+                } secus {
+                    params.adde(p.nomen)
+                }
+            }
+            redde scriptum("|§| §", params.coniunge(", "), genExpressia(e.corpus qua Expressia, g))
+        }
+
+        casu ConversioExpressia ut conv {
+            fixum src = genExpressia(conv.expressia, g)
+            elige conv.signum qua textus {
+                casu "numeratum" reddit scriptum("§.parse::<i64>().unwrap()", src)
+                casu "fractatum" reddit scriptum("§.parse::<f64>().unwrap()", src)
+                casu "textatum" reddit scriptum("§.to_string()", src)
+            }
+            redde src
+        }
+
+        casu TranslatioExpressia ut t {
+            fixum shifted = genExpressia(t.expressia, g)
+            fixum amount = genExpressia(t.quantitas, g)
+            fixum op = (t.directio qua textus) == "dextratum" sic ">>" secus "<<"
+            redde scriptum("(§ § §)", shifted, op, amount)
+        }
+    }
+    redde "/* unknown expression */"
+}
+
+functio applyNormaTemplate(textus template, lista<textus> params, textus obj, lista<textus> args) -> textus {
+    varia values = [] innatum lista<textus>
+    varia argIdx = 0
+    ex params pro param {
+        si param == "ego" {
+            values.adde(obj)
+        } secus {
+            si argIdx < args.longitudo() {
+                values.adde(args[argIdx])
+                argIdx += 1
+            } secus {
+                values.adde("")
+            }
+        }
+    }
+
+    varia result = ""
+    varia i = 0
+    varia implicitIdx = 0
+
+    dum i < template.longitudo() {
+        fixum c = template[i]
+        si c == "§" {
+            si implicitIdx < values.longitudo() {
+                result = result + values[implicitIdx]
+            }
+            implicitIdx += 1
+        } secus {
+            result = result + c
+        }
+        i += 1
+    }
+    redde result
+}

@@ -1,0 +1,45 @@
+# Rust Statement Generator - Error Handling
+
+ex "../../../ast/sententia" importa Sententia, CapeClausula
+ex "../nucleus" importa RsGenerator
+ex "./index" importa genSententia
+
+@ publica
+functio genTempta(Sententia corpus, ignotum cape, ignotum demum, RsGenerator g) -> textus {
+    g.intraProfundum()
+    fixum tryBody = genSententia(corpus, g)
+    g.exiProfundum()
+
+    si cape == nihil {
+        si nonnihil demum {
+            g.intraProfundum()
+            fixum finallyBody = genSententia(demum qua Sententia, g)
+            g.exiProfundum()
+            redde scriptum("§{{\n§\n§}}\n§", g.ind(), tryBody, g.ind(), finallyBody)
+        }
+        redde tryBody
+    }
+
+    fixum c = cape qua CapeClausula
+    fixum errVar = c.param
+
+    g.intraProfundum()
+    fixum catchBody = genSententia(c.corpus qua Sententia, g)
+    g.exiProfundum()
+
+    varia result = scriptum("§match (|| -> Result<(), Box<dyn std::error::Error>> {{\n§\n§    Ok(())\n§}})() {{", g.ind(), tryBody, g.ind(), g.ind())
+    g.intraProfundum()
+    result = scriptum("§\n§Ok(_) => {{}},", result, g.ind())
+    result = scriptum("§\n§Err(§) => {{\n§\n§}},", result, g.ind(), errVar, catchBody, g.ind())
+    g.exiProfundum()
+    result = scriptum("§\n§}}", result, g.ind())
+
+    si nonnihil demum {
+        g.intraProfundum()
+        fixum finallyBody = genSententia(demum qua Sententia, g)
+        g.exiProfundum()
+        result = scriptum("§\n§", result, finallyBody)
+    }
+
+    redde result
+}

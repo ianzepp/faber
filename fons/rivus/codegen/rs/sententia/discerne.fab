@@ -1,0 +1,44 @@
+# Rust Statement Generator - Pattern Matching
+
+ex "../../../ast/sententia" importa Sententia, VariansCasus, CampusDeclaratio
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa RsGenerator
+ex "../expressia/index" importa genExpressia
+ex "./index" importa genSententia
+
+@ publica
+functio genDiscerne(ignotum discriminans, lista<VariansCasus> casus, RsGenerator g) -> textus {
+    fixum disc = genExpressia(discriminans qua Expressia, g)
+    varia result = scriptum("§match § {{", g.ind(), disc)
+
+    g.intraProfundum()
+    ex casus pro c {
+        varia pattern = c.nomen qua textus
+
+        si nonnihil c.vinculum {
+            pattern = scriptum("§ @ §", c.vinculum qua textus, pattern)
+        }
+
+        si nonnihil c.campi et (c.campi qua lista<CampusDeclaratio>).longitudo() > 0 {
+            varia fieldPatterns = [] innatum lista<textus>
+            ex (c.campi qua lista<CampusDeclaratio>) pro campo {
+                fieldPatterns.adde(campo.nomen)
+            }
+            pattern = scriptum("§ {{ § }}", pattern, fieldPatterns.coniunge(", "))
+        }
+
+        g.intraProfundum()
+        fixum body = genSententia(c.corpus qua Sententia, g)
+        g.exiProfundum()
+
+        si body == "" {
+            result = scriptum("§\n§§ => {{}},", result, g.ind(), pattern)
+        } secus {
+            result = scriptum("§\n§§ => {{\n§\n§}}", result, g.ind(), pattern, body, g.ind())
+        }
+    }
+
+    result = scriptum("§\n§_ => {{}},", result, g.ind())
+    g.exiProfundum()
+    redde scriptum("§\n§}}", result, g.ind())
+}

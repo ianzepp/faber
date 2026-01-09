@@ -1,0 +1,46 @@
+# Rust Statement Generator - Match Statements
+
+ex "../../../ast/sententia" importa Sententia, EligeCasus
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa RsGenerator
+ex "../expressia/index" importa genExpressia
+ex "./index" importa genSententia
+
+@ publica
+functio genElige(ignotum discriminans, lista<EligeCasus> casus, ignotum praedefinitum, ignotum cape, RsGenerator g) -> textus {
+    fixum disc = genExpressia(discriminans qua Expressia, g)
+    varia result = scriptum("§match § {{", g.ind(), disc)
+
+    g.intraProfundum()
+    ex casus pro c {
+        varia patterns = [] innatum lista<textus>
+        ex (c.valores qua lista<Expressia>) pro val {
+            patterns.adde(genExpressia(val, g))
+        }
+        g.intraProfundum()
+        fixum body = genSententia(c.corpus qua Sententia, g)
+        g.exiProfundum()
+
+        si body == "" {
+            result = scriptum("§\n§§ => {{}},", result, g.ind(), patterns.coniunge(" | "))
+        } secus {
+            result = scriptum("§\n§§ => {{\n§\n§}}", result, g.ind(), patterns.coniunge(" | "), body, g.ind())
+        }
+    }
+
+    si nonnihil praedefinitum {
+        g.intraProfundum()
+        fixum defBody = genSententia(praedefinitum qua Sententia, g)
+        g.exiProfundum()
+        si defBody == "" {
+            result = scriptum("§\n§_ => {{}},", result, g.ind())
+        } secus {
+            result = scriptum("§\n§_ => {{\n§\n§}}", result, g.ind(), defBody, g.ind())
+        }
+    } secus {
+        result = scriptum("§\n§_ => {{}},", result, g.ind())
+    }
+
+    g.exiProfundum()
+    redde scriptum("§\n§}}", result, g.ind())
+}

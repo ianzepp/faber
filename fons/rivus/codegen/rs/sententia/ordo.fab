@@ -1,0 +1,23 @@
+# Rust Statement Generator - Enums
+
+ex "../../../ast/sententia" importa OrdoMembrum
+ex "../nucleus" importa RsGenerator
+ex "../expressia/index" importa genExpressia
+
+@ publica
+functio genOrdo(textus nomen, lista<OrdoMembrum> membra, RsGenerator g) -> textus {
+    varia result = scriptum("§#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n", g.ind())
+    result = scriptum("§§pub enum § {{", result, g.ind(), nomen)
+
+    g.intraProfundum()
+    ex membra pro membrum {
+        si nonnihil membrum.valor {
+            result = scriptum("§\n§§ = §,", result, g.ind(), membrum.nomen, genExpressia(membrum.valor, g))
+        } secus {
+            result = scriptum("§\n§§,", result, g.ind(), membrum.nomen)
+        }
+    }
+    g.exiProfundum()
+
+    redde scriptum("§\n§}}", result, g.ind())
+}

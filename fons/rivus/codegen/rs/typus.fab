@@ -1,0 +1,124 @@
+# Rust Type Mapping
+
+ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum
+ex "./nucleus" importa RsGenerator
+
+@ publica
+functio mappaNomenTypi(textus nomen) -> textus {
+    elige nomen {
+        casu "textus" reddit "String"
+        casu "numerus" reddit "i64"
+        casu "fractus" reddit "f64"
+        casu "decimus" reddit "f64"
+        casu "magnus" reddit "i128"
+        casu "bivalens" reddit "bool"
+        casu "nihil" reddit "()"
+        casu "vacuum" reddit "()"
+        casu "numquam" reddit "!"
+        casu "octeti" reddit "Vec<u8>"
+        casu "lista" reddit "Vec"
+        casu "tabula" reddit "HashMap"
+        casu "copia" reddit "HashSet"
+        casu "erratum" reddit "Box<dyn std::error::Error>"
+        casu "objectum" reddit "Box<dyn std::any::Any>"
+        casu "ignotum" reddit "Box<dyn std::any::Any>"
+    }
+    redde nomen
+}
+
+@ publica
+functio genTypus(TypusAnnotatio adnotatio, RsGenerator g) -> textus {
+    fixum nomen = adnotatio.nomen
+
+    si nonnihil adnotatio.unio {
+        fixum unioTypi = adnotatio.unio qua lista<TypusAnnotatio>
+        si unioTypi.longitudo() > 0 {
+            redde "Box<dyn std::any::Any>"
+        }
+    }
+
+    si nonnihil adnotatio.typusParametra {
+        fixum parametra = adnotatio.typusParametra qua lista<TypusParametrum>
+        si parametra.longitudo() > 0 {
+            redde genTypusGenericus(nomen, parametra, adnotatio.nullabilis, g)
+        }
+    }
+
+    fixum base = mappaNomenTypi(nomen)
+
+    si adnotatio.nullabilis {
+        redde scriptum("Option<§>", base)
+    }
+
+    redde base
+}
+
+functio genTypusGenericus(textus nomen, lista<TypusParametrum> parametra, bivalens nullabilis, RsGenerator g) -> textus {
+    varia result = ""
+
+    elige nomen {
+        casu "lista" {
+            g.requisita.lista = verum
+            discerne parametra[0] {
+                casu Typus ut t {
+                    result = scriptum("Vec<§>", genTypus(t.adnotatio, g))
+                }
+                casu _ { result = "Vec<Box<dyn std::any::Any>>" }
+            }
+        }
+        casu "tabula" {
+            g.requisita.tabula = verum
+            si parametra.longitudo() >= 2 {
+                varia keyRs = "Box<dyn std::any::Any>"
+                varia valRs = "Box<dyn std::any::Any>"
+                discerne parametra[0] {
+                    casu Typus ut t { keyRs = genTypus(t.adnotatio, g) }
+                    casu _ { }
+                }
+                discerne parametra[1] {
+                    casu Typus ut t { valRs = genTypus(t.adnotatio, g) }
+                    casu _ { }
+                }
+                result = scriptum("HashMap<§, §>", keyRs, valRs)
+            }
+        }
+        casu "copia" {
+            g.requisita.copia = verum
+            discerne parametra[0] {
+                casu Typus ut t {
+                    result = scriptum("HashSet<§>", genTypus(t.adnotatio, g))
+                }
+                casu _ { result = "HashSet<Box<dyn std::any::Any>>" }
+            }
+        }
+    }
+
+    si result == "" {
+        varia params = [] innatum lista<textus>
+        ex parametra pro param {
+            discerne param {
+                casu Typus ut t { params.adde(genTypus(t.adnotatio, g)) }
+                casu _ { }
+            }
+        }
+        si params.longitudo() > 0 {
+            result = scriptum("§<§>", nomen, params.coniunge(", "))
+        } secus {
+            result = nomen
+        }
+    }
+
+    si nullabilis {
+        redde scriptum("Option<§>", result)
+    }
+    redde result
+}
+
+@ publica
+functio genTypusParametrum(TypusParametrum param, RsGenerator g) -> textus? {
+    discerne param {
+        casu Typus ut p { redde genTypus(p.adnotatio, g) }
+        casu Littera { redde nihil }
+    }
+    redde nihil
+}

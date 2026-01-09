@@ -1,0 +1,50 @@
+# Rust Expression Generator - Format Strings
+
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa RsGenerator
+ex "./index" importa genExpressia
+
+@ publica
+functio genScriptum(textus exemplar, lista<Expressia> argumenta, RsGenerator g) -> textus {
+    si argumenta.longitudo() == 0 {
+        redde scriptum("\"§\".to_string()", exemplar)
+    }
+
+    varia formatStr = ""
+    varia orderedArgs = [] innatum lista<textus>
+    varia implicitIdx = 0
+    varia i = 0
+
+    dum i < exemplar.longitudo() {
+        fixum c = exemplar[i]
+        si c == "§" {
+            varia explicitIdxNum = 0
+            varia hasExplicitIdx = falsum
+            dum i + 1 < exemplar.longitudo() {
+                fixum nextChar = exemplar[i + 1]
+                si nextChar >= "0" et nextChar <= "9" {
+                    fixum digit = nextChar.charCodeAt(0) - 48
+                    explicitIdxNum = explicitIdxNum * 10 + digit
+                    hasExplicitIdx = verum
+                    i += 1
+                } secus {
+                    rumpe
+                }
+            }
+            fixum idx = hasExplicitIdx sic explicitIdxNum secus implicitIdx
+            si non hasExplicitIdx { implicitIdx += 1 }
+            fixum arg = idx < argumenta.longitudo() sic genExpressia(argumenta[idx], g) secus "/* undefined */"
+            formatStr = formatStr + "{}"
+            orderedArgs.adde(arg)
+        } sin c == "{" {
+            formatStr = formatStr + "{{"
+        } sin c == "}" {
+            formatStr = formatStr + "}}"
+        } secus {
+            formatStr = formatStr + c
+        }
+        i += 1
+    }
+
+    redde scriptum("format!(\"§\", §)", formatStr, orderedArgs.coniunge(", "))
+}

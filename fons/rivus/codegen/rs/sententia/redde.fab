@@ -1,0 +1,20 @@
+# Rust Statement Generator - Return Statements
+
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa RsGenerator
+ex "../expressia/index" importa genExpressia
+
+@ publica
+functio genRedde(ignotum valor, RsGenerator g) -> textus {
+    si g.inFlumina {
+        si nonnihil valor {
+            redde scriptum("§return Ok(§);", g.ind(), genExpressia(valor qua Expressia, g))
+        }
+        redde scriptum("§return Ok(());", g.ind())
+    }
+
+    si nonnihil valor {
+        redde scriptum("§return §;", g.ind(), genExpressia(valor qua Expressia, g))
+    }
+    redde scriptum("§return;", g.ind())
+}

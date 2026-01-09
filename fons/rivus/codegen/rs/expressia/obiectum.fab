@@ -1,0 +1,25 @@
+# Rust Expression Generator - Struct Literals
+
+ex "../../../ast/expressia" importa Expressia, ObiectumProprietas
+ex "../nucleus" importa RsGenerator
+ex "./index" importa genExpressia
+
+@ publica
+functio genObiectum(lista<ObiectumProprietas> proprietates, RsGenerator g) -> textus {
+    si proprietates.longitudo() == 0 {
+        redde "HashMap::new()"
+    }
+
+    varia props = [] innatum lista<textus>
+    ex proprietates pro prop {
+        si prop.dispersum {
+            props.adde(scriptum("..§", genExpressia(prop.valor, g)))
+        } sin prop.brevitas {
+            props.adde(genExpressia(prop.clavis, g))
+        } secus {
+            props.adde(scriptum("§: §", genExpressia(prop.clavis, g), genExpressia(prop.valor, g)))
+        }
+    }
+
+    redde scriptum("{{ § }}", props.coniunge(", "))
+}

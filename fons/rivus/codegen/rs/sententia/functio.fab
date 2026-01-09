@@ -1,0 +1,113 @@
+# Rust Statement Generator - Functions
+
+ex "../../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, Visibilitas, ReddeVerbum
+ex "../../../ast/typus" importa TypusAnnotatio
+ex "../nucleus" importa RsGenerator
+ex "../expressia/index" importa genExpressia
+ex "./index" importa genSententia
+ex "../typus" importa genTypus
+
+@ publica
+functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> parametra, ignotum reddeVerbum, ignotum typusReditus, ignotum corpus, bivalens asynca, bivalens generator, bivalens structor, ignotum visibilitas, bivalens abstracta, bivalens externa, RsGenerator g) -> textus {
+    si externa {
+        varia result = scriptum("§extern \"C\" {{ fn §", g.ind(), nomen)
+        varia params = [] innatum lista<textus>
+        ex parametra pro param { params.adde(genParametrum(param, g)) }
+        result = scriptum("§(§)", result, params.coniunge(", "))
+        si nonnihil typusReditus {
+            result = scriptum("§ -> §", result, genTypus(typusReditus qua TypusAnnotatio, g))
+        }
+        redde scriptum("§; }}", result)
+    }
+
+    varia result = g.ind()
+    si nonnihil visibilitas {
+        fixum vis = visibilitas qua Visibilitas
+        si vis == Visibilitas.Publica { result = scriptum("§pub ", result) }
+    } sin non g.inGenere {
+        result = scriptum("§pub ", result)
+    }
+
+    si asynca { result = scriptum("§async ", result) }
+    result = scriptum("§fn §", result, nomen)
+
+    si nonnihil generaParametra {
+        fixum gp = generaParametra qua lista<TypusParametrum>
+        si gp.longitudo() > 0 {
+            varia names = [] innatum lista<textus>
+            ex gp pro p { names.adde(p.nomen) }
+            result = scriptum("§<§>", result, names.coniunge(", "))
+        }
+    }
+
+    varia params = [] innatum lista<textus>
+    si g.inGenere et non structor { params.adde("&self") }
+    ex parametra pro param { params.adde(genParametrum(param, g)) }
+    result = scriptum("§(§)", result, params.coniunge(", "))
+
+    si nonnihil typusReditus et non structor {
+        fixum base = genTypus(typusReditus qua TypusAnnotatio, g)
+        si nonnihil reddeVerbum {
+            fixum rv = reddeVerbum qua ReddeVerbum
+            si rv == ReddeVerbum.Fit aut rv == ReddeVerbum.Fiet {
+                result = scriptum("§ -> Result<§, Box<dyn std::error::Error>>", result, base)
+            } sin rv == ReddeVerbum.Fiunt aut rv == ReddeVerbum.Fient {
+                result = scriptum("§ -> impl Iterator<Item = §>", result, base)
+            } secus {
+                result = scriptum("§ -> §", result, base)
+            }
+        } secus {
+            result = scriptum("§ -> §", result, base)
+        }
+    } sin structor {
+        result = scriptum("§ -> Self", result)
+    }
+
+    si abstracta aut corpus == nihil {
+        redde scriptum("§;", result)
+    }
+
+    si nonnihil corpus {
+        fixum prevInFlumina = g.inFlumina
+        si nonnihil reddeVerbum {
+            fixum rv = reddeVerbum qua ReddeVerbum
+            g.inFlumina = rv == ReddeVerbum.Fit aut rv == ReddeVerbum.Fiet
+        }
+        g.intraProfundum()
+        varia body = genSententia(corpus qua Sententia, g)
+        g.exiProfundum()
+        g.inFlumina = prevInFlumina
+
+        si body == "" { result = scriptum("§ {{}}", result) }
+        secus { result = scriptum("§ {{\n§\n§}}", result, body, g.ind()) }
+    }
+
+    redde result
+}
+
+@ publica
+functio genParametrum(Parametrum param, RsGenerator g) -> textus {
+    varia result = ""
+    si param.residuum {
+        result = scriptum("§: &[", param.nomen)
+        si nonnihil param.typus {
+            result = scriptum("§§]", result, genTypus(param.typus qua TypusAnnotatio, g))
+        } secus {
+            result = scriptum("§dyn std::any::Any]", result)
+        }
+        redde result
+    }
+
+    si nonnihil param.alias { result = param.alias qua textus }
+    secus { result = param.nomen }
+
+    si nonnihil param.typus {
+        fixum typus = genTypus(param.typus qua TypusAnnotatio, g)
+        si param.optionalis et nihil param.praedefinitum {
+            result = scriptum("§: Option<§>", result, typus)
+        } secus {
+            result = scriptum("§: §", result, typus)
+        }
+    }
+    redde result
+}

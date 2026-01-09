@@ -1,0 +1,45 @@
+# Rust Expression Generator - Literals
+
+ex "../../../ast/expressia" importa LitteraGenus, Expressia
+ex "../nucleus" importa RsGenerator
+ex "./index" importa genExpressia
+
+@ publica
+functio genLittera(LitteraGenus species, textus crudus) -> textus {
+    si species == LitteraGenus.Verum { redde "true" }
+    si species == LitteraGenus.Falsum { redde "false" }
+    si species == LitteraGenus.Nihil { redde "()" }
+    si species == LitteraGenus.Textus {
+        redde scriptum("\"§\".to_string()", crudus)
+    }
+    si species == LitteraGenus.Exemplar {
+        redde scriptum("format!(\"§\")", crudus)
+    }
+    si species == LitteraGenus.Numerus {
+        redde scriptum("§i64", crudus)
+    }
+    si species == LitteraGenus.Fractus {
+        redde scriptum("§f64", crudus)
+    }
+    redde crudus
+}
+
+@ publica
+functio genLitteraExemplar(lista<textus> partes, lista<Expressia> expressiae, RsGenerator g) -> textus {
+    varia formatStr = ""
+    varia args = [] innatum lista<textus>
+    varia i = 0
+    ex partes pro pars {
+        fixum escaped = pars.replace("{", "{{").replace("}", "}}")
+        formatStr = formatStr + escaped
+        si i < expressiae.longitudo() {
+            formatStr = formatStr + "{}"
+            args.adde(genExpressia(expressiae[i], g))
+        }
+        i += 1
+    }
+    si args.longitudo() == 0 {
+        redde scriptum("\"§\".to_string()", formatStr)
+    }
+    redde scriptum("format!(\"§\", §)", formatStr, args.coniunge(", "))
+}

@@ -1,0 +1,33 @@
+# Rust Statement Generator - Console Output
+
+ex "../../../ast/sententia" importa ScribeGradus
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa RsGenerator
+ex "../expressia/index" importa genExpressia
+
+@ publica
+functio genScribe(ScribeGradus gradus, lista<Expressia> argumenta, RsGenerator g) -> textus {
+    varia args = [] innatum lista<textus>
+    ex argumenta pro arg {
+        args.adde(genExpressia(arg, g))
+    }
+
+    varia formatPlaceholders = [] innatum lista<textus>
+    varia i = 0
+    dum i < args.longitudo() {
+        formatPlaceholders.adde("{{:?}}")
+        i += 1
+    }
+
+    si gradus == ScribeGradus.Vide {
+        si args.longitudo() == 0 { redde scriptum("§eprintln!(\"[DEBUG]\");", g.ind()) }
+        redde scriptum("§eprintln!(\"[DEBUG] §\", §);", g.ind(), formatPlaceholders.coniunge(" "), args.coniunge(", "))
+    } sin gradus == ScribeGradus.Mone {
+        si args.longitudo() == 0 { redde scriptum("§eprintln!(\"[WARN]\");", g.ind()) }
+        redde scriptum("§eprintln!(\"[WARN] §\", §);", g.ind(), formatPlaceholders.coniunge(" "), args.coniunge(", "))
+    }
+
+    si args.longitudo() == 0 { redde scriptum("§println!();", g.ind()) }
+    si args.longitudo() == 1 { redde scriptum("§println!(\"{{:?}}\", §);", g.ind(), args[0]) }
+    redde scriptum("§println!(\"§\", §);", g.ind(), formatPlaceholders.coniunge(" "), args.coniunge(", "))
+}

@@ -1,0 +1,34 @@
+# Rust Statement Generator - Variable Declarations
+
+ex "../../../ast/sententia" importa VariaGenus
+ex "../../../ast/expressia" importa Expressia
+ex "../../../ast/typus" importa TypusAnnotatio
+ex "../nucleus" importa RsGenerator
+ex "../typus" importa genTypus
+ex "../expressia/index" importa genExpressia
+
+@ publica
+functio genVaria(VariaGenus species, textus nomen, ignotum adnotatioTypus, ignotum valor, bivalens externa, RsGenerator g) -> textus {
+    si externa {
+        varia result = scriptum("§extern \"C\" {{ static §", g.ind(), nomen)
+        si nonnihil adnotatioTypus {
+            result = scriptum("§: §", result, genTypus(adnotatioTypus qua TypusAnnotatio, g))
+        }
+        redde scriptum("§; }}", result)
+    }
+
+    fixum mutable = species == VariaGenus.Varia aut species == VariaGenus.Variandum
+    fixum keyword = mutable sic "let mut" secus "let"
+    varia result = scriptum("§§ §", g.ind(), keyword, nomen)
+
+    si nonnihil adnotatioTypus {
+        result = scriptum("§: §", result, genTypus(adnotatioTypus qua TypusAnnotatio, g))
+    }
+
+    si nonnihil valor {
+        fixum asyncSuffix = species == VariaGenus.Figendum aut species == VariaGenus.Variandum sic ".await" secus ""
+        result = scriptum("§ = §§", result, genExpressia(valor qua Expressia, g), asyncSuffix)
+    }
+
+    redde scriptum("§;", result)
+}

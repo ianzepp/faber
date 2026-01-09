@@ -1,0 +1,66 @@
+# Rust Statement Generator - Structs
+
+ex "../../../ast/sententia" importa Sententia, CampusDeclaratio, Parametrum, TypusParametrum, Visibilitas
+ex "../../../ast/typus" importa TypusAnnotatio
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa RsGenerator
+ex "../typus" importa genTypus
+ex "../expressia/index" importa genExpressia
+ex "./index" importa genSententia
+
+@ publica
+functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotum implet, bivalens abstractum, lista<CampusDeclaratio> campi, ignotum structor, lista<Sententia> methodi, RsGenerator g) -> textus {
+    varia result = scriptum("§pub struct §", g.ind(), nomen)
+
+    varia genericNames = [] innatum lista<textus>
+    si nonnihil generaParametra {
+        fixum gp = generaParametra qua lista<TypusParametrum>
+        si gp.longitudo() > 0 {
+            ex gp pro p { genericNames.adde(p.nomen) }
+            result = scriptum("§<§>", result, genericNames.coniunge(", "))
+        }
+    }
+
+    si campi.longitudo() == 0 et structor == nihil {
+        result = scriptum("§;", result)
+    } secus {
+        result = scriptum("§ {{", result)
+        g.intraProfundum()
+        ex campi pro campo {
+            varia fieldResult = g.ind()
+            si nonnihil campo.visibilitas {
+                fixum vis = campo.visibilitas qua Visibilitas
+                si vis == Visibilitas.Publica { fieldResult = scriptum("§pub ", fieldResult) }
+            }
+            fieldResult = scriptum("§§", fieldResult, campo.nomen)
+            si nonnihil campo.typus {
+                fieldResult = scriptum("§: §", fieldResult, genTypus(campo.typus qua TypusAnnotatio, g))
+            }
+            result = scriptum("§\n§,", result, fieldResult)
+        }
+        g.exiProfundum()
+        result = scriptum("§\n§}}", result, g.ind())
+    }
+
+    si methodi.longitudo() > 0 aut nonnihil structor {
+        result = scriptum("§\n\n§impl §", result, g.ind(), nomen)
+        si genericNames.longitudo() > 0 {
+            result = scriptum("§<§>", result, genericNames.coniunge(", "))
+        }
+        result = scriptum("§ {{", result)
+
+        fixum prevInGenere = g.inGenere
+        g.inGenere = verum
+        g.intraProfundum()
+
+        ex methodi pro methodStmt {
+            result = scriptum("§\n\n§", result, genSententia(methodStmt, g))
+        }
+
+        g.exiProfundum()
+        g.inGenere = prevInGenere
+        result = scriptum("§\n§}}", result, g.ind())
+    }
+
+    redde result
+}

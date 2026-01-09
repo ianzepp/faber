@@ -1,0 +1,62 @@
+# Rust Code Generator - Core generator state
+
+ex "../typi" importa RequiredFeatures, creaRequiredFeatures
+
+@ publicum
+genus RsGenerator {
+    numerus profunditas
+    textus indentum
+    bivalens inCursore
+    bivalens inFlumina
+    bivalens inFiunt
+    bivalens inFiet
+    bivalens inFient
+    bivalens inGenere
+    RequiredFeatures requisita
+
+    @ publica
+    functio ind() -> textus {
+        varia result = ""
+        varia i = 0
+        dum i < ego.profunditas {
+            result = result + ego.indentum
+            i += 1
+        }
+        redde result
+    }
+
+    @ publica
+    functio intraProfundum() {
+        ego.profunditas += 1
+    }
+
+    @ publica
+    functio exiProfundum() {
+        ego.profunditas -= 1
+    }
+
+    @ publica
+    functio notaePrae(ignotum nodus) -> textus {
+        redde ""
+    }
+
+    @ publica
+    functio notaePost(ignotum nodus) -> textus {
+        redde ""
+    }
+}
+
+@ publica
+functio creaRsGenerator() -> RsGenerator {
+    redde {
+        profunditas: 0,
+        indentum: "    ",
+        inCursore: falsum,
+        inFlumina: falsum,
+        inFiunt: falsum,
+        inFiet: falsum,
+        inFient: falsum,
+        inGenere: falsum,
+        requisita: creaRequiredFeatures()
+    } qua RsGenerator
+}
