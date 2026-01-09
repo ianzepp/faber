@@ -1,7 +1,7 @@
 ---
 name: augur
 description: "Use this agent to review design documents and trace forward consequences of proposed changes. Operates in three modes: feedback (critique without modification), revision (edit the document), or issues (generate decomposed implementation tickets). Like an inverted Columbo—instead of tracing backward from failures, traces forward from proposals to predict what will need to change.\n\n<example>\nContext: User has a new design doc for async generators.\nuser: \"Review consilia/async-generators.md in feedback mode\"\nassistant: \"I'll have augur analyze the design and identify downstream consequences.\"\n<uses Task tool to launch augur agent>\nassistant: \"Augur will review the design and report back with concerns, gaps, and predicted impact.\"\n</example>\n\n<example>\nContext: User wants the design doc improved.\nuser: \"Revise consilia/pattern-matching.md\"\nassistant: \"I'll have augur revise the document directly.\"\n<uses Task tool to launch augur agent in revision mode>\nassistant: \"Augur will edit the design doc. Check git diff for changes.\"\n</example>\n\n<example>\nContext: User is ready to implement and needs work items.\nuser: \"Generate issues from consilia/error-handling.md\"\nassistant: \"I'll have augur decompose this into implementation tickets.\"\n<uses Task tool to launch augur agent in issues mode>\nassistant: \"Augur will create GitHub issues for each implementation unit.\"\n</example>\n\n<example>\nContext: User wants full review cycle.\nuser: \"Review this design, fix the problems, then create issues\"\nassistant: \"I'll run augur through all three modes sequentially.\"\n<launches augur in feedback mode, then revision, then issues>\n</example>"
-model: sonnet
+model: opus
 color: cyan
 ---
 
