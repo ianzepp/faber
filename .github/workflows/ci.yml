@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-faber:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run build:faber
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opus-faber
+          path: opus/
+
+  exempla-faber:
+    needs: build-faber
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: opus-faber
+          path: opus/
+      - run: chmod +x opus/bin/faber
+      - run: bun run build:exempla -c faber -t ts
+
+  build-norma:
+    needs: exempla-faber
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: opus-faber
+          path: opus/
+      - run: bun run build:norma
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opus-norma
+          path: opus/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: norma-generated
+          path: |
+            fons/faber/codegen/norma-registry.gen.ts
+            fons/rivus/codegen/norma-registry.gen.fab
+
+  build-rivus:
+    needs: build-norma
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: opus-norma
+          path: opus/
+      - uses: actions/download-artifact@v4
+        with:
+          name: norma-generated
+          path: .
+      - run: bun run build:rivus
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opus-rivus
+          path: opus/
+
+  exempla-rivus:
+    needs: build-rivus
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: opus-rivus
+          path: opus/
+      - run: chmod +x opus/bin/rivus
+      - run: bun run build:exempla -c rivus -t ts
+
+  build-artifex:
+    needs: exempla-rivus
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: opus-rivus
+          path: opus/
+      - run: chmod +x opus/bin/rivus
+      - run: bun run build:artifex
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opus-artifex
+          path: opus/
+
+  exempla-artifex:
+    needs: build-artifex
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: opus-artifex
+          path: opus/
+      - run: chmod +x opus/bin/artifex
+      - run: bun run build:exempla -c artifex -t ts
