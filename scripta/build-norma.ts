@@ -253,20 +253,40 @@ function generateFaberCode(collections: CollectionDef[]): string {
 // JSON GENERATOR (flat key structure)
 // =============================================================================
 
-interface JsonTranslation {
+interface JsonEntry {
+    // Collection-level (1 part key: "lista")
+    innatum?: Record<string, string>;
+    // Method-level (2 part key: "lista:adde")
+    radixForms?: string[];
+    // Translation-level (3 part key: "lista:adde:ts")
     method?: string;
     template?: string;
     params?: string[];
 }
 
 function generateJsonRegistry(collections: CollectionDef[]): string {
-    const registry: Record<string, JsonTranslation> = {};
+    const registry: Record<string, JsonEntry> = {};
 
     for (const coll of collections) {
+        // Collection-level: innatum
+        if (coll.innatum.size > 0) {
+            const innatum: Record<string, string> = {};
+            for (const [target, type] of coll.innatum) {
+                innatum[target] = type;
+            }
+            registry[coll.name] = { innatum };
+        }
+
         for (const [methodName, method] of coll.methods) {
+            // Method-level: radixForms
+            if (method.radixForms && method.radixForms.length > 0) {
+                registry[`${coll.name}:${methodName}`] = { radixForms: method.radixForms };
+            }
+
+            // Translation-level: method/template/params
             for (const [target, trans] of method.translations) {
                 const key = `${coll.name}:${methodName}:${target}`;
-                const entry: JsonTranslation = {};
+                const entry: JsonEntry = {};
 
                 if (trans.method) {
                     entry.method = trans.method;
@@ -291,6 +311,12 @@ function generateJsonRegistry(collections: CollectionDef[]): string {
         const entry = registry[key];
         const parts: string[] = [];
 
+        if (entry.innatum) {
+            parts.push(`"innatum": ${JSON.stringify(entry.innatum)}`);
+        }
+        if (entry.radixForms) {
+            parts.push(`"radixForms": ${JSON.stringify(entry.radixForms)}`);
+        }
         if (entry.method) {
             parts.push(`"method": ${JSON.stringify(entry.method)}`);
         }
