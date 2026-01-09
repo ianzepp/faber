@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 /**
- * Full build: faber -> norma -> rivus -> artifex
+ * Full build: norma -> faber -> rivus -> artifex
  *
+ * norma runs first to generate registry files that faber needs to compile.
  * Each compiler stage is verified by running build:exempla against it.
  *
  * Usage:
@@ -53,13 +54,13 @@ async function main() {
 
     console.log(`Full build (target: ${target})\n`);
 
+    await step('build:norma', async () => {
+        await $`bun run build:norma`.quiet();
+    });
+
     await step('build:faber and verify', async () => {
         await $`bun run build:faber`.quiet();
         await $`bun run build:exempla -c faber -t ${target}`.quiet();
-    });
-
-    await step('build:norma', async () => {
-        await $`bun run build:norma`.quiet();
     });
 
     await step('build:rivus and verify', async () => {

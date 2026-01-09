@@ -30,6 +30,7 @@ jobs:
         with:
           name: norma-generated
           path: .
+      - run: ls -la fons/faber/codegen/
       - run: bun run build:faber
       - uses: actions/upload-artifact@v4
         with:
