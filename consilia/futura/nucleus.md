@@ -37,6 +37,35 @@ Async Generator (primitive)
 2. **Memory efficiency** — Process items as they arrive, don't buffer everything
 3. **Unified model** — Single primitive handles all async patterns
 4. **Backpressure built-in** — Consumer controls pace via poll frequency
+5. **Buffer management** — Base streaming impl uses fixed internal buffers; derived batch forms add allocation on top
+
+**Memory efficiency example:**
+
+```fab
+# Streaming: constant memory regardless of file size
+ex solum.legens("huge.log") pro chunk {
+    si chunk.continet("ERROR") {
+        scribe chunk
+    }
+}
+
+# Batch: loads entire file into memory
+fixum content = solum.lege("huge.log")  # OOM on large files
+```
+
+**Zig 0.15 alignment:** The async-generator-first approach naturally fits Zig 0.15's buffer-based I/O APIs ("Writergate"):
+
+```zig
+// Old (pre-0.15): allocation-based
+const line = reader.readUntilDelimiterAlloc(alloc, '\n', 4096);
+
+// New (0.15): buffer-based
+var buf: [4096]u8 = undefined;
+var r = file.reader(&buf);
+const line = r.interface.takeDelimiter('\n');  // Returns slice into buf
+```
+
+Base `legens` uses fixed buffers (matches 0.15 API). Derived `leget`/`lege` add allocation on top.
 
 ### The Derivation Chain
 
@@ -49,6 +78,45 @@ future()           # derived: collect all items → single value (Promise)
     ↓ block_on
 sync()             # derived: await future → unwrapped value (blocking)
 ```
+
+### The Inversion
+
+Traditional approach (sync-first):
+```
+lege (sync)           ← Base implementation
+    ↓ wrap in Promise
+leget (async)         ← Derived
+    ↓ add chunking
+legens (streaming)    ← Derived (complex)
+```
+
+Async-generator-first approach:
+```
+legens (async generator)    ← Base implementation
+    ↓ collect stream
+leget (async batch)         ← Derived (simple)
+    ↓ block until complete
+lege (sync batch)           ← Derived (simple)
+```
+
+Streaming is strictly more general. You can always derive batch from stream (iterate and collect), but you cannot derive stream from batch without reimplementing.
+
+### Scope: What This Applies To
+
+This pattern applies to **I/O-bound** stdlib types:
+
+| Type       | Base Form       | Meaning                    |
+|------------|-----------------|----------------------------|
+| **solum**  | `legens`        | Stream file chunks         |
+| **solum**  | `scribens`      | Stream writes              |
+| **caelum** | `petens`        | Stream HTTP response       |
+| **caelum** | `auscultans`    | Stream WebSocket messages  |
+| **arca**   | `quaerens`      | Stream query results       |
+| **nucleus**| `accipiens`     | Stream IPC messages        |
+
+Does **not** apply to:
+- In-memory collections (`lista`, `tabula`, `copia`) — sync is natural base
+- Pure computation (`mathesis`, `tempus`) — no I/O involved
 
 ---
 
@@ -687,6 +755,119 @@ fons/subsidia/zig/
 └── mod.zig            # Re-exports
 ```
 
+**Detailed ChunkIterator (base streaming impl):**
+
+```zig
+// fons/subsidia/zig/solum.zig
+
+pub const ChunkIterator = struct {
+    file: std.fs.File,
+    buffer: [4096]u8,
+    bytes_read: usize,
+    done: bool,
+
+    pub fn next(self: *ChunkIterator) ?[]const u8 {
+        if (self.done) return null;
+
+        self.bytes_read = self.file.read(&self.buffer) catch |err| {
+            self.done = true;
+            return null;
+        };
+
+        if (self.bytes_read == 0) {
+            self.done = true;
+            return null;
+        }
+
+        return self.buffer[0..self.bytes_read];
+    }
+
+    pub fn deinit(self: *ChunkIterator) void {
+        self.file.close();
+    }
+};
+
+// Base: streaming read (legens)
+pub fn legens(path: []const u8) ChunkIterator {
+    const file = std.fs.cwd().openFile(path, .{}) catch |err| {
+        return ChunkIterator{ .file = undefined, .done = true, .buffer = undefined, .bytes_read = 0 };
+    };
+    return ChunkIterator{ .file = file, .done = false, .buffer = undefined, .bytes_read = 0 };
+}
+
+// Derived: sync batch read (lege) - iterates stream directly
+pub fn lege(alloc: std.mem.Allocator, path: []const u8) ![]u8 {
+    var iter = legens(path);
+    defer iter.deinit();
+
+    var result = std.ArrayList(u8).init(alloc);
+    while (iter.next()) |chunk| {
+        try result.appendSlice(chunk);
+    }
+    return result.toOwnedSlice();
+}
+```
+
+**LegetFuture (stream → async batch derivation):**
+
+```zig
+const LegetFuture = struct {
+    state: union(enum) {
+        iterating: struct {
+            alloc: Allocator,
+            iter: ChunkIterator,
+            buffer: ArrayList(u8),
+        },
+        done: []u8,
+        failed,
+    },
+
+    pub fn poll(self: *LegetFuture) Responsum([]u8) {
+        switch (self.state) {
+            .iterating => |*s| {
+                // Non-blocking: process one chunk per poll
+                if (s.iter.next()) |chunk| {
+                    s.buffer.appendSlice(chunk) catch {
+                        self.state = .failed;
+                        return .{ .err = .{ .code = "ALLOC", .message = "allocation failed" } };
+                    };
+                    return .pending;
+                }
+                // Stream exhausted
+                const result = s.buffer.toOwnedSlice();
+                s.iter.deinit();
+                self.state = .{ .done = result };
+                return .{ .ok = result };
+            },
+            .done => |data| return .{ .ok = data },
+            .failed => return .{ .err = .{ .code = "FAILED", .message = "operation failed" } },
+        }
+    }
+};
+```
+
+**Sync can also block on Future (alternative to direct iteration):**
+
+```zig
+pub fn lege_via_future(alloc: Allocator, path: []const u8) ![]u8 {
+    var future = leget(alloc, path);
+    return block_on([]u8, &future);
+}
+
+fn block_on(comptime T: type, future: anytype) !T {
+    while (true) {
+        switch (future.poll()) {
+            .pending => {}, // busy-wait or yield
+            .ok => |v| return v,
+            .err => return error.IoError,
+            else => unreachable,
+        }
+    }
+}
+```
+
+Direct iteration (first approach) avoids Future overhead for sync use cases.
+
 ---
 
 ### Rust
@@ -1166,6 +1347,38 @@ Compiler injects auth check at function entry, not inside dispatcher.
 
 ---
 
+## Trade-offs
+
+### Advantages
+
+1. **Single implementation path** — Base streaming impl is authoritative
+2. **Derived forms are trivial** — Just collect or block
+3. **Memory control** — Users choose streaming vs batch based on needs
+4. **Zig 0.15 fit** — Matches buffer-based API model naturally
+5. **Cross-target consistency** — Same semantics everywhere
+
+### Disadvantages
+
+1. **Sync has overhead** — Even `lege` goes through iterator machinery
+2. **Simple cases verbose** — Reading a small config file requires allocator
+3. **Implementation complexity** — Base streaming impl is more complex than naive sync
+
+### Mitigation
+
+For the "simple case overhead" concern, consider convenience wrappers:
+
+```fab
+# In user code, for small files:
+fixum config = solum.lege("config.json", alloc)
+
+# Sugar for truly simple cases (uses temp allocator internally):
+fixum config = solum.legeBrevis("config.json")  # "read briefly"
+```
+
+But this adds API surface. The primary recommendation is: accept the allocator parameter, trust the derived forms are efficient enough.
+
+---
+
 ## Open Questions
 
 1. **Error context enrichment** — Should `.err` include stack trace? Performance vs debuggability.
@@ -1177,6 +1390,8 @@ Compiler injects auth check at function entry, not inside dispatcher.
 4. **Cross-target ID consistency** — TS uses UUID, Zig uses counter. Acceptable divergence?
 
 5. **Partial error semantics** — Consumer sees 100 items then `.err`. How to handle?
+
+6. **Convenience wrappers** — Is `legeBrevis` worth the API surface, or just accept allocator params?
 
 ---
 

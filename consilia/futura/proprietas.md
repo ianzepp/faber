@@ -124,3 +124,62 @@ The feature exists as an escape hatch, not a default pattern.
 - `@ attributum` - "attribute" (too generic)
 - `@ nomen` - "noun" (doesn't cover adjectives)
 - `@ qualitas` - "quality" (philosophical, awkward)
+
+---
+
+## Design Review (Augur Analysis)
+
+*Reviewed: 2026-01-09*
+
+### Consequence Chain
+
+1. **Annotation parsing and storage** — Add `@ proprietas` to grammar (trivial), extend `NormaMethod` interface to store `proprietas: boolean` flag
+   → 2. **Norma registry build changes** — `build:norma` script must parse `@ proprietas`, populate flag in generated `norma-registry.gen.ts`, synchronize to `norma-registry.gen.fab` for rivus
+     → 3. **Semantic analysis divergence** — `resolveMemberExpression` must distinguish property-methods from callable-methods; `resolveCallExpression` must reject calls to property-methods
+       → 4. **Codegen per-target complexity** — Each target (ts/py/rs/cpp/zig) must check `@ proprietas` flag in `genMemberExpression`, apply norma templates there instead of `genCallExpression`
+         → 5. **Breaking change risk** — Existing code calling `longitudo()` with parens breaks when annotation added; migration path unclear
+           → 6. **Test coverage explosion** — Every target needs tests for: property access success, parenthesized call rejection, optional chaining (`items?.longitudo`), error messages, interaction with norma templates
+
+### Impact Assessment
+
+| Area | Impact | Notes |
+|------|--------|-------|
+| Lexer | None | No token changes; grammar already accepts member access |
+| Parser | None | `obj.prop` already parses as MemberExpression; no AST changes needed |
+| Semantic | **High** | Must bifurcate method access logic: property-methods resolve in `resolveMemberExpression`, reject in `resolveCallExpression`; error messages must guide users |
+| Codegen | **High** | All 5 targets must check `proprietas` flag in both `genMemberExpression` and `genCallExpression`; template application moves from call-site to member-access |
+| Tests | **Medium** | Need per-target tests for property-method access, rejection of call syntax, optional chaining; rivus tests also affected |
+| User code | **Medium-High** | Breaking change: code currently using `items.longitudo()` breaks when stdlib migrates to `@ proprietas`; no deprecation path exists |
+
+### Concerns
+
+1. **Semantic analyzer complexity** — Currently, `resolveMemberExpression` returns method types (FunctionType), and `resolveCallExpression` invokes them. With `@ proprietas`, member access must apply templates and return result types directly, duplicating codegen logic in semantic phase. This violates separation of concerns.
+
+2. **Breaking change without migration path** — Annotating `longitudo` with `@ proprietas` instantly breaks all existing `items.longitudo()` calls. No deprecation period, no warning phase, no automated migration tool.
+
+3. **Asymmetric method semantics** — Faber currently has uniform method call syntax: all methods require `()`. Introducing property-methods fragments this into "verbs need parens, nouns don't" — cognitive load when scanning code.
+
+4. **Template application in two places** — Norma templates currently apply exclusively in `genCallExpression`. With `@ proprietas`, they must also apply in `genMemberExpression`. This duplicates template logic.
+
+5. **Insufficient justification** — The design claims LLMs "consistently write `items.longitudo` instead of `items.longitudo()`" but provides no data. Is this a 90% failure rate or 10%? Does clear error feedback fix the issue in subsequent turns?
+
+6. **Linguistic alignment claim is weak** — The document argues nouns/adjectives map to properties, verbs to methods. But Latin doesn't enforce this: `longitudo` (noun) could still be a method returning length. The distinction is aesthetic, not grammatical.
+
+### Questions
+
+- What is the actual LLM failure rate for `longitudo()` vs `longitudo` in trials?
+- How should migration work? Maintain both forms for transition, emit warnings, then hard error?
+- Why not restrict `@ proprietas` to targets where it maps to native properties (TS `.length`)?
+- Can semantic return a placeholder "PropertyMethodType" that codegen resolves, preserving separation of concerns?
+
+### Recommendations
+
+1. **Defer until LLM trial data justifies it.** Measure failure rate and retry overhead with current error messages.
+
+2. **If implemented, start TS-only.** Restrict `@ proprietas` to targets where the native type actually has properties.
+
+3. **Add migration support.** Warning mode, lint rule for auto-fix, gradual rollout.
+
+4. **Separate semantic from codegen.** Introduce `PropertyMethodType` wrapper to avoid duplicating transformation logic.
+
+5. **Defer until Nucleus async generators stabilize.** The recently consolidated runtime design may change how stdlib methods interact with types.
