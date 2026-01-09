@@ -62,5 +62,5 @@ functio genPreamble(RsGenerator g) -> textus {
         redde ""
     }
 
-    redde imports.coniunge("\n") + "\n"
+    redde scriptum("§\n", imports.coniunge("\n"))
 }

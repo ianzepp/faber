@@ -1,7 +1,8 @@
 # Rust Expression Generator - Dispatch
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum, MorphologiaInvocatio
+ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum, MorphologiaInvocatio, CatenaGradus
 ex "../../../ast/sententia" importa Sententia, VariaGenus
+ex "../sententia/index" importa genSententia, genMassa
 ex "../../../ast/typus" importa TypusAnnotatio, TypusParametrum
 ex "../nucleus" importa RsGenerator
 ex "../typus" importa genTypus
@@ -187,8 +188,97 @@ functio genExpressia(Expressia expr, RsGenerator g) -> textus {
             fixum op = (t.directio qua textus) == "dextratum" sic ">>" secus "<<"
             redde scriptum("(§ § §)", shifted, op, amount)
         }
+
+        # EstExpressia - type check
+        casu EstExpressia ut e {
+            fixum expr = genExpressia(e.expressia, g)
+            fixum typusNomen = (e.scopus qua TypusAnnotatio).nomen qua textus
+            redde scriptum("/* § is § */true", expr, typusNomen)
+        }
+
+        # CatenaExpressia - method chaining
+        casu CatenaExpressia ut e {
+            fixum fons = genExpressia(e.fons, g)
+            redde applicaCatenaGradus(fons, e.gradus qua lista<CatenaGradus>, g)
+        }
+
+        # PraefixumExpressia - compile-time block
+        casu PraefixumExpressia ut e {
+            fixum corpus = e.corpus qua Sententia
+            discerne corpus {
+                casu MassaSententia ut m {
+                    g.intraProfundum()
+                    fixum body = genMassa(m.corpus qua lista<Sententia>, g)
+                    g.exiProfundum()
+                    redde scriptum("{{\n§\n§}}", body, g.ind())
+                }
+                casu _ { }
+            }
+            redde scriptum("(§)", genExpressia(e.corpus qua Expressia, g))
+        }
+
+        # LegeExpressia - read input
+        casu LegeExpressia ut e {
+            si (e.modus qua textus) == "line" {
+                redde "std::io::stdin().read_line(&mut String::new()).unwrap()"
+            }
+            redde "std::io::read_to_string(std::io::stdin()).unwrap()"
+        }
+
+        # AbExpressia - filtering
+        casu AbExpressia ut e {
+            fixum fons = genExpressia(e.fons, g)
+            si e.filtrum == nihil {
+                redde fons
+            }
+            redde scriptum("§.into_iter().filter(|_x| true).collect::<Vec<_>>()", fons)
+        }
+
+        # DispersioElementum - spread operator
+        casu DispersioElementum ut e {
+            redde scriptum("/* spread */ §", genExpressia(e.argumentum, g))
+        }
+
+        # FingeExpressia - discriminated union construction
+        casu FingeExpressia ut e {
+            varia props = [] innatum lista<textus>
+            ex (e.campi qua lista<ObiectumProprietas>) pro campo {
+                fixum key = genExpressia(campo.clavis, g)
+                fixum val = genExpressia(campo.valor, g)
+                props.adde(scriptum("§: §", key, val))
+            }
+            redde scriptum("§ {{ § }}", e.variansNomen, props.coniunge(", "))
+        }
     }
     redde "/* unknown expression */"
+}
+
+functio applicaCatenaGradus(textus fons, lista<CatenaGradus> gradus, RsGenerator g) -> textus {
+    varia result = fons
+    ex gradus pro step {
+        fixum verbum = step.verbum qua textus
+        elige verbum {
+            casu "prima" {
+                si nonnihil step.argumentum {
+                    result = scriptum("§.into_iter().take(§).collect::<Vec<_>>()", result, genExpressia(step.argumentum qua Expressia, g))
+                } secus {
+                    result = scriptum("§.first().cloned()", result)
+                }
+            }
+            casu "ultima" {
+                si nonnihil step.argumentum {
+                    result = scriptum("§.into_iter().rev().take(§).collect::<Vec<_>>()", result, genExpressia(step.argumentum qua Expressia, g))
+                } secus {
+                    result = scriptum("§.last().cloned()", result)
+                }
+            }
+            casu "summa" { result = scriptum("§.into_iter().sum::<i64>()", result) }
+            casu "longitudo" { result = scriptum("§.len()", result) }
+            casu "ordina" { result = scriptum("{{ let mut v = §; v.sort(); v }}", result) }
+            casu "inversa" { result = scriptum("{{ let mut v = §; v.reverse(); v }}", result) }
+        }
+    }
+    redde result
 }
 
 functio applyNormaTemplate(textus template, lista<textus> params, textus obj, lista<textus> args) -> textus {
