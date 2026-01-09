@@ -4,7 +4,7 @@
 
 ex "../resolvitor" importa Resolvitor
 ex "../typi" importa SemanticTypus, VACUUM, IGNOTUM, NIHIL, NUMERUS
-ex "../typi" importa primitivumTypus, genericumTypus, unioTypus
+ex "../typi" importa primitivumTypus, genericumTypus, unioTypus, ignotumTypus
 ex "../typi" importa functioTypus, usitatumTypus, genusTypus, pactumTypus, ordoTypus
 ex "../typi" importa formaTypum, assignabileAd
 ex "../scopus" importa Symbolum, SymbolumSpecies, ScopusSpecies, quaereSymbolumLocale
@@ -48,6 +48,14 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
 
     si estGenericusTypus(annotatio.nomen) {
         redde genericumTypus(annotatio.nomen, resolvedParametri, annotatio.nullabilis)
+    }
+
+    # Handle ignotum specially - returns Ignotum variant, not a primitive
+    si annotatio.nomen == "ignotum" {
+        si annotatio.nullabilis {
+            redde unioTypus([ignotumTypus(nihil), NIHIL])
+        }
+        redde ignotumTypus(nihil)
     }
 
     # Primitive types
