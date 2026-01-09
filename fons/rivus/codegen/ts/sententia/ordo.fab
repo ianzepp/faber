@@ -5,13 +5,24 @@
 # TRANSFORMS:
 #   ordo Color { Red, Green, Blue }          -> enum Color { Red, Green, Blue }
 #   ordo Status { Active = 1, Inactive = 0 } -> enum Status { Active = 1, Inactive = 0 }
+#   @ publica ordo Color { ... }             -> export enum Color { ... }
 
-ex "../../../ast/sententia" importa OrdoMembrum
+ex "../../../ast/sententia" importa OrdoMembrum, Visibilitas
 ex "../nucleus" importa TsGenerator
 
 @ publica
-functio genOrdo(textus nomen, lista<OrdoMembrum> membra, TsGenerator g) -> textus {
-    varia result = scriptum("§enum § {\n", g.ind(), nomen)
+functio genOrdo(textus nomen, lista<OrdoMembrum> membra, ignotum visibilitas, TsGenerator g) -> textus {
+    varia result = g.ind()
+
+    # Module-level: export when public
+    si nonnihil visibilitas {
+        fixum vis = visibilitas qua Visibilitas
+        si vis == Visibilitas.Publica {
+            result = scriptum("§export ", result)
+        }
+    }
+
+    result = scriptum("§enum § {\n", result, nomen)
     g.intraProfundum()
 
     # If no member has an explicit value, keep them on one line.

@@ -16,7 +16,7 @@
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
 ex "../../ast/expressia" importa Expressia
-ex "../../ast/sententia" importa Sententia, ScribeGradus, MorphologiaDeclaratio
+ex "../../ast/sententia" importa Sententia, ScribeGradus, MorphologiaDeclaratio, Visibilitas
 ex "../../ast/lexema" importa SymbolumGenus, VerbumId
 ex "../../ast/radix" importa NodusRadix
 ex "../errores" importa ParserErrorCodice
@@ -66,6 +66,16 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
         fixum stmt = parseSententiaSineNotis(r)
 
         ex annotationes pro a {
+            # Check for visibility annotations
+            varia visibilitas = nihil qua Visibilitas?
+            si a.nomen inter ["publicum", "publica", "publicus"] {
+                visibilitas = Visibilitas.Publica
+            } sin a.nomen inter ["protectum", "protecta", "protectus"] {
+                visibilitas = Visibilitas.Protecta
+            } sin a.nomen inter ["privatum", "privata", "privatus"] {
+                visibilitas = Visibilitas.Privata
+            }
+
             discerne stmt {
                 casu FunctioDeclaratio ut f {
                     si a.nomen == "futura" {
@@ -77,15 +87,44 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
                     si a.nomen == "externa" {
                         f.externa = verum
                     }
+                    si nonnihil visibilitas {
+                        f.visibilitas = visibilitas
+                    }
                 }
                 casu VariaSententia ut v {
                     si a.nomen == "externa" {
                         v.externa = verum
                     }
+                    si nonnihil visibilitas {
+                        v.visibilitas = visibilitas
+                    }
                 }
                 casu GenusDeclaratio ut g {
                     si a.nomen inter ["abstractum", "abstracta", "abstractus"] {
                         g.abstractum = verum
+                    }
+                    si nonnihil visibilitas {
+                        g.visibilitas = visibilitas
+                    }
+                }
+                casu PactumDeclaratio ut p {
+                    si nonnihil visibilitas {
+                        p.visibilitas = visibilitas
+                    }
+                }
+                casu OrdoDeclaratio ut o {
+                    si nonnihil visibilitas {
+                        o.visibilitas = visibilitas
+                    }
+                }
+                casu DiscretioDeclaratio ut d {
+                    si nonnihil visibilitas {
+                        d.visibilitas = visibilitas
+                    }
+                }
+                casu TypusAliasDeclaratio ut t {
+                    si nonnihil visibilitas {
+                        t.visibilitas = visibilitas
                     }
                 }
                 casu _ { }

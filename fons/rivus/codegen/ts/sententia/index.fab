@@ -67,7 +67,7 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
 
         # Variable declarations
         casu VariaSententia ut s {
-            redde genVaria(s.species qua VariaGenus, s.nomen qua textus, s.typus, s.valor, s.externa qua bivalens, g)
+            redde genVaria(s.species qua VariaGenus, s.nomen qua textus, s.typus, s.valor, s.externa qua bivalens, s.visibilitas, g)
         }
 
         casu ImportaSententia ut s {
@@ -89,23 +89,23 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
 
         # Type declarations
         casu GenusDeclaratio ut s {
-            redde genGenus(s.nomen qua textus, s.generaParametra, s.extendit, s.implet, s.abstractum qua bivalens, s.campi qua lista<CampusDeclaratio>, s.structor, s.methodi qua lista<Sententia>, g)
+            redde genGenus(s.nomen qua textus, s.generaParametra, s.extendit, s.implet, s.abstractum qua bivalens, s.campi qua lista<CampusDeclaratio>, s.structor, s.methodi qua lista<Sententia>, s.visibilitas, g)
         }
 
         casu PactumDeclaratio ut s {
-            redde genPactum(s.nomen qua textus, s.generaParametra, s.methodi qua lista<PactumMethodus>, g)
+            redde genPactum(s.nomen qua textus, s.generaParametra, s.methodi qua lista<PactumMethodus>, s.visibilitas, g)
         }
 
         casu TypusAliasDeclaratio ut s {
-            redde genTypusAlias(s.nomen qua textus, s.typus qua TypusAnnotatio, s.scopusNomen, g)
+            redde genTypusAlias(s.nomen qua textus, s.typus qua TypusAnnotatio, s.scopusNomen, s.visibilitas, g)
         }
 
         casu OrdoDeclaratio ut s {
-            redde genOrdo(s.nomen qua textus, s.membra qua lista<OrdoMembrum>, g)
+            redde genOrdo(s.nomen qua textus, s.membra qua lista<OrdoMembrum>, s.visibilitas, g)
         }
 
         casu DiscretioDeclaratio ut s {
-            redde genDiscretio(s.nomen qua textus, s.generaParametra, s.variantes qua lista<VariansDeclaratio>, g)
+            redde genDiscretio(s.nomen qua textus, s.generaParametra, s.variantes qua lista<VariansDeclaratio>, s.visibilitas, g)
         }
 
         # Control flow

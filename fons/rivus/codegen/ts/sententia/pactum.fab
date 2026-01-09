@@ -8,8 +8,9 @@
 #   pactum Foo { f(): T }         -> interface Foo { f(): T }
 #   pactum Foo { futura f(): T }  -> interface Foo { f(): Promise<T> }
 #   pactum Foo { cursore f(): T } -> interface Foo { f(): Generator<T> }
+#   @ publica pactum Foo { ... }  -> export interface Foo { ... }
 
-ex "../../../ast/sententia" importa Parametrum, PactumMethodus
+ex "../../../ast/sententia" importa Parametrum, PactumMethodus, Visibilitas
 ex "../../../ast/typus" importa TypusAnnotatio
 ex "../nucleus" importa TsGenerator
 
@@ -18,8 +19,18 @@ ex "./functio" importa genParametrum
 ex "../typus" importa genTypus
 
 @ publica
-functio genPactum(textus nomen, ignotum generaParametra, lista<PactumMethodus> methodi, TsGenerator g) -> textus {
-    varia result = scriptum("§interface §", g.ind(), nomen)
+functio genPactum(textus nomen, ignotum generaParametra, lista<PactumMethodus> methodi, ignotum visibilitas, TsGenerator g) -> textus {
+    varia result = g.ind()
+
+    # Module-level: export when public
+    si nonnihil visibilitas {
+        fixum vis = visibilitas qua Visibilitas
+        si vis == Visibilitas.Publica {
+            result = scriptum("§export ", result)
+        }
+    }
+
+    result = scriptum("§interface §", result, nomen)
 
     si nonnihil generaParametra {
         fixum gp = generaParametra qua lista<textus>

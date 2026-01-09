@@ -245,6 +245,7 @@ functio parseVariaSententia(Resolvitor r) -> Sententia {
         nomen: nomen,
         typus: adnotatio,
         valor: valor,
-        externa: falsum
+        externa: falsum,
+        visibilitas: nihil
     } qua Sententia
 }
