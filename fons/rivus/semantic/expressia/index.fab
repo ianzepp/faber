@@ -236,7 +236,11 @@ functio resolveAssignatio(Resolvitor r, Expressia assignatioExpr) -> SemanticTyp
                 casu MembrumExpressia ut m {
                     # TODO: Resolve member types once genus metadata exists.
                     r.expressia(m.obiectum)
-                    r.expressia(m.proprietas)
+                    # WHY: Only resolve property for computed (indexed) access.
+                    # For dot access (obj.field), property is a field name, not a variable.
+                    si m.computatum {
+                        r.expressia(m.proprietas)
+                    }
                     redde dexterTypus
                 }
                 casu _ { }
