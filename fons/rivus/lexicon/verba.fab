@@ -150,6 +150,7 @@ functio verbumFaberId(textus v) -> VerbumId? {
         casu "per" reddit VerbumId.Per
         casu "qua" reddit VerbumId.Qua
         casu "ut" reddit VerbumId.Ut
+        casu "innatum" reddit VerbumId.Innatum
 
         # ---- Domain Specific (DSL) ----
         casu "ab" reddit VerbumId.Ab

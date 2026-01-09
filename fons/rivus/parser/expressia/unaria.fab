@@ -1,14 +1,15 @@
 # Unary and Postfix Expression Parsers
 #
 # Prefix operators: non, -, ~, cede, novum, etc.
-# Postfix operators: qua (type cast), call, member access
+# Postfix operators: qua (type cast), innatum (native construction), call, member access
 #
 # GRAMMAR:
 #   unary := ('non' | '-' | '~' | 'cede' | 'novum') unary | postfix
-#   postfix := primary (callSuffix | memberSuffix | quaSuffix)*
+#   postfix := primary (callSuffix | memberSuffix | quaSuffix | innatumSuffix)*
 #   callSuffix := '(' arguments ')'
 #   memberSuffix := '.' IDENTIFIER | '[' expr ']'
 #   quaSuffix := 'qua' typeAnnotation
+#   innatumSuffix := 'innatum' typeAnnotation
 #
 # LATIN VOCABULARY:
 # - unaria = unary
@@ -16,6 +17,7 @@
 # - cede = yield/await
 # - novum = new
 # - qua = as (type cast)
+# - innatum = native (type construction)
 
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
@@ -351,6 +353,19 @@ functio parsePostfix(Resolvitor r) -> Expressia {
             fixum scopus = r.adnotatio()
 
             expressia = finge QuaExpressia {
+                locus: locus,
+                expressia: expressia,
+                scopus: scopus
+            } qua Expressia
+            perge
+        }
+
+        # Native type construction: expr innatum Type
+        # Example: {} innatum tabula<textus, numerus>
+        si p.congruetVerbum("innatum") {
+            fixum scopus = r.adnotatio()
+
+            expressia = finge InnatumExpressia {
                 locus: locus,
                 expressia: expressia,
                 scopus: scopus

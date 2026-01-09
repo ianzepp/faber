@@ -190,6 +190,15 @@ discretio Expressia {
         TypusAnnotatio scopus    # target type
     }
 
+    # Native type construction expression
+    # Example: {} innatum tabula<textus, numerus>
+    # Example: [] innatum lista<textus>
+    InnatumExpressia {
+        Locus locus
+        Expressia expressia
+        TypusAnnotatio scopus    # target type
+    }
+
     # Type check expression
     # Example: value est numerus
     EstExpressia {
