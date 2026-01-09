@@ -5,7 +5,7 @@
 ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum, MorphologiaInvocatio
 ex "../../../ast/expressia" importa AbFiltrum, CatenaGradus
 ex "../../../ast/sententia" importa Sententia, VariaGenus
-ex "../../../ast/typus" importa TypusAnnotatio
+ex "../../../ast/typus" importa TypusAnnotatio, TypusParametrum
 ex "../nucleus" importa TsGenerator
 ex "../typus" importa genTypus
 ex "../../../parser/morphologia" importa parseMethodum
@@ -172,6 +172,104 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
 
         casu QuaExpressia ut e {
             redde scriptum("(§ as §)", genExpressia(e.expressia, g), genTypus(e.scopus qua TypusAnnotatio, g))
+        }
+
+        casu InnatumExpressia ut e {
+            # Native type construction
+            # {} innatum tabula<K,V> -> new Map<K,V>()
+            # [] innatum lista<T> -> ([] as T[])
+            fixum typusNomen = (e.scopus qua TypusAnnotatio).nomen qua textus
+
+            si typusNomen == "tabula" {
+                fixum params = (e.scopus qua TypusAnnotatio).typusParametra
+                varia keyType = "unknown"
+                varia valueType = "unknown"
+                si nonnihil params {
+                    fixum paramLista = params qua lista<TypusParametrum>
+                    si paramLista.longitudo() >= 1 {
+                        discerne paramLista[0] {
+                            casu Typus ut t {
+                                keyType = genTypus(t.adnotatio, g)
+                            }
+                            casu _ { }
+                        }
+                    }
+                    si paramLista.longitudo() >= 2 {
+                        discerne paramLista[1] {
+                            casu Typus ut t {
+                                valueType = genTypus(t.adnotatio, g)
+                            }
+                            casu _ { }
+                        }
+                    }
+                }
+
+                # Check for non-empty object literal
+                discerne e.expressia {
+                    casu ObiectumExpressia ut obj {
+                        si (obj.proprietates qua lista<ObiectumProprietas>).longitudo() > 0 {
+                            varia entries = [] innatum lista<textus>
+                            ex (obj.proprietates qua lista<ObiectumProprietas>) pro prop {
+                                fixum key = genExpressia(prop.clavis, g)
+                                fixum val = genExpressia(prop.valor, g)
+                                entries.adde(scriptum("[§, §]", key, val))
+                            }
+                            redde scriptum("new Map<§, §>([§])", keyType, valueType, entries.coniunge(", "))
+                        }
+                    }
+                    casu _ { }
+                }
+
+                redde scriptum("new Map<§, §>()", keyType, valueType)
+            }
+
+            si typusNomen == "lista" {
+                fixum params = (e.scopus qua TypusAnnotatio).typusParametra
+                si nonnihil params {
+                    fixum paramLista = params qua lista<TypusParametrum>
+                    si paramLista.longitudo() >= 1 {
+                        varia elemType = "unknown"
+                        discerne paramLista[0] {
+                            casu Typus ut t {
+                                elemType = genTypus(t.adnotatio, g)
+                            }
+                            casu _ { }
+                        }
+                        # Check for non-empty array
+                        discerne e.expressia {
+                            casu SeriesExpressia ut arr {
+                                si (arr.elementa qua lista<Expressia>).longitudo() > 0 {
+                                    redde genExpressia(e.expressia, g)
+                                }
+                            }
+                            casu _ { }
+                        }
+                        redde scriptum("([] as §[])", elemType)
+                    }
+                }
+                redde "[]"
+            }
+
+            si typusNomen == "copia" {
+                fixum params = (e.scopus qua TypusAnnotatio).typusParametra
+                si nonnihil params {
+                    fixum paramLista = params qua lista<TypusParametrum>
+                    si paramLista.longitudo() >= 1 {
+                        varia elemType = "unknown"
+                        discerne paramLista[0] {
+                            casu Typus ut t {
+                                elemType = genTypus(t.adnotatio, g)
+                            }
+                            casu _ { }
+                        }
+                        redde scriptum("new Set<§>()", elemType)
+                    }
+                }
+                redde "new Set()"
+            }
+
+            # Fallback: just generate the expression
+            redde genExpressia(e.expressia, g)
         }
 
         casu EstExpressia ut e {
