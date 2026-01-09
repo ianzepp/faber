@@ -14,17 +14,33 @@ ex "../../ast/sententia" importa Sententia
 # Analyze si (if) statement
 @ publica
 functio analyzeSi(Resolvitor r, Sententia siStmt) -> vacuum {
+    fixum a = r.analyzator()
+
     discerne siStmt {
         casu SiSententia ut s {
             # Analyze condition
             r.expressia(s.condicio)
 
-            # Analyze consequent
+            # Analyze consequent in its own block scope
+            a.intraScopum(ScopusSpecies.Massa)
             r.sententia(s.consequens)
+            a.exiScopum()
 
             # Analyze alternate (sin/secus) if present
             si nonnihil s.alternans {
-                r.sententia(s.alternans qua Sententia)
+                # Check if alternate is another si statement (chained if)
+                discerne s.alternans {
+                    casu SiSententia {
+                        # Recursively analyze chained si
+                        analyzeSi(r, s.alternans qua Sententia)
+                    }
+                    casu _ {
+                        # else block needs its own scope
+                        a.intraScopum(ScopusSpecies.Massa)
+                        r.sententia(s.alternans qua Sententia)
+                        a.exiScopum()
+                    }
+                }
             }
         }
         casu _ { }
@@ -38,13 +54,17 @@ functio analyzeSi(Resolvitor r, Sententia siStmt) -> vacuum {
 # Analyze dum (while) statement
 @ publica
 functio analyzeDum(Resolvitor r, Sententia dumStmt) -> vacuum {
+    fixum a = r.analyzator()
+
     discerne dumStmt {
         casu DumSententia ut d {
             # Analyze condition
             r.expressia(d.condicio)
 
-            # Analyze body
+            # Analyze body in its own block scope
+            a.intraScopum(ScopusSpecies.Massa)
             r.sententia(d.corpus)
+            a.exiScopum()
         }
         casu _ { }
     }
@@ -123,23 +143,29 @@ functio analyzeIn(Resolvitor r, Sententia inStmt) -> vacuum {
 # Analyze elige (switch) statement
 @ publica
 functio analyzeElige(Resolvitor r, Sententia eligeStmt) -> vacuum {
+    fixum a = r.analyzator()
+
     discerne eligeStmt {
         casu EligeSententia ut e {
             # Analyze discriminant
             r.expressia(e.discriminans)
 
-            # Analyze each case
+            # Analyze each case in its own scope
             ex e.casus pro casus {
                 # Analyze case test
                 r.expressia(casus.condicio)
 
-                # Analyze case body
+                # Analyze case body in its own block scope
+                a.intraScopum(ScopusSpecies.Massa)
                 r.sententia(casus.consequens)
+                a.exiScopum()
             }
 
             # Analyze default (aliter) if present
             si nonnihil e.praedefinitum {
+                a.intraScopum(ScopusSpecies.Massa)
                 r.sententia(e.praedefinitum qua Sententia)
+                a.exiScopum()
             }
         }
         casu _ { }
@@ -197,6 +223,8 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
 # Analyze custodi (guard) statement
 @ publica
 functio analyzeCustodi(Resolvitor r, Sententia custodiStmt) -> vacuum {
+    fixum a = r.analyzator()
+
     discerne custodiStmt {
         casu CustodiSententia ut c {
             # Analyze each guard clause
@@ -204,8 +232,10 @@ functio analyzeCustodi(Resolvitor r, Sententia custodiStmt) -> vacuum {
                 # Analyze condition
                 r.expressia(clausula.condicio)
 
-                # Analyze body
+                # Analyze body in its own block scope
+                a.intraScopum(ScopusSpecies.Massa)
                 r.sententia(clausula.consequens)
+                a.exiScopum()
             }
         }
         casu _ { }
