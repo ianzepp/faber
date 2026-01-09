@@ -1,7 +1,7 @@
 /**
  * Test runner for rivus (bootstrap compiler).
  *
- * Runs YAML test cases through opus/bootstrap, TS target only.
+ * Runs YAML test cases through opus/rivus, TS target only.
  * Used to identify codegen gaps between faber and rivus.
  *
  * USAGE

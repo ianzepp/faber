@@ -5,7 +5,7 @@
 # Then uses stage1 to compile Rivus -> stage2, type-checks both, and diffs.
 #
 # Output layout:
-#   opus/bootstrap/        stage0 (built by `bun run build:rivus`)
+#   opus/artifex/          stage0 (built by `bun run build:rivus`)
 #   opus/rivus/stage1/     stage1 (compiled by stage0)
 #   opus/rivus/stage2/     stage2 (compiled by stage1)
 set -euo pipefail
@@ -15,7 +15,7 @@ cd "$(dirname "$0")/.."
 # WHY: Enable globstar for ** recursive matching
 shopt -s globstar
 
-stage0="opus/bootstrap/cli.ts"
+stage0="opus/artifex/cli.ts"
 stage1_dir="opus/rivus/stage1"
 stage2_dir="opus/rivus/stage2"
 

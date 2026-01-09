@@ -1,7 +1,7 @@
 /**
  * Isolated compiler runner for rivus tests.
  *
- * Runs the bootstrap compiler (opus/bootstrap) in a separate process so the
+ * Runs the bootstrap compiler (opus/rivus) in a separate process so the
  * test harness can enforce hard timeouts even if the parser hits a CPU-bound
  * infinite loop.
  *

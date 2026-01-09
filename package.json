@@ -14,7 +14,7 @@
         "build:faber": "bun ./scripta/build-faber.ts",
         "build:norma": "bun ./scripta/build-norma.ts",
         "build:rivus": "bun ./scripta/build-rivus.ts",
-        "build:bootstrap": "bun ./scripta/build-bootstrap.ts",
+        "build:artifex": "bun ./scripta/build-artifex.ts",
         "build:exempla": "bun ./scripta/build-exempla.ts",
         "build:exec": "bun ./scripta/build-exec.ts",
         "lint": "./scripta/lint",

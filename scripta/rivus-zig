@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Compile Faber source to Zig using rivus bootstrap compiler
+# Compile Faber source to Zig using rivus artifex compiler
 # Usage: ./scripta/rivus-zig < input.fab > output.zig
 #        echo 'incipit { scribe "hello" }' | ./scripta/rivus-zig
 
@@ -7,9 +7,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 bun -e "
-import { lexare } from './opus/bootstrap/lexor/index.ts';
-import { resolvere } from './opus/bootstrap/parser/index.ts';
-import { generateZig } from './opus/bootstrap/codegen/zig/index.ts';
+import { lexare } from './opus/artifex/lexor/index.ts';
+import { resolvere } from './opus/artifex/parser/index.ts';
+import { generateZig } from './opus/artifex/codegen/zig/index.ts';
 
 const source = await Bun.stdin.text();
 const lexResult = lexare(source);

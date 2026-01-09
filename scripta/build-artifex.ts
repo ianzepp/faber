@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Bootstrap test: Use rivus to compile itself
+ * Artifex test: Use rivus to compile itself
  *
  * Uses the compiled rivus executable (opus/bin/rivus) to compile
  * the rivus source files in fons/rivus/ and compare against
@@ -9,7 +9,7 @@
  * This proves rivus can self-host.
  *
  * Usage:
- *   bun scripta/build-bootstrap.ts
+ *   bun scripta/build-artifex.ts
  */
 
 import { Glob } from 'bun';
@@ -20,7 +20,7 @@ import { $ } from 'bun';
 const ROOT = join(import.meta.dir, '..');
 const SOURCE = join(ROOT, 'fons', 'rivus');
 const RIVUS_BIN = join(ROOT, 'opus', 'bin', 'rivus');
-const BOOTSTRAP_DIR = join(ROOT, 'opus', 'bootstrap', 'fons', 'ts');
+const ARTIFEX_DIR = join(ROOT, 'opus', 'artifex', 'fons', 'ts');
 const REFERENCE_DIR = join(ROOT, 'opus', 'rivus', 'fons', 'ts');
 
 interface CompileResult {
@@ -31,7 +31,7 @@ interface CompileResult {
 
 async function compileFile(fabPath: string): Promise<CompileResult> {
     const relPath = relative(SOURCE, fabPath);
-    const outPath = join(BOOTSTRAP_DIR, relPath.replace(/\.fab$/, '.ts'));
+    const outPath = join(ARTIFEX_DIR, relPath.replace(/\.fab$/, '.ts'));
 
     try {
         const source = await Bun.file(fabPath).text();
@@ -70,19 +70,19 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
 }
 
 async function compareFiles(file: string): Promise<{ match: boolean; diff?: string }> {
-    const bootstrapPath = join(BOOTSTRAP_DIR, file.replace(/\.fab$/, '.ts'));
+    const artifexPath = join(ARTIFEX_DIR, file.replace(/\.fab$/, '.ts'));
     const referencePath = join(REFERENCE_DIR, file.replace(/\.fab$/, '.ts'));
 
     try {
-        const bootstrapContent = await Bun.file(bootstrapPath).text();
+        const artifexContent = await Bun.file(artifexPath).text();
         const referenceContent = await Bun.file(referencePath).text();
 
-        if (bootstrapContent === referenceContent) {
+        if (artifexContent === referenceContent) {
             return { match: true };
         }
 
         // Files differ - show diff
-        const diffProc = Bun.spawn(['diff', '-u', referencePath, bootstrapPath], {
+        const diffProc = Bun.spawn(['diff', '-u', referencePath, artifexPath], {
             stdout: 'pipe',
         });
         const diff = await new Response(diffProc.stdout).text();
@@ -103,7 +103,7 @@ async function main() {
         process.exit(1);
     }
 
-    console.log('Bootstrap test: compiling rivus with rivus\n');
+    console.log('Artifex test: compiling rivus with rivus\n');
 
     // Find all .fab files
     const glob = new Glob('**/*.fab');
@@ -154,7 +154,7 @@ async function main() {
     console.log(`OK (${matches} files match, ${compareElapsed.toFixed(0)}ms)`);
 
     const elapsed = performance.now() - start;
-    console.log(`\nBootstrap test passed! rivus successfully compiled itself (${(elapsed / 1000).toFixed(1)}s)`);
+    console.log(`\nArtifex test passed! rivus successfully compiled itself (${(elapsed / 1000).toFixed(1)}s)`);
 }
 
 main().catch(err => {

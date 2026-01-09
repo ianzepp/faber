@@ -25,7 +25,7 @@ rivus compile <file.fab> -o out.ts    # Specify output file
 
 > Status % = passing tests / TypeScript baseline (741). Run `bun test proba/runner.test.ts -t "@rivus @<target>"` to verify. 35 tests skipped (intrinsic I/O functions, deferred).
 
-> **Bootstrap Status:** The bootstrap compiler (`bun run build:bootstrap`) is currently blocked by parser and semantic analyzer gaps. See issues #48 (multi-discriminant discerne), #49 (block scoping), #50 (member assignment), #51 (predeclaration types).
+> **Artifex Status:** The artifex compiler (`bun run build:artifex`) is currently blocked by parser and semantic analyzer gaps. See issues #48 (multi-discriminant discerne), #49 (block scoping), #50 (member assignment), #51 (predeclaration types).
 
 Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, ◌ convention
 
