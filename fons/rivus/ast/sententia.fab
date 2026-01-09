@@ -196,15 +196,25 @@ genus EligeCasus {
     Sententia consequens         # MassaSententia
 }
 
+# Single pattern in a variant case (matches one discriminant)
+# Example: Primitivum ut p, Click pro x, y, _, Quit
+@ publicum
+genus VariansExemplar {
+    Locus locus
+    textus variansNomen          # variant tag or "_" for wildcard
+    bivalens estWildcard         # true for _ patterns
+    textus? alias                # 'ut' binds entire variant
+    lista<textus> vincula        # field bindings from 'pro'
+}
+
 # Variant case for discerne (pattern matching)
-# Example: si Click pro x, y { ... }
+# Example: casu Click pro x, y { ... }
+# Example: casu Primitivum ut l, Primitivum ut r { ... }  (multi-discriminant)
 @ publicum
 genus VariansCasus {
     Locus locus
-    textus variansNomen
-    textus? alias                # 'ut' binds entire variant
-    lista<textus> vincula        # field bindings from 'pro'
-    Sententia consequens         # MassaSententia
+    lista<VariansExemplar> exemplaria  # patterns (one per discriminant)
+    Sententia consequens               # MassaSententia
 }
 
 # Guard clause
@@ -433,10 +443,11 @@ discretio Sententia {
     }
 
     # Pattern matching statement
-    # Example: discerne event { si Click pro x, y { ... } }
+    # Example: discerne event { casu Click pro x, y { ... } }
+    # Example: discerne a, b { casu X ut x, Y ut y { ... } }  (multi-discriminant)
     DiscerneSententia {
         Locus locus
-        Expressia discriminans
+        lista<Expressia> discriminantes   # one or more expressions to match against
         lista<VariansCasus> casus
     }
 

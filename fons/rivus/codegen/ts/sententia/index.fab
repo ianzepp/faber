@@ -130,7 +130,7 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
         }
 
         casu DiscerneSententia ut s {
-            redde genDiscerne(s.discriminans, s.casus qua lista<VariansCasus>, g)
+            redde genDiscerne(s.discriminantes, s.casus qua lista<VariansCasus>, g)
         }
 
         casu CustodiSententia ut s {

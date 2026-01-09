@@ -3,12 +3,23 @@
 # Generates if/else chains for discriminated union matching.
 #
 # TRANSFORMS:
+#   # Single discriminant
 #   discerne x { casu A {...} }       -> if (x.tag === 'A') {...}
 #   discerne x { casu B ut b {...} }  -> if (x.tag === 'B') { const b = x; ... }
 #   discerne x { casu C pro a, b {...} } -> if (x.tag === 'C') { const { a, b } = x; ... }
 #   discerne x { casu _ {...} }       -> else {...}  (wildcard pattern)
+#
+#   # Multi-discriminant
+#   discerne left, right {
+#       casu Primitivum ut l, Primitivum ut r { redde l.nomen == r.nomen }
+#       casu _, _ { redde falsum }
+#   }
+#   -> if (left.tag === 'Primitivum' && right.tag === 'Primitivum') {
+#          const l = left; const r = right;
+#          return l.nomen === r.nomen;
+#      } else { return false; }
 
-ex "../../../ast/sententia" importa Sententia, VariansCasus
+ex "../../../ast/sententia" importa Sententia, VariansCasus, VariansExemplar
 ex "../../../ast/expressia" importa Expressia
 ex "../nucleus" importa TsGenerator
 
@@ -17,48 +28,80 @@ ex "../expressia/index" importa genExpressia
 ex "./index" importa genSententia
 
 @ publica
-functio genDiscerne(Expressia discriminans, lista<VariansCasus> casus, TsGenerator g) -> textus {
-    fixum disc = genExpressia(discriminans, g)
-    varia result = scriptum("§// discerne §\n", g.ind(), disc)
+functio genDiscerne(lista<Expressia> discriminantes, lista<VariansCasus> casus, TsGenerator g) -> textus {
+    # Generate expressions for all discriminants
+    varia discriminantStrs = [] innatum lista<textus>
+    ex discriminantes pro d {
+        discriminantStrs.adde(genExpressia(d, g))
+    }
+
+    varia result = scriptum("§// discerne\n", g.ind())
 
     varia first = verum
     ex casus pro c {
-        # WHY: Wildcard pattern (_) matches anything - generates else block
-        fixum estWildcard = c.variansNomen == "_"
+        # Build combined condition for all patterns
+        varia conditions = [] innatum lista<textus>
+        varia i = 0
+        ex c.exemplaria pro pattern {
+            # Wildcard matches anything - no condition needed
+            si non pattern.estWildcard {
+                fixum disc = discriminantStrs[i]
+                conditions.adde(scriptum("§.tag === '§'", disc, pattern.variansNomen))
+            }
+            i += 1
+        }
 
-        si estWildcard {
-            # Wildcard: generate else block (no condition)
+        # If all patterns are wildcards, this is a catch-all
+        si conditions.longitudo() == 0 {
+            # Generate as else block if not first case, otherwise unconditional
             si first {
-                # If first case is wildcard, just open a block (unconditional)
-                result = scriptum("§§{{\n", result, g.ind())
+                result = scriptum("§§{\n", result, g.ind())
             } secus {
-                result = scriptum("§§else {{\n", result, g.ind())
+                result = scriptum("§§else {\n", result, g.ind())
             }
         } secus {
-            # Normal variant: generate if/else if with tag check
+            fixum condition = conditions.coniunge(" && ")
             si first {
-                result = scriptum("§§if (§.tag === '§') {{\n", result, g.ind(), disc, c.variansNomen)
+                result = scriptum("§§if (§) {\n", result, g.ind(), condition)
                 first = falsum
             } secus {
-                result = scriptum("§§else if (§.tag === '§') {{\n", result, g.ind(), disc, c.variansNomen)
+                result = scriptum("§§else if (§) {\n", result, g.ind(), condition)
             }
         }
 
         g.intraProfundum()
 
-        # Bind alias or fields (only for non-wildcard patterns)
-        si non estWildcard {
-            si nonnihil c.alias {
-                # WHY: 'ut' binds the whole variant for access via alias.
-                result = scriptum("§§const § = §;\n", result, g.ind(), c.alias, disc)
-            } sin c.vincula.longitudo() > 0 {
-                result = scriptum("§§const {{ § }} = §;\n", result, g.ind(), c.vincula.coniunge(", "), disc)
+        # Generate bindings for each pattern
+        varia j = 0
+        ex c.exemplaria pro pattern {
+            # Skip wildcards - no bindings
+            si non pattern.estWildcard {
+                fixum disc = discriminantStrs[j]
+                result = scriptum("§§", result, genPatternBindings(pattern, disc, g))
             }
+            j += 1
         }
 
+        # Generate body statements
         result = scriptum("§§\n", result, genSententia(c.consequens, g))
         g.exiProfundum()
-        result = scriptum("§§}}\n", result, g.ind())
+        result = scriptum("§§}\n", result, g.ind())
+    }
+
+    redde result
+}
+
+# Generate bindings for a single pattern
+functio genPatternBindings(VariansExemplar pattern, textus discriminant, TsGenerator g) -> textus {
+    varia result = ""
+
+    # Alias binding: casu Click ut c
+    si nonnihil pattern.alias {
+        result = scriptum("§const § = §;\n", g.ind(), pattern.alias, discriminant)
+    }
+    # Positional bindings: casu Click pro a, b
+    sin pattern.vincula.longitudo() > 0 {
+        result = scriptum("§const { § } = §;\n", g.ind(), pattern.vincula.coniunge(", "), discriminant)
     }
 
     redde result

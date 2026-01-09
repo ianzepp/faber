@@ -16,9 +16,10 @@
 # - custodi = guard (imperative of custodire)
 
 ex "../resolvitor" importa Resolvitor
+ex "../nucleus" importa Parser
 ex "../../ast/positio" importa Locus
 ex "../../ast/expressia" importa Expressia
-ex "../../ast/sententia" importa Sententia, EligeCasus, VariansCasus, CustodiClausula, CapeClausula
+ex "../../ast/sententia" importa Sententia, EligeCasus, VariansCasus, VariansExemplar, CustodiClausula, CapeClausula
 ex "../../ast/lexema" importa SymbolumGenus
 ex "../errores" importa ParserErrorCodice
 ex "./massa" importa parseMassaSententia
@@ -112,14 +113,25 @@ functio parseEligeSententia(Resolvitor r) -> Sententia {
 # Parse discerne (pattern match) statement
 #
 # GRAMMAR:
-#   discerneStmt := 'discerne' expr '{' variantCase* '}'
-#   variantCase := 'casu' IDENT ('pro' IDENT (',' IDENT)*)? block
+#   discerneStmt := 'discerne' discriminants '{' variantCase* '}'
+#   discriminants := expression (',' expression)*
+#   variantCase := 'casu' patterns (block | 'ergo' stmt | 'reddit' expr)
+#   patterns := pattern (',' pattern)*
+#   pattern := '_' | (IDENTIFIER patternBind?)
+#   patternBind := ('ut' IDENTIFIER) | ('pro' IDENTIFIER (',' IDENTIFIER)*)
 #
 # Examples:
+#   # Single discriminant
 #   discerne event {
 #       casu Click pro x, y { scribe scriptum("clicked at §, §", x, y) }
 #       casu Keypress ut key { scribe scriptum("pressed §", key) }
 #       casu Quit { mori "goodbye" }
+#   }
+#
+#   # Multi-discriminant
+#   discerne left, right {
+#       casu Primitivum ut l, Primitivum ut r { redde l.nomen == r.nomen }
+#       casu _, _ { redde falsum }
 #   }
 @ publica
 functio parseDiscerneSententia(Resolvitor r) -> Sententia {
@@ -129,8 +141,12 @@ functio parseDiscerneSententia(Resolvitor r) -> Sententia {
     # Consume 'discerne'
     p.expectaVerbum("discerne", ParserErrorCodice.ExpectaturDiscerne)
 
-    # Parse discriminant expression
-    fixum discriminans = r.expressia()
+    # Parse comma-separated discriminants
+    varia discriminantes = [] innatum lista<Expressia>
+    discriminantes.adde(r.expressia())
+    dum p.congruet(SymbolumGenus.Coma) {
+        discriminantes.adde(r.expressia())
+    }
 
     # Expect opening brace
     p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
@@ -143,24 +159,11 @@ functio parseDiscerneSententia(Resolvitor r) -> Sententia {
             fixum casusLocus = p.locusActualis()
             p.procede()  # Consume 'casu'
 
-            # Parse variant name
-            fixum variansNomenSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
-            fixum variansNomen = variansNomenSym.valor
-
-            # Parse optional bindings: ut alias OR pro x, y, z
-            # WHY: 'ut' binds the whole variant, 'pro' binds fields positionally.
-            varia alias = nihil qua textus?
-            varia vincula = [] innatum lista<textus>
-            si p.probaVerbum("ut") {
-                p.procede()
-                fixum aliasSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
-                alias = aliasSym.valor
-            } sin p.probaVerbum("pro") {
-                p.procede()
-                fac {
-                    fixum vincSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
-                    vincula.adde(vincSym.valor)
-                } dum p.congruet(SymbolumGenus.Coma)
+            # Parse comma-separated patterns (one per discriminant)
+            varia exemplaria = [] innatum lista<VariansExemplar>
+            exemplaria.adde(parseVariansExemplar(p))
+            dum p.congruet(SymbolumGenus.Coma) {
+                exemplaria.adde(parseVariansExemplar(p))
             }
 
             # Parse body
@@ -168,9 +171,7 @@ functio parseDiscerneSententia(Resolvitor r) -> Sententia {
 
             casus.adde({
                 locus: casusLocus,
-                variansNomen: variansNomen,
-                alias: alias,
-                vincula: vincula,
+                exemplaria: exemplaria,
                 consequens: consequens
             } qua VariansCasus)
         } secus {
@@ -183,9 +184,107 @@ functio parseDiscerneSententia(Resolvitor r) -> Sententia {
 
     redde finge DiscerneSententia {
         locus: locus,
-        discriminans: discriminans,
+        discriminantes: discriminantes,
         casus: casus
     } qua Sententia
+}
+
+# Parse a single variant pattern
+#
+# GRAMMAR:
+#   pattern := '_' | (IDENTIFIER patternBind?)
+#   patternBind := ('ut' IDENTIFIER) | ('pro' IDENTIFIER (',' IDENTIFIER)*)
+#
+# DISAMBIGUATION: After 'pro', commas separate bindings until we see:
+#   - '_' (wildcard pattern)
+#   - An identifier followed by 'ut' or 'pro' (new pattern with binding)
+#   - '{', 'ergo', 'reddit' (end of patterns)
+functio parseVariansExemplar(Parser p) -> VariansExemplar {
+    fixum locus = p.locusActualis()
+
+    # Parse variant name (or wildcard)
+    fixum variansNomenSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
+    fixum variansNomen = variansNomenSym.valor
+
+    # Check for wildcard
+    si variansNomen == "_" {
+        redde {
+            locus: locus,
+            variansNomen: "_",
+            estWildcard: verum,
+            alias: nihil qua textus?,
+            vincula: [] innatum lista<textus>
+        } qua VariansExemplar
+    }
+
+    # Parse optional bindings: ut alias OR pro x, y, z
+    # WHY: 'ut' binds the whole variant, 'pro' binds fields positionally.
+    varia alias = nihil qua textus?
+    varia vincula = [] innatum lista<textus>
+
+    si p.probaVerbum("ut") {
+        p.procede()
+        fixum aliasSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
+        alias = aliasSym.valor
+    } sin p.probaVerbum("pro") {
+        p.procede()
+        fac {
+            fixum vincSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
+            vincula.adde(vincSym.valor)
+        } dum estProximumVinculum(p)
+    }
+
+    redde {
+        locus: locus,
+        variansNomen: variansNomen,
+        estWildcard: falsum,
+        alias: alias,
+        vincula: vincula
+    } qua VariansExemplar
+}
+
+# Check if the token after a comma is a binding (not a new pattern)
+#
+# WHY: In multi-discriminant patterns, commas separate both:
+#   - Bindings within 'pro': `casu Click pro x, y { ... }`
+#   - Patterns: `casu Click ut c, Quit { ... }`
+#
+# RULE: After comma, it's a new pattern ONLY if:
+#   - Next token is '_' (wildcard)
+#   - Next token is identifier followed by 'ut' or 'pro' (pattern with binding)
+# Otherwise it's another binding.
+functio estProximumVinculum(Parser p) -> bivalens {
+    # Must be at comma to continue
+    si non p.proba(SymbolumGenus.Coma) {
+        redde falsum
+    }
+
+    fixum proximum = p.specta(1)
+
+    # Comma followed by '_' is next pattern (wildcard)
+    si proximum.species == SymbolumGenus.Nomen et proximum.valor == "_" {
+        redde falsum
+    }
+
+    # Comma followed by non-identifier is not a binding
+    si proximum.species != SymbolumGenus.Nomen et proximum.species != SymbolumGenus.Verbum {
+        redde falsum
+    }
+
+    # Look at what follows the identifier
+    fixum postIdent = p.specta(2)
+
+    # If followed by 'ut' or 'pro', it's a new pattern with binding
+    si postIdent.species == SymbolumGenus.Verbum {
+        si postIdent.valor == "ut" aut postIdent.valor == "pro" {
+            redde falsum
+        }
+    }
+
+    # Otherwise assume it's a binding (including when followed by ',', '{', 'ergo', 'reddit')
+    # Consume the comma and return true to continue the binding loop
+    p.procede()
+    redde verum
 }
 
 # ============================================================================

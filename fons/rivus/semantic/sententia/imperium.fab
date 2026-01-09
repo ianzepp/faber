@@ -179,34 +179,45 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
 
     discerne discerneStmt {
         casu DiscerneSententia ut d {
-            # Analyze discriminant
-            fixum discTypus = r.expressia(d.discriminans)
+            # Analyze all discriminants
+            ex d.discriminantes pro disc {
+                r.expressia(disc)
+            }
 
             # Analyze each variant case
             ex d.casus pro casus {
                 # Enter scope for pattern bindings
                 a.intraScopum(ScopusSpecies.Massa)
 
-                # Define bound variables if present
-                # WHY: 'ut' introduces an alias, 'pro' introduces field bindings.
-                si nonnihil casus.alias {
-                    fixum alias = casus.alias qua textus
-                    a.scopus.symbola[alias] = {
-                        nomen: alias,
-                        semanticTypus: IGNOTUM,  # TODO: infer from variant
-                        species: SymbolumSpecies.Variabilis,
-                        mutabilis: falsum,
-                        locus: casus.locus
+                # Define bound variables for all patterns in this case
+                # WHY: Each pattern can introduce 'ut' alias or 'pro' field bindings.
+                ex casus.exemplaria pro pattern {
+                    # Skip wildcards - they have no bindings
+                    si pattern.estWildcard {
+                        perge
                     }
-                }
 
-                ex casus.vincula pro vinculum {
-                    a.scopus.symbola[vinculum] = {
-                        nomen: vinculum,
-                        semanticTypus: IGNOTUM,  # TODO: infer from variant
-                        species: SymbolumSpecies.Variabilis,
-                        mutabilis: falsum,
-                        locus: casus.locus
+                    # Define alias if present
+                    si nonnihil pattern.alias {
+                        fixum alias = pattern.alias qua textus
+                        a.scopus.symbola[alias] = {
+                            nomen: alias,
+                            semanticTypus: IGNOTUM,  # TODO: infer from variant
+                            species: SymbolumSpecies.Variabilis,
+                            mutabilis: falsum,
+                            locus: pattern.locus
+                        }
+                    }
+
+                    # Define field bindings if present
+                    ex pattern.vincula pro vinculum {
+                        a.scopus.symbola[vinculum] = {
+                            nomen: vinculum,
+                            semanticTypus: IGNOTUM,  # TODO: infer from variant
+                            species: SymbolumSpecies.Variabilis,
+                            mutabilis: falsum,
+                            locus: pattern.locus
+                        }
                     }
                 }
 
