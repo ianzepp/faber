@@ -1383,7 +1383,18 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             }
         }
 
-        // WHY: Handle user types by looking up the genus definition in scope.
+        // If object is a pactum instance, check for methods
+        if (objectType.kind === 'pactum' && !node.computed) {
+            const propName = (node.property as Identifier).name;
+
+            const methodType = objectType.methods.get(propName);
+            if (methodType) {
+                node.resolvedType = methodType;
+                return methodType;
+            }
+        }
+
+        // WHY: Handle user types by looking up the genus/pactum definition in scope.
         // This supports cross-module field access where the type is imported.
         if (objectType.kind === 'user' && !node.computed) {
             const symbol = lookupSymbol(currentScope, objectType.name);
@@ -1398,6 +1409,18 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
                 }
 
                 const methodType = genusType.methods.get(propName);
+                if (methodType) {
+                    node.resolvedType = methodType;
+                    return methodType;
+                }
+            }
+
+            // Handle pactum types imported from other modules
+            if (symbol && symbol.type.kind === 'pactum') {
+                const pactumType = symbol.type;
+                const propName = (node.property as Identifier).name;
+
+                const methodType = pactumType.methods.get(propName);
                 if (methodType) {
                     node.resolvedType = methodType;
                     return methodType;
