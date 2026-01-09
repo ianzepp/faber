@@ -7,15 +7,30 @@
  *   ex items pro item { } -> for (const item of items) { }
  *   ex items fit item { } -> for (const item of items) { }
  *   ex stream fiet chunk { } -> for await (const chunk of stream) { }
+ *   de tabula pro key { } -> for (const key of tabula.keys()) { }
  *
  * WHY: Range expressions compile to efficient traditional for loops
  *      instead of allocating arrays. The 'fiet' verb form generates
  *      'for await' for async iteration.
+ *
+ *      tabula (Map) requires special handling because JavaScript Maps
+ *      don't support for-in iteration - use .keys() instead.
  */
 
 import type { IteratioStatement, CollectionDSLTransform } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
 import { genBlockStatement } from './functio';
+
+/**
+ * Check if an expression has tabula (Map) type.
+ *
+ * WHY: JavaScript Map doesn't support for-in iteration or bracket indexing.
+ *      We need to detect tabula types to generate correct iteration code.
+ */
+function isTabulaType(node: IteratioStatement): boolean {
+    const type = node.iterable.resolvedType;
+    return type?.kind === 'generic' && type.name === 'tabula';
+}
 
 export function genIteratioStatement(node: IteratioStatement, g: TsGenerator): string {
     const varName = node.variable.name;
@@ -58,7 +73,24 @@ export function genIteratioStatement(node: IteratioStatement, g: TsGenerator): s
 
     // Standard for-of/for-in loop
     let iterable = g.genExpression(node.iterable);
-    const keyword = node.kind === 'in' ? 'in' : 'of';
+
+    // WHY: JavaScript Maps don't support for-in iteration.
+    //      When iterating keys with 'de tabula pro key', we must use .keys() method.
+    //      for (const key in map) produces nothing; for (const key of map.keys()) works.
+    const isTabula = isTabulaType(node);
+    let keyword: string;
+    if (node.kind === 'in') {
+        if (isTabula) {
+            // tabula: use for-of with .keys()
+            iterable = `${iterable}.keys()`;
+            keyword = 'of';
+        } else {
+            // Regular object: use for-in
+            keyword = 'in';
+        }
+    } else {
+        keyword = 'of';
+    }
 
     // Apply DSL transforms as method chain
     if (node.transforms && node.transforms.length > 0) {

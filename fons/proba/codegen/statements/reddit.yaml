@@ -212,7 +212,7 @@
       }
   expect:
       ts:
-          - 'for (const k in obj)'
+          - 'for (const k of obj.keys())'
           - 'if ((k == key))'
           - 'return true'
           - 'return false'
