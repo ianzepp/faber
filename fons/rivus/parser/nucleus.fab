@@ -366,6 +366,43 @@ genus Parser {
         } qua Symbolum
     }
 
+    # Expect identifier or keyword (for positions where keywords can be used as names)
+    # WHY: In positions like object property names, pattern match bindings, and
+    #      import/export specifiers, keywords should be allowed as identifiers.
+    #      E.g., { typus: value }, casu Type ut est { ... }, ex lib importa scribe
+    # Returns matched token if found, synthetic token after advancing if not
+    @ publica
+    functio expectaNomenAutVerbum(ParserErrorCodice codice) -> Symbolum {
+        fixum s = ego.specta(0)
+
+        # Accept identifier tokens
+        si s.species === SymbolumGenus.Nomen {
+            redde ego.procede()
+        }
+
+        # Accept keyword tokens as identifiers in this context
+        si s.species === SymbolumGenus.Verbum {
+            redde ego.procede()
+        }
+
+        # Record error with context
+        ego.renuncia(codice, scriptum("got '§'", s.valor))
+
+        # Advance past unexpected token
+        si non ego.estFinis() {
+            ego.procede()
+        }
+
+        # Return synthetic identifier token
+        redde {
+            species: SymbolumGenus.Nomen,
+            valor: "",
+            locus: s.locus,
+            verbum: nihil,
+            verbumId: nihil
+        } qua Symbolum
+    }
+
     # =========================================================================
     # Error Recovery
     # synchrona = skip to next statement boundary after error

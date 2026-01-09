@@ -144,7 +144,7 @@ functio parseDiscerneSententia(Resolvitor r) -> Sententia {
             p.procede()  # Consume 'casu'
 
             # Parse variant name
-            fixum variansNomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            fixum variansNomenSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
             fixum variansNomen = variansNomenSym.valor
 
             # Parse optional bindings: ut alias OR pro x, y, z
@@ -153,12 +153,12 @@ functio parseDiscerneSententia(Resolvitor r) -> Sententia {
             varia vincula = [] innatum lista<textus>
             si p.probaVerbum("ut") {
                 p.procede()
-                fixum aliasSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+                fixum aliasSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
                 alias = aliasSym.valor
             } sin p.probaVerbum("pro") {
                 p.procede()
                 fac {
-                    fixum vincSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+                    fixum vincSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
                     vincula.adde(vincSym.valor)
                 } dum p.congruet(SymbolumGenus.Coma)
             }
@@ -258,7 +258,7 @@ functio parseCapeClausula(Resolvitor r) -> CapeClausula {
     p.procede()
 
     # Parse error binding name
-    fixum paramSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    fixum paramSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
     fixum param = paramSym.valor
 
     # Parse body
