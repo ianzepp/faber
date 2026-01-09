@@ -10,10 +10,12 @@
 # - Other paths pass through to target language (external packages)
 
 ex "./typi" importa SemanticTypus, IGNOTUM, VACUUM, functioTypus, usitatumTypus
+ex "./typi" importa genusTypus, genericumTypus, primitivumTypus
 ex "./scopus" importa SymbolumSpecies
 ex "../ast/positio" importa Locus
 ex "../ast/radix" importa Programma
 ex "../ast/sententia" importa Sententia
+ex "../ast/typus" importa TypusAnnotatio, TypusParametrum
 ex "../lexor/index" importa lexare, LexorResultatum
 ex "../parser/index" importa resolvere, ParserResultatum
 
@@ -95,6 +97,48 @@ functio resolveViaModuli(textus fons, textus viaBasica) -> textus? {
 }
 
 # ============================================================================
+# SHALLOW TYPE RESOLUTION
+# ============================================================================
+
+# Known generic collection types
+fixum GENERICI = ["lista", "tabula", "copia"]
+
+# Known primitive types
+fixum PRIMITIVI = ["textus", "numerus", "fractus", "decimus", "magnus", "bivalens", "nihil", "vacuum", "octeti"]
+
+# Resolve a type annotation to SemanticTypus without full semantic analysis.
+# WHY: During export extraction we don't have a Resolvitor, but we need to
+# build Genus types with proper field types so cross-module member access works.
+functio resolveTypusShallow(TypusAnnotatio annotatio) -> SemanticTypus {
+    # Generic types: lista<T>, tabula<K,V>, etc.
+    varia resolvedParametri = [] innatum lista<SemanticTypus>
+    si nonnihil annotatio.typusParametra {
+        ex (annotatio.typusParametra qua lista<TypusParametrum>) pro p {
+            discerne p {
+                casu Typus ut tp {
+                    resolvedParametri.adde(resolveTypusShallow(tp.adnotatio))
+                }
+                casu _ {
+                    resolvedParametri.adde(IGNOTUM)
+                }
+            }
+        }
+    }
+
+    si annotatio.nomen inter GENERICI {
+        redde genericumTypus(annotatio.nomen, resolvedParametri, annotatio.nullabilis)
+    }
+
+    # Primitive types
+    si annotatio.nomen inter PRIMITIVI {
+        redde primitivumTypus(annotatio.nomen, annotatio.nullabilis)
+    }
+
+    # User-defined types - return Usitatum (type reference)
+    redde usitatumTypus(annotatio.nomen, annotatio.nullabilis)
+}
+
+# ============================================================================
 # EXPORT EXTRACTION
 # ============================================================================
 
@@ -107,18 +151,41 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
     ex programma.corpus pro stmt {
         discerne stmt {
             casu FunctioDeclaratio ut f {
+                # WHY: Resolve return type so callers can infer variable types
+                # from function calls for proper norma translation.
+                varia reditusTypus = VACUUM qua SemanticTypus
+                si nonnihil f.typusReditus {
+                    reditusTypus = resolveTypusShallow(f.typusReditus qua TypusAnnotatio)
+                }
+
                 exporta[f.nomen] = {
                     nomen: f.nomen,
                     species: SymbolumSpecies.Functio,
-                    typus: functioTypus([], IGNOTUM, f.asynca, falsum),
+                    typus: functioTypus([], reditusTypus, f.asynca, falsum),
                     locus: f.locus
                 } qua ModulusExportum
             }
             casu GenusDeclaratio ut g {
+                # WHY: Build proper Genus type with field types so cross-module
+                # member access can resolve field types for norma translation.
+                varia agri = {} innatum tabula<textus, SemanticTypus>
+                ex g.campi pro campo {
+                    si nonnihil campo.typus {
+                        agri[campo.nomen] = resolveTypusShallow(campo.typus qua TypusAnnotatio)
+                    } secus {
+                        agri[campo.nomen] = IGNOTUM
+                    }
+                }
+
+                # Empty maps for methods (not needed for field type resolution)
+                varia methodi = {} innatum tabula<textus, SemanticTypus>
+                varia agriStatici = {} innatum tabula<textus, SemanticTypus>
+                varia methodiStatici = {} innatum tabula<textus, SemanticTypus>
+
                 exporta[g.nomen] = {
                     nomen: g.nomen,
                     species: SymbolumSpecies.Genus,
-                    typus: usitatumTypus(g.nomen, falsum),
+                    typus: genusTypus(g.nomen, agri, methodi, agriStatici, methodiStatici, falsum),
                     locus: g.locus
                 } qua ModulusExportum
             }
