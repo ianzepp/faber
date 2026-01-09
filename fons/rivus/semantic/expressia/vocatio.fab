@@ -103,6 +103,9 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
 
 functio nomenReceptor(SemanticTypus t) -> textus? {
     discerne t {
+        casu Primitivum ut p {
+            redde p.nomen
+        }
         casu Genericum ut g {
             redde g.nomen
         }
