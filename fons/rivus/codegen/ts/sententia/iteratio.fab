@@ -37,11 +37,11 @@ functio genIteratio(IteratioGenus species, textus variabilis, Expressia iterabil
             }
 
             fixum header = scriptum("for §(let § = §; § § §; §)", asyncPrefix, variabilis, initium, variabilis, op, finis, incrementum)
-            fixum loop = scriptum("§§ {{\n§\n§}}", g.ind(), header, body, g.ind())
+            fixum loop = scriptum("§§ {\n§\n§}", g.ind(), header, body, g.ind())
 
             si nonnihil cape {
                 fixum c = cape qua CapeClausula
-                redde scriptum("§try {{\n§\n§}} catch (§) §", g.ind(), loop, g.ind(), c.param, genSententia(c.corpus, g))
+                redde scriptum("§try {\n§\n§} catch (§) §", g.ind(), loop, g.ind(), c.param, genSententia(c.corpus, g))
             }
 
             redde loop
@@ -49,11 +49,11 @@ functio genIteratio(IteratioGenus species, textus variabilis, Expressia iterabil
         casu _ { }
     }
 
-    fixum loop = scriptum("§for §(const § § §) {{\n§\n§}}", g.ind(), asyncPrefix, variabilis, keyword, genExpressia(iterabile, g), body, g.ind())
+    fixum loop = scriptum("§for §(const § § §) {\n§\n§}", g.ind(), asyncPrefix, variabilis, keyword, genExpressia(iterabile, g), body, g.ind())
 
     si nonnihil cape {
         fixum c = cape qua CapeClausula
-        redde scriptum("§try {{\n§\n§}} catch (§) §", g.ind(), loop, g.ind(), c.param, genSententia(c.corpus, g))
+        redde scriptum("§try {\n§\n§} catch (§) §", g.ind(), loop, g.ind(), c.param, genSententia(c.corpus, g))
     }
 
     redde loop

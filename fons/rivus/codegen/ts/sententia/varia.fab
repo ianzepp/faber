@@ -4,8 +4,9 @@
 #   varia x: numerus = 5      -> let x: number = 5
 #   fixum y: textus = "hello" -> const y: string = "hello"
 #   @ externa fixum z: numerus -> declare const z: number
+#   @ publica fixum x = 1     -> export const x = 1
 
-ex "../../../ast/sententia" importa VariaGenus
+ex "../../../ast/sententia" importa VariaGenus, Visibilitas
 ex "../../../ast/expressia" importa Expressia
 ex "../../../ast/typus" importa TypusAnnotatio
 ex "../nucleus" importa TsGenerator
@@ -13,7 +14,7 @@ ex "../typus" importa genTypus
 ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genVaria(VariaGenus species, textus nomen, ignotum adnotatioTypus, ignotum valor, bivalens externa, TsGenerator g) -> textus {
+functio genVaria(VariaGenus species, textus nomen, ignotum adnotatioTypus, ignotum valor, bivalens externa, ignotum visibilitas, TsGenerator g) -> textus {
     # External declarations use TypeScript's 'declare' syntax
     si externa {
         varia result = scriptum("§declare const §", g.ind(), nomen)
@@ -26,7 +27,16 @@ functio genVaria(VariaGenus species, textus nomen, ignotum adnotatioTypus, ignot
     fixum keyword = species == VariaGenus.Fixum aut species == VariaGenus.Figendum sic "const" secus "let"
     fixum asyncPrefix = species == VariaGenus.Figendum aut species == VariaGenus.Variandum sic "await " secus ""
 
-    varia result = scriptum("§§ §", g.ind(), keyword, nomen)
+    # Module-level: export when public (not inside class)
+    varia exportPrefix = ""
+    si non g.inGenere et nonnihil visibilitas {
+        fixum vis = visibilitas qua Visibilitas
+        si vis == Visibilitas.Publica {
+            exportPrefix = "export "
+        }
+    }
+
+    varia result = scriptum("§§§ §", g.ind(), exportPrefix, keyword, nomen)
 
     si nonnihil adnotatioTypus {
         result = scriptum("§: §", result, genTypus(adnotatioTypus qua TypusAnnotatio, g))

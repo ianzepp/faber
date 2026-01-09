@@ -86,7 +86,7 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
         localGenerator = verum
     }
 
-    # Visibility and abstract modifier (class methods only)
+    # Visibility: class methods get public/private/protected, module-level gets export
     si g.inGenere et non structor {
         si nonnihil visibilitas {
             fixum vis = visibilitas qua Visibilitas
@@ -100,6 +100,14 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
         }
         si abstracta {
             result = scriptum("§abstract ", result)
+        }
+    } secus {
+        # Module-level: export when public
+        si nonnihil visibilitas {
+            fixum vis = visibilitas qua Visibilitas
+            si vis == Visibilitas.Publica {
+                result = scriptum("§export ", result)
+            }
         }
     }
 

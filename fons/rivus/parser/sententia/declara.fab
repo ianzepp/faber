@@ -330,7 +330,8 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
         campi: campi,
         structor: structor,
         methodi: methodi,
-        morphologia: nihil
+        morphologia: nihil,
+        visibilitas: nihil
     } qua Sententia
 }
 
@@ -428,7 +429,8 @@ functio parsePactumDeclaratio(Resolvitor r) -> Sententia {
         locus: locus,
         nomen: nomen,
         generaParametra: generaParametra,
-        methodi: methodi
+        methodi: methodi,
+        visibilitas: nihil
     } qua Sententia
 }
 
@@ -497,7 +499,8 @@ functio parseOrdoDeclaratio(Resolvitor r) -> Sententia {
     redde finge OrdoDeclaratio {
         locus: locus,
         nomen: nomen,
-        membra: membra
+        membra: membra,
+        visibilitas: nihil
     } qua Sententia
 }
 
@@ -600,7 +603,8 @@ functio parseDiscretioDeclaratio(Resolvitor r) -> Sententia {
         locus: locus,
         nomen: nomen,
         generaParametra: generaParametra,
-        variantes: variantes
+        variantes: variantes,
+        visibilitas: nihil
     } qua Sententia
 }
 
@@ -654,7 +658,8 @@ functio parseTypusAliasDeclaratio(Resolvitor r) -> Sententia {
         locus: locus,
         nomen: nomen,
         typus: typusAlias,
-        scopusNomen: scopusNomen
+        scopusNomen: scopusNomen,
+        visibilitas: nihil
     } qua Sententia
 }
 

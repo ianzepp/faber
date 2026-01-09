@@ -35,7 +35,7 @@ functio genIncipiet(ignotum corpus, ignotum ergo, TsGenerator g) -> textus {
     }
     g.exiProfundum()
 
-    varia result = scriptum("§(async () => {{\n§\n§}})();", g.ind(), body, g.ind())
+    varia result = scriptum("§(async () => {\n§\n§})();", g.ind(), body, g.ind())
 
     si nonnihil ergo {
         result = scriptum("§\n§", result, genSententia(ergo qua Sententia, g))

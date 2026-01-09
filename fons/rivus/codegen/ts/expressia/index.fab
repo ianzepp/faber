@@ -521,7 +521,7 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
                 fixum val = genExpressia(campo.valor, g)
                 props.adde(scriptum("§: §", key, val))
             }
-            redde scriptum("{{ § }}", props.coniunge(", "))
+            redde scriptum("{ § }", props.coniunge(", "))
         }
 
         # Type conversion

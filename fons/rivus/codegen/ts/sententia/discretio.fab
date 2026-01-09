@@ -4,14 +4,24 @@
 #
 # TRANSFORMS:
 #   discretio Result { Ok, Err } -> type Result = { tag: 'Ok'; ... } | { tag: 'Err'; ... }
+#   @ publica discretio X { ... } -> export type X = ...
 
-ex "../../../ast/sententia" importa VariansDeclaratio
+ex "../../../ast/sententia" importa VariansDeclaratio, Visibilitas
 ex "../nucleus" importa TsGenerator
 ex "../typus" importa genTypus
 
 @ publica
-functio genDiscretio(textus nomen, ignotum generaParametra, lista<VariansDeclaratio> variantes, TsGenerator g) -> textus {
+functio genDiscretio(textus nomen, ignotum generaParametra, lista<VariansDeclaratio> variantes, ignotum visibilitas, TsGenerator g) -> textus {
     # TS: prefer inline union members so tests can match exact fragments.
+
+    # Module-level: export when public
+    varia exportPrefix = ""
+    si nonnihil visibilitas {
+        fixum vis = visibilitas qua Visibilitas
+        si vis == Visibilitas.Publica {
+            exportPrefix = "export "
+        }
+    }
 
     varia params = ""
     si nonnihil generaParametra {
@@ -29,5 +39,5 @@ functio genDiscretio(textus nomen, ignotum generaParametra, lista<VariansDeclara
         variants.adde(member)
     }
 
-    redde scriptum("§type §§ = §;", g.ind(), nomen, params, variants.coniunge(" | "))
+    redde scriptum("§§type §§ = §;", g.ind(), exportPrefix, nomen, params, variants.coniunge(" | "))
 }

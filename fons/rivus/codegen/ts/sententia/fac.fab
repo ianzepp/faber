@@ -23,7 +23,7 @@ functio genFac(Sententia corpus, ignotum condicio, ignotum cape, TsGenerator g) 
 
     si nonnihil condicio {
         fixum test = genExpressia(condicio qua Expressia, g)
-        fixum loop = scriptum("§do {{\n§\n§}} while (§);", g.ind(), body, g.ind(), test)
+        fixum loop = scriptum("§do {\n§\n§} while (§);", g.ind(), body, g.ind(), test)
 
         si nonnihil cape {
             fixum c = cape qua CapeClausula
@@ -45,5 +45,5 @@ functio genFac(Sententia corpus, ignotum condicio, ignotum cape, TsGenerator g) 
     }
 
     # Plain block
-    redde scriptum("§{{\n§\n§}}", g.ind(), body, g.ind())
+    redde scriptum("§{\n§\n§}", g.ind(), body, g.ind())
 }

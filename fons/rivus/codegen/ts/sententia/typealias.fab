@@ -5,17 +5,28 @@
 # TRANSFORMS:
 #   typus Foo = textus     -> type Foo = string
 #   typus Foo = typeof Bar -> type Foo = typeof Bar
+#   @ publica typus X = Y  -> export type X = Y
 
 ex "../../../ast/typus" importa TypusAnnotatio
+ex "../../../ast/sententia" importa Visibilitas
 ex "../nucleus" importa TsGenerator
 
 # External declarations - implementations live in index.fab
 ex "../typus" importa genTypus
 
 @ publica
-functio genTypusAlias(textus nomen, TypusAnnotatio adnotatioTypus, ignotum scopusNomen, TsGenerator g) -> textus {
-    si nonnihil scopusNomen {
-        redde scriptum("§type § = typeof §;", g.ind(), nomen, scopusNomen qua textus)
+functio genTypusAlias(textus nomen, TypusAnnotatio adnotatioTypus, ignotum scopusNomen, ignotum visibilitas, TsGenerator g) -> textus {
+    # Module-level: export when public
+    varia exportPrefix = ""
+    si nonnihil visibilitas {
+        fixum vis = visibilitas qua Visibilitas
+        si vis == Visibilitas.Publica {
+            exportPrefix = "export "
+        }
     }
-    redde scriptum("§type § = §;", g.ind(), nomen, genTypus(adnotatioTypus, g))
+
+    si nonnihil scopusNomen {
+        redde scriptum("§§type § = typeof §;", g.ind(), exportPrefix, nomen, scopusNomen qua textus)
+    }
+    redde scriptum("§§type § = §;", g.ind(), exportPrefix, nomen, genTypus(adnotatioTypus, g))
 }
