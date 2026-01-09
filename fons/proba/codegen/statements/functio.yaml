@@ -990,3 +990,56 @@
       fab:
           - 'functio analyze(textus source, de si numerus depth)'
           - 'scribe source'
+
+# =============================================================================
+# External Declarations (@ externa)
+# =============================================================================
+# @ externa marks external function declarations with no body.
+# These compile to TypeScript's `declare function` statements.
+# NOTE: Currently only TypeScript target supports @ externa; other targets
+# either skip the test or are not yet implemented for this feature.
+
+# External function with return type
+- name: external function declaration
+  targets: [ts, fab]
+  source: |
+      @ externa
+      functio _readFileSync(textus path) -> textus
+  expect:
+      ts:
+          - 'declare function _readFileSync(path: string): string;'
+      fab:
+          - '@ externa'
+          - 'functio _readFileSync(textus path) -> textus'
+
+# External function with boolean return
+- name: external function with boolean return
+  targets: [ts, fab]
+  source: |
+      @ externa
+      functio _existsSync(textus path) -> bivalens
+  expect:
+      ts:
+          - 'declare function _existsSync(path: string): boolean;'
+      fab:
+          - '@ externa'
+          - 'functio _existsSync(textus path) -> bivalens'
+
+# Multiple external function declarations
+- name: multiple external function declarations
+  targets: [ts, fab]
+  source: |
+      @ externa
+      functio _dirname(textus path) -> textus
+
+      @ externa
+      functio _resolve(textus base, textus relative) -> textus
+  expect:
+      ts:
+          - 'declare function _dirname(path: string): string;'
+          - 'declare function _resolve(base: string, relative: string): string;'
+      fab:
+          - '@ externa'
+          - 'functio _dirname(textus path) -> textus'
+          - '@ externa'
+          - 'functio _resolve(textus base, textus relative) -> textus'

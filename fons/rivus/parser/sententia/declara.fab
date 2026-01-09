@@ -101,8 +101,13 @@ functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
         typusReditus = r.adnotatio()
     }
 
-    # Parse body
-    fixum corpus = parseMassaSententia(r)
+    # Parse body (optional for @ externa declarations)
+    # WHY: Body is optional for @ externa declarations (external functions have no body)
+    # If no opening brace, function has no body (validated in semantic phase)
+    varia corpus = nihil qua Sententia?
+    si p.proba(SymbolumGenus.UncusSin) {
+        corpus = parseMassaSententia(r)
+    }
 
     redde finge FunctioDeclaratio {
         locus: locus,
