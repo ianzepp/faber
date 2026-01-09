@@ -1,0 +1,500 @@
+# C++ Expression Generator - Dispatch
+#
+# Routes expression AST nodes to their specific generators.
+
+ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum, MorphologiaInvocatio
+ex "../../../ast/sententia" importa Sententia, VariaGenus
+ex "../../../ast/typus" importa TypusAnnotatio, TypusParametrum
+ex "../nucleus" importa CppGenerator
+ex "../typus" importa genTypus
+ex "../../norma-registry.gen" importa getNormaTranslation, VerteTranslation
+
+# Import extracted generators
+ex "./littera" importa genLittera
+ex "./scriptum" importa genScriptum
+ex "./obiectum" importa genObiectum
+
+# =============================================================================
+# EXPRESSION DISPATCH
+# =============================================================================
+
+# Generate C++ code for an expression
+@ publica
+functio genExpressia(Expressia expr, CppGenerator g) -> textus {
+    discerne expr {
+        # Identifiers
+        casu Nomen ut e {
+            redde e.valor qua textus
+        }
+
+        casu EgoExpressia {
+            redde "this"
+        }
+
+        # Literals
+        casu Littera ut e {
+            redde genLittera(e.species qua LitteraGenus, e.crudus qua textus, g)
+        }
+
+        # Binary operations
+        casu BinariaExpressia ut e {
+            fixum sinister = genExpressia(e.sinister, g)
+            fixum dexter = genExpressia(e.dexter, g)
+            varia signum = e.signum qua textus
+
+            # WHY: Normalize keyword operators to C++ equivalents.
+            elige signum {
+                casu "et" { signum = "&&" }
+                casu "aut" { signum = "||" }
+                casu "vel" {
+                    # Nullish coalescing: a ?? b -> (a.has_value() ? *a : b) or (a ? a : b)
+                    redde scriptum("(§ ? § : §)", sinister, sinister, dexter)
+                }
+            }
+
+            # WHY: Set membership lowers to find() in C++.
+            si signum == "inter" {
+                g.addeInclude("algorithm")
+                redde scriptum("(std::find(§.begin(), §.end(), §) != §.end())", dexter, dexter, sinister, dexter)
+            }
+
+            redde scriptum("(§ § §)", sinister, signum, dexter)
+        }
+
+        # Unary operations
+        casu UnariaExpressia ut e {
+            fixum arg = genExpressia(e.argumentum, g)
+
+            # WHY: Null/value checks use appropriate C++ patterns.
+            elige e.signum qua textus {
+                casu "nihil" {
+                    redde scriptum("(!§.has_value())", arg)
+                }
+                casu "nonnihil" {
+                    redde scriptum("(§.has_value())", arg)
+                }
+                casu "negativum" {
+                    redde scriptum("(§ < 0)", arg)
+                }
+                casu "positivum" {
+                    redde scriptum("(§ > 0)", arg)
+                }
+                casu "verum" {
+                    redde scriptum("(§ == true)", arg)
+                }
+                casu "falsum" {
+                    redde scriptum("(§ == false)", arg)
+                }
+            }
+
+            redde scriptum("§§", e.signum, arg)
+        }
+
+        # Assignment
+        casu AssignatioExpressia ut e {
+            redde scriptum("§ § §", genExpressia(e.sinister, g), e.signum, genExpressia(e.dexter, g))
+        }
+
+        # Ternary conditional
+        casu CondicioExpressia ut e {
+            redde scriptum("§ ? § : §", genExpressia(e.condicio, g), genExpressia(e.consequens, g), genExpressia(e.alternans, g))
+        }
+
+        # Range (C++23 ranges)
+        casu AmbitusExpressia ut e {
+            g.addeInclude("ranges")
+            fixum initium = genExpressia(e.initium, g)
+            fixum finis = genExpressia(e.finis, g)
+            # std::views::iota for ranges
+            si e.inclusivum qua bivalens {
+                redde scriptum("std::views::iota(§, § + 1)", initium, finis)
+            }
+            redde scriptum("std::views::iota(§, §)", initium, finis)
+        }
+
+        # Type cast
+        casu QuaExpressia ut e {
+            fixum cppExpr = genExpressia(e.expressia, g)
+            fixum cppTypus = genTypus(e.scopus qua TypusAnnotatio, g)
+            redde scriptum("static_cast<§>(§)", cppTypus, cppExpr)
+        }
+
+        # Native type construction
+        casu InnatumExpressia ut e {
+            fixum typusNomen = (e.scopus qua TypusAnnotatio).nomen qua textus
+
+            si typusNomen == "tabula" {
+                g.addeInclude("unordered_map")
+                fixum params = (e.scopus qua TypusAnnotatio).typusParametra
+                varia keyType = "auto"
+                varia valueType = "auto"
+                si nonnihil params {
+                    fixum paramLista = params qua lista<TypusParametrum>
+                    si paramLista.longitudo() >= 1 {
+                        discerne paramLista[0] {
+                            casu Typus ut t {
+                                keyType = genTypus(t.adnotatio, g)
+                            }
+                            casu _ { }
+                        }
+                    }
+                    si paramLista.longitudo() >= 2 {
+                        discerne paramLista[1] {
+                            casu Typus ut t {
+                                valueType = genTypus(t.adnotatio, g)
+                            }
+                            casu _ { }
+                        }
+                    }
+                }
+
+                # Check for non-empty object literal
+                discerne e.expressia {
+                    casu ObiectumExpressia ut obj {
+                        si (obj.proprietates qua lista<ObiectumProprietas>).longitudo() > 0 {
+                            varia entries = [] innatum lista<textus>
+                            ex (obj.proprietates qua lista<ObiectumProprietas>) pro prop {
+                                fixum key = genExpressia(prop.clavis, g)
+                                fixum val = genExpressia(prop.valor, g)
+                                entries.adde(scriptum("{§, §}", key, val))
+                            }
+                            redde scriptum("std::unordered_map<§, §>{{§}}", keyType, valueType, entries.coniunge(", "))
+                        }
+                    }
+                    casu _ { }
+                }
+
+                redde scriptum("std::unordered_map<§, §>{}", keyType, valueType)
+            }
+
+            si typusNomen == "lista" {
+                g.addeInclude("vector")
+                fixum params = (e.scopus qua TypusAnnotatio).typusParametra
+                si nonnihil params {
+                    fixum paramLista = params qua lista<TypusParametrum>
+                    si paramLista.longitudo() >= 1 {
+                        varia elemType = "auto"
+                        discerne paramLista[0] {
+                            casu Typus ut t {
+                                elemType = genTypus(t.adnotatio, g)
+                            }
+                            casu _ { }
+                        }
+                        # Check for non-empty array
+                        discerne e.expressia {
+                            casu SeriesExpressia ut arr {
+                                si (arr.elementa qua lista<Expressia>).longitudo() > 0 {
+                                    redde genExpressia(e.expressia, g)
+                                }
+                            }
+                            casu _ { }
+                        }
+                        redde scriptum("std::vector<§>{}", elemType)
+                    }
+                }
+                redde "std::vector<auto>{}"
+            }
+
+            si typusNomen == "copia" {
+                g.addeInclude("unordered_set")
+                fixum params = (e.scopus qua TypusAnnotatio).typusParametra
+                si nonnihil params {
+                    fixum paramLista = params qua lista<TypusParametrum>
+                    si paramLista.longitudo() >= 1 {
+                        varia elemType = "auto"
+                        discerne paramLista[0] {
+                            casu Typus ut t {
+                                elemType = genTypus(t.adnotatio, g)
+                            }
+                            casu _ { }
+                        }
+                        redde scriptum("std::unordered_set<§>{}", elemType)
+                    }
+                }
+                redde "std::unordered_set<auto>{}"
+            }
+
+            # Fallback: just generate the expression
+            redde genExpressia(e.expressia, g)
+        }
+
+        # Function call
+        casu VocatioExpressia ut e {
+            varia args = [] innatum lista<textus>
+            ex (e.argumenta qua lista<Expressia>) pro arg {
+                args.adde(genExpressia(arg, g))
+            }
+
+            # WHY: Check for stdlib method translation via norma-registry.
+            discerne e.vocatum {
+                casu MembrumExpressia ut m {
+                    si non (m.computatum qua bivalens) {
+                        discerne m.proprietas {
+                            casu Nomen ut prop {
+                                fixum methodNomen = prop.valor qua textus
+                                fixum obj = genExpressia(m.obiectum, g)
+
+                                # WHY: Try norma translation if we have receiver type info.
+                                si nonnihil e.morphologia {
+                                    fixum recipiens = (e.morphologia qua MorphologiaInvocatio).recipiens
+                                    fixum translation = getNormaTranslation("cpp", recipiens, methodNomen)
+
+                                    si nonnihil translation {
+                                        # Simple method rename: use translated method name
+                                        si nonnihil translation.method {
+                                            redde scriptum("§.§(§)", obj, translation.method, args.coniunge(", "))
+                                        }
+
+                                        # Template-based translation
+                                        si nonnihil translation.template et nonnihil translation.params {
+                                            redde applyNormaTemplate(translation.template qua textus, translation.params qua lista<textus>, obj, args)
+                                        }
+                                    }
+                                }
+                            }
+                            casu _ { }
+                        }
+                    }
+                }
+                casu _ { }
+            }
+
+            # Default: pass through as-is
+            redde scriptum("§(§)", genExpressia(e.vocatum, g), args.coniunge(", "))
+        }
+
+        # Member access
+        casu MembrumExpressia ut e {
+            fixum obj = genExpressia(e.obiectum, g)
+            si e.computatum qua bivalens {
+                # Computed access: obj[prop]
+                fixum idx = genExpressia(e.proprietas, g)
+                si e.optivum qua bivalens {
+                    # Optional chaining for computed access
+                    redde scriptum("(§ ? (*§)[§] : std::nullopt)", obj, obj, idx)
+                }
+                redde scriptum("§[§]", obj, idx)
+            }
+            # Dot access
+            fixum prop = genExpressia(e.proprietas, g)
+            si e.optivum qua bivalens {
+                # Optional chaining: use -> with has_value check
+                redde scriptum("(§.has_value() ? §->§ : std::nullopt)", obj, obj, prop)
+            }
+            redde scriptum("§.§", obj, prop)
+        }
+
+        # Array literal
+        casu SeriesExpressia ut e {
+            varia items = [] innatum lista<textus>
+            ex (e.elementa qua lista<Expressia>) pro elem {
+                items.adde(genExpressia(elem, g))
+            }
+            redde scriptum("{§}", items.coniunge(", "))
+        }
+
+        # Object literal (anonymous struct or initializer list)
+        casu ObiectumExpressia ut e {
+            redde genObiectum(e.proprietates qua lista<ObiectumProprietas>, g)
+        }
+
+        # Format string
+        casu ScriptumExpressia ut e {
+            redde genScriptum(e.exemplar qua textus, e.argumenta qua lista<Expressia>, g)
+        }
+
+        # Lambda (C++ lambda syntax)
+        casu LambdaExpressia ut e {
+            varia params = [] innatum lista<textus>
+            ex (e.parametra qua lista<LambdaParametrum>) pro p {
+                si nonnihil p.typus {
+                    params.adde(scriptum("§ §", genTypus(p.typus qua TypusAnnotatio, g), p.nomen))
+                } secus {
+                    params.adde(scriptum("auto §", p.nomen))
+                }
+            }
+            varia retType = ""
+            si nonnihil e.typusReditus {
+                retType = scriptum(" -> §", genTypus(e.typusReditus qua TypusAnnotatio, g))
+            }
+            fixum massa = e.corpus qua Sententia
+            discerne massa {
+                casu MassaSententia ut m {
+                    g.intraProfundum()
+                    fixum body = genLambdaMassa(m.corpus, g)
+                    g.exiProfundum()
+                    si body == "" {
+                        redde scriptum("[](§)§ {}", params.coniunge(", "), retType)
+                    }
+                    redde scriptum("[](§)§ {\n§\n§}", params.coniunge(", "), retType, body, g.ind())
+                }
+                casu _ { }
+            }
+            redde scriptum("[](§)§ { return §; }", params.coniunge(", "), retType, genExpressia(e.corpus qua Expressia, g))
+        }
+
+        # Spread element
+        casu DispersioElementum ut e {
+            # C++ doesn't have spread; use insert for vectors
+            redde scriptum("/* spread: */ §", genExpressia(e.argumentum, g))
+        }
+
+        # new expression
+        casu NovumExpressia ut e {
+            varia args = [] innatum lista<textus>
+            ex (e.argumenta qua lista<Expressia>) pro arg {
+                args.adde(genExpressia(arg, g))
+            }
+            redde scriptum("§{§}", genExpressia(e.vocatum, g), args.coniunge(", "))
+        }
+
+        # Cede (yield/await)
+        casu CedeExpressia ut e {
+            # C++ doesn't have native yield; use coroutines or comment
+            redde scriptum("/* cede */ §", genExpressia(e.argumentum, g))
+        }
+
+        casu _ { }
+    }
+
+    # Fallback - should not reach here
+    redde "/* unknown expression */"
+}
+
+# =============================================================================
+# NORMA TRANSLATION HELPERS
+# =============================================================================
+
+# Apply a norma template translation with parameter substitution.
+functio applyNormaTemplate(textus template, lista<textus> params, textus obj, lista<textus> args) -> textus {
+    # Build values array: ego -> obj, other params -> args
+    varia values = [] innatum lista<textus>
+    varia argIdx = 0
+    ex params pro param {
+        si param == "ego" {
+            values.adde(obj)
+        } secus {
+            si argIdx < args.longitudo() {
+                values.adde(args[argIdx])
+                argIdx += 1
+            } secus {
+                values.adde("")
+            }
+        }
+    }
+
+    # Replace section placeholders
+    varia result = ""
+    varia i = 0
+    varia implicitIdx = 0
+
+    dum i < template.longitudo() {
+        fixum c = template[i]
+        si c == "§" {
+            # Check for explicit index (§0, §1, etc.)
+            si i + 1 < template.longitudo() {
+                fixum next = template[i + 1]
+                si next >= "0" et next <= "9" {
+                    # Parse the index
+                    varia idxStr = ""
+                    varia j = i + 1
+                    dum j < template.longitudo() {
+                        fixum digit = template[j]
+                        si digit >= "0" et digit <= "9" {
+                            idxStr = idxStr + digit
+                            j += 1
+                        } secus {
+                            rumpe
+                        }
+                    }
+                    fixum idx = legeNumerusTextus(idxStr)
+                    si idx < values.longitudo() {
+                        result = result + values[idx]
+                    }
+                    i = j
+                    perge
+                }
+            }
+            # Implicit positional: plain section
+            si implicitIdx < values.longitudo() {
+                result = result + values[implicitIdx]
+            }
+            implicitIdx += 1
+            i += 1
+        } secus {
+            result = result + c
+            i += 1
+        }
+    }
+
+    redde result
+}
+
+functio legeNumerusTextus(textus crudus) -> numerus {
+    varia result = 0
+    varia i = 0
+    dum i < crudus.longitudo() {
+        fixum c = crudus.sectio(i, i + 1)
+        varia digit = 0
+        elige c {
+            casu "0" { digit = 0 }
+            casu "1" { digit = 1 }
+            casu "2" { digit = 2 }
+            casu "3" { digit = 3 }
+            casu "4" { digit = 4 }
+            casu "5" { digit = 5 }
+            casu "6" { digit = 6 }
+            casu "7" { digit = 7 }
+            casu "8" { digit = 8 }
+            casu "9" { digit = 9 }
+        }
+        result = result * 10 + digit
+        i += 1
+    }
+    redde result
+}
+
+# =============================================================================
+# LAMBDA HELPERS
+# =============================================================================
+
+functio genLambdaMassa(lista<Sententia> corpus, CppGenerator g) -> textus {
+    si corpus.longitudo() == 0 {
+        redde ""
+    }
+    varia lines = [] innatum lista<textus>
+    ex corpus pro stmt {
+        lines.adde(genLambdaSententia(stmt, g))
+    }
+    redde lines.coniunge("\n")
+}
+
+functio genLambdaSententia(Sententia stmt, CppGenerator g) -> textus {
+    discerne stmt {
+        casu VariaSententia ut s {
+            fixum keyword = s.species == VariaGenus.Fixum sic "const auto" secus "auto"
+            varia result = scriptum("§§ §", g.ind(), keyword, s.nomen)
+
+            si nonnihil s.valor {
+                result = scriptum("§ = §", result, genExpressia(s.valor qua Expressia, g))
+            }
+
+            redde scriptum("§;", result)
+        }
+
+        casu ReddeSententia ut s {
+            si nonnihil s.valor {
+                redde scriptum("§return §;", g.ind(), genExpressia(s.valor qua Expressia, g))
+            }
+            redde scriptum("§return;", g.ind())
+        }
+
+        casu ExpressiaSententia ut s {
+            redde scriptum("§§;", g.ind(), genExpressia(s.expressia, g))
+        }
+
+        casu _ { }
+    }
+
+    redde scriptum("§/* lambda: unsupported statement */", g.ind())
+}

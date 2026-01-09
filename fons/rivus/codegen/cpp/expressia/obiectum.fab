@@ -1,0 +1,35 @@
+# C++ Expression Generator - Object Literals
+#
+# Generates C++ struct initialization from Faber object literals.
+
+ex "../../../ast/expressia" importa ObiectumProprietas
+ex "../nucleus" importa CppGenerator
+
+# External declaration - implementation lives in index.fab
+ex "./index" importa genExpressia
+
+# =============================================================================
+# OBJECT LITERAL GENERATION
+# =============================================================================
+
+# Generate C++ struct/map initialization from Faber object literal
+#
+# WHY: { a: 1, b: 2 } -> { .a = 1, .b = 2 } (designated initializers in C++20)
+#      or map entries for tabula types.
+@ publica
+functio genObiectum(lista<ObiectumProprietas> proprietates, CppGenerator g) -> textus {
+    si proprietates.longitudo() == 0 {
+        redde "{}"
+    }
+
+    varia props = [] innatum lista<textus>
+    ex proprietates pro prop {
+        fixum key = genExpressia(prop.clavis, g)
+        fixum val = genExpressia(prop.valor, g)
+
+        # Use designated initializer syntax (.field = value)
+        props.adde(scriptum(".§ = §", key, val))
+    }
+
+    redde scriptum("{ § }", props.coniunge(", "))
+}

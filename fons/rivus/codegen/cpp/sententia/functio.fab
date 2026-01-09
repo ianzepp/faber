@@ -1,0 +1,63 @@
+# C++ Statement Generator - Function Declarations
+#
+# Generates C++ function declarations with parameter types.
+#
+# TRANSFORMS:
+#   functio foo(textus x) -> numerus { } -> int64_t foo(std::string x) { }
+#   @ externa functio foo() -> void;
+
+ex "../../../ast/sententia" importa Sententia, Parametrum
+ex "../../../ast/typus" importa TypusAnnotatio
+ex "../nucleus" importa CppGenerator
+
+# External declarations - implementations live in index.fab
+ex "./index" importa genSententia
+ex "../typus" importa genTypus
+
+@ publica
+functio genFunctio(textus nomen, lista<Parametrum> parametra, ignotum typusReditus, ignotum corpus, bivalens externa, CppGenerator g) -> textus {
+    # Build parameter list
+    varia params = [] innatum lista<textus>
+    ex parametra pro param {
+        params.adde(genParametrum(param, g))
+    }
+
+    # Return type
+    varia retType = "void"
+    si nonnihil typusReditus {
+        retType = genTypus(typusReditus qua TypusAnnotatio, g)
+    }
+
+    # External declarations use C++'s extern
+    si externa {
+        redde scriptum("§extern § §(§);", g.ind(), retType, nomen, params.coniunge(", "))
+    }
+
+    varia result = scriptum("§§ §(§)", g.ind(), retType, nomen, params.coniunge(", "))
+
+    # Body
+    si nonnihil corpus {
+        g.intraProfundum()
+        fixum body = genSententia(corpus qua Sententia, g)
+        g.exiProfundum()
+
+        si body == "" {
+            result = scriptum("§ {}", result)
+        } secus {
+            result = scriptum("§ {\n§\n§}", result, body, g.ind())
+        }
+    } secus {
+        result = scriptum("§;", result)
+    }
+
+    redde result
+}
+
+@ publica
+functio genParametrum(Parametrum param, CppGenerator g) -> textus {
+    varia cppTypus = "auto"
+    si nonnihil param.typus {
+        cppTypus = genTypus(param.typus qua TypusAnnotatio, g)
+    }
+    redde scriptum("§ §", cppTypus, param.nomen)
+}

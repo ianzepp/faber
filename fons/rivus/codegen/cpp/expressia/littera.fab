@@ -1,0 +1,88 @@
+# C++ Expression Generator - Literals
+#
+# Generates C++ literal values from Faber literals.
+
+ex "../../../ast/expressia" importa LitteraGenus
+ex "../nucleus" importa CppGenerator
+
+# =============================================================================
+# LITERAL GENERATION
+# =============================================================================
+
+# Generate C++ literal from Faber literal
+@ publica
+functio genLittera(LitteraGenus species, textus crudus, CppGenerator g) -> textus {
+    elige species {
+        casu LitteraGenus.Numerus {
+            # Integer literal - handle underscores and suffixes
+            redde normalizaNumerus(crudus)
+        }
+
+        casu LitteraGenus.Fractus {
+            # Floating point literal
+            redde normalizaFractus(crudus)
+        }
+
+        casu LitteraGenus.Textus {
+            # String literal - already quoted, use as-is
+            # C++ uses std::string for textus
+            g.addeInclude("string")
+            redde crudus
+        }
+
+        casu LitteraGenus.Bivalens {
+            # Boolean: verum/falsum -> true/false
+            si crudus == "verum" {
+                redde "true"
+            }
+            redde "false"
+        }
+
+        casu LitteraGenus.Nihil {
+            # Null: nihil -> nullptr
+            redde "nullptr"
+        }
+    }
+
+    # Fallback
+    redde crudus
+}
+
+# =============================================================================
+# HELPERS
+# =============================================================================
+
+# Remove underscores from numeric literals
+functio normalizaNumerus(textus crudus) -> textus {
+    varia result = ""
+    varia i = 0
+    dum i < crudus.longitudo() {
+        fixum c = crudus[i]
+        si c != "_" {
+            result = result + c
+        }
+        i += 1
+    }
+    # Handle hex, binary, octal prefixes
+    # Faber: 0x, 0b, 0o -> C++: 0x, 0b, 0
+    si result.longitudo() >= 2 {
+        si result.sectio(0, 2) == "0o" {
+            redde "0" + result.sectio(2, result.longitudo())
+        }
+    }
+    redde result
+}
+
+# Normalize floating point literals
+functio normalizaFractus(textus crudus) -> textus {
+    varia result = ""
+    varia i = 0
+    dum i < crudus.longitudo() {
+        fixum c = crudus[i]
+        si c != "_" {
+            result = result + c
+        }
+        i += 1
+    }
+    redde result
+}

@@ -1,0 +1,21 @@
+# C++ Statement Generator - Return Statements
+#
+# Generates C++ return statements.
+#
+# TRANSFORMS:
+#   redde x    -> return x;
+#   redde      -> return;
+
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa CppGenerator
+
+# External declarations
+ex "../expressia/index" importa genExpressia
+
+@ publica
+functio genRedde(ignotum valor, CppGenerator g) -> textus {
+    si nonnihil valor {
+        redde scriptum("§return §;", g.ind(), genExpressia(valor qua Expressia, g))
+    }
+    redde scriptum("§return;", g.ind())
+}

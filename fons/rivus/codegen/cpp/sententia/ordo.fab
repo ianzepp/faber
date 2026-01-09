@@ -1,0 +1,29 @@
+# C++ Statement Generator - Enum Declarations
+#
+# Generates C++ enum declarations from Faber ordo.
+#
+# TRANSFORMS:
+#   ordo Color { Ruber, Viridis } -> enum class Color { Ruber, Viridis };
+
+ex "../../../ast/sententia" importa OrdoMembrum
+ex "../nucleus" importa CppGenerator
+ex "../expressia/index" importa genExpressia
+
+@ publica
+functio genOrdo(textus nomen, lista<OrdoMembrum> membra, CppGenerator g) -> textus {
+    varia members = [] innatum lista<textus>
+
+    ex membra pro membrum {
+        si nonnihil membrum.valor {
+            members.adde(scriptum("§ = §", membrum.nomen, genExpressia(membrum.valor, g)))
+        } secus {
+            members.adde(membrum.nomen)
+        }
+    }
+
+    si members.longitudo() == 0 {
+        redde scriptum("§enum class § {};", g.ind(), nomen)
+    }
+
+    redde scriptum("§enum class § { § };", g.ind(), nomen, members.coniunge(", "))
+}

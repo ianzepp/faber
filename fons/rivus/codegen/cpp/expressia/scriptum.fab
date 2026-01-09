@@ -1,0 +1,95 @@
+# C++ Expression Generator - Format Strings
+#
+# Generates C++ std::format() calls from Faber scriptum() expressions.
+
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa CppGenerator
+
+# External declaration - implementation lives in index.fab
+ex "./index" importa genExpressia
+
+# =============================================================================
+# FORMAT STRING GENERATION
+# =============================================================================
+
+# Generate C++ format string from Faber scriptum()
+#
+# WHY: scriptum("Hello, §!", name) -> std::format("Hello, {}!", name)
+#      C++23 has std::format() which uses {} placeholders.
+@ publica
+functio genScriptum(textus exemplar, lista<Expressia> argumenta, CppGenerator g) -> textus {
+    g.addeInclude("format")
+
+    # Convert section placeholders to C++ format placeholders
+    fixum formatStr = convertaExemplar(exemplar)
+
+    # Build argument list
+    varia args = [] innatum lista<textus>
+    ex argumenta pro arg {
+        args.adde(genExpressia(arg, g))
+    }
+
+    si args.longitudo() == 0 {
+        redde scriptum("std::format(§)", formatStr)
+    }
+
+    redde scriptum("std::format(§, §)", formatStr, args.coniunge(", "))
+}
+
+# =============================================================================
+# HELPERS
+# =============================================================================
+
+# Convert Faber format string to C++ format string.
+# WHY: Section placeholders need conversion to C++ {} syntax.
+# Handles indexed (§0, §1) and implicit (§) placeholders.
+functio convertaExemplar(textus exemplar) -> textus {
+    varia result = ""
+    varia i = 0
+    varia implicitIdx = 0
+
+    dum i < exemplar.longitudo() {
+        fixum c = exemplar[i]
+
+        si c == "§" {
+            # Check for explicit index
+            si i + 1 < exemplar.longitudo() {
+                fixum next = exemplar[i + 1]
+                si next >= "0" et next <= "9" {
+                    # Explicit index: §0, §1, etc. -> {0}, {1}, etc.
+                    varia idxStr = ""
+                    varia j = i + 1
+                    dum j < exemplar.longitudo() {
+                        fixum digit = exemplar[j]
+                        si digit >= "0" et digit <= "9" {
+                            idxStr = idxStr + digit
+                            j += 1
+                        } secus {
+                            rumpe
+                        }
+                    }
+                    result = result + "{" + idxStr + "}"
+                    i = j
+                    perge
+                }
+            }
+            # Implicit placeholder: § -> {}
+            result = result + "{}"
+            implicitIdx += 1
+            i += 1
+        } sin c == "{" {
+            # Escape literal braces: { -> {{
+            result = result + "{{"
+            i += 1
+        } sin c == "}" {
+            # Escape literal braces: } -> }}
+            result = result + "}}"
+            i += 1
+        } secus {
+            result = result + c
+            i += 1
+        }
+    }
+
+    redde scriptum("\"§\"", result)
+}

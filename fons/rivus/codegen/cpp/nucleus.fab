@@ -1,0 +1,140 @@
+# C++ Code Generator - Core generator state
+#
+# This module provides the CppGenerator genus that holds shared state
+# for C++ code generation. Individual gen* functions will be in
+# separate files under sententia/ and expressia/.
+
+ex "../typi" importa RequiredFeatures, creaRequiredFeatures
+
+# =============================================================================
+# C++ GENERATOR
+# =============================================================================
+
+# Core generator state for C++ output.
+#
+# WHY: Holds indentation state, include tracking, feature tracking,
+#      and context flags shared across all statement/expression generators.
+@ publicum
+genus CppGenerator {
+    # Indentation depth (number of levels)
+    numerus profunditas
+
+    # Indentation unit (4 spaces for C++ convention)
+    textus indentum
+
+    # Set of includes needed
+    # WHY: C++ requires explicit includes. Track which headers are used
+    #      so the preamble can emit the correct #include directives.
+    lista<textus> includes
+
+    # Features used that need preamble setup
+    RequiredFeatures requisita
+
+    # Track variable names declared as tabula<K,V> for Map method generation
+    lista<textus> tabulaNominata
+
+    # Whether we're inside a function body that returns a value
+    bivalens inFunctio
+
+    # Whether we're inside a main() function
+    bivalens inMain
+
+    # ==========================================================================
+    # INDENTATION
+    # ==========================================================================
+
+    # Generate indentation string for current depth
+    @ publica
+    functio ind() -> textus {
+        varia result = ""
+        varia i = 0
+        dum i < ego.profunditas {
+            result = result + ego.indentum
+            i += 1
+        }
+        redde result
+    }
+
+    # Increment depth
+    @ publica
+    functio intraProfundum() {
+        ego.profunditas += 1
+    }
+
+    # Decrement depth
+    @ publica
+    functio exiProfundum() {
+        ego.profunditas -= 1
+    }
+
+    # ==========================================================================
+    # INCLUDE MANAGEMENT
+    # ==========================================================================
+
+    # Add an include if not already present.
+    # WHY: Prevents duplicate includes in generated code.
+    @ publica
+    functio addeInclude(textus header) {
+        ex ego.includes pro existing {
+            si existing == header {
+                redde
+            }
+        }
+        ego.includes.adde(header)
+    }
+
+    # Generate include directives for all tracked headers.
+    @ publica
+    functio genIncludes() -> textus {
+        si ego.includes.longitudo() == 0 {
+            redde ""
+        }
+        varia lines = [] innatum lista<textus>
+        ex ego.includes pro header {
+            lines.adde(scriptum("#include <§>", header))
+        }
+        redde lines.coniunge("\n")
+    }
+
+    # ==========================================================================
+    # TABULA TRACKING
+    # ==========================================================================
+
+    # Register a variable name as tabula type
+    @ publica
+    functio registraTabula(textus nomen) {
+        ego.tabulaNominata.adde(nomen)
+    }
+
+    # ==========================================================================
+    # COMMENT HANDLING (stubbed for bootstrap)
+    # ==========================================================================
+
+    @ publica
+    functio notaePrae(ignotum stmt) -> textus {
+        redde ""
+    }
+
+    @ publica
+    functio notaePost(ignotum stmt) -> textus {
+        redde ""
+    }
+}
+
+# =============================================================================
+# FACTORY
+# =============================================================================
+
+# Create a new CppGenerator with default settings
+@ publica
+functio creaCppGenerator() -> CppGenerator {
+    redde {
+        profunditas: 0,
+        indentum: "    ",
+        includes: [] innatum lista<textus>,
+        requisita: creaRequiredFeatures(),
+        tabulaNominata: [] innatum lista<textus>,
+        inFunctio: falsum,
+        inMain: falsum
+    } qua CppGenerator
+}

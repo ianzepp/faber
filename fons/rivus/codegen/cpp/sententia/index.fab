@@ -1,0 +1,116 @@
+# C++ Statement Generator - Dispatch
+#
+# Routes statement AST nodes to their specific generators.
+
+ex "../../../ast/sententia" importa Sententia, VariaGenus, ScribeGradus, IteratioGenus
+ex "../../../ast/sententia" importa Parametrum, CampusDeclaratio, OrdoMembrum
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa CppGenerator
+ex "../expressia/index" importa genExpressia
+
+# Import extracted generators
+ex "./varia" importa genVaria
+ex "./functio" importa genFunctio
+ex "./si" importa genSi
+ex "./dum" importa genDum
+ex "./iteratio" importa genIteratio
+ex "./redde" importa genRedde
+ex "./scribe" importa genScribe
+ex "./genus" importa genGenus
+ex "./ordo" importa genOrdo
+ex "./incipit" importa genIncipit
+
+# =============================================================================
+# STATEMENT DISPATCH
+# =============================================================================
+
+# Generate C++ code for a statement
+@ publica
+functio genSententia(Sententia stmt, CppGenerator g) -> textus {
+    discerne stmt {
+        # Block
+        casu MassaSententia ut s {
+            redde genMassa(s.corpus qua lista<Sententia>, g)
+        }
+
+        # Variable declarations
+        casu VariaSententia ut s {
+            redde genVaria(s.species qua VariaGenus, s.nomen qua textus, s.typus, s.valor, s.externa qua bivalens, g)
+        }
+
+        # Function declaration
+        casu FunctioDeclaratio ut f {
+            redde genFunctio(f.nomen qua textus, f.parametra qua lista<Parametrum>, f.typusReditus, f.corpus, f.externa qua bivalens, g)
+        }
+
+        # Control flow
+        casu SiSententia ut s {
+            redde genSi(s.condicio, s.consequens qua Sententia, s.alternans, g)
+        }
+
+        casu DumSententia ut s {
+            redde genDum(s.condicio, s.corpus qua Sententia, g)
+        }
+
+        casu IteratioSententia ut s {
+            redde genIteratio(s.species qua IteratioGenus, s.variabilis qua textus, s.iterabile, s.corpus qua Sententia, g)
+        }
+
+        # Return
+        casu ReddeSententia ut s {
+            redde genRedde(s.valor, g)
+        }
+
+        casu RumpeSententia {
+            redde scriptum("§break;", g.ind())
+        }
+
+        casu PergeSententia {
+            redde scriptum("§continue;", g.ind())
+        }
+
+        # Output
+        casu ScribeSententia ut s {
+            redde genScribe(s.gradus qua ScribeGradus, s.argumenta qua lista<Expressia>, g)
+        }
+
+        # Expression statement
+        casu ExpressiaSententia ut s {
+            redde scriptum("§§;", g.ind(), genExpressia(s.expressia, g))
+        }
+
+        # Entry point
+        casu IncipitSententia ut s {
+            redde genIncipit(s.corpus, s.ergo, g)
+        }
+
+        # Type declarations
+        casu GenusDeclaratio ut s {
+            redde genGenus(s.nomen qua textus, s.campi qua lista<CampusDeclaratio>, g)
+        }
+
+        casu OrdoDeclaratio ut s {
+            redde genOrdo(s.nomen qua textus, s.membra qua lista<OrdoMembrum>, g)
+        }
+
+        casu _ { }
+    }
+
+    redde scriptum("§// TODO: unknown statement", g.ind())
+}
+
+# =============================================================================
+# BLOCK
+# =============================================================================
+
+@ publica
+functio genMassa(lista<Sententia> corpus, CppGenerator g) -> textus {
+    si corpus.longitudo() == 0 {
+        redde ""
+    }
+    varia lines = [] innatum lista<textus>
+    ex corpus pro stmt {
+        lines.adde(genSententia(stmt, g))
+    }
+    redde lines.coniunge("\n")
+}

@@ -1,0 +1,57 @@
+# C++ Statement Generator - If/Else Statements
+#
+# Generates C++ if/else blocks from Faber si statements.
+#
+# TRANSFORMS:
+#   si cond { } -> if (cond) { }
+#   si cond { } secus { } -> if (cond) { } else { }
+
+ex "../../../ast/sententia" importa Sententia
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa CppGenerator
+
+# External declarations
+ex "./index" importa genSententia
+ex "../expressia/index" importa genExpressia
+
+@ publica
+functio genSi(ignotum condicio, Sententia consequens, ignotum alternans, CppGenerator g) -> textus {
+    fixum cond = genExpressia(condicio qua Expressia, g)
+
+    g.intraProfundum()
+    fixum thenBody = genSententia(consequens, g)
+    g.exiProfundum()
+
+    varia result = ""
+
+    si thenBody == "" {
+        result = scriptum("§if (§) {}", g.ind(), cond)
+    } secus {
+        result = scriptum("§if (§) {\n§\n§}", g.ind(), cond, thenBody, g.ind())
+    }
+
+    si nonnihil alternans {
+        # Check if it's an else-if chain
+        discerne alternans {
+            casu SiSententia ut elseIf {
+                fixum elseResult = genSi(elseIf.condicio, elseIf.consequens qua Sententia, elseIf.alternans, g)
+                # Remove the leading indentation for else if
+                fixum trimmed = elseResult.sectio(g.ind().longitudo(), elseResult.longitudo())
+                result = scriptum("§ else §", result, trimmed)
+            }
+            casu _ {
+                g.intraProfundum()
+                fixum elseBody = genSententia(alternans qua Sententia, g)
+                g.exiProfundum()
+
+                si elseBody == "" {
+                    result = scriptum("§ else {}", result)
+                } secus {
+                    result = scriptum("§ else {\n§\n§}", result, elseBody, g.ind())
+                }
+            }
+        }
+    }
+
+    redde result
+}

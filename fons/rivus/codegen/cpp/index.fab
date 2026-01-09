@@ -1,0 +1,46 @@
+# C++ Code Generator - Public API
+#
+# Entry point for generating C++ from Faber AST.
+#
+# TRANSFORMS:
+#   lista<Sententia> -> C++ source code string
+
+ex "../../ast/sententia" importa Sententia
+ex "./nucleus" importa CppGenerator, creaCppGenerator
+ex "./sententia/index" importa genSententia
+
+# =============================================================================
+# PUBLIC API
+# =============================================================================
+
+# Generate C++ source code from a list of statements
+@ publica
+functio generateCpp(lista<Sententia> corpus) -> textus {
+    fixum g = creaCppGenerator()
+
+    # Always include faber collectiones for helper functions
+    g.addeInclude("cstdint")
+
+    # Generate body from statements
+    varia lines = [] innatum lista<textus>
+    ex corpus pro stmt {
+        lines.adde(genSententia(stmt, g))
+    }
+
+    fixum body = lines.coniunge("\n")
+
+    # Generate preamble with includes
+    fixum includes = g.genIncludes()
+
+    # Add faber namespace include for helper functions
+    varia preamble = includes
+    si g.requisita.lista aut g.requisita.tabula aut g.requisita.copia {
+        preamble = preamble + "\n#include \"faber/collectiones.hpp\""
+    }
+
+    si preamble != "" {
+        preamble = preamble + "\n\n"
+    }
+
+    redde scriptum("§§", preamble, body)
+}

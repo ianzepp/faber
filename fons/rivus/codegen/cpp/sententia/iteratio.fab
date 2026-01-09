@@ -1,0 +1,47 @@
+# C++ Statement Generator - For Loops
+#
+# Generates C++ range-based for loops from Faber iteratio statements.
+#
+# TRANSFORMS:
+#   ex items pro item { } -> for (auto& item : items) { }
+#   de obj pro key { }    -> for (auto& [key, _] : obj) { }
+
+ex "../../../ast/sententia" importa Sententia, IteratioGenus
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa CppGenerator
+
+# External declarations
+ex "./index" importa genSententia
+ex "../expressia/index" importa genExpressia
+
+@ publica
+functio genIteratio(IteratioGenus species, textus variabilis, ignotum iterabile, Sententia corpus, CppGenerator g) -> textus {
+    fixum iter = genExpressia(iterabile qua Expressia, g)
+
+    g.intraProfundum()
+    fixum body = genSententia(corpus, g)
+    g.exiProfundum()
+
+    varia loopVar = ""
+
+    elige species {
+        casu IteratioGenus.Valores {
+            # ex items pro item -> for (auto& item : items)
+            loopVar = scriptum("auto& §", variabilis)
+        }
+        casu IteratioGenus.Claves {
+            # de obj pro key -> for (auto& [key, _] : obj)
+            loopVar = scriptum("auto& [§, _]", variabilis)
+        }
+        casu IteratioGenus.Paria {
+            # ex items pro [k, v] -> for (auto& [k, v] : items)
+            loopVar = scriptum("auto& §", variabilis)
+        }
+    }
+
+    si body == "" {
+        redde scriptum("§for (§ : §) {}", g.ind(), loopVar, iter)
+    }
+
+    redde scriptum("§for (§ : §) {\n§\n§}", g.ind(), loopVar, iter, body, g.ind())
+}

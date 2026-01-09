@@ -1,0 +1,60 @@
+# C++ Statement Generator - Variable Declarations
+#
+# Generates C++ auto/const declarations.
+#
+# TRANSFORMS:
+#   fixum x = 1       -> const auto x = 1;
+#   varia x = 1       -> auto x = 1;
+#   @ externa fixum x -> extern const auto x;
+
+ex "../../../ast/sententia" importa VariaGenus
+ex "../../../ast/expressia" importa Expressia
+ex "../../../ast/typus" importa TypusAnnotatio
+ex "../nucleus" importa CppGenerator
+
+# External declarations - implementations live in index.fab
+ex "../expressia/index" importa genExpressia
+ex "../typus" importa genTypus
+
+@ publica
+functio genVaria(VariaGenus species, textus nomen, ignotum adnotatioTypus, ignotum valor, bivalens externa, CppGenerator g) -> textus {
+    # External declarations use C++ 'extern' keyword
+    si externa {
+        varia result = scriptum("§extern ", g.ind())
+        si species == VariaGenus.Fixum {
+            result = result + "const "
+        }
+        si nonnihil adnotatioTypus {
+            result = result + genTypus(adnotatioTypus qua TypusAnnotatio, g) + " " + nomen
+        } secus {
+            result = result + "auto " + nomen
+        }
+        redde scriptum("§;", result)
+    }
+
+    # Determine const vs auto
+    fixum isConst = species == VariaGenus.Fixum
+
+    varia result = g.ind()
+
+    si nonnihil adnotatioTypus {
+        # Explicit type annotation
+        si isConst {
+            result = result + "const "
+        }
+        result = result + genTypus(adnotatioTypus qua TypusAnnotatio, g) + " " + nomen
+    } secus {
+        # Type inference with auto
+        si isConst {
+            result = result + "const auto " + nomen
+        } secus {
+            result = result + "auto " + nomen
+        }
+    }
+
+    si nonnihil valor {
+        result = scriptum("§ = §", result, genExpressia(valor qua Expressia, g))
+    }
+
+    redde scriptum("§;", result)
+}

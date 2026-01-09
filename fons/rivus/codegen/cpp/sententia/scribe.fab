@@ -1,0 +1,39 @@
+# C++ Statement Generator - Print Statements
+#
+# Generates C++ std::cout statements from Faber scribe.
+#
+# TRANSFORMS:
+#   scribe x, y    -> std::cout << x << y << std::endl;
+#   scribe.error x -> std::cerr << x << std::endl;
+
+ex "../../../ast/sententia" importa ScribeGradus
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa CppGenerator
+
+# External declarations
+ex "../expressia/index" importa genExpressia
+
+@ publica
+functio genScribe(ScribeGradus gradus, lista<Expressia> argumenta, CppGenerator g) -> textus {
+    g.addeInclude("iostream")
+
+    # Choose output stream based on level
+    varia stream = "std::cout"
+    elige gradus {
+        casu ScribeGradus.Error { stream = "std::cerr" }
+        casu ScribeGradus.Warn { stream = "std::cerr" }
+        casu ScribeGradus.Debug { stream = "std::clog" }
+    }
+
+    # Build output chain
+    varia parts = [] innatum lista<textus>
+    ex argumenta pro arg {
+        parts.adde(genExpressia(arg, g))
+    }
+
+    si parts.longitudo() == 0 {
+        redde scriptum("§§ << std::endl;", g.ind(), stream)
+    }
+
+    redde scriptum("§§ << § << std::endl;", g.ind(), stream, parts.coniunge(" << "))
+}

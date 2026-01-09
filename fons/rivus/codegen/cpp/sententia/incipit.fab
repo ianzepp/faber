@@ -1,0 +1,44 @@
+# C++ Statement Generator - Entry Point
+#
+# Generates C++ main() function from Faber incipit.
+#
+# TRANSFORMS:
+#   incipit { ... } -> int main() { ... return 0; }
+#   incipit { ... } ergo exit -> int main() { ... return exit; }
+
+ex "../../../ast/sententia" importa Sententia
+ex "../nucleus" importa CppGenerator
+
+# External declarations
+ex "./index" importa genSententia
+ex "../expressia/index" importa genExpressia
+
+@ publica
+functio genIncipit(ignotum corpus, ignotum ergo, CppGenerator g) -> textus {
+    g.inMain = verum
+
+    g.intraProfundum()
+    fixum body = genSententia(corpus qua Sententia, g)
+    g.exiProfundum()
+
+    varia result = scriptum("§int main()", g.ind())
+
+    si body == "" {
+        si nonnihil ergo {
+            fixum exitCode = genExpressia(ergo, g)
+            result = scriptum("§ {\n§    return §;\n§}", result, g.ind(), exitCode, g.ind())
+        } secus {
+            result = scriptum("§ {\n§    return 0;\n§}", result, g.ind(), g.ind())
+        }
+    } secus {
+        si nonnihil ergo {
+            fixum exitCode = genExpressia(ergo, g)
+            result = scriptum("§ {\n§\n§    return §;\n§}", result, body, g.ind(), exitCode, g.ind())
+        } secus {
+            result = scriptum("§ {\n§\n§    return 0;\n§}", result, body, g.ind(), g.ind())
+        }
+    }
+
+    g.inMain = falsum
+    redde result
+}

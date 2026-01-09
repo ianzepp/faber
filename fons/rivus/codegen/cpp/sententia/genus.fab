@@ -1,0 +1,45 @@
+# C++ Statement Generator - Struct/Class Declarations
+#
+# Generates C++ struct declarations from Faber genus.
+#
+# TRANSFORMS:
+#   genus Persona { textus nomen } -> struct Persona { std::string nomen; };
+
+ex "../../../ast/sententia" importa CampusDeclaratio
+ex "../../../ast/typus" importa TypusAnnotatio
+ex "../nucleus" importa CppGenerator
+ex "../typus" importa genTypus
+ex "../expressia/index" importa genExpressia
+
+@ publica
+functio genGenus(textus nomen, lista<CampusDeclaratio> campi, CppGenerator g) -> textus {
+    varia lines = [] innatum lista<textus>
+
+    g.intraProfundum()
+    ex campi pro campo {
+        fixum fieldLine = genCampus(campo, g)
+        lines.adde(fieldLine)
+    }
+    g.exiProfundum()
+
+    si lines.longitudo() == 0 {
+        redde scriptum("§struct § {};", g.ind(), nomen)
+    }
+
+    redde scriptum("§struct § {\n§\n§};", g.ind(), nomen, lines.coniunge("\n"), g.ind())
+}
+
+functio genCampus(CampusDeclaratio campo, CppGenerator g) -> textus {
+    varia cppTypus = "auto"
+    si nonnihil campo.typus {
+        cppTypus = genTypus(campo.typus qua TypusAnnotatio, g)
+    }
+
+    varia result = scriptum("§§ §", g.ind(), cppTypus, campo.nomen)
+
+    si nonnihil campo.praedefinitum {
+        result = scriptum("§ = §", result, genExpressia(campo.praedefinitum, g))
+    }
+
+    redde scriptum("§;", result)
+}

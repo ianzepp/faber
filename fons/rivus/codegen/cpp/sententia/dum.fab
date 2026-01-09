@@ -1,0 +1,29 @@
+# C++ Statement Generator - While Loops
+#
+# Generates C++ while loops from Faber dum statements.
+#
+# TRANSFORMS:
+#   dum cond { } -> while (cond) { }
+
+ex "../../../ast/sententia" importa Sententia
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa CppGenerator
+
+# External declarations
+ex "./index" importa genSententia
+ex "../expressia/index" importa genExpressia
+
+@ publica
+functio genDum(ignotum condicio, Sententia corpus, CppGenerator g) -> textus {
+    fixum cond = genExpressia(condicio qua Expressia, g)
+
+    g.intraProfundum()
+    fixum body = genSententia(corpus, g)
+    g.exiProfundum()
+
+    si body == "" {
+        redde scriptum("§while (§) {}", g.ind(), cond)
+    }
+
+    redde scriptum("§while (§) {\n§\n§}", g.ind(), cond, body, g.ind())
+}
