@@ -30,13 +30,17 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
                     si non (m.computatum qua bivalens) {
                         discerne m.proprietas {
                             casu Nomen ut n {
-                                fixum parsed = parseMethodum(n.valor)
-                                si nonnihil parsed {
-                                    fixum obiectumTypus = r.expressia(m.obiectum)
-                                    fixum recipiens = nomenReceptor(obiectumTypus)
-                                    si nonnihil recipiens {
-                                        fixum receiver = recipiens qua textus
-                                        si r.analyzator().habetMorphologiam(receiver) {
+                                fixum obiectumTypus = r.expressia(m.obiectum)
+                                fixum recipiens = nomenReceptor(obiectumTypus)
+                                si nonnihil recipiens {
+                                    fixum receiver = recipiens qua textus
+
+                                    # WHY: Always set morphologia.recipiens for stdlib collections
+                                    # so codegen can use norma-registry translations for method names
+                                    # that aren't morphology-aware (e.g., habet, divisa, etc.)
+                                    si estStdlibCollection(receiver) {
+                                        fixum parsed = parseMethodum(n.valor)
+                                        si nonnihil parsed et r.analyzator().habetMorphologiam(receiver) {
                                             fixum formae = r.analyzator().formaeMorphologiae(receiver, parsed.radix)
 
                                             # EDGE: Avoid lexical hijacking. Only treat a call as morphologia if
@@ -54,6 +58,13 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
                                                     } qua MorphologiaInvocatio
                                                 }
                                             }
+                                        } secus {
+                                            # Set recipiens only for norma lookup (no morphology validation)
+                                            v.morphologia = {
+                                                recipiens: receiver,
+                                                radix: "",
+                                                forma: ""
+                                            } qua MorphologiaInvocatio
                                         }
                                     }
                                 }
@@ -108,6 +119,19 @@ functio estFormaPermissa(lista<textus> formae, textus forma) -> bivalens {
         }
     }
     redde falsum
+}
+
+# Check if a type name is a stdlib collection type that uses norma translations
+functio estStdlibCollection(textus nomen) -> bivalens {
+    elige nomen {
+        casu "lista" reddit verum
+        casu "tabula" reddit verum
+        casu "copia" reddit verum
+        casu "textus" reddit verum
+        casu "numerus" reddit verum
+        casu "fractus" reddit verum
+        ceterum reddit falsum
+    }
 }
 
 # ============================================================================

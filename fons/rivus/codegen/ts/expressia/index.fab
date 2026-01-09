@@ -10,11 +10,93 @@ ex "../nucleus" importa TsGenerator
 ex "../typus" importa genTypus
 ex "../../../parser/morphologia" importa parseMethodum
 ex "../../radices" importa generaListaMethodum
+ex "../../norma-registry.gen" importa getNormaTranslation, VerteTranslation
 ex "./littera" importa genLittera, genLitteraExemplar
 ex "./scriptum" importa genScriptum
 ex "./ambitus" importa genAmbitusExpressia
 ex "./est" importa genEstExpressia, genEstExpressiaNegata
 ex "./obiectum" importa genObiectum
+
+# =============================================================================
+# NORMA TRANSLATION HELPERS
+# =============================================================================
+
+# Parse a single digit character to a number for template index
+functio legeDigitumNorma(textus c) -> numerus {
+    elige c {
+        casu "0" reddit 0
+        casu "1" reddit 1
+        casu "2" reddit 2
+        casu "3" reddit 3
+        casu "4" reddit 4
+        casu "5" reddit 5
+        casu "6" reddit 6
+        casu "7" reddit 7
+        casu "8" reddit 8
+        casu "9" reddit 9
+        ceterum reddit 0
+    }
+}
+
+# Apply a norma template translation.
+#
+# WHY: Templates use § as placeholders. 'ego' maps to the receiver object,
+#      other params map to arguments in order.
+functio applicaNormaTemplate(textus template, lista<textus> params, textus obj, lista<textus> args) -> textus {
+    # Build values array: ego -> obj, other params -> args
+    varia values = [] innatum lista<textus>
+    varia argIdx = 0
+    ex params pro param {
+        si param == "ego" {
+            values.adde(obj)
+        } secus {
+            si argIdx < args.longitudo() {
+                values.adde(args[argIdx])
+                argIdx += 1
+            } secus {
+                values.adde("")
+            }
+        }
+    }
+
+    # Replace § placeholders - supports both positional and indexed
+    varia result = ""
+    varia implicitIdx = 0
+    varia i = 0
+
+    dum i < template.longitudo() {
+        fixum c = template[i]
+        si c == "§" {
+            si i + 1 < template.longitudo() {
+                fixum next = template[i + 1]
+                si next >= "0" et next <= "9" {
+                    fixum idx = legeDigitumNorma(next)
+                    si idx < values.longitudo() {
+                        result = result + values[idx]
+                    }
+                    i += 2
+                } secus {
+                    si implicitIdx < values.longitudo() {
+                        result = result + values[implicitIdx]
+                        implicitIdx += 1
+                    }
+                    i += 1
+                }
+            } secus {
+                si implicitIdx < values.longitudo() {
+                    result = result + values[implicitIdx]
+                    implicitIdx += 1
+                }
+                i += 1
+            }
+        } secus {
+            result = result + c
+            i += 1
+        }
+    }
+
+    redde result
+}
 
 # =============================================================================
 # EXPRESSION DISPATCH
@@ -312,12 +394,32 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
                             discerne m.proprietas {
                                 casu Nomen ut prop {
                                     fixum methodNomen = prop.valor qua textus
+                                    fixum morpho = e.morphologia qua MorphologiaInvocatio
+                                    fixum collectionNomen = morpho.recipiens qua textus
+                                    fixum obj = genExpressia(m.obiectum, g)
+
+                                    # Try morphology-aware lista generation first
                                     fixum parsed = parseMethodum(methodNomen)
-                                    si nonnihil parsed et (e.morphologia qua MorphologiaInvocatio).recipiens == "lista" {
-                                        fixum obj = genExpressia(m.obiectum, g)
-                                        fixum result = generaListaMethodum((e.morphologia qua MorphologiaInvocatio).radix, obj, args, parsed.flagga)
+                                    si nonnihil parsed et collectionNomen == "lista" {
+                                        fixum result = generaListaMethodum(morpho.radix, obj, args, parsed.flagga)
                                         si nonnihil result {
                                             redde result
+                                        }
+                                    }
+
+                                    # WHY: Look up translation in norma-registry for all stdlib collections.
+                                    # This handles method names that aren't morphology-aware (e.g., habet, divisa).
+                                    fixum translation = getNormaTranslation("ts", collectionNomen, methodNomen)
+                                    si nonnihil translation {
+                                        fixum tr = translation qua VerteTranslation
+                                        # Simple method rename
+                                        si nonnihil tr.method {
+                                            fixum optMark = (e.optivum qua bivalens) sic "?." secus "."
+                                            redde scriptum("§§§(§)", obj, optMark, tr.method, args.coniunge(", "))
+                                        }
+                                        # Template-based translation
+                                        si nonnihil tr.template et nonnihil tr.params {
+                                            redde applicaNormaTemplate(tr.template qua textus, tr.params qua lista<textus>, obj, args)
                                         }
                                     }
                                 }
