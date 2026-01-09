@@ -92,7 +92,10 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
             ex f.parametra pro param {
                 paramTypi.adde(IGNOTUM)
             }
-            fixum fnTypus = functioTypus(paramTypi, VACUUM, f.asynca, falsum)
+            # WHY: Use IGNOTUM when return type is declared, matching faber behavior.
+            # This allows forward function calls to pass type checks during body analysis.
+            fixum reditusTypus = nonnihil f.typusReditus sic IGNOTUM secus VACUUM
+            fixum fnTypus = functioTypus(paramTypi, reditusTypus, f.asynca, falsum)
 
             a.definie({
                 nomen: f.nomen,
