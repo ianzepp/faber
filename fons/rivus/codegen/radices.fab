@@ -84,11 +84,11 @@ functio genFiltr(textus obj, lista<textus> args, MorphologiaFlagga flagga) fit t
             redde scriptum("Promise.all(§.map(§)).then(__keep => { for (let i = §.length - 1; i >= 0; i--) { if (!__keep[i]) §.splice(i, 1); } })", obj, args[0], obj, obj)
         }
         # filtra - sync in-place filter
-        redde scriptum("(() => {{ for (let i = §.length - 1; i >= 0; i--) {{ if (!(§)(§[i])) §.splice(i, 1); }} }})()", obj, args[0], obj, obj)
+        redde scriptum("(() => { for (let i = §.length - 1; i >= 0; i--) { if (!(§)(§[i])) §.splice(i, 1); } })()", obj, args[0], obj, obj)
     } secus {
         si flagga.async {
             # filtratura - async filter returns new
-            redde scriptum("Promise.all(§.map(x => Promise.resolve(§(x)).then(keep => ({{ x, keep }})))).then(r => r.filter(o => o.keep).map(o => o.x))", obj, args[0])
+            redde scriptum("Promise.all(§.map(x => Promise.resolve(§(x)).then(keep => ({ x, keep })))).then(r => r.filter(o => o.keep).map(o => o.x))", obj, args[0])
         }
         # filtrata - sync filter returns new
         redde scriptum("§.filter(§)", obj, args[0])
