@@ -120,7 +120,12 @@ functio parseUnaria(Resolvitor r) -> Expressia {
         redde estInitiumExpressiae(s)
     }
 
-    si p.proba(SymbolumGenus.Nihil) et estInitiumPostNihil(prox) et prox.species !== SymbolumGenus.UncusSin {
+    # WHY: Only treat these as prefix unary operators if operand is on the same line.
+    #      This prevents `verum\ni += 1` from being parsed as `(verum i) += 1`.
+    fixum actualis = p.specta(0)
+    fixum eademLinea = actualis.locus.linea == prox.locus.linea
+
+    si p.proba(SymbolumGenus.Nihil) et eademLinea et estInitiumPostNihil(prox) et prox.species !== SymbolumGenus.UncusSin {
         # WHY: Avoid treating block starts as unary operands (si x == nihil { ... }).
         p.procede()
         fixum argumentum = parseUnaria(r)
@@ -132,7 +137,7 @@ functio parseUnaria(Resolvitor r) -> Expressia {
     }
 
     # Boolean true check: verum x -> x === true
-    si p.proba(SymbolumGenus.Verum) et estInitiumPostNihil(prox) et prox.species !== SymbolumGenus.UncusSin {
+    si p.proba(SymbolumGenus.Verum) et eademLinea et estInitiumPostNihil(prox) et prox.species !== SymbolumGenus.UncusSin {
         p.procede()
         fixum argumentum = parseUnaria(r)
         redde finge UnariaExpressia {
@@ -143,7 +148,7 @@ functio parseUnaria(Resolvitor r) -> Expressia {
     }
 
     # Boolean false check: falsum x -> x === false
-    si p.proba(SymbolumGenus.Falsum) et estInitiumPostNihil(prox) et prox.species !== SymbolumGenus.UncusSin {
+    si p.proba(SymbolumGenus.Falsum) et eademLinea et estInitiumPostNihil(prox) et prox.species !== SymbolumGenus.UncusSin {
         p.procede()
         fixum argumentum = parseUnaria(r)
         redde finge UnariaExpressia {
