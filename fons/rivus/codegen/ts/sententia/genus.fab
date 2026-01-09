@@ -26,6 +26,12 @@ ex "../typus" importa genTypus
 functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotum implet, bivalens abstractum, lista<CampusDeclaratio> campi, ignotum structor, lista<Sententia> methodi, ignotum visibilitas, TsGenerator g) -> textus {
     varia result = g.ind()
 
+    # Determine class visibility for field inheritance
+    varia classVisibility = Visibilitas.Privata
+    si nonnihil visibilitas {
+        classVisibility = visibilitas qua Visibilitas
+    }
+
     # Module-level: export when public
     si nonnihil visibilitas {
         fixum vis = visibilitas qua Visibilitas
@@ -67,7 +73,7 @@ functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotu
 
     # Fields
     ex campi pro campus {
-        result = scriptum("§§\n", result, genCampus(campus, g))
+        result = scriptum("§§\n", result, genCampus(campus, classVisibility, g))
     }
 
     # Split creo method from other methods
@@ -158,17 +164,28 @@ functio genCreoMethod(Sententia creo, TsGenerator g) -> textus {
 }
 
 @ publica
-functio genCampus(CampusDeclaratio campus, TsGenerator g) -> textus {
+functio genCampus(CampusDeclaratio campus, Visibilitas classVisibility, TsGenerator g) -> textus {
     varia result = g.ind()
 
-    # Visibility
-    si campus.visibilitas == Visibilitas.Publica {
-        result = scriptum("§public ", result)
-    } sin campus.visibilitas == Visibilitas.Protecta {
-        result = scriptum("§protected ", result)
-    } secus {
-        result = scriptum("§private ", result)
+    # Determine effective visibility
+    # HEURISTIC: For public classes, only emit explicit private/protected modifiers
+    # This matches TypeScript's default where public is implicit
+    varia effectiveVisibility = campus.visibilitas
+
+    # If class is public and field would be private (default), make it public instead
+    # This implements field visibility inheritance from parent class
+    si classVisibility == Visibilitas.Publica et campus.visibilitas == Visibilitas.Privata {
+        # Fields without explicit visibility in public classes should be public
+        effectiveVisibility = Visibilitas.Publica
     }
+
+    # Only emit modifier if private or protected (public is default in TS)
+    si effectiveVisibility == Visibilitas.Privata {
+        result = scriptum("§private ", result)
+    } sin effectiveVisibility == Visibilitas.Protecta {
+        result = scriptum("§protected ", result)
+    }
+    # For public visibility, emit no modifier (public is implicit in TypeScript)
 
     si campus.staticum {
         result = scriptum("§static ", result)
