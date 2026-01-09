@@ -476,7 +476,7 @@ functio parseObiectumExpressia(Resolvitor r) -> Expressia {
                 }
                 # Identifier key: name
                 secus {
-                    fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+                    fixum nomenSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
                     clavis = finge Nomen {
                         locus: nomenSym.locus,
                         valor: nomenSym.valor
@@ -552,7 +552,7 @@ functio parseLambdaExpressia(Resolvitor r) -> Expressia {
         # Parse parameters until we hit : or ->
         fac {
             fixum paramLocus = p.locusActualis()
-            fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            fixum nomenSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
 
             parametra.adde({
                 locus: paramLocus,
@@ -609,7 +609,7 @@ functio parseFingeExpressia(Resolvitor r) -> Expressia {
             fac {
                 fixum campusLocus = p.locusActualis()
 
-                fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+                fixum nomenSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
                 # WHY: Keep Nomen as Expressia to avoid TS literal widening.
                 fixum Expressia clavis = finge Nomen {
                     locus: nomenSym.locus,
