@@ -29,7 +29,7 @@ functio genCura(ignotum curatorSpecies, ignotum res, textus vinculum, Sententia 
     }
 
     # Generic resource management with try/finally
-    varia result = scriptum("§{{\n", g.ind())
+    varia result = scriptum("§{\n", g.ind())
     g.intraProfundum()
 
     # Resource acquisition: const <binding> = [await] <resource>;

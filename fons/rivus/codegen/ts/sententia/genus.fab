@@ -61,7 +61,7 @@ functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotu
         }
     }
 
-    result = scriptum("§ {{\n", result)
+    result = scriptum("§ {\n", result)
     g.intraProfundum()
     g.inGenere = verum
 
@@ -104,7 +104,7 @@ functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotu
 
     g.inGenere = falsum
     g.exiProfundum()
-    result = scriptum("§§}}", result, g.ind())
+    result = scriptum("§§}", result, g.ind())
 
     redde result
 }

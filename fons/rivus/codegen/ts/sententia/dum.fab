@@ -18,12 +18,12 @@ functio genDum(Expressia condicio, Sententia corpus, ignotum cape, TsGenerator g
     fixum body = genSententia(corpus, g)
     g.exiProfundum()
 
-    fixum loop = scriptum("§while (§) {{\n§\n§}}", g.ind(), genExpressia(condicio, g), body, g.ind())
+    fixum loop = scriptum("§while (§) {\n§\n§}", g.ind(), genExpressia(condicio, g), body, g.ind())
 
     # WHY: dum allows cape; wrap the loop in try/catch.
     si nonnihil cape {
         fixum c = cape qua CapeClausula
-        redde scriptum("§try {{\n§\n§}} catch (§) §", g.ind(), loop, g.ind(), c.param, genSententia(c.corpus, g))
+        redde scriptum("§try {\n§\n§} catch (§) §", g.ind(), loop, g.ind(), c.param, genSententia(c.corpus, g))
     }
 
     redde loop

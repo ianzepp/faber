@@ -38,5 +38,5 @@ functio genObiectum(lista<ObiectumProprietas> proprietates, TsGenerator g) -> te
         }
     }
 
-    redde scriptum("{{ § }}", props.coniunge(", "))
+    redde scriptum("{ § }", props.coniunge(", "))
 }

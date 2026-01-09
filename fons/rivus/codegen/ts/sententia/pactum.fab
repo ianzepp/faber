@@ -39,7 +39,7 @@ functio genPactum(textus nomen, ignotum generaParametra, lista<PactumMethodus> m
         }
     }
 
-    result = scriptum("§ {{\n", result)
+    result = scriptum("§ {\n", result)
     g.intraProfundum()
 
     ex methodi pro methodus {
@@ -72,7 +72,7 @@ functio genPactum(textus nomen, ignotum generaParametra, lista<PactumMethodus> m
     }
 
     g.exiProfundum()
-    result = scriptum("§§}}", result, g.ind())
+    result = scriptum("§§}", result, g.ind())
 
     redde result
 }

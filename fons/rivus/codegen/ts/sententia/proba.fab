@@ -21,7 +21,7 @@ ex "./index" importa genSententia
 @ publica
 functio genProbandum(textus nomen, lista<Sententia> corpus, TsGenerator g) -> textus {
     varia lines = [] innatum lista<textus>
-    lines.adde(scriptum("§describe(\"§\", () => {{", g.ind(), nomen))
+    lines.adde(scriptum("§describe(\"§\", () => {", g.ind(), nomen))
 
     g.intraProfundum()
     ex corpus pro stmt {
@@ -48,7 +48,7 @@ functio genProba(textus nomen, ignotum modificator, textus? ratioModificatoris, 
             g.intraProfundum()
             fixum body = genSententia(corpus, g)
             g.exiProfundum()
-            redde scriptum("§test.skip(\"§\", () => {{\n§\n§}});", g.ind(), titulus, body, g.ind())
+            redde scriptum("§test.skip(\"§\", () => {\n§\n§});", g.ind(), titulus, body, g.ind())
         }
         si mod == ProbaModificator.Futurum {
             redde scriptum("§test.todo(\"§\");", g.ind(), titulus)
@@ -59,7 +59,7 @@ functio genProba(textus nomen, ignotum modificator, textus? ratioModificatoris, 
     fixum body = genSententia(corpus, g)
     g.exiProfundum()
 
-    redde scriptum("§test(\"§\", () => {{\n§\n§}});", g.ind(), nomen, body, g.ind())
+    redde scriptum("§test(\"§\", () => {\n§\n§});", g.ind(), nomen, body, g.ind())
 }
 
 @ publica
@@ -85,5 +85,5 @@ functio genPraepara(PraeparaTempus tempus, bivalens asynca, bivalens omnia, Sent
     fixum body = genSententia(corpus, g)
     g.exiProfundum()
 
-    redde scriptum("§§(§() => {{\n§\n§}});", g.ind(), hook, asyncPrefix, body, g.ind())
+    redde scriptum("§§(§() => {\n§\n§});", g.ind(), hook, asyncPrefix, body, g.ind())
 }
