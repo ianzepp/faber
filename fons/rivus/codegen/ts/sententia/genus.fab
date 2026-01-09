@@ -8,6 +8,7 @@
 #   genus Foo extendit Bar { ... }  -> class Foo extends Bar { ... }
 #   genus Foo implet X, Y { ... }   -> class Foo implements X, Y { ... }
 #   @ abstractum genus Foo { ... }  -> abstract class Foo { ... }
+#   @ publica genus Foo { ... }     -> export class Foo { ... }
 #   campus publicus x: numerus      -> public x: number
 #   campus staticus x: numerus      -> static x: number
 
@@ -22,8 +23,16 @@ ex "./index" importa genSententia
 ex "../typus" importa genTypus
 
 @ publica
-functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotum implet, bivalens abstractum, lista<CampusDeclaratio> campi, ignotum structor, lista<Sententia> methodi, TsGenerator g) -> textus {
+functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotum implet, bivalens abstractum, lista<CampusDeclaratio> campi, ignotum structor, lista<Sententia> methodi, ignotum visibilitas, TsGenerator g) -> textus {
     varia result = g.ind()
+
+    # Module-level: export when public
+    si nonnihil visibilitas {
+        fixum vis = visibilitas qua Visibilitas
+        si vis == Visibilitas.Publica {
+            result = scriptum("§export ", result)
+        }
+    }
 
     si abstractum {
         result = scriptum("§abstract ", result)

@@ -281,6 +281,7 @@ discretio Sententia {
         TypusAnnotatio? typus
         Expressia? valor
         bivalens externa        # @ externa annotation
+        Visibilitas? visibilitas  # @ publica annotation for module-level export
     }
 
     # Import declaration
@@ -352,6 +353,7 @@ discretio Sententia {
         Sententia? structor      # FunctioDeclaratio (WHY: "constructor" is JS reserved)
         lista<Sententia> methodi # lista<FunctioDeclaratio>
         MorphologiaDeclaratio? morphologia
+        Visibilitas? visibilitas  # @ publica annotation for module-level export
     }
 
     # Pactum (interface) declaration
@@ -361,6 +363,7 @@ discretio Sententia {
         textus nomen
         lista<textus>? generaParametra
         lista<PactumMethodus> methodi
+        Visibilitas? visibilitas  # @ publica annotation for module-level export
     }
 
     # Type alias declaration
@@ -370,6 +373,7 @@ discretio Sententia {
         textus nomen
         TypusAnnotatio typus
         textus? scopusNomen      # for typeof: typus X = typus y
+        Visibilitas? visibilitas  # @ publica annotation for module-level export
     }
 
     # Ordo (enum) declaration
@@ -378,6 +382,7 @@ discretio Sententia {
         Locus locus
         textus nomen
         lista<OrdoMembrum> membra
+        Visibilitas? visibilitas  # @ publica annotation for module-level export
     }
 
     # Discretio (tagged union) declaration
@@ -387,6 +392,7 @@ discretio Sententia {
         textus nomen
         lista<textus>? generaParametra
         lista<VariansDeclaratio> variantes
+        Visibilitas? visibilitas  # @ publica annotation for module-level export
     }
 
     # -------------------------------------------------------------------------
