@@ -3,9 +3,10 @@
 # Generates if/else chains for discriminated union matching.
 #
 # TRANSFORMS:
-#   discerne x { casu A {...} }      -> if (x.tag === 'A') {...}
-#   discerne x { casu B ut b {...} } -> if (x.tag === 'B') { const b = x; ... }
-#   discerne x { casu C(a, b) {...} } -> if (x.tag === 'C') { const { a, b } = x; ... }
+#   discerne x { casu A {...} }       -> if (x.tag === 'A') {...}
+#   discerne x { casu B ut b {...} }  -> if (x.tag === 'B') { const b = x; ... }
+#   discerne x { casu C pro a, b {...} } -> if (x.tag === 'C') { const { a, b } = x; ... }
+#   discerne x { casu _ {...} }       -> else {...}  (wildcard pattern)
 
 ex "../../../ast/sententia" importa Sententia, VariansCasus
 ex "../../../ast/expressia" importa Expressia
@@ -22,21 +23,37 @@ functio genDiscerne(Expressia discriminans, lista<VariansCasus> casus, TsGenerat
 
     varia first = verum
     ex casus pro c {
-        si first {
-            result = scriptum("§§if (§.tag === '§') {{\n", result, g.ind(), disc, c.variansNomen)
-            first = falsum
+        # WHY: Wildcard pattern (_) matches anything - generates else block
+        fixum estWildcard = c.variansNomen == "_"
+
+        si estWildcard {
+            # Wildcard: generate else block (no condition)
+            si first {
+                # If first case is wildcard, just open a block (unconditional)
+                result = scriptum("§§{{\n", result, g.ind())
+            } secus {
+                result = scriptum("§§else {{\n", result, g.ind())
+            }
         } secus {
-            result = scriptum("§§else if (§.tag === '§') {{\n", result, g.ind(), disc, c.variansNomen)
+            # Normal variant: generate if/else if with tag check
+            si first {
+                result = scriptum("§§if (§.tag === '§') {{\n", result, g.ind(), disc, c.variansNomen)
+                first = falsum
+            } secus {
+                result = scriptum("§§else if (§.tag === '§') {{\n", result, g.ind(), disc, c.variansNomen)
+            }
         }
 
         g.intraProfundum()
 
-        # Bind alias or fields
-        si nonnihil c.alias {
-            # WHY: 'ut' binds the whole variant for access via alias.
-            result = scriptum("§§const § = §;\n", result, g.ind(), c.alias, disc)
-        } sin c.vincula.longitudo() > 0 {
-            result = scriptum("§§const {{ § }} = §;\n", result, g.ind(), c.vincula.coniunge(", "), disc)
+        # Bind alias or fields (only for non-wildcard patterns)
+        si non estWildcard {
+            si nonnihil c.alias {
+                # WHY: 'ut' binds the whole variant for access via alias.
+                result = scriptum("§§const § = §;\n", result, g.ind(), c.alias, disc)
+            } sin c.vincula.longitudo() > 0 {
+                result = scriptum("§§const {{ § }} = §;\n", result, g.ind(), c.vincula.coniunge(", "), disc)
+            }
         }
 
         result = scriptum("§§\n", result, genSententia(c.consequens, g))
