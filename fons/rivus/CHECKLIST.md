@@ -25,7 +25,7 @@ rivus compile <file.fab> -o out.ts    # Specify output file
 
 > Status % = passing tests / TypeScript baseline (741). Run `bun test proba/runner.test.ts -t "@rivus @<target>"` to verify. 35 tests skipped (intrinsic I/O functions, deferred).
 
-> **Known Issue:** Norma method translations (e.g., `adde` → `push`, `habet` → `has`) are defined but not applied during codegen. Collection methods marked ◐ have stem definitions in `codegen/radices.fab` but require translation wiring to work at runtime. See issue #32.
+> **Bootstrap Status:** The bootstrap compiler (`bun run build:bootstrap`) is currently blocked by parser and semantic analyzer gaps. See issues #48 (multi-discriminant discerne), #49 (block scoping), #50 (member assignment), #51 (predeclaration types).
 
 Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, ◌ convention
 
@@ -368,42 +368,42 @@ Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, �
 
 | Latin                        | TypeScript | Zig | Python | Rust | C++23 |
 | ---------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `adde` (push)                |    ◐     | ○ |  ○   | ○  |  ○  |
+| `adde` (push)                |    ●     | ○ |  ○   | ○  |  ○  |
 | `addita` (push copy)         |    ○     | — |  ○   | ○  |  ○  |
-| `praepone` (unshift)         |    ◐     | ○ |  ○   | ○  |  ○  |
+| `praepone` (unshift)         |    ●     | ○ |  ○   | ○  |  ○  |
 | `praeposita` (unshift copy)  |    ○     | — |  ○   | ○  |  ○  |
-| `remove` (pop)               |    ◐     | ○ |  ○   | ○  |  ○  |
+| `remove` (pop)               |    ●     | ○ |  ○   | ○  |  ○  |
 | `remota` (pop copy)          |    ○     | — |  ○   | ○  |  ○  |
-| `decapita` (shift)           |    ◐     | ○ |  ○   | ○  |  ○  |
+| `decapita` (shift)           |    ●     | ○ |  ○   | ○  |  ○  |
 | `decapitata` (shift copy)    |    ○     | — |  ○   | ○  |  ○  |
 | `purga` (clear)              |    ○     | ○ |  ○   | ○  |  ○  |
-| `primus` (first)             |    ○     | ○ |  ○   | ○  |  ○  |
-| `ultimus` (last)             |    ○     | ○ |  ○   | ○  |  ○  |
-| `accipe` (at index)          |    ○     | ○ |  ○   | ○  |  ○  |
-| `longitudo` (length)         |    ◐     | ○ |  ○   | ○  |  ○  |
-| `vacua` (is empty)           |    ◐     | ○ |  ○   | ○  |  ○  |
-| `continet` (includes)        |    ○     | ○ |  ○   | ○  |  ○  |
-| `indiceDe` (indexOf)         |    ○     | ○ |  ○   | ○  |  ○  |
-| `inveni` (find)              |    ○     | ○ |  ○   | ○  |  ○  |
-| `inveniIndicem` (findIndex)  |    ○     | ○ |  ○   | ○  |  ○  |
-| `filtrata` (filter)          |    ◐     | ○ |  ○   | ○  |  ○  |
-| `mappata` (map)              |    ◐     | ○ |  ○   | ○  |  ○  |
-| `reducta` (reduce)           |    ○     | ○ |  ○   | ○  |  ○  |
-| `explanata` (flatMap)        |    ○     | — |  ○   | ○  |  ○  |
-| `plana` (flat)               |    ○     | — |  ○   | ○  |  ○  |
-| `inversa` (reverse copy)     |    ○     | ○ |  ○   | ○  |  ○  |
-| `ordinata` (sort copy)       |    ◐     | ○ |  ○   | ○  |  ○  |
-| `sectio` (slice)             |    ○     | ○ |  ○   | ○  |  ○  |
+| `primus` (first)             |    ●     | ○ |  ○   | ○  |  ○  |
+| `ultimus` (last)             |    ●     | ○ |  ○   | ○  |  ○  |
+| `accipe` (at index)          |    ●     | ○ |  ○   | ○  |  ○  |
+| `longitudo` (length)         |    ●     | ○ |  ○   | ○  |  ○  |
+| `vacua` (is empty)           |    ●     | ○ |  ○   | ○  |  ○  |
+| `continet` (includes)        |    ●     | ○ |  ○   | ○  |  ○  |
+| `indiceDe` (indexOf)         |    ●     | ○ |  ○   | ○  |  ○  |
+| `inveni` (find)              |    ●     | ○ |  ○   | ○  |  ○  |
+| `inveniIndicem` (findIndex)  |    ●     | ○ |  ○   | ○  |  ○  |
+| `filtrata` (filter)          |    ●     | ○ |  ○   | ○  |  ○  |
+| `mappata` (map)              |    ●     | ○ |  ○   | ○  |  ○  |
+| `reducta` (reduce)           |    ●     | ○ |  ○   | ○  |  ○  |
+| `explanata` (flatMap)        |    ●     | — |  ○   | ○  |  ○  |
+| `plana` (flat)               |    ●     | — |  ○   | ○  |  ○  |
+| `inversa` (reverse copy)     |    ●     | ○ |  ○   | ○  |  ○  |
+| `ordinata` (sort copy)       |    ●     | ○ |  ○   | ○  |  ○  |
+| `sectio` (slice)             |    ●     | ○ |  ○   | ○  |  ○  |
 | `prima` (take first n)       |    ○     | ○ |  ○   | ○  |  ○  |
 | `ultima` (take last n)       |    ○     | ○ |  ○   | ○  |  ○  |
 | `omissa` (skip first n)      |    ○     | ○ |  ○   | ○  |  ○  |
-| `omnes` (every)              |    ○     | ○ |  ○   | ○  |  ○  |
-| `aliquis` (some)             |    ○     | ○ |  ○   | ○  |  ○  |
-| `coniunge` (join)            |    ○     | — |  ○   | ○  |  ○  |
-| `perambula` (forEach)        |    ○     | ○ |  ○   | ○  |  ○  |
+| `omnes` (every)              |    ●     | ○ |  ○   | ○  |  ○  |
+| `aliquis` (some)             |    ●     | ○ |  ○   | ○  |  ○  |
+| `coniunge` (join)            |    ●     | — |  ○   | ○  |  ○  |
+| `perambula` (forEach)        |    ●     | ○ |  ○   | ○  |  ○  |
 | `filtra` (filter in-place)   |    ○     | — |  ○   | ○  |  ○  |
-| `ordina` (sort in-place)     |    ○     | ○ |  ○   | ○  |  ○  |
-| `inverte` (reverse in-place) |    ○     | ○ |  ○   | ○  |  ○  |
+| `ordina` (sort in-place)     |    ●     | ○ |  ○   | ○  |  ○  |
+| `inverte` (reverse in-place) |    ●     | ○ |  ○   | ○  |  ○  |
 | `congrega` (groupBy)         |    ○     | — |  ○   | ○  |  ○  |
 | `unica` (unique)             |    ○     | — |  ○   | ○  |  ○  |
 | `planaOmnia` (flattenDeep)   |    ○     | — |  ○   | ○  |  ○  |
@@ -425,23 +425,23 @@ Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, �
 
 | Latin                      | TypeScript | Zig | Python | Rust | C++23 |
 | -------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `pone` (set)               |    ○     | ○ |  ○   | ○  |  ○  |
-| `accipe` (get)             |    ○     | ○ |  ○   | ○  |  ○  |
-| `habet` (has)              |    ○     | ○ |  ○   | ○  |  ○  |
-| `dele` (delete)            |    ○     | ○ |  ○   | ○  |  ○  |
-| `longitudo` (size)         |    ○     | ○ |  ○   | ○  |  ○  |
-| `vacua` (isEmpty)          |    ○     | ○ |  ○   | ○  |  ○  |
-| `purga` (clear)            |    ○     | ○ |  ○   | ○  |  ○  |
-| `claves` (keys)            |    ○     | ○ |  ○   | ○  |  ○  |
-| `valores` (values)         |    ○     | ○ |  ○   | ○  |  ○  |
-| `paria` (entries)          |    ○     | ○ |  ○   | ○  |  ○  |
-| `accipeAut` (getOrDefault) |    ○     | ○ |  ○   | ○  |  ○  |
+| `pone` (set)               |    ●     | ○ |  ○   | ○  |  ○  |
+| `accipe` (get)             |    ●     | ○ |  ○   | ○  |  ○  |
+| `habet` (has)              |    ●     | ○ |  ○   | ○  |  ○  |
+| `dele` (delete)            |    ●     | ○ |  ○   | ○  |  ○  |
+| `longitudo` (size)         |    ●     | ○ |  ○   | ○  |  ○  |
+| `vacua` (isEmpty)          |    ●     | ○ |  ○   | ○  |  ○  |
+| `purga` (clear)            |    ●     | ○ |  ○   | ○  |  ○  |
+| `claves` (keys)            |    ●     | ○ |  ○   | ○  |  ○  |
+| `valores` (values)         |    ●     | ○ |  ○   | ○  |  ○  |
+| `paria` (entries)          |    ●     | ○ |  ○   | ○  |  ○  |
+| `accipeAut` (getOrDefault) |    ●     | ○ |  ○   | ○  |  ○  |
 | `selecta` (pick)           |    ○     | — |  ○   | ○  |  ○  |
 | `omissa` (omit)            |    ○     | — |  ○   | ○  |  ○  |
 | `conflata` (merge)         |    ○     | — |  ○   | ○  |  ○  |
 | `inversa` (invert)         |    ○     | — |  ○   | ○  |  ○  |
-| `mappaValores` (mapValues) |    ○     | — |  ○   | ○  |  ○  |
-| `mappaClaves` (mapKeys)    |    ○     | — |  ○   | ○  |  ○  |
+| `mappaValores` (mapValues) |    ●     | — |  ○   | ○  |  ○  |
+| `mappaClaves` (mapKeys)    |    ●     | — |  ○   | ○  |  ○  |
 | `inLista` (toArray)        |    ○     | — |  ○   | ○  |  ○  |
 | `inObjectum` (toObject)    |    ○     | — |  ○   | —  |  —  |
 
@@ -449,12 +449,12 @@ Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, �
 
 | Latin                         | TypeScript | Zig | Python | Rust | C++23 |
 | ----------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `adde` (add)                  |    ○     | ○ |  ○   | ○  |  ○  |
-| `habet` (has)                 |    ○     | ○ |  ○   | ○  |  ○  |
-| `dele` (delete)               |    ○     | ○ |  ○   | ○  |  ○  |
-| `longitudo` (size)            |    ○     | ○ |  ○   | ○  |  ○  |
-| `vacua` (isEmpty)             |    ○     | ○ |  ○   | ○  |  ○  |
-| `purga` (clear)               |    ○     | ○ |  ○   | ○  |  ○  |
+| `adde` (add)                  |    ●     | ○ |  ○   | ○  |  ○  |
+| `habet` (has)                 |    ●     | ○ |  ○   | ○  |  ○  |
+| `dele` (delete)               |    ●     | ○ |  ○   | ○  |  ○  |
+| `longitudo` (size)            |    ●     | ○ |  ○   | ○  |  ○  |
+| `vacua` (isEmpty)             |    ●     | ○ |  ○   | ○  |  ○  |
+| `purga` (clear)               |    ●     | ○ |  ○   | ○  |  ○  |
 | `unio` (union)                |    ○     | — |  ○   | ○  |  ○  |
 | `intersectio` (intersection)  |    ○     | — |  ○   | ○  |  ○  |
 | `differentia` (difference)    |    ○     | — |  ○   | ○  |  ○  |
@@ -462,8 +462,8 @@ Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, �
 | `subcopia` (isSubset)         |    ○     | — |  ○   | ○  |  ○  |
 | `supercopia` (isSuperset)     |    ○     | — |  ○   | ○  |  ○  |
 | `inLista` (toArray)           |    ○     | — |  ○   | ○  |  ○  |
-| `valores` (values)            |    ○     | ○ |  ○   | ○  |  ○  |
-| `perambula` (forEach)         |    ○     | — |  ○   | ○  |  ○  |
+| `valores` (values)            |    ●     | ○ |  ○   | ○  |  ○  |
+| `perambula` (forEach)         |    ●     | — |  ○   | ○  |  ○  |
 
 ## Stdlib: Time (tempus)
 
