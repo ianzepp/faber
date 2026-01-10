@@ -1,17 +1,17 @@
 /**
- * Shared test runner for cross-target codegen tests.
+ * Bun test runner for cross-target codegen tests (faber compiler).
  *
  * Loads YAML test cases and runs them against multiple codegen targets.
  * Each test case specifies input and expected output per target.
  *
  * USAGE
- *   bun test proba/runner.test.ts              Run all tests + coverage report
- *   bun test proba/runner.test.ts -t "binary"  Run tests matching "binary"
- *   bun test proba/runner.test.ts -t "@ts"     Run only TypeScript target tests
- *   bun test proba/runner.test.ts -t "@py"     Run only Python target tests
- *   bun test proba/runner.test.ts -t "@zig"    Run only Zig target tests
- *   bun test proba/runner.test.ts -t "@rs"     Run only Rust target tests
- *   bun test proba/runner.test.ts -t "@cpp"    Run only C++ target tests
+ *   bun test proba/faber.test.ts              Run all tests + coverage report
+ *   bun test proba/faber.test.ts -t "binary"  Run tests matching "binary"
+ *   bun test proba/faber.test.ts -t "@ts"     Run only TypeScript target tests
+ *   bun test proba/faber.test.ts -t "@py"     Run only Python target tests
+ *   bun test proba/faber.test.ts -t "@zig"    Run only Zig target tests
+ *   bun test proba/faber.test.ts -t "@rs"     Run only Rust target tests
+ *   bun test proba/faber.test.ts -t "@cpp"    Run only C++ target tests
  *
  * ENVIRONMENT VARIABLES
  *   STRICT_COVERAGE=1           Fail if ANY test is missing target expectations
@@ -19,17 +19,18 @@
  *   COVERAGE_DETAILS=1          Show per-suite breakdown in coverage report
  *
  * EXAMPLES
- *   STRICT_COVERAGE=1 bun test proba/runner.test.ts
+ *   STRICT_COVERAGE=1 bun test proba/faber.test.ts
  *     Fail on any test missing ts/py/cpp/rs/zig expectations
  *
- *   STRICT_COVERAGE=operator bun test proba/runner.test.ts
+ *   STRICT_COVERAGE=operator bun test proba/faber.test.ts
  *     Fail only for tests with "operator" in suite or test name
  *
- *   STRICT_COVERAGE="binary|unary" bun test proba/runner.test.ts
+ *   STRICT_COVERAGE="binary|unary" bun test proba/faber.test.ts
  *     Fail for tests matching "binary" or "unary"
  *
  * YAML TEST FORMAT
  *   - name: test name
+ *     variant: optional-variant  # Creates feature "filename: optional-variant"
  *     source: |
  *       fixum x = 1 + 2
  *     wrap: 'cura arena fit alloc { $ }'  # optional: wrap input ($ = placeholder)
@@ -68,24 +69,30 @@
  */
 
 import { describe, test, expect, afterAll } from 'bun:test';
-import { parse as parseYaml } from 'yaml';
-import { readFileSync, readdirSync, statSync } from 'fs';
-import { join, basename, relative } from 'path';
 
-import { tokenize } from '../faber/tokenizer';
-import { parse } from '../faber/parser';
-import { analyze } from '../faber/semantic';
-import { generate } from '../faber/codegen';
-
-// Supported targets
-const TARGETS = ['ts', 'py', 'cpp', 'rs', 'zig'] as const;
-type Target = (typeof TARGETS)[number];
+import {
+    EXECUTABLE_TARGETS,
+    type ExecutableTarget,
+    type Target,
+    type TestCase,
+    type TargetExpectation,
+    type ErrataExpectation,
+    findYamlFiles,
+    getSource,
+    getExpectation,
+    shouldSkipFaber,
+    hasErrata,
+    compile,
+    compileStrict,
+    matchOutput,
+    matchErrata,
+} from './shared';
 
 // Coverage tracking
 interface CoverageGap {
     suite: string;
     test: string;
-    missingTargets: Target[];
+    missingTargets: ExecutableTarget[];
 }
 
 const coverageGaps: CoverageGap[] = [];
@@ -93,8 +100,8 @@ const coverageGaps: CoverageGap[] = [];
 // Track which tests actually ran (to filter coverage report)
 const testsRun = new Set<string>();
 
-function testKey(suite: string, test: string): string {
-    return `${suite}::${test}`;
+function testKey(suite: string, testName: string): string {
+    return `${suite}::${testName}`;
 }
 
 // Strict mode: fail on missing targets
@@ -102,121 +109,19 @@ function testKey(suite: string, test: string): string {
 const strictCoverage = process.env.STRICT_COVERAGE;
 const strictPattern = strictCoverage && strictCoverage !== '1' ? new RegExp(strictCoverage, 'i') : null;
 
-interface TargetExpectation {
-    contains?: string[];
-    not_contains?: string[];
-    exact?: string;
-}
-
-// Error expectation: true (any error), string (exact), or string[] (contains all)
-type ErrataExpectation = true | string | string[];
-
-interface TestCase {
-    name: string;
-    source: string;
-    wrap?: string;
-    // Expectations: either in expect object (modern) or top-level (legacy)
-    expect?: {
-        ts?: string | string[] | TargetExpectation;
-        py?: string | string[] | TargetExpectation;
-        zig?: string | string[] | TargetExpectation;
-        cpp?: string | string[] | TargetExpectation;
-        rs?: string | string[] | TargetExpectation;
-        fab?: string | string[] | TargetExpectation;
-    };
-    // Legacy top-level expectations (deprecated)
-    ts?: string | string[] | TargetExpectation;
-    py?: string | string[] | TargetExpectation;
-    zig?: string | string[] | TargetExpectation;
-    cpp?: string | string[] | TargetExpectation;
-    rs?: string | string[] | TargetExpectation;
-    fab?: string | string[] | TargetExpectation;
-    skip?: Target[];
-    errata?: ErrataExpectation;
-    faber?: boolean; // Set to false to skip this test for faber compiler
-}
-
-function getSource(tc: TestCase): string {
-    if (tc.wrap) {
-        return tc.wrap.replace('$', tc.source);
-    }
-    return tc.source;
-}
-
-function getExpectation(tc: TestCase, target: Target): string | string[] | TargetExpectation | undefined {
-    return tc.expect?.[target] ?? tc[target];
-}
-
-function shouldSkipFaber(tc: TestCase): boolean {
-    return tc.faber === false;
-}
-
-function hasErrata(tc: TestCase): tc is TestCase & { errata: ErrataExpectation } {
-    return 'errata' in tc && tc.errata !== undefined;
-}
-
 /**
- * Compile Faber source to target language.
- * Lenient mode: ignores semantic errors (for snippet tests with undefined vars).
- */
-function compile(code: string, target: Target = 'ts'): string {
-    const { tokens } = tokenize(code);
-    const { program } = parse(tokens);
-
-    if (!program) {
-        throw new Error('Parse failed');
-    }
-
-    const { program: analyzedProgram } = analyze(program);
-    return generate(analyzedProgram, { target });
-}
-
-/**
- * Compile Faber source strictly - throws on any tokenizer, parse, or semantic error.
- * Used for errata tests that expect compilation to fail.
- */
-function compileStrict(code: string): void {
-    const { tokens, errors: tokenErrors } = tokenize(code);
-
-    if (tokenErrors.length > 0) {
-        const messages = tokenErrors.map(e => `${e.code}: ${e.text}`).join('; ');
-        throw new Error(`Tokenizer errors: ${messages}`);
-    }
-
-    const { program, errors: parseErrors } = parse(tokens);
-
-    if (parseErrors.length > 0) {
-        const messages = parseErrors.map(e => `${e.code}: ${e.message}`).join('; ');
-        throw new Error(`Parse errors: ${messages}`);
-    }
-
-    if (!program) {
-        throw new Error('Parse failed: no program');
-    }
-
-    const { program: analyzedProgram, errors: semanticErrors } = analyze(program);
-
-    if (semanticErrors.length > 0) {
-        const messages = semanticErrors.map(e => e.message).join('; ');
-        throw new Error(`Semantic errors: ${messages}`);
-    }
-}
-
-/**
- * Check if output matches expectation.
- * - String: exact match (after trimming)
- * - Array: all fragments must be present (contains)
- * - Object: { contains?: [], not_contains?: [], exact?: string }
+ * Check if output matches expectation (bun:test version - throws on failure).
  */
 function checkOutput(output: string, expected: string | string[] | TargetExpectation): void {
     if (typeof expected === 'string') {
         expect(output.trim()).toBe(expected);
-    } else if (Array.isArray(expected)) {
+    }
+    else if (Array.isArray(expected)) {
         for (const fragment of expected) {
             expect(output).toContain(fragment);
         }
-    } else {
-        // Object form with contains/not_contains/exact
+    }
+    else {
         if (expected.exact !== undefined) {
             expect(output.trim()).toBe(expected.exact);
         }
@@ -234,20 +139,18 @@ function checkOutput(output: string, expected: string | string[] | TargetExpecta
 }
 
 /**
- * Check if error matches errata expectation.
- * - true: any error is acceptable
- * - String: exact match on error message
- * - Array: all fragments must be present in error message
+ * Check if error matches errata expectation (bun:test version - throws on failure).
  */
 function checkErrata(error: unknown, expected: ErrataExpectation): void {
     const message = error instanceof Error ? error.message : String(error);
 
     if (expected === true) {
-        // Any error is fine
         return;
-    } else if (typeof expected === 'string') {
+    }
+    else if (typeof expected === 'string') {
         expect(message).toBe(expected);
-    } else {
+    }
+    else {
         for (const fragment of expected) {
             expect(message).toContain(fragment);
         }
@@ -261,18 +164,14 @@ function shouldEnforceStrict(suiteName: string, testName: string): boolean {
     if (!strictCoverage) return false;
     if (strictCoverage === '1') return true;
 
-    // Match against suite/test path
     const fullPath = `${suiteName}/${testName}`;
     return strictPattern?.test(fullPath) ?? false;
 }
 
 /**
- * Load and run all test cases from a YAML file.
+ * Run all test cases from a loaded test file.
  */
-function runTestFile(filePath: string, suiteName: string): void {
-    const content = readFileSync(filePath, 'utf-8');
-    const cases: TestCase[] = parseYaml(content);
-
+function runTestFile(suiteName: string, cases: TestCase[]): void {
     describe(suiteName, () => {
         // Errata tests: expect compilation to fail
         describe('errata', () => {
@@ -283,16 +182,15 @@ function runTestFile(filePath: string, suiteName: string): void {
                 test(tc.name, () => {
                     testsRun.add(testKey(suiteName, tc.name));
                     const input = getSource(tc);
+                    const result = compileStrict(input.trim());
 
-                    try {
-                        compileStrict(input.trim());
+                    if (result.success) {
                         throw new Error('Expected compilation to fail, but it succeeded');
-                    } catch (error) {
-                        // Don't catch our own "expected to fail" error
-                        if (error instanceof Error && error.message.includes('Expected compilation to fail')) {
-                            throw error;
-                        }
-                        checkErrata(error, tc.errata);
+                    }
+
+                    const match = matchErrata(result.error!, tc.errata);
+                    if (!match.passed) {
+                        throw new Error(match.errors.join('\n'));
                     }
                 });
             }
@@ -300,10 +198,9 @@ function runTestFile(filePath: string, suiteName: string): void {
 
         // Per-target output tests
         // WHY: Use @target prefix for easy filtering: `bun test -t "@zig"`
-        for (const target of TARGETS) {
+        for (const target of EXECUTABLE_TARGETS) {
             describe(`@${target}`, () => {
                 for (const tc of cases) {
-                    // Skip errata tests in per-target loop
                     if (hasErrata(tc)) continue;
                     if (shouldSkipFaber(tc)) continue;
 
@@ -312,7 +209,6 @@ function runTestFile(filePath: string, suiteName: string): void {
 
                     // Track missing coverage (not skipped, just missing)
                     if (expected === undefined && !isSkipped) {
-                        // Find or create gap entry for this test
                         let gap = coverageGaps.find(g => g.suite === suiteName && g.test === tc.name);
                         if (!gap) {
                             gap = { suite: suiteName, test: tc.name, missingTargets: [] };
@@ -321,17 +217,19 @@ function runTestFile(filePath: string, suiteName: string): void {
                         gap.missingTargets.push(target);
                     }
 
-                    // Skip if no expectation for this target
                     if (expected === undefined) continue;
-
-                    // Skip if explicitly marked to skip
                     if (isSkipped) continue;
 
                     test(tc.name, () => {
                         testsRun.add(testKey(suiteName, tc.name));
                         const input = getSource(tc);
-                        const output = compile(input.trim(), target);
-                        checkOutput(output, expected);
+                        const result = compile(input.trim(), target);
+
+                        if (!result.success) {
+                            throw new Error(result.error);
+                        }
+
+                        checkOutput(result.output!, expected);
                     });
                 }
             });
@@ -339,11 +237,10 @@ function runTestFile(filePath: string, suiteName: string): void {
 
         // In strict mode, add a test that fails if any targets are missing
         for (const tc of cases) {
-            // Skip errata tests from coverage enforcement
             if (hasErrata(tc)) continue;
 
             if (shouldEnforceStrict(suiteName, tc.name)) {
-                const missingTargets = TARGETS.filter(t => {
+                const missingTargets = EXECUTABLE_TARGETS.filter(t => {
                     const exp = getExpectation(tc, t);
                     const skipped = tc.skip?.includes(t);
                     return exp === undefined && !skipped;
@@ -359,40 +256,16 @@ function runTestFile(filePath: string, suiteName: string): void {
     });
 }
 
-/**
- * Recursively find all YAML files in a directory.
- */
-function findYamlFiles(dir: string, baseDir: string): Array<{ path: string; name: string }> {
-    const results: Array<{ path: string; name: string }> = [];
-
-    for (const entry of readdirSync(dir)) {
-        const fullPath = join(dir, entry);
-        const stat = statSync(fullPath);
-
-        if (stat.isDirectory()) {
-            results.push(...findYamlFiles(fullPath, baseDir));
-        } else if (entry.endsWith('.yaml')) {
-            // Build suite name from relative path: codegen/expressions/identifier
-            const relPath = relative(baseDir, fullPath);
-            const suiteName = relPath.replace(/\.yaml$/, '').replace(/\//g, '/');
-            results.push({ path: fullPath, name: suiteName });
-        }
-    }
-
-    return results;
-}
-
 // Load all YAML test files from this directory and subdirectories
 const testDir = import.meta.dir;
-const yamlFiles = findYamlFiles(testDir, testDir);
+const testFiles = findYamlFiles(testDir, testDir);
 
-for (const { path, name } of yamlFiles) {
-    runTestFile(path, name);
+for (const { suiteName, cases } of testFiles) {
+    runTestFile(suiteName, cases);
 }
 
 // Print coverage report after all tests
 afterAll(() => {
-    // Filter to only gaps for tests that actually ran
     const relevantGaps = coverageGaps.filter(gap => testsRun.has(testKey(gap.suite, gap.test)));
 
     if (relevantGaps.length === 0) {
@@ -404,7 +277,6 @@ afterAll(() => {
     console.log('COVERAGE REPORT: Tests missing target expectations');
     console.log('='.repeat(70));
 
-    // Group by suite
     const bySuite = new Map<string, CoverageGap[]>();
     for (const gap of relevantGaps) {
         const list = bySuite.get(gap.suite) ?? [];
@@ -412,8 +284,7 @@ afterAll(() => {
         bySuite.set(gap.suite, list);
     }
 
-    // Summary by target
-    const targetCounts: Record<Target, number> = { ts: 0, py: 0, cpp: 0, rs: 0, zig: 0 };
+    const targetCounts: Record<ExecutableTarget, number> = { ts: 0, py: 0, cpp: 0, rs: 0, zig: 0 };
     for (const gap of relevantGaps) {
         for (const t of gap.missingTargets) {
             targetCounts[t]++;
@@ -421,7 +292,7 @@ afterAll(() => {
     }
 
     console.log('\nMissing by target:');
-    for (const t of TARGETS) {
+    for (const t of EXECUTABLE_TARGETS) {
         if (targetCounts[t] > 0) {
             console.log(`  ${t}: ${targetCounts[t]} tests`);
         }
