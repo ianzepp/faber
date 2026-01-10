@@ -1,0 +1,51 @@
+# File-level metadata: skip in rivus tests (stdlib not yet implemented)
+- rivus: false
+
+# JSON - JSON serialization functions
+# Tests for norma/json module
+
+# =============================================================================
+# Basic Serialization
+# =============================================================================
+
+- name: solve (serialize to JSON)
+  source: |
+      ex "norma/json" importa * ut json
+      fixum text = json.solve(42)
+  expect:
+      ts:
+          - 'const text = JSON.stringify(42);'
+      py:
+          - 'import json'
+          - 'text = json.dumps(42)'
+      rs:
+          - 'let text = serde_json::to_string(&42).unwrap();'
+      cpp:
+          - '#include <nlohmann/json.hpp>'
+          - 'const auto text = nlohmann::json(42).dump();'
+
+- name: solvePulchre (pretty print JSON)
+  source: |
+      ex "norma/json" importa * ut json
+      fixum text = json.solvePulchre(42, 2)
+  expect:
+      ts:
+          - 'const text = JSON.stringify(42, null, 2);'
+      py:
+          - 'import json'
+          - 'text = json.dumps(42, indent=2)'
+      rs:
+          - 'let text = serde_json::to_string_pretty(&42).unwrap();'
+
+- name: pange (deserialize from JSON)
+  source: |
+      ex "norma/json" importa * ut json
+      fixum obj = json.pange("{\"x\":1}")
+  expect:
+      ts:
+          - 'const obj = JSON.parse("{\"x\":1}");'
+      py:
+          - 'import json'
+          - 'obj = json.loads("{\"x\":1}")'
+      rs:
+          - 'let obj = serde_json::from_str(&"{\"x\":1}").unwrap();'
