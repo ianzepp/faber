@@ -317,7 +317,7 @@ export const COMMENT_SYNTAX: Record<CodegenTarget, CommentSyntax> = {
     rs: { line: '//', blockStart: '/*', blockEnd: '*/' },
     cpp: { line: '//', blockStart: '/*', blockEnd: '*/' },
     zig: { line: '//', blockStart: null, blockEnd: null }, // Zig has no block comments
-    fab: { line: '//', blockStart: '/*', blockEnd: '*/' },
+    fab: { line: '#', blockStart: null, blockEnd: null },
 };
 
 /**
