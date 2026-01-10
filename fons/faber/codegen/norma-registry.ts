@@ -1,46 +1,44 @@
 /**
- * Norma Registry - Loads stdlib definitions from fons/norma/*.fab
+ * Norma Registry - Loads stdlib definitions from fons/norma/index.json
  *
  * Data is generated at build time by: bun run build:norma
  * See consilia/futura/norma-faber.md for the full design.
+ *
+ * Key structure:
+ *   "lista"           → { innatum: { ts: "Array", ... } }
+ *   "lista:adde"      → { radixForms: ["add", "imperativus", "perfectum"] }
+ *   "lista:adde:ts"   → { method: "push" } or { template: "...", params: [...] }
  */
 
-// WHY: Import generated registry data (avoids circular dependency with parser)
-import { registry } from './norma-registry.gen';
+import registryData from '../../../fons/norma/index.json';
 import { parseMethodum, parseMethodumWithStem } from './morphology';
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
+/** Entry in the flat JSON registry */
+interface RegistryEntry {
+    // Collection-level (1 part key)
+    innatum?: Record<string, string>;
+    // Method-level (2 part key)
+    radixForms?: string[];
+    // Translation-level (3 part key)
+    method?: string;
+    template?: string;
+    params?: string[];
+}
+
+const registry = registryData as Record<string, RegistryEntry>;
+
 /** Translation for a single target */
 export interface VerteTranslation {
     /** Simple method name (e.g., 'push') */
     method?: string;
-    /** Template string with S placeholders */
+    /** Template string with § placeholders */
     template?: string;
     /** Parameter names for template form */
     params?: string[];
-}
-
-/** Method entry in the registry */
-export interface NormaMethod {
-    /** Method name (e.g., 'adde') */
-    name: string;
-    /** Translations per target */
-    translations: Map<string, VerteTranslation>;
-    /** Morphology forms from @ radix (if present) */
-    radixForms?: string[];
-}
-
-/** Collection entry in the registry */
-export interface NormaCollection {
-    /** Collection name (e.g., 'lista') */
-    name: string;
-    /** Native type mappings from @ innatum */
-    innatum: Map<string, string>;
-    /** Methods defined for this collection */
-    methods: Map<string, NormaMethod>;
 }
 
 // =============================================================================
@@ -56,19 +54,25 @@ export interface NormaCollection {
  * @returns Translation if found, undefined otherwise
  */
 export function getNormaTranslation(target: string, collection: string, method: string): VerteTranslation | undefined {
-    const coll = registry.get(collection);
-    if (!coll) return undefined;
+    const key = `${collection}:${method}:${target}`;
+    const entry = registry[key];
+    if (!entry) return undefined;
 
-    const m = coll.methods.get(method);
-    if (!m) return undefined;
-
-    return m.translations.get(target);
+    // Only return if it's a translation entry (has method or template)
+    if (entry.method || entry.template) {
+        return {
+            method: entry.method,
+            template: entry.template,
+            params: entry.params,
+        };
+    }
+    return undefined;
 }
 
 /**
  * Apply a norma template translation.
  *
- * @param template Template string with S placeholders
+ * @param template Template string with § placeholders
  * @param params Parameter names from @ verte
  * @param obj The object/receiver expression
  * @param args The argument expressions
@@ -81,7 +85,8 @@ export function applyNormaTemplate(template: string, params: string[], obj: stri
     for (const param of params) {
         if (param === 'ego') {
             values.push(obj);
-        } else {
+        }
+        else {
             // Take next arg (includes 'alloc' - curator passed by Zig codegen)
             values.push(args.shift() || '');
         }
@@ -117,7 +122,15 @@ export function hasNormaMethod(target: string, collection: string, method: strin
  * Get all collections defined in norma files.
  */
 export function getNormaCollections(): string[] {
-    return Array.from(registry.keys());
+    const collections: string[] = [];
+    for (const key of Object.keys(registry)) {
+        // Collection keys have no colons
+        const entry = registry[key];
+        if (!key.includes(':') && entry?.innatum) {
+            collections.push(key);
+        }
+    }
+    return collections;
 }
 
 /**
@@ -130,17 +143,13 @@ export function getNormaCollections(): string[] {
 export function getNormaReceiverCollectionsForMethod(target: string, method: string): string[] {
     // Restrict to receiver types (not module-like entries such as mathesis/solum).
     // Keep this list small and explicit; expand as receiver stdlib grows.
-    const receiverCollections = new Set(['lista', 'tabula', 'copia', 'textus']);
+    const receiverCollections = ['lista', 'tabula', 'copia', 'textus'];
 
     const matches: string[] = [];
-    for (const [collectionName, coll] of registry.entries()) {
-        if (!receiverCollections.has(collectionName)) {
-            continue;
-        }
-        const m = coll.methods.get(method);
-        if (!m) continue;
-        if (m.translations.get(target)) {
-            matches.push(collectionName);
+    for (const collection of receiverCollections) {
+        const key = `${collection}:${method}:${target}`;
+        if (registry[key]) {
+            matches.push(collection);
         }
     }
     return matches;
@@ -203,13 +212,9 @@ export interface MorphologyValidation {
  * @returns radixForms array if method has @ radix, undefined otherwise
  */
 export function getNormaRadixForms(collection: string, method: string): string[] | undefined {
-    const coll = registry.get(collection);
-    if (!coll) return undefined;
-
-    const m = coll.methods.get(method);
-    if (!m) return undefined;
-
-    return m.radixForms;
+    const key = `${collection}:${method}`;
+    const entry = registry[key];
+    return entry?.radixForms;
 }
 
 /** Receiver ownership for method calls */
@@ -230,15 +235,19 @@ export type ReceiverOwnership = 'de' | 'in' | undefined;
  * @returns 'in' for mutating, 'de' for non-mutating, undefined if unknown
  */
 export function getReceiverOwnership(collection: string, methodName: string): ReceiverOwnership {
-    const coll = registry.get(collection);
-    if (!coll) return undefined;
+    // Check if collection exists
+    if (!registry[collection]) return undefined;
 
-    const method = coll.methods.get(methodName);
-    if (!method) return undefined;
+    // Check if method has a translation for any target (method exists)
+    const hasMethod = Object.keys(registry).some(k => k.startsWith(`${collection}:${methodName}:`));
+    if (!hasMethod) return undefined;
+
+    // Get radixForms if available
+    const radixForms = getNormaRadixForms(collection, methodName);
 
     // If method has radixForms, use stem-guided parsing
-    if (method.radixForms && method.radixForms.length > 0) {
-        const stem = method.radixForms[0]!;
+    if (radixForms && radixForms.length > 0) {
+        const stem = radixForms[0]!;
         const parsed = parseMethodumWithStem(methodName, stem);
         if (parsed) {
             // mutare=true forms need mutable receiver
@@ -261,6 +270,28 @@ export function getReceiverOwnership(collection: string, methodName: string): Re
 }
 
 /**
+ * Get all methods with radixForms for a collection.
+ */
+function getMethodsWithRadix(collection: string): Array<{ method: string; radixForms: string[] }> {
+    const methods: Array<{ method: string; radixForms: string[] }> = [];
+    const prefix = `${collection}:`;
+
+    for (const key of Object.keys(registry)) {
+        if (key.startsWith(prefix) && !key.includes(':', prefix.length)) {
+            // This is a method-level key (collection:method, not collection:method:target)
+            const entry = registry[key];
+            if (entry?.radixForms) {
+                methods.push({
+                    method: key.slice(prefix.length),
+                    radixForms: entry.radixForms,
+                });
+            }
+        }
+    }
+    return methods;
+}
+
+/**
  * Validate morphology for a method call on a stdlib collection.
  *
  * Validation only runs when:
@@ -272,77 +303,82 @@ export function getReceiverOwnership(collection: string, methodName: string): Re
  * @returns Validation result with error message if invalid
  */
 export function validateMorphology(collection: string, methodName: string): MorphologyValidation {
-    const coll = registry.get(collection);
-    if (!coll) {
+    // Check if collection exists
+    if (!registry[collection]) {
         // Not a stdlib collection - skip validation
         return { valid: true };
     }
 
-    // Check if method exists directly
-    const directMethod = coll.methods.get(methodName);
-    if (directMethod) {
-        // Method exists - if it has radixForms, validate the morphology
-        if (directMethod.radixForms) {
-            const declaredStem = directMethod.radixForms[0]!;
-            const declaredForms = directMethod.radixForms.slice(1);
+    // Get radixForms for this method directly
+    const directRadix = getNormaRadixForms(collection, methodName);
 
-            // WHY: Use stem-guided parsing first. The greedy parser can misparse
-            // words like 'decapita' as 'decap' + '-ita' instead of 'decapit' + '-a'.
-            const stemParsed = parseMethodumWithStem(methodName, declaredStem);
-            const greedyParsed = parseMethodum(methodName);
+    if (directRadix) {
+        // Method exists with radixForms - validate the morphology
+        const declaredStem = directRadix[0]!;
+        const declaredForms = directRadix.slice(1);
 
-            // WHY: Prefer stem-guided parser, but if it returns a form that's not declared,
-            // check if the greedy parser gives a declared form. This handles cases like
-            // 'selecta' with stem 'select': stem-guided gives 'a' -> imperativus (wrong),
-            // but greedy gives 'ta' -> perfectum (correct with stem 'selec').
-            let parsed = stemParsed;
-            if (stemParsed && !declaredForms.includes(stemParsed.form)) {
-                if (greedyParsed && declaredForms.includes(greedyParsed.form)) {
-                    // Greedy parser gives a declared form - prefer it over stem-guided
-                    // We override the stem to match the declared stem for validation
-                    parsed = { ...greedyParsed, stem: declaredStem };
-                }
-            }
+        // WHY: Use stem-guided parsing first. The greedy parser can misparse
+        // words like 'decapita' as 'decap' + '-ita' instead of 'decapit' + '-a'.
+        const stemParsed = parseMethodumWithStem(methodName, declaredStem);
+        const greedyParsed = parseMethodum(methodName);
 
-            // Fallback to whichever parser succeeded
-            if (!parsed) {
-                parsed = stemParsed || greedyParsed;
-            }
-
-            if (parsed) {
-                // Check stem matches (should always match with stem-guided parsing)
-                if (parsed.stem !== declaredStem) {
-                    return {
-                        valid: false,
-                        error: `Morphology mismatch: '${methodName}' has stem '${parsed.stem}', expected '${declaredStem}'`,
-                        stem: parsed.stem,
-                        form: parsed.form,
-                    };
-                }
-
-                // Check form is declared
-                if (!declaredForms.includes(parsed.form)) {
-                    return {
-                        valid: false,
-                        error: `Morphology form '${parsed.form}' not declared for stem '${declaredStem}'. Valid forms: ${declaredForms.join(', ')}`,
-                        stem: parsed.stem,
-                        form: parsed.form,
-                    };
-                }
+        // WHY: Prefer stem-guided parser, but if it returns a form that's not declared,
+        // check if the greedy parser gives a declared form. This handles cases like
+        // 'selecta' with stem 'select': stem-guided gives 'a' -> imperativus (wrong),
+        // but greedy gives 'ta' -> perfectum (correct with stem 'selec').
+        let parsed = stemParsed;
+        if (stemParsed && !declaredForms.includes(stemParsed.form)) {
+            if (greedyParsed && declaredForms.includes(greedyParsed.form)) {
+                // Greedy parser gives a declared form - prefer it over stem-guided
+                // We override the stem to match the declared stem for validation
+                parsed = { ...greedyParsed, stem: declaredStem };
             }
         }
-        // Method exists and passes validation (or has no radixForms)
+
+        // Fallback to whichever parser succeeded
+        if (!parsed) {
+            parsed = stemParsed || greedyParsed;
+        }
+
+        if (parsed) {
+            // Check stem matches (should always match with stem-guided parsing)
+            if (parsed.stem !== declaredStem) {
+                return {
+                    valid: false,
+                    error: `Morphology mismatch: '${methodName}' has stem '${parsed.stem}', expected '${declaredStem}'`,
+                    stem: parsed.stem,
+                    form: parsed.form,
+                };
+            }
+
+            // Check form is declared
+            if (!declaredForms.includes(parsed.form)) {
+                return {
+                    valid: false,
+                    error: `Morphology form '${parsed.form}' not declared for stem '${declaredStem}'. Valid forms: ${declaredForms.join(', ')}`,
+                    stem: parsed.stem,
+                    form: parsed.form,
+                };
+            }
+        }
+
+        // Method exists and passes validation
+        return { valid: true };
+    }
+
+    // Check if method exists (has any translation)
+    const hasMethod = Object.keys(registry).some(k => k.startsWith(`${collection}:${methodName}:`));
+    if (hasMethod) {
+        // Method exists but no radixForms - skip validation
         return { valid: true };
     }
 
     // Method doesn't exist directly - try parsing morphology to find related stem
     // WHY: Check all methods with radixForms to see if this could be an undeclared
     // form of a known verb stem. Use stem-guided parsing to handle ambiguous cases.
-    for (const method of coll.methods.values()) {
-        if (!method.radixForms) continue;
-
-        const declaredStem = method.radixForms[0]!;
-        const declaredForms = method.radixForms.slice(1);
+    for (const { radixForms } of getMethodsWithRadix(collection)) {
+        const declaredStem = radixForms[0]!;
+        const declaredForms = radixForms.slice(1);
 
         // Try both parsers with disambiguation logic (same as above)
         const stemParsed = parseMethodumWithStem(methodName, declaredStem);

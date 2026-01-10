@@ -119,6 +119,13 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
             redde targetTypus
         }
 
+        # Native type construction ([] innatum lista<T>, {} innatum tabula<K,V>)
+        casu InnatumExpressia ut i {
+            r.expressia(i.expressia)
+            fixum targetTypus = resolveTypusAnnotatio(r, i.scopus)
+            redde targetTypus
+        }
+
         # Type check (expr est Type)
         casu EstExpressia {
             redde BIVALENS
