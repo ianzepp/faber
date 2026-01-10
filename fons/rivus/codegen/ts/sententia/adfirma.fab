@@ -21,7 +21,7 @@ functio genAdfirma(Expressia condicio, ignotum nuntius, TsGenerator g) -> textus
         nuntiusTextus = genExpressia(nuntius qua Expressia, g)
     } secus {
         # WHY: Auto-generate assertion message from expression.
-        nuntiusTextus = scriptum("\"Assertion failed: §\"", test.replace("\"", "\\\""))
+        nuntiusTextus = scriptum("\"Assertion failed: §\"", test.muta("\"", "\\\""))
     }
 
     redde scriptum("§if (!(§)) { throw new Error(§); }", g.ind(), test, nuntiusTextus)
