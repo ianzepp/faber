@@ -19,5 +19,9 @@ export function genPreamble(features: RequiredFeatures): string {
         uses.push('use regex::Regex;');
     }
 
+    if (features.stdin) {
+        uses.push('use std::io::Read;');
+    }
+
     return uses.length > 0 ? uses.join('\n') + '\n' : '';
 }
