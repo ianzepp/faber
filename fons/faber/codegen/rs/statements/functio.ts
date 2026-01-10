@@ -11,7 +11,7 @@
 
 import type { FunctioDeclaration, BlockStatement } from '../../../parser/ast';
 import type { RsGenerator } from '../generator';
-import { isAsyncFromAnnotations } from '../../types';
+import { isAsyncFromAnnotations, isExternaFromAnnotations } from '../../types';
 
 export function genFunctioDeclaration(node: FunctioDeclaration, g: RsGenerator): string {
     const isAsync = node.async || isAsyncFromAnnotations(node.annotations);
@@ -23,6 +23,11 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: RsGenerator):
     let returnType = '';
     if (node.returnType) {
         returnType = ` -> ${g.genType(node.returnType)}`;
+    }
+
+    // External function declarations use Rust's extern syntax
+    if (isExternaFromAnnotations(node.annotations)) {
+        return `${g.ind()}extern "C" { fn ${name}${typeParams}(${params})${returnType}; }`;
     }
 
     if (!node.body) {
@@ -46,6 +51,11 @@ export function genMethodDeclaration(node: FunctioDeclaration, g: RsGenerator): 
     let returnType = '';
     if (node.returnType) {
         returnType = ` -> ${g.genType(node.returnType)}`;
+    }
+
+    // External method declarations not supported in impl blocks
+    if (isExternaFromAnnotations(node.annotations)) {
+        throw new Error('External methods (@externa) not supported in Rust impl blocks');
     }
 
     if (!node.body) {

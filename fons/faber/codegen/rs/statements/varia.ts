@@ -12,8 +12,16 @@
 
 import type { VariaDeclaration } from '../../../parser/ast';
 import type { RsGenerator } from '../generator';
+import { isExternaFromAnnotations } from '../../types';
 
 export function genVariaDeclaration(node: VariaDeclaration, g: RsGenerator): string {
+    // External variable declarations use Rust's extern syntax
+    if (isExternaFromAnnotations(node.annotations)) {
+        const name = node.name.type === 'ArrayPattern' ? '[destructure]' : node.name.name;
+        const typeAnno = node.typeAnnotation ? `: ${g.genType(node.typeAnnotation)}` : '';
+        return `${g.ind()}extern "C" { static ${name}${typeAnno}; }`;
+    }
+
     const isAsync = node.kind === 'figendum' || node.kind === 'variandum';
     const mutKeyword = node.kind === 'varia' || node.kind === 'variandum' ? 'mut ' : '';
 

@@ -62,6 +62,7 @@ import { genEstExpression } from './expressions/est';
 import { genPraefixumExpression } from './expressions/praefixum';
 import { genScriptumExpression } from './expressions/scriptum';
 import { genRegexLiteral } from './expressions/regex';
+import { genLegeExpression } from './expressions/lege';
 
 /**
  * Map Latin type names to Rust type names.
@@ -270,6 +271,8 @@ export class RsGenerator {
                 return genScriptumExpression(node, this);
             case 'RegexLiteral':
                 return genRegexLiteral(node, this);
+            case 'LegeExpression':
+                return genLegeExpression(node, this);
             default:
                 throw new Error(`Unknown expression type: ${(node as any).type}`);
         }
