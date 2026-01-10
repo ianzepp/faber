@@ -33,7 +33,7 @@ functio genLittera(LitteraGenus species, textus crudus) -> textus {
     }
     si species == LitteraGenus.Exemplar {
         # Template literals need backticks - lexer strips them
-        redde "`" + crudus + "`"
+        redde scriptum("`§`", crudus)
     }
     # Numerus, Fractus pass through raw value
     redde crudus
@@ -45,12 +45,12 @@ functio genLitteraExemplar(lista<textus> partes, lista<Expressia> expressiae, Ts
     varia result = "`"
     varia i = 0
     ex partes pro pars {
-        result = result + pars
+        result = scriptum("§§", result, pars)
         si i < expressiae.longitudo() {
-            result = result + "${" + genExpressia(expressiae[i], g) + "}"
+            result = scriptum("§${§}", result, genExpressia(expressiae[i], g))
         }
         i += 1
     }
-    result = result + "`"
+    result = scriptum("§`", result)
     redde result
 }

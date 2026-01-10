@@ -59,7 +59,7 @@ functio normalizaNumerus(textus crudus) -> textus {
     dum i < crudus.longitudo() {
         fixum c = crudus[i]
         si c != "_" {
-            result = result + c
+            result = scriptum("§§", result, c)
         }
         i += 1
     }
@@ -67,7 +67,7 @@ functio normalizaNumerus(textus crudus) -> textus {
     # Faber: 0x, 0b, 0o -> C++: 0x, 0b, 0
     si result.longitudo() >= 2 {
         si result.sectio(0, 2) == "0o" {
-            redde "0" + result.sectio(2, result.longitudo())
+            redde scriptum("0§", result.sectio(2, result.longitudo()))
         }
     }
     redde result
@@ -80,7 +80,7 @@ functio normalizaFractus(textus crudus) -> textus {
     dum i < crudus.longitudo() {
         fixum c = crudus[i]
         si c != "_" {
-            result = result + c
+            result = scriptum("§§", result, c)
         }
         i += 1
     }
