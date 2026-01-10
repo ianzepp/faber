@@ -1,0 +1,161 @@
+# json.fab - JSON Serialization Library
+#
+# Etymology: "JSON" - JavaScript Object Notation (kept as-is, universally recognized)
+#
+# Core functions use Latin verbs from forma.fab:
+#   solve  - dissolve/loosen (serialize: structured -> textus)
+#   pange  - compose/fasten (deserialize: textus -> structured)
+#
+# Note: Returns/accepts `quidlibet` (anything) as the dynamic type.
+# Mappings: ts=unknown, py=Any, rs=serde_json::Value, cpp=nlohmann::json, zig=std.json.Value
+
+# =============================================================================
+# SERIALIZATION
+# =============================================================================
+
+# Serialize value to compact JSON string
+@ verte ts (val) -> "JSON.stringify(§)"
+@ verte py (val) -> "json.dumps(§)"
+@ verte rs (val) -> "serde_json::to_string(&§).unwrap()"
+@ verte cpp (val) -> "nlohmann::json(§).dump()"
+@ verte zig (val, alloc) -> "std.json.stringifyAlloc(§1, §0, .{})"
+@ externa
+functio solve(quidlibet val) -> textus
+
+# Serialize value to formatted JSON string (pretty print)
+# indentum: number of spaces per indent level
+@ verte ts (val, indentum) -> "JSON.stringify(§, null, §)"
+@ verte py (val, indentum) -> "json.dumps(§, indent=§)"
+@ verte rs (val, indentum) -> "serde_json::to_string_pretty(&§).unwrap()"
+@ verte cpp (val, indentum) -> "nlohmann::json(§).dump(§)"
+@ verte zig (val, indentum, alloc) -> "std.json.stringifyAlloc(§2, §0, .{ .whitespace = .{ .indent_level = §1 } })"
+@ externa
+functio solvePulchre(quidlibet val, numerus indentum) -> textus
+
+# =============================================================================
+# DESERIALIZATION
+# =============================================================================
+
+# Parse JSON string to value
+@ verte ts (textus) -> "JSON.parse(§)"
+@ verte py (textus) -> "json.loads(§)"
+@ verte rs (textus) -> "serde_json::from_str(&§).unwrap()"
+@ verte cpp (textus) -> "nlohmann::json::parse(§)"
+@ verte zig (textus) -> "std.json.parseFromSlice(std.json.Value, std.heap.page_allocator, §, .{})"
+@ externa
+functio pange(textus json) -> quidlibet
+
+# =============================================================================
+# TYPE CHECKING
+# =============================================================================
+
+# Check if value is null
+@ verte ts (val) -> "(§ === null)"
+@ verte py (val) -> "(§ is None)"
+@ verte rs (val) -> "§.is_null()"
+@ verte cpp (val) -> "§.is_null()"
+@ verte zig (val) -> "(§ == .null)"
+@ externa
+functio estNihil(quidlibet val) -> bivalens
+
+# Check if value is boolean
+@ verte ts (val) -> "(typeof § === 'boolean')"
+@ verte py (val) -> "isinstance(§, bool)"
+@ verte rs (val) -> "§.is_boolean()"
+@ verte cpp (val) -> "§.is_boolean()"
+@ verte zig (val) -> "(§ == .true or § == .false)"
+@ externa
+functio estBivalens(quidlibet val) -> bivalens
+
+# Check if value is number
+@ verte ts (val) -> "(typeof § === 'number')"
+@ verte py (val) -> "isinstance(§, (int, float))"
+@ verte rs (val) -> "§.is_number()"
+@ verte cpp (val) -> "§.is_number()"
+@ verte zig (val) -> "(§ == .integer or § == .float)"
+@ externa
+functio estNumerus(quidlibet val) -> bivalens
+
+# Check if value is string
+@ verte ts (val) -> "(typeof § === 'string')"
+@ verte py (val) -> "isinstance(§, str)"
+@ verte rs (val) -> "§.is_string()"
+@ verte cpp (val) -> "§.is_string()"
+@ verte zig (val) -> "(§ == .string)"
+@ externa
+functio estTextus(quidlibet val) -> bivalens
+
+# Check if value is array
+@ verte ts (val) -> "Array.isArray(§)"
+@ verte py (val) -> "isinstance(§, list)"
+@ verte rs (val) -> "§.is_array()"
+@ verte cpp (val) -> "§.is_array()"
+@ verte zig (val) -> "(§ == .array)"
+@ externa
+functio estLista(quidlibet val) -> bivalens
+
+# Check if value is object
+@ verte ts (val) -> "(typeof § === 'object' && § !== null && !Array.isArray(§))"
+@ verte py (val) -> "isinstance(§, dict)"
+@ verte rs (val) -> "§.is_object()"
+@ verte cpp (val) -> "§.is_object()"
+@ verte zig (val) -> "(§ == .object)"
+@ externa
+functio estTabula(quidlibet val) -> bivalens
+
+# =============================================================================
+# VALUE EXTRACTION
+# =============================================================================
+
+# Extract as string (returns empty string if not a string)
+@ verte ts (val) -> "(typeof § === 'string' ? § : '')"
+@ verte py (val) -> "(§ if isinstance(§, str) else '')"
+@ verte rs (val) -> "§.as_str().unwrap_or(\"\")"
+@ verte cpp (val) -> "(§.is_string() ? §.get<std::string>() : \"\")"
+@ verte zig (val) -> "(if (§ == .string) §.string else \"\")"
+@ externa
+functio utTextus(quidlibet val) -> textus
+
+# Extract as number (returns 0 if not a number)
+@ verte ts (val) -> "(typeof § === 'number' ? § : 0)"
+@ verte py (val) -> "(§ if isinstance(§, (int, float)) else 0)"
+@ verte rs (val) -> "§.as_i64().unwrap_or(0)"
+@ verte cpp (val) -> "(§.is_number() ? §.get<int64_t>() : 0)"
+@ verte zig (val) -> "(if (§ == .integer) §.integer else 0)"
+@ externa
+functio utNumerus(quidlibet val) -> numerus
+
+# Extract as boolean (returns false if not a boolean)
+@ verte ts (val) -> "(typeof § === 'boolean' ? § : false)"
+@ verte py (val) -> "(§ if isinstance(§, bool) else False)"
+@ verte rs (val) -> "§.as_bool().unwrap_or(false)"
+@ verte cpp (val) -> "(§.is_boolean() ? §.get<bool>() : false)"
+@ verte zig (val) -> "(if (§ == .true) true else false)"
+@ externa
+functio utBivalens(quidlibet val) -> bivalens
+
+# =============================================================================
+# OBJECT ACCESS
+# =============================================================================
+
+# Get value at key (returns null/nil if missing)
+@ verte ts (val, key) -> "(§?.[§] ?? null)"
+@ verte py (val, key) -> "§.get(§)"
+@ verte rs (val, key) -> "§.get(§).cloned().unwrap_or(serde_json::Value::Null)"
+@ verte cpp (val, key) -> "(§.contains(§) ? §[§] : nlohmann::json())"
+@ verte zig (val, key) -> "(if (§.object.get(§)) |v| v else .null)"
+@ externa
+functio cape(quidlibet val, textus key) -> quidlibet
+
+# =============================================================================
+# ARRAY ACCESS
+# =============================================================================
+
+# Get value at index (returns null/nil if out of bounds)
+@ verte ts (val, idx) -> "(§?.[§] ?? null)"
+@ verte py (val, idx) -> "(§[§] if § < len(§) else None)"
+@ verte rs (val, idx) -> "§.get(§).cloned().unwrap_or(serde_json::Value::Null)"
+@ verte cpp (val, idx) -> "(§ < §.size() ? §[§] : nlohmann::json())"
+@ verte zig (val, idx) -> "(if (§ < §.array.len) §.array[§] else .null)"
+@ externa
+functio capeIndice(quidlibet val, numerus idx) -> quidlibet

@@ -1,0 +1,129 @@
+# toml.fab - TOML Serialization Library
+#
+# Etymology: "TOML" - Tom's Obvious Minimal Language (kept as-is)
+#
+# Core functions use Latin verbs from forma.fab:
+#   solve  - dissolve/loosen (serialize: structured -> textus)
+#   pange  - compose/fasten (deserialize: textus -> structured)
+#
+# Note: TOML support varies by target. TypeScript/Zig require external libraries.
+# TOML is stricter than JSON/YAML - root must be a table (object).
+# Mappings: ts=@iarna/toml (npm), py=tomllib/tomli, rs=toml
+
+# =============================================================================
+# TARGET AVAILABILITY
+# =============================================================================
+#
+# | Target | Library          | Notes                           |
+# |--------|------------------|---------------------------------|
+# | ts     | @iarna/toml      | Requires: npm i @iarna/toml     |
+# | py     | tomllib (3.11+)  | Read-only stdlib; tomli for <3.11 |
+# | rs     | toml             | Requires: cargo add toml        |
+# | cpp    | toml++           | Requires: vcpkg/conan           |
+# | zig    | -                | No stdlib TOML support          |
+
+# =============================================================================
+# SERIALIZATION
+# =============================================================================
+
+# Serialize table to TOML string
+# Note: TOML root must be a table (object), not array or primitive
+@ verte ts (val) -> "TOML.stringify(§)"
+@ verte py (val) -> "tomli_w.dumps(§)"
+@ verte rs (val) -> "toml::to_string(&§).unwrap()"
+@ verte cpp (val) -> "toml::format(§)"
+@ externa
+functio solve(quidlibet val) -> textus
+
+# Serialize with pretty formatting (aligned keys, sorted)
+@ verte ts (val) -> "TOML.stringify(§, { newline: '\\n', indent: 2 })"
+@ verte py (val) -> "tomli_w.dumps(§, multiline_strings=True)"
+@ verte rs (val) -> "toml::to_string_pretty(&§).unwrap()"
+@ verte cpp (val) -> "toml::format(§, toml::format_flags::indent_sub_tables)"
+@ externa
+functio solvePulchre(quidlibet val) -> textus
+
+# =============================================================================
+# DESERIALIZATION
+# =============================================================================
+
+# Parse TOML string to table
+@ verte ts (textus) -> "TOML.parse(§)"
+@ verte py (textus) -> "tomllib.loads(§)"
+@ verte rs (textus) -> "toml::from_str(&§).unwrap()"
+@ verte cpp (textus) -> "toml::parse(§)"
+@ externa
+functio pange(textus toml) -> quidlibet
+
+# =============================================================================
+# TYPE CHECKING
+# =============================================================================
+# TOML has specific types: string, integer, float, boolean, datetime, array, table
+
+# Check if value is string
+@ verte ts (val) -> "(typeof § === 'string')"
+@ verte py (val) -> "isinstance(§, str)"
+@ verte rs (val) -> "§.is_str()"
+@ verte cpp (val) -> "§.is_string()"
+@ externa
+functio estTextus(quidlibet val) -> bivalens
+
+# Check if value is integer
+@ verte ts (val) -> "(typeof § === 'number' && Number.isInteger(§))"
+@ verte py (val) -> "isinstance(§, int) and not isinstance(§, bool)"
+@ verte rs (val) -> "§.is_integer()"
+@ verte cpp (val) -> "§.is_integer()"
+@ externa
+functio estInteger(quidlibet val) -> bivalens
+
+# Check if value is float
+@ verte ts (val) -> "(typeof § === 'number' && !Number.isInteger(§))"
+@ verte py (val) -> "isinstance(§, float)"
+@ verte rs (val) -> "§.is_float()"
+@ verte cpp (val) -> "§.is_floating_point()"
+@ externa
+functio estFractus(quidlibet val) -> bivalens
+
+# Check if value is boolean
+@ verte ts (val) -> "(typeof § === 'boolean')"
+@ verte py (val) -> "isinstance(§, bool)"
+@ verte rs (val) -> "§.is_bool()"
+@ verte cpp (val) -> "§.is_boolean()"
+@ externa
+functio estBivalens(quidlibet val) -> bivalens
+
+# Check if value is datetime
+@ verte ts (val) -> "(§ instanceof Date)"
+@ verte py (val) -> "isinstance(§, datetime.datetime)"
+@ verte rs (val) -> "§.is_datetime()"
+@ verte cpp (val) -> "§.is_date_time()"
+@ externa
+functio estTempus(quidlibet val) -> bivalens
+
+# Check if value is array
+@ verte ts (val) -> "Array.isArray(§)"
+@ verte py (val) -> "isinstance(§, list)"
+@ verte rs (val) -> "§.is_array()"
+@ verte cpp (val) -> "§.is_array()"
+@ externa
+functio estLista(quidlibet val) -> bivalens
+
+# Check if value is table (object)
+@ verte ts (val) -> "(typeof § === 'object' && § !== null && !Array.isArray(§) && !(§ instanceof Date))"
+@ verte py (val) -> "isinstance(§, dict)"
+@ verte rs (val) -> "§.is_table()"
+@ verte cpp (val) -> "§.is_table()"
+@ externa
+functio estTabula(quidlibet val) -> bivalens
+
+# =============================================================================
+# TABLE ACCESS
+# =============================================================================
+
+# Get value at key (returns null if missing)
+@ verte ts (val, key) -> "(§?.[§] ?? null)"
+@ verte py (val, key) -> "§.get(§)"
+@ verte rs (val, key) -> "§.get(§).cloned()"
+@ verte cpp (val, key) -> "§[§]"
+@ externa
+functio cape(quidlibet val, textus key) -> quidlibet
