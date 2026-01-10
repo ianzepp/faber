@@ -107,8 +107,21 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
 
         # Self reference (ego/hoc)
         casu EgoExpressia {
+            fixum a = r.analyzator()
             # ego type depends on enclosing class context
-            redde IGNOTUM
+            si nonnihil a.currentGenusNomen {
+                fixum genusNomen = a.currentGenusNomen qua textus
+                si nonnihil a.scopus.symbola[genusNomen] {
+                    redde a.scopus.symbola[genusNomen].semanticTypus
+                } secus {
+                    # Genus not found - should not happen if context is managed correctly
+                    redde IGNOTUM
+                }
+            } secus {
+                # Not inside a genus - ego is not valid here
+                # TODO: Should probably report semantic error
+                redde IGNOTUM
+            }
         }
 
         # Type cast (expr qua Type)

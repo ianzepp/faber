@@ -72,6 +72,7 @@ genus Analyzator {
     SemanticTypus? currentFunctioReditus                                  # for return type checking
     bivalens currentFunctioAsync                                          # in async function?
     bivalens currentFunctioGenerator                                      # in generator function?
+    textus? currentGenusNomen                                             # name of enclosing class for ego resolution
     lista<textus> resolvendoTypusAliases                                  # cycle detection
     tabula<textus, tabula<textus, lista<textus>>> morphologiaRegistra   # receiver -> stem -> forms
     textus? viaIngressus                                                  # entry file path for module resolution
@@ -226,6 +227,7 @@ functio novumAnalyzator(textus? viaIngressus) -> Analyzator {
         currentFunctioReditus: nihil,
         currentFunctioAsync: falsum,
         currentFunctioGenerator: falsum,
+        currentGenusNomen: nihil,
         resolvendoTypusAliases: [] innatum lista<textus>,
         morphologiaRegistra: {} innatum tabula<textus, tabula<textus, lista<textus>>>,
         viaIngressus: viaIngressus,

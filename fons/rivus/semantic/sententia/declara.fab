@@ -279,6 +279,72 @@ functio analyzeGenusDeclaratio(Resolvitor r, Sententia genusStmt) -> vacuum {
                 mutabilis: falsum,
                 locus: g.locus
             }
+
+            # Analyze method bodies with genus context for ego resolution
+            # Save genus context
+            fixum prevGenusNomen = a.currentGenusNomen
+            a.currentGenusNomen = g.nomen
+
+            ex g.methodi pro methodusStmt {
+                discerne methodusStmt {
+                    casu FunctioDeclaratio ut m {
+                        # Analyze method body with genus context
+                        si nonnihil m.corpus {
+                            # Get method signature from our built maps
+                            varia methodTypus = IGNOTUM
+                            si nonnihil methodi[m.nomen] {
+                                methodTypus = methodi[m.nomen]
+                            }
+
+                            # Extract function details for context
+                            varia reditusTypus = VACUUM qua SemanticTypus
+                            discerne methodTypus {
+                                casu Functio ut fn {
+                                    reditusTypus = fn.reditusTypus
+                                }
+                                casu _ { }
+                            }
+
+                            # Save function context
+                            fixum prevReditus = a.currentFunctioReditus
+                            fixum prevAsync = a.currentFunctioAsync
+                            fixum prevGenerator = a.currentFunctioGenerator
+
+                            a.currentFunctioReditus = reditusTypus
+                            a.currentFunctioAsync = m.asynca
+                            a.currentFunctioGenerator = m.generator
+
+                            # Enter method scope
+                            a.intraScopum(ScopusSpecies.Functio)
+
+                            # Define method parameters with default types for now
+                            # TODO: Extract parameter types from function type
+                            ex m.parametra pro param {
+                                a.scopus.symbola[param.nomen] = {
+                                    nomen: param.nomen,
+                                    semanticTypus: IGNOTUM,  # TODO: Extract from methodTypus
+                                    species: SymbolumSpecies.Parametrum,
+                                    mutabilis: falsum,
+                                    locus: param.locus
+                                }
+                            }
+
+                            # Analyze method body
+                            r.sententia(m.corpus qua Sententia)
+
+                            # Exit scope and restore context
+                            a.exiScopum()
+                            a.currentFunctioReditus = prevReditus
+                            a.currentFunctioAsync = prevAsync
+                            a.currentFunctioGenerator = prevGenerator
+                        }
+                    }
+                    casu _ { }
+                }
+            }
+
+            # Restore genus context
+            a.currentGenusNomen = prevGenusNomen
         }
         casu _ { }
     }

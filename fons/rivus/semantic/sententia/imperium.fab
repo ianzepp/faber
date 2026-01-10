@@ -191,10 +191,33 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
 
                 # Define bound variables for all patterns in this case
                 # WHY: Each pattern can introduce 'ut' alias or 'pro' field bindings.
+                varia patternIndex = 0
                 ex casus.exemplaria pro pattern {
                     # Skip wildcards - they have no bindings
                     si pattern.estWildcard {
+                        patternIndex = patternIndex + 1
                         perge
+                    }
+
+                    # Get discriminant type for this pattern position
+                    varia discriminantTypus = IGNOTUM
+                    si patternIndex < d.discriminantes.longitudo() {
+                        discriminantTypus = r.expressia(d.discriminantes[patternIndex])
+                    }
+
+                    # Get variant type by resolving DiscretioNomen.VariantNomen
+                    varia variantTypus = IGNOTUM
+                    discerne discriminantTypus {
+                        casu Usitatum ut u {
+                            # For discriminated union, lookup Discriminant.Variant
+                            fixum qualNomen = scriptum("§.§", u.nomen, pattern.variansNomen)
+                            si nonnihil a.scopus.symbola[qualNomen] {
+                                variantTypus = a.scopus.symbola[qualNomen].semanticTypus
+                            }
+                        }
+                        casu _ {
+                            # Could be other complex type, but for now handle common case
+                        }
                     }
 
                     # Define alias if present
@@ -202,7 +225,7 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                         fixum alias = pattern.alias qua textus
                         a.scopus.symbola[alias] = {
                             nomen: alias,
-                            semanticTypus: IGNOTUM,  # TODO: infer from variant
+                            semanticTypus: variantTypus,  # Inferred from discriminant.variant
                             species: SymbolumSpecies.Variabilis,
                             mutabilis: falsum,
                             locus: pattern.locus
@@ -210,15 +233,33 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                     }
 
                     # Define field bindings if present
+                    varia fieldIndex = 0
                     ex pattern.vincula pro vinculum {
+                        # Extract field type from variant fields
+                        varia fieldTypus = IGNOTUM
+                        discerne variantTypus {
+                            casu Genus ut g {
+                                # Get field names from the agri map keys (since order may not be preserved in map)
+                                # For now, use IGNOTUM since we need the original field order from variant declaration
+                                # TODO: Need access to original VariansDeclaratio.campi to get correct positional types
+                                fieldTypus = IGNOTUM
+                            }
+                            casu _ {
+                                # Not a genus, can't extract field types
+                            }
+                        }
+
                         a.scopus.symbola[vinculum] = {
                             nomen: vinculum,
-                            semanticTypus: IGNOTUM,  # TODO: infer from variant
+                            semanticTypus: fieldTypus,  # Inferred from variant field
                             species: SymbolumSpecies.Variabilis,
                             mutabilis: falsum,
                             locus: pattern.locus
                         }
+                        fieldIndex = fieldIndex + 1
                     }
+
+                    patternIndex = patternIndex + 1
                 }
 
                 # Analyze case body
