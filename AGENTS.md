@@ -89,17 +89,59 @@ archivum/               # Historical/archived materials
 
 ## Agents
 
-Specialized sub-agents for delegating tasks. Invoke by name.
+Standalone agent runner at `~/.local/bin/agent` (symlink to `~/github/ianzepp/agents/agent.sh`). Runs agents as separate processes with output to stdout.
 
-| Name | Role | When to Use |
-|------|------|-------------|
-| **Columbo** | Root cause investigator | Trace failures, debug complex issues, file issues |
-| **Cicero** | Language designer | Syntax design, grammar rules, Latin↔code mappings |
-| **Galen** | Test fixer | Diagnose/fix failing tests (test-side only) |
-| **Titus** | TypeScript fixer | Bulk TS/lint error resolution |
-| **Curie** | Trials researcher | LLM experiment design, results analysis |
+```bash
+agent <name> [options] <goal>
+agent --agent <path> [options] <goal>
 
-Agent files: `.claude/agents/`
+Options:
+  -a, --agent <path>    Use agent prompt from file path
+  -m, --model <model>   Model to use (default: sonnet)
+  -d, --dir <path>      Working directory (default: cwd)
+  -n, --dry-run         Show prompt without running claude
+```
+
+### Generic Agents (`~/github/ianzepp/agents/`)
+
+| Name | Purpose |
+|------|---------|
+| `claude` | Generic pass-through, no special instructions |
+| `columbo` | Root cause investigator (traces backward) |
+| `augur` | Forward consequence analyst (traces forward) |
+| `galen` | Test diagnostician (classifies failures) |
+| `titus` | TypeScript error fixer (root causes, not suppressions) |
+
+### Project Agents (`agents/`)
+
+| Name | Purpose |
+|------|---------|
+| `cicero` | Faber language designer (syntax, grammar, Latin↔code) |
+| `curie` | LLM trials researcher (experiment design, analysis) |
+
+### Running Agents
+
+**Run agents in the background** to avoid blocking the main conversation. Claude uses the Bash tool's `run_in_background` parameter and retrieves output with TaskOutput.
+
+```bash
+# Claude runs this with run_in_background: true
+agent columbo "Why does X fail?"
+
+# Claude uses TaskOutput to retrieve results when done
+```
+
+### Examples
+
+```bash
+# Generic agents (from any directory)
+agent columbo "Why does the parser hang on nested generics?"
+agent galen "Run tests and diagnose failures"
+agent titus "Fix the TypeScript errors"
+
+# Project agents (use -a for project-specific agents)
+agent -a agents/cicero.md "Design syntax for pattern matching"
+agent -a agents/curie.md "Analyze the latest trial results"
+```
 
 ## CRITICAL RULES
 
