@@ -294,7 +294,7 @@ function generateJsonRegistry(collections: CollectionDef[]): string {
                 if (trans.template) {
                     entry.template = trans.template;
                 }
-                if (trans.params && trans.params.length > 0) {
+                if (trans.params) {
                     entry.params = trans.params;
                 }
 
@@ -323,7 +323,7 @@ function generateJsonRegistry(collections: CollectionDef[]): string {
         if (entry.template) {
             parts.push(`"template": ${JSON.stringify(entry.template)}`);
         }
-        if (entry.params && entry.params.length > 0) {
+        if (entry.params) {
             parts.push(`"params": ${JSON.stringify(entry.params)}`);
         }
 
