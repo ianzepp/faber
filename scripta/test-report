@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# Remove old database
+rm -f opus/proba/results.db
+
+# Run tests with arguments passed through (don't exit on failure)
+bun run fons/proba/harness/runner.ts "$@"
+runner_exit=$?
+
+# Generate report (always run, even if tests failed)
+bun run fons/proba/harness/report.ts
+
+# Exit with runner's exit code
+exit $runner_exit

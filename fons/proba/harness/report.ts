@@ -241,6 +241,20 @@ async function main() {
             break;
     }
 
+    // Show failed tests if format is table
+    if (options.format === 'table') {
+        const failures = getResultsForRun(db, runId).filter(r => !r.passed);
+        if (failures.length > 0) {
+            console.log('\n\nFailed Tests:\n');
+            for (const f of failures) {
+                console.log(`  ${f.feature} [${f.target}] - ${f.test_name}`);
+                if (f.error_msg) {
+                    console.log(`    Error: ${f.error_msg}`);
+                }
+            }
+        }
+    }
+
     db.close();
 }
 
