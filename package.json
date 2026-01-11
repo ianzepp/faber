@@ -52,7 +52,6 @@
     ],
     "license": "MIT",
     "dependencies": {
-        "openai": "^4.68.0",
         "yaml": "^2.8.2"
     }
 }
