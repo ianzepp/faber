@@ -16,6 +16,7 @@ import type { PyGenerator } from '../generator';
 
 // WHY: Unified norma registry for all stdlib translations (from .fab files)
 import { getNormaTranslation, applyNormaTemplate, applyNormaModuleCall, validateMorphology } from '../../norma-registry';
+import { applyNamespaceTemplate, getNamespaceTranslation, isNamespaceCall } from '../../shared/norma-namespace';
 
 /**
  * Python I/O intrinsic handler.
@@ -78,16 +79,40 @@ export function genCallExpression(node: CallExpression, g: PyGenerator): string 
                 // Set feature flags for Python imports
                 if (module === 'mathesis') {
                     g.features.math = true;
-                }
-                else if (module === 'tempus') {
+                } else if (module === 'tempus') {
                     g.features.time = true;
-                }
-                else if (module === 'aleator') {
+                } else if (module === 'aleator') {
                     g.features.random = true;
                     if (name === 'uuid') g.features.uuid = true;
                     if (name === 'octeti') g.features.secrets = true;
                 }
                 return call;
+            }
+        }
+    }
+
+    if (isNamespaceCall(node)) {
+        const moduleName = node.callee.object.resolvedType.moduleName;
+        const methodName = (node.callee.property as Identifier).name;
+        const translation = getNamespaceTranslation(node.callee, 'py');
+        if (translation) {
+            if (moduleName === 'mathesis') {
+                g.features.math = true;
+            } else if (moduleName === 'tempus') {
+                g.features.time = true;
+            } else if (moduleName === 'aleator') {
+                g.features.random = true;
+                if (methodName === 'uuid') g.features.uuid = true;
+                if (methodName === 'octeti') g.features.secrets = true;
+            } else if (moduleName === 'json') {
+                g.features.json = true;
+            }
+
+            if (translation.method) {
+                return `${translation.method}(${args})`;
+            }
+            if (translation.template) {
+                return applyNamespaceTemplate(translation.template, [...argsArray]);
             }
         }
     }

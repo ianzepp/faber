@@ -16,6 +16,17 @@ import type { CppGenerator } from '../generator';
 
 export function genMemberExpression(node: MemberExpression, g: CppGenerator): string {
     const obj = g.genExpression(node.object);
+    const objType = node.object.resolvedType;
+
+    if (objType?.kind === 'namespace') {
+        if (node.computed) {
+            const prop = g.genBareExpression(node.property);
+            return `${obj}[${prop}]`;
+        }
+
+        const propName = (node.property as Identifier).name;
+        return `${obj}.${propName}`;
+    }
 
     if (node.computed) {
         // Check for slice syntax: arr[1..3] or arr[1 usque 3]

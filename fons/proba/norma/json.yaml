@@ -23,6 +23,11 @@
       cpp:
           - '#include <nlohmann/json.hpp>'
           - 'const auto text = nlohmann::json(42).dump();'
+      zig:
+          - 'const text = std.json.stringifyAlloc(alloc, 42, .{});'
+      fab:
+          - 'ex "norma/json" importa * ut json'
+          - 'fixum text = json.solve(42)'
 
 - name: solvePulchre (pretty print JSON)
   source: |
@@ -36,6 +41,14 @@
           - 'text = json.dumps(42, indent=2)'
       rs:
           - 'let text = serde_json::to_string_pretty(&42).unwrap();'
+      cpp:
+          - '#include <nlohmann/json.hpp>'
+          - 'const auto text = nlohmann::json(42).dump(2);'
+      zig:
+          - 'const text = std.json.stringifyAlloc(alloc, 42, .{ .whitespace = .{ .indent_level = 2 } });'
+      fab:
+          - 'ex "norma/json" importa * ut json'
+          - 'fixum text = json.solvePulchre(42, 2)'
 
 - name: pange (deserialize from JSON)
   source: |
@@ -49,3 +62,11 @@
           - 'obj = json.loads("{\"x\":1}")'
       rs:
           - 'let obj = serde_json::from_str(&"{\"x\":1}").unwrap();'
+      cpp:
+          - '#include <nlohmann/json.hpp>'
+          - 'const auto obj = nlohmann::json::parse("{\"x\":1}");'
+      zig:
+          - 'const obj = std.json.parseFromSlice(std.json.Value, std.heap.page_allocator, "{\"x\":1}", .{});'
+      fab:
+          - 'ex "norma/json" importa * ut json'
+          - 'fixum obj = json.pange("{\"x\":1}")'

@@ -21,6 +21,10 @@ import type { PyGenerator } from '../generator';
 export function genImportaDeclaration(node: ImportaDeclaration, g: PyGenerator): string {
     const source = node.source;
 
+    if (source === 'norma' || source.startsWith('norma/')) {
+        return '';
+    }
+
     if (node.wildcard) {
         const alias = node.wildcardAlias ? ` as ${node.wildcardAlias.name}` : '';
         return `${g.ind()}import ${source}${alias}`;

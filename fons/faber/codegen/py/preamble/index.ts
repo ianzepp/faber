@@ -66,6 +66,10 @@ export function genPreamble(features: RequiredFeatures): string {
         imports.push('import time');
     }
 
+    if (features.json) {
+        imports.push('import json');
+    }
+
     if (features.praefixum) {
         helpers.push(PRAEFIXUM);
     }

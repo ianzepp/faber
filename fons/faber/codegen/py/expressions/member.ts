@@ -88,6 +88,26 @@ function hasOptionalInChain(node: MemberExpression): boolean {
 }
 
 export function genMemberExpression(node: MemberExpression, g: PyGenerator): string {
+    const objType = node.object.resolvedType;
+    if (objType?.kind === 'namespace') {
+        const obj = g.genExpression(node.object);
+        if (node.computed) {
+            const prop = g.genBareExpression(node.property);
+            const access = `${obj}[${prop}]`;
+            if (node.optional) {
+                return `(${access} if ${obj} is not None else None)`;
+            }
+            return access;
+        }
+
+        const propName = (node.property as Identifier).name;
+        const access = `${obj}.${propName}`;
+        if (node.optional) {
+            return `(${access} if ${obj} is not None else None)`;
+        }
+        return access;
+    }
+
     // Special case: slice expressions
     if (node.computed && node.property.type === 'RangeExpression') {
         const obj = g.genExpression(node.object);

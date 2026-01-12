@@ -22,8 +22,29 @@ export function genMemberExpression(node: MemberExpression, g: TsGenerator): str
     const obj = g.genExpression(node.object);
     const objType = node.object.resolvedType;
     // WHY: Extract type name for norma lookup - works for both generics and primitives
-    const collectionName = objType?.kind === 'generic' ? objType.name :
-                           objType?.kind === 'primitive' ? objType.name : null;
+    const collectionName = objType?.kind === 'generic' ? objType.name : objType?.kind === 'primitive' ? objType.name : null;
+
+    if (objType?.kind === 'namespace') {
+        if (node.computed) {
+            const prop = g.genBareExpression(node.property);
+            if (node.optional) {
+                return `${obj}?.[${prop}]`;
+            }
+            if (node.nonNull) {
+                return `${obj}![${prop}]`;
+            }
+            return `${obj}[${prop}]`;
+        }
+
+        const propName = (node.property as Identifier).name;
+        if (node.optional) {
+            return `${obj}?.${propName}`;
+        }
+        if (node.nonNull) {
+            return `${obj}!.${propName}`;
+        }
+        return `${obj}.${propName}`;
+    }
 
     if (node.computed) {
         // GUARD: tabula indexing uses Map.get()
