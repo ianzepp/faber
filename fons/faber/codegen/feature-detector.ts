@@ -201,20 +201,16 @@ export class FeatureDetector {
                     if (c.test) {
                         this.visitExpression(c.test);
                     }
-                    for (const s of c.consequent) {
-                        this.visitStatement(s);
-                    }
+                    this.visitBlock(c.consequent);
                 }
                 break;
 
             case 'DiscerneStatement':
-                if (stmt.discriminant) {
-                    this.visitExpression(stmt.discriminant);
+                for (const d of stmt.discriminants) {
+                    this.visitExpression(d);
                 }
                 for (const c of stmt.cases) {
-                    for (const s of c.consequent) {
-                        this.visitStatement(s);
-                    }
+                    this.visitBlock(c.consequent);
                 }
                 break;
 
@@ -228,9 +224,7 @@ export class FeatureDetector {
                     if (clause.test) {
                         this.visitExpression(clause.test);
                     }
-                    for (const s of clause.consequent) {
-                        this.visitStatement(s);
-                    }
+                    this.visitBlock(clause.consequent);
                 }
                 break;
 
