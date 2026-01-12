@@ -20,7 +20,8 @@ Implement morphology as **typed, opt-in semantic dispatch** for stdlib (Latin-na
     - Consumption remains explicit via `cede`, `figendum`, `variandum`, loops, etc.
 2. **Receiver-bound dispatch only**.
     - Never dispatch solely because a method name “looks like” morphology.
-    - If the receiver type is not morphology-enabled, the call must be treated as an ordinary method call.
+    - Only dispatch when the receiver type is morphology-enabled **and the parsed stem is declared for that receiver**.
+    - Otherwise the call must be treated as an ordinary method call.
 3. **Single annotation syntax**.
     - Supported: `@ radix imperativus, perfectum, ...` (line-based)
     - Unsupported: `@ radix(...)` (parenthesized)
@@ -38,6 +39,9 @@ Implement morphology as **typed, opt-in semantic dispatch** for stdlib (Latin-na
     - `futurum_activum` (async return-new)
     - (later) `praesens_participium` (generator)
     - (later) async generator form
+
+Note: Milestone 1 is validated primarily with `imperativus` + `perfectum`; the parser accepts the async form names as well.
+
 - **Morphology flags**: derived from form and used by semantic/codegen.
 
 ## Source Syntax: `@ radix ...` (Line-Based)
@@ -61,7 +65,7 @@ Implement end-to-end morphology for:
 
 - **Receiver type**: `lista<T>` (only)
 - **Stem(s)**: start with `filtr` only
-- **Forms**: `imperativus` and `perfectum` only
+- **Forms**: `imperativus` and `perfectum` (tests + acceptance criteria)
 
 Then expand incrementally.
 
@@ -132,8 +136,9 @@ Tasks:
     - Option B: require explicit declaration of stems in the annotation
 
 3. Add semantic validation for calls:
-    - If a call parses as morphology (via `parseMethodum`), only treat it as morphology if receiver type is morphology-enabled.
-    - If receiver is enabled but stem or form is not declared, produce a semantic error.
+    - If a call parses as morphology (via `parseMethodum`), only treat it as morphology if receiver type is morphology-enabled **and the parsed stem is declared**.
+    - If the receiver is enabled but the stem is not declared, treat it as a normal method call (do not error; avoid lexical hijacking).
+    - If the stem is declared but the form is not allowed, produce a semantic error.
 
 Deliverable:
 
@@ -207,7 +212,7 @@ Tasks:
 ## Acceptance Criteria (Milestone 1)
 
 - `@ radix imperativus, perfectum` is parsed with line-based args only.
-- Morphology dispatch occurs only when the receiver is morphology-enabled.
+- Morphology dispatch occurs only when the receiver is morphology-enabled and the parsed stem is declared for that receiver.
 - No emitted code contains hidden `await`.
 - A non-morphology receiver with a similarly named method is not hijacked.
 - At least one test asserts the above.
@@ -217,17 +222,96 @@ Tasks:
 Completed.
 
 - AST: Added `MorphologiaDeclaratio` and per-call `MorphologiaInvocatio` for receiver-bound dispatch.
+    - `@ radix` is intended for receiver methods (e.g. `genus lista { @ radix ... functio filtra ... }`), not for top-level free functions.
 - Parser: Centralized line-based annotation parsing and `@ radix` form validation.
-- Semantics: Registry keyed by receiver+stem+forms; call validation annotates eligible calls and emits diagnostics.
+- Semantics: Registry keyed by receiver+stem+forms; call validation annotates eligible calls.
+    - If the stem is undeclared, the call is left alone (no hijacking).
+    - If the stem is declared but the form is disallowed, a semantic error is emitted.
 - Codegen: Dispatch uses semantic annotation; removed hidden `await` in morphology generators.
 - Tests: Added Rivus morphology cases in `fons/proba/codegen/expressions/morphologia.yaml`.
 
 Build/test notes:
-- `bun run build:rivus` succeeds.
-- `bun run test:rivus` runs; morphology tests pass; existing unrelated Rivus failures remain (see `tmp/test-rivus.log`).
 
-## Expansion Plan (After Milestone 1)
+- `bun test fons/proba/rivus.test.ts -t morphologia --timeout 5000` passes.
+- Full `bun run test:rivus` currently has unrelated failures in this repo; do not treat that as a Morphologia regression unless the failures point at Morphologia output.
 
-1. Add `futurum_indicativum` and `futurum_activum` (async forms) with explicit consumption (no auto-await).
-2. Add generator forms (if desired) once the type model for iterators is clear.
-3. Extend from `lista` to `tabula`/`copia`, then IO types (`solum`, `caelum`, `arca`, `nucleus`).
+## Milestone 2: `lista` as the Reference Stdlib
+
+**Goal:** `lista<T>` works correctly with Morphologia for **sync + async** variants and can be used as the reference implementation for the rest of the stdlib.
+
+### Requirements
+
+1. **`lista` must be morphology-enabled by default** (no user-side `@ radix` required).
+    - The existing `@ radix ...` mechanism remains useful for user-defined/experimental receivers, but stdlib `lista` should not require local declarations.
+    - This is necessary so the shared `fons/proba/norma/lista.yaml` TS expectations (e.g. `items.filtrata(...)` → `.filter(...)`) can pass under Rivus.
+
+2. **Support sync + async forms for `lista`**
+
+- Sync:
+    - `imperativus` (mutate) — e.g. `filtra`, `ordina`, `inverte`, `adde`
+    - `perfectum` (return-new) — e.g. `filtrata`, `ordinata`, `inversa`, `addita`
+- Async:
+    - `futurum_indicativum` (mutate) — e.g. `filtrabit` (must return `Promise<void>`-shape; no hidden await)
+    - `futurum_activum` (return-new) — e.g. `filtratura` (must return `Promise<lista<T>>`-shape; no hidden await)
+
+3. **Typing is correct for the key cases**
+
+- `lista.filtra(...)` returns `vacuum` (or equivalent in TS output), mutates receiver.
+- `lista.filtrata(...)` returns a new `lista<T>`.
+- Async forms return `Promise<...>` in TS output (still explicitly consumed via `cede` or assigned to `figendum`).
+
+4. **No codegen split allowed for `lista`**
+
+If `lista` tests fail under Rivus while passing under the primary compiler, determine whether the failure is:
+
+- a missing morphology registry entry for `lista` in Rivus,
+- a mismatch in stem parsing (`parseMethodum`) vs how the stdlib spells methods,
+- or a real backend divergence between Faber and Rivus.
+
+### Implementation Checklist
+
+1. **Seed the morphology registry for built-in `lista`** during analyzer initialization.
+    - Populate `morphologiaRegistra["lista"]` with all stems implemented in `fons/rivus/codegen/radices.fab`.
+    - For each stem, list the allowed forms.
+    - Keep it explicit (no inference); it’s a reference spec.
+
+2. **Ensure call-site semantic annotation happens for `lista` without local `@ radix`**.
+    - When receiver type is `Genericum` with `nomen == "lista"`, treat it as morphology-enabled and consult the seeded registry.
+
+3. **Extend/verify TS codegen lowering for async forms**.
+    - Continue returning `Promise` expressions (no `await`).
+    - If a form implies mutation, return a promise that resolves after mutation.
+
+4. **Test strategy**
+
+- Run Rivus tests filtered to lista/norma:
+    - `bun test fons/proba/rivus.test.ts -t lista --timeout 5000`
+    - `bun test fons/proba/rivus.test.ts -t filtrata --timeout 5000`
+- Also run the same patterns against the primary compiler’s tests:
+    - `bun test fons/proba/faber.test.ts -t lista`
+
+### Diagnosing Faber vs Rivus codegen split
+
+If the primary compiler’s `lista` expectations pass but Rivus fails:
+
+1. Identify the failing YAML case and its TS expectation in `fons/proba/norma/lista.yaml`.
+2. Compare Faber vs Rivus output for the same snippet:
+    - Faber: `bun test fons/proba/faber.test.ts -t "<case name fragment>"`
+    - Rivus: `bun test fons/proba/rivus.test.ts -t "<case name fragment>" --timeout 5000`
+3. If Rivus still emits `items.filtrata(...)` instead of `.filter(...)`, it is almost certainly missing default `lista` registration (registry seeding / receiver detection).
+
+## Expansion Plan (After Milestone 2)
+
+1. Add generator forms (if desired) once the type model for iterators is clear.
+2. Extend from `lista` to `tabula`/`copia`, then IO types (`solum`, `caelum`, `arca`, `nucleus`).
+
+## Status (Milestone 2)
+
+Completed.
+
+- Seeded built-in Morphologia registry entries for `lista` so it is enabled by default.
+- Registered all `lista` stems from `fons/rivus/codegen/radices.fab` with explicit form lists.
+- Extended `lista` TS morphology codegen for async forms in mutating and return-new variants (no hidden `await`).
+- Build/test notes:
+  - `bun run build:rivus` passes.
+  - `bun run test:rivus` still has unrelated failures in this repo (lista/ranges/numeric/DSL cases remain failing); Morphologia changes did not introduce new errors in the tail output.

@@ -105,21 +105,26 @@ export function genCallExpression(node: CallExpression, g: TsGenerator): string 
     }
 
     if (isNamespaceCall(node)) {
-        const moduleName = node.callee.object.resolvedType.moduleName;
-        const methodName = (node.callee.property as Identifier).name;
-        const translation = getNamespaceTranslation(node.callee, 'ts');
-        if (translation) {
-            if (moduleName === 'solum') {
-                g.features.fs = true;
-                if (['iunge', 'dir', 'basis', 'extensio', 'resolve'].includes(methodName)) {
-                    g.features.nodePath = true;
+        const objType = node.callee.object.resolvedType;
+        if (!objType || objType.kind !== 'namespace') {
+            // Fall through to other handlers
+        } else {
+            const moduleName = objType.moduleName;
+            const methodName = (node.callee.property as Identifier).name;
+            const translation = getNamespaceTranslation(node.callee, 'ts');
+            if (translation) {
+                if (moduleName === 'solum') {
+                    g.features.fs = true;
+                    if (['iunge', 'dir', 'basis', 'extensio', 'resolve'].includes(methodName)) {
+                        g.features.nodePath = true;
+                    }
                 }
-            }
-            if (translation.method) {
-                return `${translation.method}(${args})`;
-            }
-            if (translation.template) {
-                return applyNamespaceTemplate(translation.template, [...argsArray]);
+                if (translation.method) {
+                    return `${translation.method}(${args})`;
+                }
+                if (translation.template) {
+                    return applyNamespaceTemplate(translation.template, [...argsArray]);
+                }
             }
         }
     }

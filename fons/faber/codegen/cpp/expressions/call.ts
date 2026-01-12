@@ -122,23 +122,28 @@ export function genCallExpression(node: CallExpression, g: CppGenerator): string
     }
 
     if (isNamespaceCall(node)) {
-        const moduleName = node.callee.object.resolvedType.moduleName;
-        const methodName = (node.callee.property as Identifier).name;
-        const translation = getNamespaceTranslation(node.callee, 'cpp');
-        if (translation) {
-            const moduleHeaders = CPP_HEADERS[moduleName];
-            if (moduleHeaders) {
-                const headers = moduleHeaders[methodName] || moduleHeaders._default || [];
-                for (const header of headers) {
-                    g.includes.add(header);
+        const objType = node.callee.object.resolvedType;
+        if (!objType || objType.kind !== 'namespace') {
+            // Fall through to other handlers
+        } else {
+            const moduleName = objType.moduleName;
+            const methodName = (node.callee.property as Identifier).name;
+            const translation = getNamespaceTranslation(node.callee, 'cpp');
+            if (translation) {
+                const moduleHeaders = CPP_HEADERS[moduleName];
+                if (moduleHeaders) {
+                    const headers = moduleHeaders[methodName] || moduleHeaders._default || [];
+                    for (const header of headers) {
+                        g.includes.add(header);
+                    }
                 }
-            }
 
-            if (translation.method) {
-                return `${translation.method}(${args})`;
-            }
-            if (translation.template) {
-                return applyNamespaceTemplate(translation.template, [...argsArray]);
+                if (translation.method) {
+                    return `${translation.method}(${args})`;
+                }
+                if (translation.template) {
+                    return applyNamespaceTemplate(translation.template, [...argsArray]);
+                }
             }
         }
     }
