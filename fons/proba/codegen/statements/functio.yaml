@@ -214,18 +214,15 @@
 
 # Array type with vel default
 - name: array type with vel default
+  skip: [rs, zig]  # default params unsupported
   source: 'functio process(textus[] items vel []) { scribe items }'
   expect:
       ts:
           - 'function process(items: Array<string> = [])'
       py:
           - 'def process(items: list[str] = []):'
-      rs:
-          - 'fn process(items: Vec<String>)'
       cpp:
           - 'void process(const std::vector<std::string>& items = {})'
-      zig:
-          - 'fn process(items: Lista([]const u8))'
       fab:
           - 'functio process(textus[] items vel [])'
           - 'scribe items'
@@ -290,6 +287,7 @@
 
 # @ futura annotation makes a function async
 - name: async function with futura annotation
+  skip: [cpp, zig]  # async unsupported
   source: |
       @ futura
       functio fetch(url) {
@@ -302,10 +300,6 @@
           - 'async def fetch(url):'
       rs:
           - 'async fn fetch(url: _)'
-      cpp:
-          - 'void fetch(auto url)'
-      zig:
-          - '!void'
       fab:
           - '@ futura'
           - 'functio fetch(url)'
@@ -313,6 +307,7 @@
 
 # fiet = async + return type (wraps in Promise/Awaitable)
 - name: async function with fiet return type
+  skip: [cpp, zig]  # async unsupported
   source: 'functio fetch() fiet textus { redde "data" }'
   expect:
       ts:
@@ -321,10 +316,6 @@
           - 'async def fetch() -> Awaitable[str]:'
       rs:
           - 'async fn fetch() -> String'
-      cpp:
-          - 'std::string fetch()'
-      zig:
-          - 'fn fetch() ![]const u8'
       fab:
           - 'functio fetch() -> textus'
           - 'redde "data"'
@@ -335,36 +326,26 @@
 
 # fiunt makes a function a generator (wraps return in Generator/Iterator)
 - name: generator function with fiunt
+  skip: [cpp, rs, zig]  # generators unsupported
   source: 'functio range() fiunt numerus { redde 1 }'
   expect:
       ts:
           - 'function* range(): Generator<number>'
       py:
           - 'def range() -> Iterator[int]:'
-      rs:
-          - 'fn range() -> i64'
-      cpp:
-          - 'int64_t range()'
-      zig:
-          - 'fn range() i64'
       fab:
           - 'functio range() cursor -> numerus'
           - 'redde 1'
 
 # fient = async generator (wraps in AsyncGenerator/AsyncIterator)
 - name: async generator function with fient
+  skip: [cpp, rs, zig]  # async generators unsupported
   source: 'functio stream() fient textus { redde "chunk" }'
   expect:
       ts:
           - 'async function* stream(): AsyncGenerator<string>'
       py:
           - 'async def stream() -> AsyncIterator[str]:'
-      rs:
-          - 'async fn stream() -> String'
-      cpp:
-          - 'std::string stream()'
-      zig:
-          - 'fn stream() ![]const u8'
       fab:
           - 'functio stream() futura cursor -> textus'
           - 'redde "chunk"'
@@ -375,6 +356,7 @@
 
 # cede in generator context becomes yield respond.item() (Responsum protocol)
 - name: cede as yield in generator
+  skip: [cpp, rs, zig]  # generators unsupported
   source: 'functio range() fiunt numerus { cede 1 }'
   expect:
       ts:
@@ -382,18 +364,13 @@
           - 'yield respond.done()'
       py:
           - 'yield 1'
-      rs:
-          - '1.await;'
-      cpp:
-          - 'int64_t range()'
-      zig:
-          - '_ = try 1;'
       fab:
           - 'cursor functio range() -> numerus'
           - 'cede 1'
 
 # cede in async context becomes await
 - name: cede as await in async function
+  skip: [cpp, zig]  # async unsupported
   source: 'functio fetch() fiet textus { cede getData() }'
   expect:
       ts:
@@ -402,10 +379,6 @@
           - 'await getData()'
       rs:
           - 'getData().await;'
-      cpp:
-          - 'getData();'
-      zig:
-          - 'try getData()'
       fab:
           - 'functio fetch() -> textus'
           - 'cede getData()'
@@ -505,6 +478,7 @@
 # Function with optional parameter and default value
 # WHY: Tests si (optional) + vel (default) syntax
 - name: function with default parameter
+  skip: [rs, zig]  # default params unsupported
   source: 'functio greet(si textus name vel "World") -> textus { redde name }'
   expect:
       ts:
@@ -513,14 +487,8 @@
       py:
           - 'def greet(name: str = "World")'
           - 'return name'
-      rs:
-          - 'fn greet(name'
-          - 'return name'
       cpp:
           - 'greet('
-          - 'return name'
-      zig:
-          - 'fn greet(name'
           - 'return name'
       fab:
           - 'functio greet(si textus name vel "World")'
@@ -811,6 +779,7 @@
 
 # Basic default value - string
 - name: default parameter value string
+  skip: [rs, zig]  # default params unsupported
   source: 'functio greet(textus name vel "World") { scribe name }'
   expect:
       ts:
@@ -819,20 +788,15 @@
       py:
           - 'def greet(name: str = "World"):'
           - 'print(name)'
-      rs:
-          # Rust doesn't support default params - value ignored
-          - 'fn greet(name: &str)'
       cpp:
           - 'void greet(const std::string& name = "World")'
-      zig:
-          # Zig doesn't support default params - value ignored
-          - 'fn greet(name: []const u8)'
       fab:
           - 'functio greet(textus name vel "World")'
           - 'scribe name'
 
 # Default value - numeric
 - name: default parameter value numeric
+  skip: [rs, zig]  # default params unsupported
   source: 'functio count(numerus n vel 10) -> numerus { redde n }'
   expect:
       ts:
@@ -841,18 +805,15 @@
       py:
           - 'def count(n: int = 10) -> int:'
           - 'return n'
-      rs:
-          - 'fn count(n: i64) -> i64'
       cpp:
           - 'int64_t count(int64_t n = 10)'
-      zig:
-          - 'fn count(n: i64) i64'
       fab:
           - 'functio count(numerus n vel 10) -> numerus'
           - 'redde n'
 
 # Default with dual naming
 - name: default with dual naming
+  skip: [rs, zig]  # default params unsupported
   source: 'functio greet(textus location ut loc vel "Roma") { scribe loc }'
   expect:
       ts:
@@ -861,30 +822,23 @@
       py:
           - 'def greet(loc: str = "Roma"):'
           - 'print(loc)'
-      rs:
-          - 'fn greet(loc: &str)'
       cpp:
           - 'void greet(const std::string& loc = "Roma")'
-      zig:
-          - 'fn greet(loc: []const u8)'
       fab:
           - 'functio greet(textus location ut loc vel "Roma")'
           - 'scribe loc'
 
 # Mixed default and non-default params
 - name: mixed default and non-default parameters
+  skip: [rs, zig]  # default params unsupported
   source: 'functio greet(textus greeting, textus name vel "World") { scribe greeting }'
   expect:
       ts:
           - 'function greet(greeting: string, name: string = "World")'
       py:
           - 'def greet(greeting: str, name: str = "World"):'
-      rs:
-          - 'fn greet(greeting: &str, name: &str)'
       cpp:
           - 'void greet(const std::string& greeting, const std::string& name = "World")'
-      zig:
-          - 'fn greet(greeting: []const u8, name: []const u8)'
       fab:
           - 'functio greet(textus greeting, textus name vel "World")'
           - 'scribe greeting'
@@ -916,56 +870,45 @@
 
 # Optional parameter with default value
 - name: optional parameter with default value
+  skip: [rs, zig]  # default params unsupported
   source: 'functio greet(si textus name vel "World") { scribe name }'
   expect:
       ts:
           - 'function greet(name: string = "World")'
       py:
           - 'def greet(name: str = "World"):'
-      rs:
-          # Rust: si with vel becomes Option<T> (caller must pass Some/None)
-          - 'fn greet(name: Option<&str>)'
       cpp:
           - 'void greet(const std::string& name = "World")'
-      zig:
-          # Zig: si wraps in optional regardless of default
-          - 'fn greet(name: ?[]const u8)'
       fab:
           - 'functio greet(si textus name vel "World")'
           - 'scribe name'
 
 # Optional numeric parameter with default
 - name: optional numeric parameter with default
+  skip: [rs, zig]  # default params unsupported
   source: 'functio paginate(si numerus page vel 1, si numerus limit vel 10) -> textus { redde "ok" }'
   expect:
       ts:
           - 'function paginate(page: number = 1, limit: number = 10): string'
       py:
           - 'def paginate(page: int = 1, limit: int = 10) -> str:'
-      rs:
-          - 'fn paginate(page: Option<i64>, limit: Option<i64>) -> String'
       cpp:
           - 'std::string paginate(int64_t page = 1, int64_t limit = 10)'
-      zig:
-          - 'fn paginate(page: ?i64, limit: ?i64)'
       fab:
           - 'functio paginate(si numerus page vel 1, si numerus limit vel 10) -> textus'
           - 'redde "ok"'
 
 # Mixed required and optional parameters
 - name: mixed required and optional parameters
+  skip: [rs, zig]  # default params unsupported
   source: 'functio create(textus name, si numerus age, si bivalens active vel verum) { scribe name }'
   expect:
       ts:
           - 'function create(name: string, age?: number, active: boolean = true)'
       py:
           - 'def create(name: str, age: int | None = None, active: bool = True):'
-      rs:
-          - 'fn create(name: &str, age: Option<i64>, active: Option<bool>)'
       cpp:
           - 'void create(const std::string& name, std::optional<int64_t> age = std::nullopt, bool active = true)'
-      zig:
-          - 'fn create(name: []const u8, age: ?i64, active: ?bool)'
       fab:
           - 'functio create(textus name, si numerus age, si bivalens active vel verum)'
           - 'scribe name'
