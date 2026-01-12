@@ -20,6 +20,7 @@ import type { CppGenerator } from '../generator';
 
 // WHY: Unified norma registry for all stdlib translations (from .fab files)
 import { getNormaTranslation, applyNormaTemplate, applyNormaModuleCall, validateMorphology } from '../../norma-registry';
+import { applyNamespaceTemplate, getNamespaceTranslation, isNamespaceCall } from '../../shared/norma-namespace';
 
 // WHY: C++ requires header tracking for imports. Map module/function to headers.
 const CPP_HEADERS: Record<string, Record<string, string[]>> = {
@@ -33,6 +34,9 @@ const CPP_HEADERS: Record<string, Record<string, string[]>> = {
     aleator: {
         _default: ['<random>'],
         uuid: ['<random>', '<string>'],
+    },
+    json: {
+        _default: ['<nlohmann/json.hpp>'],
     },
 };
 
@@ -113,6 +117,31 @@ export function genCallExpression(node: CallExpression, g: CppGenerator): string
                     }
                 }
                 return call;
+            }
+        }
+    }
+
+    if (isNamespaceCall(node)) {
+        const objType = node.callee.object.resolvedType;
+        if (objType?.kind === 'namespace') {
+            const moduleName = objType.moduleName;
+            const methodName = (node.callee.property as Identifier).name;
+            const translation = getNamespaceTranslation(node.callee, 'cpp');
+            if (translation) {
+                const moduleHeaders = CPP_HEADERS[moduleName];
+                if (moduleHeaders) {
+                    const headers = moduleHeaders[methodName] || moduleHeaders._default || [];
+                    for (const header of headers) {
+                        g.includes.add(header);
+                    }
+                }
+
+                if (translation.method) {
+                    return `${translation.method}(${args})`;
+                }
+                if (translation.template) {
+                    return applyNamespaceTemplate(translation.template, [...argsArray]);
+                }
             }
         }
     }

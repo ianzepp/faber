@@ -16,6 +16,10 @@ export function genImportaDeclaration(node: ImportaDeclaration, g: CppGenerator)
     // Add to includes set - will be rendered at top
     const source = node.source;
 
+    if (source === 'norma' || source.startsWith('norma/')) {
+        return '';
+    }
+
     // Check if it's a standard library or local
     if (source.startsWith('<') || !source.includes('/')) {
         g.includes.add(`<${source}>`);

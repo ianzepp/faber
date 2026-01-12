@@ -17,6 +17,7 @@ import type { RsGenerator } from '../generator';
 
 // WHY: Unified norma registry for all stdlib translations (from .fab files)
 import { getNormaTranslation, applyNormaTemplate, applyNormaModuleCall, validateMorphology } from '../../norma-registry';
+import { applyNamespaceTemplate, getNamespaceTranslation, isNamespaceCall } from '../../shared/norma-namespace';
 
 /**
  * Rust I/O intrinsic mappings.
@@ -80,6 +81,18 @@ export function genCallExpression(node: CallExpression, g: RsGenerator): string 
             const call = applyNormaModuleCall('rs', module, name, [...argsArray]);
             if (call) {
                 return call;
+            }
+        }
+    }
+
+    if (isNamespaceCall(node)) {
+        const translation = getNamespaceTranslation(node.callee, 'rs');
+        if (translation) {
+            if (translation.method) {
+                return `${translation.method}(${args})`;
+            }
+            if (translation.template) {
+                return applyNamespaceTemplate(translation.template, [...argsArray]);
             }
         }
     }

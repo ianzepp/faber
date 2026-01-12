@@ -105,6 +105,9 @@ export interface RequiredFeatures {
     // Time (Python) - needs import time for norma/tempus
     time: boolean;
 
+    // JSON (Python) - needs import json for norma/json
+    json: boolean;
+
     // I/O streams (Zig) - needs stdout/stderr/stdin setup
     stdout: boolean;
     stderr: boolean;
@@ -141,6 +144,7 @@ export function createRequiredFeatures(): RequiredFeatures {
         sys: false,
         warnings: false,
         time: false,
+        json: false,
         stdout: false,
         stderr: false,
         stdin: false,

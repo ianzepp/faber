@@ -21,6 +21,16 @@ export function genMemberExpression(node: MemberExpression, g: ZigGenerator): st
     }
 
     const obj = g.genExpression(node.object);
+    const objType = node.object.resolvedType;
+
+    if (objType?.kind === 'namespace') {
+        if (node.computed) {
+            const prop = g.genBareExpression(node.property);
+            return `${obj}[${prop}]`;
+        }
+        const propName = (node.property as Identifier).name;
+        return `${obj}.${propName}`;
+    }
 
     // GUARD: Computed access with slice syntax
     if (node.computed && node.property.type === 'RangeExpression') {

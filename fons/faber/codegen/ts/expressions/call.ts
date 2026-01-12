@@ -24,6 +24,7 @@ import {
     validateMorphology,
     getNormaReceiverCollectionsForMethod,
 } from '../../norma-registry';
+import { applyNamespaceTemplate, getNamespaceTranslation, isNamespaceCall } from '../../shared/norma-namespace';
 
 /**
  * TypeScript intrinsic mappings.
@@ -103,6 +104,29 @@ export function genCallExpression(node: CallExpression, g: TsGenerator): string 
         }
     }
 
+    if (isNamespaceCall(node)) {
+        const objType = node.callee.object.resolvedType;
+        if (objType?.kind === 'namespace') {
+            const moduleName = objType.moduleName;
+            const methodName = (node.callee.property as Identifier).name;
+            const translation = getNamespaceTranslation(node.callee, 'ts');
+            if (translation) {
+                if (moduleName === 'solum') {
+                    g.features.fs = true;
+                    if (['iunge', 'dir', 'basis', 'extensio', 'resolve'].includes(methodName)) {
+                        g.features.nodePath = true;
+                    }
+                }
+                if (translation.method) {
+                    return `${translation.method}(${args})`;
+                }
+                if (translation.template) {
+                    return applyNamespaceTemplate(translation.template, [...argsArray]);
+                }
+            }
+        }
+    }
+
     // Check for collection methods (method calls on lista/tabula/copia)
     if (node.callee.type === 'MemberExpression' && !node.callee.computed) {
         const methodName = (node.callee.property as Identifier).name;
@@ -112,8 +136,7 @@ export function genCallExpression(node: CallExpression, g: TsGenerator): string 
         // This prevents method name collisions (e.g., accipe means different
         // things for lista vs tabula). Also handles primitives like textus.
         const objType = node.callee.object.resolvedType;
-        const collectionName = objType?.kind === 'generic' ? objType.name :
-                               objType?.kind === 'primitive' ? objType.name : null;
+        const collectionName = objType?.kind === 'generic' ? objType.name : objType?.kind === 'primitive' ? objType.name : null;
 
         // WHY: Skip stdlib check entirely for user-defined types. User genus methods
         // should never match stdlib collections, even if method names coincide.

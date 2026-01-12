@@ -13,6 +13,17 @@ import type { RsGenerator } from '../generator';
 
 export function genMemberExpression(node: MemberExpression, g: RsGenerator): string {
     const obj = g.genExpression(node.object);
+    const objType = node.object.resolvedType;
+
+    if (objType?.kind === 'namespace') {
+        if (node.computed) {
+            const prop = g.genBareExpression(node.property);
+            return `${obj}[${prop}]`;
+        }
+
+        const propName = (node.property as Identifier).name;
+        return `${obj}.${propName}`;
+    }
 
     if (node.computed) {
         // WHY: Use genBareExpression to avoid unnecessary parens around index

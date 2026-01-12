@@ -172,6 +172,26 @@ genus Analyzator {
     # ========================================================================
 
     @ publica
+    functio definieMorphologiaBuiltin() -> vacuum {
+        # WHY: lista is morphology-enabled by default for stdlib lowering.
+        fixum formaeMutantes = ["imperativus", "futurum_indicativum"] qua lista<textus>
+        fixum formaeNovae = ["perfectum", "futurum_activum"] qua lista<textus>
+        fixum formaeOmnes = ["imperativus", "perfectum", "futurum_indicativum", "futurum_activum"] qua lista<textus>
+
+        ego.addeMorphologiam("lista", "add", formaeOmnes)
+        ego.addeMorphologiam("lista", "praepon", formaeMutantes)
+        ego.addeMorphologiam("lista", "praepos", formaeNovae)
+        ego.addeMorphologiam("lista", "remov", formaeOmnes)
+        ego.addeMorphologiam("lista", "decapit", formaeOmnes)
+        ego.addeMorphologiam("lista", "filtr", formaeOmnes)
+        ego.addeMorphologiam("lista", "mapp", formaeNovae)
+        ego.addeMorphologiam("lista", "ordin", formaeOmnes)
+        ego.addeMorphologiam("lista", "invert", formaeMutantes)
+        ego.addeMorphologiam("lista", "invers", formaeNovae)
+        ego.addeMorphologiam("lista", "inver", formaeNovae)
+    }
+
+    @ publica
     functio habetMorphologiam(textus recipiens) -> bivalens {
         si nihil ego.morphologiaRegistra[recipiens] {
             redde falsum
@@ -237,6 +257,7 @@ functio novumAnalyzator(textus? viaIngressus) -> Analyzator {
 
     # Define built-in intrinsics
     analyzator.definieIntrinsica()
+    analyzator.definieMorphologiaBuiltin()
 
     redde analyzator
 }

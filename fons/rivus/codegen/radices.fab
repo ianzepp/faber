@@ -43,8 +43,12 @@ functio genAdd(textus obj, lista<textus> args, MorphologiaFlagga flagga) fit tex
 @ publica
 functio genPraepon(textus obj, lista<textus> args, MorphologiaFlagga flagga) fit textus {
     si flagga.mutare {
+        si flagga.async
+            reddit scriptum("Promise.resolve().then(() => { §.unshift(§); })", obj, args[0])
         redde scriptum("§.unshift(§)", obj, args[0])
     } secus {
+        si flagga.async
+            reddit scriptum("Promise.resolve([§, ...§])", args[0], obj)
         redde scriptum("[§, ...§]", args[0], obj)
     }
 }
@@ -55,8 +59,12 @@ functio genPraepon(textus obj, lista<textus> args, MorphologiaFlagga flagga) fit
 @ publica
 functio genRemov(textus obj, lista<textus> args, MorphologiaFlagga flagga) fit textus {
     si flagga.mutare {
+        si flagga.async
+            reddit scriptum("Promise.resolve().then(() => { §.pop(); })", obj)
         redde scriptum("§.pop()", obj)
     } secus {
+        si flagga.async
+            reddit scriptum("Promise.resolve(§.slice(0, -1))", obj)
         redde scriptum("§.slice(0, -1)", obj)
     }
 }
@@ -67,8 +75,12 @@ functio genRemov(textus obj, lista<textus> args, MorphologiaFlagga flagga) fit t
 @ publica
 functio genDecapit(textus obj, lista<textus> args, MorphologiaFlagga flagga) fit textus {
     si flagga.mutare {
+        si flagga.async
+            reddit scriptum("Promise.resolve().then(() => { §.shift(); })", obj)
         redde scriptum("§.shift()", obj)
     } secus {
+        si flagga.async
+            reddit scriptum("Promise.resolve(§.slice(1))", obj)
         redde scriptum("§.slice(1)", obj)
     }
 }
@@ -116,11 +128,23 @@ functio genOrdin(textus obj, lista<textus> args, MorphologiaFlagga flagga) fit t
     fixum hasComparator = args.longitudo() > 0
 
     si flagga.mutare {
+        si flagga.async {
+            si hasComparator {
+                redde scriptum("Promise.resolve().then(() => { §.sort(§); })", obj, args[0])
+            }
+            redde scriptum("Promise.resolve().then(() => { §.sort(); })", obj)
+        }
         si hasComparator {
             redde scriptum("§.sort(§)", obj, args[0])
         }
         redde scriptum("§.sort()", obj)
     } secus {
+        si flagga.async {
+            si hasComparator {
+                redde scriptum("Promise.resolve([...§].sort(§))", obj, args[0])
+            }
+            redde scriptum("Promise.resolve([...§].sort())", obj)
+        }
         si hasComparator {
             redde scriptum("[...§].sort(§)", obj, args[0])
         }
@@ -134,8 +158,12 @@ functio genOrdin(textus obj, lista<textus> args, MorphologiaFlagga flagga) fit t
 @ publica
 functio genInvert(textus obj, lista<textus> args, MorphologiaFlagga flagga) fit textus {
     si flagga.mutare {
+        si flagga.async
+            reddit scriptum("Promise.resolve().then(() => { §.reverse(); })", obj)
         redde scriptum("§.reverse()", obj)
     } secus {
+        si flagga.async
+            reddit scriptum("Promise.resolve([...§].reverse())", obj)
         redde scriptum("[...§].reverse()", obj)
     }
 }
