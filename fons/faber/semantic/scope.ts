@@ -42,11 +42,12 @@ import type { Position } from '../tokenizer/types';
  *      - 'enum' for ordo (enum) declarations
  *      - 'genus' for genus (class/struct) declarations
  *      - 'pactum' for pactum (interface) declarations
+ *      - 'namespace' for norma namespace imports (immutable like functions)
  */
 export interface Symbol {
     name: string;
     type: SemanticType;
-    kind: 'variable' | 'function' | 'parameter' | 'type' | 'enum' | 'genus' | 'pactum';
+    kind: 'variable' | 'function' | 'parameter' | 'type' | 'enum' | 'genus' | 'pactum' | 'namespace';
     mutable: boolean;
     position: Position;
 }

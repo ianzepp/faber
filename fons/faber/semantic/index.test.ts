@@ -982,4 +982,34 @@ describe('Semantic Analyzer', () => {
             expect(errors).toHaveLength(0);
         });
     });
+
+    describe('Norma Namespace Imports', () => {
+        it('creates namespace symbol for norma/* imports with wildcardAlias', () => {
+            const source = `ex "norma/json" importa * ut json`;
+            const { errors } = analyzeSource(source);
+
+            expect(errors).toHaveLength(0);
+        });
+
+        it('validates namespace method access', () => {
+            const source = `
+                ex "norma/json" importa * ut json
+                fixum text = json.solve(42)
+            `;
+            const { errors } = analyzeSource(source);
+
+            expect(errors).toHaveLength(0);
+        });
+
+        it('errors on undefined namespace method', () => {
+            const source = `
+                ex "norma/json" importa * ut json
+                fixum text = json.unknownMethod(42)
+            `;
+            const { errors } = analyzeSource(source);
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors[0]!.message).toContain("Method 'unknownMethod' not found");
+        });
+    });
 });
