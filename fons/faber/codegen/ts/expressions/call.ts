@@ -106,9 +106,7 @@ export function genCallExpression(node: CallExpression, g: TsGenerator): string 
 
     if (isNamespaceCall(node)) {
         const objType = node.callee.object.resolvedType;
-        if (!objType || objType.kind !== 'namespace') {
-            // Fall through to other handlers
-        } else {
+        if (objType?.kind === 'namespace') {
             const moduleName = objType.moduleName;
             const methodName = (node.callee.property as Identifier).name;
             const translation = getNamespaceTranslation(node.callee, 'ts');

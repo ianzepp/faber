@@ -62,7 +62,6 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
                                                     } qua MorphologiaInvocatio
                                                 }
                                             }
-<<<<<<< Updated upstream
                                         }
 
                                         # Fallback: set morphologia with method name as-is for norma translation
@@ -75,8 +74,6 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
                                                 radix: n.valor,
                                                 forma: "directum"
                                             } qua MorphologiaInvocatio
-=======
->>>>>>> Stashed changes
                                         }
                                     }
                                 }

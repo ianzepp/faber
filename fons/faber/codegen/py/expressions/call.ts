@@ -93,22 +93,23 @@ export function genCallExpression(node: CallExpression, g: PyGenerator): string 
 
     if (isNamespaceCall(node)) {
         const objType = node.callee.object.resolvedType;
-        if (!objType || objType.kind !== 'namespace') {
-            // Fall through to other handlers
-        } else {
+        if (objType?.kind === 'namespace') {
             const moduleName = objType.moduleName;
             const methodName = (node.callee.property as Identifier).name;
             const translation = getNamespaceTranslation(node.callee, 'py');
             if (translation) {
                 if (moduleName === 'mathesis') {
                     g.features.math = true;
-                } else if (moduleName === 'tempus') {
+                }
+                else if (moduleName === 'tempus') {
                     g.features.time = true;
-                } else if (moduleName === 'aleator') {
+                }
+                else if (moduleName === 'aleator') {
                     g.features.random = true;
                     if (methodName === 'uuid') g.features.uuid = true;
                     if (methodName === 'octeti') g.features.secrets = true;
-                } else if (moduleName === 'json') {
+                }
+                else if (moduleName === 'json') {
                     g.features.json = true;
                 }
 
