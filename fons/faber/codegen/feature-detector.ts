@@ -215,8 +215,17 @@ export class FeatureDetector {
                 break;
 
             case 'BlockStatement':
-            case 'FacBlockStatement':
                 this.visitBlock(stmt);
+                break;
+
+            case 'FacBlockStatement':
+                this.visitBlock(stmt.body);
+                if (stmt.catchClause) {
+                    this.visitBlock(stmt.catchClause.body);
+                }
+                if (stmt.test) {
+                    this.visitExpression(stmt.test);
+                }
                 break;
 
             case 'CustodiStatement':
@@ -259,6 +268,12 @@ export class FeatureDetector {
                 break;
 
             case 'ProbandumStatement':
+                // body is array of PraeparaBlock | ProbandumStatement | ProbaStatement
+                for (const child of stmt.body) {
+                    this.visitStatement(child);
+                }
+                break;
+
             case 'ProbaStatement':
             case 'PraeparaBlock':
                 this.visitBlock(stmt.body);
