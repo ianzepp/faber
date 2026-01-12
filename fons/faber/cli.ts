@@ -42,6 +42,7 @@ import { tokenize } from './tokenizer';
 import { parse } from './parser';
 import { analyze } from './semantic';
 import { generate, type CodegenTarget } from './codegen';
+import { TargetCompatibilityError } from './codegen/validator';
 
 // =============================================================================
 // CONSTANTS
@@ -242,6 +243,18 @@ async function compile(inputFile: string, target: CodegenTarget, outputFile?: st
     try {
         output = generate(program, { target });
     } catch (err) {
+        if (err instanceof TargetCompatibilityError) {
+            // WHY: Format each error on its own line, matching existing CLI style
+            console.error('Target compatibility errors:');
+            for (const e of err.errors) {
+                const pos = e.position ? `${displayName}:${e.position.line}:${e.position.column}` : displayName;
+                console.error(`  ${pos} - ${e.message}`);
+                if (e.suggestion) {
+                    console.error(`    hint: ${e.suggestion}`);
+                }
+            }
+            process.exit(1);
+        }
         // WHY: Codegen errors (e.g., unsupported target features) should display cleanly
         const message = err instanceof Error ? err.message : String(err);
         console.error(`Codegen error (${target}): ${message}`);
