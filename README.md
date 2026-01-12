@@ -80,6 +80,8 @@ See [faber-trials/docs/framework-1.1-results.md](https://github.com/ianzepp/fabe
 
 **Target Transparency.** You pick a compile target (TypeScript, Zig, etc.) and use that ecosystem directly. Faber is a skin over the target, not a replacement for it.
 
+**Target Compatibility.** Not all targets support all features — the compiler validates your code against target capabilities and reports clear errors. See [fons/grammatica/targets.md](fons/grammatica/targets.md) for the compatibility matrix.
+
 ## Quick Start
 
 ```bash
