@@ -111,6 +111,7 @@ import {
     genusType,
     pactumType,
     discretioType,
+    namespaceType,
     TEXTUS,
     NUMERUS,
     FRACTUS,
@@ -127,6 +128,7 @@ import {
 import { SemanticErrorCode, SEMANTIC_ERRORS } from './errors';
 import { isLocalImport, resolveModule, createModuleContext, type ModuleContext, type ModuleExports } from './modules';
 import type { Annotation } from '../parser/ast';
+import { getNormaTranslation } from '../codegen/norma-registry';
 
 // =============================================================================
 // ANNOTATION HELPERS
@@ -544,6 +546,22 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
         if (moduleName in NORMA_SUBMODULES) {
             analyzeNormaImport(node, NORMA_SUBMODULES[moduleName]!);
+            return;
+        }
+
+        // WHY: norma/* imports with wildcardAlias create namespace symbols
+        // ex "norma/json" importa * ut json -> namespace json wrapping registry
+        if (moduleName.startsWith('norma/') && node.wildcard && node.wildcardAlias) {
+            const collection = moduleName.slice('norma/'.length);
+            const aliasName = node.wildcardAlias.name;
+
+            currentScope.symbols.set(aliasName, {
+                name: aliasName,
+                type: namespaceType(collection),
+                kind: 'namespace',
+                mutable: false,
+                position: node.position,
+            });
             return;
         }
 
@@ -1330,6 +1348,27 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             const propName = (node.property as Identifier).name;
 
             if (symbol) {
+                // Namespace member access: json.solve
+                // WHY: Namespace symbols wrap norma collections, enabling json.solve(data) calls
+                if (symbol.kind === 'namespace' && symbol.type.kind === 'namespace') {
+                    const collection = symbol.type.moduleName;
+
+                    // WHY: Validate method exists in norma registry during semantic analysis
+                    // to prevent codegen failures from undefined methods
+                    const translation = getNormaTranslation('ts', collection, propName);
+                    if (!translation) {
+                        error(`Method '${propName}' not found in norma collection '${collection}'`, node.position);
+                        node.resolvedType = UNKNOWN;
+                        return UNKNOWN;
+                    }
+
+                    // WHY: Return function type even if UNKNOWN for now (Phase 2 will add signatures)
+                    const methodType = functionType([], UNKNOWN);
+                    node.resolvedType = methodType;
+                    node.object.resolvedType = symbol.type;
+                    return methodType;
+                }
+
                 // Enum member access: Status.pending
                 if (symbol.kind === 'enum' && symbol.type.kind === 'enum') {
                     const memberType = symbol.type.members.get(propName);

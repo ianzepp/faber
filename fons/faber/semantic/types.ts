@@ -168,6 +168,19 @@ export interface DiscretioType extends BaseType {
 }
 
 /**
+ * Namespace type for norma collections.
+ *
+ * WHY: Namespace imports (`ex "norma/json" importa * ut json`) create a symbol
+ *      that wraps the norma registry, enabling `json.solve(data)` style calls.
+ *      The moduleName is used to query the norma registry during semantic analysis
+ *      to validate method existence and return types.
+ */
+export interface NamespaceType extends BaseType {
+    kind: 'namespace';
+    moduleName: string;
+}
+
+/**
  * Discriminated union of all semantic types.
  */
 export type SemanticType =
@@ -180,7 +193,8 @@ export type SemanticType =
     | EnumType
     | GenusType
     | PactumType
-    | DiscretioType;
+    | DiscretioType
+    | NamespaceType;
 
 // =============================================================================
 // TYPE CONSTRUCTORS
@@ -261,6 +275,13 @@ export function pactumType(name: string, methods: Map<string, FunctionType>, nul
  */
 export function discretioType(name: string, variants: Map<string, VariantInfo>, nullable?: boolean): DiscretioType {
     return { kind: 'discretio', name, variants, nullable };
+}
+
+/**
+ * Create a namespace type.
+ */
+export function namespaceType(moduleName: string, nullable?: boolean): NamespaceType {
+    return { kind: 'namespace', moduleName, nullable };
 }
 
 // =============================================================================
@@ -364,6 +385,8 @@ export function typesEqual(a: SemanticType, b: SemanticType): boolean {
             return a.name === (b as PactumType).name;
         case 'discretio':
             return a.name === (b as DiscretioType).name;
+        case 'namespace':
+            return a.moduleName === (b as NamespaceType).moduleName;
     }
 }
 
@@ -453,5 +476,7 @@ export function formatType(type: SemanticType): string {
             return `pactum ${type.name}` + (type.nullable ? '?' : '');
         case 'discretio':
             return `discretio ${type.name}` + (type.nullable ? '?' : '');
+        case 'namespace':
+            return `namespace ${type.moduleName}` + (type.nullable ? '?' : '');
     }
 }
