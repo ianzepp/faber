@@ -153,7 +153,7 @@ export const TARGET_SUPPORT: Record<CodegenTarget, TargetSupport> = {
         },
         binding: {
             pattern: {
-                object: 'unsupported',
+                object: 'emulated', // field-by-field extraction
             },
         },
         params: {

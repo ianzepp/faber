@@ -28,13 +28,13 @@ describe('TARGET_SUPPORT', () => {
         expect(ts.params.defaultValues).toBe('supported');
     });
 
-    test('Python supports most features except object destructuring', () => {
+    test('Python supports most features with emulated destructuring', () => {
         const py = TARGET_SUPPORT.py;
         expect(py.controlFlow.asyncFunction).toBe('supported');
         expect(py.controlFlow.generatorFunction).toBe('supported');
         expect(py.errors.tryCatch).toBe('supported');
         expect(py.errors.throw).toBe('supported');
-        expect(py.binding.pattern.object).toBe('unsupported');
+        expect(py.binding.pattern.object).toBe('emulated'); // field-by-field extraction
         expect(py.params.defaultValues).toBe('supported');
     });
 

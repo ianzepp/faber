@@ -128,7 +128,7 @@ describe('validateTargetCompatibility', () => {
         expect(errors).toHaveLength(0);
     });
 
-    test('detects object destructuring incompatibility with Python', () => {
+    test('allows emulated object destructuring for Python', () => {
         const stmt: Statement = {
             type: 'DestructureDeclaration',
             source: id('obj'),
@@ -144,12 +144,9 @@ describe('validateTargetCompatibility', () => {
             position: pos,
         };
 
+        // Python uses field-by-field extraction (emulated)
         const errors = validateTargetCompatibility(program([stmt]), 'py');
-
-        expect(errors).toHaveLength(1);
-        expect(errors[0].feature).toBe('binding.pattern.object');
-        expect(errors[0].message).toContain("Target 'py' does not support object pattern binding");
-        expect(errors[0].suggestion).toContain('explicit field');
+        expect(errors).toHaveLength(0);
     });
 
     test('detects default parameters incompatibility with Zig', () => {
