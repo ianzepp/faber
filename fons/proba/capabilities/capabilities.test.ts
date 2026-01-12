@@ -44,7 +44,7 @@ describe('TARGET_SUPPORT', () => {
         expect(rs.controlFlow.generatorFunction).toBe('unsupported');
         expect(rs.errors.tryCatch).toBe('unsupported');
         expect(rs.errors.throw).toBe('unsupported');
-        expect(rs.binding.pattern.object).toBe('supported');
+        expect(rs.binding.pattern.object).toBe('unsupported'); // codegen emits TODOs
         expect(rs.params.defaultValues).toBe('unsupported');
     });
 

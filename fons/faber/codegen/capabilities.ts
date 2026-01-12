@@ -101,7 +101,7 @@ export interface TargetSupport {
  * - Async/await supported (async fn)
  * - Generators NOT supported in stable (unstable feature)
  * - Exception handling NOT supported (uses Result<T,E>)
- * - Object destructuring supported (struct patterns)
+ * - Object destructuring NOT supported (codegen emits TODOs for rest patterns)
  * - Default parameters NOT supported (use Option or overloads)
  *
  * Zig:
@@ -168,7 +168,7 @@ export const TARGET_SUPPORT: Record<CodegenTarget, TargetSupport> = {
         },
         binding: {
             pattern: {
-                object: 'supported',
+                object: 'unsupported',
             },
         },
         params: {
