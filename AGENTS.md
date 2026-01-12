@@ -88,60 +88,122 @@ archivum/               # Historical/archived materials
 
 ## Agents
 
-Standalone agent runner at `~/.local/bin/agent` (symlink to `~/github/ianzepp/agents/agent.sh`). Runs agents as separate processes with output to stdout.
+Standalone agent runner at `~/.local/bin/agent`. Runs agents as separate Claude processes in worktrees.
 
 ```bash
-agent <name> [options] <goal>
-agent --agent <path> [options] <goal>
-
-Options:
-  -a, --agent <path>    Use agent prompt from file path
-  -m, --model <model>   Model to use (default: sonnet)
-  -d, --dir <path>      Working directory (default: cwd)
-  -n, --dry-run         Show prompt without running claude
+agent list                           # Show available agents
+agent run <name> "goal"              # Run agent with goal
+agent issue <number>                 # Run opifex on GitHub issue
+agent run -m opus <name> "goal"      # Use specific model
 ```
 
-### Generic Agents (`~/github/ianzepp/agents/`)
+### Available Agents
 
-| Name | Purpose |
-|------|---------|
-| `claude` | Generic pass-through, no special instructions |
-| `columbo` | Root cause investigator (traces backward) |
-| `augur` | Forward consequence analyst (traces forward) |
-| `galen` | Test diagnostician (classifies failures) |
-| `titus` | TypeScript error fixer (root causes, not suppressions) |
-| `opifex` | Issue worker (fixes well-defined GitHub issues from analysis to PR) |
+| Agent | Purpose | When to use |
+|-------|---------|-------------|
+| `opifex` | Issue worker | Well-defined GitHub issues with clear deliverables |
+| `diogenes` | Explorer | Recon before implementation, codebase exploration |
+| `columbo` | Investigator | Root cause diagnosis when things break |
+| `cato` | PR reviewer | Review before merge |
+| `seneca` | Design reviewer | Review planning docs, find gaps |
+| `ego` | General purpose | Research tasks, anything that doesn't fit others |
+| `titus` | TypeScript fixer | Type errors specifically |
+| `galen` | Test diagnostician | Classify test failures |
+| `augur` | Consequence analyst | Trace what will break from a change |
 
-### Project Agents (`agents/`)
+### Workflow Patterns
 
-| Name | Purpose |
-|------|---------|
-| `cicero` | Faber language designer (syntax, grammar, Latin↔code) |
-| `curie` | LLM trials researcher (experiment design, analysis) |
+**1. Phase Decomposition**
 
-### Running Agents
+Large issues should be split into focused phases before assignment:
+- Phase 1: Infrastructure (types, interfaces, no integration)
+- Phase 2: Integration (wire into existing code)
+- Phase 3: Testing and documentation
 
-**Run agents in the background** to avoid blocking the main conversation. Claude uses the Bash tool's `run_in_background` parameter and retrieves output with TaskOutput.
+Each phase gets its own issue. Agents succeed on focused work, fail on sprawling tasks.
 
+**2. Recon Before Assignment**
+
+Before sending an issue to opifex, run recon:
 ```bash
-# Claude runs this with run_in_background: true
-agent columbo "Why does X fail?"
-
-# Claude uses TaskOutput to retrieve results when done
+agent run diogenes "Explore X in preparation for issue #N. Find: [specific questions]"
 ```
 
-### Examples
+Add findings to the issue as a comment. This catches:
+- Missing prerequisites (files/functions that don't exist yet)
+- Incorrect assumptions in the issue description
+- Gotchas the agent would hit
 
+5 minutes of recon saves 15 minutes of confused agent work.
+
+**3. Parallel Execution**
+
+Run multiple agents simultaneously:
 ```bash
-# Generic agents (from any directory)
-agent columbo "Why does the parser hang on nested generics?"
-agent galen "Run tests and diagnose failures"
-agent titus "Fix the TypeScript errors"
-
-# Project agents (use -a for project-specific agents)
-agent -a agents/cicero.md "Design syntax for pattern matching"
-agent -a agents/curie.md "Analyze the latest trial results"
+agent issue 102 &
+agent run diogenes "explore X" &
+agent run cato "review PR #103" &
 ```
+
+Lock collisions occur occasionally ("Lock acquisition failed") - these are transient, retry works.
+
+**4. Review Gate**
+
+Before merging PRs from agents:
+```bash
+agent run cato "Review PR #N. Check: [specific concerns]"
+```
+
+Include context from earlier findings (e.g., "diogenes found X, verify the PR addresses it").
+
+**5. Triage Failures**
+
+When tests break:
+```bash
+agent run columbo "Run 'bun run test:faber' and diagnose root cause"
+```
+
+Columbo reports findings. You decide: direct fix or new issue.
+
+**6. Direct vs Delegated**
+
+Do directly:
+- One-line fixes
+- Config changes
+- Quick patches with clear cause
+
+Delegate to agents:
+- Multi-file changes
+- New features
+- Exploratory work
+- Repetitive transformations
+
+### Issue Quality
+
+Good issues for opifex have:
+- **Specific deliverables** - exact files to create/modify
+- **Code examples** - show the expected patterns
+- **Clear scope** - explicit "NOT in scope" section
+- **Test criteria** - how to verify success
+
+Bad issues:
+- "Improve X" (vague)
+- "Fix the problems in Y" (no specifics)
+- "Implement the design doc" (too large)
+
+### Agent Output
+
+Agents return concise reports. For opifex:
+```
+Issue: #102
+Status: COMPLETE
+Branch: issue-102
+PR: #103
+Changes: [list of files]
+Test Results: [before/after]
+```
+
+Read the full output file for details when needed.
 
 ## CRITICAL RULES
 
