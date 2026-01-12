@@ -145,9 +145,9 @@ export class FeatureDetector {
                     node: stmt,
                     context: 'try-catch block',
                 });
-                this.visitBlock(stmt.body);
-                for (const handler of stmt.handlers) {
-                    this.visitBlock(handler.body);
+                this.visitBlock(stmt.block);
+                if (stmt.handler) {
+                    this.visitBlock(stmt.handler.body);
                 }
                 if (stmt.finalizer) {
                     this.visitBlock(stmt.finalizer);
