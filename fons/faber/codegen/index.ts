@@ -41,6 +41,7 @@ import { generatePy } from './py/index';
 import { generateRs } from './rs/index';
 import { generateCpp } from './cpp/index';
 import { generateFab } from './fab/index';
+import { validateTargetCompatibility, TargetCompatibilityError } from './validator';
 
 // =============================================================================
 // PUBLIC API
@@ -79,6 +80,12 @@ export { generateFab } from './fab/index';
 export function generate(program: Program, options: CodegenOptions = {}): string {
     // WHY: Default to TypeScript for web-first development
     const target = options.target ?? 'ts';
+
+    // Validate target compatibility BEFORE codegen
+    const validationErrors = validateTargetCompatibility(program, target);
+    if (validationErrors.length > 0) {
+        throw new TargetCompatibilityError(validationErrors, target);
+    }
 
     switch (target) {
         case 'ts':
