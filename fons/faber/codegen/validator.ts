@@ -72,6 +72,8 @@ export function validateTargetCompatibility(program: Program, target: CodegenTar
     for (const used of usedFeatures) {
         const level = getSupportLevel(used.key, support);
 
+        // ARCHITECTURE: Allow both 'supported' and 'emulated' features.
+        // Only 'unsupported' features generate errors.
         if (level === 'unsupported') {
             errors.push({
                 feature: used.key,

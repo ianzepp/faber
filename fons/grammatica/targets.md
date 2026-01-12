@@ -4,27 +4,28 @@ Faber compiles to multiple target languages, each with different capabilities. T
 
 ## Support Matrix
 
+**Legend:** ✓ = supported, ~ = emulated, ✗ = unsupported
+
 | Feature | ts | py | rs | zig | cpp |
 |---------|----|----|----|----|-----|
 | async functions (`fiet`) | ✓ | ✓ | ✓ | ✗ | ✗ |
 | generators (`fiunt`) | ✓ | ✓ | ✗ | ✗ | ✗ |
 | async generators (`fient`) | ✓ | ✓ | ✗ | ✗ | ✗ |
-| try-catch (`tempta...cape`) | ✓ | ✓ | ✗ | ✗ | ✓ |
-| throw (`iace`) | ✓ | ✓ | ✗ | ✗ | ✓ |
-| object destructuring | ✓ | ✗ | ✗ | ✗ | ✗ |
+| try-catch (`tempta...cape`) | ✓ | ✓ | ~ | ~ | ✓ |
+| throw (`iace`) | ✓ | ✓ | ~ | ~ | ✓ |
+| object destructuring | ✓ | ✗ | ~ | ~ | ~ |
 | array destructuring | ✓ | ✓ | ✓ | ✓ | ✓ |
 | default parameters (`vel`) | ✓ | ✓ | ✗ | ✗ | ✓ |
 
 ## Support Levels
 
-The compiler uses four support levels:
+The compiler uses three support levels:
 
-- **supported**: Native implementation with correct semantics. Code will compile without errors.
-- **unsupported**: Cannot be emitted; compilation fails with actionable error.
-- **emulated**: Can be implemented with systematic transform, but may have performance/ergonomic costs. (Not yet implemented - currently treated as unsupported)
-- **mismatched**: Can be "made to work" but semantics differ in important ways. (Not yet implemented - currently treated as unsupported)
+- **supported** (✓): Native implementation with correct semantics. Code compiles without errors.
+- **emulated** (~): Systematic transform (e.g., `Result<T,E>` for exceptions, field-by-field extraction for destructuring). May have performance/ergonomic costs but semantics are preserved.
+- **unsupported** (✗): Cannot be emitted; compilation fails with actionable error.
 
-Currently, only `supported` and `unsupported` levels are active. Features marked unsupported will cause compilation to fail.
+Emulated features work correctly but may be less idiomatic in the target language. For example, Rust's `tempta...cape` becomes `Result<T,E>` patterns, and Zig's `iace` becomes `return error.X`.
 
 ## Error Format
 
@@ -111,17 +112,16 @@ functio divide(numerus a, numerus b) fit numerus {
 
 **Supported targets:** TypeScript, Python, C++
 
-**Unsupported targets:** Rust, Zig
+**Emulated targets:** Rust, Zig
 
-**Why unsupported:**
-- Rust uses `Result<T, E>` for recoverable errors
-- Zig uses error unions (`!T`) and explicit error handling
-- Both reject exceptions for explicitness and zero-cost error handling
+**Unsupported targets:** None
 
-**Alternatives:**
-- Use explicit return value checks
-- Return optional types (`ignotum`)
-- Restructure to avoid exceptional conditions
+**Emulation details:**
+- **Rust**: `tempta...cape` transforms to `Result<T, E>` patterns. `iace` becomes `return Err("msg")`.
+- **Zig**: `tempta...cape` transforms to error union handling. `iace` becomes `return error.X`.
+
+**Performance notes:**
+Emulated error handling preserves semantics but may be less idiomatic than native patterns in the target language.
 
 ### Object Destructuring
 
@@ -138,18 +138,25 @@ functio distance(Punto p) fit numerus {
 }
 ```
 
-**Supported targets:** TypeScript only
+**Supported targets:** TypeScript
 
-**Unsupported targets:** Python, Rust, Zig, C++
+**Emulated targets:** Rust, Zig, C++
 
-**Why unsupported:**
-- Python: No native object destructuring (only tuple/list unpacking)
-- Rust: Pattern matching works differently (requires match expressions)
-- Zig/C++: No destructuring syntax
+**Unsupported targets:** Python
 
-**Alternatives:**
-- Use explicit field access: `fixum x = p.x`
-- Access fields inline: `redde p.x * p.x + p.y * p.y`
+**Emulation details:**
+Object destructuring transforms to field-by-field extraction:
+```fab
+fixum { x, y } = p
+```
+becomes:
+```
+const x = p.x;
+const y = p.y;
+```
+
+**Performance notes:**
+No performance cost - the emulated code is semantically identical to native destructuring.
 
 ### Default Parameters (`vel`)
 
@@ -210,17 +217,7 @@ This code compiles to TypeScript, Python, Rust, Zig, and C++ without modificatio
 
 ## Future Work
 
-### Emulated Support Level
-
-Features with runtime cost but systematic implementations may be marked `emulated`:
-
-- Default parameters → function overloads
-- Simple generators → manual iterator classes
-- Object destructuring → multiple statements
-
-When implemented, these will require opt-in via CLI flag: `--allow-emulated`
-
-### Mismatched Support Level
+### Mismatched Support Level (Not Yet Implemented)
 
 Features with semantic differences may be marked `mismatched`:
 
@@ -230,13 +227,13 @@ Features with semantic differences may be marked `mismatched`:
 
 When implemented, these will require opt-in via CLI flag: `--allow-mismatched`
 
-### Policy Control
+### Policy Control (Future)
 
-Future CLI flags for fine-grained control:
+Potential CLI flags for fine-grained control:
 
 ```bash
-faber compile program.fab -t zig --allow-emulated   # Accept emulation
-faber compile program.fab -t go --allow-mismatched  # Accept semantic differences
+faber compile program.fab -t zig --warn-emulated    # Warn on emulated features
+faber compile program.fab -t go --allow-mismatched  # Accept semantic differences (when implemented)
 faber compile program.fab -t rs --strict            # Fail on warnings
 ```
 
@@ -252,15 +249,15 @@ Python supports most features except object destructuring. Use tuple unpacking o
 
 ### Rust
 
-Rust is a systems language with explicit error handling. Use `Result<T, E>` patterns instead of exceptions. Generators are not available in stable Rust.
+Rust is a systems language with explicit error handling. Exception handling (`tempta...cape`, `iace`) is emulated via `Result<T, E>` transforms. Object destructuring is emulated via field-by-field extraction. Generators are not available in stable Rust.
 
 ### Zig
 
-Zig is a minimal systems language. Use error unions (`!T`) for errors, explicit state for iteration, and synchronous code. Zig values explicitness over convenience.
+Zig is a minimal systems language. Exception handling (`tempta...cape`, `iace`) is emulated via error union transforms. Object destructuring is emulated via field-by-field extraction. Async/await is not supported (Zig uses explicit event loops).
 
 ### C++
 
-C++ supports exceptions but not async/await or generators. Keep code synchronous unless using a specific async runtime library.
+C++ supports native exception handling (`try`/`catch`/`throw`). Object destructuring is emulated via field-by-field extraction. Async/await and generators are not supported (coroutines are experimental).
 
 ## Checking Compatibility
 

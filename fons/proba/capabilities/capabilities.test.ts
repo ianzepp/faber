@@ -42,9 +42,9 @@ describe('TARGET_SUPPORT', () => {
         const rs = TARGET_SUPPORT.rs;
         expect(rs.controlFlow.asyncFunction).toBe('supported');
         expect(rs.controlFlow.generatorFunction).toBe('unsupported');
-        expect(rs.errors.tryCatch).toBe('unsupported');
-        expect(rs.errors.throw).toBe('unsupported');
-        expect(rs.binding.pattern.object).toBe('unsupported'); // codegen emits TODOs
+        expect(rs.errors.tryCatch).toBe('emulated');
+        expect(rs.errors.throw).toBe('emulated');
+        expect(rs.binding.pattern.object).toBe('emulated');
         expect(rs.params.defaultValues).toBe('unsupported');
     });
 
@@ -52,9 +52,9 @@ describe('TARGET_SUPPORT', () => {
         const zig = TARGET_SUPPORT.zig;
         expect(zig.controlFlow.asyncFunction).toBe('unsupported');
         expect(zig.controlFlow.generatorFunction).toBe('unsupported');
-        expect(zig.errors.tryCatch).toBe('unsupported');
-        expect(zig.errors.throw).toBe('unsupported');
-        expect(zig.binding.pattern.object).toBe('unsupported');
+        expect(zig.errors.tryCatch).toBe('emulated');
+        expect(zig.errors.throw).toBe('emulated');
+        expect(zig.binding.pattern.object).toBe('emulated');
         expect(zig.params.defaultValues).toBe('unsupported');
     });
 
@@ -64,7 +64,7 @@ describe('TARGET_SUPPORT', () => {
         expect(cpp.controlFlow.generatorFunction).toBe('unsupported');
         expect(cpp.errors.tryCatch).toBe('supported');
         expect(cpp.errors.throw).toBe('supported');
-        expect(cpp.binding.pattern.object).toBe('unsupported');
+        expect(cpp.binding.pattern.object).toBe('emulated');
         expect(cpp.params.defaultValues).toBe('supported');
     });
 
