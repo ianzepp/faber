@@ -16,6 +16,7 @@ Faber compiles to multiple target languages (TypeScript, Python, Rust, Zig, C++,
 - Go has goroutines (not async/await), no generators, no exceptions
 
 **Current behavior**: Codegen attempts to emit code for unsupported features, producing:
+
 - Invalid target code that won't compile
 - Runtime errors if code happens to parse
 - Silent bugs from semantic mismatches (goroutines ≠ async/await)
@@ -27,146 +28,167 @@ Faber compiles to multiple target languages (TypeScript, Python, Rust, Zig, C++,
 
 ### 1. Capability Declaration
 
-Define supported features per target in a single source of truth:
+Define target constraints in a _single source of truth_, but split it into:
+
+1. **Support**: “can this target faithfully support this Faber construct?”
+2. **Lowering model**: “if supported, what representation does codegen use?”
+
+This avoids mixing boolean checks (support) with configuration choices (lowering), which otherwise leads to subtle bugs (e.g., treating `nullable: 'option'` as “unsupported” because it’s not `true`).
 
 ```typescript
 // fons/faber/codegen/capabilities.ts
 
-export interface TargetCapabilities {
-    // Control flow
-    async: boolean;              // futura, figendum
-    generators: boolean;         // cursor, fiunt
-    asyncGenerators: boolean;    // futura cursor, fient
-    exceptions: boolean;         // tempta...cape, iace
+export type SupportLevel = 'supported' | 'emulated' | 'mismatched' | 'unsupported';
 
-    // Syntax features
-    destructuring: {
-        array: boolean;          // fixum [a, b] = arr
-        object: boolean;         // fixum {x, y} = obj
+export interface TargetSupport {
+    controlFlow: {
+        asyncFunction: SupportLevel; // futura / figendum
+        generatorFunction: SupportLevel; // cursor / fiunt
+        asyncGeneratorFunction: SupportLevel; // futura cursor / fient
     };
-    defaultParams: boolean;      // functio f(numerus x vel 0)
-    optionalChaining: boolean;   // obj?.method?.()
-    nullCoalescing: boolean;     // x ?? fallback
 
-    // Type system
-    nullable: 'builtin' | 'option' | 'pointer';  // How nihil/ignotum work
+    errors: {
+        tryCatch: SupportLevel; // tempta...cape
+        throw: SupportLevel; // iace
+    };
+
+    binding: {
+        pattern: {
+            array: SupportLevel; // pattern binding (e.g., fixum [a, b] = ...)
+            object: SupportLevel; // pattern binding (e.g., fixum {x, y} = ...)
+        };
+    };
+
+    params: {
+        defaultValues: SupportLevel; // functio f(numerus x vel 0)
+    };
+
+    expressions: {
+        nullableMemberAccess: SupportLevel; // “optional chaining”-like semantics
+        coalesce: SupportLevel; // “null coalescing”-like semantics
+    };
+}
+
+export interface TargetLoweringModel {
+    // How nihil/ignotum are represented when allowed
+    nullable: 'builtin' | 'option' | 'pointer';
+
+    // Primary error model when errors are allowed
     errorHandling: 'exceptions' | 'result' | 'multiple-return' | 'union';
 }
 
-export const TARGET_CAPABILITIES: Record<CodegenTarget, TargetCapabilities> = {
+export const TARGET_SUPPORT: Record<CodegenTarget, TargetSupport> = {
     ts: {
-        async: true,
-        generators: true,
-        asyncGenerators: true,
-        exceptions: true,
-        destructuring: { array: true, object: true },
-        defaultParams: true,
-        optionalChaining: true,
-        nullCoalescing: true,
-        nullable: 'builtin',
-        errorHandling: 'exceptions',
+        controlFlow: { asyncFunction: 'supported', generatorFunction: 'supported', asyncGeneratorFunction: 'supported' },
+        errors: { tryCatch: 'supported', throw: 'supported' },
+        binding: { pattern: { array: 'supported', object: 'supported' } },
+        params: { defaultValues: 'supported' },
+        expressions: { nullableMemberAccess: 'supported', coalesce: 'supported' },
     },
 
     py: {
-        async: true,
-        generators: true,
-        asyncGenerators: true,
-        exceptions: true,
-        destructuring: { array: true, object: false },  // No dict unpacking in params
-        defaultParams: true,
-        optionalChaining: false,  // No ?. operator
-        nullCoalescing: false,    // No ?? operator
-        nullable: 'builtin',
-        errorHandling: 'exceptions',
+        controlFlow: { asyncFunction: 'supported', generatorFunction: 'supported', asyncGeneratorFunction: 'supported' },
+        errors: { tryCatch: 'supported', throw: 'supported' },
+        binding: { pattern: { array: 'supported', object: 'unsupported' } },
+        params: { defaultValues: 'supported' },
+        expressions: { nullableMemberAccess: 'unsupported', coalesce: 'unsupported' },
     },
 
     rs: {
-        async: true,
-        generators: false,        // No yield in stable Rust
-        asyncGenerators: false,
-        exceptions: false,        // Uses Result<T, E>
-        destructuring: { array: true, object: true },
-        defaultParams: false,     // No default params in Rust
-        optionalChaining: false,
-        nullCoalescing: false,    // Has .unwrap_or() but not ??
-        nullable: 'option',       // Option<T>
-        errorHandling: 'result',  // Result<T, E>
+        controlFlow: { asyncFunction: 'supported', generatorFunction: 'unsupported', asyncGeneratorFunction: 'unsupported' },
+        errors: { tryCatch: 'unsupported', throw: 'unsupported' },
+        binding: { pattern: { array: 'supported', object: 'supported' } },
+        params: { defaultValues: 'unsupported' },
+        expressions: { nullableMemberAccess: 'unsupported', coalesce: 'unsupported' },
     },
 
     zig: {
-        async: false,             // No async/await
-        generators: false,
-        asyncGenerators: false,
-        exceptions: false,        // Error unions !T
-        destructuring: { array: true, object: false },
-        defaultParams: false,
-        optionalChaining: false,
-        nullCoalescing: false,    // Has orelse but semantics differ
-        nullable: 'option',       // ?T
-        errorHandling: 'union',   // !T error unions
+        controlFlow: { asyncFunction: 'unsupported', generatorFunction: 'unsupported', asyncGeneratorFunction: 'unsupported' },
+        errors: { tryCatch: 'unsupported', throw: 'unsupported' },
+        binding: { pattern: { array: 'supported', object: 'unsupported' } },
+        params: { defaultValues: 'unsupported' },
+        expressions: { nullableMemberAccess: 'unsupported', coalesce: 'mismatched' },
     },
 
     cpp: {
-        async: false,             // No native async (coroutines are complex)
-        generators: false,
-        asyncGenerators: false,
-        exceptions: true,
-        destructuring: { array: true, object: false },  // Structured bindings limited
-        defaultParams: true,
-        optionalChaining: false,
-        nullCoalescing: false,
-        nullable: 'option',       // std::optional
-        errorHandling: 'exceptions',
+        controlFlow: { asyncFunction: 'unsupported', generatorFunction: 'unsupported', asyncGeneratorFunction: 'unsupported' },
+        errors: { tryCatch: 'supported', throw: 'supported' },
+        binding: { pattern: { array: 'supported', object: 'unsupported' } },
+        params: { defaultValues: 'supported' },
+        expressions: { nullableMemberAccess: 'unsupported', coalesce: 'unsupported' },
     },
 
     go: {
-        async: false,             // Goroutines are not async/await
-        generators: false,        // iter.Seq[T] in 1.23+ but callback-based
-        asyncGenerators: false,
-        exceptions: false,        // Multiple return values (val, err)
-        destructuring: { array: false, object: false },
-        defaultParams: false,
-        optionalChaining: false,
-        nullCoalescing: false,
-        nullable: 'pointer',      // *T or zero values
-        errorHandling: 'multiple-return',
+        controlFlow: { asyncFunction: 'mismatched', generatorFunction: 'unsupported', asyncGeneratorFunction: 'unsupported' },
+        errors: { tryCatch: 'unsupported', throw: 'unsupported' },
+        binding: { pattern: { array: 'unsupported', object: 'unsupported' } },
+        params: { defaultValues: 'unsupported' },
+        expressions: { nullableMemberAccess: 'unsupported', coalesce: 'unsupported' },
     },
 
     fab: {
-        // Bootstrap compiler - supports everything
-        async: true,
-        generators: true,
-        asyncGenerators: true,
-        exceptions: true,
-        destructuring: { array: true, object: true },
-        defaultParams: true,
-        optionalChaining: true,
-        nullCoalescing: true,
-        nullable: 'builtin',
-        errorHandling: 'exceptions',
+        controlFlow: { asyncFunction: 'supported', generatorFunction: 'supported', asyncGeneratorFunction: 'supported' },
+        errors: { tryCatch: 'supported', throw: 'supported' },
+        binding: { pattern: { array: 'supported', object: 'supported' } },
+        params: { defaultValues: 'supported' },
+        expressions: { nullableMemberAccess: 'supported', coalesce: 'supported' },
     },
+};
+
+export const TARGET_LOWERING: Record<CodegenTarget, TargetLoweringModel> = {
+    ts: { nullable: 'builtin', errorHandling: 'exceptions' },
+    py: { nullable: 'builtin', errorHandling: 'exceptions' },
+    rs: { nullable: 'option', errorHandling: 'result' },
+    zig: { nullable: 'option', errorHandling: 'union' },
+    cpp: { nullable: 'option', errorHandling: 'exceptions' },
+    go: { nullable: 'pointer', errorHandling: 'multiple-return' },
+    fab: { nullable: 'builtin', errorHandling: 'exceptions' },
 };
 ```
 
 ### 2. Feature Detection
 
-Walk AST after semantic analysis to collect features actually used:
+Walk the AST after semantic analysis to collect _Faber-level constructs actually used_.
+
+Key points:
+
+- Use **Faber construct keys**, not target spellings like `?.` / `??`.
+- Prefer **canonical semantic flags** (produced by analysis) over “syntax sniffing”.
+- **Deduplicate/group** results so real programs don’t emit the same error hundreds of times.
 
 ```typescript
 // fons/faber/codegen/feature-detector.ts
 
+type FeatureKey =
+    | 'controlFlow.asyncFunction'
+    | 'controlFlow.generatorFunction'
+    | 'controlFlow.asyncGeneratorFunction'
+    | 'errors.tryCatch'
+    | 'errors.throw'
+    | 'binding.pattern.array'
+    | 'binding.pattern.object'
+    | 'params.defaultValues'
+    | 'expressions.nullableMemberAccess'
+    | 'expressions.coalesce';
+
 export interface UsedFeature {
-    name: string;           // Capability key (e.g., "async", "destructuring.array")
-    node: BaseNode;         // AST node for error reporting
-    context?: string;       // Additional info (e.g., function name)
+    key: FeatureKey;
+    node: BaseNode;
+    context?: string;
 }
 
 export class FeatureDetector {
-    private features: UsedFeature[] = [];
+    private featuresByKey = new Map<FeatureKey, UsedFeature[]>();
 
     detect(program: Program): UsedFeature[] {
         this.visitProgram(program);
-        return this.features;
+        return [...this.featuresByKey.values()].flat();
+    }
+
+    private add(feature: UsedFeature): void {
+        const list = this.featuresByKey.get(feature.key) ?? [];
+        list.push(feature);
+        this.featuresByKey.set(feature.key, list);
     }
 
     private visitProgram(program: Program): void {
@@ -183,8 +205,8 @@ export class FeatureDetector {
 
             case 'VariaDeclaration':
                 if (stmt.name.type === 'ArrayPattern') {
-                    this.features.push({
-                        name: 'destructuring.array',
+                    this.add({
+                        key: 'binding.pattern.array',
                         node: stmt,
                         context: 'variable declaration',
                     });
@@ -196,8 +218,8 @@ export class FeatureDetector {
 
             case 'DestructureDeclaration':
                 if (stmt.target.type === 'ObjectPattern') {
-                    this.features.push({
-                        name: 'destructuring.object',
+                    this.add({
+                        key: 'binding.pattern.object',
                         node: stmt,
                         context: 'variable declaration',
                     });
@@ -205,8 +227,8 @@ export class FeatureDetector {
                 break;
 
             case 'TemptaStatement':
-                this.features.push({
-                    name: 'exceptions',
+                this.add({
+                    key: 'errors.tryCatch',
                     node: stmt,
                     context: 'try-catch block',
                 });
@@ -217,8 +239,8 @@ export class FeatureDetector {
                 break;
 
             case 'IaceStatement':
-                this.features.push({
-                    name: 'exceptions',
+                this.add({
+                    key: 'errors.throw',
                     node: stmt,
                     context: 'throw statement',
                 });
@@ -229,7 +251,6 @@ export class FeatureDetector {
             case 'EligeStatement':
             case 'DiscerneStatement':
             case 'BlockStatement':
-                // Visit nested statements
                 this.visitBlock(stmt.body);
                 break;
 
@@ -238,39 +259,38 @@ export class FeatureDetector {
     }
 
     private visitFunctio(func: FunctioDeclaration): void {
+        // Prefer semantic flags if available (single source of truth).
         const isAsync = func.async || isAsyncFromAnnotations(func.annotations);
         const isGenerator = func.generator || isGeneratorFromAnnotations(func.annotations);
 
         if (isAsync && isGenerator) {
-            this.features.push({
-                name: 'asyncGenerators',
+            this.add({
+                key: 'controlFlow.asyncGeneratorFunction',
                 node: func,
                 context: `function ${func.name.name}`,
             });
         } else if (isAsync) {
-            this.features.push({
-                name: 'async',
+            this.add({
+                key: 'controlFlow.asyncFunction',
                 node: func,
                 context: `function ${func.name.name}`,
             });
         } else if (isGenerator) {
-            this.features.push({
-                name: 'generators',
+            this.add({
+                key: 'controlFlow.generatorFunction',
                 node: func,
                 context: `function ${func.name.name}`,
             });
         }
 
-        // Check for default parameters
         if (func.params.some(p => p.default)) {
-            this.features.push({
-                name: 'defaultParams',
+            this.add({
+                key: 'params.defaultValues',
                 node: func,
                 context: `function ${func.name.name}`,
             });
         }
 
-        // Visit function body
         if (func.body) {
             this.visitBlock(func.body);
         }
@@ -280,10 +300,7 @@ export class FeatureDetector {
         switch (expr.type) {
             case 'MemberExpression':
                 if (expr.optional) {
-                    this.features.push({
-                        name: 'optionalChaining',
-                        node: expr,
-                    });
+                    this.add({ key: 'expressions.nullableMemberAccess', node: expr });
                 }
                 this.visitExpression(expr.object);
                 if (expr.computed) {
@@ -293,10 +310,7 @@ export class FeatureDetector {
 
             case 'CallExpression':
                 if (expr.optional) {
-                    this.features.push({
-                        name: 'optionalChaining',
-                        node: expr,
-                    });
+                    this.add({ key: 'expressions.nullableMemberAccess', node: expr });
                 }
                 this.visitExpression(expr.callee);
                 for (const arg of expr.arguments) {
@@ -310,33 +324,10 @@ export class FeatureDetector {
 
             case 'BinaryExpression':
                 if (expr.operator === '??') {
-                    this.features.push({
-                        name: 'nullCoalescing',
-                        node: expr,
-                    });
+                    this.add({ key: 'expressions.coalesce', node: expr });
                 }
                 this.visitExpression(expr.left);
                 this.visitExpression(expr.right);
-                break;
-
-            case 'ArrayExpression':
-                for (const elem of expr.elements) {
-                    if (elem.type === 'SpreadElement') {
-                        this.visitExpression(elem.argument);
-                    } else {
-                        this.visitExpression(elem);
-                    }
-                }
-                break;
-
-            case 'ObjectExpression':
-                for (const prop of expr.properties) {
-                    if (prop.type === 'SpreadElement') {
-                        this.visitExpression(prop.argument);
-                    } else {
-                        this.visitExpression(prop.value);
-                    }
-                }
                 break;
 
             // ... other expression types
@@ -353,7 +344,12 @@ export class FeatureDetector {
 
 ### 3. Validation
 
-Check used features against target capabilities:
+Check used features against target support levels.
+
+This validator should answer two questions:
+
+- Is the construct **supported**?
+- If it’s only **emulated** or **mismatched**, do we allow that under the selected policy/flags?
 
 ```typescript
 // fons/faber/codegen/validator.ts
@@ -366,23 +362,30 @@ export interface ValidationError {
     suggestion?: string;
 }
 
+export interface SupportPolicy {
+    allowEmulated: boolean;
+    allowMismatched: boolean;
+}
+
 export function validateTargetCompatibility(
     program: Program,
-    target: CodegenTarget
+    target: CodegenTarget,
+    policy: SupportPolicy = { allowEmulated: false, allowMismatched: false },
 ): ValidationError[] {
     const detector = new FeatureDetector();
     const usedFeatures = detector.detect(program);
-    const capabilities = TARGET_CAPABILITIES[target];
+    const support = TARGET_SUPPORT[target];
     const errors: ValidationError[] = [];
 
     for (const used of usedFeatures) {
-        if (!isFeatureSupported(used.name, capabilities)) {
+        const level = getSupportLevel(used.key, support);
+        if (!isAllowed(level, policy)) {
             errors.push({
-                feature: used.name,
-                message: formatFeatureError(used.name, target),
+                feature: used.key,
+                message: formatFeatureError(used.key, target, level),
                 position: used.node.position,
                 context: used.context,
-                suggestion: getFeatureSuggestion(used.name, target),
+                suggestion: getFeatureSuggestion(used.key, target),
             });
         }
     }
@@ -390,123 +393,123 @@ export function validateTargetCompatibility(
     return errors;
 }
 
-function isFeatureSupported(
-    featureName: string,
-    caps: TargetCapabilities
-): boolean {
-    // Handle nested features like "destructuring.array"
-    const parts = featureName.split('.');
-    let current: any = caps;
+function isAllowed(level: SupportLevel, policy: SupportPolicy): boolean {
+    switch (level) {
+        case 'supported':
+            return true;
+        case 'emulated':
+            return policy.allowEmulated;
+        case 'mismatched':
+            return policy.allowMismatched;
+        case 'unsupported':
+            return false;
+    }
+}
+
+function getSupportLevel(featureKey: string, support: TargetSupport): SupportLevel {
+    // Feature keys are hierarchical, e.g. "errors.tryCatch".
+    const parts = featureKey.split('.');
+    let current: any = support;
 
     for (const part of parts) {
-        if (current[part] === undefined) return false;
+        if (current?.[part] === undefined) {
+            // Unknown key: treat as unsupported so we fail loudly.
+            return 'unsupported';
+        }
         current = current[part];
     }
 
-    return current === true;
+    return current as SupportLevel;
 }
 
-function formatFeatureError(feature: string, target: CodegenTarget): string {
+function formatFeatureError(feature: string, target: CodegenTarget, level: SupportLevel): string {
+    const suffix = level === 'mismatched' ? ' (semantic mismatch)' : level === 'emulated' ? ' (requires emulation)' : '';
+
     const messages: Record<string, string> = {
-        async: `Target '${target}' does not support async functions (futura)`,
-        generators: `Target '${target}' does not support generator functions (cursor/fiunt)`,
-        asyncGenerators: `Target '${target}' does not support async generators (futura cursor/fient)`,
-        exceptions: `Target '${target}' does not support exception handling (tempta...cape)`,
-        'destructuring.array': `Target '${target}' does not support array destructuring`,
-        'destructuring.object': `Target '${target}' does not support object destructuring`,
-        defaultParams: `Target '${target}' does not support default parameters`,
-        optionalChaining: `Target '${target}' does not support optional chaining (?.)`,
-        nullCoalescing: `Target '${target}' does not support null coalescing (??)`,
+        'controlFlow.asyncFunction': `Target '${target}' does not support async functions (futura)${suffix}`,
+        'controlFlow.generatorFunction': `Target '${target}' does not support generator functions (cursor/fiunt)${suffix}`,
+        'controlFlow.asyncGeneratorFunction': `Target '${target}' does not support async generators (futura cursor/fient)${suffix}`,
+        'errors.tryCatch': `Target '${target}' does not support exception handling (tempta...cape)${suffix}`,
+        'errors.throw': `Target '${target}' does not support throw statements (iace)${suffix}`,
+        'binding.pattern.array': `Target '${target}' does not support array pattern binding${suffix}`,
+        'binding.pattern.object': `Target '${target}' does not support object pattern binding${suffix}`,
+        'params.defaultValues': `Target '${target}' does not support default parameters${suffix}`,
+        'expressions.nullableMemberAccess': `Target '${target}' does not support nullable member access (optional chaining semantics)${suffix}`,
+        'expressions.coalesce': `Target '${target}' does not support coalescing (null-coalescing semantics)${suffix}`,
     };
 
-    return messages[feature] || `Target '${target}' does not support feature '${feature}'`;
+    return messages[feature] || `Target '${target}' does not support feature '${feature}'${suffix}`;
 }
 
 function getFeatureSuggestion(feature: string, target: CodegenTarget): string {
     const suggestions: Record<string, Record<string, string>> = {
-        async: {
-            go: "Use synchronous code or explicit goroutines with channels",
-            zig: "Use synchronous code or event loop library",
-            cpp: "Use synchronous code or third-party async library",
+        'controlFlow.asyncFunction': {
+            go: 'Refactor to synchronous code; goroutines are not async/await',
+            zig: 'Refactor to synchronous code; consider explicit callbacks/event loop',
+            cpp: 'Refactor to synchronous code or adopt an async runtime model',
         },
-        generators: {
-            rs: "Use iterators with iterator adapters instead",
-            zig: "Use while loops or iterator pattern",
-            cpp: "Use ranges (C++20) or manual iterator implementation",
-            go: "Use channels with goroutines or manual iteration",
+        'controlFlow.generatorFunction': {
+            rs: 'Use iterators and iterator adapters instead',
+            zig: 'Use a while loop or explicit iterator type',
+            cpp: 'Use ranges/coroutines only with an explicit design',
+            go: 'Use channels + goroutines or manual iteration',
         },
-        exceptions: {
-            rs: "Use Result<T, E> with explicit error handling",
-            zig: "Use error unions (!T) with explicit error handling",
-            go: "Use multiple return values (val, error) pattern",
+        'errors.tryCatch': {
+            rs: 'Use Result<T, E> and propagate errors explicitly',
+            zig: 'Use error unions (!T) and handle errors explicitly',
+            go: 'Use (val, err) returns and handle errors explicitly',
         },
-        'destructuring.array': {
-            go: "Use individual variable assignments: a = arr[0]; b = arr[1]",
-            zig: "Use individual variable assignments with array indexing",
+        'binding.pattern.array': {
+            go: 'Use explicit indexing assignments',
+            zig: 'Use explicit indexing assignments',
         },
-        'destructuring.object': {
-            py: "Use individual attribute access or dict.get()",
-            zig: "Use individual field access",
-            cpp: "Use individual member access",
-            go: "Use individual field access",
+        'binding.pattern.object': {
+            py: 'Use explicit field/dict access',
+            zig: 'Use explicit field access',
+            cpp: 'Use explicit member access',
+            go: 'Use explicit field access',
         },
-        defaultParams: {
-            rs: "Use Option<T> parameters or function overloading",
-            zig: "Use optional parameters (?T) with null checks",
-            go: "Use variadic parameters or options struct pattern",
+        'params.defaultValues': {
+            rs: 'Use Option<T> params or provide helper overloads',
+            zig: 'Use optional params (?T) and handle null',
+            go: 'Use variadic params or an options struct',
         },
-        optionalChaining: {
-            py: "Use explicit None checks: if x is not None: x.method()",
-            rs: "Use Option methods: x.map(|v| v.method())",
-            zig: "Use explicit null checks: if (x) |val| val.method()",
-            cpp: "Use std::optional with value_or() or explicit checks",
-            go: "Use explicit nil checks before accessing",
+        'expressions.nullableMemberAccess': {
+            py: 'Use explicit None checks',
+            rs: 'Use Option combinators (map/and_then)',
+            zig: 'Use explicit null checks',
+            cpp: 'Use std::optional and explicit checks',
+            go: 'Use explicit nil checks',
         },
     };
 
     const targetSuggestions = suggestions[feature];
-    if (targetSuggestions && targetSuggestions[target]) {
+    if (targetSuggestions?.[target]) {
         return targetSuggestions[target];
     }
 
-    // Fallback: suggest compatible targets
-    const compatibleTargets = getCompatibleTargets(feature);
-    if (compatibleTargets.length > 0) {
-        return `Consider using ${compatibleTargets.join(', ')} target instead`;
-    }
-
-    return "Refactor to avoid this feature";
-}
-
-function getCompatibleTargets(feature: string): string[] {
-    const targets: CodegenTarget[] = ['ts', 'py', 'rs', 'zig', 'cpp', 'go'];
-    return targets.filter(t => {
-        const caps = TARGET_CAPABILITIES[t];
-        return isFeatureSupported(feature, caps);
-    });
+    return 'Refactor to avoid this construct';
 }
 ```
 
 ### 4. Integration
 
-Add validation pass before codegen:
+Add validation **before codegen**.
+
+Important integration note: prefer reporting these as normal compiler diagnostics (accumulated alongside parse/semantic errors), not as a thrown exception. Throwing a `TargetCompatibilityError` is acceptable as an implementation shortcut, but the goal is consistent error formatting and multi-error reporting.
 
 ```typescript
 // fons/faber/codegen/index.ts
 
-export function generate(
-    program: Program,
-    target: CodegenTarget = 'ts',
-    options: CodegenOptions = {}
-): string {
-    // Validate target compatibility BEFORE attempting codegen
+export function generate(program: Program, target: CodegenTarget = 'ts', options: CodegenOptions = {}): string {
+    // Validate target compatibility BEFORE attempting codegen.
+    // (Policy can later be wired to CLI flags like --allow-emulated.)
     const validationErrors = validateTargetCompatibility(program, target);
 
     if (validationErrors.length > 0) {
         throw new TargetCompatibilityError(validationErrors, target);
     }
 
-    // Existing codegen dispatch
     switch (target) {
         case 'ts':
             return generateTs(program, options);
@@ -531,7 +534,7 @@ export function generate(
 export class TargetCompatibilityError extends Error {
     constructor(
         public errors: ValidationError[],
-        public target: CodegenTarget
+        public target: CodegenTarget,
     ) {
         const formatted = formatValidationErrors(errors, target);
         super(`Target compatibility errors for '${target}':\n\n${formatted}`);
@@ -540,20 +543,18 @@ export class TargetCompatibilityError extends Error {
 }
 
 function formatValidationErrors(errors: ValidationError[], target: CodegenTarget): string {
-    return errors.map(err => {
-        const pos = err.position
-            ? `${err.position.line}:${err.position.column}`
-            : 'unknown';
+    return errors
+        .map(err => {
+            const pos = err.position ? `${err.position.line}:${err.position.column}` : 'unknown';
 
-        const context = err.context ? ` (in ${err.context})` : '';
-        const msg = `error: ${err.message}${context}`;
-        const location = `  --> ${pos}`;
-        const suggestion = err.suggestion
-            ? `  = help: ${err.suggestion}`
-            : '';
+            const context = err.context ? ` (in ${err.context})` : '';
+            const msg = `error: ${err.message}${context}`;
+            const location = `  --> ${pos}`;
+            const suggestion = err.suggestion ? `  = help: ${err.suggestion}` : '';
 
-        return [location, msg, suggestion].filter(Boolean).join('\n');
-    }).join('\n\n');
+            return [location, msg, suggestion].filter(Boolean).join('\n');
+        })
+        .join('\n\n');
 }
 ```
 
@@ -573,6 +574,7 @@ $ bun run faber compile hello.fab -t zig
 ```
 
 **Output**:
+
 ```
 error: Target 'zig' does not support async functions (futura) (in function fetch)
   --> 2:1
@@ -600,6 +602,7 @@ $ bun run faber compile example.fab -t go
 ```
 
 **Output**:
+
 ```
 error: Target 'go' does not support async functions (futura) (in function process)
   --> 2:1
@@ -643,23 +646,27 @@ $ bun run faber compile valid.fab -t go
 ## Implementation Plan
 
 ### Phase 1: Infrastructure
+
 1. Create `fons/faber/codegen/capabilities.ts` with target capability definitions
 2. Create `fons/faber/codegen/feature-detector.ts` with AST visitor
 3. Create `fons/faber/codegen/validator.ts` with validation logic
 4. Add `TargetCompatibilityError` class for formatted diagnostics
 
 ### Phase 2: Integration
+
 1. Modify `fons/faber/codegen/index.ts` to run validation before codegen
 2. Update CLI to surface validation errors with proper formatting
 3. Add `--strict` flag to fail on warnings (future: soft incompatibilities)
 
 ### Phase 3: Testing
-1. Create test suite in `fons/proba/capabilities/` with YAML test cases
-2. Test each feature against each target
-3. Verify error messages are clear and actionable
-4. Test combinations (async + generator, destructure in function params, etc.)
+
+1. Create a table-driven suite in `fons/proba/capabilities/` (small programs + expected outcomes)
+2. Start with targeted assertions per feature (avoid full feature×target matrix explosion)
+3. Assert on feature key + primary message (wording can evolve without rewriting tests)
+4. Add a small set of interaction tests (async+generator, pattern binding in params vs locals, etc.)
 
 ### Phase 4: Documentation
+
 1. Document capability system in `fons/grammatica/targets.md`
 2. Add target compatibility matrix to README
 3. Update error message suggestions based on user feedback
@@ -684,13 +691,17 @@ Not needed initially - users can maintain separate files per target.
 
 ### 2. Soft vs hard incompatibilities
 
-Some features can be emulated with warnings:
+Not all incompatibilities are the same. Model them explicitly:
 
-- `async` on Go → synchronous code (semantic mismatch, warn)
-- Default params on Rust → overloading (verbose, warn)
-- Destructuring on Go → multiple statements (annoying, warn)
+- `supported`: native, faithful semantics
+- `emulated`: possible with a systematic transform/polyfill (may have perf/ergonomics cost)
+- `mismatched`: can be “made to work” but semantics differ (dangerous by default)
+- `unsupported`: cannot be emitted without changing the language model
 
-Initial implementation: all incompatibilities are hard errors. Future: add `--allow-compat` flag for soft errors with code generation fallbacks.
+Initial implementation policy:
+
+- Treat `emulated` and `mismatched` as **errors** by default.
+- Future: add a `--compat-mode`/`--allow-emulated`/`--allow-mismatched` flag that relaxes the policy and requires explicit opt-in.
 
 ### 3. Version-specific features
 
@@ -701,7 +712,7 @@ Solution: Add optional `version` field to capabilities:
 ```typescript
 export interface TargetVersion {
     target: CodegenTarget;
-    version?: string;  // Semantic version or "nightly"
+    version?: string; // Semantic version or "nightly"
 }
 
 // Usage: validateTargetCompatibility(program, { target: 'go', version: '1.23' })
@@ -764,32 +775,33 @@ futura functio f() { ... }
 ## Future Extensions
 
 1. **Capability polyfills**: Automatic transformation of unsupported features to supported equivalents
-   - `async` on Go → synchronous execution (with warning)
-   - Destructuring → multiple statements
-   - Requires opt-in flag: `--compat-mode`
+    - `async` on Go → synchronous execution (with warning)
+    - Destructuring → multiple statements
+    - Requires opt-in flag: `--compat-mode`
 
 2. **Target profiles**: Named capability sets
-   - `modern` = all features
-   - `embedded` = no async, no exceptions, no GC
-   - `wasm` = no file I/O, limited concurrency
+    - `modern` = all features
+    - `embedded` = no async, no exceptions, no GC
+    - `wasm` = no file I/O, limited concurrency
 
 3. **Custom capabilities**: User-defined capability constraints
-   ```typescript
-   // fabfile.json
-   {
-       "capabilities": {
-           "async": false,  // Disallow even if target supports it
-           "generators": false
-       }
-   }
-   ```
+
+    ```typescript
+    // fabfile.json
+    {
+        "capabilities": {
+            "async": false,  // Disallow even if target supports it
+            "generators": false
+        }
+    }
+    ```
 
 4. **Migration tooling**: CLI command to check compatibility before porting
-   ```bash
-   $ bun run faber check --target go src/**/*.fab
-   Found 23 incompatibilities in 8 files
-   Run with --verbose for details
-   ```
+    ```bash
+    $ bun run faber check --target go src/**/*.fab
+    Found 23 incompatibilities in 8 files
+    Run with --verbose for details
+    ```
 
 ## References
 
@@ -803,8 +815,10 @@ futura functio f() { ... }
 **Status**: Awaiting approval
 
 This design provides:
+
 - Clear, actionable error messages
-- Single source of truth for target capabilities
+- Single source of truth for target constraints
+- Explicit handling of emulation vs semantic mismatch
 - Easy extension as new targets are added
 - Consistent with PL industry standards
 
