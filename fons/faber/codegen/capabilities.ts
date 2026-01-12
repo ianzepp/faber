@@ -35,9 +35,11 @@ import type { CodegenTarget } from './types';
 /**
  * Support level for a language feature in a target.
  *
- * Phase 1 implementation only uses 'supported' and 'unsupported'.
+ * - 'supported': Native, faithful implementation with correct semantics
+ * - 'emulated': Systematic transform (e.g., field-by-field extraction, Result<T,E>)
+ * - 'unsupported': Cannot be emitted or would break semantics
  */
-export type SupportLevel = 'supported' | 'unsupported';
+export type SupportLevel = 'supported' | 'emulated' | 'unsupported';
 
 /**
  * Target capability matrix defining feature support.
@@ -77,11 +79,11 @@ export interface TargetSupport {
  * WHY: Single source of truth for target capabilities.
  *      Based on consilia/capabilities.md design document.
  *
- * Phase 1 scope (per issue #102):
+ * Phase 1 scope (per issue #102), extended by issue #109:
  * - Includes 5 targets: ts, py, rs, zig, cpp
  * - Excludes go and fab targets (not in scope)
  * - Only tracks features mentioned in issue
- * - Uses only 'supported' and 'unsupported' levels
+ * - Uses 'supported', 'emulated', and 'unsupported' levels
  *
  * Support levels based on target language capabilities:
  *
@@ -100,22 +102,24 @@ export interface TargetSupport {
  * Rust:
  * - Async/await supported (async fn)
  * - Generators NOT supported in stable (unstable feature)
- * - Exception handling NOT supported (uses Result<T,E>)
- * - Object destructuring NOT supported (codegen emits TODOs for rest patterns)
+ * - Exception handling EMULATED (transforms to Result<T,E>)
+ * - Throw statements EMULATED (transforms to return Err)
+ * - Object destructuring EMULATED (field-by-field extraction)
  * - Default parameters NOT supported (use Option or overloads)
  *
  * Zig:
  * - Async NOT supported in stable (async/await being redesigned)
  * - Generators NOT supported
- * - Exception handling NOT supported (uses error unions)
- * - Object destructuring NOT supported (no pattern matching)
+ * - Exception handling EMULATED (transforms to error unions)
+ * - Throw statements EMULATED (transforms to return error.X)
+ * - Object destructuring EMULATED (field-by-field extraction)
  * - Default parameters NOT supported (use optional types)
  *
  * C++:
  * - Async NOT supported (no native async/await)
  * - Generators NOT supported (coroutines experimental)
  * - Exception handling supported (try/catch/throw)
- * - Object destructuring NOT supported (no pattern matching)
+ * - Object destructuring EMULATED (field-by-field extraction)
  * - Default parameters supported
  */
 export const TARGET_SUPPORT: Record<CodegenTarget, TargetSupport> = {
@@ -163,12 +167,12 @@ export const TARGET_SUPPORT: Record<CodegenTarget, TargetSupport> = {
             generatorFunction: 'unsupported',
         },
         errors: {
-            tryCatch: 'unsupported',
-            throw: 'unsupported',
+            tryCatch: 'emulated',
+            throw: 'emulated',
         },
         binding: {
             pattern: {
-                object: 'unsupported',
+                object: 'emulated',
             },
         },
         params: {
@@ -182,12 +186,12 @@ export const TARGET_SUPPORT: Record<CodegenTarget, TargetSupport> = {
             generatorFunction: 'unsupported',
         },
         errors: {
-            tryCatch: 'unsupported',
-            throw: 'unsupported',
+            tryCatch: 'emulated',
+            throw: 'emulated',
         },
         binding: {
             pattern: {
-                object: 'unsupported',
+                object: 'emulated',
             },
         },
         params: {
@@ -206,7 +210,7 @@ export const TARGET_SUPPORT: Record<CodegenTarget, TargetSupport> = {
         },
         binding: {
             pattern: {
-                object: 'unsupported',
+                object: 'emulated',
             },
         },
         params: {

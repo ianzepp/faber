@@ -1,0 +1,7 @@
+functio test() -> numerus {
+    tempta {
+        iace "test error"
+    } cape err {
+        redde 0
+    }
+}

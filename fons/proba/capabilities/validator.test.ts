@@ -81,7 +81,7 @@ describe('validateTargetCompatibility', () => {
         expect(errors[0].suggestion).toContain('iterators');
     });
 
-    test('detects exception handling incompatibility with Zig', () => {
+    test('allows exception handling with Zig (emulated)', () => {
         const stmt: Statement = {
             type: 'TemptaStatement',
             body: {
@@ -106,14 +106,11 @@ describe('validateTargetCompatibility', () => {
 
         const errors = validateTargetCompatibility(program([stmt]), 'zig');
 
-        expect(errors).toHaveLength(1);
-        expect(errors[0].feature).toBe('errors.tryCatch');
-        expect(errors[0].message).toContain("Target 'zig' does not support exception handling");
-        expect(errors[0].message).toContain('tempta...cape');
-        expect(errors[0].suggestion).toContain('error unions');
+        // Should be allowed (emulated, not unsupported)
+        expect(errors).toHaveLength(0);
     });
 
-    test('detects throw incompatibility with Rust', () => {
+    test('allows throw with Rust (emulated)', () => {
         const stmt: Statement = {
             type: 'IaceStatement',
             argument: {
@@ -127,11 +124,8 @@ describe('validateTargetCompatibility', () => {
 
         const errors = validateTargetCompatibility(program([stmt]), 'rs');
 
-        expect(errors).toHaveLength(1);
-        expect(errors[0].feature).toBe('errors.throw');
-        expect(errors[0].message).toContain("Target 'rs' does not support throw statements");
-        expect(errors[0].message).toContain('iace');
-        expect(errors[0].suggestion).toContain('Result');
+        // Should be allowed (emulated, not unsupported)
+        expect(errors).toHaveLength(0);
     });
 
     test('detects object destructuring incompatibility with Python', () => {
@@ -198,23 +192,21 @@ describe('validateTargetCompatibility', () => {
             position: pos,
         };
 
-        const throwStmt: Statement = {
-            type: 'IaceStatement',
-            argument: {
-                type: 'Literal',
-                value: 'error',
-                raw: '"error"',
-                position: pos,
-            },
+        const generatorFunc: FunctioDeclaration = {
+            type: 'FunctioDeclaration',
+            name: id('count'),
+            params: [],
+            async: false,
+            generator: true,
             position: pos,
         };
 
-        const errors = validateTargetCompatibility(program([asyncFunc, throwStmt]), 'zig');
+        const errors = validateTargetCompatibility(program([asyncFunc, generatorFunc]), 'zig');
 
         expect(errors).toHaveLength(2);
         const features = errors.map(e => e.feature);
         expect(features).toContain('controlFlow.asyncFunction');
-        expect(features).toContain('errors.throw');
+        expect(features).toContain('controlFlow.generatorFunction');
     });
 
     test('TypeScript allows all features', () => {

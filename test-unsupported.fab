@@ -1,0 +1,7 @@
+functio count() fiunt numerus {
+    varia i = 0
+    dum i < 10 {
+        cede i
+        i = i + 1
+    }
+}
