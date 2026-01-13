@@ -383,6 +383,30 @@ genus Lexor {
         }
     }
 
+    # legeEscapeSequentia = "scan an escape sequence"
+    # Handles backslash escapes including unicode \uXXXX
+    # Returns the consumed characters (backslash + escaped content)
+    functio legeEscapeSequentia() -> textus {
+        varia result = ego.procede()  # Consume backslash
+        si non ego.estFinis() et ego.specta(0) != "\n" {
+            fixum escaped = ego.specta(0)
+            # Unicode escape \uXXXX - consume u + up to 4 hex digits
+            si escaped == "u" {
+                result = result + ego.procede()
+                varia numerus i = 0
+                dum i < 4 et ego.estDigitusHex(ego.specta(0)) {
+                    result = result + ego.procede()
+                    i += 1
+                }
+            }
+            # Other escapes: \n, \t, \", etc. - just consume the char
+            secus {
+                result = result + ego.procede()
+            }
+        }
+        redde result
+    }
+
     # legeTextum = "scan a string" - handles single and double quoted strings
     # clausa = "closing" - the quote character that ends this string
     # Preserves escape sequences (backslash + char) in the output
@@ -400,30 +424,11 @@ genus Lexor {
                 redde
             }
 
-            # Handle escape sequences: preserve backslash + escaped char
+            # Handle escape sequences
             si ego.specta(0) == "\\" {
-                valor = valor + ego.procede()  # Consume and keep backslash
-
-                si non ego.estFinis() et ego.specta(0) != "\n" {
-                    fixum escaped = ego.specta(0)
-
-                    # Unicode escape \uXXXX - consume u + up to 4 hex digits
-                    si escaped == "u" {
-                        valor = valor + ego.procede()  # Consume 'u'
-
-                        varia numerus i = 0
-                        dum i < 4 et ego.estDigitusHex(ego.specta(0)) {
-                            valor = valor + ego.procede()
-                            i += 1
-                        }
-                    }
-                    # Other escapes: \n, \t, \", etc. - just consume the char
-                    secus {
-                        valor = valor + ego.procede()
-                    }
-                }
+                valor = valor + ego.legeEscapeSequentia()
             }
-            # Regular character - consume and add to value
+            # Regular character
             secus {
                 valor = valor + ego.procede()
             }
@@ -438,6 +443,21 @@ genus Lexor {
         ego.procede()  # Consume closing quote
 
         ego.addeSymbolum(SymbolumGenus.Textus, valor, loc)
+    }
+
+    # legeInterpolatio = "scan an interpolation"
+    # Handles ${...} with brace depth tracking for nested objects/blocks
+    # Returns the consumed characters (${...} including braces)
+    functio legeInterpolatio() -> textus {
+        varia result = ego.procede()  # Consume '$'
+        result = result + ego.procede()  # Consume '{'
+        varia numerus depth = 1
+        dum non ego.estFinis() et depth > 0 {
+            si ego.specta(0) == "{" { depth += 1 }
+            si ego.specta(0) == "}" { depth -= 1 }
+            result = result + ego.procede()
+        }
+        redde result
     }
 
     # legeExemplar = "scan a template" - handles backtick template strings
@@ -461,23 +481,9 @@ genus Lexor {
                 ego.procede()  # Skip backslash
                 valor = valor + ego.procede()  # Keep escaped char
             }
-            # Interpolation: ${...} - capture entire expression including nested braces
+            # Interpolation: ${...}
             sin ego.specta(0) == "$" et ego.specta(1) == "{" {
-                valor = valor + ego.procede()  # Consume '$'
-                valor = valor + ego.procede()  # Consume '{'
-
-                # Track brace depth to handle nested objects/blocks
-                varia numerus depth = 1
-
-                dum non ego.estFinis() et depth > 0 {
-                    si ego.specta(0) == "{" {
-                        depth += 1
-                    }
-                    si ego.specta(0) == "}" {
-                        depth -= 1
-                    }
-                    valor = valor + ego.procede()
-                }
+                valor = valor + ego.legeInterpolatio()
             }
             # Regular template character
             secus {
