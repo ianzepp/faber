@@ -1,0 +1,237 @@
+# Moritor statements - syntactic sugar for ergo mori
+# Maps Faber 'moritor' to target panic statements
+#
+# Syntax:
+#   si condition moritor expression
+#   casu value moritor expression
+#   ceterum moritor expression
+#   discerne expr { casu Variant moritor expression }
+#
+# 'moritor' (let it die) is syntactic sugar for 'ergo mori'
+# It parses an expression and wraps it in a panic statement
+#
+# Target mappings:
+#   ts:  throw new Panic()
+#   py:  raise SystemExit()
+#   rs:  panic!()
+#   cpp: std::abort()
+#   zig: @panic()
+
+# =============================================================================
+# Si with Moritor (Early Panic)
+# =============================================================================
+
+- name: si with moritor - simple
+  source: |
+      functio requireNonNull(ignotum x) -> ignotum {
+          si nihil x moritor "null value not allowed"
+          redde x
+      }
+  expect:
+      ts:
+          - 'if ((x == null))'
+          - 'throw new Panic("null value not allowed")'
+          - 'return x'
+      py:
+          - 'if (x is None):'
+          - 'raise SystemExit("null value not allowed")'
+          - 'return x'
+      fab:
+          - 'si nihil x'
+          - 'mori "null value not allowed"'
+          - 'redde x'
+
+- name: si chain with moritor
+  source: |
+      functio criticalCheck(numerus x, numerus y) -> numerus {
+          si x < 0 moritor "critical: x is negative"
+          si y == 0 moritor "critical: division by zero imminent"
+          redde x / y
+      }
+  expect:
+      ts:
+          - 'if ((x < 0))'
+          - 'throw new Panic("critical: x is negative")'
+          - 'if ((y == 0))'
+          - 'throw new Panic("critical: division by zero imminent")'
+          - 'return (x / y)'
+      fab:
+          - 'si x < 0'
+          - 'mori "critical: x is negative"'
+          - 'si y == 0'
+          - 'mori "critical: division by zero imminent"'
+          - 'redde x / y'
+
+# =============================================================================
+# Elige with Moritor (Switch Cases)
+# =============================================================================
+
+- name: elige with moritor cases
+  source: |
+      functio mustHandle(textus op) -> numerus {
+          elige op {
+              casu "add" reddit 1
+              casu "sub" reddit 2
+              casu "mul" reddit 3
+              ceterum moritor "unhandled operator"
+          }
+      }
+  expect:
+      ts:
+          - 'if (op === "add")'
+          - 'return 1'
+          - 'if (op === "sub")'
+          - 'return 2'
+          - 'if (op === "mul")'
+          - 'return 3'
+          - 'throw new Panic("unhandled operator")'
+      fab:
+          - 'casu "add"'
+          - 'redde 1'
+          - 'casu "sub"'
+          - 'redde 2'
+          - 'casu "mul"'
+          - 'redde 3'
+          - 'ceterum'
+          - 'mori "unhandled operator"'
+
+- name: elige ceterum with moritor - exhaustive
+  source: |
+      functio getDay(numerus n) -> textus {
+          elige n {
+              casu 1 reddit "Monday"
+              casu 2 reddit "Tuesday"
+              casu 3 reddit "Wednesday"
+              casu 4 reddit "Thursday"
+              casu 5 reddit "Friday"
+              casu 6 reddit "Saturday"
+              casu 7 reddit "Sunday"
+              ceterum moritor "invalid day number"
+          }
+      }
+  expect:
+      ts:
+          - 'if (n === 1)'
+          - 'return "Monday"'
+          - 'if (n === 7)'
+          - 'return "Sunday"'
+          - 'throw new Panic("invalid day number")'
+      fab:
+          - 'casu 1'
+          - 'redde "Monday"'
+          - 'casu 7'
+          - 'redde "Sunday"'
+          - 'ceterum'
+          - 'mori "invalid day number"'
+
+# =============================================================================
+# Discerne with Moritor (Pattern Matching)
+# =============================================================================
+
+- name: discerne with moritor - unreachable
+  source: |
+      discretio State {
+          Running
+          Stopped
+          Error
+      }
+      functio handle(State s) -> textus {
+          discerne s {
+              casu Running reddit "running"
+              casu Stopped reddit "stopped"
+              casu Error moritor "unrecoverable error state"
+          }
+      }
+  expect:
+      ts:
+          - "if (s.tag === 'Running')"
+          - 'return "running"'
+          - "if (s.tag === 'Stopped')"
+          - 'return "stopped"'
+          - "if (s.tag === 'Error')"
+          - 'throw new Panic("unrecoverable error state")'
+      fab:
+          - 'discretio State'
+          - 'casu Running'
+          - 'redde "running"'
+          - 'casu Stopped'
+          - 'redde "stopped"'
+          - 'casu Error'
+          - 'mori "unrecoverable error state"'
+
+# =============================================================================
+# Sin/Secus with Moritor
+# =============================================================================
+
+- name: secus with moritor
+  source: |
+      functio mustSucceed(bivalens ok) -> vacuum {
+          si ok {
+              redde
+          } secus moritor "operation must succeed"
+      }
+  expect:
+      ts:
+          - 'if (ok)'
+          - 'return'
+          - 'else'
+          - 'throw new Panic("operation must succeed")'
+      fab:
+          - 'si ok'
+          - 'redde'
+          - 'secus'
+          - 'mori "operation must succeed"'
+
+# =============================================================================
+# Mixed Reddit, Iacit, and Moritor
+# =============================================================================
+
+- name: mixed reddit iacit moritor in elige
+  source: |
+      functio dispatch(textus cmd) -> numerus {
+          elige cmd {
+              casu "get" reddit 1
+              casu "set" reddit 2
+              casu "deprecated" iacit "command is deprecated"
+              ceterum moritor "unknown command"
+          }
+      }
+  expect:
+      ts:
+          - 'if (cmd === "get")'
+          - 'return 1'
+          - 'if (cmd === "set")'
+          - 'return 2'
+          - 'if (cmd === "deprecated")'
+          - 'throw "command is deprecated"'
+          - 'throw new Panic("unknown command")'
+      fab:
+          - 'casu "get"'
+          - 'redde 1'
+          - 'casu "set"'
+          - 'redde 2'
+          - 'casu "deprecated"'
+          - 'iace "command is deprecated"'
+          - 'ceterum'
+          - 'mori "unknown command"'
+
+# =============================================================================
+# Incipit with Moritor
+# =============================================================================
+
+- name: incipit moritor on failure
+  source: |
+      incipit {
+          si falsum moritor "startup failed"
+          scribe "started"
+      }
+  expect:
+      ts:
+          - 'if (false)'
+          - 'throw new Panic("startup failed")'
+          - 'console.log("started")'
+      fab:
+          - 'incipit'
+          - 'si falsum'
+          - 'mori "startup failed"'
+          - 'scribe "started"'

@@ -1,0 +1,203 @@
+# Iacit statements - syntactic sugar for ergo iace
+# Maps Faber 'iacit' to target throw statements
+#
+# Syntax:
+#   si condition iacit expression
+#   casu value iacit expression
+#   ceterum iacit expression
+#   discerne expr { casu Variant iacit expression }
+#
+# 'iacit' (it throws) is syntactic sugar for 'ergo iace'
+# It parses an expression and wraps it in a throw statement
+
+# =============================================================================
+# Si with Iacit (Early Throw)
+# =============================================================================
+
+- name: si with iacit - simple
+  source: |
+      functio validate(numerus x) -> numerus {
+          si x < 0 iacit "value must be non-negative"
+          redde x
+      }
+  expect:
+      ts:
+          - 'if ((x < 0))'
+          - 'throw "value must be non-negative"'
+          - 'return x'
+      py:
+          - 'if (x < 0):'
+          - 'raise Exception("value must be non-negative")'
+          - 'return x'
+      fab:
+          - 'si x < 0'
+          - 'iace "value must be non-negative"'
+          - 'redde x'
+
+- name: si chain with iacit
+  source: |
+      functio check(numerus x, numerus y) -> numerus {
+          si x < 0 iacit "x must be non-negative"
+          si y < 0 iacit "y must be non-negative"
+          si x > y iacit "x must not exceed y"
+          redde x + y
+      }
+  expect:
+      ts:
+          - 'if ((x < 0))'
+          - 'throw "x must be non-negative"'
+          - 'if ((y < 0))'
+          - 'throw "y must be non-negative"'
+          - 'if ((x > y))'
+          - 'throw "x must not exceed y"'
+          - 'return (x + y)'
+      fab:
+          - 'si x < 0'
+          - 'iace "x must be non-negative"'
+          - 'si y < 0'
+          - 'iace "y must be non-negative"'
+          - 'si x > y'
+          - 'iace "x must not exceed y"'
+          - 'redde x + y'
+
+# =============================================================================
+# Elige with Iacit (Switch Cases)
+# =============================================================================
+
+- name: elige with iacit cases
+  source: |
+      functio getCode(textus status) -> numerus {
+          elige status {
+              casu "ok" reddit 200
+              casu "created" reddit 201
+              casu "not_found" iacit "resource not found"
+              ceterum iacit "unknown status"
+          }
+      }
+  expect:
+      ts:
+          - 'if (status === "ok")'
+          - 'return 200'
+          - 'if (status === "created")'
+          - 'return 201'
+          - 'if (status === "not_found")'
+          - 'throw "resource not found"'
+          - 'throw "unknown status"'
+      fab:
+          - 'casu "ok"'
+          - 'redde 200'
+          - 'casu "created"'
+          - 'redde 201'
+          - 'casu "not_found"'
+          - 'iace "resource not found"'
+          - 'ceterum'
+          - 'iace "unknown status"'
+
+- name: elige ceterum with iacit
+  source: |
+      functio process(numerus code) -> textus {
+          elige code {
+              casu 1 reddit "one"
+              casu 2 reddit "two"
+              ceterum iacit "invalid code"
+          }
+      }
+  expect:
+      ts:
+          - 'if (code === 1)'
+          - 'return "one"'
+          - 'if (code === 2)'
+          - 'return "two"'
+          - 'throw "invalid code"'
+      fab:
+          - 'casu 1'
+          - 'redde "one"'
+          - 'casu 2'
+          - 'redde "two"'
+          - 'ceterum'
+          - 'iace "invalid code"'
+
+# =============================================================================
+# Discerne with Iacit (Pattern Matching)
+# =============================================================================
+
+- name: discerne with iacit
+  source: |
+      discretio Result {
+          Ok(numerus)
+          Err(textus)
+      }
+      functio unwrap(Result r) -> numerus {
+          discerne r {
+              casu Ok pro value reddit value
+              casu Err pro msg iacit msg
+          }
+      }
+  expect:
+      ts:
+          - "if (r.tag === 'Ok')"
+          - 'return value'
+          - "if (r.tag === 'Err')"
+          - 'throw msg'
+      fab:
+          - 'discretio Result'
+          - 'casu Ok pro value'
+          - 'redde value'
+          - 'casu Err pro msg'
+          - 'iace msg'
+
+# =============================================================================
+# Sin/Secus with Iacit
+# =============================================================================
+
+- name: secus with iacit
+  source: |
+      functio require(bivalens condition, textus msg) -> vacuum {
+          si condition {
+              redde
+          } secus iacit msg
+      }
+  expect:
+      ts:
+          - 'if (condition)'
+          - 'return'
+          - 'else'
+          - 'throw msg'
+      fab:
+          - 'si condition'
+          - 'redde'
+          - 'secus'
+          - 'iace msg'
+
+# =============================================================================
+# Mixed Reddit and Iacit
+# =============================================================================
+
+- name: mixed reddit and iacit in elige
+  source: |
+      functio lookup(textus key) -> numerus {
+          elige key {
+              casu "a" reddit 1
+              casu "b" reddit 2
+              casu "error" iacit "explicit error"
+              ceterum reddit 0
+          }
+      }
+  expect:
+      ts:
+          - 'if (key === "a")'
+          - 'return 1'
+          - 'if (key === "b")'
+          - 'return 2'
+          - 'if (key === "error")'
+          - 'throw "explicit error"'
+          - 'return 0'
+      fab:
+          - 'casu "a"'
+          - 'redde 1'
+          - 'casu "b"'
+          - 'redde 2'
+          - 'casu "error"'
+          - 'iace "explicit error"'
+          - 'ceterum'
+          - 'redde 0'
