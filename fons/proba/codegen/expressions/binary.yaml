@@ -364,3 +364,86 @@
           - '(((c >= "0" and c < "9") or (c >= "a" and c < "f")) or (c >= "A" and c < "F"))'
       fab:
           - 'c intra "0".."9" || c intra "a".."f" || c intra "A".."F"'
+
+# Ternary Expressions
+# WHY: Tests both symbolic (? :) and Latin (sic/secus) conditional forms
+
+- name: ternary with symbolic syntax
+  source: 'x > 0 ? 1 : 0'
+  expect:
+      ts: '(x > 0) ? 1 : 0;'
+      fab:
+          - 'x > 0 ? 1 : 0'
+
+- name: ternary with sic secus syntax
+  source: 'x > 0 sic 1 secus 0'
+  expect:
+      ts: '(x > 0) ? 1 : 0;'
+      fab:
+          - 'x > 0 ? 1 : 0'
+
+- name: nested ternary expressions
+  source: 'a ? b ? 1 : 2 : 3'
+  expect:
+      ts: 'a ? b ? 1 : 2 : 3;'
+      fab:
+          - 'a ? b ? 1 : 2 : 3'
+
+- name: ternary with complex condition
+  source: 'x > 0 et y > 0 sic "positive" secus "other"'
+  expect:
+      ts: '((x > 0) && (y > 0)) ? "positive" : "other";'
+      fab:
+          - 'x > 0 && y > 0 ? "positive" : "other"'
+
+- name: ternary with function calls
+  source: 'isValid() ? process(x) : fallback()'
+  expect:
+      ts: 'isValid() ? process(x) : fallback();'
+      fab:
+          - 'isValid() ? process(x) : fallback()'
+
+# Bitwise Operators
+# WHY: Tests bitwise AND, OR, XOR operators
+
+- name: bitwise and
+  source: a & b
+  expect:
+      ts: '(a & b);'
+      fab:
+          - 'a & b'
+
+- name: bitwise or
+  source: a | b
+  expect:
+      ts: '(a | b);'
+      fab:
+          - 'a | b'
+
+- name: bitwise xor
+  source: a ^ b
+  expect:
+      ts: '(a ^ b);'
+      fab:
+          - 'a ^ b'
+
+- name: bitwise operators with precedence
+  source: a | b & c
+  expect:
+      ts: '(a | (b & c));'
+      fab:
+          - 'a | b & c'
+
+- name: bitwise xor precedence
+  source: a ^ b | c
+  expect:
+      ts: '((a ^ b) | c);'
+      fab:
+          - 'a ^ b | c'
+
+- name: combined bitwise operations
+  source: (flags & MASK) | DEFAULT
+  expect:
+      ts: '((flags & MASK) | DEFAULT);'
+      fab:
+          - '(flags & MASK) | DEFAULT'

@@ -361,3 +361,72 @@
       fab:
           - 'ex 0..1000 pro i'
           - 'process(i)'
+
+# =============================================================================
+# For-In Loops (de...pro)
+# =============================================================================
+# WHY: Tests 'de' keyword for iterating over object keys
+
+- name: for-in iterate object keys
+  source: 'de obj pro key { scribe key }'
+  expect:
+      ts:
+          - 'for (const key in obj)'
+          - 'console.log(key)'
+      fab:
+          - 'de obj pro key'
+          - 'scribe key'
+
+- name: for-in with value access
+  source: 'de config pro key { scribe config[key] }'
+  expect:
+      ts:
+          - 'for (const key in config)'
+          - 'console.log(config[key])'
+      fab:
+          - 'de config pro key'
+          - 'scribe config[key]'
+
+- name: for-in with condition
+  source: |
+      de settings pro key {
+          si key == "debug" { perge }
+          process(key)
+      }
+  expect:
+      ts:
+          - 'for (const key in settings)'
+          - 'if ((key == "debug"))'
+          - 'continue;'
+          - 'process(key)'
+      fab:
+          - 'de settings pro key'
+          - 'si key == "debug"'
+          - 'perge'
+          - 'process(key)'
+
+- name: for-in with ergo shorthand
+  source: 'de map pro k ergo results.push(k)'
+  expect:
+      ts:
+          - 'for (const k in map)'
+          - 'results.push(k)'
+      fab:
+          - 'de map pro k'
+          - 'results.push(k)'
+
+- name: for-in with block body
+  source: |
+      de data pro key {
+          varia value = data[key]
+          process(key, value)
+      }
+  expect:
+      ts:
+          - 'for (const key in data)'
+          - 'let value = data[key]'
+          - 'process(key, value)'
+      fab:
+          - 'de data pro key'
+          - 'varia value = data[key]'
+          - 'process(key, value)'
