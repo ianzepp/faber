@@ -1,0 +1,29 @@
+# Go Statement Generator - Console Output
+#
+# Generates fmt.Println calls.
+#
+# TRANSFORMS:
+#   scribe "hello"      -> fmt.Println("hello")
+#   scribe.vide "debug" -> fmt.Println("debug")  # Go has no debug level
+#   scribe.mone "warn"  -> fmt.Println("warn")   # Go has no warn level
+
+ex "../../../ast/sententia" importa ScribeGradus
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa GoGenerator
+
+# External declaration - implementation lives in expressia/index.fab
+ex "../expressia/index" importa genExpressia
+
+@ publica
+functio genScribe(ScribeGradus gradus, lista<Expressia> argumenta, GoGenerator g) -> textus {
+    # Mark fmt import as required
+    g.requisita.fmt = verum
+
+    varia args = [] innatum lista<textus>
+    ex argumenta pro arg {
+        args.adde(genExpressia(arg, g))
+    }
+
+    # Go doesn't have log levels in fmt, just use Println for all
+    redde scriptum("§fmt.Println(§)", g.ind(), args.coniunge(", "))
+}

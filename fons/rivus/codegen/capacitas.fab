@@ -254,6 +254,31 @@ fixum CAPACITAS_FAB = {
     } qua ExpressiaCapacitas
 } qua TargetCapacitas
 
+# Go - GC'd, no async/generators, multi-return errors
+@ publica
+fixum CAPACITAS_GO = {
+    controlFlow: {
+        asyncFunctio: Sustentatio.Insustentum,
+        generatorFunctio: Sustentatio.Insustentum,
+        asyncGenerator: Sustentatio.Insustentum
+    } qua ControlFlowCapacitas,
+    errores: {
+        temptaCape: Sustentatio.Emulatum,
+        iace: Sustentatio.Emulatum
+    } qua ErrorCapacitas,
+    ligatura: {
+        seriesDestructura: Sustentatio.Sustentum,
+        obiectumDestructura: Sustentatio.Insustentum
+    } qua LigaturaCapacitas,
+    parametra: {
+        valorPraedefinitus: Sustentatio.Insustentum
+    } qua ParametrumCapacitas,
+    expressiae: {
+        optivumAccessus: Sustentatio.Insustentum,
+        coalescentio: Sustentatio.Insustentum
+    } qua ExpressiaCapacitas
+} qua TargetCapacitas
+
 # =============================================================================
 # LOWERING MODELS
 # =============================================================================
@@ -294,6 +319,12 @@ fixum LOWERING_FAB = {
     errores: ErrorModel.Exceptiones
 } qua TargetLowering
 
+@ publica
+fixum LOWERING_GO = {
+    nullabilis: NullabilisModel.Indicator,
+    errores: ErrorModel.MultipleReditus
+} qua TargetLowering
+
 # =============================================================================
 # LOOKUP FUNCTIONS
 # =============================================================================
@@ -308,6 +339,7 @@ functio getCapacitas(textus target) -> TargetCapacitas {
         casu "zig" { redde CAPACITAS_ZIG }
         casu "cpp" { redde CAPACITAS_CPP }
         casu "fab" { redde CAPACITAS_FAB }
+        casu "go" { redde CAPACITAS_GO }
         ceterum { redde CAPACITAS_TS }
     }
 }
@@ -322,6 +354,7 @@ functio getLowering(textus target) -> TargetLowering {
         casu "zig" { redde LOWERING_ZIG }
         casu "cpp" { redde LOWERING_CPP }
         casu "fab" { redde LOWERING_FAB }
+        casu "go" { redde LOWERING_GO }
         ceterum { redde LOWERING_TS }
     }
 }

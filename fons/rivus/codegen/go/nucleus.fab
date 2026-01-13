@@ -1,0 +1,81 @@
+# Go Code Generator - Core generator state
+#
+# This module provides the GoGenerator genus that holds shared state
+# for Go code generation.
+
+# =============================================================================
+# REQUIRED FEATURES
+# =============================================================================
+
+# Features used that need imports in the preamble
+@ publicum
+genus GoRequiredFeatures {
+    bivalens fmt      # fmt package needed (Println, Sprintf)
+}
+
+# =============================================================================
+# GO GENERATOR
+# =============================================================================
+
+# Core generator state for Go output.
+@ publicum
+genus GoGenerator {
+    # Indentation depth (number of levels)
+    numerus profunditas
+
+    # Indentation unit (Go standard: single tab)
+    textus indentum
+
+    # Features used that need preamble setup
+    GoRequiredFeatures requisita
+
+    # ==========================================================================
+    # INDENTATION
+    # ==========================================================================
+
+    # Generate indentation string for current depth
+    @ publica
+    functio ind() -> textus {
+        varia result = ""
+        varia i = 0
+        dum i < ego.profunditas {
+            result = result + ego.indentum
+            i += 1
+        }
+        redde result
+    }
+
+    # Increment depth
+    @ publica
+    functio intraProfundum() {
+        ego.profunditas += 1
+    }
+
+    # Decrement depth
+    @ publica
+    functio exiProfundum() {
+        ego.profunditas -= 1
+    }
+}
+
+# =============================================================================
+# FACTORY
+# =============================================================================
+
+# Create a new GoGenerator with default settings
+@ publica
+functio creaGoGenerator() -> GoGenerator {
+    redde novum GoGenerator {
+        profunditas: 0,
+        indentum: "\t",
+        requisita: creaGoRequiredFeatures()
+    }
+}
+
+# Create required features with all flags false
+@ publica
+functio creaGoRequiredFeatures() -> GoRequiredFeatures {
+    redde {
+        fmt: falsum
+    } qua GoRequiredFeatures
+}

@@ -1,0 +1,106 @@
+# Go Expression Generator - Dispatch
+#
+# Routes expression AST nodes to their specific generators.
+
+ex "../../../ast/expressia" importa Expressia, LitteraGenus
+ex "../nucleus" importa GoGenerator
+ex "./littera" importa genLittera
+ex "./scriptum" importa genScriptum
+
+# =============================================================================
+# EXPRESSION DISPATCH
+# =============================================================================
+
+# Generate Go code for an expression
+@ publica
+functio genExpressia(Expressia expr, GoGenerator g) -> textus {
+    discerne expr {
+        # Identifiers
+        casu Nomen ut e {
+            redde e.valor qua textus
+        }
+
+        casu EgoExpressia {
+            # Go uses explicit receiver names, not 'this'
+            # For now, assume receiver is named in function scope
+            redde "this"
+        }
+
+        # Literals
+        casu Littera ut e {
+            redde genLittera(e.species qua LitteraGenus, e.crudus qua textus)
+        }
+
+        # Binary operations
+        casu BinariaExpressia ut e {
+            fixum sinister = genExpressia(e.sinister, g)
+            fixum dexter = genExpressia(e.dexter, g)
+            varia signum = e.signum qua textus
+
+            # Normalize keyword operators to Go equivalents
+            elige signum {
+                casu "et" { signum = "&&" }
+                casu "aut" { signum = "||" }
+            }
+
+            redde scriptum("(§ § §)", sinister, signum, dexter)
+        }
+
+        # Unary operations
+        casu UnariaExpressia ut e {
+            fixum arg = genExpressia(e.argumentum, g)
+            redde scriptum("§§", e.signum, arg)
+        }
+
+        # Function calls
+        casu VocatioExpressia ut e {
+            varia args = [] innatum lista<textus>
+            ex (e.argumenta qua lista<Expressia>) pro arg {
+                args.adde(genExpressia(arg, g))
+            }
+            redde scriptum("§(§)", genExpressia(e.vocatum, g), args.coniunge(", "))
+        }
+
+        # Member access
+        casu MembrumExpressia ut e {
+            fixum obj = genExpressia(e.obiectum, g)
+            si e.computatum qua bivalens {
+                fixum idx = genExpressia(e.proprietas, g)
+                redde scriptum("§[§]", obj, idx)
+            }
+            fixum prop = genExpressia(e.proprietas, g)
+            redde scriptum("§.§", obj, prop)
+        }
+
+        # Format strings
+        casu ScriptumExpressia ut e {
+            redde genScriptum(e.exemplar qua textus, e.argumenta qua lista<Expressia>, g)
+        }
+
+        # Arrays
+        casu SeriesExpressia ut e {
+            varia items = [] innatum lista<textus>
+            ex (e.elementa qua lista<Expressia>) pro elem {
+                items.adde(genExpressia(elem, g))
+            }
+            # Go requires type for array literals - use interface{} as fallback
+            redde scriptum("[]interface{}{§}", items.coniunge(", "))
+        }
+
+        # Conditional expression (ternary)
+        casu CondicioExpressia ut e {
+            # Go doesn't have ternary operator - emit as inline func
+            # For simple cases this works; complex cases need statement form
+            fixum cond = genExpressia(e.condicio, g)
+            fixum cons = genExpressia(e.consequens, g)
+            fixum alt = genExpressia(e.alternans, g)
+            g.requisita.fmt = verum
+            redde scriptum("func() interface{} { if § { return § }; return § }()", cond, cons, alt)
+        }
+
+        # Fallback for unimplemented expression types
+        ceterum {
+            redde "/* TODO: unhandled expression */"
+        }
+    }
+}

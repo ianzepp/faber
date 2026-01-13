@@ -1,0 +1,132 @@
+# Go Type Mapping - Latin types to Go types
+#
+# Maps Latin type names to their Go equivalents.
+
+ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum
+ex "./nucleus" importa GoGenerator
+
+# =============================================================================
+# TYPE MAPPING
+# =============================================================================
+
+# Map a Latin type name to Go type name
+@ publica
+functio mappaNomenTypi(textus nomen) -> textus {
+    elige nomen {
+        # Primitives
+        casu "textus" reddit "string"
+        casu "numerus" reddit "int64"
+        casu "fractus" reddit "float64"
+        casu "bivalens" reddit "bool"
+        casu "vacuum" reddit ""
+        casu "nihil" reddit "nil"
+
+        # Binary
+        casu "octeti" reddit "[]byte"
+
+        # Collections - base names only, generics handled separately
+        casu "lista" reddit "[]"
+        casu "tabula" reddit "map"
+        casu "copia" reddit "map"
+
+        # Error
+        casu "erratum" reddit "error"
+
+        # Any/unknown
+        casu "ignotum" reddit "interface{}"
+        casu "objectum" reddit "interface{}"
+    }
+
+    # User-defined type: pass through unchanged
+    redde nomen
+}
+
+# =============================================================================
+# TYPE GENERATION
+# =============================================================================
+
+# Generate Go type from type annotation
+@ publica
+functio genTypus(TypusAnnotatio adnotatio, GoGenerator g) -> textus {
+    fixum base = mappaNomenTypi(adnotatio.nomen)
+
+    # Handle vacuum (void) - returns empty string
+    si adnotatio.nomen == "vacuum" {
+        redde ""
+    }
+
+    # Handle generic types
+    si nonnihil adnotatio.typusParametra {
+        fixum parametra = adnotatio.typusParametra qua lista<TypusParametrum>
+        si parametra.longitudo() > 0 {
+            # lista<T> -> []T
+            si adnotatio.nomen == "lista" {
+                varia elemType = "interface{}"
+                discerne parametra[0] {
+                    casu Typus ut t {
+                        elemType = genTypus(t.adnotatio, g)
+                    }
+                    casu _ { }
+                }
+                redde scriptum("[]§", elemType)
+            }
+
+            # tabula<K,V> -> map[K]V
+            si adnotatio.nomen == "tabula" {
+                varia keyType = "string"
+                varia valueType = "interface{}"
+                si parametra.longitudo() >= 1 {
+                    discerne parametra[0] {
+                        casu Typus ut t {
+                            keyType = genTypus(t.adnotatio, g)
+                        }
+                        casu _ { }
+                    }
+                }
+                si parametra.longitudo() >= 2 {
+                    discerne parametra[1] {
+                        casu Typus ut t {
+                            valueType = genTypus(t.adnotatio, g)
+                        }
+                        casu _ { }
+                    }
+                }
+                redde scriptum("map[§]§", keyType, valueType)
+            }
+
+            # copia<T> -> map[T]struct{}
+            si adnotatio.nomen == "copia" {
+                varia elemType = "interface{}"
+                discerne parametra[0] {
+                    casu Typus ut t {
+                        elemType = genTypus(t.adnotatio, g)
+                    }
+                    casu _ { }
+                }
+                redde scriptum("map[§]struct{}", elemType)
+            }
+        }
+    }
+
+    # Handle nullable: textus? -> *string
+    si adnotatio.nullabilis {
+        redde scriptum("*§", base)
+    }
+
+    redde base
+}
+
+# Generate a single type parameter
+@ publica
+functio genTypusParametrum(TypusParametrum param, GoGenerator g) -> textus? {
+    discerne param {
+        casu Typus ut p {
+            redde genTypus(p.adnotatio, g)
+        }
+        casu Littera {
+            # Ignore numeric parameters
+            redde nihil
+        }
+    }
+    redde nihil
+}

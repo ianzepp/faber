@@ -1,0 +1,114 @@
+# Go Statement Generator - Function Declarations
+#
+# Generates Go function declarations.
+#
+# TRANSFORMS:
+#   functio f() { ... }                    -> func f() { ... }
+#   functio f(textus x) -> textus { ... }  -> func f(x string) string { ... }
+#   functio f() curata alloc -> T { ... }  -> func f() T { ... }  (ignore allocator)
+#   @ publica functio f() { ... }          -> func F() { ... }    (capitalize)
+
+ex "../../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, Visibilitas
+ex "../../../ast/typus" importa TypusAnnotatio
+ex "../nucleus" importa GoGenerator
+
+# External declarations
+ex "../expressia/index" importa genExpressia
+ex "./index" importa genSententia
+ex "../typus" importa genTypus
+
+@ publica
+functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> parametra, ignotum reddeVerbum, ignotum typusReditus, ignotum corpus, bivalens asynca, bivalens generator, bivalens structor, ignotum visibilitas, bivalens abstracta, bivalens externa, GoGenerator g) -> textus {
+    # External declarations - Go doesn't have declare syntax
+    si externa {
+        redde scriptum("§// extern: func §(...)", g.ind(), nomen)
+    }
+
+    varia result = g.ind()
+
+    # Determine function name - capitalize if public (Go visibility convention)
+    varia funcName = nomen
+    si nonnihil visibilitas {
+        fixum vis = visibilitas qua Visibilitas
+        si vis == Visibilitas.Publica {
+            # Capitalize first letter for Go export
+            si funcName.longitudo() > 0 {
+                fixum textus firstChar = funcName.sectio(0, 1)
+                fixum first = firstChar.maiuscula()
+                fixum len = funcName.longitudo()
+                fixum rest = funcName.sectio(1, len)
+                funcName = scriptum("§§", first, rest)
+            }
+        }
+    }
+
+    result = scriptum("§func §", result, funcName)
+
+    # Generic parameters - Go 1.18+ generics
+    si nonnihil generaParametra {
+        fixum gp = generaParametra qua lista<TypusParametrum>
+        si gp.longitudo() > 0 {
+            varia names = [] innatum lista<textus>
+            ex gp pro p {
+                # Go generics need type constraint, default to 'any'
+                names.adde(scriptum("§ any", p.nomen))
+            }
+            result = scriptum("§[§]", result, names.coniunge(", "))
+        }
+    }
+
+    # Parameters - filter out allocator bindings (curata)
+    varia params = [] innatum lista<textus>
+    ex parametra pro param {
+        # Skip allocator parameters (curata binding)
+        si param.curator qua bivalens {
+            perge
+        }
+        params.adde(genParametrum(param, g))
+    }
+    result = scriptum("§(§)", result, params.coniunge(", "))
+
+    # Return type
+    si nonnihil typusReditus {
+        fixum retType = genTypus(typusReditus qua TypusAnnotatio, g)
+        si retType != "" {
+            result = scriptum("§ §", result, retType)
+        }
+    }
+
+    # Body
+    si nihil corpus {
+        # No body - abstract or declaration only
+        redde result
+    }
+
+    si nonnihil corpus {
+        g.intraProfundum()
+        fixum body = genSententia(corpus qua Sententia, g)
+        g.exiProfundum()
+
+        si body == "" {
+            result = scriptum("§ {}", result)
+        } secus {
+            result = scriptum("§ {\n§\n§}", result, body, g.ind())
+        }
+    }
+
+    redde result
+}
+
+@ publica
+functio genParametrum(Parametrum param, GoGenerator g) -> textus {
+    varia result = param.nomen
+
+    # Type annotation
+    si nonnihil param.typus {
+        fixum typeName = genTypus(param.typus qua TypusAnnotatio, g)
+        result = scriptum("§ §", result, typeName)
+    }
+
+    # Go doesn't support default values in function params
+    # Would need to handle with function overloading or optional pattern
+
+    redde result
+}

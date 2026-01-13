@@ -20,6 +20,7 @@ ex "./ts/index" importa generateTs
 ex "./rs/index" importa generateRs
 ex "./zig/index" importa generateZig
 ex "./cpp/index" importa generateCpp
+ex "./go/index" importa generateGo
 
 # =============================================================================
 # PUBLIC API
@@ -48,6 +49,7 @@ functio generateWithPolicy(lista<Sententia> corpus, textus target, ValidatioPoli
         casu "rs" { redde generateRs(corpus) }
         casu "zig" { redde generateZig(corpus) }
         casu "cpp" { redde generateCpp(corpus) }
+        casu "go" { redde generateGo(corpus) }
         ceterum {
             iace scriptum("Unknown codegen target: §", target)
         }

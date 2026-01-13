@@ -1,0 +1,79 @@
+# Go Expression Generator - Scriptum (Format Strings)
+#
+# Generates fmt.Sprintf calls with format placeholders.
+#
+# TRANSFORMS:
+#   scriptum("Hello §!", name)      -> fmt.Sprintf("Hello %v!", name)
+#   scriptum("x = §", x)            -> fmt.Sprintf("x = %v", x)
+#   scriptum("§1 before §0", a, b)  -> fmt.Sprintf("%v before %v", b, a)
+#   scriptum("no args")             -> "no args"
+
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa GoGenerator
+
+# External declaration - implementation lives in index.fab
+ex "./index" importa genExpressia
+
+# Generate scriptum (format string) expression
+# Supports both § (positional) and §0, §1, etc. (indexed) placeholders
+@ publica
+functio genScriptum(textus exemplar, lista<Expressia> argumenta, GoGenerator g) -> textus {
+    # No-arg scriptum should emit a plain string literal
+    si argumenta.longitudo() == 0 {
+        redde scriptum("\"§\"", exemplar)
+    }
+
+    # Mark fmt import as required
+    g.requisita.fmt = verum
+
+    # Build format string and args list
+    # First pass: collect args in order they appear (handling §N indexing)
+    varia formatStr = ""
+    varia argOrder = [] innatum lista<numerus>
+    varia implicitIdx = 0
+    varia i = 0
+
+    dum i < exemplar.longitudo() {
+        fixum c = exemplar[i]
+        si c == "§" {
+            # Check for explicit index (§0, §1, etc.)
+            varia explicitIdxNum = 0
+            varia hasExplicitIdx = falsum
+            dum i + 1 < exemplar.longitudo() {
+                fixum nextChar = exemplar[i + 1]
+                si nextChar >= "0" et nextChar <= "9" {
+                    fixum digit = nextChar.charCodeAt(0) - 48
+                    explicitIdxNum = explicitIdxNum * 10 + digit
+                    hasExplicitIdx = verum
+                    i += 1
+                } secus {
+                    rumpe
+                }
+            }
+
+            # Use explicit index if provided, otherwise implicit
+            fixum idx = hasExplicitIdx sic explicitIdxNum secus implicitIdx
+            si non hasExplicitIdx {
+                implicitIdx += 1
+            }
+
+            argOrder.adde(idx)
+            formatStr = formatStr + "%v"
+        } secus {
+            formatStr = formatStr + c
+        }
+        i += 1
+    }
+
+    # Build args string in the order they appear in format
+    varia args = [] innatum lista<textus>
+    ex argOrder pro idx {
+        si idx < argumenta.longitudo() {
+            args.adde(genExpressia(argumenta[idx], g))
+        } secus {
+            args.adde("nil")
+        }
+    }
+
+    redde scriptum("fmt.Sprintf(\"§\", §)", formatStr, args.coniunge(", "))
+}

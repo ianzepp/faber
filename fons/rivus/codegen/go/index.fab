@@ -1,0 +1,66 @@
+# Go Code Generator - Public API
+#
+# Entry point for generating Go from Faber AST.
+#
+# TRANSFORMS:
+#   lista<Sententia> -> Go source code string
+
+ex "../../ast/sententia" importa Sententia
+ex "./nucleus" importa GoGenerator, creaGoGenerator
+ex "./sententia/index" importa genSententia
+
+# =============================================================================
+# PUBLIC API
+# =============================================================================
+
+# Generate Go source code from a list of statements
+@ publica
+functio generateGo(lista<Sententia> corpus) -> textus {
+    fixum g = creaGoGenerator()
+
+    # Generate body from statements
+    varia lines = [] innatum lista<textus>
+    ex corpus pro stmt {
+        lines.adde(genSententia(stmt, g))
+    }
+
+    fixum body = lines.coniunge("\n")
+
+    # Generate preamble
+    fixum preamble = genPreamble(g)
+
+    si preamble == "" {
+        redde body
+    }
+
+    redde scriptum("§\n§", preamble, body)
+}
+
+# =============================================================================
+# PREAMBLE GENERATION
+# =============================================================================
+
+# Generate Go preamble (package declaration and imports)
+functio genPreamble(GoGenerator g) -> textus {
+    varia parts = [] innatum lista<textus>
+
+    # Package declaration - always main for executables
+    parts.adde("package main")
+
+    # Imports based on required features
+    varia imports = [] innatum lista<textus>
+
+    si g.requisita.fmt {
+        imports.adde("\"fmt\"")
+    }
+
+    si imports.longitudo() > 0 {
+        si imports.longitudo() == 1 {
+            parts.adde(scriptum("import §", imports[0]))
+        } secus {
+            parts.adde(scriptum("import (\n\t§\n)", imports.coniunge("\n\t")))
+        }
+    }
+
+    redde parts.coniunge("\n\n")
+}

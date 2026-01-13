@@ -1,0 +1,35 @@
+# Go Expression Generator - Literals
+#
+# Generates Go literal values.
+#
+# TRANSFORMS:
+#   verum/falsum -> true/false
+#   nihil        -> nil
+#   "text"       -> "text"
+#   123          -> 123
+
+ex "../../../ast/expressia" importa LitteraGenus
+
+# Generate literal value
+@ publica
+functio genLittera(LitteraGenus species, textus crudus) -> textus {
+    si species == LitteraGenus.Verum {
+        redde "true"
+    }
+    si species == LitteraGenus.Falsum {
+        redde "false"
+    }
+    si species == LitteraGenus.Nihil {
+        redde "nil"
+    }
+    si species == LitteraGenus.Textus {
+        # String literals need quotes
+        redde scriptum("\"§\"", crudus)
+    }
+    si species == LitteraGenus.Exemplar {
+        # Go doesn't have template literals, treat as regular string
+        redde scriptum("\"§\"", crudus)
+    }
+    # Numerus, Fractus pass through raw value
+    redde crudus
+}
