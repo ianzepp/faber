@@ -3,6 +3,7 @@
 # Routes expression AST nodes to their appropriate resolution functions.
 
 ex "../resolvitor" importa Resolvitor
+ex "../scopus" importa quaereSymbolum
 ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, BIVALENS, NIHIL, IGNOTUM
 ex "../typi" importa usitatumTypus, genericumTypus
 ex "../typi" importa formaTypum, assignabileAd
@@ -111,8 +112,11 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
             # ego type depends on enclosing class context
             si nonnihil a.currentGenusNomen {
                 fixum genusNomen = a.currentGenusNomen qua textus
-                si nonnihil a.scopus.symbola[genusNomen] {
-                    redde a.scopus.symbola[genusNomen].semanticTypus
+                # WHY: Use quaereSymbolum to search parent scopes. When inside a method body,
+                # the class symbol is in a parent scope, not the current function scope.
+                fixum symbolum = quaereSymbolum(a.scopus, genusNomen)
+                si nonnihil symbolum {
+                    redde symbolum.semanticTypus
                 } secus {
                     # Genus not found - should not happen if context is managed correctly
                     redde IGNOTUM
