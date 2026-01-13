@@ -577,7 +577,7 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
     }
 
     # Fallback - should not reach here
-    redde "/* unknown expression */"
+    mori("Codegen error: unhandled expression type in genExpressia")
 }
 
 # =============================================================================

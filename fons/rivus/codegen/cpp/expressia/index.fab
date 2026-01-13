@@ -354,11 +354,10 @@ functio genExpressia(Expressia expr, CppGenerator g) -> textus {
             redde scriptum("/* cede */ §", genExpressia(e.argumentum, g))
         }
 
-        ceterum { }
+        ceterum {
+            mori("Codegen error: unhandled expression type in genExpressia")
+        }
     }
-
-    # Fallback - should not reach here
-    redde "/* unknown expression */"
 }
 
 # =============================================================================

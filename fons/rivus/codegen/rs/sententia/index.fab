@@ -221,7 +221,7 @@ functio genSententiaContent(Sententia stmt, RsGenerator g) -> textus {
             redde scriptum("§// setup block\n§", g.ind(), body)
         }
     }
-    redde scriptum("§/* unknown statement */", g.ind())
+    mori("Codegen error: unhandled statement type in genSententia")
 }
 
 @ publica

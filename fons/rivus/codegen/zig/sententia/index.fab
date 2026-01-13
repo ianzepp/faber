@@ -100,8 +100,7 @@ functio genSententia(Sententia stmt, ZigGenerator g) -> textus {
         }
 
         ceterum {
-            # EDGE: Unknown statement type - generate placeholder
-            redde scriptum("§// TODO: unknown statement", g.ind())
+            mori("Codegen error: unhandled statement type in genSententia")
         }
     }
 }

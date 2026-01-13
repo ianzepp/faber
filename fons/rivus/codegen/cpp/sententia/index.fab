@@ -93,10 +93,10 @@ functio genSententia(Sententia stmt, CppGenerator g) -> textus {
             redde genOrdo(s.nomen qua textus, s.membra qua lista<OrdoMembrum>, g)
         }
 
-        ceterum { }
+        ceterum {
+            mori("Codegen error: unhandled statement type in genSententia")
+        }
     }
-
-    redde scriptum("§// TODO: unknown statement", g.ind())
 }
 
 # =============================================================================

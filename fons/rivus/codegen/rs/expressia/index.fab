@@ -250,7 +250,7 @@ functio genExpressia(Expressia expr, RsGenerator g) -> textus {
             redde scriptum("§ {{ § }}", e.variansNomen, props.coniunge(", "))
         }
     }
-    redde "/* unknown expression */"
+    mori("Codegen error: unhandled expression type in genExpressia")
 }
 
 functio applicaCatenaGradus(textus fons, lista<CatenaGradus> gradus, RsGenerator g) -> textus {
