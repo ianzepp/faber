@@ -544,28 +544,7 @@ functio parseDiscretioDeclaratio(Resolvitor r) -> Sententia {
         # Optional fields in braces or parens
         si p.congruet(SymbolumGenus.UncusSin) {
             dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
-                fixum campusLocus = p.locusActualis()
-                fixum campusTypus = r.adnotatio()
-
-                # EDGE: Allow keywords as field names in compiler-internal ASTs.
-                #       Example: `TypusAnnotatio? typus`, `CapeClausula? cape`.
-                fixum campusNomenSym = p.specta(0)
-                varia campusNomen = ""
-                si campusNomenSym.species == SymbolumGenus.Nomen aut campusNomenSym.species == SymbolumGenus.Verbum {
-                    p.procede()
-                    campusNomen = campusNomenSym.valor
-                } secus {
-                    p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("got '§'", campusNomenSym.valor))
-                    p.procede()
-                    campusNomen = campusNomenSym.valor
-                }
-
-                campi.adde({
-                    locus: campusLocus,
-                    nomen: campusNomen,
-                    typus: campusTypus
-                } qua VariansCampus)
-
+                campi.adde(parseVariansCampusNominatus(r))
                 p.congruet(SymbolumGenus.Coma)
             }
             p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
@@ -798,6 +777,38 @@ functio parseGenericaNomina(Resolvitor r) -> lista<textus> {
     p.expecta(SymbolumGenus.Maior, ParserErrorCodice.ExpectaturAngulusDex)
 
     redde nomina
+}
+
+# Parse a single named variant field (brace syntax)
+#
+# GRAMMAR: variantField := type IDENTIFIER
+#
+# EDGE: Allows keywords as field names for compiler-internal ASTs.
+#       Example: `TypusAnnotatio? typus`, `CapeClausula? cape`.
+@ publica
+functio parseVariansCampusNominatus(Resolvitor r) -> VariansCampus {
+    fixum p = r.parser()
+    fixum locus = p.locusActualis()
+
+    fixum typus = r.adnotatio()
+
+    # Allow keywords as field names
+    fixum nomenSym = p.specta(0)
+    varia nomen = ""
+    si nomenSym.species == SymbolumGenus.Nomen aut nomenSym.species == SymbolumGenus.Verbum {
+        p.procede()
+        nomen = nomenSym.valor
+    } secus {
+        p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("got '§'", nomenSym.valor))
+        p.procede()
+        nomen = nomenSym.valor
+    }
+
+    redde {
+        locus: locus,
+        nomen: nomen,
+        typus: typus
+    } qua VariansCampus
 }
 
 # ============================================================================

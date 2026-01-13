@@ -409,17 +409,95 @@ functio parseElementumSeries(Resolvitor r) -> Expressia {
     redde r.expressia()
 }
 
+# Parse a single object property
+#
+# GRAMMAR:
+#   property := 'sparge' expression           # spread
+#             | '[' expr ']' ':' expression   # computed key
+#             | STRING ':' expression         # string key
+#             | IDENTIFIER ':' expression     # identifier key with value
+#             | IDENTIFIER                    # shorthand { name } = { name: name }
+@ publica
+functio parseObiectumProprietas(Resolvitor r) -> ObiectumProprietas {
+    fixum p = r.parser()
+    fixum locus = p.locusActualis()
+
+    # Spread: sparge expr
+    si p.probaVerbum("sparge") {
+        p.procede()
+        fixum argumentum = r.expressia()
+
+        # WHY: We wrap spread in ObiectumProprietas with special marker
+        #      by using the spread expression as both key and value
+        redde {
+            locus: locus,
+            clavis: argumentum,
+            valor: argumentum,
+            brevitas: falsum,
+            computatum: falsum,
+            dispersum: verum
+        } qua ObiectumProprietas
+    }
+
+    # Parse the key
+    varia clavis = nihil qua Expressia?
+    varia computatum = falsum
+
+    # Computed property: [expr]
+    si p.congruet(SymbolumGenus.QuadratusSin) {
+        clavis = r.expressia()
+        p.expecta(SymbolumGenus.QuadratusDex, ParserErrorCodice.ExpectaturQuadratusDex)
+        computatum = verum
+    }
+    # String key: "name"
+    sin p.proba(SymbolumGenus.Textus) {
+        fixum strSym = p.procede()
+        clavis = finge Littera {
+            locus: strSym.locus,
+            species: LitteraGenus.Textus,
+            crudus: strSym.valor
+        } qua Expressia
+    }
+    # Identifier key: name
+    secus {
+        fixum nomenSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
+        clavis = finge Nomen {
+            locus: nomenSym.locus,
+            valor: nomenSym.valor
+        } qua Expressia
+    }
+
+    # Value follows colon, otherwise shorthand
+    si p.congruet(SymbolumGenus.Colon) {
+        fixum valor = r.expressia()
+
+        redde {
+            locus: locus,
+            clavis: clavis,
+            valor: valor,
+            brevitas: falsum,
+            computatum: computatum,
+            dispersum: falsum
+        } qua ObiectumProprietas
+    }
+
+    # Shorthand: { name } means { name: name }
+    redde {
+        locus: locus,
+        clavis: clavis,
+        valor: clavis,
+        brevitas: verum,
+        computatum: falsum,
+        dispersum: falsum
+    } qua ObiectumProprietas
+}
+
 # Parse object literal
 #
 # GRAMMAR: objectLiteral := '{' (property (',' property)*)? '}'
-#          property := (IDENTIFIER | STRING) ':' expression
-#                    | '[' expr ']' ':' expression  # computed key
-#                    | IDENTIFIER                    # shorthand { name } = { name: name }
-#                    | 'sparge' expression          # spread: sparge obj
 #
 # Examples:
 #   {}
-#   { name: "Alice" }
 #   { name: "Alice", age: 30 }
 #   { name }                      # shorthand
 #   { [key]: value }              # computed
@@ -433,82 +511,9 @@ functio parseObiectumExpressia(Resolvitor r) -> Expressia {
 
     varia proprietates = [] innatum lista<ObiectumProprietas>
 
-    # Parse properties until closing brace
     si non p.proba(SymbolumGenus.UncusDex) {
         fac {
-            fixum propLocus = p.locusActualis()
-
-            # Check for spread: sparge expr
-            si p.probaVerbum("sparge") {
-                p.procede()
-                fixum argumentum = r.expressia()
-
-                # Add as DispersioElementum property
-                # WHY: We wrap spread in ObiectumProprietas with special marker
-                #      by using the spread expression as both key and value
-                proprietates.adde({
-                    locus: propLocus,
-                    clavis: argumentum,
-                    valor: argumentum,
-                    brevitas: falsum,
-                    computatum: falsum,
-                    dispersum: verum
-                } qua ObiectumProprietas)
-            } secus {
-                # Parse the key
-                varia clavis = nihil qua Expressia?
-                varia computatum = falsum
-
-                # Computed property: [expr]
-                si p.congruet(SymbolumGenus.QuadratusSin) {
-                    clavis = r.expressia()
-                    p.expecta(SymbolumGenus.QuadratusDex, ParserErrorCodice.ExpectaturQuadratusDex)
-                    computatum = verum
-                }
-                # String key: "name"
-                sin p.proba(SymbolumGenus.Textus) {
-                    fixum strSym = p.procede()
-                    clavis = finge Littera {
-                        locus: strSym.locus,
-                        species: LitteraGenus.Textus,
-                        crudus: strSym.valor
-                    } qua Expressia
-                }
-                # Identifier key: name
-                secus {
-                    fixum nomenSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
-                    clavis = finge Nomen {
-                        locus: nomenSym.locus,
-                        valor: nomenSym.valor
-                    } qua Expressia
-                }
-
-                # Check for colon (value follows) or shorthand
-                si p.congruet(SymbolumGenus.Colon) {
-                    # key: value
-                    fixum valor = r.expressia()
-
-                    proprietates.adde({
-                        locus: propLocus,
-                        clavis: clavis,
-                        valor: valor,
-                        brevitas: falsum,
-                        computatum: computatum,
-                        dispersum: falsum
-                    } qua ObiectumProprietas)
-                } secus {
-                    # Shorthand: { name } means { name: name }
-                    # Only valid for identifier keys
-                    proprietates.adde({
-                        locus: propLocus,
-                        clavis: clavis,
-                        valor: clavis,
-                        brevitas: verum,
-                        computatum: falsum,
-                        dispersum: falsum
-                    } qua ObiectumProprietas)
-                }
-            }
+            proprietates.adde(parseObiectumProprietas(r))
         } dum p.congruet(SymbolumGenus.Coma) et non p.proba(SymbolumGenus.UncusDex)
     }
 
