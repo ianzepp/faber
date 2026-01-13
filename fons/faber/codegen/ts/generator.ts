@@ -158,7 +158,7 @@ export class TsGenerator {
      * WHY: Comments attached to AST nodes are emitted before the node content.
      */
     leadingComments(node: BaseNode): string {
-        return formatLeadingComments(node, COMMENT_SYNTAX.ts, this.ind());
+        return formatLeadingComments(node, this.ind());
     }
 
     /**
@@ -167,7 +167,7 @@ export class TsGenerator {
      * WHY: Trailing comments appear on the same line after the node content.
      */
     trailingComments(node: BaseNode): string {
-        return formatTrailingComments(node, COMMENT_SYNTAX.ts);
+        return formatTrailingComments(node);
     }
 
     /**

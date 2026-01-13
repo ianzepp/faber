@@ -1,5 +1,5 @@
 /**
- * Target Capability Definitions - Feature support matrix per codegen target
+ * Target Capability Definitions - TypeScript feature support
  *
  * COMPILER PHASE
  * ==============
@@ -7,45 +7,32 @@
  *
  * ARCHITECTURE
  * ============
- * Defines which Faber language features are supported by each compilation target.
- * Used by the validation phase to detect incompatibilities before codegen runs.
+ * Faber is the TypeScript-only reference compiler. TypeScript supports all
+ * Faber language features natively, so this module is simplified.
  *
- * Support levels:
- * - 'supported': Native, faithful implementation with correct semantics
- * - 'unsupported': Cannot be emitted or would break semantics
- *
- * NOTE: This is Phase 1 implementation. 'emulated' and 'mismatched' support
- *       levels are defined in the design doc but not implemented yet.
- *
- * INPUT/OUTPUT CONTRACT
- * =====================
- * INPUT:  None (constant definitions)
- * OUTPUT: TARGET_SUPPORT lookup table for validation
- * ERRORS: N/A (compile-time type checking only)
+ * For multi-target capability matrices, see Rivus.
+ * See consilia/compiler-roles.md for compiler separation rationale.
  *
  * @module codegen/capabilities
  */
-
-import type { CodegenTarget } from './types';
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
 /**
- * Support level for a language feature in a target.
+ * Support level for a language feature.
  *
- * - 'supported': Native, faithful implementation with correct semantics
- * - 'emulated': Systematic transform (e.g., field-by-field extraction, Result<T,E>)
- * - 'unsupported': Cannot be emitted or would break semantics
+ * TypeScript supports all Faber features natively, so this is simplified
+ * from the multi-target version which included 'emulated' and 'unsupported'.
  */
-export type SupportLevel = 'supported' | 'emulated' | 'unsupported';
+export type SupportLevel = 'supported';
 
 /**
- * Target capability matrix defining feature support.
+ * TypeScript capability matrix.
  *
- * WHY: Hierarchical structure matches feature keys used by detector.
- *      Organized by semantic category (controlFlow, errors, etc).
+ * WHY: Kept for API compatibility with validator and feature-detector.
+ *      All features are 'supported' since TS handles everything natively.
  */
 export interface TargetSupport {
     controlFlow: {
@@ -70,170 +57,33 @@ export interface TargetSupport {
 }
 
 // =============================================================================
-// TARGET SUPPORT MATRIX
+// TYPESCRIPT SUPPORT
 // =============================================================================
 
 /**
- * Feature support matrix for all codegen targets.
+ * TypeScript feature support.
  *
- * WHY: Single source of truth for target capabilities.
- *      Based on consilia/capabilities.md design document.
- *
- * Phase 1 scope (per issue #102), extended by issue #109:
- * - Includes 5 targets: ts, py, rs, zig, cpp
- * - Excludes go and fab targets (not in scope)
- * - Only tracks features mentioned in issue
- * - Uses 'supported', 'emulated', and 'unsupported' levels
- *
- * Support levels based on target language capabilities:
- *
- * TypeScript:
+ * All features are natively supported:
  * - Full async/await, generators, async generators
  * - Exception handling with try/catch/throw
  * - Object destructuring
  * - Default parameters
- *
- * Python:
- * - Full async/await, generators, async generators
- * - Exception handling with try/except/raise
- * - Object destructuring NOT supported (no direct syntax)
- * - Default parameters supported
- *
- * Rust:
- * - Async/await supported (async fn)
- * - Generators NOT supported in stable (unstable feature)
- * - Exception handling EMULATED (transforms to Result<T,E>)
- * - Throw statements EMULATED (transforms to return Err)
- * - Object destructuring EMULATED (field-by-field extraction)
- * - Default parameters NOT supported (use Option or overloads)
- *
- * Zig:
- * - Async NOT supported in stable (async/await being redesigned)
- * - Generators NOT supported
- * - Exception handling EMULATED (transforms to error unions)
- * - Throw statements EMULATED (transforms to return error.X)
- * - Object destructuring EMULATED (field-by-field extraction)
- * - Default parameters NOT supported (use optional types)
- *
- * C++:
- * - Async NOT supported (no native async/await)
- * - Generators NOT supported (coroutines experimental)
- * - Exception handling supported (try/catch/throw)
- * - Object destructuring EMULATED (field-by-field extraction)
- * - Default parameters supported
  */
-export const TARGET_SUPPORT: Record<CodegenTarget, TargetSupport> = {
-    ts: {
-        controlFlow: {
-            asyncFunction: 'supported',
-            generatorFunction: 'supported',
-        },
-        errors: {
-            tryCatch: 'supported',
-            throw: 'supported',
-        },
-        binding: {
-            pattern: {
-                object: 'supported',
-            },
-        },
-        params: {
-            defaultValues: 'supported',
+export const TARGET_SUPPORT: TargetSupport = {
+    controlFlow: {
+        asyncFunction: 'supported',
+        generatorFunction: 'supported',
+    },
+    errors: {
+        tryCatch: 'supported',
+        throw: 'supported',
+    },
+    binding: {
+        pattern: {
+            object: 'supported',
         },
     },
-
-    py: {
-        controlFlow: {
-            asyncFunction: 'supported',
-            generatorFunction: 'supported',
-        },
-        errors: {
-            tryCatch: 'supported',
-            throw: 'supported',
-        },
-        binding: {
-            pattern: {
-                object: 'emulated', // field-by-field extraction
-            },
-        },
-        params: {
-            defaultValues: 'supported',
-        },
-    },
-
-    rs: {
-        controlFlow: {
-            asyncFunction: 'supported',
-            generatorFunction: 'unsupported',
-        },
-        errors: {
-            tryCatch: 'emulated',
-            throw: 'emulated',
-        },
-        binding: {
-            pattern: {
-                object: 'emulated',
-            },
-        },
-        params: {
-            defaultValues: 'unsupported',
-        },
-    },
-
-    zig: {
-        controlFlow: {
-            asyncFunction: 'unsupported',
-            generatorFunction: 'unsupported',
-        },
-        errors: {
-            tryCatch: 'emulated',
-            throw: 'emulated',
-        },
-        binding: {
-            pattern: {
-                object: 'emulated',
-            },
-        },
-        params: {
-            defaultValues: 'unsupported',
-        },
-    },
-
-    cpp: {
-        controlFlow: {
-            asyncFunction: 'unsupported',
-            generatorFunction: 'unsupported',
-        },
-        errors: {
-            tryCatch: 'supported',
-            throw: 'supported',
-        },
-        binding: {
-            pattern: {
-                object: 'emulated',
-            },
-        },
-        params: {
-            defaultValues: 'supported',
-        },
-    },
-
-    fab: {
-        controlFlow: {
-            asyncFunction: 'supported',
-            generatorFunction: 'supported',
-        },
-        errors: {
-            tryCatch: 'supported',
-            throw: 'supported',
-        },
-        binding: {
-            pattern: {
-                object: 'supported',
-            },
-        },
-        params: {
-            defaultValues: 'supported',
-        },
+    params: {
+        defaultValues: 'supported',
     },
 };

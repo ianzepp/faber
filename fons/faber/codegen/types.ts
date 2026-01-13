@@ -1,5 +1,5 @@
 /**
- * Code Generation Types - Configuration and target specification
+ * Code Generation Types - Configuration and shared utilities
  *
  * COMPILER PHASE
  * ==============
@@ -7,14 +7,11 @@
  *
  * ARCHITECTURE
  * ============
- * This module defines the configuration interface for the code generation phase.
- * It specifies which target language to emit (TypeScript or Zig) and formatting
- * preferences for the generated output.
+ * Faber is the TypeScript-only reference compiler. This module defines
+ * configuration and utilities for TypeScript code generation.
  *
- * The codegen phase is target-agnostic at the AST level but produces radically
- * different output based on the target. TypeScript output preserves JavaScript
- * semantics with type annotations. Zig output transforms to systems programming
- * patterns with compile-time evaluation and explicit memory management.
+ * For multi-target codegen (Python, Rust, Zig, C++), see Rivus.
+ * See consilia/compiler-roles.md for compiler separation rationale.
  *
  * INPUT/OUTPUT CONTRACT
  * =====================
@@ -28,36 +25,30 @@
 // =============================================================================
 
 /**
- * WHY: Multiple targets are supported for different use cases:
- *      - ts: TypeScript (default) - web-first development
- *      - zig: Systems programming, educational
- *      - py: Python - popular, good for teaching
- *      - rs: Rust - memory safety without garbage collection
- *      - cpp: C++ - systems programming alternative
+ * Faber targets TypeScript only. For other targets, use Rivus.
  */
-export type CodegenTarget = 'ts' | 'zig' | 'py' | 'rs' | 'cpp' | 'fab';
+export type CodegenTarget = 'ts';
 
 /**
  * Features used in the source code that require preamble setup.
  *
- * WHY: Different targets need different setup code (imports, includes, class
- *      definitions) based on which language features are actually used.
- *      Tracking usage allows minimal, tree-shakeable preambles.
+ * WHY: TypeScript codegen needs to know which features are used to emit
+ *      appropriate imports and helper definitions in the preamble.
  *
  * DESIGN: Codegen traverses AST and sets flags. After traversal, preamble
  *         generator emits only what's needed for that specific program.
  */
 export interface RequiredFeatures {
     // Error handling
-    panic: boolean; // mori used - needs Panic class (TS) or includes (C++)
+    panic: boolean; // mori used - needs Panic class
 
-    // Collections (for targets that need imports)
+    // Collections
     lista: boolean; // lista<T> or array methods
     tabula: boolean; // tabula<K,V>
     copia: boolean; // copia<T>
 
     // Async
-    async: boolean; // futura, cede, promissum, figendum, variandum
+    async: boolean; // futura, cede, promissum
     asyncIterator: boolean; // fiet, async for
 
     // Generators
@@ -66,54 +57,13 @@ export interface RequiredFeatures {
     // Numeric types
     decimal: boolean; // decimus - needs decimal.js import
 
-    // Enums
-    enum: boolean; // ordo - needs Enum import (Python)
-
-    // Callable (Python) - for function type annotations
-    callable: boolean; // (T) -> U type annotations - needs Callable import
-
-    // Compile-time evaluation
-    praefixum: boolean; // praefixum blocks - needs __praefixum__ helper (Python)
-
-    // Dataclasses (Python)
-    dataclass: boolean; // discretio - needs dataclass import
-
     // Flumina (streams-first)
     flumina: boolean; // fit functions using Responsum protocol
 
     // Regex
-    usesRegex: boolean; // sed literals - needs re import (Python) or regex crate (Rust)
+    usesRegex: boolean; // sed literals
 
-    // Math (Python) - needs import math
-    math: boolean;
-
-    // Random (Python) - needs import random
-    random: boolean;
-
-    // UUID (Python) - needs import uuid
-    uuid: boolean;
-
-    // Secrets (Python) - needs import secrets (for crypto-safe random bytes)
-    secrets: boolean;
-
-    // I/O (Python) - needs import sys for stderr output
-    sys: boolean;
-
-    // Warnings (Python) - needs import warnings for _mone
-    warnings: boolean;
-
-    // Time (Python) - needs import time for norma/tempus
-    time: boolean;
-
-    // JSON (Python) - needs import json for norma/json
-    json: boolean;
-
-    // I/O streams (Zig) - needs stdout/stderr/stdin setup
-    stdout: boolean;
-    stderr: boolean;
-    stdin: boolean;
-
-    // Node.js modules (TS) - needs import statements
+    // Node.js modules - needs import statements
     fs: boolean; // norma/solum - needs import * as fs from 'fs'
     nodePath: boolean; // norma/solum path utils - needs import * as path from 'path'
 }
@@ -131,23 +81,8 @@ export function createRequiredFeatures(): RequiredFeatures {
         asyncIterator: false,
         generator: false,
         decimal: false,
-        enum: false,
-        callable: false,
-        praefixum: false,
-        dataclass: false,
         flumina: false,
         usesRegex: false,
-        math: false,
-        random: false,
-        uuid: false,
-        secrets: false,
-        sys: false,
-        warnings: false,
-        time: false,
-        json: false,
-        stdout: false,
-        stderr: false,
-        stdin: false,
         fs: false,
         nodePath: false,
     };
@@ -155,28 +90,17 @@ export function createRequiredFeatures(): RequiredFeatures {
 
 /**
  * Configuration options for code generation.
- *
- * DESIGN: Optional fields allow sensible defaults in each target generator.
- *         Target-specific options are documented with comments.
  */
 export interface CodegenOptions {
     /**
-     * Target language to generate.
-     * WHY: Defaults to 'ts' in generate() function for web-first development.
-     */
-    target?: CodegenTarget;
-
-    /**
      * Indentation string for generated code.
-     * WHY: TypeScript convention is 2 spaces, Zig convention is 4 spaces.
-     *      Each target sets its own default.
+     * Default: 2 spaces (TypeScript convention)
      */
     indent?: string;
 
     /**
      * Whether to emit semicolons at end of statements.
-     * TARGET: TypeScript only - Zig always requires semicolons.
-     *         This option is ignored for Zig target.
+     * Default: true
      */
     semicolons?: boolean;
 }
@@ -299,91 +223,74 @@ export function isExternaFromAnnotations(annotations?: Annotation[]): boolean {
 }
 
 /**
- * Comment syntax configuration per target.
- *
- * WHY: Different targets have different comment syntax:
- *      - TS/Rust/C++: // line and slash-star block
- *      - Python: # line and """ block
- *      - Zig: // line only (no block comments)
+ * Comment syntax configuration for TypeScript.
  */
 export interface CommentSyntax {
-    line: string; // Line comment prefix (e.g., '//', '#')
-    blockStart: string | null; // Block comment start (e.g., '/*', '"""') or null if not supported
-    blockEnd: string | null; // Block comment end (e.g., '*/', '"""') or null if not supported
+    line: string; // Line comment prefix: '//'
+    blockStart: string; // Block comment start: '/*'
+    blockEnd: string; // Block comment end: '*/'
 }
 
 /**
- * Comment syntax for each target.
+ * TypeScript comment syntax.
  */
-export const COMMENT_SYNTAX: Record<CodegenTarget, CommentSyntax> = {
-    ts: { line: '//', blockStart: '/*', blockEnd: '*/' },
-    py: { line: '#', blockStart: '"""', blockEnd: '"""' },
-    rs: { line: '//', blockStart: '/*', blockEnd: '*/' },
-    cpp: { line: '//', blockStart: '/*', blockEnd: '*/' },
-    zig: { line: '//', blockStart: null, blockEnd: null }, // Zig has no block comments
-    fab: { line: '#', blockStart: null, blockEnd: null },
+export const COMMENT_SYNTAX: CommentSyntax = {
+    line: '//',
+    blockStart: '/*',
+    blockEnd: '*/',
 };
 
 /**
- * Format a single comment for a target.
+ * Format a single comment for TypeScript output.
  *
  * @param comment - The comment to format
- * @param syntax - The comment syntax for the target
  * @param indent - Current indentation string
  * @returns Formatted comment string(s)
  */
-export function formatComment(comment: Comment, syntax: CommentSyntax, indent: string): string {
+export function formatComment(comment: Comment, indent: string): string {
     if (comment.type === 'line') {
-        return `${indent}${syntax.line} ${comment.value}`;
+        return `${indent}${COMMENT_SYNTAX.line} ${comment.value}`;
     }
 
     // Block or doc comment
-    if (syntax.blockStart && syntax.blockEnd) {
-        // Multi-line block comment
-        const lines = comment.value.split('\n');
-        if (lines.length === 1) {
-            return `${indent}${syntax.blockStart} ${comment.value.trim()} ${syntax.blockEnd}`;
-        }
-        // Multi-line: preserve formatting
-        const result = [`${indent}${syntax.blockStart}`];
-        for (const line of lines) {
-            result.push(`${indent} ${line.trim()}`);
-        }
-        result.push(`${indent} ${syntax.blockEnd}`);
-        return result.join('\n');
+    const lines = comment.value.split('\n');
+    if (lines.length === 1) {
+        return `${indent}${COMMENT_SYNTAX.blockStart} ${comment.value.trim()} ${COMMENT_SYNTAX.blockEnd}`;
     }
 
-    // Target doesn't support block comments (e.g., Zig) - convert to line comments
-    const lines = comment.value.split('\n');
-    return lines.map(line => `${indent}${syntax.line} ${line.trim()}`).join('\n');
+    // Multi-line: preserve formatting
+    const result = [`${indent}${COMMENT_SYNTAX.blockStart}`];
+    for (const line of lines) {
+        result.push(`${indent} ${line.trim()}`);
+    }
+    result.push(`${indent} ${COMMENT_SYNTAX.blockEnd}`);
+    return result.join('\n');
 }
 
 /**
  * Format leading comments for a node.
  *
  * @param node - The AST node
- * @param syntax - The comment syntax for the target
  * @param indent - Current indentation string
  * @returns Formatted leading comments with trailing newline, or empty string
  */
-export function formatLeadingComments(node: BaseNode, syntax: CommentSyntax, indent: string): string {
+export function formatLeadingComments(node: BaseNode, indent: string): string {
     if (!node.leadingComments || node.leadingComments.length === 0) {
         return '';
     }
-    return node.leadingComments.map(c => formatComment(c, syntax, indent)).join('\n') + '\n';
+    return node.leadingComments.map(c => formatComment(c, indent)).join('\n') + '\n';
 }
 
 /**
  * Format trailing comments for a node.
  *
  * @param node - The AST node
- * @param syntax - The comment syntax for the target
  * @returns Formatted trailing comments with leading space, or empty string
  */
-export function formatTrailingComments(node: BaseNode, syntax: CommentSyntax): string {
+export function formatTrailingComments(node: BaseNode): string {
     if (!node.trailingComments || node.trailingComments.length === 0) {
         return '';
     }
     // Trailing comments go on the same line, so no indent
-    return node.trailingComments.map(c => ` ${syntax.line} ${c.value}`).join('');
+    return node.trailingComments.map(c => ` ${COMMENT_SYNTAX.line} ${c.value}`).join('');
 }

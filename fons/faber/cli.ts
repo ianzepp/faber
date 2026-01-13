@@ -41,8 +41,7 @@ import { resolve } from 'node:path';
 import { tokenize } from './tokenizer';
 import { parse } from './parser';
 import { analyze } from './semantic';
-import { generate, type CodegenTarget } from './codegen';
-import { TargetCompatibilityError } from './codegen/validator';
+import { generate } from './codegen';
 
 // =============================================================================
 // CONSTANTS
@@ -53,19 +52,6 @@ import { TargetCompatibilityError } from './codegen/validator';
  * WHY: Hardcoded until we integrate with package.json or build system.
  */
 const VERSION = '0.2.0';
-
-/**
- * Default compilation target.
- * WHY: TypeScript is the primary target as it's most accessible and runs
- *      directly via Bun without additional toolchain setup.
- */
-const DEFAULT_TARGET: CodegenTarget = 'ts';
-
-/**
- * Valid compilation targets.
- * WHY: Defined as array for validation and help text generation.
- */
-const VALID_TARGETS = ['ts', 'zig', 'py', 'rs', 'cpp', 'fab'] as const;
 
 // =============================================================================
 // ARGUMENT PARSING
@@ -86,19 +72,18 @@ const args = process.argv.slice(2);
 function printUsage(): void {
     console.log(`
 Faber Romanus - The Roman Craftsman
-A Latin programming language
+A Latin programming language (TypeScript target)
 
 Usage:
   faber <command> <file> [options]
 
 Commands:
-  compile, finge <file>  Compile .fab file to target language
-  run, curre <file>      Compile and execute (TS target only)
-  check, proba <file>    Check for errors (with -t, also validates target compiles)
+  compile, finge <file>  Compile .fab file to TypeScript
+  run, curre <file>      Compile and execute immediately
+  check, proba <file>    Check for errors without generating code
   format, forma <file>   Format source file with Prettier
 
 Options:
-  -t, --target <lang>    Target language: ts (default), zig, py, rs, cpp
   -o, --output <file>    Output file (default: stdout)
   -c, --check            Check formatting without writing (format command)
   -h, --help             Show this help
@@ -106,14 +91,13 @@ Options:
 
 Reads from stdin if no file specified (or use '-' explicitly).
 
+For other targets (Python, Rust, Zig, C++), use the Rivus compiler.
+
 Examples:
   faber compile hello.fab                     # Compile to TS (stdout)
   faber compile hello.fab -o hello.ts         # Compile to TS file
-  faber compile hello.fab --target zig        # Compile to Zig
-  faber compile hello.fab -t py -o hello.py   # Compile to Python
-  faber run hello.fab                         # Compile to TS and execute
+  faber run hello.fab                         # Compile and execute
   faber check hello.fab                       # Check for parse/semantic errors
-  faber check hello.fab -t zig                # Also validate Zig compiles
   faber format hello.fab                      # Format file in place
   faber format hello.fab --check              # Check if file is formatted
   echo 'scribe "hello"' | faber compile       # Compile from stdin
@@ -168,17 +152,12 @@ function getDisplayName(inputFile: string): string {
  * ERROR HANDLING: Errors from each stage are collected and reported with
  *                 file positions. Process exits with code 1 on first error.
  *
- * TARGET DIFFERENCES:
- * - TS: Generates TypeScript with type annotations
- * - Zig: Generates Zig with explicit return types and error handling
- *
  * @param inputFile - Path to .fab source file
- * @param target - Compilation target language
  * @param outputFile - Optional output file path (defaults to stdout)
  * @param silent - If true, don't print to stdout (for use by run command)
- * @returns Generated source code as string
+ * @returns Generated TypeScript source code as string
  */
-async function compile(inputFile: string, target: CodegenTarget, outputFile?: string, silent = false): Promise<string> {
+async function compile(inputFile: string, outputFile?: string, silent = false): Promise<string> {
     const source = await readSource(inputFile);
     const displayName = getDisplayName(inputFile);
 
@@ -241,29 +220,17 @@ async function compile(inputFile: string, target: CodegenTarget, outputFile?: st
 
     let output: string;
     try {
-        output = generate(program, { target });
+        output = generate(program);
     } catch (err) {
-        if (err instanceof TargetCompatibilityError) {
-            // WHY: Format each error on its own line, matching existing CLI style
-            console.error('Target compatibility errors:');
-            for (const e of err.errors) {
-                const pos = e.position ? `${displayName}:${e.position.line}:${e.position.column}` : displayName;
-                console.error(`  ${pos} - ${e.message}`);
-                if (e.suggestion) {
-                    console.error(`    hint: ${e.suggestion}`);
-                }
-            }
-            process.exit(1);
-        }
-        // WHY: Codegen errors (e.g., unsupported target features) should display cleanly
+        // WHY: Codegen errors should display cleanly
         const message = err instanceof Error ? err.message : String(err);
-        console.error(`Codegen error (${target}): ${message}`);
+        console.error(`Codegen error: ${message}`);
         process.exit(1);
     }
 
     if (outputFile) {
         await Bun.write(outputFile, output);
-        console.log(`Compiled: ${displayName} -> ${outputFile} (${target})`);
+        console.log(`Compiled: ${displayName} -> ${outputFile}`);
     } else if (!silent) {
         // WHY: Write to stdout for Unix pipeline compatibility
         console.log(output);
@@ -286,7 +253,7 @@ async function compile(inputFile: string, target: CodegenTarget, outputFile?: st
  * @param inputFile - Path to .fab source file
  */
 async function run(inputFile: string): Promise<void> {
-    const ts = await compile(inputFile, 'ts', undefined, true);
+    const ts = await compile(inputFile, undefined, true);
 
     // WHY: Bun can execute TypeScript directly - write to temp file and run
     const tempFile = `/tmp/faber-${Date.now()}.ts`;
@@ -315,17 +282,14 @@ async function run(inputFile: string): Promise<void> {
  * Validate source file for errors without generating code.
  *
  * PHASES RUN: Tokenizer, parser, and semantic analysis.
- * If a target is specified, also generates code and validates with the target compiler.
  *
  * USE CASE: Fast syntax validation in editor plugins or pre-commit hooks.
- *           With -t flag, validates generated code compiles on target.
  *
  * OUTPUT: Reports error count and positions, exits 0 if no errors
  *
  * @param inputFile - Path to .fab source file
- * @param target - Optional target to validate generated code against
  */
-async function check(inputFile: string, target?: CodegenTarget): Promise<void> {
+async function check(inputFile: string): Promise<void> {
     const source = await readSource(inputFile);
     const displayName = getDisplayName(inputFile);
 
@@ -358,97 +322,7 @@ async function check(inputFile: string, target?: CodegenTarget): Promise<void> {
         process.exit(1);
     }
 
-    // If no target specified, we're done
-    if (!target) {
-        console.log(`${displayName}: No errors`);
-        return;
-    }
-
-    // Generate code and validate with target compiler
-    if (!program) {
-        console.error('Failed to parse program');
-        process.exit(1);
-    }
-
-    let code: string;
-    try {
-        code = generate(program, { target });
-    } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        console.error(`Codegen error (${target}): ${message}`);
-        process.exit(1);
-    }
-
-    const exitCode = await verifyWithTarget(code, target, displayName);
-    if (exitCode !== 0) {
-        process.exit(1);
-    }
-
-    console.log(`${displayName}: No errors (${target})`);
-}
-
-/**
- * Verify generated code compiles with the target compiler.
- *
- * WHY: Each target has different validation commands:
- * - zig: `zig ast-check` for syntax, would need build for full validation
- * - rs: `rustc --emit=metadata` for type checking without codegen
- * - cpp: `g++ -fsyntax-only` for syntax validation
- * - py: `python -m py_compile` for syntax validation
- * - ts: `bun build --no-bundle` for type checking
- *
- * @returns Exit code from the compiler (0 = success)
- */
-async function verifyWithTarget(code: string, target: CodegenTarget, displayName: string): Promise<number> {
-    const EXT: Record<CodegenTarget, string> = {
-        zig: '.zig',
-        rs: '.rs',
-        cpp: '.cpp',
-        py: '.py',
-        ts: '.ts',
-        fab: '.fab',
-    };
-
-    const tempFile = `/tmp/faber-${Date.now()}${EXT[target]}`;
-
-    try {
-        await Bun.write(tempFile, code);
-
-        // Target-specific validation commands
-        // WHY: fab uses faber check to validate round-trip through parser
-        const checkCmd: Record<CodegenTarget, string[]> = {
-            zig: ['zig', 'ast-check', tempFile],
-            rs: ['rustc', '--emit=metadata', '--out-dir=/tmp', tempFile],
-            cpp: ['g++', '-fsyntax-only', '-std=c++20', tempFile],
-            py: ['python3', '-m', 'py_compile', tempFile],
-            ts: ['bun', 'build', '--no-bundle', tempFile],
-            fab: ['bun', 'run', 'faber', 'check', tempFile],
-        };
-
-        const proc = Bun.spawn(checkCmd[target], {
-            stdout: 'pipe',
-            stderr: 'pipe',
-        });
-
-        const exitCode = await proc.exited;
-
-        if (exitCode !== 0) {
-            const stderr = await new Response(proc.stderr).text();
-            console.error(`${displayName}: ${target} compiler errors:`);
-            console.error(stderr);
-        }
-
-        return exitCode;
-    } finally {
-        // Clean up temp file
-        try {
-            await Bun.write(tempFile, '');
-            const { unlink } = await import('node:fs/promises');
-            await unlink(tempFile);
-        } catch {
-            // Ignore cleanup errors
-        }
-    }
+    console.log(`${displayName}: No errors`);
 }
 
 /**
@@ -495,8 +369,6 @@ if (command === '-v' || command === '--version') {
 
 let inputFile: string | undefined;
 let outputFile: string | undefined;
-let target: CodegenTarget = DEFAULT_TARGET;
-let targetExplicit = false;
 let checkOnly = false;
 
 // WHY: Scan all args, options can appear anywhere, non-option is the file
@@ -505,16 +377,6 @@ for (let i = 1; i < args.length; i++) {
 
     if (arg === '-o' || arg === '--output') {
         outputFile = args[++i];
-    } else if (arg === '-t' || arg === '--target') {
-        const t = args[++i];
-
-        if (!t || !VALID_TARGETS.includes(t as (typeof VALID_TARGETS)[number])) {
-            console.error(`Error: Unknown target '${t}'. Valid targets: ${VALID_TARGETS.join(', ')}`);
-            process.exit(1);
-        }
-
-        target = t as CodegenTarget;
-        targetExplicit = true;
     } else if (arg === '-c' || arg === '--check') {
         checkOnly = true;
     } else if (arg.startsWith('-') && arg !== '-') {
@@ -536,21 +398,15 @@ const effectiveInputFile = inputFile ?? '-';
 switch (command) {
     case 'compile':
     case 'finge':
-        await compile(effectiveInputFile, target, outputFile);
+        await compile(effectiveInputFile, outputFile);
         break;
     case 'run':
     case 'curre':
-        if (target !== 'ts') {
-            console.error("Error: 'run' command only works with TS target");
-            process.exit(1);
-        }
-
         await run(effectiveInputFile);
         break;
     case 'check':
     case 'proba':
-        // WHY: Pass target only if explicitly specified via -t flag
-        await check(effectiveInputFile, targetExplicit ? target : undefined);
+        await check(effectiveInputFile);
         break;
     case 'format':
     case 'forma':

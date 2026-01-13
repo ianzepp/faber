@@ -1,5 +1,5 @@
 /**
- * Code Generation Entry Point - Multi-target source code emission
+ * Code Generation Entry Point - TypeScript source code emission
  *
  * COMPILER PHASE
  * ==============
@@ -7,101 +7,48 @@
  *
  * ARCHITECTURE
  * ============
- * This module serves as the router for the code generation phase. It receives
- * a validated AST from the semantic analysis phase and dispatches to the
- * appropriate target-specific code generator.
+ * Faber is the TypeScript-only reference compiler. Multi-target codegen
+ * (Python, Rust, Zig, C++) is handled by Rivus.
  *
- * The design uses a simple switch statement rather than a plugin architecture
- * because we only support two targets and want to keep the codebase simple.
- * Each target generator is responsible for its own language semantics and
- * formatting conventions.
- *
- * This module also acts as the public API surface for the codegen package,
- * re-exporting types and target-specific generators for direct use.
+ * See consilia/compiler-roles.md for the compiler separation rationale.
  *
  * INPUT/OUTPUT CONTRACT
  * =====================
  * INPUT:  Program AST node from parser (assumed valid after semantic analysis)
- *         CodegenOptions specifying target and formatting preferences
- * OUTPUT: String containing valid source code in the target language
- * ERRORS: Throws on unknown target (should be prevented by TypeScript types)
+ *         CodegenOptions specifying formatting preferences
+ * OUTPUT: String containing valid TypeScript source code
  *
  * INVARIANTS
  * ==========
  * INV-1: Program AST must be valid (semantic analysis must have passed)
- * INV-2: Generated code must be syntactically valid in target language
- * INV-3: Generated code preserves Latin source semantics in target language
+ * INV-2: Generated code must be syntactically valid TypeScript
+ * INV-3: Generated code preserves Latin source semantics
  */
 
 import type { Program } from '../parser/ast';
 import type { CodegenOptions } from './types';
 import { generateTs } from './ts/index';
-import { generateZig } from './zig/index';
-import { generatePy } from './py/index';
-import { generateRs } from './rs/index';
-import { generateCpp } from './cpp/index';
-import { generateFab } from './fab/index';
-import { validateTargetCompatibility, TargetCompatibilityError } from './validator';
 
 // =============================================================================
 // PUBLIC API
 // =============================================================================
 
-export type { CodegenOptions, CodegenTarget } from './types';
+export type { CodegenOptions } from './types';
 export { generateTs } from './ts/index';
-export { generateZig } from './zig/index';
-export { generatePy } from './py/index';
-export { generateRs } from './rs/index';
-export { generateCpp } from './cpp/index';
-export { generateFab } from './fab/index';
 
 // =============================================================================
-// TARGET DISPATCHER
+// GENERATOR
 // =============================================================================
 
 /**
- * Generate source code from AST for the specified target language.
+ * Generate TypeScript source code from AST.
  *
- * TRANSFORMS:
- *   Latin AST -> TypeScript (default)
- *   Latin AST -> Zig (when target: "zig")
- *
- * TARGET DIFFERENCES:
- *   TypeScript: Preserves JavaScript runtime semantics with type annotations
- *   Zig:        Transforms to compile-time evaluation and explicit types
- *
- * WHY: Defaults to TypeScript for web-first development workflow.
+ * WHY: Faber targets TypeScript only. For other targets, use Rivus.
  *
  * @param program - Validated AST from parser/semantic analyzer
- * @param options - Target and formatting configuration
- * @returns Generated source code string
- * @throws Error if target is not 'ts' or 'zig' (should never happen with types)
+ * @param options - Formatting configuration
+ * @returns Generated TypeScript source code string
  */
 export function generate(program: Program, options: CodegenOptions = {}): string {
-    // WHY: Default to TypeScript for web-first development
-    const target = options.target ?? 'ts';
-
-    // Validate target compatibility BEFORE codegen
-    const validationErrors = validateTargetCompatibility(program, target);
-    if (validationErrors.length > 0) {
-        throw new TargetCompatibilityError(validationErrors, target);
-    }
-
-    switch (target) {
-        case 'ts':
-            return generateTs(program, options);
-        case 'zig':
-            return generateZig(program, options);
-        case 'py':
-            return generatePy(program, options);
-        case 'rs':
-            return generateRs(program, options);
-        case 'cpp':
-            return generateCpp(program, options);
-        case 'fab':
-            return generateFab(program, options);
-        default:
-            // EDGE: TypeScript types prevent this, but defensive check for runtime
-            throw new Error(`Unknown codegen target: ${target}`);
-    }
+    return generateTs(program, options);
 }
