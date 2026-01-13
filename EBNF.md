@@ -139,28 +139,28 @@ functio compose((A) -> B f, (B) -> C g) -> (A) -> C
 
 ### Primitive Types
 
-| Faber | Meaning |
-|-------|---------|
-| `textus` | string |
-| `numerus` | integer |
-| `fractus` | float |
+| Faber      | Meaning |
+| ---------- | ------- |
+| `textus`   | string  |
+| `numerus`  | integer |
+| `fractus`  | float   |
 | `bivalens` | boolean |
-| `nihil` | null |
-| `vacuum` | void |
-| `numquam` | never |
-| `ignotum` | unknown |
-| `octeti` | bytes |
+| `nihil`    | null    |
+| `vacuum`   | void    |
+| `numquam`  | never   |
+| `ignotum`  | unknown |
+| `octeti`   | bytes   |
 
 ### Generic Collections
 
-| Faber | Meaning |
-|-------|---------|
-| `lista<T>` | array |
-| `tabula<K,V>` | map |
-| `copia<T>` | set |
-| `promissum<T>` | promise |
-| `cursor<T>` | iterator |
-| `unio<A,B>` | union |
+| Faber          | Meaning  |
+| -------------- | -------- |
+| `lista<T>`     | array    |
+| `tabula<K,V>`  | map      |
+| `copia<T>`     | set      |
+| `promissum<T>` | promise  |
+| `cursor<T>`    | iterator |
+| `unio<A,B>`    | union    |
 
 ---
 
@@ -267,7 +267,7 @@ shiftOp    := 'sinistratum' | 'dextratum'
 range      := additive (('..' | 'ante' | 'usque') additive ('per' additive)?)?
 additive   := multiplicative (('+' | '-') multiplicative)*
 multiplicative := unary (('*' | '/' | '%') unary)*
-unary      := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'novum' | 'finge') unary | cast
+unary      := ('!' | '-' | '~' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'novum' | 'finge') unary | cast
 cast       := call ('qua' typeAnnotation | 'innatum' typeAnnotation | conversionOp)*
 conversionOp := ('numeratum' | 'fractatum') typeParams? ('vel' unary)?
              | ('textatum' | 'bivalentum')
@@ -399,53 +399,53 @@ inStmt := 'in' expression blockStmt
 
 ## Keyword Reference
 
-| Category | Faber | Meaning |
-|----------|-------|---------|
-| **Declarations** | `fixum` | const |
-| | `varia` | let |
-| | `functio` | function |
-| | `genus` | class |
-| | `pactum` | interface |
-| | `typus` | type alias |
-| | `ordo` | enum |
-| | `discretio` | tagged union |
-| **Control Flow** | `si` / `sin` / `secus` | if / else-if / else |
-| | `dum` | while |
-| | `ex...pro` | for-of |
-| | `de...pro` | for-in |
-| | `elige` / `casu` | switch / case |
-| | `discerne` | pattern match |
-| | `custodi` | guard |
-| | `redde` | return |
-| | `rumpe` | break |
-| | `perge` | continue |
-| **Error Handling** | `tempta` | try |
-| | `cape` | catch |
-| | `demum` | finally |
-| | `iace` | throw |
-| | `mori` | panic |
-| | `adfirma` | assert |
-| **Async** | `futura` | async modifier |
-| | `cede` | await |
-| **Boolean** | `verum` | true |
-| | `falsum` | false |
-| | `et` | and |
-| | `aut` | or |
-| | `non` | not |
-| | `vel` | nullish coalescing |
-| **Objects** | `ego` | this/self |
-| | `novum` | new |
-| | `finge` | construct variant |
-| **Type Conversion** | `numeratum` | parse to integer |
-| | `fractatum` | parse to float |
-| | `textatum` | convert to string |
-| | `bivalentum` | convert to boolean |
-| | `Hex` / `Oct` / `Bin` / `Dec` | radix types |
-| **Bitwise** | `sinistratum` | left shift (<<) |
-| | `dextratum` | right shift (>>) |
-| **Output** | `scribe` | log |
-| | `vide` | debug |
-| | `mone` | warn |
+| Category            | Faber                         | Meaning             |
+| ------------------- | ----------------------------- | ------------------- |
+| **Declarations**    | `fixum`                       | const               |
+|                     | `varia`                       | let                 |
+|                     | `functio`                     | function            |
+|                     | `genus`                       | class               |
+|                     | `pactum`                      | interface           |
+|                     | `typus`                       | type alias          |
+|                     | `ordo`                        | enum                |
+|                     | `discretio`                   | tagged union        |
+| **Control Flow**    | `si` / `sin` / `secus`        | if / else-if / else |
+|                     | `dum`                         | while               |
+|                     | `ex...pro`                    | for-of              |
+|                     | `de...pro`                    | for-in              |
+|                     | `elige` / `casu`              | switch / case       |
+|                     | `discerne`                    | pattern match       |
+|                     | `custodi`                     | guard               |
+|                     | `redde`                       | return              |
+|                     | `rumpe`                       | break               |
+|                     | `perge`                       | continue            |
+| **Error Handling**  | `tempta`                      | try                 |
+|                     | `cape`                        | catch               |
+|                     | `demum`                       | finally             |
+|                     | `iace`                        | throw               |
+|                     | `mori`                        | panic               |
+|                     | `adfirma`                     | assert              |
+| **Async**           | `futura`                      | async modifier      |
+|                     | `cede`                        | await               |
+| **Boolean**         | `verum`                       | true                |
+|                     | `falsum`                      | false               |
+|                     | `et`                          | and                 |
+|                     | `aut`                         | or                  |
+|                     | `non`                         | not                 |
+|                     | `vel`                         | nullish coalescing  |
+| **Objects**         | `ego`                         | this/self           |
+|                     | `novum`                       | new                 |
+|                     | `finge`                       | construct variant   |
+| **Type Conversion** | `numeratum`                   | parse to integer    |
+|                     | `fractatum`                   | parse to float      |
+|                     | `textatum`                    | convert to string   |
+|                     | `bivalentum`                  | convert to boolean  |
+|                     | `Hex` / `Oct` / `Bin` / `Dec` | radix types         |
+| **Bitwise**         | `sinistratum`                 | left shift (<<)     |
+|                     | `dextratum`                   | right shift (>>)    |
+| **Output**          | `scribe`                      | log                 |
+|                     | `vide`                        | debug               |
+|                     | `mone`                        | warn                |
 
 ---
 
