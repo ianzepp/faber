@@ -4,6 +4,7 @@
 #
 # TRANSFORMS:
 #   per x de lista { ... }  -> for (const x in lista) { ... }
+#   per x de tabula { ... } -> for (const x of tabula.keys()) { ... }
 #   per x ex lista { ... }  -> for (const x of lista) { ... }
 #   per x ex 0..10 { ... }  -> for (let x = 0; x < 10; x++) { ... }
 
@@ -15,9 +16,39 @@ ex "../nucleus" importa TsGenerator
 ex "../expressia/index" importa genExpressia
 ex "./index" importa genSententia
 
+# Check if expression is a known tabula variable name
+functio estTabula(Expressia expr, TsGenerator g) -> bivalens {
+    discerne expr {
+        casu Nomen ut n {
+            fixum nomen = n.valor qua textus
+            ex g.tabulaNominata pro item {
+                si item == nomen {
+                    redde verum
+                }
+            }
+        }
+        ceterum { }
+    }
+    redde falsum
+}
+
 @ publica
 functio genIteratio(IteratioGenus species, textus variabilis, Expressia iterabile, Sententia corpus, bivalens asynca, ignotum cape, TsGenerator g) -> textus {
-    fixum keyword = species == IteratioGenus.De sic "in" secus "of"
+    # WHY: JavaScript Maps don't support for-in iteration.
+    #      When iterating keys with 'de tabula pro key', we must use .keys() method.
+    varia keyword = "of"
+    varia iterStr = genExpressia(iterabile, g)
+
+    si species == IteratioGenus.De {
+        si estTabula(iterabile, g) {
+            # tabula: use for-of with .keys()
+            iterStr = scriptum("§.keys()", iterStr)
+        } secus {
+            # Regular object: use for-in
+            keyword = "in"
+        }
+    }
+
     fixum asyncPrefix = asynca sic "await " secus ""
 
     g.intraProfundum()
@@ -49,7 +80,7 @@ functio genIteratio(IteratioGenus species, textus variabilis, Expressia iterabil
         ceterum { }
     }
 
-    fixum loop = scriptum("§for §(const § § §) {\n§\n§}", g.ind(), asyncPrefix, variabilis, keyword, genExpressia(iterabile, g), body, g.ind())
+    fixum loop = scriptum("§for §(const § § §) {\n§\n§}", g.ind(), asyncPrefix, variabilis, keyword, iterStr, body, g.ind())
 
     si nonnihil cape {
         fixum c = cape qua CapeClausula

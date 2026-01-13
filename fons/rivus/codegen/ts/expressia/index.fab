@@ -210,7 +210,17 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
                         si (obj.proprietates qua lista<ObiectumProprietas>).longitudo() > 0 {
                             varia entries = [] innatum lista<textus>
                             ex (obj.proprietates qua lista<ObiectumProprietas>) pro prop {
-                                fixum key = genExpressia(prop.clavis, g)
+                                # WHY: Object property keys that are identifiers need to be quoted
+                                #      when used as Map keys: {a: 1} -> [["a", 1]]
+                                varia key = ""
+                                discerne prop.clavis {
+                                    casu Nomen ut n {
+                                        key = scriptum("\"§\"", n.valor)
+                                    }
+                                    casu _ {
+                                        key = genExpressia(prop.clavis, g)
+                                    }
+                                }
                                 fixum val = genExpressia(prop.valor, g)
                                 entries.adde(scriptum("[§, §]", key, val))
                             }
