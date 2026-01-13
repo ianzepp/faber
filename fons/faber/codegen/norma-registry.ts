@@ -22,6 +22,20 @@ export type VerteTranslation = Translation;
 /**
  * Look up a norma translation for a method call.
  *
+ * WHY: This is the core lookup bridging Latin method names to target implementations.
+ *   - "norma" (Latin: "rule/standard") defines the canonical API contract
+ *   - Keyed by collection (lista, tabula, textus) then method name
+ *   - Returns undefined for user-defined methods (pass-through to native)
+ *
+ * WHY: The two-level lookup (collection → method):
+ *   - Same method name can have different implementations per collection
+ *   - e.g., lista.adde() vs tabula.adde() map to different target code
+ *   - Flat namespace would require prefixing (lista_adde) - uglier API
+ *
+ * WHY: _target param is currently unused but preserved:
+ *   - norma.gen.ts is TS-specific; future: norma.rs.gen.ts, etc.
+ *   - Signature anticipates multi-target without breaking callers
+ *
  * @param target Target language (only 'ts' supported)
  * @param collection Collection name (lista, tabula, copia)
  * @param method Method name (adde, filtrata, etc.)

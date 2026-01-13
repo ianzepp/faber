@@ -178,7 +178,7 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
     }
 
     # Body
-    si abstracta aut corpus == nihil {
+    si abstracta aut nihil corpus {
         result = scriptum("§;", result)
         redde result
     }

@@ -63,7 +63,7 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
         result = scriptum("§ -> Self", result)
     }
 
-    si abstracta aut corpus == nihil {
+    si abstracta aut nihil corpus {
         redde scriptum("§;", result)
     }
 

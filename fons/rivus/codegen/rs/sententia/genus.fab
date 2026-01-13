@@ -21,7 +21,7 @@ functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotu
         }
     }
 
-    si campi.longitudo() == 0 et structor == nihil {
+    si campi.longitudo() == 0 et nihil structor {
         result = scriptum("§;", result)
     } secus {
         result = scriptum("§ {{", result)

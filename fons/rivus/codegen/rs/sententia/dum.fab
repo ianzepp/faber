@@ -12,7 +12,7 @@ functio genDum(ignotum condicio, Sententia corpus, ignotum cape, RsGenerator g) 
     fixum body = genSententia(corpus, g)
     g.exiProfundum()
 
-    si condicio == nihil {
+    si nihil condicio {
         si body == "" { redde scriptum("§loop {{}}", g.ind()) }
         redde scriptum("§loop {{\n§\n§}}", g.ind(), body, g.ind())
     }

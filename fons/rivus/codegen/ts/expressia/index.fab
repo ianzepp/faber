@@ -436,7 +436,7 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
         casu AbExpressia ut e {
             fixum fons = genExpressia(e.fons, g)
 
-            si e.filtrum == nihil {
+            si nihil e.filtrum {
                 si nonnihil e.gradus {
                     redde applicaCatenaGradus(fons, e.gradus qua lista<CatenaGradus>, g)
                 }
@@ -813,11 +813,27 @@ functio legeNumerusTextus(textus crudus) -> numerus {
 # =============================================================================
 
 # Apply a norma template translation with parameter substitution.
-# WHY: Norma templates use § placeholders that map to params.
-# - 'ego' maps to the receiver object
-# - Other params consume args in order
-# - §0, §1 etc. are explicit indices into the values array
-# - Plain § uses implicit positional indexing
+#
+# WHY: § was chosen as the placeholder sigil because:
+#   - It's visually distinct from any target language syntax (unlike $ or %)
+#   - It doesn't conflict with template literals, regex, or shell expansion
+#   - It's a single Unicode codepoint, making parsing unambiguous
+#   - Latin "sectio" evokes "section/segment" - a placeholder for content
+#
+# WHY: Dual addressing modes (implicit § vs explicit §0, §1):
+#   - Implicit § enables terse templates when order matches params
+#   - Explicit §0, §1 allows reordering or reusing values
+#   - Mixed usage is valid: "§.map(§1)" uses implicit then explicit
+#
+# WHY: 'ego' maps to receiver, others consume args in declaration order:
+#   - Latin "ego" = "I/self" - the receiver in method context
+#   - Params declared in norma.json determine the values array layout
+#   - This separates template authoring from call-site argument order
+#
+# Edge cases:
+#   - §N where N >= values.length returns empty string (silent fallback)
+#   - Implicit § continues incrementing even after explicit §N
+#   - No escaping mechanism for literal § (not needed in practice)
 functio applyNormaTemplate(textus template, lista<textus> params, textus obj, lista<textus> args) -> textus {
     # Build values array: ego -> obj, other params -> args
     varia values = [] innatum lista<textus>

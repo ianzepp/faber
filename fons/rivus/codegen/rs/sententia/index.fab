@@ -71,7 +71,7 @@ functio genSententiaContent(Sententia stmt, RsGenerator g) -> textus {
             g.intraProfundum()
             ex (s.methodi qua lista<PactumMethodus>) pro m {
                 varia params = [] innatum lista<textus>
-                si m.parametra != nihil {
+                si nonnihil m.parametra {
                     ex (m.parametra qua lista<Parametrum>) pro param {
                         params.adde(genParametrum(param, g))
                     }

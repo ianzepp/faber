@@ -47,7 +47,7 @@ functio genCustodi(lista<CustodiClausula> clausulae, TsGenerator g) -> textus {
         si body == "" {
             body = genSententia(clausula.consequens, g)
         }
-        si body == "" aut body == nihil aut body == "undefined" {
+        si body == "" aut nihil body aut body == "undefined" {
             # WHY: Defensive fallback if empty bodies stringify poorly.
             result = scriptum("§§if (§) {}\n", result, g.ind(), genExpressia(clausula.condicio, g))
             g.exiProfundum()

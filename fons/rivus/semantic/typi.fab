@@ -421,7 +421,7 @@ functio formaTypum(SemanticTypus t) -> textus {
     discerne t {
         casu Primitivum ut p {
             varia resultatum = p.nomen
-            si p.amplitudo != nihil {
+            si nonnihil p.amplitudo {
                 resultatum = scriptum("§<§>", resultatum, p.amplitudo)
             }
             si p.nullabilis {
@@ -462,7 +462,7 @@ functio formaTypum(SemanticTypus t) -> textus {
         }
 
         casu Ignotum ut ig {
-            si ig.ratio != nihil {
+            si nonnihil ig.ratio {
                 redde scriptum("ignotum(§)", ig.ratio)
             }
             redde "ignotum"

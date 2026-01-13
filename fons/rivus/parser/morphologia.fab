@@ -86,11 +86,26 @@ fixum FLAGGA_FUTURUM_INDICATIVUM = {
 
 # Parse a method name to extract verb stem and semantic flags
 #
-# Checks endings longest-first to avoid partial matches:
-#   -atura/-itura (5 chars) - future active participle
-#   -abit/-ebit/-iet (4 chars) - future indicative
-#   -ata/-ita/-ta (3 chars) - perfect passive participle
-#   -a/-e/-i (1 char) - imperative
+# WHY: Longest-first matching prevents false positives from suffix overlap.
+#   "filtratura" must match -atura (5), not -ura (3) or -a (1).
+#   Without this, "filtratura" would parse as stem "filtratur" + imperative -a,
+#   yielding wrong semantics (sync mutate vs async return-new).
+#
+# WHY: The specific character boundaries (5,4,3,2,1) derive from Latin morphology:
+#   - 5 chars: -atura/-itura (future active participle, async + allocates)
+#   - 4 chars: -abit/-ebit (future indicative, async + mutates)
+#   - 3 chars: -ata/-ita/-iet (perfect participle / 3rd conj future)
+#   - 2 chars: -ta/-sa (contracted participles like inversus → invers-a)
+#   - 1 char:  -a/-e/-i (imperative, the default sync-mutate form)
+#
+# WHY: Check length before substring extraction:
+#   "si longitudo > N" guards against stems that would be empty or negative.
+#   A 4-char word can't have a 5-char suffix and meaningful stem.
+#
+# Edge cases:
+#   - Words < 2 chars return nihil (no stem possible)
+#   - Unrecognized endings return nihil (caller handles fallback)
+#   - No disambiguation of homophonous endings (context-free parse)
 #
 # Returns nihil if no recognized morphology.
 @ publica

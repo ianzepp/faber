@@ -146,7 +146,7 @@ functio formataNotaTs(Nota nota) -> textus {
 # Format leading comments (emitted on separate lines)
 @ publica
 functio formataNotaePrae(ignotum nodus, ignotum syntax, textus indentum) -> textus {
-    si nodus == nihil {
+    si nihil nodus {
         redde ""
     }
 
@@ -166,7 +166,7 @@ functio formataNotaePrae(ignotum nodus, ignotum syntax, textus indentum) -> text
 # Format trailing comments (emitted inline at end)
 @ publica
 functio formataNotaePost(ignotum nodus, ignotum syntax) -> textus {
-    si nodus == nihil {
+    si nihil nodus {
         redde ""
     }
 

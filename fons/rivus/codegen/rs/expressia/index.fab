@@ -228,7 +228,7 @@ functio genExpressia(Expressia expr, RsGenerator g) -> textus {
         # AbExpressia - filtering
         casu AbExpressia ut e {
             fixum fons = genExpressia(e.fons, g)
-            si e.filtrum == nihil {
+            si nihil e.filtrum {
                 redde fons
             }
             redde scriptum("§.into_iter().filter(|_x| true).collect::<Vec<_>>()", fons)
