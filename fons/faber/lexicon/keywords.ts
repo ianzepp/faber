@@ -75,7 +75,6 @@ export const keywords: KeywordEntry[] = [
     // Poetic:  si / sin / secus
     // Ternary: condition sic truthy secus falsy (or ? :)
     { latin: 'si', meaning: 'if', category: 'control' },
-    { latin: 'secus', meaning: 'else', category: 'control' },
     { latin: 'sin', meaning: 'else if', category: 'control' },
     { latin: 'secus', meaning: 'else/:', category: 'control' },
     { latin: 'dum', meaning: 'while', category: 'control' },

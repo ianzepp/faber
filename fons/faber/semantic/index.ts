@@ -447,6 +447,21 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
     defineBuiltins();
 
+    // WHY: Some DSL expressions treat unknown identifiers as implicit properties.
+    // Example: `ab users ubi aetas >= 18`.
+    // Semantic analysis has no per-expression scope for these yet, so we gate this
+    // behavior behind an explicit depth counter.
+    let implicitPropertyAccessDepth = 0;
+
+    function withImplicitPropertyAccess<T>(fn: () => T): T {
+        implicitPropertyAccessDepth++;
+        try {
+            return fn();
+        } finally {
+            implicitPropertyAccessDepth--;
+        }
+    }
+
     // ---------------------------------------------------------------------------
     // Built-in Definitions
     // ---------------------------------------------------------------------------
@@ -631,12 +646,6 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
                 case 'not_found': {
                     const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.ModuleNotFound];
                     error(`${text(node.source)}\n${help}`, node.position);
-                    break;
-                }
-                case 'cycle': {
-                    const { help } = SEMANTIC_ERRORS[SemanticErrorCode.CircularImport];
-                    // WHY: result.message already contains the full cycle path
-                    error(`${result.message}\n${help}`, node.position);
                     break;
                 }
                 case 'parse_error': {
@@ -904,13 +913,11 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
                     if (exprType !== 'ObjectExpression') {
                         errors.push({ message: `innatum tabula requires object literal {}, got ${exprType}`, position: node.position });
                     }
-                }
-                else if (typeName === 'lista') {
+                } else if (typeName === 'lista') {
                     if (exprType !== 'ArrayExpression') {
                         errors.push({ message: `innatum lista requires array literal [], got ${exprType}`, position: node.position });
                     }
-                }
-                else {
+                } else {
                     errors.push({ message: `innatum only supports builtin types (tabula, lista), got ${typeName}`, position: node.position });
                 }
 
@@ -948,8 +955,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
                     // Check if fallback is nihil - result becomes nullable
                     if (node.fallback.type === 'Literal' && (node.fallback as Literal).value === null) {
                         resultType = { ...resultType, nullable: true };
-                    }
-                    else if (!isAssignableTo(fallbackType, resultType)) {
+                    } else if (!isAssignableTo(fallbackType, resultType)) {
                         errors.push({
                             message: `Conversion fallback type ${formatType(fallbackType)} is not assignable to ${formatType(resultType)}`,
                             position: node.fallback.position,
@@ -994,15 +1000,18 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
                 return node.resolvedType;
 
             case 'AbExpression':
-                // WHY: Ab expressions (filtering DSL) resolve to their source type
-                // Filtering doesn't change the element type, only reduces the collection
+                // WHY: Ab expressions (filtering DSL) resolve to their source type.
+                // Filtering doesn't change the element type, only reduces the collection.
                 resolveExpression(node.source);
+
                 if (node.filter && node.filter.hasUbi) {
-                    // Only resolve the condition if it's a full ubi expression
-                    // Boolean property shorthand (hasUbi: false) is just a property name,
-                    // not a variable reference, so we don't resolve it
-                    resolveExpression(node.filter.condition);
+                    // WHY: `ubi` conditions treat unknown identifiers as implicit properties of
+                    // the current element, not free variables.
+                    withImplicitPropertyAccess(() => {
+                        resolveExpression(node.filter!.condition);
+                    });
                 }
+
                 node.resolvedType = node.source.resolvedType || UNKNOWN;
                 return node.resolvedType;
 
@@ -1144,6 +1153,12 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         const symbol = lookupSymbol(currentScope, node.name);
 
         if (!symbol) {
+            if (implicitPropertyAccessDepth > 0) {
+                node.isImplicitProperty = true;
+                node.resolvedType = UNKNOWN;
+                return UNKNOWN;
+            }
+
             const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.UndefinedVariable];
 
             error(`${text(node.name)}\n${help}`, node.position);
@@ -2462,9 +2477,8 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
     function analyzeInStatement(node: InStatement): void {
         resolveExpression(node.object);
 
-        // WHY: Inside 'in' blocks, bare identifier assignments become property
-        //      assignments on the context object. We don't validate these as
-        //      variables since they'll be transformed at codegen time.
+        // WHY: Inside 'in' blocks, bare identifier assignments become property assignments
+        // on the context object. These are rewritten during codegen.
         enterScope();
 
         for (const stmt of node.body.body) {
@@ -2472,7 +2486,6 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
                 stmt.type === 'ExpressionStatement' && stmt.expression.type === 'AssignmentExpression' && stmt.expression.left.type === 'Identifier';
 
             if (isBareAssignment) {
-                // Skip validation for bare identifier assignments
                 resolveExpression((stmt.expression as AssignmentExpression).right);
             } else {
                 analyzeStatement(stmt);
@@ -2519,8 +2532,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
             if (discriminantType.kind === 'discretio') {
                 discretio = discriminantType;
-            }
-            else if (discriminantType.kind === 'user') {
+            } else if (discriminantType.kind === 'user') {
                 // Look up the type in scope — it might be a discretio
                 const symbol = lookupSymbol(currentScope, discriminantType.name);
 
@@ -2543,14 +2555,11 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         for (const caseNode of node.cases) {
             // Validate pattern count matches discriminant count
             if (caseNode.patterns.length !== numDiscriminants) {
-                error(
-                    `Pattern count mismatch: expected ${numDiscriminants} patterns, got ${caseNode.patterns.length}`,
-                    caseNode.position
-                );
+                error(`Pattern count mismatch: expected ${numDiscriminants} patterns, got ${caseNode.patterns.length}`, caseNode.position);
             }
 
             // Check if this is a wildcard catch-all (all patterns are wildcards)
-            const allWildcards = caseNode.patterns.every((p) => p.isWildcard);
+            const allWildcards = caseNode.patterns.every(p => p.isWildcard);
             if (allWildcards) {
                 hasWildcardCatchAll = true;
             }
@@ -2650,12 +2659,15 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             const discretio = discretios[0];
             if (discretio && !hasWildcardCatchAll && !hasDefaultCase) {
                 const allVariants = Array.from(discretio.variants.keys());
-                const missingVariants = allVariants.filter((v) => !handledVariants.has(v));
+                const missingVariants = allVariants.filter(v => !handledVariants.has(v));
 
                 if (missingVariants.length > 0) {
                     const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.NonExhaustiveMatch];
-                    error(`${text(missingVariants)}
-${help}`, node.position);
+                    error(
+                        `${text(missingVariants)}
+${help}`,
+                        node.position,
+                    );
                 }
             }
         } else {
@@ -2663,8 +2675,11 @@ ${help}`, node.position);
             // Full Cartesian product exhaustiveness checking is complex
             if (!hasWildcardCatchAll && !hasDefaultCase) {
                 const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.NonExhaustiveMatch];
-                error(`${text(["_", "_"])}
-${help}`, node.position);
+                error(
+                    `${text(['_', '_'])}
+${help}`,
+                    node.position,
+                );
             }
         }
     }

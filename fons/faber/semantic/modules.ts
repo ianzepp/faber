@@ -26,7 +26,7 @@
  * =====================
  * INPUT:  Import source string, base file path, module cache
  * OUTPUT: ModuleExports with symbols and types, or error
- * ERRORS: ModuleNotFound, CircularImport, ModuleParseError
+ * ERRORS: ModuleNotFound, ModuleParseError
  *
  * @module semantic/modules
  */
@@ -133,7 +133,7 @@ export interface ModuleExports {
 /**
  * Result of module resolution.
  */
-export type ModuleResult = { ok: true; module: ModuleExports } | { ok: false; error: 'not_found' | 'cycle' | 'parse_error'; message: string };
+export type ModuleResult = { ok: true; module: ModuleExports } | { ok: false; error: 'not_found' | 'parse_error'; message: string };
 
 /**
  * Context for module resolution, passed through recursive imports.
@@ -378,9 +378,7 @@ function extractPactumExport(stmt: PactumDeclaration, ctx: ModuleTypeContext): M
     const methods = new Map<string, FunctionType>();
 
     for (const method of stmt.methods) {
-        const paramTypes = method.params.map(p =>
-            p.typeAnnotation ? resolveTypeInModule(p.typeAnnotation, ctx) : UNKNOWN
-        );
+        const paramTypes = method.params.map(p => (p.typeAnnotation ? resolveTypeInModule(p.typeAnnotation, ctx) : UNKNOWN));
         const returnType = method.returnType ? resolveTypeInModule(method.returnType, ctx) : VACUUM;
         methods.set(method.name.name, functionType(paramTypes, returnType, method.async));
     }
@@ -490,10 +488,10 @@ export function resolveModule(source: string, ctx: ModuleContext): ModuleResult 
     }
 
     // Check for cycles
-    // WHY: JS/TS handle circular imports at runtime via import hoisting.
+    // WHY: Circular imports are common in compiler codebases and are valid for TS output.
     // Instead of erroring, return empty exports - values resolve when module finishes loading.
-    // This enables patterns like: index.fab exports genExpressia, sibling files import it,
-    // index.fab imports siblings for dispatch. All valid in JS/TS.
+    // EDGE: This limits cross-module type information within the cycle.
+
     if (ctx.inProgress.has(absolutePath)) {
         return {
             ok: true,
@@ -543,13 +541,16 @@ export function resolveModule(source: string, ctx: ModuleContext): ModuleResult 
                 };
                 const childResult = resolveModule(stmt.source, childCtx);
                 if (!childResult.ok) {
-                    // Propagate the error (especially cycles)
+                    // Propagate the error (not_found/parse_error)
                     return childResult;
                 }
                 // Add imported exports to type context
                 for (const spec of stmt.specifiers) {
                     const exportInfo = childResult.module.exports.get(spec.imported.name);
-                    if (exportInfo && (exportInfo.kind === 'genus' || exportInfo.kind === 'pactum' || exportInfo.kind === 'ordo' || exportInfo.kind === 'discretio')) {
+                    if (
+                        exportInfo &&
+                        (exportInfo.kind === 'genus' || exportInfo.kind === 'pactum' || exportInfo.kind === 'ordo' || exportInfo.kind === 'discretio')
+                    ) {
                         importedTypes.set(spec.local.name, exportInfo.type);
                     }
                 }

@@ -13,7 +13,7 @@
  *
  * The tokenizer operates as a finite state machine, advancing through the
  * source character by character. It handles:
- * - Multi-character operators (==, !=, <=, >=, &&, ||, =>, ->)
+ * - Multi-character operators (==, !=, <=, >=, &&, ||, ->)
  * - String literals with escape sequences (", ', `)
  * - Template strings with interpolation tracking
  * - Single-line comments (# only)
@@ -36,7 +36,7 @@
  * INV-1: Token stream always ends with exactly one EOF token
  * INV-2: Position tracking never goes backwards (line/column/offset only increase)
  * INV-3: Tokenizer never throws - all errors collected in result.errors
- * INV-4: Keyword detection is case-insensitive (Latin had no case distinction)
+ * INV-4: Keyword detection is case-sensitive (reserved words are lowercase)
  *
  * CHARACTER CLASSES
  * =================
@@ -54,7 +54,7 @@
  * KEYWORD:         IDENTIFIER matching lexicon entry
  *
  * OPERATOR LOOKAHEAD:
- * '=' -> '===' | '==' | '=>' | '='
+ * '=' -> '===' | '==' | '='
  * '!' -> '!==' | '!=' | '!'
  * '<' -> '<=' | '<'
  * '>' -> '>=' | '>'
@@ -122,7 +122,7 @@ export function tokenize(source: string): TokenizerResult {
      * Look ahead at upcoming characters without advancing.
      *
      * WHY: Enables multi-character operator detection (==, !=, etc.) and
-     *      comment recognition (//, /*) without consuming input.
+     *      comment recognition (#) without consuming input.
      *
      * @param offset - How many characters ahead to look (default 0 = current)
      * @returns Character at position, or empty string if past end
@@ -583,8 +583,8 @@ export function tokenize(source: string): TokenizerResult {
      *      the canonical list of Latin keywords. This keeps the tokenizer
      *      independent of language evolution.
      *
-     * WHY: Keywords are case-insensitive in Latin (classical Latin had no
-     *      case distinction). 'si', 'Si', and 'SI' all match the keyword.
+     * NOTE: Keywords are currently case-sensitive. This keeps the lexer simple and
+     *       avoids surprising collisions with identifiers like `SI`.
      */
     function scanIdentifier(): void {
         const pos = position();
@@ -800,7 +800,8 @@ export function tokenize(source: string): TokenizerResult {
                 }
                 break;
 
-            // WHY: = can be === (strict equality), == (equality), => (fat arrow), or = (assignment)
+            // WHY: = can be === (strict equality), == (equality), or = (assignment)
+
             case '=':
                 if (peek() === '=' && peek(1) === '=') {
                     advance();

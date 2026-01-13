@@ -862,8 +862,7 @@ export interface PactumMethod extends BaseNode {
 /**
  * Expression statement (expression used as statement).
  *
- * GRAMMAR (in EBNF):
- *   exprStmt := expression
+ * GRAMMAR: exprStmt (see `EBNF.md` "Program Structure")
  *
  * INVARIANT: expression is never null.
  */
@@ -875,8 +874,7 @@ export interface ExpressionStatement extends BaseNode {
 /**
  * Conditional (if) statement.
  *
- * GRAMMAR (in EBNF):
- *   ifStmt := 'si' expression blockStmt ('cape' IDENTIFIER blockStmt)? ('secus' (ifStmt | blockStmt))?
+ * GRAMMAR: ifStmt (see `EBNF.md` "Control Flow")
  *
  * INVARIANT: catchClause is unique to Latin - allows error handling within conditionals.
  * INVARIANT: alternate can be BlockStatement (else) or SiStatement (else if chain).
@@ -901,8 +899,7 @@ export interface SiStatement extends BaseNode {
 /**
  * While loop statement.
  *
- * GRAMMAR (in EBNF):
- *   whileStmt := 'dum' expression blockStmt ('cape' IDENTIFIER blockStmt)?
+ * GRAMMAR: whileStmt (see `EBNF.md` "Control Flow")
  *
  * INVARIANT: catchClause allows error handling within loop iterations.
  */
@@ -914,35 +911,9 @@ export interface DumStatement extends BaseNode {
 }
 
 /**
- * For loop statement.
- *
- * GRAMMAR (in EBNF):
- *   forStmt := ('ex' | 'in') expression ('pro' | 'fit' | 'fiet') IDENTIFIER blockStmt
- *              ('cape' IDENTIFIER blockStmt)?
- *
- * INVARIANT: kind is 'in' (for...in) or 'ex' (for...of).
- *
- * WHY: Latin distinguishes iteration kinds with different prepositions:
- *      'in' = iterate over keys/indices
- *      'ex' = iterate over values (from/out of collection)
- *
- * The binding keyword encodes sync/async:
- *      'pro' = sync iteration (traditional)
- *      'fit' = sync iteration (verb form: "becomes")
- *      'fiet' = async iteration (verb form: "will become")
- *
- * Target mappings:
- *   ex...pro  → for...of (TS), for...in (Py), for (slice) |x| (Zig)
- *   de...pro  → for...in (TS), for...in keys (Py), iteration over keys (Zig)
- *   ex...fiet → for await...of (TS), async for (Py), N/A (Zig)
- */
-/**
  * Collection DSL transform operation.
  *
- * GRAMMAR (in EBNF):
- *   dslTransform := dslVerb dslArg?
- *   dslVerb := 'prima' | 'ultima' | 'summa'
- *   dslArg := expression
+ * GRAMMAR: dslTransform (see `EBNF.md` "DSL Transforms")
  *
  * WHY: DSL transforms provide concise syntax for collection operations.
  *      They desugar to method calls during semantic analysis.
@@ -1961,6 +1932,8 @@ export type Expression =
 export interface Identifier extends BaseNode {
     type: 'Identifier';
     name: string;
+    /** WHY: Used by semantic/codegen for DSL implicit property access (e.g. `ab ... ubi`). */
+    isImplicitProperty?: boolean;
     morphology?: {
         stem: string;
         case?: Case;

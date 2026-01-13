@@ -53,7 +53,6 @@ export enum SemanticErrorCode {
     NonExhaustiveMatch = 'S017',
     // Import resolution errors
     ModuleNotFound = 'S012',
-    CircularImport = 'S013',
     ModuleParseError = 'S014',
 }
 
@@ -120,10 +119,6 @@ export const SEMANTIC_ERRORS = {
         text: (path: string) => `Cannot find module '${path}'`,
         help: 'Verify the file path is correct and the file exists. Relative paths are resolved from the importing file.',
     },
-    [SemanticErrorCode.CircularImport]: {
-        text: (path: string, cycle: string) => `Circular import detected: ${cycle}`,
-        help: 'Break the cycle by restructuring your modules or using forward declarations for types.',
-    },
     [SemanticErrorCode.ModuleParseError]: {
         text: (path: string) => `Failed to parse module '${path}'`,
         help: 'Fix the syntax errors in the imported module before importing it.',
@@ -133,7 +128,7 @@ export const SEMANTIC_ERRORS = {
         help: "Regular functions require a body. Use '@ externa' annotation for external declarations.",
     },
     [SemanticErrorCode.NonExhaustiveMatch]: {
-        text: (missing: string[]) => `Non-exhaustive match: missing variant${missing.length > 1 ? 's' : ''} ${missing.map((v) => `'${v}'`).join(', ')}`,
+        text: (missing: string[]) => `Non-exhaustive match: missing variant${missing.length > 1 ? 's' : ''} ${missing.map(v => `'${v}'`).join(', ')}`,
         help: 'All variants of a discretio must be handled in a discerne statement.',
     },
 } as const;

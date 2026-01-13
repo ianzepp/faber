@@ -17,6 +17,12 @@
       ts: 'const clean = users.filter(_x => !(_x.banned));'
   skip: [py, rs, cpp, zig, fab]
 
+- name: ab with ubi condition
+  source: fixum adults = ab users ubi aetas >= 18
+  expect:
+      ts: 'const adults = users.filter(_x => (_x.aetas >= 18));'
+  skip: [py, rs, cpp, zig, fab]
+
 # Transform chaining
 - name: ab with prima transform
   source: fixum top2 = ab users activus, prima 2

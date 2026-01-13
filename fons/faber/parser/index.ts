@@ -17,10 +17,11 @@
  * - Error recovery via synchronization prevents cascading errors
  *
  * Key design decisions:
- * 1. Never throws exceptions - collects errors and continues parsing
- * 2. Synchronizes at statement boundaries after errors
- * 3. Uses helper functions (peek, match, expect) for token manipulation
- * 4. Preserves Latin keywords in AST for semantic analysis phase
+ * 1. Collects errors and continues parsing
+ * 2. Uses local throws for recovery, caught at statement boundaries
+ * 3. Synchronizes at statement boundaries after errors
+ * 4. Uses helper functions (peek, match, expect) for token manipulation
+ * 5. Preserves Latin keywords in AST for semantic analysis phase
  *
  * INPUT/OUTPUT CONTRACT
  * =====================
@@ -38,23 +39,10 @@
  *
  * GRAMMAR
  * =======
- * High-level grammar in EBNF (detailed rules in function comments):
+ * The authoritative grammar is documented in `EBNF.md`.
  *
- *   program        := statement*
- *   statement      := importDecl | varDecl | funcDecl | ifStmt | whileStmt | forStmt
- *                   | returnStmt | throwStmt | tryStmt | blockStmt | exprStmt
- *   expression     := assignment
- *   assignment     := or ('=' assignment)?
- *   or             := and ('||' and)*
- *   and            := equality ('&&' equality)*
- *   equality       := comparison (('==' | '!=') comparison)*
- *   comparison     := additive (('<' | '>' | '<=' | '>=') additive)*
- *   additive       := multiplicative (('+' | '-') multiplicative)*
- *   multiplicative := unary (('*' | '/' | '%') unary)*
- *   unary          := ('!' | '-' | 'non' | 'cede' | 'novum') unary | call
- *   call           := primary ('(' args ')' | '.' IDENTIFIER | '[' expr ']')*
- *   primary        := IDENTIFIER | NUMBER | STRING | TEMPLATE_STRING
- *                   | 'verum' | 'falsum' | 'nihil' | '(' expression ')'
+ * NOTE: Many functions in this file include `GRAMMAR:` tags for orientation, but
+ * they are intentionally non-exhaustive. When updating syntax, update `EBNF.md`.
  *
  * ERROR RECOVERY STRATEGY
  * =======================
@@ -553,11 +541,9 @@ export function parse(tokens: Token[]): ParserResult {
         // Handle specialized annotation types
         if (name === 'innatum' || name === 'subsidia') {
             return parseTargetMappingAnnotation(name, position, startLine);
-        }
-        else if (name === 'radix') {
+        } else if (name === 'radix') {
             return parseRadixAnnotation(position, startLine);
-        }
-        else if (name === 'verte') {
+        } else if (name === 'verte') {
             return parseVerteAnnotation(position, startLine);
         }
 
@@ -883,20 +869,50 @@ export function parse(tokens: Token[]): ParserResult {
         advance();
         while (!isAtEnd()) {
             if (
-                checkKeyword('functio') ||
+                // Annotations may precede declarations.
+                check('AT') ||
+                // Blocks can always start a statement.
+                check('LBRACE') ||
+                // Statement starters (mirror parseStatementCore).
+                checkKeyword('ex') ||
+                checkKeyword('de') ||
+                checkKeyword('in') ||
                 checkKeyword('varia') ||
                 checkKeyword('fixum') ||
                 checkKeyword('figendum') ||
                 checkKeyword('variandum') ||
+                checkKeyword('functio') ||
                 checkKeyword('typus') ||
                 checkKeyword('ordo') ||
+                checkKeyword('genus') ||
+                checkKeyword('pactum') ||
+                checkKeyword('discretio') ||
                 checkKeyword('si') ||
                 checkKeyword('dum') ||
-                checkKeyword('pro') ||
+                checkKeyword('elige') ||
+                checkKeyword('discerne') ||
+                checkKeyword('custodi') ||
+                checkKeyword('adfirma') ||
                 checkKeyword('redde') ||
+                checkKeyword('rumpe') ||
+                checkKeyword('perge') ||
+                checkKeyword('iace') ||
+                checkKeyword('mori') ||
+                checkKeyword('scribe') ||
+                checkKeyword('vide') ||
+                checkKeyword('mone') ||
                 checkKeyword('tempta') ||
+                checkKeyword('fac') ||
                 checkKeyword('probandum') ||
-                checkKeyword('proba')
+                checkKeyword('proba') ||
+                checkKeyword('ad') ||
+                checkKeyword('praepara') ||
+                checkKeyword('praeparabit') ||
+                checkKeyword('postpara') ||
+                checkKeyword('postparabit') ||
+                checkKeyword('cura') ||
+                checkKeyword('incipit') ||
+                checkKeyword('incipiet')
             ) {
                 return;
             }
@@ -915,25 +931,42 @@ export function parse(tokens: Token[]): ParserResult {
      */
     function synchronizeGenusMember(): void {
         advance();
-        while (!isAtEnd() && !check('RBRACE')) {
-            // Stop at tokens that could start a new member
+        let braceDepth = 0;
+
+        while (!isAtEnd()) {
+            if (check('LBRACE')) {
+                braceDepth++;
+                advance();
+                continue;
+            }
+
+            if (check('RBRACE')) {
+                if (braceDepth === 0) {
+                    return;
+                }
+
+                braceDepth--;
+                advance();
+                continue;
+            }
+
+            // Stop at tokens that could start a new member (only at genus-body depth).
             if (
-                checkKeyword('functio') ||
-                checkKeyword('publicus') ||
-                checkKeyword('privatus') ||
-                checkKeyword('generis') ||
-                checkKeyword('nexum') ||
-                // Type keywords that could start a field
-                checkKeyword('textus') ||
-                checkKeyword('numerus') ||
-                checkKeyword('fractus') ||
-                checkKeyword('verus') ||
-                checkKeyword('nihil') ||
-                checkKeyword('lista') ||
-                checkKeyword('mappa') ||
-                checkKeyword('vacuum') ||
-                // Generic identifier could be a type name
-                check('IDENTIFIER')
+                braceDepth === 0 &&
+                (check('AT') ||
+                    checkKeyword('functio') ||
+                    checkKeyword('publicus') ||
+                    checkKeyword('privatus') ||
+                    checkKeyword('protectus') ||
+                    checkKeyword('abstractus') ||
+                    checkKeyword('generis') ||
+                    checkKeyword('nexum') ||
+                    // Type annotations may begin with borrow prepositions or a type.
+                    checkKeyword('de') ||
+                    checkKeyword('in') ||
+                    check('LPAREN') ||
+                    check('IDENTIFIER') ||
+                    check('KEYWORD'))
             ) {
                 return;
             }
@@ -1007,12 +1040,11 @@ export function parse(tokens: Token[]): ParserResult {
     /**
      * Parse any statement by dispatching to specific parser.
      *
-     * GRAMMAR:
-     *   statement := importDecl | varDecl | funcDecl | typeAliasDecl | ifStmt | whileStmt | forStmt
-     *              | returnStmt | throwStmt | tryStmt | blockStmt | exprStmt
+     * GRAMMAR: statement (see `EBNF.md` "Program Structure")
      *
      * WHY: Uses lookahead to determine statement type via keyword inspection.
      */
+
     function parseStatement(): Statement {
         // Collect any leading comments before parsing the statement
         collectComments();
@@ -4562,12 +4594,12 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     /**
-     * Parse unary expression.
-     *
-     * GRAMMAR:
-     *   unary := ('!' | '-' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'novum' | 'finge') unary | cast
-     *
-     * PRECEDENCE: Higher than binary operators, lower than cast/call/member access.
+      * Parse unary expression.
+      *
+      * GRAMMAR: unary (see `EBNF.md` "Expressions")
+      *
+      * PRECEDENCE: Higher than binary operators, lower than cast/call/member access.
+
      *
      * WHY: Latin 'non' (not), 'nulla' (none/empty), 'nonnulla' (some/non-empty),
      *      'nihil' (is null), 'nonnihil' (is not null),
@@ -4629,7 +4661,9 @@ export function parse(tokens: Token[]): ParserResult {
                 sameLine &&
                 (next?.type === 'IDENTIFIER' ||
                     (next?.type === 'KEYWORD' &&
-                        ['verum', 'falsum', 'nihil', 'ego', 'non', 'nulla', 'nonnulla', 'negativum', 'positivum', 'novum', 'cede'].includes(next.value)));
+                        ['verum', 'falsum', 'nihil', 'ego', 'non', 'nulla', 'nonnulla', 'negativum', 'positivum', 'novum', 'cede'].includes(
+                            next.value,
+                        )));
             if (isUnaryOperand) {
                 advance(); // consume 'nihil'
                 const position = tokens[current - 1]!.position;
@@ -4658,7 +4692,9 @@ export function parse(tokens: Token[]): ParserResult {
                 sameLine &&
                 (next?.type === 'IDENTIFIER' ||
                     (next?.type === 'KEYWORD' &&
-                        ['verum', 'falsum', 'nihil', 'ego', 'non', 'nulla', 'nonnulla', 'negativum', 'positivum', 'novum', 'cede'].includes(next.value)));
+                        ['verum', 'falsum', 'nihil', 'ego', 'non', 'nulla', 'nonnulla', 'negativum', 'positivum', 'novum', 'cede'].includes(
+                            next.value,
+                        )));
             if (isUnaryOperand) {
                 advance(); // consume 'verum'
                 const position = tokens[current - 1]!.position;
@@ -4679,7 +4715,9 @@ export function parse(tokens: Token[]): ParserResult {
                 sameLine &&
                 (next?.type === 'IDENTIFIER' ||
                     (next?.type === 'KEYWORD' &&
-                        ['verum', 'falsum', 'nihil', 'ego', 'non', 'nulla', 'nonnulla', 'negativum', 'positivum', 'novum', 'cede'].includes(next.value)));
+                        ['verum', 'falsum', 'nihil', 'ego', 'non', 'nulla', 'nonnulla', 'negativum', 'positivum', 'novum', 'cede'].includes(
+                            next.value,
+                        )));
             if (isUnaryOperand) {
                 advance(); // consume 'falsum'
                 const position = tokens[current - 1]!.position;
@@ -4906,10 +4944,16 @@ export function parse(tokens: Token[]): ParserResult {
     function parseQuaExpression(): Expression {
         let expr = parseCall();
 
-        while (matchKeyword('qua') || matchKeyword('innatum') ||
-               matchKeyword('numeratum') || matchKeyword('fractatum') ||
-               matchKeyword('textatum') || matchKeyword('bivalentum') ||
-               matchKeyword('dextratum') || matchKeyword('sinistratum')) {
+        while (
+            matchKeyword('qua') ||
+            matchKeyword('innatum') ||
+            matchKeyword('numeratum') ||
+            matchKeyword('fractatum') ||
+            matchKeyword('textatum') ||
+            matchKeyword('bivalentum') ||
+            matchKeyword('dextratum') ||
+            matchKeyword('sinistratum')
+        ) {
             const keyword = tokens[current - 1]!.value;
             const position = tokens[current - 1]!.position;
 
@@ -4921,8 +4965,7 @@ export function parse(tokens: Token[]): ParserResult {
                     targetType,
                     position,
                 } as QuaExpression;
-            }
-            else if (keyword === 'innatum') {
+            } else if (keyword === 'innatum') {
                 const targetType = parseTypeAnnotation();
                 expr = {
                     type: 'InnatumExpression',
@@ -4930,8 +4973,7 @@ export function parse(tokens: Token[]): ParserResult {
                     targetType,
                     position,
                 } as InnatumExpression;
-            }
-            else if (keyword === 'dextratum' || keyword === 'sinistratum') {
+            } else if (keyword === 'dextratum' || keyword === 'sinistratum') {
                 // Bit shift operators: x dextratum 3 → x >> 3, x sinistratum 3 → x << 3
                 const direction = keyword as ShiftExpression['direction'];
                 const amount = parseUnary();
@@ -4943,8 +4985,7 @@ export function parse(tokens: Token[]): ParserResult {
                     amount,
                     position,
                 } as ShiftExpression;
-            }
-            else {
+            } else {
                 // Conversion operators: numeratum, fractatum, textatum, bivalentum
                 const conversion = keyword as ConversionExpression['conversion'];
                 let targetType: TypeAnnotation | undefined;
@@ -4959,8 +5000,7 @@ export function parse(tokens: Token[]): ParserResult {
                         const radixToken = tokens[current];
                         if (radixToken && ['Dec', 'Hex', 'Oct', 'Bin'].includes(radixToken.value)) {
                             radix = advance().value as ConversionExpression['radix'];
-                        }
-                        else {
+                        } else {
                             errors.push({
                                 code: ParserErrorCode.UnexpectedToken,
                                 message: `Expected radix type (Dec, Hex, Oct, Bin), got '${radixToken?.value}'`,
@@ -5576,21 +5616,17 @@ export function parse(tokens: Token[]): ParserResult {
     /**
      * Parse type annotation.
      *
-     * GRAMMAR:
-     *   typeAnnotation := ('de' | 'in')? IDENTIFIER typeParams? '?'? arrayBrackets*
-     *   typeParams := '<' typeParameter (',' typeParameter)* '>'
-     *   typeParameter := typeAnnotation | NUMBER | MODIFIER
-     *   arrayBrackets := '[]' '?'?
+     * GRAMMAR: typeAnnotation (see `EBNF.md` "Types")
      *
      * WHY: Supports generics (lista<textus>), nullable (?), union types (unio<A, B>),
      *      and array shorthand (numerus[] desugars to lista<numerus>).
      *
      * EDGE: Numeric parameters for sized types (numerus<32>).
-     *       Modifier parameters for ownership/signedness (numerus<Naturalis>).
      *       Array shorthand preserves source form via arrayShorthand flag.
      *       Borrow prepositions (de/in) for systems targets (Rust/Zig).
      *       Union types use unio<A, B> syntax (pipe reserved for bitwise OR).
      */
+
     function parseTypeAnnotation(): TypeAnnotation {
         const position = peek().position;
 
@@ -5626,8 +5662,8 @@ export function parse(tokens: Token[]): ParserResult {
             preposition = advance().keyword;
         }
 
-        // WHY: Type names can be identifiers OR keywords (nihil, textus, numerus, etc.)
-        //      Keywords like 'nihil' are valid return types but tokenize as KEYWORD
+        // WHY: Type names are usually identifiers, but some spellings (notably `nihil`)
+        //      are keywords and still valid type names.
         let name: string;
         if (check('IDENTIFIER')) {
             name = advance().value;

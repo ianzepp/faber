@@ -750,7 +750,7 @@ describe('Semantic Analyzer', () => {
             expect(result.errors[0]!.message).toContain('is not exported');
         });
 
-        it('detects circular imports', async () => {
+        it('allows circular imports (empty exports within cycle)', async () => {
             const { resolve } = await import('path');
             const { writeFileSync, unlinkSync } = await import('fs');
 
@@ -772,8 +772,7 @@ describe('Semantic Analyzer', () => {
 
                 const result = analyze(program, { filePath: cycleAPath });
 
-                expect(result.errors.length).toBeGreaterThan(0);
-                expect(result.errors[0]!.message).toContain('Circular import');
+                expect(result.errors).toHaveLength(0);
             } finally {
                 // Clean up
                 unlinkSync(cycleAPath);
@@ -979,6 +978,18 @@ describe('Semantic Analyzer', () => {
             const { errors } = analyzeSource(source);
 
             // Should succeed - finge ... qua Result should match discretio Result
+            expect(errors).toHaveLength(0);
+        });
+    });
+
+    describe('Implicit Property Access', () => {
+        it("treats unknown identifiers as properties in 'ab ... ubi' conditions", () => {
+            const source = `
+                varia users = [{ aetas: 20 }, { aetas: 10 }]
+                varia adults = ab users ubi aetas >= 18
+            `;
+
+            const { errors } = analyzeSource(source);
             expect(errors).toHaveLength(0);
         });
     });

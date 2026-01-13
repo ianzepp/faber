@@ -14,8 +14,10 @@
  * - Primitive types (textus, numerus, bivalens, nihil)
  * - Generic types (lista<T>, tabula<K,V>, promissum<T>)
  * - Function types (parameters and return type)
- * - Union types (A | B)
+ * - Union types (unio<A, B>)
  * - Optional types (T?)
+ *
+ * NOTE: Source-level unions use `unio<...>`; `|` is a bitwise operator.
  * - Unknown type (for unresolved/error cases)
  *
  * The SemanticType discriminated union enables exhaustive pattern matching
@@ -79,7 +81,7 @@ export interface FunctionType extends BaseType {
 }
 
 /**
- * Union type (A | B | C).
+ * Union type (unio<A, B, ...> in source).
  */
 export interface UnionType extends BaseType {
     kind: 'union';
