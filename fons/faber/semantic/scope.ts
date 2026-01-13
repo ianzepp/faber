@@ -76,6 +76,7 @@ export function createGlobalScope(): Scope {
     };
 }
 
+
 /**
  * Create a child scope.
  */
@@ -86,6 +87,7 @@ export function createScope(parent: Scope, kind: Scope['kind'] = 'block'): Scope
         kind,
     };
 }
+
 
 /**
  * Define a symbol in the current scope.
@@ -103,6 +105,7 @@ export function defineSymbol(scope: Scope, symbol: Symbol): string | null {
 
     return null;
 }
+
 
 /**
  * Look up a symbol by name, walking up the scope chain.
@@ -123,6 +126,7 @@ export function lookupSymbol(scope: Scope, name: string): Symbol | null {
     return null;
 }
 
+
 /**
  * Look up a symbol only in the current scope (no parent traversal).
  *
@@ -131,6 +135,7 @@ export function lookupSymbol(scope: Scope, name: string): Symbol | null {
 export function lookupSymbolLocal(scope: Scope, name: string): Symbol | null {
     return scope.symbols.get(name) ?? null;
 }
+
 
 /**
  * Update an existing symbol's type in the current scope.
@@ -151,6 +156,7 @@ export function updateSymbolType(scope: Scope, name: string, type: SemanticType)
 
     return false;
 }
+
 
 /**
  * Find the enclosing function scope.

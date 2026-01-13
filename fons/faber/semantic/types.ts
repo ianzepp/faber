@@ -209,12 +209,14 @@ export function primitiveType(name: PrimitiveType['name'], nullable?: boolean): 
     return { kind: 'primitive', name, nullable };
 }
 
+
 /**
  * Create a generic type.
  */
 export function genericType(name: string, typeParameters: SemanticType[], nullable?: boolean): GenericType {
     return { kind: 'generic', name, typeParameters, nullable };
 }
+
 
 /**
  * Create a function type.
@@ -223,12 +225,14 @@ export function functionType(parameterTypes: SemanticType[], returnType: Semanti
     return { kind: 'function', parameterTypes, returnType, async, hasCuratorParam };
 }
 
+
 /**
  * Create a union type.
  */
 export function unionType(types: SemanticType[]): UnionType {
     return { kind: 'union', types };
 }
+
 
 /**
  * Create an unknown type.
@@ -237,6 +241,7 @@ export function unknownType(reason?: string): UnknownType {
     return { kind: 'unknown', reason };
 }
 
+
 /**
  * Create a user-defined type.
  */
@@ -244,12 +249,14 @@ export function userType(name: string, nullable?: boolean): UserType {
     return { kind: 'user', name, nullable };
 }
 
+
 /**
  * Create an enum type.
  */
 export function enumType(name: string, members: Map<string, SemanticType>, nullable?: boolean): EnumType {
     return { kind: 'enum', name, members, nullable };
 }
+
 
 /**
  * Create a genus (class/struct) type.
@@ -265,6 +272,7 @@ export function genusType(
     return { kind: 'genus', name, fields, methods, staticFields, staticMethods, nullable };
 }
 
+
 /**
  * Create a pactum (interface) type.
  */
@@ -272,12 +280,14 @@ export function pactumType(name: string, methods: Map<string, FunctionType>, nul
     return { kind: 'pactum', name, methods, nullable };
 }
 
+
 /**
  * Create a discretio (tagged union) type.
  */
 export function discretioType(name: string, variants: Map<string, VariantInfo>, nullable?: boolean): DiscretioType {
     return { kind: 'discretio', name, variants, nullable };
 }
+
 
 /**
  * Create a namespace type.

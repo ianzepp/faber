@@ -345,6 +345,7 @@ function extractFunctioExport(stmt: FunctioDeclaration, ctx: ModuleTypeContext):
     };
 }
 
+
 /**
  * Extract export from genus (class) declaration.
  */
@@ -366,6 +367,7 @@ function extractGenusExport(stmt: GenusDeclaration, ctx: ModuleTypeContext): Mod
         kind: 'genus',
     };
 }
+
 
 /**
  * Extract export from pactum (interface) declaration.
@@ -390,6 +392,7 @@ function extractPactumExport(stmt: PactumDeclaration, ctx: ModuleTypeContext): M
     };
 }
 
+
 /**
  * Extract export from ordo (enum) declaration.
  */
@@ -400,6 +403,7 @@ function extractOrdoExport(stmt: OrdoDeclaration): ModuleExport {
         kind: 'ordo',
     };
 }
+
 
 /**
  * Extract export from discretio (tagged union) declaration.
@@ -426,6 +430,7 @@ function extractDiscretioExport(stmt: DiscretioDeclaration): ModuleExport {
     };
 }
 
+
 /**
  * Extract export from typus (type alias) declaration.
  */
@@ -436,6 +441,7 @@ function extractTypusExport(stmt: TypeAliasDeclaration): ModuleExport {
         kind: 'type',
     };
 }
+
 
 /**
  * Extract export from variable declaration.
