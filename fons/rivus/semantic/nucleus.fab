@@ -241,7 +241,7 @@ genus Analyzator {
 # Create a new analyzer
 @ publica
 functio novumAnalyzator(textus? viaIngressus) -> Analyzator {
-    fixum analyzator = {
+    fixum analyzator = novum Analyzator {
         errores: [] innatum lista<SemanticError>,
         scopus: creaScopumGlobalem(),
         currentFunctioReditus: nihil,
@@ -252,8 +252,8 @@ functio novumAnalyzator(textus? viaIngressus) -> Analyzator {
         morphologiaRegistra: {} innatum tabula<textus, tabula<textus, lista<textus>>>,
         viaIngressus: viaIngressus,
         modulusCache: {} innatum tabula<textus, ModulusResolutum>,
-        modulusInProgressu: {} qua copia<textus>
-    } qua Analyzator
+        modulusInProgressu: {} innatum copia<textus>
+    }
 
     # Define built-in intrinsics
     analyzator.definieIntrinsica()

@@ -111,7 +111,7 @@ genus ZigGenerator {
 # Create a new ZigGenerator with default settings
 @ publica
 functio creaZigGenerator() -> ZigGenerator {
-    redde {
+    redde novum ZigGenerator {
         profunditas: 0,
         indentum: "    ",
         curatores: [] innatum lista<textus>,
@@ -120,5 +120,5 @@ functio creaZigGenerator() -> ZigGenerator {
         inFiunt: falsum,
         inFiet: falsum,
         inFient: falsum
-    } qua ZigGenerator
+    }
 }

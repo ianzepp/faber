@@ -44,7 +44,7 @@ genus ResolvitorImpl implet Resolvitor {
 # Create a new Resolvitor
 @ publica
 functio novumResolvitor(Analyzator a) -> Resolvitor {
-    redde { a: a } qua ResolvitorImpl qua Resolvitor
+    redde (novum ResolvitorImpl { a: a }) qua Resolvitor
 }
 
 # ============================================================================

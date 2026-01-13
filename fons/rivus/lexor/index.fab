@@ -847,7 +847,7 @@ functio lexare(textus fons, si Dialectus dialectus) -> LexorResultatum {
         dialectusActualis = dialectus
     }
 
-    varia lexor = {
+    varia lexor = novum Lexor {
         fons: fons,             # Source text to tokenize
         index: 0,               # Start at beginning
         linea: 1,               # Lines are 1-based
@@ -855,7 +855,7 @@ functio lexare(textus fons, si Dialectus dialectus) -> LexorResultatum {
         symbola: [] innatum lista<Symbolum>,    # Empty token list
         errores: [] innatum lista<LexorError>,  # Empty error list
         dialectus: dialectusActualis        # Keyword spelling dialect
-    } qua Lexor
+    }
 
     # Run the scanner and return results
     redde lexor.scanOmnia()

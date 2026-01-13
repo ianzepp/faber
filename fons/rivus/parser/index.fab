@@ -82,7 +82,7 @@ genus Parsator implet Resolvitor {
 # Create a new Parsator
 @ publica
 functio novumParsator(Parser p) -> Parsator {
-    redde { p: p } qua Parsator
+    redde novum Parsator { p: p }
 }
 
 # Parse a token stream into an AST

@@ -539,11 +539,11 @@ genus Parser {
 # Create a new parser for the given token stream
 @ publica
 functio novumParser(lista<Symbolum> symbola) -> Parser {
-    redde {
+    redde novum Parser {
         symbola: symbola,
         index: 0,
         idUnicum: 0,
         errores: [],
         notaePendentes: []
-    } qua Parser
+    }
 }

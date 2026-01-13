@@ -102,7 +102,7 @@ genus TsGenerator {
 # Create a new TsGenerator with default settings
 @ publica
 functio creaTsGenerator() -> TsGenerator {
-    redde {
+    redde novum TsGenerator {
         profunditas: 0,
         indentum: "  ",
         inCursore: falsum,
@@ -113,13 +113,13 @@ functio creaTsGenerator() -> TsGenerator {
         inGenere: falsum,
         requisita: creaRequiredFeatures(),
         tabulaNominata: [] innatum lista<textus>
-    } qua TsGenerator
+    }
 }
 
 # Create a TsGenerator with custom indentation
 @ publica
 functio creaTsGeneratorCum(textus indentum) -> TsGenerator {
-    redde {
+    redde novum TsGenerator {
         profunditas: 0,
         indentum: indentum,
         inCursore: falsum,
@@ -130,5 +130,5 @@ functio creaTsGeneratorCum(textus indentum) -> TsGenerator {
         inGenere: falsum,
         requisita: creaRequiredFeatures(),
         tabulaNominata: [] innatum lista<textus>
-    } qua TsGenerator
+    }
 }

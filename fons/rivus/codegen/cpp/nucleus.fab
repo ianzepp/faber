@@ -128,7 +128,7 @@ genus CppGenerator {
 # Create a new CppGenerator with default settings
 @ publica
 functio creaCppGenerator() -> CppGenerator {
-    redde {
+    redde novum CppGenerator {
         profunditas: 0,
         indentum: "    ",
         includes: [] innatum lista<textus>,
@@ -136,5 +136,5 @@ functio creaCppGenerator() -> CppGenerator {
         tabulaNominata: [] innatum lista<textus>,
         inFunctio: falsum,
         inMain: falsum
-    } qua CppGenerator
+    }
 }

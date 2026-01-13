@@ -917,8 +917,12 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
                     if (exprType !== 'ArrayExpression') {
                         errors.push({ message: `innatum lista requires array literal [], got ${exprType}`, position: node.position });
                     }
+                } else if (typeName === 'copia') {
+                    if (exprType !== 'ObjectExpression') {
+                        errors.push({ message: `innatum copia requires object literal {}, got ${exprType}`, position: node.position });
+                    }
                 } else {
-                    errors.push({ message: `innatum only supports builtin types (tabula, lista), got ${typeName}`, position: node.position });
+                    errors.push({ message: `innatum only supports builtin types (tabula, lista, copia), got ${typeName}`, position: node.position });
                 }
 
                 node.resolvedType = targetType;

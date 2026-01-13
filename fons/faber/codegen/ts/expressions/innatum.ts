@@ -64,6 +64,14 @@ export function genInnatumExpression(node: InnatumExpression, g: TsGenerator): s
         return '[]';
     }
 
+    if (typeName === 'copia') {
+        // WHY: Set requires new construction with type parameter
+        const typeParams = node.targetType.typeParameters;
+        const elemTypeAnno = typeParams?.[0] ? getTypeAnnotation(typeParams[0]) : null;
+        const elemType = elemTypeAnno ? g.genType(elemTypeAnno) : 'unknown';
+        return `new Set<${elemType}>()`;
+    }
+
     // Fallback: just generate the expression (shouldn't happen if semantic validation works)
     return g.genExpression(node.expression);
 }
