@@ -126,6 +126,7 @@ Both implement L001-L006:
 ### For Rivus
 1. Document why boolean/null are tokens not keywords
 2. Decide on shift operators: tokens vs keywords-only
+3. Fix template escape handling (skips backslash instead of preserving it)
 
 ---
 
