@@ -263,98 +263,65 @@ genus Lexor {
     # lege = "read/scan", numerus = "number", textus = "string"
     # =========================================================================
 
+    # legeNumerumRadix = helper for radix-prefixed literals (hex, binary, octal)
+    # Returns verum if prefix matched (even if malformed), falsum otherwise
+    functio legeNumerumRadix(
+        textus praefixumMinor,
+        textus praefixumMaior,
+        (textus) -> bivalens estValidus,
+        LexorErrorCodice errorCodice,
+        Locus loc
+    ) -> bivalens {
+        # Check for prefix: 0x, 0b, 0o (case insensitive)
+        si ego.specta(0) != "0" {
+            redde falsum
+        }
+        si ego.specta(1) != praefixumMinor et ego.specta(1) != praefixumMaior {
+            redde falsum
+        }
+
+        varia valor = ego.procede() + ego.procede()  # consume '0' and prefix
+
+        # Must have at least one valid digit
+        si non estValidus(ego.specta(0)) {
+            ego.addeErrorem(errorCodice, loc)
+            redde verum
+        }
+
+        # Consume all valid digits
+        dum estValidus(ego.specta(0)) {
+            valor = valor + ego.procede()
+        }
+
+        # Optional bigint suffix 'n'
+        si ego.specta(0) == "n" {
+            ego.procede()
+            valor = valor + "n"
+        }
+
+        ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
+        redde verum
+    }
+
     # legeNumerum = "scan a number" - handles all numeric literal formats
     # Supports: decimal (42), hex (0xFF), binary (0b101), octal (0o77),
     #           float (3.14), scientific (1e10), bigint suffix (42n)
     functio legeNumerum() -> vacuum {
         fixum loc = ego.locus()
-        varia textus valor = ""     # valor = "value" - accumulated digits
 
-        # ---- Hex literal: 0x or 0X ----
-        si ego.specta(0) == "0" et (ego.specta(1) == "x" aut ego.specta(1) == "X") {
-            valor = valor + ego.procede()  # consume '0'
-            valor = valor + ego.procede()  # consume 'x'
-
-            # Must have at least one hex digit after prefix
-            si non ego.estDigitusHex(ego.specta(0)) {
-                ego.addeErrorem(LexorErrorCodice.NumerusHexMalus, loc)
-                redde
-            }
-
-            # Consume all hex digits
-            dum ego.estDigitusHex(ego.specta(0)) {
-                valor = valor + ego.procede()
-            }
-
-            # Optional bigint suffix 'n' (e.g., 0xFFn)
-            si ego.specta(0) == "n" {
-                ego.procede()
-                valor = valor + "n"
-                ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
-                redde
-            }
-
-            ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
+        # Radix prefixes: hex (0x), binary (0b), octal (0o)
+        si ego.legeNumerumRadix("x", "X", pro c: ego.estDigitusHex(c), LexorErrorCodice.NumerusHexMalus, loc) {
             redde
         }
-
-        # ---- Binary literal: 0b or 0B ----
-        si ego.specta(0) == "0" et (ego.specta(1) == "b" aut ego.specta(1) == "B") {
-            valor = valor + ego.procede()  # consume '0'
-            valor = valor + ego.procede()  # consume 'b'
-
-            # Must have at least one binary digit
-            si non ego.estDigitusBinarius(ego.specta(0)) {
-                ego.addeErrorem(LexorErrorCodice.NumerusBinariusMalus, loc)
-                redde
-            }
-
-            # Consume all binary digits
-            dum ego.estDigitusBinarius(ego.specta(0)) {
-                valor = valor + ego.procede()
-            }
-
-            # Optional bigint suffix
-            si ego.specta(0) == "n" {
-                ego.procede()
-                valor = valor + "n"
-                ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
-                redde
-            }
-
-            ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
+        si ego.legeNumerumRadix("b", "B", pro c: ego.estDigitusBinarius(c), LexorErrorCodice.NumerusBinariusMalus, loc) {
             redde
         }
-
-        # ---- Octal literal: 0o or 0O ----
-        si ego.specta(0) == "0" et (ego.specta(1) == "o" aut ego.specta(1) == "O") {
-            valor = valor + ego.procede()  # consume '0'
-            valor = valor + ego.procede()  # consume 'o'
-
-            # Must have at least one octal digit
-            si non ego.estDigitusOctalis(ego.specta(0)) {
-                ego.addeErrorem(LexorErrorCodice.NumerusOctalisMalus, loc)
-                redde
-            }
-
-            # Consume all octal digits
-            dum ego.estDigitusOctalis(ego.specta(0)) {
-                valor = valor + ego.procede()
-            }
-
-            # Optional bigint suffix
-            si ego.specta(0) == "n" {
-                ego.procede()
-                valor = valor + "n"
-                ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
-                redde
-            }
-
-            ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
+        si ego.legeNumerumRadix("o", "O", pro c: ego.estDigitusOctalis(c), LexorErrorCodice.NumerusOctalisMalus, loc) {
             redde
         }
 
         # ---- Decimal literal ----
+        varia textus valor = ""
         # Consume integer part (digits before decimal point)
         dum ego.estDigitus(ego.specta(0)) {
             valor = valor + ego.procede()
