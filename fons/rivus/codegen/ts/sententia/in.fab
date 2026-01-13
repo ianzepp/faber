@@ -23,7 +23,7 @@ functio genIn(Expressia obiectum, Sententia corpus, TsGenerator g) -> textus {
             }
             redde lines.coniunge("\n")
         }
-        casu _ { }
+        ceterum { }
     }
     redde genSententia(corpus, g)
 }
@@ -34,7 +34,7 @@ functio genInSententia(Sententia stmt, Expressia obiectum, TsGenerator g) -> tex
             fixum expr = genInExpressia(s.expressia, obiectum, g)
             redde scriptum("§§;", g.ind(), expr)
         }
-        casu _ { }
+        ceterum { }
     }
     redde genSententia(stmt, g)
 }
@@ -47,10 +47,10 @@ functio genInExpressia(Expressia expr, Expressia obiectum, TsGenerator g) -> tex
                     fixum lhs = scriptum("§.§", genExpressia(obiectum, g), n.valor)
                     redde scriptum("§ § §", lhs, a.signum, genExpressia(a.dexter, g))
                 }
-                casu _ { }
+                ceterum { }
             }
         }
-        casu _ { }
+        ceterum { }
     }
     redde genExpressia(expr, g)
 }

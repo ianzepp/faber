@@ -148,7 +148,7 @@ functio genExpressia(Expressia expr, ZigGenerator g) -> textus {
                         }
                     }
                 }
-                casu _ { }
+                ceterum { }
             }
 
             # Default: pass through as-is
@@ -196,7 +196,7 @@ functio genExpressia(Expressia expr, ZigGenerator g) -> textus {
             redde genLambda(e.parametra qua lista<LambdaParametrum>, e.corpus, g)
         }
 
-        casu _ { }
+        ceterum { }
     }
 
     # Fallback

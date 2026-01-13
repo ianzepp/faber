@@ -30,7 +30,7 @@ functio genLambda(lista<LambdaParametrum> parametra, ignotum corpus, ZigGenerato
         casu Expressia ut e {
             redde scriptum("struct { fn f(§) anytype { return §; } }.f", params.coniunge(", "), genExpressia(e, g))
         }
-        casu _ { }
+        ceterum { }
     }
 
     redde scriptum("struct { fn f(§) void {} }.f", params.coniunge(", "))
