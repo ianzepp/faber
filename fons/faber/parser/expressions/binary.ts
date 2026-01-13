@@ -97,7 +97,7 @@ export function parseAssignment(r: Resolver): Expression {
             } as AssignmentExpression;
         }
 
-        ctx.reportError(ParserErrorCode.InvalidAssignmentTarget);
+        ctx.error(ParserErrorCode.InvalidAssignmentTarget);
     }
 
     return expr;

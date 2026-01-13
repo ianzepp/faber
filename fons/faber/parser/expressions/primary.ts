@@ -35,6 +35,34 @@ import type {
     BlockStatement,
 } from '../ast';
 import { ParserErrorCode } from '../errors';
+import {
+    isDSLVerb,
+    parseAbExpression,
+    parseCollectionDSLExpression,
+    parseRegexLiteral,
+} from './dsl';
+
+// =============================================================================
+// FORWARD REFERENCE
+// =============================================================================
+
+/**
+ * Forward reference to unary parsing.
+ *
+ * WHY: parseQuaExpression needs to call parseUnary for shift amounts and
+ *      conversion fallbacks, but parseUnary is in a separate module that
+ *      imports from this one. Forward reference breaks the cycle.
+ */
+let parseUnaryImpl: (r: Resolver) => Expression;
+
+/**
+ * Set the unary parser implementation.
+ *
+ * WHY: Allows the main parser to inject the unary parser after module loading.
+ */
+export function setUnaryParser(fn: (r: Resolver) => Expression): void {
+    parseUnaryImpl = fn;
+}
 
 // =============================================================================
 // HELPERS
@@ -68,17 +96,15 @@ function isChainAccessor(type: string): boolean {
  */
 export function parseScriptumExpression(r: Resolver): ScriptumExpression {
     const ctx = r.ctx();
-    const position = ctx.peek().position;
-
-    // Consume 'scriptum' keyword
-    ctx.advance();
+    // Position of 'scriptum' keyword (already consumed by caller)
+    const position = ctx.tokens[ctx.current - 1]!.position;
 
     ctx.expect('LPAREN', ParserErrorCode.ExpectedOpeningParen);
 
     // First argument must be the format string literal
     const formatToken = ctx.peek();
     if (formatToken.type !== 'STRING') {
-        ctx.reportError(ParserErrorCode.ExpectedString, 'scriptum requires a format string literal as first argument');
+        ctx.error(ParserErrorCode.ExpectedString, 'scriptum requires a format string literal as first argument');
     }
     ctx.advance();
     const format: Literal = {
@@ -115,10 +141,8 @@ export function parseScriptumExpression(r: Resolver): ScriptumExpression {
  */
 export function parseLegeExpression(r: Resolver): LegeExpression {
     const ctx = r.ctx();
-    const position = ctx.peek().position;
-
-    // Consume 'lege' keyword
-    ctx.advance();
+    // Position of 'lege' keyword (already consumed by caller)
+    const position = ctx.tokens[ctx.current - 1]!.position;
 
     // Check for 'lineam' modifier
     const mode = ctx.matchKeyword('lineam') ? 'line' : 'all';
@@ -156,31 +180,6 @@ export function parseLegeExpression(r: Resolver): LegeExpression {
 export function parseQuaExpression(r: Resolver): Expression {
     const ctx = r.ctx();
     let expr = parseCall(r);
-
-    while (
-        ctx.checkKeyword('qua') ||
-        ctx.checkKeyword('innatum') ||
-        ctx.checkKeyword('numeratum') ||
-        ctx.checkKeyword('fractatum') ||
-        ctx.checkKeyword('textatum') ||
-        ctx.checkKeyword('bivalentum') ||
-        ctx.checkKeyword('dextratum') ||
-        ctx.checkKeyword('sinistratum')
-    ) {
-        ctx.advance(); // consume the keyword
-        const keyword = ctx.peek().value;
-        const position = ctx.peek().position;
-
-        // Get the keyword we just consumed (it's one token back now)
-        const prevToken = ctx.peek();
-        const prevKeyword = prevToken.keyword ?? prevToken.value;
-
-        // Actually we need to look at what we matched - the advance happened already
-        // Let's restructure to capture the keyword before advancing
-    }
-
-    // Re-implement with proper keyword capture
-    expr = parseCall(r);
 
     while (true) {
         let keyword: string | undefined;
@@ -242,11 +241,8 @@ export function parseQuaExpression(r: Resolver): Expression {
         }
         else if (keyword === 'dextratum' || keyword === 'sinistratum') {
             // Bit shift operators: x dextratum 3 -> x >> 3, x sinistratum 3 -> x << 3
-            // Need to parse unary - but we don't have direct access to parseUnary here
-            // This will be called from the unary parsing context
             const direction = keyword as ShiftExpression['direction'];
-            // Parse the amount as a primary expression (conservative)
-            const amount = parsePrimary(r);
+            const amount = parseUnaryImpl(r);
 
             expr = {
                 type: 'ShiftExpression',
@@ -284,7 +280,7 @@ export function parseQuaExpression(r: Resolver): Expression {
 
             // Parse optional fallback with 'vel'
             if (ctx.matchKeyword('vel')) {
-                fallback = parsePrimary(r);
+                fallback = parseUnaryImpl(r);
             }
 
             expr = {
@@ -320,10 +316,8 @@ export function parseQuaExpression(r: Resolver): Expression {
  */
 export function parseNovumExpression(r: Resolver): NovumExpression {
     const ctx = r.ctx();
-    const position = ctx.peek().position;
-
-    // Consume 'novum' keyword
-    ctx.advance();
+    // Position of 'novum' keyword (already consumed by caller)
+    const position = ctx.tokens[ctx.current - 1]!.position;
 
     const callee = ctx.parseIdentifier();
 
@@ -369,10 +363,8 @@ export function parseNovumExpression(r: Resolver): NovumExpression {
  */
 export function parseFingeExpression(r: Resolver): FingeExpression {
     const ctx = r.ctx();
-    const position = ctx.peek().position;
-
-    // Consume 'finge' keyword
-    ctx.advance();
+    // Position of 'finge' keyword (already consumed by caller)
+    const position = ctx.tokens[ctx.current - 1]!.position;
 
     const variant = ctx.parseIdentifier();
 
@@ -629,6 +621,65 @@ export function parsePrimary(r: Resolver): Expression {
 
     if (ctx.checkKeyword('fiet')) {
         return parseLambdaExpression(r, true);
+    }
+
+    // DSL expressions
+    // ab expression: filtering DSL (ab users activus)
+    if (ctx.checkKeyword('ab')) {
+        return parseAbExpression(r);
+    }
+
+    // sed expression: regex literal (sed "\\d+" i)
+    if (ctx.checkKeyword('sed')) {
+        return parseRegexLiteral(r);
+    }
+
+    // ex expression in expression context: collection DSL (ex items prima 5)
+    // WHY: 'ex' in expression context (not statement start) with DSL verb is collection pipeline
+    if (ctx.checkKeyword('ex')) {
+        // Look ahead to see if this is DSL (prima/ultima/summa after expression)
+        // vs iteration (pro/fit/fiet) or import (importa) or destructuring (fixum/varia)
+        // Save position for lookahead
+        const savedCurrent = ctx.current;
+        ctx.advance(); // consume 'ex'
+
+        // Parse source expression (identifier or more complex expression)
+        // For DSL detection, we just check if a DSL verb follows
+        // We need to skip one expression-like token and check for DSL verb
+        let depth = 0;
+        let foundDSL = false;
+
+        // Simple lookahead: skip tokens until we find DSL verb or statement boundary
+        while (!ctx.isAtEnd() && depth < 20) {
+            if (isDSLVerb(r)) {
+                foundDSL = true;
+                break;
+            }
+
+            // Stop on keywords that indicate non-DSL usage
+            const kw = ctx.peek().keyword;
+            if (kw === 'pro' || kw === 'fit' || kw === 'fiet' || kw === 'importa' ||
+                kw === 'fixum' || kw === 'varia' || kw === 'figendum' || kw === 'variandum') {
+                break;
+            }
+
+            // Stop on statement boundaries
+            if (ctx.check('RBRACE') || ctx.check('SEMICOLON') || ctx.check('EOF')) {
+                break;
+            }
+
+            ctx.advance();
+            depth++;
+        }
+
+        // Restore position
+        ctx.current = savedCurrent;
+
+        if (foundDSL) {
+            return parseCollectionDSLExpression(r);
+        }
+
+        // Fall through - 'ex' is in statement context, not expression DSL
     }
 
     // Number literal (decimal or hex)

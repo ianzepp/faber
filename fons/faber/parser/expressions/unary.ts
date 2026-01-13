@@ -13,15 +13,17 @@ import type {
     Expression,
     UnaryExpression,
     CedeExpression,
-    NovumExpression,
-    FingeExpression,
     PraefixumExpression,
-    ScriptumExpression,
-    LegeExpression,
-    Literal,
     BlockStatement,
 } from '../ast';
 import { ParserErrorCode } from '../errors';
+import {
+    parseQuaExpression,
+    parseNovumExpression,
+    parseFingeExpression,
+    parseScriptumExpression,
+    parseLegeExpression,
+} from './primary';
 
 // =============================================================================
 // UNARY EXPRESSION PARSING
@@ -215,9 +217,9 @@ export function parseUnary(r: Resolver): Expression {
         return parseLegeExpression(r);
     }
 
-    // Fall through to qua/call parsing via resolver
+    // Fall through to qua/call parsing
     // WHY: parseQua is the next level down in precedence, followed by parseCall
-    return (r as ResolverWithQua).qua();
+    return parseQuaExpression(r);
 }
 
 // =============================================================================
@@ -269,217 +271,4 @@ export function parsePraefixumExpression(r: Resolver): PraefixumExpression {
     }
 
     return { type: 'PraefixumExpression', body, position };
-}
-
-// =============================================================================
-// FORMAT STRING EXPRESSION PARSING
-// =============================================================================
-
-/**
- * Parse format string expression.
- *
- * GRAMMAR:
- *   scriptumExpr := 'scriptum' '(' STRING (',' expression)* ')'
- *
- * WHY: "scriptum" (that which has been written) is the perfect passive participle
- *      of scribere. While scribe outputs to console, scriptum returns a formatted string.
- *
- * WHY: The placeholder is converted to target-appropriate format specifiers.
- *
- * Examples:
- *   scriptum("Hello, ...", name)
- *   scriptum("... + ... = ...", a, b, a + b)
- */
-export function parseScriptumExpression(r: Resolver): ScriptumExpression {
-    const ctx = r.ctx();
-    const position = ctx.tokens[ctx.current - 1]!.position; // Position of 'scriptum' we just consumed
-
-    ctx.expect('LPAREN', ParserErrorCode.ExpectedOpeningParen);
-
-    // First argument must be the format string literal
-    const formatToken = ctx.peek();
-    if (formatToken.type !== 'STRING') {
-        ctx.error(ParserErrorCode.ExpectedString, 'scriptum requires a format string literal as first argument');
-    }
-    ctx.advance();
-    const format: Literal = {
-        type: 'Literal',
-        value: formatToken.value,
-        raw: `"${formatToken.value}"`,
-        position: formatToken.position,
-    };
-
-    // Parse remaining arguments
-    const args: Expression[] = [];
-    while (ctx.match('COMMA')) {
-        args.push(r.expression());
-    }
-
-    ctx.expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
-
-    return { type: 'ScriptumExpression', format, arguments: args, position };
-}
-
-// =============================================================================
-// STDIN READ EXPRESSION PARSING
-// =============================================================================
-
-/**
- * Parse stdin read expression.
- *
- * GRAMMAR:
- *   legeExpr := 'lege' ('lineam')?
- *
- * Reads from stdin:
- *   lege        -> read all input until EOF
- *   lege lineam -> read one line
- */
-export function parseLegeExpression(r: Resolver): LegeExpression {
-    const ctx = r.ctx();
-    const position = ctx.tokens[ctx.current - 1]!.position; // Position of 'lege' we just consumed
-
-    // Check for 'lineam' modifier
-    const mode = ctx.matchKeyword('lineam') ? 'line' : 'all';
-
-    return { type: 'LegeExpression', mode, position };
-}
-
-// =============================================================================
-// NEW EXPRESSION PARSING
-// =============================================================================
-
-/**
- * Parse new expression (object construction).
- *
- * GRAMMAR:
- *   newExpr := 'novum' IDENTIFIER ('(' argumentList ')')? (objectLiteral | 'de' expression)?
- *
- * WHY: Two forms for property overrides:
- *      - Inline literal: `novum Persona { nomen: "Marcus" }`
- *      - From expression: `novum Persona de props` (props is variable/call/etc.)
- *
- *      The `de` (from) form allows dynamic overrides from variables or function results.
- */
-export function parseNovumExpression(r: Resolver): NovumExpression {
-    const ctx = r.ctx();
-    const position = ctx.tokens[ctx.current - 1]!.position;
-    const callee = ctx.parseIdentifier();
-
-    let args: Expression[] = [];
-
-    if (ctx.match('LPAREN')) {
-        args = parseArgumentList(r);
-
-        ctx.expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
-    }
-
-    let withExpression: Expression | undefined;
-
-    // Check for property overrides: novum X { ... } or novum X de expr
-    if (ctx.check('LBRACE')) {
-        withExpression = (r as ResolverWithPrimary).primary();
-    }
-    else if (ctx.matchKeyword('de')) {
-        withExpression = r.expression();
-    }
-
-    return { type: 'NovumExpression', callee, arguments: args, withExpression, position };
-}
-
-// =============================================================================
-// DISCRETIO VARIANT CONSTRUCTION
-// =============================================================================
-
-/**
- * Parse discretio variant construction expression.
- *
- * GRAMMAR:
- *   fingeExpr := 'finge' IDENTIFIER ('{' fieldList '}')? ('qua' IDENTIFIER)?
- *
- * WHY: Latin 'finge' (form/shape) for constructing discretio variants.
- *      Variant name comes first, optional fields in braces, optional qua for
- *      explicit discretio type when not inferrable from context.
- *
- * Examples:
- *   finge Click { x: 10, y: 20 }           - payload variant
- *   finge Click { x: 10, y: 20 } qua Event - with explicit type
- *   finge Active                            - unit variant
- *   finge Active qua Status                 - unit variant with explicit type
- */
-export function parseFingeExpression(r: Resolver): FingeExpression {
-    const ctx = r.ctx();
-    const position = ctx.tokens[ctx.current - 1]!.position;
-    const variant = ctx.parseIdentifier();
-
-    let fields: Expression | undefined;
-
-    // Check for payload fields: finge Click { x: 10, y: 20 }
-    if (ctx.check('LBRACE')) {
-        const fieldsExpr = (r as ResolverWithPrimary).primary();
-
-        if (fieldsExpr.type === 'ObjectExpression') {
-            fields = fieldsExpr;
-        }
-    }
-
-    let discretioType: Expression | undefined;
-
-    // Check for explicit type: finge Click { } qua Event
-    if (ctx.matchKeyword('qua')) {
-        discretioType = ctx.parseIdentifier();
-    }
-
-    return {
-        type: 'FingeExpression',
-        variant,
-        fields: fields as FingeExpression['fields'],
-        discretioType: discretioType as FingeExpression['discretioType'],
-        position,
-    };
-}
-
-// =============================================================================
-// ARGUMENT LIST PARSING
-// =============================================================================
-
-/**
- * Parse comma-separated argument list (without parens).
- *
- * WHY: Shared by novum and other call-like expressions.
- */
-function parseArgumentList(r: Resolver): Expression[] {
-    const ctx = r.ctx();
-    const args: Expression[] = [];
-
-    if (!ctx.check('RPAREN')) {
-        do {
-            args.push(r.expression());
-        } while (ctx.match('COMMA'));
-    }
-
-    return args;
-}
-
-// =============================================================================
-// EXTENDED RESOLVER TYPES
-// =============================================================================
-
-/**
- * Extended Resolver interface for qua expression parsing.
- *
- * WHY: The base Resolver doesn't include qua() since it's expression-internal.
- *      This type allows calling through to the implementation in index.ts.
- */
-interface ResolverWithQua extends Resolver {
-    qua(): Expression;
-}
-
-/**
- * Extended Resolver interface for primary expression parsing.
- *
- * WHY: parsePrimary is needed for object literals in novum/finge but isn't
- *      part of the base Resolver. The implementation provides this method.
- */
-interface ResolverWithPrimary extends Resolver {
-    primary(): Expression;
 }

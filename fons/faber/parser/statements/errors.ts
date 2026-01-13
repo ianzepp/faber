@@ -139,8 +139,7 @@ export function parseCustodiStatement(r: Resolver): CustodiStatement {
             clauses.push({ type: 'CustodiClause', test, consequent, position: clausePosition });
         }
         else {
-            ctx.reportError(ParserErrorCode.InvalidCustodiClauseStart);
-            break;
+            ctx.error(ParserErrorCode.InvalidCustodiClauseStart);
         }
     }
 

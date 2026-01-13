@@ -219,7 +219,7 @@ export function parseExStatement(r: Resolver): IteratioStatement | VariaDeclarat
         async = true;
     }
     else {
-        ctx.reportError(ParserErrorCode.ExpectedKeywordPro);
+        ctx.error(ParserErrorCode.ExpectedKeywordPro);
     }
 
     const variable = ctx.parseIdentifierOrKeyword();
@@ -298,7 +298,7 @@ export function parseDeStatement(r: Resolver): IteratioStatement {
         async = true;
     }
     else {
-        ctx.reportError(ParserErrorCode.ExpectedKeywordPro);
+        ctx.error(ParserErrorCode.ExpectedKeywordPro);
     }
 
     const variable = ctx.parseIdentifierOrKeyword();
