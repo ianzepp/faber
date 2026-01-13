@@ -4,7 +4,7 @@
 
 ex "../resolvitor" importa Resolvitor
 ex "../typi" importa SemanticTypus, IGNOTUM
-ex "../scopus" importa ScopusSpecies, SymbolumSpecies
+ex "../scopus" importa ScopusSpecies, Symbolum, SymbolumSpecies, quaereSymbolum
 ex "../../ast/sententia" importa Sententia
 
 # =============================================================================
@@ -211,8 +211,9 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                         casu Usitatum ut u {
                             # For discriminated union, lookup Discriminant.Variant
                             fixum qualNomen = scriptum("§.§", u.nomen, pattern.variansNomen)
-                            si nonnihil a.scopus.symbola[qualNomen] {
-                                variantTypus = a.scopus.symbola[qualNomen].semanticTypus
+                            fixum symbolum = quaereSymbolum(a.scopus, qualNomen)
+                            si nonnihil symbolum {
+                                variantTypus = (symbolum qua Symbolum).semanticTypus
                             }
                         }
                         casu _ {
