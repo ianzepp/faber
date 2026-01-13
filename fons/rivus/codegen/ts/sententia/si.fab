@@ -64,7 +64,10 @@ functio genSi(Expressia condicio, Sententia consequens, ignotum alternans, ignot
     si nonnihil cape {
         fixum c = cape qua CapeClausula
         fixum ifBody = genSiCatena(condicio, consequens, alternans, g)
-        redde scriptum("§try {\n§\n§} catch (§) §", g.ind(), ifBody, g.ind(), c.param, genSententia(c.corpus, g))
+        g.intraProfundum()
+        fixum catchBody = genSententia(c.corpus, g)
+        g.exiProfundum()
+        redde scriptum("§try {\n§\n§} catch (§) {\n§\n§}", g.ind(), ifBody, g.ind(), c.param, catchBody, g.ind())
     }
 
     redde genSiCatena(condicio, consequens, alternans, g)

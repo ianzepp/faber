@@ -85,6 +85,7 @@ Commands:
 
 Options:
   -o, --output <file>    Output file (default: stdout)
+  -t, --target ts        Target language (only 'ts' supported)
   -c, --check            Check formatting without writing (format command)
   -h, --help             Show this help
   -v, --version          Show version
@@ -377,6 +378,13 @@ for (let i = 1; i < args.length; i++) {
 
     if (arg === '-o' || arg === '--output') {
         outputFile = args[++i];
+    } else if (arg === '-t' || arg === '--target') {
+        const target = args[++i];
+        if (target !== 'ts') {
+            console.error(`Error: Faber only supports TypeScript target. Use Rivus for other targets.`);
+            process.exit(1);
+        }
+        // WHY: Accept -t ts for compatibility with build scripts, but ignore since ts is the only target
     } else if (arg === '-c' || arg === '--check') {
         checkOnly = true;
     } else if (arg.startsWith('-') && arg !== '-') {

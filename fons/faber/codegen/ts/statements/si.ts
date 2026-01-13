@@ -16,31 +16,32 @@ import type { TsGenerator } from '../generator';
 import { genBlockStatement } from './functio';
 
 export function genSiStatement(node: SiStatement, g: TsGenerator): string {
-    let result = '';
+    // Generate the core if-else chain without try-catch wrapper
+    const genCoreIf = (): string => {
+        let result = `${g.ind()}if (${g.genExpression(node.test)}) ${genBlockStatement(node.consequent, g)}`;
 
-    result += `${g.ind()}if (${g.genExpression(node.test)}) `;
+        if (node.alternate) {
+            if (node.alternate.type === 'SiStatement') {
+                result += ` else ${genSiStatement(node.alternate, g).trim()}`;
+            }
+            else {
+                result += ` else ${genBlockStatement(node.alternate, g)}`;
+            }
+        }
 
-    // WHY: 'cape' wraps the consequent block in try-catch, inside the if
+        return result;
+    };
+
+    // WHY: 'cape' wraps the ENTIRE if statement in try-catch so we catch
+    // errors from the condition evaluation, not just the consequent
     if (node.catchClause) {
-        result += `{\n`;
+        let result = `${g.ind()}try {\n`;
         g.depth++;
-        result += `${g.ind()}try ${genBlockStatement(node.consequent, g)}`;
-        result += ` catch (${node.catchClause.param.name}) ${genBlockStatement(node.catchClause.body, g)}\n`;
+        result += genCoreIf() + '\n';
         g.depth--;
-        result += `${g.ind()}}`;
-    }
-    else {
-        result += genBlockStatement(node.consequent, g);
+        result += `${g.ind()}} catch (${node.catchClause.param.name}) ${genBlockStatement(node.catchClause.body, g)}`;
+        return result;
     }
 
-    if (node.alternate) {
-        if (node.alternate.type === 'SiStatement') {
-            result += ` else ${genSiStatement(node.alternate, g).trim()}`;
-        }
-        else {
-            result += ` else ${genBlockStatement(node.alternate, g)}`;
-        }
-    }
-
-    return result;
+    return genCoreIf();
 }
