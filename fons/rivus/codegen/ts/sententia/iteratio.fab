@@ -46,7 +46,7 @@ functio genIteratio(IteratioGenus species, textus variabilis, Expressia iterabil
 
             redde loop
         }
-        casu _ { }
+        ceterum { }
     }
 
     fixum loop = scriptum("§for §(const § § §) {\n§\n§}", g.ind(), asyncPrefix, variabilis, keyword, genExpressia(iterabile, g), body, g.ind())

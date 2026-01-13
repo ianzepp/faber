@@ -28,7 +28,7 @@ functio genIace(bivalens fatale, Expressia argumentum, TsGenerator g) -> textus 
                     redde scriptum("§throw new Panic(§);", g.ind(), expr)
                 }
             }
-            casu _ { }
+            ceterum { }
         }
         redde scriptum("§throw new Panic(String(§));", g.ind(), expr)
     }
@@ -42,7 +42,7 @@ functio genIace(bivalens fatale, Expressia argumentum, TsGenerator g) -> textus 
                     message = expr
                 }
             }
-            casu _ { }
+            ceterum { }
         }
         redde scriptum("§yield respond.error(\"EFAIL\", §);\n§return;", g.ind(), message, g.ind())
     }

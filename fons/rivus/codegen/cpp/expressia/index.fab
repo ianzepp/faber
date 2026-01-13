@@ -256,7 +256,7 @@ functio genExpressia(Expressia expr, CppGenerator g) -> textus {
                         }
                     }
                 }
-                casu _ { }
+                ceterum { }
             }
 
             # Default: pass through as-is
@@ -328,7 +328,7 @@ functio genExpressia(Expressia expr, CppGenerator g) -> textus {
                     }
                     redde scriptum("[](§)§ {\n§\n§}", params.coniunge(", "), retType, body, g.ind())
                 }
-                casu _ { }
+                ceterum { }
             }
             redde scriptum("[](§)§ { return §; }", params.coniunge(", "), retType, genExpressia(e.corpus qua Expressia, g))
         }
@@ -354,7 +354,7 @@ functio genExpressia(Expressia expr, CppGenerator g) -> textus {
             redde scriptum("/* cede */ §", genExpressia(e.argumentum, g))
         }
 
-        casu _ { }
+        ceterum { }
     }
 
     # Fallback - should not reach here
@@ -493,7 +493,7 @@ functio genLambdaSententia(Sententia stmt, CppGenerator g) -> textus {
             redde scriptum("§§;", g.ind(), genExpressia(s.expressia, g))
         }
 
-        casu _ { }
+        ceterum { }
     }
 
     redde scriptum("§/* lambda: unsupported statement */", g.ind())

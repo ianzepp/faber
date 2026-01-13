@@ -641,10 +641,11 @@ functio genPraefixumSententia(Sententia stmt, TsGenerator g) -> textus {
             redde scriptum("§§;", g.ind(), genExpressia(s.expressia, g))
         }
 
-        casu _ { }
+        ceterum {
+            # EDGE: Unsupported statement type in praefixum block
+            redde scriptum("§/* praefixum: unsupported statement */", g.ind())
+        }
     }
-
-    redde scriptum("§/* praefixum: unsupported statement */", g.ind())
 }
 
 # =============================================================================
@@ -682,7 +683,7 @@ functio invenitTabulaNomen(Expressia obiectum, TsGenerator g) -> textus? {
                 }
             }
         }
-        casu _ { }
+        ceterum { }
     }
     redde nihil
 }
@@ -712,7 +713,7 @@ functio estNegativusIndex(Expressia expr) -> bivalens {
         casu UnariaExpressia ut u {
             redde (u.signum qua textus) == "-"
         }
-        casu _ { }
+        ceterum { }
     }
     redde falsum
 }
@@ -896,7 +897,7 @@ functio genNudaExpressia(Expressia expr, TsGenerator g) -> textus {
             }
             redde scriptum("§ § §", sin, signum, dex)
         }
-        casu _ { }
+        ceterum { }
     }
 
     redde genExpressia(expr, g)

@@ -32,7 +32,7 @@ functio genIteratio(IteratioGenus species, textus variabilis, Expressia iterabil
             }
             redde scriptum("§for (@intCast(§)..@intCast(§)) |§| {\n§\n§}", g.ind(), initium, finis, variabilis, body, g.ind())
         }
-        casu _ { }
+        ceterum { }
     }
 
     # Slice iteration

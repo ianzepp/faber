@@ -116,7 +116,7 @@ functio genExpressia(Expressia expr, RsGenerator g) -> textus {
                         }
                     }
                 }
-                casu _ { }
+                ceterum { }
             }
             redde scriptum("§(§)", genExpressia(e.vocatum, g), args.coniunge(", "))
         }
@@ -212,7 +212,7 @@ functio genExpressia(Expressia expr, RsGenerator g) -> textus {
                     g.exiProfundum()
                     redde scriptum("{{\n§\n§}}", body, g.ind())
                 }
-                casu _ { }
+                ceterum { }
             }
             redde scriptum("(§)", genExpressia(e.corpus qua Expressia, g))
         }

@@ -99,10 +99,11 @@ functio genSententia(Sententia stmt, ZigGenerator g) -> textus {
             redde genOrdo(s.nomen qua textus, s.membra qua lista<OrdoMembrum>, g)
         }
 
-        casu _ { }
+        ceterum {
+            # EDGE: Unknown statement type - generate placeholder
+            redde scriptum("§// TODO: unknown statement", g.ind())
+        }
     }
-
-    redde scriptum("§// TODO: unknown statement", g.ind())
 }
 
 # =============================================================================
@@ -137,8 +138,9 @@ functio genExpressiaSententia(Expressia expr, ZigGenerator g) -> textus {
         casu AssignatioExpressia {
             redde scriptum("§§;", g.ind(), e)
         }
-        casu _ { }
+        ceterum {
+            # All other expression types need _ = discard
+            redde scriptum("§_ = §;", g.ind(), e)
+        }
     }
-
-    redde scriptum("§_ = §;", g.ind(), e)
 }

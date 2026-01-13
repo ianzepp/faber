@@ -74,13 +74,14 @@ functio nuntiumErroris(LexorErrorCodice codice) -> LexorErrorNuntius {
                 auxilium: "Octal literals must have at least one digit after 0o prefix."
             } qua LexorErrorNuntius
         }
+        ceterum {
+            # EDGE: Unknown error code - should never occur with valid enum values
+            redde {
+                textus: "Error ignotus",
+                auxilium: "Unknown error occurred."
+            } qua LexorErrorNuntius
+        }
     }
-
-    # Fallback (should never reach)
-    redde {
-        textus: "Error ignotus",
-        auxilium: "Unknown error occurred."
-    } qua LexorErrorNuntius
 }
 
 # ============================================================================
