@@ -91,6 +91,26 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
             redde genericumTypus("lista", [NUMERUS], falsum)
         }
 
+        # Bit shift expression (x dextratum 3 -> x >> 3)
+        casu TranslatioExpressia ut t {
+            r.expressia(t.expressia)
+            r.expressia(t.quantitas)
+            redde NUMERUS
+        }
+
+        # Compile-time expression (praefixum { ... })
+        casu PraefixumExpressia {
+            # Compile-time expressions are evaluated at compile time
+            # Type depends on context - return IGNOTUM for now
+            redde IGNOTUM
+        }
+
+        # Spread element (...items)
+        casu DispersioElementum ut d {
+            # Spread expands an iterable - resolve the argument type
+            redde r.expressia(d.argumentum)
+        }
+
         # Object literal { key: value }
         casu ObiectumExpressia {
             redde resolveObiectum(r, expr)
@@ -107,7 +127,7 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
         }
 
         # Self reference (ego/hoc)
-        casu EgoExpressia {
+        casu EgoExpressia ut e {
             fixum a = r.analyzator()
             # ego type depends on enclosing class context
             si nonnihil a.currentGenusNomen {
@@ -117,15 +137,13 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
                 fixum symbolum = quaereSymbolum(a.scopus, genusNomen)
                 si nonnihil symbolum {
                     redde symbolum.semanticTypus
-                } secus {
-                    # Genus not found - should not happen if context is managed correctly
-                    redde IGNOTUM
                 }
-            } secus {
-                # Not inside a genus - ego is not valid here
-                # TODO: Should probably report semantic error
-                redde IGNOTUM
+                # Internal error: genus name set but symbol not in scope
+                mori(scriptum("Internal error: genus '§' not found in scope", genusNomen))
             }
+            # User error: ego used outside genus context
+            a.error("'ego' can only be used inside a genus (class)", e.locus)
+            redde IGNOTUM
         }
 
         # Type cast (expr qua Type)
@@ -213,13 +231,13 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
                 casu "bivalentum" reddit BIVALENS
             }
 
-            redde IGNOTUM
+            # Unknown conversion operator - internal error
+            mori(scriptum("Internal error: unknown conversion operator '§'", c.signum))
         }
-
-        casu _ { }
     }
 
-    redde IGNOTUM
+    # Unhandled expression type - internal error
+    mori("Internal error: unhandled expression type in resolveExpressia")
 }
 
 # ============================================================================

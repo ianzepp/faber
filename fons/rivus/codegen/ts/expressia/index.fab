@@ -268,8 +268,8 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
                 redde "new Set()"
             }
 
-            # Fallback: just generate the expression
-            redde genExpressia(e.expressia, g)
+            # Unsupported innatum type - should be caught by semantic validation
+            mori(scriptum("Codegen error: innatum only supports tabula, lista, copia - got '§'", typusNomen))
         }
 
         casu EstExpressia ut e {
