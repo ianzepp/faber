@@ -175,7 +175,6 @@ Keywords that modify declarations, members, or execution behavior:
 
 | Verbum | Meaning | Usage |
 |--------|---------|-------|
-| `nexum` | reactive | Reactive field binding |
 | `curata` | managed | Function receives allocator |
 
 ---

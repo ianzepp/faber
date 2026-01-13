@@ -442,7 +442,6 @@ export class ParserContext {
                     this.checkKeyword('protectus') ||
                     this.checkKeyword('abstractus') ||
                     this.checkKeyword('generis') ||
-                    this.checkKeyword('nexum') ||
                     // Type annotations may begin with borrow prepositions or a type
                     this.checkKeyword('de') ||
                     this.checkKeyword('in') ||

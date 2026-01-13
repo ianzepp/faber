@@ -67,7 +67,6 @@ Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, �
 | `fixum` (immutable)          | ● | ● | ○ | ○ | ○ |
 | `figendum` (async immutable) | ● | ○ | ○ | ○ | ○ |
 | `variandum` (async mutable)  | ● | ○ | ○ | ○ | ○ |
-| `nexum` (reactive field)     | ● | ○ | ○ | ○ | ○ |
 | Type annotations             | ● | ● | ○ | ○ | ○ |
 | Object destructuring         | ● | ○ | ○ | ○ | ○ |
 | Array destructuring          | ● | ○ | ○ | ○ | ○ |
@@ -257,7 +256,6 @@ Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, �
 | `genus` declaration       | ● | ● | ○ | ○ | ○ |
 | Field declarations        | ● | ● | ○ | ○ | ○ |
 | Field defaults            | ● | ○ | ○ | ○ | ○ |
-| `nexum` (reactive field)  | ● | ○ | ○ | ○ | ○ |
 | Static fields (`generis`) | ● | ○ | ○ | ○ | ○ |
 | `@ privatum` (private)    | ● | ○ | ○ | ○ | ○ |
 | `@ protectum` (protected) | ● | ○ | ○ | ○ | ○ |

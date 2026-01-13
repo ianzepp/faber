@@ -111,7 +111,6 @@ functio verbumFaberId(textus v) -> VerbumId? {
         casu "sub" reddit VerbumId.Sub
         casu "abstractus" reddit VerbumId.Abstractus
         casu "protectus" reddit VerbumId.Protectus
-        casu "nexum" reddit VerbumId.Nexum
         casu "omitte" reddit VerbumId.Omitte
         casu "futurum" reddit VerbumId.Futurum
         casu "omnia" reddit VerbumId.Omnia

@@ -133,10 +133,6 @@ function genCreoMethod(node: FunctioDeclaration, g: TsGenerator): string {
  * TRANSFORMS:
  *   textus nomen: "X" -> private nomen: string = "X"
  *   publicus numerus aetas: 0 -> aetas: number = 0
- *   nexum numerus count: 0 -> #count = 0; get count() { ... } set count(v) { ... }
- *
- * WHY: Reactive (nexum) fields emit getter/setter with invalidation hook.
- *      This allows libraries to track changes without special proxy magic.
  *
  * WHY: classVisibility parameter allows fields to inherit visibility from parent.
  *      Public class = public fields by default.
@@ -144,23 +140,6 @@ function genCreoMethod(node: FunctioDeclaration, g: TsGenerator): string {
 function genFieldDeclaration(node: FieldDeclaration, g: TsGenerator, semi: boolean, classVisibility: Visibility = 'private'): string {
     const name = node.name.name;
     const type = g.genType(node.fieldType);
-
-    // Reactive fields emit private backing field + getter/setter
-    if (node.isReactive) {
-        const init = node.init ? ` = ${g.genExpression(node.init)}` : '';
-        const lines: string[] = [];
-
-        // Private backing field with # prefix
-        lines.push(`${g.ind()}#${name}${init}${semi ? ';' : ''}`);
-
-        // Getter
-        lines.push(`${g.ind()}get ${name}(): ${type} { return this.#${name}; }`);
-
-        // Setter with invalidation
-        lines.push(`${g.ind()}set ${name}(v: ${type}) { this.#${name} = v; this.__invalidate?.('${name}'); }`);
-
-        return lines.join('\n');
-    }
 
     // Field visibility: use field's own annotation if present, else inherit from class
     const fieldVisibility = getVisibilityFromAnnotations(node.annotations);

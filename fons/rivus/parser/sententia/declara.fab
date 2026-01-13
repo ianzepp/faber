@@ -218,12 +218,6 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
             staticum = verum
         }
 
-        # Check for reactive modifier
-        varia reactivum = falsum
-        si p.congruetVerbum("nexum") {
-            reactivum = verum
-        }
-
         # Check if this is a method or field
         si p.probaVerbum("functio") {
             si non visibilitasExplicita {
@@ -308,8 +302,7 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
                 typus: typusAnnotatio,
                 valor: valor,
                 visibilitas: visibilitas,
-                staticum: staticum,
-                reactivum: reactivum
+                staticum: staticum
             } qua CampusDeclaratio)
         }
 

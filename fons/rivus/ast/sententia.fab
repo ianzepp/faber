@@ -146,7 +146,6 @@ genus CampusDeclaratio {
     Expressia? valor          # default value
     Visibilitas visibilitas
     bivalens staticum         # generis (static)
-    bivalens reactivum        # nexum (reactive)
 }
 
 # Pactum method signature (interface method)

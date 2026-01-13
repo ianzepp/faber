@@ -824,7 +824,6 @@ export function parse(tokens: Token[]): ParserResult {
                     checkKeyword('protectus') ||
                     checkKeyword('abstractus') ||
                     checkKeyword('generis') ||
-                    checkKeyword('nexum') ||
                     // Type annotations may begin with borrow prepositions or a type.
                     checkKeyword('de') ||
                     checkKeyword('in') ||

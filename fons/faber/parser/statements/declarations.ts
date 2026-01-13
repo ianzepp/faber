@@ -431,7 +431,6 @@ function synchronizeGenusMember(r: Resolver): void {
                 ctx.checkKeyword('protectus') ||
                 ctx.checkKeyword('abstractus') ||
                 ctx.checkKeyword('generis') ||
-                ctx.checkKeyword('nexum') ||
                 // Type annotations may begin with borrow prepositions or a type
                 ctx.checkKeyword('de') ||
                 ctx.checkKeyword('in') ||
@@ -579,14 +578,9 @@ export function parseGenusMember(r: Resolver): FieldDeclaration | FunctioDeclara
 
     // Parse inline modifiers that remain in signature
     let isStatic = false;
-    let isReactive = false;
 
     if (ctx.matchKeyword('generis')) {
         isStatic = true;
-    }
-
-    if (ctx.matchKeyword('nexum')) {
-        isReactive = true;
     }
 
     // If we see 'functio', it's a method
@@ -696,7 +690,6 @@ export function parseGenusMember(r: Resolver): FieldDeclaration | FunctioDeclara
         init,
         visibility: 'public', // Default; semantic analyzer extracts from annotations
         isStatic,
-        isReactive,
         position,
         annotations: annotations.length > 0 ? annotations : undefined,
     };
