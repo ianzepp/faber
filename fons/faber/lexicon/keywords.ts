@@ -141,7 +141,13 @@ export const keywords: KeywordEntry[] = [
     { latin: 'cape', meaning: 'catch', category: 'control' },
     { latin: 'demum', meaning: 'finally', category: 'control' },
     { latin: 'iace', meaning: 'throw', category: 'control' },
+    // WHY: "iacit" (it throws) is syntactic sugar for "ergo iace"
+    //      3rd person present indicative of iacere - matches reddit pattern
+    { latin: 'iacit', meaning: 'then throw', category: 'control' },
     { latin: 'mori', meaning: 'panic', category: 'control' },
+    // WHY: "moritor" (let it die) is syntactic sugar for "ergo mori"
+    //      Future imperative of morior - matches reddit pattern
+    { latin: 'moritor', meaning: 'then panic', category: 'control' },
     { latin: 'scribe', meaning: 'print', category: 'control' },
     { latin: 'vide', meaning: 'debug', category: 'control' },
     { latin: 'mone', meaning: 'warn', category: 'control' },

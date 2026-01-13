@@ -169,20 +169,22 @@ functio compose((A) -> B f, (B) -> C g) -> (A) -> C
 ### Conditionals
 
 ```ebnf
-ifStmt     := 'si' expression (blockStmt | 'ergo' statement | 'reddit' expression)
+ifStmt     := 'si' expression (blockStmt | 'ergo' statement | inlineReturn)
               ('cape' IDENTIFIER blockStmt)? (elseClause | 'sin' ifStmt)?
-elseClause := 'secus' (ifStmt | blockStmt | statement)
+elseClause := 'secus' (ifStmt | blockStmt | statement | inlineReturn)
+inlineReturn := 'reddit' expression | 'iacit' expression | 'moritor' expression
 ```
 
 - `si` = if, `sin` = else-if, `secus` = else
 - `ergo` for one-liners, `reddit` for early return
+- `iacit` for inline throw, `moritor` for inline panic
 
 ### Loops
 
 ```ebnf
-whileStmt := 'dum' expression (blockStmt | 'ergo' statement | 'reddit' expression) ('cape' IDENTIFIER blockStmt)?
+whileStmt := 'dum' expression (blockStmt | 'ergo' statement | inlineReturn) ('cape' IDENTIFIER blockStmt)?
 exStmt    := 'ex' expression (forBinding | destructBinding)
-forBinding := ('pro' | 'fit' | 'fiet') IDENTIFIER (blockStmt | 'ergo' statement | 'reddit' expression) catchClause?
+forBinding := ('pro' | 'fit' | 'fiet') IDENTIFIER (blockStmt | 'ergo' statement | inlineReturn) catchClause?
 deStmt    := 'de' expression ('pro' | 'fit' | 'fiet') IDENTIFIER (blockStmt | 'ergo' statement) catchClause?
 ```
 
@@ -194,8 +196,8 @@ deStmt    := 'de' expression ('pro' | 'fit' | 'fiet') IDENTIFIER (blockStmt | 'e
 
 ```ebnf
 eligeStmt    := 'elige' expression '{' eligeCase* defaultCase? '}' catchClause?
-eligeCase    := 'casu' expression (blockStmt | 'ergo' statement | 'reddit' expression)
-defaultCase  := 'ceterum' (blockStmt | statement)
+eligeCase    := 'casu' expression (blockStmt | 'ergo' statement | inlineReturn)
+defaultCase  := 'ceterum' (blockStmt | statement | inlineReturn)
 ```
 
 ### Pattern Matching
@@ -203,7 +205,7 @@ defaultCase  := 'ceterum' (blockStmt | statement)
 ```ebnf
 discerneStmt := 'discerne' discriminants '{' variantCase* defaultCase? '}'
 discriminants := expression (',' expression)*
-variantCase  := 'casu' patterns (blockStmt | 'ergo' statement | 'reddit' expression)
+variantCase  := 'casu' patterns (blockStmt | 'ergo' statement | inlineReturn)
 patterns     := pattern (',' pattern)*
 pattern      := '_' | (IDENTIFIER patternBind?)
 patternBind  := ('ut' IDENTIFIER) | ('pro' IDENTIFIER (',' IDENTIFIER)*)
@@ -213,7 +215,7 @@ patternBind  := ('ut' IDENTIFIER) | ('pro' IDENTIFIER (',' IDENTIFIER)*)
 
 ```ebnf
 guardStmt   := 'custodi' '{' guardClause+ '}'
-guardClause := 'si' expression (blockStmt | 'ergo' statement | 'reddit' expression)
+guardClause := 'si' expression (blockStmt | 'ergo' statement | inlineReturn)
 ```
 
 ### Resource Management
@@ -331,8 +333,8 @@ outputStmt := ('scribe' | 'vide' | 'mone') expression (',' expression)*
 ## Entry Points
 
 ```ebnf
-incipitStmt  := 'incipit' (blockStmt | 'ergo' statement | 'reddit' expression)
-incipietStmt := 'incipiet' (blockStmt | 'ergo' statement | 'reddit' expression)
+incipitStmt  := 'incipit' (blockStmt | 'ergo' statement | inlineReturn)
+incipietStmt := 'incipiet' (blockStmt | 'ergo' statement | inlineReturn)
 ```
 
 - `incipit` = sync entry, `incipiet` = async entry
@@ -417,13 +419,16 @@ inStmt := 'in' expression blockStmt
 |                     | `discerne`                    | pattern match       |
 |                     | `custodi`                     | guard               |
 |                     | `redde`                       | return              |
+|                     | `reddit`                      | inline return       |
 |                     | `rumpe`                       | break               |
 |                     | `perge`                       | continue            |
 | **Error Handling**  | `tempta`                      | try                 |
 |                     | `cape`                        | catch               |
 |                     | `demum`                       | finally             |
 |                     | `iace`                        | throw               |
+|                     | `iacit`                       | inline throw        |
 |                     | `mori`                        | panic               |
+|                     | `moritor`                     | inline panic        |
 |                     | `adfirma`                     | assert              |
 | **Async**           | `futura`                      | async modifier      |
 |                     | `cede`                        | await               |

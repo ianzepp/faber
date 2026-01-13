@@ -19,6 +19,7 @@ import type {
     VariantCase,
     BlockStatement,
     ReddeStatement,
+    IaceStatement,
     CapeClause,
     Expression,
     Identifier,
@@ -45,6 +46,39 @@ function parseCapeClause(r: Resolver): CapeClause {
     const body = r.block();
 
     return { type: 'CapeClause', param, body, position };
+}
+
+// =============================================================================
+// HELPER: INLINE THROW/PANIC PARSING
+// =============================================================================
+
+/**
+ * Try to parse an inline throw/panic statement (iacit/moritor).
+ *
+ * GRAMMAR:
+ *   inlineThrow := ('iacit' | 'moritor') expression
+ *
+ * WHY: iacit/moritor are syntactic sugar for "ergo iace/mori" in case bodies.
+ *      iacit = recoverable throw, moritor = fatal panic.
+ */
+function tryParseInlineThrow(r: Resolver): BlockStatement | null {
+    const ctx = r.ctx();
+
+    if (ctx.matchKeyword('iacit')) {
+        const stmtPos = ctx.peek().position;
+        const expr = r.expression();
+        const throwStmt: IaceStatement = { type: 'IaceStatement', fatal: false, argument: expr, position: stmtPos };
+        return { type: 'BlockStatement', body: [throwStmt], position: stmtPos };
+    }
+
+    if (ctx.matchKeyword('moritor')) {
+        const stmtPos = ctx.peek().position;
+        const expr = r.expression();
+        const panicStmt: IaceStatement = { type: 'IaceStatement', fatal: true, argument: expr, position: stmtPos };
+        return { type: 'BlockStatement', body: [panicStmt], position: stmtPos };
+    }
+
+    return null;
 }
 
 // =============================================================================
@@ -84,7 +118,7 @@ export function parseSiStatement(r: Resolver, skipSiKeyword = false): SiStatemen
 
     const test = r.expression();
 
-    // Parse consequent: block, ergo one-liner, or reddit return
+    // Parse consequent: block, ergo one-liner, reddit return, or iacit/moritor throw
     let consequent: BlockStatement;
     if (ctx.matchKeyword('reddit')) {
         // reddit = ergo redde (syntactic sugar for early return)
@@ -93,13 +127,19 @@ export function parseSiStatement(r: Resolver, skipSiKeyword = false): SiStatemen
         const returnStmt: ReddeStatement = { type: 'ReddeStatement', argument: expr, position: stmtPos };
         consequent = { type: 'BlockStatement', body: [returnStmt], position: stmtPos };
     }
-    else if (ctx.matchKeyword('ergo')) {
-        const stmtPos = ctx.peek().position;
-        const stmt = r.statement();
-        consequent = { type: 'BlockStatement', body: [stmt], position: stmtPos };
-    }
     else {
-        consequent = r.block();
+        const inlineThrow = tryParseInlineThrow(r);
+        if (inlineThrow) {
+            consequent = inlineThrow;
+        }
+        else if (ctx.matchKeyword('ergo')) {
+            const stmtPos = ctx.peek().position;
+            const stmt = r.statement();
+            consequent = { type: 'BlockStatement', body: [stmt], position: stmtPos };
+        }
+        else {
+            consequent = r.block();
+        }
     }
 
     // Check for cape (catch) clause
@@ -127,10 +167,16 @@ export function parseSiStatement(r: Resolver, skipSiKeyword = false): SiStatemen
             alternate = { type: 'BlockStatement', body: [returnStmt], position: stmtPos };
         }
         else {
-            // One-liner: secus statement (no ergo needed)
-            const stmtPos = ctx.peek().position;
-            const stmt = r.statement();
-            alternate = { type: 'BlockStatement', body: [stmt], position: stmtPos };
+            const inlineThrow = tryParseInlineThrow(r);
+            if (inlineThrow) {
+                alternate = inlineThrow;
+            }
+            else {
+                // One-liner: secus statement (no ergo needed)
+                const stmtPos = ctx.peek().position;
+                const stmt = r.statement();
+                alternate = { type: 'BlockStatement', body: [stmt], position: stmtPos };
+            }
         }
     }
     else if (ctx.matchKeyword('sin')) {
@@ -166,7 +212,7 @@ export function parseDumStatement(r: Resolver): DumStatement {
 
     const test = r.expression();
 
-    // Parse body: block, ergo one-liner, or reddit return
+    // Parse body: block, ergo one-liner, reddit return, or iacit/moritor throw
     let body: BlockStatement;
     if (ctx.matchKeyword('reddit')) {
         const stmtPos = ctx.peek().position;
@@ -174,13 +220,19 @@ export function parseDumStatement(r: Resolver): DumStatement {
         const returnStmt: ReddeStatement = { type: 'ReddeStatement', argument: expr, position: stmtPos };
         body = { type: 'BlockStatement', body: [returnStmt], position: stmtPos };
     }
-    else if (ctx.matchKeyword('ergo')) {
-        const stmtPos = ctx.peek().position;
-        const stmt = r.statement();
-        body = { type: 'BlockStatement', body: [stmt], position: stmtPos };
-    }
     else {
-        body = r.block();
+        const inlineThrow = tryParseInlineThrow(r);
+        if (inlineThrow) {
+            body = inlineThrow;
+        }
+        else if (ctx.matchKeyword('ergo')) {
+            const stmtPos = ctx.peek().position;
+            const stmt = r.statement();
+            body = { type: 'BlockStatement', body: [stmt], position: stmtPos };
+        }
+        else {
+            body = r.block();
+        }
     }
 
     let catchClause: CapeClause | undefined;
@@ -229,13 +281,17 @@ export function parseEligeStatement(r: Resolver): EligeStatement {
     const cases: EligeCasus[] = [];
     let defaultCase: BlockStatement | undefined;
 
-    // Helper: parse 'casu' case body (requires reddit, ergo, or block)
+    // Helper: parse 'casu' case body (requires reddit, iacit, moritor, ergo, or block)
     function parseCasuBody(): BlockStatement {
         if (ctx.matchKeyword('reddit')) {
             const stmtPos = ctx.peek().position;
             const expr = r.expression();
             const returnStmt: ReddeStatement = { type: 'ReddeStatement', argument: expr, position: stmtPos };
             return { type: 'BlockStatement', body: [returnStmt], position: stmtPos };
+        }
+        const inlineThrow = tryParseInlineThrow(r);
+        if (inlineThrow) {
+            return inlineThrow;
         }
         if (ctx.matchKeyword('ergo')) {
             const stmtPos = ctx.peek().position;
@@ -249,7 +305,7 @@ export function parseEligeStatement(r: Resolver): EligeStatement {
         return r.block();
     }
 
-    // Helper: parse 'ceterum' body (block, reddit, or direct statement)
+    // Helper: parse 'ceterum' body (block, reddit, iacit, moritor, or direct statement)
     function parseCeterumBody(): BlockStatement {
         if (ctx.check('LBRACE')) {
             return r.block();
@@ -259,6 +315,10 @@ export function parseEligeStatement(r: Resolver): EligeStatement {
             const expr = r.expression();
             const returnStmt: ReddeStatement = { type: 'ReddeStatement', argument: expr, position: stmtPos };
             return { type: 'BlockStatement', body: [returnStmt], position: stmtPos };
+        }
+        const inlineThrow = tryParseInlineThrow(r);
+        if (inlineThrow) {
+            return inlineThrow;
         }
         const stmtPos = ctx.peek().position;
         const stmt = r.statement();
@@ -358,7 +418,7 @@ export function parseDiscerneStatement(r: Resolver): DiscerneStatement {
     const cases: VariantCase[] = [];
     let defaultCase: BlockStatement | undefined;
 
-    // Helper: parse 'ceterum' body (block, reddit, or direct statement)
+    // Helper: parse 'ceterum' body (block, reddit, iacit, moritor, or direct statement)
     function parseCeterumBody(): BlockStatement {
         if (ctx.check('LBRACE')) {
             return r.block();
@@ -368,6 +428,10 @@ export function parseDiscerneStatement(r: Resolver): DiscerneStatement {
             const expr = r.expression();
             const returnStmt: ReddeStatement = { type: 'ReddeStatement', argument: expr, position: stmtPos };
             return { type: 'BlockStatement', body: [returnStmt], position: stmtPos };
+        }
+        const inlineThrow = tryParseInlineThrow(r);
+        if (inlineThrow) {
+            return inlineThrow;
         }
         const stmtPos = ctx.peek().position;
         const stmt = r.statement();
@@ -393,7 +457,7 @@ export function parseDiscerneStatement(r: Resolver): DiscerneStatement {
                 patterns.push(parseVariantPattern(r));
             }
 
-            // Parse consequent: reddit, ergo, or block
+            // Parse consequent: reddit, iacit, moritor, ergo, or block
             let consequent: BlockStatement;
             if (ctx.matchKeyword('reddit')) {
                 const stmtPos = ctx.peek().position;
@@ -401,13 +465,19 @@ export function parseDiscerneStatement(r: Resolver): DiscerneStatement {
                 const returnStmt: ReddeStatement = { type: 'ReddeStatement', argument: expr, position: stmtPos };
                 consequent = { type: 'BlockStatement', body: [returnStmt], position: stmtPos };
             }
-            else if (ctx.matchKeyword('ergo')) {
-                const stmtPos = ctx.peek().position;
-                const stmt = r.statement();
-                consequent = { type: 'BlockStatement', body: [stmt], position: stmtPos };
-            }
             else {
-                consequent = r.block();
+                const inlineThrow = tryParseInlineThrow(r);
+                if (inlineThrow) {
+                    consequent = inlineThrow;
+                }
+                else if (ctx.matchKeyword('ergo')) {
+                    const stmtPos = ctx.peek().position;
+                    const stmt = r.statement();
+                    consequent = { type: 'BlockStatement', body: [stmt], position: stmtPos };
+                }
+                else {
+                    consequent = r.block();
+                }
             }
 
             cases.push({ type: 'VariantCase', patterns, consequent, position: casePosition });

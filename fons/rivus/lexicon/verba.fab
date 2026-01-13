@@ -71,7 +71,9 @@ functio verbumFaberId(textus v) -> VerbumId? {
         casu "cape" reddit VerbumId.Cape
         casu "demum" reddit VerbumId.Demum
         casu "iace" reddit VerbumId.Iace
+        casu "iacit" reddit VerbumId.Iacit
         casu "mori" reddit VerbumId.Mori
+        casu "moritor" reddit VerbumId.Moritor
         casu "scribe" reddit VerbumId.Scribe
         casu "vide" reddit VerbumId.Vide
         casu "mone" reddit VerbumId.Mone

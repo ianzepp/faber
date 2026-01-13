@@ -100,7 +100,7 @@ functio parseIncipietSententia(Resolvitor r) -> Sententia {
     } qua Sententia
 }
 
-# Parse short entrypoint bodies: ergo statement or reddit expression
+# Parse short entrypoint bodies: ergo, reddit, iacit, or moritor
 @ publica
 functio parseErgoVelReddit(Resolvitor r) -> Sententia? {
     fixum p = r.parser()
@@ -117,6 +117,28 @@ functio parseErgoVelReddit(Resolvitor r) -> Sententia? {
         redde finge ReddeSententia {
             locus: locus,
             valor: valor
+        } qua Sententia
+    }
+
+    # WHY: iacit/moritor are syntactic sugar for inline throw/panic.
+    #      iacit (it throws) = ergo iace, moritor (let it die) = ergo mori.
+    si p.probaVerbum("iacit") {
+        p.procede()
+        fixum argumentum = r.expressia()
+        redde finge IaceSententia {
+            locus: locus,
+            fatale: falsum,
+            argumentum: argumentum
+        } qua Sententia
+    }
+
+    si p.probaVerbum("moritor") {
+        p.procede()
+        fixum argumentum = r.expressia()
+        redde finge IaceSententia {
+            locus: locus,
+            fatale: verum,
+            argumentum: argumentum
         } qua Sententia
     }
 
