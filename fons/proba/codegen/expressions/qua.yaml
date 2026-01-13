@@ -116,20 +116,20 @@
           - 'fixum maybe = value qua numerus?'
 
 # Empty object literal cast to copia (Set) - constructs actual Set, not type assertion
-- name: empty object to copia
+- name: empty object to copia (cast)
   source: fixum s = {} qua copia<textus>
   expect:
-      ts: 'const s = new Set<string>();'
+      ts: 'const s = ({} as Set<string>);'
       py: 's = {}'
       rs:
           - 'let s = {} as HashSet<String>;'
       fab:
           - 'fixum s = {} qua copia<textus>'
 
-- name: empty object to copia with numerus
+- name: empty object to copia with numerus (cast)
   source: fixum nums = {} qua copia<numerus>
   expect:
-      ts: 'const nums = new Set<number>();'
+      ts: 'const nums = ({} as Set<number>);'
       py: 'nums = {}'
       rs:
           - 'let nums = {} as HashSet<i64>;'
