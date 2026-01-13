@@ -13,13 +13,8 @@ import { parse } from '../faber/parser';
 import { analyze } from '../faber/semantic';
 import { generate } from '../faber/codegen';
 
-// Supported codegen targets
-export const TARGETS = ['ts', 'py', 'cpp', 'rs', 'zig', 'fab'] as const;
-export type Target = (typeof TARGETS)[number];
-
-// Targets that produce executable code (not fab-to-fab)
-export const EXECUTABLE_TARGETS = ['ts', 'py', 'cpp', 'rs', 'zig'] as const;
-export type ExecutableTarget = (typeof EXECUTABLE_TARGETS)[number];
+// Faber targets TypeScript only (see consilia/compiler-roles.md)
+export type Target = 'ts';
 
 export interface TargetExpectation {
     contains?: string[];
@@ -35,22 +30,11 @@ export interface TestCase {
     source: string;
     wrap?: string;
     variant?: string; // Optional sub-feature: "si" + variant "cape-secus" → "si: cape-secus"
-    // Expectations: either in expect object (modern) or top-level (legacy)
     expect?: {
         ts?: string | string[] | TargetExpectation;
-        py?: string | string[] | TargetExpectation;
-        zig?: string | string[] | TargetExpectation;
-        cpp?: string | string[] | TargetExpectation;
-        rs?: string | string[] | TargetExpectation;
-        fab?: string | string[] | TargetExpectation;
     };
-    // Legacy top-level expectations (deprecated)
+    // Legacy top-level expectation (deprecated)
     ts?: string | string[] | TargetExpectation;
-    py?: string | string[] | TargetExpectation;
-    zig?: string | string[] | TargetExpectation;
-    cpp?: string | string[] | TargetExpectation;
-    rs?: string | string[] | TargetExpectation;
-    fab?: string | string[] | TargetExpectation;
     skip?: Target[];
     errata?: ErrataExpectation;
     faber?: boolean; // Set to false to skip this test for faber compiler
@@ -85,10 +69,10 @@ export function getSource(tc: TestCase): string {
 }
 
 /**
- * Get the expectation for a specific target.
+ * Get the TS expectation for a test case.
  */
-export function getExpectation(tc: TestCase, target: Target): string | string[] | TargetExpectation | undefined {
-    return tc.expect?.[target] ?? tc[target as keyof TestCase] as string | string[] | TargetExpectation | undefined;
+export function getExpectation(tc: TestCase): string | string[] | TargetExpectation | undefined {
+    return tc.expect?.ts ?? tc.ts;
 }
 
 /**
@@ -124,10 +108,10 @@ export function featureFromFilename(filename: string): string {
 }
 
 /**
- * Compile Faber source to target language (lenient mode).
+ * Compile Faber source to TypeScript (lenient mode).
  * Ignores semantic errors for snippet tests with undefined vars.
  */
-export function compile(code: string, target: Target = 'ts'): CompileResult {
+export function compile(code: string): CompileResult {
     try {
         const { tokens } = tokenize(code);
         const { program } = parse(tokens);
@@ -137,7 +121,7 @@ export function compile(code: string, target: Target = 'ts'): CompileResult {
         }
 
         const { program: analyzedProgram } = analyze(program);
-        const output = generate(analyzedProgram, { target });
+        const output = generate(analyzedProgram);
         return { success: true, output };
     }
     catch (err) {
@@ -176,7 +160,7 @@ export function compileStrict(code: string): CompileResult {
             return { success: false, error: `Semantic errors: ${messages}` };
         }
 
-        const output = generate(analyzedProgram, { target: 'ts' });
+        const output = generate(analyzedProgram);
         return { success: true, output };
     }
     catch (err) {
