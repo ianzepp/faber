@@ -153,23 +153,23 @@ import type {
 } from './ast';
 import { builtinTypes } from '../lexicon/types-builtin';
 import { ParserErrorCode, PARSER_ERRORS } from './errors';
+import { ParserContext, type ParserError } from './context';
+import type { Resolver } from './resolver';
+import {
+    parseTypeAnnotation as parseTypeAnnotationImpl,
+    parseTypeAndParameterList as parseTypeAndParameterListImpl,
+    parseParameterList as parseParameterListImpl,
+    parseParameter as parseParameterImpl,
+} from './types';
+
+// Re-export types for external use
+export type { ParserError } from './context';
+export type { Resolver } from './resolver';
+export { ParserContext } from './context';
 
 // =============================================================================
 // TYPES
 // =============================================================================
-
-/**
- * Parser error with source location.
- *
- * INVARIANT: position always references valid source location.
- * INVARIANT: code is from ParserErrorCode enum.
- * INVARIANT: message combines error text with context (e.g., "got 'x'").
- */
-export interface ParserError {
-    code: ParserErrorCode;
-    message: string;
-    position: Position;
-}
 
 /**
  * Parser output containing AST and errors.
@@ -239,247 +239,53 @@ const BUILTIN_TYPE_NAMES = new Set(builtinTypes.map(t => t.nominative ?? compute
  * @returns ParserResult with program AST and error list
  */
 export function parse(tokens: Token[]): ParserResult {
-    const errors: ParserError[] = [];
-    let current = 0;
-    let uniqueIdCounter = 0;
+    // Create ParserContext for state management
+    // All state (parserCtx.current position, errors, comments) goes through parserCtx
+    const parserCtx = new ParserContext(tokens);
 
-    /**
-     * Generate a unique identifier for synthetic bindings.
-     * WHY: Used for auto-generated names (e.g., cura arena {} without explicit binding).
-     */
-    function genUniqueId(prefix: string): string {
-        return `_${prefix}_${uniqueIdCounter++}`;
-    }
+    // Legacy alias for error collection (points to parserCtx.errors)
+    const errors = parserCtx.errors;
 
-    // ---------------------------------------------------------------------------
-    // Comment Collection
-    // ---------------------------------------------------------------------------
+    // Resolver implementation - bridges closure functions and ParserContext
+    // Forward declarations for functions defined later
+    let parseExpressionFn: () => Expression;
+    let parseStatementFn: () => Statement;
+    let parseBlockStatementFn: () => BlockStatement;
+    let parseAnnotationsFn: () => Annotation[];
 
-    /**
-     * Buffer for comments collected before the next node.
-     *
-     * WHY: Comments are collected as we encounter them during parsing,
-     *      then attached to the next AST node as leadingComments.
-     */
-    let pendingComments: Comment[] = [];
-
-    /**
-     * Convert a COMMENT token to a Comment AST node.
-     */
-    function tokenToComment(token: Token): Comment {
-        return {
-            type: token.commentType ?? 'line',
-            value: token.value,
-            position: token.position,
-        };
-    }
-
-    /**
-     * Consume all pending COMMENT tokens and add to pendingComments buffer.
-     *
-     * WHY: Called before parsing any statement or significant expression
-     *      to collect comments that should be attached as leadingComments.
-     */
-    function collectComments(): void {
-        while (tokens[current]?.type === 'COMMENT') {
-            pendingComments.push(tokenToComment(tokens[current]!));
-            current++;
-        }
-    }
-
-    /**
-     * Consume pending comments and return them, clearing the buffer.
-     *
-     * WHY: Called when creating an AST node to attach collected comments.
-     */
-    function consumePendingComments(): Comment[] | undefined {
-        if (pendingComments.length === 0) {
-            return undefined;
-        }
-        const comments = pendingComments;
-        pendingComments = [];
-        return comments;
-    }
-
-    /**
-     * Check for trailing comment on the same line after current position.
-     *
-     * WHY: Trailing comments are on the same line as the node, after its content.
-     *      Example: `fixum x = 5  // this is a trailing comment`
-     */
-    function collectTrailingComment(nodeLine: number): Comment[] | undefined {
-        // Check if there's a comment immediately after (on the same line)
-        if (tokens[current]?.type === 'COMMENT' && tokens[current]!.position.line === nodeLine) {
-            const comment = tokenToComment(tokens[current]!);
-            current++;
-            return [comment];
-        }
-        return undefined;
-    }
+    const resolver: Resolver = {
+        ctx: () => parserCtx,
+        expression: () => parseExpressionFn(),
+        statement: () => parseStatementFn(),
+        block: () => parseBlockStatementFn(),
+        typeAnnotation: () => parseTypeAnnotationImpl(resolver),
+        annotations: () => parseAnnotationsFn(),
+    };
 
     // ---------------------------------------------------------------------------
-    // Token Navigation Helpers
+    // Convenience aliases to ParserContext methods
+    // These make the migration incremental - existing code can keep using these
     // ---------------------------------------------------------------------------
 
-    /**
-     * Look ahead at token without consuming, skipping COMMENT tokens.
-     *
-     * INVARIANT: Returns EOF token if offset goes beyond end.
-     */
-    function peek(offset = 0): Token {
-        // Skip COMMENT tokens when peeking
-        let pos = current;
-        let skipped = 0;
-        while (pos < tokens.length && tokens[pos]!.type === 'COMMENT') {
-            pos++;
-        }
-        while (skipped < offset && pos < tokens.length) {
-            pos++;
-            while (pos < tokens.length && tokens[pos]!.type === 'COMMENT') {
-                pos++;
-            }
-            skipped++;
-        }
-        return tokens[pos] ?? tokens[tokens.length - 1]!;
-    }
+    const peek = (offset = 0) => parserCtx.peek(offset);
+    const isAtEnd = () => parserCtx.isAtEnd();
+    const advance = () => parserCtx.advance();
+    const check = (type: TokenType) => parserCtx.check(type);
+    const checkKeyword = (keyword: string) => parserCtx.checkKeyword(keyword);
+    const match = (...types: TokenType[]) => parserCtx.match(...types);
+    const matchKeyword = (keyword: string) => parserCtx.matchKeyword(keyword);
+    const reportError = (code: ParserErrorCode, context?: string) => parserCtx.reportError(code, context);
+    const expect = (type: TokenType, code: ParserErrorCode) => parserCtx.expect(type, code);
+    const expectKeyword = (keyword: string, code: ParserErrorCode) => parserCtx.expectKeyword(keyword, code);
+    const collectComments = () => parserCtx.collectComments();
+    const consumePendingComments = () => parserCtx.consumePendingComments();
+    const collectTrailingComment = (nodeLine: number) => parserCtx.collectTrailingComment(nodeLine);
+    const isTypeName = (token: Token) => parserCtx.isTypeName(token);
+    const isPreposition = (token: Token) => parserCtx.isPreposition(token);
+    const genUniqueId = (prefix: string) => parserCtx.genUniqueId(prefix);
+    const parseIdentifier = () => parserCtx.parseIdentifier();
+    const parseIdentifierOrKeyword = () => parserCtx.parseIdentifierOrKeyword();
 
-    /**
-     * Check if at end of token stream.
-     */
-    function isAtEnd(): boolean {
-        return peek().type === 'EOF';
-    }
-
-    /**
-     * Consume and return current token, skipping COMMENT tokens.
-     *
-     * INVARIANT: Never advances past EOF.
-     */
-    function advance(): Token {
-        collectComments(); // Consume any comment tokens first
-        if (!isAtEnd()) {
-            current++;
-        }
-
-        // EDGE: current is at least 1 after advancing, so current-1 is valid
-        return tokens[current - 1]!;
-    }
-
-    /**
-     * Check if current token matches type without consuming.
-     */
-    function check(type: TokenType): boolean {
-        return peek().type === type;
-    }
-
-    /**
-     * Check if current token is specific keyword without consuming.
-     *
-     * WHY: Latin keywords are stored in token.keyword field, not token.type.
-     */
-    function checkKeyword(keyword: string): boolean {
-        return peek().type === 'KEYWORD' && peek().keyword === keyword;
-    }
-
-    /**
-     * Match and consume token if type matches.
-     *
-     * @returns true if matched and consumed, false otherwise
-     */
-    function match(...types: TokenType[]): boolean {
-        for (const type of types) {
-            if (check(type)) {
-                advance();
-
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Match and consume token if keyword matches.
-     *
-     * @returns true if matched and consumed, false otherwise
-     */
-    function matchKeyword(keyword: string): boolean {
-        if (checkKeyword(keyword)) {
-            advance();
-
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Report error using error catalog.
-     *
-     * WHY: Centralizes error creation with consistent structure.
-     *
-     * @param code - Error code from ParserErrorCode enum
-     * @param context - Optional context to append (e.g., "got 'x'")
-     */
-    function reportError(code: ParserErrorCode, context?: string): void {
-        const token = peek();
-        const { text } = PARSER_ERRORS[code];
-        const message = context ? `${text}, ${context}` : text;
-
-        errors.push({ code, message, position: token.position });
-    }
-
-    /**
-     * Expect specific token type or record error.
-     *
-     * ERROR RECOVERY: Records error and advances past the unexpected token to
-     * prevent infinite loops. Returns a synthetic token of the expected type.
-     *
-     * WHY: If we don't advance, callers in loops (like parseObjectPattern) will
-     * spin forever on the same unexpected token.
-     *
-     * @returns Matched token if found, synthetic token after advancing if not
-     */
-    function expect(type: TokenType, code: ParserErrorCode): Token {
-        if (check(type)) {
-            return advance();
-        }
-
-        const token = peek();
-
-        reportError(code, `got '${token.value}'`);
-
-        // Advance past the unexpected token to prevent infinite loops
-        if (!isAtEnd()) {
-            advance();
-        }
-
-        // Return synthetic token with expected type but actual position
-        return { type, value: '', position: token.position };
-    }
-
-    /**
-     * Expect specific keyword or record error.
-     *
-     * ERROR RECOVERY: Records error and advances past the unexpected token.
-     */
-    function expectKeyword(keyword: string, code: ParserErrorCode): Token {
-        if (checkKeyword(keyword)) {
-            return advance();
-        }
-
-        const token = peek();
-
-        reportError(code, `got '${token.value}'`);
-
-        // Advance past the unexpected token to prevent infinite loops
-        if (!isAtEnd()) {
-            advance();
-        }
-
-        // Return synthetic token with expected keyword but actual position
-        return { type: 'KEYWORD', value: keyword, keyword, position: token.position };
-    }
 
     /**
      * Record error and throw for error recovery.
@@ -488,8 +294,7 @@ export function parse(tokens: Token[]): ParserResult {
      *      Caught by statement parser which calls synchronize().
      */
     function error(code: ParserErrorCode, context?: string): never {
-        reportError(code, context);
-        throw new Error(PARSER_ERRORS[code].text);
+        throw parserCtx.error(code, context);
     }
 
     /**
@@ -791,35 +596,6 @@ export function parse(tokens: Token[]): ParserResult {
         };
     }
 
-    // ---------------------------------------------------------------------------
-    // Type Name Helpers
-    // ---------------------------------------------------------------------------
-
-    /**
-     * Check if token is a builtin type name.
-     *
-     * WHY: Type-first syntax requires distinguishing type names from identifiers.
-     *      "fixum textus nomen" (type-first) vs "fixum nomen" (type inference).
-     *
-     * @returns true if token is an identifier and a known builtin type
-     */
-    function isTypeName(token: Token): boolean {
-        return token.type === 'IDENTIFIER' && BUILTIN_TYPE_NAMES.has(token.value);
-    }
-
-    /**
-     * Check if token is a preposition used in parameters.
-     *
-     * WHY: Prepositions indicate semantic roles:
-     *      de = borrowed/read-only, in = mutable borrow, ex = source
-     *      Note: 'ad' is reserved for statement-level dispatch, not parameters.
-     *
-     * @returns true if token is a preposition keyword
-     */
-    function isPreposition(token: Token): boolean {
-        return token.type === 'KEYWORD' && ['de', 'in', 'ex'].includes(token.keyword ?? '');
-    }
-
     // =============================================================================
     // STATEMENT PARSING
     // =============================================================================
@@ -1005,7 +781,7 @@ export function parse(tokens: Token[]): ParserResult {
      * WHY: Annotations modify the following declaration with metadata like
      *      visibility (publicum, privatum), async (futura), abstract (abstractum).
      *
-     * INVARIANT: Called when current token is AT.
+     * INVARIANT: Called when parserCtx.current token is AT.
      * INVARIANT: Consumes AT and all following identifiers on the same logical line.
      *
      * Examples:
@@ -1701,176 +1477,9 @@ export function parse(tokens: Token[]): ParserResult {
 
     /**
      * Parse type parameters and regular parameters from function signature.
-     *
-     * GRAMMAR:
-     *   paramList := (typeParamDecl ',')* (parameter (',' parameter)*)?
-     *   typeParamDecl := 'prae' 'typus' IDENTIFIER
-     *
-     * WHY: Type parameters (prae typus T) must come first, followed by regular params.
-     *      This matches the conventions of TypeScript, Rust, and Zig.
-     *
-     * Examples:
-     *   (prae typus T, T a, T b)     -> typeParams=[T], params=[a, b]
-     *   (prae typus T, prae typus U) -> typeParams=[T, U], params=[]
-     *   (numerus a, numerus b)       -> typeParams=[], params=[a, b]
+     * NOTE: parseTypeAndParameterList, parseParameterList, and parseParameter
+     * are now delegated to types.ts via resolver.
      */
-    function parseTypeAndParameterList(): { typeParams: TypeParameterDeclaration[]; params: Parameter[] } {
-        const typeParams: TypeParameterDeclaration[] = [];
-        const params: Parameter[] = [];
-
-        if (check('RPAREN')) {
-            return { typeParams, params };
-        }
-
-        // Parse leading type parameters: prae typus T
-        while (checkKeyword('prae')) {
-            const typeParamPos = peek().position;
-            advance(); // consume 'prae'
-            expectKeyword('typus', ParserErrorCode.ExpectedKeywordTypus);
-            const typeParamName = parseIdentifier();
-            typeParams.push({
-                type: 'TypeParameterDeclaration',
-                name: typeParamName,
-                position: typeParamPos,
-            });
-
-            // If no comma after type param, we're done with type params
-            if (!match('COMMA')) {
-                return { typeParams, params };
-            }
-
-            // Check if next is another type param or a regular param
-            if (!checkKeyword('prae')) {
-                break; // Switch to parsing regular params
-            }
-        }
-
-        // Parse remaining regular parameters
-        if (!check('RPAREN')) {
-            do {
-                params.push(parseParameter());
-            } while (match('COMMA'));
-        }
-
-        return { typeParams, params };
-    }
-
-    /**
-     * Parse function parameter list (simple form without type params).
-     *
-     * GRAMMAR:
-     *   paramList := (parameter (',' parameter)*)?
-     */
-    function parseParameterList(): Parameter[] {
-        const params: Parameter[] = [];
-
-        if (check('RPAREN')) {
-            return params;
-        }
-
-        do {
-            params.push(parseParameter());
-        } while (match('COMMA'));
-
-        return params;
-    }
-
-    /**
-     * Parse single function parameter.
-     *
-     * GRAMMAR:
-     *   parameter := ('de' | 'in' | 'ex')? 'si'? 'ceteri'? (typeAnnotation IDENTIFIER | IDENTIFIER) ('ut' IDENTIFIER)? ('vel' expression)?
-     *
-     * WHY: Type-first syntax: "textus name" or "de textus source"
-     *      Prepositional prefixes indicate semantic roles:
-     *      de = from/concerning (borrowed, read-only),
-     *      in = in/into (mutable borrow),
-     *      ex = from/out of (source)
-     *
-     * OPTIONAL PARAMETERS:
-     *      'si' marks a parameter as optional. Without 'vel', type becomes ignotum<T>.
-     *      With 'vel', parameter has a default value and type stays T.
-     *      Order: preposition, then si, then ceteri, then type, then name.
-     *
-     * EDGE: Preposition comes first (if present), then si, then type (if present), then identifier.
-     *
-     * TYPE DETECTION: Uses lookahead to detect type annotations for user-defined types.
-     *   - Builtin type names (textus, numerus, etc.) are recognized directly
-     *   - IDENT IDENT pattern: first is type, second is name (e.g., "coordinate point")
-     *   - IDENT< pattern: generic type (e.g., "lista<textus>")
-     */
-    function parseParameter(): Parameter {
-        const position = peek().position;
-
-        let preposition: string | undefined;
-
-        if (isPreposition(peek())) {
-            preposition = advance().keyword;
-        }
-
-        // Check for optional parameter: si [type] name [vel default]
-        let optional = false;
-        if (checkKeyword('si')) {
-            advance(); // consume 'si'
-            optional = true;
-        }
-
-        // Check for rest parameter: ceteri [type] name
-        let rest = false;
-        if (checkKeyword('ceteri')) {
-            advance(); // consume 'ceteri'
-            rest = true;
-        }
-
-        let typeAnnotation: TypeAnnotation | undefined;
-
-        // WHY: Use lookahead to detect user-defined types, not just builtins.
-        // If we see IDENT followed by IDENT, first is type, second is name.
-        // If we see IDENT followed by <, it's a generic type.
-        // If we see IDENT followed by [, it's an array type (e.g., Point[]).
-        // If we see (, it's a function type: (T) -> U
-        const hasTypeAnnotation =
-            isTypeName(peek()) ||
-            check('LPAREN') || // function type: (T) -> U
-            (check('IDENTIFIER') && peek(1).type === 'IDENTIFIER') ||
-            (check('IDENTIFIER') && peek(1).type === 'LESS') ||
-            (check('IDENTIFIER') && peek(1).type === 'LBRACKET');
-
-        if (hasTypeAnnotation) {
-            typeAnnotation = parseTypeAnnotation();
-        }
-
-        const name = parseIdentifierOrKeyword();
-
-        // Check for dual naming: 'ut' introduces internal alias
-        // textus location ut loc -> external: location, internal: loc
-        let alias: Identifier | undefined;
-        if (checkKeyword('ut')) {
-            advance(); // consume 'ut'
-            alias = parseIdentifierOrKeyword();
-        }
-
-        // Check for default value: 'vel' introduces default expression
-        // si numerus aetas vel 18 -> optional with default
-        let defaultValue: Expression | undefined;
-        if (checkKeyword('vel')) {
-            advance(); // consume 'vel'
-            defaultValue = parseExpression();
-        }
-
-        return {
-            type: 'Parameter',
-            name,
-            alias,
-            defaultValue,
-            typeAnnotation,
-            preposition,
-            rest,
-            optional: optional || undefined,
-            position,
-        };
-    }
-
     /**
      * Parse type alias declaration.
      *
@@ -2181,12 +1790,12 @@ export function parse(tokens: Token[]): ParserResult {
         const hasMoreMembers = () => !check('RBRACE') && !isAtEnd();
 
         while (hasMoreMembers()) {
-            const startPosition = current;
+            const startPosition = parserCtx.current;
             const member = parseGenusMember();
 
             // EDGE: If parser didn't advance, synchronize to avoid infinite loop.
             // This happens with malformed syntax like `fixum name: textus` (TS-style).
-            if (current === startPosition) {
+            if (parserCtx.current === startPosition) {
                 synchronizeGenusMember();
                 continue;
             }
@@ -2761,7 +2370,7 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     /**
-     * Check if current token is a DSL verb.
+     * Check if parserCtx.current token is a DSL verb.
      *
      * WHY: DSL verbs are collection transform operations.
      */
@@ -4181,8 +3790,8 @@ export function parse(tokens: Token[]): ParserResult {
         const expr = parseTernary();
 
         if (match('EQUAL', 'PLUS_EQUAL', 'MINUS_EQUAL', 'STAR_EQUAL', 'SLASH_EQUAL', 'PERCENT_EQUAL', 'AMPERSAND_EQUAL', 'PIPE_EQUAL')) {
-            const operator = tokens[current - 1]!.value;
-            const position = tokens[current - 1]!.position;
+            const operator = tokens[parserCtx.current - 1]!.value;
+            const position = tokens[parserCtx.current - 1]!.position;
             const value = parseAssignment();
 
             if (expr.type === 'Identifier' || expr.type === 'MemberExpression') {
@@ -4357,8 +3966,8 @@ export function parse(tokens: Token[]): ParserResult {
             let position: Position;
 
             if (match('EQUAL_EQUAL', 'BANG_EQUAL', 'TRIPLE_EQUAL', 'BANG_DOUBLE_EQUAL')) {
-                operator = tokens[current - 1]!.value;
-                position = tokens[current - 1]!.position;
+                operator = tokens[parserCtx.current - 1]!.value;
+                position = tokens[parserCtx.current - 1]!.position;
             } else if (checkKeyword('non') && peek(1)?.type === 'KEYWORD' && peek(1)?.value === 'est') {
                 // 'non est' - negated type check
                 position = peek().position;
@@ -4376,7 +3985,7 @@ export function parse(tokens: Token[]): ParserResult {
                 continue;
             } else if (matchKeyword('est')) {
                 // 'est' - type check (instanceof/typeof)
-                position = tokens[current - 1]!.position;
+                position = tokens[parserCtx.current - 1]!.position;
 
                 const targetType = parseTypeAnnotation();
                 left = {
@@ -4412,8 +4021,8 @@ export function parse(tokens: Token[]): ParserResult {
         let left = parseBitwiseOr();
 
         while (match('LESS', 'LESS_EQUAL', 'GREATER', 'GREATER_EQUAL') || matchKeyword('intra') || matchKeyword('inter')) {
-            const operator = tokens[current - 1]!.value;
-            const position = tokens[current - 1]!.position;
+            const operator = tokens[parserCtx.current - 1]!.value;
+            const position = tokens[parserCtx.current - 1]!.position;
             const right = parseBitwiseOr();
 
             left = { type: 'BinaryExpression', operator, left, right, position };
@@ -4437,8 +4046,8 @@ export function parse(tokens: Token[]): ParserResult {
         let left = parseBitwiseXor();
 
         while (match('PIPE')) {
-            const operator = tokens[current - 1]!.value;
-            const position = tokens[current - 1]!.position;
+            const operator = tokens[parserCtx.current - 1]!.value;
+            const position = tokens[parserCtx.current - 1]!.position;
             const right = parseBitwiseXor();
 
             left = { type: 'BinaryExpression', operator, left, right, position };
@@ -4459,8 +4068,8 @@ export function parse(tokens: Token[]): ParserResult {
         let left = parseBitwiseAnd();
 
         while (match('CARET')) {
-            const operator = tokens[current - 1]!.value;
-            const position = tokens[current - 1]!.position;
+            const operator = tokens[parserCtx.current - 1]!.value;
+            const position = tokens[parserCtx.current - 1]!.position;
             const right = parseBitwiseAnd();
 
             left = { type: 'BinaryExpression', operator, left, right, position };
@@ -4485,8 +4094,8 @@ export function parse(tokens: Token[]): ParserResult {
         let left = parseRange();
 
         while (match('AMPERSAND')) {
-            const operator = tokens[current - 1]!.value;
-            const position = tokens[current - 1]!.position;
+            const operator = tokens[parserCtx.current - 1]!.value;
+            const position = tokens[parserCtx.current - 1]!.position;
             const right = parseRange();
 
             left = { type: 'BinaryExpression', operator, left, right, position };
@@ -4531,7 +4140,7 @@ export function parse(tokens: Token[]): ParserResult {
             return start;
         }
 
-        const position = tokens[current - 1]!.position;
+        const position = tokens[parserCtx.current - 1]!.position;
         const end = parseAdditive();
 
         let step: Expression | undefined;
@@ -4555,8 +4164,8 @@ export function parse(tokens: Token[]): ParserResult {
         let left = parseMultiplicative();
 
         while (match('PLUS', 'MINUS')) {
-            const operator = tokens[current - 1]!.value;
-            const position = tokens[current - 1]!.position;
+            const operator = tokens[parserCtx.current - 1]!.value;
+            const position = tokens[parserCtx.current - 1]!.position;
             const right = parseMultiplicative();
 
             left = { type: 'BinaryExpression', operator, left, right, position };
@@ -4582,8 +4191,8 @@ export function parse(tokens: Token[]): ParserResult {
         let left = parseUnary();
 
         while (match('STAR', 'SLASH', 'PERCENT')) {
-            const operator = tokens[current - 1]!.value;
-            const position = tokens[current - 1]!.position;
+            const operator = tokens[parserCtx.current - 1]!.value;
+            const position = tokens[parserCtx.current - 1]!.position;
             const right = parseUnary();
 
             left = { type: 'BinaryExpression', operator, left, right, position };
@@ -4609,35 +4218,35 @@ export function parse(tokens: Token[]): ParserResult {
         // WHY: Prefix ! is removed to make room for non-null assertion (postfix !.)
         //      Use 'non' for logical not: "si non x" instead of "si !x"
         if (matchKeyword('non')) {
-            const position = tokens[current - 1]!.position;
+            const position = tokens[parserCtx.current - 1]!.position;
             const argument = parseUnary();
 
             return { type: 'UnaryExpression', operator: '!', argument, prefix: true, position };
         }
 
         if (match('MINUS')) {
-            const position = tokens[current - 1]!.position;
+            const position = tokens[parserCtx.current - 1]!.position;
             const argument = parseUnary();
 
             return { type: 'UnaryExpression', operator: '-', argument, prefix: true, position };
         }
 
         if (match('TILDE')) {
-            const position = tokens[current - 1]!.position;
+            const position = tokens[parserCtx.current - 1]!.position;
             const argument = parseUnary();
 
             return { type: 'UnaryExpression', operator: '~', argument, prefix: true, position };
         }
 
         if (matchKeyword('nulla')) {
-            const position = tokens[current - 1]!.position;
+            const position = tokens[parserCtx.current - 1]!.position;
             const argument = parseUnary();
 
             return { type: 'UnaryExpression', operator: 'nulla', argument, prefix: true, position };
         }
 
         if (matchKeyword('nonnulla')) {
-            const position = tokens[current - 1]!.position;
+            const position = tokens[parserCtx.current - 1]!.position;
             const argument = parseUnary();
 
             return {
@@ -4665,7 +4274,7 @@ export function parse(tokens: Token[]): ParserResult {
                         )));
             if (isUnaryOperand) {
                 advance(); // consume 'nihil'
-                const position = tokens[current - 1]!.position;
+                const position = tokens[parserCtx.current - 1]!.position;
                 const argument = parseUnary();
 
                 return { type: 'UnaryExpression', operator: 'nihil', argument, prefix: true, position };
@@ -4674,7 +4283,7 @@ export function parse(tokens: Token[]): ParserResult {
 
         // WHY: 'nonnihil x' checks if x is not null (always unary, no ambiguity)
         if (matchKeyword('nonnihil')) {
-            const position = tokens[current - 1]!.position;
+            const position = tokens[parserCtx.current - 1]!.position;
             const argument = parseUnary();
 
             return { type: 'UnaryExpression', operator: 'nonnihil', argument, prefix: true, position };
@@ -4696,7 +4305,7 @@ export function parse(tokens: Token[]): ParserResult {
                         )));
             if (isUnaryOperand) {
                 advance(); // consume 'verum'
-                const position = tokens[current - 1]!.position;
+                const position = tokens[parserCtx.current - 1]!.position;
                 const argument = parseUnary();
 
                 return { type: 'UnaryExpression', operator: 'verum', argument, prefix: true, position };
@@ -4719,7 +4328,7 @@ export function parse(tokens: Token[]): ParserResult {
                         )));
             if (isUnaryOperand) {
                 advance(); // consume 'falsum'
-                const position = tokens[current - 1]!.position;
+                const position = tokens[parserCtx.current - 1]!.position;
                 const argument = parseUnary();
 
                 return { type: 'UnaryExpression', operator: 'falsum', argument, prefix: true, position };
@@ -4727,7 +4336,7 @@ export function parse(tokens: Token[]): ParserResult {
         }
 
         if (matchKeyword('negativum')) {
-            const position = tokens[current - 1]!.position;
+            const position = tokens[parserCtx.current - 1]!.position;
             const argument = parseUnary();
 
             return {
@@ -4740,7 +4349,7 @@ export function parse(tokens: Token[]): ParserResult {
         }
 
         if (matchKeyword('positivum')) {
-            const position = tokens[current - 1]!.position;
+            const position = tokens[parserCtx.current - 1]!.position;
             const argument = parseUnary();
 
             return {
@@ -4753,7 +4362,7 @@ export function parse(tokens: Token[]): ParserResult {
         }
 
         if (matchKeyword('cede')) {
-            const position = tokens[current - 1]!.position;
+            const position = tokens[parserCtx.current - 1]!.position;
             const argument = parseUnary();
 
             return { type: 'CedeExpression', argument, position };
@@ -4807,7 +4416,7 @@ export function parse(tokens: Token[]): ParserResult {
      *   }
      */
     function parsePraefixumExpression(): PraefixumExpression {
-        const position = tokens[current - 1]!.position; // Position of 'praefixum' we just consumed
+        const position = tokens[parserCtx.current - 1]!.position; // Position of 'praefixum' we just consumed
 
         let body: Expression | BlockStatement;
 
@@ -4842,7 +4451,7 @@ export function parse(tokens: Token[]): ParserResult {
      *   scriptum("§ + § = §", a, b, a + b)
      */
     function parseScriptumExpression(): ScriptumExpression {
-        const position = tokens[current - 1]!.position; // Position of 'scriptum' we just consumed
+        const position = tokens[parserCtx.current - 1]!.position; // Position of 'scriptum' we just consumed
 
         expect('LPAREN', ParserErrorCode.ExpectedOpeningParen);
 
@@ -4881,7 +4490,7 @@ export function parse(tokens: Token[]): ParserResult {
      *   lege lineam → read one line
      */
     function parseLegeExpression(): LegeExpression {
-        const position = tokens[current - 1]!.position; // Position of 'lege' we just consumed
+        const position = tokens[parserCtx.current - 1]!.position; // Position of 'lege' we just consumed
 
         // Check for 'lineam' modifier
         const mode = matchKeyword('lineam') ? 'line' : 'all';
@@ -4953,8 +4562,8 @@ export function parse(tokens: Token[]): ParserResult {
             matchKeyword('dextratum') ||
             matchKeyword('sinistratum')
         ) {
-            const keyword = tokens[current - 1]!.value;
-            const position = tokens[current - 1]!.position;
+            const keyword = tokens[parserCtx.current - 1]!.value;
+            const position = tokens[parserCtx.current - 1]!.position;
 
             if (keyword === 'qua') {
                 const targetType = parseTypeAnnotation();
@@ -4996,7 +4605,7 @@ export function parse(tokens: Token[]): ParserResult {
                     targetType = parseTypeAnnotation();
                     if (match('COMMA')) {
                         // Radix type: Dec, Hex, Oct, Bin
-                        const radixToken = tokens[current];
+                        const radixToken = tokens[parserCtx.current];
                         if (radixToken && ['Dec', 'Hex', 'Oct', 'Bin'].includes(radixToken.value)) {
                             radix = advance().value as ConversionExpression['radix'];
                         } else {
@@ -5043,7 +4652,7 @@ export function parse(tokens: Token[]): ParserResult {
      *      The `de` (from) form allows dynamic overrides from variables or function results.
      */
     function parseNovumExpression(): NovumExpression {
-        const position = tokens[current - 1]!.position;
+        const position = tokens[parserCtx.current - 1]!.position;
         const callee = parseIdentifier();
 
         let args: (Expression | SpreadElement)[] = [];
@@ -5083,7 +4692,7 @@ export function parse(tokens: Token[]): ParserResult {
      *   finge Active qua Status                 - unit variant with explicit type
      */
     function parseFingeExpression(): FingeExpression {
-        const position = tokens[current - 1]!.position;
+        const position = tokens[parserCtx.current - 1]!.position;
         const variant = parseIdentifier();
 
         let fields: ObjectExpression | undefined;
@@ -5205,14 +4814,14 @@ export function parse(tokens: Token[]): ParserResult {
             // Regular accessors
             // ---------------------------------------------------------------
             else if (match('LPAREN')) {
-                const position = tokens[current - 1]!.position;
+                const position = tokens[parserCtx.current - 1]!.position;
                 const args = parseArgumentList();
 
                 expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
 
                 expr = { type: 'CallExpression', callee: expr, arguments: args, position };
             } else if (match('DOT')) {
-                const position = tokens[current - 1]!.position;
+                const position = tokens[parserCtx.current - 1]!.position;
                 // WHY: Allow keywords as property names (e.g., items.omitte)
                 const property = parseIdentifierOrKeyword();
 
@@ -5224,7 +4833,7 @@ export function parse(tokens: Token[]): ParserResult {
                     position,
                 };
             } else if (match('LBRACKET')) {
-                const position = tokens[current - 1]!.position;
+                const position = tokens[parserCtx.current - 1]!.position;
                 const property = parseExpression();
 
                 expect('RBRACKET', ParserErrorCode.ExpectedClosingBracket);
@@ -5562,199 +5171,25 @@ export function parse(tokens: Token[]): ParserResult {
         return { type: 'LambdaExpression', params, returnType, body, async, position };
     }
 
-    /**
-     * Parse identifier.
-     *
-     * GRAMMAR:
-     *   identifier := IDENTIFIER
-     */
-    function parseIdentifier(): Identifier {
-        const token = expect('IDENTIFIER', ParserErrorCode.ExpectedIdentifier);
-
-        return { type: 'Identifier', name: token.value, position: token.position };
-    }
-
-    /**
-     * Parse identifier or keyword as a name.
-     *
-     * GRAMMAR:
-     *   identifierOrKeyword := IDENTIFIER | KEYWORD
-     *
-     * WHY: Import specifiers can be keywords (ex norma importa scribe).
-     *      In this context, 'scribe' is a valid name, not a statement keyword.
-     */
-    function parseIdentifierOrKeyword(): Identifier {
-        const token = peek();
-
-        if (token.type === 'IDENTIFIER' || token.type === 'KEYWORD') {
-            advance();
-            return { type: 'Identifier', name: token.value, position: token.position };
-        }
-
-        // Fall back to normal identifier parsing (will report error and advance)
-        return parseIdentifier();
-    }
-
     // =============================================================================
-    // TYPE ANNOTATION PARSING
+    // TYPE ANNOTATION PARSING (delegated to types.ts via resolver)
     // =============================================================================
 
-    /**
-     * Check if token is a borrow preposition (de/in for ownership semantics).
-     *
-     * WHY: These prepositions encode ownership for systems targets (Rust/Zig):
-     *      de = borrowed/read-only (&T, []const u8)
-     *      in = mutable borrow (&mut T, *T)
-     *
-     * @returns true if token is 'de' or 'in' keyword
-     */
-    function isBorrowPreposition(token: Token): boolean {
-        return token.type === 'KEYWORD' && ['de', 'in'].includes(token.keyword ?? '');
-    }
+    // Delegate to types.ts implementation
+    const parseTypeAnnotation = () => resolver.typeAnnotation();
+    const parseTypeAndParameterList = () => parseTypeAndParameterListImpl(resolver);
+    const parseParameterList = () => parseParameterListImpl(resolver);
+    const parseParameter = () => parseParameterImpl(resolver);
 
-    /**
-     * Parse type annotation.
-     *
-     * GRAMMAR: typeAnnotation (see `EBNF.md` "Types")
-     *
-     * WHY: Supports generics (lista<textus>), nullable (?), union types (unio<A, B>),
-     *      and array shorthand (numerus[] desugars to lista<numerus>).
-     *
-     * EDGE: Numeric parameters for sized types (numerus<32>).
-     *       Array shorthand preserves source form via arrayShorthand flag.
-     *       Borrow prepositions (de/in) for systems targets (Rust/Zig).
-     *       Union types use unio<A, B> syntax (pipe reserved for bitwise OR).
-     */
+    // =============================================================================
+    // WIRE UP FORWARD DECLARATIONS
+    // =============================================================================
 
-    function parseTypeAnnotation(): TypeAnnotation {
-        const position = peek().position;
-
-        // Check for function type: (T, U) -> V
-        // WHY: Function types in parameter positions enable higher-order functions
-        //      e.g., functio filtrata((T) -> bivalens pred) -> lista<T>
-        if (match('LPAREN')) {
-            const parameterTypes: TypeAnnotation[] = [];
-
-            if (!check('RPAREN')) {
-                do {
-                    parameterTypes.push(parseTypeAnnotation());
-                } while (match('COMMA'));
-            }
-
-            expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
-            expect('THIN_ARROW', ParserErrorCode.ExpectedThinArrow);
-
-            const returnType = parseTypeAnnotation();
-
-            return {
-                type: 'TypeAnnotation',
-                name: '',
-                parameterTypes,
-                returnType,
-                position,
-            };
-        }
-
-        // Check for borrow preposition (de/in for ownership semantics)
-        let preposition: string | undefined;
-        if (isBorrowPreposition(peek())) {
-            preposition = advance().keyword;
-        }
-
-        // WHY: Type names are usually identifiers, but some spellings (notably `nihil`)
-        //      are keywords and still valid type names.
-        let name: string;
-        if (check('IDENTIFIER')) {
-            name = advance().value;
-        } else if (check('KEYWORD')) {
-            name = advance().value;
-        } else {
-            reportError(ParserErrorCode.ExpectedTypeName, `got '${peek().value}'`);
-            name = peek().value;
-            advance(); // Skip to avoid infinite loop
-        }
-
-        let typeParameters: TypeParameter[] | undefined;
-
-        if (match('LESS')) {
-            typeParameters = [];
-
-            do {
-                if (check('NUMBER')) {
-                    // Numeric parameter (e.g., numerus<32>)
-                    const numToken = advance();
-                    const value = numToken.value.includes('.') ? parseFloat(numToken.value) : parseInt(numToken.value, 10);
-
-                    typeParameters.push({
-                        type: 'Literal',
-                        value,
-                        raw: numToken.value,
-                        position: numToken.position,
-                    });
-                } else {
-                    // Type parameter (e.g., lista<textus>, numerus<i32>)
-                    typeParameters.push(parseTypeAnnotation());
-                }
-            } while (match('COMMA'));
-
-            expect('GREATER', ParserErrorCode.ExpectedClosingAngle);
-        }
-
-        let nullable = false;
-
-        if (match('QUESTION')) {
-            nullable = true;
-        }
-
-        // Handle unio<A, B> -> union type with type parameters as union members
-        // WHY: unio<A, B> syntax frees pipe for bitwise OR
-        if (name === 'unio' && typeParameters && typeParameters.length > 0) {
-            // Convert type parameters to union members (must all be TypeAnnotations)
-            const union: TypeAnnotation[] = typeParameters.filter((p): p is TypeAnnotation => p.type === 'TypeAnnotation');
-
-            return {
-                type: 'TypeAnnotation',
-                name: 'union',
-                union,
-                nullable,
-                preposition,
-                position,
-            };
-        }
-
-        // Build the base type
-        let result: TypeAnnotation = {
-            type: 'TypeAnnotation',
-            name,
-            typeParameters,
-            nullable,
-            preposition,
-            position,
-        };
-
-        // Handle array shorthand: numerus[] -> lista<numerus>
-        // Each [] wraps in lista with arrayShorthand flag for round-trip fidelity
-        while (check('LBRACKET') && peek(1).type === 'RBRACKET') {
-            advance(); // [
-            advance(); // ]
-
-            let arrayNullable = false;
-            if (match('QUESTION')) {
-                arrayNullable = true;
-            }
-
-            result = {
-                type: 'TypeAnnotation',
-                name: 'lista',
-                typeParameters: [result],
-                nullable: arrayNullable,
-                arrayShorthand: true,
-                position,
-            };
-        }
-
-        return result;
-    }
+    // These assignments connect the resolver to the actual parsing functions
+    parseExpressionFn = parseExpression;
+    parseStatementFn = parseStatement;
+    parseBlockStatementFn = parseBlockStatement;
+    parseAnnotationsFn = parseAnnotations;
 
     // =============================================================================
     // MAIN PARSE EXECUTION
@@ -5770,7 +5205,8 @@ export function parse(tokens: Token[]): ParserResult {
         const program = parseProgram();
 
         return { program, errors };
-    } catch {
+    }
+    catch {
         return { program: null, errors };
     }
 }
