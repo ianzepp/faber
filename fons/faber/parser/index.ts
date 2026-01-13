@@ -4575,9 +4575,8 @@ export function parse(tokens: Token[]): ParserResult {
      *
      * NOT SUPPORTED (will produce parser errors):
      *   - Exponentiation: a ** b (use function call or explicit multiplication)
-     *   - Floor division: a // b (// starts a comment in Faber)
+     *   - Floor division: a // b (no dedicated operator; tokenizes as '/''/')
      *   - Increment/decrement: x++, ++x, x--, --x
-     *   - Compound assignment: x += 1, x -= 1, x *= 2, x /= 2
      */
     function parseMultiplicative(): Expression {
         let left = parseUnary();

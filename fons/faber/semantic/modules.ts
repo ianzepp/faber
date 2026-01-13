@@ -488,9 +488,15 @@ export function resolveModule(source: string, ctx: ModuleContext): ModuleResult 
     }
 
     // Check for cycles
-    // WHY: Circular imports are common in compiler codebases and are valid for TS output.
-    // Instead of erroring, return empty exports - values resolve when module finishes loading.
-    // EDGE: This limits cross-module type information within the cycle.
+    // WHY: This is a TS-only bootstrap compiler whose job is to compile Rivus.
+    // Circular imports are common in compiler codebases and are valid for JS/TS output.
+    //
+    // DESIGN: We detect cycles but do NOT treat them as semantic errors here.
+    // Instead, return empty exports while the cycle is in progress.
+    // This mirrors the JS module runtime model (values resolve when the module finishes loading).
+    //
+    // EDGE: This intentionally limits cross-module type information within the cycle.
+    // Strict cycle diagnosis / SCC-aware resolution belongs in Rivus.
 
     if (ctx.inProgress.has(absolutePath)) {
         return {

@@ -267,7 +267,7 @@ shiftOp    := 'sinistratum' | 'dextratum'
 range      := additive (('..' | 'ante' | 'usque') additive ('per' additive)?)?
 additive   := multiplicative (('+' | '-') multiplicative)*
 multiplicative := unary (('*' | '/' | '%') unary)*
-unary      := ('!' | '-' | '~' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'novum' | 'finge') unary | cast
+unary      := ('-' | '~' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'novum' | 'finge') unary | cast
 cast       := call ('qua' typeAnnotation | 'innatum' typeAnnotation | conversionOp)*
 conversionOp := ('numeratum' | 'fractatum') typeParams? ('vel' unary)?
              | ('textatum' | 'bivalentum')

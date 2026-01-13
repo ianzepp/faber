@@ -2418,7 +2418,7 @@ export interface MemberExpression extends BaseNode {
  *   assignExpr := (IDENTIFIER | memberExpr) '=' expression
  *
  * INVARIANT: left must be Identifier or MemberExpression (lvalue).
- * INVARIANT: operator is '=' for now (compound assignments not yet supported).
+ * INVARIANT: operator may be '=', '+=', '-=', '*=', '/=', '%=', '&=', '|='.
  */
 export interface AssignmentExpression extends BaseNode {
     type: 'AssignmentExpression';
