@@ -10,11 +10,12 @@ describe('norma-registry', () => {
             expect(result!.method).toBe('push');
         });
 
-        test('lista.adde -> py append', () => {
+        test('target parameter is ignored (TS-only)', () => {
+            // WHY: Registry is now TS-only; target param kept for API compat
             const result = getNormaTranslation('py', 'lista', 'adde');
 
             expect(result).toBeDefined();
-            expect(result!.method).toBe('append');
+            expect(result!.method).toBe('push'); // Returns TS translation
         });
 
         test('lista.filtrata -> ts filter', () => {

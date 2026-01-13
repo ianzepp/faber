@@ -43,3 +43,4 @@ __pycache__/
 
 # Auto-generated files
 **/norma-registry.gen.*
+**/norma.gen.ts

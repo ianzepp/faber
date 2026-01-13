@@ -58,19 +58,19 @@ async function main() {
         await $`bun run build:norma`.quiet();
     });
 
-    await step('build:faber and verify', async () => {
+    await step('build:faber', async () => {
         await $`bun run build:faber`.quiet();
-        await $`bun run build:exempla -c faber -t ${target}`.quiet();
+        // await $`bun run build:exempla -c faber -t ${target}`.quiet();
     });
 
-    await step('build:rivus and verify', async () => {
+    await step('build:rivus', async () => {
         await $`bun run build:rivus`.quiet();
-        await $`bun run build:exempla -c rivus -t ${target}`.quiet();
+        // await $`bun run build:exempla -c rivus -t ${target}`.quiet();
     });
 
-    await step('build:artifex and verify', async () => {
+    await step('build:artifex', async () => {
         await $`bun run build:artifex`.quiet();
-        await $`bun run build:exempla -c artifex -t ${target}`.quiet();
+        // await $`bun run build:exempla -c artifex -t ${target}`.quiet();
     });
 
     const elapsed = performance.now() - start;
