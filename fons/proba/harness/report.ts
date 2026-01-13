@@ -2,7 +2,7 @@
 /**
  * Feature matrix report generator.
  *
- * Reads test results from SQLite and generates a feature support matrix.
+ * Reads test results from SQLite and generates a feature support report.
  *
  * USAGE
  *   bun run fons/proba/harness/report.ts                    Latest run, table format
@@ -17,7 +17,7 @@ import { parseArgs } from 'util';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
 
-import { openDatabase, getLatestTestRun, getFeatureSummary, getResultsForRun, type FeatureSummary, type TestResult } from './schema';
+import { openDatabase, getLatestTestRun, getFeatureSummary, getResultsForRun, type FeatureSummary } from './schema';
 
 type OutputFormat = 'table' | 'markdown' | 'csv' | 'json';
 
@@ -62,14 +62,8 @@ function formatCellMarkdown(passed: number, total: number): string {
 }
 
 function printTable(summaries: FeatureSummary[], showFailuresOnly: boolean): void {
-    // Filter if needed
     const data = showFailuresOnly
-        ? summaries.filter(s =>
-            s.ts_passed < s.ts_total ||
-            s.py_passed < s.py_total ||
-            s.cpp_passed < s.cpp_total ||
-            s.rs_passed < s.rs_total ||
-            s.zig_passed < s.zig_total)
+        ? summaries.filter(s => s.passed < s.total)
         : summaries;
 
     if (data.length === 0) {
@@ -79,24 +73,16 @@ function printTable(summaries: FeatureSummary[], showFailuresOnly: boolean): voi
 
     // Calculate column widths
     const featureWidth = Math.max(7, ...data.map(s => s.feature.length));
-    const colWidth = 6;
+    const colWidth = 8;
 
     // Header
     const header = [
         'Feature'.padEnd(featureWidth),
-        'ts'.padStart(colWidth),
-        'py'.padStart(colWidth),
-        'cpp'.padStart(colWidth),
-        'rs'.padStart(colWidth),
-        'zig'.padStart(colWidth),
+        'Result'.padStart(colWidth),
     ].join(' | ');
 
     const separator = [
         '-'.repeat(featureWidth),
-        '-'.repeat(colWidth),
-        '-'.repeat(colWidth),
-        '-'.repeat(colWidth),
-        '-'.repeat(colWidth),
         '-'.repeat(colWidth),
     ].join('-|-');
 
@@ -106,49 +92,26 @@ function printTable(summaries: FeatureSummary[], showFailuresOnly: boolean): voi
     for (const s of data) {
         const row = [
             s.feature.padEnd(featureWidth),
-            formatCell(s.ts_passed, s.ts_total).padStart(colWidth),
-            formatCell(s.py_passed, s.py_total).padStart(colWidth),
-            formatCell(s.cpp_passed, s.cpp_total).padStart(colWidth),
-            formatCell(s.rs_passed, s.rs_total).padStart(colWidth),
-            formatCell(s.zig_passed, s.zig_total).padStart(colWidth),
+            formatCell(s.passed, s.total).padStart(colWidth),
         ].join(' | ');
         console.log(row);
     }
 
     // Summary row
     console.log(separator);
-    const totals = {
-        ts_passed: data.reduce((sum, s) => sum + s.ts_passed, 0),
-        ts_total: data.reduce((sum, s) => sum + s.ts_total, 0),
-        py_passed: data.reduce((sum, s) => sum + s.py_passed, 0),
-        py_total: data.reduce((sum, s) => sum + s.py_total, 0),
-        cpp_passed: data.reduce((sum, s) => sum + s.cpp_passed, 0),
-        cpp_total: data.reduce((sum, s) => sum + s.cpp_total, 0),
-        rs_passed: data.reduce((sum, s) => sum + s.rs_passed, 0),
-        rs_total: data.reduce((sum, s) => sum + s.rs_total, 0),
-        zig_passed: data.reduce((sum, s) => sum + s.zig_passed, 0),
-        zig_total: data.reduce((sum, s) => sum + s.zig_total, 0),
-    };
+    const totalPassed = data.reduce((sum, s) => sum + s.passed, 0);
+    const totalTests = data.reduce((sum, s) => sum + s.total, 0);
 
     const totalRow = [
         'TOTAL'.padEnd(featureWidth),
-        formatCell(totals.ts_passed, totals.ts_total).padStart(colWidth),
-        formatCell(totals.py_passed, totals.py_total).padStart(colWidth),
-        formatCell(totals.cpp_passed, totals.cpp_total).padStart(colWidth),
-        formatCell(totals.rs_passed, totals.rs_total).padStart(colWidth),
-        formatCell(totals.zig_passed, totals.zig_total).padStart(colWidth),
+        formatCell(totalPassed, totalTests).padStart(colWidth),
     ].join(' | ');
     console.log(totalRow);
 }
 
 function printMarkdown(summaries: FeatureSummary[], showFailuresOnly: boolean): void {
     const data = showFailuresOnly
-        ? summaries.filter(s =>
-            s.ts_passed < s.ts_total ||
-            s.py_passed < s.py_total ||
-            s.cpp_passed < s.cpp_total ||
-            s.rs_passed < s.rs_total ||
-            s.zig_passed < s.zig_total)
+        ? summaries.filter(s => s.passed < s.total)
         : summaries;
 
     if (data.length === 0) {
@@ -156,39 +119,29 @@ function printMarkdown(summaries: FeatureSummary[], showFailuresOnly: boolean): 
         return;
     }
 
-    console.log('| Feature | ts | py | cpp | rs | zig |');
-    console.log('|---------|----|----|-----|----|----|');
+    console.log('| Feature | Result |');
+    console.log('|---------|--------|');
 
     for (const s of data) {
-        console.log(`| ${s.feature} | ${formatCellMarkdown(s.ts_passed, s.ts_total)} | ${formatCellMarkdown(s.py_passed, s.py_total)} | ${formatCellMarkdown(s.cpp_passed, s.cpp_total)} | ${formatCellMarkdown(s.rs_passed, s.rs_total)} | ${formatCellMarkdown(s.zig_passed, s.zig_total)} |`);
+        console.log(`| ${s.feature} | ${formatCellMarkdown(s.passed, s.total)} |`);
     }
 }
 
 function printCsv(summaries: FeatureSummary[], showFailuresOnly: boolean): void {
     const data = showFailuresOnly
-        ? summaries.filter(s =>
-            s.ts_passed < s.ts_total ||
-            s.py_passed < s.py_total ||
-            s.cpp_passed < s.cpp_total ||
-            s.rs_passed < s.rs_total ||
-            s.zig_passed < s.zig_total)
+        ? summaries.filter(s => s.passed < s.total)
         : summaries;
 
-    console.log('feature,ts_passed,ts_total,py_passed,py_total,cpp_passed,cpp_total,rs_passed,rs_total,zig_passed,zig_total');
+    console.log('feature,passed,total');
 
     for (const s of data) {
-        console.log(`${s.feature},${s.ts_passed},${s.ts_total},${s.py_passed},${s.py_total},${s.cpp_passed},${s.cpp_total},${s.rs_passed},${s.rs_total},${s.zig_passed},${s.zig_total}`);
+        console.log(`${s.feature},${s.passed},${s.total}`);
     }
 }
 
 function printJson(summaries: FeatureSummary[], showFailuresOnly: boolean): void {
     const data = showFailuresOnly
-        ? summaries.filter(s =>
-            s.ts_passed < s.ts_total ||
-            s.py_passed < s.py_total ||
-            s.cpp_passed < s.cpp_total ||
-            s.rs_passed < s.rs_total ||
-            s.zig_passed < s.zig_total)
+        ? summaries.filter(s => s.passed < s.total)
         : summaries;
 
     console.log(JSON.stringify(data, null, 2));
@@ -247,7 +200,7 @@ async function main() {
         if (failures.length > 0) {
             console.log('\n\nFailed Tests:\n');
             for (const f of failures) {
-                console.log(`  ${f.feature} [${f.target}] - ${f.test_name}`);
+                console.log(`  ${f.feature} - ${f.test_name}`);
                 if (f.error_msg) {
                     console.log(`    Error: ${f.error_msg}`);
                 }

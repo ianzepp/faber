@@ -7,7 +7,6 @@
  *   bun run fons/proba/harness/runner.ts --verify           Run with verification
  *   bun run fons/proba/harness/runner.ts --db path/to.db    Custom database path
  *   bun run fons/proba/harness/runner.ts --compiler faber   Compiler (faber|rivus|artifex)
- *   bun run fons/proba/harness/runner.ts --targets ts,py    Specific targets only
  *   bun run fons/proba/harness/runner.ts --feature si       Filter by feature
  *
  * OUTPUT
@@ -19,8 +18,6 @@ import { parseArgs } from 'util';
 import { resolve, dirname } from 'path';
 
 import {
-    EXECUTABLE_TARGETS,
-    type ExecutableTarget,
     type TestCase,
     type TestFile,
     findYamlFiles,
@@ -42,7 +39,6 @@ interface RunOptions {
     dbPath: string;
     compiler: Compiler;
     doVerify: boolean;
-    targets: ExecutableTarget[];
     featureFilter?: string;
     verbose: boolean;
 }
@@ -54,21 +50,15 @@ function parseOptions(): RunOptions {
             db: { type: 'string', default: 'opus/proba/results.db' },
             compiler: { type: 'string', default: 'faber' },
             verify: { type: 'boolean', default: false },
-            targets: { type: 'string', default: '' },
             feature: { type: 'string', default: '' },
             verbose: { type: 'boolean', short: 'v', default: false },
         },
     });
 
-    const targets = values.targets
-        ? (values.targets.split(',') as ExecutableTarget[])
-        : [...EXECUTABLE_TARGETS];
-
     return {
         dbPath: resolve(values.db!),
         compiler: values.compiler as Compiler,
         doVerify: values.verify!,
-        targets,
         featureFilter: values.feature || undefined,
         verbose: values.verbose!,
     };
@@ -86,7 +76,6 @@ interface Stats {
 function runTest(
     testFile: TestFile,
     tc: TestCase,
-    target: ExecutableTarget,
     options: RunOptions
 ): {
     codegen_ok: boolean;
@@ -96,21 +85,21 @@ function runTest(
     codegen: string | null;
 } {
     const input = getSource(tc);
-    const expected = getExpectation(tc, target);
+    const expected = getExpectation(tc);
 
-    // No expectation for this target
+    // No expectation defined
     if (expected === undefined) {
         return {
             codegen_ok: false,
             verify_ok: null,
             passed: false,
-            error_msg: 'No expectation defined for target',
+            error_msg: 'No expectation defined',
             codegen: null,
         };
     }
 
     // Compile
-    const result = compile(input.trim(), target);
+    const result = compile(input.trim());
 
     if (!result.success) {
         return {
@@ -140,7 +129,7 @@ function runTest(
     let verifyError: string | null = null;
 
     if (options.doVerify) {
-        const verifyResult = verify(target, result.output!);
+        const verifyResult = verify('ts', result.output!);
         verify_ok = verifyResult.valid;
         if (!verifyResult.valid) {
             verifyError = verifyResult.error ?? 'Verification failed';
@@ -209,7 +198,7 @@ async function main() {
         console.log(`Database: ${options.dbPath}`);
         console.log(`Compiler: ${options.compiler}`);
         console.log(`Verify: ${options.doVerify}`);
-        console.log(`Targets: ${options.targets.join(', ')}`);
+        console.log(`Target: ts`);
         console.log(`Test files: ${filteredFiles.length}`);
         if (options.doVerify) {
             console.log(`Available verifiers: ${getAvailableVerifiers().join(', ')}`);
@@ -274,48 +263,44 @@ async function main() {
                 continue;
             }
 
-            // Run against each target
-            for (const target of options.targets) {
-                const expected = getExpectation(tc, target);
+            // Skip if no expectation defined
+            const expected = getExpectation(tc);
+            if (expected === undefined) {
+                continue;
+            }
 
-                // Skip if no expectation defined
-                if (expected === undefined) {
-                    continue;
+            // Skip if explicitly marked to skip ts
+            if (tc.skip?.includes('ts')) {
+                stats.skipped++;
+                continue;
+            }
+
+            stats.total++;
+            const result = runTest(testFile, tc, options);
+
+            insertResult(db, runId, {
+                compiler: options.compiler,
+                feature,
+                target: 'ts',
+                file: testFile.suiteName,
+                test_name: tc.name,
+                source,
+                ...result,
+            });
+
+            if (result.passed) {
+                stats.passed++;
+                if (result.verify_ok) stats.verified++;
+                if (options.verbose) {
+                    const verifyMark = result.verify_ok ? ' [verified]' : '';
+                    console.log(`  ✓ ${tc.name}${verifyMark}`);
                 }
-
-                // Skip if explicitly marked to skip
-                if (tc.skip?.includes(target)) {
-                    stats.skipped++;
-                    continue;
-                }
-
-                stats.total++;
-                const result = runTest(testFile, tc, target, options);
-
-                insertResult(db, runId, {
-                    compiler: options.compiler,
-                    feature,
-                    target,
-                    file: testFile.suiteName,
-                    test_name: tc.name,
-                    source,
-                    ...result,
-                });
-
-                if (result.passed) {
-                    stats.passed++;
-                    if (result.verify_ok) stats.verified++;
-                    if (options.verbose) {
-                        const verifyMark = result.verify_ok ? ' [verified]' : '';
-                        console.log(`  ✓ ${tc.name} @${target}${verifyMark}`);
-                    }
-                }
-                else {
-                    stats.failed++;
-                    if (result.verify_ok === false) stats.verifyFailed++;
-                    if (options.verbose) {
-                        console.log(`  ✗ ${tc.name} @${target}: ${result.error_msg?.split('\n')[0]}`);
-                    }
+            }
+            else {
+                stats.failed++;
+                if (result.verify_ok === false) stats.verifyFailed++;
+                if (options.verbose) {
+                    console.log(`  ✗ ${tc.name}: ${result.error_msg?.split('\n')[0]}`);
                 }
             }
         }

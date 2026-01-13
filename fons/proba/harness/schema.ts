@@ -140,32 +140,16 @@ export function getResultsForRun(db: Database, runId: number): TestResult[] {
 
 export interface FeatureSummary {
     feature: string;
-    ts_passed: number;
-    ts_total: number;
-    py_passed: number;
-    py_total: number;
-    cpp_passed: number;
-    cpp_total: number;
-    rs_passed: number;
-    rs_total: number;
-    zig_passed: number;
-    zig_total: number;
+    passed: number;
+    total: number;
 }
 
 export function getFeatureSummary(db: Database, runId: number): FeatureSummary[] {
     const query = `
         SELECT
             feature,
-            SUM(CASE WHEN target = 'ts' AND passed = 1 THEN 1 ELSE 0 END) as ts_passed,
-            SUM(CASE WHEN target = 'ts' THEN 1 ELSE 0 END) as ts_total,
-            SUM(CASE WHEN target = 'py' AND passed = 1 THEN 1 ELSE 0 END) as py_passed,
-            SUM(CASE WHEN target = 'py' THEN 1 ELSE 0 END) as py_total,
-            SUM(CASE WHEN target = 'cpp' AND passed = 1 THEN 1 ELSE 0 END) as cpp_passed,
-            SUM(CASE WHEN target = 'cpp' THEN 1 ELSE 0 END) as cpp_total,
-            SUM(CASE WHEN target = 'rs' AND passed = 1 THEN 1 ELSE 0 END) as rs_passed,
-            SUM(CASE WHEN target = 'rs' THEN 1 ELSE 0 END) as rs_total,
-            SUM(CASE WHEN target = 'zig' AND passed = 1 THEN 1 ELSE 0 END) as zig_passed,
-            SUM(CASE WHEN target = 'zig' THEN 1 ELSE 0 END) as zig_total
+            SUM(CASE WHEN passed = 1 THEN 1 ELSE 0 END) as passed,
+            COUNT(*) as total
         FROM test_results
         WHERE run_id = ?
         GROUP BY feature
