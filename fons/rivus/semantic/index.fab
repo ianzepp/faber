@@ -9,9 +9,11 @@ ex "./scopus" importa Symbolum, SymbolumSpecies
 ex "./modulus" importa estLocaleImportum, estNormaImportum, resolveModulum, ModulusExportum
 ex "./expressia/index" importa resolveExpressia
 ex "./sententia/index" importa analyzeSententia
+ex "./sententia/declara" importa resolveTypusAnnotatio
 ex "../ast/radix" importa Programma
 ex "../ast/expressia" importa Expressia
 ex "../ast/sententia" importa Sententia, MorphologiaDeclaratio
+ex "../ast/typus" importa TypusAnnotatio
 ex "../parser/morphologia" importa parseMethodum
 
 # ============================================================================
@@ -92,9 +94,12 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
             ex f.parametra pro param {
                 paramTypi.adde(IGNOTUM)
             }
-            # WHY: Use IGNOTUM when return type is declared, matching faber behavior.
-            # This allows forward function calls to pass type checks during body analysis.
-            fixum reditusTypus = nonnihil f.typusReditus sic IGNOTUM secus VACUUM
+            # WHY: Preserve declared return types so callers can infer receiver types
+            # from forward function calls (critical for norma method translation).
+            varia reditusTypus = VACUUM
+            si nonnihil f.typusReditus {
+                reditusTypus = resolveTypusAnnotatio(r, f.typusReditus qua TypusAnnotatio)
+            }
             fixum fnTypus = functioTypus(paramTypi, reditusTypus, f.asynca, falsum)
 
             a.definie({
@@ -244,6 +249,29 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                                         mutabilis: falsum,
                                         locus: spec.locus
                                     } qua Symbolum)
+
+                                    # WHY: If a discretio type is imported by name, also import its
+                                    # variant types as `LocalName.VariansNomen` so `discerne` can
+                                    # resolve bindings and enable norma translations.
+                                    fixum prefix = spec.importatum + "."
+                                    de modulus.exporta pro nomen {
+                                        si nomen.startsWith(prefix) {
+                                            fixum exportum = modulus.exporta[nomen] qua ModulusExportum
+                                            fixum suffix = nomen.slice(prefix.length)
+                                            fixum qualNomen = scriptum("§.§", spec.locale, suffix)
+
+                                            # Avoid duplicate definitions if multiple imports overlap.
+                                            si nihil a.scopus.symbola[qualNomen] {
+                                                a.definie({
+                                                    nomen: qualNomen,
+                                                    semanticTypus: exportum.typus,
+                                                    species: exportum.species,
+                                                    mutabilis: falsum,
+                                                    locus: exportum.locus
+                                                } qua Symbolum)
+                                            }
+                                        }
+                                    }
                                 } secus {
                                     a.error(scriptum("'§' is not exported from '§'", spec.importatum, imp.fons), spec.locus)
                                 }

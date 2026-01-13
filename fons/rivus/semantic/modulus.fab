@@ -9,7 +9,7 @@
 # - "norma" and "norma/*" are handled as compiler intrinsics (not files)
 # - Other paths pass through to target language (external packages)
 
-ex "./typi" importa SemanticTypus, IGNOTUM, VACUUM, functioTypus, usitatumTypus
+ex "./typi" importa SemanticTypus, IGNOTUM, VACUUM, functioTypus, usitatumTypus, pactumTypus
 ex "./typi" importa genusTypus, genericumTypus, primitivumTypus
 ex "./scopus" importa SymbolumSpecies
 ex "../ast/positio" importa Locus
@@ -190,10 +190,31 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                 } qua ModulusExportum
             }
             casu PactumDeclaratio ut p {
+                # WHY: Preserve method return types so callers can infer types from calls
+                # (needed for norma translation when compiling in dependency order).
+                varia methodi = {} innatum tabula<textus, SemanticTypus>
+                ex p.methodi pro methodSignum {
+                    varia paramTypi = [] innatum lista<SemanticTypus>
+                    ex methodSignum.parametra pro param {
+                        si nonnihil param.typus {
+                            paramTypi.adde(resolveTypusShallow(param.typus qua TypusAnnotatio))
+                        } secus {
+                            paramTypi.adde(IGNOTUM)
+                        }
+                    }
+
+                    varia reditusTypus = VACUUM qua SemanticTypus
+                    si nonnihil methodSignum.typusReditus {
+                        reditusTypus = resolveTypusShallow(methodSignum.typusReditus qua TypusAnnotatio)
+                    }
+
+                    methodi[methodSignum.nomen] = functioTypus(paramTypi, reditusTypus, methodSignum.asynca, falsum)
+                }
+
                 exporta[p.nomen] = {
                     nomen: p.nomen,
                     species: SymbolumSpecies.Pactum,
-                    typus: usitatumTypus(p.nomen, falsum),
+                    typus: pactumTypus(p.nomen, methodi, falsum),
                     locus: p.locus
                 } qua ModulusExportum
             }
@@ -212,6 +233,32 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                     typus: usitatumTypus(d.nomen, falsum),
                     locus: d.locus
                 } qua ModulusExportum
+
+                # WHY: Pattern matching (`discerne`) expects variant types to be resolvable as
+                # `DiscretioNomen.VariansNomen`, even across module boundaries.
+                ex d.variantes pro variante {
+                    varia campi = {} innatum tabula<textus, SemanticTypus>
+                    ex variante.campi pro campo {
+                        campi[campo.nomen] = resolveTypusShallow(campo.typus)
+                    }
+
+                    fixum variantTypus = genusTypus(
+                        variante.nomen,
+                        campi,
+                        {} innatum tabula<textus, SemanticTypus>,
+                        {} innatum tabula<textus, SemanticTypus>,
+                        {} innatum tabula<textus, SemanticTypus>,
+                        falsum
+                    )
+
+                    fixum qualNomen = scriptum("§.§", d.nomen, variante.nomen)
+                    exporta[qualNomen] = {
+                        nomen: qualNomen,
+                        species: SymbolumSpecies.Genus,
+                        typus: variantTypus,
+                        locus: variante.locus
+                    } qua ModulusExportum
+                }
             }
             casu TypusAliasDeclaratio ut t {
                 exporta[t.nomen] = {

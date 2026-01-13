@@ -63,8 +63,7 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
         await Bun.write(outPath, output);
 
         return { file: relPath, success: true };
-    }
-    catch (err) {
+    } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return { file: relPath, success: false, error: message };
     }
@@ -74,10 +73,39 @@ async function typeCheck(): Promise<boolean> {
     try {
         await $`npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler ${join(OUTPUT, 'cli.ts')}`.quiet();
         return true;
-    }
-    catch {
+    } catch {
         return false;
     }
+}
+
+async function injectExternImpls(): Promise<void> {
+    const modulusPath = join(OUTPUT, 'semantic', 'modulus.ts');
+    let modulusContent = await Bun.file(modulusPath).text();
+
+    const externImpls = `
+// FILE I/O IMPLEMENTATIONS (injected by build-rivus.ts)
+import { readFileSync, existsSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+const _readFileSync = (via: string): string => readFileSync(via, 'utf-8');
+const _existsSync = (via: string): boolean => existsSync(via);
+const _dirname = (via: string): string => dirname(via);
+const _resolve = (basis: string, relativum: string): string => resolve(basis, relativum);
+`;
+
+    modulusContent = modulusContent.replace(
+        /declare function _readFileSync.*?;\ndeclare function _existsSync.*?;\ndeclare function _dirname.*?;\ndeclare function _resolve.*?;/s,
+        externImpls.trim(),
+    );
+
+    await Bun.write(modulusPath, modulusContent);
+}
+
+async function buildExecutable(): Promise<void> {
+    const binDir = join(ROOT, 'opus', 'bin');
+    await mkdir(binDir, { recursive: true });
+    const outExe = join(binDir, 'rivus');
+    await $`bun build ${join(OUTPUT, 'cli.ts')} --compile --outfile=${outExe}`.quiet();
+    await $`bash -c 'rm -f .*.bun-build 2>/dev/null || true'`.quiet();
 }
 
 async function main() {
@@ -118,6 +146,12 @@ async function main() {
         process.exit(1);
     }
     console.log('Type check passed');
+
+    await injectExternImpls();
+
+    console.log('Building rivus executable...');
+    await buildExecutable();
+    console.log('Built opus/bin/rivus');
 }
 
 main().catch(err => {
