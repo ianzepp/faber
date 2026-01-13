@@ -81,6 +81,16 @@ functio parseSiSententia(Resolvitor r) -> Sententia {
             fixum stmtLocus = p.locusActualis()
             fixum valor = r.expressia()
             alternans = finge ReddeSententia { locus: stmtLocus, valor: valor } qua Sententia
+        } sin p.probaVerbum("iacit") {
+            p.procede()
+            fixum stmtLocus = p.locusActualis()
+            fixum argumentum = r.expressia()
+            alternans = finge IaceSententia { locus: stmtLocus, fatale: falsum, argumentum: argumentum } qua Sententia
+        } sin p.probaVerbum("moritor") {
+            p.procede()
+            fixum stmtLocus = p.locusActualis()
+            fixum argumentum = r.expressia()
+            alternans = finge IaceSententia { locus: stmtLocus, fatale: verum, argumentum: argumentum } qua Sententia
         } sin p.probaVerbum("ergo") {
             p.procede()
             alternans = r.sententia()
@@ -317,6 +327,28 @@ functio parseCorpusBrevis(Resolvitor r) -> Sententia {
         } qua Sententia
     }
 
+    # iacit = inline throw (non-fatal)
+    si p.probaVerbum("iacit") {
+        p.procede()
+        fixum argumentum = r.expressia()
+        redde finge IaceSententia {
+            locus: locus,
+            fatale: falsum,
+            argumentum: argumentum
+        } qua Sententia
+    }
+
+    # moritor = inline panic (fatal)
+    si p.probaVerbum("moritor") {
+        p.procede()
+        fixum argumentum = r.expressia()
+        redde finge IaceSententia {
+            locus: locus,
+            fatale: verum,
+            argumentum: argumentum
+        } qua Sententia
+    }
+
     # Short-form block: fac ... fine
     si p.probaVerbum("fac") {
         p.procede()
@@ -371,6 +403,16 @@ functio parseSinSententia(Resolvitor r) -> Sententia {
             fixum stmtLocus = p.locusActualis()
             fixum valor = r.expressia()
             alternans = finge ReddeSententia { locus: stmtLocus, valor: valor } qua Sententia
+        } sin p.probaVerbum("iacit") {
+            p.procede()
+            fixum stmtLocus = p.locusActualis()
+            fixum argumentum = r.expressia()
+            alternans = finge IaceSententia { locus: stmtLocus, fatale: falsum, argumentum: argumentum } qua Sententia
+        } sin p.probaVerbum("moritor") {
+            p.procede()
+            fixum stmtLocus = p.locusActualis()
+            fixum argumentum = r.expressia()
+            alternans = finge IaceSententia { locus: stmtLocus, fatale: verum, argumentum: argumentum } qua Sententia
         } sin p.probaVerbum("ergo") {
             p.procede()
             alternans = r.sententia()
