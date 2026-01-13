@@ -36,22 +36,8 @@ jobs:
           name: opus-faber
           path: opus/
 
-  exempla-faber:
-    needs: build-faber
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - uses: actions/download-artifact@v4
-        with:
-          name: opus-faber
-          path: opus/
-      - run: chmod +x opus/bin/faber
-      - run: bun run build:exempla -c faber -t ts
-
   build-rivus:
-    needs: exempla-faber
+    needs: build-faber
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -71,22 +57,8 @@ jobs:
           name: opus-rivus
           path: opus/
 
-  exempla-rivus:
-    needs: build-rivus
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - uses: actions/download-artifact@v4
-        with:
-          name: opus-rivus
-          path: opus/
-      - run: chmod +x opus/bin/rivus
-      - run: bun run build:exempla -c rivus -t ts
-
   build-artifex:
-    needs: exempla-rivus
+    needs: build-rivus
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -107,16 +79,3 @@ jobs:
           name: opus-artifex
           path: opus/
 
-  exempla-artifex:
-    needs: build-artifex
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - uses: actions/download-artifact@v4
-        with:
-          name: opus-artifex
-          path: opus/
-      - run: chmod +x opus/bin/artifex
-      - run: bun run build:exempla -c artifex -t ts
