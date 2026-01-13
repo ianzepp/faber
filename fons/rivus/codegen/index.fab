@@ -1,0 +1,84 @@
+# Code Generator - Public API with Target Validation
+#
+# Entry point for code generation with automatic target compatibility checking.
+# Validates that source features are supported by the target before generating.
+#
+# USAGE
+# =====
+# fixum code = generate(corpus, "ts")           # Strict validation (default)
+# fixum code = generate(corpus, "rs", POLITIA_RELAXATA)  # Allow emulated features
+#
+# ERRORS
+# ======
+# Throws if validation fails. Use validateOnly() for non-throwing checks.
+
+ex "../ast/sententia" importa Sententia
+ex "./validitor" importa validateCompatibilitatem, formatValidatioErrores
+ex "./validitor" importa ValidatioPolitia, POLITIA_STRICTA, POLITIA_RELAXATA
+ex "./validitor" importa validatioSuccessit, ValidatioError
+ex "./ts/index" importa generateTs
+ex "./rs/index" importa generateRs
+ex "./zig/index" importa generateZig
+ex "./cpp/index" importa generateCpp
+
+# =============================================================================
+# PUBLIC API
+# =============================================================================
+
+# Generate code for target with validation
+# Throws if target compatibility validation fails
+@ publica
+functio generate(lista<Sententia> corpus, textus target) -> textus {
+    redde generateWithPolicy(corpus, target, POLITIA_STRICTA)
+}
+
+# Generate code with explicit policy
+@ publica
+functio generateWithPolicy(lista<Sententia> corpus, textus target, ValidatioPolitia politia) -> textus {
+    # Validate target compatibility BEFORE codegen
+    fixum errores = validateCompatibilitatem(corpus, target, politia)
+
+    si non validatioSuccessit(errores) {
+        iace formatValidatioErrores(errores, target)
+    }
+
+    # Dispatch to target-specific generator
+    elige target {
+        casu "ts" { redde generateTs(corpus) }
+        casu "rs" { redde generateRs(corpus) }
+        casu "zig" { redde generateZig(corpus) }
+        casu "cpp" { redde generateCpp(corpus) }
+        ceterum {
+            iace scriptum("Unknown codegen target: §", target)
+        }
+    }
+}
+
+# Validate without generating - returns errors (empty if valid)
+@ publica
+functio validateOnly(lista<Sententia> corpus, textus target) -> lista<ValidatioError> {
+    redde validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
+}
+
+# Validate with explicit policy
+@ publica
+functio validateOnlyWithPolicy(lista<Sententia> corpus, textus target, ValidatioPolitia politia) -> lista<ValidatioError> {
+    redde validateCompatibilitatem(corpus, target, politia)
+}
+
+# Check if code is compatible with target (convenience function)
+@ publica
+functio isCompatible(lista<Sententia> corpus, textus target) -> bivalens {
+    fixum errores = validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
+    redde validatioSuccessit(errores)
+}
+
+# =============================================================================
+# RE-EXPORTS
+# =============================================================================
+
+# Re-export policy constants for convenience
+@ publica
+fixum StrictPolicy = POLITIA_STRICTA
+@ publica
+fixum RelaxedPolicy = POLITIA_RELAXATA

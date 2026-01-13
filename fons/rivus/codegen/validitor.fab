@@ -1,0 +1,366 @@
+# Target Compatibility Validator
+#
+# Checks used features against target support levels before codegen runs.
+# Provides clear diagnostics about which features are incompatible.
+#
+# ARCHITECTURE
+# ============
+# - Runs feature detection on AST
+# - Compares detected features against target capabilities
+# - Applies policy (strict vs relaxed) for emulated/mismatched features
+# - Returns list of validation errors with suggestions
+
+ex "./capacitas" importa TargetCapacitas, Sustentatio, getCapacitas
+ex "./detector" importa FeatureDetector, UsitataFeatura, FeaturaClavis
+ex "./detector" importa novumDetector, featuraClavisAdTextus
+ex "../ast/sententia" importa Sententia
+
+# =============================================================================
+# VALIDATION POLICY
+# =============================================================================
+
+# Policy controls what support levels are allowed
+@ publicum
+genus ValidatioPolitia {
+    bivalens permitteEmulatum      # allow 'emulated' features
+    bivalens permitteDiscrepans    # allow 'mismatched' features (dangerous)
+}
+
+# Strict policy - only native support allowed
+@ publica
+fixum POLITIA_STRICTA = {
+    permitteEmulatum: falsum,
+    permitteDiscrepans: falsum
+} qua ValidatioPolitia
+
+# Relaxed policy - emulated features allowed
+@ publica
+fixum POLITIA_RELAXATA = {
+    permitteEmulatum: verum,
+    permitteDiscrepans: falsum
+} qua ValidatioPolitia
+
+# Permissive policy - everything except unsupported allowed
+@ publica
+fixum POLITIA_PERMISSIVA = {
+    permitteEmulatum: verum,
+    permitteDiscrepans: verum
+} qua ValidatioPolitia
+
+# =============================================================================
+# VALIDATION ERROR
+# =============================================================================
+
+# A single validation error
+@ publicum
+genus ValidatioError {
+    FeaturaClavis featura
+    textus nuntius              # error message
+    textus contextus            # where it occurred
+    numerus linea
+    numerus columna
+    textus? suggestio           # help text
+}
+
+# =============================================================================
+# MAIN VALIDATION FUNCTION
+# =============================================================================
+
+# Validate program compatibility with target
+@ publica
+functio validateCompatibilitatem(lista<Sententia> corpus, textus target, ValidatioPolitia politia) -> lista<ValidatioError> {
+    fixum detector = novumDetector()
+    fixum usitata = detector.detect(corpus)
+    fixum capacitas = getCapacitas(target)
+
+    varia errores = [] innatum lista<ValidatioError>
+
+    ex usitata pro featura {
+        fixum sustentatio = getSustentatio(featura.clavis, capacitas)
+
+        si non estPermissum(sustentatio, politia) {
+            errores.adde({
+                featura: featura.clavis,
+                nuntius: formatNuntius(featura.clavis, target, sustentatio),
+                contextus: featura.contextus,
+                linea: featura.linea,
+                columna: featura.columna,
+                suggestio: getSuggestio(featura.clavis, target)
+            } qua ValidatioError)
+        }
+    }
+
+    redde errores
+}
+
+# =============================================================================
+# SUPPORT LEVEL LOOKUP
+# =============================================================================
+
+# Get support level for a feature from capability matrix
+functio getSustentatio(FeaturaClavis clavis, TargetCapacitas cap) -> Sustentatio {
+    elige clavis {
+        casu FeaturaClavis.ControlFlow_AsyncFunctio {
+            redde cap.controlFlow.asyncFunctio
+        }
+        casu FeaturaClavis.ControlFlow_GeneratorFunctio {
+            redde cap.controlFlow.generatorFunctio
+        }
+        casu FeaturaClavis.ControlFlow_AsyncGenerator {
+            redde cap.controlFlow.asyncGenerator
+        }
+        casu FeaturaClavis.Errores_TemptaCape {
+            redde cap.errores.temptaCape
+        }
+        casu FeaturaClavis.Errores_Iace {
+            redde cap.errores.iace
+        }
+        casu FeaturaClavis.Ligatura_Series {
+            redde cap.ligatura.seriesDestructura
+        }
+        casu FeaturaClavis.Ligatura_Obiectum {
+            redde cap.ligatura.obiectumDestructura
+        }
+        casu FeaturaClavis.Parametra_ValorPraedefinitus {
+            redde cap.parametra.valorPraedefinitus
+        }
+        casu FeaturaClavis.Expressiae_OptivumAccessus {
+            redde cap.expressiae.optivumAccessus
+        }
+        casu FeaturaClavis.Expressiae_Coalescentio {
+            redde cap.expressiae.coalescentio
+        }
+        ceterum {
+            redde Sustentatio.Insustentum
+        }
+    }
+}
+
+# =============================================================================
+# POLICY CHECK
+# =============================================================================
+
+# Check if support level is allowed under policy
+functio estPermissum(Sustentatio s, ValidatioPolitia p) -> bivalens {
+    elige s {
+        casu Sustentatio.Sustentum {
+            redde verum
+        }
+        casu Sustentatio.Emulatum {
+            redde p.permitteEmulatum
+        }
+        casu Sustentatio.Discrepans {
+            redde p.permitteDiscrepans
+        }
+        casu Sustentatio.Insustentum {
+            redde falsum
+        }
+        ceterum {
+            redde falsum
+        }
+    }
+}
+
+# =============================================================================
+# ERROR FORMATTING
+# =============================================================================
+
+# Format error message for a feature
+functio formatNuntius(FeaturaClavis clavis, textus target, Sustentatio s) -> textus {
+    varia suffix = ""
+    elige s {
+        casu Sustentatio.Emulatum { suffix = " (requires emulation)" }
+        casu Sustentatio.Discrepans { suffix = " (semantic mismatch)" }
+        ceterum { suffix = "" }
+    }
+
+    varia featuraNomen = ""
+    elige clavis {
+        casu FeaturaClavis.ControlFlow_AsyncFunctio {
+            featuraNomen = "async functions (futura)"
+        }
+        casu FeaturaClavis.ControlFlow_GeneratorFunctio {
+            featuraNomen = "generator functions (cursor)"
+        }
+        casu FeaturaClavis.ControlFlow_AsyncGenerator {
+            featuraNomen = "async generators (futura cursor)"
+        }
+        casu FeaturaClavis.Errores_TemptaCape {
+            featuraNomen = "exception handling (tempta...cape)"
+        }
+        casu FeaturaClavis.Errores_Iace {
+            featuraNomen = "throw statements (iace)"
+        }
+        casu FeaturaClavis.Ligatura_Series {
+            featuraNomen = "array pattern binding"
+        }
+        casu FeaturaClavis.Ligatura_Obiectum {
+            featuraNomen = "object pattern binding"
+        }
+        casu FeaturaClavis.Parametra_ValorPraedefinitus {
+            featuraNomen = "default parameters (vel)"
+        }
+        casu FeaturaClavis.Expressiae_OptivumAccessus {
+            featuraNomen = "optional chaining (?.)"
+        }
+        casu FeaturaClavis.Expressiae_Coalescentio {
+            featuraNomen = "null coalescing (??)"
+        }
+        ceterum {
+            featuraNomen = "unknown feature"
+        }
+    }
+
+    redde scriptum("Target '§' does not support §§", target, featuraNomen, suffix)
+}
+
+# =============================================================================
+# SUGGESTIONS
+# =============================================================================
+
+# Get suggestion for fixing incompatibility
+functio getSuggestio(FeaturaClavis clavis, textus target) -> textus? {
+    elige clavis {
+        casu FeaturaClavis.ControlFlow_AsyncFunctio {
+            elige target {
+                casu "zig" {
+                    redde "Refactor to synchronous code; consider explicit callbacks"
+                }
+                casu "cpp" {
+                    redde "Refactor to synchronous code or adopt an async runtime"
+                }
+                ceterum { redde nihil }
+            }
+        }
+
+        casu FeaturaClavis.ControlFlow_GeneratorFunctio {
+            elige target {
+                casu "rs" {
+                    redde "Use iterators and iterator adapters instead"
+                }
+                casu "zig" {
+                    redde "Use explicit iterator types or while loops"
+                }
+                casu "cpp" {
+                    redde "Use ranges or explicit iteration"
+                }
+                ceterum { redde nihil }
+            }
+        }
+
+        casu FeaturaClavis.Errores_TemptaCape {
+            elige target {
+                casu "rs" {
+                    redde "Use Result<T, E> and propagate errors with ?"
+                }
+                casu "zig" {
+                    redde "Use error unions (!T) and handle errors explicitly"
+                }
+                ceterum { redde nihil }
+            }
+        }
+
+        casu FeaturaClavis.Errores_Iace {
+            elige target {
+                casu "rs" {
+                    redde "Return Err(...) instead of throwing"
+                }
+                casu "zig" {
+                    redde "Return error.X instead of throwing"
+                }
+                ceterum { redde nihil }
+            }
+        }
+
+        casu FeaturaClavis.Parametra_ValorPraedefinitus {
+            elige target {
+                casu "rs" {
+                    redde "Use Option<T> params or provide helper functions"
+                }
+                casu "zig" {
+                    redde "Use optional params (?T) and handle null"
+                }
+                ceterum { redde nihil }
+            }
+        }
+
+        casu FeaturaClavis.Ligatura_Obiectum {
+            elige target {
+                casu "py" {
+                    redde "Use explicit field/dict access"
+                }
+                casu "zig" {
+                    redde "Use explicit field access"
+                }
+                casu "cpp" {
+                    redde "Use explicit member access"
+                }
+                ceterum { redde nihil }
+            }
+        }
+
+        casu FeaturaClavis.Expressiae_OptivumAccessus {
+            elige target {
+                casu "py" {
+                    redde "Use explicit None checks"
+                }
+                casu "rs" {
+                    redde "Use Option combinators (map/and_then)"
+                }
+                casu "zig" {
+                    redde "Use orelse or explicit null checks"
+                }
+                casu "cpp" {
+                    redde "Use std::optional and explicit checks"
+                }
+                ceterum { redde nihil }
+            }
+        }
+
+        casu FeaturaClavis.Expressiae_Coalescentio {
+            elige target {
+                casu "zig" {
+                    redde "Use 'orelse' operator (note: semantics differ slightly)"
+                }
+                ceterum { redde nihil }
+            }
+        }
+
+        ceterum {
+            redde nihil
+        }
+    }
+}
+
+# =============================================================================
+# ERROR FORMATTING UTILITIES
+# =============================================================================
+
+# Format all validation errors as a single string
+@ publica
+functio formatValidatioErrores(lista<ValidatioError> errores, textus target) -> textus {
+    si errores.longitudo() == 0 {
+        redde ""
+    }
+
+    varia lines = [] innatum lista<textus>
+    lines.adde(scriptum("Target compatibility errors for '§':", target))
+    lines.adde("")
+
+    ex errores pro err {
+        lines.adde(scriptum("  --> §:§", err.linea, err.columna))
+        lines.adde(scriptum("error: § (in §)", err.nuntius, err.contextus))
+        si nonnihil err.suggestio {
+            lines.adde(scriptum("  = help: §", err.suggestio))
+        }
+        lines.adde("")
+    }
+
+    redde lines.coniunge("\n")
+}
+
+# Check if validation passed (no errors)
+@ publica
+functio validatioSuccessit(lista<ValidatioError> errores) -> bivalens {
+    redde errores.longitudo() == 0
+}

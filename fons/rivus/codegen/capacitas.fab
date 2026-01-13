@@ -1,0 +1,327 @@
+# Target Capability System - Support matrix and lowering models
+#
+# Defines which Faber language features are supported by each compilation target.
+# Used by the validation phase to detect incompatibilities before codegen runs.
+#
+# ARCHITECTURE
+# ============
+# Support levels:
+# - Sustentum: Native, faithful implementation with correct semantics
+# - Emulatum: Systematic transform (e.g., Result<T,E> for exceptions)
+# - Discrepans: Can be "made to work" but semantics differ (dangerous)
+# - Insustentum: Cannot be emitted without breaking semantics
+
+# =============================================================================
+# SUPPORT LEVELS
+# =============================================================================
+
+# Support level for a language feature in a target
+@ publicum
+ordo Sustentatio {
+    Sustentum       # Native, faithful implementation
+    Emulatum        # Systematic transform (polyfill)
+    Discrepans      # Semantic mismatch (dangerous)
+    Insustentum     # Cannot be emitted
+}
+
+# =============================================================================
+# CAPABILITY STRUCTURES
+# =============================================================================
+
+# Control flow capabilities
+@ publicum
+genus ControlFlowCapacitas {
+    Sustentatio asyncFunctio        # futura / figendum
+    Sustentatio generatorFunctio    # cursor / fiunt
+    Sustentatio asyncGenerator      # futura cursor / fient
+}
+
+# Error handling capabilities
+@ publicum
+genus ErrorCapacitas {
+    Sustentatio temptaCape          # tempta...cape
+    Sustentatio iace                # iace (throw)
+}
+
+# Binding pattern capabilities
+@ publicum
+genus LigaturaCapacitas {
+    Sustentatio seriesDestructura   # fixum [a, b] = ...
+    Sustentatio obiectumDestructura # ex obj fixum {x, y}
+}
+
+# Parameter capabilities
+@ publicum
+genus ParametrumCapacitas {
+    Sustentatio valorPraedefinitus  # functio f(numerus x vel 0)
+}
+
+# Expression capabilities
+@ publicum
+genus ExpressiaCapacitas {
+    Sustentatio optivumAccessus     # ?. optional chaining
+    Sustentatio coalescentio        # ?? null coalescing
+}
+
+# Complete target support matrix
+@ publicum
+genus TargetCapacitas {
+    ControlFlowCapacitas controlFlow
+    ErrorCapacitas errores
+    LigaturaCapacitas ligatura
+    ParametrumCapacitas parametra
+    ExpressiaCapacitas expressiae
+}
+
+# =============================================================================
+# LOWERING MODELS
+# =============================================================================
+
+# How nihil/ignotum are represented
+@ publicum
+ordo NullabilisModel {
+    Innatum         # builtin null/undefined
+    Optio           # Option<T> / optional wrapper
+    Indicator       # pointer/nil
+}
+
+# Primary error model
+@ publicum
+ordo ErrorModel {
+    Exceptiones     # try/catch/throw
+    Resultatum      # Result<T, E>
+    MultipleReditus # (val, error) returns
+    Unio            # error unions
+}
+
+@ publicum
+genus TargetLowering {
+    NullabilisModel nullabilis
+    ErrorModel errores
+}
+
+# =============================================================================
+# TARGET SUPPORT MATRICES
+# =============================================================================
+
+# TypeScript - full support for all features
+@ publica
+fixum CAPACITAS_TS = {
+    controlFlow: {
+        asyncFunctio: Sustentatio.Sustentum,
+        generatorFunctio: Sustentatio.Sustentum,
+        asyncGenerator: Sustentatio.Sustentum
+    } qua ControlFlowCapacitas,
+    errores: {
+        temptaCape: Sustentatio.Sustentum,
+        iace: Sustentatio.Sustentum
+    } qua ErrorCapacitas,
+    ligatura: {
+        seriesDestructura: Sustentatio.Sustentum,
+        obiectumDestructura: Sustentatio.Sustentum
+    } qua LigaturaCapacitas,
+    parametra: {
+        valorPraedefinitus: Sustentatio.Sustentum
+    } qua ParametrumCapacitas,
+    expressiae: {
+        optivumAccessus: Sustentatio.Sustentum,
+        coalescentio: Sustentatio.Sustentum
+    } qua ExpressiaCapacitas
+} qua TargetCapacitas
+
+# Python - most features, no optional chaining
+@ publica
+fixum CAPACITAS_PY = {
+    controlFlow: {
+        asyncFunctio: Sustentatio.Sustentum,
+        generatorFunctio: Sustentatio.Sustentum,
+        asyncGenerator: Sustentatio.Sustentum
+    } qua ControlFlowCapacitas,
+    errores: {
+        temptaCape: Sustentatio.Sustentum,
+        iace: Sustentatio.Sustentum
+    } qua ErrorCapacitas,
+    ligatura: {
+        seriesDestructura: Sustentatio.Sustentum,
+        obiectumDestructura: Sustentatio.Insustentum
+    } qua LigaturaCapacitas,
+    parametra: {
+        valorPraedefinitus: Sustentatio.Sustentum
+    } qua ParametrumCapacitas,
+    expressiae: {
+        optivumAccessus: Sustentatio.Insustentum,
+        coalescentio: Sustentatio.Insustentum
+    } qua ExpressiaCapacitas
+} qua TargetCapacitas
+
+# Rust - async yes, generators no, Result for errors
+@ publica
+fixum CAPACITAS_RS = {
+    controlFlow: {
+        asyncFunctio: Sustentatio.Sustentum,
+        generatorFunctio: Sustentatio.Insustentum,
+        asyncGenerator: Sustentatio.Insustentum
+    } qua ControlFlowCapacitas,
+    errores: {
+        temptaCape: Sustentatio.Emulatum,
+        iace: Sustentatio.Emulatum
+    } qua ErrorCapacitas,
+    ligatura: {
+        seriesDestructura: Sustentatio.Sustentum,
+        obiectumDestructura: Sustentatio.Sustentum
+    } qua LigaturaCapacitas,
+    parametra: {
+        valorPraedefinitus: Sustentatio.Insustentum
+    } qua ParametrumCapacitas,
+    expressiae: {
+        optivumAccessus: Sustentatio.Insustentum,
+        coalescentio: Sustentatio.Insustentum
+    } qua ExpressiaCapacitas
+} qua TargetCapacitas
+
+# Zig - no async, no generators, error unions
+@ publica
+fixum CAPACITAS_ZIG = {
+    controlFlow: {
+        asyncFunctio: Sustentatio.Insustentum,
+        generatorFunctio: Sustentatio.Insustentum,
+        asyncGenerator: Sustentatio.Insustentum
+    } qua ControlFlowCapacitas,
+    errores: {
+        temptaCape: Sustentatio.Emulatum,
+        iace: Sustentatio.Emulatum
+    } qua ErrorCapacitas,
+    ligatura: {
+        seriesDestructura: Sustentatio.Sustentum,
+        obiectumDestructura: Sustentatio.Insustentum
+    } qua LigaturaCapacitas,
+    parametra: {
+        valorPraedefinitus: Sustentatio.Insustentum
+    } qua ParametrumCapacitas,
+    expressiae: {
+        optivumAccessus: Sustentatio.Insustentum,
+        coalescentio: Sustentatio.Discrepans
+    } qua ExpressiaCapacitas
+} qua TargetCapacitas
+
+# C++ - no async/generators, exceptions yes
+@ publica
+fixum CAPACITAS_CPP = {
+    controlFlow: {
+        asyncFunctio: Sustentatio.Insustentum,
+        generatorFunctio: Sustentatio.Insustentum,
+        asyncGenerator: Sustentatio.Insustentum
+    } qua ControlFlowCapacitas,
+    errores: {
+        temptaCape: Sustentatio.Sustentum,
+        iace: Sustentatio.Sustentum
+    } qua ErrorCapacitas,
+    ligatura: {
+        seriesDestructura: Sustentatio.Sustentum,
+        obiectumDestructura: Sustentatio.Insustentum
+    } qua LigaturaCapacitas,
+    parametra: {
+        valorPraedefinitus: Sustentatio.Sustentum
+    } qua ParametrumCapacitas,
+    expressiae: {
+        optivumAccessus: Sustentatio.Insustentum,
+        coalescentio: Sustentatio.Insustentum
+    } qua ExpressiaCapacitas
+} qua TargetCapacitas
+
+# Faber (self-compile) - full support
+@ publica
+fixum CAPACITAS_FAB = {
+    controlFlow: {
+        asyncFunctio: Sustentatio.Sustentum,
+        generatorFunctio: Sustentatio.Sustentum,
+        asyncGenerator: Sustentatio.Sustentum
+    } qua ControlFlowCapacitas,
+    errores: {
+        temptaCape: Sustentatio.Sustentum,
+        iace: Sustentatio.Sustentum
+    } qua ErrorCapacitas,
+    ligatura: {
+        seriesDestructura: Sustentatio.Sustentum,
+        obiectumDestructura: Sustentatio.Sustentum
+    } qua LigaturaCapacitas,
+    parametra: {
+        valorPraedefinitus: Sustentatio.Sustentum
+    } qua ParametrumCapacitas,
+    expressiae: {
+        optivumAccessus: Sustentatio.Sustentum,
+        coalescentio: Sustentatio.Sustentum
+    } qua ExpressiaCapacitas
+} qua TargetCapacitas
+
+# =============================================================================
+# LOWERING MODELS
+# =============================================================================
+
+@ publica
+fixum LOWERING_TS = {
+    nullabilis: NullabilisModel.Innatum,
+    errores: ErrorModel.Exceptiones
+} qua TargetLowering
+
+@ publica
+fixum LOWERING_PY = {
+    nullabilis: NullabilisModel.Innatum,
+    errores: ErrorModel.Exceptiones
+} qua TargetLowering
+
+@ publica
+fixum LOWERING_RS = {
+    nullabilis: NullabilisModel.Optio,
+    errores: ErrorModel.Resultatum
+} qua TargetLowering
+
+@ publica
+fixum LOWERING_ZIG = {
+    nullabilis: NullabilisModel.Optio,
+    errores: ErrorModel.Unio
+} qua TargetLowering
+
+@ publica
+fixum LOWERING_CPP = {
+    nullabilis: NullabilisModel.Optio,
+    errores: ErrorModel.Exceptiones
+} qua TargetLowering
+
+@ publica
+fixum LOWERING_FAB = {
+    nullabilis: NullabilisModel.Innatum,
+    errores: ErrorModel.Exceptiones
+} qua TargetLowering
+
+# =============================================================================
+# LOOKUP FUNCTIONS
+# =============================================================================
+
+# Get capability matrix for a target
+@ publica
+functio getCapacitas(textus target) -> TargetCapacitas {
+    elige target {
+        casu "ts" { redde CAPACITAS_TS }
+        casu "py" { redde CAPACITAS_PY }
+        casu "rs" { redde CAPACITAS_RS }
+        casu "zig" { redde CAPACITAS_ZIG }
+        casu "cpp" { redde CAPACITAS_CPP }
+        casu "fab" { redde CAPACITAS_FAB }
+        ceterum { redde CAPACITAS_TS }
+    }
+}
+
+# Get lowering model for a target
+@ publica
+functio getLowering(textus target) -> TargetLowering {
+    elige target {
+        casu "ts" { redde LOWERING_TS }
+        casu "py" { redde LOWERING_PY }
+        casu "rs" { redde LOWERING_RS }
+        casu "zig" { redde LOWERING_ZIG }
+        casu "cpp" { redde LOWERING_CPP }
+        casu "fab" { redde LOWERING_FAB }
+        ceterum { redde LOWERING_TS }
+    }
+}

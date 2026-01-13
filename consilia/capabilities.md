@@ -1,6 +1,6 @@
 # Target Capability System
 
-**Status**: Proposed
+**Status**: Implemented (Rivus)
 **Author**: Design discussion 2026-01-12
 **Related**: Multi-target codegen, Go target proposal
 
@@ -812,7 +812,7 @@ futura functio f() { ... }
 
 ## Decision
 
-**Status**: Awaiting approval
+**Status**: Implemented (Rivus)
 
 This design provides:
 

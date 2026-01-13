@@ -1,0 +1,404 @@
+# Feature Detector - AST visitor to detect language features used in source
+#
+# Walks the AST to identify which Faber language features are actually used.
+# Deduplicates by feature key - reports each feature once regardless of how
+# many times it appears in the source.
+#
+# ARCHITECTURE
+# ============
+# - Uses visitor pattern on AST
+# - Detects features at semantic level (async, generators, etc.)
+# - Tracks first occurrence for error reporting
+# - Feature keys match capability structure hierarchy
+
+ex "../ast/positio" importa Locus
+ex "../ast/sententia" importa Sententia
+ex "../ast/expressia" importa Expressia, ObiectumProprietas
+
+# =============================================================================
+# FEATURE KEYS
+# =============================================================================
+
+# Feature keys - hierarchical identifiers matching capability structure
+@ publicum
+ordo FeaturaClavis {
+    ControlFlow_AsyncFunctio
+    ControlFlow_GeneratorFunctio
+    ControlFlow_AsyncGenerator
+    Errores_TemptaCape
+    Errores_Iace
+    Ligatura_Series
+    Ligatura_Obiectum
+    Parametra_ValorPraedefinitus
+    Expressiae_OptivumAccessus
+    Expressiae_Coalescentio
+}
+
+# =============================================================================
+# USED FEATURE RECORD
+# =============================================================================
+
+# Record of a feature being used in source
+@ publicum
+genus UsitataFeatura {
+    FeaturaClavis clavis
+    textus contextus        # e.g., "functio fetchData"
+    numerus linea           # source line for error reporting
+    numerus columna         # source column
+}
+
+# =============================================================================
+# FEATURE DETECTOR
+# =============================================================================
+
+# Feature detector - collects unique features from AST
+@ publicum
+genus FeatureDetector {
+    tabula<textus, UsitataFeatura> featurae
+
+    # Detect all features used in a program
+    @ publica
+    functio detect(lista<Sententia> corpus) -> lista<UsitataFeatura> {
+        ego.featurae = {} innatum tabula<textus, UsitataFeatura>
+
+        ex corpus pro stmt {
+            ego.visitSententia(stmt)
+        }
+
+        # Return unique features
+        varia result = [] innatum lista<UsitataFeatura>
+        de ego.featurae pro clavis {
+            result.adde(ego.featurae[clavis] qua UsitataFeatura)
+        }
+        redde result
+    }
+
+    # Add a feature if not already tracked (first occurrence wins)
+    functio registraFeatura(UsitataFeatura f) -> vacuum {
+        fixum clavisTextus = featuraClavisAdTextus(f.clavis)
+        si nihil ego.featurae[clavisTextus] {
+            ego.featurae[clavisTextus] = f
+        }
+    }
+
+    # Visit a statement node
+    functio visitSententia(Sententia stmt) -> vacuum {
+        discerne stmt {
+            casu FunctioDeclaratio ut f {
+                ego.visitFunctio(f)
+            }
+
+            casu TemptaSententia ut t {
+                ego.registraFeatura({
+                    clavis: FeaturaClavis.Errores_TemptaCape,
+                    contextus: "tempta...cape block",
+                    linea: t.locus.linea,
+                    columna: t.locus.columna
+                } qua UsitataFeatura)
+                ego.visitSententia(t.corpus)
+                si nonnihil t.cape {
+                    ego.visitSententia(t.cape.corpus)
+                }
+                si nonnihil t.demum {
+                    ego.visitSententia(t.demum)
+                }
+            }
+
+            casu IaceSententia ut i {
+                ego.registraFeatura({
+                    clavis: FeaturaClavis.Errores_Iace,
+                    contextus: "iace statement",
+                    linea: i.locus.linea,
+                    columna: i.locus.columna
+                } qua UsitataFeatura)
+                ego.visitExpressia(i.argumentum)
+            }
+
+            casu DestructuraSententia ut d {
+                ego.registraFeatura({
+                    clavis: FeaturaClavis.Ligatura_Obiectum,
+                    contextus: "object destructuring",
+                    linea: d.locus.linea,
+                    columna: d.locus.columna
+                } qua UsitataFeatura)
+                ego.visitExpressia(d.fons)
+            }
+
+            casu SeriesDestructuraSententia ut s {
+                ego.registraFeatura({
+                    clavis: FeaturaClavis.Ligatura_Series,
+                    contextus: "array destructuring",
+                    linea: s.locus.linea,
+                    columna: s.locus.columna
+                } qua UsitataFeatura)
+                ego.visitExpressia(s.fons)
+            }
+
+            casu MassaSententia ut m {
+                ex m.corpus pro child {
+                    ego.visitSententia(child)
+                }
+            }
+
+            casu VariaSententia ut v {
+                si nonnihil v.valor {
+                    ego.visitExpressia(v.valor qua Expressia)
+                }
+            }
+
+            casu SiSententia ut siStmt {
+                ego.visitExpressia(siStmt.condicio)
+                ego.visitSententia(siStmt.consequens)
+                si nonnihil siStmt.alternans {
+                    ego.visitSententia(siStmt.alternans qua Sententia)
+                }
+            }
+
+            casu DumSententia ut d {
+                ego.visitExpressia(d.condicio)
+                ego.visitSententia(d.corpus)
+            }
+
+            casu IteratioSententia ut it {
+                ego.visitExpressia(it.iterabile)
+                ego.visitSententia(it.corpus)
+            }
+
+            casu EligeSententia ut e {
+                ego.visitExpressia(e.discriminans)
+                ex e.casus pro c {
+                    ego.visitExpressia(c.condicio)
+                    ego.visitSententia(c.consequens)
+                }
+                si nonnihil e.praedefinitum {
+                    ego.visitSententia(e.praedefinitum qua Sententia)
+                }
+            }
+
+            casu DiscerneSententia ut d {
+                ex d.discriminantes pro disc {
+                    ego.visitExpressia(disc)
+                }
+                ex d.casus pro c {
+                    ego.visitSententia(c.consequens)
+                }
+            }
+
+            casu CustodiSententia ut c {
+                ex c.clausulae pro clause {
+                    ego.visitExpressia(clause.condicio)
+                    ego.visitSententia(clause.consequens)
+                }
+            }
+
+            casu FacSententia ut f {
+                ego.visitSententia(f.corpus)
+                si nonnihil f.condicio {
+                    ego.visitExpressia(f.condicio qua Expressia)
+                }
+            }
+
+            casu CuraSententia ut c {
+                si nonnihil c.res {
+                    ego.visitExpressia(c.res qua Expressia)
+                }
+                ego.visitSententia(c.corpus)
+            }
+
+            casu GenusDeclaratio ut g {
+                ex g.methodi pro methodus {
+                    ego.visitSententia(methodus)
+                }
+            }
+
+            casu PactumDeclaratio ut p {
+                # Interface methods don't have bodies
+            }
+
+            casu ReddeSententia ut r {
+                si nonnihil r.valor {
+                    ego.visitExpressia(r.valor qua Expressia)
+                }
+            }
+
+            casu ExpressiaSententia ut e {
+                ego.visitExpressia(e.expressia)
+            }
+
+            casu ProbandumSententia ut p {
+                ex p.corpus pro child {
+                    ego.visitSententia(child)
+                }
+            }
+
+            casu ProbaSententia ut p {
+                ego.visitSententia(p.corpus)
+            }
+
+            casu _ {
+                # Other statement types don't need special handling
+            }
+        }
+    }
+
+    # Visit a function declaration
+    functio visitFunctio(FunctioDeclaratio f) -> vacuum {
+        fixum isAsync = f.asynca
+        fixum isGenerator = f.generator
+
+        si isAsync et isGenerator {
+            ego.registraFeatura({
+                clavis: FeaturaClavis.ControlFlow_AsyncGenerator,
+                contextus: scriptum("functio §", f.nomen),
+                linea: f.locus.linea,
+                columna: f.locus.columna
+            } qua UsitataFeatura)
+        } sin isAsync {
+            ego.registraFeatura({
+                clavis: FeaturaClavis.ControlFlow_AsyncFunctio,
+                contextus: scriptum("functio §", f.nomen),
+                linea: f.locus.linea,
+                columna: f.locus.columna
+            } qua UsitataFeatura)
+        } sin isGenerator {
+            ego.registraFeatura({
+                clavis: FeaturaClavis.ControlFlow_GeneratorFunctio,
+                contextus: scriptum("functio §", f.nomen),
+                linea: f.locus.linea,
+                columna: f.locus.columna
+            } qua UsitataFeatura)
+        }
+
+        # Check for default parameters
+        ex f.parametra pro param {
+            si nonnihil param.praedefinitum {
+                ego.registraFeatura({
+                    clavis: FeaturaClavis.Parametra_ValorPraedefinitus,
+                    contextus: scriptum("functio §", f.nomen),
+                    linea: f.locus.linea,
+                    columna: f.locus.columna
+                } qua UsitataFeatura)
+                rumpe
+            }
+        }
+
+        # Visit function body
+        si nonnihil f.corpus {
+            ego.visitSententia(f.corpus qua Sententia)
+        }
+    }
+
+    # Visit an expression node
+    functio visitExpressia(Expressia expr) -> vacuum {
+        discerne expr {
+            casu MembrumExpressia ut m {
+                si m.optivum {
+                    ego.registraFeatura({
+                        clavis: FeaturaClavis.Expressiae_OptivumAccessus,
+                        contextus: "optional chaining",
+                        linea: m.locus.linea,
+                        columna: m.locus.columna
+                    } qua UsitataFeatura)
+                }
+                ego.visitExpressia(m.obiectum)
+                si m.computatum {
+                    ego.visitExpressia(m.proprietas)
+                }
+            }
+
+            casu VocatioExpressia ut v {
+                si v.optivum {
+                    ego.registraFeatura({
+                        clavis: FeaturaClavis.Expressiae_OptivumAccessus,
+                        contextus: "optional call",
+                        linea: v.locus.linea,
+                        columna: v.locus.columna
+                    } qua UsitataFeatura)
+                }
+                ego.visitExpressia(v.vocatum)
+                ex v.argumenta pro arg {
+                    ego.visitExpressia(arg)
+                }
+            }
+
+            casu BinariaExpressia ut b {
+                si b.signum == "??" {
+                    ego.registraFeatura({
+                        clavis: FeaturaClavis.Expressiae_Coalescentio,
+                        contextus: "null coalescing",
+                        linea: b.locus.linea,
+                        columna: b.locus.columna
+                    } qua UsitataFeatura)
+                }
+                ego.visitExpressia(b.sinister)
+                ego.visitExpressia(b.dexter)
+            }
+
+            casu UnariaExpressia ut u {
+                ego.visitExpressia(u.argumentum)
+            }
+
+            casu CondicioExpressia ut c {
+                ego.visitExpressia(c.condicio)
+                ego.visitExpressia(c.consequens)
+                ego.visitExpressia(c.alternans)
+            }
+
+            casu AssignatioExpressia ut a {
+                ego.visitExpressia(a.sinister)
+                ego.visitExpressia(a.dexter)
+            }
+
+            casu SeriesExpressia ut s {
+                ex s.elementa pro elem {
+                    ego.visitExpressia(elem)
+                }
+            }
+
+            casu ObiectumExpressia ut o {
+                ex o.proprietates pro prop {
+                    ego.visitExpressia(prop.valor)
+                }
+            }
+
+            casu LambdaExpressia ut l {
+                # Lambda corpus is ignotum type - skip descending
+                # Feature detection in lambda bodies would require runtime type checks
+            }
+
+            casu _ {
+                # Other expression types don't need special handling
+            }
+        }
+    }
+}
+
+# =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
+
+# Convert feature key to string for map lookup
+@ publica
+functio featuraClavisAdTextus(FeaturaClavis clavis) -> textus {
+    elige clavis {
+        casu FeaturaClavis.ControlFlow_AsyncFunctio { redde "controlFlow.asyncFunctio" }
+        casu FeaturaClavis.ControlFlow_GeneratorFunctio { redde "controlFlow.generatorFunctio" }
+        casu FeaturaClavis.ControlFlow_AsyncGenerator { redde "controlFlow.asyncGenerator" }
+        casu FeaturaClavis.Errores_TemptaCape { redde "errores.temptaCape" }
+        casu FeaturaClavis.Errores_Iace { redde "errores.iace" }
+        casu FeaturaClavis.Ligatura_Series { redde "ligatura.series" }
+        casu FeaturaClavis.Ligatura_Obiectum { redde "ligatura.obiectum" }
+        casu FeaturaClavis.Parametra_ValorPraedefinitus { redde "parametra.valorPraedefinitus" }
+        casu FeaturaClavis.Expressiae_OptivumAccessus { redde "expressiae.optivumAccessus" }
+        casu FeaturaClavis.Expressiae_Coalescentio { redde "expressiae.coalescentio" }
+        ceterum { redde "unknown" }
+    }
+}
+
+# Create a new feature detector
+@ publica
+functio novumDetector() -> FeatureDetector {
+    redde {
+        featurae: {} innatum tabula<textus, UsitataFeatura>
+    } qua FeatureDetector
+}
