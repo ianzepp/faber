@@ -37,6 +37,23 @@ genus SemanticResultatum {
 }
 
 # ============================================================================
+# DISCRETIO REGISTRY
+# ============================================================================
+
+@ publicum
+genus DiscretioVariansInfo {
+    textus nomen
+    Locus locus
+}
+
+@ publicum
+genus DiscretioDeclInfo {
+    textus nomen
+    Locus locus
+    lista<DiscretioVariansInfo> variantes
+}
+
+# ============================================================================
 # LATIN TYPE MAPPING
 # ============================================================================
 
@@ -78,6 +95,7 @@ genus Analyzator {
     textus? viaIngressus                                                  # entry file path for module resolution
     tabula<textus, ModulusResolutum> modulusCache                         # module cache (path -> resolved)
     copia<textus> modulusInProgressu                                      # cycle detection for imports
+    tabula<textus, DiscretioDeclInfo> discretioIndex                      # declaration metadata for discretio
 
     # ========================================================================
     # ERROR REPORTING
@@ -252,7 +270,8 @@ functio novumAnalyzator(textus? viaIngressus) -> Analyzator {
         morphologiaRegistra: {} innatum tabula<textus, tabula<textus, lista<textus>>>,
         viaIngressus: viaIngressus,
         modulusCache: {} innatum tabula<textus, ModulusResolutum>,
-        modulusInProgressu: {} innatum copia<textus>
+        modulusInProgressu: {} innatum copia<textus>,
+        discretioIndex: {} innatum tabula<textus, DiscretioDeclInfo>
     }
 
     # Define built-in intrinsics

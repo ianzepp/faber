@@ -8,7 +8,7 @@ ex "../typi" importa primitivumTypus, genericumTypus, unioTypus, ignotumTypus
 ex "../typi" importa functioTypus, usitatumTypus, genusTypus, pactumTypus, ordoTypus
 ex "../typi" importa formaTypum, assignabileAd
 ex "../scopus" importa Symbolum, SymbolumSpecies, ScopusSpecies, quaereSymbolumLocale
-ex "../nucleus" importa estGenericusTypus
+ex "../nucleus" importa estGenericusTypus, DiscretioDeclInfo, DiscretioVariansInfo
 ex "../errores" importa noTypeOrInitializerError, typeMismatchError, awaitOutsideAsyncError, missingFunctionBodyError
 ex "../errores" importa duplicateModifierError, invalidModifierContextError
 ex "../../ast/sententia" importa Sententia, VariaGenus, FunctioModificator
@@ -509,6 +509,20 @@ functio analyzeDiscretioDeclaratio(Resolvitor r, Sententia discretioStmt) -> vac
                 mutabilis: falsum,
                 locus: d.locus
             }
+
+            # Record declaration metadata for exhaustiveness checks
+            varia variantInfos = [] innatum lista<DiscretioVariansInfo>
+            ex d.variantes pro variante {
+                variantInfos.adde({
+                    nomen: variante.nomen,
+                    locus: variante.locus
+                } qua DiscretioVariansInfo)
+            }
+            a.discretioIndex[d.nomen] = {
+                nomen: d.nomen,
+                locus: d.locus,
+                variantes: variantInfos
+            } qua DiscretioDeclInfo
 
             # Analyze and register each variant
             # WHY: Each variant is registered as a nested type (Discretio.Variant) for pattern matching
