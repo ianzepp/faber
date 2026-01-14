@@ -230,6 +230,17 @@ export interface SemanticResult {
     errors: SemanticError[];
 }
 
+export type DiscretioVariantDeclInfo = {
+    name: string;
+    position: Position;
+};
+
+export type DiscretioDeclInfo = {
+    name: string;
+    position: Position;
+    variants: DiscretioVariantDeclInfo[];
+};
+
 /**
  * Options for semantic analysis.
  */
@@ -472,6 +483,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
     let currentFunctionAsync = false;
     let currentFunctionGenerator = false;
     let currentGenusType: SemanticType | null = null;
+    const discretioIndex = new Map<string, DiscretioDeclInfo>();
 
     // WHY: Track type aliases currently being resolved to detect cycles
     const resolvingTypeAliases = new Set<string>();
@@ -2252,8 +2264,10 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
     function analyzeDiscretioDeclaration(node: DiscretioDeclaration): void {
         // Build variant info map with field types in declaration order
         const variants = new Map<string, VariantInfo>();
+        const variantDecls: DiscretioVariantDeclInfo[] = [];
 
         for (const variant of node.variants) {
+            variantDecls.push({ name: variant.name.name, position: variant.position });
             const fields: { name: string; type: SemanticType }[] = [];
 
             for (const field of variant.fields) {
@@ -2265,6 +2279,11 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         }
 
         const type = discretioType(node.name.name, variants);
+        discretioIndex.set(node.name.name, {
+            name: node.name.name,
+            position: node.position,
+            variants: variantDecls,
+        });
 
         // WHY: Skip define if predeclared (two-pass analysis)
         if (!lookupSymbolLocal(currentScope, node.name.name)) {
