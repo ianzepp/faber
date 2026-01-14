@@ -148,12 +148,12 @@ functio doNothingExplicit() -> vacuum {
 
 Faber offers an alternative syntax using conjugated forms of the Latin verb _fieri_ ("to become"). These verb forms encode additional semantic information about how the function returns values:
 
-| Verb    | Tense/Number   | Meaning                | Semantics              |
-| ------- | -------------- | ---------------------- | ---------------------- |
-| `fit`   | present, sing. | "it becomes"           | sync, single value     |
-| `fiet`  | future, sing.  | "it will become"       | async, single value    |
-| `fiunt` | present, plur. | "they become"          | sync, yields multiple  |
-| `fient` | future, plur.  | "they will become"     | async, yields multiple |
+| Verb    | Tense/Number   | Meaning            | Semantics              |
+| ------- | -------------- | ------------------ | ---------------------- |
+| `fit`   | present, sing. | "it becomes"       | sync, single value     |
+| `fiet`  | future, sing.  | "it will become"   | async, single value    |
+| `fiunt` | present, plur. | "they become"      | sync, yields multiple  |
+| `fient` | future, plur.  | "they will become" | async, yields multiple |
 
 The verb forms participate in the Responsum stream protocol, providing structured error handling. Arrow syntax (`->`) bypasses this protocol for direct returns with zero overhead.
 
@@ -167,12 +167,13 @@ The verb syntax becomes valuable when you want stream-based error handling or ge
 
 ## Async Functions
 
-### The futura Modifier
+### The `@ futura` Annotation
 
-The `futura` modifier (Latin "future things," neuter plural of _futurus_) marks a function as asynchronous. Combined with arrow syntax, it returns a Promise:
+The `@ futura` annotation (Latin "future things," neuter plural of _futurus_) marks a function as asynchronous. Combined with arrow syntax, it returns a `promissum<T>` / Promise:
 
 ```fab
-futura functio fetchData(textus url) -> textus {
+@ futura
+functio fetchData(textus url) -> textus {
     fixum response = cede fetch(url)
     redde response.text()
 }
@@ -185,7 +186,8 @@ The choice of _futura_ leverages Latin's grammatical future tense to express tem
 Inside async functions, `cede` (Latin "yield, give way, surrender") awaits a promise:
 
 ```fab
-futura functio processAll(textus[] urls) -> textus[] {
+@ futura
+functio processAll(textus[] urls) -> textus[] {
     varia results = []
     ex urls pro url {
         fixum data = cede fetchData(url)
@@ -199,7 +201,7 @@ The etymology captures the semantics precisely: the function cedes control until
 
 ### Async via Verb Form
 
-The `fiet` verb ("it will become") implies async behavior without the `futura` modifier:
+The `fiet` verb ("it will become") implies async behavior without the `@ futura` annotation:
 
 ```fab
 functio fetchData() fiet textus {
@@ -207,7 +209,14 @@ functio fetchData() fiet textus {
 }
 ```
 
-This is equivalent to `futura functio fetchData() -> textus` but participates in the Responsum protocol.
+This is equivalent to:
+
+```fab
+@ futura
+functio fetchData() -> textus { redde "data" }
+```
+
+…but participates in the Responsum protocol.
 
 ### Gerundive Declarations
 
@@ -222,12 +231,13 @@ These are equivalent to `fixum x = cede y()` and `varia x = cede y()`. The gerun
 
 ## Generator Functions
 
-### The cursor Modifier
+### The `@ cursor` Annotation
 
-The `cursor` modifier (Latin "runner," from _currere_ "to run") creates a generator function:
+The `@ cursor` annotation (Latin "runner," from _currere_ "to run") creates a generator function:
 
 ```fab
-cursor functio range(numerus n) -> numerus {
+@ cursor
+functio range(numerus n) -> numerus {
     ex 0..n pro i {
         cede i
     }
@@ -432,7 +442,7 @@ Faber's function system balances Latin linguistic authenticity with practical pr
 - Type-first parameters with `ut` aliasing
 - `si` for optional, `vel` for defaults, `ceteri` for rest
 - Arrow `->` for direct returns, verb forms for stream protocol
-- `futura`, `cursor`, and `curata` modifiers, or `fiet`/`fiunt`/`fient` verbs
+- `@ futura` and `@ cursor` annotations, post-function modifiers (`curata`, `errata`, `immutata`, `iacit`), or `fiet`/`fiunt`/`fient` verbs
 - `cede` for await (async) or yield (generator)
 - `prae typus` for generics
 - `pro` for lambdas with optional `fiet` for async

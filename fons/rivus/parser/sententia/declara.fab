@@ -23,7 +23,7 @@
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
 ex "../../ast/expressia" importa Expressia
-ex "../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, CampusDeclaratio, PactumMethodus, OrdoMembrum, VariansDeclaratio, VariansCampus, Visibilitas, ReddeVerbum, ImportaSpecificator, MorphologiaDeclaratio
+ex "../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, CampusDeclaratio, PactumMethodus, OrdoMembrum, VariansDeclaratio, VariansCampus, Visibilitas, ReddeVerbum, ImportaSpecificator, MorphologiaDeclaratio, FunctioModificator
 ex "../../ast/typus" importa TypusAnnotatio, typusSimplicis
 ex "../../ast/lexema" importa SymbolumGenus, VerbumId
 ex "../errores" importa ParserErrorCodice
@@ -35,10 +35,43 @@ ex "./annotatio" importa Annotatio, parseAnnotationes
 # FUNCTION DECLARATIONS
 # ============================================================================
 
+# Parse post-parameter function modifiers
+functio parseFunctioModificatores(Resolvitor r) -> lista<FunctioModificator>? {
+    fixum p = r.parser()
+    varia modificatores = [] innatum lista<FunctioModificator>
+
+    dum verum {
+        si p.congruetVerbum("curata") {
+            fixum locus = p.praevius().locus
+            fixum curatorSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            modificatores.adde(finge CurataModificator { locus: locus, nomen: curatorSym.valor } qua FunctioModificator)
+        } sin p.congruetVerbum("errata") {
+            fixum locus = p.praevius().locus
+            fixum errataSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            modificatores.adde(finge ErrataModificator { locus: locus, nomen: errataSym.valor } qua FunctioModificator)
+        } sin p.congruetVerbum("immutata") {
+            fixum locus = p.praevius().locus
+            modificatores.adde(finge ImmutataModificator { locus: locus } qua FunctioModificator)
+        } sin p.congruetVerbum("iacit") {
+            fixum locus = p.praevius().locus
+            modificatores.adde(finge IacitModificator { locus: locus } qua FunctioModificator)
+        } secus {
+            rumpe
+        }
+    }
+
+    si modificatores.longitudo() == 0 {
+        redde nihil
+    }
+
+    redde modificatores
+}
+
 # Parse function declaration
 #
 # GRAMMAR:
-#   functioDecl := 'functio' IDENT genericParams? '(' params? ')' returnType? blockStmt?
+#   functioDecl := 'functio' IDENT genericParams? '(' params? ')' funcModifier* returnType? blockStmt?
+#   funcModifier := 'curata' IDENT | 'errata' IDENT | 'immutata' | 'iacit'
 #   returnType := '->' type | 'fit' type | 'fiet' type | 'fiunt' type | 'fient' type
 #
 # Examples:
@@ -74,12 +107,7 @@ functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
     fixum parametra = parseParametra(r)
     p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
 
-    # Parse optional curata NAME binding (allocator for Zig, ignored for other targets)
-    varia curatorNomen = nihil qua textus?
-    si p.congruetVerbum("curata") {
-        fixum curatorSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-        curatorNomen = curatorSym.valor
-    }
+    varia modificatores = parseFunctioModificatores(r)
 
     # Parse return type
     varia typusReditus = nihil qua TypusAnnotatio?
@@ -131,7 +159,7 @@ functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
         visibilitas: nihil,
         reddeVerbum: reddeVerbum,
         morphologia: nihil,
-        curatorNomen: curatorNomen
+        modificatores: modificatores
     } qua Sententia
 }
 
@@ -240,6 +268,8 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
             fixum params = parseParametra(r)
             p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
 
+            varia modificatores = parseFunctioModificatores(r)
+
             varia retTypus = nihil qua TypusAnnotatio?
             varia asynca = falsum
             varia generator = falsum
@@ -292,7 +322,7 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
                 visibilitas: visibilitas,
                 reddeVerbum: nihil,
                 morphologia: morphologiaEx(annotationes),
-                curatorNomen: nihil
+                modificatores: modificatores
             } qua Sententia)
         } secus {
             # Field: type name or name: default
@@ -375,7 +405,7 @@ functio parsePactumDeclaratio(Resolvitor r) -> Sententia {
         # Optional annotations (e.g., @ futura, @ radix)
         fixum annotationes = parseAnnotationes(r)
 
-        # Each method: functio name(params) returnType
+        # Each method: functio name(params) funcModifier* returnType
         p.expectaVerbum("functio", ParserErrorCodice.ExpectaturFunctio)
 
         fixum methodLocus = p.praevius().locus
@@ -385,6 +415,8 @@ functio parsePactumDeclaratio(Resolvitor r) -> Sententia {
         p.expecta(SymbolumGenus.ParensSin, ParserErrorCodice.ExpectaturParensSin)
         fixum params = parseParametra(r)
         p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+
+        varia modificatores = parseFunctioModificatores(r)
 
         varia typusReditus = nihil qua TypusAnnotatio?
         varia asynca = falsum
@@ -417,6 +449,7 @@ functio parsePactumDeclaratio(Resolvitor r) -> Sententia {
             typusReditus: typusReditus,
             asynca: asynca,
             generator: generator,
+            modificatores: modificatores,
             morphologia: morphologiaEx(annotationes)
         } qua PactumMethodus)
 

@@ -6,16 +6,16 @@ Faber compiles to multiple target languages, each with different capabilities. T
 
 **Legend:** ✓ = supported, ~ = emulated, ✗ = unsupported
 
-| Feature | ts | py | rs | zig | cpp |
-|---------|----|----|----|----|-----|
-| async functions (`fiet`) | ✓ | ✓ | ✓ | ✗ | ✗ |
-| generators (`fiunt`) | ✓ | ✓ | ✗ | ✗ | ✗ |
-| async generators (`fient`) | ✓ | ✓ | ✗ | ✗ | ✗ |
-| try-catch (`tempta...cape`) | ✓ | ✓ | ~ | ~ | ✓ |
-| throw (`iace`) | ✓ | ✓ | ~ | ~ | ✓ |
-| object destructuring | ✓ | ✗ | ~ | ~ | ~ |
-| array destructuring | ✓ | ✓ | ✓ | ✓ | ✓ |
-| default parameters (`vel`) | ✓ | ✓ | ✗ | ✗ | ✓ |
+| Feature                     | ts  | py  | rs  | zig | cpp |
+| --------------------------- | --- | --- | --- | --- | --- |
+| async functions (`fiet`)    | ✓   | ✓   | ✓   | ✗   | ✗   |
+| generators (`fiunt`)        | ✓   | ✓   | ✗   | ✗   | ✗   |
+| async generators (`fient`)  | ✓   | ✓   | ✗   | ✗   | ✗   |
+| try-catch (`tempta...cape`) | ✓   | ✓   | ~   | ~   | ✓   |
+| throw (`iace`)              | ✓   | ✓   | ~   | ~   | ✓   |
+| object destructuring        | ✓   | ✗   | ~   | ~   | ~   |
+| array destructuring         | ✓   | ✓   | ✓   | ✓   | ✓   |
+| default parameters (`vel`)  | ✓   | ✓   | ✗   | ✗   | ✓   |
 
 ## Support Levels
 
@@ -34,7 +34,7 @@ When you use an unsupported feature, the compiler reports all incompatibilities 
 ```
 Target compatibility errors for 'zig':
 
-  file.fab:12:1 - Target 'zig' does not support async functions (futura)
+  file.fab:12:1 - Target 'zig' does not support async functions (@ futura)
     context: function fetch
     hint: Refactor to synchronous code; consider explicit callbacks/event loop
 
@@ -48,6 +48,7 @@ Target compatibility errors for 'zig':
 ### Async Functions (`fiet`)
 
 **Faber syntax:**
+
 ```fab
 functio fetch(textus url) fiet textus {
     redde "data"
@@ -59,10 +60,12 @@ functio fetch(textus url) fiet textus {
 **Unsupported targets:** Zig, C++
 
 **Why unsupported:**
+
 - Zig uses explicit error unions and event loops, not async/await
 - C++ has no standard async/await (coroutines require careful design)
 
 **Alternatives:**
+
 - Refactor to synchronous code
 - Use target-specific concurrency primitives (goroutines, event loops)
 - Consider splitting code by target if async is essential
@@ -70,6 +73,7 @@ functio fetch(textus url) fiet textus {
 ### Generators (`fiunt`)
 
 **Faber syntax:**
+
 ```fab
 functio count(numerus n) fiunt numerus {
     varia i = 0
@@ -85,10 +89,12 @@ functio count(numerus n) fiunt numerus {
 **Unsupported targets:** Rust, Zig, C++
 
 **Why unsupported:**
+
 - Rust: Generators are unstable (nightly only)
 - Zig/C++: No native generator support
 
 **Alternatives:**
+
 - Return an array/collection instead
 - Use iterators with explicit state
 - Use `while` loops at call site
@@ -96,6 +102,7 @@ functio count(numerus n) fiunt numerus {
 ### Exception Handling (`tempta...cape`, `iace`)
 
 **Faber syntax:**
+
 ```fab
 functio divide(numerus a, numerus b) fit numerus {
     tempta {
@@ -117,6 +124,7 @@ functio divide(numerus a, numerus b) fit numerus {
 **Unsupported targets:** None
 
 **Emulation details:**
+
 - **Rust**: `tempta...cape` transforms to `Result<T, E>` patterns. `iace` becomes `return Err("msg")`.
 - **Zig**: `tempta...cape` transforms to error union handling. `iace` becomes `return error.X`.
 
@@ -126,6 +134,7 @@ Emulated error handling preserves semantics but may be less idiomatic than nativ
 ### Object Destructuring
 
 **Faber syntax:**
+
 ```fab
 genus Punto {
     numerus x
@@ -146,10 +155,13 @@ functio distance(Punto p) fit numerus {
 
 **Emulation details:**
 Object destructuring transforms to field-by-field extraction:
+
 ```fab
 fixum { x, y } = p
 ```
+
 becomes:
+
 ```
 const x = p.x;
 const y = p.y;
@@ -161,6 +173,7 @@ No performance cost - the emulated code is semantically identical to native dest
 ### Default Parameters (`vel`)
 
 **Faber syntax:**
+
 ```fab
 functio greet(textus name vel "World") fit textus {
     redde "Salve, " + name
@@ -172,10 +185,12 @@ functio greet(textus name vel "World") fit textus {
 **Unsupported targets:** Rust, Zig
 
 **Why unsupported:**
+
 - Rust: Use Option<T> or separate functions
 - Zig: Use optional types (`?T`) with explicit null handling
 
 **Alternatives:**
+
 - Use function overloading (separate signatures)
 - Accept optional type and check for null
 - Provide separate convenience functions

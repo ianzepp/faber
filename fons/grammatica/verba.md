@@ -3,6 +3,7 @@
 Reserved keywords in Faber Romanus. This reference catalogs all Latin keywords used throughout the language, organized by their grammatical and functional role.
 
 **Implementation synchronization:** When the compiler recognizes a new keyword, it must appear in:
+
 - `fons/faber/lexicon/keywords.ts` - TypeScript compiler
 - `fons/rivus/lexicon/verba.fab` - Bootstrap compiler
 - This document
@@ -13,31 +14,31 @@ Reserved keywords in Faber Romanus. This reference catalogs all Latin keywords u
 
 Keywords for directing program flow through conditionals, loops, and branching:
 
-| Verbum | Meaning | Usage |
-|--------|---------|-------|
-| `si` | if | Begin conditional branch |
-| `sin` | else if | Chained conditional |
-| `secus` | else | Default branch; also `:` in ternary |
-| `dum` | while | Loop while condition holds |
-| `fac` | do | Do-while loop prefix |
-| `pro` | for | Loop variable binding (with `ex`/`de`) |
-| `elige` | switch | Value-based branching |
-| `casu` | case | Branch within `elige` |
-| `ceterum` | default | Fallback branch in `elige` |
-| `ergo` | then | Consequence marker (one-liner) |
-| `rumpe` | break | Exit loop |
-| `perge` | continue | Skip to next iteration |
-| `redde` | return | Return value from function |
-| `reddit` | then return | Sugar for `ergo redde` |
-| `custodi` | guard | Early-exit guard clause |
-| `adfirma` | assert | Runtime assertion |
-| `discerne` | match | Pattern matching on `discretio` |
+| Verbum     | Meaning     | Usage                                  |
+| ---------- | ----------- | -------------------------------------- |
+| `si`       | if          | Begin conditional branch               |
+| `sin`      | else if     | Chained conditional                    |
+| `secus`    | else        | Default branch; also `:` in ternary    |
+| `dum`      | while       | Loop while condition holds             |
+| `fac`      | do          | Do-while loop prefix                   |
+| `pro`      | for         | Loop variable binding (with `ex`/`de`) |
+| `elige`    | switch      | Value-based branching                  |
+| `casu`     | case        | Branch within `elige`                  |
+| `ceterum`  | default     | Fallback branch in `elige`             |
+| `ergo`     | then        | Consequence marker (one-liner)         |
+| `rumpe`    | break       | Exit loop                              |
+| `perge`    | continue    | Skip to next iteration                 |
+| `redde`    | return      | Return value from function             |
+| `reddit`   | then return | Sugar for `ergo redde`                 |
+| `custodi`  | guard       | Early-exit guard clause                |
+| `adfirma`  | assert      | Runtime assertion                      |
+| `discerne` | match       | Pattern matching on `discretio`        |
 
 **Entry points:**
 
-| Verbum | Meaning | Usage |
-|--------|---------|-------|
-| `incipit` | main | Synchronous program entry point |
+| Verbum     | Meaning    | Usage                            |
+| ---------- | ---------- | -------------------------------- |
+| `incipit`  | main       | Synchronous program entry point  |
 | `incipiet` | async main | Asynchronous program entry point |
 
 ---
@@ -46,17 +47,17 @@ Keywords for directing program flow through conditionals, loops, and branching:
 
 Keywords for organizing test suites and cases:
 
-| Verbum | Meaning | Usage |
-|--------|---------|-------|
-| `probandum` | describe | Test suite declaration (gerundive) |
-| `proba` | test/it | Individual test case |
-| `praepara` | beforeEach | Run before each test |
-| `praeparabit` | async beforeEach | Async setup before each test |
-| `postpara` | afterEach | Run after each test |
-| `postparabit` | async afterEach | Async teardown after each test |
-| `omnia` | all | Modifier: beforeAll/afterAll |
-| `omitte` | skip | Skip this test |
-| `futurum` | todo | Mark test as pending |
+| Verbum        | Meaning          | Usage                              |
+| ------------- | ---------------- | ---------------------------------- |
+| `probandum`   | describe         | Test suite declaration (gerundive) |
+| `proba`       | test/it          | Individual test case               |
+| `praepara`    | beforeEach       | Run before each test               |
+| `praeparabit` | async beforeEach | Async setup before each test       |
+| `postpara`    | afterEach        | Run after each test                |
+| `postparabit` | async afterEach  | Async teardown after each test     |
+| `omnia`       | all              | Modifier: beforeAll/afterAll       |
+| `omitte`      | skip             | Skip this test                     |
+| `futurum`     | todo             | Mark test as pending               |
 
 ---
 
@@ -64,13 +65,14 @@ Keywords for organizing test suites and cases:
 
 Keywords for managing errors and cleanup:
 
-| Verbum | Meaning | Usage |
-|--------|---------|-------|
-| `tempta` | try | Begin error-handling block |
-| `cape` | catch | Handle thrown error |
-| `demum` | finally | Cleanup block (runs regardless) |
-| `iace` | throw | Throw recoverable error |
-| `mori` | panic | Fatal/unrecoverable error |
+| Verbum   | Meaning    | Usage                                                         |
+| -------- | ---------- | ------------------------------------------------------------- |
+| `tempta` | try        | Begin error-handling block                                    |
+| `cape`   | catch      | Handle thrown error                                           |
+| `demum`  | finally    | Cleanup block (runs regardless)                               |
+| `iace`   | throw      | Throw recoverable error                                       |
+| `iacit`  | then throw | Sugar for `ergo iace` (also used as a post-function modifier) |
+| `mori`   | panic      | Fatal/unrecoverable error                                     |
 
 ---
 
@@ -78,11 +80,11 @@ Keywords for managing errors and cleanup:
 
 Keywords for scoped resource and allocator management:
 
-| Verbum | Meaning | Usage |
-|--------|---------|-------|
-| `cura` | care | Scoped resource management |
-| `arena` | arena | Arena allocator kind |
-| `page` | page | Page allocator kind |
+| Verbum  | Meaning | Usage                      |
+| ------- | ------- | -------------------------- |
+| `cura`  | care    | Scoped resource management |
+| `arena` | arena   | Arena allocator kind       |
+| `page`  | page    | Page allocator kind        |
 
 See `cura.md` in `consilia/completa/` for full details on resource management.
 
@@ -92,15 +94,15 @@ See `cura.md` in `consilia/completa/` for full details on resource management.
 
 Keywords for input, output, and diagnostic operations:
 
-| Verbum | Meaning | Usage |
-|--------|---------|-------|
-| `scribe` | print | Write to stdout |
-| `vide` | debug | Debug output |
-| `mone` | warn | Warning output |
-| `lege` | read | Read input |
-| `lineam` | line | With `lege`: read one line |
-| `scriptum` | format | Create formatted string |
-| `cede` | await/yield | Await promise or yield value |
+| Verbum     | Meaning     | Usage                        |
+| ---------- | ----------- | ---------------------------- |
+| `scribe`   | print       | Write to stdout              |
+| `vide`     | debug       | Debug output                 |
+| `mone`     | warn        | Warning output               |
+| `lege`     | read        | Read input                   |
+| `lineam`   | line        | With `lege`: read one line   |
+| `scriptum` | format      | Create formatted string      |
+| `cede`     | await/yield | Await promise or yield value |
 
 ---
 
@@ -110,32 +112,32 @@ Keywords for declaring variables, types, and structures:
 
 ### Variables
 
-| Verbum | Meaning | Usage |
-|--------|---------|-------|
-| `varia` | let | Mutable binding |
-| `fixum` | const | Immutable binding |
-| `figendum` | const await | Immutable async binding |
-| `variandum` | let await | Mutable async binding |
+| Verbum      | Meaning     | Usage                   |
+| ----------- | ----------- | ----------------------- |
+| `varia`     | let         | Mutable binding         |
+| `fixum`     | const       | Immutable binding       |
+| `figendum`  | const await | Immutable async binding |
+| `variandum` | let await   | Mutable async binding   |
 
 ### Functions and Instantiation
 
-| Verbum | Meaning | Usage |
-|--------|---------|-------|
-| `functio` | function | Function declaration |
-| `novum` | new | Object instantiation |
-| `finge` | form | Construct `discretio` variant |
+| Verbum    | Meaning  | Usage                         |
+| --------- | -------- | ----------------------------- |
+| `functio` | function | Function declaration          |
+| `novum`   | new      | Object instantiation          |
+| `finge`   | form     | Construct `discretio` variant |
 
 ### Types and Modules
 
-| Verbum | Meaning | Usage |
-|--------|---------|-------|
-| `importa` | import | Import from module |
-| `exporta` | export | Export from module |
-| `typus` | type | Type alias; also `typeof` on RHS |
-| `genus` | class/struct | Data structure with methods |
-| `pactum` | interface/trait | Contract/interface |
-| `ordo` | enum | Enumeration |
-| `discretio` | tagged union | Discriminated union type |
+| Verbum      | Meaning         | Usage                            |
+| ----------- | --------------- | -------------------------------- |
+| `importa`   | import          | Import from module               |
+| `exporta`   | export          | Export from module               |
+| `typus`     | type            | Type alias; also `typeof` on RHS |
+| `genus`     | class/struct    | Data structure with methods      |
+| `pactum`    | interface/trait | Contract/interface               |
+| `ordo`      | enum            | Enumeration                      |
+| `discretio` | tagged union    | Discriminated union type         |
 
 ---
 
@@ -145,37 +147,41 @@ Keywords that modify declarations, members, or execution behavior:
 
 ### Function Modifiers
 
-| Verbum | Meaning | Usage |
-|--------|---------|-------|
-| `futura` | async | Async function modifier |
-| `cursor` | generator | Generator function modifier |
-| `prae` | comptime | Compile-time type parameter |
-| `praefixum` | comptime block | Compile-time evaluation |
+| Verbum      | Meaning        | Usage                                                         |
+| ----------- | -------------- | ------------------------------------------------------------- |
+| `futura`    | async          | Async function annotation (`@ futura`)                        |
+| `cursor`    | generator      | Generator function annotation (`@ cursor`)                    |
+| `curata`    | managed        | Post-parameter modifier: allocator binding (`curata NAME`)    |
+| `errata`    | errored        | Post-parameter modifier: error binding (`errata NAME`)        |
+| `immutata`  | unchanged      | Post-parameter modifier: const/non-mutating qualifier         |
+| `iacit`     | throws         | Post-parameter modifier: throws declaration (target-specific) |
+| `prae`      | comptime       | Compile-time type parameter                                   |
+| `praefixum` | comptime block | Compile-time evaluation                                       |
 
 ### Visibility
 
-| Verbum | Meaning | Usage |
-|--------|---------|-------|
-| `publicus` | public | Public visibility (genus modifier) |
-| `publica` | public | Public visibility (functio modifier) |
-| `privatus` | private | Private field |
-| `privata` | private | Private method |
+| Verbum      | Meaning   | Usage                                 |
+| ----------- | --------- | ------------------------------------- |
+| `publicus`  | public    | Public visibility (genus modifier)    |
+| `publica`   | public    | Public visibility (functio modifier)  |
+| `privatus`  | private   | Private field                         |
+| `privata`   | private   | Private method                        |
 | `protectus` | protected | Protected visibility (TS/Py/C++ only) |
 
 ### Type Relationships
 
-| Verbum | Meaning | Usage |
-|--------|---------|-------|
-| `generis` | static | Type-level/static member |
-| `implet` | implements | Implement interface |
-| `sub` | extends | Class inheritance (TS/Py/C++ only) |
-| `abstractus` | abstract | Abstract class/method (TS/Py/C++ only) |
+| Verbum       | Meaning    | Usage                                  |
+| ------------ | ---------- | -------------------------------------- |
+| `generis`    | static     | Type-level/static member               |
+| `implet`     | implements | Implement interface                    |
+| `sub`        | extends    | Class inheritance (TS/Py/C++ only)     |
+| `abstractus` | abstract   | Abstract class/method (TS/Py/C++ only) |
 
 ### Other
 
-| Verbum | Meaning | Usage |
-|--------|---------|-------|
-| `curata` | managed | Function receives allocator |
+| Verbum  | Meaning | Usage                                |
+| ------- | ------- | ------------------------------------ |
+| `omnia` | all     | Modifier: beforeAll/afterAll (tests) |
 
 ---
 
@@ -183,66 +189,66 @@ Keywords that modify declarations, members, or execution behavior:
 
 ### Logical
 
-| Verbum | Symbol | Meaning |
-|--------|--------|---------|
-| `et` | `&&` | Logical AND |
-| `aut` | `\|\|` | Logical OR |
-| `non` | `!` | Logical NOT |
-| `vel` | `??` | Nullish coalescing |
+| Verbum | Symbol | Meaning            |
+| ------ | ------ | ------------------ |
+| `et`   | `&&`   | Logical AND        |
+| `aut`  | `\|\|` | Logical OR         |
+| `non`  | `!`    | Logical NOT        |
+| `vel`  | `??`   | Nullish coalescing |
 
 ### Comparison
 
-| Verbum | Symbol | Meaning |
-|--------|--------|---------|
-| `est` | `===` | Strict equality |
+| Verbum | Symbol | Meaning         |
+| ------ | ------ | --------------- |
+| `est`  | `===`  | Strict equality |
 
 ### Null and Empty Checks
 
 Unary operators that expand to inline checks:
 
-| Verbum | Meaning | Generated Code |
-|--------|---------|----------------|
-| `nihil x` | is null | `x == null` |
-| `nonnihil x` | is not null | `x != null` |
-| `nulla x` | is empty | length/size check |
-| `nonnulla x` | has content | length/size check |
-| `negativum x` | less than zero | `x < 0` |
-| `positivum x` | greater than zero | `x > 0` |
+| Verbum        | Meaning           | Generated Code    |
+| ------------- | ----------------- | ----------------- |
+| `nihil x`     | is null           | `x == null`       |
+| `nonnihil x`  | is not null       | `x != null`       |
+| `nulla x`     | is empty          | length/size check |
+| `nonnulla x`  | has content       | length/size check |
+| `negativum x` | less than zero    | `x < 0`           |
+| `positivum x` | greater than zero | `x > 0`           |
 
 ### Ternary
 
-| Verbum | Symbol | Usage |
-|--------|--------|-------|
-| `sic` | `?` | Then branch in ternary |
-| `secus` | `:` | Else branch in ternary |
+| Verbum  | Symbol | Usage                  |
+| ------- | ------ | ---------------------- |
+| `sic`   | `?`    | Then branch in ternary |
+| `secus` | `:`    | Else branch in ternary |
 
 ### Return Type Verbs
 
-Conjugations of *fio* ("to become") indicating return behavior:
+Conjugations of _fio_ ("to become") indicating return behavior:
 
-| Verbum | Async | Generator | Meaning |
-|--------|:-----:|:---------:|---------|
-| `fit` | no | no | "it becomes" (sync) |
-| `fiet` | yes | no | "it will become" (async) |
-| `fiunt` | no | yes | "they become" (sync generator) |
-| `fient` | yes | yes | "they will become" (async generator) |
+| Verbum  | Async | Generator | Meaning                              |
+| ------- | :---: | :-------: | ------------------------------------ |
+| `fit`   |  no   |    no     | "it becomes" (sync)                  |
+| `fiet`  |  yes  |    no     | "it will become" (async)             |
+| `fiunt` |  no   |    yes    | "they become" (sync generator)       |
+| `fient` |  yes  |    yes    | "they will become" (async generator) |
 
 ### Range Operators
 
-| Verbum | Meaning | Usage |
-|--------|---------|-------|
-| `ante` | before | Exclusive range: `0 ante 10` = 0-9 |
-| `usque` | up to | Inclusive range: `0 usque 10` = 0-10 |
-| `per` | through | Iteration step: `0..10 per 2` |
-| `intra` | within | Range containment: `x intra 0..100` |
-| `inter` | among | Set membership: `x inter [1, 2, 3]` |
+| Verbum  | Meaning | Usage                                |
+| ------- | ------- | ------------------------------------ |
+| `ante`  | before  | Exclusive range: `0 ante 10` = 0-9   |
+| `usque` | up to   | Inclusive range: `0 usque 10` = 0-10 |
+| `per`   | through | Iteration step: `0..10 per 2`        |
+| `intra` | within  | Range containment: `x intra 0..100`  |
+| `inter` | among   | Set membership: `x inter [1, 2, 3]`  |
 
 ### Spread and Rest
 
-| Verbum | Symbol | Usage |
-|--------|--------|-------|
-| `sparge` | `...` | Spread elements |
-| `ceteri` | `...` | Rest parameters |
+| Verbum   | Symbol | Usage           |
+| -------- | ------ | --------------- |
+| `sparge` | `...`  | Spread elements |
+| `ceteri` | `...`  | Rest parameters |
 
 ---
 
@@ -250,12 +256,12 @@ Conjugations of *fio* ("to become") indicating return behavior:
 
 Keywords representing constant values:
 
-| Verbum | Meaning | Type |
-|--------|---------|------|
-| `verum` | true | Boolean |
-| `falsum` | false | Boolean |
-| `nihil` | null | Null (also unary operator) |
-| `ego` | this/self | Self-reference in methods |
+| Verbum   | Meaning   | Type                       |
+| -------- | --------- | -------------------------- |
+| `verum`  | true      | Boolean                    |
+| `falsum` | false     | Boolean                    |
+| `nihil`  | null      | Null (also unary operator) |
+| `ego`    | this/self | Self-reference in methods  |
 
 ---
 
@@ -263,15 +269,15 @@ Keywords representing constant values:
 
 Latin prepositions used in various syntactic contexts:
 
-| Verbum | Meaning | Contexts |
-|--------|---------|----------|
-| `de` | from/of | Key iteration (`de...pro`); borrowed reference (Rust/Zig) |
-| `in` | in/into | Membership test; mutable reference (Rust/Zig); mutation block |
-| `ex` | from | Value iteration (`ex...pro`); module import (`ex...importa`) |
-| `ad` | to | Target/destination (planned) |
-| `per` | through | Iteration step in ranges |
-| `qua` | as (type) | Type cast: `x qua textus` |
-| `ut` | as (alias) | Rename in import/destructure: `nomen ut n` |
+| Verbum | Meaning    | Contexts                                                      |
+| ------ | ---------- | ------------------------------------------------------------- |
+| `de`   | from/of    | Key iteration (`de...pro`); borrowed reference (Rust/Zig)     |
+| `in`   | in/into    | Membership test; mutable reference (Rust/Zig); mutation block |
+| `ex`   | from       | Value iteration (`ex...pro`); module import (`ex...importa`)  |
+| `ad`   | to         | Target/destination (planned)                                  |
+| `per`  | through    | Iteration step in ranges                                      |
+| `qua`  | as (type)  | Type cast: `x qua textus`                                     |
+| `ut`   | as (alias) | Rename in import/destructure: `nomen ut n`                    |
 
 ---
 
@@ -279,24 +285,24 @@ Latin prepositions used in various syntactic contexts:
 
 Keywords for collection manipulation (planned):
 
-| Verbum | Meaning | Usage |
-|--------|---------|-------|
-| `ab` | filter from | DSL entry point |
-| `ubi` | where | Filter condition |
-| `prima` | first n | Take first n elements |
-| `ultima` | last n | Take last n elements |
-| `summa` | sum | Reduce to sum |
-| `ordina` | sort | Sort collection |
-| `collige` | pluck | Extract field values |
-| `grupa` | group by | Group by key |
+| Verbum    | Meaning     | Usage                 |
+| --------- | ----------- | --------------------- |
+| `ab`      | filter from | DSL entry point       |
+| `ubi`     | where       | Filter condition      |
+| `prima`   | first n     | Take first n elements |
+| `ultima`  | last n      | Take last n elements  |
+| `summa`   | sum         | Reduce to sum         |
+| `ordina`  | sort        | Sort collection       |
+| `collige` | pluck       | Extract field values  |
+| `grupa`   | group by    | Group by key          |
 
 ---
 
 ## Regex DSL
 
-| Verbum | Meaning | Usage |
-|--------|---------|-------|
-| `sed` | regex | Pattern matching (Unix `sed` reference) |
+| Verbum | Meaning | Usage                                   |
+| ------ | ------- | --------------------------------------- |
+| `sed`  | regex   | Pattern matching (Unix `sed` reference) |
 
 ---
 
@@ -304,9 +310,9 @@ Keywords for collection manipulation (planned):
 
 Not yet implemented:
 
-| Verbum | Meaning | Status |
-|--------|---------|--------|
-| `solum` | only | Test modifier (run only this test) |
+| Verbum  | Meaning | Status                             |
+| ------- | ------- | ---------------------------------- |
+| `solum` | only    | Test modifier (run only this test) |
 
 ---
 
@@ -315,12 +321,12 @@ Not yet implemented:
 When adding a new keyword to the language:
 
 1. **Add to TypeScript compiler:** `fons/faber/lexicon/keywords.ts`
-   - Include category and meaning in the keyword definition
+    - Include category and meaning in the keyword definition
 2. **Add to bootstrap compiler:** `fons/rivus/lexicon/verba.fab`
-   - Add to `estVerbum()` function
+    - Add to `estVerbum()` function
 3. **Categorize if needed:**
-   - If statement-starting: add to `estVerbumSententiae()`
-   - If genus member: add to `estVerbumGeneris()`
+    - If statement-starting: add to `estVerbumSententiae()`
+    - If genus member: add to `estVerbumGeneris()`
 4. **Update this document:** Add to appropriate section above
 5. **Update grammatica:** If the keyword affects user-facing syntax, document in relevant `fons/grammatica/*.md` file
 6. **Update EBNF:** If grammar rules change, update `EBNF.md`

@@ -70,6 +70,16 @@
           - 'functio accipe() -> textus'
           - 'functio claude() -> vacuum'
 
+- name: pactum method with post modifiers
+  source: |
+      pactum Guard {
+        functio check(textus data) errata err immutata -> bivalens
+      }
+  expect:
+      ts:
+          - 'interface Guard'
+          - 'check(data: string): boolean'
+
 # =============================================================================
 # Method Parameters
 # =============================================================================

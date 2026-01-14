@@ -208,6 +208,8 @@ ordo VerbumId {
     Praefixum
     Cursor
     Curata
+    Errata
+    Immutata
     Publicus
     Privatus
     Generis
