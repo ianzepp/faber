@@ -3,9 +3,10 @@
 # Handles: si, dum, ex/de...pro, elige, discerne, custodi
 
 ex "../resolvitor" importa Resolvitor
+ex "../nucleus" importa DiscretioDeclInfo
 ex "../typi" importa SemanticTypus, IGNOTUM
 ex "../scopus" importa ScopusSpecies, Symbolum, SymbolumSpecies, quaereSymbolum
-ex "../../ast/sententia" importa Sententia
+ex "../../ast/sententia" importa Sententia, VariansExemplar
 
 # =============================================================================
 # CONDITIONAL
@@ -267,6 +268,90 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                 r.sententia(casus.consequens)
 
                 a.exiScopum()
+            }
+
+            # Exhaustiveness check (discerne omnia only)
+            si d.exhaustiva {
+                # Treat all-wildcard case as catch-all (ceterum)
+                varia habetWildcardCasu = falsum
+                ex d.casus pro casus {
+                    varia habetExemplar = falsum
+                    varia omniaWildcard = verum
+                    ex casus.exemplaria pro exemplar {
+                        habetExemplar = verum
+                        si non exemplar.estWildcard {
+                            omniaWildcard = falsum
+                            rumpe
+                        }
+                    }
+                    si habetExemplar et omniaWildcard {
+                        habetWildcardCasu = verum
+                        rumpe
+                    }
+                }
+
+                si d.discriminantes.longitudo() != 1 {
+                    a.error("discerne omnia requires exactly one discriminant", d.locus)
+                }
+                secus si non habetWildcardCasu {
+                    # Resolve discriminant type name
+                    fixum discriminantTypus = r.expressia(d.discriminantes[0])
+                    varia discretioNomen = nihil qua textus?
+                    discerne discriminantTypus {
+                        casu Usitatum ut u {
+                            discretioNomen = u.nomen
+                        }
+                        casu _ { }
+                    }
+
+                    si nonnihil discretioNomen {
+                        fixum info = a.discretioIndex[discretioNomen qua textus]
+                        si nonnihil info {
+                            varia handled = {} innatum tabula<textus, bivalens>
+                            ex d.casus pro casus {
+                                varia primum = nihil qua VariansExemplar?
+                                ex casus.exemplaria pro exemplar {
+                                    primum = exemplar
+                                    rumpe
+                                }
+                                si nonnihil primum {
+                                    fixum exemplar = primum qua VariansExemplar
+                                    si non exemplar.estWildcard {
+                                        handled[exemplar.variansNomen] = verum
+                                    }
+                                }
+                            }
+
+                            varia missingCount = 0
+                            varia firstMissing = "" qua textus
+                            varia quoted = [] innatum lista<textus>
+                            ex (info qua DiscretioDeclInfo).variantes pro variansInfo {
+                                si nihil handled[variansInfo.nomen] {
+                                    missingCount = missingCount + 1
+                                    si missingCount == 1 {
+                                        firstMissing = variansInfo.nomen
+                                    }
+                                    quoted.adde(scriptum("'§'", variansInfo.nomen))
+                                }
+                            }
+
+                            si missingCount > 0 {
+                                si missingCount == 1 {
+                                    a.error(
+                                        scriptum("Non-exhaustive match in discerne omnia: missing variant '§'", firstMissing),
+                                        d.locus
+                                    )
+                                }
+                                secus {
+                                    a.error(
+                                        scriptum("Non-exhaustive match in discerne omnia: missing variants §", quoted.coniunge(", ")),
+                                        d.locus
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
         casu _ { }

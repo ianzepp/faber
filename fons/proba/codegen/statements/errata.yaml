@@ -349,14 +349,14 @@
         Pending
       }
       functio check(Status s) -> vacuum {
-        discerne s {
+        discerne omnia s {
           casu Active { scribe "active" }
           casu Inactive { scribe "inactive" }
         }
       }
   errata:
       - 'Semantic errors'
-      - 'Non-exhaustive match'
+      - 'Non-exhaustive match in discerne omnia'
       - "missing variant 'Pending'"
 
 - name: S017 missing multiple variants in discerne
@@ -368,13 +368,13 @@
         Quit
       }
       functio handle(Event e) -> vacuum {
-        discerne e {
+        discerne omnia e {
           casu Click pro x, y { scribe x }
         }
       }
   errata:
       - 'Semantic errors'
-      - 'Non-exhaustive match'
+      - 'Non-exhaustive match in discerne omnia'
       - "missing variants"
 
 - name: S017 exhaustive match passes (no error)
@@ -384,7 +384,7 @@
         Failure { textus err }
       }
       functio process(Result r) -> vacuum {
-        discerne r {
+        discerne omnia r {
           casu Success pro m { scribe m }
           casu Failure pro e { mone e }
         }
