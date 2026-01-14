@@ -710,6 +710,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         }
 
         const moduleExports = result.module.exports;
+        const moduleDiscretios = result.module.discretios;
 
         if (node.wildcard) {
             // ex "./utils" importa * - add all exports to scope
@@ -744,6 +745,11 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
                 mutable: false,
                 position: specifier.position,
             });
+
+            const discretioInfo = moduleDiscretios.get(importedName);
+            if (discretioInfo) {
+                discretioIndex.set(localName, discretioInfo);
+            }
         }
     }
 

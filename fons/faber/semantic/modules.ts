@@ -35,6 +35,7 @@ import { resolve, dirname, extname } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { tokenize } from '../tokenizer';
 import { parse } from '../parser';
+import type { DiscretioDeclInfo } from './index';
 import type {
     Program,
     Statement,
@@ -124,6 +125,8 @@ export interface ModuleExport {
 export interface ModuleExports {
     /** Map of export name to export info */
     exports: Map<string, ModuleExport>;
+    /** Discretio declarations by name (ordered variants) */
+    discretios: Map<string, DiscretioDeclInfo>;
     /** The parsed program (for future multi-file codegen) */
     program: Program;
     /** Absolute path to the module file */
@@ -260,6 +263,7 @@ function resolveTypeInModule(node: TypeAnnotation, ctx: ModuleTypeContext): Sema
  */
 export function extractExports(program: Program, filePath: string, importedTypes: Map<string, SemanticType> = new Map()): ModuleExports {
     const exports = new Map<string, ModuleExport>();
+    const discretios = new Map<string, DiscretioDeclInfo>();
 
     // Pass 1: Extract genus/ordo/discretio types first
     // These provide the type context for pactum method signatures
@@ -294,13 +298,23 @@ export function extractExports(program: Program, filePath: string, importedTypes
 
     // Pass 3: Extract full exports using the complete type context
     for (const stmt of program.body) {
+        if (stmt.type === 'DiscretioDeclaration') {
+            discretios.set(stmt.name.name, {
+                name: stmt.name.name,
+                position: stmt.position,
+                variants: stmt.variants.map(variant => ({
+                    name: variant.name.name,
+                    position: variant.position,
+                })),
+            });
+        }
         const extracted = extractStatementExports(stmt, typeCtx);
         for (const exp of extracted) {
             exports.set(exp.name, exp);
         }
     }
 
-    return { exports, program, filePath };
+    return { exports, discretios, program, filePath };
 }
 
 /**
@@ -529,6 +543,7 @@ export function resolveModule(source: string, ctx: ModuleContext): ModuleResult 
             ok: true,
             module: {
                 exports: new Map(),
+                discretios: new Map(),
                 program: null as unknown as Program,
                 filePath: absolutePath,
             },
