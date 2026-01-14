@@ -113,9 +113,10 @@ functio parseEligeSententia(Resolvitor r) -> Sententia {
 # Parse discerne (pattern match) statement
 #
 # GRAMMAR:
-#   discerneStmt := 'discerne' discriminants '{' variantCase* '}'
+#   discerneStmt := 'discerne' discriminants '{' variantCase* defaultCase? '}'
 #   discriminants := expression (',' expression)*
 #   variantCase := 'casu' patterns (block | 'ergo' stmt | 'reddit' expr)
+#   defaultCase := 'ceterum' (block | 'ergo' stmt | 'reddit' expr)
 #   patterns := pattern (',' pattern)*
 #   pattern := '_' | (IDENTIFIER patternBind?)
 #   patternBind := ('ut' IDENTIFIER) | ('pro' IDENTIFIER (',' IDENTIFIER)*)
@@ -174,7 +175,36 @@ functio parseDiscerneSententia(Resolvitor r) -> Sententia {
                 exemplaria: exemplaria,
                 consequens: consequens
             } qua VariansCasus)
-        } secus {
+        }
+        # Check for 'ceterum' (default case) - converted to wildcard patterns
+        sin p.probaVerbum("ceterum") {
+            fixum casusLocus = p.locusActualis()
+            p.procede()  # Consume 'ceterum'
+
+            # Create wildcard patterns (one per discriminant)
+            varia exemplaria = [] innatum lista<VariansExemplar>
+            ex discriminantes pro _ {
+                exemplaria.adde({
+                    locus: casusLocus,
+                    variansNomen: "_",
+                    estWildcard: verum,
+                    alias: nihil qua textus?,
+                    vincula: [] innatum lista<textus>
+                } qua VariansExemplar)
+            }
+
+            # Parse body (supports block, ergo, reddit, iacit)
+            fixum consequens = parseCorpusBrevis(r)
+
+            casus.adde({
+                locus: casusLocus,
+                exemplaria: exemplaria,
+                consequens: consequens
+            } qua VariansCasus)
+
+            rumpe  # Default must be last
+        }
+        secus {
             p.renuncia(ParserErrorCodice.InvalidumDiscerneCasusInitium, scriptum("got '§'", p.specta(0).valor))
             rumpe
         }
