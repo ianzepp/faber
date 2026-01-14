@@ -11,60 +11,76 @@
  */
 
 import type { IncipitStatement } from '../../../parser/ast';
-import type { TsGenerator, CliProgram, CliCommand } from '../generator';
+import type { TsGenerator, CliProgram, CliCommandNode, CliParam } from '../generator';
 
 /**
- * Generate help text for a CLI program.
+ * Generate help text for a command node (shows its children).
  */
-function genHelpText(cli: CliProgram, ind: string): string {
+function genNodeHelp(
+    cli: CliProgram,
+    node: CliCommandNode,
+    pathPrefix: string,
+    ind: string,
+    g: TsGenerator
+): string {
     const lines: string[] = [];
+    const fullCommand = pathPrefix ? `${cli.name} ${pathPrefix}` : cli.name;
 
-    // Header
-    if (cli.version) {
-        lines.push(`console.log("${cli.name} v${cli.version}");`);
-    }
-    else {
-        lines.push(`console.log("${cli.name}");`);
-    }
-
-    if (cli.description) {
-        lines.push(`console.log("${cli.description}");`);
-    }
-
-    lines.push(`console.log("");`);
-    lines.push(`console.log("Usage: ${cli.name} <command> [options]");`);
-    lines.push(`console.log("");`);
-    lines.push(`console.log("Commands:");`);
-
-    // Command list
-    for (const cmd of cli.commands) {
-        const aliasStr = cmd.alias ? `, ${cmd.alias}` : '';
-        lines.push(`console.log("  ${cmd.name}${aliasStr}");`);
+    // Header (only at root level)
+    if (!pathPrefix) {
+        if (cli.version) {
+            lines.push(`${ind}console.log("${cli.name} v${cli.version}");`);
+        }
+        else {
+            lines.push(`${ind}console.log("${cli.name}");`);
+        }
+        if (cli.description) {
+            lines.push(`${ind}console.log("${cli.description}");`);
+        }
+        lines.push(`${ind}console.log("");`);
     }
 
-    lines.push(`console.log("");`);
-    lines.push(`console.log("Options:");`);
-    lines.push(`console.log("  --help, -h     Show this help message");`);
-    if (cli.version) {
-        lines.push(`console.log("  --version, -v  Show version number");`);
+    lines.push(`${ind}console.log("Usage: ${fullCommand} <command> [options]");`);
+    lines.push(`${ind}console.log("");`);
+    lines.push(`${ind}console.log("Commands:");`);
+
+    // List children
+    for (const [name, child] of node.children) {
+        const aliasStr = child.alias ? `, ${child.alias}` : '';
+        const isGroup = child.children.size > 0 && !child.functionName;
+        const suffix = isGroup ? ' ...' : '';
+        lines.push(`${ind}console.log("  ${name}${aliasStr}${suffix}");`);
     }
 
-    return lines.map(l => ind + l).join('\n');
+    lines.push(`${ind}console.log("");`);
+    lines.push(`${ind}console.log("Options:");`);
+    lines.push(`${ind}console.log("  --help, -h     Show this help message");`);
+
+    // Version only at root
+    if (!pathPrefix && cli.version) {
+        lines.push(`${ind}console.log("  --version, -v  Show version number");`);
+    }
+
+    return lines.join('\n');
 }
 
 /**
- * Generate argument parsing for a command.
+ * Generate argument parsing and function call for a leaf command.
  */
-function genCommandCall(cmd: CliCommand, ind: string): string {
+function genLeafCommand(
+    node: CliCommandNode,
+    argsVar: string,
+    startIdx: number,
+    ind: string
+): string {
     const lines: string[] = [];
+    const params = node.params ?? [];
 
-    // Positional params: required, no `si` prefix
-    // Optional params: have `si` prefix, become flags
-    const positionalParams = cmd.params.filter(p => !p.optional);
-    const optionalParams = cmd.params.filter(p => p.optional);
+    const positionalParams = params.filter(p => !p.optional);
+    const optionalParams = params.filter(p => p.optional);
 
     // Declare variables for parsed args
-    for (const p of cmd.params) {
+    for (const p of params) {
         let defaultVal: string;
         if (p.type === 'bivalens') {
             defaultVal = 'false';
@@ -80,15 +96,14 @@ function genCommandCall(cmd: CliCommand, ind: string): string {
         }
 
         const tsType = p.type === 'bivalens' ? 'boolean' : 'string';
-        const nullableType = p.optional && p.type !== 'bivalens' ? ` | undefined` : '';
+        const nullableType = p.optional && p.type !== 'bivalens' ? ' | undefined' : '';
         lines.push(`${ind}let ${p.name}: ${tsType}${nullableType} = ${defaultVal};`);
     }
 
-    lines.push(`${ind}let _argIdx = 1;`);
-    lines.push(`${ind}while (_argIdx < args.length) {`);
-    lines.push(`${ind}  const _arg = args[_argIdx]!;`);
+    lines.push(`${ind}for (let _i = ${startIdx}; _i < ${argsVar}.length; _i++) {`);
+    lines.push(`${ind}  const _arg = ${argsVar}[_i]!;`);
 
-    // Handle optional flags first (so they're consumed before positional handling)
+    // Handle optional flags
     for (const p of optionalParams) {
         const longFlag = `--${p.name}`;
         const shortFlag = p.shortFlag ? `-${p.shortFlag}` : null;
@@ -97,26 +112,25 @@ function genCommandCall(cmd: CliCommand, ind: string): string {
             : `_arg === "${longFlag}"`;
 
         if (p.type === 'bivalens') {
-            lines.push(`${ind}  if (${flagCheck}) { ${p.name} = true; _argIdx++; continue; }`);
+            lines.push(`${ind}  if (${flagCheck}) { ${p.name} = true; continue; }`);
         }
         else {
-            lines.push(`${ind}  if (${flagCheck}) { ${p.name} = args[++_argIdx]; _argIdx++; continue; }`);
+            lines.push(`${ind}  if (${flagCheck}) { ${p.name} = ${argsVar}[++_i]; continue; }`);
         }
     }
 
-    // Handle positional args (only non-optional params)
+    // Handle positional args
     if (positionalParams.length > 0) {
         lines.push(`${ind}  if (!_arg.startsWith("-")) {`);
         for (const p of positionalParams) {
-            lines.push(`${ind}    if (${p.name} === "") { ${p.name} = _arg; _argIdx++; continue; }`);
+            lines.push(`${ind}    if (${p.name} === "") { ${p.name} = _arg; continue; }`);
         }
         lines.push(`${ind}  }`);
     }
 
-    lines.push(`${ind}  _argIdx++;`);
     lines.push(`${ind}}`);
 
-    // Validate required args (only positional/non-optional)
+    // Validate required args
     for (const p of positionalParams) {
         lines.push(`${ind}if (${p.name} === "") {`);
         lines.push(`${ind}  console.error("Missing required argument: ${p.name}");`);
@@ -125,56 +139,93 @@ function genCommandCall(cmd: CliCommand, ind: string): string {
     }
 
     // Call the function
-    const argList = cmd.params.map(p => p.name).join(', ');
-    lines.push(`${ind}${cmd.functionName}(${argList});`);
+    const argList = params.map(p => p.name).join(', ');
+    lines.push(`${ind}${node.functionName}(${argList});`);
 
     return lines.join('\n');
 }
 
 /**
- * Generate CLI dispatcher code.
+ * Generate dispatcher for a command node (recursive).
+ */
+function genNodeDispatcher(
+    cli: CliProgram,
+    node: CliCommandNode,
+    pathPrefix: string,
+    argsVar: string,
+    argIdx: number,
+    ind: string,
+    g: TsGenerator
+): string {
+    const lines: string[] = [];
+    const cmdVar = `_cmd${argIdx}`;
+
+    lines.push(`${ind}const ${cmdVar} = ${argsVar}[${argIdx}];`);
+
+    // Help flag or no command
+    lines.push(`${ind}if (${cmdVar} === "--help" || ${cmdVar} === "-h" || ${cmdVar} === undefined) {`);
+    lines.push(genNodeHelp(cli, node, pathPrefix, ind + g.indent, g));
+    lines.push(`${ind}  process.exit(0);`);
+    lines.push(`${ind}}`);
+
+    // Version flag (only at root)
+    if (!pathPrefix && cli.version) {
+        lines.push(`${ind}if (${cmdVar} === "--version" || ${cmdVar} === "-v") {`);
+        lines.push(`${ind}  console.log("${cli.version}");`);
+        lines.push(`${ind}  process.exit(0);`);
+        lines.push(`${ind}}`);
+    }
+
+    // Command dispatch
+    lines.push(`${ind}switch (${cmdVar}) {`);
+
+    for (const [name, child] of node.children) {
+        // Case labels (include alias if present)
+        if (child.alias) {
+            lines.push(`${ind}  case "${name}":`);
+            lines.push(`${ind}  case "${child.alias}": {`);
+        }
+        else {
+            lines.push(`${ind}  case "${name}": {`);
+        }
+
+        const childPath = pathPrefix ? `${pathPrefix} ${name}` : name;
+
+        if (child.functionName && child.children.size === 0) {
+            // Leaf node - call the function
+            lines.push(genLeafCommand(child, argsVar, argIdx + 1, ind + g.indent + g.indent));
+        }
+        else if (child.children.size > 0) {
+            // Branch node - recurse
+            lines.push(genNodeDispatcher(cli, child, childPath, argsVar, argIdx + 1, ind + g.indent + g.indent, g));
+        }
+
+        lines.push(`${ind}    break;`);
+        lines.push(`${ind}  }`);
+    }
+
+    // Default case
+    const errorContext = pathPrefix ? `${cli.name} ${pathPrefix}` : cli.name;
+    lines.push(`${ind}  default: {`);
+    lines.push(`${ind}    console.error(\`Unknown command: \${${cmdVar}}\`);`);
+    lines.push(`${ind}    console.error("Run '${errorContext} --help' for usage.");`);
+    lines.push(`${ind}    process.exit(1);`);
+    lines.push(`${ind}  }`);
+    lines.push(`${ind}}`);
+
+    return lines.join('\n');
+}
+
+/**
+ * Generate CLI dispatcher code (entry point).
  */
 function genCliDispatcher(cli: CliProgram, g: TsGenerator): string {
     const ind = g.ind();
     const lines: string[] = [];
 
-    lines.push(`${ind}const args = process.argv.slice(2);`);
-    lines.push(`${ind}const command = args[0];`);
+    lines.push(`${ind}const _args = process.argv.slice(2);`);
     lines.push(``);
-
-    // Help flag
-    lines.push(`${ind}if (command === "--help" || command === "-h" || command === undefined) {`);
-    lines.push(genHelpText(cli, ind + g.indent));
-    lines.push(`${ind}  process.exit(0);`);
-    lines.push(`${ind}}`);
-    lines.push(``);
-
-    // Version flag
-    if (cli.version) {
-        lines.push(`${ind}if (command === "--version" || command === "-v") {`);
-        lines.push(`${ind}  console.log("${cli.version}");`);
-        lines.push(`${ind}  process.exit(0);`);
-        lines.push(`${ind}}`);
-        lines.push(``);
-    }
-
-    // Command dispatch
-    lines.push(`${ind}switch (command) {`);
-    for (const cmd of cli.commands) {
-        const cases = cmd.alias
-            ? `case "${cmd.name}":\n${ind}case "${cmd.alias}":`
-            : `case "${cmd.name}":`;
-        lines.push(`${ind}  ${cases} {`);
-        lines.push(genCommandCall(cmd, ind + g.indent + g.indent));
-        lines.push(`${ind}    break;`);
-        lines.push(`${ind}  }`);
-    }
-    lines.push(`${ind}  default: {`);
-    lines.push(`${ind}    console.error(\`Unknown command: \${command}\`);`);
-    lines.push(`${ind}    console.error("Run '${cli.name} --help' for usage.");`);
-    lines.push(`${ind}    process.exit(1);`);
-    lines.push(`${ind}  }`);
-    lines.push(`${ind}}`);
+    lines.push(genNodeDispatcher(cli, cli.root, '', '_args', 0, ind, g));
 
     return lines.join('\n');
 }

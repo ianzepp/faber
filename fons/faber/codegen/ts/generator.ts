@@ -101,18 +101,25 @@ const typeMap: Record<string, string> = {
     ignotum: 'unknown',
 };
 
-/** CLI command metadata collected from @ imperium annotations */
-export interface CliCommand {
+/** CLI command parameter metadata */
+export interface CliParam {
     name: string;
+    type: string;
+    optional: boolean;
+    shortFlag?: string;
+    defaultValue?: string;
+}
+
+/** CLI command tree node - can be a leaf (with handler) or branch (with children) */
+export interface CliCommandNode {
+    name: string;           // This node's name (e.g., "add" in "remote/add")
+    fullPath: string;       // Full path for help text (e.g., "remote/add")
     alias?: string;
-    functionName: string;
-    params: Array<{
-        name: string;
-        type: string;
-        optional: boolean;
-        shortFlag?: string;
-        defaultValue?: string;
-    }>;
+    // Leaf node properties (has a handler function)
+    functionName?: string;
+    params?: CliParam[];
+    // Branch node properties
+    children: Map<string, CliCommandNode>;
 }
 
 /** CLI program metadata collected from @ cli annotations on incipit */
@@ -120,7 +127,7 @@ export interface CliProgram {
     name: string;
     version?: string;
     description?: string;
-    commands: CliCommand[];
+    root: CliCommandNode;   // Tree root containing all commands
 }
 
 export class TsGenerator {
