@@ -1,57 +1,81 @@
-# Type conversion operators
+# Conversio - Type conversion operators
 #
-# Faber provides explicit conversion operators for primitive types:
-#   numeratum  - parse to integer
-#   fractatum  - parse to float
-#   textatum   - convert to string
-#   bivalentum - convert to boolean
-#
-# Optional: vel (nullish coalescing) for fallback on parse failure
+# Demonstrates numeratum, fractatum, textatum, and bivalentum operators
+# for converting between primitive types.
 
-incipit ergo cura arena fit alloc {
-    # numeratum - parse string to integer
-    fixum age = "42" numeratum
-    scribe age  # 42
+incipit {
+    # ==========================================================================
+    # numeratum - Convert to integer
+    # ==========================================================================
 
-    # With fallback on parse failure
-    fixum invalid = "abc" numeratum vel 0
-    scribe invalid  # 0 (parse failed, uses fallback)
+    # Basic string to number
+    fixum n1 = "42" numeratum
+    scribe n1  # 42
 
-    # fractatum - parse string to float
-    fixum price = "19.99" fractatum
-    scribe price  # 19.99
+    # With fallback for invalid input
+    fixum n2 = "invalid" numeratum vel 0
+    scribe n2  # 0
 
-    # With fallback
-    fixum badPrice = "not-a-number" fractatum vel 0.0
-    scribe badPrice  # 0.0
+    # With type parameter for sized integers
+    fixum n3 = "255" numeratum<i32>
+    scribe n3  # 255
 
-    # textatum - convert to string
-    fixum count = 42
-    fixum countStr = count textatum
-    scribe countStr  # "42"
-
-    fixum flag = verum
-    fixum flagStr = flag textatum
-    scribe flagStr  # "true"
-
-    # bivalentum - convert to boolean
-    fixum zero = 0
-    fixum zeroAsBool = zero bivalentum
-    scribe zeroAsBool  # falsum
-
-    fixum nonZero = 42
-    fixum nonZeroAsBool = nonZero bivalentum
-    scribe nonZeroAsBool  # verum
-
-    # Chaining conversions
-    fixum input = "123"
-    fixum doubled = (input numeratum) * 2
-    scribe doubled  # 246
-
-    # Radix types (Hex, Oct, Bin, Dec)
-    fixum hex = "FF" numeratum<Hex>
+    # With radix for hex/octal/binary parsing
+    fixum hex = "ff" numeratum<i32, Hex>
     scribe hex  # 255
 
-    fixum octal = "755" numeratum<Oct>
-    scribe octal  # 493
+    fixum bin = "1010" numeratum<i32, Bin>
+    scribe bin  # 10
+
+    fixum oct = "755" numeratum<i32, Oct>
+    scribe oct  # 493
+
+    # ==========================================================================
+    # fractatum - Convert to float
+    # ==========================================================================
+
+    fixum f1 = "3.14159" fractatum
+    scribe f1  # 3.14159
+
+    fixum f2 = "invalid" fractatum vel 0.0
+    scribe f2  # 0.0
+
+    # ==========================================================================
+    # textatum - Convert to string (infallible)
+    # ==========================================================================
+
+    fixum s1 = 42 textatum
+    scribe s1  # "42"
+
+    fixum s2 = 3.14 textatum
+    scribe s2  # "3.14"
+
+    fixum s3 = verum textatum
+    scribe s3  # "true"
+
+    # ==========================================================================
+    # bivalentum - Convert to boolean (truthiness)
+    # ==========================================================================
+
+    # Numbers: 0 is falsum, non-zero is verum
+    fixum b1 = 0 bivalentum
+    fixum b2 = 42 bivalentum
+    scribe b1, b2  # false, true
+
+    # Strings: empty is falsum, non-empty is verum
+    fixum b3 = "" bivalentum
+    fixum b4 = "hello" bivalentum
+    scribe b3, b4  # false, true
+
+    # ==========================================================================
+    # Chaining conversions
+    # ==========================================================================
+
+    # Parse then format back
+    fixum roundtrip = "42" numeratum textatum
+    scribe roundtrip  # "42"
+
+    # Parse with fallback, then check truthiness
+    fixum hasValue = "123" numeratum vel 0 bivalentum
+    scribe hasValue  # true
 }
