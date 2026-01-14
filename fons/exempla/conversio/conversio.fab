@@ -76,6 +76,6 @@ incipit {
     scribe roundtrip  # "42"
 
     # Parse with fallback, then check truthiness
-    fixum hasValue = "123" numeratum vel 0 bivalentum
+    fixum hasValue = ("123" numeratum vel 0) bivalentum
     scribe hasValue  # true
 }
