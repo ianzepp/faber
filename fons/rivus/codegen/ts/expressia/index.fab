@@ -26,6 +26,9 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
     discerne expr {
         # Identifiers
         casu Nomen ut e {
+            si g.inAbUbi {
+                redde scriptum("§.§", g.abUbiParam, e.valor)
+            }
             redde e.valor qua textus
         }
 
@@ -458,7 +461,13 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
             varia condicio = ""
 
             si filtrum.habetUbi {
+                fixum priorInAbUbi = g.inAbUbi
+                fixum priorParam = g.abUbiParam
+                g.inAbUbi = verum
+                g.abUbiParam = param
                 condicio = genExpressia(filtrum.condicio, g)
+                g.inAbUbi = priorInAbUbi
+                g.abUbiParam = priorParam
             } secus {
                 condicio = scriptum("§.§", param, genExpressia(filtrum.condicio, g))
             }

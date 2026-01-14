@@ -43,6 +43,12 @@ genus TsGenerator {
     # Current function-scope tabula names (for Map get/set lowering)
     lista<textus> tabulaNominata
 
+    # Whether we're generating an `ab ... ubi` filter predicate
+    bivalens inAbUbi
+
+    # Name of the implicit filter element variable (usually "_x")
+    textus abUbiParam
+
     # Features used that need preamble setup
     RequiredFeatures requisita
 
@@ -111,6 +117,8 @@ functio creaTsGenerator() -> TsGenerator {
         inFiet: falsum,
         inFient: falsum,
         inGenere: falsum,
+        inAbUbi: falsum,
+        abUbiParam: "_x",
         requisita: creaRequiredFeatures(),
         tabulaNominata: [] innatum lista<textus>
     }
@@ -128,6 +136,8 @@ functio creaTsGeneratorCum(textus indentum) -> TsGenerator {
         inFiet: falsum,
         inFient: falsum,
         inGenere: falsum,
+        inAbUbi: falsum,
+        abUbiParam: "_x",
         requisita: creaRequiredFeatures(),
         tabulaNominata: [] innatum lista<textus>
     }
