@@ -12,7 +12,7 @@
 # - Feature keys match capability structure hierarchy
 
 ex "../ast/positio" importa Locus
-ex "../ast/sententia" importa Sententia, FunctioDeclaratio
+ex "../ast/sententia" importa Sententia
 ex "../ast/expressia" importa Expressia, ObiectumProprietas
 
 # =============================================================================
