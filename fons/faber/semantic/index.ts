@@ -2724,38 +2724,47 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             exitScope();
         }
 
-        // Exhaustiveness check
-        // For single discriminant: all variants must be handled (or have ceterum/wildcard)
-        // For multi-discriminant: require wildcard catch-all or ceterum
-        const hasDefaultCase = !!node.defaultCase;
-
-        if (numDiscriminants === 1) {
-            const discretio = discretios[0];
-            if (discretio && !hasWildcardCatchAll && !hasDefaultCase) {
-                const allVariants = Array.from(discretio.variants.keys());
-                const missingVariants = allVariants.filter(v => !handledVariants.has(v));
-
-                if (missingVariants.length > 0) {
-                    const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.NonExhaustiveMatch];
-                    error(
-                        `${text(missingVariants)}
-${help}`,
-                        node.position,
-                    );
-                }
-            }
-        } else {
-            // Multi-discriminant: for now, just require wildcard catch-all or ceterum
-            // Full Cartesian product exhaustiveness checking is complex
-            if (!hasWildcardCatchAll && !hasDefaultCase) {
-                const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.NonExhaustiveMatch];
-                error(
-                    `${text(['_', '_'])}
-${help}`,
-                    node.position,
-                );
-            }
+        if (!node.exhaustive) {
+            return;
         }
+
+        if (numDiscriminants !== 1) {
+            error('discerne omnia requires exactly one discriminant', node.position);
+            return;
+        }
+
+        if (node.defaultCase || hasWildcardCatchAll) {
+            return;
+        }
+
+        const discriminantType = discriminantTypes[0] ?? UNKNOWN;
+        let discretioName: string | null = null;
+
+        if (discriminantType.kind === 'discretio') {
+            discretioName = discriminantType.name;
+        } else if (discriminantType.kind === 'user') {
+            discretioName = discriminantType.name;
+        }
+
+        if (!discretioName) {
+            return;
+        }
+
+        const discretioInfo = discretioIndex.get(discretioName);
+        if (!discretioInfo) {
+            return;
+        }
+
+        const missingVariants = discretioInfo.variants.map(v => v.name).filter(v => !handledVariants.has(v));
+        if (missingVariants.length === 0) {
+            return;
+        }
+
+        const missingText =
+            missingVariants.length === 1
+                ? `missing variant '${missingVariants[0]}'`
+                : `missing variants ${missingVariants.map(v => `'${v}'`).join(', ')}`;
+        error(`Non-exhaustive match in discerne omnia: ${missingText}`, node.position);
     }
 
     function analyzeCustodiStatement(node: CustodiStatement): void {
