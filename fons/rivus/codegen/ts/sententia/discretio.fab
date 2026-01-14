@@ -39,5 +39,13 @@ functio genDiscretio(textus nomen, ignotum generaParametra, lista<VariansDeclara
         variants.adde(member)
     }
 
-    redde scriptum("§§type §§ = §;", g.ind(), exportPrefix, nomen, params, variants.coniunge(" | "))
+    fixum unionType = scriptum("§§type §§ = §;", g.ind(), exportPrefix, nomen, params, variants.coniunge(" | "))
+
+    # Generate extracted variant types so they can be used as standalone types
+    varia variantTypes = [] innatum lista<textus>
+    ex variantes pro varians {
+        variantTypes.adde(scriptum("§§type § = Extract<§, { tag: '§' }>;", g.ind(), exportPrefix, varians.nomen, nomen, varians.nomen))
+    }
+
+    redde ([unionType] + variantTypes).coniunge("\n")
 }

@@ -26,6 +26,9 @@
           - "{ tag: 'Active' }"
           - "{ tag: 'Inactive' }"
           - "{ tag: 'Pending' }"
+          - "type Active = Extract<Status, { tag: 'Active' }>"
+          - "type Inactive = Extract<Status, { tag: 'Inactive' }>"
+          - "type Pending = Extract<Status, { tag: 'Pending' }>"
       py:
           - '@dataclass'
           - 'class Status_Active:'
@@ -72,6 +75,9 @@
           - "{ tag: 'Click'; x: number; y: number }"
           - "{ tag: 'Keypress'; key: string }"
           - "{ tag: 'Quit' }"
+          - "type Click = Extract<Event, { tag: 'Click' }>"
+          - "type Keypress = Extract<Event, { tag: 'Keypress' }>"
+          - "type Quit = Extract<Event, { tag: 'Quit' }>"
       py:
           - '@dataclass'
           - 'class Event_Click:'

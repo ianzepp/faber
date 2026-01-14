@@ -44,5 +44,13 @@ export function genDiscretioDeclaration(node: DiscretioDeclaration, g: TsGenerat
         return `{ tag: '${variantName}'; ${fields.join('; ')} }`;
     });
 
-    return `${g.ind()}${exportMod}type ${name}${typeParams} = ${variants.join(' | ')};`;
+    const unionType = `${g.ind()}${exportMod}type ${name}${typeParams} = ${variants.join(' | ')};`;
+
+    // Generate extracted variant types so they can be used as standalone types
+    const variantTypes = node.variants.map(variant => {
+        const variantName = variant.name.name;
+        return `${g.ind()}${exportMod}type ${variantName} = Extract<${name}, { tag: '${variantName}' }>;`;
+    });
+
+    return [unionType, ...variantTypes].join('\n');
 }
