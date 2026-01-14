@@ -104,6 +104,38 @@ functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
 
     # Parse parameters
     p.expecta(SymbolumGenus.ParensSin, ParserErrorCodice.ExpectaturParensSin)
+
+    # Optional generic parameters inside parameter list: (prae typus T, ...)
+    varia parenGenera = [] innatum lista<TypusParametrum>
+    dum p.probaVerbum("prae") {
+        p.procede()
+        p.expectaVerbum("typus", ParserErrorCodice.ExpectaturTypus)
+
+        fixum paramLocus = p.locusActualis()
+        fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        parenGenera.adde({
+            locus: paramLocus,
+            nomen: nomenSym.valor
+        } qua TypusParametrum)
+
+        si p.congruet(SymbolumGenus.Coma) {
+            si p.probaVerbum("prae") {
+                perge
+            }
+        }
+        rumpe
+    }
+
+    si parenGenera.longitudo() > 0 {
+        si nihil generaParametra {
+            generaParametra = parenGenera
+        } secus {
+            ex parenGenera pro g {
+                (generaParametra qua lista<TypusParametrum>).adde(g)
+            }
+        }
+    }
+
     fixum parametra = parseParametra(r)
     p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
 
