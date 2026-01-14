@@ -98,9 +98,16 @@ functio genExpressia(Expressia expr, GoGenerator g) -> textus {
             redde scriptum("func() interface{} { if § { return § }; return § }()", cond, cons, alt)
         }
 
-        # Fallback for unimplemented expression types
+        # Assignment expression
+        casu AssignatioExpressia ut e {
+            fixum sinister = genExpressia(e.sinister, g)
+            fixum dexter = genExpressia(e.dexter, g)
+            redde scriptum("§ § §", sinister, e.signum, dexter)
+        }
+
+        # Fail on unimplemented expression types
         ceterum {
-            redde scriptum("/* TODO: unhandled expression: § */", expr.tag)
+            iace scriptum("Go codegen: unsupported expression type '§'", expr.tag)
         }
     }
 }

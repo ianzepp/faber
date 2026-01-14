@@ -2,7 +2,7 @@
 #
 # Routes statement AST nodes to their specific generators.
 
-ex "../../../ast/sententia" importa Sententia, Parametrum, ScribeGradus
+ex "../../../ast/sententia" importa Sententia, Parametrum, ScribeGradus, VariaGenus, IteratioGenus
 ex "../../../ast/expressia" importa Expressia
 ex "../nucleus" importa GoGenerator
 ex "../expressia/index" importa genExpressia
@@ -10,6 +10,11 @@ ex "./functio" importa genFunctio, genParametrum
 ex "./scribe" importa genScribe
 ex "./redde" importa genRedde
 ex "./incipit" importa genIncipit, genIncipiet
+ex "./varia" importa genVaria
+ex "./si" importa genSi
+ex "./dum" importa genDum
+ex "./iteratio" importa genIteratio
+ex "./fac" importa genFac
 
 # =============================================================================
 # STATEMENT DISPATCH
@@ -27,6 +32,11 @@ functio genSententia(Sententia stmt, GoGenerator g) -> textus {
         # Function declaration
         casu FunctioDeclaratio ut f {
             redde genFunctio(f.nomen qua textus, f.generaParametra, f.parametra qua lista<Parametrum>, f.reddeVerbum, f.typusReditus, f.corpus, f.asynca qua bivalens, f.generator qua bivalens, f.structor qua bivalens, f.visibilitas, f.abstracta qua bivalens, f.externa qua bivalens, g)
+        }
+
+        # Variable declaration
+        casu VariaSententia ut v {
+            redde genVaria(v.species qua VariaGenus, v.nomen qua textus, v.typus, v.valor, v.externa qua bivalens, v.visibilitas, g)
         }
 
         # Actions
@@ -67,9 +77,26 @@ functio genSententia(Sententia stmt, GoGenerator g) -> textus {
             redde genSententia(s.corpus qua Sententia, g)
         }
 
-        # Fallback for unimplemented statement types
+        # Control flow
+        casu SiSententia ut s {
+            redde genSi(s.condicio qua Expressia, s.consequens qua Sententia, s.alternans, g)
+        }
+
+        casu DumSententia ut s {
+            redde genDum(s.condicio qua Expressia, s.corpus qua Sententia, g)
+        }
+
+        casu IteratioSententia ut s {
+            redde genIteratio(s.species qua IteratioGenus, s.variabilis qua textus, s.iterabile qua Expressia, s.corpus qua Sententia, g)
+        }
+
+        casu FacSententia ut s {
+            redde genFac(s.corpus qua Sententia, s.condicio, g)
+        }
+
+        # Fail on unimplemented statement types
         ceterum {
-            redde scriptum("§// TODO: unhandled statement: §", g.ind(), stmt.tag)
+            iace scriptum("Go codegen: unsupported statement type '§'", stmt.tag)
         }
     }
 }
