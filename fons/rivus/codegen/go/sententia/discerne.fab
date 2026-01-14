@@ -1,17 +1,17 @@
 # Go Statement Generator - Discerne (Variant Matching)
 #
-# Generates switch statements for discriminated union matching.
-# Assumes discretio types are generated with a Tag field.
+# Generates Go type switches for discriminated union matching.
+# Uses idiomatic Go interface-based tagged unions.
 #
 # TRANSFORMS:
-#   discerne x { casu A {...} }             -> switch x.Tag { case "A": ... }
-#   discerne x { casu B ut b {...} }        -> switch x.Tag { case "B": b := x; ... }
-#   discerne x { casu C pro a, b {...} }    -> switch x.Tag { case "C": a := x.A; b := x.B; ... }
+#   discerne x { casu A {...} }             -> switch _v := x.(type) { case A: ... }
+#   discerne x { casu B ut b {...} }        -> switch _v := x.(type) { case B: b := _v; ... }
+#   discerne x { casu C pro a, b {...} }    -> switch _v := x.(type) { case C: a := _v.A; b := _v.B; ... }
 #   discerne x { casu _ {...} }             -> default: ...
 #
 #   Multi-discriminant:
 #   discerne a, b { casu X ut x, Y ut y {...} }
-#     -> if a.Tag == "X" && b.Tag == "Y" { x := a; y := b; ... }
+#     -> _a, aOk := a.(X); _b, bOk := b.(Y); if aOk && bOk { x := _a; y := _b; ... }
 
 ex "../../../ast/sententia" importa Sententia, VariansCasus, VariansExemplar
 ex "../../../ast/expressia" importa Expressia
@@ -27,18 +27,36 @@ functio genDiscerne(lista<Expressia> discriminantes, lista<VariansCasus> casus, 
         discriminantStrs.adde(genExpressia(d, g))
     }
 
-    # Single discriminant: use switch
+    # Single discriminant: use type switch
     si discriminantStrs.longitudo() == 1 {
         redde genDiscerneSimplex(discriminantStrs[0], casus, g)
     }
 
-    # Multi-discriminant: use if/else chain (can't use switch with multiple values)
+    # Multi-discriminant: use type assertions with if/else
     redde genDiscerneMultiplex(discriminantStrs, casus, g)
 }
 
-# Single discriminant: generates Go switch statement
+# Single discriminant: generates Go type switch
 functio genDiscerneSimplex(textus discriminant, lista<VariansCasus> casus, GoGenerator g) -> textus {
-    varia result = scriptum("§switch §.Tag {\n", g.ind(), discriminant)
+    # Check if any case uses bindings (alias or field extraction)
+    varia needsBinding = falsum
+    ex casus pro c {
+        fixum pattern = c.exemplaria[0]
+        si non pattern.estWildcard {
+            si nonnihil pattern.alias aut pattern.vincula.longitudo() > 0 {
+                needsBinding = verum
+                rumpe
+            }
+        }
+    }
+
+    # Go type switch: switch _v := x.(type) or switch x.(type) if no bindings needed
+    varia result = ""
+    si needsBinding {
+        result = scriptum("§switch _v := §.(type) {\n", g.ind(), discriminant)
+    } secus {
+        result = scriptum("§switch §.(type) {\n", g.ind(), discriminant)
+    }
 
     ex casus pro c {
         fixum pattern = c.exemplaria[0]
@@ -46,14 +64,14 @@ functio genDiscerneSimplex(textus discriminant, lista<VariansCasus> casus, GoGen
         si pattern.estWildcard {
             result = scriptum("§§default:\n", result, g.ind())
         } secus {
-            result = scriptum("§§case \"§\":\n", result, g.ind(), pattern.variansNomen)
+            result = scriptum("§§case §:\n", result, g.ind(), pattern.variansNomen)
         }
 
         g.intraProfundum()
 
-        # Generate bindings
+        # Generate bindings (use _v as the typed value)
         si non pattern.estWildcard {
-            result = scriptum("§§", result, genPatternBindings(pattern, discriminant, g))
+            result = scriptum("§§", result, genPatternBindingsTypeSwitch(pattern, g))
         }
 
         # Generate body
@@ -61,37 +79,73 @@ functio genDiscerneSimplex(textus discriminant, lista<VariansCasus> casus, GoGen
         g.exiProfundum()
     }
 
+    # Check if we have a default case (wildcard)
+    varia hasDefault = falsum
+    ex casus pro c {
+        si c.exemplaria[0].estWildcard {
+            hasDefault = verum
+            rumpe
+        }
+    }
+
+    # Add implicit default panic if no default case (for Go's exhaustiveness check)
+    si non hasDefault {
+        result = scriptum("§§default:\n", result, g.ind())
+        g.intraProfundum()
+        result = scriptum("§§panic(\"unhandled case\")\n", result, g.ind())
+        g.exiProfundum()
+    }
+
     result = scriptum("§§}", result, g.ind())
     redde result
 }
 
-# Multi-discriminant: generates if/else chain
+# Multi-discriminant: generates type assertions with if/else chain
 functio genDiscerneMultiplex(lista<textus> discriminantStrs, lista<VariansCasus> casus, GoGenerator g) -> textus {
     varia result = ""
     varia first = verum
 
     ex casus pro c {
-        # Build combined condition for all patterns
-        varia conditions = [] innatum lista<textus>
-        varia i = 0
+        # Check if all patterns are wildcards
+        varia allWildcards = verum
         ex c.exemplaria pro pattern {
             si non pattern.estWildcard {
-                fixum disc = discriminantStrs[i]
-                conditions.adde(scriptum("§.Tag == \"§\"", disc, pattern.variansNomen))
+                allWildcards = falsum
+                rumpe
             }
-            i += 1
         }
 
-        # Generate condition or default
-        si conditions.longitudo() == 0 {
-            # All wildcards - else block
+        si allWildcards {
+            # All wildcards - else block (no assertions needed)
             si first {
                 result = scriptum("§{\n", g.ind())
             } secus {
                 result = scriptum("§ else {\n", result)
             }
         } secus {
-            fixum condition = conditions.coniunge(" && ")
+            # Generate type assertions for each non-wildcard pattern
+            varia assertions = [] innatum lista<textus>
+            varia okVars = [] innatum lista<textus>
+            varia i = 0
+
+            ex c.exemplaria pro pattern {
+                si non pattern.estWildcard {
+                    fixum disc = discriminantStrs[i]
+                    fixum tempVar = scriptum("_d§", i)
+                    fixum okVar = scriptum("_ok§", i)
+                    assertions.adde(scriptum("§§, § := §.(§)", g.ind(), tempVar, okVar, disc, pattern.variansNomen))
+                    okVars.adde(okVar)
+                }
+                i += 1
+            }
+
+            # Add assertions before the if
+            ex assertions pro assertion {
+                result = scriptum("§§\n", result, assertion)
+            }
+
+            # Generate if condition
+            fixum condition = okVars.coniunge(" && ")
             si first {
                 result = scriptum("§if § {\n", g.ind(), condition)
                 first = falsum
@@ -106,8 +160,8 @@ functio genDiscerneMultiplex(lista<textus> discriminantStrs, lista<VariansCasus>
         varia j = 0
         ex c.exemplaria pro pattern {
             si non pattern.estWildcard {
-                fixum disc = discriminantStrs[j]
-                result = scriptum("§§", result, genPatternBindings(pattern, disc, g))
+                fixum tempVar = scriptum("_d§", j)
+                result = scriptum("§§", result, genPatternBindingsMulti(pattern, tempVar, g))
             }
             j += 1
         }
@@ -121,21 +175,41 @@ functio genDiscerneMultiplex(lista<textus> discriminantStrs, lista<VariansCasus>
     redde result
 }
 
-# Generate bindings for a single pattern
-functio genPatternBindings(VariansExemplar pattern, textus discriminant, GoGenerator g) -> textus {
+# Generate bindings for type switch (single discriminant)
+# The typed value is available as _v
+functio genPatternBindingsTypeSwitch(VariansExemplar pattern, GoGenerator g) -> textus {
     varia result = ""
 
-    # Alias binding: casu Click ut c -> c := discriminant
+    # Alias binding: casu Click ut c -> c := _v
     si nonnihil pattern.alias {
-        result = scriptum("§§ := §\n", g.ind(), pattern.alias, discriminant)
+        result = scriptum("§§ := _v\n", g.ind(), pattern.alias)
     }
 
-    # Field bindings: casu Click pro x, y -> x := discriminant.X; y := discriminant.Y
-    # Go fields are capitalized, so we capitalize the first letter
+    # Field bindings: casu Click pro x, y -> x := _v.X; y := _v.Y
     si pattern.vincula.longitudo() > 0 {
         ex pattern.vincula pro vinculum {
             fixum fieldName = capitaliza(vinculum)
-            result = scriptum("§§§ := §.§\n", result, g.ind(), vinculum, discriminant, fieldName)
+            result = scriptum("§§§ := _v.§\n", result, g.ind(), vinculum, fieldName)
+        }
+    }
+
+    redde result
+}
+
+# Generate bindings for multi-discriminant (type assertions)
+functio genPatternBindingsMulti(VariansExemplar pattern, textus tempVar, GoGenerator g) -> textus {
+    varia result = ""
+
+    # Alias binding: casu Click ut c -> c := _dN
+    si nonnihil pattern.alias {
+        result = scriptum("§§ := §\n", g.ind(), pattern.alias, tempVar)
+    }
+
+    # Field bindings: casu Click pro x, y -> x := _dN.X; y := _dN.Y
+    si pattern.vincula.longitudo() > 0 {
+        ex pattern.vincula pro vinculum {
+            fixum fieldName = capitaliza(vinculum)
+            result = scriptum("§§§ := §.§\n", result, g.ind(), vinculum, tempVar, fieldName)
         }
     }
 

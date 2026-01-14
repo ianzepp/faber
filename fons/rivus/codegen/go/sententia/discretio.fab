@@ -1,0 +1,75 @@
+# Go Statement Generator - Discretio (Tagged Unions)
+#
+# Generates Go interface + struct types for discriminated unions.
+#
+# TRANSFORMS:
+#   discretio Event { Click { numerus x, numerus y }, Quit }
+#   ->
+#   type Event interface {
+#       isEvent()
+#   }
+#   type Click struct {
+#       X int64
+#       Y int64
+#   }
+#   func (Click) isEvent() {}
+#   type Quit struct{}
+#   func (Quit) isEvent() {}
+
+ex "../../../ast/sententia" importa VariansDeclaratio, Visibilitas
+ex "../nucleus" importa GoGenerator
+ex "../typus" importa genTypus
+
+@ publica
+functio genDiscretio(textus nomen, ignotum generaParametra, lista<VariansDeclaratio> variantes, ignotum visibilitas, GoGenerator g) -> textus {
+    varia lines = [] innatum lista<textus>
+
+    # Generate marker method name (lowercase for unexported)
+    fixum markerMethod = scriptum("is§", nomen)
+
+    # Generate interface type
+    lines.adde(scriptum("§type § interface {", g.ind(), nomen))
+    g.intraProfundum()
+    lines.adde(scriptum("§§()", g.ind(), markerMethod))
+    g.exiProfundum()
+    lines.adde(scriptum("§}", g.ind()))
+
+    # Generate struct types and marker implementations for each variant
+    ex variantes pro varians {
+        lines.adde("")  # Blank line between types
+
+        si varians.campi.longitudo() == 0 {
+            # Unit variant: empty struct
+            lines.adde(scriptum("§type § struct{}", g.ind(), varians.nomen))
+        } secus {
+            # Variant with fields
+            lines.adde(scriptum("§type § struct {", g.ind(), varians.nomen))
+            g.intraProfundum()
+            ex varians.campi pro campus {
+                fixum fieldName = capitaliza(campus.nomen)
+                fixum fieldType = genTypus(campus.typus, g)
+                lines.adde(scriptum("§§ §", g.ind(), fieldName, fieldType))
+            }
+            g.exiProfundum()
+            lines.adde(scriptum("§}", g.ind()))
+        }
+
+        # Marker method implementation
+        lines.adde(scriptum("§func (§) §() {}", g.ind(), varians.nomen, markerMethod))
+    }
+
+    redde lines.coniunge("\n")
+}
+
+# Capitalize first letter for Go field names
+functio capitaliza(textus s) -> textus {
+    si s.longitudo() == 0 {
+        redde s
+    }
+    fixum primum = s.sectio(0, 1) qua textus
+    fixum first = primum.maiuscula()
+    si s.longitudo() == 1 {
+        redde first
+    }
+    redde scriptum("§§", first, s.sectio(1, s.longitudo()))
+}

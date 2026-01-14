@@ -19,7 +19,7 @@ functio mappaNomenTypi(textus nomen) -> textus {
         casu "fractus" reddit "float64"
         casu "bivalens" reddit "bool"
         casu "vacuum" reddit ""
-        casu "nihil" reddit "nil"
+        casu "nihil" reddit ""  # void return type
 
         # Binary
         casu "octeti" reddit "[]byte"

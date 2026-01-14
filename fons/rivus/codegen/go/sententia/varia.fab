@@ -1,10 +1,14 @@
 # Go Statement Generator - Variable Declarations
 #
 # TRANSFORMS:
-#   varia x = 5           -> var x = 5       (or x := 5 inside functions)
-#   fixum y = "hello"     -> const y = "hello"
+#   varia x = 5           -> var x = 5
+#   fixum y = "hello"     -> var y = "hello"  (Go const is limited to primitives)
 #   varia numerus x = 5   -> var x int64 = 5
-#   @ externa fixum z     -> // extern: z    (Go has no declare syntax)
+#   @ externa fixum z     -> // extern: z     (Go has no declare syntax)
+#
+# NOTE: Go's const only supports untyped constants (numbers, strings, bools).
+# Struct literals, slices, maps, etc. cannot be const. We use var for all
+# declarations to ensure compatibility with any value type.
 
 ex "../../../ast/sententia" importa VariaGenus, Visibilitas
 ex "../../../ast/expressia" importa Expressia
@@ -20,24 +24,7 @@ functio genVaria(VariaGenus species, textus nomen, ignotum adnotatioTypus, ignot
         redde scriptum("§// extern: §", g.ind(), nomen)
     }
 
-    # Constants use const keyword
-    si species == VariaGenus.Fixum aut species == VariaGenus.Figendum {
-        varia result = scriptum("§const §", g.ind(), nomen)
-
-        # Type annotation (optional for const with initializer)
-        si nonnihil adnotatioTypus {
-            result = scriptum("§ §", result, genTypus(adnotatioTypus qua TypusAnnotatio, g))
-        }
-
-        # Value (required for const in Go)
-        si nonnihil valor {
-            result = scriptum("§ = §", result, genExpressia(valor qua Expressia, g))
-        }
-
-        redde result
-    }
-
-    # Variables use var keyword
+    # All declarations use var (Go's const is too limited for general use)
     varia result = scriptum("§var §", g.ind(), nomen)
 
     # Type annotation

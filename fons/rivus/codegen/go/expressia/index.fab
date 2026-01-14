@@ -2,7 +2,7 @@
 #
 # Routes expression AST nodes to their specific generators.
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus
+ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas
 ex "../nucleus" importa GoGenerator
 ex "./littera" importa genLittera
 ex "./scriptum" importa genScriptum
@@ -105,9 +105,38 @@ functio genExpressia(Expressia expr, GoGenerator g) -> textus {
             redde scriptum("§ § §", sinister, e.signum, dexter)
         }
 
+        # Discretio construction
+        casu FingeExpressia ut e {
+            # finge Click { x: 10, y: 20 } -> Click{X: 10, Y: 20}
+            varia props = [] innatum lista<textus>
+            ex (e.campi qua lista<ObiectumProprietas>) pro campo {
+                fixum key = genExpressia(campo.clavis, g)
+                fixum keyCapitalized = capitaliza(key)
+                fixum val = genExpressia(campo.valor, g)
+                props.adde(scriptum("§: §", keyCapitalized, val))
+            }
+            si props.longitudo() == 0 {
+                redde scriptum("§{}", e.variansNomen)
+            }
+            redde scriptum("§{§}", e.variansNomen, props.coniunge(", "))
+        }
+
         # Fail on unimplemented expression types
         ceterum {
             iace scriptum("Go codegen: unsupported expression type '§'", expr.tag)
         }
     }
+}
+
+# Capitalize first letter for Go field names
+functio capitaliza(textus s) -> textus {
+    si s.longitudo() == 0 {
+        redde s
+    }
+    fixum primum = s.sectio(0, 1) qua textus
+    fixum first = primum.maiuscula()
+    si s.longitudo() == 1 {
+        redde first
+    }
+    redde scriptum("§§", first, s.sectio(1, s.longitudo()))
 }
