@@ -3,7 +3,7 @@
 # Performs semantic analysis on the AST. Resolves types, builds symbol tables.
 
 ex "./resolvitor" importa Resolvitor
-ex "./nucleus" importa Analyzator, SemanticResultatum, novumAnalyzator
+ex "./nucleus" importa Analyzator, SemanticResultatum, novumAnalyzator, DiscretioDeclInfo
 ex "./typi" importa SemanticTypus, IGNOTUM, VACUUM, functioTypus, usitatumTypus
 ex "./scopus" importa Symbolum, SymbolumSpecies
 ex "./modulus" importa estLocaleImportum, estNormaImportum, resolveModulum, ModulusExportum
@@ -249,6 +249,11 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                                         mutabilis: falsum,
                                         locus: spec.locus
                                     } qua Symbolum)
+
+                                    # Record discretio metadata under the local alias, if present.
+                                    si nonnihil modulus.discretiones[spec.importatum] {
+                                        a.discretioIndex[spec.locale] = modulus.discretiones[spec.importatum] qua DiscretioDeclInfo
+                                    }
 
                                     # WHY: If a discretio type is imported by name, also import its
                                     # variant types as `LocalName.VariansNomen` so `discerne` can

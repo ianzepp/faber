@@ -12,6 +12,7 @@
 ex "./typi" importa SemanticTypus, IGNOTUM, VACUUM, functioTypus, usitatumTypus, pactumTypus
 ex "./typi" importa genusTypus, genericumTypus, primitivumTypus
 ex "./scopus" importa SymbolumSpecies
+ex "./nucleus" importa DiscretioDeclInfo, DiscretioVariansInfo
 ex "../ast/positio" importa Locus
 ex "../ast/radix" importa Programma
 ex "../ast/sententia" importa Sententia
@@ -52,6 +53,7 @@ genus ModulusExportum {
 @ publicum
 genus ModulusResolutum {
     tabula<textus, ModulusExportum> exporta    # map of name -> export info
+    tabula<textus, DiscretioDeclInfo> discretiones # map of name -> discretio info
     textus via                                  # absolute file path
     Programma? programma                        # parsed AST (for future multi-file codegen)
 }
@@ -147,6 +149,7 @@ functio resolveTypusShallow(TypusAnnotatio annotatio) -> SemanticTypus {
 @ publica
 functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
     varia exporta = {} innatum tabula<textus, ModulusExportum>
+    varia discretiones = {} innatum tabula<textus, DiscretioDeclInfo>
 
     ex programma.corpus pro stmt {
         discerne stmt {
@@ -234,6 +237,19 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                     locus: d.locus
                 } qua ModulusExportum
 
+                varia variantInfos = [] innatum lista<DiscretioVariansInfo>
+                ex d.variantes pro variante {
+                    variantInfos.adde({
+                        nomen: variante.nomen,
+                        locus: variante.locus
+                    } qua DiscretioVariansInfo)
+                }
+                discretiones[d.nomen] = {
+                    nomen: d.nomen,
+                    locus: d.locus,
+                    variantes: variantInfos
+                } qua DiscretioDeclInfo
+
                 # WHY: Pattern matching (`discerne`) expects variant types to be resolvable as
                 # `DiscretioNomen.VariansNomen`, even across module boundaries.
                 ex d.variantes pro variante {
@@ -283,6 +299,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
 
     redde {
         exporta: exporta,
+        discretiones: discretiones,
         via: via,
         programma: programma
     } qua ModulusResolutum
@@ -325,6 +342,7 @@ functio resolveModulum(
     si inProgressu.has(via) {
         redde {
             exporta: {} innatum tabula<textus, ModulusExportum>,
+            discretiones: {} innatum tabula<textus, DiscretioDeclInfo>,
             via: via,
             programma: nihil
         } qua ModulusResolutum
