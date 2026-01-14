@@ -76,7 +76,7 @@ functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
 
     # Parse optional curata NAME binding (allocator for Zig, ignored for other targets)
     varia curatorNomen = nihil qua textus?
-    si p.probaVerbum("curata") {
+    si p.congruetVerbum("curata") {
         fixum curatorSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
         curatorNomen = curatorSym.valor
     }
