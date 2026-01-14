@@ -1263,6 +1263,7 @@ export interface IncipitStatement extends BaseNode {
     type: 'IncipitStatement';
     body?: BlockStatement;
     ergoStatement?: Statement;
+    annotations?: Annotation[];
 }
 
 /**

@@ -101,6 +101,28 @@ const typeMap: Record<string, string> = {
     ignotum: 'unknown',
 };
 
+/** CLI command metadata collected from @ imperium annotations */
+export interface CliCommand {
+    name: string;
+    alias?: string;
+    functionName: string;
+    params: Array<{
+        name: string;
+        type: string;
+        optional: boolean;
+        shortFlag?: string;
+        defaultValue?: string;
+    }>;
+}
+
+/** CLI program metadata collected from @ cli annotations on incipit */
+export interface CliProgram {
+    name: string;
+    version?: string;
+    description?: string;
+    commands: CliCommand[];
+}
+
 export class TsGenerator {
     depth = 0;
     inGenerator = false;
@@ -113,6 +135,9 @@ export class TsGenerator {
     features: RequiredFeatures;
     semi: boolean;
     codegenErrors: Array<{ message: string; position?: Position }> = [];
+
+    // CLI codegen state
+    cli?: CliProgram;
 
     constructor(
         public indent: string = '  ',

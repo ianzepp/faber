@@ -1,0 +1,23 @@
+# CLI Framework Test File
+# Testing annotation parsing for issue #148
+
+@ cli "backup"
+@ versio "1.0.0"
+@ descriptio "Filesystem backup utility"
+incipit {}
+
+@ imperium "create"
+functio create(textus source, si textus dest vel ".") -> vacuum {
+    scribe scriptum("Backing up § to §", source, dest)
+}
+
+@ imperium "restore"
+functio restore(textus archive) -> vacuum {
+    scribe scriptum("Restoring §", archive)
+}
+
+@ imperium "list"
+@ alias "ls"
+functio list(si bivalens verbose ut v) -> vacuum {
+    scribe "Listing backups..."
+}

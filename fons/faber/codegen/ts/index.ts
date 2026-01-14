@@ -41,10 +41,94 @@
  * INV-3: Indentation depth is correctly maintained (incremented/decremented)
  */
 
-import type { Program } from '../../parser/ast';
+import type { Program, IncipitStatement, FunctioDeclaration, Annotation } from '../../parser/ast';
 import type { CodegenOptions } from '../types';
-import { TsGenerator } from './generator';
+import { TsGenerator, type CliProgram, type CliCommand } from './generator';
 import { genPreamble } from './preamble';
+
+/**
+ * Extract string value from annotation argument.
+ */
+function getAnnotationString(ann: Annotation): string | undefined {
+    if (ann.argument?.type === 'Literal' && typeof ann.argument.value === 'string') {
+        return ann.argument.value;
+    }
+    return undefined;
+}
+
+/**
+ * Find annotation by name in annotation list.
+ */
+function findAnnotation(annotations: Annotation[] | undefined, name: string): Annotation | undefined {
+    return annotations?.find(a => a.name === name);
+}
+
+/**
+ * Scan program for CLI annotations and build CLI metadata.
+ *
+ * Looks for:
+ * - @ cli on incipit -> marks file as CLI program
+ * - @ versio on incipit -> program version
+ * - @ descriptio on incipit -> program description
+ * - @ imperium on functions -> subcommands
+ * - @ alias on functions -> command aliases
+ */
+function detectCliProgram(program: Program): CliProgram | undefined {
+    let cliIncipit: IncipitStatement | undefined;
+
+    // Find incipit with @ cli annotation
+    for (const stmt of program.body) {
+        if (stmt.type === 'IncipitStatement') {
+            const incipit = stmt as IncipitStatement;
+            if (findAnnotation(incipit.annotations, 'cli')) {
+                cliIncipit = incipit;
+                break;
+            }
+        }
+    }
+
+    if (!cliIncipit) return undefined;
+
+    // Extract CLI metadata from incipit annotations
+    const cliAnn = findAnnotation(cliIncipit.annotations, 'cli')!;
+    const versioAnn = findAnnotation(cliIncipit.annotations, 'versio');
+    const descriptioAnn = findAnnotation(cliIncipit.annotations, 'descriptio');
+
+    const cli: CliProgram = {
+        name: getAnnotationString(cliAnn) ?? 'cli',
+        version: versioAnn ? getAnnotationString(versioAnn) : undefined,
+        description: descriptioAnn ? getAnnotationString(descriptioAnn) : undefined,
+        commands: [],
+    };
+
+    // Collect @ imperium functions
+    for (const stmt of program.body) {
+        if (stmt.type === 'FunctioDeclaration') {
+            const fn = stmt as FunctioDeclaration;
+            const imperiumAnn = findAnnotation(fn.annotations, 'imperium');
+            if (imperiumAnn) {
+                const aliasAnn = findAnnotation(fn.annotations, 'alias');
+                const cmd: CliCommand = {
+                    name: getAnnotationString(imperiumAnn) ?? fn.name.name,
+                    alias: aliasAnn ? getAnnotationString(aliasAnn) : undefined,
+                    functionName: fn.name.name,
+                    params: fn.params.map(p => ({
+                        name: p.name.name,
+                        type: p.typeAnnotation?.name ?? 'textus',
+                        optional: p.optional === true,
+                        shortFlag: p.alias?.name,
+                        defaultValue: p.defaultValue?.type === 'Literal'
+                            ? String(p.defaultValue.value)
+                            : undefined,
+                    })),
+                };
+                cli.commands.push(cmd);
+            }
+        }
+    }
+
+    return cli;
+}
 
 /**
  * Generate TypeScript source code from a Latin AST.
@@ -63,6 +147,9 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     const semi = options.semicolons ?? true;
 
     const g = new TsGenerator(indent, semi);
+
+    // Pre-pass: detect CLI mode and collect command metadata
+    g.cli = detectCliProgram(program);
 
     // First pass: generate body (this populates features)
     const body = program.body.map(stmt => g.genStatement(stmt)).join('\n');
