@@ -759,6 +759,12 @@ export interface Annotation extends BaseNode {
      * Example: "[...§, §]" for `@ verte ts (ego, elem) -> "[...§, §]"`
      */
     verteTemplate?: string;
+
+    /**
+     * For @ imperia: the module reference identifier.
+     * Example: `remote` in `@ imperia "remote" ex remote`
+     */
+    exClause?: Identifier;
 }
 
 /**
@@ -1263,6 +1269,7 @@ export interface IncipitStatement extends BaseNode {
     type: 'IncipitStatement';
     body?: BlockStatement;
     ergoStatement?: Statement;
+    annotations?: Annotation[];
 }
 
 /**

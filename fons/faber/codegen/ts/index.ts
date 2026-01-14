@@ -45,6 +45,7 @@ import type { Program } from '../../parser/ast';
 import type { CodegenOptions } from '../types';
 import { TsGenerator } from './generator';
 import { genPreamble } from './preamble';
+import { detectCliProgram } from '../cli/detector';
 
 /**
  * Generate TypeScript source code from a Latin AST.
@@ -53,7 +54,7 @@ import { genPreamble } from './preamble';
  *   Program AST -> TypeScript source code string
  *
  * @param program - Validated AST from parser
- * @param options - Formatting configuration (indent, semicolons)
+ * @param options - Formatting configuration (indent, semicolons, filePath)
  * @returns TypeScript source code
  */
 export function generateTs(program: Program, options: CodegenOptions = {}): string {
@@ -63,6 +64,18 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     const semi = options.semicolons ?? true;
 
     const g = new TsGenerator(indent, semi);
+
+    // Pre-pass: detect CLI mode and collect command metadata
+    // Pass filePath for module resolution (@ imperia ex module)
+    const cliResult = detectCliProgram(program, options.filePath);
+
+    // Fail hard on CLI detection errors
+    if (cliResult.errors.length > 0) {
+        throw new Error(`CLI detection errors:\n  ${cliResult.errors.join('\n  ')}`);
+    }
+
+    g.cli = cliResult.cli;
+    g.cliModuleImports = cliResult.moduleImports;
 
     // First pass: generate body (this populates features)
     const body = program.body.map(stmt => g.genStatement(stmt)).join('\n');
@@ -79,5 +92,17 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     // Second: prepend preamble based on detected features
     const preamble = genPreamble(g.features);
 
-    return preamble + body;
+    // Third: generate CLI module imports (must be at top of file for valid ESM)
+    // WHY: CLI imports are hoisted here instead of inside incipit to ensure
+    // they appear before any non-import statements
+    let cliImports = '';
+    if (g.cliModuleImports.size > 0) {
+        const importLines: string[] = [];
+        for (const [alias, path] of g.cliModuleImports) {
+            importLines.push(`import * as ${alias} from "${path}";`);
+        }
+        cliImports = importLines.join('\n') + '\n\n';
+    }
+
+    return preamble + cliImports + body;
 }

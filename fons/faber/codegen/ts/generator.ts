@@ -101,6 +101,37 @@ const typeMap: Record<string, string> = {
     ignotum: 'unknown',
 };
 
+/** CLI command parameter metadata */
+export interface CliParam {
+    name: string;
+    type: string;
+    optional: boolean;
+    shortFlag?: string;
+    defaultValue?: string;
+}
+
+/** CLI command tree node - can be a leaf (with handler) or branch (with children) */
+export interface CliCommandNode {
+    name: string;           // This node's name (e.g., "add" in "remote/add")
+    fullPath: string;       // Full path for help text (e.g., "remote/add")
+    alias?: string;
+    description?: string;   // For mounted submodules (from @ descriptio)
+    // Leaf node properties (has a handler function)
+    functionName?: string;
+    modulePrefix?: string;  // For imported commands (e.g., "configModule" for configModule.list)
+    params?: CliParam[];
+    // Branch node properties
+    children: Map<string, CliCommandNode>;
+}
+
+/** CLI program metadata collected from @ cli annotations on incipit */
+export interface CliProgram {
+    name: string;
+    version?: string;
+    description?: string;
+    root: CliCommandNode;   // Tree root containing all commands
+}
+
 export class TsGenerator {
     depth = 0;
     inGenerator = false;
@@ -113,6 +144,11 @@ export class TsGenerator {
     features: RequiredFeatures;
     semi: boolean;
     codegenErrors: Array<{ message: string; position?: Position }> = [];
+
+    // CLI codegen state
+    cli?: CliProgram;
+    /** Module imports needed for CLI dispatcher (alias -> relative path) */
+    cliModuleImports: Map<string, string> = new Map();
 
     constructor(
         public indent: string = '  ',
