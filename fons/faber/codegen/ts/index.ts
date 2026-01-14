@@ -41,141 +41,11 @@
  * INV-3: Indentation depth is correctly maintained (incremented/decremented)
  */
 
-import type { Program, IncipitStatement, FunctioDeclaration, Annotation } from '../../parser/ast';
+import type { Program } from '../../parser/ast';
 import type { CodegenOptions } from '../types';
-import { TsGenerator, type CliProgram, type CliCommandNode, type CliParam } from './generator';
+import { TsGenerator } from './generator';
 import { genPreamble } from './preamble';
-
-/**
- * Extract string value from annotation argument.
- */
-function getAnnotationString(ann: Annotation): string | undefined {
-    if (ann.argument?.type === 'Literal' && typeof ann.argument.value === 'string') {
-        return ann.argument.value;
-    }
-    return undefined;
-}
-
-/**
- * Find annotation by name in annotation list.
- */
-function findAnnotation(annotations: Annotation[] | undefined, name: string): Annotation | undefined {
-    return annotations?.find(a => a.name === name);
-}
-
-/**
- * Create a new command tree node.
- */
-function createCommandNode(name: string, fullPath: string): CliCommandNode {
-    return { name, fullPath, children: new Map() };
-}
-
-/**
- * Insert a command into the tree at the given path.
- * Creates intermediate nodes as needed.
- */
-function insertCommand(
-    root: CliCommandNode,
-    path: string[],
-    fullPath: string,
-    functionName: string,
-    params: CliParam[],
-    alias?: string
-): void {
-    let current = root;
-
-    // Navigate/create intermediate nodes
-    for (let i = 0; i < path.length - 1; i++) {
-        const segment = path[i]!;
-        if (!current.children.has(segment)) {
-            const intermediatePath = path.slice(0, i + 1).join('/');
-            current.children.set(segment, createCommandNode(segment, intermediatePath));
-        }
-        current = current.children.get(segment)!;
-    }
-
-    // Create/update leaf node
-    const leafName = path[path.length - 1]!;
-    if (!current.children.has(leafName)) {
-        current.children.set(leafName, createCommandNode(leafName, fullPath));
-    }
-    const leaf = current.children.get(leafName)!;
-    leaf.functionName = functionName;
-    leaf.params = params;
-    leaf.alias = alias;
-}
-
-/**
- * Scan program for CLI annotations and build CLI metadata tree.
- *
- * Looks for:
- * - @ cli on incipit -> marks file as CLI program
- * - @ versio on incipit -> program version
- * - @ descriptio on incipit -> program description
- * - @ imperium on functions -> subcommands (supports paths like "remote/add")
- * - @ alias on functions -> command aliases
- */
-function detectCliProgram(program: Program): CliProgram | undefined {
-    let cliIncipit: IncipitStatement | undefined;
-
-    // Find incipit with @ cli annotation
-    for (const stmt of program.body) {
-        if (stmt.type === 'IncipitStatement') {
-            const incipit = stmt as IncipitStatement;
-            if (findAnnotation(incipit.annotations, 'cli')) {
-                cliIncipit = incipit;
-                break;
-            }
-        }
-    }
-
-    if (!cliIncipit) return undefined;
-
-    // Extract CLI metadata from incipit annotations
-    const cliAnn = findAnnotation(cliIncipit.annotations, 'cli')!;
-    const versioAnn = findAnnotation(cliIncipit.annotations, 'versio');
-    const descriptioAnn = findAnnotation(cliIncipit.annotations, 'descriptio');
-
-    const cli: CliProgram = {
-        name: getAnnotationString(cliAnn) ?? 'cli',
-        version: versioAnn ? getAnnotationString(versioAnn) : undefined,
-        description: descriptioAnn ? getAnnotationString(descriptioAnn) : undefined,
-        root: createCommandNode('', ''),
-    };
-
-    // Collect @ imperium functions and build command tree
-    for (const stmt of program.body) {
-        if (stmt.type === 'FunctioDeclaration') {
-            const fn = stmt as FunctioDeclaration;
-            const imperiumAnn = findAnnotation(fn.annotations, 'imperium');
-            if (imperiumAnn) {
-                const aliasAnn = findAnnotation(fn.annotations, 'alias');
-                const commandPath = getAnnotationString(imperiumAnn) ?? fn.name.name;
-                const pathParts = commandPath.split('/');
-                const params: CliParam[] = fn.params.map(p => ({
-                    name: p.name.name,
-                    type: p.typeAnnotation?.name ?? 'textus',
-                    optional: p.optional === true,
-                    shortFlag: p.alias?.name,
-                    defaultValue: p.defaultValue?.type === 'Literal'
-                        ? String(p.defaultValue.value)
-                        : undefined,
-                }));
-
-                insertCommand(
-                    cli.root,
-                    pathParts,
-                    commandPath,
-                    fn.name.name,
-                    params,
-                    aliasAnn ? getAnnotationString(aliasAnn) : undefined
-                );
-            }
-        }
-    }
-
-    return cli;
-}
+import { detectCliProgram } from '../cli/detector';
 
 /**
  * Generate TypeScript source code from a Latin AST.
@@ -184,7 +54,7 @@ function detectCliProgram(program: Program): CliProgram | undefined {
  *   Program AST -> TypeScript source code string
  *
  * @param program - Validated AST from parser
- * @param options - Formatting configuration (indent, semicolons)
+ * @param options - Formatting configuration (indent, semicolons, filePath)
  * @returns TypeScript source code
  */
 export function generateTs(program: Program, options: CodegenOptions = {}): string {
@@ -196,7 +66,16 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     const g = new TsGenerator(indent, semi);
 
     // Pre-pass: detect CLI mode and collect command metadata
-    g.cli = detectCliProgram(program);
+    // Pass filePath for module resolution (@ imperia ex module)
+    const cliResult = detectCliProgram(program, options.filePath);
+
+    // Fail hard on CLI detection errors
+    if (cliResult.errors.length > 0) {
+        throw new Error(`CLI detection errors:\n  ${cliResult.errors.join('\n  ')}`);
+    }
+
+    g.cli = cliResult.cli;
+    g.cliModuleImports = cliResult.moduleImports;
 
     // First pass: generate body (this populates features)
     const body = program.body.map(stmt => g.genStatement(stmt)).join('\n');

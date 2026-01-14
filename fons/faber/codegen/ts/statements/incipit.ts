@@ -138,9 +138,12 @@ function genLeafCommand(
         lines.push(`${ind}}`);
     }
 
-    // Call the function
+    // Call the function (with module prefix if from imported module)
     const argList = params.map(p => p.name).join(', ');
-    lines.push(`${ind}${node.functionName}(${argList});`);
+    const funcCall = node.modulePrefix
+        ? `${node.modulePrefix}.${node.functionName}`
+        : node.functionName;
+    lines.push(`${ind}${funcCall}(${argList});`);
 
     return lines.join('\n');
 }
@@ -222,6 +225,15 @@ function genNodeDispatcher(
 function genCliDispatcher(cli: CliProgram, g: TsGenerator): string {
     const ind = g.ind();
     const lines: string[] = [];
+
+    // Generate imports for CLI command modules
+    // These are injected here because they're not part of the original AST
+    for (const [alias, path] of g.cliModuleImports) {
+        lines.push(`import * as ${alias} from "${path}";`);
+    }
+    if (g.cliModuleImports.size > 0) {
+        lines.push(``);
+    }
 
     lines.push(`${ind}const _args = process.argv.slice(2);`);
     lines.push(``);

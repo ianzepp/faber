@@ -103,6 +103,12 @@ export interface CodegenOptions {
      * Default: true
      */
     semicolons?: boolean;
+
+    /**
+     * Absolute path to the source file.
+     * Required for CLI module resolution (@ imperia ex module).
+     */
+    filePath?: string;
 }
 
 // =============================================================================

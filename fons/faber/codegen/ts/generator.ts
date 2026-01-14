@@ -115,8 +115,10 @@ export interface CliCommandNode {
     name: string;           // This node's name (e.g., "add" in "remote/add")
     fullPath: string;       // Full path for help text (e.g., "remote/add")
     alias?: string;
+    description?: string;   // For mounted submodules (from @ descriptio)
     // Leaf node properties (has a handler function)
     functionName?: string;
+    modulePrefix?: string;  // For imported commands (e.g., "configModule" for configModule.list)
     params?: CliParam[];
     // Branch node properties
     children: Map<string, CliCommandNode>;
@@ -145,6 +147,8 @@ export class TsGenerator {
 
     // CLI codegen state
     cli?: CliProgram;
+    /** Module imports needed for CLI dispatcher (alias -> relative path) */
+    cliModuleImports: Map<string, string> = new Map();
 
     constructor(
         public indent: string = '  ',

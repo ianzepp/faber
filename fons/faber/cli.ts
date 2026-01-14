@@ -221,7 +221,8 @@ async function compile(inputFile: string, outputFile?: string, silent = false): 
 
     let output: string;
     try {
-        output = generate(program);
+        // WHY: Pass filePath to enable CLI module resolution (@ imperia ex module)
+        output = generate(program, { filePath });
     } catch (err) {
         // WHY: Codegen errors should display cleanly
         const message = err instanceof Error ? err.message : String(err);
