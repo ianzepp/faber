@@ -57,13 +57,9 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
         }
     }
 
-    # Parameters - filter out allocator bindings (curata)
+    # Parameters
     varia params = [] innatum lista<textus>
     ex parametra pro param {
-        # Skip allocator parameters (curata binding)
-        si param.curator qua bivalens {
-            perge
-        }
         params.adde(genParametrum(param, g))
     }
     result = scriptum("§(§)", result, params.coniunge(", "))
