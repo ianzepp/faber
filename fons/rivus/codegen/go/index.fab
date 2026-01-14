@@ -54,6 +54,10 @@ functio genPreamble(GoGenerator g) -> textus {
         imports.adde("\"fmt\"")
     }
 
+    si g.requisita.errors {
+        imports.adde("\"errors\"")
+    }
+
     si imports.longitudo() > 0 {
         si imports.longitudo() == 1 {
             parts.adde(scriptum("import §", imports[0]))

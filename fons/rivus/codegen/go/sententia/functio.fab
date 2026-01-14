@@ -8,7 +8,7 @@
 #   functio f() curata alloc -> T { ... }  -> func f() T { ... }  (ignore allocator)
 #   @ publica functio f() { ... }          -> func F() { ... }    (capitalize)
 
-ex "../../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, Visibilitas
+ex "../../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, Visibilitas, FunctioModificator
 ex "../../../ast/typus" importa TypusAnnotatio
 ex "../nucleus" importa GoGenerator
 
@@ -17,8 +17,23 @@ ex "../expressia/index" importa genExpressia
 ex "./index" importa genSententia
 ex "../typus" importa genTypus
 
+functio habetErrataModificator(ignotum modificatores) -> bivalens {
+    si nihil modificatores {
+        redde falsum
+    }
+    ex (modificatores qua lista<FunctioModificator>) pro m {
+        discerne m {
+            casu ErrataModificator {
+                redde verum
+            }
+            ceterum { }
+        }
+    }
+    redde falsum
+}
+
 @ publica
-functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> parametra, ignotum reddeVerbum, ignotum typusReditus, ignotum corpus, bivalens asynca, bivalens generator, bivalens structor, ignotum visibilitas, bivalens abstracta, bivalens externa, GoGenerator g) -> textus {
+functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> parametra, ignotum modificatores, ignotum reddeVerbum, ignotum typusReditus, ignotum corpus, bivalens asynca, bivalens generator, bivalens structor, ignotum visibilitas, bivalens abstracta, bivalens externa, GoGenerator g) -> textus {
     # External declarations - Go doesn't have declare syntax
     si externa {
         redde scriptum("§// extern: func §(...)", g.ind(), nomen)
@@ -65,11 +80,19 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
     result = scriptum("§(§)", result, params.coniunge(", "))
 
     # Return type
+    varia retType = ""
     si nonnihil typusReditus {
-        fixum retType = genTypus(typusReditus qua TypusAnnotatio, g)
-        si retType != "" {
-            result = scriptum("§ §", result, retType)
+        retType = genTypus(typusReditus qua TypusAnnotatio, g)
+    }
+    fixum hasErrata = habetErrataModificator(modificatores)
+    si hasErrata {
+        si retType == "" {
+            result = scriptum("§ error", result)
+        } secus {
+            result = scriptum("§ (§, error)", result, retType)
         }
+    } sin retType != "" {
+        result = scriptum("§ §", result, retType)
     }
 
     # Body
@@ -79,9 +102,23 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
     }
 
     si nonnihil corpus {
+        fixum prevInErrata = g.inErrata
+        fixum prevErrataType = g.errataTypusReditus
+        g.inErrata = hasErrata
+        varia errataType = nihil qua TypusAnnotatio?
+        # WHY: Only track a value return type for errata when Go emits (T, error).
+        # EDGE: `-> vacuum` or no return type becomes `error` only.
+        si hasErrata et retType != "" et nonnihil typusReditus {
+            errataType = typusReditus qua TypusAnnotatio
+        }
+        g.errataTypusReditus = errataType
+
         g.intraProfundum()
         fixum body = genSententia(corpus qua Sententia, g)
         g.exiProfundum()
+
+        g.inErrata = prevInErrata
+        g.errataTypusReditus = prevErrataType
 
         si body == "" {
             result = scriptum("§ {}", result)

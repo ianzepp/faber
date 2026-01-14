@@ -116,6 +116,49 @@ functio genTypus(TypusAnnotatio adnotatio, GoGenerator g) -> textus {
     redde base
 }
 
+# Generate Go zero value for a type annotation
+@ publica
+functio zeroValueForType(TypusAnnotatio adnotatio, GoGenerator g) -> textus {
+    # Nullables and pointer-like types default to nil
+    si adnotatio.nullabilis {
+        redde "nil"
+    }
+
+    elige adnotatio.nomen {
+        casu "numerus" reddit "0"
+        casu "fractus" reddit "0.0"
+        casu "bivalens" reddit "false"
+        casu "textus" reddit "\"\""
+        casu "vacuum" reddit "nil"
+        casu "nihil" reddit "nil"
+        casu "erratum" reddit "nil"
+        casu "lista" reddit "nil"
+        casu "tabula" reddit "nil"
+        casu "copia" reddit "nil"
+        casu "ignotum" reddit "nil"
+        casu "objectum" reddit "nil"
+    }
+
+    fixum typeName = genTypus(adnotatio, g)
+    si typeName == "" {
+        redde "nil"
+    }
+    si typeName == "interface{}" {
+        redde "nil"
+    }
+    si typeName.sectio(0, 1) == "*" {
+        redde "nil"
+    }
+    si typeName.sectio(0, 2) == "[]" {
+        redde "nil"
+    }
+    si typeName.sectio(0, 4) == "map[" {
+        redde "nil"
+    }
+
+    redde scriptum("§{}", typeName)
+}
+
 # Generate a single type parameter
 @ publica
 functio genTypusParametrum(TypusParametrum param, GoGenerator g) -> textus? {

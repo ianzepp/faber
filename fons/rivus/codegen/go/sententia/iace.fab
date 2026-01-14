@@ -1,0 +1,42 @@
+# Go Statement Generator - Throw Statements
+#
+# Generates error returns for errata-modified functions.
+
+ex "../../../ast/expressia" importa Expressia, LitteraGenus
+ex "../nucleus" importa GoGenerator
+ex "../expressia/index" importa genExpressia
+ex "../typus" importa zeroValueForType
+
+functio genErrataError(Expressia argumentum, GoGenerator g) -> textus {
+    g.requisita.errors = verum
+    fixum expr = genExpressia(argumentum, g)
+
+    discerne argumentum {
+        casu Littera ut l {
+            si l.species == LitteraGenus.Textus aut l.species == LitteraGenus.Exemplar {
+                redde scriptum("errors.New(§)", expr)
+            }
+        }
+        casu ScriptumExpressia {
+            redde scriptum("errors.New(§)", expr)
+        }
+        ceterum { }
+    }
+
+    redde expr
+}
+
+@ publica
+functio genIace(Expressia argumentum, bivalens fatale, GoGenerator g) -> textus {
+    si g.inErrata {
+        fixum errExpr = genErrataError(argumentum, g)
+        si nonnihil g.errataTypusReditus {
+            fixum zero = zeroValueForType(g.errataTypusReditus, g)
+            redde scriptum("§return §, §", g.ind(), zero, errExpr)
+        }
+        redde scriptum("§return §", g.ind(), errExpr)
+    }
+
+    # Fallback: use panic for non-errata throws
+    redde scriptum("§panic(§)", g.ind(), genExpressia(argumentum, g))
+}

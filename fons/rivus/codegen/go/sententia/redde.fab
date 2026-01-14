@@ -7,13 +7,26 @@
 #   redde valor     -> return valor
 
 ex "../../../ast/expressia" importa Expressia
+ex "../../../ast/typus" importa TypusAnnotatio
 ex "../nucleus" importa GoGenerator
 
 # External declaration - implementation lives in index.fab
 ex "../expressia/index" importa genExpressia
+ex "../typus" importa zeroValueForType
 
 @ publica
 functio genRedde(ignotum valor, GoGenerator g) -> textus {
+    si g.inErrata {
+        si nonnihil g.errataTypusReditus {
+            fixum zero = zeroValueForType(g.errataTypusReditus qua TypusAnnotatio, g)
+            si nonnihil valor {
+                redde scriptum("§return §, nil", g.ind(), genExpressia(valor qua Expressia, g))
+            }
+            redde scriptum("§return §, nil", g.ind(), zero)
+        }
+        redde scriptum("§return nil", g.ind())
+    }
+
     si nonnihil valor {
         redde scriptum("§return §", g.ind(), genExpressia(valor qua Expressia, g))
     }

@@ -9,6 +9,7 @@ ex "../expressia/index" importa genExpressia
 ex "./functio" importa genFunctio, genParametrum
 ex "./scribe" importa genScribe
 ex "./redde" importa genRedde
+ex "./iace" importa genIace
 ex "./incipit" importa genIncipit, genIncipiet
 ex "./varia" importa genVaria
 ex "./si" importa genSi
@@ -34,7 +35,7 @@ functio genSententia(Sententia stmt, GoGenerator g) -> textus {
 
         # Function declaration
         casu FunctioDeclaratio ut f {
-            redde genFunctio(f.nomen qua textus, f.generaParametra, f.parametra qua lista<Parametrum>, f.reddeVerbum, f.typusReditus, f.corpus, f.asynca qua bivalens, f.generator qua bivalens, f.structor qua bivalens, f.visibilitas, f.abstracta qua bivalens, f.externa qua bivalens, g)
+            redde genFunctio(f.nomen qua textus, f.generaParametra, f.parametra qua lista<Parametrum>, f.modificatores, f.reddeVerbum, f.typusReditus, f.corpus, f.asynca qua bivalens, f.generator qua bivalens, f.structor qua bivalens, f.visibilitas, f.abstracta qua bivalens, f.externa qua bivalens, g)
         }
 
         # Variable declaration
@@ -54,6 +55,10 @@ functio genSententia(Sententia stmt, GoGenerator g) -> textus {
 
         casu ReddeSententia ut s {
             redde genRedde(s.valor, g)
+        }
+
+        casu IaceSententia ut s {
+            redde genIace(s.argumentum, s.fatale qua bivalens, g)
         }
 
         casu RumpeSententia {

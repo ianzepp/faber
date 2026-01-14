@@ -3,6 +3,8 @@
 # This module provides the GoGenerator genus that holds shared state
 # for Go code generation.
 
+ex "../../ast/typus" importa TypusAnnotatio
+
 # =============================================================================
 # REQUIRED FEATURES
 # =============================================================================
@@ -11,6 +13,7 @@
 @ publicum
 genus GoRequiredFeatures {
     bivalens fmt      # fmt package needed (Println, Sprintf)
+    bivalens errors   # errors package needed (errors.New)
 }
 
 # =============================================================================
@@ -28,6 +31,10 @@ genus GoGenerator {
 
     # Features used that need preamble setup
     GoRequiredFeatures requisita
+
+    # Errata modifier context for function bodies
+    bivalens inErrata
+    TypusAnnotatio? errataTypusReditus
 
     # ==========================================================================
     # INDENTATION
@@ -68,7 +75,9 @@ functio creaGoGenerator() -> GoGenerator {
     redde novum GoGenerator {
         profunditas: 0,
         indentum: "\t",
-        requisita: creaGoRequiredFeatures()
+        requisita: creaGoRequiredFeatures(),
+        inErrata: falsum,
+        errataTypusReditus: nihil
     }
 }
 
@@ -76,6 +85,7 @@ functio creaGoGenerator() -> GoGenerator {
 @ publica
 functio creaGoRequiredFeatures() -> GoRequiredFeatures {
     redde {
-        fmt: falsum
+        fmt: falsum,
+        errors: falsum
     } qua GoRequiredFeatures
 }
