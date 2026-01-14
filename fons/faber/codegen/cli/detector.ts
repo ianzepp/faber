@@ -235,9 +235,13 @@ function mountSubmodules(
         const moduleName = ann.exClause.name;
 
         // Resolve the imported module
+        // CONSTRAINT: moduleName must match a wildcard import alias
         const submodule = resolveImportedModule(moduleName, moduleInfo, ctx);
         if (!submodule) {
-            errors.push(`Cannot resolve module '${moduleName}' for @ imperia "${mountPath}"`);
+            errors.push(
+                `Cannot resolve module '${moduleName}' for @ imperia "${mountPath}". ` +
+                `Ensure you have a wildcard import: importa * ut ${moduleName} ex "./path"`
+            );
             continue;
         }
 
@@ -266,6 +270,15 @@ function mountSubmodules(
         const moduleAlias = generateModuleAlias(submodule.filePath, basePath);
         const { relative, dirname } = require('node:path');
         const relImportPath = './' + relative(dirname(basePath), submodule.filePath).replace(/\.fab$/, '');
+
+        // Check for alias collision (different paths generating same alias)
+        if (moduleImports.has(moduleAlias) && moduleImports.get(moduleAlias) !== relImportPath) {
+            errors.push(
+                `Module alias collision: '${moduleAlias}' resolves to both ` +
+                `'${moduleImports.get(moduleAlias)}' and '${relImportPath}'`
+            );
+            continue;
+        }
         moduleImports.set(moduleAlias, relImportPath);
 
         // Extract commands from the submodule with module prefix

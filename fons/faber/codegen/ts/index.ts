@@ -92,5 +92,17 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     // Second: prepend preamble based on detected features
     const preamble = genPreamble(g.features);
 
-    return preamble + body;
+    // Third: generate CLI module imports (must be at top of file for valid ESM)
+    // WHY: CLI imports are hoisted here instead of inside incipit to ensure
+    // they appear before any non-import statements
+    let cliImports = '';
+    if (g.cliModuleImports.size > 0) {
+        const importLines: string[] = [];
+        for (const [alias, path] of g.cliModuleImports) {
+            importLines.push(`import * as ${alias} from "${path}";`);
+        }
+        cliImports = importLines.join('\n') + '\n\n';
+    }
+
+    return preamble + cliImports + body;
 }

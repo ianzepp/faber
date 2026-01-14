@@ -244,14 +244,8 @@ function genCliDispatcher(cli: CliProgram, g: TsGenerator): string {
     const ind = g.ind();
     const lines: string[] = [];
 
-    // Generate imports for CLI command modules
-    // These are injected here because they're not part of the original AST
-    for (const [alias, path] of g.cliModuleImports) {
-        lines.push(`import * as ${alias} from "${path}";`);
-    }
-    if (g.cliModuleImports.size > 0) {
-        lines.push(``);
-    }
+    // WHY: CLI module imports are now hoisted to top-of-file in ts/index.ts
+    // to ensure they appear before any non-import statements (valid ESM)
 
     lines.push(`${ind}const _args = process.argv.slice(2);`);
     lines.push(``);

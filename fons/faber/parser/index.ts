@@ -447,16 +447,22 @@ export function parse(tokens: Token[]): ParserResult {
             // that isn't the start of a new statement
             const next = peek();
             if (next.type === 'STRING' || next.type === 'IDENTIFIER' || next.type === 'KEYWORD') {
-                // Don't consume 'ex' as argument - it's a clause keyword
-                if (next.value !== 'ex') {
+                // WHY: For @ imperia, don't consume 'ex' as argument - it's a clause keyword
+                // Scoped to imperia only to avoid breaking other annotations
+                if (name === 'imperia' && next.value === 'ex') {
+                    // Skip - will be parsed as exClause below
+                }
+                else {
                     argument = parseExpressionModule(resolver);
                 }
             }
         }
 
-        // Check for 'ex <identifier>' clause (e.g., @ imperia "remote" ex remote)
+        // Check for 'ex <identifier>' clause (e.g., @ imperia "remote" ex remoteModule)
+        // WHY: Scoped strictly to @ imperia - 'ex' is common Latin and shouldn't be
+        // reserved for all annotations
         let exClause: Identifier | undefined;
-        if (!isAtEnd() && peek().position.line === startLine && checkKeyword('ex')) {
+        if (name === 'imperia' && !isAtEnd() && peek().position.line === startLine && checkKeyword('ex')) {
             advance(); // consume 'ex'
             if ((check('IDENTIFIER') || check('KEYWORD')) && peek().position.line === startLine) {
                 const exIdent = advance();
@@ -469,7 +475,7 @@ export function parse(tokens: Token[]): ParserResult {
             else {
                 errors.push({
                     code: ParserErrorCode.UnexpectedToken,
-                    message: `Expected identifier after 'ex' in annotation, got '${peek().value}'`,
+                    message: `Expected identifier after 'ex' in @ imperia annotation, got '${peek().value}'`,
                     position: peek().position,
                 });
             }

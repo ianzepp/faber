@@ -12,6 +12,13 @@
  * WHY: CLI detection is a codegen concern, not a semantic concern.
  *      Keeping it isolated prevents polluting the main compiler pipeline.
  *
+ * CONSTRAINTS
+ * ===========
+ * 1. Module references in `@ imperia ... ex <module>` must match a wildcard
+ *    import alias (e.g., `importa * ut configModule ex "./config"`).
+ * 2. Only local relative imports are resolved (./path or ../path).
+ * 3. Named imports are not supported for CLI module mounting.
+ *
  * @module codegen/cli/resolver
  */
 

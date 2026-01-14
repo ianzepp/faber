@@ -35,6 +35,10 @@ jobs:
         with:
           name: opus-faber
           path: opus/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: faber-generated
+          path: fons/faber/codegen/norma.gen.ts
 
   build-rivus:
     needs: build-faber
@@ -50,7 +54,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: norma-generated
-      - run: cp norma/index.json fons/norma/ && cp rivus/codegen/norma-registry.gen.fab fons/rivus/codegen/
+      - uses: actions/download-artifact@v4
+        with:
+          name: faber-generated
+      - run: cp norma/index.json fons/norma/ && cp rivus/codegen/norma-registry.gen.fab fons/rivus/codegen/ && cp norma.gen.ts fons/faber/codegen/
       - run: bun run build:rivus
       - uses: actions/upload-artifact@v4
         with:
@@ -71,7 +78,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: norma-generated
-      - run: cp norma/index.json fons/norma/ && cp rivus/codegen/norma-registry.gen.fab fons/rivus/codegen/
+      - uses: actions/download-artifact@v4
+        with:
+          name: faber-generated
+      - run: cp norma/index.json fons/norma/ && cp rivus/codegen/norma-registry.gen.fab fons/rivus/codegen/ && cp norma.gen.ts fons/faber/codegen/
       - run: chmod +x opus/bin/rivus
       - run: bun run build:artifex
       - uses: actions/upload-artifact@v4
