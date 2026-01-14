@@ -447,7 +447,31 @@ export function parse(tokens: Token[]): ParserResult {
             // that isn't the start of a new statement
             const next = peek();
             if (next.type === 'STRING' || next.type === 'IDENTIFIER' || next.type === 'KEYWORD') {
-                argument = parseExpressionModule(resolver);
+                // Don't consume 'ex' as argument - it's a clause keyword
+                if (next.value !== 'ex') {
+                    argument = parseExpressionModule(resolver);
+                }
+            }
+        }
+
+        // Check for 'ex <identifier>' clause (e.g., @ imperia "remote" ex remote)
+        let exClause: Identifier | undefined;
+        if (!isAtEnd() && peek().position.line === startLine && checkKeyword('ex')) {
+            advance(); // consume 'ex'
+            if ((check('IDENTIFIER') || check('KEYWORD')) && peek().position.line === startLine) {
+                const exIdent = advance();
+                exClause = {
+                    type: 'Identifier',
+                    name: exIdent.value,
+                    position: exIdent.position,
+                };
+            }
+            else {
+                errors.push({
+                    code: ParserErrorCode.UnexpectedToken,
+                    message: `Expected identifier after 'ex' in annotation, got '${peek().value}'`,
+                    position: peek().position,
+                });
             }
         }
 
@@ -455,6 +479,7 @@ export function parse(tokens: Token[]): ParserResult {
             type: 'Annotation',
             name,
             argument,
+            exClause,
             position,
         };
     }

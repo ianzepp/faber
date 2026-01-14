@@ -4265,6 +4265,31 @@ describe('parser', () => {
             expect(decl.methods[0].annotations).toHaveLength(1);
             expect(decl.methods[0].annotations[0].name).toBe('publica');
         });
+
+        test('annotation with ex clause', () => {
+            const { program, errors } = parseCode('@ imperia "remote" ex remoteModule\nfunctio f() { }');
+
+            expect(errors).toHaveLength(0);
+            const decl = program!.body[0] as any;
+            expect(decl.type).toBe('FunctioDeclaration');
+            expect(decl.annotations).toHaveLength(1);
+            expect(decl.annotations[0].name).toBe('imperia');
+            expect(decl.annotations[0].argument?.type).toBe('Literal');
+            expect(decl.annotations[0].argument?.value).toBe('remote');
+            expect(decl.annotations[0].exClause?.type).toBe('Identifier');
+            expect(decl.annotations[0].exClause?.name).toBe('remoteModule');
+        });
+
+        test('annotation with ex clause but no argument', () => {
+            const { program, errors } = parseCode('@ imperia ex remoteModule\nfunctio f() { }');
+
+            expect(errors).toHaveLength(0);
+            const decl = program!.body[0] as any;
+            expect(decl.annotations).toHaveLength(1);
+            expect(decl.annotations[0].name).toBe('imperia');
+            expect(decl.annotations[0].argument).toBeUndefined();
+            expect(decl.annotations[0].exClause?.name).toBe('remoteModule');
+        });
     });
 
     describe('stdlib annotations', () => {
