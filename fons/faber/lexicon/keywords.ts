@@ -217,6 +217,10 @@ export const keywords: KeywordEntry[] = [
     //      Function is "under management" - receives allocator from caller
     //      Usage: functio f() curata alloc -> T { ... }
     { latin: 'curata', meaning: 'managed (allocator)', category: 'modifier' },
+    // WHY: "errata" (errors) binds an error name in function signatures
+    { latin: 'errata', meaning: 'errors (binding)', category: 'modifier' },
+    // WHY: "immutata" (unchanged) marks a function as constant
+    { latin: 'immutata', meaning: 'constant', category: 'modifier' },
     // WHY: "publicus/privatus" for visibility - default is public (struct semantics)
     { latin: 'publicus', meaning: 'public', category: 'modifier' },
     { latin: 'privatus', meaning: 'private', category: 'modifier' },

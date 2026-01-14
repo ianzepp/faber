@@ -118,6 +118,20 @@
       - 'P010'
       - 'Expected identifier'
 
+- name: P010 missing curator name after curata
+  source: 'functio f() curata -> numerus { redde 1 }'
+  errata:
+      - 'Parse errors'
+      - 'P010'
+      - 'Expected identifier'
+
+- name: P010 missing errata name after errata
+  source: 'functio f() errata -> numerus { redde 1 }'
+  errata:
+      - 'Parse errors'
+      - 'P010'
+      - 'Expected identifier'
+
 - name: P202 genus missing name
   source: 'genus { textus nomen }'
   errata:

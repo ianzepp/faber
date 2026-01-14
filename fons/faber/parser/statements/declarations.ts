@@ -28,6 +28,7 @@ import type {
     Literal,
     Expression,
     ReturnVerb,
+    FunctioModifier,
     TypeParameterDeclaration,
 } from '../ast';
 import { ParserErrorCode } from '../errors';
@@ -37,6 +38,47 @@ import { parseTypeAndParameterList, parseParameterList } from '../types';
 // FUNCTION DECLARATIONS
 // =============================================================================
 
+function parseFunctionModifiers(r: Resolver): FunctioModifier[] | undefined {
+    const ctx = r.ctx();
+    const modifiers: FunctioModifier[] = [];
+
+    while (!ctx.isAtEnd()) {
+        if (ctx.checkKeyword('curata')) {
+            const position = ctx.peek().position;
+            ctx.advance();
+            const name = ctx.parseIdentifier();
+            modifiers.push({ type: 'CurataModifier', name, position });
+            continue;
+        }
+
+        if (ctx.checkKeyword('errata')) {
+            const position = ctx.peek().position;
+            ctx.advance();
+            const name = ctx.parseIdentifier();
+            modifiers.push({ type: 'ErrataModifier', name, position });
+            continue;
+        }
+
+        if (ctx.checkKeyword('immutata')) {
+            const position = ctx.peek().position;
+            ctx.advance();
+            modifiers.push({ type: 'ImmutataModifier', position });
+            continue;
+        }
+
+        if (ctx.checkKeyword('iacit')) {
+            const position = ctx.peek().position;
+            ctx.advance();
+            modifiers.push({ type: 'IacitModifier', position });
+            continue;
+        }
+
+        break;
+    }
+
+    return modifiers.length > 0 ? modifiers : undefined;
+}
+
 /**
  * Parse function declaration.
  *
@@ -44,6 +86,9 @@ import { parseTypeAndParameterList, parseParameterList } from '../types';
  *   funcDecl := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? blockStmt?
  *   paramList := (typeParamDecl ',')* (parameter (',' parameter)*)?
  *   funcModifier := 'curata' IDENTIFIER
+ *                | 'errata' IDENTIFIER
+ *                | 'immutata'
+ *                | 'iacit'
  *   returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
  *
  * WHY: Top-level function declaration. Body is optional for @ externa declarations.
@@ -64,14 +109,7 @@ export function parseFunctioDeclaration(r: Resolver): FunctioDeclaration {
 
     ctx.expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
 
-    // Parse optional curata NAME binding (allocator for Zig)
-    // WHY: futura/cursor moved to @ annotations; curata stays inline because it binds a name
-    let curatorName: string | undefined;
-
-    if (ctx.matchKeyword('curata')) {
-        const curatorIdent = ctx.parseIdentifier();
-        curatorName = curatorIdent.name;
-    }
+    const modifiers = parseFunctionModifiers(r);
 
     let returnType: TypeAnnotation | undefined;
     let verbAsync: boolean | undefined;
@@ -131,7 +169,7 @@ export function parseFunctioDeclaration(r: Resolver): FunctioDeclaration {
         body,
         async,
         generator,
-        curatorName,
+        modifiers,
         returnVerb,
         position,
     };
@@ -562,7 +600,10 @@ export function parseGenusDeclaration(r: Resolver): GenusDeclaration {
  *   annotation := '@' IDENTIFIER+
  *   fieldDecl := 'generis'? 'nexum'? typeAnnotation IDENTIFIER (':' expression)?
  *   methodDecl := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? blockStmt?
- *   funcModifier := 'futura' | 'cursor' | 'curata' IDENTIFIER
+ *   funcModifier := 'curata' IDENTIFIER
+ *                | 'errata' IDENTIFIER
+ *                | 'immutata'
+ *                | 'iacit'
  *
  * WHY: Distinguishes between fields and methods by looking for 'functio' keyword.
  * WHY: Fields are public by default (struct semantics).
@@ -596,14 +637,7 @@ export function parseGenusMember(r: Resolver): FieldDeclaration | FunctioDeclara
 
         ctx.expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
 
-        // Parse optional curata NAME binding (allocator for Zig)
-        // WHY: futura/cursor moved to @ annotations; curata stays inline because it binds a name
-        let curatorName: string | undefined;
-
-        if (ctx.matchKeyword('curata')) {
-            const curatorIdent = ctx.parseIdentifier();
-            curatorName = curatorIdent.name;
-        }
+        const modifiers = parseFunctionModifiers(r);
 
         let returnType: TypeAnnotation | undefined;
         let verbAsync: boolean | undefined;
@@ -658,7 +692,7 @@ export function parseGenusMember(r: Resolver): FieldDeclaration | FunctioDeclara
             body,
             async: verbAsync ?? false,
             generator: verbGenerator ?? false,
-            curatorName,
+            modifiers,
             isAbstract: isAbstract || undefined,
             position,
             annotations: annotations.length > 0 ? annotations : undefined,
@@ -754,7 +788,10 @@ export function parsePactumDeclaration(r: Resolver): PactumDeclaration {
  *
  * GRAMMAR:
  *   pactumMethod := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause?
- *   funcModifier := 'futura' | 'cursor' | 'curata' IDENTIFIER
+ *   funcModifier := 'curata' IDENTIFIER
+ *                | 'errata' IDENTIFIER
+ *                | 'immutata'
+ *                | 'iacit'
  *   returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
  *
  * WHY: Method signatures without bodies. Same syntax as function declarations
@@ -778,14 +815,7 @@ export function parsePactumMethod(r: Resolver): PactumMethod {
 
     ctx.expect('RPAREN', ParserErrorCode.ExpectedClosingParen);
 
-    // Parse optional curata NAME binding (allocator for Zig)
-    // WHY: futura/cursor moved to @ annotations; curata stays inline because it binds a name
-    let curatorName: string | undefined;
-
-    if (ctx.matchKeyword('curata')) {
-        const curatorIdent = ctx.parseIdentifier();
-        curatorName = curatorIdent.name;
-    }
+    const modifiers = parseFunctionModifiers(r);
 
     let returnType: TypeAnnotation | undefined;
     let verbAsync: boolean | undefined;
@@ -829,7 +859,7 @@ export function parsePactumMethod(r: Resolver): PactumMethod {
         returnType,
         async: verbAsync ?? false,
         generator: verbGenerator ?? false,
-        curatorName,
+        modifiers,
         position,
         annotations: annotations.length > 0 ? annotations : undefined,
     };

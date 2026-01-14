@@ -97,6 +97,7 @@ import type {
     IncipietStatement,
     AdStatement,
     ConversionExpression,
+    FunctioModifier,
 } from '../parser/ast';
 import type { Position } from '../tokenizer/types';
 import type { Scope, Symbol } from './scope';
@@ -166,6 +167,14 @@ function isExternaFromAnnotations(annotations?: Annotation[]): boolean {
     if (!annotations) return false;
     for (const ann of annotations) {
         if (ann.name === 'externa') return true;
+    }
+    return false;
+}
+
+function hasCurataModifier(modifiers?: FunctioModifier[]): boolean {
+    if (!modifiers) return false;
+    for (const modifier of modifiers) {
+        if (modifier.type === 'CurataModifier') return true;
     }
     return false;
 }
@@ -1927,7 +1936,8 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
         // WHY: Detect curator param for allocator injection at call sites
         // Check both explicit curator param type and curata NAME syntax
-        const hasCuratorParam = !!node.curatorName || node.params.some(p => p.typeAnnotation?.name.toLowerCase() === 'curator');
+        const hasCuratorParam = hasCurataModifier(node.modifiers)
+            || node.params.some(p => p.typeAnnotation?.name.toLowerCase() === 'curator');
 
         const fnType = functionType(paramTypes, returnType, node.async, hasCuratorParam);
 
@@ -2915,7 +2925,8 @@ ${help}`,
             case 'FunctioDeclaration': {
                 const paramTypes: SemanticType[] = stmt.params.map(p => (p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN));
                 const returnType = stmt.returnType ? resolveTypeAnnotation(stmt.returnType) : VACUUM;
-                const hasCuratorParam = !!stmt.curatorName || stmt.params.some(p => p.typeAnnotation?.name.toLowerCase() === 'curator');
+                const hasCuratorParam = hasCurataModifier(stmt.modifiers)
+                    || stmt.params.some(p => p.typeAnnotation?.name.toLowerCase() === 'curator');
                 const fnType = functionType(paramTypes, returnType, stmt.async, hasCuratorParam);
 
                 updateSymbolType(currentScope, stmt.name.name, fnType);

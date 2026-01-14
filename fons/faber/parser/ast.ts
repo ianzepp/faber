@@ -380,12 +380,44 @@ export interface TypeParameterDeclaration extends BaseNode {
 export type ReturnVerb = 'arrow' | 'fit' | 'fiet' | 'fiunt' | 'fient';
 
 /**
+ * Function modifiers that appear after the parameter list.
+ *
+ * GRAMMAR (in EBNF):
+ *   funcModifier := 'curata' IDENTIFIER
+ *                | 'errata' IDENTIFIER
+ *                | 'immutata'
+ *                | 'iacit'
+ */
+export type FunctioModifier = CurataModifier | ErrataModifier | ImmutataModifier | IacitModifier;
+
+export interface CurataModifier extends BaseNode {
+    type: 'CurataModifier';
+    name: Identifier;
+}
+
+export interface ErrataModifier extends BaseNode {
+    type: 'ErrataModifier';
+    name: Identifier;
+}
+
+export interface ImmutataModifier extends BaseNode {
+    type: 'ImmutataModifier';
+}
+
+export interface IacitModifier extends BaseNode {
+    type: 'IacitModifier';
+}
+
+/**
  * Function declaration statement.
  *
  * GRAMMAR (in EBNF):
  *   funcDecl := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? blockStmt?
  *   paramList := (typeParamDecl ',')* (parameter (',' parameter)*)?
- *   funcModifier := 'futura' | 'cursor' | 'curata' IDENTIFIER
+ *   funcModifier := 'curata' IDENTIFIER
+ *                | 'errata' IDENTIFIER
+ *                | 'immutata'
+ *                | 'iacit'
  *   returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
  *
  * INVARIANT: async flag set by presence of 'futura' modifier or fiet/fient verb.
@@ -394,7 +426,7 @@ export type ReturnVerb = 'arrow' | 'fit' | 'fiet' | 'fiunt' | 'fient';
  * INVARIANT: typeParams contains compile-time type parameters (prae typus T).
  * INVARIANT: isAbstract is true for abstract methods (no body).
  * INVARIANT: body is optional only when isAbstract is true.
- * INVARIANT: curatorName is set when 'curata NAME' modifier present.
+ * INVARIANT: modifiers includes CurataModifier when 'curata NAME' modifier present.
  *
  * Target mappings:
  *   functio                    → function (TS), def (Py), fn (Zig), fn (Rust)
@@ -420,7 +452,7 @@ export interface FunctioDeclaration extends BaseNode {
     body?: BlockStatement;
     async: boolean;
     generator: boolean;
-    curatorName?: string; // WHY: Allocator binding name from 'curata NAME' modifier
+    modifiers?: FunctioModifier[];
     isConstructor?: boolean;
     isAbstract?: boolean;
     visibility?: Visibility;
@@ -839,7 +871,10 @@ export interface PactumDeclaration extends BaseNode {
  *
  * GRAMMAR:
  *   pactumMethod := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause?
- *   funcModifier := 'futura' | 'cursor' | 'curata' IDENTIFIER
+ *   funcModifier := 'curata' IDENTIFIER
+ *                | 'errata' IDENTIFIER
+ *                | 'immutata'
+ *                | 'iacit'
  */
 export interface PactumMethod extends BaseNode {
     type: 'PactumMethod';
@@ -848,7 +883,7 @@ export interface PactumMethod extends BaseNode {
     returnType?: TypeAnnotation;
     async: boolean;
     generator: boolean;
-    curatorName?: string;
+    modifiers?: FunctioModifier[];
     annotations?: Annotation[];
 }
 

@@ -65,6 +65,28 @@
           - 'functio greet() -> textus'
           - 'redde "hello"'
 
+# Post-function modifiers
+- name: function with no post modifiers
+  source: 'functio plain() -> numerus { redde 1 }'
+  expect:
+      ts:
+          - 'function plain(): number'
+          - 'return 1;'
+
+- name: function with curata modifier
+  source: 'functio manage(textus data) curata alloc -> textus { redde data }'
+  expect:
+      ts:
+          - 'function manage(data: string): string'
+          - 'return data;'
+
+- name: function with multiple post modifiers
+  source: 'functio process(textus data) curata alloc errata err immutata iacit -> textus { redde data }'
+  expect:
+      ts:
+          - 'function process(data: string): string'
+          - 'return data;'
+
 # Empty function body - Python requires pass, others allow {}
 - name: empty function body
   source: 'functio noop() {}'
