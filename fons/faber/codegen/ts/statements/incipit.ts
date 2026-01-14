@@ -44,12 +44,30 @@ function genNodeHelp(
     lines.push(`${ind}console.log("");`);
     lines.push(`${ind}console.log("Commands:");`);
 
-    // List children
+    // List children with descriptions
+    // WHY: Calculate max width at codegen time for aligned output
+    const cmdWidths: number[] = [];
     for (const [name, child] of node.children) {
         const aliasStr = child.alias ? `, ${child.alias}` : '';
         const isGroup = child.children.size > 0 && !child.functionName;
         const suffix = isGroup ? ' ...' : '';
-        lines.push(`${ind}console.log("  ${name}${aliasStr}${suffix}");`);
+        cmdWidths.push((name + aliasStr + suffix).length);
+    }
+    const maxCmdWidth = Math.max(12, ...cmdWidths); // Minimum 12 chars
+
+    for (const [name, child] of node.children) {
+        const aliasStr = child.alias ? `, ${child.alias}` : '';
+        const isGroup = child.children.size > 0 && !child.functionName;
+        const suffix = isGroup ? ' ...' : '';
+        const cmdPart = `${name}${aliasStr}${suffix}`;
+
+        if (child.description) {
+            const padding = ' '.repeat(maxCmdWidth - cmdPart.length + 2);
+            lines.push(`${ind}console.log("  ${cmdPart}${padding}${child.description}");`);
+        }
+        else {
+            lines.push(`${ind}console.log("  ${cmdPart}");`);
+        }
     }
 
     lines.push(`${ind}console.log("");`);
