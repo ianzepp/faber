@@ -317,6 +317,10 @@ functio typiAequales(SemanticTypus a, SemanticTypus b) -> bivalens {
 # Check if a type is assignable to another type
 @ publica
 functio assignabileAd(SemanticTypus fons, SemanticTypus scopus) -> bivalens {
+    # Defensive: treat missing types as ignotum to avoid crashes.
+    si nihil fons aut nihil scopus {
+        redde verum
+    }
     # Unknown is assignable to anything
     discerne fons {
         casu Ignotum {

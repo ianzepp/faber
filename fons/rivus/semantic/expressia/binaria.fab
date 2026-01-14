@@ -93,6 +93,9 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
             si estLogicum(b.signum) {
                 redde BIVALENS
             }
+
+            # EDGE: Unknown operator - return ignotum to avoid nil leakage.
+            redde IGNOTUM
         }
         ceterum {
             # EDGE: Non-binary expression - should not occur with correct AST structure
