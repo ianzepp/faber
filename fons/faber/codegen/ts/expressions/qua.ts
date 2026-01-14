@@ -5,17 +5,20 @@
  *   x qua textus -> (x as string)
  *   response.body qua objectum -> (response.body as object)
  *   { field: value } qua Genus -> new Genus({ field: value })
- *   {} qua copia<T> -> new Set<T>()
  *
  * WHY: TypeScript uses 'as' for type assertions. Parentheses ensure
  *      correct precedence when the cast appears in larger expressions.
  *
+ * IMPORTANT: `qua` is a compile-time type assertion only. It does NOT construct
+ *            or convert values at runtime. For actual construction of built-in
+ *            collection types (lista, tabula, copia), use `innatum` instead:
+ *              - [] innatum lista<T>   -> typed array
+ *              - {} innatum tabula<K,V> -> new Map<K,V>()
+ *              - [] innatum copia<T>   -> new Set<T>()
+ *
  * EDGE: Object literals cast to genus types need `new` instantiation,
  *       not type assertion, because genus compiles to a class with methods.
  *       Plain `as` would create an object without the class prototype.
- *
- * EDGE: Empty object literals cast to copia (Set) need `new Set()` construction,
- *       not type assertion. `{} as Set<T>` creates a plain object without Set prototype.
  */
 
 import type { QuaExpression, TypeAnnotation } from '../../../parser/ast';
@@ -38,15 +41,6 @@ export function genQuaExpression(node: QuaExpression, g: TsGenerator): string {
     if (node.expression.type === 'ObjectExpression' && g.isGenus(targetTypeName)) {
         const props = g.genExpression(node.expression);
         return `new ${targetType}(${props})`;
-    }
-
-    // WHY: Empty object literal + copia target = Set construction, not type assertion.
-    // `{} as Set<T>` creates a plain object without Set methods like .has(), .add(), etc.
-    if (node.expression.type === 'ObjectExpression' && targetTypeName === 'copia') {
-        const typeParams = node.targetType.typeParameters;
-        const elemTypeAnno = typeParams?.[0] ? getTypeAnnotation(typeParams[0]) : null;
-        const elemType = elemTypeAnno ? g.genType(elemTypeAnno) : 'unknown';
-        return `new Set<${elemType}>()`;
     }
 
     const expr = g.genExpression(node.expression);

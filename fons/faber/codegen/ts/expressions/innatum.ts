@@ -2,12 +2,21 @@
  * TypeScript Code Generator - Innatum Expression (native type construction)
  *
  * TRANSFORMS:
+ *   [] innatum lista<T>    -> ([] as T[])
  *   {} innatum tabula<K,V> -> new Map<K, V>()
- *   [] innatum lista<T> -> []
+ *   [] innatum copia<T>    -> new Set<T>()
  *
- * WHY: tabula maps to Map in TypeScript, which requires explicit construction.
- *      lista maps to array, which can use literal syntax.
- *      Unlike 'qua' (type assertion), 'innatum' actually constructs the native type.
+ * IMPORTANT: `innatum` constructs actual runtime instances of built-in collection types.
+ *            Use this when you need the native type's methods and behavior.
+ *
+ *            Compare with `qua` which is compile-time type assertion only:
+ *              - `{} qua copia<T>` produces `({} as Set<T>)` - NO Set methods!
+ *              - `[] innatum copia<T>` produces `new Set<T>()` - has .add(), .has(), etc.
+ *
+ * WHY: Latin 'innatum' (inborn, innate) - constructs the native/innate representation.
+ *      - tabula -> Map (requires `new Map()`)
+ *      - copia -> Set (requires `new Set()`)
+ *      - lista -> Array (uses literal syntax with type assertion)
  */
 
 import type { InnatumExpression, TypeAnnotation } from '../../../parser/ast';

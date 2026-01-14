@@ -275,6 +275,18 @@ conversionOp := ('numeratum' | 'fractatum') typeParams? ('vel' unary)?
              | ('textatum' | 'bivalentum')
 ```
 
+**Type casting vs construction:**
+
+- `qua` = compile-time type assertion only. No runtime effect. Use when you know a value's type but the compiler doesn't.
+  - `data qua textus` → TypeScript: `(data as string)`
+
+- `innatum` = native type construction. Actually builds the target type at runtime. Use for built-in collections:
+  - `[] innatum lista<T>` → typed empty array
+  - `{} innatum tabula<K,V>` → `new Map<K,V>()`
+  - `[] innatum copia<T>` → `new Set<T>()`
+
+**Important:** Do NOT use `qua` for collection construction. `{} qua copia<T>` produces a plain object with a type assertion—it will NOT have Set methods like `.add()` or `.has()`. Use `innatum` instead.
+
 ### Call and Member Access
 
 ```ebnf

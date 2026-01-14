@@ -166,16 +166,23 @@ export function parseLegeExpression(r: Resolver): LegeExpression {
  *   x qua A qua B parses as (x qua A) qua B - left-associative
  *
  * WHY: Latin 'qua' (as, in the capacity of) for type assertions.
- *      Compile-time only - no runtime checking. Maps to:
- *      - TypeScript: x as T
+ *      Compile-time only - no runtime construction or conversion. Maps to:
+ *      - TypeScript: (x as T)
  *      - Python: x (ignored, dynamic typing)
  *      - Zig: @as(T, x)
  *      - Rust: x as T
  *      - C++: static_cast<T>(x)
  *
  * WHY: Latin 'innatum' (inborn, innate) for native type construction.
- *      Unlike qua, this constructs the native representation of the type.
- *      Used for tabula<K,V> and lista<T> which need proper initialization.
+ *      Unlike qua, this constructs the actual native representation.
+ *      Use for built-in collection types that need proper initialization:
+ *        - [] innatum lista<T>    -> typed array
+ *        - {} innatum tabula<K,V> -> new Map<K,V>()
+ *        - [] innatum copia<T>    -> new Set<T>()
+ *
+ * IMPORTANT: Do NOT use `qua` for collection construction. For example:
+ *      `{} qua copia<T>` produces a plain object cast, not a Set.
+ *      Use `[] innatum copia<T>` to get an actual Set with .add(), .has(), etc.
  */
 export function parseQuaExpression(r: Resolver): Expression {
     const ctx = r.ctx();
