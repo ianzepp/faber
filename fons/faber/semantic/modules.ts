@@ -277,8 +277,9 @@ export function extractExports(program: Program, filePath: string, importedTypes
             // WHY: Extract discretio with full variant info from the start.
             // This ensures that genus fields referencing this discretio type
             // get the proper variant information for pattern matching.
-            const discretioExport = extractDiscretioExport(stmt);
-            typeCtx.types.set(stmt.name.name, discretioExport.type);
+            const discretioExports = extractDiscretioExports(stmt);
+            // First export is always the union type
+            typeCtx.types.set(stmt.name.name, discretioExports[0]!.type);
         }
     }
 
@@ -293,9 +294,9 @@ export function extractExports(program: Program, filePath: string, importedTypes
 
     // Pass 3: Extract full exports using the complete type context
     for (const stmt of program.body) {
-        const extracted = extractStatementExport(stmt, typeCtx);
-        if (extracted) {
-            exports.set(extracted.name, extracted);
+        const extracted = extractStatementExports(stmt, typeCtx);
+        for (const exp of extracted) {
+            exports.set(exp.name, exp);
         }
     }
 
@@ -303,26 +304,29 @@ export function extractExports(program: Program, filePath: string, importedTypes
 }
 
 /**
- * Extract export from a single statement, if it's exportable.
+ * Extract exports from a single statement, if it's exportable.
+ * Returns array because discretio exports multiple types (union + variants).
  */
-function extractStatementExport(stmt: Statement, ctx: ModuleTypeContext): ModuleExport | null {
+function extractStatementExports(stmt: Statement, ctx: ModuleTypeContext): ModuleExport[] {
     switch (stmt.type) {
         case 'FunctioDeclaration':
-            return extractFunctioExport(stmt, ctx);
+            return [extractFunctioExport(stmt, ctx)];
         case 'GenusDeclaration':
-            return extractGenusExport(stmt, ctx);
+            return [extractGenusExport(stmt, ctx)];
         case 'PactumDeclaration':
-            return extractPactumExport(stmt, ctx);
+            return [extractPactumExport(stmt, ctx)];
         case 'OrdoDeclaration':
-            return extractOrdoExport(stmt);
+            return [extractOrdoExport(stmt)];
         case 'DiscretioDeclaration':
-            return extractDiscretioExport(stmt);
+            return extractDiscretioExports(stmt);
         case 'TypeAliasDeclaration':
-            return extractTypusExport(stmt);
-        case 'VariaDeclaration':
-            return extractVariaExport(stmt);
+            return [extractTypusExport(stmt)];
+        case 'VariaDeclaration': {
+            const exp = extractVariaExport(stmt);
+            return exp ? [exp] : [];
+        }
         default:
-            return null;
+            return [];
     }
 }
 
@@ -402,9 +406,16 @@ function extractOrdoExport(stmt: OrdoDeclaration): ModuleExport {
 }
 
 /**
- * Extract export from discretio (tagged union) declaration.
+ * Extract exports from discretio (tagged union) declaration.
+ *
+ * WHY: Returns array because we export both the union type AND each variant type.
+ * This allows code to import specific variants for use as parameter types:
+ *   ex "./ast" importa Sententia, FunctioDeclaratio
+ *   functio visit(FunctioDeclaratio f) -> vacuum { ... }
  */
-function extractDiscretioExport(stmt: DiscretioDeclaration): ModuleExport {
+function extractDiscretioExports(stmt: DiscretioDeclaration): ModuleExport[] {
+    const exports: ModuleExport[] = [];
+
     // WHY: Preserve variant field information for cross-module pattern matching.
     // Without this, variant aliases in `discerne` cannot be typed when the
     // discretio is imported from another file.
@@ -419,11 +430,26 @@ function extractDiscretioExport(stmt: DiscretioDeclaration): ModuleExport {
         });
     }
 
-    return {
+    const unionType = discretioType(stmt.name.name, variants);
+
+    // Export the union type
+    exports.push({
         name: stmt.name.name,
-        type: discretioType(stmt.name.name, variants),
+        type: unionType,
         kind: 'discretio',
-    };
+    });
+
+    // Export each variant as a separate type (Extract<Union, { tag: 'Variant' }>)
+    // WHY: Allows importing specific variants for use as parameter types
+    for (const variant of stmt.variants) {
+        exports.push({
+            name: variant.name.name,
+            type: userType(variant.name.name), // Simplified - codegen produces Extract<>
+            kind: 'type',
+        });
+    }
+
+    return exports;
 }
 
 /**

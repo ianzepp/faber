@@ -74,6 +74,13 @@ functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
     fixum parametra = parseParametra(r)
     p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
 
+    # Parse optional curata NAME binding (allocator for Zig, ignored for other targets)
+    varia curatorNomen = nihil qua textus?
+    si p.probaVerbum("curata") {
+        fixum curatorSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        curatorNomen = curatorSym.valor
+    }
+
     # Parse return type
     varia typusReditus = nihil qua TypusAnnotatio?
     varia asynca = falsum
@@ -123,7 +130,8 @@ functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
         externa: falsum,
         visibilitas: nihil,
         reddeVerbum: reddeVerbum,
-        morphologia: nihil
+        morphologia: nihil,
+        curatorNomen: curatorNomen
     } qua Sententia
 }
 
@@ -283,7 +291,8 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
                 externa: falsum,
                 visibilitas: visibilitas,
                 reddeVerbum: nihil,
-                morphologia: morphologiaEx(annotationes)
+                morphologia: morphologiaEx(annotationes),
+                curatorNomen: nihil
             } qua Sententia)
         } secus {
             # Field: type name or name: default

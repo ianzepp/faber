@@ -23,7 +23,11 @@ export function genVariaDeclaration(node: VariaDeclaration, g: TsGenerator, semi
     // External declarations use TypeScript's 'declare' syntax
     if (isExternaFromAnnotations(node.annotations)) {
         const name = node.name.type === 'ArrayPattern' ? '[destructure]' : node.name.name;
-        const typeAnno = node.typeAnnotation ? `: ${g.genType(node.typeAnnotation)}` : '';
+        // WHY: Use 'any' for ignotum in externa - runtime globals are outside the type system,
+        // and 'unknown' doesn't allow property access which breaks patterns like Bun.env.X
+        const typeAnno = node.typeAnnotation
+            ? `: ${node.typeAnnotation.name === 'ignotum' ? 'any' : g.genType(node.typeAnnotation)}`
+            : '';
         return `${g.ind()}declare const ${name}${typeAnno}${semi ? ';' : ''}`;
     }
 

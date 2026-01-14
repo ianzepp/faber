@@ -2,24 +2,34 @@
 #
 # Minimal stdin-to-stdout compiler for bootstrap testing.
 # Reads file path as first line, then Faber source from stdin.
-# Writes TypeScript to stdout.
+# Writes generated code to stdout.
 #
-# Usage: { echo "/path/to/file.fab"; cat file.fab } | bun opus/rivus/fons/ts/cli.ts
+# Usage:
+#   { echo "/path/to/file.fab"; cat file.fab } | bun opus/rivus/fons/ts/cli.ts
+#   FAB_TARGET=go { echo "/path/to/file.fab"; cat file.fab } | bun opus/rivus/fons/ts/cli.ts
 #
-# For Zig output, use the test script pattern or import generateZig directly.
+# Environment variables:
+#   FAB_TARGET - Target language: ts (default), go
 
 ex "./lexor/index" importa lexare, LexorResultatum
 ex "./parser/index" importa resolvere, ParserResultatum
 ex "./semantic/index" importa analyze
 ex "./semantic/nucleus" importa SemanticResultatum
-ex "./codegen/ts/index" importa generateTs
+ex "./codegen/index" importa generate
 ex "./ast/radix" importa Programma
+
+# External runtime - Bun global provides env access
+@ externa
+fixum ignotum Bun
 
 # =============================================================================
 # MAIN ENTRY POINT
 # =============================================================================
 
 incipiet {
+    # Read target from environment (default: ts)
+    fixum target = (Bun.env.FAB_TARGET qua textus?) vel "ts"
+
     # Read all stdin: first line is file path, rest is source
     fixum input = lege
     fixum newlineIndex = input.indexOf("\n")
@@ -77,7 +87,7 @@ incipiet {
     }
 
     # Code generation
-    fixum output = generateTs((parseResult.programma qua Programma).corpus)
+    fixum output = generate((parseResult.programma qua Programma).corpus, target)
 
     # Write to stdout
     scribe output

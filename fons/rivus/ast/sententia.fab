@@ -317,6 +317,7 @@ discretio Sententia {
 
     # Function declaration
     # Example: functio salve(textus nomen) fit textus { ... }
+    # Example: functio alloc(textus s) curata alloc -> T { ... }
     # @ externa marks external declarations (no body required)
     FunctioDeclaratio {
         Locus locus
@@ -333,6 +334,7 @@ discretio Sententia {
         Visibilitas? visibilitas
         ReddeVerbum? reddeVerbum
         MorphologiaDeclaratio? morphologia
+        textus? curatorNomen    # Allocator binding from 'curata NAME' (Zig only)
     }
 
     # -------------------------------------------------------------------------
