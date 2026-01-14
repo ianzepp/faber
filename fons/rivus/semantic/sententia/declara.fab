@@ -10,7 +10,8 @@ ex "../typi" importa formaTypum, assignabileAd
 ex "../scopus" importa Symbolum, SymbolumSpecies, ScopusSpecies, quaereSymbolumLocale
 ex "../nucleus" importa estGenericusTypus
 ex "../errores" importa noTypeOrInitializerError, typeMismatchError, awaitOutsideAsyncError, missingFunctionBodyError
-ex "../../ast/sententia" importa Sententia, VariaGenus
+ex "../errores" importa duplicateModifierError, invalidModifierContextError
+ex "../../ast/sententia" importa Sententia, VariaGenus, FunctioModificator
 ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum
 
 @ publica
@@ -65,6 +66,57 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
 
     # User-defined types (genus/pactum/etc.)
     redde usitatumTypus(annotatio.nomen, annotatio.nullabilis)
+}
+
+functio validateFunctioModificatores(Resolvitor r, lista<FunctioModificator>? modificatores, bivalens immutataPermissa) -> vacuum {
+    si nihil modificatores {
+        redde
+    }
+
+    fixum a = r.analyzator()
+    varia visa = {} innatum tabula<textus, bivalens>
+
+    ex (modificatores qua lista<FunctioModificator>) pro m {
+        discerne m {
+            casu CurataModificator ut mod {
+                si nonnihil visa["curata"] {
+                    fixum err = duplicateModifierError("curata")
+                    a.error(err.textus, mod.locus)
+                } secus {
+                    visa["curata"] = verum
+                }
+            }
+            casu ErrataModificator ut mod {
+                si nonnihil visa["errata"] {
+                    fixum err = duplicateModifierError("errata")
+                    a.error(err.textus, mod.locus)
+                } secus {
+                    visa["errata"] = verum
+                }
+            }
+            casu ImmutataModificator ut mod {
+                si nonnihil visa["immutata"] {
+                    fixum err = duplicateModifierError("immutata")
+                    a.error(err.textus, mod.locus)
+                } secus {
+                    visa["immutata"] = verum
+                }
+                si non immutataPermissa {
+                    fixum err = invalidModifierContextError("immutata", "genus methods")
+                    a.error(err.textus, mod.locus)
+                }
+            }
+            casu IacitModificator ut mod {
+                si nonnihil visa["iacit"] {
+                    fixum err = duplicateModifierError("iacit")
+                    a.error(err.textus, mod.locus)
+                } secus {
+                    visa["iacit"] = verum
+                }
+            }
+            casu _ { }
+        }
+    }
 }
 
 # =============================================================================
@@ -136,6 +188,8 @@ functio analyzeFunctioDeclaratio(Resolvitor r, Sententia functioStmt) -> vacuum 
 
     discerne functioStmt {
         casu FunctioDeclaratio ut f {
+            validateFunctioModificatores(r, f.modificatores, falsum)
+
             # Build parameter types
             varia paramTypi = [] innatum lista<SemanticTypus>
             ex f.parametra pro param {
@@ -247,6 +301,8 @@ functio analyzeGenusDeclaratio(Resolvitor r, Sententia genusStmt) -> vacuum {
             ex g.methodi pro methodusStmt {
                 discerne methodusStmt {
                     casu FunctioDeclaratio ut m {
+                        validateFunctioModificatores(r, m.modificatores, verum)
+
                         # Build parameter types
                         varia paramTypi = [] innatum lista<SemanticTypus>
                         ex m.parametra pro param {
@@ -367,6 +423,8 @@ functio analyzePactumDeclaratio(Resolvitor r, Sententia pactumStmt) -> vacuum {
             varia methodi = {} innatum tabula<textus, SemanticTypus>
 
             ex p.methodi pro methodSignum {
+                validateFunctioModificatores(r, methodSignum.modificatores, falsum)
+
                 # Build parameter types
                 varia paramTypi = [] innatum lista<SemanticTypus>
                 ex methodSignum.parametra pro param {

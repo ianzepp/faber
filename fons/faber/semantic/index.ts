@@ -179,6 +179,37 @@ function hasCurataModifier(modifiers?: FunctioModifier[]): boolean {
     return false;
 }
 
+function validateFunctioModifiers(
+    modifiers: FunctioModifier[] | undefined,
+    context: 'function' | 'method' | 'pactum',
+    report: (message: string, position: Position) => void
+): void {
+    if (!modifiers || modifiers.length === 0) return;
+
+    const seen = new Set<string>();
+    for (const modifier of modifiers) {
+        let name = '';
+        if (modifier.type === 'CurataModifier') name = 'curata';
+        else if (modifier.type === 'ErrataModifier') name = 'errata';
+        else if (modifier.type === 'ImmutataModifier') name = 'immutata';
+        else if (modifier.type === 'IacitModifier') name = 'iacit';
+
+        if (name && seen.has(name)) {
+            const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.DuplicateModifier];
+            report(`${text(name)}\n${help}`, modifier.position);
+            continue;
+        }
+        if (name) {
+            seen.add(name);
+        }
+
+        if (name === 'immutata' && context !== 'method') {
+            const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.InvalidModifierContext];
+            report(`${text(name, 'genus methods')}\n${help}`, modifier.position);
+        }
+    }
+}
+
 // =============================================================================
 // TYPES
 // =============================================================================
@@ -1911,6 +1942,8 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
     }
 
     function analyzeFunctioDeclaration(node: FunctioDeclaration): void {
+        validateFunctioModifiers(node.modifiers, 'function', error);
+
         // Validate parameters
         let seenOptional = false;
         for (const param of node.params) {
@@ -2087,6 +2120,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
         // Process methods (all instance methods for now - static methods not yet in parser)
         for (const method of node.methods) {
+            validateFunctioModifiers(method.modifiers, 'method', error);
             const paramTypes = method.params.map(p => (p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN));
             const returnType = method.returnType ? resolveTypeAnnotation(method.returnType) : VACUUM;
             const fnType = functionType(paramTypes, returnType, method.async);
@@ -2183,6 +2217,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         const methods = new Map<string, FunctionType>();
 
         for (const method of node.methods) {
+            validateFunctioModifiers(method.modifiers, 'pactum', error);
             const paramTypes = method.params.map(p => (p.typeAnnotation ? resolveTypeAnnotation(p.typeAnnotation) : UNKNOWN));
             const returnType = method.returnType ? resolveTypeAnnotation(method.returnType) : VACUUM;
             const fnType = functionType(paramTypes, returnType, method.async);

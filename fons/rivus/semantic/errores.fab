@@ -24,6 +24,8 @@ ordo SemanticErrorCodice {
     CircularImport          # S013: Circular import detected
     ModuleParseError        # S014: Failed to parse module
     MissingFunctionBody     # S016: Function has no body (not @ externa)
+    DuplicateModifier       # S018: Duplicate modifier
+    InvalidModifierContext  # S019: Modifier not allowed in context
 }
 
 # ============================================================================
@@ -173,6 +175,24 @@ functio missingFunctionBodyError(textus nomen) -> SemanticErrorNuntius {
     redde {
         textus: scriptum("Function '§' has no body", nomen),
         auxilium: "Regular functions require a body. Use '@ externa' annotation for external declarations."
+    } qua SemanticErrorNuntius
+}
+
+# Duplicate modifier error
+@ publica
+functio duplicateModifierError(textus nomen) -> SemanticErrorNuntius {
+    redde {
+        textus: scriptum("Duplicate modifier '§'", nomen),
+        auxilium: "Each modifier can appear at most once in a function signature."
+    } qua SemanticErrorNuntius
+}
+
+# Invalid modifier context error
+@ publica
+functio invalidModifierContextError(textus nomen, textus contextus) -> SemanticErrorNuntius {
+    redde {
+        textus: scriptum("Modifier '§' is only allowed on §", nomen, contextus),
+        auxilium: "Remove the modifier or move it to a valid context."
     } qua SemanticErrorNuntius
 }
 

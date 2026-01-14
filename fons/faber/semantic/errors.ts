@@ -51,6 +51,8 @@ export enum SemanticErrorCode {
     RequiredAfterOptional = 'S015',
     MissingFunctionBody = 'S016',
     NonExhaustiveMatch = 'S017',
+    DuplicateModifier = 'S018',
+    InvalidModifierContext = 'S019',
     // Import resolution errors
     ModuleNotFound = 'S012',
     ModuleParseError = 'S014',
@@ -130,5 +132,13 @@ export const SEMANTIC_ERRORS = {
     [SemanticErrorCode.NonExhaustiveMatch]: {
         text: (missing: string[]) => `Non-exhaustive match: missing variant${missing.length > 1 ? 's' : ''} ${missing.map(v => `'${v}'`).join(', ')}`,
         help: 'All variants of a discretio must be handled in a discerne statement.',
+    },
+    [SemanticErrorCode.DuplicateModifier]: {
+        text: (name: string) => `Duplicate modifier '${name}'`,
+        help: 'Each modifier can appear at most once in a function signature.',
+    },
+    [SemanticErrorCode.InvalidModifierContext]: {
+        text: (name: string, context: string) => `Modifier '${name}' is only allowed on ${context}`,
+        help: 'Remove the modifier or move it to a valid context.',
     },
 } as const;
