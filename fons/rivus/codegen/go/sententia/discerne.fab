@@ -1,0 +1,156 @@
+# Go Statement Generator - Discerne (Variant Matching)
+#
+# Generates switch statements for discriminated union matching.
+# Assumes discretio types are generated with a Tag field.
+#
+# TRANSFORMS:
+#   discerne x { casu A {...} }             -> switch x.Tag { case "A": ... }
+#   discerne x { casu B ut b {...} }        -> switch x.Tag { case "B": b := x; ... }
+#   discerne x { casu C pro a, b {...} }    -> switch x.Tag { case "C": a := x.A; b := x.B; ... }
+#   discerne x { casu _ {...} }             -> default: ...
+#
+#   Multi-discriminant:
+#   discerne a, b { casu X ut x, Y ut y {...} }
+#     -> if a.Tag == "X" && b.Tag == "Y" { x := a; y := b; ... }
+
+ex "../../../ast/sententia" importa Sententia, VariansCasus, VariansExemplar
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa GoGenerator
+ex "../expressia/index" importa genExpressia
+ex "./index" importa genSententia
+
+@ publica
+functio genDiscerne(lista<Expressia> discriminantes, lista<VariansCasus> casus, GoGenerator g) -> textus {
+    # Generate expressions for all discriminants
+    varia discriminantStrs = [] innatum lista<textus>
+    ex discriminantes pro d {
+        discriminantStrs.adde(genExpressia(d, g))
+    }
+
+    # Single discriminant: use switch
+    si discriminantStrs.longitudo() == 1 {
+        redde genDiscerneSimplex(discriminantStrs[0], casus, g)
+    }
+
+    # Multi-discriminant: use if/else chain (can't use switch with multiple values)
+    redde genDiscerneMultiplex(discriminantStrs, casus, g)
+}
+
+# Single discriminant: generates Go switch statement
+functio genDiscerneSimplex(textus discriminant, lista<VariansCasus> casus, GoGenerator g) -> textus {
+    varia result = scriptum("§switch §.Tag {\n", g.ind(), discriminant)
+
+    ex casus pro c {
+        fixum pattern = c.exemplaria[0]
+
+        si pattern.estWildcard {
+            result = scriptum("§§default:\n", result, g.ind())
+        } secus {
+            result = scriptum("§§case \"§\":\n", result, g.ind(), pattern.variansNomen)
+        }
+
+        g.intraProfundum()
+
+        # Generate bindings
+        si non pattern.estWildcard {
+            result = scriptum("§§", result, genPatternBindings(pattern, discriminant, g))
+        }
+
+        # Generate body
+        result = scriptum("§§\n", result, genSententia(c.consequens, g))
+        g.exiProfundum()
+    }
+
+    result = scriptum("§§}", result, g.ind())
+    redde result
+}
+
+# Multi-discriminant: generates if/else chain
+functio genDiscerneMultiplex(lista<textus> discriminantStrs, lista<VariansCasus> casus, GoGenerator g) -> textus {
+    varia result = ""
+    varia first = verum
+
+    ex casus pro c {
+        # Build combined condition for all patterns
+        varia conditions = [] innatum lista<textus>
+        varia i = 0
+        ex c.exemplaria pro pattern {
+            si non pattern.estWildcard {
+                fixum disc = discriminantStrs[i]
+                conditions.adde(scriptum("§.Tag == \"§\"", disc, pattern.variansNomen))
+            }
+            i += 1
+        }
+
+        # Generate condition or default
+        si conditions.longitudo() == 0 {
+            # All wildcards - else block
+            si first {
+                result = scriptum("§{\n", g.ind())
+            } secus {
+                result = scriptum("§ else {\n", result)
+            }
+        } secus {
+            fixum condition = conditions.coniunge(" && ")
+            si first {
+                result = scriptum("§if § {\n", g.ind(), condition)
+                first = falsum
+            } secus {
+                result = scriptum("§ else if § {\n", result, condition)
+            }
+        }
+
+        g.intraProfundum()
+
+        # Generate bindings for each pattern
+        varia j = 0
+        ex c.exemplaria pro pattern {
+            si non pattern.estWildcard {
+                fixum disc = discriminantStrs[j]
+                result = scriptum("§§", result, genPatternBindings(pattern, disc, g))
+            }
+            j += 1
+        }
+
+        # Generate body
+        result = scriptum("§§\n", result, genSententia(c.consequens, g))
+        g.exiProfundum()
+        result = scriptum("§§}", result, g.ind())
+    }
+
+    redde result
+}
+
+# Generate bindings for a single pattern
+functio genPatternBindings(VariansExemplar pattern, textus discriminant, GoGenerator g) -> textus {
+    varia result = ""
+
+    # Alias binding: casu Click ut c -> c := discriminant
+    si nonnihil pattern.alias {
+        result = scriptum("§§ := §\n", g.ind(), pattern.alias, discriminant)
+    }
+
+    # Field bindings: casu Click pro x, y -> x := discriminant.X; y := discriminant.Y
+    # Go fields are capitalized, so we capitalize the first letter
+    si pattern.vincula.longitudo() > 0 {
+        ex pattern.vincula pro vinculum {
+            fixum fieldName = capitaliza(vinculum)
+            result = scriptum("§§§ := §.§\n", result, g.ind(), vinculum, discriminant, fieldName)
+        }
+    }
+
+    redde result
+}
+
+# Capitalize first letter for Go field access
+functio capitaliza(textus s) -> textus {
+    si s.longitudo() == 0 {
+        redde s
+    }
+    fixum primum = s.sectio(0, 1) qua textus
+    fixum first = primum.maiuscula()
+    si s.longitudo() == 1 {
+        redde first
+    }
+    redde scriptum("§§", first, s.sectio(1, s.longitudo()))
+}

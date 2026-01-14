@@ -2,7 +2,7 @@
 #
 # Routes statement AST nodes to their specific generators.
 
-ex "../../../ast/sententia" importa Sententia, Parametrum, ScribeGradus, VariaGenus, IteratioGenus
+ex "../../../ast/sententia" importa Sententia, Parametrum, ScribeGradus, VariaGenus, IteratioGenus, EligeCasus, VariansCasus
 ex "../../../ast/expressia" importa Expressia
 ex "../nucleus" importa GoGenerator
 ex "../expressia/index" importa genExpressia
@@ -15,6 +15,8 @@ ex "./si" importa genSi
 ex "./dum" importa genDum
 ex "./iteratio" importa genIteratio
 ex "./fac" importa genFac
+ex "./elige" importa genElige
+ex "./discerne" importa genDiscerne
 
 # =============================================================================
 # STATEMENT DISPATCH
@@ -92,6 +94,14 @@ functio genSententia(Sententia stmt, GoGenerator g) -> textus {
 
         casu FacSententia ut s {
             redde genFac(s.corpus qua Sententia, s.condicio, g)
+        }
+
+        casu EligeSententia ut s {
+            redde genElige(s.discriminans qua Expressia, s.casus qua lista<EligeCasus>, s.praedefinitum, s.cape, g)
+        }
+
+        casu DiscerneSententia ut s {
+            redde genDiscerne(s.discriminantes qua lista<Expressia>, s.casus qua lista<VariansCasus>, g)
         }
 
         # Fail on unimplemented statement types
