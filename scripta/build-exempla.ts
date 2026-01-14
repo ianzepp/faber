@@ -19,12 +19,12 @@ const EXEMPLA_SOURCE = join(ROOT, 'fons', 'exempla');
 const EXEMPLA_OUTPUT = join(ROOT, 'opus', 'exempla');
 
 type Compiler = 'faber' | 'rivus' | 'artifex';
-type Target = 'ts' | 'zig' | 'py' | 'rs';
+type Target = 'ts' | 'zig' | 'py' | 'rs' | 'go';
 
 const VALID_COMPILERS = ['faber', 'rivus', 'artifex'] as const;
-const VALID_TARGETS = ['ts', 'zig', 'py', 'rs', 'all'] as const;
-const ALL_TARGETS: Target[] = ['ts', 'zig', 'py', 'rs'];
-const TARGET_EXT: Record<Target, string> = { ts: 'ts', zig: 'zig', py: 'py', rs: 'rs' };
+const VALID_TARGETS = ['ts', 'zig', 'py', 'rs', 'go', 'all'] as const;
+const ALL_TARGETS: Target[] = ['ts', 'zig', 'py', 'rs', 'go'];
+const TARGET_EXT: Record<Target, string> = { ts: 'ts', zig: 'zig', py: 'py', rs: 'rs', go: 'go' };
 
 interface Args {
     compiler: Compiler;
@@ -79,7 +79,10 @@ async function findFiles(dir: string, ext: string): Promise<string[]> {
 }
 
 async function compileExempla(compiler: Compiler, targets: Target[]): Promise<{ total: number; failed: number }> {
-    const compilerBin = join(ROOT, 'opus', 'bin', compiler);
+    // faber uses the compiled binary, rivus/artifex use the wrapper script
+    const compilerBin = compiler === 'faber'
+        ? join(ROOT, 'opus', 'bin', compiler)
+        : join(ROOT, 'scripta', compiler);
     const fabFiles = await findFiles(EXEMPLA_SOURCE, '.fab');
 
     // Clear output directories for each target to ensure fresh builds
@@ -103,16 +106,8 @@ async function compileExempla(compiler: Compiler, targets: Target[]): Promise<{ 
             try {
                 await mkdir(outDir, { recursive: true });
 
-                let result;
-                if (compiler === 'faber') {
-                    // faber: use file path for proper module resolution
-                    result = await $`${compilerBin} compile ${fabPath} -t ${target}`.quiet();
-                } else {
-                    // rivus/artifex: stdin with path on first line
-                    const source = await Bun.file(fabPath).text();
-                    const input = `${fabPath}\n${source}`;
-                    result = await $`echo ${input} | ${compilerBin}`.quiet();
-                }
+                // All compilers use same CLI: compile <file> -t <target>
+                const result = await $`${compilerBin} compile ${fabPath} -t ${target}`.quiet();
 
                 await Bun.write(outPath, result.stdout);
                 console.log(`  ${relPath} -> ${target}/${subdir}/${name}.${ext}`);
@@ -211,6 +206,27 @@ async function verifyRust(): Promise<{ total: number; failed: number }> {
     return { total: files.length, failed };
 }
 
+async function verifyGo(): Promise<{ total: number; failed: number }> {
+    const goDir = join(EXEMPLA_OUTPUT, 'go');
+    const files = await findFiles(goDir, '.go');
+    let failed = 0;
+
+    for (const file of files) {
+        try {
+            await $`go build -o /dev/null ${file}`.quiet();
+        }
+        catch (err: any) {
+            console.error(`  ${relative(EXEMPLA_OUTPUT, file)}: compile error`);
+            const errText = err.stderr?.toString() || '';
+            const firstError = errText.split('\n').slice(0, 5).join('\n');
+            if (firstError) console.error(`    ${firstError}`);
+            failed++;
+        }
+    }
+
+    return { total: files.length, failed };
+}
+
 async function main() {
     const { compiler, targets } = parseArgs();
     const start = performance.now();
@@ -229,6 +245,7 @@ async function main() {
         zig: verifyZig,
         py: verifyPython,
         rs: verifyRust,
+        go: verifyGo,
     };
 
     let verifyFailed = 0;

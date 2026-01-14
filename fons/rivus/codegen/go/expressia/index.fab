@@ -100,7 +100,7 @@ functio genExpressia(Expressia expr, GoGenerator g) -> textus {
 
         # Fallback for unimplemented expression types
         ceterum {
-            redde "/* TODO: unhandled expression */"
+            redde scriptum("/* TODO: unhandled expression: § */", expr.tag)
         }
     }
 }

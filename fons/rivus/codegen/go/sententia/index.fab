@@ -69,7 +69,7 @@ functio genSententia(Sententia stmt, GoGenerator g) -> textus {
 
         # Fallback for unimplemented statement types
         ceterum {
-            redde scriptum("§// TODO: unhandled statement type", g.ind())
+            redde scriptum("§// TODO: unhandled statement: §", g.ind(), stmt.tag)
         }
     }
 }
