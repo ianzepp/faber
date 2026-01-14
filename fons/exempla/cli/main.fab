@@ -1,0 +1,19 @@
+# CLI Framework Example
+#
+# Demonstrates @ cli, @ imperium, @ imperia annotations.
+# Compile: faber compile main.fab -o cli.ts
+# Run: bun cli.ts --help
+
+ex "./commands/greet" importa * ut greetModule
+
+@ cli "example"
+@ versio "1.0.0"
+@ descriptio "Example CLI application"
+@ imperia "greet" ex greetModule
+incipit {}
+
+@ imperium "version"
+@ alias "v"
+functio version() -> vacuum {
+    scribe "Example CLI v1.0.0"
+}

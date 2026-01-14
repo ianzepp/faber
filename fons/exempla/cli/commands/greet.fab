@@ -1,0 +1,23 @@
+# Greet Commands Module
+#
+# Mounted at "greet" by main.fab.
+# Commands: greet hello, greet goodbye
+
+@ descriptio "Greeting commands"
+incipit {}
+
+@ imperium "hello"
+functio hello(textus name) -> vacuum {
+    scribe scriptum("Hello, {}!", name)
+}
+
+@ imperium "goodbye"
+@ alias "bye"
+functio goodbye(textus name, si bivalens formal ut f) -> vacuum {
+    si formal {
+        scribe scriptum("Farewell, {}.", name)
+    }
+    vel {
+        scribe scriptum("Bye, {}!", name)
+    }
+}
