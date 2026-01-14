@@ -727,6 +727,9 @@ functio parseParametra(Resolvitor r) -> lista<Parametrum> {
         varia paramTypus = nihil qua TypusAnnotatio?
         si p.estTypusNomen(p.specta(0)) {
             paramTypus = r.adnotatio()
+        } sin p.proba(SymbolumGenus.ParensSin) {
+            # Function type annotation: (T) -> U
+            paramTypus = r.adnotatio()
         } sin p.proba(SymbolumGenus.Verbum) et p.specta(1).species == SymbolumGenus.Nomen {
             paramTypus = r.adnotatio()
         } sin p.proba(SymbolumGenus.Nomen) et (

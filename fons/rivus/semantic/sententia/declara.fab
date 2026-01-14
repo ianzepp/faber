@@ -19,6 +19,16 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
     # WHY: Self-hosting needs full type annotation resolution for the compiler itself
     # (AST nodes, generics, and nullable types).
 
+    # Function type: (T, U) -> V
+    si annotatio.nomen == "" et nonnihil annotatio.parametra et nonnihil annotatio.reditus {
+        varia paramTypi = [] innatum lista<SemanticTypus>
+        ex (annotatio.parametra qua lista<TypusAnnotatio>) pro param {
+            paramTypi.adde(resolveTypusAnnotatio(r, param))
+        }
+        fixum reditusTypus = resolveTypusAnnotatio(r, annotatio.reditus qua TypusAnnotatio)
+        redde functioTypus(paramTypi, reditusTypus, falsum, falsum)
+    }
+
     # Union type: unio<A, B>
     si nonnihil annotatio.unio {
         varia typi = [] innatum lista<SemanticTypus>

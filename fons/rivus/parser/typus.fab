@@ -46,6 +46,36 @@ functio parseTypusAnnotatio(Resolvitor r) -> TypusAnnotatio {
     }
 
     # -------------------------------------------------------------------------
+    # Function type annotation: (T, U) -> V
+    # -------------------------------------------------------------------------
+    si p.congruet(SymbolumGenus.ParensSin) {
+        varia parametra = [] innatum lista<TypusAnnotatio>
+        si non p.proba(SymbolumGenus.ParensDex) {
+            parametra.adde(r.adnotatio())
+            dum p.congruet(SymbolumGenus.Coma) {
+                parametra.adde(r.adnotatio())
+            }
+        }
+
+        p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
+        p.expecta(SymbolumGenus.Sagitta, ParserErrorCodice.ExpectaturSagitta)
+
+        fixum reditus = r.adnotatio()
+
+        redde {
+            locus: locus,
+            nomen: "",
+            typusParametra: nihil,
+            nullabilis: falsum,
+            unio: nihil,
+            compendiumSeries: falsum,
+            praepositio: praepositio,
+            parametra: parametra,
+            reditus: reditus
+        } qua TypusAnnotatio
+    }
+
+    # -------------------------------------------------------------------------
     # Parse type name (identifier or keyword like nihil/textus)
     # -------------------------------------------------------------------------
     varia nomen = "" qua textus
@@ -131,10 +161,12 @@ functio parseTypusAnnotatio(Resolvitor r) -> TypusAnnotatio {
                 nomen: "union",
                 typusParametra: nihil,
                 nullabilis: nullabilis,
-                unio: [] innatum lista<TypusAnnotatio>,
-                compendiumSeries: falsum,
-                praepositio: praepositio
-            } qua TypusAnnotatio
+            unio: [] innatum lista<TypusAnnotatio>,
+            compendiumSeries: falsum,
+            praepositio: praepositio,
+            parametra: nihil,
+            reditus: nihil
+        } qua TypusAnnotatio
         }
         varia unioParametra = [] innatum lista<TypusAnnotatio>
         ex parametra pro param {
@@ -152,7 +184,9 @@ functio parseTypusAnnotatio(Resolvitor r) -> TypusAnnotatio {
             nullabilis: nullabilis,
             unio: unioParametra,
             compendiumSeries: falsum,
-            praepositio: praepositio
+            praepositio: praepositio,
+            parametra: nihil,
+            reditus: nihil
         } qua TypusAnnotatio
     }
 
@@ -166,7 +200,9 @@ functio parseTypusAnnotatio(Resolvitor r) -> TypusAnnotatio {
         nullabilis: nullabilis,
         unio: nihil,
         compendiumSeries: falsum,
-        praepositio: praepositio
+        praepositio: praepositio,
+        parametra: nihil,
+        reditus: nihil
     } qua TypusAnnotatio
 
     # -------------------------------------------------------------------------
@@ -191,7 +227,9 @@ functio parseTypusAnnotatio(Resolvitor r) -> TypusAnnotatio {
             nullabilis: arrayNullabilis,
             unio: nihil,
             compendiumSeries: verum,
-            praepositio: nihil
+            praepositio: nihil,
+            parametra: nihil,
+            reditus: nihil
         } qua TypusAnnotatio
     }
 

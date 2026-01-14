@@ -60,6 +60,20 @@ functio mappaNomenTypi(textus nomen) -> textus {
 # Generate TypeScript type from type annotation
 @ publica
 functio genTypus(TypusAnnotatio adnotatio, TsGenerator g) -> textus {
+    si adnotatio.nomen == "" et nonnihil adnotatio.reditus {
+        varia params = [] innatum lista<textus>
+        si nonnihil adnotatio.parametra {
+            varia index = 0
+            ex (adnotatio.parametra qua lista<TypusAnnotatio>) pro param {
+                params.adde(scriptum("arg§: §", index, genTypus(param, g)))
+                index = index + 1
+            }
+        }
+        fixum paramStr = params.coniunge(", ")
+        fixum retStr = genTypus(adnotatio.reditus qua TypusAnnotatio, g)
+        redde scriptum("(§) => §", paramStr, retStr)
+    }
+
     # Track feature usage for preamble
     si adnotatio.nomen == "decimus" aut adnotatio.nomen == "decim" {
         g.requisita.decimal = verum

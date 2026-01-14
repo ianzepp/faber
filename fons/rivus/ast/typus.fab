@@ -43,6 +43,8 @@ genus TypusAnnotatio {
     lista<TypusAnnotatio>? unio             # union members for unio<A, B>
     bivalens compendiumSeries               # true if T[] shorthand
     textus? praepositio                     # de (borrowed) or in (mutable)
+    lista<TypusAnnotatio>? parametra        # function type parameters
+    TypusAnnotatio? reditus                 # function return type
 }
 
 # ============================================================================
@@ -59,7 +61,9 @@ functio typusSimplicis(textus nomen, Locus locus) -> TypusAnnotatio {
         nullabilis: falsum,
         unio: nihil,
         compendiumSeries: falsum,
-        praepositio: nihil
+        praepositio: nihil,
+        parametra: nihil,
+        reditus: nihil
     } qua TypusAnnotatio
 }
 
@@ -73,7 +77,9 @@ functio typusNullabilis(textus nomen, Locus locus) -> TypusAnnotatio {
         nullabilis: verum,
         unio: nihil,
         compendiumSeries: falsum,
-        praepositio: nihil
+        praepositio: nihil,
+        parametra: nihil,
+        reditus: nihil
     } qua TypusAnnotatio
 }
 
@@ -87,6 +93,8 @@ functio typusGenericus(textus nomen, lista<TypusParametrum> parametra, Locus loc
         nullabilis: falsum,
         unio: nihil,
         compendiumSeries: falsum,
-        praepositio: nihil
+        praepositio: nihil,
+        parametra: nihil,
+        reditus: nihil
     } qua TypusAnnotatio
 }
