@@ -3811,6 +3811,7 @@ describe('parser', () => {
 
                 const discerneStmt = program!.body[0] as any;
                 expect(discerneStmt.type).toBe('DiscerneStatement');
+                expect(discerneStmt.exhaustive).toBe(false);
                 expect(discerneStmt.discriminants).toHaveLength(1);
                 expect(discerneStmt.cases).toHaveLength(2);
 
@@ -3829,6 +3830,23 @@ describe('parser', () => {
                 expect(quitCase.patterns).toHaveLength(1);
                 expect(quitCase.patterns[0].variant.name).toBe('Quit');
                 expect(quitCase.patterns[0].bindings).toHaveLength(0);
+            });
+
+            test('variant case pattern matching with discerne omnia', () => {
+                const { program, errors } = parseCode(`
+                    discerne omnia result {
+                        casu Ok { scribe "ok" }
+                        casu Err { scribe "err" }
+                    }
+                `);
+
+                expect(errors).toHaveLength(0);
+
+                const discerneStmt = program!.body[0] as any;
+                expect(discerneStmt.type).toBe('DiscerneStatement');
+                expect(discerneStmt.exhaustive).toBe(true);
+                expect(discerneStmt.discriminants).toHaveLength(1);
+                expect(discerneStmt.cases).toHaveLength(2);
             });
 
             test('empty discretio parses but has no variants', () => {

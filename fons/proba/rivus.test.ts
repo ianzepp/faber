@@ -198,6 +198,27 @@ function loadYamlFiles(dir: string): { file: string; cases: TestCase[]; meta?: F
 const probaDir = join(import.meta.dir, '.');
 const yamlFiles = loadYamlFiles(probaDir);
 
+describe('[rivus] parser', () => {
+    test('discerne omnia sets exhaustiva', () => {
+        const code = `
+            discerne omnia result {
+                casu Ok { scribe "ok" }
+                casu Err { scribe "err" }
+            }
+        `;
+
+        const lexResult = lexare(code);
+        expect(lexResult.errores).toHaveLength(0);
+
+        const parseResult = resolvere(lexResult.symbola);
+        expect(parseResult.errores).toHaveLength(0);
+
+        const stmt = (parseResult.programma as any).corpus[0];
+        expect(stmt.tag).toBe('DiscerneSententia');
+        expect(stmt.exhaustiva).toBe(true);
+    });
+});
+
 for (const { file, cases, meta } of yamlFiles) {
     const suiteName = basename(file, '.yaml');
 

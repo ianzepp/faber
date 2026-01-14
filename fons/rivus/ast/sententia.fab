@@ -475,6 +475,7 @@ discretio Sententia {
     DiscerneSententia {
         Locus locus
         lista<Expressia> discriminantes   # one or more expressions to match against
+        bivalens exhaustiva              # opt-in exhaustiveness ("discerne omnia")
         lista<VariansCasus> casus
     }
 

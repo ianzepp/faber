@@ -406,6 +406,8 @@ export function parseDiscerneStatement(r: Resolver): DiscerneStatement {
 
     ctx.expectKeyword('discerne', ParserErrorCode.ExpectedKeywordDiscerne);
 
+    const exhaustive = ctx.matchKeyword('omnia');
+
     // Parse comma-separated discriminants
     const discriminants: Expression[] = [];
     discriminants.push(r.expression());
@@ -495,7 +497,7 @@ export function parseDiscerneStatement(r: Resolver): DiscerneStatement {
 
     ctx.expect('RBRACE', ParserErrorCode.ExpectedClosingBrace);
 
-    return { type: 'DiscerneStatement', discriminants, cases, defaultCase, position };
+    return { type: 'DiscerneStatement', discriminants, exhaustive, cases, defaultCase, position };
 }
 
 // =============================================================================

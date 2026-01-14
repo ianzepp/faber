@@ -1063,6 +1063,7 @@ export interface EligeCasus extends BaseNode {
 export interface DiscerneStatement extends BaseNode {
     type: 'DiscerneStatement';
     discriminants: Expression[];
+    exhaustive: boolean;
     cases: VariantCase[];
     defaultCase?: BlockStatement;
 }
