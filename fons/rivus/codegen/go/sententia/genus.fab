@@ -4,13 +4,16 @@
 #   genus Persona { textus nomen } -> type Persona struct { Nomen string }
 #   @ publica genus Persona { ... } -> type Persona struct { ... } (exported via name)
 
-ex "../../../ast/sententia" importa CampusDeclaratio, Visibilitas
+ex "../../../ast/sententia" importa Sententia, CampusDeclaratio, Parametrum, TypusParametrum, Visibilitas, FunctioModificator
+ex "../../../ast/typus" importa TypusAnnotatio
 ex "../nucleus" importa GoGenerator
 ex "../typus" importa genTypus
+ex "./index" importa genSententia
+ex "./functio" importa genParametrum
 
 @ publica
-functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotum implet, bivalens abstractum, lista<CampusDeclaratio> campi, ignotum structor, ignotum methodi, ignotum visibilitas, GoGenerator g) -> textus {
-    # NOTE: Go has no class inheritance; extendit/implet/structor/methodi are ignored here.
+functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotum implet, bivalens abstractum, lista<CampusDeclaratio> campi, ignotum structor, lista<Sententia> methodi, ignotum visibilitas, GoGenerator g) -> textus {
+    # NOTE: Go has no class inheritance; extendit/implet/structor are ignored here.
     varia typeName = nomen
     si nonnihil visibilitas {
         fixum vis = visibilitas qua Visibilitas
@@ -44,7 +47,112 @@ functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotu
     g.exiProfundum()
     lines.adde(scriptum("§}", g.ind()))
 
+    ex methodi pro methodus {
+        lines.adde("")
+        lines.adde(genGenusMethod(typeName, methodus, g))
+    }
+
     redde lines.coniunge("\n")
+}
+
+functio habetErrataModificator(ignotum modificatores) -> bivalens {
+    si nihil modificatores {
+        redde falsum
+    }
+    ex (modificatores qua lista<FunctioModificator>) pro m {
+        discerne m {
+            casu ErrataModificator {
+                redde verum
+            }
+            ceterum { }
+        }
+    }
+    redde falsum
+}
+
+functio genGenusMethod(textus typeName, Sententia methodus, GoGenerator g) -> textus {
+    discerne methodus {
+        casu FunctioDeclaratio ut f {
+            # External method declarations are not supported in Go
+            si f.externa {
+                redde scriptum("§// extern: method §", g.ind(), f.nomen)
+            }
+
+            varia methodName = f.nomen
+            si nonnihil f.visibilitas {
+                fixum vis = f.visibilitas qua Visibilitas
+                si vis == Visibilitas.Publica {
+                    methodName = capitaliza(methodName)
+                }
+            }
+
+            varia result = scriptum("§func (this *§) §", g.ind(), typeName, methodName)
+
+            # Generic parameters
+            si nonnihil f.generaParametra {
+                fixum gp = f.generaParametra qua lista<TypusParametrum>
+                si gp.longitudo() > 0 {
+                    varia names = [] innatum lista<textus>
+                    ex gp pro p {
+                        names.adde(scriptum("§ any", p.nomen))
+                    }
+                    result = scriptum("§[§]", result, names.coniunge(", "))
+                }
+            }
+
+            # Parameters
+            varia params = [] innatum lista<textus>
+            ex (f.parametra qua lista<Parametrum>) pro param {
+                params.adde(genParametrum(param, g))
+            }
+            result = scriptum("§(§)", result, params.coniunge(", "))
+
+            # Return type
+            varia retType = ""
+            si nonnihil f.typusReditus {
+                retType = genTypus(f.typusReditus qua TypusAnnotatio, g)
+            }
+            fixum hasErrata = habetErrataModificator(f.modificatores)
+            si hasErrata {
+                si retType == "" {
+                    result = scriptum("§ error", result)
+                } secus {
+                    result = scriptum("§ (§, error)", result, retType)
+                }
+            } sin retType != "" {
+                result = scriptum("§ §", result, retType)
+            }
+
+            # Body
+            si nihil f.corpus {
+                redde result
+            }
+
+            fixum prevInErrata = g.inErrata
+            fixum prevErrataType = g.errataTypusReditus
+            g.inErrata = hasErrata
+            varia errataType = nihil qua TypusAnnotatio?
+            si hasErrata et retType != "" et nonnihil f.typusReditus {
+                errataType = f.typusReditus qua TypusAnnotatio
+            }
+            g.errataTypusReditus = errataType
+
+            g.intraProfundum()
+            fixum body = genSententia(f.corpus qua Sententia, g)
+            g.exiProfundum()
+
+            g.inErrata = prevInErrata
+            g.errataTypusReditus = prevErrataType
+
+            si body == "" {
+                redde scriptum("§ {}", result)
+            }
+            redde scriptum("§ {\n§\n§}", result, body, g.ind())
+        }
+        ceterum { }
+    }
+
+    redde ""
 }
 
 functio campusNomenGo(CampusDeclaratio campus) -> textus {
