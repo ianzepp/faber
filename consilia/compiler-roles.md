@@ -675,8 +675,8 @@ Internal `redde`/`iace` emit `yield respond.ok()`/`yield respond.error()`.
 |-----------|----------|---------|--------|-----------|
 | Norma stdlib | `fons/norma/*.fab` | Both | Working | Stays shared |
 | Registry generator | `scripta/build-norma.ts` | Build | Working | Stays shared |
-| Faber registry | `fons/norma/index.json` | Faber | Working | Faber-specific |
-| Rivus registry | `fons/rivus/codegen/norma-registry.gen.fab` | Rivus | **Verify integration** | Rivus-specific |
+| Faber registry | `fons/faber/codegen/norma.*.gen.ts` | Faber | Working | Per-target files |
+| Rivus registry | `fons/rivus/codegen/norma.gen.fab` | Rivus | Working | Rivus-specific |
 | Test infrastructure | `fons/proba/` | Both | Working | Stays shared |
 | Capability system | `fons/faber/codegen/capabilities.ts` | Faber only | **Missing in rivus** | **Migrate** |
 | Feature detector | `fons/faber/codegen/feature-detector.ts` | Faber only | **Missing in rivus** | **Migrate** |
@@ -711,8 +711,8 @@ functio adde(T elem) -> vacuum
 **Script**: `scripta/build-norma.ts` (408 lines)
 
 **Generates**:
-1. `fons/norma/index.json` - Flat key structure for faber
-2. `fons/rivus/codegen/norma-registry.gen.fab` - Nested elige for rivus
+1. `fons/faber/codegen/norma.*.gen.ts` - Per-target files for faber (5 files: ts, py, rs, cpp, zig)
+2. `fons/rivus/codegen/norma.gen.fab` - Data structure registry for rivus
 
 **Uses faber's parser** to extract annotations from `.fab` files.
 

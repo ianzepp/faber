@@ -2,7 +2,7 @@
  * Generated ZIG norma registry.
  * Source: fons/norma/
  * Generator: bun run build:norma
- * Generated: 2026-01-15T14:30:37.483Z
+ * Generated: 2026-01-15T14:33:44.456Z
  */
 
 export interface Translation {

@@ -2,7 +2,7 @@
  * Generated TS norma registry.
  * Source: fons/norma/
  * Generator: bun run build:norma
- * Generated: 2026-01-15T14:30:37.478Z
+ * Generated: 2026-01-15T14:33:44.453Z
  */
 
 export interface Translation {

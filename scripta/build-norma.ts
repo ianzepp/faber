@@ -359,91 +359,6 @@ function generateTypescriptRegistry(collections: CollectionDef[], target: string
     return lines.join('\n');
 }
 
-// =============================================================================
-// JSON GENERATOR (flat key structure)
-// =============================================================================
-
-interface JsonEntry {
-    // Collection-level (1 part key: "lista")
-    innatum?: Record<string, string>;
-    // Method-level (2 part key: "lista:adde")
-    radixForms?: string[];
-    // Translation-level (3 part key: "lista:adde:ts")
-    method?: string;
-    template?: string;
-    params?: string[];
-}
-
-function generateJsonRegistry(collections: CollectionDef[]): string {
-    const registry: Record<string, JsonEntry> = {};
-
-    for (const coll of collections) {
-        // Collection-level: innatum
-        if (coll.innatum.size > 0) {
-            const innatum: Record<string, string> = {};
-            for (const [target, type] of coll.innatum) {
-                innatum[target] = type;
-            }
-            registry[coll.name] = { innatum };
-        }
-
-        for (const [methodName, method] of coll.methods) {
-            // Method-level: radixForms
-            if (method.radixForms && method.radixForms.length > 0) {
-                registry[`${coll.name}:${methodName}`] = { radixForms: method.radixForms };
-            }
-
-            // Translation-level: method/template/params
-            for (const [target, trans] of method.translations) {
-                const key = `${coll.name}:${methodName}:${target}`;
-                const entry: JsonEntry = {};
-
-                if (trans.method) {
-                    entry.method = trans.method;
-                }
-                if (trans.template) {
-                    entry.template = trans.template;
-                }
-                if (trans.params) {
-                    entry.params = trans.params;
-                }
-
-                registry[key] = entry;
-            }
-        }
-    }
-
-    const lines: string[] = ['{'];
-    const sortedKeys = Object.keys(registry).sort();
-
-    for (let i = 0; i < sortedKeys.length; i++) {
-        const key = sortedKeys[i]!;
-        const entry = registry[key]!;
-        const parts: string[] = [];
-
-        if (entry.innatum) {
-            parts.push(`"innatum": ${JSON.stringify(entry.innatum)}`);
-        }
-        if (entry.radixForms) {
-            parts.push(`"radixForms": ${JSON.stringify(entry.radixForms)}`);
-        }
-        if (entry.method) {
-            parts.push(`"method": ${JSON.stringify(entry.method)}`);
-        }
-        if (entry.template) {
-            parts.push(`"template": ${JSON.stringify(entry.template)}`);
-        }
-        if (entry.params) {
-            parts.push(`"params": ${JSON.stringify(entry.params)}`);
-        }
-
-        const comma = i < sortedKeys.length - 1 ? ',' : '';
-        lines.push(`  ${JSON.stringify(key)}: { ${parts.join(', ')} }${comma}`);
-    }
-
-    lines.push('}');
-    return lines.join('\n') + '\n';
-}
 
 // =============================================================================
 // MAIN
@@ -454,7 +369,6 @@ async function main() {
     const innatumDir = join(normaDir, 'innatum');
     const codegenDir = join(import.meta.dir, '..', 'fons', 'faber', 'codegen');
     const outputFab = join(import.meta.dir, '..', 'fons', 'rivus', 'codegen', 'norma.gen.fab');
-    const outputJson = join(import.meta.dir, '..', 'fons', 'norma', 'index.json');
 
     const targets = ['ts', 'py', 'rs', 'cpp', 'zig'];
 
@@ -524,11 +438,6 @@ async function main() {
     const fabCode = generateFaberCode(allCollections);
     await writeFile(outputFab, fabCode, 'utf-8');
     console.log(`Generated: ${outputFab}`);
-
-    // Generate JSON output (for backwards compatibility)
-    const jsonCode = generateJsonRegistry(allCollections);
-    await writeFile(outputJson, jsonCode, 'utf-8');
-    console.log(`Generated: ${outputJson}`);
 }
 
 main().catch(err => {
