@@ -1023,4 +1023,64 @@ describe('Semantic Analyzer', () => {
             expect(errors[0]!.message).toContain("Method 'unknownMethod' not found");
         });
     });
+
+    describe('Exitus Modifier Validation', () => {
+        it('accepts exitus with literal code', () => {
+            const source = `
+                functio main() exitus 0 {
+                    scribe "success"
+                }
+            `;
+            const { errors } = analyzeSource(source);
+
+            expect(errors).toHaveLength(0);
+        });
+
+        it('accepts exitus with identifier code', () => {
+            const source = `
+                functio main() exitus code {
+                    varia failed = falsum
+                    si failed { code = 1 }
+                }
+            `;
+            const { errors } = analyzeSource(source);
+
+            expect(errors).toHaveLength(0);
+        });
+
+        it('errors on exitus with non-vacuum return type', () => {
+            const source = `
+                functio main() exitus 0 -> numerus {
+                    redde 42
+                }
+            `;
+            const { errors } = analyzeSource(source);
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors[0]!.message).toContain("'exitus' requires vacuum return type");
+        });
+
+        it('errors on exitus combined with errata', () => {
+            const source = `
+                functio main() exitus 0 errata err {
+                    scribe "test"
+                }
+            `;
+            const { errors } = analyzeSource(source);
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors[0]!.message).toContain("'exitus' and 'errata' cannot be used together");
+        });
+
+        it('accepts exitus with explicit vacuum return', () => {
+            const source = `
+                functio main() exitus 0 -> vacuum {
+                    scribe "success"
+                }
+            `;
+            const { errors } = analyzeSource(source);
+
+            expect(errors).toHaveLength(0);
+        });
+    });
 });

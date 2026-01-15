@@ -40,7 +40,7 @@ funcDecl     := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClaus
 paramList    := (typeParamDecl ',')* (parameter (',' parameter)*)?
 typeParamDecl := 'prae' 'typus' IDENTIFIER
 parameter    := ('de' | 'in' | 'ex')? 'si'? 'ceteri'? typeAnnotation? IDENTIFIER ('ut' IDENTIFIER)? ('vel' expression)?
-funcModifier := 'curata' IDENTIFIER | 'errata' IDENTIFIER | 'immutata' | 'iacit'
+funcModifier := 'curata' IDENTIFIER | 'errata' IDENTIFIER | 'exitus' (IDENTIFIER | NUMBER) | 'immutata' | 'iacit'
 returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
 lambdaExpr   := ('pro' | 'fit' | 'fiet') params? ('->' type)? (':' expression | blockStmt)
 ```

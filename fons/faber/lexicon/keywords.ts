@@ -219,6 +219,9 @@ export const keywords: KeywordEntry[] = [
     { latin: 'curata', meaning: 'managed (allocator)', category: 'modifier' },
     // WHY: "errata" (errors) binds an error name in function signatures
     { latin: 'errata', meaning: 'errors (binding)', category: 'modifier' },
+    // WHY: "exitus" (exit, outcome) declares exit code for CLI entry points
+    //      Usage: functio main() exitus 0 { } or functio main() exitus code { }
+    { latin: 'exitus', meaning: 'exit code', category: 'modifier' },
     // WHY: "immutata" (unchanged) marks a function as constant
     { latin: 'immutata', meaning: 'constant', category: 'modifier' },
     // WHY: "publicus/privatus" for visibility - default is public (struct semantics)

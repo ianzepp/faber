@@ -53,6 +53,8 @@ export enum SemanticErrorCode {
     NonExhaustiveMatch = 'S017',
     DuplicateModifier = 'S018',
     InvalidModifierContext = 'S019',
+    ConflictingModifiers = 'S020',
+    ExitusRequiresVacuumReturn = 'S021',
     // Import resolution errors
     ModuleNotFound = 'S012',
     ModuleParseError = 'S014',
@@ -140,5 +142,13 @@ export const SEMANTIC_ERRORS = {
     [SemanticErrorCode.InvalidModifierContext]: {
         text: (name: string, context: string) => `Modifier '${name}' is only allowed on ${context}`,
         help: 'Remove the modifier or move it to a valid context.',
+    },
+    [SemanticErrorCode.ConflictingModifiers]: {
+        text: (mod1: string, mod2: string) => `Modifiers '${mod1}' and '${mod2}' cannot be used together`,
+        help: 'These modifiers have incompatible semantics. Remove one of them.',
+    },
+    [SemanticErrorCode.ExitusRequiresVacuumReturn]: {
+        text: (returnType: string) => `Modifier 'exitus' requires vacuum return type, but function returns '${returnType}'`,
+        help: "Functions with 'exitus' cannot have a return value. Remove the return type or use 'redde' without a value.",
     },
 } as const;

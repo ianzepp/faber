@@ -191,7 +191,36 @@ ${ind}}`;
     // Non-flumina path: arrow syntax, async, generator, or constructor
     const asyncMod = isAsync ? 'async ' : '';
     const star = isGenerator ? '*' : '';
-    const body = genBlockStatement(node.body, g);
+
+    // Check for exitus modifier
+    const exitusModifier = node.modifiers?.find(m => m.type === 'ExitusModifier');
+    let body: string;
+
+    if (exitusModifier) {
+        // WHY: exitus injects exit code handling
+        // For literal: always exit with that code
+        // For identifier: create mutable variable, exit with it on return
+        const exitusCode = exitusModifier.code;
+        const ind = g.ind();
+
+        g.depth++;
+        const innerBody = node.body.body.map(stmt => g.genStatement(stmt)).join('\n');
+        g.depth--;
+
+        if (exitusCode.type === 'Literal') {
+            // Literal exit code: always exit with that value
+            const code = exitusCode.value;
+            body = `{\n${innerBody}\n${ind}  process.exit(${code});\n${ind}}`;
+        }
+        else {
+            // Named exit code: create variable, exit with it
+            const codeName = exitusCode.name;
+            body = `{\n${ind}  let ${codeName} = 0;\n${innerBody}\n${ind}  process.exit(${codeName});\n${ind}}`;
+        }
+    }
+    else {
+        body = genBlockStatement(node.body, g);
+    }
 
     g.inGenerator = prevInGenerator;
     g.inFlumina = prevInFlumina;

@@ -59,6 +59,30 @@ function parseFunctionModifiers(r: Resolver): FunctioModifier[] | undefined {
             continue;
         }
 
+        if (ctx.checkKeyword('exitus')) {
+            const position = ctx.peek().position;
+            ctx.advance();
+            // Parse either IDENTIFIER or NUMBER literal
+            const next = ctx.peek();
+            if (next.type === 'IDENTIFIER') {
+                const code = ctx.parseIdentifier();
+                modifiers.push({ type: 'ExitusModifier', code, position });
+            }
+            else if (next.type === 'NUMBER') {
+                const codeToken = ctx.advance();
+                const code: Literal = {
+                    type: 'Literal',
+                    value: codeToken.value,
+                    position: codeToken.position,
+                };
+                modifiers.push({ type: 'ExitusModifier', code, position });
+            }
+            else {
+                ctx.reportError('Expected identifier or number after exitus', ParserErrorCode.UnexpectedToken);
+            }
+            continue;
+        }
+
         if (ctx.checkKeyword('immutata')) {
             const position = ctx.peek().position;
             ctx.advance();
@@ -87,6 +111,7 @@ function parseFunctionModifiers(r: Resolver): FunctioModifier[] | undefined {
  *   paramList := (typeParamDecl ',')* (parameter (',' parameter)*)?
  *   funcModifier := 'curata' IDENTIFIER
  *                | 'errata' IDENTIFIER
+ *                | 'exitus' (IDENTIFIER | NUMBER)
  *                | 'immutata'
  *                | 'iacit'
  *   returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
