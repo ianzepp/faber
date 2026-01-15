@@ -2,7 +2,7 @@
 #
 # Routes expression AST nodes to their specific generators.
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum
+ex "../../../ast/expressia" importa Expressia, LitteraGenus, MembrumExpressia, ObiectumProprietas, LambdaParametrum
 ex "../../../ast/sententia" importa Sententia, VariaGenus
 ex "../../../ast/typus" importa TypusAnnotatio
 ex "../nucleus" importa GoGenerator
