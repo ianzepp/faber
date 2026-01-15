@@ -46,6 +46,7 @@ import type { CodegenOptions } from '../types';
 import { TsGenerator } from './generator';
 import { genPreamble } from './preamble';
 import { detectCliProgram } from '../cli/detector';
+import { join, dirname, relative } from 'node:path';
 
 /**
  * Generate TypeScript source code from a Latin AST.
@@ -92,7 +93,21 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     // Second: prepend preamble based on detected features
     const preamble = genPreamble(g.features);
 
-    // Third: generate CLI module imports (must be at top of file for valid ESM)
+    // Third: generate HAL imports (must be at top for valid ESM)
+    // WHY: HAL pactums with @subsidia need native implementations imported
+    let halImports = '';
+    if (g.halImports.size > 0) {
+        const importLines: string[] = [];
+        for (const [name, relativePath] of g.halImports) {
+            // Resolve path relative to source file
+            // WHY: @subsidia paths are relative to declaring .fab file
+            const importPath = resolveHalImportPath(relativePath, options.filePath);
+            importLines.push(`import { ${name} } from "${importPath}";`);
+        }
+        halImports = importLines.join('\n') + '\n\n';
+    }
+
+    // Fourth: generate CLI module imports (must be at top of file for valid ESM)
     // WHY: CLI imports are hoisted here instead of inside incipit to ensure
     // they appear before any non-import statements
     let cliImports = '';
@@ -104,5 +119,40 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         cliImports = importLines.join('\n') + '\n\n';
     }
 
-    return preamble + cliImports + body;
+    return preamble + halImports + cliImports + body;
+}
+
+/**
+ * Resolve HAL import path relative to output file.
+ *
+ * WHY: @subsidia paths are relative to the declaring .fab file.
+ *      We need to convert them to paths relative to the output .ts file.
+ *
+ * @param relativePath - Path from @subsidia annotation (e.g., "codegen/ts/consolum.ts")
+ * @param sourceFilePath - Original .fab file path (optional)
+ * @returns Resolved import path
+ */
+function resolveHalImportPath(relativePath: string, sourceFilePath?: string): string {
+    // For now, use path as-is if no source file context
+    // WHY: When compiling from stdin or without file context, paths are passed through
+    if (!sourceFilePath) {
+        return relativePath;
+    }
+
+    // Resolve path relative to source file's directory
+    // Example: fons/norma/hal/consolum.fab -> fons/norma/hal/codegen/ts/consolum.ts
+    const sourceDir = dirname(sourceFilePath);
+    const absolutePath = join(sourceDir, relativePath);
+
+    // Make import path relative to current directory (for TypeScript imports)
+    // WHY: TypeScript imports should be relative to project root or use absolute paths
+    const importPath = relative(process.cwd(), absolutePath);
+
+    // Ensure path starts with ./ or ../ for relative imports
+    if (!importPath.startsWith('.') && !importPath.startsWith('/')) {
+        return './' + importPath;
+    }
+
+    // Remove .ts extension if present (TypeScript imports don't need it)
+    return importPath.replace(/\.ts$/, '');
 }

@@ -150,6 +150,9 @@ export class TsGenerator {
     /** Module imports needed for CLI dispatcher (alias -> relative path) */
     cliModuleImports: Map<string, string> = new Map();
 
+    /** HAL imports needed for @subsidia pactums (name -> import path) */
+    halImports: Map<string, string> = new Map();
+
     constructor(
         public indent: string = '  ',
         semi: boolean = true,

@@ -130,6 +130,7 @@ import { SemanticErrorCode, SEMANTIC_ERRORS } from './errors';
 import { isLocalImport, resolveModule, createModuleContext, type ModuleContext, type ModuleExports } from './modules';
 import type { Annotation } from '../parser/ast';
 import { getNormaTranslation } from '../codegen/norma';
+import { join } from 'node:path';
 
 // =============================================================================
 // ANNOTATION HELPERS
@@ -621,6 +622,20 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
         if (moduleName in NORMA_SUBMODULES) {
             analyzeNormaImport(node, NORMA_SUBMODULES[moduleName]!);
+            return;
+        }
+
+        // WHY: norma/hal/* imports are file-based modules with @subsidia pactums
+        // Resolve them from project root (fons/norma/hal/), not relative to importing file
+        if (moduleName.startsWith('norma/hal/') && moduleContext) {
+            // Convert norma/hal/consolum -> absolute path from project root
+            const halRelativePath = moduleName.replace('norma/', 'fons/norma/') + '.fab';
+            const projectRoot = process.cwd();
+            const halAbsolutePath = join(projectRoot, halRelativePath);
+
+            // Create a modified import node with absolute path
+            const halImportNode = { ...node, source: halAbsolutePath };
+            analyzeLocalImport(halImportNode);
             return;
         }
 
@@ -2261,8 +2276,34 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
      * Analyze pactum (interface) declaration.
      *
      * WHY: Pactum declarations define contracts that genus types can implement.
+     *      HAL pactums with @subsidia are treated as namespace types for native imports.
      */
     function analyzePactumDeclaration(node: PactumDeclaration): void {
+        // Check for @subsidia annotation (HAL interface with native implementation)
+        const subsidiaAnnotation = node.annotations?.find(a => a.name === 'subsidia');
+
+        if (subsidiaAnnotation?.targetMappings) {
+            // HAL pactum: create namespace type instead of pactum type
+            // WHY: HAL pactums provide runtime namespaces (e.g., consolum.fundeLineam)
+            const type = namespaceType(node.name.name);
+
+            // WHY: Skip define if predeclared (two-pass analysis)
+            if (!lookupSymbolLocal(currentScope, node.name.name)) {
+                define({
+                    name: node.name.name,
+                    type,
+                    kind: 'namespace',
+                    mutable: false,
+                    position: node.position,
+                });
+            }
+
+            node.resolvedType = type;
+            node.name.resolvedType = type;
+            return;
+        }
+
+        // Regular pactum: build method signatures
         const methods = new Map<string, FunctionType>();
 
         for (const method of node.methods) {

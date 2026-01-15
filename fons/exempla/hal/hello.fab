@@ -2,24 +2,24 @@
 #
 # Demonstrates basic stdin/stdout using the HAL layer.
 
-ex "norma/hal/consolum" importa fundeLineam, estTerminale
-ex "norma/hal/processus" importa cwd, argv
+ex "norma/hal/consolum" importa consolum
+ex "norma/hal/processus" importa processus
 
 incipit {
     # Print current directory
-    fundeLineam(scriptum("Working directory: {}", cwd()))
+    consolum.fundeLineam(scriptum("Working directory: {}", processus.cwd()))
 
     # Print args
-    fixum args = argv()
-    fundeLineam(scriptum("Arguments: {}", args))
+    fixum args = processus.argv()
+    consolum.fundeLineam(scriptum("Arguments: {}", args))
 
     # Check if we're in a terminal
-    si estTerminale() {
-        fundeLineam("Running in terminal mode")
+    si consolum.estTerminale() {
+        consolum.fundeLineam("Running in terminal mode")
     }
     secus {
-        fundeLineam("Running in piped mode")
+        consolum.fundeLineam("Running in piped mode")
     }
 
-    fundeLineam("Hello from HAL!")
+    consolum.fundeLineam("Hello from HAL!")
 }

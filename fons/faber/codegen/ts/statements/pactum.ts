@@ -15,6 +15,23 @@ import { getVisibilityFromAnnotations, isAsyncFromAnnotations, isGeneratorFromAn
 
 export function genPactumDeclaration(node: PactumDeclaration, g: TsGenerator, semi: boolean): string {
     const name = node.name.name;
+
+    // Check for @subsidia annotation (HAL interface)
+    const subsidiaAnnotation = node.annotations?.find(a => a.name === 'subsidia');
+
+    if (subsidiaAnnotation?.targetMappings) {
+        // HAL pactum: register import and skip interface generation
+        // WHY: HAL pactums are implemented externally - we import them, not define them
+        const tsPath = subsidiaAnnotation.targetMappings.get('ts');
+        if (tsPath) {
+            // Resolve path relative to current file (handled later with actual file path)
+            g.halImports.set(name, tsPath);
+        }
+        // Return empty string - don't generate interface for HAL pactums
+        return '';
+    }
+
+    // Regular pactum: generate TypeScript interface
     const typeParams = node.typeParameters ? `<${node.typeParameters.map(p => p.name).join(', ')}>` : '';
 
     // Module-level: export when public

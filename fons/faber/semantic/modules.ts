@@ -48,7 +48,7 @@ import type {
     VariaDeclaration,
 } from '../parser/ast';
 import type { SemanticType, FunctionType, PrimitiveType, VariantInfo } from './types';
-import { functionType, UNKNOWN, VACUUM, userType, enumType, genusType, pactumType, genericType, primitiveType, discretioType } from './types';
+import { functionType, UNKNOWN, VACUUM, userType, enumType, genusType, pactumType, genericType, primitiveType, discretioType, namespaceType } from './types';
 import type { TypeAnnotation } from '../parser/ast';
 
 // =============================================================================
@@ -391,8 +391,23 @@ function extractGenusExport(stmt: GenusDeclaration, ctx: ModuleTypeContext): Mod
  * WHY: Extract method signatures for cross-module method call resolution.
  * Without this, calling methods on pactum instances from other modules
  * fails because the return type can't be resolved.
+ *
+ * For HAL pactums with @subsidia, export as namespace instead of pactum.
  */
 function extractPactumExport(stmt: PactumDeclaration, ctx: ModuleTypeContext): ModuleExport {
+    // Check for @subsidia annotation (HAL interface)
+    const subsidiaAnnotation = stmt.annotations?.find(a => a.name === 'subsidia');
+
+    if (subsidiaAnnotation?.targetMappings) {
+        // HAL pactum: export as namespace type
+        return {
+            name: stmt.name.name,
+            type: namespaceType(stmt.name.name),
+            kind: 'namespace',
+        };
+    }
+
+    // Regular pactum: export as pactum type with methods
     const methods = new Map<string, FunctionType>();
 
     for (const method of stmt.methods) {
