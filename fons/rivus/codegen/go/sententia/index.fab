@@ -8,6 +8,7 @@ ex "../nucleus" importa GoGenerator
 ex "../expressia/index" importa genExpressia
 ex "./functio" importa genFunctio, genParametrum
 ex "./scribe" importa genScribe
+ex "./adfirma" importa genAdfirma
 ex "./redde" importa genRedde
 ex "./iace" importa genIace
 ex "./incipit" importa genIncipit, genIncipiet
@@ -51,6 +52,10 @@ functio genSententia(Sententia stmt, GoGenerator g) -> textus {
         # Actions
         casu ScribeSententia ut s {
             redde genScribe(s.gradus qua ScribeGradus, s.argumenta qua lista<Expressia>, g)
+        }
+
+        casu AdfirmaSententia ut s {
+            redde genAdfirma(s.condicio qua Expressia, s.nuntius, g)
         }
 
         casu ReddeSententia ut s {

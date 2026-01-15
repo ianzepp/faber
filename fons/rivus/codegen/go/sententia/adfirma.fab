@@ -1,0 +1,24 @@
+# Go Statement Generator - Assertions
+#
+# TRANSFORMS:
+#   adfirma cond         -> if !(cond) { panic("assertion failed") }
+#   adfirma cond, "msg"  -> if !(cond) { panic("msg") }
+
+ex "../../../ast/expressia" importa Expressia
+ex "../nucleus" importa GoGenerator
+ex "../expressia/index" importa genExpressia
+
+@ publica
+functio genAdfirma(Expressia condicio, ignotum nuntius, GoGenerator g) -> textus {
+    fixum test = genExpressia(condicio, g)
+    varia nuntiusTextus = "\"assertion failed\""
+    si nonnihil nuntius {
+        nuntiusTextus = genExpressia(nuntius qua Expressia, g)
+    }
+
+    g.intraProfundum()
+    fixum panicLine = scriptum("§panic(§)", g.ind(), nuntiusTextus)
+    g.exiProfundum()
+
+    redde scriptum("§if !(§) {\n§\n§}", g.ind(), test, panicLine, g.ind())
+}
