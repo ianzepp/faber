@@ -1,0 +1,25 @@
+# echo - display a line of text
+#
+# Usage: echo [-n] [STRING]...
+# Exit status: 0 on success, 1 on write error
+
+ex "../lib/norma/hal/consolum" importa consolum
+
+@ cli "echo"
+@ versio "0.1.0"
+@ descriptio "Display a line of text"
+
+functio main(ceteri textus[] args, si bivalens n) exitus code {
+    tenta {
+        si n {
+            # -n: no trailing newline
+            consolum.fundeTextum(args.iunge(" "))
+        }
+        vel {
+            consolum.fundeLineam(args.iunge(" "))
+        }
+    }
+    cape {
+        code = 1
+    }
+}

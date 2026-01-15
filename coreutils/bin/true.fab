@@ -1,0 +1,10 @@
+# true - exit successfully
+#
+# Usage: true
+# Exit status: Always 0
+
+@ cli "true"
+@ versio "0.1.0"
+@ descriptio "Exit with success status"
+
+functio main() exitus 0 {}
