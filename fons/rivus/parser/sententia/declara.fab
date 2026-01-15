@@ -288,9 +288,6 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
 
         # Check if this is a method or field
         si p.probaVerbum("functio") {
-            si non visibilitasExplicita {
-                visibilitas = Visibilitas.Publica
-            }
             # WHY: Methods use full functio syntax but remain inside genus.
             p.procede()
             fixum methodLocus = p.locusActualis()
