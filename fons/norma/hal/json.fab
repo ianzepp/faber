@@ -1,0 +1,90 @@
+# json.fab - JSON Encoding/Decoding Device
+#
+# Etymology: "JSON" - JavaScript Object Notation (universal, kept as-is).
+#
+# Part of the Hardware Abstraction Layer (HAL).
+# Maps to JsonDevice from monk-os-kernel.
+#
+# Design notes:
+#   - solve: serialize to JSON string
+#   - pange: parse JSON string
+#   - Type checking and value extraction utilities
+
+@ subsidia ts "codegen/ts/json.ts"
+pactum json {
+    # =========================================================================
+    # SERIALIZATION
+    # =========================================================================
+
+    # Serialize value to compact JSON string
+    @ externa
+    functio solve(quidlibet valor) -> textus
+
+    # Serialize value to formatted JSON string
+    @ externa
+    functio solvePulchre(quidlibet valor, numerus indentum) -> textus
+
+    # =========================================================================
+    # DESERIALIZATION
+    # =========================================================================
+
+    # Parse JSON string to value
+    @ externa
+    functio pange(textus json) -> quidlibet
+
+    # Parse JSON string, return nihil on error (safe parse)
+    @ externa
+    functio pangeTuto(textus json) -> quidlibet?
+
+    # =========================================================================
+    # TYPE CHECKING
+    # =========================================================================
+
+    @ externa
+    functio estNihil(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estBivalens(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estNumerus(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estTextus(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estLista(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estTabula(quidlibet valor) -> bivalens
+
+    # =========================================================================
+    # VALUE EXTRACTION
+    # =========================================================================
+
+    # Extract as specific type (returns default if wrong type)
+    @ externa
+    functio utTextus(quidlibet valor, textus defVal) -> textus
+
+    @ externa
+    functio utNumerus(quidlibet valor, numerus defVal) -> numerus
+
+    @ externa
+    functio utBivalens(quidlibet valor, bivalens defVal) -> bivalens
+
+    # =========================================================================
+    # OBJECT/ARRAY ACCESS
+    # =========================================================================
+
+    # Get value at key (returns nihil if missing)
+    @ externa
+    functio cape(quidlibet valor, textus clavis) -> quidlibet
+
+    # Get value at index (returns nihil if out of bounds)
+    @ externa
+    functio capeIndice(quidlibet valor, numerus index) -> quidlibet
+
+    # Get nested value by path (e.g., "foo.bar.baz")
+    @ externa
+    functio capeVia(quidlibet valor, textus via) -> quidlibet
+}

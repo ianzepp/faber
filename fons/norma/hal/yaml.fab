@@ -1,0 +1,61 @@
+# yaml.fab - YAML Encoding/Decoding Device
+#
+# Etymology: "YAML" - YAML Ain't Markup Language (universal, kept as-is).
+#
+# Part of the Hardware Abstraction Layer (HAL).
+# Maps to YamlDevice from monk-os-kernel.
+#
+# Design notes:
+#   - solve: serialize to YAML string
+#   - pange: parse YAML string
+#   - Multi-document support
+
+@ subsidia ts "codegen/ts/yaml.ts"
+pactum yaml {
+    # =========================================================================
+    # SERIALIZATION
+    # =========================================================================
+
+    # Serialize value to YAML string
+    @ externa
+    functio solve(quidlibet valor) -> textus
+
+    # Serialize multiple documents (--- separated)
+    @ externa
+    functio solveMulti(lista<quidlibet> documenta) -> textus
+
+    # =========================================================================
+    # DESERIALIZATION
+    # =========================================================================
+
+    # Parse YAML string (first document if multi-doc)
+    @ externa
+    functio pange(textus yaml) -> quidlibet
+
+    # Parse YAML string, return nihil on error
+    @ externa
+    functio pangeTuto(textus yaml) -> quidlibet?
+
+    # Parse all documents in YAML string
+    @ externa
+    functio pangeMulti(textus yaml) -> lista<quidlibet>
+
+    # =========================================================================
+    # TYPE CHECKING (same as JSON)
+    # =========================================================================
+
+    @ externa
+    functio estNihil(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estTextus(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estNumerus(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estLista(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estTabula(quidlibet valor) -> bivalens
+}

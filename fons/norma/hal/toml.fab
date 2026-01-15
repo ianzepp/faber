@@ -1,0 +1,69 @@
+# toml.fab - TOML Encoding/Decoding Device
+#
+# Etymology: "TOML" - Tom's Obvious Minimal Language (universal, kept as-is).
+#
+# Part of the Hardware Abstraction Layer (HAL).
+#
+# Design notes:
+#   - TOML root must be a table (object), not array or primitive
+#   - More strict than JSON/YAML
+
+@ subsidia ts "codegen/ts/toml.ts"
+pactum toml {
+    # =========================================================================
+    # SERIALIZATION
+    # =========================================================================
+
+    # Serialize table to TOML string
+    @ externa
+    functio solve(quidlibet valor) -> textus
+
+    # Serialize with pretty formatting
+    @ externa
+    functio solvePulchre(quidlibet valor) -> textus
+
+    # =========================================================================
+    # DESERIALIZATION
+    # =========================================================================
+
+    # Parse TOML string to table
+    @ externa
+    functio pange(textus toml) -> quidlibet
+
+    # Parse TOML string, return nihil on error
+    @ externa
+    functio pangeTuto(textus toml) -> quidlibet?
+
+    # =========================================================================
+    # TYPE CHECKING
+    # =========================================================================
+
+    @ externa
+    functio estTextus(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estInteger(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estFractus(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estBivalens(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estTempus(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estLista(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estTabula(quidlibet valor) -> bivalens
+
+    # =========================================================================
+    # TABLE ACCESS
+    # =========================================================================
+
+    # Get value at key
+    @ externa
+    functio cape(quidlibet valor, textus clavis) -> quidlibet
+}

@@ -1,0 +1,119 @@
+# thesaurus.fab - Cache and Pub/Sub Device
+#
+# Etymology: "thesaurus" - treasury, storehouse. A cache of values.
+#
+# Part of the Hardware Abstraction Layer (HAL).
+# Maps to RedisDevice from monk-os-kernel.
+#
+# Design notes:
+#   - Key-value cache with TTL
+#   - Pub/sub messaging with pattern subscriptions
+#   - In-memory for dev/single-node, Redis for production
+
+@ subsidia ts "codegen/ts/thesaurus.ts"
+pactum thesaurus {
+    # =========================================================================
+    # KEY-VALUE CACHE
+    # =========================================================================
+
+    # Get value by key (returns nihil if not found)
+    @ futura
+    @ externa
+    functio cape(textus clavis) -> textus?
+
+    # Set value with optional TTL in seconds
+    @ futura
+    @ externa
+    functio pone(textus clavis, textus valor, numerus ttl) -> vacuum
+
+    # Set value only if key doesn't exist
+    @ futura
+    @ externa
+    functio poneNovum(textus clavis, textus valor) -> bivalens
+
+    # Delete key(s)
+    @ futura
+    @ externa
+    functio dele(lista<textus> claves) -> numerus
+
+    # Check if key exists
+    @ futura
+    @ externa
+    functio exstat(textus clavis) -> bivalens
+
+    # Get remaining TTL in seconds (-1 = no expiry, -2 = not found)
+    @ futura
+    @ externa
+    functio ttl(textus clavis) -> numerus
+
+    # Set expiry on existing key
+    @ futura
+    @ externa
+    functio expira(textus clavis, numerus secundae) -> bivalens
+
+    # =========================================================================
+    # NUMERIC OPERATIONS
+    # =========================================================================
+
+    # Increment by 1
+    @ futura
+    @ externa
+    functio incr(textus clavis) -> numerus
+
+    # Increment by amount
+    @ futura
+    @ externa
+    functio incrPer(textus clavis, numerus quantum) -> numerus
+
+    # Decrement by 1
+    @ futura
+    @ externa
+    functio decr(textus clavis) -> numerus
+
+    # =========================================================================
+    # KEY QUERIES
+    # =========================================================================
+
+    # Find keys matching glob pattern
+    @ futura
+    @ externa
+    functio claves(textus exemplar) -> lista<textus>
+
+    # =========================================================================
+    # PUB/SUB
+    # =========================================================================
+
+    # Publish message to topic, returns subscriber count
+    @ futura
+    @ externa
+    functio publica(textus thema, textus nuntius) -> numerus
+
+    # Subscribe to topic patterns
+    # Pattern: * matches one segment, ** matches multiple
+    @ futura
+    @ externa
+    functio subscribe(lista<textus> exemplaria) -> Subscriptio
+}
+
+# Pub/Sub subscription
+pactum Subscriptio {
+    # Iterate over incoming messages
+    @ externa
+    functio nuntii() -> cursor<Nuntius>
+
+    # Unsubscribe and cleanup
+    @ externa
+    functio claude() -> vacuum
+}
+
+# Pub/Sub message
+pactum Nuntius {
+    @ externa
+    functio thema() -> textus
+
+    @ externa
+    functio corpus() -> textus
+
+    @ externa
+    functio tempus() -> numerus
+}

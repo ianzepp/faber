@@ -13,7 +13,7 @@
 
 import type { ImportaDeclaration } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 export function genImportaDeclaration(node: ImportaDeclaration, g: TsGenerator, semi: boolean): string {
     let source = node.source;
@@ -26,13 +26,23 @@ export function genImportaDeclaration(node: ImportaDeclaration, g: TsGenerator, 
         const subsidiaPath = targetMappings.get('ts');
         if (subsidiaPath) {
             // WHY: Subsidia path is relative to the declaring .fab file.
-            //      We need to resolve it relative to the original import path.
+            //      When compiling to a temp file (faber run), we need absolute paths.
             // Example: "../../norma/hal/consolum" + "codegen/ts/consolum.ts"
-            //       -> "../../norma/hal/codegen/ts/consolum"
-            const sourceDir = dirname(source);
-            const fullPath = join(sourceDir, subsidiaPath);
-            // Remove .ts extension (TypeScript imports don't need it)
-            source = fullPath.replace(/\.ts$/, '');
+            //       -> "/abs/path/to/fons/norma/hal/codegen/ts/consolum"
+            if (g.sourceFilePath) {
+                // Resolve the import source relative to the source file
+                const sourceDir = dirname(g.sourceFilePath);
+                const importedFileDir = resolve(sourceDir, dirname(source));
+                const absolutePath = join(importedFileDir, subsidiaPath);
+                // Remove .ts extension (TypeScript imports don't need it)
+                source = absolutePath.replace(/\.ts$/, '');
+            }
+            else {
+                // Fallback: relative path (may not work for temp file execution)
+                const sourceDir = dirname(source);
+                const fullPath = join(sourceDir, subsidiaPath);
+                source = fullPath.replace(/\.ts$/, '');
+            }
         }
     }
 

@@ -1,0 +1,53 @@
+# HAL Example: JSON Encoding/Decoding
+#
+# Demonstrates JSON serialization using the json HAL module.
+
+ex "../../norma/hal/consolum" importa consolum
+ex "../../norma/hal/json" importa json
+
+incipit {
+    consolum.fundeLineam("=== JSON Demo ===\n")
+
+    # Serialize objects
+    consolum.fundeLineam("--- Serialization ---")
+    fixum obj = { "name": "Alice", "age": 30, "active": verum }
+    fixum compact = json.solve(obj)
+    consolum.fundeLineam(scriptum("Compact: §", compact))
+
+    fixum pretty = json.solvePulchre(obj, 2)
+    consolum.fundeLineam(scriptum("Pretty:\n§", pretty))
+
+    # Parse JSON
+    consolum.fundeLineam("\n--- Parsing ---")
+    fixum parsed = json.pange("{\"x\": 100, \"y\": 200}")
+    consolum.fundeLineam(scriptum("Parsed: §", parsed))
+
+    # Safe parse (returns nihil on error)
+    fixum good = json.pangeTuto("{\"valid\": true}")
+    consolum.fundeLineam(scriptum("Good JSON: §", good))
+
+    fixum bad = json.pangeTuto("not valid json")
+    consolum.fundeLineam(scriptum("Bad JSON: §", bad))
+
+    # Type checking
+    consolum.fundeLineam("\n--- Type Checking ---")
+    consolum.fundeLineam(scriptum("estTextus('hello'): §", json.estTextus("hello")))
+    consolum.fundeLineam(scriptum("estNumerus(42): §", json.estNumerus(42)))
+    consolum.fundeLineam(scriptum("estNihil(null): §", json.estNihil(nihil)))
+
+    # Value extraction with defaults
+    consolum.fundeLineam("\n--- Value Extraction ---")
+    fixum data = { "name": "Bob", "count": 42 }
+    fixum name = json.cape(data, "name")
+    fixum count = json.cape(data, "count")
+    consolum.fundeLineam(scriptum("name: §", json.utTextus(name, "unknown")))
+    consolum.fundeLineam(scriptum("count: §", json.utNumerus(count, 0)))
+
+    # Path access for nested data
+    consolum.fundeLineam("\n--- Path Access ---")
+    fixum nested = { "user": { "profile": { "email": "alice@example.com" } } }
+    fixum email = json.capeVia(nested, "user.profile.email")
+    consolum.fundeLineam(scriptum("email: §", email))
+
+    consolum.fundeLineam("\n=== Demo Complete ===")
+}

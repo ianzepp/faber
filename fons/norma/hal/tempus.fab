@@ -1,0 +1,88 @@
+# tempus.fab - Clock and Timer Device
+#
+# Etymology: "tempus" - time, period. Temporal operations.
+#
+# Part of the Hardware Abstraction Layer (HAL).
+# Combines ClockDevice (time sources) and TimerDevice (scheduling) from monk-os-kernel.
+#
+# Design notes:
+#   - nunc/nuncNano/nuncSecunda: wall clock (can jump, NTP adjustments)
+#   - monotonicum: monotonic time (never decreases, for measuring durations)
+#   - dormi: async sleep with optional cancellation
+#   - post/intervallum: scheduled callbacks
+
+@ subsidia ts "codegen/ts/tempus.ts"
+pactum tempus {
+    # =========================================================================
+    # WALL CLOCK (can jump forward/backward)
+    # =========================================================================
+
+    # Current epoch time in milliseconds
+    @ externa
+    functio nunc() -> numerus
+
+    # Current epoch time in nanoseconds
+    @ externa
+    functio nuncNano() -> magnus
+
+    # Current epoch time in seconds
+    @ externa
+    functio nuncSecunda() -> numerus
+
+    # =========================================================================
+    # MONOTONIC CLOCK (never decreases)
+    # =========================================================================
+
+    # Monotonic nanoseconds since arbitrary fixed point
+    # Use for measuring durations, not wall clock time
+    @ externa
+    functio monotonicum() -> magnus
+
+    # Milliseconds since HAL initialization (uptime)
+    @ externa
+    functio activum() -> numerus
+
+    # =========================================================================
+    # SLEEP / DELAY
+    # =========================================================================
+
+    # Sleep for milliseconds (async)
+    @ futura
+    @ externa
+    functio dormi(numerus ms) -> vacuum
+
+    # =========================================================================
+    # SCHEDULED CALLBACKS
+    # =========================================================================
+
+    # Call function once after delay (returns handle for cancellation)
+    @ externa
+    functio post(numerus ms, () -> vacuum fn) -> numerus
+
+    # Call function repeatedly at interval (returns handle for cancellation)
+    @ externa
+    functio intervallum(numerus ms, () -> vacuum fn) -> numerus
+
+    # Cancel a scheduled callback by handle
+    @ externa
+    functio siste(numerus handle) -> vacuum
+
+    # =========================================================================
+    # DURATION CONSTANTS (milliseconds)
+    # =========================================================================
+
+    @ externa
+    functio MILLISECUNDUM() -> numerus
+
+    @ externa
+    functio SECUNDUM() -> numerus
+
+    @ externa
+    functio MINUTUM() -> numerus
+
+    @ externa
+    functio HORA() -> numerus
+
+    @ externa
+    functio DIES() -> numerus
+}

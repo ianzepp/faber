@@ -65,6 +65,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     const semi = options.semicolons ?? true;
 
     const g = new TsGenerator(indent, semi);
+    g.sourceFilePath = options.filePath;
 
     // Pre-pass: detect CLI mode and collect command metadata
     // Pass filePath for module resolution (@ imperia ex module)

@@ -1,0 +1,80 @@
+# pressura.fab - Compression Device
+#
+# Etymology: "pressura" - pressing, squeezing. Data compression.
+#
+# Part of the Hardware Abstraction Layer (HAL).
+# Maps to CompressionDevice from monk-os-kernel.
+#
+# Design notes:
+#   - Algorithms: gzip, deflate, brotli, zstd
+#   - Levels: 1 (fast) to 9 (best compression)
+#   - Sync operations suitable for data <10MB
+
+@ subsidia ts "codegen/ts/pressura.ts"
+pactum pressura {
+    # =========================================================================
+    # COMPRESSION
+    # =========================================================================
+
+    # Compress bytes with algorithm (gzip, deflate, brotli, zstd)
+    @ externa
+    functio comprime(textus algorithmus, octeti data) -> octeti
+
+    # Compress with level (1-9)
+    @ externa
+    functio comprimeNivel(textus algorithmus, octeti data, numerus nivel) -> octeti
+
+    # Compress text (convenience - encodes as UTF-8)
+    @ externa
+    functio comprimeTextum(textus algorithmus, textus data) -> octeti
+
+    # =========================================================================
+    # DECOMPRESSION
+    # =========================================================================
+
+    # Decompress bytes
+    @ externa
+    functio decomprimen(textus algorithmus, octeti data) -> octeti
+
+    # Decompress to text (convenience - decodes as UTF-8)
+    @ externa
+    functio decomprimeTextum(textus algorithmus, octeti data) -> textus
+
+    # =========================================================================
+    # STREAMING (for large data)
+    # =========================================================================
+
+    # Create compression stream
+    @ externa
+    functio comprimens(textus algorithmus) -> Compressor
+
+    # Create decompression stream
+    @ externa
+    functio decomprimens(textus algorithmus) -> Decompressor
+}
+
+# Compression stream
+pactum Compressor {
+    # Add data to compress
+    @ externa
+    functio adde(octeti data) -> vacuum
+
+    # Finish and get compressed output
+    @ externa
+    functio fini() -> octeti
+}
+
+# Decompression stream
+pactum Decompressor {
+    # Add compressed data
+    @ externa
+    functio adde(octeti data) -> vacuum
+
+    # Get decompressed output so far
+    @ externa
+    functio cape() -> octeti
+
+    # Finish decompression
+    @ externa
+    functio fini() -> octeti
+}

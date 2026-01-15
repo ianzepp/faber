@@ -144,6 +144,7 @@ export class TsGenerator {
     features: RequiredFeatures;
     semi: boolean;
     codegenErrors: Array<{ message: string; position?: Position }> = [];
+    sourceFilePath?: string; // WHY: Needed to resolve @subsidia paths to absolute
 
     // CLI codegen state
     cli?: CliProgram;

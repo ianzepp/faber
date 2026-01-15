@@ -1,0 +1,50 @@
+# aleator.fab - Entropy Device (random number generation)
+#
+# Etymology: "aleator" - dice player, gambler. Games of chance.
+#
+# Part of the Hardware Abstraction Layer (HAL). All random number
+# generation should go through this interface, enabling:
+#   - Consistent API across targets
+#   - Testability via seeded/mock implementations
+#   - Clean separation from platform-specific crypto APIs
+#
+# Design notes:
+#   - fractus/inter use Math.random (fast, not crypto-secure)
+#   - octeti/uuid use crypto.getRandomValues (secure)
+#   - selige/miscita use Math.random (adequate for shuffling)
+
+@ subsidia ts "codegen/ts/aleator.ts"
+pactum aleator {
+    # =========================================================================
+    # BASIC GENERATION
+    # =========================================================================
+
+    # Random float in [0, 1)
+    @ externa
+    functio fractus() -> fractus
+
+    # Random integer in [min, max] inclusive
+    @ externa
+    functio inter(numerus min, numerus max) -> numerus
+
+    # =========================================================================
+    # CRYPTOGRAPHIC
+    # =========================================================================
+
+    # Random bytes (crypto-secure)
+    @ externa
+    functio octeti(numerus n) -> octeti
+
+    # UUID v4 string (crypto-secure)
+    @ externa
+    functio uuid() -> textus
+
+    # =========================================================================
+    # SEEDING (for reproducible tests)
+    # =========================================================================
+
+    # Seed the RNG. Only affects non-crypto functions.
+    # Pass 0 or negative to reset to true random.
+    @ externa
+    functio semen(numerus n) -> vacuum
+}

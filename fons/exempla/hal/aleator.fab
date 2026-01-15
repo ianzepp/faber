@@ -1,0 +1,41 @@
+# HAL Example: Entropy / Random Numbers
+#
+# Demonstrates random number generation using the aleator HAL module.
+
+ex "../../norma/hal/consolum" importa consolum
+ex "../../norma/hal/aleator" importa aleator
+
+incipit {
+    consolum.fundeLineam("=== Entropy / Random Demo ===\n")
+
+    # Basic random numbers
+    consolum.fundeLineam("--- Basic Generation ---")
+    fixum f = aleator.fractus()
+    consolum.fundeLineam(scriptum("Random float [0,1): §", f))
+
+    fixum n = aleator.inter(1, 100)
+    consolum.fundeLineam(scriptum("Random int [1,100]: §", n))
+
+    # Cryptographic
+    consolum.fundeLineam("\n--- Cryptographic ---")
+    fixum id = aleator.uuid()
+    consolum.fundeLineam(scriptum("UUID v4: §", id))
+
+    fixum bytes = aleator.octeti(8)
+    consolum.fundeLineam(scriptum("Random 8 bytes: §", bytes))
+
+    # Seeded (reproducible) random
+    consolum.fundeLineam("\n--- Seeded Random (reproducible) ---")
+    aleator.semen(42)
+    consolum.fundeLineam(scriptum("Seed 42, first:  §", aleator.inter(1, 100)))
+    consolum.fundeLineam(scriptum("Seed 42, second: §", aleator.inter(1, 100)))
+
+    aleator.semen(42)
+    consolum.fundeLineam(scriptum("Seed 42 again:   §", aleator.inter(1, 100)))
+    consolum.fundeLineam("(should match first)")
+
+    aleator.semen(0)  # Reset to true random
+    consolum.fundeLineam(scriptum("Reset, random:   §", aleator.inter(1, 100)))
+
+    consolum.fundeLineam("\n=== Demo Complete ===")
+}

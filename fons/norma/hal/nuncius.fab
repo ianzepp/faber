@@ -1,0 +1,128 @@
+# nuncius.fab - Inter-Process Communication Device
+#
+# Etymology: "nuncius" - messenger, envoy. Communication between processes.
+#
+# Part of the Hardware Abstraction Layer (HAL).
+# Maps to IPCDevice from monk-os-kernel.
+#
+# Design notes:
+#   - Shared memory for fast data exchange
+#   - Mutex/semaphore/condvar for synchronization
+#   - Message ports for structured communication
+
+@ subsidia ts "codegen/ts/nuncius.ts"
+pactum nuncius {
+    # =========================================================================
+    # SHARED MEMORY
+    # =========================================================================
+
+    # Allocate shared memory buffer
+    @ externa
+    functio alloca(numerus magnitudo) -> octeti
+
+    # =========================================================================
+    # MESSAGE PORTS
+    # =========================================================================
+
+    # Create a connected message port pair
+    @ externa
+    functio portae() -> ParPortarum
+
+    # =========================================================================
+    # SYNCHRONIZATION PRIMITIVES
+    # =========================================================================
+
+    # Create mutex backed by shared memory
+    @ externa
+    functio mutex(octeti memoria, numerus offset) -> Mutex
+
+    # Create semaphore backed by shared memory
+    @ externa
+    functio semaphorum(octeti memoria, numerus offset, numerus valor) -> Semaphorum
+
+    # Create condition variable backed by shared memory
+    @ externa
+    functio conditio(octeti memoria, numerus offset) -> Conditio
+}
+
+# Message port pair
+pactum ParPortarum {
+    @ externa
+    functio a() -> Porta
+
+    @ externa
+    functio b() -> Porta
+}
+
+# Message port (one end of a channel)
+pactum Porta {
+    # Send message
+    @ externa
+    functio mitte(quidlibet nuntius) -> vacuum
+
+    # Receive message (blocks until available)
+    @ futura
+    @ externa
+    functio recipe() -> quidlibet
+
+    # Check if message available
+    @ externa
+    functio paratum() -> bivalens
+
+    # Close port
+    @ externa
+    functio claude() -> vacuum
+}
+
+# Mutual exclusion lock
+pactum Mutex {
+    # Acquire lock (blocks until available)
+    @ externa
+    functio obstringe() -> vacuum
+
+    # Try to acquire without blocking
+    @ externa
+    functio tempta() -> bivalens
+
+    # Release lock
+    @ externa
+    functio solve() -> vacuum
+}
+
+# Counting semaphore
+pactum Semaphorum {
+    # Wait (decrement, blocks if zero)
+    @ externa
+    functio exspecta() -> vacuum
+
+    # Try to decrement without blocking
+    @ externa
+    functio tempta() -> bivalens
+
+    # Post (increment, wakes one waiter)
+    @ externa
+    functio signa() -> vacuum
+
+    # Current value
+    @ externa
+    functio valor() -> numerus
+}
+
+# Condition variable
+pactum Conditio {
+    # Wait for signal (must hold mutex)
+    @ externa
+    functio exspecta(Mutex mutex) -> vacuum
+
+    # Wait with timeout, returns false if timed out
+    @ externa
+    functio exspectaUsque(Mutex mutex, numerus ms) -> bivalens
+
+    # Wake one waiting thread
+    @ externa
+    functio signa() -> vacuum
+
+    # Wake all waiting threads
+    @ externa
+    functio diffunde() -> vacuum
+}

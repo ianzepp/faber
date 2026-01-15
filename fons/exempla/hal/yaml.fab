@@ -1,0 +1,53 @@
+# HAL Example: YAML Encoding/Decoding
+#
+# Demonstrates YAML serialization using the yaml HAL module.
+
+ex "../../norma/hal/consolum" importa consolum
+ex "../../norma/hal/yaml" importa yaml
+
+incipit {
+    consolum.fundeLineam("=== YAML Demo ===\n")
+
+    # Serialize objects
+    consolum.fundeLineam("--- Serialization ---")
+    fixum config = {
+        "database": {
+            "host": "localhost",
+            "port": 5432,
+            "name": "myapp"
+        },
+        "debug": verum
+    }
+
+    fixum serialized = yaml.solve(config)
+    consolum.fundeLineam("Serialized:")
+    consolum.fundeLineam(serialized)
+
+    # Parse YAML
+    consolum.fundeLineam("--- Parsing ---")
+    fixum yamlText = "name: Alice\nage: 30\nactive: true"
+    fixum parsed = yaml.pange(yamlText)
+    consolum.fundeLineam(scriptum("Parsed: §", parsed))
+
+    # Safe parse (returns nihil on error)
+    fixum good = yaml.pangeTuto("valid: yaml")
+    consolum.fundeLineam(scriptum("Good YAML: §", good))
+
+    fixum bad = yaml.pangeTuto("[unclosed")
+    consolum.fundeLineam(scriptum("Bad YAML: §", bad))
+
+    # Multi-document YAML
+    consolum.fundeLineam("\n--- Multi-Document ---")
+    fixum multiYaml = "a: 1\n---\nb: 2\n---\nc: 3"
+    fixum lista<quidlibet> docs = yaml.pangeMulti(multiYaml)
+    consolum.fundeLineam(scriptum("Document count: §", docs.longitudo()))
+    consolum.fundeLineam(scriptum("First doc: §", docs[0]))
+    consolum.fundeLineam(scriptum("Last doc: §", docs[2]))
+
+    # Type checking
+    consolum.fundeLineam("\n--- Type Checking ---")
+    consolum.fundeLineam(scriptum("estTextus('hello'): §", yaml.estTextus("hello")))
+    consolum.fundeLineam(scriptum("estNumerus(42): §", yaml.estNumerus(42)))
+
+    consolum.fundeLineam("\n=== Demo Complete ===")
+}

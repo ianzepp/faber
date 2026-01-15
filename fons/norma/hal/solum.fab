@@ -1,0 +1,165 @@
+# solum.fab - File System Device
+#
+# Etymology: "solum" - ground, floor, base. Local/ground I/O (vs caelum/sky/network).
+#
+# Part of the Hardware Abstraction Layer (HAL).
+# Maps to FileDevice + BlockDevice from monk-os-kernel.
+#
+# Design notes:
+#   - Async-first: most operations return promissum
+#   - Streaming: legens/scribens return cursors for large files
+#   - Path utilities included (iunge, dir, basis, etc.)
+
+@ subsidia ts "codegen/ts/solum.ts"
+pactum solum {
+    # =========================================================================
+    # READING - File Content
+    # =========================================================================
+
+    # Read entire file as text (async)
+    @ futura
+    @ externa
+    functio lege(textus path) -> textus
+
+    # Read entire file as bytes (async)
+    @ futura
+    @ externa
+    functio legeOctetos(textus path) -> octeti
+
+    # Stream file chunks (for large files)
+    @ externa
+    functio legens(textus path) -> cursor<octeti>
+
+    # =========================================================================
+    # WRITING
+    # =========================================================================
+
+    # Write text to file (overwrites, async)
+    @ futura
+    @ externa
+    functio scribe(textus path, textus data) -> vacuum
+
+    # Write bytes to file (overwrites, async)
+    @ futura
+    @ externa
+    functio scribeOctetos(textus path, octeti data) -> vacuum
+
+    # Append text to file (async)
+    @ futura
+    @ externa
+    functio appone(textus path, textus data) -> vacuum
+
+    # Stream writes (for large files)
+    @ externa
+    functio scribens(textus path) -> cursor<octeti>
+
+    # =========================================================================
+    # FILE INFO
+    # =========================================================================
+
+    # Check if path exists
+    @ externa
+    functio exstat(textus path) -> bivalens
+
+    # Check if path is a file
+    @ externa
+    functio estLimae(textus path) -> bivalens
+
+    # Check if path is a directory
+    @ externa
+    functio estDirectorii(textus path) -> bivalens
+
+    # Get file size in bytes
+    @ futura
+    @ externa
+    functio magnitudo(textus path) -> numerus
+
+    # Get modification time (ms since epoch)
+    @ futura
+    @ externa
+    functio modificatum(textus path) -> numerus
+
+    # =========================================================================
+    # FILE OPERATIONS
+    # =========================================================================
+
+    # Delete file
+    @ futura
+    @ externa
+    functio dele(textus path) -> vacuum
+
+    # Copy file
+    @ futura
+    @ externa
+    functio copia(textus src, textus dest) -> vacuum
+
+    # Move/rename file
+    @ futura
+    @ externa
+    functio move(textus src, textus dest) -> vacuum
+
+    # Touch (create empty or update mtime)
+    @ futura
+    @ externa
+    functio tange(textus path) -> vacuum
+
+    # =========================================================================
+    # DIRECTORY OPERATIONS
+    # =========================================================================
+
+    # Create directory (recursive)
+    @ futura
+    @ externa
+    functio creaDir(textus path) -> vacuum
+
+    # List directory contents
+    @ futura
+    @ externa
+    functio elenca(textus path) -> lista<textus>
+
+    # Walk directory tree (recursive)
+    @ externa
+    functio ambula(textus path) -> cursor<textus>
+
+    # Remove empty directory
+    @ futura
+    @ externa
+    functio deleDir(textus path) -> vacuum
+
+    # Remove directory tree (recursive)
+    @ futura
+    @ externa
+    functio deleArborem(textus path) -> vacuum
+
+    # =========================================================================
+    # PATH UTILITIES
+    # =========================================================================
+
+    # Join path segments
+    @ externa
+    functio iunge(lista<textus> partes) -> textus
+
+    # Get directory part of path
+    @ externa
+    functio dir(textus path) -> textus
+
+    # Get filename part of path
+    @ externa
+    functio basis(textus path) -> textus
+
+    # Get file extension
+    @ externa
+    functio extensio(textus path) -> textus
+
+    # Resolve to absolute path
+    @ externa
+    functio absolve(textus path) -> textus
+
+    # Get home directory
+    @ externa
+    functio domus() -> textus
+
+    # Get temp directory
+    @ externa
+    functio temp() -> textus
+}
