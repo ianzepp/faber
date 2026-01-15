@@ -8,18 +8,21 @@ ex "../lib/norma/hal/consolum" importa consolum
 @ cli "echo"
 @ versio "0.1.0"
 @ descriptio "Display a line of text"
+incipit {
+    main()
+}
 
-functio main(ceteri textus[] args, si bivalens n) exitus code {
-    tenta {
+functio main(si bivalens n, ceteri textus[] args) exitus code {
+    tempta {
         si n {
             # -n: no trailing newline
-            consolum.fundeTextum(args.iunge(" "))
+            consolum.fundeTextum(args.coniunge(" "))
         }
-        vel {
-            consolum.fundeLineam(args.iunge(" "))
+        secus {
+            consolum.fundeLineam(args.coniunge(" "))
         }
     }
-    cape {
+    cape err {
         code = 1
     }
 }
