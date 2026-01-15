@@ -130,7 +130,6 @@ import { SemanticErrorCode, SEMANTIC_ERRORS } from './errors';
 import { isLocalImport, resolveModule, createModuleContext, type ModuleContext, type ModuleExports } from './modules';
 import type { Annotation } from '../parser/ast';
 import { getNormaTranslation } from '../codegen/norma';
-import { join } from 'node:path';
 
 // =============================================================================
 // ANNOTATION HELPERS
@@ -625,20 +624,6 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
         if (moduleName in NORMA_SUBMODULES) {
             analyzeNormaImport(node, NORMA_SUBMODULES[moduleName]!);
-            return;
-        }
-
-        // WHY: norma/hal/* imports are file-based modules with @subsidia pactums
-        // Resolve them from project root (fons/norma/hal/), not relative to importing file
-        if (moduleName.startsWith('norma/hal/') && moduleContext) {
-            // Convert norma/hal/consolum -> absolute path from project root
-            const halRelativePath = moduleName.replace('norma/', 'fons/norma/') + '.fab';
-            const projectRoot = process.cwd();
-            const halAbsolutePath = join(projectRoot, halRelativePath);
-
-            // Create a modified import node with absolute path
-            const halImportNode = { ...node, source: halAbsolutePath };
-            analyzeLocalImport(halImportNode);
             return;
         }
 
