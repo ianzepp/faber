@@ -14,10 +14,10 @@ functio hello(textus name) -> vacuum {
 @ imperium "goodbye"
 @ alias "bye"
 functio goodbye(textus name, si bivalens formal ut f) -> vacuum {
-    si formal {
+    si f {
         scribe scriptum("Farewell, {}.", name)
     }
-    vel {
+    secus {
         scribe scriptum("Bye, {}!", name)
     }
 }

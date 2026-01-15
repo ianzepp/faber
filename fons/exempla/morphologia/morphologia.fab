@@ -7,7 +7,7 @@
 # Run with: bun run faber compile exempla/morphologia.fab
 
 incipit {
-    varia items = [1, 2, 3, 4, 5]
+    varia items = [1, 2, 3, 4, 5] qua numerus[]
 
     # ==========================================================================
     # FILTER: filtr-
@@ -17,10 +17,10 @@ incipit {
     fixum evens = items.filtrata(pro x: x % 2 == 0)
     scribe "filtrata (returns new):", evens
 
-    # filtra (imperative) - mutates in place
-    varia nums = [1, 2, 3, 4, 5]
-    nums.filtra(pro x: x > 2)
-    scribe "filtra (mutates):", nums
+    # TODO (type errors) - filtra (imperative) - mutates in place
+    # varia nums = [1, 2, 3, 4, 5]
+    # nums.filtra(pro x: x > 2)
+    # scribe "filtra (mutates):", nums
 
     # ==========================================================================
     # ADD: add-
