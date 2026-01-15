@@ -47,6 +47,9 @@ functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotu
     g.exiProfundum()
     lines.adde(scriptum("§}", g.ind()))
 
+    lines.adde("")
+    lines.adde(genGenusConstructor(typeName, g))
+
     ex methodi pro methodus {
         lines.adde("")
         lines.adde(genGenusMethod(typeName, methodus, g))
@@ -68,6 +71,16 @@ functio habetErrataModificator(ignotum modificatores) -> bivalens {
         }
     }
     redde falsum
+}
+
+functio genGenusConstructor(textus typeName, GoGenerator g) -> textus {
+    varia lines = [] innatum lista<textus>
+    lines.adde(scriptum("§func New§(_ ...interface{}) *§ {", g.ind(), capitaliza(typeName), typeName))
+    g.intraProfundum()
+    lines.adde(scriptum("§return &§{}", g.ind(), typeName))
+    g.exiProfundum()
+    lines.adde(scriptum("§}", g.ind()))
+    redde lines.coniunge("\n")
 }
 
 functio genGenusMethod(textus typeName, Sententia methodus, GoGenerator g) -> textus {

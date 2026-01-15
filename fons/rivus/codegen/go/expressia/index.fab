@@ -153,6 +153,19 @@ functio genExpressia(Expressia expr, GoGenerator g) -> textus {
             redde scriptum("§{§}", e.variansNomen, props.coniunge(", "))
         }
 
+        # New instance creation
+        casu NovumExpressia ut e {
+            varia args = [] innatum lista<textus>
+            ex (e.argumenta qua lista<Expressia>) pro arg {
+                args.adde(genExpressia(arg, g))
+            }
+            si nonnihil e.initor {
+                args.adde(genExpressia(e.initor, g))
+            }
+            fixum ctor = genConstructorNomen(e.vocatum, g)
+            redde scriptum("§(§)", ctor, args.coniunge(", "))
+        }
+
         # Fail on unimplemented expression types
         ceterum {
             iace scriptum("Go codegen: unsupported expression type '§'", expr.tag)
@@ -261,6 +274,30 @@ functio genObiectumDispersum(lista<ObiectumProprietas> proprietates, GoGenerator
     g.exiProfundum()
     lines.adde(scriptum("§}()", baseInd))
     redde lines.coniunge("\n")
+}
+
+functio genConstructorNomen(Expressia vocatum, GoGenerator g) -> textus {
+    discerne vocatum {
+        casu Nomen ut n {
+            redde scriptum("New§", capitaliza(n.valor))
+        }
+        casu MembrumExpressia ut m {
+            si m.computatum qua bivalens {
+                iace "Go codegen: unsupported constructor access (computed member)"
+            }
+            fixum obj = genExpressia(m.obiectum, g)
+            discerne m.proprietas {
+                casu Nomen ut n {
+                    redde scriptum("§.New§", obj, capitaliza(n.valor))
+                }
+                casu _ { }
+            }
+        }
+        casu _ { }
+    }
+
+    iace "Go codegen: unsupported constructor target"
+    redde "New"
 }
 
 # Capitalize first letter for Go field names
