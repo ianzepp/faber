@@ -237,6 +237,8 @@ export interface SemanticError {
 export interface SemanticResult {
     program: Program;
     errors: SemanticError[];
+    /** HAL imports with @subsidia: original path → (target → implementation path) */
+    subsidiaImports: Map<string, Map<string, string>>;
 }
 
 export type DiscretioVariantDeclInfo = {
@@ -493,6 +495,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
     let currentFunctionGenerator = false;
     let currentGenusType: SemanticType | null = null;
     const discretioIndex = new Map<string, DiscretioDeclInfo>();
+    const subsidiaImports = new Map<string, Map<string, string>>();
 
     // WHY: Track type aliases currently being resolved to detect cycles
     const resolvingTypeAliases = new Set<string>();
@@ -706,6 +709,25 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
     }
 
     /**
+     * Check if a module has @subsidia pactums and store implementation paths.
+     *
+     * WHY: HAL modules with @subsidia need their native implementation paths
+     * stored so codegen can emit correct imports.
+     */
+    function checkForSubsidiaExports(importSource: string, moduleProgram: Program): void {
+        for (const stmt of moduleProgram.body) {
+            if (stmt.type === 'PactumDeclaration') {
+                const subsidiaAnnotation = stmt.annotations?.find(a => a.name === 'subsidia');
+                if (subsidiaAnnotation?.targetMappings) {
+                    // Store mapping: import source → (target → implementation path)
+                    subsidiaImports.set(importSource, subsidiaAnnotation.targetMappings);
+                    break; // Only one pactum per HAL module by convention
+                }
+            }
+        }
+    }
+
+    /**
      * Handle imports from local .fab files.
      */
     function analyzeLocalImport(node: ImportaDeclaration): void {
@@ -734,6 +756,10 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
         const moduleExports = result.module.exports;
         const moduleDiscretios = result.module.discretios;
+
+        // WHY: Check if module has @subsidia pactums and store their implementation paths
+        // This enables codegen to emit imports pointing to native implementations
+        checkForSubsidiaExports(node.source, result.module.program);
 
         if (node.wildcard) {
             // ex "./utils" importa * - add all exports to scope
@@ -3199,7 +3225,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         analyzeStatement(stmt);
     }
 
-    return { program, errors };
+    return { program, errors, subsidiaImports };
 }
 
 // Re-export types

@@ -4,16 +4,37 @@
  * TRANSFORMS:
  *   ex "norma/tempus" importa nunc -> (no output, handled via intrinsics)
  *   ex "@hono/hono" importa Hono -> import { Hono } from "@hono/hono"
+ *   ex "../../norma/hal/consolum" importa consolum -> import { consolum } from "../../norma/hal/codegen/ts/consolum"
  *
  * WHY: norma/* imports are compiler-handled via intrinsics, not runtime imports.
  *      External packages pass through as native imports.
+ *      HAL imports with @subsidia are rewritten to point to native implementations.
  */
 
 import type { ImportaDeclaration } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
+import { dirname, join } from 'node:path';
 
 export function genImportaDeclaration(node: ImportaDeclaration, g: TsGenerator, semi: boolean): string {
-    const source = node.source;
+    let source = node.source;
+
+    // Check if this import has a @subsidia mapping (HAL import)
+    // WHY: HAL pactums declare native implementations via @subsidia annotation.
+    //      We need to rewrite the import to point to the native implementation.
+    const targetMappings = g.subsidiaImports.get(source);
+    if (targetMappings) {
+        const subsidiaPath = targetMappings.get('ts');
+        if (subsidiaPath) {
+            // WHY: Subsidia path is relative to the declaring .fab file.
+            //      We need to resolve it relative to the original import path.
+            // Example: "../../norma/hal/consolum" + "codegen/ts/consolum.ts"
+            //       -> "../../norma/hal/codegen/ts/consolum"
+            const sourceDir = dirname(source);
+            const fullPath = join(sourceDir, subsidiaPath);
+            // Remove .ts extension (TypeScript imports don't need it)
+            source = fullPath.replace(/\.ts$/, '');
+        }
+    }
 
     // Skip norma imports - these are handled via intrinsics
     if (source === 'norma' || source.startsWith('norma/')) {

@@ -109,6 +109,12 @@ export interface CodegenOptions {
      * Required for CLI module resolution (@ imperia ex module).
      */
     filePath?: string;
+
+    /**
+     * HAL imports with @subsidia: original path → (target → implementation path).
+     * Populated by semantic analysis for modules with @subsidia pactums.
+     */
+    subsidiaImports?: Map<string, Map<string, string>>;
 }
 
 // =============================================================================

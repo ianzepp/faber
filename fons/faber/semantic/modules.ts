@@ -116,7 +116,7 @@ function resolveTypeSimple(node: TypeAnnotation): SemanticType {
 export interface ModuleExport {
     name: string;
     type: SemanticType;
-    kind: 'function' | 'variable' | 'type' | 'genus' | 'pactum' | 'ordo' | 'discretio';
+    kind: 'function' | 'variable' | 'type' | 'genus' | 'pactum' | 'ordo' | 'discretio' | 'namespace';
 }
 
 /**

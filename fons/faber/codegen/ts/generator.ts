@@ -153,6 +153,9 @@ export class TsGenerator {
     /** HAL imports needed for @subsidia pactums (name -> import path) */
     halImports: Map<string, string> = new Map();
 
+    /** Subsidia mappings from semantic analysis (import source -> target -> impl path) */
+    subsidiaImports: Map<string, Map<string, string>> = new Map();
+
     constructor(
         public indent: string = '  ',
         semi: boolean = true,

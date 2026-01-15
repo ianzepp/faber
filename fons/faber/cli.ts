@@ -204,7 +204,7 @@ async function compile(inputFile: string, outputFile?: string, silent = false): 
 
     // WHY: Pass absolute file path to enable local import resolution
     const filePath = inputFile !== '-' ? resolve(inputFile) : undefined;
-    const { errors: semanticErrors } = analyze(program, { filePath });
+    const { errors: semanticErrors, subsidiaImports } = analyze(program, { filePath });
 
     if (semanticErrors.length > 0) {
         console.error('Semantic errors:');
@@ -222,7 +222,8 @@ async function compile(inputFile: string, outputFile?: string, silent = false): 
     let output: string;
     try {
         // WHY: Pass filePath to enable CLI module resolution (@ imperia ex module)
-        output = generate(program, { filePath });
+        // WHY: Pass subsidiaImports to enable HAL import resolution
+        output = generate(program, { filePath, subsidiaImports });
     } catch (err) {
         // WHY: Codegen errors should display cleanly
         const message = err instanceof Error ? err.message : String(err);

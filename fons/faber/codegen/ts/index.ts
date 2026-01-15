@@ -78,6 +78,11 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     g.cli = cliResult.cli;
     g.cliModuleImports = cliResult.moduleImports;
 
+    // Store subsidia imports from semantic analysis
+    if (options.subsidiaImports) {
+        g.subsidiaImports = options.subsidiaImports;
+    }
+
     // First pass: generate body (this populates features)
     const body = program.body.map(stmt => g.genStatement(stmt)).join('\n');
 
