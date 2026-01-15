@@ -1083,23 +1083,27 @@ export function parse(tokens: Token[]): ParserResult {
             return parsePergeStatement(resolver);
         }
 
-        if (checkKeyword('iace')) {
+        // WHY: Keywords followed by '(' are treated as function calls, not keyword statements.
+        //      This allows user-defined functions with keyword names (e.g., HAL's consolum.scribe).
+        //      Keyword syntax: `scribe "hello"` (no parens)
+        //      Function call:  `scribe("hello")` (with parens)
+        if (checkKeyword('iace') && peek(1).type !== 'LPAREN') {
             return parseIaceStatement(resolver, false);
         }
 
-        if (checkKeyword('mori')) {
+        if (checkKeyword('mori') && peek(1).type !== 'LPAREN') {
             return parseIaceStatement(resolver, true);
         }
 
-        if (checkKeyword('scribe')) {
+        if (checkKeyword('scribe') && peek(1).type !== 'LPAREN') {
             return parseScribeStatement(resolver, 'log');
         }
 
-        if (checkKeyword('vide')) {
+        if (checkKeyword('vide') && peek(1).type !== 'LPAREN') {
             return parseScribeStatement(resolver, 'debug');
         }
 
-        if (checkKeyword('mone')) {
+        if (checkKeyword('mone') && peek(1).type !== 'LPAREN') {
             return parseScribeStatement(resolver, 'warn');
         }
 
@@ -1137,15 +1141,15 @@ export function parse(tokens: Token[]): ParserResult {
 
         // Resource management
         // cura [cede]? <expr> fit <id> { } [cape]? - scoped resources (CuraStatement)
-        if (checkKeyword('cura')) {
+        if (checkKeyword('cura') && peek(1).type !== 'LPAREN') {
             return parseCuraStatement(resolver);
         }
 
         // Entry point statements: incipit { } (sync) or incipiet { } (async)
-        if (checkKeyword('incipit')) {
+        if (checkKeyword('incipit') && peek(1).type !== 'LPAREN') {
             return parseIncipitStatement(resolver);
         }
-        if (checkKeyword('incipiet')) {
+        if (checkKeyword('incipiet') && peek(1).type !== 'LPAREN') {
             return parseIncipietStatement(resolver);
         }
 

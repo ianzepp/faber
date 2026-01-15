@@ -813,6 +813,11 @@ export function parsePrimary(r: Resolver): Expression {
         // Contextual keywords like 'cape'/'demum' (only meaningful within
         // tempta/fac) should NOT be blocked - they're valid identifiers
         // in expression context.
+        //
+        // NOTE: Some keywords (iace, mori, scribe, vide, mone, cura, incipit, incipiet)
+        // are intentionally OMITTED from this list. They can be used as function names
+        // when called with parentheses: `scribe("hello")` is a function call,
+        // while `scribe "hello"` is the keyword statement.
         const statementKeywords = [
             'si',
             'dum',
@@ -822,21 +827,13 @@ export function parsePrimary(r: Resolver): Expression {
             'redde',
             'rumpe',
             'perge',
-            'iace',
-            'mori',
             'tempta',
             'fac',
-            'scribe',
-            'vide',
-            'mone',
             'adfirma',
             'custodi',
             'elige',
             'discerne',
-            'cura',
             'ad',
-            'incipit',
-            'incipiet',
             'probandum',
             'praepara',
             'praeparabit',

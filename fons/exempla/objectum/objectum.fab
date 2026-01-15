@@ -3,30 +3,30 @@
 incipit {
     # Empty object
     fixum empty = {}
-    scribe(empty)
+    scribe empty
 
     # Simple object with numeric values
     fixum point = { x: 10, y: 20 }
-    scribe(point)
+    scribe point
 
     # String keys
     fixum value = 42
     fixum withStringKey = { "key": value }
-    scribe(withStringKey)
+    scribe withStringKey
 
     # Properties from variables
     fixum name = "Marcus"
     fixum age = 30
     fixum person = { name: name, age: age }
-    scribe(person)
+    scribe person
 
     # Nested objects
     fixum nested = { outer: { inner: 1 } }
-    scribe(nested)
+    scribe nested
 
     # Spread operator
     fixum base = { a: 1, b: 2 }
-    scribe(base)
+    scribe base
     fixum extended = { sparge base, c: 3 }
-    scribe(extended)
+    scribe extended
 }

@@ -30,8 +30,8 @@ incipit {
     ex rangeSync(5) pro num {
         syncResults.adde(num * 2)
     }
-    scribe("Sync collected:")
-    scribe(syncResults)
+    scribe "Sync collected:"
+    scribe syncResults
 
     # Note: Async iteration would require async context
     # ex rangeAsync(3) fiunt num {

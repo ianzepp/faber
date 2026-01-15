@@ -205,7 +205,7 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
         }
     }
 
-    mori("Codegen error: unhandled statement type in genSententia")
+    mori "Codegen error: unhandled statement type in genSententia"
 }
 
 # =============================================================================

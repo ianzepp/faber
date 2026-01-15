@@ -282,7 +282,7 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
             }
 
             # Unsupported innatum type - should be caught by semantic validation
-            mori(scriptum("Codegen error: innatum only supports tabula, lista, copia - got '§'", typusNomen))
+            mori scriptum("Codegen error: innatum only supports tabula, lista, copia - got '§'", typusNomen)
         }
 
         casu EstExpressia ut e {
@@ -596,7 +596,7 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
     }
 
     # Fallback - should not reach here
-    mori("Codegen error: unhandled expression type in genExpressia")
+    mori "Codegen error: unhandled expression type in genExpressia"
 }
 
 # =============================================================================

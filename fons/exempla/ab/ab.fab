@@ -18,19 +18,19 @@ incipit {
 
     # Boolean property shorthand - filter where property is true
     fixum active = ab users activus
-    scribe(active)
+    scribe active
 
     # Negated filter - filter where property is false
     fixum inactive = ab users non activus
-    scribe(inactive)
+    scribe inactive
 
     # Filter with prima transform (first N elements)
     fixum top2 = ab items visibilis, prima 2
-    scribe(top2)
+    scribe top2
 
     # Filter with ultima transform (last N elements)
     fixum last2 = ab items visibilis, ultima 2
-    scribe(last2)
+    scribe last2
 
     # Filter with summa transform (sum of results)
     fixum prices = [
@@ -39,23 +39,23 @@ incipit {
         { pretium: 50, validum: falsum }
     ]
     fixum validPrices = ab prices validum
-    scribe(validPrices)
+    scribe validPrices
 
     # Multiple transforms chained
     fixum result = ab items visibilis, prima 3, ultima 2
-    scribe(result)
+    scribe result
 
     # Without filter - just apply transforms to collection
     fixum nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     fixum firstFive = ab nums, prima 5
-    scribe(firstFive)
+    scribe firstFive
 
     # Chain transforms without filter
     fixum sumFirst = ab nums, prima 5, summa
-    scribe(sumFirst)
+    scribe sumFirst
 
     # Complex source - member expression
     fixum data = { users: users }
     fixum dataActive = ab data.users activus
-    scribe(dataActive)
+    scribe dataActive
 }
