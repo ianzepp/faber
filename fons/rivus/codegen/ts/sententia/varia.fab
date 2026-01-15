@@ -16,10 +16,16 @@ ex "../expressia/index" importa genExpressia
 @ publica
 functio genVaria(VariaGenus species, textus nomen, ignotum adnotatioTypus, ignotum valor, bivalens externa, ignotum visibilitas, TsGenerator g) -> textus {
     # External declarations use TypeScript's 'declare' syntax
+    # WHY: ignotum maps to 'any' for externa since we're trusting external APIs
     si externa {
         varia result = scriptum("§declare const §", g.ind(), nomen)
         si nonnihil adnotatioTypus {
-            result = scriptum("§: §", result, genTypus(adnotatioTypus qua TypusAnnotatio, g))
+            varia tsType = genTypus(adnotatioTypus qua TypusAnnotatio, g)
+            # WHY: unknown is too restrictive for external APIs - use any
+            si tsType == "unknown" {
+                tsType = "any"
+            }
+            result = scriptum("§: §", result, tsType)
         }
         redde scriptum("§;", result)
     }

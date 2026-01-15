@@ -2,7 +2,7 @@
 #
 # Routes expression AST nodes to their specific generators.
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus, MembrumExpressia, ObiectumProprietas, LambdaParametrum
+ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum
 ex "../../../ast/sententia" importa Sententia, VariaGenus
 ex "../../../ast/typus" importa TypusAnnotatio
 ex "../nucleus" importa GoGenerator
@@ -375,13 +375,20 @@ functio genConstructorNomen(Expressia vocatum, GoGenerator g) -> textus {
 }
 
 # Generate optional member access by flattening the chain
-functio genOptionalMembrum(MembrumExpressia e, GoGenerator g) -> textus {
+functio genOptionalMembrum(Expressia expr, GoGenerator g) -> textus {
     # Collect the full chain: base.prop1.prop2.prop3
     varia chain = [] innatum lista<textus>
     varia checks = [] innatum lista<textus>
-    varia current = e qua Expressia
+    varia current = expr
     varia base = nihil qua textus?
-    varia isComputedAccess = e.computatum qua bivalens
+    # WHY: Extract initial computatum from the MembrumExpressia variant
+    varia isComputedAccess = falsum
+    discerne expr {
+        casu MembrumExpressia ut m {
+            isComputedAccess = m.computatum qua bivalens
+        }
+        casu _ { }
+    }
 
     # Walk backwards through the chain collecting properties
     dum verum {
