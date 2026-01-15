@@ -44,6 +44,12 @@ functio genExpressia(Expressia expr, GoGenerator g) -> textus {
             elige signum {
                 casu "et" { signum = "&&" }
                 casu "aut" { signum = "||" }
+                casu "vel" {
+                    # WHY: Go lacks nullish coalescing operator. Generate inline func that
+                    # returns left value when non-nil, otherwise returns right fallback.
+                    # Optional chaining yields interface{}, so check via != nil.
+                    redde scriptum("func() interface{} { if _left := §; _left != nil { return _left }; return § }()", sinister, dexter)
+                }
             }
 
             redde scriptum("(§ § §)", sinister, signum, dexter)
