@@ -250,6 +250,100 @@ function generateFaberCode(collections: CollectionDef[]): string {
 }
 
 // =============================================================================
+// TYPESCRIPT GENERATOR (for Faber - direct from .fab)
+// =============================================================================
+
+function generateTypescriptRegistry(collections: CollectionDef[]): string {
+    const lines: string[] = [];
+
+    lines.push('/**');
+    lines.push(' * Generated TS-only norma registry.');
+    lines.push(' * Source: fons/norma/');
+    lines.push(' * Generator: bun run build:norma');
+    lines.push(` * Generated: ${new Date().toISOString()}`);
+    lines.push(' */');
+    lines.push('');
+    lines.push('export interface Translation {');
+    lines.push('    method?: string;');
+    lines.push('    template?: string;');
+    lines.push('    params?: string[];');
+    lines.push('}');
+    lines.push('');
+    lines.push('export interface NormaCollection {');
+    lines.push('    innatum?: string;');
+    lines.push('    methods: Record<string, Translation>;');
+    lines.push('}');
+    lines.push('');
+    lines.push('export const norma: Record<string, NormaCollection> = {');
+
+    for (let i = 0; i < collections.length; i++) {
+        const coll = collections[i]!;
+        const comma = i < collections.length - 1 ? ',' : '';
+
+        lines.push(`  ${JSON.stringify(coll.name)}: {`);
+        lines.push('    "methods": {');
+
+        const methods = Array.from(coll.methods.entries());
+        for (let j = 0; j < methods.length; j++) {
+            const [methodName, method] = methods[j]!;
+            const methodComma = j < methods.length - 1 ? ',' : '';
+
+            // Get TS translation only
+            const tsTrans = method.translations.get('ts');
+            if (!tsTrans) continue;
+
+            lines.push(`      ${JSON.stringify(methodName)}: {`);
+            if (tsTrans.method) {
+                lines.push(`        "method": ${JSON.stringify(tsTrans.method)}`);
+            }
+            else if (tsTrans.template && tsTrans.params) {
+                lines.push(`        "template": ${JSON.stringify(tsTrans.template)},`);
+                lines.push(`        "params": ${JSON.stringify(tsTrans.params)}`);
+            }
+            lines.push(`      }${methodComma}`);
+        }
+
+        lines.push('    }');
+
+        // Add innatum if exists
+        const tsInnatum = coll.innatum.get('ts');
+        if (tsInnatum) {
+            lines.push(`    , "innatum": ${JSON.stringify(tsInnatum)}`);
+        }
+
+        lines.push(`  }${comma}`);
+    }
+
+    lines.push('};');
+    lines.push('');
+
+    // Generate radixForms lookup
+    lines.push('export const radixForms: Record<string, Record<string, string[]>> = {');
+    for (let i = 0; i < collections.length; i++) {
+        const coll = collections[i]!;
+        const collComma = i < collections.length - 1 ? ',' : '';
+
+        // Check if any methods have radixForms
+        const methodsWithForms = Array.from(coll.methods.entries()).filter(([_, m]) => m.radixForms);
+        if (methodsWithForms.length === 0) continue;
+
+        lines.push(`  ${JSON.stringify(coll.name)}: {`);
+
+        for (let j = 0; j < methodsWithForms.length; j++) {
+            const [methodName, method] = methodsWithForms[j]!;
+            const methodComma = j < methodsWithForms.length - 1 ? ',' : '';
+            lines.push(`    ${JSON.stringify(methodName)}: ${JSON.stringify(method.radixForms)}${methodComma}`);
+        }
+
+        lines.push(`  }${collComma}`);
+    }
+    lines.push('};');
+    lines.push('');
+
+    return lines.join('\n');
+}
+
+// =============================================================================
 // JSON GENERATOR (flat key structure)
 // =============================================================================
 
@@ -341,23 +435,33 @@ function generateJsonRegistry(collections: CollectionDef[]): string {
 
 async function main() {
     const normaDir = join(import.meta.dir, '..', 'fons', 'norma');
+    const innatumDir = join(normaDir, 'innatum');
     const outputFab = join(import.meta.dir, '..', 'fons', 'rivus', 'codegen', 'norma-registry.gen.fab');
     const outputJson = join(import.meta.dir, '..', 'fons', 'norma', 'index.json');
+    const outputTs = join(import.meta.dir, '..', 'fons', 'faber', 'codegen', 'norma.gen.ts');
 
-    const files = await readdir(normaDir);
-    const fabFiles = files.filter(f => f.endsWith('.fab'));
+    // Read from both directories
+    const topLevelFiles = await readdir(normaDir);
+    const topLevelFabs = topLevelFiles.filter(f => f.endsWith('.fab')).map(f => ({ dir: normaDir, file: f }));
 
-    if (fabFiles.length === 0) {
-        console.error('No .fab files found in fons/norma/');
+    const innatumFiles = await readdir(innatumDir);
+    const innatumFabs = innatumFiles.filter(f => f.endsWith('.fab')).map(f => ({ dir: innatumDir, file: f }));
+
+    const allFiles = [...topLevelFabs, ...innatumFabs];
+
+    if (allFiles.length === 0) {
+        console.error('No .fab files found in fons/norma/ or fons/norma/innatum/');
         process.exit(1);
     }
 
-    console.log(`Found ${fabFiles.length} norma file(s): ${fabFiles.join(', ')}`);
+    console.log(`Found ${allFiles.length} norma file(s)`);
+    console.log(`  Top-level: ${topLevelFabs.map(f => f.file).join(', ')}`);
+    console.log(`  Innatum: ${innatumFabs.map(f => f.file).join(', ')}`);
 
     const allCollections: CollectionDef[] = [];
 
-    for (const file of fabFiles) {
-        const content = await readFile(join(normaDir, file), 'utf-8');
+    for (const { dir, file } of allFiles) {
+        const content = await readFile(join(dir, file), 'utf-8');
 
         // WHY: Use Faber's parser to get proper AST with annotations
         const tokenResult = tokenize(content);
@@ -390,12 +494,17 @@ async function main() {
         }
     }
 
+    // Generate TypeScript output (for Faber)
+    const tsCode = generateTypescriptRegistry(allCollections);
+    await writeFile(outputTs, tsCode, 'utf-8');
+    console.log(`Generated: ${outputTs}`);
+
     // Generate Faber output (for Rivus)
     const fabCode = generateFaberCode(allCollections);
     await writeFile(outputFab, fabCode, 'utf-8');
     console.log(`Generated: ${outputFab}`);
 
-    // Generate JSON output (trial flat format)
+    // Generate JSON output (for backwards compatibility)
     const jsonCode = generateJsonRegistry(allCollections);
     await writeFile(outputJson, jsonCode, 'utf-8');
     console.log(`Generated: ${outputJson}`);
