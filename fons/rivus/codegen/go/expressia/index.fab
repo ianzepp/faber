@@ -2,8 +2,11 @@
 #
 # Routes expression AST nodes to their specific generators.
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas
+ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum
+ex "../../../ast/sententia" importa Sententia, VariaGenus
+ex "../../../ast/typus" importa TypusAnnotatio
 ex "../nucleus" importa GoGenerator
+ex "../typus" importa genTypus
 ex "./littera" importa genLittera
 ex "./scriptum" importa genScriptum
 
@@ -153,6 +156,34 @@ functio genExpressia(Expressia expr, GoGenerator g) -> textus {
             redde scriptum("§{§}", e.variansNomen, props.coniunge(", "))
         }
 
+        # Lambda
+        casu LambdaExpressia ut e {
+            varia params = [] innatum lista<textus>
+            ex (e.parametra qua lista<LambdaParametrum>) pro p {
+                si nonnihil p.typus {
+                    params.adde(scriptum("§ §", p.nomen, genTypus(p.typus qua TypusAnnotatio, g)))
+                } secus {
+                    params.adde(scriptum("§ interface{}", p.nomen))
+                }
+            }
+
+            fixum massa = e.corpus qua Sententia
+            discerne massa {
+                casu MassaSententia ut m {
+                    g.intraProfundum()
+                    fixum body = genLambdaMassa(m.corpus, g)
+                    g.exiProfundum()
+                    si body == "" {
+                        redde scriptum("func(§) interface{} { }", params.coniunge(", "))
+                    }
+                    redde scriptum("func(§) interface{} {\n§\n§}", params.coniunge(", "), body, g.ind())
+                }
+                casu _ { }
+            }
+
+            redde scriptum("func(§) interface{} { return § }", params.coniunge(", "), genExpressia(e.corpus qua Expressia, g))
+        }
+
         # New instance creation
         casu NovumExpressia ut e {
             varia args = [] innatum lista<textus>
@@ -274,6 +305,44 @@ functio genObiectumDispersum(lista<ObiectumProprietas> proprietates, GoGenerator
     g.exiProfundum()
     lines.adde(scriptum("§}()", baseInd))
     redde lines.coniunge("\n")
+}
+
+functio genLambdaMassa(lista<Sententia> corpus, GoGenerator g) -> textus {
+    si corpus.longitudo() == 0 {
+        redde ""
+    }
+    varia lines = [] innatum lista<textus>
+    ex corpus pro stmt {
+        lines.adde(genLambdaSententia(stmt, g))
+    }
+    redde lines.coniunge("\n")
+}
+
+functio genLambdaSententia(Sententia stmt, GoGenerator g) -> textus {
+    discerne stmt {
+        casu VariaSententia ut s {
+            varia result = scriptum("§var §", g.ind(), s.nomen)
+            si nonnihil s.typus {
+                result = scriptum("§ §", result, genTypus(s.typus qua TypusAnnotatio, g))
+            }
+            si nonnihil s.valor {
+                result = scriptum("§ = §", result, genExpressia(s.valor qua Expressia, g))
+            }
+            redde result
+        }
+        casu ReddeSententia ut s {
+            si nonnihil s.valor {
+                redde scriptum("§return §", g.ind(), genExpressia(s.valor qua Expressia, g))
+            }
+            redde scriptum("§return", g.ind())
+        }
+        casu ExpressiaSententia ut s {
+            redde scriptum("§§", g.ind(), genExpressia(s.expressia, g))
+        }
+        casu _ { }
+    }
+
+    iace scriptum("Go codegen: unsupported lambda statement '§'", stmt.tag)
 }
 
 functio genConstructorNomen(Expressia vocatum, GoGenerator g) -> textus {
