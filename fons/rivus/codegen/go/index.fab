@@ -18,22 +18,83 @@ ex "./sententia/index" importa genSententia
 functio generateGo(lista<Sententia> corpus) -> textus {
     fixum g = creaGoGenerator()
 
-    # Generate body from statements
-    varia lines = [] innatum lista<textus>
+    # Separate declarations from executables, preserving source order
+    varia declarationes = [] innatum lista<Sententia>
+    varia mainSententiae = [] innatum lista<Sententia>
+
     ex corpus pro stmt {
-        lines.adde(genSententia(stmt, g))
+        discerne stmt {
+            # Entry points - inline their body statements into func main
+            casu IncipitSententia ut s {
+                si nonnihil s.corpus {
+                    mainSententiae.adde(s.corpus qua Sententia)
+                }
+                si nonnihil s.ergo {
+                    mainSententiae.adde(s.ergo qua Sententia)
+                }
+            }
+
+            casu IncipietSententia ut s {
+                si nonnihil s.corpus {
+                    mainSententiae.adde(s.corpus qua Sententia)
+                }
+                si nonnihil s.ergo {
+                    mainSententiae.adde(s.ergo qua Sententia)
+                }
+            }
+
+            # Declarations (top-level)
+            casu FunctioDeclaratio { declarationes.adde(stmt) }
+            casu GenusDeclaratio { declarationes.adde(stmt) }
+            casu DiscretioDeclaratio { declarationes.adde(stmt) }
+            casu OrdoDeclaratio { declarationes.adde(stmt) }
+            casu PactumDeclaratio { declarationes.adde(stmt) }
+            casu TypusAliasDeclaratio { declarationes.adde(stmt) }
+            casu ImportaSententia { declarationes.adde(stmt) }
+            casu VariaSententia { declarationes.adde(stmt) }
+
+            # Everything else is executable
+            ceterum {
+                mainSententiae.adde(stmt)
+            }
+        }
     }
 
-    fixum body = lines.coniunge("\n")
+    # Generate declarations
+    varia declarationesLines = [] innatum lista<textus>
+    ex declarationes pro s {
+        declarationesLines.adde(genSententia(s, g))
+    }
+    fixum declsBody = declarationesLines.coniunge("\n")
 
-    # Generate preamble
+    # Generate func main
+    varia mainBody = ""
+    si mainSententiae.longitudo() == 0 {
+        mainBody = "func main() {}"
+    } secus {
+        g.intraProfundum()
+        varia mainLines = [] innatum lista<textus>
+        ex mainSententiae pro s {
+            mainLines.adde(genSententia(s, g))
+        }
+        g.exiProfundum()
+        fixum mainContent = mainLines.coniunge("\n")
+        mainBody = scriptum("func main() {\n§\n}", mainContent)
+    }
+
+    # Combine: preamble + declarations + main
     fixum preamble = genPreamble(g)
 
-    si preamble == "" {
-        redde body
+    varia parts = [] innatum lista<textus>
+    si preamble != "" {
+        parts.adde(preamble)
     }
+    si declsBody != "" {
+        parts.adde(declsBody)
+    }
+    parts.adde(mainBody)
 
-    redde scriptum("§\n§", preamble, body)
+    redde parts.coniunge("\n\n")
 }
 
 # =============================================================================
