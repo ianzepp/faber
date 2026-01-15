@@ -1,0 +1,41 @@
+# HAL Example: Process Management
+#
+# Demonstrates process control using the processus HAL module.
+
+ex "../../norma/hal/consolum" importa consolum
+ex "../../norma/hal/processus" importa processus
+
+incipit {
+    consolum.fundeLineam("=== Process Management Demo ===\n")
+
+    # Current working directory
+    fixum dir = processus.cwd()
+    consolum.fundeLineam(scriptum("Current directory: §", dir))
+
+    # Process ID
+    fixum pid = processus.pid()
+    consolum.fundeLineam(scriptum("Process ID: §", pid))
+
+    # Command line arguments
+    fixum args = processus.argv()
+    consolum.fundeLineam(scriptum("Arguments: §", args))
+
+    # Environment variables
+    fixum path = processus.envVel("PATH", "(not set)")
+    consolum.fundeLineam(scriptum("PATH: §", path))
+
+    fixum home = processus.envVel("HOME", "(not set)")
+    consolum.fundeLineam(scriptum("HOME: §", home))
+
+    # Execute a simple command
+    consolum.fundeLineam("\n--- Executing: echo 'Hello from subprocess' ---")
+    fixum output = processus.exsequi("echo 'Hello from subprocess'")
+    consolum.fundeLineam(scriptum("Output: §", output))
+
+    # Execute command and check exit code
+    consolum.fundeLineam("\n--- Checking exit code: true ---")
+    fixum exitCode = processus.exsequiCodem("true")
+    consolum.fundeLineam(scriptum("Exit code: §", exitCode))
+
+    consolum.fundeLineam("\n=== Demo Complete ===")
+}

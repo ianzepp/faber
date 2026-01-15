@@ -1,0 +1,43 @@
+# HAL Example: Console I/O
+#
+# Demonstrates console input/output using the consolum HAL module.
+
+ex "../../norma/hal/consolum" importa consolum
+
+incipit {
+    consolum.fundeLineam("=== Console I/O Demo ===\n")
+
+    # Basic text output
+    consolum.fundeTextum("Text without newline... ")
+    consolum.fundeLineam("and text with newline")
+
+    # Check if running in a terminal
+    si consolum.estTerminale() {
+        consolum.fundeLineam("✓ stdin is a TTY (terminal)")
+    }
+    secus {
+        consolum.fundeLineam("✗ stdin is NOT a TTY (piped/redirected)")
+    }
+
+    si consolum.estTerminaleOutput() {
+        consolum.fundeLineam("✓ stdout is a TTY (terminal)")
+    }
+    secus {
+        consolum.fundeLineam("✗ stdout is NOT a TTY (piped/redirected)")
+    }
+
+    # Write to stderr
+    consolum.fundeLineam("\n--- Writing to stderr ---")
+    consolum.errorLineam("This is an error message on stderr")
+    consolum.errorTextum("Error without newline... ")
+    consolum.errorLineam("and another error line")
+
+    # Byte output
+    consolum.fundeLineam("\n--- Byte output ---")
+    consolum.fundeLineam("Writing raw bytes: [72, 101, 108, 108, 111] = 'Hello'")
+    # TODO: Need octeti literal syntax to demonstrate fundeOctetos
+    # consolum.fundeOctetos([72, 101, 108, 108, 111])
+
+    consolum.fundeLineam("\n=== Demo Complete ===")
+    consolum.fundeLineam("(Note: stdin reading functions like hauriLineam() require interactive input)")
+}
