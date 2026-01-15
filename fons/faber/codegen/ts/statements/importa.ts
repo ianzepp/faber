@@ -51,6 +51,14 @@ export function genImportaDeclaration(node: ImportaDeclaration, g: TsGenerator, 
         return '';
     }
 
+    // WHY: Relative imports need absolutizing when compiling to a temp file (faber run).
+    // The temp file is in /tmp, so ./foo won't resolve relative to the source location.
+    // But for build output where directory structure is preserved, keep relative imports.
+    if (g.sourceFilePath && !g.keepRelativeImports && (source.startsWith('./') || source.startsWith('../'))) {
+        const sourceDir = dirname(g.sourceFilePath);
+        source = resolve(sourceDir, source);
+    }
+
     if (node.wildcard) {
         // WHY: Pass through literally. If TS requires an alias and none provided,
         // the TS compiler will error - that's the developer's responsibility.

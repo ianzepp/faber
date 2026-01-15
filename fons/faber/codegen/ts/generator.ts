@@ -145,6 +145,7 @@ export class TsGenerator {
     semi: boolean;
     codegenErrors: Array<{ message: string; position?: Position }> = [];
     sourceFilePath?: string; // WHY: Needed to resolve @subsidia paths to absolute
+    keepRelativeImports = false; // WHY: For build command, keep relative imports
 
     // CLI codegen state
     cli?: CliProgram;

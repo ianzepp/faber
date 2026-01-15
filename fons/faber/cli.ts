@@ -37,7 +37,9 @@
  * @module cli
  */
 
-import { resolve } from 'node:path';
+import { resolve, dirname, join, relative, basename } from 'node:path';
+import { mkdir } from 'node:fs/promises';
+import type { Program } from './parser/ast';
 import { tokenize } from './tokenizer';
 import { parse } from './parser';
 import { analyze } from './semantic';
@@ -79,6 +81,7 @@ Usage:
 
 Commands:
   compile, finge <file>  Compile .fab file to TypeScript
+  build, aedifica <file> Build entry + dependencies to directory
   run, curre <file>      Compile and execute immediately
   check, proba <file>    Check for errors without generating code
   format, forma <file>   Format source file with Prettier
@@ -97,6 +100,7 @@ For other targets (Python, Rust, Zig, C++), use the Rivus compiler.
 Examples:
   faber compile hello.fab                     # Compile to TS (stdout)
   faber compile hello.fab -o hello.ts         # Compile to TS file
+  faber build main.fab -o dist/               # Build entry + deps to dist/
   faber run hello.fab                         # Compile and execute
   faber check hello.fab                       # Check for parse/semantic errors
   faber format hello.fab                      # Format file in place
@@ -204,7 +208,7 @@ async function compile(inputFile: string, outputFile?: string, silent = false): 
 
     // WHY: Pass absolute file path to enable local import resolution
     const filePath = inputFile !== '-' ? resolve(inputFile) : undefined;
-    const { errors: semanticErrors, subsidiaImports } = analyze(program, { filePath });
+    const { errors: semanticErrors, subsidiaImports, resolvedModules } = analyze(program, { filePath });
 
     if (semanticErrors.length > 0) {
         console.error('Semantic errors:');
@@ -279,6 +283,91 @@ async function run(inputFile: string): Promise<void> {
         // Clean up temp file
         (await Bun.file(tempFile).exists()) && (await Bun.write(tempFile, ''));
     }
+}
+
+/**
+ * Build entry point and all dependencies to output directory.
+ *
+ * PIPELINE: For each local dependency discovered during semantic analysis,
+ *           compile to target language and write to output directory
+ *           preserving relative path structure.
+ *
+ * OUTPUT STRUCTURE:
+ *   Given entry fons/cli/main.fab with import ./commands/greet.fab:
+ *   dist/
+ *     main.ts
+ *     commands/
+ *       greet.ts
+ *
+ * @param inputFile - Path to entry .fab source file
+ * @param outputDir - Directory to write compiled files
+ */
+async function build(inputFile: string, outputDir: string): Promise<void> {
+    const entryPath = resolve(inputFile);
+    const baseDir = dirname(entryPath);
+
+    // Compile entry file and collect all resolved modules
+    const source = await readSource(inputFile);
+    const displayName = getDisplayName(inputFile);
+
+    const { tokens, errors: tokenErrors } = tokenize(source);
+    if (tokenErrors.length > 0) {
+        console.error('Tokenizer errors:');
+        for (const err of tokenErrors) {
+            console.error(`  ${displayName}:${err.position.line}:${err.position.column} - ${err.text}`);
+        }
+        process.exit(1);
+    }
+
+    const { program, errors: parseErrors } = parse(tokens);
+    if (parseErrors.length > 0) {
+        console.error('Parser errors:');
+        for (const err of parseErrors) {
+            console.error(`  ${displayName}:${err.position.line}:${err.position.column} - ${err.message}`);
+        }
+        process.exit(1);
+    }
+
+    if (!program) {
+        console.error('Failed to parse program');
+        process.exit(1);
+    }
+
+    const { errors: semanticErrors, subsidiaImports, resolvedModules } = analyze(program, { filePath: entryPath });
+    if (semanticErrors.length > 0) {
+        console.error('Semantic errors:');
+        for (const err of semanticErrors) {
+            console.error(`  ${displayName}:${err.position.line}:${err.position.column} - ${err.message}`);
+        }
+        process.exit(1);
+    }
+
+    // Create output directory
+    await mkdir(outputDir, { recursive: true });
+
+    // Compile and write entry file
+    // WHY: keepRelativeImports=true because output directory structure mirrors source
+    const entryOutput = generate(program, { filePath: entryPath, subsidiaImports, keepRelativeImports: true });
+    const entryOutPath = join(outputDir, basename(entryPath).replace(/\.fab$/, '.ts'));
+    await Bun.write(entryOutPath, entryOutput);
+    console.log(`  ${displayName} -> ${entryOutPath}`);
+
+    // Compile and write each dependency
+    for (const [depPath, depProgram] of resolvedModules) {
+        // Calculate relative path from entry's directory
+        const relPath = relative(baseDir, depPath);
+        const outPath = join(outputDir, relPath.replace(/\.fab$/, '.ts'));
+
+        // Ensure subdirectory exists
+        await mkdir(dirname(outPath), { recursive: true });
+
+        // Generate code for dependency
+        const depOutput = generate(depProgram, { filePath: depPath, subsidiaImports, keepRelativeImports: true });
+        await Bun.write(outPath, depOutput);
+        console.log(`  ${relPath} -> ${outPath}`);
+    }
+
+    console.log(`\nBuild complete: ${1 + resolvedModules.size} file(s) written to ${outputDir}`);
 }
 
 /**
@@ -417,6 +506,10 @@ switch (command) {
     case 'check':
     case 'proba':
         await check(effectiveInputFile);
+        break;
+    case 'build':
+    case 'aedifica':
+        await build(effectiveInputFile, outputFile ?? './dist');
         break;
     case 'format':
     case 'forma':

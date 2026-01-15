@@ -238,6 +238,8 @@ export interface SemanticResult {
     errors: SemanticError[];
     /** HAL imports with @subsidia: original path → (target → implementation path) */
     subsidiaImports: Map<string, Map<string, string>>;
+    /** All resolved local modules: absolute path → AST */
+    resolvedModules: Map<string, Program>;
 }
 
 export type DiscretioVariantDeclInfo = {
@@ -3210,7 +3212,15 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         analyzeStatement(stmt);
     }
 
-    return { program, errors, subsidiaImports };
+    // WHY: Extract resolved modules for multi-file build support
+    const resolvedModules = new Map<string, Program>();
+    if (moduleContext) {
+        for (const [path, exports] of moduleContext.cache) {
+            resolvedModules.set(path, exports.program);
+        }
+    }
+
+    return { program, errors, subsidiaImports, resolvedModules };
 }
 
 // Re-export types

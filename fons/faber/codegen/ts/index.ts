@@ -46,7 +46,7 @@ import type { CodegenOptions } from '../types';
 import { TsGenerator } from './generator';
 import { genPreamble } from './preamble';
 import { detectCliProgram } from '../cli/detector';
-import { join, dirname, relative } from 'node:path';
+import { join, dirname, relative, resolve } from 'node:path';
 
 /**
  * Generate TypeScript source code from a Latin AST.
@@ -66,6 +66,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
 
     const g = new TsGenerator(indent, semi);
     g.sourceFilePath = options.filePath;
+    g.keepRelativeImports = options.keepRelativeImports ?? false;
 
     // Pre-pass: detect CLI mode and collect command metadata
     // Pass filePath for module resolution (@ imperia ex module)
@@ -120,7 +121,13 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
     if (g.cliModuleImports.size > 0) {
         const importLines: string[] = [];
         for (const [alias, path] of g.cliModuleImports) {
-            importLines.push(`import * as ${alias} from "${path}";`);
+            // WHY: Relative imports need absolutizing for temp file execution (faber run)
+            // But for build output where directory structure is preserved, keep relative imports.
+            let resolvedPath = path;
+            if (g.sourceFilePath && !g.keepRelativeImports && (path.startsWith('./') || path.startsWith('../'))) {
+                resolvedPath = resolve(dirname(g.sourceFilePath), path);
+            }
+            importLines.push(`import * as ${alias} from "${resolvedPath}";`);
         }
         cliImports = importLines.join('\n') + '\n\n';
     }

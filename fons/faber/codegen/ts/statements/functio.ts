@@ -37,8 +37,10 @@ export function genFunctioDeclaration(node: FunctioDeclaration, g: TsGenerator):
     const typeParams = node.typeParams ? g.genTypeParams(node.typeParams) : '';
 
     // Module-level: export when public (inClass is false for top-level functions)
+    // WHY: @ imperium implies public - CLI commands must be callable from parent module
     const visibility = getVisibilityFromAnnotations(node.annotations);
-    const exportMod = !g.inClass && visibility === 'public' ? 'export ' : '';
+    const hasImperium = node.annotations?.some(a => a.name === 'imperium') ?? false;
+    const exportMod = !g.inClass && (visibility === 'public' || hasImperium) ? 'export ' : '';
 
     // Derive async/generator from annotations OR node properties
     // WHY: @ futura and @ cursor annotations are equivalent to inline futura/cursor modifiers

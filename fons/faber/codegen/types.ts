@@ -111,6 +111,13 @@ export interface CodegenOptions {
     filePath?: string;
 
     /**
+     * Keep relative imports as-is instead of converting to absolute paths.
+     * Use this for build output where directory structure is preserved.
+     * Default: false (relative imports are absolutized when filePath is set)
+     */
+    keepRelativeImports?: boolean;
+
+    /**
      * HAL imports with @subsidia: original path → (target → implementation path).
      * Populated by semantic analysis for modules with @subsidia pactums.
      */
