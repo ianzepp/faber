@@ -1,0 +1,25 @@
+# HAL Example: Hello World using consolum
+#
+# Demonstrates basic stdin/stdout using the HAL layer.
+
+ex "norma/hal/consolum" importa fundeLineam, estTerminale
+ex "norma/hal/processus" importa cwd, argv
+
+incipit {
+    # Print current directory
+    fundeLineam(scriptum("Working directory: {}", cwd()))
+
+    # Print args
+    fixum args = argv()
+    fundeLineam(scriptum("Arguments: {}", args))
+
+    # Check if we're in a terminal
+    si estTerminale() {
+        fundeLineam("Running in terminal mode")
+    }
+    secus {
+        fundeLineam("Running in piped mode")
+    }
+
+    fundeLineam("Hello from HAL!")
+}

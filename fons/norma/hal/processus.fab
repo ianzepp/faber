@@ -1,0 +1,62 @@
+# processus.fab - Process Device (spawn/exec subprocesses)
+#
+# Etymology: "processus" from "pro-" (forward) + "cedere" (to go)
+#            A going forward, a process in motion.
+#
+# Part of the Hardware Abstraction Layer (HAL). All subprocess
+# management should go through this interface.
+
+@ subsidia ts "codegen/ts/processus.ts"
+pactum processus {
+    # =========================================================================
+    # EXECUTION
+    # =========================================================================
+
+    @ externa
+    functio exsequi(textus cmd) -> textus
+
+    @ externa
+    functio exsequiCodem(textus cmd) -> numerus
+
+    @ externa
+    functio genera(textus cmd, lista<textus> args) -> textus
+
+    @ externa
+    functio generaCodem(textus cmd, lista<textus> args) -> numerus
+
+    # =========================================================================
+    # ENVIRONMENT
+    # =========================================================================
+
+    @ externa
+    functio env(textus nomen) -> textus?
+
+    @ externa
+    functio envVel(textus nomen, textus defVal) -> textus
+
+    @ externa
+    functio poneEnv(textus nomen, textus valor) -> vacuum
+
+    # =========================================================================
+    # PROCESS INFO
+    # =========================================================================
+
+    @ externa
+    functio cwd() -> textus
+
+    @ externa
+    functio chdir(textus via) -> vacuum
+
+    @ externa
+    functio pid() -> numerus
+
+    @ externa
+    functio argv() -> lista<textus>
+
+    # =========================================================================
+    # EXIT
+    # =========================================================================
+
+    @ externa
+    functio exi(numerus code) -> numquam
+}

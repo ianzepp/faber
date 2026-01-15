@@ -1,0 +1,64 @@
+# consolum.fab - Console Device (stdin/stdout/stderr)
+#
+# Etymology: "consolum" from "con-" (together) + "solum" (base/ground)
+#            The foundation for all I/O interaction.
+#
+# Part of the Hardware Abstraction Layer (HAL). All console I/O
+# should go through this interface, enabling:
+#   - Consistent API across targets
+#   - Testability via mock implementations
+#   - Clean separation from platform-specific code
+#
+# Verbs used (to avoid keyword collision with lege/scribe):
+#   hauri  - to draw out, drain (for reading stdin)
+#   funde  - to pour (for writing stdout)
+#   error  - stderr output (not a keyword)
+
+@ subsidia ts "codegen/ts/consolum.ts"
+pactum consolum {
+    # =========================================================================
+    # STDIN
+    # =========================================================================
+
+    @ externa
+    functio hauriOctetos(numerus magnitudo) -> octeti
+
+    @ externa
+    functio hauriLineam() -> textus
+
+    # =========================================================================
+    # STDOUT
+    # =========================================================================
+
+    @ externa
+    functio fundeOctetos(octeti data) -> vacuum
+
+    @ externa
+    functio fundeTextum(textus msg) -> vacuum
+
+    @ externa
+    functio fundeLineam(textus msg) -> vacuum
+
+    # =========================================================================
+    # STDERR
+    # =========================================================================
+
+    @ externa
+    functio errorOctetos(octeti data) -> vacuum
+
+    @ externa
+    functio errorTextum(textus msg) -> vacuum
+
+    @ externa
+    functio errorLineam(textus msg) -> vacuum
+
+    # =========================================================================
+    # TTY
+    # =========================================================================
+
+    @ externa
+    functio estTerminale() -> bivalens
+
+    @ externa
+    functio estTerminaleOutput() -> bivalens
+}
