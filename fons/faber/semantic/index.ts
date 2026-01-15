@@ -191,6 +191,7 @@ function validateFunctioModifiers(
         let name = '';
         if (modifier.type === 'CurataModifier') name = 'curata';
         else if (modifier.type === 'ErrataModifier') name = 'errata';
+        else if (modifier.type === 'ExitusModifier') name = 'exitus';
         else if (modifier.type === 'ImmutataModifier') name = 'immutata';
         else if (modifier.type === 'IacitModifier') name = 'iacit';
 
@@ -207,6 +208,13 @@ function validateFunctioModifiers(
             const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.InvalidModifierContext];
             report(`${text(name, 'genus methods')}\n${help}`, modifier.position);
         }
+    }
+
+    // Check forbidden combinations
+    if (seen.has('exitus') && seen.has('errata')) {
+        const exitusModifier = modifiers.find(m => m.type === 'ExitusModifier');
+        const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.ConflictingModifiers];
+        report(`${text('exitus', 'errata')}\n${help}`, exitusModifier!.position);
     }
 }
 
@@ -1962,6 +1970,17 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
     function analyzeFunctioDeclaration(node: FunctioDeclaration): void {
         validateFunctioModifiers(node.modifiers, 'function', error);
 
+        // Validate exitus modifier return type restriction
+        // WHY: exitus only makes sense for functions with no return value (vacuum)
+        const exitusModifier = node.modifiers?.find(m => m.type === 'ExitusModifier');
+        if (exitusModifier && node.returnType) {
+            const returnTypeName = node.returnType.name;
+            if (returnTypeName !== 'vacuum') {
+                const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.ExitusRequiresVacuumReturn];
+                error(`${text(returnTypeName)}\n${help}`, exitusModifier.position);
+            }
+        }
+
         // Validate parameters
         let seenOptional = false;
         for (const param of node.params) {
@@ -2031,6 +2050,18 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
                 kind: 'parameter',
                 mutable: false,
                 position: param.position,
+            });
+        }
+
+        // WHY: exitus IDENT creates a mutable exit code variable in function scope
+        if (exitusModifier && exitusModifier.code.type === 'Identifier') {
+            const codeName = exitusModifier.code.name;
+            define({
+                name: codeName,
+                type: NUMERUS,
+                kind: 'variable',
+                mutable: true,
+                position: exitusModifier.position,
             });
         }
 

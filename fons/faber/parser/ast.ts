@@ -385,10 +385,11 @@ export type ReturnVerb = 'arrow' | 'fit' | 'fiet' | 'fiunt' | 'fient';
  * GRAMMAR (in EBNF):
  *   funcModifier := 'curata' IDENTIFIER
  *                | 'errata' IDENTIFIER
+ *                | 'exitus' (IDENTIFIER | NUMBER)
  *                | 'immutata'
  *                | 'iacit'
  */
-export type FunctioModifier = CurataModifier | ErrataModifier | ImmutataModifier | IacitModifier;
+export type FunctioModifier = CurataModifier | ErrataModifier | ExitusModifier | ImmutataModifier | IacitModifier;
 
 export interface CurataModifier extends BaseNode {
     type: 'CurataModifier';
@@ -398,6 +399,11 @@ export interface CurataModifier extends BaseNode {
 export interface ErrataModifier extends BaseNode {
     type: 'ErrataModifier';
     name: Identifier;
+}
+
+export interface ExitusModifier extends BaseNode {
+    type: 'ExitusModifier';
+    code: Identifier | Literal;
 }
 
 export interface ImmutataModifier extends BaseNode {
@@ -416,6 +422,7 @@ export interface IacitModifier extends BaseNode {
  *   paramList := (typeParamDecl ',')* (parameter (',' parameter)*)?
  *   funcModifier := 'curata' IDENTIFIER
  *                | 'errata' IDENTIFIER
+ *                | 'exitus' (IDENTIFIER | NUMBER)
  *                | 'immutata'
  *                | 'iacit'
  *   returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
