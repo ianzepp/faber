@@ -23,7 +23,7 @@ import {
     applyNormaModuleCall,
     validateMorphology,
     getNormaReceiverCollectionsForMethod,
-} from '../../norma-registry';
+} from '../../norma';
 import { applyNamespaceTemplate, getNamespaceTranslation, isNamespaceCall } from '../../shared/norma-namespace';
 
 /**

@@ -1,7 +1,7 @@
 import { test, expect, describe } from 'bun:test';
-import { validateMorphology, getNormaTranslation, getNormaRadixForms, getReceiverOwnership } from './norma-registry';
+import { validateMorphology, getNormaTranslation, getNormaRadixForms, getReceiverOwnership } from './norma';
 
-describe('norma-registry', () => {
+describe('norma', () => {
     describe('getNormaTranslation', () => {
         test('lista.adde -> ts push', () => {
             const result = getNormaTranslation('ts', 'lista', 'adde');

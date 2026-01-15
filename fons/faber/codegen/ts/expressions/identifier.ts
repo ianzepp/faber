@@ -11,7 +11,7 @@
 
 import type { Identifier } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
-import { getNormaTranslation } from '../../norma-registry';
+import { getNormaTranslation } from '../../norma';
 
 /**
  * TypeScript constant intrinsics.

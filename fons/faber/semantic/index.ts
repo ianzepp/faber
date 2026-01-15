@@ -129,7 +129,7 @@ import {
 import { SemanticErrorCode, SEMANTIC_ERRORS } from './errors';
 import { isLocalImport, resolveModule, createModuleContext, type ModuleContext, type ModuleExports } from './modules';
 import type { Annotation } from '../parser/ast';
-import { getNormaTranslation } from '../codegen/norma-registry';
+import { getNormaTranslation } from '../codegen/norma';
 
 // =============================================================================
 // ANNOTATION HELPERS

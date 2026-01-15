@@ -16,7 +16,7 @@ import type { MemberExpression, Identifier, Expression, RangeExpression } from '
 import type { TsGenerator } from '../generator';
 
 // WHY: Use norma registry for stdlib property translations
-import { getNormaTranslation, applyNormaTemplate } from '../../norma-registry';
+import { getNormaTranslation, applyNormaTemplate } from '../../norma';
 
 export function genMemberExpression(node: MemberExpression, g: TsGenerator): string {
     const obj = g.genExpression(node.object);

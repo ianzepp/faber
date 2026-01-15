@@ -3,7 +3,7 @@
  */
 
 import type { CallExpression, MemberExpression, Identifier } from '../../parser/ast';
-import { getNormaTranslation, type VerteTranslation } from '../norma-registry';
+import { getNormaTranslation, type VerteTranslation } from '../norma';
 
 export function isNamespaceCall(node: CallExpression): node is CallExpression & { callee: MemberExpression } {
     return node.callee.type === 'MemberExpression' && !node.callee.computed && node.callee.object.resolvedType?.kind === 'namespace';
