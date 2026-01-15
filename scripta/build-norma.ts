@@ -452,7 +452,7 @@ function generateJsonRegistry(collections: CollectionDef[]): string {
 async function main() {
     const normaDir = join(import.meta.dir, '..', 'fons', 'norma');
     const innatumDir = join(normaDir, 'innatum');
-    const outputFab = join(import.meta.dir, '..', 'fons', 'rivus', 'codegen', 'norma-registry.gen.fab');
+    const outputFab = join(import.meta.dir, '..', 'fons', 'rivus', 'codegen', 'norma.gen.fab');
     const outputJson = join(import.meta.dir, '..', 'fons', 'norma', 'index.json');
     const outputTs = join(import.meta.dir, '..', 'fons', 'faber', 'codegen', 'norma.gen.ts');
 

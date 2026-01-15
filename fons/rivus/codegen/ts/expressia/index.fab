@@ -10,7 +10,7 @@ ex "../nucleus" importa TsGenerator
 ex "../typus" importa genTypus
 ex "../../../parser/morphologia" importa parseMethodum
 ex "../../radices" importa generaListaMethodum
-ex "../../norma-registry.gen" importa getNormaTranslation, VerteTranslation
+ex "../../norma.gen" importa getNormaTranslation, VerteTranslation
 ex "./littera" importa genLittera, genLitteraExemplar
 ex "./scriptum" importa genScriptum
 ex "./ambitus" importa genAmbitusExpressia
