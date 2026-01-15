@@ -55,8 +55,8 @@ incipiet {
         ex lexResult.errores pro err {
             mone scriptum("  §:§ - §", err.locus.linea, err.locus.columna, err.textus)
         }
-        # Exit with error (no explicit exit in Faber yet)
-        redde
+        # Exit with error (non-zero) so callers don't write empty output files.
+        iace "Lexor failed"
     }
 
     # Parsing
@@ -67,12 +67,12 @@ incipiet {
         ex parseResult.errores pro err {
             mone scriptum("  §:§ - §", err.locus.linea, err.locus.columna, err.nuntius)
         }
-        redde
+        iace "Parser failed"
     }
 
     si parseResult.programma est nihil {
         mone "Failed to parse program"
-        redde
+        iace "Parser failed"
     }
 
     # Semantic analysis
@@ -83,7 +83,7 @@ incipiet {
         ex semResult.errores pro err {
             mone scriptum("  §:§ - §", err.locus.linea, err.locus.columna, err.nuntius)
         }
-        redde
+        iace "Semantic failed"
     }
 
     # Code generation

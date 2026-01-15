@@ -84,8 +84,8 @@ genus FeatureDetector {
     # Visit a statement node
     functio visitSententia(Sententia stmt) -> vacuum {
         discerne stmt {
-            casu FunctioDeclaratio ut f {
-                ego.visitFunctio(f)
+            casu FunctioDeclaratio {
+                ego.visitFunctio(stmt)
             }
 
             casu TemptaSententia ut t {
@@ -242,49 +242,55 @@ genus FeatureDetector {
     }
 
     # Visit a function declaration
-    functio visitFunctio(FunctioDeclaratio f) -> vacuum {
-        fixum isAsync = f.asynca
-        fixum isGenerator = f.generator
+    functio visitFunctio(Sententia stmt) -> vacuum {
+        discerne stmt {
+            casu FunctioDeclaratio ut f {
+                fixum isAsync = f.asynca
+                fixum isGenerator = f.generator
 
-        si isAsync et isGenerator {
-            ego.registraFeatura({
-                clavis: FeaturaClavis.ControlFlow_AsyncGenerator,
-                contextus: scriptum("functio §", f.nomen),
-                linea: f.locus.linea,
-                columna: f.locus.columna
-            } qua UsitataFeatura)
-        } sin isAsync {
-            ego.registraFeatura({
-                clavis: FeaturaClavis.ControlFlow_AsyncFunctio,
-                contextus: scriptum("functio §", f.nomen),
-                linea: f.locus.linea,
-                columna: f.locus.columna
-            } qua UsitataFeatura)
-        } sin isGenerator {
-            ego.registraFeatura({
-                clavis: FeaturaClavis.ControlFlow_GeneratorFunctio,
-                contextus: scriptum("functio §", f.nomen),
-                linea: f.locus.linea,
-                columna: f.locus.columna
-            } qua UsitataFeatura)
-        }
+                si isAsync et isGenerator {
+                    ego.registraFeatura({
+                        clavis: FeaturaClavis.ControlFlow_AsyncGenerator,
+                        contextus: scriptum("functio §", f.nomen),
+                        linea: f.locus.linea,
+                        columna: f.locus.columna
+                    } qua UsitataFeatura)
+                } sin isAsync {
+                    ego.registraFeatura({
+                        clavis: FeaturaClavis.ControlFlow_AsyncFunctio,
+                        contextus: scriptum("functio §", f.nomen),
+                        linea: f.locus.linea,
+                        columna: f.locus.columna
+                    } qua UsitataFeatura)
+                } sin isGenerator {
+                    ego.registraFeatura({
+                        clavis: FeaturaClavis.ControlFlow_GeneratorFunctio,
+                        contextus: scriptum("functio §", f.nomen),
+                        linea: f.locus.linea,
+                        columna: f.locus.columna
+                    } qua UsitataFeatura)
+                }
 
-        # Check for default parameters
-        ex f.parametra pro param {
-            si nonnihil param.praedefinitum {
-                ego.registraFeatura({
-                    clavis: FeaturaClavis.Parametra_ValorPraedefinitus,
-                    contextus: scriptum("functio §", f.nomen),
-                    linea: f.locus.linea,
-                    columna: f.locus.columna
-                } qua UsitataFeatura)
-                rumpe
+                # Check for default parameters
+                ex f.parametra pro param {
+                    si nonnihil param.praedefinitum {
+                        ego.registraFeatura({
+                            clavis: FeaturaClavis.Parametra_ValorPraedefinitus,
+                            contextus: scriptum("functio §", f.nomen),
+                            linea: f.locus.linea,
+                            columna: f.locus.columna
+                        } qua UsitataFeatura)
+                        rumpe
+                    }
+                }
+
+                # Visit function body
+                si nonnihil f.corpus {
+                    ego.visitSententia(f.corpus qua Sententia)
+                }
             }
-        }
 
-        # Visit function body
-        si nonnihil f.corpus {
-            ego.visitSententia(f.corpus qua Sententia)
+            casu _ { }
         }
     }
 

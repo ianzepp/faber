@@ -83,8 +83,11 @@ functio genExpressia(Expressia expr, GoGenerator g) -> textus {
             ex (e.elementa qua lista<Expressia>) pro elem {
                 items.adde(genExpressia(elem, g))
             }
-            # Go requires type for array literals - use interface{} as fallback
-            redde scriptum("[]interface{}{§}", items.coniunge(", "))
+
+            # WHY: Go slice literals must be typed. Infer simple literal element types
+            # to avoid generating []interface{} where a typed slice is expected.
+            fixum elemTypus = inferSeriesElemTypus(e.elementa qua lista<Expressia>)
+            redde scriptum("[]§{§}", elemTypus, items.coniunge(", "))
         }
 
         # Conditional expression (ternary)
@@ -126,6 +129,67 @@ functio genExpressia(Expressia expr, GoGenerator g) -> textus {
             iace scriptum("Go codegen: unsupported expression type '§'", expr.tag)
         }
     }
+}
+
+functio inferSeriesElemTypus(lista<Expressia> elementa) -> textus {
+    si elementa.longitudo() == 0 {
+        redde "interface{}"
+    }
+
+    varia viditTextus = falsum
+    varia viditNumerus = falsum
+    varia viditFractus = falsum
+    varia viditBivalens = falsum
+
+    ex elementa pro elem {
+        discerne elem {
+            casu Littera ut l {
+                elige l.species {
+                    casu LitteraGenus.Numerus {
+                        viditNumerus = verum
+                    }
+                    casu LitteraGenus.Fractus {
+                        viditFractus = verum
+                    }
+                    casu LitteraGenus.Textus {
+                        viditTextus = verum
+                    }
+                    casu LitteraGenus.Verum {
+                        viditBivalens = verum
+                    }
+                    casu LitteraGenus.Falsum {
+                        viditBivalens = verum
+                    }
+                    casu LitteraGenus.Nihil {
+                        redde "interface{}"
+                    }
+                }
+            }
+            casu _ {
+                redde "interface{}"
+            }
+        }
+    }
+
+    # Mixed primitive element types fall back to interface{}
+    varia genera = 0
+    si viditTextus { genera += 1 }
+    si viditBivalens { genera += 1 }
+    si viditNumerus aut viditFractus { genera += 1 }
+    si genera != 1 {
+        redde "interface{}"
+    }
+
+    si viditTextus {
+        redde "string"
+    }
+    si viditBivalens {
+        redde "bool"
+    }
+    si viditFractus {
+        redde "float64"
+    }
+    redde "int64"
 }
 
 # Capitalize first letter for Go field names
