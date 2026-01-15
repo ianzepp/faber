@@ -14,7 +14,7 @@
  * and code generator in sequence, collecting errors at each phase.
  *
  * The CLI provides three primary commands:
- * - compile: Full compilation pipeline from .fab source to target language
+ * - emit: Full compilation pipeline from .fab source to target language
  * - run: Compile to TypeScript and execute immediately (TS target only)
  * - check: Validate source for errors without generating code
  *
@@ -80,7 +80,7 @@ Usage:
   faber <command> <file> [options]
 
 Commands:
-  compile, finge <file>  Compile .fab file to TypeScript
+  emit, compile <file>   Emit .fab file as TypeScript
   build, aedifica <file> Build entry + dependencies to directory
   run, curre <file>      Compile and execute immediately
   check, proba <file>    Check for errors without generating code
@@ -98,14 +98,14 @@ Reads from stdin if no file specified (or use '-' explicitly).
 For other targets (Python, Rust, Zig, C++), use the Rivus compiler.
 
 Examples:
-  faber compile hello.fab                     # Compile to TS (stdout)
-  faber compile hello.fab -o hello.ts         # Compile to TS file
+  faber emit hello.fab                        # Emit as TS (stdout)
+  faber emit hello.fab -o hello.ts            # Emit to TS file
   faber build main.fab -o dist/               # Build entry + deps to dist/
   faber run hello.fab                         # Compile and execute
   faber check hello.fab                       # Check for parse/semantic errors
   faber format hello.fab                      # Format file in place
   faber format hello.fab --check              # Check if file is formatted
-  echo 'scribe "hello"' | faber compile       # Compile from stdin
+  echo 'scribe "hello"' | faber emit          # Emit from stdin
 `);
 }
 
@@ -162,7 +162,7 @@ function getDisplayName(inputFile: string): string {
  * @param silent - If true, don't print to stdout (for use by run command)
  * @returns Generated TypeScript source code as string
  */
-async function compile(inputFile: string, outputFile?: string, silent = false): Promise<string> {
+async function emit(inputFile: string, outputFile?: string, silent = false): Promise<string> {
     const source = await readSource(inputFile);
     const displayName = getDisplayName(inputFile);
 
@@ -260,7 +260,7 @@ async function compile(inputFile: string, outputFile?: string, silent = false): 
  * @param inputFile - Path to .fab source file
  */
 async function run(inputFile: string): Promise<void> {
-    const ts = await compile(inputFile, undefined, true);
+    const ts = await emit(inputFile, undefined, true);
 
     // WHY: Bun can execute TypeScript directly - write to temp file and run
     const tempFile = `/tmp/faber-${Date.now()}.ts`;
@@ -495,9 +495,10 @@ const effectiveInputFile = inputFile ?? '-';
 // ---------------------------------------------------------------------------
 
 switch (command) {
+    case 'emit':
     case 'compile':
     case 'finge':
-        await compile(effectiveInputFile, outputFile);
+        await emit(effectiveInputFile, outputFile);
         break;
     case 'run':
     case 'curre':
