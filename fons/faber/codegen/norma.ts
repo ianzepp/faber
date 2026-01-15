@@ -1,11 +1,11 @@
 /**
- * Norma Registry - TS-only stdlib translations.
+ * Norma Registry - TypeScript stdlib translations.
  *
- * Data is generated at build time by: bun run build:faber
- * Source: fons/norma/index.json → fons/faber/codegen/norma.gen.ts
+ * Data is generated at build time by: bun run build:norma
+ * Source: fons/norma/ → fons/faber/codegen/norma.ts.gen.ts
  */
 
-import { norma, radixForms, type Translation } from './norma.gen';
+import { norma, radixForms, type Translation } from './norma.ts.gen';
 import { parseMethodum, parseMethodumWithStem } from './morphology';
 
 // =============================================================================

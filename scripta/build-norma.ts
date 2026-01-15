@@ -269,11 +269,11 @@ function generateFaberCode(collections: CollectionDef[]): string {
 // TYPESCRIPT GENERATOR (for Faber - direct from .fab)
 // =============================================================================
 
-function generateTypescriptRegistry(collections: CollectionDef[]): string {
+function generateTypescriptRegistry(collections: CollectionDef[], target: string): string {
     const lines: string[] = [];
 
     lines.push('/**');
-    lines.push(' * Generated TS-only norma registry.');
+    lines.push(` * Generated ${target.toUpperCase()} norma registry.`);
     lines.push(' * Source: fons/norma/');
     lines.push(' * Generator: bun run build:norma');
     lines.push(` * Generated: ${new Date().toISOString()}`);
@@ -290,7 +290,7 @@ function generateTypescriptRegistry(collections: CollectionDef[]): string {
     lines.push('    methods: Record<string, Translation>;');
     lines.push('}');
     lines.push('');
-    lines.push('export const norma: Record<string, NormaCollection> = {');
+    lines.push(`export const norma: Record<string, NormaCollection> = {`);
 
     for (let i = 0; i < collections.length; i++) {
         const coll = collections[i]!;
@@ -304,27 +304,27 @@ function generateTypescriptRegistry(collections: CollectionDef[]): string {
             const [methodName, method] = methods[j]!;
             const methodComma = j < methods.length - 1 ? ',' : '';
 
-            // Get TS translation only
-            const tsTrans = method.translations.get('ts');
-            if (!tsTrans) continue;
+            // Get translation for this target only
+            const trans = method.translations.get(target);
+            if (!trans) continue;
 
             lines.push(`      ${JSON.stringify(methodName)}: {`);
-            if (tsTrans.method) {
-                lines.push(`        "method": ${JSON.stringify(tsTrans.method)}`);
+            if (trans.method) {
+                lines.push(`        "method": ${JSON.stringify(trans.method)}`);
             }
-            else if (tsTrans.template && tsTrans.params) {
-                lines.push(`        "template": ${JSON.stringify(tsTrans.template)},`);
-                lines.push(`        "params": ${JSON.stringify(tsTrans.params)}`);
+            else if (trans.template && trans.params) {
+                lines.push(`        "template": ${JSON.stringify(trans.template)},`);
+                lines.push(`        "params": ${JSON.stringify(trans.params)}`);
             }
             lines.push(`      }${methodComma}`);
         }
 
         lines.push('    }');
 
-        // Add innatum if exists
-        const tsInnatum = coll.innatum.get('ts');
-        if (tsInnatum) {
-            lines.push(`    , "innatum": ${JSON.stringify(tsInnatum)}`);
+        // Add innatum if exists for this target
+        const innatum = coll.innatum.get(target);
+        if (innatum) {
+            lines.push(`    , "innatum": ${JSON.stringify(innatum)}`);
         }
 
         lines.push(`  }${comma}`);
@@ -452,9 +452,11 @@ function generateJsonRegistry(collections: CollectionDef[]): string {
 async function main() {
     const normaDir = join(import.meta.dir, '..', 'fons', 'norma');
     const innatumDir = join(normaDir, 'innatum');
+    const codegenDir = join(import.meta.dir, '..', 'fons', 'faber', 'codegen');
     const outputFab = join(import.meta.dir, '..', 'fons', 'rivus', 'codegen', 'norma.gen.fab');
     const outputJson = join(import.meta.dir, '..', 'fons', 'norma', 'index.json');
-    const outputTs = join(import.meta.dir, '..', 'fons', 'faber', 'codegen', 'norma.gen.ts');
+
+    const targets = ['ts', 'py', 'rs', 'cpp', 'zig'];
 
     // Read from both directories
     const topLevelFiles = await readdir(normaDir);
@@ -510,10 +512,13 @@ async function main() {
         }
     }
 
-    // Generate TypeScript output (for Faber)
-    const tsCode = generateTypescriptRegistry(allCollections);
-    await writeFile(outputTs, tsCode, 'utf-8');
-    console.log(`Generated: ${outputTs}`);
+    // Generate TypeScript output for each target (for Faber)
+    for (const target of targets) {
+        const outputTs = join(codegenDir, `norma.${target}.gen.ts`);
+        const tsCode = generateTypescriptRegistry(allCollections, target);
+        await writeFile(outputTs, tsCode, 'utf-8');
+        console.log(`Generated: ${outputTs}`);
+    }
 
     // Generate Faber output (for Rivus)
     const fabCode = generateFaberCode(allCollections);
