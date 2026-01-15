@@ -2,7 +2,7 @@
 #
 # Routes expression AST nodes to their specific generators.
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum
+ex "../../../ast/expressia" importa Expressia, LitteraGenus, MembrumExpressia, ObiectumProprietas, LambdaParametrum
 ex "../../../ast/sententia" importa Sententia, VariaGenus
 ex "../../../ast/typus" importa TypusAnnotatio
 ex "../nucleus" importa GoGenerator
@@ -66,6 +66,11 @@ functio genExpressia(Expressia expr, GoGenerator g) -> textus {
 
         # Member access
         casu MembrumExpressia ut e {
+            # WHY: Optional chaining requires flattening nested chains to avoid type issues
+            si e.optivum qua bivalens {
+                redde genOptionalMembrum(e, g)
+            }
+
             fixum obj = genExpressia(e.obiectum, g)
             si e.computatum qua bivalens {
                 fixum idx = genExpressia(e.proprietas, g)
@@ -367,6 +372,71 @@ functio genConstructorNomen(Expressia vocatum, GoGenerator g) -> textus {
 
     iace "Go codegen: unsupported constructor target"
     redde "New"
+}
+
+# Generate optional member access by flattening the chain
+functio genOptionalMembrum(MembrumExpressia e, GoGenerator g) -> textus {
+    # Collect the full chain: base.prop1.prop2.prop3
+    varia chain = [] innatum lista<textus>
+    varia checks = [] innatum lista<textus>
+    varia current = e qua Expressia
+    varia base = nihil qua textus?
+    varia isComputedAccess = e.computatum qua bivalens
+
+    # Walk backwards through the chain collecting properties
+    dum verum {
+        discerne current {
+            casu MembrumExpressia ut m {
+                si m.optivum qua bivalens {
+                    # Add this property to the chain
+                    si m.computatum qua bivalens {
+                        fixum idx = genExpressia(m.proprietas, g)
+                        chain.adde(scriptum("[§]", idx))
+                        isComputedAccess = verum
+                    } secus {
+                        fixum prop = genExpressia(m.proprietas, g)
+                        chain.adde(scriptum(".§", prop))
+                    }
+                    # Continue with the object
+                    current = m.obiectum
+                } secus {
+                    # Non-optional member, treat as base
+                    base = genExpressia(current, g)
+                    rumpe
+                }
+            }
+            casu _ {
+                # Reached the base object
+                base = genExpressia(current, g)
+                rumpe
+            }
+        }
+    }
+
+    # Reverse the chain (we collected it backwards)
+    varia reversedChain = [] innatum lista<textus>
+    varia i = chain.longitudo() - 1
+    dum i >= 0 {
+        reversedChain.adde(chain[i])
+        i -= 1
+    }
+
+    # Build the access path for checks: base, base.prop1, base.prop1.prop2, etc.
+    fixum baseExpr = base qua textus
+    varia accessPath = baseExpr
+    ex reversedChain pro segment {
+        checks.adde(scriptum("§ != nil", accessPath))
+        accessPath = scriptum("§§", accessPath, segment)
+    }
+
+    # WHY: For optional index, need bounds check instead of nil check for final access
+    si isComputedAccess {
+        # For array access, final value is taken by reference
+        redde scriptum("func() interface{} { if § { v := §; return &v }; return nil }()", checks.coniunge(" && "), accessPath)
+    }
+
+    # Final expression returns pointer to the value
+    redde scriptum("func() interface{} { if § { v := §; return &v }; return nil }()", checks.coniunge(" && "), accessPath)
 }
 
 # Capitalize first letter for Go field names
