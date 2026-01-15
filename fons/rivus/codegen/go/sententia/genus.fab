@@ -1,0 +1,68 @@
+# Go Statement Generator - Genus (Struct) Declarations
+#
+# TRANSFORMS:
+#   genus Persona { textus nomen } -> type Persona struct { Nomen string }
+#   @ publica genus Persona { ... } -> type Persona struct { ... } (exported via name)
+
+ex "../../../ast/sententia" importa CampusDeclaratio, Visibilitas
+ex "../nucleus" importa GoGenerator
+ex "../typus" importa genTypus
+
+@ publica
+functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotum implet, bivalens abstractum, lista<CampusDeclaratio> campi, ignotum structor, ignotum methodi, ignotum visibilitas, GoGenerator g) -> textus {
+    # NOTE: Go has no class inheritance; extendit/implet/structor/methodi are ignored here.
+    varia typeName = nomen
+    si nonnihil visibilitas {
+        fixum vis = visibilitas qua Visibilitas
+        si vis == Visibilitas.Publica {
+            typeName = capitaliza(typeName)
+        }
+    }
+
+    varia header = scriptum("§type §", g.ind(), typeName)
+
+    # Generic parameters (Go 1.18+)
+    si nonnihil generaParametra {
+        fixum gp = generaParametra qua lista<textus>
+        si gp.longitudo() > 0 {
+            varia params = [] innatum lista<textus>
+            ex gp pro p {
+                params.adde(scriptum("§ any", p))
+            }
+            header = scriptum("§[§]", header, params.coniunge(", "))
+        }
+    }
+
+    varia lines = [] innatum lista<textus>
+    lines.adde(scriptum("§ struct {", header))
+    g.intraProfundum()
+    ex campi pro campus {
+        fixum fieldName = campusNomenGo(campus)
+        fixum fieldType = genTypus(campus.typus, g)
+        lines.adde(scriptum("§§ §", g.ind(), fieldName, fieldType))
+    }
+    g.exiProfundum()
+    lines.adde(scriptum("§}", g.ind()))
+
+    redde lines.coniunge("\n")
+}
+
+functio campusNomenGo(CampusDeclaratio campus) -> textus {
+    si campus.visibilitas == Visibilitas.Publica {
+        redde capitaliza(campus.nomen)
+    }
+    redde campus.nomen
+}
+
+# Capitalize first letter for Go field names
+functio capitaliza(textus s) -> textus {
+    si s.longitudo() == 0 {
+        redde s
+    }
+    fixum primum = s.sectio(0, 1) qua textus
+    fixum first = primum.maiuscula()
+    si s.longitudo() == 1 {
+        redde first
+    }
+    redde scriptum("§§", first, s.sectio(1, s.longitudo()))
+}
