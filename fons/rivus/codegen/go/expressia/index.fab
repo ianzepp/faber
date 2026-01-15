@@ -90,6 +90,35 @@ functio genExpressia(Expressia expr, GoGenerator g) -> textus {
             redde scriptum("[]§{§}", elemTypus, items.coniunge(", "))
         }
 
+        # Object literals
+        casu ObiectumExpressia ut e {
+            varia props = [] innatum lista<textus>
+            varia habetDispersum = falsum
+            ex (e.proprietates qua lista<ObiectumProprietas>) pro prop {
+                si prop.computatum {
+                    iace "Go codegen: unsupported object property (computed key)"
+                }
+                si prop.dispersum {
+                    habetDispersum = verum
+                    perge
+                }
+                fixum key = genObiectumClavis(prop.clavis, g)
+                fixum val = genExpressia(prop.valor, g)
+                props.adde(scriptum("§: §", key, val))
+            }
+
+            si props.longitudo() == 0 {
+                si habetDispersum {
+                    redde genObiectumDispersum(e.proprietates qua lista<ObiectumProprietas>, g)
+                }
+                redde "map[string]interface{}{}"
+            }
+            si habetDispersum {
+                redde genObiectumDispersum(e.proprietates qua lista<ObiectumProprietas>, g)
+            }
+            redde scriptum("map[string]interface{}{§}", props.coniunge(", "))
+        }
+
         # Conditional expression (ternary)
         casu CondicioExpressia ut e {
             # Go doesn't have ternary operator - emit as inline func
@@ -190,6 +219,48 @@ functio inferSeriesElemTypus(lista<Expressia> elementa) -> textus {
         redde "float64"
     }
     redde "int64"
+}
+
+functio genObiectumClavis(Expressia clavis, GoGenerator g) -> textus {
+    discerne clavis {
+        casu Nomen ut n {
+            redde scriptum("\"§\"", n.valor)
+        }
+        casu Littera ut l {
+            si l.species == LitteraGenus.Textus {
+                redde genLittera(l.species qua LitteraGenus, l.crudus qua textus)
+            }
+        }
+        casu _ { }
+    }
+
+    iace "Go codegen: unsupported object key expression"
+    redde "\"\""
+}
+
+functio genObiectumDispersum(lista<ObiectumProprietas> proprietates, GoGenerator g) -> textus {
+    varia lines = [] innatum lista<textus>
+    fixum baseInd = g.ind()
+    lines.adde(scriptum("§func() map[string]interface{} {", baseInd))
+    g.intraProfundum()
+    lines.adde(scriptum("§m := map[string]interface{}{}", g.ind()))
+    ex proprietates pro prop {
+        si prop.computatum {
+            iace "Go codegen: unsupported object property (computed key)"
+        }
+        si prop.dispersum {
+            fixum src = genExpressia(prop.valor, g)
+            lines.adde(scriptum("§for k, v := range § { m[k] = v }", g.ind(), src))
+        } secus {
+            fixum key = genObiectumClavis(prop.clavis, g)
+            fixum val = genExpressia(prop.valor, g)
+            lines.adde(scriptum("§m[§] = §", g.ind(), key, val))
+        }
+    }
+    lines.adde(scriptum("§return m", g.ind()))
+    g.exiProfundum()
+    lines.adde(scriptum("§}()", baseInd))
+    redde lines.coniunge("\n")
 }
 
 # Capitalize first letter for Go field names
