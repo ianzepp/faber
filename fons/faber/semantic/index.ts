@@ -2478,10 +2478,9 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
             for (const ann of node.annotations) {
                 if (ann.name === 'optio' && ann.optioType) {
-                    // Get the internal name (or derive from external)
-                    const name = ann.optioInternal?.name ?? ann.optioExternal?.replace(/-/g, '');
+                    // Binding name is always in optioInternal (position 2 in grammar)
+                    const name = ann.optioInternal?.name;
                     if (name) {
-                        const typeName = ann.optioType.name;
                         const fieldType = resolveTypeAnnotation(ann.optioType);
                         fields.set(name, fieldType);
                     }
@@ -2555,7 +2554,8 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
             for (const ann of node.annotations) {
                 if (ann.name === 'optio' && ann.optioType) {
-                    const name = ann.optioInternal?.name ?? ann.optioExternal?.replace(/-/g, '');
+                    // Binding name is always in optioInternal (position 2 in grammar)
+                    const name = ann.optioInternal?.name;
                     if (name) {
                         const fieldType = resolveTypeAnnotation(ann.optioType);
                         fields.set(name, fieldType);

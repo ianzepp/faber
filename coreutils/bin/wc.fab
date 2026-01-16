@@ -6,10 +6,10 @@
 @ cli "wc"
 @ versio "0.1.0"
 @ descriptio "Print newline, word, and byte counts for each file"
-@ optio bivalens "lines" ut l brevis "l" descriptio "Print the newline counts"
-@ optio bivalens "words" ut w brevis "w" descriptio "Print the word counts"
-@ optio bivalens "bytes" ut c brevis "c" descriptio "Print the byte counts"
-@ operandus ceteri textus "files"
+@ optio bivalens l brevis "l" longum "lines" descriptio "Print the newline counts"
+@ optio bivalens w brevis "w" longum "words" descriptio "Print the word counts"
+@ optio bivalens c brevis "c" longum "bytes" descriptio "Print the byte counts"
+@ operandus ceteri textus files
 
 incipit argumenta args exitus code {
     # If no flags specified, show all counts

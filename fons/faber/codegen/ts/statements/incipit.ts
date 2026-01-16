@@ -336,16 +336,32 @@ function genSingleCommandHelp(cli: CliProgram, cmd: CliSingleCommand, ind: strin
         lines.push(`${ind}console.log("Options:");`);
 
         // Calculate max width for alignment
+        // Handle three cases: short-only, long-only, both
         const optWidths = cmd.options.map(opt => {
-            const short = opt.short ? `-${opt.short}, ` : '    ';
-            return (short + `--${opt.external}`).length;
+            if (opt.short && opt.external) {
+                return `-${opt.short}, --${opt.external}`.length;
+            }
+            else if (opt.short) {
+                return `-${opt.short}`.length;
+            }
+            else {
+                return `--${opt.external}`.length;
+            }
         });
         const maxOptWidth = Math.max(16, ...optWidths);
 
         for (const opt of cmd.options) {
-            const short = opt.short ? `-${opt.short}, ` : '    ';
-            const long = `--${opt.external}`;
-            const flagPart = short + long;
+            // Build flag part: short-only, long-only, or both
+            let flagPart: string;
+            if (opt.short && opt.external) {
+                flagPart = `-${opt.short}, --${opt.external}`;
+            }
+            else if (opt.short) {
+                flagPart = `-${opt.short}`;
+            }
+            else {
+                flagPart = `--${opt.external}`;
+            }
             const padding = ' '.repeat(maxOptWidth - flagPart.length + 2);
 
             if (opt.description) {
@@ -453,12 +469,21 @@ function genSingleCommandParser(cli: CliProgram, cmd: CliSingleCommand, argsVar:
     lines.push(`${ind}  const _arg = _args[_i]!;`);
 
     // Handle option flags
+    // Three cases: short-only, long-only, or both
     for (const opt of cmd.options) {
-        const longFlag = `--${opt.external}`;
-        const shortFlag = opt.short ? `-${opt.short}` : null;
-        const flagCheck = shortFlag
-            ? `_arg === "${longFlag}" || _arg === "${shortFlag}"`
-            : `_arg === "${longFlag}"`;
+        const hasLong = opt.external && opt.external.length > 0;
+        const hasShort = opt.short && opt.short.length > 0;
+
+        let flagCheck: string;
+        if (hasLong && hasShort) {
+            flagCheck = `_arg === "--${opt.external}" || _arg === "-${opt.short}"`;
+        }
+        else if (hasShort) {
+            flagCheck = `_arg === "-${opt.short}"`;
+        }
+        else {
+            flagCheck = `_arg === "--${opt.external}"`;
+        }
 
         if (opt.type === 'bivalens') {
             lines.push(`${ind}  if (${flagCheck}) { ${argsVar}.${opt.internal} = true; continue; }`);

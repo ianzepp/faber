@@ -723,13 +723,17 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse @ optio annotation for CLI option flags.
      *
      * GRAMMAR:
-     *   optioAnnotation := type STRING ['ut' IDENTIFIER] ['brevis' STRING]
-     *                      ['vel' expression] ['descriptio' STRING]
+     *   optioAnnotation := type IDENTIFIER [brevis STRING] [longum STRING] [descriptio STRING]
+     *
+     * CONSTRAINTS:
+     *   - At least one of brevis/longum is required
+     *   - brevis must be a single character
      *
      * Examples:
-     *   @ optio bivalens "verbose" brevis "v" descriptio "Enable verbose output"
-     *   @ optio bivalens "dry-run" ut dryRun brevis "n" descriptio "Perform dry run"
-     *   @ optio textus "remote" vel "origin" descriptio "Git remote"
+     *   @ optio bivalens v brevis "v" longum "verbose" descriptio "Enable verbose output"
+     *   @ optio bivalens n brevis "n" descriptio "Dry run mode"
+     *   @ optio textus color longum "color" descriptio "Colorize output"
+     *   @ optio bivalens singleColumn brevis "1" descriptio "One file per line"
      */
     function parseOptioAnnotation(position: Position, startLine: number): Annotation {
         // Parse type (required)
@@ -743,40 +747,23 @@ export function parse(tokens: Token[]): ParserResult {
         }
         const optioType = parseTypeAnnotationImpl(resolver);
 
-        // Parse external name (STRING required)
-        let optioExternal: string;
+        // Parse binding name (IDENTIFIER required)
         let optioInternal: Identifier | undefined;
-
-        if (!isAtEnd() && peek().position.line === startLine && check('STRING')) {
-            optioExternal = advance().value;
+        if (!isAtEnd() && peek().position.line === startLine && (check('IDENTIFIER') || check('KEYWORD'))) {
+            const ident = advance();
+            optioInternal = {
+                type: 'Identifier',
+                name: ident.value,
+                position: ident.position,
+            };
         }
         else {
             errors.push({
                 code: ParserErrorCode.UnexpectedToken,
-                message: `Expected string literal for option name in @optio annotation, got '${peek().value}'`,
+                message: `Expected identifier for binding name in @optio annotation, got '${peek().value}'`,
                 position: peek().position,
             });
             return { type: 'Annotation', name: 'optio', optioType, position };
-        }
-
-        // Parse optional 'ut' internal binding (only if external was a string)
-        if (!isAtEnd() && peek().position.line === startLine && checkKeyword('ut')) {
-            advance(); // consume 'ut'
-            if ((check('IDENTIFIER') || check('KEYWORD')) && peek().position.line === startLine) {
-                const ident = advance();
-                optioInternal = {
-                    type: 'Identifier',
-                    name: ident.value,
-                    position: ident.position,
-                };
-            }
-            else {
-                errors.push({
-                    code: ParserErrorCode.UnexpectedToken,
-                    message: `Expected identifier after 'ut' in @optio annotation, got '${peek().value}'`,
-                    position: peek().position,
-                });
-            }
         }
 
         // Parse optional 'brevis' short flag
@@ -784,7 +771,18 @@ export function parse(tokens: Token[]): ParserResult {
         if (!isAtEnd() && peek().position.line === startLine && checkKeyword('brevis')) {
             advance(); // consume 'brevis'
             if (check('STRING') && peek().position.line === startLine) {
-                optioShort = advance().value;
+                const shortValue = advance().value;
+                // Validate single character
+                if (shortValue.length !== 1) {
+                    errors.push({
+                        code: ParserErrorCode.UnexpectedToken,
+                        message: `Short flag in 'brevis' must be a single character, got '${shortValue}'`,
+                        position: peek().position,
+                    });
+                }
+                else {
+                    optioShort = shortValue;
+                }
             }
             else {
                 errors.push({
@@ -795,11 +793,29 @@ export function parse(tokens: Token[]): ParserResult {
             }
         }
 
-        // Parse optional 'vel' default value
-        let optioDefault: Expression | undefined;
-        if (!isAtEnd() && peek().position.line === startLine && checkKeyword('vel')) {
-            advance(); // consume 'vel'
-            optioDefault = parseExpressionModule(resolver);
+        // Parse optional 'longum' long flag
+        let optioLong: string | undefined;
+        if (!isAtEnd() && peek().position.line === startLine && checkKeyword('longum')) {
+            advance(); // consume 'longum'
+            if (check('STRING') && peek().position.line === startLine) {
+                optioLong = advance().value;
+            }
+            else {
+                errors.push({
+                    code: ParserErrorCode.UnexpectedToken,
+                    message: `Expected string after 'longum' in @optio annotation, got '${peek().value}'`,
+                    position: peek().position,
+                });
+            }
+        }
+
+        // Validate: at least one of brevis/longum required
+        if (!optioShort && !optioLong) {
+            errors.push({
+                code: ParserErrorCode.UnexpectedToken,
+                message: `@optio requires at least one of 'brevis' or 'longum'`,
+                position: position,
+            });
         }
 
         // Parse optional 'descriptio' help text
@@ -822,10 +838,9 @@ export function parse(tokens: Token[]): ParserResult {
             type: 'Annotation',
             name: 'optio',
             optioType,
-            optioExternal,
             optioInternal,
             optioShort,
-            optioDefault,
+            optioLong,
             optioDescription,
             position,
         };
@@ -835,12 +850,11 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse @ operandus annotation for CLI positional arguments.
      *
      * GRAMMAR:
-     *   operandusAnnotation := ['ceteri'] type STRING ['vel' expression] ['descriptio' STRING]
+     *   operandusAnnotation := ['ceteri'] type IDENTIFIER ['descriptio' STRING]
      *
      * Examples:
-     *   @ operandus textus "file" descriptio "Input file"
-     *   @ operandus textus "output" vel "-" descriptio "Output file"
-     *   @ operandus ceteri textus "files" descriptio "Additional input files"
+     *   @ operandus textus file descriptio "Input file"
+     *   @ operandus ceteri textus files descriptio "Additional input files"
      */
     function parseOperandusAnnotation(position: Position, startLine: number): Annotation {
         // Check for optional 'ceteri' prefix (rest/variadic)
@@ -861,9 +875,9 @@ export function parse(tokens: Token[]): ParserResult {
         }
         const operandusType = parseTypeAnnotationImpl(resolver);
 
-        // Parse name (STRING required)
+        // Parse name (IDENTIFIER required)
         let operandusName: Identifier | undefined;
-        if (!isAtEnd() && peek().position.line === startLine && check('STRING')) {
+        if (!isAtEnd() && peek().position.line === startLine && (check('IDENTIFIER') || check('KEYWORD'))) {
             const tok = advance();
             operandusName = {
                 type: 'Identifier',
@@ -874,7 +888,7 @@ export function parse(tokens: Token[]): ParserResult {
         else {
             errors.push({
                 code: ParserErrorCode.UnexpectedToken,
-                message: `Expected string literal for operand name in @operandus annotation, got '${peek().value}'`,
+                message: `Expected identifier for operand name in @operandus annotation, got '${peek().value}'`,
                 position: peek().position,
             });
             return { type: 'Annotation', name: 'operandus', operandusType, operandusRest, position };

@@ -44,8 +44,8 @@ For simple CLI programs that don't need subcommands. Options and positional argu
 @ cli "echo"
 @ versio "0.1.0"
 @ descriptio "Display a line of text"
-@ optio bivalens "n" descriptio "Do not output trailing newline"
-@ operandus ceteri textus "strings"
+@ optio bivalens n brevis "n" descriptio "Do not output trailing newline"
+@ operandus ceteri textus strings
 
 incipit argumenta args exitus code {
     si args.n {
@@ -69,28 +69,33 @@ echo --help               # shows help text
 Declare command-line flags with `@ optio`:
 
 ```
-@ optio <type> "<name>" [ut <internal>] [brevis "<short>"] [descriptio "..."]
+@ optio <type> <binding> [brevis "<short>"] [longum "<long>"] [descriptio "..."]
 ```
 
 | Part | Required | Description |
 |------|----------|-------------|
 | `<type>` | Yes | `bivalens` (flag), `textus` (string), `numerus` (integer) |
-| `"<name>"` | Yes | External flag name as string literal (becomes `--name`) |
-| `ut <internal>` | No | Internal binding name (defaults to `<name>` with hyphens removed) |
-| `brevis "<short>"` | No | Short flag (e.g., `brevis "v"` → `-v`) |
+| `<binding>` | Yes | Internal binding name (identifier, accessed as `args.<binding>`) |
+| `brevis "<short>"` | Conditional | Short flag, single char (e.g., `brevis "v"` → `-v`) |
+| `longum "<long>"` | Conditional | Long flag (e.g., `longum "verbose"` → `--verbose`) |
 | `descriptio "..."` | No | Help text for this option |
+
+At least one of `brevis` or `longum` is required. The `brevis` value must be a single character.
 
 Examples:
 
 ```fab
-# Boolean flag: --verbose or -v
-@ optio bivalens "verbose" brevis "v" descriptio "Enable verbose output"
+# Short only: -l
+@ optio bivalens l brevis "l" descriptio "Long listing format"
 
-# String option: --output <path> or -o <path>
-@ optio textus "output" brevis "o" descriptio "Output file path"
+# Long only: --color
+@ optio textus color longum "color" descriptio "Colorize output"
 
-# With different internal name: --dry-run flag accessed as args.dryRun
-@ optio bivalens "dry-run" ut dryRun descriptio "Show what would happen"
+# Both short and long: -v or --verbose
+@ optio bivalens v brevis "v" longum "verbose" descriptio "Enable verbose output"
+
+# Binding differs from flag (e.g., -1 flag)
+@ optio bivalens singleColumn brevis "1" descriptio "One file per line"
 ```
 
 ### Operands: @ operandus
@@ -98,24 +103,24 @@ Examples:
 Declare positional arguments with `@ operandus`:
 
 ```
-@ operandus [ceteri] <type> "<name>" [descriptio "..."]
+@ operandus [ceteri] <type> <binding> [descriptio "..."]
 ```
 
 | Part | Required | Description |
 |------|----------|-------------|
 | `ceteri` | No | Makes this a rest/variadic argument (collects remaining args) |
 | `<type>` | Yes | `textus`, `numerus`, etc. |
-| `"<name>"` | Yes | Binding name as string literal |
+| `<binding>` | Yes | Internal binding name (identifier) |
 | `descriptio "..."` | No | Help text |
 
 Examples:
 
 ```fab
 # Required positional argument
-@ operandus textus "input" descriptio "Input file"
+@ operandus textus input descriptio "Input file"
 
 # Rest argument (collects all remaining positional args)
-@ operandus ceteri textus "files" descriptio "Additional files"
+@ operandus ceteri textus files descriptio "Additional files"
 ```
 
 Order matters: non-rest operands are matched first, then rest operand collects the remainder.
@@ -157,11 +162,11 @@ Without `exitus`, no explicit exit is generated.
 @ cli "copy"
 @ versio "1.0.0"
 @ descriptio "Copy files to a destination"
-@ optio bivalens "verbose" ut v brevis "v" descriptio "Print files as they are copied"
-@ optio bivalens "force" brevis "f" descriptio "Overwrite existing files"
-@ optio textus "dest" brevis "d" descriptio "Destination directory"
-@ operandus textus "source" descriptio "Source file"
-@ operandus ceteri textus "additional" descriptio "Additional source files"
+@ optio bivalens v brevis "v" longum "verbose" descriptio "Print files as they are copied"
+@ optio bivalens f brevis "f" longum "force" descriptio "Overwrite existing files"
+@ optio textus dest brevis "d" longum "dest" descriptio "Destination directory"
+@ operandus textus source descriptio "Source file"
+@ operandus ceteri textus additional descriptio "Additional source files"
 
 incipit argumenta args exitus code {
     si args.v {

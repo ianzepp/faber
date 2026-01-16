@@ -647,32 +647,26 @@ export interface Annotation extends BaseNode {
     optioType?: TypeAnnotation;
 
     /**
-     * For @ optio: the external CLI flag name (may contain hyphens).
-     * Example: "dry-run" in `@ optio bivalens "dry-run" ut dryRun`
-     */
-    optioExternal?: string;
-
-    /**
-     * For @ optio: the internal binding name (valid identifier).
-     * Example: `dryRun` in `@ optio bivalens "dry-run" ut dryRun`
+     * For @ optio: the binding name (valid identifier, always position 2).
+     * Example: `v` in `@ optio bivalens v brevis "v" longum "verbose"`
      */
     optioInternal?: Identifier;
 
     /**
-     * For @ optio: the short flag (single character or string).
-     * Example: "n" in `@ optio bivalens "verbose" brevis "n"`
+     * For @ optio: the short flag (single character, from 'brevis').
+     * Example: "v" in `@ optio bivalens v brevis "v"`
      */
     optioShort?: string;
 
     /**
-     * For @ optio: the default value expression.
-     * Example: "origin" in `@ optio textus "remote" vel "origin"`
+     * For @ optio: the long flag (from 'longum').
+     * Example: "verbose" in `@ optio bivalens v longum "verbose"`
      */
-    optioDefault?: Expression;
+    optioLong?: string;
 
     /**
      * For @ optio / @ operandus: the description for help text.
-     * Example: "Enable verbose output" in `@ optio bivalens "verbose" descriptio "Enable verbose output"`
+     * Example: "Enable verbose output" in `@ optio bivalens v brevis "v" descriptio "Enable verbose output"`
      */
     optioDescription?: string;
 
