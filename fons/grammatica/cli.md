@@ -44,8 +44,8 @@ For simple CLI programs that don't need subcommands. Options and positional argu
 @ cli "echo"
 @ versio "0.1.0"
 @ descriptio "Display a line of text"
-@ optio bivalens n descriptio "Do not output trailing newline"
-@ operandus ceteri textus args
+@ optio bivalens "n" descriptio "Do not output trailing newline"
+@ operandus ceteri textus "args"
 
 incipit optio opts exitus code {
     si opts.n {
@@ -69,28 +69,28 @@ echo --help               # shows help text
 Declare command-line flags with `@ optio`:
 
 ```
-@ optio <type> <name> [ut <internal>] [brevis <short>] [descriptio "..."]
+@ optio <type> "<name>" [ut <internal>] [brevis "<short>"] [descriptio "..."]
 ```
 
 | Part | Required | Description |
 |------|----------|-------------|
 | `<type>` | Yes | `bivalens` (flag), `textus` (string), `numerus` (integer) |
-| `<name>` | Yes | External flag name (becomes `--name`) |
-| `ut <internal>` | No | Internal binding name (defaults to `<name>`) |
-| `brevis <short>` | No | Short flag (e.g., `brevis "v"` → `-v`) |
+| `"<name>"` | Yes | External flag name as string literal (becomes `--name`) |
+| `ut <internal>` | No | Internal binding name (defaults to `<name>` with hyphens removed) |
+| `brevis "<short>"` | No | Short flag (e.g., `brevis "v"` → `-v`) |
 | `descriptio "..."` | No | Help text for this option |
 
 Examples:
 
 ```fab
 # Boolean flag: --verbose or -v
-@ optio bivalens verbose brevis "v" descriptio "Enable verbose output"
+@ optio bivalens "verbose" brevis "v" descriptio "Enable verbose output"
 
 # String option: --output <path> or -o <path>
-@ optio textus output brevis "o" descriptio "Output file path"
+@ optio textus "output" brevis "o" descriptio "Output file path"
 
 # With different internal name: --dry-run flag accessed as opts.dryRun
-@ optio bivalens dry-run ut dryRun descriptio "Show what would happen"
+@ optio bivalens "dry-run" ut dryRun descriptio "Show what would happen"
 ```
 
 ### Operands: @ operandus
@@ -98,24 +98,24 @@ Examples:
 Declare positional arguments with `@ operandus`:
 
 ```
-@ operandus [ceteri] <type> <name> [descriptio "..."]
+@ operandus [ceteri] <type> "<name>" [descriptio "..."]
 ```
 
 | Part | Required | Description |
 |------|----------|-------------|
 | `ceteri` | No | Makes this a rest/variadic argument (collects remaining args) |
 | `<type>` | Yes | `textus`, `numerus`, etc. |
-| `<name>` | Yes | Binding name |
+| `"<name>"` | Yes | Binding name as string literal |
 | `descriptio "..."` | No | Help text |
 
 Examples:
 
 ```fab
 # Required positional argument
-@ operandus textus input descriptio "Input file"
+@ operandus textus "input" descriptio "Input file"
 
 # Rest argument (collects all remaining positional args)
-@ operandus ceteri textus files descriptio "Additional files"
+@ operandus ceteri textus "files" descriptio "Additional files"
 ```
 
 Order matters: non-rest operands are matched first, then rest operand collects the remainder.
@@ -157,11 +157,11 @@ Without `exitus`, no explicit exit is generated.
 @ cli "copy"
 @ versio "1.0.0"
 @ descriptio "Copy files to a destination"
-@ optio bivalens verbose ut v brevis "v" descriptio "Print files as they are copied"
-@ optio bivalens force brevis "f" descriptio "Overwrite existing files"
-@ optio textus dest brevis "d" descriptio "Destination directory"
-@ operandus textus source descriptio "Source file"
-@ operandus ceteri textus additional descriptio "Additional source files"
+@ optio bivalens "verbose" ut v brevis "v" descriptio "Print files as they are copied"
+@ optio bivalens "force" brevis "f" descriptio "Overwrite existing files"
+@ optio textus "dest" brevis "d" descriptio "Destination directory"
+@ operandus textus "source" descriptio "Source file"
+@ operandus ceteri textus "additional" descriptio "Additional source files"
 
 incipit optio opts exitus code {
     si opts.v {

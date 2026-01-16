@@ -223,7 +223,7 @@ export const keywords: KeywordEntry[] = [
     //      Usage: functio main() exitus 0 { } or functio main() exitus code { }
     { latin: 'exitus', meaning: 'exit code', category: 'modifier' },
     // WHY: "brevis" (short) for CLI short flag aliases
-    //      Usage: @ optio bivalens verbose brevis "v" descriptio "..."
+    //      Usage: @ optio bivalens "verbose" brevis "v" descriptio "..."
     { latin: 'brevis', meaning: 'short (flag)', category: 'modifier' },
     // WHY: "optio" (choice) for CLI options binding in incipit
     //      Usage: incipit optio opts { }

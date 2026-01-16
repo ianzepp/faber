@@ -723,13 +723,13 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse @ optio annotation for CLI option flags.
      *
      * GRAMMAR:
-     *   optioAnnotation := type (STRING | IDENTIFIER) ['ut' IDENTIFIER] ['brevis' STRING]
+     *   optioAnnotation := type STRING ['ut' IDENTIFIER] ['brevis' STRING]
      *                      ['vel' expression] ['descriptio' STRING]
      *
      * Examples:
-     *   @ optio bivalens verbose brevis "v" descriptio "Enable verbose output"
+     *   @ optio bivalens "verbose" brevis "v" descriptio "Enable verbose output"
      *   @ optio bivalens "dry-run" ut dryRun brevis "n" descriptio "Perform dry run"
-     *   @ optio textus remote vel "origin" descriptio "Git remote"
+     *   @ optio textus "remote" vel "origin" descriptio "Git remote"
      */
     function parseOptioAnnotation(position: Position, startLine: number): Annotation {
         // Parse type (required)
@@ -743,39 +743,18 @@ export function parse(tokens: Token[]): ParserResult {
         }
         const optioType = parseTypeAnnotationImpl(resolver);
 
-        // Parse external name (STRING or IDENTIFIER)
+        // Parse external name (STRING required)
         let optioExternal: string;
         let optioInternal: Identifier | undefined;
 
-        if (!isAtEnd() && peek().position.line === startLine) {
-            if (check('STRING')) {
-                // Explicit external name with hyphens
-                optioExternal = advance().value;
-            }
-            else if (check('IDENTIFIER') || check('KEYWORD')) {
-                // Identifier serves as both external and internal
-                const ident = advance();
-                optioExternal = ident.value;
-                optioInternal = {
-                    type: 'Identifier',
-                    name: ident.value,
-                    position: ident.position,
-                };
-            }
-            else {
-                errors.push({
-                    code: ParserErrorCode.UnexpectedToken,
-                    message: `Expected option name in @optio annotation, got '${peek().value}'`,
-                    position: peek().position,
-                });
-                return { type: 'Annotation', name: 'optio', optioType, position };
-            }
+        if (!isAtEnd() && peek().position.line === startLine && check('STRING')) {
+            optioExternal = advance().value;
         }
         else {
             errors.push({
                 code: ParserErrorCode.UnexpectedToken,
-                message: `Expected option name in @optio annotation`,
-                position,
+                message: `Expected string literal for option name in @optio annotation, got '${peek().value}'`,
+                position: peek().position,
             });
             return { type: 'Annotation', name: 'optio', optioType, position };
         }
@@ -856,12 +835,12 @@ export function parse(tokens: Token[]): ParserResult {
      * Parse @ operandus annotation for CLI positional arguments.
      *
      * GRAMMAR:
-     *   operandusAnnotation := ['ceteri'] type IDENTIFIER ['vel' expression] ['descriptio' STRING]
+     *   operandusAnnotation := ['ceteri'] type STRING ['vel' expression] ['descriptio' STRING]
      *
      * Examples:
-     *   @ operandus textus file descriptio "Input file"
-     *   @ operandus textus output vel "-" descriptio "Output file"
-     *   @ operandus ceteri textus files descriptio "Additional input files"
+     *   @ operandus textus "file" descriptio "Input file"
+     *   @ operandus textus "output" vel "-" descriptio "Output file"
+     *   @ operandus ceteri textus "files" descriptio "Additional input files"
      */
     function parseOperandusAnnotation(position: Position, startLine: number): Annotation {
         // Check for optional 'ceteri' prefix (rest/variadic)
@@ -882,20 +861,20 @@ export function parse(tokens: Token[]): ParserResult {
         }
         const operandusType = parseTypeAnnotationImpl(resolver);
 
-        // Parse name (required)
+        // Parse name (STRING required)
         let operandusName: Identifier | undefined;
-        if (!isAtEnd() && peek().position.line === startLine && (check('IDENTIFIER') || check('KEYWORD'))) {
-            const ident = advance();
+        if (!isAtEnd() && peek().position.line === startLine && check('STRING')) {
+            const tok = advance();
             operandusName = {
                 type: 'Identifier',
-                name: ident.value,
-                position: ident.position,
+                name: tok.value,
+                position: tok.position,
             };
         }
         else {
             errors.push({
                 code: ParserErrorCode.UnexpectedToken,
-                message: `Expected operand name in @operandus annotation, got '${peek().value}'`,
+                message: `Expected string literal for operand name in @operandus annotation, got '${peek().value}'`,
                 position: peek().position,
             });
             return { type: 'Annotation', name: 'operandus', operandusType, operandusRest, position };

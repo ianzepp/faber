@@ -796,19 +796,19 @@ export interface Annotation extends BaseNode {
 
     /**
      * For @ optio: the short flag (single character or string).
-     * Example: "n" in `@ optio bivalens verbose brevis "n"`
+     * Example: "n" in `@ optio bivalens "verbose" brevis "n"`
      */
     optioShort?: string;
 
     /**
      * For @ optio: the default value expression.
-     * Example: "origin" in `@ optio textus remote vel "origin"`
+     * Example: "origin" in `@ optio textus "remote" vel "origin"`
      */
     optioDefault?: Expression;
 
     /**
      * For @ optio / @ operandus: the description for help text.
-     * Example: "Enable verbose output" in `@ optio bivalens verbose descriptio "Enable verbose output"`
+     * Example: "Enable verbose output" in `@ optio bivalens "verbose" descriptio "Enable verbose output"`
      */
     optioDescription?: string;
 
