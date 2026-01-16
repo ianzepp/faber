@@ -110,6 +110,31 @@ export interface CliParam {
     defaultValue?: string;
 }
 
+/** CLI option from @ optio annotation */
+export interface CliOption {
+    type: string;           // bivalens, textus, numerus, etc.
+    external: string;       // CLI flag name (may have hyphens)
+    internal: string;       // Internal binding name
+    short?: string;         // Short flag (single char)
+    defaultValue?: string;  // Default value
+    description?: string;   // Help text
+}
+
+/** CLI operand from @ operandus annotation */
+export interface CliOperand {
+    type: string;           // textus, numerus, etc.
+    name: string;           // Binding name
+    rest: boolean;          // Is this a variadic/rest operand (ceteri)
+    defaultValue?: string;  // Default value (makes operand optional)
+    description?: string;   // Help text
+}
+
+/** Single-command CLI info (no subcommands) */
+export interface CliSingleCommand {
+    options: CliOption[];
+    operands: CliOperand[];
+}
+
 /** CLI command tree node - can be a leaf (with handler) or branch (with children) */
 export interface CliCommandNode {
     name: string;           // This node's name (e.g., "add" in "remote/add")
@@ -129,7 +154,8 @@ export interface CliProgram {
     name: string;
     version?: string;
     description?: string;
-    root: CliCommandNode;   // Tree root containing all commands
+    root: CliCommandNode;           // Tree root containing all commands (subcommand mode)
+    singleCommand?: CliSingleCommand;  // Single-command mode info (no subcommands)
 }
 
 export class TsGenerator {

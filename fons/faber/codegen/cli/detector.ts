@@ -16,7 +16,7 @@
  */
 
 import type { Program, Annotation } from '../../parser/ast';
-import type { CliProgram, CliCommandNode, CliParam } from '../ts/generator';
+import type { CliProgram, CliCommandNode, CliParam, CliOption, CliOperand, CliSingleCommand } from '../ts/generator';
 import {
     type CliModuleInfo,
     type CliResolverContext,
@@ -45,6 +45,85 @@ function getAnnotationString(ann: Annotation): string | undefined {
  */
 function findAnnotation(annotations: Annotation[] | undefined, name: string): Annotation | undefined {
     return annotations?.find(a => a.name === name);
+}
+
+/**
+ * Find all annotations by name in annotation list.
+ */
+function findAnnotations(annotations: Annotation[] | undefined, name: string): Annotation[] {
+    return annotations?.filter(a => a.name === name) ?? [];
+}
+
+/**
+ * Convert camelCase or snake_case to kebab-case for CLI flag names.
+ */
+function toKebabCase(str: string): string {
+    return str
+        .replace(/([a-z])([A-Z])/g, '$1-$2')
+        .replace(/_/g, '-')
+        .toLowerCase();
+}
+
+/**
+ * Extract CLI option from @ optio annotation.
+ */
+function extractCliOption(ann: Annotation): CliOption | undefined {
+    if (ann.name !== 'optio') return undefined;
+
+    const type = ann.optioType?.name ?? 'textus';
+
+    // External can be explicit string or derived from identifier
+    let external = ann.optioExternal;
+    if (!external) return undefined;
+
+    // If external doesn't have hyphens and we have an internal, use external as-is for flag
+    // Otherwise convert to kebab-case
+    if (!external.includes('-')) {
+        external = toKebabCase(external);
+    }
+
+    // Internal binding name
+    const internal = ann.optioInternal?.name ?? external.replace(/-/g, '');
+
+    // Default value
+    let defaultValue: string | undefined;
+    if (ann.optioDefault?.type === 'Literal') {
+        defaultValue = String(ann.optioDefault.value);
+    }
+
+    return {
+        type,
+        external,
+        internal,
+        short: ann.optioShort,
+        defaultValue,
+        description: ann.optioDescription,
+    };
+}
+
+/**
+ * Extract CLI operand from @ operandus annotation.
+ */
+function extractCliOperand(ann: Annotation): CliOperand | undefined {
+    if (ann.name !== 'operandus') return undefined;
+
+    const type = ann.operandusType?.name ?? 'textus';
+    const name = ann.operandusName?.name;
+    if (!name) return undefined;
+
+    // Default value
+    let defaultValue: string | undefined;
+    if (ann.operandusDefault?.type === 'Literal') {
+        defaultValue = String(ann.operandusDefault.value);
+    }
+
+    return {
+        type,
+        name,
+        rest: ann.operandusRest === true,
+        defaultValue,
+        description: ann.operandusDescription,
+    };
 }
 
 // =============================================================================
@@ -398,7 +477,38 @@ export function detectCliProgram(program: Program, filePath?: string): CliDetect
         root: createCommandNode('', ''),
     };
 
-    // Extract commands from main file (no module prefix - these are local functions)
+    // Check for @ optio and @ operandus annotations (single-command mode)
+    const optioAnns = findAnnotations(mainInfo.incipit.annotations, 'optio');
+    const operandusAnns = findAnnotations(mainInfo.incipit.annotations, 'operandus');
+
+    // Check if any functions have @ imperium (subcommand mode)
+    const hasSubcommands = mainInfo.functions.some(fn =>
+        findAnnotation(fn.annotations, 'imperium') !== undefined
+    );
+
+    // Check for @ imperia annotations (module-based subcommands)
+    const hasImperia = findAnnotation(mainInfo.incipit.annotations, 'imperia') !== undefined;
+
+    // Detect single-command mode: has optio/operandus annotations but no subcommands
+    if ((optioAnns.length > 0 || operandusAnns.length > 0) && !hasSubcommands && !hasImperia) {
+        const options: CliOption[] = [];
+        const operands: CliOperand[] = [];
+
+        for (const ann of optioAnns) {
+            const opt = extractCliOption(ann);
+            if (opt) options.push(opt);
+        }
+
+        for (const ann of operandusAnns) {
+            const operand = extractCliOperand(ann);
+            if (operand) operands.push(operand);
+        }
+
+        cli.singleCommand = { options, operands };
+        return { cli, moduleImports, errors };
+    }
+
+    // Subcommand mode: extract commands from main file (no module prefix - these are local functions)
     extractCommands(mainInfo.functions, cli.root, [], errors);
 
     // Process @ imperia for mounted submodules (if we have a file path)

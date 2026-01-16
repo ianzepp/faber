@@ -222,6 +222,15 @@ export const keywords: KeywordEntry[] = [
     // WHY: "exitus" (exit, outcome) declares exit code for CLI entry points
     //      Usage: functio main() exitus 0 { } or functio main() exitus code { }
     { latin: 'exitus', meaning: 'exit code', category: 'modifier' },
+    // WHY: "brevis" (short) for CLI short flag aliases
+    //      Usage: @ optio bivalens verbose brevis "v" descriptio "..."
+    { latin: 'brevis', meaning: 'short (flag)', category: 'modifier' },
+    // WHY: "optio" (choice) for CLI options binding in incipit
+    //      Usage: incipit optio opts { }
+    { latin: 'optio', meaning: 'options (CLI)', category: 'modifier' },
+    // WHY: "descriptio" (description) for CLI help text in annotations
+    //      Usage: @ optio ... descriptio "help text"
+    { latin: 'descriptio', meaning: 'description', category: 'modifier' },
     // WHY: "immutata" (unchanged) marks a function as constant
     { latin: 'immutata', meaning: 'constant', category: 'modifier' },
     // WHY: "publicus/privatus" for visibility - default is public (struct semantics)

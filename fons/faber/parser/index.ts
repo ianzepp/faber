@@ -438,6 +438,10 @@ export function parse(tokens: Token[]): ParserResult {
             return parseRadixAnnotation(position, startLine);
         } else if (name === 'verte') {
             return parseVerteAnnotation(position, startLine);
+        } else if (name === 'optio') {
+            return parseOptioAnnotation(position, startLine);
+        } else if (name === 'operandus') {
+            return parseOperandusAnnotation(position, startLine);
         }
 
         // Check for optional argument on the same line (standard annotation)
@@ -711,6 +715,223 @@ export function parse(tokens: Token[]): ParserResult {
             name: 'verte',
             verteTarget,
             verteMethod,
+            position,
+        };
+    }
+
+    /**
+     * Parse @ optio annotation for CLI option flags.
+     *
+     * GRAMMAR:
+     *   optioAnnotation := type (STRING | IDENTIFIER) ['ut' IDENTIFIER] ['brevis' STRING]
+     *                      ['vel' expression] ['descriptio' STRING]
+     *
+     * Examples:
+     *   @ optio bivalens verbose brevis "v" descriptio "Enable verbose output"
+     *   @ optio bivalens "dry-run" ut dryRun brevis "n" descriptio "Perform dry run"
+     *   @ optio textus remote vel "origin" descriptio "Git remote"
+     */
+    function parseOptioAnnotation(position: Position, startLine: number): Annotation {
+        // Parse type (required)
+        if ((!check('IDENTIFIER') && !check('KEYWORD')) || peek().position.line !== startLine) {
+            errors.push({
+                code: ParserErrorCode.UnexpectedToken,
+                message: `Expected type in @optio annotation, got '${peek().value}'`,
+                position: peek().position,
+            });
+            return { type: 'Annotation', name: 'optio', position };
+        }
+        const optioType = parseTypeAnnotationImpl(resolver);
+
+        // Parse external name (STRING or IDENTIFIER)
+        let optioExternal: string;
+        let optioInternal: Identifier | undefined;
+
+        if (!isAtEnd() && peek().position.line === startLine) {
+            if (check('STRING')) {
+                // Explicit external name with hyphens
+                optioExternal = advance().value;
+            }
+            else if (check('IDENTIFIER') || check('KEYWORD')) {
+                // Identifier serves as both external and internal
+                const ident = advance();
+                optioExternal = ident.value;
+                optioInternal = {
+                    type: 'Identifier',
+                    name: ident.value,
+                    position: ident.position,
+                };
+            }
+            else {
+                errors.push({
+                    code: ParserErrorCode.UnexpectedToken,
+                    message: `Expected option name in @optio annotation, got '${peek().value}'`,
+                    position: peek().position,
+                });
+                return { type: 'Annotation', name: 'optio', optioType, position };
+            }
+        }
+        else {
+            errors.push({
+                code: ParserErrorCode.UnexpectedToken,
+                message: `Expected option name in @optio annotation`,
+                position,
+            });
+            return { type: 'Annotation', name: 'optio', optioType, position };
+        }
+
+        // Parse optional 'ut' internal binding (only if external was a string)
+        if (!isAtEnd() && peek().position.line === startLine && checkKeyword('ut')) {
+            advance(); // consume 'ut'
+            if ((check('IDENTIFIER') || check('KEYWORD')) && peek().position.line === startLine) {
+                const ident = advance();
+                optioInternal = {
+                    type: 'Identifier',
+                    name: ident.value,
+                    position: ident.position,
+                };
+            }
+            else {
+                errors.push({
+                    code: ParserErrorCode.UnexpectedToken,
+                    message: `Expected identifier after 'ut' in @optio annotation, got '${peek().value}'`,
+                    position: peek().position,
+                });
+            }
+        }
+
+        // Parse optional 'brevis' short flag
+        let optioShort: string | undefined;
+        if (!isAtEnd() && peek().position.line === startLine && checkKeyword('brevis')) {
+            advance(); // consume 'brevis'
+            if (check('STRING') && peek().position.line === startLine) {
+                optioShort = advance().value;
+            }
+            else {
+                errors.push({
+                    code: ParserErrorCode.UnexpectedToken,
+                    message: `Expected string after 'brevis' in @optio annotation, got '${peek().value}'`,
+                    position: peek().position,
+                });
+            }
+        }
+
+        // Parse optional 'vel' default value
+        let optioDefault: Expression | undefined;
+        if (!isAtEnd() && peek().position.line === startLine && checkKeyword('vel')) {
+            advance(); // consume 'vel'
+            optioDefault = parseExpressionModule(resolver);
+        }
+
+        // Parse optional 'descriptio' help text
+        let optioDescription: string | undefined;
+        if (!isAtEnd() && peek().position.line === startLine && checkKeyword('descriptio')) {
+            advance(); // consume 'descriptio'
+            if (check('STRING') && peek().position.line === startLine) {
+                optioDescription = advance().value;
+            }
+            else {
+                errors.push({
+                    code: ParserErrorCode.UnexpectedToken,
+                    message: `Expected string after 'descriptio' in @optio annotation, got '${peek().value}'`,
+                    position: peek().position,
+                });
+            }
+        }
+
+        return {
+            type: 'Annotation',
+            name: 'optio',
+            optioType,
+            optioExternal,
+            optioInternal,
+            optioShort,
+            optioDefault,
+            optioDescription,
+            position,
+        };
+    }
+
+    /**
+     * Parse @ operandus annotation for CLI positional arguments.
+     *
+     * GRAMMAR:
+     *   operandusAnnotation := ['ceteri'] type IDENTIFIER ['vel' expression] ['descriptio' STRING]
+     *
+     * Examples:
+     *   @ operandus textus file descriptio "Input file"
+     *   @ operandus textus output vel "-" descriptio "Output file"
+     *   @ operandus ceteri textus files descriptio "Additional input files"
+     */
+    function parseOperandusAnnotation(position: Position, startLine: number): Annotation {
+        // Check for optional 'ceteri' prefix (rest/variadic)
+        let operandusRest = false;
+        if (!isAtEnd() && peek().position.line === startLine && checkKeyword('ceteri')) {
+            advance(); // consume 'ceteri'
+            operandusRest = true;
+        }
+
+        // Parse type (required)
+        if ((!check('IDENTIFIER') && !check('KEYWORD')) || peek().position.line !== startLine) {
+            errors.push({
+                code: ParserErrorCode.UnexpectedToken,
+                message: `Expected type in @operandus annotation, got '${peek().value}'`,
+                position: peek().position,
+            });
+            return { type: 'Annotation', name: 'operandus', operandusRest, position };
+        }
+        const operandusType = parseTypeAnnotationImpl(resolver);
+
+        // Parse name (required)
+        let operandusName: Identifier | undefined;
+        if (!isAtEnd() && peek().position.line === startLine && (check('IDENTIFIER') || check('KEYWORD'))) {
+            const ident = advance();
+            operandusName = {
+                type: 'Identifier',
+                name: ident.value,
+                position: ident.position,
+            };
+        }
+        else {
+            errors.push({
+                code: ParserErrorCode.UnexpectedToken,
+                message: `Expected operand name in @operandus annotation, got '${peek().value}'`,
+                position: peek().position,
+            });
+            return { type: 'Annotation', name: 'operandus', operandusType, operandusRest, position };
+        }
+
+        // Parse optional 'vel' default value
+        let operandusDefault: Expression | undefined;
+        if (!isAtEnd() && peek().position.line === startLine && checkKeyword('vel')) {
+            advance(); // consume 'vel'
+            operandusDefault = parseExpressionModule(resolver);
+        }
+
+        // Parse optional 'descriptio' help text
+        let operandusDescription: string | undefined;
+        if (!isAtEnd() && peek().position.line === startLine && checkKeyword('descriptio')) {
+            advance(); // consume 'descriptio'
+            if (check('STRING') && peek().position.line === startLine) {
+                operandusDescription = advance().value;
+            }
+            else {
+                errors.push({
+                    code: ParserErrorCode.UnexpectedToken,
+                    message: `Expected string after 'descriptio' in @operandus annotation, got '${peek().value}'`,
+                    position: peek().position,
+                });
+            }
+        }
+
+        return {
+            type: 'Annotation',
+            name: 'operandus',
+            operandusType,
+            operandusName,
+            operandusRest,
+            operandusDefault,
+            operandusDescription,
             position,
         };
     }

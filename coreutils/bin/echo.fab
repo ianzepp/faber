@@ -8,18 +8,16 @@ ex "../lib/norma/hal/consolum" importa consolum
 @ cli "echo"
 @ versio "0.1.0"
 @ descriptio "Display a line of text"
-incipit {
-    main()
-}
+@ optio bivalens n descriptio "Do not output trailing newline"
+@ operandus ceteri textus args
 
-functio main(si bivalens n, ceteri textus[] args) exitus code {
+incipit optio opts exitus code {
     tempta {
-        si n {
-            # -n: no trailing newline
-            consolum.fundeTextum(args.coniunge(" "))
+        si opts.n {
+            consolum.fundeTextum(opts.args.coniunge(" "))
         }
         secus {
-            consolum.fundeLineam(args.coniunge(" "))
+            consolum.fundeLineam(opts.args.coniunge(" "))
         }
     }
     cape err {

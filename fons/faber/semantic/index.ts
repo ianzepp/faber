@@ -2470,6 +2470,69 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
     function analyzeIncipitStatement(node: IncipitStatement): void {
         // WHY: Entry point contains either a body block or ergo-chained statement
         enterScope('function');
+
+        // Define optioBinding in scope (for CLI single-command mode)
+        // WHY: Build a proper type from @ optio and @ operandus annotations
+        if (node.optioBinding && node.annotations) {
+            const fields = new Map<string, SemanticType>();
+
+            for (const ann of node.annotations) {
+                if (ann.name === 'optio' && ann.optioType) {
+                    // Get the internal name (or derive from external)
+                    const name = ann.optioInternal?.name ?? ann.optioExternal?.replace(/-/g, '');
+                    if (name) {
+                        const typeName = ann.optioType.name;
+                        const fieldType = resolveTypeAnnotation(ann.optioType);
+                        fields.set(name, fieldType);
+                    }
+                }
+                else if (ann.name === 'operandus' && ann.operandusName) {
+                    const name = ann.operandusName.name;
+                    const baseType = ann.operandusType ? resolveTypeAnnotation(ann.operandusType) : TEXTUS;
+                    // Rest operands are arrays
+                    const fieldType = ann.operandusRest ? genericType('lista', [baseType]) : baseType;
+                    fields.set(name, fieldType);
+                }
+            }
+
+            const optsType = genusType(
+                'CliOptions',
+                fields,
+                new Map(), // methods
+                new Map(), // staticFields
+                new Map(), // staticMethods
+            );
+
+            defineSymbol(currentScope!, {
+                name: node.optioBinding.name,
+                type: optsType,
+                kind: 'variable',
+                mutable: false,
+                position: node.optioBinding.position,
+            });
+        }
+        else if (node.optioBinding) {
+            // Fallback if no annotations
+            defineSymbol(currentScope!, {
+                name: node.optioBinding.name,
+                type: UNKNOWN,
+                kind: 'variable',
+                mutable: false,
+                position: node.optioBinding.position,
+            });
+        }
+
+        // Define exitusModifier variable in scope if it's a named identifier
+        if (node.exitusModifier && node.exitusModifier.code.type === 'Identifier') {
+            defineSymbol(currentScope!, {
+                name: node.exitusModifier.code.name,
+                type: NUMERUS,
+                kind: 'variable',
+                mutable: true,
+                position: node.exitusModifier.code.position,
+            });
+        }
+
         if (node.body) {
             analyzeBlock(node.body);
         }
@@ -2484,6 +2547,64 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         enterScope('function');
         const previousAsync = currentFunctionAsync;
         currentFunctionAsync = true;
+
+        // Define optioBinding in scope (for CLI single-command mode)
+        // WHY: Build a proper type from @ optio and @ operandus annotations
+        if (node.optioBinding && node.annotations) {
+            const fields = new Map<string, SemanticType>();
+
+            for (const ann of node.annotations) {
+                if (ann.name === 'optio' && ann.optioType) {
+                    const name = ann.optioInternal?.name ?? ann.optioExternal?.replace(/-/g, '');
+                    if (name) {
+                        const fieldType = resolveTypeAnnotation(ann.optioType);
+                        fields.set(name, fieldType);
+                    }
+                }
+                else if (ann.name === 'operandus' && ann.operandusName) {
+                    const name = ann.operandusName.name;
+                    const baseType = ann.operandusType ? resolveTypeAnnotation(ann.operandusType) : TEXTUS;
+                    const fieldType = ann.operandusRest ? genericType('lista', [baseType]) : baseType;
+                    fields.set(name, fieldType);
+                }
+            }
+
+            const optsType = genusType(
+                'CliOptions',
+                fields,
+                new Map(),
+                new Map(),
+                new Map(),
+            );
+
+            defineSymbol(currentScope!, {
+                name: node.optioBinding.name,
+                type: optsType,
+                kind: 'variable',
+                mutable: false,
+                position: node.optioBinding.position,
+            });
+        }
+        else if (node.optioBinding) {
+            defineSymbol(currentScope!, {
+                name: node.optioBinding.name,
+                type: UNKNOWN,
+                kind: 'variable',
+                mutable: false,
+                position: node.optioBinding.position,
+            });
+        }
+
+        // Define exitusModifier variable in scope if it's a named identifier
+        if (node.exitusModifier && node.exitusModifier.code.type === 'Identifier') {
+            defineSymbol(currentScope!, {
+                name: node.exitusModifier.code.name,
+                type: NUMERUS,
+                kind: 'variable',
+                mutable: true,
+                position: node.exitusModifier.code.position,
+            });
+        }
 
         if (node.body) {
             analyzeBlock(node.body);

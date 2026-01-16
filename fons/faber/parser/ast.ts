@@ -772,6 +772,70 @@ export interface Annotation extends BaseNode {
      * Example: `remote` in `@ imperia "remote" ex remote`
      */
     exClause?: Identifier;
+
+    // -------------------------------------------------------------------------
+    // CLI Option Annotations (@ optio, @ operandus)
+    // -------------------------------------------------------------------------
+
+    /**
+     * For @ optio: the type of the option (bivalens, textus, numerus, etc.)
+     */
+    optioType?: TypeAnnotation;
+
+    /**
+     * For @ optio: the external CLI flag name (may contain hyphens).
+     * Example: "dry-run" in `@ optio bivalens "dry-run" ut dryRun`
+     */
+    optioExternal?: string;
+
+    /**
+     * For @ optio: the internal binding name (valid identifier).
+     * Example: `dryRun` in `@ optio bivalens "dry-run" ut dryRun`
+     */
+    optioInternal?: Identifier;
+
+    /**
+     * For @ optio: the short flag (single character or string).
+     * Example: "n" in `@ optio bivalens verbose brevis "n"`
+     */
+    optioShort?: string;
+
+    /**
+     * For @ optio: the default value expression.
+     * Example: "origin" in `@ optio textus remote vel "origin"`
+     */
+    optioDefault?: Expression;
+
+    /**
+     * For @ optio / @ operandus: the description for help text.
+     * Example: "Enable verbose output" in `@ optio bivalens verbose descriptio "Enable verbose output"`
+     */
+    optioDescription?: string;
+
+    /**
+     * For @ operandus: the type of the positional operand.
+     */
+    operandusType?: TypeAnnotation;
+
+    /**
+     * For @ operandus: the binding name.
+     */
+    operandusName?: Identifier;
+
+    /**
+     * For @ operandus: whether this is a rest/variadic operand (ceteri prefix).
+     */
+    operandusRest?: boolean;
+
+    /**
+     * For @ operandus: the default value expression.
+     */
+    operandusDefault?: Expression;
+
+    /**
+     * For @ operandus: the description for help text.
+     */
+    operandusDescription?: string;
 }
 
 /**
@@ -1277,6 +1341,10 @@ export interface IncipitStatement extends BaseNode {
     body?: BlockStatement;
     ergoStatement?: Statement;
     annotations?: Annotation[];
+    /** For CLI: binds parsed options to named variable. Usage: incipit optio opts { } */
+    optioBinding?: Identifier;
+    /** For CLI: exit code modifier. Usage: incipit exitus 0 { } or incipit exitus code { } */
+    exitusModifier?: ExitusModifier;
 }
 
 /**
@@ -1314,6 +1382,11 @@ export interface IncipietStatement extends BaseNode {
     type: 'IncipietStatement';
     body?: BlockStatement;
     ergoStatement?: Statement;
+    annotations?: Annotation[];
+    /** For CLI: binds parsed options to named variable. Usage: incipiet optio opts { } */
+    optioBinding?: Identifier;
+    /** For CLI: exit code modifier. Usage: incipiet exitus 0 { } or incipiet exitus code { } */
+    exitusModifier?: ExitusModifier;
 }
 
 // ---------------------------------------------------------------------------

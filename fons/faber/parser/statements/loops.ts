@@ -31,6 +31,8 @@ import type {
     VariaDeclaration,
     DestructureDeclaration,
     ImportSpecifier,
+    ExitusModifier,
+    Literal,
 } from '../ast';
 import { ParserErrorCode } from '../errors';
 import { parseSpecifier } from './imports';
@@ -618,25 +620,81 @@ export function parseIncipitStatement(r: Resolver): IncipitStatement {
 
     ctx.expectKeyword('incipit', ParserErrorCode.ExpectedKeywordIncipit);
 
+    // Parse optional modifiers: optio <ident>, exitus <literal|ident>
+    let optioBinding: Identifier | undefined;
+    let exitusModifier: ExitusModifier | undefined;
+
+    // Check for optio modifier: incipit optio opts ...
+    if (ctx.checkKeyword('optio')) {
+        ctx.advance(); // consume 'optio'
+        if (ctx.check('IDENTIFIER') || ctx.check('KEYWORD')) {
+            const ident = ctx.advance();
+            optioBinding = {
+                type: 'Identifier',
+                name: ident.value,
+                position: ident.position,
+            };
+        }
+        else {
+            ctx.errors.push({
+                code: ParserErrorCode.UnexpectedToken,
+                message: `Expected identifier after 'optio' in incipit, got '${ctx.peek().value}'`,
+                position: ctx.peek().position,
+            });
+        }
+    }
+
+    // Check for exitus modifier: incipit exitus 0 ... or incipit exitus code ...
+    if (ctx.checkKeyword('exitus')) {
+        const exitusPos = ctx.peek().position;
+        ctx.advance(); // consume 'exitus'
+        if (ctx.check('NUMBER')) {
+            const numToken = ctx.advance();
+            const code: Literal = {
+                type: 'Literal',
+                value: Number(numToken.value),
+                raw: numToken.value,
+                position: numToken.position,
+            };
+            exitusModifier = { type: 'ExitusModifier', code, position: exitusPos };
+        }
+        else if (ctx.check('IDENTIFIER') || ctx.check('KEYWORD')) {
+            const ident = ctx.advance();
+            const code: Identifier = {
+                type: 'Identifier',
+                name: ident.value,
+                position: ident.position,
+            };
+            exitusModifier = { type: 'ExitusModifier', code, position: exitusPos };
+        }
+        else {
+            ctx.errors.push({
+                code: ParserErrorCode.UnexpectedToken,
+                message: `Expected number or identifier after 'exitus' in incipit, got '${ctx.peek().value}'`,
+                position: ctx.peek().position,
+            });
+        }
+    }
+
     // Check for reddit form: incipit reddit <expression> (return exit code)
     if (ctx.checkKeyword('reddit')) {
         ctx.advance(); // consume 'reddit'
         const stmtPos = ctx.peek().position;
         const expr = r.expression();
         const returnStmt: ReddeStatement = { type: 'ReddeStatement', argument: expr, position: stmtPos };
-        return { type: 'IncipitStatement', ergoStatement: returnStmt, position };
+        return { type: 'IncipitStatement', ergoStatement: returnStmt, optioBinding, exitusModifier, position };
     }
 
     // Check for ergo form: incipit ergo <statement>
     if (ctx.checkKeyword('ergo')) {
         ctx.advance(); // consume 'ergo'
         const ergoStatement = r.statement();
-        return { type: 'IncipitStatement', ergoStatement, position };
+        return { type: 'IncipitStatement', ergoStatement, optioBinding, exitusModifier, position };
     }
 
     const body = r.block();
 
-    return { type: 'IncipitStatement', body, position };
+    return { type: 'IncipitStatement', body, optioBinding, exitusModifier, position };
 }
 
 // =============================================================================
@@ -673,23 +731,79 @@ export function parseIncipietStatement(r: Resolver): IncipietStatement {
 
     ctx.expectKeyword('incipiet', ParserErrorCode.ExpectedKeywordIncipiet);
 
+    // Parse optional modifiers: optio <ident>, exitus <literal|ident>
+    let optioBinding: Identifier | undefined;
+    let exitusModifier: ExitusModifier | undefined;
+
+    // Check for optio modifier: incipiet optio opts ...
+    if (ctx.checkKeyword('optio')) {
+        ctx.advance(); // consume 'optio'
+        if (ctx.check('IDENTIFIER') || ctx.check('KEYWORD')) {
+            const ident = ctx.advance();
+            optioBinding = {
+                type: 'Identifier',
+                name: ident.value,
+                position: ident.position,
+            };
+        }
+        else {
+            ctx.errors.push({
+                code: ParserErrorCode.UnexpectedToken,
+                message: `Expected identifier after 'optio' in incipiet, got '${ctx.peek().value}'`,
+                position: ctx.peek().position,
+            });
+        }
+    }
+
+    // Check for exitus modifier: incipiet exitus 0 ... or incipiet exitus code ...
+    if (ctx.checkKeyword('exitus')) {
+        const exitusPos = ctx.peek().position;
+        ctx.advance(); // consume 'exitus'
+        if (ctx.check('NUMBER')) {
+            const numToken = ctx.advance();
+            const code: Literal = {
+                type: 'Literal',
+                value: Number(numToken.value),
+                raw: numToken.value,
+                position: numToken.position,
+            };
+            exitusModifier = { type: 'ExitusModifier', code, position: exitusPos };
+        }
+        else if (ctx.check('IDENTIFIER') || ctx.check('KEYWORD')) {
+            const ident = ctx.advance();
+            const code: Identifier = {
+                type: 'Identifier',
+                name: ident.value,
+                position: ident.position,
+            };
+            exitusModifier = { type: 'ExitusModifier', code, position: exitusPos };
+        }
+        else {
+            ctx.errors.push({
+                code: ParserErrorCode.UnexpectedToken,
+                message: `Expected number or identifier after 'exitus' in incipiet, got '${ctx.peek().value}'`,
+                position: ctx.peek().position,
+            });
+        }
+    }
+
     // Check for reddit form: incipiet reddit <expression>
     if (ctx.checkKeyword('reddit')) {
         ctx.advance(); // consume 'reddit'
         const stmtPos = ctx.peek().position;
         const expr = r.expression();
         const returnStmt: ReddeStatement = { type: 'ReddeStatement', argument: expr, position: stmtPos };
-        return { type: 'IncipietStatement', ergoStatement: returnStmt, position };
+        return { type: 'IncipietStatement', ergoStatement: returnStmt, optioBinding, exitusModifier, position };
     }
 
     // Check for ergo form: incipiet ergo <statement>
     if (ctx.checkKeyword('ergo')) {
         ctx.advance(); // consume 'ergo'
         const ergoStatement = r.statement();
-        return { type: 'IncipietStatement', ergoStatement, position };
+        return { type: 'IncipietStatement', ergoStatement, optioBinding, exitusModifier, position };
     }
 
     const body = r.block();
 
-    return { type: 'IncipietStatement', body, position };
+    return { type: 'IncipietStatement', body, optioBinding, exitusModifier, position };
 }

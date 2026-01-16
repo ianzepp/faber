@@ -11,7 +11,15 @@
  */
 
 import type { IncipitStatement } from '../../../parser/ast';
-import type { TsGenerator, CliProgram, CliCommandNode, CliParam } from '../generator';
+import type { TsGenerator, CliProgram, CliCommandNode, CliParam, CliSingleCommand, CliOption, CliOperand } from '../generator';
+
+// Type mapping for TypeScript
+const TYPE_MAP: Record<string, string> = {
+    bivalens: 'boolean',
+    textus: 'string',
+    numerus: 'number',
+    fractus: 'number',
+};
 
 /**
  * Generate help text for a command node (shows its children).
@@ -254,9 +262,312 @@ function genCliDispatcher(cli: CliProgram, g: TsGenerator): string {
     return lines.join('\n');
 }
 
+// =============================================================================
+// SINGLE-COMMAND MODE
+// =============================================================================
+
+/**
+ * Generate options interface for single-command CLI.
+ */
+function genOptionsInterface(cmd: CliSingleCommand, ind: string): string {
+    const lines: string[] = [];
+    lines.push(`${ind}interface CliOptions {`);
+
+    for (const opt of cmd.options) {
+        const tsType = TYPE_MAP[opt.type] ?? 'string';
+        const optional = opt.defaultValue !== undefined || opt.type === 'bivalens' ? '' : '?';
+        lines.push(`${ind}  ${opt.internal}${optional}: ${tsType};`);
+    }
+
+    for (const op of cmd.operands) {
+        const tsType = TYPE_MAP[op.type] ?? 'string';
+        const optional = op.defaultValue !== undefined || op.rest ? '' : '?';
+        if (op.rest) {
+            lines.push(`${ind}  ${op.name}: ${tsType}[];`);
+        }
+        else {
+            lines.push(`${ind}  ${op.name}${optional}: ${tsType};`);
+        }
+    }
+
+    lines.push(`${ind}}`);
+    return lines.join('\n');
+}
+
+/**
+ * Generate help text for single-command CLI.
+ */
+function genSingleCommandHelp(cli: CliProgram, cmd: CliSingleCommand, ind: string): string {
+    const lines: string[] = [];
+
+    // Header
+    if (cli.version) {
+        lines.push(`${ind}console.log("${cli.name} v${cli.version}");`);
+    }
+    else {
+        lines.push(`${ind}console.log("${cli.name}");`);
+    }
+    if (cli.description) {
+        lines.push(`${ind}console.log("${cli.description}");`);
+    }
+    lines.push(`${ind}console.log("");`);
+
+    // Usage line
+    let usage = `Usage: ${cli.name}`;
+    if (cmd.options.length > 0) {
+        usage += ' [options]';
+    }
+    for (const op of cmd.operands) {
+        if (op.rest) {
+            usage += ` [${op.name}...]`;
+        }
+        else if (op.defaultValue !== undefined) {
+            usage += ` [${op.name}]`;
+        }
+        else {
+            usage += ` <${op.name}>`;
+        }
+    }
+    lines.push(`${ind}console.log("${usage}");`);
+    lines.push(`${ind}console.log("");`);
+
+    // Options section
+    if (cmd.options.length > 0) {
+        lines.push(`${ind}console.log("Options:");`);
+
+        // Calculate max width for alignment
+        const optWidths = cmd.options.map(opt => {
+            const short = opt.short ? `-${opt.short}, ` : '    ';
+            return (short + `--${opt.external}`).length;
+        });
+        const maxOptWidth = Math.max(16, ...optWidths);
+
+        for (const opt of cmd.options) {
+            const short = opt.short ? `-${opt.short}, ` : '    ';
+            const long = `--${opt.external}`;
+            const flagPart = short + long;
+            const padding = ' '.repeat(maxOptWidth - flagPart.length + 2);
+
+            if (opt.description) {
+                lines.push(`${ind}console.log("  ${flagPart}${padding}${opt.description}");`);
+            }
+            else {
+                lines.push(`${ind}console.log("  ${flagPart}");`);
+            }
+        }
+        lines.push(`${ind}console.log("");`);
+    }
+
+    // Operands section
+    if (cmd.operands.length > 0) {
+        lines.push(`${ind}console.log("Arguments:");`);
+
+        const opWidths = cmd.operands.map(op => op.name.length);
+        const maxOpWidth = Math.max(12, ...opWidths);
+
+        for (const op of cmd.operands) {
+            const padding = ' '.repeat(maxOpWidth - op.name.length + 2);
+            if (op.description) {
+                lines.push(`${ind}console.log("  ${op.name}${padding}${op.description}");`);
+            }
+            else {
+                lines.push(`${ind}console.log("  ${op.name}");`);
+            }
+        }
+        lines.push(`${ind}console.log("");`);
+    }
+
+    // Standard help/version
+    lines.push(`${ind}console.log("  --help, -h     Show this help message");`);
+    if (cli.version) {
+        lines.push(`${ind}console.log("  --version, -v  Show version number");`);
+    }
+
+    return lines.join('\n');
+}
+
+/**
+ * Generate argument parsing for single-command CLI.
+ */
+function genSingleCommandParser(cli: CliProgram, cmd: CliSingleCommand, optionsVar: string, ind: string, g: TsGenerator): string {
+    const lines: string[] = [];
+
+    lines.push(`${ind}const _args = process.argv.slice(2);`);
+    lines.push(``);
+
+    // Help flag check
+    lines.push(`${ind}if (_args.includes("--help") || _args.includes("-h")) {`);
+    lines.push(genSingleCommandHelp(cli, cmd, ind + g.indent));
+    lines.push(`${ind}  process.exit(0);`);
+    lines.push(`${ind}}`);
+
+    // Version flag check
+    if (cli.version) {
+        lines.push(`${ind}if (_args.includes("--version") || _args.includes("-v")) {`);
+        lines.push(`${ind}  console.log("${cli.version}");`);
+        lines.push(`${ind}  process.exit(0);`);
+        lines.push(`${ind}}`);
+    }
+
+    lines.push(``);
+
+    // Initialize options object
+    lines.push(`${ind}const ${optionsVar}: CliOptions = {`);
+
+    // Initialize options with defaults
+    for (const opt of cmd.options) {
+        let defaultVal: string;
+        if (opt.type === 'bivalens') {
+            defaultVal = 'false';
+        }
+        else if (opt.defaultValue !== undefined) {
+            defaultVal = JSON.stringify(opt.defaultValue);
+        }
+        else {
+            defaultVal = 'undefined as any';
+        }
+        lines.push(`${ind}  ${opt.internal}: ${defaultVal},`);
+    }
+
+    // Initialize operands with defaults
+    for (const op of cmd.operands) {
+        let defaultVal: string;
+        if (op.rest) {
+            defaultVal = '[]';
+        }
+        else if (op.defaultValue !== undefined) {
+            defaultVal = JSON.stringify(op.defaultValue);
+        }
+        else {
+            defaultVal = 'undefined as any';
+        }
+        lines.push(`${ind}  ${op.name}: ${defaultVal},`);
+    }
+
+    lines.push(`${ind}};`);
+    lines.push(``);
+
+    // Parse arguments
+    lines.push(`${ind}let _positionalIdx = 0;`);
+    lines.push(`${ind}for (let _i = 0; _i < _args.length; _i++) {`);
+    lines.push(`${ind}  const _arg = _args[_i]!;`);
+
+    // Handle option flags
+    for (const opt of cmd.options) {
+        const longFlag = `--${opt.external}`;
+        const shortFlag = opt.short ? `-${opt.short}` : null;
+        const flagCheck = shortFlag
+            ? `_arg === "${longFlag}" || _arg === "${shortFlag}"`
+            : `_arg === "${longFlag}"`;
+
+        if (opt.type === 'bivalens') {
+            lines.push(`${ind}  if (${flagCheck}) { ${optionsVar}.${opt.internal} = true; continue; }`);
+        }
+        else {
+            lines.push(`${ind}  if (${flagCheck}) { ${optionsVar}.${opt.internal} = _args[++_i]!; continue; }`);
+        }
+    }
+
+    // Handle positional arguments (non-rest operands first, then rest)
+    const nonRestOperands = cmd.operands.filter(op => !op.rest);
+    const restOperand = cmd.operands.find(op => op.rest);
+
+    if (nonRestOperands.length > 0 || restOperand) {
+        lines.push(`${ind}  if (!_arg.startsWith("-")) {`);
+
+        for (let i = 0; i < nonRestOperands.length; i++) {
+            const op = nonRestOperands[i]!;
+            lines.push(`${ind}    if (_positionalIdx === ${i}) { ${optionsVar}.${op.name} = _arg; _positionalIdx++; continue; }`);
+        }
+
+        if (restOperand) {
+            lines.push(`${ind}    ${optionsVar}.${restOperand.name}.push(_arg);`);
+            lines.push(`${ind}    continue;`);
+        }
+
+        lines.push(`${ind}  }`);
+    }
+
+    lines.push(`${ind}}`);
+    lines.push(``);
+
+    // Validate required operands
+    for (const op of nonRestOperands) {
+        if (op.defaultValue === undefined) {
+            lines.push(`${ind}if (${optionsVar}.${op.name} === undefined) {`);
+            lines.push(`${ind}  console.error("Missing required argument: ${op.name}");`);
+            lines.push(`${ind}  process.exit(1);`);
+            lines.push(`${ind}}`);
+        }
+    }
+
+    return lines.join('\n');
+}
+
+/**
+ * Generate single-command CLI code.
+ */
+function genSingleCommandCli(cli: CliProgram, cmd: CliSingleCommand, node: IncipitStatement, g: TsGenerator): string {
+    const ind = g.ind();
+    const lines: string[] = [];
+
+    // Get options binding name (default to 'opts' if not specified)
+    const optionsVar = node.optioBinding?.name ?? 'opts';
+
+    // Generate options interface
+    lines.push(genOptionsInterface(cmd, ind));
+    lines.push(``);
+
+    // Generate argument parsing
+    lines.push(genSingleCommandParser(cli, cmd, optionsVar, ind, g));
+    lines.push(``);
+
+    // Handle exit code modifier
+    if (node.exitusModifier) {
+        const code = node.exitusModifier.code;
+        if (code.type === 'Literal') {
+            // Fixed exit code: just emit body and exit
+            if (node.ergoStatement) {
+                lines.push(g.genStatement(node.ergoStatement));
+            }
+            else if (node.body) {
+                lines.push(g.genBlockStatementContent(node.body));
+            }
+            lines.push(`${ind}process.exit(${code.value});`);
+        }
+        else {
+            // Mutable exit code variable
+            lines.push(`${ind}let ${code.name} = 0;`);
+            if (node.ergoStatement) {
+                lines.push(g.genStatement(node.ergoStatement));
+            }
+            else if (node.body) {
+                lines.push(g.genBlockStatementContent(node.body));
+            }
+            lines.push(`${ind}process.exit(${code.name});`);
+        }
+    }
+    else {
+        // No exit modifier - just emit body
+        if (node.ergoStatement) {
+            lines.push(g.genStatement(node.ergoStatement));
+        }
+        else if (node.body) {
+            lines.push(g.genBlockStatementContent(node.body));
+        }
+    }
+
+    return lines.join('\n');
+}
+
 export function genIncipitStatement(node: IncipitStatement, g: TsGenerator): string {
     // CLI mode: generate argument parser and dispatcher
     if (g.cli) {
+        // Single-command mode
+        if (g.cli.singleCommand) {
+            return genSingleCommandCli(g.cli, g.cli.singleCommand, node, g);
+        }
+        // Subcommand mode
         return genCliDispatcher(g.cli, g);
     }
 
