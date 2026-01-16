@@ -80,6 +80,32 @@ pactum solum {
     functio modificatum(textus path) -> numerus
 
     # =========================================================================
+    # FILE STATUS (stat)
+    # =========================================================================
+
+    # Full file status for ls -l, stat, etc.
+    genus Status {
+        modus: numerus        # permission bits (e.g., 0o755)
+        nexus: numerus        # hard link count
+        possessor: numerus    # owner uid
+        grex: numerus         # group gid
+        magnitudo: numerus    # size in bytes
+        modificatum: numerus  # mtime (ms since epoch)
+        estDirectorii: bivalens
+        estVinculum: bivalens # is symlink
+    }
+
+    # Get full file status (uses lstat - doesn't follow symlinks)
+    @ futura
+    @ externa
+    functio status(textus path) -> Status
+
+    # Read symlink target
+    @ futura
+    @ externa
+    functio legeVinculum(textus path) -> textus
+
+    # =========================================================================
     # FILE OPERATIONS
     # =========================================================================
 

@@ -103,6 +103,38 @@ export const solum = {
     },
 
     // =========================================================================
+    // FILE STATUS (stat)
+    // =========================================================================
+
+    async status(filePath: string): Promise<{
+        modus: number;
+        nexus: number;
+        possessor: number;
+        grex: number;
+        magnitudo: number;
+        modificatum: number;
+        estDirectorii: boolean;
+        estVinculum: boolean;
+    }> {
+        // Use lstat to not follow symlinks
+        const stats = await fs.lstat(filePath);
+        return {
+            modus: stats.mode & 0o7777, // permission bits only
+            nexus: stats.nlink,
+            possessor: stats.uid,
+            grex: stats.gid,
+            magnitudo: stats.size,
+            modificatum: stats.mtimeMs,
+            estDirectorii: stats.isDirectory(),
+            estVinculum: stats.isSymbolicLink(),
+        };
+    },
+
+    async legeVinculum(filePath: string): Promise<string> {
+        return fs.readlink(filePath);
+    },
+
+    // =========================================================================
     // FILE OPERATIONS
     // =========================================================================
 
