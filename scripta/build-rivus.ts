@@ -70,12 +70,12 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
 }
 
 async function typeCheck(): Promise<boolean> {
-    try {
-        await $`npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler ${join(OUTPUT, 'cli.ts')}`.quiet();
-        return true;
-    } catch {
+    const result = await $`npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler ${join(OUTPUT, 'cli.ts')}`.nothrow();
+    if (result.exitCode !== 0) {
+        console.error(result.stdout.toString());
         return false;
     }
+    return true;
 }
 
 async function injectExternImpls(): Promise<void> {

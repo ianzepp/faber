@@ -307,7 +307,7 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
                         casu _ { }
                     }
                 }
-                casu Expressia ut expr {
+                casu Expr ut expr {
                     redde scriptum("(§)", genExpressia(expr.valor, g))
                 }
             }
@@ -534,7 +534,7 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
                         casu _ { }
                     }
                 }
-                casu Expressia ut expr {
+                casu Expr ut expr {
                     redde scriptum("(§)§ => §", params.coniunge(", "), retType, genExpressia(expr.valor, g))
                 }
             }

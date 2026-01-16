@@ -71,7 +71,7 @@ functio resolveLambda(Resolvitor r, Expressia lambdaExpr) -> SemanticTypus {
                         casu _ { }
                     }
                 }
-                casu Expressia ut e {
+                casu Expr ut e {
                     reditusTypus = r.expressia(e.valor)
                 }
             }

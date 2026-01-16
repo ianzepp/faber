@@ -576,12 +576,12 @@ functio parseLambdaExpressia(Resolvitor r) -> Expressia {
     # Body: ':' expression or blockStmt
     varia corpus = nihil qua LambdaCorpus?
     si p.congruet(SymbolumGenus.Colon) {
-        corpus = finge Expressia { valor: r.expressia() } qua LambdaCorpus
+        corpus = finge Expr { valor: r.expressia() } qua LambdaCorpus
     } sin p.proba(SymbolumGenus.UncusSin) {
         corpus = finge Massa { valor: r.massa() } qua LambdaCorpus
     } secus {
         p.expecta(SymbolumGenus.Colon, ParserErrorCodice.ExpectaturColon)
-        corpus = finge Expressia { valor: r.expressia() } qua LambdaCorpus
+        corpus = finge Expr { valor: r.expressia() } qua LambdaCorpus
     }
 
     redde finge LambdaExpressia {
@@ -682,10 +682,10 @@ functio parsePraefixumExpressia(Resolvitor r) -> Expressia {
     } sin p.congruet(SymbolumGenus.ParensSin) {
         fixum expr = r.expressia()
         p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
-        corpus = finge Expressia { valor: expr } qua LambdaCorpus
+        corpus = finge Expr { valor: expr } qua LambdaCorpus
     } secus {
         p.renuncia(ParserErrorCodice.ExpectaturUncusVelParens, scriptum("got '§'", p.specta(0).valor))
-        corpus = finge Expressia {
+        corpus = finge Expr {
             valor: finge Littera {
                 locus: locus,
                 species: LitteraGenus.Nihil,
