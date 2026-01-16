@@ -42,6 +42,9 @@ incipiet argumenta args exitus code {
         paths = ["."]
     }
 
+    # Print directory header when listing multiple paths or recursive
+    varia showHeader = paths.longitudo > 1 aut args.R
+
     # Process each path
     ex paths pro path {
         tempta {
@@ -52,10 +55,21 @@ incipiet argumenta args exitus code {
                 perge
             }
 
+            # -d: list directory itself, not contents
+            si args.d {
+                cede fundeEntry(path, path, args)
+                perge
+            }
+
             # If it's a file, just print it
             si solum.estLimae(path) {
-                consolum.fundeLineam(path)
+                cede fundeEntry(path, path, args)
                 perge
+            }
+
+            # Show header for multiple directories
+            si showHeader {
+                consolum.fundeLineam(path + ":")
             }
 
             # List directory contents
@@ -70,12 +84,29 @@ incipiet argumenta args exitus code {
                 entries = entries.filtrata(pro textus e: e != "." et e != "..")
             }
 
-            # Sort alphabetically (default)
-            entries = entries.ordinata()
+            # Sort entries
+            entries = cede sortEntries(entries, path, args)
+
+            # Reverse if requested
+            si args.r {
+                entries = entries.inversa()
+            }
 
             # Print each entry
             ex entries pro entry {
-                consolum.fundeLineam(entry)
+                fixum fullPath = solum.iunge([path, entry])
+                cede fundeEntry(fullPath, entry, args)
+            }
+
+            # Recursive listing
+            si args.R {
+                ex entries pro entry {
+                    fixum fullPath = solum.iunge([path, entry])
+                    si solum.estDirectorii(fullPath) et entry != "." et entry != ".." {
+                        consolum.fundeLineam("")
+                        paths.adde(fullPath)
+                    }
+                }
             }
         }
         cape err {
@@ -83,4 +114,36 @@ incipiet argumenta args exitus code {
             code = 1
         }
     }
+}
+
+# Sort entries based on options
+@ futura
+functio sortEntries(lista<textus> entries, textus dir, Argumenta args) -> lista<textus> {
+    # Default: alphabetical sort
+    redde entries.ordinata()
+}
+
+# Format and print a single entry
+@ futura
+functio fundeEntry(textus fullPath, textus name, Argumenta args) -> vacuum {
+    varia output = ""
+
+    # -s: print size (in blocks, 1 block = 512 bytes for ls compat)
+    si args.s {
+        fixum size = cede solum.magnitudo(fullPath)
+        fixum blocks = ((size + 511) / 512) numeratum
+        output = output + blocks textatum + "\t"
+    }
+
+    varia displayName = name
+
+    # -F: classify with indicator
+    si args.F {
+        si solum.estDirectorii(fullPath) {
+            displayName = displayName + "/"
+        }
+        # TODO: detect executables (*), symlinks (@), etc.
+    }
+
+    consolum.fundeLineam(output + displayName)
 }
