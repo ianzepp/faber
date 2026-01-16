@@ -10,11 +10,10 @@
 
 - name: solve (serialize to JSON)
   source: |
-      ex "norma/json" importa * ut json
+      ex "norma/hal/json" importa json
       fixum text = json.solve(42)
   expect:
-      ts:
-          - 'const text = JSON.stringify(42);'
+      ts: 'const text = json.solve(42);'
       py:
           - 'import json'
           - 'text = json.dumps(42)'
@@ -26,16 +25,15 @@
       zig:
           - 'const text = std.json.stringifyAlloc(alloc, 42, .{});'
       fab:
-          - 'ex "norma/json" importa * ut json'
+          - 'ex "norma/hal/json" importa json'
           - 'fixum text = json.solve(42)'
 
 - name: solvePulchre (pretty print JSON)
   source: |
-      ex "norma/json" importa * ut json
+      ex "norma/hal/json" importa json
       fixum text = json.solvePulchre(42, 2)
   expect:
-      ts:
-          - 'const text = JSON.stringify(42, null, 2);'
+      ts: 'const text = json.solvePulchre(42, 2);'
       py:
           - 'import json'
           - 'text = json.dumps(42, indent=2)'
@@ -47,16 +45,15 @@
       zig:
           - 'const text = std.json.stringifyAlloc(alloc, 42, .{ .whitespace = .{ .indent_level = 2 } });'
       fab:
-          - 'ex "norma/json" importa * ut json'
+          - 'ex "norma/hal/json" importa json'
           - 'fixum text = json.solvePulchre(42, 2)'
 
 - name: pange (deserialize from JSON)
   source: |
-      ex "norma/json" importa * ut json
+      ex "norma/hal/json" importa json
       fixum obj = json.pange("{\"x\":1}")
   expect:
-      ts:
-          - 'const obj = JSON.parse("{\"x\":1}");'
+      ts: 'const obj = json.pange("{\"x\":1}");'
       py:
           - 'import json'
           - 'obj = json.loads("{\"x\":1}")'
@@ -68,5 +65,5 @@
       zig:
           - 'const obj = std.json.parseFromSlice(std.json.Value, std.heap.page_allocator, "{\"x\":1}", .{});'
       fab:
-          - 'ex "norma/json" importa * ut json'
+          - 'ex "norma/hal/json" importa json'
           - 'fixum obj = json.pange("{\"x\":1}")'

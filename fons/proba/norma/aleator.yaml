@@ -10,9 +10,10 @@
 
 - name: fractus (random float 0-1)
   source: |
-      fixum x = fractus()
+      ex "norma/hal/aleator" importa aleator
+      fixum x = aleator.fractus()
   expect:
-      ts: 'const x = Math.random();'
+      ts: 'const x = aleator.fractus();'
       py:
           - 'import random'
           - 'x = random.random()'
@@ -29,10 +30,10 @@
 
 - name: inter (random integer in range)
   source: |
-      fixum x = inter(1, 100)
+      ex "norma/hal/aleator" importa aleator
+      fixum x = aleator.inter(1, 100)
   expect:
-      ts:
-          - 'const x = Math.floor(Math.random() * (100 - 1 + 1)) + 1;'
+      ts: 'const x = aleator.inter(1, 100);'
       py:
           - 'import random'
           - 'x = random.randint(1, 100)'
@@ -47,9 +48,10 @@
 
 - name: octeti (random bytes)
   source: |
-      fixum bytes = octeti(16)
+      ex "norma/hal/aleator" importa aleator
+      fixum bytes = aleator.octeti(16)
   expect:
-      ts: 'const bytes = crypto.getRandomValues(new Uint8Array(16));'
+      ts: 'const bytes = aleator.octeti(16);'
       py:
           - 'import secrets'
           - 'bytes = secrets.token_bytes(16)'
@@ -66,9 +68,10 @@
 
 - name: uuid (UUID v4)
   source: |
-      fixum id = uuid()
+      ex "norma/hal/aleator" importa aleator
+      fixum id = aleator.uuid()
   expect:
-      ts: 'const id = crypto.randomUUID();'
+      ts: 'const id = aleator.uuid();'
       py:
           - 'import uuid'
           - 'id = str(uuid.uuid4())'
@@ -88,12 +91,13 @@
 
 - name: selige (random pick from list)
   source: |
+      ex "norma/hal/aleator" importa aleator
       fixum items = [1, 2, 3, 4, 5]
-      fixum item = selige(items)
+      fixum item = aleator.selige(items)
   expect:
       ts:
           - 'const items = [1, 2, 3, 4, 5];'
-          - 'const item = items[Math.floor(Math.random() * items.length)];'
+          - 'const item = aleator.selige(items);'
       py:
           - 'import random'
           - 'items = [1, 2, 3, 4, 5]'
@@ -109,17 +113,16 @@
           - 'uintLessThan(usize, items.len)'
 
 - name: miscita (shuffle list)
+  faber: false  # Requires type inference for stdlib method resolution
   source: |
+      ex "norma/hal/aleator" importa aleator
       fixum items = [1, 2, 3, 4, 5]
-      fixum shuffled = miscita(items)
+      fixum shuffled = aleator.miscita(items)
   expect:
       ts:
           contains:
               - 'const items = [1, 2, 3, 4, 5];'
-              - 'const shuffled'
-              - 'const a = [...items]'
-              - 'Math.random()'
-              - 'return a'
+              - 'const shuffled = aleator.miscita(items);'
       py:
           - 'import random'
           - 'items = [1, 2, 3, 4, 5]'
@@ -142,10 +145,10 @@
 
 - name: semen (seed RNG)
   source: |
-      semen(42)
+      ex "norma/hal/aleator" importa aleator
+      aleator.semen(42)
   expect:
-      ts:
-          - 'undefined /* JS Math.random is not seedable */'
+      ts: 'aleator.semen(42);'
       py:
           - 'import random'
           - 'random.seed(42)'
@@ -165,13 +168,14 @@
 
 - name: random dice roll
   source: |
-      fixum die1 = inter(1, 6)
-      fixum die2 = inter(1, 6)
+      ex "norma/hal/aleator" importa aleator
+      fixum die1 = aleator.inter(1, 6)
+      fixum die2 = aleator.inter(1, 6)
       fixum total = die1 + die2
   expect:
       ts:
-          - 'const die1 = Math.floor(Math.random() * (6 - 1 + 1)) + 1;'
-          - 'const die2 = Math.floor(Math.random() * (6 - 1 + 1)) + 1;'
+          - 'const die1 = aleator.inter(1, 6);'
+          - 'const die2 = aleator.inter(1, 6);'
           - 'const total = (die1 + die2);'
       py:
           - 'import random'

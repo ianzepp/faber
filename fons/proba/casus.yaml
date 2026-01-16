@@ -7,7 +7,7 @@
 
 # Standard lowercase keywords work
 - name: 'lowercase si keyword'
-  source: 'si verum { scribe("yes") }'
+  source: 'si verum { scribe "yes" }'
   ts:
       - 'if (true)'
       - 'console.log("yes")'
@@ -74,7 +74,7 @@
 - name: 'lowercase de-pro keywords'
   source: |
       de items pro item {
-        scribe(item)
+        scribe item
       }
   skip: [rs]
   ts:

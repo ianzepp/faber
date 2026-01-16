@@ -10,9 +10,10 @@
 
 - name: nunc (milliseconds)
   source: |
-      fixum t = nunc()
+      ex "norma/hal/tempus" importa tempus
+      fixum t = tempus.nunc()
   expect:
-      ts: 'const t = Date.now();'
+      ts: 'const t = tempus.nunc();'
       py:
           - 'import time'
           - 't = int(time.time() * 1000)'
@@ -26,9 +27,10 @@
 
 - name: nunc_nano (nanoseconds)
   source: |
-      fixum t = nunc_nano()
+      ex "norma/hal/tempus" importa tempus
+      fixum t = tempus.nuncNano()
   expect:
-      ts: 'const t = BigInt(Date.now()) * 1000000n;'
+      ts: 'const t = tempus.nuncNano();'
       py:
           - 'import time'
           - 't = time.time_ns()'
@@ -42,9 +44,10 @@
 
 - name: nunc_secunda (seconds)
   source: |
-      fixum t = nunc_secunda()
+      ex "norma/hal/tempus" importa tempus
+      fixum t = tempus.nuncSecunda()
   expect:
-      ts: 'const t = Math.floor(Date.now() / 1000);'
+      ts: 'const t = tempus.nuncSecunda();'
       py:
           - 'import time'
           - 't = int(time.time())'
@@ -58,9 +61,10 @@
 
 - name: dormi (sleep)
   source: |
-      dormi(100)
+      ex "norma/hal/tempus" importa tempus
+      tempus.dormi(100)
   expect:
-      ts: 'new Promise(r => setTimeout(r, 100));'
+      ts: 'tempus.dormi(100);'
       py:
           - 'import time'
           - 'time.sleep(100 / 1000)'
@@ -148,9 +152,10 @@
 
 - name: sleep for one second
   source: |
-      dormi(SECUNDUM)
+      ex "norma/hal/tempus" importa tempus
+      tempus.dormi(tempus.SECUNDUM())
   expect:
-      ts: 'new Promise(r => setTimeout(r, 1000));'
+      ts: 'tempus.dormi(tempus.SECUNDUM());'
       py:
           - 'import time'
           - 'time.sleep(1000 / 1000)'
