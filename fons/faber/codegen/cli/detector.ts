@@ -146,7 +146,8 @@ function insertCommand(
     functionName: string,
     params: CliParam[],
     alias?: string,
-    modulePrefix?: string
+    modulePrefix?: string,
+    description?: string
 ): boolean {
     let current = root;
 
@@ -178,6 +179,7 @@ function insertCommand(
     leaf.params = params;
     leaf.alias = alias;
     leaf.modulePrefix = modulePrefix;
+    leaf.description = description;
     return true;
 }
 
@@ -220,17 +222,29 @@ function extractCommands(
         if (!imperiumAnn) continue;
 
         const aliasAnn = findAnnotation(fn.annotations, 'alias');
+        const descriptioAnn = findAnnotation(fn.annotations, 'descriptio');
         const commandPath = getAnnotationString(imperiumAnn) ?? fn.name;
         const pathParts = [...pathPrefix, ...commandPath.split('/')];
         const fullPath = pathParts.join('/');
 
-        const params: CliParam[] = fn.params.map(p => ({
-            name: p.name,
-            type: p.type,
-            optional: p.optional,
-            shortFlag: p.shortFlag,
-            defaultValue: p.defaultValue,
-        }));
+        // Extract @ optio annotations for this function
+        const optioAnns = findAnnotations(fn.annotations, 'optio');
+        const optioByName = new Map<string, CliOption>();
+        for (const ann of optioAnns) {
+            const opt = extractCliOption(ann);
+            if (opt) optioByName.set(opt.internal, opt);
+        }
+
+        const params: CliParam[] = fn.params.map(p => {
+            const optio = optioByName.get(p.name);
+            return {
+                name: p.name,
+                type: p.type,
+                optional: p.optional,
+                shortFlag: optio?.short ?? p.shortFlag,
+                defaultValue: p.defaultValue,
+            };
+        });
 
         const success = insertCommand(
             root,
@@ -239,7 +253,8 @@ function extractCommands(
             fn.name,
             params,
             aliasAnn ? getAnnotationString(aliasAnn) : undefined,
-            modulePrefix
+            modulePrefix,
+            descriptioAnn ? getAnnotationString(descriptioAnn) : undefined
         );
 
         if (!success) {

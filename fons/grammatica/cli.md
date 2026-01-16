@@ -242,6 +242,47 @@ functio version() -> vacuum {
 
 Usage: `myapp version` or `myapp v`
 
+### Command Descriptions: @ descriptio
+
+Add help text for commands with `@ descriptio`:
+
+```fab
+@ imperium "build"
+@ descriptio "Build the project"
+functio build(textus target) -> vacuum { }
+```
+
+The description appears in help output:
+```
+Commands:
+  build     Build the project
+```
+
+### Options on Commands: @ optio
+
+Use `@ optio` annotations on `@ imperium` functions for richer CLI metadata (short flags, long flags, descriptions). This is an alternative to the `si ... ut` parameter syntax:
+
+```fab
+@ imperium "compile"
+@ descriptio "Compile source to target language"
+@ optio textus output brevis "o" longum "output" descriptio "Output file"
+@ optio textus target brevis "t" longum "target" descriptio "Target language"
+functio compile(textus inputFile, si textus output, si textus target) -> vacuum { }
+```
+
+The `@ optio` annotations provide:
+- Short flag via `brevis "o"` → `-o`
+- Long flag via `longum "output"` → `--output`
+- Help text via `descriptio "..."`
+
+The function signature still declares the parameters with `si` for optionality, but the CLI metadata comes from the annotations. This separates the type system concern (optional vs required) from the CLI concern (flag names, help text).
+
+Usage:
+```
+myapp compile file.fab -o out.ts -t ts
+myapp compile file.fab --output out.ts --target ts
+```
+
 ### Nested Commands: Path Syntax
 
 Use `/` in the command name for nested subcommands:

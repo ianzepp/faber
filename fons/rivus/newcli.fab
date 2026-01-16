@@ -1,0 +1,108 @@
+# rivus - Multi-target Faber compiler
+#
+# Usage: rivus <command> [options] <file>
+
+ex "./lexor/index" importa lexare
+ex "./parser/index" importa resolvere
+ex "./semantic/index" importa analyze
+ex "./codegen/index" importa generate
+
+# Norma library imports
+ex "../norma/hal/solum" importa solum
+ex "../norma/hal/consolum" importa consolum
+
+@ cli "rivus"
+@ versio "0.1.0"
+@ descriptio "Multi-target Faber compiler"
+incipit {}
+
+# -----------------------------------------------------------------------------
+# emit - Compile source to target language
+# -----------------------------------------------------------------------------
+
+@ imperium "emit"
+@ alias "compile"
+@ descriptio "Compile .fab source to target language"
+@ operandus textus inputFile descriptio "Source file to compile"
+@ optio textus output brevis "o" longum "output" descriptio "Output file (default: stdout)"
+@ optio textus target brevis "t" longum "target" descriptio "Target language (ts, go)"
+@ futura
+functio emit(textus inputFile, si textus output, si textus target) errata err -> vacuum {
+    fixum effectiveTarget = target vel "ts"
+    fixum source = cede solum.lege(inputFile)
+
+    # Lexical analysis
+    fixum lexResult = lexare(source)
+    si lexResult.errores.longitudo() > 0 {
+        consolum.errorLineam("Lexor errors:")
+        ex lexResult.errores pro err {
+            consolum.errorLineam(scriptum("  §:§ - §", err.locus.linea, err.locus.columna, err.textus))
+        }
+        iace "Compilation failed"
+    }
+
+    # Parsing
+    fixum parseResult = resolvere(lexResult.symbola)
+    si parseResult.errores.longitudo() > 0 {
+        consolum.errorLineam("Parser errors:")
+        ex parseResult.errores pro err {
+            consolum.errorLineam(scriptum("  §:§ - §", err.locus.linea, err.locus.columna, err.nuntius))
+        }
+        iace "Compilation failed"
+    }
+
+    si parseResult.programma est nihil {
+        consolum.errorLineam("Failed to parse program")
+        iace "Compilation failed"
+    }
+
+    # Semantic analysis
+    fixum semResult = analyze(parseResult.programma, inputFile)
+    si semResult.errores.longitudo() > 0 {
+        consolum.errorLineam("Semantic errors:")
+        ex semResult.errores pro err {
+            consolum.errorLineam(scriptum("  §:§ - §", err.locus.linea, err.locus.columna, err.nuntius))
+        }
+        iace "Compilation failed"
+    }
+
+    # Code generation
+    fixum code = generate(parseResult.programma.corpus, effectiveTarget)
+
+    si nulla output {
+        scribe code
+    }
+    secus {
+        cede solum.scribe(output, code)
+        consolum.fundeLineam(scriptum("Compiled: § -> §", inputFile, output))
+    }
+}
+
+# -----------------------------------------------------------------------------
+# check - Validate without generating code
+# -----------------------------------------------------------------------------
+
+@ imperium "check"
+@ descriptio "Check for errors without generating code"
+@ operandus textus inputFile descriptio "Source file to check"
+@ futura
+functio check(textus inputFile) errata err -> vacuum {
+    fixum source = cede solum.lege(inputFile)
+
+    fixum lexResult = lexare(source)
+    fixum parseResult = resolvere(lexResult.symbola)
+
+    varia errorCount = lexResult.errores.longitudo() + parseResult.errores.longitudo()
+
+    si parseResult.programma non est nihil {
+        fixum semResult = analyze(parseResult.programma, inputFile)
+        errorCount = errorCount + semResult.errores.longitudo()
+    }
+
+    si errorCount > 0 {
+        consolum.fundeLineam(scriptum("§: § error(s)", inputFile, errorCount))
+        iace "Check failed"
+    }
+
+    consolum.fundeLineam(scriptum("§: No errors", inputFile))
+}
