@@ -1,0 +1,24 @@
+# wc - print newline, word, and byte counts
+#
+# Usage: wc [-lwc] [FILE]...
+# Exit status: 0 on success, 1 on error
+
+@ cli "wc"
+@ versio "0.1.0"
+@ descriptio "Print newline, word, and byte counts for each file"
+@ optio bivalens "lines" ut l brevis "l" descriptio "Print the newline counts"
+@ optio bivalens "words" ut w brevis "w" descriptio "Print the word counts"
+@ optio bivalens "bytes" ut c brevis "c" descriptio "Print the byte counts"
+@ operandus ceteri textus "files"
+
+incipit optio opts exitus code {
+    # If no flags specified, show all counts
+    fixum showAll = non opts.l et non opts.w et non opts.c
+    fixum showLines = opts.l aut showAll
+    fixum showWords = opts.w aut showAll
+    fixum showBytes = opts.c aut showAll
+
+    ex opts.files pro file {
+        scribe scriptum("Processing: §", file)
+    }
+}
