@@ -354,6 +354,16 @@ async function build(inputFile: string, outputDir: string): Promise<void> {
 
     // Compile and write each dependency
     for (const [depPath, depProgram] of resolvedModules) {
+        // WHY: Dependency codegen requires semantic types (e.g., ego.field -> lista)
+        const depAnalysis = analyze(depProgram, { filePath: depPath });
+        if (depAnalysis.errors.length > 0) {
+            console.error('Semantic errors:');
+            for (const err of depAnalysis.errors) {
+                console.error(`  ${depPath}:${err.position.line}:${err.position.column} - ${err.message}`);
+            }
+            process.exit(1);
+        }
+
         // Calculate relative path from entry's directory
         const relPath = relative(baseDir, depPath);
         const outPath = join(outputDir, relPath.replace(/\.fab$/, '.ts'));
@@ -362,7 +372,11 @@ async function build(inputFile: string, outputDir: string): Promise<void> {
         await mkdir(dirname(outPath), { recursive: true });
 
         // Generate code for dependency
-        const depOutput = generate(depProgram, { filePath: depPath, subsidiaImports, keepRelativeImports: true });
+        const depOutput = generate(depProgram, {
+            filePath: depPath,
+            subsidiaImports: depAnalysis.subsidiaImports,
+            keepRelativeImports: true,
+        });
         await Bun.write(outPath, depOutput);
         console.log(`  ${relPath} -> ${outPath}`);
     }
