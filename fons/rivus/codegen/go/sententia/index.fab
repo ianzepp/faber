@@ -97,7 +97,7 @@ functio genSententia(Sententia stmt, GoGenerator g) -> textus {
         casu CuraSententia ut s {
             # For Go, cura...fit blocks become just the body statements
             # Resource cleanup is handled by Go's GC or defer patterns
-            redde genSententia(s.corpus qua Sententia, g)
+            redde genSententia(s.corpus, g)
         }
 
         # Control flow
@@ -106,15 +106,15 @@ functio genSententia(Sententia stmt, GoGenerator g) -> textus {
         }
 
         casu DumSententia ut s {
-            redde genDum(s.condicio qua Expressia, s.corpus qua Sententia, g)
+            redde genDum(s.condicio qua Expressia, s.corpus, g)
         }
 
         casu IteratioSententia ut s {
-            redde genIteratio(s.species qua IteratioGenus, s.variabilis qua textus, s.iterabile qua Expressia, s.corpus qua Sententia, g)
+            redde genIteratio(s.species qua IteratioGenus, s.variabilis qua textus, s.iterabile qua Expressia, s.corpus, g)
         }
 
         casu FacSententia ut s {
-            redde genFac(s.corpus qua Sententia, s.condicio, g)
+            redde genFac(s.corpus, s.condicio, g)
         }
 
         casu EligeSententia ut s {

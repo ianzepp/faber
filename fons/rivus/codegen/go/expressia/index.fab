@@ -2,7 +2,7 @@
 #
 # Routes expression AST nodes to their specific generators.
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum
+ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum, LambdaCorpus
 ex "../../../ast/sententia" importa Sententia, VariaGenus
 ex "../../../ast/typus" importa TypusAnnotatio
 ex "../nucleus" importa GoGenerator
@@ -178,21 +178,27 @@ functio genExpressia(Expressia expr, GoGenerator g) -> textus {
                 }
             }
 
-            fixum massa = e.corpus qua Sententia
-            discerne massa {
-                casu MassaSententia ut m {
-                    g.intraProfundum()
-                    fixum body = genLambdaMassa(m.corpus, g)
-                    g.exiProfundum()
-                    si body == "" {
-                        redde scriptum("func(§) interface{} { }", params.coniunge(", "))
+            discerne e.corpus {
+                casu Massa ut m {
+                    discerne m.valor {
+                        casu MassaSententia ut body {
+                            g.intraProfundum()
+                            fixum rendered = genLambdaMassa(body.corpus, g)
+                            g.exiProfundum()
+                            si rendered == "" {
+                                redde scriptum("func(§) interface{} { }", params.coniunge(", "))
+                            }
+                            redde scriptum("func(§) interface{} {\n§\n§}", params.coniunge(", "), rendered, g.ind())
+                        }
+                        casu _ { }
                     }
-                    redde scriptum("func(§) interface{} {\n§\n§}", params.coniunge(", "), body, g.ind())
                 }
-                casu _ { }
+                casu Expressia ut expr {
+                    redde scriptum("func(§) interface{} { return § }", params.coniunge(", "), genExpressia(expr.valor, g))
+                }
             }
 
-            redde scriptum("func(§) interface{} { return § }", params.coniunge(", "), genExpressia(e.corpus qua Expressia, g))
+            redde scriptum("func(§) interface{} { return § }", params.coniunge(", "), genExpressia(finge Littera { locus: e.locus, species: LitteraGenus.Nihil, crudus: "nihil" } qua Expressia, g))
         }
 
         # New instance creation

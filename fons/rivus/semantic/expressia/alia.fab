@@ -8,7 +8,7 @@ ex "../typi" importa functioTypus, usitatumTypus, genericumTypus
 ex "../scopus" importa ScopusSpecies, SymbolumSpecies
 ex "../errores" importa cedeOutsideAsyncError
 ex "../sententia/declara" importa resolveTypusAnnotatio
-ex "../../ast/expressia" importa Expressia
+ex "../../ast/expressia" importa Expressia, LambdaCorpus
 ex "../../ast/sententia" importa Sententia
 ex "../../ast/typus" importa TypusAnnotatio
 
@@ -47,31 +47,33 @@ functio resolveLambda(Resolvitor r, Expressia lambdaExpr) -> SemanticTypus {
 
             # Resolve body (expression or block)
             varia reditusTypus = VACUUM
-            fixum massa = l.corpus qua Sententia
-            varia estMassa = falsum
-            discerne massa {
-                casu MassaSententia ut m {
-                    estMassa = verum
-                    r.sententia(massa)
-                    si m.corpus.longitudo() > 0 {
-                        fixum ult = m.corpus[m.corpus.longitudo() - 1]
-                        discerne ult {
-                            casu ReddeSententia ut s {
-                                si nonnihil s.valor {
-                                    reditusTypus = r.expressia(s.valor qua Expressia)
+            discerne l.corpus {
+                casu Massa ut m {
+                    r.sententia(m.valor)
+                    discerne m.valor {
+                        casu MassaSententia ut body {
+                            fixum corpusLista = body.corpus qua lista<Sententia>
+                            si corpusLista.longitudo() > 0 {
+                                fixum ult = corpusLista[corpusLista.longitudo() - 1]
+                                discerne ult {
+                                    casu ReddeSententia ut s {
+                                        si nonnihil s.valor {
+                                            reditusTypus = r.expressia(s.valor qua Expressia)
+                                        }
+                                    }
+                                    casu ExpressiaSententia ut s {
+                                        reditusTypus = r.expressia(s.expressia)
+                                    }
+                                    casu _ { }
                                 }
                             }
-                            casu ExpressiaSententia ut s {
-                                reditusTypus = r.expressia(s.expressia)
-                            }
-                            casu _ { }
                         }
+                        casu _ { }
                     }
                 }
-                casu _ { }
-            }
-            si non estMassa {
-                reditusTypus = r.expressia(l.corpus qua Expressia)
+                casu Expressia ut e {
+                    reditusTypus = r.expressia(e.valor)
+                }
             }
 
             # Exit function scope

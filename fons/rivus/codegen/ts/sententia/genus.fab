@@ -23,7 +23,7 @@ ex "./index" importa genSententia
 ex "../typus" importa genTypus
 
 @ publica
-functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotum implet, bivalens abstractum, lista<CampusDeclaratio> campi, ignotum structor, lista<Sententia> methodi, ignotum visibilitas, TsGenerator g) -> textus {
+functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotum implet, bivalens abstractum, lista<CampusDeclaratio> campi, ignotum structor, lista<FunctioDeclaratio> methodi, ignotum visibilitas, TsGenerator g) -> textus {
     varia result = g.ind()
 
     # Determine class visibility for field inheritance
@@ -77,20 +77,12 @@ functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotu
     }
 
     # Split creo method from other methods
-    varia creo = nihil qua Sententia?
-    varia ceteri = [] innatum lista<Sententia>
+    varia creo = nihil qua FunctioDeclaratio?
+    varia ceteri = [] innatum lista<FunctioDeclaratio>
     ex methodi pro m {
-        varia estCreo = falsum
-        discerne m {
-            casu FunctioDeclaratio ut f {
-                si f.structor {
-                    creo = f qua Sententia
-                    estCreo = verum
-                }
-            }
-            ceterum { }
-        }
-        si non estCreo {
+        si m.structor {
+            creo = m
+        } secus {
             ceteri.adde(m)
         }
     }
@@ -152,7 +144,7 @@ functio genCreoMethod(Sententia creo, TsGenerator g) -> textus {
             varia body = "{}"
             si nonnihil f.corpus {
                 g.intraProfundum()
-                fixum content = genSententia(f.corpus qua Sententia, g)
+                fixum content = genSententia(f.corpus, g)
                 g.exiProfundum()
                 body = scriptum("{\n§\n§}", content, g.ind())
             }

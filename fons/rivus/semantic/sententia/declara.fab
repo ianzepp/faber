@@ -266,8 +266,9 @@ functio analyzeFunctioDeclaratio(Resolvitor r, Sententia functioStmt) -> vacuum 
                     i += 1
                 }
 
-                # Analyze body
-                r.sententia(f.corpus qua Sententia)
+            # Analyze body
+            r.sententia(f.corpus)
+
 
                 # Exit scope and restore context
                 a.exiScopum()
@@ -308,36 +309,31 @@ functio analyzeGenusDeclaratio(Resolvitor r, Sententia genusStmt) -> vacuum {
             varia methodi = {} innatum tabula<textus, SemanticTypus>
             varia methodiStatici = {} innatum tabula<textus, SemanticTypus>
 
-            ex g.methodi pro methodusStmt {
-                discerne methodusStmt {
-                    casu FunctioDeclaratio ut m {
-                        validateFunctioModificatores(r, m.modificatores, verum)
+            ex g.methodi pro m {
+                validateFunctioModificatores(r, m.modificatores, verum)
 
-                        # Build parameter types
-                        varia paramTypi = [] innatum lista<SemanticTypus>
-                        ex m.parametra pro param {
-                            si nonnihil param.typus {
-                                paramTypi.adde(resolveTypusAnnotatio(r, param.typus qua TypusAnnotatio))
-                            } secus {
-                                paramTypi.adde(IGNOTUM)
-                            }
-                        }
-
-                        # Resolve return type
-                        varia reditusTypus = VACUUM qua SemanticTypus
-                        si nonnihil m.typusReditus {
-                            reditusTypus = resolveTypusAnnotatio(r, m.typusReditus qua TypusAnnotatio)
-                        }
-
-                        # Build function type
-                        fixum fnTypus = functioTypus(paramTypi, reditusTypus, m.asynca, falsum)
-
-                        # WHY: FunctioDeclaratio doesn't have staticum field (AST limitation).
-                        # All methods are treated as instance methods for now.
-                        methodi[m.nomen] = fnTypus
+                # Build parameter types
+                varia paramTypi = [] innatum lista<SemanticTypus>
+                ex m.parametra pro param {
+                    si nonnihil param.typus {
+                        paramTypi.adde(resolveTypusAnnotatio(r, param.typus qua TypusAnnotatio))
+                    } secus {
+                        paramTypi.adde(IGNOTUM)
                     }
-                    casu _ { }
                 }
+
+                # Resolve return type
+                varia reditusTypus = VACUUM qua SemanticTypus
+                si nonnihil m.typusReditus {
+                    reditusTypus = resolveTypusAnnotatio(r, m.typusReditus qua TypusAnnotatio)
+                }
+
+                # Build function type
+                fixum fnTypus = functioTypus(paramTypi, reditusTypus, m.asynca, falsum)
+
+                # WHY: FunctioDeclaratio doesn't have staticum field (AST limitation).
+                # All methods are treated as instance methods for now.
+                methodi[m.nomen] = fnTypus
             }
 
             # Create genus type with populated maps
@@ -357,61 +353,57 @@ functio analyzeGenusDeclaratio(Resolvitor r, Sententia genusStmt) -> vacuum {
             fixum prevGenusNomen = a.currentGenusNomen
             a.currentGenusNomen = g.nomen
 
-            ex g.methodi pro methodusStmt {
-                discerne methodusStmt {
-                    casu FunctioDeclaratio ut m {
-                        # Analyze method body with genus context
-                        si nonnihil m.corpus {
-                            # Get method signature from our built maps
-                            varia methodTypus = IGNOTUM
-                            si nonnihil methodi[m.nomen] {
-                                methodTypus = methodi[m.nomen]
-                            }
+            ex g.methodi pro m {
+                # Analyze method body with genus context
+                si nonnihil m.corpus {
+                    # Get method signature from our built maps
+                    varia methodTypus = IGNOTUM
+                    si nonnihil methodi[m.nomen] {
+                        methodTypus = methodi[m.nomen]
+                    }
 
-                            # Extract function details for context
-                            varia reditusTypus = VACUUM qua SemanticTypus
-                            discerne methodTypus {
-                                casu Functio ut fn {
-                                    reditusTypus = fn.reditusTypus
-                                }
-                                casu _ { }
-                            }
+                    # Extract function details for context
+                    varia reditusTypus = VACUUM qua SemanticTypus
+                    discerne methodTypus {
+                        casu Functio ut fn {
+                            reditusTypus = fn.reditusTypus
+                        }
+                        casu _ { }
+                    }
 
-                            # Save function context
-                            fixum prevReditus = a.currentFunctioReditus
-                            fixum prevAsync = a.currentFunctioAsync
-                            fixum prevGenerator = a.currentFunctioGenerator
+                    # Save function context
+                    fixum prevReditus = a.currentFunctioReditus
+                    fixum prevAsync = a.currentFunctioAsync
+                    fixum prevGenerator = a.currentFunctioGenerator
 
-                            a.currentFunctioReditus = reditusTypus
-                            a.currentFunctioAsync = m.asynca
-                            a.currentFunctioGenerator = m.generator
+                    a.currentFunctioReditus = reditusTypus
+                    a.currentFunctioAsync = m.asynca
+                    a.currentFunctioGenerator = m.generator
 
-                            # Enter method scope
-                            a.intraScopum(ScopusSpecies.Functio)
+                    # Enter method scope
+                    a.intraScopum(ScopusSpecies.Functio)
 
-                            # Define method parameters with default types for now
-                            # TODO: Extract parameter types from function type
-                            ex m.parametra pro param {
-                                a.scopus.symbola[param.nomen] = {
-                                    nomen: param.nomen,
-                                    semanticTypus: IGNOTUM,  # TODO: Extract from methodTypus
-                                    species: SymbolumSpecies.Parametrum,
-                                    mutabilis: falsum,
-                                    locus: param.locus
-                                }
-                            }
-
-                            # Analyze method body
-                            r.sententia(m.corpus qua Sententia)
-
-                            # Exit scope and restore context
-                            a.exiScopum()
-                            a.currentFunctioReditus = prevReditus
-                            a.currentFunctioAsync = prevAsync
-                            a.currentFunctioGenerator = prevGenerator
+                    # Define method parameters with default types for now
+                    # TODO: Extract parameter types from function type
+                    ex m.parametra pro param {
+                        a.scopus.symbola[param.nomen] = {
+                            nomen: param.nomen,
+                            semanticTypus: IGNOTUM,  # TODO: Extract from methodTypus
+                            species: SymbolumSpecies.Parametrum,
+                            mutabilis: falsum,
+                            locus: param.locus
                         }
                     }
-                    casu _ { }
+
+                            # Analyze method body
+                            r.sententia(m.corpus)
+
+
+                    # Exit scope and restore context
+                    a.exiScopum()
+                    a.currentFunctioReditus = prevReditus
+                    a.currentFunctioAsync = prevAsync
+                    a.currentFunctioGenerator = prevGenerator
                 }
             }
 

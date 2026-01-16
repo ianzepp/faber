@@ -30,7 +30,7 @@
 
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
-ex "../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum
+ex "../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum, LambdaCorpus
 ex "../../ast/expressia" importa AbFiltrum, CatenaGradus
 ex "../../ast/typus" importa TypusAnnotatio
 ex "../../ast/lexema" importa SymbolumGenus
@@ -574,14 +574,14 @@ functio parseLambdaExpressia(Resolvitor r) -> Expressia {
     }
 
     # Body: ':' expression or blockStmt
-    varia corpus = nihil qua ignotum?
+    varia corpus = nihil qua LambdaCorpus?
     si p.congruet(SymbolumGenus.Colon) {
-        corpus = r.expressia()
+        corpus = finge Expressia { valor: r.expressia() } qua LambdaCorpus
     } sin p.proba(SymbolumGenus.UncusSin) {
-        corpus = r.massa()
+        corpus = finge Massa { valor: r.massa() } qua LambdaCorpus
     } secus {
         p.expecta(SymbolumGenus.Colon, ParserErrorCodice.ExpectaturColon)
-        corpus = r.expressia()
+        corpus = finge Expressia { valor: r.expressia() } qua LambdaCorpus
     }
 
     redde finge LambdaExpressia {
@@ -673,23 +673,25 @@ functio parsePraefixumExpressia(Resolvitor r) -> Expressia {
 
     p.expectaVerbum("praefixum", ParserErrorCodice.ExpectaturExpressia)
 
-    varia corpus = nihil qua ignotum?
+    varia corpus = nihil qua LambdaCorpus?
 
     si p.proba(SymbolumGenus.UncusSin) {
         # WHY: Block form is allowed in grammar, but AST expects an expression.
         fixum massa = r.massa()
-        corpus = massa
+        corpus = finge Massa { valor: massa } qua LambdaCorpus
     } sin p.congruet(SymbolumGenus.ParensSin) {
         fixum expr = r.expressia()
         p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
-        corpus = expr
+        corpus = finge Expressia { valor: expr } qua LambdaCorpus
     } secus {
         p.renuncia(ParserErrorCodice.ExpectaturUncusVelParens, scriptum("got '§'", p.specta(0).valor))
-        corpus = finge Littera {
-            locus: locus,
-            species: LitteraGenus.Nihil,
-            crudus: "nihil"
-        } qua Expressia
+        corpus = finge Expressia {
+            valor: finge Littera {
+                locus: locus,
+                species: LitteraGenus.Nihil,
+                crudus: "nihil"
+            } qua Expressia
+        } qua LambdaCorpus
     }
 
     redde finge PraefixumExpressia {
