@@ -37,8 +37,9 @@
  * @module cli
  */
 
-import { resolve, dirname, join, relative, basename } from 'node:path';
+import { resolve, dirname, join, relative } from 'node:path';
 import { mkdir } from 'node:fs/promises';
+import { realpathSync } from 'node:fs';
 import type { Program } from './parser/ast';
 import { tokenize } from './tokenizer';
 import { parse } from './parser';
@@ -303,8 +304,8 @@ async function run(inputFile: string): Promise<void> {
  * @param outputDir - Directory to write compiled files
  */
 async function build(inputFile: string, outputDir: string): Promise<void> {
-    const entryPath = resolve(inputFile);
-    const baseDir = dirname(entryPath);
+    const entryPath = realpathSync(resolve(inputFile));
+    const projectRoot = process.cwd();
 
     // Compile entry file and collect all resolved modules
     const source = await readSource(inputFile);
@@ -348,7 +349,9 @@ async function build(inputFile: string, outputDir: string): Promise<void> {
     // Compile and write entry file
     // WHY: keepRelativeImports=true because output directory structure mirrors source
     const entryOutput = generate(program, { filePath: entryPath, subsidiaImports, keepRelativeImports: true });
-    const entryOutPath = join(outputDir, basename(entryPath).replace(/\.fab$/, '.ts'));
+    const entryRelPath = relative(projectRoot, entryPath);
+    const entryOutPath = join(outputDir, entryRelPath.replace(/\.fab$/, '.ts'));
+    await mkdir(dirname(entryOutPath), { recursive: true });
     await Bun.write(entryOutPath, entryOutput);
     console.log(`  ${displayName} -> ${entryOutPath}`);
 
@@ -364,8 +367,9 @@ async function build(inputFile: string, outputDir: string): Promise<void> {
             process.exit(1);
         }
 
-        // Calculate relative path from entry's directory
-        const relPath = relative(baseDir, depPath);
+        // Calculate relative path from project root (canonicalize to resolve symlinks)
+        const canonicalDepPath = realpathSync(depPath);
+        const relPath = relative(projectRoot, canonicalDepPath);
         const outPath = join(outputDir, relPath.replace(/\.fab$/, '.ts'));
 
         // Ensure subdirectory exists
