@@ -107,7 +107,9 @@ export interface CliParam {
     type: string;
     optional: boolean;
     shortFlag?: string;
+    longFlag?: string;
     defaultValue?: string;
+    description?: string;
 }
 
 /** CLI option from @ optio annotation */

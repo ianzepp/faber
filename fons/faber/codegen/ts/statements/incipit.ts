@@ -91,19 +91,121 @@ function genNodeHelp(
 }
 
 /**
+ * Generate help text for a leaf command (shows its options).
+ */
+function genLeafCommandHelp(
+    cli: CliProgram,
+    node: CliCommandNode,
+    commandPath: string,
+    ind: string
+): string {
+    const lines: string[] = [];
+    const params = node.params ?? [];
+    const fullCommand = `${cli.name} ${commandPath}`;
+
+    const positionalParams = params.filter(p => !p.optional);
+    const optionalParams = params.filter(p => p.optional);
+
+    // Command description
+    if (node.description) {
+        lines.push(`${ind}console.log("${node.description}");`);
+        lines.push(`${ind}console.log("");`);
+    }
+
+    // Usage line
+    let usage = `Usage: ${fullCommand}`;
+    if (optionalParams.length > 0) {
+        usage += ' [options]';
+    }
+    for (const p of positionalParams) {
+        usage += ` <${p.name}>`;
+    }
+    lines.push(`${ind}console.log("${usage}");`);
+    lines.push(`${ind}console.log("");`);
+
+    // Arguments section (positional params)
+    if (positionalParams.length > 0) {
+        lines.push(`${ind}console.log("Arguments:");`);
+
+        const argWidths = positionalParams.map(p => p.name.length);
+        const maxArgWidth = Math.max(12, ...argWidths);
+
+        for (const p of positionalParams) {
+            const padding = ' '.repeat(maxArgWidth - p.name.length + 2);
+            if (p.description) {
+                lines.push(`${ind}console.log("  ${p.name}${padding}${p.description}");`);
+            }
+            else {
+                lines.push(`${ind}console.log("  ${p.name}");`);
+            }
+        }
+        lines.push(`${ind}console.log("");`);
+    }
+
+    // Options section
+    if (optionalParams.length > 0) {
+        lines.push(`${ind}console.log("Options:");`);
+
+        // Calculate max width for alignment
+        const optWidths = optionalParams.map(p => {
+            const longFlag = p.longFlag ?? p.name;
+            if (p.shortFlag) {
+                return `-${p.shortFlag}, --${longFlag}`.length;
+            }
+            return `--${longFlag}`.length;
+        });
+        const maxOptWidth = Math.max(16, ...optWidths);
+
+        for (const p of optionalParams) {
+            const longFlag = p.longFlag ?? p.name;
+            let flagPart: string;
+            if (p.shortFlag) {
+                flagPart = `-${p.shortFlag}, --${longFlag}`;
+            }
+            else {
+                flagPart = `--${longFlag}`;
+            }
+            const padding = ' '.repeat(maxOptWidth - flagPart.length + 2);
+
+            if (p.description) {
+                lines.push(`${ind}console.log("  ${flagPart}${padding}${p.description}");`);
+            }
+            else {
+                lines.push(`${ind}console.log("  ${flagPart}");`);
+            }
+        }
+        lines.push(`${ind}console.log("");`);
+    }
+
+    // Standard help option
+    lines.push(`${ind}console.log("  --help, -h      Show this help message");`);
+
+    return lines.join('\n');
+}
+
+/**
  * Generate argument parsing and function call for a leaf command.
  */
 function genLeafCommand(
+    cli: CliProgram,
     node: CliCommandNode,
+    commandPath: string,
     argsVar: string,
     startIdx: number,
-    ind: string
+    ind: string,
+    g: TsGenerator
 ): string {
     const lines: string[] = [];
     const params = node.params ?? [];
 
     const positionalParams = params.filter(p => !p.optional);
     const optionalParams = params.filter(p => p.optional);
+
+    // Help flag check - must come before argument parsing
+    lines.push(`${ind}if (${argsVar}[${startIdx}] === "--help" || ${argsVar}[${startIdx}] === "-h") {`);
+    lines.push(genLeafCommandHelp(cli, node, commandPath, ind + g.indent));
+    lines.push(`${ind}  process.exit(0);`);
+    lines.push(`${ind}}`);
 
     // Declare variables for parsed args
     for (const p of params) {
@@ -129,9 +231,9 @@ function genLeafCommand(
     lines.push(`${ind}for (let _i = ${startIdx}; _i < ${argsVar}.length; _i++) {`);
     lines.push(`${ind}  const _arg = ${argsVar}[_i]!;`);
 
-    // Handle optional flags
+    // Handle optional flags (use longFlag if available, otherwise fall back to name)
     for (const p of optionalParams) {
-        const longFlag = `--${p.name}`;
+        const longFlag = `--${p.longFlag ?? p.name}`;
         const shortFlag = p.shortFlag ? `-${p.shortFlag}` : null;
         const flagCheck = shortFlag
             ? `_arg === "${longFlag}" || _arg === "${shortFlag}"`
@@ -222,7 +324,7 @@ function genNodeDispatcher(
 
         if (child.functionName && child.children.size === 0) {
             // Leaf node - call the function
-            lines.push(genLeafCommand(child, argsVar, argIdx + 1, ind + g.indent + g.indent));
+            lines.push(genLeafCommand(cli, child, childPath, argsVar, argIdx + 1, ind + g.indent + g.indent, g));
         }
         else if (child.children.size > 0) {
             // Branch node - recurse

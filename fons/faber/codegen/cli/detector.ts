@@ -242,7 +242,9 @@ function extractCommands(
                 type: p.type,
                 optional: p.optional,
                 shortFlag: optio?.short ?? p.shortFlag,
+                longFlag: optio?.external,
                 defaultValue: p.defaultValue,
+                description: optio?.description,
             };
         });
 
