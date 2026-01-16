@@ -29,23 +29,26 @@ functio genDiscretio(textus nomen, ignotum generaParametra, lista<VariansDeclara
         params = scriptum("<§>", p.coniunge(", "))
     }
 
-    varia variants = [] innatum lista<textus>
+    # Emit each variant as a named type, then build the union from those.
+    # WHY: `Extract<Union, ...>` aliases become circular when variants reference
+    #      sibling variants (Union -> VariantAlias -> Union).
+    varia lines = [] innatum lista<textus>
+
     ex variantes pro varians {
         varia member = scriptum("{ tag: '§'", varians.nomen)
         ex varians.campi pro campus {
             member = scriptum("§; §: §", member, campus.nomen, genTypus(campus.typus, g))
         }
         member = scriptum("§ }", member)
-        variants.adde(member)
+        lines.adde(scriptum("§§type §§ = §;", g.ind(), exportPrefix, varians.nomen, params, member))
     }
 
-    fixum unionType = scriptum("§§type §§ = §;", g.ind(), exportPrefix, nomen, params, variants.coniunge(" | "))
-
-    # Generate extracted variant types so they can be used as standalone types
-    varia lines = [unionType] innatum lista<textus>
+    varia unionMembers = [] innatum lista<textus>
     ex variantes pro varians {
-        lines.adde(scriptum("§§type § = Extract<§, { tag: '§' }>;", g.ind(), exportPrefix, varians.nomen, nomen, varians.nomen))
+        unionMembers.adde(scriptum("§§", varians.nomen, params))
     }
+
+    lines.adde(scriptum("§§type §§ = §;", g.ind(), exportPrefix, nomen, params, unionMembers.coniunge(" | ")))
 
     redde lines.coniunge("\n")
 }

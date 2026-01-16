@@ -336,7 +336,11 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
                 visibilitas = Visibilitas.Privata
             }
 
+            # NOTE: we keep this as a plain record cast rather than `finge`.
+            # WHY: inside Rivus itself, `finge` is currently not preserving literal
+            #      tag types for nested discriminated unions in TS output.
             fixum methodus = {
+                tag: "FunctioDeclaratio",
                 locus: methodLocus,
                 nomen: methodNomen,
                 generaParametra: nihil,

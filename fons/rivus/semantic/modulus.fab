@@ -267,6 +267,10 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                         falsum
                     )
 
+                    # Export both the qualified and unqualified variant names.
+                    # WHY: Target codegen emits variants as standalone types, and
+                    #      user code (and internal AST) frequently imports variants
+                    #      directly (e.g. `ex "./sententia" importa MassaSententia`).
                     fixum qualNomen = scriptum("§.§", d.nomen, variante.nomen)
                     exporta[qualNomen] = {
                         nomen: qualNomen,
@@ -274,6 +278,18 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                         typus: variantTypus,
                         locus: variante.locus
                     } qua ModulusExportum
+
+                    # Avoid clobbering a pre-existing export (would be an error in TS too).
+                    # EDGE: `exporta` is a reserved verb; use an alias for nil-check.
+                    fixum exportaTabula = exporta
+                    si nihil exportaTabula[variante.nomen] {
+                        exporta[variante.nomen] = {
+                            nomen: variante.nomen,
+                            species: SymbolumSpecies.Genus,
+                            typus: variantTypus,
+                            locus: variante.locus
+                        } qua ModulusExportum
+                    }
                 }
             }
             casu TypusAliasDeclaratio ut t {
