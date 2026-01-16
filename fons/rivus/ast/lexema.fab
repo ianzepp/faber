@@ -203,7 +203,7 @@ ordo VerbumId {
     # -------------------------------------------------------------------------
     # Modifiers
     # -------------------------------------------------------------------------
-    Futura
+    # NOTE: Futura removed - now contextual keyword (only recognized after @)
     Prae
     Praefixum
     Cursor

@@ -99,7 +99,7 @@ functio verbumFaberId(textus v) -> VerbumId? {
         casu "discretio" reddit VerbumId.Discretio
 
         # ---- Modifiers ----
-        casu "futura" reddit VerbumId.Futura
+        # NOTE: "futura" is contextual - only recognized after @ in annotation context
         casu "prae" reddit VerbumId.Prae
         casu "praefixum" reddit VerbumId.Praefixum
         casu "cursor" reddit VerbumId.Cursor
