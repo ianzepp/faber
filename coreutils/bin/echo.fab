@@ -11,13 +11,13 @@ ex "../lib/norma/hal/consolum" importa consolum
 @ optio bivalens "n" descriptio "Do not output trailing newline"
 @ operandus ceteri textus "args"
 
-incipit optio opts exitus code {
+incipit argumenta args exitus code {
     tempta {
-        si opts.n {
-            consolum.fundeTextum(opts.args.coniunge(" "))
+        si args.n {
+            consolum.fundeTextum(args.args.coniunge(" "))
         }
         secus {
-            consolum.fundeLineam(opts.args.coniunge(" "))
+            consolum.fundeLineam(args.args.coniunge(" "))
         }
     }
     cape err {

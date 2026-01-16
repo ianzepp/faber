@@ -620,16 +620,16 @@ export function parseIncipitStatement(r: Resolver): IncipitStatement {
 
     ctx.expectKeyword('incipit', ParserErrorCode.ExpectedKeywordIncipit);
 
-    // Parse optional modifiers: optio <ident>, exitus <literal|ident>
-    let optioBinding: Identifier | undefined;
+    // Parse optional modifiers: argumenta <ident>, exitus <literal|ident>
+    let argumentaBinding: Identifier | undefined;
     let exitusModifier: ExitusModifier | undefined;
 
-    // Check for optio modifier: incipit optio opts ...
-    if (ctx.checkKeyword('optio')) {
-        ctx.advance(); // consume 'optio'
+    // Check for argumenta modifier: incipit argumenta args ...
+    if (ctx.checkKeyword('argumenta')) {
+        ctx.advance(); // consume 'argumenta'
         if (ctx.check('IDENTIFIER') || ctx.check('KEYWORD')) {
             const ident = ctx.advance();
-            optioBinding = {
+            argumentaBinding = {
                 type: 'Identifier',
                 name: ident.value,
                 position: ident.position,
@@ -638,7 +638,7 @@ export function parseIncipitStatement(r: Resolver): IncipitStatement {
         else {
             ctx.errors.push({
                 code: ParserErrorCode.UnexpectedToken,
-                message: `Expected identifier after 'optio' in incipit, got '${ctx.peek().value}'`,
+                message: `Expected identifier after 'argumenta' in incipit, got '${ctx.peek().value}'`,
                 position: ctx.peek().position,
             });
         }
@@ -682,19 +682,19 @@ export function parseIncipitStatement(r: Resolver): IncipitStatement {
         const stmtPos = ctx.peek().position;
         const expr = r.expression();
         const returnStmt: ReddeStatement = { type: 'ReddeStatement', argument: expr, position: stmtPos };
-        return { type: 'IncipitStatement', ergoStatement: returnStmt, optioBinding, exitusModifier, position };
+        return { type: 'IncipitStatement', ergoStatement: returnStmt, argumentaBinding, exitusModifier, position };
     }
 
     // Check for ergo form: incipit ergo <statement>
     if (ctx.checkKeyword('ergo')) {
         ctx.advance(); // consume 'ergo'
         const ergoStatement = r.statement();
-        return { type: 'IncipitStatement', ergoStatement, optioBinding, exitusModifier, position };
+        return { type: 'IncipitStatement', ergoStatement, argumentaBinding, exitusModifier, position };
     }
 
     const body = r.block();
 
-    return { type: 'IncipitStatement', body, optioBinding, exitusModifier, position };
+    return { type: 'IncipitStatement', body, argumentaBinding, exitusModifier, position };
 }
 
 // =============================================================================
@@ -731,16 +731,16 @@ export function parseIncipietStatement(r: Resolver): IncipietStatement {
 
     ctx.expectKeyword('incipiet', ParserErrorCode.ExpectedKeywordIncipiet);
 
-    // Parse optional modifiers: optio <ident>, exitus <literal|ident>
-    let optioBinding: Identifier | undefined;
+    // Parse optional modifiers: argumenta <ident>, exitus <literal|ident>
+    let argumentaBinding: Identifier | undefined;
     let exitusModifier: ExitusModifier | undefined;
 
-    // Check for optio modifier: incipiet optio opts ...
-    if (ctx.checkKeyword('optio')) {
-        ctx.advance(); // consume 'optio'
+    // Check for argumenta modifier: incipiet argumenta args ...
+    if (ctx.checkKeyword('argumenta')) {
+        ctx.advance(); // consume 'argumenta'
         if (ctx.check('IDENTIFIER') || ctx.check('KEYWORD')) {
             const ident = ctx.advance();
-            optioBinding = {
+            argumentaBinding = {
                 type: 'Identifier',
                 name: ident.value,
                 position: ident.position,
@@ -749,7 +749,7 @@ export function parseIncipietStatement(r: Resolver): IncipietStatement {
         else {
             ctx.errors.push({
                 code: ParserErrorCode.UnexpectedToken,
-                message: `Expected identifier after 'optio' in incipiet, got '${ctx.peek().value}'`,
+                message: `Expected identifier after 'argumenta' in incipiet, got '${ctx.peek().value}'`,
                 position: ctx.peek().position,
             });
         }
@@ -793,17 +793,17 @@ export function parseIncipietStatement(r: Resolver): IncipietStatement {
         const stmtPos = ctx.peek().position;
         const expr = r.expression();
         const returnStmt: ReddeStatement = { type: 'ReddeStatement', argument: expr, position: stmtPos };
-        return { type: 'IncipietStatement', ergoStatement: returnStmt, optioBinding, exitusModifier, position };
+        return { type: 'IncipietStatement', ergoStatement: returnStmt, argumentaBinding, exitusModifier, position };
     }
 
     // Check for ergo form: incipiet ergo <statement>
     if (ctx.checkKeyword('ergo')) {
         ctx.advance(); // consume 'ergo'
         const ergoStatement = r.statement();
-        return { type: 'IncipietStatement', ergoStatement, optioBinding, exitusModifier, position };
+        return { type: 'IncipietStatement', ergoStatement, argumentaBinding, exitusModifier, position };
     }
 
     const body = r.block();
 
-    return { type: 'IncipietStatement', body, optioBinding, exitusModifier, position };
+    return { type: 'IncipietStatement', body, argumentaBinding, exitusModifier, position };
 }

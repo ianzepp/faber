@@ -2471,9 +2471,9 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         // WHY: Entry point contains either a body block or ergo-chained statement
         enterScope('function');
 
-        // Define optioBinding in scope (for CLI single-command mode)
+        // Define argumentaBinding in scope (for CLI single-command mode)
         // WHY: Build a proper type from @ optio and @ operandus annotations
-        if (node.optioBinding && node.annotations) {
+        if (node.argumentaBinding && node.annotations) {
             const fields = new Map<string, SemanticType>();
 
             for (const ann of node.annotations) {
@@ -2496,7 +2496,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             }
 
             const optsType = genusType(
-                'CliOptions',
+                'Argumenta',
                 fields,
                 new Map(), // methods
                 new Map(), // staticFields
@@ -2504,21 +2504,21 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             );
 
             defineSymbol(currentScope!, {
-                name: node.optioBinding.name,
+                name: node.argumentaBinding.name,
                 type: optsType,
                 kind: 'variable',
                 mutable: false,
-                position: node.optioBinding.position,
+                position: node.argumentaBinding.position,
             });
         }
-        else if (node.optioBinding) {
+        else if (node.argumentaBinding) {
             // Fallback if no annotations
             defineSymbol(currentScope!, {
-                name: node.optioBinding.name,
+                name: node.argumentaBinding.name,
                 type: UNKNOWN,
                 kind: 'variable',
                 mutable: false,
-                position: node.optioBinding.position,
+                position: node.argumentaBinding.position,
             });
         }
 
@@ -2548,9 +2548,9 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
         const previousAsync = currentFunctionAsync;
         currentFunctionAsync = true;
 
-        // Define optioBinding in scope (for CLI single-command mode)
+        // Define argumentaBinding in scope (for CLI single-command mode)
         // WHY: Build a proper type from @ optio and @ operandus annotations
-        if (node.optioBinding && node.annotations) {
+        if (node.argumentaBinding && node.annotations) {
             const fields = new Map<string, SemanticType>();
 
             for (const ann of node.annotations) {
@@ -2570,7 +2570,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             }
 
             const optsType = genusType(
-                'CliOptions',
+                'Argumenta',
                 fields,
                 new Map(),
                 new Map(),
@@ -2578,20 +2578,20 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             );
 
             defineSymbol(currentScope!, {
-                name: node.optioBinding.name,
+                name: node.argumentaBinding.name,
                 type: optsType,
                 kind: 'variable',
                 mutable: false,
-                position: node.optioBinding.position,
+                position: node.argumentaBinding.position,
             });
         }
-        else if (node.optioBinding) {
+        else if (node.argumentaBinding) {
             defineSymbol(currentScope!, {
-                name: node.optioBinding.name,
+                name: node.argumentaBinding.name,
                 type: UNKNOWN,
                 kind: 'variable',
                 mutable: false,
-                position: node.optioBinding.position,
+                position: node.argumentaBinding.position,
             });
         }
 

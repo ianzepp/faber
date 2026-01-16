@@ -225,9 +225,12 @@ export const keywords: KeywordEntry[] = [
     // WHY: "brevis" (short) for CLI short flag aliases
     //      Usage: @ optio bivalens "verbose" brevis "v" descriptio "..."
     { latin: 'brevis', meaning: 'short (flag)', category: 'modifier' },
-    // WHY: "optio" (choice) for CLI options binding in incipit
-    //      Usage: incipit optio opts { }
-    { latin: 'optio', meaning: 'options (CLI)', category: 'modifier' },
+    // WHY: "optio" (choice) for CLI option annotations
+    //      Usage: @ optio bivalens "verbose" brevis "v"
+    { latin: 'optio', meaning: 'option (CLI)', category: 'modifier' },
+    // WHY: "argumenta" (arguments) for CLI args binding in incipit
+    //      Usage: incipit argumenta args { }
+    { latin: 'argumenta', meaning: 'arguments (CLI)', category: 'modifier' },
     // WHY: "descriptio" (description) for CLI help text in annotations
     //      Usage: @ optio ... descriptio "help text"
     { latin: 'descriptio', meaning: 'description', category: 'modifier' },

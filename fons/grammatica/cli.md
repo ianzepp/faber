@@ -45,14 +45,14 @@ For simple CLI programs that don't need subcommands. Options and positional argu
 @ versio "0.1.0"
 @ descriptio "Display a line of text"
 @ optio bivalens "n" descriptio "Do not output trailing newline"
-@ operandus ceteri textus "args"
+@ operandus ceteri textus "strings"
 
-incipit optio opts exitus code {
-    si opts.n {
-        consolum.fundeTextum(opts.args.coniunge(" "))
+incipit argumenta args exitus code {
+    si args.n {
+        consolum.fundeTextum(args.strings.coniunge(" "))
     }
     secus {
-        consolum.fundeLineam(opts.args.coniunge(" "))
+        consolum.fundeLineam(args.strings.coniunge(" "))
     }
 }
 ```
@@ -89,7 +89,7 @@ Examples:
 # String option: --output <path> or -o <path>
 @ optio textus "output" brevis "o" descriptio "Output file path"
 
-# With different internal name: --dry-run flag accessed as opts.dryRun
+# With different internal name: --dry-run flag accessed as args.dryRun
 @ optio bivalens "dry-run" ut dryRun descriptio "Show what would happen"
 ```
 
@@ -120,18 +120,18 @@ Examples:
 
 Order matters: non-rest operands are matched first, then rest operand collects the remainder.
 
-### Entry Point: incipit optio
+### Entry Point: incipit argumenta
 
-Bind parsed options to a variable with `incipit optio <name>`:
+Bind parsed arguments to a variable with `incipit argumenta <name>`:
 
 ```fab
-incipit optio opts {
-    scribe opts.verbose
-    scribe opts.input
+incipit argumenta args {
+    scribe args.verbose
+    scribe args.input
 }
 ```
 
-The compiler generates a typed interface for the options object based on the declared annotations.
+The compiler generates a typed `Argumenta` interface based on the declared annotations.
 
 ### Exit Codes: exitus
 
@@ -139,12 +139,12 @@ Control the program's exit code with the `exitus` modifier:
 
 ```fab
 # Fixed exit code (always exits 0)
-incipit optio opts exitus 0 {
+incipit argumenta args exitus 0 {
     # body
 }
 
 # Variable exit code (exits with value of 'code' at end)
-incipit optio opts exitus code {
+incipit argumenta args exitus code {
     code = 1  # set non-zero on error
 }
 ```
@@ -163,9 +163,9 @@ Without `exitus`, no explicit exit is generated.
 @ operandus textus "source" descriptio "Source file"
 @ operandus ceteri textus "additional" descriptio "Additional source files"
 
-incipit optio opts exitus code {
-    si opts.v {
-        scribe scriptum("Copying § to §", opts.source, opts.dest)
+incipit argumenta args exitus code {
+    si args.v {
+        scribe scriptum("Copying § to §", args.source, args.dest)
     }
     # ... copy logic
 }

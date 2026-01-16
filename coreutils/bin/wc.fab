@@ -11,14 +11,14 @@
 @ optio bivalens "bytes" ut c brevis "c" descriptio "Print the byte counts"
 @ operandus ceteri textus "files"
 
-incipit optio opts exitus code {
+incipit argumenta args exitus code {
     # If no flags specified, show all counts
-    fixum showAll = non opts.l et non opts.w et non opts.c
-    fixum showLines = opts.l aut showAll
-    fixum showWords = opts.w aut showAll
-    fixum showBytes = opts.c aut showAll
+    fixum showAll = non args.l et non args.w et non args.c
+    fixum showLines = args.l aut showAll
+    fixum showWords = args.w aut showAll
+    fixum showBytes = args.c aut showAll
 
-    ex opts.files pro file {
+    ex args.files pro file {
         scribe scriptum("Processing: §", file)
     }
 }

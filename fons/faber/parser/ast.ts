@@ -1341,8 +1341,8 @@ export interface IncipitStatement extends BaseNode {
     body?: BlockStatement;
     ergoStatement?: Statement;
     annotations?: Annotation[];
-    /** For CLI: binds parsed options to named variable. Usage: incipit optio opts { } */
-    optioBinding?: Identifier;
+    /** For CLI: binds parsed arguments to named variable. Usage: incipit argumenta args { } */
+    argumentaBinding?: Identifier;
     /** For CLI: exit code modifier. Usage: incipit exitus 0 { } or incipit exitus code { } */
     exitusModifier?: ExitusModifier;
 }
@@ -1383,8 +1383,8 @@ export interface IncipietStatement extends BaseNode {
     body?: BlockStatement;
     ergoStatement?: Statement;
     annotations?: Annotation[];
-    /** For CLI: binds parsed options to named variable. Usage: incipiet optio opts { } */
-    optioBinding?: Identifier;
+    /** For CLI: binds parsed arguments to named variable. Usage: incipiet argumenta args { } */
+    argumentaBinding?: Identifier;
     /** For CLI: exit code modifier. Usage: incipiet exitus 0 { } or incipiet exitus code { } */
     exitusModifier?: ExitusModifier;
 }

@@ -267,11 +267,11 @@ function genCliDispatcher(cli: CliProgram, g: TsGenerator): string {
 // =============================================================================
 
 /**
- * Generate options interface for single-command CLI.
+ * Generate Argumenta interface for single-command CLI.
  */
-function genOptionsInterface(cmd: CliSingleCommand, ind: string): string {
+function genArgumentaInterface(cmd: CliSingleCommand, ind: string): string {
     const lines: string[] = [];
-    lines.push(`${ind}interface CliOptions {`);
+    lines.push(`${ind}interface Argumenta {`);
 
     for (const opt of cmd.options) {
         const tsType = TYPE_MAP[opt.type] ?? 'string';
@@ -389,7 +389,7 @@ function genSingleCommandHelp(cli: CliProgram, cmd: CliSingleCommand, ind: strin
 /**
  * Generate argument parsing for single-command CLI.
  */
-function genSingleCommandParser(cli: CliProgram, cmd: CliSingleCommand, optionsVar: string, ind: string, g: TsGenerator): string {
+function genSingleCommandParser(cli: CliProgram, cmd: CliSingleCommand, argsVar: string, ind: string, g: TsGenerator): string {
     const lines: string[] = [];
 
     lines.push(`${ind}const _args = process.argv.slice(2);`);
@@ -411,8 +411,8 @@ function genSingleCommandParser(cli: CliProgram, cmd: CliSingleCommand, optionsV
 
     lines.push(``);
 
-    // Initialize options object
-    lines.push(`${ind}const ${optionsVar}: CliOptions = {`);
+    // Initialize argumenta object
+    lines.push(`${ind}const ${argsVar}: Argumenta = {`);
 
     // Initialize options with defaults
     for (const opt of cmd.options) {
@@ -461,10 +461,10 @@ function genSingleCommandParser(cli: CliProgram, cmd: CliSingleCommand, optionsV
             : `_arg === "${longFlag}"`;
 
         if (opt.type === 'bivalens') {
-            lines.push(`${ind}  if (${flagCheck}) { ${optionsVar}.${opt.internal} = true; continue; }`);
+            lines.push(`${ind}  if (${flagCheck}) { ${argsVar}.${opt.internal} = true; continue; }`);
         }
         else {
-            lines.push(`${ind}  if (${flagCheck}) { ${optionsVar}.${opt.internal} = _args[++_i]!; continue; }`);
+            lines.push(`${ind}  if (${flagCheck}) { ${argsVar}.${opt.internal} = _args[++_i]!; continue; }`);
         }
     }
 
@@ -477,11 +477,11 @@ function genSingleCommandParser(cli: CliProgram, cmd: CliSingleCommand, optionsV
 
         for (let i = 0; i < nonRestOperands.length; i++) {
             const op = nonRestOperands[i]!;
-            lines.push(`${ind}    if (_positionalIdx === ${i}) { ${optionsVar}.${op.name} = _arg; _positionalIdx++; continue; }`);
+            lines.push(`${ind}    if (_positionalIdx === ${i}) { ${argsVar}.${op.name} = _arg; _positionalIdx++; continue; }`);
         }
 
         if (restOperand) {
-            lines.push(`${ind}    ${optionsVar}.${restOperand.name}.push(_arg);`);
+            lines.push(`${ind}    ${argsVar}.${restOperand.name}.push(_arg);`);
             lines.push(`${ind}    continue;`);
         }
 
@@ -494,7 +494,7 @@ function genSingleCommandParser(cli: CliProgram, cmd: CliSingleCommand, optionsV
     // Validate required operands
     for (const op of nonRestOperands) {
         if (op.defaultValue === undefined) {
-            lines.push(`${ind}if (${optionsVar}.${op.name} === undefined) {`);
+            lines.push(`${ind}if (${argsVar}.${op.name} === undefined) {`);
             lines.push(`${ind}  console.error("Missing required argument: ${op.name}");`);
             lines.push(`${ind}  process.exit(1);`);
             lines.push(`${ind}}`);
@@ -511,15 +511,15 @@ function genSingleCommandCli(cli: CliProgram, cmd: CliSingleCommand, node: Incip
     const ind = g.ind();
     const lines: string[] = [];
 
-    // Get options binding name (default to 'opts' if not specified)
-    const optionsVar = node.optioBinding?.name ?? 'opts';
+    // Get argumenta binding name (default to 'args' if not specified)
+    const argsVar = node.argumentaBinding?.name ?? 'args';
 
-    // Generate options interface
-    lines.push(genOptionsInterface(cmd, ind));
+    // Generate Argumenta interface
+    lines.push(genArgumentaInterface(cmd, ind));
     lines.push(``);
 
     // Generate argument parsing
-    lines.push(genSingleCommandParser(cli, cmd, optionsVar, ind, g));
+    lines.push(genSingleCommandParser(cli, cmd, argsVar, ind, g));
     lines.push(``);
 
     // Handle exit code modifier
