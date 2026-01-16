@@ -1,6 +1,6 @@
 # CLI Framework
 
-Faber provides a declarative CLI framework through annotations. The compiler generates argument parsing, help text, and command dispatch from function signatures and metadata annotations.
+Faber provides a declarative CLI framework through annotations. The compiler generates argument parsing, help text, and command dispatch from metadata annotations.
 
 ## File-Level Annotations
 
@@ -21,9 +21,183 @@ incipit {}
 
 The `@ cli` annotation replaces the need for manual entry point logic. The compiler generates argument parsing and dispatch.
 
-## Commands
+## CLI Modes
 
-### Single Commands: @ imperium
+Faber supports two CLI patterns:
+
+| Mode | Use case | Defined by |
+|------|----------|------------|
+| **Single-command** | Simple utilities (`echo`, `cat`, `true`) | `@ optio` / `@ operandus` annotations |
+| **Subcommand** | Multi-command tools (`git`, `npm`, `docker`) | `@ imperium` annotations on functions |
+
+The compiler detects the mode automatically from which annotations are present.
+
+---
+
+## Single-Command Mode
+
+For simple CLI programs that don't need subcommands. Options and positional arguments are declared with annotations, then bound to a variable in `incipit`.
+
+### Basic Example
+
+```fab
+@ cli "echo"
+@ versio "0.1.0"
+@ descriptio "Display a line of text"
+@ optio bivalens n descriptio "Do not output trailing newline"
+@ operandus ceteri textus args
+
+incipit optio opts exitus code {
+    si opts.n {
+        consolum.fundeTextum(opts.args.coniunge(" "))
+    }
+    secus {
+        consolum.fundeLineam(opts.args.coniunge(" "))
+    }
+}
+```
+
+Usage:
+```
+echo hello world          # prints "hello world\n"
+echo -n hello world       # prints "hello world" (no newline)
+echo --help               # shows help text
+```
+
+### Options: @ optio
+
+Declare command-line flags with `@ optio`:
+
+```
+@ optio <type> <name> [ut <internal>] [brevis <short>] [descriptio "..."]
+```
+
+| Part | Required | Description |
+|------|----------|-------------|
+| `<type>` | Yes | `bivalens` (flag), `textus` (string), `numerus` (integer) |
+| `<name>` | Yes | External flag name (becomes `--name`) |
+| `ut <internal>` | No | Internal binding name (defaults to `<name>`) |
+| `brevis <short>` | No | Short flag (e.g., `brevis "v"` → `-v`) |
+| `descriptio "..."` | No | Help text for this option |
+
+Examples:
+
+```fab
+# Boolean flag: --verbose or -v
+@ optio bivalens verbose brevis "v" descriptio "Enable verbose output"
+
+# String option: --output <path> or -o <path>
+@ optio textus output brevis "o" descriptio "Output file path"
+
+# With different internal name: --dry-run flag accessed as opts.dryRun
+@ optio bivalens dry-run ut dryRun descriptio "Show what would happen"
+```
+
+### Operands: @ operandus
+
+Declare positional arguments with `@ operandus`:
+
+```
+@ operandus [ceteri] <type> <name> [descriptio "..."]
+```
+
+| Part | Required | Description |
+|------|----------|-------------|
+| `ceteri` | No | Makes this a rest/variadic argument (collects remaining args) |
+| `<type>` | Yes | `textus`, `numerus`, etc. |
+| `<name>` | Yes | Binding name |
+| `descriptio "..."` | No | Help text |
+
+Examples:
+
+```fab
+# Required positional argument
+@ operandus textus input descriptio "Input file"
+
+# Rest argument (collects all remaining positional args)
+@ operandus ceteri textus files descriptio "Additional files"
+```
+
+Order matters: non-rest operands are matched first, then rest operand collects the remainder.
+
+### Entry Point: incipit optio
+
+Bind parsed options to a variable with `incipit optio <name>`:
+
+```fab
+incipit optio opts {
+    scribe opts.verbose
+    scribe opts.input
+}
+```
+
+The compiler generates a typed interface for the options object based on the declared annotations.
+
+### Exit Codes: exitus
+
+Control the program's exit code with the `exitus` modifier:
+
+```fab
+# Fixed exit code (always exits 0)
+incipit optio opts exitus 0 {
+    # body
+}
+
+# Variable exit code (exits with value of 'code' at end)
+incipit optio opts exitus code {
+    code = 1  # set non-zero on error
+}
+```
+
+Without `exitus`, no explicit exit is generated.
+
+### Complete Example
+
+```fab
+@ cli "copy"
+@ versio "1.0.0"
+@ descriptio "Copy files to a destination"
+@ optio bivalens verbose ut v brevis "v" descriptio "Print files as they are copied"
+@ optio bivalens force brevis "f" descriptio "Overwrite existing files"
+@ optio textus dest brevis "d" descriptio "Destination directory"
+@ operandus textus source descriptio "Source file"
+@ operandus ceteri textus additional descriptio "Additional source files"
+
+incipit optio opts exitus code {
+    si opts.v {
+        scribe scriptum("Copying § to §", opts.source, opts.dest)
+    }
+    # ... copy logic
+}
+```
+
+Generated help:
+```
+copy v1.0.0
+Copy files to a destination
+
+Usage: copy [options] <source> [additional...]
+
+Options:
+  -v, --verbose     Print files as they are copied
+  -f, --force       Overwrite existing files
+  -d, --dest        Destination directory
+
+Arguments:
+  source            Source file
+  additional        Additional source files
+
+  --help, -h        Show this help message
+  --version, -v     Show version number
+```
+
+---
+
+## Subcommand Mode
+
+For multi-command CLIs where each command is a separate function. Arguments are defined in function signatures.
+
+### Subcommands: @ imperium
 
 The `@ imperium` annotation marks a function as a CLI command. The function's parameters define the command's arguments and flags.
 
@@ -211,11 +385,8 @@ Help is contextual — running `myapp --help` shows top-level commands, while `m
 
 ## Limitations
 
-The current implementation supports **subcommand-based CLIs only**. Programs must have at least one `@ imperium` command. Single-command executables (like `echo` or `cat`) are not yet supported.
-
 Not yet implemented:
-- Default values for parameters (`vel`)
-- Rest/variadic parameters (`ceteri`)
-- Parameter help text and metadata (`@ arg`)
+- Default values for options (`vel`)
 - Environment variable fallbacks
 - Mutual exclusion constraints
+- Negatable flags (`--no-verbose`)
