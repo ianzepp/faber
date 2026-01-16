@@ -2,7 +2,7 @@
 #
 # Routes expression AST nodes to their specific generators.
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum, MorphologiaInvocatio
+ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum, MorphologiaInvocatio, LambdaCorpus
 ex "../../../ast/expressia" importa AbFiltrum, CatenaGradus
 ex "../../../ast/sententia" importa Sententia, VariaGenus
 ex "../../../ast/typus" importa TypusAnnotatio, TypusParametrum
@@ -295,19 +295,24 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
         }
 
         casu PraefixumExpressia ut e {
-            # Compile-time evaluation - in TS, wrap in IIFE for block form.
-            fixum corpus = e.corpus qua Sententia
-            discerne corpus {
-                casu MassaSententia ut m {
-                    g.intraProfundum()
-                    fixum body = genPraefixumMassa(m.corpus, g)
-                    g.exiProfundum()
-                    redde scriptum("(() => {\n§\n§})()", body, g.ind())
+            discerne e.corpus {
+                casu Massa ut m {
+                    discerne m.valor {
+                        casu MassaSententia ut body {
+                            g.intraProfundum()
+                            fixum rendered = genPraefixumMassa(body.corpus, g)
+                            g.exiProfundum()
+                            redde scriptum("(() => {\n§\n§})()", rendered, g.ind())
+                        }
+                        casu _ { }
+                    }
                 }
-                casu _ { }
+                casu Expressia ut expr {
+                    redde scriptum("(§)", genExpressia(expr.valor, g))
+                }
             }
             # Fallback: expression form.
-            redde scriptum("(§)", genExpressia(e.corpus qua Expressia, g))
+            redde scriptum("(§)", genExpressia(finge Littera { locus: e.locus, species: LitteraGenus.Nihil, crudus: "nihil" } qua Expressia, g))
         }
 
         # Calls and member access
@@ -514,20 +519,26 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
             si nonnihil e.typusReditus {
                 retType = scriptum(": §", genTypus(e.typusReditus qua TypusAnnotatio, g))
             }
-            fixum massa = e.corpus qua Sententia
-            discerne massa {
-                casu MassaSententia ut m {
-                    g.intraProfundum()
-                    fixum body = genPraefixumMassa(m.corpus, g)
-                    g.exiProfundum()
-                    si body == "" {
-                        redde scriptum("(§)§ => {}", params.coniunge(", "), retType)
+            discerne e.corpus {
+                casu Massa ut m {
+                    discerne m.valor {
+                        casu MassaSententia ut body {
+                            g.intraProfundum()
+                            fixum rendered = genPraefixumMassa(body.corpus, g)
+                            g.exiProfundum()
+                            si rendered == "" {
+                                redde scriptum("(§)§ => {}", params.coniunge(", "), retType)
+                            }
+                            redde scriptum("(§)§ => {\n§\n§}", params.coniunge(", "), retType, rendered, g.ind())
+                        }
+                        casu _ { }
                     }
-                    redde scriptum("(§)§ => {\n§\n§}", params.coniunge(", "), retType, body, g.ind())
                 }
-                casu _ { }
+                casu Expressia ut expr {
+                    redde scriptum("(§)§ => §", params.coniunge(", "), retType, genExpressia(expr.valor, g))
+                }
             }
-            redde scriptum("(§)§ => §", params.coniunge(", "), retType, genExpressia(e.corpus qua Expressia, g))
+            redde scriptum("(§)§ => §", params.coniunge(", "), retType, genExpressia(finge Littera { locus: e.locus, species: LitteraGenus.Nihil, crudus: "nihil" } qua Expressia, g))
         }
 
         # Discretio construction

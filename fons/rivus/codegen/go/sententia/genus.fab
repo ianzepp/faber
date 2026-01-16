@@ -12,7 +12,7 @@ ex "./index" importa genSententia
 ex "./functio" importa genParametrum
 
 @ publica
-functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotum implet, bivalens abstractum, lista<CampusDeclaratio> campi, ignotum structor, lista<Sententia> methodi, ignotum visibilitas, GoGenerator g) -> textus {
+functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotum implet, bivalens abstractum, lista<CampusDeclaratio> campi, ignotum structor, lista<FunctioDeclaratio> methodi, ignotum visibilitas, GoGenerator g) -> textus {
     # NOTE: Go has no class inheritance; extendit/implet/structor are ignored here.
     varia typeName = nomen
     si nonnihil visibilitas {
@@ -52,7 +52,7 @@ functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotu
 
     ex methodi pro methodus {
         lines.adde("")
-        lines.adde(genGenusMethod(typeName, methodus, g))
+        lines.adde(genGenusMethod(typeName, methodus qua Sententia, g))
     }
 
     redde lines.coniunge("\n")
@@ -151,7 +151,7 @@ functio genGenusMethod(textus typeName, Sententia methodus, GoGenerator g) -> te
             g.errataTypusReditus = errataType
 
             g.intraProfundum()
-            fixum body = genSententia(f.corpus qua Sententia, g)
+            fixum body = genSententia(f.corpus, g)
             g.exiProfundum()
 
             g.inErrata = prevInErrata

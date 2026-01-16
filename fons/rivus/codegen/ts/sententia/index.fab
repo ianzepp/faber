@@ -89,7 +89,7 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
 
         # Type declarations
         casu GenusDeclaratio ut s {
-            redde genGenus(s.nomen qua textus, s.generaParametra, s.extendit, s.implet, s.abstractum qua bivalens, s.campi qua lista<CampusDeclaratio>, s.structor, s.methodi qua lista<Sententia>, s.visibilitas, g)
+            redde genGenus(s.nomen qua textus, s.generaParametra, s.extendit, s.implet, s.abstractum qua bivalens, s.campi qua lista<CampusDeclaratio>, s.structor, s.methodi, s.visibilitas, g)
         }
 
         casu PactumDeclaratio ut s {
@@ -114,15 +114,15 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
         }
 
         casu DumSententia ut s {
-            redde genDum(s.condicio, s.corpus qua Sententia, s.cape, g)
+            redde genDum(s.condicio, s.corpus, s.cape, g)
         }
 
         casu IteratioSententia ut s {
-            redde genIteratio(s.species qua IteratioGenus, s.variabilis qua textus, s.iterabile, s.corpus qua Sententia, s.asynca qua bivalens, s.cape, g)
+            redde genIteratio(s.species qua IteratioGenus, s.variabilis qua textus, s.iterabile, s.corpus, s.asynca qua bivalens, s.cape, g)
         }
 
         casu InSententia ut s {
-            redde genIn(s.obiectum, s.corpus qua Sententia, g)
+            redde genIn(s.obiectum, s.corpus, g)
         }
 
         casu EligeSententia ut s {
@@ -139,7 +139,7 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
 
         # Error handling
         casu TemptaSententia ut s {
-            redde genTempta(s.corpus qua Sententia, s.cape, s.demum, g)
+            redde genTempta(s.corpus, s.cape, s.demum, g)
         }
 
         casu IaceSententia ut s {
@@ -147,7 +147,7 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
         }
 
         casu FacSententia ut s {
-            redde genFac(s.corpus qua Sententia, s.condicio, s.cape, g)
+            redde genFac(s.corpus, s.condicio, s.cape, g)
         }
 
         casu AdfirmaSententia ut s {
@@ -184,7 +184,7 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
         }
 
         casu CuraSententia ut s {
-            redde genCura(s.curatorSpecies, s.res, s.vinculum qua textus, s.corpus qua Sententia, s.asynca qua bivalens, s.cape, g)
+            redde genCura(s.curatorSpecies, s.res, s.vinculum qua textus, s.corpus, s.asynca qua bivalens, s.cape, g)
         }
 
         casu AdSententia {
@@ -197,11 +197,11 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
         }
 
         casu ProbaSententia ut s {
-            redde genProba(s.nomen qua textus, s.modificator, s.ratioModificatoris, s.corpus qua Sententia, g)
+            redde genProba(s.nomen qua textus, s.modificator, s.ratioModificatoris, s.corpus, g)
         }
 
         casu PraeparaMassa ut s {
-            redde genPraepara(s.tempus qua PraeparaTempus, s.asynca qua bivalens, s.omnia qua bivalens, s.corpus qua Sententia, g)
+            redde genPraepara(s.tempus qua PraeparaTempus, s.asynca qua bivalens, s.omnia qua bivalens, s.corpus, g)
         }
     }
 

@@ -27,7 +27,7 @@ functio generateGo(lista<Sententia> corpus) -> textus {
             # Entry points - inline their body statements into func main
             casu IncipitSententia ut s {
                 si nonnihil s.corpus {
-                    mainSententiae.adde(s.corpus qua Sententia)
+                    mainSententiae.adde(s.corpus)
                 }
                 si nonnihil s.ergo {
                     mainSententiae.adde(s.ergo qua Sententia)
@@ -36,7 +36,7 @@ functio generateGo(lista<Sententia> corpus) -> textus {
 
             casu IncipietSententia ut s {
                 si nonnihil s.corpus {
-                    mainSententiae.adde(s.corpus qua Sententia)
+                    mainSententiae.adde(s.corpus)
                 }
                 si nonnihil s.ergo {
                     mainSententiae.adde(s.ergo qua Sententia)

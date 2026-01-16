@@ -121,18 +121,13 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                 locus: g.locus
             } qua Symbolum)
 
-            ex g.methodi pro methodus {
-                discerne methodus {
-                    casu FunctioDeclaratio ut f {
-                        si nonnihil f.morphologia {
-                            fixum parsed = parseMethodum(f.nomen)
-                            si nonnihil parsed {
-                                fixum nota = f.morphologia qua MorphologiaDeclaratio
-                                a.addeMorphologiam(g.nomen, parsed.radix, nota.formae)
-                            }
-                        }
+            ex g.methodi pro f {
+                si nonnihil f.morphologia {
+                    fixum parsed = parseMethodum(f.nomen)
+                    si nonnihil parsed {
+                        fixum nota = f.morphologia qua MorphologiaDeclaratio
+                        a.addeMorphologiam(g.nomen, parsed.radix, nota.formae)
                     }
-                    casu _ { }
                 }
             }
         }

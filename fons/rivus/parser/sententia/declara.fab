@@ -247,8 +247,8 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
     p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
 
     varia campi = [] innatum lista<CampusDeclaratio>
-    varia methodi = [] innatum lista<Sententia>
-    varia structor = nihil qua Sententia?
+    varia methodi = [] innatum lista<FunctioDeclaratio>
+    varia structor = nihil qua FunctioDeclaratio?
 
     dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
         # Parse annotations for visibility/abstract/morphologia
@@ -336,7 +336,7 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
                 visibilitas = Visibilitas.Privata
             }
 
-            methodi.adde(finge FunctioDeclaratio {
+            fixum methodus = {
                 locus: methodLocus,
                 nomen: methodNomen,
                 generaParametra: nihil,
@@ -352,7 +352,12 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
                 reddeVerbum: nihil,
                 morphologia: morphologiaEx(annotationes),
                 modificatores: modificatores
-            } qua Sententia)
+            } qua FunctioDeclaratio
+
+            si estStructor {
+                structor = methodus
+            }
+            methodi.adde(methodus)
         } secus {
             # Field: type name or name: default
             fixum campusLocus = p.locusActualis()
