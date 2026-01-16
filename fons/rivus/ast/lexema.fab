@@ -102,6 +102,7 @@ ordo SymbolumGenus {
     Colon         # :
     PunctumColon  # ;
     At            # @
+    Sectio        # §
     Sagitta       # ->
     SagittaCrassa # =>
     PunctumBis    # ..

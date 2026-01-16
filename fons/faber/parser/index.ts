@@ -980,6 +980,7 @@ export function parse(tokens: Token[]): ParserResult {
             if (
                 // Annotations may precede declarations.
                 check('AT') ||
+                check('SECTION') ||
                 // Blocks can always start a statement.
                 check('LBRACE') ||
                 // Statement starters (mirror parseStatementCore).
@@ -1063,6 +1064,7 @@ export function parse(tokens: Token[]): ParserResult {
             if (
                 braceDepth === 0 &&
                 (check('AT') ||
+                    check('SECTION') ||
                     checkKeyword('functio') ||
                     checkKeyword('publicus') ||
                     checkKeyword('privatus') ||
@@ -1146,6 +1148,50 @@ export function parse(tokens: Token[]): ParserResult {
     }
 
     /**
+     * Parse a section annotation (§).
+     *
+     * GRAMMAR:
+     *   sectionAnnotation := '§' IDENTIFIER (IDENTIFIER | STRING)*
+     *
+     * Section annotations are file-level build/project configuration.
+     * They're parsed but stored separately from statement annotations.
+     *
+     * Examples:
+     *   § opus nomen "echo"
+     *   § scopos "ts"
+     *   § dependentia "norma" via "../lib/norma"
+     */
+    function parseSectionAnnotation(): void {
+        const position = peek().position;
+        const startLine = position.line;
+        advance(); // consume '§'
+
+        // First token must be identifier on the same line (the annotation name)
+        if ((!check('IDENTIFIER') && !check('KEYWORD')) || peek().position.line !== startLine) {
+            errors.push({
+                code: ParserErrorCode.UnexpectedToken,
+                message: `Expected annotation name after '§', got '${peek().value}'`,
+                position,
+            });
+            return;
+        }
+
+        advance(); // consume annotation name
+
+        // Consume all arguments on the same line (identifiers and strings)
+        while (!isAtEnd() && peek().position.line === startLine) {
+            if (check('IDENTIFIER') || check('KEYWORD') || check('STRING')) {
+                advance();
+            } else {
+                break;
+            }
+        }
+
+        // Section annotations are currently parsed and discarded
+        // TODO: Store for build system integration
+    }
+
+    /**
      * Parse any statement by dispatching to specific parser.
      *
      * GRAMMAR: statement (see `EBNF.md` "Program Structure")
@@ -1168,6 +1214,12 @@ export function parse(tokens: Token[]): ParserResult {
      * WHY: Separates statement dispatch from comment handling for cleaner code.
      */
     function parseStatementWithoutComments(): Statement {
+        // Skip any section annotations (§) - these are file-level build config
+        // They're parsed but not attached to statements
+        while (check('SECTION')) {
+            parseSectionAnnotation();
+        }
+
         // Parse any leading annotations (@ modifier+)
         // Annotations attach to the following declaration
         const annotations = parseAnnotations();

@@ -20,7 +20,7 @@ ex "../../ast/sententia" importa Sententia, ScribeGradus, MorphologiaDeclaratio,
 ex "../../ast/lexema" importa SymbolumGenus, VerbumId
 ex "../../ast/radix" importa NodusRadix
 ex "../errores" importa ParserErrorCodice
-ex "./annotatio" importa parseAnnotationes
+ex "./annotatio" importa parseAnnotationes, parseSectiones, SectioAnnotatio
 
 # Import statement parsers from submodules
 ex "./actio" importa parseReddeSententia, parseRumpeSententia, parsePergeSententia, parseIaceSententia, parseScribeSententia
@@ -58,6 +58,16 @@ functio parseSententia(Resolvitor r) -> Sententia {
 functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum sym = p.specta(0)
+
+    # Section annotation prefix (§) - parse but don't attach to statements
+    # These are file-level build configuration, parsed for later extraction
+    si sym.species === SymbolumGenus.Sectio {
+        fixum sectiones = parseSectiones(r)
+        # Section annotations are stored at file level, not on statements.
+        # For now, we parse them and continue to the next statement.
+        # TODO: Store sectiones in file-level metadata for build system
+        redde parseSententiaSineNotis(r)
+    }
 
     # Annotation prefix (e.g. `@ futura`)
     si sym.species === SymbolumGenus.At {

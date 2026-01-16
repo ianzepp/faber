@@ -114,6 +114,7 @@ export type TokenType =
     | 'COMMA' // ,
     | 'SEMICOLON' // ;
     | 'AT' // @ (annotation marker)
+    | 'SECTION' // § (section annotation marker)
 
     // ---------------------------------------------------------------------------
     // Special

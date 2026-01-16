@@ -607,6 +607,7 @@ genus Lexor {
             casu ";" { ego.addeSymbolum(SymbolumGenus.PunctumColon, c, loc) } # semicolon
             casu ":" { ego.addeSymbolum(SymbolumGenus.Colon, c, loc) }        # colon
             casu "@" { ego.addeSymbolum(SymbolumGenus.At, c, loc) }           # annotation
+            casu "§" { ego.addeSymbolum(SymbolumGenus.Sectio, c, loc) }     # section annotation
             casu "?" {
                 # WHY: Distinguish ?? (nullish) from ? (ternary/optional chain)
                 si ego.specta(0) == "?" {

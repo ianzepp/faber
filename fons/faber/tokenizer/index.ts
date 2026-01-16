@@ -748,6 +748,11 @@ export function tokenize(source: string): TokenizerResult {
                 addToken('AT', char, pos);
                 break;
 
+            // Section annotation marker (build/project config)
+            case '§':
+                addToken('SECTION', char, pos);
+                break;
+
             // Single-character arithmetic operators
             case '+':
                 if (peek() === '=') {

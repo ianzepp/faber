@@ -1,17 +1,31 @@
-# Annotation Parser - @ Directive Parsing
+# Annotation Parser - @ and § Directive Parsing
 #
 # Parses line-based annotations that modify declarations.
 #
+# TWO ANNOTATION SYSTEMS:
+#   @ = Code semantics (futura, externa, publica, verte, etc.)
+#   § = Project/build configuration (opus, scopos, exitus, dependentia, etc.)
+#
 # GRAMMAR:
 #   annotation := '@' IDENTIFIER arguments?
-#   arguments := IDENTIFIER (',' IDENTIFIER)*  (same line only)
+#   sectio := '§' IDENTIFIER arguments?
+#   arguments := (IDENTIFIER | STRING)* (same line only)
 #
-# STDLIB ANNOTATIONS:
+# STDLIB @ ANNOTATIONS:
 #   innatumAnnotation := '@' 'innatum' targetMapping (',' targetMapping)*
 #   subsidiaAnnotation := '@' 'subsidia' targetMapping (',' targetMapping)*
 #   radixAnnotation := '@' 'radix' IDENTIFIER (',' IDENTIFIER)*
 #   verteAnnotation := '@' 'verte' IDENTIFIER (STRING | '(' IDENTIFIER (',' IDENTIFIER)* ')' '->' STRING)
 #   targetMapping := IDENTIFIER STRING
+#
+# § ANNOTATIONS (build config):
+#   § opus nomen "name"              -> project name
+#   § opus versio "1.0.0"            -> project version
+#   § scopos "ts"                    -> target language
+#   § exitus "dist"                  -> output directory
+#   § dependentia "name" via "path"  -> Faber library dependency
+#   § externa "alias" ex "package"   -> external package
+#   § modulus "path/to/module"       -> module identity
 #
 # Examples:
 #   @ futura                         -> marks function as async
@@ -25,10 +39,15 @@
 #
 # LATIN VOCABULARY:
 # - annotatio = annotation/note
+# - sectio = section (for build config)
 # - innatum = inborn/native
 # - subsidia = supports/implementation
 # - radix = root/stem
 # - verte = turn/transform
+# - opus = work/project
+# - scopos = target/goal
+# - exitus = exit/output
+# - dependentia = dependency
 
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
@@ -353,4 +372,74 @@ functio parseAnnotationes(Resolvitor r) -> lista<Annotatio> {
     }
 
     redde annotationes
+}
+
+# ============================================================================
+# SECTION ANNOTATIONS (§)
+# ============================================================================
+
+# Parsed section annotation for build/project configuration
+#
+# Unlike @ annotations which have specialized fields for code transforms,
+# § annotations use a simpler key-value model for build configuration.
+#
+# Examples:
+#   § opus nomen "echo"           -> nomen="opus", argumenta=["nomen", "echo"]
+#   § scopos "ts"                 -> nomen="scopos", argumenta=["ts"]
+#   § dependentia "norma" via "." -> nomen="dependentia", argumenta=["norma", "via", "."]
+@ publicum
+genus SectioAnnotatio {
+    Locus locus
+    textus nomen                # annotation name (opus, scopos, dependentia, etc.)
+    lista<textus> argumenta     # all arguments as strings (identifiers and string literals)
+}
+
+# Parse all section annotations at current position
+#
+# Consumes § directives until a non-§ token is found.
+# Section annotations are simpler than @ annotations - just name + arguments.
+@ publica
+functio parseSectiones(Resolvitor r) -> lista<SectioAnnotatio> {
+    fixum p = r.parser()
+    varia sectiones = [] innatum lista<SectioAnnotatio>
+
+    dum p.congruet(SymbolumGenus.Sectio) {
+        fixum locus = p.praevius().locus
+        fixum linea = locus.linea
+        fixum sym = p.specta(0)
+
+        varia nomen = ""
+        si estNomenAutVerbum(sym.species) {
+            p.procede()
+            nomen = sym.valor
+        } secus {
+            p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("got '§'", sym.valor))
+            p.procede()
+            perge
+        }
+
+        # Collect all arguments on the same line (identifiers and strings)
+        varia argumenta = [] innatum lista<textus>
+        dum non p.estFinis() et p.specta(0).locus.linea == linea {
+            fixum argSym = p.specta(0)
+            si estNomenAutVerbum(argSym.species) {
+                argumenta.adde(argSym.valor)
+                p.procede()
+            } sin argSym.species == SymbolumGenus.Textus {
+                argumenta.adde(argSym.valor)
+                p.procede()
+            } secus {
+                # Stop at unexpected token
+                rumpe
+            }
+        }
+
+        sectiones.adde({
+            locus: locus,
+            nomen: nomen,
+            argumenta: argumenta
+        } qua SectioAnnotatio)
+    }
+
+    redde sectiones
 }
