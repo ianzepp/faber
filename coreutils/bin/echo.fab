@@ -8,8 +8,8 @@ ex "../lib/norma/hal/consolum" importa consolum
 @ cli "echo"
 @ versio "0.1.0"
 @ descriptio "Display a line of text"
-@ optio bivalens "n" descriptio "Do not output trailing newline"
-@ operandus ceteri textus "args"
+@ optio bivalens n brevis "n" descriptio "Do not output trailing newline"
+@ operandus ceteri textus args
 
 incipit argumenta args exitus code {
     tempta {

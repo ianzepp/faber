@@ -223,10 +223,13 @@ export const keywords: KeywordEntry[] = [
     //      Usage: functio main() exitus 0 { } or functio main() exitus code { }
     { latin: 'exitus', meaning: 'exit code', category: 'modifier' },
     // WHY: "brevis" (short) for CLI short flag aliases
-    //      Usage: @ optio bivalens "verbose" brevis "v" descriptio "..."
+    //      Usage: @ optio bivalens v brevis "v" descriptio "..."
     { latin: 'brevis', meaning: 'short (flag)', category: 'modifier' },
+    // WHY: "longum" (long) for CLI long flag names
+    //      Usage: @ optio bivalens v brevis "v" longum "verbose" descriptio "..."
+    { latin: 'longum', meaning: 'long (flag)', category: 'modifier' },
     // WHY: "optio" (choice) for CLI option annotations
-    //      Usage: @ optio bivalens "verbose" brevis "v"
+    //      Usage: @ optio bivalens v brevis "v" longum "verbose"
     { latin: 'optio', meaning: 'option (CLI)', category: 'modifier' },
     // WHY: "argumenta" (arguments) for CLI args binding in incipit
     //      Usage: incipit argumenta args { }

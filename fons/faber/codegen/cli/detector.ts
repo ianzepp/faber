@@ -66,37 +66,34 @@ function toKebabCase(str: string): string {
 
 /**
  * Extract CLI option from @ optio annotation.
+ *
+ * New grammar: @ optio <type> <binding> [brevis "<short>"] [longum "<long>"] [descriptio "..."]
+ *   - binding: identifier used as internal variable name
+ *   - short: from brevis, the -x flag
+ *   - external: from longum, the --name flag (falls back to binding name in kebab-case if not specified)
  */
 function extractCliOption(ann: Annotation): CliOption | undefined {
     if (ann.name !== 'optio') return undefined;
 
     const type = ann.optioType?.name ?? 'textus';
 
-    // External can be explicit string or derived from identifier
-    let external = ann.optioExternal;
-    if (!external) return undefined;
+    // Internal binding name is required (position 2 in grammar)
+    const internal = ann.optioInternal?.name;
+    if (!internal) return undefined;
 
-    // If external doesn't have hyphens and we have an internal, use external as-is for flag
-    // Otherwise convert to kebab-case
-    if (!external.includes('-')) {
-        external = toKebabCase(external);
-    }
-
-    // Internal binding name
-    const internal = ann.optioInternal?.name ?? external.replace(/-/g, '');
-
-    // Default value
-    let defaultValue: string | undefined;
-    if (ann.optioDefault?.type === 'Literal') {
-        defaultValue = String(ann.optioDefault.value);
+    // External (long flag): use explicit longum, or derive from binding name
+    // If only brevis is specified, external will be undefined (short-only option)
+    let external = ann.optioLong;
+    if (!external && !ann.optioShort) {
+        // Neither specified - shouldn't happen (parser validates), but fallback
+        external = toKebabCase(internal);
     }
 
     return {
         type,
-        external,
+        external: external ?? '', // Empty string for short-only options
         internal,
         short: ann.optioShort,
-        defaultValue,
         description: ann.optioDescription,
     };
 }

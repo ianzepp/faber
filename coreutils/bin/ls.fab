@@ -1,0 +1,39 @@
+# ls - list directory contents
+#
+# Usage: ls [OPTION]... [FILE]...
+# Exit status: 0 on success, 1 on minor problems, 2 on serious trouble
+
+@ cli "ls"
+@ versio "0.1.0"
+@ descriptio "List directory contents"
+
+# Display options
+@ optio bivalens a brevis "a" longum "all" descriptio "Do not ignore entries starting with ."
+@ optio bivalens A brevis "A" longum "almost-all" descriptio "Do not list implied . and .."
+@ optio bivalens l brevis "l" descriptio "Use long listing format"
+@ optio bivalens h brevis "h" longum "human-readable" descriptio "Print sizes in human readable format"
+@ optio bivalens i brevis "i" longum "inode" descriptio "Print index number of each file"
+@ optio bivalens s brevis "s" longum "size" descriptio "Print allocated size of each file"
+@ optio bivalens F brevis "F" longum "classify" descriptio "Append indicator (*/=>@|) to entries"
+@ optio bivalens d brevis "d" longum "directory" descriptio "List directories themselves, not contents"
+@ optio bivalens singleColumn brevis "1" descriptio "List one file per line"
+
+# Sorting options
+@ optio bivalens t brevis "t" descriptio "Sort by modification time, newest first"
+@ optio bivalens sortBySize brevis "S" descriptio "Sort by file size, largest first"
+@ optio bivalens r brevis "r" longum "reverse" descriptio "Reverse order while sorting"
+
+# Recursion
+@ optio bivalens R brevis "R" longum "recursive" descriptio "List subdirectories recursively"
+
+# Color (long-only)
+@ optio textus color longum "color" descriptio "Colorize output (always, auto, never)"
+
+# Positional
+@ operandus ceteri textus paths descriptio "Files or directories to list"
+
+incipit argumenta args exitus code {
+    # TODO: Implementation
+    scribe "ls: not yet implemented"
+    code = 1
+}
