@@ -4,7 +4,7 @@
 #   genus Persona { textus nomen } -> type Persona struct { Nomen string }
 #   @ publica genus Persona { ... } -> type Persona struct { ... } (exported via name)
 
-ex "../../../ast/sententia" importa Sententia, CampusDeclaratio, Parametrum, TypusParametrum, Visibilitas, FunctioModificator
+ex "../../../ast/sententia" importa Sententia, FunctioDeclaratio, CampusDeclaratio, Parametrum, TypusParametrum, Visibilitas, FunctioModificator
 ex "../../../ast/typus" importa TypusAnnotatio
 ex "../nucleus" importa GoGenerator
 ex "../typus" importa genTypus

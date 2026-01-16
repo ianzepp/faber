@@ -136,7 +136,7 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
 
     # Block statement
     si sym.species === SymbolumGenus.UncusSin {
-        redde parseMassaSententia(r)
+        redde parseMassaSententia(r) qua Sententia
     }
 
     # Keyword-based dispatch

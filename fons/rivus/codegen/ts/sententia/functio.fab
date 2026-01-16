@@ -216,7 +216,7 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
         }
 
         g.intraProfundum()
-        varia body = genSententia(corpus, g)
+        varia body = genSententia(corpus qua Sententia, g)
 
         # fiunt/fient always end with done()
         si g.inFiunt aut g.inFient {

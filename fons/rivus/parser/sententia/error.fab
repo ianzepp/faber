@@ -18,7 +18,7 @@
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
 ex "../../ast/expressia" importa Expressia
-ex "../../ast/sententia" importa Sententia, CapeClausula
+ex "../../ast/sententia" importa Sententia, MassaSententia, CapeClausula
 ex "../../ast/lexema" importa SymbolumGenus
 ex "../errores" importa ParserErrorCodice
 
@@ -44,7 +44,7 @@ functio parseCapeClausula(Resolvitor r) -> CapeClausula {
     fixum param = nomenSymbolum.valor
 
     # Parse the handler block
-    fixum corpus = r.massa()
+    fixum corpus = r.massa() qua MassaSententia
 
     redde {
         locus: locus,
@@ -68,7 +68,7 @@ functio parseTemptaSententia(Resolvitor r) -> Sententia {
     p.expectaVerbum("tempta", ParserErrorCodice.ExpectaturTempta)
 
     # Parse the try block
-    fixum corpus = r.massa()
+    fixum corpus = r.massa() qua MassaSententia
 
     # Parse optional catch clause
     varia cape = nihil qua CapeClausula?
@@ -78,10 +78,10 @@ functio parseTemptaSententia(Resolvitor r) -> Sententia {
     }
 
     # Parse optional finally block
-    varia demum = nihil qua Sententia?
+    varia demum = nihil qua MassaSententia?
 
     si p.congruetVerbum("demum") {
-        demum = r.massa()
+        demum = r.massa() qua MassaSententia
     }
 
     redde finge TemptaSententia {
@@ -111,7 +111,7 @@ functio parseFacSententia(Resolvitor r) -> Sententia {
     p.expectaVerbum("fac", ParserErrorCodice.ExpectaturFac)
 
     # Parse the block
-    fixum corpus = r.massa()
+    fixum corpus = r.massa() qua MassaSententia
 
     # Parse optional catch clause
     varia cape = nihil qua CapeClausula?

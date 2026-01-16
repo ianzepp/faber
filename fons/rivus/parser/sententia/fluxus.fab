@@ -19,7 +19,7 @@ ex "../resolvitor" importa Resolvitor
 ex "../nucleus" importa Parser
 ex "../../ast/positio" importa Locus
 ex "../../ast/expressia" importa Expressia
-ex "../../ast/sententia" importa Sententia, EligeCasus, VariansCasus, VariansExemplar, CustodiClausula, CapeClausula
+ex "../../ast/sententia" importa Sententia, MassaSententia, EligeCasus, VariansCasus, VariansExemplar, CustodiClausula, CapeClausula
 ex "../../ast/lexema" importa SymbolumGenus
 ex "../errores" importa ParserErrorCodice
 ex "./massa" importa parseMassaSententia
@@ -55,7 +55,7 @@ functio parseEligeSententia(Resolvitor r) -> Sententia {
     p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
 
     varia casus = [] innatum lista<EligeCasus>
-    varia praedefinitum = nihil qua Sententia?
+    varia praedefinitum = nihil qua MassaSententia?
 
     # Parse cases until closing brace
     dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
@@ -79,7 +79,7 @@ functio parseEligeSententia(Resolvitor r) -> Sententia {
         # Check for 'ceterum' (default case)
         sin p.probaVerbum("ceterum") {
             p.procede()
-            praedefinitum = parseCorpusBrevis(r)
+            praedefinitum = parseCorpusBrevis(r) qua MassaSententia
             rumpe  # Default must be last
         }
         secus {
@@ -449,5 +449,5 @@ functio parseCorpusBrevis(Resolvitor r) -> Sententia {
         } qua Sententia
     }
 
-    redde parseMassaSententia(r)
+    redde parseMassaSententia(r) qua Sententia
 }

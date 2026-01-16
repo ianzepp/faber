@@ -5,6 +5,7 @@
 
 ex "./positio" importa Locus
 ex "./typus" importa TypusAnnotatio
+ex "./sententia" importa MassaSententia
 
 # ============================================================================
 # SUPPORTING TYPES

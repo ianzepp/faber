@@ -22,14 +22,14 @@ functio genIncipit(ignotum corpus, ignotum ergo, GoGenerator g) -> textus {
     # Check corpus first (simple incipit { ... })
     si nonnihil corpus {
         g.intraProfundum()
-        body = genSententia(corpus, g)
+        body = genSententia(corpus qua Sententia, g)
         g.exiProfundum()
     }
 
     # Then check ergo (incipit ergo ... { ... })
     si nonnihil ergo {
         g.intraProfundum()
-        fixum ergoBody = genSententia(ergo, g)
+        fixum ergoBody = genSententia(ergo qua Sententia, g)
         g.exiProfundum()
         si body != "" {
             body = scriptum("§\n§", body, ergoBody)

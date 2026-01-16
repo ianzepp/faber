@@ -193,7 +193,7 @@ functio genExpressia(Expressia expr, GoGenerator g) -> textus {
                         casu _ { }
                     }
                 }
-                casu Expressia ut expr {
+                casu Expr ut expr {
                     redde scriptum("func(§) interface{} { return § }", params.coniunge(", "), genExpressia(expr.valor, g))
                 }
             }

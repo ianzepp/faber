@@ -20,18 +20,18 @@ export function genDiscretioDeclaration(node: DiscretioDeclaration, g: TsGenerat
     const exportMod = visibility === 'public' ? 'export ' : '';
 
     // Generate type parameters if present
-    let typeParams = '';
-    if (node.typeParameters && node.typeParameters.length > 0) {
-        typeParams = '<' + node.typeParameters.map(p => p.name).join(', ') + '>';
-    }
+    const typeParams = node.typeParameters && node.typeParameters.length > 0 ? '<' + node.typeParameters.map(p => p.name).join(', ') + '>' : '';
 
-    // Generate variant types
-    const variants = node.variants.map(variant => {
+    // Generate each variant as its own named type.
+    // WHY: Variants may reference sibling variants (or themselves). Emitting
+    //      `Extract<Union, ...>` aliases creates circular dependencies like:
+    //      Union -> VariantAlias -> Union.
+    const variantTypes = node.variants.map(variant => {
         const variantName = variant.name.name;
 
         if (variant.fields.length === 0) {
             // Unit variant: just the tag
-            return `{ tag: '${variantName}' }`;
+            return `${g.ind()}${exportMod}type ${variantName}${typeParams} = { tag: '${variantName}' };`;
         }
 
         // Variant with fields: tag + field properties
@@ -41,16 +41,12 @@ export function genDiscretioDeclaration(node: DiscretioDeclaration, g: TsGenerat
             return `${fieldName}: ${fieldType}`;
         });
 
-        return `{ tag: '${variantName}'; ${fields.join('; ')} }`;
+        return `${g.ind()}${exportMod}type ${variantName}${typeParams} = { tag: '${variantName}'; ${fields.join('; ')} };`;
     });
 
-    const unionType = `${g.ind()}${exportMod}type ${name}${typeParams} = ${variants.join(' | ')};`;
+    // Union type built from the named variants.
+    const unionMembers = node.variants.map(variant => `${variant.name.name}${typeParams}`);
+    const unionType = `${g.ind()}${exportMod}type ${name}${typeParams} = ${unionMembers.join(' | ')};`;
 
-    // Generate extracted variant types so they can be used as standalone types
-    const variantTypes = node.variants.map(variant => {
-        const variantName = variant.name.name;
-        return `${g.ind()}${exportMod}type ${variantName} = Extract<${name}, { tag: '${variantName}' }>;`;
-    });
-
-    return [unionType, ...variantTypes].join('\n');
+    return [...variantTypes, unionType].join('\n');
 }

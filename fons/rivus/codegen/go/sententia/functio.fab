@@ -114,7 +114,7 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
         g.errataTypusReditus = errataType
 
         g.intraProfundum()
-        fixum body = genSententia(corpus, g)
+        fixum body = genSententia(corpus qua Sententia, g)
         g.exiProfundum()
 
         g.inErrata = prevInErrata

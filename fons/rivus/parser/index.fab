@@ -22,7 +22,7 @@ ex "./errores" importa ParserError, ParserErrorCodice
 ex "./resolvitor" importa Resolvitor
 ex "../ast/positio" importa Locus
 ex "../ast/expressia" importa Expressia
-ex "../ast/sententia" importa Sententia
+ex "../ast/sententia" importa Sententia, MassaSententia
 ex "../ast/typus" importa TypusAnnotatio
 ex "../ast/lexema" importa Symbolum
 
@@ -67,7 +67,7 @@ genus Parsator implet Resolvitor {
     }
 
     @ publica
-    functio massa() -> Sententia {
+    functio massa() -> MassaSententia {
         # Parse block statement
         redde parseMassaSententia(ego)
     }

@@ -17,7 +17,7 @@
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
 ex "../../ast/expressia" importa Expressia
-ex "../../ast/sententia" importa Sententia, CapeClausula, CuratorGenus, AdVinculum, AdVerbumVinculandi
+ex "../../ast/sententia" importa Sententia, MassaSententia, CapeClausula, CuratorGenus, AdVinculum, AdVerbumVinculandi
 ex "../../ast/typus" importa TypusAnnotatio
 ex "../../ast/lexema" importa SymbolumGenus, VerbumId
 ex "../errores" importa ParserErrorCodice
@@ -322,7 +322,7 @@ functio parseAdSententia(Resolvitor r) -> Sententia {
     }
 
     # Parse optional body block
-    varia corpus = nihil qua Sententia?
+    varia corpus = nihil qua MassaSententia?
     si p.proba(SymbolumGenus.UncusSin) {
         corpus = parseMassaSententia(r)
     }

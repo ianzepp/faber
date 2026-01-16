@@ -16,7 +16,7 @@
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
 ex "../../ast/expressia" importa Expressia
-ex "../../ast/sententia" importa Sententia
+ex "../../ast/sententia" importa Sententia, MassaSententia
 ex "../../ast/lexema" importa SymbolumGenus
 ex "../errores" importa ParserErrorCodice
 
@@ -35,7 +35,7 @@ genus Programma {
 # Consumes opening brace, parses statements until closing brace.
 # Handles optional semicolons between statements.
 @ publica
-functio parseMassaSententia(Resolvitor r) -> Sententia {
+functio parseMassaSententia(Resolvitor r) -> MassaSententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -66,7 +66,7 @@ functio parseMassaSententia(Resolvitor r) -> Sententia {
     redde finge MassaSententia {
         locus: locus,
         corpus: corpus
-    } qua Sententia
+    } qua MassaSententia
 }
 
 # Parse an expression statement

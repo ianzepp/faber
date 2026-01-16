@@ -75,7 +75,7 @@ functio parseSiSententia(Resolvitor r) -> Sententia {
         si p.probaVerbum("si") {
             alternans = parseSiSententia(r)
         } sin p.proba(SymbolumGenus.UncusSin) {
-            alternans = parseMassaSententia(r)
+            alternans = parseMassaSententia(r) qua Sententia
         } sin p.probaVerbum("reddit") {
             p.procede()
             fixum stmtLocus = p.locusActualis()
@@ -374,7 +374,7 @@ functio parseCorpusBrevis(Resolvitor r) -> Sententia {
         } qua Sententia
     }
 
-    redde parseMassaSententia(r)
+    redde parseMassaSententia(r) qua Sententia
 }
 
 # Parse a "sin" (else-if) clause
@@ -397,7 +397,7 @@ functio parseSinSententia(Resolvitor r) -> Sententia {
         si p.probaVerbum("si") {
             alternans = parseSiSententia(r)
         } sin p.proba(SymbolumGenus.UncusSin) {
-            alternans = parseMassaSententia(r)
+            alternans = parseMassaSententia(r) qua Sententia
         } sin p.probaVerbum("reddit") {
             p.procede()
             fixum stmtLocus = p.locusActualis()
