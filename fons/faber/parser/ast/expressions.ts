@@ -8,6 +8,7 @@ import type { Case, Number as GramNumber } from '../../lexicon/types';
 import type { BaseNode } from './base';
 import type { TypeAnnotation } from './types';
 import type { BlockStatement, CollectionDSLTransform } from './control';
+import type { Parameter } from './declarations';
 
 // =============================================================================
 // EXPRESSION UNION
@@ -682,7 +683,7 @@ export interface FingeExpression extends BaseNode {
  */
 export interface LambdaExpression extends BaseNode {
     type: 'LambdaExpression';
-    params: Identifier[];
+    params: Parameter[];
     returnType?: TypeAnnotation;
     body: Expression | BlockStatement;
     async: boolean;

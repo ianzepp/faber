@@ -2822,7 +2822,7 @@ describe('parser', () => {
 
                 expect(expr.type).toBe('LambdaExpression');
                 expect(expr.params).toHaveLength(1);
-                expect(expr.params[0].name).toBe('x');
+                expect(expr.params[0].name.name).toBe('x');
                 expect(expr.body.type).toBe('BinaryExpression');
                 expect(expr.async).toBe(false);
             });
@@ -2833,8 +2833,8 @@ describe('parser', () => {
 
                 expect(expr.type).toBe('LambdaExpression');
                 expect(expr.params).toHaveLength(2);
-                expect(expr.params[0].name).toBe('a');
-                expect(expr.params[1].name).toBe('b');
+                expect(expr.params[0].name.name).toBe('a');
+                expect(expr.params[1].name.name).toBe('b');
             });
 
             test('zero param lambda', () => {
@@ -2869,7 +2869,7 @@ describe('parser', () => {
 
                 expect(expr.type).toBe('LambdaExpression');
                 expect(expr.params).toHaveLength(1);
-                expect(expr.params[0].name).toBe('x');
+                expect(expr.params[0].name.name).toBe('x');
                 expect(expr.body.type).toBe('BlockStatement');
             });
 
@@ -2908,7 +2908,7 @@ describe('parser', () => {
 
                 expect(expr.type).toBe('LambdaExpression');
                 expect(expr.params).toHaveLength(1);
-                expect(expr.params[0].name).toBe('x');
+                expect(expr.params[0].name.name).toBe('x');
                 expect(expr.body.type).toBe('BinaryExpression');
             });
 
@@ -2918,8 +2918,8 @@ describe('parser', () => {
 
                 expect(expr.type).toBe('LambdaExpression');
                 expect(expr.params).toHaveLength(2);
-                expect(expr.params[0].name).toBe('a');
-                expect(expr.params[1].name).toBe('b');
+                expect(expr.params[0].name.name).toBe('a');
+                expect(expr.params[1].name.name).toBe('b');
             });
 
             test('zero param lambda with :', () => {
@@ -2964,7 +2964,7 @@ describe('parser', () => {
 
                 expect(expr.type).toBe('LambdaExpression');
                 expect(expr.params).toHaveLength(1);
-                expect(expr.params[0].name).toBe('x');
+                expect(expr.params[0].name.name).toBe('x');
                 expect(expr.returnType).toBeDefined();
                 expect(expr.returnType.name).toBe('numerus');
                 expect(expr.body.type).toBe('BinaryExpression');
@@ -3045,7 +3045,7 @@ describe('parser', () => {
 
                 expect(expr.type).toBe('LambdaExpression');
                 expect(expr.params).toHaveLength(1);
-                expect(expr.params[0].name).toBe('x');
+                expect(expr.params[0].name.name).toBe('x');
                 expect(expr.async).toBe(false);
             });
 
@@ -3075,7 +3075,7 @@ describe('parser', () => {
 
                 expect(expr.type).toBe('LambdaExpression');
                 expect(expr.params).toHaveLength(1);
-                expect(expr.params[0].name).toBe('x');
+                expect(expr.params[0].name.name).toBe('x');
                 expect(expr.async).toBe(true);
             });
 

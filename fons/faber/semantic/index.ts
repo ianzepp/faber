@@ -1616,14 +1616,16 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
     function resolveLambdaExpression(node: LambdaExpression): SemanticType {
         enterScope('function');
 
-        // Define parameters (untyped - infer from usage)
+        // Define parameters (typed if annotation present, otherwise unknown)
         const paramTypes: SemanticType[] = [];
 
         for (const param of node.params) {
-            const paramType = UNKNOWN;
+            const paramType = param.typeAnnotation
+                ? resolveTypeAnnotation(param.typeAnnotation)
+                : UNKNOWN;
             paramTypes.push(paramType);
             define({
-                name: param.name,
+                name: param.name.name,
                 type: paramType,
                 kind: 'parameter',
                 mutable: false,

@@ -33,8 +33,10 @@ import type {
     FingeExpression,
     TypeAnnotation,
     BlockStatement,
+    Parameter,
 } from '../ast';
 import { ParserErrorCode } from '../errors';
+import { parseParameter } from '../types';
 import {
     isDSLVerb,
     parseAbExpression,
@@ -857,19 +859,22 @@ export function parsePrimary(r: Resolver): Expression {
  * Parse lambda expression (anonymous function).
  *
  * GRAMMAR:
- *   lambdaExpr := ('pro' | 'fit' | 'fiet') params? ('->' type)? (':' expression | blockStmt)
- *   params := IDENTIFIER (',' IDENTIFIER)*
+ *   lambdaExpr   := ('pro' | 'fit' | 'fiet') lambdaParams? ('->' type)? (':' expression | blockStmt)
+ *   lambdaParams := lambdaParam (',' lambdaParam)*
+ *   lambdaParam  := ('de' | 'in' | 'ex')? typeAnnotation? IDENTIFIER
  *
  * Three keyword forms with different semantics:
  *   - 'pro' / 'fit': sync lambda (pro is casual, fit is explicit verb form)
  *   - 'fiet': async lambda (future tense verb form)
  *
  * Expression form (colon required):
- *      pro x: x * 2              -> (x) => x * 2
- *      pro: 42                   -> () => 42
- *      pro x, y: x + y           -> (x, y) => x + y
- *      pro x -> numerus: x * 2   -> (x): number => x * 2
- *      fiet x: expr              -> async (x) => expr
+ *      pro x: x * 2                      -> (x) => x * 2
+ *      pro: 42                           -> () => 42
+ *      pro x, y: x + y                   -> (x, y) => x + y
+ *      pro numerus x: x * 2              -> (x: number) => x * 2
+ *      pro numerus x, numerus y: x + y   -> (x: number, y: number) => x + y
+ *      pro x -> numerus: x * 2           -> (x): number => x * 2
+ *      fiet x: expr                      -> async (x) => expr
  *
  * Block form (for multi-statement bodies):
  *      pro x { redde x * 2 }     -> (x) => { return x * 2; }
@@ -882,13 +887,13 @@ export function parseLambdaExpression(r: Resolver, async: boolean): LambdaExpres
     // Consume the keyword (pro, fit, or fiet)
     ctx.advance();
 
-    const params: Identifier[] = [];
+    const params: Parameter[] = [];
 
     // Check for immediate :, ->, or { (zero-param lambda)
     if (!ctx.check('COLON') && !ctx.check('LBRACE') && !ctx.check('THIN_ARROW')) {
         // Parse parameters until we hit :, ->, or {
         do {
-            params.push(ctx.parseIdentifierOrKeyword());
+            params.push(parseParameter(r));
         } while (ctx.match('COMMA'));
     }
 
