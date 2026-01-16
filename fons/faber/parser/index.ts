@@ -1185,7 +1185,8 @@ export function parse(tokens: Token[]): ParserResult {
                 stmt.type === 'OrdoDeclaration' ||
                 stmt.type === 'DiscretioDeclaration' ||
                 stmt.type === 'TypeAliasDeclaration' ||
-                stmt.type === 'IncipitStatement'
+                stmt.type === 'IncipitStatement' ||
+                stmt.type === 'IncipietStatement'
             ) {
                 stmt.annotations = annotations;
             } else {

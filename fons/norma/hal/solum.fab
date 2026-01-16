@@ -10,6 +10,18 @@
 #   - Streaming: legens/scribens return cursors for large files
 #   - Path utilities included (iunge, dir, basis, etc.)
 
+# Full file status for ls -l, stat, etc.
+genus SolumStatus {
+    numerus modus         # permission bits (e.g., 0o755)
+    numerus nexus         # hard link count
+    numerus possessor     # owner uid
+    numerus grex          # group gid
+    numerus magnitudo     # size in bytes
+    numerus modificatum   # mtime (ms since epoch)
+    bivalens estDirectorii
+    bivalens estVinculum  # is symlink
+}
+
 @ subsidia ts "codegen/ts/solum.ts"
 pactum solum {
     # =========================================================================
@@ -83,22 +95,10 @@ pactum solum {
     # FILE STATUS (stat)
     # =========================================================================
 
-    # Full file status for ls -l, stat, etc.
-    genus Status {
-        modus: numerus        # permission bits (e.g., 0o755)
-        nexus: numerus        # hard link count
-        possessor: numerus    # owner uid
-        grex: numerus         # group gid
-        magnitudo: numerus    # size in bytes
-        modificatum: numerus  # mtime (ms since epoch)
-        estDirectorii: bivalens
-        estVinculum: bivalens # is symlink
-    }
-
     # Get full file status (uses lstat - doesn't follow symlinks)
     @ futura
     @ externa
-    functio status(textus path) -> Status
+    functio status(textus path) -> SolumStatus
 
     # Read symlink target
     @ futura

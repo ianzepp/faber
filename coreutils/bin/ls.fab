@@ -3,6 +3,9 @@
 # Usage: ls [OPTION]... [FILE]...
 # Exit status: 0 on success, 1 on minor problems, 2 on serious trouble
 
+ex "../lib/norma/hal/solum" importa solum
+ex "../lib/norma/hal/consolum" importa consolum
+
 @ cli "ls"
 @ versio "0.1.0"
 @ descriptio "List directory contents"
@@ -32,8 +35,52 @@
 # Positional
 @ operandus ceteri textus paths descriptio "Files or directories to list"
 
-incipit argumenta args exitus code {
-    # TODO: Implementation
-    scribe "ls: not yet implemented"
-    code = 1
+incipiet argumenta args exitus code {
+    # Default to current directory if no paths given
+    varia paths = args.paths
+    si paths.longitudo == 0 {
+        paths = ["."]
+    }
+
+    # Process each path
+    ex paths pro path {
+        tempta {
+            # Check if path exists
+            si non solum.exstat(path) {
+                consolum.errorLineam("ls: cannot access '" + path + "': No such file or directory")
+                code = 1
+                perge
+            }
+
+            # If it's a file, just print it
+            si solum.estLimae(path) {
+                consolum.fundeLineam(path)
+                perge
+            }
+
+            # List directory contents
+            varia lista<textus> entries = cede solum.elenca(path)
+
+            # Filter hidden files unless -a or -A
+            si non args.a et non args.A {
+                entries = entries.filtrata(pro textus e: non e.initium("."))
+            }
+            secus si args.A {
+                # -A: show hidden but not . and ..
+                entries = entries.filtrata(pro textus e: e != "." et e != "..")
+            }
+
+            # Sort alphabetically (default)
+            entries = entries.ordinata()
+
+            # Print each entry
+            ex entries pro entry {
+                consolum.fundeLineam(entry)
+            }
+        }
+        cape err {
+            consolum.errorLineam("ls: " + err textatum)
+            code = 1
+        }
+    }
 }

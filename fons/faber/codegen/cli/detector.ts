@@ -424,7 +424,8 @@ export function detectCliProgram(program: Program, filePath?: string): CliDetect
                 break;
             }
 
-            case 'IncipitStatement': {
+            case 'IncipitStatement':
+            case 'IncipietStatement': {
                 if (stmt.annotations && stmt.annotations.length > 0) {
                     mainInfo.incipit = { annotations: stmt.annotations };
                 }
