@@ -11,8 +11,11 @@
 ex "../../../ast/sententia" importa Sententia, IteratioGenus, CapeClausula
 ex "../../../ast/expressia" importa Expressia
 ex "../nucleus" importa TsGenerator
+ex "../../shared/syntaxis" importa SYNTAXIS_TS
+ex "../../shared/iteratio" importa genAmbitusIteratio
+ex "../revocata" importa creaTsRevocata
 
-# External declarations - implementations live in index.fab
+# External declarations
 ex "../expressia/index" importa genExpressia
 ex "./index" importa genSententia
 
@@ -34,8 +37,36 @@ functio estTabula(Expressia expr, TsGenerator g) -> bivalens {
 
 @ publica
 functio genIteratio(IteratioGenus species, textus variabilis, Expressia iterabile, Sententia corpus, bivalens asynca, ignotum cape, TsGenerator g) -> textus {
-    # WHY: JavaScript Maps don't support for-in iteration.
-    #      When iterating keys with 'de tabula pro key', we must use .keys() method.
+    fixum rev = creaTsRevocata()
+
+    # Check for range expression - use shared handler
+    discerne iterabile {
+        casu AmbitusExpressia ut a {
+            g.intraProfundum()
+            fixum body = genSententia(corpus, g)
+            g.exiProfundum()
+
+            fixum initium = genExpressia(a.initium, g)
+            fixum finis = genExpressia(a.finis, g)
+
+            redde genAmbitusIteratio(
+                variabilis,
+                initium,
+                finis,
+                a.inclusivum qua bivalens,
+                a.gradus,
+                body,
+                asynca,
+                cape,
+                g,
+                SYNTAXIS_TS,
+                rev
+            )
+        }
+        ceterum { }
+    }
+
+    # Regular iteration - TS-specific for-of/for-in handling
     varia keyword = "of"
     varia iterStr = genExpressia(iterabile, g)
 
@@ -54,31 +85,6 @@ functio genIteratio(IteratioGenus species, textus variabilis, Expressia iterabil
     g.intraProfundum()
     fixum body = genSententia(corpus, g)
     g.exiProfundum()
-
-    # WHY: Ranges become traditional for loops for efficiency.
-    discerne iterabile {
-        casu AmbitusExpressia ut a {
-            fixum initium = genExpressia(a.initium, g)
-            fixum finis = genExpressia(a.finis, g)
-            fixum op = (a.inclusivum qua bivalens) sic "<=" secus "<"
-
-            varia incrementum = scriptum("§++", variabilis)
-            si nonnihil a.gradus {
-                incrementum = scriptum("§ += §", variabilis, genExpressia(a.gradus qua Expressia, g))
-            }
-
-            fixum header = scriptum("for §(let § = §; § § §; §)", asyncPrefix, variabilis, initium, variabilis, op, finis, incrementum)
-            fixum loop = scriptum("§§ {\n§\n§}", g.ind(), header, body, g.ind())
-
-            si nonnihil cape {
-                fixum c = cape qua CapeClausula
-                redde scriptum("§try {\n§\n§} catch (§) §", g.ind(), loop, g.ind(), c.param, genSententia(c.corpus, g))
-            }
-
-            redde loop
-        }
-        ceterum { }
-    }
 
     fixum loop = scriptum("§for §(const § § §) {\n§\n§}", g.ind(), asyncPrefix, variabilis, keyword, iterStr, body, g.ind())
 

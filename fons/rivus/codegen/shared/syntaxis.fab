@@ -18,8 +18,13 @@ genus ScopusSyntaxis {
     # Loops
     textus dumVerbum         # "while" for TS/Zig, "for" for Go
 
+    # Range loops (for x = 0; x < 10; x++)
+    textus forVarDecl        # "let " for TS, "" for Go/Zig
+    textus forVarAssign      # " = " for TS, " := " for Go, " = " for Zig
+
     # Feature support
     bivalens habetCape       # TS has try/catch, Go/Zig/Rust do not
+    bivalens habetAsync      # TS has async iteration, others do not
 }
 
 # TypeScript syntax
@@ -31,7 +36,10 @@ fixum SYNTAXIS_TS = finge ScopusSyntaxis {
     sinVerbum: "else if",
     aequaleOp: "===",
     dumVerbum: "while",
-    habetCape: verum
+    forVarDecl: "let ",
+    forVarAssign: " = ",
+    habetCape: verum,
+    habetAsync: verum
 }
 
 # Go syntax
@@ -43,5 +51,8 @@ fixum SYNTAXIS_GO = finge ScopusSyntaxis {
     sinVerbum: "else if",
     aequaleOp: "==",
     dumVerbum: "for",
-    habetCape: falsum
+    forVarDecl: "",
+    forVarAssign: " := ",
+    habetCape: falsum,
+    habetAsync: falsum
 }

@@ -9,33 +9,48 @@
 ex "../../../ast/sententia" importa Sententia, IteratioGenus
 ex "../../../ast/expressia" importa Expressia
 ex "../nucleus" importa GoGenerator
+ex "../../shared/syntaxis" importa SYNTAXIS_GO
+ex "../../shared/iteratio" importa genAmbitusIteratio
+ex "../revocata" importa creaGoRevocata
 ex "../expressia/index" importa genExpressia
 ex "./index" importa genSententia
 
 @ publica
 functio genIteratio(IteratioGenus species, textus variabilis, Expressia iterabile, Sententia corpus, GoGenerator g) -> textus {
-    g.intraProfundum()
-    fixum body = genSententia(corpus, g)
-    g.exiProfundum()
+    fixum rev = creaGoRevocata()
 
-    # Check for range expression (AmbitusExpressia) - use traditional for loop
+    # Check for range expression - use shared handler
     discerne iterabile {
         casu AmbitusExpressia ut a {
+            g.intraProfundum()
+            fixum body = genSententia(corpus, g)
+            g.exiProfundum()
+
             fixum initium = genExpressia(a.initium, g)
             fixum finis = genExpressia(a.finis, g)
-            fixum op = (a.inclusivum qua bivalens) sic "<=" secus "<"
 
-            varia incrementum = scriptum("§++", variabilis)
-            si nonnihil a.gradus {
-                incrementum = scriptum("§ += §", variabilis, genExpressia(a.gradus qua Expressia, g))
-            }
-
-            redde scriptum("§for § := §; § § §; § {\n§\n§}", g.ind(), variabilis, initium, variabilis, op, finis, incrementum, body, g.ind())
+            redde genAmbitusIteratio(
+                variabilis,
+                initium,
+                finis,
+                a.inclusivum qua bivalens,
+                a.gradus,
+                body,
+                falsum,
+                nihil,
+                g,
+                SYNTAXIS_GO,
+                rev
+            )
         }
         ceterum { }
     }
 
-    # Regular iteration
+    # Regular iteration - Go-specific range syntax
+    g.intraProfundum()
+    fixum body = genSententia(corpus, g)
+    g.exiProfundum()
+
     fixum iterStr = genExpressia(iterabile, g)
 
     si species == IteratioGenus.De {
