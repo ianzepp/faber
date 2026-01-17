@@ -259,6 +259,42 @@ describe('Semantic Analyzer', () => {
             expect(errors.length).toBeGreaterThan(0);
             expect(errors[0]!.message).toContain('no type annotation or initializer');
         });
+
+        it('warns about == nihil pattern', () => {
+            const source = `
+        varia numerus? x = nihil
+        si x == nihil { }
+      `;
+            const { errors } = analyzeSource(source);
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors[0]!.message).toContain('nulla');
+            expect(errors[0]!.message).toContain('nonnulla');
+        });
+
+        it('warns about != nihil pattern', () => {
+            const source = `
+        varia numerus? x = nihil
+        si x != nihil { }
+      `;
+            const { errors } = analyzeSource(source);
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors[0]!.message).toContain('nulla');
+            expect(errors[0]!.message).toContain('nonnulla');
+        });
+
+        it('warns about nihil == x pattern', () => {
+            const source = `
+        varia numerus? x = nihil
+        si nihil == x { }
+      `;
+            const { errors } = analyzeSource(source);
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors[0]!.message).toContain('nulla');
+            expect(errors[0]!.message).toContain('nonnulla');
+        });
     });
 
     describe('Control Flow', () => {

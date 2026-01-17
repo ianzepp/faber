@@ -55,6 +55,7 @@ export enum SemanticErrorCode {
     InvalidModifierContext = 'S019',
     ConflictingModifiers = 'S020',
     ExitusRequiresVacuumReturn = 'S021',
+    NihilEqualityComparison = 'S022',
     // Import resolution errors
     ModuleNotFound = 'S012',
     ModuleParseError = 'S014',
@@ -150,5 +151,9 @@ export const SEMANTIC_ERRORS = {
     [SemanticErrorCode.ExitusRequiresVacuumReturn]: {
         text: (returnType: string) => `Modifier 'exitus' requires vacuum return type, but function returns '${returnType}'`,
         help: "Functions with 'exitus' cannot have a return value. Remove the return type or use 'redde' without a value.",
+    },
+    [SemanticErrorCode.NihilEqualityComparison]: {
+        text: (operator: string) => `Use 'nulla' or 'nonnulla' unary operators instead of '${operator} nihil'`,
+        help: "For null checks, prefer 'nulla x' (is null/empty) or 'nonnulla x' (is not null/empty) over '== nihil' or '!= nihil'.",
     },
 } as const;

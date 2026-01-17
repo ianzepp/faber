@@ -1333,6 +1333,15 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
         // Equality operators: ==, !=
         if (['==', '!='].includes(node.operator)) {
+            // Warn about == nihil / != nihil patterns
+            const isLeftNihil = node.left.type === 'Literal' && node.left.value === null;
+            const isRightNihil = node.right.type === 'Literal' && node.right.value === null;
+
+            if (isLeftNihil || isRightNihil) {
+                const { text, help } = SEMANTIC_ERRORS[SemanticErrorCode.NihilEqualityComparison];
+                error(`${text(node.operator)}\n${help}`, node.position);
+            }
+
             node.resolvedType = BIVALENS;
 
             return BIVALENS;
