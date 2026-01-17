@@ -131,7 +131,7 @@ Faber uses a consistent `keyword expr VERB name { body }` pattern for scoped con
 | `si`              | `si expr { }`                            | —       | conditional    |
 | `custodi`         | `custodi { si expr { } }`                | —       | guard clauses  |
 | `elige`           | `elige expr { si val { } }`              | —       | switch         |
-| `discerne`        | `discerne expr { si Variant pro x { } }` | `x`     | pattern match  |
+| `discerne`        | `discerne expr { casu Variant pro x { } }` | `x`     | pattern match  |
 | `in`              | `in expr { }`                            | —       | mutation scope |
 
 ## Primitive Types

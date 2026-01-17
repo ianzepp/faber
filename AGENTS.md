@@ -20,7 +20,7 @@ functio adde(T elem) -> vacuum
 ```
 
 **Build pipeline:**
-1. `fons/norma/*.fab` → `bun run build:norma` → `norma-registry.gen.ts` (for faber) and `norma-registry.gen.fab` (for rivus)
+1. `fons/norma/*.fab` → `bun run build:norma` → `norma.<target>.gen.ts` (for faber) and `norma.gen.fab` (for rivus)
 2. Codegen calls `getNormaTranslation(target, type, method)` to get the translation
 3. Method calls like `myList.adde(x)` become `myList.push(x)` in TypeScript output
 
@@ -74,12 +74,6 @@ opus/                   # Build outputs ("opus" = work/product)
 └── rivus/fons/         # Compiled rivus source by target
     ├── ts/             # TypeScript output
     └── zig/            # Zig output
-
-consilia/               # Design documents ("consilia" = plans/advice)
-├── futura/             # Proposed features (not yet implemented)
-├── completa/           # Implemented features (reference docs)
-├── archived/           # Superseded or rejected proposals
-└── cleanup/            # Refactoring notes
 
 scripta/                # Build and utility scripts
 editors/                # Editor integrations (syntax highlighting, etc.)
@@ -346,7 +340,7 @@ tempta...cape   # tempta { } cape err { }       - error handling
 dum             # dum cond { }                  - while loop
 si              # si cond { }                   - conditional
 elige           # elige val { si case { } }     - switch
-discerne        # discern val { si Var { } }    - pattern match
+discerne        # discerne val { casu Var { } }  - pattern match
 ```
 
 ### Return Type Verbs
