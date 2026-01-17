@@ -37,7 +37,7 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
     try {
         await mkdir(dirname(outPath), { recursive: true });
 
-        const result = await $`${FABER_BIN} compile ${fabPath} -o ${outPath}`.nothrow().quiet();
+        const result = await $`${FABER_BIN} compile ${fabPath} -o ${outPath} --strip-tests`.nothrow().quiet();
 
         if (result.exitCode !== 0) {
             const stderr = result.stderr.toString().trim();

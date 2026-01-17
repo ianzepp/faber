@@ -91,6 +91,7 @@ Options:
   -o, --output <file>    Output file (default: stdout)
   -t, --target ts        Target language (only 'ts' supported)
   -c, --check            Check formatting without writing (format command)
+  --strip-tests          Strip test blocks (probandum/proba) from output
   -h, --help             Show this help
   -v, --version          Show version
 
@@ -160,10 +161,11 @@ function getDisplayName(inputFile: string): string {
  *
  * @param inputFile - Path to .fab source file
  * @param outputFile - Optional output file path (defaults to stdout)
- * @param silent - If true, don't print to stdout (for use by run command)
+ * @param options - Emit options
  * @returns Generated TypeScript source code as string
  */
-async function emit(inputFile: string, outputFile?: string, silent = false): Promise<string> {
+async function emit(inputFile: string, outputFile?: string, options: { silent?: boolean; stripTests?: boolean } = {}): Promise<string> {
+    const { silent = false, stripTests = false } = options;
     const source = await readSource(inputFile);
     const displayName = getDisplayName(inputFile);
 
@@ -229,7 +231,8 @@ async function emit(inputFile: string, outputFile?: string, silent = false): Pro
     try {
         // WHY: Pass filePath to enable CLI module resolution (@ imperia ex module)
         // WHY: Pass subsidiaImports to enable HAL import resolution
-        output = generate(program, { filePath, subsidiaImports });
+        // WHY: keepRelativeImports=true because output directory structure mirrors source
+        output = generate(program, { filePath, subsidiaImports, keepRelativeImports: true, stripTests });
     } catch (err) {
         // WHY: Codegen errors should display cleanly
         const message = err instanceof Error ? err.message : String(err);
@@ -262,7 +265,7 @@ async function emit(inputFile: string, outputFile?: string, silent = false): Pro
  * @param inputFile - Path to .fab source file
  */
 async function run(inputFile: string): Promise<void> {
-    const ts = await emit(inputFile, undefined, true);
+    const ts = await emit(inputFile, undefined, { silent: true });
 
     // WHY: Bun can execute TypeScript directly - write to temp file and run
     const tempFile = `/tmp/faber-${Date.now()}.ts`;
@@ -482,6 +485,7 @@ if (command === '-v' || command === '--version') {
 let inputFile: string | undefined;
 let outputFile: string | undefined;
 let checkOnly = false;
+let stripTests = false;
 
 // WHY: Scan all args, options can appear anywhere, non-option is the file
 for (let i = 1; i < args.length; i++) {
@@ -498,6 +502,8 @@ for (let i = 1; i < args.length; i++) {
         // WHY: Accept -t ts for compatibility with build scripts, but ignore since ts is the only target
     } else if (arg === '-c' || arg === '--check') {
         checkOnly = true;
+    } else if (arg === '--strip-tests') {
+        stripTests = true;
     } else if (arg.startsWith('-') && arg !== '-') {
         console.error(`Error: Unknown option '${arg}'`);
         process.exit(1);
@@ -518,7 +524,7 @@ switch (command) {
     case 'emit':
     case 'compile':
     case 'finge':
-        await emit(effectiveInputFile, outputFile);
+        await emit(effectiveInputFile, outputFile, { stripTests });
         break;
     case 'run':
     case 'curre':
