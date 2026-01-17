@@ -2,10 +2,10 @@
 #
 # Generates error returns for errata-modified functions.
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus
-ex "../nucleus" importa GoGenerator
-ex "../expressia/index" importa genExpressia
-ex "../typus" importa zeroValueForType
+§ ex "../../../ast/expressia" importa Expressia, LitteraGenus
+§ ex "../nucleus" importa GoGenerator
+§ ex "../expressia/index" importa genExpressia
+§ ex "../typus" importa zeroValueForType
 
 functio genErrataError(Expressia argumentum, GoGenerator g) -> textus {
     g.requisita.errors = verum

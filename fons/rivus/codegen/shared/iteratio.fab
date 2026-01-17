@@ -8,11 +8,11 @@
 #   ex 0..10 pro i { ... }     -> for i := 0; i < 10; i++ { ... }       (Go)
 #   ex 0 usque 10 pro i { ... } -> for (let i = 0; i <= 10; i++) { ... } (TS)
 
-ex "../../ast/sententia" importa CapeClausula
-ex "../../ast/expressia" importa Expressia
-ex "./syntaxis" importa ScopusSyntaxis
-ex "./revocata" importa Revocata
-ex "./generans" importa Generans
+§ ex "../../ast/sententia" importa CapeClausula
+§ ex "../../ast/expressia" importa Expressia
+§ ex "./syntaxis" importa ScopusSyntaxis
+§ ex "./revocata" importa Revocata
+§ ex "./generans" importa Generans
 
 # Generates a traditional for loop from range parameters.
 # Returns the loop string, optionally wrapped in try/catch.

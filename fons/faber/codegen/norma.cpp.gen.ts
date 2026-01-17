@@ -101,6 +101,74 @@ export const norma: Record<string, NormaCollection> = {
     }
     , "innatum": "std::cmath"
   },
+  "tabula": {
+    "methods": {
+      "pone": {
+        "template": "§0.insert_or_assign(§1, §2)",
+        "params": ["ego","k","v"]
+      },
+      "accipe": {
+        "template": "§0.at(§1)",
+        "params": ["ego","k"]
+      },
+      "accipeAut": {
+        "template": "(§0.contains(§1) ? §0.at(§1) : §2)",
+        "params": ["ego","k","def"]
+      },
+      "habet": {
+        "template": "§0.contains(§1)",
+        "params": ["ego","k"]
+      },
+      "dele": {
+        "template": "§0.erase(§1)",
+        "params": ["ego","k"]
+      },
+      "longitudo": {
+        "template": "§.size()",
+        "params": ["ego"]
+      },
+      "vacua": {
+        "template": "§.empty()",
+        "params": ["ego"]
+      },
+      "purga": {
+        "method": "clear"
+      },
+      "claves": {
+        "template": "§ | std::views::keys",
+        "params": ["ego"]
+      },
+      "valores": {
+        "template": "§ | std::views::values",
+        "params": ["ego"]
+      },
+      "paria": {
+        "template": "§",
+        "params": ["ego"]
+      },
+      "selecta": {
+        "template": "faber::tabula_selecta(§0, §1)",
+        "params": ["ego","claves"]
+      },
+      "omissa": {
+        "template": "faber::tabula_omissa(§0, §1)",
+        "params": ["ego","claves"]
+      },
+      "conflata": {
+        "template": "faber::tabula_conflata(§0, §1)",
+        "params": ["ego","alia"]
+      },
+      "inversa": {
+        "template": "faber::tabula_inversa(§)",
+        "params": ["ego"]
+      },
+      "inLista": {
+        "template": "faber::tabula_in_lista(§)",
+        "params": ["ego"]
+      },
+    }
+    , "innatum": "std::unordered_map"
+  },
   "numerus": {
     "methods": {
       "absolutum": {
@@ -158,6 +226,114 @@ export const norma: Record<string, NormaCollection> = {
       }
     }
     , "innatum": "double"
+  },
+  "textus": {
+    "methods": {
+      "longitudo": {
+        "template": "§.length()",
+        "params": ["ego"]
+      },
+      "sectio": {
+        "template": "§.substr(§, § - §)",
+        "params": ["ego","start","end"]
+      },
+      "continet": {
+        "template": "(§.find(§) != std::string::npos)",
+        "params": ["ego","sub"]
+      },
+      "initium": {
+        "template": "(§.rfind(§, 0) == 0)",
+        "params": ["ego","prefix"]
+      },
+      "finis": {
+        "template": "(§.size() >= §.size() && §.compare(§.size() - §.size(), §.size(), §) == 0)",
+        "params": ["ego","suffix"]
+      },
+      "maiuscula": {
+        "template": "[&]{ auto s = §; std::transform(s.begin(), s.end(), s.begin(), ::toupper); return s; }()",
+        "params": ["ego"]
+      },
+      "minuscula": {
+        "template": "[&]{ auto s = §; std::transform(s.begin(), s.end(), s.begin(), ::tolower); return s; }()",
+        "params": ["ego"]
+      },
+      "recide": {
+        "template": "[&]{ auto s = §; s.erase(0, s.find_first_not_of(\\\" \\\\t\\\\n\\\\r\\\")); s.erase(s.find_last_not_of(\\\" \\\\t\\\\n\\\\r\\\") + 1); return s; }()",
+        "params": ["ego"]
+      },
+      "divide": {
+        "template": "@compileError(\\\"No single-expression split in C++ - use manual loop\\\")",
+        "params": ["ego","sep"]
+      },
+      "muta": {
+        "template": "std::regex_replace(§, std::regex(§), §)",
+        "params": ["ego","old","new"]
+      }
+    }
+    , "innatum": "std::string"
+  },
+  "copia": {
+    "methods": {
+      "adde": {
+        "method": "insert"
+      },
+      "habet": {
+        "template": "§0.contains(§1)",
+        "params": ["ego","elem"]
+      },
+      "dele": {
+        "template": "§0.erase(§1)",
+        "params": ["ego","elem"]
+      },
+      "longitudo": {
+        "template": "§.size()",
+        "params": ["ego"]
+      },
+      "vacua": {
+        "template": "§.empty()",
+        "params": ["ego"]
+      },
+      "purga": {
+        "method": "clear"
+      },
+      "valores": {
+        "template": "§",
+        "params": ["ego"]
+      },
+      "perambula": {
+        "template": "std::ranges::for_each(§0, §1)",
+        "params": ["ego","fn"]
+      },
+      "unio": {
+        "template": "faber::copia_unio(§0, §1)",
+        "params": ["ego","alia"]
+      },
+      "intersectio": {
+        "template": "faber::copia_intersectio(§0, §1)",
+        "params": ["ego","alia"]
+      },
+      "differentia": {
+        "template": "faber::copia_differentia(§0, §1)",
+        "params": ["ego","alia"]
+      },
+      "symmetrica": {
+        "template": "faber::copia_symmetrica(§0, §1)",
+        "params": ["ego","alia"]
+      },
+      "subcopia": {
+        "template": "faber::copia_subcopia(§0, §1)",
+        "params": ["ego","alia"]
+      },
+      "supercopia": {
+        "template": "faber::copia_supercopia(§0, §1)",
+        "params": ["ego","alia"]
+      },
+      "inLista": {
+        "template": "faber::copia_in_lista(§)",
+        "params": ["ego"]
+      }
+    }
+    , "innatum": "std::unordered_set"
   },
   "lista": {
     "methods": {
@@ -369,186 +545,24 @@ export const norma: Record<string, NormaCollection> = {
       }
     }
     , "innatum": "std::vector"
-  },
-  "copia": {
-    "methods": {
-      "adde": {
-        "method": "insert"
-      },
-      "habet": {
-        "template": "§0.contains(§1)",
-        "params": ["ego","elem"]
-      },
-      "dele": {
-        "template": "§0.erase(§1)",
-        "params": ["ego","elem"]
-      },
-      "longitudo": {
-        "template": "§.size()",
-        "params": ["ego"]
-      },
-      "vacua": {
-        "template": "§.empty()",
-        "params": ["ego"]
-      },
-      "purga": {
-        "method": "clear"
-      },
-      "valores": {
-        "template": "§",
-        "params": ["ego"]
-      },
-      "perambula": {
-        "template": "std::ranges::for_each(§0, §1)",
-        "params": ["ego","fn"]
-      },
-      "unio": {
-        "template": "faber::copia_unio(§0, §1)",
-        "params": ["ego","alia"]
-      },
-      "intersectio": {
-        "template": "faber::copia_intersectio(§0, §1)",
-        "params": ["ego","alia"]
-      },
-      "differentia": {
-        "template": "faber::copia_differentia(§0, §1)",
-        "params": ["ego","alia"]
-      },
-      "symmetrica": {
-        "template": "faber::copia_symmetrica(§0, §1)",
-        "params": ["ego","alia"]
-      },
-      "subcopia": {
-        "template": "faber::copia_subcopia(§0, §1)",
-        "params": ["ego","alia"]
-      },
-      "supercopia": {
-        "template": "faber::copia_supercopia(§0, §1)",
-        "params": ["ego","alia"]
-      },
-      "inLista": {
-        "template": "faber::copia_in_lista(§)",
-        "params": ["ego"]
-      }
-    }
-    , "innatum": "std::unordered_set"
-  },
-  "tabula": {
-    "methods": {
-      "pone": {
-        "template": "§0.insert_or_assign(§1, §2)",
-        "params": ["ego","k","v"]
-      },
-      "accipe": {
-        "template": "§0.at(§1)",
-        "params": ["ego","k"]
-      },
-      "accipeAut": {
-        "template": "(§0.contains(§1) ? §0.at(§1) : §2)",
-        "params": ["ego","k","def"]
-      },
-      "habet": {
-        "template": "§0.contains(§1)",
-        "params": ["ego","k"]
-      },
-      "dele": {
-        "template": "§0.erase(§1)",
-        "params": ["ego","k"]
-      },
-      "longitudo": {
-        "template": "§.size()",
-        "params": ["ego"]
-      },
-      "vacua": {
-        "template": "§.empty()",
-        "params": ["ego"]
-      },
-      "purga": {
-        "method": "clear"
-      },
-      "claves": {
-        "template": "§ | std::views::keys",
-        "params": ["ego"]
-      },
-      "valores": {
-        "template": "§ | std::views::values",
-        "params": ["ego"]
-      },
-      "paria": {
-        "template": "§",
-        "params": ["ego"]
-      },
-      "selecta": {
-        "template": "faber::tabula_selecta(§0, §1)",
-        "params": ["ego","claves"]
-      },
-      "omissa": {
-        "template": "faber::tabula_omissa(§0, §1)",
-        "params": ["ego","claves"]
-      },
-      "conflata": {
-        "template": "faber::tabula_conflata(§0, §1)",
-        "params": ["ego","alia"]
-      },
-      "inversa": {
-        "template": "faber::tabula_inversa(§)",
-        "params": ["ego"]
-      },
-      "inLista": {
-        "template": "faber::tabula_in_lista(§)",
-        "params": ["ego"]
-      },
-    }
-    , "innatum": "std::unordered_map"
-  },
-  "textus": {
-    "methods": {
-      "longitudo": {
-        "template": "§.length()",
-        "params": ["ego"]
-      },
-      "sectio": {
-        "template": "§.substr(§, § - §)",
-        "params": ["ego","start","end"]
-      },
-      "continet": {
-        "template": "(§.find(§) != std::string::npos)",
-        "params": ["ego","sub"]
-      },
-      "initium": {
-        "template": "(§.rfind(§, 0) == 0)",
-        "params": ["ego","prefix"]
-      },
-      "finis": {
-        "template": "(§.size() >= §.size() && §.compare(§.size() - §.size(), §.size(), §) == 0)",
-        "params": ["ego","suffix"]
-      },
-      "maiuscula": {
-        "template": "[&]{ auto s = §; std::transform(s.begin(), s.end(), s.begin(), ::toupper); return s; }()",
-        "params": ["ego"]
-      },
-      "minuscula": {
-        "template": "[&]{ auto s = §; std::transform(s.begin(), s.end(), s.begin(), ::tolower); return s; }()",
-        "params": ["ego"]
-      },
-      "recide": {
-        "template": "[&]{ auto s = §; s.erase(0, s.find_first_not_of(\\\" \\\\t\\\\n\\\\r\\\")); s.erase(s.find_last_not_of(\\\" \\\\t\\\\n\\\\r\\\") + 1); return s; }()",
-        "params": ["ego"]
-      },
-      "divide": {
-        "template": "@compileError(\\\"No single-expression split in C++ - use manual loop\\\")",
-        "params": ["ego","sep"]
-      },
-      "muta": {
-        "template": "std::regex_replace(§, std::regex(§), §)",
-        "params": ["ego","old","new"]
-      }
-    }
-    , "innatum": "std::string"
   }
 };
 
 export const radixForms: Record<string, Record<string, string[]>> = {
+  "tabula": {
+    "pone": ["pon","imperativus"],
+    "dele": ["del","imperativus"],
+    "purga": ["purg","imperativus"],
+    "selecta": ["select","perfectum"],
+    "omissa": ["omis","perfectum"],
+    "conflata": ["confl","perfectum"],
+    "inversa": ["inver","perfectum"]
+  },
+  "copia": {
+    "adde": ["add","imperativus"],
+    "dele": ["del","imperativus"],
+    "purga": ["purg","imperativus"]
+  },
   "lista": {
     "adde": ["add","imperativus","perfectum"],
     "praepone": ["praepon","imperativus","perfectum"],
@@ -566,19 +580,5 @@ export const radixForms: Record<string, Record<string, string[]>> = {
     "ordina": ["ordin","imperativus","perfectum"],
     "inverte": ["invert","imperativus"],
     "miscita": ["misc","perfectum"]
-  },
-  "copia": {
-    "adde": ["add","imperativus"],
-    "dele": ["del","imperativus"],
-    "purga": ["purg","imperativus"]
-  },
-  "tabula": {
-    "pone": ["pon","imperativus"],
-    "dele": ["del","imperativus"],
-    "purga": ["purg","imperativus"],
-    "selecta": ["select","perfectum"],
-    "omissa": ["omis","perfectum"],
-    "conflata": ["confl","perfectum"],
-    "inversa": ["inver","perfectum"]
-  },
+  }
 };

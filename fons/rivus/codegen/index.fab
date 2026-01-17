@@ -12,12 +12,12 @@
 # ======
 # Throws if validation fails. Use validateOnly() for non-throwing checks.
 
-ex "../ast/sententia" importa Sententia
-ex "./validitor" importa validateCompatibilitatem, formatValidatioErrores
-ex "./validitor" importa ValidatioPolitia, POLITIA_STRICTA, POLITIA_RELAXATA
-ex "./validitor" importa validatioSuccessit, ValidatioError
-ex "./ts/index" importa generateTs, generateTsWithTests, generateTsWithOptions
-ex "./go/index" importa generateGo
+§ ex "../ast/sententia" importa Sententia
+§ ex "./validitor" importa validateCompatibilitatem, formatValidatioErrores
+§ ex "./validitor" importa ValidatioPolitia, POLITIA_STRICTA, POLITIA_RELAXATA
+§ ex "./validitor" importa validatioSuccessit, ValidatioError
+§ ex "./ts/index" importa generateTs, generateTsWithTests, generateTsWithOptions
+§ ex "./go/index" importa generateGo
 
 # =============================================================================
 # PUBLIC API

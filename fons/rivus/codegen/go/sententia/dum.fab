@@ -3,12 +3,12 @@
 # TRANSFORMS:
 #   dum x > 0 { ... }  -> for x > 0 { ... }
 
-ex "../../../ast/sententia" importa Sententia
-ex "../../../ast/expressia" importa Expressia
-ex "../nucleus" importa GoGenerator
-ex "../../shared/syntaxis" importa SYNTAXIS_GO
-ex "../../shared/dum" importa genDumLogica
-ex "../revocata" importa creaGoRevocata
+§ ex "../../../ast/sententia" importa Sententia
+§ ex "../../../ast/expressia" importa Expressia
+§ ex "../nucleus" importa GoGenerator
+§ ex "../../shared/syntaxis" importa SYNTAXIS_GO
+§ ex "../../shared/dum" importa genDumLogica
+§ ex "../revocata" importa creaGoRevocata
 
 @ publica
 functio genDum(Expressia condicio, Sententia corpus, GoGenerator g) -> textus {

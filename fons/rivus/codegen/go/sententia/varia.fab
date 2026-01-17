@@ -10,12 +10,12 @@
 # Struct literals, slices, maps, etc. cannot be const. We use var for all
 # declarations to ensure compatibility with any value type.
 
-ex "../../../ast/sententia" importa VariaGenus, Visibilitas
-ex "../../../ast/expressia" importa Expressia
-ex "../../../ast/typus" importa TypusAnnotatio
-ex "../nucleus" importa GoGenerator
-ex "../typus" importa genTypus
-ex "../expressia/index" importa genExpressia
+§ ex "../../../ast/sententia" importa VariaGenus, Visibilitas
+§ ex "../../../ast/expressia" importa Expressia
+§ ex "../../../ast/typus" importa TypusAnnotatio
+§ ex "../nucleus" importa GoGenerator
+§ ex "../typus" importa genTypus
+§ ex "../expressia/index" importa genExpressia
 
 @ publica
 functio genVaria(VariaGenus species, textus nomen, ignotum adnotatioTypus, ignotum valor, bivalens externa, ignotum visibilitas, GoGenerator g) -> textus {

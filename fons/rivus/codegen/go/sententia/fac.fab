@@ -4,11 +4,11 @@
 #   fac { ... }              -> { ... }
 #   fac { ... } dum x > 0    -> for { ... if !(x > 0) { break } }
 
-ex "../../../ast/sententia" importa Sententia
-ex "../../../ast/expressia" importa Expressia
-ex "../nucleus" importa GoGenerator
-ex "../expressia/index" importa genExpressia
-ex "./index" importa genSententia
+§ ex "../../../ast/sententia" importa Sententia
+§ ex "../../../ast/expressia" importa Expressia
+§ ex "../nucleus" importa GoGenerator
+§ ex "../expressia/index" importa genExpressia
+§ ex "./index" importa genSententia
 
 @ publica
 functio genFac(Sententia corpus, ignotum condicio, GoGenerator g) -> textus {

@@ -6,10 +6,10 @@
 #   incipit { ... }                        -> func main() { ... }
 #   incipit ergo cura arena fit alloc { }  -> func main() { ... } (ignore arena)
 
-ex "../../../ast/sententia" importa Sententia
-ex "../nucleus" importa GoGenerator
+§ ex "../../../ast/sententia" importa Sententia
+§ ex "../nucleus" importa GoGenerator
 
-ex "./index" importa genSententia
+§ ex "./index" importa genSententia
 
 @ publica
 functio genIncipit(ignotum corpus, ignotum ergo, GoGenerator g) -> textus {

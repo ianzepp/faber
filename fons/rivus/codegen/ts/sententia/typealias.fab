@@ -7,12 +7,12 @@
 #   typus Foo = typeof Bar -> type Foo = typeof Bar
 #   @ publica typus X = Y  -> export type X = Y
 
-ex "../../../ast/typus" importa TypusAnnotatio
-ex "../../../ast/sententia" importa Visibilitas
-ex "../nucleus" importa TsGenerator
+§ ex "../../../ast/typus" importa TypusAnnotatio
+§ ex "../../../ast/sententia" importa Visibilitas
+§ ex "../nucleus" importa TsGenerator
 
 # External declarations - implementations live in index.fab
-ex "../typus" importa genTypus
+§ ex "../typus" importa genTypus
 
 @ publica
 functio genTypusAlias(textus nomen, TypusAnnotatio adnotatioTypus, ignotum scopusNomen, ignotum visibilitas, TsGenerator g) -> textus {

@@ -28,10 +28,10 @@
 # - numerus = number
 # - fractus = float (broken number)
 
-ex "../ast/positio" importa Locus
-ex "../ast/lexema" importa Symbolum, SymbolumGenus, VerbumId
-ex "../lexicon/verba" importa Dialectus, verbumId
-ex "./errores" importa LexorError, LexorErrorCodice, error
+§ ex "../ast/positio" importa Locus
+§ ex "../ast/lexema" importa Symbolum, SymbolumGenus, VerbumId
+§ ex "../lexicon/verba" importa Dialectus, verbumId
+§ ex "./errores" importa LexorError, LexorErrorCodice, error
 
 # Result of lexical analysis
 @ publicum

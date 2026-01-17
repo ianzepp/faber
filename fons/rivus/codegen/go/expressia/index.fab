@@ -2,13 +2,13 @@
 #
 # Routes expression AST nodes to their specific generators.
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, ClausuraParametrum, ClausuraCorpus
-ex "../../../ast/sententia" importa Sententia, VariaGenus
-ex "../../../ast/typus" importa TypusAnnotatio
-ex "../nucleus" importa GoGenerator
-ex "../typus" importa genTypus
-ex "./littera" importa genLittera
-ex "./scriptum" importa genScriptum
+§ ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, ClausuraParametrum, ClausuraCorpus
+§ ex "../../../ast/sententia" importa Sententia, VariaGenus
+§ ex "../../../ast/typus" importa TypusAnnotatio
+§ ex "../nucleus" importa GoGenerator
+§ ex "../typus" importa genTypus
+§ ex "./littera" importa genLittera
+§ ex "./scriptum" importa genScriptum
 
 # =============================================================================
 # EXPRESSION DISPATCH

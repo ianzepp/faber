@@ -2,22 +2,22 @@
 #
 # Routes expression AST nodes to their specific generators.
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, ClausuraParametrum, MorphologiaInvocatio, ClausuraCorpus
-ex "../../../ast/expressia" importa AbFiltrum, CatenaGradus, AssignatioExpressia, MembrumExpressia
-ex "../../../ast/expressia" importa InnatumExpressia, ObiectumExpressia, SeriesExpressia, Nomen, AmbitusExpressia
-ex "../../../ast/expressia" importa Littera, UnariaExpressia
-ex "../../../ast/sententia" importa Sententia, VariaGenus
-ex "../../../ast/typus" importa TypusAnnotatio, TypusParametrum, Typus
-ex "../nucleus" importa TsGenerator
-ex "../typus" importa genTypus
-ex "../../../parser/morphologia" importa parseMethodum
-ex "../../radices" importa generaListaMethodum
-ex "../../norma.gen" importa getNormaTranslation, VerteTranslation
-ex "./littera" importa genLittera, genLitteraExemplar
-ex "./scriptum" importa genScriptum
-ex "./ambitus" importa genAmbitusExpressia
-ex "./est" importa genEstExpressia, genEstExpressiaNegata
-ex "./obiectum" importa genObiectum
+§ ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, ClausuraParametrum, MorphologiaInvocatio, ClausuraCorpus
+§ ex "../../../ast/expressia" importa AbFiltrum, CatenaGradus, AssignatioExpressia, MembrumExpressia
+§ ex "../../../ast/expressia" importa InnatumExpressia, ObiectumExpressia, SeriesExpressia, Nomen, AmbitusExpressia
+§ ex "../../../ast/expressia" importa Littera, UnariaExpressia
+§ ex "../../../ast/sententia" importa Sententia, VariaGenus
+§ ex "../../../ast/typus" importa TypusAnnotatio, TypusParametrum, Typus
+§ ex "../nucleus" importa TsGenerator
+§ ex "../typus" importa genTypus
+§ ex "../../../parser/morphologia" importa parseMethodum
+§ ex "../../radices" importa generaListaMethodum
+§ ex "../../norma.gen" importa getNormaTranslation, VerteTranslation
+§ ex "./littera" importa genLittera, genLitteraExemplar
+§ ex "./scriptum" importa genScriptum
+§ ex "./ambitus" importa genAmbitusExpressia
+§ ex "./est" importa genEstExpressia, genEstExpressiaNegata
+§ ex "./obiectum" importa genObiectum
 # =============================================================================
 # EXPRESSION DISPATCH
 # =============================================================================

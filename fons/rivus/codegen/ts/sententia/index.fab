@@ -4,40 +4,40 @@
 #
 # WHY: Uses scriptum() for string formatting to avoid method call return type bugs.
 
-ex "../../../ast/sententia" importa Sententia, VariaGenus, ScribeGradus, IteratioGenus, CuratorGenus
-ex "../../../ast/sententia" importa Parametrum, CampusDeclaratio, EligeCasus, VariansCasus
-ex "../../../ast/sententia" importa CustodiClausula, CapeClausula, OrdoMembrum, VariansDeclaratio
-ex "../../../ast/sententia" importa ImportaSpecificator, PactumMethodus, TypusParametrum
-ex "../../../ast/sententia" importa SeriesDestructuraElementum
-ex "../../../ast/sententia" importa Visibilitas, ProbaModificator, PraeparaTempus, ReddeVerbum
-ex "../../../ast/expressia" importa Expressia, LitteraGenus
-ex "../../../ast/typus" importa TypusAnnotatio
-ex "../nucleus" importa TsGenerator
-ex "../typus" importa genTypus
-ex "../expressia/index" importa genExpressia
-ex "./varia" importa genVaria
-ex "./si" importa genSi
-ex "./importa" importa genImporta, genDestructura, genSeriesDestructura
-ex "./functio" importa genFunctio, genParametrum
-ex "./genus" importa genGenus, genCampus
-ex "./pactum" importa genPactum
-ex "./typealias" importa genTypusAlias
-ex "./ordo" importa genOrdo
-ex "./discretio" importa genDiscretio
-ex "./dum" importa genDum
-ex "./iteratio" importa genIteratio
-ex "./elige" importa genElige
-ex "./discerne" importa genDiscerne
-ex "./custodi" importa genCustodi
-ex "./tempta" importa genTempta
-ex "./iace" importa genIace
-ex "./fac" importa genFac
-ex "./adfirma" importa genAdfirma
-ex "./scribe" importa genScribe
-ex "./redde" importa genRedde
-ex "./incipit" importa genIncipit, genIncipiet
-ex "./cura" importa genCura
-ex "./proba" importa genProbandum, genProba, genPraepara, genProbaHarness
+§ ex "../../../ast/sententia" importa Sententia, VariaGenus, ScribeGradus, IteratioGenus, CuratorGenus
+§ ex "../../../ast/sententia" importa Parametrum, CampusDeclaratio, EligeCasus, VariansCasus
+§ ex "../../../ast/sententia" importa CustodiClausula, CapeClausula, OrdoMembrum, VariansDeclaratio
+§ ex "../../../ast/sententia" importa ImportaSpecificator, PactumMethodus, TypusParametrum
+§ ex "../../../ast/sententia" importa SeriesDestructuraElementum
+§ ex "../../../ast/sententia" importa Visibilitas, ProbaModificator, PraeparaTempus, ReddeVerbum
+§ ex "../../../ast/expressia" importa Expressia, LitteraGenus
+§ ex "../../../ast/typus" importa TypusAnnotatio
+§ ex "../nucleus" importa TsGenerator
+§ ex "../typus" importa genTypus
+§ ex "../expressia/index" importa genExpressia
+§ ex "./varia" importa genVaria
+§ ex "./si" importa genSi
+§ ex "./importa" importa genImporta, genDestructura, genSeriesDestructura
+§ ex "./functio" importa genFunctio, genParametrum
+§ ex "./genus" importa genGenus, genCampus
+§ ex "./pactum" importa genPactum
+§ ex "./typealias" importa genTypusAlias
+§ ex "./ordo" importa genOrdo
+§ ex "./discretio" importa genDiscretio
+§ ex "./dum" importa genDum
+§ ex "./iteratio" importa genIteratio
+§ ex "./elige" importa genElige
+§ ex "./discerne" importa genDiscerne
+§ ex "./custodi" importa genCustodi
+§ ex "./tempta" importa genTempta
+§ ex "./iace" importa genIace
+§ ex "./fac" importa genFac
+§ ex "./adfirma" importa genAdfirma
+§ ex "./scribe" importa genScribe
+§ ex "./redde" importa genRedde
+§ ex "./incipit" importa genIncipit, genIncipiet
+§ ex "./cura" importa genCura
+§ ex "./proba" importa genProbandum, genProba, genPraepara, genProbaHarness
 
 # =============================================================================
 # STATEMENT DISPATCH

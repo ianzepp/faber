@@ -16,11 +16,11 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # Commands
-ex "./cli/commands/emit" importa emitCommand
-ex "./cli/commands/build" importa buildCommand
-ex "./cli/commands/parse" importa parseCommand
-ex "./cli/commands/check" importa checkCommand
-ex "./cli/commands/test" importa testCommand
+§ ex "./cli/commands/emit" importa emitCommand
+§ ex "./cli/commands/build" importa buildCommand
+§ ex "./cli/commands/parse" importa parseCommand
+§ ex "./cli/commands/check" importa checkCommand
+§ ex "./cli/commands/test" importa testCommand
 
 @ cli "rivus"
 @ versio "0.1.0"

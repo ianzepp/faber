@@ -2,17 +2,17 @@
 #
 # Provides the Analyzator genus that manages semantic analysis state.
 
-ex "./typi" importa SemanticTypus, TEXTUS, NUMERUS, FRACTUS, BIVALENS, NIHIL, VACUUM, IGNOTUM
-ex "./typi" importa primitivumTypus, genericumTypus, functioTypus, usitatumTypus
-ex "./typi" importa formaTypum, assignabileAd, typiAequales
-ex "./scopus" importa Scopus, Symbolum, SymbolumSpecies, ScopusSpecies
-ex "./scopus" importa creaScopumGlobalem, creaScopum, definieSymbolum, quaereSymbolum
-ex "./errores" importa SemanticErrorCodice, SemanticErrorNuntius
-ex "./modulus" importa ModulusResolutum
-ex "../ast/positio" importa Locus
-ex "../ast/radix" importa Programma
-ex "../ast/sententia" importa Sententia
-ex "../ast/expressia" importa Expressia
+§ ex "./typi" importa SemanticTypus, TEXTUS, NUMERUS, FRACTUS, BIVALENS, NIHIL, VACUUM, IGNOTUM
+§ ex "./typi" importa primitivumTypus, genericumTypus, functioTypus, usitatumTypus
+§ ex "./typi" importa formaTypum, assignabileAd, typiAequales
+§ ex "./scopus" importa Scopus, Symbolum, SymbolumSpecies, ScopusSpecies
+§ ex "./scopus" importa creaScopumGlobalem, creaScopum, definieSymbolum, quaereSymbolum
+§ ex "./errores" importa SemanticErrorCodice, SemanticErrorNuntius
+§ ex "./modulus" importa ModulusResolutum
+§ ex "../ast/positio" importa Locus
+§ ex "../ast/radix" importa Programma
+§ ex "../ast/sententia" importa Sententia
+§ ex "../ast/expressia" importa Expressia
 
 # ============================================================================
 # SEMANTIC ERROR

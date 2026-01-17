@@ -49,11 +49,11 @@
 # - exitus = exit/output
 # - dependentia = dependency
 
-ex "../resolvitor" importa Resolvitor
-ex "../../ast/positio" importa Locus
-ex "../../ast/lexema" importa SymbolumGenus
-ex "../../ast/radix" importa SectioAnnotatio
-ex "../errores" importa ParserErrorCodice
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../../ast/positio" importa Locus
+§ ex "../../ast/lexema" importa SymbolumGenus
+§ ex "../../ast/radix" importa SectioAnnotatio
+§ ex "../errores" importa ParserErrorCodice
 
 # ============================================================================
 # TYPES

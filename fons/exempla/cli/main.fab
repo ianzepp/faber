@@ -4,7 +4,7 @@
 # Compile: faber compile main.fab -o cli.ts
 # Run: bun cli.ts --help
 
-ex "./commands/greet" importa * ut greetModule
+§ ex "./commands/greet" importa * ut greetModule
 
 @ cli "example"
 @ versio "1.0.0"

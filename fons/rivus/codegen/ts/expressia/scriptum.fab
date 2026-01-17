@@ -8,11 +8,11 @@
 #   scriptum("§1 before §0", a, b)  -> `${b} before ${a}` (indexed)
 #   scriptum("no args")             -> "no args"
 
-ex "../../../ast/expressia" importa Expressia
-ex "../nucleus" importa TsGenerator
+§ ex "../../../ast/expressia" importa Expressia
+§ ex "../nucleus" importa TsGenerator
 
 # External declaration - implementation lives in index.fab
-ex "./index" importa genExpressia
+§ ex "./index" importa genExpressia
 
 # Generate scriptum (format string) expression
 # Supports both § (positional) and §0, §1, etc. (indexed) placeholders

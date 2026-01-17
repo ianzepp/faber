@@ -15,12 +15,12 @@
 # - fac = do/make
 # - adfirma = affirm/assert
 
-ex "../resolvitor" importa Resolvitor
-ex "../../ast/positio" importa Locus
-ex "../../ast/expressia" importa Expressia
-ex "../../ast/sententia" importa Sententia, MassaSententia, CapeClausula
-ex "../../ast/lexema" importa SymbolumGenus
-ex "../errores" importa ParserErrorCodice
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../../ast/positio" importa Locus
+§ ex "../../ast/expressia" importa Expressia
+§ ex "../../ast/sententia" importa Sententia, MassaSententia, CapeClausula
+§ ex "../../ast/lexema" importa SymbolumGenus
+§ ex "../errores" importa ParserErrorCodice
 
 # ============================================================================
 # TRY-CATCH-FINALLY

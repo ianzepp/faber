@@ -20,12 +20,12 @@
 # - vide = see/debug
 # - mone = warn
 
-ex "../resolvitor" importa Resolvitor
-ex "../../ast/positio" importa Locus
-ex "../../ast/expressia" importa Expressia
-ex "../../ast/sententia" importa Sententia, ScribeGradus
-ex "../../ast/lexema" importa SymbolumGenus
-ex "../errores" importa ParserErrorCodice
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../../ast/positio" importa Locus
+§ ex "../../ast/expressia" importa Expressia
+§ ex "../../ast/sententia" importa Sententia, ScribeGradus
+§ ex "../../ast/lexema" importa SymbolumGenus
+§ ex "../errores" importa ParserErrorCodice
 
 # Parse return statement
 #
@@ -36,7 +36,7 @@ ex "../errores" importa ParserErrorCodice
 @ publica
 functio parseReddeSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
-    fixum locus = p.locusActualis() 
+    fixum locus = p.locusActualis()
 
     # Consume 'redde' keyword
     p.expectaVerbum("redde", ParserErrorCodice.ExpectaturRedde)

@@ -13,26 +13,26 @@
 # - declara = declare
 # - imperium = control (command)
 
-ex "../resolvitor" importa Resolvitor
-ex "../../ast/positio" importa Locus
-ex "../../ast/expressia" importa Expressia
-ex "../../ast/sententia" importa Sententia, ScribeGradus, MorphologiaDeclaratio, Visibilitas, ProbaModificator
-ex "../../ast/lexema" importa SymbolumGenus, VerbumId
-ex "../../ast/radix" importa NodusRadix
-ex "../errores" importa ParserErrorCodice
-ex "./annotatio" importa parseAnnotationes, parseSectiones
-ex "../../ast/radix" importa SectioAnnotatio
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../../ast/positio" importa Locus
+§ ex "../../ast/expressia" importa Expressia
+§ ex "../../ast/sententia" importa Sententia, ScribeGradus, MorphologiaDeclaratio, Visibilitas, ProbaModificator
+§ ex "../../ast/lexema" importa SymbolumGenus, VerbumId
+§ ex "../../ast/radix" importa NodusRadix
+§ ex "../errores" importa ParserErrorCodice
+§ ex "./annotatio" importa parseAnnotationes, parseSectiones
+§ ex "../../ast/radix" importa SectioAnnotatio
 
 # Import statement parsers from submodules
-ex "./actio" importa parseReddeSententia, parseRumpeSententia, parsePergeSententia, parseIaceSententia, parseScribeSententia
-ex "./declara" importa parseFunctioDeclaratio, parseGenusDeclaratio, parsePactumDeclaratio, parseOrdoDeclaratio, parseDiscretioDeclaratio, parseTypusAliasDeclaratio, parseImportaSententia
-ex "./error" importa parseTemptaSententia, parseFacSententia, parseAdfirmaSententia
-ex "./imperium" importa parseSiSententia, parseDumSententia, parseExSententia, parseDeSententia
-ex "./fluxus" importa parseEligeSententia, parseDiscerneSententia, parseCustodiSententia
-ex "./initus" importa parseIncipitSententia, parseIncipietSententia, parseCuraSententia, parseAdSententia
-ex "./massa" importa parseMassaSententia, parseExpressiaSententia
-ex "./varia" importa parseVariaSententia, parseDestructuraSententia, parseNomenVelVerbum
-ex "./proba" importa parseProbandumSententia, parseProbaSententia, parsePraeparaMassa
+§ ex "./actio" importa parseReddeSententia, parseRumpeSententia, parsePergeSententia, parseIaceSententia, parseScribeSententia
+§ ex "./declara" importa parseFunctioDeclaratio, parseGenusDeclaratio, parsePactumDeclaratio, parseOrdoDeclaratio, parseDiscretioDeclaratio, parseTypusAliasDeclaratio, parseImportaSententia
+§ ex "./error" importa parseTemptaSententia, parseFacSententia, parseAdfirmaSententia
+§ ex "./imperium" importa parseSiSententia, parseDumSententia, parseExSententia, parseDeSententia
+§ ex "./fluxus" importa parseEligeSententia, parseDiscerneSententia, parseCustodiSententia
+§ ex "./initus" importa parseIncipitSententia, parseIncipietSententia, parseCuraSententia, parseAdSententia
+§ ex "./massa" importa parseMassaSententia, parseExpressiaSententia
+§ ex "./varia" importa parseVariaSententia, parseDestructuraSententia, parseNomenVelVerbum
+§ ex "./proba" importa parseProbandumSententia, parseProbaSententia, parsePraeparaMassa
 
 # Parse a statement
 #

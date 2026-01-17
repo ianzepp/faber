@@ -20,14 +20,14 @@
 #   as return type syntax. Re-enable in parser/sententia/declara.fab when Go/Zig backends
 #   are ready to support the protocol. See preamble/index.fab for runtime definitions.
 
-ex "../../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, Visibilitas, ReddeVerbum
-ex "../../../ast/typus" importa TypusAnnotatio
-ex "../nucleus" importa TsGenerator
+§ ex "../../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, Visibilitas, ReddeVerbum
+§ ex "../../../ast/typus" importa TypusAnnotatio
+§ ex "../nucleus" importa TsGenerator
 
 # External declarations - implementations live in index.fab
-ex "../expressia/index" importa genExpressia
-ex "./index" importa genSententia
-ex "../typus" importa genTypus
+§ ex "../expressia/index" importa genExpressia
+§ ex "./index" importa genSententia
+§ ex "../typus" importa genTypus
 
 @ publica
 functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> parametra, ignotum reddeVerbum, ignotum typusReditus, ignotum corpus, bivalens asynca, bivalens generator, bivalens structor, ignotum visibilitas, bivalens abstracta, bivalens externa, TsGenerator g) -> textus {

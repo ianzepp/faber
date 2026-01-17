@@ -101,6 +101,87 @@ export const norma: Record<string, NormaCollection> = {
     }
     , "innatum": "std.math"
   },
+  "tabula": {
+    "methods": {
+      "pone": {
+        "template": "§0.pone(§3, §1, §2)",
+        "params": ["ego","k","v","alloc"]
+      },
+      "accipe": {
+        "template": "§0.accipe(§1)",
+        "params": ["ego","k"]
+      },
+      "accipeAut": {
+        "template": "§0.accipeAut(§1, §2)",
+        "params": ["ego","k","def"]
+      },
+      "habet": {
+        "template": "§0.habet(§1)",
+        "params": ["ego","k"]
+      },
+      "dele": {
+        "template": "_ = §0.dele(§1)",
+        "params": ["ego","k"]
+      },
+      "longitudo": {
+        "template": "§.longitudo()",
+        "params": ["ego"]
+      },
+      "vacua": {
+        "template": "§.vacua()",
+        "params": ["ego"]
+      },
+      "purga": {
+        "template": "§.purga()",
+        "params": ["ego"]
+      },
+      "claves": {
+        "template": "§.claves()",
+        "params": ["ego"]
+      },
+      "valores": {
+        "template": "§.valores()",
+        "params": ["ego"]
+      },
+      "paria": {
+        "template": "§.paria()",
+        "params": ["ego"]
+      },
+      "selecta": {
+        "template": "@compileError(\\\"selecta not implemented for Zig - use explicit loop\\\")",
+        "params": ["ego","claves"]
+      },
+      "omissa": {
+        "template": "@compileError(\\\"omissa not implemented for Zig - use explicit loop\\\")",
+        "params": ["ego","claves"]
+      },
+      "conflata": {
+        "template": "§0.conflata(&§1)",
+        "params": ["ego","alia"]
+      },
+      "inversa": {
+        "template": "@compileError(\\\"inversa not implemented for Zig - use explicit loop\\\")",
+        "params": ["ego"]
+      },
+      "mappaValores": {
+        "template": "@compileError(\\\"mappaValores not implemented for Zig - use explicit loop\\\")",
+        "params": ["ego","fn"]
+      },
+      "mappaClaves": {
+        "template": "@compileError(\\\"mappaClaves not implemented for Zig - use explicit loop\\\")",
+        "params": ["ego","fn"]
+      },
+      "inLista": {
+        "template": "§.inLista(§)",
+        "params": ["ego","alloc"]
+      },
+      "inObjectum": {
+        "template": "@compileError(\\\"inObjectum not implemented for Zig - Zig has no object type\\\")",
+        "params": ["ego"]
+      }
+    }
+    , "innatum": "Tabula"
+  },
   "numerus": {
     "methods": {
       "absolutum": {
@@ -158,6 +239,116 @@ export const norma: Record<string, NormaCollection> = {
       }
     }
     , "innatum": "f64"
+  },
+  "textus": {
+    "methods": {
+      "longitudo": {
+        "template": "§.len",
+        "params": ["ego"]
+      },
+      "sectio": {
+        "template": "§[§..§]",
+        "params": ["ego","start","end"]
+      },
+      "continet": {
+        "template": "(std.mem.indexOf(u8, §, §) != null)",
+        "params": ["ego","sub"]
+      },
+      "initium": {
+        "template": "std.mem.startsWith(u8, §, §)",
+        "params": ["ego","prefix"]
+      },
+      "finis": {
+        "template": "std.mem.endsWith(u8, §, §)",
+        "params": ["ego","suffix"]
+      },
+      "maiuscula": {
+        "template": "std.ascii.upperString(§)",
+        "params": ["ego"]
+      },
+      "minuscula": {
+        "template": "std.ascii.lowerString(§)",
+        "params": ["ego"]
+      },
+      "recide": {
+        "template": "std.mem.trim(u8, §, \\\" \\\\t\\\\n\\\\r\\\")",
+        "params": ["ego"]
+      },
+      "divide": {
+        "template": "@compileError(\\\"Use std.mem.splitSequence for Zig\\\")",
+        "params": ["ego","sep"]
+      },
+      "muta": {
+        "template": "@compileError(\\\"Use std.mem.replace for Zig\\\")",
+        "params": ["ego","old","new"]
+      }
+    }
+    , "innatum": "[]const u8"
+  },
+  "copia": {
+    "methods": {
+      "adde": {
+        "template": "§0.adde(§2, §1)",
+        "params": ["ego","elem","alloc"]
+      },
+      "habet": {
+        "template": "§0.habet(§1)",
+        "params": ["ego","elem"]
+      },
+      "dele": {
+        "template": "_ = §0.dele(§1)",
+        "params": ["ego","elem"]
+      },
+      "longitudo": {
+        "template": "§.longitudo()",
+        "params": ["ego"]
+      },
+      "vacua": {
+        "template": "§.vacua()",
+        "params": ["ego"]
+      },
+      "purga": {
+        "template": "§.purga()",
+        "params": ["ego"]
+      },
+      "valores": {
+        "template": "§.valores()",
+        "params": ["ego"]
+      },
+      "perambula": {
+        "template": "@compileError(\\\"perambula not implemented for Zig - use 'ex set.valores() pro item { ... }' loop\\\")",
+        "params": ["ego","fn"]
+      },
+      "unio": {
+        "template": "@compileError(\\\"unio not implemented for Zig - use explicit loop to merge sets\\\")",
+        "params": ["ego","alia"]
+      },
+      "intersectio": {
+        "template": "@compileError(\\\"intersectio not implemented for Zig - use explicit loop\\\")",
+        "params": ["ego","alia"]
+      },
+      "differentia": {
+        "template": "@compileError(\\\"differentia not implemented for Zig - use explicit loop\\\")",
+        "params": ["ego","alia"]
+      },
+      "symmetrica": {
+        "template": "@compileError(\\\"symmetrica not implemented for Zig - use explicit loop\\\")",
+        "params": ["ego","alia"]
+      },
+      "subcopia": {
+        "template": "@compileError(\\\"subcopia not implemented for Zig - use explicit loop\\\")",
+        "params": ["ego","alia"]
+      },
+      "supercopia": {
+        "template": "@compileError(\\\"supercopia not implemented for Zig - use explicit loop\\\")",
+        "params": ["ego","alia"]
+      },
+      "inLista": {
+        "template": "@compileError(\\\"inLista not implemented for Zig - iterate with ex...pro into ArrayList\\\")",
+        "params": ["ego"]
+      }
+    }
+    , "innatum": "Copia"
   },
   "lista": {
     "methods": {
@@ -311,201 +502,24 @@ export const norma: Record<string, NormaCollection> = {
       },
     }
     , "innatum": "Lista"
-  },
-  "copia": {
-    "methods": {
-      "adde": {
-        "template": "§0.adde(§2, §1)",
-        "params": ["ego","elem","alloc"]
-      },
-      "habet": {
-        "template": "§0.habet(§1)",
-        "params": ["ego","elem"]
-      },
-      "dele": {
-        "template": "_ = §0.dele(§1)",
-        "params": ["ego","elem"]
-      },
-      "longitudo": {
-        "template": "§.longitudo()",
-        "params": ["ego"]
-      },
-      "vacua": {
-        "template": "§.vacua()",
-        "params": ["ego"]
-      },
-      "purga": {
-        "template": "§.purga()",
-        "params": ["ego"]
-      },
-      "valores": {
-        "template": "§.valores()",
-        "params": ["ego"]
-      },
-      "perambula": {
-        "template": "@compileError(\\\"perambula not implemented for Zig - use 'ex set.valores() pro item { ... }' loop\\\")",
-        "params": ["ego","fn"]
-      },
-      "unio": {
-        "template": "@compileError(\\\"unio not implemented for Zig - use explicit loop to merge sets\\\")",
-        "params": ["ego","alia"]
-      },
-      "intersectio": {
-        "template": "@compileError(\\\"intersectio not implemented for Zig - use explicit loop\\\")",
-        "params": ["ego","alia"]
-      },
-      "differentia": {
-        "template": "@compileError(\\\"differentia not implemented for Zig - use explicit loop\\\")",
-        "params": ["ego","alia"]
-      },
-      "symmetrica": {
-        "template": "@compileError(\\\"symmetrica not implemented for Zig - use explicit loop\\\")",
-        "params": ["ego","alia"]
-      },
-      "subcopia": {
-        "template": "@compileError(\\\"subcopia not implemented for Zig - use explicit loop\\\")",
-        "params": ["ego","alia"]
-      },
-      "supercopia": {
-        "template": "@compileError(\\\"supercopia not implemented for Zig - use explicit loop\\\")",
-        "params": ["ego","alia"]
-      },
-      "inLista": {
-        "template": "@compileError(\\\"inLista not implemented for Zig - iterate with ex...pro into ArrayList\\\")",
-        "params": ["ego"]
-      }
-    }
-    , "innatum": "Copia"
-  },
-  "tabula": {
-    "methods": {
-      "pone": {
-        "template": "§0.pone(§3, §1, §2)",
-        "params": ["ego","k","v","alloc"]
-      },
-      "accipe": {
-        "template": "§0.accipe(§1)",
-        "params": ["ego","k"]
-      },
-      "accipeAut": {
-        "template": "§0.accipeAut(§1, §2)",
-        "params": ["ego","k","def"]
-      },
-      "habet": {
-        "template": "§0.habet(§1)",
-        "params": ["ego","k"]
-      },
-      "dele": {
-        "template": "_ = §0.dele(§1)",
-        "params": ["ego","k"]
-      },
-      "longitudo": {
-        "template": "§.longitudo()",
-        "params": ["ego"]
-      },
-      "vacua": {
-        "template": "§.vacua()",
-        "params": ["ego"]
-      },
-      "purga": {
-        "template": "§.purga()",
-        "params": ["ego"]
-      },
-      "claves": {
-        "template": "§.claves()",
-        "params": ["ego"]
-      },
-      "valores": {
-        "template": "§.valores()",
-        "params": ["ego"]
-      },
-      "paria": {
-        "template": "§.paria()",
-        "params": ["ego"]
-      },
-      "selecta": {
-        "template": "@compileError(\\\"selecta not implemented for Zig - use explicit loop\\\")",
-        "params": ["ego","claves"]
-      },
-      "omissa": {
-        "template": "@compileError(\\\"omissa not implemented for Zig - use explicit loop\\\")",
-        "params": ["ego","claves"]
-      },
-      "conflata": {
-        "template": "§0.conflata(&§1)",
-        "params": ["ego","alia"]
-      },
-      "inversa": {
-        "template": "@compileError(\\\"inversa not implemented for Zig - use explicit loop\\\")",
-        "params": ["ego"]
-      },
-      "mappaValores": {
-        "template": "@compileError(\\\"mappaValores not implemented for Zig - use explicit loop\\\")",
-        "params": ["ego","fn"]
-      },
-      "mappaClaves": {
-        "template": "@compileError(\\\"mappaClaves not implemented for Zig - use explicit loop\\\")",
-        "params": ["ego","fn"]
-      },
-      "inLista": {
-        "template": "§.inLista(§)",
-        "params": ["ego","alloc"]
-      },
-      "inObjectum": {
-        "template": "@compileError(\\\"inObjectum not implemented for Zig - Zig has no object type\\\")",
-        "params": ["ego"]
-      }
-    }
-    , "innatum": "Tabula"
-  },
-  "textus": {
-    "methods": {
-      "longitudo": {
-        "template": "§.len",
-        "params": ["ego"]
-      },
-      "sectio": {
-        "template": "§[§..§]",
-        "params": ["ego","start","end"]
-      },
-      "continet": {
-        "template": "(std.mem.indexOf(u8, §, §) != null)",
-        "params": ["ego","sub"]
-      },
-      "initium": {
-        "template": "std.mem.startsWith(u8, §, §)",
-        "params": ["ego","prefix"]
-      },
-      "finis": {
-        "template": "std.mem.endsWith(u8, §, §)",
-        "params": ["ego","suffix"]
-      },
-      "maiuscula": {
-        "template": "std.ascii.upperString(§)",
-        "params": ["ego"]
-      },
-      "minuscula": {
-        "template": "std.ascii.lowerString(§)",
-        "params": ["ego"]
-      },
-      "recide": {
-        "template": "std.mem.trim(u8, §, \\\" \\\\t\\\\n\\\\r\\\")",
-        "params": ["ego"]
-      },
-      "divide": {
-        "template": "@compileError(\\\"Use std.mem.splitSequence for Zig\\\")",
-        "params": ["ego","sep"]
-      },
-      "muta": {
-        "template": "@compileError(\\\"Use std.mem.replace for Zig\\\")",
-        "params": ["ego","old","new"]
-      }
-    }
-    , "innatum": "[]const u8"
   }
 };
 
 export const radixForms: Record<string, Record<string, string[]>> = {
+  "tabula": {
+    "pone": ["pon","imperativus"],
+    "dele": ["del","imperativus"],
+    "purga": ["purg","imperativus"],
+    "selecta": ["select","perfectum"],
+    "omissa": ["omis","perfectum"],
+    "conflata": ["confl","perfectum"],
+    "inversa": ["inver","perfectum"]
+  },
+  "copia": {
+    "adde": ["add","imperativus"],
+    "dele": ["del","imperativus"],
+    "purga": ["purg","imperativus"]
+  },
   "lista": {
     "adde": ["add","imperativus","perfectum"],
     "praepone": ["praepon","imperativus","perfectum"],
@@ -523,19 +537,5 @@ export const radixForms: Record<string, Record<string, string[]>> = {
     "ordina": ["ordin","imperativus","perfectum"],
     "inverte": ["invert","imperativus"],
     "miscita": ["misc","perfectum"]
-  },
-  "copia": {
-    "adde": ["add","imperativus"],
-    "dele": ["del","imperativus"],
-    "purga": ["purg","imperativus"]
-  },
-  "tabula": {
-    "pone": ["pon","imperativus"],
-    "dele": ["del","imperativus"],
-    "purga": ["purg","imperativus"],
-    "selecta": ["select","perfectum"],
-    "omissa": ["omis","perfectum"],
-    "conflata": ["confl","perfectum"],
-    "inversa": ["inver","perfectum"]
-  },
+  }
 };

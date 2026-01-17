@@ -2,8 +2,8 @@
 #
 # Maps Latin type names to their TypeScript equivalents.
 
-ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum
-ex "./nucleus" importa TsGenerator
+§ ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum
+§ ex "./nucleus" importa TsGenerator
 
 # =============================================================================
 # TYPE MAPPING

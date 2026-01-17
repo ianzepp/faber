@@ -6,12 +6,12 @@
 #   si x > 0 { } sin y > 0 { }  -> if (x > 0) { } else if (y > 0) { }
 #   si ... cape e { }           -> try { if (...) {...} } catch (e) { }
 
-ex "../../../ast/sententia" importa Sententia
-ex "../../../ast/expressia" importa Expressia
-ex "../nucleus" importa TsGenerator
-ex "../../shared/syntaxis" importa SYNTAXIS_TS
-ex "../../shared/si" importa genSiLogica
-ex "../revocata" importa creaTsRevocata
+§ ex "../../../ast/sententia" importa Sententia
+§ ex "../../../ast/expressia" importa Expressia
+§ ex "../nucleus" importa TsGenerator
+§ ex "../../shared/syntaxis" importa SYNTAXIS_TS
+§ ex "../../shared/si" importa genSiLogica
+§ ex "../revocata" importa creaTsRevocata
 
 @ publica
 functio genSi(Expressia condicio, Sententia consequens, ignotum alternans, ignotum cape, TsGenerator g) -> textus {

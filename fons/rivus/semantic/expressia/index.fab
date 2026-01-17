@@ -2,21 +2,21 @@
 #
 # Routes expression AST nodes to their appropriate resolution functions.
 
-ex "../resolvitor" importa Resolvitor
-ex "../scopus" importa quaereSymbolum
-ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, BIVALENS, NIHIL, IGNOTUM
-ex "../typi" importa usitatumTypus, genericumTypus
-ex "../typi" importa formaTypum, assignabileAd
-ex "../errores" importa immutableAssignmentError, typeMismatchError, undefinedVariableError
-ex "../../ast/expressia" importa Expressia, CatenaGradus
-ex "../../ast/typus" importa TypusAnnotatio
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../scopus" importa quaereSymbolum
+§ ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, BIVALENS, NIHIL, IGNOTUM
+§ ex "../typi" importa usitatumTypus, genericumTypus
+§ ex "../typi" importa formaTypum, assignabileAd
+§ ex "../errores" importa immutableAssignmentError, typeMismatchError, undefinedVariableError
+§ ex "../../ast/expressia" importa Expressia, CatenaGradus
+§ ex "../../ast/typus" importa TypusAnnotatio
 
-ex "./primaria" importa resolveNomen, resolveLittera, resolveSeries, resolveObiectum
-ex "./binaria" importa resolveBinaria
-ex "./unaria" importa resolveUnaria
-ex "./vocatio" importa resolveVocatio, resolveMembrum
-ex "./alia" importa resolveClausura, resolveFingeExpr, resolveCedeExpr, resolveNovumExpr, resolveCondicio
-ex "../sententia/declara" importa resolveTypusAnnotatio
+§ ex "./primaria" importa resolveNomen, resolveLittera, resolveSeries, resolveObiectum
+§ ex "./binaria" importa resolveBinaria
+§ ex "./unaria" importa resolveUnaria
+§ ex "./vocatio" importa resolveVocatio, resolveMembrum
+§ ex "./alia" importa resolveClausura, resolveFingeExpr, resolveCedeExpr, resolveNovumExpr, resolveCondicio
+§ ex "../sententia/declara" importa resolveTypusAnnotatio
 
 # ============================================================================
 # MAIN DISPATCHER

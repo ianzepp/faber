@@ -9,16 +9,16 @@
 # - "norma" and "norma/*" are handled as compiler intrinsics (not files)
 # - Other paths pass through to target language (external packages)
 
-ex "./typi" importa SemanticTypus, IGNOTUM, VACUUM, functioTypus, usitatumTypus, pactumTypus
-ex "./typi" importa genusTypus, genericumTypus, primitivumTypus
-ex "./scopus" importa SymbolumSpecies
-ex "./nucleus" importa DiscretioDeclInfo, DiscretioVariansInfo
-ex "../ast/positio" importa Locus
-ex "../ast/radix" importa Programma
-ex "../ast/sententia" importa Sententia
-ex "../ast/typus" importa TypusAnnotatio, TypusParametrum
-ex "../lexor/index" importa lexare, LexorResultatum
-ex "../parser/index" importa resolvere, ParserResultatum
+§ ex "./typi" importa SemanticTypus, IGNOTUM, VACUUM, functioTypus, usitatumTypus, pactumTypus
+§ ex "./typi" importa genusTypus, genericumTypus, primitivumTypus
+§ ex "./scopus" importa SymbolumSpecies
+§ ex "./nucleus" importa DiscretioDeclInfo, DiscretioVariansInfo
+§ ex "../ast/positio" importa Locus
+§ ex "../ast/radix" importa Programma
+§ ex "../ast/sententia" importa Sententia
+§ ex "../ast/typus" importa TypusAnnotatio, TypusParametrum
+§ ex "../lexor/index" importa lexare, LexorResultatum
+§ ex "../parser/index" importa resolvere, ParserResultatum
 
 # ============================================================================
 # FILE I/O DECLARATIONS (extern - implementations injected post-build)

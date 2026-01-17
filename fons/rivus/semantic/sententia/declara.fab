@@ -2,18 +2,18 @@
 #
 # Handles: varia/fixum, functio, genus, pactum, ordo, discretio, typus
 
-ex "../resolvitor" importa Resolvitor
-ex "../typi" importa SemanticTypus, VACUUM, IGNOTUM, NIHIL, NUMERUS
-ex "../typi" importa primitivumTypus, genericumTypus, unioTypus, ignotumTypus
-ex "../typi" importa functioTypus, usitatumTypus, genusTypus, pactumTypus, ordoTypus
-ex "../typi" importa formaTypum, assignabileAd
-ex "../scopus" importa Symbolum, SymbolumSpecies, ScopusSpecies, quaereSymbolumLocale
-ex "../nucleus" importa estGenericusTypus, DiscretioDeclInfo, DiscretioVariansInfo
-ex "../errores" importa noTypeOrInitializerError, typeMismatchError, awaitOutsideAsyncError, missingFunctionBodyError
-ex "../errores" importa duplicateModifierError, invalidModifierContextError
-ex "../../ast/sententia" importa Sententia, VariaGenus, FunctioModificator, FunctioDeclaratio
-ex "../../ast/sententia" importa ImportaSpecificator, SeriesDestructuraElementum
-ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../typi" importa SemanticTypus, VACUUM, IGNOTUM, NIHIL, NUMERUS
+§ ex "../typi" importa primitivumTypus, genericumTypus, unioTypus, ignotumTypus
+§ ex "../typi" importa functioTypus, usitatumTypus, genusTypus, pactumTypus, ordoTypus
+§ ex "../typi" importa formaTypum, assignabileAd
+§ ex "../scopus" importa Symbolum, SymbolumSpecies, ScopusSpecies, quaereSymbolumLocale
+§ ex "../nucleus" importa estGenericusTypus, DiscretioDeclInfo, DiscretioVariansInfo
+§ ex "../errores" importa noTypeOrInitializerError, typeMismatchError, awaitOutsideAsyncError, missingFunctionBodyError
+§ ex "../errores" importa duplicateModifierError, invalidModifierContextError
+§ ex "../../ast/sententia" importa Sententia, VariaGenus, FunctioModificator, FunctioDeclaratio
+§ ex "../../ast/sententia" importa ImportaSpecificator, SeriesDestructuraElementum
+§ ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum
 
 @ publica
 functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> SemanticTypus {

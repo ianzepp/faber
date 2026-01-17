@@ -13,13 +13,13 @@
 # - sententia = statement
 # - expressia = expression
 
-ex "../resolvitor" importa Resolvitor
-ex "../../ast/positio" importa Locus
-ex "../../ast/expressia" importa Expressia
-ex "../../ast/sententia" importa Sententia, MassaSententia
-ex "../../ast/radix" importa Programma, SectioAnnotatio
-ex "../../ast/lexema" importa SymbolumGenus
-ex "../errores" importa ParserErrorCodice
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../../ast/positio" importa Locus
+§ ex "../../ast/expressia" importa Expressia
+§ ex "../../ast/sententia" importa Sententia, MassaSententia
+§ ex "../../ast/radix" importa Programma, SectioAnnotatio
+§ ex "../../ast/lexema" importa SymbolumGenus
+§ ex "../errores" importa ParserErrorCodice
 
 # Parse a block statement
 #

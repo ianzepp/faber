@@ -8,11 +8,11 @@
 #   { [expr]: val } -> { [expr]: val }
 #   { ...expr }     -> { ...expr }
 
-ex "../../../ast/expressia" importa Expressia, ObiectumProprietas
-ex "../nucleus" importa TsGenerator
+§ ex "../../../ast/expressia" importa Expressia, ObiectumProprietas
+§ ex "../nucleus" importa TsGenerator
 
 # External declaration - implementation lives in index.fab
-ex "./index" importa genExpressia
+§ ex "./index" importa genExpressia
 
 # Generate object literal
 @ publica

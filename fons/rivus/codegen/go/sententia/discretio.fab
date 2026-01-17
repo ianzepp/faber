@@ -16,9 +16,9 @@
 #   type Quit struct{}
 #   func (Quit) isEvent() {}
 
-ex "../../../ast/sententia" importa VariansDeclaratio, Visibilitas
-ex "../nucleus" importa GoGenerator
-ex "../typus" importa genTypus
+§ ex "../../../ast/sententia" importa VariansDeclaratio, Visibilitas
+§ ex "../nucleus" importa GoGenerator
+§ ex "../typus" importa genTypus
 
 @ publica
 functio genDiscretio(textus nomen, ignotum generaParametra, lista<VariansDeclaratio> variantes, ignotum visibilitas, GoGenerator g) -> textus {

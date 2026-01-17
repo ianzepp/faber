@@ -21,13 +21,13 @@
 # - pro = for
 # - cape = catch
 
-ex "../resolvitor" importa Resolvitor
-ex "../../ast/positio" importa Locus
-ex "../../ast/expressia" importa Expressia
-ex "../../ast/sententia" importa Sententia, CapeClausula, IteratioGenus
-ex "../../ast/lexema" importa SymbolumGenus
-ex "../errores" importa ParserErrorCodice
-ex "./massa" importa parseMassaSententia
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../../ast/positio" importa Locus
+§ ex "../../ast/expressia" importa Expressia
+§ ex "../../ast/sententia" importa Sententia, CapeClausula, IteratioGenus
+§ ex "../../ast/lexema" importa SymbolumGenus
+§ ex "../errores" importa ParserErrorCodice
+§ ex "./massa" importa parseMassaSententia
 
 # ============================================================================
 # CONDITIONAL STATEMENTS

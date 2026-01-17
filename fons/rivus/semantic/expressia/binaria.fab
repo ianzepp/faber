@@ -2,10 +2,10 @@
 #
 # Handles arithmetic, comparison, and logical operators.
 
-ex "../resolvitor" importa Resolvitor
-ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, BIVALENS, IGNOTUM, formaTypum
-ex "../errores" importa incompatibleComparisonError, nihilEqualityWarning
-ex "../../ast/expressia" importa Expressia, LitteraGenus
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, BIVALENS, IGNOTUM, formaTypum
+§ ex "../errores" importa incompatibleComparisonError, nihilEqualityWarning
+§ ex "../../ast/expressia" importa Expressia, LitteraGenus
 
 # ============================================================================
 # BINARY EXPRESSION RESOLUTION

@@ -7,8 +7,8 @@
 #   ordo Status { Active = 1, Inactive = 0 } -> enum Status { Active = 1, Inactive = 0 }
 #   @ publica ordo Color { ... }             -> export enum Color { ... }
 
-ex "../../../ast/sententia" importa OrdoMembrum, Visibilitas
-ex "../nucleus" importa TsGenerator
+§ ex "../../../ast/sententia" importa OrdoMembrum, Visibilitas
+§ ex "../nucleus" importa TsGenerator
 
 @ publica
 functio genOrdo(textus nomen, lista<OrdoMembrum> membra, ignotum visibilitas, TsGenerator g) -> textus {

@@ -6,13 +6,13 @@
 #   redde           -> return
 #   redde valor     -> return valor
 
-ex "../../../ast/expressia" importa Expressia
-ex "../../../ast/typus" importa TypusAnnotatio
-ex "../nucleus" importa GoGenerator
+§ ex "../../../ast/expressia" importa Expressia
+§ ex "../../../ast/typus" importa TypusAnnotatio
+§ ex "../nucleus" importa GoGenerator
 
 # External declaration - implementation lives in index.fab
-ex "../expressia/index" importa genExpressia
-ex "../typus" importa zeroValueForType
+§ ex "../expressia/index" importa genExpressia
+§ ex "../typus" importa zeroValueForType
 
 @ publica
 functio genRedde(ignotum valor, GoGenerator g) -> textus {

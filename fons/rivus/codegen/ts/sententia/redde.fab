@@ -7,11 +7,11 @@
 #   redde valor     -> return valor;
 #   (flumina) redde -> yield respond.ok(valor);
 
-ex "../../../ast/expressia" importa Expressia
-ex "../nucleus" importa TsGenerator
+§ ex "../../../ast/expressia" importa Expressia
+§ ex "../nucleus" importa TsGenerator
 
 # External declarations - implementations live in index.fab
-ex "../expressia/index" importa genExpressia
+§ ex "../expressia/index" importa genExpressia
 
 @ publica
 functio genRedde(ignotum valor, TsGenerator g) -> textus {

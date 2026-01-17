@@ -9,11 +9,11 @@
 #   iace expr          -> throw expr;
 #   (flumina) iace ... -> yield respond.error("EFAIL", ...); return;
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus
-ex "../nucleus" importa TsGenerator
+§ ex "../../../ast/expressia" importa Expressia, LitteraGenus
+§ ex "../nucleus" importa TsGenerator
 
 # External declarations - implementations live in index.fab
-ex "../expressia/index" importa genExpressia
+§ ex "../expressia/index" importa genExpressia
 
 @ publica
 functio genIace(bivalens fatale, Expressia argumentum, TsGenerator g) -> textus {

@@ -2,11 +2,11 @@
 #
 # Handles tempta/cape, fac...dum, and cura statements.
 
-ex "../resolvitor" importa Resolvitor
-ex "../typi" importa IGNOTUM
-ex "../scopus" importa ScopusSpecies, SymbolumSpecies
-ex "../../ast/sententia" importa Sententia, CapeClausula
-ex "../../ast/expressia" importa Expressia
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../typi" importa IGNOTUM
+§ ex "../scopus" importa ScopusSpecies, SymbolumSpecies
+§ ex "../../ast/sententia" importa Sententia, CapeClausula
+§ ex "../../ast/expressia" importa Expressia
 
 # =============================================================================
 # TRY-CATCH

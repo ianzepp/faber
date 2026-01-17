@@ -2,18 +2,18 @@
 #
 # Routes statement AST nodes to their appropriate analysis functions.
 
-ex "../resolvitor" importa Resolvitor
-ex "../../ast/sententia" importa Sententia
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../../ast/sententia" importa Sententia
 
 # Import analyzers - no circular dependency since they only use Resolvitor
-ex "./declara" importa analyzeVariaDeclaratio, analyzeFunctioDeclaratio
-ex "./declara" importa analyzeDestructuraSententia, analyzeSeriesDestructuraSententia
-ex "./declara" importa analyzeGenusDeclaratio, analyzePactumDeclaratio
-ex "./declara" importa analyzeOrdoDeclaratio, analyzeDiscretioDeclaratio, analyzeTypusAlias
-ex "./imperium" importa analyzeSi, analyzeDum, analyzeIteratio
-ex "./imperium" importa analyzeElige, analyzeDiscerne, analyzeCustodi
-ex "./actio" importa analyzeRedde, analyzeIace, analyzeScribe, analyzeAdfirma
-ex "./error" importa analyzeTempta, analyzeFac, analyzeCura
+§ ex "./declara" importa analyzeVariaDeclaratio, analyzeFunctioDeclaratio
+§ ex "./declara" importa analyzeDestructuraSententia, analyzeSeriesDestructuraSententia
+§ ex "./declara" importa analyzeGenusDeclaratio, analyzePactumDeclaratio
+§ ex "./declara" importa analyzeOrdoDeclaratio, analyzeDiscretioDeclaratio, analyzeTypusAlias
+§ ex "./imperium" importa analyzeSi, analyzeDum, analyzeIteratio
+§ ex "./imperium" importa analyzeElige, analyzeDiscerne, analyzeCustodi
+§ ex "./actio" importa analyzeRedde, analyzeIace, analyzeScribe, analyzeAdfirma
+§ ex "./error" importa analyzeTempta, analyzeFac, analyzeCura
 
 # =============================================================================
 # MAIN DISPATCHER

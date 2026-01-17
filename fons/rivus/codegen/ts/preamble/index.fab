@@ -8,7 +8,7 @@
 #   dormant - the parser no longer accepts these keywords as return syntax.
 #   Re-enable in parser/sententia/declara.fab when Go/Zig backends support the protocol.
 
-ex "../../typi" importa RequiredFeatures
+§ ex "../../typi" importa RequiredFeatures
 
 fixum PANIC = "class Panic extends Error {\n  constructor(message: string) {\n    super(message);\n    this.name = 'Panic';\n  }\n}"
 

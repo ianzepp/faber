@@ -6,10 +6,10 @@
 #   incipit { ... }  -> (unwrapped body statements)
 #   incipiet { ... } -> (async () => { ... })();
 
-ex "../../../ast/sententia" importa Sententia
-ex "../nucleus" importa TsGenerator
+§ ex "../../../ast/sententia" importa Sententia
+§ ex "../nucleus" importa TsGenerator
 
-ex "./index" importa genSententia
+§ ex "./index" importa genSententia
 
 @ publica
 functio genIncipit(ignotum corpus, ignotum ergo, TsGenerator g) -> textus {

@@ -3,7 +3,7 @@
 # WHY: Type annotations appear throughout the AST for typed declarations.
 #      Supports generics, nullable, unions, and borrow semantics.
 
-ex "./positio" importa Locus
+§ ex "./positio" importa Locus
 
 # ============================================================================
 # TYPE PARAMETERS

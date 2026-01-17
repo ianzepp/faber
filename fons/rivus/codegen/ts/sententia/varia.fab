@@ -6,12 +6,12 @@
 #   @ externa fixum z: numerus -> declare const z: number
 #   @ publica fixum x = 1     -> export const x = 1
 
-ex "../../../ast/sententia" importa VariaGenus, Visibilitas
-ex "../../../ast/expressia" importa Expressia
-ex "../../../ast/typus" importa TypusAnnotatio
-ex "../nucleus" importa TsGenerator
-ex "../typus" importa genTypus
-ex "../expressia/index" importa genExpressia
+§ ex "../../../ast/sententia" importa VariaGenus, Visibilitas
+§ ex "../../../ast/expressia" importa Expressia
+§ ex "../../../ast/typus" importa TypusAnnotatio
+§ ex "../nucleus" importa TsGenerator
+§ ex "../typus" importa genTypus
+§ ex "../expressia/index" importa genExpressia
 
 @ publica
 functio genVaria(VariaGenus species, textus nomen, ignotum adnotatioTypus, ignotum valor, bivalens externa, ignotum visibilitas, TsGenerator g) -> textus {

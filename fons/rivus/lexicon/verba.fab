@@ -3,7 +3,7 @@
 # Keyword recognition for the lexer and parser.
 # Single source of truth for keyword classification.
 
-ex "../ast/lexema" importa VerbumId
+§ ex "../ast/lexema" importa VerbumId
 
 # ============================================================================
 # DIALECT SELECTION

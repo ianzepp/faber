@@ -8,7 +8,7 @@
 #   "text"       -> "text"
 #   123          -> 123
 
-ex "../../../ast/expressia" importa LitteraGenus
+§ ex "../../../ast/expressia" importa LitteraGenus
 
 # Generate literal value
 @ publica

@@ -2,9 +2,9 @@
 #
 # Handles negation and null check operators.
 
-ex "../resolvitor" importa Resolvitor
-ex "../typi" importa SemanticTypus, NUMERUS, BIVALENS, IGNOTUM
-ex "../../ast/expressia" importa Expressia
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../typi" importa SemanticTypus, NUMERUS, BIVALENS, IGNOTUM
+§ ex "../../ast/expressia" importa Expressia
 
 # ============================================================================
 # UNARY EXPRESSION RESOLUTION

@@ -11,12 +11,12 @@
 #   expr est nihil      -> expr === null
 #   expr est lista      -> Array.isArray(expr)
 
-ex "../../../ast/expressia" importa Expressia
-ex "../../../ast/typus" importa TypusAnnotatio
-ex "../nucleus" importa TsGenerator
+§ ex "../../../ast/expressia" importa Expressia
+§ ex "../../../ast/typus" importa TypusAnnotatio
+§ ex "../nucleus" importa TsGenerator
 
 # External declaration - implementation lives in index.fab
-ex "./index" importa genExpressia
+§ ex "./index" importa genExpressia
 
 # Generate est (type check) expression
 @ publica

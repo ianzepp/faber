@@ -3,8 +3,8 @@
 # WHY: Every AST node needs position info for error messages.
 #      Comments attach to nodes for formatting preservation.
 
-ex "./positio" importa Locus
-ex "./sententia" importa Sententia
+§ ex "./positio" importa Locus
+§ ex "./sententia" importa Sententia
 
 # ============================================================================
 # COMMENT TYPES

@@ -2,25 +2,25 @@
 #
 # Routes statement AST nodes to their specific generators.
 
-ex "../../../ast/sententia" importa Sententia, Parametrum, CampusDeclaratio, ScribeGradus, VariaGenus, IteratioGenus, EligeCasus, VariansCasus, VariansDeclaratio
-ex "../../../ast/expressia" importa Expressia
-ex "../nucleus" importa GoGenerator
-ex "../expressia/index" importa genExpressia
-ex "./functio" importa genFunctio, genParametrum
-ex "./scribe" importa genScribe
-ex "./adfirma" importa genAdfirma
-ex "./redde" importa genRedde
-ex "./iace" importa genIace
-ex "./incipit" importa genIncipit, genIncipiet
-ex "./varia" importa genVaria
-ex "./si" importa genSi
-ex "./dum" importa genDum
-ex "./iteratio" importa genIteratio
-ex "./fac" importa genFac
-ex "./elige" importa genElige
-ex "./discerne" importa genDiscerne
-ex "./discretio" importa genDiscretio
-ex "./genus" importa genGenus
+§ ex "../../../ast/sententia" importa Sententia, Parametrum, CampusDeclaratio, ScribeGradus, VariaGenus, IteratioGenus, EligeCasus, VariansCasus, VariansDeclaratio
+§ ex "../../../ast/expressia" importa Expressia
+§ ex "../nucleus" importa GoGenerator
+§ ex "../expressia/index" importa genExpressia
+§ ex "./functio" importa genFunctio, genParametrum
+§ ex "./scribe" importa genScribe
+§ ex "./adfirma" importa genAdfirma
+§ ex "./redde" importa genRedde
+§ ex "./iace" importa genIace
+§ ex "./incipit" importa genIncipit, genIncipiet
+§ ex "./varia" importa genVaria
+§ ex "./si" importa genSi
+§ ex "./dum" importa genDum
+§ ex "./iteratio" importa genIteratio
+§ ex "./fac" importa genFac
+§ ex "./elige" importa genElige
+§ ex "./discerne" importa genDiscerne
+§ ex "./discretio" importa genDiscretio
+§ ex "./genus" importa genGenus
 
 # =============================================================================
 # STATEMENT DISPATCH

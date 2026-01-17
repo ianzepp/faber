@@ -17,11 +17,11 @@
 #   function __runTests(): number { ... }
 #   if (require.main === module) process.exit(__runTests())
 
-ex "../../../ast/sententia" importa Sententia, ProbaModificator, PraeparaTempus
-ex "../nucleus" importa TsGenerator
+§ ex "../../../ast/sententia" importa Sententia, ProbaModificator, PraeparaTempus
+§ ex "../nucleus" importa TsGenerator
 
 # External declarations - implementations live in index.fab
-ex "./index" importa genSententia
+§ ex "./index" importa genSententia
 
 # =============================================================================
 # HELPERS

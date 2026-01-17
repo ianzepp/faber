@@ -5,27 +5,27 @@
 # ex <source> importa * ut <alias>      - wildcard import with alias
 
 # Named imports
-ex "lodash" importa map
-ex "@hono/hono" importa Hono, Context
-ex "utils" importa helper ut h
-ex "db" importa connect, query ut q, close
+§ ex "lodash" importa map
+§ ex "@hono/hono" importa Hono, Context
+§ ex "utils" importa helper ut h
+§ ex "db" importa connect, query ut q, close
 
 # Wildcard import (alias required for TypeScript target)
-ex "@std/crypto" importa * ut crypto
+§ ex "@std/crypto" importa * ut crypto
 
 # Multiple imports from different sources
-ex "@oak/oak" importa Application
-ex "std/path" importa join, resolve
+§ ex "@oak/oak" importa Application
+§ ex "std/path" importa join, resolve
 
 # Relative imports (commented out - modules don't exist in exempla)
 # ex "./utils" importa helper
 # ex "../shared/utils" importa formatter
 
 # Many named items
-ex "helpers" importa a, b, c, d, e, f
+§ ex "helpers" importa a, b, c, d, e, f
 
 # Multiple aliases
-ex "mod" importa foo ut f, bar ut b, baz ut z
+§ ex "mod" importa foo ut f, bar ut b, baz ut z
 
 incipit {
     scribe "Import statements are declarations at module scope"

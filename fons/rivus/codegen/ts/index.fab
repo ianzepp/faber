@@ -8,11 +8,11 @@
 # WHY: Preamble generation skipped for bootstrap - features that need preambles
 # (panic, decimal, flumina) are not used by the bootstrap compiler.
 
-ex "../../ast/sententia" importa Sententia
-ex "./nucleus" importa TsGenerator, creaTsGenerator
-ex "./sententia/index" importa genSententia
-ex "./sententia/proba" importa genProbaHarness
-ex "./preamble/index" importa genPreamble
+§ ex "../../ast/sententia" importa Sententia
+§ ex "./nucleus" importa TsGenerator, creaTsGenerator
+§ ex "./sententia/index" importa genSententia
+§ ex "./sententia/proba" importa genProbaHarness
+§ ex "./preamble/index" importa genPreamble
 
 # =============================================================================
 # PUBLIC API

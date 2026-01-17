@@ -3,7 +3,7 @@
 # WHY: The tokenizer produces a stream of tokens that the parser consumes.
 #      Each token has a type, value, and position.
 
-ex "./positio" importa Locus
+§ ex "./positio" importa Locus
 
 # ============================================================================
 # TOKEN TYPES

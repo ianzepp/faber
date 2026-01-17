@@ -7,13 +7,13 @@
 #   fac { ... } dum x > 0       -> do { ... } while (x > 0);
 #   fac { ... } cape e { ... }  -> try { ... } catch (e) { ... }
 
-ex "../../../ast/sententia" importa Sententia, CapeClausula
-ex "../../../ast/expressia" importa Expressia
-ex "../nucleus" importa TsGenerator
+§ ex "../../../ast/sententia" importa Sententia, CapeClausula
+§ ex "../../../ast/expressia" importa Expressia
+§ ex "../nucleus" importa TsGenerator
 
 # External declarations - implementations live in index.fab
-ex "../expressia/index" importa genExpressia
-ex "./index" importa genSententia
+§ ex "../expressia/index" importa genExpressia
+§ ex "./index" importa genSententia
 
 @ publica
 functio genFac(Sententia corpus, ignotum condicio, ignotum cape, TsGenerator g) -> textus {

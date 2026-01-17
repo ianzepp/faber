@@ -14,14 +14,14 @@
 # - cura = care (imperative of curare)
 # - ad = to/toward (preposition for dispatch)
 
-ex "../resolvitor" importa Resolvitor
-ex "../../ast/positio" importa Locus
-ex "../../ast/expressia" importa Expressia
-ex "../../ast/sententia" importa Sententia, MassaSententia, CapeClausula, CuratorGenus, AdVinculum, AdVerbumVinculandi
-ex "../../ast/typus" importa TypusAnnotatio
-ex "../../ast/lexema" importa SymbolumGenus, VerbumId
-ex "../errores" importa ParserErrorCodice
-ex "./massa" importa parseMassaSententia
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../../ast/positio" importa Locus
+§ ex "../../ast/expressia" importa Expressia
+§ ex "../../ast/sententia" importa Sententia, MassaSententia, CapeClausula, CuratorGenus, AdVinculum, AdVerbumVinculandi
+§ ex "../../ast/typus" importa TypusAnnotatio
+§ ex "../../ast/lexema" importa SymbolumGenus, VerbumId
+§ ex "../errores" importa ParserErrorCodice
+§ ex "./massa" importa parseMassaSententia
 
 # ============================================================================
 # ENTRY POINTS

@@ -15,15 +15,15 @@
 # - discerne = distinguish (imperative of discernere)
 # - custodi = guard (imperative of custodire)
 
-ex "../resolvitor" importa Resolvitor
-ex "../nucleus" importa Parser
-ex "../../ast/positio" importa Locus
-ex "../../ast/expressia" importa Expressia
-ex "../../ast/sententia" importa Sententia, MassaSententia, EligeCasus, VariansCasus, VariansExemplar, CustodiClausula, CapeClausula
-ex "../../ast/lexema" importa SymbolumGenus
-ex "../errores" importa ParserErrorCodice
-ex "./massa" importa parseMassaSententia
-ex "./imperium" importa parseCorpus, parseCorpusAutSententia
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../nucleus" importa Parser
+§ ex "../../ast/positio" importa Locus
+§ ex "../../ast/expressia" importa Expressia
+§ ex "../../ast/sententia" importa Sententia, MassaSententia, EligeCasus, VariansCasus, VariansExemplar, CustodiClausula, CapeClausula
+§ ex "../../ast/lexema" importa SymbolumGenus
+§ ex "../errores" importa ParserErrorCodice
+§ ex "./massa" importa parseMassaSententia
+§ ex "./imperium" importa parseCorpus, parseCorpusAutSententia
 
 # ============================================================================
 # SWITCH STATEMENT (elige)

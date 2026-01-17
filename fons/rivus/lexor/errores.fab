@@ -2,7 +2,7 @@
 #
 # Centralized error definitions for lexical analysis.
 
-ex "../ast/positio" importa Locus
+§ ex "../ast/positio" importa Locus
 
 # ============================================================================
 # ERROR CODES

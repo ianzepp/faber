@@ -3,8 +3,8 @@
 # This module provides the GoGenerator genus that holds shared state
 # for Go code generation.
 
-ex "../../ast/typus" importa TypusAnnotatio
-ex "../shared/generans" importa Generans
+§ ex "../../ast/typus" importa TypusAnnotatio
+§ ex "../shared/generans" importa Generans
 
 # =============================================================================
 # REQUIRED FEATURES

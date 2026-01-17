@@ -2,11 +2,11 @@
 #
 # Handles: si, dum, ex/de...pro, elige, discerne, custodi
 
-ex "../resolvitor" importa Resolvitor
-ex "../nucleus" importa DiscretioDeclInfo
-ex "../typi" importa SemanticTypus, IGNOTUM
-ex "../scopus" importa ScopusSpecies, Symbolum, SymbolumSpecies, quaereSymbolum
-ex "../../ast/sententia" importa Sententia, VariansExemplar
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../nucleus" importa DiscretioDeclInfo
+§ ex "../typi" importa SemanticTypus, IGNOTUM
+§ ex "../scopus" importa ScopusSpecies, Symbolum, SymbolumSpecies, quaereSymbolum
+§ ex "../../ast/sententia" importa Sententia, VariansExemplar
 
 # =============================================================================
 # CONDITIONAL

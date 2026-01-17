@@ -3,11 +3,11 @@
 # Shared logic for dum (while) loops.
 # Parameterized by ScopusSyntaxis for target-specific output.
 
-ex "../../ast/sententia" importa Sententia, CapeClausula
-ex "../../ast/expressia" importa Expressia
-ex "./syntaxis" importa ScopusSyntaxis
-ex "./revocata" importa Revocata
-ex "./generans" importa Generans
+§ ex "../../ast/sententia" importa Sententia, CapeClausula
+§ ex "../../ast/expressia" importa Expressia
+§ ex "./syntaxis" importa ScopusSyntaxis
+§ ex "./revocata" importa Revocata
+§ ex "./generans" importa Generans
 
 # Main entry point - handles while loop with optional cape wrapper
 @ publica

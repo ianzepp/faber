@@ -28,14 +28,14 @@
 # - ab = from (collection DSL)
 # - catena = chain (collection DSL)
 
-ex "../resolvitor" importa Resolvitor
-ex "../../ast/positio" importa Locus
-ex "../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, ClausuraParametrum, ClausuraCorpus
-ex "../../ast/expressia" importa AbFiltrum, CatenaGradus
-ex "../../ast/typus" importa TypusAnnotatio
-ex "../../ast/lexema" importa SymbolumGenus
-ex "../../ast/sententia" importa Sententia
-ex "../errores" importa ParserErrorCodice
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../../ast/positio" importa Locus
+§ ex "../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, ClausuraParametrum, ClausuraCorpus
+§ ex "../../ast/expressia" importa AbFiltrum, CatenaGradus
+§ ex "../../ast/typus" importa TypusAnnotatio
+§ ex "../../ast/lexema" importa SymbolumGenus
+§ ex "../../ast/sententia" importa Sententia
+§ ex "../errores" importa ParserErrorCodice
 
 # ============================================================================
 # PRIMARY DISPATCHER

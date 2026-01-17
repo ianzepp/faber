@@ -3,9 +3,9 @@
 # WHY: Single file defines all expression variants for pattern matching.
 #      Parsers construct variants with `finge VariantName { ... } qua Expressia`.
 
-ex "./positio" importa Locus
-ex "./typus" importa TypusAnnotatio
-ex "./sententia" importa MassaSententia
+§ ex "./positio" importa Locus
+§ ex "./typus" importa TypusAnnotatio
+§ ex "./sententia" importa MassaSententia
 
 # ============================================================================
 # SUPPORTING TYPES

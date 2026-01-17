@@ -2,8 +2,8 @@
 #
 # Implements lexical scoping with a chain of symbol tables for name resolution.
 
-ex "./typi" importa SemanticTypus
-ex "../ast/positio" importa Locus
+§ ex "./typi" importa SemanticTypus
+§ ex "../ast/positio" importa Locus
 
 # =============================================================================
 # SYMBOL DEFINITIONS

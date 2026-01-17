@@ -10,10 +10,10 @@
 # - Applies policy (strict vs relaxed) for emulated/mismatched features
 # - Returns list of validation errors with suggestions
 
-ex "./capacitas" importa TargetCapacitas, Sustentatio, getCapacitas
-ex "./detector" importa FeatureDetector, UsitataFeatura, FeaturaClavis
-ex "./detector" importa novumDetector, featuraClavisAdTextus
-ex "../ast/sententia" importa Sententia
+§ ex "./capacitas" importa TargetCapacitas, Sustentatio, getCapacitas
+§ ex "./detector" importa FeatureDetector, UsitataFeatura, FeaturaClavis
+§ ex "./detector" importa novumDetector, featuraClavisAdTextus
+§ ex "../ast/sententia" importa Sententia
 
 # =============================================================================
 # VALIDATION POLICY

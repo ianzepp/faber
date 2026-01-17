@@ -7,13 +7,13 @@
 #   ex obj importa { a, b }        -> const { a, b } = obj;
 #   ex arr importa [a, , b]        -> const [a, , b] = arr;
 
-ex "../../../ast/sententia" importa ImportaSpecificator, VariaGenus, SeriesDestructuraElementum
-ex "../../../ast/expressia" importa Expressia
-ex "../nucleus" importa TsGenerator
-ex "../../../semantic/modulus" importa estNormaImportum
+§ ex "../../../ast/sententia" importa ImportaSpecificator, VariaGenus, SeriesDestructuraElementum
+§ ex "../../../ast/expressia" importa Expressia
+§ ex "../nucleus" importa TsGenerator
+§ ex "../../../semantic/modulus" importa estNormaImportum
 
 # External declaration - implementation lives in index.fab
-ex "../expressia/index" importa genExpressia
+§ ex "../expressia/index" importa genExpressia
 
 @ publica
 functio genImporta(textus fons, lista<ImportaSpecificator> specificatores, bivalens totum, ignotum totumAlias, TsGenerator g) -> textus {

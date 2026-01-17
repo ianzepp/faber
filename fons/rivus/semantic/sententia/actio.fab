@@ -2,10 +2,10 @@
 #
 # Handles redde, iace, scribe, and adfirma statements.
 
-ex "../resolvitor" importa Resolvitor
-ex "../typi" importa SemanticTypus, formaTypum, assignabileAd
-ex "../errores" importa returnTypeMismatchError
-ex "../../ast/sententia" importa Sententia
+§ ex "../resolvitor" importa Resolvitor
+§ ex "../typi" importa SemanticTypus, formaTypum, assignabileAd
+§ ex "../errores" importa returnTypeMismatchError
+§ ex "../../ast/sententia" importa Sententia
 
 # ============================================================================
 # RETURN

@@ -7,14 +7,14 @@
 #
 # WHY: Guards represent early-exit patterns; multiple guards emit sequential ifs.
 
-ex "../../../ast/sententia" importa Sententia, CustodiClausula
-ex "../../../ast/expressia" importa Expressia
-ex "../nucleus" importa TsGenerator
+§ ex "../../../ast/sententia" importa Sententia, CustodiClausula
+§ ex "../../../ast/expressia" importa Expressia
+§ ex "../nucleus" importa TsGenerator
 
 # External declarations - implementations live in index.fab
-ex "../expressia/index" importa genExpressia
-ex "./index" importa genSententia
-ex "./index" importa genMassa
+§ ex "../expressia/index" importa genExpressia
+§ ex "./index" importa genSententia
+§ ex "./index" importa genMassa
 
 @ publica
 functio genCustodi(lista<CustodiClausula> clausulae, TsGenerator g) -> textus {

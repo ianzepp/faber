@@ -2,19 +2,19 @@
 #
 # Performs semantic analysis on the AST. Resolves types, builds symbol tables.
 
-ex "./resolvitor" importa Resolvitor
-ex "./nucleus" importa Analyzator, SemanticResultatum, novumAnalyzator, DiscretioDeclInfo
-ex "./typi" importa SemanticTypus, IGNOTUM, VACUUM, functioTypus, usitatumTypus
-ex "./scopus" importa Symbolum, SymbolumSpecies
-ex "./modulus" importa estLocaleImportum, estNormaImportum, resolveModulum, ModulusExportum
-ex "./expressia/index" importa resolveExpressia
-ex "./sententia/index" importa analyzeSententia
-ex "./sententia/declara" importa resolveTypusAnnotatio
-ex "../ast/radix" importa Programma
-ex "../ast/expressia" importa Expressia
-ex "../ast/sententia" importa Sententia, MorphologiaDeclaratio
-ex "../ast/typus" importa TypusAnnotatio
-ex "../parser/morphologia" importa parseMethodum
+§ ex "./resolvitor" importa Resolvitor
+§ ex "./nucleus" importa Analyzator, SemanticResultatum, novumAnalyzator, DiscretioDeclInfo
+§ ex "./typi" importa SemanticTypus, IGNOTUM, VACUUM, functioTypus, usitatumTypus
+§ ex "./scopus" importa Symbolum, SymbolumSpecies
+§ ex "./modulus" importa estLocaleImportum, estNormaImportum, resolveModulum, ModulusExportum
+§ ex "./expressia/index" importa resolveExpressia
+§ ex "./sententia/index" importa analyzeSententia
+§ ex "./sententia/declara" importa resolveTypusAnnotatio
+§ ex "../ast/radix" importa Programma
+§ ex "../ast/expressia" importa Expressia
+§ ex "../ast/sententia" importa Sententia, MorphologiaDeclaratio
+§ ex "../ast/typus" importa TypusAnnotatio
+§ ex "../parser/morphologia" importa parseMethodum
 
 # ============================================================================
 # RESOLVITOR IMPLEMENTATION

@@ -132,7 +132,7 @@ functio estGeneris(lista<textus> modifiers) -> bivalens {
 # COMMENT FORMATTING
 # =============================================================================
 
-ex "../ast/radix" importa Nota, NotaGenus, NodusRadix
+§ ex "../ast/radix" importa Nota, NotaGenus, NodusRadix
 
 functio formataNotaTs(Nota nota) -> textus {
     elige nota.species {

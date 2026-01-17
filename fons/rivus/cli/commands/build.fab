@@ -18,19 +18,19 @@
 #
 # ═══════════════════════════════════════════════════════════════════════════════
 
-ex "../../lexor/index" importa lexare
-ex "../../parser/index" importa resolvere
-ex "../../semantic/index" importa analyze
-ex "../../semantic/nucleus" importa SemanticResultatum
-ex "../../codegen/index" importa generate
-ex "../../ast/radix" importa Programma
+§ ex "../../lexor/index" importa lexare
+§ ex "../../parser/index" importa resolvere
+§ ex "../../semantic/index" importa analyze
+§ ex "../../semantic/nucleus" importa SemanticResultatum
+§ ex "../../codegen/index" importa generate
+§ ex "../../ast/radix" importa Programma
 
-ex "../../../norma/hal/solum" importa solum
-ex "../../../norma/hal/processus" importa processus
-ex "../../../norma/hal/consolum" importa consolum
-ex "../../../norma/hal/json" importa json
+§ ex "../../../norma/hal/solum" importa solum
+§ ex "../../../norma/hal/processus" importa processus
+§ ex "../../../norma/hal/consolum" importa consolum
+§ ex "../../../norma/hal/json" importa json
 
-ex "../auxilium" importa mutaExtensionem, viaRelativa
+§ ex "../auxilium" importa mutaExtensionem, viaRelativa
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TYPES
