@@ -16,7 +16,7 @@ ex "../ast/sententia" importa Sententia
 ex "./validitor" importa validateCompatibilitatem, formatValidatioErrores
 ex "./validitor" importa ValidatioPolitia, POLITIA_STRICTA, POLITIA_RELAXATA
 ex "./validitor" importa validatioSuccessit, ValidatioError
-ex "./ts/index" importa generateTs
+ex "./ts/index" importa generateTs, generateTsWithTests, generateTsWithOptions
 ex "./go/index" importa generateGo
 
 # =============================================================================
@@ -28,6 +28,23 @@ ex "./go/index" importa generateGo
 @ publica
 functio generate(lista<Sententia> corpus, textus target) -> textus {
     redde generateWithPolicy(corpus, target, POLITIA_STRICTA)
+}
+
+# Generate code with test blocks stripped (for production builds)
+@ publica
+functio generateStripTests(lista<Sententia> corpus, textus target) -> textus {
+    # Validate first
+    fixum errores = validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
+    si non validatioSuccessit(errores) {
+        iace formatValidatioErrores(errores, target)
+    }
+
+    elige target {
+        casu "ts" { redde generateTsWithOptions(corpus, verum) }
+        ceterum {
+            iace scriptum("Strip tests not supported for target '§'. Only 'ts' is supported.", target)
+        }
+    }
 }
 
 # Generate code with explicit policy
@@ -47,6 +64,24 @@ functio generateWithPolicy(lista<Sententia> corpus, textus target, ValidatioPoli
         casu "go" { redde generateGo(corpus) }
         ceterum {
             iace scriptum("Unknown target '§'. Supported: ts, go", target)
+        }
+    }
+}
+
+# Generate code with standalone test harness (for `rivus test` command)
+# Currently only supports TypeScript target
+@ publica
+functio generateWithTests(lista<Sententia> corpus, textus target) -> textus {
+    # Validate first
+    fixum errores = validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
+    si non validatioSuccessit(errores) {
+        iace formatValidatioErrores(errores, target)
+    }
+
+    elige target {
+        casu "ts" { redde generateTsWithTests(corpus) }
+        ceterum {
+            iace scriptum("Test generation not supported for target '§'. Only 'ts' is supported.", target)
         }
     }
 }

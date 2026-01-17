@@ -357,11 +357,29 @@ functio parseAnnotationes(Resolvitor r) -> lista<Annotatio> {
             perge
         }
 
-        # Standard annotation: just the name, no special processing
+        # Standard annotation: collect any arguments on the same line
+        # This handles test annotations like @ tag "slow", @ temporis 5000
+        varia argumenta = [] innatum lista<textus>
+        dum non p.estFinis() et p.specta(0).locus.linea == linea {
+            fixum argSym = p.specta(0)
+            si argSym.species == SymbolumGenus.Textus {
+                argumenta.adde(argSym.valor)
+                p.procede()
+            } sin argSym.species == SymbolumGenus.Numerus {
+                argumenta.adde(argSym.valor)
+                p.procede()
+            } sin estNomenAutVerbum(argSym.species) {
+                # Stop at next identifier (likely next annotation or statement)
+                rumpe
+            } secus {
+                rumpe
+            }
+        }
+
         annotationes.adde({
             locus: locus,
             nomen: nomen,
-            argumenta: [] innatum lista<textus>,
+            argumenta: argumenta,
             targetMappings: nihil,
             radixForms: nihil,
             verteTarget: nihil,

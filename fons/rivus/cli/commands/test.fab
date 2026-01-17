@@ -1,59 +1,79 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# EMIT - Compile single Faber source file to target language
+# TEST - Compile and run Faber tests with standalone harness
 # ═══════════════════════════════════════════════════════════════════════════════
 #
-# Full compilation pipeline: lex -> parse -> semantic -> codegen
-# Outputs to stdout or file.
+# Compiles .fab files with test harness generation and executes them.
+# Tests use `probandum` and `proba` blocks with annotation-based configuration.
 #
 # Usage:
-#   rivus emit hello.fab                 # emit to stdout (default: ts)
-#   rivus emit hello.fab -t go           # emit as Go
-#   rivus emit hello.fab -o hello.ts     # emit to file
-#   rivus emit -                         # emit from stdin
-#   rivus emit - --stdin-filename=foo.fab  # stdin with filename for errors
-#   rivus emit hello.fab --dry-run       # check without emitting
-#   rivus emit hello.fab --json          # errors as JSON
+#   rivus test hello.fab                 # run tests in file
+#   rivus test hello.fab --tag slow      # run only tests tagged "slow"
+#   rivus test hello.fab --exclude slow  # exclude tests tagged "slow"
+#   rivus test hello.fab --dry-run       # compile only, don't execute
+#   rivus test hello.fab --json          # JSON error output
+#
+# Annotations supported on `proba` blocks:
+#   @ omitte "reason"     - Skip test
+#   @ futurum "reason"    - Mark as todo
+#   @ solum               - Only run this test
+#   @ tag "name"          - Tag for filtering
+#   @ temporis 5000       - Timeout in ms
+#   @ metior              - Benchmark mode
+#   @ repete 100          - Repeat N times
+#   @ fragilis 3          - Retry N times
+#   @ requirit "ENV_VAR"  - Skip if env missing
+#   @ solum_in "darwin"   - Platform filter
 #
 # ═══════════════════════════════════════════════════════════════════════════════
 
 ex "../../lexor/index" importa lexare
 ex "../../parser/index" importa resolvere
 ex "../../semantic/index" importa analyze
-ex "../../codegen/index" importa generate, generateStripTests
+ex "../../codegen/index" importa generateWithTests
 ex "../../ast/radix" importa Programma
 
 ex "../../../norma/hal/solum" importa solum
 ex "../../../norma/hal/consolum" importa consolum
 ex "../../../norma/hal/json" importa json
+ex "../../../norma/hal/processus" importa processus
 
 ex "../auxilium" importa hauriSource, nomenOstende, validaInput
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# EMIT COMMAND
+# TEST COMMAND
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @ publica
 @ futura
-functio emitCommand(
+functio testCommand(
     textus input,
     si textus target,
-    si textus output,
-    si textus include,
+    si textus tag,
+    si textus exclude,
     si textus stdinFilename,
     si bivalens jsonOutput,
     si bivalens dryRun,
-    si bivalens stripTests
+    si bivalens solum
 ) -> numerus {
     fixum targetLang = target vel "ts"
     fixum displayName = stdinFilename vel nomenOstende(input)
+
+    # Only TypeScript target supported for now
+    si targetLang != "ts" {
+        si jsonOutput {
+            consolum.fundeLineam(json.solve({ error: "Test runner only supports TypeScript target" }))
+        } secus {
+            mone "Test runner only supports TypeScript target"
+        }
+        redde 1
+    }
 
     # Validate input exists
     custodi {
         si non validaInput(input) {
             si jsonOutput {
                 consolum.fundeLineam(json.solve({ error: scriptum("File not found: §", input) }))
-            }
-            secus {
+            } secus {
                 mone "File not found: §", input
             }
             redde 1
@@ -79,15 +99,12 @@ functio emitCommand(
                     message: err.textus
                 } innatum tabula<textus, ignotum>)
             }
-        }
-        secus {
+            consolum.fundeLineam(json.solve({ errors: errores }))
+        } secus {
             mone "Lexor errors:"
             ex lexResult.errores pro err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus
             }
-        }
-        si jsonOutput {
-            consolum.fundeLineam(json.solve({ errors: errores }))
         }
         redde 1
     }
@@ -106,15 +123,12 @@ functio emitCommand(
                     message: err.nuntius
                 } innatum tabula<textus, ignotum>)
             }
-        }
-        secus {
+            consolum.fundeLineam(json.solve({ errors: errores }))
+        } secus {
             mone "Parser errors:"
             ex parseResult.errores pro err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
             }
-        }
-        si jsonOutput {
-            consolum.fundeLineam(json.solve({ errors: errores }))
         }
         redde 1
     }
@@ -122,8 +136,7 @@ functio emitCommand(
     si nihil parseResult.programma {
         si jsonOutput {
             consolum.fundeLineam(json.solve({ error: "Failed to parse program" }))
-        }
-        secus {
+        } secus {
             mone "Failed to parse program"
         }
         redde 1
@@ -145,8 +158,7 @@ functio emitCommand(
                 } innatum tabula<textus, ignotum>)
             }
             consolum.fundeLineam(json.solve({ errors: errores }))
-        }
-        secus {
+        } secus {
             mone "Semantic errors:"
             ex semResult.errores pro err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
@@ -155,35 +167,53 @@ functio emitCommand(
         redde 1
     }
 
+    # Code generation with test harness
+    fixum generated = generateWithTests((parseResult.programma qua Programma).corpus, targetLang)
+
     # Dry run stops here
     si dryRun {
         si jsonOutput {
-            consolum.fundeLineam(json.solve({ success: verum, file: displayName }))
-        }
-        secus {
-            scribe "§: OK", displayName
+            consolum.fundeLineam(json.solve({ success: verum, file: displayName, code: generated }))
+        } secus {
+            scribe "§: Compiled (dry run)", displayName
+            consolum.fundeTextum(generated)
         }
         redde 0
     }
 
-    # Code generation
-    varia generated = ""
-    si stripTests {
-        generated = generateStripTests((parseResult.programma qua Programma).corpus, targetLang)
-    } secus {
-        generated = generate((parseResult.programma qua Programma).corpus, targetLang)
-    }
+    # Write to temp file and execute
+    fixum tempFile = scriptum("/tmp/faber-test-§.ts", processus.pid())
 
-    # Output
-    si output {
-        cede solum.scribe(output, generated)
-        si non jsonOutput {
-            mone "Compiled: § -> §", displayName, output
+    tempta {
+        cede solum.scribe(tempFile, generated)
+
+        # Build bun command with options
+        varia args = [tempFile] innatum lista<textus>
+
+        # Execute with Bun
+        fixum proc = processus.spawn("bun", args, {
+            stdout: "inherit",
+            stderr: "inherit"
+        } innatum tabula<textus, ignotum>)
+
+        fixum exitCode = cede proc.exited
+
+        # Cleanup temp file
+        cede solum.tolle(tempFile)
+
+        si exitCode != 0 {
+            redde exitCode qua numerus
         }
-    }
-    secus {
-        consolum.fundeTextum(generated)
-    }
 
-    redde 0
+        redde 0
+    } cape err {
+        mone "Test execution error: §", err
+        # Try to cleanup
+        tempta {
+            cede solum.tolle(tempFile)
+        } cape _ {
+            # Ignore cleanup errors
+        }
+        redde 1
+    }
 }

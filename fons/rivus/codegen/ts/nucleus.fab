@@ -53,6 +53,23 @@ genus TsGenerator {
     RequiredFeatures requisita
 
     # ==========================================================================
+    # TEST HARNESS STATE
+    # ==========================================================================
+
+    # Whether to generate standalone test functions (vs describe/test)
+    bivalens inProbaStandalone
+
+    # Whether to strip test blocks (probandum/proba) from output
+    bivalens stripTests
+
+    # Test registry entries for harness generation
+    # Each entry: { suite: string, name: string, funcName: string, skip?: bool, todo?: bool, ... }
+    lista<tabula<textus, ignotum>> probaRegistrum
+
+    # Current suite name stack (for nested probandum)
+    lista<textus> probaSuiteStack
+
+    # ==========================================================================
     # INDENTATION
     # ==========================================================================
 
@@ -120,7 +137,11 @@ functio creaTsGenerator() -> TsGenerator {
         inAbUbi: falsum,
         abUbiParam: "_x",
         requisita: creaRequiredFeatures(),
-        tabulaNominata: [] innatum lista<textus>
+        tabulaNominata: [] innatum lista<textus>,
+        inProbaStandalone: falsum,
+        stripTests: falsum,
+        probaRegistrum: [] innatum lista<tabula<textus, ignotum>>,
+        probaSuiteStack: [] innatum lista<textus>
     }
 }
 
@@ -139,6 +160,10 @@ functio creaTsGeneratorCum(textus indentum) -> TsGenerator {
         inAbUbi: falsum,
         abUbiParam: "_x",
         requisita: creaRequiredFeatures(),
-        tabulaNominata: [] innatum lista<textus>
+        tabulaNominata: [] innatum lista<textus>,
+        inProbaStandalone: falsum,
+        stripTests: falsum,
+        probaRegistrum: [] innatum lista<tabula<textus, ignotum>>,
+        probaSuiteStack: [] innatum lista<textus>
     }
 }

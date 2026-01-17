@@ -1241,6 +1241,67 @@ export function parse(tokens: Token[]): ParserResult {
                 stmt.type === 'IncipietStatement'
             ) {
                 stmt.annotations = annotations;
+            } else if (stmt.type === 'ProbaStatement') {
+                // Process test annotations
+                for (const a of annotations) {
+                    if (a.name === 'omitte') {
+                        stmt.modifier = 'omitte';
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'StringLiteral') {
+                            stmt.modifierReason = (a.argument as { value: string }).value;
+                        }
+                    } else if (a.name === 'futurum') {
+                        stmt.modifier = 'futurum';
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'StringLiteral') {
+                            stmt.modifierReason = (a.argument as { value: string }).value;
+                        }
+                    } else if (a.name === 'solum') {
+                        stmt.solum = true;
+                    } else if (a.name === 'tag') {
+                        if (!stmt.tags) stmt.tags = [];
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'StringLiteral') {
+                            stmt.tags.push((a.argument as { value: string }).value);
+                        }
+                    } else if (a.name === 'temporis') {
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'NumericLiteral') {
+                            stmt.temporis = (a.argument as { value: number }).value;
+                        }
+                    } else if (a.name === 'metior') {
+                        stmt.metior = true;
+                    } else if (a.name === 'repete') {
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'NumericLiteral') {
+                            stmt.repete = (a.argument as { value: number }).value;
+                        }
+                    } else if (a.name === 'fragilis') {
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'NumericLiteral') {
+                            stmt.fragilis = (a.argument as { value: number }).value;
+                        }
+                    } else if (a.name === 'requirit') {
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'StringLiteral') {
+                            stmt.requirit = (a.argument as { value: string }).value;
+                        }
+                    } else if (a.name === 'solum_in') {
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'StringLiteral') {
+                            stmt.solumIn = (a.argument as { value: string }).value;
+                        }
+                    }
+                }
+            } else if (stmt.type === 'ProbandumStatement') {
+                // Process suite annotations
+                for (const a of annotations) {
+                    if (a.name === 'omitte') {
+                        stmt.skip = true;
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'StringLiteral') {
+                            stmt.skipReason = (a.argument as { value: string }).value;
+                        }
+                    } else if (a.name === 'solum') {
+                        stmt.solum = true;
+                    } else if (a.name === 'tag') {
+                        if (!stmt.tags) stmt.tags = [];
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'StringLiteral') {
+                            stmt.tags.push((a.argument as { value: string }).value);
+                        }
+                    }
+                }
             } else {
                 // Warn about annotations on unsupported statements
                 errors.push({

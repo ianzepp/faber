@@ -1,16 +1,21 @@
 # TypeScript Statement Generator - Test Statements
 #
-# Generates Jest-style test blocks and lifecycle hooks.
+# Generates standalone test functions with inline harness.
 #
-# TRANSFORMS:
+# STANDALONE MODE (inProbaStandalone = true):
+#   probandum "suite" { ... }  -> suiteStack push, generate members, pop
+#   proba "case" { ... }       -> __proba_suite_case() function + registry entry
+#   @ omitte proba "skip" { }  -> function marked skip in registry
+#   @ futurum proba "todo"     -> function marked todo in registry
+#
+# LEGACY MODE (inProbaStandalone = false):
 #   probandum "suite" { ... }  -> describe("suite", () => { ... })
 #   proba "case" { ... }       -> test("case", () => { ... })
-#   proba @ omitte "skip" { }  -> test.skip("skip", () => { })
-#   proba @ futurum "todo"     -> test.todo("todo")
-#   praepara { ... }           -> beforeEach(() => { ... })
-#   praepara @ omnia { ... }   -> beforeAll(() => { ... })
-#   postpara { ... }           -> afterEach(() => { ... })
-#   postpara @ omnia { ... }   -> afterAll(() => { ... })
+#
+# Harness output (at end of file):
+#   const __tests = [{ suite, name, fn, skip?, todo?, ... }, ...]
+#   function __runTests(): number { ... }
+#   if (require.main === module) process.exit(__runTests())
 
 ex "../../../ast/sententia" importa Sententia, ProbaModificator, PraeparaTempus
 ex "../nucleus" importa TsGenerator
@@ -18,52 +23,210 @@ ex "../nucleus" importa TsGenerator
 # External declarations - implementations live in index.fab
 ex "./index" importa genSententia
 
-@ publica
-functio genProbandum(textus nomen, lista<Sententia> corpus, TsGenerator g) -> textus {
-    varia lines = [] innatum lista<textus>
-    lines.adde(scriptum("§describe(\"§\", () => {", g.ind(), nomen))
+# =============================================================================
+# HELPERS
+# =============================================================================
 
-    g.intraProfundum()
+# Sanitize name for use as identifier (replace spaces/special chars with _)
+functio sanitizeNomen(textus nomen) -> textus {
+    varia textus result = nomen
+    result = result.muta(" ", "_")
+    result = result.muta("-", "_")
+    result = result.muta(".", "_")
+    result = result.muta("/", "_")
+    result = result.muta("'", "")
+    result = result.muta("\"", "")
+    redde result
+}
+
+# Get full suite path from stack
+functio getSuitePath(TsGenerator g) -> textus {
+    si g.probaSuiteStack.longitudo() == 0 {
+        redde ""
+    }
+    redde g.probaSuiteStack.coniunge("_")
+}
+
+# =============================================================================
+# PROBANDUM (TEST SUITE)
+# =============================================================================
+
+@ publica
+functio genProbandum(textus nomen, bivalens? ompitur, textus? ratioOmissionis, bivalens? solum, lista<textus>? tags, lista<Sententia> corpus, TsGenerator g) -> textus {
+    # Legacy mode: generate describe()
+    si non g.inProbaStandalone {
+        varia lines = [] innatum lista<textus>
+        lines.adde(scriptum("§describe(\"§\", () => {", g.ind(), nomen))
+
+        g.intraProfundum()
+        ex corpus pro stmt {
+            lines.adde(genSententia(stmt, g))
+        }
+        g.exiProfundum()
+
+        lines.adde(scriptum("§});", g.ind()))
+        redde lines.coniunge("\n")
+    }
+
+    # Standalone mode: push suite name, generate members, pop
+    g.probaSuiteStack.adde(sanitizeNomen(nomen))
+
+    varia lines = [] innatum lista<textus>
+    lines.adde(scriptum("§// Suite: §", g.ind(), nomen))
+
     ex corpus pro stmt {
         lines.adde(genSententia(stmt, g))
     }
-    g.exiProfundum()
 
-    lines.adde(scriptum("§});", g.ind()))
+    g.probaSuiteStack.tolle(g.probaSuiteStack.longitudo() - 1)
+
     redde lines.coniunge("\n")
 }
 
+# =============================================================================
+# PROBA (TEST CASE)
+# =============================================================================
+
 @ publica
-functio genProba(textus nomen, ignotum modificator, textus? ratioModificatoris, Sententia corpus, TsGenerator g) -> textus {
-    varia ratio = ""
-    si nonnihil ratioModificatoris {
-        ratio = scriptum("§: ", ratioModificatoris)
+functio genProba(
+    textus nomen,
+    ignotum modificator,
+    textus? ratioModificatoris,
+    bivalens? solum,
+    lista<textus>? tags,
+    numerus? temporis,
+    bivalens? metior,
+    numerus? repete,
+    numerus? fragilis,
+    textus? requirit,
+    textus? solumIn,
+    Sententia corpus,
+    TsGenerator g
+) -> textus {
+    # Legacy mode: generate test()
+    si non g.inProbaStandalone {
+        varia ratio = ""
+        si nonnihil ratioModificatoris {
+            ratio = scriptum("§: ", ratioModificatoris)
+        }
+
+        si nonnihil modificator {
+            fixum mod = modificator qua ProbaModificator
+            fixum titulus = scriptum("§§", ratio, nomen)
+
+            si mod == ProbaModificator.Omitte {
+                g.intraProfundum()
+                fixum body = genSententia(corpus, g)
+                g.exiProfundum()
+                redde scriptum("§test.skip(\"§\", () => {\n§\n§});", g.ind(), titulus, body, g.ind())
+            }
+            si mod == ProbaModificator.Futurum {
+                redde scriptum("§test.todo(\"§\");", g.ind(), titulus)
+            }
+        }
+
+        g.intraProfundum()
+        fixum body = genSententia(corpus, g)
+        g.exiProfundum()
+
+        redde scriptum("§test(\"§\", () => {\n§\n§});", g.ind(), nomen, body, g.ind())
     }
+
+    # Standalone mode: generate function + registry entry
+    fixum suitePath = getSuitePath(g)
+    fixum sanitizedName = sanitizeNomen(nomen)
+    fixum funcName = suitePath.longitudo() > 0 sic scriptum("__proba_§_§", suitePath, sanitizedName) secus scriptum("__proba_§", sanitizedName)
+    fixum suiteDisplay = suitePath.longitudo() > 0 sic g.probaSuiteStack.coniunge(" > ") secus ""
+
+    # Build registry entry
+    varia entry = {
+        suite: suiteDisplay,
+        name: nomen,
+        funcName: funcName
+    } innatum tabula<textus, ignotum>
 
     si nonnihil modificator {
         fixum mod = modificator qua ProbaModificator
-        fixum titulus = scriptum("§§", ratio, nomen)
-
         si mod == ProbaModificator.Omitte {
-            g.intraProfundum()
-            fixum body = genSententia(corpus, g)
-            g.exiProfundum()
-            redde scriptum("§test.skip(\"§\", () => {\n§\n§});", g.ind(), titulus, body, g.ind())
+            entry.pone("skip", verum)
+            si nonnihil ratioModificatoris {
+                entry.pone("skipReason", ratioModificatoris)
+            }
         }
         si mod == ProbaModificator.Futurum {
-            redde scriptum("§test.todo(\"§\");", g.ind(), titulus)
+            entry.pone("todo", verum)
+            si nonnihil ratioModificatoris {
+                entry.pone("todoReason", ratioModificatoris)
+            }
         }
     }
+    si nonnihil solum et solum {
+        entry.pone("only", verum)
+    }
+    si nonnihil tags et tags.longitudo() > 0 {
+        entry.pone("tags", tags)
+    }
+    si nonnihil temporis {
+        entry.pone("timeout", temporis)
+    }
+    si nonnihil metior et metior {
+        entry.pone("benchmark", verum)
+    }
+    si nonnihil repete {
+        entry.pone("repeat", repete)
+    }
+    si nonnihil fragilis {
+        entry.pone("retries", fragilis)
+    }
+    si nonnihil requirit {
+        entry.pone("requireEnv", requirit)
+    }
+    si nonnihil solumIn {
+        entry.pone("platformOnly", solumIn)
+    }
 
+    g.probaRegistrum.adde(entry)
+
+    # Generate standalone function
+    varia lines = [] innatum lista<textus>
+    lines.adde(scriptum("§function §(): string | null {", g.ind(), funcName))
     g.intraProfundum()
-    fixum body = genSententia(corpus, g)
-    g.exiProfundum()
+    lines.adde(scriptum("§try {", g.ind()))
+    g.intraProfundum()
 
-    redde scriptum("§test(\"§\", () => {\n§\n§});", g.ind(), nomen, body, g.ind())
+    # Generate body
+    fixum body = genSententia(corpus, g)
+    si body.longitudo() > 0 {
+        lines.adde(body)
+    }
+
+    lines.adde(scriptum("§return null;", g.ind()))
+    g.exiProfundum()
+    lines.adde(scriptum("§} catch (e) {", g.ind()))
+    g.intraProfundum()
+    lines.adde(scriptum("§return String(e);", g.ind()))
+    g.exiProfundum()
+    lines.adde(scriptum("§}", g.ind()))
+    g.exiProfundum()
+    lines.adde(scriptum("§}", g.ind()))
+
+    redde lines.coniunge("\n")
 }
+
+# =============================================================================
+# PRAEPARA (SETUP/TEARDOWN)
+# =============================================================================
 
 @ publica
 functio genPraepara(PraeparaTempus tempus, bivalens asynca, bivalens omnia, Sententia corpus, TsGenerator g) -> textus {
+    # In standalone mode, setup/teardown become comments (not supported in simple harness)
+    si g.inProbaStandalone {
+        fixum hookType = tempus == PraeparaTempus.Praepara sic "setup" secus "teardown"
+        fixum hookScope = omnia sic "all" secus "each"
+        redde scriptum("§// TODO: § § hook not supported in standalone mode", g.ind(), hookType, hookScope)
+    }
+
+    # Legacy mode
     varia hook = "beforeEach"
     si tempus == PraeparaTempus.Praepara {
         si omnia {
@@ -86,4 +249,189 @@ functio genPraepara(PraeparaTempus tempus, bivalens asynca, bivalens omnia, Sent
     g.exiProfundum()
 
     redde scriptum("§§(§() => {\n§\n§});", g.ind(), hook, asyncPrefix, body, g.ind())
+}
+
+# =============================================================================
+# HARNESS GENERATION
+# =============================================================================
+
+# Generate the test harness (registry + runner)
+# Call this after all statements have been generated
+@ publica
+functio genProbaHarness(TsGenerator g) -> textus {
+    si g.probaRegistrum.longitudo() == 0 {
+        redde ""
+    }
+
+    varia lines = [] innatum lista<textus>
+    lines.adde("")
+    lines.adde("// =============================================================================")
+    lines.adde("// TEST HARNESS")
+    lines.adde("// =============================================================================")
+    lines.adde("")
+
+    # Generate registry type
+    lines.adde("interface __TestEntry {")
+    lines.adde("  suite: string;")
+    lines.adde("  name: string;")
+    lines.adde("  fn: () => string | null;")
+    lines.adde("  skip?: boolean;")
+    lines.adde("  skipReason?: string;")
+    lines.adde("  todo?: boolean;")
+    lines.adde("  todoReason?: string;")
+    lines.adde("  only?: boolean;")
+    lines.adde("  tags?: string[];")
+    lines.adde("  timeout?: number;")
+    lines.adde("  benchmark?: boolean;")
+    lines.adde("  repeat?: number;")
+    lines.adde("  retries?: number;")
+    lines.adde("  requireEnv?: string;")
+    lines.adde("  platformOnly?: string;")
+    lines.adde("}")
+    lines.adde("")
+
+    # Generate registry
+    lines.adde("const __tests: __TestEntry[] = [")
+    ex g.probaRegistrum pro entry {
+        varia parts = [] innatum lista<textus>
+        parts.adde(scriptum("suite: \"§\"", entry.habe("suite") qua textus))
+        parts.adde(scriptum("name: \"§\"", entry.habe("name") qua textus))
+        parts.adde(scriptum("fn: §", entry.habe("funcName") qua textus))
+
+        si entry.tenet("skip") {
+            parts.adde("skip: true")
+            si entry.tenet("skipReason") {
+                parts.adde(scriptum("skipReason: \"§\"", entry.habe("skipReason") qua textus))
+            }
+        }
+        si entry.tenet("todo") {
+            parts.adde("todo: true")
+            si entry.tenet("todoReason") {
+                parts.adde(scriptum("todoReason: \"§\"", entry.habe("todoReason") qua textus))
+            }
+        }
+        si entry.tenet("only") {
+            parts.adde("only: true")
+        }
+        si entry.tenet("tags") {
+            fixum tagsArr = entry.habe("tags") qua lista<textus>
+            varia tagStrs = [] innatum lista<textus>
+            ex tagsArr pro t {
+                tagStrs.adde(scriptum("\"§\"", t))
+            }
+            parts.adde(scriptum("tags: [§]", tagStrs.coniunge(", ")))
+        }
+        si entry.tenet("timeout") {
+            parts.adde(scriptum("timeout: §", entry.habe("timeout")))
+        }
+        si entry.tenet("benchmark") {
+            parts.adde("benchmark: true")
+        }
+        si entry.tenet("repeat") {
+            parts.adde(scriptum("repeat: §", entry.habe("repeat")))
+        }
+        si entry.tenet("retries") {
+            parts.adde(scriptum("retries: §", entry.habe("retries")))
+        }
+        si entry.tenet("requireEnv") {
+            parts.adde(scriptum("requireEnv: \"§\"", entry.habe("requireEnv") qua textus))
+        }
+        si entry.tenet("platformOnly") {
+            parts.adde(scriptum("platformOnly: \"§\"", entry.habe("platformOnly") qua textus))
+        }
+
+        lines.adde(scriptum("  { § },", parts.coniunge(", ")))
+    }
+    lines.adde("];")
+    lines.adde("")
+
+    # Generate runner
+    lines.adde("function __runTests(options?: { tag?: string; exclude?: string; only?: boolean }): number {")
+    lines.adde("  const opts = options ?? {};")
+    lines.adde("  let testsToRun = __tests;")
+    lines.adde("")
+    lines.adde("  // Filter by 'only' if any test has it")
+    lines.adde("  if (opts.only || testsToRun.some(t => t.only)) {")
+    lines.adde("    testsToRun = testsToRun.filter(t => t.only);")
+    lines.adde("  }")
+    lines.adde("")
+    lines.adde("  // Filter by tag")
+    lines.adde("  if (opts.tag) {")
+    lines.adde("    testsToRun = testsToRun.filter(t => t.tags?.includes(opts.tag!));")
+    lines.adde("  }")
+    lines.adde("")
+    lines.adde("  // Exclude by tag")
+    lines.adde("  if (opts.exclude) {")
+    lines.adde("    testsToRun = testsToRun.filter(t => !t.tags?.includes(opts.exclude!));")
+    lines.adde("  }")
+    lines.adde("")
+    lines.adde("  let passed = 0, failed = 0, skipped = 0, todo = 0;")
+    lines.adde("")
+    lines.adde("  for (const t of testsToRun) {")
+    lines.adde("    const label = t.suite ? `${t.suite} > ${t.name}` : t.name;")
+    lines.adde("")
+    lines.adde("    // Check platform filter")
+    lines.adde("    if (t.platformOnly && process.platform !== t.platformOnly) {")
+    lines.adde("      console.log(`SKIP ${label} (platform: ${t.platformOnly})`);")
+    lines.adde("      skipped++;")
+    lines.adde("      continue;")
+    lines.adde("    }")
+    lines.adde("")
+    lines.adde("    // Check required env")
+    lines.adde("    if (t.requireEnv && !process.env[t.requireEnv]) {")
+    lines.adde("      console.log(`SKIP ${label} (missing env: ${t.requireEnv})`);")
+    lines.adde("      skipped++;")
+    lines.adde("      continue;")
+    lines.adde("    }")
+    lines.adde("")
+    lines.adde("    // Skip")
+    lines.adde("    if (t.skip) {")
+    lines.adde("      const reason = t.skipReason ? `: ${t.skipReason}` : '';")
+    lines.adde("      console.log(`SKIP ${label}${reason}`);")
+    lines.adde("      skipped++;")
+    lines.adde("      continue;")
+    lines.adde("    }")
+    lines.adde("")
+    lines.adde("    // Todo")
+    lines.adde("    if (t.todo) {")
+    lines.adde("      const reason = t.todoReason ? `: ${t.todoReason}` : '';")
+    lines.adde("      console.log(`TODO ${label}${reason}`);")
+    lines.adde("      todo++;")
+    lines.adde("      continue;")
+    lines.adde("    }")
+    lines.adde("")
+    lines.adde("    // Run with retries")
+    lines.adde("    const maxAttempts = t.retries ?? 1;")
+    lines.adde("    const repeatCount = t.repeat ?? 1;")
+    lines.adde("    let lastErr: string | null = null;")
+    lines.adde("")
+    lines.adde("    for (let rep = 0; rep < repeatCount; rep++) {")
+    lines.adde("      for (let attempt = 0; attempt < maxAttempts; attempt++) {")
+    lines.adde("        lastErr = t.fn();")
+    lines.adde("        if (!lastErr) break;")
+    lines.adde("      }")
+    lines.adde("      if (lastErr) break;")
+    lines.adde("    }")
+    lines.adde("")
+    lines.adde("    if (lastErr) {")
+    lines.adde("      console.log(`FAIL ${label}: ${lastErr}`);")
+    lines.adde("      failed++;")
+    lines.adde("    } else {")
+    lines.adde("      console.log(`PASS ${label}`);")
+    lines.adde("      passed++;")
+    lines.adde("    }")
+    lines.adde("  }")
+    lines.adde("")
+    lines.adde("  console.log(`\\n${passed} passed, ${failed} failed, ${skipped} skipped, ${todo} todo`);")
+    lines.adde("  return failed > 0 ? 1 : 0;")
+    lines.adde("}")
+    lines.adde("")
+
+    # Generate entry point check
+    lines.adde("// Run tests if executed directly")
+    lines.adde("if (typeof require !== 'undefined' && require.main === module) {")
+    lines.adde("  process.exit(__runTests());")
+    lines.adde("}")
+
+    redde lines.coniunge("\n")
 }

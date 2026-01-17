@@ -186,6 +186,32 @@ export class TsGenerator {
     /** Subsidia mappings from semantic analysis (import source -> target -> impl path) */
     subsidiaImports: Map<string, Map<string, string>> = new Map();
 
+    // Test harness state
+    /** Whether to generate standalone test functions (vs describe/test) */
+    inProbaStandalone = false;
+    /** Whether to strip test blocks from output */
+    stripTests = false;
+    /** Test registry for harness generation */
+    probaRegistry: Array<{
+        suite: string;
+        name: string;
+        funcName: string;
+        skip?: boolean;
+        skipReason?: string;
+        todo?: boolean;
+        todoReason?: string;
+        only?: boolean;
+        tags?: string[];
+        timeout?: number;
+        benchmark?: boolean;
+        repeat?: number;
+        retries?: number;
+        requireEnv?: string;
+        platformOnly?: string;
+    }> = [];
+    /** Current suite name stack (for nested probandum) */
+    probaSuiteStack: string[] = [];
+
     constructor(
         public indent: string = '  ',
         semi: boolean = true,
@@ -313,10 +339,13 @@ export class TsGenerator {
             case 'ExpressionStatement':
                 return `${this.ind()}${this.genExpression(node.expression)}${this.semi ? ';' : ''}`;
             case 'ProbandumStatement':
+                if (this.stripTests) return '';
                 return genProbandumStatement(node, this, this.semi);
             case 'ProbaStatement':
+                if (this.stripTests) return '';
                 return genProbaStatement(node, this, this.semi);
             case 'PraeparaBlock':
+                if (this.stripTests) return '';
                 return genPraeparaBlock(node, this, this.semi);
             case 'CuraStatement':
                 return genCuraStatement(node, this, this.semi);

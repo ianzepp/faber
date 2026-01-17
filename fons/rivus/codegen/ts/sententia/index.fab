@@ -38,7 +38,7 @@ ex "./scribe" importa genScribe
 ex "./redde" importa genRedde
 ex "./incipit" importa genIncipit, genIncipiet
 ex "./cura" importa genCura
-ex "./proba" importa genProbandum, genProba, genPraepara
+ex "./proba" importa genProbandum, genProba, genPraepara, genProbaHarness
 
 # =============================================================================
 # STATEMENT DISPATCH
@@ -191,16 +191,25 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
             redde scriptum("§throw new Error(\"ad statement not implemented\");", g.ind())
         }
 
-        # Tests
+        # Tests - skip if stripTests is enabled
         casu ProbandumSententia ut s {
-            redde genProbandum(s.nomen qua textus, s.corpus qua lista<Sententia>, g)
+            si g.stripTests {
+                redde ""
+            }
+            redde genProbandum(s.nomen qua textus, s.ompitur, s.ratioOmissionis, s.solum, s.tags, s.corpus qua lista<Sententia>, g)
         }
 
         casu ProbaSententia ut s {
-            redde genProba(s.nomen qua textus, s.modificator, s.ratioModificatoris, s.corpus, g)
+            si g.stripTests {
+                redde ""
+            }
+            redde genProba(s.nomen qua textus, s.modificator, s.ratioModificatoris, s.solum, s.tags, s.temporis, s.metior, s.repete, s.fragilis, s.requirit, s.solumIn, s.corpus, g)
         }
 
         casu PraeparaMassa ut s {
+            si g.stripTests {
+                redde ""
+            }
             redde genPraepara(s.tempus qua PraeparaTempus, s.asynca qua bivalens, s.omnia qua bivalens, s.corpus, g)
         }
     }

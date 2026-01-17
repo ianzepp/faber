@@ -612,20 +612,49 @@ discretio Sententia {
 
     # Test suite
     # Example: probandum "Tokenizer" { proba "..." { } }
+    #
+    # Suite-level annotations:
+    #   @ omitte "reason"     - Skip entire suite
+    #   @ solum               - Only run this suite
+    #   @ tag "name"          - Tag for filtering
     ProbandumSententia {
         Locus locus
         textus nomen
-        lista<Sententia> corpus  # PraeparaMassa, ProbandumSententia, ProbaSententia
+        bivalens? ompitur            # @ omitte - skip entire suite
+        textus? ratioOmissionis      # reason for skip
+        bivalens? solum              # @ solum - only run this suite
+        lista<textus>? tags          # @ tag - filtering tags
+        lista<Sententia> corpus      # PraeparaMassa, ProbandumSententia, ProbaSententia
     }
 
     # Test case
     # Example: proba "parses integers" { adfirma ... }
+    #
+    # Annotations control test execution:
+    #   @ omitte "reason"     - Skip test with reason
+    #   @ futurum "reason"    - Mark as todo/pending
+    #   @ solum               - Only run this test (exclusive)
+    #   @ tag "name"          - Tag for filtering (can repeat)
+    #   @ temporis 5000       - Timeout in milliseconds
+    #   @ metior              - Benchmark mode
+    #   @ repete 100          - Repeat test N times
+    #   @ fragilis 3          - Retry flaky test N times
+    #   @ requirit "ENV_VAR"  - Skip if env var missing
+    #   @ solum_in "darwin"   - Only run on platform
     ProbaSententia {
         Locus locus
         textus nomen
         ProbaModificator? modificator
         textus? ratioModificatoris   # reason for skip/todo
-        Sententia corpus         # MassaSententia
+        bivalens? solum              # @ solum - only run this test
+        lista<textus>? tags          # @ tag - filtering tags
+        numerus? temporis            # @ temporis - timeout in ms
+        bivalens? metior             # @ metior - benchmark mode
+        numerus? repete              # @ repete - repeat count
+        numerus? fragilis            # @ fragilis - retry count
+        textus? requirit             # @ requirit - required env var
+        textus? solumIn              # @ solum_in - platform filter
+        Sententia corpus             # MassaSententia
     }
 
     # Test setup/teardown block

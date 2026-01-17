@@ -43,6 +43,10 @@ import type { CapeClause } from './actions';
 export interface ProbandumStatement extends BaseNode {
     type: 'ProbandumStatement';
     name: string;
+    skip?: boolean;
+    skipReason?: string;
+    solum?: boolean;
+    tags?: string[];
     body: (PraeparaBlock | ProbandumStatement | ProbaStatement)[];
 }
 
@@ -59,18 +63,30 @@ export type ProbaModifier = 'omitte' | 'futurum';
  * Individual test case (proba).
  *
  * GRAMMAR (in EBNF):
- *   probaStmt := 'proba' probaModifier? STRING blockStmt
- *   probaModifier := 'omitte' STRING | 'futurum' STRING
+ *   probaStmt := probaAnnotation* 'proba' STRING blockStmt
+ *   probaAnnotation := '@' ('omitte' | 'futurum' | 'solum' | 'tag' | 'temporis' | 'metior' | 'repete' | 'fragilis' | 'requirit' | 'solum_in') STRING?
  *
  * INVARIANT: name is the test description string.
- * INVARIANT: modifier is optional (omitte/futurum) with reason string.
+ * INVARIANT: annotations control test execution behavior.
  * INVARIANT: body is the test block.
  *
  * WHY: Latin "proba" (imperative of probare) = "test!" / "prove!".
  *      Analogous to test() or it() in Jest/Vitest.
  *
+ * Annotation meanings:
+ *   @ omitte "reason"     - Skip test with reason
+ *   @ futurum "reason"    - Mark as todo/pending
+ *   @ solum               - Only run this test (exclusive)
+ *   @ tag "name"          - Tag for filtering (can appear multiple times)
+ *   @ temporis 5000       - Timeout in milliseconds
+ *   @ metior              - Benchmark mode
+ *   @ repete 100          - Repeat test N times
+ *   @ fragilis 3          - Retry flaky test N times
+ *   @ requirit "ENV_VAR"  - Skip if environment variable missing
+ *   @ solum_in "darwin"   - Only run on specified platform
+ *
  * Target mappings:
- *   TypeScript: test("name", () => { ... })
+ *   TypeScript: __proba_suite_name() function + registry
  *   Python:     def test_name(): ...
  *   Zig:        test "name" { ... }
  *   Rust:       #[test] fn name() { ... }
@@ -78,14 +94,25 @@ export type ProbaModifier = 'omitte' | 'futurum';
  *
  * Examples:
  *   proba "parses integers" { adfirma parse("42") est 42 }
- *   proba omitte "blocked by #42" { ... }
- *   proba futurum "needs async support" { ... }
+ *   @ omitte "blocked by #42"
+ *   proba "skipped test" { ... }
+ *   @ tag "slow"
+ *   @ temporis 10000
+ *   proba "slow test" { ... }
  */
 export interface ProbaStatement extends BaseNode {
     type: 'ProbaStatement';
     name: string;
     modifier?: ProbaModifier;
     modifierReason?: string;
+    solum?: boolean;
+    tags?: string[];
+    temporis?: number;
+    metior?: boolean;
+    repete?: number;
+    fragilis?: number;
+    requirit?: string;
+    solumIn?: string;
     body: BlockStatement;
 }
 

@@ -20,6 +20,7 @@ ex "./cli/commands/emit" importa emitCommand
 ex "./cli/commands/build" importa buildCommand
 ex "./cli/commands/parse" importa parseCommand
 ex "./cli/commands/check" importa checkCommand
+ex "./cli/commands/test" importa testCommand
 
 @ cli "rivus"
 @ versio "0.1.0"
@@ -50,6 +51,7 @@ functio version() -> vacuum {
 @ optio textus stdinFilename longum "stdin-filename" descriptio "Filename to use for stdin input"
 @ optio bivalens json longum "json" descriptio "Output errors as JSON"
 @ optio bivalens dryRun longum "dry-run" descriptio "Check without emitting code"
+@ optio bivalens stripTests longum "strip-tests" descriptio "Strip probandum/proba test blocks from output"
 functio emit(
     textus input,
     si textus target,
@@ -57,9 +59,10 @@ functio emit(
     si textus include,
     si textus stdinFilename,
     si bivalens json,
-    si bivalens dryRun
+    si bivalens dryRun,
+    si bivalens stripTests
 ) exitus code -> vacuum {
-    fixum result = cede emitCommand(input, target, output, include, stdinFilename, json, dryRun)
+    fixum result = cede emitCommand(input, target, output, include, stdinFilename, json, dryRun, stripTests)
     code = result
 }
 
@@ -133,5 +136,34 @@ functio check(
     si bivalens strict
 ) exitus code -> vacuum {
     fixum result = cede checkCommand(input, output, include, stdinFilename, json, strict)
+    code = result
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# test - compile and run tests with standalone harness
+# ─────────────────────────────────────────────────────────────────────────────
+
+@ imperium "test"
+@ alias "probandum"
+@ descriptio "Compile and run tests with standalone harness"
+@ futura
+@ optio textus target brevis "t" longum "target" descriptio "Target language: ts (default)"
+@ optio textus tag longum "tag" descriptio "Run only tests with this tag"
+@ optio textus exclude longum "exclude" descriptio "Exclude tests with this tag"
+@ optio textus stdinFilename longum "stdin-filename" descriptio "Filename to use for stdin input"
+@ optio bivalens json longum "json" descriptio "Output errors as JSON"
+@ optio bivalens dryRun longum "dry-run" descriptio "Compile only, don't execute"
+@ optio bivalens solum longum "only" descriptio "Run only tests marked @ solum"
+functio test(
+    textus input,
+    si textus target,
+    si textus tag,
+    si textus exclude,
+    si textus stdinFilename,
+    si bivalens json,
+    si bivalens dryRun,
+    si bivalens solum
+) exitus code -> vacuum {
+    fixum result = cede testCommand(input, target, tag, exclude, stdinFilename, json, dryRun, solum)
     code = result
 }

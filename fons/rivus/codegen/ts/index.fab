@@ -11,6 +11,7 @@
 ex "../../ast/sententia" importa Sententia
 ex "./nucleus" importa TsGenerator, creaTsGenerator
 ex "./sententia/index" importa genSententia
+ex "./sententia/proba" importa genProbaHarness
 ex "./preamble/index" importa genPreamble
 
 # =============================================================================
@@ -20,12 +21,23 @@ ex "./preamble/index" importa genPreamble
 # Generate TypeScript source code from a list of statements
 @ publica
 functio generateTs(lista<Sententia> corpus) -> textus {
+    redde generateTsWithOptions(corpus, falsum)
+}
+
+# Generate TypeScript with option to strip test blocks
+@ publica
+functio generateTsWithOptions(lista<Sententia> corpus, bivalens stripTests) -> textus {
     fixum g = creaTsGenerator()
+    g.stripTests = stripTests
 
     # Generate body from statements
     varia lines = [] innatum lista<textus>
     ex corpus pro stmt {
-        lines.adde(genSententia(stmt, g))
+        fixum line = genSententia(stmt, g)
+        # Skip empty lines from stripped tests
+        si line.longitudo() > 0 {
+            lines.adde(line)
+        }
     }
 
     fixum preamble = genPreamble(g.requisita)
@@ -34,4 +46,36 @@ functio generateTs(lista<Sententia> corpus) -> textus {
         redde body
     }
     redde scriptum("§§", preamble, body)
+}
+
+# Generate TypeScript with standalone test harness
+# Enables standalone test mode and appends harness after all statements
+@ publica
+functio generateTsWithTests(lista<Sententia> corpus) -> textus {
+    fixum g = creaTsGenerator()
+
+    # Enable standalone test mode
+    g.inProbaStandalone = verum
+
+    # Generate body from statements
+    varia lines = [] innatum lista<textus>
+    ex corpus pro stmt {
+        lines.adde(genSententia(stmt, g))
+    }
+
+    # Add test harness if any tests were registered
+    fixum harness = genProbaHarness(g)
+
+    fixum preamble = genPreamble(g.requisita)
+    fixum body = lines.coniunge("\n")
+
+    varia result = ""
+    si preamble != "" {
+        result = preamble
+    }
+    result = result + body
+    si harness != "" {
+        result = result + "\n" + harness
+    }
+    redde result
 }

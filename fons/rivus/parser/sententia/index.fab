@@ -16,7 +16,7 @@
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
 ex "../../ast/expressia" importa Expressia
-ex "../../ast/sententia" importa Sententia, ScribeGradus, MorphologiaDeclaratio, Visibilitas
+ex "../../ast/sententia" importa Sententia, ScribeGradus, MorphologiaDeclaratio, Visibilitas, ProbaModificator
 ex "../../ast/lexema" importa SymbolumGenus, VerbumId
 ex "../../ast/radix" importa NodusRadix
 ex "../errores" importa ParserErrorCodice
@@ -135,6 +135,80 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
                 casu TypusAliasDeclaratio ut t {
                     si nonnihil visibilitas {
                         t.visibilitas = visibilitas
+                    }
+                }
+                casu ProbaSententia ut p {
+                    # Test annotations
+                    si a.nomen == "omitte" {
+                        p.modificator = ProbaModificator.Omitte
+                        si positivum a.argumenta.longitudo() {
+                            p.ratioModificatoris = a.argumenta[0]
+                        }
+                    }
+                    si a.nomen == "futurum" {
+                        p.modificator = ProbaModificator.Futurum
+                        si positivum a.argumenta.longitudo() {
+                            p.ratioModificatoris = a.argumenta[0]
+                        }
+                    }
+                    si a.nomen == "solum" {
+                        p.solum = verum
+                    }
+                    si a.nomen == "tag" {
+                        si nihil p.tags {
+                            p.tags = [] innatum lista<textus>
+                        }
+                        si positivum a.argumenta.longitudo() {
+                            (p.tags qua lista<textus>).adde(a.argumenta[0])
+                        }
+                    }
+                    si a.nomen == "temporis" {
+                        si positivum a.argumenta.longitudo() {
+                            p.temporis = a.argumenta[0] fractatum
+                        }
+                    }
+                    si a.nomen == "metior" {
+                        p.metior = verum
+                    }
+                    si a.nomen == "repete" {
+                        si positivum a.argumenta.longitudo() {
+                            p.repete = a.argumenta[0] fractatum
+                        }
+                    }
+                    si a.nomen == "fragilis" {
+                        si positivum a.argumenta.longitudo() {
+                            p.fragilis = a.argumenta[0] fractatum
+                        }
+                    }
+                    si a.nomen == "requirit" {
+                        si positivum a.argumenta.longitudo() {
+                            p.requirit = a.argumenta[0]
+                        }
+                    }
+                    si a.nomen == "solum_in" {
+                        si positivum a.argumenta.longitudo() {
+                            p.solumIn = a.argumenta[0]
+                        }
+                    }
+                }
+                casu ProbandumSententia ut s {
+                    # Suite annotations
+                    si a.nomen == "omitte" {
+                        s.ompitur = verum
+                        si positivum a.argumenta.longitudo() {
+                            s.ratioOmissionis = a.argumenta[0]
+                        }
+                    }
+                    si a.nomen == "solum" {
+                        s.solum = verum
+                    }
+                    si a.nomen == "tag" {
+                        si nihil s.tags {
+                            s.tags = [] innatum lista<textus>
+                        }
+                        si positivum a.argumenta.longitudo() {
+                            (s.tags qua lista<textus>).adde(a.argumenta[0])
+                        }
                     }
                 }
                 casu _ { }
