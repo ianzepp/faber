@@ -81,16 +81,18 @@ scripta/                # Build and utility scripts
 Standalone agent runner at `~/.local/bin/agent`. Runs agents as separate Claude processes in worktrees.
 
 ```bash
-agent list                           # Show available agents
-agent run <name> "goal"              # Run agent with goal
-agent issue <number>                 # Run opifex on GitHub issue
-agent run -m opus <name> "goal"      # Use specific model
+agent personas list                  # Show available personas
+agent jobs list                      # Show running/completed jobs
+agent run "goal"                     # Run with default persona
+agent run --persona opifex "goal"    # Run with specific persona
+agent run -i 102 "fix the bug"       # Work on GitHub issue
+agent run -m opus "goal"             # Use specific model
 ```
 
-### Available Agents
+### Available Personas
 
-| Agent | Purpose | When to use |
-|-------|---------|-------------|
+| Persona | Purpose | When to use |
+|---------|---------|-------------|
 | `opifex` | Issue worker | Well-defined GitHub issues with clear deliverables |
 | `diogenes` | Explorer | Recon before implementation, codebase exploration |
 | `columbo` | Investigator | Root cause diagnosis when things break |
@@ -100,6 +102,7 @@ agent run -m opus <name> "goal"      # Use specific model
 | `titus` | TypeScript fixer | Type errors specifically |
 | `galen` | Test diagnostician | Classify test failures |
 | `augur` | Consequence analyst | Trace what will break from a change |
+| `manager` | Coordinator | Multi-phase tasks, delegation |
 
 ### Workflow Patterns
 
@@ -116,7 +119,7 @@ Each phase gets its own issue. Agents succeed on focused work, fail on sprawling
 
 Before sending an issue to opifex, run recon:
 ```bash
-agent run diogenes "Explore X in preparation for issue #N. Find: [specific questions]"
+agent run --persona diogenes "Explore X in preparation for issue #N. Find: [specific questions]"
 ```
 
 Add findings to the issue as a comment. This catches:
@@ -130,9 +133,9 @@ Add findings to the issue as a comment. This catches:
 
 Run multiple agents simultaneously:
 ```bash
-agent issue 102 &
-agent run diogenes "explore X" &
-agent run cato "review PR #103" &
+agent run -i 102 "fix the bug" &
+agent run --persona diogenes "explore X" &
+agent run --persona cato "review PR #103" &
 ```
 
 Lock collisions occur occasionally ("Lock acquisition failed") - these are transient, retry works.
@@ -141,7 +144,7 @@ Lock collisions occur occasionally ("Lock acquisition failed") - these are trans
 
 Before merging PRs from agents:
 ```bash
-agent run cato "Review PR #N. Check: [specific concerns]"
+agent run --persona cato "Review PR #N. Check: [specific concerns]"
 ```
 
 Include context from earlier findings (e.g., "diogenes found X, verify the PR addresses it").
@@ -150,7 +153,7 @@ Include context from earlier findings (e.g., "diogenes found X, verify the PR ad
 
 When tests break:
 ```bash
-agent run columbo "Run 'bun run test:faber' and diagnose root cause"
+agent run --persona columbo "Run 'bun run test:faber' and diagnose root cause"
 ```
 
 Columbo reports findings. You decide: direct fix or new issue.
