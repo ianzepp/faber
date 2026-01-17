@@ -456,14 +456,6 @@ discretio Sententia {
         CapeClausula? cape
     }
 
-    # With statement (mutation block)
-    # Example: in user { nomen = "Marcus" }
-    InSententia {
-        Locus locus
-        Expressia obiectum
-        Sententia corpus         # MassaSententia
-    }
-
     # Switch statement
     # Example: elige status { si "pending" { ... } }
     EligeSententia {

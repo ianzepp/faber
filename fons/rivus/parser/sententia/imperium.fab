@@ -226,36 +226,6 @@ functio parseDeSententia(Resolvitor r) -> Sententia {
 }
 
 # ============================================================================
-# MUTATION BLOCK
-# ============================================================================
-
-# Parse mutation block
-#
-# GRAMMAR: inStmt := 'in' expr blockStmt
-#
-# Example: in user { nomen = "Marcus" }
-@ publica
-functio parseInSententia(Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
-
-    # Consume 'in'
-    p.expectaVerbum("in", ParserErrorCodice.ExpectaturIn)
-
-    # Parse target object
-    fixum obiectum = r.expressia()
-
-    # Parse block body
-    fixum corpus = parseMassaSententia(r)
-
-    redde finge InSententia {
-        locus: locus,
-        obiectum: obiectum,
-        corpus: corpus
-    } qua Sententia
-}
-
-# ============================================================================
 # HELPERS
 # ============================================================================
 

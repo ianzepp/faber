@@ -114,29 +114,6 @@ functio analyzeIteratio(Resolvitor r, Sententia iteratioStmt) -> vacuum {
     }
 }
 
-# Analyze in (context block) statement
-@ publica
-functio analyzeIn(Resolvitor r, Sententia inStmt) -> vacuum {
-    fixum a = r.analyzator()
-
-    discerne inStmt {
-        casu InSententia ut i {
-            # Analyze source expression
-            r.expressia(i.obiectum)
-
-            # Enter scope for body
-            a.intraScopum(ScopusSpecies.Massa)
-
-            # Analyze body
-            r.sententia(i.corpus)
-
-            # Exit scope
-            a.exiScopum()
-        }
-        casu _ { }
-    }
-}
-
 # =============================================================================
 # PATTERN MATCHING
 # =============================================================================

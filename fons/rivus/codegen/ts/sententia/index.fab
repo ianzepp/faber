@@ -18,7 +18,6 @@ ex "../expressia/index" importa genExpressia
 ex "./varia" importa genVaria
 ex "./si" importa genSi
 ex "./importa" importa genImporta, genDestructura, genSeriesDestructura
-ex "./in" importa genIn
 ex "./functio" importa genFunctio, genParametrum
 ex "./genus" importa genGenus, genCampus
 ex "./pactum" importa genPactum
@@ -119,10 +118,6 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
 
         casu IteratioSententia ut s {
             redde genIteratio(s.species qua IteratioGenus, s.variabilis qua textus, s.iterabile, s.corpus, s.asynca qua bivalens, s.cape, g)
-        }
-
-        casu InSententia ut s {
-            redde genIn(s.obiectum, s.corpus, g)
         }
 
         casu EligeSententia ut s {

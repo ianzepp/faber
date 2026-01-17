@@ -10,7 +10,7 @@ ex "./declara" importa analyzeVariaDeclaratio, analyzeFunctioDeclaratio
 ex "./declara" importa analyzeDestructuraSententia, analyzeSeriesDestructuraSententia
 ex "./declara" importa analyzeGenusDeclaratio, analyzePactumDeclaratio
 ex "./declara" importa analyzeOrdoDeclaratio, analyzeDiscretioDeclaratio, analyzeTypusAlias
-ex "./imperium" importa analyzeSi, analyzeDum, analyzeIteratio, analyzeIn
+ex "./imperium" importa analyzeSi, analyzeDum, analyzeIteratio
 ex "./imperium" importa analyzeElige, analyzeDiscerne, analyzeCustodi
 ex "./actio" importa analyzeRedde, analyzeIace, analyzeScribe, analyzeAdfirma
 ex "./error" importa analyzeTempta, analyzeFac, analyzeCura
@@ -71,10 +71,6 @@ functio analyzeSententia(Resolvitor r, Sententia stmt) -> vacuum {
 
         casu IteratioSententia {
             analyzeIteratio(r, stmt)
-        }
-
-        casu InSententia {
-            analyzeIn(r, stmt)
         }
 
         casu EligeSententia {

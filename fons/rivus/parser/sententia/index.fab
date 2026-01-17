@@ -28,7 +28,6 @@ ex "./actio" importa parseReddeSententia, parseRumpeSententia, parsePergeSentent
 ex "./declara" importa parseFunctioDeclaratio, parseGenusDeclaratio, parsePactumDeclaratio, parseOrdoDeclaratio, parseDiscretioDeclaratio, parseTypusAliasDeclaratio, parseImportaSententia
 ex "./error" importa parseTemptaSententia, parseFacSententia, parseAdfirmaSententia
 ex "./imperium" importa parseSiSententia, parseDumSententia, parseExSententia, parseDeSententia
-ex "./imperium" importa parseInSententia
 ex "./fluxus" importa parseEligeSententia, parseDiscerneSententia, parseCustodiSententia
 ex "./initus" importa parseIncipitSententia, parseIncipietSententia, parseCuraSententia, parseAdSententia
 ex "./massa" importa parseMassaSententia, parseExpressiaSententia
@@ -314,9 +313,6 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
         }
         si verbumId === VerbumId.De {
             redde parseDeSententia(r)
-        }
-        si verbumId === VerbumId.In {
-            redde parseInSententia(r)
         }
 
         # Declarations
