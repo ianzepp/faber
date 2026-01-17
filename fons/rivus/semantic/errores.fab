@@ -26,6 +26,7 @@ ordo SemanticErrorCodice {
     MissingFunctionBody     # S016: Function has no body (not @ externa)
     DuplicateModifier       # S018: Duplicate modifier
     InvalidModifierContext  # S019: Modifier not allowed in context
+    NihilEqualityWarning    # S022: Use nihil/nonnihil unary operators
 }
 
 # ============================================================================
@@ -213,5 +214,14 @@ functio morphologiaFormaNonPermissaError(textus methodus, textus radix, textus f
     redde {
         textus: scriptum("Morphologia forma '§' is not allowed for stem '§' on '§' (method '§'). §", forma, radix, recipiens, methodus, aux),
         auxilium: aux
+    } qua SemanticErrorNuntius
+}
+
+# Nihil equality comparison warning
+@ publica
+functio nihilEqualityWarning(textus signum) -> SemanticErrorNuntius {
+    redde {
+        textus: scriptum("Use 'nihil' or 'nonnihil' unary operators instead of '§ nihil'", signum),
+        auxilium: "For null checks, prefer 'nihil x' (is null) or 'nonnihil x' (is not null) over '== nihil' or '!= nihil'."
     } qua SemanticErrorNuntius
 }

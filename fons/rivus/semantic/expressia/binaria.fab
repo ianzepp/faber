@@ -4,8 +4,8 @@
 
 ex "../resolvitor" importa Resolvitor
 ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, BIVALENS, IGNOTUM, formaTypum
-ex "../errores" importa incompatibleComparisonError
-ex "../../ast/expressia" importa Expressia
+ex "../errores" importa incompatibleComparisonError, nihilEqualityWarning
+ex "../../ast/expressia" importa Expressia, LitteraGenus
 
 # ============================================================================
 # BINARY EXPRESSION RESOLUTION
@@ -86,6 +86,15 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
 
             # Equality operators: ==, !=
             si b.signum inter ["==", "!="] {
+                # Warn about == nihil / != nihil patterns
+                fixum sinisterNihil = estNihilLittera(b.sinister)
+                fixum dexterNihil = estNihilLittera(b.dexter)
+
+                si sinisterNihil aut dexterNihil {
+                    fixum warn = nihilEqualityWarning(b.signum)
+                    a.error(warn.textus, b.locus)
+                }
+
                 redde BIVALENS
             }
 
@@ -126,4 +135,16 @@ functio estLogicum(textus signum) -> bivalens {
 @ publica
 functio estNumericum(textus nomen) -> bivalens {
     redde nomen inter ["numerus", "fractus", "decimus", "magnus"]
+}
+
+# Check if an expression is a nihil literal
+functio estNihilLittera(Expressia expr) -> bivalens {
+    discerne expr {
+        casu Littera ut lit {
+            redde lit.species == LitteraGenus.Nihil
+        }
+        ceterum {
+            redde falsum
+        }
+    }
 }
