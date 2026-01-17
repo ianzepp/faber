@@ -17,6 +17,8 @@ import type {
     TemptaStatement,
     BlockStatement,
     ReddeStatement,
+    IaceStatement,
+    MoriStatement,
 } from '../ast';
 import { ParserErrorCode } from '../errors';
 
@@ -86,7 +88,7 @@ export function parseCapeClause(r: Resolver): CapeClause {
  *
  * GRAMMAR:
  *   custodiStmt := 'custodi' '{' (custodiClause)* '}'
- *   custodiClause := 'si' expression ('reddit' expression | 'ergo' statement | blockStmt)
+ *   custodiClause := 'si' expression ('reddit' expression | 'iacit' expression | 'moritor' expression | 'ergo' statement | blockStmt)
  *
  * WHY: 'custodi' (guard) provides early-exit checks with multiple clauses.
  *      Each clause tests a condition and executes consequent on match.
@@ -94,7 +96,7 @@ export function parseCapeClause(r: Resolver): CapeClause {
  * Example:
  *   custodi {
  *       si user == nihil reddit nihil
- *       si user.age < 0 ergo iace "Invalid age"
+ *       si user.age < 0 iacit "Invalid age"
  *       si user.name == "" { redde defaultUser() }
  *   }
  */
@@ -119,13 +121,25 @@ export function parseCustodiStatement(r: Resolver): CustodiStatement {
 
             const test = r.expression();
 
-            // Parse consequent: reddit, ergo, or block
+            // Parse consequent: reddit, iacit, moritor, ergo, or block
             let consequent: BlockStatement;
             if (ctx.matchKeyword('reddit')) {
                 const stmtPos = ctx.peek().position;
                 const expr = r.expression();
                 const returnStmt: ReddeStatement = { type: 'ReddeStatement', argument: expr, position: stmtPos };
                 consequent = { type: 'BlockStatement', body: [returnStmt], position: stmtPos };
+            }
+            else if (ctx.matchKeyword('iacit')) {
+                const stmtPos = ctx.peek().position;
+                const expr = r.expression();
+                const throwStmt: IaceStatement = { type: 'IaceStatement', argument: expr, position: stmtPos };
+                consequent = { type: 'BlockStatement', body: [throwStmt], position: stmtPos };
+            }
+            else if (ctx.matchKeyword('moritor')) {
+                const stmtPos = ctx.peek().position;
+                const expr = r.expression();
+                const panicStmt: MoriStatement = { type: 'MoriStatement', argument: expr, position: stmtPos };
+                consequent = { type: 'BlockStatement', body: [panicStmt], position: stmtPos };
             }
             else if (ctx.matchKeyword('ergo')) {
                 const stmtPos = ctx.peek().position;
