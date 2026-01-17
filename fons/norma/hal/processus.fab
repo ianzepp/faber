@@ -9,7 +9,16 @@
 @ subsidia ts "codegen/ts/processus.ts"
 pactum processus {
     # =========================================================================
-    # EXECUTION
+    # SPAWN - Portable array-based process spawning
+    # =========================================================================
+
+    # Spawn a detached process. Returns PID immediately.
+    # This is the primary, portable way to spawn subprocesses.
+    @ externa
+    functio genera(lista<textus> args, si textus cwd, si mappa<textus, textus> env) -> numerus
+
+    # =========================================================================
+    # SHELL EXECUTION - For commands needing shell features (&&, |, >, etc)
     # =========================================================================
 
     @ externa
@@ -17,12 +26,6 @@ pactum processus {
 
     @ externa
     functio exsequiCodem(textus cmd) -> numerus
-
-    @ externa
-    functio genera(textus cmd, lista<textus> args) -> textus
-
-    @ externa
-    functio generaCodem(textus cmd, lista<textus> args) -> numerus
 
     # =========================================================================
     # ENVIRONMENT

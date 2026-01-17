@@ -5,24 +5,27 @@
  */
 
 export const processus = {
-    // EXECUTION
+    // SPAWN - Portable array-based process spawning
+    genera(args: string[], cwd?: string, env?: Record<string, string>): number {
+        const proc = Bun.spawn(args, {
+            cwd: cwd ?? process.cwd(),
+            env: env ? { ...process.env, ...env } : process.env,
+            stdout: "ignore",
+            stderr: "ignore",
+            stdin: "ignore",
+        });
+        proc.unref();
+        return proc.pid;
+    },
+
+    // SHELL EXECUTION - For commands needing shell features (&&, |, >, etc)
     exsequi(cmd: string): string {
-        const result = Bun.spawnSync(cmd.split(' '));
+        const result = Bun.spawnSync(["sh", "-c", cmd]);
         return result.stdout.toString();
     },
 
     exsequiCodem(cmd: string): number {
-        const result = Bun.spawnSync(cmd.split(' '));
-        return result.exitCode;
-    },
-
-    genera(cmd: string, args: string[]): string {
-        const result = Bun.spawnSync([cmd, ...args]);
-        return result.stdout.toString();
-    },
-
-    generaCodem(cmd: string, args: string[]): number {
-        const result = Bun.spawnSync([cmd, ...args]);
+        const result = Bun.spawnSync(["sh", "-c", cmd]);
         return result.exitCode;
     },
 

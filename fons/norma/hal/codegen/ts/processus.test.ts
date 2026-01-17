@@ -27,37 +27,35 @@ describe('processus HAL', () => {
     });
 
     describe('genera', () => {
-        test('runs command with args array and returns output', () => {
-            const output = processus.genera('echo', ['hello', 'world']);
-            expect(output.trim()).toBe('hello world');
+        test('spawns process and returns PID', () => {
+            const pid = processus.genera(['sleep', '0.1']);
+            expect(typeof pid).toBe('number');
+            expect(pid).toBeGreaterThan(0);
+            expect(Number.isInteger(pid)).toBe(true);
         });
 
-        test('handles empty args array', () => {
-            const output = processus.genera('echo', []);
-            expect(output.trim()).toBe('');
+        test('spawned process runs in specified cwd', async () => {
+            const marker = `/tmp/_processus_test_cwd_${Date.now()}`;
+            // pwd writes cwd to file
+            processus.genera(['sh', '-c', `pwd > ${marker}`], '/tmp');
+            await Bun.sleep(100);
+            const content = await Bun.file(marker).text();
+            // macOS resolves /tmp to /private/tmp
+            expect(content.trim()).toMatch(/^(\/tmp|\/private\/tmp)$/);
+            await Bun.$`rm -f ${marker}`;
         });
 
-        test('handles args with special characters', () => {
-            const output = processus.genera('echo', ['hello', '"quoted"', 'world']);
-            expect(output.trim()).toBe('hello "quoted" world');
-        });
-    });
-
-    describe('generaCodem', () => {
-        test('returns exit code 0 for successful command', () => {
-            const code = processus.generaCodem('true', []);
-            expect(code).toBe(0);
-        });
-
-        test('returns non-zero exit code for failed command', () => {
-            const code = processus.generaCodem('false', []);
-            expect(code).toBe(1);
-        });
-
-        test('passes arguments correctly', () => {
-            // test -f checks if file exists
-            const code = processus.generaCodem('test', ['-d', '/tmp']);
-            expect(code).toBe(0);
+        test('spawned process receives custom env', async () => {
+            const marker = `/tmp/_processus_test_env_${Date.now()}`;
+            processus.genera(
+                ['sh', '-c', `echo $TEST_VAR > ${marker}`],
+                undefined,
+                { TEST_VAR: 'hello_from_genera' }
+            );
+            await Bun.sleep(100);
+            const content = await Bun.file(marker).text();
+            expect(content.trim()).toBe('hello_from_genera');
+            await Bun.$`rm -f ${marker}`;
         });
     });
 
