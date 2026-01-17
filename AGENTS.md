@@ -34,50 +34,46 @@ functio adde(T elem) -> vacuum
 ```
 fons/                   # Source code ("fons" = source/spring)
 ├── faber/              # Reference compiler (TypeScript)
-│   │                   # Uses mixed Latin/English identifiers
 │   ├── codegen/        # Code generators by target
-│   │   ├── norma-registry.gen.ts  # Generated from fons/norma/*.fab
-│   │   └── <target>/   # ts, py, rs, cpp, zig, fab
-│   │       ├── index.ts
-│   │       ├── generator.ts
-│   │       ├── expressions/
-│   │       ├── statements/
-│   │       ├── preamble/   # Target-specific preamble generation
-│   │       └── norma/      # Legacy stdlib codegen (partial)
-│   ├── lexicon/        # Lexer/tokenizer
+│   │   ├── norma.<target>.gen.ts  # Generated stdlib (per target)
+│   │   ├── shared/     # Shared codegen utilities
+│   │   ├── ts/         # TypeScript codegen
+│   │   │   ├── expressions/
+│   │   │   ├── statements/
+│   │   │   └── preamble/
+│   │   └── ...         # py, rs, cpp, zig, fab, go
+│   ├── lexicon/        # Lexer definitions
+│   ├── tokenizer/      # Tokenizer implementation
 │   ├── parser/         # Parser and AST
-│   ├── semantic/       # Type checking and analysis
-│   └── shared/         # Shared utilities
+│   └── semantic/       # Type checking and analysis
 ├── rivus/              # Bootstrap compiler (Faber source)
-│   │                   # Uses Latin exclusively - compiler written in Faber
 │   ├── ast/            # AST type definitions (.fab)
+│   ├── cli/            # CLI entry point (.fab)
 │   ├── lexicon/        # Lexer modules (.fab)
 │   ├── lexor/          # Lexer implementation (.fab)
 │   ├── parser/         # Parser modules (.fab)
 │   ├── semantic/       # Semantic analysis (.fab)
 │   └── codegen/        # Code generation (.fab)
-│       ├── norma-registry.gen.fab  # Generated from fons/norma/*.fab
-│       ├── ts/         # TypeScript codegen
-│       └── zig/        # Zig codegen (partial)
-├── proba/              # Shared test suite for both compilers
-│   │                   # Maintains feature sync between faber and rivus
-│   ├── parser/         # Parser tests
-│   ├── semantic/       # Semantic analysis tests
-│   └── codegen/        # Codegen tests by target
+│       ├── norma.gen.fab  # Generated stdlib
+│       └── ts/, go/    # Target-specific codegen
+├── proba/              # Shared test suite (YAML specs)
+│   ├── codegen/        # Codegen tests by target
+│   ├── capabilities/   # Feature capability tests
+│   ├── harness/        # Test runner infrastructure
+│   └── norma/          # Stdlib tests
 ├── exempla/            # Example .fab programs
 ├── grammatica/         # Language documentation (prose tutorials)
-├── norma/              # Standard library definitions with codegen annotations
-└── subsidia/           # Helper utilities (e.g., Zig runtime)
+├── norma/              # Standard library definitions (@ verte annotations)
+└── subsidia/           # Runtime helpers (Zig, C++, Rust)
 
 opus/                   # Build outputs ("opus" = work/product)
 ├── bin/                # Compiled executables (faber, rivus)
-└── rivus/fons/         # Compiled rivus source by target
-    ├── ts/             # TypeScript output
-    └── zig/            # Zig output
+├── exempla/            # Compiled examples by target
+├── proba/              # Test results database
+└── rivus/              # Compiled rivus by target
 
+agents/                 # Agent prompt definitions
 scripta/                # Build and utility scripts
-editors/                # Editor integrations (syntax highlighting, etc.)
-archivum/               # Historical/archived materials
 ```
 
 ## Agents
