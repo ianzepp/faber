@@ -56,7 +56,7 @@ functio parseSiSententia(Resolvitor r) -> Sententia {
     fixum condicio = r.expressia()
 
     # Parse consequent body
-    fixum consequens = parseCorpusBrevis(r)
+    fixum consequens = parseCorpus(r)
 
     # Check for optional catch (si expr { } cape err { })
     varia cape = nihil qua CapeClausula?
@@ -71,36 +71,10 @@ functio parseSiSententia(Resolvitor r) -> Sententia {
         alternans = parseSinSententia(r)
     } sin p.probaVerbum("secus") {
         p.procede()
-        # Match faber's secus handling: si, block, reddit, ergo, or bare statement
         si p.probaVerbum("si") {
             alternans = parseSiSententia(r)
-        } sin p.proba(SymbolumGenus.UncusSin) {
-            alternans = parseMassaSententia(r) qua Sententia
-        } sin p.probaVerbum("reddit") {
-            p.procede()
-            fixum stmtLocus = p.locusActualis()
-            fixum valor = r.expressia()
-            alternans = finge ReddeSententia { locus: stmtLocus, valor: valor } qua Sententia
-        } sin p.probaVerbum("iacit") {
-            p.procede()
-            fixum stmtLocus = p.locusActualis()
-            fixum argumentum = r.expressia()
-            alternans = finge IaceSententia { locus: stmtLocus, fatale: falsum, argumentum: argumentum } qua Sententia
-        } sin p.probaVerbum("moritor") {
-            p.procede()
-            fixum stmtLocus = p.locusActualis()
-            fixum argumentum = r.expressia()
-            alternans = finge IaceSententia { locus: stmtLocus, fatale: verum, argumentum: argumentum } qua Sententia
-        } sin p.probaVerbum("tacet") {
-            p.procede()
-            fixum stmtLocus = p.locusActualis()
-            alternans = finge TacetSententia { locus: stmtLocus } qua Sententia
-        } sin p.probaVerbum("ergo") {
-            p.procede()
-            alternans = r.sententia()
         } secus {
-            # One-liner: bare statement (no ergo needed)
-            alternans = r.sententia()
+            alternans = parseCorpusAutSententia(r)
         }
     }
 
@@ -136,7 +110,7 @@ functio parseDumSententia(Resolvitor r) -> Sententia {
     fixum condicio = r.expressia()
 
     # Parse body
-    fixum corpus = parseCorpusBrevis(r)
+    fixum corpus = parseCorpus(r)
 
     # Optional catch
     varia cape = nihil qua CapeClausula?
@@ -188,7 +162,7 @@ functio parseExSententia(Resolvitor r) -> Sententia {
     fixum variabilis = nomenSym.valor
 
     # Parse body
-    fixum corpus = parseCorpusBrevis(r)
+    fixum corpus = parseCorpus(r)
 
     # Optional catch
     varia cape = nihil qua CapeClausula?
@@ -232,7 +206,7 @@ functio parseDeSententia(Resolvitor r) -> Sententia {
     fixum variabilis = nomenSym.valor
 
     # Parse body
-    fixum corpus = parseCorpusBrevis(r)
+    fixum corpus = parseCorpus(r)
 
     # Optional catch
     varia cape = nihil qua CapeClausula?
@@ -311,18 +285,38 @@ functio parseCapeClausula(Resolvitor r) -> CapeClausula {
     } qua CapeClausula
 }
 
-# Parse a block or short-form body
+# Parse a statement body (block or inline form)
+#
+# GRAMMAR:
+#   body := 'tacet' | 'reddit' expr | 'iacit' expr | 'moritor' expr | 'ergo' stmt | block
+#
+# Used after conditions where a delimiter (ergo) is required for bare statements.
 @ publica
-functio parseCorpusBrevis(Resolvitor r) -> Sententia {
+functio parseCorpus(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
-    # tacet = explicit no-op (empty block)
     si p.probaVerbum("tacet") {
         p.procede()
-        redde finge TacetSententia {
-            locus: locus
-        } qua Sententia
+        redde finge TacetSententia { locus: locus } qua Sententia
+    }
+
+    si p.probaVerbum("reddit") {
+        p.procede()
+        fixum valor = r.expressia()
+        redde finge ReddeSententia { locus: locus, valor: valor } qua Sententia
+    }
+
+    si p.probaVerbum("iacit") {
+        p.procede()
+        fixum argumentum = r.expressia()
+        redde finge IaceSententia { locus: locus, fatale: falsum, argumentum: argumentum } qua Sententia
+    }
+
+    si p.probaVerbum("moritor") {
+        p.procede()
+        fixum argumentum = r.expressia()
+        redde finge IaceSententia { locus: locus, fatale: verum, argumentum: argumentum } qua Sententia
     }
 
     si p.probaVerbum("ergo") {
@@ -330,63 +324,45 @@ functio parseCorpusBrevis(Resolvitor r) -> Sententia {
         redde r.sententia()
     }
 
+    redde parseMassaSententia(r) qua Sententia
+}
+
+# Parse a statement body without requiring 'ergo' for bare statements
+#
+# Used after secus/ceterum where no condition exists, so no delimiter is needed.
+@ publica
+functio parseCorpusAutSententia(Resolvitor r) -> Sententia {
+    fixum p = r.parser()
+    fixum locus = p.locusActualis()
+
+    si p.probaVerbum("tacet") {
+        p.procede()
+        redde finge TacetSententia { locus: locus } qua Sententia
+    }
+
     si p.probaVerbum("reddit") {
         p.procede()
         fixum valor = r.expressia()
-        redde finge ReddeSententia {
-            locus: locus,
-            valor: valor
-        } qua Sententia
+        redde finge ReddeSententia { locus: locus, valor: valor } qua Sententia
     }
 
-    # iacit = inline throw (non-fatal)
     si p.probaVerbum("iacit") {
         p.procede()
         fixum argumentum = r.expressia()
-        redde finge IaceSententia {
-            locus: locus,
-            fatale: falsum,
-            argumentum: argumentum
-        } qua Sententia
+        redde finge IaceSententia { locus: locus, fatale: falsum, argumentum: argumentum } qua Sententia
     }
 
-    # moritor = inline panic (fatal)
     si p.probaVerbum("moritor") {
         p.procede()
         fixum argumentum = r.expressia()
-        redde finge IaceSententia {
-            locus: locus,
-            fatale: verum,
-            argumentum: argumentum
-        } qua Sententia
+        redde finge IaceSententia { locus: locus, fatale: verum, argumentum: argumentum } qua Sententia
     }
 
-    # Short-form block: fac ... fine
-    si p.probaVerbum("fac") {
-        p.procede()
-        varia corpus = [] innatum lista<Sententia>
-
-        dum non p.estFinis() {
-            fixum s = p.specta(0)
-            si (s.species == SymbolumGenus.Verbum et s.verbum == "fine") aut (s.species == SymbolumGenus.Nomen et s.valor == "fine") {
-                p.procede()
-                redde finge MassaSententia {
-                    locus: locus,
-                    corpus: corpus
-                } qua Sententia
-            }
-
-            corpus.adde(r.sententia())
-        }
-
-        # Fallback: unterminated short block
-        redde finge MassaSententia {
-            locus: locus,
-            corpus: corpus
-        } qua Sententia
+    si p.proba(SymbolumGenus.UncusSin) {
+        redde parseMassaSententia(r) qua Sententia
     }
 
-    redde parseMassaSententia(r) qua Sententia
+    redde r.sententia()
 }
 
 # Parse a "sin" (else-if) clause
@@ -398,43 +374,17 @@ functio parseSinSententia(Resolvitor r) -> Sententia {
     p.expectaVerbum("sin", ParserErrorCodice.ExpectaturSi)
 
     fixum condicio = r.expressia()
-    fixum consequens = parseCorpusBrevis(r)
+    fixum consequens = parseCorpus(r)
 
     varia alternans = nihil qua Sententia?
     si p.probaVerbum("sin") {
         alternans = parseSinSententia(r)
     } sin p.probaVerbum("secus") {
         p.procede()
-        # Match faber's secus handling: si, block, reddit, ergo, or bare statement
         si p.probaVerbum("si") {
             alternans = parseSiSententia(r)
-        } sin p.proba(SymbolumGenus.UncusSin) {
-            alternans = parseMassaSententia(r) qua Sententia
-        } sin p.probaVerbum("reddit") {
-            p.procede()
-            fixum stmtLocus = p.locusActualis()
-            fixum valor = r.expressia()
-            alternans = finge ReddeSententia { locus: stmtLocus, valor: valor } qua Sententia
-        } sin p.probaVerbum("iacit") {
-            p.procede()
-            fixum stmtLocus = p.locusActualis()
-            fixum argumentum = r.expressia()
-            alternans = finge IaceSententia { locus: stmtLocus, fatale: falsum, argumentum: argumentum } qua Sententia
-        } sin p.probaVerbum("moritor") {
-            p.procede()
-            fixum stmtLocus = p.locusActualis()
-            fixum argumentum = r.expressia()
-            alternans = finge IaceSententia { locus: stmtLocus, fatale: verum, argumentum: argumentum } qua Sententia
-        } sin p.probaVerbum("tacet") {
-            p.procede()
-            fixum stmtLocus = p.locusActualis()
-            alternans = finge TacetSententia { locus: stmtLocus } qua Sententia
-        } sin p.probaVerbum("ergo") {
-            p.procede()
-            alternans = r.sententia()
         } secus {
-            # One-liner: bare statement (no ergo needed)
-            alternans = r.sententia()
+            alternans = parseCorpusAutSententia(r)
         }
     }
 

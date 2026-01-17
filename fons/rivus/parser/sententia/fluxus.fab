@@ -23,6 +23,7 @@ ex "../../ast/sententia" importa Sententia, MassaSententia, EligeCasus, VariansC
 ex "../../ast/lexema" importa SymbolumGenus
 ex "../errores" importa ParserErrorCodice
 ex "./massa" importa parseMassaSententia
+ex "./imperium" importa parseCorpus, parseCorpusAutSententia
 
 # ============================================================================
 # SWITCH STATEMENT (elige)
@@ -68,7 +69,7 @@ functio parseEligeSententia(Resolvitor r) -> Sententia {
             fixum condicio = r.expressia()
 
             # Parse body: block, ergo stmt, or reddit expr
-            fixum consequens = parseCorpusBrevis(r)
+            fixum consequens = parseCorpus(r)
 
             casus.adde({
                 locus: casusLocus,
@@ -79,7 +80,7 @@ functio parseEligeSententia(Resolvitor r) -> Sententia {
         # Check for 'ceterum' (default case)
         sin p.probaVerbum("ceterum") {
             p.procede()
-            praedefinitum = parseCorpusBrevis(r) qua MassaSententia
+            praedefinitum = parseCorpusAutSententia(r) qua MassaSententia
             rumpe  # Default must be last
         }
         secus {
@@ -174,7 +175,7 @@ functio parseDiscerneSententia(Resolvitor r) -> Sententia {
             }
 
             # Parse body
-            fixum consequens = parseCorpusBrevis(r)
+            fixum consequens = parseCorpus(r)
 
             casus.adde({
                 locus: casusLocus,
@@ -200,7 +201,7 @@ functio parseDiscerneSententia(Resolvitor r) -> Sententia {
             }
 
             # Parse body (supports block, ergo, reddit, iacit)
-            fixum consequens = parseCorpusBrevis(r)
+            fixum consequens = parseCorpusAutSententia(r)
 
             casus.adde({
                 locus: casusLocus,
@@ -359,7 +360,7 @@ functio parseCustodiSententia(Resolvitor r) -> Sententia {
             p.procede()  # Consume 'si'
 
             fixum condicio = r.expressia()
-            fixum consequens = parseCorpusBrevis(r)
+            fixum consequens = parseCorpus(r)
 
             clausulae.adde({
                 locus: clausulaLocus,
@@ -407,55 +408,3 @@ functio parseCapeClausula(Resolvitor r) -> CapeClausula {
     } qua CapeClausula
 }
 
-# Parse a block or short-form body
-@ publica
-functio parseCorpusBrevis(Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
-
-    # tacet = explicit no-op (empty block)
-    si p.probaVerbum("tacet") {
-        p.procede()
-        redde finge TacetSententia {
-            locus: locus
-        } qua Sententia
-    }
-
-    si p.probaVerbum("ergo") {
-        p.procede()
-        redde r.sententia()
-    }
-
-    si p.probaVerbum("reddit") {
-        p.procede()
-        fixum valor = r.expressia()
-        redde finge ReddeSententia {
-            locus: locus,
-            valor: valor
-        } qua Sententia
-    }
-
-    # WHY: iacit/moritor are syntactic sugar for inline throw/panic in case bodies.
-    #      iacit (it throws) = ergo iace, moritor (let it die) = ergo mori.
-    si p.probaVerbum("iacit") {
-        p.procede()
-        fixum argumentum = r.expressia()
-        redde finge IaceSententia {
-            locus: locus,
-            fatale: falsum,
-            argumentum: argumentum
-        } qua Sententia
-    }
-
-    si p.probaVerbum("moritor") {
-        p.procede()
-        fixum argumentum = r.expressia()
-        redde finge IaceSententia {
-            locus: locus,
-            fatale: verum,
-            argumentum: argumentum
-        } qua Sententia
-    }
-
-    redde parseMassaSententia(r) qua Sententia
-}
