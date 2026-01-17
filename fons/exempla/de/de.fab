@@ -13,14 +13,14 @@ incipit ergo cura arena {
 
     # Access values using the key
     de persona pro clavis {
-        scribe scriptum("§: §", clavis, persona[clavis])
+        scribe "§: §", clavis, persona[clavis]
     }
 
     # Iterate over array indices
     fixum numeri = [10, 20, 30]
 
     de numeri pro index {
-        scribe scriptum("Index §: §", index, numeri[index])
+        scribe "Index §: §", index, numeri[index]
     }
 
     # One-liner form with ergo

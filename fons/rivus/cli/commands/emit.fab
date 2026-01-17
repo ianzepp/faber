@@ -53,7 +53,7 @@ functio emitCommand(
                 consolum.fundeLineam(json.solve({ error: scriptum("File not found: §", input) }))
             }
             secus {
-                mone scriptum("File not found: §", input)
+                mone "File not found: §", input
             }
             redde 1
         }
@@ -82,7 +82,7 @@ functio emitCommand(
         secus {
             mone "Lexor errors:"
             ex lexResult.errores pro err {
-                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus)
+                mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus
             }
         }
         si jsonOutput {
@@ -109,7 +109,7 @@ functio emitCommand(
         secus {
             mone "Parser errors:"
             ex parseResult.errores pro err {
-                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+                mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
             }
         }
         si jsonOutput {
@@ -148,7 +148,7 @@ functio emitCommand(
         secus {
             mone "Semantic errors:"
             ex semResult.errores pro err {
-                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+                mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
             }
         }
         redde 1
@@ -160,7 +160,7 @@ functio emitCommand(
             consolum.fundeLineam(json.solve({ success: verum, file: displayName }))
         }
         secus {
-            scribe scriptum("§: OK", displayName)
+            scribe "§: OK", displayName
         }
         redde 0
     }
@@ -172,7 +172,7 @@ functio emitCommand(
     si output {
         cede solum.scribe(output, generated)
         si non jsonOutput {
-            mone scriptum("Compiled: § -> §", displayName, output)
+            mone "Compiled: § -> §", displayName, output
         }
     }
     secus {

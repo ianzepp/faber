@@ -29,7 +29,7 @@ incipit ergo cura arena {
                 perge
             }
 
-            scribe scriptum("outer=§, inner=§", outer, inner)
+            scribe "outer=§, inner=§", outer, inner
         }
 
         outer = outer + 1

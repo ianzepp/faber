@@ -55,7 +55,7 @@ functio checkCommand(
                 }
             }
             secus {
-                mone scriptum("File not found: §", input)
+                mone "File not found: §", input
             }
             redde 1
         }
@@ -86,7 +86,7 @@ functio checkCommand(
         secus {
             mone "Lexor errors:"
             ex lexResult.errores pro err {
-                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus)
+                mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus
             }
         }
     }
@@ -110,7 +110,7 @@ functio checkCommand(
         secus {
             mone "Parser errors:"
             ex parseResult.errores pro err {
-                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+                mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
             }
         }
     }
@@ -136,7 +136,7 @@ functio checkCommand(
             secus {
                 mone "Semantic errors:"
                 ex semResult.errores pro err {
-                    mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+                    mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
                 }
             }
         }

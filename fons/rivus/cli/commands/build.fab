@@ -74,7 +74,7 @@ functio compileFile(
         secus {
             mone "Lexor errors:"
             ex lexResult.errores pro err {
-                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus)
+                mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus
             }
         }
         redde nihil
@@ -98,7 +98,7 @@ functio compileFile(
         secus {
             mone "Parser errors:"
             ex parseResult.errores pro err {
-                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+                mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
             }
         }
         redde nihil
@@ -113,7 +113,7 @@ functio compileFile(
             } innatum tabula<textus, ignotum>)
         }
         secus {
-            mone scriptum("Failed to parse: §", displayName)
+            mone "Failed to parse: §", displayName
         }
         redde nihil
     }
@@ -136,7 +136,7 @@ functio compileFile(
         secus {
             mone "Semantic errors:"
             ex semResult.errores pro err {
-                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+                mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
             }
         }
         redde nihil
@@ -179,7 +179,7 @@ functio buildCommand(
                 consolum.fundeLineam(json.solve({ error: scriptum("File not found: §", input) }))
             }
             secus {
-                mone scriptum("File not found: §", input)
+                mone "File not found: §", input
             }
             redde 1
         }
@@ -230,7 +230,7 @@ functio buildCommand(
                 secus {
                     mone "Semantic errors:"
                     ex depAnalysis.errores pro err {
-                        mone scriptum("  §:§:§ - §", depPath, err.locus.linea, err.locus.columna, err.nuntius)
+                        mone "  §:§:§ - §", depPath, err.locus.linea, err.locus.columna, err.nuntius
                     }
                 }
                 hadErrors = verum
@@ -262,7 +262,7 @@ functio buildCommand(
         }
         secus {
             ex filesToWrite pro file {
-                scribe scriptum("§ -> §", file["source"], file["target"])
+                scribe "§ -> §", file["source"], file["target"]
             }
         }
         redde 0
@@ -274,7 +274,7 @@ functio buildCommand(
             consolum.fundeLineam(json.solve({ success: verum, fileCount: filesToWrite.length }))
         }
         secus {
-            scribe scriptum("Would compile § file(s) to §", filesToWrite.length, outputDir)
+            scribe "Would compile § file(s) to §", filesToWrite.length, outputDir
         }
         redde 0
     }
@@ -301,7 +301,7 @@ functio buildCommand(
         }
 
         si non jsonOutput {
-            scribe scriptum("  § -> §", file["source"], file["target"])
+            scribe "  § -> §", file["source"], file["target"]
         }
         fileCount = fileCount + 1
     }
@@ -311,7 +311,7 @@ functio buildCommand(
     }
     secus {
         scribe ""
-        scribe scriptum("Build complete: § file(s) written to §", fileCount, outputDir)
+        scribe "Build complete: § file(s) written to §", fileCount, outputDir
     }
 
     redde 0

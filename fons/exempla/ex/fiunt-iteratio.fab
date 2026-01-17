@@ -22,7 +22,7 @@ incipit {
     # Iterate over sync fiunt function results
     scribe "Sync fiunt iteration:"
     ex rangeSync(3) pro num {
-        scribe scriptum("  num: {num}")
+        scribe "  num: {num}"
     }
 
     # Collect all results from fiunt function

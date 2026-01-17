@@ -93,3 +93,42 @@ functio validaInput(textus inputFile) -> bivalens {
     }
     redde solum.exstat(inputFile)
 }
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# TESTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+probandum "auxilium" {
+    probandum "nomenOstende" {
+        proba "returns <stdin> for dash" {
+            adfirma nomenOstende("-") == "<stdin>"
+        }
+        proba "returns filename as-is" {
+            adfirma nomenOstende("foo.fab") == "foo.fab"
+        }
+    }
+
+    probandum "mutaExtensionem" {
+        proba "replaces .fab with .ts" {
+            adfirma mutaExtensionem("foo.fab", ".ts") == "foo.ts"
+        }
+        proba "handles paths with directories" {
+            adfirma mutaExtensionem("src/lib/utils.fab", ".ts") == "src/lib/utils.ts"
+        }
+        proba "appends extension when none exists" {
+            adfirma mutaExtensionem("README", ".md") == "README.md"
+        }
+    }
+
+    probandum "viaRelativa" {
+        proba "same directory" {
+            adfirma viaRelativa("/a/b", "/a/c") == "../c"
+        }
+        proba "nested deeper" {
+            adfirma viaRelativa("/a/b", "/a/b/c/d") == "c/d"
+        }
+        proba "sibling directories" {
+            adfirma viaRelativa("/a/b/c", "/a/d/e") == "../../d/e"
+        }
+    }
+}

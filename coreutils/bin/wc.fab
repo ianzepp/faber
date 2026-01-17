@@ -19,6 +19,6 @@ incipit argumenta args exitus code {
     fixum showBytes = args.c aut showAll
 
     ex args.files pro file {
-        scribe scriptum("Processing: §", file)
+        scribe "Processing: §", file
     }
 }

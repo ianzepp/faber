@@ -40,7 +40,7 @@ functio parseCommand(
     # Validate input exists
     custodi {
         si non validaInput(input) {
-            mone scriptum("File not found: §", input)
+            mone "File not found: §", input
             redde 1
         }
     }
@@ -53,7 +53,7 @@ functio parseCommand(
     si positivum lexResult.errores.longitudo() {
         mone "Lexor errors:"
         ex lexResult.errores pro err {
-            mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus)
+            mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus
         }
         redde 1
     }
@@ -64,7 +64,7 @@ functio parseCommand(
     si positivum parseResult.errores.longitudo() {
         mone "Parser errors:"
         ex parseResult.errores pro err {
-            mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+            mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
         }
         redde 1
     }
@@ -79,7 +79,7 @@ functio parseCommand(
 
     si output {
         cede solum.scribe(output, astJson)
-        mone scriptum("AST written to §", output)
+        mone "AST written to §", output
     }
     secus {
         consolum.fundeLineam(astJson)

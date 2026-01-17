@@ -8,16 +8,16 @@ incipit {}
 
 @ imperium "hello"
 functio hello(textus name) -> vacuum {
-    scribe scriptum("Hello, §!", name)
+    scribe "Hello, §!", name
 }
 
 @ imperium "goodbye"
 @ alias "bye"
 functio goodbye(textus name, si bivalens formal ut f) -> vacuum {
     si f {
-        scribe scriptum("Farewell, §.", name)
+        scribe "Farewell, §.", name
     }
     secus {
-        scribe scriptum("Bye, §!", name)
+        scribe "Bye, §!", name
     }
 }

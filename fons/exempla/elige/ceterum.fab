@@ -54,7 +54,7 @@ incipit ergo cura arena {
         }
         ceterum {
             scribe "Custom level"
-            scribe scriptum("Level: §", level)
+            scribe "Level: §", level
         }
     }
 }
