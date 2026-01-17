@@ -26,7 +26,7 @@
 # - notae = comments (marks/notes)
 
 ex "../ast/lexema" importa Symbolum, SymbolumGenus, VerbumId
-ex "../ast/radix" importa Nota, NotaGenus
+ex "../ast/radix" importa Nota, NotaGenus, SectioAnnotatio
 ex "../ast/positio" importa Locus
 ex "./errores" importa ParserError, ParserErrorCodice, error
 ex "../lexicon/verba" importa estVerbumSententiae, estVerbumGeneris
@@ -42,6 +42,7 @@ genus Parser {
     numerus idUnicum              # Counter for unique ID generation
     lista<ParserError> errores    # Accumulated parse errors
     lista<Nota> notaePendentes    # Comments awaiting attachment
+    lista<SectioAnnotatio> sectiones  # File-level § directives
 
     # =========================================================================
     # Unique ID Generation
@@ -544,6 +545,7 @@ functio novumParser(lista<Symbolum> symbola) -> Parser {
         index: 0,
         idUnicum: 0,
         errores: [],
-        notaePendentes: []
+        notaePendentes: [],
+        sectiones: []
     }
 }

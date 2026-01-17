@@ -17,16 +17,9 @@ ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
 ex "../../ast/expressia" importa Expressia
 ex "../../ast/sententia" importa Sententia, MassaSententia
+ex "../../ast/radix" importa Programma, SectioAnnotatio
 ex "../../ast/lexema" importa SymbolumGenus
 ex "../errores" importa ParserErrorCodice
-
-# Programma - top-level program AST node
-# NOTE: This is separate from Sententia since it's the root
-@ publicum
-genus Programma {
-    Locus locus
-    lista<Sententia> corpus
-}
 
 # Parse a block statement
 #
@@ -119,8 +112,15 @@ functio parseProgramma(Resolvitor r) -> Programma {
         }
     }
 
+    # Extract accumulated § directives from parser
+    varia sectiones = nihil qua lista<SectioAnnotatio>?
+    si p.sectiones.longitudo() > 0 {
+        sectiones = p.sectiones
+    }
+
     redde {
         locus: locus,
-        corpus: corpus
+        corpus: corpus,
+        sectiones: sectiones
     } qua Programma
 }

@@ -52,6 +52,7 @@
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
 ex "../../ast/lexema" importa SymbolumGenus
+ex "../../ast/radix" importa SectioAnnotatio
 ex "../errores" importa ParserErrorCodice
 
 # ============================================================================
@@ -396,21 +397,7 @@ functio parseAnnotationes(Resolvitor r) -> lista<Annotatio> {
 # SECTION ANNOTATIONS (§)
 # ============================================================================
 
-# Parsed section annotation for build/project configuration
-#
-# Unlike @ annotations which have specialized fields for code transforms,
-# § annotations use a simpler key-value model for build configuration.
-#
-# Examples:
-#   § opus nomen "echo"           -> nomen="opus", argumenta=["nomen", "echo"]
-#   § scopos "ts"                 -> nomen="scopos", argumenta=["ts"]
-#   § dependentia "norma" via "." -> nomen="dependentia", argumenta=["norma", "via", "."]
-@ publicum
-genus SectioAnnotatio {
-    Locus locus
-    textus nomen                # annotation name (opus, scopos, dependentia, etc.)
-    lista<textus> argumenta     # all arguments as strings (identifiers and string literals)
-}
+# SectioAnnotatio is defined in ast/radix.fab to avoid circular imports
 
 # Parse all section annotations at current position
 #

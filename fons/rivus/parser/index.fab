@@ -25,9 +25,10 @@ ex "../ast/expressia" importa Expressia
 ex "../ast/sententia" importa Sententia, MassaSententia
 ex "../ast/typus" importa TypusAnnotatio
 ex "../ast/lexema" importa Symbolum
+ex "../ast/radix" importa Programma
 
 # Import parsing functions
-ex "./sententia/massa" importa Programma, parseProgramma, parseMassaSententia
+ex "./sententia/massa" importa parseProgramma, parseMassaSententia
 ex "./sententia/index" importa parseSententia
 ex "./expressia/binaria" importa parseAssignatio
 ex "./typus" importa parseTypusAnnotatio
