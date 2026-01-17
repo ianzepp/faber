@@ -245,22 +245,22 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
             redde parsePergeSententia(r)
         }
 
-        # Throw/panic
-        si verbumId === VerbumId.Iace {
+        # Throw/panic (skip if followed by LPAREN - treat as function call)
+        si verbumId === VerbumId.Iace et p.specta(1).species !== SymbolumGenus.ParensSin {
             redde parseIaceSententia(r, falsum)
         }
-        si verbumId === VerbumId.Mori {
+        si verbumId === VerbumId.Mori et p.specta(1).species !== SymbolumGenus.ParensSin {
             redde parseIaceSententia(r, verum)
         }
 
-        # Output statements
-        si verbumId === VerbumId.Scribe {
+        # Output statements (skip if followed by LPAREN - treat as function call)
+        si verbumId === VerbumId.Scribe et p.specta(1).species !== SymbolumGenus.ParensSin {
             redde parseScribeSententia(r, ScribeGradus.Scribe)
         }
-        si verbumId === VerbumId.Vide {
+        si verbumId === VerbumId.Vide et p.specta(1).species !== SymbolumGenus.ParensSin {
             redde parseScribeSententia(r, ScribeGradus.Vide)
         }
-        si verbumId === VerbumId.Mone {
+        si verbumId === VerbumId.Mone et p.specta(1).species !== SymbolumGenus.ParensSin {
             redde parseScribeSententia(r, ScribeGradus.Mone)
         }
 
@@ -355,16 +355,16 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
             redde parseCustodiSententia(r)
         }
 
-        # Entry points
-        si verbumId === VerbumId.Incipit {
+        # Entry points (skip if followed by LPAREN - treat as function call)
+        si verbumId === VerbumId.Incipit et p.specta(1).species !== SymbolumGenus.ParensSin {
             redde parseIncipitSententia(r)
         }
-        si verbumId === VerbumId.Incipiet {
+        si verbumId === VerbumId.Incipiet et p.specta(1).species !== SymbolumGenus.ParensSin {
             redde parseIncipietSententia(r)
         }
 
-        # Resource management and dispatch
-        si verbumId === VerbumId.Cura {
+        # Resource management and dispatch (skip if followed by LPAREN - treat as function call)
+        si verbumId === VerbumId.Cura et p.specta(1).species !== SymbolumGenus.ParensSin {
             redde parseCuraSententia(r)
         }
         si verbumId === VerbumId.Ad {
