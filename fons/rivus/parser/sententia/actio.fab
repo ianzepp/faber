@@ -118,12 +118,18 @@ functio parseIaceSententia(Resolvitor r, bivalens fatale) -> Sententia {
 
 # Parse output statement (scribe/vide/mone)
 #
-# GRAMMAR: outputStmt := ('scribe' | 'vide' | 'mone') expression (',' expression)*
+# GRAMMAR: outputStmt := ('scribe' | 'vide' | 'mone') scribeItem (',' scribeItem)*
+#          scribeItem := STRING expression* | expression
 #
 # Maps to console output:
 # - scribe → console.log
 # - vide → console.debug
 # - mone → console.warn
+#
+# STRING DESUGARING: String literals are automatically wrapped in scriptum expressions.
+# The § placeholder count determines how many following arguments are consumed:
+#   scribe "Found § errors", count  →  scribe scriptum("Found § errors", count)
+#   scribe "hello"                  →  scribe scriptum("hello")
 @ publica
 functio parseScribeSententia(Resolvitor r, ScribeGradus gradus) -> Sententia {
     fixum p = r.parser()
@@ -132,15 +138,12 @@ functio parseScribeSententia(Resolvitor r, ScribeGradus gradus) -> Sententia {
     # Consume keyword (already validated by caller)
     p.procede()
 
-    # Parse first argument (required)
-    # TODO: does this compile if `varia lista<Expressia> argumenta = []`?
-    # TODO: or better yet as `varia Expressia[] argumenta = []`?
-    varia argumenta = [] innatum lista<Expressia>   
-    argumenta.adde(r.expressia())
+    varia argumenta = [] innatum lista<Expressia>
+    argumenta.adde(parseScribeElementum(r))
 
-    # Parse additional comma-separated arguments
+    # Parse additional comma-separated items
     dum p.congruet(SymbolumGenus.Coma) {
-        argumenta.adde(r.expressia())
+        argumenta.adde(parseScribeElementum(r))
     }
 
     redde finge ScribeSententia {
@@ -148,4 +151,50 @@ functio parseScribeSententia(Resolvitor r, ScribeGradus gradus) -> Sententia {
         gradus: gradus,
         argumenta: argumenta
     } qua Sententia
+}
+
+# Parse a single scribe item, converting string literals to scriptum expressions.
+#
+# WHY: Syntactic sugar - string literals in scribe statements are implicitly
+# wrapped in scriptum() for consistent formatting semantics. The § placeholder
+# count determines how many following comma-separated arguments are consumed.
+functio parseScribeElementum(Resolvitor r) -> Expressia {
+    fixum p = r.parser()
+
+    # String literals become scriptum expressions
+    si p.proba(SymbolumGenus.Textus) {
+        fixum token = p.procede()
+        fixum locus = token.locus
+        fixum exemplar = token.valor
+
+        # Count § placeholders to determine how many args to consume
+        varia placeholderNumerus = 0
+        ex 0 ante exemplar.longitudo() pro i {
+            si exemplar[i] == "§" {
+                placeholderNumerus += 1
+            }
+        }
+
+        varia scriptumArgumenta = [] innatum lista<Expressia>
+
+        ex 0 ante placeholderNumerus pro i {
+            si non p.congruet(SymbolumGenus.Coma) {
+                p.renuncia(
+                    ParserErrorCodice.ExpectaturExpressia,
+                    scriptum("Expected argument for § placeholder (need §, got §)", placeholderNumerus, i)
+                )
+                rumpe
+            }
+            scriptumArgumenta.adde(r.expressia())
+        }
+
+        redde finge ScriptumExpressia {
+            locus: locus,
+            exemplar: exemplar,
+            argumenta: scriptumArgumenta
+        } qua Expressia
+    }
+
+    # Non-string expressions are parsed normally
+    redde r.expressia()
 }
