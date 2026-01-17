@@ -298,16 +298,9 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
         si verbumId === VerbumId.Dum {
             redde parseDumSententia(r)
         }
+        # 'ex' for for-of loops and destructuring
+        # NOTE: imports use § ex sectional syntax, not bare ex
         si verbumId === VerbumId.Ex {
-            # Look ahead: ex (IDENTIFIER|STRING) importa -> import
-            fixum nextSym = p.specta(1)
-            si (nextSym.species === SymbolumGenus.Nomen aut nextSym.species === SymbolumGenus.Textus) {
-                fixum afterSym = p.specta(2)
-                si afterSym.species === SymbolumGenus.Verbum et afterSym.verbumId === VerbumId.Importa {
-                    redde parseImportaSententia(r)
-                }
-            }
-
             # Destructure: ex <expr> fixum/varia/figendum/variandum ...
             varia i = 1
             dum i < 32 et non p.estFinis() {

@@ -1,29 +1,22 @@
 # Importa
 
-Faber's module system lets programs organize code across files and incorporate external libraries. The design follows a simple principle: imports should read like Latin sentences. When you write `ex norma importa scribe`, you are saying "from the standard library, bring in scribe." The syntax mirrors how Latin expresses provenance and acquisition.
+Faber's module system lets programs organize code across files and incorporate external libraries. The design follows a simple principle: imports should read like Latin sentences. When you write `§ ex norma importa scribe`, you are saying "from the standard library, bring in scribe." The syntax mirrors how Latin expresses provenance and acquisition.
 
 The verb `importa` is the imperative of *importare* (to bring in, to carry into). Its counterpart `exporta` comes from *exportare* (to carry out). These are not arbitrary keyword choices. They describe exactly what the operations do: bringing symbols into a scope, or carrying them out for others to use.
 
 ## Importing
 
-### The ex...importa Pattern
+### The § ex...importa Pattern
 
-Every import begins with `ex` followed by a source, then `importa` followed by the names you want:
-
-```fab
-ex norma importa scribe, lege
-ex "lodash" importa map, filter
-ex "./utils" importa helper
-```
-
-Imports may also use the sectional prefix `§`:
+Every import begins with the sectional marker `§`, followed by `ex`, a source, then `importa` and the names you want:
 
 ```fab
 § ex norma importa scribe, lege
 § ex "lodash" importa map, filter
+§ ex "./utils" importa helper
 ```
 
-The sectional form groups imports with other file-level directives like `§ dependentia` and `§ externa`. Both forms produce identical behavior; the `§` prefix is purely syntactic. Use whichever reads better in context.
+The `§` prefix groups imports with other file-level directives like `§ dependentia` and `§ externa`. This distinguishes imports (which are declarative) from `ex` used in iteration (`ex items pro item`).
 
 This pattern reads naturally in Latin. The preposition `ex` means "from" or "out of," indicating origin or source. You are drawing bindings *out of* a module into your local scope.
 
@@ -31,25 +24,25 @@ The structure is consistent regardless of source type. Whether importing from th
 
 ### Why "ex"?
 
-Latin prepositions carry semantic weight that English keywords lose through familiarity. When you see `ex items pro item` in a loop, the `ex` tells you where the data flows from. When you see `ex norma importa scribe`, the `ex` tells you where the symbol originates.
+Latin prepositions carry semantic weight that English keywords lose through familiarity. When you see `ex items pro item` in a loop, the `ex` tells you where the data flows from. When you see `§ ex norma importa scribe`, the `ex` tells you where the symbol originates.
 
 The preposition `ex` appears throughout Faber whenever something is drawn from a source:
 
-- Imports draw symbols from modules: `ex module importa name`
+- Imports draw symbols from modules: `§ ex module importa name`
 - Iteration draws elements from collections: `ex items pro item { ... }`
 - Destructuring draws fields from objects: `ex response fixum status, data`
 
-This consistency is deliberate. By using positional grammar rather than distinct keywords for each context, Faber mirrors how Latin works. The preposition's meaning derives from its position in the sentence, not from memorizing what each keyword does in isolation.
+The `§` prefix on imports distinguishes the declarative context from the executable contexts (iteration, destructuring).
 
 ### String Paths vs. Bare Identifiers
 
 The source in an import can be either a quoted string or a bare identifier:
 
 ```fab
-ex norma importa scribe           # bare identifier
-ex "norma/tempus" importa dormi   # string path
-ex "@hono/hono" importa Hono      # string with special characters
-ex "./local" importa helper       # relative path
+§ ex norma importa scribe           # bare identifier
+§ ex "norma/tempus" importa dormi   # string path
+§ ex "@hono/hono" importa Hono      # string with special characters
+§ ex "./local" importa helper       # relative path
 ```
 
 Bare identifiers work for simple module names that are valid identifiers. Use quoted strings when the path contains slashes, special characters, or needs to be a relative path. The `norma` standard library can be imported either way, but its submodules require string paths: `"norma/tempus"`, `"norma/crypto"`.
@@ -61,9 +54,9 @@ External packages from registries like npm use their published names as strings.
 Most imports specify exactly which symbols to bring in:
 
 ```fab
-ex "hono" importa Hono, Context
-ex "lodash" importa map, filter, reduce
-ex norma importa scribe, lege, mone
+§ ex "hono" importa Hono, Context
+§ ex "lodash" importa map, filter, reduce
+§ ex norma importa scribe, lege, mone
 ```
 
 This is explicit and intentional. Named imports make dependencies visible. A reader can see at a glance what a file uses from each module without hunting through the code.
@@ -75,9 +68,9 @@ Multiple symbols are comma-separated. There is no limit to how many you can impo
 Sometimes you need to rename an import. Perhaps there is a naming conflict, or the original name is unclear in context, or you prefer a shorter form for frequently used symbols. The `ut` keyword provides aliasing:
 
 ```fab
-ex "utils" importa helper ut h
-ex "db" importa connect, query ut q, close
-ex "lodash" importa map ut lodashMap
+§ ex "utils" importa helper ut h
+§ ex "db" importa connect, query ut q, close
+§ ex "lodash" importa map ut lodashMap
 ```
 
 The `ut` preposition means "as" or "like." You are saying "import `helper` *as* `h`." The original name appears first, then `ut`, then the local name you want to use. This mirrors Latin's use of `ut` for comparison and equivalence.
@@ -85,7 +78,7 @@ The `ut` preposition means "as" or "like." You are saying "import `helper` *as* 
 Aliases work with any import, whether you are renaming one symbol or several:
 
 ```fab
-ex "mod" importa foo ut f, bar ut b, baz ut z
+§ ex "mod" importa foo ut f, bar ut b, baz ut z
 ```
 
 Each renaming is independent. You can alias some imports while leaving others with their original names.
@@ -95,8 +88,8 @@ Each renaming is independent. You can alias some imports while leaving others wi
 When you need everything a module exports, use the wildcard form with an alias:
 
 ```fab
-ex "@std/crypto" importa * ut crypto
-ex "lodash" importa * ut _
+§ ex "@std/crypto" importa * ut crypto
+§ ex "lodash" importa * ut _
 ```
 
 The asterisk `*` means "all exports." The alias is required because wildcard imports must be namespaced. You cannot dump all exports into the local scope without a container. This prevents name collisions and keeps dependencies traceable.
@@ -104,7 +97,7 @@ The asterisk `*` means "all exports." The alias is required because wildcard imp
 After a wildcard import, access symbols through the alias:
 
 ```fab
-ex "lodash" importa * ut _
+§ ex "lodash" importa * ut _
 fixum doubled = _.map(numbers, pro x: x * 2)
 ```
 
@@ -163,7 +156,7 @@ If you are porting code from TypeScript or JavaScript that uses default exports,
 Static imports happen at module load time. Sometimes you need to import a module later, perhaps conditionally or to reduce initial load time. Faber provides dynamic imports using the future tense: `importabit`.
 
 ```fab
-ex "./heavy" importabit modulus
+§ ex "./heavy" importabit modulus
 scribe modulus.process(data)
 ```
 
@@ -194,8 +187,8 @@ Use dynamic imports judiciously. Static imports are analyzed at compile time, en
 The identifier `norma` refers to Faber's standard library. Unlike external packages, `norma` modules are compiler-handled. The compiler recognizes `norma/*` paths, validates their exports, and generates appropriate target-language code without emitting import statements.
 
 ```fab
-ex norma importa scribe, lege
-ex "norma/tempus" importa nunc, dormi, SECUNDUM
+§ ex norma importa scribe, lege
+§ ex "norma/tempus" importa nunc, dormi, SECUNDUM
 ```
 
 This design means compiled output has no Faber-specific dependencies. The standard library is "batteries included" at compile time, not runtime. When you import `dormi` from `norma/tempus`, the compiler emits the appropriate sleep implementation for your target language directly.
@@ -205,8 +198,8 @@ This design means compiled output has no Faber-specific dependencies. The standa
 External packages are imported by their published names:
 
 ```fab
-ex "@hono/hono" importa Hono, Context
-ex "pg" importa Pool
+§ ex "@hono/hono" importa Hono, Context
+§ ex "pg" importa Pool
 ```
 
 The compiler passes external package references through unchanged. This gives you full access to your target ecosystem's libraries while writing Faber syntax.
@@ -216,8 +209,8 @@ The compiler passes external package references through unchanged. This gives yo
 Files within your project import from relative paths:
 
 ```fab
-ex "./utils" importa helper, formatter
-ex "../shared/types" importa User, Config
+§ ex "./utils" importa helper, formatter
+§ ex "../shared/types" importa User, Config
 ```
 
 Local imports work like external packages for compilation purposes. The compiler rewrites the path extension (`.fab` to `.ts` or `.py` depending on target) but otherwise passes the import through.

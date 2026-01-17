@@ -3077,7 +3077,7 @@ describe('parser', () => {
 
     describe('import declarations', () => {
         test('string path source', () => {
-            const { program } = parseCode('ex "norma/tempus" importa nunc, dormi');
+            const { program } = parseCode('§ ex "norma/tempus" importa nunc, dormi');
             const decl = program!.body[0] as any;
 
             expect(decl.type).toBe('ImportaDeclaration');
@@ -3089,7 +3089,7 @@ describe('parser', () => {
         });
 
         test('wildcard import', () => {
-            const { program } = parseCode('ex "norma/tempus" importa *');
+            const { program } = parseCode('§ ex "norma/tempus" importa *');
             const decl = program!.body[0] as any;
 
             expect(decl.type).toBe('ImportaDeclaration');
@@ -3098,7 +3098,7 @@ describe('parser', () => {
         });
 
         test('single import', () => {
-            const { program } = parseCode('ex "norma/tempus" importa nunc');
+            const { program } = parseCode('§ ex "norma/tempus" importa nunc');
             const decl = program!.body[0] as any;
 
             expect(decl.specifiers).toHaveLength(1);
@@ -3106,7 +3106,7 @@ describe('parser', () => {
         });
 
         test('import with constants', () => {
-            const { program } = parseCode('ex "norma/tempus" importa SECUNDUM, MINUTUM, HORA');
+            const { program } = parseCode('§ ex "norma/tempus" importa SECUNDUM, MINUTUM, HORA');
             const decl = program!.body[0] as any;
 
             expect(decl.specifiers).toHaveLength(3);
@@ -3116,7 +3116,7 @@ describe('parser', () => {
         });
 
         test('import with ut alias', () => {
-            const { program } = parseCode('ex norma importa scribe ut s, lege ut l');
+            const { program } = parseCode('§ ex norma importa scribe ut s, lege ut l');
             const decl = program!.body[0] as any;
 
             expect(decl.type).toBe('ImportaDeclaration');
@@ -3128,7 +3128,7 @@ describe('parser', () => {
         });
 
         test('import with mixed aliases', () => {
-            const { program } = parseCode('ex norma importa scribe ut s, lege');
+            const { program } = parseCode('§ ex norma importa scribe ut s, lege');
             const decl = program!.body[0] as any;
 
             expect(decl.specifiers).toHaveLength(2);
@@ -3138,35 +3138,22 @@ describe('parser', () => {
             expect(decl.specifiers[1].local.name).toBe('lege'); // no alias, same name
         });
 
-        test('sectional import with §', () => {
-            const { program } = parseCode('§ ex "hono" importa Hono');
-            const decl = program!.body[0] as any;
-
-            expect(decl.type).toBe('ImportaDeclaration');
-            expect(decl.source).toBe('hono');
-            expect(decl.specifiers).toHaveLength(1);
-            expect(decl.specifiers[0].imported.name).toBe('Hono');
-        });
-
-        test('sectional import produces same AST as bare import', () => {
-            const { program: bare } = parseCode('ex "hono" importa Hono, Router');
-            const { program: sectional } = parseCode('§ ex "hono" importa Hono, Router');
-            const bareDecl = bare!.body[0] as any;
-            const sectDecl = sectional!.body[0] as any;
-
-            expect(sectDecl.type).toBe(bareDecl.type);
-            expect(sectDecl.source).toBe(bareDecl.source);
-            expect(sectDecl.specifiers.length).toBe(bareDecl.specifiers.length);
-            expect(sectDecl.wildcard).toBe(bareDecl.wildcard);
-        });
-
-        test('sectional wildcard import', () => {
+        test('wildcard import with alias', () => {
             const { program } = parseCode('§ ex norma importa * ut n');
             const decl = program!.body[0] as any;
 
             expect(decl.type).toBe('ImportaDeclaration');
             expect(decl.wildcard).toBe(true);
             expect(decl.wildcardAlias.name).toBe('n');
+        });
+
+        test('bare identifier source', () => {
+            const { program } = parseCode('§ ex norma importa scribe');
+            const decl = program!.body[0] as any;
+
+            expect(decl.type).toBe('ImportaDeclaration');
+            expect(decl.source).toBe('norma');
+            expect(decl.specifiers).toHaveLength(1);
         });
     });
 

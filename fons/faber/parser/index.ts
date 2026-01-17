@@ -1334,17 +1334,11 @@ export function parse(tokens: Token[]): ParserResult {
      * WHY: Separated from parseStatementWithoutComments to allow annotation handling.
      */
     function parseStatementCore(): Statement {
-        // Distinguish 'ex norma importa' (import), 'ex items pro n' (for-loop),
-        // and 'ex response fixum { }' (destructuring)
+        // 'ex' for for-of loops and destructuring
+        // ex items pro n { } → for-of loop
+        // ex response fixum { } → destructuring
+        // NOTE: imports use § ex sectional syntax, not bare ex
         if (checkKeyword('ex')) {
-            // Look ahead: ex (IDENTIFIER|STRING) importa -> import
-            const nextType = peek(1).type;
-
-            if ((nextType === 'IDENTIFIER' || nextType === 'STRING') && peek(2).keyword === 'importa') {
-                return parseImportaDeclaration(resolver);
-            }
-
-            // Could be for-loop or destructuring - parse and dispatch
             return parseExStatement(resolver);
         }
 

@@ -114,15 +114,16 @@ variantFields := (typeAnnotation IDENTIFIER (',' typeAnnotation IDENTIFIER)*)?
 ### Imports
 
 ```ebnf
-importDecl    := '§'? 'ex' (STRING | IDENTIFIER) 'importa' (specifierList | '*' ('ut' IDENTIFIER)?)
+importDecl    := '§' 'ex' (STRING | IDENTIFIER) 'importa' (specifierList | '*' ('ut' IDENTIFIER)?)
 specifierList := specifier (',' specifier)*
 specifier     := IDENTIFIER ('ut' IDENTIFIER)?
 ```
 
-Both forms are equivalent:
+Example:
 ```fab
-ex "hono" importa Hono          # bare import
-§ ex "hono" importa Hono        # sectional import (preferred)
+§ ex "hono" importa Hono, Context
+§ ex norma importa scribe ut s
+§ ex "lodash" importa * ut _
 ```
 
 ---
