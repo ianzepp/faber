@@ -132,11 +132,11 @@ discretio Expressia {
     }
 
     # Regex literal
-    # Example: sed "pattern" flags
+    # Example: sed "(?i)pattern" (inline flags)
     LitteraRegex {
         Locus locus
-        textus forma         # pattern
-        textus vexilla       # flags
+        textus forma         # pattern (may include inline flags like (?i))
+        textus vexilla       # unused, kept for compatibility
     }
 
     # -------------------------------------------------------------------------

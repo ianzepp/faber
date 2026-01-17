@@ -1,14 +1,14 @@
 # Regex literals using sed keyword
-# Syntax: sed "pattern" [flags]
+# Syntax: sed "pattern" with inline flags like (?i) for case-insensitive
 
 incipit {
     # Simple patterns
     fixum digits = sed "\d+"
     fixum word = sed "\w+"
 
-    # With flags (i = case insensitive, m = multiline)
-    fixum insensitive = sed "hello" i
-    fixum multiline = sed "^start" im
+    # With inline flags (i = case insensitive, m = multiline)
+    fixum insensitive = sed "(?i)hello"
+    fixum multiline = sed "(?im)^start"
 
     # Complex patterns
     fixum email = sed "[^@]+@[^@]+"

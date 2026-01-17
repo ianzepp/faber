@@ -49,9 +49,13 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
 
         casu LitteraRegex ut e {
             g.requisita.usesRegex = verum
-            # WHY: Escape '/' so JS regex literals stay valid.
-            fixum pattern = escapaRegex(e.forma)
-            redde scriptum("/§/§", pattern, e.vexilla)
+            # Extract inline flags (e.g., "(?i)pattern" -> flags="i", pattern="pattern")
+            # JS doesn't support inline flags natively, so we extract and append them.
+            fixum parts = extractInlineFlags(e.forma)
+            fixum flags = parts[0]
+            fixum rawPattern = parts[1]
+            fixum pattern = escapaRegex(rawPattern)
+            redde scriptum("/§/§", pattern, flags)
         }
 
         # Binary and unary
@@ -505,6 +509,38 @@ functio escapaRegex(textus pattern) -> textus {
         i += 1
     }
     redde result
+}
+
+# Extract inline flags from regex pattern.
+# Patterns like "(?i)test" or "(?im)test" have flags at the start.
+# Returns [flags, remaining_pattern]. JS doesn't support inline flags natively.
+functio extractInlineFlags(textus pattern) -> lista<textus> {
+    # Check for inline flag prefix: (?flags)
+    si pattern.longitudo() >= 3 et pattern[0] == "(" et pattern[1] == "?" {
+        varia i = 2
+        varia flags = ""
+
+        # Collect flag characters until we hit ')'
+        dum i < pattern.longitudo() {
+            fixum c = pattern[i]
+            si c == ")" {
+                # Found end of flags, return flags and rest of pattern
+                redde [flags, pattern.sectio(i + 1, pattern.longitudo())]
+            }
+            # Valid regex flags: i (ignore case), m (multiline), s (dotall), g (global), u (unicode), y (sticky)
+            si c inter ["i", "m", "s", "g", "u", "y"] {
+                flags = flags + c
+            } secus {
+                # Not a simple flag group, might be a more complex construct like (?:...)
+                # Return no flags, original pattern
+                redde ["", pattern]
+            }
+            i += 1
+        }
+    }
+
+    # No inline flags found
+    redde ["", pattern]
 }
 
 # Minimal statement lowering for praefixum blocks (avoid codegen cycles).

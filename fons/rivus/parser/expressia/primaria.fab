@@ -186,7 +186,7 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
         redde parseLegeExpressia(r)
     }
 
-    # Regex literal: sed "pattern" flags?
+    # Regex literal: sed "(?flags)pattern"
     si p.probaVerbum("sed") {
         redde parseRegexExpressia(r)
     }
@@ -787,9 +787,12 @@ functio parseLegeExpressia(Resolvitor r) -> Expressia {
 
 # Parse regex literal
 #
-# GRAMMAR: sed STRING IDENTIFIER?
+# GRAMMAR: sed STRING
 #
-# Example: sed "\\d+" g, sed "[a-z]+" i
+# Flags use inline syntax: sed "(?i)pattern" for case-insensitive, etc.
+# This avoids ambiguity with the next statement when flags are separate tokens.
+#
+# Example: sed "\\d+", sed "(?i)[a-z]+"
 @ publica
 functio parseRegexExpressia(Resolvitor r) -> Expressia {
     fixum p = r.parser()
@@ -798,15 +801,10 @@ functio parseRegexExpressia(Resolvitor r) -> Expressia {
     p.expectaVerbum("sed", ParserErrorCodice.ExpectaturExpressia)
 
     fixum patternSym = p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextusPostSed)
-    varia vexilla = "" qua textus
-
-    si p.proba(SymbolumGenus.Nomen) aut p.proba(SymbolumGenus.Verbum) {
-        vexilla = p.procede().valor
-    }
 
     redde finge LitteraRegex {
         locus: locus,
         forma: patternSym.valor,
-        vexilla: vexilla
+        vexilla: ""
     } qua Expressia
 }
