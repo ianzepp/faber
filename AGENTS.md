@@ -122,17 +122,24 @@ agent run -m opus "goal"             # Use specific model
 
 ## Commands
 
-### Rivus CLI (Primary Compiler)
+### Building Compilers
 
-The self-hosted compiler in `fons/rivus/` - Faber written in Faber. **Use this for all new development.**
-
-Must be built first with `bun run build:rivus`:
+Binaries must be built before use:
 
 ```
-bun run build:rivus                   # Build rivus to opus/rivus/fons/ts/
-bun run rivus compile <file.fab>      # Compile to TypeScript (default)
-bun run rivus compile <file.fab> -o out.ts
-bun run test:rivus                    # Run tests against rivus
+bun run build                         # Build faber + rivus (default)
+bun run build --no-rivus              # Build faber only
+bun run build --no-faber --artifex    # Build artifex (rivus compiling itself)
+```
+
+### Rivus CLI (Primary Compiler)
+
+The self-hosted compiler at `opus/bin/rivus`. **Use this for all new development.**
+
+```
+./opus/bin/rivus compile <file.fab>         # Compile to TypeScript (default)
+./opus/bin/rivus compile <file.fab> -o out.ts
+bun run test:rivus                          # Run tests against rivus
 ```
 
 **When to use Rivus:**
@@ -148,19 +155,17 @@ bun run test:rivus                    # Run tests against rivus
 
 ### Faber CLI (Bootstrap Compiler)
 
-The TypeScript implementation in `fons/faber/`. **Primary purpose: compile rivus.**
+The TypeScript implementation at `opus/bin/faber`. **Primary purpose: compile rivus.**
 
 ```
-bun run faber compile <file.fab>      # TS (default)
-bun run faber compile <file.fab> -t py | zig | rs | cpp | fab
-bun run faber run <file.fab>          # Compile & execute (TS only)
-bun run faber check <file.fab>        # Validate syntax
+./opus/bin/faber compile <file.fab>         # TS (default)
+./opus/bin/faber run <file.fab>             # Compile & execute (TS only)
+./opus/bin/faber check <file.fab>           # Validate syntax
 ```
 
 **When to use Faber:**
 
 - Building rivus (`bun run build:rivus` uses faber internally)
-- Multi-target compilation (py, zig, rs, cpp) until rivus supports them
 - Fallback when rivus has bugs
 
 **Language backports to faber should be limited** - new features go in rivus first.

@@ -8,8 +8,6 @@
         "faber": "./fons/faber/cli.ts"
     },
     "scripts": {
-        "faber": "bun ./fons/faber/cli.ts",
-        "rivus": "./scripta/rivus",
         "build": "bun ./scripta/build.ts",
         "build:faber": "bun ./scripta/build-faber.ts",
         "build:norma": "bun ./scripta/build-norma.ts",

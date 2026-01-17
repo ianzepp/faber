@@ -2,8 +2,10 @@
 /**
  * Build rivus (bootstrap compiler) from fons/rivus/ using faber.
  *
- * Compiles all .fab files in parallel without spawning processes.
+ * Uses opus/bin/faber to compile all .fab files in parallel.
  * Output is TypeScript (faber is TS-only; for other targets, use rivus).
+ *
+ * Requires: bun run build --no-rivus (to build faber first)
  *
  * Usage:
  *   bun scripta/build-rivus.ts
@@ -12,15 +14,12 @@
 import { Glob } from 'bun';
 import { mkdir } from 'fs/promises';
 import { dirname, join, relative } from 'path';
-import { tokenize } from '../fons/faber/tokenizer';
-import { parse } from '../fons/faber/parser';
-import { analyze } from '../fons/faber/semantic';
-import { generate } from '../fons/faber/codegen';
 import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
 const SOURCE = join(ROOT, 'fons', 'rivus');
 const OUTPUT = join(ROOT, 'opus', 'rivus', 'fons', 'ts');
+const FABER_BIN = join(ROOT, 'opus', 'bin', 'faber');
 
 interface CompileResult {
     file: string;
@@ -33,34 +32,14 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
     const outPath = join(OUTPUT, relPath.replace(/\.fab$/, '.ts'));
 
     try {
-        const source = await Bun.file(fabPath).text();
-
-        const { tokens, errors: tokenErrors } = tokenize(source);
-        if (tokenErrors.length > 0) {
-            const first = tokenErrors[0]!;
-            throw new Error(`${first.position.line}:${first.position.column} ${first.text}`);
-        }
-
-        const { program, errors: parseErrors } = parse(tokens);
-        if (parseErrors.length > 0) {
-            const first = parseErrors[0]!;
-            throw new Error(`${first.position.line}:${first.position.column} ${first.message}`);
-        }
-
-        if (!program) {
-            throw new Error('Failed to parse program');
-        }
-
-        const { errors: semanticErrors } = analyze(program, { filePath: fabPath });
-        if (semanticErrors.length > 0) {
-            const first = semanticErrors[0]!;
-            throw new Error(`${first.position.line}:${first.position.column} ${first.message}`);
-        }
-
-        const output = generate(program, { stripTests: true });
-
         await mkdir(dirname(outPath), { recursive: true });
-        await Bun.write(outPath, output);
+
+        const result = await $`${FABER_BIN} compile ${fabPath} -o ${outPath}`.nothrow().quiet();
+
+        if (result.exitCode !== 0) {
+            const stderr = result.stderr.toString().trim();
+            throw new Error(stderr || `Exit code ${result.exitCode}`);
+        }
 
         return { file: relPath, success: true };
     } catch (err) {
@@ -126,6 +105,13 @@ async function buildExecutable(): Promise<void> {
 
 async function main() {
     const start = performance.now();
+
+    // Check faber binary exists
+    if (!await Bun.file(FABER_BIN).exists()) {
+        console.error('Error: faber binary not found at opus/bin/faber');
+        console.error('Run `bun run build --no-rivus` first to build faber.');
+        process.exit(1);
+    }
 
     // Find all .fab files
     const glob = new Glob('**/*.fab');
