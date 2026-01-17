@@ -2976,7 +2976,7 @@ describe('parser', () => {
             });
 
             test('clausura with : in variable declaration', () => {
-                const { program } = parseCode('fixum double = pro x: x * 2');
+                const { program } = parseCode('fixum double = clausura x: x * 2');
                 const decl = program!.body[0] as any;
 
                 expect(decl.type).toBe('VariaDeclaration');
@@ -3177,7 +3177,7 @@ describe('parser', () => {
         });
 
         test('block clausura single line with semicolon', () => {
-            const { program } = parseCode('items.mappata(pro x { fixum y = transform(x); redde y })');
+            const { program } = parseCode('items.mappata(clausura x { fixum y = transform(x); redde y })');
             const expr = (program!.body[0] as any).expression;
             const lambda = expr.arguments[0];
 
@@ -3234,7 +3234,7 @@ describe('parser', () => {
         });
 
         test('event handler with semicolon', () => {
-            const { program } = parseCode('button.onClick(pro { setup(); doThing() })');
+            const { program } = parseCode('button.onClick(clausura { setup(); doThing() })');
             const expr = (program!.body[0] as any).expression;
             const lambda = expr.arguments[0];
 
