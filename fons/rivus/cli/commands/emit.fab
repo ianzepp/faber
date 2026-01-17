@@ -1,0 +1,118 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# EMIT - Compile single Faber source file to target language
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# Full compilation pipeline: lex -> parse -> semantic -> codegen
+# Outputs to stdout or file.
+#
+# Usage:
+#   rivus emit hello.fab                 # emit to stdout (default: ts)
+#   rivus emit hello.fab -t go           # emit as Go
+#   rivus emit hello.fab -o hello.ts     # emit to file
+#   rivus emit -                         # emit from stdin
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+ex "../../lexor/index" importa lexare
+ex "../../parser/index" importa resolvere
+ex "../../semantic/index" importa analyze
+ex "../../semantic/nucleus" importa SemanticResultatum
+ex "../../codegen/index" importa generate
+ex "../../ast/radix" importa Programma
+
+ex "../../../norma/hal/solum" importa solum
+ex "../../../norma/hal/consolum" importa consolum
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# INPUT HANDLING
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@ futura
+functio readSource(textus inputFile) -> textus {
+    si inputFile == "-" {
+        # Read from stdin - collect lines until EOF
+        varia lista<textus> lines = [] innatum lista<textus>
+        varia textus line = consolum.hauriLineam()
+        dum line != nihil {
+            lines.push(line)
+            line = consolum.hauriLineam()
+        }
+        redde lines.join("\n")
+    }
+    redde cede solum.lege(inputFile)
+}
+
+functio getDisplayName(textus inputFile) -> textus {
+    redde inputFile == "-" sic "<stdin>" secus inputFile
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# COMPILATION PIPELINE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@ publica
+@ futura
+functio emitCommand(
+    textus input,
+    si textus target,
+    si textus output
+) -> numerus {
+    fixum targetLang = target vel "ts"
+    fixum displayName = getDisplayName(input)
+
+    # Read source
+    fixum source = cede readSource(input)
+
+    # Lexical analysis
+    fixum lexResult = lexare(source)
+
+    si lexResult.errores.longitudo() > 0 {
+        mone "Lexor errors:"
+        ex lexResult.errores pro err {
+            mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus)
+        }
+        redde 1
+    }
+
+    # Parsing
+    fixum parseResult = resolvere(lexResult.symbola)
+
+    si parseResult.errores.longitudo() > 0 {
+        mone "Parser errors:"
+        ex parseResult.errores pro err {
+            mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+        }
+        redde 1
+    }
+
+    si parseResult.programma est nihil {
+        mone "Failed to parse program"
+        redde 1
+    }
+
+    # Semantic analysis
+    fixum viaIngressus = input != "-" sic solum.absolve(input) secus nihil
+    fixum semResult = analyze(parseResult.programma qua Programma, viaIngressus)
+
+    si semResult.errores.longitudo() > 0 {
+        mone "Semantic errors:"
+        ex semResult.errores pro err {
+            mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+        }
+        redde 1
+    }
+
+    # Code generation
+    fixum generated = generate((parseResult.programma qua Programma).corpus, targetLang)
+
+    # Write output
+    si output {
+        cede solum.scribe(output, generated)
+        mone scriptum("Compiled: § -> §", displayName, output)
+    }
+    secus {
+        consolum.fundeTextum(generated)
+    }
+
+    redde 0
+}

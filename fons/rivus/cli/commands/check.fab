@@ -1,0 +1,103 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# CHECK - Validate Faber source without code generation
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# Runs full analysis pipeline (lex + parse + semantic) without codegen.
+# Fast validation for editors, CI, and pre-commit hooks.
+#
+# Usage:
+#   rivus check hello.fab                # validate single file
+#   rivus check -                        # validate from stdin
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+ex "../../lexor/index" importa lexare
+ex "../../parser/index" importa resolvere
+ex "../../semantic/index" importa analyze
+ex "../../ast/radix" importa Programma
+
+ex "../../../norma/hal/solum" importa solum
+ex "../../../norma/hal/consolum" importa consolum
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# INPUT HANDLING
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@ futura
+functio readSource(textus inputFile) -> textus {
+    si inputFile == "-" {
+        varia lista<textus> lines = [] innatum lista<textus>
+        varia textus line = consolum.hauriLineam()
+        dum line != nihil {
+            lines.push(line)
+            line = consolum.hauriLineam()
+        }
+        redde lines.join("\n")
+    }
+    redde cede solum.lege(inputFile)
+}
+
+functio getDisplayName(textus inputFile) -> textus {
+    redde inputFile == "-" sic "<stdin>" secus inputFile
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CHECK COMMAND
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@ publica
+@ futura
+functio checkCommand(textus input) -> numerus {
+    fixum displayName = getDisplayName(input)
+
+    # Read source
+    fixum source = cede readSource(input)
+
+    # Lexical analysis
+    fixum lexResult = lexare(source)
+
+    varia numerus errorCount = lexResult.errores.longitudo()
+
+    si errorCount > 0 {
+        mone "Lexor errors:"
+        ex lexResult.errores pro err {
+            mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus)
+        }
+    }
+
+    # Parsing (continue even with lex errors to report all issues)
+    fixum parseResult = resolvere(lexResult.symbola)
+
+    errorCount = errorCount + parseResult.errores.longitudo()
+
+    si parseResult.errores.longitudo() > 0 {
+        mone "Parser errors:"
+        ex parseResult.errores pro err {
+            mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+        }
+    }
+
+    # Semantic analysis (only if we have a valid AST)
+    si parseResult.programma non est nihil {
+        fixum viaIngressus = input != "-" sic solum.absolve(input) secus nihil
+        fixum semResult = analyze(parseResult.programma qua Programma, viaIngressus)
+
+        errorCount = errorCount + semResult.errores.longitudo()
+
+        si semResult.errores.longitudo() > 0 {
+            mone "Semantic errors:"
+            ex semResult.errores pro err {
+                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+            }
+        }
+    }
+
+    # Report summary
+    si errorCount > 0 {
+        scribe scriptum("§: § error(s)", displayName, errorCount)
+        redde 1
+    }
+
+    scribe scriptum("§: No errors", displayName)
+    redde 0
+}

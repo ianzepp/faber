@@ -214,7 +214,8 @@ async function emit(inputFile: string, outputFile?: string, silent = false): Pro
     if (semanticErrors.length > 0) {
         console.error('Semantic errors:');
         for (const err of semanticErrors) {
-            console.error(`  ${displayName}:${err.position.line}:${err.position.column} - ${err.message}`);
+            const errorFile = err.filePath ? getDisplayName(err.filePath) : displayName;
+            console.error(`  ${errorFile}:${err.position.line}:${err.position.column} - ${err.message}`);
         }
 
         process.exit(1);
@@ -406,7 +407,7 @@ async function check(inputFile: string): Promise<void> {
     const { tokens, errors: tokenErrors } = tokenize(source);
     const { program, errors: parseErrors } = parse(tokens);
 
-    let semanticErrors: { message: string; position: { line: number; column: number } }[] = [];
+    let semanticErrors: { message: string; position: { line: number; column: number }; filePath?: string }[] = [];
 
     if (program) {
         // WHY: Pass absolute file path to enable local import resolution
@@ -426,7 +427,8 @@ async function check(inputFile: string): Promise<void> {
     if (allErrors.length > 0) {
         console.log(`${displayName}: ${allErrors.length} error(s)`);
         for (const err of allErrors) {
-            console.log(`  ${err.position.line}:${err.position.column} - ${err.message}`);
+            const errorFile = 'filePath' in err && err.filePath ? getDisplayName(err.filePath) : displayName;
+            console.log(`  ${errorFile}:${err.position.line}:${err.position.column} - ${err.message}`);
         }
 
         process.exit(1);

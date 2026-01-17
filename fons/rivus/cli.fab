@@ -1,94 +1,105 @@
-# CLI - Command-line interface for bootstrap Faber compiler
+# ═══════════════════════════════════════════════════════════════════════════════
+# RIVUS - Bootstrap Faber Compiler CLI
+# ═══════════════════════════════════════════════════════════════════════════════
 #
-# Minimal stdin-to-stdout compiler for bootstrap testing.
-# Reads file path as first line, then Faber source from stdin.
-# Writes generated code to stdout.
+# Multi-target compiler for bootstrap testing.
+# Compiles Faber source to TypeScript, Go, or other targets.
 #
 # Usage:
-#   { echo "/path/to/file.fab"; cat file.fab } | bun opus/rivus/fons/ts/cli.ts
-#   FAB_TARGET=go { echo "/path/to/file.fab"; cat file.fab } | bun opus/rivus/fons/ts/cli.ts
+#   rivus emit hello.fab                 # compile to stdout (default: ts)
+#   rivus emit hello.fab -t go           # compile to Go
+#   rivus emit hello.fab -o hello.ts     # compile to file
+#   rivus build main.fab -o dist/        # build with dependencies
+#   rivus parse hello.fab                # dump AST as JSON
+#   rivus check hello.fab                # validate without codegen
 #
-# Environment variables:
-#   FAB_TARGET - Target language: ts (default), go
+# ═══════════════════════════════════════════════════════════════════════════════
 
-ex "./lexor/index" importa lexare, LexorResultatum
-ex "./parser/index" importa resolvere, ParserResultatum
-ex "./semantic/index" importa analyze
-ex "./semantic/nucleus" importa SemanticResultatum
-ex "./codegen/index" importa generate
-ex "./ast/radix" importa Programma
+# Commands
+ex "./cli/commands/emit" importa emitCommand
+ex "./cli/commands/build" importa buildCommand
+ex "./cli/commands/parse" importa parseCommand
+ex "./cli/commands/check" importa checkCommand
 
-# External runtime - Bun global provides env access
-@ externa
-fixum ignotum Bun
+@ cli "rivus"
+@ versio "0.1.0"
+@ descriptio "Bootstrap Faber compiler - compiles Faber source to TypeScript or Go"
+incipit argumenta args {}
 
-# =============================================================================
-# MAIN ENTRY POINT
-# =============================================================================
+# ─────────────────────────────────────────────────────────────────────────────
+# version - show version
+# ─────────────────────────────────────────────────────────────────────────────
 
-incipiet {
-    # Read target from environment (default: ts)
-    fixum target = (Bun.env.FAB_TARGET qua textus?) vel "ts"
+@ imperium "version"
+@ alias "v"
+functio version() -> vacuum {
+    scribe "rivus v0.1.0"
+}
 
-    # Read all stdin: first line is file path, rest is source
-    fixum input = lege
-    fixum newlineIndex = input.indexOf("\n")
+# ─────────────────────────────────────────────────────────────────────────────
+# emit - compile single file to target language
+# ─────────────────────────────────────────────────────────────────────────────
 
-    # Extract file path (first line) and source (rest)
-    varia viaIngressus = nihil qua textus?
-    varia source = input
+@ imperium "emit"
+@ alias "compile"
+@ descriptio "Compile Faber source to target language"
+@ futura
+@ optio textus target brevis "t" longum "target" descriptio "Target language: ts (default), go"
+@ optio textus output brevis "o" longum "output" descriptio "Output file (default: stdout)"
+functio emit(
+    textus input,
+    si textus target,
+    si textus output
+) exitus code -> vacuum {
+    fixum result = cede emitCommand(input, target, output)
+    code = result
+}
 
-    si newlineIndex > 0 {
-        fixum firstLine = input.substring(0, newlineIndex)
-        # Check if first line looks like a file path (starts with / or ./)
-        si firstLine.startsWith("/") aut firstLine.startsWith("./") {
-            viaIngressus = firstLine
-            source = input.substring(newlineIndex + 1)
-        }
-    }
+# ─────────────────────────────────────────────────────────────────────────────
+# build - compile entry and dependencies to directory
+# ─────────────────────────────────────────────────────────────────────────────
 
-    # Lexical analysis
-    fixum lexResult = lexare(source)
+@ imperium "build"
+@ alias "aedifica"
+@ descriptio "Build entry file and all dependencies to output directory"
+@ futura
+@ optio textus target brevis "t" longum "target" descriptio "Target language: ts (default), go"
+@ optio textus output brevis "o" longum "output" descriptio "Output directory (default: ./dist)"
+functio build(
+    textus input,
+    si textus target,
+    si textus output
+) exitus code -> vacuum {
+    fixum result = cede buildCommand(input, target, output)
+    code = result
+}
 
-    si lexResult.errores.longitudo() > 0 {
-        mone "Lexor errors:"
-        ex lexResult.errores pro err {
-            mone scriptum("  §:§ - §", err.locus.linea, err.locus.columna, err.textus)
-        }
-        # Exit with error (non-zero) so callers don't write empty output files.
-        iace "Lexor failed"
-    }
+# ─────────────────────────────────────────────────────────────────────────────
+# parse - lex and parse, dump AST
+# ─────────────────────────────────────────────────────────────────────────────
 
-    # Parsing
-    fixum parseResult = resolvere(lexResult.symbola)
+@ imperium "parse"
+@ alias "ast"
+@ descriptio "Parse source and dump AST as JSON"
+@ futura
+@ optio textus output brevis "o" longum "output" descriptio "Output file (default: stdout)"
+functio parse(
+    textus input,
+    si textus output
+) exitus code -> vacuum {
+    fixum result = cede parseCommand(input, output)
+    code = result
+}
 
-    si parseResult.errores.longitudo() > 0 {
-        mone "Parser errors:"
-        ex parseResult.errores pro err {
-            mone scriptum("  §:§ - §", err.locus.linea, err.locus.columna, err.nuntius)
-        }
-        iace "Parser failed"
-    }
+# ─────────────────────────────────────────────────────────────────────────────
+# check - validate without codegen
+# ─────────────────────────────────────────────────────────────────────────────
 
-    si parseResult.programma est nihil {
-        mone "Failed to parse program"
-        iace "Parser failed"
-    }
-
-    # Semantic analysis
-    fixum semResult = analyze(parseResult.programma qua Programma, viaIngressus)
-
-    si semResult.errores.longitudo() > 0 {
-        mone "Semantic errors:"
-        ex semResult.errores pro err {
-            mone scriptum("  §:§ - §", err.locus.linea, err.locus.columna, err.nuntius)
-        }
-        iace "Semantic failed"
-    }
-
-    # Code generation
-    fixum output = generate((parseResult.programma qua Programma).corpus, target)
-
-    # Write to stdout
-    scribe output
+@ imperium "check"
+@ alias "proba"
+@ descriptio "Validate source without generating code"
+@ futura
+functio check(textus input) exitus code -> vacuum {
+    fixum result = cede checkCommand(input)
+    code = result
 }

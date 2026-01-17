@@ -228,6 +228,8 @@ function validateFunctioModifiers(
 export interface SemanticError {
     message: string;
     position: Position;
+    /** File path where the error occurred (if known) */
+    filePath?: string;
 }
 
 /**
@@ -567,8 +569,8 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
     /**
      * Report a semantic error.
      */
-    function error(message: string, position: Position): void {
-        errors.push({ message, position });
+    function error(message: string, position: Position, errorFilePath?: string): void {
+        errors.push({ message, position, filePath: errorFilePath ?? options.filePath });
     }
 
     // ---------------------------------------------------------------------------
@@ -1005,18 +1007,18 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
                 if (typeName === 'tabula') {
                     if (exprType !== 'ObjectExpression') {
-                        errors.push({ message: `innatum tabula requires object literal {}, got ${exprType}`, position: node.position });
+                        error(`innatum tabula requires object literal {}, got ${exprType}`, node.position);
                     }
                 } else if (typeName === 'lista') {
                     if (exprType !== 'ArrayExpression') {
-                        errors.push({ message: `innatum lista requires array literal [], got ${exprType}`, position: node.position });
+                        error(`innatum lista requires array literal [], got ${exprType}`, node.position);
                     }
                 } else if (typeName === 'copia') {
                     if (exprType !== 'ObjectExpression') {
-                        errors.push({ message: `innatum copia requires object literal {}, got ${exprType}`, position: node.position });
+                        error(`innatum copia requires object literal {}, got ${exprType}`, node.position);
                     }
                 } else {
-                    errors.push({ message: `innatum only supports builtin types (tabula, lista, copia), got ${typeName}`, position: node.position });
+                    error(`innatum only supports builtin types (tabula, lista, copia), got ${typeName}`, node.position);
                 }
 
                 node.resolvedType = targetType;
@@ -1054,10 +1056,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
                     if (node.fallback.type === 'Literal' && (node.fallback as Literal).value === null) {
                         resultType = { ...resultType, nullable: true };
                     } else if (!isAssignableTo(fallbackType, resultType)) {
-                        errors.push({
-                            message: `Conversion fallback type ${formatType(fallbackType)} is not assignable to ${formatType(resultType)}`,
-                            position: node.fallback.position,
-                        });
+                        error(`Conversion fallback type ${formatType(fallbackType)} is not assignable to ${formatType(resultType)}`, node.fallback.position);
                     }
                 }
 
