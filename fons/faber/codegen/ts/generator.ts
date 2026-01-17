@@ -40,6 +40,7 @@ import { genAdfirmaStatement } from './statements/adfirma';
 import { genReddeStatement } from './statements/redde';
 import { genRumpeStatement } from './statements/rumpe';
 import { genPergeStatement } from './statements/perge';
+import { genTacetStatement } from './statements/tacet';
 import { genIaceStatement } from './statements/iace';
 import { genScribeStatement } from './statements/scribe';
 import { genTemptaStatement } from './statements/tempta';
@@ -326,6 +327,8 @@ export class TsGenerator {
                 return genRumpeStatement(this, this.semi);
             case 'PergeStatement':
                 return genPergeStatement(this, this.semi);
+            case 'TacetStatement':
+                return genTacetStatement(this);
             case 'IaceStatement':
                 return genIaceStatement(node, this, this.semi);
             case 'ScribeStatement':

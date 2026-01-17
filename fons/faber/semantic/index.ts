@@ -1860,7 +1860,8 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
             case 'RumpeStatement':
             case 'PergeStatement':
-                // No semantic analysis needed for break/continue
+            case 'TacetStatement':
+                // No semantic analysis needed for break/continue/no-op
                 break;
 
             case 'ProbandumStatement':

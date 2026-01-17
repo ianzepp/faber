@@ -23,7 +23,6 @@ import type {
     CollectionDSLTransform,
     BlockStatement,
     CapeClause,
-    ReddeStatement,
     TypeAnnotation,
     Expression,
     SpreadElement,
@@ -36,6 +35,7 @@ import type {
 } from '../ast';
 import { ParserErrorCode } from '../errors';
 import { parseSpecifier } from './imports';
+import { parseBody } from './control';
 
 // =============================================================================
 // HELPERS
@@ -247,23 +247,7 @@ export function parseExStatement(r: Resolver): IteratioStatement | VariaDeclarat
     }
 
     const variable = ctx.parseIdentifierOrKeyword();
-
-    // Parse body: block, ergo one-liner, or reddit return
-    let body: BlockStatement;
-    if (ctx.matchKeyword('reddit')) {
-        const stmtPos = ctx.peek().position;
-        const expr = r.expression();
-        const returnStmt: ReddeStatement = { type: 'ReddeStatement', argument: expr, position: stmtPos };
-        body = { type: 'BlockStatement', body: [returnStmt], position: stmtPos };
-    }
-    else if (ctx.matchKeyword('ergo')) {
-        const stmtPos = ctx.peek().position;
-        const stmt = r.statement();
-        body = { type: 'BlockStatement', body: [stmt], position: stmtPos };
-    }
-    else {
-        body = r.block();
-    }
+    const body = parseBody(r);
 
     let catchClause: CapeClause | undefined;
     if (ctx.checkKeyword('cape')) {
@@ -326,23 +310,7 @@ export function parseDeStatement(r: Resolver): IteratioStatement {
     }
 
     const variable = ctx.parseIdentifierOrKeyword();
-
-    // Parse body: block, ergo one-liner, or reddit return
-    let body: BlockStatement;
-    if (ctx.matchKeyword('reddit')) {
-        const stmtPos = ctx.peek().position;
-        const expr = r.expression();
-        const returnStmt: ReddeStatement = { type: 'ReddeStatement', argument: expr, position: stmtPos };
-        body = { type: 'BlockStatement', body: [returnStmt], position: stmtPos };
-    }
-    else if (ctx.matchKeyword('ergo')) {
-        const stmtPos = ctx.peek().position;
-        const stmt = r.statement();
-        body = { type: 'BlockStatement', body: [stmt], position: stmtPos };
-    }
-    else {
-        body = r.block();
-    }
+    const body = parseBody(r);
 
     let catchClause: CapeClause | undefined;
     if (ctx.checkKeyword('cape')) {
@@ -698,23 +666,7 @@ export function parseIncipitStatement(r: Resolver): IncipitStatement {
         }
     }
 
-    // Check for reddit form: incipit reddit <expression> (return exit code)
-    if (ctx.checkKeyword('reddit')) {
-        ctx.advance(); // consume 'reddit'
-        const stmtPos = ctx.peek().position;
-        const expr = r.expression();
-        const returnStmt: ReddeStatement = { type: 'ReddeStatement', argument: expr, position: stmtPos };
-        return { type: 'IncipitStatement', ergoStatement: returnStmt, argumentaBinding, exitusModifier, position };
-    }
-
-    // Check for ergo form: incipit ergo <statement>
-    if (ctx.checkKeyword('ergo')) {
-        ctx.advance(); // consume 'ergo'
-        const ergoStatement = r.statement();
-        return { type: 'IncipitStatement', ergoStatement, argumentaBinding, exitusModifier, position };
-    }
-
-    const body = r.block();
+    const body = parseBody(r);
 
     return { type: 'IncipitStatement', body, argumentaBinding, exitusModifier, position };
 }
@@ -809,23 +761,7 @@ export function parseIncipietStatement(r: Resolver): IncipietStatement {
         }
     }
 
-    // Check for reddit form: incipiet reddit <expression>
-    if (ctx.checkKeyword('reddit')) {
-        ctx.advance(); // consume 'reddit'
-        const stmtPos = ctx.peek().position;
-        const expr = r.expression();
-        const returnStmt: ReddeStatement = { type: 'ReddeStatement', argument: expr, position: stmtPos };
-        return { type: 'IncipietStatement', ergoStatement: returnStmt, argumentaBinding, exitusModifier, position };
-    }
-
-    // Check for ergo form: incipiet ergo <statement>
-    if (ctx.checkKeyword('ergo')) {
-        ctx.advance(); // consume 'ergo'
-        const ergoStatement = r.statement();
-        return { type: 'IncipietStatement', ergoStatement, argumentaBinding, exitusModifier, position };
-    }
-
-    const body = r.block();
+    const body = parseBody(r);
 
     return { type: 'IncipietStatement', body, argumentaBinding, exitusModifier, position };
 }

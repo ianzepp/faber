@@ -15,6 +15,7 @@ import type {
     ReddeStatement,
     RumpeStatement,
     PergeStatement,
+    TacetStatement,
     IaceStatement,
     ScribeStatement,
     Expression,
@@ -126,6 +127,29 @@ export function parsePergeStatement(r: Resolver): PergeStatement {
     ctx.advance();
 
     return { type: 'PergeStatement', position };
+}
+
+// =============================================================================
+// NO-OP STATEMENT
+// =============================================================================
+
+/**
+ * Parse no-op statement.
+ *
+ * GRAMMAR:
+ *   tacetStmt := 'tacet'
+ *
+ * WHY: 'tacet' (it is silent) for explicit empty blocks.
+ *      From musical notation - makes intentional emptiness explicit.
+ */
+export function parseTacetStatement(r: Resolver): TacetStatement {
+    const ctx = r.ctx();
+    const position = ctx.peek().position;
+
+    // Consume the 'tacet' keyword (already validated by checkKeyword in parseStatement)
+    ctx.advance();
+
+    return { type: 'TacetStatement', position };
 }
 
 // =============================================================================

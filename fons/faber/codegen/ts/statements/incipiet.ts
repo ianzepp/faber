@@ -307,34 +307,18 @@ function genSingleCommandCliAsync(cli: CliProgram, cmd: CliSingleCommand, node: 
         const code = node.exitusModifier.code;
         if (code.type === 'Literal') {
             // Fixed exit code: just emit body and exit
-            if (node.ergoStatement) {
-                lines.push(g.genStatement(node.ergoStatement));
-            }
-            else if (node.body) {
-                lines.push(g.genBlockStatementContent(node.body));
-            }
+            lines.push(g.genBlockStatementContent(node.body));
             lines.push(`${g.ind()}process.exit(${code.value});`);
         }
         else {
             // Mutable exit code variable
             lines.push(`${g.ind()}let ${code.name} = 0;`);
-            if (node.ergoStatement) {
-                lines.push(g.genStatement(node.ergoStatement));
-            }
-            else if (node.body) {
-                lines.push(g.genBlockStatementContent(node.body));
-            }
+            lines.push(g.genBlockStatementContent(node.body));
             lines.push(`${g.ind()}process.exit(${code.name});`);
         }
     }
     else {
-        // No exit modifier - just emit body
-        if (node.ergoStatement) {
-            lines.push(g.genStatement(node.ergoStatement));
-        }
-        else if (node.body) {
-            lines.push(g.genBlockStatementContent(node.body));
-        }
+        lines.push(g.genBlockStatementContent(node.body));
     }
 
     g.depth--;
@@ -359,11 +343,7 @@ export function genIncipietStatement(node: IncipietStatement, g: TsGenerator): s
     const semi = g.semi ? ';' : '';
     lines.push(`${g.ind()}(async () => {`);
     g.depth++;
-    if (node.ergoStatement) {
-        lines.push(g.genStatement(node.ergoStatement));
-    } else {
-        lines.push(g.genBlockStatementContent(node.body!));
-    }
+    lines.push(g.genBlockStatementContent(node.body));
     g.depth--;
     lines.push(`${g.ind()}})()${semi}`);
     return lines.join('\n');

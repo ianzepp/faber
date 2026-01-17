@@ -654,34 +654,18 @@ function genSingleCommandCli(cli: CliProgram, cmd: CliSingleCommand, node: Incip
         const code = node.exitusModifier.code;
         if (code.type === 'Literal') {
             // Fixed exit code: just emit body and exit
-            if (node.ergoStatement) {
-                lines.push(g.genStatement(node.ergoStatement));
-            }
-            else if (node.body) {
-                lines.push(g.genBlockStatementContent(node.body));
-            }
+            lines.push(g.genBlockStatementContent(node.body));
             lines.push(`${ind}process.exit(${code.value});`);
         }
         else {
             // Mutable exit code variable
             lines.push(`${ind}let ${code.name} = 0;`);
-            if (node.ergoStatement) {
-                lines.push(g.genStatement(node.ergoStatement));
-            }
-            else if (node.body) {
-                lines.push(g.genBlockStatementContent(node.body));
-            }
+            lines.push(g.genBlockStatementContent(node.body));
             lines.push(`${ind}process.exit(${code.name});`);
         }
     }
     else {
-        // No exit modifier - just emit body
-        if (node.ergoStatement) {
-            lines.push(g.genStatement(node.ergoStatement));
-        }
-        else if (node.body) {
-            lines.push(g.genBlockStatementContent(node.body));
-        }
+        lines.push(g.genBlockStatementContent(node.body));
     }
 
     return lines.join('\n');
@@ -698,11 +682,6 @@ export function genIncipitStatement(node: IncipitStatement, g: TsGenerator): str
         return genCliDispatcher(g.cli, g);
     }
 
-    // Handle ergo form: incipit ergo <statement>
-    if (node.ergoStatement) {
-        return g.genStatement(node.ergoStatement);
-    }
-
     // Just emit the body statements - no wrapper needed for TS
-    return g.genBlockStatementContent(node.body!);
+    return g.genBlockStatementContent(node.body);
 }

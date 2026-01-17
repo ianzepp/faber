@@ -141,6 +141,7 @@ export type {
     ReddeStatement,
     RumpeStatement,
     PergeStatement,
+    TacetStatement,
     IaceStatement,
     TemptaStatement,
     CapeClause,
@@ -173,7 +174,7 @@ export type {
 
 import type { ImportaDeclaration, DestructureDeclaration, VariaDeclaration, FunctioDeclaration, GenusDeclaration, PactumDeclaration, TypeAliasDeclaration, OrdoDeclaration, DiscretioDeclaration } from './declarations';
 import type { ExpressionStatement, SiStatement, DumStatement, IteratioStatement, InStatement, EligeStatement, DiscerneStatement, CustodiStatement, BlockStatement, IncipitStatement, IncipietStatement } from './control';
-import type { AdfirmaStatement, ReddeStatement, RumpeStatement, PergeStatement, IaceStatement, TemptaStatement, ScribeStatement, FacBlockStatement } from './actions';
+import type { AdfirmaStatement, ReddeStatement, RumpeStatement, PergeStatement, TacetStatement, IaceStatement, TemptaStatement, ScribeStatement, FacBlockStatement } from './actions';
 import type { ProbandumStatement, ProbaStatement, PraeparaBlock, CuraStatement } from './testing';
 import type { AdStatement } from './dispatch';
 import type { BaseNode } from './base';
@@ -206,6 +207,7 @@ export type Statement =
     | ReddeStatement
     | RumpeStatement
     | PergeStatement
+    | TacetStatement
     | BlockStatement
     | IaceStatement
     | TemptaStatement

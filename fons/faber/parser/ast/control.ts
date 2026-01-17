@@ -340,8 +340,7 @@ export interface CustodiClause extends BaseNode {
  */
 export interface IncipitStatement extends BaseNode {
     type: 'IncipitStatement';
-    body?: BlockStatement;
-    ergoStatement?: Statement;
+    body: BlockStatement;
     annotations?: Annotation[];
     /** For CLI: binds parsed arguments to named variable. Usage: incipit argumenta args { } */
     argumentaBinding?: Identifier;
@@ -382,8 +381,7 @@ export interface IncipitStatement extends BaseNode {
  */
 export interface IncipietStatement extends BaseNode {
     type: 'IncipietStatement';
-    body?: BlockStatement;
-    ergoStatement?: Statement;
+    body: BlockStatement;
     annotations?: Annotation[];
     /** For CLI: binds parsed arguments to named variable. Usage: incipiet argumenta args { } */
     argumentaBinding?: Identifier;

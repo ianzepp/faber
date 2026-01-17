@@ -82,6 +82,24 @@ export interface PergeStatement extends BaseNode {
     type: 'PergeStatement';
 }
 
+/**
+ * No-op statement (intentional silence).
+ *
+ * GRAMMAR (in EBNF):
+ *   tacetStmt := 'tacet'
+ *
+ * WHY: Latin 'tacet' (it is silent) for explicit empty blocks.
+ *      From musical notation where tacet indicates a rest/silence.
+ *      Makes intentional emptiness explicit vs forgotten implementation.
+ *
+ * Example:
+ *   si debug tacet secus process()
+ *   casu Littera ut l tacet
+ */
+export interface TacetStatement extends BaseNode {
+    type: 'TacetStatement';
+}
+
 // =============================================================================
 // EXCEPTION HANDLING
 // =============================================================================

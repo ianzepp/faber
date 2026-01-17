@@ -232,6 +232,7 @@ import {
     parseReddeStatement,
     parseRumpeStatement,
     parsePergeStatement,
+    parseTacetStatement,
     parseIaceStatement,
     parseScribeStatement,
 } from './statements/actions';
@@ -1006,6 +1007,7 @@ export function parse(tokens: Token[]): ParserResult {
                 checkKeyword('redde') ||
                 checkKeyword('rumpe') ||
                 checkKeyword('perge') ||
+                checkKeyword('tacet') ||
                 checkKeyword('iace') ||
                 checkKeyword('mori') ||
                 checkKeyword('scribe') ||
@@ -1409,6 +1411,10 @@ export function parse(tokens: Token[]): ParserResult {
 
         if (checkKeyword('perge')) {
             return parsePergeStatement(resolver);
+        }
+
+        if (checkKeyword('tacet')) {
+            return parseTacetStatement(resolver);
         }
 
         // WHY: Keywords followed by '(' are treated as function calls, not keyword statements.
