@@ -7,6 +7,7 @@ ex "../../ast/sententia" importa Sententia
 
 # Import analyzers - no circular dependency since they only use Resolvitor
 ex "./declara" importa analyzeVariaDeclaratio, analyzeFunctioDeclaratio
+ex "./declara" importa analyzeDestructuraSententia, analyzeSeriesDestructuraSententia
 ex "./declara" importa analyzeGenusDeclaratio, analyzePactumDeclaratio
 ex "./declara" importa analyzeOrdoDeclaratio, analyzeDiscretioDeclaratio, analyzeTypusAlias
 ex "./imperium" importa analyzeSi, analyzeDum, analyzeIteratio, analyzeIn
@@ -27,12 +28,12 @@ functio analyzeSententia(Resolvitor r, Sententia stmt) -> vacuum {
             analyzeVariaDeclaratio(r, stmt)
         }
 
-        casu DestructuraSententia ut s {
-            r.expressia(s.fons)
+        casu DestructuraSententia {
+            analyzeDestructuraSententia(r, stmt)
         }
 
-        casu SeriesDestructuraSententia ut s {
-            r.expressia(s.fons)
+        casu SeriesDestructuraSententia {
+            analyzeSeriesDestructuraSententia(r, stmt)
         }
 
         casu FunctioDeclaratio {

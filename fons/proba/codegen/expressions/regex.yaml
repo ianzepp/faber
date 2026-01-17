@@ -19,7 +19,7 @@
           - 'fixum pattern = sed "\d+"'
 
 - name: regex with case insensitive flag
-  source: fixum word = sed "hello" i
+  source: fixum word = sed "(?i)hello"
   expect:
       ts: 'const word = /hello/i;'
       py:
@@ -31,10 +31,10 @@
       zig:
           - 'const word = "(?i)hello";'
       fab:
-          - 'fixum word = sed "hello" i'
+          - 'fixum word = sed "(?i)hello"'
 
 - name: regex with multiple flags
-  source: fixum lines = sed "^start" im
+  source: fixum lines = sed "(?im)^start"
   expect:
       ts: 'const lines = /^start/im;'
       py:
@@ -46,7 +46,7 @@
       zig:
           - 'const lines = "(?im)^start";'
       fab:
-          - 'fixum lines = sed "^start" im'
+          - 'fixum lines = sed "(?im)^start"'
 
 - name: regex with forward slashes
   source: fixum paths = sed "/usr/local/.*"

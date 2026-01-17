@@ -12,6 +12,7 @@ ex "../nucleus" importa estGenericusTypus, DiscretioDeclInfo, DiscretioVariansIn
 ex "../errores" importa noTypeOrInitializerError, typeMismatchError, awaitOutsideAsyncError, missingFunctionBodyError
 ex "../errores" importa duplicateModifierError, invalidModifierContextError
 ex "../../ast/sententia" importa Sententia, VariaGenus, FunctioModificator, FunctioDeclaratio
+ex "../../ast/sententia" importa ImportaSpecificator, SeriesDestructuraElementum
 ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum
 
 @ publica
@@ -182,6 +183,72 @@ functio analyzeVariaDeclaratio(Resolvitor r, Sententia variaStmt) -> vacuum {
                 mutabilis: mutabilis,
                 locus: v.locus
             } qua Symbolum)
+        }
+        casu _ { }
+    }
+}
+
+# Analyze object destructuring: ex obj fixum name, age ut alias
+@ publica
+functio analyzeDestructuraSententia(Resolvitor r, Sententia stmt) -> vacuum {
+    fixum a = r.analyzator()
+
+    discerne stmt {
+        casu DestructuraSententia ut d {
+            # Analyze the source expression to get its type
+            fixum fonsTypus = r.expressia(d.fons)
+
+            # Determine mutability from species (fixum vs varia)
+            fixum mutabilis = d.species == VariaGenus.Varia aut d.species == VariaGenus.Variandum
+
+            # Register each binding from the specificatores
+            ex d.specificatores pro spec {
+                # The local name is what gets bound (aliased name or original)
+                fixum bindingName = spec.locale
+
+                a.definie({
+                    nomen: bindingName,
+                    semanticTypus: IGNOTUM,
+                    species: SymbolumSpecies.Variabilis,
+                    mutabilis: mutabilis,
+                    locus: spec.locus
+                } qua Symbolum)
+            }
+        }
+        casu _ { }
+    }
+}
+
+# Analyze array destructuring: fixum [a, b, c] = array
+@ publica
+functio analyzeSeriesDestructuraSententia(Resolvitor r, Sententia stmt) -> vacuum {
+    fixum a = r.analyzator()
+
+    discerne stmt {
+        casu SeriesDestructuraSententia ut s {
+            # Analyze the source expression to get its type
+            fixum fonsTypus = r.expressia(s.fons)
+
+            # Determine mutability from species (fixum vs varia)
+            fixum mutabilis = s.species == VariaGenus.Varia aut s.species == VariaGenus.Variandum
+
+            # Register each binding from the elementa
+            ex s.elementa pro elem {
+                # Skip placeholders (_) and elements without names
+                si elem.omissum aut nihil elem.nomen {
+                    perge
+                }
+
+                fixum bindingName = elem.nomen qua textus
+
+                a.definie({
+                    nomen: bindingName,
+                    semanticTypus: IGNOTUM,
+                    species: SymbolumSpecies.Variabilis,
+                    mutabilis: mutabilis,
+                    locus: elem.locus
+                } qua Symbolum)
+            }
         }
         casu _ { }
     }
