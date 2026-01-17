@@ -100,6 +100,22 @@ const _resolve = (basis: string, relativum: string): string => resolve(basis, re
     await Bun.write(modulusPath, modulusContent);
 }
 
+async function copyHalImplementations(): Promise<void> {
+    const halSource = join(ROOT, 'fons', 'norma', 'hal', 'codegen', 'ts');
+    // WHY: Imports use ../../../norma/hal from cli/commands/, which resolves
+    // to opus/rivus/fons/norma/hal (not opus/rivus/fons/ts/norma/hal)
+    const halDest = join(ROOT, 'opus', 'rivus', 'fons', 'norma', 'hal');
+    await mkdir(halDest, { recursive: true });
+
+    const glob = new Glob('*.ts');
+    for await (const file of glob.scan({ cwd: halSource, absolute: false })) {
+        if (file.endsWith('.test.ts')) continue;
+        const src = join(halSource, file);
+        const dest = join(halDest, file);
+        await Bun.write(dest, await Bun.file(src).text());
+    }
+}
+
 async function buildExecutable(): Promise<void> {
     const binDir = join(ROOT, 'opus', 'bin');
     await mkdir(binDir, { recursive: true });
@@ -137,6 +153,9 @@ async function main() {
     if (failed.length > 0) {
         process.exit(1);
     }
+
+    // Copy HAL native implementations
+    await copyHalImplementations();
 
     // Type check (TypeScript only)
     console.log('Type checking...');

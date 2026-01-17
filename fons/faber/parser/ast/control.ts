@@ -7,7 +7,7 @@
 import type { BaseNode } from './base';
 import type { Expression, Identifier } from './expressions';
 import type { CapeClause } from './actions';
-import type { Annotation, ExitusModifier } from './declarations';
+import type { Annotation, ExitusModifier, ArrayPattern } from './declarations';
 
 // Forward declaration for Statement (defined in index.ts)
 import type { Statement } from './index';
@@ -114,7 +114,7 @@ export interface CollectionDSLTransform extends BaseNode {
 export interface IteratioStatement extends BaseNode {
     type: 'IteratioStatement';
     kind: 'in' | 'ex';
-    variable: Identifier;
+    variable: Identifier | ArrayPattern;
     iterable: Expression;
     body: BlockStatement;
     async: boolean;

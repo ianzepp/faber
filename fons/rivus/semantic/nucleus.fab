@@ -32,8 +32,12 @@ genus SemanticError {
 # Result of semantic analysis
 @ publicum
 genus SemanticResultatum {
+    @ publica
     Programma programma
+    @ publica
     lista<SemanticError> errores
+    @ publica
+    tabula<textus, Programma>? resolvedModules
 }
 
 # ============================================================================

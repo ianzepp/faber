@@ -17,9 +17,28 @@
  *      don't support for-in iteration - use .keys() instead.
  */
 
-import type { IteratioStatement, CollectionDSLTransform } from '../../../parser/ast';
+import type { IteratioStatement, CollectionDSLTransform, ArrayPattern } from '../../../parser/ast';
 import type { TsGenerator } from '../generator';
 import { genBlockStatement } from './functio';
+
+/**
+ * Generate the variable binding pattern for a for-of loop.
+ *
+ * WHY: Supports both simple identifiers and array destructuring patterns.
+ *      ex items pro item { }      -> for (const item of items)
+ *      ex map fixum [k, v] { }    -> for (const [k, v] of map)
+ */
+function genLoopVariable(variable: IteratioStatement['variable']): string {
+    if (variable.type === 'ArrayPattern') {
+        const elements = variable.elements.map(el => {
+            if (el.skip) return '_';
+            if (el.rest) return `...${el.name.name}`;
+            return el.name.name;
+        });
+        return `[${elements.join(', ')}]`;
+    }
+    return variable.name;
+}
 
 /**
  * Check if an expression has tabula (Map) type.
@@ -33,7 +52,7 @@ function isTabulaType(node: IteratioStatement): boolean {
 }
 
 export function genIteratioStatement(node: IteratioStatement, g: TsGenerator): string {
-    const varName = node.variable.name;
+    const varName = genLoopVariable(node.variable);
     const body = genBlockStatement(node.body, g);
     const awaitKeyword = node.async ? ' await' : '';
 

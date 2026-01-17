@@ -2738,14 +2738,40 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             return elementTypeFromIterable(iterableType);
         })();
 
-        define({
-            name: node.variable.name,
-            type: inferredVarType,
-            kind: 'variable',
-            mutable: false,
-            position: node.variable.position,
-        });
-        node.variable.resolvedType = inferredVarType;
+        // Handle simple identifier or array destructuring pattern
+        if (node.variable.type === 'ArrayPattern') {
+            // Array destructuring: ex map fixum [k, v] { }
+            // For tabula, elements are [keyType, valueType]
+            const keyType = iterableType.kind === 'generic' && iterableType.name === 'tabula'
+                ? iterableType.typeParameters[0] ?? UNKNOWN
+                : UNKNOWN;
+            const valueType = iterableType.kind === 'generic' && iterableType.name === 'tabula'
+                ? iterableType.typeParameters[1] ?? UNKNOWN
+                : UNKNOWN;
+
+            for (let i = 0; i < node.variable.elements.length; i++) {
+                const el = node.variable.elements[i]!;
+                if (el.skip) continue;
+                const elType = i === 0 ? keyType : i === 1 ? valueType : UNKNOWN;
+                define({
+                    name: el.name.name,
+                    type: elType,
+                    kind: 'variable',
+                    mutable: false,
+                    position: el.position,
+                });
+                el.name.resolvedType = elType;
+            }
+        } else {
+            define({
+                name: node.variable.name,
+                type: inferredVarType,
+                kind: 'variable',
+                mutable: false,
+                position: node.variable.position,
+            });
+            node.variable.resolvedType = inferredVarType;
+        }
 
         analyzeBlock(node.body);
         exitScope();

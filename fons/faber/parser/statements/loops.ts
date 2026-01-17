@@ -190,10 +190,32 @@ export function parseExStatement(r: Resolver): IteratioStatement | VariaDeclarat
     if (ctx.checkKeyword('fixum') || ctx.checkKeyword('varia') || ctx.checkKeyword('figendum') || ctx.checkKeyword('variandum')) {
         const kind = ctx.advance().keyword as 'varia' | 'fixum' | 'figendum' | 'variandum';
 
-        // Array destructuring: ex coords fixum [x, y, z]
+        // Array destructuring: ex coords fixum [x, y, z] or for-of with destructure: ex map fixum [k, v] { }
         if (ctx.check('LBRACKET')) {
-            const name = parseArrayPattern(r);
-            return { type: 'VariaDeclaration', kind, name, init: source, position };
+            const pattern = parseArrayPattern(r);
+
+            // Check for block body -> for-of loop with destructuring
+            if (ctx.check('LBRACE')) {
+                const body = r.block();
+                let catchClause: CapeClause | undefined;
+                if (ctx.checkKeyword('cape')) {
+                    catchClause = parseCapeClause(r);
+                }
+                const async = kind === 'figendum' || kind === 'variandum';
+                return {
+                    type: 'IteratioStatement',
+                    kind: 'ex',
+                    variable: pattern,
+                    iterable: source,
+                    body,
+                    async,
+                    catchClause,
+                    position,
+                };
+            }
+
+            // No block -> one-shot destructuring
+            return { type: 'VariaDeclaration', kind, name: pattern, init: source, position };
         }
 
         // Object destructuring: ex persona fixum nomen, aetas

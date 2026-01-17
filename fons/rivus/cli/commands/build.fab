@@ -31,10 +31,12 @@ ex "../../../norma/hal/processus" importa processus
 
 functio replaceExtension(textus path, textus newExt) -> textus {
     fixum lastDot = path.lastIndexOf(".")
+
     si lastDot == -1 {
-        redde path + newExt
+        redde scriptum("§§", path, newExt)
     }
-    redde path.slice(0, lastDot) + newExt
+
+    redde scriptum("§§", path.slice(0, lastDot), newExt)
 }
 
 functio relativePath(textus from, textus to) -> textus {
@@ -53,13 +55,17 @@ functio relativePath(textus from, textus to) -> textus {
     varia lista<textus> result = [] innatum lista<textus>
 
     # Add ".." for each remaining part in 'from'
-    ex numerum(fromParts.length - common) pro i {
+    varia numerus i = 0
+    dum i < fromParts.length - common {
         result.push("..")
+        i = i + 1
     }
 
     # Add remaining parts from 'to'
-    ex numerum(toParts.length - common) pro i {
-        result.push(toParts[common + i])
+    varia numerus j = 0
+    dum j < toParts.length - common {
+        result.push(toParts[common + j])
+        j = j + 1
     }
 
     redde result.join("/")
@@ -70,7 +76,9 @@ functio relativePath(textus from, textus to) -> textus {
 # ═══════════════════════════════════════════════════════════════════════════════
 
 genus CompileResultatum {
+    @ publica
     Programma programma
+    @ publica
     SemanticResultatum semResult
 }
 
@@ -172,7 +180,7 @@ functio buildCommand(
     varia numerus fileCount = 1
 
     si entryResult.semResult.resolvedModules {
-        ex entryResult.semResult.resolvedModules pro depPath, depProgram {
+        ex entryResult.semResult.resolvedModules fixum [depPath, depProgram] {
             # Compile dependency
             fixum depAnalysis = analyze(depProgram, depPath)
 
