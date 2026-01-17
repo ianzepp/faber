@@ -95,20 +95,31 @@ export interface DumStatement extends BaseNode {
 /**
  * Collection DSL transform operation.
  *
- * GRAMMAR: dslTransform (see `EBNF.md` "DSL Transforms")
+ * GRAMMAR: dslTransform (see `EBNF.md` "Collection DSL")
  *
  * WHY: DSL transforms provide concise syntax for collection operations.
- *      They desugar to method calls during semantic analysis.
+ *      They desugar to method calls during code generation.
  *
  * Examples:
- *   prima 5        -> .prima(5)
- *   ultima 3       -> .ultima(3)
- *   summa          -> .summa()
+ *   prima 5                     -> .slice(0, 5)
+ *   ultima 3                    -> .slice(-3)
+ *   summa                       -> .reduce((a, b) => a + b, 0)
+ *   summa pretium               -> .reduce((a, b) => a + b.pretium, 0)
+ *   ordina per nomen            -> .sort((a, b) => compare(a.nomen, b.nomen))
+ *   ordina per nomen descendens -> .sort((a, b) => compare(b.nomen, a.nomen))
+ *   collige nomen               -> .map(x => x.nomen)
+ *   grupa per categoria         -> groupBy(x => x.categoria)
+ *   maximum                     -> Math.max(...arr)
+ *   minimum                     -> Math.min(...arr)
+ *   medium                      -> arr.reduce((a,b) => a+b, 0) / arr.length
+ *   numera                      -> .length
  */
 export interface CollectionDSLTransform extends BaseNode {
     type: 'CollectionDSLTransform';
     verb: string;
     argument?: Expression;
+    property?: Expression;
+    direction?: 'ascendens' | 'descendens';
 }
 
 export interface IteratioStatement extends BaseNode {

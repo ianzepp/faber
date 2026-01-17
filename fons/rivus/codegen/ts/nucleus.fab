@@ -63,6 +63,9 @@ genus TsGenerator implet Generans {
     # Whether to strip test blocks (probandum/proba) from output
     bivalens stripTests
 
+    # Whether to strip comments from output
+    bivalens stripComments
+
     # Test registry entries for harness generation
     # Each entry: { suite: string, name: string, funcName: string, skip?: bool, todo?: bool, ... }
     lista<tabula<textus, ignotum>> probaRegistrum
@@ -103,18 +106,20 @@ genus TsGenerator implet Generans {
     # ==========================================================================
 
     # Format leading comments for a node
-    #
-    # WHY: Stubbed for bootstrap - comment preservation is P3
     @ publica
     functio notaePrae(ignotum nodus) -> textus {
+        si ego.stripComments {
+            redde ""
+        }
         redde formataNotaePrae(nodus, nihil, ego.ind())
     }
 
     # Format trailing comments for a node
-    #
-    # WHY: Stubbed for bootstrap - comment preservation is P3
     @ publica
     functio notaePost(ignotum nodus) -> textus {
+        si ego.stripComments {
+            redde ""
+        }
         redde formataNotaePost(nodus, nihil)
     }
 }
@@ -141,6 +146,7 @@ functio creaTsGenerator() -> TsGenerator {
         tabulaNominata: [] innatum lista<textus>,
         inProbaStandalone: falsum,
         stripTests: falsum,
+        stripComments: falsum,
         probaRegistrum: [] innatum lista<tabula<textus, ignotum>>,
         probaSuiteStack: [] innatum lista<textus>
     }
@@ -164,6 +170,7 @@ functio creaTsGeneratorCum(textus indentum) -> TsGenerator {
         tabulaNominata: [] innatum lista<textus>,
         inProbaStandalone: falsum,
         stripTests: falsum,
+        stripComments: falsum,
         probaRegistrum: [] innatum lista<tabula<textus, ignotum>>,
         probaSuiteStack: [] innatum lista<textus>
     }

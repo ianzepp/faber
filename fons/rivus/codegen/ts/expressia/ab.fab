@@ -1,0 +1,178 @@
+# TypeScript Expression Generator - Ab Expression (Collection DSL)
+#
+# Handles filtering, transforms, and aggregations for collection pipelines.
+#
+# TRANSFORMS:
+#   ab users activus                     -> users.filter(_x => _x.activus)
+#   ab users non banned                  -> users.filter(_x => !(_x.banned))
+#   ab users ubi aetas >= 18             -> users.filter(_x => _x.aetas >= 18)
+#   ab items prima 5                     -> items.slice(0, 5)
+#   ab items, ordina per nomen           -> items.toSorted((a, b) => compare)
+#   ab items, collige nomen              -> items.map(_x => _x.nomen)
+#   ab items, numera                     -> items.length
+#
+# WHY: 'ab' is the sole DSL entry point for collection operations.
+#      ex is used only for iteration (ex items pro x) and imports.
+
+§ ex "../../../ast/expressia" importa Expressia, CatenaGradus, AbFiltrum, Nomen
+§ ex "../nucleus" importa TsGenerator
+§ ex "./index" importa genExpressia
+
+# =============================================================================
+# AB EXPRESSION CODEGEN
+# =============================================================================
+
+# Generate TypeScript code for an ab expression
+@ publica
+functio genAbExpressia(Expressia fons, bivalens negata, TsGenerator g, si AbFiltrum filtrum, si lista<CatenaGradus> gradus) -> textus {
+    fixum fonsTxt = genExpressia(fons, g)
+
+    # No filter case: just apply transforms
+    si nihil filtrum {
+        si nonnihil gradus {
+            redde applicaCatenaGradus(fonsTxt, gradus qua lista<CatenaGradus>, g)
+        }
+        redde fonsTxt
+    }
+
+    # Build filter callback
+    fixum param = "_x"
+    varia condicio = ""
+
+    si filtrum.habetUbi {
+        # Full condition: ab users ubi aetas >= 18
+        # Use generator state for implicit property rewriting
+        fixum priorInAbUbi = g.inAbUbi
+        fixum priorParam = g.abUbiParam
+        g.inAbUbi = verum
+        g.abUbiParam = param
+        condicio = genExpressia(filtrum.condicio, g)
+        g.inAbUbi = priorInAbUbi
+        g.abUbiParam = priorParam
+    } secus {
+        # Boolean property shorthand: ab users activus
+        condicio = scriptum("§.§", param, genExpressia(filtrum.condicio, g))
+    }
+
+    # Apply negation if present
+    si negata {
+        condicio = scriptum("!(§)", condicio)
+    }
+
+    # Build result with filter
+    varia result = scriptum("§.filter(§ => §)", fonsTxt, param, condicio)
+
+    # Apply transforms
+    si nonnihil gradus {
+        result = applicaCatenaGradus(result, gradus qua lista<CatenaGradus>, g)
+    }
+
+    redde result
+}
+
+# =============================================================================
+# TRANSFORM APPLICATION
+# =============================================================================
+
+# Apply DSL transforms as method calls
+#
+# TRANSFORMS:
+#   prima 5                     -> .slice(0, 5)
+#   ultima 3                    -> .slice(-3)
+#   summa                       -> .reduce((a, b) => a + b, 0)
+#   summa pretium               -> .reduce((a, b) => a + b.pretium, 0)
+#   ordina per nomen            -> .toSorted((a, b) => compare)
+#   ordina per nomen descendens -> .toSorted((a, b) => reverse compare)
+#   collige nomen               -> .map(_x => _x.nomen)
+#   grupa per categoria         -> Object.groupBy(arr, _x => _x.categoria)
+#   maximum                     -> Math.max(...arr)
+#   minimum                     -> Math.min(...arr)
+#   medium                      -> IIFE for avg
+#   numera                      -> .length
+#
+# WHY: DSL verbs desugar to target-language collection operations.
+#      Uses toSorted() for immutable sort (ES2023+).
+#      Uses Object.groupBy() for grouping (ES2024+).
+@ publica
+functio applicaCatenaGradus(textus fons, lista<CatenaGradus> gradus, TsGenerator g) -> textus {
+    varia result = fons
+
+    ex gradus pro gradusSingulus {
+        fixum verbum = gradusSingulus.verbum qua textus
+
+        elige verbum {
+            casu "prima" {
+                # prima N -> .slice(0, N)
+                fixum arg = genExpressia(gradusSingulus.argumentum qua Expressia, g)
+                result = scriptum("§.slice(0, §)", result, arg)
+            }
+
+            casu "ultima" {
+                # ultima N -> .slice(-N)
+                fixum arg = genExpressia(gradusSingulus.argumentum qua Expressia, g)
+                result = scriptum("§.slice(-§)", result, arg)
+            }
+
+            casu "summa" {
+                # summa -> .reduce((a, b) => a + b, 0)
+                # summa prop -> .reduce((a, b) => a + b.prop, 0)
+                si nonnihil gradusSingulus.proprietas {
+                    fixum prop = genExpressia(gradusSingulus.proprietas qua Expressia, g)
+                    result = scriptum("§.reduce((a, b) => a + b.§, 0)", result, prop)
+                } secus {
+                    result = scriptum("§.reduce((a, b) => a + b, 0)", result)
+                }
+            }
+
+            casu "ordina" {
+                # ordina per prop -> .toSorted((a, b) => compare)
+                # Uses toSorted() for immutable sort
+                si nonnihil gradusSingulus.proprietas {
+                    fixum prop = genExpressia(gradusSingulus.proprietas qua Expressia, g)
+                    fixum desc = (gradusSingulus.directio qua textus?) == "descendens"
+                    fixum first = desc sic "b" secus "a"
+                    fixum second = desc sic "a" secus "b"
+                    result = scriptum("§.toSorted((a, b) => §.§ < §.§ ? -1 : §.§ > §.§ ? 1 : 0)", result, first, prop, second, prop, first, prop, second, prop)
+                }
+            }
+
+            casu "collige" {
+                # collige prop -> .map(_x => _x.prop)
+                si nonnihil gradusSingulus.proprietas {
+                    fixum prop = genExpressia(gradusSingulus.proprietas qua Expressia, g)
+                    result = scriptum("§.map(_x => _x.§)", result, prop)
+                }
+            }
+
+            casu "grupa" {
+                # grupa per prop -> Object.groupBy(arr, _x => _x.prop)
+                si nonnihil gradusSingulus.proprietas {
+                    fixum prop = genExpressia(gradusSingulus.proprietas qua Expressia, g)
+                    result = scriptum("Object.groupBy(§, _x => _x.§)", result, prop)
+                }
+            }
+
+            casu "maximum" {
+                # maximum -> Math.max(...arr)
+                result = scriptum("Math.max(...§)", result)
+            }
+
+            casu "minimum" {
+                # minimum -> Math.min(...arr)
+                result = scriptum("Math.min(...§)", result)
+            }
+
+            casu "medium" {
+                # medium -> IIFE to avoid re-evaluating source
+                result = scriptum("((_arr) => _arr.reduce((a, b) => a + b, 0) / _arr.length)(§)", result)
+            }
+
+            casu "numera" {
+                # numera -> .length
+                result = scriptum("§.length", result)
+            }
+        }
+    }
+
+    redde result
+}

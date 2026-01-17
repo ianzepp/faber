@@ -52,6 +52,7 @@ functio version() -> vacuum {
 @ optio bivalens json longum "json" descriptio "Output errors as JSON"
 @ optio bivalens dryRun longum "dry-run" descriptio "Check without emitting code"
 @ optio bivalens stripTests longum "strip-tests" descriptio "Strip probandum/proba test blocks from output"
+@ optio bivalens stripComments longum "strip-comments" descriptio "Strip comments from output"
 functio emit(
     textus input,
     si textus target,
@@ -60,9 +61,10 @@ functio emit(
     si textus stdinFilename,
     si bivalens json,
     si bivalens dryRun,
-    si bivalens stripTests
+    si bivalens stripTests,
+    si bivalens stripComments
 ) exitus code -> vacuum {
-    fixum result = cede emitCommand(input, target, output, include, stdinFilename, json, dryRun, stripTests)
+    fixum result = cede emitCommand(input, target, output, include, stdinFilename, json, dryRun, stripTests, stripComments)
     code = result
 }
 
@@ -80,6 +82,7 @@ functio emit(
 @ optio bivalens json longum "json" descriptio "Output errors as JSON"
 @ optio bivalens dryRun longum "dry-run" descriptio "Check without writing files"
 @ optio bivalens listFiles longum "list-files" descriptio "List files that would be compiled"
+@ optio bivalens stripComments longum "strip-comments" descriptio "Strip comments from output"
 functio build(
     textus input,
     si textus target,
@@ -87,9 +90,10 @@ functio build(
     si textus include,
     si bivalens json,
     si bivalens dryRun,
-    si bivalens listFiles
+    si bivalens listFiles,
+    si bivalens stripComments
 ) exitus code -> vacuum {
-    fixum result = cede buildCommand(input, target, output, include, json, dryRun, listFiles)
+    fixum result = cede buildCommand(input, target, output, include, json, dryRun, listFiles, stripComments)
     code = result
 }
 

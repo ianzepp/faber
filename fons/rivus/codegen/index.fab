@@ -33,6 +33,18 @@ functio generate(lista<Sententia> corpus, textus target) -> textus {
 # Generate code with test blocks stripped (for production builds)
 @ publica
 functio generateStripTests(lista<Sententia> corpus, textus target) -> textus {
+    redde generateWithStripping(corpus, target, verum, falsum)
+}
+
+# Generate code with comments stripped
+@ publica
+functio generateStripComments(lista<Sententia> corpus, textus target) -> textus {
+    redde generateWithStripping(corpus, target, falsum, verum)
+}
+
+# Generate code with optional stripping of tests and/or comments
+@ publica
+functio generateWithStripping(lista<Sententia> corpus, textus target, bivalens stripTests, bivalens stripComments) -> textus {
     # Validate first
     fixum errores = validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
     si non validatioSuccessit(errores) {
@@ -40,9 +52,9 @@ functio generateStripTests(lista<Sententia> corpus, textus target) -> textus {
     }
 
     elige target {
-        casu "ts" { redde generateTsWithOptions(corpus, verum) }
+        casu "ts" { redde generateTsWithOptions(corpus, stripTests, stripComments) }
         ceterum {
-            iace scriptum("Strip tests not supported for target '§'. Only 'ts' is supported.", target)
+            iace scriptum("Stripping not supported for target '§'. Only 'ts' is supported.", target)
         }
     }
 }

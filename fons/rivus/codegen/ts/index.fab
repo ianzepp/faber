@@ -21,14 +21,15 @@
 # Generate TypeScript source code from a list of statements
 @ publica
 functio generateTs(lista<Sententia> corpus) -> textus {
-    redde generateTsWithOptions(corpus, falsum)
+    redde generateTsWithOptions(corpus, falsum, falsum)
 }
 
-# Generate TypeScript with option to strip test blocks
+# Generate TypeScript with options to strip test blocks and/or comments
 @ publica
-functio generateTsWithOptions(lista<Sententia> corpus, bivalens stripTests) -> textus {
+functio generateTsWithOptions(lista<Sententia> corpus, bivalens stripTests, bivalens stripComments) -> textus {
     fixum g = creaTsGenerator()
     g.stripTests = stripTests
+    g.stripComments = stripComments
 
     # Generate body from statements
     varia lines = [] innatum lista<textus>

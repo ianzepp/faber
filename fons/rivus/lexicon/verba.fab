@@ -166,6 +166,12 @@ functio verbumFaberId(textus v) -> VerbumId? {
         casu "ordina" reddit VerbumId.Ordina
         casu "collige" reddit VerbumId.Collige
         casu "grupa" reddit VerbumId.Grupa
+        casu "ascendens" reddit VerbumId.Ascendens
+        casu "descendens" reddit VerbumId.Descendens
+        casu "maximum" reddit VerbumId.Maximum
+        casu "minimum" reddit VerbumId.Minimum
+        casu "medium" reddit VerbumId.Medium
+        casu "numera" reddit VerbumId.Numera
         casu "sed" reddit VerbumId.Sed
 
         # ---- Conversion Operators ----

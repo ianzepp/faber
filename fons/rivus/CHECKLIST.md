@@ -332,9 +332,9 @@ See [`fons/norma/README.md`](../norma/README.md) for stdlib method implementatio
 
 | Feature                   | TypeScript | Zig | Python | Rust | C++23 |
 | ------------------------- | :--------: | :-: | :----: | :--: | :---: |
-| `ex...prima n` (take)     | ○ | ○ | ○ | ○ | ○ |
-| `ex...ultima n` (last)    | ○ | ○ | ○ | ○ | ○ |
-| `ex...summa` (sum)        | ○ | ○ | ○ | ○ | ○ |
+| `ab...prima n` (take)     | ○ | ○ | ○ | ○ | ○ |
+| `ab...ultima n` (last)    | ○ | ○ | ○ | ○ | ○ |
+| `ab...summa` (sum)        | ○ | ○ | ○ | ○ | ○ |
 | `ab...ubi` (filter where) | ○ | ○ | ○ | ○ | ○ |
 | `ab...pro` (filter iter)  | ○ | ○ | ○ | ○ | ○ |
 

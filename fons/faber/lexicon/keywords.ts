@@ -378,6 +378,12 @@ export const keywords: KeywordEntry[] = [
     { latin: 'ordina', meaning: 'sort', category: 'dsl' },
     { latin: 'collige', meaning: 'pluck', category: 'dsl' },
     { latin: 'grupa', meaning: 'group by', category: 'dsl' },
+    { latin: 'ascendens', meaning: 'ascending', category: 'dsl' },
+    { latin: 'descendens', meaning: 'descending', category: 'dsl' },
+    { latin: 'maximum', meaning: 'max', category: 'dsl' },
+    { latin: 'minimum', meaning: 'min', category: 'dsl' },
+    { latin: 'medium', meaning: 'average', category: 'dsl' },
+    { latin: 'numera', meaning: 'count', category: 'dsl' },
 
     // ---------------------------------------------------------------------------
     // Regex DSL

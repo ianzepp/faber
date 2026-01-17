@@ -40,7 +40,6 @@ import { parseParameter } from '../types';
 import {
     isDSLVerb,
     parseAbExpression,
-    parseCollectionDSLExpression,
     parseRegexLiteral,
 } from './dsl';
 
@@ -636,54 +635,6 @@ export function parsePrimary(r: Resolver): Expression {
     // sed expression: regex literal (sed "\\d+" i)
     if (ctx.checkKeyword('sed')) {
         return parseRegexLiteral(r);
-    }
-
-    // ex expression in expression context: collection DSL (ex items prima 5)
-    // WHY: 'ex' in expression context (not statement start) with DSL verb is collection pipeline
-    if (ctx.checkKeyword('ex')) {
-        // Look ahead to see if this is DSL (prima/ultima/summa after expression)
-        // vs iteration (pro/fit/fiet) or import (importa) or destructuring (fixum/varia)
-        // Save position for lookahead
-        const savedCurrent = ctx.current;
-        ctx.advance(); // consume 'ex'
-
-        // Parse source expression (identifier or more complex expression)
-        // For DSL detection, we just check if a DSL verb follows
-        // We need to skip one expression-like token and check for DSL verb
-        let depth = 0;
-        let foundDSL = false;
-
-        // Simple lookahead: skip tokens until we find DSL verb or statement boundary
-        while (!ctx.isAtEnd() && depth < 20) {
-            if (isDSLVerb(r)) {
-                foundDSL = true;
-                break;
-            }
-
-            // Stop on keywords that indicate non-DSL usage
-            const kw = ctx.peek().keyword;
-            if (kw === 'pro' || kw === 'fit' || kw === 'fiet' || kw === 'importa' ||
-                kw === 'fixum' || kw === 'varia' || kw === 'figendum' || kw === 'variandum') {
-                break;
-            }
-
-            // Stop on statement boundaries
-            if (ctx.check('RBRACE') || ctx.check('SEMICOLON') || ctx.check('EOF')) {
-                break;
-            }
-
-            ctx.advance();
-            depth++;
-        }
-
-        // Restore position
-        ctx.current = savedCurrent;
-
-        if (foundDSL) {
-            return parseCollectionDSLExpression(r);
-        }
-
-        // Fall through - 'ex' is in statement context, not expression DSL
     }
 
     // Number literal (decimal or hex)

@@ -8,7 +8,7 @@
 #            | 'ego' | 'verum' | 'falsum' | 'nihil'
 #            | '(' expression ')' | arrayLiteral | objectLiteral
 #            | lambdaExpression | fingeExpression | scriptumExpression
-#            | legeExpression | regexExpression | abExpression | catenaExpression
+#            | legeExpression | regexExpression | abExpression
 #
 # WHY: Primary expressions are the leaves of the expression tree.
 #      Everything else builds on top of these terminals.
@@ -26,7 +26,6 @@
 # - lege = read (stdin)
 # - sed = regex (but/except)
 # - ab = from (collection DSL)
-# - catena = chain (collection DSL)
 
 § ex "../resolvitor" importa Resolvitor
 § ex "../../ast/positio" importa Locus
@@ -191,11 +190,6 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
         redde parseRegexExpressia(r)
     }
 
-    # Collection DSL expression: ex items prima 5
-    si p.probaVerbum("ex") {
-        redde parseCatenaExpressia(r)
-    }
-
     # Keyword identifiers (allow keywords as names in expression position)
     si sym.species == SymbolumGenus.Verbum {
         p.procede()
@@ -217,31 +211,8 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
 }
 
 # ============================================================================
-# COLLECTION DSL (ex/ab expressions)
+# COLLECTION DSL (ab expression)
 # ============================================================================
-
-# Parse collection DSL expression (ex ... transforms)
-#
-# Example: ex items prima 5 summa
-@ publica
-functio parseCatenaExpressia(Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
-
-    p.expectaVerbum("ex", ParserErrorCodice.ExpectaturEx)
-    fixum fons = r.expressia()
-
-    varia gradus = parseCatenaGradus(r)
-    si gradus.longitudo() == 0 {
-        p.renuncia(ParserErrorCodice.ExpectaturExpressia, "expected DSL transform after ex")
-    }
-
-    redde finge CatenaExpressia {
-        locus: locus,
-        fons: fons,
-        gradus: gradus
-    } qua Expressia
-}
 
 # Parse ab expression (collection filtering DSL)
 #
@@ -324,7 +295,7 @@ functio parseCatenaGradus(Resolvitor r) -> lista<CatenaGradus> {
         si symbolum.species !== SymbolumGenus.Verbum {
             redde falsum
         }
-        si symbolum.verbum inter ["prima", "ultima", "summa"] {
+        si symbolum.verbum inter ["prima", "ultima", "summa", "ordina", "collige", "grupa", "maximum", "minimum", "medium", "numera"] {
             redde verum
         }
         redde falsum
@@ -332,16 +303,55 @@ functio parseCatenaGradus(Resolvitor r) -> lista<CatenaGradus> {
 
     dum estCatenaVerbumSym(p.specta(0)) {
         fixum verbSym = p.procede()
-        varia argumentum = nihil qua Expressia?
+        fixum verbum = verbSym.verbum qua textus
+        fixum locus = verbSym.locus
 
-        si verbSym.verbum == "prima" aut verbSym.verbum == "ultima" {
-            argumentum = r.expressia()
+        varia argumentum = nihil qua Expressia?
+        varia proprietas = nihil qua Expressia?
+        varia directio = nihil qua textus?
+
+        elige verbum {
+            casu "prima" {
+                argumentum = r.expressia()
+            }
+            casu "ultima" {
+                argumentum = r.expressia()
+            }
+            casu "summa" {
+                # summa optionally takes property: summa pretium
+                si p.specta(0).species == SymbolumGenus.Nomen et non estCatenaVerbumSym(p.specta(0)) {
+                    proprietas = r.expressia()
+                }
+            }
+            casu "ordina" {
+                # ordina per property [ascendens|descendens]
+                p.expectaVerbum("per", ParserErrorCodice.ExpectaturNomen)
+                proprietas = r.expressia()
+                si p.congruetVerbum("ascendens") {
+                    directio = "ascendens"
+                } sin p.congruetVerbum("descendens") {
+                    directio = "descendens"
+                }
+            }
+            casu "collige" {
+                proprietas = r.expressia()
+            }
+            casu "grupa" {
+                p.expectaVerbum("per", ParserErrorCodice.ExpectaturNomen)
+                proprietas = r.expressia()
+            }
+            casu "maximum" { }
+            casu "minimum" { }
+            casu "medium" { }
+            casu "numera" { }
         }
 
         gradus.adde({
-            locus: verbSym.locus,
-            verbum: verbSym.verbum,
-            argumentum: argumentum
+            locus: locus,
+            verbum: verbum,
+            argumentum: argumentum,
+            proprietas: proprietas,
+            directio: directio
         } qua CatenaGradus)
 
         si non p.congruet(SymbolumGenus.Coma) {

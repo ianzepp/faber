@@ -179,16 +179,7 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
             redde usitatumTypus("Regex", falsum)
         }
 
-        # Collection DSL pipeline (ex items prima 5)
-        casu CatenaExpressia ut c {
-            # WHY: DSL expressions resolve to source type after transforms.
-            # Most operations (prima, ultima, ordina) preserve element type.
-            # summa would change to numerus, but basic inference returns source type.
-            fixum fonsTypus = r.expressia(c.fons)
-            redde fonsTypus
-        }
-
-        # Filter DSL (ab items activus)
+        # Collection DSL (ab items activus, ab items prima 5)
         casu AbExpressia ut abExpr {
             # WHY: Filtering doesn't change element type, only reduces collection.
             fixum fonsTypus = r.expressia(abExpr.fons)

@@ -282,6 +282,12 @@ ordo VerbumId {
     Ordina
     Collige
     Grupa
+    Ascendens
+    Descendens
+    Maximum
+    Minimum
+    Medium
+    Numera
     Sed
 
     # -------------------------------------------------------------------------

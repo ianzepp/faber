@@ -12,7 +12,6 @@
 import type { Resolver } from '../resolver';
 import type {
     Expression,
-    CollectionDSLExpression,
     CollectionDSLTransform,
     AbExpression,
     RegexLiteral,
@@ -30,7 +29,16 @@ import { ParserErrorCode } from '../errors';
  */
 export function isDSLVerb(r: Resolver): boolean {
     const ctx = r.ctx();
-    return ctx.checkKeyword('prima') || ctx.checkKeyword('ultima') || ctx.checkKeyword('summa');
+    return ctx.checkKeyword('prima')
+        || ctx.checkKeyword('ultima')
+        || ctx.checkKeyword('summa')
+        || ctx.checkKeyword('ordina')
+        || ctx.checkKeyword('collige')
+        || ctx.checkKeyword('grupa')
+        || ctx.checkKeyword('maximum')
+        || ctx.checkKeyword('minimum')
+        || ctx.checkKeyword('medium')
+        || ctx.checkKeyword('numera');
 }
 
 // =============================================================================
@@ -42,17 +50,30 @@ export function isDSLVerb(r: Resolver): boolean {
  *
  * GRAMMAR:
  *   dslTransforms := dslTransform (',' dslTransform)*
- *   dslTransform := dslVerb expression?
- *   dslVerb := 'prima' | 'ultima' | 'summa'
+ *   dslTransform := 'prima' expression
+ *                 | 'ultima' expression
+ *                 | 'summa' expression?
+ *                 | 'ordina' 'per' expression ('ascendens' | 'descendens')?
+ *                 | 'collige' expression
+ *                 | 'grupa' 'per' expression
+ *                 | 'maximum' | 'minimum' | 'medium' | 'numera'
  *
  * WHY: DSL provides concise syntax for common collection operations.
- *      Transforms chain with commas: prima 5, ultima 3
+ *      Transforms chain with commas: ab items activus, ordina per nomen, prima 5
  *
  * Examples:
- *   prima 5           -> first 5 elements
- *   ultima 3          -> last 3 elements
- *   summa             -> sum (no argument)
- *   prima 5, ultima 2 -> first 5, then last 2 of those
+ *   prima 5                     -> first 5 elements
+ *   ultima 3                    -> last 3 elements
+ *   summa                       -> sum all elements
+ *   summa pretium               -> sum by property
+ *   ordina per nomen            -> sort by property ascending
+ *   ordina per nomen descendens -> sort by property descending
+ *   collige nomen               -> pluck/map to property
+ *   grupa per categoria         -> group by property
+ *   maximum                     -> max value
+ *   minimum                     -> min value
+ *   medium                      -> average
+ *   numera                      -> count
  */
 export function parseDSLTransforms(r: Resolver): CollectionDSLTransform[] {
     const ctx = r.ctx();
@@ -62,20 +83,61 @@ export function parseDSLTransforms(r: Resolver): CollectionDSLTransform[] {
         const transformPos = ctx.peek().position;
         const verb = ctx.advance().keyword!;
 
-        // Check if this verb takes an argument
-        // prima and ultima require numeric argument
-        // summa takes no argument
         let argument: Expression | undefined;
-        if (verb === 'prima' || verb === 'ultima') {
-            // These verbs require a numeric argument
-            argument = r.expression();
+        let property: Expression | undefined;
+        let direction: 'ascendens' | 'descendens' | undefined;
+
+        switch (verb) {
+            case 'prima':
+            case 'ultima':
+                // These verbs require a count argument
+                argument = r.expression();
+                break;
+
+            case 'summa':
+                // summa optionally takes a property: summa pretium
+                // Only parse if next token looks like a property (identifier, not comma/DSL verb)
+                if (ctx.check('IDENTIFIER') && !isDSLVerb(r)) {
+                    property = r.expression();
+                }
+                break;
+
+            case 'ordina':
+                // ordina per property [ascendens|descendens]
+                ctx.expectKeyword('per', ParserErrorCode.UnexpectedToken);
+                property = r.expression();
+                if (ctx.matchKeyword('ascendens')) {
+                    direction = 'ascendens';
+                } else if (ctx.matchKeyword('descendens')) {
+                    direction = 'descendens';
+                }
+                break;
+
+            case 'collige':
+                // collige property
+                property = r.expression();
+                break;
+
+            case 'grupa':
+                // grupa per property
+                ctx.expectKeyword('per', ParserErrorCode.UnexpectedToken);
+                property = r.expression();
+                break;
+
+            case 'maximum':
+            case 'minimum':
+            case 'medium':
+            case 'numera':
+                // These take no arguments
+                break;
         }
-        // summa takes no argument
 
         transforms.push({
             type: 'CollectionDSLTransform',
             verb,
             argument,
+            property,
+            direction,
             position: transformPos,
         });
 
@@ -86,49 +148,6 @@ export function parseDSLTransforms(r: Resolver): CollectionDSLTransform[] {
     }
 
     return transforms;
-}
-
-// =============================================================================
-// COLLECTION DSL EXPRESSION
-// =============================================================================
-
-/**
- * Parse collection DSL expression (expression context).
- *
- * GRAMMAR:
- *   dslExpr := 'ex' expression dslTransform (',' dslTransform)*
- *
- * WHY: When 'ex' appears in expression context with DSL verbs (not pro/fit/fiet),
- *      it creates a collection pipeline expression that can be assigned.
- *
- * Examples:
- *   fixum top5 = ex items prima 5
- *   fixum total = ex prices summa
- *   fixum result = ex items prima 10, ultima 3
- */
-export function parseCollectionDSLExpression(r: Resolver): CollectionDSLExpression {
-    const ctx = r.ctx();
-    const position = ctx.peek().position;
-
-    ctx.expectKeyword('ex', ParserErrorCode.InvalidExDeStart);
-
-    const source = r.expression();
-
-    // Parse DSL transforms (at least one required for expression form)
-    const transforms = parseDSLTransforms(r);
-
-    if (transforms.length === 0) {
-        // No transforms means this shouldn't be parsed as DSL expression
-        // This case shouldn't happen if called correctly from parsePrimary
-        ctx.error(ParserErrorCode.UnexpectedToken, 'expected DSL verb after ex');
-    }
-
-    return {
-        type: 'CollectionDSLExpression',
-        source,
-        transforms,
-        position,
-    };
 }
 
 // =============================================================================

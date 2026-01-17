@@ -18,6 +18,7 @@
 § ex "./ambitus" importa genAmbitusExpressia
 § ex "./est" importa genEstExpressia, genEstExpressiaNegata
 § ex "./obiectum" importa genObiectum
+§ ex "./ab" importa genAbExpressia, applicaCatenaGradus
 # =============================================================================
 # EXPRESSION DISPATCH
 # =============================================================================
@@ -168,11 +169,6 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
 
         casu EstExpressia ut e {
             redde genEstExpressia(e.expressia, e.scopus qua TypusAnnotatio, g)
-        }
-
-        casu CatenaExpressia ut e {
-            fixum fons = genExpressia(e.fons, g)
-            redde applicaCatenaGradus(fons, e.gradus qua lista<CatenaGradus>, g)
         }
 
         casu PraefixumExpressia ut e {
@@ -333,40 +329,7 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
         }
 
         casu AbExpressia ut e {
-            fixum fons = genExpressia(e.fons, g)
-
-            si nihil e.filtrum {
-                si nonnihil e.gradus {
-                    redde applicaCatenaGradus(fons, e.gradus qua lista<CatenaGradus>, g)
-                }
-                redde fons
-            }
-
-            fixum filtrum = e.filtrum qua AbFiltrum
-            fixum param = "_x"
-            varia condicio = ""
-
-            si filtrum.habetUbi {
-                fixum priorInAbUbi = g.inAbUbi
-                fixum priorParam = g.abUbiParam
-                g.inAbUbi = verum
-                g.abUbiParam = param
-                condicio = genExpressia(filtrum.condicio, g)
-                g.inAbUbi = priorInAbUbi
-                g.abUbiParam = priorParam
-            } secus {
-                condicio = scriptum("§.§", param, genExpressia(filtrum.condicio, g))
-            }
-
-            si e.negata qua bivalens {
-                condicio = scriptum("!(§)", condicio)
-            }
-
-            varia result = scriptum("§.filter(§ => §)", fons, param, condicio)
-            si nonnihil e.gradus {
-                result = applicaCatenaGradus(result, e.gradus qua lista<CatenaGradus>, g)
-            }
-            redde result
+            redde genAbExpressia(e.fons, e.negata qua bivalens, g, e.filtrum, e.gradus)
         }
 
         # Collections
@@ -589,31 +552,6 @@ functio genPraefixumSententia(Sententia stmt, TsGenerator g) -> textus {
             redde scriptum("§/* praefixum: unsupported statement */", g.ind())
         }
     }
-}
-
-# =============================================================================
-# CHAIN HELPERS
-# =============================================================================
-
-functio applicaCatenaGradus(textus fons, lista<CatenaGradus> gradus, TsGenerator g) -> textus {
-    varia result = fons
-    ex gradus pro gradusSingulus {
-        fixum verbum = gradusSingulus.verbum qua textus
-        elige verbum {
-            casu "prima" {
-                fixum arg = genExpressia(gradusSingulus.argumentum qua Expressia, g)
-                result = scriptum("§.slice(0, §)", result, arg)
-            }
-            casu "ultima" {
-                fixum arg = genExpressia(gradusSingulus.argumentum qua Expressia, g)
-                result = scriptum("§.slice(-§)", result, arg)
-            }
-            casu "summa" {
-                result = scriptum("§.reduce((a, b) => a + b, 0)", result)
-            }
-        }
-    }
-    redde result
 }
 
 functio invenitTabulaNomen(Expressia obiectum, TsGenerator g) -> textus? {

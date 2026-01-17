@@ -57,12 +57,14 @@ genus ClausuraParametrum {
 }
 
 # Chain step for collection DSL
-# Examples: prima 5, ultima 3, summa, ordina per nomen
+# Examples: prima 5, ultima 3, summa, ordina per nomen descendens
 @ publicum
 genus CatenaGradus {
     Locus locus
-    textus verbum            # prima, ultima, summa, ordina, collige, grupa
-    Expressia? argumentum    # optional argument (5 in "prima 5")
+    textus verbum            # prima, ultima, summa, ordina, collige, grupa, maximum, minimum, medium, numera
+    Expressia? argumentum    # count for prima/ultima
+    Expressia? proprietas    # property for ordina/collige/grupa/summa
+    textus? directio         # "ascendens" | "descendens" for ordina
 }
 
 # Ab filter clause (ubi condition or boolean shorthand)
@@ -221,14 +223,6 @@ discretio Expressia {
         Locus locus
         Expressia expressia
         TypusAnnotatio scopus    # type to check against
-    }
-
-    # Chain expression (collection DSL pipeline)
-    # Example: ex items prima 5, ex prices summa
-    CatenaExpressia {
-        Locus locus
-        Expressia fons           # source collection
-        lista<CatenaGradus> gradus
     }
 
     # Compile-time expression

@@ -43,7 +43,6 @@ export type Expression =
     | TemplateLiteral
     | ClausuraExpression
     | PraefixumExpression
-    | CollectionDSLExpression
     | AbExpression
     | ScriptumExpression
     | LegeExpression
@@ -715,32 +714,8 @@ export interface PraefixumExpression extends BaseNode {
 }
 
 // =============================================================================
-// COLLECTION DSL EXPRESSIONS
+// AB EXPRESSION
 // =============================================================================
-
-/**
- * Collection DSL expression (ex source transforms... without iteration).
- *
- * GRAMMAR (in EBNF):
- *   dslExpr := 'ex' expression dslTransform (',' dslTransform)*
- *
- * WHY: DSL expressions provide concise syntax for collection pipelines
- *      when used in assignment context (no `pro` iteration binding).
- *
- * Examples:
- *   fixum top5 = ex items prima 5
- *   fixum total = ex prices summa
- *   fixum last3 = ex items ultima 3
- *
- * Target mapping (desugared):
- *   ex items prima 5 -> items.prima(5)
- *   ex prices summa  -> prices.summa()
- */
-export interface CollectionDSLExpression extends BaseNode {
-    type: 'CollectionDSLExpression';
-    source: Expression;
-    transforms: CollectionDSLTransform[];
-}
 
 /**
  * Ab expression - collection filtering DSL.

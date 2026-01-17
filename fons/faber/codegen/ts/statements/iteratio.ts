@@ -134,11 +134,22 @@ export function genIteratioStatement(node: IteratioStatement, g: TsGenerator): s
  * Apply DSL transforms as method calls.
  *
  * TRANSFORMS:
- *   prima 5      -> .slice(0, 5)
- *   ultima 3     -> .slice(-3)
- *   summa        -> .reduce((a, b) => a + b, 0)
+ *   prima 5                     -> .slice(0, 5)
+ *   ultima 3                    -> .slice(-3)
+ *   summa                       -> .reduce((a, b) => a + b, 0)
+ *   summa pretium               -> .reduce((a, b) => a + b.pretium, 0)
+ *   ordina per nomen            -> .toSorted((a, b) => a.nomen < b.nomen ? -1 : a.nomen > b.nomen ? 1 : 0)
+ *   ordina per nomen descendens -> .toSorted((a, b) => b.nomen < a.nomen ? -1 : b.nomen > a.nomen ? 1 : 0)
+ *   collige nomen               -> .map(_x => _x.nomen)
+ *   grupa per categoria         -> Object.groupBy(arr, _x => _x.categoria)
+ *   maximum                     -> Math.max(...arr)
+ *   minimum                     -> Math.min(...arr)
+ *   medium                      -> (arr.reduce((a, b) => a + b, 0) / arr.length)
+ *   numera                      -> .length
  *
- * WHY: DSL verbs desugar to norma method implementations.
+ * WHY: DSL verbs desugar to target-language collection operations.
+ *      Uses toSorted() for immutable sort (ES2023+).
+ *      Uses Object.groupBy() for grouping (ES2024+).
  */
 export function applyDSLTransforms(source: string, transforms: CollectionDSLTransform[], g: TsGenerator): string {
     let result = source;
@@ -152,6 +163,7 @@ export function applyDSLTransforms(source: string, transforms: CollectionDSLTran
                     result = `${result}.slice(0, ${n})`;
                 }
                 break;
+
             case 'ultima':
                 // ultima N -> .slice(-N)
                 if (transform.argument) {
@@ -159,9 +171,65 @@ export function applyDSLTransforms(source: string, transforms: CollectionDSLTran
                     result = `${result}.slice(-${n})`;
                 }
                 break;
+
             case 'summa':
                 // summa -> .reduce((a, b) => a + b, 0)
-                result = `${result}.reduce((a, b) => a + b, 0)`;
+                // summa prop -> .reduce((a, b) => a + b.prop, 0)
+                if (transform.property) {
+                    const prop = g.genExpression(transform.property);
+                    result = `${result}.reduce((a, b) => a + b.${prop}, 0)`;
+                } else {
+                    result = `${result}.reduce((a, b) => a + b, 0)`;
+                }
+                break;
+
+            case 'ordina': {
+                // ordina per prop -> .toSorted((a, b) => compare)
+                // Uses toSorted() for immutable sort
+                if (transform.property) {
+                    const prop = g.genExpression(transform.property);
+                    const desc = transform.direction === 'descendens';
+                    const [first, second] = desc ? ['b', 'a'] : ['a', 'b'];
+                    result = `${result}.toSorted((a, b) => ${first}.${prop} < ${second}.${prop} ? -1 : ${first}.${prop} > ${second}.${prop} ? 1 : 0)`;
+                }
+                break;
+            }
+
+            case 'collige':
+                // collige prop -> .map(_x => _x.prop)
+                if (transform.property) {
+                    const prop = g.genExpression(transform.property);
+                    result = `${result}.map(_x => _x.${prop})`;
+                }
+                break;
+
+            case 'grupa':
+                // grupa per prop -> Object.groupBy(arr, _x => _x.prop)
+                if (transform.property) {
+                    const prop = g.genExpression(transform.property);
+                    result = `Object.groupBy(${result}, _x => _x.${prop})`;
+                }
+                break;
+
+            case 'maximum':
+                // maximum -> Math.max(...arr)
+                result = `Math.max(...${result})`;
+                break;
+
+            case 'minimum':
+                // minimum -> Math.min(...arr)
+                result = `Math.min(...${result})`;
+                break;
+
+            case 'medium':
+                // medium -> (arr.reduce((a, b) => a + b, 0) / arr.length)
+                // Need to wrap in IIFE to avoid re-evaluating source
+                result = `((_arr) => _arr.reduce((a, b) => a + b, 0) / _arr.length)(${result})`;
+                break;
+
+            case 'numera':
+                // numera -> .length
+                result = `${result}.length`;
                 break;
         }
     }

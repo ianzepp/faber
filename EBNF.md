@@ -386,17 +386,23 @@ adBindingVerb := 'fit' | 'fiet' | 'fiunt' | 'fient'
 
 ---
 
-## DSL Transforms
+## Collection DSL
 
 ```ebnf
-dslExpr      := 'ex' expression dslTransforms
+abExpr        := 'ab' expression filter? (',' dslTransform)*
+filter        := 'non'? ('ubi' condition | IDENTIFIER)
 dslTransforms := dslTransform (',' dslTransform)*
-dslTransform := dslVerb expression?
-dslVerb      := 'prima' | 'ultima' | 'summa'
-
-abExpr := 'ab' expression filter? (',' dslTransform)*
-filter := 'non'? ('ubi' condition | IDENTIFIER)
+dslTransform  := dslVerb expression?
+dslVerb       := 'prima' | 'ultima' | 'summa'
 ```
+
+`ab` is the sole collection DSL entry point. Filter is optional, allowing direct transforms:
+- `ab users activus` - filter by boolean property
+- `ab users ubi aetas >= 18` - filter by condition
+- `ab items prima 5` - direct transform (no filter)
+- `ab items prima 10, ultima 3` - chained transforms
+
+`ex` is used only for iteration (`ex items pro x`) and imports (`ex path importa`).
 
 **Note:** Collection DSL transforms (`prima`, `ultima`, `summa`) are implemented for TypeScript target only. Other targets not yet supported.
 

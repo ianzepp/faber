@@ -19,7 +19,7 @@
 § ex "../../lexor/index" importa lexare
 § ex "../../parser/index" importa resolvere
 § ex "../../semantic/index" importa analyze
-§ ex "../../codegen/index" importa generate, generateStripTests
+§ ex "../../codegen/index" importa generate, generateWithStripping
 § ex "../../ast/radix" importa Programma
 
 § ex "../../../norma/hal/solum" importa solum
@@ -42,7 +42,8 @@ functio emitCommand(
     si textus stdinFilename,
     si bivalens jsonOutput,
     si bivalens dryRun,
-    si bivalens stripTests
+    si bivalens stripTests,
+    si bivalens stripComments
 ) -> numerus {
     fixum targetLang = target vel "ts"
     fixum displayName = stdinFilename vel nomenOstende(input)
@@ -168,8 +169,8 @@ functio emitCommand(
 
     # Code generation
     varia generated = ""
-    si stripTests {
-        generated = generateStripTests((parseResult.programma qua Programma).corpus, targetLang)
+    si stripTests vel stripComments {
+        generated = generateWithStripping((parseResult.programma qua Programma).corpus, targetLang, stripTests, stripComments)
     } secus {
         generated = generate((parseResult.programma qua Programma).corpus, targetLang)
     }

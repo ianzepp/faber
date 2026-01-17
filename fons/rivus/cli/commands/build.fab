@@ -22,7 +22,7 @@
 § ex "../../parser/index" importa resolvere
 § ex "../../semantic/index" importa analyze
 § ex "../../semantic/nucleus" importa SemanticResultatum
-§ ex "../../codegen/index" importa generate
+§ ex "../../codegen/index" importa generate, generateWithStripping
 § ex "../../ast/radix" importa Programma
 
 § ex "../../../norma/hal/solum" importa solum
@@ -161,7 +161,8 @@ functio buildCommand(
     si textus include,
     si bivalens jsonOutput,
     si bivalens dryRun,
-    si bivalens listFiles
+    si bivalens listFiles,
+    si bivalens stripComments
 ) -> numerus {
     fixum targetLang = target vel "ts"
     fixum outputDir = output vel "./dist"
@@ -204,7 +205,7 @@ functio buildCommand(
     varia lista<tabula<textus, textus>> filesToWrite = [] innatum lista<tabula<textus, textus>>
 
     # Generate entry file
-    fixum entryOutput = generate(entryResult.programma.corpus, targetLang)
+    fixum entryOutput = stripComments sic generateWithStripping(entryResult.programma.corpus, targetLang, falsum, verum) secus generate(entryResult.programma.corpus, targetLang)
     filesToWrite.push({ source: input, target: entryOutPath } innatum tabula<textus, textus>)
 
     # Process dependencies from semantic analysis
@@ -242,7 +243,7 @@ functio buildCommand(
             fixum depOutPath = solum.iunge([outputDir, mutaExtensionem(depRelPath, targetExt)])
 
             # Generate
-            fixum depOutput = generate(depProgram.corpus, targetLang)
+            fixum depOutput = stripComments sic generateWithStripping(depProgram.corpus, targetLang, falsum, verum) secus generate(depProgram.corpus, targetLang)
             filesToWrite.push({ source: depRelPath, target: depOutPath } innatum tabula<textus, textus>)
         }
     }
@@ -295,7 +296,7 @@ functio buildCommand(
             # This is a simplification - in practice we'd cache the generated output
             fixum depProgram = entryResult.semResult.resolvedModules![solum.absolve(file["source"])]
             si nonnihil depProgram {
-                fixum depOutput = generate(depProgram.corpus, targetLang)
+                fixum depOutput = stripComments sic generateWithStripping(depProgram.corpus, targetLang, falsum, verum) secus generate(depProgram.corpus, targetLang)
                 cede solum.scribe(file["target"], depOutput)
             }
         }
