@@ -560,6 +560,12 @@ discretio Sententia {
         Locus locus
     }
 
+    # No-op statement (explicit empty block)
+    # Example: si debug tacet secus { ... }
+    TacetSententia {
+        Locus locus
+    }
+
     # Expression statement (expression used as statement)
     ExpressiaSententia {
         Locus locus

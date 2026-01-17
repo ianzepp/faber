@@ -413,6 +413,14 @@ functio parseCorpusBrevis(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
+    # tacet = explicit no-op (empty block)
+    si p.probaVerbum("tacet") {
+        p.procede()
+        redde finge TacetSententia {
+            locus: locus
+        } qua Sententia
+    }
+
     si p.probaVerbum("ergo") {
         p.procede()
         redde r.sententia()

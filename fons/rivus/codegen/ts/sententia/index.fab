@@ -171,6 +171,10 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
             redde scriptum("§continue;", g.ind())
         }
 
+        casu TacetSententia {
+            redde scriptum("§{}", g.ind())
+        }
+
         casu ExpressiaSententia ut s {
             redde scriptum("§§;", g.ind(), genExpressia(s.expressia, g))
         }
