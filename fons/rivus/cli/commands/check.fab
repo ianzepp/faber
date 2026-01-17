@@ -17,29 +17,8 @@ ex "../../semantic/index" importa analyze
 ex "../../ast/radix" importa Programma
 
 ex "../../../norma/hal/solum" importa solum
-ex "../../../norma/hal/consolum" importa consolum
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# INPUT HANDLING
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@ futura
-functio readSource(textus inputFile) -> textus {
-    si inputFile == "-" {
-        varia lista<textus> lines = [] innatum lista<textus>
-        varia textus line = consolum.hauriLineam()
-        dum line != nihil {
-            lines.push(line)
-            line = consolum.hauriLineam()
-        }
-        redde lines.join("\n")
-    }
-    redde cede solum.lege(inputFile)
-}
-
-functio getDisplayName(textus inputFile) -> textus {
-    redde inputFile == "-" sic "<stdin>" secus inputFile
-}
+ex "../auxilium" importa hauriSource, nomenOstende, validaInput
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CHECK COMMAND
@@ -48,17 +27,25 @@ functio getDisplayName(textus inputFile) -> textus {
 @ publica
 @ futura
 functio checkCommand(textus input) -> numerus {
-    fixum displayName = getDisplayName(input)
+    fixum displayName = nomenOstende(input)
 
-    # Read source
-    fixum source = cede readSource(input)
+    # Validate input exists
+    custodi {
+        si non validaInput(input) {
+            mone scriptum("File not found: §", input)
+            redde 1
+        }
+    }
+
+    fixum source = cede hauriSource(input)
+
+    varia numerus errorCount = 0
 
     # Lexical analysis
     fixum lexResult = lexare(source)
+    errorCount = errorCount + lexResult.errores.longitudo()
 
-    varia numerus errorCount = lexResult.errores.longitudo()
-
-    si errorCount > 0 {
+    si positivum lexResult.errores.longitudo() {
         mone "Lexor errors:"
         ex lexResult.errores pro err {
             mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus)
@@ -67,10 +54,9 @@ functio checkCommand(textus input) -> numerus {
 
     # Parsing (continue even with lex errors to report all issues)
     fixum parseResult = resolvere(lexResult.symbola)
-
     errorCount = errorCount + parseResult.errores.longitudo()
 
-    si parseResult.errores.longitudo() > 0 {
+    si positivum parseResult.errores.longitudo() {
         mone "Parser errors:"
         ex parseResult.errores pro err {
             mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
@@ -78,13 +64,12 @@ functio checkCommand(textus input) -> numerus {
     }
 
     # Semantic analysis (only if we have a valid AST)
-    si parseResult.programma non est nihil {
+    si nonnihil parseResult.programma {
         fixum viaIngressus = input != "-" sic solum.absolve(input) secus nihil
         fixum semResult = analyze(parseResult.programma qua Programma, viaIngressus)
-
         errorCount = errorCount + semResult.errores.longitudo()
 
-        si semResult.errores.longitudo() > 0 {
+        si positivum semResult.errores.longitudo() {
             mone "Semantic errors:"
             ex semResult.errores pro err {
                 mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
@@ -92,8 +77,8 @@ functio checkCommand(textus input) -> numerus {
         }
     }
 
-    # Report summary
-    si errorCount > 0 {
+    # Summary
+    si positivum errorCount {
         scribe scriptum("§: § error(s)", displayName, errorCount)
         redde 1
     }

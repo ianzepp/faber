@@ -1,0 +1,95 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# AUXILIUM - Shared CLI utilities
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# Common helpers for rivus CLI commands: input handling, display names,
+# path manipulation, and error formatting.
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+ex "../../norma/hal/solum" importa solum
+ex "../../norma/hal/consolum" importa consolum
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# INPUT HANDLING
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Read source from file or stdin (when inputFile is "-")
+@ publica
+@ futura
+functio hauriSource(textus inputFile) -> textus {
+    si inputFile == "-" {
+        varia lista<textus> lines = [] innatum lista<textus>
+        varia textus line = consolum.hauriLineam()
+        dum line != nihil {
+            lines.push(line)
+            line = consolum.hauriLineam()
+        }
+        redde lines.join("\n")
+    }
+    redde cede solum.lege(inputFile)
+}
+
+# Human-readable name for error messages
+@ publica
+functio nomenOstende(textus inputFile) -> textus {
+    redde inputFile == "-" sic "<stdin>" secus inputFile
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PATH UTILITIES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Replace file extension (e.g., ".fab" -> ".ts")
+@ publica
+functio mutaExtensionem(textus via, textus novaExtensio) -> textus {
+    fixum ultimusPunctum = via.lastIndexOf(".")
+    si ultimusPunctum == -1 {
+        redde scriptum("§§", via, novaExtensio)
+    }
+    redde scriptum("§§", via.slice(0, ultimusPunctum), novaExtensio)
+}
+
+# Compute relative path between two absolute paths
+@ publica
+functio viaRelativa(textus fons, textus destinatio) -> textus {
+    fixum partes_fons = fons.split("/")
+    fixum partes_dest = destinatio.split("/")
+
+    # Find common prefix length
+    varia numerus communis = 0
+    dum communis < partes_fons.length et communis < partes_dest.length et partes_fons[communis] == partes_dest[communis] {
+        communis = communis + 1
+    }
+
+    varia lista<textus> resultatum = [] innatum lista<textus>
+
+    # Add ".." for each remaining segment in source path
+    varia numerus i = 0
+    dum i < partes_fons.length - communis {
+        resultatum.push("..")
+        i = i + 1
+    }
+
+    # Add remaining segments from target path
+    varia numerus j = 0
+    dum j < partes_dest.length - communis {
+        resultatum.push(partes_dest[communis + j])
+        j = j + 1
+    }
+
+    redde resultatum.join("/")
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# VALIDATION
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Check if input file exists (returns false for stdin)
+@ publica
+functio validaInput(textus inputFile) -> bivalens {
+    si inputFile == "-" {
+        redde verum
+    }
+    redde solum.exstat(inputFile)
+}

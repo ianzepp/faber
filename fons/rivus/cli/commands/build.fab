@@ -7,7 +7,7 @@
 #
 # Usage:
 #   rivus build main.fab -o dist/        # build to dist/
-#   rivus build main.fab                  # build to ./dist (default)
+#   rivus build main.fab                 # build to ./dist (default)
 #
 # Output structure mirrors source:
 #   src/main.fab           -> dist/src/main.ts
@@ -25,54 +25,10 @@ ex "../../ast/radix" importa Programma
 ex "../../../norma/hal/solum" importa solum
 ex "../../../norma/hal/processus" importa processus
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# PATH UTILITIES
-# ═══════════════════════════════════════════════════════════════════════════════
-
-functio replaceExtension(textus path, textus newExt) -> textus {
-    fixum lastDot = path.lastIndexOf(".")
-
-    si lastDot == -1 {
-        redde scriptum("§§", path, newExt)
-    }
-
-    redde scriptum("§§", path.slice(0, lastDot), newExt)
-}
-
-functio relativePath(textus from, textus to) -> textus {
-    # Simple relative path calculation
-    # Assumes both paths are absolute
-    fixum fromParts = from.split("/")
-    fixum toParts = to.split("/")
-
-    # Find common prefix
-    varia numerus common = 0
-    dum common < fromParts.length et common < toParts.length et fromParts[common] == toParts[common] {
-        common = common + 1
-    }
-
-    # Build relative path
-    varia lista<textus> result = [] innatum lista<textus>
-
-    # Add ".." for each remaining part in 'from'
-    varia numerus i = 0
-    dum i < fromParts.length - common {
-        result.push("..")
-        i = i + 1
-    }
-
-    # Add remaining parts from 'to'
-    varia numerus j = 0
-    dum j < toParts.length - common {
-        result.push(toParts[common + j])
-        j = j + 1
-    }
-
-    redde result.join("/")
-}
+ex "../auxilium" importa mutaExtensionem, viaRelativa
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# COMPILATION
+# TYPES
 # ═══════════════════════════════════════════════════════════════════════════════
 
 genus CompileResultatum {
@@ -82,6 +38,10 @@ genus CompileResultatum {
     SemanticResultatum semResult
 }
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# COMPILATION
+# ═══════════════════════════════════════════════════════════════════════════════
+
 @ futura
 functio compileFile(textus filePath, textus displayName) -> CompileResultatum? {
     fixum source = cede solum.lege(filePath)
@@ -89,7 +49,7 @@ functio compileFile(textus filePath, textus displayName) -> CompileResultatum? {
     # Lexical analysis
     fixum lexResult = lexare(source)
 
-    si lexResult.errores.longitudo() > 0 {
+    si positivum lexResult.errores.longitudo() {
         mone "Lexor errors:"
         ex lexResult.errores pro err {
             mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus)
@@ -145,12 +105,14 @@ functio buildCommand(
     fixum outputDir = output vel "./dist"
     fixum projectRoot = processus.cwd()
 
-    # Resolve entry path
+    # Resolve and validate entry path
     fixum entryPath = solum.absolve(input)
 
-    si non solum.exstat(entryPath) {
-        mone scriptum("File not found: §", input)
-        redde 1
+    custodi {
+        si non solum.exstat(entryPath) {
+            mone scriptum("File not found: §", input)
+            redde 1
+        }
     }
 
     # Compile entry file
@@ -164,9 +126,9 @@ functio buildCommand(
     cede solum.creaDir(outputDir)
 
     # Calculate output path for entry file
-    fixum entryRelPath = relativePath(projectRoot, entryPath)
+    fixum entryRelPath = viaRelativa(projectRoot, entryPath)
     fixum targetExt = targetLang == "go" sic ".go" secus ".ts"
-    fixum entryOutPath = solum.iunge([outputDir, replaceExtension(entryRelPath, targetExt)])
+    fixum entryOutPath = solum.iunge([outputDir, mutaExtensionem(entryRelPath, targetExt)])
 
     # Ensure output subdirectory exists
     cede solum.creaDir(solum.dir(entryOutPath))
@@ -178,23 +140,25 @@ functio buildCommand(
 
     # Process dependencies from semantic analysis
     varia numerus fileCount = 1
+    varia bivalens hadErrors = falsum
 
     si entryResult.semResult.resolvedModules {
         ex entryResult.semResult.resolvedModules fixum [depPath, depProgram] {
-            # Compile dependency
+            # Semantic analysis for dependency
             fixum depAnalysis = analyze(depProgram, depPath)
 
-            si depAnalysis.errores.longitudo() > 0 {
+            si positivum depAnalysis.errores.longitudo() {
                 mone "Semantic errors:"
                 ex depAnalysis.errores pro err {
                     mone scriptum("  §:§:§ - §", depPath, err.locus.linea, err.locus.columna, err.nuntius)
                 }
-                redde 1
+                hadErrors = verum
+                perge
             }
 
             # Calculate output path
-            fixum depRelPath = relativePath(projectRoot, depPath)
-            fixum depOutPath = solum.iunge([outputDir, replaceExtension(depRelPath, targetExt)])
+            fixum depRelPath = viaRelativa(projectRoot, depPath)
+            fixum depOutPath = solum.iunge([outputDir, mutaExtensionem(depRelPath, targetExt)])
 
             # Ensure subdirectory exists
             cede solum.creaDir(solum.dir(depOutPath))
@@ -206,6 +170,11 @@ functio buildCommand(
 
             fileCount = fileCount + 1
         }
+    }
+
+    # Check if any dependencies failed
+    si hadErrors {
+        redde 1
     }
 
     scribe ""
