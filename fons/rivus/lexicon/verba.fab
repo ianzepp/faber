@@ -44,6 +44,7 @@ functio verbumFaberId(textus v) -> VerbumId? {
         casu "dum" reddit VerbumId.Dum
         casu "fac" reddit VerbumId.Fac
         casu "pro" reddit VerbumId.Pro
+        casu "clausura" reddit VerbumId.Clausura
         casu "elige" reddit VerbumId.Elige
         casu "ergo" reddit VerbumId.Ergo
         casu "rumpe" reddit VerbumId.Rumpe

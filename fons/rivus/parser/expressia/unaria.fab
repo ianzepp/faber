@@ -108,7 +108,7 @@ functio parseUnaria(Resolvitor r) -> Expressia {
     functio estInitiumPostNihil(Symbolum s) -> bivalens {
         si s.species == SymbolumGenus.Verbum {
             # WHY: Only allow keywords that start expressions as nihil operands.
-            si s.verbum inter ["pro", "finge", "praefixum", "scriptum", "lege", "sed", "novum", "ego"] {
+            si s.verbum inter ["clausura", "finge", "praefixum", "scriptum", "lege", "sed", "novum", "ego"] {
                 redde verum
             }
             # Treat statement/short-form keywords as terminators, not operands.

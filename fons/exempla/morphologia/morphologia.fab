@@ -14,12 +14,12 @@ incipit {
     # ==========================================================================
 
     # filtrata (participle) - returns new filtered list
-    fixum evens = items.filtrata(pro x: x % 2 == 0)
+    fixum evens = items.filtrata(clausura x: x % 2 == 0)
     scribe "filtrata (returns new):", evens
 
     # TODO (type errors) - filtra (imperative) - mutates in place
     # varia nums = [1, 2, 3, 4, 5]
-    # nums.filtra(pro x: x > 2)
+    # nums.filtra(clausura x: x > 2)
     # scribe "filtra (mutates):", nums
 
     # ==========================================================================
@@ -63,7 +63,7 @@ incipit {
     # ==========================================================================
 
     # mappata (participle) - returns new mapped list
-    fixum doubled = items.mappata(pro x: x * 2)
+    fixum doubled = items.mappata(clausura x: x * 2)
     scribe "mappata (returns new):", doubled
 
     # ==========================================================================

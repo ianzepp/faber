@@ -310,13 +310,13 @@ genus Lexor {
         fixum loc = ego.locus()
 
         # Radix prefixes: hex (0x), binary (0b), octal (0o)
-        si ego.legeNumerumRadix("x", "X", pro c: ego.estDigitusHex(c), LexorErrorCodice.NumerusHexMalus, loc) {
+        si ego.legeNumerumRadix("x", "X", clausura c: ego.estDigitusHex(c), LexorErrorCodice.NumerusHexMalus, loc) {
             redde
         }
-        si ego.legeNumerumRadix("b", "B", pro c: ego.estDigitusBinarius(c), LexorErrorCodice.NumerusBinariusMalus, loc) {
+        si ego.legeNumerumRadix("b", "B", clausura c: ego.estDigitusBinarius(c), LexorErrorCodice.NumerusBinariusMalus, loc) {
             redde
         }
-        si ego.legeNumerumRadix("o", "O", pro c: ego.estDigitusOctalis(c), LexorErrorCodice.NumerusOctalisMalus, loc) {
+        si ego.legeNumerumRadix("o", "O", clausura c: ego.estDigitusOctalis(c), LexorErrorCodice.NumerusOctalisMalus, loc) {
             redde
         }
 

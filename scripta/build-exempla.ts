@@ -79,8 +79,8 @@ async function findFiles(dir: string, ext: string): Promise<string[]> {
 }
 
 async function compileExempla(compiler: Compiler, targets: Target[]): Promise<{ total: number; failed: number }> {
-    // faber uses the compiled binary, rivus/artifex use the wrapper script
-    const compilerBin = compiler === 'faber'
+    // faber/rivus use compiled binaries, artifex uses wrapper script
+    const compilerBin = (compiler === 'faber' || compiler === 'rivus')
         ? join(ROOT, 'opus', 'bin', compiler)
         : join(ROOT, 'scripta', compiler);
     const fabFiles = await findFiles(EXEMPLA_SOURCE, '.fab');
