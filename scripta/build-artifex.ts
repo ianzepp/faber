@@ -8,9 +8,12 @@
  * This proves rivus can self-host and produces a working compiler.
  *
  * Usage:
- *   bun scripta/build-artifex.ts              # Build artifex executable
+ *   bun scripta/build-artifex.ts                # Build artifex executable
  *   bun scripta/build-artifex.ts --verify-diff  # Also compare output with faber
+ *   bun scripta/build-artifex.ts --no-typecheck # Skip TypeScript type checking
  */
+
+const SKIP_TYPECHECK = process.argv.includes('--no-typecheck');
 
 import { Glob } from 'bun';
 import { mkdir } from 'fs/promises';
@@ -176,18 +179,20 @@ async function main() {
     await injectExternImpls();
 
     // Type-check
-    process.stdout.write('Type-checking... ');
-    const tcStart = performance.now();
-    const tcOk = await typeCheck();
-    const tcElapsed = performance.now() - tcStart;
+    if (!SKIP_TYPECHECK) {
+        process.stdout.write('Type-checking... ');
+        const tcStart = performance.now();
+        const tcOk = await typeCheck();
+        const tcElapsed = performance.now() - tcStart;
 
-    if (tcOk) {
-        console.log(`OK (${tcElapsed.toFixed(0)}ms)`);
-    }
-    else {
-        console.log('FAILED');
-        await $`npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler ${join(ARTIFEX_DIR, 'cli.ts')}`;
-        process.exit(1);
+        if (tcOk) {
+            console.log(`OK (${tcElapsed.toFixed(0)}ms)`);
+        }
+        else {
+            console.log('FAILED');
+            await $`npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler ${join(ARTIFEX_DIR, 'cli.ts')}`;
+            process.exit(1);
+        }
     }
 
     // Build executable

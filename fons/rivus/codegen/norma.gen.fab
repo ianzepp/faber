@@ -912,10 +912,10 @@ fixum norma = {
 @ publica
 functio getNormaTranslation(textus target, textus collection, textus method) fit VerteTranslation? {
     fixum coll = norma[collection]
-    si coll == nihil reddit nihil
+    si nihil coll reddit nihil
 
     fixum methodMap = coll.methods[method]
-    si methodMap == nihil reddit nihil
+    si nihil methodMap reddit nihil
 
     redde methodMap[target]
 }

@@ -251,10 +251,10 @@ function generateFaberCode(collections: CollectionDef[]): string {
     lines.push('@ publica');
     lines.push('functio getNormaTranslation(textus target, textus collection, textus method) fit VerteTranslation? {');
     lines.push('    fixum coll = norma[collection]');
-    lines.push('    si coll == nihil reddit nihil');
+    lines.push('    si nihil coll reddit nihil');
     lines.push('');
     lines.push('    fixum methodMap = coll.methods[method]');
-    lines.push('    si methodMap == nihil reddit nihil');
+    lines.push('    si nihil methodMap reddit nihil');
     lines.push('');
     lines.push('    redde methodMap[target]');
     lines.push('}');

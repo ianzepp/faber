@@ -126,7 +126,7 @@ functio parseUnaria(Resolvitor r) -> Expressia {
     fixum eademLinea = actualis.locus.linea == prox.locus.linea
 
     si p.proba(SymbolumGenus.Nihil) et eademLinea et estInitiumPostNihil(prox) et prox.species !== SymbolumGenus.UncusSin {
-        # WHY: Avoid treating block starts as unary operands (si x == nihil { ... }).
+        # WHY: Avoid treating block starts as unary operands (si nihil x { ... }).
         p.procede()
         fixum argumentum = parseUnaria(r)
         redde finge UnariaExpressia {

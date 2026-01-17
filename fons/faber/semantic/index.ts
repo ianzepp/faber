@@ -1414,6 +1414,13 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             return BIVALENS;
         }
 
+        // Null checks: nihil (is null), nonnihil (is not null)
+        if (node.operator === 'nihil' || node.operator === 'nonnihil') {
+            node.resolvedType = BIVALENS;
+
+            return BIVALENS;
+        }
+
         // Numeric negation - preserve the numeric type
         if (node.operator === '-') {
             // Keep the argument type for numeric types (numerus, fractus, decimus, magnus)

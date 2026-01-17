@@ -9,7 +9,10 @@
  *
  * Usage:
  *   bun scripta/build-rivus.ts
+ *   bun scripta/build-rivus.ts --no-typecheck
  */
+
+const SKIP_TYPECHECK = process.argv.includes('--no-typecheck');
 
 import { Glob } from 'bun';
 import { mkdir } from 'fs/promises';
@@ -144,13 +147,15 @@ async function main() {
     await copyHalImplementations();
 
     // Type check (TypeScript only)
-    console.log('Type checking...');
-    const tcOk = await typeCheck();
-    if (!tcOk) {
-        console.error('TypeScript type check failed');
-        process.exit(1);
+    if (!SKIP_TYPECHECK) {
+        console.log('Type checking...');
+        const tcOk = await typeCheck();
+        if (!tcOk) {
+            console.error('TypeScript type check failed');
+            process.exit(1);
+        }
+        console.log('Type check passed');
     }
-    console.log('Type check passed');
 
     await injectExternImpls();
 

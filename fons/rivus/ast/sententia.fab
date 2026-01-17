@@ -237,7 +237,7 @@ genus VariansCasus {
 }
 
 # Guard clause
-# Example: si x == nihil { redde nihil }
+# Example: si nihil x { redde nihil }
 @ publicum
 genus CustodiClausula {
     Locus locus
@@ -485,7 +485,7 @@ discretio Sententia {
     }
 
     # Guard statement
-    # Example: custodi { si x == nihil { redde nihil } }
+    # Example: custodi { si nihil x { redde nihil } }
     CustodiSententia {
         Locus locus
         lista<CustodiClausula> clausulae

@@ -337,7 +337,7 @@ functio estProximumVinculum(Parser p) -> bivalens {
 #
 # Examples:
 #   custodi {
-#       si user == nihil { redde nihil }
+#       si nihil user { redde nihil }
 #       si user.aetas < 0 { iace "Invalid age" }
 #   }
 @ publica
@@ -407,4 +407,3 @@ functio parseCapeClausula(Resolvitor r) -> CapeClausula {
         corpus: corpus
     } qua CapeClausula
 }
-

@@ -23,10 +23,10 @@ functio processAge(age) -> textus {
 
 functio createUser(name, email, age, curator alloc) -> textus {
     custodi {
-        si name == nihil aut name == "" {
+        si nihil name aut name == "" {
             redde "Error: name required"
         }
-        si email == nihil aut email == "" {
+        si nihil email aut email == "" {
             redde "Error: email required"
         }
         si age < 13 {

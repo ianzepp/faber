@@ -35,7 +35,7 @@ incipit {
 
     # With nullish values
     fixum textus? maybe = nihil
-    fixum result = maybe != nihil ? maybe : "default"
+    fixum result = nonnihil maybe ? maybe : "default"
     scribe result  # "default"
 
     # Prefer sic/secus for clarity

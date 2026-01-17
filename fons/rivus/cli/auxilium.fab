@@ -21,7 +21,7 @@ functio hauriSource(textus inputFile) -> textus {
     si inputFile == "-" {
         varia lista<textus> lines = [] innatum lista<textus>
         varia textus line = consolum.hauriLineam()
-        dum line != nihil {
+        dum nonnihil line {
             lines.push(line)
             line = consolum.hauriLineam()
         }

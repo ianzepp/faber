@@ -24,7 +24,7 @@ ordo Dialectus {
 @ publica
 functio estVerbum(textus v) -> bivalens {
     fixum id = verbumId(v)
-    redde id != nihil
+    redde nonnihil id
 }
 
 # ============================================================================
