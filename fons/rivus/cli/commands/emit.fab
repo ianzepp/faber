@@ -60,7 +60,7 @@ functio emitCommand(
         }
     }
 
-    fixum source = cede hauriSource(input)
+    figendum source = hauriSource(input)
 
     # Collect errors for potential JSON output
     varia lista<tabula<textus, ignotum>> errores = [] innatum lista<tabula<textus, ignotum>>

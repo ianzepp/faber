@@ -61,7 +61,7 @@ functio checkCommand(
         }
     }
 
-    fixum source = cede hauriSource(input)
+    figendum source = hauriSource(input)
 
     # Collect all errors across phases
     varia lista<tabula<textus, ignotum>> errores = [] innatum lista<tabula<textus, ignotum>>

@@ -54,7 +54,7 @@ functio compileFile(
     de lista<tabula<textus, ignotum>> errores,
     si bivalens jsonOutput
 ) -> CompileResultatum? {
-    fixum source = cede solum.lege(filePath)
+    figendum source = solum.lege(filePath)
 
     # Lexical analysis
     fixum lexResult = lexare(source)
@@ -186,7 +186,7 @@ functio buildCommand(
     }
 
     # Compile entry file
-    fixum entryResult = cede compileFile(entryPath, input, errores, jsonOutput)
+    figendum entryResult = compileFile(entryPath, input, errores, jsonOutput)
 
     si nihil entryResult {
         si jsonOutput {
