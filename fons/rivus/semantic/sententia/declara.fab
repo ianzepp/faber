@@ -11,7 +11,7 @@ ex "../scopus" importa Symbolum, SymbolumSpecies, ScopusSpecies, quaereSymbolumL
 ex "../nucleus" importa estGenericusTypus, DiscretioDeclInfo, DiscretioVariansInfo
 ex "../errores" importa noTypeOrInitializerError, typeMismatchError, awaitOutsideAsyncError, missingFunctionBodyError
 ex "../errores" importa duplicateModifierError, invalidModifierContextError
-ex "../../ast/sententia" importa Sententia, VariaGenus, FunctioModificator
+ex "../../ast/sententia" importa Sententia, VariaGenus, FunctioModificator, FunctioDeclaratio
 ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum
 
 @ publica
@@ -348,70 +348,63 @@ functio analyzeGenusDeclaratio(Resolvitor r, Sententia genusStmt) -> vacuum {
                 locus: g.locus
             }
 
-            # Analyze method bodies with genus context for ego resolution
-            # Save genus context
+            # Analyze method bodies with genus context
             fixum prevGenusNomen = a.currentGenusNomen
             a.currentGenusNomen = g.nomen
 
             ex g.methodi pro m {
-                # Analyze method body with genus context
-                si nonnihil m.corpus {
-                    # Get method signature from our built maps
-                    varia methodTypus = IGNOTUM
-                    si nonnihil methodi[m.nomen] {
-                        methodTypus = methodi[m.nomen]
-                    }
-
-                    # Extract function details for context
-                    varia reditusTypus = VACUUM qua SemanticTypus
-                    discerne methodTypus {
-                        casu Functio ut fn {
-                            reditusTypus = fn.reditusTypus
-                        }
-                        casu _ { }
-                    }
-
-                    # Save function context
-                    fixum prevReditus = a.currentFunctioReditus
-                    fixum prevAsync = a.currentFunctioAsync
-                    fixum prevGenerator = a.currentFunctioGenerator
-
-                    a.currentFunctioReditus = reditusTypus
-                    a.currentFunctioAsync = m.asynca
-                    a.currentFunctioGenerator = m.generator
-
-                    # Enter method scope
-                    a.intraScopum(ScopusSpecies.Functio)
-
-                    # Define method parameters with default types for now
-                    # TODO: Extract parameter types from function type
-                    ex m.parametra pro param {
-                        a.scopus.symbola[param.nomen] = {
-                            nomen: param.nomen,
-                            semanticTypus: IGNOTUM,  # TODO: Extract from methodTypus
-                            species: SymbolumSpecies.Parametrum,
-                            mutabilis: falsum,
-                            locus: param.locus
-                        }
-                    }
-
-                            # Analyze method body
-                            r.sententia(m.corpus)
-
-
-                    # Exit scope and restore context
-                    a.exiScopum()
-                    a.currentFunctioReditus = prevReditus
-                    a.currentFunctioAsync = prevAsync
-                    a.currentFunctioGenerator = prevGenerator
-                }
+                analyzeMethodusCorpus(r, m, methodi)
             }
 
-            # Restore genus context
             a.currentGenusNomen = prevGenusNomen
         }
         casu _ { }
     }
+}
+
+functio analyzeMethodusCorpus(Resolvitor r, FunctioDeclaratio m, tabula<textus, SemanticTypus> methodi) -> vacuum {
+    si nihil m.corpus { redde }
+
+    fixum a = r.analyzator()
+
+    # Resolve method return type from signature
+    varia methodTypus = methodi[m.nomen] vel IGNOTUM
+    varia reditusTypus = VACUUM qua SemanticTypus
+
+    discerne methodTypus {
+        casu Functio ut fn { reditusTypus = fn.reditusTypus }
+        casu _ { }
+    }
+
+    # Save function context
+    fixum prevReditus = a.currentFunctioReditus
+    fixum prevAsync = a.currentFunctioAsync
+    fixum prevGenerator = a.currentFunctioGenerator
+
+    a.currentFunctioReditus = reditusTypus
+    a.currentFunctioAsync = m.asynca
+    a.currentFunctioGenerator = m.generator
+
+    # Enter method scope and define parameters
+    a.intraScopum(ScopusSpecies.Functio)
+
+    ex m.parametra pro param {
+        a.scopus.symbola[param.nomen] = {
+            nomen: param.nomen,
+            semanticTypus: IGNOTUM,
+            species: SymbolumSpecies.Parametrum,
+            mutabilis: falsum,
+            locus: param.locus
+        }
+    }
+
+    r.sententia(m.corpus)
+
+    # Restore context
+    a.exiScopum()
+    a.currentFunctioReditus = prevReditus
+    a.currentFunctioAsync = prevAsync
+    a.currentFunctioGenerator = prevGenerator
 }
 
 # Analyze pactum declaration

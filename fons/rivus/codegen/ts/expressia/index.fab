@@ -3,9 +3,11 @@
 # Routes expression AST nodes to their specific generators.
 
 ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, ClausuraParametrum, MorphologiaInvocatio, ClausuraCorpus
-ex "../../../ast/expressia" importa AbFiltrum, CatenaGradus
+ex "../../../ast/expressia" importa AbFiltrum, CatenaGradus, AssignatioExpressia, MembrumExpressia
+ex "../../../ast/expressia" importa InnatumExpressia, ObiectumExpressia, SeriesExpressia, Nomen, AmbitusExpressia
+ex "../../../ast/expressia" importa Littera, UnariaExpressia
 ex "../../../ast/sententia" importa Sententia, VariaGenus
-ex "../../../ast/typus" importa TypusAnnotatio, TypusParametrum
+ex "../../../ast/typus" importa TypusAnnotatio, TypusParametrum, Typus
 ex "../nucleus" importa TsGenerator
 ex "../typus" importa genTypus
 ex "../../../parser/morphologia" importa parseMethodum
@@ -132,36 +134,9 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
         }
 
         casu AssignatioExpressia ut e {
-            # Map assignments for tabula<K,V>
-            discerne e.sinister {
-                casu MembrumExpressia ut m {
-                    si m.computatum qua bivalens {
-                        fixum tabulaNomen = invenitTabulaNomen(m.obiectum, g)
-                        si nonnihil tabulaNomen {
-                            fixum obj = genExpressia(m.obiectum, g)
-                            fixum prop = genNudaExpressia(m.proprietas, g)
-                            fixum right = genNudaExpressia(e.dexter, g)
+            fixum tabula = genTabulaAssignatio(e, g)
+            si nonnihil tabula { redde tabula }
 
-                            fixum getExpr = genTabulaGet(obj, prop, m.optivum qua bivalens, m.nonNullum qua bivalens)
-                            fixum setStmt = genTabulaSet(obj, prop, "__next", m.optivum qua bivalens, m.nonNullum qua bivalens)
-
-                            si e.signum == "=" {
-                                redde scriptum("(() => { const __next = §; §; return __next; })()", right, setStmt)
-                            }
-
-                            varia op = e.signum qua textus
-                            si op.longitudo() > 1 et op.sectio(op.longitudo() - 1, op.longitudo()) == "=" {
-                                op = op.sectio(0, op.longitudo() - 1)
-                            }
-
-                            redde scriptum("(() => { const __next = (§ as any) § §; §; return __next; })()", getExpr, op, right, setStmt)
-                        }
-                    }
-                }
-                casu _ { }
-            }
-
-            # WHY: Avoid extra parens on RHS for assignments.
             redde scriptum("§ § §", genExpressia(e.sinister, g), e.signum, genNudaExpressia(e.dexter, g))
         }
 
@@ -178,110 +153,12 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
         }
 
         casu InnatumExpressia ut e {
-            # Native type construction
-            # {} innatum tabula<K,V> -> new Map<K,V>()
-            # [] innatum lista<T> -> ([] as T[])
             fixum typusNomen = (e.scopus qua TypusAnnotatio).nomen qua textus
 
-            si typusNomen == "tabula" {
-                fixum params = (e.scopus qua TypusAnnotatio).typusParametra
-                varia keyType = "unknown"
-                varia valueType = "unknown"
-                si nonnihil params {
-                    fixum paramLista = params qua lista<TypusParametrum>
-                    si paramLista.longitudo() >= 1 {
-                        discerne paramLista[0] {
-                            casu Typus ut t {
-                                keyType = genTypus(t.adnotatio, g)
-                            }
-                            casu _ { }
-                        }
-                    }
-                    si paramLista.longitudo() >= 2 {
-                        discerne paramLista[1] {
-                            casu Typus ut t {
-                                valueType = genTypus(t.adnotatio, g)
-                            }
-                            casu _ { }
-                        }
-                    }
-                }
+            si typusNomen == "tabula" { redde genInnatumTabula(e, g) }
+            si typusNomen == "lista" { redde genInnatumLista(e, g) }
+            si typusNomen == "copia" { redde genInnatumCopia(e, g) }
 
-                # Check for non-empty object literal
-                discerne e.expressia {
-                    casu ObiectumExpressia ut obj {
-                        si (obj.proprietates qua lista<ObiectumProprietas>).longitudo() > 0 {
-                            varia entries = [] innatum lista<textus>
-                            ex (obj.proprietates qua lista<ObiectumProprietas>) pro prop {
-                                # WHY: Object property keys that are identifiers need to be quoted
-                                #      when used as Map keys: {a: 1} -> [["a", 1]]
-                                varia key = ""
-                                discerne prop.clavis {
-                                    casu Nomen ut n {
-                                        key = scriptum("\"§\"", n.valor)
-                                    }
-                                    casu _ {
-                                        key = genExpressia(prop.clavis, g)
-                                    }
-                                }
-                                fixum val = genExpressia(prop.valor, g)
-                                entries.adde(scriptum("[§, §]", key, val))
-                            }
-                            redde scriptum("new Map<§, §>([§])", keyType, valueType, entries.coniunge(", "))
-                        }
-                    }
-                    casu _ { }
-                }
-
-                redde scriptum("new Map<§, §>()", keyType, valueType)
-            }
-
-            si typusNomen == "lista" {
-                fixum params = (e.scopus qua TypusAnnotatio).typusParametra
-                si nonnihil params {
-                    fixum paramLista = params qua lista<TypusParametrum>
-                    si paramLista.longitudo() >= 1 {
-                        varia elemType = "unknown"
-                        discerne paramLista[0] {
-                            casu Typus ut t {
-                                elemType = genTypus(t.adnotatio, g)
-                            }
-                            casu _ { }
-                        }
-                        # Check for non-empty array
-                        discerne e.expressia {
-                            casu SeriesExpressia ut arr {
-                                si (arr.elementa qua lista<Expressia>).longitudo() > 0 {
-                                    redde genExpressia(e.expressia, g)
-                                }
-                            }
-                            casu _ { }
-                        }
-                        redde scriptum("([] as §[])", elemType)
-                    }
-                }
-                redde "[]"
-            }
-
-            si typusNomen == "copia" {
-                fixum params = (e.scopus qua TypusAnnotatio).typusParametra
-                si nonnihil params {
-                    fixum paramLista = params qua lista<TypusParametrum>
-                    si paramLista.longitudo() >= 1 {
-                        varia elemType = "unknown"
-                        discerne paramLista[0] {
-                            casu Typus ut t {
-                                elemType = genTypus(t.adnotatio, g)
-                            }
-                            casu _ { }
-                        }
-                        redde scriptum("new Set<§>()", elemType)
-                    }
-                }
-                redde "new Set()"
-            }
-
-            # Unsupported innatum type - should be caught by semantic validation
             mori scriptum("Codegen error: innatum only supports tabula, lista, copia - got '§'", typusNomen)
         }
 
@@ -738,6 +615,119 @@ functio genTabulaSet(textus obj, textus prop, textus valor, bivalens optivum, bi
     redde scriptum("§.set(§, §)", obj, prop, valor)
 }
 
+functio genTabulaAssignatio(AssignatioExpressia e, TsGenerator g) -> textus? {
+    discerne e.sinister {
+        casu MembrumExpressia ut m {
+            redde genTabulaAssignatioMembrum(e, m, g)
+        }
+        casu _ { }
+    }
+    redde nihil
+}
+
+functio genTabulaAssignatioMembrum(AssignatioExpressia e, MembrumExpressia m, TsGenerator g) -> textus? {
+    si non (m.computatum qua bivalens) { redde nihil }
+
+    fixum tabulaNomen = invenitTabulaNomen(m.obiectum, g)
+    si nihil tabulaNomen { redde nihil }
+
+    fixum obj = genExpressia(m.obiectum, g)
+    fixum prop = genNudaExpressia(m.proprietas, g)
+    fixum right = genNudaExpressia(e.dexter, g)
+    fixum getExpr = genTabulaGet(obj, prop, m.optivum qua bivalens, m.nonNullum qua bivalens)
+    fixum setStmt = genTabulaSet(obj, prop, "__next", m.optivum qua bivalens, m.nonNullum qua bivalens)
+
+    si e.signum == "=" {
+        redde scriptum("(() => { const __next = §; §; return __next; })()", right, setStmt)
+    }
+
+    varia op = e.signum qua textus
+    si op.longitudo() > 1 et op.sectio(op.longitudo() - 1, op.longitudo()) == "=" {
+        op = op.sectio(0, op.longitudo() - 1)
+    }
+
+    redde scriptum("(() => { const __next = (§ as any) § §; §; return __next; })()", getExpr, op, right, setStmt)
+}
+
+# =============================================================================
+# INNATUM HELPERS
+# =============================================================================
+
+functio extractTypusParam(lista<TypusParametrum>? params, numerus index, TsGenerator g) -> textus {
+    si nihil params { redde "unknown" }
+
+    fixum paramLista = params qua lista<TypusParametrum>
+    si paramLista.longitudo() <= index { redde "unknown" }
+
+    discerne paramLista[index] {
+        casu Typus ut t { redde genTypus(t.adnotatio, g) }
+        casu _ { }
+    }
+
+    redde "unknown"
+}
+
+functio genInnatumTabula(InnatumExpressia e, TsGenerator g) -> textus {
+    fixum params = (e.scopus qua TypusAnnotatio).typusParametra
+    fixum keyType = extractTypusParam(params, 0, g)
+    fixum valueType = extractTypusParam(params, 1, g)
+
+    # Non-empty object literal -> Map with entries
+    discerne e.expressia {
+        casu ObiectumExpressia ut obj {
+            si (obj.proprietates qua lista<ObiectumProprietas>).longitudo() > 0 {
+                redde genTabulaEntries(obj, keyType, valueType, g)
+            }
+        }
+        casu _ { }
+    }
+
+    redde scriptum("new Map<§, §>()", keyType, valueType)
+}
+
+functio genTabulaEntries(ObiectumExpressia obj, textus keyType, textus valueType, TsGenerator g) -> textus {
+    varia entries = [] innatum lista<textus>
+    ex (obj.proprietates qua lista<ObiectumProprietas>) pro prop {
+        fixum key = genMapKey(prop.clavis, g)
+        fixum val = genExpressia(prop.valor, g)
+        entries.adde(scriptum("[§, §]", key, val))
+    }
+    redde scriptum("new Map<§, §>([§])", keyType, valueType, entries.coniunge(", "))
+}
+
+functio genMapKey(Expressia clavis, TsGenerator g) -> textus {
+    discerne clavis {
+        casu Nomen ut n { redde scriptum("\"§\"", n.valor) }
+        casu _ { redde genExpressia(clavis, g) }
+    }
+}
+
+functio genInnatumLista(InnatumExpressia e, TsGenerator g) -> textus {
+    fixum params = (e.scopus qua TypusAnnotatio).typusParametra
+    fixum elemType = extractTypusParam(params, 0, g)
+
+    # Non-empty array -> pass through
+    discerne e.expressia {
+        casu SeriesExpressia ut arr {
+            si (arr.elementa qua lista<Expressia>).longitudo() > 0 {
+                redde genExpressia(e.expressia, g)
+            }
+        }
+        casu _ { }
+    }
+
+    si elemType == "unknown" { redde "[]" }
+    redde scriptum("([] as §[])", elemType)
+}
+
+functio genInnatumCopia(InnatumExpressia e, TsGenerator g) -> textus {
+    fixum params = (e.scopus qua TypusAnnotatio).typusParametra
+    fixum elemType = extractTypusParam(params, 0, g)
+
+    si elemType == "unknown" { redde "new Set()" }
+    redde scriptum("new Set<§>()", elemType)
+}
+
 functio estNegativusIndex(Expressia expr) -> bivalens {
     discerne expr {
         casu UnariaExpressia ut u {
@@ -749,45 +739,44 @@ functio estNegativusIndex(Expressia expr) -> bivalens {
 }
 
 functio genNegativusAccess(textus obj, textus idx, bivalens optivum, bivalens nonNullum) -> textus {
-    si optivum {
-        redde scriptum("§?.at(§)", obj, idx)
-    }
-    si nonNullum {
-        redde scriptum("§!.at(§)", obj, idx)
-    }
+    si optivum { redde scriptum("§?.at(§)", obj, idx) }
+    si nonNullum { redde scriptum("§!.at(§)", obj, idx) }
     redde scriptum("§.at(§)", obj, idx)
+}
+
+functio genReceiverSuffix(textus obj, bivalens optivum, bivalens nonNullum) -> textus {
+    si optivum { redde scriptum("§?", obj) }
+    si nonNullum { redde scriptum("§!", obj) }
+    redde obj
 }
 
 functio genSectioAccess(textus obj, Expressia range, bivalens optivum, bivalens nonNullum, TsGenerator g) -> textus {
     discerne range {
         casu AmbitusExpressia ut a {
-            fixum initium = genExpressia(a.initium, g)
-            fixum finis = genExpressia(a.finis, g)
-            varia receiver = obj
-            si optivum {
-                receiver = scriptum("§?", receiver)
-            } sin nonNullum {
-                receiver = scriptum("§!", receiver)
-            }
-
-            si a.inclusivum qua bivalens {
-                fixum literal = legeNumerusLiteralis(a.finis)
-                si nonnihil literal {
-                    fixum inclusive = (literal qua numerus) + 1
-                    si inclusive == 0 {
-                        redde scriptum("§.slice(§)", receiver, initium)
-                    }
-                    redde scriptum("§.slice(§, §)", receiver, initium, inclusive)
-                }
-                redde scriptum("§.slice(§, § + 1)", receiver, initium, finis)
-            }
-
-            redde scriptum("§.slice(§, §)", receiver, initium, finis)
+            redde genAmbitusSlice(obj, a, optivum, nonNullum, g)
         }
         casu _ { }
     }
-
     redde scriptum("§[§]", obj, genExpressia(range, g))
+}
+
+functio genAmbitusSlice(textus obj, AmbitusExpressia a, bivalens optivum, bivalens nonNullum, TsGenerator g) -> textus {
+    fixum initium = genExpressia(a.initium, g)
+    fixum finis = genExpressia(a.finis, g)
+    fixum receiver = genReceiverSuffix(obj, optivum, nonNullum)
+
+    si non (a.inclusivum qua bivalens) {
+        redde scriptum("§.slice(§, §)", receiver, initium, finis)
+    }
+
+    # Inclusive range: try to optimize literal end index
+    fixum literal = legeNumerusLiteralis(a.finis)
+    si nihil literal { redde scriptum("§.slice(§, § + 1)", receiver, initium, finis) }
+
+    fixum inclusive = (literal qua numerus) + 1
+    si inclusive == 0 { redde scriptum("§.slice(§)", receiver, initium) }
+
+    redde scriptum("§.slice(§, §)", receiver, initium, inclusive)
 }
 
 functio legeNumerusLiteralis(Expressia expr) -> numerus? {
@@ -798,15 +787,20 @@ functio legeNumerusLiteralis(Expressia expr) -> numerus? {
             }
         }
         casu UnariaExpressia ut u {
-            si (u.signum qua textus) == "-" {
-                discerne u.argumentum {
-                    casu Littera ut l {
-                        si l.species == LitteraGenus.Numerus {
-                            redde -legeNumerusTextus(l.crudus)
-                        }
-                    }
-                    casu _ { }
-                }
+            redde legeNegativusNumerus(u)
+        }
+        casu _ { }
+    }
+    redde nihil
+}
+
+functio legeNegativusNumerus(UnariaExpressia u) -> numerus? {
+    si (u.signum qua textus) != "-" { redde nihil }
+
+    discerne u.argumentum {
+        casu Littera ut l {
+            si l.species == LitteraGenus.Numerus {
+                redde -legeNumerusTextus(l.crudus)
             }
         }
         casu _ { }
