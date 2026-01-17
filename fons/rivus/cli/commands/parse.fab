@@ -9,6 +9,8 @@
 #   rivus parse hello.fab                # dump AST to stdout
 #   rivus parse hello.fab -o ast.json    # dump to file
 #   rivus parse -                        # parse from stdin
+#   rivus parse - --stdin-filename=foo.fab  # stdin with filename for errors
+#   rivus parse hello.fab --compact      # minified JSON output
 #
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -29,9 +31,11 @@ ex "../auxilium" importa hauriSource, nomenOstende, validaInput
 @ futura
 functio parseCommand(
     textus input,
-    si textus output
+    si textus output,
+    si textus stdinFilename,
+    si bivalens compact
 ) -> numerus {
-    fixum displayName = nomenOstende(input)
+    fixum displayName = stdinFilename vel nomenOstende(input)
 
     # Validate input exists
     custodi {
@@ -71,7 +75,7 @@ functio parseCommand(
     }
 
     # Output AST as JSON
-    fixum astJson = json.solvePulchre(parseResult.programma, 2)
+    fixum astJson = compact sic json.solve(parseResult.programma) secus json.solvePulchre(parseResult.programma, 2)
 
     si output {
         cede solum.scribe(output, astJson)

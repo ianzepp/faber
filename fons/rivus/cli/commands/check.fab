@@ -8,6 +8,10 @@
 # Usage:
 #   rivus check hello.fab                # validate single file
 #   rivus check -                        # validate from stdin
+#   rivus check - --stdin-filename=foo.fab  # stdin with filename for errors
+#   rivus check hello.fab --json         # errors as JSON
+#   rivus check hello.fab --strict       # enable all strict checks
+#   rivus check hello.fab -o report.txt  # write report to file
 #
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -17,6 +21,8 @@ ex "../../semantic/index" importa analyze
 ex "../../ast/radix" importa Programma
 
 ex "../../../norma/hal/solum" importa solum
+ex "../../../norma/hal/consolum" importa consolum
+ex "../../../norma/hal/json" importa json
 
 ex "../auxilium" importa hauriSource, nomenOstende, validaInput
 
@@ -26,19 +32,39 @@ ex "../auxilium" importa hauriSource, nomenOstende, validaInput
 
 @ publica
 @ futura
-functio checkCommand(textus input) -> numerus {
-    fixum displayName = nomenOstende(input)
+functio checkCommand(
+    textus input,
+    si textus output,
+    si textus include,
+    si textus stdinFilename,
+    si bivalens jsonOutput,
+    si bivalens strict
+) -> numerus {
+    fixum displayName = stdinFilename vel nomenOstende(input)
 
     # Validate input exists
     custodi {
         si non validaInput(input) {
-            mone scriptum("File not found: §", input)
+            si jsonOutput {
+                fixum errorJson = json.solve({ error: scriptum("File not found: §", input) })
+                si output {
+                    cede solum.scribe(output, errorJson)
+                }
+                secus {
+                    consolum.fundeLineam(errorJson)
+                }
+            }
+            secus {
+                mone scriptum("File not found: §", input)
+            }
             redde 1
         }
     }
 
     fixum source = cede hauriSource(input)
 
+    # Collect all errors across phases
+    varia lista<tabula<textus, ignotum>> errores = [] innatum lista<tabula<textus, ignotum>>
     varia numerus errorCount = 0
 
     # Lexical analysis
@@ -46,9 +72,22 @@ functio checkCommand(textus input) -> numerus {
     errorCount = errorCount + lexResult.errores.longitudo()
 
     si positivum lexResult.errores.longitudo() {
-        mone "Lexor errors:"
-        ex lexResult.errores pro err {
-            mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus)
+        si jsonOutput {
+            ex lexResult.errores pro err {
+                errores.push({
+                    phase: "lexor",
+                    file: displayName,
+                    line: err.locus.linea,
+                    column: err.locus.columna,
+                    message: err.textus
+                } innatum tabula<textus, ignotum>)
+            }
+        }
+        secus {
+            mone "Lexor errors:"
+            ex lexResult.errores pro err {
+                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus)
+            }
         }
     }
 
@@ -57,9 +96,22 @@ functio checkCommand(textus input) -> numerus {
     errorCount = errorCount + parseResult.errores.longitudo()
 
     si positivum parseResult.errores.longitudo() {
-        mone "Parser errors:"
-        ex parseResult.errores pro err {
-            mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+        si jsonOutput {
+            ex parseResult.errores pro err {
+                errores.push({
+                    phase: "parser",
+                    file: displayName,
+                    line: err.locus.linea,
+                    column: err.locus.columna,
+                    message: err.nuntius
+                } innatum tabula<textus, ignotum>)
+            }
+        }
+        secus {
+            mone "Parser errors:"
+            ex parseResult.errores pro err {
+                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+            }
         }
     }
 
@@ -70,19 +122,51 @@ functio checkCommand(textus input) -> numerus {
         errorCount = errorCount + semResult.errores.longitudo()
 
         si positivum semResult.errores.longitudo() {
-            mone "Semantic errors:"
-            ex semResult.errores pro err {
-                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+            si jsonOutput {
+                ex semResult.errores pro err {
+                    errores.push({
+                        phase: "semantic",
+                        file: displayName,
+                        line: err.locus.linea,
+                        column: err.locus.columna,
+                        message: err.nuntius
+                    } innatum tabula<textus, ignotum>)
+                }
+            }
+            secus {
+                mone "Semantic errors:"
+                ex semResult.errores pro err {
+                    mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+                }
             }
         }
     }
 
-    # Summary
-    si positivum errorCount {
-        scribe scriptum("§: § error(s)", displayName, errorCount)
-        redde 1
+    # Output results
+    si jsonOutput {
+        fixum resultJson = positivum errorCount
+            sic json.solve({ success: falsum, errors: errores, errorCount: errorCount })
+            secus json.solve({ success: verum, file: displayName })
+
+        si output {
+            cede solum.scribe(output, resultJson)
+        }
+        secus {
+            consolum.fundeLineam(resultJson)
+        }
+    }
+    secus {
+        fixum summary = positivum errorCount
+            sic scriptum("§: § error(s)", displayName, errorCount)
+            secus scriptum("§: OK", displayName)
+
+        si output {
+            cede solum.scribe(output, summary)
+        }
+        secus {
+            scribe summary
+        }
     }
 
-    scribe scriptum("§: No errors", displayName)
-    redde 0
+    redde positivum errorCount sic 1 secus 0
 }

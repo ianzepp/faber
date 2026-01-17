@@ -8,6 +8,9 @@
 # Usage:
 #   rivus build main.fab -o dist/        # build to dist/
 #   rivus build main.fab                 # build to ./dist (default)
+#   rivus build main.fab --dry-run       # check without writing
+#   rivus build main.fab --list-files    # show files that would be compiled
+#   rivus build main.fab --json          # errors as JSON
 #
 # Output structure mirrors source:
 #   src/main.fab           -> dist/src/main.ts
@@ -24,6 +27,8 @@ ex "../../ast/radix" importa Programma
 
 ex "../../../norma/hal/solum" importa solum
 ex "../../../norma/hal/processus" importa processus
+ex "../../../norma/hal/consolum" importa consolum
+ex "../../../norma/hal/json" importa json
 
 ex "../auxilium" importa mutaExtensionem, viaRelativa
 
@@ -43,16 +48,34 @@ genus CompileResultatum {
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @ futura
-functio compileFile(textus filePath, textus displayName) -> CompileResultatum? {
+functio compileFile(
+    textus filePath,
+    textus displayName,
+    de lista<tabula<textus, ignotum>> errores,
+    si bivalens jsonOutput
+) -> CompileResultatum? {
     fixum source = cede solum.lege(filePath)
 
     # Lexical analysis
     fixum lexResult = lexare(source)
 
     si positivum lexResult.errores.longitudo() {
-        mone "Lexor errors:"
-        ex lexResult.errores pro err {
-            mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus)
+        si jsonOutput {
+            ex lexResult.errores pro err {
+                errores.push({
+                    phase: "lexor",
+                    file: displayName,
+                    line: err.locus.linea,
+                    column: err.locus.columna,
+                    message: err.textus
+                } innatum tabula<textus, ignotum>)
+            }
+        }
+        secus {
+            mone "Lexor errors:"
+            ex lexResult.errores pro err {
+                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus)
+            }
         }
         redde nihil
     }
@@ -61,15 +84,37 @@ functio compileFile(textus filePath, textus displayName) -> CompileResultatum? {
     fixum parseResult = resolvere(lexResult.symbola)
 
     si positivum parseResult.errores.longitudo() {
-        mone "Parser errors:"
-        ex parseResult.errores pro err {
-            mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+        si jsonOutput {
+            ex parseResult.errores pro err {
+                errores.push({
+                    phase: "parser",
+                    file: displayName,
+                    line: err.locus.linea,
+                    column: err.locus.columna,
+                    message: err.nuntius
+                } innatum tabula<textus, ignotum>)
+            }
+        }
+        secus {
+            mone "Parser errors:"
+            ex parseResult.errores pro err {
+                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+            }
         }
         redde nihil
     }
 
     si nihil parseResult.programma {
-        mone scriptum("Failed to parse: §", displayName)
+        si jsonOutput {
+            errores.push({
+                phase: "parser",
+                file: displayName,
+                message: "Failed to parse"
+            } innatum tabula<textus, ignotum>)
+        }
+        secus {
+            mone scriptum("Failed to parse: §", displayName)
+        }
         redde nihil
     }
 
@@ -77,9 +122,22 @@ functio compileFile(textus filePath, textus displayName) -> CompileResultatum? {
     fixum semResult = analyze(parseResult.programma qua Programma, filePath)
 
     si positivum semResult.errores.longitudo() {
-        mone "Semantic errors:"
-        ex semResult.errores pro err {
-            mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+        si jsonOutput {
+            ex semResult.errores pro err {
+                errores.push({
+                    phase: "semantic",
+                    file: displayName,
+                    line: err.locus.linea,
+                    column: err.locus.columna,
+                    message: err.nuntius
+                } innatum tabula<textus, ignotum>)
+            }
+        }
+        secus {
+            mone "Semantic errors:"
+            ex semResult.errores pro err {
+                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+            }
         }
         redde nihil
     }
@@ -99,47 +157,57 @@ functio compileFile(textus filePath, textus displayName) -> CompileResultatum? {
 functio buildCommand(
     textus input,
     si textus target,
-    si textus output
+    si textus output,
+    si textus include,
+    si bivalens jsonOutput,
+    si bivalens dryRun,
+    si bivalens listFiles
 ) -> numerus {
     fixum targetLang = target vel "ts"
     fixum outputDir = output vel "./dist"
     fixum projectRoot = processus.cwd()
+
+    # Collect errors for JSON output
+    varia lista<tabula<textus, ignotum>> errores = [] innatum lista<tabula<textus, ignotum>>
 
     # Resolve and validate entry path
     fixum entryPath = solum.absolve(input)
 
     custodi {
         si non solum.exstat(entryPath) {
-            mone scriptum("File not found: §", input)
+            si jsonOutput {
+                consolum.fundeLineam(json.solve({ error: scriptum("File not found: §", input) }))
+            }
+            secus {
+                mone scriptum("File not found: §", input)
+            }
             redde 1
         }
     }
 
     # Compile entry file
-    fixum entryResult = cede compileFile(entryPath, input)
+    fixum entryResult = cede compileFile(entryPath, input, errores, jsonOutput)
 
     si nihil entryResult {
+        si jsonOutput {
+            consolum.fundeLineam(json.solve({ errors: errores }))
+        }
         redde 1
     }
-
-    # Create output directory
-    cede solum.creaDir(outputDir)
 
     # Calculate output path for entry file
     fixum entryRelPath = viaRelativa(projectRoot, entryPath)
     fixum targetExt = targetLang == "go" sic ".go" secus ".ts"
     fixum entryOutPath = solum.iunge([outputDir, mutaExtensionem(entryRelPath, targetExt)])
 
-    # Ensure output subdirectory exists
-    cede solum.creaDir(solum.dir(entryOutPath))
+    # Collect all files for --list-files
+    varia lista<tabula<textus, textus>> filesToWrite = [] innatum lista<tabula<textus, textus>>
 
-    # Generate and write entry file
+    # Generate entry file
     fixum entryOutput = generate(entryResult.programma.corpus, targetLang)
-    cede solum.scribe(entryOutPath, entryOutput)
-    scribe scriptum("  § -> §", input, entryOutPath)
+    filesToWrite.push({ source: input, target: entryOutPath } innatum tabula<textus, textus>)
 
     # Process dependencies from semantic analysis
-    varia numerus fileCount = 1
     varia bivalens hadErrors = falsum
 
     si entryResult.semResult.resolvedModules {
@@ -148,9 +216,22 @@ functio buildCommand(
             fixum depAnalysis = analyze(depProgram, depPath)
 
             si positivum depAnalysis.errores.longitudo() {
-                mone "Semantic errors:"
-                ex depAnalysis.errores pro err {
-                    mone scriptum("  §:§:§ - §", depPath, err.locus.linea, err.locus.columna, err.nuntius)
+                si jsonOutput {
+                    ex depAnalysis.errores pro err {
+                        errores.push({
+                            phase: "semantic",
+                            file: depPath,
+                            line: err.locus.linea,
+                            column: err.locus.columna,
+                            message: err.nuntius
+                        } innatum tabula<textus, ignotum>)
+                    }
+                }
+                secus {
+                    mone "Semantic errors:"
+                    ex depAnalysis.errores pro err {
+                        mone scriptum("  §:§:§ - §", depPath, err.locus.linea, err.locus.columna, err.nuntius)
+                    }
                 }
                 hadErrors = verum
                 perge
@@ -160,25 +241,78 @@ functio buildCommand(
             fixum depRelPath = viaRelativa(projectRoot, depPath)
             fixum depOutPath = solum.iunge([outputDir, mutaExtensionem(depRelPath, targetExt)])
 
-            # Ensure subdirectory exists
-            cede solum.creaDir(solum.dir(depOutPath))
-
-            # Generate and write
+            # Generate
             fixum depOutput = generate(depProgram.corpus, targetLang)
-            cede solum.scribe(depOutPath, depOutput)
-            scribe scriptum("  § -> §", depRelPath, depOutPath)
-
-            fileCount = fileCount + 1
+            filesToWrite.push({ source: depRelPath, target: depOutPath } innatum tabula<textus, textus>)
         }
     }
 
-    # Check if any dependencies failed
+    # Check for errors before writing
     si hadErrors {
+        si jsonOutput {
+            consolum.fundeLineam(json.solve({ errors: errores }))
+        }
         redde 1
     }
 
-    scribe ""
-    scribe scriptum("Build complete: § file(s) written to §", fileCount, outputDir)
+    # List files mode
+    si listFiles {
+        si jsonOutput {
+            consolum.fundeLineam(json.solve({ files: filesToWrite }))
+        }
+        secus {
+            ex filesToWrite pro file {
+                scribe scriptum("§ -> §", file["source"], file["target"])
+            }
+        }
+        redde 0
+    }
+
+    # Dry run stops here
+    si dryRun {
+        si jsonOutput {
+            consolum.fundeLineam(json.solve({ success: verum, fileCount: filesToWrite.length }))
+        }
+        secus {
+            scribe scriptum("Would compile § file(s) to §", filesToWrite.length, outputDir)
+        }
+        redde 0
+    }
+
+    # Create output directory and write files
+    cede solum.creaDir(outputDir)
+
+    varia numerus fileCount = 0
+    ex filesToWrite pro file {
+        cede solum.creaDir(solum.dir(file["target"]))
+
+        # Re-generate (we could cache this, but keeping it simple)
+        si fileCount == 0 {
+            cede solum.scribe(file["target"], entryOutput)
+        }
+        secus {
+            # For dependencies, regenerate from the resolved modules
+            # This is a simplification - in practice we'd cache the generated output
+            fixum depProgram = entryResult.semResult.resolvedModules![solum.absolve(file["source"])]
+            si nonnihil depProgram {
+                fixum depOutput = generate(depProgram.corpus, targetLang)
+                cede solum.scribe(file["target"], depOutput)
+            }
+        }
+
+        si non jsonOutput {
+            scribe scriptum("  § -> §", file["source"], file["target"])
+        }
+        fileCount = fileCount + 1
+    }
+
+    si jsonOutput {
+        consolum.fundeLineam(json.solve({ success: verum, fileCount: fileCount, outputDir: outputDir }))
+    }
+    secus {
+        scribe ""
+        scribe scriptum("Build complete: § file(s) written to §", fileCount, outputDir)
+    }
 
     redde 0
 }

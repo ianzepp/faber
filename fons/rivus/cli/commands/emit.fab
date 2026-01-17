@@ -10,6 +10,9 @@
 #   rivus emit hello.fab -t go           # emit as Go
 #   rivus emit hello.fab -o hello.ts     # emit to file
 #   rivus emit -                         # emit from stdin
+#   rivus emit - --stdin-filename=foo.fab  # stdin with filename for errors
+#   rivus emit hello.fab --dry-run       # check without emitting
+#   rivus emit hello.fab --json          # errors as JSON
 #
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -21,6 +24,7 @@ ex "../../ast/radix" importa Programma
 
 ex "../../../norma/hal/solum" importa solum
 ex "../../../norma/hal/consolum" importa consolum
+ex "../../../norma/hal/json" importa json
 
 ex "../auxilium" importa hauriSource, nomenOstende, validaInput
 
@@ -33,28 +37,56 @@ ex "../auxilium" importa hauriSource, nomenOstende, validaInput
 functio emitCommand(
     textus input,
     si textus target,
-    si textus output
+    si textus output,
+    si textus include,
+    si textus stdinFilename,
+    si bivalens jsonOutput,
+    si bivalens dryRun
 ) -> numerus {
     fixum targetLang = target vel "ts"
-    fixum displayName = nomenOstende(input)
+    fixum displayName = stdinFilename vel nomenOstende(input)
 
     # Validate input exists
     custodi {
         si non validaInput(input) {
-            mone scriptum("File not found: §", input)
+            si jsonOutput {
+                consolum.fundeLineam(json.solve({ error: scriptum("File not found: §", input) }))
+            }
+            secus {
+                mone scriptum("File not found: §", input)
+            }
             redde 1
         }
     }
 
     fixum source = cede hauriSource(input)
 
+    # Collect errors for potential JSON output
+    varia lista<tabula<textus, ignotum>> errores = [] innatum lista<tabula<textus, ignotum>>
+
     # Lexical analysis
     fixum lexResult = lexare(source)
 
     si positivum lexResult.errores.longitudo() {
-        mone "Lexor errors:"
-        ex lexResult.errores pro err {
-            mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus)
+        si jsonOutput {
+            ex lexResult.errores pro err {
+                errores.push({
+                    phase: "lexor",
+                    file: displayName,
+                    line: err.locus.linea,
+                    column: err.locus.columna,
+                    message: err.textus
+                } innatum tabula<textus, ignotum>)
+            }
+        }
+        secus {
+            mone "Lexor errors:"
+            ex lexResult.errores pro err {
+                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus)
+            }
+        }
+        si jsonOutput {
+            consolum.fundeLineam(json.solve({ errors: errores }))
         }
         redde 1
     }
@@ -63,15 +95,36 @@ functio emitCommand(
     fixum parseResult = resolvere(lexResult.symbola)
 
     si positivum parseResult.errores.longitudo() {
-        mone "Parser errors:"
-        ex parseResult.errores pro err {
-            mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+        si jsonOutput {
+            ex parseResult.errores pro err {
+                errores.push({
+                    phase: "parser",
+                    file: displayName,
+                    line: err.locus.linea,
+                    column: err.locus.columna,
+                    message: err.nuntius
+                } innatum tabula<textus, ignotum>)
+            }
+        }
+        secus {
+            mone "Parser errors:"
+            ex parseResult.errores pro err {
+                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+            }
+        }
+        si jsonOutput {
+            consolum.fundeLineam(json.solve({ errors: errores }))
         }
         redde 1
     }
 
     si nihil parseResult.programma {
-        mone "Failed to parse program"
+        si jsonOutput {
+            consolum.fundeLineam(json.solve({ error: "Failed to parse program" }))
+        }
+        secus {
+            mone "Failed to parse program"
+        }
         redde 1
     }
 
@@ -80,11 +133,36 @@ functio emitCommand(
     fixum semResult = analyze(parseResult.programma qua Programma, viaIngressus)
 
     si positivum semResult.errores.longitudo() {
-        mone "Semantic errors:"
-        ex semResult.errores pro err {
-            mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+        si jsonOutput {
+            ex semResult.errores pro err {
+                errores.push({
+                    phase: "semantic",
+                    file: displayName,
+                    line: err.locus.linea,
+                    column: err.locus.columna,
+                    message: err.nuntius
+                } innatum tabula<textus, ignotum>)
+            }
+            consolum.fundeLineam(json.solve({ errors: errores }))
+        }
+        secus {
+            mone "Semantic errors:"
+            ex semResult.errores pro err {
+                mone scriptum("  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius)
+            }
         }
         redde 1
+    }
+
+    # Dry run stops here
+    si dryRun {
+        si jsonOutput {
+            consolum.fundeLineam(json.solve({ success: verum, file: displayName }))
+        }
+        secus {
+            scribe scriptum("§: OK", displayName)
+        }
+        redde 0
     }
 
     # Code generation
@@ -93,7 +171,9 @@ functio emitCommand(
     # Output
     si output {
         cede solum.scribe(output, generated)
-        mone scriptum("Compiled: § -> §", displayName, output)
+        si non jsonOutput {
+            mone scriptum("Compiled: § -> §", displayName, output)
+        }
     }
     secus {
         consolum.fundeTextum(generated)

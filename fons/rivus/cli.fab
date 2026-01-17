@@ -46,12 +46,20 @@ functio version() -> vacuum {
 @ futura
 @ optio textus target brevis "t" longum "target" descriptio "Target language: ts (default), go"
 @ optio textus output brevis "o" longum "output" descriptio "Output file (default: stdout)"
+@ optio textus include brevis "I" longum "include" descriptio "Add import search path"
+@ optio textus stdinFilename longum "stdin-filename" descriptio "Filename to use for stdin input"
+@ optio bivalens json longum "json" descriptio "Output errors as JSON"
+@ optio bivalens dryRun longum "dry-run" descriptio "Check without emitting code"
 functio emit(
     textus input,
     si textus target,
-    si textus output
+    si textus output,
+    si textus include,
+    si textus stdinFilename,
+    si bivalens json,
+    si bivalens dryRun
 ) exitus code -> vacuum {
-    fixum result = cede emitCommand(input, target, output)
+    fixum result = cede emitCommand(input, target, output, include, stdinFilename, json, dryRun)
     code = result
 }
 
@@ -65,12 +73,20 @@ functio emit(
 @ futura
 @ optio textus target brevis "t" longum "target" descriptio "Target language: ts (default), go"
 @ optio textus output brevis "o" longum "output" descriptio "Output directory (default: ./dist)"
+@ optio textus include brevis "I" longum "include" descriptio "Add import search path"
+@ optio bivalens json longum "json" descriptio "Output errors as JSON"
+@ optio bivalens dryRun longum "dry-run" descriptio "Check without writing files"
+@ optio bivalens listFiles longum "list-files" descriptio "List files that would be compiled"
 functio build(
     textus input,
     si textus target,
-    si textus output
+    si textus output,
+    si textus include,
+    si bivalens json,
+    si bivalens dryRun,
+    si bivalens listFiles
 ) exitus code -> vacuum {
-    fixum result = cede buildCommand(input, target, output)
+    fixum result = cede buildCommand(input, target, output, include, json, dryRun, listFiles)
     code = result
 }
 
@@ -83,11 +99,15 @@ functio build(
 @ descriptio "Parse source and dump AST as JSON"
 @ futura
 @ optio textus output brevis "o" longum "output" descriptio "Output file (default: stdout)"
+@ optio textus stdinFilename longum "stdin-filename" descriptio "Filename to use for stdin input"
+@ optio bivalens compact longum "compact" descriptio "Output compact JSON (no indentation)"
 functio parse(
     textus input,
-    si textus output
+    si textus output,
+    si textus stdinFilename,
+    si bivalens compact
 ) exitus code -> vacuum {
-    fixum result = cede parseCommand(input, output)
+    fixum result = cede parseCommand(input, output, stdinFilename, compact)
     code = result
 }
 
@@ -99,7 +119,19 @@ functio parse(
 @ alias "proba"
 @ descriptio "Validate source without generating code"
 @ futura
-functio check(textus input) exitus code -> vacuum {
-    fixum result = cede checkCommand(input)
+@ optio textus output brevis "o" longum "output" descriptio "Write error report to file"
+@ optio textus include brevis "I" longum "include" descriptio "Add import search path"
+@ optio textus stdinFilename longum "stdin-filename" descriptio "Filename to use for stdin input"
+@ optio bivalens json longum "json" descriptio "Output errors as JSON"
+@ optio bivalens strict longum "strict" descriptio "Enable all strict checks"
+functio check(
+    textus input,
+    si textus output,
+    si textus include,
+    si textus stdinFilename,
+    si bivalens json,
+    si bivalens strict
+) exitus code -> vacuum {
+    fixum result = cede checkCommand(input, output, include, stdinFilename, json, strict)
     code = result
 }
