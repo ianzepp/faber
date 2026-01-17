@@ -92,6 +92,9 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
                     si a.nomen == "futura" {
                         f.asynca = verum
                     }
+                    si a.nomen == "cursor" {
+                        f.generator = verum
+                    }
                     si a.nomen == "radix" {
                         f.morphologia = { locus: a.locus, formae: a.argumenta } qua MorphologiaDeclaratio
                     }

@@ -101,79 +101,6 @@ export const norma: Record<string, NormaCollection> = {
     }
     , "innatum": "Math"
   },
-  "tabula": {
-    "methods": {
-      "pone": {
-        "method": "set"
-      },
-      "accipe": {
-        "method": "get"
-      },
-      "accipeAut": {
-        "template": "(§0.get(§1) ?? §2)",
-        "params": ["ego","k","def"]
-      },
-      "habet": {
-        "method": "has"
-      },
-      "dele": {
-        "method": "delete"
-      },
-      "longitudo": {
-        "template": "§.size",
-        "params": ["ego"]
-      },
-      "vacua": {
-        "template": "§.size === 0",
-        "params": ["ego"]
-      },
-      "purga": {
-        "method": "clear"
-      },
-      "claves": {
-        "method": "keys"
-      },
-      "valores": {
-        "method": "values"
-      },
-      "paria": {
-        "method": "entries"
-      },
-      "selecta": {
-        "template": "new Map([...§0].filter(([k]) => [§1].flat().includes(k)))",
-        "params": ["ego","claves"]
-      },
-      "omissa": {
-        "template": "new Map([...§0].filter(([k]) => ![§1].flat().includes(k)))",
-        "params": ["ego","claves"]
-      },
-      "conflata": {
-        "template": "new Map([...§0, ...§1])",
-        "params": ["ego","alia"]
-      },
-      "inversa": {
-        "template": "new Map([...§].map(([k, v]) => [v, k]))",
-        "params": ["ego"]
-      },
-      "mappaValores": {
-        "template": "new Map([...§0].map(([k, v]) => [k, (§1)(v)]))",
-        "params": ["ego","fn"]
-      },
-      "mappaClaves": {
-        "template": "new Map([...§0].map(([k, v]) => [(§1)(k), v]))",
-        "params": ["ego","fn"]
-      },
-      "inLista": {
-        "template": "[...§]",
-        "params": ["ego"]
-      },
-      "inObjectum": {
-        "template": "Object.fromEntries(§)",
-        "params": ["ego"]
-      }
-    }
-    , "innatum": "Map"
-  },
   "numerus": {
     "methods": {
       "absolutum": {
@@ -231,101 +158,6 @@ export const norma: Record<string, NormaCollection> = {
       }
     }
     , "innatum": "number"
-  },
-  "textus": {
-    "methods": {
-      "longitudo": {
-        "template": "§.length",
-        "params": ["ego"]
-      },
-      "sectio": {
-        "method": "slice"
-      },
-      "continet": {
-        "method": "includes"
-      },
-      "initium": {
-        "method": "startsWith"
-      },
-      "finis": {
-        "method": "endsWith"
-      },
-      "maiuscula": {
-        "method": "toUpperCase"
-      },
-      "minuscula": {
-        "method": "toLowerCase"
-      },
-      "recide": {
-        "method": "trim"
-      },
-      "divide": {
-        "method": "split"
-      },
-      "muta": {
-        "method": "replaceAll"
-      }
-    }
-    , "innatum": "string"
-  },
-  "copia": {
-    "methods": {
-      "adde": {
-        "method": "add"
-      },
-      "habet": {
-        "method": "has"
-      },
-      "dele": {
-        "method": "delete"
-      },
-      "longitudo": {
-        "template": "§.size",
-        "params": ["ego"]
-      },
-      "vacua": {
-        "template": "§.size === 0",
-        "params": ["ego"]
-      },
-      "purga": {
-        "method": "clear"
-      },
-      "valores": {
-        "method": "values"
-      },
-      "perambula": {
-        "method": "forEach"
-      },
-      "unio": {
-        "template": "new Set([...§0, ...§1])",
-        "params": ["ego","alia"]
-      },
-      "intersectio": {
-        "template": "new Set([...§0].filter(x => §1.has(x)))",
-        "params": ["ego","alia"]
-      },
-      "differentia": {
-        "template": "new Set([...§0].filter(x => !§1.has(x)))",
-        "params": ["ego","alia"]
-      },
-      "symmetrica": {
-        "template": "new Set([...[...§0].filter(x => !§1.has(x)), ...[...§1].filter(x => !§0.has(x))])",
-        "params": ["ego","alia"]
-      },
-      "subcopia": {
-        "template": "[...§0].every(x => §1.has(x))",
-        "params": ["ego","alia"]
-      },
-      "supercopia": {
-        "template": "[...§1].every(x => §0.has(x))",
-        "params": ["ego","alia"]
-      },
-      "inLista": {
-        "template": "[...§]",
-        "params": ["ego"]
-      }
-    }
-    , "innatum": "Set"
   },
   "lista": {
     "methods": {
@@ -520,24 +352,178 @@ export const norma: Record<string, NormaCollection> = {
       }
     }
     , "innatum": "Array"
+  },
+  "copia": {
+    "methods": {
+      "adde": {
+        "method": "add"
+      },
+      "habet": {
+        "method": "has"
+      },
+      "dele": {
+        "method": "delete"
+      },
+      "longitudo": {
+        "template": "§.size",
+        "params": ["ego"]
+      },
+      "vacua": {
+        "template": "§.size === 0",
+        "params": ["ego"]
+      },
+      "purga": {
+        "method": "clear"
+      },
+      "valores": {
+        "method": "values"
+      },
+      "perambula": {
+        "method": "forEach"
+      },
+      "unio": {
+        "template": "new Set([...§0, ...§1])",
+        "params": ["ego","alia"]
+      },
+      "intersectio": {
+        "template": "new Set([...§0].filter(x => §1.has(x)))",
+        "params": ["ego","alia"]
+      },
+      "differentia": {
+        "template": "new Set([...§0].filter(x => !§1.has(x)))",
+        "params": ["ego","alia"]
+      },
+      "symmetrica": {
+        "template": "new Set([...[...§0].filter(x => !§1.has(x)), ...[...§1].filter(x => !§0.has(x))])",
+        "params": ["ego","alia"]
+      },
+      "subcopia": {
+        "template": "[...§0].every(x => §1.has(x))",
+        "params": ["ego","alia"]
+      },
+      "supercopia": {
+        "template": "[...§1].every(x => §0.has(x))",
+        "params": ["ego","alia"]
+      },
+      "inLista": {
+        "template": "[...§]",
+        "params": ["ego"]
+      }
+    }
+    , "innatum": "Set"
+  },
+  "tabula": {
+    "methods": {
+      "pone": {
+        "method": "set"
+      },
+      "accipe": {
+        "method": "get"
+      },
+      "accipeAut": {
+        "template": "(§0.get(§1) ?? §2)",
+        "params": ["ego","k","def"]
+      },
+      "habet": {
+        "method": "has"
+      },
+      "dele": {
+        "method": "delete"
+      },
+      "longitudo": {
+        "template": "§.size",
+        "params": ["ego"]
+      },
+      "vacua": {
+        "template": "§.size === 0",
+        "params": ["ego"]
+      },
+      "purga": {
+        "method": "clear"
+      },
+      "claves": {
+        "method": "keys"
+      },
+      "valores": {
+        "method": "values"
+      },
+      "paria": {
+        "method": "entries"
+      },
+      "selecta": {
+        "template": "new Map([...§0].filter(([k]) => [§1].flat().includes(k)))",
+        "params": ["ego","claves"]
+      },
+      "omissa": {
+        "template": "new Map([...§0].filter(([k]) => ![§1].flat().includes(k)))",
+        "params": ["ego","claves"]
+      },
+      "conflata": {
+        "template": "new Map([...§0, ...§1])",
+        "params": ["ego","alia"]
+      },
+      "inversa": {
+        "template": "new Map([...§].map(([k, v]) => [v, k]))",
+        "params": ["ego"]
+      },
+      "mappaValores": {
+        "template": "new Map([...§0].map(([k, v]) => [k, (§1)(v)]))",
+        "params": ["ego","fn"]
+      },
+      "mappaClaves": {
+        "template": "new Map([...§0].map(([k, v]) => [(§1)(k), v]))",
+        "params": ["ego","fn"]
+      },
+      "inLista": {
+        "template": "[...§]",
+        "params": ["ego"]
+      },
+      "inObjectum": {
+        "template": "Object.fromEntries(§)",
+        "params": ["ego"]
+      }
+    }
+    , "innatum": "Map"
+  },
+  "textus": {
+    "methods": {
+      "longitudo": {
+        "template": "§.length",
+        "params": ["ego"]
+      },
+      "sectio": {
+        "method": "slice"
+      },
+      "continet": {
+        "method": "includes"
+      },
+      "initium": {
+        "method": "startsWith"
+      },
+      "finis": {
+        "method": "endsWith"
+      },
+      "maiuscula": {
+        "method": "toUpperCase"
+      },
+      "minuscula": {
+        "method": "toLowerCase"
+      },
+      "recide": {
+        "method": "trim"
+      },
+      "divide": {
+        "method": "split"
+      },
+      "muta": {
+        "method": "replaceAll"
+      }
+    }
+    , "innatum": "string"
   }
 };
 
 export const radixForms: Record<string, Record<string, string[]>> = {
-  "tabula": {
-    "pone": ["pon","imperativus"],
-    "dele": ["del","imperativus"],
-    "purga": ["purg","imperativus"],
-    "selecta": ["select","perfectum"],
-    "omissa": ["omis","perfectum"],
-    "conflata": ["confl","perfectum"],
-    "inversa": ["inver","perfectum"]
-  },
-  "copia": {
-    "adde": ["add","imperativus"],
-    "dele": ["del","imperativus"],
-    "purga": ["purg","imperativus"]
-  },
   "lista": {
     "adde": ["add","imperativus","perfectum"],
     "praepone": ["praepon","imperativus","perfectum"],
@@ -555,5 +541,19 @@ export const radixForms: Record<string, Record<string, string[]>> = {
     "ordina": ["ordin","imperativus","perfectum"],
     "inverte": ["invert","imperativus"],
     "miscita": ["misc","perfectum"]
-  }
+  },
+  "copia": {
+    "adde": ["add","imperativus"],
+    "dele": ["del","imperativus"],
+    "purga": ["purg","imperativus"]
+  },
+  "tabula": {
+    "pone": ["pon","imperativus"],
+    "dele": ["del","imperativus"],
+    "purga": ["purg","imperativus"],
+    "selecta": ["select","perfectum"],
+    "omissa": ["omis","perfectum"],
+    "conflata": ["confl","perfectum"],
+    "inversa": ["inver","perfectum"]
+  },
 };

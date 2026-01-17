@@ -72,12 +72,13 @@ functio parseFunctioModificatores(Resolvitor r) -> lista<FunctioModificator>? {
 # GRAMMAR:
 #   functioDecl := 'functio' IDENT genericParams? '(' params? ')' funcModifier* returnType? blockStmt?
 #   funcModifier := 'curata' IDENT | 'errata' IDENT | 'immutata' | 'iacit'
-#   returnType := '->' type | 'fit' type | 'fiet' type | 'fiunt' type | 'fient' type
+#   returnType := '->' type
+#
+# NOTE: fit/fiet/fiunt/fient return syntax is disabled pending Go/Zig backend support.
 #
 # Examples:
 #   functio salve() { scribe "hello" }
 #   functio add(numerus a, numerus b) -> numerus { redde a + b }
-#   functio greet(textus name) fit textus { redde scriptum("Hello, §!", name) }
 @ publica
 functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
     fixum p = r.parser()
@@ -147,24 +148,11 @@ functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
     varia generator = falsum
     varia reddeVerbum = nihil qua ReddeVerbum?
 
+    # NOTE: fit/fiet/fiunt/fient return syntax is disabled pending Go/Zig backend support.
+    # The Responsum protocol machinery remains in codegen but is dormant until re-enabled here.
+    # When re-enabling, restore: VerbumId.Fit, VerbumId.Fiet, VerbumId.Fiunt, VerbumId.Fient
     si p.congruet(SymbolumGenus.Sagitta) {
         reddeVerbum = ReddeVerbum.Sagitta
-        typusReditus = r.adnotatio()
-    } sin p.congruetVerbumId(VerbumId.Fit) {
-        reddeVerbum = ReddeVerbum.Fit
-        typusReditus = r.adnotatio()
-    } sin p.congruetVerbumId(VerbumId.Fiet) {
-        reddeVerbum = ReddeVerbum.Fiet
-        asynca = verum
-        typusReditus = r.adnotatio()
-    } sin p.congruetVerbumId(VerbumId.Fiunt) {
-        reddeVerbum = ReddeVerbum.Fiunt
-        generator = verum
-        typusReditus = r.adnotatio()
-    } sin p.congruetVerbumId(VerbumId.Fient) {
-        reddeVerbum = ReddeVerbum.Fient
-        asynca = verum
-        generator = verum
         typusReditus = r.adnotatio()
     }
 
@@ -303,19 +291,8 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
             varia asynca = falsum
             varia generator = falsum
 
+            # NOTE: fit/fiet/fiunt/fient disabled - see parseFunctioDeclaratio comment
             si p.congruet(SymbolumGenus.Sagitta) {
-                retTypus = r.adnotatio()
-            } sin p.congruetVerbumId(VerbumId.Fit) {
-                retTypus = r.adnotatio()
-            } sin p.congruetVerbumId(VerbumId.Fiet) {
-                asynca = verum
-                retTypus = r.adnotatio()
-            } sin p.congruetVerbumId(VerbumId.Fiunt) {
-                generator = verum
-                retTypus = r.adnotatio()
-            } sin p.congruetVerbumId(VerbumId.Fient) {
-                asynca = verum
-                generator = verum
                 retTypus = r.adnotatio()
             }
 
@@ -414,8 +391,8 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
 # GRAMMAR: pactumDecl := 'pactum' IDENT genericParams? '{' methods '}'
 #
 # Examples:
-#   pactum Iterabilis { functio sequens() fit T? }
-#   pactum Comparabilis<T> { functio compara(T alius) fit numerus }
+#   pactum Iterabilis { functio sequens() -> T? }
+#   pactum Comparabilis<T> { functio compara(T alius) -> numerus }
 @ publica
 functio parsePactumDeclaratio(Resolvitor r) -> Sententia {
     fixum p = r.parser()
@@ -444,11 +421,11 @@ functio parsePactumDeclaratio(Resolvitor r) -> Sententia {
         fixum annotationes = parseAnnotationes(r)
 
         # Each method: functio name(params) funcModifier* returnType
+        # Method names can be keywords (e.g., cape, tempta in HAL modules)
         p.expectaVerbum("functio", ParserErrorCodice.ExpectaturFunctio)
 
         fixum methodLocus = p.praevius().locus
-        fixum methodNomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-        fixum methodNomen = methodNomenSym.valor
+        fixum methodNomen = parseNomenVelVerbum(r)
 
         p.expecta(SymbolumGenus.ParensSin, ParserErrorCodice.ExpectaturParensSin)
         fixum params = parseParametra(r)
@@ -460,17 +437,8 @@ functio parsePactumDeclaratio(Resolvitor r) -> Sententia {
         varia asynca = falsum
         varia generator = falsum
 
-        si p.congruet(SymbolumGenus.Sagitta) aut p.congruetVerbumId(VerbumId.Fit) {
-            typusReditus = r.adnotatio()
-        } sin p.congruetVerbumId(VerbumId.Fiet) {
-            asynca = verum
-            typusReditus = r.adnotatio()
-        } sin p.congruetVerbumId(VerbumId.Fiunt) {
-            generator = verum
-            typusReditus = r.adnotatio()
-        } sin p.congruetVerbumId(VerbumId.Fient) {
-            asynca = verum
-            generator = verum
+        # NOTE: fit/fiet/fiunt/fient disabled - see parseFunctioDeclaratio comment
+        si p.congruet(SymbolumGenus.Sagitta) {
             typusReditus = r.adnotatio()
         }
 

@@ -156,137 +156,6 @@ fixum norma = {
             }
         }
     },
-    "tabula": {
-        "methods": {
-            "pone": {
-                "ts": { "method": "set" },
-                "py": { "template": "§0[§1] = §2", "params": ["ego", "k", "v"] },
-                "rs": { "template": "§0.insert(§1, §2)", "params": ["ego", "k", "v"] },
-                "cpp": { "template": "§0.insert_or_assign(§1, §2)", "params": ["ego", "k", "v"] },
-                "zig": { "template": "§0.pone(§3, §1, §2)", "params": ["ego", "k", "v", "alloc"] }
-            },
-            "accipe": {
-                "ts": { "method": "get" },
-                "py": { "template": "§0.get(§1)", "params": ["ego", "k"] },
-                "rs": { "template": "§0.get(&§1)", "params": ["ego", "k"] },
-                "cpp": { "template": "§0.at(§1)", "params": ["ego", "k"] },
-                "zig": { "template": "§0.accipe(§1)", "params": ["ego", "k"] }
-            },
-            "accipeAut": {
-                "ts": { "template": "(§0.get(§1) ?? §2)", "params": ["ego", "k", "def"] },
-                "py": { "template": "§0.get(§1, §2)", "params": ["ego", "k", "def"] },
-                "rs": { "template": "§0.get(&§1).cloned().unwrap_or(§2)", "params": ["ego", "k", "def"] },
-                "cpp": { "template": "(§0.contains(§1) ? §0.at(§1) : §2)", "params": ["ego", "k", "def"] },
-                "zig": { "template": "§0.accipeAut(§1, §2)", "params": ["ego", "k", "def"] }
-            },
-            "habet": {
-                "ts": { "method": "has" },
-                "py": { "template": "(§1 in §0)", "params": ["ego", "k"] },
-                "rs": { "template": "§0.contains_key(&§1)", "params": ["ego", "k"] },
-                "cpp": { "template": "§0.contains(§1)", "params": ["ego", "k"] },
-                "zig": { "template": "§0.habet(§1)", "params": ["ego", "k"] }
-            },
-            "dele": {
-                "ts": { "method": "delete" },
-                "py": { "template": "del §0[§1]", "params": ["ego", "k"] },
-                "rs": { "template": "§0.remove(&§1)", "params": ["ego", "k"] },
-                "cpp": { "template": "§0.erase(§1)", "params": ["ego", "k"] },
-                "zig": { "template": "_ = §0.dele(§1)", "params": ["ego", "k"] }
-            },
-            "longitudo": {
-                "ts": { "template": "§.size", "params": ["ego"] },
-                "py": { "template": "len(§)", "params": ["ego"] },
-                "rs": { "template": "§.len()", "params": ["ego"] },
-                "cpp": { "template": "§.size()", "params": ["ego"] },
-                "zig": { "template": "§.longitudo()", "params": ["ego"] }
-            },
-            "vacua": {
-                "ts": { "template": "§.size === 0", "params": ["ego"] },
-                "py": { "template": "len(§) == 0", "params": ["ego"] },
-                "rs": { "template": "§.is_empty()", "params": ["ego"] },
-                "cpp": { "template": "§.empty()", "params": ["ego"] },
-                "zig": { "template": "§.vacua()", "params": ["ego"] }
-            },
-            "purga": {
-                "ts": { "method": "clear" },
-                "py": { "method": "clear" },
-                "rs": { "method": "clear" },
-                "cpp": { "method": "clear" },
-                "zig": { "template": "§.purga()", "params": ["ego"] }
-            },
-            "claves": {
-                "ts": { "method": "keys" },
-                "py": { "method": "keys" },
-                "rs": { "template": "§.keys()", "params": ["ego"] },
-                "cpp": { "template": "§ | std::views::keys", "params": ["ego"] },
-                "zig": { "template": "§.claves()", "params": ["ego"] }
-            },
-            "valores": {
-                "ts": { "method": "values" },
-                "py": { "method": "values" },
-                "rs": { "template": "§.values()", "params": ["ego"] },
-                "cpp": { "template": "§ | std::views::values", "params": ["ego"] },
-                "zig": { "template": "§.valores()", "params": ["ego"] }
-            },
-            "paria": {
-                "ts": { "method": "entries" },
-                "py": { "method": "items" },
-                "rs": { "template": "§.iter()", "params": ["ego"] },
-                "cpp": { "template": "§", "params": ["ego"] },
-                "zig": { "template": "§.paria()", "params": ["ego"] }
-            },
-            "selecta": {
-                "ts": { "template": "new Map([...§0].filter(([k]) => [§1].flat().includes(k)))", "params": ["ego", "claves"] },
-                "py": { "template": "{k: v for k, v in §0.items() if k in [§1]}", "params": ["ego", "claves"] },
-                "rs": { "template": "faber::tabula_selecta(&§0, &§1)", "params": ["ego", "claves"] },
-                "cpp": { "template": "faber::tabula_selecta(§0, §1)", "params": ["ego", "claves"] },
-                "zig": { "template": "@compileError(\"selecta not implemented for Zig - use explicit loop\")", "params": ["ego", "claves"] }
-            },
-            "omissa": {
-                "ts": { "template": "new Map([...§0].filter(([k]) => ![§1].flat().includes(k)))", "params": ["ego", "claves"] },
-                "py": { "template": "{k: v for k, v in §0.items() if k not in [§1]}", "params": ["ego", "claves"] },
-                "rs": { "template": "faber::tabula_omissa(&§0, &§1)", "params": ["ego", "claves"] },
-                "cpp": { "template": "faber::tabula_omissa(§0, §1)", "params": ["ego", "claves"] },
-                "zig": { "template": "@compileError(\"omissa not implemented for Zig - use explicit loop\")", "params": ["ego", "claves"] }
-            },
-            "conflata": {
-                "ts": { "template": "new Map([...§0, ...§1])", "params": ["ego", "alia"] },
-                "py": { "template": "{**§0, **§1}", "params": ["ego", "alia"] },
-                "rs": { "template": "faber::tabula_conflata(&§0, &§1)", "params": ["ego", "alia"] },
-                "cpp": { "template": "faber::tabula_conflata(§0, §1)", "params": ["ego", "alia"] },
-                "zig": { "template": "§0.conflata(&§1)", "params": ["ego", "alia"] }
-            },
-            "inversa": {
-                "ts": { "template": "new Map([...§].map(([k, v]) => [v, k]))", "params": ["ego"] },
-                "py": { "template": "{v: k for k, v in §.items()}", "params": ["ego"] },
-                "rs": { "template": "faber::tabula_inversa(&§)", "params": ["ego"] },
-                "cpp": { "template": "faber::tabula_inversa(§)", "params": ["ego"] },
-                "zig": { "template": "@compileError(\"inversa not implemented for Zig - use explicit loop\")", "params": ["ego"] }
-            },
-            "mappaValores": {
-                "ts": { "template": "new Map([...§0].map(([k, v]) => [k, (§1)(v)]))", "params": ["ego", "fn"] },
-                "py": { "template": "{k: (§1)(v) for k, v in §0.items()}", "params": ["ego", "fn"] },
-                "zig": { "template": "@compileError(\"mappaValores not implemented for Zig - use explicit loop\")", "params": ["ego", "fn"] }
-            },
-            "mappaClaves": {
-                "ts": { "template": "new Map([...§0].map(([k, v]) => [(§1)(k), v]))", "params": ["ego", "fn"] },
-                "py": { "template": "{(§1)(k): v for k, v in §0.items()}", "params": ["ego", "fn"] },
-                "zig": { "template": "@compileError(\"mappaClaves not implemented for Zig - use explicit loop\")", "params": ["ego", "fn"] }
-            },
-            "inLista": {
-                "ts": { "template": "[...§]", "params": ["ego"] },
-                "py": { "template": "list(§.items())", "params": ["ego"] },
-                "rs": { "template": "faber::tabula_in_lista(&§)", "params": ["ego"] },
-                "cpp": { "template": "faber::tabula_in_lista(§)", "params": ["ego"] },
-                "zig": { "template": "§.inLista(§)", "params": ["ego", "alloc"] }
-            },
-            "inObjectum": {
-                "ts": { "template": "Object.fromEntries(§)", "params": ["ego"] },
-                "py": { "template": "dict(§)", "params": ["ego"] },
-                "zig": { "template": "@compileError(\"inObjectum not implemented for Zig - Zig has no object type\")", "params": ["ego"] }
-            }
-        }
-    },
     "numerus": {
         "methods": {
             "absolutum": {
@@ -376,189 +245,6 @@ fixum norma = {
                 "rs": { "template": "§.trunc() as i64", "params": ["ego"] },
                 "cpp": { "template": "static_cast<int64_t>(std::trunc(§))", "params": ["ego"] },
                 "zig": { "template": "@intFromFloat(@trunc(§))", "params": ["ego"] }
-            }
-        }
-    },
-    "textus": {
-        "methods": {
-            "longitudo": {
-                "ts": { "template": "§.length", "params": ["ego"] },
-                "py": { "template": "len(§)", "params": ["ego"] },
-                "rs": { "template": "§.len()", "params": ["ego"] },
-                "cpp": { "template": "§.length()", "params": ["ego"] },
-                "zig": { "template": "§.len", "params": ["ego"] }
-            },
-            "sectio": {
-                "ts": { "method": "slice" },
-                "py": { "template": "§[§:§]", "params": ["ego", "start", "end"] },
-                "rs": { "template": "&§[§..§]", "params": ["ego", "start", "end"] },
-                "cpp": { "template": "§.substr(§, § - §)", "params": ["ego", "start", "end"] },
-                "zig": { "template": "§[§..§]", "params": ["ego", "start", "end"] }
-            },
-            "continet": {
-                "ts": { "method": "includes" },
-                "py": { "template": "§ in §", "params": ["ego", "sub"] },
-                "rs": { "method": "contains" },
-                "cpp": { "template": "(§.find(§) != std::string::npos)", "params": ["ego", "sub"] },
-                "zig": { "template": "(std.mem.indexOf(u8, §, §) != null)", "params": ["ego", "sub"] }
-            },
-            "initium": {
-                "ts": { "method": "startsWith" },
-                "py": { "method": "startswith" },
-                "rs": { "method": "starts_with" },
-                "cpp": { "template": "(§.rfind(§, 0) == 0)", "params": ["ego", "prefix"] },
-                "zig": { "template": "std.mem.startsWith(u8, §, §)", "params": ["ego", "prefix"] }
-            },
-            "finis": {
-                "ts": { "method": "endsWith" },
-                "py": { "method": "endswith" },
-                "rs": { "method": "ends_with" },
-                "cpp": { "template": "(§.size() >= §.size() && §.compare(§.size() - §.size(), §.size(), §) == 0)", "params": ["ego", "suffix"] },
-                "zig": { "template": "std.mem.endsWith(u8, §, §)", "params": ["ego", "suffix"] }
-            },
-            "maiuscula": {
-                "ts": { "method": "toUpperCase" },
-                "py": { "method": "upper" },
-                "rs": { "method": "to_uppercase" },
-                "cpp": { "template": "[&]{ auto s = §; std::transform(s.begin(), s.end(), s.begin(), ::toupper); return s; }()", "params": ["ego"] },
-                "zig": { "template": "std.ascii.upperString(§)", "params": ["ego"] }
-            },
-            "minuscula": {
-                "ts": { "method": "toLowerCase" },
-                "py": { "method": "lower" },
-                "rs": { "method": "to_lowercase" },
-                "cpp": { "template": "[&]{ auto s = §; std::transform(s.begin(), s.end(), s.begin(), ::tolower); return s; }()", "params": ["ego"] },
-                "zig": { "template": "std.ascii.lowerString(§)", "params": ["ego"] }
-            },
-            "recide": {
-                "ts": { "method": "trim" },
-                "py": { "method": "strip" },
-                "rs": { "method": "trim" },
-                "cpp": { "template": "[&]{ auto s = §; s.erase(0, s.find_first_not_of(\" \\t\\n\\r\")); s.erase(s.find_last_not_of(\" \\t\\n\\r\") + 1); return s; }()", "params": ["ego"] },
-                "zig": { "template": "std.mem.trim(u8, §, \" \\t\\n\\r\")", "params": ["ego"] }
-            },
-            "divide": {
-                "ts": { "method": "split" },
-                "py": { "method": "split" },
-                "rs": { "template": "§.split(§).collect::<Vec<_>>()", "params": ["ego", "sep"] },
-                "cpp": { "template": "@compileError(\"No single-expression split in C++ - use manual loop\")", "params": ["ego", "sep"] },
-                "zig": { "template": "@compileError(\"Use std.mem.splitSequence for Zig\")", "params": ["ego", "sep"] }
-            },
-            "muta": {
-                "ts": { "method": "replaceAll" },
-                "py": { "method": "replace" },
-                "rs": { "method": "replace" },
-                "cpp": { "template": "std::regex_replace(§, std::regex(§), §)", "params": ["ego", "old", "new"] },
-                "zig": { "template": "@compileError(\"Use std.mem.replace for Zig\")", "params": ["ego", "old", "new"] }
-            }
-        }
-    },
-    "copia": {
-        "methods": {
-            "adde": {
-                "ts": { "method": "add" },
-                "py": { "method": "add" },
-                "rs": { "method": "insert" },
-                "cpp": { "method": "insert" },
-                "zig": { "template": "§0.adde(§2, §1)", "params": ["ego", "elem", "alloc"] }
-            },
-            "habet": {
-                "ts": { "method": "has" },
-                "py": { "template": "(§1 in §0)", "params": ["ego", "elem"] },
-                "rs": { "template": "§0.contains(&§1)", "params": ["ego", "elem"] },
-                "cpp": { "template": "§0.contains(§1)", "params": ["ego", "elem"] },
-                "zig": { "template": "§0.habet(§1)", "params": ["ego", "elem"] }
-            },
-            "dele": {
-                "ts": { "method": "delete" },
-                "py": { "method": "discard" },
-                "rs": { "template": "§0.remove(&§1)", "params": ["ego", "elem"] },
-                "cpp": { "template": "§0.erase(§1)", "params": ["ego", "elem"] },
-                "zig": { "template": "_ = §0.dele(§1)", "params": ["ego", "elem"] }
-            },
-            "longitudo": {
-                "ts": { "template": "§.size", "params": ["ego"] },
-                "py": { "template": "len(§)", "params": ["ego"] },
-                "rs": { "template": "§.len()", "params": ["ego"] },
-                "cpp": { "template": "§.size()", "params": ["ego"] },
-                "zig": { "template": "§.longitudo()", "params": ["ego"] }
-            },
-            "vacua": {
-                "ts": { "template": "§.size === 0", "params": ["ego"] },
-                "py": { "template": "len(§) == 0", "params": ["ego"] },
-                "rs": { "template": "§.is_empty()", "params": ["ego"] },
-                "cpp": { "template": "§.empty()", "params": ["ego"] },
-                "zig": { "template": "§.vacua()", "params": ["ego"] }
-            },
-            "purga": {
-                "ts": { "method": "clear" },
-                "py": { "method": "clear" },
-                "rs": { "method": "clear" },
-                "cpp": { "method": "clear" },
-                "zig": { "template": "§.purga()", "params": ["ego"] }
-            },
-            "valores": {
-                "ts": { "method": "values" },
-                "py": { "template": "iter(§)", "params": ["ego"] },
-                "rs": { "template": "§.iter()", "params": ["ego"] },
-                "cpp": { "template": "§", "params": ["ego"] },
-                "zig": { "template": "§.valores()", "params": ["ego"] }
-            },
-            "perambula": {
-                "ts": { "method": "forEach" },
-                "py": { "template": "[(§1)(x) for x in §0]", "params": ["ego", "fn"] },
-                "rs": { "template": "§0.iter().for_each(§1)", "params": ["ego", "fn"] },
-                "cpp": { "template": "std::ranges::for_each(§0, §1)", "params": ["ego", "fn"] },
-                "zig": { "template": "@compileError(\"perambula not implemented for Zig - use 'ex set.valores() pro item { ... }' loop\")", "params": ["ego", "fn"] }
-            },
-            "unio": {
-                "ts": { "template": "new Set([...§0, ...§1])", "params": ["ego", "alia"] },
-                "py": { "template": "§0 | §1", "params": ["ego", "alia"] },
-                "rs": { "template": "faber::copia_unio(&§0, &§1)", "params": ["ego", "alia"] },
-                "cpp": { "template": "faber::copia_unio(§0, §1)", "params": ["ego", "alia"] },
-                "zig": { "template": "@compileError(\"unio not implemented for Zig - use explicit loop to merge sets\")", "params": ["ego", "alia"] }
-            },
-            "intersectio": {
-                "ts": { "template": "new Set([...§0].filter(x => §1.has(x)))", "params": ["ego", "alia"] },
-                "py": { "template": "§0 & §1", "params": ["ego", "alia"] },
-                "rs": { "template": "faber::copia_intersectio(&§0, &§1)", "params": ["ego", "alia"] },
-                "cpp": { "template": "faber::copia_intersectio(§0, §1)", "params": ["ego", "alia"] },
-                "zig": { "template": "@compileError(\"intersectio not implemented for Zig - use explicit loop\")", "params": ["ego", "alia"] }
-            },
-            "differentia": {
-                "ts": { "template": "new Set([...§0].filter(x => !§1.has(x)))", "params": ["ego", "alia"] },
-                "py": { "template": "§0 - §1", "params": ["ego", "alia"] },
-                "rs": { "template": "faber::copia_differentia(&§0, &§1)", "params": ["ego", "alia"] },
-                "cpp": { "template": "faber::copia_differentia(§0, §1)", "params": ["ego", "alia"] },
-                "zig": { "template": "@compileError(\"differentia not implemented for Zig - use explicit loop\")", "params": ["ego", "alia"] }
-            },
-            "symmetrica": {
-                "ts": { "template": "new Set([...[...§0].filter(x => !§1.has(x)), ...[...§1].filter(x => !§0.has(x))])", "params": ["ego", "alia"] },
-                "py": { "template": "§0 ^ §1", "params": ["ego", "alia"] },
-                "rs": { "template": "faber::copia_symmetrica(&§0, &§1)", "params": ["ego", "alia"] },
-                "cpp": { "template": "faber::copia_symmetrica(§0, §1)", "params": ["ego", "alia"] },
-                "zig": { "template": "@compileError(\"symmetrica not implemented for Zig - use explicit loop\")", "params": ["ego", "alia"] }
-            },
-            "subcopia": {
-                "ts": { "template": "[...§0].every(x => §1.has(x))", "params": ["ego", "alia"] },
-                "py": { "template": "§0 <= §1", "params": ["ego", "alia"] },
-                "rs": { "template": "§0.is_subset(&§1)", "params": ["ego", "alia"] },
-                "cpp": { "template": "faber::copia_subcopia(§0, §1)", "params": ["ego", "alia"] },
-                "zig": { "template": "@compileError(\"subcopia not implemented for Zig - use explicit loop\")", "params": ["ego", "alia"] }
-            },
-            "supercopia": {
-                "ts": { "template": "[...§1].every(x => §0.has(x))", "params": ["ego", "alia"] },
-                "py": { "template": "§0 >= §1", "params": ["ego", "alia"] },
-                "rs": { "template": "§0.is_superset(&§1)", "params": ["ego", "alia"] },
-                "cpp": { "template": "faber::copia_supercopia(§0, §1)", "params": ["ego", "alia"] },
-                "zig": { "template": "@compileError(\"supercopia not implemented for Zig - use explicit loop\")", "params": ["ego", "alia"] }
-            },
-            "inLista": {
-                "ts": { "template": "[...§]", "params": ["ego"] },
-                "py": { "template": "list(§)", "params": ["ego"] },
-                "rs": { "template": "faber::copia_in_lista(&§)", "params": ["ego"] },
-                "cpp": { "template": "faber::copia_in_lista(§)", "params": ["ego"] },
-                "zig": { "template": "@compileError(\"inLista not implemented for Zig - iterate with ex...pro into ArrayList\")", "params": ["ego"] }
             }
         }
     },
@@ -903,6 +589,320 @@ fixum norma = {
                 "ts": { "template": "(() => { const a = [...§]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, §); })()", "params": ["ego", "n"] },
                 "py": { "template": "random.sample(§, §)", "params": ["ego", "n"] },
                 "cpp": { "template": "faber::lista_specimina(§0, §1)", "params": ["ego", "n"] }
+            }
+        }
+    },
+    "copia": {
+        "methods": {
+            "adde": {
+                "ts": { "method": "add" },
+                "py": { "method": "add" },
+                "rs": { "method": "insert" },
+                "cpp": { "method": "insert" },
+                "zig": { "template": "§0.adde(§2, §1)", "params": ["ego", "elem", "alloc"] }
+            },
+            "habet": {
+                "ts": { "method": "has" },
+                "py": { "template": "(§1 in §0)", "params": ["ego", "elem"] },
+                "rs": { "template": "§0.contains(&§1)", "params": ["ego", "elem"] },
+                "cpp": { "template": "§0.contains(§1)", "params": ["ego", "elem"] },
+                "zig": { "template": "§0.habet(§1)", "params": ["ego", "elem"] }
+            },
+            "dele": {
+                "ts": { "method": "delete" },
+                "py": { "method": "discard" },
+                "rs": { "template": "§0.remove(&§1)", "params": ["ego", "elem"] },
+                "cpp": { "template": "§0.erase(§1)", "params": ["ego", "elem"] },
+                "zig": { "template": "_ = §0.dele(§1)", "params": ["ego", "elem"] }
+            },
+            "longitudo": {
+                "ts": { "template": "§.size", "params": ["ego"] },
+                "py": { "template": "len(§)", "params": ["ego"] },
+                "rs": { "template": "§.len()", "params": ["ego"] },
+                "cpp": { "template": "§.size()", "params": ["ego"] },
+                "zig": { "template": "§.longitudo()", "params": ["ego"] }
+            },
+            "vacua": {
+                "ts": { "template": "§.size === 0", "params": ["ego"] },
+                "py": { "template": "len(§) == 0", "params": ["ego"] },
+                "rs": { "template": "§.is_empty()", "params": ["ego"] },
+                "cpp": { "template": "§.empty()", "params": ["ego"] },
+                "zig": { "template": "§.vacua()", "params": ["ego"] }
+            },
+            "purga": {
+                "ts": { "method": "clear" },
+                "py": { "method": "clear" },
+                "rs": { "method": "clear" },
+                "cpp": { "method": "clear" },
+                "zig": { "template": "§.purga()", "params": ["ego"] }
+            },
+            "valores": {
+                "ts": { "method": "values" },
+                "py": { "template": "iter(§)", "params": ["ego"] },
+                "rs": { "template": "§.iter()", "params": ["ego"] },
+                "cpp": { "template": "§", "params": ["ego"] },
+                "zig": { "template": "§.valores()", "params": ["ego"] }
+            },
+            "perambula": {
+                "ts": { "method": "forEach" },
+                "py": { "template": "[(§1)(x) for x in §0]", "params": ["ego", "fn"] },
+                "rs": { "template": "§0.iter().for_each(§1)", "params": ["ego", "fn"] },
+                "cpp": { "template": "std::ranges::for_each(§0, §1)", "params": ["ego", "fn"] },
+                "zig": { "template": "@compileError(\"perambula not implemented for Zig - use 'ex set.valores() pro item { ... }' loop\")", "params": ["ego", "fn"] }
+            },
+            "unio": {
+                "ts": { "template": "new Set([...§0, ...§1])", "params": ["ego", "alia"] },
+                "py": { "template": "§0 | §1", "params": ["ego", "alia"] },
+                "rs": { "template": "faber::copia_unio(&§0, &§1)", "params": ["ego", "alia"] },
+                "cpp": { "template": "faber::copia_unio(§0, §1)", "params": ["ego", "alia"] },
+                "zig": { "template": "@compileError(\"unio not implemented for Zig - use explicit loop to merge sets\")", "params": ["ego", "alia"] }
+            },
+            "intersectio": {
+                "ts": { "template": "new Set([...§0].filter(x => §1.has(x)))", "params": ["ego", "alia"] },
+                "py": { "template": "§0 & §1", "params": ["ego", "alia"] },
+                "rs": { "template": "faber::copia_intersectio(&§0, &§1)", "params": ["ego", "alia"] },
+                "cpp": { "template": "faber::copia_intersectio(§0, §1)", "params": ["ego", "alia"] },
+                "zig": { "template": "@compileError(\"intersectio not implemented for Zig - use explicit loop\")", "params": ["ego", "alia"] }
+            },
+            "differentia": {
+                "ts": { "template": "new Set([...§0].filter(x => !§1.has(x)))", "params": ["ego", "alia"] },
+                "py": { "template": "§0 - §1", "params": ["ego", "alia"] },
+                "rs": { "template": "faber::copia_differentia(&§0, &§1)", "params": ["ego", "alia"] },
+                "cpp": { "template": "faber::copia_differentia(§0, §1)", "params": ["ego", "alia"] },
+                "zig": { "template": "@compileError(\"differentia not implemented for Zig - use explicit loop\")", "params": ["ego", "alia"] }
+            },
+            "symmetrica": {
+                "ts": { "template": "new Set([...[...§0].filter(x => !§1.has(x)), ...[...§1].filter(x => !§0.has(x))])", "params": ["ego", "alia"] },
+                "py": { "template": "§0 ^ §1", "params": ["ego", "alia"] },
+                "rs": { "template": "faber::copia_symmetrica(&§0, &§1)", "params": ["ego", "alia"] },
+                "cpp": { "template": "faber::copia_symmetrica(§0, §1)", "params": ["ego", "alia"] },
+                "zig": { "template": "@compileError(\"symmetrica not implemented for Zig - use explicit loop\")", "params": ["ego", "alia"] }
+            },
+            "subcopia": {
+                "ts": { "template": "[...§0].every(x => §1.has(x))", "params": ["ego", "alia"] },
+                "py": { "template": "§0 <= §1", "params": ["ego", "alia"] },
+                "rs": { "template": "§0.is_subset(&§1)", "params": ["ego", "alia"] },
+                "cpp": { "template": "faber::copia_subcopia(§0, §1)", "params": ["ego", "alia"] },
+                "zig": { "template": "@compileError(\"subcopia not implemented for Zig - use explicit loop\")", "params": ["ego", "alia"] }
+            },
+            "supercopia": {
+                "ts": { "template": "[...§1].every(x => §0.has(x))", "params": ["ego", "alia"] },
+                "py": { "template": "§0 >= §1", "params": ["ego", "alia"] },
+                "rs": { "template": "§0.is_superset(&§1)", "params": ["ego", "alia"] },
+                "cpp": { "template": "faber::copia_supercopia(§0, §1)", "params": ["ego", "alia"] },
+                "zig": { "template": "@compileError(\"supercopia not implemented for Zig - use explicit loop\")", "params": ["ego", "alia"] }
+            },
+            "inLista": {
+                "ts": { "template": "[...§]", "params": ["ego"] },
+                "py": { "template": "list(§)", "params": ["ego"] },
+                "rs": { "template": "faber::copia_in_lista(&§)", "params": ["ego"] },
+                "cpp": { "template": "faber::copia_in_lista(§)", "params": ["ego"] },
+                "zig": { "template": "@compileError(\"inLista not implemented for Zig - iterate with ex...pro into ArrayList\")", "params": ["ego"] }
+            }
+        }
+    },
+    "tabula": {
+        "methods": {
+            "pone": {
+                "ts": { "method": "set" },
+                "py": { "template": "§0[§1] = §2", "params": ["ego", "k", "v"] },
+                "rs": { "template": "§0.insert(§1, §2)", "params": ["ego", "k", "v"] },
+                "cpp": { "template": "§0.insert_or_assign(§1, §2)", "params": ["ego", "k", "v"] },
+                "zig": { "template": "§0.pone(§3, §1, §2)", "params": ["ego", "k", "v", "alloc"] }
+            },
+            "accipe": {
+                "ts": { "method": "get" },
+                "py": { "template": "§0.get(§1)", "params": ["ego", "k"] },
+                "rs": { "template": "§0.get(&§1)", "params": ["ego", "k"] },
+                "cpp": { "template": "§0.at(§1)", "params": ["ego", "k"] },
+                "zig": { "template": "§0.accipe(§1)", "params": ["ego", "k"] }
+            },
+            "accipeAut": {
+                "ts": { "template": "(§0.get(§1) ?? §2)", "params": ["ego", "k", "def"] },
+                "py": { "template": "§0.get(§1, §2)", "params": ["ego", "k", "def"] },
+                "rs": { "template": "§0.get(&§1).cloned().unwrap_or(§2)", "params": ["ego", "k", "def"] },
+                "cpp": { "template": "(§0.contains(§1) ? §0.at(§1) : §2)", "params": ["ego", "k", "def"] },
+                "zig": { "template": "§0.accipeAut(§1, §2)", "params": ["ego", "k", "def"] }
+            },
+            "habet": {
+                "ts": { "method": "has" },
+                "py": { "template": "(§1 in §0)", "params": ["ego", "k"] },
+                "rs": { "template": "§0.contains_key(&§1)", "params": ["ego", "k"] },
+                "cpp": { "template": "§0.contains(§1)", "params": ["ego", "k"] },
+                "zig": { "template": "§0.habet(§1)", "params": ["ego", "k"] }
+            },
+            "dele": {
+                "ts": { "method": "delete" },
+                "py": { "template": "del §0[§1]", "params": ["ego", "k"] },
+                "rs": { "template": "§0.remove(&§1)", "params": ["ego", "k"] },
+                "cpp": { "template": "§0.erase(§1)", "params": ["ego", "k"] },
+                "zig": { "template": "_ = §0.dele(§1)", "params": ["ego", "k"] }
+            },
+            "longitudo": {
+                "ts": { "template": "§.size", "params": ["ego"] },
+                "py": { "template": "len(§)", "params": ["ego"] },
+                "rs": { "template": "§.len()", "params": ["ego"] },
+                "cpp": { "template": "§.size()", "params": ["ego"] },
+                "zig": { "template": "§.longitudo()", "params": ["ego"] }
+            },
+            "vacua": {
+                "ts": { "template": "§.size === 0", "params": ["ego"] },
+                "py": { "template": "len(§) == 0", "params": ["ego"] },
+                "rs": { "template": "§.is_empty()", "params": ["ego"] },
+                "cpp": { "template": "§.empty()", "params": ["ego"] },
+                "zig": { "template": "§.vacua()", "params": ["ego"] }
+            },
+            "purga": {
+                "ts": { "method": "clear" },
+                "py": { "method": "clear" },
+                "rs": { "method": "clear" },
+                "cpp": { "method": "clear" },
+                "zig": { "template": "§.purga()", "params": ["ego"] }
+            },
+            "claves": {
+                "ts": { "method": "keys" },
+                "py": { "method": "keys" },
+                "rs": { "template": "§.keys()", "params": ["ego"] },
+                "cpp": { "template": "§ | std::views::keys", "params": ["ego"] },
+                "zig": { "template": "§.claves()", "params": ["ego"] }
+            },
+            "valores": {
+                "ts": { "method": "values" },
+                "py": { "method": "values" },
+                "rs": { "template": "§.values()", "params": ["ego"] },
+                "cpp": { "template": "§ | std::views::values", "params": ["ego"] },
+                "zig": { "template": "§.valores()", "params": ["ego"] }
+            },
+            "paria": {
+                "ts": { "method": "entries" },
+                "py": { "method": "items" },
+                "rs": { "template": "§.iter()", "params": ["ego"] },
+                "cpp": { "template": "§", "params": ["ego"] },
+                "zig": { "template": "§.paria()", "params": ["ego"] }
+            },
+            "selecta": {
+                "ts": { "template": "new Map([...§0].filter(([k]) => [§1].flat().includes(k)))", "params": ["ego", "claves"] },
+                "py": { "template": "{k: v for k, v in §0.items() if k in [§1]}", "params": ["ego", "claves"] },
+                "rs": { "template": "faber::tabula_selecta(&§0, &§1)", "params": ["ego", "claves"] },
+                "cpp": { "template": "faber::tabula_selecta(§0, §1)", "params": ["ego", "claves"] },
+                "zig": { "template": "@compileError(\"selecta not implemented for Zig - use explicit loop\")", "params": ["ego", "claves"] }
+            },
+            "omissa": {
+                "ts": { "template": "new Map([...§0].filter(([k]) => ![§1].flat().includes(k)))", "params": ["ego", "claves"] },
+                "py": { "template": "{k: v for k, v in §0.items() if k not in [§1]}", "params": ["ego", "claves"] },
+                "rs": { "template": "faber::tabula_omissa(&§0, &§1)", "params": ["ego", "claves"] },
+                "cpp": { "template": "faber::tabula_omissa(§0, §1)", "params": ["ego", "claves"] },
+                "zig": { "template": "@compileError(\"omissa not implemented for Zig - use explicit loop\")", "params": ["ego", "claves"] }
+            },
+            "conflata": {
+                "ts": { "template": "new Map([...§0, ...§1])", "params": ["ego", "alia"] },
+                "py": { "template": "{**§0, **§1}", "params": ["ego", "alia"] },
+                "rs": { "template": "faber::tabula_conflata(&§0, &§1)", "params": ["ego", "alia"] },
+                "cpp": { "template": "faber::tabula_conflata(§0, §1)", "params": ["ego", "alia"] },
+                "zig": { "template": "§0.conflata(&§1)", "params": ["ego", "alia"] }
+            },
+            "inversa": {
+                "ts": { "template": "new Map([...§].map(([k, v]) => [v, k]))", "params": ["ego"] },
+                "py": { "template": "{v: k for k, v in §.items()}", "params": ["ego"] },
+                "rs": { "template": "faber::tabula_inversa(&§)", "params": ["ego"] },
+                "cpp": { "template": "faber::tabula_inversa(§)", "params": ["ego"] },
+                "zig": { "template": "@compileError(\"inversa not implemented for Zig - use explicit loop\")", "params": ["ego"] }
+            },
+            "mappaValores": {
+                "ts": { "template": "new Map([...§0].map(([k, v]) => [k, (§1)(v)]))", "params": ["ego", "fn"] },
+                "py": { "template": "{k: (§1)(v) for k, v in §0.items()}", "params": ["ego", "fn"] },
+                "zig": { "template": "@compileError(\"mappaValores not implemented for Zig - use explicit loop\")", "params": ["ego", "fn"] }
+            },
+            "mappaClaves": {
+                "ts": { "template": "new Map([...§0].map(([k, v]) => [(§1)(k), v]))", "params": ["ego", "fn"] },
+                "py": { "template": "{(§1)(k): v for k, v in §0.items()}", "params": ["ego", "fn"] },
+                "zig": { "template": "@compileError(\"mappaClaves not implemented for Zig - use explicit loop\")", "params": ["ego", "fn"] }
+            },
+            "inLista": {
+                "ts": { "template": "[...§]", "params": ["ego"] },
+                "py": { "template": "list(§.items())", "params": ["ego"] },
+                "rs": { "template": "faber::tabula_in_lista(&§)", "params": ["ego"] },
+                "cpp": { "template": "faber::tabula_in_lista(§)", "params": ["ego"] },
+                "zig": { "template": "§.inLista(§)", "params": ["ego", "alloc"] }
+            },
+            "inObjectum": {
+                "ts": { "template": "Object.fromEntries(§)", "params": ["ego"] },
+                "py": { "template": "dict(§)", "params": ["ego"] },
+                "zig": { "template": "@compileError(\"inObjectum not implemented for Zig - Zig has no object type\")", "params": ["ego"] }
+            }
+        }
+    },
+    "textus": {
+        "methods": {
+            "longitudo": {
+                "ts": { "template": "§.length", "params": ["ego"] },
+                "py": { "template": "len(§)", "params": ["ego"] },
+                "rs": { "template": "§.len()", "params": ["ego"] },
+                "cpp": { "template": "§.length()", "params": ["ego"] },
+                "zig": { "template": "§.len", "params": ["ego"] }
+            },
+            "sectio": {
+                "ts": { "method": "slice" },
+                "py": { "template": "§[§:§]", "params": ["ego", "start", "end"] },
+                "rs": { "template": "&§[§..§]", "params": ["ego", "start", "end"] },
+                "cpp": { "template": "§.substr(§, § - §)", "params": ["ego", "start", "end"] },
+                "zig": { "template": "§[§..§]", "params": ["ego", "start", "end"] }
+            },
+            "continet": {
+                "ts": { "method": "includes" },
+                "py": { "template": "§ in §", "params": ["ego", "sub"] },
+                "rs": { "method": "contains" },
+                "cpp": { "template": "(§.find(§) != std::string::npos)", "params": ["ego", "sub"] },
+                "zig": { "template": "(std.mem.indexOf(u8, §, §) != null)", "params": ["ego", "sub"] }
+            },
+            "initium": {
+                "ts": { "method": "startsWith" },
+                "py": { "method": "startswith" },
+                "rs": { "method": "starts_with" },
+                "cpp": { "template": "(§.rfind(§, 0) == 0)", "params": ["ego", "prefix"] },
+                "zig": { "template": "std.mem.startsWith(u8, §, §)", "params": ["ego", "prefix"] }
+            },
+            "finis": {
+                "ts": { "method": "endsWith" },
+                "py": { "method": "endswith" },
+                "rs": { "method": "ends_with" },
+                "cpp": { "template": "(§.size() >= §.size() && §.compare(§.size() - §.size(), §.size(), §) == 0)", "params": ["ego", "suffix"] },
+                "zig": { "template": "std.mem.endsWith(u8, §, §)", "params": ["ego", "suffix"] }
+            },
+            "maiuscula": {
+                "ts": { "method": "toUpperCase" },
+                "py": { "method": "upper" },
+                "rs": { "method": "to_uppercase" },
+                "cpp": { "template": "[&]{ auto s = §; std::transform(s.begin(), s.end(), s.begin(), ::toupper); return s; }()", "params": ["ego"] },
+                "zig": { "template": "std.ascii.upperString(§)", "params": ["ego"] }
+            },
+            "minuscula": {
+                "ts": { "method": "toLowerCase" },
+                "py": { "method": "lower" },
+                "rs": { "method": "to_lowercase" },
+                "cpp": { "template": "[&]{ auto s = §; std::transform(s.begin(), s.end(), s.begin(), ::tolower); return s; }()", "params": ["ego"] },
+                "zig": { "template": "std.ascii.lowerString(§)", "params": ["ego"] }
+            },
+            "recide": {
+                "ts": { "method": "trim" },
+                "py": { "method": "strip" },
+                "rs": { "method": "trim" },
+                "cpp": { "template": "[&]{ auto s = §; s.erase(0, s.find_first_not_of(\" \\t\\n\\r\")); s.erase(s.find_last_not_of(\" \\t\\n\\r\") + 1); return s; }()", "params": ["ego"] },
+                "zig": { "template": "std.mem.trim(u8, §, \" \\t\\n\\r\")", "params": ["ego"] }
+            },
+            "divide": {
+                "ts": { "method": "split" },
+                "py": { "method": "split" },
+                "rs": { "template": "§.split(§).collect::<Vec<_>>()", "params": ["ego", "sep"] },
+                "cpp": { "template": "@compileError(\"No single-expression split in C++ - use manual loop\")", "params": ["ego", "sep"] },
+                "zig": { "template": "@compileError(\"Use std.mem.splitSequence for Zig\")", "params": ["ego", "sep"] }
+            },
+            "muta": {
+                "ts": { "method": "replaceAll" },
+                "py": { "method": "replace" },
+                "rs": { "method": "replace" },
+                "cpp": { "template": "std::regex_replace(§, std::regex(§), §)", "params": ["ego", "old", "new"] },
+                "zig": { "template": "@compileError(\"Use std.mem.replace for Zig\")", "params": ["ego", "old", "new"] }
             }
         }
     }

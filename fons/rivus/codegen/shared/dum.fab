@@ -18,7 +18,7 @@ functio genDumLogica(
     Generans g,
     ScopusSyntaxis syn,
     Revocata rev
-) fit textus {
+) -> textus {
     g.intraProfundum()
     fixum body = rev.genStmt(corpus, g)
     g.exiProfundum()

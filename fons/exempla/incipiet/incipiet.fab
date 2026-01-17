@@ -9,12 +9,14 @@
 #   incipiet reddit <expression>
 
 # Helper async function
-functio fetchData() fiet textus {
+@ futura
+functio fetchData() -> textus {
     # Simulates async operation
     redde "data loaded"
 }
 
-functio processData(textus data) fiet numerus {
+@ futura
+functio processData(textus data) -> numerus {
     redde data.longitudo()
 }
 

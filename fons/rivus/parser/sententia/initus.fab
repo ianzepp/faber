@@ -157,7 +157,7 @@ functio parseErgoVelReddit(Resolvitor r) -> Sententia? {
 #
 # Examples:
 #   cura arena fit mem { ... }
-#   cura aperi("file.txt") fit fd { lege(fd) }
+#   cura aperi("file.txt") -> fd { lege(fd) }
 #   cura connect(url) fiet conn { ... }
 @ publica
 functio parseCuraSententia(Resolvitor r) -> Sententia {
@@ -248,7 +248,7 @@ functio parseCuraSententia(Resolvitor r) -> Sententia {
 #   binding := ('fit'|'fiet'|'fiunt'|'fient') type? 'pro' IDENT ('ut' IDENT)?
 #
 # Examples:
-#   ad "fasciculus:lege" ("file.txt") fit textus pro content { scribe content }
+#   ad "fasciculus:lege" ("file.txt") -> textus pro content { scribe content }
 #   ad "http:pete" (url) fiet Response pro resp { ... }
 @ publica
 functio parseAdSententia(Resolvitor r) -> Sententia {

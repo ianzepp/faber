@@ -7,11 +7,11 @@
 @ publicum
 pactum Generans {
     # Generate indentation string for current depth
-    functio ind() fit textus
+    functio ind() -> textus
 
     # Increment indentation depth
-    functio intraProfundum() fit vacuum
+    functio intraProfundum() -> vacuum
 
     # Decrement indentation depth
-    functio exiProfundum() fit vacuum
+    functio exiProfundum() -> vacuum
 }

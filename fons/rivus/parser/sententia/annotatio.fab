@@ -314,6 +314,60 @@ functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
     } qua Annotatio
 }
 
+# Parse @ imperia: command re-export annotation
+# Grammar: @ imperia STRING 'ex' IDENTIFIER
+# Example: @ imperia "greet" ex greetModule
+functio parseImperiaAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annotatio {
+    fixum p = r.parser()
+    varia argumenta = [] innatum lista<textus>
+
+    # Parse subcommand name (string)
+    si p.specta(0).species == SymbolumGenus.Textus et p.specta(0).locus.linea == linea {
+        argumenta.adde(p.specta(0).valor)
+        p.procede()
+    } secus {
+        p.renuncia(ParserErrorCodice.ExpectaturTextus, scriptum("@ imperia requires subcommand name, got '§'", p.specta(0).valor))
+    }
+
+    # Parse 'ex' keyword
+    si p.probaVerbum("ex") et p.specta(0).locus.linea == linea {
+        p.procede()
+    } secus {
+        # No 'ex' - that's fine, just return what we have
+        redde {
+            locus: locus,
+            nomen: "imperia",
+            argumenta: argumenta,
+            targetMappings: nihil,
+            radixForms: nihil,
+            verteTarget: nihil,
+            verteMethod: nihil,
+            verteParams: nihil,
+            verteTemplate: nihil
+        } qua Annotatio
+    }
+
+    # Parse module identifier
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
+        argumenta.adde(p.specta(0).valor)
+        p.procede()
+    } secus {
+        p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("@ imperia ex requires module name, got '§'", p.specta(0).valor))
+    }
+
+    redde {
+        locus: locus,
+        nomen: "imperia",
+        argumenta: argumenta,
+        targetMappings: nihil,
+        radixForms: nihil,
+        verteTarget: nihil,
+        verteMethod: nihil,
+        verteParams: nihil,
+        verteTemplate: nihil
+    } qua Annotatio
+}
+
 # ============================================================================
 # MAIN PARSER
 # ============================================================================
@@ -355,6 +409,13 @@ functio parseAnnotationes(Resolvitor r) -> lista<Annotatio> {
 
         si nomen == "verte" {
             annotationes.adde(parseVerteAnnotation(r, locus, linea))
+            perge
+        }
+
+        # @ imperia "subcommand" ex moduleIdentifier
+        # Mounts commands from imported module under a subcommand namespace
+        si nomen == "imperia" {
+            annotationes.adde(parseImperiaAnnotation(r, locus, linea))
             perge
         }
 

@@ -341,7 +341,7 @@ discretio Sententia {
     # -------------------------------------------------------------------------
 
     # Function declaration
-    # Example: functio salve(textus nomen) fit textus { ... }
+    # Example: functio salve(textus nomen) -> textus { ... }
     # Example: functio alloc(textus s) curata alloc -> T { ... }
     # @ externa marks external declarations (no body required)
     FunctioDeclaratio {
@@ -383,7 +383,7 @@ discretio Sententia {
     }
 
     # Pactum (interface) declaration
-    # Example: pactum Iterabilis { functio sequens() fit T? }
+    # Example: pactum Iterabilis { functio sequens() -> T? }
     PactumDeclaratio {
         Locus locus
         textus nomen
@@ -594,7 +594,7 @@ discretio Sententia {
     }
 
     # Dispatch statement
-    # Example: ad "fasciculus:lege" ("file.txt") fit textus pro content { ... }
+    # Example: ad "fasciculus:lege" ("file.txt") -> textus pro content { ... }
     AdSententia {
         Locus locus
         textus scopus            # target string

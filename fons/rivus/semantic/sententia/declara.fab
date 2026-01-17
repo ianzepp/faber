@@ -75,6 +75,20 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
         redde primitivumTypus(annotatio.nomen, annotatio.nullabilis)
     }
 
+    # Check if this is a type alias - if so, return the underlying type (structural aliases)
+    fixum symbolum = quaereSymbolumLocale(r.analyzator().scopus, annotatio.nomen)
+    si nonnihil symbolum {
+        fixum sym = symbolum qua Symbolum
+        si sym.species == SymbolumSpecies.TypusAlias {
+            # Return the underlying type, preserving nullability
+            si annotatio.nullabilis {
+                # Wrap in union with nihil for nullable
+                redde unioTypus([sym.semanticTypus, NIHIL])
+            }
+            redde sym.semanticTypus
+        }
+    }
+
     # User-defined types (genus/pactum/etc.)
     redde usitatumTypus(annotatio.nomen, annotatio.nullabilis)
 }

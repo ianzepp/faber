@@ -109,7 +109,7 @@ fixum FLAGGA_FUTURUM_INDICATIVUM = {
 #
 # Returns nihil if no recognized morphology.
 @ publica
-functio parseMethodum(textus nomen) fit RadixEtFlagga? {
+functio parseMethodum(textus nomen) -> RadixEtFlagga? {
     fixum longitudo = nomen.longitudo()
 
     # Need at least 2 chars (1 stem + 1 ending)
@@ -164,7 +164,7 @@ functio parseMethodum(textus nomen) fit RadixEtFlagga? {
 
 # Check if a stem is a known lista verb
 @ publica
-functio estRadixListae(textus radix) fit bivalens {
+functio estRadixListae(textus radix) -> bivalens {
     # Core action verbs for lista operations
     # WHY: Some verbs have different stems for different conjugations.
     #      e.g., invertere → invert- (present), invers- (perfect participle)

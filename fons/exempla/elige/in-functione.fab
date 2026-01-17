@@ -6,7 +6,7 @@
 #     ceterum { redde ... }
 # }
 
-functio getGreeting(textus language) fit textus {
+functio getGreeting(textus language) -> textus {
     elige language {
         casu "latin" {
             redde "Salve"
@@ -25,7 +25,7 @@ functio getGreeting(textus language) fit textus {
     redde "Hi"
 }
 
-functio getHttpMessage(numerus code) fit textus {
+functio getHttpMessage(numerus code) -> textus {
     elige code {
         casu 200 {
             redde "OK"

@@ -7,11 +7,18 @@
 #   futura functio f() { ... }          -> async function f() { ... }
 #   cursore functio f() { ... }         -> function* f() { ... }
 #   futura cursore functio f() { ... }  -> async function* f() { ... }
-#   functio f() fit T { ... }           -> function f(): T { return asFit(...) }
-#   functio f() fiet T { ... }          -> async function f(): Promise<T> { return await asFiet(...) }
-#   functio f() fiunt T { ... }         -> function* f(): Generator<T> { yield* asFiunt(...) }
-#   functio f() fient T { ... }         -> async function* f(): AsyncGenerator<T> { yield* asFient(...) }
 #   @ externa functio f() -> T          -> declare function f(): T;
+#
+# DORMANT (fit/fiet/fiunt/fient return protocol):
+#   The code below still supports the Responsum protocol for structured returns:
+#     functio f() -> T { ... }   -> function f(): T { return asFit(...) }
+#     functio f() fiet T { ... }  -> async function f(): Promise<T> { ... }
+#     functio f() fiunt T { ... } -> function* f(): Generator<T> { ... }
+#     functio f() fient T { ... } -> async function* f(): AsyncGenerator<T> { ... }
+#
+#   This machinery is preserved but dormant - the parser no longer accepts fit/fiet/fiunt/fient
+#   as return type syntax. Re-enable in parser/sententia/declara.fab when Go/Zig backends
+#   are ready to support the protocol. See preamble/index.fab for runtime definitions.
 
 ex "../../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, Visibilitas, ReddeVerbum
 ex "../../../ast/typus" importa TypusAnnotatio

@@ -78,7 +78,7 @@ functio additaExemplar()
 @ verte py (ego) -> "len(§)"
 @ verte zig (ego) -> "§.longitudo()"
 @ externa
-functio longitudoExemplar() fit numerus
+functio longitudoExemplar() -> numerus
 
 # =============================================================================
 # Combined Example: Full Method Definition

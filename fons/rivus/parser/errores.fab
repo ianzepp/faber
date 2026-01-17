@@ -230,7 +230,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde creoNuntium("Expected 'fac'", "Block scope: fac { } cape { }")
         }
         casu ParserErrorCodice.ExpectaturFit {
-            redde creoNuntium("Expected 'fit'", "Return type: functio f() fit T { }")
+            redde creoNuntium("Expected 'fit'", "Return type: functio f() -> T { }")
         }
         casu ParserErrorCodice.ExpectaturOrdo {
             redde creoNuntium("Expected 'ordo'", "Enum: ordo Color { R, G, B }")

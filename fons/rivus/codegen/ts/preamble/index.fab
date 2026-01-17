@@ -1,6 +1,12 @@
 # TypeScript Preamble Generator
 #
 # Assembles runtime preamble snippets based on features used in generated code.
+#
+# DORMANT (Responsum/flumina protocol):
+#   The FLUMINA constant below defines the Responsum type and asFit/asFiet/asFiunt/asFient
+#   unwrappers for the fit/fiet/fiunt/fient return protocol. This code is preserved but
+#   dormant - the parser no longer accepts these keywords as return syntax.
+#   Re-enable in parser/sententia/declara.fab when Go/Zig backends support the protocol.
 
 ex "../../typi" importa RequiredFeatures
 

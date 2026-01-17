@@ -1,31 +1,34 @@
 
-# Iterating over fiunt/fient function returns with ex...pro
+# Iterating over generator function returns with ex...pro
 #
-# This demonstrates that fiunt/fient functions produce iterable results
+# This demonstrates that @ cursor functions produce iterable results
 # that can be consumed with ex...pro loops
 
 # Multi-value sync function that yields values via cede
-functio rangeSync(numerus n) fiunt numerus {
+@ cursor
+functio rangeSync(numerus n) -> numerus {
     ex 0..n pro i {
         cede i
     }
 }
 
 # Multi-value async function that yields values via cede
-functio rangeAsync(numerus n) fient numerus {
+@ futura
+@ cursor
+functio rangeAsync(numerus n) -> numerus {
     ex 0..n pro i {
         cede i
     }
 }
 
 incipit {
-    # Iterate over sync fiunt function results
-    scribe "Sync fiunt iteration:"
+    # Iterate over sync generator function results
+    scribe "Sync cursor iteration:"
     ex rangeSync(3) pro num {
         scribe "  num: {num}"
     }
 
-    # Collect all results from fiunt function
+    # Collect all results from generator function
     varia syncResults = []
     ex rangeSync(5) pro num {
         syncResults.adde(num * 2)

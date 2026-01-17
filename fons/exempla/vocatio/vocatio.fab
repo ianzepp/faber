@@ -4,28 +4,28 @@ functio greet() {
     scribe "Salve!"
 }
 
-functio add(numerus a, numerus b) fit numerus {
+functio add(numerus a, numerus b) -> numerus {
     redde a + b
 }
 
-functio multiply(numerus x, numerus y) fit numerus {
+functio multiply(numerus x, numerus y) -> numerus {
     redde x * y
 }
 
 genus Calculator {
     numerus value: 0
 
-    functio setValue(numerus n) fit Calculator {
+    functio setValue(numerus n) -> Calculator {
         ego.value = n
         redde ego
     }
 
-    functio double() fit Calculator {
+    functio double() -> Calculator {
         ego.value = ego.value * 2
         redde ego
     }
 
-    functio getResult() fit numerus {
+    functio getResult() -> numerus {
         redde ego.value
     }
 }

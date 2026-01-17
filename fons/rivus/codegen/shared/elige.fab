@@ -22,7 +22,7 @@ functio genEligeLogica(
     Generans g,
     ScopusSyntaxis syn,
     Revocata rev
-) fit textus {
+) -> textus {
     fixum disc = rev.genExpr(discriminans, g)
     varia wrapTry = nonnihil cape et syn.habetCape
 

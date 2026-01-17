@@ -3,23 +3,23 @@
 # redde <expression>   -- return a value
 # redde                -- void return
 
-functio add(numerus a, numerus b) fit numerus {
+functio add(numerus a, numerus b) -> numerus {
     redde a + b
 }
 
-functio greet(textus name) fit textus {
+functio greet(textus name) -> textus {
     redde "Hello, " + name
 }
 
-functio getFortyTwo() fit numerus {
+functio getFortyTwo() -> numerus {
     redde 42
 }
 
-functio doNothing() fit vacuum {
+functio doNothing() -> vacuum {
     redde
 }
 
-functio earlyExit(numerus x) fit numerus {
+functio earlyExit(numerus x) -> numerus {
     si x < 0 {
         redde 0
     }

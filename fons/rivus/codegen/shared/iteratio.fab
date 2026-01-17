@@ -29,7 +29,7 @@ functio genAmbitusIteratio(
     Generans g,
     ScopusSyntaxis syn,
     Revocata rev
-) fit textus {
+) -> textus {
     fixum op = inclusivum sic "<=" secus "<"
 
     varia incrementum = scriptum("§++", variabilis)
