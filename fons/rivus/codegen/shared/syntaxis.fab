@@ -12,6 +12,9 @@ genus ScopusSyntaxis {
     textus secusVerbum       # "else" for all
     textus sinVerbum         # "else if" for all
 
+    # Operators
+    textus aequaleOp         # "===" for TS, "==" for Go/Zig/Rust
+
     # Loops
     textus dumVerbum         # "while" for TS/Zig, "for" for Go
 
@@ -26,6 +29,7 @@ fixum SYNTAXIS_TS = finge ScopusSyntaxis {
     siCondicioPost: ")",
     secusVerbum: "else",
     sinVerbum: "else if",
+    aequaleOp: "===",
     dumVerbum: "while",
     habetCape: verum
 }
@@ -37,6 +41,7 @@ fixum SYNTAXIS_GO = finge ScopusSyntaxis {
     siCondicioPost: "",
     secusVerbum: "else",
     sinVerbum: "else if",
+    aequaleOp: "==",
     dumVerbum: "for",
     habetCape: falsum
 }

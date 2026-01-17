@@ -1,57 +1,18 @@
 # Go Statement Generator - Elige (Switch on Value)
 #
-# TRANSFORMS:
-#   elige x { casu 1 {...} casu 2 {...} }  -> switch x { case 1: ... case 2: ... }
-#   elige x { casu 1 {...} ceterum {...} } -> switch x { case 1: ... default: ... }
-#   elige x { casu 1 reddit expr }         -> switch x { case 1: return expr }
+# Generates if/else chains for value matching.
 #
-# NOTE: cape (catch) clause is not directly supported in Go.
-#       Go uses defer/recover for panic handling, which is structurally different.
+# TRANSFORMS:
+#   elige x { casu 1 {...} casu 2 {...} } -> if x == 1 {...} else if x == 2 {...}
 
-ex "../../../ast/sententia" importa Sententia, EligeCasus
+ex "../../../ast/sententia" importa EligeCasus
 ex "../../../ast/expressia" importa Expressia
 ex "../nucleus" importa GoGenerator
-ex "../expressia/index" importa genExpressia
-ex "./index" importa genSententia
+ex "../../shared/syntaxis" importa SYNTAXIS_GO
+ex "../../shared/elige" importa genEligeLogica
+ex "../revocata" importa creaGoRevocata
 
 @ publica
 functio genElige(Expressia discriminans, lista<EligeCasus> casus, ignotum praedefinitum, ignotum cape, GoGenerator g) -> textus {
-    fixum disc = genExpressia(discriminans, g)
-
-    varia result = scriptum("§switch § {\n", g.ind(), disc)
-
-    ex casus pro c {
-        fixum cond = genExpressia(c.condicio, g)
-        result = scriptum("§§case §:\n", result, g.ind(), cond)
-
-        g.intraProfundum()
-        fixum body = genSententia(c.consequens, g)
-        g.exiProfundum()
-
-        si body != "" {
-            result = scriptum("§§\n", result, body)
-        }
-    }
-
-    si nonnihil praedefinitum {
-        result = scriptum("§§default:\n", result, g.ind())
-
-        g.intraProfundum()
-        fixum defBody = genSententia(praedefinitum qua Sententia, g)
-        g.exiProfundum()
-
-        si defBody != "" {
-            result = scriptum("§§\n", result, defBody)
-        }
-    }
-
-    result = scriptum("§§}", result, g.ind())
-
-    # cape (catch) clause - Go doesn't have try/catch
-    # For now, emit a comment warning. Full defer/recover pattern would require restructuring.
-    si nonnihil cape {
-        result = scriptum("§\n§// WARNING: cape clause not supported in Go (use defer/recover pattern)", result, g.ind())
-    }
-
-    redde result
+    redde genEligeLogica(discriminans, casus, praedefinitum, cape, g, SYNTAXIS_GO, creaGoRevocata())
 }

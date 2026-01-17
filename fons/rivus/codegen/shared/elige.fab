@@ -1,0 +1,114 @@
+# Shared Codegen - Elige (Switch on Value)
+#
+# Generates if/else chains for value matching.
+# Parameterized by ScopusSyntaxis for target-specific output.
+#
+# TRANSFORMS:
+#   elige x { casu 1 {...} casu 2 {...} } -> if (x === 1) {...} else if (x === 2) {...}
+
+ex "../../ast/sententia" importa Sententia, EligeCasus, CapeClausula
+ex "../../ast/expressia" importa Expressia
+ex "./syntaxis" importa ScopusSyntaxis
+ex "./revocata" importa Revocata
+ex "./generans" importa Generans
+
+# Main entry point - generates if/else chain with optional cape wrapper
+@ publica
+functio genEligeLogica(
+    Expressia discriminans,
+    lista<EligeCasus> casus,
+    ignotum praedefinitum,
+    ignotum cape,
+    Generans g,
+    ScopusSyntaxis syn,
+    Revocata rev
+) fit textus {
+    fixum disc = rev.genExpr(discriminans, g)
+    varia wrapTry = nonnihil cape et syn.habetCape
+
+    si wrapTry {
+        g.intraProfundum()
+    }
+
+    varia result = ""
+    varia primus = verum
+
+    ex casus pro c {
+        fixum cond = rev.genExpr(c.condicio, g)
+
+        si primus {
+            # First case: if (disc === cond) {
+            result = scriptum(
+                "§if §§ § §§ {\n",
+                g.ind(),
+                syn.siCondicioPrae,
+                disc,
+                syn.aequaleOp,
+                cond,
+                syn.siCondicioPost
+            )
+            primus = falsum
+        } secus {
+            # Subsequent cases: } else if (disc === cond) {
+            result = scriptum(
+                "§} § §§ § §§ {\n",
+                result,
+                syn.sinVerbum,
+                syn.siCondicioPrae,
+                disc,
+                syn.aequaleOp,
+                cond,
+                syn.siCondicioPost
+            )
+        }
+
+        g.intraProfundum()
+        fixum body = rev.genStmt(c.consequens, g)
+        g.exiProfundum()
+
+        si body != "" {
+            result = scriptum("§§\n", result, body)
+        }
+        result = scriptum("§§", result, g.ind())
+    }
+
+    # Default case: } else { or close final case with }
+    si nonnihil praedefinitum {
+        result = scriptum("§} § {\n", result, syn.secusVerbum)
+
+        g.intraProfundum()
+        fixum defBody = rev.genStmt(praedefinitum qua Sententia, g)
+        g.exiProfundum()
+
+        si defBody != "" {
+            result = scriptum("§§\n", result, defBody)
+        }
+        result = scriptum("§§}\n", result, g.ind())
+    } secus {
+        # No default - just close the final case
+        result = scriptum("§}\n", result)
+    }
+
+    si wrapTry {
+        g.exiProfundum()
+    }
+
+    # Wrap in try/catch if cape is present and target supports it
+    si nonnihil cape et syn.habetCape {
+        fixum c = cape qua CapeClausula
+        g.intraProfundum()
+        fixum catchBody = rev.genStmt(c.corpus, g)
+        g.exiProfundum()
+        redde scriptum(
+            "§try {\n§\n§} catch (§) {\n§\n§}",
+            g.ind(),
+            result,
+            g.ind(),
+            c.param,
+            catchBody,
+            g.ind()
+        )
+    }
+
+    redde result
+}
