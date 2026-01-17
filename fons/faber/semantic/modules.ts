@@ -31,7 +31,7 @@
  * @module semantic/modules
  */
 
-import { resolve, dirname, extname } from 'node:path';
+import { resolve, dirname, extname, relative } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { tokenize } from '../tokenizer';
 import { parse } from '../parser';
@@ -574,20 +574,28 @@ export function resolveModule(source: string, ctx: ModuleContext): ModuleResult 
         const { tokens, errors: tokenErrors } = tokenize(sourceCode);
 
         if (tokenErrors.length > 0) {
+            const displayPath = relative(process.cwd(), absolutePath);
+            const formatted = tokenErrors
+                .map(e => `${displayPath}:${e.position.line}:${e.position.column} - ${e.text}`)
+                .join('\n');
             return {
                 ok: false,
                 error: 'parse_error',
-                message: `Lexer errors in '${source}': ${tokenErrors.map(e => e.text).join(', ')}`,
+                message: formatted,
             };
         }
 
         const { program, errors: parseErrors } = parse(tokens);
 
         if (parseErrors.length > 0 || !program) {
+            const displayPath = relative(process.cwd(), absolutePath);
+            const formatted = parseErrors
+                .map(e => `${displayPath}:${e.position.line}:${e.position.column} - ${e.message}`)
+                .join('\n');
             return {
                 ok: false,
                 error: 'parse_error',
-                message: `Parse errors in '${source}': ${parseErrors.map(e => e.message).join(', ')}`,
+                message: formatted,
             };
         }
 
