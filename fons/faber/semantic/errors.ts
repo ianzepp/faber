@@ -51,6 +51,7 @@ export enum SemanticErrorCode {
     RequiredAfterOptional = 'S015',
     MissingFunctionBody = 'S016',
     NonExhaustiveMatch = 'S017',
+    NihilEqualityComparison = 'S018',
     // Import resolution errors
     ModuleNotFound = 'S012',
     ModuleParseError = 'S014',
@@ -130,5 +131,9 @@ export const SEMANTIC_ERRORS = {
     [SemanticErrorCode.NonExhaustiveMatch]: {
         text: (missing: string[]) => `Non-exhaustive match: missing variant${missing.length > 1 ? 's' : ''} ${missing.map(v => `'${v}'`).join(', ')}`,
         help: 'All variants of a discretio must be handled in a discerne statement.',
+    },
+    [SemanticErrorCode.NihilEqualityComparison]: {
+        text: (operator: string) => `Use 'nulla' or 'nonnulla' unary operators instead of '${operator} nihil'`,
+        help: "For null checks, prefer 'nulla x' (is null/empty) or 'nonnulla x' (is not null/empty) over '== nihil' or '!= nihil'.",
     },
 } as const;
