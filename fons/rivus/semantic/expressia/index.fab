@@ -132,14 +132,9 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
             # ego type depends on enclosing class context
             si nonnihil a.currentGenusNomen {
                 fixum genusNomen = a.currentGenusNomen qua textus
-                # WHY: Use quaereSymbolum to search parent scopes. When inside a method body,
-                # the class symbol is in a parent scope, not the current function scope.
-                fixum symbolum = quaereSymbolum(a.scopus, genusNomen)
-                si nonnihil symbolum {
-                    redde symbolum.semanticTypus
-                }
-                # Internal error: genus name set but symbol not in scope
-                mori scriptum("Internal error: genus '§' not found in scope", genusNomen)
+                # WHY: ego refers to an instance of the class, not the class definition itself.
+                # Return Usitatum (instance type) not Genus (metatype).
+                redde usitatumTypus(genusNomen, falsum)
             }
             # User error: ego used outside genus context
             a.error("'ego' can only be used inside a genus (class)", e.locus)
