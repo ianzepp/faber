@@ -42,9 +42,9 @@ typeParamDecl := 'prae' 'typus' IDENTIFIER
 parameter    := ('de' | 'in' | 'ex')? 'si'? 'ceteri'? typeAnnotation? IDENTIFIER ('ut' IDENTIFIER)? ('vel' expression)?
 funcModifier := 'curata' IDENTIFIER | 'errata' IDENTIFIER | 'exitus' (IDENTIFIER | NUMBER) | 'immutata' | 'iacit'
 returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
-lambdaExpr   := ('pro' | 'fit' | 'fiet') lambdaParams? ('->' typeAnnotation)? (':' expression | blockStmt)
-lambdaParams := lambdaParam (',' lambdaParam)*
-lambdaParam  := ('de' | 'in' | 'ex')? typeAnnotation? IDENTIFIER
+clausuraExpr   := 'clausura' clausuraParams? ('->' typeAnnotation)? (':' expression | blockStmt)
+clausuraParams := clausuraParam (',' clausuraParam)*
+clausuraParam  := ('de' | 'in' | 'ex')? typeAnnotation? IDENTIFIER
 ```
 
 - Return verbs: `fit` (sync), `fiet` (async), `fiunt` (generator), `fient` (async generator)

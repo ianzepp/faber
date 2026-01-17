@@ -67,6 +67,7 @@ ordo ParserErrorCodice {
     ExpectaturAd = "P052",
     ExpectaturIncipit = "P054",
     ExpectaturIncipiet = "P055",
+    ExpectaturClausura = "P056",
 
     # Module/source errors (P050-P059)
     ExpectaturModulusNomen = "P050",
@@ -260,6 +261,9 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
         }
         casu ParserErrorCodice.ExpectaturIncipiet {
             redde creoNuntium("Expected 'incipiet'", "Async entry: incipiet { }")
+        }
+        casu ParserErrorCodice.ExpectaturClausura {
+            redde creoNuntium("Expected 'clausura'", "Closure: clausura x: x * 2")
         }
 
         # Module/source errors

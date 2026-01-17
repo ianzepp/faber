@@ -66,6 +66,7 @@
 "adfirma" @keyword
 "scribe" @keyword.function
 "cede" @keyword.control
+"clausura" @keyword.function
 
 ; ==============================================================================
 ; Literals

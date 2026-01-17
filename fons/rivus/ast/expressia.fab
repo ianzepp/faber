@@ -12,9 +12,9 @@ ex "./sententia" importa MassaSententia
 # ============================================================================
 
 @ publicum
-# Lambda body: either an expression or a block
-# WHY: Lambdas can be `pro x: expr` or `pro x { ... }`.
-discretio LambdaCorpus {
+# Clausura body: either an expression or a block
+# WHY: Clausuras can be `clausura x: expr` or `clausura x { ... }`.
+discretio ClausuraCorpus {
     Expr {
         Expressia valor
     }
@@ -47,10 +47,10 @@ genus ObiectumProprietas {
     bivalens dispersum       # true for { sparge expr }
 }
 
-# Lambda parameter (simplified vs full Parametrum)
-# Example: pro x, y: x + y
+# Clausura parameter (simplified vs full Parametrum)
+# Example: clausura x, y: x + y
 @ publicum
-genus LambdaParametrum {
+genus ClausuraParametrum {
     Locus locus
     textus nomen
     TypusAnnotatio? typus
@@ -235,7 +235,7 @@ discretio Expressia {
     # Example: praefixum { ... }
     PraefixumExpressia {
         Locus locus
-        LambdaCorpus corpus
+        ClausuraCorpus corpus
     }
 
 
@@ -331,16 +331,16 @@ discretio Expressia {
     }
 
     # -------------------------------------------------------------------------
-    # Lambda
+    # Clausura
     # -------------------------------------------------------------------------
 
-    # Lambda expression (anonymous function)
-    # Example: pro x: x * 2
-    # Example: pro x, y: x + y
-    LambdaExpressia {
+    # Clausura expression (anonymous function/closure)
+    # Example: clausura x: x * 2
+    # Example: clausura x, y: x + y
+    ClausuraExpressia {
         Locus locus
-        lista<LambdaParametrum> parametra
-        LambdaCorpus corpus
+        lista<ClausuraParametrum> parametra
+        ClausuraCorpus corpus
         TypusAnnotatio? typusReditus    # optional return type
     }
 

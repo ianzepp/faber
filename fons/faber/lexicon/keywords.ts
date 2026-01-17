@@ -278,6 +278,9 @@ export const keywords: KeywordEntry[] = [
     { latin: 'fiet', meaning: 'async ->', category: 'operator' },
     { latin: 'fiunt', meaning: 'yields ->', category: 'operator' },
     { latin: 'fient', meaning: 'async yields ->', category: 'operator' },
+    // WHY: "clausura" (closure) for anonymous functions/lambdas
+    //      Replaces overloaded 'pro' which is used for for-of loops
+    { latin: 'clausura', meaning: 'closure/lambda', category: 'expression' },
 
     // ---------------------------------------------------------------------------
     // Literal Values

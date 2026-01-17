@@ -30,7 +30,7 @@
 
 ex "../resolvitor" importa Resolvitor
 ex "../../ast/positio" importa Locus
-ex "../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum, LambdaCorpus
+ex "../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, ClausuraParametrum, ClausuraCorpus
 ex "../../ast/expressia" importa AbFiltrum, CatenaGradus
 ex "../../ast/typus" importa TypusAnnotatio
 ex "../../ast/lexema" importa SymbolumGenus
@@ -161,9 +161,9 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
         redde parseObiectumExpressia(r)
     }
 
-    # Lambda: pro x: expr
-    si p.probaVerbum("pro") {
-        redde parseLambdaExpressia(r)
+    # Clausura: clausura x: expr
+    si p.probaVerbum("clausura") {
+        redde parseClausuraExpressia(r)
     }
 
     # Discretio construction: finge Variant { ... } qua Type
@@ -287,7 +287,7 @@ functio parseAbExpressia(Resolvitor r) -> Expressia {
             } qua AbFiltrum
         } sin (p.proba(SymbolumGenus.Nomen) aut p.proba(SymbolumGenus.Verbum)) {
             fixum prox = p.specta(0)
-            si non estCatenaVerbumSym(prox) et non p.probaVerbum("pro") et non p.probaVerbum("fit") et non p.probaVerbum("fiet") {
+            si non estCatenaVerbumSym(prox) et non p.probaVerbum("clausura") {
                 fixum nomenSym = p.procede()
                 filtrum = {
                     locus: nomenSym.locus,
@@ -537,22 +537,22 @@ functio parseObiectumExpressia(Resolvitor r) -> Expressia {
 #
 # Examples:
 #   pro: 42                       # zero params
-#   pro x: x * 2                  # single param
-#   pro x, y: x + y               # multiple params
-#   pro x -> numerus: x * 2       # with return type
+#   clausura x: x * 2             # single param
+#   clausura x, y: x + y          # multiple params
+#   clausura x -> numerus: x * 2  # with return type
 #
 # Note: Block form uses MassaSententia as corpus for later codegen.
 @ publica
-functio parseLambdaExpressia(Resolvitor r) -> Expressia {
+functio parseClausuraExpressia(Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
-    # Consume 'pro'
-    p.expectaVerbum("pro", ParserErrorCodice.ExpectaturPro)
+    # Consume 'clausura'
+    p.expectaVerbum("clausura", ParserErrorCodice.ExpectaturClausura)
 
-    varia parametra = [] innatum lista<LambdaParametrum>
+    varia parametra = [] innatum lista<ClausuraParametrum>
 
-    # Check for immediate : or -> (zero-param lambda)
+    # Check for immediate : or -> (zero-param clausura)
     si non p.proba(SymbolumGenus.Colon) et non p.proba(SymbolumGenus.Sagitta) {
         # Parse parameters until we hit : or ->
         fac {
@@ -563,7 +563,7 @@ functio parseLambdaExpressia(Resolvitor r) -> Expressia {
                 locus: paramLocus,
                 nomen: nomenSym.valor,
                 typus: nihil
-            } qua LambdaParametrum)
+            } qua ClausuraParametrum)
         } dum p.congruet(SymbolumGenus.Coma)
     }
 
@@ -574,17 +574,17 @@ functio parseLambdaExpressia(Resolvitor r) -> Expressia {
     }
 
     # Body: ':' expression or blockStmt
-    varia corpus = nihil qua LambdaCorpus?
+    varia corpus = nihil qua ClausuraCorpus?
     si p.congruet(SymbolumGenus.Colon) {
-        corpus = finge Expr { valor: r.expressia() } qua LambdaCorpus
+        corpus = finge Expr { valor: r.expressia() } qua ClausuraCorpus
     } sin p.proba(SymbolumGenus.UncusSin) {
-        corpus = finge Massa { valor: r.massa() } qua LambdaCorpus
+        corpus = finge Massa { valor: r.massa() } qua ClausuraCorpus
     } secus {
         p.expecta(SymbolumGenus.Colon, ParserErrorCodice.ExpectaturColon)
-        corpus = finge Expr { valor: r.expressia() } qua LambdaCorpus
+        corpus = finge Expr { valor: r.expressia() } qua ClausuraCorpus
     }
 
-    redde finge LambdaExpressia {
+    redde finge ClausuraExpressia {
         locus: locus,
         parametra: parametra,
         corpus: corpus,
@@ -673,16 +673,16 @@ functio parsePraefixumExpressia(Resolvitor r) -> Expressia {
 
     p.expectaVerbum("praefixum", ParserErrorCodice.ExpectaturExpressia)
 
-    varia corpus = nihil qua LambdaCorpus?
+    varia corpus = nihil qua ClausuraCorpus?
 
     si p.proba(SymbolumGenus.UncusSin) {
         # WHY: Block form is allowed in grammar, but AST expects an expression.
         fixum massa = r.massa()
-        corpus = finge Massa { valor: massa } qua LambdaCorpus
+        corpus = finge Massa { valor: massa } qua ClausuraCorpus
     } sin p.congruet(SymbolumGenus.ParensSin) {
         fixum expr = r.expressia()
         p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
-        corpus = finge Expr { valor: expr } qua LambdaCorpus
+        corpus = finge Expr { valor: expr } qua ClausuraCorpus
     } secus {
         p.renuncia(ParserErrorCodice.ExpectaturUncusVelParens, scriptum("got '§'", p.specta(0).valor))
         corpus = finge Expr {
@@ -691,7 +691,7 @@ functio parsePraefixumExpressia(Resolvitor r) -> Expressia {
                 species: LitteraGenus.Nihil,
                 crudus: "nihil"
             } qua Expressia
-        } qua LambdaCorpus
+        } qua ClausuraCorpus
     }
 
     redde finge PraefixumExpressia {

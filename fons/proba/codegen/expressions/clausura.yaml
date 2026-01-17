@@ -1,8 +1,8 @@
-# Lambda expressions - Latin pro syntax for lambdas
-# Maps Faber pro: syntax to target-language lambda equivalents
+# Clausura expressions - Latin clausura syntax for closures/lambdas
+# Maps Faber clausura: syntax to target-language lambda equivalents
 
-- name: lambda with return type (expression body)
-  source: 'pro x -> numerus: x * 2'
+- name: clausura with return type (expression body)
+  source: 'clausura x -> numerus: x * 2'
   expect:
       ts: '(x): number => (x * 2);'
       py: 'lambda x: (x * 2)'
@@ -13,12 +13,12 @@
       zig:
           - 'struct { fn call(x: anytype) i64 { return (x * 2); } }.call'
       fab:
-          - 'pro x -> numerus:'
+          - 'clausura x -> numerus:'
           - 'x * 2'
 
-- name: lambda with return type (block body)
+- name: clausura with return type (block body)
   source: |
-      pro x -> numerus {
+      clausura x -> numerus {
           redde x * 2
       }
   expect:
@@ -38,11 +38,11 @@
           - 'return (x * 2);'
           - '} }.call'
       fab:
-          - 'pro x -> numerus {'
+          - 'clausura x -> numerus {'
           - 'redde x * 2'
 
-- name: single param lambda
-  source: 'pro x: x * 2'
+- name: single param clausura
+  source: 'clausura x: x * 2'
   expect:
       ts: '(x) => (x * 2);'
       py: 'lambda x: (x * 2)'
@@ -53,11 +53,11 @@
       zig:
           - 'struct { fn call(x: anytype) i64 { return (x * 2); } }.call'
       fab:
-          - 'pro x:'
+          - 'clausura x:'
           - 'x * 2'
 
-- name: multi param lambda
-  source: 'pro x, y: x + y'
+- name: multi param clausura
+  source: 'clausura x, y: x + y'
   expect:
       ts: '(x, y) => (x + y);'
       py: 'lambda x, y: (x + y)'
@@ -68,11 +68,11 @@
       zig:
           - 'struct { fn call(x: anytype, y: anytype) i64 { return (x + y); } }.call'
       fab:
-          - 'pro x, y:'
+          - 'clausura x, y:'
           - 'x + y'
 
-- name: zero param lambda
-  source: 'pro: 42'
+- name: zero param clausura
+  source: 'clausura: 42'
   expect:
       ts: '() => 42;'
       py: 'lambda : 42'
@@ -83,11 +83,11 @@
       zig:
           - 'struct { fn call() i64 { return 42; } }.call'
       fab:
-          - 'pro:'
+          - 'clausura:'
           - '42'
 
-- name: lambda in variable
-  source: 'fixum double = pro x: x * 2'
+- name: clausura in variable
+  source: 'fixum double = clausura x: x * 2'
   expect:
       ts: 'const double = (x) => (x * 2);'
       py: 'double = lambda x: (x * 2)'
@@ -98,13 +98,13 @@
       zig:
           - 'const double = struct { fn call(x: anytype) i64 { return (x * 2); } }.call'
       fab:
-          - 'fixum double = pro x:'
+          - 'fixum double = clausura x:'
           - 'x * 2'
 
-- name: lambda as callback
+- name: clausura as callback
   source: |
       fixum items = [1, 2, 3]
-      items.filtrata(pro x: x > 0)
+      items.filtrata(clausura x: x > 0)
   expect:
       ts:
           - 'const items'
@@ -121,11 +121,11 @@
           - '(items | std::views::filter([&](auto x) { return (x > 0); }) | std::ranges::to<std::vector>());'
       fab:
           - 'fixum items ='
-          - 'items.filtrata(pro x:'
+          - 'items.filtrata(clausura x:'
           - 'x > 0'
 
-- name: lambda returning lambda (curried)
-  source: 'fixum curry = pro x: pro y: x + y'
+- name: clausura returning clausura (curried)
+  source: 'fixum curry = clausura x: clausura y: x + y'
   expect:
       ts: 'const curry = (x) => (y) => (x + y);'
       py: 'curry = lambda x: lambda y: (x + y)'
@@ -134,16 +134,16 @@
       cpp:
           - 'const auto curry = [&](auto x) { return [&](auto y) { return (x + y); }; };'
       zig:
-          # WHY: Inner lambda return type is a function, which becomes anytype (invalid in Zig)
+          # WHY: Inner clausura return type is a function, which becomes anytype (invalid in Zig)
           - 'struct { fn call(x: anytype) anytype { return struct { fn call(y: anytype) i64 { return (x + y); } }.call; } }.call'
       fab:
-          - 'fixum curry = pro x:'
-          - 'pro y:'
+          - 'fixum curry = clausura x:'
+          - 'clausura y:'
           - 'x + y'
 
-- name: lambda with block and multiple statements
+- name: clausura with block and multiple statements
   source: |
-      pro x {
+      clausura x {
         varia r = x * 2
         redde r
       }
@@ -172,12 +172,12 @@
           - 'return r;'
           - '} }.call'
       fab:
-          - 'pro x {'
+          - 'clausura x {'
           - 'varia r = x * 2'
           - 'redde r'
 
-- name: triple nested lambda
-  source: 'fixum nested = pro a: pro b: pro c: a + b + c'
+- name: triple nested clausura
+  source: 'fixum nested = clausura a: clausura b: clausura c: a + b + c'
   expect:
       ts: 'const nested = (a) => (b) => (c) => ((a + b) + c);'
       py: 'nested = lambda a: lambda b: lambda c: ((a + b) + c)'
@@ -186,18 +186,18 @@
       cpp:
           - 'const auto nested = [&](auto a) { return [&](auto b) { return [&](auto c) { return ((a + b) + c); }; }; };'
       zig:
-          # WHY: Nested lambdas return function types which become anytype
+          # WHY: Nested clausuras return function types which become anytype
           - 'struct { fn call(a: anytype) anytype { return struct { fn call(b: anytype) anytype { return struct { fn call(c: anytype) i64 { return ((a + b) + c); } }.call; } }.call; } }.call'
       fab:
-          - 'fixum nested = pro a:'
-          - 'pro b:'
-          - 'pro c:'
+          - 'fixum nested = clausura a:'
+          - 'clausura b:'
+          - 'clausura c:'
           - 'a + b + c'
 
-- name: lambda capturing outer variable (closure)
+- name: clausura capturing outer variable (closure)
   source: |
       fixum multiplier = 3
-      fixum scale = pro x: x * multiplier
+      fixum scale = clausura x: x * multiplier
   expect:
       ts:
           - 'const multiplier = 3;'
@@ -217,11 +217,11 @@
           - 'const scale = struct { fn call(x: anytype) i64 { return (x * multiplier); } }.call'
       fab:
           - 'fixum multiplier = 3'
-          - 'fixum scale = pro x:'
+          - 'fixum scale = clausura x:'
           - 'x * multiplier'
 
-- name: lambda immediately invoked
-  source: 'fixum result = (pro x: x * 2)(5)'
+- name: clausura immediately invoked
+  source: 'fixum result = (clausura x: x * 2)(5)'
   expect:
       ts: 'const result = (x) => (x * 2)(5);'
       py: 'result = lambda x: (x * 2)(5)'
@@ -233,6 +233,6 @@
           - 'const result = struct { fn call(x: anytype) i64 { return (x * 2); } }.call(5)'
       fab:
           - 'fixum result ='
-          - 'pro x:'
+          - 'clausura x:'
           - 'x * 2'
           - '(5)'

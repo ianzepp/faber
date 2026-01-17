@@ -2,7 +2,7 @@
 #
 # Routes expression AST nodes to their specific generators.
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum, LambdaCorpus
+ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, ClausuraParametrum, ClausuraCorpus
 ex "../../../ast/sententia" importa Sententia, VariaGenus
 ex "../../../ast/typus" importa TypusAnnotatio
 ex "../nucleus" importa GoGenerator
@@ -167,10 +167,10 @@ functio genExpressia(Expressia expr, GoGenerator g) -> textus {
             redde scriptum("§{§}", e.variansNomen, props.coniunge(", "))
         }
 
-        # Lambda
-        casu LambdaExpressia ut e {
+        # Clausura
+        casu ClausuraExpressia ut e {
             varia params = [] innatum lista<textus>
-            ex (e.parametra qua lista<LambdaParametrum>) pro p {
+            ex (e.parametra qua lista<ClausuraParametrum>) pro p {
                 si nonnihil p.typus {
                     params.adde(scriptum("§ §", p.nomen, genTypus(p.typus qua TypusAnnotatio, g)))
                 } secus {
@@ -183,7 +183,7 @@ functio genExpressia(Expressia expr, GoGenerator g) -> textus {
                     discerne m.valor {
                         casu MassaSententia ut body {
                             g.intraProfundum()
-                            fixum rendered = genLambdaMassa(body.corpus, g)
+                            fixum rendered = genClausuraMassa(body.corpus, g)
                             g.exiProfundum()
                             si rendered == "" {
                                 redde scriptum("func(§) interface{} { }", params.coniunge(", "))
@@ -324,18 +324,18 @@ functio genObiectumDispersum(lista<ObiectumProprietas> proprietates, GoGenerator
     redde lines.coniunge("\n")
 }
 
-functio genLambdaMassa(lista<Sententia> corpus, GoGenerator g) -> textus {
+functio genClausuraMassa(lista<Sententia> corpus, GoGenerator g) -> textus {
     si corpus.longitudo() == 0 {
         redde ""
     }
     varia lines = [] innatum lista<textus>
     ex corpus pro stmt {
-        lines.adde(genLambdaSententia(stmt, g))
+        lines.adde(genClausuraSententia(stmt, g))
     }
     redde lines.coniunge("\n")
 }
 
-functio genLambdaSententia(Sententia stmt, GoGenerator g) -> textus {
+functio genClausuraSententia(Sententia stmt, GoGenerator g) -> textus {
     discerne stmt {
         casu VariaSententia ut s {
             varia result = scriptum("§var §", g.ind(), s.nomen)

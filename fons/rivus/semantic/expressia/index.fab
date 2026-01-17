@@ -15,7 +15,7 @@ ex "./primaria" importa resolveNomen, resolveLittera, resolveSeries, resolveObie
 ex "./binaria" importa resolveBinaria
 ex "./unaria" importa resolveUnaria
 ex "./vocatio" importa resolveVocatio, resolveMembrum
-ex "./alia" importa resolveLambda, resolveFingeExpr, resolveCedeExpr, resolveNovumExpr, resolveCondicio
+ex "./alia" importa resolveClausura, resolveFingeExpr, resolveCedeExpr, resolveNovumExpr, resolveCondicio
 ex "../sententia/declara" importa resolveTypusAnnotatio
 
 # ============================================================================
@@ -121,9 +121,9 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
             redde resolveSeries(r, expr)
         }
 
-        # Lambda expression (pro x: x + 1)
-        casu LambdaExpressia {
-            redde resolveLambda(r, expr)
+        # Clausura expression (clausura x: x + 1)
+        casu ClausuraExpressia {
+            redde resolveClausura(r, expr)
         }
 
         # Self reference (ego/hoc)

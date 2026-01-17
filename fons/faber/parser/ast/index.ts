@@ -74,7 +74,7 @@ export type {
     CedeExpression,
     NovumExpression,
     FingeExpression,
-    LambdaExpression,
+    ClausuraExpression,
     PraefixumExpression,
     CollectionDSLExpression,
     AbExpression,

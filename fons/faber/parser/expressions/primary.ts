@@ -22,7 +22,7 @@ import type {
     SpreadElement,
     CallExpression,
     MemberExpression,
-    LambdaExpression,
+    ClausuraExpression,
     ScriptumExpression,
     LegeExpression,
     QuaExpression,
@@ -622,14 +622,9 @@ export function parsePrimary(r: Resolver): Expression {
         return { type: 'Literal', value: null, raw: 'nihil', position };
     }
 
-    // Lambda expression: pro x redde expr, pro x, y redde expr, pro redde expr
-    // Also: fit x: expr (sync, explicit), fiet x: expr (async)
-    if (ctx.checkKeyword('pro') || ctx.checkKeyword('fit')) {
-        return parseLambdaExpression(r, false);
-    }
-
-    if (ctx.checkKeyword('fiet')) {
-        return parseLambdaExpression(r, true);
+    // Clausura expression: clausura x: expr, clausura x, y: expr, clausura: expr
+    if (ctx.checkKeyword('clausura')) {
+        return parseClausuraExpression(r);
     }
 
     // DSL expressions
@@ -852,44 +847,42 @@ export function parsePrimary(r: Resolver): Expression {
 }
 
 // =============================================================================
-// LAMBDA EXPRESSION
+// CLAUSURA EXPRESSION
 // =============================================================================
 
 /**
- * Parse lambda expression (anonymous function).
+ * Parse clausura expression (anonymous function/closure).
  *
  * GRAMMAR:
- *   lambdaExpr   := ('pro' | 'fit' | 'fiet') lambdaParams? ('->' type)? (':' expression | blockStmt)
- *   lambdaParams := lambdaParam (',' lambdaParam)*
- *   lambdaParam  := ('de' | 'in' | 'ex')? typeAnnotation? IDENTIFIER
- *
- * Three keyword forms with different semantics:
- *   - 'pro' / 'fit': sync lambda (pro is casual, fit is explicit verb form)
- *   - 'fiet': async lambda (future tense verb form)
+ *   clausuraExpr   := 'clausura' clausuraParams? ('->' type)? (':' expression | blockStmt)
+ *   clausuraParams := clausuraParam (',' clausuraParam)*
+ *   clausuraParam  := ('de' | 'in' | 'ex')? typeAnnotation? IDENTIFIER
  *
  * Expression form (colon required):
- *      pro x: x * 2                      -> (x) => x * 2
- *      pro: 42                           -> () => 42
- *      pro x, y: x + y                   -> (x, y) => x + y
- *      pro numerus x: x * 2              -> (x: number) => x * 2
- *      pro numerus x, numerus y: x + y   -> (x: number, y: number) => x + y
- *      pro x -> numerus: x * 2           -> (x): number => x * 2
- *      fiet x: expr                      -> async (x) => expr
+ *      clausura x: x * 2                      -> (x) => x * 2
+ *      clausura: 42                           -> () => 42
+ *      clausura x, y: x + y                   -> (x, y) => x + y
+ *      clausura numerus x: x * 2              -> (x: number) => x * 2
+ *      clausura numerus x, numerus y: x + y   -> (x: number, y: number) => x + y
+ *      clausura x -> numerus: x * 2           -> (x): number => x * 2
  *
  * Block form (for multi-statement bodies):
- *      pro x { redde x * 2 }     -> (x) => { return x * 2; }
- *      fiet c { cede fetch() }   -> async (c) => { await fetch(); }
+ *      clausura x { redde x * 2 }     -> (x) => { return x * 2; }
+ *      clausura c { cede fetch() }    -> async (c) => { await fetch(); }
+ *
+ * WHY: 'clausura' (Latin for closure) replaces the overloaded 'pro' keyword.
+ *      Async is inferred from presence of 'cede' in block body.
  */
-export function parseLambdaExpression(r: Resolver, async: boolean): LambdaExpression {
+export function parseClausuraExpression(r: Resolver): ClausuraExpression {
     const ctx = r.ctx();
     const position = ctx.peek().position;
 
-    // Consume the keyword (pro, fit, or fiet)
+    // Consume 'clausura' keyword
     ctx.advance();
 
     const params: Parameter[] = [];
 
-    // Check for immediate :, ->, or { (zero-param lambda)
+    // Check for immediate :, ->, or { (zero-param clausura)
     if (!ctx.check('COLON') && !ctx.check('LBRACE') && !ctx.check('THIN_ARROW')) {
         // Parse parameters until we hit :, ->, or {
         do {
@@ -907,14 +900,14 @@ export function parseLambdaExpression(r: Resolver, async: boolean): LambdaExpres
     let body: Expression | BlockStatement;
 
     if (ctx.check('LBRACE')) {
-        // Block form: pro x { ... } or pro x -> T { ... }
+        // Block form: clausura x { ... } or clausura x -> T { ... }
         body = r.block();
     }
     else {
-        // Expression form: pro x: expr or pro x -> T: expr
+        // Expression form: clausura x: expr or clausura x -> T: expr
         ctx.expect('COLON', ParserErrorCode.ExpectedColon);
         body = r.expression();
     }
 
-    return { type: 'LambdaExpression', params, returnType, body, async, position };
+    return { type: 'ClausuraExpression', params, returnType, body, position };
 }

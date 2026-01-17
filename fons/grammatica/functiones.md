@@ -1,6 +1,6 @@
 # Functiones
 
-Functions in Faber are declared using the `functio` keyword, derived from the Latin _functio_ meaning "performance, execution." This chapter covers function declarations, parameters, return types, async patterns, generators, and lambda expressions.
+Functions in Faber are declared using the `functio` keyword, derived from the Latin _functio_ meaning "performance, execution." This chapter covers function declarations, parameters, return types, async patterns, generators, and clausura expressions.
 
 ## Declaring Functions
 
@@ -304,15 +304,15 @@ functio pair(prae typus T, prae typus U, T first, U second) -> [T, U] {
 }
 ```
 
-## Lambda Expressions
+## Clausura Expressions (Closures)
 
 ### Basic Syntax
 
-Lambda expressions use `pro` (Latin "for, on behalf of") followed by parameters, a colon, and an expression:
+Clausura expressions use `clausura` (Latin for "closure") followed by parameters, a colon, and an expression:
 
 ```fab
-fixum double = pro x: x * 2
-fixum add = pro a, b: a + b
+fixum double = clausura x: x * 2
+fixum add = clausura a, b: a + b
 ```
 
 The colon separates parameters from the body. For single expressions, the result is implicitly returned.
@@ -322,36 +322,36 @@ The colon separates parameters from the body. For single expressions, the result
 When type annotation is needed, use an arrow before the colon:
 
 ```fab
-fixum add = pro a, b -> numerus: a + b
-fixum isPositive = pro n -> bivalens: n > 0
+fixum add = clausura a, b -> numerus: a + b
+fixum isPositive = clausura n -> bivalens: n > 0
 ```
 
 ### Block Bodies
 
-For multi-statement lambdas, use braces and explicit `redde`:
+For multi-statement clausuras, use braces and explicit `redde`:
 
 ```fab
-fixum process = pro x {
+fixum process = clausura x {
     varia result = x * 2
     result += 10
     redde result
 }
 ```
 
-### Zero-Parameter Lambdas
+### Zero-Parameter Clausuras
 
-When a lambda takes no parameters, place the colon immediately after `pro`:
+When a clausura takes no parameters, place the colon immediately after `clausura`:
 
 ```fab
-fixum getFortyTwo = pro: 42
+fixum getFortyTwo = clausura: 42
 ```
 
-### Async Lambdas
+### Async Clausuras
 
-The `fiet` keyword creates async lambdas:
+Async is inferred from the presence of `cede` in the body:
 
 ```fab
-fixum fetchAndProcess = fiet url {
+fixum fetchAndProcess = clausura url {
     fixum data = cede fetch(url)
     redde process(data)
 }
@@ -360,26 +360,27 @@ fixum fetchAndProcess = fiet url {
 This is useful for callbacks in async contexts:
 
 ```fab
-app.post("/users", fiet context {
-    redde context.json()
+app.post("/users", clausura context {
+    fixum data = cede context.json()
+    redde data
 })
 ```
 
 ### Common Patterns
 
-Lambdas shine in functional operations:
+Clausuras shine in functional operations:
 
 ```fab
 fixum numbers = [1, 2, 3, 4, 5]
 
 # Filter
-fixum evens = numbers.filter(pro x: x % 2 == 0)
+fixum evens = numbers.filter(clausura x: x % 2 == 0)
 
 # Map
-fixum doubled = numbers.map(pro x: x * 2)
+fixum doubled = numbers.map(clausura x: x * 2)
 
 # Reduce
-fixum sum = numbers.reduce(0, pro acc, x: acc + x)
+fixum sum = numbers.reduce(0, clausura acc, x: acc + x)
 ```
 
 ## Allocator Binding with curata
@@ -445,6 +446,6 @@ Faber's function system balances Latin linguistic authenticity with practical pr
 - `@ futura` and `@ cursor` annotations, post-function modifiers (`curata`, `errata`, `immutata`, `iacit`), or `fiet`/`fiunt`/`fient` verbs
 - `cede` for await (async) or yield (generator)
 - `prae typus` for generics
-- `pro` for lambdas with optional `fiet` for async
+- `clausura` for closures (async inferred from `cede` usage)
 
 The Latin vocabulary maps naturally to programming concepts: _futura_ captures async's temporal nature, _cede_ captures yielding control, and verb conjugations encode sync/async and single/multiple semantics grammatically.

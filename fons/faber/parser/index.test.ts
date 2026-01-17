@@ -2851,154 +2851,153 @@ describe('parser', () => {
             });
         });
 
-        describe('pro expression (lambda)', () => {
-            test('single param lambda', () => {
-                const { program } = parseCode('pro x: x * 2');
+        describe('clausura expression (closure)', () => {
+            test('single param clausura', () => {
+                const { program } = parseCode('clausura x: x * 2');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.params).toHaveLength(1);
                 expect(expr.params[0].name.name).toBe('x');
                 expect(expr.body.type).toBe('BinaryExpression');
-                expect(expr.async).toBe(false);
             });
 
-            test('multi param lambda', () => {
-                const { program } = parseCode('pro a, b: a + b');
+            test('multi param clausura', () => {
+                const { program } = parseCode('clausura a, b: a + b');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.params).toHaveLength(2);
                 expect(expr.params[0].name.name).toBe('a');
                 expect(expr.params[1].name.name).toBe('b');
             });
 
-            test('zero param lambda', () => {
-                const { program } = parseCode('pro: 42');
+            test('zero param clausura', () => {
+                const { program } = parseCode('clausura: 42');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.params).toHaveLength(0);
                 expect(expr.body.value).toBe(42);
             });
 
-            test('lambda in variable declaration', () => {
-                const { program } = parseCode('fixum double = pro x: x * 2');
+            test('clausura in variable declaration', () => {
+                const { program } = parseCode('fixum double = clausura x: x * 2');
                 const decl = program!.body[0] as any;
 
                 expect(decl.type).toBe('VariaDeclaration');
-                expect(decl.init.type).toBe('LambdaExpression');
+                expect(decl.init.type).toBe('ClausuraExpression');
             });
 
-            test('nested lambdas', () => {
-                const { program } = parseCode('pro x: pro y: x + y');
+            test('nested clausuras', () => {
+                const { program } = parseCode('clausura x: clausura y: x + y');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
-                expect(expr.body.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
+                expect(expr.body.type).toBe('ClausuraExpression');
                 expect(expr.body.body.type).toBe('BinaryExpression');
             });
 
-            test('single param block lambda', () => {
-                const { program } = parseCode('pro x { redde x * 2 }');
+            test('single param block clausura', () => {
+                const { program } = parseCode('clausura x { redde x * 2 }');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.params).toHaveLength(1);
                 expect(expr.params[0].name.name).toBe('x');
                 expect(expr.body.type).toBe('BlockStatement');
             });
 
-            test('multi param block lambda', () => {
-                const { program } = parseCode('pro a, b { redde a + b }');
+            test('multi param block clausura', () => {
+                const { program } = parseCode('clausura a, b { redde a + b }');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.params).toHaveLength(2);
                 expect(expr.body.type).toBe('BlockStatement');
             });
 
-            test('zero param block lambda', () => {
-                const { program } = parseCode('pro { scribe "hello" }');
+            test('zero param block clausura', () => {
+                const { program } = parseCode('clausura { scribe "hello" }');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.params).toHaveLength(0);
                 expect(expr.body.type).toBe('BlockStatement');
             });
 
-            test('block lambda with multiple statements', () => {
-                const { program } = parseCode('pro x {\nfixum y = x * 2\nredde y\n}');
+            test('block clausura with multiple statements', () => {
+                const { program } = parseCode('clausura x {\nfixum y = x * 2\nredde y\n}');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.body.type).toBe('BlockStatement');
                 expect(expr.body.body).toHaveLength(2);
             });
         });
 
         describe('pro expression with : shorthand', () => {
-            test('single param lambda with :', () => {
-                const { program } = parseCode('pro x: x * 2');
+            test('single param clausura with :', () => {
+                const { program } = parseCode('clausura x: x * 2');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.params).toHaveLength(1);
                 expect(expr.params[0].name.name).toBe('x');
                 expect(expr.body.type).toBe('BinaryExpression');
             });
 
-            test('multi param lambda with :', () => {
-                const { program } = parseCode('pro a, b: a + b');
+            test('multi param clausura with :', () => {
+                const { program } = parseCode('clausura a, b: a + b');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.params).toHaveLength(2);
                 expect(expr.params[0].name.name).toBe('a');
                 expect(expr.params[1].name.name).toBe('b');
             });
 
-            test('zero param lambda with :', () => {
-                const { program } = parseCode('pro: 42');
+            test('zero param clausura with :', () => {
+                const { program } = parseCode('clausura: 42');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.params).toHaveLength(0);
                 expect(expr.body.value).toBe(42);
             });
 
-            test('nested lambdas with :', () => {
-                const { program } = parseCode('pro x: pro y: x + y');
+            test('nested clausuras with :', () => {
+                const { program } = parseCode('clausura x: clausura y: x + y');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
-                expect(expr.body.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
+                expect(expr.body.type).toBe('ClausuraExpression');
                 expect(expr.body.body.type).toBe('BinaryExpression');
             });
 
-            test('lambda with : in variable declaration', () => {
+            test('clausura with : in variable declaration', () => {
                 const { program } = parseCode('fixum double = pro x: x * 2');
                 const decl = program!.body[0] as any;
 
                 expect(decl.type).toBe('VariaDeclaration');
-                expect(decl.init.type).toBe('LambdaExpression');
+                expect(decl.init.type).toBe('ClausuraExpression');
             });
 
-            test('mixed : and redde in nested lambdas', () => {
-                const { program } = parseCode('pro x: pro y redde x + y');
+            test('mixed : and redde in nested clausuras', () => {
+                const { program } = parseCode('clausura x: clausura y redde x + y');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
-                expect(expr.body.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
+                expect(expr.body.type).toBe('ClausuraExpression');
             });
         });
 
         describe('pro expression with return type annotation', () => {
-            test('lambda with return type and : shorthand', () => {
-                const { program } = parseCode('pro x -> numerus: x * 2');
+            test('clausura with return type and : shorthand', () => {
+                const { program } = parseCode('clausura x -> numerus: x * 2');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.params).toHaveLength(1);
                 expect(expr.params[0].name.name).toBe('x');
                 expect(expr.returnType).toBeDefined();
@@ -3006,162 +3005,74 @@ describe('parser', () => {
                 expect(expr.body.type).toBe('BinaryExpression');
             });
 
-            test('lambda with return type and redde', () => {
-                const { program } = parseCode('pro x -> numerus redde x * 2');
+            test('clausura with return type and redde', () => {
+                const { program } = parseCode('clausura x -> numerus redde x * 2');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.returnType).toBeDefined();
                 expect(expr.returnType.name).toBe('numerus');
             });
 
-            test('lambda with return type and block body', () => {
-                const { program } = parseCode('pro x -> textus { redde "hello" }');
+            test('clausura with return type and block body', () => {
+                const { program } = parseCode('clausura x -> textus { redde "hello" }');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.returnType).toBeDefined();
                 expect(expr.returnType.name).toBe('textus');
                 expect(expr.body.type).toBe('BlockStatement');
             });
 
-            test('zero-param lambda with return type', () => {
-                const { program } = parseCode('pro -> numerus: 42');
+            test('zero-param clausura with return type', () => {
+                const { program } = parseCode('clausura -> numerus: 42');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.params).toHaveLength(0);
                 expect(expr.returnType).toBeDefined();
                 expect(expr.returnType.name).toBe('numerus');
             });
 
-            test('multi-param lambda with return type', () => {
-                const { program } = parseCode('pro a, b -> numerus: a + b');
+            test('multi-param clausura with return type', () => {
+                const { program } = parseCode('clausura a, b -> numerus: a + b');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.params).toHaveLength(2);
                 expect(expr.returnType).toBeDefined();
                 expect(expr.returnType.name).toBe('numerus');
             });
 
-            test('lambda without return type has undefined returnType', () => {
-                const { program } = parseCode('pro x: x * 2');
+            test('clausura without return type has undefined returnType', () => {
+                const { program } = parseCode('clausura x: x * 2');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.returnType).toBeUndefined();
             });
 
-            test('lambda with nullable return type', () => {
-                const { program } = parseCode('pro x -> textus?: nihil');
+            test('clausura with nullable return type', () => {
+                const { program } = parseCode('clausura x -> textus?: nihil');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.returnType).toBeDefined();
                 expect(expr.returnType.name).toBe('textus');
                 expect(expr.returnType.nullable).toBe(true);
             });
 
-            test('lambda with generic return type', () => {
-                const { program } = parseCode('pro x -> numerus[]: [x]');
+            test('clausura with generic return type', () => {
+                const { program } = parseCode('clausura x -> numerus[]: [x]');
                 const expr = (program!.body[0] as any).expression;
 
-                expect(expr.type).toBe('LambdaExpression');
+                expect(expr.type).toBe('ClausuraExpression');
                 expect(expr.returnType).toBeDefined();
                 expect(expr.returnType.name).toBe('lista');
                 expect(expr.returnType.typeParameters).toHaveLength(1);
             });
         });
 
-        describe('fit expression (sync lambda, explicit)', () => {
-            test('fit is equivalent to pro (sync)', () => {
-                const { program } = parseCode('fit x: x * 2');
-                const expr = (program!.body[0] as any).expression;
-
-                expect(expr.type).toBe('LambdaExpression');
-                expect(expr.params).toHaveLength(1);
-                expect(expr.params[0].name.name).toBe('x');
-                expect(expr.async).toBe(false);
-            });
-
-            test('fit with block body', () => {
-                const { program } = parseCode('fit x { redde x * 2 }');
-                const expr = (program!.body[0] as any).expression;
-
-                expect(expr.type).toBe('LambdaExpression');
-                expect(expr.body.type).toBe('BlockStatement');
-                expect(expr.async).toBe(false);
-            });
-
-            test('fit zero params', () => {
-                const { program } = parseCode('fit: 42');
-                const expr = (program!.body[0] as any).expression;
-
-                expect(expr.type).toBe('LambdaExpression');
-                expect(expr.params).toHaveLength(0);
-                expect(expr.async).toBe(false);
-            });
-        });
-
-        describe('fiet expression (async lambda)', () => {
-            test('fiet creates async lambda', () => {
-                const { program } = parseCode('fiet x: x * 2');
-                const expr = (program!.body[0] as any).expression;
-
-                expect(expr.type).toBe('LambdaExpression');
-                expect(expr.params).toHaveLength(1);
-                expect(expr.params[0].name.name).toBe('x');
-                expect(expr.async).toBe(true);
-            });
-
-            test('fiet with block body', () => {
-                const { program } = parseCode('fiet c { redde c.json() }');
-                const expr = (program!.body[0] as any).expression;
-
-                expect(expr.type).toBe('LambdaExpression');
-                expect(expr.body.type).toBe('BlockStatement');
-                expect(expr.async).toBe(true);
-            });
-
-            test('fiet zero params', () => {
-                const { program } = parseCode('fiet: fetch()');
-                const expr = (program!.body[0] as any).expression;
-
-                expect(expr.type).toBe('LambdaExpression');
-                expect(expr.params).toHaveLength(0);
-                expect(expr.async).toBe(true);
-            });
-
-            test('fiet multi params', () => {
-                const { program } = parseCode('fiet a, b { redde a + b }');
-                const expr = (program!.body[0] as any).expression;
-
-                expect(expr.type).toBe('LambdaExpression');
-                expect(expr.params).toHaveLength(2);
-                expect(expr.async).toBe(true);
-            });
-
-            test('fiet with return type annotation', () => {
-                const { program } = parseCode('fiet x -> textus: x');
-                const expr = (program!.body[0] as any).expression;
-
-                expect(expr.type).toBe('LambdaExpression');
-                expect(expr.returnType).toBeDefined();
-                expect(expr.returnType.name).toBe('textus');
-                expect(expr.async).toBe(true);
-            });
-
-            test('fiet in function call', () => {
-                const { program } = parseCode('app.post("/users", fiet c { redde c.json() })');
-                const expr = (program!.body[0] as any).expression;
-
-                expect(expr.type).toBe('CallExpression');
-                const lambda = expr.arguments[1];
-                expect(lambda.type).toBe('LambdaExpression');
-                expect(lambda.async).toBe(true);
-            });
-        });
     });
 
     describe('import declarations', () => {
@@ -3256,21 +3167,21 @@ describe('parser', () => {
             expect(program!.body).toHaveLength(2);
         });
 
-        test('semicolons in block lambda', () => {
-            const { program } = parseCode('pro x { fixum y = x * 2; redde y }');
+        test('semicolons in block clausura', () => {
+            const { program } = parseCode('clausura x { fixum y = x * 2; redde y }');
             const expr = (program!.body[0] as any).expression;
 
-            expect(expr.type).toBe('LambdaExpression');
+            expect(expr.type).toBe('ClausuraExpression');
             expect(expr.body.type).toBe('BlockStatement');
             expect(expr.body.body).toHaveLength(2);
         });
 
-        test('block lambda single line with semicolon', () => {
+        test('block clausura single line with semicolon', () => {
             const { program } = parseCode('items.mappata(pro x { fixum y = transform(x); redde y })');
             const expr = (program!.body[0] as any).expression;
             const lambda = expr.arguments[0];
 
-            expect(lambda.type).toBe('LambdaExpression');
+            expect(lambda.type).toBe('ClausuraExpression');
             expect(lambda.body.body).toHaveLength(2);
         });
 

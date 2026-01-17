@@ -2,7 +2,7 @@
 #
 # Routes expression AST nodes to their specific generators.
 
-ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, LambdaParametrum, MorphologiaInvocatio, LambdaCorpus
+ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, ClausuraParametrum, MorphologiaInvocatio, ClausuraCorpus
 ex "../../../ast/expressia" importa AbFiltrum, CatenaGradus
 ex "../../../ast/sententia" importa Sententia, VariaGenus
 ex "../../../ast/typus" importa TypusAnnotatio, TypusParametrum
@@ -505,10 +505,10 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
             redde scriptum("...§", genExpressia(e.argumentum, g))
         }
 
-        # Lambda
-        casu LambdaExpressia ut e {
+        # Clausura
+        casu ClausuraExpressia ut e {
             varia params = [] innatum lista<textus>
-            ex (e.parametra qua lista<LambdaParametrum>) pro p {
+            ex (e.parametra qua lista<ClausuraParametrum>) pro p {
                 si nonnihil p.typus {
                     params.adde(scriptum("§: §", p.nomen, genTypus(p.typus qua TypusAnnotatio, g)))
                 } secus {

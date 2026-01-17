@@ -238,16 +238,15 @@ Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, �
 | `vel` (nullish coalescing)          | ● | ○ | ○ | ○ | ○ |
 | `praefixum` (comptime expr)         | ● | ○ | ○ | ○ | ○ |
 
-## Lambda Syntax
+## Clausura Syntax
 
-| Feature                        | TypeScript | Zig | Python | Rust | C++23 |
-| ------------------------------ | :--------: | :-: | :----: | :--: | :---: |
-| `pro x: expr` (expression)     | ● | ● | ○ | ○ | ○ |
-| `pro x { body }` (block)       | ● | ◐ | ○ | ○ | ○ |
-| `pro: expr` (zero-param)       | ● | ● | ○ | ○ | ○ |
-| `pro x -> T: expr` (ret. type) | ● | ◐ | ○ | ○ | ○ |
-| `fit x: expr` (sync binding)   | ● | ○ | ○ | ○ | ○ |
-| `per property` (shorthand)     | ● | ○ | ○ | ○ | ○ |
+| Feature                             | TypeScript | Zig | Python | Rust | C++23 |
+| ----------------------------------- | :--------: | :-: | :----: | :--: | :---: |
+| `clausura x: expr` (expression)     | ● | ● | ○ | ○ | ○ |
+| `clausura x { body }` (block)       | ● | ◐ | ○ | ○ | ○ |
+| `clausura: expr` (zero-param)       | ● | ● | ○ | ○ | ○ |
+| `clausura x -> T: expr` (ret. type) | ● | ◐ | ○ | ○ | ○ |
+| `per property` (shorthand)          | ● | ○ | ○ | ○ | ○ |
 
 ## OOP Features (genus/pactum)
 

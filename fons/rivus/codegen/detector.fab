@@ -13,7 +13,7 @@
 
 ex "../ast/positio" importa Locus
 ex "../ast/sententia" importa Sententia
-ex "../ast/expressia" importa Expressia, ObiectumProprietas, LambdaCorpus
+ex "../ast/expressia" importa Expressia, ObiectumProprietas, ClausuraCorpus
 
 # =============================================================================
 # FEATURE KEYS
@@ -367,7 +367,7 @@ genus FeatureDetector {
                 }
             }
 
-            casu LambdaExpressia ut l {
+            casu ClausuraExpressia ut l {
                 discerne l.corpus {
                     casu Massa ut m {
                         ego.visitSententia(m.valor)

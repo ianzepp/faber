@@ -405,8 +405,8 @@ module.exports = grammar({
 
         arrow_function_parameter: $ => seq(optional(field('type', $.type_annotation)), field('name', $.identifier)),
 
-        // Fac expression (lambda): pro params redde expr
-        fac_expression: $ => prec.right(seq('pro', optional(sep1($.identifier, ',')), 'redde', field('body', $._expression))),
+        // Clausura expression (closure): clausura params: expr or clausura params { }
+        clausura_expression: $ => prec.right(seq('clausura', optional(sep1($.identifier, ',')), choice(seq(':', field('body', $._expression)), field('body', $.block_statement)))),
 
         new_expression: $ =>
             prec.right(

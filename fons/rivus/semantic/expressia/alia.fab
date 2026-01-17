@@ -8,21 +8,21 @@ ex "../typi" importa functioTypus, usitatumTypus, genericumTypus
 ex "../scopus" importa ScopusSpecies, SymbolumSpecies
 ex "../errores" importa cedeOutsideAsyncError
 ex "../sententia/declara" importa resolveTypusAnnotatio
-ex "../../ast/expressia" importa Expressia, LambdaCorpus
+ex "../../ast/expressia" importa Expressia, ClausuraCorpus
 ex "../../ast/sententia" importa Sententia
 ex "../../ast/typus" importa TypusAnnotatio
 
 # ============================================================================
-# LAMBDA EXPRESSION RESOLUTION
+# CLAUSURA EXPRESSION RESOLUTION
 # ============================================================================
 
-# Resolve a lambda expression (pro x: x + 1)
+# Resolve a clausura expression (clausura x: x + 1)
 @ publica
-functio resolveLambda(Resolvitor r, Expressia lambdaExpr) -> SemanticTypus {
+functio resolveClausura(Resolvitor r, Expressia clausuraExpr) -> SemanticTypus {
     fixum a = r.analyzator()
 
-    discerne lambdaExpr {
-        casu LambdaExpressia ut l {
+    discerne clausuraExpr {
+        casu ClausuraExpressia ut l {
             # Enter function scope for parameters
             a.intraScopum(ScopusSpecies.Functio)
 

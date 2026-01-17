@@ -86,7 +86,7 @@ import type {
     ScribeStatement,
     TemptaStatement,
     FacBlockStatement,
-    LambdaExpression,
+    ClausuraExpression,
     ProbandumStatement,
     ProbaStatement,
     PraeparaBlock,
@@ -974,8 +974,8 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             case 'ArrayExpression':
                 return resolveArrayExpression(node);
 
-            case 'LambdaExpression':
-                return resolveLambdaExpression(node);
+            case 'ClausuraExpression':
+                return resolveClausuraExpression(node);
 
             case 'EgoExpression':
                 // WHY: 'ego' (this) resolves to the enclosing genus type
@@ -1600,9 +1600,9 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
     }
 
     /**
-     * Resolve lambda expression (pro ... redde or pro ... { }).
+     * Resolve clausura expression (clausura x: expr or clausura x { }).
      */
-    function resolveLambdaExpression(node: LambdaExpression): SemanticType {
+    function resolveClausuraExpression(node: ClausuraExpression): SemanticType {
         enterScope('function');
 
         // Define parameters (typed if annotation present, otherwise unknown)
@@ -1634,7 +1634,8 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
 
         exitScope();
 
-        const fnType = functionType(paramTypes, returnType, node.async);
+        // Async is inferred from presence of 'cede' in block body (checked by codegen)
+        const fnType = functionType(paramTypes, returnType, false);
         node.resolvedType = fnType;
 
         return fnType;

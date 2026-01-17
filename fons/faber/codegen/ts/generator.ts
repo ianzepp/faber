@@ -60,7 +60,7 @@ import { genBinaryExpression } from './expressions/binary';
 import { genUnaryExpression } from './expressions/unary';
 import { genCallExpression } from './expressions/call';
 import { genMemberExpression } from './expressions/member';
-import { genLambdaExpression } from './expressions/lambda';
+import { genClausuraExpression } from './expressions/clausura';
 import { genAssignmentExpression } from './expressions/assignment';
 import { genNovumExpression } from './expressions/novum';
 import { genFingeExpression } from './expressions/finge';
@@ -407,8 +407,8 @@ export class TsGenerator {
                 return genCallExpression(node, this);
             case 'MemberExpression':
                 return genMemberExpression(node, this);
-            case 'LambdaExpression':
-                return genLambdaExpression(node, this);
+            case 'ClausuraExpression':
+                return genClausuraExpression(node, this);
             case 'AssignmentExpression':
                 return genAssignmentExpression(node, this);
             case 'CedeExpression':
