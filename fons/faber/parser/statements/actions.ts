@@ -19,6 +19,8 @@ import type {
     ScribeStatement,
     Expression,
     OutputLevel,
+    ScriptumExpression,
+    Literal,
 } from '../ast';
 import { ParserErrorCode } from '../errors';
 
@@ -160,15 +162,22 @@ export function parseIaceStatement(r: Resolver, fatal: boolean): IaceStatement {
  * Parse output statement (scribe/vide/mone).
  *
  * GRAMMAR:
- *   outputStmt := ('scribe' | 'vide' | 'mone') expression (',' expression)*
+ *   outputStmt := ('scribe' | 'vide' | 'mone') scribeItem (',' scribeItem)*
+ *   scribeItem := STRING expression* | expression
  *
  * WHY: Latin output keywords as statement forms:
  *   scribe (write!) -> console.log
  *   vide (see!)     -> console.debug
  *   mone (warn!)    -> console.warn
  *
+ * STRING DESUGARING: String literals are automatically wrapped in scriptum expressions.
+ * The § placeholder count determines how many following arguments are consumed:
+ *   scribe "Found § errors", count  ->  scribe scriptum("Found § errors", count)
+ *   scribe "hello"                  ->  scribe scriptum("hello")
+ *
  * Examples:
  *   scribe "hello"
+ *   scribe "Found § errors in §", errorCount, fileName
  *   vide "debugging:", value
  *   mone "warning:", message
  */
@@ -181,13 +190,59 @@ export function parseScribeStatement(r: Resolver, level: OutputLevel): ScribeSta
 
     const args: Expression[] = [];
 
-    // Parse first argument (required)
-    args.push(r.expression());
+    // Parse first item (required)
+    args.push(parseScribeItem(r));
 
-    // Parse additional comma-separated arguments
+    // Parse additional comma-separated items
     while (ctx.match('COMMA')) {
-        args.push(r.expression());
+        args.push(parseScribeItem(r));
     }
 
     return { type: 'ScribeStatement', level, arguments: args, position };
+}
+
+/**
+ * Parse a single scribe item, converting string literals to scriptum expressions.
+ *
+ * WHY: Syntactic sugar - string literals in scribe statements are implicitly
+ * wrapped in scriptum() for consistent formatting semantics. The § placeholder
+ * count determines how many following comma-separated arguments are consumed.
+ */
+function parseScribeItem(r: Resolver): Expression {
+    const ctx = r.ctx();
+
+    // String literals become scriptum expressions
+    if (ctx.check('STRING')) {
+        const token = ctx.advance();
+        const format: Literal = {
+            type: 'Literal',
+            value: token.value,
+            raw: `"${token.value}"`,
+            position: token.position,
+        };
+
+        // Count § placeholders to determine how many args to consume
+        const placeholderCount = (token.value.match(/§/g) || []).length;
+        const scriptumArgs: Expression[] = [];
+
+        for (let i = 0; i < placeholderCount; i++) {
+            if (!ctx.match('COMMA')) {
+                ctx.error(
+                    ParserErrorCode.GenericError,
+                    `Expected argument for § placeholder (need ${placeholderCount}, got ${i})`
+                );
+            }
+            scriptumArgs.push(r.expression());
+        }
+
+        return {
+            type: 'ScriptumExpression',
+            format,
+            arguments: scriptumArgs,
+            position: token.position,
+        } as ScriptumExpression;
+    }
+
+    // Non-string expressions are parsed normally
+    return r.expression();
 }

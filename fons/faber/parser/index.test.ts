@@ -2747,7 +2747,9 @@ describe('parser', () => {
 
             expect(stmt.type).toBe('ScribeStatement');
             expect(stmt.arguments).toHaveLength(2);
-            expect(stmt.arguments[0].value).toBe('Name:');
+            // String literals are desugared to ScriptumExpression
+            expect(stmt.arguments[0].type).toBe('ScriptumExpression');
+            expect(stmt.arguments[0].format.value).toBe('Name:');
             expect(stmt.arguments[1].name).toBe('name');
         });
 
@@ -2757,10 +2759,44 @@ describe('parser', () => {
 
             expect(stmt.type).toBe('ScribeStatement');
             expect(stmt.arguments).toHaveLength(4);
-            expect(stmt.arguments[0].value).toBe('Name:');
+            // String literals are desugared to ScriptumExpression
+            expect(stmt.arguments[0].type).toBe('ScriptumExpression');
+            expect(stmt.arguments[0].format.value).toBe('Name:');
             expect(stmt.arguments[1].name).toBe('name');
-            expect(stmt.arguments[2].value).toBe('Age:');
+            expect(stmt.arguments[2].type).toBe('ScriptumExpression');
+            expect(stmt.arguments[2].format.value).toBe('Age:');
             expect(stmt.arguments[3].name).toBe('age');
+        });
+
+        test('scribe with § placeholder consumes following args', () => {
+            // "Found § errors in §" has 2 placeholders, so it consumes count and file
+            const { program } = parseCode('scribe "Found § errors in §", count, file');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('ScribeStatement');
+            // Should be single ScriptumExpression with 2 args, not 3 separate args
+            expect(stmt.arguments).toHaveLength(1);
+            expect(stmt.arguments[0].type).toBe('ScriptumExpression');
+            expect(stmt.arguments[0].format.value).toBe('Found § errors in §');
+            expect(stmt.arguments[0].arguments).toHaveLength(2);
+            expect(stmt.arguments[0].arguments[0].name).toBe('count');
+            expect(stmt.arguments[0].arguments[1].name).toBe('file');
+        });
+
+        test('scribe with mixed scriptum and plain args', () => {
+            // "Found §" consumes count, then moduleName is separate
+            const { program } = parseCode('scribe "Found § errors", count, moduleName');
+            const stmt = program!.body[0] as any;
+
+            expect(stmt.type).toBe('ScribeStatement');
+            expect(stmt.arguments).toHaveLength(2);
+            // First: ScriptumExpression with 1 arg
+            expect(stmt.arguments[0].type).toBe('ScriptumExpression');
+            expect(stmt.arguments[0].format.value).toBe('Found § errors');
+            expect(stmt.arguments[0].arguments).toHaveLength(1);
+            expect(stmt.arguments[0].arguments[0].name).toBe('count');
+            // Second: plain identifier
+            expect(stmt.arguments[1].name).toBe('moduleName');
         });
 
         test('scribe with expressions', () => {
