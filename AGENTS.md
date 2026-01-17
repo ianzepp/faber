@@ -122,57 +122,57 @@ agent run -m opus "goal"             # Use specific model
 
 ## Commands
 
-### Faber CLI (Primary Compiler)
+### Rivus CLI (Primary Compiler)
 
-The TypeScript implementation in `fons/faber/` - use this for all daily development:
+The self-hosted compiler in `fons/rivus/` - Faber written in Faber. **Use this for all new development.**
 
-```
-bun run faber compile <file.fab>      # TS (default)
-bun run faber compile <file.fab> -t py | zig | rs | cpp | fab
-bun run faber run <file.fab>          # Compile & execute (TS only)
-bun run faber check <file.fab>        # Validate syntax
-bun run faber format <file.fab>       # Format source
-```
-
-### Rivus CLI (Bootstrap Compiler)
-
-The Faber implementation in `fons/rivus/` - Faber compiler written in Faber itself.
-Must be built first with `bun run build:rivus` before use:
+Must be built first with `bun run build:rivus`:
 
 ```
-bun run build:rivus                   # Build bootstrap compiler to opus/rivus/fons/ts/
-bun run build:rivus -- -t zig         # Build to opus/rivus/fons/zig/
-bun run rivus compile <file.fab>      # Compile using bootstrap (TS only)
+bun run build:rivus                   # Build rivus to opus/rivus/fons/ts/
+bun run rivus compile <file.fab>      # Compile to TypeScript (default)
 bun run rivus compile <file.fab> -o out.ts
-bun run test:rivus                    # Run tests against bootstrap compiler
+bun run test:rivus                    # Run tests against rivus
 ```
 
 **When to use Rivus:**
 
-- Testing that Faber can compile itself
-- Verifying bootstrap compiler correctness
-- Dogfooding language features
-
-**When to use Faber (default):**
-
-- All normal development
-- Multi-target compilation (py, zig, rs, cpp)
-- Faster iteration (no rebuild needed)
+- All new feature development
+- Daily compilation tasks
+- Language evolution
 
 **Known Issues:**
 
 - Parser has infinite loop on some inputs - investigation needed
 - Tests may hang (use Ctrl+C to interrupt)
 
+### Faber CLI (Bootstrap Compiler)
+
+The TypeScript implementation in `fons/faber/`. **Primary purpose: compile rivus.**
+
+```
+bun run faber compile <file.fab>      # TS (default)
+bun run faber compile <file.fab> -t py | zig | rs | cpp | fab
+bun run faber run <file.fab>          # Compile & execute (TS only)
+bun run faber check <file.fab>        # Validate syntax
+```
+
+**When to use Faber:**
+
+- Building rivus (`bun run build:rivus` uses faber internally)
+- Multi-target compilation (py, zig, rs, cpp) until rivus supports them
+- Fallback when rivus has bugs
+
+**Language backports to faber should be limited** - new features go in rivus first.
+
 ### Development
 
 ```
-bun test                              # Run all tests (primary compiler)
+bun run test:rivus                    # Run tests against rivus (primary)
+bun test                              # Run faber unit tests
 bun test -t "pattern"                 # Filter tests
-bun test --coverage                   # With coverage
-bun run test:rivus                    # Run tests against bootstrap compiler
 bun run test:report                   # Run tests with DB tracking + feature matrix
-bun run test:report -- --compiler faber --targets ts,py
+bun run test:report -- --compiler rivus --targets ts
 bun run test:report -- --verify       # With target verification (compile/run)
 bun run test:report -- --feature si   # Filter by feature name
 bun run lint                          # Lint TS source (fons/faber)
@@ -190,7 +190,7 @@ Output includes:
 - List of failed tests with error messages
 
 Available options (via `--`):
-- `--compiler <faber|rivus|artifex>` - Which compiler to test (default: faber)
+- `--compiler <faber|rivus|artifex>` - Which compiler to test (default: rivus)
 - `--targets <ts,py,cpp,rs,zig>` - Comma-separated target list (default: all)
 - `--verify` - Compile and execute generated code (slower but thorough)
 - `--feature <pattern>` - Filter tests by feature name
