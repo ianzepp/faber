@@ -59,9 +59,21 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum sym = p.specta(0)
 
-    # Section annotation prefix (§) - parse and accumulate on parser
-    # These are file-level build configuration, stored on Programma
+    # Section annotation prefix (§) - may be build config or sectional import
     si sym.species === SymbolumGenus.Sectio {
+        # Check for sectional import: § ex (STRING|IDENT) importa
+        fixum nextSym = p.specta(1)
+        si (nextSym.species === SymbolumGenus.Verbum) && (nextSym.verbumId === VerbumId.Ex) {
+            fixum sourceSym = p.specta(2)
+            si (sourceSym.species === SymbolumGenus.Nomen) || (sourceSym.species === SymbolumGenus.Textus) {
+                fixum importaSym = p.specta(3)
+                si (importaSym.species === SymbolumGenus.Verbum) && (importaSym.verbumId === VerbumId.Importa) {
+                    p.procede() # consume §
+                    redde parseImportaSententia(r)
+                }
+            }
+        }
+        # Otherwise it's file-level build configuration
         fixum sectiones = parseSectiones(r)
         # Accumulate on parser for later extraction by parseProgramma
         ex sectiones pro s {

@@ -16,6 +16,15 @@ ex "lodash" importa map, filter
 ex "./utils" importa helper
 ```
 
+Imports may also use the sectional prefix `§`:
+
+```fab
+§ ex norma importa scribe, lege
+§ ex "lodash" importa map, filter
+```
+
+The sectional form groups imports with other file-level directives like `§ dependentia` and `§ externa`. Both forms produce identical behavior; the `§` prefix is purely syntactic. Use whichever reads better in context.
+
 This pattern reads naturally in Latin. The preposition `ex` means "from" or "out of," indicating origin or source. You are drawing bindings *out of* a module into your local scope.
 
 The structure is consistent regardless of source type. Whether importing from the standard library, an external package, or a local file, the syntax remains the same. Only the source specifier changes.

@@ -1163,7 +1163,7 @@ export function parse(tokens: Token[]): ParserResult {
      *   § scopos "ts"
      *   § dependentia "norma" via "../lib/norma"
      */
-    function parseSectionAnnotation(): void {
+    function parseSectionAnnotation(): Statement | null {
         const position = peek().position;
         const startLine = position.line;
         advance(); // consume '§'
@@ -1175,7 +1175,15 @@ export function parse(tokens: Token[]): ParserResult {
                 message: `Expected annotation name after '§', got '${peek().value}'`,
                 position,
             });
-            return;
+            return null;
+        }
+
+        // Check for sectional import: § ex (STRING|IDENTIFIER) importa
+        if (checkKeyword('ex')) {
+            const nextType = peek(1).type;
+            if ((nextType === 'IDENTIFIER' || nextType === 'STRING') && peek(2).keyword === 'importa') {
+                return parseImportaDeclaration(resolver);
+            }
         }
 
         advance(); // consume annotation name
@@ -1191,6 +1199,7 @@ export function parse(tokens: Token[]): ParserResult {
 
         // Section annotations are currently parsed and discarded
         // TODO: Store for build system integration
+        return null;
     }
 
     /**
@@ -1216,10 +1225,12 @@ export function parse(tokens: Token[]): ParserResult {
      * WHY: Separates statement dispatch from comment handling for cleaner code.
      */
     function parseStatementWithoutComments(): Statement {
-        // Skip any section annotations (§) - these are file-level build config
-        // They're parsed but not attached to statements
+        // Handle section annotations (§) - may be build config or sectional imports
         while (check('SECTION')) {
-            parseSectionAnnotation();
+            const sectionResult = parseSectionAnnotation();
+            if (sectionResult) {
+                return sectionResult; // Sectional import: § ex ... importa
+            }
         }
 
         // Parse any leading annotations (@ modifier+)

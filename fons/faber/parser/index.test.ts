@@ -3137,6 +3137,37 @@ describe('parser', () => {
             expect(decl.specifiers[1].imported.name).toBe('lege');
             expect(decl.specifiers[1].local.name).toBe('lege'); // no alias, same name
         });
+
+        test('sectional import with §', () => {
+            const { program } = parseCode('§ ex "hono" importa Hono');
+            const decl = program!.body[0] as any;
+
+            expect(decl.type).toBe('ImportaDeclaration');
+            expect(decl.source).toBe('hono');
+            expect(decl.specifiers).toHaveLength(1);
+            expect(decl.specifiers[0].imported.name).toBe('Hono');
+        });
+
+        test('sectional import produces same AST as bare import', () => {
+            const { program: bare } = parseCode('ex "hono" importa Hono, Router');
+            const { program: sectional } = parseCode('§ ex "hono" importa Hono, Router');
+            const bareDecl = bare!.body[0] as any;
+            const sectDecl = sectional!.body[0] as any;
+
+            expect(sectDecl.type).toBe(bareDecl.type);
+            expect(sectDecl.source).toBe(bareDecl.source);
+            expect(sectDecl.specifiers.length).toBe(bareDecl.specifiers.length);
+            expect(sectDecl.wildcard).toBe(bareDecl.wildcard);
+        });
+
+        test('sectional wildcard import', () => {
+            const { program } = parseCode('§ ex norma importa * ut n');
+            const decl = program!.body[0] as any;
+
+            expect(decl.type).toBe('ImportaDeclaration');
+            expect(decl.wildcard).toBe(true);
+            expect(decl.wildcardAlias.name).toBe('n');
+        });
     });
 
     describe('semicolon as optional statement separator', () => {
