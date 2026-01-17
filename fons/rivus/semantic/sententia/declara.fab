@@ -330,6 +330,17 @@ functio analyzeFunctioDeclaratio(Resolvitor r, Sententia functioStmt) -> vacuum 
                         mutabilis: falsum,
                         locus: param.locus
                     }
+                    # Also register alias if present (ut syntax)
+                    si nonnihil param.alias {
+                        fixum aliasNomen = param.alias qua textus
+                        a.scopus.symbola[aliasNomen] = {
+                            nomen: aliasNomen,
+                            semanticTypus: paramTypi[i],
+                            species: SymbolumSpecies.Parametrum,
+                            mutabilis: falsum,
+                            locus: param.locus
+                        }
+                    }
                     i += 1
                 }
 
@@ -462,6 +473,17 @@ functio analyzeMethodusCorpus(Resolvitor r, FunctioDeclaratio m, tabula<textus, 
             species: SymbolumSpecies.Parametrum,
             mutabilis: falsum,
             locus: param.locus
+        }
+        # Also register alias if present (ut syntax)
+        si nonnihil param.alias {
+            fixum aliasNomen = param.alias qua textus
+            a.scopus.symbola[aliasNomen] = {
+                nomen: aliasNomen,
+                semanticTypus: IGNOTUM,
+                species: SymbolumSpecies.Parametrum,
+                mutabilis: falsum,
+                locus: param.locus
+            }
         }
     }
 
