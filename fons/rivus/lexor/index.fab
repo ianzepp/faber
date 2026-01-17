@@ -445,6 +445,64 @@ genus Lexor {
         ego.addeSymbolum(SymbolumGenus.Textus, valor, loc)
     }
 
+    # legeTriplumTextum = "scan a triple-quoted string"
+    # Handles """ multi-line strings
+    # - Newlines preserved as content
+    # - Embedded " and "" don't terminate
+    # - No escape processing (literal content)
+    # - Leading/trailing newlines adjacent to delimiters stripped
+    # Emits as Exemplar (template) for proper multi-line codegen
+    functio legeTriplumTextum() -> vacuum {
+        fixum loc = ego.locus()
+        varia textus valor = ""
+
+        ego.procede()  # First "
+        ego.procede()  # Second "
+        ego.procede()  # Third "
+
+        # Skip leading newline immediately after opening """
+        si ego.specta(0) == "\n" {
+            ego.linea += 1
+            ego.columnaInitium = ego.index + 1
+            ego.procede()
+        }
+
+        dum non ego.estFinis() {
+            # Check for closing """
+            si ego.specta(0) == "\"" et ego.specta(1) == "\"" et ego.specta(2) == "\"" {
+                rumpe
+            }
+
+            si ego.specta(0) == "\n" {
+                ego.linea += 1
+                ego.columnaInitium = ego.index + 1
+            }
+
+            valor = valor + ego.procede()
+        }
+
+        si ego.estFinis() {
+            ego.addeErrorem(LexorErrorCodice.TextusNonClausa, loc)
+            redde
+        }
+
+        # Strip trailing newline immediately before closing """
+        si valor.endsWith("\n") {
+            valor = valor.slice(0, -1)
+        }
+
+        ego.procede()  # First closing "
+        ego.procede()  # Second closing "
+        ego.procede()  # Third closing "
+
+        # Escape backticks and ${ for template string output
+        valor = valor.muta("\\", "\\\\")
+        valor = valor.muta("`", "\\`")
+        valor = valor.muta("${", "\\${")
+
+        ego.addeSymbolum(SymbolumGenus.Exemplar, valor, loc)
+    }
+
     # legeInterpolatio = "scan an interpolation"
     # Handles ${...} with brace depth tracking for nested objects/blocks
     # Returns the consumed characters (${...} including braces)
@@ -577,8 +635,13 @@ genus Lexor {
         }
 
         # String literal: single or double quote
+        # Triple-quote strings (""") allow multi-line content
         si c == "\"" aut c == "'" {
-            ego.legeTextum(c)
+            si c == "\"" et ego.specta(1) == "\"" et ego.specta(2) == "\"" {
+                ego.legeTriplumTextum()
+            } secus {
+                ego.legeTextum(c)
+            }
             redde
         }
 

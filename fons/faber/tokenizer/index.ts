@@ -498,6 +498,73 @@ export function tokenize(source: string): TokenizerResult {
     }
 
     /**
+     * Scan a triple-quoted string literal.
+     *
+     * PATTERN: '"""' (any character except '"""')* '"""'
+     *
+     * WHY: Triple-quoted strings allow multi-line content and embedded quotes
+     *      without escaping. Useful for documentation, help text, and SQL.
+     *
+     * BEHAVIOR:
+     * - Newlines preserved as content
+     * - Embedded " and "" don't terminate the string
+     * - No escape sequence processing (content is literal)
+     * - Leading/trailing newlines adjacent to delimiters are stripped
+     */
+    function scanTripleQuoteString(): void {
+        const pos = position();
+        let value = '';
+
+        advance(); // first "
+        advance(); // second "
+        advance(); // third "
+
+        // Skip leading newline immediately after opening """
+        if (peek() === '\n') {
+            line++;
+            lineStart = current + 1;
+            advance();
+        }
+
+        while (!isAtEnd()) {
+            // Check for closing """
+            if (peek() === '"' && peek(1) === '"' && peek(2) === '"') {
+                break;
+            }
+
+            if (peek() === '\n') {
+                line++;
+                lineStart = current + 1;
+            }
+
+            value += advance();
+        }
+
+        if (isAtEnd()) {
+            addError(TokenizerErrorCode.UnterminatedString, pos);
+
+            return;
+        }
+
+        // Strip trailing newline immediately before closing """
+        if (value.endsWith('\n')) {
+            value = value.slice(0, -1);
+        }
+
+        advance(); // first closing "
+        advance(); // second closing "
+        advance(); // third closing "
+
+        // Escape backticks and ${ for template string output
+        const escaped = value
+            .replace(/\\/g, '\\\\')
+            .replace(/`/g, '\\`')
+            .replace(/\$\{/g, '\\${');
+
+        addToken('TEMPLATE_STRING', escaped, pos);
+    }
+
+    /**
      * Scan a template string literal.
      *
      * PATTERN: '`' (escape | [^`] | '${' expr '}')* '`'
@@ -642,8 +709,13 @@ export function tokenize(source: string): TokenizerResult {
         }
 
         // WHY: String literals can use ' or "
+        // Triple-quote strings (""") allow multi-line content
         if (char === '"' || char === "'") {
-            scanString(char);
+            if (char === '"' && peek(1) === '"' && peek(2) === '"') {
+                scanTripleQuoteString();
+            } else {
+                scanString(char);
+            }
 
             return;
         }
