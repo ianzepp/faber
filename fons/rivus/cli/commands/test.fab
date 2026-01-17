@@ -53,7 +53,7 @@ functio testCommand(
     si textus stdinFilename,
     si bivalens jsonOutput,
     si bivalens dryRun,
-    si bivalens solum
+    si bivalens solo
 ) -> numerus {
     fixum targetLang = target vel "ts"
     fixum displayName = stdinFilename vel nomenOstende(input)
@@ -194,12 +194,12 @@ functio testCommand(
         fixum proc = processus.spawn("bun", args, {
             stdout: "inherit",
             stderr: "inherit"
-        } innatum tabula<textus, ignotum>)
+        })
 
         figendum exitCode = proc.exited
 
         # Cleanup temp file
-        cede solum.tolle(tempFile)
+        cede solum.dele(tempFile)
 
         si exitCode != 0 {
             redde exitCode qua numerus
@@ -210,7 +210,7 @@ functio testCommand(
         mone "Test execution error: §", err
         # Try to cleanup
         tempta {
-            cede solum.tolle(tempFile)
+            cede solum.dele(tempFile)
         } cape _ {
             # Ignore cleanup errors
         }

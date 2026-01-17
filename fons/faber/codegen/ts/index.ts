@@ -85,6 +85,9 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         g.subsidiaImports = options.subsidiaImports;
     }
 
+    // Strip tests from output (for production builds)
+    g.stripTests = options.stripTests ?? false;
+
     // First pass: generate body (this populates features)
     const body = program.body.map(stmt => g.genStatement(stmt)).join('\n');
 

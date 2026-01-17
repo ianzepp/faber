@@ -91,6 +91,10 @@ functio parseProbandumSententia(Resolvitor r) -> Sententia {
     redde finge ProbandumSententia {
         locus: locus,
         nomen: nomen,
+        ompitur: nihil,
+        ratioOmissionis: nihil,
+        solum: nihil,
+        tags: nihil,
         corpus: corpus
     } qua Sententia
 }
@@ -146,6 +150,14 @@ functio parseProbaSententia(Resolvitor r) -> Sententia {
         nomen: nomen,
         modificator: modificator,
         ratioModificatoris: ratio,
+        solum: nihil,
+        tags: nihil,
+        temporis: nihil,
+        metior: nihil,
+        repete: nihil,
+        fragilis: nihil,
+        requirit: nihil,
+        solumIn: nihil,
         corpus: corpus
     } qua Sententia
 }

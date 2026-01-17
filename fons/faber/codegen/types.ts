@@ -122,6 +122,13 @@ export interface CodegenOptions {
      * Populated by semantic analysis for modules with @subsidia pactums.
      */
     subsidiaImports?: Map<string, Map<string, string>>;
+
+    /**
+     * Strip test blocks (probandum/proba) from output.
+     * Use for production builds where tests should not be included.
+     * Default: false
+     */
+    stripTests?: boolean;
 }
 
 // =============================================================================

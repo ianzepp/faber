@@ -57,7 +57,7 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
             throw new Error(`${first.position.line}:${first.position.column} ${first.message}`);
         }
 
-        const output = generate(program);
+        const output = generate(program, { stripTests: true });
 
         await mkdir(dirname(outPath), { recursive: true });
         await Bun.write(outPath, output);

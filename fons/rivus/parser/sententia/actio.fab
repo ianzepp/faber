@@ -165,7 +165,7 @@ functio parseScribeElementum(Resolvitor r) -> Expressia {
     si p.proba(SymbolumGenus.Textus) {
         fixum token = p.procede()
         fixum locus = token.locus
-        fixum exemplar = token.valor
+        fixum textus exemplar = token.valor
 
         # Count § placeholders to determine how many args to consume
         varia placeholderNumerus = 0

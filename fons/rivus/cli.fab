@@ -153,7 +153,7 @@ functio check(
 @ optio textus stdinFilename longum "stdin-filename" descriptio "Filename to use for stdin input"
 @ optio bivalens json longum "json" descriptio "Output errors as JSON"
 @ optio bivalens dryRun longum "dry-run" descriptio "Compile only, don't execute"
-@ optio bivalens solum longum "only" descriptio "Run only tests marked @ solum"
+@ optio bivalens solo longum "only" descriptio "Run only tests marked @ solum"
 functio test(
     textus input,
     si textus target,
@@ -162,8 +162,8 @@ functio test(
     si textus stdinFilename,
     si bivalens json,
     si bivalens dryRun,
-    si bivalens solum
+    si bivalens solo
 ) exitus code -> vacuum {
-    fixum result = cede testCommand(input, target, tag, exclude, stdinFilename, json, dryRun, solum)
+    figendum result = testCommand(input, target, tag, exclude, stdinFilename, json, dryRun, solo)
     code = result
 }

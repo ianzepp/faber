@@ -779,7 +779,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             currentScope.symbols.set(localName, {
                 name: localName,
                 type: exportInfo.type,
-                kind: exportInfo.kind === 'function' || exportInfo.kind === 'variable' ? exportInfo.kind : 'variable',
+                kind: exportInfo.kind,
                 mutable: false,
                 position: specifier.position,
             });
@@ -1460,21 +1460,11 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             const propName = (node.property as Identifier).name;
 
             if (symbol) {
-                // Namespace member access: json.solve
-                // WHY: Namespace symbols wrap norma collections, enabling json.solve(data) calls
+                // Namespace member access: json.solve, solum.dele, etc.
+                // WHY: Namespace symbols wrap HAL pactums and norma collections
                 if (symbol.kind === 'namespace' && symbol.type.kind === 'namespace') {
-                    const collection = symbol.type.moduleName;
-
-                    // WHY: Validate method exists in norma registry during semantic analysis
-                    // to prevent codegen failures from undefined methods
-                    const translation = getNormaTranslation('ts', collection, propName);
-                    if (!translation) {
-                        error(`Method '${propName}' not found in norma collection '${collection}'`, node.position);
-                        node.resolvedType = UNKNOWN;
-                        return UNKNOWN;
-                    }
-
-                    // WHY: Return function type even if UNKNOWN for now (Phase 2 will add signatures)
+                    // WHY: Return function type - HAL pactum methods pass through directly,
+                    // norma collection methods get translated in codegen
                     const methodType = functionType([], UNKNOWN);
                     node.resolvedType = methodType;
                     node.object.resolvedType = symbol.type;

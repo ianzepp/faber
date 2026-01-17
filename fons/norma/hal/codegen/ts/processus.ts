@@ -18,6 +18,15 @@ export const processus = {
         return proc.pid;
     },
 
+    // SPAWN - With options, returns process handle
+    spawn(cmd: string, args: string[], options: Record<string, unknown>): { pid: number; exited: Promise<number> } {
+        const proc = Bun.spawn([cmd, ...args], {
+            stdout: (options.stdout as "inherit" | "pipe" | "ignore") ?? "inherit",
+            stderr: (options.stderr as "inherit" | "pipe" | "ignore") ?? "inherit",
+        });
+        return { pid: proc.pid, exited: proc.exited };
+    },
+
     // SHELL EXECUTION - For commands needing shell features (&&, |, >, etc)
     exsequi(cmd: string): string {
         const result = Bun.spawnSync(["sh", "-c", cmd]);

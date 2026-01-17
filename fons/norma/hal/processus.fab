@@ -6,6 +6,12 @@
 # Part of the Hardware Abstraction Layer (HAL). All subprocess
 # management should go through this interface.
 
+# Spawned subprocess handle
+genus Subprocessus {
+    numerus pid
+    promissum<numerus> exited
+}
+
 @ subsidia ts "codegen/ts/processus.ts"
 pactum processus {
     # =========================================================================
@@ -16,6 +22,11 @@ pactum processus {
     # This is the primary, portable way to spawn subprocesses.
     @ externa
     functio genera(lista<textus> args, si textus cwd, si mappa<textus, textus> env) -> numerus
+
+    # Spawn process with options. Returns object with exited promise.
+    # Options: { stdout: "inherit"|"pipe"|"ignore", stderr: "inherit"|"pipe"|"ignore" }
+    @ externa
+    functio spawn(textus cmd, lista<textus> args, tabula<textus, ignotum> options) -> Subprocessus
 
     # =========================================================================
     # SHELL EXECUTION - For commands needing shell features (&&, |, >, etc)

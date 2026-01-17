@@ -78,7 +78,7 @@ functio genProbandum(textus nomen, bivalens? ompitur, textus? ratioOmissionis, b
         lines.adde(genSententia(stmt, g))
     }
 
-    g.probaSuiteStack.tolle(g.probaSuiteStack.longitudo() - 1)
+    g.probaSuiteStack.remove()
 
     redde lines.coniunge("\n")
 }
@@ -294,50 +294,50 @@ functio genProbaHarness(TsGenerator g) -> textus {
     lines.adde("const __tests: __TestEntry[] = [")
     ex g.probaRegistrum pro entry {
         varia parts = [] innatum lista<textus>
-        parts.adde(scriptum("suite: \"§\"", entry.habe("suite") qua textus))
-        parts.adde(scriptum("name: \"§\"", entry.habe("name") qua textus))
-        parts.adde(scriptum("fn: §", entry.habe("funcName") qua textus))
+        parts.adde(scriptum("suite: \"§\"", entry.accipe("suite") qua textus))
+        parts.adde(scriptum("name: \"§\"", entry.accipe("name") qua textus))
+        parts.adde(scriptum("fn: §", entry.accipe("funcName") qua textus))
 
-        si entry.tenet("skip") {
+        si entry.habet("skip") {
             parts.adde("skip: true")
-            si entry.tenet("skipReason") {
-                parts.adde(scriptum("skipReason: \"§\"", entry.habe("skipReason") qua textus))
+            si entry.habet("skipReason") {
+                parts.adde(scriptum("skipReason: \"§\"", entry.accipe("skipReason") qua textus))
             }
         }
-        si entry.tenet("todo") {
+        si entry.habet("todo") {
             parts.adde("todo: true")
-            si entry.tenet("todoReason") {
-                parts.adde(scriptum("todoReason: \"§\"", entry.habe("todoReason") qua textus))
+            si entry.habet("todoReason") {
+                parts.adde(scriptum("todoReason: \"§\"", entry.accipe("todoReason") qua textus))
             }
         }
-        si entry.tenet("only") {
+        si entry.habet("only") {
             parts.adde("only: true")
         }
-        si entry.tenet("tags") {
-            fixum tagsArr = entry.habe("tags") qua lista<textus>
+        si entry.habet("tags") {
+            fixum tagsArr = entry.accipe("tags") qua lista<textus>
             varia tagStrs = [] innatum lista<textus>
             ex tagsArr pro t {
                 tagStrs.adde(scriptum("\"§\"", t))
             }
             parts.adde(scriptum("tags: [§]", tagStrs.coniunge(", ")))
         }
-        si entry.tenet("timeout") {
-            parts.adde(scriptum("timeout: §", entry.habe("timeout")))
+        si entry.habet("timeout") {
+            parts.adde(scriptum("timeout: §", entry.accipe("timeout")))
         }
-        si entry.tenet("benchmark") {
+        si entry.habet("benchmark") {
             parts.adde("benchmark: true")
         }
-        si entry.tenet("repeat") {
-            parts.adde(scriptum("repeat: §", entry.habe("repeat")))
+        si entry.habet("repeat") {
+            parts.adde(scriptum("repeat: §", entry.accipe("repeat")))
         }
-        si entry.tenet("retries") {
-            parts.adde(scriptum("retries: §", entry.habe("retries")))
+        si entry.habet("retries") {
+            parts.adde(scriptum("retries: §", entry.accipe("retries")))
         }
-        si entry.tenet("requireEnv") {
-            parts.adde(scriptum("requireEnv: \"§\"", entry.habe("requireEnv") qua textus))
+        si entry.habet("requireEnv") {
+            parts.adde(scriptum("requireEnv: \"§\"", entry.accipe("requireEnv") qua textus))
         }
-        si entry.tenet("platformOnly") {
-            parts.adde(scriptum("platformOnly: \"§\"", entry.habe("platformOnly") qua textus))
+        si entry.habet("platformOnly") {
+            parts.adde(scriptum("platformOnly: \"§\"", entry.accipe("platformOnly") qua textus))
         }
 
         lines.adde(scriptum("  { § },", parts.coniunge(", ")))

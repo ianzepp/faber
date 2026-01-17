@@ -124,6 +124,9 @@ export function genCallExpression(node: CallExpression, g: TsGenerator): string 
                     return applyNamespaceTemplate(translation.template, [...argsArray]);
                 }
             }
+            // No norma translation - emit HAL pactum call directly
+            const obj = g.genExpression(node.callee.object);
+            return `${obj}.${methodName}(${args})`;
         }
     }
 
