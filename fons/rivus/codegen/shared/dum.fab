@@ -1,0 +1,55 @@
+# Shared Codegen - While Loops
+#
+# Shared logic for dum (while) loops.
+# Parameterized by ScopusSyntaxis for target-specific output.
+
+ex "../../ast/sententia" importa Sententia, CapeClausula
+ex "../../ast/expressia" importa Expressia
+ex "./syntaxis" importa ScopusSyntaxis
+ex "./revocata" importa Revocata
+ex "./generans" importa Generans
+
+# Main entry point - handles while loop with optional cape wrapper
+@ publica
+functio genDumLogica(
+    Expressia condicio,
+    Sententia corpus,
+    ignotum cape,
+    Generans g,
+    ScopusSyntaxis syn,
+    Revocata rev
+) fit textus {
+    g.intraProfundum()
+    fixum body = rev.genStmt(corpus, g)
+    g.exiProfundum()
+
+    fixum loop = scriptum(
+        "§§ §§§ {\n§\n§}",
+        g.ind(),
+        syn.dumVerbum,
+        syn.siCondicioPrae,
+        rev.genExpr(condicio, g),
+        syn.siCondicioPost,
+        body,
+        g.ind()
+    )
+
+    # If target supports cape and cape is present, wrap in try/catch
+    si nonnihil cape et syn.habetCape {
+        fixum c = cape qua CapeClausula
+        g.intraProfundum()
+        fixum catchBody = rev.genStmt(c.corpus, g)
+        g.exiProfundum()
+        redde scriptum(
+            "§try {\n§\n§} catch (§) {\n§\n§}",
+            g.ind(),
+            loop,
+            g.ind(),
+            c.param,
+            catchBody,
+            g.ind()
+        )
+    }
+
+    redde loop
+}

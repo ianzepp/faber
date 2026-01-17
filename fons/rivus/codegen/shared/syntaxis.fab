@@ -1,0 +1,42 @@
+# Shared Codegen - Target Syntax Configuration
+#
+# Defines target-specific syntax patterns for shared codegen handlers.
+# Each target provides an instance with its syntax rules.
+
+# Target syntax configuration
+@ publicum
+genus ScopusSyntaxis {
+    # Conditionals
+    textus siCondicioPrae    # "(" for TS, "" for Go/Zig
+    textus siCondicioPost    # ")" for TS, "" for Go/Zig
+    textus secusVerbum       # "else" for all
+    textus sinVerbum         # "else if" for all
+
+    # Loops
+    textus dumVerbum         # "while" for TS/Zig, "for" for Go
+
+    # Feature support
+    bivalens habetCape       # TS has try/catch, Go/Zig/Rust do not
+}
+
+# TypeScript syntax
+@ publica
+fixum SYNTAXIS_TS = finge ScopusSyntaxis {
+    siCondicioPrae: "(",
+    siCondicioPost: ")",
+    secusVerbum: "else",
+    sinVerbum: "else if",
+    dumVerbum: "while",
+    habetCape: verum
+}
+
+# Go syntax
+@ publica
+fixum SYNTAXIS_GO = finge ScopusSyntaxis {
+    siCondicioPrae: "",
+    siCondicioPost: "",
+    secusVerbum: "else",
+    sinVerbum: "else if",
+    dumVerbum: "for",
+    habetCape: falsum
+}

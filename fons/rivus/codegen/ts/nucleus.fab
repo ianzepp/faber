@@ -5,6 +5,7 @@
 # separate files under sententia/ and expressia/.
 
 ex "../typi" importa RequiredFeatures, creaRequiredFeatures, formataNotaePrae, formataNotaePost
+ex "../shared/generans" importa Generans
 
 # =============================================================================
 # TS GENERATOR
@@ -15,7 +16,7 @@ ex "../typi" importa RequiredFeatures, creaRequiredFeatures, formataNotaePrae, f
 # WHY: Holds indentation state, feature tracking, and context flags
 #      that are shared across all statement/expression generators.
 @ publicum
-genus TsGenerator {
+genus TsGenerator implet Generans {
     # Indentation depth (number of levels)
     numerus profunditas
 

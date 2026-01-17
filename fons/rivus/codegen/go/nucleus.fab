@@ -4,6 +4,7 @@
 # for Go code generation.
 
 ex "../../ast/typus" importa TypusAnnotatio
+ex "../shared/generans" importa Generans
 
 # =============================================================================
 # REQUIRED FEATURES
@@ -22,7 +23,7 @@ genus GoRequiredFeatures {
 
 # Core generator state for Go output.
 @ publicum
-genus GoGenerator {
+genus GoGenerator implet Generans {
     # Indentation depth (number of levels)
     numerus profunditas
 

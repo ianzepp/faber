@@ -1,0 +1,30 @@
+# TypeScript Codegen - Revocata Adapter
+#
+# Implements the shared Revocata interface for TypeScript codegen.
+
+ex "../../ast/sententia" importa Sententia
+ex "../../ast/expressia" importa Expressia
+ex "../shared/revocata" importa Revocata
+ex "../shared/generans" importa Generans
+ex "./nucleus" importa TsGenerator
+ex "./expressia/index" importa genExpressia
+ex "./sententia/index" importa genSententia
+
+# Adapter implementing Revocata for TypeScript codegen
+@ publicum
+genus TsRevocata implet Revocata {
+    @ publica
+    functio genExpr(Expressia e, Generans g) fit textus {
+        redde genExpressia(e, g qua TsGenerator)
+    }
+    @ publica
+    functio genStmt(Sententia s, Generans g) fit textus {
+        redde genSententia(s, g qua TsGenerator)
+    }
+}
+
+# Factory function for creating the adapter
+@ publica
+functio creaTsRevocata() fit TsRevocata {
+    redde novum TsRevocata {}
+}

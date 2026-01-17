@@ -1,0 +1,15 @@
+# Shared Codegen - Callback Interface
+#
+# Interface for codegen dispatch functions.
+# Workaround for #140: rivus doesn't support function types in parameters.
+
+ex "../../ast/expressia" importa Expressia
+ex "../../ast/sententia" importa Sententia
+ex "./generans" importa Generans
+
+# Callback interface for codegen dispatch functions
+@ publicum
+pactum Revocata {
+    functio genExpr(Expressia e, Generans g) fit textus
+    functio genStmt(Sententia s, Generans g) fit textus
+}

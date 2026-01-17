@@ -4,27 +4,14 @@
 #   dum x > 0 { ... }         -> while (x > 0) { ... }
 #   dum x > 0 { } cape e { }  -> try { while (...) {...} } catch (e) { }
 
-ex "../../../ast/sententia" importa Sententia, CapeClausula
+ex "../../../ast/sententia" importa Sententia
 ex "../../../ast/expressia" importa Expressia
 ex "../nucleus" importa TsGenerator
-
-# External declarations - implementations live in index.fab
-ex "../expressia/index" importa genExpressia
-ex "./index" importa genSententia
+ex "../../shared/syntaxis" importa SYNTAXIS_TS
+ex "../../shared/dum" importa genDumLogica
+ex "../revocata" importa creaTsRevocata
 
 @ publica
 functio genDum(Expressia condicio, Sententia corpus, ignotum cape, TsGenerator g) -> textus {
-    g.intraProfundum()
-    fixum body = genSententia(corpus, g)
-    g.exiProfundum()
-
-    fixum loop = scriptum("§while (§) {\n§\n§}", g.ind(), genExpressia(condicio, g), body, g.ind())
-
-    # WHY: dum allows cape; wrap the loop in try/catch.
-    si nonnihil cape {
-        fixum c = cape qua CapeClausula
-        redde scriptum("§try {\n§\n§} catch (§) §", g.ind(), loop, g.ind(), c.param, genSententia(c.corpus, g))
-    }
-
-    redde loop
+    redde genDumLogica(condicio, corpus, cape, g, SYNTAXIS_TS, creaTsRevocata())
 }

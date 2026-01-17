@@ -1,0 +1,112 @@
+# Shared Codegen - Conditional Statements
+#
+# Shared logic for si/sin/secus (if/else-if/else) chains.
+# Parameterized by ScopusSyntaxis for target-specific output.
+
+ex "../../ast/sententia" importa Sententia, CapeClausula
+ex "../../ast/expressia" importa Expressia
+ex "./syntaxis" importa ScopusSyntaxis
+ex "./revocata" importa Revocata
+ex "./generans" importa Generans
+
+# Build the if/else-if/else chain without cape wrapper
+functio genSiCatena(
+    Expressia condicio,
+    Sententia consequens,
+    ignotum alternans,
+    Generans g,
+    ScopusSyntaxis syn,
+    Revocata rev
+) fit textus {
+    g.intraProfundum()
+    fixum consBody = rev.genStmt(consequens, g)
+    g.exiProfundum()
+
+    varia result = scriptum(
+        "§if §§§ {\n§\n§}",
+        g.ind(),
+        syn.siCondicioPrae,
+        rev.genExpr(condicio, g),
+        syn.siCondicioPost,
+        consBody,
+        g.ind()
+    )
+
+    varia next = alternans
+    dum nonnihil next {
+        fixum stmt = next qua Sententia
+
+        si stmt.tag == "SiSententia" {
+            fixum s = stmt
+
+            # Nested si with cape gets wrapped in else block
+            si nonnihil s.cape et syn.habetCape {
+                g.intraProfundum()
+                fixum elseBody = rev.genStmt(s, g)
+                g.exiProfundum()
+                result = scriptum("§ § {\n§\n§}", result, syn.secusVerbum, elseBody, g.ind())
+                next = nihil
+                perge
+            }
+
+            g.intraProfundum()
+            fixum body = rev.genStmt(s.consequens, g)
+            g.exiProfundum()
+
+            result = scriptum(
+                "§ § §§§ {\n§\n§}",
+                result,
+                syn.sinVerbum,
+                syn.siCondicioPrae,
+                rev.genExpr(s.condicio, g),
+                syn.siCondicioPost,
+                body,
+                g.ind()
+            )
+            next = s.alternans
+            perge
+        }
+
+        # Plain else block
+        g.intraProfundum()
+        fixum body = rev.genStmt(stmt, g)
+        g.exiProfundum()
+
+        result = scriptum("§ § {\n§\n§}", result, syn.secusVerbum, body, g.ind())
+        next = nihil
+    }
+
+    redde result
+}
+
+# Main entry point - handles optional cape wrapper
+@ publica
+functio genSiLogica(
+    Expressia condicio,
+    Sententia consequens,
+    ignotum alternans,
+    ignotum cape,
+    Generans g,
+    ScopusSyntaxis syn,
+    Revocata rev
+) fit textus {
+    # If target supports cape and cape is present, wrap in try/catch
+    si nonnihil cape et syn.habetCape {
+        fixum c = cape qua CapeClausula
+        fixum ifBody = genSiCatena(condicio, consequens, alternans, g, syn, rev)
+        g.intraProfundum()
+        fixum catchBody = rev.genStmt(c.corpus, g)
+        g.exiProfundum()
+        redde scriptum(
+            "§try {\n§\n§} catch (§) {\n§\n§}",
+            g.ind(),
+            ifBody,
+            g.ind(),
+            c.param,
+            catchBody,
+            g.ind()
+        )
+    }
+
+    redde genSiCatena(condicio, consequens, alternans, g, syn, rev)
+}

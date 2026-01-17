@@ -1,0 +1,17 @@
+# Shared Codegen - Generator Interface
+#
+# Common interface for all code generators (TsGenerator, GoGenerator, etc.).
+# Defines the minimal methods needed by shared codegen handlers.
+
+# Common generator interface for shared codegen
+@ publicum
+pactum Generans {
+    # Generate indentation string for current depth
+    functio ind() fit textus
+
+    # Increment indentation depth
+    functio intraProfundum() fit vacuum
+
+    # Decrement indentation depth
+    functio exiProfundum() fit vacuum
+}

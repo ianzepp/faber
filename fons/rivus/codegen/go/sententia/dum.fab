@@ -6,14 +6,11 @@
 ex "../../../ast/sententia" importa Sententia
 ex "../../../ast/expressia" importa Expressia
 ex "../nucleus" importa GoGenerator
-ex "../expressia/index" importa genExpressia
-ex "./index" importa genSententia
+ex "../../shared/syntaxis" importa SYNTAXIS_GO
+ex "../../shared/dum" importa genDumLogica
+ex "../revocata" importa creaGoRevocata
 
 @ publica
 functio genDum(Expressia condicio, Sententia corpus, GoGenerator g) -> textus {
-    g.intraProfundum()
-    fixum body = genSententia(corpus, g)
-    g.exiProfundum()
-
-    redde scriptum("§for § {\n§\n§}", g.ind(), genExpressia(condicio, g), body, g.ind())
+    redde genDumLogica(condicio, corpus, nihil, g, SYNTAXIS_GO, creaGoRevocata())
 }

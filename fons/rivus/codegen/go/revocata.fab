@@ -1,0 +1,30 @@
+# Go Codegen - Revocata Adapter
+#
+# Implements the shared Revocata interface for Go codegen.
+
+ex "../../ast/sententia" importa Sententia
+ex "../../ast/expressia" importa Expressia
+ex "../shared/revocata" importa Revocata
+ex "../shared/generans" importa Generans
+ex "./nucleus" importa GoGenerator
+ex "./expressia/index" importa genExpressia
+ex "./sententia/index" importa genSententia
+
+# Adapter implementing Revocata for Go codegen
+@ publicum
+genus GoRevocata implet Revocata {
+    @ publica
+    functio genExpr(Expressia e, Generans g) fit textus {
+        redde genExpressia(e, g qua GoGenerator)
+    }
+    @ publica
+    functio genStmt(Sententia s, Generans g) fit textus {
+        redde genSententia(s, g qua GoGenerator)
+    }
+}
+
+# Factory function for creating the adapter
+@ publica
+functio creaGoRevocata() fit GoRevocata {
+    redde novum GoRevocata {}
+}

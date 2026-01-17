@@ -8,42 +8,11 @@
 ex "../../../ast/sententia" importa Sententia
 ex "../../../ast/expressia" importa Expressia
 ex "../nucleus" importa GoGenerator
-ex "../expressia/index" importa genExpressia
-ex "./index" importa genSententia
+ex "../../shared/syntaxis" importa SYNTAXIS_GO
+ex "../../shared/si" importa genSiLogica
+ex "../revocata" importa creaGoRevocata
 
 @ publica
 functio genSi(Expressia condicio, Sententia consequens, ignotum alternans, GoGenerator g) -> textus {
-    g.intraProfundum()
-    fixum consBody = genSententia(consequens, g)
-    g.exiProfundum()
-
-    varia result = scriptum("§if § {\n§\n§}", g.ind(), genExpressia(condicio, g), consBody, g.ind())
-
-    varia next = alternans
-    dum nonnihil next {
-        fixum stmt = next qua Sententia
-
-        # Check for else-if chain (sin)
-        si stmt.tag == "SiSententia" {
-            fixum s = stmt
-
-            g.intraProfundum()
-            fixum body = genSententia(s.consequens, g)
-            g.exiProfundum()
-
-            result = scriptum("§ else if § {\n§\n§}", result, genExpressia(s.condicio, g), body, g.ind())
-            next = s.alternans
-            perge
-        }
-
-        # Plain else block
-        g.intraProfundum()
-        fixum body = genSententia(stmt, g)
-        g.exiProfundum()
-
-        result = scriptum("§ else {\n§\n§}", result, body, g.ind())
-        next = nihil
-    }
-
-    redde result
+    redde genSiLogica(condicio, consequens, alternans, nihil, g, SYNTAXIS_GO, creaGoRevocata())
 }
