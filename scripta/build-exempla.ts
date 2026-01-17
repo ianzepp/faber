@@ -3,11 +3,11 @@
  * Compile fons/exempla/ using faber, rivus, or artifex.
  *
  * Usage:
- *   bun run build:exempla                    # faber, TypeScript (default)
- *   bun run build:exempla -t zig             # faber, Zig
- *   bun run build:exempla -t all             # faber, all targets
- *   bun run build:exempla -c rivus           # rivus, TypeScript
- *   bun run build:exempla -c artifex         # artifex (self-hosted), TypeScript
+ *   bun run exempla                          # faber + rivus (default)
+ *   bun run exempla -t zig                   # faber + rivus, Zig target
+ *   bun run exempla --no-rivus               # faber only
+ *   bun run exempla --artifex                # faber + rivus + artifex
+ *   bun run exempla --no-faber --no-rivus --artifex  # artifex only
  */
 
 import { mkdir, readdir, rm, stat } from 'fs/promises';
@@ -21,43 +21,53 @@ const EXEMPLA_OUTPUT = join(ROOT, 'opus', 'exempla');
 type Compiler = 'faber' | 'rivus' | 'artifex';
 type Target = 'ts' | 'zig' | 'py' | 'rs' | 'go';
 
-const VALID_COMPILERS = ['faber', 'rivus', 'artifex'] as const;
 const VALID_TARGETS = ['ts', 'zig', 'py', 'rs', 'go', 'all'] as const;
 const ALL_TARGETS: Target[] = ['ts', 'zig', 'py', 'rs', 'go'];
 const TARGET_EXT: Record<Target, string> = { ts: 'ts', zig: 'zig', py: 'py', rs: 'rs', go: 'go' };
 
 interface Args {
-    compiler: Compiler;
+    compilers: Compiler[];
     targets: Target[];
 }
 
 function parseArgs(): Args {
     const args = process.argv.slice(2);
-    let compiler: Compiler = 'faber';
+    let faber = true;
+    let rivus = true;
+    let artifex = false;
     let targets: Target[] = ['ts'];
 
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
 
-        if (arg === '-c' || arg === '--compiler') {
-            const c = args[++i];
-            if (!VALID_COMPILERS.includes(c as Compiler)) {
-                console.error(`Unknown compiler '${c}'. Valid: ${VALID_COMPILERS.join(', ')}`);
-                process.exit(1);
-            }
-            compiler = c as Compiler;
-        }
-        else if (arg === '-t' || arg === '--target') {
+        if (arg === '-t' || arg === '--target') {
             const t = args[++i];
             if (!VALID_TARGETS.includes(t as typeof VALID_TARGETS[number])) {
                 console.error(`Unknown target '${t}'. Valid: ${VALID_TARGETS.join(', ')}`);
                 process.exit(1);
             }
             targets = t === 'all' ? ALL_TARGETS : [t as Target];
+        } else if (arg === '--faber') {
+            faber = true;
+        } else if (arg === '--no-faber') {
+            faber = false;
+        } else if (arg === '--rivus') {
+            rivus = true;
+        } else if (arg === '--no-rivus') {
+            rivus = false;
+        } else if (arg === '--artifex') {
+            artifex = true;
+        } else if (arg === '--no-artifex') {
+            artifex = false;
         }
     }
 
-    return { compiler, targets };
+    const compilers: Compiler[] = [];
+    if (faber) compilers.push('faber');
+    if (rivus) compilers.push('rivus');
+    if (artifex) compilers.push('artifex');
+
+    return { compilers, targets };
 }
 
 async function findFiles(dir: string, ext: string): Promise<string[]> {
@@ -228,14 +238,27 @@ async function verifyGo(): Promise<{ total: number; failed: number }> {
 }
 
 async function main() {
-    const { compiler, targets } = parseArgs();
+    const { compilers, targets } = parseArgs();
     const start = performance.now();
 
-    console.log(`Compiling exempla with ${compiler} (targets: ${targets.join(', ')})\n`);
+    if (compilers.length === 0) {
+        console.log('No compilers selected. Use --faber, --rivus, or --artifex.');
+        process.exit(0);
+    }
 
-    const compile = await compileExempla(compiler, targets);
-    if (compile.failed > 0) {
-        console.log(`\n${compile.failed}/${compile.total} compilation(s) failed\n`);
+    console.log(`Compiling exempla (compilers: ${compilers.join(', ')}, targets: ${targets.join(', ')})\n`);
+
+    let totalCompileFailed = 0;
+    let totalCompileCount = 0;
+
+    for (const compiler of compilers) {
+        console.log(`\n[${compiler}]`);
+        const compile = await compileExempla(compiler, targets);
+        totalCompileCount += compile.total;
+        totalCompileFailed += compile.failed;
+        if (compile.failed > 0) {
+            console.log(`  ${compile.failed}/${compile.total} compilation(s) failed`);
+        }
     }
 
     console.log('\nVerifying output...');
@@ -264,7 +287,7 @@ async function main() {
     const elapsed = performance.now() - start;
     console.log(`\nDone (${elapsed.toFixed(0)}ms)`);
 
-    if (compile.failed > 0 || verifyFailed > 0) {
+    if (totalCompileFailed > 0 || verifyFailed > 0) {
         process.exit(1);
     }
 }
