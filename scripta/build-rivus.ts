@@ -70,7 +70,7 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
 }
 
 async function typeCheck(): Promise<boolean> {
-    const result = await $`npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler ${join(OUTPUT, 'cli.ts')}`.nothrow();
+    const result = await $`npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler ${join(OUTPUT, 'rivus.ts')}`.nothrow();
     if (result.exitCode !== 0) {
         console.error(result.stdout.toString());
         return false;
@@ -120,7 +120,7 @@ async function buildExecutable(): Promise<void> {
     const binDir = join(ROOT, 'opus', 'bin');
     await mkdir(binDir, { recursive: true });
     const outExe = join(binDir, 'rivus-ts');
-    await $`bun build ${join(OUTPUT, 'cli.ts')} --compile --outfile=${outExe}`.quiet();
+    await $`bun build ${join(OUTPUT, 'rivus.ts')} --compile --outfile=${outExe}`.quiet();
     await $`bash -c 'rm -f .*.bun-build 2>/dev/null || true'`.quiet();
 
     // Create backward-compat symlink: rivus -> rivus-ts
