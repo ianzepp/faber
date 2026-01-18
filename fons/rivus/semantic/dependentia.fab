@@ -82,28 +82,28 @@ functio parseDependentiaArgs(lista<textus> args) -> Dependentia? {
 # Get the cache root directory
 # Respects XDG_CACHE_HOME, FABER_CACHE, or falls back to ~/.cache/faber
 @ publica
-functio cacheRoot() -> textus {
+functio radixCachei() -> textus {
     # FABER_CACHE overrides everything
     fixum faberCache = processus.env("FABER_CACHE")
     si nonnihil faberCache { redde faberCache }
 
     # XDG_CACHE_HOME or default
     fixum xdgCache = processus.env("XDG_CACHE_HOME")
-    fixum baseCache = nonnihil xdgCache sic xdgCache secus solum.iunge([solum.domus(), ".cache"])
+    fixum basisCachei = nonnihil xdgCache sic xdgCache secus solum.iunge([solum.domus(), ".cache"])
 
-    redde solum.iunge([baseCache, "faber"])
+    redde solum.iunge([basisCachei, "faber"])
 }
 
 # Get the cache path for a specific github repo + commit
 @ publica
-functio cachePath(textus owner, textus repo, textus sha) -> textus {
-    redde solum.iunge([cacheRoot(), "github.com", owner, repo, sha])
+functio viaCachei(textus dominus, textus repo, textus sha) -> textus {
+    redde solum.iunge([radixCachei(), "github.com", dominus, repo, sha])
 }
 
 # Check if a repo+commit is already cached
 @ publica
-functio isCached(textus owner, textus repo, textus sha) -> bivalens {
-    redde solum.exstat(cachePath(owner, repo, sha))
+functio estCacheatum(textus dominus, textus repo, textus sha) -> bivalens {
+    redde solum.exstat(viaCachei(dominus, repo, sha))
 }
 
 # ============================================================================
@@ -112,31 +112,31 @@ functio isCached(textus owner, textus repo, textus sha) -> bivalens {
 
 # Parsed GitHub reference
 @ publicum
-genus GithubRef {
-    textus owner
+genus GithubReferentia {
+    textus dominus
     textus repo
     textus ref      # branch, tag, or commit SHA
 }
 
-# Parse "owner/repo#ref" into GithubRef
+# Parse "owner/repo#ref" into GithubReferentia
 # Examples:
-#   "ianzepp/faber#main" -> { owner: "ianzepp", repo: "faber", ref: "main" }
-#   "ianzepp/faber#v1.0.0" -> { owner: "ianzepp", repo: "faber", ref: "v1.0.0" }
-#   "ianzepp/faber" -> { owner: "ianzepp", repo: "faber", ref: "main" }
+#   "ianzepp/faber#main" -> { dominus: "ianzepp", repo: "faber", ref: "main" }
+#   "ianzepp/faber#v1.0.0" -> { dominus: "ianzepp", repo: "faber", ref: "v1.0.0" }
+#   "ianzepp/faber" -> { dominus: "ianzepp", repo: "faber", ref: "main" }
 @ publica
-functio parseGithubSource(textus source) -> GithubRef? {
+functio pangeGithubFontem(textus fons) -> GithubReferentia? {
     # Split on # to get ref (default to "main")
-    fixum lista<textus> hashParts = source.divide("#")
-    fixum repoPath = hashParts[0]
-    fixum ref = hashParts.longitudo() > 1 sic hashParts[1] secus "main"
+    fixum lista<textus> partesHash = fons.divide("#")
+    fixum viaRepo = partesHash[0]
+    fixum ref = partesHash.longitudo() > 1 sic partesHash[1] secus "main"
 
     # Split repo path on /
-    fixum lista<textus> slashParts = repoPath.divide("/")
-    si slashParts.longitudo() != 2 { redde nihil }
+    fixum lista<textus> partesSlash = viaRepo.divide("/")
+    si partesSlash.longitudo() != 2 { redde nihil }
 
-    redde novum GithubRef {
-        owner: slashParts[0],
-        repo: slashParts[1],
+    redde novum GithubReferentia {
+        dominus: partesSlash[0],
+        repo: partesSlash[1],
         ref: ref
     }
 }

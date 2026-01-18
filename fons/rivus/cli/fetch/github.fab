@@ -7,7 +7,7 @@
 § ex "../../../norma/hal/caelum" importa caelum
 § ex "../../../norma/hal/solum" importa solum
 § ex "../../../norma/hal/processus" importa processus
-§ ex "../../semantic/dependentia" importa GithubRef
+§ ex "../../semantic/dependentia" importa GithubReferentia
 
 # ============================================================================
 # API CALLS
@@ -17,20 +17,20 @@
 # Uses GitHub API: GET /repos/{owner}/{repo}/commits/{ref}
 @ publica
 @ futura
-functio resolveRef(GithubRef ref) -> textus? {
+functio resolveReferentiam(GithubReferentia ref) -> textus? {
     fixum url = scriptum(
         "https://api.github.com/repos/§/§/commits/§",
-        ref.owner, ref.repo, ref.ref
+        ref.dominus, ref.repo, ref.ref
     )
 
-    fixum response = cede caelum.pete(url)
+    fixum replicatio = cede caelum.pete(url)
 
-    si non response.bene() {
+    si non replicatio.bene() {
         redde nihil
     }
 
     # corpusJson() returns a plain object, use quidlibet for property access
-    fixum data = response.corpusJson() qua quidlibet
+    fixum data = replicatio.corpusJson() qua quidlibet
     redde data.sha qua textus
 }
 
@@ -39,26 +39,26 @@ functio resolveRef(GithubRef ref) -> textus? {
 # Uses curl because caelum.pete() doesn't handle binary data correctly
 @ publica
 @ futura
-functio downloadTarball(textus owner, textus repo, textus sha) -> textus? {
+functio deferTarball(textus dominus, textus repo, textus sha) -> textus? {
     fixum url = scriptum(
         "https://api.github.com/repos/§/§/tarball/§",
-        owner, repo, sha
+        dominus, repo, sha
     )
 
-    fixum tempPath = solum.iunge([solum.temp(), scriptum("faber-§.tar.gz", sha)])
+    fixum viaTemporaria = solum.iunge([solum.temp(), scriptum("faber-§.tar.gz", sha)])
 
     # Use curl to download binary file, following redirects
-    fixum cmd = scriptum("curl -sL -o '§' '§'", tempPath, url)
-    fixum result = processus.exsequiCodem(cmd)
+    fixum mandatum = scriptum("curl -sL -o '§' '§'", viaTemporaria, url)
+    fixum exitus = processus.exsequiCodem(mandatum)
 
-    si result != 0 {
+    si exitus != 0 {
         redde nihil
     }
 
     # Verify file exists and has content
-    si non solum.exstat(tempPath) {
+    si non solum.exstat(viaTemporaria) {
         redde nihil
     }
 
-    redde tempPath
+    redde viaTemporaria
 }

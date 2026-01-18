@@ -21,7 +21,7 @@
 § ex "./cli/commands/parse" importa parseCommand
 § ex "./cli/commands/check" importa checkCommand
 § ex "./cli/commands/test" importa testCommand
-§ ex "./cli/commands/fetch" importa fetchCommand
+§ ex "./cli/commands/fetch" importa mandatumArcessere
 
 @ cli "rivus"
 @ versio "0.1.0"
@@ -194,6 +194,6 @@ functio fetch(
     si bivalens force,
     si bivalens json
 ) exitus code -> vacuum {
-    fixum result = cede fetchCommand(manifest, force, json)
+    fixum result = cede mandatumArcessere(manifest, force, json)
     code = result
 }

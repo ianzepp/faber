@@ -11,10 +11,10 @@
 #
 # ═══════════════════════════════════════════════════════════════════════════════
 
-§ ex "../../semantic/dependentia" importa extractDependentiae, Dependentia, parseGithubSource, GithubRef, isCached, cachePath
+§ ex "../../semantic/dependentia" importa extractDependentiae, Dependentia, pangeGithubFontem, GithubReferentia, estCacheatum, viaCachei
 § ex "../../ast/radix" importa SectioAnnotatio
-§ ex "../fetch/github" importa resolveRef, downloadTarball
-§ ex "../fetch/cache" importa extractToCache
+§ ex "../fetch/github" importa resolveReferentiam, deferTarball
+§ ex "../fetch/cache" importa extraheInCacheum
 
 § ex "../../../norma/hal/solum" importa solum
 § ex "../../../norma/hal/json" importa json
@@ -28,7 +28,7 @@
 
 @ publica
 @ futura
-functio fetchCommand(
+functio mandatumArcessere(
     si textus manifest,
     si bivalens force,
     si bivalens jsonOutput
@@ -56,8 +56,8 @@ functio fetchCommand(
     # Load manifest sectiones
     varia lista<SectioAnnotatio>? manifestSectiones = nihil
     tempta {
-        figendum loaded = loadManifestSectiones(manifest)
-        manifestSectiones = loaded
+        figendum lectum = loadManifestSectiones(manifest)
+        manifestSectiones = lectum
     } cape err {
         si jsonOutput {
             consolum.fundeLineam(json.solve({ error: scriptum("Failed to load manifest: §", err) }))
@@ -71,7 +71,7 @@ functio fetchCommand(
     fixum dependentiae = extractDependentiae(manifestSectiones)
 
     # Collect github dependencies
-    varia lista<tabula<textus, textus>> toFetch = [] innatum lista<tabula<textus, textus>>
+    varia lista<tabula<textus, textus>> arcessenda = [] innatum lista<tabula<textus, textus>>
 
     de dependentiae pro alias {
         fixum dep = dependentiae[alias] qua Dependentia
@@ -79,19 +79,19 @@ functio fetchCommand(
         # Skip if no github source
         si nihil dep.github { perge }
 
-        fixum parsed = parseGithubSource(dep.github qua textus)
-        si nihil parsed { perge }
+        fixum resolutum = pangeGithubFontem(dep.github qua textus)
+        si nihil resolutum { perge }
 
-        toFetch.push({
+        arcessenda.push({
             alias: alias,
-            owner: parsed.owner,
-            repo: parsed.repo,
-            ref: parsed.ref,
+            dominus: resolutum.dominus,
+            repo: resolutum.repo,
+            ref: resolutum.ref,
             via: dep.via vel ""
         } innatum tabula<textus, textus>)
     }
 
-    si toFetch.longitudo() == 0 {
+    si arcessenda.longitudo() == 0 {
         si jsonOutput {
             consolum.fundeLineam(json.solve({ message: "No GitHub dependencies to fetch" }))
         } secus {
@@ -101,43 +101,43 @@ functio fetchCommand(
     }
 
     # Fetch each dependency
-    varia numerus fetched = 0
-    varia numerus skipped = 0
-    varia numerus failed = 0
-    varia lista<tabula<textus, textus>> results = [] innatum lista<tabula<textus, textus>>
+    varia numerus arcessita = 0
+    varia numerus praetermissa = 0
+    varia numerus defecta = 0
+    varia lista<tabula<textus, textus>> resultata = [] innatum lista<tabula<textus, textus>>
 
-    ex toFetch pro dep {
+    ex arcessenda pro dep {
         fixum alias = dep["alias"]
-        fixum owner = dep["owner"]
+        fixum dominus = dep["dominus"]
         fixum repo = dep["repo"]
         fixum ref = dep["ref"]
 
         si non jsonOutput {
-            scribe "Fetching §... (§/§#§)", alias, owner, repo, ref
+            scribe "Fetching §... (§/§#§)", alias, dominus, repo, ref
         }
 
         # Resolve ref to commit SHA
-        fixum ghRef = novum GithubRef { owner: owner, repo: repo, ref: ref }
-        figendum sha = resolveRef(ghRef)
+        fixum ghRef = novum GithubReferentia { dominus: dominus, repo: repo, ref: ref }
+        figendum sha = resolveReferentiam(ghRef)
 
         si nihil sha {
             si jsonOutput {
-                results.push({
+                resultata.push({
                     alias: alias,
                     status: "failed",
                     error: "Failed to resolve ref"
                 } innatum tabula<textus, textus>)
             } secus {
-                mone "  Failed to resolve ref §/§#§", owner, repo, ref
+                mone "  Failed to resolve ref §/§#§", dominus, repo, ref
             }
-            failed = failed + 1
+            defecta = defecta + 1
             perge
         }
 
         # Check if already cached (skip if not --force)
-        si isCached(owner, repo, sha qua textus) et non force {
+        si estCacheatum(dominus, repo, sha qua textus) et non force {
             si jsonOutput {
-                results.push({
+                resultata.push({
                     alias: alias,
                     status: "skipped",
                     sha: sha qua textus,
@@ -146,7 +146,7 @@ functio fetchCommand(
             } secus {
                 scribe "  Skipped (already cached at §)", sha
             }
-            skipped = skipped + 1
+            praetermissa = praetermissa + 1
             perge
         }
 
@@ -155,11 +155,11 @@ functio fetchCommand(
             scribe "  Downloading §...", sha
         }
 
-        figendum tarball = downloadTarball(owner, repo, sha qua textus)
+        figendum tarball = deferTarball(dominus, repo, sha qua textus)
 
         si nihil tarball {
             si jsonOutput {
-                results.push({
+                resultata.push({
                     alias: alias,
                     status: "failed",
                     sha: sha qua textus,
@@ -168,7 +168,7 @@ functio fetchCommand(
             } secus {
                 mone "  Failed to download tarball"
             }
-            failed = failed + 1
+            defecta = defecta + 1
             perge
         }
 
@@ -178,10 +178,10 @@ functio fetchCommand(
         }
 
         tempta {
-            cede extractToCache(tarball qua textus, owner, repo, sha qua textus)
+            cede extraheInCacheum(tarball qua textus, dominus, repo, sha qua textus)
         } cape err {
             si jsonOutput {
-                results.push({
+                resultata.push({
                     alias: alias,
                     status: "failed",
                     sha: sha qua textus,
@@ -190,7 +190,7 @@ functio fetchCommand(
             } secus {
                 mone "  Failed to extract: §", err
             }
-            failed = failed + 1
+            defecta = defecta + 1
             perge
         }
 
@@ -202,31 +202,31 @@ functio fetchCommand(
         }
 
         si jsonOutput {
-            results.push({
+            resultata.push({
                 alias: alias,
                 status: "fetched",
                 sha: sha qua textus,
-                path: cachePath(owner, repo, sha qua textus)
+                path: viaCachei(dominus, repo, sha qua textus)
             } innatum tabula<textus, textus>)
         } secus {
-            scribe "  Cached at §", cachePath(owner, repo, sha qua textus)
+            scribe "  Cached at §", viaCachei(dominus, repo, sha qua textus)
         }
 
-        fetched = fetched + 1
+        arcessita = arcessita + 1
     }
 
     # Summary
     si jsonOutput {
         consolum.fundeLineam(json.solve({
-            fetched: fetched,
-            skipped: skipped,
-            failed: failed,
-            results: results
+            fetched: arcessita,
+            skipped: praetermissa,
+            failed: defecta,
+            results: resultata
         }))
     } secus {
         scribe ""
-        scribe "Fetch complete: § fetched, § skipped, § failed", fetched, skipped, failed
+        scribe "Fetch complete: § fetched, § skipped, § failed", arcessita, praetermissa, defecta
     }
 
-    redde failed > 0 sic 1 secus 0
+    redde defecta > 0 sic 1 secus 0
 }
