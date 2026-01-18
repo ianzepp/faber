@@ -120,7 +120,7 @@ genus ParserErrorNuntius {
 
 # Helper to construct error messages
 functio creoNuntium(textus t, textus a) -> ParserErrorNuntius {
-    redde novum ParserErrorNuntius de { textus: t, auxilium: a }
+    redde novum ParserErrorNuntius { textus: t, auxilium: a }
 }
 
 # Get error message for a given error code
@@ -396,7 +396,7 @@ functio error(ParserErrorCodice codice, Locus locus, si textus contextus) -> Par
         msg = scriptum("§: §", msg, contextus)
     }
 
-    redde novum ParserError de {
+    redde novum ParserError {
         codice: codice,
         nuntius: msg,
         locus: locus

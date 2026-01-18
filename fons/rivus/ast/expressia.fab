@@ -259,7 +259,7 @@ discretio Expressia {
     }
 
     # New instance creation
-    # Example: novum Person de { name: "Alice" }
+    # Example: novum Person { name: "Alice" }
     NovumExpressia {
         Locus locus
         Expressia vocatum        # the type/constructor
