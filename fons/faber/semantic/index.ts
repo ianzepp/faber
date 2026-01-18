@@ -92,7 +92,6 @@ import type {
     PraeparaBlock,
     CuraStatement,
     DiscretioDeclaration,
-    CollectionDSLExpression,
     IncipitStatement,
     IncipietStatement,
     AdStatement,
@@ -1087,14 +1086,6 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
                 resolveExpression(node.expression);
                 node.resolvedType = BIVALENS;
                 return BIVALENS;
-
-            case 'CollectionDSLExpression':
-                // WHY: DSL expressions resolve to their source type after transforms
-                // For now, return the source type (transforms don't change element type for prima/ultima)
-                // summa would change to numerus, but we'd need smarter type inference for that
-                resolveExpression(node.source);
-                node.resolvedType = node.source.resolvedType || UNKNOWN;
-                return node.resolvedType;
 
             case 'AbExpression':
                 // WHY: Ab expressions (filtering DSL) resolve to their source type.
@@ -2541,12 +2532,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             });
         }
 
-        if (node.body) {
-            analyzeBlock(node.body);
-        }
-        if (node.ergoStatement) {
-            analyzeStatement(node.ergoStatement);
-        }
+        analyzeBlock(node.body);
         exitScope();
     }
 
@@ -2615,12 +2601,7 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             });
         }
 
-        if (node.body) {
-            analyzeBlock(node.body);
-        }
-        if (node.ergoStatement) {
-            analyzeStatement(node.ergoStatement);
-        }
+        analyzeBlock(node.body);
 
         currentFunctionAsync = previousAsync;
         exitScope();

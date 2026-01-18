@@ -73,12 +73,13 @@ function parseFunctionModifiers(r: Resolver): FunctioModifier[] | undefined {
                 const code: Literal = {
                     type: 'Literal',
                     value: codeToken.value,
+                    raw: String(codeToken.value),
                     position: codeToken.position,
                 };
                 modifiers.push({ type: 'ExitusModifier', code, position });
             }
             else {
-                ctx.reportError('Expected identifier or number after exitus', ParserErrorCode.UnexpectedToken);
+                ctx.reportError(ParserErrorCode.UnexpectedToken, 'Expected identifier or number after exitus');
             }
             continue;
         }

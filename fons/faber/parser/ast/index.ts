@@ -76,7 +76,6 @@ export type {
     FingeExpression,
     ClausuraExpression,
     PraefixumExpression,
-    CollectionDSLExpression,
     AbExpression,
     ScriptumExpression,
     LegeExpression,

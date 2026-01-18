@@ -145,7 +145,6 @@ import type {
     AdBindingVerb,
     PraefixumExpression,
     CollectionDSLTransform,
-    CollectionDSLExpression,
     AbExpression,
     ScriptumExpression,
     LegeExpression,
@@ -187,7 +186,6 @@ import {
 import {
     isDSLVerb,
     parseDSLTransforms,
-    parseCollectionDSLExpression,
     parseAbExpression,
     parseRegexLiteral,
 } from './expressions/dsl';
@@ -1284,41 +1282,41 @@ export function parse(tokens: Token[]): ParserResult {
                 for (const a of annotations) {
                     if (a.name === 'omitte') {
                         stmt.modifier = 'omitte';
-                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'StringLiteral') {
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'Literal' && typeof a.argument.value === 'string') {
                             stmt.modifierReason = (a.argument as { value: string }).value;
                         }
                     } else if (a.name === 'futurum') {
                         stmt.modifier = 'futurum';
-                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'StringLiteral') {
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'Literal' && typeof a.argument.value === 'string') {
                             stmt.modifierReason = (a.argument as { value: string }).value;
                         }
                     } else if (a.name === 'solum') {
                         stmt.solum = true;
                     } else if (a.name === 'tag') {
                         if (!stmt.tags) stmt.tags = [];
-                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'StringLiteral') {
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'Literal' && typeof a.argument.value === 'string') {
                             stmt.tags.push((a.argument as { value: string }).value);
                         }
                     } else if (a.name === 'temporis') {
-                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'NumericLiteral') {
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'Literal' && typeof a.argument.value === 'number') {
                             stmt.temporis = (a.argument as { value: number }).value;
                         }
                     } else if (a.name === 'metior') {
                         stmt.metior = true;
                     } else if (a.name === 'repete') {
-                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'NumericLiteral') {
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'Literal' && typeof a.argument.value === 'number') {
                             stmt.repete = (a.argument as { value: number }).value;
                         }
                     } else if (a.name === 'fragilis') {
-                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'NumericLiteral') {
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'Literal' && typeof a.argument.value === 'number') {
                             stmt.fragilis = (a.argument as { value: number }).value;
                         }
                     } else if (a.name === 'requirit') {
-                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'StringLiteral') {
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'Literal' && typeof a.argument.value === 'string') {
                             stmt.requirit = (a.argument as { value: string }).value;
                         }
                     } else if (a.name === 'solum_in') {
-                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'StringLiteral') {
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'Literal' && typeof a.argument.value === 'string') {
                             stmt.solumIn = (a.argument as { value: string }).value;
                         }
                     }
@@ -1328,14 +1326,14 @@ export function parse(tokens: Token[]): ParserResult {
                 for (const a of annotations) {
                     if (a.name === 'omitte') {
                         stmt.skip = true;
-                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'StringLiteral') {
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'Literal' && typeof a.argument.value === 'string') {
                             stmt.skipReason = (a.argument as { value: string }).value;
                         }
                     } else if (a.name === 'solum') {
                         stmt.solum = true;
                     } else if (a.name === 'tag') {
                         if (!stmt.tags) stmt.tags = [];
-                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'StringLiteral') {
+                        if (a.argument && typeof a.argument === 'object' && 'type' in a.argument && a.argument.type === 'Literal' && typeof a.argument.value === 'string') {
                             stmt.tags.push((a.argument as { value: string }).value);
                         }
                     }
