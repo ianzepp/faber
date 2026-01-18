@@ -139,8 +139,8 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
         }
 
         casu AssignatioExpressia ut e {
-            fixum tabula = genTabulaAssignatio(e, g)
-            si nonnihil tabula { redde tabula }
+            fixum tabulaRes = genTabulaAssignatio(e, g)
+            si nonnihil tabulaRes { redde tabulaRes }
 
             redde scriptum("§ § §", genExpressia(e.sinister, g), e.signum, genNudaExpressia(e.dexter, g))
         }

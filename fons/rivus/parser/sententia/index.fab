@@ -317,22 +317,27 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
         # 'ex' for for-of loops and destructuring
         # NOTE: imports use § ex sectional syntax, not bare ex
         si verbumId === VerbumId.Ex {
-            # Destructure: ex <expr> fixum/varia/figendum/variandum ...
+            # Disambiguate: ex <expr> fixum/varia IDENT { } → loop
+            #              ex <expr> fixum/varia IDENT, IDENT → destructure
             varia i = 1
             dum i < 32 et non p.estFinis() {
                 fixum s = p.specta(i)
                 si s.species === SymbolumGenus.Verbum {
                     si s.verbumId inter [VerbumId.Fixum, VerbumId.Varia, VerbumId.Figendum, VerbumId.Variandum] {
+                        # Found binding keyword - check what follows: IDENT then { or ,?
+                        fixum afterIdent = p.specta(i + 2)
+                        si afterIdent.species === SymbolumGenus.UncusSin {
+                            # Block follows -> for-of loop
+                            rumpe
+                        }
+                        # No block -> destructure
                         redde parseDestructuraSententia(r)
-                    }
-                    si s.verbumId === VerbumId.Pro {
-                        rumpe
                     }
                 }
                 i += 1
             }
 
-            # Otherwise it's a for-of loop
+            # For-of loop
             redde parseExSententia(r)
         }
         si verbumId === VerbumId.De {

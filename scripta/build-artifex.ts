@@ -29,6 +29,7 @@ const REFERENCE_DIR = join(ROOT, 'opus', 'rivus-ts', 'fons');
 interface CompileResult {
     file: string;
     success: boolean;
+    warnings?: string;
     error?: string;
 }
 
@@ -47,11 +48,12 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
         const exitCode = await proc.exited;
         const stderr = await new Response(proc.stderr).text();
 
-        if (exitCode !== 0 || stderr.trim()) {
-            throw new Error(stderr || `Exit code ${exitCode}`);
+        if (exitCode !== 0) {
+            return { file: relPath, success: false, error: stderr.trim() || `Exit code ${exitCode}` };
         }
 
-        return { file: relPath, success: true };
+        // Success - but may have warnings
+        return { file: relPath, success: true, warnings: stderr.trim() || undefined };
     }
     catch (err) {
         const message = err instanceof Error ? err.message : String(err);
@@ -156,16 +158,18 @@ async function main() {
 
     const succeeded = results.filter(r => r.success).length;
     const failed = results.filter(r => !r.success);
+    const withWarnings = results.filter(r => r.success && r.warnings);
 
     if (failed.length > 0) {
         console.log(`FAILED (${failed.length}/${results.length})\n`);
         for (const f of failed) {
-            console.error(`  ${f.file}: ${f.error}`);
+            console.error(`  ${f.file}:\n    ${f.error?.split('\n').join('\n    ')}`);
         }
         process.exit(1);
     }
 
-    console.log(`OK (${succeeded} files, ${compileElapsed.toFixed(0)}ms)`);
+    const warnSuffix = withWarnings.length > 0 ? `, ${withWarnings.length} with warnings` : '';
+    console.log(`OK (${succeeded} files${warnSuffix}, ${compileElapsed.toFixed(0)}ms)`);
 
     // Inject extern implementations
     await injectExternImpls();
