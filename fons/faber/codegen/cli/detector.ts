@@ -464,13 +464,12 @@ export function detectCliProgram(program: Program, filePath?: string): CliDetect
         switch (stmt.type) {
             case 'ImportaDeclaration': {
                 const imp = stmt;
-                const source = typeof imp.source === 'string' ? imp.source : imp.source.name;
 
-                if (source.startsWith('./') || source.startsWith('../')) {
+                if (imp.source.startsWith('./') || imp.source.startsWith('../')) {
                     if (imp.wildcard && imp.wildcardAlias) {
                         mainInfo.imports.push({
                             localName: imp.wildcardAlias.name,
-                            sourcePath: source,
+                            sourcePath: imp.source,
                             isWildcard: true,
                         });
                     }
@@ -478,7 +477,7 @@ export function detectCliProgram(program: Program, filePath?: string): CliDetect
                         for (const spec of imp.specifiers) {
                             mainInfo.imports.push({
                                 localName: spec.local.name,
-                                sourcePath: source,
+                                sourcePath: imp.source,
                                 isWildcard: false,
                             });
                         }

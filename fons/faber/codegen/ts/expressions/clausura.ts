@@ -62,7 +62,7 @@ function containsCede(node: Expression | Statement): boolean {
     if (node.type === 'SiStatement') {
         return containsCede(node.test) ||
                node.consequent.body.some(containsCede) ||
-               (node.alternate ? node.alternate.body.some(containsCede) : false);
+               (node.alternate ? containsCede(node.alternate) : false);
     }
     return false;
 }

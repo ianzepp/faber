@@ -152,14 +152,13 @@ function extractCliInfo(program: Program, filePath: string): CliModuleInfo {
         switch (stmt.type) {
             case 'ImportaDeclaration': {
                 const imp = stmt as ImportaDeclaration;
-                const source = typeof imp.source === 'string' ? imp.source : imp.source.name;
 
-                if (isLocalImport(source)) {
+                if (isLocalImport(imp.source)) {
                     if (imp.wildcard && imp.wildcardAlias) {
                         // ex "./module" importa * ut alias
                         imports.push({
                             localName: imp.wildcardAlias.name,
-                            sourcePath: source,
+                            sourcePath: imp.source,
                             isWildcard: true,
                         });
                     }
@@ -168,7 +167,7 @@ function extractCliInfo(program: Program, filePath: string): CliModuleInfo {
                         for (const spec of imp.specifiers) {
                             imports.push({
                                 localName: spec.local.name,
-                                sourcePath: source,
+                                sourcePath: imp.source,
                                 isWildcard: false,
                             });
                         }

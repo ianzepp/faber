@@ -47,7 +47,7 @@ import type { Position } from '../tokenizer/types';
 export interface Symbol {
     name: string;
     type: SemanticType;
-    kind: 'variable' | 'function' | 'parameter' | 'type' | 'enum' | 'genus' | 'pactum' | 'namespace';
+    kind: 'variable' | 'function' | 'parameter' | 'type' | 'enum' | 'genus' | 'pactum' | 'namespace' | 'discretio' | 'ordo';
     mutable: boolean;
     position: Position;
 }

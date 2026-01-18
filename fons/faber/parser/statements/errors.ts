@@ -18,7 +18,6 @@ import type {
     BlockStatement,
     ReddeStatement,
     IaceStatement,
-    MoriStatement,
 } from '../ast';
 import { ParserErrorCode } from '../errors';
 
@@ -132,13 +131,13 @@ export function parseCustodiStatement(r: Resolver): CustodiStatement {
             else if (ctx.matchKeyword('iacit')) {
                 const stmtPos = ctx.peek().position;
                 const expr = r.expression();
-                const throwStmt: IaceStatement = { type: 'IaceStatement', argument: expr, position: stmtPos };
+                const throwStmt: IaceStatement = { type: 'IaceStatement', fatal: false, argument: expr, position: stmtPos };
                 consequent = { type: 'BlockStatement', body: [throwStmt], position: stmtPos };
             }
             else if (ctx.matchKeyword('moritor')) {
                 const stmtPos = ctx.peek().position;
                 const expr = r.expression();
-                const panicStmt: MoriStatement = { type: 'MoriStatement', argument: expr, position: stmtPos };
+                const panicStmt: IaceStatement = { type: 'IaceStatement', fatal: true, argument: expr, position: stmtPos };
                 consequent = { type: 'BlockStatement', body: [panicStmt], position: stmtPos };
             }
             else if (ctx.matchKeyword('ergo')) {
