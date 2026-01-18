@@ -79,7 +79,7 @@ export type Stmt =
     | { tag: 'Massa'; locus: Locus; corpus: Stmt[] }
     | { tag: 'Expressia'; locus: Locus; expr: Expr }
     | { tag: 'Varia'; locus: Locus; species: VariaSpecies; nomen: string; typus: Typus | null; valor: Expr | null; publica: boolean; externa: boolean }
-    | { tag: 'Functio'; locus: Locus; nomen: string; params: Param[]; typusReditus: Typus | null; corpus: Stmt | null; asynca: boolean; publica: boolean; generics: string[] }
+    | { tag: 'Functio'; locus: Locus; nomen: string; params: Param[]; typusReditus: Typus | null; corpus: Stmt | null; asynca: boolean; publica: boolean; generics: string[]; externa: boolean }
     | { tag: 'Genus'; locus: Locus; nomen: string; campi: CampusDecl[]; methodi: Stmt[]; implet: string[]; generics: string[]; publica: boolean }
     | { tag: 'Pactum'; locus: Locus; nomen: string; methodi: PactumMethodus[]; generics: string[]; publica: boolean }
     | { tag: 'Ordo'; locus: Locus; nomen: string; membra: OrdoMembrum[]; publica: boolean }

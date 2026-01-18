@@ -445,7 +445,7 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
         casu TranslatioExpressia ut t {
             fixum shifted = genExpressia(t.expressia, g)
             fixum amount = genExpressia(t.quantitas, g)
-            fixum op = (t.directio qua textus) == "dextratum" sic ">>" secus "<<"
+            fixum op = ((t.directio qua textus) == "dextratum") sic ">>" secus "<<"
             redde scriptum("(§ § §)", shifted, op, amount)
         }
     }
@@ -521,8 +521,8 @@ functio genPraefixumMassa(lista<Sententia> corpus, TsGenerator g) -> textus {
 functio genPraefixumSententia(Sententia stmt, TsGenerator g) -> textus {
     discerne stmt {
         casu VariaSententia ut s {
-            fixum keyword = s.species == VariaGenus.Fixum aut s.species == VariaGenus.Figendum sic "const" secus "let"
-            fixum asyncPrefix = s.species == VariaGenus.Figendum aut s.species == VariaGenus.Variandum sic "await " secus ""
+            fixum keyword = (s.species == VariaGenus.Fixum aut s.species == VariaGenus.Figendum) sic "const" secus "let"
+            fixum asyncPrefix = (s.species == VariaGenus.Figendum aut s.species == VariaGenus.Variandum) sic "await " secus ""
             varia result = scriptum("§§ §", g.ind(), keyword, s.nomen)
 
             si nonnihil s.typus {

@@ -149,7 +149,7 @@ export class Parser {
                 case 'ex':
                     return this.parseExStmt(publica);
                 case 'functio':
-                    return this.parseFunctio(publica, futura);
+                    return this.parseFunctio(publica, futura, externa);
                 case 'genus':
                     return this.parseGenus(publica);
                 case 'pactum':
@@ -302,7 +302,7 @@ export class Parser {
         throw this.error('destructuring not supported in nanus');
     }
 
-    private parseFunctio(publica: boolean, futura: boolean = false): Stmt {
+    private parseFunctio(publica: boolean, futura: boolean = false, externa: boolean = false): Stmt {
         const locus = this.peek().locus;
         this.expect('Keyword', 'functio');
         const asynca = futura;
@@ -335,7 +335,7 @@ export class Parser {
             this.expectNewline();
         }
 
-        return { tag: 'Functio', locus, nomen, params, typusReditus, corpus, asynca, publica, generics };
+        return { tag: 'Functio', locus, nomen, params, typusReditus, corpus, asynca, publica, generics, externa };
     }
 
     private parseParams(): Param[] {
@@ -1103,12 +1103,19 @@ export class Parser {
         // Must be Operator or Keyword tag, not a Textus with value '-'
         if ((tok.tag === 'Operator' || tok.tag === 'Keyword') && UNARY_OPS.has(tok.valor)) {
             // Check if followed by expression (identifier, number, paren, keyword-as-identifier, etc.)
-            // Exclude operator keywords (qua, innatum, et, aut, vel, sic, secus) that shouldn't start expressions
-            const OPERATOR_KEYWORDS = new Set(['qua', 'innatum', 'et', 'aut', 'vel', 'sic', 'secus', 'inter', 'intra']);
+            // Exclude keywords that shouldn't start expressions
+            const NON_EXPR_KEYWORDS = new Set([
+                'qua', 'innatum', 'et', 'aut', 'vel', 'sic', 'secus', 'inter', 'intra',  // operators
+                'perge', 'rumpe', 'redde', 'reddit', 'iace', 'mori',  // control flow statements
+                'si', 'secussi', 'dum', 'ex', 'de', 'elige', 'discerne', 'custodi', 'tempta',  // block statements
+                'functio', 'genus', 'pactum', 'ordo', 'discretio',  // declarations
+                'casu', 'ceterum', 'importa', 'incipit', 'incipiet', 'probandum', 'proba',  // more
+                // Note: cape, demum can be used as variable names, so not excluded
+            ]);
             const next = this.tokens[this.pos + 1];
             const canBeUnary = next && (
                 next.tag === 'Identifier' ||
-                (next.tag === 'Keyword' && !OPERATOR_KEYWORDS.has(next.valor)) ||
+                (next.tag === 'Keyword' && !NON_EXPR_KEYWORDS.has(next.valor)) ||
                 next.tag === 'Numerus' ||
                 next.tag === 'Textus' ||
                 next.valor === '(' ||

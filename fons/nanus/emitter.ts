@@ -117,13 +117,14 @@ function emitStmt(stmt: Stmt, indent = ''): string {
         }
 
         case 'Functio': {
+            const decl = stmt.externa ? 'declare ' : '';
             const exp = stmt.publica ? 'export ' : '';
             const async = stmt.asynca ? 'async ' : '';
             const generics = stmt.generics.length > 0 ? `<${stmt.generics.join(', ')}>` : '';
             const params = stmt.params.map(emitParam).join(', ');
             const ret = stmt.typusReditus ? `: ${emitTypus(stmt.typusReditus)}` : '';
-            const body = stmt.corpus ? ` ${emitStmt(stmt.corpus)}` : ';';
-            return `${indent}${exp}${async}function ${stmt.nomen}${generics}(${params})${ret}${body}`;
+            const body = stmt.corpus && !stmt.externa ? ` ${emitStmt(stmt.corpus)}` : ';';
+            return `${indent}${exp}${decl}${async}function ${stmt.nomen}${generics}(${params})${ret}${body}`;
         }
 
         case 'Genus': {

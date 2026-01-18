@@ -128,7 +128,7 @@ functio pangeGithubFontem(textus fons) -> GithubReferentia? {
     # Split on # to get ref (default to "main")
     fixum partesHash = fons.divide("#") qua lista<textus>
     fixum viaRepo = partesHash[0]
-    fixum ref = partesHash.longitudo() > 1 sic partesHash[1] secus "main"
+    fixum ref = (partesHash.longitudo() > 1) sic partesHash[1] secus "main"
 
     # Split repo path on /
     fixum partesSlash = viaRepo.divide("/") qua lista<textus>

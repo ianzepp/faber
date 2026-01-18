@@ -135,54 +135,54 @@ functio genProba(
     # Standalone mode: generate function + registry entry
     fixum suitePath = getSuitePath(g)
     fixum sanitizedName = sanitizeNomen(nomen)
-    fixum funcName = suitePath.longitudo() > 0 sic scriptum("__proba_§_§", suitePath, sanitizedName) secus scriptum("__proba_§", sanitizedName)
-    fixum suiteDisplay = suitePath.longitudo() > 0 sic g.probaSuiteStack.coniunge(" > ") secus ""
+    fixum funcName = (suitePath.longitudo() > 0) sic scriptum("__proba_§_§", suitePath, sanitizedName) secus scriptum("__proba_§", sanitizedName)
+    fixum suiteDisplay = (suitePath.longitudo() > 0) sic g.probaSuiteStack.coniunge(" > ") secus ""
 
-    # Build registry entry
+    # Build registry entry as plain object with bracket access
     varia entry = {
         suite: suiteDisplay,
         name: nomen,
         funcName: funcName
-    } innatum tabula<textus, ignotum>
+    } qua ignotum
 
     si nonnihil modificator {
         fixum mod = modificator qua ProbaModificator
         si mod == ProbaModificator.Omitte {
-            entry.pone("skip", verum)
+            entry["skip"] = verum
             si nonnihil ratioModificatoris {
-                entry.pone("skipReason", ratioModificatoris)
+                entry["skipReason"] = ratioModificatoris
             }
         }
         si mod == ProbaModificator.Futurum {
-            entry.pone("todo", verum)
+            entry["todo"] = verum
             si nonnihil ratioModificatoris {
-                entry.pone("todoReason", ratioModificatoris)
+                entry["todoReason"] = ratioModificatoris
             }
         }
     }
     si nonnihil solum et solum {
-        entry.pone("only", verum)
+        entry["only"] = verum
     }
     si nonnihil tags et tags.longitudo() > 0 {
-        entry.pone("tags", tags)
+        entry["tags"] = tags
     }
     si nonnihil temporis {
-        entry.pone("timeout", temporis)
+        entry["timeout"] = temporis
     }
     si nonnihil metior et metior {
-        entry.pone("benchmark", verum)
+        entry["benchmark"] = verum
     }
     si nonnihil repete {
-        entry.pone("repeat", repete)
+        entry["repeat"] = repete
     }
     si nonnihil fragilis {
-        entry.pone("retries", fragilis)
+        entry["retries"] = fragilis
     }
     si nonnihil requirit {
-        entry.pone("requireEnv", requirit)
+        entry["requireEnv"] = requirit
     }
     si nonnihil solumIn {
-        entry.pone("platformOnly", solumIn)
+        entry["platformOnly"] = solumIn
     }
 
     g.probaRegistrum.adde(entry)
@@ -221,8 +221,8 @@ functio genProba(
 functio genPraepara(PraeparaTempus tempus, bivalens asynca, bivalens omnia, Sententia corpus, TsGenerator g) -> textus {
     # In standalone mode, setup/teardown become comments (not supported in simple harness)
     si g.inProbaStandalone {
-        fixum hookType = tempus == PraeparaTempus.Praepara sic "setup" secus "teardown"
-        fixum hookScope = omnia sic "all" secus "each"
+        fixum hookType = (tempus == PraeparaTempus.Praepara) sic "setup" secus "teardown"
+        fixum hookScope = (omnia) sic "all" secus "each"
         redde scriptum("§// TODO: § § hook not supported in standalone mode", g.ind(), hookType, hookScope)
     }
 
@@ -290,54 +290,54 @@ functio genProbaHarness(TsGenerator g) -> textus {
     lines.adde("}")
     lines.adde("")
 
-    # Generate registry
+    # Generate registry (using bracket notation for plain object entries)
     lines.adde("const __tests: __TestEntry[] = [")
     ex g.probaRegistrum fixum entry {
         varia parts = [] innatum lista<textus>
-        parts.adde(scriptum("suite: \"§\"", entry.accipe("suite") qua textus))
-        parts.adde(scriptum("name: \"§\"", entry.accipe("name") qua textus))
-        parts.adde(scriptum("fn: §", entry.accipe("funcName") qua textus))
+        parts.adde(scriptum("suite: \"§\"", entry["suite"] qua textus))
+        parts.adde(scriptum("name: \"§\"", entry["name"] qua textus))
+        parts.adde(scriptum("fn: §", entry["funcName"] qua textus))
 
-        si entry.habet("skip") {
+        si nonnihil entry["skip"] {
             parts.adde("skip: true")
-            si entry.habet("skipReason") {
-                parts.adde(scriptum("skipReason: \"§\"", entry.accipe("skipReason") qua textus))
+            si nonnihil entry["skipReason"] {
+                parts.adde(scriptum("skipReason: \"§\"", entry["skipReason"] qua textus))
             }
         }
-        si entry.habet("todo") {
+        si nonnihil entry["todo"] {
             parts.adde("todo: true")
-            si entry.habet("todoReason") {
-                parts.adde(scriptum("todoReason: \"§\"", entry.accipe("todoReason") qua textus))
+            si nonnihil entry["todoReason"] {
+                parts.adde(scriptum("todoReason: \"§\"", entry["todoReason"] qua textus))
             }
         }
-        si entry.habet("only") {
+        si nonnihil entry["only"] {
             parts.adde("only: true")
         }
-        si entry.habet("tags") {
-            fixum tagsArr = entry.accipe("tags") qua lista<textus>
+        si nonnihil entry["tags"] {
+            fixum tagsArr = entry["tags"] qua lista<textus>
             varia tagStrs = [] innatum lista<textus>
             ex tagsArr fixum t {
                 tagStrs.adde(scriptum("\"§\"", t))
             }
             parts.adde(scriptum("tags: [§]", tagStrs.coniunge(", ")))
         }
-        si entry.habet("timeout") {
-            parts.adde(scriptum("timeout: §", entry.accipe("timeout")))
+        si nonnihil entry["timeout"] {
+            parts.adde(scriptum("timeout: §", entry["timeout"]))
         }
-        si entry.habet("benchmark") {
+        si nonnihil entry["benchmark"] {
             parts.adde("benchmark: true")
         }
-        si entry.habet("repeat") {
-            parts.adde(scriptum("repeat: §", entry.accipe("repeat")))
+        si nonnihil entry["repeat"] {
+            parts.adde(scriptum("repeat: §", entry["repeat"]))
         }
-        si entry.habet("retries") {
-            parts.adde(scriptum("retries: §", entry.accipe("retries")))
+        si nonnihil entry["retries"] {
+            parts.adde(scriptum("retries: §", entry["retries"]))
         }
-        si entry.habet("requireEnv") {
-            parts.adde(scriptum("requireEnv: \"§\"", entry.accipe("requireEnv") qua textus))
+        si nonnihil entry["requireEnv"] {
+            parts.adde(scriptum("requireEnv: \"§\"", entry["requireEnv"] qua textus))
         }
-        si entry.habet("platformOnly") {
-            parts.adde(scriptum("platformOnly: \"§\"", entry.accipe("platformOnly") qua textus))
+        si nonnihil entry["platformOnly"] {
+            parts.adde(scriptum("platformOnly: \"§\"", entry["platformOnly"] qua textus))
         }
 
         lines.adde(scriptum("  { § },", parts.coniunge(", ")))

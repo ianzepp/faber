@@ -608,7 +608,7 @@ functio parseDiscretioDeclaratio(Resolvitor r) -> Sententia {
                 fac {
                     fixum campusLocus = p.locusActualis()
                     fixum campusTypus = r.adnotatio()
-                    fixum campusNomen = index == 1 sic "value" secus scriptum("value§", index)
+                    fixum campusNomen = (index == 1) sic "value" secus scriptum("value§", index)
                     index += 1
                     campi.adde({
                         locus: campusLocus,

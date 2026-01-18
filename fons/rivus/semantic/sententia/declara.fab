@@ -183,13 +183,13 @@ functio analyzeVariaDeclaratio(Resolvitor r, Sententia variaStmt) -> vacuum {
             }
 
             si (v.species == VariaGenus.Figendum aut v.species == VariaGenus.Variandum) et non a.currentFunctioAsync {
-                fixum keyword = v.species == VariaGenus.Figendum sic "figendum" secus "variandum"
+                fixum keyword = (v.species == VariaGenus.Figendum) sic "figendum" secus "variandum"
                 fixum err = awaitOutsideAsyncError(keyword)
                 a.error(err.textus, v.locus)
             }
 
             # Define in symbol table
-            fixum mutabilis = v.species == VariaGenus.Varia aut v.species == VariaGenus.Variandum
+            fixum mutabilis = (v.species == VariaGenus.Varia aut v.species == VariaGenus.Variandum)
             a.definie({
                 nomen: v.nomen,
                 semanticTypus: resolvedTypus,

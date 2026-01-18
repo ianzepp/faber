@@ -200,7 +200,7 @@ functio invalidModifierContextError(textus nomen, textus contextus) -> SemanticE
 # Morphologia stem not declared error
 @ publica
 functio morphologiaRadixNonDeclarataError(textus methodus, textus radix, textus forma, textus recipiens, lista<textus> formae) -> SemanticErrorNuntius {
-    fixum aux = formae.longitudo() == 0 sic "Allowed forms for this stem: (none)" secus scriptum("Allowed forms for this stem: §", formae.coniunge(", "))
+    fixum aux = (formae.longitudo() == 0) sic "Allowed forms for this stem: (none)" secus scriptum("Allowed forms for this stem: §", formae.coniunge(", "))
     redde {
         textus: scriptum("Morphologia stem '§' is not declared for '§' (method '§', forma '§'). §", radix, recipiens, methodus, forma, aux),
         auxilium: aux

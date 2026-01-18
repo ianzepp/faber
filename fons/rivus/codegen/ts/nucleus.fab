@@ -67,8 +67,8 @@ genus TsGenerator implet Generans {
     bivalens stripComments
 
     # Test registry entries for harness generation
-    # Each entry: { suite: string, name: string, funcName: string, skip?: bool, todo?: bool, ... }
-    lista<tabula<textus, ignotum>> probaRegistrum
+    # Each entry is a plain object: { suite: string, name: string, funcName: string, skip?: bool, ... }
+    lista<ignotum> probaRegistrum
 
     # Current suite name stack (for nested probandum)
     lista<textus> probaSuiteStack
@@ -147,7 +147,7 @@ functio creaTsGenerator() -> TsGenerator {
         inProbaStandalone: falsum,
         stripTests: falsum,
         stripComments: falsum,
-        probaRegistrum: [] innatum lista<tabula<textus, ignotum>>,
+        probaRegistrum: [] innatum lista<ignotum>,
         probaSuiteStack: [] innatum lista<textus>
     }
 }
@@ -171,7 +171,7 @@ functio creaTsGeneratorCum(textus indentum) -> TsGenerator {
         inProbaStandalone: falsum,
         stripTests: falsum,
         stripComments: falsum,
-        probaRegistrum: [] innatum lista<tabula<textus, ignotum>>,
+        probaRegistrum: [] innatum lista<ignotum>,
         probaSuiteStack: [] innatum lista<textus>
     }
 }

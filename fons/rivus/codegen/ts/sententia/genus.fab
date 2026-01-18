@@ -120,7 +120,7 @@ functio genAutoMergeConstructor(lista<CampusDeclaratio> campi, bivalens hasCreo,
     ex instFields fixum campus {
         props.adde(scriptum("§?: §", campus.nomen, genTypus(campus.typus, g)))
     }
-    fixum overridesType = instFields.longitudo() > 0 sic scriptum("{ § }", props.coniunge(", ")) secus "Record<string, never>"
+    fixum overridesType = (instFields.longitudo() > 0) sic scriptum("{ § }", props.coniunge(", ")) secus "Record<string, never>"
 
     lines.adde(scriptum("§constructor(overrides: § = {}) {", g.ind(), overridesType))
     g.intraProfundum()

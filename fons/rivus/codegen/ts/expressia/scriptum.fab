@@ -53,7 +53,7 @@ functio genScriptum(textus exemplar, lista<Expressia> argumenta, TsGenerator g) 
                 implicitIdx += 1
             }
 
-            fixum arg = idx < argumenta.longitudo() sic genExpressia(argumenta[idx], g) secus "undefined"
+            fixum arg = (idx < argumenta.longitudo()) sic genExpressia(argumenta[idx], g) secus "undefined"
             result = result + "${" + arg + "}"
         } secus {
             result = result + c
