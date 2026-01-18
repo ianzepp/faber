@@ -16,7 +16,7 @@ import { join, basename } from 'path';
 import { compile } from '../fons/nanus';
 
 const ROOT = join(import.meta.dir, '..');
-const CORPUS = join(ROOT, 'fons', 'nanus', 'corpus');
+const CORPUS = join(ROOT, 'fons', 'corpus');
 
 interface TestResult {
     name: string;
