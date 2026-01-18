@@ -6,10 +6,11 @@
 # Useful for tooling, debugging, and compiler development.
 #
 # Usage:
-#   rivus parse hello.fab                # dump AST to stdout
-#   rivus parse hello.fab -o ast.json    # dump to file
-#   rivus parse -                        # parse from stdin
-#   rivus parse - --stdin-filename=foo.fab  # stdin with filename for errors
+#   rivus parse                          # stdin -> stdout
+#   rivus parse hello.fab                # file -> stdout
+#   rivus parse hello.fab -o ast.json    # file -> file
+#   echo 'scribe "hi"' | rivus parse     # pipe works naturally
+#   rivus parse --stdin-filename=foo.fab # stdin with filename for errors
 #   rivus parse hello.fab --compact      # minified JSON output
 #
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -30,12 +31,13 @@
 @ publica
 @ futura
 functio parseCommand(
-    textus input,
+    si textus input,
     si textus output,
     si textus stdinFilename,
     si bivalens compact
 ) -> numerus {
     fixum displayName = stdinFilename vel nomenOstende(input)
+    fixum estStdin = nihil input aut input == "-"
 
     # Validate input exists
     custodi {

@@ -6,9 +6,10 @@
 # Fast validation for editors, CI, and pre-commit hooks.
 #
 # Usage:
+#   rivus check                          # stdin -> stdout
 #   rivus check hello.fab                # validate single file
-#   rivus check -                        # validate from stdin
-#   rivus check - --stdin-filename=foo.fab  # stdin with filename for errors
+#   echo 'scribe "hi"' | rivus check     # pipe works naturally
+#   rivus check --stdin-filename=foo.fab # stdin with filename for errors
 #   rivus check hello.fab --json         # errors as JSON
 #   rivus check hello.fab --strict       # enable all strict checks
 #   rivus check hello.fab -o report.txt  # write report to file
@@ -33,7 +34,7 @@
 @ publica
 @ futura
 functio checkCommand(
-    textus input,
+    si textus input,
     si textus output,
     si textus include,
     si textus manifest,
@@ -42,6 +43,7 @@ functio checkCommand(
     si bivalens strict
 ) -> numerus {
     fixum displayName = stdinFilename vel nomenOstende(input)
+    fixum estStdin = nihil input aut input == "-"
 
     # Validate input exists
     custodi {
@@ -121,7 +123,7 @@ functio checkCommand(
         # Load manifest sectiones if provided
         figendum manifestSectiones = loadManifestSectiones(manifest)
 
-        fixum viaIngressus = input != "-" sic solum.absolve(input) secus nihil
+        fixum viaIngressus = estStdin sic nihil secus solum.absolve(input qua textus)
         fixum semResult = analyze(parseResult.programma qua Programma, viaIngressus, manifestSectiones)
         errorCount = errorCount + semResult.errores.longitudo()
 
