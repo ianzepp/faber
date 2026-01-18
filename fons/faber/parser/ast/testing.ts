@@ -197,11 +197,11 @@ export interface PraeparaBlock extends BaseNode {
  *   Rust:       RAII / Drop at scope end
  *
  * Examples:
- *   cura arena fit mem { ... }                    // arena allocator
- *   cura page fit mem { ... }                     // page allocator
- *   cura aperi("data.bin") fit fd { lege(fd) }   // generic resource
- *   cura connect(url) fiet conn { ... }          // async resource
- *   cura aperi("config.json") fit File fd { }    // with type annotation
+ *   cura arena fixum mem { ... }                    // arena allocator
+ *   cura page fixum mem { ... }                     // page allocator
+ *   cura aperi("data.bin") fixum fd { lege(fd) }   // generic resource
+ *   cura connect(url) fixum conn { ... }           // resource binding
+ *   cura aperi("config.json") fixum File fd { }    // with type annotation
  */
 export interface CuraStatement extends BaseNode {
     type: 'CuraStatement';
@@ -210,6 +210,7 @@ export interface CuraStatement extends BaseNode {
     binding: Identifier;
     typeAnnotation?: TypeAnnotation;
     async: boolean;
+    mutable: boolean; // true for varia (let), false for fixum (const)
     body: BlockStatement;
     catchClause?: CapeClause;
 }

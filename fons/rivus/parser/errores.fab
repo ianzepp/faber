@@ -254,7 +254,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde creoNuntium("Expected 'proba'", "Test case: proba 'name' { }")
         }
         casu ParserErrorCodice.ExpectaturCura {
-            redde creoNuntium("Expected 'cura'", "Resource: cura res fit h { }")
+            redde creoNuntium("Expected 'cura'", "Resource: cura res fixum h { }")
         }
         casu ParserErrorCodice.ExpectaturAnteVelPost {
             redde creoNuntium("Expected 'ante' or 'post'", "Timing: ante (before) or post (after)")

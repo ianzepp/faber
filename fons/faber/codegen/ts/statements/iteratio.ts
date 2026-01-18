@@ -2,16 +2,15 @@
  * TypeScript Code Generator - IteratioStatement
  *
  * TRANSFORMS:
- *   ex 0..10 pro i { } -> for (let i = 0; i < 10; i++) { }
- *   ex 0..10 per 2 pro i { } -> for (let i = 0; i < 10; i += 2) { }
- *   ex items pro item { } -> for (const item of items) { }
- *   ex items fit item { } -> for (const item of items) { }
- *   ex stream fiet chunk { } -> for await (const chunk of stream) { }
- *   de tabula pro key { } -> for (const key of tabula.keys()) { }
+ *   ex 0..10 fixum i { } -> for (const i = 0; i < 10; i++) { }
+ *   ex 0..10 per 2 varia i { } -> for (let i = 0; i < 10; i += 2) { }
+ *   ex items fixum item { } -> for (const item of items) { }
+ *   ex items varia item { } -> for (let item of items) { }
+ *   de tabula fixum key { } -> for (const key of tabula.keys()) { }
  *
  * WHY: Range expressions compile to efficient traditional for loops
- *      instead of allocating arrays. The 'fiet' verb form generates
- *      'for await' for async iteration.
+ *      instead of allocating arrays. The 'fixum' keyword generates
+ *      const bindings, 'varia' generates let bindings.
  *
  *      tabula (Map) requires special handling because JavaScript Maps
  *      don't support for-in iteration - use .keys() instead.
@@ -116,18 +115,21 @@ export function genIteratioStatement(node: IteratioStatement, g: TsGenerator): s
         iterable = applyDSLTransforms(iterable, node.transforms, g);
     }
 
+    // Use let for mutable bindings, const for immutable
+    const bindingKeyword = node.mutable ? 'let' : 'const';
+
     if (node.catchClause) {
         let result = `${g.ind()}try {\n`;
 
         g.depth++;
-        result += `${g.ind()}for${awaitKeyword} (const ${varName} ${keyword} ${iterable}) ${body}`;
+        result += `${g.ind()}for${awaitKeyword} (${bindingKeyword} ${varName} ${keyword} ${iterable}) ${body}`;
         g.depth--;
         result += `\n${g.ind()}} catch (${node.catchClause.param.name}) ${genBlockStatement(node.catchClause.body, g)}`;
 
         return result;
     }
 
-    return `${g.ind()}for${awaitKeyword} (const ${varName} ${keyword} ${iterable}) ${body}`;
+    return `${g.ind()}for${awaitKeyword} (${bindingKeyword} ${varName} ${keyword} ${iterable}) ${body}`;
 }
 
 /**

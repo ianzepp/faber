@@ -603,7 +603,7 @@ discretio Sententia {
     }
 
     # Resource management statement
-    # Example: cura arena fit mem { ... }
+    # Example: cura arena fixum mem { ... }
     CuraSententia {
         Locus locus
         CuratorGenus? curatorSpecies # WHY: optional when `res` provides curator

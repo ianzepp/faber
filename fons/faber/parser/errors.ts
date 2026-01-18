@@ -98,6 +98,7 @@ export enum ParserErrorCode {
     ExpectedKeywordAd = 'P052',
     ExpectedKeywordIncipit = 'P054',
     ExpectedKeywordIncipiet = 'P055',
+    ExpectedKeywordFixum = 'P057',
 
     // Module/source errors (P050-P059)
     ExpectedModuleName = 'P050',
@@ -328,6 +329,10 @@ export const PARSER_ERRORS = {
     [ParserErrorCode.ExpectedKeywordIncipiet]: {
         text: "Expected async entry point keyword 'incipiet' (it will begin)",
         help: "Async entry point blocks use 'incipiet': incipiet { cede fetchData() }",
+    },
+    [ParserErrorCode.ExpectedKeywordFixum]: {
+        text: "Expected binding keyword 'fixum' or 'varia'",
+        help: "Loop bindings require 'fixum' (const) or 'varia' (let): ex items fixum x { }",
     },
 
     // Module/source errors

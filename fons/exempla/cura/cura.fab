@@ -7,7 +7,7 @@
 # On GC targets (TS, Python), allocator blocks are ignored.
 
 incipit {
-    cura arena fit mem {
+    cura arena fixum mem {
         # All allocations in this block use the arena
         varia textus[] items = ["hello", "world"]
         scribe items
@@ -15,7 +15,7 @@ incipit {
     # Arena freed, all allocations released
 
     # Page allocator variant
-    cura page fit pageMem {
+    cura page fixum pageMem {
         scribe "Using page allocator"
     }
 }

@@ -167,16 +167,17 @@ function parseCapeClause(r: Resolver): CapeClause {
  *             (destructure | iteration)
  *   destructure := ('fixum' | 'varia' | 'figendum' | 'variandum')
  *                  ('[' pattern ']' | specifiers)
- *   iteration := dslTransforms? ('pro' | 'fit' | 'fiet') IDENTIFIER
+ *   iteration := dslTransforms? ('fixum' | 'varia') IDENTIFIER
  *                (blockStmt | 'ergo' statement | 'reddit' expression) catchClause?
  *
  * WHY: 'ex' (from/out of) for extracting values from collections.
  *      Semantically read-only - contrasts with 'in' for mutation.
  *      Supports both iteration and destructuring patterns.
+ *      Async iteration (figendum/variandum) deferred pending backend support.
  *
  * Collection DSL forms:
- *   ex items prima 5 pro item { }        // iteration with transforms
- *   ex items prima 5, ultima 2 pro x {}  // multiple transforms
+ *   ex items prima 5 fixum item { }        // iteration with transforms
+ *   ex items prima 5, ultima 2 fixum x {}  // multiple transforms
  */
 export function parseExStatement(r: Resolver): IteratioStatement | VariaDeclaration | DestructureDeclaration {
     const ctx = r.ctx();
@@ -202,6 +203,7 @@ export function parseExStatement(r: Resolver): IteratioStatement | VariaDeclarat
                     catchClause = parseCapeClause(r);
                 }
                 const async = kind === 'figendum' || kind === 'variandum';
+                const mutable = kind === 'varia' || kind === 'variandum';
                 return {
                     type: 'IteratioStatement',
                     kind: 'ex',
@@ -209,6 +211,7 @@ export function parseExStatement(r: Resolver): IteratioStatement | VariaDeclarat
                     iterable: source,
                     body,
                     async,
+                    mutable,
                     catchClause,
                     position,
                 };
@@ -228,22 +231,17 @@ export function parseExStatement(r: Resolver): IteratioStatement | VariaDeclarat
         return { type: 'DestructureDeclaration', source, kind, specifiers, position };
     }
 
-    // Check for DSL transforms before pro/fit/fiet
+    // Check for DSL transforms before binding keyword
     const transforms = parseDSLTransforms(r);
 
-    // Now expect for-loop binding: ex source [transforms] pro/fit/fiet variable { }
-    let async = false;
-    if (ctx.matchKeyword('pro')) {
-        async = false;
-    }
-    else if (ctx.matchKeyword('fit')) {
-        async = false;
-    }
-    else if (ctx.matchKeyword('fiet')) {
-        async = true;
+    // Now expect for-loop binding: ex source [transforms] fixum/varia variable { }
+    let mutable = false;
+
+    if (ctx.matchKeyword('varia')) {
+        mutable = true;
     }
     else {
-        ctx.error(ParserErrorCode.ExpectedKeywordPro);
+        ctx.expectKeyword('fixum', ParserErrorCode.ExpectedKeywordFixum);
     }
 
     const variable = ctx.parseIdentifierOrKeyword();
@@ -260,7 +258,8 @@ export function parseExStatement(r: Resolver): IteratioStatement | VariaDeclarat
         variable,
         iterable: source,
         body,
-        async,
+        async: false,
+        mutable,
         catchClause,
         transforms: transforms.length > 0 ? transforms : undefined,
         position,
@@ -275,16 +274,16 @@ export function parseExStatement(r: Resolver): IteratioStatement | VariaDeclarat
  * Parse 'de' statement (for-in loop).
  *
  * GRAMMAR:
- *   deStmt := 'de' expression ('pro' | 'fit' | 'fiet') IDENTIFIER
+ *   deStmt := 'de' expression ('fixum' | 'varia') IDENTIFIER
  *             (blockStmt | 'ergo' statement | 'reddit' expression) catchClause?
  *
  * WHY: 'de' (from/concerning) for extracting keys from an object.
  *      Semantically read-only - contrasts with 'in' for mutation.
  *
  * Examples:
- *   de tabula pro clavis { ... }  // from table, for each key
- *   de object pro k ergo scribe k // one-liner form
- *   de object pro k reddit k      // return first key
+ *   de tabula fixum clavis { ... }  // from table, for each key
+ *   de object fixum k ergo scribe k // one-liner form
+ *   de object fixum k reddit k      // return first key
  */
 export function parseDeStatement(r: Resolver): IteratioStatement {
     const ctx = r.ctx();
@@ -294,19 +293,14 @@ export function parseDeStatement(r: Resolver): IteratioStatement {
 
     const expr = r.expression();
 
-    // Require binding keyword
-    let async = false;
-    if (ctx.matchKeyword('pro')) {
-        async = false;
-    }
-    else if (ctx.matchKeyword('fit')) {
-        async = false;
-    }
-    else if (ctx.matchKeyword('fiet')) {
-        async = true;
+    // Require binding keyword: fixum (const) or varia (let)
+    let mutable = false;
+
+    if (ctx.matchKeyword('varia')) {
+        mutable = true;
     }
     else {
-        ctx.error(ParserErrorCode.ExpectedKeywordPro);
+        ctx.expectKeyword('fixum', ParserErrorCode.ExpectedKeywordFixum);
     }
 
     const variable = ctx.parseIdentifierOrKeyword();
@@ -323,7 +317,8 @@ export function parseDeStatement(r: Resolver): IteratioStatement {
         variable,
         iterable: expr,
         body,
-        async,
+        async: false,
+        mutable,
         catchClause,
         position,
     };
@@ -365,21 +360,20 @@ export function parseInStatement(r: Resolver): InStatement {
  * Parse cura statement (resource management).
  *
  * GRAMMAR:
- *   curaStmt := 'cura' curatorKind? expression? ('pro' | 'fit' | 'fiet') typeAnnotation? IDENTIFIER blockStmt catchClause?
+ *   curaStmt := 'cura' curatorKind? expression? ('fixum' | 'varia') typeAnnotation? IDENTIFIER blockStmt catchClause?
  *   curatorKind := 'arena' | 'page'
  *
- * WHY: Latin "cura" (care) + binding verb for scoped resources.
- *      - pro: neutral binding ("for")
- *      - fit: sync binding ("it becomes")
- *      - fiet: async binding ("it will become")
+ * WHY: Latin "cura" (care) + binding keyword for scoped resources.
+ *      - fixum: immutable binding (const)
+ *      - varia: mutable binding (let)
  *      Curator kinds declare explicit allocator types (arena, page).
  *      Guarantees cleanup via solve() on scope exit.
  *
  * Examples:
- *   cura arena fit mem { ... }                    // arena allocator
- *   cura page fit mem { ... }                     // page allocator
- *   cura aperi("data.bin") fit fd { lege(fd) }   // generic resource
- *   cura connect(url) fiet conn { ... }          // async resource
+ *   cura arena fixum mem { ... }                    // arena allocator
+ *   cura page fixum mem { ... }                     // page allocator
+ *   cura aperi("data.bin") fixum fd { lege(fd) }   // generic resource
+ *   cura connect(url) fixum conn { ... }           // resource binding
  */
 export function parseCuraStatement(r: Resolver): CuraStatement {
     const ctx = r.ctx();
@@ -401,25 +395,21 @@ export function parseCuraStatement(r: Resolver): CuraStatement {
     // WHY: For arena/page, expression is optional (they create their own allocator)
     //      For generic resources, expression is required
     let resource: Expression | undefined;
-    if (!ctx.checkKeyword('pro') && !ctx.checkKeyword('fit') && !ctx.checkKeyword('fiet') && !ctx.check('LBRACE')) {
+    if (!ctx.checkKeyword('fixum') && !ctx.checkKeyword('varia') && !ctx.check('LBRACE')) {
         resource = r.expression();
     }
 
-    // Optional binding verb: pro, fit, or fiet
-    // WHY: pro is neutral, fit is sync, fiet is async (matches lambda syntax)
-    // WHY: If no verb, auto-generate binding name for convenience (cura arena { })
-    let async = false;
+    // Optional binding keyword: fixum (const) or varia (let)
+    // WHY: If no keyword, auto-generate binding name for convenience (cura arena { })
+    let mutable = false;
     let hasBinding = false;
-    if (ctx.matchKeyword('pro')) {
-        async = false;
+
+    if (ctx.matchKeyword('varia')) {
+        mutable = true;
         hasBinding = true;
     }
-    else if (ctx.matchKeyword('fit')) {
-        async = false;
-        hasBinding = true;
-    }
-    else if (ctx.matchKeyword('fiet')) {
-        async = true;
+    else if (ctx.matchKeyword('fixum')) {
+        mutable = false;
         hasBinding = true;
     }
 
@@ -457,7 +447,7 @@ export function parseCuraStatement(r: Resolver): CuraStatement {
         catchClause = parseCapeClause(r);
     }
 
-    return { type: 'CuraStatement', curatorKind, resource, binding, typeAnnotation, async, body, catchClause, position };
+    return { type: 'CuraStatement', curatorKind, resource, binding, typeAnnotation, async: false, mutable, body, catchClause, position };
 }
 
 // =============================================================================

@@ -123,7 +123,9 @@ function parseFunctionModifiers(r: Resolver): FunctioModifier[] | undefined {
  *                | 'exitus' (IDENTIFIER | NUMBER)
  *                | 'immutata'
  *                | 'iacit'
- *   returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
+ *   returnClause := '->' typeAnnotation
+ *
+ * NOTE: fit/fiet/fiunt/fient return syntax disabled pending Go/Zig backend support.
  *
  * WHY: Top-level function declaration. Body is optional for @ externa declarations.
  */
@@ -146,46 +148,19 @@ export function parseFunctioDeclaration(r: Resolver): FunctioDeclaration {
     const modifiers = parseFunctionModifiers(r);
 
     let returnType: TypeAnnotation | undefined;
-    let verbAsync: boolean | undefined;
-    let verbGenerator: boolean | undefined;
     let returnVerb: ReturnVerb | undefined;
 
-    // Parse return type with arrow or verb form
-    // Verb forms: fit (sync, single), fiet (async, single), fiunt (sync, generator), fient (async, generator)
-    // WHY: Track which syntax was used - arrow (direct return) vs verb (stream protocol)
+    // Parse return type with arrow only
+    // NOTE: fit/fiet/fiunt/fient return syntax is disabled pending Go/Zig backend support.
+    // The Responsum protocol machinery remains in codegen but is dormant until re-enabled here.
     if (ctx.match('THIN_ARROW')) {
         returnType = r.typeAnnotation();
         returnVerb = 'arrow';
     }
-    else if (ctx.matchKeyword('fit')) {
-        returnType = r.typeAnnotation();
-        verbAsync = false;
-        verbGenerator = false;
-        returnVerb = 'fit';
-    }
-    else if (ctx.matchKeyword('fiet')) {
-        returnType = r.typeAnnotation();
-        verbAsync = true;
-        verbGenerator = false;
-        returnVerb = 'fiet';
-    }
-    else if (ctx.matchKeyword('fiunt')) {
-        returnType = r.typeAnnotation();
-        verbAsync = false;
-        verbGenerator = true;
-        returnVerb = 'fiunt';
-    }
-    else if (ctx.matchKeyword('fient')) {
-        returnType = r.typeAnnotation();
-        verbAsync = true;
-        verbGenerator = true;
-        returnVerb = 'fient';
-    }
 
-    // Derive async/generator from verb form (annotations handled in codegen/semantic)
-    // WHY: futura/cursor inline modifiers removed - use @ futura / @ cursor annotations instead
-    const async: boolean = verbAsync ?? false;
-    const generator: boolean = verbGenerator ?? false;
+    // WHY: async/generator now derived from annotations (@ futura / @ cursor) not return verbs
+    const async: boolean = false;
+    const generator: boolean = false;
 
     // WHY: Body is optional for @ externa declarations (external functions have no body)
     // If no opening brace, function has no body (validated in semantic phase)
@@ -638,6 +613,9 @@ export function parseGenusDeclaration(r: Resolver): GenusDeclaration {
  *                | 'errata' IDENTIFIER
  *                | 'immutata'
  *                | 'iacit'
+ *   returnClause := '->' typeAnnotation
+ *
+ * NOTE: fit/fiet/fiunt/fient return syntax disabled pending Go/Zig backend support.
  *
  * WHY: Distinguishes between fields and methods by looking for 'functio' keyword.
  * WHY: Fields are public by default (struct semantics).
@@ -674,38 +652,13 @@ export function parseGenusMember(r: Resolver): FieldDeclaration | FunctioDeclara
         const modifiers = parseFunctionModifiers(r);
 
         let returnType: TypeAnnotation | undefined;
-        let verbAsync: boolean | undefined;
-        let verbGenerator: boolean | undefined;
         let returnVerb: ReturnVerb | undefined;
 
-        // Parse return type with arrow or verb form
+        // Parse return type with arrow only
+        // NOTE: fit/fiet/fiunt/fient return syntax is disabled pending Go/Zig backend support.
         if (ctx.match('THIN_ARROW')) {
             returnType = r.typeAnnotation();
             returnVerb = 'arrow';
-        }
-        else if (ctx.matchKeyword('fit')) {
-            returnType = r.typeAnnotation();
-            verbAsync = false;
-            verbGenerator = false;
-            returnVerb = 'fit';
-        }
-        else if (ctx.matchKeyword('fiet')) {
-            returnType = r.typeAnnotation();
-            verbAsync = true;
-            verbGenerator = false;
-            returnVerb = 'fiet';
-        }
-        else if (ctx.matchKeyword('fiunt')) {
-            returnType = r.typeAnnotation();
-            verbAsync = false;
-            verbGenerator = true;
-            returnVerb = 'fiunt';
-        }
-        else if (ctx.matchKeyword('fient')) {
-            returnType = r.typeAnnotation();
-            verbAsync = true;
-            verbGenerator = true;
-            returnVerb = 'fient';
         }
 
         // Abstract methods (from annotation) have no body
@@ -724,8 +677,8 @@ export function parseGenusMember(r: Resolver): FieldDeclaration | FunctioDeclara
             params,
             returnType,
             body,
-            async: verbAsync ?? false,
-            generator: verbGenerator ?? false,
+            async: false,
+            generator: false,
             modifiers,
             isAbstract: isAbstract || undefined,
             position,
@@ -826,7 +779,9 @@ export function parsePactumDeclaration(r: Resolver): PactumDeclaration {
  *                | 'errata' IDENTIFIER
  *                | 'immutata'
  *                | 'iacit'
- *   returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
+ *   returnClause := '->' typeAnnotation
+ *
+ * NOTE: fit/fiet/fiunt/fient return syntax disabled pending Go/Zig backend support.
  *
  * WHY: Method signatures without bodies. Same syntax as function declarations
  *      but terminates after return type (no block).
@@ -852,38 +807,11 @@ export function parsePactumMethod(r: Resolver): PactumMethod {
     const modifiers = parseFunctionModifiers(r);
 
     let returnType: TypeAnnotation | undefined;
-    let verbAsync: boolean | undefined;
-    let verbGenerator: boolean | undefined;
-    let returnVerb: ReturnVerb | undefined;
 
-    // Parse return type with arrow or verb form
+    // Parse return type with arrow only
+    // NOTE: fit/fiet/fiunt/fient return syntax is disabled pending Go/Zig backend support.
     if (ctx.match('THIN_ARROW')) {
         returnType = r.typeAnnotation();
-        returnVerb = 'arrow';
-    }
-    else if (ctx.matchKeyword('fit')) {
-        returnType = r.typeAnnotation();
-        verbAsync = false;
-        verbGenerator = false;
-        returnVerb = 'fit';
-    }
-    else if (ctx.matchKeyword('fiet')) {
-        returnType = r.typeAnnotation();
-        verbAsync = true;
-        verbGenerator = false;
-        returnVerb = 'fiet';
-    }
-    else if (ctx.matchKeyword('fiunt')) {
-        returnType = r.typeAnnotation();
-        verbAsync = false;
-        verbGenerator = true;
-        returnVerb = 'fiunt';
-    }
-    else if (ctx.matchKeyword('fient')) {
-        returnType = r.typeAnnotation();
-        verbAsync = true;
-        verbGenerator = true;
-        returnVerb = 'fient';
     }
 
     return {
@@ -891,8 +819,8 @@ export function parsePactumMethod(r: Resolver): PactumMethod {
         name,
         params,
         returnType,
-        async: verbAsync ?? false,
-        generator: verbGenerator ?? false,
+        async: false,
+        generator: false,
         modifiers,
         position,
         annotations: annotations.length > 0 ? annotations : undefined,

@@ -32,7 +32,7 @@ functio createUser(textus nomen, si numerus aetas vel 0, si bivalens activus vel
     redde scriptum("User: §, age: §, active: §", nomen, aetas, activus)
 }
 
-incipit ergo cura arena fit alloc {
+incipit ergo cura arena fixum alloc {
     # Without optional arg
     scribe greet("Marcus")
 

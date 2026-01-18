@@ -4,7 +4,7 @@
 #
 # TRANSFORMS:
 #   incipit { ... }                        -> func main() { ... }
-#   incipit ergo cura arena fit alloc { }  -> func main() { ... } (ignore arena)
+#   incipit ergo cura arena fixum alloc { }  -> func main() { ... } (ignore arena)
 
 § ex "../../../ast/sententia" importa Sententia
 § ex "../nucleus" importa GoGenerator

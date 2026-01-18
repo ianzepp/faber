@@ -162,8 +162,8 @@ functio parseErgoVelReddit(Resolvitor r) -> Sententia? {
 #   curatorKind := 'arena' | 'pagina'
 #
 # Examples:
-#   cura arena fit mem { ... }
-#   cura aperi("file.txt") fit fd { lege(fd) }
+#   cura arena fixum mem { ... }
+#   cura aperi("file.txt") fixum fd { lege(fd) }
 #   cura connect(url) varia conn { ... }
 @ publica
 functio parseCuraSententia(Resolvitor r) -> Sententia {

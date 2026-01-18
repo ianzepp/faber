@@ -12,7 +12,7 @@
 # DORMANT (fit/fiet/fiunt/fient return protocol):
 #   The code below still supports the Responsum protocol for structured returns:
 #     functio f() -> T { ... }   -> function f(): T { return asFit(...) }
-#     functio f() fiet T { ... }  -> async function f(): Promise<T> { ... }
+#     functio f() fixum T { ... }  -> async function f(): Promise<T> { ... }
 #     functio f() fiunt T { ... } -> function* f(): Generator<T> { ... }
 #     functio f() fient T { ... } -> async function* f(): AsyncGenerator<T> { ... }
 #

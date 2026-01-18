@@ -129,6 +129,7 @@ export interface IteratioStatement extends BaseNode {
     iterable: Expression;
     body: BlockStatement;
     async: boolean;
+    mutable: boolean; // true for varia (let), false for fixum (const)
     catchClause?: CapeClause;
     transforms?: CollectionDSLTransform[];
 }

@@ -5,10 +5,10 @@
 # Allocator scopes can nest. Inner scopes free before outer scopes.
 
 incipit {
-    cura arena fit outer {
+    cura arena fixum outer {
         varia textus[] a = ["one"]
 
-        cura arena fit inner {
+        cura arena fixum inner {
             varia textus[] b = ["two"]
             scribe "Inner:", b
         }

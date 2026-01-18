@@ -21,7 +21,7 @@
  *   -> afterAll(async () => { await db.close(); });
  *
  * CuraStatement (resource management):
- *   cura aperi("file.txt") fit fd { lege(fd) }
+ *   cura aperi("file.txt") fixum fd { lege(fd) }
  *   -> {
  *        const fd = aperi("file.txt");
  *        try {
@@ -31,10 +31,10 @@
  *        }
  *      }
  *
- *   cura cede connect(url) fit conn { ... }
- *   -> { const conn = await connect(url); try { ... } finally { conn.solve?.(); } }
+ *   cura aperi("file.txt") varia fd { ... }
+ *   -> { let fd = aperi("file.txt"); try { ... } finally { fd.solve?.(); } }
  *
- *   cura resource() fit r { ... } cape err { ... }
+ *   cura resource() fixum r { ... } cape err { ... }
  *   -> { const r = resource(); try { ... } catch (err) { ... } finally { r.solve?.(); } }
  *
  * WHY: Wraps in try/finally to guarantee cleanup via solve().
@@ -70,12 +70,15 @@ export function genCuraStatement(node: CuraStatement, g: TsGenerator, semi: bool
     const resource = node.resource ? g.genExpression(node.resource) : 'undefined';
     const awaitPrefix = node.async ? 'await ' : '';
 
+    // Use let for mutable bindings, const for immutable
+    const bindingKeyword = node.mutable ? 'let' : 'const';
+
     // Opening block scope
     lines.push(`${g.ind()}{`);
     g.depth++;
 
-    // Resource acquisition: const <binding> = [await] <resource>;
-    lines.push(`${g.ind()}const ${binding} = ${awaitPrefix}${resource}${semi ? ';' : ''}`);
+    // Resource acquisition: const/let <binding> = [await] <resource>;
+    lines.push(`${g.ind()}${bindingKeyword} ${binding} = ${awaitPrefix}${resource}${semi ? ';' : ''}`);
 
     // Try block
     lines.push(`${g.ind()}try ${genBlockStatement(node.body, g)}`);

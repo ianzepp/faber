@@ -11,7 +11,7 @@ functio add(numerus a, numerus b) -> numerus {
     redde a + b
 }
 
-incipit ergo cura arena fit alloc {
+incipit ergo cura arena fixum alloc {
     scribe greet("Marcus")
     scribe "Sum:", add(3, 5)
 }

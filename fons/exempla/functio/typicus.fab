@@ -27,7 +27,7 @@ functio media(fractus a, fractus b) -> fractus {
     redde (a + b) / 2.0
 }
 
-incipit ergo cura arena fit alloc {
+incipit ergo cura arena fixum alloc {
     scribe quadratum(7)
 
     scribe adde(100, 200)
