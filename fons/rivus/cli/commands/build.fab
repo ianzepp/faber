@@ -217,7 +217,10 @@ functio buildCommand(
     varia bivalens hadErrors = falsum
 
     si entryResult.semResult.resolvedModules {
-        ex entryResult.semResult.resolvedModules fixum [depPath, depProgram] {
+        ex entryResult.semResult.resolvedModules fixum entry {
+            fixum depPath = entry[0]
+            fixum depProgram = entry[1]
+
             # Semantic analysis for dependency
             fixum depAnalysis = analyze(depProgram, depPath, manifestSectiones)
 
