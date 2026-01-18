@@ -23,7 +23,7 @@
 § ex "../resolvitor" importa Resolvitor
 § ex "../../ast/positio" importa Locus
 § ex "../../ast/expressia" importa Expressia
-§ ex "../../ast/sententia" importa Sententia, MassaSententia, FunctioDeclaratio, Parametrum, TypusParametrum, CampusDeclaratio, PactumMethodus, OrdoMembrum, VariansDeclaratio, VariansCampus, Visibilitas, ReddeVerbum, ImportaSpecificator, MorphologiaDeclaratio, FunctioModificator
+§ ex "../../ast/sententia" importa Sententia, MassaSententia, FunctioDeclaratio, Parametrum, TypusParametrum, CampusDeclaratio, PactumMethodus, OrdoMembrum, VariansDeclaratio, VariansCampus, Visibilitas, ReddeVerbum, ImportaSpecificator, MorphologiaDeclaratio, FunctioModificator, OptionesModificator
 § ex "../../ast/typus" importa TypusAnnotatio, typusSimplicis
 § ex "../../ast/lexema" importa SymbolumGenus, VerbumId
 § ex "../errores" importa ParserErrorCodice
@@ -56,6 +56,11 @@ functio parseFunctioModificatores(Resolvitor r) -> lista<FunctioModificator>? {
         } sin p.congruetVerbum("iacit") {
             fixum locus = p.praevius().locus
             modificatores.adde(finge IacitModificator { locus: locus } qua FunctioModificator)
+        } sin p.congruetVerbum("optiones") {
+            # Bundle all @ optio annotations into a Map<string, string> named <name>
+            fixum locus = p.praevius().locus
+            fixum optionesSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            modificatores.adde(finge OptionesModificator { locus: locus, nomen: optionesSym.valor } qua FunctioModificator)
         } secus {
             rumpe
         }

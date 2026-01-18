@@ -114,6 +114,7 @@ functio parseTargetMappingAnnotation(Resolvitor r, textus nomen, Locus locus, nu
         optioBrevis: nihil,
         optioLongum: nihil,
         optioDescriptio: nihil,
+        optioBivalens: nihil,
         operandusTypus: nihil,
         operandusNomen: nihil,
         operandusCeteri: nihil,
@@ -156,6 +157,7 @@ functio parseRadixAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
         optioBrevis: nihil,
         optioLongum: nihil,
         optioDescriptio: nihil,
+        optioBivalens: nihil,
         operandusTypus: nihil,
         operandusNomen: nihil,
         operandusCeteri: nihil,
@@ -189,6 +191,7 @@ functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
             optioBrevis: nihil,
             optioLongum: nihil,
             optioDescriptio: nihil,
+            optioBivalens: nihil,
             operandusTypus: nihil,
             operandusNomen: nihil,
             operandusCeteri: nihil,
@@ -273,6 +276,7 @@ functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
             optioBrevis: nihil,
             optioLongum: nihil,
             optioDescriptio: nihil,
+            optioBivalens: nihil,
             operandusTypus: nihil,
             operandusNomen: nihil,
             operandusCeteri: nihil,
@@ -298,6 +302,7 @@ functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
             optioBrevis: nihil,
             optioLongum: nihil,
             optioDescriptio: nihil,
+            optioBivalens: nihil,
             operandusTypus: nihil,
             operandusNomen: nihil,
             operandusCeteri: nihil,
@@ -369,6 +374,7 @@ functio parseImperiaAnnotation(Resolvitor r, Locus locus, numerus linea) -> Anno
             optioBrevis: nihil,
             optioLongum: nihil,
             optioDescriptio: nihil,
+            optioBivalens: nihil,
             operandusTypus: nihil,
             operandusNomen: nihil,
             operandusCeteri: nihil,
@@ -407,27 +413,47 @@ functio parseImperiaAnnotation(Resolvitor r, Locus locus, numerus linea) -> Anno
 }
 
 # Parse @ optio annotation for CLI flags
-# Grammar: @ optio <type> <binding> [brevis "x"] [longum "xxx"] [descriptio "..."]
-# Example: @ optio textus target brevis "t" longum "target" descriptio "Target language"
+# Old grammar: @ optio <type> <binding> [brevis "x"] [longum "xxx"] [descriptio "..."]
+# New grammar: @ optio <name> [brevis "x"] [longum "xxx"] [bivalens] [descriptio "..."]
+#
+# Detection: If the first token is a type keyword (textus, bivalens, numerus, fractus, lista),
+# use old syntax. Otherwise, use new syntax where name comes first.
+#
+# Example (old): @ optio textus target brevis "t" longum "target" descriptio "Target language"
+# Example (new): @ optio target brevis "t" longum "target" descriptio "Target language"
+# Example (new): @ optio verbose brevis "v" longum "verbose" bivalens descriptio "Enable verbose"
 functio parseOptioAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annotatio {
     fixum p = r.parser()
 
-    # Parse type (required) - textus, bivalens, numerus, etc.
-    varia optioTypus = nihil qua textus?
-    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
-        optioTypus = p.specta(0).valor
-        p.procede()
-    } secus {
-        p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("@ optio requires type, got '§'", p.specta(0).valor))
-    }
+    # Type keywords that indicate old syntax
+    fixum typusVerba = ["textus", "bivalens", "numerus", "fractus", "lista"]
 
-    # Parse binding name (required)
+    # Check if first token is a type keyword (old syntax) or name (new syntax)
+    varia optioTypus = nihil qua textus?
     varia optioNomen = nihil qua textus?
+    varia optioBivalens = nihil qua bivalens?
+
     si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
-        optioNomen = p.specta(0).valor
-        p.procede()
+        fixum primumValor = p.specta(0).valor
+        si primumValor inter typusVerba {
+            # Old syntax: @ optio <type> <name> ...
+            optioTypus = primumValor
+            p.procede()
+
+            # Parse binding name (required)
+            si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
+                optioNomen = p.specta(0).valor
+                p.procede()
+            } secus {
+                p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("@ optio requires binding name, got '§'", p.specta(0).valor))
+            }
+        } secus {
+            # New syntax: @ optio <name> [brevis] [longum] [bivalens] [descriptio]
+            optioNomen = primumValor
+            p.procede()
+        }
     } secus {
-        p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("@ optio requires binding name, got '§'", p.specta(0).valor))
+        p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("@ optio requires name, got '§'", p.specta(0).valor))
     }
 
     # Parse optional brevis "x"
@@ -452,6 +478,12 @@ functio parseOptioAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
         } secus {
             p.renuncia(ParserErrorCodice.ExpectaturTextus, "expected string after longum")
         }
+    }
+
+    # Parse optional bivalens modifier (new syntax only)
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor == "bivalens" et p.specta(0).locus.linea == linea {
+        p.procede()
+        optioBivalens = verum
     }
 
     # Validate: at least one of brevis/longum required
@@ -486,6 +518,7 @@ functio parseOptioAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
         optioBrevis: optioBrevis,
         optioLongum: optioLongum,
         optioDescriptio: optioDescriptio,
+        optioBivalens: optioBivalens,
         operandusTypus: nihil,
         operandusNomen: nihil,
         operandusCeteri: nihil,
@@ -551,6 +584,7 @@ functio parseOperandusAnnotation(Resolvitor r, Locus locus, numerus linea) -> An
         optioBrevis: nihil,
         optioLongum: nihil,
         optioDescriptio: nihil,
+        optioBivalens: nihil,
         operandusTypus: operandusTypus,
         operandusNomen: operandusNomen,
         operandusCeteri: operandusCeteri,
@@ -655,6 +689,7 @@ functio parseAnnotationes(Resolvitor r) -> lista<Annotatio> {
             optioBrevis: nihil,
             optioLongum: nihil,
             optioDescriptio: nihil,
+            optioBivalens: nihil,
             operandusTypus: nihil,
             operandusNomen: nihil,
             operandusCeteri: nihil,

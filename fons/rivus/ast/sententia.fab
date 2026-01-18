@@ -154,6 +154,10 @@ discretio FunctioModificator {
     IacitModificator {
         Locus locus
     }
+    OptionesModificator {
+        Locus locus
+        textus nomen    # Bundle variable name (e.g., "opts")
+    }
 }
 
 # Field declaration within genus

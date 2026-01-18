@@ -213,6 +213,7 @@ ordo VerbumId {
     Curata
     Errata
     Immutata
+    Optiones       # CLI options bundle modifier
     Publicus
     Privatus
     Generis
