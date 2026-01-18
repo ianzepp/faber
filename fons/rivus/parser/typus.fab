@@ -169,7 +169,7 @@ functio parseTypusAnnotatio(Resolvitor r) -> TypusAnnotatio {
         } qua TypusAnnotatio
         }
         varia unioParametra = [] innatum lista<TypusAnnotatio>
-        ex parametra pro param {
+        ex parametra fixum param {
             discerne param {
                 casu Typus ut t {
                     unioParametra.adde(t.adnotatio)

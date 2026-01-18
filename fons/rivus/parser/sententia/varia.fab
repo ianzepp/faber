@@ -84,7 +84,7 @@ functio parseDestructuraSententia(Resolvitor r) -> Sententia {
     }
     p.procede()
 
-    # Array destructuring: ex source fixum [a, b] or ex source pro [k, v] { }
+    # Array destructuring: ex source fixum [a, b] or ex source fixum [k, v] { }
     si p.proba(SymbolumGenus.QuadratusSin) {
         fixum elementa = parseSeriesDestructura(r)
 
@@ -124,7 +124,7 @@ functio parseDestructuraSententia(Resolvitor r) -> Sententia {
         } qua Sententia
     }
 
-    # Object destructuring: ex persona pro nomen, aetas
+    # Object destructuring: ex persona fixum nomen, aetas
     varia specificatores = [] innatum lista<ImportaSpecificator>
 
     fac {

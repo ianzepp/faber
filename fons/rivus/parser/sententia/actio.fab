@@ -169,7 +169,7 @@ functio parseScribeElementum(Resolvitor r) -> Expressia {
 
         # Count § placeholders to determine how many args to consume
         varia placeholderNumerus = 0
-        ex 0 ante exemplar.longitudo() pro i {
+        ex 0 ante exemplar.longitudo() fixum i {
             si exemplar[i] == "§" {
                 placeholderNumerus += 1
             }
@@ -177,7 +177,7 @@ functio parseScribeElementum(Resolvitor r) -> Expressia {
 
         varia scriptumArgumenta = [] innatum lista<Expressia>
 
-        ex 0 ante placeholderNumerus pro i {
+        ex 0 ante placeholderNumerus fixum i {
             si non p.congruet(SymbolumGenus.Coma) {
                 p.renuncia(
                     ParserErrorCodice.ExpectaturExpressia,

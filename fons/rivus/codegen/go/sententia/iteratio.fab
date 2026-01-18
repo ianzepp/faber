@@ -1,10 +1,10 @@
 # Go Statement Generator - Iteration Loops
 #
 # TRANSFORMS:
-#   ex lista pro item { ... }   -> for _, item := range lista { ... }
-#   de tabula pro key { ... }   -> for key := range tabula { ... }
-#   ex 0..10 pro i { ... }      -> for i := 0; i < 10; i++ { ... }
-#   ex 0 usque 10 pro i { ... } -> for i := 0; i <= 10; i++ { ... }
+#   ex lista fixum item { ... }   -> for _, item := range lista { ... }
+#   de tabula fixum key { ... }   -> for key := range tabula { ... }
+#   ex 0..10 fixum i { ... }      -> for i := 0; i < 10; i++ { ... }
+#   ex 0 usque 10 fixum i { ... } -> for i := 0; i <= 10; i++ { ... }
 
 § ex "../../../ast/sententia" importa Sententia, IteratioGenus, IteratioVariabilis
 § ex "../../../ast/expressia" importa Expressia
@@ -76,7 +76,7 @@ functio genIteratio(IteratioGenus species, IteratioVariabilis variabilis, Expres
             # For other patterns, use temp var + unpacking
             varia unpacks = [] innatum lista<textus>
             varia indice = 0
-            ex s.elementa pro elem {
+            ex s.elementa fixum elem {
                 si non elem.omissum et nonnihil elem.nomen {
                     g.intraProfundum()
                     unpacks.adde(scriptum("§§ := _item[§]", g.ind(), elem.nomen, indice))

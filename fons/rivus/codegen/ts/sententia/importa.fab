@@ -30,7 +30,7 @@ functio genImporta(textus fons, lista<ImportaSpecificator> specificatores, bival
     }
 
     varia specs = [] innatum lista<textus>
-    ex specificatores pro spec {
+    ex specificatores fixum spec {
         si spec.importatum == spec.locale {
             specs.adde(spec.importatum)
         } secus {
@@ -47,7 +47,7 @@ functio genDestructura(Expressia fons, VariaGenus species, lista<ImportaSpecific
     fixum asyncPrefix = (species == VariaGenus.Figendum aut species == VariaGenus.Variandum) sic "await " secus ""
 
     varia specs = [] innatum lista<textus>
-    ex specificatores pro spec {
+    ex specificatores fixum spec {
         si spec.residuum {
             specs.adde(scriptum("...§", spec.locale))
         } sin spec.importatum == spec.locale {
@@ -66,7 +66,7 @@ functio genSeriesDestructura(lista<SeriesDestructuraElementum> elementa, Express
     fixum asyncPrefix = (species == VariaGenus.Figendum aut species == VariaGenus.Variandum) sic "await " secus ""
 
     varia items = [] innatum lista<textus>
-    ex elementa pro elem {
+    ex elementa fixum elem {
         si elem.omissum {
             items.adde("")
         } sin elem.residuum {

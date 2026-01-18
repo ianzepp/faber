@@ -48,7 +48,7 @@ functio genSeriesDestructura(VariaGenus species, lista<SeriesDestructuraElementu
 
     varia assignments = [] innatum lista<textus>
     varia indice = 0
-    ex elementa pro elem {
+    ex elementa fixum elem {
         si non elem.omissum et nonnihil elem.nomen {
             assignments.adde(scriptum("§var § = §[§]", g.ind(), elem.nomen, fonsStr, indice))
         }

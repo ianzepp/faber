@@ -90,7 +90,7 @@ functio testCommand(
 
     si positivum lexResult.errores.longitudo() {
         si jsonOutput {
-            ex lexResult.errores pro err {
+            ex lexResult.errores fixum err {
                 errores.push({
                     phase: "lexor",
                     file: displayName,
@@ -102,7 +102,7 @@ functio testCommand(
             consolum.fundeLineam(json.solve({ errors: errores }))
         } secus {
             mone "Lexor errors:"
-            ex lexResult.errores pro err {
+            ex lexResult.errores fixum err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus
             }
         }
@@ -114,7 +114,7 @@ functio testCommand(
 
     si positivum parseResult.errores.longitudo() {
         si jsonOutput {
-            ex parseResult.errores pro err {
+            ex parseResult.errores fixum err {
                 errores.push({
                     phase: "parser",
                     file: displayName,
@@ -126,7 +126,7 @@ functio testCommand(
             consolum.fundeLineam(json.solve({ errors: errores }))
         } secus {
             mone "Parser errors:"
-            ex parseResult.errores pro err {
+            ex parseResult.errores fixum err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
             }
         }
@@ -148,7 +148,7 @@ functio testCommand(
 
     si positivum semResult.errores.longitudo() {
         si jsonOutput {
-            ex semResult.errores pro err {
+            ex semResult.errores fixum err {
                 errores.push({
                     phase: "semantic",
                     file: displayName,
@@ -160,7 +160,7 @@ functio testCommand(
             consolum.fundeLineam(json.solve({ errors: errores }))
         } secus {
             mone "Semantic errors:"
-            ex semResult.errores pro err {
+            ex semResult.errores fixum err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
             }
         }

@@ -62,7 +62,7 @@ functio compileFile(
 
     si positivum lexResult.errores.longitudo() {
         si jsonOutput {
-            ex lexResult.errores pro err {
+            ex lexResult.errores fixum err {
                 errores.push({
                     phase: "lexor",
                     file: displayName,
@@ -74,7 +74,7 @@ functio compileFile(
         }
         secus {
             mone "Lexor errors:"
-            ex lexResult.errores pro err {
+            ex lexResult.errores fixum err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus
             }
         }
@@ -86,7 +86,7 @@ functio compileFile(
 
     si positivum parseResult.errores.longitudo() {
         si jsonOutput {
-            ex parseResult.errores pro err {
+            ex parseResult.errores fixum err {
                 errores.push({
                     phase: "parser",
                     file: displayName,
@@ -98,7 +98,7 @@ functio compileFile(
         }
         secus {
             mone "Parser errors:"
-            ex parseResult.errores pro err {
+            ex parseResult.errores fixum err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
             }
         }
@@ -124,7 +124,7 @@ functio compileFile(
 
     si positivum semResult.errores.longitudo() {
         si jsonOutput {
-            ex semResult.errores pro err {
+            ex semResult.errores fixum err {
                 errores.push({
                     phase: "semantic",
                     file: displayName,
@@ -136,7 +136,7 @@ functio compileFile(
         }
         secus {
             mone "Semantic errors:"
-            ex semResult.errores pro err {
+            ex semResult.errores fixum err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
             }
         }
@@ -223,7 +223,7 @@ functio buildCommand(
 
             si positivum depAnalysis.errores.longitudo() {
                 si jsonOutput {
-                    ex depAnalysis.errores pro err {
+                    ex depAnalysis.errores fixum err {
                         errores.push({
                             phase: "semantic",
                             file: depPath,
@@ -235,7 +235,7 @@ functio buildCommand(
                 }
                 secus {
                     mone "Semantic errors:"
-                    ex depAnalysis.errores pro err {
+                    ex depAnalysis.errores fixum err {
                         mone "  §:§:§ - §", depPath, err.locus.linea, err.locus.columna, err.nuntius
                     }
                 }
@@ -267,7 +267,7 @@ functio buildCommand(
             consolum.fundeLineam(json.solve({ files: filesToWrite }))
         }
         secus {
-            ex filesToWrite pro file {
+            ex filesToWrite fixum file {
                 scribe "§ -> §", file["source"], file["target"]
             }
         }
@@ -289,7 +289,7 @@ functio buildCommand(
     cede solum.creaDir(outputDir)
 
     varia numerus fileCount = 0
-    ex filesToWrite pro file {
+    ex filesToWrite fixum file {
         cede solum.creaDir(solum.dir(file["target"]))
 
         # Re-generate (we could cache this, but keeping it simple)

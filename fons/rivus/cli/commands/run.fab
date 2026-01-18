@@ -76,7 +76,7 @@ functio mandatumCurrere(
 
         si jsonOutput {
             varia items = [] innatum lista<tabula<textus, textus>>
-            ex nomina pro nomen {
+            ex nomina fixum nomen {
                 fixum scr = scripta[nomen] qua Scriptum
                 items.push({ name: nomen, path: scr.via } innatum tabula<textus, textus>)
             }
@@ -86,7 +86,7 @@ functio mandatumCurrere(
                 scribe "No scripts registered in §", manifestPath
             } secus {
                 scribe "Available scripts:"
-                ex nomina pro nomen {
+                ex nomina fixum nomen {
                     fixum scr = scripta[nomen] qua Scriptum
                     scribe "  § -> §", nomen, scr.via
                 }
@@ -140,7 +140,7 @@ functio mandatumCurrere(
     si positivum lexResult.errores.longitudo() {
         si jsonOutput {
             varia errores = [] innatum lista<tabula<textus, ignotum>>
-            ex lexResult.errores pro err {
+            ex lexResult.errores fixum err {
                 errores.push({
                     phase: "lexor",
                     file: scriptPath,
@@ -152,7 +152,7 @@ functio mandatumCurrere(
             consolum.fundeLineam(json.solve({ errors: errores }))
         } secus {
             mone "Lexor errors in §:", scriptPath
-            ex lexResult.errores pro err {
+            ex lexResult.errores fixum err {
                 mone "  §:§ - §", err.locus.linea, err.locus.columna, err.textus
             }
         }
@@ -164,7 +164,7 @@ functio mandatumCurrere(
     si positivum parseResult.errores.longitudo() {
         si jsonOutput {
             varia errores = [] innatum lista<tabula<textus, ignotum>>
-            ex parseResult.errores pro err {
+            ex parseResult.errores fixum err {
                 errores.push({
                     phase: "parser",
                     file: scriptPath,
@@ -176,7 +176,7 @@ functio mandatumCurrere(
             consolum.fundeLineam(json.solve({ errors: errores }))
         } secus {
             mone "Parser errors in §:", scriptPath
-            ex parseResult.errores pro err {
+            ex parseResult.errores fixum err {
                 mone "  §:§ - §", err.locus.linea, err.locus.columna, err.nuntius
             }
         }
@@ -197,7 +197,7 @@ functio mandatumCurrere(
     si positivum semResult.errores.longitudo() {
         si jsonOutput {
             varia errores = [] innatum lista<tabula<textus, ignotum>>
-            ex semResult.errores pro err {
+            ex semResult.errores fixum err {
                 errores.push({
                     phase: "semantic",
                     file: scriptPath,
@@ -209,7 +209,7 @@ functio mandatumCurrere(
             consolum.fundeLineam(json.solve({ errors: errores }))
         } secus {
             mone "Semantic errors in §:", scriptPath
-            ex semResult.errores pro err {
+            ex semResult.errores fixum err {
                 mone "  §:§ - §", err.locus.linea, err.locus.columna, err.nuntius
             }
         }
@@ -228,7 +228,7 @@ functio mandatumCurrere(
         # Build args: script args passed through
         varia args = [tempFile] innatum lista<textus>
         si nonnihil scriptArgs {
-            ex scriptArgs pro arg {
+            ex scriptArgs fixum arg {
                 args.push(arg)
             }
         }

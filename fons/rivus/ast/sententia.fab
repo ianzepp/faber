@@ -244,7 +244,7 @@ genus VariansExemplar {
 }
 
 # Variant case for discerne (pattern matching)
-# Example: casu Click pro x, y { ... }
+# Example: casu Click fixum x, y { ... }
 # Example: casu Primitivum ut l, Primitivum ut r { ... }  (multi-discriminant)
 @ publicum
 genus VariansCasus {
@@ -336,7 +336,7 @@ discretio Sententia {
     }
 
     # Destructure declaration
-    # Example: ex persona pro nomen, aetas
+    # Example: ex persona fixum nomen, aetas
     DestructuraSententia {
         Locus locus
         Expressia fons           # source expression
@@ -463,8 +463,8 @@ discretio Sententia {
     }
 
     # For loop (iteration)
-    # Example: ex items pro item { ... }
-    # Example: ex map pro [key, value] { ... }
+    # Example: ex items fixum item { ... }
+    # Example: ex map fixum [key, value] { ... }
     IteratioSententia {
         Locus locus
         IteratioGenus species
@@ -487,7 +487,7 @@ discretio Sententia {
     }
 
     # Pattern matching statement
-    # Example: discerne event { casu Click pro x, y { ... } }
+    # Example: discerne event { casu Click fixum x, y { ... } }
     # Example: discerne a, b { casu X ut x, Y ut y { ... } }  (multi-discriminant)
     DiscerneSententia {
         Locus locus

@@ -21,7 +21,7 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
             fixum vocatumTypus = r.expressia(v.vocatum)
 
             # Resolve all arguments
-            ex v.argumenta pro arg {
+            ex v.argumenta fixum arg {
                 r.expressia(arg)
             }
 
@@ -125,7 +125,7 @@ functio nomenReceptor(SemanticTypus t) -> textus? {
 }
 
 functio estFormaPermissa(lista<textus> formae, textus forma) -> bivalens {
-    ex formae pro item {
+    ex formae fixum item {
         si item == forma {
             redde verum
         }

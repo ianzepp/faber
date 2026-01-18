@@ -77,7 +77,7 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
         # Otherwise it's file-level build configuration
         fixum sectiones = parseSectiones(r)
         # Accumulate on parser for later extraction by parseProgramma
-        ex sectiones pro s {
+        ex sectiones fixum s {
             p.sectiones.adde(s)
         }
         redde parseSententiaSineNotis(r)
@@ -104,7 +104,7 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
         }
 
         # Process individual annotation effects
-        ex annotationes pro a {
+        ex annotationes fixum a {
             # Check for visibility annotations
             varia visibilitas = nihil qua Visibilitas?
             si a.nomen inter ["publicum", "publica", "publicus"] {

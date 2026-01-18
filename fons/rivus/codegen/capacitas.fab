@@ -47,7 +47,7 @@ genus ErrorCapacitas {
 @ publicum
 genus LigaturaCapacitas {
     Sustentatio seriesDestructura   # fixum [a, b] = ...
-    Sustentatio obiectumDestructura # ex obj pro {x, y}
+    Sustentatio obiectumDestructura # ex obj fixum {x, y}
 }
 
 # Parameter capabilities

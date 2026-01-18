@@ -240,7 +240,7 @@ functio typiAequales(SemanticTypus a, SemanticTypus b) -> bivalens {
             }
 
             varia i = 0
-            ex ga.parametri pro t {
+            ex ga.parametri fixum t {
                 si non typiAequales(t, gb.parametri[i]) {
                     redde falsum
                 }
@@ -262,7 +262,7 @@ functio typiAequales(SemanticTypus a, SemanticTypus b) -> bivalens {
             }
 
             varia i = 0
-            ex fa.parametriTypi pro t {
+            ex fa.parametriTypi fixum t {
                 si non typiAequales(t, fb.parametriTypi[i]) {
                     redde falsum
                 }
@@ -278,7 +278,7 @@ functio typiAequales(SemanticTypus a, SemanticTypus b) -> bivalens {
             }
 
             varia i = 0
-            ex ua.typi pro t {
+            ex ua.typi fixum t {
                 si non typiAequales(t, ub.typi[i]) {
                     redde falsum
                 }
@@ -387,7 +387,7 @@ functio assignabileAd(SemanticTypus fons, SemanticTypus scopus) -> bivalens {
     # Check if source is in target union
     discerne scopus {
         casu Unio ut u {
-            ex u.typi pro t {
+            ex u.typi fixum t {
                 si assignabileAd(fons, t) {
                     redde verum
                 }
@@ -400,7 +400,7 @@ functio assignabileAd(SemanticTypus fons, SemanticTypus scopus) -> bivalens {
     # Source union must have all types assignable to target
     discerne fons {
         casu Unio ut u {
-            ex u.typi pro t {
+            ex u.typi fixum t {
                 si non assignabileAd(t, scopus) {
                     redde falsum
                 }
@@ -438,7 +438,7 @@ functio formaTypum(SemanticTypus t) -> textus {
         casu Genericum ut g {
             # Build parameter list
             varia params = [] innatum lista<textus>
-            ex g.parametri pro typ {
+            ex g.parametri fixum typ {
                 params.adde(formaTypum(typ))
             }
             varia resultatum = scriptum("§<§>", g.nomen, params.coniunge(", "))
@@ -451,7 +451,7 @@ functio formaTypum(SemanticTypus t) -> textus {
         casu Functio ut f {
             # Build parameter list
             varia params = [] innatum lista<textus>
-            ex f.parametriTypi pro typ {
+            ex f.parametriTypi fixum typ {
                 params.adde(formaTypum(typ))
             }
             fixum asyncPraefix = f.asyncronum sic "futura " secus ""
@@ -460,7 +460,7 @@ functio formaTypum(SemanticTypus t) -> textus {
 
         casu Unio ut u {
             varia parts = [] innatum lista<textus>
-            ex u.typi pro typ {
+            ex u.typi fixum typ {
                 parts.adde(formaTypum(typ))
             }
             redde parts.coniunge(" | ")

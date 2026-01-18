@@ -151,7 +151,7 @@ functio resolveTypusShallow(TypusAnnotatio annotatio) -> SemanticTypus {
     # Generic types: lista<T>, tabula<K,V>, etc.
     varia resolvedParametri = [] innatum lista<SemanticTypus>
     si nonnihil annotatio.typusParametra {
-        ex (annotatio.typusParametra qua lista<TypusParametrum>) pro p {
+        ex (annotatio.typusParametra qua lista<TypusParametrum>) fixum p {
             discerne p {
                 casu Typus ut tp {
                     resolvedParametri.adde(resolveTypusShallow(tp.adnotatio))
@@ -187,7 +187,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
     varia exporta = {} innatum tabula<textus, ModulusExportum>
     varia discretiones = {} innatum tabula<textus, DiscretioDeclInfo>
 
-    ex programma.corpus pro stmt {
+    ex programma.corpus fixum stmt {
         discerne stmt {
             casu FunctioDeclaratio ut f {
                 # WHY: Resolve return type so callers can infer variable types
@@ -208,7 +208,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                 # WHY: Build proper Genus type with field types so cross-module
                 # member access can resolve field types for norma translation.
                 varia agri = {} innatum tabula<textus, SemanticTypus>
-                ex g.campi pro campo {
+                ex g.campi fixum campo {
                     si nonnihil campo.typus {
                         agri[campo.nomen] = resolveTypusShallow(campo.typus qua TypusAnnotatio)
                     } secus {
@@ -232,9 +232,9 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                 # WHY: Preserve method return types so callers can infer types from calls
                 # (needed for norma translation when compiling in dependency order).
                 varia methodi = {} innatum tabula<textus, SemanticTypus>
-                ex p.methodi pro methodSignum {
+                ex p.methodi fixum methodSignum {
                     varia paramTypi = [] innatum lista<SemanticTypus>
-                    ex methodSignum.parametra pro param {
+                    ex methodSignum.parametra fixum param {
                         si nonnihil param.typus {
                             paramTypi.adde(resolveTypusShallow(param.typus qua TypusAnnotatio))
                         } secus {
@@ -274,7 +274,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                 } qua ModulusExportum
 
                 varia variantInfos = [] innatum lista<DiscretioVariansInfo>
-                ex d.variantes pro variante {
+                ex d.variantes fixum variante {
                     variantInfos.adde({
                         nomen: variante.nomen,
                         locus: variante.locus
@@ -288,9 +288,9 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
 
                 # WHY: Pattern matching (`discerne`) expects variant types to be resolvable as
                 # `DiscretioNomen.VariansNomen`, even across module boundaries.
-                ex d.variantes pro variante {
+                ex d.variantes fixum variante {
                     varia campi = {} innatum tabula<textus, SemanticTypus>
-                    ex variante.campi pro campo {
+                    ex variante.campi fixum campo {
                         campi[campo.nomen] = resolveTypusShallow(campo.typus)
                     }
 
@@ -424,7 +424,7 @@ functio resolveModulum(
     cache[via] = modulus
 
     # Recursively resolve child imports (for cycle detection)
-    ex (parseResult.programma qua Programma).corpus pro stmt {
+    ex (parseResult.programma qua Programma).corpus fixum stmt {
         discerne stmt {
             casu ImportaSententia ut imp {
                 si estLocaleImportum(imp.fons) {

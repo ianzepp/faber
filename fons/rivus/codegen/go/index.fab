@@ -22,7 +22,7 @@ functio generateGo(lista<Sententia> corpus) -> textus {
     varia declarationes = [] innatum lista<Sententia>
     varia mainSententiae = [] innatum lista<Sententia>
 
-    ex corpus pro stmt {
+    ex corpus fixum stmt {
         discerne stmt {
             # Entry points - inline their body statements into func main
             casu IncipitSententia ut s {
@@ -62,7 +62,7 @@ functio generateGo(lista<Sententia> corpus) -> textus {
 
     # Generate declarations
     varia declarationesLines = [] innatum lista<textus>
-    ex declarationes pro s {
+    ex declarationes fixum s {
         declarationesLines.adde(genSententia(s, g))
     }
     fixum declsBody = declarationesLines.coniunge("\n")
@@ -74,7 +74,7 @@ functio generateGo(lista<Sententia> corpus) -> textus {
     } secus {
         g.intraProfundum()
         varia mainLines = [] innatum lista<textus>
-        ex mainSententiae pro s {
+        ex mainSententiae fixum s {
             mainLines.adde(genSententia(s, g))
         }
         g.exiProfundum()

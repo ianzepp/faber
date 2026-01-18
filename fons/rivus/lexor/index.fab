@@ -874,7 +874,7 @@ genus Lexor {
 #
 # Usage:
 #   fixum result = lexare("si verum { scribe 42 }")
-#   ex result.symbola pro sym { ... }
+#   ex result.symbola fixum sym { ... }
 #
 @ publica
 functio lexare(textus fons, si Dialectus dialectus) -> LexorResultatum {

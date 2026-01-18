@@ -22,7 +22,7 @@ functio genObiectum(lista<ObiectumProprietas> proprietates, TsGenerator g) -> te
     }
 
     varia props = [] innatum lista<textus>
-    ex proprietates pro prop {
+    ex proprietates fixum prop {
         si prop.dispersum {
             # WHY: Spread properties lower to ...expr in JS object literals.
             props.adde(scriptum("...§", genExpressia(prop.valor, g)))

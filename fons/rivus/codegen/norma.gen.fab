@@ -910,7 +910,7 @@ fixum norma = {
 
 # Lookup translation for target/collection/method
 @ publica
-functio getNormaTranslation(textus target, textus collection, textus method) fit VerteTranslation? {
+functio getNormaTranslation(textus target, textus collection, textus method) -> VerteTranslation? {
     fixum coll = norma[collection]
     si nihil coll reddit nihil
 

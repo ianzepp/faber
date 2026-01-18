@@ -54,7 +54,7 @@ functio parseCommand(
 
     si positivum lexResult.errores.longitudo() {
         mone "Lexor errors:"
-        ex lexResult.errores pro err {
+        ex lexResult.errores fixum err {
             mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus
         }
         redde 1
@@ -65,7 +65,7 @@ functio parseCommand(
 
     si positivum parseResult.errores.longitudo() {
         mone "Parser errors:"
-        ex parseResult.errores pro err {
+        ex parseResult.errores fixum err {
             mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
         }
         redde 1

@@ -42,9 +42,9 @@ functio genPactum(textus nomen, ignotum generaParametra, lista<PactumMethodus> m
     result = scriptum("§ {\n", result)
     g.intraProfundum()
 
-    ex methodi pro methodus {
+    ex methodi fixum methodus {
         varia params = [] innatum lista<textus>
-        ex methodus.parametra pro param {
+        ex methodus.parametra fixum param {
             params.adde(genParametrum(param, g))
         }
 

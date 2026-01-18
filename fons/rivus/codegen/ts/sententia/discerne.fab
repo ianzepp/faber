@@ -6,7 +6,7 @@
 #   # Single discriminant
 #   discerne x { casu A {...} }       -> if (x.tag === 'A') {...}
 #   discerne x { casu B ut b {...} }  -> if (x.tag === 'B') { const b = x; ... }
-#   discerne x { casu C pro a, b {...} } -> if (x.tag === 'C') { const { a, b } = x; ... }
+#   discerne x { casu C fixum a, b {...} } -> if (x.tag === 'C') { const { a, b } = x; ... }
 #   discerne x { casu _ {...} }       -> else {...}  (wildcard pattern)
 #
 #   # Multi-discriminant
@@ -31,18 +31,18 @@
 functio genDiscerne(lista<Expressia> discriminantes, lista<VariansCasus> casus, TsGenerator g) -> textus {
     # Generate expressions for all discriminants
     varia discriminantStrs = [] innatum lista<textus>
-    ex discriminantes pro d {
+    ex discriminantes fixum d {
         discriminantStrs.adde(genExpressia(d, g))
     }
 
     varia result = scriptum("§// discerne\n", g.ind())
 
     varia first = verum
-    ex casus pro c {
+    ex casus fixum c {
         # Build combined condition for all patterns
         varia conditions = [] innatum lista<textus>
         varia i = 0
-        ex c.exemplaria pro pattern {
+        ex c.exemplaria fixum pattern {
             # Wildcard matches anything - no condition needed
             si non pattern.estWildcard {
                 fixum disc = discriminantStrs[i]
@@ -73,7 +73,7 @@ functio genDiscerne(lista<Expressia> discriminantes, lista<VariansCasus> casus, 
 
         # Generate bindings for each pattern
         varia j = 0
-        ex c.exemplaria pro pattern {
+        ex c.exemplaria fixum pattern {
             # Skip wildcards - no bindings
             si non pattern.estWildcard {
                 fixum disc = discriminantStrs[j]
@@ -99,7 +99,7 @@ functio genPatternBindings(VariansExemplar pattern, textus discriminant, TsGener
     si nonnihil pattern.alias {
         result = scriptum("§const § = §;\n", g.ind(), pattern.alias, discriminant)
     }
-    # Positional bindings: casu Click pro a, b
+    # Positional bindings: casu Click fixum a, b
     sin pattern.vincula.longitudo() > 0 {
         result = scriptum("§const { § } = §;\n", g.ind(), pattern.vincula.coniunge(", "), discriminant)
     }

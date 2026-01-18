@@ -44,7 +44,7 @@ functio genLittera(LitteraGenus species, textus crudus) -> textus {
 functio genLitteraExemplar(lista<textus> partes, lista<Expressia> expressiae, TsGenerator g) -> textus {
     varia result = "`"
     varia i = 0
-    ex partes pro pars {
+    ex partes fixum pars {
         result = scriptum("§§", result, pars)
         si i < expressiae.longitudo() {
             result = scriptum("§\x24\x7b§\x7d", result, genExpressia(expressiae[i], g))

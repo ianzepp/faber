@@ -17,7 +17,7 @@
 @ publica
 functio genScribe(ScribeGradus gradus, lista<Expressia> argumenta, TsGenerator g) -> textus {
     varia args = [] innatum lista<textus>
-    ex argumenta pro arg {
+    ex argumenta fixum arg {
         args.adde(genExpressia(arg, g))
     }
 

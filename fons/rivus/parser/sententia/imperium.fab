@@ -130,7 +130,7 @@ functio parseDumSententia(Resolvitor r) -> Sententia {
 # GRAMMAR: exStmt := 'ex' expr ('fixum'|'varia') (IDENT | arrayPattern) blockStmt ('cape' IDENT blockStmt)?
 #
 # Examples:
-#   ex items pro item { scribe item }
+#   ex items fixum item { scribe item }
 #   ex 0 ante 10 varia i { scribe i }
 @ publica
 functio parseExSententia(Resolvitor r) -> Sententia {
@@ -188,7 +188,7 @@ functio parseExSententia(Resolvitor r) -> Sententia {
 # GRAMMAR: deStmt := 'de' expr ('fixum'|'varia') (IDENT | arrayPattern) blockStmt ('cape' IDENT blockStmt)?
 #
 # Examples:
-#   de obiectum pro clavis { scribe clavis }
+#   de obiectum fixum clavis { scribe clavis }
 @ publica
 functio parseDeSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()

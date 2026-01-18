@@ -59,7 +59,7 @@ functio genProbandum(textus nomen, bivalens? ompitur, textus? ratioOmissionis, b
         lines.adde(scriptum("§describe(\"§\", () => {", g.ind(), nomen))
 
         g.intraProfundum()
-        ex corpus pro stmt {
+        ex corpus fixum stmt {
             lines.adde(genSententia(stmt, g))
         }
         g.exiProfundum()
@@ -74,7 +74,7 @@ functio genProbandum(textus nomen, bivalens? ompitur, textus? ratioOmissionis, b
     varia lines = [] innatum lista<textus>
     lines.adde(scriptum("§// Suite: §", g.ind(), nomen))
 
-    ex corpus pro stmt {
+    ex corpus fixum stmt {
         lines.adde(genSententia(stmt, g))
     }
 
@@ -292,7 +292,7 @@ functio genProbaHarness(TsGenerator g) -> textus {
 
     # Generate registry
     lines.adde("const __tests: __TestEntry[] = [")
-    ex g.probaRegistrum pro entry {
+    ex g.probaRegistrum fixum entry {
         varia parts = [] innatum lista<textus>
         parts.adde(scriptum("suite: \"§\"", entry.accipe("suite") qua textus))
         parts.adde(scriptum("name: \"§\"", entry.accipe("name") qua textus))
@@ -316,7 +316,7 @@ functio genProbaHarness(TsGenerator g) -> textus {
         si entry.habet("tags") {
             fixum tagsArr = entry.accipe("tags") qua lista<textus>
             varia tagStrs = [] innatum lista<textus>
-            ex tagsArr pro t {
+            ex tagsArr fixum t {
                 tagStrs.adde(scriptum("\"§\"", t))
             }
             parts.adde(scriptum("tags: [§]", tagStrs.coniunge(", ")))

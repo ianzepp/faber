@@ -62,11 +62,11 @@ functio mergeSectiones(
     varia lista<SectioAnnotatio> result = [] innatum lista<SectioAnnotatio>
 
     si nonnihil manifest {
-        ex manifest pro s { result.adde(s) }
+        ex manifest fixum s { result.adde(s) }
     }
 
     si nonnihil source {
-        ex source pro s { result.adde(s) }
+        ex source fixum s { result.adde(s) }
     }
 
     redde result
@@ -93,12 +93,12 @@ functio analyze(
 
     # Phase 1: Predeclare all top-level names
     # (allows forward references)
-    ex programma.corpus pro stmt {
+    ex programma.corpus fixum stmt {
         predeclare(r, stmt)
     }
 
     # Phase 2: Analyze all statements
-    ex programma.corpus pro stmt {
+    ex programma.corpus fixum stmt {
         r.sententia(stmt)
     }
 
@@ -123,7 +123,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
         casu FunctioDeclaratio ut f {
             # Build placeholder function type
             varia paramTypi = [] innatum lista<SemanticTypus>
-            ex f.parametra pro param {
+            ex f.parametra fixum param {
                 paramTypi.adde(IGNOTUM)
             }
             # WHY: Preserve declared return types so callers can infer receiver types
@@ -153,7 +153,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                 locus: g.locus
             } qua Symbolum)
 
-            ex g.methodi pro f {
+            ex g.methodi fixum f {
                 si nonnihil f.morphologia {
                     fixum parsed = parseMethodum(f.nomen)
                     si nonnihil parsed {
@@ -174,7 +174,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                 locus: p.locus
             } qua Symbolum)
 
-            ex p.methodi pro methodus {
+            ex p.methodi fixum methodus {
                 si nonnihil methodus.morphologia {
                     fixum parsed = parseMethodum(methodus.nomen)
                     si nonnihil parsed {
@@ -248,7 +248,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                             a.error(scriptum("Module not found: § (resolved from §)", resolvedPath, imp.fons), imp.locus)
                         } secus {
                             # Named imports: ex "alias:path" importa foo, bar
-                            ex imp.specificatores pro spec {
+                            ex imp.specificatores fixum spec {
                                 si nonnihil modulus.exporta[spec.importatum] {
                                     fixum exportum = modulus.exporta[spec.importatum] qua ModulusExportum
                                     a.definie({
@@ -265,7 +265,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
 
                                     # Import variant types for discretio
                                     fixum prefix = spec.importatum + "."
-                                    de modulus.exporta pro nomen {
+                                    de modulus.exporta fixum nomen {
                                         si nomen.startsWith(prefix) {
                                             fixum exportum = modulus.exporta[nomen] qua ModulusExportum
                                             fixum suffix = nomen.slice(prefix.length)
@@ -319,7 +319,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                                 } qua Symbolum)
                             }
                             # Also add all individual exports to scope
-                            de modulus.exporta pro nomen {
+                            de modulus.exporta fixum nomen {
                                 fixum exportum = modulus.exporta[nomen] qua ModulusExportum
                                 a.definie({
                                     nomen: exportum.nomen,
@@ -331,7 +331,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                             }
                         } secus {
                             # Named imports: ex "./x" importa foo, bar ut b
-                            ex imp.specificatores pro spec {
+                            ex imp.specificatores fixum spec {
                                 si nonnihil modulus.exporta[spec.importatum] {
                                     fixum exportum = modulus.exporta[spec.importatum] qua ModulusExportum
                                     a.definie({
@@ -351,7 +351,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                                     # variant types as `LocalName.VariansNomen` so `discerne` can
                                     # resolve bindings and enable norma translations.
                                     fixum prefix = spec.importatum + "."
-                                    de modulus.exporta pro nomen {
+                                    de modulus.exporta fixum nomen {
                                         si nomen.startsWith(prefix) {
                                             fixum exportum = modulus.exporta[nomen] qua ModulusExportum
                                             fixum suffix = nomen.slice(prefix.length)

@@ -29,7 +29,7 @@ functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotu
         fixum gp = generaParametra qua lista<textus>
         si gp.longitudo() > 0 {
             varia params = [] innatum lista<textus>
-            ex gp pro p {
+            ex gp fixum p {
                 params.adde(scriptum("§ any", p))
             }
             header = scriptum("§[§]", header, params.coniunge(", "))
@@ -39,7 +39,7 @@ functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotu
     varia lines = [] innatum lista<textus>
     lines.adde(scriptum("§ struct {", header))
     g.intraProfundum()
-    ex campi pro campus {
+    ex campi fixum campus {
         fixum fieldName = campusNomenGo(campus)
         fixum fieldType = genTypus(campus.typus, g)
         lines.adde(scriptum("§§ §", g.ind(), fieldName, fieldType))
@@ -50,7 +50,7 @@ functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotu
     lines.adde("")
     lines.adde(genGenusConstructor(typeName, g))
 
-    ex methodi pro methodus {
+    ex methodi fixum methodus {
         lines.adde("")
         lines.adde(genGenusMethod(typeName, methodus qua Sententia, g))
     }
@@ -62,7 +62,7 @@ functio habetErrataModificator(ignotum modificatores) -> bivalens {
     si nihil modificatores {
         redde falsum
     }
-    ex (modificatores qua lista<FunctioModificator>) pro m {
+    ex (modificatores qua lista<FunctioModificator>) fixum m {
         discerne m {
             casu ErrataModificator {
                 redde verum
@@ -106,7 +106,7 @@ functio genGenusMethod(textus typeName, Sententia methodus, GoGenerator g) -> te
                 fixum gp = f.generaParametra qua lista<TypusParametrum>
                 si gp.longitudo() > 0 {
                     varia names = [] innatum lista<textus>
-                    ex gp pro p {
+                    ex gp fixum p {
                         names.adde(scriptum("§ any", p.nomen))
                     }
                     result = scriptum("§[§]", result, names.coniunge(", "))
@@ -115,7 +115,7 @@ functio genGenusMethod(textus typeName, Sententia methodus, GoGenerator g) -> te
 
             # Parameters
             varia params = [] innatum lista<textus>
-            ex (f.parametra qua lista<Parametrum>) pro param {
+            ex (f.parametra qua lista<Parametrum>) fixum param {
                 params.adde(genParametrum(param, g))
             }
             result = scriptum("§(§)", result, params.coniunge(", "))

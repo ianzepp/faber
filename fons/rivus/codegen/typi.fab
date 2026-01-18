@@ -85,7 +85,7 @@ functio creaCodegenOptions() -> CodegenOptions {
 # Returns: "public", "private", or "protected"
 @ publica
 functio visibilitasEx(lista<textus> modifiers) -> textus {
-    ex modifiers pro mod {
+    ex modifiers fixum mod {
         si mod inter ["publicum", "publica", "publicus"] {
             redde "public"
         }
@@ -102,7 +102,7 @@ functio visibilitasEx(lista<textus> modifiers) -> textus {
 # Check if modifiers include abstract
 @ publica
 functio estAbstractum(lista<textus> modifiers) -> bivalens {
-    ex modifiers pro mod {
+    ex modifiers fixum mod {
         si mod inter ["abstractum", "abstracta", "abstractus"] {
             redde verum
         }
@@ -157,7 +157,7 @@ functio formataNotaePrae(ignotum nodus, ignotum syntax, textus indentum) -> text
     }
 
     varia out = ""
-    ex notae pro nota {
+    ex notae fixum nota {
         out = out + indentum + formataNotaTs(nota) + "\n"
     }
     redde out
@@ -177,7 +177,7 @@ functio formataNotaePost(ignotum nodus, ignotum syntax) -> textus {
     }
 
     varia out = ""
-    ex notae pro nota {
+    ex notae fixum nota {
         out = out + " " + formataNotaTs(nota)
     }
     redde out

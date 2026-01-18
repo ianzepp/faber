@@ -67,7 +67,7 @@ functio genScriptum(textus exemplar, lista<Expressia> argumenta, GoGenerator g) 
 
     # Build args string in the order they appear in format
     varia args = [] innatum lista<textus>
-    ex argOrder pro idx {
+    ex argOrder fixum idx {
         si idx < argumenta.longitudo() {
             args.adde(genExpressia(argumenta[idx], g))
         } secus {

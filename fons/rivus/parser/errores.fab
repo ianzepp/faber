@@ -170,7 +170,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
 
         # Keyword expectation errors
         casu ParserErrorCodice.ExpectaturEx {
-            redde creoNuntium("Expected 'ex'", "For-of loops: ex lista pro item { }")
+            redde creoNuntium("Expected 'ex'", "For-of loops: ex lista fixum item { }")
         }
         casu ParserErrorCodice.ExpectaturImporta {
             redde creoNuntium("Expected 'importa'", "Imports: ex norma importa scribe")
@@ -194,7 +194,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde creoNuntium("Expected 'dum'", "While loops: dum verum { }")
         }
         casu ParserErrorCodice.ExpectaturPro {
-            redde creoNuntium("Expected 'pro'", "For loops: ex lista pro item { }")
+            redde creoNuntium("Expected 'pro'", "For loops: ex lista fixum item { }")
         }
         casu ParserErrorCodice.ExpectaturFixum {
             redde creoNuntium("Expected 'fixum' or 'varia'", "For loops: ex lista fixum item { }")
@@ -203,7 +203,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde creoNuntium("Expected 'in'", "Mutation: in object { prop = val }")
         }
         casu ParserErrorCodice.ExpectaturDe {
-            redde creoNuntium("Expected 'de'", "For-in: de tabula pro clavis { }")
+            redde creoNuntium("Expected 'de'", "For-in: de tabula fixum clavis { }")
         }
         casu ParserErrorCodice.ExpectaturElige {
             redde creoNuntium("Expected 'elige'", "Switch: elige status { casu x { } }")
@@ -288,7 +288,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde creoNuntium("Invalid assignment target", "Only identifiers/members can be assigned.")
         }
         casu ParserErrorCodice.InvalidumExDeInitium {
-            redde creoNuntium("For loop requires 'ex' or 'de'", "ex items pro i { } or de obj pro k { }")
+            redde creoNuntium("For loop requires 'ex' or 'de'", "ex items fixum i { } or de obj fixum k { }")
         }
         casu ParserErrorCodice.InvalidumEligeCasusInitium {
             redde creoNuntium("Switch cases need 'casu' or 'ceterum'", "elige x { casu 1 { } ceterum { } }")

@@ -109,7 +109,7 @@ functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
     } sin p.congruet(SymbolumGenus.Minor) {
         fixum nomina = parseGenericaNomina(r)
         generaParametra = [] innatum lista<TypusParametrum>
-        ex nomina pro n {
+        ex nomina fixum n {
             generaParametra.adde({ locus: locus, nomen: n } qua TypusParametrum)
         }
     }
@@ -142,7 +142,7 @@ functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
         si nihil generaParametra {
             generaParametra = parenGenera
         } secus {
-            ex parenGenera pro g {
+            ex parenGenera fixum g {
                 (generaParametra qua lista<TypusParametrum>).adde(g)
             }
         }
@@ -257,7 +257,7 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
         # Parse visibility modifier
         varia visibilitas = Visibilitas.Privata
         varia visibilitasExplicita = falsum
-        ex annotationes pro a {
+        ex annotationes fixum a {
             si a.nomen inter ["publicum", "publica", "publicus"] {
                 visibilitas = Visibilitas.Publica
                 visibilitasExplicita = verum
@@ -316,7 +316,7 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
 
             varia estStructor = methodNomen == "creo"
             varia abstracta = falsum
-            ex annotationes pro a {
+            ex annotationes fixum a {
                 si a.nomen inter ["abstractum", "abstracta", "abstractus"] {
                     abstracta = verum
                 }
@@ -455,7 +455,7 @@ functio parsePactumDeclaratio(Resolvitor r) -> Sententia {
             typusReditus = r.adnotatio()
         }
 
-        ex annotationes pro a {
+        ex annotationes fixum a {
             si a.nomen == "futura" {
                 asynca = verum
             }
@@ -701,7 +701,7 @@ functio parseTypusAliasDeclaratio(Resolvitor r) -> Sententia {
 # ============================================================================
 
 functio morphologiaEx(lista<Annotatio> annotationes) -> MorphologiaDeclaratio? {
-    ex annotationes pro a {
+    ex annotationes fixum a {
         si a.nomen == "radix" {
             redde { locus: a.locus, formae: a.argumenta } qua MorphologiaDeclaratio
         }

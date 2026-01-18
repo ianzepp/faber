@@ -37,7 +37,7 @@ functio extractDependentiae(lista<SectioAnnotatio>? sectiones) -> tabula<textus,
     varia result = {} innatum tabula<textus, Dependentia>
     si nihil sectiones { redde result }
 
-    ex sectiones pro s {
+    ex sectiones fixum s {
         si s.nomen == "dependentia" {
             fixum dep = parseDependentiaArgs(s.argumenta)
             si nonnihil dep {

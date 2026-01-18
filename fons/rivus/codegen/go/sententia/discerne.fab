@@ -6,7 +6,7 @@
 # TRANSFORMS:
 #   discerne x { casu A {...} }             -> switch _v := x.(type) { case A: ... }
 #   discerne x { casu B ut b {...} }        -> switch _v := x.(type) { case B: b := _v; ... }
-#   discerne x { casu C pro a, b {...} }    -> switch _v := x.(type) { case C: a := _v.A; b := _v.B; ... }
+#   discerne x { casu C fixum a, b {...} }    -> switch _v := x.(type) { case C: a := _v.A; b := _v.B; ... }
 #   discerne x { casu _ {...} }             -> default: ...
 #
 #   Multi-discriminant:
@@ -23,7 +23,7 @@
 functio genDiscerne(lista<Expressia> discriminantes, lista<VariansCasus> casus, GoGenerator g) -> textus {
     # Generate expressions for all discriminants
     varia discriminantStrs = [] innatum lista<textus>
-    ex discriminantes pro d {
+    ex discriminantes fixum d {
         discriminantStrs.adde(genExpressia(d, g))
     }
 
@@ -40,7 +40,7 @@ functio genDiscerne(lista<Expressia> discriminantes, lista<VariansCasus> casus, 
 functio genDiscerneSimplex(textus discriminant, lista<VariansCasus> casus, GoGenerator g) -> textus {
     # Check if any case uses bindings (alias or field extraction)
     varia needsBinding = falsum
-    ex casus pro c {
+    ex casus fixum c {
         fixum pattern = c.exemplaria[0]
         si non pattern.estWildcard {
             si nonnihil pattern.alias aut pattern.vincula.longitudo() > 0 {
@@ -58,7 +58,7 @@ functio genDiscerneSimplex(textus discriminant, lista<VariansCasus> casus, GoGen
         result = scriptum("§switch §.(type) {\n", g.ind(), discriminant)
     }
 
-    ex casus pro c {
+    ex casus fixum c {
         fixum pattern = c.exemplaria[0]
 
         si pattern.estWildcard {
@@ -81,7 +81,7 @@ functio genDiscerneSimplex(textus discriminant, lista<VariansCasus> casus, GoGen
 
     # Check if we have a default case (wildcard)
     varia hasDefault = falsum
-    ex casus pro c {
+    ex casus fixum c {
         si c.exemplaria[0].estWildcard {
             hasDefault = verum
             rumpe
@@ -105,10 +105,10 @@ functio genDiscerneMultiplex(lista<textus> discriminantStrs, lista<VariansCasus>
     varia result = ""
     varia first = verum
 
-    ex casus pro c {
+    ex casus fixum c {
         # Check if all patterns are wildcards
         varia allWildcards = verum
-        ex c.exemplaria pro pattern {
+        ex c.exemplaria fixum pattern {
             si non pattern.estWildcard {
                 allWildcards = falsum
                 rumpe
@@ -128,7 +128,7 @@ functio genDiscerneMultiplex(lista<textus> discriminantStrs, lista<VariansCasus>
             varia okVars = [] innatum lista<textus>
             varia i = 0
 
-            ex c.exemplaria pro pattern {
+            ex c.exemplaria fixum pattern {
                 si non pattern.estWildcard {
                     fixum disc = discriminantStrs[i]
                     fixum tempVar = scriptum("_d§", i)
@@ -140,7 +140,7 @@ functio genDiscerneMultiplex(lista<textus> discriminantStrs, lista<VariansCasus>
             }
 
             # Add assertions before the if
-            ex assertions pro assertion {
+            ex assertions fixum assertion {
                 result = scriptum("§§\n", result, assertion)
             }
 
@@ -158,7 +158,7 @@ functio genDiscerneMultiplex(lista<textus> discriminantStrs, lista<VariansCasus>
 
         # Generate bindings for each pattern
         varia j = 0
-        ex c.exemplaria pro pattern {
+        ex c.exemplaria fixum pattern {
             si non pattern.estWildcard {
                 fixum tempVar = scriptum("_d§", j)
                 result = scriptum("§§", result, genPatternBindingsMulti(pattern, tempVar, g))
@@ -185,9 +185,9 @@ functio genPatternBindingsTypeSwitch(VariansExemplar pattern, GoGenerator g) -> 
         result = scriptum("§§ := _v\n", g.ind(), pattern.alias)
     }
 
-    # Field bindings: casu Click pro x, y -> x := _v.X; y := _v.Y
+    # Field bindings: casu Click fixum x, y -> x := _v.X; y := _v.Y
     si pattern.vincula.longitudo() > 0 {
-        ex pattern.vincula pro vinculum {
+        ex pattern.vincula fixum vinculum {
             fixum fieldName = capitaliza(vinculum)
             result = scriptum("§§§ := _v.§\n", result, g.ind(), vinculum, fieldName)
         }
@@ -205,9 +205,9 @@ functio genPatternBindingsMulti(VariansExemplar pattern, textus tempVar, GoGener
         result = scriptum("§§ := §\n", g.ind(), pattern.alias, tempVar)
     }
 
-    # Field bindings: casu Click pro x, y -> x := _dN.X; y := _dN.Y
+    # Field bindings: casu Click fixum x, y -> x := _dN.X; y := _dN.Y
     si pattern.vincula.longitudo() > 0 {
-        ex pattern.vincula pro vinculum {
+        ex pattern.vincula fixum vinculum {
             fixum fieldName = capitaliza(vinculum)
             result = scriptum("§§§ := §.§\n", result, g.ind(), vinculum, tempVar, fieldName)
         }

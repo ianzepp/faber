@@ -24,7 +24,7 @@ functio estTabula(Expressia expr, TsGenerator g) -> bivalens {
     discerne expr {
         casu Nomen ut n {
             fixum nomen = n.valor qua textus
-            ex g.tabulaNominata pro item {
+            ex g.tabulaNominata fixum item {
                 si item == nomen {
                     redde verum
                 }
@@ -115,7 +115,7 @@ functio genLoopVariable(IteratioVariabilis variabilis) -> textus {
         }
         casu Series ut s {
             varia parts = [] innatum lista<textus>
-            ex s.elementa pro elem {
+            ex s.elementa fixum elem {
                 si elem.omissum {
                     parts.adde("")
                 } sin elem.residuum et nonnihil elem.nomen {

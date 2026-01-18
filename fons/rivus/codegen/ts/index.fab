@@ -33,7 +33,7 @@ functio generateTsWithOptions(lista<Sententia> corpus, bivalens stripTests, biva
 
     # Generate body from statements
     varia lines = [] innatum lista<textus>
-    ex corpus pro stmt {
+    ex corpus fixum stmt {
         fixum line = genSententia(stmt, g)
         # Skip empty lines from stripped tests
         si line.longitudo() > 0 {
@@ -60,7 +60,7 @@ functio generateTsWithTests(lista<Sententia> corpus) -> textus {
 
     # Generate body from statements
     varia lines = [] innatum lista<textus>
-    ex corpus pro stmt {
+    ex corpus fixum stmt {
         lines.adde(genSententia(stmt, g))
     }
 

@@ -35,7 +35,7 @@ functio genDiscretio(textus nomen, ignotum generaParametra, lista<VariansDeclara
     lines.adde(scriptum("§}", g.ind()))
 
     # Generate struct types and marker implementations for each variant
-    ex variantes pro varians {
+    ex variantes fixum varians {
         lines.adde("")  # Blank line between types
 
         si varians.campi.longitudo() == 0 {
@@ -45,7 +45,7 @@ functio genDiscretio(textus nomen, ignotum generaParametra, lista<VariansDeclara
             # Variant with fields
             lines.adde(scriptum("§type § struct {", g.ind(), varians.nomen))
             g.intraProfundum()
-            ex varians.campi pro campus {
+            ex varians.campi fixum campus {
                 fixum fieldName = capitaliza(campus.nomen)
                 fixum fieldType = genTypus(campus.typus, g)
                 lines.adde(scriptum("§§ §", g.ind(), fieldName, fieldType))

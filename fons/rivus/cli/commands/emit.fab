@@ -76,7 +76,7 @@ functio emitCommand(
 
     si positivum lexResult.errores.longitudo() {
         si jsonOutput {
-            ex lexResult.errores pro err {
+            ex lexResult.errores fixum err {
                 errores.push({
                     phase: "lexor",
                     file: displayName,
@@ -88,7 +88,7 @@ functio emitCommand(
         }
         secus {
             mone "Lexor errors:"
-            ex lexResult.errores pro err {
+            ex lexResult.errores fixum err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus
             }
         }
@@ -103,7 +103,7 @@ functio emitCommand(
 
     si positivum parseResult.errores.longitudo() {
         si jsonOutput {
-            ex parseResult.errores pro err {
+            ex parseResult.errores fixum err {
                 errores.push({
                     phase: "parser",
                     file: displayName,
@@ -115,7 +115,7 @@ functio emitCommand(
         }
         secus {
             mone "Parser errors:"
-            ex parseResult.errores pro err {
+            ex parseResult.errores fixum err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
             }
         }
@@ -147,7 +147,7 @@ functio emitCommand(
         si strict {
             # Strict mode (compile command): fail on errors
             si jsonOutput {
-                ex semResult.errores pro err {
+                ex semResult.errores fixum err {
                     errores.push({
                         phase: "semantic",
                         file: displayName,
@@ -159,7 +159,7 @@ functio emitCommand(
                 consolum.fundeLineam(json.solve({ errors: errores }))
             } secus {
                 mone "Semantic errors:"
-                ex semResult.errores pro err {
+                ex semResult.errores fixum err {
                     mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
                 }
             }
@@ -167,7 +167,7 @@ functio emitCommand(
         } secus {
             # Emit mode: warn but continue
             si jsonOutput {
-                ex semResult.errores pro err {
+                ex semResult.errores fixum err {
                     errores.push({
                         phase: "semantic",
                         file: displayName,
@@ -179,7 +179,7 @@ functio emitCommand(
                 consolum.errorLineam(json.solve({ warnings: errores }))
             } secus {
                 mone "Semantic warnings (use --strict to fail):"
-                ex semResult.errores pro err {
+                ex semResult.errores fixum err {
                     mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
                 }
             }

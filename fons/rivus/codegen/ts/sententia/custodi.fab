@@ -19,7 +19,7 @@
 @ publica
 functio genCustodi(lista<CustodiClausula> clausulae, TsGenerator g) -> textus {
     varia result = ""
-    ex clausulae pro clausula {
+    ex clausulae fixum clausula {
         varia vacuus = falsum
         discerne clausula.consequens {
             casu MassaSententia ut m {

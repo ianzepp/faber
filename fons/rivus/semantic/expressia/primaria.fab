@@ -100,7 +100,7 @@ functio resolveSeries(Resolvitor r, Expressia seriesExpr) -> SemanticTypus {
             fixum primumTypus = r.expressia(s.elementa.primus())
 
             # Resolve all other elements
-            ex s.elementa pro elem {
+            ex s.elementa fixum elem {
                 r.expressia(elem)
             }
 
@@ -122,7 +122,7 @@ functio resolveObiectum(Resolvitor r, Expressia obiectumExpr) -> SemanticTypus {
     discerne obiectumExpr {
         casu ObiectumExpressia ut o {
             # Resolve each property value
-            ex o.proprietates pro prop {
+            ex o.proprietates fixum prop {
                 r.expressia(prop.valor)
             }
 

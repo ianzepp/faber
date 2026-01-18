@@ -40,7 +40,7 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
             fixum gp = generaParametra qua lista<TypusParametrum>
             si gp.longitudo() > 0 {
                 varia names = [] innatum lista<textus>
-                ex gp pro p {
+                ex gp fixum p {
                     names.adde(p.nomen)
                 }
                 result = scriptum("§<§>", result, names.coniunge(", "))
@@ -49,7 +49,7 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
 
         # Parameters
         varia params = [] innatum lista<textus>
-        ex parametra pro param {
+        ex parametra fixum param {
             params.adde(genParametrum(param, g))
         }
         result = scriptum("§(§)", result, params.coniunge(", "))
@@ -145,7 +145,7 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
         fixum gp = generaParametra qua lista<TypusParametrum>
         si gp.longitudo() > 0 {
             varia names = [] innatum lista<textus>
-            ex gp pro p {
+            ex gp fixum p {
                 names.adde(p.nomen)
             }
             result = scriptum("§<§>", result, names.coniunge(", "))
@@ -154,7 +154,7 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
 
     # Parameters
     varia params = [] innatum lista<textus>
-    ex parametra pro param {
+    ex parametra fixum param {
         params.adde(genParametrum(param, g))
     }
     result = scriptum("§(§)", result, params.coniunge(", "))
@@ -200,7 +200,7 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
         fixum prevTabula = g.tabulaNominata
 
         varia localTabula = [] innatum lista<textus>
-        ex parametra pro param {
+        ex parametra fixum param {
             si nonnihil param.typus {
                 fixum typus = param.typus qua TypusAnnotatio
                 si typus.nomen == "tabula" {
@@ -247,7 +247,7 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
         varia exitusNomen = nihil qua textus?
         si nonnihil modificatores {
             fixum mods = modificatores qua lista<FunctioModificator>
-            ex mods pro mod {
+            ex mods fixum mod {
                 discerne mod {
                     casu ExitusModificator ut e {
                         exitusNomen = e.nomen

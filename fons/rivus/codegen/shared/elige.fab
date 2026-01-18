@@ -33,7 +33,7 @@ functio genEligeLogica(
     varia result = ""
     varia primus = verum
 
-    ex casus pro c {
+    ex casus fixum c {
         fixum cond = rev.genExpr(c.condicio, g)
 
         si primus {

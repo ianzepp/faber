@@ -12,7 +12,7 @@
 #   ab items, numera                     -> items.length
 #
 # WHY: 'ab' is the sole DSL entry point for collection operations.
-#      ex is used only for iteration (ex items pro x) and imports.
+#      ex is used only for iteration (ex items fixum x) and imports.
 
 § ex "../../../ast/expressia" importa Expressia, CatenaGradus, AbFiltrum, Nomen
 § ex "../nucleus" importa TsGenerator
@@ -97,7 +97,7 @@ functio genAbExpressia(Expressia fons, bivalens negata, TsGenerator g, si AbFilt
 functio applicaCatenaGradus(textus fons, lista<CatenaGradus> gradus, TsGenerator g) -> textus {
     varia result = fons
 
-    ex gradus pro gradusSingulus {
+    ex gradus fixum gradusSingulus {
         fixum verbum = gradusSingulus.verbum qua textus
 
         elige verbum {
