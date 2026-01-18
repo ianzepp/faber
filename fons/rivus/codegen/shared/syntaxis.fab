@@ -4,7 +4,7 @@
 # Each target provides an instance with its syntax rules.
 
 # Target syntax configuration
-@ publicum
+@ publica
 genus ScopusSyntaxis {
     # Conditionals
     textus siCondicioPrae    # "(" for TS, "" for Go/Zig

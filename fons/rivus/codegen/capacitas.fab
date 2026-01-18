@@ -16,7 +16,7 @@
 # =============================================================================
 
 # Support level for a language feature in a target
-@ publicum
+@ publica
 ordo Sustentatio {
     Sustentum       # Native, faithful implementation
     Emulatum        # Systematic transform (polyfill)
@@ -29,7 +29,7 @@ ordo Sustentatio {
 # =============================================================================
 
 # Control flow capabilities
-@ publicum
+@ publica
 genus ControlFlowCapacitas {
     Sustentatio asyncFunctio        # futura / figendum
     Sustentatio generatorFunctio    # cursor / fiunt
@@ -37,34 +37,34 @@ genus ControlFlowCapacitas {
 }
 
 # Error handling capabilities
-@ publicum
+@ publica
 genus ErrorCapacitas {
     Sustentatio temptaCape          # tempta...cape
     Sustentatio iace                # iace (throw)
 }
 
 # Binding pattern capabilities
-@ publicum
+@ publica
 genus LigaturaCapacitas {
     Sustentatio seriesDestructura   # fixum [a, b] = ...
     Sustentatio obiectumDestructura # ex obj fixum {x, y}
 }
 
 # Parameter capabilities
-@ publicum
+@ publica
 genus ParametrumCapacitas {
     Sustentatio valorPraedefinitus  # functio f(numerus x vel 0)
 }
 
 # Expression capabilities
-@ publicum
+@ publica
 genus ExpressiaCapacitas {
     Sustentatio optivumAccessus     # ?. optional chaining
     Sustentatio coalescentio        # ?? null coalescing
 }
 
 # Complete target support matrix
-@ publicum
+@ publica
 genus TargetCapacitas {
     ControlFlowCapacitas controlFlow
     ErrorCapacitas errores
@@ -78,7 +78,7 @@ genus TargetCapacitas {
 # =============================================================================
 
 # How nihil/ignotum are represented
-@ publicum
+@ publica
 ordo NullabilisModel {
     Innatum         # builtin null/undefined
     Optio           # Option<T> / optional wrapper
@@ -86,7 +86,7 @@ ordo NullabilisModel {
 }
 
 # Primary error model
-@ publicum
+@ publica
 ordo ErrorModel {
     Exceptiones     # try/catch/throw
     Resultatum      # Result<T, E>
@@ -94,7 +94,7 @@ ordo ErrorModel {
     Unio            # error unions
 }
 
-@ publicum
+@ publica
 genus TargetLowering {
     NullabilisModel nullabilis
     ErrorModel errores

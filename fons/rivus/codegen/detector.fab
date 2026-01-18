@@ -20,7 +20,7 @@
 # =============================================================================
 
 # Feature keys - hierarchical identifiers matching capability structure
-@ publicum
+@ publica
 ordo FeaturaClavis {
     ControlFlow_AsyncFunctio
     ControlFlow_GeneratorFunctio
@@ -39,7 +39,7 @@ ordo FeaturaClavis {
 # =============================================================================
 
 # Record of a feature being used in source
-@ publicum
+@ publica
 genus UsitataFeatura {
     FeaturaClavis clavis
     textus contextus        # e.g., "functio fetchData"
@@ -52,7 +52,7 @@ genus UsitataFeatura {
 # =============================================================================
 
 # Feature detector - collects unique features from AST
-@ publicum
+@ publica
 genus FeatureDetector {
     tabula<textus, UsitataFeatura> featurae
 

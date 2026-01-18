@@ -34,7 +34,7 @@
 § ex "./errores" importa LexorError, LexorErrorCodice, error
 
 # Result of lexical analysis
-@ publicum
+@ publica
 genus LexorResultatum {
     lista<Symbolum> symbola       # Token stream (ends with Finis)
     lista<LexorError> errores     # Errors encountered
@@ -46,7 +46,7 @@ genus LexorResultatum {
 # - Current position (index) and line tracking
 # - Output accumulator for tokens (symbola)
 # - Error accumulator for malformed input (errores)
-@ publicum
+@ publica
 genus Lexor {
     textus fons                   # fons = "source" - the input text
     numerus index                 # Current byte offset in fons

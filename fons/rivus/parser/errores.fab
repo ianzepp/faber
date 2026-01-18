@@ -17,7 +17,7 @@
 § ex "../ast/positio" importa Locus
 
 # Parser error codes with P prefix
-@ publicum
+@ publica
 ordo ParserErrorCodice {
     # Token expectation errors (P001-P099)
     ExpectaturParensDex = "P001",
@@ -112,7 +112,7 @@ ordo ParserErrorCodice {
 }
 
 # Error message with help text
-@ publicum
+@ publica
 genus ParserErrorNuntius {
     textus textus       # Brief error message
     textus auxilium     # Extended help text
@@ -378,7 +378,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
 }
 
 # Structured parser error with source location
-@ publicum
+@ publica
 genus ParserError {
     ParserErrorCodice codice    # Error code for programmatic handling
     textus nuntius              # Human-readable message

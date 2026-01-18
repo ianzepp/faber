@@ -42,7 +42,7 @@ functio _resolve(textus basis, textus relativum) -> textus
 # ============================================================================
 
 # Export information extracted from a module
-@ publicum
+@ publica
 genus ModulusExportum {
     textus nomen                    # exported name
     SymbolumSpecies species         # symbol kind (Functio, Genus, etc.)
@@ -51,7 +51,7 @@ genus ModulusExportum {
 }
 
 # Resolved module with its exports
-@ publicum
+@ publica
 genus ModulusResolutum {
     tabula<textus, ModulusExportum> exporta    # map of name -> export info
     tabula<textus, DiscretioDeclInfo> discretiones # map of name -> discretio info

@@ -20,7 +20,7 @@
 # =============================================================================
 
 # Policy controls what support levels are allowed
-@ publicum
+@ publica
 genus ValidatioPolitia {
     bivalens permitteEmulatum      # allow 'emulated' features
     bivalens permitteDiscrepans    # allow 'mismatched' features (dangerous)
@@ -52,7 +52,7 @@ fixum POLITIA_PERMISSIVA = {
 # =============================================================================
 
 # A single validation error
-@ publicum
+@ publica
 genus ValidatioError {
     FeaturaClavis featura
     textus nuntius              # error message

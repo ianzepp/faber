@@ -11,7 +11,7 @@
 # =============================================================================
 
 # Features used that need imports in the preamble
-@ publicum
+@ publica
 genus GoRequiredFeatures {
     bivalens fmt      # fmt package needed (Println, Sprintf)
     bivalens errors   # errors package needed (errors.New)
@@ -22,7 +22,7 @@ genus GoRequiredFeatures {
 # =============================================================================
 
 # Core generator state for Go output.
-@ publicum
+@ publica
 genus GoGenerator implet Generans {
     # Indentation depth (number of levels)
     numerus profunditas

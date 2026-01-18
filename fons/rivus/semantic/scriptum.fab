@@ -13,7 +13,7 @@
 # ============================================================================
 
 # A resolved script declaration
-@ publicum
+@ publica
 genus Scriptum {
     textus nomen    # script name (e.g., "verify")
     textus via      # path to script file (e.g., "scripta/verify.fab")

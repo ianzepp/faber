@@ -19,7 +19,7 @@
 #       fixum t = r.expressia(subExpr)
 #       r.sententia(subStmt)
 #   }
-@ publicum
+@ publica
 pactum Resolvitor {
     functio analyzator() -> Analyzator
     functio expressia(Expressia expr) -> SemanticTypus

@@ -35,7 +35,7 @@
 #
 # Maintains token stream position, accumulated errors, and pending comments.
 # All parsing methods operate on this shared state.
-@ publicum
+@ publica
 genus Parser {
     lista<Symbolum> symbola       # Token stream from lexer
     numerus index                 # Current position in token stream

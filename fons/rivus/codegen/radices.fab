@@ -12,7 +12,7 @@
 # ============================================================================
 
 # Generator for a verb stem - produces TS code based on flags
-@ publicum
+@ publica
 pactum RadixGenerator {
     functio genera(textus obj, lista<textus> args, MorphologiaFlagga flagga) -> textus
 }

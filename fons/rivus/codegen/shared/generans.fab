@@ -4,7 +4,7 @@
 # Defines the minimal methods needed by shared codegen handlers.
 
 # Common generator interface for shared codegen
-@ publicum
+@ publica
 pactum Generans {
     # Generate indentation string for current depth
     functio ind() -> textus

@@ -13,7 +13,7 @@
 # ============================================================================
 
 # Variable declaration kind
-@ publicum
+@ publica
 ordo VariaGenus {
     Varia       # mutable: let
     Fixum       # immutable: const
@@ -22,7 +22,7 @@ ordo VariaGenus {
 }
 
 # Visibility level for members
-@ publicum
+@ publica
 ordo Visibilitas {
     Publica       # public (default)
     Protecta      # protected
@@ -30,7 +30,7 @@ ordo Visibilitas {
 }
 
 # Return type verb
-@ publicum
+@ publica
 ordo ReddeVerbum {
     Sagitta       # -> (arrow)
     Fit           # sync single
@@ -40,7 +40,7 @@ ordo ReddeVerbum {
 }
 
 # Output level for scribe/vide/mone
-@ publicum
+@ publica
 ordo ScribeGradus {
     Scribe     # console.log
     Vide       # console.debug
@@ -48,21 +48,21 @@ ordo ScribeGradus {
 }
 
 # Iteration kind
-@ publicum
+@ publica
 ordo IteratioGenus {
     Ex      # iterate values (for...of)
     De      # iterate keys (for...in)
 }
 
 # Curator kind for cura statements
-@ publicum
+@ publica
 ordo CuratorGenus {
     Arena      # arena allocator
     Pagina     # page allocator
 }
 
 # Ad binding verb
-@ publicum
+@ publica
 ordo AdVerbumVinculandi {
     Fit        # sync single
     Fiet       # async single
@@ -71,14 +71,14 @@ ordo AdVerbumVinculandi {
 }
 
 # Praepara/postpara timing
-@ publicum
+@ publica
 ordo PraeparaTempus {
     Praepara    # before (setup)
     Postpara    # after (teardown)
 }
 
 # Proba modifier
-@ publicum
+@ publica
 ordo ProbaModificator {
     Omitte     # skip
     Futurum    # todo
@@ -90,7 +90,7 @@ ordo ProbaModificator {
 
 # Import specifier with optional alias
 # Example: scribe, scribe ut s
-@ publicum
+@ publica
 genus ImportaSpecificator {
     Locus locus
     textus importatum         # imported name
@@ -100,7 +100,7 @@ genus ImportaSpecificator {
 
 # Array destructuring element
 # Example: a, ceteri rest, _
-@ publicum
+@ publica
 genus SeriesDestructuraElementum {
     Locus locus
     textus? nomen             # binding name (nil for omitted)
@@ -110,7 +110,7 @@ genus SeriesDestructuraElementum {
 
 # Loop variable binding (simple identifier or array pattern)
 # Example: item, [key, value]
-@ publicum
+@ publica
 discretio IteratioVariabilis {
     Nomen { textus valor }
     Series { lista<SeriesDestructuraElementum> elementa }
@@ -118,7 +118,7 @@ discretio IteratioVariabilis {
 
 # Function parameter
 # Example: textus nomen, de lista<T> items, ceteri args
-@ publicum
+@ publica
 genus Parametrum {
     Locus locus
     textus nomen
@@ -131,7 +131,7 @@ genus Parametrum {
 }
 
 # Morphologia annotation metadata
-@ publicum
+@ publica
 genus MorphologiaDeclaratio {
     Locus locus
     lista<textus> formae
@@ -139,14 +139,14 @@ genus MorphologiaDeclaratio {
 
 # Compile-time type parameter
 # Example: prae typus T
-@ publicum
+@ publica
 genus TypusParametrum {
     Locus locus
     textus nomen
 }
 
 # Function modifier (post-parameter)
-@ publicum
+@ publica
 discretio FunctioModificator {
     CurataModificator {
         Locus locus
@@ -174,7 +174,7 @@ discretio FunctioModificator {
 
 # Field declaration within genus
 # Example: textus nomen, privatus numerus aetas: 0
-@ publicum
+@ publica
 genus CampusDeclaratio {
     Locus locus
     textus nomen
@@ -185,7 +185,7 @@ genus CampusDeclaratio {
 }
 
 # Pactum method signature (interface method)
-@ publicum
+@ publica
 genus PactumMethodus {
     Locus locus
     textus nomen
@@ -199,7 +199,7 @@ genus PactumMethodus {
 
 # Ordo (enum) member
 # Example: Rubrum, Actum = 1, Septentrio = "north"
-@ publicum
+@ publica
 genus OrdoMembrum {
     Locus locus
     textus nomen
@@ -208,7 +208,7 @@ genus OrdoMembrum {
 
 # Variant field in discretio
 # Example: numerus x, textus key
-@ publicum
+@ publica
 genus VariansCampus {
     Locus locus
     textus nomen
@@ -217,7 +217,7 @@ genus VariansCampus {
 
 # Variant declaration within discretio
 # Example: Click { numerus x, numerus y }, Quit
-@ publicum
+@ publica
 genus VariansDeclaratio {
     Locus locus
     textus nomen
@@ -225,7 +225,7 @@ genus VariansDeclaratio {
 }
 
 # Elige (switch) case
-@ publicum
+@ publica
 genus EligeCasus {
     Locus locus
     Expressia condicio
@@ -234,7 +234,7 @@ genus EligeCasus {
 
 # Single pattern in a variant case (matches one discriminant)
 # Example: Primitivum ut p, Click pro x, y, _, Quit
-@ publicum
+@ publica
 genus VariansExemplar {
     Locus locus
     textus variansNomen          # variant tag or "_" for wildcard
@@ -246,7 +246,7 @@ genus VariansExemplar {
 # Variant case for discerne (pattern matching)
 # Example: casu Click fixum x, y { ... }
 # Example: casu Primitivum ut l, Primitivum ut r { ... }  (multi-discriminant)
-@ publicum
+@ publica
 genus VariansCasus {
     Locus locus
     lista<VariansExemplar> exemplaria  # patterns (one per discriminant)
@@ -255,7 +255,7 @@ genus VariansCasus {
 
 # Guard clause
 # Example: si nihil x { redde nihil }
-@ publicum
+@ publica
 genus CustodiClausula {
     Locus locus
     Expressia condicio
@@ -264,7 +264,7 @@ genus CustodiClausula {
 
 # Catch clause
 # Example: cape err { handleError(err) }
-@ publicum
+@ publica
 genus CapeClausula {
     Locus locus
     textus param
@@ -273,7 +273,7 @@ genus CapeClausula {
 
 # Ad binding clause
 # Example: fit textus pro content
-@ publicum
+@ publica
 genus AdVinculum {
     Locus locus
     AdVerbumVinculandi verbum
@@ -296,7 +296,7 @@ genus AdVinculum {
 # Each variant contains its fields directly. Use `finge` to construct:
 #   finge MassaSententia { locus: loc, corpus: stmts } qua Sententia
 #   finge VariaSententia { ... } qua Sententia
-@ publicum
+@ publica
 discretio Sententia {
     # -------------------------------------------------------------------------
     # Block

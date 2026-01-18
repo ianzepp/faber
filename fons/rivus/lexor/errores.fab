@@ -9,7 +9,7 @@
 # ============================================================================
 
 # Error codes for lexical failures (L-prefix distinguishes from parser/semantic)
-@ publicum
+@ publica
 ordo LexorErrorCodice {
     TextusNonClausa = "L001",           # Unterminated string
     ExemplarNonClausum = "L002",        # Unterminated template string
@@ -24,7 +24,7 @@ ordo LexorErrorCodice {
 # ============================================================================
 
 # Structured error message with brief text and detailed help
-@ publicum
+@ publica
 genus LexorErrorNuntius {
     textus textus             # Brief error message
     textus auxilium           # Detailed help text
@@ -89,7 +89,7 @@ functio nuntiumErroris(LexorErrorCodice codice) -> LexorErrorNuntius {
 # ============================================================================
 
 # A lexical error with source position for reporting
-@ publicum
+@ publica
 genus LexorError {
     LexorErrorCodice codice
     textus textus

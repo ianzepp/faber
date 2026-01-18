@@ -23,7 +23,7 @@
 # ============================================================================
 
 # Concrete implementation of the Resolvitor pactum
-@ publicum
+@ publica
 genus ResolvitorImpl implet Resolvitor {
     Analyzator a
 

@@ -8,7 +8,7 @@
 § ex "./generans" importa Generans
 
 # Callback interface for codegen dispatch functions
-@ publicum
+@ publica
 pactum Revocata {
     functio genExpr(Expressia e, Generans g) -> textus
     functio genStmt(Sententia s, Generans g) -> textus

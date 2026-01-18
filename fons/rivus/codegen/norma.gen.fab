@@ -3,7 +3,7 @@
 # Source: fons/norma/
 
 # Translation result type
-@ publicum
+@ publica
 genus VerteTranslation {
     textus? method
     textus? template

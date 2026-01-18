@@ -11,7 +11,7 @@
 
 # Type parameter in generic types
 # Example: lista<textus> uses Typus, numerus<32> uses Littera
-@ publicum
+@ publica
 discretio TypusParametrum {
     # Type annotation parameter: lista<textus>
     Typus {
@@ -34,7 +34,7 @@ discretio TypusParametrum {
 # Example: textus?                   -> nomen="textus", nullabilis=true
 # Example: numerus[]                 -> compendiumSeries=true
 # Example: de textus                 -> praepositio="de" (borrowed)
-@ publicum
+@ publica
 genus TypusAnnotatio {
     Locus locus
     textus nomen                            # type name

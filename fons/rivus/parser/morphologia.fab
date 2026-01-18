@@ -11,7 +11,7 @@
 # ============================================================================
 
 # Semantic flags derived from verb morphology
-@ publicum
+@ publica
 genus MorphologiaFlagga {
     bivalens mutare           # Modifies receiver in place
     bivalens async            # Returns Promise
@@ -20,14 +20,14 @@ genus MorphologiaFlagga {
 }
 
 # Result of parsing a method name
-@ publicum
+@ publica
 genus RadixEtFlagga {
     textus radix              # Verb stem (e.g., "filtr", "add", "ordin")
     MorphologiaFlagga flagga
 }
 
 # Map semantic flags to canonical form name
-@ publicum
+@ publica
 functio formaExFlagga(MorphologiaFlagga flagga) -> textus {
     si flagga.mutare et non flagga.async et non flagga.reddeNovum {
         redde "imperativus"

@@ -11,7 +11,7 @@
 § ex "./sententia/index" importa genSententia
 
 # Adapter implementing Revocata for Go codegen
-@ publicum
+@ publica
 genus GoRevocata implet Revocata {
     @ publica
     functio genExpr(Expressia e, Generans g) -> textus {

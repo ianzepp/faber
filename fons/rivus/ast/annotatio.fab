@@ -20,7 +20,7 @@
 # - verteTemplate: for @ verte template form (template string)
 # - optio*: for @ optio CLI flag definition
 # - operandus*: for @ operandus CLI positional argument
-@ publicum
+@ publica
 genus Annotatio {
     Locus locus
     textus nomen                # annotation name (e.g., "futura", "radix")

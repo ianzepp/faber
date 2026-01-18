@@ -11,7 +11,7 @@
 # SUPPORTING TYPES
 # ============================================================================
 
-@ publicum
+@ publica
 # Clausura body: either an expression or a block
 # WHY: Clausuras can be `clausura x: expr` or `clausura x { ... }`.
 discretio ClausuraCorpus {
@@ -24,7 +24,7 @@ discretio ClausuraCorpus {
 }
 
 # Literal value type - what kind of constant this is
-@ publicum
+@ publica
 ordo LitteraGenus {
     Numerus    # integer: 42
     Fractus    # float: 3.14
@@ -37,7 +37,7 @@ ordo LitteraGenus {
 
 # Object property in object literal
 # Example: name: "Alice", or shorthand: name
-@ publicum
+@ publica
 genus ObiectumProprietas {
     Locus locus
     Expressia clavis         # key - usually Nomen or Littera
@@ -49,7 +49,7 @@ genus ObiectumProprietas {
 
 # Clausura parameter (simplified vs full Parametrum)
 # Example: clausura x, y: x + y
-@ publicum
+@ publica
 genus ClausuraParametrum {
     Locus locus
     textus nomen
@@ -58,7 +58,7 @@ genus ClausuraParametrum {
 
 # Chain step for collection DSL
 # Examples: prima 5, ultima 3, summa, ordina per nomen descendens
-@ publicum
+@ publica
 genus CatenaGradus {
     Locus locus
     textus verbum            # prima, ultima, summa, ordina, collige, grupa, maximum, minimum, medium, numera
@@ -68,7 +68,7 @@ genus CatenaGradus {
 }
 
 # Ab filter clause (ubi condition or boolean shorthand)
-@ publicum
+@ publica
 genus AbFiltrum {
     Locus locus
     bivalens habetUbi        # true if 'ubi' form was used
@@ -76,7 +76,7 @@ genus AbFiltrum {
 }
 
 # Morphology dispatch info for method calls
-@ publicum
+@ publica
 genus MorphologiaInvocatio {
     textus recipiens
     textus radix
@@ -95,7 +95,7 @@ genus MorphologiaInvocatio {
 # Each variant contains its fields directly. Use `finge` to construct:
 #   finge Nomen { locus: loc, valor: "x" } qua Expressia
 #   finge Littera { locus: loc, species: LitteraGenus.Numerus, crudus: "42" } qua Expressia
-@ publicum
+@ publica
 discretio Expressia {
     # -------------------------------------------------------------------------
     # Identifiers

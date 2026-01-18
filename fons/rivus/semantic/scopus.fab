@@ -10,7 +10,7 @@
 # =============================================================================
 
 # Kind of binding this symbol represents
-@ publicus
+@ publica
 ordo SymbolumSpecies {
     Variabilis                  # varia/fixum
     Functio                     # function
@@ -22,7 +22,7 @@ ordo SymbolumSpecies {
 }
 
 # Kind of scope this is
-@ publicus
+@ publica
 ordo ScopusSpecies {
     Globalis                    # global/module scope
     Functio                     # function scope
@@ -30,7 +30,7 @@ ordo ScopusSpecies {
 }
 
 # A symbol binding in the symbol table
-@ publicum
+@ publica
 genus Symbolum {
     textus nomen                    # binding name
     SemanticTypus semanticTypus     # resolved type
@@ -40,7 +40,7 @@ genus Symbolum {
 }
 
 # A lexical scope containing symbol bindings
-@ publicum
+@ publica
 genus Scopus {
     tabula<textus, Symbolum> symbola  # name -> symbol bindings
     Scopus? parens                    # parent scope (nil for global)

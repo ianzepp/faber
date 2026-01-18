@@ -10,7 +10,7 @@
 # ============================================================================
 
 # Keyword spelling dialect (Latin vs English surface forms)
-@ publicum
+@ publica
 ordo Dialectus {
     Latinus
     Anglicus

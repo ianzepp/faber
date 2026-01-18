@@ -11,7 +11,7 @@
 # ============================================================================
 
 # Comment type enumeration
-@ publicum
+@ publica
 ordo NotaGenus {
     Linea      # # comment
     Massa      # /* comment */
@@ -19,7 +19,7 @@ ordo NotaGenus {
 }
 
 # A source code comment
-@ publicum
+@ publica
 genus Nota {
     NotaGenus species
     textus valor
@@ -33,7 +33,7 @@ genus Nota {
 # Base fields present on all AST nodes
 # WHY: Every node tracks position for error messages,
 #      and may have leading/trailing comments for formatting.
-@ publicum
+@ publica
 genus NodusRadix {
     Locus locus
     lista<Nota>? notaePrae      # leading comments
@@ -41,7 +41,7 @@ genus NodusRadix {
 }
 
 # Root node of the AST - represents an entire source file
-@ publicum
+@ publica
 genus Programma {
     Locus locus
     lista<Nota>? notaePrae
@@ -64,7 +64,7 @@ genus Programma {
 #   § opus nomen "echo"           -> nomen="opus", argumenta=["nomen", "echo"]
 #   § scopos "ts"                 -> nomen="scopos", argumenta=["ts"]
 #   § dependentia "norma" via "." -> nomen="dependentia", argumenta=["norma", "via", "."]
-@ publicum
+@ publica
 genus SectioAnnotatio {
     Locus locus
     textus nomen                # annotation name (opus, scopos, dependentia, etc.)

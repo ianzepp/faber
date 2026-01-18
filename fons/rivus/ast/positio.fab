@@ -8,7 +8,7 @@
 # ============================================================================
 
 # A single point in source code
-@ publicum
+@ publica
 genus Locus {
     numerus linea      # 1-based line number
     numerus columna    # 1-based column number
@@ -16,7 +16,7 @@ genus Locus {
 }
 
 # A range in source code (start inclusive, end exclusive)
-@ publicum
+@ publica
 genus Tractus {
     Locus initium
     Locus finis

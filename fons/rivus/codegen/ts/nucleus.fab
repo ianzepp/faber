@@ -15,7 +15,7 @@
 #
 # WHY: Holds indentation state, feature tracking, and context flags
 #      that are shared across all statement/expression generators.
-@ publicum
+@ publica
 genus TsGenerator implet Generans {
     # Indentation depth (number of levels)
     numerus profunditas

@@ -12,7 +12,7 @@
 # WHY: Different targets need different setup code (imports, includes, class
 #      definitions) based on which language features are actually used.
 #      Tracking usage allows minimal, tree-shakeable preambles.
-@ publicum
+@ publica
 genus RequiredFeatures {
     # Error handling
     bivalens panic           # mori used - needs Panic class
@@ -59,7 +59,7 @@ functio creaRequiredFeatures() -> RequiredFeatures {
 # =============================================================================
 
 # Configuration options for code generation
-@ publicum
+@ publica
 genus CodegenOptions {
     # Indentation string (default: 2 spaces for TS)
     textus indentum

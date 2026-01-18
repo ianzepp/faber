@@ -19,7 +19,7 @@
 # ============================================================================
 
 # A resolved dependency declaration
-@ publicum
+@ publica
 genus Dependentia {
     textus alias      # import alias (e.g., "norma")
     textus? github    # github reference "owner/repo#ref" (future)
@@ -111,7 +111,7 @@ functio estCacheatum(textus dominus, textus repo, textus sha) -> bivalens {
 # ============================================================================
 
 # Parsed GitHub reference
-@ publicum
+@ publica
 genus GithubReferentia {
     textus dominus
     textus repo

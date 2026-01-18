@@ -10,7 +10,7 @@
 # ============================================================================
 
 # Token type enumeration
-@ publicum
+@ publica
 ordo SymbolumGenus {
     # -------------------------------------------------------------------------
     # Literals
@@ -131,7 +131,7 @@ ordo SymbolumGenus {
 # WHY: Parsing against raw keyword strings bakes Latin spellings into semantics.
 #      This enum allows multiple surface spellings (dialects) to map to the same
 #      internal meaning.
-@ publicum
+@ publica
 ordo VerbumId {
     # -------------------------------------------------------------------------
     # Control Flow
@@ -306,7 +306,7 @@ ordo VerbumId {
 # ============================================================================
 
 # A single token from the source
-@ publicum
+@ publica
 genus Symbolum {
     SymbolumGenus species
     textus valor       # raw text of the token

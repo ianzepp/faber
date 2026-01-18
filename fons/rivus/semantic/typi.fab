@@ -7,7 +7,7 @@
 # ============================================================================
 
 # All possible types in the type system
-@ publicum
+@ publica
 discretio SemanticTypus {
     # Primitive types: textus, numerus, fractus, decimus, magnus, bivalens, nihil, vacuum, octeti
     Primitivum {
@@ -187,34 +187,34 @@ functio pactumTypus(textus nomen, tabula<textus, SemanticTypus> methodi, bivalen
 # COMMON TYPE CONSTANTS
 # ============================================================================
 
-@ publicum
+@ publica
 fixum TEXTUS = primitivumTypus("textus", falsum)
 
-@ publicum
+@ publica
 fixum NUMERUS = primitivumTypus("numerus", falsum)
 
-@ publicum
+@ publica
 fixum FRACTUS = primitivumTypus("fractus", falsum)
 
-@ publicum
+@ publica
 fixum DECIMUS = primitivumTypus("decimus", falsum)
 
-@ publicum
+@ publica
 fixum MAGNUS = primitivumTypus("magnus", falsum)
 
-@ publicum
+@ publica
 fixum BIVALENS = primitivumTypus("bivalens", falsum)
 
-@ publicum
+@ publica
 fixum NIHIL = primitivumTypus("nihil", falsum)
 
-@ publicum
+@ publica
 fixum VACUUM = primitivumTypus("vacuum", falsum)
 
-@ publicum
+@ publica
 fixum OCTETI = primitivumTypus("octeti", falsum)
 
-@ publicum
+@ publica
 fixum IGNOTUM = ignotumTypus(nihil)
 
 # ============================================================================

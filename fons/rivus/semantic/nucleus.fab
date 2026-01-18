@@ -20,7 +20,7 @@
 # ============================================================================
 
 # A semantic error with source location
-@ publicum
+@ publica
 genus SemanticError {
     textus nuntius
     Locus locus
@@ -31,7 +31,7 @@ genus SemanticError {
 # ============================================================================
 
 # Result of semantic analysis
-@ publicum
+@ publica
 genus SemanticResultatum {
     @ publica
     Programma programma
@@ -45,13 +45,13 @@ genus SemanticResultatum {
 # DISCRETIO REGISTRY
 # ============================================================================
 
-@ publicum
+@ publica
 genus DiscretioVariansInfo {
     textus nomen
     Locus locus
 }
 
-@ publicum
+@ publica
 genus DiscretioDeclInfo {
     textus nomen
     Locus locus
@@ -87,7 +87,7 @@ functio estGenericusTypus(textus nomen) -> bivalens {
 # ============================================================================
 
 # The semantic analyzer state
-@ publicum
+@ publica
 genus Analyzator {
     lista<SemanticError> errores                                          # collected errors
     Scopus scopus                                                         # current scope chain

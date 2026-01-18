@@ -7,7 +7,7 @@
 # ============================================================================
 
 # Semantic error codes (S-prefix identifies semantic phase)
-@ publicus
+@ publica
 ordo SemanticErrorCodice {
     UndefinedVariable       # S001: Undefined variable
     AlreadyDefined          # S002: Already defined in scope
@@ -34,7 +34,7 @@ ordo SemanticErrorCodice {
 # ============================================================================
 
 # Error message with text and help
-@ publicum
+@ publica
 genus SemanticErrorNuntius {
     textus textus               # user-facing error message
     textus auxilium             # helpful guidance

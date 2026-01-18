@@ -29,7 +29,7 @@
 #       fixum typ = r.adnotatio()      # parse type annotation
 #       ...
 #   }
-@ publicum
+@ publica
 pactum Resolvitor {
     # Get the underlying parser state
     functio parser() -> Parser
