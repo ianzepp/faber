@@ -571,7 +571,9 @@ export class Parser {
             const name = this.expect('Identifier').valor;
             let valor: string | null = null;
             if (this.match('Operator', '=')) {
-                valor = this.peek().valor;
+                const tok = this.peek();
+                // Quote string values so they emit correctly in TypeScript
+                valor = tok.tag === 'Textus' ? JSON.stringify(tok.valor) : tok.valor;
                 this.advance(); // number or string
             }
             membra.push({ locus: loc, nomen: name, valor });

@@ -102,7 +102,15 @@ function emitStmt(stmt: Stmt, indent = ''): string {
         case 'Varia': {
             const decl = stmt.externa ? 'declare ' : '';
             const kw = stmt.species === 'Varia' ? 'let' : 'const';
-            const typ = stmt.typus ? `: ${emitTypus(stmt.typus)}` : '';
+            // For externa with ignotum type, use 'any' for usability (allows property access)
+            let typ = '';
+            if (stmt.typus) {
+                if (stmt.externa && stmt.typus.tag === 'Nomen' && stmt.typus.nomen === 'ignotum') {
+                    typ = ': any';
+                } else {
+                    typ = `: ${emitTypus(stmt.typus)}`;
+                }
+            }
             const val = stmt.valor && !stmt.externa ? ` = ${emitExpr(stmt.valor)}` : '';
             const exp = stmt.publica ? 'export ' : '';
             return `${indent}${exp}${decl}${kw} ${stmt.nomen}${typ}${val};`;
@@ -181,15 +189,20 @@ function emitStmt(stmt: Stmt, indent = ''): string {
             const generics = stmt.generics.length > 0 ? `<${stmt.generics.join(', ')}>` : '';
             const lines: string[] = [];
 
-            // Generate type alias as discriminated union
-            const variants = stmt.variantes.map(v => {
+            // First, export each variant as a separate type alias
+            const variantNames: string[] = [];
+            for (const v of stmt.variantes) {
+                variantNames.push(v.nomen);
                 if (v.campi.length === 0) {
-                    return `{ tag: '${v.nomen}' }`;
+                    lines.push(`${indent}${exp}type ${v.nomen} = { tag: '${v.nomen}' };`);
+                } else {
+                    const fields = v.campi.map(f => `${f.nomen}: ${emitTypus(f.typus)}`).join('; ');
+                    lines.push(`${indent}${exp}type ${v.nomen} = { tag: '${v.nomen}'; ${fields} };`);
                 }
-                const fields = v.campi.map(f => `${f.nomen}: ${emitTypus(f.typus)}`).join('; ');
-                return `{ tag: '${v.nomen}'; ${fields} }`;
-            });
-            lines.push(`${indent}${exp}type ${stmt.nomen}${generics} = ${variants.join(' | ')};`);
+            }
+
+            // Then generate the union type referencing the variant types
+            lines.push(`${indent}${exp}type ${stmt.nomen}${generics} = ${variantNames.join(' | ')};`);
 
             return lines.join('\n');
         }
@@ -241,30 +254,43 @@ function emitStmt(stmt: Stmt, indent = ''): string {
 
         case 'Discerne': {
             // Pattern matching → switch on tag
-            const discrim = stmt.discrim.length === 1 ? emitExpr(stmt.discrim[0]) : 'discriminant';
             const lines: string[] = [];
+            const numDiscrim = stmt.discrim.length;
 
-            if (stmt.discrim.length > 1) {
-                // Multi-discriminant: need temp var
-                lines.push(`${indent}const discriminant = ${emitExpr(stmt.discrim[0])};`);
+            // For single discriminant, use expression directly; for multi, create temp vars
+            const discrimVars: string[] = [];
+            if (numDiscrim === 1) {
+                discrimVars.push(emitExpr(stmt.discrim[0]));
+            } else {
+                for (let i = 0; i < numDiscrim; i++) {
+                    const varName = `discriminant_${i}`;
+                    discrimVars.push(varName);
+                    lines.push(`${indent}const ${varName} = ${emitExpr(stmt.discrim[i])};`);
+                }
             }
 
-            lines.push(`${indent}switch (${discrim}.tag) {`);
+            // Switch on first discriminant's tag
+            lines.push(`${indent}switch (${discrimVars[0]}.tag) {`);
 
             for (const c of stmt.casus) {
-                const pattern = c.patterns[0]; // Simplified: single pattern
-                if (pattern.wildcard) {
+                const firstPattern = c.patterns[0];
+                if (firstPattern.wildcard) {
                     lines.push(`${indent}    default: {`);
                 } else {
-                    lines.push(`${indent}    case '${pattern.variant}': {`);
+                    lines.push(`${indent}    case '${firstPattern.variant}': {`);
                 }
 
-                // Bindings
-                if (pattern.alias) {
-                    lines.push(`${indent}        const ${pattern.alias} = ${discrim};`);
-                }
-                for (const b of pattern.bindings) {
-                    lines.push(`${indent}        const ${b} = ${discrim}.${b};`);
+                // Extract bindings from ALL patterns
+                for (let i = 0; i < c.patterns.length && i < numDiscrim; i++) {
+                    const pattern = c.patterns[i];
+                    const discrimVar = discrimVars[i];
+
+                    if (pattern.alias) {
+                        lines.push(`${indent}        const ${pattern.alias} = ${discrimVar};`);
+                    }
+                    for (const b of pattern.bindings) {
+                        lines.push(`${indent}        const ${b} = ${discrimVar}.${b};`);
+                    }
                 }
 
                 lines.push(emitStmt(c.corpus, indent + '        '));
@@ -387,12 +413,22 @@ function emitExpr(expr: Expr): string {
             return `(${emitExpr(expr.cond)} ? ${emitExpr(expr.cons)} : ${emitExpr(expr.alt)})`;
 
         case 'Vocatio': {
-            // Check if callee is a property-only access (e.g., .longitudo() → .length)
+            // Check if callee is a method call that needs translation
             if (expr.callee.tag === 'Membrum' && !expr.callee.computed) {
                 const propName = expr.callee.prop.tag === 'Littera' ? expr.callee.prop.valor : null;
-                if (propName && PROPERTY_ONLY.has(propName)) {
-                    // Emit as property access, not method call
-                    return emitExpr(expr.callee);
+                if (propName) {
+                    // Property-only access (e.g., .longitudo() → .length)
+                    if (PROPERTY_ONLY.has(propName)) {
+                        return emitExpr(expr.callee);
+                    }
+                    // Method name translation (only for method calls, not field access)
+                    const translated = METHOD_MAP[propName];
+                    if (translated) {
+                        const obj = emitExpr(expr.callee.obj);
+                        const access = expr.callee.nonNull ? '!.' : '.';
+                        const args = expr.args.map(emitExpr).join(', ');
+                        return `${obj}${access}${translated}(${args})`;
+                    }
                 }
             }
             const args = expr.args.map(emitExpr).join(', ');
@@ -412,8 +448,11 @@ function emitExpr(expr: Expr): string {
             if (prop === 'ultimus') {
                 return `${obj}.at(-1)`;
             }
-            // Translate method/property names via norma
-            prop = METHOD_MAP[prop] ?? prop;
+            // Only translate property-like names (longitudo), not method names
+            // Method name translations are handled in Vocatio case
+            if (PROPERTY_ONLY.has(prop)) {
+                prop = METHOD_MAP[prop] ?? prop;
+            }
             const access = expr.nonNull ? '!.' : '.';
             return `${obj}${access}${prop}`;
         }
@@ -552,6 +591,12 @@ function mapTypeName(name: string): string {
 function emitParam(param: Param): string {
     const rest = param.rest ? '...' : '';
     const typ = param.typus ? `: ${emitTypus(param.typus)}` : '';
-    const def = param.default_ ? ` = ${emitExpr(param.default_)}` : '';
+    // For Nullabilis params without explicit default, use = null
+    let def = '';
+    if (param.default_) {
+        def = ` = ${emitExpr(param.default_)}`;
+    } else if (param.typus?.tag === 'Nullabilis') {
+        def = ' = null';
+    }
     return `${rest}${param.nomen}${typ}${def}`;
 }
