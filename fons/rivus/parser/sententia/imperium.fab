@@ -22,6 +22,7 @@
 # - cape = catch
 
 § ex "../resolvitor" importa Resolvitor
+§ ex "../nucleus" importa Parser
 § ex "../../ast/positio" importa Locus
 § ex "../../ast/expressia" importa Expressia
 § ex "../../ast/sententia" importa Sententia, CapeClausula, IteratioGenus
@@ -71,11 +72,7 @@ functio parseSiSententia(Resolvitor r) -> Sententia {
         alternans = parseSinSententia(r)
     } sin p.probaVerbum("secus") {
         p.procede()
-        si p.probaVerbum("si") {
-            alternans = parseSiSententia(r)
-        } secus {
-            alternans = parseCorpusAutSententia(r)
-        }
+        alternans = parseCorpusAutSententia(r)
     }
 
     redde finge SiSententia {
@@ -291,15 +288,24 @@ functio parseCorpus(Resolvitor r) -> Sententia {
 
     si p.probaVerbum("ergo") {
         p.procede()
+
+        # Reject compound statements after ergo
+        si estCompositumVerbum(p) {
+            p.renuncia(ParserErrorCodice.CompositumPostErgo, scriptum("got '§'", p.specta(0).valor))
+        }
+
         redde r.sententia()
     }
 
     redde parseMassaSententia(r) qua Sententia
 }
 
-# Parse a statement body without requiring 'ergo' for bare statements
+# Parse a statement body requiring braces or 'ergo' for statements
 #
-# Used after secus/ceterum where no condition exists, so no delimiter is needed.
+# Used after secus/ceterum. Requires either:
+#   - { block }
+#   - ergo + simple statement (not compound)
+#   - Shortcuts: tacet, reddit, iacit, moritor
 @ publica
 functio parseCorpusAutSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
@@ -328,11 +334,42 @@ functio parseCorpusAutSententia(Resolvitor r) -> Sententia {
         redde finge IaceSententia { locus: locus, fatale: verum, argumentum: argumentum } qua Sententia
     }
 
+    # Block
     si p.proba(SymbolumGenus.UncusSin) {
         redde parseMassaSententia(r) qua Sententia
     }
 
-    redde r.sententia()
+    # ergo + simple statement
+    si p.probaVerbum("ergo") {
+        p.procede()
+
+        # Reject compound statements after ergo
+        si estCompositumVerbum(p) {
+            p.renuncia(ParserErrorCodice.CompositumPostErgo, scriptum("got '§'", p.specta(0).valor))
+        }
+
+        redde r.sententia()
+    }
+
+    # Neither block nor ergo - error
+    p.renuncia(ParserErrorCodice.ExpectaturUncusVelErgo, scriptum("got '§'", p.specta(0).valor))
+    redde finge TacetSententia { locus: locus } qua Sententia
+}
+
+# Check if current token is a compound statement keyword
+functio estCompositumVerbum(Parser p) -> bivalens {
+    si p.probaVerbum("si") { redde verum }
+    si p.probaVerbum("sin") { redde verum }
+    si p.probaVerbum("dum") { redde verum }
+    si p.probaVerbum("ex") { redde verum }
+    si p.probaVerbum("de") { redde verum }
+    si p.probaVerbum("elige") { redde verum }
+    si p.probaVerbum("discerne") { redde verum }
+    si p.probaVerbum("custodi") { redde verum }
+    si p.probaVerbum("tempta") { redde verum }
+    si p.probaVerbum("fac") { redde verum }
+    si p.probaVerbum("cura") { redde verum }
+    redde falsum
 }
 
 # Parse a "sin" (else-if) clause
@@ -351,11 +388,7 @@ functio parseSinSententia(Resolvitor r) -> Sententia {
         alternans = parseSinSententia(r)
     } sin p.probaVerbum("secus") {
         p.procede()
-        si p.probaVerbum("si") {
-            alternans = parseSiSententia(r)
-        } secus {
-            alternans = parseCorpusAutSententia(r)
-        }
+        alternans = parseCorpusAutSententia(r)
     }
 
     redde finge SiSententia {

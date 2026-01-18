@@ -83,6 +83,8 @@ ordo ParserErrorCodice {
     InexpectatumSymbolum = "P104",
     ExpectaturUncusVelParens = "P105",
     ExpectaturExpressia = "P107",
+    ExpectaturUncusVelErgo = "P108",
+    CompositumPostErgo = "P109",
 
     # Generic errors (P190-P199)
     ErrorGeneralis = "P190",
@@ -301,6 +303,12 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
         }
         casu ParserErrorCodice.ExpectaturExpressia {
             redde creoNuntium("Expected expression", "Provide an expression or value here.")
+        }
+        casu ParserErrorCodice.ExpectaturUncusVelErgo {
+            redde creoNuntium("Expected '{' or 'ergo'", "After 'secus' or 'ceterum', use braces for a block or 'ergo' for a single statement.")
+        }
+        casu ParserErrorCodice.CompositumPostErgo {
+            redde creoNuntium("Compound statement not allowed after 'ergo'", "Use braces for compound statements (si, dum, ex, etc). 'ergo' is for simple one-liners.")
         }
 
         # Generic errors
