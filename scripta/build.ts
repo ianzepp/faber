@@ -10,6 +10,7 @@
  *   bun run build -t zig                 # faber + rivus, Zig target
  *   bun run build --artifex              # faber + rivus + artifex
  *   bun run build --no-faber --rivus     # rivus only
+ *   bun run build --verbose              # show subprocess output
  */
 
 import { join } from 'path';
@@ -27,6 +28,7 @@ interface BuildOptions {
     rivus: boolean;
     artifex: boolean;
     typecheck: boolean;
+    verbose: boolean;
 }
 
 function parseArgs(): BuildOptions {
@@ -36,6 +38,7 @@ function parseArgs(): BuildOptions {
     let rivus = true;
     let artifex = false;
     let typecheck = true;
+    let verbose = false;
 
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
@@ -63,58 +66,89 @@ function parseArgs(): BuildOptions {
             typecheck = true;
         } else if (arg === '--no-typecheck') {
             typecheck = false;
+        } else if (arg === '-v' || arg === '--verbose') {
+            verbose = true;
         }
     }
 
-    return { target, faber, rivus, artifex, typecheck };
+    return { target, faber, rivus, artifex, typecheck, verbose };
 }
 
-async function step(name: string, fn: () => Promise<void>) {
+async function step(name: string, verbose: boolean, fn: () => Promise<void>) {
     const start = performance.now();
-    process.stdout.write(`${name}... `);
+    if (verbose) {
+        console.log(`\n=== ${name} ===\n`);
+    } else {
+        process.stdout.write(`${name}... `);
+    }
     await fn();
     const elapsed = performance.now() - start;
-    console.log(`OK (${elapsed.toFixed(0)}ms)`);
+    if (verbose) {
+        console.log(`\n=== ${name} OK (${elapsed.toFixed(0)}ms) ===`);
+    } else {
+        console.log(`OK (${elapsed.toFixed(0)}ms)`);
+    }
 }
 
 async function main() {
-    const { target, faber, rivus, artifex, typecheck } = parseArgs();
+    const { target, faber, rivus, artifex, typecheck, verbose } = parseArgs();
     const start = performance.now();
     const tcFlag = typecheck ? '' : '--no-typecheck';
 
     const stages = [faber && 'faber', rivus && 'rivus', artifex && 'artifex'].filter(Boolean);
     console.log(`Build (target: ${target}, stages: ${stages.join(', ') || 'none'})\n`);
 
-    await step('build:norma', async () => {
-        await $`bun run build:norma`.quiet();
+    await step('build:norma', verbose, async () => {
+        if (verbose) {
+            await $`bun run build:norma`;
+        } else {
+            await $`bun run build:norma`.quiet();
+        }
     });
 
     if (faber) {
-        await step('build:faber', async () => {
-            await $`bun run build:faber`.quiet();
-            // await $`bun run build:exempla -c faber -t ${target}`.quiet();
+        await step('build:faber', verbose, async () => {
+            if (verbose) {
+                await $`bun run build:faber`;
+            } else {
+                await $`bun run build:faber`.quiet();
+            }
         });
     }
 
     if (rivus) {
-        await step('build:rivus', async () => {
-            if (tcFlag) {
-                await $`bun run build:rivus -- ${tcFlag}`.quiet();
+        await step('build:rivus', verbose, async () => {
+            if (verbose) {
+                if (tcFlag) {
+                    await $`bun run build:rivus -- ${tcFlag}`;
+                } else {
+                    await $`bun run build:rivus`;
+                }
             } else {
-                await $`bun run build:rivus`.quiet();
+                if (tcFlag) {
+                    await $`bun run build:rivus -- ${tcFlag}`.quiet();
+                } else {
+                    await $`bun run build:rivus`.quiet();
+                }
             }
-            // await $`bun run build:exempla -c rivus -t ${target}`.quiet();
         });
     }
 
     if (artifex) {
-        await step('build:artifex', async () => {
-            if (tcFlag) {
-                await $`bun run build:artifex -- ${tcFlag}`.quiet();
+        await step('build:artifex', verbose, async () => {
+            if (verbose) {
+                if (tcFlag) {
+                    await $`bun run build:artifex -- ${tcFlag}`;
+                } else {
+                    await $`bun run build:artifex`;
+                }
             } else {
-                await $`bun run build:artifex`.quiet();
+                if (tcFlag) {
+                    await $`bun run build:artifex -- ${tcFlag}`.quiet();
+                } else {
+                    await $`bun run build:artifex`.quiet();
+                }
             }
-            // await $`bun run build:exempla -c artifex -t ${target}`.quiet();
         });
     }
 
