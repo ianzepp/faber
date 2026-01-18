@@ -148,6 +148,10 @@ discretio FunctioModificator {
         Locus locus
         textus nomen
     }
+    ExitusModificator {
+        Locus locus
+        textus nomen    # Exit code variable name (e.g., "code")
+    }
     ImmutataModificator {
         Locus locus
     }

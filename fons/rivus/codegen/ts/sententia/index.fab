@@ -83,7 +83,7 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
 
         # Function declaration
         casu FunctioDeclaratio ut f {
-            redde genFunctio(f.nomen qua textus, f.generaParametra, f.parametra qua lista<Parametrum>, f.reddeVerbum, f.typusReditus, f.corpus, f.asynca qua bivalens, f.generator qua bivalens, f.structor qua bivalens, f.visibilitas, f.abstracta qua bivalens, f.externa qua bivalens, g)
+            redde genFunctio(f.nomen qua textus, f.generaParametra, f.parametra qua lista<Parametrum>, f.reddeVerbum, f.typusReditus, f.corpus, f.asynca qua bivalens, f.generator qua bivalens, f.structor qua bivalens, f.visibilitas, f.abstracta qua bivalens, f.externa qua bivalens, f.modificatores, g)
         }
 
         # Type declarations

@@ -20,7 +20,7 @@
 #   as return type syntax. Re-enable in parser/sententia/declara.fab when Go/Zig backends
 #   are ready to support the protocol. See preamble/index.fab for runtime definitions.
 
-§ ex "../../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, Visibilitas, ReddeVerbum
+§ ex "../../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, Visibilitas, ReddeVerbum, FunctioModificator, ExitusModificator
 § ex "../../../ast/typus" importa TypusAnnotatio
 § ex "../nucleus" importa TsGenerator
 
@@ -30,7 +30,7 @@
 § ex "../typus" importa genTypus
 
 @ publica
-functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> parametra, ignotum reddeVerbum, ignotum typusReditus, ignotum corpus, bivalens asynca, bivalens generator, bivalens structor, ignotum visibilitas, bivalens abstracta, bivalens externa, TsGenerator g) -> textus {
+functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> parametra, ignotum reddeVerbum, ignotum typusReditus, ignotum corpus, bivalens asynca, bivalens generator, bivalens structor, ignotum visibilitas, bivalens abstracta, bivalens externa, ignotum modificatores, TsGenerator g) -> textus {
     # External declarations use TypeScript's 'declare' syntax
     si externa {
         varia result = scriptum("§declare function §", g.ind(), nomen)
@@ -243,7 +243,26 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
         g.inFient = prevInFient
         g.tabulaNominata = prevTabula
 
-        si useFit {
+        # Check for exitus modifier to wrap body with exit code handling
+        varia exitusNomen = nihil qua textus?
+        si nonnihil modificatores {
+            fixum mods = modificatores qua lista<FunctioModificator>
+            ex mods pro mod {
+                discerne mod {
+                    casu ExitusModificator ut e {
+                        exitusNomen = e.nomen
+                        rumpe
+                    }
+                    casu _ { }
+                }
+            }
+        }
+
+        si nonnihil exitusNomen {
+            fixum ind = g.ind()
+            fixum codeName = exitusNomen qua textus
+            result = scriptum("§ {\n§  let § = 0;\n§\n§  process.exit(§);\n§}", result, ind, codeName, body, ind, codeName, ind)
+        } sin useFit {
             fixum ind = g.ind()
             result = scriptum("§ {\n§  return asFit(function* () {\n§\n§  });\n§}", result, ind, body, ind, ind)
         } sin useFiunt {

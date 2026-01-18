@@ -212,6 +212,7 @@ ordo VerbumId {
     Cursor
     Curata
     Errata
+    Exitus         # exit code modifier for CLI functions
     Immutata
     Optiones       # CLI options bundle modifier
     Publicus

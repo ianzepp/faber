@@ -107,6 +107,7 @@ functio verbumFaberId(textus v) -> VerbumId? {
         casu "cursor" reddit VerbumId.Cursor
         casu "curata" reddit VerbumId.Curata
         casu "errata" reddit VerbumId.Errata
+        casu "exitus" reddit VerbumId.Exitus
         casu "immutata" reddit VerbumId.Immutata
         casu "optiones" reddit VerbumId.Optiones
         casu "publicus" reddit VerbumId.Publicus

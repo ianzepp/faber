@@ -23,7 +23,7 @@
 § ex "../resolvitor" importa Resolvitor
 § ex "../../ast/positio" importa Locus
 § ex "../../ast/expressia" importa Expressia
-§ ex "../../ast/sententia" importa Sententia, MassaSententia, FunctioDeclaratio, Parametrum, TypusParametrum, CampusDeclaratio, PactumMethodus, OrdoMembrum, VariansDeclaratio, VariansCampus, Visibilitas, ReddeVerbum, ImportaSpecificator, MorphologiaDeclaratio, FunctioModificator, OptionesModificator
+§ ex "../../ast/sententia" importa Sententia, MassaSententia, FunctioDeclaratio, Parametrum, TypusParametrum, CampusDeclaratio, PactumMethodus, OrdoMembrum, VariansDeclaratio, VariansCampus, Visibilitas, ReddeVerbum, ImportaSpecificator, MorphologiaDeclaratio, FunctioModificator, OptionesModificator, ExitusModificator
 § ex "../../ast/typus" importa TypusAnnotatio, typusSimplicis
 § ex "../../ast/lexema" importa SymbolumGenus, VerbumId
 § ex "../errores" importa ParserErrorCodice
@@ -61,6 +61,11 @@ functio parseFunctioModificatores(Resolvitor r) -> lista<FunctioModificator>? {
             fixum locus = p.praevius().locus
             fixum optionesSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
             modificatores.adde(finge OptionesModificator { locus: locus, nomen: optionesSym.valor } qua FunctioModificator)
+        } sin p.congruetVerbum("exitus") {
+            # Exit code modifier: exitus <name> -> sets process.exit(<name>) at function end
+            fixum locus = p.praevius().locus
+            fixum exitusSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            modificatores.adde(finge ExitusModificator { locus: locus, nomen: exitusSym.valor } qua FunctioModificator)
         } secus {
             rumpe
         }
@@ -77,7 +82,7 @@ functio parseFunctioModificatores(Resolvitor r) -> lista<FunctioModificator>? {
 #
 # GRAMMAR:
 #   functioDecl := 'functio' IDENT genericParams? '(' params? ')' funcModifier* returnType? blockStmt?
-#   funcModifier := 'curata' IDENT | 'errata' IDENT | 'immutata' | 'iacit'
+#   funcModifier := 'curata' IDENT | 'errata' IDENT | 'exitus' IDENT | 'immutata' | 'iacit' | 'optiones' IDENT
 #   returnType := '->' type
 #
 # NOTE: fit/fiet/fiunt/fient return syntax is disabled pending Go/Zig backend support.
