@@ -221,12 +221,45 @@ export function parseExStatement(r: Resolver): IteratioStatement | VariaDeclarat
             return { type: 'VariaDeclaration', kind, name: pattern, init: source, position };
         }
 
+        // Could be:
+        //   - For-of loop: ex items fixum x { }
+        //   - Object destructuring: ex persona fixum nomen, aetas
+        // Disambiguate by checking for block after first identifier
+        const firstIdent = ctx.parseIdentifierOrKeyword();
+
+        // Block follows -> for-of loop
+        if (ctx.check('LBRACE')) {
+            const body = r.block();
+            let catchClause: CapeClause | undefined;
+            if (ctx.checkKeyword('cape')) {
+                catchClause = parseCapeClause(r);
+            }
+            const async = kind === 'figendum' || kind === 'variandum';
+            const mutable = kind === 'varia' || kind === 'variandum';
+            return {
+                type: 'IteratioStatement',
+                kind: 'ex',
+                variable: firstIdent,
+                iterable: source,
+                body,
+                async,
+                mutable,
+                catchClause,
+                position,
+            };
+        }
+
         // Object destructuring: ex persona fixum nomen, aetas
         // WHY: Brace-less syntax matches import pattern: ex norma importa scribe, lege
-        const specifiers: ImportSpecifier[] = [];
-        do {
+        const specifiers: ImportSpecifier[] = [{
+            type: 'ImportSpecifier',
+            imported: firstIdent,
+            local: firstIdent,
+            position: firstIdent.position,
+        }];
+        while (ctx.match('COMMA')) {
             specifiers.push(parseSpecifier(r));
-        } while (ctx.match('COMMA'));
+        }
 
         return { type: 'DestructureDeclaration', source, kind, specifiers, position };
     }
