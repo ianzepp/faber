@@ -1,4 +1,3 @@
-// discretio + finge + discerne
 type Init = { tag: 'Init'; x: number };
 type Finis = { tag: 'Finis' };
 type Eventus = Init | Finis;

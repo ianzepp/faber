@@ -1,5 +1,4 @@
 try {
-  // try/catch/finally
   throw "err";
 } catch (err) {
   console.log(err);

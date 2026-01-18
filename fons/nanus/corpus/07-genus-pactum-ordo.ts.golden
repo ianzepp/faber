@@ -1,4 +1,3 @@
-// genus / pactum / ordo
 interface Res {
   lege(): string;
 }

@@ -94,7 +94,7 @@ export function emit(mod: Modulus): string {
 function emitStmt(stmt: Stmt, indent = ''): string {
     switch (stmt.tag) {
         case 'Massa':
-            return `{\n${stmt.corpus.map(s => emitStmt(s, indent + '    ')).join('\n')}\n${indent}}`;
+            return `{\n${stmt.corpus.map(s => emitStmt(s, indent + '  ')).join('\n')}\n${indent}}`;
 
         case 'Expressia':
             return `${indent}${emitExpr(stmt.expr)};`;
@@ -134,19 +134,34 @@ function emitStmt(stmt: Stmt, indent = ''): string {
             const lines: string[] = [];
             lines.push(`${indent}${exp}class ${stmt.nomen}${generics}${impl} {`);
 
+            // Fields (default to private in TS output)
             for (const campo of stmt.campi) {
-                const vis = campo.visibilitas === 'Privata' ? 'private ' : campo.visibilitas === 'Protecta' ? 'protected ' : '';
+                const vis = campo.visibilitas === 'Protecta' ? 'protected ' : 'private ';
                 const val = campo.valor ? ` = ${emitExpr(campo.valor)}` : '';
-                lines.push(`${indent}    ${vis}${campo.nomen}: ${emitTypus(campo.typus)}${val};`);
+                lines.push(`${indent}  ${vis}${campo.nomen}: ${emitTypus(campo.typus)}${val};`);
             }
 
+            // Auto-generate constructor if there are fields
+            if (stmt.campi.length > 0) {
+                lines.push('');
+                const overrideFields = stmt.campi.map(c => `${c.nomen}?: ${emitTypus(c.typus)}`).join(', ');
+                lines.push(`${indent}  constructor(overrides: { ${overrideFields} } = {}) {`);
+                for (const campo of stmt.campi) {
+                    lines.push(`${indent}    if (overrides.${campo.nomen} !== undefined) { this.${campo.nomen} = overrides.${campo.nomen}; }`);
+                }
+                lines.push(`${indent}  }`);
+            }
+
+            // Methods (default to private)
             for (const method of stmt.methodi) {
                 if (method.tag === 'Functio') {
+                    lines.push('');
+                    const vis = method.visibilitas === 'Protecta' ? 'protected ' : method.visibilitas === 'Publica' ? '' : 'private ';
                     const async = method.asynca ? 'async ' : '';
                     const params = method.params.map(emitParam).join(', ');
                     const ret = method.typusReditus ? `: ${emitTypus(method.typusReditus)}` : '';
-                    const body = method.corpus ? ` ${emitStmt(method.corpus, indent + '    ')}` : ';';
-                    lines.push(`${indent}    ${async}${method.nomen}(${params})${ret}${body}`);
+                    const body = method.corpus ? ` ${emitStmt(method.corpus, indent + '  ')}` : ';';
+                    lines.push(`${indent}  ${vis}${async}${method.nomen}(${params})${ret}${body}`);
                 }
             }
 
@@ -164,7 +179,7 @@ function emitStmt(stmt: Stmt, indent = ''): string {
                 const async = method.asynca ? 'async ' : '';
                 const params = method.params.map(emitParam).join(', ');
                 const ret = method.typusReditus ? `: ${emitTypus(method.typusReditus)}` : '';
-                lines.push(`${indent}    ${method.nomen}(${params})${ret};`);
+                lines.push(`${indent}  ${method.nomen}(${params})${ret};`);
             }
 
             lines.push(`${indent}}`);
@@ -173,16 +188,11 @@ function emitStmt(stmt: Stmt, indent = ''): string {
 
         case 'Ordo': {
             const exp = stmt.publica ? 'export ' : '';
-            const lines: string[] = [];
-            lines.push(`${indent}${exp}enum ${stmt.nomen} {`);
-
-            for (const m of stmt.membra) {
+            const members = stmt.membra.map(m => {
                 const val = m.valor ? ` = ${m.valor}` : '';
-                lines.push(`${indent}    ${m.nomen}${val},`);
-            }
-
-            lines.push(`${indent}}`);
-            return lines.join('\n');
+                return `${m.nomen}${val}`;
+            }).join(', ');
+            return `${indent}${exp}enum ${stmt.nomen} { ${members} }`;
         }
 
         case 'Discretio': {
@@ -210,7 +220,7 @@ function emitStmt(stmt: Stmt, indent = ''): string {
 
         case 'Importa': {
             const specs = stmt.specs.map(s => s.imported === s.local ? s.imported : `${s.imported} as ${s.local}`);
-            return `${indent}import { ${specs.join(', ')} } from '${stmt.fons}';`;
+            return `${indent}import { ${specs.join(', ')} } from "${stmt.fons}";`;
         }
 
         case 'Si': {
@@ -238,23 +248,22 @@ function emitStmt(stmt: Stmt, indent = ''): string {
         }
 
         case 'Elige': {
+            // Emit as if/else chain (matching faber)
+            const discrim = emitExpr(stmt.discrim);
             const lines: string[] = [];
-            lines.push(`${indent}switch (${emitExpr(stmt.discrim)}) {`);
-            for (const c of stmt.casus) {
-                lines.push(`${indent}    case ${emitExpr(c.cond)}:`);
-                lines.push(emitStmt(c.corpus, indent + '        '));
-                lines.push(`${indent}        break;`);
+            for (let i = 0; i < stmt.casus.length; i++) {
+                const c = stmt.casus[i];
+                const kw = i === 0 ? 'if' : 'else if';
+                lines.push(`${indent}${kw} (${discrim} === ${emitExpr(c.cond)}) ${emitStmt(c.corpus, indent)}`);
             }
             if (stmt.default_) {
-                lines.push(`${indent}    default:`);
-                lines.push(emitStmt(stmt.default_, indent + '        '));
+                lines.push(`${indent}else ${emitStmt(stmt.default_, indent)}`);
             }
-            lines.push(`${indent}}`);
             return lines.join('\n');
         }
 
         case 'Discerne': {
-            // Pattern matching → switch on tag
+            // Pattern matching → if/else chain (matching faber)
             const lines: string[] = [];
             const numDiscrim = stmt.discrim.length;
 
@@ -270,15 +279,15 @@ function emitStmt(stmt: Stmt, indent = ''): string {
                 }
             }
 
-            // Switch on first discriminant's tag
-            lines.push(`${indent}switch (${discrimVars[0]}.tag) {`);
-
-            for (const c of stmt.casus) {
+            for (let ci = 0; ci < stmt.casus.length; ci++) {
+                const c = stmt.casus[ci];
                 const firstPattern = c.patterns[0];
+                const kw = ci === 0 ? 'if' : 'else if';
+
                 if (firstPattern.wildcard) {
-                    lines.push(`${indent}    default: {`);
+                    lines.push(`${indent}else {`);
                 } else {
-                    lines.push(`${indent}    case '${firstPattern.variant}': {`);
+                    lines.push(`${indent}${kw} (${discrimVars[0]}.tag === '${firstPattern.variant}') {`);
                 }
 
                 // Extract bindings from ALL patterns
@@ -287,19 +296,24 @@ function emitStmt(stmt: Stmt, indent = ''): string {
                     const discrimVar = discrimVars[i];
 
                     if (pattern.alias) {
-                        lines.push(`${indent}        const ${pattern.alias} = ${discrimVar};`);
+                        lines.push(`${indent}  const ${pattern.alias} = ${discrimVar};`);
                     }
                     for (const b of pattern.bindings) {
-                        lines.push(`${indent}        const ${b} = ${discrimVar}.${b};`);
+                        lines.push(`${indent}  const ${b} = ${discrimVar}.${b};`);
                     }
                 }
 
-                lines.push(emitStmt(c.corpus, indent + '        '));
-                lines.push(`${indent}        break;`);
-                lines.push(`${indent}    }`);
+                // Emit body contents (unwrap Massa if present)
+                if (c.corpus.tag === 'Massa') {
+                    for (const s of c.corpus.corpus) {
+                        lines.push(emitStmt(s, indent + '  '));
+                    }
+                } else {
+                    lines.push(emitStmt(c.corpus, indent + '  '));
+                }
+                lines.push(`${indent}}`);
             }
 
-            lines.push(`${indent}}`);
             return lines.join('\n');
         }
 
@@ -361,7 +375,7 @@ function emitStmt(stmt: Stmt, indent = ''): string {
             const lines: string[] = [];
             lines.push(`${indent}describe(${JSON.stringify(stmt.nomen)}, () => {`);
             for (const s of stmt.corpus) {
-                lines.push(emitStmt(s, indent + '    '));
+                lines.push(emitStmt(s, indent + '  '));
             }
             lines.push(`${indent}});`);
             return lines.join('\n');
@@ -408,7 +422,7 @@ function emitExpr(expr: Expr): string {
         }
 
         case 'Assignatio':
-            return `(${emitExpr(expr.sin)} ${expr.signum} ${emitExpr(expr.dex)})`;
+            return `${emitExpr(expr.sin)} ${expr.signum} ${emitBareExpr(expr.dex)}`;
 
         case 'Condicio':
             return `(${emitExpr(expr.cond)} ? ${emitExpr(expr.cons)} : ${emitExpr(expr.alt)})`;
@@ -542,6 +556,18 @@ function emitExpr(expr: Expr): string {
         default:
             return `/* unhandled: ${(expr as Expr).tag} */`;
     }
+}
+
+/**
+ * Emit expression without outer parens on binary expressions.
+ * Used for assignment RHS where parens are unnecessary.
+ */
+function emitBareExpr(expr: Expr): string {
+    if (expr.tag === 'Binaria') {
+        const op = BINARY_OPS[expr.signum] ?? expr.signum;
+        return `${emitBareExpr(expr.sin)} ${op} ${emitBareExpr(expr.dex)}`;
+    }
+    return emitExpr(expr);
 }
 
 function emitTypus(typus: Typus): string {

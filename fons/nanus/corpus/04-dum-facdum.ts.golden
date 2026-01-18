@@ -1,4 +1,3 @@
-// while and do-while
 let i: number = 0;
 let acc: number = 0;
 while ((i < 3)) {
