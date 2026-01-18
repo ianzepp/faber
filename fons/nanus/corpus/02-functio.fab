@@ -1,0 +1,7 @@
+# Function declaration, params, return
+
+functio summa(numerus a, numerus b) -> numerus {
+    redde a + b
+}
+
+scribe summa(2, 3)

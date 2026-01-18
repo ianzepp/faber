@@ -1,0 +1,7 @@
+# Basic declarations + expressions (nanus corpus)
+
+varia numerus a = 1
+fixum numerus b = 2
+varia numerus c = a + b * 3
+
+scribe c

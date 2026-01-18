@@ -1,0 +1,18 @@
+# genus / pactum / ordo
+
+pactum Res {
+    functio lege() -> textus
+}
+
+ordo Color {
+    Ruber = "red",
+    Viridis = "green",
+}
+
+genus Persona implet Res {
+    textus nomen
+
+    functio lege() -> textus {
+        redde ego.nomen
+    }
+}

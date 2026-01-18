@@ -1,0 +1,16 @@
+// genus / pactum / ordo
+interface Res {
+  lege(): string;
+}
+enum Color { Ruber = "red", Viridis = "green" }
+class Persona implements Res {
+  private nomen: string;
+
+  constructor(overrides: { nomen?: string } = {}) {
+    if (overrides.nomen !== undefined) { this.nomen = overrides.nomen; }
+  }
+
+  private lege(): string {
+    return this.nomen;
+  }
+}

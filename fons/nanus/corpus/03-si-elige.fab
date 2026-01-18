@@ -1,0 +1,13 @@
+# if / else-if / else and elige
+
+varia numerus x = 2
+
+si x > 2 reddit 10
+sin x == 2 reddit 20
+secus reddit 30
+
+elige x {
+    casu 1 reddit 11
+    casu 2 reddit 22
+    ceterum reddit 99
+}

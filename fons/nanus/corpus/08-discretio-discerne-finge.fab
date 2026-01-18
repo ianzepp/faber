@@ -1,0 +1,19 @@
+# discretio + finge + discerne
+
+discretio Eventus {
+    Init { numerus x }
+    Finis
+}
+
+functio tracta(Eventus e) -> numerus {
+    discerne e {
+        casu Init pro x {
+            redde x
+        }
+        casu Finis {
+            redde 0
+        }
+    }
+}
+
+scribe tracta(finge Init { x: 7 })

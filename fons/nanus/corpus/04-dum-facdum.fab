@@ -1,0 +1,15 @@
+# while and do-while
+
+varia numerus i = 0
+varia numerus acc = 0
+
+dum i < 3 {
+    acc = acc + i
+    i = i + 1
+}
+
+fac {
+    acc = acc + 10
+} dum acc < 20
+
+scribe acc

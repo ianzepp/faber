@@ -1,0 +1,3 @@
+# import syntax (use a real existing module so faber succeeds)
+
+§ ex "../../rivus/lexor/index" importa lexare

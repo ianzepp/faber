@@ -1,0 +1,6 @@
+// array + object literals, member access, calls
+const lista = [1, 2, 3];
+const tabula = { a: 1, b: 2 };
+console.log(lista.length);
+console.log(tabula.a);
+console.log({ x: 1, y: 2 });

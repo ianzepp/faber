@@ -1,0 +1,5 @@
+function summa(a: number, b: number): number {
+  // Function declaration, params, return
+  return (a + b);
+}
+console.log(summa(2, 3));

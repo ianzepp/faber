@@ -1,0 +1,5 @@
+// Basic declarations + expressions (nanus corpus)
+let a: number = 1;
+const b: number = 2;
+let c: number = (a + (b * 3));
+console.log(c);

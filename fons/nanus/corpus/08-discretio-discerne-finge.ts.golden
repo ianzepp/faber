@@ -1,0 +1,14 @@
+// discretio + finge + discerne
+type Init = { tag: 'Init'; x: number };
+type Finis = { tag: 'Finis' };
+type Eventus = Init | Finis;
+function tracta(e: Eventus): number {
+  if (e.tag === 'Init') {
+    const x = e.x;
+    return x;
+  }
+  else if (e.tag === 'Finis') {
+    return 0;
+  }
+}
+console.log(tracta({ tag: 'Init', x: 7 }));

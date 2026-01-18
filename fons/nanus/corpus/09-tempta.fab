@@ -1,0 +1,9 @@
+# try/catch/finally
+
+tempta {
+    iace "err"
+} cape err {
+    scribe err
+} demum {
+    scribe "demum"
+}

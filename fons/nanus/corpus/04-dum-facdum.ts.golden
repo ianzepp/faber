@@ -1,0 +1,11 @@
+// while and do-while
+let i: number = 0;
+let acc: number = 0;
+while ((i < 3)) {
+  acc = acc + i;
+  i = i + 1;
+}
+do {
+  acc = acc + 10;
+} while ((acc < 20));
+console.log(acc);
