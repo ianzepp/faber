@@ -54,7 +54,7 @@ functio mandatumArcessere(
     }
 
     # Load manifest sectiones
-    varia lista<SectioAnnotatio>? manifestSectiones = nihil
+    varia manifestSectiones = nihil qua lista<SectioAnnotatio>?
     tempta {
         figendum lectum = loadManifestSectiones(manifest)
         manifestSectiones = lectum
@@ -71,7 +71,7 @@ functio mandatumArcessere(
     fixum dependentiae = extractDependentiae(manifestSectiones)
 
     # Collect github dependencies
-    varia lista<tabula<textus, textus>> arcessenda = [] innatum lista<tabula<textus, textus>>
+    varia arcessenda = [] innatum lista<tabula<textus, textus>>
 
     de dependentiae fixum alias {
         fixum dep = dependentiae[alias] qua Dependentia
@@ -104,7 +104,7 @@ functio mandatumArcessere(
     varia numerus arcessita = 0
     varia numerus praetermissa = 0
     varia numerus defecta = 0
-    varia lista<tabula<textus, textus>> resultata = [] innatum lista<tabula<textus, textus>>
+    varia resultata = [] innatum lista<tabula<textus, textus>>
 
     ex arcessenda fixum dep {
         fixum alias = dep["alias"]

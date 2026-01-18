@@ -171,7 +171,7 @@ functio buildCommand(
     fixum projectRoot = processus.cwd()
 
     # Collect errors for JSON output
-    varia lista<tabula<textus, ignotum>> errores = [] innatum lista<tabula<textus, ignotum>>
+    varia errores = [] innatum lista<tabula<textus, ignotum>>
 
     # Resolve and validate entry path
     fixum entryPath = solum.absolve(input)
@@ -207,7 +207,7 @@ functio buildCommand(
     fixum entryOutPath = solum.iunge([outputDir, mutaExtensionem(entryRelPath, targetExt)])
 
     # Collect all files for --list-files
-    varia lista<tabula<textus, textus>> filesToWrite = [] innatum lista<tabula<textus, textus>>
+    varia filesToWrite = [] innatum lista<tabula<textus, textus>>
 
     # Generate entry file
     fixum entryOutput = stripComments sic generateWithStripping(entryResult.programma.corpus, targetLang, falsum, verum) secus generate(entryResult.programma.corpus, targetLang)

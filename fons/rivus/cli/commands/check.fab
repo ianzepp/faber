@@ -67,7 +67,7 @@ functio checkCommand(
     figendum source = hauriSource(input)
 
     # Collect all errors across phases
-    varia lista<tabula<textus, ignotum>> errores = [] innatum lista<tabula<textus, ignotum>>
+    varia errores = [] innatum lista<tabula<textus, ignotum>>
     varia numerus errorCount = 0
 
     # Lexical analysis

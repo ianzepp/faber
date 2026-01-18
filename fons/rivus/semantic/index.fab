@@ -59,7 +59,7 @@ functio mergeSectiones(
     lista<SectioAnnotatio>? manifest,
     lista<SectioAnnotatio>? source
 ) -> lista<SectioAnnotatio> {
-    varia lista<SectioAnnotatio> result = [] innatum lista<SectioAnnotatio>
+    varia result = [] innatum lista<SectioAnnotatio>
 
     si nonnihil manifest {
         ex manifest fixum s { result.adde(s) }
@@ -233,7 +233,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                     fixum resolvedPath = resolveDependentiaPath(imp.fons, a.dependentiae)
                     si nihil resolvedPath {
                         # Extract alias for error message
-                        fixum lista<textus> partes = imp.fons.divide(":")
+                        fixum partes = imp.fons.divide(":")
                         a.error(scriptum("Unknown dependency alias: §", partes[0]), imp.locus)
                     } secus {
                         # Use resolved path with resolveModulum (same as local import)

@@ -249,7 +249,7 @@ cura...fit      # cura r fit h { }              - resource scope
 tempta...cape   # tempta { } cape err { }       - error handling
 dum             # dum cond { }                  - while loop
 si              # si cond { }                   - conditional
-elige           # elige val { si case { } }     - switch
+elige           # elige val { casu case { } }     - switch
 discerne        # discerne val { casu Var { } }  - pattern match
 ```
 

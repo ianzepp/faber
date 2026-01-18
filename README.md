@@ -130,7 +130,7 @@ Faber uses a consistent `keyword expr VERB name { body }` pattern for scoped con
 | `dum`             | `dum expr { }`                           | —       | while loop     |
 | `si`              | `si expr { }`                            | —       | conditional    |
 | `custodi`         | `custodi { si expr { } }`                | —       | guard clauses  |
-| `elige`           | `elige expr { si val { } }`              | —       | switch         |
+| `elige`           | `elige expr { casu val { } }`              | —       | switch         |
 | `discerne`        | `discerne expr { casu Variant pro x { } }` | `x`     | pattern match  |
 | `in`              | `in expr { }`                            | —       | mutation scope |
 

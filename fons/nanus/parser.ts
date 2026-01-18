@@ -27,7 +27,7 @@ const PRECEDENCE: Record<string, number> = {
     'qua': 9, 'innatum': 9,
 };
 
-const UNARY_OPS = new Set(['-', '!', 'nihil', 'nonnihil', 'positivum']);
+const UNARY_OPS = new Set(['-', '!', 'non', 'nihil', 'nonnihil', 'positivum']);
 const ASSIGN_OPS = new Set(['=', '+=', '-=', '*=', '/=']);
 
 export class Parser {
@@ -73,6 +73,20 @@ export class Parser {
         return new Error(`${loc.linea}:${loc.columna}: ${msg}`);
     }
 
+    // Accept identifier OR keyword as a name (for field names, param names that are keywords)
+    private expectName(): Token {
+        const tok = this.peek();
+        if (tok.tag === 'Identifier' || tok.tag === 'Keyword') {
+            return this.advance();
+        }
+        throw this.error(`expected identifier, got '${tok.valor}'`);
+    }
+
+    private checkName(): boolean {
+        const tok = this.peek();
+        return tok.tag === 'Identifier' || tok.tag === 'Keyword';
+    }
+
     private skipNewlines(): void {
         while (this.match('Newline')) {}
     }
@@ -108,7 +122,16 @@ export class Parser {
                 throw this.error('expected annotation name');
             }
             const anno = this.advance().valor;
-            if (anno === 'publicum' || anno === 'publica') publica = true;
+            if (anno === 'publicum' || anno === 'publica') {
+                publica = true;
+            } else if (anno === 'externa' || anno === 'futura') {
+                // Known simple annotations - just skip
+            } else {
+                // Unknown annotation (optio, etc.) - skip until newline
+                while (!this.check('Newline') && !this.check('EOF') && !this.check('Punctuator', '@')) {
+                    this.advance();
+                }
+            }
             this.skipNewlines();
         }
 
@@ -292,11 +315,17 @@ export class Parser {
             let rest = false;
             if (this.match('Keyword', 'ceteri')) rest = true;
 
+            // Check for optional param: si Type name
+            let optional = false;
+            if (this.match('Keyword', 'si')) {
+                optional = true;
+            }
+
             let typus: Typus | null = null;
             let nomen: string;
 
-            if (this.check('Identifier')) {
-                const first = this.advance().valor;
+            if (this.checkName()) {
+                const first = this.expectName().valor;
 
                 // Check for generic type: Type<T>
                 if (this.match('Operator', '<')) {
@@ -312,15 +341,15 @@ export class Parser {
                         typus = { tag: 'Nullabilis', inner: typus };
                     }
 
-                    nomen = this.expect('Identifier').valor;
+                    nomen = this.expectName().valor;
                 } else if (this.match('Punctuator', '?')) {
                     // Nullable type: Type?
                     typus = { tag: 'Nullabilis', inner: { tag: 'Nomen', nomen: first } };
-                    nomen = this.expect('Identifier').valor;
-                } else if (this.check('Identifier')) {
+                    nomen = this.expectName().valor;
+                } else if (this.checkName()) {
                     // "Type name" pattern
                     typus = { tag: 'Nomen', nomen: first };
-                    nomen = this.advance().valor;
+                    nomen = this.expectName().valor;
                 } else if (this.match('Punctuator', ':')) {
                     // "name: Type" pattern
                     nomen = first;
@@ -331,6 +360,11 @@ export class Parser {
                 }
             } else {
                 throw this.error('expected parameter name');
+            }
+
+            // If optional (si Type name), wrap type in Nullabilis
+            if (optional && typus && typus.tag !== 'Nullabilis') {
+                typus = { tag: 'Nullabilis', inner: typus };
             }
 
             let default_: Expr | null = null;
@@ -395,7 +429,7 @@ export class Parser {
             } else {
                 // Field: Typus nomen, Typus<T> nomen, Typus? nomen, or nomen: Typus
                 const loc = this.peek().locus;
-                const first = this.expect('Identifier').valor;
+                const first = this.expectName().valor;
                 let fieldTypus: Typus;
                 let fieldNomen: string;
 
@@ -413,7 +447,7 @@ export class Parser {
                         fieldTypus = { tag: 'Nullabilis', inner: fieldTypus };
                     }
 
-                    fieldNomen = this.expect('Identifier').valor;
+                    fieldNomen = this.expectName().valor;
                 } else {
                     // Check for nullable: Typus?
                     let nullable = false;
@@ -421,13 +455,13 @@ export class Parser {
                         nullable = true;
                     }
 
-                    if (this.check('Identifier')) {
+                    if (this.checkName()) {
                         // "Typus nomen" or "Typus? nomen" pattern
                         fieldTypus = { tag: 'Nomen', nomen: first };
                         if (nullable) {
                             fieldTypus = { tag: 'Nullabilis', inner: fieldTypus };
                         }
-                        fieldNomen = this.advance().valor;
+                        fieldNomen = this.expectName().valor;
                     } else if (this.match('Punctuator', ':')) {
                         fieldNomen = first;
                         fieldTypus = this.parseTypus();
@@ -507,6 +541,7 @@ export class Parser {
                 this.advance(); // number or string
             }
             membra.push({ locus: loc, nomen: name, valor });
+            this.match('Punctuator', ','); // optional trailing comma
             this.skipNewlines();
         }
 
@@ -540,7 +575,7 @@ export class Parser {
                 this.skipNewlines();
                 while (!this.check('Punctuator', '}') && !this.check('EOF')) {
                     // Typus nomen, Typus<T> nomen, Typus? nomen patterns
-                    const typNomen = this.expect('Identifier').valor;
+                    const typNomen = this.expectName().valor;
                     let fieldTypus: Typus;
 
                     if (this.match('Operator', '<')) {
@@ -558,7 +593,7 @@ export class Parser {
                         fieldTypus = { tag: 'Nullabilis', inner: fieldTypus };
                     }
 
-                    const fieldNomen = this.expect('Identifier').valor;
+                    const fieldNomen = this.expectName().valor;
                     campi.push({ nomen: fieldNomen, typus: fieldTypus });
                     this.skipNewlines();
                 }
@@ -589,11 +624,19 @@ export class Parser {
     private parseSi(): Stmt {
         const locus = this.peek().locus;
         this.expect('Keyword', 'si');
+        return this.parseSiBody(locus);
+    }
+
+    private parseSiBody(locus: Locus): Stmt {
         const cond = this.parseExpr();
         const cons = this.parseMassa();
         let alt: Stmt | null = null;
         this.skipNewlines();
-        if (this.match('Keyword', 'secus')) {
+        if (this.match('Keyword', 'sin')) {
+            // sin = else-if shorthand - parse body directly without 'si'
+            const sinLocus = this.peek().locus;
+            alt = this.parseSiBody(sinLocus);
+        } else if (this.match('Keyword', 'secus')) {
             this.skipNewlines();
             if (this.check('Keyword', 'si')) {
                 alt = this.parseSi();
@@ -634,12 +677,31 @@ export class Parser {
 
         while (!this.check('Punctuator', '}') && !this.check('EOF')) {
             if (this.match('Keyword', 'ceterum')) {
-                default_ = this.parseMassa();
+                // ceterum { ... } or ceterum reddit expr
+                if (this.check('Punctuator', '{')) {
+                    default_ = this.parseMassa();
+                } else if (this.match('Keyword', 'reddit')) {
+                    const redLoc = this.peek().locus;
+                    const valor = this.parseExpr();
+                    default_ = { tag: 'Massa', locus: redLoc, corpus: [{ tag: 'Redde', locus: redLoc, valor }] };
+                } else {
+                    throw this.error('expected { or reddit after ceterum');
+                }
             } else {
-                this.expect('Keyword', 'si');
+                this.expect('Keyword', 'casu');
                 const loc = this.peek().locus;
                 const cond = this.parseExpr();
-                const corpus = this.parseMassa();
+                // casu cond { ... } or casu cond reddit expr
+                let corpus: Stmt;
+                if (this.check('Punctuator', '{')) {
+                    corpus = this.parseMassa();
+                } else if (this.match('Keyword', 'reddit')) {
+                    const redLoc = this.peek().locus;
+                    const valor = this.parseExpr();
+                    corpus = { tag: 'Massa', locus: redLoc, corpus: [{ tag: 'Redde', locus: redLoc, valor }] };
+                } else {
+                    throw this.error('expected { or reddit after casu condition');
+                }
                 casus.push({ locus: loc, cond, corpus });
             }
             this.skipNewlines();
@@ -662,6 +724,18 @@ export class Parser {
         const casus: DiscerneCasus[] = [];
         while (!this.check('Punctuator', '}') && !this.check('EOF')) {
             const loc = this.peek().locus;
+
+            // ceterum is wildcard/default case
+            if (this.match('Keyword', 'ceterum')) {
+                const patterns: VariansPattern[] = [{
+                    locus: loc, variant: '_', bindings: [], alias: null, wildcard: true
+                }];
+                const corpus = this.parseMassa();
+                casus.push({ locus: loc, patterns, corpus });
+                this.skipNewlines();
+                continue;
+            }
+
             this.expect('Keyword', 'casu');
             const patterns: VariansPattern[] = [];
 
@@ -674,10 +748,10 @@ export class Parser {
                 const wildcard = variant === '_';
 
                 if (this.match('Keyword', 'ut')) {
-                    alias = this.expect('Identifier').valor;
+                    alias = this.expectName().valor;
                 } else if (this.match('Keyword', 'pro') || this.match('Keyword', 'fixum')) {
                     do {
-                        bindings.push(this.expect('Identifier').valor);
+                        bindings.push(this.expectName().valor);
                     } while (this.match('Punctuator', ','));
                 }
 
@@ -964,7 +1038,7 @@ export class Parser {
 
             // Member: expr.prop
             if (this.match('Punctuator', '.')) {
-                const prop: Expr = { tag: 'Littera', locus: this.peek().locus, species: 'Textus', valor: this.expect('Identifier').valor };
+                const prop: Expr = { tag: 'Littera', locus: this.peek().locus, species: 'Textus', valor: this.expectName().valor };
                 expr = { tag: 'Membrum', locus: tok.locus, obj: expr, prop, computed: false, nonNull: false };
                 continue;
             }
@@ -975,7 +1049,7 @@ export class Parser {
                     this.advance(); // !
                     this.advance(); // .
                 }
-                const prop: Expr = { tag: 'Littera', locus: this.peek().locus, species: 'Textus', valor: this.expect('Identifier').valor };
+                const prop: Expr = { tag: 'Littera', locus: this.peek().locus, species: 'Textus', valor: this.expectName().valor };
                 expr = { tag: 'Membrum', locus: tok.locus, obj: expr, prop, computed: false, nonNull: true };
                 continue;
             }
@@ -1034,8 +1108,12 @@ export class Parser {
                         key = this.parseExpr();
                         this.expect('Punctuator', ']');
                         computed = true;
+                    } else if (this.check('Textus')) {
+                        // String key: "name": value
+                        const strKey = this.advance().valor;
+                        key = { tag: 'Littera', locus: loc, species: 'Textus', valor: strKey };
                     } else {
-                        const name = this.expect('Identifier').valor;
+                        const name = this.expectName().valor;
                         key = { tag: 'Littera', locus: loc, species: 'Textus', valor: name };
                     }
 
@@ -1130,8 +1208,7 @@ export class Parser {
             this.expect('Punctuator', ')');
         }
         let init: Expr | null = null;
-        // Handle both "de { ... }" and just "{ ... }" for initializer
-        if (this.match('Keyword', 'de') || this.check('Punctuator', '{')) {
+        if (this.check('Punctuator', '{')) {
             init = this.parsePrimary(); // object literal
         }
         return { tag: 'Novum', locus, callee, args, init };
@@ -1149,7 +1226,7 @@ export class Parser {
             do {
                 this.skipNewlines();
                 const loc = this.peek().locus;
-                const name = this.expect('Identifier').valor;
+                const name = this.expectName().valor;
                 const key: Expr = { tag: 'Littera', locus: loc, species: 'Textus', valor: name };
                 this.expect('Punctuator', ':');
                 const valor = this.parseExpr();

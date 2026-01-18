@@ -21,7 +21,7 @@ const FEATURES: Record<string, string[]> = {
         'importa {}', 'importa *', 'ex..destructura', '[..destructura]',
     ],
     'Control Flow': [
-        'si', 'si..secus', 'si..secus si',
+        'si', 'si..secus', 'si..sin',
         'dum', 'fac', 'fac..dum',
         'ex..fixum', 'ex..varia', 'ex..fixum cede', 'ex..varia cede',
         'de..fixum', 'de..varia', 'de..fixum cede', 'de..varia cede',
@@ -201,7 +201,7 @@ function walkAndCount(node: unknown, counts: Counts): void {
                 const alternans = obj.alternans as unknown;
                 const altTag = alternans && typeof alternans === 'object' ? (alternans as Record<string, unknown>).tag : null;
                 if (!alternans) inc(counts, 'si');
-                else if (altTag === 'SiSententia') inc(counts, 'si..secus si');
+                else if (altTag === 'SiSententia') inc(counts, 'si..sin');
                 else inc(counts, 'si..secus');
                 break;
             }

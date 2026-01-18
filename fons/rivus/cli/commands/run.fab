@@ -54,7 +54,7 @@ functio mandatumCurrere(
     }
 
     # Load manifest sectiones
-    varia lista<SectioAnnotatio>? manifestSectiones = nihil
+    varia manifestSectiones = nihil qua lista<SectioAnnotatio>?
     tempta {
         figendum lectum = loadManifestSectiones(manifestPath)
         manifestSectiones = lectum

@@ -1,28 +1,46 @@
 #!/usr/bin/env bun
 /**
- * Build rivus (bootstrap compiler) from fons/rivus/ using faber.
+ * Build rivus (bootstrap compiler) from fons/rivus/ using faber or nanus.
  *
- * Uses opus/bin/faber to compile all .fab files in parallel.
- * Output is TypeScript (faber is TS-only; for other targets, use rivus).
+ * Uses the specified compiler to compile all .fab files in parallel.
+ * Output is TypeScript (both compilers emit TS).
  *
- * Requires: bun run build --no-rivus (to build faber first)
+ * Requires: bun run build:faber (or build:nanus) first
  *
  * Usage:
  *   bun scripta/build-rivus.ts
- *   bun scripta/build-rivus.ts --no-typecheck
+ *   bun scripta/build-rivus.ts -c nanus
+ *   bun scripta/build-rivus.ts -c faber --no-typecheck
  */
-
-const SKIP_TYPECHECK = process.argv.includes('--no-typecheck');
 
 import { Glob } from 'bun';
 import { mkdir, symlink, unlink } from 'fs/promises';
 import { dirname, join, relative } from 'path';
 import { $ } from 'bun';
 
+// Parse arguments
+let compiler: 'faber' | 'nanus' = 'faber';
+let skipTypecheck = false;
+
+const args = process.argv.slice(2);
+for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '-c' || arg === '--compiler') {
+        const c = args[++i];
+        if (c !== 'faber' && c !== 'nanus') {
+            console.error(`Unknown compiler '${c}'. Valid: faber, nanus`);
+            process.exit(1);
+        }
+        compiler = c;
+    } else if (arg === '--no-typecheck') {
+        skipTypecheck = true;
+    }
+}
+
 const ROOT = join(import.meta.dir, '..');
 const SOURCE = join(ROOT, 'fons', 'rivus');
 const OUTPUT = join(ROOT, 'opus', 'rivus-ts', 'fons');
-const FABER_BIN = join(ROOT, 'opus', 'bin', 'faber');
+const COMPILER_BIN = join(ROOT, 'opus', 'bin', compiler);
 
 interface CompileResult {
     file: string;
@@ -37,7 +55,7 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
     try {
         await mkdir(dirname(outPath), { recursive: true });
 
-        const result = await $`${FABER_BIN} compile ${fabPath} -o ${outPath} --strip-tests`.nothrow().quiet();
+        const result = await $`${COMPILER_BIN} compile ${fabPath} -o ${outPath}`.nothrow().quiet();
 
         if (result.exitCode !== 0) {
             const stderr = result.stderr.toString().trim();
@@ -114,12 +132,14 @@ async function buildExecutable(): Promise<void> {
 async function main() {
     const start = performance.now();
 
-    // Check faber binary exists
-    if (!await Bun.file(FABER_BIN).exists()) {
-        console.error('Error: faber binary not found at opus/bin/faber');
-        console.error('Run `bun run build --no-rivus` first to build faber.');
+    // Check compiler binary exists
+    if (!await Bun.file(COMPILER_BIN).exists()) {
+        console.error(`Error: ${compiler} binary not found at opus/bin/${compiler}`);
+        console.error(`Run \`bun run build:${compiler}\` first.`);
         process.exit(1);
     }
+
+    console.log(`Using compiler: ${compiler}`);
 
     // Find all .fab files
     const glob = new Glob('**/*.fab');
@@ -152,7 +172,7 @@ async function main() {
     await copyHalImplementations();
 
     // Type check (TypeScript only)
-    if (!SKIP_TYPECHECK) {
+    if (!skipTypecheck) {
         console.log('Type checking...');
         const tcOk = await typeCheck();
         if (!tcOk) {

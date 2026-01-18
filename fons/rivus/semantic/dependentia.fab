@@ -126,12 +126,12 @@ genus GithubReferentia {
 @ publica
 functio pangeGithubFontem(textus fons) -> GithubReferentia? {
     # Split on # to get ref (default to "main")
-    fixum lista<textus> partesHash = fons.divide("#")
+    fixum partesHash = fons.divide("#")
     fixum viaRepo = partesHash[0]
     fixum ref = partesHash.longitudo() > 1 sic partesHash[1] secus "main"
 
     # Split repo path on /
-    fixum lista<textus> partesSlash = viaRepo.divide("/")
+    fixum partesSlash = viaRepo.divide("/")
     si partesSlash.longitudo() != 2 { redde nihil }
 
     redde novum GithubReferentia {

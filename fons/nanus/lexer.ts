@@ -17,17 +17,17 @@ const KEYWORDS = new Set([
     // Modifiers
     'publica', 'privata', 'protecta', 'asynca', 'generis', 'implet', 'sub',
     // Control flow
-    'si', 'secus', 'dum', 'fac', 'elige', 'casu', 'discerne', 'custodi',
+    'si', 'sin', 'secus', 'dum', 'fac', 'elige', 'casu', 'ceterum', 'discerne', 'custodi',
     'de', 'pro', 'omnia',
     // Actions
-    'redde', 'rumpe', 'perge', 'iace', 'mori', 'tempta', 'cape', 'demum',
+    'redde', 'reddit', 'rumpe', 'perge', 'iace', 'mori', 'tempta', 'cape', 'demum',
     'scribe', 'vide', 'mone', 'adfirma',
     // Expressions
     'cede', 'novum', 'clausura', 'qua', 'innatum', 'finge',
     'sic', 'scriptum',
     // Operators (word-form)
     'et', 'aut', 'vel', 'inter', 'intra',
-    'nihil', 'nonnihil', 'positivum',
+    'non', 'nihil', 'nonnihil', 'positivum',
     // Literals
     'verum', 'falsum',
     // Entry
@@ -37,7 +37,7 @@ const KEYWORDS = new Set([
     // Type
     'usque',
     // Annotations
-    'publicum',
+    'publicum', 'externa',
 ]);
 
 const PUNCTUATORS = new Set([

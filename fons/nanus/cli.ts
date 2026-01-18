@@ -2,19 +2,42 @@
 /**
  * NANUS - Minimal Faber Compiler
  *
- * CLI entry point for testing and development.
+ * CLI with faber-compatible interface for bootstrapping rivus.
  *
  * Usage:
- *   nanus <file.fab>           Compile to stdout
- *   nanus <file.fab> -o out.ts Compile to file
- *   echo "..." | nanus         Compile from stdin
+ *   nanus compile <file.fab>           Compile to stdout
+ *   nanus compile <file.fab> -o out.ts Compile to file
+ *   echo "..." | nanus compile         Compile from stdin
  */
 
 import { compile } from './index';
 
+function showHelp() {
+    console.log('nanus - Minimal Faber compiler');
+    console.log('Compiles the Faber subset needed to bootstrap rivus.');
+    console.log('');
+    console.log('Usage:');
+    console.log('  nanus <command> <file> [options]');
+    console.log('');
+    console.log('Commands:');
+    console.log('  emit, compile <file>   Emit .fab file as TypeScript');
+    console.log('');
+    console.log('Options:');
+    console.log('  -o, --output <file>    Output file (default: stdout)');
+    console.log('  -h, --help             Show this help');
+    console.log('');
+    console.log('Reads from stdin if no file specified (or use \'-\' explicitly).');
+}
+
 async function main() {
     const args = process.argv.slice(2);
 
+    if (args.length === 0 || args.includes('-h') || args.includes('--help')) {
+        showHelp();
+        process.exit(0);
+    }
+
+    let command: string | undefined;
     let input: string | undefined;
     let output: string | undefined;
     let filename = '<stdin>';
@@ -24,20 +47,26 @@ async function main() {
         if (arg === '-o' || arg === '--output') {
             output = args[++i];
         } else if (arg === '-h' || arg === '--help') {
-            console.log('Usage: nanus [options] [file.fab]');
-            console.log('');
-            console.log('Options:');
-            console.log('  -o, --output <file>  Output file (default: stdout)');
-            console.log('  -h, --help           Show this help');
+            showHelp();
             process.exit(0);
-        } else if (!arg.startsWith('-')) {
+        } else if (arg.startsWith('-')) {
+            // Ignore unknown flags for forward compatibility
+        } else if (!command) {
+            command = arg;
+        } else if (!input) {
             input = arg;
             filename = arg;
         }
     }
 
+    if (!command || (command !== 'emit' && command !== 'compile')) {
+        console.error(`Unknown command: ${command ?? '(none)'}`);
+        console.error('Use --help for usage.');
+        process.exit(1);
+    }
+
     let source: string;
-    if (input) {
+    if (input && input !== '-') {
         source = await Bun.file(input).text();
     } else {
         // Read from stdin

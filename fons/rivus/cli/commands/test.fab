@@ -83,7 +83,7 @@ functio testCommand(
     figendum source = hauriSource(input)
 
     # Collect errors for potential JSON output
-    varia lista<tabula<textus, ignotum>> errores = [] innatum lista<tabula<textus, ignotum>>
+    varia errores = [] innatum lista<tabula<textus, ignotum>>
 
     # Lexical analysis
     fixum lexResult = lexare(source)
