@@ -37,20 +37,12 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
     const outPath = join(ARTIFEX_DIR, relPath.replace(/\.fab$/, '.ts'));
 
     try {
-        const source = await Bun.file(fabPath).text();
+        await mkdir(dirname(outPath), { recursive: true });
 
-        // rivus expects: first line = file path, rest = source
-        const input = `${fabPath}\n${source}`;
-
-        // Run rivus
-        const proc = Bun.spawn([RIVUS_BIN], {
-            stdin: 'pipe',
+        const proc = Bun.spawn([RIVUS_BIN, 'emit', '--input', fabPath, '-o', outPath, '--strip-tests'], {
             stdout: 'pipe',
             stderr: 'pipe',
         });
-
-        proc.stdin.write(input);
-        proc.stdin.end();
 
         const exitCode = await proc.exited;
         const stderr = await new Response(proc.stderr).text();
@@ -58,11 +50,6 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
         if (exitCode !== 0 || stderr.trim()) {
             throw new Error(stderr || `Exit code ${exitCode}`);
         }
-
-        const output = await new Response(proc.stdout).text();
-
-        await mkdir(dirname(outPath), { recursive: true });
-        await Bun.write(outPath, output);
 
         return { file: relPath, success: true };
     }
