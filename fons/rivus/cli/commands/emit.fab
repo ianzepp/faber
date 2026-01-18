@@ -26,7 +26,7 @@
 § ex "../../../norma/hal/consolum" importa consolum
 § ex "../../../norma/hal/json" importa json
 
-§ ex "../auxilium" importa hauriSource, nomenOstende, validaInput
+§ ex "../auxilium" importa hauriSource, nomenOstende, validaInput, loadManifestSectiones
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # EMIT COMMAND
@@ -39,6 +39,7 @@ functio emitCommand(
     si textus target,
     si textus output,
     si textus include,
+    si textus manifest,
     si textus stdinFilename,
     si bivalens jsonOutput,
     si bivalens dryRun,
@@ -130,9 +131,12 @@ functio emitCommand(
         redde 1
     }
 
+    # Load manifest sectiones if provided
+    figendum manifestSectiones = loadManifestSectiones(manifest)
+
     # Semantic analysis
     fixum viaIngressus = input != "-" sic solum.absolve(input) secus nihil
-    fixum semResult = analyze(parseResult.programma qua Programma, viaIngressus)
+    fixum semResult = analyze(parseResult.programma qua Programma, viaIngressus, manifestSectiones)
 
     si positivum semResult.errores.longitudo() {
         si jsonOutput {

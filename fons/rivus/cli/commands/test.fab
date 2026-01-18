@@ -144,7 +144,7 @@ functio testCommand(
 
     # Semantic analysis
     fixum viaIngressus = input != "-" sic solum.absolve(input) secus nihil
-    fixum semResult = analyze(parseResult.programma qua Programma, viaIngressus)
+    fixum semResult = analyze(parseResult.programma qua Programma, viaIngressus, nihil)
 
     si positivum semResult.errores.longitudo() {
         si jsonOutput {

@@ -10,6 +10,10 @@
 § ex "../../norma/hal/solum" importa solum
 § ex "../../norma/hal/consolum" importa consolum
 
+§ ex "../lexor/index" importa lexare
+§ ex "../parser/index" importa resolvere
+§ ex "../ast/radix" importa SectioAnnotatio
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # INPUT HANDLING
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -92,6 +96,43 @@ functio validaInput(textus inputFile) -> bivalens {
         redde verum
     }
     redde solum.exstat(inputFile)
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MANIFEST LOADING
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Load sectiones from a manifest file (faber.fab)
+# Returns nihil if no manifest path provided
+# Throws on file not found or parse errors
+@ publica
+@ futura
+functio loadManifestSectiones(textus? manifestPath) -> lista<SectioAnnotatio>? {
+    si nihil manifestPath { redde nihil }
+
+    si non solum.exstat(manifestPath) {
+        iace novum Error(scriptum("Manifest not found: §", manifestPath))
+    }
+
+    figendum content = solum.lege(manifestPath)
+
+    fixum lexResult = lexare(content)
+    si positivum lexResult.errores.longitudo() {
+        fixum msg = lexResult.errores[0].textus
+        iace novum Error(scriptum("Manifest lexor error: §", msg))
+    }
+
+    fixum parseResult = resolvere(lexResult.symbola)
+    si positivum parseResult.errores.longitudo() {
+        fixum msg = parseResult.errores[0].nuntius
+        iace novum Error(scriptum("Manifest parser error: §", msg))
+    }
+
+    si nihil parseResult.programma {
+        iace novum Error("Failed to parse manifest")
+    }
+
+    redde parseResult.programma.sectiones
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════

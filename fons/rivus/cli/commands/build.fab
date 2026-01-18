@@ -23,14 +23,14 @@
 § ex "../../semantic/index" importa analyze
 § ex "../../semantic/nucleus" importa SemanticResultatum
 § ex "../../codegen/index" importa generate, generateWithStripping
-§ ex "../../ast/radix" importa Programma
+§ ex "../../ast/radix" importa Programma, SectioAnnotatio
 
 § ex "../../../norma/hal/solum" importa solum
 § ex "../../../norma/hal/processus" importa processus
 § ex "../../../norma/hal/consolum" importa consolum
 § ex "../../../norma/hal/json" importa json
 
-§ ex "../auxilium" importa mutaExtensionem, viaRelativa
+§ ex "../auxilium" importa mutaExtensionem, viaRelativa, loadManifestSectiones
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TYPES
@@ -52,7 +52,8 @@ functio compileFile(
     textus filePath,
     textus displayName,
     de lista<tabula<textus, ignotum>> errores,
-    si bivalens jsonOutput
+    si bivalens jsonOutput,
+    si lista<SectioAnnotatio>? manifestSectiones
 ) -> CompileResultatum? {
     figendum source = solum.lege(filePath)
 
@@ -119,7 +120,7 @@ functio compileFile(
     }
 
     # Semantic analysis
-    fixum semResult = analyze(parseResult.programma qua Programma, filePath)
+    fixum semResult = analyze(parseResult.programma qua Programma, filePath, manifestSectiones)
 
     si positivum semResult.errores.longitudo() {
         si jsonOutput {
@@ -159,6 +160,7 @@ functio buildCommand(
     si textus target,
     si textus output,
     si textus include,
+    si textus manifest,
     si bivalens jsonOutput,
     si bivalens dryRun,
     si bivalens listFiles,
@@ -186,8 +188,11 @@ functio buildCommand(
         }
     }
 
+    # Load manifest sectiones if provided
+    figendum manifestSectiones = loadManifestSectiones(manifest)
+
     # Compile entry file
-    figendum entryResult = compileFile(entryPath, input, errores, jsonOutput)
+    figendum entryResult = compileFile(entryPath, input, errores, jsonOutput, manifestSectiones)
 
     si nihil entryResult {
         si jsonOutput {
@@ -214,7 +219,7 @@ functio buildCommand(
     si entryResult.semResult.resolvedModules {
         ex entryResult.semResult.resolvedModules fixum [depPath, depProgram] {
             # Semantic analysis for dependency
-            fixum depAnalysis = analyze(depProgram, depPath)
+            fixum depAnalysis = analyze(depProgram, depPath, manifestSectiones)
 
             si positivum depAnalysis.errores.longitudo() {
                 si jsonOutput {

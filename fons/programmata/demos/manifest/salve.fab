@@ -1,0 +1,11 @@
+# Test file for manifest --dependentia feature
+#
+# Uses norma:solum import which requires the manifest to provide
+# the § dependentia "norma" declaration
+
+§ ex "norma:solum" importa solum
+
+incipit {
+    scribe "Salve, Munde!"
+    scribe solum.cwd()
+}

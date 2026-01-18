@@ -1,0 +1,18 @@
+# faber.fab - Project manifest
+
+# Project metadata
+§ projectum "manifest-demo"
+§ versio "0.1.0"
+§ descriptio "Demo project for testing faber.fab manifest parsing"
+§ auctor "Ian Zepp <ian@zepp.dev>"
+§ licentia "MIT"
+
+# Build configuration
+§ scopum "ts"
+§ fons "src/"
+§ exitus "dist/"
+§ ingressus "main.fab"
+
+# Dependencies
+§ dependentia "norma" via "../../../norma/hal"
+incipit {}

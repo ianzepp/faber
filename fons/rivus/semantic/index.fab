@@ -12,7 +12,7 @@
 § ex "./expressia/index" importa resolveExpressia
 § ex "./sententia/index" importa analyzeSententia
 § ex "./sententia/declara" importa resolveTypusAnnotatio
-§ ex "../ast/radix" importa Programma
+§ ex "../ast/radix" importa Programma, SectioAnnotatio
 § ex "../ast/expressia" importa Expressia
 § ex "../ast/sententia" importa Sententia, MorphologiaDeclaratio
 § ex "../ast/typus" importa TypusAnnotatio
@@ -53,12 +53,39 @@ functio novumResolvitor(Analyzator a) -> Resolvitor {
 # MAIN ENTRY POINT
 # ============================================================================
 
+# Merge manifest sectiones with source file sectiones
+# Manifest sectiones come first, source file can override/extend
+functio mergeSectiones(
+    lista<SectioAnnotatio>? manifest,
+    lista<SectioAnnotatio>? source
+) -> lista<SectioAnnotatio> {
+    varia lista<SectioAnnotatio> result = [] innatum lista<SectioAnnotatio>
+
+    si nonnihil manifest {
+        ex manifest pro s { result.adde(s) }
+    }
+
+    si nonnihil source {
+        ex source pro s { result.adde(s) }
+    }
+
+    redde result
+}
+
 # Perform semantic analysis on a program
 # viaIngressus: optional path to the entry file (needed for local import resolution)
+# manifestSectiones: optional sectiones from project manifest (faber.fab)
 @ publica
-functio analyze(Programma programma, textus? viaIngressus) -> SemanticResultatum {
-    # Extract dependency registry from § dependentia annotations
-    fixum dependentiae = extractDependentiae(programma.sectiones)
+functio analyze(
+    Programma programma,
+    textus? viaIngressus,
+    lista<SectioAnnotatio>? manifestSectiones
+) -> SemanticResultatum {
+    # Merge manifest and source sectiones
+    fixum mergedSectiones = mergeSectiones(manifestSectiones, programma.sectiones)
+
+    # Extract dependency registry from merged sectiones
+    fixum dependentiae = extractDependentiae(mergedSectiones)
 
     # Create analyzer state with registry
     fixum a = novumAnalyzator(viaIngressus, dependentiae)

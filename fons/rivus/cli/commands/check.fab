@@ -24,7 +24,7 @@
 § ex "../../../norma/hal/consolum" importa consolum
 § ex "../../../norma/hal/json" importa json
 
-§ ex "../auxilium" importa hauriSource, nomenOstende, validaInput
+§ ex "../auxilium" importa hauriSource, nomenOstende, validaInput, loadManifestSectiones
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CHECK COMMAND
@@ -36,6 +36,7 @@ functio checkCommand(
     textus input,
     si textus output,
     si textus include,
+    si textus manifest,
     si textus stdinFilename,
     si bivalens jsonOutput,
     si bivalens strict
@@ -117,8 +118,11 @@ functio checkCommand(
 
     # Semantic analysis (only if we have a valid AST)
     si nonnihil parseResult.programma {
+        # Load manifest sectiones if provided
+        figendum manifestSectiones = loadManifestSectiones(manifest)
+
         fixum viaIngressus = input != "-" sic solum.absolve(input) secus nihil
-        fixum semResult = analyze(parseResult.programma qua Programma, viaIngressus)
+        fixum semResult = analyze(parseResult.programma qua Programma, viaIngressus, manifestSectiones)
         errorCount = errorCount + semResult.errores.longitudo()
 
         si positivum semResult.errores.longitudo() {

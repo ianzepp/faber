@@ -48,6 +48,7 @@ functio version() -> vacuum {
 @ optio textus target brevis "t" longum "target" descriptio "Target language: ts (default), go"
 @ optio textus output brevis "o" longum "output" descriptio "Output file (default: stdout)"
 @ optio textus include brevis "I" longum "include" descriptio "Add import search path"
+@ optio textus manifest brevis "m" longum "manifest" descriptio "Project manifest file (faber.fab)"
 @ optio textus stdinFilename longum "stdin-filename" descriptio "Filename to use for stdin input"
 @ optio bivalens json longum "json" descriptio "Output errors as JSON"
 @ optio bivalens dryRun longum "dry-run" descriptio "Check without emitting code"
@@ -58,13 +59,14 @@ functio emit(
     si textus target,
     si textus output,
     si textus include,
+    si textus manifest,
     si textus stdinFilename,
     si bivalens json,
     si bivalens dryRun,
     si bivalens stripTests,
     si bivalens stripComments
 ) exitus code -> vacuum {
-    fixum result = cede emitCommand(input, target, output, include, stdinFilename, json, dryRun, stripTests, stripComments)
+    fixum result = cede emitCommand(input, target, output, include, manifest, stdinFilename, json, dryRun, stripTests, stripComments)
     code = result
 }
 
@@ -79,6 +81,7 @@ functio emit(
 @ optio textus target brevis "t" longum "target" descriptio "Target language: ts (default), go"
 @ optio textus output brevis "o" longum "output" descriptio "Output directory (default: ./dist)"
 @ optio textus include brevis "I" longum "include" descriptio "Add import search path"
+@ optio textus manifest brevis "m" longum "manifest" descriptio "Project manifest file (faber.fab)"
 @ optio bivalens json longum "json" descriptio "Output errors as JSON"
 @ optio bivalens dryRun longum "dry-run" descriptio "Check without writing files"
 @ optio bivalens listFiles longum "list-files" descriptio "List files that would be compiled"
@@ -88,12 +91,13 @@ functio build(
     si textus target,
     si textus output,
     si textus include,
+    si textus manifest,
     si bivalens json,
     si bivalens dryRun,
     si bivalens listFiles,
     si bivalens stripComments
 ) exitus code -> vacuum {
-    fixum result = cede buildCommand(input, target, output, include, json, dryRun, listFiles, stripComments)
+    fixum result = cede buildCommand(input, target, output, include, manifest, json, dryRun, listFiles, stripComments)
     code = result
 }
 
@@ -128,6 +132,7 @@ functio parse(
 @ futura
 @ optio textus output brevis "o" longum "output" descriptio "Write error report to file"
 @ optio textus include brevis "I" longum "include" descriptio "Add import search path"
+@ optio textus manifest brevis "m" longum "manifest" descriptio "Project manifest file (faber.fab)"
 @ optio textus stdinFilename longum "stdin-filename" descriptio "Filename to use for stdin input"
 @ optio bivalens json longum "json" descriptio "Output errors as JSON"
 @ optio bivalens strict longum "strict" descriptio "Enable all strict checks"
@@ -135,11 +140,12 @@ functio check(
     textus input,
     si textus output,
     si textus include,
+    si textus manifest,
     si textus stdinFilename,
     si bivalens json,
     si bivalens strict
 ) exitus code -> vacuum {
-    fixum result = cede checkCommand(input, output, include, stdinFilename, json, strict)
+    fixum result = cede checkCommand(input, output, include, manifest, stdinFilename, json, strict)
     code = result
 }
 
