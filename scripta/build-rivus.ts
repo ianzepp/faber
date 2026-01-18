@@ -15,13 +15,13 @@
 const SKIP_TYPECHECK = process.argv.includes('--no-typecheck');
 
 import { Glob } from 'bun';
-import { mkdir } from 'fs/promises';
+import { mkdir, symlink, unlink } from 'fs/promises';
 import { dirname, join, relative } from 'path';
 import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
 const SOURCE = join(ROOT, 'fons', 'rivus');
-const OUTPUT = join(ROOT, 'opus', 'rivus', 'fons', 'ts');
+const OUTPUT = join(ROOT, 'opus', 'rivus-ts', 'fons');
 const FABER_BIN = join(ROOT, 'opus', 'bin', 'faber');
 
 interface CompileResult {
@@ -85,8 +85,8 @@ const _resolve = (basis: string, relativum: string): string => resolve(basis, re
 async function copyHalImplementations(): Promise<void> {
     const halSource = join(ROOT, 'fons', 'norma', 'hal', 'codegen', 'ts');
     // WHY: Imports use ../../../norma/hal from cli/commands/, which resolves
-    // to opus/rivus/fons/norma/hal (not opus/rivus/fons/ts/norma/hal)
-    const halDest = join(ROOT, 'opus', 'rivus', 'fons', 'norma', 'hal');
+    // to opus/rivus-ts/norma/hal (not opus/rivus-ts/fons/norma/hal)
+    const halDest = join(ROOT, 'opus', 'rivus-ts', 'norma', 'hal');
     await mkdir(halDest, { recursive: true });
 
     const glob = new Glob('*.ts');
@@ -101,9 +101,14 @@ async function copyHalImplementations(): Promise<void> {
 async function buildExecutable(): Promise<void> {
     const binDir = join(ROOT, 'opus', 'bin');
     await mkdir(binDir, { recursive: true });
-    const outExe = join(binDir, 'rivus');
+    const outExe = join(binDir, 'rivus-ts');
     await $`bun build ${join(OUTPUT, 'cli.ts')} --compile --outfile=${outExe}`.quiet();
     await $`bash -c 'rm -f .*.bun-build 2>/dev/null || true'`.quiet();
+
+    // Create backward-compat symlink: rivus -> rivus-ts
+    const symlinkPath = join(binDir, 'rivus');
+    try { await unlink(symlinkPath); } catch { /* ignore */ }
+    await symlink('rivus-ts', symlinkPath);
 }
 
 async function main() {
@@ -161,7 +166,7 @@ async function main() {
 
     console.log('Building rivus executable...');
     await buildExecutable();
-    console.log('Built opus/bin/rivus');
+    console.log('Built opus/bin/rivus-ts');
 }
 
 main().catch(err => {
