@@ -1,0 +1,77 @@
+# RIVUS - Minimal Bootstrap Compiler Entry Point
+#
+# This is a stripped-down entry point for nanus compilation.
+# No norma/hal dependencies - uses Bun APIs directly.
+#
+# Usage:
+#   rivus lex hello.fab      # tokenize and dump tokens
+#   rivus parse hello.fab    # parse and dump AST
+#   rivus emit hello.fab     # compile to TypeScript
+
+§ ex "./lexor/index" importa lexare
+§ ex "./parser/index" importa resolvere
+§ ex "./codegen/index" importa generate
+§ ex "./semantic/index" importa analyze
+
+# Bun globals (declared as external)
+@ externa
+fixum ignotum Bun
+
+@ externa
+fixum ignotum process
+
+@ externa
+fixum ignotum console
+
+incipiet {
+    fixum args = process.argv.sectio(2) qua lista<textus>
+
+    si args.longitudo() == 0 {
+        console.log("Usage: rivus <command> <file>")
+        console.log("Commands: lex, parse, emit")
+        process.exit(0)
+    }
+
+    fixum command = args[0]
+    fixum file = args[1]
+
+    si nihil file {
+        console.error("Error: no input file")
+        process.exit(1)
+    }
+
+    # Read source file
+    fixum source = cede Bun.file(file).text() qua textus
+    fixum filename = file
+
+    elige command {
+        casu "lex" {
+            fixum tokens = lexare(source, filename)
+            console.log(JSON.stringify(tokens, nihil, 2))
+        }
+
+        casu "parse" {
+            fixum programma = resolvere(source, filename)
+            console.log(JSON.stringify(programma, nihil, 2))
+        }
+
+        casu "emit" {
+            fixum programma = resolvere(source, filename)
+            fixum result = analyze(programma)
+
+            si result.errores.longitudo() > 0 {
+                ex result.errores fixum err {
+                    console.error(scriptum("§:§:§: §", err.locus.file, err.locus.line, err.locus.column, err.nuntius))
+                }
+            }
+
+            fixum output = generate(programma, "ts")
+            console.log(output)
+        }
+
+        ceterum {
+            console.error(scriptum("Unknown command: §", command))
+            process.exit(1)
+        }
+    }
+}

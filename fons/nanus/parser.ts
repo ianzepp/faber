@@ -110,6 +110,7 @@ export class Parser {
         // Annotations
         let publica = false;
         let futura = false;
+        let externa = false;
         while (this.match('Punctuator', '@')) {
             // Annotation name can be identifier or keyword
             const tok = this.peek();
@@ -122,7 +123,7 @@ export class Parser {
             } else if (anno === 'futura') {
                 futura = true;
             } else if (anno === 'externa') {
-                // Known simple annotation - just skip
+                externa = true;
             } else {
                 // Unknown annotation (optio, etc.) - skip until next annotation or declaration
                 while (!this.check('EOF') && !this.check('Punctuator', '@') && !this.check('Punctuator', '§') && !this.isDeclarationKeyword()) {
@@ -144,7 +145,7 @@ export class Parser {
                 case 'varia':
                 case 'fixum':
                 case 'figendum':
-                    return this.parseVaria(publica);
+                    return this.parseVaria(publica, externa);
                 case 'ex':
                     return this.parseExStmt(publica);
                 case 'functio':
@@ -187,6 +188,7 @@ export class Parser {
                 case 'perge':
                     return this.parsePerge();
                 case 'incipit':
+                case 'incipiet':
                     return this.parseIncipit();
                 case 'probandum':
                     return this.parseProbandum();
@@ -225,7 +227,7 @@ export class Parser {
         return { tag: 'Importa', locus, fons, specs, totum: false, alias: null };
     }
 
-    private parseVaria(publica: boolean): Stmt {
+    private parseVaria(publica: boolean, externa: boolean = false): Stmt {
         const locus = this.peek().locus;
         const kw = this.advance().valor;
         const species: VariaSpecies = kw === 'varia' ? 'Varia' : kw === 'figendum' ? 'Figendum' : 'Fixum';
@@ -276,7 +278,7 @@ export class Parser {
             valor = this.parseExpr();
         }
         this.expectNewline();
-        return { tag: 'Varia', locus, species, nomen, typus, valor, publica };
+        return { tag: 'Varia', locus, species, nomen, typus, valor, publica, externa };
     }
 
     private parseExStmt(publica: boolean): Stmt {
@@ -972,9 +974,10 @@ export class Parser {
 
     private parseIncipit(): Stmt {
         const locus = this.peek().locus;
-        this.expect('Keyword', 'incipit');
+        const kw = this.advance().valor; // consume incipit or incipiet
+        const asynca = kw === 'incipiet';
         const corpus = this.parseMassa();
-        return { tag: 'Incipit', locus, corpus };
+        return { tag: 'Incipit', locus, corpus, asynca };
     }
 
     private parseProbandum(): Stmt {

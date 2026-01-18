@@ -13,17 +13,17 @@
 #
 # ═══════════════════════════════════════════════════════════════════════════════
 
-§ ex "../../lexor/index" importa lexare
-§ ex "../../parser/index" importa resolvere
-§ ex "../../semantic/index" importa analyze
-§ ex "../../semantic/scriptum" importa extractScripta, nominaScriptorum, Scriptum
-§ ex "../../codegen/index" importa generate
-§ ex "../../ast/radix" importa Programma, SectioAnnotatio
+§ ex "../rivus/lexor/index" importa lexare
+§ ex "../rivus/parser/index" importa resolvere
+§ ex "../rivus/semantic/index" importa analyze
+§ ex "../rivus/semantic/scriptum" importa extractScripta, nominaScriptorum, Scriptum
+§ ex "../rivus/codegen/index" importa generate
+§ ex "../rivus/ast/radix" importa Programma, SectioAnnotatio
 
-§ ex "../../../norma/hal/solum" importa solum
-§ ex "../../../norma/hal/consolum" importa consolum
-§ ex "../../../norma/hal/json" importa json
-§ ex "../../../norma/hal/processus" importa processus
+§ ex "../../norma/hal/solum" importa solum
+§ ex "../../norma/hal/consolum" importa consolum
+§ ex "../../norma/hal/json" importa json
+§ ex "../../norma/hal/processus" importa processus
 
 § ex "../auxilium" importa loadManifestSectiones
 

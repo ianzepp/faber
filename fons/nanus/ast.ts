@@ -78,7 +78,7 @@ export interface ObiectumProp {
 export type Stmt =
     | { tag: 'Massa'; locus: Locus; corpus: Stmt[] }
     | { tag: 'Expressia'; locus: Locus; expr: Expr }
-    | { tag: 'Varia'; locus: Locus; species: VariaSpecies; nomen: string; typus: Typus | null; valor: Expr | null; publica: boolean }
+    | { tag: 'Varia'; locus: Locus; species: VariaSpecies; nomen: string; typus: Typus | null; valor: Expr | null; publica: boolean; externa: boolean }
     | { tag: 'Functio'; locus: Locus; nomen: string; params: Param[]; typusReditus: Typus | null; corpus: Stmt | null; asynca: boolean; publica: boolean; generics: string[] }
     | { tag: 'Genus'; locus: Locus; nomen: string; campi: CampusDecl[]; methodi: Stmt[]; implet: string[]; generics: string[]; publica: boolean }
     | { tag: 'Pactum'; locus: Locus; nomen: string; methodi: PactumMethodus[]; generics: string[]; publica: boolean }
@@ -99,7 +99,7 @@ export type Stmt =
     | { tag: 'Adfirma'; locus: Locus; cond: Expr; msg: Expr | null }
     | { tag: 'Rumpe'; locus: Locus }
     | { tag: 'Perge'; locus: Locus }
-    | { tag: 'Incipit'; locus: Locus; corpus: Stmt }
+    | { tag: 'Incipit'; locus: Locus; corpus: Stmt; asynca: boolean }
     | { tag: 'Probandum'; locus: Locus; nomen: string; corpus: Stmt[] }
     | { tag: 'Proba'; locus: Locus; nomen: string; corpus: Stmt };
 

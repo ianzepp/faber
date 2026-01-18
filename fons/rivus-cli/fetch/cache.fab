@@ -5,9 +5,9 @@
 #   - Removing cached dependencies
 #   - Clearing entire cache
 
-§ ex "../../../norma/hal/solum" importa solum
-§ ex "../../../norma/hal/processus" importa processus
-§ ex "../../semantic/dependentia" importa radixCachei, viaCachei
+§ ex "../../norma/hal/solum" importa solum
+§ ex "../../norma/hal/processus" importa processus
+§ ex "../rivus/semantic/dependentia" importa radixCachei, viaCachei
 
 # ============================================================================
 # CACHE WRITE OPERATIONS

@@ -29,6 +29,58 @@ const UNARY_OPS: Record<string, string> = {
     'positivum': '+',  // positivum x → +x (to number)
 };
 
+// Method/property name translations from norma (Faber → TypeScript)
+const METHOD_MAP: Record<string, string> = {
+    // lista (Array)
+    'adde': 'push',
+    'praepone': 'unshift',
+    'remove': 'pop',
+    'decapita': 'shift',
+    'coniunge': 'join',
+    'continet': 'includes',
+    'indiceDe': 'indexOf',
+    'inveni': 'find',
+    'inveniIndicem': 'findIndex',
+    'omnes': 'every',
+    'aliquis': 'some',
+    'filtrata': 'filter',
+    'mappata': 'map',
+    'explanata': 'flatMap',
+    'plana': 'flat',
+    'sectio': 'slice',
+    'reducta': 'reduce',
+    'perambula': 'forEach',
+    'inverte': 'reverse',
+    'ordina': 'sort',
+    // tabula (Map)
+    'pone': 'set',
+    'accipe': 'get',
+    'habet': 'has',
+    'dele': 'delete',
+    'purga': 'clear',
+    'claves': 'keys',
+    'valores': 'values',
+    'paria': 'entries',
+    // textus (string)
+    'initium': 'startsWith',
+    'finis': 'endsWith',
+    'maiuscula': 'toUpperCase',
+    'minuscula': 'toLowerCase',
+    'recide': 'trim',
+    'divide': 'split',
+    'muta': 'replaceAll',
+    // copia (Set)  - adde→add for Set, but push for Array; we use push as default
+    // Properties (not methods, but accessed the same way)
+    'longitudo': 'length',
+};
+
+// Properties that should NOT be called as methods (emit without parentheses)
+const PROPERTY_ONLY: Set<string> = new Set([
+    'longitudo',  // .length (arrays, strings)
+    'primus',     // [0] (first element)
+    'ultimus',    // .at(-1) (last element)
+]);
+
 export function emit(mod: Modulus): string {
     const lines: string[] = [];
 
@@ -48,11 +100,12 @@ function emitStmt(stmt: Stmt, indent = ''): string {
             return `${indent}${emitExpr(stmt.expr)};`;
 
         case 'Varia': {
+            const decl = stmt.externa ? 'declare ' : '';
             const kw = stmt.species === 'Varia' ? 'let' : 'const';
             const typ = stmt.typus ? `: ${emitTypus(stmt.typus)}` : '';
-            const val = stmt.valor ? ` = ${emitExpr(stmt.valor)}` : '';
+            const val = stmt.valor && !stmt.externa ? ` = ${emitExpr(stmt.valor)}` : '';
             const exp = stmt.publica ? 'export ' : '';
-            return `${indent}${exp}${kw} ${stmt.nomen}${typ}${val};`;
+            return `${indent}${exp}${decl}${kw} ${stmt.nomen}${typ}${val};`;
         }
 
         case 'Functio': {
@@ -271,9 +324,11 @@ function emitStmt(stmt: Stmt, indent = ''): string {
         case 'Perge':
             return `${indent}continue;`;
 
-        case 'Incipit':
-            // Entry point → IIFE
-            return `${indent}(function() ${emitStmt(stmt.corpus, indent)})();`;
+        case 'Incipit': {
+            // Entry point → IIFE (sync or async)
+            const async = stmt.asynca ? 'async ' : '';
+            return `${indent}(${async}function() ${emitStmt(stmt.corpus, indent)})();`;
+        }
 
         case 'Probandum': {
             const lines: string[] = [];
@@ -332,6 +387,14 @@ function emitExpr(expr: Expr): string {
             return `(${emitExpr(expr.cond)} ? ${emitExpr(expr.cons)} : ${emitExpr(expr.alt)})`;
 
         case 'Vocatio': {
+            // Check if callee is a property-only access (e.g., .longitudo() → .length)
+            if (expr.callee.tag === 'Membrum' && !expr.callee.computed) {
+                const propName = expr.callee.prop.tag === 'Littera' ? expr.callee.prop.valor : null;
+                if (propName && PROPERTY_ONLY.has(propName)) {
+                    // Emit as property access, not method call
+                    return emitExpr(expr.callee);
+                }
+            }
             const args = expr.args.map(emitExpr).join(', ');
             return `${emitExpr(expr.callee)}(${args})`;
         }
@@ -341,7 +404,16 @@ function emitExpr(expr: Expr): string {
             if (expr.computed) {
                 return `${obj}[${emitExpr(expr.prop)}]`;
             }
-            const prop = expr.prop.tag === 'Littera' ? expr.prop.valor : emitExpr(expr.prop);
+            let prop = expr.prop.tag === 'Littera' ? expr.prop.valor : emitExpr(expr.prop);
+            // Special property translations (templates)
+            if (prop === 'primus') {
+                return `${obj}[0]`;
+            }
+            if (prop === 'ultimus') {
+                return `${obj}.at(-1)`;
+            }
+            // Translate method/property names via norma
+            prop = METHOD_MAP[prop] ?? prop;
             const access = expr.nonNull ? '!.' : '.';
             return `${obj}${access}${prop}`;
         }
@@ -464,12 +536,15 @@ function mapTypeName(name: string): string {
         'fractus': 'number',
         'bivalens': 'boolean',
         'nihil': 'null',
+        'vacuum': 'void',
         'vacuus': 'void',
         'ignotum': 'unknown',
         'quodlibet': 'any',
+        'quidlibet': 'any',
         'lista': 'Array',
         'tabula': 'Map',
         'collectio': 'Set',
+        'copia': 'Set',
     };
     return MAP[name] ?? name;
 }

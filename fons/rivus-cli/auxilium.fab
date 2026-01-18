@@ -10,9 +10,9 @@
 § ex "../../norma/hal/solum" importa solum
 § ex "../../norma/hal/consolum" importa consolum
 
-§ ex "../lexor/index" importa lexare
-§ ex "../parser/index" importa resolvere
-§ ex "../ast/radix" importa SectioAnnotatio
+§ ex "../rivus/lexor/index" importa lexare
+§ ex "../rivus/parser/index" importa resolvere
+§ ex "../rivus/ast/radix" importa SectioAnnotatio
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # INPUT HANDLING

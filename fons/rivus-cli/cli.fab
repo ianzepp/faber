@@ -16,13 +16,13 @@
 fixum ignotum process
 
 # Command implementations
-§ ex "./cli/commands/emit" importa emitCommand
-§ ex "./cli/commands/build" importa buildCommand
-§ ex "./cli/commands/parse" importa parseCommand
-§ ex "./cli/commands/check" importa checkCommand
-§ ex "./cli/commands/test" importa testCommand
-§ ex "./cli/commands/fetch" importa mandatumArcessere
-§ ex "./cli/commands/run" importa mandatumCurrere
+§ ex "./commands/emit" importa emitCommand
+§ ex "./commands/build" importa buildCommand
+§ ex "./commands/parse" importa parseCommand
+§ ex "./commands/check" importa checkCommand
+§ ex "./commands/test" importa testCommand
+§ ex "./commands/fetch" importa mandatumArcessere
+§ ex "./commands/run" importa mandatumCurrere
 
 fixum VERSION = "0.1.0"
 

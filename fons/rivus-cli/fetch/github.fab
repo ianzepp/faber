@@ -4,10 +4,10 @@
 #   - Resolving refs (branches, tags) to commit SHAs via GitHub API
 #   - Downloading tarballs
 
-§ ex "../../../norma/hal/caelum" importa caelum
-§ ex "../../../norma/hal/solum" importa solum
-§ ex "../../../norma/hal/processus" importa processus
-§ ex "../../semantic/dependentia" importa GithubReferentia
+§ ex "../../norma/hal/caelum" importa caelum
+§ ex "../../norma/hal/solum" importa solum
+§ ex "../../norma/hal/processus" importa processus
+§ ex "../rivus/semantic/dependentia" importa GithubReferentia
 
 # ============================================================================
 # API CALLS

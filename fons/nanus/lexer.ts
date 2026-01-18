@@ -29,9 +29,9 @@ const KEYWORDS = new Set([
     'et', 'aut', 'vel', 'inter', 'intra',
     'non', 'nihil', 'nonnihil', 'positivum',
     // Literals
-    'verum', 'falsum',
+    'verum', 'falsum', 'ego',
     // Entry
-    'incipit',
+    'incipit', 'incipiet',
     // Test
     'probandum', 'proba',
     // Type

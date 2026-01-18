@@ -18,17 +18,17 @@
 #
 # ═══════════════════════════════════════════════════════════════════════════════
 
-§ ex "../../lexor/index" importa lexare
-§ ex "../../parser/index" importa resolvere
-§ ex "../../semantic/index" importa analyze
-§ ex "../../semantic/nucleus" importa SemanticResultatum
-§ ex "../../codegen/index" importa generate, generateWithStripping
-§ ex "../../ast/radix" importa Programma, SectioAnnotatio
+§ ex "../rivus/lexor/index" importa lexare
+§ ex "../rivus/parser/index" importa resolvere
+§ ex "../rivus/semantic/index" importa analyze
+§ ex "../rivus/semantic/nucleus" importa SemanticResultatum
+§ ex "../rivus/codegen/index" importa generate, generateWithStripping
+§ ex "../rivus/ast/radix" importa Programma, SectioAnnotatio
 
-§ ex "../../../norma/hal/solum" importa solum
-§ ex "../../../norma/hal/processus" importa processus
-§ ex "../../../norma/hal/consolum" importa consolum
-§ ex "../../../norma/hal/json" importa json
+§ ex "../../norma/hal/solum" importa solum
+§ ex "../../norma/hal/processus" importa processus
+§ ex "../../norma/hal/consolum" importa consolum
+§ ex "../../norma/hal/json" importa json
 
 § ex "../auxilium" importa mutaExtensionem, viaRelativa, loadManifestSectiones
 
