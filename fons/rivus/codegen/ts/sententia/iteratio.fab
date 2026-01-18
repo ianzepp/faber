@@ -36,11 +36,14 @@ functio estTabula(Expressia expr, TsGenerator g) -> bivalens {
 }
 
 @ publica
-functio genIteratio(IteratioGenus species, IteratioVariabilis variabilis, Expressia iterabile, Sententia corpus, bivalens asynca, ignotum cape, TsGenerator g) -> textus {
+functio genIteratio(IteratioGenus species, IteratioVariabilis variabilis, Expressia iterabile, Sententia corpus, bivalens asynca, bivalens mutabilis, ignotum cape, TsGenerator g) -> textus {
     fixum rev = creaTsRevocata()
 
     # Convert IteratioVariabilis to string representation
     fixum varStr = genLoopVariable(variabilis)
+
+    # Determine binding keyword based on mutability
+    fixum bindKeyword = mutabilis sic "let" secus "const"
 
     # Check for range expression - use shared handler (only for simple identifier)
     discerne variabilis {
@@ -94,7 +97,7 @@ functio genIteratio(IteratioGenus species, IteratioVariabilis variabilis, Expres
     fixum body = genSententia(corpus, g)
     g.exiProfundum()
 
-    fixum loop = scriptum("§for §(const § § §) {\n§\n§}", g.ind(), asyncPrefix, varStr, keyword, iterStr, body, g.ind())
+    fixum loop = scriptum("§for §(§ § § §) {\n§\n§}", g.ind(), asyncPrefix, bindKeyword, varStr, keyword, iterStr, body, g.ind())
 
     si nonnihil cape {
         fixum c = cape qua CapeClausula

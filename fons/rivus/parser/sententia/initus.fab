@@ -5,13 +5,15 @@
 # GRAMMAR:
 #   incipitStmt := 'incipit' (block | 'ergo' stmt)
 #   incipietStmt := 'incipiet' (block | 'ergo' stmt)
-#   curaStmt := 'cura' curatorKind? expr? ('pro'|'fit'|'fiet') type? IDENT block ('cape' IDENT block)?
+#   curaStmt := 'cura' curatorKind? expr? ('fixum'|'varia') type? IDENT block ('cape' IDENT block)?
 #   adStmt := 'ad' STRING '(' args ')' binding? block? ('cape' IDENT block)?
 #
 # LATIN VOCABULARY:
 # - incipit = it begins (present tense - sync)
 # - incipiet = it will begin (future tense - async)
 # - cura = care (imperative of curare)
+# - fixum = const binding
+# - varia = mutable binding
 # - ad = to/toward (preposition for dispatch)
 
 § ex "../resolvitor" importa Resolvitor
@@ -156,13 +158,13 @@ functio parseErgoVelReddit(Resolvitor r) -> Sententia? {
 # Parse cura (resource management) statement
 #
 # GRAMMAR:
-#   curaStmt := 'cura' curatorKind? expr? ('pro'|'fit'|'fiet') type? IDENT block ('cape' ...)?
+#   curaStmt := 'cura' curatorKind? expr? ('fixum'|'varia') type? IDENT block ('cape' ...)?
 #   curatorKind := 'arena' | 'pagina'
 #
 # Examples:
 #   cura arena fit mem { ... }
-#   cura aperi("file.txt") -> fd { lege(fd) }
-#   cura connect(url) fiet conn { ... }
+#   cura aperi("file.txt") fit fd { lege(fd) }
+#   cura connect(url) varia conn { ... }
 @ publica
 functio parseCuraSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
@@ -183,23 +185,23 @@ functio parseCuraSententia(Resolvitor r) -> Sententia {
     }
 
     # Parse optional resource expression
-    # Skip if next token starts a binding (pro, fit, fiet) or block
+    # Skip if next token starts a binding (fixum, varia) or block
     varia res = nihil qua Expressia?
-    si non p.probaVerbum("pro") et non p.probaVerbumId(VerbumId.Fit) et non p.probaVerbumId(VerbumId.Fiet) et non p.proba(SymbolumGenus.UncusSin) {
+    si non p.probaVerbum("fixum") et non p.probaVerbum("varia") et non p.proba(SymbolumGenus.UncusSin) {
         res = r.expressia()
     }
 
-    # Parse binding verb: pro, fit, or fiet
-    varia asynca = falsum
+    # Parse binding keyword: fixum (const) or varia (let)
+    varia mutabilis = falsum
     varia hasBinding = falsum
 
-    si p.congruetVerbum("pro") {
+    si p.probaVerbum("varia") {
+        mutabilis = verum
         hasBinding = verum
-    } sin p.congruetVerbumId(VerbumId.Fit) {
+        p.procede()
+    } sin p.probaVerbum("fixum") {
         hasBinding = verum
-    } sin p.congruetVerbumId(VerbumId.Fiet) {
-        asynca = verum
-        hasBinding = verum
+        p.procede()
     }
 
     # Parse optional type and binding name
@@ -235,7 +237,8 @@ functio parseCuraSententia(Resolvitor r) -> Sententia {
         res: res,
         vinculum: vinculum,
         typus: adnotatioTypus,
-        asynca: asynca,
+        asynca: falsum,
+        mutabilis: mutabilis,
         corpus: corpus,
         cape: cape
     } qua Sententia

@@ -6,8 +6,8 @@
 #   siStmt := 'si' expr blockStmt ('secus' 'si' expr blockStmt)* ('secus' blockStmt)?
 #           | 'si' expr blockStmt 'cape' IDENT blockStmt
 #   dumStmt := 'dum' expr blockStmt ('cape' IDENT blockStmt)?
-#   exStmt := 'ex' expr 'pro' IDENT blockStmt ('cape' IDENT blockStmt)?
-#   deStmt := 'de' expr 'pro' IDENT blockStmt ('cape' IDENT blockStmt)?
+#   exStmt := 'ex' expr ('fixum'|'varia') (IDENT | arrayPattern) blockStmt ('cape' IDENT blockStmt)?
+#   deStmt := 'de' expr ('fixum'|'varia') (IDENT | arrayPattern) blockStmt ('cape' IDENT blockStmt)?
 #   inStmt := 'in' expr blockStmt
 #
 # LATIN VOCABULARY:
@@ -18,7 +18,8 @@
 # - ex = from (iterate values)
 # - de = from (iterate keys)
 # - in = into (mutation)
-# - pro = for
+# - fixum = const binding
+# - varia = mutable binding
 # - cape = catch
 
 § ex "../resolvitor" importa Resolvitor
@@ -126,11 +127,11 @@ functio parseDumSententia(Resolvitor r) -> Sententia {
 
 # Parse for-of loop (iterate values)
 #
-# GRAMMAR: exStmt := 'ex' expr 'pro' IDENT blockStmt ('cape' IDENT blockStmt)?
+# GRAMMAR: exStmt := 'ex' expr ('fixum'|'varia') (IDENT | arrayPattern) blockStmt ('cape' IDENT blockStmt)?
 #
 # Examples:
 #   ex items pro item { scribe item }
-#   ex 0 ante 10 pro i { scribe i }
+#   ex 0 ante 10 varia i { scribe i }
 @ publica
 functio parseExSententia(Resolvitor r) -> Sententia {
     fixum p = r.parser()
@@ -142,17 +143,13 @@ functio parseExSententia(Resolvitor r) -> Sententia {
     # Parse iterable expression
     fixum iterabile = r.expressia()
 
-    varia asynca = falsum
-    varia expectaPro = verum
-    si p.probaVerbum("fiet") {
-        asynca = verum
-        expectaPro = falsum
+    # Parse binding keyword: fixum (const) or varia (let)
+    varia mutabilis = falsum
+    si p.probaVerbum("varia") {
+        mutabilis = verum
         p.procede()
-    }
-
-    # Expect 'pro' for sync loops
-    si expectaPro {
-        p.expectaVerbum("pro", ParserErrorCodice.ExpectaturPro)
+    } secus {
+        p.expectaVerbum("fixum", ParserErrorCodice.ExpectaturFixum)
     }
 
     # Parse variable name or array pattern
@@ -180,14 +177,15 @@ functio parseExSententia(Resolvitor r) -> Sententia {
         variabilis: variabilis qua IteratioVariabilis,
         iterabile: iterabile,
         corpus: corpus,
-        asynca: asynca,
+        asynca: falsum,
+        mutabilis: mutabilis,
         cape: cape
     } qua Sententia
 }
 
 # Parse for-in loop (iterate keys)
 #
-# GRAMMAR: deStmt := 'de' expr 'pro' IDENT blockStmt ('cape' IDENT blockStmt)?
+# GRAMMAR: deStmt := 'de' expr ('fixum'|'varia') (IDENT | arrayPattern) blockStmt ('cape' IDENT blockStmt)?
 #
 # Examples:
 #   de obiectum pro clavis { scribe clavis }
@@ -202,8 +200,14 @@ functio parseDeSententia(Resolvitor r) -> Sententia {
     # Parse iterable expression
     fixum iterabile = r.expressia()
 
-    # Expect 'pro'
-    p.expectaVerbum("pro", ParserErrorCodice.ExpectaturPro)
+    # Parse binding keyword: fixum (const) or varia (let)
+    varia mutabilis = falsum
+    si p.probaVerbum("varia") {
+        mutabilis = verum
+        p.procede()
+    } secus {
+        p.expectaVerbum("fixum", ParserErrorCodice.ExpectaturFixum)
+    }
 
     # Parse variable name or array pattern
     varia variabilis = nihil qua IteratioVariabilis?
@@ -231,6 +235,7 @@ functio parseDeSententia(Resolvitor r) -> Sententia {
         iterabile: iterabile,
         corpus: corpus,
         asynca: falsum,
+        mutabilis: mutabilis,
         cape: cape
     } qua Sententia
 }

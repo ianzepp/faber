@@ -336,7 +336,7 @@ discretio Sententia {
     }
 
     # Destructure declaration
-    # Example: ex persona fixum nomen, aetas
+    # Example: ex persona pro nomen, aetas
     DestructuraSententia {
         Locus locus
         Expressia fons           # source expression
@@ -472,6 +472,7 @@ discretio Sententia {
         Expressia iterabile
         Sententia corpus         # MassaSententia
         bivalens asynca
+        bivalens mutabilis       # varia = mutable, fixum = immutable
         CapeClausula? cape
     }
 
@@ -610,6 +611,7 @@ discretio Sententia {
         textus vinculum          # binding name
         TypusAnnotatio? typus
         bivalens asynca
+        bivalens mutabilis       # varia = mutable, fixum = immutable
         Sententia corpus         # MassaSententia
         CapeClausula? cape
     }

@@ -102,7 +102,7 @@ functio analyzeIteratio(Resolvitor r, Sententia iteratioStmt) -> vacuum {
                         nomen: n.valor,
                         semanticTypus: elemTypus,
                         species: SymbolumSpecies.Variabilis,
-                        mutabilis: falsum,
+                        mutabilis: i.mutabilis,
                         locus: i.locus
                     }
                 }
@@ -133,7 +133,7 @@ functio analyzeIteratio(Resolvitor r, Sententia iteratioStmt) -> vacuum {
                             nomen: elem.nomen qua textus,
                             semanticTypus: posTypus,
                             species: SymbolumSpecies.Variabilis,
-                            mutabilis: falsum,
+                            mutabilis: i.mutabilis,
                             locus: elem.locus
                         }
                         indice = indice + 1

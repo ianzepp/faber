@@ -44,6 +44,7 @@ ordo ParserErrorCodice {
     ExpectaturSi = "P026",
     ExpectaturDum = "P027",
     ExpectaturPro = "P028",
+    ExpectaturFixum = "P057",
     ExpectaturIn = "P029",
     ExpectaturDe = "P043",
     ExpectaturElige = "P030",
@@ -194,6 +195,9 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
         }
         casu ParserErrorCodice.ExpectaturPro {
             redde creoNuntium("Expected 'pro'", "For loops: ex lista pro item { }")
+        }
+        casu ParserErrorCodice.ExpectaturFixum {
+            redde creoNuntium("Expected 'fixum' or 'varia'", "For loops: ex lista fixum item { }")
         }
         casu ParserErrorCodice.ExpectaturIn {
             redde creoNuntium("Expected 'in'", "Mutation: in object { prop = val }")

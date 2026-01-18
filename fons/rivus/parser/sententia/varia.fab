@@ -84,7 +84,7 @@ functio parseDestructuraSententia(Resolvitor r) -> Sententia {
     }
     p.procede()
 
-    # Array destructuring: ex source fixum [a, b] or ex source fixum [k, v] { }
+    # Array destructuring: ex source fixum [a, b] or ex source pro [k, v] { }
     si p.proba(SymbolumGenus.QuadratusSin) {
         fixum elementa = parseSeriesDestructura(r)
 
@@ -99,6 +99,7 @@ functio parseDestructuraSententia(Resolvitor r) -> Sententia {
             }
 
             fixum asynca = species == VariaGenus.Figendum aut species == VariaGenus.Variandum
+            fixum mutabilis = species == VariaGenus.Varia aut species == VariaGenus.Variandum
             varia variabilis = nihil qua IteratioVariabilis?
             variabilis = finge Series { elementa: elementa } qua IteratioVariabilis
 
@@ -109,6 +110,7 @@ functio parseDestructuraSententia(Resolvitor r) -> Sententia {
                 iterabile: fons,
                 corpus: corpus,
                 asynca: asynca,
+                mutabilis: mutabilis,
                 cape: cape
             } qua Sententia
         }
@@ -122,7 +124,7 @@ functio parseDestructuraSententia(Resolvitor r) -> Sententia {
         } qua Sententia
     }
 
-    # Object destructuring: ex persona fixum nomen, aetas
+    # Object destructuring: ex persona pro nomen, aetas
     varia specificatores = [] innatum lista<ImportaSpecificator>
 
     fac {

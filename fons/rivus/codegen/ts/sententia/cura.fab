@@ -18,7 +18,7 @@
 § ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genCura(ignotum curatorSpecies, ignotum res, textus vinculum, Sententia corpus, bivalens asynca, ignotum cape, TsGenerator g) -> textus {
+functio genCura(ignotum curatorSpecies, ignotum res, textus vinculum, Sententia corpus, bivalens asynca, bivalens mutabilis, ignotum cape, TsGenerator g) -> textus {
     # WHY: For arena/page curator kinds, just emit the block contents.
     # GC targets don't need allocator management - memory is automatic.
     si nonnihil curatorSpecies {
@@ -28,16 +28,19 @@ functio genCura(ignotum curatorSpecies, ignotum res, textus vinculum, Sententia 
         }
     }
 
+    # Determine binding keyword based on mutability
+    fixum bindKeyword = mutabilis sic "let" secus "const"
+
     # Generic resource management with try/finally
     varia result = scriptum("§{\n", g.ind())
     g.intraProfundum()
 
-    # Resource acquisition: const <binding> = [await] <resource>;
+    # Resource acquisition: const/let <binding> = [await] <resource>;
     fixum awaitPrefix = asynca sic "await " secus ""
     si nonnihil res {
-        result = scriptum("§§const § = §§;\n", result, g.ind(), vinculum, awaitPrefix, genExpressia(res qua Expressia, g))
+        result = scriptum("§§§ § = §§;\n", result, g.ind(), bindKeyword, vinculum, awaitPrefix, genExpressia(res qua Expressia, g))
     } secus {
-        result = scriptum("§§const § = undefined;\n", result, g.ind(), vinculum)
+        result = scriptum("§§§ § = undefined;\n", result, g.ind(), bindKeyword, vinculum)
     }
 
     # Try block

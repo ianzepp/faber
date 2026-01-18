@@ -202,7 +202,7 @@ functio analyzeVariaDeclaratio(Resolvitor r, Sententia variaStmt) -> vacuum {
     }
 }
 
-# Analyze object destructuring: ex obj fixum name, age ut alias
+# Analyze object destructuring: ex obj pro name, age ut alias
 @ publica
 functio analyzeDestructuraSententia(Resolvitor r, Sententia stmt) -> vacuum {
     fixum a = r.analyzator()

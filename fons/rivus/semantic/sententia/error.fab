@@ -120,7 +120,7 @@ functio analyzeCura(Resolvitor r, Sententia curaStmt) -> vacuum {
                 nomen: c.vinculum,
                 semanticTypus: resourceTypus,
                 species: SymbolumSpecies.Variabilis,
-                mutabilis: falsum,
+                mutabilis: c.mutabilis,
                 locus: c.locus
             }
 
