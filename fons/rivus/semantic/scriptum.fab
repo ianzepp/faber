@@ -74,7 +74,7 @@ functio parseScriptumArgs(lista<textus> args) -> Scriptum? {
 @ publica
 functio nominaScriptorum(tabula<textus, Scriptum> scripta) -> lista<textus> {
     varia nomina = [] innatum lista<textus>
-    de scripta fixum nomen {
+    ex scripta.claves() fixum nomen {
         nomina.push(nomen)
     }
     redde nomina.sort()

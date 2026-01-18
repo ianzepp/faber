@@ -534,7 +534,7 @@ export const norma: Record<string, NormaCollection> = {
     }
     , "innatum": "list"
   }
-};
+}
 
 export const radixForms: Record<string, Record<string, string[]>> = {
   "tabula": {
@@ -569,4 +569,4 @@ export const radixForms: Record<string, Record<string, string[]>> = {
     "inverte": ["invert","imperativus"],
     "miscita": ["misc","perfectum"]
   }
-};
+}

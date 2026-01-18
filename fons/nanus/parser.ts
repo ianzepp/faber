@@ -87,16 +87,10 @@ export class Parser {
         return tok.tag === 'Identifier' || tok.tag === 'Keyword';
     }
 
-    private skipNewlines(): void {
-        while (this.match('Newline')) {}
-    }
-
-    private expectNewline(): void {
-        if (!this.check('EOF') && !this.check('Punctuator', '}')) {
-            this.expect('Newline');
-        }
-        this.skipNewlines();
-    }
+    // No-ops: newlines are filtered out in prepare()
+    // Kept for minimal code churn - these calls are harmless
+    private skipNewlines(): void {}
+    private expectNewline(): void {}
 
     // Main entry point
     parse(): Modulus {
@@ -115,6 +109,7 @@ export class Parser {
 
         // Annotations
         let publica = false;
+        let futura = false;
         while (this.match('Punctuator', '@')) {
             // Annotation name can be identifier or keyword
             const tok = this.peek();
@@ -124,15 +119,16 @@ export class Parser {
             const anno = this.advance().valor;
             if (anno === 'publicum' || anno === 'publica') {
                 publica = true;
-            } else if (anno === 'externa' || anno === 'futura') {
-                // Known simple annotations - just skip
+            } else if (anno === 'futura') {
+                futura = true;
+            } else if (anno === 'externa') {
+                // Known simple annotation - just skip
             } else {
-                // Unknown annotation (optio, etc.) - skip until newline
-                while (!this.check('Newline') && !this.check('EOF') && !this.check('Punctuator', '@')) {
+                // Unknown annotation (optio, etc.) - skip until next annotation or declaration
+                while (!this.check('EOF') && !this.check('Punctuator', '@') && !this.check('Punctuator', '§') && !this.isDeclarationKeyword()) {
                     this.advance();
                 }
             }
-            this.skipNewlines();
         }
 
         // Section import: § ex "path" importa ...
@@ -152,7 +148,7 @@ export class Parser {
                 case 'ex':
                     return this.parseExStmt(publica);
                 case 'functio':
-                    return this.parseFunctio(publica);
+                    return this.parseFunctio(publica, futura);
                 case 'genus':
                     return this.parseGenus(publica);
                 case 'pactum':
@@ -234,18 +230,45 @@ export class Parser {
         const kw = this.advance().valor;
         const species: VariaSpecies = kw === 'varia' ? 'Varia' : kw === 'figendum' ? 'Figendum' : 'Fixum';
 
-        // Check for type-first syntax: fixum <type> <name>
-        // Used for external declarations like: @ externa fixum ignotum process
+        // Handle type-first syntax: varia <type> <name> = value
+        // vs name-first syntax: varia <name> = value
         let typus: Typus | null = null;
         let nomen: string;
-        if (this.check('Identifier', 'ignotum')) {
-            typus = this.parseTypus();
-            nomen = this.expect('Identifier').valor;
-        } else {
-            nomen = this.expect('Identifier').valor;
-            if (this.match('Punctuator', ':')) {
-                typus = this.parseTypus();
+
+        const first = this.expectName().valor;
+
+        // Check for generic type: Type<...>
+        if (this.check('Operator', '<')) {
+            // Type-first with generics: varia lista<textus> items = []
+            const args: Typus[] = [];
+            this.advance(); // consume <
+            do {
+                args.push(this.parseTypus());
+            } while (this.match('Punctuator', ','));
+            this.expect('Operator', '>');
+            typus = { tag: 'Genericus', nomen: first, args };
+
+            // Check for nullable: Type<T>?
+            if (this.match('Punctuator', '?')) {
+                typus = { tag: 'Nullabilis', inner: typus };
             }
+
+            nomen = this.expectName().valor;
+        } else if (this.match('Punctuator', '?')) {
+            // Nullable type-first: varia textus? name = nil
+            typus = { tag: 'Nullabilis', inner: { tag: 'Nomen', nomen: first } };
+            nomen = this.expectName().valor;
+        } else if (this.checkName()) {
+            // Type-first: varia numerus count = 0
+            typus = { tag: 'Nomen', nomen: first };
+            nomen = this.expectName().valor;
+        } else if (this.match('Punctuator', ':')) {
+            // Name with type annotation: varia count: numerus = 0
+            nomen = first;
+            typus = this.parseTypus();
+        } else {
+            // Just a name: varia count = 0
+            nomen = first;
         }
 
         let valor: Expr | null = null;
@@ -277,13 +300,12 @@ export class Parser {
         throw this.error('destructuring not supported in nanus');
     }
 
-    private parseFunctio(publica: boolean): Stmt {
+    private parseFunctio(publica: boolean, futura: boolean = false): Stmt {
         const locus = this.peek().locus;
         this.expect('Keyword', 'functio');
-        let asynca = false;
-        if (this.match('Keyword', 'asynca')) asynca = true;
+        const asynca = futura;
 
-        const nomen = this.expect('Identifier').valor;
+        const nomen = this.expectName().valor;
 
         // Optional generics
         const generics: string[] = [];
@@ -631,6 +653,48 @@ export class Parser {
         return { tag: 'Massa', locus, corpus };
     }
 
+    // Parse body: block, ergo stmt, reddit/iacit/moritor expr, or tacet
+    private parseBody(): Stmt {
+        const locus = this.peek().locus;
+
+        // Block form: { ... }
+        if (this.check('Punctuator', '{')) {
+            return this.parseMassa();
+        }
+
+        // One-liner with statement: ergo stmt
+        if (this.match('Keyword', 'ergo')) {
+            const stmt = this.parseStmt();
+            return { tag: 'Massa', locus, corpus: [stmt] };
+        }
+
+        // Inline return: reddit expr
+        if (this.match('Keyword', 'reddit')) {
+            const valor = this.parseExpr();
+            return { tag: 'Massa', locus, corpus: [{ tag: 'Redde', locus, valor }] };
+        }
+
+        // Inline throw: iacit expr
+        if (this.match('Keyword', 'iacit')) {
+            const arg = this.parseExpr();
+            return { tag: 'Massa', locus, corpus: [{ tag: 'Iace', locus, arg, fatale: false }] };
+        }
+
+        // Inline panic: moritor expr
+        if (this.match('Keyword', 'moritor')) {
+            const arg = this.parseExpr();
+            return { tag: 'Massa', locus, corpus: [{ tag: 'Iace', locus, arg, fatale: true }] };
+        }
+
+        // No-op: tacet
+        if (this.match('Keyword', 'tacet')) {
+            return { tag: 'Massa', locus, corpus: [] };
+        }
+
+        // If none matched, require block
+        return this.parseMassa();
+    }
+
     private parseSi(): Stmt {
         const locus = this.peek().locus;
         this.expect('Keyword', 'si');
@@ -639,7 +703,7 @@ export class Parser {
 
     private parseSiBody(locus: Locus): Stmt {
         const cond = this.parseExpr();
-        const cons = this.parseMassa();
+        const cons = this.parseBody();
         let alt: Stmt | null = null;
         this.skipNewlines();
         if (this.match('Keyword', 'sin')) {
@@ -651,7 +715,7 @@ export class Parser {
             if (this.check('Keyword', 'si')) {
                 alt = this.parseSi();
             } else {
-                alt = this.parseMassa();
+                alt = this.parseBody();
             }
         }
         return { tag: 'Si', locus, cond, cons, alt };
@@ -661,7 +725,7 @@ export class Parser {
         const locus = this.peek().locus;
         this.expect('Keyword', 'dum');
         const cond = this.parseExpr();
-        const corpus = this.parseMassa();
+        const corpus = this.parseBody();
         return { tag: 'Dum', locus, cond, corpus };
     }
 
@@ -824,11 +888,37 @@ export class Parser {
         const locus = this.peek().locus;
         this.expect('Keyword', 'redde');
         let valor: Expr | null = null;
-        if (!this.check('Newline') && !this.check('EOF') && !this.check('Punctuator', '}')) {
+        // Parse expression if next token can start one (not } or EOF or statement keyword)
+        if (!this.check('EOF') && !this.check('Punctuator', '}') && !this.isStatementKeyword()) {
             valor = this.parseExpr();
         }
         this.expectNewline();
         return { tag: 'Redde', locus, valor };
+    }
+
+    // Check if current token is a keyword that starts a statement (not an expression)
+    private isStatementKeyword(): boolean {
+        if (!this.check('Keyword')) return false;
+        const kw = this.peek().valor;
+        const STMT_KEYWORDS = new Set([
+            'si', 'sin', 'secus', 'dum', 'fac', 'ex', 'de', 'elige', 'discerne', 'custodi',
+            'tempta', 'cape', 'demum', 'redde', 'rumpe', 'perge', 'iace', 'mori',
+            'scribe', 'vide', 'mone', 'adfirma', 'functio', 'genus', 'pactum', 'ordo',
+            'discretio', 'varia', 'fixum', 'figendum', 'incipit', 'probandum', 'proba',
+            'casu', 'ceterum', 'reddit', 'ergo', 'tacet', 'iacit', 'moritor',
+        ]);
+        return STMT_KEYWORDS.has(kw);
+    }
+
+    // Check if current token is a declaration keyword (can follow annotations)
+    private isDeclarationKeyword(): boolean {
+        if (!this.check('Keyword')) return false;
+        const kw = this.peek().valor;
+        const DECL_KEYWORDS = new Set([
+            'functio', 'genus', 'pactum', 'ordo', 'discretio',
+            'varia', 'fixum', 'figendum', 'incipit', 'probandum',
+        ]);
+        return DECL_KEYWORDS.has(kw);
     }
 
     private parseIace(): Stmt {
@@ -844,7 +934,8 @@ export class Parser {
         const kw = this.advance().valor;
         const gradus = kw === 'vide' ? 'Vide' : kw === 'mone' ? 'Mone' : 'Scribe';
         const args: Expr[] = [];
-        if (!this.check('Newline') && !this.check('EOF')) {
+        // Parse args if next token can start an expression
+        if (!this.check('EOF') && !this.check('Punctuator', '}') && !this.isStatementKeyword()) {
             do {
                 args.push(this.parseExpr());
             } while (this.match('Punctuator', ','));
@@ -1004,11 +1095,15 @@ export class Parser {
         const tok = this.peek();
 
         // Unary operators - but 'nihil' alone is a literal, not unary
-        if (UNARY_OPS.has(tok.valor)) {
-            // Check if followed by expression (identifier, number, paren, etc.)
+        // Must be Operator or Keyword tag, not a Textus with value '-'
+        if ((tok.tag === 'Operator' || tok.tag === 'Keyword') && UNARY_OPS.has(tok.valor)) {
+            // Check if followed by expression (identifier, number, paren, keyword-as-identifier, etc.)
+            // Exclude operator keywords (qua, innatum, et, aut, vel, sic, secus) that shouldn't start expressions
+            const OPERATOR_KEYWORDS = new Set(['qua', 'innatum', 'et', 'aut', 'vel', 'sic', 'secus', 'inter', 'intra']);
             const next = this.tokens[this.pos + 1];
             const canBeUnary = next && (
                 next.tag === 'Identifier' ||
+                (next.tag === 'Keyword' && !OPERATOR_KEYWORDS.has(next.valor)) ||
                 next.tag === 'Numerus' ||
                 next.tag === 'Textus' ||
                 next.valor === '(' ||
@@ -1061,6 +1156,16 @@ export class Parser {
                 }
                 const prop: Expr = { tag: 'Littera', locus: this.peek().locus, species: 'Textus', valor: this.expectName().valor };
                 expr = { tag: 'Membrum', locus: tok.locus, obj: expr, prop, computed: false, nonNull: true };
+                continue;
+            }
+
+            // Non-null computed member: expr![index]
+            if (tok.valor === '!' && this.tokens[this.pos + 1]?.valor === '[') {
+                this.advance(); // !
+                this.advance(); // [
+                const prop = this.parseExpr();
+                this.expect('Punctuator', ']');
+                expr = { tag: 'Membrum', locus: tok.locus, obj: expr, prop, computed: true, nonNull: true };
                 continue;
             }
 
@@ -1169,6 +1274,10 @@ export class Parser {
                     return this.parseClausura();
                 case 'scriptum':
                     return this.parseScriptum();
+                default:
+                    // Keywords used as identifiers (e.g., 'cape' as variable name)
+                    this.advance();
+                    return { tag: 'Nomen', locus: tok.locus, valor: tok.valor };
             }
         }
 

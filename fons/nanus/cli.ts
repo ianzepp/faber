@@ -10,7 +10,8 @@
  *   echo "..." | nanus compile         Compile from stdin
  */
 
-import { compile } from './index';
+import { compile, lex, prepare, parse } from './index';
+import { formatError } from './errors';
 
 function showHelp() {
     console.log('nanus - Minimal Faber compiler');
@@ -21,6 +22,8 @@ function showHelp() {
     console.log('');
     console.log('Commands:');
     console.log('  emit, compile <file>   Emit .fab file as TypeScript');
+    console.log('  parse <file>           Parse and output AST as JSON');
+    console.log('  lex <file>             Lex and output tokens as JSON');
     console.log('');
     console.log('Options:');
     console.log('  -o, --output <file>    Output file (default: stdout)');
@@ -59,7 +62,8 @@ async function main() {
         }
     }
 
-    if (!command || (command !== 'emit' && command !== 'compile')) {
+    const validCommands = ['emit', 'compile', 'parse', 'lex'];
+    if (!command || !validCommands.includes(command)) {
         console.error(`Unknown command: ${command ?? '(none)'}`);
         console.error('Use --help for usage.');
         process.exit(1);
@@ -77,17 +81,46 @@ async function main() {
         source = chunks.join('');
     }
 
-    const result = compile(source, { filename });
+    try {
+        if (command === 'lex') {
+            const tokens = lex(source, filename);
+            const out = JSON.stringify(tokens, null, 2);
+            if (output) {
+                await Bun.write(output, out);
+            } else {
+                console.log(out);
+            }
+            return;
+        }
 
-    if (!result.success) {
-        console.error(result.error);
+        if (command === 'parse') {
+            const tokens = prepare(lex(source, filename));
+            const ast = parse(tokens);
+            const out = JSON.stringify(ast, null, 2);
+            if (output) {
+                await Bun.write(output, out);
+            } else {
+                console.log(out);
+            }
+            return;
+        }
+
+        // emit/compile
+        const result = compile(source, { filename });
+
+        if (!result.success) {
+            console.error(result.error);
+            process.exit(1);
+        }
+
+        if (output) {
+            await Bun.write(output, result.output!);
+        } else {
+            console.log(result.output);
+        }
+    } catch (err) {
+        console.error(formatError(err, source, filename));
         process.exit(1);
-    }
-
-    if (output) {
-        await Bun.write(output, result.output!);
-    } else {
-        console.log(result.output);
     }
 }
 

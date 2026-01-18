@@ -67,7 +67,7 @@ genus FeatureDetector {
 
         # Return unique features
         varia result = [] innatum lista<UsitataFeatura>
-        de ego.featurae fixum clavis {
+        ex ego.featurae.claves() fixum clavis {
             result.adde(ego.featurae[clavis] qua UsitataFeatura)
         }
         redde result

@@ -477,7 +477,7 @@ genus Parser {
     # Used to distinguish "fixum textus nomen" from "fixum nomen"
     @ publica
     functio estTypusNomen(Symbolum s) -> bivalens {
-        si s.species !== SymbolumGenus.Nomen et s.species !== SymbolumGenus.Verbum et s.species !== SymbolumGenus.Nihil reddit falsum
+        si s.species !== SymbolumGenus.Nomen et s.species !== SymbolumGenus.Verbum et s.species !== SymbolumGenus.Nihil { redde falsum }
 
         # Check against builtin type names
         # TODO: This should use a proper type registry
@@ -508,7 +508,7 @@ genus Parser {
     # de = borrowed/read-only, in = mutable borrow, ex = source
     @ publica
     functio estPraepositio(Symbolum s) -> bivalens {
-        si s.species !== SymbolumGenus.Verbum reddit falsum
+        si s.species !== SymbolumGenus.Verbum { redde falsum }
 
         elige s.verbum {
             casu "de" reddit verum

@@ -11,6 +11,7 @@
         "build": "bun ./scripta/build.ts",
         "faber": "opus/bin/faber",
         "rivus": "opus/bin/rivus",
+        "nanus": "opus/bin/nanus",
         "build:faber": "bun ./scripta/build-faber.ts",
         "build:nanus": "bun ./scripta/build-nanus.ts",
         "build:norma": "bun ./scripta/build-norma.ts",

@@ -245,16 +245,16 @@ function generateFaberCode(collections: CollectionDef[]): string {
         lines.push(`    }${comma}`);
     }
 
-    lines.push('};');
+    lines.push('}');
     lines.push('');
     lines.push('# Lookup translation for target/collection/method');
     lines.push('@ publica');
     lines.push('functio getNormaTranslation(textus target, textus collection, textus method) -> VerteTranslation? {');
     lines.push('    fixum coll = norma[collection]');
-    lines.push('    si nihil coll reddit nihil');
+    lines.push('    si nihil coll { redde nihil }');
     lines.push('');
     lines.push('    fixum methodMap = coll.methods[method]');
-    lines.push('    si nihil methodMap reddit nihil');
+    lines.push('    si nihil methodMap { redde nihil }');
     lines.push('');
     lines.push('    redde methodMap[target]');
     lines.push('}');
@@ -327,7 +327,7 @@ function generateTypescriptRegistry(collections: CollectionDef[], target: string
         lines.push(`  }${comma}`);
     }
 
-    lines.push('};');
+    lines.push('}');
     lines.push('');
 
     // Generate radixForms lookup
@@ -350,7 +350,7 @@ function generateTypescriptRegistry(collections: CollectionDef[], target: string
 
         lines.push(`  }${collComma}`);
     }
-    lines.push('};');
+    lines.push('}');
     lines.push('');
 
     return lines.join('\n');

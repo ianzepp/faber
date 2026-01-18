@@ -73,7 +73,7 @@ functio mandatumArcessere(
     # Collect github dependencies
     varia arcessenda = [] innatum lista<tabula<textus, textus>>
 
-    de dependentiae fixum alias {
+    ex dependentiae.claves() fixum alias {
         fixum dep = dependentiae[alias] qua Dependentia
 
         # Skip if no github source

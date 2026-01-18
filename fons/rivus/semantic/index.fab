@@ -265,7 +265,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
 
                                     # Import variant types for discretio
                                     fixum prefix = spec.importatum + "."
-                                    de modulus.exporta fixum nomen {
+                                    ex modulus.exporta.claves() fixum nomen {
                                         si nomen.startsWith(prefix) {
                                             fixum exportum = modulus.exporta[nomen] qua ModulusExportum
                                             fixum suffix = nomen.slice(prefix.length)
@@ -319,7 +319,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                                 } qua Symbolum)
                             }
                             # Also add all individual exports to scope
-                            de modulus.exporta fixum nomen {
+                            ex modulus.exporta.claves() fixum nomen {
                                 fixum exportum = modulus.exporta[nomen] qua ModulusExportum
                                 a.definie({
                                     nomen: exportum.nomen,
@@ -351,7 +351,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                                     # variant types as `LocalName.VariansNomen` so `discerne` can
                                     # resolve bindings and enable norma translations.
                                     fixum prefix = spec.importatum + "."
-                                    de modulus.exporta fixum nomen {
+                                    ex modulus.exporta.claves() fixum nomen {
                                         si nomen.startsWith(prefix) {
                                             fixum exportum = modulus.exporta[nomen] qua ModulusExportum
                                             fixum suffix = nomen.slice(prefix.length)

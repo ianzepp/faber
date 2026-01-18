@@ -212,7 +212,7 @@ functio verbumAnglicusId(textus v) -> VerbumId? {
 functio verbumId(textus v, si Dialectus dialectus) -> VerbumId? {
     si nonnihil dialectus et dialectus === Dialectus.Anglicus {
         fixum id = verbumAnglicusId(v)
-        si nonnihil id reddit id
+        si nonnihil id { redde id }
     }
 
     redde verbumFaberId(v)

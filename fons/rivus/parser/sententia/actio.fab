@@ -169,23 +169,27 @@ functio parseScribeElementum(Resolvitor r) -> Expressia {
 
         # Count § placeholders to determine how many args to consume
         varia placeholderNumerus = 0
-        ex 0 ante exemplar.longitudo() fixum i {
+        varia numerus i = 0
+        dum i < exemplar.longitudo() {
             si exemplar[i] == "§" {
                 placeholderNumerus += 1
             }
+            i += 1
         }
 
         varia scriptumArgumenta = [] innatum lista<Expressia>
 
-        ex 0 ante placeholderNumerus fixum i {
+        varia numerus j = 0
+        dum j < placeholderNumerus {
             si non p.congruet(SymbolumGenus.Coma) {
                 p.renuncia(
                     ParserErrorCodice.ExpectaturExpressia,
-                    scriptum("Expected argument for § placeholder (need §, got §)", placeholderNumerus, i)
+                    scriptum("Expected argument for § placeholder (need §, got §)", placeholderNumerus, j)
                 )
                 rumpe
             }
             scriptumArgumenta.adde(r.expressia())
+            j += 1
         }
 
         redde finge ScriptumExpressia {

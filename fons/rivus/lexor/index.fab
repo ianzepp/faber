@@ -107,12 +107,12 @@ genus Lexor {
 
     # estDigitus = "is it a digit?" - decimal 0-9
     functio estDigitus(textus c) -> bivalens {
-        redde c intra "0" usque "9"
+        redde c >= "0" et c <= "9"
     }
 
     # estDigitusHex = "is it a hex digit?" - 0-9, a-f, A-F
     functio estDigitusHex(textus c) -> bivalens {
-        redde ego.estDigitus(c) aut (c intra "a" usque "f") aut (c intra "A" usque "F")
+        redde ego.estDigitus(c) aut (c >= "a" et c <= "f") aut (c >= "A" et c <= "F")
     }
 
     # estDigitusBinarius = "is it a binary digit?" - 0 or 1
@@ -122,12 +122,12 @@ genus Lexor {
 
     # estDigitusOctalis = "is it an octal digit?" - 0-7
     functio estDigitusOctalis(textus c) -> bivalens {
-        redde c intra "0" usque "7"
+        redde c >= "0" et c <= "7"
     }
 
     # estLittera = "is it a letter?" - identifier start char (a-z, A-Z, _)
     functio estLittera(textus c) -> bivalens {
-        redde (c intra "a" usque "z") aut (c intra "A" usque "Z") aut c == "_"
+        redde (c >= "a" et c <= "z") aut (c >= "A" et c <= "Z") aut c == "_"
     }
 
     # estLitteraVelDigitus = "is it a letter or digit?" - identifier continuation
@@ -265,10 +265,11 @@ genus Lexor {
 
     # legeNumerumRadix = helper for radix-prefixed literals (hex, binary, octal)
     # Returns verum if prefix matched (even if malformed), falsum otherwise
+    # radix: "hex", "bin", "oct"
     functio legeNumerumRadix(
         textus praefixumMinor,
         textus praefixumMaior,
-        (textus) -> bivalens estValidus,
+        textus radix,
         LexorErrorCodice errorCodice,
         Locus loc
     ) -> bivalens {
@@ -281,6 +282,16 @@ genus Lexor {
         }
 
         varia valor = ego.procede() + ego.procede()  # consume '0' and prefix
+
+        # Dispatch to appropriate validator
+        functio estValidus(textus c) -> bivalens {
+            elige radix {
+                casu "hex" reddit ego.estDigitusHex(c)
+                casu "bin" reddit ego.estDigitusBinarius(c)
+                casu "oct" reddit ego.estDigitusOctalis(c)
+                ceterum reddit falsum
+            }
+        }
 
         # Must have at least one valid digit
         si non estValidus(ego.specta(0)) {
@@ -310,13 +321,13 @@ genus Lexor {
         fixum loc = ego.locus()
 
         # Radix prefixes: hex (0x), binary (0b), octal (0o)
-        si ego.legeNumerumRadix("x", "X", clausura c: ego.estDigitusHex(c), LexorErrorCodice.NumerusHexMalus, loc) {
+        si ego.legeNumerumRadix("x", "X", "hex", LexorErrorCodice.NumerusHexMalus, loc) {
             redde
         }
-        si ego.legeNumerumRadix("b", "B", clausura c: ego.estDigitusBinarius(c), LexorErrorCodice.NumerusBinariusMalus, loc) {
+        si ego.legeNumerumRadix("b", "B", "bin", LexorErrorCodice.NumerusBinariusMalus, loc) {
             redde
         }
-        si ego.legeNumerumRadix("o", "O", clausura c: ego.estDigitusOctalis(c), LexorErrorCodice.NumerusOctalisMalus, loc) {
+        si ego.legeNumerumRadix("o", "O", "oct", LexorErrorCodice.NumerusOctalisMalus, loc) {
             redde
         }
 
@@ -578,16 +589,34 @@ genus Lexor {
         #      explicit without depending on keyword IDs.
         si ego.dialectus === Dialectus.Anglicus {
             elige valor {
-                casu "true" { ego.addeSymbolum(SymbolumGenus.Verum, valor, loc); redde }
-                casu "false" { ego.addeSymbolum(SymbolumGenus.Falsum, valor, loc); redde }
-                casu "null" { ego.addeSymbolum(SymbolumGenus.Nihil, valor, loc); redde }
+                casu "true" {
+                    ego.addeSymbolum(SymbolumGenus.Verum, valor, loc)
+                    redde
+                }
+                casu "false" {
+                    ego.addeSymbolum(SymbolumGenus.Falsum, valor, loc)
+                    redde
+                }
+                casu "null" {
+                    ego.addeSymbolum(SymbolumGenus.Nihil, valor, loc)
+                    redde
+                }
             }
         }
 
         elige valor {
-            casu "verum" { ego.addeSymbolum(SymbolumGenus.Verum, valor, loc); redde }
-            casu "falsum" { ego.addeSymbolum(SymbolumGenus.Falsum, valor, loc); redde }
-            casu "nihil" { ego.addeSymbolum(SymbolumGenus.Nihil, valor, loc); redde }
+            casu "verum" {
+                ego.addeSymbolum(SymbolumGenus.Verum, valor, loc)
+                redde
+            }
+            casu "falsum" {
+                ego.addeSymbolum(SymbolumGenus.Falsum, valor, loc)
+                redde
+            }
+            casu "nihil" {
+                ego.addeSymbolum(SymbolumGenus.Nihil, valor, loc)
+                redde
+            }
         }
 
         # Check if the identifier is a reserved keyword

@@ -15,7 +15,7 @@ const KEYWORDS = new Set([
     'functio', 'genus', 'pactum', 'ordo', 'discretio',
     'ex', 'importa', 'ut',
     // Modifiers
-    'publica', 'privata', 'protecta', 'asynca', 'generis', 'implet', 'sub',
+    'publica', 'privata', 'protecta', 'generis', 'implet', 'sub',
     // Control flow
     'si', 'sin', 'secus', 'dum', 'fac', 'elige', 'casu', 'ceterum', 'discerne', 'custodi',
     'de', 'pro', 'omnia',
@@ -245,23 +245,8 @@ export function lex(source: string, filename = '<stdin>'): Token[] {
     return tokens;
 }
 
-// Filter out comments and collapse multiple newlines
+// Filter out comments and newlines
+// Newlines are not significant in Faber - the grammar is structurally self-delimiting
 export function prepare(tokens: Token[]): Token[] {
-    const result: Token[] = [];
-    let lastWasNewline = true; // start as if preceded by newline
-
-    for (const tok of tokens) {
-        if (tok.tag === 'Comment') continue;
-        if (tok.tag === 'Newline') {
-            if (!lastWasNewline) {
-                result.push(tok);
-                lastWasNewline = true;
-            }
-        } else {
-            result.push(tok);
-            lastWasNewline = false;
-        }
-    }
-
-    return result;
+    return tokens.filter(tok => tok.tag !== 'Comment' && tok.tag !== 'Newline');
 }

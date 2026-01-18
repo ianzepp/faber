@@ -51,7 +51,7 @@ genus CompileResultatum {
 functio compileFile(
     textus filePath,
     textus displayName,
-    de lista<tabula<textus, ignotum>> errores,
+    lista<tabula<textus, ignotum>> errores,
     si bivalens jsonOutput,
     si lista<SectioAnnotatio>? manifestSectiones
 ) -> CompileResultatum? {

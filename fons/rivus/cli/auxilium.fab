@@ -24,9 +24,11 @@
 @ futura
 functio hauriSource(textus? inputFile) -> textus {
     si nihil inputFile aut inputFile == "-" {
-        redde cede consolum.hauriOmnia()
+        figendum result = cede consolum.hauriOmnia()
+        redde result
     }
-    redde cede solum.lege(inputFile)
+    figendum result = cede solum.lege(inputFile)
+    redde result
 }
 
 # Human-readable name for error messages
