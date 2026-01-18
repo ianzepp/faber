@@ -5,7 +5,7 @@
 @ optio textus name brevis "n" longum "name" descriptio "Name to greet"
 @ optio bivalens loud brevis "l" longum "loud" descriptio "Shout the greeting"
 
-incipit argumenta args exitus code {
+incipit {
     varia greeting = "Hello"
 
     si args.name {

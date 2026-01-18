@@ -1,16 +1,18 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# EMIT - Compile single Faber source file to target language
+# EMIT - Emit Faber source as target language (fast, warns on errors)
 # ═══════════════════════════════════════════════════════════════════════════════
 #
-# Full compilation pipeline: lex -> parse -> semantic -> codegen
-# Outputs to stdout or file.
+# Pipeline: lex -> parse -> semantic -> codegen
+# Warns on semantic errors but continues to emit code.
+# Use 'compile' command to fail on errors.
 #
 # Usage:
-#   rivus emit hello.fab                 # emit to stdout (default: ts)
+#   rivus emit                           # stdin -> stdout (default: ts)
+#   rivus emit hello.fab                 # file -> stdout
 #   rivus emit hello.fab -t go           # emit as Go
-#   rivus emit hello.fab -o hello.ts     # emit to file
-#   rivus emit -                         # emit from stdin
-#   rivus emit - --stdin-filename=foo.fab  # stdin with filename for errors
+#   rivus emit hello.fab -o hello.ts     # file -> file
+#   echo 'scribe "hi"' | rivus emit      # pipe works naturally
+#   rivus emit --stdin-filename=foo.fab  # stdin with filename for errors
 #   rivus emit hello.fab --dry-run       # check without emitting
 #   rivus emit hello.fab --json          # errors as JSON
 #
@@ -35,7 +37,7 @@
 @ publica
 @ futura
 functio emitCommand(
-    textus input,
+    si textus input,
     si textus target,
     si textus output,
     si textus include,
@@ -44,10 +46,12 @@ functio emitCommand(
     si bivalens jsonOutput,
     si bivalens dryRun,
     si bivalens stripTests,
-    si bivalens stripComments
+    si bivalens stripComments,
+    si bivalens strict
 ) -> numerus {
     fixum targetLang = target vel "ts"
     fixum displayName = stdinFilename vel nomenOstende(input)
+    fixum estStdin = nihil input aut input == "-"
 
     # Validate input exists
     custodi {
@@ -135,29 +139,51 @@ functio emitCommand(
     figendum manifestSectiones = loadManifestSectiones(manifest)
 
     # Semantic analysis
-    fixum viaIngressus = input != "-" sic solum.absolve(input) secus nihil
+    fixum viaIngressus = estStdin sic nihil secus solum.absolve(input qua textus)
     fixum semResult = analyze(parseResult.programma qua Programma, viaIngressus, manifestSectiones)
 
+    # Handle semantic errors: strict mode fails, emit mode warns and continues
     si positivum semResult.errores.longitudo() {
-        si jsonOutput {
-            ex semResult.errores pro err {
-                errores.push({
-                    phase: "semantic",
-                    file: displayName,
-                    line: err.locus.linea,
-                    column: err.locus.columna,
-                    message: err.nuntius
-                } innatum tabula<textus, ignotum>)
+        si strict {
+            # Strict mode (compile command): fail on errors
+            si jsonOutput {
+                ex semResult.errores pro err {
+                    errores.push({
+                        phase: "semantic",
+                        file: displayName,
+                        line: err.locus.linea,
+                        column: err.locus.columna,
+                        message: err.nuntius
+                    } innatum tabula<textus, ignotum>)
+                }
+                consolum.fundeLineam(json.solve({ errors: errores }))
+            } secus {
+                mone "Semantic errors:"
+                ex semResult.errores pro err {
+                    mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
+                }
             }
-            consolum.fundeLineam(json.solve({ errors: errores }))
-        }
-        secus {
-            mone "Semantic errors:"
-            ex semResult.errores pro err {
-                mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
+            redde 1
+        } secus {
+            # Emit mode: warn but continue
+            si jsonOutput {
+                ex semResult.errores pro err {
+                    errores.push({
+                        phase: "semantic",
+                        file: displayName,
+                        line: err.locus.linea,
+                        column: err.locus.columna,
+                        message: err.nuntius
+                    } innatum tabula<textus, ignotum>)
+                }
+                consolum.errorLineam(json.solve({ warnings: errores }))
+            } secus {
+                mone "Semantic warnings (use --strict to fail):"
+                ex semResult.errores pro err {
+                    mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
+                }
             }
         }
-        redde 1
     }
 
     # Dry run stops here

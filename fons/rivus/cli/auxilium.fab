@@ -18,26 +18,25 @@
 # INPUT HANDLING
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Read source from file or stdin (when inputFile is "-")
+# Read source from file or stdin
+# If inputFile is nil or "-", reads from stdin
 @ publica
 @ futura
-functio hauriSource(textus inputFile) -> textus {
-    si inputFile == "-" {
-        varia lista<textus> lines = [] innatum lista<textus>
-        varia textus line = consolum.hauriLineam()
-        dum nonnihil line {
-            lines.push(line)
-            line = consolum.hauriLineam()
-        }
-        redde lines.join("\n")
+functio hauriSource(textus? inputFile) -> textus {
+    si nihil inputFile aut inputFile == "-" {
+        redde cede consolum.hauriOmnia()
     }
     redde cede solum.lege(inputFile)
 }
 
 # Human-readable name for error messages
+# Returns "<stdin>" for nil or "-"
 @ publica
-functio nomenOstende(textus inputFile) -> textus {
-    redde inputFile == "-" sic "<stdin>" secus inputFile
+functio nomenOstende(textus? inputFile) -> textus {
+    si nihil inputFile aut inputFile == "-" {
+        redde "<stdin>"
+    }
+    redde inputFile
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -89,10 +88,10 @@ functio viaRelativa(textus fons, textus destinatio) -> textus {
 # VALIDATION
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Check if input file exists (returns false for stdin)
+# Check if input is valid (nil/"-" = stdin = always valid, else check file exists)
 @ publica
-functio validaInput(textus inputFile) -> bivalens {
-    si inputFile == "-" {
+functio validaInput(textus? inputFile) -> bivalens {
+    si nihil inputFile aut inputFile == "-" {
         redde verum
     }
     redde solum.exstat(inputFile)
@@ -141,6 +140,9 @@ functio loadManifestSectiones(textus? manifestPath) -> lista<SectioAnnotatio>? {
 
 probandum "auxilium" {
     probandum "nomenOstende" {
+        proba "returns <stdin> for nil" {
+            adfirma nomenOstende(nihil) == "<stdin>"
+        }
         proba "returns <stdin> for dash" {
             adfirma nomenOstende("-") == "<stdin>"
         }

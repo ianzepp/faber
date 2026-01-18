@@ -29,6 +29,10 @@ export const consolum = {
         return decoder.decode(new Uint8Array(chunks));
     },
 
+    async hauriOmnia(): Promise<string> {
+        return Bun.stdin.text();
+    },
+
     // STDOUT
     fundeOctetos(data: Uint8Array): void {
         writeSync(1, data);

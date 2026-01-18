@@ -45,19 +45,20 @@ functio version() -> vacuum {
 
 @ imperium "emit"
 @ alias "compile"
-@ descriptio "Compile Faber source to target language"
+@ descriptio "Emit code (warns on errors unless --strict)"
 @ futura
 @ optio textus target brevis "t" longum "target" descriptio "Target language: ts (default), go"
 @ optio textus output brevis "o" longum "output" descriptio "Output file (default: stdout)"
 @ optio textus include brevis "I" longum "include" descriptio "Add import search path"
 @ optio textus manifest brevis "m" longum "manifest" descriptio "Project manifest file (faber.fab)"
-@ optio textus stdinFilename longum "stdin-filename" descriptio "Filename to use for stdin input"
+@ optio textus stdinFilename longum "stdin-filename" descriptio "Filename for error messages when reading stdin"
 @ optio bivalens json longum "json" descriptio "Output errors as JSON"
 @ optio bivalens dryRun longum "dry-run" descriptio "Check without emitting code"
 @ optio bivalens stripTests longum "strip-tests" descriptio "Strip probandum/proba test blocks from output"
 @ optio bivalens stripComments longum "strip-comments" descriptio "Strip comments from output"
+@ optio bivalens strict longum "strict" descriptio "Fail on semantic errors instead of warning"
 functio emit(
-    textus input,
+    si textus input,
     si textus target,
     si textus output,
     si textus include,
@@ -66,9 +67,10 @@ functio emit(
     si bivalens json,
     si bivalens dryRun,
     si bivalens stripTests,
-    si bivalens stripComments
+    si bivalens stripComments,
+    si bivalens strict
 ) exitus code -> vacuum {
-    fixum result = cede emitCommand(input, target, output, include, manifest, stdinFilename, json, dryRun, stripTests, stripComments)
+    fixum result = cede emitCommand(input, target, output, include, manifest, stdinFilename, json, dryRun, stripTests, stripComments, strict)
     code = result
 }
 
