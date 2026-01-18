@@ -1,0 +1,22 @@
+# scripta/hello.fab - Simple hello world script
+
+@ cli "hello"
+@ descriptio "Say hello"
+@ optio textus name brevis "n" longum "name" descriptio "Name to greet"
+@ optio bivalens loud brevis "l" longum "loud" descriptio "Shout the greeting"
+
+incipit argumenta args exitus code {
+    varia greeting = "Hello"
+
+    si args.name {
+        greeting = greeting + ", " + args.name
+    } secus {
+        greeting = greeting + ", World"
+    }
+
+    si args.loud {
+        greeting = greeting + "!"
+    }
+
+    scribe greeting
+}

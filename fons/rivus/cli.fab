@@ -22,6 +22,7 @@
 § ex "./cli/commands/check" importa checkCommand
 § ex "./cli/commands/test" importa testCommand
 § ex "./cli/commands/fetch" importa mandatumArcessere
+§ ex "./cli/commands/run" importa mandatumCurrere
 
 @ cli "rivus"
 @ versio "0.1.0"
@@ -195,5 +196,27 @@ functio fetch(
     si bivalens json
 ) exitus code -> vacuum {
     fixum result = cede mandatumArcessere(manifest, force, json)
+    code = result
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# run - execute build scripts from manifest
+# ─────────────────────────────────────────────────────────────────────────────
+
+@ imperium "run"
+@ descriptio "Execute build scripts registered via § scriptum"
+@ futura
+@ optio textus manifest brevis "m" longum "manifest" descriptio "Project manifest file (default: faber.fab)"
+@ optio bivalens list brevis "l" longum "list" descriptio "List available scripts"
+@ optio bivalens json longum "json" descriptio "Output as JSON"
+functio run(
+    si textus script,
+    si textus manifest,
+    si bivalens list,
+    si bivalens json
+) exitus code -> vacuum {
+    # TODO: arg forwarding - for now, pass empty list
+    varia scriptArgs = [] innatum lista<textus>
+    fixum result = cede mandatumCurrere(script, manifest, list, json, scriptArgs)
     code = result
 }

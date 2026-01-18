@@ -1,0 +1,31 @@
+# scripta/verify.fab - Run verification checks
+§ ex "norma:processus" importa processus
+
+@ cli "verify"
+@ descriptio "Run all verification checks"
+@ optio bivalens verbose brevis "v" longum "verbose" descriptio "Show detailed output"
+@ optio bivalens skipTests longum "skip-tests" descriptio "Skip test suite"
+
+incipit argumenta args exitus code {
+    si args.verbose {
+        scribe "Starting verification..."
+    }
+
+    # Type check
+    si args.verbose {
+        scribe "Running type check..."
+    }
+    processus.exsequi("faber build --check")
+
+    # Tests (unless skipped)
+    si non args.skipTests {
+        si args.verbose {
+            scribe "Running tests..."
+        }
+        processus.exsequi("bun test")
+    }
+
+    si args.verbose {
+        scribe "Verification complete."
+    }
+}

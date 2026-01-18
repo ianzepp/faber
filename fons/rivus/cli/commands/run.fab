@@ -1,0 +1,259 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# RUN - Execute build scripts from § scriptum declarations
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# Looks up scripts registered via § scriptum in the manifest and executes them.
+# Scripts are compiled on demand and run with Bun.
+#
+# Usage:
+#   rivus run verify                    # run verify script
+#   rivus run verify --verbose          # with flags passed to script
+#   rivus run --list                    # show available scripts
+#   rivus run --manifest faber.fab verify
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+§ ex "../../lexor/index" importa lexare
+§ ex "../../parser/index" importa resolvere
+§ ex "../../semantic/index" importa analyze
+§ ex "../../semantic/scriptum" importa extractScripta, nominaScriptorum, Scriptum
+§ ex "../../codegen/index" importa generate
+§ ex "../../ast/radix" importa Programma, SectioAnnotatio
+
+§ ex "../../../norma/hal/solum" importa solum
+§ ex "../../../norma/hal/consolum" importa consolum
+§ ex "../../../norma/hal/json" importa json
+§ ex "../../../norma/hal/processus" importa processus
+
+§ ex "../auxilium" importa loadManifestSectiones
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# RUN COMMAND
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@ publica
+@ futura
+functio mandatumCurrere(
+    si textus script,
+    si textus manifest,
+    si bivalens list,
+    si bivalens jsonOutput,
+    si lista<textus> scriptArgs
+) -> numerus {
+    # Default manifest
+    fixum manifestPath = manifest vel "faber.fab"
+
+    # Check manifest exists
+    si non solum.exstat(manifestPath) {
+        si jsonOutput {
+            consolum.fundeLineam(json.solve({ error: scriptum("Manifest not found: §", manifestPath) }))
+        } secus {
+            mone "Manifest not found: §", manifestPath
+        }
+        redde 1
+    }
+
+    # Load manifest sectiones
+    varia lista<SectioAnnotatio>? manifestSectiones = nihil
+    tempta {
+        figendum lectum = loadManifestSectiones(manifestPath)
+        manifestSectiones = lectum
+    } cape err {
+        si jsonOutput {
+            consolum.fundeLineam(json.solve({ error: scriptum("Failed to load manifest: §", err) }))
+        } secus {
+            mone "Failed to load manifest: §", err
+        }
+        redde 1
+    }
+
+    # Extract scripts
+    fixum scripta = extractScripta(manifestSectiones)
+
+    # List mode
+    si list {
+        fixum nomina = nominaScriptorum(scripta)
+
+        si jsonOutput {
+            varia items = [] innatum lista<tabula<textus, textus>>
+            ex nomina pro nomen {
+                fixum scr = scripta[nomen] qua Scriptum
+                items.push({ name: nomen, path: scr.via } innatum tabula<textus, textus>)
+            }
+            consolum.fundeLineam(json.solve({ scripts: items }))
+        } secus {
+            si nomina.longitudo() == 0 {
+                scribe "No scripts registered in §", manifestPath
+            } secus {
+                scribe "Available scripts:"
+                ex nomina pro nomen {
+                    fixum scr = scripta[nomen] qua Scriptum
+                    scribe "  § -> §", nomen, scr.via
+                }
+            }
+        }
+        redde 0
+    }
+
+    # Require script name
+    si nihil script {
+        si jsonOutput {
+            consolum.fundeLineam(json.solve({ error: "No script specified. Use: rivus run <script>" }))
+        } secus {
+            mone "No script specified. Use: rivus run <script>"
+            mone "Use --list to see available scripts"
+        }
+        redde 1
+    }
+
+    # Look up script
+    si non scripta[script] {
+        si jsonOutput {
+            consolum.fundeLineam(json.solve({ error: scriptum("Script not found: §", script) }))
+        } secus {
+            mone "Script not found: §", script
+            mone "Use --list to see available scripts"
+        }
+        redde 1
+    }
+
+    fixum scr = scripta[script] qua Scriptum
+
+    # Resolve script path relative to manifest directory
+    fixum manifestDir = solum.dir(manifestPath)
+    fixum scriptPath = solum.iunge([manifestDir, scr.via])
+
+    si non solum.exstat(scriptPath) {
+        si jsonOutput {
+            consolum.fundeLineam(json.solve({ error: scriptum("Script file not found: §", scriptPath) }))
+        } secus {
+            mone "Script file not found: §", scriptPath
+        }
+        redde 1
+    }
+
+    # Compile script
+    figendum source = solum.lege(scriptPath)
+
+    # Lexical analysis
+    fixum lexResult = lexare(source)
+    si positivum lexResult.errores.longitudo() {
+        si jsonOutput {
+            varia errores = [] innatum lista<tabula<textus, ignotum>>
+            ex lexResult.errores pro err {
+                errores.push({
+                    phase: "lexor",
+                    file: scriptPath,
+                    line: err.locus.linea,
+                    column: err.locus.columna,
+                    message: err.textus
+                } innatum tabula<textus, ignotum>)
+            }
+            consolum.fundeLineam(json.solve({ errors: errores }))
+        } secus {
+            mone "Lexor errors in §:", scriptPath
+            ex lexResult.errores pro err {
+                mone "  §:§ - §", err.locus.linea, err.locus.columna, err.textus
+            }
+        }
+        redde 1
+    }
+
+    # Parsing
+    fixum parseResult = resolvere(lexResult.symbola)
+    si positivum parseResult.errores.longitudo() {
+        si jsonOutput {
+            varia errores = [] innatum lista<tabula<textus, ignotum>>
+            ex parseResult.errores pro err {
+                errores.push({
+                    phase: "parser",
+                    file: scriptPath,
+                    line: err.locus.linea,
+                    column: err.locus.columna,
+                    message: err.nuntius
+                } innatum tabula<textus, ignotum>)
+            }
+            consolum.fundeLineam(json.solve({ errors: errores }))
+        } secus {
+            mone "Parser errors in §:", scriptPath
+            ex parseResult.errores pro err {
+                mone "  §:§ - §", err.locus.linea, err.locus.columna, err.nuntius
+            }
+        }
+        redde 1
+    }
+
+    si nihil parseResult.programma {
+        si jsonOutput {
+            consolum.fundeLineam(json.solve({ error: "Failed to parse script" }))
+        } secus {
+            mone "Failed to parse script"
+        }
+        redde 1
+    }
+
+    # Semantic analysis
+    fixum semResult = analyze(parseResult.programma qua Programma, scriptPath, manifestSectiones)
+    si positivum semResult.errores.longitudo() {
+        si jsonOutput {
+            varia errores = [] innatum lista<tabula<textus, ignotum>>
+            ex semResult.errores pro err {
+                errores.push({
+                    phase: "semantic",
+                    file: scriptPath,
+                    line: err.locus.linea,
+                    column: err.locus.columna,
+                    message: err.nuntius
+                } innatum tabula<textus, ignotum>)
+            }
+            consolum.fundeLineam(json.solve({ errors: errores }))
+        } secus {
+            mone "Semantic errors in §:", scriptPath
+            ex semResult.errores pro err {
+                mone "  §:§ - §", err.locus.linea, err.locus.columna, err.nuntius
+            }
+        }
+        redde 1
+    }
+
+    # Code generation
+    fixum generated = generate((parseResult.programma qua Programma).corpus, "ts")
+
+    # Write to temp file and execute
+    fixum tempFile = scriptum("/tmp/faber-run-§-§.ts", processus.pid(), script)
+
+    tempta {
+        cede solum.scribe(tempFile, generated)
+
+        # Build args: script args passed through
+        varia args = [tempFile] innatum lista<textus>
+        si nonnihil scriptArgs {
+            ex scriptArgs pro arg {
+                args.push(arg)
+            }
+        }
+
+        # Execute with Bun
+        fixum proc = processus.spawn("bun", args, {
+            stdout: "inherit",
+            stderr: "inherit",
+            stdin: "inherit"
+        })
+
+        figendum exitCode = proc.exited
+
+        # Cleanup temp file
+        cede solum.dele(tempFile)
+
+        redde exitCode qua numerus
+    } cape err {
+        mone "Script execution error: §", err
+        # Try to cleanup
+        tempta {
+            cede solum.dele(tempFile)
+        } cape _ {
+            # Ignore cleanup errors
+        }
+        redde 1
+    }
+}

@@ -1,0 +1,81 @@
+# Scriptum - Registry extraction for § scriptum annotations
+#
+# Parses file-level § scriptum annotations and builds a registry
+# mapping script names to their file paths.
+#
+# Syntax:
+#   § scriptum "name" via "path"
+
+§ ex "../ast/radix" importa SectioAnnotatio
+
+# ============================================================================
+# TYPES
+# ============================================================================
+
+# A resolved script declaration
+@ publicum
+genus Scriptum {
+    textus nomen    # script name (e.g., "verify")
+    textus via      # path to script file (e.g., "scripta/verify.fab")
+}
+
+# ============================================================================
+# EXTRACTION
+# ============================================================================
+
+# Extract script registry from sectiones
+# Returns a map of name -> Scriptum
+@ publica
+functio extractScripta(lista<SectioAnnotatio>? sectiones) -> tabula<textus, Scriptum> {
+    varia result = {} innatum tabula<textus, Scriptum>
+    si nihil sectiones { redde result }
+
+    ex sectiones pro s {
+        si s.nomen == "scriptum" {
+            fixum scr = parseScriptumArgs(s.argumenta)
+            si nonnihil scr {
+                result[scr.nomen] = scr
+            }
+        }
+    }
+    redde result
+}
+
+# Parse scriptum arguments into a Scriptum
+# Arguments: ["name", "via", "path"]
+functio parseScriptumArgs(lista<textus> args) -> Scriptum? {
+    si args.longitudo() < 1 { redde nihil }
+
+    fixum nomen = args[0]
+    varia via = nihil qua textus?
+
+    # Parse keyword-value pairs: via "..."
+    varia i = 1
+    dum i < args.longitudo() {
+        fixum arg = args[i]
+        si arg == "via" et i + 1 < args.longitudo() {
+            via = args[i + 1]
+            i = i + 2
+        } secus {
+            i = i + 1
+        }
+    }
+
+    si nihil via { redde nihil }
+
+    redde { nomen: nomen, via: via } qua Scriptum
+}
+
+# ============================================================================
+# LISTING
+# ============================================================================
+
+# Get a sorted list of script names
+@ publica
+functio nominaScriptorum(tabula<textus, Scriptum> scripta) -> lista<textus> {
+    varia nomina = [] innatum lista<textus>
+    de scripta pro nomen {
+        nomina.push(nomen)
+    }
+    redde nomina.sort()
+}
