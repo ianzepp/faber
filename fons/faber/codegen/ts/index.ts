@@ -111,7 +111,7 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
         for (const [name, relativePath] of g.halImports) {
             // Resolve path relative to source file
             // WHY: @subsidia paths are relative to declaring .fab file
-            const importPath = resolveHalImportPath(relativePath, options.filePath);
+            const importPath = resolveHalImportPath(relativePath, options.filePath, g.keepRelativeImports);
             importLines.push(`import { ${name} } from "${importPath}";`);
         }
         halImports = importLines.join('\n') + '\n\n';
@@ -144,11 +144,24 @@ export function generateTs(program: Program, options: CodegenOptions = {}): stri
  * WHY: @subsidia paths are relative to the declaring .fab file.
  *      We need to convert them to paths relative to the output .ts file.
  *
+ * When keepRelativeImports=true (build command):
+ *   - Return the path as-is (build scripts copy HAL to matching locations)
+ *
+ * When keepRelativeImports=false (faber run):
+ *   - Resolve to paths relative to cwd (temp file execution)
+ *
  * @param relativePath - Path from @subsidia annotation (e.g., "codegen/ts/consolum.ts")
  * @param sourceFilePath - Original .fab file path (optional)
+ * @param keepRelativeImports - Whether to preserve relative paths
  * @returns Resolved import path
  */
-function resolveHalImportPath(relativePath: string, sourceFilePath?: string): string {
+function resolveHalImportPath(relativePath: string, sourceFilePath?: string, keepRelativeImports = false): string {
+    // When keepRelativeImports=true, return path as-is
+    // Build scripts are responsible for copying HAL to the right locations
+    if (keepRelativeImports) {
+        return relativePath.replace(/\.ts$/, '');
+    }
+
     // For now, use path as-is if no source file context
     // WHY: When compiling from stdin or without file context, paths are passed through
     if (!sourceFilePath) {
