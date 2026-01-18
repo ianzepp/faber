@@ -97,6 +97,14 @@ function parseFunctionModifiers(r: Resolver): FunctioModifier[] | undefined {
             continue;
         }
 
+        if (ctx.checkKeyword('optiones')) {
+            const position = ctx.peek().position;
+            ctx.advance();
+            const name = ctx.parseIdentifier();
+            modifiers.push({ type: 'OptionesModifier', name, position });
+            continue;
+        }
+
         break;
     }
 

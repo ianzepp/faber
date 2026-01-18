@@ -306,6 +306,68 @@ agent run "fix the bug" -r owner/repo -i 123 -m sonnet
 agent run "implement feature" --repo owner/repo --model opus --pr
 ```
 
+### Positional Arguments on Commands: @ operandus
+
+Use `@ operandus` annotations on `@ imperium` functions to declare positional arguments with help text:
+
+```fab
+@ imperium "emit"
+@ descriptio "Compile source files to target language"
+@ operandus ceteri textus files descriptio "Source files to compile"
+@ optio target brevis "t" longum "target" descriptio "Target language (ts, go)"
+@ optio strict longum "strict" bivalens descriptio "Fail on errors"
+functio emit(
+    lista<textus> files,
+    si textus target,
+    si bivalens strict
+) -> vacuum {
+    # files contains all positional arguments
+}
+```
+
+The `ceteri` modifier creates a variadic argument that collects all remaining positional args:
+
+```
+rivus emit file1.fab file2.fab file3.fab -t go
+rivus emit *.fab --strict
+```
+
+Constraints:
+- Only one `ceteri` operand per function
+- `ceteri` must be the last operand
+- Type is always `textus` (collected into `lista<textus>`)
+
+### Options Bundle: optiones
+
+For commands with many options, use the `optiones` modifier to bundle all `@ optio` annotations into a `tabula<textus, textus>`:
+
+```fab
+@ imperium "emit"
+@ operandus ceteri textus files descriptio "Files to compile"
+@ optio target brevis "t" longum "target" descriptio "Target language"
+@ optio strict longum "strict" bivalens descriptio "Fail on errors"
+functio emit(lista<textus> files) optiones opts -> vacuum {
+    fixum target = opts["target"] vel "ts"
+    fixum strict = opts["strict"] bivalentum vel falsum
+    # ...
+}
+```
+
+The `optiones opts` modifier:
+- Bundles all `@ optio` annotations into a `Map<string, string>` named `opts`
+- Positional arguments (`@ operandus`) stay explicit in the function signature
+- Options are accessed via bracket notation: `opts["name"]`
+- Use `vel` for defaults and type coercion (`bivalentum`, `numeratum`)
+
+New `@ optio` syntax (preferred):
+```fab
+@ optio name [brevis "x"] [longum "xxx"] [bivalens] [descriptio "..."]
+```
+
+- Name comes first (no type prefix)
+- `bivalens` is an optional modifier indicating a boolean flag
+- Without `bivalens`, the option expects a value
+
 ---
 
 ## Command Groups: @ imperia

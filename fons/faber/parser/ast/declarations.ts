@@ -259,7 +259,7 @@ export type ReturnVerb = 'arrow' | 'fit' | 'fiet' | 'fiunt' | 'fient';
  *                | 'immutata'
  *                | 'iacit'
  */
-export type FunctioModifier = CurataModifier | ErrataModifier | ExitusModifier | ImmutataModifier | IacitModifier;
+export type FunctioModifier = CurataModifier | ErrataModifier | ExitusModifier | ImmutataModifier | IacitModifier | OptionesModifier;
 
 export interface CurataModifier extends BaseNode {
     type: 'CurataModifier';
@@ -282,6 +282,11 @@ export interface ImmutataModifier extends BaseNode {
 
 export interface IacitModifier extends BaseNode {
     type: 'IacitModifier';
+}
+
+export interface OptionesModifier extends BaseNode {
+    type: 'OptionesModifier';
+    name: Identifier; // Bundle variable name (e.g., 'opts')
 }
 
 /**
@@ -669,6 +674,12 @@ export interface Annotation extends BaseNode {
      * Example: "Enable verbose output" in `@ optio bivalens v brevis "v" descriptio "Enable verbose output"`
      */
     optioDescription?: string;
+
+    /**
+     * For @ optio: whether this is a boolean flag (no value) vs a value option.
+     * Set by 'bivalens' modifier in new syntax: `@ optio verbose longum "verbose" bivalens`
+     */
+    optioBivalens?: boolean;
 
     /**
      * For @ operandus: the type of the positional operand.

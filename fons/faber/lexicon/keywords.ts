@@ -232,6 +232,9 @@ export const keywords: KeywordEntry[] = [
     // WHY: "optio" (choice) for CLI option annotations
     //      Usage: @ optio bivalens v brevis "v" longum "verbose"
     { latin: 'optio', meaning: 'option (CLI)', category: 'modifier' },
+    // WHY: "optiones" (options, plural) bundles CLI options into a map
+    //      Usage: functio emit() optiones opts -> vacuum
+    { latin: 'optiones', meaning: 'options bundle (CLI)', category: 'modifier' },
     // WHY: "argumenta" (arguments) for CLI args binding in incipit
     //      Usage: incipit argumenta args { }
     { latin: 'argumenta', meaning: 'arguments (CLI)', category: 'modifier' },

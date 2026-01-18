@@ -75,7 +75,18 @@ function toKebabCase(str: string): string {
 function extractCliOption(ann: Annotation): CliOption | undefined {
     if (ann.name !== 'optio') return undefined;
 
-    const type = ann.optioType?.name ?? 'textus';
+    // Determine type:
+    // - New syntax: use optioBivalens flag (true = 'bivalens', false/undefined = 'textus')
+    // - Old syntax: use optioType directly
+    let type: string;
+    if (ann.optioBivalens !== undefined) {
+        // New syntax
+        type = ann.optioBivalens ? 'bivalens' : 'textus';
+    }
+    else {
+        // Old syntax (or new syntax without bivalens modifier)
+        type = ann.optioType?.name ?? 'textus';
+    }
 
     // Internal binding name is required (position 2 in grammar)
     const internal = ann.optioInternal?.name;
@@ -145,6 +156,9 @@ function insertCommand(
     fullPath: string,
     functionName: string,
     params: CliParam[],
+    operands: CliOperand[],
+    options: CliOption[],
+    optionesBundle: string | undefined,
     alias?: string,
     modulePrefix?: string,
     description?: string
@@ -177,6 +191,9 @@ function insertCommand(
     const leaf = current.children.get(leafName)!;
     leaf.functionName = functionName;
     leaf.params = params;
+    leaf.operands = operands;
+    leaf.options = options;
+    leaf.optionesBundle = optionesBundle;
     leaf.alias = alias;
     leaf.modulePrefix = modulePrefix;
     leaf.description = description;
@@ -235,8 +252,34 @@ function extractCommands(
             if (opt) optioByName.set(opt.internal, opt);
         }
 
+        // Extract @ operandus annotations for this function
+        const operandusAnns = findAnnotations(fn.annotations, 'operandus');
+        const operands: CliOperand[] = [];
+        for (const ann of operandusAnns) {
+            const operand = extractCliOperand(ann);
+            if (operand) operands.push(operand);
+        }
+
+        // Validate operands: only one ceteri, must be last
+        const ceteriCount = operands.filter(o => o.rest).length;
+        if (ceteriCount > 1) {
+            errors.push(`Function '${fn.name}' has multiple ceteri operands; only one allowed`);
+        }
+        else if (ceteriCount === 1 && !operands[operands.length - 1]?.rest) {
+            errors.push(`ceteri operand must be last in function '${fn.name}'`);
+        }
+
+        // Collect options for bundle (when optionesBundle is set)
+        const options: CliOption[] = [];
+        for (const ann of optioAnns) {
+            const opt = extractCliOption(ann);
+            if (opt) options.push(opt);
+        }
+
+        // Build params - when using optionesBundle, don't merge optio metadata into params
         const params: CliParam[] = fn.params.map(p => {
-            const optio = optioByName.get(p.name);
+            // Only merge optio metadata if NOT using optionesBundle
+            const optio = fn.optionesBundle ? undefined : optioByName.get(p.name);
             return {
                 name: p.name,
                 type: p.type,
@@ -254,6 +297,9 @@ function extractCommands(
             fullPath,
             fn.name,
             params,
+            operands,
+            options,
+            fn.optionesBundle,
             aliasAnn ? getAnnotationString(aliasAnn) : undefined,
             modulePrefix,
             descriptioAnn ? getAnnotationString(descriptioAnn) : undefined

@@ -101,6 +101,7 @@ function genLeafCommandHelp(
 ): string {
     const lines: string[] = [];
     const params = node.params ?? [];
+    const operands = node.operands ?? [];
     const fullCommand = `${cli.name} ${commandPath}`;
 
     const positionalParams = params.filter(p => !p.optional);
@@ -117,58 +118,86 @@ function genLeafCommandHelp(
     if (optionalParams.length > 0) {
         usage += ' [options]';
     }
+    // Show operands from @ operandus annotations
+    for (const op of operands) {
+        if (op.rest) {
+            usage += ` [${op.name}...]`;
+        }
+        else if (op.defaultValue !== undefined) {
+            usage += ` [${op.name}]`;
+        }
+        else {
+            usage += ` <${op.name}>`;
+        }
+    }
+    // Also show positional params (for backwards compatibility)
     for (const p of positionalParams) {
         usage += ` <${p.name}>`;
     }
     lines.push(`${ind}console.log("${usage}");`);
     lines.push(`${ind}console.log("");`);
 
-    // Arguments section (positional params)
-    if (positionalParams.length > 0) {
+    // Arguments section (operands + positional params)
+    const allArgs = [
+        ...operands.map(op => ({ name: op.name, description: op.description, rest: op.rest })),
+        ...positionalParams.map(p => ({ name: p.name, description: p.description, rest: false })),
+    ];
+    if (allArgs.length > 0) {
         lines.push(`${ind}console.log("Arguments:");`);
 
-        const argWidths = positionalParams.map(p => p.name.length);
+        const argWidths = allArgs.map(a => a.rest ? a.name.length + 3 : a.name.length);
         const maxArgWidth = Math.max(12, ...argWidths);
 
-        for (const p of positionalParams) {
-            const padding = ' '.repeat(maxArgWidth - p.name.length + 2);
-            if (p.description) {
-                lines.push(`${ind}console.log("  ${p.name}${padding}${p.description}");`);
+        for (const a of allArgs) {
+            const displayName = a.rest ? `${a.name}...` : a.name;
+            const padding = ' '.repeat(maxArgWidth - displayName.length + 2);
+            if (a.description) {
+                lines.push(`${ind}console.log("  ${displayName}${padding}${a.description}");`);
             }
             else {
-                lines.push(`${ind}console.log("  ${p.name}");`);
+                lines.push(`${ind}console.log("  ${displayName}");`);
             }
         }
         lines.push(`${ind}console.log("");`);
     }
 
-    // Options section
-    if (optionalParams.length > 0) {
+    // Options section - use node.options when optionesBundle is set, otherwise use optionalParams
+    const displayOptions = node.optionesBundle && node.options
+        ? node.options.map(o => ({
+            shortFlag: o.short,
+            longFlag: o.external || o.internal,
+            description: o.description,
+        }))
+        : optionalParams.map(p => ({
+            shortFlag: p.shortFlag,
+            longFlag: p.longFlag ?? p.name,
+            description: p.description,
+        }));
+
+    if (displayOptions.length > 0) {
         lines.push(`${ind}console.log("Options:");`);
 
         // Calculate max width for alignment
-        const optWidths = optionalParams.map(p => {
-            const longFlag = p.longFlag ?? p.name;
-            if (p.shortFlag) {
-                return `-${p.shortFlag}, --${longFlag}`.length;
+        const optWidths = displayOptions.map(o => {
+            if (o.shortFlag) {
+                return `-${o.shortFlag}, --${o.longFlag}`.length;
             }
-            return `--${longFlag}`.length;
+            return `--${o.longFlag}`.length;
         });
         const maxOptWidth = Math.max(16, ...optWidths);
 
-        for (const p of optionalParams) {
-            const longFlag = p.longFlag ?? p.name;
+        for (const o of displayOptions) {
             let flagPart: string;
-            if (p.shortFlag) {
-                flagPart = `-${p.shortFlag}, --${longFlag}`;
+            if (o.shortFlag) {
+                flagPart = `-${o.shortFlag}, --${o.longFlag}`;
             }
             else {
-                flagPart = `--${longFlag}`;
+                flagPart = `--${o.longFlag}`;
             }
             const padding = ' '.repeat(maxOptWidth - flagPart.length + 2);
 
-            if (p.description) {
-                lines.push(`${ind}console.log("  ${flagPart}${padding}${p.description}");`);
+            if (o.description) {
+                lines.push(`${ind}console.log("  ${flagPart}${padding}${o.description}");`);
             }
             else {
                 lines.push(`${ind}console.log("  ${flagPart}");`);
@@ -197,9 +226,16 @@ function genLeafCommand(
 ): string {
     const lines: string[] = [];
     const params = node.params ?? [];
+    const operands = node.operands ?? [];
+    const options = node.options ?? [];
+    const optionesBundle = node.optionesBundle;
 
     const positionalParams = params.filter(p => !p.optional);
     const optionalParams = params.filter(p => p.optional);
+
+    // Separate operands into regular and rest (ceteri)
+    const regularOperands = operands.filter(op => !op.rest);
+    const restOperand = operands.find(op => op.rest);
 
     // Help flag check - must come before argument parsing
     lines.push(`${ind}if (${argsVar}[${startIdx}] === "--help" || ${argsVar}[${startIdx}] === "-h") {`);
@@ -207,67 +243,144 @@ function genLeafCommand(
     lines.push(`${ind}  process.exit(0);`);
     lines.push(`${ind}}`);
 
-    // Declare variables for parsed args
-    for (const p of params) {
-        let defaultVal: string;
-        if (p.type === 'bivalens') {
-            defaultVal = 'false';
-        }
-        else if (p.defaultValue !== undefined) {
-            defaultVal = `"${p.defaultValue}"`;
-        }
-        else if (p.optional) {
-            defaultVal = 'undefined';
+    // Declare variables for operands (from @ operandus annotations)
+    for (const op of regularOperands) {
+        if (op.defaultValue !== undefined) {
+            lines.push(`${ind}let ${op.name}: string = "${op.defaultValue}";`);
         }
         else {
-            defaultVal = '""';
+            lines.push(`${ind}let ${op.name}: string = "";`);
         }
+    }
+    if (restOperand) {
+        lines.push(`${ind}let ${restOperand.name}: string[] = [];`);
+    }
 
-        const tsType = p.type === 'bivalens' ? 'boolean' : 'string';
-        const nullableType = p.optional && p.type !== 'bivalens' ? ' | undefined' : '';
-        lines.push(`${ind}let ${p.name}: ${tsType}${nullableType} = ${defaultVal};`);
+    if (optionesBundle) {
+        // Bundle mode: declare Map for options
+        lines.push(`${ind}const ${optionesBundle} = new Map<string, string>();`);
+    }
+    else {
+        // Legacy mode: declare individual variables for params
+        for (const p of params) {
+            let defaultVal: string;
+            if (p.type === 'bivalens') {
+                defaultVal = 'false';
+            }
+            else if (p.defaultValue !== undefined) {
+                defaultVal = `"${p.defaultValue}"`;
+            }
+            else if (p.optional) {
+                defaultVal = 'undefined';
+            }
+            else {
+                defaultVal = '""';
+            }
+
+            const tsType = p.type === 'bivalens' ? 'boolean' : 'string';
+            const nullableType = p.optional && p.type !== 'bivalens' ? ' | undefined' : '';
+            lines.push(`${ind}let ${p.name}: ${tsType}${nullableType} = ${defaultVal};`);
+        }
     }
 
     lines.push(`${ind}for (let _i = ${startIdx}; _i < ${argsVar}.length; _i++) {`);
     lines.push(`${ind}  const _arg = ${argsVar}[_i]!;`);
 
-    // Handle optional flags (use longFlag if available, otherwise fall back to name)
-    for (const p of optionalParams) {
-        const longFlag = `--${p.longFlag ?? p.name}`;
-        const shortFlag = p.shortFlag ? `-${p.shortFlag}` : null;
-        const flagCheck = shortFlag
-            ? `_arg === "${longFlag}" || _arg === "${shortFlag}"`
-            : `_arg === "${longFlag}"`;
+    if (optionesBundle) {
+        // Bundle mode: parse options into map
+        for (const opt of options) {
+            const longFlag = opt.external ? `--${opt.external}` : `--${opt.internal}`;
+            const shortFlag = opt.short ? `-${opt.short}` : null;
+            const flagCheck = shortFlag
+                ? `_arg === "${longFlag}" || _arg === "${shortFlag}"`
+                : `_arg === "${longFlag}"`;
 
-        if (p.type === 'bivalens') {
-            lines.push(`${ind}  if (${flagCheck}) { ${p.name} = true; continue; }`);
+            if (opt.type === 'bivalens') {
+                lines.push(`${ind}  if (${flagCheck}) { ${optionesBundle}.set("${opt.internal}", "true"); continue; }`);
+            }
+            else {
+                lines.push(`${ind}  if (${flagCheck}) { ${optionesBundle}.set("${opt.internal}", ${argsVar}[++_i]!); continue; }`);
+            }
         }
-        else {
-            lines.push(`${ind}  if (${flagCheck}) { ${p.name} = ${argsVar}[++_i]; continue; }`);
+    }
+    else {
+        // Legacy mode: parse options into individual variables
+        for (const p of optionalParams) {
+            const longFlag = `--${p.longFlag ?? p.name}`;
+            const shortFlag = p.shortFlag ? `-${p.shortFlag}` : null;
+            const flagCheck = shortFlag
+                ? `_arg === "${longFlag}" || _arg === "${shortFlag}"`
+                : `_arg === "${longFlag}"`;
+
+            if (p.type === 'bivalens') {
+                lines.push(`${ind}  if (${flagCheck}) { ${p.name} = true; continue; }`);
+            }
+            else {
+                lines.push(`${ind}  if (${flagCheck}) { ${p.name} = ${argsVar}[++_i]; continue; }`);
+            }
         }
     }
 
-    // Handle positional args
-    if (positionalParams.length > 0) {
+    // Handle positional args (operands first, then legacy positional params)
+    const hasPositionalArgs = regularOperands.length > 0 || restOperand || positionalParams.length > 0;
+    if (hasPositionalArgs) {
         lines.push(`${ind}  if (!_arg.startsWith("-")) {`);
-        for (const p of positionalParams) {
-            lines.push(`${ind}    if (${p.name} === "") { ${p.name} = _arg; continue; }`);
+
+        // Regular operands (non-ceteri) - fill in order
+        for (const op of regularOperands) {
+            lines.push(`${ind}    if (${op.name} === "") { ${op.name} = _arg; continue; }`);
         }
+
+        // Rest operand (ceteri) - collects remaining positional args
+        if (restOperand) {
+            lines.push(`${ind}    ${restOperand.name}.push(_arg); continue;`);
+        }
+        else if (!optionesBundle) {
+            // Legacy positional params (only when not using bundle)
+            for (const p of positionalParams) {
+                lines.push(`${ind}    if (${p.name} === "") { ${p.name} = _arg; continue; }`);
+            }
+        }
+
         lines.push(`${ind}  }`);
     }
 
     lines.push(`${ind}}`);
 
-    // Validate required args
-    for (const p of positionalParams) {
-        lines.push(`${ind}if (${p.name} === "") {`);
-        lines.push(`${ind}  console.error("Missing required argument: ${p.name}");`);
-        lines.push(`${ind}  process.exit(1);`);
-        lines.push(`${ind}}`);
+    // Validate required operands
+    for (const op of regularOperands) {
+        if (op.defaultValue === undefined) {
+            lines.push(`${ind}if (${op.name} === "") {`);
+            lines.push(`${ind}  console.error("Missing required argument: ${op.name}");`);
+            lines.push(`${ind}  process.exit(1);`);
+            lines.push(`${ind}}`);
+        }
+    }
+
+    // Validate required positional params (legacy, only when not using bundle)
+    if (!optionesBundle) {
+        for (const p of positionalParams) {
+            lines.push(`${ind}if (${p.name} === "") {`);
+            lines.push(`${ind}  console.error("Missing required argument: ${p.name}");`);
+            lines.push(`${ind}  process.exit(1);`);
+            lines.push(`${ind}}`);
+        }
+    }
+
+    // Build argument list for function call
+    const operandArgs = operands.map(op => op.name);
+    let argList: string;
+    if (optionesBundle) {
+        // Bundle mode: operands + bundle map
+        argList = [...operandArgs, optionesBundle].join(', ');
+    }
+    else {
+        // Legacy mode: operands + individual params
+        const paramArgs = params.map(p => p.name);
+        argList = [...operandArgs, ...paramArgs].join(', ');
     }
 
     // Call the function (with module prefix if from imported module)
-    const argList = params.map(p => p.name).join(', ');
     const funcCall = node.modulePrefix
         ? `${node.modulePrefix}.${node.functionName}`
         : node.functionName;

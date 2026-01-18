@@ -44,6 +44,7 @@ export interface CliFunctionInfo {
     name: string;
     annotations: Annotation[];
     params: CliParamInfo[];
+    optionesBundle?: string; // From 'optiones <name>' modifier
 }
 
 /** Extracted parameter info for CLI */
@@ -186,10 +187,16 @@ function extractCliInfo(program: Program, filePath: string): CliModuleInfo {
 
             case 'FunctioDeclaration': {
                 const fn = stmt as FunctioDeclaration;
+                // Extract optiones modifier if present
+                const optionesModifier = fn.modifiers?.find(m => m.type === 'OptionesModifier');
+                const optionesBundle = optionesModifier?.type === 'OptionesModifier'
+                    ? (optionesModifier as { name: { name: string } }).name.name
+                    : undefined;
                 functions.push({
                     name: fn.name.name,
                     annotations: fn.annotations ?? [],
                     params: fn.params.map(extractParamInfo),
+                    optionesBundle,
                 });
                 break;
             }

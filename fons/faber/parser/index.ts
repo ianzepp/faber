@@ -723,30 +723,48 @@ export function parse(tokens: Token[]): ParserResult {
     /**
      * Parse @ optio annotation for CLI option flags.
      *
-     * GRAMMAR:
+     * NEW GRAMMAR (preferred):
+     *   optioAnnotation := IDENTIFIER [brevis STRING] [longum STRING] [bivalens] [descriptio STRING]
+     *
+     * OLD GRAMMAR (backwards compatible):
      *   optioAnnotation := type IDENTIFIER [brevis STRING] [longum STRING] [descriptio STRING]
+     *
+     * Detection: If first token is a type keyword (bivalens, textus, numerus, etc.), use old syntax.
      *
      * CONSTRAINTS:
      *   - At least one of brevis/longum is required
      *   - brevis must be a single character
      *
-     * Examples:
+     * Examples (new):
+     *   @ optio verbose brevis "v" longum "verbose" bivalens descriptio "Enable verbose output"
+     *   @ optio color longum "color" descriptio "Colorize output"
+     *
+     * Examples (old, deprecated):
      *   @ optio bivalens v brevis "v" longum "verbose" descriptio "Enable verbose output"
-     *   @ optio bivalens n brevis "n" descriptio "Dry run mode"
      *   @ optio textus color longum "color" descriptio "Colorize output"
-     *   @ optio bivalens singleColumn brevis "1" descriptio "One file per line"
      */
     function parseOptioAnnotation(position: Position, startLine: number): Annotation {
-        // Parse type (required)
         if ((!check('IDENTIFIER') && !check('KEYWORD')) || peek().position.line !== startLine) {
             errors.push({
                 code: ParserErrorCode.UnexpectedToken,
-                message: `Expected type in @optio annotation, got '${peek().value}'`,
+                message: `Expected name in @optio annotation, got '${peek().value}'`,
                 position: peek().position,
             });
             return { type: 'Annotation', name: 'optio', position };
         }
-        const optioType = parseTypeAnnotationImpl(resolver);
+
+        // Detect old vs new syntax: check if first token is a type keyword
+        const TYPE_KEYWORDS = ['bivalens', 'textus', 'numerus', 'fractus', 'ignotum'];
+        const firstToken = peek();
+        const isOldSyntax = TYPE_KEYWORDS.includes(firstToken.value);
+
+        let optioType: TypeAnnotation | undefined;
+        let optioBivalens: boolean | undefined;
+
+        if (isOldSyntax) {
+            // OLD SYNTAX: type comes first
+            optioType = parseTypeAnnotationImpl(resolver);
+        }
 
         // Parse binding name (IDENTIFIER required)
         let optioInternal: Identifier | undefined;
@@ -810,6 +828,12 @@ export function parse(tokens: Token[]): ParserResult {
             }
         }
 
+        // Parse optional 'bivalens' modifier (new syntax only)
+        if (!isOldSyntax && !isAtEnd() && peek().position.line === startLine && checkKeyword('bivalens')) {
+            advance(); // consume 'bivalens'
+            optioBivalens = true;
+        }
+
         // Validate: at least one of brevis/longum required
         if (!optioShort && !optioLong) {
             errors.push({
@@ -842,6 +866,7 @@ export function parse(tokens: Token[]): ParserResult {
             optioInternal,
             optioShort,
             optioLong,
+            optioBivalens,
             optioDescription,
             position,
         };

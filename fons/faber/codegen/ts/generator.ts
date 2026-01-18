@@ -148,6 +148,9 @@ export interface CliCommandNode {
     functionName?: string;
     modulePrefix?: string;  // For imported commands (e.g., "configModule" for configModule.list)
     params?: CliParam[];
+    operands?: CliOperand[]; // From @ operandus annotations on @ imperium functions
+    options?: CliOption[];  // From @ optio annotations (when using optiones bundle)
+    optionesBundle?: string; // Bundle name from 'optiones <name>' modifier
     // Branch node properties
     children: Map<string, CliCommandNode>;
 }
