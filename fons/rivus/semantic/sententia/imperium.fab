@@ -270,7 +270,7 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                 si d.discriminantes.longitudo() != 1 {
                     a.error("discerne omnia requires exactly one discriminant", d.locus)
                 }
-                secus si non habetWildcardCasu {
+                sin non habetWildcardCasu {
                     # Resolve discriminant type name
                     fixum discriminantTypus = r.expressia(d.discriminantes[0])
                     varia discretioNomen = nihil qua textus?
