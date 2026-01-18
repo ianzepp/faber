@@ -50,7 +50,8 @@ functio parseIncipitSententia(Resolvitor r) -> Sententia {
         redde finge IncipitSententia {
             locus: locus,
             corpus: nihil,
-            ergo: ergo
+            ergo: ergo,
+            annotationes: nihil
         } qua Sententia
     }
 
@@ -60,7 +61,8 @@ functio parseIncipitSententia(Resolvitor r) -> Sententia {
     redde finge IncipitSententia {
         locus: locus,
         corpus: corpus,
-        ergo: nihil
+        ergo: nihil,
+        annotationes: nihil
     } qua Sententia
 }
 
@@ -86,7 +88,8 @@ functio parseIncipietSententia(Resolvitor r) -> Sententia {
         redde finge IncipietSententia {
             locus: locus,
             corpus: nihil,
-            ergo: ergo
+            ergo: ergo,
+            annotationes: nihil
         } qua Sententia
     }
 
@@ -96,7 +99,8 @@ functio parseIncipietSententia(Resolvitor r) -> Sententia {
     redde finge IncipietSententia {
         locus: locus,
         corpus: corpus,
-        ergo: nihil
+        ergo: nihil,
+        annotationes: nihil
     } qua Sententia
 }
 

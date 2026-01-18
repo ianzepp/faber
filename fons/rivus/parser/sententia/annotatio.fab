@@ -53,51 +53,8 @@
 § ex "../../ast/positio" importa Locus
 § ex "../../ast/lexema" importa SymbolumGenus
 § ex "../../ast/radix" importa SectioAnnotatio
+§ ex "../../ast/annotatio" importa Annotatio
 § ex "../errores" importa ParserErrorCodice
-
-# ============================================================================
-# TYPES
-# ============================================================================
-
-# Parsed annotation with optional arguments
-#
-# EXTENDED FIELDS for stdlib annotations:
-# - targetMappings: for @ innatum and @ subsidia (target -> value mapping)
-# - radixForms: for @ radix (stem + morphological forms)
-# - verteTarget: for @ verte (target language)
-# - verteMethod: for @ verte simple form (method name)
-# - verteParams: for @ verte template form (parameter list)
-# - verteTemplate: for @ verte template form (template string)
-@ publicum
-genus Annotatio {
-    Locus locus
-    textus nomen                # annotation name (e.g., "futura", "radix")
-    lista<textus> argumenta     # optional arguments (e.g., ["imperativus"])
-
-    # For @ innatum and @ subsidia: target-to-value mappings
-    # Example: { ts: "Array", py: "list", zig: "Lista" }
-    tabula<textus, textus>? targetMappings
-
-    # For @ radix: stem and valid morphological forms
-    # First element is the stem, rest are form names
-    # Example: ["filtr", "imperativus", "perfectum"]
-    lista<textus>? radixForms
-
-    # For @ verte: the target language (ts, py, rs, cpp, zig)
-    textus? verteTarget
-
-    # For @ verte with simple method: the method name
-    # Example: "push" for `@ verte ts "push"`
-    textus? verteMethod
-
-    # For @ verte with template: parameter names
-    # Example: ["ego", "elem"] for `@ verte ts (ego, elem) -> "..."`
-    lista<textus>? verteParams
-
-    # For @ verte with template: the template string with S placeholders
-    # Example: "[...S, S]" for `@ verte ts (ego, elem) -> "[...S, S]"`
-    textus? verteTemplate
-}
 
 # ============================================================================
 # HELPERS
@@ -151,7 +108,16 @@ functio parseTargetMappingAnnotation(Resolvitor r, textus nomen, Locus locus, nu
         verteTarget: nihil,
         verteMethod: nihil,
         verteParams: nihil,
-        verteTemplate: nihil
+        verteTemplate: nihil,
+        optioTypus: nihil,
+        optioNomen: nihil,
+        optioBrevis: nihil,
+        optioLongum: nihil,
+        optioDescriptio: nihil,
+        operandusTypus: nihil,
+        operandusNomen: nihil,
+        operandusCeteri: nihil,
+        operandusDescriptio: nihil
     } qua Annotatio
 }
 
@@ -184,7 +150,16 @@ functio parseRadixAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
         verteTarget: nihil,
         verteMethod: nihil,
         verteParams: nihil,
-        verteTemplate: nihil
+        verteTemplate: nihil,
+        optioTypus: nihil,
+        optioNomen: nihil,
+        optioBrevis: nihil,
+        optioLongum: nihil,
+        optioDescriptio: nihil,
+        operandusTypus: nihil,
+        operandusNomen: nihil,
+        operandusCeteri: nihil,
+        operandusDescriptio: nihil
     } qua Annotatio
 }
 
@@ -208,7 +183,16 @@ functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
             verteTarget: nihil,
             verteMethod: nihil,
             verteParams: nihil,
-            verteTemplate: nihil
+            verteTemplate: nihil,
+            optioTypus: nihil,
+            optioNomen: nihil,
+            optioBrevis: nihil,
+            optioLongum: nihil,
+            optioDescriptio: nihil,
+            operandusTypus: nihil,
+            operandusNomen: nihil,
+            operandusCeteri: nihil,
+            operandusDescriptio: nihil
         } qua Annotatio
     }
     fixum verteTarget = p.specta(0).valor
@@ -254,7 +238,16 @@ functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
                 verteTarget: verteTarget,
                 verteMethod: nihil,
                 verteParams: verteParams,
-                verteTemplate: nihil
+                verteTemplate: nihil,
+                optioTypus: nihil,
+                optioNomen: nihil,
+                optioBrevis: nihil,
+                optioLongum: nihil,
+                optioDescriptio: nihil,
+                operandusTypus: nihil,
+                operandusNomen: nihil,
+                operandusCeteri: nihil,
+                operandusDescriptio: nihil
             } qua Annotatio
         }
         fixum verteTemplate = p.specta(0).valor
@@ -274,7 +267,16 @@ functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
             verteTarget: verteTarget,
             verteMethod: nihil,
             verteParams: verteParams,
-            verteTemplate: verteTemplate
+            verteTemplate: verteTemplate,
+            optioTypus: nihil,
+            optioNomen: nihil,
+            optioBrevis: nihil,
+            optioLongum: nihil,
+            optioDescriptio: nihil,
+            operandusTypus: nihil,
+            operandusNomen: nihil,
+            operandusCeteri: nihil,
+            operandusDescriptio: nihil
         } qua Annotatio
     }
 
@@ -290,7 +292,16 @@ functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
             verteTarget: verteTarget,
             verteMethod: nihil,
             verteParams: nihil,
-            verteTemplate: nihil
+            verteTemplate: nihil,
+            optioTypus: nihil,
+            optioNomen: nihil,
+            optioBrevis: nihil,
+            optioLongum: nihil,
+            optioDescriptio: nihil,
+            operandusTypus: nihil,
+            operandusNomen: nihil,
+            operandusCeteri: nihil,
+            operandusDescriptio: nihil
         } qua Annotatio
     }
     fixum verteMethod = p.specta(0).valor
@@ -310,7 +321,16 @@ functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
         verteTarget: verteTarget,
         verteMethod: verteMethod,
         verteParams: nihil,
-        verteTemplate: nihil
+        verteTemplate: nihil,
+        optioTypus: nihil,
+        optioNomen: nihil,
+        optioBrevis: nihil,
+        optioLongum: nihil,
+        optioDescriptio: nihil,
+        operandusTypus: nihil,
+        operandusNomen: nihil,
+        operandusCeteri: nihil,
+        operandusDescriptio: nihil
     } qua Annotatio
 }
 
@@ -343,7 +363,16 @@ functio parseImperiaAnnotation(Resolvitor r, Locus locus, numerus linea) -> Anno
             verteTarget: nihil,
             verteMethod: nihil,
             verteParams: nihil,
-            verteTemplate: nihil
+            verteTemplate: nihil,
+            optioTypus: nihil,
+            optioNomen: nihil,
+            optioBrevis: nihil,
+            optioLongum: nihil,
+            optioDescriptio: nihil,
+            operandusTypus: nihil,
+            operandusNomen: nihil,
+            operandusCeteri: nihil,
+            operandusDescriptio: nihil
         } qua Annotatio
     }
 
@@ -364,7 +393,168 @@ functio parseImperiaAnnotation(Resolvitor r, Locus locus, numerus linea) -> Anno
         verteTarget: nihil,
         verteMethod: nihil,
         verteParams: nihil,
-        verteTemplate: nihil
+        verteTemplate: nihil,
+        optioTypus: nihil,
+        optioNomen: nihil,
+        optioBrevis: nihil,
+        optioLongum: nihil,
+        optioDescriptio: nihil,
+        operandusTypus: nihil,
+        operandusNomen: nihil,
+        operandusCeteri: nihil,
+        operandusDescriptio: nihil
+    } qua Annotatio
+}
+
+# Parse @ optio annotation for CLI flags
+# Grammar: @ optio <type> <binding> [brevis "x"] [longum "xxx"] [descriptio "..."]
+# Example: @ optio textus target brevis "t" longum "target" descriptio "Target language"
+functio parseOptioAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annotatio {
+    fixum p = r.parser()
+
+    # Parse type (required) - textus, bivalens, numerus, etc.
+    varia optioTypus = nihil qua textus?
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
+        optioTypus = p.specta(0).valor
+        p.procede()
+    } secus {
+        p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("@ optio requires type, got '§'", p.specta(0).valor))
+    }
+
+    # Parse binding name (required)
+    varia optioNomen = nihil qua textus?
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
+        optioNomen = p.specta(0).valor
+        p.procede()
+    } secus {
+        p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("@ optio requires binding name, got '§'", p.specta(0).valor))
+    }
+
+    # Parse optional brevis "x"
+    varia optioBrevis = nihil qua textus?
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor == "brevis" et p.specta(0).locus.linea == linea {
+        p.procede()
+        si p.specta(0).species == SymbolumGenus.Textus et p.specta(0).locus.linea == linea {
+            optioBrevis = p.specta(0).valor
+            p.procede()
+        } secus {
+            p.renuncia(ParserErrorCodice.ExpectaturTextus, "expected string after brevis")
+        }
+    }
+
+    # Parse optional longum "xxx"
+    varia optioLongum = nihil qua textus?
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor == "longum" et p.specta(0).locus.linea == linea {
+        p.procede()
+        si p.specta(0).species == SymbolumGenus.Textus et p.specta(0).locus.linea == linea {
+            optioLongum = p.specta(0).valor
+            p.procede()
+        } secus {
+            p.renuncia(ParserErrorCodice.ExpectaturTextus, "expected string after longum")
+        }
+    }
+
+    # Validate: at least one of brevis/longum required
+    si nihil optioBrevis et nihil optioLongum {
+        p.renuncia(ParserErrorCodice.ExpectaturNomen, "@ optio requires brevis or longum")
+    }
+
+    # Parse optional descriptio "..."
+    varia optioDescriptio = nihil qua textus?
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor == "descriptio" et p.specta(0).locus.linea == linea {
+        p.procede()
+        si p.specta(0).species == SymbolumGenus.Textus et p.specta(0).locus.linea == linea {
+            optioDescriptio = p.specta(0).valor
+            p.procede()
+        } secus {
+            p.renuncia(ParserErrorCodice.ExpectaturTextus, "expected string after descriptio")
+        }
+    }
+
+    redde {
+        locus: locus,
+        nomen: "optio",
+        argumenta: [] innatum lista<textus>,
+        targetMappings: nihil,
+        radixForms: nihil,
+        verteTarget: nihil,
+        verteMethod: nihil,
+        verteParams: nihil,
+        verteTemplate: nihil,
+        optioTypus: optioTypus,
+        optioNomen: optioNomen,
+        optioBrevis: optioBrevis,
+        optioLongum: optioLongum,
+        optioDescriptio: optioDescriptio,
+        operandusTypus: nihil,
+        operandusNomen: nihil,
+        operandusCeteri: nihil,
+        operandusDescriptio: nihil
+    } qua Annotatio
+}
+
+# Parse @ operandus annotation for CLI positional arguments
+# Grammar: @ operandus [ceteri] <type> <name> [descriptio "..."]
+# Example: @ operandus textus file descriptio "Input file"
+functio parseOperandusAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annotatio {
+    fixum p = r.parser()
+
+    # Check for optional 'ceteri' prefix (rest/variadic)
+    varia operandusCeteri = falsum
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor == "ceteri" et p.specta(0).locus.linea == linea {
+        p.procede()
+        operandusCeteri = verum
+    }
+
+    # Parse type (required)
+    varia operandusTypus = nihil qua textus?
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
+        operandusTypus = p.specta(0).valor
+        p.procede()
+    } secus {
+        p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("@ operandus requires type, got '§'", p.specta(0).valor))
+    }
+
+    # Parse name (required)
+    varia operandusNomen = nihil qua textus?
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
+        operandusNomen = p.specta(0).valor
+        p.procede()
+    } secus {
+        p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("@ operandus requires name, got '§'", p.specta(0).valor))
+    }
+
+    # Parse optional descriptio "..."
+    varia operandusDescriptio = nihil qua textus?
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor == "descriptio" et p.specta(0).locus.linea == linea {
+        p.procede()
+        si p.specta(0).species == SymbolumGenus.Textus et p.specta(0).locus.linea == linea {
+            operandusDescriptio = p.specta(0).valor
+            p.procede()
+        } secus {
+            p.renuncia(ParserErrorCodice.ExpectaturTextus, "expected string after descriptio")
+        }
+    }
+
+    redde {
+        locus: locus,
+        nomen: "operandus",
+        argumenta: [] innatum lista<textus>,
+        targetMappings: nihil,
+        radixForms: nihil,
+        verteTarget: nihil,
+        verteMethod: nihil,
+        verteParams: nihil,
+        verteTemplate: nihil,
+        optioTypus: nihil,
+        optioNomen: nihil,
+        optioBrevis: nihil,
+        optioLongum: nihil,
+        optioDescriptio: nihil,
+        operandusTypus: operandusTypus,
+        operandusNomen: operandusNomen,
+        operandusCeteri: operandusCeteri,
+        operandusDescriptio: operandusDescriptio
     } qua Annotatio
 }
 
@@ -419,6 +609,18 @@ functio parseAnnotationes(Resolvitor r) -> lista<Annotatio> {
             perge
         }
 
+        # @ optio <type> <binding> [brevis "x"] [longum "xxx"] [descriptio "..."]
+        si nomen == "optio" {
+            annotationes.adde(parseOptioAnnotation(r, locus, linea))
+            perge
+        }
+
+        # @ operandus [ceteri] <type> <name> [descriptio "..."]
+        si nomen == "operandus" {
+            annotationes.adde(parseOperandusAnnotation(r, locus, linea))
+            perge
+        }
+
         # Standard annotation: collect any arguments on the same line
         # This handles test annotations like @ tag "slow", @ temporis 5000
         varia argumenta = [] innatum lista<textus>
@@ -447,7 +649,16 @@ functio parseAnnotationes(Resolvitor r) -> lista<Annotatio> {
             verteTarget: nihil,
             verteMethod: nihil,
             verteParams: nihil,
-            verteTemplate: nihil
+            verteTemplate: nihil,
+            optioTypus: nihil,
+            optioNomen: nihil,
+            optioBrevis: nihil,
+            optioLongum: nihil,
+            optioDescriptio: nihil,
+            operandusTypus: nihil,
+            operandusNomen: nihil,
+            operandusCeteri: nihil,
+            operandusDescriptio: nihil
         } qua Annotatio)
     }
 

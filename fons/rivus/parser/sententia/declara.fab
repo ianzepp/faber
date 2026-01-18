@@ -29,7 +29,8 @@
 § ex "../errores" importa ParserErrorCodice
 § ex "./massa" importa parseMassaSententia
 § ex "./varia" importa parseNomenVelVerbum
-§ ex "./annotatio" importa Annotatio, parseAnnotationes
+§ ex "../../ast/annotatio" importa Annotatio
+§ ex "./annotatio" importa parseAnnotationes
 
 # ============================================================================
 # FUNCTION DECLARATIONS
@@ -179,7 +180,8 @@ functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
         visibilitas: nihil,
         reddeVerbum: reddeVerbum,
         morphologia: nihil,
-        modificatores: modificatores
+        modificatores: modificatores,
+        annotationes: nihil
     } qua Sententia
 }
 
@@ -332,7 +334,8 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
                 visibilitas: visibilitas,
                 reddeVerbum: nihil,
                 morphologia: morphologiaEx(annotationes),
-                modificatores: modificatores
+                modificatores: modificatores,
+                annotationes: nihil
             } qua FunctioDeclaratio
 
             si estStructor {

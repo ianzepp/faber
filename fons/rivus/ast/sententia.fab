@@ -6,6 +6,7 @@
 § ex "./positio" importa Locus
 § ex "./typus" importa TypusAnnotatio
 § ex "./expressia" importa Expressia
+§ ex "./annotatio" importa Annotatio
 
 # ============================================================================
 # SUPPORTING ENUMS
@@ -360,6 +361,7 @@ discretio Sententia {
         ReddeVerbum? reddeVerbum
         MorphologiaDeclaratio? morphologia      # WHY: optional method morphology
         lista<FunctioModificator>? modificatores # WHY: optional modifiers list
+        lista<Annotatio>? annotationes  # WHY: CLI annotations (@ imperium, @ optio, etc.)
     }
 
     # -------------------------------------------------------------------------
@@ -570,6 +572,7 @@ discretio Sententia {
         Locus locus
         MassaSententia? corpus   # WHY: optional incipit body
         Sententia? ergo          # WHY: optional incipit ergo clause
+        lista<Annotatio>? annotationes  # WHY: CLI annotations (@ cli, @ optio, etc.)
     }
 
     # Entry point (async)
@@ -578,6 +581,7 @@ discretio Sententia {
         Locus locus
         MassaSententia? corpus   # WHY: optional incipiet body
         Sententia? ergo          # WHY: optional incipiet ergo clause
+        lista<Annotatio>? annotationes  # WHY: CLI annotations
     }
 
     # Resource management statement

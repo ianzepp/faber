@@ -19,6 +19,7 @@
 § ex "../../ast/sententia" importa Sententia, ScribeGradus, MorphologiaDeclaratio, Visibilitas, ProbaModificator
 § ex "../../ast/lexema" importa SymbolumGenus, VerbumId
 § ex "../../ast/radix" importa NodusRadix
+§ ex "../../ast/annotatio" importa Annotatio
 § ex "../errores" importa ParserErrorCodice
 § ex "./annotatio" importa parseAnnotationes, parseSectiones
 § ex "../../ast/radix" importa SectioAnnotatio
@@ -88,6 +89,21 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
 
         fixum stmt = parseSententiaSineNotis(r)
 
+        # Store all annotations on statements that support the annotationes field
+        discerne stmt {
+            casu FunctioDeclaratio ut f {
+                f.annotationes = annotationes
+            }
+            casu IncipitSententia ut i {
+                i.annotationes = annotationes
+            }
+            casu IncipietSententia ut i {
+                i.annotationes = annotationes
+            }
+            casu _ { }
+        }
+
+        # Process individual annotation effects
         ex annotationes pro a {
             # Check for visibility annotations
             varia visibilitas = nihil qua Visibilitas?

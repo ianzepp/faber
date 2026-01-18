@@ -1,0 +1,69 @@
+# Annotation AST - Type definition for @ annotations
+#
+# WHY: Collocated with other AST types so both parser and AST can import.
+#      Parser functions remain in parser/sententia/annotatio.fab.
+
+§ ex "./positio" importa Locus
+
+# ============================================================================
+# ANNOTATION TYPE
+# ============================================================================
+
+# Parsed annotation with optional arguments
+#
+# EXTENDED FIELDS for stdlib annotations:
+# - targetMappings: for @ innatum and @ subsidia (target -> value mapping)
+# - radixForms: for @ radix (stem + morphological forms)
+# - verteTarget: for @ verte (target language)
+# - verteMethod: for @ verte simple form (method name)
+# - verteParams: for @ verte template form (parameter list)
+# - verteTemplate: for @ verte template form (template string)
+# - optio*: for @ optio CLI flag definition
+# - operandus*: for @ operandus CLI positional argument
+@ publicum
+genus Annotatio {
+    Locus locus
+    textus nomen                # annotation name (e.g., "futura", "radix")
+    lista<textus> argumenta     # optional arguments (e.g., ["imperativus"])
+
+    # For @ innatum and @ subsidia: target-to-value mappings
+    # Example: { ts: "Array", py: "list", zig: "Lista" }
+    tabula<textus, textus>? targetMappings
+
+    # For @ radix: stem and valid morphological forms
+    # First element is the stem, rest are form names
+    # Example: ["filtr", "imperativus", "perfectum"]
+    lista<textus>? radixForms
+
+    # For @ verte: the target language (ts, py, rs, cpp, zig)
+    textus? verteTarget
+
+    # For @ verte with simple method: the method name
+    # Example: "push" for `@ verte ts "push"`
+    textus? verteMethod
+
+    # For @ verte with template: parameter names
+    # Example: ["ego", "elem"] for `@ verte ts (ego, elem) -> "..."`
+    lista<textus>? verteParams
+
+    # For @ verte with template: the template string with S placeholders
+    # Example: "[...S, S]" for `@ verte ts (ego, elem) -> "[...S, S]"`
+    textus? verteTemplate
+
+    # For @ optio: CLI flag definition
+    # Grammar: @ optio <type> <binding> [brevis "x"] [longum "xxx"] [descriptio "..."]
+    # Example: @ optio textus target brevis "t" longum "target" descriptio "Target language"
+    textus? optioTypus        # type annotation (textus, bivalens, etc.)
+    textus? optioNomen        # binding name
+    textus? optioBrevis       # short flag (-x)
+    textus? optioLongum       # long flag (--xxx)
+    textus? optioDescriptio   # help text
+
+    # For @ operandus: CLI positional argument
+    # Grammar: @ operandus [ceteri] <type> <name> [descriptio "..."]
+    # Example: @ operandus textus file descriptio "Input file"
+    textus? operandusTypus
+    textus? operandusNomen
+    bivalens? operandusCeteri  # rest/variadic marker
+    textus? operandusDescriptio
+}

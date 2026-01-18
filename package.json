@@ -9,6 +9,8 @@
     },
     "scripts": {
         "build": "bun ./scripta/build.ts",
+        "faber": "opus/bin/faber",
+        "rivus": "opus/bin/rivus",
         "build:faber": "bun ./scripta/build-faber.ts",
         "build:norma": "bun ./scripta/build-norma.ts",
         "build:rivus": "bun ./scripta/build-rivus.ts",
