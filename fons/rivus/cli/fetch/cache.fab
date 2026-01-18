@@ -1,0 +1,49 @@
+# cache.fab - Cache write operations for dependency fetching
+#
+# Handles cache modifications:
+#   - Extracting tarballs to cache
+#   - Removing cached dependencies
+#   - Clearing entire cache
+
+§ ex "../../../norma/hal/solum" importa solum
+§ ex "../../../norma/hal/processus" importa processus
+§ ex "../../semantic/dependentia" importa cacheRoot, cachePath
+
+# ============================================================================
+# CACHE WRITE OPERATIONS
+# ============================================================================
+
+# Extract a tarball to the cache
+# GitHub tarballs have a top-level directory that needs stripping
+@ publica
+@ futura
+functio extractToCache(textus tarballPath, textus owner, textus repo, textus sha) -> vacuum {
+    fixum destPath = cachePath(owner, repo, sha)
+
+    # Create destination directory
+    cede solum.creaDir(destPath)
+
+    # Extract with --strip-components=1 to remove GitHub's top-level dir
+    fixum cmd = scriptum("tar -xzf '§' -C '§' --strip-components=1", tarballPath, destPath)
+    processus.exsequi(cmd)
+}
+
+# Remove a cached repo+commit
+@ publica
+@ futura
+functio removeFromCache(textus owner, textus repo, textus sha) -> vacuum {
+    fixum path = cachePath(owner, repo, sha)
+    si solum.exstat(path) {
+        cede solum.deleArborem(path)
+    }
+}
+
+# Clear entire cache
+@ publica
+@ futura
+functio clearCache() -> vacuum {
+    fixum root = cacheRoot()
+    si solum.exstat(root) {
+        cede solum.deleArborem(root)
+    }
+}

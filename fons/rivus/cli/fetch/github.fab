@@ -1,0 +1,64 @@
+# github.fab - GitHub API client for dependency fetching
+#
+# Handles network operations:
+#   - Resolving refs (branches, tags) to commit SHAs via GitHub API
+#   - Downloading tarballs
+
+§ ex "../../../norma/hal/caelum" importa caelum
+§ ex "../../../norma/hal/solum" importa solum
+§ ex "../../../norma/hal/processus" importa processus
+§ ex "../../semantic/dependentia" importa GithubRef
+
+# ============================================================================
+# API CALLS
+# ============================================================================
+
+# Resolve a ref (branch, tag, commit) to its commit SHA
+# Uses GitHub API: GET /repos/{owner}/{repo}/commits/{ref}
+@ publica
+@ futura
+functio resolveRef(GithubRef ref) -> textus? {
+    fixum url = scriptum(
+        "https://api.github.com/repos/§/§/commits/§",
+        ref.owner, ref.repo, ref.ref
+    )
+
+    fixum response = cede caelum.pete(url)
+
+    si non response.bene() {
+        redde nihil
+    }
+
+    # corpusJson() returns a plain object, use quidlibet for property access
+    fixum data = response.corpusJson() qua quidlibet
+    redde data.sha qua textus
+}
+
+# Download tarball for a specific commit
+# Returns path to downloaded tarball in temp directory
+# Uses curl because caelum.pete() doesn't handle binary data correctly
+@ publica
+@ futura
+functio downloadTarball(textus owner, textus repo, textus sha) -> textus? {
+    fixum url = scriptum(
+        "https://api.github.com/repos/§/§/tarball/§",
+        owner, repo, sha
+    )
+
+    fixum tempPath = solum.iunge([solum.temp(), scriptum("faber-§.tar.gz", sha)])
+
+    # Use curl to download binary file, following redirects
+    fixum cmd = scriptum("curl -sL -o '§' '§'", tempPath, url)
+    fixum result = processus.exsequiCodem(cmd)
+
+    si result != 0 {
+        redde nihil
+    }
+
+    # Verify file exists and has content
+    si non solum.exstat(tempPath) {
+        redde nihil
+    }
+
+    redde tempPath
+}

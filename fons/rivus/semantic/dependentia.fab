@@ -5,9 +5,14 @@
 #
 # Syntax:
 #   § dependentia "alias" via "path"
-#   § dependentia "alias" github "owner/repo#ref" via "subpath"  (future)
+#   § dependentia "alias" github "owner/repo#ref" via "subpath"
+#
+# Also provides cache path resolution for GitHub dependencies.
+# Cache structure: ~/.cache/faber/github.com/{owner}/{repo}/{sha}/
 
 § ex "../ast/radix" importa SectioAnnotatio
+§ ex "../../norma/hal/solum" importa solum
+§ ex "../../norma/hal/processus" importa processus
 
 # ============================================================================
 # TYPES
@@ -68,4 +73,70 @@ functio parseDependentiaArgs(lista<textus> args) -> Dependentia? {
     }
 
     redde { alias: alias, github: github, via: via } qua Dependentia
+}
+
+# ============================================================================
+# CACHE PATHS (read-only)
+# ============================================================================
+
+# Get the cache root directory
+# Respects XDG_CACHE_HOME, FABER_CACHE, or falls back to ~/.cache/faber
+@ publica
+functio cacheRoot() -> textus {
+    # FABER_CACHE overrides everything
+    fixum faberCache = processus.env("FABER_CACHE")
+    si nonnihil faberCache { redde faberCache }
+
+    # XDG_CACHE_HOME or default
+    fixum xdgCache = processus.env("XDG_CACHE_HOME")
+    fixum baseCache = nonnihil xdgCache sic xdgCache secus solum.iunge([solum.domus(), ".cache"])
+
+    redde solum.iunge([baseCache, "faber"])
+}
+
+# Get the cache path for a specific github repo + commit
+@ publica
+functio cachePath(textus owner, textus repo, textus sha) -> textus {
+    redde solum.iunge([cacheRoot(), "github.com", owner, repo, sha])
+}
+
+# Check if a repo+commit is already cached
+@ publica
+functio isCached(textus owner, textus repo, textus sha) -> bivalens {
+    redde solum.exstat(cachePath(owner, repo, sha))
+}
+
+# ============================================================================
+# GITHUB REF PARSING
+# ============================================================================
+
+# Parsed GitHub reference
+@ publicum
+genus GithubRef {
+    textus owner
+    textus repo
+    textus ref      # branch, tag, or commit SHA
+}
+
+# Parse "owner/repo#ref" into GithubRef
+# Examples:
+#   "ianzepp/faber#main" -> { owner: "ianzepp", repo: "faber", ref: "main" }
+#   "ianzepp/faber#v1.0.0" -> { owner: "ianzepp", repo: "faber", ref: "v1.0.0" }
+#   "ianzepp/faber" -> { owner: "ianzepp", repo: "faber", ref: "main" }
+@ publica
+functio parseGithubSource(textus source) -> GithubRef? {
+    # Split on # to get ref (default to "main")
+    fixum lista<textus> hashParts = source.divide("#")
+    fixum repoPath = hashParts[0]
+    fixum ref = hashParts.longitudo() > 1 sic hashParts[1] secus "main"
+
+    # Split repo path on /
+    fixum lista<textus> slashParts = repoPath.divide("/")
+    si slashParts.longitudo() != 2 { redde nihil }
+
+    redde novum GithubRef {
+        owner: slashParts[0],
+        repo: slashParts[1],
+        ref: ref
+    }
 }

@@ -99,6 +99,7 @@ const typeMap: Record<string, string> = {
     objectum: 'object',
     object: 'object',
     ignotum: 'unknown',
+    quidlibet: 'any',
 };
 
 /** CLI command parameter metadata */

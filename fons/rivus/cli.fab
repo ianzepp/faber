@@ -21,6 +21,7 @@
 § ex "./cli/commands/parse" importa parseCommand
 § ex "./cli/commands/check" importa checkCommand
 § ex "./cli/commands/test" importa testCommand
+§ ex "./cli/commands/fetch" importa fetchCommand
 
 @ cli "rivus"
 @ versio "0.1.0"
@@ -175,5 +176,24 @@ functio test(
     si bivalens solo
 ) exitus code -> vacuum {
     figendum result = testCommand(input, target, tag, exclude, stdinFilename, json, dryRun, solo)
+    code = result
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# fetch - download and cache GitHub dependencies
+# ─────────────────────────────────────────────────────────────────────────────
+
+@ imperium "fetch"
+@ descriptio "Download and cache GitHub dependencies from manifest"
+@ futura
+@ optio textus manifest brevis "m" longum "manifest" descriptio "Project manifest file (faber.fab)"
+@ optio bivalens force brevis "f" longum "force" descriptio "Re-fetch even if cached"
+@ optio bivalens json longum "json" descriptio "Output as JSON"
+functio fetch(
+    si textus manifest,
+    si bivalens force,
+    si bivalens json
+) exitus code -> vacuum {
+    fixum result = cede fetchCommand(manifest, force, json)
     code = result
 }

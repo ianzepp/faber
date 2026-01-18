@@ -13,6 +13,9 @@
 § exitus "dist/"
 § ingressus "main.fab"
 
-# Dependencies
+# Dependencies - local
 § dependentia "norma" via "../../../norma/hal"
+
+# Dependencies - github (for testing rivus fetch)
+§ dependentia "faber-test" github "ianzepp/faber#main" via "fons/norma/hal"
 incipit {}

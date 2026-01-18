@@ -45,8 +45,9 @@ functio mappaNomenTypi(textus nomen) -> textus {
         casu "objectum" reddit "object"
         casu "object" reddit "object"
 
-        # Unknown
+        # Unknown / Any
         casu "ignotum" reddit "unknown"
+        casu "quidlibet" reddit "any"
     }
 
     # User-defined type: pass through unchanged
