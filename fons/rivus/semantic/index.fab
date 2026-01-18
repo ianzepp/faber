@@ -7,6 +7,8 @@
 § ex "./typi" importa SemanticTypus, IGNOTUM, VACUUM, functioTypus, usitatumTypus
 § ex "./scopus" importa Symbolum, SymbolumSpecies
 § ex "./modulus" importa estLocaleImportum, estNormaImportum, resolveModulum, ModulusExportum
+§ ex "./modulus" importa estDependentiaImportum, resolveDependentiaPath
+§ ex "./dependentia" importa extractDependentiae
 § ex "./expressia/index" importa resolveExpressia
 § ex "./sententia/index" importa analyzeSententia
 § ex "./sententia/declara" importa resolveTypusAnnotatio
@@ -55,8 +57,11 @@ functio novumResolvitor(Analyzator a) -> Resolvitor {
 # viaIngressus: optional path to the entry file (needed for local import resolution)
 @ publica
 functio analyze(Programma programma, textus? viaIngressus) -> SemanticResultatum {
-    # Create analyzer state
-    fixum a = novumAnalyzator(viaIngressus)
+    # Extract dependency registry from § dependentia annotations
+    fixum dependentiae = extractDependentiae(programma.sectiones)
+
+    # Create analyzer state with registry
+    fixum a = novumAnalyzator(viaIngressus, dependentiae)
     fixum r = novumResolvitor(a)
 
     # Phase 1: Predeclare all top-level names
@@ -192,6 +197,71 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
             si estNormaImportum(imp.fons) {
                 # Norma symbols are defined via definieIntrinsica()
                 # No additional work needed
+            }
+            # Handle dependentia alias imports (alias:subpath)
+            sin estDependentiaImportum(imp.fons) {
+                si nihil a.viaIngressus {
+                    a.error(scriptum("Cannot resolve dependentia import without file context: §", imp.fons), imp.locus)
+                } secus {
+                    fixum resolvedPath = resolveDependentiaPath(imp.fons, a.dependentiae)
+                    si nihil resolvedPath {
+                        # Extract alias for error message
+                        fixum lista<textus> partes = imp.fons.divide(":")
+                        a.error(scriptum("Unknown dependency alias: §", partes[0]), imp.locus)
+                    } secus {
+                        # Use resolved path with resolveModulum (same as local import)
+                        fixum modulus = resolveModulum(
+                            resolvedPath qua textus,
+                            a.viaIngressus qua textus,
+                            a.modulusCache,
+                            a.modulusInProgressu
+                        )
+
+                        si nihil modulus {
+                            a.error(scriptum("Module not found: § (resolved from §)", resolvedPath, imp.fons), imp.locus)
+                        } secus {
+                            # Named imports: ex "alias:path" importa foo, bar
+                            ex imp.specificatores pro spec {
+                                si nonnihil modulus.exporta[spec.importatum] {
+                                    fixum exportum = modulus.exporta[spec.importatum] qua ModulusExportum
+                                    a.definie({
+                                        nomen: spec.locale,
+                                        semanticTypus: exportum.typus,
+                                        species: exportum.species,
+                                        mutabilis: falsum,
+                                        locus: spec.locus
+                                    } qua Symbolum)
+
+                                    si nonnihil modulus.discretiones[spec.importatum] {
+                                        a.discretioIndex[spec.locale] = modulus.discretiones[spec.importatum] qua DiscretioDeclInfo
+                                    }
+
+                                    # Import variant types for discretio
+                                    fixum prefix = spec.importatum + "."
+                                    de modulus.exporta pro nomen {
+                                        si nomen.startsWith(prefix) {
+                                            fixum exportum = modulus.exporta[nomen] qua ModulusExportum
+                                            fixum suffix = nomen.slice(prefix.length)
+                                            fixum qualNomen = scriptum("§.§", spec.locale, suffix)
+
+                                            si nihil a.scopus.symbola[qualNomen] {
+                                                a.definie({
+                                                    nomen: qualNomen,
+                                                    semanticTypus: exportum.typus,
+                                                    species: exportum.species,
+                                                    mutabilis: falsum,
+                                                    locus: exportum.locus
+                                                } qua Symbolum)
+                                            }
+                                        }
+                                    }
+                                } secus {
+                                    a.error(scriptum("'§' is not exported from '§'", spec.importatum, imp.fons), spec.locus)
+                                }
+                            }
+                        }
+                    }
+                }
             }
             # Handle local file imports
             sin estLocaleImportum(imp.fons) {

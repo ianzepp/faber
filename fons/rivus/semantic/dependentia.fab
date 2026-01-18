@@ -1,0 +1,71 @@
+# Dependentia - Registry extraction for § dependentia annotations
+#
+# Parses file-level § dependentia annotations and builds a registry
+# mapping aliases to their resolution paths.
+#
+# Syntax:
+#   § dependentia "alias" via "path"
+#   § dependentia "alias" github "owner/repo#ref" via "subpath"  (future)
+
+§ ex "../ast/radix" importa SectioAnnotatio
+
+# ============================================================================
+# TYPES
+# ============================================================================
+
+# A resolved dependency declaration
+@ publicum
+genus Dependentia {
+    textus alias      # import alias (e.g., "norma")
+    textus? github    # github reference "owner/repo#ref" (future)
+    textus? via       # local path or subpath within github repo
+}
+
+# ============================================================================
+# EXTRACTION
+# ============================================================================
+
+# Extract dependency registry from sectiones
+# Returns a map of alias -> Dependentia
+@ publica
+functio extractDependentiae(lista<SectioAnnotatio>? sectiones) -> tabula<textus, Dependentia> {
+    varia result = {} innatum tabula<textus, Dependentia>
+    si nihil sectiones { redde result }
+
+    ex sectiones pro s {
+        si s.nomen == "dependentia" {
+            fixum dep = parseDependentiaArgs(s.argumenta)
+            si nonnihil dep {
+                result[dep.alias] = dep
+            }
+        }
+    }
+    redde result
+}
+
+# Parse dependentia arguments into a Dependentia
+# Arguments: ["alias", "via", "path"] or ["alias", "github", "ref", "via", "subpath"]
+functio parseDependentiaArgs(lista<textus> args) -> Dependentia? {
+    si args.longitudo() < 1 { redde nihil }
+
+    fixum alias = args[0]
+    varia github = nihil qua textus?
+    varia via = nihil qua textus?
+
+    # Parse keyword-value pairs: github "...", via "..."
+    varia i = 1
+    dum i < args.longitudo() {
+        fixum arg = args[i]
+        si arg == "github" et i + 1 < args.longitudo() {
+            github = args[i + 1]
+            i = i + 2
+        } sin arg == "via" et i + 1 < args.longitudo() {
+            via = args[i + 1]
+            i = i + 2
+        } secus {
+            i = i + 1
+        }
+    }
+
+    redde { alias: alias, github: github, via: via } qua Dependentia
+}

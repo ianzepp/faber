@@ -9,6 +9,7 @@
 § ex "./scopus" importa creaScopumGlobalem, creaScopum, definieSymbolum, quaereSymbolum
 § ex "./errores" importa SemanticErrorCodice, SemanticErrorNuntius
 § ex "./modulus" importa ModulusResolutum
+§ ex "./dependentia" importa Dependentia
 § ex "../ast/positio" importa Locus
 § ex "../ast/radix" importa Programma
 § ex "../ast/sententia" importa Sententia
@@ -100,6 +101,7 @@ genus Analyzator {
     tabula<textus, ModulusResolutum> modulusCache                         # module cache (path -> resolved)
     copia<textus> modulusInProgressu                                      # cycle detection for imports
     tabula<textus, DiscretioDeclInfo> discretioIndex                      # declaration metadata for discretio
+    tabula<textus, Dependentia> dependentiae                              # alias -> path registry from § dependentia
 
     # ========================================================================
     # ERROR REPORTING
@@ -262,7 +264,7 @@ genus Analyzator {
 
 # Create a new analyzer
 @ publica
-functio novumAnalyzator(textus? viaIngressus) -> Analyzator {
+functio novumAnalyzator(textus? viaIngressus, tabula<textus, Dependentia> dependentiae) -> Analyzator {
     fixum analyzator = novum Analyzator {
         errores: [] innatum lista<SemanticError>,
         scopus: creaScopumGlobalem(),
@@ -275,7 +277,8 @@ functio novumAnalyzator(textus? viaIngressus) -> Analyzator {
         viaIngressus: viaIngressus,
         modulusCache: {} innatum tabula<textus, ModulusResolutum>,
         modulusInProgressu: {} innatum copia<textus>,
-        discretioIndex: {} innatum tabula<textus, DiscretioDeclInfo>
+        discretioIndex: {} innatum tabula<textus, DiscretioDeclInfo>,
+        dependentiae: dependentiae
     }
 
     # Define built-in intrinsics

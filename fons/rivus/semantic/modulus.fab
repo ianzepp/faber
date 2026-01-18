@@ -13,6 +13,7 @@
 § ex "./typi" importa genusTypus, genericumTypus, primitivumTypus
 § ex "./scopus" importa SymbolumSpecies
 § ex "./nucleus" importa DiscretioDeclInfo, DiscretioVariansInfo
+§ ex "./dependentia" importa Dependentia
 § ex "../ast/positio" importa Locus
 § ex "../ast/radix" importa Programma
 § ex "../ast/sententia" importa Sententia
@@ -72,6 +73,41 @@ functio estLocaleImportum(textus fons) -> bivalens {
 @ publica
 functio estNormaImportum(textus fons) -> bivalens {
     redde fons == "norma" aut fons.startsWith("norma/")
+}
+
+# Check if import source is a dependentia alias import (alias:subpath)
+@ publica
+functio estDependentiaImportum(textus fons) -> bivalens {
+    # Has colon and doesn't start with ./ or ../
+    si fons.continet(":") {
+        redde non estLocaleImportum(fons)
+    }
+    redde falsum
+}
+
+# Resolve a dependentia import path using the registry
+# Returns the constructed relative path (dep.via + subpath), or nihil if alias not found
+# Does NOT resolve to absolute path - caller should use resolveModulum for that
+@ publica
+functio resolveDependentiaPath(
+    textus fons,
+    tabula<textus, Dependentia> registry
+) -> textus? {
+    # Split on colon: "alias:subpath" -> ["alias", "subpath"]
+    fixum lista<textus> partes = fons.divide(":")
+    si partes.longitudo() != 2 { redde nihil }
+
+    fixum alias = partes[0]
+    fixum subpath = partes[1]
+
+    fixum dep = registry[alias]
+    si nihil dep { redde nihil }
+
+    # For now, only support local via paths
+    si nihil dep.via { redde nihil }
+
+    # Construct full path: dep.via + "/" + subpath
+    redde dep.via + "/" + subpath
 }
 
 # Resolve import path to absolute filesystem path
