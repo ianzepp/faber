@@ -23,6 +23,7 @@ const BINARY_OPS: Record<string, string> = {
 };
 
 const UNARY_OPS: Record<string, string> = {
+    'non': '!',        // non x → !x (logical not)
     'nihil': '!',      // nihil x → !x (null check)
     'nonnihil': '!!',  // nonnihil x → !!x (non-null assertion as boolean)
     'positivum': '+',  // positivum x → +x (to number)

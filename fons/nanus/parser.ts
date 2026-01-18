@@ -233,11 +233,21 @@ export class Parser {
         const locus = this.peek().locus;
         const kw = this.advance().valor;
         const species: VariaSpecies = kw === 'varia' ? 'Varia' : kw === 'figendum' ? 'Figendum' : 'Fixum';
-        const nomen = this.expect('Identifier').valor;
+
+        // Check for type-first syntax: fixum <type> <name>
+        // Used for external declarations like: @ externa fixum ignotum process
         let typus: Typus | null = null;
-        if (this.match('Punctuator', ':')) {
+        let nomen: string;
+        if (this.check('Identifier', 'ignotum')) {
             typus = this.parseTypus();
+            nomen = this.expect('Identifier').valor;
+        } else {
+            nomen = this.expect('Identifier').valor;
+            if (this.match('Punctuator', ':')) {
+                typus = this.parseTypus();
+            }
         }
+
         let valor: Expr | null = null;
         if (this.match('Operator', '=')) {
             valor = this.parseExpr();

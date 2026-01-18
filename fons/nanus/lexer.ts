@@ -127,6 +127,31 @@ export function lex(source: string, filename = '<stdin>'): Token[] {
         return value;
     }
 
+    function readTripleString(): string {
+        // Skip opening """
+        advance(); advance(); advance();
+
+        // Skip leading newline immediately after opening """
+        if (peek() === '\n') {
+            advance();
+        }
+
+        let value = '';
+        while (pos < source.length) {
+            // Check for closing """
+            if (peek() === '"' && peek(1) === '"' && peek(2) === '"') {
+                // Strip trailing newline before closing """
+                if (value.endsWith('\n')) {
+                    value = value.slice(0, -1);
+                }
+                advance(); advance(); advance(); // skip closing """
+                break;
+            }
+            value += advance();
+        }
+        return value;
+    }
+
     function readNumber(): string {
         let value = '';
         while (pos < source.length && /[0-9._]/.test(peek())) {
@@ -166,7 +191,12 @@ export function lex(source: string, filename = '<stdin>'): Token[] {
             continue;
         }
 
-        // Strings
+        // Strings - check triple-quote first
+        if (ch === '"' && peek(1) === '"' && peek(2) === '"') {
+            const value = readTripleString();
+            tokens.push({ tag: 'Textus', valor: value, locus: loc });
+            continue;
+        }
         if (ch === '"' || ch === "'") {
             const value = readString(ch);
             tokens.push({ tag: 'Textus', valor: value, locus: loc });

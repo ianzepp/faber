@@ -94,7 +94,7 @@ functio resolveDependentiaPath(
     tabula<textus, Dependentia> registry
 ) -> textus? {
     # Split on colon: "alias:subpath" -> ["alias", "subpath"]
-    fixum partes = fons.divide(":")
+    fixum partes = fons.divide(":") qua lista<textus>
     si partes.longitudo() != 2 { redde nihil }
 
     fixum alias = partes[0]
