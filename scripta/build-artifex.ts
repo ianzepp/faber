@@ -16,15 +16,15 @@
 const SKIP_TYPECHECK = process.argv.includes('--no-typecheck');
 
 import { Glob } from 'bun';
-import { mkdir } from 'fs/promises';
+import { mkdir, symlink, unlink } from 'fs/promises';
 import { dirname, join, relative } from 'path';
 import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
 const SOURCE = join(ROOT, 'fons', 'rivus');
 const RIVUS_BIN = join(ROOT, 'opus', 'bin', 'rivus');
-const ARTIFEX_DIR = join(ROOT, 'opus', 'artifex', 'fons', 'ts');
-const REFERENCE_DIR = join(ROOT, 'opus', 'rivus', 'fons', 'ts');
+const ARTIFEX_DIR = join(ROOT, 'opus', 'artifex-ts', 'fons');
+const REFERENCE_DIR = join(ROOT, 'opus', 'rivus-ts', 'fons');
 
 interface CompileResult {
     file: string;
@@ -107,9 +107,14 @@ async function typeCheck(): Promise<boolean> {
 async function buildExecutable(): Promise<void> {
     const binDir = join(ROOT, 'opus', 'bin');
     await mkdir(binDir, { recursive: true });
-    const outExe = join(binDir, 'artifex');
+    const outExe = join(binDir, 'artifex-ts');
     await $`bun build ${join(ARTIFEX_DIR, 'cli.ts')} --compile --outfile=${outExe}`.quiet();
     await $`bash -c 'rm -f .*.bun-build 2>/dev/null || true'`.quiet();
+
+    // Create backward-compat symlink: artifex -> artifex-ts
+    const symlinkPath = join(binDir, 'artifex');
+    try { await unlink(symlinkPath); } catch { /* ignore */ }
+    await symlink('artifex-ts', symlinkPath);
 }
 
 async function compareFiles(file: string): Promise<{ match: boolean; diff?: string }> {
@@ -228,7 +233,7 @@ async function main() {
 
     const elapsed = performance.now() - start;
     const verified = verifyDiff ? ', verified' : '';
-    console.log(`\nArtifex built: ${succeeded} files compiled${verified} -> opus/bin/artifex (${(elapsed / 1000).toFixed(1)}s)`);
+    console.log(`\nArtifex built: ${succeeded} files compiled${verified} -> opus/bin/artifex-ts (${(elapsed / 1000).toFixed(1)}s)`);
 }
 
 main().catch(err => {
