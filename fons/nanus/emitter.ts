@@ -156,7 +156,7 @@ function emitStmt(stmt: Stmt, indent = ''): string {
             for (const method of stmt.methodi) {
                 if (method.tag === 'Functio') {
                     lines.push('');
-                    const vis = method.visibilitas === 'Protecta' ? 'protected ' : method.visibilitas === 'Publica' ? '' : 'private ';
+                    const vis = method.publica ? '' : 'private ';
                     const async = method.asynca ? 'async ' : '';
                     const params = method.params.map(emitParam).join(', ');
                     const ret = method.typusReditus ? `: ${emitTypus(method.typusReditus)}` : '';

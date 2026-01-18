@@ -1,22 +1,24 @@
 #!/usr/bin/env bun
 /**
- * Test nanus compiler against golden corpus.
+ * Test compiler against golden corpus.
  *
- * For each .fab file in fons/nanus/corpus/:
- *   1. Compile with nanus
+ * For each .fab file in fons/corpus/:
+ *   1. Compile with specified compiler
  *   2. Compare output to .ts.golden reference
  *   3. Report pass/fail
  *
  * Options:
- *   --diff    Show line-by-line diff for failures
+ *   -c, --compiler <name>  Compiler to use: nanus, faber, rivus (default: nanus)
+ *   --diff                 Show line-by-line diff for failures
  */
 
 import { readdir } from 'fs/promises';
 import { join, basename } from 'path';
-import { compile } from '../fons/nanus';
+import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
 const CORPUS = join(ROOT, 'fons', 'corpus');
+const BIN = join(ROOT, 'opus', 'bin');
 
 interface TestResult {
     name: string;
@@ -40,9 +42,40 @@ function showDiff(actual: string, expected: string) {
     }
 }
 
+function parseArgs(args: string[]): { compiler: string; showDiffs: boolean } {
+    let compiler = 'nanus';
+    let showDiffs = false;
+
+    for (let i = 0; i < args.length; i++) {
+        const arg = args[i];
+        if (arg === '-c' || arg === '--compiler') {
+            compiler = args[++i];
+        } else if (arg === '--diff') {
+            showDiffs = true;
+        }
+    }
+
+    return { compiler, showDiffs };
+}
+
+async function compile(compiler: string, fabPath: string): Promise<{ success: boolean; output?: string; error?: string }> {
+    const bin = join(BIN, compiler);
+    try {
+        const result = await $`${bin} compile ${fabPath}`.quiet();
+        return { success: true, output: result.text() };
+    } catch (err: any) {
+        return { success: false, error: err.stderr?.toString() || err.message };
+    }
+}
+
 async function main() {
-    const args = process.argv.slice(2);
-    const showDiffs = args.includes('--diff');
+    const { compiler, showDiffs } = parseArgs(process.argv.slice(2));
+
+    const validCompilers = ['nanus', 'faber', 'rivus'];
+    if (!validCompilers.includes(compiler)) {
+        console.error(`Invalid compiler: ${compiler}. Must be one of: ${validCompilers.join(', ')}`);
+        process.exit(1);
+    }
 
     const files = await readdir(CORPUS);
     const fabFiles = files.filter(f => f.endsWith('.fab')).sort();
@@ -56,7 +89,6 @@ async function main() {
         const fabPath = join(CORPUS, fabFile);
         const goldenPath = join(CORPUS, `${name}.ts.golden`);
 
-        const source = await Bun.file(fabPath).text();
         const goldenFile = Bun.file(goldenPath);
 
         if (!(await goldenFile.exists())) {
@@ -66,7 +98,7 @@ async function main() {
         }
 
         const expected = await goldenFile.text();
-        const result = compile(source, { filename: fabFile });
+        const result = await compile(compiler, fabPath);
 
         if (!result.success) {
             results.push({ name, passed: false, error: result.error });
@@ -87,7 +119,7 @@ async function main() {
     }
 
     // Report results
-    console.log('nanus golden corpus tests\n');
+    console.log(`${compiler} golden corpus tests\n`);
 
     for (const r of results) {
         const status = r.passed ? '\x1b[32mPASS\x1b[0m' : '\x1b[31mFAIL\x1b[0m';
