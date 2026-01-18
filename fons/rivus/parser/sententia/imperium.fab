@@ -25,10 +25,11 @@
 § ex "../nucleus" importa Parser
 § ex "../../ast/positio" importa Locus
 § ex "../../ast/expressia" importa Expressia
-§ ex "../../ast/sententia" importa Sententia, CapeClausula, IteratioGenus
+§ ex "../../ast/sententia" importa Sententia, CapeClausula, IteratioGenus, IteratioVariabilis
 § ex "../../ast/lexema" importa SymbolumGenus
 § ex "../errores" importa ParserErrorCodice
 § ex "./massa" importa parseMassaSententia
+§ ex "./varia" importa parseSeriesDestructura
 
 # ============================================================================
 # CONDITIONAL STATEMENTS
@@ -154,9 +155,15 @@ functio parseExSententia(Resolvitor r) -> Sententia {
         p.expectaVerbum("pro", ParserErrorCodice.ExpectaturPro)
     }
 
-    # Parse variable name
-    fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-    fixum variabilis = nomenSym.valor
+    # Parse variable name or array pattern
+    varia variabilis = nihil qua IteratioVariabilis?
+    si p.proba(SymbolumGenus.QuadratusSin) {
+        fixum elementa = parseSeriesDestructura(r)
+        variabilis = finge Series { elementa: elementa } qua IteratioVariabilis
+    } secus {
+        fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        variabilis = finge Nomen { valor: nomenSym.valor } qua IteratioVariabilis
+    }
 
     # Parse body
     fixum corpus = parseCorpus(r)
@@ -170,7 +177,7 @@ functio parseExSententia(Resolvitor r) -> Sententia {
     redde finge IteratioSententia {
         locus: locus,
         species: IteratioGenus.Ex,
-        variabilis: variabilis,
+        variabilis: variabilis qua IteratioVariabilis,
         iterabile: iterabile,
         corpus: corpus,
         asynca: asynca,
@@ -198,9 +205,15 @@ functio parseDeSententia(Resolvitor r) -> Sententia {
     # Expect 'pro'
     p.expectaVerbum("pro", ParserErrorCodice.ExpectaturPro)
 
-    # Parse variable name
-    fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-    fixum variabilis = nomenSym.valor
+    # Parse variable name or array pattern
+    varia variabilis = nihil qua IteratioVariabilis?
+    si p.proba(SymbolumGenus.QuadratusSin) {
+        fixum elementa = parseSeriesDestructura(r)
+        variabilis = finge Series { elementa: elementa } qua IteratioVariabilis
+    } secus {
+        fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        variabilis = finge Nomen { valor: nomenSym.valor } qua IteratioVariabilis
+    }
 
     # Parse body
     fixum corpus = parseCorpus(r)
@@ -214,7 +227,7 @@ functio parseDeSententia(Resolvitor r) -> Sententia {
     redde finge IteratioSententia {
         locus: locus,
         species: IteratioGenus.De,
-        variabilis: variabilis,
+        variabilis: variabilis qua IteratioVariabilis,
         iterabile: iterabile,
         corpus: corpus,
         asynca: falsum,

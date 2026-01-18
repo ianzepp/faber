@@ -2,7 +2,7 @@
 #
 # Routes statement AST nodes to their specific generators.
 
-§ ex "../../../ast/sententia" importa Sententia, Parametrum, CampusDeclaratio, ScribeGradus, VariaGenus, IteratioGenus, EligeCasus, VariansCasus, VariansDeclaratio
+§ ex "../../../ast/sententia" importa Sententia, Parametrum, CampusDeclaratio, ScribeGradus, VariaGenus, IteratioGenus, EligeCasus, VariansCasus, VariansDeclaratio, SeriesDestructuraElementum
 § ex "../../../ast/expressia" importa Expressia
 § ex "../nucleus" importa GoGenerator
 § ex "../expressia/index" importa genExpressia
@@ -12,7 +12,7 @@
 § ex "./redde" importa genRedde
 § ex "./iace" importa genIace
 § ex "./incipit" importa genIncipit, genIncipiet
-§ ex "./varia" importa genVaria
+§ ex "./varia" importa genVaria, genSeriesDestructura
 § ex "./si" importa genSi
 § ex "./dum" importa genDum
 § ex "./iteratio" importa genIteratio
@@ -43,6 +43,11 @@ functio genSententia(Sententia stmt, GoGenerator g) -> textus {
         # Variable declaration
         casu VariaSententia ut v {
             redde genVaria(v.species qua VariaGenus, v.nomen qua textus, v.typus, v.valor, v.externa qua bivalens, v.visibilitas, g)
+        }
+
+        # Array destructuring declaration
+        casu SeriesDestructuraSententia ut s {
+            redde genSeriesDestructura(s.species qua VariaGenus, s.elementa, s.fons qua Expressia, g)
         }
 
         # Type declarations
@@ -114,7 +119,7 @@ functio genSententia(Sententia stmt, GoGenerator g) -> textus {
         }
 
         casu IteratioSententia ut s {
-            redde genIteratio(s.species qua IteratioGenus, s.variabilis qua textus, s.iterabile qua Expressia, s.corpus, g)
+            redde genIteratio(s.species qua IteratioGenus, s.variabilis, s.iterabile qua Expressia, s.corpus, g)
         }
 
         casu FacSententia ut s {

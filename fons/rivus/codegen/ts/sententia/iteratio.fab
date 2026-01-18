@@ -8,7 +8,7 @@
 #   per x ex lista { ... }  -> for (const x of lista) { ... }
 #   per x ex 0..10 { ... }  -> for (let x = 0; x < 10; x++) { ... }
 
-§ ex "../../../ast/sententia" importa Sententia, IteratioGenus, CapeClausula
+§ ex "../../../ast/sententia" importa Sententia, IteratioGenus, CapeClausula, IteratioVariabilis
 § ex "../../../ast/expressia" importa Expressia
 § ex "../nucleus" importa TsGenerator
 § ex "../../shared/syntaxis" importa SYNTAXIS_TS
@@ -36,32 +36,40 @@ functio estTabula(Expressia expr, TsGenerator g) -> bivalens {
 }
 
 @ publica
-functio genIteratio(IteratioGenus species, textus variabilis, Expressia iterabile, Sententia corpus, bivalens asynca, ignotum cape, TsGenerator g) -> textus {
+functio genIteratio(IteratioGenus species, IteratioVariabilis variabilis, Expressia iterabile, Sententia corpus, bivalens asynca, ignotum cape, TsGenerator g) -> textus {
     fixum rev = creaTsRevocata()
 
-    # Check for range expression - use shared handler
-    discerne iterabile {
-        casu AmbitusExpressia ut a {
-            g.intraProfundum()
-            fixum body = genSententia(corpus, g)
-            g.exiProfundum()
+    # Convert IteratioVariabilis to string representation
+    fixum varStr = genLoopVariable(variabilis)
 
-            fixum initium = genExpressia(a.initium, g)
-            fixum finis = genExpressia(a.finis, g)
+    # Check for range expression - use shared handler (only for simple identifier)
+    discerne variabilis {
+        casu Nomen ut n {
+            discerne iterabile {
+                casu AmbitusExpressia ut a {
+                    g.intraProfundum()
+                    fixum body = genSententia(corpus, g)
+                    g.exiProfundum()
 
-            redde genAmbitusIteratio(
-                variabilis,
-                initium,
-                finis,
-                a.inclusivum qua bivalens,
-                a.gradus,
-                body,
-                asynca,
-                cape,
-                g,
-                SYNTAXIS_TS,
-                rev
-            )
+                    fixum initium = genExpressia(a.initium, g)
+                    fixum finis = genExpressia(a.finis, g)
+
+                    redde genAmbitusIteratio(
+                        n.valor,
+                        initium,
+                        finis,
+                        a.inclusivum qua bivalens,
+                        a.gradus,
+                        body,
+                        asynca,
+                        cape,
+                        g,
+                        SYNTAXIS_TS,
+                        rev
+                    )
+                }
+                ceterum { }
+            }
         }
         ceterum { }
     }
@@ -86,7 +94,7 @@ functio genIteratio(IteratioGenus species, textus variabilis, Expressia iterabil
     fixum body = genSententia(corpus, g)
     g.exiProfundum()
 
-    fixum loop = scriptum("§for §(const § § §) {\n§\n§}", g.ind(), asyncPrefix, variabilis, keyword, iterStr, body, g.ind())
+    fixum loop = scriptum("§for §(const § § §) {\n§\n§}", g.ind(), asyncPrefix, varStr, keyword, iterStr, body, g.ind())
 
     si nonnihil cape {
         fixum c = cape qua CapeClausula
@@ -94,4 +102,28 @@ functio genIteratio(IteratioGenus species, textus variabilis, Expressia iterabil
     }
 
     redde loop
+}
+
+# Convert loop variable binding to string
+functio genLoopVariable(IteratioVariabilis variabilis) -> textus {
+    discerne variabilis {
+        casu Nomen ut n {
+            redde n.valor
+        }
+        casu Series ut s {
+            varia parts = [] innatum lista<textus>
+            ex s.elementa pro elem {
+                si elem.omissum {
+                    parts.adde("")
+                } sin elem.residuum et nonnihil elem.nomen {
+                    parts.adde(scriptum("...§", elem.nomen))
+                } sin nonnihil elem.nomen {
+                    parts.adde(elem.nomen qua textus)
+                } secus {
+                    parts.adde("")
+                }
+            }
+            redde scriptum("[§]", parts.coniunge(", "))
+        }
+    }
 }

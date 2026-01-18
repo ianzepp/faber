@@ -19,10 +19,12 @@
 § ex "../../ast/positio" importa Locus
 § ex "../../ast/expressia" importa Expressia
 § ex "../../ast/sententia" importa Sententia, VariaGenus, ImportaSpecificator
-§ ex "../../ast/sententia" importa SeriesDestructuraElementum
+§ ex "../../ast/sententia" importa SeriesDestructuraElementum, IteratioVariabilis, IteratioGenus, CapeClausula
 § ex "../../ast/typus" importa TypusAnnotatio
 § ex "../../ast/lexema" importa SymbolumGenus
 § ex "../errores" importa ParserErrorCodice
+§ ex "./massa" importa parseMassaSententia
+§ ex "./imperium" importa parseCapeClausula
 
 # ============================================================================
 # IDENTIFIER PARSING
@@ -61,6 +63,7 @@ functio parseNomenVelVerbum(Resolvitor r) -> textus {
 # Parse destructure declaration
 #
 # GRAMMAR: destruct := 'ex' expr (fixum|varia|figendum|variandum) spec (',' spec)*
+#          | 'ex' expr (fixum|varia|figendum|variandum) '[' pattern ']' ('{' block '}' | '=' expr)
 # spec := IDENT ('ut' IDENT)? | 'ceteri' IDENT
 @ publica
 functio parseDestructuraSententia(Resolvitor r) -> Sententia {
@@ -81,6 +84,45 @@ functio parseDestructuraSententia(Resolvitor r) -> Sententia {
     }
     p.procede()
 
+    # Array destructuring: ex source fixum [a, b] or ex source fixum [k, v] { }
+    si p.proba(SymbolumGenus.QuadratusSin) {
+        fixum elementa = parseSeriesDestructura(r)
+
+        # Check for block body -> for-of loop with destructuring
+        si p.proba(SymbolumGenus.UncusSin) {
+            fixum corpus = parseMassaSententia(r)
+
+            # Optional catch
+            varia cape = nihil qua CapeClausula?
+            si p.probaVerbum("cape") {
+                cape = parseCapeClausula(r)
+            }
+
+            fixum asynca = species == VariaGenus.Figendum aut species == VariaGenus.Variandum
+            varia variabilis = nihil qua IteratioVariabilis?
+            variabilis = finge Series { elementa: elementa } qua IteratioVariabilis
+
+            redde finge IteratioSententia {
+                locus: locus,
+                species: IteratioGenus.Ex,
+                variabilis: variabilis qua IteratioVariabilis,
+                iterabile: fons,
+                corpus: corpus,
+                asynca: asynca,
+                cape: cape
+            } qua Sententia
+        }
+
+        # No block -> one-shot destructuring
+        redde finge SeriesDestructuraSententia {
+            locus: locus,
+            species: species,
+            elementa: elementa,
+            fons: fons
+        } qua Sententia
+    }
+
+    # Object destructuring: ex persona fixum nomen, aetas
     varia specificatores = [] innatum lista<ImportaSpecificator>
 
     fac {

@@ -6,7 +6,7 @@
 #   ex 0..10 pro i { ... }      -> for i := 0; i < 10; i++ { ... }
 #   ex 0 usque 10 pro i { ... } -> for i := 0; i <= 10; i++ { ... }
 
-§ ex "../../../ast/sententia" importa Sententia, IteratioGenus
+§ ex "../../../ast/sententia" importa Sententia, IteratioGenus, IteratioVariabilis
 § ex "../../../ast/expressia" importa Expressia
 § ex "../nucleus" importa GoGenerator
 § ex "../../shared/syntaxis" importa SYNTAXIS_GO
@@ -16,32 +16,37 @@
 § ex "./index" importa genSententia
 
 @ publica
-functio genIteratio(IteratioGenus species, textus variabilis, Expressia iterabile, Sententia corpus, GoGenerator g) -> textus {
+functio genIteratio(IteratioGenus species, IteratioVariabilis variabilis, Expressia iterabile, Sententia corpus, GoGenerator g) -> textus {
     fixum rev = creaGoRevocata()
 
-    # Check for range expression - use shared handler
-    discerne iterabile {
-        casu AmbitusExpressia ut a {
-            g.intraProfundum()
-            fixum body = genSententia(corpus, g)
-            g.exiProfundum()
+    # Check for range expression - use shared handler (only for simple identifier)
+    discerne variabilis {
+        casu Nomen ut n {
+            discerne iterabile {
+                casu AmbitusExpressia ut a {
+                    g.intraProfundum()
+                    fixum body = genSententia(corpus, g)
+                    g.exiProfundum()
 
-            fixum initium = genExpressia(a.initium, g)
-            fixum finis = genExpressia(a.finis, g)
+                    fixum initium = genExpressia(a.initium, g)
+                    fixum finis = genExpressia(a.finis, g)
 
-            redde genAmbitusIteratio(
-                variabilis,
-                initium,
-                finis,
-                a.inclusivum qua bivalens,
-                a.gradus,
-                body,
-                falsum,
-                nihil,
-                g,
-                SYNTAXIS_GO,
-                rev
-            )
+                    redde genAmbitusIteratio(
+                        n.valor,
+                        initium,
+                        finis,
+                        a.inclusivum qua bivalens,
+                        a.gradus,
+                        body,
+                        falsum,
+                        nihil,
+                        g,
+                        SYNTAXIS_GO,
+                        rev
+                    )
+                }
+                ceterum { }
+            }
         }
         ceterum { }
     }
@@ -53,11 +58,34 @@ functio genIteratio(IteratioGenus species, textus variabilis, Expressia iterabil
 
     fixum iterStr = genExpressia(iterabile, g)
 
-    si species == IteratioGenus.De {
-        # de: iterate over keys only
-        redde scriptum("§for § := range § {\n§\n§}", g.ind(), variabilis, iterStr, body, g.ind())
-    }
+    discerne variabilis {
+        casu Nomen ut n {
+            si species == IteratioGenus.De {
+                redde scriptum("§for § := range § {\n§\n§}", g.ind(), n.valor, iterStr, body, g.ind())
+            }
+            redde scriptum("§for _, § := range § {\n§\n§}", g.ind(), n.valor, iterStr, body, g.ind())
+        }
+        casu Series ut s {
+            # For maps with 2 elements, use Go's native k,v syntax
+            si s.elementa.longitudo() == 2 {
+                fixum k = s.elementa[0].nomen vel "_"
+                fixum v = s.elementa[1].nomen vel "_"
+                redde scriptum("§for §, § := range § {\n§\n§}", g.ind(), k, v, iterStr, body, g.ind())
+            }
 
-    # ex: iterate over values (use blank identifier for index)
-    redde scriptum("§for _, § := range § {\n§\n§}", g.ind(), variabilis, iterStr, body, g.ind())
+            # For other patterns, use temp var + unpacking
+            varia unpacks = [] innatum lista<textus>
+            varia indice = 0
+            ex s.elementa pro elem {
+                si non elem.omissum et nonnihil elem.nomen {
+                    g.intraProfundum()
+                    unpacks.adde(scriptum("§§ := _item[§]", g.ind(), elem.nomen, indice))
+                    g.exiProfundum()
+                }
+                indice = indice + 1
+            }
+            fixum unpackStr = unpacks.coniunge("\n")
+            redde scriptum("§for _, _item := range § {\n§\n§\n§}", g.ind(), iterStr, unpackStr, body, g.ind())
+        }
+    }
 }

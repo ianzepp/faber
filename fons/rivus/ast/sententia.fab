@@ -108,6 +108,14 @@ genus SeriesDestructuraElementum {
     bivalens omissum          # true for placeholder _
 }
 
+# Loop variable binding (simple identifier or array pattern)
+# Example: item, [key, value]
+@ publicum
+discretio IteratioVariabilis {
+    Nomen { textus valor }
+    Series { lista<SeriesDestructuraElementum> elementa }
+}
+
 # Function parameter
 # Example: textus nomen, de lista<T> items, ceteri args
 @ publicum
@@ -456,10 +464,11 @@ discretio Sententia {
 
     # For loop (iteration)
     # Example: ex items pro item { ... }
+    # Example: ex map pro [key, value] { ... }
     IteratioSententia {
         Locus locus
         IteratioGenus species
-        textus variabilis
+        IteratioVariabilis variabilis
         Expressia iterabile
         Sententia corpus         # MassaSententia
         bivalens asynca

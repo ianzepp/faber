@@ -117,7 +117,7 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
         }
 
         casu IteratioSententia ut s {
-            redde genIteratio(s.species qua IteratioGenus, s.variabilis qua textus, s.iterabile, s.corpus, s.asynca qua bivalens, s.cape, g)
+            redde genIteratio(s.species qua IteratioGenus, s.variabilis, s.iterabile, s.corpus, s.asynca qua bivalens, s.cape, g)
         }
 
         casu EligeSententia ut s {

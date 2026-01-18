@@ -6,7 +6,7 @@
 § ex "../nucleus" importa DiscretioDeclInfo
 § ex "../typi" importa SemanticTypus, IGNOTUM
 § ex "../scopus" importa ScopusSpecies, Symbolum, SymbolumSpecies, quaereSymbolum
-§ ex "../../ast/sententia" importa Sententia, VariansExemplar
+§ ex "../../ast/sententia" importa Sententia, VariansExemplar, IteratioVariabilis
 
 # =============================================================================
 # CONDITIONAL
@@ -84,24 +84,61 @@ functio analyzeIteratio(Resolvitor r, Sententia iteratioStmt) -> vacuum {
             # Enter block scope for loop variable
             a.intraScopum(ScopusSpecies.Massa)
 
-            # Infer loop variable type from source
-            varia elemTypus = IGNOTUM qua SemanticTypus
-            discerne sourceTypus {
-                casu Genericum ut g {
-                    si g.nomen == "lista" et g.parametri.longitudo() > 0 {
-                        elemTypus = g.parametri.primus()
+            # Define loop variable(s) based on binding type
+            discerne i.variabilis {
+                casu Nomen ut n {
+                    # Simple identifier - infer type from source
+                    varia elemTypus = IGNOTUM qua SemanticTypus
+                    discerne sourceTypus {
+                        casu Genericum ut g {
+                            si g.nomen == "lista" et g.parametri.longitudo() > 0 {
+                                elemTypus = g.parametri.primus()
+                            }
+                        }
+                        ceterum { }
+                    }
+
+                    a.scopus.symbola[n.valor] = {
+                        nomen: n.valor,
+                        semanticTypus: elemTypus,
+                        species: SymbolumSpecies.Variabilis,
+                        mutabilis: falsum,
+                        locus: i.locus
                     }
                 }
-                casu _ { }
-            }
+                casu Series ut s {
+                    # Array pattern - define each element as a binding
+                    varia indice = 0
+                    ex s.elementa pro elem {
+                        si elem.omissum aut nihil elem.nomen {
+                            indice = indice + 1
+                            perge
+                        }
 
-            # Define loop variable
-            a.scopus.symbola[i.variabilis] = {
-                nomen: i.variabilis,
-                semanticTypus: elemTypus,
-                species: SymbolumSpecies.Variabilis,
-                mutabilis: falsum,
-                locus: i.locus
+                        # Type inference: for tabula<K,V>, [0]=K, [1]=V
+                        varia posTypus = IGNOTUM qua SemanticTypus
+                        discerne sourceTypus {
+                            casu Genericum ut g {
+                                si g.nomen == "tabula" et g.parametri.longitudo() > 1 {
+                                    si indice == 0 { posTypus = g.parametri[0] }
+                                    sin indice == 1 { posTypus = g.parametri[1] }
+                                } sin g.nomen == "lista" et g.parametri.longitudo() > 0 {
+                                    posTypus = g.parametri[0]
+                                }
+                            }
+                            ceterum { }
+                        }
+
+                        a.scopus.symbola[elem.nomen qua textus] = {
+                            nomen: elem.nomen qua textus,
+                            semanticTypus: posTypus,
+                            species: SymbolumSpecies.Variabilis,
+                            mutabilis: falsum,
+                            locus: elem.locus
+                        }
+                        indice = indice + 1
+                    }
+                }
             }
 
             # Analyze body
