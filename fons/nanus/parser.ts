@@ -539,9 +539,25 @@ export class Parser {
             if (this.match('Punctuator', '{')) {
                 this.skipNewlines();
                 while (!this.check('Punctuator', '}') && !this.check('EOF')) {
-                    // Typus nomen pattern
+                    // Typus nomen, Typus<T> nomen, Typus? nomen patterns
                     const typNomen = this.expect('Identifier').valor;
-                    const fieldTypus: Typus = { tag: 'Nomen', nomen: typNomen };
+                    let fieldTypus: Typus;
+
+                    if (this.match('Operator', '<')) {
+                        const args: Typus[] = [];
+                        do {
+                            args.push(this.parseTypus());
+                        } while (this.match('Punctuator', ','));
+                        this.expect('Operator', '>');
+                        fieldTypus = { tag: 'Genericus', nomen: typNomen, args };
+                    } else {
+                        fieldTypus = { tag: 'Nomen', nomen: typNomen };
+                    }
+
+                    if (this.match('Punctuator', '?')) {
+                        fieldTypus = { tag: 'Nullabilis', inner: fieldTypus };
+                    }
+
                     const fieldNomen = this.expect('Identifier').valor;
                     campi.push({ nomen: fieldNomen, typus: fieldTypus });
                     this.skipNewlines();
