@@ -27,7 +27,7 @@
 @ cli "rivus"
 @ versio "0.1.0"
 @ descriptio "Bootstrap Faber compiler - compiles Faber source to TypeScript or Go"
-incipit argumenta args {}
+incipit {}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # version - show version
