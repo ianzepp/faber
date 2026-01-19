@@ -3,13 +3,14 @@
  * Build rivus (bootstrap compiler) from fons/rivus/ using faber or nanus.
  *
  * Uses the specified compiler to compile all .fab files in parallel.
- * Output is TypeScript (both compilers emit TS).
+ * Output is TypeScript (all compilers emit TS).
  *
- * Requires: bun run build:faber (or build:nanus) first
+ * Requires: bun run build:faber (or build:nanus-ts, build:nanus-go) first
  *
  * Usage:
  *   bun scripta/build-rivus.ts
- *   bun scripta/build-rivus.ts -c nanus
+ *   bun scripta/build-rivus.ts -c nanus-ts
+ *   bun scripta/build-rivus.ts -c nanus-go
  *   bun scripta/build-rivus.ts -c faber --no-typecheck
  */
 
@@ -18,17 +19,20 @@ import { mkdir, symlink, unlink } from 'fs/promises';
 import { dirname, join, relative } from 'path';
 import { $ } from 'bun';
 
+type Compiler = 'faber' | 'nanus' | 'nanus-ts' | 'nanus-go';
+const VALID_COMPILERS: Compiler[] = ['faber', 'nanus', 'nanus-ts', 'nanus-go'];
+
 // Parse arguments
-let compiler: 'faber' | 'nanus' = 'faber';
+let compiler: Compiler = 'faber';
 let skipTypecheck = false;
 
 const args = process.argv.slice(2);
 for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '-c' || arg === '--compiler') {
-        const c = args[++i];
-        if (c !== 'faber' && c !== 'nanus') {
-            console.error(`Unknown compiler '${c}'. Valid: faber, nanus`);
+        const c = args[++i] as Compiler;
+        if (!VALID_COMPILERS.includes(c)) {
+            console.error(`Unknown compiler '${c}'. Valid: ${VALID_COMPILERS.join(', ')}`);
             process.exit(1);
         }
         compiler = c;
@@ -41,6 +45,9 @@ const ROOT = join(import.meta.dir, '..');
 const SOURCE = join(ROOT, 'fons', 'rivus');
 const OUTPUT = join(ROOT, 'opus', 'rivus-ts', 'fons');
 const COMPILER_BIN = join(ROOT, 'opus', 'bin', compiler);
+
+// nanus-ts and nanus-go use stdin/stdout, faber/nanus use file args
+const useStdinStdout = compiler === 'nanus-ts' || compiler === 'nanus-go';
 
 interface CompileResult {
     file: string;
@@ -55,11 +62,21 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
     try {
         await mkdir(dirname(outPath), { recursive: true });
 
-        const result = await $`${COMPILER_BIN} compile ${fabPath} -o ${outPath}`.nothrow().quiet();
-
-        if (result.exitCode !== 0) {
-            const stderr = result.stderr.toString().trim();
-            throw new Error(stderr || `Exit code ${result.exitCode}`);
+        if (useStdinStdout) {
+            // nanus-ts/nanus-go: cat file | compiler emit > output
+            const result = await $`cat ${fabPath} | ${COMPILER_BIN} emit`.nothrow().quiet();
+            if (result.exitCode !== 0) {
+                const stderr = result.stderr.toString().trim();
+                throw new Error(stderr || `Exit code ${result.exitCode}`);
+            }
+            await Bun.write(outPath, result.stdout);
+        } else {
+            // faber/nanus: compiler compile file -o output
+            const result = await $`${COMPILER_BIN} compile ${fabPath} -o ${outPath}`.nothrow().quiet();
+            if (result.exitCode !== 0) {
+                const stderr = result.stderr.toString().trim();
+                throw new Error(stderr || `Exit code ${result.exitCode}`);
+            }
         }
 
         return { file: relPath, success: true };
