@@ -64,17 +64,17 @@ var glyphKeywordToFaber = map[string]string{
 	"⊸": "nexum",
 
 	// Control Flow
-	"∃": "si",
-	"∄": "sin",
-	"∁": "secus",
+	"↳": "si",
+	"↴": "sin",
+	"↲": "secus",
 	"∴": "ergo",
 	"∞": "dum",
 	"∈": "ex",
 	"∋": "de",
 	"∀": "pro",
 	"⋔": "elige",
-	"↳": "casu",
-	"↲": "ceterum",
+	"⌜": "casu",
+	"⌟": "ceterum",
 	"⊧": "custodi",
 	"⊡": "fac",
 
@@ -97,10 +97,6 @@ var glyphKeywordToFaber = map[string]string{
 	// Async
 	"⋆": "cede",
 	"⊶": "futura",
-	"→": "fit",
-	"⇢": "fiet",
-	"⇉": "fiunt",
-	"⇶": "fient",
 
 	// Boolean and Logic
 	"⊤": "verum",
@@ -133,10 +129,11 @@ var glyphKeywordToFaber = map[string]string{
 	"⋮": "mone",
 
 	// Ranges
-	"≺": "ante",
-	"≼": "usque",
-	"⊹": "per",
-	"≬": "inter",
+	"▷": "ante",
+	"▶": "usque",
+	"▴": "per",
+	"≬": "intra",
+	"∊": "inter",
 
 	// Bitwise Keywords
 	"⋘": "sinistratum",
@@ -168,7 +165,9 @@ var glyphOperatorToFaber = map[string]string{
 	"⧻": "--",
 
 	// Comparison
+	"≺": "<",
 	"≻": ">",
+	"≼": "<=",
 	"≽": ">=",
 	"≈": "==",
 	"≣": "===",
@@ -196,6 +195,7 @@ var glyphOperatorToFaber = map[string]string{
 
 	// Other
 	"‥": "..",
+	"→": "->",
 	"⇒": "=>",
 }
 

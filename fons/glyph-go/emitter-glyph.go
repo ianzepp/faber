@@ -61,17 +61,17 @@ var glyphKeywords = map[string]string{
 	"nexum":   "⊸",
 
 	// Control Flow
-	"si":      "∃",
-	"sin":     "∄",
-	"secus":   "∁",
+	"si":      "↳",
+	"sin":     "↴",
+	"secus":   "↲",
 	"ergo":    "∴",
 	"dum":     "∞",
 	"ex":      "∈",
 	"de":      "∋",
 	"pro":     "∀",
 	"elige":   "⋔",
-	"casu":    "↳",
-	"ceterum": "↲",
+	"casu":    "⌜",
+	"ceterum": "⌟",
 	"custodi": "⊧",
 	"fac":     "⊡",
 
@@ -94,10 +94,6 @@ var glyphKeywords = map[string]string{
 	// Async
 	"cede":   "⋆",
 	"futura": "⊶",
-	"fit":    "→",
-	"fiet":   "⇢",
-	"fiunt":  "⇉",
-	"fient":  "⇶",
 
 	// Boolean and Logic
 	"verum":  "⊤",
@@ -130,11 +126,11 @@ var glyphKeywords = map[string]string{
 	"mone":   "⋮",
 
 	// Ranges
-	"ante":  "≺",
-	"usque": "≼",
-	"per":   "⊹",
-	"intra": "∈",
-	"inter": "≬",
+	"ante":  "▷",
+	"usque": "▶",
+	"per":   "▴",
+	"intra": "≬",
+	"inter": "∊",
 
 	// Bitwise Keywords
 	"sinistratum": "⋘",
@@ -389,12 +385,12 @@ func glyphEmitStmt(stmt subsidia.Stmt, indent string) string {
 		return indent + "⊲ ▐ " + strings.Join(specs, "⸴ ") + " ▌ ∈ ▚" + toBraille(s.Fons) + "▚"
 
 	case *subsidia.StmtSi:
-		code := indent + "∃ " + glyphEmitExpr(s.Cond) + " " + glyphEmitStmt(s.Cons, indent)
+		code := indent + "↳ " + glyphEmitExpr(s.Cond) + " " + glyphEmitStmt(s.Cons, indent)
 		if s.Alt != nil {
 			if _, ok := s.Alt.(*subsidia.StmtSi); ok {
-				code += " ∄ " + strings.TrimPrefix(glyphEmitStmt(s.Alt, indent), indent+"∃ ")
+				code += " ↴ " + strings.TrimPrefix(glyphEmitStmt(s.Alt, indent), indent+"↳ ")
 			} else {
-				code += " ∁ " + glyphEmitStmt(s.Alt, indent)
+				code += " ↲ " + glyphEmitStmt(s.Alt, indent)
 			}
 		}
 		return code
@@ -420,10 +416,10 @@ func glyphEmitStmt(stmt subsidia.Stmt, indent string) string {
 		lines := []string{}
 		lines = append(lines, indent+"⋔ "+glyphEmitExpr(s.Discrim)+" ▐")
 		for _, c := range s.Casus {
-			lines = append(lines, indent+"  ↳ "+glyphEmitExpr(c.Cond)+" ∴ "+glyphEmitStmt(c.Corpus, indent+"  "))
+			lines = append(lines, indent+"  ⌜ "+glyphEmitExpr(c.Cond)+" ∴ "+glyphEmitStmt(c.Corpus, indent+"  "))
 		}
 		if s.Default != nil {
-			lines = append(lines, indent+"  ↲ "+glyphEmitStmt(s.Default, indent+"  "))
+			lines = append(lines, indent+"  ⌟ "+glyphEmitStmt(s.Default, indent+"  "))
 		}
 		lines = append(lines, indent+"▌")
 		return strings.Join(lines, "\n")
@@ -439,7 +435,7 @@ func glyphEmitStmt(stmt subsidia.Stmt, indent string) string {
 			patterns := []string{}
 			for _, p := range c.Patterns {
 				if p.Wildcard {
-					patterns = append(patterns, "↲")
+					patterns = append(patterns, "⌟")
 				} else {
 					pat := toBraille(p.Variant)
 					if len(p.Bindings) > 0 {
@@ -718,9 +714,9 @@ func glyphEmitExpr(expr subsidia.Expr) string {
 		start := glyphEmitExpr(e.Start)
 		end := glyphEmitExpr(e.End)
 		if e.Inclusive {
-			return start + " ≼ " + end
+			return start + " ▶ " + end
 		}
-		return start + " ≺ " + end
+		return start + " ▷ " + end
 
 	default:
 		return "⌗ unhandled"
