@@ -13,6 +13,7 @@
         "build:exec": "bun ./scripta/build-exec.ts",
         "build:faber": "bun ./scripta/build-faber.ts",
         "build:nanus": "bun ./scripta/build-nanus.ts",
+        "build:nanus-go": "bun ./scripta/build-nanus-go.ts",
         "build:norma": "bun ./scripta/build-norma.ts",
         "build:rivus": "bun ./scripta/build-rivus.ts",
         "corpus": "bun ./scripta/corpus.ts",
