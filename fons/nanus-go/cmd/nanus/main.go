@@ -5,74 +5,37 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	nanus "nanus-go"
 )
 
 func showHelp() {
-	fmt.Println("nanus - Minimal Faber compiler")
-	fmt.Println("Compiles the Faber subset needed to bootstrap rivus.")
+	fmt.Println("nanus-go - Minimal Faber compiler (stdin/stdout)")
 	fmt.Println("")
-	fmt.Println("Usage:")
-	fmt.Println("  nanus <command> <file> [options]")
+	fmt.Println("Usage: <source> | nanus-go <command>")
 	fmt.Println("")
 	fmt.Println("Commands:")
-	fmt.Println("  emit, compile <file>   Emit .fab file as TypeScript")
-	fmt.Println("  parse <file>           Parse and output AST as JSON")
-	fmt.Println("  lex <file>             Lex and output tokens as JSON")
-	fmt.Println("")
-	fmt.Println("Options:")
-	fmt.Println("  -o, --output <file>    Output file (default: stdout)")
-	fmt.Println("  -h, --help             Show this help")
-	fmt.Println("")
-	fmt.Println("Reads from stdin if no file specified (or use '-' explicitly).")
+	fmt.Println("  emit     Compile to TypeScript")
+	fmt.Println("  parse    Output AST as JSON")
+	fmt.Println("  lex      Output tokens as JSON")
 }
 
 func main() {
 	args := os.Args[1:]
-	if len(args) == 0 || contains(args, "-h") || contains(args, "--help") {
+
+	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" {
 		showHelp()
 		os.Exit(0)
 	}
 
-	var command string
-	var input string
-	var output string
-	filename := "<stdin>"
-
-	for i := 0; i < len(args); i++ {
-		arg := args[i]
-		switch arg {
-		case "-o", "--output":
-			if i+1 < len(args) {
-				output = args[i+1]
-				i++
-			}
-		case "-h", "--help":
-			showHelp()
-			os.Exit(0)
-		default:
-			if strings.HasPrefix(arg, "-") {
-				continue
-			}
-			if command == "" {
-				command = arg
-			} else if input == "" {
-				input = arg
-				filename = arg
-			}
-		}
-	}
-
-	validCommands := map[string]struct{}{"emit": {}, "compile": {}, "parse": {}, "lex": {}}
+	command := args[0]
+	validCommands := map[string]struct{}{"emit": {}, "parse": {}, "lex": {}}
 	if _, ok := validCommands[command]; !ok {
-		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", firstOr(command, "(none)"))
-		fmt.Fprintln(os.Stderr, "Use --help for usage.")
+		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 		os.Exit(1)
 	}
 
-	source, err := readSource(input)
+	source, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
@@ -80,81 +43,35 @@ func main() {
 
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Fprintln(os.Stderr, nanus.FormatError(r, source, filename))
+			fmt.Fprintln(os.Stderr, nanus.FormatError(r, string(source), "<stdin>"))
 			os.Exit(1)
 		}
 	}()
 
 	switch command {
 	case "lex":
-		tokens := nanus.Lex(source, filename)
+		tokens := nanus.Lex(string(source), "<stdin>")
 		out, err := json.MarshalIndent(tokens, "", "  ")
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
-		writeOutput(out, output)
-		return
+		fmt.Println(string(out))
 	case "parse":
-		tokens := nanus.Prepare(nanus.Lex(source, filename))
-		ast := nanus.Parse(tokens, filename)
+		tokens := nanus.Prepare(nanus.Lex(string(source), "<stdin>"))
+		ast := nanus.Parse(tokens, "<stdin>")
 		out, err := json.MarshalIndent(ast, "", "  ")
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
-		writeOutput(out, output)
-		return
+		fmt.Println(string(out))
 	default:
-		result := nanus.Compile(source, &nanus.CompileOptions{Filename: filename})
+		result := nanus.Compile(string(source), nil)
 		if !result.Success {
 			fmt.Fprintln(os.Stderr, result.Error)
 			os.Exit(1)
 		}
-		writeOutput([]byte(result.Output), output)
-		return
+		fmt.Println(result.Output)
 	}
-}
-
-func readSource(input string) (string, error) {
-	if input != "" && input != "-" {
-		data, err := os.ReadFile(input)
-		if err != nil {
-			return "", err
-		}
-		return string(data), nil
-	}
-
-	data, err := io.ReadAll(os.Stdin)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
-}
-
-func writeOutput(data []byte, output string) {
-	if output != "" {
-		if err := os.WriteFile(output, data, 0644); err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
-		}
-		return
-	}
-	fmt.Println(string(data))
-}
-
-func contains(args []string, val string) bool {
-	for _, arg := range args {
-		if arg == val {
-			return true
-		}
-	}
-	return false
-}
-
-func firstOr(val string, fallback string) string {
-	if val == "" {
-		return fallback
-	}
-	return val
 }

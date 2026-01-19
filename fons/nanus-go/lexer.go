@@ -35,7 +35,7 @@ var keywords = map[string]struct{}{
 
 var punctuators = map[byte]struct{}{
 	'(': {}, ')': {}, '{': {}, '}': {}, '[': {}, ']': {},
-	',': {}, '.': {}, ':': {}, ';': {}, '@': {}, '#': {}, '§': {},
+	',': {}, '.': {}, ':': {}, ';': {}, '@': {}, '#': {},
 	'?': {}, '!': {},
 }
 
@@ -250,6 +250,12 @@ func Lex(source string, filename string) []Token {
 			}
 		}
 		if matched {
+			continue
+		}
+
+		// § is multi-byte UTF-8, handle via string match
+		if match("§") {
+			tokens = append(tokens, Token{Tag: tokenPunctuator, Valor: "§", Locus: loc})
 			continue
 		}
 

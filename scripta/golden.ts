@@ -61,6 +61,12 @@ function parseArgs(args: string[]): { compiler: string; showDiffs: boolean } {
 async function compile(compiler: string, fabPath: string): Promise<{ success: boolean; output?: string; error?: string }> {
     const bin = join(BIN, compiler);
     try {
+        // nanus-ts and nanus-go use stdin/stdout
+        if (compiler === 'nanus-ts' || compiler === 'nanus-go') {
+            const result = await $`cat ${fabPath} | ${bin} emit`.quiet();
+            return { success: true, output: result.text() };
+        }
+        // faber, rivus, nanus (symlink) use file args
         const result = await $`${bin} compile ${fabPath}`.quiet();
         return { success: true, output: result.text() };
     } catch (err: any) {
