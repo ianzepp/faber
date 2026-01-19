@@ -18,7 +18,7 @@ import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
 const EXEMPLA = join(ROOT, 'fons', 'exempla');
-const CLI = join(ROOT, 'fons', 'faber', 'cli.ts');
+const CLI = join(ROOT, 'fons', 'faber', 'faber.ts');
 
 type Target = 'ts' | 'zig' | 'py';
 

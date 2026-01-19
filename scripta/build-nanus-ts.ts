@@ -22,7 +22,7 @@ async function main() {
     const binDir = join(ROOT, 'opus', 'bin');
     await mkdir(binDir, { recursive: true });
     const outExe = join(binDir, 'nanus-ts');
-    await $`bun build ${join(ROOT, 'fons', 'nanus-ts', 'cli.ts')} --compile --outfile=${outExe}`.quiet();
+    await $`bun build ${join(ROOT, 'fons', 'nanus-ts', 'nanus.ts')} --compile --outfile=${outExe}`.quiet();
     await $`bash -c 'rm -f .*.bun-build 2>/dev/null || true'`.quiet();
 
     // Create symlink: nanus -> nanus-ts

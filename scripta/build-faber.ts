@@ -23,7 +23,7 @@ async function main() {
     const binDir = join(ROOT, 'opus', 'bin');
     await mkdir(binDir, { recursive: true });
     const outExe = join(binDir, 'faber-ts');
-    await $`bun build ${join(ROOT, 'fons', 'faber', 'cli.ts')} --compile --outfile=${outExe}`.quiet();
+    await $`bun build ${join(ROOT, 'fons', 'faber', 'faber.ts')} --compile --outfile=${outExe}`.quiet();
     await $`bash -c 'rm -f .*.bun-build 2>/dev/null || true'`.quiet();
 
     // Create backward-compat symlink: faber -> faber-ts

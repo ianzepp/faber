@@ -20,7 +20,7 @@ emitter.ts  (~480 lines)  AST → TypeScript
 ast.ts      (~190 lines)  type definitions
 errors.ts   (~50 lines)   error formatting
 index.ts    (~60 lines)   orchestration
-cli.ts      (~65 lines)   command-line interface
+nanus.ts    (~50 lines)   stdin/stdout CLI
 ```
 
 Design principles:
@@ -44,15 +44,18 @@ Known gaps being addressed:
 
 ## Usage
 
+Pure stdin/stdout interface:
+
 ```bash
-# Compile a .fab file to TypeScript
-bun fons/nanus-ts/cli.ts input.fab
+# Compile to TypeScript
+cat input.fab | nanus-ts emit
 
-# Output to file
-bun fons/nanus-ts/cli.ts input.fab -o output.ts
+# Or with echo
+echo 'scribe "hello"' | nanus-ts emit
 
-# From stdin
-echo 'scribe "hello"' | bun fons/nanus-ts/cli.ts
+# Other commands
+cat input.fab | nanus-ts parse   # Output AST as JSON
+cat input.fab | nanus-ts lex     # Output tokens as JSON
 ```
 
 ## Relationship to Faber and Rivus

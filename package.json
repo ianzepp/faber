@@ -5,7 +5,7 @@
     "module": "index.ts",
     "type": "module",
     "bin": {
-        "faber": "./fons/faber/cli.ts"
+        "faber": "./fons/faber/faber.ts"
     },
     "scripts": {
         "build": "bun ./scripta/build.ts",
