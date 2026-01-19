@@ -54,7 +54,7 @@ fixum FLAGGA_IMPERATIVUS = {
     async: falsum,
     reddeNovum: falsum,
     allocatio: falsum
-} qua MorphologiaFlagga
+} novum MorphologiaFlagga
 
 # Perfect passive participle: addita, filtrata, ordinata - returns new, sync
 fixum FLAGGA_PERFECTUM = {
@@ -62,7 +62,7 @@ fixum FLAGGA_PERFECTUM = {
     async: falsum,
     reddeNovum: verum,
     allocatio: verum
-} qua MorphologiaFlagga
+} novum MorphologiaFlagga
 
 # Future active participle: additura, filtratura - returns new, async
 fixum FLAGGA_FUTURUM_ACTIVUM = {
@@ -70,7 +70,7 @@ fixum FLAGGA_FUTURUM_ACTIVUM = {
     async: verum,
     reddeNovum: verum,
     allocatio: verum
-} qua MorphologiaFlagga
+} novum MorphologiaFlagga
 
 # Future indicative: addet, filtrabit - mutates, async
 fixum FLAGGA_FUTURUM_INDICATIVUM = {
@@ -78,7 +78,7 @@ fixum FLAGGA_FUTURUM_INDICATIVUM = {
     async: verum,
     reddeNovum: falsum,
     allocatio: falsum
-} qua MorphologiaFlagga
+} novum MorphologiaFlagga
 
 # ============================================================================
 # MORPHOLOGY PARSER
@@ -121,28 +121,28 @@ functio parseMethodum(textus nomen) -> RadixEtFlagga? {
     si longitudo > 5 {
         fixum suffix5 = nomen.sectio(longitudo - 5, longitudo)
         si suffix5 == "atura" aut suffix5 == "itura"
-            reddit { radix: nomen.sectio(0, longitudo - 5), flagga: FLAGGA_FUTURUM_ACTIVUM } qua RadixEtFlagga
+            reddit { radix: nomen.sectio(0, longitudo - 5), flagga: FLAGGA_FUTURUM_ACTIVUM } novum RadixEtFlagga
     }
 
     # Future indicative: -abit, -ebit (async, mutates)
     si longitudo > 4 {
         fixum suffix4 = nomen.sectio(longitudo - 4, longitudo)
         si suffix4 == "abit" aut suffix4 == "ebit"
-            reddit { radix: nomen.sectio(0, longitudo - 4), flagga: FLAGGA_FUTURUM_INDICATIVUM } qua RadixEtFlagga
+            reddit { radix: nomen.sectio(0, longitudo - 4), flagga: FLAGGA_FUTURUM_INDICATIVUM } novum RadixEtFlagga
     }
 
     # Also check -iet for 3rd conjugation futures
     si longitudo > 3 {
         fixum suffix3 = nomen.sectio(longitudo - 3, longitudo)
         si suffix3 == "iet"
-            reddit { radix: nomen.sectio(0, longitudo - 3), flagga: FLAGGA_FUTURUM_INDICATIVUM } qua RadixEtFlagga
+            reddit { radix: nomen.sectio(0, longitudo - 3), flagga: FLAGGA_FUTURUM_INDICATIVUM } novum RadixEtFlagga
     }
 
     # Perfect passive participle: -ata, -ita, -ta (sync, returns new)
     si longitudo > 3 {
         fixum suffix3 = nomen.sectio(longitudo - 3, longitudo)
         si suffix3 == "ata" aut suffix3 == "ita"
-            reddit { radix: nomen.sectio(0, longitudo - 3), flagga: FLAGGA_PERFECTUM } qua RadixEtFlagga
+            reddit { radix: nomen.sectio(0, longitudo - 3), flagga: FLAGGA_PERFECTUM } novum RadixEtFlagga
     }
 
     # Check 2-char endings: -ta, -sa (some participles)
@@ -150,13 +150,13 @@ functio parseMethodum(textus nomen) -> RadixEtFlagga? {
     si longitudo > 2 {
         fixum suffix2 = nomen.sectio(longitudo - 2, longitudo)
         si suffix2 == "ta" aut suffix2 == "sa"
-            reddit { radix: nomen.sectio(0, longitudo - 2), flagga: FLAGGA_PERFECTUM } qua RadixEtFlagga
+            reddit { radix: nomen.sectio(0, longitudo - 2), flagga: FLAGGA_PERFECTUM } novum RadixEtFlagga
     }
 
     # Imperative: -a, -e, -i (sync, mutates)
     fixum ultimum = nomen.sectio(longitudo - 1, longitudo)
     si ultimum == "a" aut ultimum == "e" aut ultimum == "i"
-        reddit { radix: nomen.sectio(0, longitudo - 1), flagga: FLAGGA_IMPERATIVUS } qua RadixEtFlagga
+        reddit { radix: nomen.sectio(0, longitudo - 1), flagga: FLAGGA_IMPERATIVUS } novum RadixEtFlagga
 
     # No recognized morphology
     redde nihil

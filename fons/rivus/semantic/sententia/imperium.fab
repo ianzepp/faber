@@ -228,7 +228,7 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                             fixum qualNomen = scriptum("§.§", u.nomen, pattern.variansNomen)
                             fixum symbolum = quaereSymbolum(a.scopus, qualNomen)
                             si nonnihil symbolum {
-                                variantTypus = (symbolum qua Symbolum).semanticTypus
+                                variantTypus = (symbolum novum Symbolum).semanticTypus
                             }
                         }
                         casu _ {
@@ -329,7 +329,7 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                                     rumpe
                                 }
                                 si nonnihil primum {
-                                    fixum exemplar = primum qua VariansExemplar
+                                    fixum exemplar = primum novum VariansExemplar
                                     si non exemplar.estWildcard {
                                         handled[exemplar.variansNomen] = verum
                                     }
@@ -339,7 +339,7 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                             varia missingCount = 0
                             varia firstMissing = "" qua textus
                             varia quoted = [] innatum lista<textus>
-                            ex (info qua DiscretioDeclInfo).variantes fixum variansInfo {
+                            ex (info novum DiscretioDeclInfo).variantes fixum variansInfo {
                                 si nihil handled[variansInfo.nomen] {
                                     missingCount = missingCount + 1
                                     si missingCount == 1 {

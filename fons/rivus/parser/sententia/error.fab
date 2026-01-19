@@ -50,7 +50,7 @@ functio parseCapeClausula(Resolvitor r) -> CapeClausula {
         locus: locus,
         param: param,
         corpus: corpus
-    } qua CapeClausula
+    } novum CapeClausula
 }
 
 # Parse try-catch-finally statement

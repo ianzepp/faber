@@ -119,7 +119,7 @@ functio parseTargetMappingAnnotation(Resolvitor r, textus nomen, Locus locus, nu
         operandusNomen: nihil,
         operandusCeteri: nihil,
         operandusDescriptio: nihil
-    } qua Annotatio
+    } novum Annotatio
 }
 
 # Parse @ radix: stem and morphological forms
@@ -162,7 +162,7 @@ functio parseRadixAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
         operandusNomen: nihil,
         operandusCeteri: nihil,
         operandusDescriptio: nihil
-    } qua Annotatio
+    } novum Annotatio
 }
 
 # Parse @ verte: codegen transformation
@@ -196,7 +196,7 @@ functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
             operandusNomen: nihil,
             operandusCeteri: nihil,
             operandusDescriptio: nihil
-        } qua Annotatio
+        } novum Annotatio
     }
     fixum verteTarget = p.specta(0).valor
     p.procede()
@@ -251,7 +251,7 @@ functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
                 operandusNomen: nihil,
                 operandusCeteri: nihil,
                 operandusDescriptio: nihil
-            } qua Annotatio
+            } novum Annotatio
         }
         fixum verteTemplate = p.specta(0).valor
         p.procede()
@@ -281,7 +281,7 @@ functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
             operandusNomen: nihil,
             operandusCeteri: nihil,
             operandusDescriptio: nihil
-        } qua Annotatio
+        } novum Annotatio
     }
 
     # Simple method form: "methodName"
@@ -307,7 +307,7 @@ functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
             operandusNomen: nihil,
             operandusCeteri: nihil,
             operandusDescriptio: nihil
-        } qua Annotatio
+        } novum Annotatio
     }
     fixum verteMethod = p.specta(0).valor
     p.procede()
@@ -336,7 +336,7 @@ functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
         operandusNomen: nihil,
         operandusCeteri: nihil,
         operandusDescriptio: nihil
-    } qua Annotatio
+    } novum Annotatio
 }
 
 # Parse @ imperia: command re-export annotation
@@ -379,7 +379,7 @@ functio parseImperiaAnnotation(Resolvitor r, Locus locus, numerus linea) -> Anno
             operandusNomen: nihil,
             operandusCeteri: nihil,
             operandusDescriptio: nihil
-        } qua Annotatio
+        } novum Annotatio
     }
 
     # Parse module identifier
@@ -409,7 +409,7 @@ functio parseImperiaAnnotation(Resolvitor r, Locus locus, numerus linea) -> Anno
         operandusNomen: nihil,
         operandusCeteri: nihil,
         operandusDescriptio: nihil
-    } qua Annotatio
+    } novum Annotatio
 }
 
 # Parse @ optio annotation for CLI flags
@@ -523,7 +523,7 @@ functio parseOptioAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
         operandusNomen: nihil,
         operandusCeteri: nihil,
         operandusDescriptio: nihil
-    } qua Annotatio
+    } novum Annotatio
 }
 
 # Parse @ operandus annotation for CLI positional arguments
@@ -589,7 +589,7 @@ functio parseOperandusAnnotation(Resolvitor r, Locus locus, numerus linea) -> An
         operandusNomen: operandusNomen,
         operandusCeteri: operandusCeteri,
         operandusDescriptio: operandusDescriptio
-    } qua Annotatio
+    } novum Annotatio
 }
 
 # ============================================================================
@@ -694,7 +694,7 @@ functio parseAnnotationes(Resolvitor r) -> lista<Annotatio> {
             operandusNomen: nihil,
             operandusCeteri: nihil,
             operandusDescriptio: nihil
-        } qua Annotatio)
+        } novum Annotatio)
     }
 
     redde annotationes
@@ -750,7 +750,7 @@ functio parseSectiones(Resolvitor r) -> lista<SectioAnnotatio> {
             locus: locus,
             nomen: nomen,
             argumenta: argumenta
-        } qua SectioAnnotatio)
+        } novum SectioAnnotatio)
     }
 
     redde sectiones

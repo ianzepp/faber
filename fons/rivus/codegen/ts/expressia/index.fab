@@ -129,7 +129,7 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
             si e.signum == "!" {
                 discerne e.argumentum {
                     casu EstExpressia ut est {
-                        redde genEstExpressiaNegata(est.expressia, est.scopus qua TypusAnnotatio, g)
+                        redde genEstExpressiaNegata(est.expressia, est.scopus novum TypusAnnotatio, g)
                     }
                     casu _ { }
                 }
@@ -154,11 +154,15 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
         }
 
         casu QuaExpressia ut e {
-            redde scriptum("(§ as §)", genExpressia(e.expressia, g), genTypus(e.scopus qua TypusAnnotatio, g))
+            redde scriptum("(§ as §)", genExpressia(e.expressia, g), genTypus(e.scopus novum TypusAnnotatio, g))
+        }
+
+        casu PostfixNovumExpressia ut e {
+            redde scriptum("new §(§)", genTypus(e.scopus novum TypusAnnotatio, g), genExpressia(e.expressia, g))
         }
 
         casu InnatumExpressia ut e {
-            fixum typusNomen = (e.scopus qua TypusAnnotatio).nomen qua textus
+            fixum typusNomen = (e.scopus novum TypusAnnotatio).nomen qua textus
 
             si typusNomen == "tabula" { redde genInnatumTabula(e, g) }
             si typusNomen == "lista" { redde genInnatumLista(e, g) }
@@ -168,7 +172,7 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
         }
 
         casu EstExpressia ut e {
-            redde genEstExpressia(e.expressia, e.scopus qua TypusAnnotatio, g)
+            redde genEstExpressia(e.expressia, e.scopus novum TypusAnnotatio, g)
         }
 
         casu PraefixumExpressia ut e {
@@ -211,7 +215,7 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
 
                                 # WHY: Try norma translation if we have receiver type info.
                                 si nonnihil e.morphologia {
-                                    fixum recipiens = (e.morphologia qua MorphologiaInvocatio).recipiens
+                                    fixum recipiens = (e.morphologia novum MorphologiaInvocatio).recipiens
                                     fixum translation = getNormaTranslation("ts", recipiens, methodNomen)
 
                                     si nonnihil translation {
@@ -230,7 +234,7 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
                                     # Fallback: generaListaMethodum for lista morphology patterns
                                     fixum parsed = parseMethodum(methodNomen)
                                     si nonnihil parsed et recipiens == "lista" {
-                                        fixum result = generaListaMethodum((e.morphologia qua MorphologiaInvocatio).radix, obj, args, parsed.flagga)
+                                        fixum result = generaListaMethodum((e.morphologia novum MorphologiaInvocatio).radix, obj, args, parsed.flagga)
                                         si nonnihil result {
                                             redde result
                                         }
@@ -354,14 +358,14 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
             varia params = [] innatum lista<textus>
             ex (e.parametra qua lista<ClausuraParametrum>) fixum p {
                 si nonnihil p.typus {
-                    params.adde(scriptum("§: §", p.nomen, genTypus(p.typus qua TypusAnnotatio, g)))
+                    params.adde(scriptum("§: §", p.nomen, genTypus(p.typus novum TypusAnnotatio, g)))
                 } secus {
                     params.adde(p.nomen)
                 }
             }
             varia retType = ""
             si nonnihil e.typusReditus {
-                retType = scriptum(": §", genTypus(e.typusReditus qua TypusAnnotatio, g))
+                retType = scriptum(": §", genTypus(e.typusReditus novum TypusAnnotatio, g))
             }
             discerne e.corpus {
                 casu Massa ut m {
@@ -526,7 +530,7 @@ functio genPraefixumSententia(Sententia stmt, TsGenerator g) -> textus {
             varia result = scriptum("§§ §", g.ind(), keyword, s.nomen)
 
             si nonnihil s.typus {
-                result = scriptum("§: §", result, genTypus(s.typus qua TypusAnnotatio, g))
+                result = scriptum("§: §", result, genTypus(s.typus novum TypusAnnotatio, g))
             }
 
             si nonnihil s.valor {
@@ -642,7 +646,7 @@ functio extractTypusParam(lista<TypusParametrum>? params, numerus index, TsGener
 }
 
 functio genInnatumTabula(InnatumExpressia e, TsGenerator g) -> textus {
-    fixum params = (e.scopus qua TypusAnnotatio).typusParametra
+    fixum params = (e.scopus novum TypusAnnotatio).typusParametra
     fixum keyType = extractTypusParam(params, 0, g)
     fixum valueType = extractTypusParam(params, 1, g)
 
@@ -677,7 +681,7 @@ functio genMapKey(Expressia clavis, TsGenerator g) -> textus {
 }
 
 functio genInnatumLista(InnatumExpressia e, TsGenerator g) -> textus {
-    fixum params = (e.scopus qua TypusAnnotatio).typusParametra
+    fixum params = (e.scopus novum TypusAnnotatio).typusParametra
     fixum elemType = extractTypusParam(params, 0, g)
 
     # Non-empty array -> pass through
@@ -695,7 +699,7 @@ functio genInnatumLista(InnatumExpressia e, TsGenerator g) -> textus {
 }
 
 functio genInnatumCopia(InnatumExpressia e, TsGenerator g) -> textus {
-    fixum params = (e.scopus qua TypusAnnotatio).typusParametra
+    fixum params = (e.scopus novum TypusAnnotatio).typusParametra
     fixum elemType = extractTypusParam(params, 0, g)
 
     si elemType == "unknown" { redde "new Set()" }

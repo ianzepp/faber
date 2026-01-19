@@ -325,7 +325,7 @@ functio parseAdSententia(Resolvitor r) -> Sententia {
             typus: adnotatioTypus,
             nomen: nomen,
             alias: alias
-        } qua AdVinculum
+        } novum AdVinculum
     }
 
     # Parse optional body block
@@ -374,5 +374,5 @@ functio parseCapeClausula(Resolvitor r) -> CapeClausula {
         locus: locus,
         param: param,
         corpus: corpus
-    } qua CapeClausula
+    } novum CapeClausula
 }

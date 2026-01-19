@@ -68,7 +68,7 @@ genus Lexor {
             linea: ego.linea,
             columna: ego.index - ego.columnaInitium + 1,
             index: ego.index
-        } qua Locus
+        } novum Locus
     }
 
     # =========================================================================
@@ -149,7 +149,7 @@ genus Lexor {
             locus: locus,
             verbum: nihil,
             verbumId: nihil
-        } qua Symbolum)
+        } novum Symbolum)
     }
 
     # addeVerbum = "add a keyword" - special case for reserved words
@@ -161,7 +161,7 @@ genus Lexor {
             locus: locus,
             verbum: verbum,
             verbumId: id
-        } qua Symbolum)
+        } novum Symbolum)
     }
 
     # addeErrorem = "add an error" - record lexical error without stopping
@@ -888,7 +888,7 @@ genus Lexor {
         redde {
             symbola: ego.symbola,
             errores: ego.errores
-        } qua LexorResultatum
+        } novum LexorResultatum
     }
 }
 

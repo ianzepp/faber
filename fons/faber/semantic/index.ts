@@ -958,6 +958,15 @@ export function analyze(program: Program, options: AnalyzeOptions = {}): Semanti
             case 'NovumExpression':
                 return resolveNew(node);
 
+            case 'PostfixNovumExpression': {
+                // WHY: Postfix construction { ... } novum Type -> new Type({ ... })
+                // Resolve the expression and target type, return target type
+                resolveExpression(node.expression);
+                const targetType = resolveTypeAnnotation(node.targetType);
+                node.resolvedType = targetType;
+                return targetType;
+            }
+
             case 'FingeExpression':
                 return resolveFingeExpression(node);
 

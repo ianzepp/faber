@@ -36,7 +36,7 @@ functio genDumLogica(
 
     # If target supports cape and cape is present, wrap in try/catch
     si nonnihil cape et syn.habetCape {
-        fixum c = cape qua CapeClausula
+        fixum c = cape novum CapeClausula
         g.intraProfundum()
         fixum catchBody = rev.genStmt(c.corpus, g)
         g.exiProfundum()

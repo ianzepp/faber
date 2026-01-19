@@ -26,7 +26,7 @@ functio genFac(Sententia corpus, ignotum condicio, ignotum cape, TsGenerator g) 
         fixum loop = scriptum("§do {\n§\n§} while (§);", g.ind(), body, g.ind(), test)
 
         si nonnihil cape {
-            fixum c = cape qua CapeClausula
+            fixum c = cape novum CapeClausula
             g.intraProfundum()
             fixum catchBody = genSententia(c.corpus, g)
             g.exiProfundum()
@@ -37,7 +37,7 @@ functio genFac(Sententia corpus, ignotum condicio, ignotum cape, TsGenerator g) 
     }
 
     si nonnihil cape {
-        fixum c = cape qua CapeClausula
+        fixum c = cape novum CapeClausula
         g.intraProfundum()
         fixum catchBody = genSententia(c.corpus, g)
         g.exiProfundum()

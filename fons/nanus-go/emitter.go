@@ -629,6 +629,9 @@ func emitExpr(expr Expr) string {
 	case *ExprInnatum:
 		return "(" + emitExpr(e.Expr) + " as " + emitTypus(e.Typus) + ")"
 
+	case *ExprPostfixNovum:
+		return "new " + emitTypus(e.Typus) + "(" + emitExpr(e.Expr) + ")"
+
 	case *ExprFinge:
 		fields := []string{}
 		for _, p := range e.Campi {

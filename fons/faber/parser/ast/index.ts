@@ -73,6 +73,7 @@ export type {
     ConditionalExpression,
     CedeExpression,
     NovumExpression,
+    PostfixNovumExpression,
     FingeExpression,
     ClausuraExpression,
     PraefixumExpression,

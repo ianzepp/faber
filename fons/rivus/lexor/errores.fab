@@ -42,44 +42,44 @@ functio nuntiumErroris(LexorErrorCodice codice) -> LexorErrorNuntius {
             redde {
                 textus: "Unterminated string",
                 auxilium: "String literals must be closed on the same line. Use backticks for multi-line."
-            } qua LexorErrorNuntius
+            } novum LexorErrorNuntius
         }
         casu LexorErrorCodice.ExemplarNonClausum {
             redde {
                 textus: "Unterminated template string",
                 auxilium: "Template strings must end with a closing backtick."
-            } qua LexorErrorNuntius
+            } novum LexorErrorNuntius
         }
         casu LexorErrorCodice.SignumInopinatum {
             redde {
                 textus: "Unexpected character",
                 auxilium: "This character is not valid in Latin syntax."
-            } qua LexorErrorNuntius
+            } novum LexorErrorNuntius
         }
         casu LexorErrorCodice.NumerusHexMalus {
             redde {
                 textus: "Invalid hex literal",
                 auxilium: "Hex literals must have at least one digit after 0x prefix."
-            } qua LexorErrorNuntius
+            } novum LexorErrorNuntius
         }
         casu LexorErrorCodice.NumerusBinariusMalus {
             redde {
                 textus: "Invalid binary literal",
                 auxilium: "Binary literals must have at least one digit after 0b prefix."
-            } qua LexorErrorNuntius
+            } novum LexorErrorNuntius
         }
         casu LexorErrorCodice.NumerusOctalisMalus {
             redde {
                 textus: "Invalid octal literal",
                 auxilium: "Octal literals must have at least one digit after 0o prefix."
-            } qua LexorErrorNuntius
+            } novum LexorErrorNuntius
         }
         ceterum {
             # EDGE: Unknown error code - should never occur with valid enum values
             redde {
                 textus: "Error ignotus",
                 auxilium: "Unknown error occurred."
-            } qua LexorErrorNuntius
+            } novum LexorErrorNuntius
         }
     }
 }
@@ -110,5 +110,5 @@ functio error(LexorErrorCodice codice, Locus locus) -> LexorError {
         textus: nuntius.textus,
         auxilium: nuntius.auxilium,
         locus: locus
-    } qua LexorError
+    } novum LexorError
 }

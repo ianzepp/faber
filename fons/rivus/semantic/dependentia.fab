@@ -72,7 +72,7 @@ functio parseDependentiaArgs(lista<textus> args) -> Dependentia? {
         }
     }
 
-    redde { alias: alias, github: github, via: via } qua Dependentia
+    redde { alias: alias, github: github, via: via } novum Dependentia
 }
 
 # ============================================================================

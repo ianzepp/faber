@@ -24,7 +24,7 @@ functio analyzeTempta(Resolvitor r, Sententia temptaStmt) -> vacuum {
 
             # Analyze catch clause if present
             si nonnihil t.cape {
-                fixum cape = t.cape qua CapeClausula
+                fixum cape = t.cape novum CapeClausula
 
                 # Enter scope for catch parameter
                 a.intraScopum(ScopusSpecies.Massa)

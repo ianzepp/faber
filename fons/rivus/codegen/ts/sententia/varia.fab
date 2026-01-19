@@ -20,7 +20,7 @@ functio genVaria(VariaGenus species, textus nomen, ignotum adnotatioTypus, ignot
     si externa {
         varia result = scriptum("§declare const §", g.ind(), nomen)
         si nonnihil adnotatioTypus {
-            varia tsType = genTypus(adnotatioTypus qua TypusAnnotatio, g)
+            varia tsType = genTypus(adnotatioTypus novum TypusAnnotatio, g)
             # WHY: unknown is too restrictive for external APIs - use any
             si tsType == "unknown" {
                 tsType = "any"
@@ -45,7 +45,7 @@ functio genVaria(VariaGenus species, textus nomen, ignotum adnotatioTypus, ignot
     varia result = scriptum("§§§ §", g.ind(), exportPrefix, keyword, nomen)
 
     si nonnihil adnotatioTypus {
-        result = scriptum("§: §", result, genTypus(adnotatioTypus qua TypusAnnotatio, g))
+        result = scriptum("§: §", result, genTypus(adnotatioTypus novum TypusAnnotatio, g))
     }
 
     si nonnihil valor {

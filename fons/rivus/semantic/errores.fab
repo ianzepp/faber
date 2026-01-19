@@ -50,7 +50,7 @@ functio undefinedVariableError(textus nomen) -> SemanticErrorNuntius {
     redde {
         textus: scriptum("Undefined variable '§'", nomen),
         auxilium: "Variables must be declared with 'varia' or 'fixum' before use"
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Already defined error
@@ -59,7 +59,7 @@ functio alreadyDefinedError(textus nomen, numerus linea) -> SemanticErrorNuntius
     redde {
         textus: scriptum("'§' is already defined at line §", nomen, linea),
         auxilium: "Each name can only be defined once in the same scope. Use a different name or assign to the existing variable."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Immutable assignment error
@@ -68,7 +68,7 @@ functio immutableAssignmentError(textus nomen) -> SemanticErrorNuntius {
     redde {
         textus: scriptum("Cannot assign to immutable variable '§'", nomen),
         auxilium: "Variables declared with 'fixum' cannot be reassigned. Use 'varia' for mutable variables."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Type mismatch error
@@ -77,7 +77,7 @@ functio typeMismatchError(textus sourceType, textus targetType) -> SemanticError
     redde {
         textus: scriptum("Type '§' is not assignable to type '§'", sourceType, targetType),
         auxilium: "Ensure the types are compatible. You may need a type conversion or to change the variable type."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Return type mismatch error
@@ -86,7 +86,7 @@ functio returnTypeMismatchError(textus returnType, textus functionType) -> Seman
     redde {
         textus: scriptum("Return type '§' is not assignable to function return type '§'", returnType, functionType),
         auxilium: "The returned value must match the function return type annotation."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # No type or initializer error
@@ -95,7 +95,7 @@ functio noTypeOrInitializerError(textus nomen) -> SemanticErrorNuntius {
     redde {
         textus: scriptum("Variable '§' has no type annotation or initializer", nomen),
         auxilium: "Variables must have either a type annotation (e.g., 'numerus x') or an initializer (e.g., 'varia x = 5')."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Not exported from module error
@@ -104,7 +104,7 @@ functio notExportedFromModuleError(textus nomen, textus modulus) -> SemanticErro
     redde {
         textus: scriptum("'§' is not exported from '§'", nomen, modulus),
         auxilium: "Check the module documentation for available exports. You may have a typo in the import name."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Incompatible comparison error
@@ -113,7 +113,7 @@ functio incompatibleComparisonError(textus leftType, textus rightType, textus op
     redde {
         textus: scriptum("Cannot compare '§' with '§' using '§'", leftType, rightType, operator),
         auxilium: "Comparison operators require operands of the same type. Both sides must be numbers or both must be strings."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Cede outside async error
@@ -122,7 +122,7 @@ functio cedeOutsideAsyncError() -> SemanticErrorNuntius {
     redde {
         textus: "'cede' requires an async or generator function context",
         auxilium: "Use 'fiet' for async functions, 'fiunt' for generators, or 'fient' for async generators."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Await outside async error
@@ -131,7 +131,7 @@ functio awaitOutsideAsyncError(textus keyword) -> SemanticErrorNuntius {
     redde {
         textus: scriptum("'§' requires an async function context", keyword),
         auxilium: "Use 'fiet' or 'fient' to declare an async function."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Default with borrowed param error
@@ -140,7 +140,7 @@ functio defaultWithBorrowedParamError(textus preposition) -> SemanticErrorNuntiu
     redde {
         textus: scriptum("Cannot use default value with '§' (borrowed) parameter", preposition),
         auxilium: "Default values require owned parameters. Remove the 'de' or 'in' preposition, or remove the default value."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Module not found error
@@ -149,7 +149,7 @@ functio moduleNotFoundError(textus path) -> SemanticErrorNuntius {
     redde {
         textus: scriptum("Cannot find module '§'", path),
         auxilium: "Verify the file path is correct and the file exists. Relative paths are resolved from the importing file."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Circular import error
@@ -158,7 +158,7 @@ functio circularImportError(textus path, textus cycle) -> SemanticErrorNuntius {
     redde {
         textus: scriptum("Circular import detected: §", cycle),
         auxilium: "Break the cycle by restructuring your modules or using forward declarations for types."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Module parse error
@@ -167,7 +167,7 @@ functio moduleParseError(textus path) -> SemanticErrorNuntius {
     redde {
         textus: scriptum("Failed to parse module '§'", path),
         auxilium: "Fix the syntax errors in the imported module before importing it."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Missing function body error
@@ -176,7 +176,7 @@ functio missingFunctionBodyError(textus nomen) -> SemanticErrorNuntius {
     redde {
         textus: scriptum("Function '§' has no body", nomen),
         auxilium: "Regular functions require a body. Use '@ externa' annotation for external declarations."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Duplicate modifier error
@@ -185,7 +185,7 @@ functio duplicateModifierError(textus nomen) -> SemanticErrorNuntius {
     redde {
         textus: scriptum("Duplicate modifier '§'", nomen),
         auxilium: "Each modifier can appear at most once in a function signature."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Invalid modifier context error
@@ -194,7 +194,7 @@ functio invalidModifierContextError(textus nomen, textus contextus) -> SemanticE
     redde {
         textus: scriptum("Modifier '§' is only allowed on §", nomen, contextus),
         auxilium: "Remove the modifier or move it to a valid context."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Morphologia stem not declared error
@@ -204,7 +204,7 @@ functio morphologiaRadixNonDeclarataError(textus methodus, textus radix, textus 
     redde {
         textus: scriptum("Morphologia stem '§' is not declared for '§' (method '§', forma '§'). §", radix, recipiens, methodus, forma, aux),
         auxilium: aux
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Morphologia form not permitted error
@@ -214,7 +214,7 @@ functio morphologiaFormaNonPermissaError(textus methodus, textus radix, textus f
     redde {
         textus: scriptum("Morphologia forma '§' is not allowed for stem '§' on '§' (method '§'). §", forma, radix, recipiens, methodus, aux),
         auxilium: aux
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }
 
 # Nihil equality comparison warning
@@ -223,5 +223,5 @@ functio nihilEqualityWarning(textus signum) -> SemanticErrorNuntius {
     redde {
         textus: scriptum("Use 'nihil' or 'nonnihil' unary operators instead of '§ nihil'", signum),
         auxilium: "For null checks, prefer 'nihil x' (is null) or 'nonnihil x' (is not null) over '== nihil' or '!= nihil'."
-    } qua SemanticErrorNuntius
+    } novum SemanticErrorNuntius
 }

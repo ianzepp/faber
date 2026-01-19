@@ -106,7 +106,7 @@ functio analyze(
     redde {
         programma: programma,
         errores: a.errores
-    } qua SemanticResultatum
+    } novum SemanticResultatum
 }
 
 # ============================================================================
@@ -130,7 +130,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
             # from forward function calls (critical for norma method translation).
             varia reditusTypus = VACUUM
             si nonnihil f.typusReditus {
-                reditusTypus = resolveTypusAnnotatio(r, f.typusReditus qua TypusAnnotatio)
+                reditusTypus = resolveTypusAnnotatio(r, f.typusReditus novum TypusAnnotatio)
             }
             fixum fnTypus = functioTypus(paramTypi, reditusTypus, f.asynca, falsum)
 
@@ -140,7 +140,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                 species: SymbolumSpecies.Functio,
                 mutabilis: falsum,
                 locus: f.locus
-            } qua Symbolum)
+            } novum Symbolum)
         }
 
         # Genus declaration - register name with user type
@@ -151,13 +151,13 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                 species: SymbolumSpecies.Genus,
                 mutabilis: falsum,
                 locus: g.locus
-            } qua Symbolum)
+            } novum Symbolum)
 
             ex g.methodi fixum f {
                 si nonnihil f.morphologia {
                     fixum parsed = parseMethodum(f.nomen)
                     si nonnihil parsed {
-                        fixum nota = f.morphologia qua MorphologiaDeclaratio
+                        fixum nota = f.morphologia novum MorphologiaDeclaratio
                         a.addeMorphologiam(g.nomen, parsed.radix, nota.formae)
                     }
                 }
@@ -172,13 +172,13 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                 species: SymbolumSpecies.Pactum,
                 mutabilis: falsum,
                 locus: p.locus
-            } qua Symbolum)
+            } novum Symbolum)
 
             ex p.methodi fixum methodus {
                 si nonnihil methodus.morphologia {
                     fixum parsed = parseMethodum(methodus.nomen)
                     si nonnihil parsed {
-                        fixum nota = methodus.morphologia qua MorphologiaDeclaratio
+                        fixum nota = methodus.morphologia novum MorphologiaDeclaratio
                         a.addeMorphologiam(p.nomen, parsed.radix, nota.formae)
                     }
                 }
@@ -193,7 +193,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                 species: SymbolumSpecies.Ordo,
                 mutabilis: falsum,
                 locus: o.locus
-            } qua Symbolum)
+            } novum Symbolum)
         }
 
         # Discretio declaration - register name with user type
@@ -204,7 +204,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                 species: SymbolumSpecies.TypusAlias,
                 mutabilis: falsum,
                 locus: d.locus
-            } qua Symbolum)
+            } novum Symbolum)
         }
 
         # Typus alias - register name with user type
@@ -215,7 +215,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                 species: SymbolumSpecies.TypusAlias,
                 mutabilis: falsum,
                 locus: t.locus
-            } qua Symbolum)
+            } novum Symbolum)
         }
 
         # Import declaration - resolve module and register symbols
@@ -250,24 +250,24 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                             # Named imports: ex "alias:path" importa foo, bar
                             ex imp.specificatores fixum spec {
                                 si nonnihil modulus.exporta[spec.importatum] {
-                                    fixum exportum = modulus.exporta[spec.importatum] qua ModulusExportum
+                                    fixum exportum = modulus.exporta[spec.importatum] novum ModulusExportum
                                     a.definie({
                                         nomen: spec.locale,
                                         semanticTypus: exportum.typus,
                                         species: exportum.species,
                                         mutabilis: falsum,
                                         locus: spec.locus
-                                    } qua Symbolum)
+                                    } novum Symbolum)
 
                                     si nonnihil modulus.discretiones[spec.importatum] {
-                                        a.discretioIndex[spec.locale] = modulus.discretiones[spec.importatum] qua DiscretioDeclInfo
+                                        a.discretioIndex[spec.locale] = modulus.discretiones[spec.importatum] novum DiscretioDeclInfo
                                     }
 
                                     # Import variant types for discretio
                                     fixum prefix = spec.importatum + "."
                                     ex modulus.exporta.claves() fixum nomen {
                                         si nomen.startsWith(prefix) {
-                                            fixum exportum = modulus.exporta[nomen] qua ModulusExportum
+                                            fixum exportum = modulus.exporta[nomen] novum ModulusExportum
                                             fixum suffix = nomen.slice(prefix.length)
                                             fixum qualNomen = scriptum("§.§", spec.locale, suffix)
 
@@ -278,7 +278,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                                                     species: exportum.species,
                                                     mutabilis: falsum,
                                                     locus: exportum.locus
-                                                } qua Symbolum)
+                                                } novum Symbolum)
                                             }
                                         }
                                     }
@@ -316,35 +316,35 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                                     species: SymbolumSpecies.Variabilis,
                                     mutabilis: falsum,
                                     locus: imp.locus
-                                } qua Symbolum)
+                                } novum Symbolum)
                             }
                             # Also add all individual exports to scope
                             ex modulus.exporta.claves() fixum nomen {
-                                fixum exportum = modulus.exporta[nomen] qua ModulusExportum
+                                fixum exportum = modulus.exporta[nomen] novum ModulusExportum
                                 a.definie({
                                     nomen: exportum.nomen,
                                     semanticTypus: exportum.typus,
                                     species: exportum.species,
                                     mutabilis: falsum,
                                     locus: exportum.locus
-                                } qua Symbolum)
+                                } novum Symbolum)
                             }
                         } secus {
                             # Named imports: ex "./x" importa foo, bar ut b
                             ex imp.specificatores fixum spec {
                                 si nonnihil modulus.exporta[spec.importatum] {
-                                    fixum exportum = modulus.exporta[spec.importatum] qua ModulusExportum
+                                    fixum exportum = modulus.exporta[spec.importatum] novum ModulusExportum
                                     a.definie({
                                         nomen: spec.locale,  # Use local alias if provided
                                         semanticTypus: exportum.typus,
                                         species: exportum.species,
                                         mutabilis: falsum,
                                         locus: spec.locus
-                                    } qua Symbolum)
+                                    } novum Symbolum)
 
                                     # Record discretio metadata under the local alias, if present.
                                     si nonnihil modulus.discretiones[spec.importatum] {
-                                        a.discretioIndex[spec.locale] = modulus.discretiones[spec.importatum] qua DiscretioDeclInfo
+                                        a.discretioIndex[spec.locale] = modulus.discretiones[spec.importatum] novum DiscretioDeclInfo
                                     }
 
                                     # WHY: If a discretio type is imported by name, also import its
@@ -353,7 +353,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                                     fixum prefix = spec.importatum + "."
                                     ex modulus.exporta.claves() fixum nomen {
                                         si nomen.startsWith(prefix) {
-                                            fixum exportum = modulus.exporta[nomen] qua ModulusExportum
+                                            fixum exportum = modulus.exporta[nomen] novum ModulusExportum
                                             fixum suffix = nomen.slice(prefix.length)
                                             fixum qualNomen = scriptum("§.§", spec.locale, suffix)
 
@@ -365,7 +365,7 @@ functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
                                                     species: exportum.species,
                                                     mutabilis: falsum,
                                                     locus: exportum.locus
-                                                } qua Symbolum)
+                                                } novum Symbolum)
                                             }
                                         }
                                     }

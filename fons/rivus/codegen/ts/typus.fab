@@ -71,7 +71,7 @@ functio genTypus(TypusAnnotatio adnotatio, TsGenerator g) -> textus {
             }
         }
         fixum paramStr = params.coniunge(", ")
-        fixum retStr = genTypus(adnotatio.reditus qua TypusAnnotatio, g)
+        fixum retStr = genTypus(adnotatio.reditus novum TypusAnnotatio, g)
         redde scriptum("(§) => §", paramStr, retStr)
     }
 

@@ -370,7 +370,7 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
                 valor: valor,
                 visibilitas: visibilitas,
                 staticum: staticum
-            } qua CampusDeclaratio)
+            } novum CampusDeclaratio)
         }
 
         # Optional comma/semicolon between members
@@ -470,7 +470,7 @@ functio parsePactumDeclaratio(Resolvitor r) -> Sententia {
             generator: generator,
             modificatores: modificatores,
             morphologia: morphologiaEx(annotationes)
-        } qua PactumMethodus)
+        } novum PactumMethodus)
 
         # Optional separator
         p.congruet(SymbolumGenus.Coma)
@@ -542,7 +542,7 @@ functio parseOrdoDeclaratio(Resolvitor r) -> Sententia {
             locus: membrumLocus,
             nomen: membrumNomen,
             valor: valor
-        } qua OrdoMembrum)
+        } novum OrdoMembrum)
 
         # Optional comma
         p.congruet(SymbolumGenus.Coma)
@@ -614,7 +614,7 @@ functio parseDiscretioDeclaratio(Resolvitor r) -> Sententia {
                         locus: campusLocus,
                         nomen: campusNomen,
                         typus: campusTypus
-                    } qua VariansCampus)
+                    } novum VariansCampus)
                 } dum p.congruet(SymbolumGenus.Coma)
             }
             p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
@@ -624,7 +624,7 @@ functio parseDiscretioDeclaratio(Resolvitor r) -> Sententia {
             locus: variansLocus,
             nomen: variansNomen,
             campi: campi
-        } qua VariansDeclaratio)
+        } novum VariansDeclaratio)
 
         # Optional comma between variants
         p.congruet(SymbolumGenus.Coma)
@@ -703,7 +703,7 @@ functio parseTypusAliasDeclaratio(Resolvitor r) -> Sententia {
 functio morphologiaEx(lista<Annotatio> annotationes) -> MorphologiaDeclaratio? {
     ex annotationes fixum a {
         si a.nomen == "radix" {
-            redde { locus: a.locus, formae: a.argumenta } qua MorphologiaDeclaratio
+            redde { locus: a.locus, formae: a.argumenta } novum MorphologiaDeclaratio
         }
     }
     redde nihil
@@ -790,7 +790,7 @@ functio parseParametra(Resolvitor r) -> lista<Parametrum> {
             praepositio: praepositio,
             optionalis: optionalis,
             residuum: residuum
-        } qua Parametrum)
+        } novum Parametrum)
 
     } dum p.congruet(SymbolumGenus.Coma)
 
@@ -865,7 +865,7 @@ functio parseVariansCampusNominatus(Resolvitor r) -> VariansCampus {
         locus: locus,
         nomen: nomen,
         typus: typus
-    } qua VariansCampus
+    } novum VariansCampus
 }
 
 # ============================================================================
@@ -939,7 +939,7 @@ functio parseImportaSententia(Resolvitor r) -> Sententia {
                 importatum: importatum,
                 locale: locale,
                 residuum: falsum
-            } qua ImportaSpecificator)
+            } novum ImportaSpecificator)
 
         } dum p.congruet(SymbolumGenus.Coma)
     }

@@ -76,7 +76,7 @@ incipiet {
 
             si result.errores.longitudo() > 0 {
                 ex result.errores fixum err {
-                    fixum loc = err.locus qua Locus
+                    fixum loc = err.locus novum Locus
                     console.error(scriptum("§:§:§: §", filename, loc.linea, loc.columna, err.nuntius))
                 }
             }

@@ -64,7 +64,7 @@ functio typusSimplicis(textus nomen, Locus locus) -> TypusAnnotatio {
         praepositio: nihil,
         parametra: nihil,
         reditus: nihil
-    } qua TypusAnnotatio
+    } novum TypusAnnotatio
 }
 
 # Create nullable type annotation
@@ -80,7 +80,7 @@ functio typusNullabilis(textus nomen, Locus locus) -> TypusAnnotatio {
         praepositio: nihil,
         parametra: nihil,
         reditus: nihil
-    } qua TypusAnnotatio
+    } novum TypusAnnotatio
 }
 
 # Create generic type annotation
@@ -96,5 +96,5 @@ functio typusGenericus(textus nomen, lista<TypusParametrum> parametra, Locus loc
         praepositio: nihil,
         parametra: nihil,
         reditus: nihil
-    } qua TypusAnnotatio
+    } novum TypusAnnotatio
 }

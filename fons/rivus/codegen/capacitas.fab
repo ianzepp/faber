@@ -111,23 +111,23 @@ fixum CAPACITAS_TS = {
         asyncFunctio: Sustentatio.Sustentum,
         generatorFunctio: Sustentatio.Sustentum,
         asyncGenerator: Sustentatio.Sustentum
-    } qua ControlFlowCapacitas,
+    } novum ControlFlowCapacitas,
     errores: {
         temptaCape: Sustentatio.Sustentum,
         iace: Sustentatio.Sustentum
-    } qua ErrorCapacitas,
+    } novum ErrorCapacitas,
     ligatura: {
         seriesDestructura: Sustentatio.Sustentum,
         obiectumDestructura: Sustentatio.Sustentum
-    } qua LigaturaCapacitas,
+    } novum LigaturaCapacitas,
     parametra: {
         valorPraedefinitus: Sustentatio.Sustentum
-    } qua ParametrumCapacitas,
+    } novum ParametrumCapacitas,
     expressiae: {
         optivumAccessus: Sustentatio.Sustentum,
         coalescentio: Sustentatio.Sustentum
-    } qua ExpressiaCapacitas
-} qua TargetCapacitas
+    } novum ExpressiaCapacitas
+} novum TargetCapacitas
 
 # Python - most features, no optional chaining
 @ publica
@@ -136,23 +136,23 @@ fixum CAPACITAS_PY = {
         asyncFunctio: Sustentatio.Sustentum,
         generatorFunctio: Sustentatio.Sustentum,
         asyncGenerator: Sustentatio.Sustentum
-    } qua ControlFlowCapacitas,
+    } novum ControlFlowCapacitas,
     errores: {
         temptaCape: Sustentatio.Sustentum,
         iace: Sustentatio.Sustentum
-    } qua ErrorCapacitas,
+    } novum ErrorCapacitas,
     ligatura: {
         seriesDestructura: Sustentatio.Sustentum,
         obiectumDestructura: Sustentatio.Insustentum
-    } qua LigaturaCapacitas,
+    } novum LigaturaCapacitas,
     parametra: {
         valorPraedefinitus: Sustentatio.Sustentum
-    } qua ParametrumCapacitas,
+    } novum ParametrumCapacitas,
     expressiae: {
         optivumAccessus: Sustentatio.Insustentum,
         coalescentio: Sustentatio.Insustentum
-    } qua ExpressiaCapacitas
-} qua TargetCapacitas
+    } novum ExpressiaCapacitas
+} novum TargetCapacitas
 
 # Rust - async yes, generators no, Result for errors
 @ publica
@@ -161,23 +161,23 @@ fixum CAPACITAS_RS = {
         asyncFunctio: Sustentatio.Sustentum,
         generatorFunctio: Sustentatio.Insustentum,
         asyncGenerator: Sustentatio.Insustentum
-    } qua ControlFlowCapacitas,
+    } novum ControlFlowCapacitas,
     errores: {
         temptaCape: Sustentatio.Emulatum,
         iace: Sustentatio.Emulatum
-    } qua ErrorCapacitas,
+    } novum ErrorCapacitas,
     ligatura: {
         seriesDestructura: Sustentatio.Sustentum,
         obiectumDestructura: Sustentatio.Sustentum
-    } qua LigaturaCapacitas,
+    } novum LigaturaCapacitas,
     parametra: {
         valorPraedefinitus: Sustentatio.Insustentum
-    } qua ParametrumCapacitas,
+    } novum ParametrumCapacitas,
     expressiae: {
         optivumAccessus: Sustentatio.Insustentum,
         coalescentio: Sustentatio.Insustentum
-    } qua ExpressiaCapacitas
-} qua TargetCapacitas
+    } novum ExpressiaCapacitas
+} novum TargetCapacitas
 
 # Zig - no async, no generators, error unions
 @ publica
@@ -186,23 +186,23 @@ fixum CAPACITAS_ZIG = {
         asyncFunctio: Sustentatio.Insustentum,
         generatorFunctio: Sustentatio.Insustentum,
         asyncGenerator: Sustentatio.Insustentum
-    } qua ControlFlowCapacitas,
+    } novum ControlFlowCapacitas,
     errores: {
         temptaCape: Sustentatio.Emulatum,
         iace: Sustentatio.Emulatum
-    } qua ErrorCapacitas,
+    } novum ErrorCapacitas,
     ligatura: {
         seriesDestructura: Sustentatio.Sustentum,
         obiectumDestructura: Sustentatio.Insustentum
-    } qua LigaturaCapacitas,
+    } novum LigaturaCapacitas,
     parametra: {
         valorPraedefinitus: Sustentatio.Insustentum
-    } qua ParametrumCapacitas,
+    } novum ParametrumCapacitas,
     expressiae: {
         optivumAccessus: Sustentatio.Insustentum,
         coalescentio: Sustentatio.Discrepans
-    } qua ExpressiaCapacitas
-} qua TargetCapacitas
+    } novum ExpressiaCapacitas
+} novum TargetCapacitas
 
 # C++ - no async/generators, exceptions yes
 @ publica
@@ -211,23 +211,23 @@ fixum CAPACITAS_CPP = {
         asyncFunctio: Sustentatio.Insustentum,
         generatorFunctio: Sustentatio.Insustentum,
         asyncGenerator: Sustentatio.Insustentum
-    } qua ControlFlowCapacitas,
+    } novum ControlFlowCapacitas,
     errores: {
         temptaCape: Sustentatio.Sustentum,
         iace: Sustentatio.Sustentum
-    } qua ErrorCapacitas,
+    } novum ErrorCapacitas,
     ligatura: {
         seriesDestructura: Sustentatio.Sustentum,
         obiectumDestructura: Sustentatio.Insustentum
-    } qua LigaturaCapacitas,
+    } novum LigaturaCapacitas,
     parametra: {
         valorPraedefinitus: Sustentatio.Sustentum
-    } qua ParametrumCapacitas,
+    } novum ParametrumCapacitas,
     expressiae: {
         optivumAccessus: Sustentatio.Insustentum,
         coalescentio: Sustentatio.Insustentum
-    } qua ExpressiaCapacitas
-} qua TargetCapacitas
+    } novum ExpressiaCapacitas
+} novum TargetCapacitas
 
 # Faber (self-compile) - full support
 @ publica
@@ -236,23 +236,23 @@ fixum CAPACITAS_FAB = {
         asyncFunctio: Sustentatio.Sustentum,
         generatorFunctio: Sustentatio.Sustentum,
         asyncGenerator: Sustentatio.Sustentum
-    } qua ControlFlowCapacitas,
+    } novum ControlFlowCapacitas,
     errores: {
         temptaCape: Sustentatio.Sustentum,
         iace: Sustentatio.Sustentum
-    } qua ErrorCapacitas,
+    } novum ErrorCapacitas,
     ligatura: {
         seriesDestructura: Sustentatio.Sustentum,
         obiectumDestructura: Sustentatio.Sustentum
-    } qua LigaturaCapacitas,
+    } novum LigaturaCapacitas,
     parametra: {
         valorPraedefinitus: Sustentatio.Sustentum
-    } qua ParametrumCapacitas,
+    } novum ParametrumCapacitas,
     expressiae: {
         optivumAccessus: Sustentatio.Sustentum,
         coalescentio: Sustentatio.Sustentum
-    } qua ExpressiaCapacitas
-} qua TargetCapacitas
+    } novum ExpressiaCapacitas
+} novum TargetCapacitas
 
 # Go - GC'd, no async/generators, multi-return errors
 @ publica
@@ -261,23 +261,23 @@ fixum CAPACITAS_GO = {
         asyncFunctio: Sustentatio.Insustentum,
         generatorFunctio: Sustentatio.Insustentum,
         asyncGenerator: Sustentatio.Insustentum
-    } qua ControlFlowCapacitas,
+    } novum ControlFlowCapacitas,
     errores: {
         temptaCape: Sustentatio.Emulatum,
         iace: Sustentatio.Emulatum
-    } qua ErrorCapacitas,
+    } novum ErrorCapacitas,
     ligatura: {
         seriesDestructura: Sustentatio.Sustentum,
         obiectumDestructura: Sustentatio.Insustentum
-    } qua LigaturaCapacitas,
+    } novum LigaturaCapacitas,
     parametra: {
         valorPraedefinitus: Sustentatio.Insustentum
-    } qua ParametrumCapacitas,
+    } novum ParametrumCapacitas,
     expressiae: {
         optivumAccessus: Sustentatio.Insustentum,
         coalescentio: Sustentatio.Insustentum
-    } qua ExpressiaCapacitas
-} qua TargetCapacitas
+    } novum ExpressiaCapacitas
+} novum TargetCapacitas
 
 # =============================================================================
 # LOWERING MODELS
@@ -287,43 +287,43 @@ fixum CAPACITAS_GO = {
 fixum LOWERING_TS = {
     nullabilis: NullabilisModel.Innatum,
     errores: ErrorModel.Exceptiones
-} qua TargetLowering
+} novum TargetLowering
 
 @ publica
 fixum LOWERING_PY = {
     nullabilis: NullabilisModel.Innatum,
     errores: ErrorModel.Exceptiones
-} qua TargetLowering
+} novum TargetLowering
 
 @ publica
 fixum LOWERING_RS = {
     nullabilis: NullabilisModel.Optio,
     errores: ErrorModel.Resultatum
-} qua TargetLowering
+} novum TargetLowering
 
 @ publica
 fixum LOWERING_ZIG = {
     nullabilis: NullabilisModel.Optio,
     errores: ErrorModel.Unio
-} qua TargetLowering
+} novum TargetLowering
 
 @ publica
 fixum LOWERING_CPP = {
     nullabilis: NullabilisModel.Optio,
     errores: ErrorModel.Exceptiones
-} qua TargetLowering
+} novum TargetLowering
 
 @ publica
 fixum LOWERING_FAB = {
     nullabilis: NullabilisModel.Innatum,
     errores: ErrorModel.Exceptiones
-} qua TargetLowering
+} novum TargetLowering
 
 @ publica
 fixum LOWERING_GO = {
     nullabilis: NullabilisModel.Indicator,
     errores: ErrorModel.MultipleReditus
-} qua TargetLowering
+} novum TargetLowering
 
 # =============================================================================
 # LOOKUP FUNCTIONS

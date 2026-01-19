@@ -51,7 +51,7 @@ functio genPactum(textus nomen, ignotum generaParametra, lista<PactumMethodus> m
         varia line = scriptum("§§(§)", g.ind(), methodus.nomen, params.coniunge(", "))
         varia reditus = ""
         si nonnihil methodus.typusReditus {
-            reditus = genTypus(methodus.typusReditus qua TypusAnnotatio, g)
+            reditus = genTypus(methodus.typusReditus novum TypusAnnotatio, g)
         }
 
         si reditus == "" et (methodus.generator aut methodus.asynca) {

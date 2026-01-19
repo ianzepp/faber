@@ -96,7 +96,7 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
         }
 
         casu TypusAliasDeclaratio ut s {
-            redde genTypusAlias(s.nomen qua textus, s.typus qua TypusAnnotatio, s.scopusNomen, s.visibilitas, g)
+            redde genTypusAlias(s.nomen qua textus, s.typus novum TypusAnnotatio, s.scopusNomen, s.visibilitas, g)
         }
 
         casu OrdoDeclaratio ut s {

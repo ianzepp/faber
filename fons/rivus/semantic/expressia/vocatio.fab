@@ -59,7 +59,7 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
                                                         recipiens: receiver,
                                                         radix: parsed.radix,
                                                         forma: forma
-                                                    } qua MorphologiaInvocatio
+                                                    } novum MorphologiaInvocatio
                                                 }
                                             }
                                         }
@@ -73,7 +73,7 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
                                                 recipiens: receiver,
                                                 radix: n.valor,
                                                 forma: "directum"
-                                            } qua MorphologiaInvocatio
+                                            } novum MorphologiaInvocatio
                                         }
                                     }
                                 }

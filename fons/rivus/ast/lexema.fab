@@ -322,7 +322,7 @@ genus Symbolum {
 # Create a token
 @ publica
 functio symbolum(SymbolumGenus species, textus valor, Locus locus) -> Symbolum {
-    redde { species: species, valor: valor, locus: locus, verbum: nihil, verbumId: nihil } qua Symbolum
+    redde { species: species, valor: valor, locus: locus, verbum: nihil, verbumId: nihil } novum Symbolum
 }
 
 # Create a keyword token
@@ -334,7 +334,7 @@ functio symbolumVerbum(textus verbum, Locus locus) -> Symbolum {
         locus: locus,
         verbum: verbum,
         verbumId: nihil
-    } qua Symbolum
+    } novum Symbolum
 }
 
 # Create a keyword token with canonical identity
@@ -346,7 +346,7 @@ functio symbolumVerbumId(textus verbum, VerbumId verbumId, Locus locus) -> Symbo
         locus: locus,
         verbum: verbum,
         verbumId: verbumId
-    } qua Symbolum
+    } novum Symbolum
 }
 
 # ============================================================================

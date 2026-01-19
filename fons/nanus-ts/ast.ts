@@ -60,6 +60,7 @@ export type Expr =
     | { tag: 'Cede'; locus: Locus; arg: Expr }
     | { tag: 'Qua'; locus: Locus; expr: Expr; typus: Typus }
     | { tag: 'Innatum'; locus: Locus; expr: Expr; typus: Typus }
+    | { tag: 'PostfixNovum'; locus: Locus; expr: Expr; typus: Typus }
     | { tag: 'Finge'; locus: Locus; variant: string; campi: ObiectumProp[]; typus: Typus | null }
     | { tag: 'Scriptum'; locus: Locus; template: string; args: Expr[] }
     | { tag: 'Ambitus'; locus: Locus; start: Expr; end: Expr; inclusive: boolean };

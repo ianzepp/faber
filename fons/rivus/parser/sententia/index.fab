@@ -49,7 +49,7 @@ functio parseSententia(Resolvitor r) -> Sententia {
     fixum stmt = parseSententiaSineNotis(r)
 
     # Attach leading/trailing comments (if any).
-    fixum radix = stmt qua ignotum qua NodusRadix
+    fixum radix = stmt qua ignotum novum NodusRadix
     radix.notaePrae = p.consumeNotas()
     radix.notaePost = p.colligeNotamTrahentem(radix.locus.linea)
 
@@ -124,7 +124,7 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
                         f.generator = verum
                     }
                     si a.nomen == "radix" {
-                        f.morphologia = { locus: a.locus, formae: a.argumenta } qua MorphologiaDeclaratio
+                        f.morphologia = { locus: a.locus, formae: a.argumenta } novum MorphologiaDeclaratio
                     }
                     si a.nomen == "externa" {
                         f.externa = verum

@@ -82,7 +82,7 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
     # Return type
     varia retType = ""
     si nonnihil typusReditus {
-        retType = genTypus(typusReditus qua TypusAnnotatio, g)
+        retType = genTypus(typusReditus novum TypusAnnotatio, g)
     }
     fixum hasErrata = habetErrataModificator(modificatores)
     si hasErrata {
@@ -109,7 +109,7 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
         # WHY: Only track a value return type for errata when Go emits (T, error).
         # EDGE: `-> vacuum` or no return type becomes `error` only.
         si hasErrata et retType != "" et nonnihil typusReditus {
-            errataType = typusReditus qua TypusAnnotatio
+            errataType = typusReditus novum TypusAnnotatio
         }
         g.errataTypusReditus = errataType
 
@@ -136,7 +136,7 @@ functio genParametrum(Parametrum param, GoGenerator g) -> textus {
 
     # Type annotation
     si nonnihil param.typus {
-        fixum typeName = genTypus(param.typus qua TypusAnnotatio, g)
+        fixum typeName = genTypus(param.typus novum TypusAnnotatio, g)
         result = scriptum("§ §", result, typeName)
     }
 

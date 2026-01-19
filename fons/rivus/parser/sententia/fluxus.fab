@@ -75,7 +75,7 @@ functio parseEligeSententia(Resolvitor r) -> Sententia {
                 locus: casusLocus,
                 condicio: condicio,
                 consequens: consequens
-            } qua EligeCasus)
+            } novum EligeCasus)
         }
         # Check for 'ceterum' (default case)
         sin p.probaVerbum("ceterum") {
@@ -181,7 +181,7 @@ functio parseDiscerneSententia(Resolvitor r) -> Sententia {
                 locus: casusLocus,
                 exemplaria: exemplaria,
                 consequens: consequens
-            } qua VariansCasus)
+            } novum VariansCasus)
         }
         # Check for 'ceterum' (default case) - converted to wildcard patterns
         sin p.probaVerbum("ceterum") {
@@ -197,7 +197,7 @@ functio parseDiscerneSententia(Resolvitor r) -> Sententia {
                     estWildcard: verum,
                     alias: nihil qua textus?,
                     vincula: [] innatum lista<textus>
-                } qua VariansExemplar)
+                } novum VariansExemplar)
             }
 
             # Parse body (supports block, ergo, reddit, iacit)
@@ -207,7 +207,7 @@ functio parseDiscerneSententia(Resolvitor r) -> Sententia {
                 locus: casusLocus,
                 exemplaria: exemplaria,
                 consequens: consequens
-            } qua VariansCasus)
+            } novum VariansCasus)
 
             rumpe  # Default must be last
         }
@@ -252,7 +252,7 @@ functio parseVariansExemplar(Parser p) -> VariansExemplar {
             estWildcard: verum,
             alias: nihil qua textus?,
             vincula: [] innatum lista<textus>
-        } qua VariansExemplar
+        } novum VariansExemplar
     }
 
     # Parse optional bindings: ut alias OR pro x, y, z
@@ -278,7 +278,7 @@ functio parseVariansExemplar(Parser p) -> VariansExemplar {
         estWildcard: falsum,
         alias: alias,
         vincula: vincula
-    } qua VariansExemplar
+    } novum VariansExemplar
 }
 
 # Check if the token after a comma is a binding (not a new pattern)
@@ -366,7 +366,7 @@ functio parseCustodiSententia(Resolvitor r) -> Sententia {
                 locus: clausulaLocus,
                 condicio: condicio,
                 consequens: consequens
-            } qua CustodiClausula)
+            } novum CustodiClausula)
         } secus {
             p.renuncia(ParserErrorCodice.ExpectaturSi, scriptum("got '§'", p.specta(0).valor))
             rumpe
@@ -405,5 +405,5 @@ functio parseCapeClausula(Resolvitor r) -> CapeClausula {
         locus: locus,
         param: param,
         corpus: corpus
-    } qua CapeClausula
+    } novum CapeClausula
 }

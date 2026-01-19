@@ -35,6 +35,7 @@ var precedence = map[string]int{
 	"%":       8,
 	"qua":     9,
 	"innatum": 9,
+	"novum":   9,
 }
 
 var unaryOps = map[string]struct{}{
@@ -1070,6 +1071,11 @@ func (p *Parser) parseExpr(minPrec int) Expr {
 			left = &ExprInnatum{Tag: "Innatum", Locus: tok.Locus, Expr: left, Typus: typus}
 			continue
 		}
+		if op == "novum" {
+			typus := p.parseTypus()
+			left = &ExprPostfixNovum{Tag: "PostfixNovum", Locus: tok.Locus, Expr: left, Typus: typus}
+			continue
+		}
 
 		right := p.parseExpr(prec + 1)
 
@@ -1433,6 +1439,8 @@ func exprLocus(expr Expr) Locus {
 	case *ExprQua:
 		return e.Locus
 	case *ExprInnatum:
+		return e.Locus
+	case *ExprPostfixNovum:
 		return e.Locus
 	case *ExprFinge:
 		return e.Locus

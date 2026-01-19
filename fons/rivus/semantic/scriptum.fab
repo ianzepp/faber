@@ -63,7 +63,7 @@ functio parseScriptumArgs(lista<textus> args) -> Scriptum? {
 
     si nihil via { redde nihil }
 
-    redde { nomen: nomen, via: via } qua Scriptum
+    redde { nomen: nomen, via: via } novum Scriptum
 }
 
 # ============================================================================

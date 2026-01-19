@@ -92,7 +92,7 @@ functio genSiLogica(
 ) -> textus {
     # If target supports cape and cape is present, wrap in try/catch
     si nonnihil cape et syn.habetCape {
-        fixum c = cape qua CapeClausula
+        fixum c = cape novum CapeClausula
         fixum ifBody = genSiCatena(condicio, consequens, alternans, g, syn, rev)
         g.intraProfundum()
         fixum catchBody = rev.genStmt(c.corpus, g)

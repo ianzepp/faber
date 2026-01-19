@@ -32,7 +32,7 @@ functio resolveClausura(Resolvitor r, Expressia clausuraExpr) -> SemanticTypus {
                 # Resolve parameter type from annotation if present
                 varia paramTypus = IGNOTUM qua SemanticTypus
                 si nonnihil param.typus {
-                    paramTypus = resolveTypusAnnotatio(r, param.typus qua TypusAnnotatio)
+                    paramTypus = resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio)
                 }
                 paramTypi.adde(paramTypus)
 

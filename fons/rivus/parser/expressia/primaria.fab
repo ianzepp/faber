@@ -255,7 +255,7 @@ functio parseAbExpressia(Resolvitor r) -> Expressia {
                 locus: locus,
                 habetUbi: verum,
                 condicio: condicio
-            } qua AbFiltrum
+            } novum AbFiltrum
         } sin (p.proba(SymbolumGenus.Nomen) aut p.proba(SymbolumGenus.Verbum)) {
             fixum prox = p.specta(0)
             si non estCatenaVerbumSym(prox) et non p.probaVerbum("clausura") {
@@ -267,7 +267,7 @@ functio parseAbExpressia(Resolvitor r) -> Expressia {
                         locus: nomenSym.locus,
                         valor: nomenSym.valor
                     } qua Expressia
-                } qua AbFiltrum
+                } novum AbFiltrum
             }
         }
     }
@@ -352,7 +352,7 @@ functio parseCatenaGradus(Resolvitor r) -> lista<CatenaGradus> {
             argumentum: argumentum,
             proprietas: proprietas,
             directio: directio
-        } qua CatenaGradus)
+        } novum CatenaGradus)
 
         si non p.congruet(SymbolumGenus.Coma) {
             rumpe
@@ -446,7 +446,7 @@ functio parseObiectumProprietas(Resolvitor r) -> ObiectumProprietas {
             brevitas: falsum,
             computatum: falsum,
             dispersum: verum
-        } qua ObiectumProprietas
+        } novum ObiectumProprietas
     }
 
     # Parse the key
@@ -488,7 +488,7 @@ functio parseObiectumProprietas(Resolvitor r) -> ObiectumProprietas {
             brevitas: falsum,
             computatum: computatum,
             dispersum: falsum
-        } qua ObiectumProprietas
+        } novum ObiectumProprietas
     }
 
     # Shorthand: { name } means { name: name }
@@ -499,7 +499,7 @@ functio parseObiectumProprietas(Resolvitor r) -> ObiectumProprietas {
         brevitas: verum,
         computatum: falsum,
         dispersum: falsum
-    } qua ObiectumProprietas
+    } novum ObiectumProprietas
 }
 
 # Parse object literal
@@ -573,7 +573,7 @@ functio parseClausuraExpressia(Resolvitor r) -> Expressia {
                 locus: paramLocus,
                 nomen: nomenSym.valor,
                 typus: nihil
-            } qua ClausuraParametrum)
+            } novum ClausuraParametrum)
         } dum p.congruet(SymbolumGenus.Coma)
     }
 
@@ -647,7 +647,7 @@ functio parseFingeExpressia(Resolvitor r) -> Expressia {
                     brevitas: brevitas,
                     computatum: falsum,
                     dispersum: falsum
-                } qua ObiectumProprietas)
+                } novum ObiectumProprietas)
             } dum p.congruet(SymbolumGenus.Coma)
         }
 

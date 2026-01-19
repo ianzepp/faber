@@ -516,6 +516,9 @@ function emitExpr(expr: Expr): string {
         case 'Innatum':
             return `(${emitExpr(expr.expr)} as ${emitTypus(expr.typus)})`;
 
+        case 'PostfixNovum':
+            return `new ${emitTypus(expr.typus)}(${emitExpr(expr.expr)})`;
+
         case 'Finge': {
             const fields = expr.campi.map(p => {
                 const key = p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key);

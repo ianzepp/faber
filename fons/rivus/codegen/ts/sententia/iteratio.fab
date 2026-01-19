@@ -100,7 +100,7 @@ functio genIteratio(IteratioGenus species, IteratioVariabilis variabilis, Expres
     fixum loop = scriptum("§for §(§ § § §) {\n§\n§}", g.ind(), asyncPrefix, bindKeyword, varStr, keyword, iterStr, body, g.ind())
 
     si nonnihil cape {
-        fixum c = cape qua CapeClausula
+        fixum c = cape novum CapeClausula
         redde scriptum("§try {\n§\n§} catch (§) §", g.ind(), loop, g.ind(), c.param, genSententia(c.corpus, g))
     }
 

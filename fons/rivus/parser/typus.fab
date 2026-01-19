@@ -72,7 +72,7 @@ functio parseTypusAnnotatio(Resolvitor r) -> TypusAnnotatio {
             praepositio: praepositio,
             parametra: parametra,
             reditus: reditus
-        } qua TypusAnnotatio
+        } novum TypusAnnotatio
     }
 
     # -------------------------------------------------------------------------
@@ -166,7 +166,7 @@ functio parseTypusAnnotatio(Resolvitor r) -> TypusAnnotatio {
             praepositio: praepositio,
             parametra: nihil,
             reditus: nihil
-        } qua TypusAnnotatio
+        } novum TypusAnnotatio
         }
         varia unioParametra = [] innatum lista<TypusAnnotatio>
         ex parametra fixum param {
@@ -187,7 +187,7 @@ functio parseTypusAnnotatio(Resolvitor r) -> TypusAnnotatio {
             praepositio: praepositio,
             parametra: nihil,
             reditus: nihil
-        } qua TypusAnnotatio
+        } novum TypusAnnotatio
     }
 
     # -------------------------------------------------------------------------
@@ -203,7 +203,7 @@ functio parseTypusAnnotatio(Resolvitor r) -> TypusAnnotatio {
         praepositio: praepositio,
         parametra: nihil,
         reditus: nihil
-    } qua TypusAnnotatio
+    } novum TypusAnnotatio
 
     # -------------------------------------------------------------------------
     # Handle array shorthand: T[] -> lista<T>
@@ -230,7 +230,7 @@ functio parseTypusAnnotatio(Resolvitor r) -> TypusAnnotatio {
             praepositio: nihil,
             parametra: nihil,
             reditus: nihil
-        } qua TypusAnnotatio
+        } novum TypusAnnotatio
     }
 
     redde resultatum

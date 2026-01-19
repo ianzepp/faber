@@ -51,7 +51,7 @@ functio creaRequiredFeatures() -> RequiredFeatures {
         decimal: falsum,
         flumina: falsum,
         usesRegex: falsum
-    } qua RequiredFeatures
+    } novum RequiredFeatures
 }
 
 # =============================================================================
@@ -74,7 +74,7 @@ functio creaCodegenOptions() -> CodegenOptions {
     redde {
         indentum: "  ",
         semicolons: verum
-    } qua CodegenOptions
+    } novum CodegenOptions
 }
 
 # =============================================================================
@@ -150,7 +150,7 @@ functio formataNotaePrae(ignotum nodus, ignotum syntax, textus indentum) -> text
         redde ""
     }
 
-    fixum radix = nodus qua NodusRadix
+    fixum radix = nodus novum NodusRadix
     fixum notae = radix.notaePrae
     si nihil notae {
         redde ""
@@ -170,7 +170,7 @@ functio formataNotaePost(ignotum nodus, ignotum syntax) -> textus {
         redde ""
     }
 
-    fixum radix = nodus qua NodusRadix
+    fixum radix = nodus novum NodusRadix
     fixum notae = radix.notaePost
     si nihil notae {
         redde ""

@@ -206,7 +206,7 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
 
             # Resolve target type if present
             si nonnihil c.scopusTypus {
-                resolveTypusAnnotatio(r, c.scopusTypus qua TypusAnnotatio)
+                resolveTypusAnnotatio(r, c.scopusTypus novum TypusAnnotatio)
             }
 
             # Return type depends on conversion operator

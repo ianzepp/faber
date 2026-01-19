@@ -149,7 +149,7 @@ functio parseDestructuraSententia(Resolvitor r) -> Sententia {
             importatum: importatum,
             locale: locale,
             residuum: residuum
-        } qua ImportaSpecificator)
+        } novum ImportaSpecificator)
 
     } dum p.congruet(SymbolumGenus.Coma)
 
@@ -199,7 +199,7 @@ functio parseSeriesDestructura(Resolvitor r) -> lista<SeriesDestructuraElementum
                 nomen: nomen,
                 residuum: residuum,
                 omissum: omissum
-            } qua SeriesDestructuraElementum)
+            } novum SeriesDestructuraElementum)
         } dum p.congruet(SymbolumGenus.Coma)
     }
 

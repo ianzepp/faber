@@ -58,7 +58,7 @@ functio creaScopumGlobalem() -> Scopus {
         symbola: {} innatum tabula<textus, Symbolum>,
         parens: nihil,
         species: ScopusSpecies.Globalis
-    } qua Scopus
+    } novum Scopus
 }
 
 # Create a child scope
@@ -68,7 +68,7 @@ functio creaScopum(Scopus parentScopus, ScopusSpecies scopusSpecies) -> Scopus {
         symbola: {} innatum tabula<textus, Symbolum>,
         parens: parentScopus,
         species: scopusSpecies
-    } qua Scopus
+    } novum Scopus
 }
 
 # Define a symbol in current scope (returns error if duplicate)
@@ -92,7 +92,7 @@ functio quaereSymbolum(Scopus scopus, textus nomen) -> Symbolum? {
 
     # Walk up the scope chain
     si nonnihil scopus.parens {
-        redde quaereSymbolum(scopus.parens qua Scopus, nomen)
+        redde quaereSymbolum(scopus.parens novum Scopus, nomen)
     }
 
     redde nihil
@@ -130,7 +130,7 @@ functio inveniScopumFunctionis(Scopus scopus) -> Scopus? {
 
     # parens is guaranteed non-nil here due to the check
     si nonnihil scopus.parens {
-        redde inveniScopumFunctionis(scopus.parens qua Scopus)
+        redde inveniScopumFunctionis(scopus.parens novum Scopus)
     }
 
     redde nihil

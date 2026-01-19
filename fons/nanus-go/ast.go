@@ -186,6 +186,13 @@ type ExprInnatum struct {
 	Typus Typus  `json:"typus"`
 }
 
+type ExprPostfixNovum struct {
+	Tag   string `json:"tag"`
+	Locus Locus  `json:"locus"`
+	Expr  Expr   `json:"expr"`
+	Typus Typus  `json:"typus"`
+}
+
 type ExprFinge struct {
 	Tag     string         `json:"tag"`
 	Locus   Locus          `json:"locus"`
@@ -223,9 +230,10 @@ func (*ExprObiectum) exprNode()   {}
 func (*ExprClausura) exprNode()   {}
 func (*ExprNovum) exprNode()      {}
 func (*ExprCede) exprNode()       {}
-func (*ExprQua) exprNode()        {}
-func (*ExprInnatum) exprNode()    {}
-func (*ExprFinge) exprNode()      {}
+func (*ExprQua) exprNode()          {}
+func (*ExprInnatum) exprNode()      {}
+func (*ExprPostfixNovum) exprNode() {}
+func (*ExprFinge) exprNode()        {}
 func (*ExprScriptum) exprNode()   {}
 func (*ExprAmbitus) exprNode()    {}
 

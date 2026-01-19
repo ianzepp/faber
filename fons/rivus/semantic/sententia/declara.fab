@@ -26,7 +26,7 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
         ex (annotatio.parametra qua lista<TypusAnnotatio>) fixum param {
             paramTypi.adde(resolveTypusAnnotatio(r, param))
         }
-        fixum reditusTypus = resolveTypusAnnotatio(r, annotatio.reditus qua TypusAnnotatio)
+        fixum reditusTypus = resolveTypusAnnotatio(r, annotatio.reditus novum TypusAnnotatio)
         redde functioTypus(paramTypi, reditusTypus, falsum, falsum)
     }
 
@@ -78,7 +78,7 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
     # Check if this is a type alias - if so, return the underlying type (structural aliases)
     fixum symbolum = quaereSymbolumLocale(r.analyzator().scopus, annotatio.nomen)
     si nonnihil symbolum {
-        fixum sym = symbolum qua Symbolum
+        fixum sym = symbolum novum Symbolum
         si sym.species == SymbolumSpecies.TypusAlias {
             # Return the underlying type, preserving nullability
             si annotatio.nullabilis {
@@ -159,7 +159,7 @@ functio analyzeVariaDeclaratio(Resolvitor r, Sententia variaStmt) -> vacuum {
             varia resolvedTypus = IGNOTUM qua SemanticTypus
 
             si nonnihil v.typus {
-                resolvedTypus = resolveTypusAnnotatio(r, v.typus qua TypusAnnotatio)
+                resolvedTypus = resolveTypusAnnotatio(r, v.typus novum TypusAnnotatio)
             }
             sin nonnihil v.valor {
                 resolvedTypus = r.expressia(v.valor)
@@ -196,7 +196,7 @@ functio analyzeVariaDeclaratio(Resolvitor r, Sententia variaStmt) -> vacuum {
                 species: SymbolumSpecies.Variabilis,
                 mutabilis: mutabilis,
                 locus: v.locus
-            } qua Symbolum)
+            } novum Symbolum)
         }
         casu _ { }
     }
@@ -226,7 +226,7 @@ functio analyzeDestructuraSententia(Resolvitor r, Sententia stmt) -> vacuum {
                     species: SymbolumSpecies.Variabilis,
                     mutabilis: mutabilis,
                     locus: spec.locus
-                } qua Symbolum)
+                } novum Symbolum)
             }
         }
         casu _ { }
@@ -261,7 +261,7 @@ functio analyzeSeriesDestructuraSententia(Resolvitor r, Sententia stmt) -> vacuu
                     species: SymbolumSpecies.Variabilis,
                     mutabilis: mutabilis,
                     locus: elem.locus
-                } qua Symbolum)
+                } novum Symbolum)
             }
         }
         casu _ { }
@@ -285,7 +285,7 @@ functio analyzeFunctioDeclaratio(Resolvitor r, Sententia functioStmt) -> vacuum 
             varia paramTypi = [] innatum lista<SemanticTypus>
             ex f.parametra fixum param {
                 si nonnihil param.typus {
-                    paramTypi.adde(resolveTypusAnnotatio(r, param.typus qua TypusAnnotatio))
+                    paramTypi.adde(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
                 } secus {
                     paramTypi.adde(IGNOTUM)
                 }
@@ -294,7 +294,7 @@ functio analyzeFunctioDeclaratio(Resolvitor r, Sententia functioStmt) -> vacuum 
             # Resolve return type
             varia reditusTypus = VACUUM qua SemanticTypus
             si nonnihil f.typusReditus {
-                reditusTypus = resolveTypusAnnotatio(r, f.typusReditus qua TypusAnnotatio)
+                reditusTypus = resolveTypusAnnotatio(r, f.typusReditus novum TypusAnnotatio)
             }
 
             # Build function type
@@ -311,7 +311,7 @@ functio analyzeFunctioDeclaratio(Resolvitor r, Sententia functioStmt) -> vacuum 
                     species: SymbolumSpecies.Functio,
                     mutabilis: falsum,
                     locus: f.locus
-                } qua Symbolum)
+                } novum Symbolum)
             }
 
             # Check for missing body (functions must have body unless @ externa or abstract)
@@ -408,7 +408,7 @@ functio analyzeGenusDeclaratio(Resolvitor r, Sententia genusStmt) -> vacuum {
                 varia paramTypi = [] innatum lista<SemanticTypus>
                 ex m.parametra fixum param {
                     si nonnihil param.typus {
-                        paramTypi.adde(resolveTypusAnnotatio(r, param.typus qua TypusAnnotatio))
+                        paramTypi.adde(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
                     } secus {
                         paramTypi.adde(IGNOTUM)
                     }
@@ -417,7 +417,7 @@ functio analyzeGenusDeclaratio(Resolvitor r, Sententia genusStmt) -> vacuum {
                 # Resolve return type
                 varia reditusTypus = VACUUM qua SemanticTypus
                 si nonnihil m.typusReditus {
-                    reditusTypus = resolveTypusAnnotatio(r, m.typusReditus qua TypusAnnotatio)
+                    reditusTypus = resolveTypusAnnotatio(r, m.typusReditus novum TypusAnnotatio)
                 }
 
                 # Build function type
@@ -527,7 +527,7 @@ functio analyzePactumDeclaratio(Resolvitor r, Sententia pactumStmt) -> vacuum {
                 varia paramTypi = [] innatum lista<SemanticTypus>
                 ex methodSignum.parametra fixum param {
                     si nonnihil param.typus {
-                        paramTypi.adde(resolveTypusAnnotatio(r, param.typus qua TypusAnnotatio))
+                        paramTypi.adde(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
                     } secus {
                         paramTypi.adde(IGNOTUM)
                     }
@@ -536,7 +536,7 @@ functio analyzePactumDeclaratio(Resolvitor r, Sententia pactumStmt) -> vacuum {
                 # Resolve return type
                 varia reditusTypus = VACUUM qua SemanticTypus
                 si nonnihil methodSignum.typusReditus {
-                    reditusTypus = resolveTypusAnnotatio(r, methodSignum.typusReditus qua TypusAnnotatio)
+                    reditusTypus = resolveTypusAnnotatio(r, methodSignum.typusReditus novum TypusAnnotatio)
                 }
 
                 # Build function type
@@ -614,13 +614,13 @@ functio analyzeDiscretioDeclaratio(Resolvitor r, Sententia discretioStmt) -> vac
                 variantInfos.adde({
                     nomen: variante.nomen,
                     locus: variante.locus
-                } qua DiscretioVariansInfo)
+                } novum DiscretioVariansInfo)
             }
             a.discretioIndex[d.nomen] = {
                 nomen: d.nomen,
                 locus: d.locus,
                 variantes: variantInfos
-            } qua DiscretioDeclInfo
+            } novum DiscretioDeclInfo
 
             # Analyze and register each variant
             # WHY: Each variant is registered as a nested type (Discretio.Variant) for pattern matching

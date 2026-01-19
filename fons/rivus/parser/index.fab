@@ -105,12 +105,12 @@ functio resolvere(lista<Symbolum> symbola) -> ParserResultatum {
         redde {
             programma: programma,
             errores: p.errores
-        } qua ParserResultatum
+        } novum ParserResultatum
     } cape e {
         # Catastrophic failure - return nil program with errors
         redde {
             programma: nihil,
             errores: p.errores
-        } qua ParserResultatum
+        } novum ParserResultatum
     }
 }

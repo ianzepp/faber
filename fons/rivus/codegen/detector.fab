@@ -68,7 +68,7 @@ genus FeatureDetector {
         # Return unique features
         varia result = [] innatum lista<UsitataFeatura>
         ex ego.featurae.claves() fixum clavis {
-            result.adde(ego.featurae[clavis] qua UsitataFeatura)
+            result.adde(ego.featurae[clavis] novum UsitataFeatura)
         }
         redde result
     }
@@ -94,7 +94,7 @@ genus FeatureDetector {
                     contextus: "tempta...cape block",
                     linea: t.locus.linea,
                     columna: t.locus.columna
-                } qua UsitataFeatura)
+                } novum UsitataFeatura)
                 ego.visitSententia(t.corpus)
                 si nonnihil t.cape {
                     ego.visitSententia(t.cape.corpus)
@@ -110,7 +110,7 @@ genus FeatureDetector {
                     contextus: "iace statement",
                     linea: i.locus.linea,
                     columna: i.locus.columna
-                } qua UsitataFeatura)
+                } novum UsitataFeatura)
                 ego.visitExpressia(i.argumentum)
             }
 
@@ -120,7 +120,7 @@ genus FeatureDetector {
                     contextus: "object destructuring",
                     linea: d.locus.linea,
                     columna: d.locus.columna
-                } qua UsitataFeatura)
+                } novum UsitataFeatura)
                 ego.visitExpressia(d.fons)
             }
 
@@ -130,7 +130,7 @@ genus FeatureDetector {
                     contextus: "array destructuring",
                     linea: s.locus.linea,
                     columna: s.locus.columna
-                } qua UsitataFeatura)
+                } novum UsitataFeatura)
                 ego.visitExpressia(s.fons)
             }
 
@@ -254,21 +254,21 @@ genus FeatureDetector {
                         contextus: scriptum("functio §", f.nomen),
                         linea: f.locus.linea,
                         columna: f.locus.columna
-                    } qua UsitataFeatura)
+                    } novum UsitataFeatura)
                 } sin isAsync {
                     ego.registraFeatura({
                         clavis: FeaturaClavis.ControlFlow_AsyncFunctio,
                         contextus: scriptum("functio §", f.nomen),
                         linea: f.locus.linea,
                         columna: f.locus.columna
-                    } qua UsitataFeatura)
+                    } novum UsitataFeatura)
                 } sin isGenerator {
                     ego.registraFeatura({
                         clavis: FeaturaClavis.ControlFlow_GeneratorFunctio,
                         contextus: scriptum("functio §", f.nomen),
                         linea: f.locus.linea,
                         columna: f.locus.columna
-                    } qua UsitataFeatura)
+                    } novum UsitataFeatura)
                 }
 
                 # Check for default parameters
@@ -279,7 +279,7 @@ genus FeatureDetector {
                             contextus: scriptum("functio §", f.nomen),
                             linea: f.locus.linea,
                             columna: f.locus.columna
-                        } qua UsitataFeatura)
+                        } novum UsitataFeatura)
                         rumpe
                     }
                 }
@@ -304,7 +304,7 @@ genus FeatureDetector {
                         contextus: "optional chaining",
                         linea: m.locus.linea,
                         columna: m.locus.columna
-                    } qua UsitataFeatura)
+                    } novum UsitataFeatura)
                 }
                 ego.visitExpressia(m.obiectum)
                 si m.computatum {
@@ -319,7 +319,7 @@ genus FeatureDetector {
                         contextus: "optional call",
                         linea: v.locus.linea,
                         columna: v.locus.columna
-                    } qua UsitataFeatura)
+                    } novum UsitataFeatura)
                 }
                 ego.visitExpressia(v.vocatum)
                 ex v.argumenta fixum arg {
@@ -334,7 +334,7 @@ genus FeatureDetector {
                         contextus: "null coalescing",
                         linea: b.locus.linea,
                         columna: b.locus.columna
-                    } qua UsitataFeatura)
+                    } novum UsitataFeatura)
                 }
                 ego.visitExpressia(b.sinister)
                 ego.visitExpressia(b.dexter)
@@ -412,5 +412,5 @@ functio featuraClavisAdTextus(FeaturaClavis clavis) -> textus {
 functio novumDetector() -> FeatureDetector {
     redde {
         featurae: {} innatum tabula<textus, UsitataFeatura>
-    } qua FeatureDetector
+    } novum FeatureDetector
 }

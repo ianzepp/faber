@@ -217,6 +217,18 @@ discretio Expressia {
         TypusAnnotatio scopus    # target type
     }
 
+    # Postfix construction expression
+    # Example: { x: 1 } novum Type
+    # WHY: Provides postfix construction syntax parallel to 'qua' casting.
+    #      Makes the distinction between casting and construction explicit:
+    #        { ... } qua Type   -> type assertion (compile-time only)
+    #        { ... } novum Type -> constructor call (runtime instantiation)
+    PostfixNovumExpressia {
+        Locus locus
+        Expressia expressia
+        TypusAnnotatio scopus    # target type (class to instantiate)
+    }
+
     # Type check expression
     # Example: value est numerus
     EstExpressia {

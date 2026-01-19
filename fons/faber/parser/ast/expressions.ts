@@ -39,6 +39,7 @@ export type Expression =
     | ConditionalExpression
     | CedeExpression
     | NovumExpression
+    | PostfixNovumExpression
     | FingeExpression
     | TemplateLiteral
     | ClausuraExpression
@@ -595,7 +596,7 @@ export interface CedeExpression extends BaseNode {
 }
 
 /**
- * New expression (object construction).
+ * New expression (object construction) - PREFIX form.
  *
  * GRAMMAR (in EBNF):
  *   newExpr := 'novum' IDENTIFIER ('(' argumentList ')')? (objectLiteral | 'de' expression)?
@@ -617,6 +618,29 @@ export interface NovumExpression extends BaseNode {
     callee: Identifier;
     arguments: (Expression | SpreadElement)[];
     withExpression?: Expression;
+}
+
+/**
+ * Postfix construction expression - POSTFIX form.
+ *
+ * GRAMMAR (in EBNF):
+ *   postfixNovum := objectLiteral 'novum' typeAnnotation
+ *
+ * INVARIANT: expression is the object literal to pass to constructor.
+ * INVARIANT: targetType is the class to instantiate.
+ *
+ * WHY: Provides postfix construction syntax parallel to 'qua' casting syntax.
+ *      Makes the distinction between casting and construction explicit:
+ *        { ... } qua Type   → type assertion (compile-time only)
+ *        { ... } novum Type → constructor call (runtime instantiation)
+ *
+ * Target mappings:
+ *   { x: 1 } novum Type → new Type({ x: 1 }) (TS)
+ */
+export interface PostfixNovumExpression extends BaseNode {
+    type: 'PostfixNovumExpression';
+    expression: Expression;
+    targetType: TypeAnnotation;
 }
 
 /**

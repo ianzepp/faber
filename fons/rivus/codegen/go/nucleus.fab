@@ -88,5 +88,5 @@ functio creaGoRequiredFeatures() -> GoRequiredFeatures {
     redde {
         fmt: falsum,
         errors: falsum
-    } qua GoRequiredFeatures
+    } novum GoRequiredFeatures
 }

@@ -64,6 +64,7 @@ import { genMemberExpression } from './expressions/member';
 import { genClausuraExpression } from './expressions/clausura';
 import { genAssignmentExpression } from './expressions/assignment';
 import { genNovumExpression } from './expressions/novum';
+import { genPostfixNovumExpression } from './expressions/postfixNovum';
 import { genFingeExpression } from './expressions/finge';
 import { genQuaExpression } from './expressions/qua';
 import { genInnatumExpression } from './expressions/innatum';
@@ -428,6 +429,8 @@ export class TsGenerator {
                 return `${this.inGenerator ? 'yield' : 'await'} ${this.genExpression(node.argument)}`;
             case 'NovumExpression':
                 return genNovumExpression(node, this);
+            case 'PostfixNovumExpression':
+                return genPostfixNovumExpression(node, this);
             case 'FingeExpression':
                 return genFingeExpression(node, this);
             case 'ConditionalExpression':

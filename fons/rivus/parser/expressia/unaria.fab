@@ -378,6 +378,19 @@ functio parsePostfix(Resolvitor r) -> Expressia {
             perge
         }
 
+        # Postfix construction: expr novum Type
+        # Example: { x: 1 } novum MyClass
+        si p.congruetVerbum("novum") {
+            fixum scopus = r.adnotatio()
+
+            expressia = finge PostfixNovumExpressia {
+                locus: locus,
+                expressia: expressia,
+                scopus: scopus
+            } qua Expressia
+            perge
+        }
+
         # Type conversion: expr numeratum, expr fractatum, expr textatum, expr bivalentum
         si p.probaVerbum("numeratum") aut p.probaVerbum("fractatum") aut
            p.probaVerbum("textatum") aut p.probaVerbum("bivalentum") {

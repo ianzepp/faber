@@ -25,7 +25,7 @@ const PRECEDENCE: Record<string, number> = {
     '<': 6, '>': 6, '<=': 6, '>=': 6, 'inter': 6, 'intra': 6,
     '+': 7, '-': 7,
     '*': 8, '/': 8, '%': 8,
-    'qua': 9, 'innatum': 9,
+    'qua': 9, 'innatum': 9, 'novum': 9,
 };
 
 const UNARY_OPS = new Set(['-', '!', 'non', 'nihil', 'nonnihil', 'positivum']);
@@ -1016,7 +1016,7 @@ export class Parser {
 
             this.advance();
 
-            // Handle qua/innatum specially (postfix type operators)
+            // Handle qua/innatum/novum specially (postfix type operators)
             if (op === 'qua') {
                 const typus = this.parseTypus();
                 left = { tag: 'Qua', locus: tok.locus, expr: left, typus };
@@ -1025,6 +1025,11 @@ export class Parser {
             if (op === 'innatum') {
                 const typus = this.parseTypus();
                 left = { tag: 'Innatum', locus: tok.locus, expr: left, typus };
+                continue;
+            }
+            if (op === 'novum') {
+                const typus = this.parseTypus();
+                left = { tag: 'PostfixNovum', locus: tok.locus, expr: left, typus };
                 continue;
             }
 

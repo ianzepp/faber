@@ -113,7 +113,7 @@ genus Analyzator {
         ego.errores.adde({
             nuntius: nuntius,
             locus: locus
-        } qua SemanticError)
+        } novum SemanticError)
     }
 
     # ========================================================================
@@ -130,7 +130,7 @@ genus Analyzator {
     @ publica
     functio exiScopum() {
         si nonnihil ego.scopus.parens {
-            ego.scopus = ego.scopus.parens qua Scopus
+            ego.scopus = ego.scopus.parens novum Scopus
         }
     }
 
@@ -156,7 +156,7 @@ genus Analyzator {
     # Define built-in functions (intrinsics) in global scope
     @ publica
     functio definieIntrinsica() {
-        fixum builtinLocus = { linea: 0, columna: 0, index: 0 } qua Locus
+        fixum builtinLocus = { linea: 0, columna: 0, index: 0 } novum Locus
 
         # I/O Intrinsics (always available - prefixed with _ for internal use)
         ego.definieIntrinsicaFunctio("_scribe", [], VACUUM, builtinLocus)
@@ -188,7 +188,7 @@ genus Analyzator {
             species: SymbolumSpecies.Functio,
             mutabilis: falsum,
             locus: locus
-        } qua Symbolum
+        } novum Symbolum
     }
 
     # ========================================================================

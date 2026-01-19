@@ -55,7 +55,7 @@ functio genCura(ignotum curatorSpecies, ignotum res, textus vinculum, Sententia 
 
     # Optional catch clause
     si nonnihil cape {
-        fixum capeClause = cape qua CapeClausula
+        fixum capeClause = cape novum CapeClausula
         fixum catchParam = capeClause.param
         g.intraProfundum()
         fixum catchBody = genSententia(capeClause.corpus, g)

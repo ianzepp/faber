@@ -122,5 +122,5 @@ functio parseProgramma(Resolvitor r) -> Programma {
         locus: locus,
         corpus: corpus,
         sectiones: sectiones
-    } qua Programma
+    } novum Programma
 }

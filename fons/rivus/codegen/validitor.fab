@@ -31,21 +31,21 @@ genus ValidatioPolitia {
 fixum POLITIA_STRICTA = {
     permitteEmulatum: falsum,
     permitteDiscrepans: falsum
-} qua ValidatioPolitia
+} novum ValidatioPolitia
 
 # Relaxed policy - emulated features allowed
 @ publica
 fixum POLITIA_RELAXATA = {
     permitteEmulatum: verum,
     permitteDiscrepans: falsum
-} qua ValidatioPolitia
+} novum ValidatioPolitia
 
 # Permissive policy - everything except unsupported allowed
 @ publica
 fixum POLITIA_PERMISSIVA = {
     permitteEmulatum: verum,
     permitteDiscrepans: verum
-} qua ValidatioPolitia
+} novum ValidatioPolitia
 
 # =============================================================================
 # VALIDATION ERROR
@@ -86,7 +86,7 @@ functio validateCompatibilitatem(lista<Sententia> corpus, textus target, Validat
                 linea: featura.linea,
                 columna: featura.columna,
                 suggestio: getSuggestio(featura.clavis, target)
-            } qua ValidatioError)
+            } novum ValidatioError)
         }
     }
 

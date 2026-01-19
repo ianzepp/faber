@@ -60,7 +60,7 @@ functio genAmbitusIteratio(
 
     # Wrap in try/catch if cape present and target supports it
     si nonnihil cape et syn.habetCape {
-        fixum c = cape qua CapeClausula
+        fixum c = cape novum CapeClausula
         g.intraProfundum()
         fixum catchBody = rev.genStmt(c.corpus, g)
         g.exiProfundum()

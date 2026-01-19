@@ -267,7 +267,7 @@ functio parseCapeClausula(Resolvitor r) -> CapeClausula {
         locus: locus,
         param: param,
         corpus: corpus
-    } qua CapeClausula
+    } novum CapeClausula
 }
 
 # Parse a statement body (block or inline form)

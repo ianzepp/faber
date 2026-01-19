@@ -78,7 +78,7 @@ genus Parser {
             species: notaGenus,
             valor: s.valor,
             locus: s.locus
-        } qua Nota
+        } novum Nota
     }
 
     # Consume all pending comment tokens into buffer
@@ -337,7 +337,7 @@ genus Parser {
             locus: s.locus,
             verbum: nihil,
             verbumId: nihil
-        } qua Symbolum
+        } novum Symbolum
     }
 
     # Expect specific keyword or record error
@@ -364,7 +364,7 @@ genus Parser {
             locus: s.locus,
             verbum: verbum,
             verbumId: nihil
-        } qua Symbolum
+        } novum Symbolum
     }
 
     # Expect identifier or keyword (for positions where keywords can be used as names)
@@ -401,7 +401,7 @@ genus Parser {
             locus: s.locus,
             verbum: nihil,
             verbumId: nihil
-        } qua Symbolum
+        } novum Symbolum
     }
 
     # =========================================================================

@@ -28,7 +28,7 @@ functio genTempta(Sententia corpus, ignotum cape, ignotum demum, TsGenerator g) 
     }
 
     si nonnihil cape {
-        fixum capeClausula = cape qua CapeClausula
+        fixum capeClausula = cape novum CapeClausula
         g.intraProfundum()
         fixum catchBody = genSententia(capeClausula.corpus, g)
         g.exiProfundum()

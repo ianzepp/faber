@@ -194,7 +194,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                 # from function calls for proper norma translation.
                 varia reditusTypus = VACUUM qua SemanticTypus
                 si nonnihil f.typusReditus {
-                    reditusTypus = resolveTypusShallow(f.typusReditus qua TypusAnnotatio)
+                    reditusTypus = resolveTypusShallow(f.typusReditus novum TypusAnnotatio)
                 }
 
                 exporta[f.nomen] = {
@@ -202,7 +202,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                     species: SymbolumSpecies.Functio,
                     typus: functioTypus([], reditusTypus, f.asynca, falsum),
                     locus: f.locus
-                } qua ModulusExportum
+                } novum ModulusExportum
             }
             casu GenusDeclaratio ut g {
                 # WHY: Build proper Genus type with field types so cross-module
@@ -210,7 +210,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                 varia agri = {} innatum tabula<textus, SemanticTypus>
                 ex g.campi fixum campo {
                     si nonnihil campo.typus {
-                        agri[campo.nomen] = resolveTypusShallow(campo.typus qua TypusAnnotatio)
+                        agri[campo.nomen] = resolveTypusShallow(campo.typus novum TypusAnnotatio)
                     } secus {
                         agri[campo.nomen] = IGNOTUM
                     }
@@ -226,7 +226,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                     species: SymbolumSpecies.Genus,
                     typus: genusTypus(g.nomen, agri, methodi, agriStatici, methodiStatici, falsum),
                     locus: g.locus
-                } qua ModulusExportum
+                } novum ModulusExportum
             }
             casu PactumDeclaratio ut p {
                 # WHY: Preserve method return types so callers can infer types from calls
@@ -236,7 +236,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                     varia paramTypi = [] innatum lista<SemanticTypus>
                     ex methodSignum.parametra fixum param {
                         si nonnihil param.typus {
-                            paramTypi.adde(resolveTypusShallow(param.typus qua TypusAnnotatio))
+                            paramTypi.adde(resolveTypusShallow(param.typus novum TypusAnnotatio))
                         } secus {
                             paramTypi.adde(IGNOTUM)
                         }
@@ -244,7 +244,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
 
                     varia reditusTypus = VACUUM qua SemanticTypus
                     si nonnihil methodSignum.typusReditus {
-                        reditusTypus = resolveTypusShallow(methodSignum.typusReditus qua TypusAnnotatio)
+                        reditusTypus = resolveTypusShallow(methodSignum.typusReditus novum TypusAnnotatio)
                     }
 
                     methodi[methodSignum.nomen] = functioTypus(paramTypi, reditusTypus, methodSignum.asynca, falsum)
@@ -255,7 +255,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                     species: SymbolumSpecies.Pactum,
                     typus: pactumTypus(p.nomen, methodi, falsum),
                     locus: p.locus
-                } qua ModulusExportum
+                } novum ModulusExportum
             }
             casu OrdoDeclaratio ut o {
                 exporta[o.nomen] = {
@@ -263,7 +263,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                     species: SymbolumSpecies.Ordo,
                     typus: usitatumTypus(o.nomen, falsum),
                     locus: o.locus
-                } qua ModulusExportum
+                } novum ModulusExportum
             }
             casu DiscretioDeclaratio ut d {
                 exporta[d.nomen] = {
@@ -271,20 +271,20 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                     species: SymbolumSpecies.TypusAlias,
                     typus: usitatumTypus(d.nomen, falsum),
                     locus: d.locus
-                } qua ModulusExportum
+                } novum ModulusExportum
 
                 varia variantInfos = [] innatum lista<DiscretioVariansInfo>
                 ex d.variantes fixum variante {
                     variantInfos.adde({
                         nomen: variante.nomen,
                         locus: variante.locus
-                    } qua DiscretioVariansInfo)
+                    } novum DiscretioVariansInfo)
                 }
                 discretiones[d.nomen] = {
                     nomen: d.nomen,
                     locus: d.locus,
                     variantes: variantInfos
-                } qua DiscretioDeclInfo
+                } novum DiscretioDeclInfo
 
                 # WHY: Pattern matching (`discerne`) expects variant types to be resolvable as
                 # `DiscretioNomen.VariansNomen`, even across module boundaries.
@@ -313,7 +313,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                         species: SymbolumSpecies.Genus,
                         typus: variantTypus,
                         locus: variante.locus
-                    } qua ModulusExportum
+                    } novum ModulusExportum
 
                     # Avoid clobbering a pre-existing export (would be an error in TS too).
                     # EDGE: `exporta` is a reserved verb; use an alias for nil-check.
@@ -324,7 +324,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                             species: SymbolumSpecies.Genus,
                             typus: variantTypus,
                             locus: variante.locus
-                        } qua ModulusExportum
+                        } novum ModulusExportum
                     }
                 }
             }
@@ -334,7 +334,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                     species: SymbolumSpecies.TypusAlias,
                     typus: usitatumTypus(t.nomen, falsum),
                     locus: t.locus
-                } qua ModulusExportum
+                } novum ModulusExportum
             }
             casu VariaSententia ut v {
                 # VariaSententia.nomen is a string (destructuring has separate types)
@@ -343,7 +343,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
                     species: SymbolumSpecies.Variabilis,
                     typus: IGNOTUM,
                     locus: v.locus
-                } qua ModulusExportum
+                } novum ModulusExportum
             }
             casu _ { }
         }
@@ -354,7 +354,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
         discretiones: discretiones,
         via: via,
         programma: programma
-    } qua ModulusResolutum
+    } novum ModulusResolutum
 }
 
 # ============================================================================
@@ -397,7 +397,7 @@ functio resolveModulum(
             discretiones: {} innatum tabula<textus, DiscretioDeclInfo>,
             via: via,
             programma: nihil
-        } qua ModulusResolutum
+        } novum ModulusResolutum
     }
 
     # Mark as in progress
@@ -418,13 +418,13 @@ functio resolveModulum(
     }
 
     # Extract exports
-    fixum modulus = extraheExporta(parseResult.programma qua Programma, via)
+    fixum modulus = extraheExporta(parseResult.programma novum Programma, via)
 
     # Cache before recursing (handles diamond dependencies)
     cache[via] = modulus
 
     # Recursively resolve child imports (for cycle detection)
-    ex (parseResult.programma qua Programma).corpus fixum stmt {
+    ex (parseResult.programma novum Programma).corpus fixum stmt {
         discerne stmt {
             casu ImportaSententia ut imp {
                 si estLocaleImportum(imp.fons) {

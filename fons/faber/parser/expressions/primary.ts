@@ -30,6 +30,7 @@ import type {
     ConversionExpression,
     ShiftExpression,
     NovumExpression,
+    PostfixNovumExpression,
     FingeExpression,
     TypeAnnotation,
     BlockStatement,
@@ -201,6 +202,10 @@ export function parseQuaExpression(r: Resolver): Expression {
             keyword = 'innatum';
             ctx.advance();
         }
+        else if (ctx.checkKeyword('novum')) {
+            keyword = 'novum';
+            ctx.advance();
+        }
         else if (ctx.checkKeyword('numeratum')) {
             keyword = 'numeratum';
             ctx.advance();
@@ -246,6 +251,15 @@ export function parseQuaExpression(r: Resolver): Expression {
                 targetType,
                 position,
             } as InnatumExpression;
+        }
+        else if (keyword === 'novum') {
+            const targetType = r.typeAnnotation();
+            expr = {
+                type: 'PostfixNovumExpression',
+                expression: expr,
+                targetType,
+                position,
+            } as PostfixNovumExpression;
         }
         else if (keyword === 'dextratum' || keyword === 'sinistratum') {
             // Bit shift operators: x dextratum 3 -> x >> 3, x sinistratum 3 -> x << 3
