@@ -134,6 +134,16 @@ Note:
 - Nullish coalescing (`??`) is the keyword `vel` → `⁇`
 - Logical not (`!expr`) is `¬` (distinct from non-null `¡`)
 
+### Range
+
+| Faber   | Glyph | Unicode | Note |
+|---------|-------|---------|------|
+| `ante`  | `▷`   | U+25B7  | Exclusive end (before) |
+| `usque` | `▶`   | U+25B6  | Inclusive end (up to) |
+| `per`   | `▴`   | U+25B4  | Step/stride |
+| `intra` | `≬`   | U+226C  | Range containment (within) |
+| `inter` | `∊`   | U+220A  | Set membership (among) |
+
 ---
 
 ## Punctuation Mapping
@@ -205,17 +215,17 @@ Keywords are migrating out of the math operator space.
 
 | Faber     | Glyph | Unicode | Mnemonic |
 |-----------|-------|---------|----------|
-| `si`      | `TBD` | TBD     | (TBD) migrating out of math operators |
-| `sin`     | `∄`   | U+2204 | Not exists (else-if) |
-| `secus`   | `∁`   | U+2201 | Complement (else/otherwise) |
+| `si`      | `↳`   | U+21B3 | Down-right arrow (if) |
+| `sin`     | `↴`   | U+21B4 | Right arrow with corner down (else-if) |
+| `secus`   | `↲`   | U+21B2 | Down-left arrow (else) |
 | `ergo`    | `∴`   | U+2234 | Therefore |
 | `dum`     | `∞`   | U+221E | Infinity (while) |
 | `ex`      | `∈`   | U+2208 | Element of (from) |
 | `de`      | `∋`   | U+220B | Contains (in/of) |
 | `pro`     | `∀`   | U+2200 | For all |
 | `elige`   | `⋔`   | U+22D4 | Pitchfork (switch) |
-| `casu`    | `↳`   | U+21B3 | Down-right arrow (case) |
-| `ceterum` | `↲`   | U+21B2 | Down-left arrow (default) |
+| `casu`    | `⌜`   | U+231C | Top-left corner (case) |
+| `ceterum` | `⌟`   | U+231F | Bottom-right corner (default) |
 | `custodi` | `⊧`   | U+22A7 | Guard |
 | `fac`     | `⊡`   | U+22A1 | Boxed empty (do block) |
 
@@ -247,10 +257,6 @@ Keywords are migrating out of the math operator space.
 |----------|-------|---------|----------|
 | `cede`   | `⋆`   | U+22C6 | Star (await) |
 | `futura` | `⊶`   | U+22B6 | Original of (async marker) |
-| `fit`    | `→`   | U+2192 | Returns sync |
-| `fiet`   | `⇢`   | U+21E2 | Returns async |
-| `fiunt`  | `⇉`   | U+21C9 | Yields (generator) |
-| `fient`  | `⇶`   | U+21F6 | Yields async |
 
 ### Boolean and Logic
 
@@ -301,20 +307,6 @@ Keywords are migrating out of the math operator space.
 | `vide`  | `⋱`   | U+22F1 | Diagonal ellipsis (debug) |
 | `mone`  | `⋮`   | U+22EE | Vertical ellipsis (warn) |
 
-### Ranges
-
-Range keywords are *not* comparison operators. They must not share glyphs with `<`/`<=`/etc.
-
-Status: migrating to a dedicated triangle-family keyword set (TBD final assignments).
-
-| Faber   | Glyph        | Unicode | Mnemonic |
-|---------|--------------|---------|----------|
-| `ante`  | `◁` (TBD)    | U+25C1  | Before |
-| `usque` | `◂` (TBD)    | U+25C2  | Up to |
-| `intra` | `△` (TBD)    | U+25B3  | Within |
-| `inter` | `▽` (TBD)    | U+25BD  | Between |
-| `per`   | `TBD`        | TBD     | Step by |
-
 ### Bitwise Keywords
 
 | Faber        | Glyph | Unicode | Mnemonic |
@@ -344,8 +336,6 @@ Status: migrating to a dedicated triangle-family keyword set (TBD final assignme
 | Faber  | Glyph | Unicode | Mnemonic |
 |--------|-------|---------|----------|
 | `cura` | `⦾`   | U+29BE | Circled white bullet (managed scope) |
-| `arena`| `—`   | — | UNASSIGNED (conflict with ordo) |
-| `page` | `—`   | — | UNASSIGNED (conflict with abstractus) |
 
 ---
 
@@ -366,7 +356,7 @@ Note: keyword glyphs shown here are legacy. During keyword migration, glyph outp
 
 ```
 ∫ ⡦⡩⡢⡯⡮⡡⡣⡣⡩ ▝ ⡮⡵⡭⡥⡲⡵⡳ ⡮ ▘ → ⡮⡵⡭⡥⡲⡵⡳ ▐
-  TBD ⡮ ≼ ⠱ ∴ ⊢ ⡮
+  ↳ ⡮ ≼ ⠱ ∴ ⊢ ⡮
   ⊢ ⡦⡩⡢⡯⡮⡡⡣⡣⡩ ▝ ⡮ ⊖ ⠱ ▘ ⊕ ⡦⡩⡢⡯⡮⡡⡣⡣⡩ ▝ ⡮ ⊖ ⠲ ▘
 ▌
 ```
@@ -381,7 +371,7 @@ Note: keyword glyphs shown here are legacy. During keyword migration, glyph outp
 ⡮              → "n" (parameter name)
 →              → fit (returns)
 ▐ ▌            → { } (block delimiters)
-TBD            → si (if)
+↳              → si (if)
 ≼              → <= (less or equal)
 ⠱              → "1" (number literal)
 ∴              → ergo (then)
