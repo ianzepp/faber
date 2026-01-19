@@ -12,7 +12,7 @@
         "build:artifex": "bun ./scripta/build-artifex.ts",
         "build:exec": "bun ./scripta/build-exec.ts",
         "build:faber": "bun ./scripta/build-faber.ts",
-        "build:nanus": "bun ./scripta/build-nanus.ts",
+        "build:nanus-ts": "bun ./scripta/build-nanus-ts.ts",
         "build:nanus-go": "bun ./scripta/build-nanus-go.ts",
         "build:norma": "bun ./scripta/build-norma.ts",
         "build:rivus": "bun ./scripta/build-rivus.ts",

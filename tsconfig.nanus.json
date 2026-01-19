@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["fons/nanus"],
+  "include": ["fons/nanus-ts"],
   "compilerOptions": {
     // Semi-strict: relax some checks for minimal compiler
     "noUncheckedIndexedAccess": false,

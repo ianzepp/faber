@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Full build: norma -> nanus -> faber -> rivus -> artifex
+ * Full build: norma -> nanus-ts -> nanus-go -> faber -> rivus -> artifex
  *
  * norma runs first to generate registry files that faber needs to compile.
  * nanus is the minimal compiler for bootstrapping.
@@ -107,11 +107,19 @@ async function main() {
         }
     });
 
-    await step('build:nanus', verbose, async () => {
+    await step('build:nanus-ts', verbose, async () => {
         if (verbose) {
-            await $`bun run build:nanus`;
+            await $`bun run build:nanus-ts`;
         } else {
-            await $`bun run build:nanus`.quiet();
+            await $`bun run build:nanus-ts`.quiet();
+        }
+    });
+
+    await step('build:nanus-go', verbose, async () => {
+        if (verbose) {
+            await $`bun run build:nanus-go`;
+        } else {
+            await $`bun run build:nanus-go`.quiet();
         }
     });
 

@@ -2,7 +2,7 @@
 
 **Nanus** (Latin: "dwarf") is a minimal Faber compiler targeting only the language subset needed to compile **rivus**, the self-hosting Faber compiler.
 
-This is a Go port of `fons/nanus/` with the same behavior and structure.
+This is a Go port of `fons/nanus-ts/` with the same behavior and structure.
 
 ## Why Nanus Exists
 

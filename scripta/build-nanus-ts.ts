@@ -3,7 +3,7 @@
  * Build standalone nanus executable.
  *
  * Steps:
- *   1. Typecheck fons/nanus/ with semi-strict tsconfig
+ *   1. Typecheck fons/nanus-ts/ with semi-strict tsconfig
  *   2. Compile nanus CLI to standalone binary
  */
 
@@ -16,13 +16,13 @@ const ROOT = join(import.meta.dir, '..');
 async function main() {
     const start = performance.now();
 
-    // Typecheck fons/nanus/ before compiling
+    // Typecheck fons/nanus-ts/ before compiling
     await $`tsc -p tsconfig.nanus.json`.cwd(ROOT);
 
     const binDir = join(ROOT, 'opus', 'bin');
     await mkdir(binDir, { recursive: true });
     const outExe = join(binDir, 'nanus-ts');
-    await $`bun build ${join(ROOT, 'fons', 'nanus', 'cli.ts')} --compile --outfile=${outExe}`.quiet();
+    await $`bun build ${join(ROOT, 'fons', 'nanus-ts', 'cli.ts')} --compile --outfile=${outExe}`.quiet();
     await $`bash -c 'rm -f .*.bun-build 2>/dev/null || true'`.quiet();
 
     // Create symlink: nanus -> nanus-ts

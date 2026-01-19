@@ -46,13 +46,13 @@ Known gaps being addressed:
 
 ```bash
 # Compile a .fab file to TypeScript
-bun fons/nanus/cli.ts input.fab
+bun fons/nanus-ts/cli.ts input.fab
 
 # Output to file
-bun fons/nanus/cli.ts input.fab -o output.ts
+bun fons/nanus-ts/cli.ts input.fab -o output.ts
 
 # From stdin
-echo 'scribe "hello"' | bun fons/nanus/cli.ts
+echo 'scribe "hello"' | bun fons/nanus-ts/cli.ts
 ```
 
 ## Relationship to Faber and Rivus
