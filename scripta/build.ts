@@ -169,6 +169,33 @@ async function main() {
         });
     }
 
+    // Golden tests for all compilers
+    await step('golden:nanus-ts', verbose, async () => {
+        if (verbose) {
+            await $`bun run golden -c nanus-ts`;
+        } else {
+            await $`bun run golden -c nanus-ts`.quiet();
+        }
+    });
+
+    await step('golden:nanus-go', verbose, async () => {
+        if (verbose) {
+            await $`bun run golden -c nanus-go`;
+        } else {
+            await $`bun run golden -c nanus-go`.quiet();
+        }
+    });
+
+    if (faber) {
+        await step('golden:faber', verbose, async () => {
+            if (verbose) {
+                await $`bun run golden -c faber`;
+            } else {
+                await $`bun run golden -c faber`.quiet();
+            }
+        });
+    }
+
     const elapsed = performance.now() - start;
     console.log(`\nBuild complete (${(elapsed / 1000).toFixed(1)}s)`);
 }
