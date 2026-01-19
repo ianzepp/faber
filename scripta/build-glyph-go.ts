@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 /**
- * Build standalone nanus-go executable.
+ * Build standalone glyph-go executable.
  *
  * Steps:
- *   1. Compile Go nanus CLI to standalone binary
+ *   1. Compile Go glyph CLI to standalone binary
  */
 
 import { mkdir } from 'fs/promises';
@@ -11,7 +11,7 @@ import { join } from 'path';
 import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
-const NANUS_GO = join(ROOT, 'fons', 'nanus-go');
+const GLYPH_GO = join(ROOT, 'fons', 'glyph-go');
 const GO_CACHE = '/tmp/go-build';
 
 async function main() {
@@ -21,12 +21,12 @@ async function main() {
     await mkdir(binDir, { recursive: true });
     await mkdir(GO_CACHE, { recursive: true });
 
-    const outExe = join(binDir, 'nanus-go');
-    await $`cd ${NANUS_GO} && go build -o ${outExe} .`
+    const outExe = join(binDir, 'glyph-go');
+    await $`cd ${GLYPH_GO} && go build -o ${outExe} .`
         .env({ ...process.env, GOCACHE: GO_CACHE });
 
     const elapsed = performance.now() - start;
-    console.log(`Built opus/bin/nanus-go (${elapsed.toFixed(0)}ms)`);
+    console.log(`Built opus/bin/glyph-go (${elapsed.toFixed(0)}ms)`);
 }
 
 main().catch(err => {

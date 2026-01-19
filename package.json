@@ -14,6 +14,7 @@
         "build:faber": "bun ./scripta/build-faber.ts",
         "build:nanus-ts": "bun ./scripta/build-nanus-ts.ts",
         "build:nanus-go": "bun ./scripta/build-nanus-go.ts",
+        "build:glyph-go": "bun ./scripta/build-glyph-go.ts",
         "build:norma": "bun ./scripta/build-norma.ts",
         "build:rivus": "bun ./scripta/build-rivus.ts",
         "golden": "bun ./scripta/golden.ts",
