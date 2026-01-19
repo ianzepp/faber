@@ -244,18 +244,18 @@ functio resolveAssignatio(Resolvitor r, Expressia assignatioExpr) -> SemanticTyp
                     fixum symbolum = a.quaere(n.valor)
                     si nihil symbolum {
                         fixum err = undefinedVariableError(n.valor)
-                        a.error(err.textus, n.locus)
+                        a.error(err.textus, n.locus, err.auxilium)
                         redde IGNOTUM
                     }
 
                     si non symbolum.mutabilis {
                         fixum err = immutableAssignmentError(symbolum.nomen)
-                        a.error(err.textus, as.locus)
+                        a.error(err.textus, as.locus, err.auxilium)
                     }
 
                     si non assignabileAd(dexterTypus, symbolum.semanticTypus) {
                         fixum err = typeMismatchError(formaTypum(dexterTypus), formaTypum(symbolum.semanticTypus))
-                        a.error(err.textus, as.locus)
+                        a.error(err.textus, as.locus, err.auxilium)
                     }
 
                     redde symbolum.semanticTypus

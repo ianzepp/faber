@@ -106,7 +106,7 @@ functio validateFunctioModificatores(Resolvitor r, lista<FunctioModificator>? mo
             casu CurataModificator ut mod {
                 si nonnihil visa["curata"] {
                     fixum err = duplicateModifierError("curata")
-                    a.error(err.textus, mod.locus)
+                    a.error(err.textus, mod.locus, err.auxilium)
                 } secus {
                     visa["curata"] = verum
                 }
@@ -114,7 +114,7 @@ functio validateFunctioModificatores(Resolvitor r, lista<FunctioModificator>? mo
             casu ErrataModificator ut mod {
                 si nonnihil visa["errata"] {
                     fixum err = duplicateModifierError("errata")
-                    a.error(err.textus, mod.locus)
+                    a.error(err.textus, mod.locus, err.auxilium)
                 } secus {
                     visa["errata"] = verum
                 }
@@ -122,19 +122,19 @@ functio validateFunctioModificatores(Resolvitor r, lista<FunctioModificator>? mo
             casu ImmutataModificator ut mod {
                 si nonnihil visa["immutata"] {
                     fixum err = duplicateModifierError("immutata")
-                    a.error(err.textus, mod.locus)
+                    a.error(err.textus, mod.locus, err.auxilium)
                 } secus {
                     visa["immutata"] = verum
                 }
                 si non immutataPermissa {
                     fixum err = invalidModifierContextError("immutata", "genus methods")
-                    a.error(err.textus, mod.locus)
+                    a.error(err.textus, mod.locus, err.auxilium)
                 }
             }
             casu IacitModificator ut mod {
                 si nonnihil visa["iacit"] {
                     fixum err = duplicateModifierError("iacit")
-                    a.error(err.textus, mod.locus)
+                    a.error(err.textus, mod.locus, err.auxilium)
                 } secus {
                     visa["iacit"] = verum
                 }
@@ -169,7 +169,7 @@ functio analyzeVariaDeclaratio(Resolvitor r, Sententia variaStmt) -> vacuum {
                 # Non-externa without type or initializer is an error
                 si non v.externa {
                     fixum err = noTypeOrInitializerError(v.nomen)
-                    a.error(err.textus, v.locus)
+                    a.error(err.textus, v.locus, err.auxilium)
                 }
             }
 
@@ -178,14 +178,14 @@ functio analyzeVariaDeclaratio(Resolvitor r, Sententia variaStmt) -> vacuum {
                 fixum initTypus = r.expressia(v.valor)
                 si non assignabileAd(initTypus, resolvedTypus) {
                     fixum err = typeMismatchError(formaTypum(initTypus), formaTypum(resolvedTypus))
-                    a.error(err.textus, v.locus)
+                    a.error(err.textus, v.locus, err.auxilium)
                 }
             }
 
             si (v.species == VariaGenus.Figendum aut v.species == VariaGenus.Variandum) et non a.currentFunctioAsync {
                 fixum keyword = (v.species == VariaGenus.Figendum) sic "figendum" secus "variandum"
                 fixum err = awaitOutsideAsyncError(keyword)
-                a.error(err.textus, v.locus)
+                a.error(err.textus, v.locus, err.auxilium)
             }
 
             # Define in symbol table
@@ -317,7 +317,7 @@ functio analyzeFunctioDeclaratio(Resolvitor r, Sententia functioStmt) -> vacuum 
             # Check for missing body (functions must have body unless @ externa or abstract)
             si nihil f.corpus et non f.externa et non f.abstracta {
                 fixum err = missingFunctionBodyError(f.nomen)
-                a.error(err.textus, f.locus)
+                a.error(err.textus, f.locus, err.auxilium)
             }
 
             # Analyze body in new scope

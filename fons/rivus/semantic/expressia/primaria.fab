@@ -34,7 +34,7 @@ functio resolveNomen(Resolvitor r, Expressia nomenExpr) -> SemanticTypus {
 
             si nihil symbolum {
                 fixum err = undefinedVariableError(n.valor)
-                a.error(err.textus, n.locus)
+                a.error(err.textus, n.locus, err.auxilium)
                 redde IGNOTUM
             }
 

@@ -72,7 +72,7 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
                                         formaTypum(dexterTypus),
                                         b.signum
                                     )
-                                    a.error(err.textus, b.locus)
+                                    a.error(err.textus, b.locus, err.auxilium)
                                 }
                             }
                             ceterum { }
@@ -92,7 +92,7 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
 
                 si sinisterNihil aut dexterNihil {
                     fixum warn = nihilEqualityWarning(b.signum)
-                    a.error(warn.textus, b.locus)
+                    a.error(warn.textus, b.locus, warn.auxilium)
                 }
 
                 redde BIVALENS

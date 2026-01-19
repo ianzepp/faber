@@ -56,6 +56,9 @@ functio parseCommand(
         mone "Lexor errors:"
         ex lexResult.errores fixum err {
             mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus
+            si nonnihil err.auxilium {
+                mone "    §", err.auxilium
+            }
         }
         redde 1
     }
@@ -67,6 +70,9 @@ functio parseCommand(
         mone "Parser errors:"
         ex parseResult.errores fixum err {
             mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
+            si nonnihil err.auxilium {
+                mone "    §", err.auxilium
+            }
         }
         redde 1
     }

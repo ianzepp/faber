@@ -23,6 +23,7 @@
 @ publica
 genus SemanticError {
     textus nuntius
+    textus auxilium
     Locus locus
 }
 
@@ -109,9 +110,10 @@ genus Analyzator {
 
     # Report a semantic error
     @ publica
-    functio error(textus nuntius, Locus locus) {
+    functio error(textus nuntius, Locus locus, si textus auxilium) {
         ego.errores.adde({
             nuntius: nuntius,
+            auxilium: auxilium vel "",
             locus: locus
         } novum SemanticError)
     }

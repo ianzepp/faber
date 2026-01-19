@@ -53,7 +53,7 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
                                                 fixum forma = formaExFlagga(parsed.flagga)
                                                 si non estFormaPermissa(formae qua lista<textus>, forma) {
                                                     fixum err = morphologiaFormaNonPermissaError(n.valor, parsed.radix, forma, receiver, formae qua lista<textus>)
-                                                    r.analyzator().error(err.textus, n.locus)
+                                                    r.analyzator().error(err.textus, n.locus, err.auxilium)
                                                 } secus {
                                                     v.morphologia = {
                                                         recipiens: receiver,

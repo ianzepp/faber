@@ -382,6 +382,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
 genus ParserError {
     ParserErrorCodice codice    # Error code for programmatic handling
     textus nuntius              # Human-readable message
+    textus auxilium             # Help text for remediation
     Locus locus                 # Source position
 }
 
@@ -399,6 +400,7 @@ functio error(ParserErrorCodice codice, Locus locus, si textus contextus) -> Par
     redde novum ParserError {
         codice: codice,
         nuntius: msg,
+        auxilium: nuntium.auxilium,
         locus: locus
     }
 }

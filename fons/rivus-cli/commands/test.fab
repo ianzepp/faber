@@ -96,7 +96,8 @@ functio testCommand(
                     file: displayName,
                     line: err.locus.linea,
                     column: err.locus.columna,
-                    message: err.textus
+                    message: err.textus,
+                    help: err.auxilium
                 } innatum tabula<textus, ignotum>)
             }
             consolum.fundeLineam(json.solve({ errors: errores }))
@@ -104,6 +105,9 @@ functio testCommand(
             mone "Lexor errors:"
             ex lexResult.errores fixum err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus
+                si nonnihil err.auxilium {
+                    mone "    §", err.auxilium
+                }
             }
         }
         redde 1
@@ -120,7 +124,8 @@ functio testCommand(
                     file: displayName,
                     line: err.locus.linea,
                     column: err.locus.columna,
-                    message: err.nuntius
+                    message: err.nuntius,
+                    help: err.auxilium
                 } innatum tabula<textus, ignotum>)
             }
             consolum.fundeLineam(json.solve({ errors: errores }))
@@ -128,6 +133,9 @@ functio testCommand(
             mone "Parser errors:"
             ex parseResult.errores fixum err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
+                si nonnihil err.auxilium {
+                    mone "    §", err.auxilium
+                }
             }
         }
         redde 1
@@ -154,7 +162,8 @@ functio testCommand(
                     file: displayName,
                     line: err.locus.linea,
                     column: err.locus.columna,
-                    message: err.nuntius
+                    message: err.nuntius,
+                    help: err.auxilium
                 } innatum tabula<textus, ignotum>)
             }
             consolum.fundeLineam(json.solve({ errors: errores }))
@@ -162,6 +171,9 @@ functio testCommand(
             mone "Semantic errors:"
             ex semResult.errores fixum err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
+                si nonnihil err.auxilium {
+                    mone "    §", err.auxilium
+                }
             }
         }
         redde 1

@@ -146,7 +146,8 @@ functio mandatumCurrere(
                     file: scriptPath,
                     line: err.locus.linea,
                     column: err.locus.columna,
-                    message: err.textus
+                    message: err.textus,
+                    help: err.auxilium
                 } innatum tabula<textus, ignotum>)
             }
             consolum.fundeLineam(json.solve({ errors: errores }))
@@ -154,6 +155,9 @@ functio mandatumCurrere(
             mone "Lexor errors in §:", scriptPath
             ex lexResult.errores fixum err {
                 mone "  §:§ - §", err.locus.linea, err.locus.columna, err.textus
+                si nonnihil err.auxilium {
+                    mone "    §", err.auxilium
+                }
             }
         }
         redde 1
@@ -170,7 +174,8 @@ functio mandatumCurrere(
                     file: scriptPath,
                     line: err.locus.linea,
                     column: err.locus.columna,
-                    message: err.nuntius
+                    message: err.nuntius,
+                    help: err.auxilium
                 } innatum tabula<textus, ignotum>)
             }
             consolum.fundeLineam(json.solve({ errors: errores }))
@@ -178,6 +183,9 @@ functio mandatumCurrere(
             mone "Parser errors in §:", scriptPath
             ex parseResult.errores fixum err {
                 mone "  §:§ - §", err.locus.linea, err.locus.columna, err.nuntius
+                si nonnihil err.auxilium {
+                    mone "    §", err.auxilium
+                }
             }
         }
         redde 1
@@ -203,7 +211,8 @@ functio mandatumCurrere(
                     file: scriptPath,
                     line: err.locus.linea,
                     column: err.locus.columna,
-                    message: err.nuntius
+                    message: err.nuntius,
+                    help: err.auxilium
                 } innatum tabula<textus, ignotum>)
             }
             consolum.fundeLineam(json.solve({ errors: errores }))
@@ -211,6 +220,9 @@ functio mandatumCurrere(
             mone "Semantic errors in §:", scriptPath
             ex semResult.errores fixum err {
                 mone "  §:§ - §", err.locus.linea, err.locus.columna, err.nuntius
+                si nonnihil err.auxilium {
+                    mone "    §", err.auxilium
+                }
             }
         }
         redde 1

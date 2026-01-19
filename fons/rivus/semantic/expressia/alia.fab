@@ -132,7 +132,7 @@ functio resolveCedeExpr(Resolvitor r, Expressia cedeExpr) -> SemanticTypus {
             # Check we're in an async context
             si non a.currentFunctioAsync et non a.currentFunctioGenerator {
                 fixum err = cedeOutsideAsyncError()
-                a.error(err.textus, c.locus)
+                a.error(err.textus, c.locus, err.auxilium)
             }
 
             # Unwrap promissum<T> to T

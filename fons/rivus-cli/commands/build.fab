@@ -68,7 +68,8 @@ functio compileFile(
                     file: displayName,
                     line: err.locus.linea,
                     column: err.locus.columna,
-                    message: err.textus
+                    message: err.textus,
+                    help: err.auxilium
                 } innatum tabula<textus, ignotum>)
             }
         }
@@ -76,6 +77,9 @@ functio compileFile(
             mone "Lexor errors:"
             ex lexResult.errores fixum err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.textus
+                si nonnihil err.auxilium {
+                    mone "    §", err.auxilium
+                }
             }
         }
         redde nihil
@@ -92,7 +96,8 @@ functio compileFile(
                     file: displayName,
                     line: err.locus.linea,
                     column: err.locus.columna,
-                    message: err.nuntius
+                    message: err.nuntius,
+                    help: err.auxilium
                 } innatum tabula<textus, ignotum>)
             }
         }
@@ -100,6 +105,9 @@ functio compileFile(
             mone "Parser errors:"
             ex parseResult.errores fixum err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
+                si nonnihil err.auxilium {
+                    mone "    §", err.auxilium
+                }
             }
         }
         redde nihil
@@ -130,7 +138,8 @@ functio compileFile(
                     file: displayName,
                     line: err.locus.linea,
                     column: err.locus.columna,
-                    message: err.nuntius
+                    message: err.nuntius,
+                    help: err.auxilium
                 } innatum tabula<textus, ignotum>)
             }
         }
@@ -138,6 +147,9 @@ functio compileFile(
             mone "Semantic errors:"
             ex semResult.errores fixum err {
                 mone "  §:§:§ - §", displayName, err.locus.linea, err.locus.columna, err.nuntius
+                si nonnihil err.auxilium {
+                    mone "    §", err.auxilium
+                }
             }
         }
         redde nihil
@@ -232,7 +244,8 @@ functio buildCommand(
                             file: depPath,
                             line: err.locus.linea,
                             column: err.locus.columna,
-                            message: err.nuntius
+                            message: err.nuntius,
+                            help: err.auxilium
                         } innatum tabula<textus, ignotum>)
                     }
                 }
@@ -240,6 +253,9 @@ functio buildCommand(
                     mone "Semantic errors:"
                     ex depAnalysis.errores fixum err {
                         mone "  §:§:§ - §", depPath, err.locus.linea, err.locus.columna, err.nuntius
+                        si nonnihil err.auxilium {
+                            mone "    §", err.auxilium
+                        }
                     }
                 }
                 hadErrors = verum

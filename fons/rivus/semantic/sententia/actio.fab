@@ -29,7 +29,7 @@ functio analyzeRedde(Resolvitor r, Sententia reddeStmt) -> vacuum {
                             formaTypum(valorTypus),
                             formaTypum(a.currentFunctioReditus qua SemanticTypus)
                         )
-                        a.error(err.textus, rd.locus)
+                        a.error(err.textus, rd.locus, err.auxilium)
                     }
                 }
             }
