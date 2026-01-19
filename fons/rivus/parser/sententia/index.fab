@@ -196,7 +196,7 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
                     }
                     si a.nomen == "temporis" {
                         si positivum a.argumenta.longitudo() {
-                            p.temporis = positivum a.argumenta[0]
+                            p.temporis = a.argumenta[0] numeratum
                         }
                     }
                     si a.nomen == "metior" {
@@ -204,12 +204,12 @@ functio parseSententiaSineNotis(Resolvitor r) -> Sententia {
                     }
                     si a.nomen == "repete" {
                         si positivum a.argumenta.longitudo() {
-                            p.repete = positivum a.argumenta[0]
+                            p.repete = a.argumenta[0] numeratum
                         }
                     }
                     si a.nomen == "fragilis" {
                         si positivum a.argumenta.longitudo() {
-                            p.fragilis = positivum a.argumenta[0]
+                            p.fragilis = a.argumenta[0] numeratum
                         }
                     }
                     si a.nomen == "requirit" {
