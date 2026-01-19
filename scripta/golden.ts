@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 /**
- * Test compiler against golden corpus.
+ * Test compiler against golden tests.
  *
- * For each .fab file in fons/corpus/:
+ * For each .fab file in fons/golden/:
  *   1. Compile with specified compiler
  *   2. Compare output to .ts.golden reference
  *   3. Report pass/fail
@@ -17,7 +17,7 @@ import { join, basename } from 'path';
 import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
-const CORPUS = join(ROOT, 'fons', 'corpus');
+const GOLDEN = join(ROOT, 'fons', 'golden');
 const BIN = join(ROOT, 'opus', 'bin');
 
 interface TestResult {
@@ -71,13 +71,13 @@ async function compile(compiler: string, fabPath: string): Promise<{ success: bo
 async function main() {
     const { compiler, showDiffs } = parseArgs(process.argv.slice(2));
 
-    const validCompilers = ['nanus', 'faber', 'rivus'];
+    const validCompilers = ['nanus', 'nanus-ts', 'nanus-go', 'faber', 'rivus'];
     if (!validCompilers.includes(compiler)) {
         console.error(`Invalid compiler: ${compiler}. Must be one of: ${validCompilers.join(', ')}`);
         process.exit(1);
     }
 
-    const files = await readdir(CORPUS);
+    const files = await readdir(GOLDEN);
     const fabFiles = files.filter(f => f.endsWith('.fab')).sort();
 
     const results: TestResult[] = [];
@@ -86,8 +86,8 @@ async function main() {
 
     for (const fabFile of fabFiles) {
         const name = basename(fabFile, '.fab');
-        const fabPath = join(CORPUS, fabFile);
-        const goldenPath = join(CORPUS, `${name}.ts.golden`);
+        const fabPath = join(GOLDEN, fabFile);
+        const goldenPath = join(GOLDEN, `${name}.ts.golden`);
 
         const goldenFile = Bun.file(goldenPath);
 
@@ -119,7 +119,7 @@ async function main() {
     }
 
     // Report results
-    console.log(`${compiler} golden corpus tests\n`);
+    console.log(`${compiler} golden tests\n`);
 
     for (const r of results) {
         const status = r.passed ? '\x1b[32mPASS\x1b[0m' : '\x1b[31mFAIL\x1b[0m';
