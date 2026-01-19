@@ -13,6 +13,7 @@ import type {
     OrdoMembrum, VariansDecl, ImportSpec, EligeCasus, DiscerneCasus,
     VariansPattern, CustodiClausula, CapeClausula, Modulus,
 } from './ast';
+import { CompileError } from './errors';
 
 // Operator precedence for Pratt parser
 const PRECEDENCE: Record<string, number> = {
@@ -33,9 +34,11 @@ const ASSIGN_OPS = new Set(['=', '+=', '-=', '*=', '/=']);
 export class Parser {
     private tokens: Token[];
     private pos = 0;
+    private filename: string;
 
-    constructor(tokens: Token[]) {
+    constructor(tokens: Token[], filename = '<stdin>') {
         this.tokens = tokens;
+        this.filename = filename;
     }
 
     // Token access
@@ -68,9 +71,8 @@ export class Parser {
         return tok;
     }
 
-    private error(msg: string): Error {
-        const loc = this.peek().locus;
-        return new Error(`${loc.linea}:${loc.columna}: ${msg}`);
+    private error(msg: string): CompileError {
+        return new CompileError(msg, this.peek().locus, this.filename);
     }
 
     // Accept identifier OR keyword as a name (for field names, param names that are keywords)
@@ -87,25 +89,18 @@ export class Parser {
         return tok.tag === 'Identifier' || tok.tag === 'Keyword';
     }
 
-    // No-ops: newlines are filtered out in prepare()
-    // Kept for minimal code churn - these calls are harmless
-    private skipNewlines(): void {}
-    private expectNewline(): void {}
 
     // Main entry point
     parse(): Modulus {
-        this.skipNewlines();
         const corpus: Stmt[] = [];
         while (!this.check('EOF')) {
             corpus.push(this.parseStmt());
-            this.skipNewlines();
-        }
+            }
         return { locus: { linea: 1, columna: 1, index: 0 }, corpus };
     }
 
     // Statements
     private parseStmt(): Stmt {
-        this.skipNewlines();
 
         // Annotations
         let publica = false;
@@ -223,7 +218,6 @@ export class Parser {
             specs.push({ locus: loc, imported, local });
         } while (this.match('Punctuator', ','));
 
-        this.expectNewline();
         return { tag: 'Importa', locus, fons, specs, totum: false, alias: null };
     }
 
@@ -277,7 +271,6 @@ export class Parser {
         if (this.match('Operator', '=')) {
             valor = this.parseExpr();
         }
-        this.expectNewline();
         return { tag: 'Varia', locus, species, nomen, typus, valor, publica, externa };
     }
 
@@ -328,24 +321,20 @@ export class Parser {
         }
 
         let corpus: Stmt | null = null;
-        this.skipNewlines();
         if (this.check('Punctuator', '{')) {
             corpus = this.parseMassa();
         } else {
-            this.expectNewline();
-        }
+            }
 
         return { tag: 'Functio', locus, nomen, params, typusReditus, corpus, asynca, publica, generics, externa };
     }
 
     private parseParams(): Param[] {
         const params: Param[] = [];
-        this.skipNewlines();
         if (this.check('Punctuator', ')')) return params;
 
         do {
-            this.skipNewlines();
-            const locus = this.peek().locus;
+                const locus = this.peek().locus;
             let rest = false;
             if (this.match('Keyword', 'ceteri')) rest = true;
 
@@ -407,8 +396,7 @@ export class Parser {
             }
 
             params.push({ locus, nomen, typus, default_, rest });
-            this.skipNewlines();
-        } while (this.match('Punctuator', ','));
+            } while (this.match('Punctuator', ','));
 
         return params;
     }
@@ -434,7 +422,6 @@ export class Parser {
         }
 
         this.expect('Punctuator', '{');
-        this.skipNewlines();
 
         const campi: CampusDecl[] = [];
         const methodi: Stmt[] = [];
@@ -447,8 +434,7 @@ export class Parser {
                     throw this.error('expected annotation name');
                 }
                 this.advance(); // skip annotation name
-                this.skipNewlines();
-            }
+                    }
 
             // Check for visibility keyword
             let visibilitas: 'Publica' | 'Privata' | 'Protecta' = 'Publica';
@@ -510,10 +496,8 @@ export class Parser {
                 }
 
                 campi.push({ locus: loc, nomen: fieldNomen, typus: fieldTypus, valor, visibilitas });
-                this.expectNewline();
+                    }
             }
-            this.skipNewlines();
-        }
 
         this.expect('Punctuator', '}');
         return { tag: 'Genus', locus, nomen, campi, methodi, implet, generics, publica };
@@ -533,7 +517,6 @@ export class Parser {
         }
 
         this.expect('Punctuator', '{');
-        this.skipNewlines();
 
         const methodi: PactumMethodus[] = [];
         while (!this.check('Punctuator', '}') && !this.check('EOF')) {
@@ -550,9 +533,7 @@ export class Parser {
                 typusReditus = this.parseTypus();
             }
             methodi.push({ locus: loc, nomen: name, params, typusReditus, asynca });
-            this.expectNewline();
-            this.skipNewlines();
-        }
+                }
 
         this.expect('Punctuator', '}');
         return { tag: 'Pactum', locus, nomen, methodi, generics, publica };
@@ -563,7 +544,6 @@ export class Parser {
         this.expect('Keyword', 'ordo');
         const nomen = this.expect('Identifier').valor;
         this.expect('Punctuator', '{');
-        this.skipNewlines();
 
         const membra: OrdoMembrum[] = [];
         while (!this.check('Punctuator', '}') && !this.check('EOF')) {
@@ -578,8 +558,7 @@ export class Parser {
             }
             membra.push({ locus: loc, nomen: name, valor });
             this.match('Punctuator', ','); // optional trailing comma
-            this.skipNewlines();
-        }
+            }
 
         this.expect('Punctuator', '}');
         return { tag: 'Ordo', locus, nomen, membra, publica };
@@ -599,7 +578,6 @@ export class Parser {
         }
 
         this.expect('Punctuator', '{');
-        this.skipNewlines();
 
         const variantes: VariansDecl[] = [];
         while (!this.check('Punctuator', '}') && !this.check('EOF')) {
@@ -608,8 +586,7 @@ export class Parser {
             const campi: { nomen: string; typus: Typus }[] = [];
 
             if (this.match('Punctuator', '{')) {
-                this.skipNewlines();
-                while (!this.check('Punctuator', '}') && !this.check('EOF')) {
+                        while (!this.check('Punctuator', '}') && !this.check('EOF')) {
                     // Typus nomen, Typus<T> nomen, Typus? nomen patterns
                     const typNomen = this.expectName().valor;
                     let fieldTypus: Typus;
@@ -631,14 +608,12 @@ export class Parser {
 
                     const fieldNomen = this.expectName().valor;
                     campi.push({ nomen: fieldNomen, typus: fieldTypus });
-                    this.skipNewlines();
-                }
+                            }
                 this.expect('Punctuator', '}');
             }
 
             variantes.push({ locus: loc, nomen: name, campi });
-            this.skipNewlines();
-        }
+            }
 
         this.expect('Punctuator', '}');
         return { tag: 'Discretio', locus, nomen, variantes, generics, publica };
@@ -647,12 +622,10 @@ export class Parser {
     private parseMassa(): Stmt {
         const locus = this.peek().locus;
         this.expect('Punctuator', '{');
-        this.skipNewlines();
         const corpus: Stmt[] = [];
         while (!this.check('Punctuator', '}') && !this.check('EOF')) {
             corpus.push(this.parseStmt());
-            this.skipNewlines();
-        }
+            }
         this.expect('Punctuator', '}');
         return { tag: 'Massa', locus, corpus };
     }
@@ -709,14 +682,12 @@ export class Parser {
         const cond = this.parseExpr();
         const cons = this.parseBody();
         let alt: Stmt | null = null;
-        this.skipNewlines();
         if (this.match('Keyword', 'sin')) {
             // sin = else-if shorthand - parse body directly without 'si'
             const sinLocus = this.peek().locus;
             alt = this.parseSiBody(sinLocus);
         } else if (this.match('Keyword', 'secus')) {
-            this.skipNewlines();
-            if (this.check('Keyword', 'si')) {
+                if (this.check('Keyword', 'si')) {
                 alt = this.parseSi();
             } else {
                 alt = this.parseBody();
@@ -739,7 +710,6 @@ export class Parser {
         const corpus = this.parseMassa();
         this.expect('Keyword', 'dum');
         const cond = this.parseExpr();
-        this.expectNewline();
         return { tag: 'FacDum', locus, corpus, cond };
     }
 
@@ -748,7 +718,6 @@ export class Parser {
         this.expect('Keyword', 'elige');
         const discrim = this.parseExpr();
         this.expect('Punctuator', '{');
-        this.skipNewlines();
 
         const casus: EligeCasus[] = [];
         let default_: Stmt | null = null;
@@ -782,8 +751,7 @@ export class Parser {
                 }
                 casus.push({ locus: loc, cond, corpus });
             }
-            this.skipNewlines();
-        }
+            }
 
         this.expect('Punctuator', '}');
         return { tag: 'Elige', locus, discrim, casus, default_ };
@@ -797,7 +765,6 @@ export class Parser {
             discrim.push(this.parseExpr());
         }
         this.expect('Punctuator', '{');
-        this.skipNewlines();
 
         const casus: DiscerneCasus[] = [];
         while (!this.check('Punctuator', '}') && !this.check('EOF')) {
@@ -810,8 +777,7 @@ export class Parser {
                 }];
                 const corpus = this.parseMassa();
                 casus.push({ locus: loc, patterns, corpus });
-                this.skipNewlines();
-                continue;
+                        continue;
             }
 
             this.expect('Keyword', 'casu');
@@ -838,8 +804,7 @@ export class Parser {
 
             const corpus = this.parseMassa();
             casus.push({ locus: loc, patterns, corpus });
-            this.skipNewlines();
-        }
+            }
 
         this.expect('Punctuator', '}');
         return { tag: 'Discerne', locus, discrim, casus };
@@ -849,7 +814,6 @@ export class Parser {
         const locus = this.peek().locus;
         this.expect('Keyword', 'custodi');
         this.expect('Punctuator', '{');
-        this.skipNewlines();
 
         const clausulae: CustodiClausula[] = [];
         while (!this.check('Punctuator', '}') && !this.check('EOF')) {
@@ -858,8 +822,7 @@ export class Parser {
             const cond = this.parseExpr();
             const corpus = this.parseMassa();
             clausulae.push({ locus: loc, cond, corpus });
-            this.skipNewlines();
-        }
+            }
 
         this.expect('Punctuator', '}');
         return { tag: 'Custodi', locus, clausulae };
@@ -871,7 +834,6 @@ export class Parser {
         const corpus = this.parseMassa();
 
         let cape: CapeClausula | null = null;
-        this.skipNewlines();
         if (this.match('Keyword', 'cape')) {
             const loc = this.peek().locus;
             const param = this.expect('Identifier').valor;
@@ -880,7 +842,6 @@ export class Parser {
         }
 
         let demum: Stmt | null = null;
-        this.skipNewlines();
         if (this.match('Keyword', 'demum')) {
             demum = this.parseMassa();
         }
@@ -896,7 +857,6 @@ export class Parser {
         if (!this.check('EOF') && !this.check('Punctuator', '}') && !this.isStatementKeyword()) {
             valor = this.parseExpr();
         }
-        this.expectNewline();
         return { tag: 'Redde', locus, valor };
     }
 
@@ -929,7 +889,6 @@ export class Parser {
         const locus = this.peek().locus;
         const fatale = this.advance().valor === 'mori';
         const arg = this.parseExpr();
-        this.expectNewline();
         return { tag: 'Iace', locus, arg, fatale };
     }
 
@@ -944,7 +903,6 @@ export class Parser {
                 args.push(this.parseExpr());
             } while (this.match('Punctuator', ','));
         }
-        this.expectNewline();
         return { tag: 'Scribe', locus, gradus, args };
     }
 
@@ -956,21 +914,18 @@ export class Parser {
         if (this.match('Punctuator', ',')) {
             msg = this.parseExpr();
         }
-        this.expectNewline();
         return { tag: 'Adfirma', locus, cond, msg };
     }
 
     private parseRumpe(): Stmt {
         const locus = this.peek().locus;
         this.expect('Keyword', 'rumpe');
-        this.expectNewline();
         return { tag: 'Rumpe', locus };
     }
 
     private parsePerge(): Stmt {
         const locus = this.peek().locus;
         this.expect('Keyword', 'perge');
-        this.expectNewline();
         return { tag: 'Perge', locus };
     }
 
@@ -987,13 +942,11 @@ export class Parser {
         this.expect('Keyword', 'probandum');
         const nomen = this.expect('Textus').valor;
         this.expect('Punctuator', '{');
-        this.skipNewlines();
 
         const corpus: Stmt[] = [];
         while (!this.check('Punctuator', '}') && !this.check('EOF')) {
             corpus.push(this.parseStmt());
-            this.skipNewlines();
-        }
+            }
 
         this.expect('Punctuator', '}');
         return { tag: 'Probandum', locus, nomen, corpus };
@@ -1010,7 +963,6 @@ export class Parser {
     private parseExpressiaStmt(): Stmt {
         const locus = this.peek().locus;
         const expr = this.parseExpr();
-        this.expectNewline();
         return { tag: 'Expressia', locus, expr };
     }
 
@@ -1208,13 +1160,10 @@ export class Parser {
         // Array literal
         if (this.match('Punctuator', '[')) {
             const elementa: Expr[] = [];
-            this.skipNewlines();
-            if (!this.check('Punctuator', ']')) {
+                if (!this.check('Punctuator', ']')) {
                 do {
-                    this.skipNewlines();
-                    elementa.push(this.parseExpr());
-                    this.skipNewlines();
-                } while (this.match('Punctuator', ','));
+                                elementa.push(this.parseExpr());
+                            } while (this.match('Punctuator', ','));
             }
             this.expect('Punctuator', ']');
             return { tag: 'Series', locus: tok.locus, elementa };
@@ -1223,11 +1172,9 @@ export class Parser {
         // Object literal
         if (this.match('Punctuator', '{')) {
             const props: ObiectumProp[] = [];
-            this.skipNewlines();
-            if (!this.check('Punctuator', '}')) {
+                if (!this.check('Punctuator', '}')) {
                 do {
-                    this.skipNewlines();
-                    const loc = this.peek().locus;
+                                const loc = this.peek().locus;
                     let key: Expr;
                     let computed = false;
 
@@ -1256,8 +1203,7 @@ export class Parser {
                     }
 
                     props.push({ locus: loc, key, valor, shorthand, computed });
-                    this.skipNewlines();
-                } while (this.match('Punctuator', ','));
+                            } while (this.match('Punctuator', ','));
             }
             this.expect('Punctuator', '}');
             return { tag: 'Obiectum', locus: tok.locus, props };
@@ -1317,14 +1263,11 @@ export class Parser {
 
     private parseArgs(): Expr[] {
         const args: Expr[] = [];
-        this.skipNewlines();
         if (this.check('Punctuator', ')')) return args;
 
         do {
-            this.skipNewlines();
-            args.push(this.parseExpr());
-            this.skipNewlines();
-        } while (this.match('Punctuator', ','));
+                args.push(this.parseExpr());
+            } while (this.match('Punctuator', ','));
 
         return args;
     }
@@ -1352,18 +1295,15 @@ export class Parser {
         this.expect('Punctuator', '{');
 
         const campi: ObiectumProp[] = [];
-        this.skipNewlines();
         if (!this.check('Punctuator', '}')) {
             do {
-                this.skipNewlines();
-                const loc = this.peek().locus;
+                        const loc = this.peek().locus;
                 const name = this.expectName().valor;
                 const key: Expr = { tag: 'Littera', locus: loc, species: 'Textus', valor: name };
                 this.expect('Punctuator', ':');
                 const valor = this.parseExpr();
                 campi.push({ locus: loc, key, valor, shorthand: false, computed: false });
-                this.skipNewlines();
-            } while (this.match('Punctuator', ','));
+                    } while (this.match('Punctuator', ','));
         }
         this.expect('Punctuator', '}');
 
@@ -1417,6 +1357,6 @@ export class Parser {
     }
 }
 
-export function parse(tokens: Token[]): Modulus {
-    return new Parser(tokens).parse();
+export function parse(tokens: Token[], filename = '<stdin>'): Modulus {
+    return new Parser(tokens, filename).parse();
 }

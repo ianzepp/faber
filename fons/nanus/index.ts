@@ -48,7 +48,7 @@ export function compile(source: string, options: CompileOptions = {}): CompileRe
 
     try {
         const tokens = prepare(lex(source, filename));
-        const ast = parse(tokens);
+        const ast = parse(tokens, filename);
         const output = emit(ast);
 
         return { success: true, output };

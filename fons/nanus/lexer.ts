@@ -8,6 +8,7 @@
  */
 
 import type { Token, TokenTag, Locus } from './ast';
+import { CompileError } from './errors';
 
 const KEYWORDS = new Set([
     // Declarations
@@ -236,9 +237,8 @@ export function lex(source: string, filename = '<stdin>'): Token[] {
             continue;
         }
 
-        // Unknown character - skip with warning
-        console.error(`${filename}:${loc.linea}:${loc.columna}: unexpected character '${ch}'`);
-        advance();
+        // Unknown character - fatal error
+        throw new CompileError(`unexpected character '${ch}'`, loc, filename);
     }
 
     tokens.push({ tag: 'EOF', valor: '', locus: locus() });

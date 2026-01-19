@@ -95,7 +95,7 @@ async function main() {
 
         if (command === 'parse') {
             const tokens = prepare(lex(source, filename));
-            const ast = parse(tokens);
+            const ast = parse(tokens, filename);
             const out = JSON.stringify(ast, null, 2);
             if (output) {
                 await Bun.write(output, out);

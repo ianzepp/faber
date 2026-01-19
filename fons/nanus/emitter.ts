@@ -176,7 +176,6 @@ function emitStmt(stmt: Stmt, indent = ''): string {
             lines.push(`${indent}${exp}interface ${stmt.nomen}${generics} {`);
 
             for (const method of stmt.methodi) {
-                const async = method.asynca ? 'async ' : '';
                 const params = method.params.map(emitParam).join(', ');
                 const ret = method.typusReditus ? `: ${emitTypus(method.typusReditus)}` : '';
                 lines.push(`${indent}  ${method.nomen}(${params})${ret};`);

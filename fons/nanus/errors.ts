@@ -22,15 +22,23 @@ export function formatError(err: unknown, source: string, filename: string): str
         return String(err);
     }
 
-    // Extract line:column from message if present
-    const match = err.message.match(/^(\d+):(\d+): (.*)$/);
-    if (!match) {
-        return err.message;
-    }
+    let line: number;
+    let col: number;
+    let msg: string;
 
-    const line = parseInt(match[1], 10);
-    const col = parseInt(match[2], 10);
-    const msg = match[3];
+    if (err instanceof CompileError) {
+        line = err.locus.linea;
+        col = err.locus.columna;
+        msg = err.message.replace(/^[^:]+:\d+:\d+: /, '');
+    } else {
+        const match = err.message.match(/^(\d+):(\d+): (.*)$/);
+        if (!match) {
+            return err.message;
+        }
+        line = parseInt(match[1], 10);
+        col = parseInt(match[2], 10);
+        msg = match[3];
+    }
 
     const lines = source.split('\n');
     const srcLine = lines[line - 1] ?? '';
