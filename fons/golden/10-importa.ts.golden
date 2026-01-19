@@ -1,1 +1,1 @@
-import { lexare } from "../../rivus/lexor/index";
+import { lexare } from "../rivus/lexor/index";

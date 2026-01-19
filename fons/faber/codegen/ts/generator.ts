@@ -256,20 +256,18 @@ export class TsGenerator {
 
     /**
      * Format leading comments for a node.
-     *
-     * WHY: Comments attached to AST nodes are emitted before the node content.
+     * Disabled: rivus is now primary compiler, comments not preserved.
      */
-    leadingComments(node: BaseNode): string {
-        return formatLeadingComments(node, this.ind());
+    leadingComments(_node: BaseNode): string {
+        return '';
     }
 
     /**
      * Format trailing comments for a node.
-     *
-     * WHY: Trailing comments appear on the same line after the node content.
+     * Disabled: rivus is now primary compiler, comments not preserved.
      */
-    trailingComments(node: BaseNode): string {
-        return formatTrailingComments(node);
+    trailingComments(_node: BaseNode): string {
+        return '';
     }
 
     /**
