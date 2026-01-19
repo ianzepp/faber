@@ -12,12 +12,16 @@ import (
 func showHelp() {
 	fmt.Println("nanus-go - Minimal Faber compiler (stdin/stdout)")
 	fmt.Println("")
-	fmt.Println("Usage: <source> | nanus-go <command>")
+	fmt.Println("Usage: <source> | nanus-go <command> [options]")
 	fmt.Println("")
 	fmt.Println("Commands:")
-	fmt.Println("  emit     Compile to TypeScript")
+	fmt.Println("  emit     Compile to output format")
 	fmt.Println("  parse    Output AST as JSON")
 	fmt.Println("  lex      Output tokens as JSON")
+	fmt.Println("")
+	fmt.Println("Options:")
+	fmt.Println("  -i <format>  Input format: faber (default), fg (Faber Glyph)")
+	fmt.Println("  -f <format>  Output format: ts (TypeScript, default), fg (Faber Glyph)")
 }
 
 func main() {
@@ -35,6 +39,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	inputFormat := "faber"
+	outputFormat := "ts"
+	for i := 1; i < len(args); i++ {
+		if args[i] == "-i" && i+1 < len(args) {
+			inputFormat = args[i+1]
+			i++
+		} else if args[i] == "-f" && i+1 < len(args) {
+			outputFormat = args[i+1]
+			i++
+		}
+	}
+
 	source, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
@@ -50,7 +66,12 @@ func main() {
 
 	switch command {
 	case "lex":
-		tokens := nanus.Lex(string(source), "<stdin>")
+		var tokens []nanus.Token
+		if inputFormat == "fg" {
+			tokens = nanus.LexFG(string(source), "<stdin>")
+		} else {
+			tokens = nanus.Lex(string(source), "<stdin>")
+		}
 		out, err := json.MarshalIndent(tokens, "", "  ")
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
@@ -58,7 +79,12 @@ func main() {
 		}
 		fmt.Println(string(out))
 	case "parse":
-		tokens := nanus.Prepare(nanus.Lex(string(source), "<stdin>"))
+		var tokens []nanus.Token
+		if inputFormat == "fg" {
+			tokens = nanus.Prepare(nanus.LexFG(string(source), "<stdin>"))
+		} else {
+			tokens = nanus.Prepare(nanus.Lex(string(source), "<stdin>"))
+		}
 		ast := nanus.Parse(tokens, "<stdin>")
 		out, err := json.MarshalIndent(ast, "", "  ")
 		if err != nil {
@@ -67,7 +93,7 @@ func main() {
 		}
 		fmt.Println(string(out))
 	default:
-		result := nanus.Compile(string(source), nil)
+		result := nanus.Compile(string(source), &nanus.CompileOptions{InputFormat: inputFormat, Format: outputFormat})
 		if !result.Success {
 			fmt.Fprintln(os.Stderr, result.Error)
 			os.Exit(1)

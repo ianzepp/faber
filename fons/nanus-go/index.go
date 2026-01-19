@@ -1,8 +1,12 @@
 package nanus
 
+import "subsidia"
+
 // CompileOptions controls compilation behavior.
 type CompileOptions struct {
-	Filename string
+	Filename    string
+	InputFormat string // "faber" (default) or "fg" (Faber Glyph)
+	Format      string // "ts" (default) or "fg" (Faber Glyph)
 }
 
 // CompileResult mirrors nanus compile output.
@@ -12,25 +16,49 @@ type CompileResult struct {
 	Error   string `json:"error"`
 }
 
-// Compile Faber source to TypeScript.
+// Compile source to the specified output format.
 func Compile(source string, options *CompileOptions) (result CompileResult) {
 	filename := "<stdin>"
-	if options != nil && options.Filename != "" {
-		filename = options.Filename
+	inputFormat := "faber"
+	outputFormat := "ts"
+	if options != nil {
+		if options.Filename != "" {
+			filename = options.Filename
+		}
+		if options.InputFormat != "" {
+			inputFormat = options.InputFormat
+		}
+		if options.Format != "" {
+			outputFormat = options.Format
+		}
 	}
 
 	defer func() {
 		if r := recover(); r != nil {
 			result = CompileResult{
 				Success: false,
-				Error:   FormatError(r, source, filename),
+				Error:   subsidia.FormatError(r, source, filename),
 			}
 		}
 	}()
 
-	tokens := Prepare(Lex(source, filename))
-	ast := Parse(tokens, filename)
-	output := Emit(ast)
+	var tokens []subsidia.Token
+	switch inputFormat {
+	case "fg":
+		tokens = subsidia.Prepare(LexFG(source, filename))
+	default:
+		tokens = subsidia.Prepare(Lex(source, filename))
+	}
+
+	ast := subsidia.Parse(tokens, filename)
+
+	var output string
+	switch outputFormat {
+	case "fg":
+		output = EmitFG(ast)
+	default:
+		output = EmitTS(ast)
+	}
 
 	return CompileResult{Success: true, Output: output}
 }

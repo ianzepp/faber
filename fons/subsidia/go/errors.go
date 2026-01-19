@@ -1,4 +1,4 @@
-package nanus
+package subsidia
 
 import (
 	"errors"
@@ -57,7 +57,7 @@ func FormatError(err interface{}, source string, filename string) string {
 		srcLine = lines[line-1]
 	}
 
-	pointer := strings.Repeat(" ", max(0, col-1)) + "^"
+	pointer := strings.Repeat(" ", maxInt(0, col-1)) + "^"
 
 	return strings.Join([]string{
 		fmt.Sprintf("%s:%d:%d: error: %s", filename, line, col, msg),
@@ -67,7 +67,7 @@ func FormatError(err interface{}, source string, filename string) string {
 	}, "\n")
 }
 
-func max(a, b int) int {
+func maxInt(a, b int) int {
 	if a > b {
 		return a
 	}

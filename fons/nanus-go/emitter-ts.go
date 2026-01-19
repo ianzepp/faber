@@ -3,6 +3,8 @@ package nanus
 import (
 	"strconv"
 	"strings"
+
+	"subsidia"
 )
 
 var binaryOps = map[string]string{
@@ -65,8 +67,8 @@ var propertyOnly = map[string]struct{}{
 	"ultimus":   {},
 }
 
-// Emit renders a module to TypeScript.
-func Emit(mod *Modulus) string {
+// EmitTS renders a module to TypeScript.
+func EmitTS(mod *subsidia.Modulus) string {
 	lines := []string{}
 	for _, stmt := range mod.Corpus {
 		lines = append(lines, emitStmt(stmt, ""))
@@ -74,31 +76,31 @@ func Emit(mod *Modulus) string {
 	return strings.Join(lines, "\n")
 }
 
-func emitStmt(stmt Stmt, indent string) string {
+func emitStmt(stmt subsidia.Stmt, indent string) string {
 	switch s := stmt.(type) {
-	case *StmtMassa:
+	case *subsidia.StmtMassa:
 		lines := []string{}
 		for _, inner := range s.Corpus {
 			lines = append(lines, emitStmt(inner, indent+"  "))
 		}
 		return "{\n" + strings.Join(lines, "\n") + "\n" + indent + "}"
 
-	case *StmtExpressia:
+	case *subsidia.StmtExpressia:
 		return indent + emitExpr(s.Expr) + ";"
 
-	case *StmtVaria:
+	case *subsidia.StmtVaria:
 		decl := ""
 		if s.Externa {
 			decl = "declare "
 		}
 		kw := "let"
-		if s.Species == VariaFixum {
+		if s.Species == subsidia.VariaFixum {
 			kw = "const"
 		}
 		typ := ""
 		if s.Typus != nil {
 			if s.Externa {
-				if t, ok := s.Typus.(*TypusNomen); ok && t.Nomen == "ignotum" {
+				if t, ok := s.Typus.(*subsidia.TypusNomen); ok && t.Nomen == "ignotum" {
 					typ = ": any"
 				} else {
 					typ = ": " + emitTypus(s.Typus)
@@ -117,7 +119,7 @@ func emitStmt(stmt Stmt, indent string) string {
 		}
 		return indent + exp + decl + kw + " " + s.Nomen + typ + val + ";"
 
-	case *StmtFunctio:
+	case *subsidia.StmtFunctio:
 		decl := ""
 		if s.Externa {
 			decl = "declare "
@@ -148,7 +150,7 @@ func emitStmt(stmt Stmt, indent string) string {
 		}
 		return indent + exp + decl + async + "function " + s.Nomen + generics + "(" + strings.Join(params, ", ") + ")" + ret + body
 
-	case *StmtGenus:
+	case *subsidia.StmtGenus:
 		exp := ""
 		if s.Publica {
 			exp = "export "
@@ -190,7 +192,7 @@ func emitStmt(stmt Stmt, indent string) string {
 		}
 
 		for _, method := range s.Methodi {
-			if fn, ok := method.(*StmtFunctio); ok {
+			if fn, ok := method.(*subsidia.StmtFunctio); ok {
 				lines = append(lines, "")
 				vis := "private "
 				if fn.Publica {
@@ -219,7 +221,7 @@ func emitStmt(stmt Stmt, indent string) string {
 		lines = append(lines, indent+"}")
 		return strings.Join(lines, "\n")
 
-	case *StmtPactum:
+	case *subsidia.StmtPactum:
 		exp := ""
 		if s.Publica {
 			exp = "export "
@@ -244,7 +246,7 @@ func emitStmt(stmt Stmt, indent string) string {
 		lines = append(lines, indent+"}")
 		return strings.Join(lines, "\n")
 
-	case *StmtOrdo:
+	case *subsidia.StmtOrdo:
 		exp := ""
 		if s.Publica {
 			exp = "export "
@@ -259,7 +261,7 @@ func emitStmt(stmt Stmt, indent string) string {
 		}
 		return indent + exp + "enum " + s.Nomen + " { " + strings.Join(members, ", ") + " }"
 
-	case *StmtDiscretio:
+	case *subsidia.StmtDiscretio:
 		exp := ""
 		if s.Publica {
 			exp = "export "
@@ -285,7 +287,7 @@ func emitStmt(stmt Stmt, indent string) string {
 		lines = append(lines, indent+exp+"type "+s.Nomen+generics+" = "+strings.Join(variantNames, " | ")+";")
 		return strings.Join(lines, "\n")
 
-	case *StmtImporta:
+	case *subsidia.StmtImporta:
 		specs := []string{}
 		for _, spec := range s.Specs {
 			if spec.Imported == spec.Local {
@@ -296,20 +298,20 @@ func emitStmt(stmt Stmt, indent string) string {
 		}
 		return indent + "import { " + strings.Join(specs, ", ") + " } from \"" + s.Fons + "\";"
 
-	case *StmtSi:
+	case *subsidia.StmtSi:
 		code := indent + "if (" + emitExpr(s.Cond) + ") " + emitStmt(s.Cons, indent)
 		if s.Alt != nil {
 			code += " else " + emitStmt(s.Alt, indent)
 		}
 		return code
 
-	case *StmtDum:
+	case *subsidia.StmtDum:
 		return indent + "while (" + emitExpr(s.Cond) + ") " + emitStmt(s.Corpus, indent)
 
-	case *StmtFacDum:
+	case *subsidia.StmtFacDum:
 		return indent + "do " + emitStmt(s.Corpus, indent) + " while (" + emitExpr(s.Cond) + ");"
 
-	case *StmtIteratio:
+	case *subsidia.StmtIteratio:
 		kw := "of"
 		if s.Species == "De" {
 			kw = "in"
@@ -320,7 +322,7 @@ func emitStmt(stmt Stmt, indent string) string {
 		}
 		return indent + "for " + async + "(const " + s.Binding + " " + kw + " " + emitExpr(s.Iter) + ") " + emitStmt(s.Corpus, indent)
 
-	case *StmtElige:
+	case *subsidia.StmtElige:
 		discrim := emitExpr(s.Discrim)
 		lines := []string{}
 		for i, c := range s.Casus {
@@ -335,7 +337,7 @@ func emitStmt(stmt Stmt, indent string) string {
 		}
 		return strings.Join(lines, "\n")
 
-	case *StmtDiscerne:
+	case *subsidia.StmtDiscerne:
 		lines := []string{}
 		numDiscrim := len(s.Discrim)
 		discrimVars := []string{}
@@ -373,7 +375,7 @@ func emitStmt(stmt Stmt, indent string) string {
 				}
 			}
 
-			if block, ok := c.Corpus.(*StmtMassa); ok {
+			if block, ok := c.Corpus.(*subsidia.StmtMassa); ok {
 				for _, s := range block.Corpus {
 					lines = append(lines, emitStmt(s, indent+"  "))
 				}
@@ -385,14 +387,14 @@ func emitStmt(stmt Stmt, indent string) string {
 
 		return strings.Join(lines, "\n")
 
-	case *StmtCustodi:
+	case *subsidia.StmtCustodi:
 		lines := []string{}
 		for _, c := range s.Clausulae {
 			lines = append(lines, indent+"if ("+emitExpr(c.Cond)+") "+emitStmt(c.Corpus, indent))
 		}
 		return strings.Join(lines, "\n")
 
-	case *StmtTempta:
+	case *subsidia.StmtTempta:
 		code := indent + "try " + emitStmt(s.Corpus, indent)
 		if s.Cape != nil {
 			code += " catch (" + s.Cape.Param + ") " + emitStmt(s.Cape.Corpus, indent)
@@ -402,19 +404,19 @@ func emitStmt(stmt Stmt, indent string) string {
 		}
 		return code
 
-	case *StmtRedde:
+	case *subsidia.StmtRedde:
 		if s.Valor != nil {
 			return indent + "return " + emitExpr(s.Valor) + ";"
 		}
 		return indent + "return;"
 
-	case *StmtIace:
+	case *subsidia.StmtIace:
 		if s.Fatale {
 			return indent + "throw new Error(" + emitExpr(s.Arg) + ");"
 		}
 		return indent + "throw " + emitExpr(s.Arg) + ";"
 
-	case *StmtScribe:
+	case *subsidia.StmtScribe:
 		method := "log"
 		if s.Gradus == "Vide" {
 			method = "debug"
@@ -427,27 +429,27 @@ func emitStmt(stmt Stmt, indent string) string {
 		}
 		return indent + "console." + method + "(" + strings.Join(args, ", ") + ");"
 
-	case *StmtAdfirma:
+	case *subsidia.StmtAdfirma:
 		msg := ""
 		if s.Msg != nil {
 			msg = ", " + emitExpr(s.Msg)
 		}
 		return indent + "console.assert(" + emitExpr(s.Cond) + msg + ");"
 
-	case *StmtRumpe:
+	case *subsidia.StmtRumpe:
 		return indent + "break;"
 
-	case *StmtPerge:
+	case *subsidia.StmtPerge:
 		return indent + "continue;"
 
-	case *StmtIncipit:
+	case *subsidia.StmtIncipit:
 		async := ""
 		if s.Asynca {
 			async = "async "
 		}
 		return indent + "(" + async + "function() " + emitStmt(s.Corpus, indent) + ")();"
 
-	case *StmtProbandum:
+	case *subsidia.StmtProbandum:
 		lines := []string{}
 		lines = append(lines, indent+"describe("+strconv.Quote(s.Nomen)+", () => {")
 		for _, inner := range s.Corpus {
@@ -456,7 +458,7 @@ func emitStmt(stmt Stmt, indent string) string {
 		lines = append(lines, indent+"});")
 		return strings.Join(lines, "\n")
 
-	case *StmtProba:
+	case *subsidia.StmtProba:
 		return indent + "it(" + strconv.Quote(s.Nomen) + ", () => " + emitStmt(s.Corpus, indent) + ");"
 
 	default:
@@ -464,51 +466,51 @@ func emitStmt(stmt Stmt, indent string) string {
 	}
 }
 
-func emitExpr(expr Expr) string {
+func emitExpr(expr subsidia.Expr) string {
 	switch e := expr.(type) {
-	case *ExprNomen:
+	case *subsidia.ExprNomen:
 		return e.Valor
 
-	case *ExprEgo:
+	case *subsidia.ExprEgo:
 		return "this"
 
-	case *ExprLittera:
+	case *subsidia.ExprLittera:
 		switch e.Species {
-		case LitteraTextus:
+		case subsidia.LitteraTextus:
 			return strconv.Quote(e.Valor)
-		case LitteraVerum:
+		case subsidia.LitteraVerum:
 			return "true"
-		case LitteraFalsum:
+		case subsidia.LitteraFalsum:
 			return "false"
-		case LitteraNihil:
+		case subsidia.LitteraNihil:
 			return "null"
 		default:
 			return e.Valor
 		}
 
-	case *ExprBinaria:
+	case *subsidia.ExprBinaria:
 		op := e.Signum
 		if mapped, ok := binaryOps[op]; ok {
 			op = mapped
 		}
 		return "(" + emitExpr(e.Sin) + " " + op + " " + emitExpr(e.Dex) + ")"
 
-	case *ExprUnaria:
+	case *subsidia.ExprUnaria:
 		op := e.Signum
 		if mapped, ok := unaryOpsEmit[op]; ok {
 			op = mapped
 		}
 		return "(" + op + emitExpr(e.Arg) + ")"
 
-	case *ExprAssignatio:
+	case *subsidia.ExprAssignatio:
 		return emitExpr(e.Sin) + " " + e.Signum + " " + emitBareExpr(e.Dex)
 
-	case *ExprCondicio:
+	case *subsidia.ExprCondicio:
 		return "(" + emitExpr(e.Cond) + " ? " + emitExpr(e.Cons) + " : " + emitExpr(e.Alt) + ")"
 
-	case *ExprVocatio:
-		if m, ok := e.Callee.(*ExprMembrum); ok && !m.Computed {
-			if prop, ok := m.Prop.(*ExprLittera); ok {
+	case *subsidia.ExprVocatio:
+		if m, ok := e.Callee.(*subsidia.ExprMembrum); ok && !m.Computed {
+			if prop, ok := m.Prop.(*subsidia.ExprLittera); ok {
 				propName := prop.Valor
 				if _, ok := propertyOnly[propName]; ok {
 					return emitExpr(m)
@@ -533,13 +535,13 @@ func emitExpr(expr Expr) string {
 		}
 		return emitExpr(e.Callee) + "(" + strings.Join(args, ", ") + ")"
 
-	case *ExprMembrum:
+	case *subsidia.ExprMembrum:
 		obj := emitExpr(e.Obj)
 		if e.Computed {
 			return obj + "[" + emitExpr(e.Prop) + "]"
 		}
 		prop := ""
-		if lit, ok := e.Prop.(*ExprLittera); ok {
+		if lit, ok := e.Prop.(*subsidia.ExprLittera); ok {
 			prop = lit.Valor
 		} else {
 			prop = emitExpr(e.Prop)
@@ -561,18 +563,18 @@ func emitExpr(expr Expr) string {
 		}
 		return obj + access + prop
 
-	case *ExprSeries:
+	case *subsidia.ExprSeries:
 		elems := []string{}
 		for _, elem := range e.Elementa {
 			elems = append(elems, emitExpr(elem))
 		}
 		return "[" + strings.Join(elems, ", ") + "]"
 
-	case *ExprObiectum:
+	case *subsidia.ExprObiectum:
 		props := []string{}
 		for _, p := range e.Props {
 			if p.Shorthand {
-				if lit, ok := p.Key.(*ExprLittera); ok {
+				if lit, ok := p.Key.(*subsidia.ExprLittera); ok {
 					props = append(props, lit.Valor)
 				} else {
 					props = append(props, emitExpr(p.Key))
@@ -582,7 +584,7 @@ func emitExpr(expr Expr) string {
 			key := ""
 			if p.Computed {
 				key = "[" + emitExpr(p.Key) + "]"
-			} else if lit, ok := p.Key.(*ExprLittera); ok {
+			} else if lit, ok := p.Key.(*subsidia.ExprLittera); ok {
 				key = lit.Valor
 			} else {
 				key = emitExpr(p.Key)
@@ -591,7 +593,7 @@ func emitExpr(expr Expr) string {
 		}
 		return "{ " + strings.Join(props, ", ") + " }"
 
-	case *ExprClausura:
+	case *subsidia.ExprClausura:
 		params := []string{}
 		for _, param := range e.Params {
 			if param.Typus != nil {
@@ -601,15 +603,15 @@ func emitExpr(expr Expr) string {
 			}
 		}
 		switch body := e.Corpus.(type) {
-		case Stmt:
+		case subsidia.Stmt:
 			return "(" + strings.Join(params, ", ") + ") => " + emitStmt(body, "")
-		case Expr:
+		case subsidia.Expr:
 			return "(" + strings.Join(params, ", ") + ") => " + emitExpr(body)
 		default:
 			return "(" + strings.Join(params, ", ") + ") => {}"
 		}
 
-	case *ExprNovum:
+	case *subsidia.ExprNovum:
 		args := []string{}
 		for _, arg := range e.Args {
 			args = append(args, emitExpr(arg))
@@ -620,23 +622,23 @@ func emitExpr(expr Expr) string {
 		}
 		return code
 
-	case *ExprCede:
+	case *subsidia.ExprCede:
 		return "await " + emitExpr(e.Arg)
 
-	case *ExprQua:
+	case *subsidia.ExprQua:
 		return "(" + emitExpr(e.Expr) + " as " + emitTypus(e.Typus) + ")"
 
-	case *ExprInnatum:
+	case *subsidia.ExprInnatum:
 		return "(" + emitExpr(e.Expr) + " as " + emitTypus(e.Typus) + ")"
 
-	case *ExprPostfixNovum:
+	case *subsidia.ExprPostfixNovum:
 		return "new " + emitTypus(e.Typus) + "(" + emitExpr(e.Expr) + ")"
 
-	case *ExprFinge:
+	case *subsidia.ExprFinge:
 		fields := []string{}
 		for _, p := range e.Campi {
 			key := ""
-			if lit, ok := p.Key.(*ExprLittera); ok {
+			if lit, ok := p.Key.(*subsidia.ExprLittera); ok {
 				key = lit.Valor
 			} else {
 				key = emitExpr(p.Key)
@@ -649,7 +651,7 @@ func emitExpr(expr Expr) string {
 		}
 		return "{ tag: '" + e.Variant + "', " + strings.Join(fields, ", ") + " }" + cast
 
-	case *ExprScriptum:
+	case *subsidia.ExprScriptum:
 		parts := strings.Split(e.Template, "§")
 		if len(parts) == 1 {
 			return strconv.Quote(e.Template)
@@ -665,7 +667,7 @@ func emitExpr(expr Expr) string {
 		b.WriteString("`")
 		return b.String()
 
-	case *ExprAmbitus:
+	case *subsidia.ExprAmbitus:
 		start := emitExpr(e.Start)
 		end := emitExpr(e.End)
 		if e.Inclusive {
@@ -678,8 +680,8 @@ func emitExpr(expr Expr) string {
 	}
 }
 
-func emitBareExpr(expr Expr) string {
-	if e, ok := expr.(*ExprBinaria); ok {
+func emitBareExpr(expr subsidia.Expr) string {
+	if e, ok := expr.(*subsidia.ExprBinaria); ok {
 		op := e.Signum
 		if mapped, ok := binaryOps[op]; ok {
 			op = mapped
@@ -689,31 +691,31 @@ func emitBareExpr(expr Expr) string {
 	return emitExpr(expr)
 }
 
-func emitTypus(typus Typus) string {
+func emitTypus(typus subsidia.Typus) string {
 	switch t := typus.(type) {
-	case *TypusNomen:
+	case *subsidia.TypusNomen:
 		return mapTypeName(t.Nomen)
-	case *TypusNullabilis:
+	case *subsidia.TypusNullabilis:
 		return emitTypus(t.Inner) + " | null"
-	case *TypusGenericus:
+	case *subsidia.TypusGenericus:
 		args := []string{}
 		for _, arg := range t.Args {
 			args = append(args, emitTypus(arg))
 		}
 		return mapTypeName(t.Nomen) + "<" + strings.Join(args, ", ") + ">"
-	case *TypusFunctio:
+	case *subsidia.TypusFunctio:
 		args := []string{}
 		for i, p := range t.Params {
 			args = append(args, "arg"+strconv.Itoa(i)+": "+emitTypus(p))
 		}
 		return "(" + strings.Join(args, ", ") + ") => " + emitTypus(t.Returns)
-	case *TypusUnio:
+	case *subsidia.TypusUnio:
 		members := []string{}
 		for _, m := range t.Members {
 			members = append(members, emitTypus(m))
 		}
 		return strings.Join(members, " | ")
-	case *TypusLitteralis:
+	case *subsidia.TypusLitteralis:
 		return t.Valor
 	default:
 		return "unknown"
@@ -743,7 +745,7 @@ func mapTypeName(name string) string {
 	return name
 }
 
-func emitParam(param Param) string {
+func emitParam(param subsidia.Param) string {
 	rest := ""
 	if param.Rest {
 		rest = "..."
@@ -756,7 +758,7 @@ func emitParam(param Param) string {
 	if param.Default != nil {
 		def = " = " + emitExpr(param.Default)
 	} else {
-		if _, ok := param.Typus.(*TypusNullabilis); ok {
+		if _, ok := param.Typus.(*subsidia.TypusNullabilis); ok {
 			def = " = null"
 		}
 	}

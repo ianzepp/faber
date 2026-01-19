@@ -1,4 +1,4 @@
-package nanus
+package subsidia
 
 // Source location for error reporting.
 type Locus struct {
@@ -13,6 +13,19 @@ type Token struct {
 	Valor string `json:"valor"`
 	Locus Locus  `json:"locus"`
 }
+
+// Token tag constants.
+const (
+	TokenEOF        = "EOF"
+	TokenNewline    = "Newline"
+	TokenIdentifier = "Identifier"
+	TokenNumerus    = "Numerus"
+	TokenTextus     = "Textus"
+	TokenOperator   = "Operator"
+	TokenPunctuator = "Punctuator"
+	TokenKeyword    = "Keyword"
+	TokenComment    = "Comment"
+)
 
 // Type annotations.
 type Typus interface {
@@ -216,26 +229,26 @@ type ExprAmbitus struct {
 	Inclusive bool   `json:"inclusive"`
 }
 
-func (*ExprNomen) exprNode()      {}
-func (*ExprEgo) exprNode()        {}
-func (*ExprLittera) exprNode()    {}
-func (*ExprBinaria) exprNode()    {}
-func (*ExprUnaria) exprNode()     {}
-func (*ExprAssignatio) exprNode() {}
-func (*ExprCondicio) exprNode()   {}
-func (*ExprVocatio) exprNode()    {}
-func (*ExprMembrum) exprNode()    {}
-func (*ExprSeries) exprNode()     {}
-func (*ExprObiectum) exprNode()   {}
-func (*ExprClausura) exprNode()   {}
-func (*ExprNovum) exprNode()      {}
-func (*ExprCede) exprNode()       {}
+func (*ExprNomen) exprNode()        {}
+func (*ExprEgo) exprNode()          {}
+func (*ExprLittera) exprNode()      {}
+func (*ExprBinaria) exprNode()      {}
+func (*ExprUnaria) exprNode()       {}
+func (*ExprAssignatio) exprNode()   {}
+func (*ExprCondicio) exprNode()     {}
+func (*ExprVocatio) exprNode()      {}
+func (*ExprMembrum) exprNode()      {}
+func (*ExprSeries) exprNode()       {}
+func (*ExprObiectum) exprNode()     {}
+func (*ExprClausura) exprNode()     {}
+func (*ExprNovum) exprNode()        {}
+func (*ExprCede) exprNode()         {}
 func (*ExprQua) exprNode()          {}
 func (*ExprInnatum) exprNode()      {}
 func (*ExprPostfixNovum) exprNode() {}
 func (*ExprFinge) exprNode()        {}
-func (*ExprScriptum) exprNode()   {}
-func (*ExprAmbitus) exprNode()    {}
+func (*ExprScriptum) exprNode()     {}
+func (*ExprAmbitus) exprNode()      {}
 
 // Object literal properties.
 type ObiectumProp struct {

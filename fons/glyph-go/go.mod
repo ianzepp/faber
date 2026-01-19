@@ -1,4 +1,4 @@
-module nanus-go
+module glyph-go
 
 go 1.21
 
