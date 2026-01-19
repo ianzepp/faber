@@ -291,7 +291,7 @@ func faberEmitDiscretio(s *subsidia.StmtDiscretio, indent string) string {
 func faberEmitImporta(s *subsidia.StmtImporta, indent string) string {
 	var b strings.Builder
 	b.WriteString(indent)
-	b.WriteString("ex \"")
+	b.WriteString("§ ex \"")
 	b.WriteString(s.Fons)
 	b.WriteString("\" importa ")
 	if s.Totum {
@@ -360,10 +360,10 @@ func faberEmitFacDum(s *subsidia.StmtFacDum, indent string) string {
 func faberEmitIteratio(s *subsidia.StmtIteratio, indent string) string {
 	var b strings.Builder
 	b.WriteString(indent)
-	b.WriteString("pro ")
-	b.WriteString(s.Binding)
-	b.WriteString(" de ")
+	b.WriteString("ex ")
 	b.WriteString(faberEmitExpr(s.Iter))
+	b.WriteString(" fixum ")
+	b.WriteString(s.Binding)
 	b.WriteString(" ")
 	b.WriteString(faberEmitStmt(s.Corpus, ""))
 	return b.String()
@@ -543,6 +543,10 @@ func faberEmitExpr(e subsidia.Expr) string {
 	case *subsidia.ExprBinaria:
 		return faberEmitExpr(e.Sin) + " " + e.Signum + " " + faberEmitExpr(e.Dex)
 	case *subsidia.ExprUnaria:
+		// Keyword operators need a space, symbol operators don't
+		if e.Signum == "nihil" || e.Signum == "non" || e.Signum == "nonnihil" {
+			return e.Signum + " " + faberEmitExpr(e.Arg)
+		}
 		return e.Signum + faberEmitExpr(e.Arg)
 	case *subsidia.ExprAssignatio:
 		return faberEmitExpr(e.Sin) + " " + e.Signum + " " + faberEmitExpr(e.Dex)
@@ -557,10 +561,16 @@ func faberEmitExpr(e subsidia.Expr) string {
 		if e.Computed {
 			return obj + "[" + faberEmitExpr(e.Prop) + "]"
 		}
-		if e.NonNull {
-			return obj + "!." + faberEmitExpr(e.Prop)
+		prop := ""
+		if lit, ok := e.Prop.(*subsidia.ExprLittera); ok {
+			prop = lit.Valor
+		} else {
+			prop = faberEmitExpr(e.Prop)
 		}
-		return obj + "." + faberEmitExpr(e.Prop)
+		if e.NonNull {
+			return obj + "!." + prop
+		}
+		return obj + "." + prop
 	case *subsidia.ExprCondicio:
 		return faberEmitExpr(e.Cond) + " ? " + faberEmitExpr(e.Cons) + " : " + faberEmitExpr(e.Alt)
 	case *subsidia.ExprSeries:

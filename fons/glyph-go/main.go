@@ -16,9 +16,9 @@ func main() {
 
 	cmd := os.Args[1]
 	switch cmd {
-	case "to-glyph", "glyph":
+	case "encode":
 		convertToGlyph()
-	case "to-faber", "faber":
+	case "decode":
 		convertToFaber()
 	case "help", "-h", "--help":
 		printUsage()
@@ -33,9 +33,9 @@ func printUsage() {
 	fmt.Println("glyph-go: Faber Glyph format converter")
 	fmt.Println()
 	fmt.Println("Usage:")
-	fmt.Println("  glyph-go to-glyph [file]  Convert Faber to Faber Glyph")
-	fmt.Println("  glyph-go to-faber [file]  Convert Faber Glyph to Faber")
-	fmt.Println("  glyph-go help             Show this help")
+	fmt.Println("  glyph-go encode [file]  Convert Faber to Glyph")
+	fmt.Println("  glyph-go decode [file]  Convert Glyph to Faber")
+	fmt.Println("  glyph-go help           Show this help")
 	fmt.Println()
 	fmt.Println("If no file is specified, reads from stdin.")
 }

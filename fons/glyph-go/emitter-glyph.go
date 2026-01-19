@@ -382,7 +382,7 @@ func glyphEmitStmt(stmt subsidia.Stmt, indent string) string {
 				specs = append(specs, toBraille(spec.Imported)+" ↦ "+toBraille(spec.Local))
 			}
 		}
-		return indent + "⊲ ▐ " + strings.Join(specs, "⸴ ") + " ▌ ∈ ▚" + toBraille(s.Fons) + "▚"
+		return indent + "§ ∈ ▚" + toBraille(s.Fons) + "▚ ⊲ " + strings.Join(specs, "⸴ ")
 
 	case *subsidia.StmtSi:
 		code := indent + "↳ " + glyphEmitExpr(s.Cond) + " " + glyphEmitStmt(s.Cons, indent)
@@ -402,21 +402,17 @@ func glyphEmitStmt(stmt subsidia.Stmt, indent string) string {
 		return indent + "⊡ " + glyphEmitStmt(s.Corpus, indent) + " ∞ " + glyphEmitExpr(s.Cond) 
 
 	case *subsidia.StmtIteratio:
-		kw := "∋" // de
-		if s.Species == "Ex" {
-			kw = "∈" // ex
-		}
 		async := ""
 		if s.Asynca {
 			async = "⋆ "
 		}
-		return indent + "∀ " + async + toBraille(s.Binding) + " " + kw + " " + glyphEmitExpr(s.Iter) + " " + glyphEmitStmt(s.Corpus, indent)
+		return indent + async + "∈ " + glyphEmitExpr(s.Iter) + " ≡ " + toBraille(s.Binding) + " " + glyphEmitStmt(s.Corpus, indent)
 
 	case *subsidia.StmtElige:
 		lines := []string{}
 		lines = append(lines, indent+"⋔ "+glyphEmitExpr(s.Discrim)+" ▐")
 		for _, c := range s.Casus {
-			lines = append(lines, indent+"  ⌜ "+glyphEmitExpr(c.Cond)+" ∴ "+glyphEmitStmt(c.Corpus, indent+"  "))
+			lines = append(lines, indent+"  ⌜ "+glyphEmitExpr(c.Cond)+" "+glyphEmitStmt(c.Corpus, indent+"  "))
 		}
 		if s.Default != nil {
 			lines = append(lines, indent+"  ⌟ "+glyphEmitStmt(s.Default, indent+"  "))
@@ -451,7 +447,7 @@ func glyphEmitStmt(stmt subsidia.Stmt, indent string) string {
 					patterns = append(patterns, pat)
 				}
 			}
-			lines = append(lines, indent+"  "+strings.Join(patterns, "⸴ ")+" ∴ "+glyphEmitStmt(c.Corpus, indent+"  "))
+			lines = append(lines, indent+"  "+strings.Join(patterns, "⸴ ")+" "+glyphEmitStmt(c.Corpus, indent+"  "))
 		}
 		lines = append(lines, indent+"▌")
 		return strings.Join(lines, "\n")
