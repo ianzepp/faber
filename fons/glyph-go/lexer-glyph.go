@@ -1,4 +1,4 @@
-package nanus
+package main
 
 import (
 	"strings"
@@ -9,7 +9,7 @@ import (
 
 // Reverse mappings for glyph → Faber
 
-var fgDelimiterToFaber = map[rune]string{
+var glyphDelimiterToFaber = map[rune]string{
 	'\u2590': "{",  // ▐ Right half block
 	'\u258C': "}",  // ▌ Left half block
 	'\u259D': "(",  // ▝ Upper right quadrant
@@ -22,7 +22,7 @@ var fgDelimiterToFaber = map[rune]string{
 	'\u259E': "'",  // ▞ Char delimiter
 }
 
-var fgPunctToFaber = map[rune]string{
+var glyphPunctToFaber = map[rune]string{
 	'\u204F': ";", // ⁏
 	'\u2E34': ",", // ⸴
 	'\u00B7': ".", // ·
@@ -33,7 +33,7 @@ var fgPunctToFaber = map[rune]string{
 	'\u2317': "#", // ⌗ (comments)
 }
 
-var fgKeywordToFaber = map[string]string{
+var glyphKeywordToFaber = map[string]string{
 	// Declarations
 	"≡": "fixum",
 	"≔": "varia",
@@ -157,7 +157,7 @@ var fgKeywordToFaber = map[string]string{
 	"⦾": "cura",
 }
 
-var fgOperatorToFaber = map[string]string{
+var glyphOperatorToFaber = map[string]string{
 	// Arithmetic
 	"⊕": "+",
 	"⊖": "-",
@@ -214,18 +214,18 @@ func isBraille(r rune) bool {
 
 // isBlockDelimiter checks if a rune is a block delimiter
 func isBlockDelimiter(r rune) bool {
-	_, ok := fgDelimiterToFaber[r]
+	_, ok := glyphDelimiterToFaber[r]
 	return ok
 }
 
 // isGlyphPunct checks if a rune is glyph punctuation
 func isGlyphPunct(r rune) bool {
-	_, ok := fgPunctToFaber[r]
+	_, ok := glyphPunctToFaber[r]
 	return ok
 }
 
-// LexFG converts glyph source text into tokens (same format as regular Lex).
-func LexFG(source string, filename string) []subsidia.Token {
+// LexGlyph converts glyph source text into tokens (same format as regular Lex).
+func LexGlyph(source string, filename string) []subsidia.Token {
 	tokens := []subsidia.Token{}
 	runes := []rune(source)
 	pos := 0
@@ -305,12 +305,12 @@ func LexFG(source string, filename string) []subsidia.Token {
 		s := string(r)
 
 		// Check keywords first
-		if faber, ok := fgKeywordToFaber[s]; ok {
+		if faber, ok := glyphKeywordToFaber[s]; ok {
 			return faber, subsidia.TokenKeyword, true
 		}
 
 		// Check operators
-		if faber, ok := fgOperatorToFaber[s]; ok {
+		if faber, ok := glyphOperatorToFaber[s]; ok {
 			return faber, subsidia.TokenOperator, true
 		}
 
@@ -365,7 +365,7 @@ func LexFG(source string, filename string) []subsidia.Token {
 		// Block delimiters
 		if isBlockDelimiter(r) {
 			advance()
-			faber := fgDelimiterToFaber[r]
+			faber := glyphDelimiterToFaber[r]
 			// < and > are operators in type contexts
 			if faber == "<" || faber == ">" {
 				tokens = append(tokens, subsidia.Token{Tag: subsidia.TokenOperator, Valor: faber, Locus: loc})
@@ -378,7 +378,7 @@ func LexFG(source string, filename string) []subsidia.Token {
 		// Glyph punctuation
 		if isGlyphPunct(r) {
 			advance()
-			faber := fgPunctToFaber[r]
+			faber := glyphPunctToFaber[r]
 			tokens = append(tokens, subsidia.Token{Tag: subsidia.TokenPunctuator, Valor: faber, Locus: loc})
 			continue
 		}

@@ -1,4 +1,4 @@
-package nanus
+package main
 
 import (
 	"strings"

@@ -16,8 +16,8 @@ func main() {
 
 	cmd := os.Args[1]
 	switch cmd {
-	case "to-fg", "fg":
-		convertToFG()
+	case "to-glyph", "glyph":
+		convertToGlyph()
 	case "to-faber", "faber":
 		convertToFaber()
 	case "help", "-h", "--help":
@@ -33,14 +33,14 @@ func printUsage() {
 	fmt.Println("glyph-go: Faber Glyph format converter")
 	fmt.Println()
 	fmt.Println("Usage:")
-	fmt.Println("  glyph-go to-fg [file]     Convert Faber to Faber Glyph")
+	fmt.Println("  glyph-go to-glyph [file]  Convert Faber to Faber Glyph")
 	fmt.Println("  glyph-go to-faber [file]  Convert Faber Glyph to Faber")
 	fmt.Println("  glyph-go help             Show this help")
 	fmt.Println()
 	fmt.Println("If no file is specified, reads from stdin.")
 }
 
-func convertToFG() {
+func convertToGlyph() {
 	source, filename := readInput()
 	defer func() {
 		if r := recover(); r != nil {
@@ -51,7 +51,7 @@ func convertToFG() {
 
 	tokens := subsidia.Prepare(Lex(source, filename))
 	ast := subsidia.Parse(tokens, filename)
-	output := EmitFG(ast)
+	output := EmitGlyph(ast)
 	fmt.Print(output)
 }
 
@@ -64,7 +64,7 @@ func convertToFaber() {
 		}
 	}()
 
-	tokens := subsidia.Prepare(LexFG(source, filename))
+	tokens := subsidia.Prepare(LexGlyph(source, filename))
 	ast := subsidia.Parse(tokens, filename)
 	output := EmitFaber(ast)
 	fmt.Print(output)

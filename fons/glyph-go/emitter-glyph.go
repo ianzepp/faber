@@ -9,7 +9,7 @@ import (
 // Glyph mappings from GLYPH.md
 
 // Delimiters (Block Characters U+2580-U+259F)
-var fgDelimiters = map[rune]rune{
+var glyphDelimiters = map[rune]rune{
 	'{': '\u2590', // ▐ Right half block
 	'}': '\u258C', // ▌ Left half block
 	'(': '\u259D', // ▝ Upper right quadrant
@@ -23,14 +23,14 @@ var fgDelimiters = map[rune]rune{
 }
 
 // Punctuation
-var fgPunctuation = map[rune]rune{
+var glyphPunctuation = map[rune]rune{
 	';': '\u204F', // 	',': '\u2E34', // ⸴
 	'.': '\u00B7', // ·
 	':': '\u2236', // ∶
 }
 
 // Keywords
-var fgKeywords = map[string]string{
+var glyphKeywords = map[string]string{
 	// Declarations
 	"fixum":     "≡",
 	"varia":     "≔",
@@ -156,7 +156,7 @@ var fgKeywords = map[string]string{
 }
 
 // Operators
-var fgOperators = map[string]string{
+var glyphOperators = map[string]string{
 	// Arithmetic
 	"+":  "⊕",
 	"-":  "⊖",
@@ -215,26 +215,26 @@ func toBraille(s string) string {
 	return b.String()
 }
 
-// EmitFG renders a module to Faber Glyph format.
-func EmitFG(mod *subsidia.Modulus) string {
+// EmitGlyph renders a module to Faber Glyph format.
+func EmitGlyph(mod *subsidia.Modulus) string {
 	lines := []string{}
 	for _, stmt := range mod.Corpus {
-		lines = append(lines, fgEmitStmt(stmt, ""))
+		lines = append(lines, glyphEmitStmt(stmt, ""))
 	}
 	return strings.Join(lines, "\n")
 }
 
-func fgEmitStmt(stmt subsidia.Stmt, indent string) string {
+func glyphEmitStmt(stmt subsidia.Stmt, indent string) string {
 	switch s := stmt.(type) {
 	case *subsidia.StmtMassa:
 		lines := []string{}
 		for _, inner := range s.Corpus {
-			lines = append(lines, fgEmitStmt(inner, indent+"  "))
+			lines = append(lines, glyphEmitStmt(inner, indent+"  "))
 		}
 		return "▐\n" + strings.Join(lines, "\n") + "\n" + indent + "▌"
 
 	case *subsidia.StmtExpressia:
-		return indent + fgEmitExpr(s.Expr)
+		return indent + glyphEmitExpr(s.Expr)
 
 	case *subsidia.StmtVaria:
 		kw := "≔" // varia
@@ -243,11 +243,11 @@ func fgEmitStmt(stmt subsidia.Stmt, indent string) string {
 		}
 		typ := ""
 		if s.Typus != nil {
-			typ = " ∶ " + fgEmitTypus(s.Typus)
+			typ = " ∶ " + glyphEmitTypus(s.Typus)
 		}
 		val := ""
 		if s.Valor != nil {
-			val = " ← " + fgEmitExpr(s.Valor)
+			val = " ← " + glyphEmitExpr(s.Valor)
 		}
 		return indent + kw + " " + toBraille(s.Nomen) + typ + val
 
@@ -266,15 +266,15 @@ func fgEmitStmt(stmt subsidia.Stmt, indent string) string {
 		}
 		params := []string{}
 		for _, param := range s.Params {
-			params = append(params, fgEmitParam(param))
+			params = append(params, glyphEmitParam(param))
 		}
 		ret := ""
 		if s.TypusReditus != nil {
-			ret = " → " + fgEmitTypus(s.TypusReditus)
+			ret = " → " + glyphEmitTypus(s.TypusReditus)
 		}
 		body := ""
 		if s.Corpus != nil {
-			body = " " + fgEmitStmt(s.Corpus, indent)
+			body = " " + glyphEmitStmt(s.Corpus, indent)
 		}
 		return indent + async + "∫ " + toBraille(s.Nomen) + generics + " ▝ " + strings.Join(params, "⸴ ") + " ▘" + ret + body
 
@@ -301,15 +301,15 @@ func fgEmitStmt(stmt subsidia.Stmt, indent string) string {
 		for _, campo := range s.Campi {
 			val := ""
 			if campo.Valor != nil {
-				val = " ← " + fgEmitExpr(campo.Valor)
+				val = " ← " + glyphEmitExpr(campo.Valor)
 			}
-			lines = append(lines, indent+"  "+toBraille(campo.Nomen)+" ∶ "+fgEmitTypus(campo.Typus)+val+"")
+			lines = append(lines, indent+"  "+toBraille(campo.Nomen)+" ∶ "+glyphEmitTypus(campo.Typus)+val+"")
 		}
 
 		for _, method := range s.Methodi {
 			if fn, ok := method.(*subsidia.StmtFunctio); ok {
 				lines = append(lines, "")
-				lines = append(lines, fgEmitStmt(fn, indent+"  "))
+				lines = append(lines, glyphEmitStmt(fn, indent+"  "))
 			}
 		}
 
@@ -330,11 +330,11 @@ func fgEmitStmt(stmt subsidia.Stmt, indent string) string {
 		for _, method := range s.Methodi {
 			params := []string{}
 			for _, param := range method.Params {
-				params = append(params, fgEmitParam(param))
+				params = append(params, glyphEmitParam(param))
 			}
 			ret := ""
 			if method.TypusReditus != nil {
-				ret = " → " + fgEmitTypus(method.TypusReditus)
+				ret = " → " + glyphEmitTypus(method.TypusReditus)
 			}
 			lines = append(lines, indent+"  "+toBraille(method.Nomen)+" ▝ "+strings.Join(params, "⸴ ")+" ▘"+ret+"")
 		}
@@ -369,7 +369,7 @@ func fgEmitStmt(stmt subsidia.Stmt, indent string) string {
 			} else {
 				fields := []string{}
 				for _, f := range v.Campi {
-					fields = append(fields, toBraille(f.Nomen)+" ∶ "+fgEmitTypus(f.Typus))
+					fields = append(fields, toBraille(f.Nomen)+" ∶ "+glyphEmitTypus(f.Typus))
 				}
 				lines = append(lines, indent+"  "+toBraille(v.Nomen)+" ▝ "+strings.Join(fields, "⸴ ")+" ▘")
 			}
@@ -389,21 +389,21 @@ func fgEmitStmt(stmt subsidia.Stmt, indent string) string {
 		return indent + "⊲ ▐ " + strings.Join(specs, "⸴ ") + " ▌ ∈ ▚" + toBraille(s.Fons) + "▚"
 
 	case *subsidia.StmtSi:
-		code := indent + "∃ " + fgEmitExpr(s.Cond) + " " + fgEmitStmt(s.Cons, indent)
+		code := indent + "∃ " + glyphEmitExpr(s.Cond) + " " + glyphEmitStmt(s.Cons, indent)
 		if s.Alt != nil {
 			if _, ok := s.Alt.(*subsidia.StmtSi); ok {
-				code += " ∄ " + strings.TrimPrefix(fgEmitStmt(s.Alt, indent), indent+"∃ ")
+				code += " ∄ " + strings.TrimPrefix(glyphEmitStmt(s.Alt, indent), indent+"∃ ")
 			} else {
-				code += " ∁ " + fgEmitStmt(s.Alt, indent)
+				code += " ∁ " + glyphEmitStmt(s.Alt, indent)
 			}
 		}
 		return code
 
 	case *subsidia.StmtDum:
-		return indent + "∞ " + fgEmitExpr(s.Cond) + " " + fgEmitStmt(s.Corpus, indent)
+		return indent + "∞ " + glyphEmitExpr(s.Cond) + " " + glyphEmitStmt(s.Corpus, indent)
 
 	case *subsidia.StmtFacDum:
-		return indent + "⊡ " + fgEmitStmt(s.Corpus, indent) + " ∞ " + fgEmitExpr(s.Cond) 
+		return indent + "⊡ " + glyphEmitStmt(s.Corpus, indent) + " ∞ " + glyphEmitExpr(s.Cond) 
 
 	case *subsidia.StmtIteratio:
 		kw := "∋" // de
@@ -414,16 +414,16 @@ func fgEmitStmt(stmt subsidia.Stmt, indent string) string {
 		if s.Asynca {
 			async = "⋆ "
 		}
-		return indent + "∀ " + async + toBraille(s.Binding) + " " + kw + " " + fgEmitExpr(s.Iter) + " " + fgEmitStmt(s.Corpus, indent)
+		return indent + "∀ " + async + toBraille(s.Binding) + " " + kw + " " + glyphEmitExpr(s.Iter) + " " + glyphEmitStmt(s.Corpus, indent)
 
 	case *subsidia.StmtElige:
 		lines := []string{}
-		lines = append(lines, indent+"⋔ "+fgEmitExpr(s.Discrim)+" ▐")
+		lines = append(lines, indent+"⋔ "+glyphEmitExpr(s.Discrim)+" ▐")
 		for _, c := range s.Casus {
-			lines = append(lines, indent+"  ↳ "+fgEmitExpr(c.Cond)+" ∴ "+fgEmitStmt(c.Corpus, indent+"  "))
+			lines = append(lines, indent+"  ↳ "+glyphEmitExpr(c.Cond)+" ∴ "+glyphEmitStmt(c.Corpus, indent+"  "))
 		}
 		if s.Default != nil {
-			lines = append(lines, indent+"  ↲ "+fgEmitStmt(s.Default, indent+"  "))
+			lines = append(lines, indent+"  ↲ "+glyphEmitStmt(s.Default, indent+"  "))
 		}
 		lines = append(lines, indent+"▌")
 		return strings.Join(lines, "\n")
@@ -432,7 +432,7 @@ func fgEmitStmt(stmt subsidia.Stmt, indent string) string {
 		lines := []string{}
 		discrims := []string{}
 		for _, d := range s.Discrim {
-			discrims = append(discrims, fgEmitExpr(d))
+			discrims = append(discrims, glyphEmitExpr(d))
 		}
 		lines = append(lines, indent+"⦼ "+strings.Join(discrims, "⸴ ")+" ▐")
 		for _, c := range s.Casus {
@@ -455,7 +455,7 @@ func fgEmitStmt(stmt subsidia.Stmt, indent string) string {
 					patterns = append(patterns, pat)
 				}
 			}
-			lines = append(lines, indent+"  "+strings.Join(patterns, "⸴ ")+" ∴ "+fgEmitStmt(c.Corpus, indent+"  "))
+			lines = append(lines, indent+"  "+strings.Join(patterns, "⸴ ")+" ∴ "+glyphEmitStmt(c.Corpus, indent+"  "))
 		}
 		lines = append(lines, indent+"▌")
 		return strings.Join(lines, "\n")
@@ -463,31 +463,31 @@ func fgEmitStmt(stmt subsidia.Stmt, indent string) string {
 	case *subsidia.StmtCustodi:
 		lines := []string{}
 		for _, c := range s.Clausulae {
-			lines = append(lines, indent+"⊧ "+fgEmitExpr(c.Cond)+" "+fgEmitStmt(c.Corpus, indent))
+			lines = append(lines, indent+"⊧ "+glyphEmitExpr(c.Cond)+" "+glyphEmitStmt(c.Corpus, indent))
 		}
 		return strings.Join(lines, "\n")
 
 	case *subsidia.StmtTempta:
-		code := indent + "◇ " + fgEmitStmt(s.Corpus, indent)
+		code := indent + "◇ " + glyphEmitStmt(s.Corpus, indent)
 		if s.Cape != nil {
-			code += " ◆ " + toBraille(s.Cape.Param) + " " + fgEmitStmt(s.Cape.Corpus, indent)
+			code += " ◆ " + toBraille(s.Cape.Param) + " " + glyphEmitStmt(s.Cape.Corpus, indent)
 		}
 		if s.Demum != nil {
-			code += " ◈ " + fgEmitStmt(s.Demum, indent)
+			code += " ◈ " + glyphEmitStmt(s.Demum, indent)
 		}
 		return code
 
 	case *subsidia.StmtRedde:
 		if s.Valor != nil {
-			return indent + "⊢ " + fgEmitExpr(s.Valor) 
+			return indent + "⊢ " + glyphEmitExpr(s.Valor) 
 		}
 		return indent + "⊢"
 
 	case *subsidia.StmtIace:
 		if s.Fatale {
-			return indent + "⟂ " + fgEmitExpr(s.Arg) 
+			return indent + "⟂ " + glyphEmitExpr(s.Arg) 
 		}
-		return indent + "↯ " + fgEmitExpr(s.Arg) 
+		return indent + "↯ " + glyphEmitExpr(s.Arg) 
 
 	case *subsidia.StmtScribe:
 		glyph := "⊝" // scribe
@@ -498,16 +498,16 @@ func fgEmitStmt(stmt subsidia.Stmt, indent string) string {
 		}
 		args := []string{}
 		for _, arg := range s.Args {
-			args = append(args, fgEmitExpr(arg))
+			args = append(args, glyphEmitExpr(arg))
 		}
 		return indent + glyph + " " + strings.Join(args, "⸴ ") 
 
 	case *subsidia.StmtAdfirma:
 		msg := ""
 		if s.Msg != nil {
-			msg = "⸴ " + fgEmitExpr(s.Msg)
+			msg = "⸴ " + glyphEmitExpr(s.Msg)
 		}
-		return indent + "⊩ " + fgEmitExpr(s.Cond) + msg 
+		return indent + "⊩ " + glyphEmitExpr(s.Cond) + msg 
 
 	case *subsidia.StmtRumpe:
 		return indent + "⊗"
@@ -520,29 +520,29 @@ func fgEmitStmt(stmt subsidia.Stmt, indent string) string {
 		if s.Asynca {
 			glyph = "⫟" // incipiet
 		}
-		return indent + glyph + " " + fgEmitStmt(s.Corpus, indent)
+		return indent + glyph + " " + glyphEmitStmt(s.Corpus, indent)
 
 	case *subsidia.StmtProbandum:
 		lines := []string{}
 		lines = append(lines, indent+"⊬ "+toBraille(s.Nomen)+" ▐")
 		for _, inner := range s.Corpus {
-			lines = append(lines, fgEmitStmt(inner, indent+"  "))
+			lines = append(lines, glyphEmitStmt(inner, indent+"  "))
 		}
 		lines = append(lines, indent+"▌")
 		return strings.Join(lines, "\n")
 
 	case *subsidia.StmtProba:
-		return indent + "⫞ " + toBraille(s.Nomen) + " " + fgEmitStmt(s.Corpus, indent)
+		return indent + "⫞ " + toBraille(s.Nomen) + " " + glyphEmitStmt(s.Corpus, indent)
 
 	default:
 		return indent + "⌗ unhandled"
 	}
 }
 
-func fgEmitExpr(expr subsidia.Expr) string {
+func glyphEmitExpr(expr subsidia.Expr) string {
 	switch e := expr.(type) {
 	case *subsidia.ExprNomen:
-		if kw, ok := fgKeywords[e.Valor]; ok {
+		if kw, ok := glyphKeywords[e.Valor]; ok {
 			return kw
 		}
 		return toBraille(e.Valor)
@@ -566,49 +566,49 @@ func fgEmitExpr(expr subsidia.Expr) string {
 
 	case *subsidia.ExprBinaria:
 		op := e.Signum
-		if mapped, ok := fgOperators[op]; ok {
+		if mapped, ok := glyphOperators[op]; ok {
 			op = mapped
-		} else if mapped, ok := fgKeywords[op]; ok {
+		} else if mapped, ok := glyphKeywords[op]; ok {
 			op = mapped
 		}
-		return "▝ " + fgEmitExpr(e.Sin) + " " + op + " " + fgEmitExpr(e.Dex) + " ▘"
+		return "▝ " + glyphEmitExpr(e.Sin) + " " + op + " " + glyphEmitExpr(e.Dex) + " ▘"
 
 	case *subsidia.ExprUnaria:
 		op := e.Signum
-		if mapped, ok := fgKeywords[op]; ok {
+		if mapped, ok := glyphKeywords[op]; ok {
 			op = mapped
-		} else if mapped, ok := fgOperators[op]; ok {
+		} else if mapped, ok := glyphOperators[op]; ok {
 			op = mapped
 		}
-		return "▝ " + op + fgEmitExpr(e.Arg) + " ▘"
+		return "▝ " + op + glyphEmitExpr(e.Arg) + " ▘"
 
 	case *subsidia.ExprAssignatio:
 		op := e.Signum
-		if mapped, ok := fgOperators[op]; ok {
+		if mapped, ok := glyphOperators[op]; ok {
 			op = mapped
 		}
-		return fgEmitExpr(e.Sin) + " " + op + " " + fgEmitExpr(e.Dex)
+		return glyphEmitExpr(e.Sin) + " " + op + " " + glyphEmitExpr(e.Dex)
 
 	case *subsidia.ExprCondicio:
-		return "▝ " + fgEmitExpr(e.Cond) + " ∴ " + fgEmitExpr(e.Cons) + " ∁ " + fgEmitExpr(e.Alt) + " ▘"
+		return "▝ " + glyphEmitExpr(e.Cond) + " ∴ " + glyphEmitExpr(e.Cons) + " ∁ " + glyphEmitExpr(e.Alt) + " ▘"
 
 	case *subsidia.ExprVocatio:
 		args := []string{}
 		for _, arg := range e.Args {
-			args = append(args, fgEmitExpr(arg))
+			args = append(args, glyphEmitExpr(arg))
 		}
-		return fgEmitExpr(e.Callee) + " ▝ " + strings.Join(args, "⸴ ") + " ▘"
+		return glyphEmitExpr(e.Callee) + " ▝ " + strings.Join(args, "⸴ ") + " ▘"
 
 	case *subsidia.ExprMembrum:
-		obj := fgEmitExpr(e.Obj)
+		obj := glyphEmitExpr(e.Obj)
 		if e.Computed {
-			return obj + " ▗ " + fgEmitExpr(e.Prop) + " ▖"
+			return obj + " ▗ " + glyphEmitExpr(e.Prop) + " ▖"
 		}
 		prop := ""
 		if lit, ok := e.Prop.(*subsidia.ExprLittera); ok {
 			prop = toBraille(lit.Valor)
 		} else {
-			prop = fgEmitExpr(e.Prop)
+			prop = glyphEmitExpr(e.Prop)
 		}
 		access := "·"
 		if e.NonNull {
@@ -619,7 +619,7 @@ func fgEmitExpr(expr subsidia.Expr) string {
 	case *subsidia.ExprSeries:
 		elems := []string{}
 		for _, elem := range e.Elementa {
-			elems = append(elems, fgEmitExpr(elem))
+			elems = append(elems, glyphEmitExpr(elem))
 		}
 		return "▗ " + strings.Join(elems, "⸴ ") + " ▖"
 
@@ -630,32 +630,32 @@ func fgEmitExpr(expr subsidia.Expr) string {
 				if lit, ok := p.Key.(*subsidia.ExprLittera); ok {
 					props = append(props, toBraille(lit.Valor))
 				} else {
-					props = append(props, fgEmitExpr(p.Key))
+					props = append(props, glyphEmitExpr(p.Key))
 				}
 				continue
 			}
 			key := ""
 			if p.Computed {
-				key = "▗ " + fgEmitExpr(p.Key) + " ▖"
+				key = "▗ " + glyphEmitExpr(p.Key) + " ▖"
 			} else if lit, ok := p.Key.(*subsidia.ExprLittera); ok {
 				key = toBraille(lit.Valor)
 			} else {
-				key = fgEmitExpr(p.Key)
+				key = glyphEmitExpr(p.Key)
 			}
-			props = append(props, key+" ∶ "+fgEmitExpr(p.Valor))
+			props = append(props, key+" ∶ "+glyphEmitExpr(p.Valor))
 		}
 		return "▐ " + strings.Join(props, "⸴ ") + " ▌"
 
 	case *subsidia.ExprClausura:
 		params := []string{}
 		for _, param := range e.Params {
-			params = append(params, fgEmitParam(param))
+			params = append(params, glyphEmitParam(param))
 		}
 		switch body := e.Corpus.(type) {
 		case subsidia.Stmt:
-			return "▝ " + strings.Join(params, "⸴ ") + " ▘ ⇒ " + fgEmitStmt(body, "")
+			return "▝ " + strings.Join(params, "⸴ ") + " ▘ ⇒ " + glyphEmitStmt(body, "")
 		case subsidia.Expr:
-			return "▝ " + strings.Join(params, "⸴ ") + " ▘ ⇒ " + fgEmitExpr(body)
+			return "▝ " + strings.Join(params, "⸴ ") + " ▘ ⇒ " + glyphEmitExpr(body)
 		default:
 			return "▝ " + strings.Join(params, "⸴ ") + " ▘ ⇒ ▐ ▌"
 		}
@@ -663,25 +663,25 @@ func fgEmitExpr(expr subsidia.Expr) string {
 	case *subsidia.ExprNovum:
 		args := []string{}
 		for _, arg := range e.Args {
-			args = append(args, fgEmitExpr(arg))
+			args = append(args, glyphEmitExpr(arg))
 		}
-		code := "⦿ " + fgEmitExpr(e.Callee) + " ▝ " + strings.Join(args, "⸴ ") + " ▘"
+		code := "⦿ " + glyphEmitExpr(e.Callee) + " ▝ " + strings.Join(args, "⸴ ") + " ▘"
 		if e.Init != nil {
-			code += " " + fgEmitExpr(e.Init)
+			code += " " + glyphEmitExpr(e.Init)
 		}
 		return code
 
 	case *subsidia.ExprCede:
-		return "⋆ " + fgEmitExpr(e.Arg)
+		return "⋆ " + glyphEmitExpr(e.Arg)
 
 	case *subsidia.ExprQua:
-		return fgEmitExpr(e.Expr) + " ⦶ " + fgEmitTypus(e.Typus)
+		return glyphEmitExpr(e.Expr) + " ⦶ " + glyphEmitTypus(e.Typus)
 
 	case *subsidia.ExprInnatum:
-		return fgEmitExpr(e.Expr) + " ⦵ " + fgEmitTypus(e.Typus)
+		return glyphEmitExpr(e.Expr) + " ⦵ " + glyphEmitTypus(e.Typus)
 
 	case *subsidia.ExprPostfixNovum:
-		return fgEmitExpr(e.Expr) + " ⦿ " + fgEmitTypus(e.Typus)
+		return glyphEmitExpr(e.Expr) + " ⦿ " + glyphEmitTypus(e.Typus)
 
 	case *subsidia.ExprFinge:
 		fields := []string{}
@@ -690,9 +690,9 @@ func fgEmitExpr(expr subsidia.Expr) string {
 			if lit, ok := p.Key.(*subsidia.ExprLittera); ok {
 				key = toBraille(lit.Valor)
 			} else {
-				key = fgEmitExpr(p.Key)
+				key = glyphEmitExpr(p.Key)
 			}
-			fields = append(fields, key+" ∶ "+fgEmitExpr(p.Valor))
+			fields = append(fields, key+" ∶ "+glyphEmitExpr(p.Valor))
 		}
 		return "⦺ " + toBraille(e.Variant) + " ▐ " + strings.Join(fields, "⸴ ") + " ▌"
 
@@ -707,7 +707,7 @@ func fgEmitExpr(expr subsidia.Expr) string {
 			b.WriteString(toBraille(part))
 			if i < len(e.Args) {
 				b.WriteString("§")
-				b.WriteString(fgEmitExpr(e.Args[i]))
+				b.WriteString(glyphEmitExpr(e.Args[i]))
 				b.WriteString("§")
 			}
 		}
@@ -715,8 +715,8 @@ func fgEmitExpr(expr subsidia.Expr) string {
 		return b.String()
 
 	case *subsidia.ExprAmbitus:
-		start := fgEmitExpr(e.Start)
-		end := fgEmitExpr(e.End)
+		start := glyphEmitExpr(e.Start)
+		end := glyphEmitExpr(e.End)
 		if e.Inclusive {
 			return start + " ≼ " + end
 		}
@@ -727,22 +727,22 @@ func fgEmitExpr(expr subsidia.Expr) string {
 	}
 }
 
-func fgEmitTypus(typus subsidia.Typus) string {
+func glyphEmitTypus(typus subsidia.Typus) string {
 	switch t := typus.(type) {
 	case *subsidia.TypusNomen:
-		if kw, ok := fgKeywords[t.Nomen]; ok {
+		if kw, ok := glyphKeywords[t.Nomen]; ok {
 			return kw
 		}
 		return toBraille(t.Nomen)
 	case *subsidia.TypusNullabilis:
-		return fgEmitTypus(t.Inner) + "⸮"
+		return glyphEmitTypus(t.Inner) + "⸮"
 	case *subsidia.TypusGenericus:
 		args := []string{}
 		for _, arg := range t.Args {
-			args = append(args, fgEmitTypus(arg))
+			args = append(args, glyphEmitTypus(arg))
 		}
 		name := t.Nomen
-		if kw, ok := fgKeywords[name]; ok {
+		if kw, ok := glyphKeywords[name]; ok {
 			name = kw
 		} else {
 			name = toBraille(name)
@@ -751,13 +751,13 @@ func fgEmitTypus(typus subsidia.Typus) string {
 	case *subsidia.TypusFunctio:
 		args := []string{}
 		for _, p := range t.Params {
-			args = append(args, fgEmitTypus(p))
+			args = append(args, glyphEmitTypus(p))
 		}
-		return "▝ " + strings.Join(args, "⸴ ") + " ▘ → " + fgEmitTypus(t.Returns)
+		return "▝ " + strings.Join(args, "⸴ ") + " ▘ → " + glyphEmitTypus(t.Returns)
 	case *subsidia.TypusUnio:
 		members := []string{}
 		for _, m := range t.Members {
-			members = append(members, fgEmitTypus(m))
+			members = append(members, glyphEmitTypus(m))
 		}
 		return strings.Join(members, " ∨ ")
 	case *subsidia.TypusLitteralis:
@@ -767,18 +767,18 @@ func fgEmitTypus(typus subsidia.Typus) string {
 	}
 }
 
-func fgEmitParam(param subsidia.Param) string {
+func glyphEmitParam(param subsidia.Param) string {
 	rest := ""
 	if param.Rest {
 		rest = "⋯"
 	}
 	typ := ""
 	if param.Typus != nil {
-		typ = " ∶ " + fgEmitTypus(param.Typus)
+		typ = " ∶ " + glyphEmitTypus(param.Typus)
 	}
 	def := ""
 	if param.Default != nil {
-		def = " ← " + fgEmitExpr(param.Default)
+		def = " ← " + glyphEmitExpr(param.Default)
 	}
 	return rest + toBraille(param.Nomen) + typ + def
 }
