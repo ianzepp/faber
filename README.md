@@ -18,7 +18,7 @@ You don't need an IR to generate TypeScript. You need one to generate Rust witho
 Faber Romanus is an **intermediate representation** optimized for LLM generation and human review.
 
 ```
-ex items pro item {
+ex items fixum item {
     si item.price > 100 {
         scribe item.name
     }
@@ -33,7 +33,7 @@ The workflow: LLM drafts Faber → Human approves → Compiler emits production 
 
 ## Why It Works
 
-**No ecosystem problem.** Faber compiles to the target language, so you use its libraries directly. `ex hono importa Hono` becomes `import { Hono } from 'hono'`. No need to rewrite npm/PyPI/crates.io in a new language.
+**No ecosystem problem.** Faber compiles to the target language, so you use its libraries directly. `§ ex "hono" importa Hono` becomes `import { Hono } from 'hono'`. No need to rewrite npm/PyPI/crates.io in a new language.
 
 **Grammar designed for LLMs.** The [EBNF.md](EBNF.md) specification is built for LLM consumption: formal grammar, type tables, keyword mappings. Trials show models achieve 96-98% accuracy after reading the grammar specification alone — no prose documentation required.
 
@@ -49,28 +49,38 @@ The [faber-trials](https://github.com/ianzepp/faber-trials) research harness tes
 
 ~13,000 trials across 17 models, testing Faber↔TypeScript translation tasks:
 
-| Finding | Result |
-|---------|--------|
-| **Faber is learnable** | 11 of 12 models achieve 86%+ accuracy with grammar-only context |
-| **Grammar beats prose** | Formal EBNF (87%) matches verbose docs (87%), outperforms minimal (83%) |
-| **Reading > Writing** | Models score 90-95% on Faber→TS but 54-65% on TS→Faber |
-| **Coding models are cost-effective** | qwen3-coder (96%) matches gpt-4o (98%) at 1/10th cost |
+| Finding                              | Result                                                                  |
+| ------------------------------------ | ----------------------------------------------------------------------- |
+| **Faber is learnable**               | 11 of 12 models achieve 86%+ accuracy with grammar-only context         |
+| **Grammar beats prose**              | Formal EBNF (87%) matches verbose docs (87%), outperforms minimal (83%) |
+| **Reading > Writing**                | Models score 90-95% on Faber→TS but 54-65% on TS→Faber                  |
+| **Coding models are cost-effective** | qwen3-coder (96%) matches gpt-4o (98%) at 1/10th cost                   |
 
 Top performers with grammar-only context:
 
-| Model | Accuracy |
-|-------|----------|
-| gpt-4o | 98% |
-| claude-3.5-sonnet | 98% |
-| qwen3-coder | 96% |
-| llama-3.1-70b | 95% |
-| deepseek-v3.1 | 95% |
+| Model             | Accuracy |
+| ----------------- | -------- |
+| gpt-4o            | 98%      |
+| claude-3.5-sonnet | 98%      |
+| qwen3-coder       | 96%      |
+| llama-3.1-70b     | 95%      |
+| deepseek-v3.1     | 95%      |
 
 **What this validates**: LLMs can learn Faber syntax from a formal grammar specification. TypeScript was used for grading (mature tooling), but the value proposition is strongest for systems languages where direct generation is error-prone.
 
 **Open questions**: Do Latin keywords help, or is it just the regular structure? (Faber-English ablation planned.) How do error rates compare for Faber→Zig vs direct Zig generation?
 
 See [faber-trials/docs/framework-1.1-results.md](https://github.com/ianzepp/faber-trials/blob/main/docs/framework-1.1-results.md) for methodology, or [faber-trials/thesis.md](https://github.com/ianzepp/faber-trials/blob/main/thesis.md) for the research strategy.
+
+## The § Symbol
+
+Faber uses the `§` symbol as a distinctive marker for declarative constructs:
+
+- **String formatting**: `scriptum("Hello, §!", name)` → `"Hello, World!"`
+- **Imports**: `§ ex "hono" importa Hono` → `import { Hono } from 'hono'`
+- **File-level directives**: `§ dependentia "hono" github "honojs/hono#main" via "."`
+
+The `§` symbol (section marker) distinguishes file-level configuration and imports from executable code. Use `@` for code annotations like `@ futura`, `@ radix`, `@ verte`.
 
 ## Principles
 
@@ -86,53 +96,58 @@ See [faber-trials/docs/framework-1.1-results.md](https://github.com/ianzepp/fabe
 
 ```bash
 bun install
-bun run build                                             # Build the compiler
-bun run faber compile exempla/fundamenta/salve.fab        # TypeScript (default)
-bun run faber compile exempla/fundamenta/salve.fab -t zig # Zig
-bun run faber run exempla/fundamenta/salve.fab            # Compile and run
+bun run build                                             # Build all compilers
+./opus/bin/nanus-go compile fons/exempla/salve-munde.fab -t ts  # TypeScript (recommended)
+./opus/bin/nanus-go compile fons/exempla/salve-munde.fab -t go  # Go (recommended)
+./opus/bin/faber run fons/exempla/salve-munde.fab         # Legacy: compile and run (TS only)
 bun test                                                  # Run tests
 ```
 
 ## Project Stats
 
-| Component | Lines | Files | Description |
-|-----------|------:|------:|-------------|
-| **Compiler (faber)** | 35,732 | 334 | Reference compiler in TypeScript |
-| **Bootstrap (rivus)** | 24,541 | 204 | Self-hosting compiler in Faber |
-| **Tests** | 7,128 | — | Test infrastructure |
-| **Test Specs** | 18,271 | — | YAML test definitions (3,267 passing) |
-| **Core Phases** | 9,392 | 3 | Tokenizer, parser, semantic analyzer |
-| **Codegen** | 17,592 | 340 | Code generators for 6 targets |
-| **Documentation** | 4,189 | — | Grammar spec + prose tutorials |
-| **Examples** | 286 | 4 | Sample Faber programs |
-| **Research** | 2,087 | — | LLM learnability harness |
-| **Total** | **119,218** | **885** | Complete implementation |
+| Component             |       Lines |   Files | Description                                   |
+| --------------------- | ----------: | ------: | --------------------------------------------- |
+| **Compiler (faber)**  |      34,729 |     141 | Reference compiler in TypeScript (deprecated) |
+| **Bootstrap (rivus)** |      35,751 |     312 | Self-hosting compiler in Faber                |
+| **Micro-compilers**   |             |         |                                               |
+|   **nanus-ts**        |             |         | TypeScript compiler in TypeScript             |
+|   **nanus-go**        |             |         | Go compiler in Go                             |
+|   **glyph-go**        |             |         | Fun translator in Go                          |
+| **Tests**             |      12,002 |       — | Test infrastructure                           |
+| **Test Specs**        |      19,573 |       — | YAML test definitions (0 passing)             |
+| **Core Phases**       |       5,897 |       3 | Tokenizer, parser, semantic analyzer          |
+| **Codegen**           |       7,957 |     171 | Code generators for 3 targets                 |
+| **Documentation**     |       5,345 |       — | Grammar spec + prose tutorials                |
+| **Examples**          |           0 |       0 | Sample Faber programs                         |
+| **Total**             | **121,254** | **627** | Complete implementation                       |
 
-**Compilation Targets:** TypeScript, Zig, Python, Rust, C++, Faber (round-trip)
+**Primary Compiler:** nanus-go (Go, supports -t ts and -t go targets)
+**Compilation Targets:** TypeScript, Go, Faber (round-trip)
 
 ## Block Syntax Patterns
 
-Faber uses a consistent `keyword expr VERB name { body }` pattern for scoped constructs:
+Faber uses a consistent `keyword expr VERB name { body }` pattern for scoped constructs. Note: `pro` bindings have been replaced with explicit `fixum`/`varia` declarations:
 
-| Construct         | Syntax                                   | Binding | Purpose        |
-| ----------------- | ---------------------------------------- | ------- | -------------- |
-| `ex...pro`        | `ex expr pro name { }`                   | `name`  | iterate values |
-| `ex...fiet`       | `ex expr fiet name { }`                  | `name`  | async iterate  |
-| `de...pro`        | `de expr pro name { }`                   | `name`  | iterate keys   |
-| `cura...fit`      | `cura expr fit name { }`                 | `name`  | resource scope |
-| `cura cede...fit` | `cura cede expr fit name { }`            | `name`  | async acquire  |
-| `probandum`       | `probandum "label" { }`                  | —       | test suite     |
-| `proba`           | `proba "label" { }`                      | —       | test case      |
-| `cura ante`       | `cura ante { }`                          | —       | before each    |
-| `cura post`       | `cura post { }`                          | —       | after each     |
-| `tempta...cape`   | `tempta { } cape err { }`                | `err`   | error handling |
-| `fac...cape`      | `fac { } cape err { }`                   | `err`   | scoped block   |
-| `dum`             | `dum expr { }`                           | —       | while loop     |
-| `si`              | `si expr { }`                            | —       | conditional    |
-| `custodi`         | `custodi { si expr { } }`                | —       | guard clauses  |
-| `elige`           | `elige expr { casu val { } }`              | —       | switch         |
-| `discerne`        | `discerne expr { casu Variant pro x { } }` | `x`     | pattern match  |
-| `in`              | `in expr { }`                            | —       | mutation scope |
+| Construct       | Syntax                                    | Binding | Purpose        |
+| --------------- | ----------------------------------------- | ------- | -------------- |
+| `ex...fixum`    | `ex expr fixum name { }`                  | `name`  | iterate values |
+| `ex...varia`    | `ex expr varia name { }`                  | `name`  | iterate values |
+| `de...fixum`    | `de expr fixum name { }`                  | `name`  | iterate keys   |
+| `de...varia`    | `de expr varia name { }`                  | `name`  | iterate keys   |
+| `cura...fixum`  | `cura expr fixum name { }`                | `name`  | resource scope |
+| `cura...varia`  | `cura expr varia name { }`                | `name`  | resource scope |
+| `probandum`     | `probandum "label" { }`                   | —       | test suite     |
+| `proba`         | `proba "label" { }`                       | —       | test case      |
+| `praepara`      | `praepara { }`                            | —       | setup          |
+| `postpara`      | `postpara { }`                            | —       | teardown       |
+| `tempta...cape` | `tempta { } cape err { }`                 | `err`   | error handling |
+| `fac...cape`    | `fac { } cape err { }`                    | `err`   | scoped block   |
+| `dum`           | `dum expr { }`                            | —       | while loop     |
+| `si`            | `si expr { }`                             | —       | conditional    |
+| `custodi`       | `custodi { si expr { } }`                 | —       | guard clauses  |
+| `elige`         | `elige expr { casu val { } }`             | —       | switch         |
+| `discerne`      | `discerne expr { casu Variant ut x { } }` | `x`     | pattern match  |
+| `in`            | `in expr { }`                             | —       | mutation scope |
 
 ## Primitive Types
 
@@ -152,28 +167,32 @@ Faber uses a consistent `keyword expr VERB name { body }` pattern for scoped con
 
 ## Return Type Verbs
 
-Function return types use Latin verb forms of `fio` ("to become") to encode async and generator semantics:
+Function return types use arrow syntax (`->`) with optional annotations for async and generator semantics:
 
-| Verb    | Async | Generator | Meaning            | Example                         |
-| ------- | :---: | :-------: | ------------------ | ------------------------------- |
-| `fit`   |  no   |    no     | "it becomes"       | `functio parse() fit numerus`   |
-| `fiet`  |  yes  |    no     | "it will become"   | `functio fetch() fiet textus`   |
-| `fiunt` |  no   |    yes    | "they become"      | `functio items() fiunt numerus` |
-| `fient` |  yes  |    yes    | "they will become" | `functio stream() fient datum`  |
+```fab
+functio parse() -> numerus                        # sync function
+@ futura
+functio fetch() -> textus                         # async function
+@ cursor
+functio items() -> numerus                         # generator function
+@ futura
+@ cursor
+functio stream() -> datum                          # async generator
+```
 
-The verb alone carries the semantic — no `futura` or `cursor` prefix needed. Arrow syntax (`->`) is also supported but requires explicit prefixes for async/generator behavior.
+The `@ futura` annotation marks async functions, `@ cursor` marks generators. Arrow syntax (`->`) is the standard return type syntax.
 
 ## Method Morphology
 
 Standard library methods use Latin verb conjugations to encode behavior. Instead of separate names like `filter`/`filterAsync`/`filterNew`, Faber uses different endings on the same stem:
 
-| Form | Ending | Behavior | Example |
-|------|--------|----------|---------|
-| **Imperative** | -a/-e/-i | Mutates in place, sync | `adde`, `filtra` |
-| **Perfect** | -ata/-ita/-sa | Returns new value, sync | `addita`, `filtrata`, `inversa` |
-| **Future Indicative** | -abit/-ebit | Mutates in place, async | `filtrabit`, `scribet` |
-| **Future Active** | -atura/-itura | Returns new value, async | `filtratura` |
-| **Present Participle** | -ans/-ens | Streaming/generator | `filtrans`, `legens` |
+| Form                   | Ending        | Behavior                 | Example                         |
+| ---------------------- | ------------- | ------------------------ | ------------------------------- |
+| **Imperative**         | -a/-e/-i      | Mutates in place, sync   | `adde`, `filtra`                |
+| **Perfect**            | -ata/-ita/-sa | Returns new value, sync  | `addita`, `filtrata`, `inversa` |
+| **Future Indicative**  | -abit/-ebit   | Mutates in place, async  | `filtrabit`, `scribet`          |
+| **Future Active**      | -atura/-itura | Returns new value, async | `filtratura`                    |
+| **Present Participle** | -ans/-ens     | Streaming/generator      | `filtrans`, `legens`            |
 
 **Collections** use morphology for mutation vs allocation:
 
@@ -190,13 +209,13 @@ solum.leget(path)   # async read (future)
 solum.legens(path)  # streaming read (participle)
 ```
 
-The compiler validates morphology: if you call `lista.additura(x)` but only imperative and perfect forms are declared, you get a warning. See [fons/grammatica/morphologia.md](fons/grammatica/morphologia.md) for the complete specification.
+The morphology system is implemented via `@ radix` and `@ verte` annotations in the standard library definitions. `@ radix` declares the verb stem and valid morphological forms, while `@ verte` provides target-specific code generation for each form. The compiler validates morphology usage against declared forms. See [fons/grammatica/morphologia.md](fons/grammatica/morphologia.md) for the complete specification.
 
 ## Example
 
 ```fab
 functio salve(nomen) -> textus {
-    redde "Salve, " + nomen + "!"
+    redde scriptum("Salve, §!", nomen)
 }
 
 fixum nomen = "Mundus"

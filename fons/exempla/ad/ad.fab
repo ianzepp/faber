@@ -1,2 +1,32 @@
-# TODO
-incipit {}
+# Ad statement - endpoint dispatch
+# NOTE: Currently parsed but codegen not yet implemented
+# See consilia/futura/ad.md for future implementation details
+
+incipit {
+    # Basic endpoint dispatch with sync handler
+    ad "fasciculus:lege" ("hello.txt") fit textus pro content {
+        scribe scriptum("File contents: §", content)
+    }
+
+    # Async endpoint dispatch
+    ad "caelum:pete" ("https://api.example.com/data") fiet objectum pro response {
+        fixum data = cede response.json()
+        scribe data
+    }
+
+    # Multiple arguments
+    ad "processus:executa" ("ls", "-la") fiunt textus pro output {
+        scribe output
+    }
+
+    # Complex dispatch with error handling
+    ad "rete:connecta" ("127.0.0.1", 8080) fit rete.Socket pro socket {
+        scribe "Connected successfully"
+        socket.claude()
+    } cape err {
+        scribe scriptum("Connection failed: §", err.nuntius)
+    }
+
+    # Endpoint dispatch without handler (fire-and-forget)
+    ad "notificatio:mitte" ("User logged in", userId)
+}

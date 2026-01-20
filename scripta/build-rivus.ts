@@ -19,37 +19,66 @@ import { mkdir, symlink, unlink } from 'fs/promises';
 import { basename, dirname, join, relative } from 'path';
 import { $ } from 'bun';
 
+// =============================================================================
+// CONSTANTS AND TYPES
+// =============================================================================
+
 type Compiler = 'faber' | 'nanus-ts' | 'nanus-go';
 type Target = 'ts' | 'go';
+
 const VALID_COMPILERS: Compiler[] = ['faber', 'nanus-ts', 'nanus-go'];
 const VALID_TARGETS: Target[] = ['ts', 'go'];
 
-// Parse arguments
+// =============================================================================
+// CONFIGURATION
+// =============================================================================
+
 let compiler: Compiler = 'faber';
 let target: Target = 'ts';
 let skipTypecheck = false;
 
-const args = process.argv.slice(2);
-for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    if (arg === '-c' || arg === '--compiler') {
-        const c = args[++i] as Compiler;
-        if (!VALID_COMPILERS.includes(c)) {
-            console.error(`Unknown compiler '${c}'. Valid: ${VALID_COMPILERS.join(', ')}`);
-            process.exit(1);
+/**
+ * Parse command line arguments
+ */
+function parseArgs() {
+    const args = process.argv.slice(2);
+    for (let i = 0; i < args.length; i++) {
+        const arg = args[i];
+        switch (arg) {
+            case '-c':
+            case '--compiler':
+                const c = args[++i] as Compiler;
+                if (!VALID_COMPILERS.includes(c)) {
+                    console.error(`Unknown compiler '${c}'. Valid: ${VALID_COMPILERS.join(', ')}`);
+                    process.exit(1);
+                }
+                compiler = c;
+                break;
+            case '-t':
+            case '--target':
+                const t = args[++i] as Target;
+                if (!VALID_TARGETS.includes(t)) {
+                    console.error(`Unknown target '${t}'. Valid: ${VALID_TARGETS.join(', ')}`);
+                    process.exit(1);
+                }
+                target = t;
+                break;
+            case '--no-typecheck':
+                skipTypecheck = true;
+                break;
+            default:
+                console.error(`Unknown argument: ${arg}`);
+                console.error('Usage: build-rivus.ts [-c compiler] [-t target] [--no-typecheck]');
+                process.exit(1);
         }
-        compiler = c;
-    } else if (arg === '-t' || arg === '--target') {
-        const t = args[++i] as Target;
-        if (!VALID_TARGETS.includes(t)) {
-            console.error(`Unknown target '${t}'. Valid: ${VALID_TARGETS.join(', ')}`);
-            process.exit(1);
-        }
-        target = t;
-    } else if (arg === '--no-typecheck') {
-        skipTypecheck = true;
     }
 }
+
+parseArgs();
+
+// =============================================================================
+// PATH CONFIGURATION
+// =============================================================================
 
 const ROOT = join(import.meta.dir, '..');
 const SOURCE = join(ROOT, 'fons', 'rivus');
@@ -59,7 +88,9 @@ const OUTPUT = target === 'go'
 const COMPILER_BIN = join(ROOT, 'opus', 'bin', compiler);
 const FILE_EXT = target === 'go' ? '.go' : '.ts';
 
-// nanus-ts and nanus-go use stdin/stdout, faber/nanus use file args
+// Different compilers use different I/O methods:
+// - nanus-ts/nanus-go: streaming via stdin/stdout
+// - faber: file-based arguments
 const useStdinStdout = compiler === 'nanus-ts' || compiler === 'nanus-go';
 
 interface CompileResult {
@@ -68,35 +99,43 @@ interface CompileResult {
     error?: string;
 }
 
+/**
+ * Compile a single .fab file using the configured compiler
+ */
 async function compileFile(fabPath: string): Promise<CompileResult> {
     const relPath = relative(SOURCE, fabPath);
     const outPath = join(OUTPUT, relPath.replace(/\.fab$/, FILE_EXT));
 
     // Calculate Go package name from directory
-    // Root files (e.g., rivus.fab) → "main", subdirs → directory name
+    // Root files (e.g., rivus.fab) -> "main", subdirs -> directory name
     const relDir = dirname(relPath);
     const pkg = relDir === '.' ? 'main' : basename(relDir);
 
     try {
+        // Ensure output directory exists
         await mkdir(dirname(outPath), { recursive: true });
+
+        let result: { exitCode: number; stderr: Buffer; stdout?: Buffer };
 
         if (useStdinStdout) {
             // nanus-ts/nanus-go: cat file | compiler emit -t target [-p pkg] > output
-            const result = target === 'go'
+            result = target === 'go'
                 ? await $`cat ${fabPath} | ${COMPILER_BIN} emit -t ${target} -p ${pkg}`.nothrow().quiet()
                 : await $`cat ${fabPath} | ${COMPILER_BIN} emit -t ${target}`.nothrow().quiet();
-            if (result.exitCode !== 0) {
-                const stderr = result.stderr.toString().trim();
-                throw new Error(stderr || `Exit code ${result.exitCode}`);
-            }
-            await Bun.write(outPath, result.stdout);
         } else {
-            // faber: compiler compile file -o output
-            const result = await $`${COMPILER_BIN} compile ${fabPath} -o ${outPath}`.nothrow().quiet();
-            if (result.exitCode !== 0) {
-                const stderr = result.stderr.toString().trim();
-                throw new Error(stderr || `Exit code ${result.exitCode}`);
-            }
+            // faber: compile with file arguments
+            result = await $`${COMPILER_BIN} compile ${fabPath} -o ${outPath}`.nothrow().quiet();
+        }
+
+        // Check for compilation errors
+        if (result.exitCode !== 0) {
+            const stderr = result.stderr.toString().trim();
+            throw new Error(stderr || `Exit code ${result.exitCode}`);
+        }
+
+        // Write output for stdin/stdout compilers
+        if (useStdinStdout && result.stdout) {
+            await Bun.write(outPath, result.stdout);
         }
 
         return { file: relPath, success: true };
@@ -107,7 +146,8 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
 }
 
 async function typeCheck(): Promise<boolean> {
-    const result = await $`npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler ${join(OUTPUT, 'rivus.ts')}`.nothrow();
+    const result =
+        await $`npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler ${join(OUTPUT, 'rivus.ts')}`.nothrow();
     if (result.exitCode !== 0) {
         console.error(result.stdout.toString());
         return false;
@@ -162,15 +202,26 @@ async function buildExecutable(): Promise<void> {
 
     // Create backward-compat symlink: rivus -> rivus-ts
     const symlinkPath = join(binDir, 'rivus');
-    try { await unlink(symlinkPath); } catch { /* ignore */ }
+    try {
+        await unlink(symlinkPath);
+    } catch {
+        /* ignore */
+    }
     await symlink('rivus-ts', symlinkPath);
 }
 
+/**
+ * Main build function that orchestrates the rivus compilation process
+ */
 async function main() {
     const start = performance.now();
 
-    // Check compiler binary exists
-    if (!await Bun.file(COMPILER_BIN).exists()) {
+    // =============================================================================
+    // VALIDATION
+    // =============================================================================
+
+    // Verify compiler binary exists
+    if (!(await Bun.file(COMPILER_BIN).exists())) {
         console.error(`Error: ${compiler} binary not found at opus/bin/${compiler}`);
         console.error(`Run \`bun run build:${compiler}\` first.`);
         process.exit(1);
@@ -178,57 +229,81 @@ async function main() {
 
     console.log(`Using compiler: ${compiler}, target: ${target}`);
 
-    // Find all .fab files
+    // =============================================================================
+    // FILE DISCOVERY AND COMPILATION
+    // =============================================================================
+
+    // Find all .fab files in the source directory
+    console.log('Discovering source files...');
     const glob = new Glob('**/*.fab');
     const files: string[] = [];
     for await (const file of glob.scan({ cwd: SOURCE, absolute: true })) {
         files.push(file);
     }
+    console.log(`Found ${files.length} .fab files`);
 
-    // Compile all in parallel
+    // Compile all files in parallel for better performance
+    console.log('Compiling files...');
     const results = await Promise.all(files.map(f => compileFile(f)));
+
+    // =============================================================================
+    // RESULTS AND ERROR REPORTING
+    // =============================================================================
 
     const elapsed = performance.now() - start;
     const succeeded = results.filter(r => r.success).length;
-    const failed = results.filter(r => !r.success);
+    const failedResults = results.filter(r => !r.success);
 
-    // Report failures
-    for (const f of failed) {
-        console.error(`${f.file}: ${f.error}`);
+    // Report compilation failures
+    if (failedResults.length > 0) {
+        console.error('\nCompilation failures:');
+        for (const f of failedResults) {
+            console.error(`  ${f.file}: ${f.error}`);
+        }
     }
 
     // Summary
     const relOut = relative(ROOT, OUTPUT);
-    console.log(`Compiled ${succeeded}/${results.length} files to ${relOut}/ (${elapsed.toFixed(0)}ms)`);
+    console.log(`\nCompiled ${succeeded}/${results.length} files to ${relOut}/ (${elapsed.toFixed(0)}ms)`);
 
-    if (failed.length > 0) {
+    if (failedResults.length > 0) {
         process.exit(1);
     }
 
-    // TypeScript-specific post-processing
-    if (target === 'ts') {
-        // Copy HAL native implementations
-        await copyHalImplementations();
+    // =============================================================================
+    // TARGET-SPECIFIC POST-PROCESSING
+    // =============================================================================
 
-        // Type check (TypeScript only)
+    if (target === 'ts') {
+        console.log('\nTypeScript post-processing:');
+
+        // Copy HAL implementations needed for runtime
+        await copyHalImplementations();
+        console.log('  Copied HAL implementations');
+
+        // Type check the generated TypeScript
         if (!skipTypecheck) {
-            console.log('Type checking...');
+            console.log('  Type checking...');
             const tcOk = await typeCheck();
             if (!tcOk) {
-                console.error('TypeScript type check failed');
+                console.error('  TypeScript type check failed');
                 process.exit(1);
             }
-            console.log('Type check passed');
+            console.log('  Type check passed');
         }
 
+        // Inject runtime implementations for external functions
         await injectExternImpls();
+        console.log('  Injected external implementations');
 
-        console.log('Building rivus executable...');
+        // Build the final executable
+        console.log('  Building rivus executable...');
         await buildExecutable();
-        console.log('Built opus/bin/rivus-ts');
+        console.log('  Built opus/bin/rivus-ts');
     } else {
-        // Go output - just report success, user can build manually
-        console.log(`Go source generated in ${relative(ROOT, OUTPUT)}/`);
+        // Go output - compilation is manual for now
+        console.log(`\nGo source generated in ${relative(ROOT, OUTPUT)}/`);
+        console.log('Build manually with: go build .');
     }
 }
 
