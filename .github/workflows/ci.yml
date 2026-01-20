@@ -1,24 +1,32 @@
 name: CI
 
+# Triggers: Pull requests and manual dispatch
 on:
-  pull_request:
-  workflow_dispatch:
+    pull_request:
+    workflow_dispatch:
 
+# Build pipeline: norma -> nanus -> faber -> rivus -> artifex
+# Each stage depends on artifacts from the previous stage
 jobs:
-  build-norma:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bun run build:norma
-      - uses: actions/upload-artifact@v4
-        with:
-          name: norma-generated
-          path: |
-            fons/norma/index.json
-            fons/rivus/codegen/norma-registry.gen.fab
+    # Stage 1: Generate norma registry (stdlib definitions)
+    # Output: norma/index.json, rivus/codegen/norma-registry.gen.fab
+    build-norma:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: oven-sh/setup-bun@v2
+            - run: bun install --frozen-lockfile
+            - run: bun run build:norma
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: norma-generated
+                  path: |
+                      fons/norma/index.json
+                      fons/rivus/codegen/norma-registry.gen.fab
 
+  # Stage 2: Build faber compiler (TypeScript reference implementation)
+  # Input: norma-generated artifacts
+  # Output: faber executable, faber codegen artifacts
   build-faber:
     needs: build-norma
     runs-on: ubuntu-latest
@@ -26,6 +34,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
+      # Restore norma artifacts
       - uses: actions/download-artifact@v4
         with:
           name: norma-generated
@@ -40,6 +49,9 @@ jobs:
           name: faber-generated
           path: fons/faber/codegen/norma.gen.ts
 
+  # Stage 3: Build rivus compiler (Faber self-hosting)
+  # Input: faber executable, norma artifacts, faber-generated artifacts
+  # Output: rivus executable
   build-rivus:
     needs: build-faber
     runs-on: ubuntu-latest
@@ -47,6 +59,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
+      # Restore previous stage artifacts
       - uses: actions/download-artifact@v4
         with:
           name: opus-faber
@@ -64,6 +77,9 @@ jobs:
           name: opus-rivus
           path: opus/
 
+  # Stage 4: Build artifex (rivus compiling itself)
+  # Input: rivus executable, all previous artifacts
+  # Output: final self-hosted compiler
   build-artifex:
     needs: build-rivus
     runs-on: ubuntu-latest
@@ -71,6 +87,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
+      # Restore all previous artifacts
       - uses: actions/download-artifact@v4
         with:
           name: opus-rivus
@@ -88,4 +105,3 @@ jobs:
         with:
           name: opus-artifex
           path: opus/
-
