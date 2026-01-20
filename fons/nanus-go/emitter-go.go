@@ -56,8 +56,8 @@ func EmitGo(mod *subsidia.Modulus, pkg string) string {
 
 	var b strings.Builder
 
-	// Package declaration
-	b.WriteString("package " + pkg + "\n\n")
+	// Package declaration (sanitized for Go reserved words)
+	b.WriteString("package " + goSanitizePackage(pkg) + "\n\n")
 
 	// Collect imports
 	imports := collectImports(mod)
@@ -810,4 +810,32 @@ func capitalize(s string) string {
 		return s
 	}
 	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+// goSanitizePackage converts a directory name to a valid Go package name.
+func goSanitizePackage(name string) string {
+	// Replace hyphens with underscores
+	name = strings.ReplaceAll(name, "-", "_")
+
+	// Map Go reserved keywords to safe alternatives
+	reserved := map[string]string{
+		"go":        "golang",
+		"type":      "typus",
+		"map":       "tabula",
+		"func":      "functio",
+		"var":       "varia",
+		"const":     "fixa",
+		"import":    "importa",
+		"package":   "modulus",
+		"interface": "pactum",
+		"struct":    "genus",
+		"range":     "ambitus",
+		"select":    "elige",
+		"chan":      "canalis",
+		"default":   "defalta",
+	}
+	if mapped, ok := reserved[name]; ok {
+		return mapped
+	}
+	return name
 }
