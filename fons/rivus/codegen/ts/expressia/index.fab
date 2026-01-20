@@ -728,14 +728,14 @@ functio genReceiverSuffix(textus obj, bivalens optivum, bivalens nonNullum) -> t
     redde obj
 }
 
-functio genSectioAccess(textus obj, Expressia range, bivalens optivum, bivalens nonNullum, TsGenerator g) -> textus {
-    discerne range {
+functio genSectioAccess(textus obj, Expressia ambitus, bivalens optivum, bivalens nonNullum, TsGenerator g) -> textus {
+    discerne ambitus {
         casu AmbitusExpressia ut a {
             redde genAmbitusSlice(obj, a, optivum, nonNullum, g)
         }
         casu _ { }
     }
-    redde scriptum("§[§]", obj, genExpressia(range, g))
+    redde scriptum("§[§]", obj, genExpressia(ambitus, g))
 }
 
 functio genAmbitusSlice(textus obj, AmbitusExpressia a, bivalens optivum, bivalens nonNullum, TsGenerator g) -> textus {

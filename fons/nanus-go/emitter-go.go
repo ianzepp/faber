@@ -444,6 +444,23 @@ func (e *GoEmitter) emitExpr(expr subsidia.Expr) string {
 			// For simplicity, just emit left for now (TODO: proper handling)
 			return e.emitExpr(x.Sin)
 		}
+		// Handle inter (membership test) - value inter collection
+		if x.Signum == "inter" {
+			val := e.emitExpr(x.Sin)
+			// For array literals, expand to equality checks
+			if series, ok := x.Dex.(*subsidia.ExprSeries); ok {
+				if len(series.Elementa) == 0 {
+					return "false"
+				}
+				checks := []string{}
+				for _, elem := range series.Elementa {
+					checks = append(checks, val+" == "+e.emitExpr(elem))
+				}
+				return "(" + strings.Join(checks, " || ") + ")"
+			}
+			// For other expressions, use sliceContains helper
+			return "sliceContains(" + e.emitExpr(x.Dex) + ", " + val + ")"
+		}
 		return "(" + e.emitExpr(x.Sin) + " " + op + " " + e.emitExpr(x.Dex) + ")"
 
 	case *subsidia.ExprUnaria:
@@ -617,6 +634,28 @@ func (e *GoEmitter) emitExpr(expr subsidia.Expr) string {
 		}
 		return "New" + callee + "(" + strings.Join(args, ", ") + ")"
 
+	case *subsidia.ExprPostfixNovum:
+		// Postfix syntax: { field: value } novum Type
+		typeName := e.emitTypus(x.Typus)
+		// Strip pointer prefix since we add & ourselves
+		if strings.HasPrefix(typeName, "*") {
+			typeName = typeName[1:]
+		}
+		if obj, ok := x.Expr.(*subsidia.ExprObiectum); ok {
+			fields := []string{}
+			for _, p := range obj.Props {
+				key := ""
+				if lit, ok := p.Key.(*subsidia.ExprLittera); ok {
+					key = capitalize(lit.Valor)
+				} else {
+					key = e.emitExpr(p.Key)
+				}
+				fields = append(fields, key+": "+e.emitExpr(p.Valor))
+			}
+			return "&" + typeName + "{" + strings.Join(fields, ", ") + "}"
+		}
+		return "&" + typeName + "{" + e.emitExpr(x.Expr) + "}"
+
 	case *subsidia.ExprCede:
 		// No await in Go - just emit the expression
 		return e.emitExpr(x.Arg)
@@ -628,9 +667,6 @@ func (e *GoEmitter) emitExpr(expr subsidia.Expr) string {
 	case *subsidia.ExprInnatum:
 		// Type assertion/conversion
 		return e.emitTypus(x.Typus) + "(" + e.emitExpr(x.Expr) + ")"
-
-	case *subsidia.ExprPostfixNovum:
-		return "&" + e.emitTypus(x.Typus) + "{" + e.emitExpr(x.Expr) + "}"
 
 	case *subsidia.ExprFinge:
 		fields := []string{}
@@ -671,8 +707,20 @@ func (e *GoEmitter) emitExpr(expr subsidia.Expr) string {
 func (e *GoEmitter) emitTypus(typus subsidia.Typus) string {
 	switch t := typus.(type) {
 	case *subsidia.TypusNomen:
-		return goMapTypeName(t.Nomen)
+		name := goMapTypeName(t.Nomen)
+		// Genus types (structs) are always pointers in Go
+		if _, isGenus := e.ctx.GenusRegistry[t.Nomen]; isGenus {
+			return "*" + name
+		}
+		return name
 	case *subsidia.TypusNullabilis:
+		// For genus types, already emitted as pointer, so no extra *
+		if nomen, ok := t.Inner.(*subsidia.TypusNomen); ok {
+			if _, isGenus := e.ctx.GenusRegistry[nomen.Nomen]; isGenus {
+				return e.emitTypus(t.Inner)
+			}
+		}
+		// For primitives, add pointer
 		return "*" + e.emitTypus(t.Inner)
 	case *subsidia.TypusGenericus:
 		base := goMapTypeName(t.Nomen)
