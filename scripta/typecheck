@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
-# Type-check fons/faber source code
+# Type-check TypeScript source code
+#
+# Runs TypeScript compiler in check-only mode (--noEmit) to validate
+# types without generating output files. This is faster than a full build.
+#
+# Covers: fons/faber/ (main compiler), fons/proba/ (tests), and generated code
+# Excludes: archivum/, opus/, tmp/ (build artifacts)
+
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

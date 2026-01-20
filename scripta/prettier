@@ -1,11 +1,23 @@
 #!/usr/bin/env bash
 # Format source code with Prettier
+#
+# Formats TypeScript source files and YAML test specifications.
+# Use --check flag to validate formatting without making changes.
+#
+# Usage:
+#   ./scripta/prettier          # Format all files in-place
+#   ./scripta/prettier --check  # Check formatting (CI mode)
+#
+# Covers:
+#   - fons/**/*.ts (TypeScript source files)
+#   - proba/**/*.yaml (test specifications)
+
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 if [[ "${1:-}" == "--check" ]]; then
-    prettier --check "fons/**/*.ts" "proba/**/*.yaml"
+    prettier --check "fons/**/*.ts" "fons/**/*.fab" "fons/proba/**/*.yaml"
 else
-    prettier --write "fons/**/*.ts" "proba/**/*.yaml"
+    prettier --write "fons/**/*.ts" "fons/**/*.fab" "fons/proba/**/*.yaml"
 fi
