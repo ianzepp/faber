@@ -98,19 +98,14 @@ functio resolvere(lista<Symbolum> symbola) -> ParserResultatum {
     # Create Parsator to wire up parsing functions
     fixum r = novumParsator(p)
 
-    # Try to parse the program
-    tempta {
-        fixum programma = parseProgramma(r)
+    # Parse the program
+    # NOTE: No try/catch here. The parser collects errors in p.errores rather than
+    # throwing. Any panic (mori) indicates a bug that should crash, not be swallowed.
+    # This keeps rivus Go-compilable (no exception handling translation needed).
+    fixum programma = parseProgramma(r)
 
-        redde {
-            programma: programma,
-            errores: p.errores
-        } novum ParserResultatum
-    } cape e {
-        # Catastrophic failure - return nil program with errors
-        redde {
-            programma: nihil,
-            errores: p.errores
-        } novum ParserResultatum
-    }
+    redde {
+        programma: programma,
+        errores: p.errores
+    } novum ParserResultatum
 }

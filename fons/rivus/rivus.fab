@@ -1,12 +1,12 @@
 # RIVUS - Minimal Bootstrap Compiler Entry Point
 #
 # This is a stripped-down entry point for nanus compilation.
-# No norma/hal dependencies - uses Bun APIs directly.
+# Reads from stdin, writes to stdout. No file I/O dependencies.
 #
 # Usage:
-#   rivus lex hello.fab      # tokenize and dump tokens
-#   rivus parse hello.fab    # parse and dump AST
-#   rivus emit hello.fab     # compile to TypeScript
+#   cat hello.fab | rivus lex      # tokenize and dump tokens
+#   cat hello.fab | rivus parse    # parse and dump AST
+#   cat hello.fab | rivus emit     # compile to TypeScript
 
 § ex "./lexor/index" importa lexare
 § ex "./parser/index" importa resolvere
@@ -14,11 +14,7 @@
 § ex "./semantic/index" importa analyze
 § ex "./ast/positio" importa Locus
 
-# Bun globals (declared as external)
-@ externa
-fixum ignotum Bun
-
-# JSON globals (declared as external)
+# External globals
 @ externa
 fixum ignotum JSON
 
@@ -32,26 +28,20 @@ fixum ignotum console
 fixum ignotum readFileSync
 
 incipit {
-    fixum argv = process.argv qua lista<textus>     # resolves unknown type issue
+    fixum argv = process.argv qua lista<textus>
     fixum args = argv.sectio(2) qua lista<textus>
 
     si args.longitudo() == 0 {
-        console.log("Usage: rivus <command> <file>")
+        console.log("Usage: <source> | rivus <command>")
         console.log("Commands: lex, parse, emit")
         process.exit(0)
     }
 
     fixum command = args[0]
-    fixum file = args[1]
 
-    si nihil file {
-        console.error("Error: no input file")
-        process.exit(1)
-    }
-
-    # Read source file (sync)
-    fixum source = readFileSync(file, "utf-8") qua textus
-    fixum filename = file
+    # Read from stdin (fd 0)
+    fixum source = readFileSync(0, "utf-8") qua textus
+    fixum filename = "<stdin>"
 
     elige command {
         casu "lex" {

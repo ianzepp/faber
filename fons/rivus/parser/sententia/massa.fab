@@ -84,7 +84,6 @@ functio parseExpressiaSententia(Resolvitor r) -> Sententia {
 # GRAMMAR: program := statement*
 #
 # Parses statements until end of input.
-# Uses error recovery to handle malformed statements.
 @ publica
 functio parseProgramma(Resolvitor r) -> Programma {
     fixum p = r.parser()
@@ -103,13 +102,11 @@ functio parseProgramma(Resolvitor r) -> Programma {
             rumpe
         }
 
-        # Try to parse statement with error recovery
-        tempta {
-            corpus.adde(r.sententia())
-        } cape e {
-            # Error recovery: skip to next statement boundary
-            p.synchrona()
-        }
+        # Parse the next statement
+        # NOTE: No try/catch for error recovery. The parser records errors via
+        # p.addeError() and returns partial AST nodes rather than throwing.
+        # This keeps rivus Go-compilable (no exception handling translation needed).
+        corpus.adde(r.sententia())
     }
 
     # Extract accumulated § directives from parser

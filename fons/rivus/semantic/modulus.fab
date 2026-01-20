@@ -1,13 +1,8 @@
-# Modulus - Module Resolution for Local File Imports
+# Modulus - Module Resolution (DISABLED)
 #
-# Handles resolution of local .fab file imports during semantic analysis.
-# Provides path resolution, file loading, export extraction, and caching.
-#
-# Resolution rules:
-# - Paths starting with "./" or "../" are local file imports
-# - ".fab" extension is implicit and added automatically
-# - "norma" and "norma/*" are handled as compiler intrinsics (not files)
-# - Other paths pass through to target language (external packages)
+# NOTE: Multi-file resolution removed for Go compatibility. Rivus is now
+# stdin-only; an external bundler handles imports before compilation.
+# Path helpers and export extraction remain for compatibility.
 
 § ex "./typi" importa SemanticTypus, IGNOTUM, VACUUM, functioTypus, usitatumTypus, pactumTypus
 § ex "./typi" importa genusTypus, genericumTypus, primitivumTypus
@@ -18,24 +13,6 @@
 § ex "../ast/radix" importa Programma
 § ex "../ast/sententia" importa Sententia
 § ex "../ast/typus" importa TypusAnnotatio, TypusParametrum
-§ ex "../lexor/index" importa lexare, LexorResultatum
-§ ex "../parser/index" importa resolvere, ParserResultatum
-
-# ============================================================================
-# FILE I/O DECLARATIONS (extern - implementations injected post-build)
-# ============================================================================
-
-@ externa
-functio _readFileSync(textus via) -> textus
-
-@ externa
-functio _existsSync(textus via) -> bivalens
-
-@ externa
-functio _dirname(textus via) -> textus
-
-@ externa
-functio _resolve(textus basis, textus relativum) -> textus
 
 # ============================================================================
 # TYPES
@@ -111,27 +88,10 @@ functio resolveDependentiaPath(
 }
 
 # Resolve import path to absolute filesystem path
-# Returns nihil if file doesn't exist
+# NOTE: Disabled - rivus is stdin-only, bundler handles imports
 @ publica
 functio resolveViaModuli(textus fons, textus viaBasica) -> textus? {
-    # Get directory of importing file
-    fixum directorium = _dirname(viaBasica)
-
-    # Add .fab extension if missing
-    varia via = fons
-    si non via.endsWith(".fab") {
-        via = via + ".fab"
-    }
-
-    # Resolve to absolute path
-    fixum viaAbsoluta = _resolve(directorium, via)
-
-    # Check existence
-    si non _existsSync(viaAbsoluta) {
-        redde nihil
-    }
-
-    redde viaAbsoluta
+    redde nihil
 }
 
 # ============================================================================
@@ -362,14 +322,7 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
 # ============================================================================
 
 # Main entry point: resolve and load a local module
-# Returns nihil on error (file not found, parse error, etc.)
-#
-# Parameters:
-#   fons - import source string (e.g., "./utils")
-#   viaBasica - absolute path of the importing file
-#   cache - module cache (path -> resolved module)
-#   inProgressu - set of paths currently being resolved (for cycle detection)
-#
+# NOTE: Disabled - rivus is stdin-only, bundler handles imports
 @ publica
 functio resolveModulum(
     textus fons,
@@ -377,66 +330,5 @@ functio resolveModulum(
     tabula<textus, ModulusResolutum> cache,
     copia<textus> inProgressu
 ) -> ModulusResolutum? {
-    # Resolve to absolute path
-    fixum viaAbsoluta = resolveViaModuli(fons, viaBasica)
-    si nihil viaAbsoluta {
-        redde nihil  # File not found
-    }
-
-    fixum via = viaAbsoluta qua textus
-
-    # Check cache first
-    si nonnihil cache[via] {
-        redde cache[via]
-    }
-
-    # Check for cycles - return empty exports (JS/TS hoisting behavior)
-    si inProgressu.has(via) {
-        redde {
-            exporta: {} innatum tabula<textus, ModulusExportum>,
-            discretiones: {} innatum tabula<textus, DiscretioDeclInfo>,
-            via: via,
-            programma: nihil
-        } novum ModulusResolutum
-    }
-
-    # Mark as in progress
-    inProgressu.add(via)
-
-    # Load and parse
-    fixum sourceCode = _readFileSync(via)
-    fixum lexResult = lexare(sourceCode)
-    si lexResult.errores.longitudo() > 0 {
-        inProgressu.delete(via)
-        redde nihil  # Lexer error
-    }
-
-    fixum parseResult = resolvere(lexResult.symbola)
-    si parseResult.errores.longitudo() > 0 aut nihil parseResult.programma {
-        inProgressu.delete(via)
-        redde nihil  # Parse error
-    }
-
-    # Extract exports
-    fixum modulus = extraheExporta(parseResult.programma novum Programma, via)
-
-    # Cache before recursing (handles diamond dependencies)
-    cache[via] = modulus
-
-    # Recursively resolve child imports (for cycle detection)
-    ex (parseResult.programma novum Programma).corpus fixum stmt {
-        discerne stmt {
-            casu ImportaSententia ut imp {
-                si estLocaleImportum(imp.fons) {
-                    resolveModulum(imp.fons, via, cache, inProgressu)
-                }
-            }
-            casu _ { }
-        }
-    }
-
-    # Remove from in progress
-    inProgressu.delete(via)
-
-    redde modulus
+    redde nihil
 }
