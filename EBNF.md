@@ -8,7 +8,7 @@ Formal grammar for the Faber programming language. This is the authoritative spe
 
 ```ebnf
 program     := statement*
-statement   := importDecl | varDecl | funcDecl | genusDecl | pactumDecl
+statement   := directiveDecl | importDecl | varDecl | funcDecl | genusDecl | pactumDecl
              | typeAliasDecl | enumDecl | discretioDecl
              | ifStmt | whileStmt | exStmt | deStmt | inStmt
              | eligeStmt | discerneStmt | guardStmt | curaStmt
@@ -40,14 +40,14 @@ funcDecl     := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClaus
 paramList    := (typeParamDecl ',')* (parameter (',' parameter)*)?
 typeParamDecl := 'prae' 'typus' IDENTIFIER
 parameter    := ('de' | 'in' | 'ex')? 'si'? 'ceteri'? typeAnnotation? IDENTIFIER ('ut' IDENTIFIER)? ('vel' expression)?
-funcModifier := 'curata' IDENTIFIER | 'errata' IDENTIFIER | 'exitus' (IDENTIFIER | NUMBER) | 'immutata' | 'iacit'
-returnClause := ('->' | 'fit' | 'fiet' | 'fiunt' | 'fient') typeAnnotation
+funcModifier := 'curata' IDENTIFIER | 'errata' IDENTIFIER | 'exitus' (IDENTIFIER | NUMBER) | 'immutata' | 'iacit' | 'optiones' IDENTIFIER
+returnClause := '->' typeAnnotation
 clausuraExpr   := 'clausura' clausuraParams? ('->' typeAnnotation)? (':' expression | blockStmt)
 clausuraParams := clausuraParam (',' clausuraParam)*
 clausuraParam  := ('de' | 'in' | 'ex')? typeAnnotation? IDENTIFIER
 ```
 
-- Return verbs: `fit` (sync), `fiet` (async), `fiunt` (generator), `fient` (async generator)
+- Return syntax: `->` (arrow) with optional `@ futura`/`@ cursor` annotations for async/generator
 - Parameter prefixes: `de` (read), `in` (mutate), `ex` (consume)
 - `si` marks optional, `ceteri` marks rest parameter
 - `curata NAME` declares allocator requirement; NAME is auto-injected at call sites within `cura` blocks
@@ -65,12 +65,23 @@ annotation   := '@' IDENTIFIER+ | stdlibAnnotation
 ### Stdlib Annotations
 
 ```ebnf
+annotation       := '@' IDENTIFIER+ | stdlibAnnotation | cliAnnotation
 stdlibAnnotation := innatumAnnotation | subsidiaAnnotation | radixAnnotation | verteAnnotation | externaAnnotation
-innatumAnnotation := '@' 'innatum' targetMapping (',' targetMapping)*
+cliAnnotation    := imperiumAnnotation | optioAnnotation | operandusAnnotation | cliAnnotationSimple
+
+innatumAnnotation  := '@' 'innatum' targetMapping (',' targetMapping)*
 subsidiaAnnotation := '@' 'subsidia' targetMapping (',' targetMapping)*
-radixAnnotation := '@' 'radix' IDENTIFIER (',' IDENTIFIER)*
-verteAnnotation := '@' 'verte' IDENTIFIER (STRING | '(' IDENTIFIER (',' IDENTIFIER)* ')' '->' STRING)
-externaAnnotation := '@' 'externa'
+radixAnnotation    := '@' 'radix' IDENTIFIER (',' IDENTIFIER)*
+verteAnnotation    := '@' 'verte' IDENTIFIER (STRING | '(' IDENTIFIER (',' IDENTIFIER)* ')' '->' STRING)
+externaAnnotation  := '@' 'externa'
+
+imperiumAnnotation := '@' 'imperium' | '@' 'cli'
+optioAnnotation    := '@' 'optio' IDENTIFIER ('brevis' STRING)? ('longum' STRING)?
+                      ('bivalens')? ('descriptio' STRING)?
+operandusAnnotation := '@' 'operandus' ('ceteri')? IDENTIFIER IDENTIFIER ('descriptio' STRING)?
+cliAnnotationSimple := '@' 'futura' | '@' 'cursor' | '@' 'tag' | '@' 'solum' | '@' 'omitte'
+                      | '@' 'metior' | '@' 'publica' | '@' 'protecta' | '@' 'privata'
+
 targetMapping := IDENTIFIER STRING
 ```
 
@@ -79,6 +90,11 @@ targetMapping := IDENTIFIER STRING
 - `@ radix` declares morphological stem and valid verb forms
 - `@ verte` defines codegen transformation (method name or template)
 - `@ externa` marks declarations as externally provided (no initializer/body required)
+- `@ imperium` / `@ cli` marks a function as a CLI command entry point
+- `@ optio` defines a CLI flag option
+- `@ operandus` defines a CLI positional argument
+- `@ futura` marks function as async (equivalent to `futura` modifier)
+- `@ cursor` marks function as generator (equivalent to `cursor` modifier)
 
 - `sub` = extends, `implet` = implements
 - `generis` = static, `nexum` = bound/property
@@ -111,6 +127,47 @@ variant       := IDENTIFIER ('{' variantFields '}')?
 variantFields := (typeAnnotation IDENTIFIER (',' typeAnnotation IDENTIFIER)*)?
 ```
 
+### File-Level Directives
+
+```ebnf
+directiveDecl  := '§' directiveName directiveArgs?
+directiveName  := IDENTIFIER
+directiveArgs  := (STRING | IDENTIFIER)+
+```
+
+Common directives:
+
+- `§ dependentia` - declare module dependencies
+- `§ externa` - declare external packages
+- `§ opus` - project configuration (name, version, target)
+- `§ scopos` - compilation target
+- `§ modulus` - module identity
+
+Example:
+
+```fab
+§ dependentia "hono" github "honojs/hono#main" via "."
+§ externa "lodash" ex "@types/lodash"
+§ opus nomen "myproject"
+§ scopos "ts"
+```
+
+Common directives:
+
+- `§ dependentia` - declare module dependencies
+- `§ externa` - mark external declarations
+- `§ radix` - morphological verb forms
+- `§ verte` - codegen transformations
+- `§ innatum` - native type mappings
+
+Example:
+
+```fab
+§ dependentia "hono" github "honojs/hono#main" via "."
+§ externa fixum textus VERSION
+§ radix adde imperativus perfectum
+```
+
 ### Imports
 
 ```ebnf
@@ -120,6 +177,7 @@ specifier     := IDENTIFIER ('ut' IDENTIFIER)?
 ```
 
 Example:
+
 ```fab
 § ex "hono" importa Hono, Context
 § ex norma importa scribe ut s
@@ -193,13 +251,13 @@ inlineReturn := 'reddit' expression | 'iacit' expression | 'moritor' expression
 ```ebnf
 whileStmt := 'dum' expression (blockStmt | 'ergo' statement | inlineReturn) ('cape' IDENTIFIER blockStmt)?
 exStmt    := 'ex' expression (forBinding | destructBinding)
-forBinding := ('pro' | 'fit' | 'fiet') IDENTIFIER (blockStmt | 'ergo' statement | inlineReturn) catchClause?
-deStmt    := 'de' expression ('pro' | 'fit' | 'fiet') IDENTIFIER (blockStmt | 'ergo' statement) catchClause?
+forBinding := ('fixum' | 'varia') IDENTIFIER (blockStmt | 'ergo' statement | inlineReturn) catchClause?
+deStmt    := 'de' expression ('fixum' | 'varia') IDENTIFIER (blockStmt | 'ergo' statement) catchClause?
 ```
 
 - `dum` = while
-- `ex...pro` = for-of (values)
-- `de...pro` = for-in (keys)
+- `ex...fixum`/`ex...varia` = for-of (values)
+- `de...fixum`/`de...varia` = for-in (keys)
 
 ### Switch/Match
 
@@ -217,7 +275,7 @@ discriminants := expression (',' expression)*
 variantCase  := 'casu' patterns (blockStmt | 'ergo' statement | inlineReturn)
 patterns     := pattern (',' pattern)*
 pattern      := '_' | (IDENTIFIER patternBind?)
-patternBind  := ('ut' IDENTIFIER) | ('pro' IDENTIFIER (',' IDENTIFIER)*)
+patternBind  := ('ut' IDENTIFIER) | ('pro' IDENTIFIER (',' IDENTIFIER)*)  # NOTE: 'pro' deprecated, use 'ut'
 ```
 
 ### Guards
@@ -230,7 +288,7 @@ guardClause := 'si' expression (blockStmt | 'ergo' statement | inlineReturn)
 ### Resource Management
 
 ```ebnf
-curaStmt    := 'cura' curatorKind? expression? ('pro' | 'fit' | 'fiet') typeAnnotation? IDENTIFIER blockStmt catchClause?
+curaStmt    := 'cura' curatorKind? expression? ('fixum' | 'varia') typeAnnotation? IDENTIFIER blockStmt catchClause?
 curatorKind := 'arena' | 'page'
 ```
 
@@ -287,12 +345,12 @@ conversionOp := ('numeratum' | 'fractatum') typeParams? ('vel' unary)?
 **Type casting vs construction:**
 
 - `qua` = compile-time type assertion only. No runtime effect. Use when you know a value's type but the compiler doesn't.
-  - `data qua textus` → TypeScript: `(data as string)`
+    - `data qua textus` → TypeScript: `(data as string)`
 
 - `innatum` = native type construction. Actually builds the target type at runtime. Use for built-in collections:
-  - `[] innatum lista<T>` → typed empty array
-  - `{} innatum tabula<K,V>` → `new Map<K,V>()`
-  - `[] innatum copia<T>` → `new Set<T>()`
+    - `[] innatum lista<T>` → typed empty array
+    - `{} innatum tabula<K,V>` → `new Map<K,V>()`
+    - `[] innatum copia<T>` → `new Set<T>()`
 
 **Important:** Do NOT use `qua` for collection construction. `{} qua copia<T>` produces a plain object with a type assertion—it will NOT have Set methods like `.add()` or `.has()`. Use `innatum` instead.
 
@@ -323,7 +381,7 @@ primary := IDENTIFIER | NUMBER | STRING | TEMPLATE_STRING
 newExpr       := 'novum' IDENTIFIER ('(' argumentList ')')? (objectLiteral | 'de' expression)?
 fingeExpr     := 'finge' IDENTIFIER ('{' fieldList '}')? ('qua' IDENTIFIER)?
 praefixumExpr := 'praefixum' (blockStmt | '(' expression ')')
-scriptumExpr  := 'scriptum' '(' STRING (',' expression)* ')'
+scriptumExpr  := 'scriptum' '(' STRING (',' expression)* ')'  # § placeholders filled positionally
 legeExpr      := 'lege' 'lineam'?
 regexLiteral  := 'sed' STRING IDENTIFIER?
 ```
@@ -368,8 +426,48 @@ incipietStmt := 'incipiet' (blockStmt | 'ergo' statement | inlineReturn)
 probandumDecl := 'probandum' STRING '{' probandumBody '}'
 probandumBody := (praeparaBlock | probandumDecl | probaStmt)*
 probaStmt     := 'proba' probaModifier? STRING blockStmt
-probaModifier := 'omitte' STRING | 'futurum' STRING
+probaModifier := 'omitte' STRING | 'futurum' STRING | 'solum' | 'tag' STRING
+              | 'temporis' NUMBER | 'metior' | 'repete' NUMBER | 'fragilis' NUMBER
+              | 'requirit' STRING | 'solum_in' STRING
 praeparaBlock := ('praepara' | 'praeparabit' | 'postpara' | 'postparabit') 'omnia'? blockStmt
+```
+
+---
+
+## CLI Framework
+
+```ebnf
+cliDecl     := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? blockStmt?
+cliAnnotation := '@' ('imperium' | 'cli' | 'optio' | 'operandus')
+```
+
+Faber supports building CLI applications with automatic argument parsing and help generation.
+
+### CLI Entry Point
+
+```fab
+@ imperium
+functio main() {
+    # CLI framework automatically parses arguments
+}
+```
+
+### CLI Options and Arguments
+
+```fab
+@ imperium
+functio deploy(
+    @ optio target brevis "t" longum "target" descriptio "Deployment target"
+    textus target,
+
+    @ optio verbose brevis "v" longum "verbose" bivalens descriptio "Enable verbose output"
+    bivalens verbose,
+
+    @ operandus textus file descriptio "File to deploy"
+    textus file
+) {
+    # Arguments automatically parsed and passed
+}
 ```
 
 ---
@@ -397,6 +495,7 @@ dslVerb       := 'prima' | 'ultima' | 'summa'
 ```
 
 `ab` is the sole collection DSL entry point. Filter is optional, allowing direct transforms:
+
 - `ab users activus` - filter by boolean property
 - `ab users ubi aetas >= 18` - filter by condition
 - `ab items prima 5` - direct transform (no filter)
@@ -426,6 +525,28 @@ inStmt := 'in' expression blockStmt
 
 ---
 
+## Target-Specific Features
+
+Not all Faber features are supported across all compilation targets. Some features are currently limited to specific targets:
+
+### TypeScript-Only Features
+
+- Collection DSL transforms (`prima`, `ultima`, `summa`, `ordina`, etc.)
+- Some runtime stdlib functions
+
+### Zig-Only Features
+
+- `curata` allocator binding (for manual memory management)
+- Arena and page allocators (`cura arena`, `cura pagina`)
+
+### Cross-Target Features
+
+- Basic control flow, functions, and types work on all targets
+- Collection types (`lista`, `tabula`, `copia`) work on all targets
+- Pattern matching and destructuring work on all targets
+
+---
+
 ## Keyword Reference
 
 | Category            | Faber                         | Meaning             |
@@ -440,8 +561,8 @@ inStmt := 'in' expression blockStmt
 |                     | `discretio`                   | tagged union        |
 | **Control Flow**    | `si` / `sin` / `secus`        | if / else-if / else |
 |                     | `dum`                         | while               |
-|                     | `ex...pro`                    | for-of              |
-|                     | `de...pro`                    | for-in              |
+|                     | `ex...fixum`/`ex...varia`     | for-of              |
+|                     | `de...fixum`/`de...varia`     | for-in              |
 |                     | `elige` / `casu`              | switch / case       |
 |                     | `discerne`                    | pattern match       |
 |                     | `custodi`                     | guard               |
@@ -485,6 +606,6 @@ inStmt := 'in' expression blockStmt
 
 1. **Type-first parameters**: `functio f(numerus x)` NOT `functio f(x: numerus)`
 2. **Type-first declarations**: `fixum textus name` NOT `fixum name: textus`
-3. **For-of loops**: `ex collection pro item { }` (collection first)
+3. **For-of loops**: `ex collection fixum item { }` (collection first, use `fixum` or `varia`)
 4. **Parentheses around conditions are valid but not idiomatic**: prefer `si x > 0 { }` or `si positivum x { }` over `si (x > 0) { }`
 5. **Output keywords are statements**, not functions — `scribe x` works, `scribe(x)` also works (parentheses group the expression), but `scribe` is not a callable value

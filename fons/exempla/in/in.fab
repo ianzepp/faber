@@ -1,0 +1,44 @@
+# In statement - mutation block
+# Explicitly marks a block where the target expression may be mutated
+#
+# in <expression> { <body> }
+
+incipit {
+    # Basic mutation block - marks that 'counter' may be mutated inside
+    varia counter = { value: 0 }
+    in counter {
+        counter.value = counter.value + 1
+        scribe scriptum("Counter is now: §", counter.value)
+    }
+
+    # Mutation block with array
+    varia numbers = [1, 2, 3]
+    in numbers {
+        numbers.adde(4)
+        numbers[0] = 10
+        scribe numbers
+    }
+
+    # Mutation block with object
+    varia person = { nomen: "Anonymous", aetas: 0 }
+    in person {
+        person.nomen = "Marcus"
+        person.aetas = 30
+        scribe person
+    }
+
+    # Nested mutation blocks
+    varia data = {
+        users: [{ nomen: "Alice", score: 10 }],
+        total: 0
+    }
+
+    in data {
+        in data.users[0] {
+            data.users[0].score = 20
+        }
+        data.total = data.users[0].score
+    }
+
+    scribe data
+}

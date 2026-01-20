@@ -1,9 +1,11 @@
-# Basic fac (do) scope blocks
+# Fac statement - explicit scoping with optional do-while and error handling
 #
-# fac { <body> }
+# fac { <body> }                              - basic scope block
+# fac { <body> } dum <condition>             - do-while scope
+# fac { <body> } cape <err> { <handler> }    - scope with error handling
 
 incipit {
-    # Simple scope block
+    # Basic scope block (explicit scoping)
     fac {
         fixum x = 42
         scribe x
@@ -22,4 +24,32 @@ incipit {
         fixum sum = a + b
         scribe sum
     }
+
+    # Fac with do-while condition (repeats until condition is false)
+    varia counter = 0
+    fac {
+        counter = counter + 1
+        scribe scriptum("Iteration §", counter)
+    } dum counter < 3
+
+    # Fac with error handling
+    fac {
+        # This would normally throw an error
+        # iace "Test error"
+        scribe "Block executed successfully"
+    } cape err {
+        scribe scriptum("Caught error: §", err.nuntius)
+    }
+
+    # Fac with both do-while and error handling
+    varia attempts = 0
+    fac {
+        attempts = attempts + 1
+        scribe scriptum("Attempt §", attempts)
+        si attempts == 2 {
+            iace "Simulated failure"
+        }
+    } cape err {
+        scribe scriptum("Failed on attempt §: §", attempts, err.nuntius)
+    } dum attempts < 5
 }
