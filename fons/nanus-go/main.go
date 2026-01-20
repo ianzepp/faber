@@ -36,8 +36,8 @@ func main() {
 	}
 
 	// Validate target
-	if command == "emit" && target != "ts" && target != "go" {
-		fmt.Fprintf(os.Stderr, "Unknown target: %s. Valid: ts, go\n", target)
+	if command == "emit" && target != "ts" && target != "go" && target != "fab" {
+		fmt.Fprintf(os.Stderr, "Unknown target: %s. Valid: ts, go, fab\n", target)
 		os.Exit(1)
 	}
 
@@ -75,10 +75,13 @@ func main() {
 	case "emit":
 		tokens := subsidia.Prepare(Lex(string(source), "<stdin>"))
 		ast := subsidia.Parse(tokens, "<stdin>")
-		if target == "ts" {
+		switch target {
+		case "ts":
 			fmt.Println(EmitTS(ast))
-		} else {
+		case "go":
 			fmt.Println(EmitGo(ast, pkg))
+		case "fab":
+			fmt.Println(EmitFaber(ast))
 		}
 	}
 }
@@ -94,6 +97,6 @@ func printUsage() {
 	fmt.Println("  lex      Output tokens as JSON")
 	fmt.Println()
 	fmt.Println("Options (emit only):")
-	fmt.Println("  -t <target>   Output target: ts, go (default: go)")
+	fmt.Println("  -t <target>   Output target: ts, go, fab (default: go)")
 	fmt.Println("  -p <package>  Go package name (default: main)")
 }
