@@ -27,12 +27,15 @@ async function main() {
     if (!command || command === '-h' || command === '--help') {
         console.log('nanus-ts - Minimal Faber compiler (stdin/stdout)');
         console.log('');
-        console.log('Usage: <source> | nanus-ts <command>');
+        console.log('Usage: <source> | nanus-ts <command> [options]');
         console.log('');
         console.log('Commands:');
         console.log('  emit     Compile to TypeScript');
         console.log('  parse    Output AST as JSON');
         console.log('  lex      Output tokens as JSON');
+        console.log('');
+        console.log('Options (emit only):');
+        console.log('  -t <target>   Output target: ts (default: ts)');
         process.exit(0);
     }
 
@@ -40,6 +43,17 @@ async function main() {
     if (!validCommands.includes(command)) {
         console.error(`Unknown command: ${command}`);
         process.exit(1);
+    }
+
+    // Parse -t flag (only ts is valid for nanus-ts)
+    for (let i = 1; i < args.length; i++) {
+        if (args[i] === '-t' && i + 1 < args.length) {
+            const target = args[i + 1];
+            if (target !== 'ts') {
+                console.error(`Unknown target: ${target}. nanus-ts only supports: ts`);
+                process.exit(1);
+            }
+        }
     }
 
     const source = await readStdin();

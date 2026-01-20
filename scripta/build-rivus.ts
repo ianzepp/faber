@@ -10,23 +10,23 @@
  *   bun scripta/build-rivus.ts
  *   bun scripta/build-rivus.ts -c nanus-ts
  *   bun scripta/build-rivus.ts -c nanus-go
- *   bun scripta/build-rivus.ts -c nanus-go -f go
+ *   bun scripta/build-rivus.ts -c nanus-go -t go
  *   bun scripta/build-rivus.ts -c faber --no-typecheck
  */
 
 import { Glob } from 'bun';
 import { mkdir, symlink, unlink } from 'fs/promises';
-import { dirname, join, relative } from 'path';
+import { basename, dirname, join, relative } from 'path';
 import { $ } from 'bun';
 
-type Compiler = 'faber' | 'nanus' | 'nanus-ts' | 'nanus-go';
-type Format = 'ts' | 'go';
-const VALID_COMPILERS: Compiler[] = ['faber', 'nanus', 'nanus-ts', 'nanus-go'];
-const VALID_FORMATS: Format[] = ['ts', 'go'];
+type Compiler = 'faber' | 'nanus-ts' | 'nanus-go';
+type Target = 'ts' | 'go';
+const VALID_COMPILERS: Compiler[] = ['faber', 'nanus-ts', 'nanus-go'];
+const VALID_TARGETS: Target[] = ['ts', 'go'];
 
 // Parse arguments
 let compiler: Compiler = 'faber';
-let format: Format = 'ts';
+let target: Target = 'ts';
 let skipTypecheck = false;
 
 const args = process.argv.slice(2);
@@ -39,13 +39,13 @@ for (let i = 0; i < args.length; i++) {
             process.exit(1);
         }
         compiler = c;
-    } else if (arg === '-f' || arg === '--format') {
-        const f = args[++i] as Format;
-        if (!VALID_FORMATS.includes(f)) {
-            console.error(`Unknown format '${f}'. Valid: ${VALID_FORMATS.join(', ')}`);
+    } else if (arg === '-t' || arg === '--target') {
+        const t = args[++i] as Target;
+        if (!VALID_TARGETS.includes(t)) {
+            console.error(`Unknown target '${t}'. Valid: ${VALID_TARGETS.join(', ')}`);
             process.exit(1);
         }
-        format = f;
+        target = t;
     } else if (arg === '--no-typecheck') {
         skipTypecheck = true;
     }
@@ -53,11 +53,11 @@ for (let i = 0; i < args.length; i++) {
 
 const ROOT = join(import.meta.dir, '..');
 const SOURCE = join(ROOT, 'fons', 'rivus');
-const OUTPUT = format === 'go'
+const OUTPUT = target === 'go'
     ? join(ROOT, 'opus', 'rivus-go', 'fons')
     : join(ROOT, 'opus', 'rivus-ts', 'fons');
 const COMPILER_BIN = join(ROOT, 'opus', 'bin', compiler);
-const FILE_EXT = format === 'go' ? '.go' : '.ts';
+const FILE_EXT = target === 'go' ? '.go' : '.ts';
 
 // nanus-ts and nanus-go use stdin/stdout, faber/nanus use file args
 const useStdinStdout = compiler === 'nanus-ts' || compiler === 'nanus-go';
@@ -72,19 +72,26 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
     const relPath = relative(SOURCE, fabPath);
     const outPath = join(OUTPUT, relPath.replace(/\.fab$/, FILE_EXT));
 
+    // Calculate Go package name from directory
+    // Root files (e.g., rivus.fab) → "main", subdirs → directory name
+    const relDir = dirname(relPath);
+    const pkg = relDir === '.' ? 'main' : basename(relDir);
+
     try {
         await mkdir(dirname(outPath), { recursive: true });
 
         if (useStdinStdout) {
-            // nanus-ts/nanus-go: cat file | compiler emit -f format > output
-            const result = await $`cat ${fabPath} | ${COMPILER_BIN} emit -f ${format}`.nothrow().quiet();
+            // nanus-ts/nanus-go: cat file | compiler emit -t target [-p pkg] > output
+            const result = target === 'go'
+                ? await $`cat ${fabPath} | ${COMPILER_BIN} emit -t ${target} -p ${pkg}`.nothrow().quiet()
+                : await $`cat ${fabPath} | ${COMPILER_BIN} emit -t ${target}`.nothrow().quiet();
             if (result.exitCode !== 0) {
                 const stderr = result.stderr.toString().trim();
                 throw new Error(stderr || `Exit code ${result.exitCode}`);
             }
             await Bun.write(outPath, result.stdout);
         } else {
-            // faber/nanus: compiler compile file -o output
+            // faber: compiler compile file -o output
             const result = await $`${COMPILER_BIN} compile ${fabPath} -o ${outPath}`.nothrow().quiet();
             if (result.exitCode !== 0) {
                 const stderr = result.stderr.toString().trim();
@@ -139,7 +146,7 @@ async function copyHalImplementations(): Promise<void> {
 
     const glob = new Glob('*.ts');
     for await (const file of glob.scan({ cwd: halSource, absolute: false })) {
-        if (file.endsWith('.test.ts')) continue;
+        if (file.endsWith('.test.ts')) { continue; }
         const src = join(halSource, file);
         const dest = join(halDest, file);
         await Bun.write(dest, await Bun.file(src).text());
@@ -169,7 +176,7 @@ async function main() {
         process.exit(1);
     }
 
-    console.log(`Using compiler: ${compiler}, format: ${format}`);
+    console.log(`Using compiler: ${compiler}, target: ${target}`);
 
     // Find all .fab files
     const glob = new Glob('**/*.fab');
@@ -199,7 +206,7 @@ async function main() {
     }
 
     // TypeScript-specific post-processing
-    if (format === 'ts') {
+    if (target === 'ts') {
         // Copy HAL native implementations
         await copyHalImplementations();
 

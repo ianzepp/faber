@@ -23,17 +23,21 @@ func main() {
 	}
 
 	// Parse flags for emit command
-	format := "go" // default to Go
+	target := "go"   // default to Go
+	pkg := "main"    // default package name
 	for i := 2; i < len(os.Args); i++ {
-		if os.Args[i] == "-f" && i+1 < len(os.Args) {
-			format = os.Args[i+1]
+		if os.Args[i] == "-t" && i+1 < len(os.Args) {
+			target = os.Args[i+1]
+			i++
+		} else if os.Args[i] == "-p" && i+1 < len(os.Args) {
+			pkg = os.Args[i+1]
 			i++
 		}
 	}
 
-	// Validate format
-	if command == "emit" && format != "ts" && format != "go" {
-		fmt.Fprintf(os.Stderr, "Unknown format: %s. Valid: ts, go\n", format)
+	// Validate target
+	if command == "emit" && target != "ts" && target != "go" {
+		fmt.Fprintf(os.Stderr, "Unknown target: %s. Valid: ts, go\n", target)
 		os.Exit(1)
 	}
 
@@ -71,10 +75,10 @@ func main() {
 	case "emit":
 		tokens := subsidia.Prepare(Lex(string(source), "<stdin>"))
 		ast := subsidia.Parse(tokens, "<stdin>")
-		if format == "ts" {
+		if target == "ts" {
 			fmt.Println(EmitTS(ast))
 		} else {
-			fmt.Println(EmitGo(ast))
+			fmt.Println(EmitGo(ast, pkg))
 		}
 	}
 }
@@ -90,5 +94,6 @@ func printUsage() {
 	fmt.Println("  lex      Output tokens as JSON")
 	fmt.Println()
 	fmt.Println("Options (emit only):")
-	fmt.Println("  -f <format>  Output format: ts, go (default: go)")
+	fmt.Println("  -t <target>   Output target: ts, go (default: go)")
+	fmt.Println("  -p <package>  Go package name (default: main)")
 }
