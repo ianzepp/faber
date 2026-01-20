@@ -136,7 +136,7 @@ functio genSententia(Sententia stmt, GoGenerator g) -> textus {
 
         # Fail on unimplemented statement types
         ceterum {
-            iace scriptum("Go codegen: unsupported statement type '§'", stmt.tag)
+            mori scriptum("Go codegen: unsupported statement type '§'", stmt.tag)
         }
     }
 }

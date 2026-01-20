@@ -28,7 +28,10 @@ fixum ignotum process
 @ externa
 fixum ignotum console
 
-incipiet {
+@ externa
+fixum ignotum readFileSync
+
+incipit {
     fixum argv = process.argv qua lista<textus>     # resolves unknown type issue
     fixum args = argv.sectio(2) qua lista<textus>
 
@@ -46,8 +49,8 @@ incipiet {
         process.exit(1)
     }
 
-    # Read source file
-    fixum source = cede Bun.file(file).text() qua textus
+    # Read source file (sync)
+    fixum source = readFileSync(file, "utf-8") qua textus
     fixum filename = file
 
     elige command {

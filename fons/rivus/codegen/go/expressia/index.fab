@@ -110,7 +110,7 @@ functio genExpressia(Expressia expr, GoGenerator g) -> textus {
             varia habetDispersum = falsum
             ex (e.proprietates qua lista<ObiectumProprietas>) fixum prop {
                 si prop.computatum {
-                    iace "Go codegen: unsupported object property (computed key)"
+                    mori "Go codegen: unsupported object property (computed key)"
                 }
                 si prop.dispersum {
                     habetDispersum = verum
@@ -216,7 +216,7 @@ functio genExpressia(Expressia expr, GoGenerator g) -> textus {
 
         # Fail on unimplemented expression types
         ceterum {
-            iace scriptum("Go codegen: unsupported expression type '§'", expr.tag)
+            mori scriptum("Go codegen: unsupported expression type '§'", expr.tag)
         }
     }
 }
@@ -295,7 +295,7 @@ functio genObiectumClavis(Expressia clavis, GoGenerator g) -> textus {
         casu _ { }
     }
 
-    iace "Go codegen: unsupported object key expression"
+    mori "Go codegen: unsupported object key expression"
     redde "\"\""
 }
 
@@ -307,7 +307,7 @@ functio genObiectumDispersum(lista<ObiectumProprietas> proprietates, GoGenerator
     lines.adde(scriptum("§m := map[string]interface{}{}", g.ind()))
     ex proprietates fixum prop {
         si prop.computatum {
-            iace "Go codegen: unsupported object property (computed key)"
+            mori "Go codegen: unsupported object property (computed key)"
         }
         si prop.dispersum {
             fixum src = genExpressia(prop.valor, g)
@@ -359,7 +359,7 @@ functio genClausuraSententia(Sententia stmt, GoGenerator g) -> textus {
         casu _ { }
     }
 
-    iace scriptum("Go codegen: unsupported lambda statement '§'", stmt.tag)
+    mori scriptum("Go codegen: unsupported lambda statement '§'", stmt.tag)
 }
 
 functio genConstructorNomen(Expressia vocatum, GoGenerator g) -> textus {
@@ -369,7 +369,7 @@ functio genConstructorNomen(Expressia vocatum, GoGenerator g) -> textus {
         }
         casu MembrumExpressia ut m {
             si m.computatum qua bivalens {
-                iace "Go codegen: unsupported constructor access (computed member)"
+                mori "Go codegen: unsupported constructor access (computed member)"
             }
             fixum obj = genExpressia(m.obiectum, g)
             discerne m.proprietas {
@@ -382,7 +382,7 @@ functio genConstructorNomen(Expressia vocatum, GoGenerator g) -> textus {
         casu _ { }
     }
 
-    iace "Go codegen: unsupported constructor target"
+    mori "Go codegen: unsupported constructor target"
     redde "New"
 }
 

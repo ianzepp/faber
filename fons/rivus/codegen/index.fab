@@ -48,13 +48,13 @@ functio generateWithStripping(lista<Sententia> corpus, textus target, bivalens s
     # Validate first
     fixum errores = validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
     si non validatioSuccessit(errores) {
-        iace formatValidatioErrores(errores, target)
+        mori formatValidatioErrores(errores, target)
     }
 
     elige target {
         casu "ts" { redde generateTsWithOptions(corpus, stripTests, stripComments) }
         ceterum {
-            iace scriptum("Stripping not supported for target '§'. Only 'ts' is supported.", target)
+            mori scriptum("Stripping not supported for target '§'. Only 'ts' is supported.", target)
         }
     }
 }
@@ -66,7 +66,7 @@ functio generateWithPolicy(lista<Sententia> corpus, textus target, ValidatioPoli
     fixum errores = validateCompatibilitatem(corpus, target, politia)
 
     si non validatioSuccessit(errores) {
-        iace formatValidatioErrores(errores, target)
+        mori formatValidatioErrores(errores, target)
     }
 
     # Dispatch to target-specific generator
@@ -75,7 +75,7 @@ functio generateWithPolicy(lista<Sententia> corpus, textus target, ValidatioPoli
         casu "ts" { redde generateTs(corpus) }
         casu "go" { redde generateGo(corpus) }
         ceterum {
-            iace scriptum("Unknown target '§'. Supported: ts, go", target)
+            mori scriptum("Unknown target '§'. Supported: ts, go", target)
         }
     }
 }
@@ -87,13 +87,13 @@ functio generateWithTests(lista<Sententia> corpus, textus target) -> textus {
     # Validate first
     fixum errores = validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
     si non validatioSuccessit(errores) {
-        iace formatValidatioErrores(errores, target)
+        mori formatValidatioErrores(errores, target)
     }
 
     elige target {
         casu "ts" { redde generateTsWithTests(corpus) }
         ceterum {
-            iace scriptum("Test generation not supported for target '§'. Only 'ts' is supported.", target)
+            mori scriptum("Test generation not supported for target '§'. Only 'ts' is supported.", target)
         }
     }
 }
