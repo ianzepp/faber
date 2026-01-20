@@ -3,7 +3,6 @@
  * Build rivus (bootstrap compiler) from fons/rivus/ using faber or nanus.
  *
  * Uses the specified compiler to compile all .fab files in parallel.
- * Output is TypeScript (all compilers emit TS).
  *
  * Requires: bun run build:faber (or build:nanus-ts, build:nanus-go) first
  *
@@ -11,6 +10,7 @@
  *   bun scripta/build-rivus.ts
  *   bun scripta/build-rivus.ts -c nanus-ts
  *   bun scripta/build-rivus.ts -c nanus-go
+ *   bun scripta/build-rivus.ts -c nanus-go -f go
  *   bun scripta/build-rivus.ts -c faber --no-typecheck
  */
 
@@ -20,10 +20,13 @@ import { dirname, join, relative } from 'path';
 import { $ } from 'bun';
 
 type Compiler = 'faber' | 'nanus' | 'nanus-ts' | 'nanus-go';
+type Format = 'ts' | 'go';
 const VALID_COMPILERS: Compiler[] = ['faber', 'nanus', 'nanus-ts', 'nanus-go'];
+const VALID_FORMATS: Format[] = ['ts', 'go'];
 
 // Parse arguments
 let compiler: Compiler = 'faber';
+let format: Format = 'ts';
 let skipTypecheck = false;
 
 const args = process.argv.slice(2);
@@ -36,6 +39,13 @@ for (let i = 0; i < args.length; i++) {
             process.exit(1);
         }
         compiler = c;
+    } else if (arg === '-f' || arg === '--format') {
+        const f = args[++i] as Format;
+        if (!VALID_FORMATS.includes(f)) {
+            console.error(`Unknown format '${f}'. Valid: ${VALID_FORMATS.join(', ')}`);
+            process.exit(1);
+        }
+        format = f;
     } else if (arg === '--no-typecheck') {
         skipTypecheck = true;
     }
@@ -43,8 +53,11 @@ for (let i = 0; i < args.length; i++) {
 
 const ROOT = join(import.meta.dir, '..');
 const SOURCE = join(ROOT, 'fons', 'rivus');
-const OUTPUT = join(ROOT, 'opus', 'rivus-ts', 'fons');
+const OUTPUT = format === 'go'
+    ? join(ROOT, 'opus', 'rivus-go', 'fons')
+    : join(ROOT, 'opus', 'rivus-ts', 'fons');
 const COMPILER_BIN = join(ROOT, 'opus', 'bin', compiler);
+const FILE_EXT = format === 'go' ? '.go' : '.ts';
 
 // nanus-ts and nanus-go use stdin/stdout, faber/nanus use file args
 const useStdinStdout = compiler === 'nanus-ts' || compiler === 'nanus-go';
@@ -57,14 +70,14 @@ interface CompileResult {
 
 async function compileFile(fabPath: string): Promise<CompileResult> {
     const relPath = relative(SOURCE, fabPath);
-    const outPath = join(OUTPUT, relPath.replace(/\.fab$/, '.ts'));
+    const outPath = join(OUTPUT, relPath.replace(/\.fab$/, FILE_EXT));
 
     try {
         await mkdir(dirname(outPath), { recursive: true });
 
         if (useStdinStdout) {
-            // nanus-ts/nanus-go: cat file | compiler emit > output
-            const result = await $`cat ${fabPath} | ${COMPILER_BIN} emit`.nothrow().quiet();
+            // nanus-ts/nanus-go: cat file | compiler emit -f format > output
+            const result = await $`cat ${fabPath} | ${COMPILER_BIN} emit -f ${format}`.nothrow().quiet();
             if (result.exitCode !== 0) {
                 const stderr = result.stderr.toString().trim();
                 throw new Error(stderr || `Exit code ${result.exitCode}`);
@@ -156,7 +169,7 @@ async function main() {
         process.exit(1);
     }
 
-    console.log(`Using compiler: ${compiler}`);
+    console.log(`Using compiler: ${compiler}, format: ${format}`);
 
     // Find all .fab files
     const glob = new Glob('**/*.fab');
@@ -185,25 +198,31 @@ async function main() {
         process.exit(1);
     }
 
-    // Copy HAL native implementations
-    await copyHalImplementations();
+    // TypeScript-specific post-processing
+    if (format === 'ts') {
+        // Copy HAL native implementations
+        await copyHalImplementations();
 
-    // Type check (TypeScript only)
-    if (!skipTypecheck) {
-        console.log('Type checking...');
-        const tcOk = await typeCheck();
-        if (!tcOk) {
-            console.error('TypeScript type check failed');
-            process.exit(1);
+        // Type check (TypeScript only)
+        if (!skipTypecheck) {
+            console.log('Type checking...');
+            const tcOk = await typeCheck();
+            if (!tcOk) {
+                console.error('TypeScript type check failed');
+                process.exit(1);
+            }
+            console.log('Type check passed');
         }
-        console.log('Type check passed');
+
+        await injectExternImpls();
+
+        console.log('Building rivus executable...');
+        await buildExecutable();
+        console.log('Built opus/bin/rivus-ts');
+    } else {
+        // Go output - just report success, user can build manually
+        console.log(`Go source generated in ${relative(ROOT, OUTPUT)}/`);
     }
-
-    await injectExternImpls();
-
-    console.log('Building rivus executable...');
-    await buildExecutable();
-    console.log('Built opus/bin/rivus-ts');
 }
 
 main().catch(err => {
