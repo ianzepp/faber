@@ -17,6 +17,16 @@ import { parse } from '../fons/faber/parser';
 import type { Annotation, FunctioDeclaration, GenusDeclaration, Program } from '../fons/faber/parser/ast';
 
 // =============================================================================
+// CONSTANTS AND CONFIGURATION
+// =============================================================================
+
+const NORMA_DIR = join(import.meta.dir, '..', 'fons', 'norma');
+const INNATUM_DIR = join(NORMA_DIR, 'innatum');
+const CODEGEN_DIR = join(import.meta.dir, '..', 'fons', 'faber', 'codegen');
+const OUTPUT_FAB = join(import.meta.dir, '..', 'fons', 'rivus', 'codegen', 'norma.gen.fab');
+const TARGETS = ['ts', 'py', 'rs', 'cpp', 'zig'] as const;
+
+// =============================================================================
 // TYPES
 // =============================================================================
 
@@ -99,8 +109,7 @@ function extractMethod(func: FunctioDeclaration): MethodDef | null {
 
             if (ann.verteMethod) {
                 trans.method = ann.verteMethod;
-            }
-            else if (ann.verteTemplate && ann.verteParams) {
+            } else if (ann.verteTemplate && ann.verteParams) {
                 trans.template = ann.verteTemplate;
                 trans.params = ann.verteParams;
             }
@@ -164,8 +173,7 @@ function generateRegistryCode(collections: CollectionDef[]): string {
             for (const [target, trans] of method.translations) {
                 if (trans.method) {
                     lines.push(`                    ['${target}', { method: '${trans.method}' }],`);
-                }
-                else if (trans.template && trans.params) {
+                } else if (trans.template && trans.params) {
                     const paramsStr = trans.params.map(p => `'${p}'`).join(', ');
                     const templateEsc = trans.template.replace(/'/g, "\\'");
                     lines.push(`                    ['${target}', { template: '${templateEsc}', params: [${paramsStr}] }],`);
@@ -231,8 +239,7 @@ function generateFaberCode(collections: CollectionDef[]): string {
 
                 if (trans.method) {
                     lines.push(`                "${target}": { "method": "${trans.method}" }${targetComma}`);
-                }
-                else if (trans.template && trans.params) {
+                } else if (trans.template && trans.params) {
                     const paramsStr = trans.params.map(p => `"${p}"`).join(', ');
                     lines.push(`                "${target}": { "template": "${trans.template}", "params": [${paramsStr}] }${targetComma}`);
                 }
@@ -308,8 +315,7 @@ function generateTypescriptRegistry(collections: CollectionDef[], target: string
             lines.push(`      ${JSON.stringify(methodName)}: {`);
             if (trans.method) {
                 lines.push(`        "method": ${JSON.stringify(trans.method)}`);
-            }
-            else if (trans.template && trans.params) {
+            } else if (trans.template && trans.params) {
                 lines.push(`        "template": ${JSON.stringify(trans.template)},`);
                 lines.push(`        "params": ${JSON.stringify(trans.params)}`);
             }
@@ -356,85 +362,102 @@ function generateTypescriptRegistry(collections: CollectionDef[], target: string
     return lines.join('\n');
 }
 
+// =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+/**
+ * Finds all .fab files in norma directories
+ */
+async function findNormaFiles(): Promise<{ dir: string; file: string }[]> {
+    const topLevelFiles = await readdir(NORMA_DIR);
+    const topLevelFabs = topLevelFiles.filter(f => f.endsWith('.fab')).map(f => ({ dir: NORMA_DIR, file: f }));
+
+    const innatumFiles = await readdir(INNATUM_DIR);
+    const innatumFabs = innatumFiles.filter(f => f.endsWith('.fab')).map(f => ({ dir: INNATUM_DIR, file: f }));
+
+    return [...topLevelFabs, ...innatumFabs];
+}
+
+/**
+ * Parses a .fab file and extracts collections, handling errors gracefully
+ */
+async function parseNormaFile(fileInfo: { dir: string; file: string }): Promise<CollectionDef[]> {
+    const { dir, file } = fileInfo;
+    const filePath = join(dir, file);
+    const content = await readFile(filePath, 'utf-8');
+
+    // WHY: Use Faber's parser to get proper AST with annotations
+    const tokenResult = tokenize(content);
+    if (tokenResult.errors.length > 0) {
+        console.error(`Tokenizer errors in ${file}:`);
+        for (const err of tokenResult.errors) {
+            console.error(`  ${err.position.line}:${err.position.column} - ${err.text}`);
+        }
+        process.exit(1);
+    }
+
+    const result = parse(tokenResult.tokens);
+    if (result.errors.length > 0) {
+        console.error(`Parse errors in ${file}:`);
+        for (const err of result.errors) {
+            console.error(`  ${err.position.line}:${err.position.column} - ${err.message}`);
+        }
+        process.exit(1);
+    }
+
+    if (!result.program) {
+        console.error(`No program generated for ${file}`);
+        process.exit(1);
+    }
+
+    return extractCollections(result.program);
+}
 
 // =============================================================================
 // MAIN
 // =============================================================================
 
 async function main() {
-    const normaDir = join(import.meta.dir, '..', 'fons', 'norma');
-    const innatumDir = join(normaDir, 'innatum');
-    const codegenDir = join(import.meta.dir, '..', 'fons', 'faber', 'codegen');
-    const outputFab = join(import.meta.dir, '..', 'fons', 'rivus', 'codegen', 'norma.gen.fab');
-
-    const targets = ['ts', 'py', 'rs', 'cpp', 'zig'];
-
-    // Read from both directories
-    const topLevelFiles = await readdir(normaDir);
-    const topLevelFabs = topLevelFiles.filter(f => f.endsWith('.fab')).map(f => ({ dir: normaDir, file: f }));
-
-    const innatumFiles = await readdir(innatumDir);
-    const innatumFabs = innatumFiles.filter(f => f.endsWith('.fab')).map(f => ({ dir: innatumDir, file: f }));
-
-    const allFiles = [...topLevelFabs, ...innatumFabs];
+    // Discover norma files
+    const allFiles = await findNormaFiles();
 
     if (allFiles.length === 0) {
         console.error('No .fab files found in fons/norma/ or fons/norma/innatum/');
         process.exit(1);
     }
 
+    const topLevelFabs = allFiles.filter(f => f.dir === NORMA_DIR);
+    const innatumFabs = allFiles.filter(f => f.dir === INNATUM_DIR);
+
     console.log(`Found ${allFiles.length} norma file(s)`);
     console.log(`  Top-level: ${topLevelFabs.map(f => f.file).join(', ')}`);
     console.log(`  Innatum: ${innatumFabs.map(f => f.file).join(', ')}`);
 
+    // Parse all norma files and collect collections
     const allCollections: CollectionDef[] = [];
 
-    for (const { dir, file } of allFiles) {
-        const content = await readFile(join(dir, file), 'utf-8');
-
-        // WHY: Use Faber's parser to get proper AST with annotations
-        const tokenResult = tokenize(content);
-        if (tokenResult.errors.length > 0) {
-            console.error(`Tokenizer errors in ${file}:`);
-            for (const err of tokenResult.errors) {
-                console.error(`  ${err.position.line}:${err.position.column} - ${err.text}`);
-            }
-            process.exit(1);
-        }
-        const result = parse(tokenResult.tokens);
-
-        if (result.errors.length > 0) {
-            console.error(`Parse errors in ${file}:`);
-            for (const err of result.errors) {
-                console.error(`  ${err.position.line}:${err.position.column} - ${err.message}`);
-            }
-            process.exit(1);
-        }
-
-        if (!result.program) {
-            console.error(`No program generated for ${file}`);
-            process.exit(1);
-        }
-
-        const collections = extractCollections(result.program);
+    for (const fileInfo of allFiles) {
+        const collections = await parseNormaFile(fileInfo);
         for (const coll of collections) {
             allCollections.push(coll);
-            console.log(`  ${file}: ${coll.name} with ${coll.methods.size} method(s)`);
+            console.log(`  ${fileInfo.file}: ${coll.name} with ${coll.methods.size} method(s)`);
         }
     }
 
-    // Generate TypeScript output for each target (for Faber)
-    for (const target of targets) {
-        const outputTs = join(codegenDir, `norma.${target}.gen.ts`);
+    // Generate code for all targets
+    console.log('\nGenerating TypeScript registries...');
+    for (const target of TARGETS) {
+        const outputTs = join(CODEGEN_DIR, `norma.${target}.gen.ts`);
         const tsCode = generateTypescriptRegistry(allCollections, target);
         await writeFile(outputTs, tsCode, 'utf-8');
-        console.log(`Generated: ${outputTs}`);
+        console.log(`  ✓ ${outputTs}`);
     }
 
-    // Generate Faber output (for Rivus)
+    console.log('\nGenerating Faber registry...');
     const fabCode = generateFaberCode(allCollections);
-    await writeFile(outputFab, fabCode, 'utf-8');
-    console.log(`Generated: ${outputFab}`);
+    await writeFile(OUTPUT_FAB, fabCode, 'utf-8');
+    console.log(`  ✓ ${OUTPUT_FAB}`);
 }
 
 main().catch(err => {

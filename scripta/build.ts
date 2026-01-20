@@ -75,14 +75,20 @@ function parseArgs(): BuildOptions {
     return { target, faber, rivus, artifex, typecheck, verbose };
 }
 
+/**
+ * Execute a build step with timing and optional verbose output
+ */
 async function step(name: string, verbose: boolean, fn: () => Promise<void>) {
     const start = performance.now();
+
     if (verbose) {
         console.log(`\n=== ${name} ===\n`);
     } else {
         process.stdout.write(`${name}... `);
     }
+
     await fn();
+
     const elapsed = performance.now() - start;
     if (verbose) {
         console.log(`\n=== ${name} OK (${elapsed.toFixed(0)}ms) ===`);
@@ -99,6 +105,7 @@ async function main() {
     const stages = [faber && 'faber', rivus && 'rivus', artifex && 'artifex'].filter(Boolean);
     console.log(`Build (target: ${target}, stages: ${stages.join(', ') || 'none'})\n`);
 
+    // Generate norma registry from .fab files (required by faber)
     await step('build:norma', verbose, async () => {
         if (verbose) {
             await $`bun run build:norma`;
@@ -107,6 +114,7 @@ async function main() {
         }
     });
 
+    // Build minimal TypeScript compiler (bootstrapping)
     await step('build:nanus-ts', verbose, async () => {
         if (verbose) {
             await $`bun run build:nanus-ts`;
@@ -115,6 +123,7 @@ async function main() {
         }
     });
 
+    // Build minimal Go compiler (bootstrapping)
     await step('build:nanus-go', verbose, async () => {
         if (verbose) {
             await $`bun run build:nanus-go`;
@@ -169,7 +178,10 @@ async function main() {
         });
     }
 
-    // Golden tests for all compilers
+    // =============================================================================
+    // VERIFICATION: Run golden tests to ensure compilers work correctly
+    // =============================================================================
+
     await step('golden:nanus-ts', verbose, async () => {
         if (verbose) {
             await $`bun run golden -c nanus-ts`;
