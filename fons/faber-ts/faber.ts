@@ -78,36 +78,34 @@ Faber Romanus - The Roman Craftsman
 A Latin programming language (TypeScript target)
 
 Usage:
-  faber <command> <file> [options]
+  <source> | faber <command> [options]
+  faber build <file> [options]
 
 Commands:
-  emit, compile <file>   Emit .fab file as TypeScript
-  build, aedifica <file> Build entry + dependencies to directory
-  run, curre <file>      Compile and execute immediately
-  check, proba <file>    Check for errors without generating code
-  format, forma <file>   Format source file with Prettier
+  emit, compile          Emit stdin as TypeScript
+  run, curre             Compile stdin and execute immediately
+  check, proba           Check stdin for errors without generating code
+  format, forma          Format stdin with Prettier
+  build, aedifica <file> Build entry file + dependencies to directory
 
 Options:
-  -o, --output <file>    Output file (default: stdout)
-  -t, --target ts        Target language (only 'ts' supported)
-  -c, --check            Check formatting without writing (format command)
-  --strip-tests          Strip test blocks (probandum/proba) from output
-  -h, --help             Show this help
-  -v, --version          Show version
-
-Reads from stdin if no file specified (or use '-' explicitly).
+  -o, --output <file>       Output file (default: stdout)
+  -t, --target ts           Target language (only 'ts' supported)
+  -c, --check               Check formatting without writing (format command)
+  --strip-tests             Strip test blocks (probandum/proba) from output
+  --stdin-filename <file>   Filename for error messages (default: <stdin>)
+  -h, --help                Show this help
+  -v, --version             Show version
 
 For other targets (Python, Rust, Zig, C++), use the Rivus compiler.
 
 Examples:
-  faber emit hello.fab                        # Emit as TS (stdout)
-  faber emit hello.fab -o hello.ts            # Emit to TS file
-  faber build main.fab -o dist/               # Build entry + deps to dist/
-  faber run hello.fab                         # Compile and execute
-  faber check hello.fab                       # Check for parse/semantic errors
-  faber format hello.fab                      # Format file in place
-  faber format hello.fab --check              # Check if file is formatted
-  echo 'scribe "hello"' | faber emit          # Emit from stdin
+  cat hello.fab | faber emit                              # Emit as TS (stdout)
+  cat hello.fab | faber emit -o hello.ts                  # Emit to TS file
+  cat hello.fab | faber emit --stdin-filename hello.fab   # With filename in errors
+  faber build main.fab -o dist/                           # Build entry + deps to dist/
+  cat hello.fab | faber run                               # Compile and execute
+  cat hello.fab | faber check                             # Check for parse/semantic errors
 `);
 }
 
@@ -116,32 +114,27 @@ Examples:
 // =============================================================================
 
 /**
- * Read source code from file or stdin.
+ * Read source code from stdin.
  *
- * WHY: Unix convention uses '-' to mean stdin, allowing pipeline usage:
- *      echo 'scribe "hi"' | faber compile -
- *
- * @param inputFile - Path to file, or '-' for stdin
  * @returns Source code as string
  */
-async function readSource(inputFile: string): Promise<string> {
-    if (inputFile === '-') {
-        // Read from stdin
-        const chunks: Uint8Array[] = [];
-        for await (const chunk of Bun.stdin.stream()) {
-            chunks.push(chunk);
-        }
-        const decoder = new TextDecoder();
-        return chunks.map(c => decoder.decode(c)).join('');
+async function readStdin(): Promise<string> {
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of Bun.stdin.stream()) {
+        chunks.push(chunk);
     }
-    return Bun.file(inputFile).text();
+    const decoder = new TextDecoder();
+    return chunks.map(c => decoder.decode(c)).join('');
 }
 
 /**
- * Get display name for error messages.
+ * Read source code from file.
+ *
+ * @param filePath - Path to file
+ * @returns Source code as string
  */
-function getDisplayName(inputFile: string): string {
-    return inputFile === '-' ? '<stdin>' : inputFile;
+async function readFile(filePath: string): Promise<string> {
+    return Bun.file(filePath).text();
 }
 
 // =============================================================================
@@ -159,15 +152,14 @@ function getDisplayName(inputFile: string): string {
  * ERROR HANDLING: Errors from each stage are collected and reported with
  *                 file positions. Process exits with code 1 on first error.
  *
- * @param inputFile - Path to .fab source file
+ * @param displayName - Filename for error messages
  * @param outputFile - Optional output file path (defaults to stdout)
  * @param options - Emit options
  * @returns Generated TypeScript source code as string
  */
-async function emit(inputFile: string, outputFile?: string, options: { silent?: boolean; stripTests?: boolean } = {}): Promise<string> {
+async function emit(displayName: string, outputFile?: string, options: { silent?: boolean; stripTests?: boolean } = {}): Promise<string> {
     const { silent = false, stripTests = false } = options;
-    const source = await readSource(inputFile);
-    const displayName = getDisplayName(inputFile);
+    const source = await readStdin();
 
     // ---------------------------------------------------------------------------
     // Lexical Analysis
@@ -209,14 +201,13 @@ async function emit(inputFile: string, outputFile?: string, options: { silent?: 
     // Semantic Analysis
     // ---------------------------------------------------------------------------
 
-    // WHY: Pass absolute file path to enable local import resolution
-    const filePath = inputFile !== '-' ? resolve(inputFile) : undefined;
-    const { errors: semanticErrors, subsidiaImports, resolvedModules } = analyze(program, { filePath });
+    // WHY: No file path for stdin - import resolution not supported
+    const { errors: semanticErrors, subsidiaImports, resolvedModules } = analyze(program, { filePath: undefined });
 
     if (semanticErrors.length > 0) {
         console.error('Semantic errors:');
         for (const err of semanticErrors) {
-            const errorFile = err.filePath ? getDisplayName(err.filePath) : displayName;
+            const errorFile = err.filePath ?? displayName;
             console.error(`  ${errorFile}:${err.position.line}:${err.position.column} - ${err.message}`);
         }
 
@@ -229,10 +220,10 @@ async function emit(inputFile: string, outputFile?: string, options: { silent?: 
 
     let output: string;
     try {
-        // WHY: Pass filePath to enable CLI module resolution (@ imperia ex module)
+        // WHY: No filePath for stdin - CLI module resolution not available
         // WHY: Pass subsidiaImports to enable HAL import resolution
         // WHY: keepRelativeImports=true because output directory structure mirrors source
-        output = generate(program, { filePath, subsidiaImports, keepRelativeImports: true, stripTests });
+        output = generate(program, { filePath: undefined, subsidiaImports, keepRelativeImports: true, stripTests });
     } catch (err) {
         // WHY: Codegen errors should display cleanly
         const message = err instanceof Error ? err.message : String(err);
@@ -262,10 +253,10 @@ async function emit(inputFile: string, outputFile?: string, options: { silent?: 
  * TARGET RESTRICTION: Only works with TypeScript target since Zig requires
  *                     separate compilation and linking.
  *
- * @param inputFile - Path to .fab source file
+ * @param displayName - Filename for error messages
  */
-async function run(inputFile: string): Promise<void> {
-    const ts = await emit(inputFile, undefined, { silent: true });
+async function run(displayName: string): Promise<void> {
+    const ts = await emit(displayName, undefined, { silent: true });
 
     // WHY: Bun can execute TypeScript directly - write to temp file and run
     const tempFile = `/tmp/faber-${Date.now()}.ts`;
@@ -393,7 +384,7 @@ async function build(inputFile: string, outputDir: string): Promise<void> {
 }
 
 /**
- * Validate source file for errors without generating code.
+ * Validate source for errors without generating code.
  *
  * PHASES RUN: Tokenizer, parser, and semantic analysis.
  *
@@ -401,11 +392,10 @@ async function build(inputFile: string, outputDir: string): Promise<void> {
  *
  * OUTPUT: Reports error count and positions, exits 0 if no errors
  *
- * @param inputFile - Path to .fab source file
+ * @param displayName - Filename for error messages
  */
-async function check(inputFile: string): Promise<void> {
-    const source = await readSource(inputFile);
-    const displayName = getDisplayName(inputFile);
+async function check(displayName: string): Promise<void> {
+    const source = await readStdin();
 
     const { tokens, errors: tokenErrors } = tokenize(source);
     const { program, errors: parseErrors } = parse(tokens);
@@ -413,9 +403,8 @@ async function check(inputFile: string): Promise<void> {
     let semanticErrors: { message: string; position: { line: number; column: number }; filePath?: string }[] = [];
 
     if (program) {
-        // WHY: Pass absolute file path to enable local import resolution
-        const filePath = inputFile !== '-' ? resolve(inputFile) : undefined;
-        const result = analyze(program, { filePath });
+        // WHY: No file path for stdin - import resolution not supported
+        const result = analyze(program, { filePath: undefined });
 
         semanticErrors = result.errors;
     }
@@ -430,7 +419,7 @@ async function check(inputFile: string): Promise<void> {
     if (allErrors.length > 0) {
         console.log(`${displayName}: ${allErrors.length} error(s)`);
         for (const err of allErrors) {
-            const errorFile = 'filePath' in err && err.filePath ? getDisplayName(err.filePath) : displayName;
+            const errorFile = 'filePath' in err && err.filePath ? err.filePath : displayName;
             console.log(`  ${errorFile}:${err.position.line}:${err.position.column} - ${err.message}`);
         }
 
@@ -441,19 +430,19 @@ async function check(inputFile: string): Promise<void> {
 }
 
 /**
- * Format source file using Prettier with the Faber plugin.
+ * Format source using Prettier with the Faber plugin.
  *
  * FORMATTING: Uses the Prettier plugin defined in fons/prettier/ to format
  *             .fab files with consistent style (4-space indent, Stroustrup braces).
  *
  * MODES:
- * - Default: Format file in place
+ * - Default: Format and output to stdout
  * - Check: Verify formatting without writing (for CI)
  *
- * @param inputFile - Path to .fab source file
+ * @param displayName - Filename for error messages
  * @param checkOnly - If true, check formatting without writing
  */
-async function format(_inputFile: string, _checkOnly: boolean): Promise<void> {
+async function format(_displayName: string, _checkOnly: boolean): Promise<void> {
     console.error('Format command is temporarily disabled (prettier plugin archived)');
     process.exit(1);
 }
@@ -482,12 +471,12 @@ if (command === '-v' || command === '--version') {
 // Option Parsing
 // ---------------------------------------------------------------------------
 
-let inputFile: string | undefined;
+let inputFile: string | undefined;  // Only used by build command
 let outputFile: string | undefined;
+let stdinFilename = '<stdin>';
 let checkOnly = false;
 let stripTests = false;
 
-// WHY: Scan all args, options can appear anywhere, non-option is the file
 for (let i = 1; i < args.length; i++) {
     const arg = args[i]!;
 
@@ -504,17 +493,16 @@ for (let i = 1; i < args.length; i++) {
         checkOnly = true;
     } else if (arg === '--strip-tests') {
         stripTests = true;
-    } else if (arg.startsWith('-') && arg !== '-') {
+    } else if (arg === '--stdin-filename') {
+        stdinFilename = args[++i] ?? '<stdin>';
+    } else if (arg.startsWith('-')) {
         console.error(`Error: Unknown option '${arg}'`);
         process.exit(1);
     } else {
-        // Non-option arg is the file, or explicit '-' for stdin
+        // Positional arg - only used by build command
         inputFile = arg;
     }
 }
-
-// WHY: Default to stdin when no file specified, enabling: echo 'code' | faber compile
-const effectiveInputFile = inputFile ?? '-';
 
 // ---------------------------------------------------------------------------
 // Command Execution
@@ -524,23 +512,27 @@ switch (command) {
     case 'emit':
     case 'compile':
     case 'finge':
-        await emit(effectiveInputFile, outputFile, { stripTests });
+        await emit(stdinFilename, outputFile, { stripTests });
         break;
     case 'run':
     case 'curre':
-        await run(effectiveInputFile);
+        await run(stdinFilename);
         break;
     case 'check':
     case 'proba':
-        await check(effectiveInputFile);
+        await check(stdinFilename);
         break;
     case 'build':
     case 'aedifica':
-        await build(effectiveInputFile, outputFile ?? './dist');
+        if (!inputFile) {
+            console.error('Error: build command requires an input file');
+            process.exit(1);
+        }
+        await build(inputFile, outputFile ?? './dist');
         break;
     case 'format':
     case 'forma':
-        await format(effectiveInputFile, checkOnly);
+        await format(stdinFilename, checkOnly);
         break;
     default:
         console.error(`Unknown command: ${command}`);

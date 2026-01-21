@@ -23,12 +23,16 @@ fn main() {
         process::exit(1);
     }
 
-    // Parse flags for emit command
+    // Parse flags
     let mut target = "rs".to_string();
+    let mut filename = "<stdin>".to_string();
     let mut i = 2;
     while i < args.len() {
         if args[i] == "-t" && i + 1 < args.len() {
             target = args[i + 1].clone();
+            i += 2;
+        } else if args[i] == "--stdin-filename" && i + 1 < args.len() {
+            filename = args[i + 1].clone();
             i += 2;
         } else {
             i += 1;
@@ -48,7 +52,7 @@ fn main() {
         process::exit(1);
     }
 
-    match run(command, &source, &target) {
+    match run(command, &source, &target, &filename) {
         Ok(output) => println!("{}", output),
         Err(e) => {
             eprintln!("{}", format_error(&e, &source));
@@ -57,24 +61,24 @@ fn main() {
     }
 }
 
-fn run(command: &str, source: &str, target: &str) -> Result<String, subsidia_rs::CompileError> {
+fn run(command: &str, source: &str, target: &str, filename: &str) -> Result<String, subsidia_rs::CompileError> {
     match command {
         "lex" => {
-            let tokens = lexer::lex(source, "<stdin>")?;
+            let tokens = lexer::lex(source, filename)?;
             let json = serde_json::to_string_pretty(&tokens).unwrap();
             Ok(json)
         }
         "parse" => {
-            let tokens = lexer::lex(source, "<stdin>")?;
+            let tokens = lexer::lex(source, filename)?;
             let tokens = prepare(tokens);
-            let ast = parse(tokens, "<stdin>")?;
+            let ast = parse(tokens, filename)?;
             let json = serde_json::to_string_pretty(&ast).unwrap();
             Ok(json)
         }
         "emit" => {
-            let tokens = lexer::lex(source, "<stdin>")?;
+            let tokens = lexer::lex(source, filename)?;
             let tokens = prepare(tokens);
-            let ast = parse(tokens, "<stdin>")?;
+            let ast = parse(tokens, filename)?;
             match target {
                 "fab" => Ok(emitter_faber::emit_faber(&ast)),
                 "rs" => Ok(emitter_rs::emit_rs(&ast)),
@@ -95,6 +99,7 @@ fn print_usage() {
     println!("  parse    Output AST as JSON");
     println!("  lex      Output tokens as JSON");
     println!();
-    println!("Options (emit only):");
-    println!("  -t <target>   Output target: rs, fab (default: rs)");
+    println!("Options:");
+    println!("  -t <target>            Output target: rs, fab (default: rs)");
+    println!("  --stdin-filename <f>   Filename for error messages (default: <stdin>)");
 }

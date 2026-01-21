@@ -22,15 +22,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Parse flags for emit command
-	target := "go"   // default to Go
-	pkg := "main"    // default package name
+	// Parse flags
+	target := "go"        // default to Go
+	pkg := "main"         // default package name
+	filename := "<stdin>" // default filename for errors
 	for i := 2; i < len(os.Args); i++ {
 		if os.Args[i] == "-t" && i+1 < len(os.Args) {
 			target = os.Args[i+1]
 			i++
 		} else if os.Args[i] == "-p" && i+1 < len(os.Args) {
 			pkg = os.Args[i+1]
+			i++
+		} else if os.Args[i] == "--stdin-filename" && i+1 < len(os.Args) {
+			filename = os.Args[i+1]
 			i++
 		}
 	}
@@ -49,14 +53,14 @@ func main() {
 
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Fprintln(os.Stderr, subsidia.FormatError(r, string(source), "<stdin>"))
+			fmt.Fprintln(os.Stderr, subsidia.FormatError(r, string(source), filename))
 			os.Exit(1)
 		}
 	}()
 
 	switch command {
 	case "lex":
-		tokens := Lex(string(source), "<stdin>")
+		tokens := Lex(string(source), filename)
 		out, err := json.MarshalIndent(tokens, "", "  ")
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
@@ -64,8 +68,8 @@ func main() {
 		}
 		fmt.Println(string(out))
 	case "parse":
-		tokens := subsidia.Prepare(Lex(string(source), "<stdin>"))
-		ast := subsidia.Parse(tokens, "<stdin>")
+		tokens := subsidia.Prepare(Lex(string(source), filename))
+		ast := subsidia.Parse(tokens, filename)
 		out, err := json.MarshalIndent(ast, "", "  ")
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
@@ -73,8 +77,8 @@ func main() {
 		}
 		fmt.Println(string(out))
 	case "emit":
-		tokens := subsidia.Prepare(Lex(string(source), "<stdin>"))
-		ast := subsidia.Parse(tokens, "<stdin>")
+		tokens := subsidia.Prepare(Lex(string(source), filename))
+		ast := subsidia.Parse(tokens, filename)
 		switch target {
 		case "go":
 			fmt.Println(EmitGo(ast, pkg))
@@ -94,7 +98,8 @@ func printUsage() {
 	fmt.Println("  parse    Output AST as JSON")
 	fmt.Println("  lex      Output tokens as JSON")
 	fmt.Println()
-	fmt.Println("Options (emit only):")
-	fmt.Println("  -t <target>   Output target: go, fab (default: go)")
-	fmt.Println("  -p <package>  Go package name (default: main)")
+	fmt.Println("Options:")
+	fmt.Println("  -t <target>            Output target: go, fab (default: go)")
+	fmt.Println("  -p <package>           Go package name (default: main)")
+	fmt.Println("  --stdin-filename <f>   Filename for error messages (default: <stdin>)")
 }

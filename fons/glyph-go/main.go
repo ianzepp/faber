@@ -8,6 +8,8 @@ import (
 	"subsidia"
 )
 
+var stdinFilename = "<stdin>"
+
 func main() {
 	if len(os.Args) < 2 {
 		printUsage()
@@ -15,6 +17,15 @@ func main() {
 	}
 
 	cmd := os.Args[1]
+
+	// Parse flags
+	for i := 2; i < len(os.Args); i++ {
+		if os.Args[i] == "--stdin-filename" && i+1 < len(os.Args) {
+			stdinFilename = os.Args[i+1]
+			i++
+		}
+	}
+
 	switch cmd {
 	case "encode":
 		convertToGlyph()
@@ -33,11 +44,12 @@ func printUsage() {
 	fmt.Println("glyph-go: Faber Glyph format converter")
 	fmt.Println()
 	fmt.Println("Usage:")
-	fmt.Println("  glyph-go encode [file]  Convert Faber to Glyph")
-	fmt.Println("  glyph-go decode [file]  Convert Glyph to Faber")
-	fmt.Println("  glyph-go help           Show this help")
+	fmt.Println("  <source> | glyph-go encode [options]  Convert Faber to Glyph")
+	fmt.Println("  <source> | glyph-go decode [options]  Convert Glyph to Faber")
+	fmt.Println("  glyph-go help                         Show this help")
 	fmt.Println()
-	fmt.Println("If no file is specified, reads from stdin.")
+	fmt.Println("Options:")
+	fmt.Println("  --stdin-filename <f>   Filename for error messages (default: <stdin>)")
 }
 
 func convertToGlyph() {
@@ -71,20 +83,10 @@ func convertToFaber() {
 }
 
 func readInput() (string, string) {
-	if len(os.Args) >= 3 {
-		filename := os.Args[2]
-		data, err := os.ReadFile(filename)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error reading file: %v\n", err)
-			os.Exit(1)
-		}
-		return string(data), filename
-	}
-
 	data, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading stdin: %v\n", err)
 		os.Exit(1)
 	}
-	return string(data), "<stdin>"
+	return string(data), stdinFilename
 }

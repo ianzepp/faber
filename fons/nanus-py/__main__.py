@@ -17,13 +17,15 @@ def main():
         prog="nanus-py",
         description="Faber microcompiler (stdin/stdout)",
     )
+    parser.add_argument(
+        "--stdin-filename",
+        help="Filename for error messages (default: <stdin>)",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    lex_parser = subparsers.add_parser("lex", help="Output tokens as JSON")
-    lex_parser.add_argument("-f", "--file", help="Input file (default: stdin)")
+    subparsers.add_parser("lex", help="Output tokens as JSON")
 
-    parse_parser = subparsers.add_parser("parse", help="Output AST as JSON")
-    parse_parser.add_argument("-f", "--file", help="Input file (default: stdin)")
+    subparsers.add_parser("parse", help="Output AST as JSON")
 
     emit_parser = subparsers.add_parser("emit", help="Compile Faber to target language")
     emit_parser.add_argument(
@@ -32,17 +34,11 @@ def main():
         default="py",
         help="Output target: fab, py (default: py)",
     )
-    emit_parser.add_argument("-f", "--file", help="Input file (default: stdin)")
 
     args = parser.parse_args()
 
-    if args.file:
-        with open(args.file, "r") as f:
-            source = f.read()
-        filename = args.file
-    else:
-        source = sys.stdin.read()
-        filename = "<stdin>"
+    source = sys.stdin.read()
+    filename = args.stdin_filename or "<stdin>"
 
     try:
         if args.command == "lex":
