@@ -51,7 +51,7 @@ const ROOT = join(import.meta.dir, '..');
 const BIN = join(ROOT, 'opus', 'bin');
 const DEFAULT_DIR = join(ROOT, 'fons', 'rivus');
 
-const COMPILERS = ['nanus-ts', 'nanus-go', 'nanus-rs'] as const;
+const COMPILERS = ['nanus-ts', 'nanus-go', 'nanus-rs', 'nanus-py'] as const;
 type Compiler = (typeof COMPILERS)[number];
 
 interface Args {

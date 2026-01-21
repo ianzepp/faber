@@ -7,7 +7,7 @@
  *   2. Compile nanus CLI to standalone binary
  */
 
-import { mkdir, symlink, unlink } from 'fs/promises';
+import { mkdir } from 'fs/promises';
 import { join } from 'path';
 import { $ } from 'bun';
 
@@ -24,11 +24,6 @@ async function main() {
     const outExe = join(binDir, 'nanus-ts');
     await $`bun build ${join(ROOT, 'fons', 'nanus-ts', 'nanus.ts')} --compile --outfile=${outExe}`.quiet();
     await $`bash -c 'rm -f .*.bun-build 2>/dev/null || true'`.quiet();
-
-    // Create symlink: nanus -> nanus-ts
-    const symlinkPath = join(binDir, 'nanus');
-    try { await unlink(symlinkPath); } catch { /* ignore */ }
-    await symlink('nanus-ts', symlinkPath);
 
     const elapsed = performance.now() - start;
     console.log(`Built opus/bin/nanus-ts (${elapsed.toFixed(0)}ms)`);

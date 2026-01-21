@@ -22,9 +22,9 @@ const ROOT = join(import.meta.dir, '..');
 const GOLDEN = join(ROOT, 'fons', 'golden');
 const BIN = join(ROOT, 'opus', 'bin');
 
-type Compiler = 'nanus-ts' | 'nanus-go' | 'nanus-rs' | 'faber' | 'rivus';
+type Compiler = 'nanus-ts' | 'nanus-go' | 'nanus-rs' | 'nanus-py' | 'faber' | 'rivus';
 
-const ALL_COMPILERS: Compiler[] = ['nanus-ts', 'nanus-go', 'nanus-rs', 'faber'];
+const ALL_COMPILERS: Compiler[] = ['nanus-ts', 'nanus-go', 'nanus-rs', 'nanus-py', 'faber'];
 
 interface Args {
     compilers: Compiler[];
@@ -98,8 +98,8 @@ async function compile(
     }
 
     try {
-        // nanus-ts, nanus-go, nanus-rs use stdin/stdout
-        if (compiler === 'nanus-ts' || compiler === 'nanus-go' || compiler === 'nanus-rs') {
+        // nanus-ts, nanus-go, nanus-rs, nanus-py use stdin/stdout
+        if (compiler === 'nanus-ts' || compiler === 'nanus-go' || compiler === 'nanus-rs' || compiler === 'nanus-py') {
             const result = await $`cat ${fabPath} | ${bin} emit -t ts`.quiet();
             return { success: true, output: result.text() };
         }

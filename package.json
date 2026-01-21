@@ -52,7 +52,6 @@
 
     "faber": "opus/bin/faber",
     "rivus": "opus/bin/rivus",
-    "nanus": "opus/bin/nanus",
 
     // =============================================================================
     // DEVELOPMENT UTILITIES - Analysis and Maintenance

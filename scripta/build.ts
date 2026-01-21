@@ -2,7 +2,7 @@
 /**
  * Full build pipeline in three stages:
  *
- *   Stage 1: nanus-ts, nanus-go, nanus-rs (bootstrap compilers)
+ *   Stage 1: nanus-ts, nanus-go, nanus-rs, nanus-py (bootstrap compilers)
  *   Stage 2: norma (stdlib registry) + faber (main compiler)
  *   Stage 3: rivus built with each nanus compiler (failures noted, not fatal)
  *
@@ -123,7 +123,7 @@ async function main() {
     });
 
     // =============================================================================
-    // STAGE 1: Bootstrap compilers (nanus-ts, nanus-go, nanus-rs)
+    // STAGE 1: Bootstrap compilers (nanus-ts, nanus-go, nanus-rs, nanus-py)
     // =============================================================================
 
     console.log('\n--- Stage 1: Bootstrap compilers ---\n');
@@ -149,6 +149,14 @@ async function main() {
             await $`bun run build:nanus-rs`;
         } else {
             await $`bun run build:nanus-rs`.quiet();
+        }
+    });
+
+    await step('build:nanus-py', verbose, async () => {
+        if (verbose) {
+            await $`bun run build:nanus-py`;
+        } else {
+            await $`bun run build:nanus-py`.quiet();
         }
     });
 
@@ -183,7 +191,7 @@ async function main() {
     if (rivus) {
         console.log('\n--- Stage 3: Rivus (multi-compiler) ---\n');
 
-        const compilers = ['nanus-ts', 'nanus-go', 'nanus-rs'] as const;
+        const compilers = ['nanus-ts', 'nanus-go', 'nanus-rs', 'nanus-py'] as const;
 
         for (const compiler of compilers) {
             const result = await step(

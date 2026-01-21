@@ -8,7 +8,7 @@
  *   3. Report pass/fail
  *
  * Options:
- *   -c, --compiler <name>  Compiler to use: nanus, faber, rivus (default: nanus)
+ *   -c, --compiler <name>  Compiler to use (default: nanus-ts)
  *   --diff                 Show line-by-line diff for failures
  */
 
@@ -43,7 +43,7 @@ function showDiff(actual: string, expected: string) {
 }
 
 function parseArgs(args: string[]): { compiler: string; showDiffs: boolean } {
-    let compiler = 'nanus';
+    let compiler = 'nanus-ts';
     let showDiffs = false;
 
     for (let i = 0; i < args.length; i++) {
@@ -61,12 +61,12 @@ function parseArgs(args: string[]): { compiler: string; showDiffs: boolean } {
 async function compile(compiler: string, fabPath: string): Promise<{ success: boolean; output?: string; error?: string }> {
     const bin = join(BIN, compiler);
     try {
-        // nanus-ts, nanus-go, nanus-rs use stdin/stdout
-        if (compiler === 'nanus-ts' || compiler === 'nanus-go' || compiler === 'nanus-rs') {
+        // nanus-ts, nanus-go, nanus-rs, nanus-py use stdin/stdout
+        if (compiler === 'nanus-ts' || compiler === 'nanus-go' || compiler === 'nanus-rs' || compiler === 'nanus-py') {
             const result = await $`cat ${fabPath} | ${bin} emit -t ts`.quiet();
             return { success: true, output: result.text() };
         }
-        // faber, rivus, nanus (symlink) use file args
+        // faber, rivus use file args
         const result = await $`${bin} compile ${fabPath}`.quiet();
         return { success: true, output: result.text() };
     } catch (err: any) {
@@ -77,7 +77,7 @@ async function compile(compiler: string, fabPath: string): Promise<{ success: bo
 async function main() {
     const { compiler, showDiffs } = parseArgs(process.argv.slice(2));
 
-    const validCompilers = ['nanus', 'nanus-ts', 'nanus-go', 'nanus-rs', 'faber', 'rivus'];
+    const validCompilers = ['nanus-ts', 'nanus-go', 'nanus-rs', 'nanus-py', 'faber', 'rivus'];
     if (!validCompilers.includes(compiler)) {
         console.error(`Invalid compiler: ${compiler}. Must be one of: ${validCompilers.join(', ')}`);
         process.exit(1);
