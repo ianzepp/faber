@@ -874,8 +874,15 @@ functio parseVariansCampusNominatus(in Resolvitor r) -> VariansCampus {
 
 # Parse import declaration
 #
-# GRAMMAR:
+# GRAMMAR (new):
+#   importaDecl := 'ex' (STRING | IDENT) specifiers
+# GRAMMAR (legacy):
 #   importaDecl := 'ex' (STRING | IDENT) 'importa' specifiers
+#
+# The caller determines which syntax is used:
+#   - New syntax: § importa ex "path" bindings (importa already consumed)
+#   - Legacy syntax: § ex "path" importa bindings (starts with 'ex')
+#
 #   specifiers := specifier (',' specifier)*
 #   specifier := IDENT ('ut' IDENT)?
 #              | '*' ('ut' IDENT)?
@@ -903,8 +910,8 @@ functio parseImportaSententia(in Resolvitor r) -> Sententia {
         fons = fonsSym.valor
     }
 
-    # Expect 'importa'
-    p.expectaVerbum("importa", ParserErrorCodice.ExpectaturImporta)
+    # Optional 'importa' - for new syntax it's already consumed, for legacy it's here
+    p.congruetVerbum("importa")
 
     # Check for wildcard import: * or * ut alias
     varia totum = falsum
