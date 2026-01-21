@@ -134,9 +134,9 @@ function emitStmt(stmt: Stmt, indent = ''): string {
             const lines: string[] = [];
             lines.push(`${indent}${exp}class ${stmt.nomen}${generics}${impl} {`);
 
-            // Fields (default to private in TS output)
+            // Fields (default to public; only emit visibility if explicitly specified)
             for (const campo of stmt.campi) {
-                const vis = campo.visibilitas === 'Protecta' ? 'protected ' : 'private ';
+                const vis = campo.visibilitas === 'Protecta' ? 'protected ' : campo.visibilitas === 'Privata' ? 'private ' : '';
                 const val = campo.valor ? ` = ${emitExpr(campo.valor)}` : '';
                 lines.push(`${indent}  ${vis}${campo.nomen}: ${emitTypus(campo.typus)}${val};`);
             }

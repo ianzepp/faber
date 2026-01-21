@@ -285,7 +285,12 @@ fn emit_genus(stmt: &Stmt, indent: &str) -> String {
 
         // Fields
         for c in campi {
-            let vis = if c.visibilitas == "Protecta" { "protected" } else { "private" };
+            // Only emit visibility if explicitly specified; default is public (no modifier)
+            let vis = match c.visibilitas.as_str() {
+                "Protecta" => "protected ",
+                "Privata" => "private ",
+                _ => "",  // Public by default (no modifier)
+            };
             let typ = if let Some(t) = &c.typus {
                 format!(": {}", emit_typus(t))
             } else {
@@ -296,7 +301,7 @@ fn emit_genus(stmt: &Stmt, indent: &str) -> String {
             } else {
                 String::new()
             };
-            lines.push(format!("{}  {} {}{}{};", indent, vis, c.nomen, typ, val));
+            lines.push(format!("{}  {}{}{}{};", indent, vis, c.nomen, typ, val));
         }
 
         // Auto-generate constructor if there are fields
@@ -845,6 +850,8 @@ fn map_binary_op(op: &str) -> &'static str {
                 "%" => "%",
                 "==" => "==",
                 "!=" => "!=",
+                "===" => "===",
+                "!==" => "!==",
                 "<" => "<",
                 ">" => ">",
                 "<=" => "<=",

@@ -167,9 +167,12 @@ func emitStmt(stmt subsidia.Stmt, indent string) string {
 		lines = append(lines, indent+exp+"class "+s.Nomen+generics+impl+" {")
 
 		for _, campo := range s.Campi {
-			vis := "private "
+			// Only emit visibility if explicitly specified; default is public (no modifier)
+			vis := ""
 			if campo.Visibilitas == "Protecta" {
 				vis = "protected "
+			} else if campo.Visibilitas == "Privata" {
+				vis = "private "
 			}
 			val := ""
 			if campo.Valor != nil {
