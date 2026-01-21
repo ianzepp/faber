@@ -8,14 +8,14 @@ import (
 
 var keywords = map[string]struct{}{
 	// Declarations
-	"varia": {}, "fixum": {}, "figendum": {},
-	"functio": {}, "genus": {}, "pactum": {}, "ordo": {}, "discretio": {},
+	"varia": {}, "fixum": {}, "figendum": {}, "variandum": {},
+	"functio": {}, "genus": {}, "pactum": {}, "ordo": {}, "discretio": {}, "typus": {},
 	"ex": {}, "importa": {}, "ut": {},
 	// Modifiers
-	"publica": {}, "privata": {}, "protecta": {}, "generis": {}, "implet": {}, "sub": {},
+	"publica": {}, "privata": {}, "protecta": {}, "generis": {}, "implet": {}, "sub": {}, "abstractus": {},
 	// Control flow
 	"si": {}, "sin": {}, "secus": {}, "dum": {}, "fac": {}, "elige": {}, "casu": {}, "ceterum": {}, "discerne": {}, "custodi": {},
-	"de": {}, "pro": {}, "omnia": {},
+	"de": {}, "in": {}, "pro": {}, "omnia": {},
 	// Actions
 	"redde": {}, "reddit": {}, "rumpe": {}, "perge": {}, "iace": {}, "mori": {}, "tempta": {}, "cape": {}, "demum": {},
 	"scribe": {}, "vide": {}, "mone": {}, "adfirma": {},
@@ -24,7 +24,9 @@ var keywords = map[string]struct{}{
 	"sic": {}, "scriptum": {},
 	// Operators (word-form)
 	"et": {}, "aut": {}, "vel": {}, "inter": {}, "intra": {},
-	"non": {}, "nihil": {}, "nonnihil": {}, "positivum": {},
+	"non": {}, "nihil": {}, "nonnihil": {}, "positivum": {}, "negativum": {}, "nulla": {}, "nonnulla": {},
+	// Conversion operators
+	"numeratum": {}, "fractatum": {}, "textatum": {}, "bivalentum": {},
 	// Literals
 	"verum": {}, "falsum": {}, "ego": {},
 	// Entry

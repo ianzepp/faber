@@ -413,6 +413,23 @@ func analyzeStatement(ctx *SemanticContext, stmt Stmt) {
 		if s.Demum != nil {
 			analyzeStatement(ctx, s.Demum)
 		}
+
+	case *StmtTypusAlias:
+		// Register type alias
+		targetType := resolveTypusAnnotatio(ctx, s.Typus)
+		ctx.RegisterTypus(s.Nomen, targetType)
+		ctx.Definie(&Symbolum{
+			Nomen:   s.Nomen,
+			Typus:   targetType,
+			Species: SymbolTypus,
+			Locus:   s.Locus,
+			Node:    s,
+		})
+
+	case *StmtIn:
+		// Mutation block - analyze expression and body
+		analyzeExpression(ctx, s.Expr)
+		analyzeStatement(ctx, s.Corpus)
 	}
 }
 

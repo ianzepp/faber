@@ -88,6 +88,24 @@ func analyzeExpression(ctx *SemanticContext, expr Expr) SemanticTypus {
 		analyzeExpression(ctx, e.End)
 		result = &SemLista{Elementum: NUMERUS}
 
+	case *ExprConversio:
+		analyzeExpression(ctx, e.Expr)
+		if e.Fallback != nil {
+			analyzeExpression(ctx, e.Fallback)
+		}
+		switch e.Species {
+		case "numeratum":
+			result = NUMERUS
+		case "fractatum":
+			result = FRACTUS
+		case "textatum":
+			result = TEXTUS
+		case "bivalentum":
+			result = BIVALENS
+		default:
+			result = IGNOTUM
+		}
+
 	default:
 		result = IGNOTUM
 	}
@@ -172,9 +190,9 @@ func analyzeUnaria(ctx *SemanticContext, e *ExprUnaria) SemanticTypus {
 	switch e.Signum {
 	case "non", "!":
 		return BIVALENS
-	case "nihil", "nonnihil":
+	case "nihil", "nonnihil", "nulla", "nonnulla":
 		return BIVALENS
-	case "-", "+", "positivum", "negativum":
+	case "-", "+", "~", "positivum", "negativum":
 		return argType
 	default:
 		return argType

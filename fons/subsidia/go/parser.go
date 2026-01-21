@@ -7,39 +7,44 @@ import (
 
 // Operator precedence for Pratt parser.
 var Precedence = map[string]int{
-	"=":       1,
-	"+=":      1,
-	"-=":      1,
-	"*=":      1,
-	"/=":      1,
-	"vel":     2,
-	"??":      2,
-	"aut":     3,
-	"||":      3,
-	"et":      4,
-	"&&":      4,
-	"==":      5,
-	"!=":      5,
-	"===":     5,
-	"!==":     5,
-	"<":       6,
-	">":       6,
-	"<=":      6,
-	">=":      6,
-	"inter":   6,
-	"intra":   6,
-	"+":       7,
-	"-":       7,
-	"*":       8,
-	"/":       8,
-	"%":       8,
-	"qua":     9,
-	"innatum": 9,
-	"novum":   9,
+	"=":         1,
+	"+=":        1,
+	"-=":        1,
+	"*=":        1,
+	"/=":        1,
+	"vel":       2,
+	"??":        2,
+	"aut":       3,
+	"||":        3,
+	"et":        4,
+	"&&":        4,
+	"==":        5,
+	"!=":        5,
+	"===":       5,
+	"!==":       5,
+	"<":         6,
+	">":         6,
+	"<=":        6,
+	">=":        6,
+	"inter":     6,
+	"intra":     6,
+	"+":         7,
+	"-":         7,
+	"*":         8,
+	"/":         8,
+	"%":         8,
+	"qua":       9,
+	"innatum":   9,
+	"novum":     9,
+	"numeratum": 9,
+	"fractatum": 9,
+	"textatum":  9,
+	"bivalentum": 9,
 }
 
 var UnaryOps = map[string]struct{}{
-	"-": {}, "!": {}, "non": {}, "nihil": {}, "nonnihil": {}, "positivum": {},
+	"-": {}, "!": {}, "~": {}, "non": {}, "nihil": {}, "nonnihil": {},
+	"positivum": {}, "negativum": {}, "nulla": {}, "nonnulla": {},
 }
 
 var AssignOps = map[string]struct{}{
@@ -162,20 +167,32 @@ func (p *Parser) parseStmt() Stmt {
 	tok := p.peek(0)
 	if tok.Tag == TokenKeyword {
 		switch tok.Valor {
-		case "varia", "fixum", "figendum":
+		case "varia", "fixum", "figendum", "variandum":
 			return p.parseVaria(publica, externa)
 		case "ex":
 			return p.parseExStmt(publica)
 		case "functio":
 			return p.parseFunctio(publica, futura, externa)
+		case "abstractus":
+			p.advance() // consume "abstractus"
+			if p.check(TokenKeyword, "genus") {
+				return p.parseGenus(publica, true)
+			}
+			panic(p.error("expected 'genus' after 'abstractus'"))
 		case "genus":
-			return p.parseGenus(publica)
+			return p.parseGenus(publica, false)
 		case "pactum":
 			return p.parsePactum(publica)
 		case "ordo":
 			return p.parseOrdo(publica)
 		case "discretio":
 			return p.parseDiscretio(publica)
+		case "typus":
+			return p.parseTypusAlias(publica)
+		case "in":
+			return p.parseInStmt()
+		case "de":
+			return p.parseDeStmt()
 		case "si":
 			return p.parseSi()
 		case "dum":
@@ -245,10 +262,13 @@ func (p *Parser) parseVaria(publica bool, externa bool) Stmt {
 	locus := p.peek(0).Locus
 	kw := p.advance().Valor
 	species := VariaVaria
-	if kw == "figendum" {
+	switch kw {
+	case "figendum":
 		species = VariaFigendum
-	} else if kw == "fixum" {
+	case "fixum":
 		species = VariaFixum
+	case "variandum":
+		species = VariaVariandum
 	}
 
 	var typus Typus
@@ -428,7 +448,7 @@ func (p *Parser) parseParams() []Param {
 	return params
 }
 
-func (p *Parser) parseGenus(publica bool) Stmt {
+func (p *Parser) parseGenus(publica bool, abstractus bool) Stmt {
 	locus := p.peek(0).Locus
 	p.expect(TokenKeyword, "genus")
 	nomen := p.expect(TokenIdentifier).Valor
@@ -526,7 +546,7 @@ func (p *Parser) parseGenus(publica bool) Stmt {
 	}
 
 	p.expect(TokenPunctuator, "}")
-	return &StmtGenus{Tag: "Genus", Locus: locus, Nomen: nomen, Campi: campi, Methodi: methodi, Implet: implet, Generics: generics, Publica: publica}
+	return &StmtGenus{Tag: "Genus", Locus: locus, Nomen: nomen, Campi: campi, Methodi: methodi, Implet: implet, Generics: generics, Publica: publica, Abstractus: abstractus}
 }
 
 func (p *Parser) parsePactum(publica bool) Stmt {
@@ -658,6 +678,38 @@ func (p *Parser) parseDiscretio(publica bool) Stmt {
 
 	p.expect(TokenPunctuator, "}")
 	return &StmtDiscretio{Tag: "Discretio", Locus: locus, Nomen: nomen, Variantes: variantes, Generics: generics, Publica: publica}
+}
+
+func (p *Parser) parseTypusAlias(publica bool) Stmt {
+	locus := p.peek(0).Locus
+	p.expect(TokenKeyword, "typus")
+	nomen := p.expect(TokenIdentifier).Valor
+	p.expect(TokenOperator, "=")
+	typus := p.parseTypus()
+	return &StmtTypusAlias{Tag: "TypusAlias", Locus: locus, Nomen: nomen, Typus: typus, Publica: publica}
+}
+
+func (p *Parser) parseInStmt() Stmt {
+	locus := p.peek(0).Locus
+	p.expect(TokenKeyword, "in")
+	expr := p.parseExpr(0)
+	corpus := p.parseMassa()
+	return &StmtIn{Tag: "In", Locus: locus, Expr: expr, Corpus: corpus}
+}
+
+func (p *Parser) parseDeStmt() Stmt {
+	locus := p.peek(0).Locus
+	p.expect(TokenKeyword, "de")
+	expr := p.parseExpr(0)
+
+	// Expect fixum or varia for binding
+	if !p.check(TokenKeyword, "fixum") && !p.check(TokenKeyword, "varia") {
+		panic(p.error("expected 'fixum' or 'varia' after 'de' expression"))
+	}
+	p.advance()
+	binding := p.expect(TokenIdentifier).Valor
+	corpus := p.parseMassa()
+	return &StmtIteratio{Tag: "Iteratio", Locus: locus, Species: "De", Binding: binding, Iter: expr, Corpus: corpus, Asynca: false}
 }
 
 func (p *Parser) parseMassa() Stmt {
@@ -899,11 +951,11 @@ func (p *Parser) isStatementKeyword() bool {
 	}
 	kw := p.peek(0).Valor
 	stmtKeywords := map[string]struct{}{
-		"si": {}, "sin": {}, "secus": {}, "dum": {}, "fac": {}, "ex": {}, "de": {}, "elige": {}, "discerne": {}, "custodi": {},
+		"si": {}, "sin": {}, "secus": {}, "dum": {}, "fac": {}, "ex": {}, "de": {}, "in": {}, "elige": {}, "discerne": {}, "custodi": {},
 		"tempta": {}, "cape": {}, "demum": {}, "redde": {}, "rumpe": {}, "perge": {}, "iace": {}, "mori": {},
 		"scribe": {}, "vide": {}, "mone": {}, "adfirma": {}, "functio": {}, "genus": {}, "pactum": {}, "ordo": {},
-		"discretio": {}, "varia": {}, "fixum": {}, "figendum": {}, "incipit": {}, "probandum": {}, "proba": {},
-		"casu": {}, "ceterum": {}, "reddit": {}, "ergo": {}, "tacet": {}, "iacit": {}, "moritor": {},
+		"discretio": {}, "varia": {}, "fixum": {}, "figendum": {}, "variandum": {}, "incipit": {}, "probandum": {}, "proba": {},
+		"casu": {}, "ceterum": {}, "reddit": {}, "ergo": {}, "tacet": {}, "iacit": {}, "moritor": {}, "typus": {}, "abstractus": {},
 	}
 	_, ok := stmtKeywords[kw]
 	return ok
@@ -915,8 +967,8 @@ func (p *Parser) isDeclarationKeyword() bool {
 	}
 	kw := p.peek(0).Valor
 	declKeywords := map[string]struct{}{
-		"functio": {}, "genus": {}, "pactum": {}, "ordo": {}, "discretio": {},
-		"varia": {}, "fixum": {}, "figendum": {}, "incipit": {}, "probandum": {},
+		"functio": {}, "genus": {}, "pactum": {}, "ordo": {}, "discretio": {}, "typus": {},
+		"varia": {}, "fixum": {}, "figendum": {}, "variandum": {}, "incipit": {}, "probandum": {}, "abstractus": {},
 	}
 	_, ok := declKeywords[kw]
 	return ok
@@ -1075,6 +1127,17 @@ func (p *Parser) parseExpr(minPrec int) Expr {
 		if op == "novum" {
 			typus := p.parseTypus()
 			left = &ExprPostfixNovum{Tag: "PostfixNovum", Locus: tok.Locus, Expr: left, Typus: typus}
+			continue
+		}
+
+		// Conversion operators: numeratum, fractatum, textatum, bivalentum
+		if op == "numeratum" || op == "fractatum" || op == "textatum" || op == "bivalentum" {
+			var fallback Expr
+			// Numeric conversions can have "vel fallback"
+			if (op == "numeratum" || op == "fractatum") && p.match(TokenKeyword, "vel") != nil {
+				fallback = p.parseUnary()
+			}
+			left = &ExprConversio{Tag: "Conversio", Locus: tok.Locus, Expr: left, Species: op, Fallback: fallback}
 			continue
 		}
 
@@ -1449,6 +1512,8 @@ func ExprLocus(expr Expr) Locus {
 	case *ExprScriptum:
 		return e.Locus
 	case *ExprAmbitus:
+		return e.Locus
+	case *ExprConversio:
 		return e.Locus
 	default:
 		return Locus{}

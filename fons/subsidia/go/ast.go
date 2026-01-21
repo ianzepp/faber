@@ -229,6 +229,14 @@ type ExprAmbitus struct {
 	Inclusive bool   `json:"inclusive"`
 }
 
+type ExprConversio struct {
+	Tag      string `json:"tag"`
+	Locus    Locus  `json:"locus"`
+	Expr     Expr   `json:"expr"`
+	Species  string `json:"species"`
+	Fallback Expr   `json:"fallback"`
+}
+
 func (*ExprNomen) exprNode()        {}
 func (*ExprEgo) exprNode()          {}
 func (*ExprLittera) exprNode()      {}
@@ -247,8 +255,9 @@ func (*ExprQua) exprNode()          {}
 func (*ExprInnatum) exprNode()      {}
 func (*ExprPostfixNovum) exprNode() {}
 func (*ExprFinge) exprNode()        {}
-func (*ExprScriptum) exprNode()     {}
-func (*ExprAmbitus) exprNode()      {}
+func (*ExprScriptum) exprNode()   {}
+func (*ExprAmbitus) exprNode()    {}
+func (*ExprConversio) exprNode()  {}
 
 // Object literal properties.
 type ObiectumProp struct {
@@ -267,9 +276,10 @@ type Stmt interface {
 type VariaSpecies string
 
 const (
-	VariaVaria    VariaSpecies = "Varia"
-	VariaFixum    VariaSpecies = "Fixum"
-	VariaFigendum VariaSpecies = "Figendum"
+	VariaVaria     VariaSpecies = "Varia"
+	VariaFixum     VariaSpecies = "Fixum"
+	VariaFigendum  VariaSpecies = "Figendum"
+	VariaVariandum VariaSpecies = "Variandum"
 )
 
 type StmtMassa struct {
@@ -309,14 +319,15 @@ type StmtFunctio struct {
 }
 
 type StmtGenus struct {
-	Tag      string       `json:"tag"`
-	Locus    Locus        `json:"locus"`
-	Nomen    string       `json:"nomen"`
-	Campi    []CampusDecl `json:"campi"`
-	Methodi  []Stmt       `json:"methodi"`
-	Implet   []string     `json:"implet"`
-	Generics []string     `json:"generics"`
-	Publica  bool         `json:"publica"`
+	Tag       string       `json:"tag"`
+	Locus     Locus        `json:"locus"`
+	Nomen     string       `json:"nomen"`
+	Campi     []CampusDecl `json:"campi"`
+	Methodi   []Stmt       `json:"methodi"`
+	Implet    []string     `json:"implet"`
+	Generics  []string     `json:"generics"`
+	Publica   bool         `json:"publica"`
+	Abstractus bool        `json:"abstractus"`
 }
 
 type StmtPactum struct {
@@ -352,6 +363,14 @@ type StmtImporta struct {
 	Specs []ImportSpec `json:"specs"`
 	Totum bool         `json:"totum"`
 	Alias *string      `json:"alias"`
+}
+
+type StmtTypusAlias struct {
+	Tag     string `json:"tag"`
+	Locus   Locus  `json:"locus"`
+	Nomen   string `json:"nomen"`
+	Typus   Typus  `json:"typus"`
+	Publica bool   `json:"publica"`
 }
 
 type StmtSi struct {
@@ -473,6 +492,13 @@ type StmtProba struct {
 	Corpus Stmt   `json:"corpus"`
 }
 
+type StmtIn struct {
+	Tag    string `json:"tag"`
+	Locus  Locus  `json:"locus"`
+	Expr   Expr   `json:"expr"`
+	Corpus Stmt   `json:"corpus"`
+}
+
 func (*StmtMassa) stmtNode()     {}
 func (*StmtExpressia) stmtNode() {}
 func (*StmtVaria) stmtNode()     {}
@@ -497,8 +523,10 @@ func (*StmtAdfirma) stmtNode()   {}
 func (*StmtRumpe) stmtNode()     {}
 func (*StmtPerge) stmtNode()     {}
 func (*StmtIncipit) stmtNode()   {}
-func (*StmtProbandum) stmtNode() {}
-func (*StmtProba) stmtNode()     {}
+func (*StmtProbandum) stmtNode()  {}
+func (*StmtProba) stmtNode()      {}
+func (*StmtTypusAlias) stmtNode() {}
+func (*StmtIn) stmtNode()         {}
 
 // Supporting types.
 type Param struct {
