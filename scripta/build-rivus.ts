@@ -25,10 +25,10 @@ import { $ } from 'bun';
 // =============================================================================
 
 type Compiler = 'faber' | 'nanus-ts' | 'nanus-go' | 'nanus-rs';
-type Target = 'ts' | 'go';
+type Target = 'ts' | 'go' | 'rs';
 
 const VALID_COMPILERS: Compiler[] = ['faber', 'nanus-ts', 'nanus-go', 'nanus-rs'];
-const VALID_TARGETS: Target[] = ['ts', 'go'];
+const VALID_TARGETS: Target[] = ['ts', 'go', 'rs'];
 
 // =============================================================================
 // CONFIGURATION
@@ -85,9 +85,11 @@ const ROOT = join(import.meta.dir, '..');
 const SOURCE = join(ROOT, 'fons', 'rivus');
 const OUTPUT = target === 'go'
     ? join(ROOT, 'opus', 'rivus-go', 'fons')
+    : target === 'rs'
+    ? join(ROOT, 'opus', 'rivus-rs', 'src')
     : join(ROOT, 'opus', 'rivus-ts', 'fons');
 const COMPILER_BIN = join(ROOT, 'opus', 'bin', compiler);
-const FILE_EXT = target === 'go' ? '.go' : '.ts';
+const FILE_EXT = target === 'go' ? '.go' : target === 'rs' ? '.rs' : '.ts';
 
 // Different compilers use different I/O methods:
 // - nanus-ts/nanus-go/nanus-rs: streaming via stdin/stdout
@@ -301,10 +303,14 @@ async function main() {
         console.log('  Building rivus executable...');
         await buildExecutable();
         console.log('  Built opus/bin/rivus-ts');
-    } else {
+    } else if (target === 'go') {
         // Go output - compilation is manual for now
         console.log(`\nGo source generated in ${relative(ROOT, OUTPUT)}/`);
         console.log('Build manually with: go build .');
+    } else if (target === 'rs') {
+        // Rust output - compilation is manual for now
+        console.log(`\nRust source generated in ${relative(ROOT, OUTPUT)}/`);
+        console.log('Build manually with: cargo build');
     }
 }
 
