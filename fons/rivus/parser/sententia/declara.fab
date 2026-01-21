@@ -722,17 +722,17 @@ functio parseParametra(Resolvitor r) -> lista<Parametrum> {
     fac {
         fixum paramLocus = p.locusActualis()
 
-        # Check for preposition (de, in, ex)
-        varia praepositio = nihil qua textus?
-        si p.estPraepositio(p.specta(0)) {
-            praepositio = p.procede().verbum
-        }
-
-        # Optional parameter marker
+        # Optional parameter marker (must come before preposition per EBNF)
         varia optionalis = falsum
         si p.probaVerbum("si") {
             optionalis = verum
             p.procede()
+        }
+
+        # Check for preposition (de, in, ex)
+        varia praepositio = nihil qua textus?
+        si p.estPraepositio(p.specta(0)) {
+            praepositio = p.procede().verbum
         }
 
         # Check for rest parameter

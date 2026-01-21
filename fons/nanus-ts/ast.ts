@@ -112,6 +112,8 @@ export interface Param {
     typus: Typus | null;
     default_: Expr | null;
     rest: boolean;
+    optional?: boolean;
+    ownership?: string; // 'ex' | 'de' | 'in'
 }
 
 export interface CampusDecl {

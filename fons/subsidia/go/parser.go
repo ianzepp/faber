@@ -365,6 +365,16 @@ func (p *Parser) parseParams() []Param {
 			optional = true
 		}
 
+		// Check for ownership preposition: ex/de/in
+		var ownership string
+		if p.match(TokenKeyword, "ex") != nil {
+			ownership = "ex"
+		} else if p.match(TokenKeyword, "de") != nil {
+			ownership = "de"
+		} else if p.match(TokenKeyword, "in") != nil {
+			ownership = "in"
+		}
+
 		var typus Typus
 		var nomen string
 
@@ -414,7 +424,7 @@ func (p *Parser) parseParams() []Param {
 			def = p.parseExpr(0)
 		}
 
-		params = append(params, Param{Locus: locus, Nomen: nomen, Typus: typus, Default: def, Rest: rest})
+		params = append(params, Param{Locus: locus, Nomen: nomen, Typus: typus, Default: def, Rest: rest, Optional: optional, Ownership: ownership})
 
 		if p.match(TokenPunctuator, ",") == nil {
 			break

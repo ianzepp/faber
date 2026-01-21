@@ -288,9 +288,9 @@ export function parseParameterList(r: Resolver): Parameter[] {
  * OPTIONAL PARAMETERS:
  *      'si' marks a parameter as optional. Without 'vel', type becomes ignotum<T>.
  *      With 'vel', parameter has a default value and type stays T.
- *      Order: preposition, then si, then ceteri, then type, then name.
+ *      Order: si, then preposition, then ceteri, then type, then name.
  *
- * EDGE: Preposition comes first (if present), then si, then type (if present), then identifier.
+ * EDGE: si comes first (if present), then preposition, then type (if present), then identifier.
  *
  * TYPE DETECTION: Uses lookahead to detect type annotations for user-defined types.
  *   - Builtin type names (textus, numerus, etc.) are recognized directly
@@ -301,17 +301,17 @@ export function parseParameter(r: Resolver): Parameter {
     const ctx = r.ctx();
     const position = ctx.peek().position;
 
-    let preposition: string | undefined;
-
-    if (ctx.isPreposition(ctx.peek())) {
-        preposition = ctx.advance().keyword;
-    }
-
     // Check for optional parameter: si [type] name [vel default]
     let optional = false;
     if (ctx.checkKeyword('si')) {
         ctx.advance(); // consume 'si'
         optional = true;
+    }
+
+    // Check for borrow preposition (de/in/ex for ownership semantics)
+    let preposition: string | undefined;
+    if (ctx.isPreposition(ctx.peek())) {
+        preposition = ctx.advance().keyword;
     }
 
     // Check for rest parameter: ceteri [type] name

@@ -502,11 +502,13 @@ func (*StmtProba) stmtNode()     {}
 
 // Supporting types.
 type Param struct {
-	Locus   Locus  `json:"locus"`
-	Nomen   string `json:"nomen"`
-	Typus   Typus  `json:"typus"`
-	Default Expr   `json:"default_"`
-	Rest    bool   `json:"rest"`
+	Locus     Locus  `json:"locus"`
+	Nomen     string `json:"nomen"`
+	Typus     Typus  `json:"typus"`
+	Default   Expr   `json:"default_"`
+	Rest      bool   `json:"rest"`
+	Optional  bool   `json:"optional,omitempty"`
+	Ownership string `json:"ownership,omitempty"`
 }
 
 type CampusDecl struct {

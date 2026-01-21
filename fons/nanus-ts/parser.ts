@@ -344,6 +344,16 @@ export class Parser {
                 optional = true;
             }
 
+            // Check for ownership preposition: ex/de/in
+            let ownership: string | undefined;
+            if (this.match('Keyword', 'ex')) {
+                ownership = 'ex';
+            } else if (this.match('Keyword', 'de')) {
+                ownership = 'de';
+            } else if (this.match('Keyword', 'in')) {
+                ownership = 'in';
+            }
+
             let typus: Typus | null = null;
             let nomen: string;
 
@@ -395,7 +405,7 @@ export class Parser {
                 default_ = this.parseExpr();
             }
 
-            params.push({ locus, nomen, typus, default_, rest });
+            params.push({ locus, nomen, typus, default_, rest, optional: optional || undefined, ownership });
             } while (this.match('Punctuator', ','));
 
         return params;
