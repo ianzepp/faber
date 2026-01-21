@@ -63,7 +63,8 @@ export type Expr =
     | { tag: 'PostfixNovum'; locus: Locus; expr: Expr; typus: Typus }
     | { tag: 'Finge'; locus: Locus; variant: string; campi: ObiectumProp[]; typus: Typus | null }
     | { tag: 'Scriptum'; locus: Locus; template: string; args: Expr[] }
-    | { tag: 'Ambitus'; locus: Locus; start: Expr; end: Expr; inclusive: boolean };
+    | { tag: 'Ambitus'; locus: Locus; start: Expr; end: Expr; inclusive: boolean }
+    | { tag: 'Conversio'; locus: Locus; expr: Expr; species: string; fallback: Expr | null };
 
 export type LitteraSpecies = 'Numerus' | 'Fractus' | 'Textus' | 'Verum' | 'Falsum' | 'Nihil';
 
@@ -81,7 +82,7 @@ export type Stmt =
     | { tag: 'Expressia'; locus: Locus; expr: Expr }
     | { tag: 'Varia'; locus: Locus; species: VariaSpecies; nomen: string; typus: Typus | null; valor: Expr | null; publica: boolean; externa: boolean }
     | { tag: 'Functio'; locus: Locus; nomen: string; params: Param[]; typusReditus: Typus | null; corpus: Stmt | null; asynca: boolean; publica: boolean; generics: string[]; externa: boolean }
-    | { tag: 'Genus'; locus: Locus; nomen: string; campi: CampusDecl[]; methodi: Stmt[]; implet: string[]; generics: string[]; publica: boolean }
+    | { tag: 'Genus'; locus: Locus; nomen: string; campi: CampusDecl[]; methodi: Stmt[]; implet: string[]; generics: string[]; publica: boolean; abstractus: boolean }
     | { tag: 'Pactum'; locus: Locus; nomen: string; methodi: PactumMethodus[]; generics: string[]; publica: boolean }
     | { tag: 'Ordo'; locus: Locus; nomen: string; membra: OrdoMembrum[]; publica: boolean }
     | { tag: 'Discretio'; locus: Locus; nomen: string; variantes: VariansDecl[]; generics: string[]; publica: boolean }
@@ -102,9 +103,11 @@ export type Stmt =
     | { tag: 'Perge'; locus: Locus }
     | { tag: 'Incipit'; locus: Locus; corpus: Stmt; asynca: boolean }
     | { tag: 'Probandum'; locus: Locus; nomen: string; corpus: Stmt[] }
-    | { tag: 'Proba'; locus: Locus; nomen: string; corpus: Stmt };
+    | { tag: 'Proba'; locus: Locus; nomen: string; corpus: Stmt }
+    | { tag: 'TypusAlias'; locus: Locus; nomen: string; typus: Typus; publica: boolean }
+    | { tag: 'In'; locus: Locus; expr: Expr; corpus: Stmt };
 
-export type VariaSpecies = 'Varia' | 'Fixum' | 'Figendum';
+export type VariaSpecies = 'Varia' | 'Fixum' | 'Figendum' | 'Variandum';
 
 export interface Param {
     locus: Locus;

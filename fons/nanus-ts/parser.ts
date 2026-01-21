@@ -25,10 +25,10 @@ const PRECEDENCE: Record<string, number> = {
     '<': 6, '>': 6, '<=': 6, '>=': 6, 'inter': 6, 'intra': 6,
     '+': 7, '-': 7,
     '*': 8, '/': 8, '%': 8,
-    'qua': 9, 'innatum': 9, 'novum': 9,
+    'qua': 9, 'innatum': 9, 'novum': 9, 'numeratum': 9, 'fractatum': 9, 'textatum': 9, 'bivalentum': 9,
 };
 
-const UNARY_OPS = new Set(['-', '!', 'non', 'nihil', 'nonnihil', 'positivum']);
+const UNARY_OPS = new Set(['-', '!', '~', 'non', 'nihil', 'nonnihil', 'positivum', 'negativum', 'nulla', 'nonnulla']);
 const ASSIGN_OPS = new Set(['=', '+=', '-=', '*=', '/=']);
 
 export class Parser {
@@ -140,11 +140,18 @@ export class Parser {
                 case 'varia':
                 case 'fixum':
                 case 'figendum':
+                case 'variandum':
                     return this.parseVaria(publica, externa);
                 case 'ex':
                     return this.parseExStmt(publica);
                 case 'functio':
                     return this.parseFunctio(publica, futura, externa);
+                case 'abstractus': {
+                    const locus = this.peek().locus;
+                    this.advance(); // consume 'abstractus'
+                    this.expect('Keyword', 'genus');
+                    return this.parseGenusBody(locus, publica, true);
+                }
                 case 'genus':
                     return this.parseGenus(publica);
                 case 'pactum':
@@ -189,6 +196,12 @@ export class Parser {
                     return this.parseProbandum();
                 case 'proba':
                     return this.parseProba();
+                case 'typus':
+                    return this.parseTypusAlias(publica);
+                case 'in':
+                    return this.parseInStmt();
+                case 'de':
+                    return this.parseDeStmt();
             }
         }
 
@@ -224,7 +237,7 @@ export class Parser {
     private parseVaria(publica: boolean, externa: boolean = false): Stmt {
         const locus = this.peek().locus;
         const kw = this.advance().valor;
-        const species: VariaSpecies = kw === 'varia' ? 'Varia' : kw === 'figendum' ? 'Figendum' : 'Fixum';
+        const species: VariaSpecies = kw === 'varia' ? 'Varia' : kw === 'figendum' ? 'Figendum' : kw === 'variandum' ? 'Variandum' : 'Fixum';
 
         // Handle type-first syntax: varia <type> <name> = value
         // vs name-first syntax: varia <name> = value
@@ -406,6 +419,10 @@ export class Parser {
     private parseGenus(publica: boolean): Stmt {
         const locus = this.peek().locus;
         this.expect('Keyword', 'genus');
+        return this.parseGenusBody(locus, publica, false);
+    }
+
+    private parseGenusBody(locus: Locus, publica: boolean, abstractus: boolean): Stmt {
         const nomen = this.expect('Identifier').valor;
 
         const generics: string[] = [];
@@ -499,7 +516,7 @@ export class Parser {
             }
 
         this.expect('Punctuator', '}');
-        return { tag: 'Genus', locus, nomen, campi, methodi, implet, generics, publica };
+        return { tag: 'Genus', locus, nomen, campi, methodi, implet, generics, publica, abstractus };
     }
 
     private parsePactum(publica: boolean): Stmt {
@@ -959,6 +976,37 @@ export class Parser {
         return { tag: 'Proba', locus, nomen, corpus };
     }
 
+    private parseTypusAlias(publica: boolean): Stmt {
+        const locus = this.peek().locus;
+        this.expect('Keyword', 'typus');
+        const nomen = this.expect('Identifier').valor;
+        this.expect('Operator', '=');
+        const typus = this.parseTypus();
+        return { tag: 'TypusAlias', locus, nomen, typus, publica };
+    }
+
+    private parseInStmt(): Stmt {
+        const locus = this.peek().locus;
+        this.expect('Keyword', 'in');
+        const expr = this.parseExpr();
+        const corpus = this.parseMassa();
+        return { tag: 'In', locus, expr, corpus };
+    }
+
+    private parseDeStmt(): Stmt {
+        const locus = this.peek().locus;
+        this.expect('Keyword', 'de');
+        const iter = this.parseExpr();
+        // Expect 'fixum' or 'varia' before binding
+        if (!this.check('Keyword', 'fixum') && !this.check('Keyword', 'varia')) {
+            throw this.error("expected 'fixum' or 'varia' after 'de' expression");
+        }
+        this.advance(); // consume fixum/varia
+        const binding = this.expect('Identifier').valor;
+        const corpus = this.parseMassa();
+        return { tag: 'Iteratio', locus, species: 'De', binding, iter, corpus, asynca: false };
+    }
+
     private parseExpressiaStmt(): Stmt {
         const locus = this.peek().locus;
         const expr = this.parseExpr();
@@ -1029,6 +1077,16 @@ export class Parser {
             if (op === 'novum') {
                 const typus = this.parseTypus();
                 left = { tag: 'PostfixNovum', locus: tok.locus, expr: left, typus };
+                continue;
+            }
+
+            // Handle conversion operators: expr numeratum vel fallback
+            if (op === 'numeratum' || op === 'fractatum' || op === 'textatum' || op === 'bivalentum') {
+                let fallback: Expr | null = null;
+                if (this.match('Keyword', 'vel')) {
+                    fallback = this.parseExpr(prec + 1);
+                }
+                left = { tag: 'Conversio', locus: tok.locus, expr: left, species: op, fallback };
                 continue;
             }
 

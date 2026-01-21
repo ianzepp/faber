@@ -24,9 +24,12 @@ const BINARY_OPS: Record<string, string> = {
 
 const UNARY_OPS: Record<string, string> = {
     'non': '!',        // non x → !x (logical not)
-    'nihil': '!',      // nihil x → !x (null check)
+    'nihil': '!',      // nihil x → !x (null check - checks if value is null/undefined)
     'nonnihil': '!!',  // nonnihil x → !!x (non-null assertion as boolean)
     'positivum': '+',  // positivum x → +x (to number)
+    'negativum': '-',  // negativum x → -x (negate)
+    'nulla': '!',      // nulla x → !x (null check - same as nihil)
+    'nonnulla': '!!',  // nonnulla x → !!x (non-null check - same as nonnihil)
 };
 
 // Method/property name translations from norma (Faber → TypeScript)
@@ -101,7 +104,7 @@ function emitStmt(stmt: Stmt, indent = ''): string {
 
         case 'Varia': {
             const decl = stmt.externa ? 'declare ' : '';
-            const kw = stmt.species === 'Varia' ? 'let' : 'const';
+            const kw = stmt.species === 'Varia' || stmt.species === 'Variandum' ? 'let' : 'const';
             // For externa with ignotum type, use 'any' for usability (allows property access)
             let typ = '';
             if (stmt.typus) {
@@ -129,10 +132,11 @@ function emitStmt(stmt: Stmt, indent = ''): string {
 
         case 'Genus': {
             const exp = stmt.publica ? 'export ' : '';
+            const abs = stmt.abstractus ? 'abstract ' : '';
             const generics = stmt.generics.length > 0 ? `<${stmt.generics.join(', ')}>` : '';
             const impl = stmt.implet.length > 0 ? ` implements ${stmt.implet.join(', ')}` : '';
             const lines: string[] = [];
-            lines.push(`${indent}${exp}class ${stmt.nomen}${generics}${impl} {`);
+            lines.push(`${indent}${exp}${abs}class ${stmt.nomen}${generics}${impl} {`);
 
             // Fields (default to public; only emit visibility if explicitly specified)
             for (const campo of stmt.campi) {
@@ -390,6 +394,16 @@ function emitStmt(stmt: Stmt, indent = ''): string {
         case 'Proba':
             return `${indent}it(${JSON.stringify(stmt.nomen)}, () => ${emitStmt(stmt.corpus, indent)});`;
 
+        case 'TypusAlias': {
+            const exp = stmt.publica ? 'export ' : '';
+            return `${indent}${exp}type ${stmt.nomen} = ${emitTypus(stmt.typus)};`;
+        }
+
+        case 'In':
+            // In mutation block - emit as block with the expression available
+            // For now, just emit the body (the semantics depend on usage)
+            return emitStmt(stmt.corpus, indent);
+
         default:
             return `${indent}/* unhandled: ${(stmt as Stmt).tag} */`;
     }
@@ -560,6 +574,32 @@ function emitExpr(expr: Expr): string {
                 return `Array.from({ length: ${end} - ${start} + 1 }, (_, i) => ${start} + i)`;
             }
             return `Array.from({ length: ${end} - ${start} }, (_, i) => ${start} + i)`;
+        }
+
+        case 'Conversio': {
+            // Convert expr to target type with optional fallback
+            const inner = emitExpr(expr.expr);
+            let conversion: string;
+            switch (expr.species) {
+                case 'numeratum':
+                    conversion = `parseInt(${inner}, 10)`;
+                    break;
+                case 'fractatum':
+                    conversion = `parseFloat(${inner})`;
+                    break;
+                case 'textatum':
+                    conversion = `String(${inner})`;
+                    break;
+                case 'bivalentum':
+                    conversion = `Boolean(${inner})`;
+                    break;
+                default:
+                    conversion = inner;
+            }
+            if (expr.fallback) {
+                return `(${conversion} ?? ${emitExpr(expr.fallback)})`;
+            }
+            return conversion;
         }
 
         default:
