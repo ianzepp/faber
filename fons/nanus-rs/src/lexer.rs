@@ -285,7 +285,17 @@ impl<'a> Lexer<'a> {
                     _ => result.push(esc as char),
                 }
             } else {
-                result.push(self.advance() as char);
+                // Handle UTF-8 properly by reading chars from source slice
+                let remaining = &self.source[self.pos..];
+                if let Some(ch) = remaining.chars().next() {
+                    result.push(ch);
+                    let byte_len = ch.len_utf8();
+                    for _ in 0..byte_len {
+                        self.advance();
+                    }
+                } else {
+                    self.advance();
+                }
             }
         }
         if self.pos < self.bytes.len() {
@@ -317,7 +327,17 @@ impl<'a> Lexer<'a> {
                 self.advance();
                 return result;
             }
-            result.push(self.advance() as char);
+            // Handle UTF-8 properly
+            let remaining = &self.source[self.pos..];
+            if let Some(ch) = remaining.chars().next() {
+                result.push(ch);
+                let byte_len = ch.len_utf8();
+                for _ in 0..byte_len {
+                    self.advance();
+                }
+            } else {
+                self.advance();
+            }
         }
         result
     }

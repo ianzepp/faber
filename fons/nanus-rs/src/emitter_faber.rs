@@ -46,11 +46,11 @@ fn emit_stmt(stmt: &Stmt, indent: &str) -> String {
         } => {
             let prefix = if *asynca { "cede " } else { "" };
             format!(
-                "{}{}pro {} de {} {}",
+                "{}{}ex {} fixum {} {}",
                 indent,
                 prefix,
-                binding,
                 emit_expr(iter),
+                binding,
                 emit_stmt(corpus, indent)
             )
         }
@@ -142,15 +142,21 @@ fn emit_varia(stmt: &Stmt, indent: &str) -> String {
         nomen,
         typus,
         valor,
+        publica,
         ..
     } = stmt
     {
+        let mut result = String::new();
+        if *publica {
+            result.push_str(indent);
+            result.push_str("@ publica\n");
+        }
         let keyword = match species {
             VariaSpecies::Fixum => "fixum",
             VariaSpecies::Figendum => "figendum",
             _ => "varia",
         };
-        let mut result = format!("{}{} {}", indent, keyword, nomen);
+        result.push_str(&format!("{}{} {}", indent, keyword, nomen));
         if let Some(t) = typus {
             result.push_str(&format!(": {}", emit_typus(t)));
         }
@@ -627,8 +633,13 @@ fn emit_expr(expr: &Expr) -> String {
                 .collect();
             format!("finge {} {{ {} }}", variant, pairs.join(", "))
         }
-        Expr::Scriptum { template, .. } => {
-            format!("scriptum(\"{}\")", template)
+        Expr::Scriptum { template, args, .. } => {
+            if args.is_empty() {
+                format!("scriptum(\"{}\")", escape_string(template))
+            } else {
+                let args_str: Vec<String> = args.iter().map(emit_expr).collect();
+                format!("scriptum(\"{}\", {})", escape_string(template), args_str.join(", "))
+            }
         }
         Expr::Ambitus {
             start,
@@ -677,8 +688,15 @@ fn emit_param(p: &Param) -> String {
         result.push_str("ceteri ");
     }
     if let Some(t) = &p.typus {
-        result.push_str(&emit_typus(t));
-        result.push(' ');
+        // If param type is Nullabilis, emit as "si inner_type name" (optional param syntax)
+        if let Typus::Nullabilis { inner } = t {
+            result.push_str("si ");
+            result.push_str(&emit_typus(inner));
+            result.push(' ');
+        } else {
+            result.push_str(&emit_typus(t));
+            result.push(' ');
+        }
     }
     result.push_str(&p.nomen);
     if let Some(d) = &p.default {
