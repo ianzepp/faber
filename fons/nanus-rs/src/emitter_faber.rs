@@ -112,7 +112,7 @@ fn emit_stmt(stmt: &Stmt, indent: &str) -> String {
         Stmt::Probandum { nomen, corpus, .. } => {
             let mut result = format!("{}probandum \"{}\" {{\n", indent, nomen);
             for s in corpus {
-                result.push_str(&emit_stmt(s, &format!("{}\t", indent)));
+                result.push_str(&emit_stmt(s, &format!("{}    ", indent)));
                 result.push('\n');
             }
             result.push_str(indent);
@@ -128,7 +128,7 @@ fn emit_stmt(stmt: &Stmt, indent: &str) -> String {
 fn emit_massa(corpus: &[Stmt], indent: &str) -> String {
     let mut result = String::from("{\n");
     for stmt in corpus {
-        result.push_str(&emit_stmt(stmt, &format!("{}\t", indent)));
+        result.push_str(&emit_stmt(stmt, &format!("{}    ", indent)));
         result.push('\n');
     }
     result.push_str(indent);
@@ -245,7 +245,7 @@ fn emit_genus(stmt: &Stmt, indent: &str) -> String {
         }
         result.push_str(" {\n");
         for c in campi {
-            result.push_str(&format!("{}\t", indent));
+            result.push_str(&format!("{}    ", indent));
             result.push_str(&c.nomen);
             if let Some(t) = &c.typus {
                 result.push_str(": ");
@@ -258,7 +258,7 @@ fn emit_genus(stmt: &Stmt, indent: &str) -> String {
             result.push('\n');
         }
         for m in methodi {
-            result.push_str(&emit_stmt(m, &format!("{}\t", indent)));
+            result.push_str(&emit_stmt(m, &format!("{}    ", indent)));
             result.push('\n');
         }
         result.push_str(indent);
@@ -293,7 +293,7 @@ fn emit_pactum(stmt: &Stmt, indent: &str) -> String {
         }
         result.push_str(" {\n");
         for m in methodi {
-            result.push_str(&format!("{}\t", indent));
+            result.push_str(&format!("{}    ", indent));
             if m.asynca {
                 result.push_str("asynca ");
             }
@@ -335,7 +335,7 @@ fn emit_ordo(stmt: &Stmt, indent: &str) -> String {
         result.push_str(nomen);
         result.push_str(" {\n");
         for m in membra {
-            result.push_str(&format!("{}\t{}", indent, m.nomen));
+            result.push_str(&format!("{}{}", indent, m.nomen));
             if let Some(v) = &m.valor {
                 result.push_str(" = ");
                 result.push_str(v);
@@ -373,13 +373,14 @@ fn emit_discretio(stmt: &Stmt, indent: &str) -> String {
             result.push('>');
         }
         result.push_str(" {\n");
-        let inner = format!("{}\t", indent);
+        let inner = format!("{}    ", indent);
+        let inner2 = format!("{}    ", inner);
         for v in variantes {
             result.push_str(&format!("{}{}", inner, v.nomen));
             if !v.campi.is_empty() {
                 result.push_str(" {\n");
                 for f in &v.campi {
-                    result.push_str(&format!("{}\t{} {}\n", inner, emit_typus(&f.typus), f.nomen));
+                    result.push_str(&format!("{}{} {}\n", inner2, emit_typus(&f.typus), f.nomen));
                 }
                 result.push_str(&inner);
                 result.push('}');
@@ -453,17 +454,17 @@ fn emit_elige(stmt: &Stmt, indent: &str) -> String {
         let mut result = format!("{}elige {} {{\n", indent, emit_expr(discrim));
         for c in casus {
             result.push_str(&format!(
-                "{}\tcasu {} {}\n",
+                "{}casu {} {}\n",
                 indent,
                 emit_expr(&c.cond),
-                emit_stmt(&c.corpus, &format!("{}\t", indent))
+                emit_stmt(&c.corpus, &format!("{}    ", indent))
             ));
         }
         if let Some(d) = default {
             result.push_str(&format!(
-                "{}\tceterum {}\n",
+                "{}ceterum {}\n",
                 indent,
-                emit_stmt(d, &format!("{}\t", indent))
+                emit_stmt(d, &format!("{}    ", indent))
             ));
         }
         result.push_str(indent);
@@ -479,7 +480,7 @@ fn emit_discerne(stmt: &Stmt, indent: &str) -> String {
         let discrim_str: Vec<String> = discrim.iter().map(|d| emit_expr(d)).collect();
         let mut result = format!("{}discerne {} {{\n", indent, discrim_str.join(", "));
         for c in casus {
-            result.push_str(&format!("{}\tcasu ", indent));
+            result.push_str(&format!("{}casu ", indent));
             let patterns: Vec<String> = c
                 .patterns
                 .iter()
@@ -502,7 +503,7 @@ fn emit_discerne(stmt: &Stmt, indent: &str) -> String {
                 .collect();
             result.push_str(&patterns.join(", "));
             result.push(' ');
-            result.push_str(&emit_stmt(&c.corpus, &format!("{}\t", indent)));
+            result.push_str(&emit_stmt(&c.corpus, &format!("{}    ", indent)));
             result.push('\n');
         }
         result.push_str(indent);
