@@ -88,9 +88,6 @@ ordo SymbolumGenus {
     Vel           # |
     Apex          # ^
     Unda          # ~
-    MinorBis      # <<
-    MaiorBis      # >>
-    MaiorTer      # >>>
     EtAequum      # &=
     VelAequum     # |=
 
