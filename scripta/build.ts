@@ -207,7 +207,13 @@ async function main() {
         }
     });
 
-    // Note: nanus-rs golden tests skipped - it emits Faber only, not TS
+    await step('golden:nanus-rs', verbose, async () => {
+        if (verbose) {
+            await $`bun run golden -c nanus-rs`;
+        } else {
+            await $`bun run golden -c nanus-rs`.quiet();
+        }
+    });
 
     if (faber) {
         await step('golden:faber', verbose, async () => {

@@ -61,9 +61,9 @@ function parseArgs(args: string[]): { compiler: string; showDiffs: boolean } {
 async function compile(compiler: string, fabPath: string): Promise<{ success: boolean; output?: string; error?: string }> {
     const bin = join(BIN, compiler);
     try {
-        // nanus-ts and nanus-go use stdin/stdout
-        if (compiler === 'nanus-ts' || compiler === 'nanus-go') {
-            const result = await $`cat ${fabPath} | ${bin} emit`.quiet();
+        // nanus-ts, nanus-go, nanus-rs use stdin/stdout
+        if (compiler === 'nanus-ts' || compiler === 'nanus-go' || compiler === 'nanus-rs') {
+            const result = await $`cat ${fabPath} | ${bin} emit -t ts`.quiet();
             return { success: true, output: result.text() };
         }
         // faber, rivus, nanus (symlink) use file args
@@ -77,7 +77,7 @@ async function compile(compiler: string, fabPath: string): Promise<{ success: bo
 async function main() {
     const { compiler, showDiffs } = parseArgs(process.argv.slice(2));
 
-    const validCompilers = ['nanus', 'nanus-ts', 'nanus-go', 'faber', 'rivus'];
+    const validCompilers = ['nanus', 'nanus-ts', 'nanus-go', 'nanus-rs', 'faber', 'rivus'];
     if (!validCompilers.includes(compiler)) {
         console.error(`Invalid compiler: ${compiler}. Must be one of: ${validCompilers.join(', ')}`);
         process.exit(1);

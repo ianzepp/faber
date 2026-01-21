@@ -4,12 +4,13 @@
  *
  * Uses the specified compiler to compile all .fab files in parallel.
  *
- * Requires: bun run build:faber (or build:nanus-ts, build:nanus-go) first
+ * Requires: bun run build:faber (or build:nanus-ts, build:nanus-go, build:nanus-rs) first
  *
  * Usage:
  *   bun scripta/build-rivus.ts
  *   bun scripta/build-rivus.ts -c nanus-ts
  *   bun scripta/build-rivus.ts -c nanus-go
+ *   bun scripta/build-rivus.ts -c nanus-rs
  *   bun scripta/build-rivus.ts -c nanus-go -t go
  *   bun scripta/build-rivus.ts -c faber --no-typecheck
  */
@@ -23,10 +24,10 @@ import { $ } from 'bun';
 // CONSTANTS AND TYPES
 // =============================================================================
 
-type Compiler = 'faber' | 'nanus-ts' | 'nanus-go';
+type Compiler = 'faber' | 'nanus-ts' | 'nanus-go' | 'nanus-rs';
 type Target = 'ts' | 'go';
 
-const VALID_COMPILERS: Compiler[] = ['faber', 'nanus-ts', 'nanus-go'];
+const VALID_COMPILERS: Compiler[] = ['faber', 'nanus-ts', 'nanus-go', 'nanus-rs'];
 const VALID_TARGETS: Target[] = ['ts', 'go'];
 
 // =============================================================================
@@ -89,9 +90,9 @@ const COMPILER_BIN = join(ROOT, 'opus', 'bin', compiler);
 const FILE_EXT = target === 'go' ? '.go' : '.ts';
 
 // Different compilers use different I/O methods:
-// - nanus-ts/nanus-go: streaming via stdin/stdout
+// - nanus-ts/nanus-go/nanus-rs: streaming via stdin/stdout
 // - faber: file-based arguments
-const useStdinStdout = compiler === 'nanus-ts' || compiler === 'nanus-go';
+const useStdinStdout = compiler === 'nanus-ts' || compiler === 'nanus-go' || compiler === 'nanus-rs';
 
 interface CompileResult {
     file: string;
