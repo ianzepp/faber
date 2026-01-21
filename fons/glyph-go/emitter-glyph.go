@@ -762,15 +762,36 @@ func glyphEmitTypus(typus subsidia.Typus) string {
 func glyphEmitParam(param subsidia.Param) string {
 	rest := ""
 	if param.Rest {
-		rest = "⋯"
-	}
-	typ := ""
-	if param.Typus != nil {
-		typ = " ∶ " + glyphEmitTypus(param.Typus)
+		rest = "⋯ "
 	}
 	def := ""
 	if param.Default != nil {
 		def = " ← " + glyphEmitExpr(param.Default)
 	}
-	return rest + toBraille(param.Nomen) + typ + def
+
+	// With ownership preposition: ownership type name
+	if param.Ownership != "" {
+		ownership := ""
+		switch param.Ownership {
+		case "in":
+			ownership = "⊳"
+		case "ex":
+			ownership = "∈"
+		case "de":
+			ownership = "∋"
+		}
+		typ := ""
+		if param.Typus != nil {
+			typ = glyphEmitTypus(param.Typus) + " "
+		}
+		return rest + ownership + " " + typ + toBraille(param.Nomen) + def
+	}
+
+	// Without ownership but with type: type name (type-first syntax)
+	if param.Typus != nil {
+		return rest + glyphEmitTypus(param.Typus) + " " + toBraille(param.Nomen) + def
+	}
+
+	// Without ownership or type: just name
+	return rest + toBraille(param.Nomen) + def
 }

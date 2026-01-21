@@ -681,11 +681,37 @@ func faberEmitParam(p subsidia.Param) string {
 	if p.Rest {
 		b.WriteString("...")
 	}
-	b.WriteString(p.Nomen)
-	if p.Typus != nil {
-		b.WriteString(": ")
-		b.WriteString(faberEmitTypus(p.Typus))
+
+	// With ownership preposition: ownership type name
+	if p.Ownership != "" {
+		b.WriteString(p.Ownership)
+		b.WriteString(" ")
+		if p.Typus != nil {
+			b.WriteString(faberEmitTypus(p.Typus))
+			b.WriteString(" ")
+		}
+		b.WriteString(p.Nomen)
+		if p.Default != nil {
+			b.WriteString(" = ")
+			b.WriteString(faberEmitExpr(p.Default))
+		}
+		return b.String()
 	}
+
+	// Without ownership but with type: type name (type-first syntax)
+	if p.Typus != nil {
+		b.WriteString(faberEmitTypus(p.Typus))
+		b.WriteString(" ")
+		b.WriteString(p.Nomen)
+		if p.Default != nil {
+			b.WriteString(" = ")
+			b.WriteString(faberEmitExpr(p.Default))
+		}
+		return b.String()
+	}
+
+	// Without ownership or type: just name
+	b.WriteString(p.Nomen)
 	if p.Default != nil {
 		b.WriteString(" = ")
 		b.WriteString(faberEmitExpr(p.Default))
