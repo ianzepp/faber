@@ -58,7 +58,7 @@ genus FeatureDetector {
 
     # Detect all features used in a program
     @ publica
-    functio detect(lista<Sententia> corpus) -> lista<UsitataFeatura> {
+    functio detect(de lista<Sententia> corpus) -> lista<UsitataFeatura> {
         ego.featurae = {} innatum tabula<textus, UsitataFeatura>
 
         ex corpus fixum stmt {
@@ -74,7 +74,7 @@ genus FeatureDetector {
     }
 
     # Add a feature if not already tracked (first occurrence wins)
-    functio registraFeatura(UsitataFeatura f) -> vacuum {
+    functio registraFeatura(de UsitataFeatura f) -> vacuum {
         fixum clavisTextus = featuraClavisAdTextus(f.clavis)
         si nihil ego.featurae[clavisTextus] {
             ego.featurae[clavisTextus] = f
@@ -82,7 +82,7 @@ genus FeatureDetector {
     }
 
     # Visit a statement node
-    functio visitSententia(Sententia stmt) -> vacuum {
+    functio visitSententia(de Sententia stmt) -> vacuum {
         discerne stmt {
             casu FunctioDeclaratio {
                 ego.visitFunctio(stmt)
@@ -242,7 +242,7 @@ genus FeatureDetector {
     }
 
     # Visit a function declaration
-    functio visitFunctio(Sententia stmt) -> vacuum {
+    functio visitFunctio(de Sententia stmt) -> vacuum {
         discerne stmt {
             casu FunctioDeclaratio ut f {
                 fixum isAsync = f.asynca
@@ -295,7 +295,7 @@ genus FeatureDetector {
     }
 
     # Visit an expression node
-    functio visitExpressia(Expressia expr) -> vacuum {
+    functio visitExpressia(de Expressia expr) -> vacuum {
         discerne expr {
             casu MembrumExpressia ut m {
                 si m.optivum {

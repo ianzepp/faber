@@ -13,6 +13,6 @@
 § ex "../revocata" importa creaGoRevocata
 
 @ publica
-functio genElige(Expressia discriminans, lista<EligeCasus> casus, ignotum praedefinitum, ignotum cape, GoGenerator g) -> textus {
+functio genElige(de Expressia discriminans, de lista<EligeCasus> casus, si de ignotum praedefinitum, si de ignotum cape, in GoGenerator g) -> textus {
     redde genEligeLogica(discriminans, casus, praedefinitum, cape, g, SYNTAXIS_GO, creaGoRevocata())
 }

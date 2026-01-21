@@ -33,19 +33,19 @@ genus ResolvitorImpl implet Resolvitor {
     }
 
     @ publica
-    functio expressia(Expressia expr) -> SemanticTypus {
+    functio expressia(de Expressia expr) -> SemanticTypus {
         redde resolveExpressia(ego qua Resolvitor, expr)
     }
 
     @ publica
-    functio sententia(Sententia stmt) -> vacuum {
+    functio sententia(de Sententia stmt) -> vacuum {
         analyzeSententia(ego qua Resolvitor, stmt)
     }
 }
 
 # Create a new Resolvitor
 @ publica
-functio novumResolvitor(Analyzator a) -> Resolvitor {
+functio novumResolvitor(in Analyzator a) -> Resolvitor {
     redde (novum ResolvitorImpl { a: a }) qua Resolvitor
 }
 
@@ -56,8 +56,8 @@ functio novumResolvitor(Analyzator a) -> Resolvitor {
 # Merge manifest sectiones with source file sectiones
 # Manifest sectiones come first, source file can override/extend
 functio mergeSectiones(
-    lista<SectioAnnotatio>? manifest,
-    lista<SectioAnnotatio>? source
+    de lista<SectioAnnotatio>? manifest,
+    de lista<SectioAnnotatio>? source
 ) -> lista<SectioAnnotatio> {
     varia result = [] innatum lista<SectioAnnotatio>
 
@@ -77,9 +77,9 @@ functio mergeSectiones(
 # manifestSectiones: optional sectiones from project manifest (faber.fab)
 @ publica
 functio analyze(
-    Programma programma,
-    textus? viaIngressus,
-    lista<SectioAnnotatio>? manifestSectiones
+    de Programma programma,
+    si de textus viaIngressus,
+    de lista<SectioAnnotatio>? manifestSectiones
 ) -> SemanticResultatum {
     # Merge manifest and source sectiones
     fixum mergedSectiones = mergeSectiones(manifestSectiones, programma.sectiones)
@@ -115,7 +115,7 @@ functio analyze(
 
 # Predeclare a top-level statement (registers placeholder types)
 @ publica
-functio predeclare(Resolvitor r, Sententia stmt) -> vacuum {
+functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
     fixum a = r.analyzator()
 
     discerne stmt {

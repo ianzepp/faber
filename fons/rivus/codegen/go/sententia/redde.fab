@@ -15,7 +15,7 @@
 § ex "../typus" importa zeroValueForType
 
 @ publica
-functio genRedde(ignotum valor, GoGenerator g) -> textus {
+functio genRedde(si de ignotum valor, in GoGenerator g) -> textus {
     si g.inErrata {
         si nonnihil g.errataTypusReditus {
             fixum zero = zeroValueForType(g.errataTypusReditus novum TypusAnnotatio, g)

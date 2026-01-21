@@ -28,7 +28,7 @@
 # =============================================================================
 
 # Sanitize name for use as identifier (replace spaces/special chars with _)
-functio sanitizeNomen(textus nomen) -> textus {
+functio sanitizeNomen(de textus nomen) -> textus {
     varia textus result = nomen
     result = result.muta(" ", "_")
     result = result.muta("-", "_")
@@ -40,7 +40,7 @@ functio sanitizeNomen(textus nomen) -> textus {
 }
 
 # Get full suite path from stack
-functio getSuitePath(TsGenerator g) -> textus {
+functio getSuitePath(de TsGenerator g) -> textus {
     si g.probaSuiteStack.longitudo() == 0 {
         redde ""
     }
@@ -52,7 +52,7 @@ functio getSuitePath(TsGenerator g) -> textus {
 # =============================================================================
 
 @ publica
-functio genProbandum(textus nomen, bivalens? ompitur, textus? ratioOmissionis, bivalens? solum, lista<textus>? tags, lista<Sententia> corpus, TsGenerator g) -> textus {
+functio genProbandum(de textus nomen, si bivalens ompitur, si de textus ratioOmissionis, si bivalens solum, si de lista<textus> tags, de lista<Sententia> corpus, in TsGenerator g) -> textus {
     # Legacy mode: generate describe()
     si non g.inProbaStandalone {
         varia lines = [] innatum lista<textus>
@@ -89,19 +89,19 @@ functio genProbandum(textus nomen, bivalens? ompitur, textus? ratioOmissionis, b
 
 @ publica
 functio genProba(
-    textus nomen,
-    ignotum modificator,
-    textus? ratioModificatoris,
-    bivalens? solum,
-    lista<textus>? tags,
-    numerus? temporis,
-    bivalens? metior,
-    numerus? repete,
-    numerus? fragilis,
-    textus? requirit,
-    textus? solumIn,
-    Sententia corpus,
-    TsGenerator g
+    de textus nomen,
+    de ignotum modificator,
+    si de textus ratioModificatoris,
+    si bivalens solum,
+    si de lista<textus> tags,
+    si numerus temporis,
+    si bivalens metior,
+    si numerus repete,
+    si numerus fragilis,
+    si de textus requirit,
+    si de textus solumIn,
+    de Sententia corpus,
+    in TsGenerator g
 ) -> textus {
     # Legacy mode: generate test()
     si non g.inProbaStandalone {
@@ -218,7 +218,7 @@ functio genProba(
 # =============================================================================
 
 @ publica
-functio genPraepara(PraeparaTempus tempus, bivalens asynca, bivalens omnia, Sententia corpus, TsGenerator g) -> textus {
+functio genPraepara(PraeparaTempus tempus, bivalens asynca, bivalens omnia, de Sententia corpus, in TsGenerator g) -> textus {
     # In standalone mode, setup/teardown become comments (not supported in simple harness)
     si g.inProbaStandalone {
         fixum hookType = (tempus == PraeparaTempus.Praepara) sic "setup" secus "teardown"
@@ -258,7 +258,7 @@ functio genPraepara(PraeparaTempus tempus, bivalens asynca, bivalens omnia, Sent
 # Generate the test harness (registry + runner)
 # Call this after all statements have been generated
 @ publica
-functio genProbaHarness(TsGenerator g) -> textus {
+functio genProbaHarness(in TsGenerator g) -> textus {
     si g.probaRegistrum.longitudo() == 0 {
         redde ""
     }

@@ -33,7 +33,7 @@ genus Dependentia {
 # Extract dependency registry from sectiones
 # Returns a map of alias -> Dependentia
 @ publica
-functio extractDependentiae(lista<SectioAnnotatio>? sectiones) -> tabula<textus, Dependentia> {
+functio extractDependentiae(de lista<SectioAnnotatio>? sectiones) -> tabula<textus, Dependentia> {
     varia result = {} innatum tabula<textus, Dependentia>
     si nihil sectiones { redde result }
 
@@ -50,7 +50,7 @@ functio extractDependentiae(lista<SectioAnnotatio>? sectiones) -> tabula<textus,
 
 # Parse dependentia arguments into a Dependentia
 # Arguments: ["alias", "via", "path"] or ["alias", "github", "ref", "via", "subpath"]
-functio parseDependentiaArgs(lista<textus> args) -> Dependentia? {
+functio parseDependentiaArgs(de lista<textus> args) -> Dependentia? {
     si args.longitudo() < 1 { redde nihil }
 
     fixum alias = args[0]
@@ -96,13 +96,13 @@ functio radixCachei() -> textus {
 
 # Get the cache path for a specific github repo + commit
 @ publica
-functio viaCachei(textus dominus, textus repo, textus sha) -> textus {
+functio viaCachei(de textus dominus, de textus repo, de textus sha) -> textus {
     redde solum.iunge([radixCachei(), "github.com", dominus, repo, sha])
 }
 
 # Check if a repo+commit is already cached
 @ publica
-functio estCacheatum(textus dominus, textus repo, textus sha) -> bivalens {
+functio estCacheatum(de textus dominus, de textus repo, de textus sha) -> bivalens {
     redde solum.exstat(viaCachei(dominus, repo, sha))
 }
 
@@ -124,7 +124,7 @@ genus GithubReferentia {
 #   "ianzepp/faber#v1.0.0" -> { dominus: "ianzepp", repo: "faber", ref: "v1.0.0" }
 #   "ianzepp/faber" -> { dominus: "ianzepp", repo: "faber", ref: "main" }
 @ publica
-functio pangeGithubFontem(textus fons) -> GithubReferentia? {
+functio pangeGithubFontem(de textus fons) -> GithubReferentia? {
     # Split on # to get ref (default to "main")
     fixum partesHash = fons.divide("#") qua lista<textus>
     fixum viaRepo = partesHash[0]

@@ -12,6 +12,6 @@
 § ex "../revocata" importa creaTsRevocata
 
 @ publica
-functio genDum(Expressia condicio, Sententia corpus, ignotum cape, TsGenerator g) -> textus {
+functio genDum(de Expressia condicio, de Sententia corpus, de ignotum cape, in TsGenerator g) -> textus {
     redde genDumLogica(condicio, corpus, cape, g, SYNTAXIS_TS, creaTsRevocata())
 }

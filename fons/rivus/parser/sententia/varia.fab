@@ -32,7 +32,7 @@
 
 # Parse an identifier (simple name reference)
 @ publica
-functio parseNomen(Resolvitor r) -> textus {
+functio parseNomen(in Resolvitor r) -> textus {
     fixum p = r.parser()
     fixum symbolum = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
     redde symbolum.valor
@@ -41,7 +41,7 @@ functio parseNomen(Resolvitor r) -> textus {
 # Parse identifier or keyword (for import specifiers, property names)
 # Keywords like 'scribe' can be valid identifiers in some contexts
 @ publica
-functio parseNomenVelVerbum(Resolvitor r) -> textus {
+functio parseNomenVelVerbum(in Resolvitor r) -> textus {
     fixum p = r.parser()
     fixum s = p.specta(0)
 
@@ -66,7 +66,7 @@ functio parseNomenVelVerbum(Resolvitor r) -> textus {
 #          | 'ex' expr (fixum|varia|figendum|variandum) '[' pattern ']' ('{' block '}' | '=' expr)
 # spec := IDENT ('ut' IDENT)? | 'ceteri' IDENT
 @ publica
-functio parseDestructuraSententia(Resolvitor r) -> Sententia {
+functio parseDestructuraSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -163,7 +163,7 @@ functio parseDestructuraSententia(Resolvitor r) -> Sententia {
 
 # Parse array destructuring pattern: [a, b, ceteri rest]
 @ publica
-functio parseSeriesDestructura(Resolvitor r) -> lista<SeriesDestructuraElementum> {
+functio parseSeriesDestructura(in Resolvitor r) -> lista<SeriesDestructuraElementum> {
     fixum p = r.parser()
 
     p.expecta(SymbolumGenus.QuadratusSin, ParserErrorCodice.ExpectaturQuadratusSin)
@@ -221,7 +221,7 @@ functio parseSeriesDestructura(Resolvitor r) -> lista<SeriesDestructuraElementum
 # - Type-first: fixum numerus x = 42
 # - Array destructuring: fixum [a, b] = coords (TODO)
 @ publica
-functio parseVariaSententia(Resolvitor r) -> Sententia {
+functio parseVariaSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 

@@ -17,7 +17,7 @@
 
 # Generate literal value
 @ publica
-functio genLittera(LitteraGenus species, textus crudus) -> textus {
+functio genLittera(LitteraGenus species, de textus crudus) -> textus {
     si species == LitteraGenus.Verum {
         redde "true"
     }
@@ -41,7 +41,7 @@ functio genLittera(LitteraGenus species, textus crudus) -> textus {
 
 # Generate template literal with interpolation
 @ publica
-functio genLitteraExemplar(lista<textus> partes, lista<Expressia> expressiae, TsGenerator g) -> textus {
+functio genLitteraExemplar(de lista<textus> partes, de lista<Expressia> expressiae, in TsGenerator g) -> textus {
     varia result = "`"
     varia i = 0
     ex partes fixum pars {

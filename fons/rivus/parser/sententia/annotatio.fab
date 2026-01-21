@@ -72,7 +72,7 @@ functio estNomenAutVerbum(SymbolumGenus species) -> bivalens {
 # Parse @ innatum or @ subsidia: target-to-value mappings
 # Grammar: targetMapping (',' targetMapping)*
 # Example: @ innatum ts "Array", py "list", zig "Lista"
-functio parseTargetMappingAnnotation(Resolvitor r, textus nomen, Locus locus, numerus linea) -> Annotatio {
+functio parseTargetMappingAnnotation(in Resolvitor r, de textus nomen, de Locus locus, numerus linea) -> Annotatio {
     fixum p = r.parser()
     varia targetMappings = {} innatum tabula<textus, textus>
 
@@ -126,7 +126,7 @@ functio parseTargetMappingAnnotation(Resolvitor r, textus nomen, Locus locus, nu
 # Grammar: IDENTIFIER (',' IDENTIFIER)*
 # Example: @ radix filtr, imperativus, perfectum
 # Note: First identifier is stem, rest are form names (no validation)
-functio parseRadixAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annotatio {
+functio parseRadixAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> Annotatio {
     fixum p = r.parser()
     varia radixForms = [] innatum lista<textus>
 
@@ -170,7 +170,7 @@ functio parseRadixAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
 # Examples:
 #   @ verte ts "push"
 #   @ verte ts (ego, elem) -> "[...S, S]"
-functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annotatio {
+functio parseVerteAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> Annotatio {
     fixum p = r.parser()
 
     # Parse target identifier (ts, py, rs, cpp, zig)
@@ -342,7 +342,7 @@ functio parseVerteAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
 # Parse @ imperia: command re-export annotation
 # Grammar: @ imperia STRING 'ex' IDENTIFIER
 # Example: @ imperia "greet" ex greetModule
-functio parseImperiaAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annotatio {
+functio parseImperiaAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> Annotatio {
     fixum p = r.parser()
     varia argumenta = [] innatum lista<textus>
 
@@ -422,7 +422,7 @@ functio parseImperiaAnnotation(Resolvitor r, Locus locus, numerus linea) -> Anno
 # Example (old): @ optio textus target brevis "t" longum "target" descriptio "Target language"
 # Example (new): @ optio target brevis "t" longum "target" descriptio "Target language"
 # Example (new): @ optio verbose brevis "v" longum "verbose" bivalens descriptio "Enable verbose"
-functio parseOptioAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annotatio {
+functio parseOptioAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> Annotatio {
     fixum p = r.parser()
 
     # Type keywords that indicate old syntax
@@ -529,7 +529,7 @@ functio parseOptioAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annota
 # Parse @ operandus annotation for CLI positional arguments
 # Grammar: @ operandus [ceteri] <type> <name> [descriptio "..."]
 # Example: @ operandus textus file descriptio "Input file"
-functio parseOperandusAnnotation(Resolvitor r, Locus locus, numerus linea) -> Annotatio {
+functio parseOperandusAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> Annotatio {
     fixum p = r.parser()
 
     # Check for optional 'ceteri' prefix (rest/variadic)
@@ -601,7 +601,7 @@ functio parseOperandusAnnotation(Resolvitor r, Locus locus, numerus linea) -> An
 # Consumes @ directives until a non-@ token is found.
 # Dispatches to specialized parsers for stdlib annotations.
 @ publica
-functio parseAnnotationes(Resolvitor r) -> lista<Annotatio> {
+functio parseAnnotationes(in Resolvitor r) -> lista<Annotatio> {
     fixum p = r.parser()
     varia annotationes = [] innatum lista<Annotatio>
 
@@ -711,7 +711,7 @@ functio parseAnnotationes(Resolvitor r) -> lista<Annotatio> {
 # Consumes § directives until a non-§ token is found.
 # Section annotations are simpler than @ annotations - just name + arguments.
 @ publica
-functio parseSectiones(Resolvitor r) -> lista<SectioAnnotatio> {
+functio parseSectiones(in Resolvitor r) -> lista<SectioAnnotatio> {
     fixum p = r.parser()
     varia sectiones = [] innatum lista<SectioAnnotatio>
 

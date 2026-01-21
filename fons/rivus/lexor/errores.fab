@@ -103,7 +103,7 @@ genus LexorError {
 
 # Create an error at a source position
 @ publica
-functio error(LexorErrorCodice codice, Locus locus) -> LexorError {
+functio error(LexorErrorCodice codice, ex Locus locus) -> LexorError {
     fixum nuntius = nuntiumErroris(codice)
     redde {
         codice: codice,

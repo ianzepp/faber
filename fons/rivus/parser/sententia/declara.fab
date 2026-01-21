@@ -37,7 +37,7 @@
 # ============================================================================
 
 # Parse post-parameter function modifiers
-functio parseFunctioModificatores(Resolvitor r) -> lista<FunctioModificator>? {
+functio parseFunctioModificatores(in Resolvitor r) -> lista<FunctioModificator>? {
     fixum p = r.parser()
     varia modificatores = [] innatum lista<FunctioModificator>
 
@@ -91,7 +91,7 @@ functio parseFunctioModificatores(Resolvitor r) -> lista<FunctioModificator>? {
 #   functio salve() { scribe "hello" }
 #   functio add(numerus a, numerus b) -> numerus { redde a + b }
 @ publica
-functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
+functio parseFunctioDeclaratio(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -209,7 +209,7 @@ functio parseFunctioDeclaratio(Resolvitor r) -> Sententia {
 #   genus Cursor<T> { varia index = 0 }
 #   genus Admin sub Persona implet Serializable { ... }
 @ publica
-functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
+functio parseGenusDeclaratio(in Resolvitor r, bivalens abstractum) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -407,7 +407,7 @@ functio parseGenusDeclaratio(Resolvitor r, bivalens abstractum) -> Sententia {
 #   pactum Iterabilis { functio sequens() -> T? }
 #   pactum Comparabilis<T> { functio compara(T alius) -> numerus }
 @ publica
-functio parsePactumDeclaratio(Resolvitor r) -> Sententia {
+functio parsePactumDeclaratio(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -500,7 +500,7 @@ functio parsePactumDeclaratio(Resolvitor r) -> Sententia {
 #   ordo Color { Rubrum, Viridis, Caeruleum }
 #   ordo Status { Pendens = 0, Actum = 1, Completum = 2 }
 @ publica
-functio parseOrdoDeclaratio(Resolvitor r) -> Sententia {
+functio parseOrdoDeclaratio(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -566,7 +566,7 @@ functio parseOrdoDeclaratio(Resolvitor r) -> Sententia {
 #   discretio Option<T> { Aliquid { T valor }, Nihil }
 #   discretio Event { Click { numerus x, numerus y }, Quit }
 @ publica
-functio parseDiscretioDeclaratio(Resolvitor r) -> Sententia {
+functio parseDiscretioDeclaratio(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -653,7 +653,7 @@ functio parseDiscretioDeclaratio(Resolvitor r) -> Sententia {
 #   typus ID = textus
 #   typus Callback = functio(numerus) -> vacuum
 @ publica
-functio parseTypusAliasDeclaratio(Resolvitor r) -> Sententia {
+functio parseTypusAliasDeclaratio(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -700,7 +700,7 @@ functio parseTypusAliasDeclaratio(Resolvitor r) -> Sententia {
 # HELPER FUNCTIONS
 # ============================================================================
 
-functio morphologiaEx(lista<Annotatio> annotationes) -> MorphologiaDeclaratio? {
+functio morphologiaEx(de lista<Annotatio> annotationes) -> MorphologiaDeclaratio? {
     ex annotationes fixum a {
         si a.nomen == "radix" {
             redde { locus: a.locus, formae: a.argumenta } novum MorphologiaDeclaratio
@@ -711,7 +711,7 @@ functio morphologiaEx(lista<Annotatio> annotationes) -> MorphologiaDeclaratio? {
 
 # Parse function parameters
 @ publica
-functio parseParametra(Resolvitor r) -> lista<Parametrum> {
+functio parseParametra(in Resolvitor r) -> lista<Parametrum> {
     fixum p = r.parser()
     varia parametra = [] innatum lista<Parametrum>
 
@@ -799,7 +799,7 @@ functio parseParametra(Resolvitor r) -> lista<Parametrum> {
 
 # Parse compile-time type parameters (prae typus T, U)
 @ publica
-functio parseTypusParametra(Resolvitor r) -> lista<TypusParametrum> {
+functio parseTypusParametra(in Resolvitor r) -> lista<TypusParametrum> {
     fixum p = r.parser()
     varia parametra = [] innatum lista<TypusParametrum>
 
@@ -821,7 +821,7 @@ functio parseTypusParametra(Resolvitor r) -> lista<TypusParametrum> {
 
 # Parse generic type names in angle brackets: <T, U>
 @ publica
-functio parseGenericaNomina(Resolvitor r) -> lista<textus> {
+functio parseGenericaNomina(in Resolvitor r) -> lista<textus> {
     fixum p = r.parser()
     varia nomina = [] innatum lista<textus>
 
@@ -843,7 +843,7 @@ functio parseGenericaNomina(Resolvitor r) -> lista<textus> {
 # EDGE: Allows keywords as field names for compiler-internal ASTs.
 #       Example: `TypusAnnotatio? typus`, `CapeClausula? cape`.
 @ publica
-functio parseVariansCampusNominatus(Resolvitor r) -> VariansCampus {
+functio parseVariansCampusNominatus(in Resolvitor r) -> VariansCampus {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -886,7 +886,7 @@ functio parseVariansCampusNominatus(Resolvitor r) -> VariansCampus {
 #   ex norma importa scribe ut s
 #   ex "./utils" importa * ut utils
 @ publica
-functio parseImportaSententia(Resolvitor r) -> Sententia {
+functio parseImportaSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 

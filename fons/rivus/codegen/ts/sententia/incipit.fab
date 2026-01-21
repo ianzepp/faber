@@ -12,7 +12,7 @@
 § ex "./index" importa genSententia
 
 @ publica
-functio genIncipit(ignotum corpus, ignotum ergo, TsGenerator g) -> textus {
+functio genIncipit(de ignotum corpus, de ignotum ergo, in TsGenerator g) -> textus {
     si nonnihil corpus {
         varia result = genSententia(corpus qua Sententia, g)
         si nonnihil ergo {
@@ -27,7 +27,7 @@ functio genIncipit(ignotum corpus, ignotum ergo, TsGenerator g) -> textus {
 }
 
 @ publica
-functio genIncipiet(ignotum corpus, ignotum ergo, TsGenerator g) -> textus {
+functio genIncipiet(de ignotum corpus, de ignotum ergo, in TsGenerator g) -> textus {
     g.intraProfundum()
     varia body = ""
     si nonnihil corpus {

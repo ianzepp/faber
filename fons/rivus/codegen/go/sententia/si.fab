@@ -13,6 +13,6 @@
 § ex "../revocata" importa creaGoRevocata
 
 @ publica
-functio genSi(Expressia condicio, Sententia consequens, ignotum alternans, GoGenerator g) -> textus {
+functio genSi(de Expressia condicio, de Sententia consequens, si de ignotum alternans, in GoGenerator g) -> textus {
     redde genSiLogica(condicio, consequens, alternans, nihil, g, SYNTAXIS_GO, creaGoRevocata())
 }

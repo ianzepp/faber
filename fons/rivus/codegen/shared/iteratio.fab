@@ -18,17 +18,17 @@
 # Returns the loop string, optionally wrapped in try/catch.
 @ publica
 functio genAmbitusIteratio(
-    textus variabilis,
-    textus initium,
-    textus finis,
+    de textus variabilis,
+    de textus initium,
+    de textus finis,
     bivalens inclusivum,
     ignotum gradusExpr,
-    textus body,
+    de textus body,
     bivalens asynca,
     ignotum cape,
-    Generans g,
-    ScopusSyntaxis syn,
-    Revocata rev
+    in Generans g,
+    de ScopusSyntaxis syn,
+    de Revocata rev
 ) -> textus {
     fixum op = inclusivum sic "<=" secus "<"
 

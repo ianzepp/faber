@@ -21,7 +21,7 @@
 § ex "../typus" importa genTypus
 
 @ publica
-functio genDiscretio(textus nomen, ignotum generaParametra, lista<VariansDeclaratio> variantes, ignotum visibilitas, GoGenerator g) -> textus {
+functio genDiscretio(de textus nomen, si de ignotum generaParametra, de lista<VariansDeclaratio> variantes, si de ignotum visibilitas, in GoGenerator g) -> textus {
     varia lines = [] innatum lista<textus>
 
     # Generate marker method name (lowercase for unexported)
@@ -62,7 +62,7 @@ functio genDiscretio(textus nomen, ignotum generaParametra, lista<VariansDeclara
 }
 
 # Capitalize first letter for Go field names
-functio capitaliza(textus s) -> textus {
+functio capitaliza(de textus s) -> textus {
     si s.longitudo() == 0 {
         redde s
     }

@@ -107,7 +107,7 @@ genus TsGenerator implet Generans {
 
     # Format leading comments for a node
     @ publica
-    functio notaePrae(ignotum nodus) -> textus {
+    functio notaePrae(de ignotum nodus) -> textus {
         si ego.stripComments {
             redde ""
         }
@@ -116,7 +116,7 @@ genus TsGenerator implet Generans {
 
     # Format trailing comments for a node
     @ publica
-    functio notaePost(ignotum nodus) -> textus {
+    functio notaePost(de ignotum nodus) -> textus {
         si ego.stripComments {
             redde ""
         }
@@ -154,7 +154,7 @@ functio creaTsGenerator() -> TsGenerator {
 
 # Create a TsGenerator with custom indentation
 @ publica
-functio creaTsGeneratorCum(textus indentum) -> TsGenerator {
+functio creaTsGeneratorCum(de textus indentum) -> TsGenerator {
     redde novum TsGenerator {
         profunditas: 0,
         indentum: indentum,

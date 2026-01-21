@@ -7,7 +7,7 @@
 § ex "../expressia/index" importa genExpressia
 § ex "../typus" importa zeroValueForType
 
-functio genErrataError(Expressia argumentum, GoGenerator g) -> textus {
+functio genErrataError(de Expressia argumentum, in GoGenerator g) -> textus {
     g.requisita.errors = verum
     fixum expr = genExpressia(argumentum, g)
 
@@ -27,7 +27,7 @@ functio genErrataError(Expressia argumentum, GoGenerator g) -> textus {
 }
 
 @ publica
-functio genIace(Expressia argumentum, bivalens fatale, GoGenerator g) -> textus {
+functio genIace(de Expressia argumentum, fatale, in GoGenerator g) -> textus {
     si g.inErrata {
         fixum errExpr = genErrataError(argumentum, g)
         si nonnihil g.errataTypusReditus {

@@ -34,7 +34,7 @@
 # Return value is optional - bare 'redde' returns void.
 # Doesn't consume expression if next token is closing brace.
 @ publica
-functio parseReddeSententia(Resolvitor r) -> Sententia {
+functio parseReddeSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -61,7 +61,7 @@ functio parseReddeSententia(Resolvitor r) -> Sententia {
 #
 # Exits the innermost loop.
 @ publica
-functio parseRumpeSententia(Resolvitor r) -> Sententia {
+functio parseRumpeSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -79,7 +79,7 @@ functio parseRumpeSententia(Resolvitor r) -> Sententia {
 #
 # Skips to next loop iteration.
 @ publica
-functio parsePergeSententia(Resolvitor r) -> Sententia {
+functio parsePergeSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -99,7 +99,7 @@ functio parsePergeSententia(Resolvitor r) -> Sententia {
 # - iace (throw): recoverable, can be caught
 # - mori (die): fatal/panic, unrecoverable
 @ publica
-functio parseIaceSententia(Resolvitor r, bivalens fatale) -> Sententia {
+functio parseIaceSententia(in Resolvitor r, bivalens fatale) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -131,7 +131,7 @@ functio parseIaceSententia(Resolvitor r, bivalens fatale) -> Sententia {
 #   scribe "Found § errors", count  →  scribe scriptum("Found § errors", count)
 #   scribe "hello"                  →  scribe scriptum("hello")
 @ publica
-functio parseScribeSententia(Resolvitor r, ScribeGradus gradus) -> Sententia {
+functio parseScribeSententia(in Resolvitor r, ScribeGradus gradus) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -158,7 +158,7 @@ functio parseScribeSententia(Resolvitor r, ScribeGradus gradus) -> Sententia {
 # WHY: Syntactic sugar - string literals in scribe statements are implicitly
 # wrapped in scriptum() for consistent formatting semantics. The § placeholder
 # count determines how many following comma-separated arguments are consumed.
-functio parseScribeElementum(Resolvitor r) -> Expressia {
+functio parseScribeElementum(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
 
     # String literals become scriptum expressions

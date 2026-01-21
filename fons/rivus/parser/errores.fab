@@ -388,7 +388,7 @@ genus ParserError {
 
 # Create a parser error at given location
 @ publica
-functio error(ParserErrorCodice codice, Locus locus, si textus contextus) -> ParserError {
+functio error(ParserErrorCodice codice, de Locus locus, si de textus contextus) -> ParserError {
     fixum nuntium = nuntiumErroris(codice)
     varia msg = nuntium.textus
 

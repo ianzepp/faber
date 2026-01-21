@@ -15,7 +15,7 @@
 § ex "../typus" importa genTypus
 
 @ publica
-functio genTypusAlias(textus nomen, TypusAnnotatio adnotatioTypus, ignotum scopusNomen, ignotum visibilitas, TsGenerator g) -> textus {
+functio genTypusAlias(de textus nomen, de TypusAnnotatio adnotatioTypus, de ignotum scopusNomen, de ignotum visibilitas, in TsGenerator g) -> textus {
     # Module-level: export when public
     varia exportPrefix = ""
     si nonnihil visibilitas {

@@ -68,7 +68,7 @@ genus ValidatioError {
 
 # Validate program compatibility with target
 @ publica
-functio validateCompatibilitatem(lista<Sententia> corpus, textus target, ValidatioPolitia politia) -> lista<ValidatioError> {
+functio validateCompatibilitatem(de lista<Sententia> corpus, de textus target, de ValidatioPolitia politia) -> lista<ValidatioError> {
     fixum detector = novumDetector()
     fixum usitata = detector.detect(corpus)
     fixum capacitas = getCapacitas(target)
@@ -98,7 +98,7 @@ functio validateCompatibilitatem(lista<Sententia> corpus, textus target, Validat
 # =============================================================================
 
 # Get support level for a feature from capability matrix
-functio getSustentatio(FeaturaClavis clavis, TargetCapacitas cap) -> Sustentatio {
+functio getSustentatio(FeaturaClavis clavis, de TargetCapacitas cap) -> Sustentatio {
     elige clavis {
         casu FeaturaClavis.ControlFlow_AsyncFunctio {
             redde cap.controlFlow.asyncFunctio
@@ -141,7 +141,7 @@ functio getSustentatio(FeaturaClavis clavis, TargetCapacitas cap) -> Sustentatio
 # =============================================================================
 
 # Check if support level is allowed under policy
-functio estPermissum(Sustentatio s, ValidatioPolitia p) -> bivalens {
+functio estPermissum(Sustentatio s, de ValidatioPolitia p) -> bivalens {
     elige s {
         casu Sustentatio.Sustentum {
             redde verum
@@ -166,7 +166,7 @@ functio estPermissum(Sustentatio s, ValidatioPolitia p) -> bivalens {
 # =============================================================================
 
 # Format error message for a feature
-functio formatNuntius(FeaturaClavis clavis, textus target, Sustentatio s) -> textus {
+functio formatNuntius(FeaturaClavis clavis, de textus target, Sustentatio s) -> textus {
     varia suffix = ""
     elige s {
         casu Sustentatio.Emulatum { suffix = " (requires emulation)" }
@@ -219,7 +219,7 @@ functio formatNuntius(FeaturaClavis clavis, textus target, Sustentatio s) -> tex
 # =============================================================================
 
 # Get suggestion for fixing incompatibility
-functio getSuggestio(FeaturaClavis clavis, textus target) -> textus? {
+functio getSuggestio(FeaturaClavis clavis, de textus target) -> textus? {
     elige clavis {
         casu FeaturaClavis.ControlFlow_AsyncFunctio {
             elige target {
@@ -338,7 +338,7 @@ functio getSuggestio(FeaturaClavis clavis, textus target) -> textus? {
 
 # Format all validation errors as a single string
 @ publica
-functio formatValidatioErrores(lista<ValidatioError> errores, textus target) -> textus {
+functio formatValidatioErrores(de lista<ValidatioError> errores, de textus target) -> textus {
     si errores.longitudo() == 0 {
         redde ""
     }
@@ -361,6 +361,6 @@ functio formatValidatioErrores(lista<ValidatioError> errores, textus target) -> 
 
 # Check if validation passed (no errors)
 @ publica
-functio validatioSuccessit(lista<ValidatioError> errores) -> bivalens {
+functio validatioSuccessit(de lista<ValidatioError> errores) -> bivalens {
     redde errores.longitudo() == 0
 }

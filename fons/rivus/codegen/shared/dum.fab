@@ -12,12 +12,12 @@
 # Main entry point - handles while loop with optional cape wrapper
 @ publica
 functio genDumLogica(
-    Expressia condicio,
-    Sententia corpus,
+    de Expressia condicio,
+    de Sententia corpus,
     ignotum cape,
-    Generans g,
-    ScopusSyntaxis syn,
-    Revocata rev
+    in Generans g,
+    de ScopusSyntaxis syn,
+    de Revocata rev
 ) -> textus {
     g.intraProfundum()
     fixum body = rev.genStmt(corpus, g)

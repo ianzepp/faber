@@ -12,7 +12,7 @@
 
 # Generate literal value
 @ publica
-functio genLittera(LitteraGenus species, textus crudus) -> textus {
+functio genLittera(species, de textus crudus) -> textus {
     si species == LitteraGenus.Verum {
         redde "true"
     }

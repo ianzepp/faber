@@ -11,7 +11,7 @@
 § ex "../typus" importa genTypus
 
 @ publica
-functio genDiscretio(textus nomen, ignotum generaParametra, lista<VariansDeclaratio> variantes, ignotum visibilitas, TsGenerator g) -> textus {
+functio genDiscretio(de textus nomen, de ignotum generaParametra, de lista<VariansDeclaratio> variantes, de ignotum visibilitas, in TsGenerator g) -> textus {
     # TS: prefer inline union members so tests can match exact fragments.
 
     # Module-level: export when public

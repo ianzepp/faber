@@ -14,7 +14,7 @@
 § ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genRedde(ignotum valor, TsGenerator g) -> textus {
+functio genRedde(de ignotum valor, in TsGenerator g) -> textus {
     si g.inFlumina {
         fixum data = nonnihil valor sic genExpressia(valor qua Expressia, g) secus "undefined"
         redde scriptum("§yield respond.ok(§);", g.ind(), data)

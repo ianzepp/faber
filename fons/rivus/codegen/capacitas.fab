@@ -331,7 +331,7 @@ fixum LOWERING_GO = {
 
 # Get capability matrix for a target
 @ publica
-functio getCapacitas(textus target) -> TargetCapacitas {
+functio getCapacitas(de textus target) -> TargetCapacitas {
     elige target {
         casu "ts" { redde CAPACITAS_TS }
         casu "py" { redde CAPACITAS_PY }
@@ -346,7 +346,7 @@ functio getCapacitas(textus target) -> TargetCapacitas {
 
 # Get lowering model for a target
 @ publica
-functio getLowering(textus target) -> TargetLowering {
+functio getLowering(de textus target) -> TargetLowering {
     elige target {
         casu "ts" { redde LOWERING_TS }
         casu "py" { redde LOWERING_PY }

@@ -63,7 +63,7 @@ functio creaScopumGlobalem() -> Scopus {
 
 # Create a child scope
 @ publica
-functio creaScopum(Scopus parentScopus, ScopusSpecies scopusSpecies) -> Scopus {
+functio creaScopum(de Scopus parentScopus, ScopusSpecies scopusSpecies) -> Scopus {
     redde {
         symbola: {} innatum tabula<textus, Symbolum>,
         parens: parentScopus,
@@ -73,7 +73,7 @@ functio creaScopum(Scopus parentScopus, ScopusSpecies scopusSpecies) -> Scopus {
 
 # Define a symbol in current scope (returns error if duplicate)
 @ publica
-functio definieSymbolum(Scopus scopus, Symbolum symbolum) -> textus? {
+functio definieSymbolum(in Scopus scopus, ex Symbolum symbolum) -> textus? {
     fixum existens = scopus.symbola[symbolum.nomen]
     si nonnihil existens {
         redde scriptum("'§' is already defined at line §", symbolum.nomen, existens.locus.linea)
@@ -85,7 +85,7 @@ functio definieSymbolum(Scopus scopus, Symbolum symbolum) -> textus? {
 
 # Look up a symbol by name, walking up the scope chain
 @ publica
-functio quaereSymbolum(Scopus scopus, textus nomen) -> Symbolum? {
+functio quaereSymbolum(de Scopus scopus, de textus nomen) -> Symbolum? {
     si nonnihil scopus.symbola[nomen] {
         redde scopus.symbola[nomen]
     }
@@ -100,7 +100,7 @@ functio quaereSymbolum(Scopus scopus, textus nomen) -> Symbolum? {
 
 # Look up a symbol only in the current scope (no parent traversal)
 @ publica
-functio quaereSymbolumLocale(Scopus scopus, textus nomen) -> Symbolum? {
+functio quaereSymbolumLocale(de Scopus scopus, de textus nomen) -> Symbolum? {
     si nonnihil scopus.symbola[nomen] {
         redde scopus.symbola[nomen]
     }
@@ -110,7 +110,7 @@ functio quaereSymbolumLocale(Scopus scopus, textus nomen) -> Symbolum? {
 
 # Update an existing symbol's type (for two-pass analysis)
 @ publica
-functio renovaSymbolumTypum(Scopus scopus, textus nomen, SemanticTypus novusTypus) -> bivalens {
+functio renovaSymbolumTypum(in Scopus scopus, de textus nomen, ex SemanticTypus novusTypus) -> bivalens {
     si nihil scopus.symbola[nomen] {
         redde falsum
     }
@@ -123,7 +123,7 @@ functio renovaSymbolumTypum(Scopus scopus, textus nomen, SemanticTypus novusTypu
 
 # Find the enclosing function scope (for return type checking)
 @ publica
-functio inveniScopumFunctionis(Scopus scopus) -> Scopus? {
+functio inveniScopumFunctionis(de Scopus scopus) -> Scopus? {
     si scopus.species == ScopusSpecies.Functio {
         redde scopus
     }

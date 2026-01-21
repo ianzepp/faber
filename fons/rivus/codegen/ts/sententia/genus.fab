@@ -23,7 +23,7 @@
 § ex "../typus" importa genTypus
 
 @ publica
-functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotum implet, bivalens abstractum, lista<CampusDeclaratio> campi, ignotum structor, lista<FunctioDeclaratio> methodi, ignotum visibilitas, TsGenerator g) -> textus {
+functio genGenus(de textus nomen, de ignotum generaParametra, de ignotum extendit, de ignotum implet, bivalens abstractum, de lista<CampusDeclaratio> campi, de ignotum structor, de lista<FunctioDeclaratio> methodi, de ignotum visibilitas, in TsGenerator g) -> textus {
     varia result = g.ind()
 
     # Determine class visibility for field inheritance
@@ -107,7 +107,7 @@ functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotu
     redde result
 }
 
-functio genAutoMergeConstructor(lista<CampusDeclaratio> campi, bivalens hasCreo, TsGenerator g) -> textus {
+functio genAutoMergeConstructor(de lista<CampusDeclaratio> campi, bivalens hasCreo, in TsGenerator g) -> textus {
     varia lines = [] innatum lista<textus>
     varia instFields = [] innatum lista<CampusDeclaratio>
     ex campi fixum campus {
@@ -138,7 +138,7 @@ functio genAutoMergeConstructor(lista<CampusDeclaratio> campi, bivalens hasCreo,
     redde lines.coniunge("\n")
 }
 
-functio genCreoMethod(Sententia creo, TsGenerator g) -> textus {
+functio genCreoMethod(de Sententia creo, in TsGenerator g) -> textus {
     discerne creo {
         casu FunctioDeclaratio ut f {
             varia body = "{}"
@@ -156,7 +156,7 @@ functio genCreoMethod(Sententia creo, TsGenerator g) -> textus {
 }
 
 @ publica
-functio genCampus(CampusDeclaratio campus, Visibilitas classVisibility, TsGenerator g) -> textus {
+functio genCampus(de CampusDeclaratio campus, Visibilitas classVisibility, in TsGenerator g) -> textus {
     varia result = g.ind()
 
     # Determine effective visibility

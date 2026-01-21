@@ -17,7 +17,7 @@
 § ex "./index" importa genMassa
 
 @ publica
-functio genCustodi(lista<CustodiClausula> clausulae, TsGenerator g) -> textus {
+functio genCustodi(de lista<CustodiClausula> clausulae, in TsGenerator g) -> textus {
     varia result = ""
     ex clausulae fixum clausula {
         varia vacuus = falsum

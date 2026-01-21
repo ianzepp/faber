@@ -9,7 +9,7 @@
 § ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genAdfirma(Expressia condicio, ignotum nuntius, GoGenerator g) -> textus {
+functio genAdfirma(de Expressia condicio, si de ignotum nuntius, in GoGenerator g) -> textus {
     fixum test = genExpressia(condicio, g)
     varia nuntiusTextus = "\"assertion failed\""
     si nonnihil nuntius {

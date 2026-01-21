@@ -40,7 +40,7 @@
 #       proba "parses literals" { ... }
 #   }
 @ publica
-functio parseProbandumSententia(Resolvitor r) -> Sententia {
+functio parseProbandumSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -110,7 +110,7 @@ functio parseProbandumSententia(Resolvitor r) -> Sententia {
 #   proba omitte "reason" "skipped test" { }
 #   proba futurum "todo" "future test" { }
 @ publica
-functio parseProbaSententia(Resolvitor r) -> Sententia {
+functio parseProbaSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -174,7 +174,7 @@ functio parseProbaSententia(Resolvitor r) -> Sententia {
 #   postpara { cleanup() }         -> afterEach
 #   praepara omnia { initOnce() }  -> beforeAll
 @ publica
-functio parsePraeparaMassa(Resolvitor r) -> Sententia {
+functio parsePraeparaMassa(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 

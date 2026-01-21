@@ -28,7 +28,7 @@
 § ex "./index" importa genSententia
 
 @ publica
-functio genDiscerne(lista<Expressia> discriminantes, lista<VariansCasus> casus, TsGenerator g) -> textus {
+functio genDiscerne(de lista<Expressia> discriminantes, de lista<VariansCasus> casus, in TsGenerator g) -> textus {
     # Generate expressions for all discriminants
     varia discriminantStrs = [] innatum lista<textus>
     ex discriminantes fixum d {
@@ -92,7 +92,7 @@ functio genDiscerne(lista<Expressia> discriminantes, lista<VariansCasus> casus, 
 }
 
 # Generate bindings for a single pattern
-functio genPatternBindings(VariansExemplar pattern, textus discriminant, TsGenerator g) -> textus {
+functio genPatternBindings(de VariansExemplar pattern, de textus discriminant, in TsGenerator g) -> textus {
     varia result = ""
 
     # Alias binding: casu Click ut c

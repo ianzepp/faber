@@ -28,7 +28,7 @@
 # Consumes opening brace, parses statements until closing brace.
 # Handles optional semicolons between statements.
 @ publica
-functio parseMassaSententia(Resolvitor r) -> MassaSententia {
+functio parseMassaSententia(in Resolvitor r) -> MassaSententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -68,7 +68,7 @@ functio parseMassaSententia(Resolvitor r) -> MassaSententia {
 #
 # Wraps a standalone expression as a statement.
 @ publica
-functio parseExpressiaSententia(Resolvitor r) -> Sententia {
+functio parseExpressiaSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
     fixum expressia = r.expressia()
@@ -85,7 +85,7 @@ functio parseExpressiaSententia(Resolvitor r) -> Sententia {
 #
 # Parses statements until end of input.
 @ publica
-functio parseProgramma(Resolvitor r) -> Programma {
+functio parseProgramma(in Resolvitor r) -> Programma {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
     varia corpus = [] innatum lista<Sententia>

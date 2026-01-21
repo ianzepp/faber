@@ -34,12 +34,12 @@ functio locus(numerus linea, numerus columna, numerus index) -> Locus {
 
 # Create a span from two positions
 @ publica
-functio tractus(Locus initium, Locus finis) -> Tractus {
+functio tractus(de Locus initium, de Locus finis) -> Tractus {
     redde { initium: initium, finis: finis } novum Tractus
 }
 
 # Create a zero-length span at a position
 @ publica
-functio tractusAd(Locus loc) -> Tractus {
+functio tractusAd(de Locus loc) -> Tractus {
     redde { initium: loc, finis: loc } novum Tractus
 }

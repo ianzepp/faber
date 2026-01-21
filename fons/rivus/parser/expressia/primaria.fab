@@ -45,7 +45,7 @@
 # Handles terminals: literals, identifiers, ego, grouped expressions.
 # Routes to specialized parsers for compound forms (arrays, objects, lambdas).
 @ publica
-functio parsePrimaria(Resolvitor r) -> Expressia {
+functio parsePrimaria(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum sym = p.specta(0)
     fixum locus = sym.locus
@@ -221,7 +221,7 @@ functio parsePrimaria(Resolvitor r) -> Expressia {
 #   filter := ['non'] ('ubi' expression | IDENT)
 #   transform := ('prima' | 'ultima' | 'summa') expression?
 @ publica
-functio parseAbExpressia(Resolvitor r) -> Expressia {
+functio parseAbExpressia(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -287,7 +287,7 @@ functio parseAbExpressia(Resolvitor r) -> Expressia {
 }
 
 @ publica
-functio parseCatenaGradus(Resolvitor r) -> lista<CatenaGradus> {
+functio parseCatenaGradus(in Resolvitor r) -> lista<CatenaGradus> {
     fixum p = r.parser()
     varia gradus = [] innatum lista<CatenaGradus>
 
@@ -372,7 +372,7 @@ functio parseCatenaGradus(Resolvitor r) -> lista<CatenaGradus> {
 #
 # Example: [1, 2, 3], [sparge items, 4, 5]
 @ publica
-functio parseSeriesExpressia(Resolvitor r) -> Expressia {
+functio parseSeriesExpressia(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -402,7 +402,7 @@ functio parseSeriesExpressia(Resolvitor r) -> Expressia {
 
 # Parse a single array element (supports sparge)
 @ publica
-functio parseElementumSeries(Resolvitor r) -> Expressia {
+functio parseElementumSeries(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -428,7 +428,7 @@ functio parseElementumSeries(Resolvitor r) -> Expressia {
 #             | IDENTIFIER ':' expression     # identifier key with value
 #             | IDENTIFIER                    # shorthand { name } = { name: name }
 @ publica
-functio parseObiectumProprietas(Resolvitor r) -> ObiectumProprietas {
+functio parseObiectumProprietas(in Resolvitor r) -> ObiectumProprietas {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -513,7 +513,7 @@ functio parseObiectumProprietas(Resolvitor r) -> ObiectumProprietas {
 #   { [key]: value }              # computed
 #   { sparge base, extra: 1 }    # spread
 @ publica
-functio parseObiectumExpressia(Resolvitor r) -> Expressia {
+functio parseObiectumExpressia(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -553,7 +553,7 @@ functio parseObiectumExpressia(Resolvitor r) -> Expressia {
 #
 # Note: Block form uses MassaSententia as corpus for later codegen.
 @ publica
-functio parseClausuraExpressia(Resolvitor r) -> Expressia {
+functio parseClausuraExpressia(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -608,7 +608,7 @@ functio parseClausuraExpressia(Resolvitor r) -> Expressia {
 #   fingeExpr := 'finge' IDENTIFIER ('{' fields? '}')? ('qua' typeAnnotation)?
 #   field := IDENTIFIER (':' expression)?
 @ publica
-functio parseFingeExpressia(Resolvitor r) -> Expressia {
+functio parseFingeExpressia(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -677,7 +677,7 @@ functio parseFingeExpressia(Resolvitor r) -> Expressia {
 #
 # Example: praefixum(VERSION), praefixum { computeConstant() }
 @ publica
-functio parsePraefixumExpressia(Resolvitor r) -> Expressia {
+functio parsePraefixumExpressia(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -712,7 +712,7 @@ functio parsePraefixumExpressia(Resolvitor r) -> Expressia {
 
 # Extract an expression from a block, preferring trailing redde/expr
 @ publica
-functio exMassaExpressia(Sententia massa, Locus locus) -> Expressia {
+functio exMassaExpressia(de Sententia massa, de Locus locus) -> Expressia {
     # WHY: Blocks are statements; we salvage the last expression when present.
     discerne massa {
         casu MassaSententia ut m {
@@ -747,7 +747,7 @@ functio exMassaExpressia(Sententia massa, Locus locus) -> Expressia {
 #
 # Example: scriptum("Hello, §!", name)
 @ publica
-functio parseScriptumExpressia(Resolvitor r) -> Expressia {
+functio parseScriptumExpressia(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -777,7 +777,7 @@ functio parseScriptumExpressia(Resolvitor r) -> Expressia {
 #
 # Example: lege (all stdin), lege lineam (one line)
 @ publica
-functio parseLegeExpressia(Resolvitor r) -> Expressia {
+functio parseLegeExpressia(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -804,7 +804,7 @@ functio parseLegeExpressia(Resolvitor r) -> Expressia {
 #
 # Example: sed "\\d+", sed "(?i)[a-z]+"
 @ publica
-functio parseRegexExpressia(Resolvitor r) -> Expressia {
+functio parseRegexExpressia(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 

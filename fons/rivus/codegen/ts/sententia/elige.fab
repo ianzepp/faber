@@ -14,6 +14,6 @@
 § ex "../revocata" importa creaTsRevocata
 
 @ publica
-functio genElige(Expressia discriminans, lista<EligeCasus> casus, ignotum praedefinitum, ignotum cape, TsGenerator g) -> textus {
+functio genElige(de Expressia discriminans, de lista<EligeCasus> casus, de ignotum praedefinitum, de ignotum cape, in TsGenerator g) -> textus {
     redde genEligeLogica(discriminans, casus, praedefinitum, cape, g, SYNTAXIS_TS, creaTsRevocata())
 }

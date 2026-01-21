@@ -14,6 +14,6 @@
 § ex "../revocata" importa creaTsRevocata
 
 @ publica
-functio genSi(Expressia condicio, Sententia consequens, ignotum alternans, ignotum cape, TsGenerator g) -> textus {
+functio genSi(de Expressia condicio, de Sententia consequens, de ignotum alternans, de ignotum cape, in TsGenerator g) -> textus {
     redde genSiLogica(condicio, consequens, alternans, cape, g, SYNTAXIS_TS, creaTsRevocata())
 }

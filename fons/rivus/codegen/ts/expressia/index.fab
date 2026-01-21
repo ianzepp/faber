@@ -25,7 +25,7 @@
 
 # Generate TypeScript code for an expression
 @ publica
-functio genExpressia(Expressia expr, TsGenerator g) -> textus {
+functio genExpressia(de Expressia expr, in TsGenerator g) -> textus {
     discerne expr {
         # Identifiers
         casu Nomen ut e {
@@ -463,7 +463,7 @@ functio genExpressia(Expressia expr, TsGenerator g) -> textus {
 # =============================================================================
 
 # Escape forward slashes for JS regex literals.
-functio escapaRegex(textus pattern) -> textus {
+functio escapaRegex(de textus pattern) -> textus {
     varia result = ""
     varia i = 0
     dum i < pattern.longitudo() {
@@ -481,7 +481,7 @@ functio escapaRegex(textus pattern) -> textus {
 # Extract inline flags from regex pattern.
 # Patterns like "(?i)test" or "(?im)test" have flags at the start.
 # Returns [flags, remaining_pattern]. JS doesn't support inline flags natively.
-functio extractInlineFlags(textus pattern) -> lista<textus> {
+functio extractInlineFlags(de textus pattern) -> lista<textus> {
     # Check for inline flag prefix: (?flags)
     si pattern.longitudo() >= 3 et pattern[0] == "(" et pattern[1] == "?" {
         varia i = 2
@@ -511,7 +511,7 @@ functio extractInlineFlags(textus pattern) -> lista<textus> {
 }
 
 # Minimal statement lowering for praefixum blocks (avoid codegen cycles).
-functio genPraefixumMassa(lista<Sententia> corpus, TsGenerator g) -> textus {
+functio genPraefixumMassa(de lista<Sententia> corpus, in TsGenerator g) -> textus {
     si corpus.longitudo() == 0 {
         redde ""
     }
@@ -522,7 +522,7 @@ functio genPraefixumMassa(lista<Sententia> corpus, TsGenerator g) -> textus {
     redde lines.coniunge("\n")
 }
 
-functio genPraefixumSententia(Sententia stmt, TsGenerator g) -> textus {
+functio genPraefixumSententia(de Sententia stmt, in TsGenerator g) -> textus {
     discerne stmt {
         casu VariaSententia ut s {
             fixum keyword = (s.species == VariaGenus.Fixum aut s.species == VariaGenus.Figendum) sic "const" secus "let"
@@ -558,7 +558,7 @@ functio genPraefixumSententia(Sententia stmt, TsGenerator g) -> textus {
     }
 }
 
-functio invenitTabulaNomen(Expressia obiectum, TsGenerator g) -> textus? {
+functio invenitTabulaNomen(de Expressia obiectum, de TsGenerator g) -> textus? {
     discerne obiectum {
         casu Nomen ut n {
             fixum nomen = n.valor qua textus
@@ -573,7 +573,7 @@ functio invenitTabulaNomen(Expressia obiectum, TsGenerator g) -> textus? {
     redde nihil
 }
 
-functio genTabulaGet(textus obj, textus prop, bivalens optivum, bivalens nonNullum) -> textus {
+functio genTabulaGet(de textus obj, de textus prop, bivalens optivum, bivalens nonNullum) -> textus {
     si optivum {
         redde scriptum("§?.get(§)", obj, prop)
     }
@@ -583,7 +583,7 @@ functio genTabulaGet(textus obj, textus prop, bivalens optivum, bivalens nonNull
     redde scriptum("§.get(§)", obj, prop)
 }
 
-functio genTabulaSet(textus obj, textus prop, textus valor, bivalens optivum, bivalens nonNullum) -> textus {
+functio genTabulaSet(de textus obj, de textus prop, de textus valor, bivalens optivum, bivalens nonNullum) -> textus {
     si optivum {
         redde scriptum("§?.set(§, §)", obj, prop, valor)
     }
@@ -593,7 +593,7 @@ functio genTabulaSet(textus obj, textus prop, textus valor, bivalens optivum, bi
     redde scriptum("§.set(§, §)", obj, prop, valor)
 }
 
-functio genTabulaAssignatio(AssignatioExpressia e, TsGenerator g) -> textus? {
+functio genTabulaAssignatio(de AssignatioExpressia e, in TsGenerator g) -> textus? {
     discerne e.sinister {
         casu MembrumExpressia ut m {
             redde genTabulaAssignatioMembrum(e, m, g)
@@ -603,7 +603,7 @@ functio genTabulaAssignatio(AssignatioExpressia e, TsGenerator g) -> textus? {
     redde nihil
 }
 
-functio genTabulaAssignatioMembrum(AssignatioExpressia e, MembrumExpressia m, TsGenerator g) -> textus? {
+functio genTabulaAssignatioMembrum(de AssignatioExpressia e, de MembrumExpressia m, in TsGenerator g) -> textus? {
     si non (m.computatum qua bivalens) { redde nihil }
 
     fixum tabulaNomen = invenitTabulaNomen(m.obiectum, g)
@@ -631,7 +631,7 @@ functio genTabulaAssignatioMembrum(AssignatioExpressia e, MembrumExpressia m, Ts
 # INNATUM HELPERS
 # =============================================================================
 
-functio extractTypusParam(lista<TypusParametrum>? params, numerus index, TsGenerator g) -> textus {
+functio extractTypusParam(si de lista<TypusParametrum> params, numerus index, in TsGenerator g) -> textus {
     si nihil params { redde "unknown" }
 
     fixum paramLista = params qua lista<TypusParametrum>
@@ -645,7 +645,7 @@ functio extractTypusParam(lista<TypusParametrum>? params, numerus index, TsGener
     redde "unknown"
 }
 
-functio genInnatumTabula(InnatumExpressia e, TsGenerator g) -> textus {
+functio genInnatumTabula(de InnatumExpressia e, in TsGenerator g) -> textus {
     fixum params = (e.scopus novum TypusAnnotatio).typusParametra
     fixum keyType = extractTypusParam(params, 0, g)
     fixum valueType = extractTypusParam(params, 1, g)
@@ -663,7 +663,7 @@ functio genInnatumTabula(InnatumExpressia e, TsGenerator g) -> textus {
     redde scriptum("new Map<§, §>()", keyType, valueType)
 }
 
-functio genTabulaEntries(ObiectumExpressia obj, textus keyType, textus valueType, TsGenerator g) -> textus {
+functio genTabulaEntries(de ObiectumExpressia obj, de textus keyType, de textus valueType, in TsGenerator g) -> textus {
     varia entries = [] innatum lista<textus>
     ex (obj.proprietates qua lista<ObiectumProprietas>) fixum prop {
         fixum key = genMapKey(prop.clavis, g)
@@ -673,14 +673,14 @@ functio genTabulaEntries(ObiectumExpressia obj, textus keyType, textus valueType
     redde scriptum("new Map<§, §>([§])", keyType, valueType, entries.coniunge(", "))
 }
 
-functio genMapKey(Expressia clavis, TsGenerator g) -> textus {
+functio genMapKey(de Expressia clavis, in TsGenerator g) -> textus {
     discerne clavis {
         casu Nomen ut n { redde scriptum("\"§\"", n.valor) }
         casu _ { redde genExpressia(clavis, g) }
     }
 }
 
-functio genInnatumLista(InnatumExpressia e, TsGenerator g) -> textus {
+functio genInnatumLista(de InnatumExpressia e, in TsGenerator g) -> textus {
     fixum params = (e.scopus novum TypusAnnotatio).typusParametra
     fixum elemType = extractTypusParam(params, 0, g)
 
@@ -698,7 +698,7 @@ functio genInnatumLista(InnatumExpressia e, TsGenerator g) -> textus {
     redde scriptum("([] as §[])", elemType)
 }
 
-functio genInnatumCopia(InnatumExpressia e, TsGenerator g) -> textus {
+functio genInnatumCopia(de InnatumExpressia e, in TsGenerator g) -> textus {
     fixum params = (e.scopus novum TypusAnnotatio).typusParametra
     fixum elemType = extractTypusParam(params, 0, g)
 
@@ -706,7 +706,7 @@ functio genInnatumCopia(InnatumExpressia e, TsGenerator g) -> textus {
     redde scriptum("new Set<§>()", elemType)
 }
 
-functio estNegativusIndex(Expressia expr) -> bivalens {
+functio estNegativusIndex(de Expressia expr) -> bivalens {
     discerne expr {
         casu UnariaExpressia ut u {
             redde (u.signum qua textus) == "-"
@@ -716,19 +716,19 @@ functio estNegativusIndex(Expressia expr) -> bivalens {
     redde falsum
 }
 
-functio genNegativusAccess(textus obj, textus idx, bivalens optivum, bivalens nonNullum) -> textus {
+functio genNegativusAccess(de textus obj, de textus idx, bivalens optivum, bivalens nonNullum) -> textus {
     si optivum { redde scriptum("§?.at(§)", obj, idx) }
     si nonNullum { redde scriptum("§!.at(§)", obj, idx) }
     redde scriptum("§.at(§)", obj, idx)
 }
 
-functio genReceiverSuffix(textus obj, bivalens optivum, bivalens nonNullum) -> textus {
+functio genReceiverSuffix(de textus obj, bivalens optivum, bivalens nonNullum) -> textus {
     si optivum { redde scriptum("§?", obj) }
     si nonNullum { redde scriptum("§!", obj) }
     redde obj
 }
 
-functio genSectioAccess(textus obj, Expressia ambitus, bivalens optivum, bivalens nonNullum, TsGenerator g) -> textus {
+functio genSectioAccess(de textus obj, de Expressia ambitus, bivalens optivum, bivalens nonNullum, in TsGenerator g) -> textus {
     discerne ambitus {
         casu AmbitusExpressia ut a {
             redde genAmbitusSlice(obj, a, optivum, nonNullum, g)
@@ -738,7 +738,7 @@ functio genSectioAccess(textus obj, Expressia ambitus, bivalens optivum, bivalen
     redde scriptum("§[§]", obj, genExpressia(ambitus, g))
 }
 
-functio genAmbitusSlice(textus obj, AmbitusExpressia a, bivalens optivum, bivalens nonNullum, TsGenerator g) -> textus {
+functio genAmbitusSlice(de textus obj, de AmbitusExpressia a, bivalens optivum, bivalens nonNullum, in TsGenerator g) -> textus {
     fixum initium = genExpressia(a.initium, g)
     fixum finis = genExpressia(a.finis, g)
     fixum receiver = genReceiverSuffix(obj, optivum, nonNullum)
@@ -757,7 +757,7 @@ functio genAmbitusSlice(textus obj, AmbitusExpressia a, bivalens optivum, bivale
     redde scriptum("§.slice(§, §)", receiver, initium, inclusive)
 }
 
-functio legeNumerusLiteralis(Expressia expr) -> numerus? {
+functio legeNumerusLiteralis(de Expressia expr) -> numerus? {
     discerne expr {
         casu Littera ut l {
             si l.species == LitteraGenus.Numerus {
@@ -772,7 +772,7 @@ functio legeNumerusLiteralis(Expressia expr) -> numerus? {
     redde nihil
 }
 
-functio legeNegativusNumerus(UnariaExpressia u) -> numerus? {
+functio legeNegativusNumerus(de UnariaExpressia u) -> numerus? {
     si (u.signum qua textus) != "-" { redde nihil }
 
     discerne u.argumentum {
@@ -786,7 +786,7 @@ functio legeNegativusNumerus(UnariaExpressia u) -> numerus? {
     redde nihil
 }
 
-functio legeNumerusTextus(textus crudus) -> numerus {
+functio legeNumerusTextus(de textus crudus) -> numerus {
     varia result = 0
     varia i = 0
     dum i < crudus.longitudo() {
@@ -836,7 +836,7 @@ functio legeNumerusTextus(textus crudus) -> numerus {
 #   - §N where N >= values.length returns empty string (silent fallback)
 #   - Implicit § continues incrementing even after explicit §N
 #   - No escaping mechanism for literal § (not needed in practice)
-functio applyNormaTemplate(textus template, lista<textus> params, textus obj, lista<textus> args) -> textus {
+functio applyNormaTemplate(de textus template, de lista<textus> params, de textus obj, de lista<textus> args) -> textus {
     # Build values array: ego -> obj, other params -> args
     varia values = [] innatum lista<textus>
     varia argIdx = 0
@@ -901,7 +901,7 @@ functio applyNormaTemplate(textus template, lista<textus> params, textus obj, li
 }
 
 @ publica
-functio genNudaExpressia(Expressia expr, TsGenerator g) -> textus {
+functio genNudaExpressia(de Expressia expr, in TsGenerator g) -> textus {
     # WHY: Flatten binary expressions when outer parens are unnecessary.
     discerne expr {
         casu BinariaExpressia ut e {

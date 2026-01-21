@@ -12,7 +12,7 @@
 § ex "./index" importa genSententia
 
 @ publica
-functio genIncipit(ignotum corpus, ignotum ergo, GoGenerator g) -> textus {
+functio genIncipit(si de ignotum corpus, si de ignotum ergo, in GoGenerator g) -> textus {
     # Generate main function body
     # For simple incipit { ... }, body is in corpus
     # For incipit ergo cura..., actual statements are in ergo
@@ -47,7 +47,7 @@ functio genIncipit(ignotum corpus, ignotum ergo, GoGenerator g) -> textus {
 
 # Async entry point - Go doesn't have async main, just use regular main
 @ publica
-functio genIncipiet(ignotum corpus, ignotum ergo, GoGenerator g) -> textus {
+functio genIncipiet(si de ignotum corpus, si de ignotum ergo, in GoGenerator g) -> textus {
     # Go doesn't have async main - generate regular main
     redde genIncipit(corpus, ergo, g)
 }

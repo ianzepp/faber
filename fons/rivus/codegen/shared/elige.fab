@@ -15,13 +15,13 @@
 # Main entry point - generates if/else chain with optional cape wrapper
 @ publica
 functio genEligeLogica(
-    Expressia discriminans,
-    lista<EligeCasus> casus,
+    de Expressia discriminans,
+    de lista<EligeCasus> casus,
     ignotum praedefinitum,
     ignotum cape,
-    Generans g,
-    ScopusSyntaxis syn,
-    Revocata rev
+    in Generans g,
+    de ScopusSyntaxis syn,
+    de Revocata rev
 ) -> textus {
     fixum disc = rev.genExpr(discriminans, g)
     varia wrapTry = nonnihil cape et syn.habetCape

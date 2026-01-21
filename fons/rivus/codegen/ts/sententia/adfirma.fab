@@ -13,7 +13,7 @@
 § ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genAdfirma(Expressia condicio, ignotum nuntius, TsGenerator g) -> textus {
+functio genAdfirma(de Expressia condicio, de ignotum nuntius, in TsGenerator g) -> textus {
     fixum test = genExpressia(condicio, g)
 
     varia nuntiusTextus = ""

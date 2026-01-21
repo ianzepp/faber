@@ -16,7 +16,7 @@
 § ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genImporta(textus fons, lista<ImportaSpecificator> specificatores, bivalens totum, ignotum totumAlias, TsGenerator g) -> textus {
+functio genImporta(de textus fons, de lista<ImportaSpecificator> specificatores, bivalens totum, de ignotum totumAlias, in TsGenerator g) -> textus {
     # Skip norma imports - they are compiler intrinsics, not real modules
     si estNormaImportum(fons) {
         redde ""
@@ -42,7 +42,7 @@ functio genImporta(textus fons, lista<ImportaSpecificator> specificatores, bival
 }
 
 @ publica
-functio genDestructura(Expressia fons, VariaGenus species, lista<ImportaSpecificator> specificatores, TsGenerator g) -> textus {
+functio genDestructura(de Expressia fons, VariaGenus species, de lista<ImportaSpecificator> specificatores, in TsGenerator g) -> textus {
     fixum keyword = (species == VariaGenus.Fixum aut species == VariaGenus.Figendum) sic "const" secus "let"
     fixum asyncPrefix = (species == VariaGenus.Figendum aut species == VariaGenus.Variandum) sic "await " secus ""
 
@@ -61,7 +61,7 @@ functio genDestructura(Expressia fons, VariaGenus species, lista<ImportaSpecific
 }
 
 @ publica
-functio genSeriesDestructura(lista<SeriesDestructuraElementum> elementa, Expressia fons, VariaGenus species, TsGenerator g) -> textus {
+functio genSeriesDestructura(de lista<SeriesDestructuraElementum> elementa, de Expressia fons, VariaGenus species, in TsGenerator g) -> textus {
     fixum keyword = (species == VariaGenus.Fixum aut species == VariaGenus.Figendum) sic "const" secus "let"
     fixum asyncPrefix = (species == VariaGenus.Figendum aut species == VariaGenus.Variandum) sic "await " secus ""
 

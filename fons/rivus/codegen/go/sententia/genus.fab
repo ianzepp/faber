@@ -12,7 +12,7 @@
 § ex "./functio" importa genParametrum
 
 @ publica
-functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotum implet, bivalens abstractum, lista<CampusDeclaratio> campi, ignotum structor, lista<FunctioDeclaratio> methodi, ignotum visibilitas, GoGenerator g) -> textus {
+functio genGenus(de textus nomen, si de ignotum generaParametra, si de ignotum extendit, si de ignotum implet, abstractum, de lista<CampusDeclaratio> campi, si de ignotum structor, de lista<FunctioDeclaratio> methodi, si de ignotum visibilitas, in GoGenerator g) -> textus {
     # NOTE: Go has no class inheritance; extendit/implet/structor are ignored here.
     varia typeName = nomen
     si nonnihil visibilitas {
@@ -58,7 +58,7 @@ functio genGenus(textus nomen, ignotum generaParametra, ignotum extendit, ignotu
     redde lines.coniunge("\n")
 }
 
-functio habetErrataModificator(ignotum modificatores) -> bivalens {
+functio habetErrataModificator(si de ignotum modificatores) -> bivalens {
     si nihil modificatores {
         redde falsum
     }
@@ -73,7 +73,7 @@ functio habetErrataModificator(ignotum modificatores) -> bivalens {
     redde falsum
 }
 
-functio genGenusConstructor(textus typeName, GoGenerator g) -> textus {
+functio genGenusConstructor(de textus typeName, in GoGenerator g) -> textus {
     varia lines = [] innatum lista<textus>
     lines.adde(scriptum("§func New§(_ ...interface{}) *§ {", g.ind(), capitaliza(typeName), typeName))
     g.intraProfundum()
@@ -83,7 +83,7 @@ functio genGenusConstructor(textus typeName, GoGenerator g) -> textus {
     redde lines.coniunge("\n")
 }
 
-functio genGenusMethod(textus typeName, Sententia methodus, GoGenerator g) -> textus {
+functio genGenusMethod(de textus typeName, de Sententia methodus, in GoGenerator g) -> textus {
     discerne methodus {
         casu FunctioDeclaratio ut f {
             # External method declarations are not supported in Go
@@ -168,7 +168,7 @@ functio genGenusMethod(textus typeName, Sententia methodus, GoGenerator g) -> te
     redde ""
 }
 
-functio campusNomenGo(CampusDeclaratio campus) -> textus {
+functio campusNomenGo(de CampusDeclaratio campus) -> textus {
     si campus.visibilitas == Visibilitas.Publica {
         redde capitaliza(campus.nomen)
     }
@@ -176,7 +176,7 @@ functio campusNomenGo(CampusDeclaratio campus) -> textus {
 }
 
 # Capitalize first letter for Go field names
-functio capitaliza(textus s) -> textus {
+functio capitaliza(de textus s) -> textus {
     si s.longitudo() == 0 {
         redde s
     }

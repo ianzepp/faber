@@ -49,7 +49,7 @@
 #      appear before the statement, trailing comments on the same line.
 #      Currently stubbed (returns empty strings) for bootstrap.
 @ publica
-functio genSententia(Sententia stmt, TsGenerator g) -> textus {
+functio genSententia(de Sententia stmt, in TsGenerator g) -> textus {
     fixum leading = g.notaePrae(stmt)
     fixum trailing = g.notaePost(stmt)
     fixum content = genSententiaContent(stmt, g)
@@ -57,7 +57,7 @@ functio genSententia(Sententia stmt, TsGenerator g) -> textus {
 }
 
 # Generate statement content without comments
-functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
+functio genSententiaContent(de Sententia stmt, in TsGenerator g) -> textus {
     discerne stmt {
         # Block
         casu MassaSententia ut s {
@@ -221,7 +221,7 @@ functio genSententiaContent(Sententia stmt, TsGenerator g) -> textus {
 # =============================================================================
 
 @ publica
-functio genMassa(lista<Sententia> corpus, TsGenerator g) -> textus {
+functio genMassa(de lista<Sententia> corpus, in TsGenerator g) -> textus {
     si corpus.longitudo() == 0 {
         # WHY: Empty blocks should not stringify to undefined.
         redde ""

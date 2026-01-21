@@ -15,7 +15,7 @@
 
 # Generate range expression as array
 @ publica
-functio genAmbitusExpressia(Expressia expr, TsGenerator g) -> textus {
+functio genAmbitusExpressia(de Expressia expr, in TsGenerator g) -> textus {
     # WHY: Ranges become arrays outside of for-loops.
     discerne expr {
         casu AmbitusExpressia ut e {

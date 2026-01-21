@@ -11,6 +11,6 @@
 § ex "../revocata" importa creaGoRevocata
 
 @ publica
-functio genDum(Expressia condicio, Sententia corpus, GoGenerator g) -> textus {
+functio genDum(de Expressia condicio, de Sententia corpus, in GoGenerator g) -> textus {
     redde genDumLogica(condicio, corpus, nihil, g, SYNTAXIS_GO, creaGoRevocata())
 }

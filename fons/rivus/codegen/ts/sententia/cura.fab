@@ -18,7 +18,7 @@
 § ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genCura(ignotum curatorSpecies, ignotum res, textus vinculum, Sententia corpus, bivalens asynca, bivalens mutabilis, ignotum cape, TsGenerator g) -> textus {
+functio genCura(de ignotum curatorSpecies, de ignotum res, de textus vinculum, de Sententia corpus, bivalens asynca, bivalens mutabilis, de ignotum cape, in TsGenerator g) -> textus {
     # WHY: For arena/page curator kinds, just emit the block contents.
     # GC targets don't need allocator management - memory is automatic.
     si nonnihil curatorSpecies {

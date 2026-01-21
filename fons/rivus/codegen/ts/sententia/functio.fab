@@ -30,7 +30,7 @@
 § ex "../typus" importa genTypus
 
 @ publica
-functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> parametra, ignotum reddeVerbum, ignotum typusReditus, ignotum corpus, bivalens asynca, bivalens generator, bivalens structor, ignotum visibilitas, bivalens abstracta, bivalens externa, ignotum modificatores, TsGenerator g) -> textus {
+functio genFunctio(de textus nomen, de ignotum generaParametra, de lista<Parametrum> parametra, de ignotum reddeVerbum, de ignotum typusReditus, de ignotum corpus, bivalens asynca, bivalens generator, bivalens structor, de ignotum visibilitas, bivalens abstracta, bivalens externa, de ignotum modificatores, in TsGenerator g) -> textus {
     # External declarations use TypeScript's 'declare' syntax
     si externa {
         varia result = scriptum("§declare function §", g.ind(), nomen)
@@ -285,7 +285,7 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
 }
 
 @ publica
-functio genParametrum(Parametrum param, TsGenerator g) -> textus {
+functio genParametrum(de Parametrum param, in TsGenerator g) -> textus {
     varia result = ""
 
     si param.residuum {

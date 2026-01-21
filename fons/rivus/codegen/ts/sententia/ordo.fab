@@ -11,7 +11,7 @@
 § ex "../nucleus" importa TsGenerator
 
 @ publica
-functio genOrdo(textus nomen, lista<OrdoMembrum> membra, ignotum visibilitas, TsGenerator g) -> textus {
+functio genOrdo(de textus nomen, de lista<OrdoMembrum> membra, de ignotum visibilitas, in TsGenerator g) -> textus {
     varia result = g.ind()
 
     # Module-level: export when public

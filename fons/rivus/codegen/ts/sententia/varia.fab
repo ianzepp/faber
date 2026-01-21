@@ -14,7 +14,7 @@
 § ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genVaria(VariaGenus species, textus nomen, ignotum adnotatioTypus, ignotum valor, bivalens externa, ignotum visibilitas, TsGenerator g) -> textus {
+functio genVaria(VariaGenus species, de textus nomen, de ignotum adnotatioTypus, de ignotum valor, bivalens externa, de ignotum visibilitas, in TsGenerator g) -> textus {
     # External declarations use TypeScript's 'declare' syntax
     # WHY: ignotum maps to 'any' for externa since we're trusting external APIs
     si externa {

@@ -41,7 +41,7 @@
 # Top-level expression delegates to assignment (lowest precedence).
 # All expression parsing flows through this function.
 @ publica
-functio parseExpressia(Resolvitor r) -> Expressia {
+functio parseExpressia(in Resolvitor r) -> Expressia {
     # Delegate to assignment parser (lowest precedence)
     redde parseAssignatio(r)
 }

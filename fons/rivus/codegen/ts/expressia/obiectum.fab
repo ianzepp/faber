@@ -16,7 +16,7 @@
 
 # Generate object literal
 @ publica
-functio genObiectum(lista<ObiectumProprietas> proprietates, TsGenerator g) -> textus {
+functio genObiectum(de lista<ObiectumProprietas> proprietates, in TsGenerator g) -> textus {
     si proprietates.longitudo() == 0 {
         redde "{}"
     }

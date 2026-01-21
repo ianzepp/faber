@@ -26,7 +26,7 @@ genus Scriptum {
 # Extract script registry from sectiones
 # Returns a map of name -> Scriptum
 @ publica
-functio extractScripta(lista<SectioAnnotatio>? sectiones) -> tabula<textus, Scriptum> {
+functio extractScripta(de lista<SectioAnnotatio>? sectiones) -> tabula<textus, Scriptum> {
     varia result = {} innatum tabula<textus, Scriptum>
     si nihil sectiones { redde result }
 
@@ -43,7 +43,7 @@ functio extractScripta(lista<SectioAnnotatio>? sectiones) -> tabula<textus, Scri
 
 # Parse scriptum arguments into a Scriptum
 # Arguments: ["name", "via", "path"]
-functio parseScriptumArgs(lista<textus> args) -> Scriptum? {
+functio parseScriptumArgs(de lista<textus> args) -> Scriptum? {
     si args.longitudo() < 1 { redde nihil }
 
     fixum nomen = args[0]
@@ -72,7 +72,7 @@ functio parseScriptumArgs(lista<textus> args) -> Scriptum? {
 
 # Get a sorted list of script names
 @ publica
-functio nominaScriptorum(tabula<textus, Scriptum> scripta) -> lista<textus> {
+functio nominaScriptorum(de tabula<textus, Scriptum> scripta) -> lista<textus> {
     varia nomina = [] innatum lista<textus>
     ex scripta.claves() fixum nomen {
         nomina.push(nomen)

@@ -52,7 +52,7 @@ genus Parser {
     # Generate unique identifier for synthetic bindings
     # Returns: _prefix_N where N is incremented each call
     @ publica
-    functio generaId(textus prae) -> textus {
+    functio generaId(de textus prae) -> textus {
         fixum id = scriptum("_§_§", prae, ego.idUnicum)
         ego.idUnicum += 1
         redde id
@@ -65,7 +65,7 @@ genus Parser {
 
     # Convert a comment token to a Nota AST node
     @ publica
-    functio symbolumAdNotam(Symbolum s) -> Nota {
+    functio symbolumAdNotam(de Symbolum s) -> Nota {
         # Determine comment type from token species
         varia notaGenus = NotaGenus.Linea
         si s.species === SymbolumGenus.NotaMassa {
@@ -241,7 +241,7 @@ genus Parser {
     # Check if current token is a specific keyword without consuming
     # Keywords are stored in token.verbum field
     @ publica
-    functio probaVerbum(textus verbum) -> bivalens {
+    functio probaVerbum(de textus verbum) -> bivalens {
         fixum s = ego.specta(0)
         redde s.species === SymbolumGenus.Verbum et s.verbum === verbum
     }
@@ -267,7 +267,7 @@ genus Parser {
     # Match and consume token if keyword matches
     # Returns true if matched and consumed, false otherwise
     @ publica
-    functio congruetVerbum(textus verbum) -> bivalens {
+    functio congruetVerbum(de textus verbum) -> bivalens {
         si ego.probaVerbum(verbum) {
             ego.procede()
             redde verum
@@ -288,7 +288,7 @@ genus Parser {
     # Match any of several token types, consuming if matched
     # Returns true if any matched, false otherwise
     @ publica
-    functio congruetAliquod(lista<SymbolumGenus> species) -> bivalens {
+    functio congruetAliquod(de lista<SymbolumGenus> species) -> bivalens {
         ex species fixum s {
             si ego.proba(s) {
                 ego.procede()
@@ -306,7 +306,7 @@ genus Parser {
     # Report error at current position
     # contextus = optional additional context (e.g., "got 'x'")
     @ publica
-    functio renuncia(ParserErrorCodice codice, si textus contextus) -> vacuum {
+    functio renuncia(ParserErrorCodice codice, si de textus contextus) -> vacuum {
         fixum s = ego.specta(0)
         fixum err = error(codice, s.locus, contextus)
         ego.errores.adde(err)
@@ -343,7 +343,7 @@ genus Parser {
     # Expect specific keyword or record error
     # Returns matched token if found, synthetic token after advancing if not
     @ publica
-    functio expectaVerbum(textus verbum, ParserErrorCodice codice) -> Symbolum {
+    functio expectaVerbum(de textus verbum, ParserErrorCodice codice) -> Symbolum {
         si ego.probaVerbum(verbum) {
             redde ego.procede()
         }
@@ -476,7 +476,7 @@ genus Parser {
     # Check if token is a builtin type name
     # Used to distinguish "fixum textus nomen" from "fixum nomen"
     @ publica
-    functio estTypusNomen(Symbolum s) -> bivalens {
+    functio estTypusNomen(de Symbolum s) -> bivalens {
         si s.species !== SymbolumGenus.Nomen et s.species !== SymbolumGenus.Verbum et s.species !== SymbolumGenus.Nihil { redde falsum }
 
         # Check against builtin type names
@@ -507,7 +507,7 @@ genus Parser {
     # Check if token is a preposition used in parameters
     # de = borrowed/read-only, in = mutable borrow, ex = source
     @ publica
-    functio estPraepositio(Symbolum s) -> bivalens {
+    functio estPraepositio(de Symbolum s) -> bivalens {
         si s.species !== SymbolumGenus.Verbum { redde falsum }
 
         elige s.verbum {
@@ -521,7 +521,7 @@ genus Parser {
     # Check if token is an assignment operator
     # Includes = and compound assignments (+=, -=, *=, /=, %=, &=, |=)
     @ publica
-    functio estAssignatioSignum(Symbolum s) -> bivalens {
+    functio estAssignatioSignum(de Symbolum s) -> bivalens {
         # WHY: Compound assignment shares assignment precedence and associativity.
         elige s.species {
             casu SymbolumGenus.Aequum reddit verum
@@ -539,7 +539,7 @@ genus Parser {
 
 # Create a new parser for the given token stream
 @ publica
-functio novumParser(lista<Symbolum> symbola) -> Parser {
+functio novumParser(ex lista<Symbolum> symbola) -> Parser {
     redde novum Parser {
         symbola: symbola,
         index: 0,

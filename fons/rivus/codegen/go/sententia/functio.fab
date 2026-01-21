@@ -17,7 +17,7 @@
 § ex "./index" importa genSententia
 § ex "../typus" importa genTypus
 
-functio habetErrataModificator(ignotum modificatores) -> bivalens {
+functio habetErrataModificator(si de ignotum modificatores) -> bivalens {
     si nihil modificatores {
         redde falsum
     }
@@ -33,7 +33,7 @@ functio habetErrataModificator(ignotum modificatores) -> bivalens {
 }
 
 @ publica
-functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> parametra, ignotum modificatores, ignotum reddeVerbum, ignotum typusReditus, ignotum corpus, bivalens asynca, bivalens generator, bivalens structor, ignotum visibilitas, bivalens abstracta, bivalens externa, GoGenerator g) -> textus {
+functio genFunctio(de textus nomen, si de ignotum generaParametra, de lista<Parametrum> parametra, si de ignotum modificatores, si de ignotum reddeVerbum, si de ignotum typusReditus, si de ignotum corpus, asynca, generator, structor, si de ignotum visibilitas, abstracta, externa, in GoGenerator g) -> textus {
     # External declarations - Go doesn't have declare syntax
     si externa {
         redde scriptum("§// extern: func §(...)", g.ind(), nomen)
@@ -131,7 +131,7 @@ functio genFunctio(textus nomen, ignotum generaParametra, lista<Parametrum> para
 }
 
 @ publica
-functio genParametrum(Parametrum param, GoGenerator g) -> textus {
+functio genParametrum(de Parametrum param, in GoGenerator g) -> textus {
     varia result = param.nomen
 
     # Type annotation

@@ -15,7 +15,7 @@
 
 # Generate Go source code from a list of statements
 @ publica
-functio generateGo(lista<Sententia> corpus) -> textus {
+functio generateGo(de lista<Sententia> corpus) -> textus {
     fixum g = creaGoGenerator()
 
     # Separate declarations from executables, preserving source order
@@ -102,7 +102,7 @@ functio generateGo(lista<Sententia> corpus) -> textus {
 # =============================================================================
 
 # Generate Go preamble (package declaration and imports)
-functio genPreamble(GoGenerator g) -> textus {
+functio genPreamble(in GoGenerator g) -> textus {
     varia parts = [] innatum lista<textus>
 
     # Package declaration - always main for executables

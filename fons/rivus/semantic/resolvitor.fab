@@ -22,6 +22,6 @@
 @ publica
 pactum Resolvitor {
     functio analyzator() -> Analyzator
-    functio expressia(Expressia expr) -> SemanticTypus
-    functio sententia(Sententia stmt) -> vacuum
+    functio expressia(de Expressia expr) -> SemanticTypus
+    functio sententia(de Sententia stmt) -> vacuum
 }

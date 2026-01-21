@@ -11,7 +11,7 @@
 
 # Map a Latin type name to TypeScript type name
 @ publica
-functio mappaNomenTypi(textus nomen) -> textus {
+functio mappaNomenTypi(de textus nomen) -> textus {
     elige nomen {
         # Primitives
         casu "textus" reddit "string"
@@ -60,7 +60,7 @@ functio mappaNomenTypi(textus nomen) -> textus {
 
 # Generate TypeScript type from type annotation
 @ publica
-functio genTypus(TypusAnnotatio adnotatio, TsGenerator g) -> textus {
+functio genTypus(de TypusAnnotatio adnotatio, in TsGenerator g) -> textus {
     si adnotatio.nomen == "" et nonnihil adnotatio.reditus {
         varia params = [] innatum lista<textus>
         si nonnihil adnotatio.parametra {
@@ -124,7 +124,7 @@ functio genTypus(TypusAnnotatio adnotatio, TsGenerator g) -> textus {
 
 # Generate a single type parameter
 @ publica
-functio genTypusParametrum(TypusParametrum param, TsGenerator g) -> textus? {
+functio genTypusParametrum(de TypusParametrum param, in TsGenerator g) -> textus? {
     discerne param {
         casu Typus ut p {
             redde genTypus(p.adnotatio, g)
@@ -140,6 +140,6 @@ functio genTypusParametrum(TypusParametrum param, TsGenerator g) -> textus? {
 # Generate type parameter declarations for generics
 # Example: <T, U, V>
 @ publica
-functio genTypusParametra(lista<textus> parametra) -> textus {
+functio genTypusParametra(de lista<textus> parametra) -> textus {
     redde scriptum("<§>", parametra.coniunge(", "))
 }

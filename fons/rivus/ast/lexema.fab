@@ -321,13 +321,13 @@ genus Symbolum {
 
 # Create a token
 @ publica
-functio symbolum(SymbolumGenus species, textus valor, Locus locus) -> Symbolum {
+functio symbolum(de SymbolumGenus species, de textus valor, de Locus locus) -> Symbolum {
     redde { species: species, valor: valor, locus: locus, verbum: nihil, verbumId: nihil } novum Symbolum
 }
 
 # Create a keyword token
 @ publica
-functio symbolumVerbum(textus verbum, Locus locus) -> Symbolum {
+functio symbolumVerbum(de textus verbum, de Locus locus) -> Symbolum {
     redde {
         species: SymbolumGenus.Verbum,
         valor: verbum,
@@ -339,7 +339,7 @@ functio symbolumVerbum(textus verbum, Locus locus) -> Symbolum {
 
 # Create a keyword token with canonical identity
 @ publica
-functio symbolumVerbumId(textus verbum, VerbumId verbumId, Locus locus) -> Symbolum {
+functio symbolumVerbumId(de textus verbum, de VerbumId verbumId, de Locus locus) -> Symbolum {
     redde {
         species: SymbolumGenus.Verbum,
         valor: verbum,
@@ -355,18 +355,18 @@ functio symbolumVerbumId(textus verbum, VerbumId verbumId, Locus locus) -> Symbo
 
 # Check if token is a specific keyword (surface spelling)
 @ publica
-functio estVerbum(Symbolum sym, textus verbum) -> bivalens {
+functio estVerbum(de Symbolum sym, de textus verbum) -> bivalens {
     redde sym.species == SymbolumGenus.Verbum && sym.verbum == verbum
 }
 
 # Check if token is a specific keyword (canonical identity)
 @ publica
-functio estVerbumId(Symbolum sym, VerbumId verbumId) -> bivalens {
+functio estVerbumId(de Symbolum sym, de VerbumId verbumId) -> bivalens {
     redde sym.species == SymbolumGenus.Verbum && sym.verbumId == verbumId
 }
 
 # Check if token is EOF
 @ publica
-functio estFinis(Symbolum sym) -> bivalens {
+functio estFinis(de Symbolum sym) -> bivalens {
     redde sym.species == SymbolumGenus.Finis
 }

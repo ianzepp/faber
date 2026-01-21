@@ -35,7 +35,7 @@
 § ex "../errores" importa ParserErrorCodice
 § ex "./unaria" importa parseUnaria
 
-functio estAssignabile(Expressia expr) -> bivalens {
+functio estAssignabile(de Expressia expr) -> bivalens {
     discerne expr {
         casu Nomen ut n {
             redde verum
@@ -55,7 +55,7 @@ functio estAssignabile(Expressia expr) -> bivalens {
 #
 # Assignment is right-associative: a = b = c parses as a = (b = c)
 @ publica
-functio parseAssignatio(Resolvitor r) -> Expressia {
+functio parseAssignatio(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -91,7 +91,7 @@ functio parseAssignatio(Resolvitor r) -> Expressia {
 # Latin: condicio sic consequens secus alternans
 # JS:    condicio ? consequens : alternans
 @ publica
-functio parseCondicio(Resolvitor r) -> Expressia {
+functio parseCondicio(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -132,7 +132,7 @@ functio parseCondicio(Resolvitor r) -> Expressia {
 #
 # GRAMMAR: or := and (('||' | 'aut' | '??') and)*
 @ publica
-functio parseAut(Resolvitor r) -> Expressia {
+functio parseAut(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseEt(r)
 
@@ -157,7 +157,7 @@ functio parseAut(Resolvitor r) -> Expressia {
 #
 # GRAMMAR: and := bitwiseOr (('&&' | 'et') bitwiseOr)*
 @ publica
-functio parseEt(Resolvitor r) -> Expressia {
+functio parseEt(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseBitVel(r)
 
@@ -182,7 +182,7 @@ functio parseEt(Resolvitor r) -> Expressia {
 #
 # GRAMMAR: bitwiseOr := bitwiseXor ('|' bitwiseXor)*
 @ publica
-functio parseBitVel(Resolvitor r) -> Expressia {
+functio parseBitVel(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseBitApex(r)
 
@@ -207,7 +207,7 @@ functio parseBitVel(Resolvitor r) -> Expressia {
 #
 # GRAMMAR: bitwiseXor := bitwiseAnd ('^' bitwiseAnd)*
 @ publica
-functio parseBitApex(Resolvitor r) -> Expressia {
+functio parseBitApex(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseBitEt(r)
 
@@ -232,7 +232,7 @@ functio parseBitApex(Resolvitor r) -> Expressia {
 #
 # GRAMMAR: bitwiseAnd := equality ('&' equality)*
 @ publica
-functio parseBitEt(Resolvitor r) -> Expressia {
+functio parseBitEt(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseAequale(r)
 
@@ -257,7 +257,7 @@ functio parseBitEt(Resolvitor r) -> Expressia {
 #
 # GRAMMAR: equality := comparison (('==' | '!=' | '===' | '!==' | 'est') comparison)*
 @ publica
-functio parseAequale(Resolvitor r) -> Expressia {
+functio parseAequale(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseComparatio(r)
 
@@ -312,7 +312,7 @@ functio parseAequale(Resolvitor r) -> Expressia {
 #
 # GRAMMAR: comparison := shift (('<' | '>' | '<=' | '>=') shift)*
 @ publica
-functio parseComparatio(Resolvitor r) -> Expressia {
+functio parseComparatio(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseTranslatio(r)
 
@@ -337,7 +337,7 @@ functio parseComparatio(Resolvitor r) -> Expressia {
 #
 # GRAMMAR: shift := range (('<<' | '>>' | '>>>') range)*
 @ publica
-functio parseTranslatio(Resolvitor r) -> Expressia {
+functio parseTranslatio(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseAmbitus(r)
 
@@ -362,7 +362,7 @@ functio parseTranslatio(Resolvitor r) -> Expressia {
 #
 # GRAMMAR: range := additive (('..' | 'ante' | 'usque') additive ('per' additive)?)?
 @ publica
-functio parseAmbitus(Resolvitor r) -> Expressia {
+functio parseAmbitus(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
     varia initium = parseAdditio(r)
@@ -408,7 +408,7 @@ functio parseAmbitus(Resolvitor r) -> Expressia {
 #
 # GRAMMAR: additive := multiplicative (('+' | '-') multiplicative)*
 @ publica
-functio parseAdditio(Resolvitor r) -> Expressia {
+functio parseAdditio(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseMultiplicatio(r)
 
@@ -433,7 +433,7 @@ functio parseAdditio(Resolvitor r) -> Expressia {
 #
 # GRAMMAR: multiplicative := unary (('*' | '/' | '%') unary)*
 @ publica
-functio parseMultiplicatio(Resolvitor r) -> Expressia {
+functio parseMultiplicatio(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia sinister = parseUnaria(r)
 

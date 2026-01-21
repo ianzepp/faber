@@ -24,7 +24,7 @@
 
 # Generate TypeScript code for an ab expression
 @ publica
-functio genAbExpressia(Expressia fons, bivalens negata, TsGenerator g, si AbFiltrum filtrum, si lista<CatenaGradus> gradus) -> textus {
+functio genAbExpressia(de Expressia fons, bivalens negata, in TsGenerator g, si de AbFiltrum filtrum, si de lista<CatenaGradus> gradus) -> textus {
     fixum fonsTxt = genExpressia(fons, g)
 
     # No filter case: just apply transforms
@@ -94,7 +94,7 @@ functio genAbExpressia(Expressia fons, bivalens negata, TsGenerator g, si AbFilt
 #      Uses toSorted() for immutable sort (ES2023+).
 #      Uses Object.groupBy() for grouping (ES2024+).
 @ publica
-functio applicaCatenaGradus(textus fons, lista<CatenaGradus> gradus, TsGenerator g) -> textus {
+functio applicaCatenaGradus(de textus fons, de lista<CatenaGradus> gradus, in TsGenerator g) -> textus {
     varia result = fons
 
     ex gradus fixum gradusSingulus {

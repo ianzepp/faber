@@ -28,7 +28,7 @@
 
 # Generate Go code for a statement
 @ publica
-functio genSententia(Sententia stmt, GoGenerator g) -> textus {
+functio genSententia(de Sententia stmt, in GoGenerator g) -> textus {
     discerne stmt {
         # Block
         casu MassaSententia ut s {
@@ -146,7 +146,7 @@ functio genSententia(Sententia stmt, GoGenerator g) -> textus {
 # =============================================================================
 
 @ publica
-functio genMassa(lista<Sententia> corpus, GoGenerator g) -> textus {
+functio genMassa(de lista<Sententia> corpus, in GoGenerator g) -> textus {
     si corpus.longitudo() == 0 {
         redde ""
     }

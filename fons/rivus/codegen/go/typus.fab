@@ -11,7 +11,7 @@
 
 # Map a Latin type name to Go type name
 @ publica
-functio mappaNomenTypi(textus nomen) -> textus {
+functio mappaNomenTypi(de textus nomen) -> textus {
     elige nomen {
         # Primitives
         casu "textus" reddit "string"
@@ -47,7 +47,7 @@ functio mappaNomenTypi(textus nomen) -> textus {
 
 # Generate Go type from type annotation
 @ publica
-functio genTypus(TypusAnnotatio adnotatio, GoGenerator g) -> textus {
+functio genTypus(de TypusAnnotatio adnotatio, in GoGenerator g) -> textus {
     fixum base = mappaNomenTypi(adnotatio.nomen)
 
     # Handle vacuum (void) - returns empty string
@@ -118,7 +118,7 @@ functio genTypus(TypusAnnotatio adnotatio, GoGenerator g) -> textus {
 
 # Generate Go zero value for a type annotation
 @ publica
-functio zeroValueForType(TypusAnnotatio adnotatio, GoGenerator g) -> textus {
+functio zeroValueForType(de TypusAnnotatio adnotatio, in GoGenerator g) -> textus {
     # Nullables and pointer-like types default to nil
     si adnotatio.nullabilis {
         redde "nil"
@@ -161,7 +161,7 @@ functio zeroValueForType(TypusAnnotatio adnotatio, GoGenerator g) -> textus {
 
 # Generate a single type parameter
 @ publica
-functio genTypusParametrum(TypusParametrum param, GoGenerator g) -> textus? {
+functio genTypusParametrum(de TypusParametrum param, in GoGenerator g) -> textus? {
     discerne param {
         casu Typus ut p {
             redde genTypus(p.adnotatio, g)

@@ -32,7 +32,7 @@
 #
 # Binds the caught error to the identifier.
 @ publica
-functio parseCapeClausula(Resolvitor r) -> CapeClausula {
+functio parseCapeClausula(in Resolvitor r) -> CapeClausula {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -60,7 +60,7 @@ functio parseCapeClausula(Resolvitor r) -> CapeClausula {
 # Both cape and demum are optional, but at least one should be present
 # for the statement to be useful.
 @ publica
-functio parseTemptaSententia(Resolvitor r) -> Sententia {
+functio parseTemptaSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -103,7 +103,7 @@ functio parseTemptaSententia(Resolvitor r) -> Sententia {
 # Creates explicit scope boundary with optional error handling.
 # When 'dum' is present, creates a do-while loop.
 @ publica
-functio parseFacSententia(Resolvitor r) -> Sententia {
+functio parseFacSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -145,7 +145,7 @@ functio parseFacSententia(Resolvitor r) -> Sententia {
 #
 # Runtime invariant check. Optional second expression is error message.
 @ publica
-functio parseAdfirmaSententia(Resolvitor r) -> Sententia {
+functio parseAdfirmaSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 

@@ -39,7 +39,7 @@
 #   incipit ergo cura arena { ... }
 #   incipit ergo runMain()
 @ publica
-functio parseIncipitSententia(Resolvitor r) -> Sententia {
+functio parseIncipitSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -77,7 +77,7 @@ functio parseIncipitSententia(Resolvitor r) -> Sententia {
 #   incipiet { cede fetchData() }
 #   incipiet ergo cura arena { cede fetch() }
 @ publica
-functio parseIncipietSententia(Resolvitor r) -> Sententia {
+functio parseIncipietSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -108,7 +108,7 @@ functio parseIncipietSententia(Resolvitor r) -> Sententia {
 
 # Parse short entrypoint bodies: ergo, reddit, iacit, or moritor
 @ publica
-functio parseErgoVelReddit(Resolvitor r) -> Sententia? {
+functio parseErgoVelReddit(in Resolvitor r) -> Sententia? {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -166,7 +166,7 @@ functio parseErgoVelReddit(Resolvitor r) -> Sententia? {
 #   cura aperi("file.txt") fixum fd { lege(fd) }
 #   cura connect(url) varia conn { ... }
 @ publica
-functio parseCuraSententia(Resolvitor r) -> Sententia {
+functio parseCuraSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -258,7 +258,7 @@ functio parseCuraSententia(Resolvitor r) -> Sententia {
 #   ad "fasciculus:lege" ("file.txt") -> textus pro content { scribe content }
 #   ad "http:pete" (url) fiet Response pro resp { ... }
 @ publica
-functio parseAdSententia(Resolvitor r) -> Sententia {
+functio parseAdSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -356,7 +356,7 @@ functio parseAdSententia(Resolvitor r) -> Sententia {
 
 # Parse catch clause
 @ publica
-functio parseCapeClausula(Resolvitor r) -> CapeClausula {
+functio parseCapeClausula(in Resolvitor r) -> CapeClausula {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 

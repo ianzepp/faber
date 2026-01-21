@@ -48,7 +48,7 @@
 #   si x > 0 { ... } sin x < 0 { ... } secus { ... }
 #   si fetch() cape err { handle(err) }
 @ publica
-functio parseSiSententia(Resolvitor r) -> Sententia {
+functio parseSiSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -98,7 +98,7 @@ functio parseSiSententia(Resolvitor r) -> Sententia {
 #   dum x > 0 { x = x - 1 }
 #   dum iter.sequens() cape err { handle(err) }
 @ publica
-functio parseDumSententia(Resolvitor r) -> Sententia {
+functio parseDumSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -133,7 +133,7 @@ functio parseDumSententia(Resolvitor r) -> Sententia {
 #   ex items fixum item { scribe item }
 #   ex 0 ante 10 varia i { scribe i }
 @ publica
-functio parseExSententia(Resolvitor r) -> Sententia {
+functio parseExSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -190,7 +190,7 @@ functio parseExSententia(Resolvitor r) -> Sententia {
 # Examples:
 #   de obiectum fixum clavis { scribe clavis }
 @ publica
-functio parseDeSententia(Resolvitor r) -> Sententia {
+functio parseDeSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -250,7 +250,7 @@ functio parseDeSententia(Resolvitor r) -> Sententia {
 #
 # Example: cape err { handle(err) }
 @ publica
-functio parseCapeClausula(Resolvitor r) -> CapeClausula {
+functio parseCapeClausula(in Resolvitor r) -> CapeClausula {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -277,7 +277,7 @@ functio parseCapeClausula(Resolvitor r) -> CapeClausula {
 #
 # Used after conditions where a delimiter (ergo) is required for bare statements.
 @ publica
-functio parseCorpus(Resolvitor r) -> Sententia {
+functio parseCorpus(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -325,7 +325,7 @@ functio parseCorpus(Resolvitor r) -> Sententia {
 #   - ergo + simple statement (not compound)
 #   - Shortcuts: tacet, reddit, iacit, moritor
 @ publica
-functio parseCorpusAutSententia(Resolvitor r) -> Sententia {
+functio parseCorpusAutSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -375,7 +375,7 @@ functio parseCorpusAutSententia(Resolvitor r) -> Sententia {
 }
 
 # Check if current token is a compound statement keyword
-functio estCompositumVerbum(Parser p) -> bivalens {
+functio estCompositumVerbum(in Parser p) -> bivalens {
     si p.probaVerbum("si") { redde verum }
     si p.probaVerbum("sin") { redde verum }
     si p.probaVerbum("dum") { redde verum }
@@ -392,7 +392,7 @@ functio estCompositumVerbum(Parser p) -> bivalens {
 
 # Parse a "sin" (else-if) clause
 @ publica
-functio parseSinSententia(Resolvitor r) -> Sententia {
+functio parseSinSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 

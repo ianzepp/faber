@@ -20,7 +20,7 @@
 § ex "./index" importa genSententia
 
 # Check if expression is a known tabula variable name
-functio estTabula(Expressia expr, TsGenerator g) -> bivalens {
+functio estTabula(de Expressia expr, de TsGenerator g) -> bivalens {
     discerne expr {
         casu Nomen ut n {
             fixum nomen = n.valor qua textus
@@ -36,7 +36,7 @@ functio estTabula(Expressia expr, TsGenerator g) -> bivalens {
 }
 
 @ publica
-functio genIteratio(IteratioGenus species, IteratioVariabilis variabilis, Expressia iterabile, Sententia corpus, bivalens asynca, bivalens mutabilis, ignotum cape, TsGenerator g) -> textus {
+functio genIteratio(IteratioGenus species, de IteratioVariabilis variabilis, de Expressia iterabile, de Sententia corpus, bivalens asynca, bivalens mutabilis, de ignotum cape, in TsGenerator g) -> textus {
     fixum rev = creaTsRevocata()
 
     # Convert IteratioVariabilis to string representation
@@ -108,7 +108,7 @@ functio genIteratio(IteratioGenus species, IteratioVariabilis variabilis, Expres
 }
 
 # Convert loop variable binding to string
-functio genLoopVariable(IteratioVariabilis variabilis) -> textus {
+functio genLoopVariable(de IteratioVariabilis variabilis) -> textus {
     discerne variabilis {
         casu Nomen ut n {
             redde n.valor

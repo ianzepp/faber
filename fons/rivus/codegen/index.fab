@@ -26,25 +26,25 @@
 # Generate code for target with validation
 # Throws if target compatibility validation fails
 @ publica
-functio generate(lista<Sententia> corpus, textus target) -> textus {
+functio generate(de lista<Sententia> corpus, de textus target) -> textus {
     redde generateWithPolicy(corpus, target, POLITIA_STRICTA)
 }
 
 # Generate code with test blocks stripped (for production builds)
 @ publica
-functio generateStripTests(lista<Sententia> corpus, textus target) -> textus {
+functio generateStripTests(de lista<Sententia> corpus, de textus target) -> textus {
     redde generateWithStripping(corpus, target, verum, falsum)
 }
 
 # Generate code with comments stripped
 @ publica
-functio generateStripComments(lista<Sententia> corpus, textus target) -> textus {
+functio generateStripComments(de lista<Sententia> corpus, de textus target) -> textus {
     redde generateWithStripping(corpus, target, falsum, verum)
 }
 
 # Generate code with optional stripping of tests and/or comments
 @ publica
-functio generateWithStripping(lista<Sententia> corpus, textus target, bivalens stripTests, bivalens stripComments) -> textus {
+functio generateWithStripping(de lista<Sententia> corpus, de textus target, bivalens stripTests, bivalens stripComments) -> textus {
     # Validate first
     fixum errores = validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
     si non validatioSuccessit(errores) {
@@ -61,7 +61,7 @@ functio generateWithStripping(lista<Sententia> corpus, textus target, bivalens s
 
 # Generate code with explicit policy
 @ publica
-functio generateWithPolicy(lista<Sententia> corpus, textus target, ValidatioPolitia politia) -> textus {
+functio generateWithPolicy(de lista<Sententia> corpus, de textus target, de ValidatioPolitia politia) -> textus {
     # Validate target compatibility BEFORE codegen
     fixum errores = validateCompatibilitatem(corpus, target, politia)
 
@@ -83,7 +83,7 @@ functio generateWithPolicy(lista<Sententia> corpus, textus target, ValidatioPoli
 # Generate code with standalone test harness (for `rivus test` command)
 # Currently only supports TypeScript target
 @ publica
-functio generateWithTests(lista<Sententia> corpus, textus target) -> textus {
+functio generateWithTests(de lista<Sententia> corpus, de textus target) -> textus {
     # Validate first
     fixum errores = validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
     si non validatioSuccessit(errores) {
@@ -100,19 +100,19 @@ functio generateWithTests(lista<Sententia> corpus, textus target) -> textus {
 
 # Validate without generating - returns errors (empty if valid)
 @ publica
-functio validateOnly(lista<Sententia> corpus, textus target) -> lista<ValidatioError> {
+functio validateOnly(de lista<Sententia> corpus, de textus target) -> lista<ValidatioError> {
     redde validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
 }
 
 # Validate with explicit policy
 @ publica
-functio validateOnlyWithPolicy(lista<Sententia> corpus, textus target, ValidatioPolitia politia) -> lista<ValidatioError> {
+functio validateOnlyWithPolicy(de lista<Sententia> corpus, de textus target, de ValidatioPolitia politia) -> lista<ValidatioError> {
     redde validateCompatibilitatem(corpus, target, politia)
 }
 
 # Check if code is compatible with target (convenience function)
 @ publica
-functio isCompatible(lista<Sententia> corpus, textus target) -> bivalens {
+functio isCompatible(de lista<Sententia> corpus, de textus target) -> bivalens {
     fixum errores = validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
     redde validatioSuccessit(errores)
 }

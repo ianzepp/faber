@@ -42,19 +42,19 @@ genus ModulusResolutum {
 
 # Check if import source is a local file (starts with ./ or ../)
 @ publica
-functio estLocaleImportum(textus fons) -> bivalens {
+functio estLocaleImportum(de textus fons) -> bivalens {
     redde fons.startsWith("./") aut fons.startsWith("../")
 }
 
 # Check if import source is norma stdlib
 @ publica
-functio estNormaImportum(textus fons) -> bivalens {
+functio estNormaImportum(de textus fons) -> bivalens {
     redde fons == "norma" aut fons.startsWith("norma/")
 }
 
 # Check if import source is a dependentia alias import (alias:subpath)
 @ publica
-functio estDependentiaImportum(textus fons) -> bivalens {
+functio estDependentiaImportum(de textus fons) -> bivalens {
     # Has colon and doesn't start with ./ or ../
     si fons.continet(":") {
         redde non estLocaleImportum(fons)
@@ -67,8 +67,8 @@ functio estDependentiaImportum(textus fons) -> bivalens {
 # Does NOT resolve to absolute path - caller should use resolveModulum for that
 @ publica
 functio resolveDependentiaPath(
-    textus fons,
-    tabula<textus, Dependentia> registry
+    de textus fons,
+    de tabula<textus, Dependentia> registry
 ) -> textus? {
     # Split on colon: "alias:subpath" -> ["alias", "subpath"]
     fixum partes = fons.divide(":") qua lista<textus>
@@ -90,7 +90,7 @@ functio resolveDependentiaPath(
 # Resolve import path to absolute filesystem path
 # NOTE: Disabled - rivus is stdin-only, bundler handles imports
 @ publica
-functio resolveViaModuli(textus fons, textus viaBasica) -> textus? {
+functio resolveViaModuli(de textus fons, de textus viaBasica) -> textus? {
     redde nihil
 }
 
@@ -107,7 +107,7 @@ fixum PRIMITIVI = ["textus", "numerus", "fractus", "decimus", "magnus", "bivalen
 # Resolve a type annotation to SemanticTypus without full semantic analysis.
 # WHY: During export extraction we don't have a Resolvitor, but we need to
 # build Genus types with proper field types so cross-module member access works.
-functio resolveTypusShallow(TypusAnnotatio annotatio) -> SemanticTypus {
+functio resolveTypusShallow(de TypusAnnotatio annotatio) -> SemanticTypus {
     # Generic types: lista<T>, tabula<K,V>, etc.
     varia resolvedParametri = [] innatum lista<SemanticTypus>
     si nonnihil annotatio.typusParametra {
@@ -143,7 +143,7 @@ functio resolveTypusShallow(TypusAnnotatio annotatio) -> SemanticTypus {
 # Extract exports from a parsed program
 # All top-level declarations become exports
 @ publica
-functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
+functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutum {
     varia exporta = {} innatum tabula<textus, ModulusExportum>
     varia discretiones = {} innatum tabula<textus, DiscretioDeclInfo>
 
@@ -325,10 +325,10 @@ functio extraheExporta(Programma programma, textus via) -> ModulusResolutum {
 # NOTE: Disabled - rivus is stdin-only, bundler handles imports
 @ publica
 functio resolveModulum(
-    textus fons,
-    textus viaBasica,
-    tabula<textus, ModulusResolutum> cache,
-    copia<textus> inProgressu
+    de textus fons,
+    de textus viaBasica,
+    in tabula<textus, ModulusResolutum> cache,
+    in copia<textus> inProgressu
 ) -> ModulusResolutum? {
     redde nihil
 }

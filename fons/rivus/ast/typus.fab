@@ -53,7 +53,7 @@ genus TypusAnnotatio {
 
 # Create simple type annotation
 @ publica
-functio typusSimplicis(textus nomen, Locus locus) -> TypusAnnotatio {
+functio typusSimplicis(de textus nomen, de Locus locus) -> TypusAnnotatio {
     redde {
         locus: locus,
         nomen: nomen,
@@ -69,7 +69,7 @@ functio typusSimplicis(textus nomen, Locus locus) -> TypusAnnotatio {
 
 # Create nullable type annotation
 @ publica
-functio typusNullabilis(textus nomen, Locus locus) -> TypusAnnotatio {
+functio typusNullabilis(de textus nomen, de Locus locus) -> TypusAnnotatio {
     redde {
         locus: locus,
         nomen: nomen,
@@ -85,7 +85,7 @@ functio typusNullabilis(textus nomen, Locus locus) -> TypusAnnotatio {
 
 # Create generic type annotation
 @ publica
-functio typusGenericus(textus nomen, lista<TypusParametrum> parametra, Locus locus) -> TypusAnnotatio {
+functio typusGenericus(de textus nomen, de lista<TypusParametrum> parametra, de Locus locus) -> TypusAnnotatio {
     redde {
         locus: locus,
         nomen: nomen,

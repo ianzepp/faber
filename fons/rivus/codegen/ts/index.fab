@@ -20,13 +20,13 @@
 
 # Generate TypeScript source code from a list of statements
 @ publica
-functio generateTs(lista<Sententia> corpus) -> textus {
+functio generateTs(de lista<Sententia> corpus) -> textus {
     redde generateTsWithOptions(corpus, falsum, falsum)
 }
 
 # Generate TypeScript with options to strip test blocks and/or comments
 @ publica
-functio generateTsWithOptions(lista<Sententia> corpus, bivalens stripTests, bivalens stripComments) -> textus {
+functio generateTsWithOptions(de lista<Sententia> corpus, bivalens stripTests, bivalens stripComments) -> textus {
     fixum g = creaTsGenerator()
     g.stripTests = stripTests
     g.stripComments = stripComments
@@ -52,7 +52,7 @@ functio generateTsWithOptions(lista<Sententia> corpus, bivalens stripTests, biva
 # Generate TypeScript with standalone test harness
 # Enables standalone test mode and appends harness after all statements
 @ publica
-functio generateTsWithTests(lista<Sententia> corpus) -> textus {
+functio generateTsWithTests(de lista<Sententia> corpus) -> textus {
     fixum g = creaTsGenerator()
 
     # Enable standalone test mode

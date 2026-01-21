@@ -15,7 +15,7 @@
 § ex "./index" importa genSententia
 
 @ publica
-functio genTempta(Sententia corpus, ignotum cape, ignotum demum, TsGenerator g) -> textus {
+functio genTempta(de Sententia corpus, de ignotum cape, de ignotum demum, in TsGenerator g) -> textus {
     g.intraProfundum()
     fixum tryBody = genSententia(corpus, g)
     g.exiProfundum()

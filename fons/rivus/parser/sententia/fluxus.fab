@@ -42,7 +42,7 @@
 #       ceterum { scribe "unknown" }
 #   }
 @ publica
-functio parseEligeSententia(Resolvitor r) -> Sententia {
+functio parseEligeSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -136,7 +136,7 @@ functio parseEligeSententia(Resolvitor r) -> Sententia {
 #       casu _, _ { redde falsum }
 #   }
 @ publica
-functio parseDiscerneSententia(Resolvitor r) -> Sententia {
+functio parseDiscerneSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -237,7 +237,7 @@ functio parseDiscerneSententia(Resolvitor r) -> Sententia {
 #   - '_' (wildcard pattern)
 #   - An identifier followed by 'ut' or 'pro' (new pattern with binding)
 #   - '{', 'ergo', 'reddit' (end of patterns)
-functio parseVariansExemplar(Parser p) -> VariansExemplar {
+functio parseVariansExemplar(in Parser p) -> VariansExemplar {
     fixum locus = p.locusActualis()
 
     # Parse variant name (or wildcard)
@@ -291,7 +291,7 @@ functio parseVariansExemplar(Parser p) -> VariansExemplar {
 #   - Next token is '_' (wildcard)
 #   - Next token is identifier followed by 'ut' or 'pro' (pattern with binding)
 # Otherwise it's another binding.
-functio estProximumVinculum(Parser p) -> bivalens {
+functio estProximumVinculum(in Parser p) -> bivalens {
     # Must be at comma to continue
     si non p.proba(SymbolumGenus.Coma) {
         redde falsum
@@ -341,7 +341,7 @@ functio estProximumVinculum(Parser p) -> bivalens {
 #       si user.aetas < 0 { iace "Invalid age" }
 #   }
 @ publica
-functio parseCustodiSententia(Resolvitor r) -> Sententia {
+functio parseCustodiSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -387,7 +387,7 @@ functio parseCustodiSententia(Resolvitor r) -> Sententia {
 
 # Parse catch clause
 @ publica
-functio parseCapeClausula(Resolvitor r) -> CapeClausula {
+functio parseCapeClausula(in Resolvitor r) -> CapeClausula {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 

@@ -65,7 +65,7 @@ genus DiscretioDeclInfo {
 
 # Map Latin type name to semantic type
 @ publica
-functio latinTypusAd(textus nomen) -> SemanticTypus {
+functio latinTypusAd(de textus nomen) -> SemanticTypus {
     elige nomen {
         casu "textus" reddit TEXTUS
         casu "numerus" reddit NUMERUS
@@ -79,7 +79,7 @@ functio latinTypusAd(textus nomen) -> SemanticTypus {
 
 # Check if a type name is a generic type
 @ publica
-functio estGenericusTypus(textus nomen) -> bivalens {
+functio estGenericusTypus(de textus nomen) -> bivalens {
     redde nomen inter ["lista", "tabula", "copia", "promissum", "cursor", "fluxus"]
 }
 
@@ -110,7 +110,7 @@ genus Analyzator {
 
     # Report a semantic error
     @ publica
-    functio error(textus nuntius, Locus locus, si textus auxilium) {
+    functio error(ex textus nuntius, ex Locus locus, si ex textus auxilium) {
         ego.errores.adde({
             nuntius: nuntius,
             auxilium: auxilium vel "",
@@ -138,7 +138,7 @@ genus Analyzator {
 
     # Define a symbol in current scope (reports error if duplicate)
     @ publica
-    functio definie(Symbolum symbolum) {
+    functio definie(ex Symbolum symbolum) {
         fixum err = definieSymbolum(ego.scopus, symbolum)
         si nonnihil err {
             ego.error(err qua textus, symbolum.locus)
@@ -147,7 +147,7 @@ genus Analyzator {
 
     # Look up a symbol in scope chain
     @ publica
-    functio quaere(textus nomen) -> Symbolum? {
+    functio quaere(de textus nomen) -> Symbolum? {
         redde quaereSymbolum(ego.scopus, nomen)
     }
 
@@ -182,7 +182,7 @@ genus Analyzator {
 
     # Helper to define a single intrinsic function
     @ publica
-    functio definieIntrinsicaFunctio(textus nomen, lista<SemanticTypus> parametri, SemanticTypus reditus, Locus locus) {
+    functio definieIntrinsicaFunctio(ex textus nomen, ex lista<SemanticTypus> parametri, ex SemanticTypus reditus, ex Locus locus) {
         fixum typusFunctionis = functioTypus(parametri, reditus, falsum, falsum)
         ego.scopus.symbola[nomen] = {
             nomen: nomen,
@@ -218,7 +218,7 @@ genus Analyzator {
     }
 
     @ publica
-    functio habetMorphologiam(textus recipiens) -> bivalens {
+    functio habetMorphologiam(de textus recipiens) -> bivalens {
         si nihil ego.morphologiaRegistra[recipiens] {
             redde falsum
         }
@@ -226,7 +226,7 @@ genus Analyzator {
     }
 
     @ publica
-    functio formaeMorphologiae(textus recipiens, textus radix) -> lista<textus>? {
+    functio formaeMorphologiae(de textus recipiens, de textus radix) -> lista<textus>? {
         fixum perRecipiens = ego.morphologiaRegistra[recipiens]
         si nihil perRecipiens {
             redde nihil
@@ -235,7 +235,7 @@ genus Analyzator {
     }
 
     @ publica
-    functio addeMorphologiam(textus recipiens, textus radix, lista<textus> formae) -> vacuum {
+    functio addeMorphologiam(ex textus recipiens, ex textus radix, de lista<textus> formae) -> vacuum {
         si nihil ego.morphologiaRegistra[recipiens] {
             ego.morphologiaRegistra[recipiens] = {} innatum tabula<textus, lista<textus>>
         }
@@ -266,7 +266,7 @@ genus Analyzator {
 
 # Create a new analyzer
 @ publica
-functio novumAnalyzator(textus? viaIngressus, tabula<textus, Dependentia> dependentiae) -> Analyzator {
+functio novumAnalyzator(si de textus viaIngressus, ex tabula<textus, Dependentia> dependentiae) -> Analyzator {
     fixum analyzator = novum Analyzator {
         errores: [] innatum lista<SemanticError>,
         scopus: creaScopumGlobalem(),

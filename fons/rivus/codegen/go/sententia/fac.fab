@@ -11,7 +11,7 @@
 § ex "./index" importa genSententia
 
 @ publica
-functio genFac(Sententia corpus, ignotum condicio, GoGenerator g) -> textus {
+functio genFac(de Sententia corpus, si de ignotum condicio, in GoGenerator g) -> textus {
     g.intraProfundum()
     fixum body = genSententia(corpus, g)
     g.exiProfundum()

@@ -38,12 +38,12 @@
 #
 # GRAMMAR: unary := prefixOp unary | postfix
 @ publica
-functio parseUnaria(Resolvitor r) -> Expressia {
+functio parseUnaria(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
     fixum prox = p.specta(1)
 
-    functio estInitiumExpressiae(Symbolum s) -> bivalens {
+    functio estInitiumExpressiae(de Symbolum s) -> bivalens {
         si s.species inter [
             SymbolumGenus.Nomen,
             SymbolumGenus.Numerus,
@@ -105,7 +105,7 @@ functio parseUnaria(Resolvitor r) -> Expressia {
         } qua Expressia
     }
 
-    functio estInitiumPostNihil(Symbolum s) -> bivalens {
+    functio estInitiumPostNihil(de Symbolum s) -> bivalens {
         si s.species == SymbolumGenus.Verbum {
             # WHY: Only allow keywords that start expressions as nihil operands.
             si s.verbum inter ["clausura", "finge", "praefixum", "scriptum", "lege", "sed", "novum", "ego"] {
@@ -186,7 +186,7 @@ functio parseUnaria(Resolvitor r) -> Expressia {
 #
 # GRAMMAR: postfix := primary (callSuffix | memberSuffix | quaSuffix)*
 @ publica
-functio parsePostfix(Resolvitor r) -> Expressia {
+functio parsePostfix(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     varia expressia = parsePrimaria(r)
 
@@ -460,7 +460,7 @@ functio parsePostfix(Resolvitor r) -> Expressia {
 #
 # WHY: novum binds to the constructor name, not to a call expression.
 @ publica
-functio parseNovumExpressia(Resolvitor r, Locus locus) -> Expressia {
+functio parseNovumExpressia(in Resolvitor r, de Locus locus) -> Expressia {
     fixum p = r.parser()
 
     # Constructor name
@@ -494,7 +494,7 @@ functio parseNovumExpressia(Resolvitor r, Locus locus) -> Expressia {
 #
 # GRAMMAR: arguments := (expression (',' expression)*)?
 @ publica
-functio parseArgumenta(Resolvitor r) -> lista<Expressia> {
+functio parseArgumenta(in Resolvitor r) -> lista<Expressia> {
     fixum p = r.parser()
     varia argumenta = [] innatum lista<Expressia>
 
@@ -520,7 +520,7 @@ functio parseArgumenta(Resolvitor r) -> lista<Expressia> {
 
 # Parse a single argument (supports sparge)
 @ publica
-functio parseArgumentum(Resolvitor r) -> Expressia {
+functio parseArgumentum(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -543,7 +543,7 @@ functio parseArgumentum(Resolvitor r) -> Expressia {
 
 # Parse property name as identifier or keyword
 @ publica
-functio parseNomenVelVerbum(Resolvitor r) -> Expressia {
+functio parseNomenVelVerbum(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
     fixum sym = p.specta(0)
 
@@ -566,6 +566,6 @@ functio parseNomenVelVerbum(Resolvitor r) -> Expressia {
 
 # Check for postfix accessor start after '?' or '!'
 @ publica
-functio estAccessorInitium(Symbolum s) -> bivalens {
+functio estAccessorInitium(de Symbolum s) -> bivalens {
     redde s.species == SymbolumGenus.Punctum aut s.species == SymbolumGenus.QuadratusSin aut s.species == SymbolumGenus.ParensSin
 }

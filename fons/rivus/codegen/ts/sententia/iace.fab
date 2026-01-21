@@ -16,7 +16,7 @@
 § ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genIace(bivalens fatale, Expressia argumentum, TsGenerator g) -> textus {
+functio genIace(bivalens fatale, de Expressia argumentum, in TsGenerator g) -> textus {
     fixum expr = genExpressia(argumentum, g)
 
     si fatale {

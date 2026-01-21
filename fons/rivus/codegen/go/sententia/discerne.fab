@@ -20,7 +20,7 @@
 § ex "./index" importa genSententia
 
 @ publica
-functio genDiscerne(lista<Expressia> discriminantes, lista<VariansCasus> casus, GoGenerator g) -> textus {
+functio genDiscerne(de lista<Expressia> discriminantes, de lista<VariansCasus> casus, in GoGenerator g) -> textus {
     # Generate expressions for all discriminants
     varia discriminantStrs = [] innatum lista<textus>
     ex discriminantes fixum d {
@@ -37,7 +37,7 @@ functio genDiscerne(lista<Expressia> discriminantes, lista<VariansCasus> casus, 
 }
 
 # Single discriminant: generates Go type switch
-functio genDiscerneSimplex(textus discriminant, lista<VariansCasus> casus, GoGenerator g) -> textus {
+functio genDiscerneSimplex(de textus discriminant, de lista<VariansCasus> casus, in GoGenerator g) -> textus {
     # Check if any case uses bindings (alias or field extraction)
     varia needsBinding = falsum
     ex casus fixum c {
@@ -101,7 +101,7 @@ functio genDiscerneSimplex(textus discriminant, lista<VariansCasus> casus, GoGen
 }
 
 # Multi-discriminant: generates type assertions with if/else chain
-functio genDiscerneMultiplex(lista<textus> discriminantStrs, lista<VariansCasus> casus, GoGenerator g) -> textus {
+functio genDiscerneMultiplex(de lista<textus> discriminantStrs, de lista<VariansCasus> casus, in GoGenerator g) -> textus {
     varia result = ""
     varia first = verum
 
@@ -177,7 +177,7 @@ functio genDiscerneMultiplex(lista<textus> discriminantStrs, lista<VariansCasus>
 
 # Generate bindings for type switch (single discriminant)
 # The typed value is available as _v
-functio genPatternBindingsTypeSwitch(VariansExemplar pattern, GoGenerator g) -> textus {
+functio genPatternBindingsTypeSwitch(de VariansExemplar pattern, in GoGenerator g) -> textus {
     varia result = ""
 
     # Alias binding: casu Click ut c -> c := _v
@@ -197,7 +197,7 @@ functio genPatternBindingsTypeSwitch(VariansExemplar pattern, GoGenerator g) -> 
 }
 
 # Generate bindings for multi-discriminant (type assertions)
-functio genPatternBindingsMulti(VariansExemplar pattern, textus tempVar, GoGenerator g) -> textus {
+functio genPatternBindingsMulti(de VariansExemplar pattern, de textus tempVar, in GoGenerator g) -> textus {
     varia result = ""
 
     # Alias binding: casu Click ut c -> c := _dN
@@ -217,7 +217,7 @@ functio genPatternBindingsMulti(VariansExemplar pattern, textus tempVar, GoGener
 }
 
 # Capitalize first letter for Go field access
-functio capitaliza(textus s) -> textus {
+functio capitaliza(de textus s) -> textus {
     si s.longitudo() == 0 {
         redde s
     }

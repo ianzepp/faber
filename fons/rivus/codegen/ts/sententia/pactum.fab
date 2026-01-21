@@ -19,7 +19,7 @@
 § ex "../typus" importa genTypus
 
 @ publica
-functio genPactum(textus nomen, ignotum generaParametra, lista<PactumMethodus> methodi, ignotum visibilitas, TsGenerator g) -> textus {
+functio genPactum(de textus nomen, de ignotum generaParametra, de lista<PactumMethodus> methodi, de ignotum visibilitas, in TsGenerator g) -> textus {
     varia result = g.ind()
 
     # Module-level: export when public

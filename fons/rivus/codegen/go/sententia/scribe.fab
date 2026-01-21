@@ -15,7 +15,7 @@
 § ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genScribe(ScribeGradus gradus, lista<Expressia> argumenta, GoGenerator g) -> textus {
+functio genScribe(gradus, de lista<Expressia> argumenta, in GoGenerator g) -> textus {
     # Mark fmt import as required
     g.requisita.fmt = verum
 

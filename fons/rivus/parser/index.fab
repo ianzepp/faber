@@ -82,7 +82,7 @@ genus Parsator implet Resolvitor {
 
 # Create a new Parsator
 @ publica
-functio novumParsator(Parser p) -> Parsator {
+functio novumParsator(in Parser p) -> Parsator {
     redde novum Parsator { p: p }
 }
 
@@ -91,7 +91,7 @@ functio novumParsator(Parser p) -> Parsator {
 # Main entry point for the parser.
 # Creates a Parser instance and parses the program.
 @ publica
-functio resolvere(lista<Symbolum> symbola) -> ParserResultatum {
+functio resolvere(ex lista<Symbolum> symbola) -> ParserResultatum {
     # Create parser state
     fixum p = novumParser(symbola)
 
