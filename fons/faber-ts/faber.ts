@@ -298,6 +298,21 @@ async function run(displayName: string): Promise<void> {
  * @param inputFile - Path to entry .fab source file
  * @param outputDir - Directory to write compiled files
  */
+
+/**
+ * Read source file content
+ */
+async function readSource(filePath: string): Promise<string> {
+    return Bun.file(filePath).text();
+}
+
+/**
+ * Get display name for file (used in error messages)
+ */
+function getDisplayName(filePath: string): string {
+    return filePath;
+}
+
 async function build(inputFile: string, outputDir: string): Promise<void> {
     const entryPath = realpathSync(resolve(inputFile));
     const projectRoot = process.cwd();
