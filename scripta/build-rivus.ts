@@ -101,11 +101,6 @@ const FILE_EXT: Record<Target, string> = {
 const OUTPUT = OUTPUT_PATH[target];
 const COMPILER_BIN = join(ROOT, 'opus', 'bin', compiler);
 
-// Different compilers use different I/O methods:
-// - nanus-ts/nanus-go/nanus-rs/nanus-py: streaming via stdin/stdout
-// - faber-ts: file-based arguments
-const useStdinStdout = compiler === 'nanus-ts' || compiler === 'nanus-go' || compiler === 'nanus-rs' || compiler === 'nanus-py';
-
 interface CompileResult {
     file: string;
     success: boolean;
@@ -113,48 +108,34 @@ interface CompileResult {
 }
 
 /**
- * Compile a single .fab file using the configured compiler
+ * Compile a single .fab file using the configured compiler.
+ * All compilers use stdin/stdout: cat file | compiler emit > output
  */
 async function compileFile(fabPath: string): Promise<CompileResult> {
     const relPath = relative(SOURCE, fabPath);
     const outPath = join(OUTPUT, relPath.replace(/\.fab$/, FILE_EXT[target]));
 
-    // Calculate Go package name from directory
-    // Root files (e.g., rivus.fab) -> "main", subdirs -> directory name
-    const relDir = dirname(relPath);
-    const pkg = relDir === '.' ? 'main' : basename(relDir);
-
     try {
-        // Ensure output directory exists
         await mkdir(dirname(outPath), { recursive: true });
 
-        let result: { exitCode: number; stderr: Buffer; stdout?: Buffer };
+        // Go target needs package name (root files -> "main", subdirs -> dir name)
+        const pkg = target === 'go'
+            ? (dirname(relPath) === '.' ? 'main' : basename(dirname(relPath)))
+            : null;
 
-        if (useStdinStdout) {
-            // nanus-ts/nanus-go: cat file | compiler emit -t target [-p pkg] > output
-            result = target === 'go'
-                ? await $`cat ${fabPath} | ${COMPILER_BIN} emit -t ${target} -p ${pkg}`.nothrow().quiet()
-                : await $`cat ${fabPath} | ${COMPILER_BIN} emit -t ${target}`.nothrow().quiet();
-        } else {
-            // faber: compile with file arguments
-            result = await $`${COMPILER_BIN} compile ${fabPath} -o ${outPath}`.nothrow().quiet();
-        }
+        // All compilers: cat file | compiler emit [flags] > output
+        const result = pkg
+            ? await $`cat ${fabPath} | ${COMPILER_BIN} emit -p ${pkg}`.nothrow().quiet()
+            : await $`cat ${fabPath} | ${COMPILER_BIN} emit`.nothrow().quiet();
 
-        // Check for compilation errors
         if (result.exitCode !== 0) {
-            const stderr = result.stderr.toString().trim();
-            throw new Error(stderr || `Exit code ${result.exitCode}`);
+            throw new Error(result.stderr.toString().trim() || `Exit code ${result.exitCode}`);
         }
 
-        // Write output for stdin/stdout compilers
-        if (useStdinStdout && result.stdout) {
-            await Bun.write(outPath, result.stdout);
-        }
-
+        await Bun.write(outPath, result.stdout);
         return { file: relPath, success: true };
     } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { file: relPath, success: false, error: message };
+        return { file: relPath, success: false, error: err instanceof Error ? err.message : String(err) };
     }
 }
 
