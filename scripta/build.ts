@@ -132,6 +132,15 @@ async function main() {
         }
     });
 
+    // Build minimal Rust compiler (bootstrapping)
+    await step('build:nanus-rs', verbose, async () => {
+        if (verbose) {
+            await $`bun run build:nanus-rs`;
+        } else {
+            await $`bun run build:nanus-rs`.quiet();
+        }
+    });
+
     if (faber) {
         await step('build:faber', verbose, async () => {
             if (verbose) {
@@ -197,6 +206,8 @@ async function main() {
             await $`bun run golden -c nanus-go`.quiet();
         }
     });
+
+    // Note: nanus-rs golden tests skipped - it emits Faber only, not TS
 
     if (faber) {
         await step('golden:faber', verbose, async () => {
