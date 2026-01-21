@@ -22,6 +22,13 @@ fn emit_stmt(stmt: &Stmt, indent: &str) -> String {
         Stmt::Pactum { .. } => emit_pactum(stmt, indent),
         Stmt::Ordo { .. } => emit_ordo(stmt, indent),
         Stmt::Discretio { .. } => emit_discretio(stmt, indent),
+        Stmt::TypusAlias { nomen, typus, publica, .. } => {
+            let exp = if *publica { "export " } else { "" };
+            format!("{}{}type {} = {};", indent, exp, nomen, emit_typus(typus))
+        }
+        Stmt::In { expr, corpus, .. } => {
+            format!("{}{{\n{}    const __target = {};\n{}\n{}}}", indent, indent, emit_expr(expr), emit_stmt(corpus, &format!("{}    ", indent)), indent)
+        }
         Stmt::Importa { .. } => emit_importa(stmt, indent),
         Stmt::Si { cond, cons, alt, .. } => {
             let mut result = format!("{}if ({}) {}", indent, emit_expr(cond), emit_stmt(cons, indent));
@@ -700,6 +707,20 @@ fn emit_expr(expr: &Expr) -> String {
         }
         Expr::Innatum { expr, typus, .. } => {
             format!("({} as {})", emit_expr(expr), emit_typus(typus))
+        }
+        Expr::Conversio { expr, species, fallback, .. } => {
+            let conversion = match species.as_str() {
+                "numeratum" => format!("parseInt({})", emit_expr(expr)),
+                "fractatum" => format!("parseFloat({})", emit_expr(expr)),
+                "textatum" => format!("String({})", emit_expr(expr)),
+                "bivalentum" => format!("Boolean({})", emit_expr(expr)),
+                _ => format!("/* unknown conversion {} */ {}", species, emit_expr(expr)),
+            };
+            if let Some(fb) = fallback {
+                format!("({} ?? {})", conversion, emit_expr(fb))
+            } else {
+                conversion
+            }
         }
         Expr::PostfixNovum { expr, typus, .. } => {
             format!("new {}({})", emit_typus(typus), emit_expr(expr))

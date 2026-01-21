@@ -22,6 +22,13 @@ fn emit_stmt(stmt: &Stmt, indent: &str) -> String {
         Stmt::Pactum { .. } => emit_pactum(stmt, indent),
         Stmt::Ordo { .. } => emit_ordo(stmt, indent),
         Stmt::Discretio { .. } => emit_discretio(stmt, indent),
+        Stmt::TypusAlias { nomen, typus, publica, .. } => {
+            let pub_prefix = if *publica { "publica " } else { "" };
+            format!("{}{}typus {} = {}", indent, pub_prefix, nomen, emit_typus(typus))
+        }
+        Stmt::In { expr, corpus, .. } => {
+            format!("{}in {} {}", indent, emit_expr(expr), emit_stmt(corpus, indent))
+        }
         Stmt::Importa { .. } => emit_importa(stmt, indent),
         Stmt::Redde { valor, .. } => {
             if let Some(v) = valor {
@@ -612,6 +619,14 @@ fn emit_expr(expr: &Expr) -> String {
         }
         Expr::Innatum { expr, typus, .. } => {
             format!("{} innatum {}", emit_expr(expr), emit_typus(typus))
+        }
+        Expr::Conversio { expr, species, fallback, .. } => {
+            let base = format!("{} {}", emit_expr(expr), species);
+            if let Some(fb) = fallback {
+                format!("{} vel {}", base, emit_expr(fb))
+            } else {
+                base
+            }
         }
         Expr::Cede { arg, .. } => {
             format!("cede {}", emit_expr(arg))

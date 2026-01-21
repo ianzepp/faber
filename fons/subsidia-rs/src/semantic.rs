@@ -683,6 +683,19 @@ fn analyze_expression(ctx: &mut SemanticContext, expr: &Expr) -> SemanticTypus {
         Expr::Cede { arg, .. } => analyze_expression(ctx, arg),
         Expr::Qua { typus, .. } => resolve_typus_annotatio(ctx, typus),
         Expr::Innatum { typus, .. } => resolve_typus_annotatio(ctx, typus),
+        Expr::Conversio { expr, species, fallback, .. } => {
+            analyze_expression(ctx, expr);
+            if let Some(fb) = fallback {
+                analyze_expression(ctx, fb);
+            }
+            match species.as_str() {
+                "numeratum" => numerus(),
+                "fractatum" => fractus(),
+                "textatum" => textus(),
+                "bivalentum" => bivalens(),
+                _ => ignotum(),
+            }
+        }
         Expr::PostfixNovum { typus, .. } => resolve_typus_annotatio(ctx, typus),
         Expr::Finge { variant, campi, .. } => {
             for p in campi {

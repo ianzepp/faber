@@ -50,6 +50,7 @@ pub enum VariaSpecies {
     Varia,
     Fixum,
     Figendum,
+    Variandum,
 }
 
 impl Default for VariaSpecies {
@@ -190,6 +191,14 @@ pub enum Expr {
         typus: Typus,
     },
 
+    #[serde(rename = "Conversio")]
+    Conversio {
+        locus: Locus,
+        expr: Box<Expr>,
+        species: String,
+        fallback: Option<Box<Expr>>,
+    },
+
     #[serde(rename = "PostfixNovum")]
     PostfixNovum {
         locus: Locus,
@@ -240,6 +249,7 @@ impl Expr {
             Expr::Cede { locus, .. } => *locus,
             Expr::Qua { locus, .. } => *locus,
             Expr::Innatum { locus, .. } => *locus,
+            Expr::Conversio { locus, .. } => *locus,
             Expr::PostfixNovum { locus, .. } => *locus,
             Expr::Finge { locus, .. } => *locus,
             Expr::Scriptum { locus, .. } => *locus,
@@ -310,6 +320,7 @@ pub enum Stmt {
         implet: Vec<String>,
         generics: Vec<String>,
         publica: bool,
+        abstractus: bool,
     },
 
     #[serde(rename = "Pactum")]
@@ -336,6 +347,21 @@ pub enum Stmt {
         variantes: Vec<VariansDecl>,
         generics: Vec<String>,
         publica: bool,
+    },
+
+    #[serde(rename = "TypusAlias")]
+    TypusAlias {
+        locus: Locus,
+        nomen: String,
+        typus: Typus,
+        publica: bool,
+    },
+
+    #[serde(rename = "In")]
+    In {
+        locus: Locus,
+        expr: Expr,
+        corpus: Box<Stmt>,
     },
 
     #[serde(rename = "Importa")]
@@ -475,6 +501,8 @@ impl Stmt {
             Stmt::Pactum { locus, .. } => *locus,
             Stmt::Ordo { locus, .. } => *locus,
             Stmt::Discretio { locus, .. } => *locus,
+            Stmt::TypusAlias { locus, .. } => *locus,
+            Stmt::In { locus, .. } => *locus,
             Stmt::Importa { locus, .. } => *locus,
             Stmt::Si { locus, .. } => *locus,
             Stmt::Dum { locus, .. } => *locus,

@@ -51,6 +51,13 @@ impl<'a> RsEmitter<'a> {
             Stmt::Pactum { .. } => self.emit_pactum(stmt, indent),
             Stmt::Ordo { .. } => self.emit_ordo(stmt, indent),
             Stmt::Discretio { .. } => self.emit_discretio_decl(stmt, indent),
+            Stmt::TypusAlias { nomen, typus, publica, .. } => {
+                let vis = if *publica { "pub " } else { "" };
+                format!("{}{}type {} = {};", indent, vis, nomen, self.emit_typus(typus))
+            }
+            Stmt::In { expr, corpus, .. } => {
+                format!("{}{{\n{}    let __target = {};\n{}\n{}}}", indent, indent, self.emit_expr(expr), self.emit_stmt(corpus, &format!("{}    ", indent)), indent)
+            }
             Stmt::Importa { .. } => self.emit_importa(stmt, indent),
             Stmt::Si { cond, cons, alt, .. } => {
                 let mut result = format!("{}if {} {}", indent, self.emit_expr(cond), self.emit_stmt(cons, indent));
@@ -682,6 +689,22 @@ impl<'a> RsEmitter<'a> {
             }
             Expr::Innatum { expr, typus, .. } => {
                 format!("({} as {})", self.emit_expr(expr), self.emit_typus(typus))
+            }
+            Expr::Conversio { expr, species, fallback, .. } => {
+                let conversion = match species.as_str() {
+                    "numeratum" => format!("{}.parse::<i64>()", self.emit_expr(expr)),
+                    "fractatum" => format!("{}.parse::<f64>()", self.emit_expr(expr)),
+                    "textatum" => format!("{}.to_string()", self.emit_expr(expr)),
+                    "bivalentum" => format!("({} != 0)", self.emit_expr(expr)),
+                    _ => format!("/* unknown conversion {} */ {}", species, self.emit_expr(expr)),
+                };
+                if let Some(fb) = fallback {
+                    format!("{}.unwrap_or({})", conversion, self.emit_expr(fb))
+                } else if species == "numeratum" || species == "fractatum" {
+                    format!("{}.unwrap()", conversion)
+                } else {
+                    conversion
+                }
             }
             Expr::PostfixNovum { expr, typus, .. } => {
                 format!("{}::from({})", self.emit_typus(typus), self.emit_expr(expr))

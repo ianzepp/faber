@@ -37,6 +37,10 @@ fn precedence() -> HashMap<&'static str, i32> {
     m.insert("qua", 9);
     m.insert("innatum", 9);
     m.insert("novum", 9);
+    m.insert("numeratum", 9);
+    m.insert("fractatum", 9);
+    m.insert("textatum", 9);
+    m.insert("bivalentum", 9);
     m
 }
 
@@ -44,10 +48,14 @@ fn unary_ops() -> HashMap<&'static str, ()> {
     let mut m = HashMap::new();
     m.insert("-", ());
     m.insert("!", ());
+    m.insert("~", ());
     m.insert("non", ());
     m.insert("nihil", ());
     m.insert("nonnihil", ());
+    m.insert("nulla", ());
+    m.insert("nonnulla", ());
     m.insert("positivum", ());
+    m.insert("negativum", ());
     m
 }
 
@@ -197,14 +205,21 @@ impl Parser {
         let tok = self.peek(0);
         if tok.tag == TOKEN_KEYWORD {
             match tok.valor.as_str() {
-                "varia" | "fixum" | "figendum" => return self.parse_varia(publica, externa),
+                "varia" | "fixum" | "figendum" | "variandum" => return self.parse_varia(publica, externa),
                 "ex" => return self.parse_ex_stmt(publica),
+                "de" => return self.parse_de_stmt(),
                 "functio" => return self.parse_functio(publica, futura, externa),
-                "genus" => return self.parse_genus(publica),
+                "genus" => return self.parse_genus(publica, false),
+                "abstractus" => {
+                    self.advance();
+                    return self.parse_genus(publica, true);
+                }
                 "pactum" => return self.parse_pactum(publica),
                 "ordo" => return self.parse_ordo(publica),
                 "discretio" => return self.parse_discretio(publica),
+                "typus" => return self.parse_typus_alias(publica),
                 "si" => return self.parse_si(),
+                "in" => return self.parse_in_stmt(),
                 "dum" => return self.parse_dum(),
                 "fac" => return self.parse_fac(),
                 "elige" => return self.parse_elige(),
@@ -271,6 +286,7 @@ impl Parser {
         let kw = self.advance().valor;
         let species = match kw.as_str() {
             "figendum" => VariaSpecies::Figendum,
+            "variandum" => VariaSpecies::Variandum,
             "fixum" => VariaSpecies::Fixum,
             _ => VariaSpecies::Varia,
         };
@@ -344,6 +360,28 @@ impl Parser {
         }
 
         Err(self.error("destructuring not supported in nanus"))
+    }
+
+    fn parse_de_stmt(&mut self) -> Result<Stmt, CompileError> {
+        let locus = self.peek(0).locus;
+        self.expect(TOKEN_KEYWORD, Some("de"))?;
+        let expr = self.parse_expr(0)?;
+
+        if self.check(TOKEN_KEYWORD, Some("fixum")) || self.check(TOKEN_KEYWORD, Some("varia")) {
+            self.advance();
+            let binding = self.expect(TOKEN_IDENTIFIER, None)?.valor;
+            let corpus = Box::new(self.parse_massa()?);
+            return Ok(Stmt::Iteratio {
+                locus,
+                species: "De".to_string(),
+                binding,
+                iter: expr,
+                corpus,
+                asynca: false,
+            });
+        }
+
+        Err(self.error("expected fixum or varia after de expression"))
     }
 
     fn parse_functio(
@@ -487,7 +525,7 @@ impl Parser {
         Ok(params)
     }
 
-    fn parse_genus(&mut self, publica: bool) -> Result<Stmt, CompileError> {
+    fn parse_genus(&mut self, publica: bool, abstractus: bool) -> Result<Stmt, CompileError> {
         let locus = self.peek(0).locus;
         self.expect(TOKEN_KEYWORD, Some("genus"))?;
         let nomen = self.expect(TOKEN_IDENTIFIER, None)?.valor;
@@ -599,6 +637,7 @@ impl Parser {
             implet,
             generics,
             publica,
+            abstractus,
         })
     }
 
@@ -770,6 +809,28 @@ impl Parser {
             generics,
             publica,
         })
+    }
+
+    fn parse_typus_alias(&mut self, publica: bool) -> Result<Stmt, CompileError> {
+        let locus = self.peek(0).locus;
+        self.expect(TOKEN_KEYWORD, Some("typus"))?;
+        let nomen = self.expect(TOKEN_IDENTIFIER, None)?.valor;
+        self.expect(TOKEN_OPERATOR, Some("="))?;
+        let typus = self.parse_typus()?;
+        Ok(Stmt::TypusAlias {
+            locus,
+            nomen,
+            typus,
+            publica,
+        })
+    }
+
+    fn parse_in_stmt(&mut self) -> Result<Stmt, CompileError> {
+        let locus = self.peek(0).locus;
+        self.expect(TOKEN_KEYWORD, Some("in"))?;
+        let expr = self.parse_expr(0)?;
+        let corpus = Box::new(self.parse_massa()?);
+        Ok(Stmt::In { locus, expr, corpus })
     }
 
     fn parse_massa(&mut self) -> Result<Stmt, CompileError> {
@@ -1083,6 +1144,7 @@ impl Parser {
         matches!(
             kw.as_str(),
             "si" | "sin"
+                | "in"
                 | "secus"
                 | "dum"
                 | "fac"
@@ -1105,12 +1167,15 @@ impl Parser {
                 | "adfirma"
                 | "functio"
                 | "genus"
+                | "abstractus"
                 | "pactum"
                 | "ordo"
                 | "discretio"
+                | "typus"
                 | "varia"
                 | "fixum"
                 | "figendum"
+                | "variandum"
                 | "incipit"
                 | "probandum"
                 | "proba"
@@ -1131,7 +1196,7 @@ impl Parser {
         let kw = &self.peek(0).valor;
         matches!(
             kw.as_str(),
-            "functio" | "genus" | "pactum" | "ordo" | "discretio" | "varia" | "fixum" | "figendum" | "incipit" | "probandum"
+            "functio" | "genus" | "abstractus" | "pactum" | "ordo" | "discretio" | "typus" | "varia" | "fixum" | "figendum" | "variandum" | "incipit" | "probandum"
         )
     }
 
@@ -1306,6 +1371,29 @@ impl Parser {
                 };
                 continue;
             }
+            if op == "numeratum" || op == "fractatum" {
+                let fallback = if self.match_token(TOKEN_KEYWORD, Some("vel")).is_some() {
+                    Some(Box::new(self.parse_unary()?))
+                } else {
+                    None
+                };
+                left = Expr::Conversio {
+                    locus: tok.locus,
+                    expr: Box::new(left),
+                    species: op.clone(),
+                    fallback,
+                };
+                continue;
+            }
+            if op == "textatum" || op == "bivalentum" {
+                left = Expr::Conversio {
+                    locus: tok.locus,
+                    expr: Box::new(left),
+                    species: op.clone(),
+                    fallback: None,
+                };
+                continue;
+            }
 
             let right = self.parse_expr(prec + 1)?;
 
@@ -1351,7 +1439,7 @@ impl Parser {
                     "rumpe", "redde", "reddit", "iace", "mori", "si", "secussi", "dum", "ex", "de",
                     "elige", "discerne", "custodi", "tempta", "functio", "genus", "pactum", "ordo",
                     "discretio", "casu", "ceterum", "importa", "incipit", "incipiet", "probandum",
-                    "proba",
+                    "proba", "numeratum", "fractatum", "textatum", "bivalentum",
                 ]
                 .into_iter()
                 .collect();
