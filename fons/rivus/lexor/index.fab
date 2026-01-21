@@ -62,11 +62,11 @@ genus Lexor {
     # =========================================================================
 
     # locus = "place" - capture current source position
-    # Returns a Locus struct with line, column, and byte offset
+    # Returns a Locus struct with line, column (codepoint-based), and byte offset
     functio locus() -> Locus {
         redde {
             linea: ego.linea,
-            columna: ego.index - ego.columnaInitium + 1,
+            columna: codepointCount(ego.fons, ego.columnaInitium, ego.index) + 1,
             index: ego.index
         } novum Locus
     }
@@ -125,14 +125,14 @@ genus Lexor {
         redde c >= "0" et c <= "7"
     }
 
-    # estLittera = "is it a letter?" - identifier start char (a-z, A-Z, _)
+    # estLittera = "is it a letter?" - identifier start char (XID_Start or _)
     functio estLittera(de textus c) -> bivalens {
-        redde (c >= "a" et c <= "z") aut (c >= "A" et c <= "Z") aut c == "_"
+        redde estXID_Start(c) aut c == "_"
     }
 
-    # estLitteraVelDigitus = "is it a letter or digit?" - identifier continuation
+    # estLitteraVelDigitus = "is it a letter or digit?" - identifier continuation (XID_Continue)
     functio estLitteraVelDigitus(de textus c) -> bivalens {
-        redde ego.estLittera(c) aut ego.estDigitus(c)
+        redde estXID_Continue(c)
     }
 
     # =========================================================================
@@ -578,10 +578,13 @@ genus Lexor {
         fixum loc = ego.locus()
         varia textus valor = ""
 
-        # Consume all identifier characters (letters, digits, underscore)
+        # Consume all identifier characters (XID_Continue)
         dum ego.estLitteraVelDigitus(ego.specta(0)) {
             valor = valor + ego.procede()
         }
+
+        # Normalize to NFC for consistent identifier matching
+        valor = NFC(valor)
 
         # Boolean/null literals are tokens, not keywords.
         # WHY: "nihil" is ambiguous (literal vs unary operator vs type name), and

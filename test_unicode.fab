@@ -1,0 +1,7 @@
+# Test Unicode identifiers
+functio функция(параметр textus) -> vacuum {
+    varia переменная = "hello"
+    scribe переменная
+}
+
+функция("test")

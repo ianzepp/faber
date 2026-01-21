@@ -538,6 +538,35 @@ describe('tokenizer', () => {
             expect(tokens[0]!.type).toBe('IDENTIFIER');
         });
 
+        test('cyrillic identifiers', () => {
+            const { tokens } = tokenize('функция');
+
+            expect(tokens[0]!.type).toBe('IDENTIFIER');
+            expect(tokens[0]!.value).toBe('функция');
+        });
+
+        test('han identifiers', () => {
+            const { tokens } = tokenize('计算');
+
+            expect(tokens[0]!.type).toBe('IDENTIFIER');
+            expect(tokens[0]!.value).toBe('计算');
+        });
+
+        test('mixed unicode identifiers', () => {
+            const { tokens } = tokenize('test_тест_测试');
+
+            expect(tokens[0]!.type).toBe('IDENTIFIER');
+            expect(tokens[0]!.value).toBe('test_тест_测试');
+        });
+
+        test('NFC normalization', () => {
+            // Decomposed form: cafe\u0301 (c + a + f + e + combining acute)
+            const decomposed = tokenize('café');
+            const composed = tokenize('caf\u00e9'); // composed form
+
+            expect(decomposed.tokens[0]!.value).toBe(composed.tokens[0]!.value);
+        });
+
         test('emoji in string', () => {
             const { tokens } = tokenize('"hello 👋"');
 

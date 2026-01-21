@@ -1,0 +1,41 @@
+# unicode.fab - Unicode Identifier Support
+#
+# Functions for Unicode identifier character classification per UAX #31.
+
+# Check if character is XID_Start (can start an identifier)
+# XID_Start includes letters, some punctuation, but excludes digits
+@ verte ts (c) -> "/\\p{XID_Start}/u.test(§)"
+@ verte py (c) -> "unicodedata.category(§0) in ('Lu', 'Ll', 'Lt', 'Lm', 'Lo', 'Nl')"
+@ verte rs (c) -> "unicode_xid::UnicodeXID::is_xid_start(§0)"
+@ verte cpp (c) -> "utf8::is_xid_start(§0)"
+@ verte zig (c) -> "std.unicode.isXidStart(§0)"
+@ externa
+functio estXID_Start(textus c) -> bivalens
+
+# Check if character is XID_Continue (can continue an identifier)
+# XID_Continue includes XID_Start plus digits, combining marks, etc.
+@ verte ts (c) -> "/\\p{XID_Continue}/u.test(§)"
+@ verte py (c) -> "unicodedata.category(§0) in ('Lu', 'Ll', 'Lt', 'Lm', 'Lo', 'Nl', 'Mn', 'Mc', 'Nd', 'Pc')"
+@ verte rs (c) -> "unicode_xid::UnicodeXID::is_xid_continue(§0)"
+@ verte cpp (c) -> "utf8::is_xid_continue(§0)"
+@ verte zig (c) -> "std.unicode.isXidContinue(§0)"
+@ externa
+functio estXID_Continue(textus c) -> bivalens
+
+# Normalize string to NFC (Canonical Composition)
+@ verte ts (s) -> "§.normalize('NFC')"
+@ verte py (s) -> "unicodedata.normalize('NFC', §)"
+@ verte rs (s) -> "unicode_normalization::UnicodeNormalization::nfc(§0)"
+@ verte cpp (s) -> "utf8::nfc_normalize(§0)"
+@ verte zig (s) -> "std.unicode.nfc(§0)"
+@ externa
+functio NFC(textus s) -> textus
+
+# Count codepoints in substring from start to end
+@ verte ts (s, start, end) -> "Array.from(§0.slice(§1, §2)).length"
+@ verte py (s, start, end) -> "len(§0[§1:§2])"
+@ verte rs (s, start, end) -> "§0[§1..§2].chars().count()"
+@ verte cpp (s, start, end) -> "utf8::codepoint_count(§0.substr(§1, §2 - §1))"
+@ verte zig (s, start, end) -> "std.unicode.utf8CountCodepoints(§0[§1..§2]) catch 0"
+@ externa
+functio codepointCount(textus s, numerus start, numerus end) -> numerus

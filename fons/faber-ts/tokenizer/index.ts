@@ -105,13 +105,20 @@ export function tokenize(source: string): TokenizerResult {
     // ---------------------------------------------------------------------------
 
     /**
+     * Count codepoints in a substring.
+     */
+    function codepointCount(start: number, end: number): number {
+        return Array.from(source.slice(start, end)).length;
+    }
+
+    /**
      * Capture current source position.
      *
      * WHY: Position snapshots taken at token start, not end, to point error
-     *      messages at the beginning of problematic tokens.
+     *      locations accurately for IDE tooling.
      */
     function position(): Position {
-        return { line, column: current - lineStart + 1, offset: current };
+        return { line, column: codepointCount(lineStart, current) + 1, offset: current };
     }
 
     // ---------------------------------------------------------------------------
@@ -192,18 +199,17 @@ export function tokenize(source: string): TokenizerResult {
     /**
      * Check if character can start an identifier.
      *
-     * WHY: Allows underscore prefix (common in modern languages) while
-     *      excluding digits (which cannot start identifiers).
+     * WHY: Allows XID_Start characters or underscore.
      */
     function isAlpha(char: string): boolean {
-        return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || char === '_';
+        return /\p{XID_Start}/u.test(char) || char === '_';
     }
 
     /**
      * Check if character can continue an identifier.
      */
     function isAlphaNumeric(char: string): boolean {
-        return isAlpha(char) || isDigit(char);
+        return /\p{XID_Continue}/u.test(char);
     }
 
     // ---------------------------------------------------------------------------
@@ -660,6 +666,9 @@ export function tokenize(source: string): TokenizerResult {
         while (isAlphaNumeric(peek())) {
             value += advance();
         }
+
+        // Normalize to NFC for consistent identifier matching
+        value = value.normalize('NFC');
 
         // Check lexicon for keyword match
         if (isKeyword(value)) {
