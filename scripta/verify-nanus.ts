@@ -19,12 +19,14 @@
  *   - "<compiler> failed": Only some compilers failed (parser inconsistency)
  *
  * Usage:
- *   bun run verify:nanus                       # bulk check all fons/exempla/
- *   bun run verify:nanus path/to/file.fab     # single file (shows all outputs)
+ *   bun run verify:nanus                       # bulk check all .fab in fons/rivus
+ *   bun run verify:nanus path/to/file.fab      # single file (shows all outputs)
+ *   bun run verify:nanus path/to/dir           # bulk check all .fab in directory
+ *   bun run verify:nanus *.fab                 # multiple files via shell glob
+ *   bun run verify:nanus -s                    # grouped error summary
  *   bun run verify:nanus --diff                # show line-by-line diffs on mismatch
  *   bun run verify:nanus -x                    # exit on first failure
  *   bun run verify:nanus -q                    # quiet: single-line output, skip passes
- *   bun run verify:nanus -q -x                 # combined: compact + fail fast
  *
  * Single file mode:
  *   Shows the fab output from each compiler side-by-side, useful for debugging
@@ -46,17 +48,18 @@ import { join, relative, isAbsolute } from 'path';
 import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
-const EXEMPLA = join(ROOT, 'fons', 'exempla');
 const BIN = join(ROOT, 'opus', 'bin');
+const DEFAULT_DIR = join(ROOT, 'fons', 'rivus');
 
 const COMPILERS = ['nanus-ts', 'nanus-go', 'nanus-rs'] as const;
 type Compiler = (typeof COMPILERS)[number];
 
 interface Args {
-    file: string | null;
+    paths: string[];
     showDiffs: boolean;
     quiet: boolean;
     failFast: boolean;
+    summary: boolean;
 }
 
 interface CompileResult {
@@ -80,13 +83,16 @@ Verifies that nanus-ts, nanus-go, and nanus-rs produce identical output
 when emitting Faber source (\`-t fab\`).
 
 Usage:
-  bun run verify:nanus                     Bulk check all fons/exempla/
+  bun run verify:nanus                     Bulk check all .fab in fons/rivus
   bun run verify:nanus <file.fab>          Single file (shows all outputs)
+  bun run verify:nanus <dir>               Bulk check all .fab in directory
+  bun run verify:nanus *.fab               Multiple files (shell glob)
 
 Options:
   --diff          Show line-by-line diffs on mismatch
   -x, --fail-fast Exit on first failure
   -q, --quiet     Single-line output, skip passes
+  -s, --summary   Show grouped error summary at end
   -h, --help      Show this help message
 
 Exit codes:
@@ -96,10 +102,11 @@ Exit codes:
 
 function parseArgs(): Args {
     const args = process.argv.slice(2);
-    let file: string | null = null;
+    const paths: string[] = [];
     let showDiffs = false;
     let quiet = false;
     let failFast = false;
+    let summary = false;
 
     for (const arg of args) {
         if (arg === '--help' || arg === '-h') {
@@ -108,10 +115,11 @@ function parseArgs(): Args {
         } else if (arg === '--diff') showDiffs = true;
         else if (arg === '--quiet' || arg === '-q') quiet = true;
         else if (arg === '--fail-fast' || arg === '-x') failFast = true;
-        else if (!arg.startsWith('-')) file = arg;
+        else if (arg === '--summary' || arg === '-s') summary = true;
+        else if (!arg.startsWith('-')) paths.push(arg);
     }
 
-    return { file, showDiffs, quiet, failFast };
+    return { paths, showDiffs, quiet, failFast, summary };
 }
 
 async function findFiles(dir: string): Promise<string[]> {
@@ -119,8 +127,10 @@ async function findFiles(dir: string): Promise<string[]> {
     const files: string[] = [];
 
     for (const entry of entries) {
+        if (entry.startsWith('.')) continue; // skip hidden files/dirs
         const fullPath = join(dir, entry);
-        const s = await stat(fullPath);
+        const s = await stat(fullPath).catch(() => null);
+        if (!s) continue; // skip broken symlinks
         if (s.isDirectory()) {
             files.push(...(await findFiles(fullPath)));
         } else if (entry.endsWith('.fab')) {
@@ -150,6 +160,71 @@ async function compile(compiler: Compiler, fabPath: string): Promise<CompileResu
     }
 }
 
+function extractErrorPattern(error: string): string {
+    const match = error.match(/error: (.+?)$/m);
+    return match ? match[1] : error;
+}
+
+function printSummary(results: FileResult[]): void {
+    const failures = results.filter(r => !r.consistent);
+    if (failures.length === 0) return;
+
+    console.log('\n\x1b[1mFailure Summary\x1b[0m\n');
+
+    // Group by high-level failure type
+    const byType = new Map<string, FileResult[]>();
+    for (const f of failures) {
+        const type = f.error ?? 'unknown';
+        if (!byType.has(type)) byType.set(type, []);
+        byType.get(type)!.push(f);
+    }
+
+    // Print high-level breakdown
+    console.log('By failure type:');
+    for (const [type, files] of [...byType.entries()].sort((a, b) => b[1].length - a[1].length)) {
+        console.log(`  ${files.length.toString().padStart(3)}  ${type}`);
+    }
+
+    // For "all compilers failed", break down by error pattern
+    const allFailed = byType.get('all compilers failed');
+    if (allFailed && allFailed.length > 0) {
+        console.log('\nParse errors (all compilers failed):');
+
+        const byPattern = new Map<string, string[]>();
+        for (const f of allFailed) {
+            const tsResult = f.results.find(r => r.compiler === 'nanus-ts');
+            const pattern = tsResult?.error ? extractErrorPattern(tsResult.error) : 'unknown';
+            if (!byPattern.has(pattern)) byPattern.set(pattern, []);
+            byPattern.get(pattern)!.push(f.file);
+        }
+
+        for (const [pattern, files] of [...byPattern.entries()].sort((a, b) => b[1].length - a[1].length)) {
+            console.log(`  ${files.length.toString().padStart(3)}  ${pattern}`);
+        }
+    }
+
+    // For output mismatches, list files
+    const mismatches = byType.get('output mismatch');
+    if (mismatches && mismatches.length > 0) {
+        console.log('\nOutput mismatches (emitter drift):');
+        for (const f of mismatches.slice(0, 10)) {
+            console.log(`        ${f.file}`);
+        }
+        if (mismatches.length > 10) {
+            console.log(`        ... and ${mismatches.length - 10} more`);
+        }
+    }
+
+    // Partial failures (one compiler disagrees)
+    const partial = failures.filter(f => f.error !== 'all compilers failed' && f.error !== 'output mismatch');
+    if (partial.length > 0) {
+        console.log('\nPartial failures (parser inconsistency):');
+        for (const f of partial) {
+            console.log(`        ${f.file} (${f.error})`);
+        }
+    }
+}
+
 function showDiff(a: string, b: string, compilerA: string, compilerB: string): void {
     const linesA = a.split('\n');
     const linesB = b.split('\n');
@@ -165,8 +240,8 @@ function showDiff(a: string, b: string, compilerA: string, compilerB: string): v
     }
 }
 
-async function checkFile(fabPath: string): Promise<FileResult> {
-    const file = relative(EXEMPLA, fabPath);
+async function checkFile(fabPath: string, baseDir: string): Promise<FileResult> {
+    const file = relative(baseDir, fabPath);
     const results: CompileResult[] = [];
 
     // Compile with each compiler
@@ -249,7 +324,7 @@ async function runSingleFile(fabPath: string, showDiffs: boolean): Promise<void>
     }
 
     // Check consistency
-    const fileResult = await checkFile(fullPath);
+    const fileResult = await checkFile(fullPath, process.cwd());
     if (fileResult.consistent) {
         console.log('\x1b[32mOK\x1b[0m - all compilers produce identical output');
     } else {
@@ -271,7 +346,17 @@ async function runSingleFile(fabPath: string, showDiffs: boolean): Promise<void>
     }
 }
 
-async function runBulk(showDiffs: boolean, quiet: boolean, failFast: boolean): Promise<void> {
+interface BulkOptions {
+    files?: string[];
+    dir?: string;
+    showDiffs: boolean;
+    quiet: boolean;
+    failFast: boolean;
+    summary: boolean;
+}
+
+async function runBulk(opts: BulkOptions): Promise<void> {
+    const { showDiffs, quiet, failFast, summary } = opts;
     const start = performance.now();
 
     if (!quiet) {
@@ -293,48 +378,67 @@ async function runBulk(showDiffs: boolean, quiet: boolean, failFast: boolean): P
         process.exit(1);
     }
 
-    // Find all .fab files
-    const files = await findFiles(EXEMPLA);
-    if (!quiet) {
-        console.log(`Found ${files.length} .fab files in fons/exempla/\n`);
+    // Determine files to check and base directory for display
+    let files: string[];
+    let baseDir: string;
+
+    if (opts.files && opts.files.length > 0) {
+        files = opts.files.map(f => isAbsolute(f) ? f : join(process.cwd(), f));
+        baseDir = process.cwd();
+        if (!quiet) {
+            console.log(`Checking ${files.length} file(s)\n`);
+        }
+    } else {
+        const dir = opts.dir ?? DEFAULT_DIR;
+        baseDir = dir;
+        files = await findFiles(dir);
+        if (!quiet) {
+            const displayDir = relative(process.cwd(), dir) || '.';
+            console.log(`Found ${files.length} .fab files in ${displayDir}/\n`);
+        }
+    }
+
+    if (files.length === 0) {
+        console.log('No .fab files found');
+        return;
     }
 
     // Check each file
+    const allResults: FileResult[] = [];
     let passed = 0;
     let failed = 0;
 
     for (const fabPath of files) {
-        const result = await checkFile(fabPath);
+        const result = await checkFile(fabPath, baseDir);
+        allResults.push(result);
 
         if (result.consistent) {
             passed++;
-            // Skip output for passing files (quiet or default)
         } else {
             failed++;
 
-            if (quiet) {
-                // Single-line output
-                console.log(`FAIL ${result.file} (${result.error})`);
-            } else {
-                console.log(`  \x1b[31mFAIL\x1b[0m  ${result.file} (${result.error})`);
+            if (!summary) {
+                if (quiet) {
+                    console.log(`FAIL ${result.file} (${result.error})`);
+                } else {
+                    console.log(`  \x1b[31mFAIL\x1b[0m  ${result.file} (${result.error})`);
 
-                // Show which compilers failed
-                const failedCompilers = result.results.filter(r => !r.success);
-                for (const f of failedCompilers) {
-                    console.log(`      ${f.compiler}: ${f.error}`);
-                }
+                    const failedCompilers = result.results.filter(r => !r.success);
+                    for (const f of failedCompilers) {
+                        console.log(`      ${f.compiler}: ${f.error}`);
+                    }
 
-                // Show diffs if requested and we have output mismatch
-                if (showDiffs && result.error === 'output mismatch') {
-                    const succeeded = result.results.filter(r => r.success);
-                    for (let i = 1; i < succeeded.length; i++) {
-                        if (succeeded[i].output !== succeeded[0].output) {
-                            showDiff(
-                                succeeded[0].output!,
-                                succeeded[i].output!,
-                                succeeded[0].compiler,
-                                succeeded[i].compiler,
-                            );
+                    if (showDiffs && result.error === 'output mismatch') {
+                        const succeeded = result.results.filter(r => r.success);
+                        for (let i = 1; i < succeeded.length; i++) {
+                            if (succeeded[i].output !== succeeded[0].output) {
+                                showDiff(
+                                    succeeded[0].output!,
+                                    succeeded[i].output!,
+                                    succeeded[0].compiler,
+                                    succeeded[i].compiler,
+                                );
+                            }
                         }
                     }
                 }
@@ -352,18 +456,39 @@ async function runBulk(showDiffs: boolean, quiet: boolean, failFast: boolean): P
     const elapsed = performance.now() - start;
     console.log(`\n${passed} passed, ${failed} failed (${elapsed.toFixed(0)}ms)`);
 
+    if (summary) {
+        printSummary(allResults);
+    }
+
     if (failed > 0) {
         process.exit(1);
     }
 }
 
 async function main() {
-    const { file, showDiffs, quiet, failFast } = parseArgs();
+    const { paths, showDiffs, quiet, failFast, summary } = parseArgs();
 
-    if (file) {
-        await runSingleFile(file, showDiffs);
+    if (paths.length === 0) {
+        // No args: search CWD
+        await runBulk({ showDiffs, quiet, failFast, summary });
+    } else if (paths.length === 1) {
+        // Single arg: could be file or directory
+        const p = isAbsolute(paths[0]) ? paths[0] : join(process.cwd(), paths[0]);
+        const s = await stat(p).catch(() => null);
+
+        if (!s) {
+            console.error(`Not found: ${paths[0]}`);
+            process.exit(1);
+        }
+
+        if (s.isDirectory()) {
+            await runBulk({ dir: p, showDiffs, quiet, failFast, summary });
+        } else {
+            await runSingleFile(paths[0], showDiffs);
+        }
     } else {
-        await runBulk(showDiffs, quiet, failFast);
+        // Multiple args: treat as file list
+        await runBulk({ files: paths, showDiffs, quiet, failFast, summary });
     }
 }
 
