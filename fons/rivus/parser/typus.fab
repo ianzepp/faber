@@ -32,7 +32,7 @@
 # Parse a type annotation
 # Handles generics, nullable, array shorthand, and union types
 @ publica
-functio parseTypusAnnotatio(Resolvitor r) -> TypusAnnotatio {
+functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
