@@ -188,11 +188,10 @@ async function copyHalImplementations(): Promise<void> {
     }
 }
 
-async function buildExecutable(): Promise<void> {
+async function buildExecutableTs(): Promise<void> {
     const binDir = join(ROOT, 'opus', 'bin');
     await mkdir(binDir, { recursive: true });
 
-    // Executable named after compiler: rivus-faber-ts, rivus-nanus-ts, etc.
     const exeName = `rivus-${compiler}`;
     const outExe = join(binDir, exeName);
     await $`bun build ${join(OUTPUT, 'rivus.ts')} --compile --outfile=${outExe}`.quiet();
@@ -204,6 +203,19 @@ async function buildExecutable(): Promise<void> {
         try { await unlink(symlinkPath); } catch { /* ignore */ }
         await symlink(exeName, symlinkPath);
     }
+}
+
+async function buildExecutablePy(): Promise<void> {
+    const binDir = join(ROOT, 'opus', 'bin');
+    await mkdir(binDir, { recursive: true });
+
+    const exeName = `rivus-${compiler}`;
+    const outExe = join(binDir, exeName);
+    const script = `#!/bin/bash
+exec python3 "$(dirname "$0")/../${compiler}/fons/rivus.py" "$@"
+`;
+    await Bun.write(outExe, script);
+    await $`chmod +x ${outExe}`.quiet();
 }
 
 /**
@@ -294,7 +306,7 @@ async function main() {
 
         // Build the final executable
         console.log('  Building rivus executable...');
-        await buildExecutable();
+        await buildExecutableTs();
         console.log(`  Built opus/bin/rivus-${compiler}`);
     } else if (target === 'go') {
         // Go output - compilation is manual for now
@@ -305,9 +317,9 @@ async function main() {
         console.log(`\nRust source generated in ${relative(ROOT, OUTPUT)}/`);
         console.log('Build manually with: cargo build');
     } else if (target === 'py') {
-        // Python output - compilation is manual for now
-        console.log(`\nPython source generated in ${relative(ROOT, OUTPUT)}/`);
-        console.log('Run with: python -m rivus');
+        console.log('\nPython post-processing:');
+        await buildExecutablePy();
+        console.log(`  Built opus/bin/rivus-${compiler}`);
     }
 }
 
