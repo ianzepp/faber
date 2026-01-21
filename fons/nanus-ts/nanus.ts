@@ -6,11 +6,13 @@
  *
  * Usage:
  *   echo 'scribe "hello"' | nanus-ts emit
- *   cat file.fab | nanus-ts emit
+ *   cat file.fab | nanus-ts emit -t fab
  */
 
-import { compile, lex, prepare, parse } from './index';
+import { lex, prepare, parse, emit, emitFaber } from './index';
 import { formatError } from './errors';
+
+type Target = 'ts' | 'fab';
 
 async function readStdin(): Promise<string> {
     const chunks: string[] = [];
@@ -30,12 +32,12 @@ async function main() {
         console.log('Usage: <source> | nanus-ts <command> [options]');
         console.log('');
         console.log('Commands:');
-        console.log('  emit     Compile to TypeScript');
+        console.log('  emit     Compile to target language');
         console.log('  parse    Output AST as JSON');
         console.log('  lex      Output tokens as JSON');
         console.log('');
         console.log('Options (emit only):');
-        console.log('  -t <target>   Output target: ts (default: ts)');
+        console.log('  -t <target>   Output target: ts, fab (default: ts)');
         process.exit(0);
     }
 
@@ -45,14 +47,16 @@ async function main() {
         process.exit(1);
     }
 
-    // Parse -t flag (only ts is valid for nanus-ts)
+    // Parse -t flag
+    let target: Target = 'ts';
     for (let i = 1; i < args.length; i++) {
         if (args[i] === '-t' && i + 1 < args.length) {
-            const target = args[i + 1];
-            if (target !== 'ts') {
-                console.error(`Unknown target: ${target}. nanus-ts only supports: ts`);
+            const t = args[i + 1];
+            if (t !== 'ts' && t !== 'fab') {
+                console.error(`Unknown target: ${t}. Valid: ts, fab`);
                 process.exit(1);
             }
+            target = t as Target;
         }
     }
 
@@ -73,12 +77,10 @@ async function main() {
         }
 
         // emit
-        const result = compile(source);
-        if (!result.success) {
-            console.error(result.error);
-            process.exit(1);
-        }
-        console.log(result.output);
+        const tokens = prepare(lex(source, '<stdin>'));
+        const ast = parse(tokens, '<stdin>');
+        const output = target === 'fab' ? emitFaber(ast) : emit(ast);
+        console.log(output);
     } catch (err) {
         console.error(formatError(err, source, '<stdin>'));
         process.exit(1);

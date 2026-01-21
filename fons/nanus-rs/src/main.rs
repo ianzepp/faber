@@ -25,7 +25,7 @@ fn main() {
     }
 
     // Parse flags for emit command
-    let mut target = "fab".to_string();
+    let mut target = "rs".to_string();
     let mut i = 2;
     while i < args.len() {
         if args[i] == "-t" && i + 1 < args.len() {
@@ -37,8 +37,8 @@ fn main() {
     }
 
     // Validate target
-    if command == "emit" && target != "fab" && target != "ts" && target != "rs" {
-        eprintln!("Unknown target: {}. Valid: fab, ts, rs", target);
+    if command == "emit" && target != "rs" && target != "ts" && target != "fab" {
+        eprintln!("Unknown target: {}. Valid: rs, ts, fab", target);
         process::exit(1);
     }
 
@@ -98,5 +98,5 @@ fn print_usage() {
     println!("  lex      Output tokens as JSON");
     println!();
     println!("Options (emit only):");
-    println!("  -t <target>   Output target: fab, ts, rs (default: fab)");
+    println!("  -t <target>   Output target: rs, ts, fab (default: rs)");
 }

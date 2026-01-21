@@ -23,6 +23,7 @@
     "build:artifex": "bun ./scripta/build-artifex.ts",
     "build:exec": "bun ./scripta/build-exec.ts",
     "build:exempla": "bun ./scripta/build-exempla.ts",
+    "build:golden": "bun ./scripta/build-golden.ts",
 
     // =============================================================================
     // TESTING - Verification and Validation
@@ -60,6 +61,7 @@
     "sanity": "bun ./scripta/sanity.ts",
     "rivus:features": "bun ./scripta/rivus-features.ts",
     "verify:exempla": "bun ./scripta/verify-exempla.ts",
+    "verify:nanus": "bun ./scripta/verify-nanus.ts",
     "use": "./scripta/use",
     "release": "./scripta/release",
 

@@ -1,57 +1,43 @@
 #!/usr/bin/env bun
 /**
- * Full build: norma -> nanus-ts -> nanus-go -> faber -> rivus -> artifex
+ * Full build pipeline in three stages:
  *
- * norma runs first to generate registry files that faber needs to compile.
- * nanus is the minimal compiler for bootstrapping.
- * Each compiler stage is verified by running build:exempla against it.
+ *   Stage 1: nanus-ts, nanus-go, nanus-rs (bootstrap compilers)
+ *   Stage 2: norma (stdlib registry) + faber (main compiler)
+ *   Stage 3: rivus built with each nanus compiler (failures noted, not fatal)
+ *
+ * Prework: wipes opus/* for clean builds.
  *
  * Usage:
- *   bun run build                        # faber + rivus (default)
- *   bun run build -t zig                 # faber + rivus, Zig target
- *   bun run build --artifex              # faber + rivus + artifex
- *   bun run build --no-faber --rivus     # rivus only
- *   bun run build --verbose              # show subprocess output
+ *   bun run build              # full build
+ *   bun run build --verbose    # show subprocess output
+ *   bun run build --no-faber   # skip faber (stage 2)
+ *   bun run build --no-rivus   # skip rivus (stage 3)
  */
 
+import { rm } from 'fs/promises';
 import { join } from 'path';
 import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
-
-type Target = 'ts' | 'zig' | 'py' | 'rs' | 'all';
-
-const VALID_TARGETS = ['ts', 'zig', 'py', 'rs', 'all'] as const;
+const OPUS = join(ROOT, 'opus');
 
 interface BuildOptions {
-    target: Target;
     faber: boolean;
     rivus: boolean;
-    artifex: boolean;
-    typecheck: boolean;
     verbose: boolean;
 }
 
 function parseArgs(): BuildOptions {
     const args = process.argv.slice(2);
-    let target: Target = 'ts';
     let faber = true;
     let rivus = true;
-    let artifex = false;
-    let typecheck = true;
     let verbose = false;
 
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
 
-        if (arg === '-t' || arg === '--target') {
-            const t = args[++i];
-            if (!VALID_TARGETS.includes(t as Target)) {
-                console.error(`Unknown target '${t}'. Valid: ${VALID_TARGETS.join(', ')}`);
-                process.exit(1);
-            }
-            target = t as Target;
-        } else if (arg === '--faber') {
+        if (arg === '--faber') {
             faber = true;
         } else if (arg === '--no-faber') {
             faber = false;
@@ -59,26 +45,30 @@ function parseArgs(): BuildOptions {
             rivus = true;
         } else if (arg === '--no-rivus') {
             rivus = false;
-        } else if (arg === '--artifex') {
-            artifex = true;
-        } else if (arg === '--no-artifex') {
-            artifex = false;
-        } else if (arg === '--typecheck') {
-            typecheck = true;
-        } else if (arg === '--no-typecheck') {
-            typecheck = false;
         } else if (arg === '-v' || arg === '--verbose') {
             verbose = true;
         }
     }
 
-    return { target, faber, rivus, artifex, typecheck, verbose };
+    return { faber, rivus, verbose };
+}
+
+interface StepResult {
+    name: string;
+    success: boolean;
+    elapsed: number;
+    error?: string;
 }
 
 /**
- * Execute a build step with timing and optional verbose output
+ * Execute a build step with timing. Returns result instead of throwing.
  */
-async function step(name: string, verbose: boolean, fn: () => Promise<void>) {
+async function step(
+    name: string,
+    verbose: boolean,
+    fn: () => Promise<void>,
+    allowFailure = false,
+): Promise<StepResult> {
     const start = performance.now();
 
     if (verbose) {
@@ -87,34 +77,57 @@ async function step(name: string, verbose: boolean, fn: () => Promise<void>) {
         process.stdout.write(`${name}... `);
     }
 
-    await fn();
+    try {
+        await fn();
+        const elapsed = performance.now() - start;
 
-    const elapsed = performance.now() - start;
-    if (verbose) {
-        console.log(`\n=== ${name} OK (${elapsed.toFixed(0)}ms) ===`);
-    } else {
-        console.log(`OK (${elapsed.toFixed(0)}ms)`);
+        if (verbose) {
+            console.log(`\n=== ${name} OK (${elapsed.toFixed(0)}ms) ===`);
+        } else {
+            console.log(`OK (${elapsed.toFixed(0)}ms)`);
+        }
+
+        return { name, success: true, elapsed };
+    } catch (err: any) {
+        const elapsed = performance.now() - start;
+        const error = err.stderr?.toString().trim() || err.message || 'unknown error';
+
+        if (verbose) {
+            console.log(`\n=== ${name} FAILED (${elapsed.toFixed(0)}ms) ===`);
+            console.error(error);
+        } else {
+            console.log(`FAILED (${elapsed.toFixed(0)}ms)`);
+        }
+
+        if (!allowFailure) {
+            throw err;
+        }
+
+        return { name, success: false, elapsed, error };
     }
 }
 
 async function main() {
-    const { target, faber, rivus, artifex, typecheck, verbose } = parseArgs();
+    const { faber, rivus, verbose } = parseArgs();
     const start = performance.now();
-    const tcFlag = typecheck ? '' : '--no-typecheck';
+    const rivusResults: StepResult[] = [];
 
-    const stages = [faber && 'faber', rivus && 'rivus', artifex && 'artifex'].filter(Boolean);
-    console.log(`Build (target: ${target}, stages: ${stages.join(', ') || 'none'})\n`);
+    console.log('Build\n');
 
-    // Generate norma registry from .fab files (required by faber)
-    await step('build:norma', verbose, async () => {
-        if (verbose) {
-            await $`bun run build:norma`;
-        } else {
-            await $`bun run build:norma`.quiet();
-        }
+    // =============================================================================
+    // PREWORK: Clean opus directory
+    // =============================================================================
+
+    await step('clean opus/*', verbose, async () => {
+        await rm(OPUS, { recursive: true, force: true });
     });
 
-    // Build minimal TypeScript compiler (bootstrapping)
+    // =============================================================================
+    // STAGE 1: Bootstrap compilers (nanus-ts, nanus-go, nanus-rs)
+    // =============================================================================
+
+    console.log('\n--- Stage 1: Bootstrap compilers ---\n');
+
     await step('build:nanus-ts', verbose, async () => {
         if (verbose) {
             await $`bun run build:nanus-ts`;
@@ -123,7 +136,6 @@ async function main() {
         }
     });
 
-    // Build minimal Go compiler (bootstrapping)
     await step('build:nanus-go', verbose, async () => {
         if (verbose) {
             await $`bun run build:nanus-go`;
@@ -132,7 +144,6 @@ async function main() {
         }
     });
 
-    // Build minimal Rust compiler (bootstrapping)
     await step('build:nanus-rs', verbose, async () => {
         if (verbose) {
             await $`bun run build:nanus-rs`;
@@ -141,7 +152,21 @@ async function main() {
         }
     });
 
+    // =============================================================================
+    // STAGE 2: Norma stdlib + Faber compiler
+    // =============================================================================
+
     if (faber) {
+        console.log('\n--- Stage 2: Norma + Faber ---\n');
+
+        await step('build:norma', verbose, async () => {
+            if (verbose) {
+                await $`bun run build:norma`;
+            } else {
+                await $`bun run build:norma`.quiet();
+            }
+        });
+
         await step('build:faber-ts', verbose, async () => {
             if (verbose) {
                 await $`bun run build:faber-ts`;
@@ -151,82 +176,52 @@ async function main() {
         });
     }
 
+    // =============================================================================
+    // STAGE 3: Rivus with each nanus compiler (failures allowed)
+    // =============================================================================
+
     if (rivus) {
-        await step('build:rivus', verbose, async () => {
-            if (verbose) {
-                if (tcFlag) {
-                    await $`bun run build:rivus -- ${tcFlag}`;
-                } else {
-                    await $`bun run build:rivus`;
-                }
-            } else {
-                if (tcFlag) {
-                    await $`bun run build:rivus -- ${tcFlag}`.quiet();
-                } else {
-                    await $`bun run build:rivus`.quiet();
-                }
-            }
-        });
-    }
+        console.log('\n--- Stage 3: Rivus (multi-compiler) ---\n');
 
-    if (artifex) {
-        await step('build:artifex', verbose, async () => {
-            if (verbose) {
-                if (tcFlag) {
-                    await $`bun run build:artifex -- ${tcFlag}`;
-                } else {
-                    await $`bun run build:artifex`;
-                }
-            } else {
-                if (tcFlag) {
-                    await $`bun run build:artifex -- ${tcFlag}`.quiet();
-                } else {
-                    await $`bun run build:artifex`.quiet();
-                }
-            }
-        });
+        const compilers = ['nanus-ts', 'nanus-go', 'nanus-rs'] as const;
+
+        for (const compiler of compilers) {
+            const result = await step(
+                `build:rivus (${compiler})`,
+                verbose,
+                async () => {
+                    if (verbose) {
+                        await $`bun run build:rivus -- -c ${compiler}`;
+                    } else {
+                        await $`bun run build:rivus -- -c ${compiler}`.quiet();
+                    }
+                },
+                true, // allow failure
+            );
+            rivusResults.push(result);
+        }
     }
 
     // =============================================================================
-    // VERIFICATION: Run golden tests to ensure compilers work correctly
+    // SUMMARY
     // =============================================================================
-
-    await step('golden:nanus-ts', verbose, async () => {
-        if (verbose) {
-            await $`bun run golden -c nanus-ts`;
-        } else {
-            await $`bun run golden -c nanus-ts`.quiet();
-        }
-    });
-
-    await step('golden:nanus-go', verbose, async () => {
-        if (verbose) {
-            await $`bun run golden -c nanus-go`;
-        } else {
-            await $`bun run golden -c nanus-go`.quiet();
-        }
-    });
-
-    await step('golden:nanus-rs', verbose, async () => {
-        if (verbose) {
-            await $`bun run golden -c nanus-rs`;
-        } else {
-            await $`bun run golden -c nanus-rs`.quiet();
-        }
-    });
-
-    if (faber) {
-        await step('golden:faber', verbose, async () => {
-            if (verbose) {
-                await $`bun run golden -c faber`;
-            } else {
-                await $`bun run golden -c faber`.quiet();
-            }
-        });
-    }
 
     const elapsed = performance.now() - start;
     console.log(`\nBuild complete (${(elapsed / 1000).toFixed(1)}s)`);
+
+    if (rivusResults.length > 0) {
+        const passed = rivusResults.filter(r => r.success).length;
+        const failed = rivusResults.filter(r => !r.success);
+
+        console.log(`\nRivus builds: ${passed}/${rivusResults.length} succeeded`);
+
+        if (failed.length > 0) {
+            console.log('Failed:');
+            for (const f of failed) {
+                console.log(`  - ${f.name}`);
+            }
+        }
+    }
 }
 
 main().catch(err => {

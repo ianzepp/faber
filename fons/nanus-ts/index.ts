@@ -23,11 +23,13 @@ export * from './ast';
 export { lex, prepare } from './lexer';
 export { parse, Parser } from './parser';
 export { emit } from './emitter';
+export { emitFaber } from './emitter-faber';
 export { CompileError, formatError } from './errors';
 
 import { lex, prepare } from './lexer';
 import { parse } from './parser';
 import { emit } from './emitter';
+import { emitFaber } from './emitter-faber';
 import { formatError } from './errors';
 
 export interface CompileOptions {
