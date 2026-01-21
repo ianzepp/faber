@@ -137,6 +137,14 @@ async function readFile(filePath: string): Promise<string> {
     return Bun.file(filePath).text();
 }
 
+async function readSource(filePath: string): Promise<string> {
+    return readFile(filePath);
+}
+
+function getDisplayName(filePath: string): string {
+    return relative(process.cwd(), filePath);
+}
+
 // =============================================================================
 // COMPILATION PIPELINE
 // =============================================================================

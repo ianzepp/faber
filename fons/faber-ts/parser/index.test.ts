@@ -792,6 +792,20 @@ describe('parser', () => {
             expect(expr.right.direction).toBe('sinistratum');
         });
 
+        test('symbolic shift operators are not supported', () => {
+            // << should not parse as left shift - use sinistratum keyword instead
+            const { errors: leftErrors } = parseCode('a << 2');
+            expect(leftErrors.length).toBeGreaterThan(0);
+
+            // >> should not parse as right shift - use dextratum keyword instead
+            const { errors: rightErrors } = parseCode('a >> 2');
+            expect(rightErrors.length).toBeGreaterThan(0);
+
+            // >>> should not parse as unsigned right shift
+            const { errors: unsignedErrors } = parseCode('a >>> 2');
+            expect(unsignedErrors.length).toBeGreaterThan(0);
+        });
+
         test('bitwise precedence: bitwise binds tighter than comparison', () => {
             const { program } = parseCode('flags & MASK == 0');
             const expr = (program!.body[0] as any).expression;

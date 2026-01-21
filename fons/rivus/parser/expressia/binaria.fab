@@ -12,8 +12,7 @@
 #   bitwiseXor := bitwiseAnd ('^' bitwiseAnd)*
 #   bitwiseAnd := equality ('&' equality)*
 #   equality := comparison (('==' | '!=' | 'est') comparison)*
-#   comparison := shift (('<' | '>') shift)*
-#   shift := range (('<<' | '>>' | '>>>') range)*
+#   comparison := range (('<' | '>') range)*
 #   range := additive (('..' | 'ante' | 'usque') additive)?
 #   additive := multiplicative (('+' | '-') multiplicative)*
 #   multiplicative := unary (('*' | '/' | '%') unary)*
@@ -310,38 +309,13 @@ functio parseAequale(in Resolvitor r) -> Expressia {
 
 # Parse comparison expression
 #
-# GRAMMAR: comparison := shift (('<' | '>' | '<=' | '>=') shift)*
+# GRAMMAR: comparison := range (('<' | '>' | '<=' | '>=') range)*
 @ publica
 functio parseComparatio(in Resolvitor r) -> Expressia {
     fixum p = r.parser()
-    varia sinister = parseTranslatio(r)
-
-    dum p.congruet(SymbolumGenus.Minor) aut p.congruet(SymbolumGenus.Maior) aut p.congruet(SymbolumGenus.MinorAequum) aut p.congruet(SymbolumGenus.MaiorAequum) aut p.congruetVerbum("intra") aut p.congruetVerbum("inter") {
-        fixum operatorSym = p.praevius()
-        fixum locus = operatorSym.locus
-        fixum signum = operatorSym.valor
-        fixum dexter = parseTranslatio(r)
-
-        sinister = finge BinariaExpressia {
-            locus: locus,
-            sinister: sinister,
-            signum: signum,
-            dexter: dexter
-        } qua Expressia
-    }
-
-    redde sinister
-}
-
-# Parse shift expression
-#
-# GRAMMAR: shift := range (('<<' | '>>' | '>>>') range)*
-@ publica
-functio parseTranslatio(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
     varia sinister = parseAmbitus(r)
 
-    dum p.congruet(SymbolumGenus.MinorBis) aut p.congruet(SymbolumGenus.MaiorBis) aut p.congruet(SymbolumGenus.MaiorTer) {
+    dum p.congruet(SymbolumGenus.Minor) aut p.congruet(SymbolumGenus.Maior) aut p.congruet(SymbolumGenus.MinorAequum) aut p.congruet(SymbolumGenus.MaiorAequum) aut p.congruetVerbum("intra") aut p.congruetVerbum("inter") {
         fixum operatorSym = p.praevius()
         fixum locus = operatorSym.locus
         fixum signum = operatorSym.valor
@@ -357,6 +331,7 @@ functio parseTranslatio(in Resolvitor r) -> Expressia {
 
     redde sinister
 }
+
 
 # Parse range expression
 #
