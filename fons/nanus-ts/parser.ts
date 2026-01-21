@@ -102,34 +102,20 @@ export class Parser {
     // Statements
     private parseStmt(): Stmt {
 
-        // Annotations
+        // Annotations - dispatch based on keyword
         let publica = false;
         let futura = false;
         let externa = false;
         while (this.match('Punctuator', '@')) {
-            // Annotation name can be identifier or keyword
-            const tok = this.peek();
-            if (tok.tag !== 'Identifier' && tok.tag !== 'Keyword') {
-                throw this.error('expected annotation name');
-            }
-            const anno = this.advance().valor;
-            if (anno === 'publicum' || anno === 'publica') {
-                publica = true;
-            } else if (anno === 'futura') {
-                futura = true;
-            } else if (anno === 'externa') {
-                externa = true;
-            } else {
-                // Unknown annotation (optio, etc.) - skip until next annotation or declaration
-                while (!this.check('EOF') && !this.check('Punctuator', '@') && !this.check('Punctuator', '§') && !this.isDeclarationKeyword()) {
-                    this.advance();
-                }
-            }
+            const [pub, fut, ext] = this.parseAnnotatio();
+            if (pub) publica = true;
+            if (fut) futura = true;
+            if (ext) externa = true;
         }
 
-        // Section import: § ex "path" importa ...
+        // Section annotation: § keyword [args...]
         if (this.match('Punctuator', '§')) {
-            return this.parseImport();
+            return this.parseSectio();
         }
 
         const tok = this.peek();
@@ -214,11 +200,39 @@ export class Parser {
         return this.parseExpressiaStmt();
     }
 
-    private parseImport(): Stmt {
+    // Dispatch § annotations based on keyword
+    private parseSectio(): Stmt {
+        const tok = this.peek();
+        if (tok.tag !== 'Identifier' && tok.tag !== 'Keyword') {
+            throw this.error('expected keyword after §');
+        }
+        const keyword = this.advance().valor;
+        switch (keyword) {
+            case 'importa':
+                return this.parseSectioImporta();
+            case 'sectio':
+                return this.parseSectioSectio();
+            case 'ex':
+                return this.parseSectioExLegacy();
+            default:
+                throw this.error(`unknown § keyword: ${keyword}`);
+        }
+    }
+
+    // New syntax: § importa ex "path" bindings
+    private parseSectioImporta(): Stmt {
         const locus = this.peek().locus;
         this.expect('Keyword', 'ex');
         const fons = this.expect('Textus').valor;
-        this.expect('Keyword', 'importa');
+
+        // Check for wildcard import: * or * ut alias
+        if (this.match('Operator', '*')) {
+            let alias: string | null = null;
+            if (this.match('Keyword', 'ut')) {
+                alias = this.expect('Identifier').valor;
+            }
+            return { tag: 'Importa', locus, fons, specs: [], totum: true, alias };
+        }
 
         const specs: ImportSpec[] = [];
         do {
@@ -232,6 +246,99 @@ export class Parser {
         } while (this.match('Punctuator', ','));
 
         return { tag: 'Importa', locus, fons, specs, totum: false, alias: null };
+    }
+
+    // § sectio "name" - file section marker (ignored in nanus, but parsed)
+    private parseSectioSectio(): Stmt {
+        const locus = this.peek().locus;
+        this.expect('Textus'); // section name, ignored
+        return { tag: 'Expressia', locus, expr: { tag: 'Littera', locus, species: 'Nihil', valor: 'null' } };
+    }
+
+    // Legacy syntax: § ex "path" importa bindings
+    private parseSectioExLegacy(): Stmt {
+        const locus = this.peek().locus;
+        const fons = this.expect('Textus').valor;
+        this.expect('Keyword', 'importa');
+
+        // Check for wildcard import: * or * ut alias
+        if (this.match('Operator', '*')) {
+            let alias: string | null = null;
+            if (this.match('Keyword', 'ut')) {
+                alias = this.expect('Identifier').valor;
+            }
+            return { tag: 'Importa', locus, fons, specs: [], totum: true, alias };
+        }
+
+        const specs: ImportSpec[] = [];
+        do {
+            const loc = this.peek().locus;
+            const imported = this.expect('Identifier').valor;
+            let local = imported;
+            if (this.match('Keyword', 'ut')) {
+                local = this.expect('Identifier').valor;
+            }
+            specs.push({ locus: loc, imported, local });
+        } while (this.match('Punctuator', ','));
+
+        return { tag: 'Importa', locus, fons, specs, totum: false, alias: null };
+    }
+
+    // Dispatch @ annotations based on keyword. Returns [publica, futura, externa].
+    private parseAnnotatio(): [boolean, boolean, boolean] {
+        const tok = this.peek();
+        if (tok.tag !== 'Identifier' && tok.tag !== 'Keyword') {
+            throw this.error('expected keyword after @');
+        }
+        const keyword = this.advance().valor;
+        switch (keyword) {
+            case 'publica':
+            case 'publicum':
+                return [true, false, false];
+            case 'privata':
+            case 'privatum':
+                return [false, false, false];
+            case 'futura':
+                return [false, true, false];
+            case 'externa':
+                return [false, false, true];
+            // Stdlib annotations - skip their arguments
+            case 'innatum':
+            case 'subsidia':
+            case 'radix':
+            case 'verte':
+                this.skipAnnotatioArgs();
+                return [false, false, false];
+            // CLI annotations - skip their arguments
+            case 'cli':
+            case 'versio':
+            case 'descriptio':
+            case 'optio':
+            case 'operandus':
+            case 'imperium':
+            case 'alias':
+            case 'imperia':
+            case 'nomen':
+            // Formatter annotations - skip their arguments
+            case 'indentum':
+            case 'tabulae':
+            case 'latitudo':
+            case 'ordinatio':
+            case 'separaGroups':
+            case 'bracchiae':
+            case 'methodiSeparatio':
+                this.skipAnnotatioArgs();
+                return [false, false, false];
+            default:
+                throw this.error(`unknown @ keyword: ${keyword}`);
+        }
+    }
+
+    // Skip annotation arguments until next @ or § or declaration keyword
+    private skipAnnotatioArgs(): void {
+        while (!this.check('EOF') && !this.check('Punctuator', '@') && !this.check('Punctuator', '§') && !this.isDeclarationKeyword()) {
+            this.advance();
+        }
     }
 
     private parseVaria(publica: boolean, externa: boolean = false): Stmt {

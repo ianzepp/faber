@@ -68,8 +68,15 @@ export function parseSpecifier(r: Resolver): ImportSpecifier {
 /**
  * Parse import declaration.
  *
- * GRAMMAR:
+ * GRAMMAR (new):
+ *   importDecl := 'ex' (STRING | IDENTIFIER) (specifierList | '*')
+ * GRAMMAR (legacy):
  *   importDecl := 'ex' (STRING | IDENTIFIER) 'importa' (specifierList | '*')
+ *
+ * The caller determines which syntax is used:
+ *   - New syntax: § importa ex "path" bindings (importa already consumed)
+ *   - Legacy syntax: § ex "path" importa bindings (starts with 'ex')
+ *
  *   specifierList := specifier (',' specifier)*
  *   specifier := IDENTIFIER ('ut' IDENTIFIER)?
  *
@@ -98,7 +105,8 @@ export function parseImportaDeclaration(r: Resolver): ImportaDeclaration {
         source = sourceToken.value;
     }
 
-    ctx.expectKeyword('importa', ParserErrorCode.ExpectedKeywordImporta);
+    // Support both new syntax (importa already consumed) and legacy syntax (importa here)
+    ctx.matchKeyword('importa');
 
     if (ctx.match('STAR')) {
         // Optional alias: ex "source" importa * ut alias

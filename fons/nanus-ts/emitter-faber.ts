@@ -290,7 +290,8 @@ function emitDiscretio(stmt: Stmt & { tag: 'Discretio' }, indent: string): strin
 }
 
 function emitImporta(stmt: Stmt & { tag: 'Importa' }, indent: string): string {
-    let code = `${indent}ex "${stmt.fons}" importa `;
+    // Always emit new syntax: § importa ex "path" bindings
+    let code = `${indent}§ importa ex "${stmt.fons}" `;
     if (stmt.totum) {
         code += stmt.alias ? `* ut ${stmt.alias}` : '*';
     } else {

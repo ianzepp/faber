@@ -105,25 +105,16 @@ class Parser:
         externa = False
 
         while self.match(TokenTag.PUNCTUATOR, "@"):
-            tok = self.peek()
-            if tok.tag not in (TokenTag.IDENTIFIER, TokenTag.KEYWORD):
-                raise self.error("expected annotation name")
-            anno = self.advance().valor
-            if anno in ("publicum", "publica"):
+            pub, fut, ext = self.parse_annotatio()
+            if pub:
                 publica = True
-            elif anno == "futura":
+            if fut:
                 futura = True
-            elif anno == "externa":
+            if ext:
                 externa = True
-            else:
-                while (not self.check(TokenTag.EOF) and
-                       not self.check(TokenTag.PUNCTUATOR, "@") and
-                       not self.check(TokenTag.PUNCTUATOR, "§") and
-                       not self._is_declaration_keyword()):
-                    self.advance()
 
         if self.match(TokenTag.PUNCTUATOR, "§"):
-            return self.parse_import()
+            return self.parse_sectio()
 
         tok = self.peek()
         if tok.tag == TokenTag.KEYWORD:
@@ -191,11 +182,33 @@ class Parser:
 
         return self.parse_expressia_stmt()
 
-    def parse_import(self) -> Stmt:
+    def parse_sectio(self) -> Stmt:
+        """Dispatch § annotations based on keyword."""
+        tok = self.peek()
+        if tok.tag not in (TokenTag.IDENTIFIER, TokenTag.KEYWORD):
+            raise self.error("expected keyword after §")
+        keyword = self.advance().valor
+        if keyword == "importa":
+            return self.parse_sectio_importa()
+        elif keyword == "sectio":
+            return self.parse_sectio_sectio()
+        elif keyword == "ex":
+            return self.parse_sectio_ex_legacy()
+        else:
+            raise self.error(f"unknown § keyword: {keyword}")
+
+    def parse_sectio_importa(self) -> Stmt:
+        """New syntax: § importa ex 'path' bindings"""
         locus = self.peek().locus
         self.expect(TokenTag.KEYWORD, "ex")
         fons = self.expect(TokenTag.TEXTUS).valor
-        self.expect(TokenTag.KEYWORD, "importa")
+
+        # Check for wildcard import: * or * ut alias
+        if self.match(TokenTag.OPERATOR, "*"):
+            alias: str | None = None
+            if self.match(TokenTag.KEYWORD, "ut"):
+                alias = self.expect(TokenTag.IDENTIFIER).valor
+            return StmtImporta(fons=fons, specs=[], totum=True, alias=alias, locus=locus)
 
         specs: list[ImportSpec] = []
         while True:
@@ -209,6 +222,76 @@ class Parser:
                 break
 
         return StmtImporta(fons=fons, specs=specs, totum=False, alias=None, locus=locus)
+
+    def parse_sectio_sectio(self) -> Stmt:
+        """§ sectio 'name' - file section marker (ignored in nanus, but parsed)"""
+        locus = self.peek().locus
+        self.expect(TokenTag.TEXTUS)  # section name, ignored
+        return StmtExpressia(expr=ExprLittera(species=LitteraSpecies.NIHIL, valor="null", locus=locus), locus=locus)
+
+    def parse_sectio_ex_legacy(self) -> Stmt:
+        """Legacy syntax: § ex 'path' importa bindings"""
+        locus = self.peek().locus
+        fons = self.expect(TokenTag.TEXTUS).valor
+        self.expect(TokenTag.KEYWORD, "importa")
+
+        # Check for wildcard import: * or * ut alias
+        if self.match(TokenTag.OPERATOR, "*"):
+            alias: str | None = None
+            if self.match(TokenTag.KEYWORD, "ut"):
+                alias = self.expect(TokenTag.IDENTIFIER).valor
+            return StmtImporta(fons=fons, specs=[], totum=True, alias=alias, locus=locus)
+
+        specs: list[ImportSpec] = []
+        while True:
+            loc = self.peek().locus
+            imported = self.expect(TokenTag.IDENTIFIER).valor
+            local = imported
+            if self.match(TokenTag.KEYWORD, "ut"):
+                local = self.expect(TokenTag.IDENTIFIER).valor
+            specs.append(ImportSpec(imported=imported, local=local, locus=loc))
+            if not self.match(TokenTag.PUNCTUATOR, ","):
+                break
+
+        return StmtImporta(fons=fons, specs=specs, totum=False, alias=None, locus=locus)
+
+    def parse_annotatio(self) -> tuple[bool, bool, bool]:
+        """Dispatch @ annotations based on keyword. Returns (publica, futura, externa)."""
+        tok = self.peek()
+        if tok.tag not in (TokenTag.IDENTIFIER, TokenTag.KEYWORD):
+            raise self.error("expected keyword after @")
+        keyword = self.advance().valor
+        match keyword:
+            case "publica" | "publicum":
+                return (True, False, False)
+            case "privata" | "privatum":
+                return (False, False, False)
+            case "futura":
+                return (False, True, False)
+            case "externa":
+                return (False, False, True)
+            # Stdlib annotations - skip their arguments
+            case "innatum" | "subsidia" | "radix" | "verte":
+                self._skip_annotatio_args()
+                return (False, False, False)
+            # CLI annotations - skip their arguments
+            case "cli" | "versio" | "descriptio" | "optio" | "operandus" | "imperium" | "alias" | "imperia" | "nomen":
+                self._skip_annotatio_args()
+                return (False, False, False)
+            # Formatter annotations - skip their arguments
+            case "indentum" | "tabulae" | "latitudo" | "ordinatio" | "separaGroups" | "bracchiae" | "methodiSeparatio":
+                self._skip_annotatio_args()
+                return (False, False, False)
+            case _:
+                raise self.error(f"unknown @ keyword: {keyword}")
+
+    def _skip_annotatio_args(self) -> None:
+        """Skip annotation arguments until next @ or § or declaration keyword."""
+        while (not self.check(TokenTag.EOF) and
+               not self.check(TokenTag.PUNCTUATOR, "@") and
+               not self.check(TokenTag.PUNCTUATOR, "§") and
+               not self._is_declaration_keyword()):
+            self.advance()
 
     def parse_varia(self, publica: bool, externa: bool) -> Stmt:
         locus = self.peek().locus

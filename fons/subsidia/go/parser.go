@@ -141,27 +141,20 @@ func (p *Parser) parseStmt() Stmt {
 	externa := false
 
 	for p.match(TokenPunctuator, "@") != nil {
-		tok := p.peek(0)
-		if tok.Tag != TokenIdentifier && tok.Tag != TokenKeyword {
-			panic(p.error("expected annotation name"))
-		}
-		anno := p.advance().Valor
-		switch anno {
-		case "publicum", "publica":
+		pub, fut, ext := p.parseAnnotatio()
+		if pub {
 			publica = true
-		case "futura":
+		}
+		if fut {
 			futura = true
-		case "externa":
+		}
+		if ext {
 			externa = true
-		default:
-			for !p.check(TokenEOF) && !p.check(TokenPunctuator, "@") && !p.check(TokenPunctuator, "§") && !p.isDeclarationKeyword() {
-				p.advance()
-			}
 		}
 	}
 
 	if p.match(TokenPunctuator, "§") != nil {
-		return p.parseImport()
+		return p.parseSectio()
 	}
 
 	tok := p.peek(0)
@@ -235,11 +228,40 @@ func (p *Parser) parseStmt() Stmt {
 	return p.parseExpressiaStmt()
 }
 
-func (p *Parser) parseImport() Stmt {
+// Dispatch § annotations based on keyword.
+func (p *Parser) parseSectio() Stmt {
+	tok := p.peek(0)
+	if tok.Tag != TokenIdentifier && tok.Tag != TokenKeyword {
+		panic(p.error("expected keyword after §"))
+	}
+	keyword := p.advance().Valor
+	switch keyword {
+	case "importa":
+		return p.parseSectioImporta()
+	case "sectio":
+		return p.parseSectioSectio()
+	case "ex":
+		return p.parseSectioExLegacy()
+	default:
+		panic(p.error("unknown § keyword: " + keyword))
+	}
+}
+
+// New syntax: § importa ex "path" bindings
+func (p *Parser) parseSectioImporta() Stmt {
 	locus := p.peek(0).Locus
 	p.expect(TokenKeyword, "ex")
 	fons := p.expect(TokenTextus).Valor
-	p.expect(TokenKeyword, "importa")
+
+	// Check for wildcard import: * or * ut alias
+	if p.match(TokenOperator, "*") != nil {
+		var alias *string
+		if p.match(TokenKeyword, "ut") != nil {
+			name := p.expect(TokenIdentifier).Valor
+			alias = &name
+		}
+		return &StmtImporta{Tag: "Importa", Locus: locus, Fons: fons, Specs: []ImportSpec{}, Totum: true, Alias: alias}
+	}
 
 	specs := []ImportSpec{}
 	for {
@@ -256,6 +278,86 @@ func (p *Parser) parseImport() Stmt {
 	}
 
 	return &StmtImporta{Tag: "Importa", Locus: locus, Fons: fons, Specs: specs, Totum: false, Alias: nil}
+}
+
+// § sectio "name" - file section marker (ignored in nanus, but parsed)
+func (p *Parser) parseSectioSectio() Stmt {
+	locus := p.peek(0).Locus
+	p.expect(TokenTextus) // section name, ignored
+	return &StmtExpressia{Tag: "Expressia", Locus: locus, Expr: &ExprLittera{Tag: "Littera", Locus: locus, Species: LitteraNihil, Valor: "null"}}
+}
+
+// Legacy syntax: § ex "path" importa bindings
+func (p *Parser) parseSectioExLegacy() Stmt {
+	locus := p.peek(0).Locus
+	fons := p.expect(TokenTextus).Valor
+	p.expect(TokenKeyword, "importa")
+
+	// Check for wildcard import: * or * ut alias
+	if p.match(TokenOperator, "*") != nil {
+		var alias *string
+		if p.match(TokenKeyword, "ut") != nil {
+			name := p.expect(TokenIdentifier).Valor
+			alias = &name
+		}
+		return &StmtImporta{Tag: "Importa", Locus: locus, Fons: fons, Specs: []ImportSpec{}, Totum: true, Alias: alias}
+	}
+
+	specs := []ImportSpec{}
+	for {
+		loc := p.peek(0).Locus
+		imported := p.expect(TokenIdentifier).Valor
+		local := imported
+		if p.match(TokenKeyword, "ut") != nil {
+			local = p.expect(TokenIdentifier).Valor
+		}
+		specs = append(specs, ImportSpec{Locus: loc, Imported: imported, Local: local})
+		if p.match(TokenPunctuator, ",") == nil {
+			break
+		}
+	}
+
+	return &StmtImporta{Tag: "Importa", Locus: locus, Fons: fons, Specs: specs, Totum: false, Alias: nil}
+}
+
+// Dispatch @ annotations based on keyword. Returns (publica, futura, externa).
+func (p *Parser) parseAnnotatio() (bool, bool, bool) {
+	tok := p.peek(0)
+	if tok.Tag != TokenIdentifier && tok.Tag != TokenKeyword {
+		panic(p.error("expected keyword after @"))
+	}
+	keyword := p.advance().Valor
+	switch keyword {
+	case "publica", "publicum":
+		return true, false, false
+	case "privata", "privatum":
+		return false, false, false
+	case "futura":
+		return false, true, false
+	case "externa":
+		return false, false, true
+	// Stdlib annotations - skip their arguments
+	case "innatum", "subsidia", "radix", "verte":
+		p.skipAnnotatioArgs()
+		return false, false, false
+	// CLI annotations - skip their arguments
+	case "cli", "versio", "descriptio", "optio", "operandus", "imperium", "alias", "imperia", "nomen":
+		p.skipAnnotatioArgs()
+		return false, false, false
+	// Formatter annotations - skip their arguments
+	case "indentum", "tabulae", "latitudo", "ordinatio", "separaGroups", "bracchiae", "methodiSeparatio":
+		p.skipAnnotatioArgs()
+		return false, false, false
+	default:
+		panic(p.error("unknown @ keyword: " + keyword))
+	}
+}
+
+// Skip annotation arguments until next @ or § or declaration keyword
+func (p *Parser) skipAnnotatioArgs() {
+	for !p.check(TokenEOF) && !p.check(TokenPunctuator, "@") && !p.check(TokenPunctuator, "§") && !p.isDeclarationKeyword() {
+		p.advance()
+	}
 }
 
 func (p *Parser) parseVaria(publica bool, externa bool) Stmt {

@@ -301,10 +301,11 @@ func fabDiscretio(s *subsidia.StmtDiscretio, indent string) string {
 
 func fabImporta(s *subsidia.StmtImporta, indent string) string {
 	var b strings.Builder
+	// Always emit new syntax: § importa ex "path" bindings
 	b.WriteString(indent)
-	b.WriteString("ex \"")
+	b.WriteString("§ importa ex \"")
 	b.WriteString(s.Fons)
-	b.WriteString("\" importa ")
+	b.WriteString("\" ")
 	if s.Totum {
 		if s.Alias != nil {
 			b.WriteString("* ut ")

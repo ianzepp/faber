@@ -239,8 +239,9 @@ def _discretio(s: StmtDiscretio, indent: str) -> str:
 
 
 def _importa(s: StmtImporta, indent: str) -> str:
-    """Emit an import statement."""
-    parts = [f'{indent}ex "{s.fons}" importa ']
+    """Emit an import statement. Always uses new syntax."""
+    # Always emit new syntax: § importa ex "path" bindings
+    parts = [f'{indent}§ importa ex "{s.fons}" ']
     if s.totum:
         if s.alias:
             parts.append(f"* ut {s.alias}")

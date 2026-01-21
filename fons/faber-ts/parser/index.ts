@@ -1201,7 +1201,13 @@ export function parse(tokens: Token[]): ParserResult {
             return null;
         }
 
-        // Check for sectional import: § ex (STRING|IDENTIFIER) importa
+        // Check for sectional import:
+        // New syntax: § importa ex (STRING|IDENTIFIER) bindings
+        // Legacy syntax: § ex (STRING|IDENTIFIER) importa bindings
+        if (checkKeyword('importa') && peek(1).keyword === 'ex') {
+            advance(); // consume 'importa'
+            return parseImportaDeclaration(resolver);
+        }
         if (checkKeyword('ex')) {
             const nextType = peek(1).type;
             if ((nextType === 'IDENTIFIER' || nextType === 'STRING') && peek(2).keyword === 'importa') {
