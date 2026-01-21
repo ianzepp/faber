@@ -17,6 +17,7 @@
     "build:nanus-ts": "bun ./scripta/build-nanus-ts.ts",
     "build:nanus-go": "bun ./scripta/build-nanus-go.ts",
     "build:nanus-rs": "bun ./scripta/build-nanus-rs.ts",
+    "build:nanus-py": "bun ./scripta/build-nanus-py.ts",
     "build:glyph-go": "bun ./scripta/build-glyph-go.ts",
     "build:faber-ts": "bun ./scripta/build-faber-ts.ts",
     "build:rivus": "bun ./scripta/build-rivus.ts",
