@@ -29,7 +29,7 @@ impl<'a> Lexer<'a> {
             "publica", "privata", "protecta", "generis", "implet", "sub",
             // Control flow
             "si", "sin", "secus", "dum", "fac", "elige", "casu", "ceterum", "discerne", "custodi",
-            "de", "pro", "omnia",
+            "de", "in", "pro", "omnia",
             // Actions
             "redde", "reddit", "rumpe", "perge", "iace", "mori", "tempta", "cape", "demum",
             "scribe", "vide", "mone", "adfirma",
