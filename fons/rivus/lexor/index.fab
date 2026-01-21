@@ -30,7 +30,7 @@
 
 § ex "../ast/positio" importa Locus
 § ex "../ast/lexema" importa Symbolum, SymbolumGenus, VerbumId
-§ ex "../lexicon/verba" importa Dialectus, verbumId
+§ ex "../lexicon/verba" importa verbumId
 § ex "./errores" importa LexorError, LexorErrorCodice, error
 
 # Result of lexical analysis
@@ -54,7 +54,6 @@ genus Lexor {
     numerus columnaInitium        # Byte offset where current line starts
     lista<Symbolum> symbola       # symbola = "tokens" - output accumulator
     lista<LexorError> errores     # Accumulated lexical errors
-    Dialectus dialectus          # Keyword spelling dialect
 
     # =========================================================================
     # Position Tracking
@@ -587,23 +586,6 @@ genus Lexor {
         # WHY: "nihil" is ambiguous (literal vs unary operator vs type name), and
         #      treating these as dedicated token kinds keeps downstream matching
         #      explicit without depending on keyword IDs.
-        si ego.dialectus === Dialectus.Anglicus {
-            elige valor {
-                casu "true" {
-                    ego.addeSymbolum(SymbolumGenus.Verum, valor, loc)
-                    redde
-                }
-                casu "false" {
-                    ego.addeSymbolum(SymbolumGenus.Falsum, valor, loc)
-                    redde
-                }
-                casu "null" {
-                    ego.addeSymbolum(SymbolumGenus.Nihil, valor, loc)
-                    redde
-                }
-            }
-        }
-
         elige valor {
             casu "verum" {
                 ego.addeSymbolum(SymbolumGenus.Verum, valor, loc)
@@ -621,7 +603,7 @@ genus Lexor {
 
         # Check if the identifier is a reserved keyword
         # verbumId() is defined in lexicon/verba.fab
-        fixum id = verbumId(valor, ego.dialectus)
+        fixum id = verbumId(valor)
         si nonnihil id {
             ego.addeVerbum(valor, loc, id)
         } secus {
@@ -906,21 +888,14 @@ genus Lexor {
 #   ex result.symbola fixum sym { ... }
 #
 @ publica
-functio lexare(ex textus fons, si Dialectus dialectus) -> LexorResultatum {
-    # Initialize scanner state
-    varia dialectusActualis = Dialectus.Latinus
-    si nonnihil dialectus {
-        dialectusActualis = dialectus
-    }
-
+functio lexare(ex textus fons) -> LexorResultatum {
     varia lexor = novum Lexor {
         fons: fons,             # Source text to tokenize
         index: 0,               # Start at beginning
         linea: 1,               # Lines are 1-based
         columnaInitium: 0,      # First line starts at offset 0
         symbola: [] innatum lista<Symbolum>,    # Empty token list
-        errores: [] innatum lista<LexorError>,  # Empty error list
-        dialectus: dialectusActualis        # Keyword spelling dialect
+        errores: [] innatum lista<LexorError>   # Empty error list
     }
 
     # Run the scanner and return results

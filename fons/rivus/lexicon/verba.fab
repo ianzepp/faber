@@ -6,17 +6,6 @@
 § ex "../ast/lexema" importa VerbumId
 
 # ============================================================================
-# DIALECT SELECTION
-# ============================================================================
-
-# Keyword spelling dialect (Latin vs English surface forms)
-@ publica
-ordo Dialectus {
-    Latinus
-    Anglicus
-}
-
-# ============================================================================
 # KEYWORD PREDICATES
 # ============================================================================
 
@@ -187,34 +176,12 @@ functio verbumFaberId(textus v) -> VerbumId? {
 }
 
 # ============================================================================
-# ENGLISH KEYWORD MAPPING
-# ============================================================================
-
-# Map an English keyword spelling to canonical identity
-@ publica
-functio verbumAnglicusId(textus v) -> VerbumId? {
-    elige v {
-        casu "becomes" reddit VerbumId.Fit
-        casu "will_become" reddit VerbumId.Fiet
-        casu "become_each" reddit VerbumId.Fiunt
-        casu "will_become_each" reddit VerbumId.Fient
-        ceterum reddit nihil
-    }
-}
-
-# ============================================================================
 # UNIFIED LOOKUP
 # ============================================================================
 
 # Map surface keyword spelling to canonical identity
-# WHY: Enables dialect spellings without changing downstream parsing/codegen logic
 @ publica
-functio verbumId(textus v, si Dialectus dialectus) -> VerbumId? {
-    si nonnihil dialectus et dialectus === Dialectus.Anglicus {
-        fixum id = verbumAnglicusId(v)
-        si nonnihil id { redde id }
-    }
-
+functio verbumId(textus v) -> VerbumId? {
     redde verbumFaberId(v)
 }
 
