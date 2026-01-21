@@ -14,13 +14,13 @@
 § ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genVaria(VariaGenus species, de textus nomen, de ignotum adnotatioTypus, de ignotum valor, bivalens externa, de ignotum visibilitas, in TsGenerator g) -> textus {
+functio genVaria(in TsGenerator g, VariaGenus species, de textus nomen, de ignotum adnotatioTypus, de ignotum valor, bivalens externa, de ignotum visibilitas) -> textus {
     # External declarations use TypeScript's 'declare' syntax
     # WHY: ignotum maps to 'any' for externa since we're trusting external APIs
     si externa {
         varia result = scriptum("§declare const §", g.ind(), nomen)
         si nonnihil adnotatioTypus {
-            varia tsType = genTypus(adnotatioTypus novum TypusAnnotatio, g)
+            varia tsType = genTypus(g, adnotatioTypus novum TypusAnnotatio)
             # WHY: unknown is too restrictive for external APIs - use any
             si tsType == "unknown" {
                 tsType = "any"
@@ -45,11 +45,11 @@ functio genVaria(VariaGenus species, de textus nomen, de ignotum adnotatioTypus,
     varia result = scriptum("§§§ §", g.ind(), exportPrefix, keyword, nomen)
 
     si nonnihil adnotatioTypus {
-        result = scriptum("§: §", result, genTypus(adnotatioTypus novum TypusAnnotatio, g))
+        result = scriptum("§: §", result, genTypus(g, adnotatioTypus novum TypusAnnotatio))
     }
 
     si nonnihil valor {
-        result = scriptum("§ = §§", result, asyncPrefix, genExpressia(valor qua Expressia, g))
+        result = scriptum("§ = §§", result, asyncPrefix, genExpressia(g, valor qua Expressia))
     }
 
     redde scriptum("§;", result)

@@ -42,13 +42,13 @@ incipit {
     fixum command = args[0]
 
     # Parse --stdin-filename flag
-    variabile filename = "<stdin>"
-    variabile i = 1
+    varia filename = "<stdin>"
+    varia i = 1
     dum i < args.longitudo() {
         si args[i] == "--stdin-filename" && i + 1 < args.longitudo() {
             filename = args[i + 1] qua textus
             i = i + 2
-        } ceterum {
+        } secus {
             i = i + 1
         }
     }
@@ -78,7 +78,7 @@ incipit {
                 process.exit(1)
             }
 
-            fixum result = analyze(programma, filename, nihil)
+            fixum result = analyze(programma, nihil, filename)
 
             si result.errores.longitudo() > 0 {
                 ex result.errores fixum err {

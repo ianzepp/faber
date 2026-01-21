@@ -4,7 +4,7 @@
 #   genus Persona { textus nomen } -> type Persona struct { Nomen string }
 #   @ publica genus Persona { ... } -> type Persona struct { ... } (exported via name)
 
-§ ex "../../../ast/sententia" importa Sententia, FunctioDeclaratio, CampusDeclaratio, Parametrum, TypusParametrum, Visibilitas, FunctioModificator
+§ ex "../../../ast/sententia" importa Sententia, FunctioDeclaratio, CampusDeclaratio, Parametrum, TypusParametrum, Visibilitas, FunctioModificator, GenusDeclaratio
 § ex "../../../ast/typus" importa TypusAnnotatio
 § ex "../nucleus" importa GoGenerator
 § ex "../typus" importa genTypus
@@ -12,11 +12,11 @@
 § ex "./functio" importa genParametrum
 
 @ publica
-functio genGenus(de textus nomen, si de ignotum generaParametra, si de ignotum extendit, si de ignotum implet, abstractum, de lista<CampusDeclaratio> campi, si de ignotum structor, de lista<FunctioDeclaratio> methodi, si de ignotum visibilitas, in GoGenerator g) -> textus {
+functio genGenus(in GoGenerator g, de GenusDeclaratio s) -> textus {
     # NOTE: Go has no class inheritance; extendit/implet/structor are ignored here.
-    varia typeName = nomen
-    si nonnihil visibilitas {
-        fixum vis = visibilitas qua Visibilitas
+    varia typeName = s.nomen qua textus
+    si nonnihil s.visibilitas {
+        fixum vis = s.visibilitas novum Visibilitas
         si vis == Visibilitas.Publica {
             typeName = capitaliza(typeName)
         }
@@ -25,8 +25,8 @@ functio genGenus(de textus nomen, si de ignotum generaParametra, si de ignotum e
     varia header = scriptum("§type §", g.ind(), typeName)
 
     # Generic parameters (Go 1.18+)
-    si nonnihil generaParametra {
-        fixum gp = generaParametra qua lista<textus>
+    si nonnihil s.generaParametra {
+        fixum gp = s.generaParametra novum lista<textus>
         si gp.longitudo() > 0 {
             varia params = [] innatum lista<textus>
             ex gp fixum p {
@@ -39,20 +39,20 @@ functio genGenus(de textus nomen, si de ignotum generaParametra, si de ignotum e
     varia lines = [] innatum lista<textus>
     lines.adde(scriptum("§ struct {", header))
     g.intraProfundum()
-    ex campi fixum campus {
+    ex s.campi fixum campus {
         fixum fieldName = campusNomenGo(campus)
-        fixum fieldType = genTypus(campus.typus, g)
+        fixum fieldType = genTypus(g, campus.typus)
         lines.adde(scriptum("§§ §", g.ind(), fieldName, fieldType))
     }
     g.exiProfundum()
     lines.adde(scriptum("§}", g.ind()))
 
     lines.adde("")
-    lines.adde(genGenusConstructor(typeName, g))
+    lines.adde(genGenusConstructor(g, typeName))
 
-    ex methodi fixum methodus {
+    ex s.methodi fixum methodus {
         lines.adde("")
-        lines.adde(genGenusMethod(typeName, methodus qua Sententia, g))
+        lines.adde(genGenusMethod(g, typeName, methodus qua Sententia))
     }
 
     redde lines.coniunge("\n")
@@ -73,7 +73,7 @@ functio habetErrataModificator(si de ignotum modificatores) -> bivalens {
     redde falsum
 }
 
-functio genGenusConstructor(de textus typeName, in GoGenerator g) -> textus {
+functio genGenusConstructor(in GoGenerator g, de textus typeName) -> textus {
     varia lines = [] innatum lista<textus>
     lines.adde(scriptum("§func New§(_ ...interface{}) *§ {", g.ind(), capitaliza(typeName), typeName))
     g.intraProfundum()
@@ -83,7 +83,7 @@ functio genGenusConstructor(de textus typeName, in GoGenerator g) -> textus {
     redde lines.coniunge("\n")
 }
 
-functio genGenusMethod(de textus typeName, de Sententia methodus, in GoGenerator g) -> textus {
+functio genGenusMethod(in GoGenerator g, de textus typeName, de Sententia methodus) -> textus {
     discerne methodus {
         casu FunctioDeclaratio ut f {
             # External method declarations are not supported in Go
@@ -116,14 +116,14 @@ functio genGenusMethod(de textus typeName, de Sententia methodus, in GoGenerator
             # Parameters
             varia params = [] innatum lista<textus>
             ex (f.parametra qua lista<Parametrum>) fixum param {
-                params.adde(genParametrum(param, g))
+                params.adde(genParametrum(g, param))
             }
             result = scriptum("§(§)", result, params.coniunge(", "))
 
             # Return type
             varia retType = ""
             si nonnihil f.typusReditus {
-                retType = genTypus(f.typusReditus novum TypusAnnotatio, g)
+                retType = genTypus(g, f.typusReditus novum TypusAnnotatio)
             }
             fixum hasErrata = habetErrataModificator(f.modificatores)
             si hasErrata {
@@ -151,7 +151,7 @@ functio genGenusMethod(de textus typeName, de Sententia methodus, in GoGenerator
             g.errataTypusReditus = errataType
 
             g.intraProfundum()
-            fixum body = genSententia(f.corpus, g)
+            fixum body = genSententia(g, f.corpus)
             g.exiProfundum()
 
             g.inErrata = prevInErrata

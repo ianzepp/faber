@@ -16,7 +16,7 @@
 
 # Generate object literal
 @ publica
-functio genObiectum(de lista<ObiectumProprietas> proprietates, in TsGenerator g) -> textus {
+functio genObiectum(in TsGenerator g, de lista<ObiectumProprietas> proprietates) -> textus {
     si proprietates.longitudo() == 0 {
         redde "{}"
     }
@@ -25,16 +25,16 @@ functio genObiectum(de lista<ObiectumProprietas> proprietates, in TsGenerator g)
     ex proprietates fixum prop {
         si prop.dispersum {
             # WHY: Spread properties lower to ...expr in JS object literals.
-            props.adde(scriptum("...§", genExpressia(prop.valor, g)))
+            props.adde(scriptum("...§", genExpressia(g, prop.valor)))
         } sin prop.brevitas {
             # Shorthand: { name } -> { name }
-            props.adde(genExpressia(prop.clavis, g))
+            props.adde(genExpressia(g, prop.clavis))
         } sin prop.computatum {
             # Computed: { [expr]: value }
-            props.adde(scriptum("[§]: §", genExpressia(prop.clavis, g), genExpressia(prop.valor, g)))
+            props.adde(scriptum("[§]: §", genExpressia(g, prop.clavis), genExpressia(g, prop.valor)))
         } secus {
             # Normal: { key: value }
-            props.adde(scriptum("§: §", genExpressia(prop.clavis, g), genExpressia(prop.valor, g)))
+            props.adde(scriptum("§: §", genExpressia(g, prop.clavis), genExpressia(g, prop.valor)))
         }
     }
 

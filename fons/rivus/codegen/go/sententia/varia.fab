@@ -18,7 +18,7 @@
 § ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genVaria(species, de textus nomen, si de ignotum adnotatioTypus, si de ignotum valor, externa, si de ignotum visibilitas, in GoGenerator g) -> textus {
+functio genVaria(in GoGenerator g, VariaGenus species, de textus nomen, bivalens externa, si de ignotum adnotatioTypus, si de ignotum valor, si de ignotum visibilitas) -> textus {
     # External declarations - Go doesn't have declare syntax
     si externa {
         redde scriptum("§// extern: §", g.ind(), nomen)
@@ -29,12 +29,12 @@ functio genVaria(species, de textus nomen, si de ignotum adnotatioTypus, si de i
 
     # Type annotation
     si nonnihil adnotatioTypus {
-        result = scriptum("§ §", result, genTypus(adnotatioTypus novum TypusAnnotatio, g))
+        result = scriptum("§ §", result, genTypus(g, adnotatioTypus novum TypusAnnotatio))
     }
 
     # Initializer
     si nonnihil valor {
-        result = scriptum("§ = §", result, genExpressia(valor qua Expressia, g))
+        result = scriptum("§ = §", result, genExpressia(g, valor qua Expressia))
     }
 
     redde result
@@ -43,8 +43,8 @@ functio genVaria(species, de textus nomen, si de ignotum adnotatioTypus, si de i
 # Generate array destructuring
 # Go doesn't support array destructuring syntax, so emit individual assignments
 @ publica
-functio genSeriesDestructura(species, de lista<SeriesDestructuraElementum> elementa, de Expressia fons, in GoGenerator g) -> textus {
-    fixum fonsStr = genExpressia(fons, g)
+functio genSeriesDestructura(in GoGenerator g, species, de lista<SeriesDestructuraElementum> elementa, de Expressia fons) -> textus {
+    fixum fonsStr = genExpressia(g, fons)
 
     varia assignments = [] innatum lista<textus>
     varia indice = 0

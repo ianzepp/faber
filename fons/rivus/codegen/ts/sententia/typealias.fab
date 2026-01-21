@@ -15,7 +15,7 @@
 § ex "../typus" importa genTypus
 
 @ publica
-functio genTypusAlias(de textus nomen, de TypusAnnotatio adnotatioTypus, de ignotum scopusNomen, de ignotum visibilitas, in TsGenerator g) -> textus {
+functio genTypusAlias(in TsGenerator g, de textus nomen, de TypusAnnotatio adnotatioTypus, de ignotum scopusNomen, de ignotum visibilitas) -> textus {
     # Module-level: export when public
     varia exportPrefix = ""
     si nonnihil visibilitas {
@@ -28,5 +28,5 @@ functio genTypusAlias(de textus nomen, de TypusAnnotatio adnotatioTypus, de igno
     si nonnihil scopusNomen {
         redde scriptum("§§type § = typeof §;", g.ind(), exportPrefix, nomen, scopusNomen qua textus)
     }
-    redde scriptum("§§type § = §;", g.ind(), exportPrefix, nomen, genTypus(adnotatioTypus, g))
+    redde scriptum("§§type § = §;", g.ind(), exportPrefix, nomen, genTypus(g, adnotatioTypus))
 }

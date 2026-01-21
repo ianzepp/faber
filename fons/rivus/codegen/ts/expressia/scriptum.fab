@@ -17,7 +17,7 @@
 # Generate scriptum (format string) expression
 # Supports both § (positional) and §0, §1, etc. (indexed) placeholders
 @ publica
-functio genScriptum(de textus exemplar, de lista<Expressia> argumenta, in TsGenerator g) -> textus {
+functio genScriptum(in TsGenerator g, de textus exemplar, de lista<Expressia> argumenta) -> textus {
     # WHY: No-arg scriptum should emit a plain string literal (no template).
     si argumenta.longitudo() == 0 {
         redde scriptum("\"§\"", exemplar)
@@ -53,7 +53,7 @@ functio genScriptum(de textus exemplar, de lista<Expressia> argumenta, in TsGene
                 implicitIdx += 1
             }
 
-            fixum arg = (idx < argumenta.longitudo()) sic genExpressia(argumenta[idx], g) secus "undefined"
+            fixum arg = (idx < argumenta.longitudo()) sic genExpressia(g, argumenta[idx]) secus "undefined"
             result = result + "${" + arg + "}"
         } secus {
             result = result + c

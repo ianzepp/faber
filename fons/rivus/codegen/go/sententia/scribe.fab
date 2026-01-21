@@ -15,13 +15,13 @@
 § ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genScribe(gradus, de lista<Expressia> argumenta, in GoGenerator g) -> textus {
+functio genScribe(in GoGenerator g, gradus, de lista<Expressia> argumenta) -> textus {
     # Mark fmt import as required
     g.requisita.fmt = verum
 
     varia args = [] innatum lista<textus>
     ex argumenta fixum arg {
-        args.adde(genExpressia(arg, g))
+        args.adde(genExpressia(g, arg))
     }
 
     # Go doesn't have log levels in fmt, just use Println for all

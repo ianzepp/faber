@@ -28,52 +28,52 @@
 
 # Generate Go code for a statement
 @ publica
-functio genSententia(de Sententia stmt, in GoGenerator g) -> textus {
+functio genSententia(in GoGenerator g, de Sententia stmt) -> textus {
     discerne stmt {
         # Block
         casu MassaSententia ut s {
-            redde genMassa(s.corpus qua lista<Sententia>, g)
+            redde genMassa(g, s.corpus qua lista<Sententia>)
         }
 
         # Function declaration
         casu FunctioDeclaratio ut f {
-            redde genFunctio(f.nomen qua textus, f.generaParametra, f.parametra qua lista<Parametrum>, f.modificatores, f.reddeVerbum, f.typusReditus, f.corpus, f.asynca qua bivalens, f.generator qua bivalens, f.structor qua bivalens, f.visibilitas, f.abstracta qua bivalens, f.externa qua bivalens, g)
+            redde genFunctio(g, f)
         }
 
         # Variable declaration
         casu VariaSententia ut v {
-            redde genVaria(v.species qua VariaGenus, v.nomen qua textus, v.typus, v.valor, v.externa qua bivalens, v.visibilitas, g)
+            redde genVaria(g, v.species qua VariaGenus, v.nomen qua textus, v.typus, v.valor, v.externa qua bivalens, v.visibilitas)
         }
 
         # Array destructuring declaration
         casu SeriesDestructuraSententia ut s {
-            redde genSeriesDestructura(s.species qua VariaGenus, s.elementa, s.fons qua Expressia, g)
+            redde genSeriesDestructura(g, s.species qua VariaGenus, s.elementa, s.fons qua Expressia)
         }
 
         # Type declarations
         casu GenusDeclaratio ut s {
-            redde genGenus(s.nomen qua textus, s.generaParametra, s.extendit, s.implet, s.abstractum qua bivalens, s.campi qua lista<CampusDeclaratio>, s.structor, s.methodi, s.visibilitas, g)
+            redde genGenus(g, s)
         }
 
         casu DiscretioDeclaratio ut d {
-            redde genDiscretio(d.nomen qua textus, d.generaParametra, d.variantes qua lista<VariansDeclaratio>, d.visibilitas, g)
+            redde genDiscretio(g, d.nomen qua textus, d.variantes qua lista<VariansDeclaratio>, d.generaParametra, d.visibilitas)
         }
 
         # Actions
         casu ScribeSententia ut s {
-            redde genScribe(s.gradus qua ScribeGradus, s.argumenta qua lista<Expressia>, g)
+            redde genScribe(g, s.gradus qua ScribeGradus, s.argumenta qua lista<Expressia>)
         }
 
         casu AdfirmaSententia ut s {
-            redde genAdfirma(s.condicio qua Expressia, s.nuntius, g)
+            redde genAdfirma(g, s.condicio qua Expressia, s.nuntius)
         }
 
         casu ReddeSententia ut s {
-            redde genRedde(s.valor, g)
+            redde genRedde(g, s.valor)
         }
 
         casu IaceSententia ut s {
-            redde genIace(s.argumentum, s.fatale qua bivalens, g)
+            redde genIace(g, s.argumentum, s.fatale qua bivalens)
         }
 
         casu RumpeSententia {
@@ -89,16 +89,16 @@ functio genSententia(de Sententia stmt, in GoGenerator g) -> textus {
         }
 
         casu ExpressiaSententia ut s {
-            redde scriptum("§§", g.ind(), genExpressia(s.expressia, g))
+            redde scriptum("§§", g.ind(), genExpressia(g, s.expressia))
         }
 
         # Entry points
         casu IncipitSententia ut s {
-            redde genIncipit(s.corpus, s.ergo, g)
+            redde genIncipit(g, s.corpus, s.ergo)
         }
 
         casu IncipietSententia ut s {
-            redde genIncipiet(s.corpus, s.ergo, g)
+            redde genIncipiet(g, s.corpus, s.ergo)
         }
 
         # Cura (resource management) - for Go, we ignore arena allocation
@@ -106,32 +106,32 @@ functio genSententia(de Sententia stmt, in GoGenerator g) -> textus {
         casu CuraSententia ut s {
             # For Go, cura...fit blocks become just the body statements
             # Resource cleanup is handled by Go's GC or defer patterns
-            redde genSententia(s.corpus, g)
+            redde genSententia(g, s.corpus)
         }
 
         # Control flow
         casu SiSententia ut s {
-            redde genSi(s.condicio qua Expressia, s.consequens qua Sententia, s.alternans, g)
+            redde genSi(g, s.condicio qua Expressia, s.consequens qua Sententia, s.alternans)
         }
 
         casu DumSententia ut s {
-            redde genDum(s.condicio qua Expressia, s.corpus, g)
+            redde genDum(g, s.condicio qua Expressia, s.corpus)
         }
 
         casu IteratioSententia ut s {
-            redde genIteratio(s.species qua IteratioGenus, s.variabilis, s.iterabile qua Expressia, s.corpus, g)
+            redde genIteratio(g, s.species qua IteratioGenus, s.variabilis, s.iterabile qua Expressia, s.corpus)
         }
 
         casu FacSententia ut s {
-            redde genFac(s.corpus, s.condicio, g)
+            redde genFac(g, s.corpus, s.condicio)
         }
 
         casu EligeSententia ut s {
-            redde genElige(s.discriminans qua Expressia, s.casus qua lista<EligeCasus>, s.praedefinitum, s.cape, g)
+            redde genElige(g, s.discriminans qua Expressia, s.casus qua lista<EligeCasus>, s.praedefinitum, s.cape)
         }
 
         casu DiscerneSententia ut s {
-            redde genDiscerne(s.discriminantes qua lista<Expressia>, s.casus qua lista<VariansCasus>, g)
+            redde genDiscerne(g, s.discriminantes qua lista<Expressia>, s.casus qua lista<VariansCasus>)
         }
 
         # Fail on unimplemented statement types
@@ -146,13 +146,13 @@ functio genSententia(de Sententia stmt, in GoGenerator g) -> textus {
 # =============================================================================
 
 @ publica
-functio genMassa(de lista<Sententia> corpus, in GoGenerator g) -> textus {
+functio genMassa(in GoGenerator g, de lista<Sententia> corpus) -> textus {
     si corpus.longitudo() == 0 {
         redde ""
     }
     varia lines = [] innatum lista<textus>
     ex corpus fixum stmt {
-        lines.adde(genSententia(stmt, g))
+        lines.adde(genSententia(g, stmt))
     }
     redde lines.coniunge("\n")
 }

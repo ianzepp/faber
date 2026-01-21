@@ -8,10 +8,10 @@ import { parse as parseYaml } from 'yaml';
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, basename, relative } from 'path';
 
-import { tokenize } from '../faber/tokenizer';
-import { parse } from '../faber/parser';
-import { analyze } from '../faber/semantic';
-import { generate } from '../faber/codegen';
+import { tokenize } from '../faber-ts/tokenizer';
+import { parse } from '../faber-ts/parser';
+import { analyze } from '../faber-ts/semantic';
+import { generate } from '../faber-ts/codegen';
 
 // Faber targets TypeScript only (see consilia/compiler-roles.md)
 export type Target = 'ts';

@@ -47,7 +47,7 @@ functio mappaNomenTypi(de textus nomen) -> textus {
 
 # Generate Go type from type annotation
 @ publica
-functio genTypus(de TypusAnnotatio adnotatio, in GoGenerator g) -> textus {
+functio genTypus(in GoGenerator g, de TypusAnnotatio adnotatio) -> textus {
     fixum base = mappaNomenTypi(adnotatio.nomen)
 
     # Handle vacuum (void) - returns empty string
@@ -64,7 +64,7 @@ functio genTypus(de TypusAnnotatio adnotatio, in GoGenerator g) -> textus {
                 varia elemType = "interface{}"
                 discerne parametra[0] {
                     casu Typus ut t {
-                        elemType = genTypus(t.adnotatio, g)
+                        elemType = genTypus(g, t.adnotatio)
                     }
                     casu _ { }
                 }
@@ -78,7 +78,7 @@ functio genTypus(de TypusAnnotatio adnotatio, in GoGenerator g) -> textus {
                 si parametra.longitudo() >= 1 {
                     discerne parametra[0] {
                         casu Typus ut t {
-                            keyType = genTypus(t.adnotatio, g)
+                            keyType = genTypus(g, t.adnotatio)
                         }
                         casu _ { }
                     }
@@ -86,7 +86,7 @@ functio genTypus(de TypusAnnotatio adnotatio, in GoGenerator g) -> textus {
                 si parametra.longitudo() >= 2 {
                     discerne parametra[1] {
                         casu Typus ut t {
-                            valueType = genTypus(t.adnotatio, g)
+                            valueType = genTypus(g, t.adnotatio)
                         }
                         casu _ { }
                     }
@@ -99,7 +99,7 @@ functio genTypus(de TypusAnnotatio adnotatio, in GoGenerator g) -> textus {
                 varia elemType = "interface{}"
                 discerne parametra[0] {
                     casu Typus ut t {
-                        elemType = genTypus(t.adnotatio, g)
+                        elemType = genTypus(g, t.adnotatio)
                     }
                     casu _ { }
                 }
@@ -139,7 +139,7 @@ functio zeroValueForType(de TypusAnnotatio adnotatio, in GoGenerator g) -> textu
         casu "objectum" reddit "nil"
     }
 
-    fixum typeName = genTypus(adnotatio, g)
+    fixum typeName = genTypus(g, adnotatio)
     si typeName == "" {
         redde "nil"
     }
@@ -161,10 +161,10 @@ functio zeroValueForType(de TypusAnnotatio adnotatio, in GoGenerator g) -> textu
 
 # Generate a single type parameter
 @ publica
-functio genTypusParametrum(de TypusParametrum param, in GoGenerator g) -> textus? {
+functio genTypusParametrum(in GoGenerator g, de TypusParametrum param) -> textus? {
     discerne param {
         casu Typus ut p {
-            redde genTypus(p.adnotatio, g)
+            redde genTypus(g, p.adnotatio)
         }
         casu Littera {
             # Ignore numeric parameters

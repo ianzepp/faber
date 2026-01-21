@@ -11,14 +11,14 @@
 § ex "./index" importa genSententia
 
 @ publica
-functio genFac(de Sententia corpus, si de ignotum condicio, in GoGenerator g) -> textus {
+functio genFac(in GoGenerator g, de Sententia corpus, si de ignotum condicio) -> textus {
     g.intraProfundum()
-    fixum body = genSententia(corpus, g)
+    fixum body = genSententia(g, corpus)
     g.exiProfundum()
 
     si nonnihil condicio {
         # Do-while: Go doesn't have do-while, emulate with for + break
-        fixum test = genExpressia(condicio qua Expressia, g)
+        fixum test = genExpressia(g, condicio qua Expressia)
 
         g.intraProfundum()
         fixum breakCheck = scriptum("§if !(§) {\n§\tbreak\n§}", g.ind(), test, g.ind(), g.ind())

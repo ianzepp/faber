@@ -41,13 +41,13 @@ functio genLittera(LitteraGenus species, de textus crudus) -> textus {
 
 # Generate template literal with interpolation
 @ publica
-functio genLitteraExemplar(de lista<textus> partes, de lista<Expressia> expressiae, in TsGenerator g) -> textus {
+functio genLitteraExemplar(in TsGenerator g, de lista<textus> partes, de lista<Expressia> expressiae) -> textus {
     varia result = "`"
     varia i = 0
     ex partes fixum pars {
         result = scriptum("§§", result, pars)
         si i < expressiae.longitudo() {
-            result = scriptum("§\x24\x7b§\x7d", result, genExpressia(expressiae[i], g))
+            result = scriptum("§\x24\x7b§\x7d", result, genExpressia(g, expressiae[i]))
         }
         i += 1
     }

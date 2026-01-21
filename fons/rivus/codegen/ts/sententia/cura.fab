@@ -18,13 +18,13 @@
 § ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genCura(de ignotum curatorSpecies, de ignotum res, de textus vinculum, de Sententia corpus, bivalens asynca, bivalens mutabilis, de ignotum cape, in TsGenerator g) -> textus {
+functio genCura(in TsGenerator g, de ignotum curatorSpecies, de ignotum res, de textus vinculum, de Sententia corpus, bivalens asynca, bivalens mutabilis, de ignotum cape) -> textus {
     # WHY: For arena/page curator kinds, just emit the block contents.
     # GC targets don't need allocator management - memory is automatic.
     si nonnihil curatorSpecies {
         fixum species = curatorSpecies qua CuratorGenus
         si species == CuratorGenus.Arena aut species == CuratorGenus.Pagina {
-            redde genSententia(corpus, g)
+            redde genSententia(g, corpus)
         }
     }
 
@@ -38,14 +38,14 @@ functio genCura(de ignotum curatorSpecies, de ignotum res, de textus vinculum, d
     # Resource acquisition: const/let <binding> = [await] <resource>;
     fixum awaitPrefix = asynca sic "await " secus ""
     si nonnihil res {
-        result = scriptum("§§§ § = §§;\n", result, g.ind(), bindKeyword, vinculum, awaitPrefix, genExpressia(res qua Expressia, g))
+        result = scriptum("§§§ § = §§;\n", result, g.ind(), bindKeyword, vinculum, awaitPrefix, genExpressia(g, res qua Expressia))
     } secus {
         result = scriptum("§§§ § = undefined;\n", result, g.ind(), bindKeyword, vinculum)
     }
 
     # Try block
     g.intraProfundum()
-    fixum tryBody = genSententia(corpus, g)
+    fixum tryBody = genSententia(g, corpus)
     g.exiProfundum()
     si tryBody == "" {
         result = scriptum("§§try {}\n", result, g.ind())
@@ -58,7 +58,7 @@ functio genCura(de ignotum curatorSpecies, de ignotum res, de textus vinculum, d
         fixum capeClause = cape novum CapeClausula
         fixum catchParam = capeClause.param
         g.intraProfundum()
-        fixum catchBody = genSententia(capeClause.corpus, g)
+        fixum catchBody = genSententia(g, capeClause.corpus)
         g.exiProfundum()
         result = scriptum("§§catch (§) {\n§\n§}\n", result, g.ind(), catchParam, catchBody, g.ind())
     }

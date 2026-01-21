@@ -19,7 +19,7 @@
 § ex "../typus" importa genTypus
 
 @ publica
-functio genPactum(de textus nomen, de ignotum generaParametra, de lista<PactumMethodus> methodi, de ignotum visibilitas, in TsGenerator g) -> textus {
+functio genPactum(in TsGenerator g, de textus nomen, de ignotum generaParametra, de lista<PactumMethodus> methodi, de ignotum visibilitas) -> textus {
     varia result = g.ind()
 
     # Module-level: export when public
@@ -45,13 +45,13 @@ functio genPactum(de textus nomen, de ignotum generaParametra, de lista<PactumMe
     ex methodi fixum methodus {
         varia params = [] innatum lista<textus>
         ex methodus.parametra fixum param {
-            params.adde(genParametrum(param, g))
+            params.adde(genParametrum(g, param))
         }
 
         varia line = scriptum("§§(§)", g.ind(), methodus.nomen, params.coniunge(", "))
         varia reditus = ""
         si nonnihil methodus.typusReditus {
-            reditus = genTypus(methodus.typusReditus novum TypusAnnotatio, g)
+            reditus = genTypus(g, methodus.typusReditus novum TypusAnnotatio)
         }
 
         si reditus == "" et (methodus.generator aut methodus.asynca) {

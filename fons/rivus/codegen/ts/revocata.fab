@@ -15,11 +15,11 @@
 genus TsRevocata implet Revocata {
     @ publica
     functio genExpr(de Expressia e, in Generans g) -> textus {
-        redde genExpressia(e, g qua TsGenerator)
+        redde genExpressia(g qua TsGenerator, e)
     }
     @ publica
     functio genStmt(de Sententia s, in Generans g) -> textus {
-        redde genSententia(s, g qua TsGenerator)
+        redde genSententia(g qua TsGenerator, s)
     }
 }
 

@@ -11,7 +11,7 @@
 § ex "../typus" importa genTypus
 
 @ publica
-functio genDiscretio(de textus nomen, de ignotum generaParametra, de lista<VariansDeclaratio> variantes, de ignotum visibilitas, in TsGenerator g) -> textus {
+functio genDiscretio(in TsGenerator g, de textus nomen, de ignotum generaParametra, de lista<VariansDeclaratio> variantes, de ignotum visibilitas) -> textus {
     # TS: prefer inline union members so tests can match exact fragments.
 
     # Module-level: export when public
@@ -37,7 +37,7 @@ functio genDiscretio(de textus nomen, de ignotum generaParametra, de lista<Varia
     ex variantes fixum varians {
         varia member = scriptum("{ tag: '§'", varians.nomen)
         ex varians.campi fixum campus {
-            member = scriptum("§; §: §", member, campus.nomen, genTypus(campus.typus, g))
+            member = scriptum("§; §: §", member, campus.nomen, genTypus(g, campus.typus))
         }
         member = scriptum("§ }", member)
         lines.adde(scriptum("§§type §§ = §;", g.ind(), exportPrefix, varians.nomen, params, member))

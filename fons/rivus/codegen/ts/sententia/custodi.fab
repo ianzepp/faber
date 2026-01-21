@@ -17,7 +17,7 @@
 § ex "./index" importa genMassa
 
 @ publica
-functio genCustodi(de lista<CustodiClausula> clausulae, in TsGenerator g) -> textus {
+functio genCustodi(in TsGenerator g, de lista<CustodiClausula> clausulae) -> textus {
     varia result = ""
     ex clausulae fixum clausula {
         varia vacuus = falsum
@@ -32,7 +32,7 @@ functio genCustodi(de lista<CustodiClausula> clausulae, in TsGenerator g) -> tex
 
         si vacuus {
             # WHY: Empty guard bodies should compact to {} with no blank line.
-            result = scriptum("§§if (§) {}\n", result, g.ind(), genExpressia(clausula.condicio, g))
+            result = scriptum("§§if (§) {}\n", result, g.ind(), genExpressia(g, clausula.condicio))
             perge
         }
 
@@ -40,21 +40,21 @@ functio genCustodi(de lista<CustodiClausula> clausulae, in TsGenerator g) -> tex
         varia body = "" qua textus
         discerne clausula.consequens {
             casu MassaSententia ut m {
-                body = genMassa(m.corpus, g)
+                body = genMassa(g, m.corpus)
             }
             ceterum { }
         }
         si body == "" {
-            body = genSententia(clausula.consequens, g)
+            body = genSententia(g, clausula.consequens)
         }
         si body == "" aut nihil body aut body == "undefined" {
             # WHY: Defensive fallback if empty bodies stringify poorly.
-            result = scriptum("§§if (§) {}\n", result, g.ind(), genExpressia(clausula.condicio, g))
+            result = scriptum("§§if (§) {}\n", result, g.ind(), genExpressia(g, clausula.condicio))
             g.exiProfundum()
             perge
         }
         g.exiProfundum()
-        result = scriptum("§§if (§) {\n§\n§}\n", result, g.ind(), genExpressia(clausula.condicio, g), body, g.ind())
+        result = scriptum("§§if (§) {\n§\n§}\n", result, g.ind(), genExpressia(g, clausula.condicio), body, g.ind())
     }
     redde result
 }

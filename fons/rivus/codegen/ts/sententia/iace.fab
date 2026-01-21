@@ -16,8 +16,8 @@
 § ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genIace(bivalens fatale, de Expressia argumentum, in TsGenerator g) -> textus {
-    fixum expr = genExpressia(argumentum, g)
+functio genIace(in TsGenerator g, bivalens fatale, de Expressia argumentum) -> textus {
+    fixum expr = genExpressia(g, argumentum)
 
     si fatale {
         # WHY: mori is fatal - use Panic and string coercion for non-literals.

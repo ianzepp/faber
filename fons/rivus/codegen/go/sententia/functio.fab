@@ -8,7 +8,7 @@
 #   functio f() curata alloc -> T { ... }  -> func f() T { ... }  (ignore allocator)
 #   @ publica functio f() { ... }          -> func F() { ... }    (capitalize)
 
-§ ex "../../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, Visibilitas, FunctioModificator
+§ ex "../../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, Visibilitas, FunctioModificator, FunctioDeclaratio
 § ex "../../../ast/typus" importa TypusAnnotatio
 § ex "../nucleus" importa GoGenerator
 
@@ -33,18 +33,18 @@ functio habetErrataModificator(si de ignotum modificatores) -> bivalens {
 }
 
 @ publica
-functio genFunctio(de textus nomen, si de ignotum generaParametra, de lista<Parametrum> parametra, si de ignotum modificatores, si de ignotum reddeVerbum, si de ignotum typusReditus, si de ignotum corpus, asynca, generator, structor, si de ignotum visibilitas, abstracta, externa, in GoGenerator g) -> textus {
+functio genFunctio(in GoGenerator g, de FunctioDeclaratio f) -> textus {
     # External declarations - Go doesn't have declare syntax
-    si externa {
-        redde scriptum("§// extern: func §(...)", g.ind(), nomen)
+    si f.externa {
+        redde scriptum("§// extern: func §(...)", g.ind(), f.nomen)
     }
 
     varia result = g.ind()
 
     # Determine function name - capitalize if public (Go visibility convention)
-    varia funcName = nomen
-    si nonnihil visibilitas {
-        fixum vis = visibilitas qua Visibilitas
+    varia funcName = f.nomen qua textus
+    si nonnihil f.visibilitas {
+        fixum vis = f.visibilitas novum Visibilitas
         si vis == Visibilitas.Publica {
             # Capitalize first letter for Go export
             si funcName.longitudo() > 0 {
@@ -60,8 +60,8 @@ functio genFunctio(de textus nomen, si de ignotum generaParametra, de lista<Para
     result = scriptum("§func §", result, funcName)
 
     # Generic parameters - Go 1.18+ generics
-    si nonnihil generaParametra {
-        fixum gp = generaParametra qua lista<TypusParametrum>
+    si nonnihil f.generaParametra {
+        fixum gp = f.generaParametra novum lista<TypusParametrum>
         si gp.longitudo() > 0 {
             varia names = [] innatum lista<textus>
             ex gp fixum p {
@@ -74,17 +74,17 @@ functio genFunctio(de textus nomen, si de ignotum generaParametra, de lista<Para
 
     # Parameters
     varia params = [] innatum lista<textus>
-    ex parametra fixum param {
-        params.adde(genParametrum(param, g))
+    ex f.parametra fixum param {
+        params.adde(genParametrum(g, param))
     }
     result = scriptum("§(§)", result, params.coniunge(", "))
 
     # Return type
     varia retType = ""
-    si nonnihil typusReditus {
-        retType = genTypus(typusReditus novum TypusAnnotatio, g)
+    si nonnihil f.typusReditus {
+        retType = genTypus(g, f.typusReditus novum TypusAnnotatio)
     }
-    fixum hasErrata = habetErrataModificator(modificatores)
+    fixum hasErrata = habetErrataModificator(f.modificatores)
     si hasErrata {
         si retType == "" {
             result = scriptum("§ error", result)
@@ -96,25 +96,25 @@ functio genFunctio(de textus nomen, si de ignotum generaParametra, de lista<Para
     }
 
     # Body
-    si nihil corpus {
+    si nihil f.corpus {
         # No body - abstract or declaration only
         redde result
     }
 
-    si nonnihil corpus {
+    si nonnihil f.corpus {
         fixum prevInErrata = g.inErrata
         fixum prevErrataType = g.errataTypusReditus
         g.inErrata = hasErrata
         varia errataType = nihil qua TypusAnnotatio?
         # WHY: Only track a value return type for errata when Go emits (T, error).
         # EDGE: `-> vacuum` or no return type becomes `error` only.
-        si hasErrata et retType != "" et nonnihil typusReditus {
-            errataType = typusReditus novum TypusAnnotatio
+        si hasErrata et retType != "" et nonnihil f.typusReditus {
+            errataType = f.typusReditus novum TypusAnnotatio
         }
         g.errataTypusReditus = errataType
 
         g.intraProfundum()
-        fixum body = genSententia(corpus qua Sententia, g)
+        fixum body = genSententia(g, f.corpus novum Sententia)
         g.exiProfundum()
 
         g.inErrata = prevInErrata
@@ -131,12 +131,12 @@ functio genFunctio(de textus nomen, si de ignotum generaParametra, de lista<Para
 }
 
 @ publica
-functio genParametrum(de Parametrum param, in GoGenerator g) -> textus {
+functio genParametrum(in GoGenerator g, de Parametrum param) -> textus {
     varia result = param.nomen
 
     # Type annotation
     si nonnihil param.typus {
-        fixum typeName = genTypus(param.typus novum TypusAnnotatio, g)
+        fixum typeName = genTypus(g, param.typus novum TypusAnnotatio)
         result = scriptum("§ §", result, typeName)
     }
 

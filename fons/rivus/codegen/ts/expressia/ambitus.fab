@@ -15,16 +15,16 @@
 
 # Generate range expression as array
 @ publica
-functio genAmbitusExpressia(de Expressia expr, in TsGenerator g) -> textus {
+functio genAmbitusExpressia(in TsGenerator g, de Expressia expr) -> textus {
     # WHY: Ranges become arrays outside of for-loops.
     discerne expr {
         casu AmbitusExpressia ut e {
-            fixum initium = genExpressia(e.initium, g)
-            fixum finis = genExpressia(e.finis, g)
+            fixum initium = genExpressia(g, e.initium)
+            fixum finis = genExpressia(g, e.finis)
             fixum adj = (e.inclusivum qua bivalens) sic " + 1" secus ""
 
             si nonnihil e.gradus {
-                fixum gradus = genExpressia(e.gradus qua Expressia, g)
+                fixum gradus = genExpressia(g, e.gradus qua Expressia)
                 si e.inclusivum qua bivalens {
                     redde scriptum("Array.from({length: Math.floor((§ - §) / §) + 1}, (_, i) => § + i * §)", finis, initium, gradus, initium, gradus)
                 }
@@ -36,5 +36,5 @@ functio genAmbitusExpressia(de Expressia expr, in TsGenerator g) -> textus {
         casu _ { }
     }
 
-    redde genExpressia(expr, g)
+    redde genExpressia(g, expr)
 }

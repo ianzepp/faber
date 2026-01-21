@@ -49,113 +49,113 @@
 #      appear before the statement, trailing comments on the same line.
 #      Currently stubbed (returns empty strings) for bootstrap.
 @ publica
-functio genSententia(de Sententia stmt, in TsGenerator g) -> textus {
+functio genSententia(in TsGenerator g, de Sententia stmt) -> textus {
     fixum leading = g.notaePrae(stmt)
     fixum trailing = g.notaePost(stmt)
-    fixum content = genSententiaContent(stmt, g)
+    fixum content = genSententiaContent(g, stmt)
     redde scriptum("§§§", leading, content, trailing)
 }
 
 # Generate statement content without comments
-functio genSententiaContent(de Sententia stmt, in TsGenerator g) -> textus {
+functio genSententiaContent(in TsGenerator g, de Sententia stmt) -> textus {
     discerne stmt {
         # Block
         casu MassaSententia ut s {
-            redde genMassa(s.corpus qua lista<Sententia>, g)
+            redde genMassa(g, s.corpus qua lista<Sententia>)
         }
 
         # Variable declarations
         casu VariaSententia ut s {
-            redde genVaria(s.species qua VariaGenus, s.nomen qua textus, s.typus, s.valor, s.externa qua bivalens, s.visibilitas, g)
+            redde genVaria(g, s.species qua VariaGenus, s.nomen qua textus, s.typus, s.valor, s.externa qua bivalens, s.visibilitas)
         }
 
         casu ImportaSententia ut s {
-            redde genImporta(s.fons qua textus, s.specificatores qua lista<ImportaSpecificator>, s.totum qua bivalens, s.totumAlias, g)
+            redde genImporta(g, s.fons qua textus, s.specificatores qua lista<ImportaSpecificator>, s.totum qua bivalens, s.totumAlias)
         }
 
         casu DestructuraSententia ut s {
-            redde genDestructura(s.fons, s.species qua VariaGenus, s.specificatores qua lista<ImportaSpecificator>, g)
+            redde genDestructura(g, s.fons, s.species qua VariaGenus, s.specificatores qua lista<ImportaSpecificator>)
         }
 
         casu SeriesDestructuraSententia ut s {
-            redde genSeriesDestructura(s.elementa qua lista<SeriesDestructuraElementum>, s.fons, s.species qua VariaGenus, g)
+            redde genSeriesDestructura(g, s.elementa qua lista<SeriesDestructuraElementum>, s.fons, s.species qua VariaGenus)
         }
 
         # Function declaration
         casu FunctioDeclaratio ut f {
-            redde genFunctio(f.nomen qua textus, f.generaParametra, f.parametra qua lista<Parametrum>, f.reddeVerbum, f.typusReditus, f.corpus, f.asynca qua bivalens, f.generator qua bivalens, f.structor qua bivalens, f.visibilitas, f.abstracta qua bivalens, f.externa qua bivalens, f.modificatores, g)
+            redde genFunctio(g, f)
         }
 
         # Type declarations
         casu GenusDeclaratio ut s {
-            redde genGenus(s.nomen qua textus, s.generaParametra, s.extendit, s.implet, s.abstractum qua bivalens, s.campi qua lista<CampusDeclaratio>, s.structor, s.methodi, s.visibilitas, g)
+            redde genGenus(g, s)
         }
 
         casu PactumDeclaratio ut s {
-            redde genPactum(s.nomen qua textus, s.generaParametra, s.methodi qua lista<PactumMethodus>, s.visibilitas, g)
+            redde genPactum(g, s.nomen qua textus, s.generaParametra, s.methodi qua lista<PactumMethodus>, s.visibilitas)
         }
 
         casu TypusAliasDeclaratio ut s {
-            redde genTypusAlias(s.nomen qua textus, s.typus novum TypusAnnotatio, s.scopusNomen, s.visibilitas, g)
+            redde genTypusAlias(g, s.nomen qua textus, s.typus novum TypusAnnotatio, s.scopusNomen, s.visibilitas)
         }
 
         casu OrdoDeclaratio ut s {
-            redde genOrdo(s.nomen qua textus, s.membra qua lista<OrdoMembrum>, s.visibilitas, g)
+            redde genOrdo(g, s.nomen qua textus, s.membra qua lista<OrdoMembrum>, s.visibilitas)
         }
 
         casu DiscretioDeclaratio ut s {
-            redde genDiscretio(s.nomen qua textus, s.generaParametra, s.variantes qua lista<VariansDeclaratio>, s.visibilitas, g)
+            redde genDiscretio(g, s.nomen qua textus, s.generaParametra, s.variantes qua lista<VariansDeclaratio>, s.visibilitas)
         }
 
         # Control flow
         casu SiSententia ut s {
-            redde genSi(s.condicio, s.consequens qua Sententia, s.alternans, s.cape, g)
+            redde genSi(g, s.condicio, s.consequens qua Sententia, s.alternans, s.cape)
         }
 
         casu DumSententia ut s {
-            redde genDum(s.condicio, s.corpus, s.cape, g)
+            redde genDum(g, s.condicio, s.corpus, s.cape)
         }
 
         casu IteratioSententia ut s {
-            redde genIteratio(s.species qua IteratioGenus, s.variabilis, s.iterabile, s.corpus, s.asynca qua bivalens, s.mutabilis qua bivalens, s.cape, g)
+            redde genIteratio(g, s.species qua IteratioGenus, s.variabilis, s.iterabile, s.corpus, s.asynca qua bivalens, s.mutabilis qua bivalens, s.cape)
         }
 
         casu EligeSententia ut s {
-            redde genElige(s.discriminans, s.casus qua lista<EligeCasus>, s.praedefinitum, s.cape, g)
+            redde genElige(g, s.discriminans, s.casus qua lista<EligeCasus>, s.praedefinitum, s.cape)
         }
 
         casu DiscerneSententia ut s {
-            redde genDiscerne(s.discriminantes, s.casus qua lista<VariansCasus>, g)
+            redde genDiscerne(g, s.discriminantes, s.casus qua lista<VariansCasus>)
         }
 
         casu CustodiSententia ut s {
-            redde genCustodi(s.clausulae qua lista<CustodiClausula>, g)
+            redde genCustodi(g, s.clausulae qua lista<CustodiClausula>)
         }
 
         # Error handling
         casu TemptaSententia ut s {
-            redde genTempta(s.corpus, s.cape, s.demum, g)
+            redde genTempta(g, s.corpus, s.cape, s.demum)
         }
 
         casu IaceSententia ut s {
-            redde genIace(s.fatale qua bivalens, s.argumentum, g)
+            redde genIace(g, s.fatale qua bivalens, s.argumentum)
         }
 
         casu FacSententia ut s {
-            redde genFac(s.corpus, s.condicio, s.cape, g)
+            redde genFac(g, s.corpus, s.condicio, s.cape)
         }
 
         casu AdfirmaSententia ut s {
-            redde genAdfirma(s.condicio, s.nuntius, g)
+            redde genAdfirma(g, s.condicio, s.nuntius)
         }
 
         # Actions
         casu ScribeSententia ut s {
-            redde genScribe(s.gradus qua ScribeGradus, s.argumenta qua lista<Expressia>, g)
+            redde genScribe(g, s.gradus qua ScribeGradus, s.argumenta qua lista<Expressia>)
         }
 
         casu ReddeSententia ut s {
-            redde genRedde(s.valor, g)
+            redde genRedde(g, s.valor)
         }
 
         casu RumpeSententia {
@@ -171,19 +171,19 @@ functio genSententiaContent(de Sententia stmt, in TsGenerator g) -> textus {
         }
 
         casu ExpressiaSententia ut s {
-            redde scriptum("§§;", g.ind(), genExpressia(s.expressia, g))
+            redde scriptum("§§;", g.ind(), genExpressia(g, s.expressia))
         }
 
         casu IncipitSententia ut s {
-            redde genIncipit(s.corpus, s.ergo, g)
+            redde genIncipit(g, s.corpus, s.ergo)
         }
 
         casu IncipietSententia ut s {
-            redde genIncipiet(s.corpus, s.ergo, g)
+            redde genIncipiet(g, s.corpus, s.ergo)
         }
 
         casu CuraSententia ut s {
-            redde genCura(s.curatorSpecies, s.res, s.vinculum qua textus, s.corpus, s.asynca qua bivalens, s.mutabilis qua bivalens, s.cape, g)
+            redde genCura(g, s.curatorSpecies, s.res, s.vinculum qua textus, s.corpus, s.asynca qua bivalens, s.mutabilis qua bivalens, s.cape)
         }
 
         casu AdSententia {
@@ -195,21 +195,21 @@ functio genSententiaContent(de Sententia stmt, in TsGenerator g) -> textus {
             si g.stripTests {
                 redde ""
             }
-            redde genProbandum(s.nomen qua textus, s.ompitur, s.ratioOmissionis, s.solum, s.tags, s.corpus qua lista<Sententia>, g)
+            redde genProbandum(g, s.nomen qua textus, s.corpus qua lista<Sententia>, s.ompitur, s.ratioOmissionis, s.solum, s.tags)
         }
 
         casu ProbaSententia ut s {
             si g.stripTests {
                 redde ""
             }
-            redde genProba(s.nomen qua textus, s.modificator, s.ratioModificatoris, s.solum, s.tags, s.temporis, s.metior, s.repete, s.fragilis, s.requirit, s.solumIn, s.corpus, g)
+            redde genProba(g, s.nomen qua textus, s.modificator, s.corpus, s.ratioModificatoris, s.solum, s.tags, s.temporis, s.metior, s.repete, s.fragilis, s.requirit, s.solumIn)
         }
 
         casu PraeparaMassa ut s {
             si g.stripTests {
                 redde ""
             }
-            redde genPraepara(s.tempus qua PraeparaTempus, s.asynca qua bivalens, s.omnia qua bivalens, s.corpus, g)
+            redde genPraepara(g, s.tempus qua PraeparaTempus, s.asynca qua bivalens, s.omnia qua bivalens, s.corpus)
         }
     }
 
@@ -221,14 +221,14 @@ functio genSententiaContent(de Sententia stmt, in TsGenerator g) -> textus {
 # =============================================================================
 
 @ publica
-functio genMassa(de lista<Sententia> corpus, in TsGenerator g) -> textus {
+functio genMassa(in TsGenerator g, de lista<Sententia> corpus) -> textus {
     si corpus.longitudo() == 0 {
         # WHY: Empty blocks should not stringify to undefined.
         redde ""
     }
     varia lines = [] innatum lista<textus>
     ex corpus fixum stmt {
-        lines.adde(genSententia(stmt, g))
+        lines.adde(genSententia(g, stmt))
     }
     redde lines.coniunge("\n")
 }

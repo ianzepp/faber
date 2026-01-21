@@ -34,7 +34,7 @@ functio genAmbitusIteratio(
 
     varia incrementum = scriptum("§++", variabilis)
     si nonnihil gradusExpr {
-        incrementum = scriptum("§ += §", variabilis, rev.genExpr(gradusExpr qua Expressia, g))
+        incrementum = scriptum("§ += §", variabilis, rev.genExpr(g, gradusExpr qua Expressia))
     }
 
     fixum asyncPrefix = asynca et syn.habetAsync sic "await " secus ""
@@ -62,7 +62,7 @@ functio genAmbitusIteratio(
     si nonnihil cape et syn.habetCape {
         fixum c = cape novum CapeClausula
         g.intraProfundum()
-        fixum catchBody = rev.genStmt(c.corpus, g)
+        fixum catchBody = rev.genStmt(g, c.corpus)
         g.exiProfundum()
         redde scriptum(
             "§try {\n§\n§} catch (§) {\n§\n§}",

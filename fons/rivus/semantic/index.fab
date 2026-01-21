@@ -78,8 +78,8 @@ functio mergeSectiones(
 @ publica
 functio analyze(
     de Programma programma,
-    si de textus viaIngressus,
-    de lista<SectioAnnotatio>? manifestSectiones
+    de lista<SectioAnnotatio>? manifestSectiones,
+    si de textus viaIngressus
 ) -> SemanticResultatum {
     # Merge manifest and source sectiones
     fixum mergedSectiones = mergeSectiones(manifestSectiones, programma.sectiones)
@@ -88,7 +88,7 @@ functio analyze(
     fixum dependentiae = extractDependentiae(mergedSectiones)
 
     # Create analyzer state with registry
-    fixum a = novumAnalyzator(viaIngressus, dependentiae)
+    fixum a = novumAnalyzator(dependentiae, viaIngressus)
     fixum r = novumResolvitor(a)
 
     # Phase 1: Predeclare all top-level names

@@ -14,12 +14,12 @@
 @ publica
 genus GoRevocata implet Revocata {
     @ publica
-    functio genExpr(de Expressia e, in Generans g) -> textus {
-        redde genExpressia(e, g qua GoGenerator)
+    functio genExpr(in Generans g, de Expressia e) -> textus {
+        redde genExpressia(g qua GoGenerator, e)
     }
     @ publica
-    functio genStmt(de Sententia s, in Generans g) -> textus {
-        redde genSententia(s, g qua GoGenerator)
+    functio genStmt(in Generans g, de Sententia s) -> textus {
+        redde genSententia(g qua GoGenerator, s)
     }
 }
 

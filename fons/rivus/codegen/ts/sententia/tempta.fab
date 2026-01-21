@@ -15,9 +15,9 @@
 § ex "./index" importa genSententia
 
 @ publica
-functio genTempta(de Sententia corpus, de ignotum cape, de ignotum demum, in TsGenerator g) -> textus {
+functio genTempta(in TsGenerator g, de Sententia corpus, de ignotum cape, de ignotum demum) -> textus {
     g.intraProfundum()
-    fixum tryBody = genSententia(corpus, g)
+    fixum tryBody = genSententia(g, corpus)
     g.exiProfundum()
 
     varia result = ""
@@ -30,7 +30,7 @@ functio genTempta(de Sententia corpus, de ignotum cape, de ignotum demum, in TsG
     si nonnihil cape {
         fixum capeClausula = cape novum CapeClausula
         g.intraProfundum()
-        fixum catchBody = genSententia(capeClausula.corpus, g)
+        fixum catchBody = genSententia(g, capeClausula.corpus)
         g.exiProfundum()
         si catchBody == "" {
             result = scriptum("§ catch (§) {}", result, capeClausula.param)
@@ -41,7 +41,7 @@ functio genTempta(de Sententia corpus, de ignotum cape, de ignotum demum, in TsG
 
     si nonnihil demum {
         g.intraProfundum()
-        fixum finallyBody = genSententia(demum qua Sententia, g)
+        fixum finallyBody = genSententia(g, demum qua Sententia)
         g.exiProfundum()
         si finallyBody == "" {
             result = scriptum("§ finally {}", result)

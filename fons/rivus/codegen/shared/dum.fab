@@ -20,7 +20,7 @@ functio genDumLogica(
     de Revocata rev
 ) -> textus {
     g.intraProfundum()
-    fixum body = rev.genStmt(corpus, g)
+    fixum body = rev.genStmt(g, corpus)
     g.exiProfundum()
 
     fixum loop = scriptum(
@@ -28,7 +28,7 @@ functio genDumLogica(
         g.ind(),
         syn.dumVerbum,
         syn.siCondicioPrae,
-        rev.genExpr(condicio, g),
+        rev.genExpr(g, condicio),
         syn.siCondicioPost,
         body,
         g.ind()
@@ -38,7 +38,7 @@ functio genDumLogica(
     si nonnihil cape et syn.habetCape {
         fixum c = cape novum CapeClausula
         g.intraProfundum()
-        fixum catchBody = rev.genStmt(c.corpus, g)
+        fixum catchBody = rev.genStmt(g, c.corpus)
         g.exiProfundum()
         redde scriptum(
             "§try {\n§\n§} catch (§) {\n§\n§}",

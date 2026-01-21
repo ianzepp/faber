@@ -10,6 +10,6 @@
 # Callback interface for codegen dispatch functions
 @ publica
 pactum Revocata {
-    functio genExpr(de Expressia e, in Generans g) -> textus
-    functio genStmt(de Sententia s, in Generans g) -> textus
+    functio genExpr(in Generans g, de Expressia e) -> textus
+    functio genStmt(in Generans g, de Sententia s) -> textus
 }

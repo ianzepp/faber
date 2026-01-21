@@ -15,12 +15,12 @@
 § ex "../typus" importa zeroValueForType
 
 @ publica
-functio genRedde(si de ignotum valor, in GoGenerator g) -> textus {
+functio genRedde(in GoGenerator g, si de ignotum valor) -> textus {
     si g.inErrata {
         si nonnihil g.errataTypusReditus {
             fixum zero = zeroValueForType(g.errataTypusReditus novum TypusAnnotatio, g)
             si nonnihil valor {
-                redde scriptum("§return §, nil", g.ind(), genExpressia(valor qua Expressia, g))
+                redde scriptum("§return §, nil", g.ind(), genExpressia(g, valor qua Expressia))
             }
             redde scriptum("§return §, nil", g.ind(), zero)
         }
@@ -28,7 +28,7 @@ functio genRedde(si de ignotum valor, in GoGenerator g) -> textus {
     }
 
     si nonnihil valor {
-        redde scriptum("§return §", g.ind(), genExpressia(valor qua Expressia, g))
+        redde scriptum("§return §", g.ind(), genExpressia(g, valor qua Expressia))
     }
     redde scriptum("§return", g.ind())
 }

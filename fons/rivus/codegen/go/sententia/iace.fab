@@ -7,9 +7,9 @@
 § ex "../expressia/index" importa genExpressia
 § ex "../typus" importa zeroValueForType
 
-functio genErrataError(de Expressia argumentum, in GoGenerator g) -> textus {
+functio genErrataError(in GoGenerator g, de Expressia argumentum) -> textus {
     g.requisita.errors = verum
-    fixum expr = genExpressia(argumentum, g)
+    fixum expr = genExpressia(g, argumentum)
 
     discerne argumentum {
         casu Littera ut l {
@@ -27,9 +27,9 @@ functio genErrataError(de Expressia argumentum, in GoGenerator g) -> textus {
 }
 
 @ publica
-functio genIace(de Expressia argumentum, fatale, in GoGenerator g) -> textus {
+functio genIace(in GoGenerator g, de Expressia argumentum, fatale) -> textus {
     si g.inErrata {
-        fixum errExpr = genErrataError(argumentum, g)
+        fixum errExpr = genErrataError(g, argumentum)
         si nonnihil g.errataTypusReditus {
             fixum zero = zeroValueForType(g.errataTypusReditus, g)
             redde scriptum("§return §, §", g.ind(), zero, errExpr)
@@ -38,5 +38,5 @@ functio genIace(de Expressia argumentum, fatale, in GoGenerator g) -> textus {
     }
 
     # Fallback: use panic for non-errata throws
-    redde scriptum("§panic(§)", g.ind(), genExpressia(argumentum, g))
+    redde scriptum("§panic(§)", g.ind(), genExpressia(g, argumentum))
 }

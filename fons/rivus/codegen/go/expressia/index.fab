@@ -16,7 +16,7 @@
 
 # Generate Go code for an expression
 @ publica
-functio genExpressia(de Expressia expr, in GoGenerator g) -> textus {
+functio genExpressia(in GoGenerator g, de Expressia expr) -> textus {
     discerne expr {
         # Identifiers
         casu Nomen ut e {
@@ -36,8 +36,8 @@ functio genExpressia(de Expressia expr, in GoGenerator g) -> textus {
 
         # Binary operations
         casu BinariaExpressia ut e {
-            fixum sinister = genExpressia(e.sinister, g)
-            fixum dexter = genExpressia(e.dexter, g)
+            fixum sinister = genExpressia(g, e.sinister)
+            fixum dexter = genExpressia(g, e.dexter)
             varia signum = e.signum qua textus
 
             # Normalize keyword operators to Go equivalents
@@ -57,7 +57,7 @@ functio genExpressia(de Expressia expr, in GoGenerator g) -> textus {
 
         # Unary operations
         casu UnariaExpressia ut e {
-            fixum arg = genExpressia(e.argumentum, g)
+            fixum arg = genExpressia(g, e.argumentum)
             redde scriptum("§§", e.signum, arg)
         }
 
@@ -65,37 +65,37 @@ functio genExpressia(de Expressia expr, in GoGenerator g) -> textus {
         casu VocatioExpressia ut e {
             varia args = [] innatum lista<textus>
             ex (e.argumenta qua lista<Expressia>) fixum arg {
-                args.adde(genExpressia(arg, g))
+                args.adde(genExpressia(g, arg))
             }
-            redde scriptum("§(§)", genExpressia(e.vocatum, g), args.coniunge(", "))
+            redde scriptum("§(§)", genExpressia(g, e.vocatum), args.coniunge(", "))
         }
 
         # Member access
         casu MembrumExpressia ut e {
             # WHY: Optional chaining requires flattening nested chains to avoid type issues
             si e.optivum qua bivalens {
-                redde genOptionalMembrum(e, g)
+                redde genOptionalMembrum(g, e)
             }
 
-            fixum obj = genExpressia(e.obiectum, g)
+            fixum obj = genExpressia(g, e.obiectum)
             si e.computatum qua bivalens {
-                fixum idx = genExpressia(e.proprietas, g)
+                fixum idx = genExpressia(g, e.proprietas)
                 redde scriptum("§[§]", obj, idx)
             }
-            fixum prop = genExpressia(e.proprietas, g)
+            fixum prop = genExpressia(g, e.proprietas)
             redde scriptum("§.§", obj, prop)
         }
 
         # Format strings
         casu ScriptumExpressia ut e {
-            redde genScriptum(e.exemplar qua textus, e.argumenta qua lista<Expressia>, g)
+            redde genScriptum(g, e.exemplar qua textus, e.argumenta qua lista<Expressia>)
         }
 
         # Arrays
         casu SeriesExpressia ut e {
             varia items = [] innatum lista<textus>
             ex (e.elementa qua lista<Expressia>) fixum elem {
-                items.adde(genExpressia(elem, g))
+                items.adde(genExpressia(g, elem))
             }
 
             # WHY: Go slice literals must be typed. Infer simple literal element types
@@ -116,19 +116,19 @@ functio genExpressia(de Expressia expr, in GoGenerator g) -> textus {
                     habetDispersum = verum
                     perge
                 }
-                fixum key = genObiectumClavis(prop.clavis, g)
-                fixum val = genExpressia(prop.valor, g)
+                fixum key = genObiectumClavis(g, prop.clavis)
+                fixum val = genExpressia(g, prop.valor)
                 props.adde(scriptum("§: §", key, val))
             }
 
             si props.longitudo() == 0 {
                 si habetDispersum {
-                    redde genObiectumDispersum(e.proprietates qua lista<ObiectumProprietas>, g)
+                    redde genObiectumDispersum(g, e.proprietates qua lista<ObiectumProprietas>)
                 }
                 redde "map[string]interface{}{}"
             }
             si habetDispersum {
-                redde genObiectumDispersum(e.proprietates qua lista<ObiectumProprietas>, g)
+                redde genObiectumDispersum(g, e.proprietates qua lista<ObiectumProprietas>)
             }
             redde scriptum("map[string]interface{}{§}", props.coniunge(", "))
         }
@@ -137,17 +137,17 @@ functio genExpressia(de Expressia expr, in GoGenerator g) -> textus {
         casu CondicioExpressia ut e {
             # Go doesn't have ternary operator - emit as inline func
             # For simple cases this works; complex cases need statement form
-            fixum cond = genExpressia(e.condicio, g)
-            fixum cons = genExpressia(e.consequens, g)
-            fixum alt = genExpressia(e.alternans, g)
+            fixum cond = genExpressia(g, e.condicio)
+            fixum cons = genExpressia(g, e.consequens)
+            fixum alt = genExpressia(g, e.alternans)
             g.requisita.fmt = verum
             redde scriptum("func() interface{} { if § { return § }; return § }()", cond, cons, alt)
         }
 
         # Assignment expression
         casu AssignatioExpressia ut e {
-            fixum sinister = genExpressia(e.sinister, g)
-            fixum dexter = genExpressia(e.dexter, g)
+            fixum sinister = genExpressia(g, e.sinister)
+            fixum dexter = genExpressia(g, e.dexter)
             redde scriptum("§ § §", sinister, e.signum, dexter)
         }
 
@@ -156,9 +156,9 @@ functio genExpressia(de Expressia expr, in GoGenerator g) -> textus {
             # finge Click { x: 10, y: 20 } -> Click{X: 10, Y: 20}
             varia props = [] innatum lista<textus>
             ex (e.campi qua lista<ObiectumProprietas>) fixum campo {
-                fixum key = genExpressia(campo.clavis, g)
+                fixum key = genExpressia(g, campo.clavis)
                 fixum keyCapitalized = capitaliza(key)
-                fixum val = genExpressia(campo.valor, g)
+                fixum val = genExpressia(g, campo.valor)
                 props.adde(scriptum("§: §", keyCapitalized, val))
             }
             si props.longitudo() == 0 {
@@ -172,7 +172,7 @@ functio genExpressia(de Expressia expr, in GoGenerator g) -> textus {
             varia params = [] innatum lista<textus>
             ex (e.parametra qua lista<ClausuraParametrum>) fixum p {
                 si nonnihil p.typus {
-                    params.adde(scriptum("§ §", p.nomen, genTypus(p.typus novum TypusAnnotatio, g)))
+                    params.adde(scriptum("§ §", p.nomen, genTypus(g, p.typus novum TypusAnnotatio)))
                 } secus {
                     params.adde(scriptum("§ interface{}", p.nomen))
                 }
@@ -183,7 +183,7 @@ functio genExpressia(de Expressia expr, in GoGenerator g) -> textus {
                     discerne m.valor {
                         casu MassaSententia ut body {
                             g.intraProfundum()
-                            fixum rendered = genClausuraMassa(body.corpus, g)
+                            fixum rendered = genClausuraMassa(g, body.corpus)
                             g.exiProfundum()
                             si rendered == "" {
                                 redde scriptum("func(§) interface{} { }", params.coniunge(", "))
@@ -194,23 +194,23 @@ functio genExpressia(de Expressia expr, in GoGenerator g) -> textus {
                     }
                 }
                 casu Expr ut expr {
-                    redde scriptum("func(§) interface{} { return § }", params.coniunge(", "), genExpressia(expr.valor, g))
+                    redde scriptum("func(§) interface{} { return § }", params.coniunge(", "), genExpressia(g, expr.valor))
                 }
             }
 
-            redde scriptum("func(§) interface{} { return § }", params.coniunge(", "), genExpressia(finge Littera { locus: e.locus, species: LitteraGenus.Nihil, crudus: "nihil" } qua Expressia, g))
+            redde scriptum("func(§) interface{} { return § }", params.coniunge(", "), genExpressia(g, finge Littera { locus: e.locus, species: LitteraGenus.Nihil, crudus: "nihil" } qua Expressia))
         }
 
         # New instance creation
         casu NovumExpressia ut e {
             varia args = [] innatum lista<textus>
             ex (e.argumenta qua lista<Expressia>) fixum arg {
-                args.adde(genExpressia(arg, g))
+                args.adde(genExpressia(g, arg))
             }
             si nonnihil e.initor {
-                args.adde(genExpressia(e.initor, g))
+                args.adde(genExpressia(g, e.initor))
             }
-            fixum ctor = genConstructorNomen(e.vocatum, g)
+            fixum ctor = genConstructorNomen(g, e.vocatum)
             redde scriptum("§(§)", ctor, args.coniunge(", "))
         }
 
@@ -282,7 +282,7 @@ functio inferSeriesElemTypus(de lista<Expressia> elementa) -> textus {
     redde "int64"
 }
 
-functio genObiectumClavis(de Expressia clavis, in GoGenerator g) -> textus {
+functio genObiectumClavis(in GoGenerator g, de Expressia clavis) -> textus {
     discerne clavis {
         casu Nomen ut n {
             redde scriptum("\"§\"", n.valor)
@@ -299,7 +299,7 @@ functio genObiectumClavis(de Expressia clavis, in GoGenerator g) -> textus {
     redde "\"\""
 }
 
-functio genObiectumDispersum(de lista<ObiectumProprietas> proprietates, in GoGenerator g) -> textus {
+functio genObiectumDispersum(in GoGenerator g, de lista<ObiectumProprietas> proprietates) -> textus {
     varia lines = [] innatum lista<textus>
     fixum baseInd = g.ind()
     lines.adde(scriptum("§func() map[string]interface{} {", baseInd))
@@ -310,11 +310,11 @@ functio genObiectumDispersum(de lista<ObiectumProprietas> proprietates, in GoGen
             mori "Go codegen: unsupported object property (computed key)"
         }
         si prop.dispersum {
-            fixum src = genExpressia(prop.valor, g)
+            fixum src = genExpressia(g, prop.valor)
             lines.adde(scriptum("§for k, v := range § { m[k] = v }", g.ind(), src))
         } secus {
-            fixum key = genObiectumClavis(prop.clavis, g)
-            fixum val = genExpressia(prop.valor, g)
+            fixum key = genObiectumClavis(g, prop.clavis)
+            fixum val = genExpressia(g, prop.valor)
             lines.adde(scriptum("§m[§] = §", g.ind(), key, val))
         }
     }
@@ -324,37 +324,37 @@ functio genObiectumDispersum(de lista<ObiectumProprietas> proprietates, in GoGen
     redde lines.coniunge("\n")
 }
 
-functio genClausuraMassa(de lista<Sententia> corpus, in GoGenerator g) -> textus {
+functio genClausuraMassa(in GoGenerator g, de lista<Sententia> corpus) -> textus {
     si corpus.longitudo() == 0 {
         redde ""
     }
     varia lines = [] innatum lista<textus>
     ex corpus fixum stmt {
-        lines.adde(genClausuraSententia(stmt, g))
+        lines.adde(genClausuraSententia(g, stmt))
     }
     redde lines.coniunge("\n")
 }
 
-functio genClausuraSententia(de Sententia stmt, in GoGenerator g) -> textus {
+functio genClausuraSententia(in GoGenerator g, de Sententia stmt) -> textus {
     discerne stmt {
         casu VariaSententia ut s {
             varia result = scriptum("§var §", g.ind(), s.nomen)
             si nonnihil s.typus {
-                result = scriptum("§ §", result, genTypus(s.typus novum TypusAnnotatio, g))
+                result = scriptum("§ §", result, genTypus(g, s.typus novum TypusAnnotatio))
             }
             si nonnihil s.valor {
-                result = scriptum("§ = §", result, genExpressia(s.valor qua Expressia, g))
+                result = scriptum("§ = §", result, genExpressia(g, s.valor qua Expressia))
             }
             redde result
         }
         casu ReddeSententia ut s {
             si nonnihil s.valor {
-                redde scriptum("§return §", g.ind(), genExpressia(s.valor qua Expressia, g))
+                redde scriptum("§return §", g.ind(), genExpressia(g, s.valor qua Expressia))
             }
             redde scriptum("§return", g.ind())
         }
         casu ExpressiaSententia ut s {
-            redde scriptum("§§", g.ind(), genExpressia(s.expressia, g))
+            redde scriptum("§§", g.ind(), genExpressia(g, s.expressia))
         }
         casu _ { }
     }
@@ -362,7 +362,7 @@ functio genClausuraSententia(de Sententia stmt, in GoGenerator g) -> textus {
     mori scriptum("Go codegen: unsupported lambda statement '§'", stmt.tag)
 }
 
-functio genConstructorNomen(de Expressia vocatum, in GoGenerator g) -> textus {
+functio genConstructorNomen(in GoGenerator g, de Expressia vocatum) -> textus {
     discerne vocatum {
         casu Nomen ut n {
             redde scriptum("New§", capitaliza(n.valor))
@@ -371,7 +371,7 @@ functio genConstructorNomen(de Expressia vocatum, in GoGenerator g) -> textus {
             si m.computatum qua bivalens {
                 mori "Go codegen: unsupported constructor access (computed member)"
             }
-            fixum obj = genExpressia(m.obiectum, g)
+            fixum obj = genExpressia(g, m.obiectum)
             discerne m.proprietas {
                 casu Nomen ut n {
                     redde scriptum("§.New§", obj, capitaliza(n.valor))
@@ -387,7 +387,7 @@ functio genConstructorNomen(de Expressia vocatum, in GoGenerator g) -> textus {
 }
 
 # Generate optional member access by flattening the chain
-functio genOptionalMembrum(de Expressia expr, in GoGenerator g) -> textus {
+functio genOptionalMembrum(in GoGenerator g, de Expressia expr) -> textus {
     # Collect the full chain: base.prop1.prop2.prop3
     varia chain = [] innatum lista<textus>
     varia checks = [] innatum lista<textus>
@@ -409,24 +409,24 @@ functio genOptionalMembrum(de Expressia expr, in GoGenerator g) -> textus {
                 si m.optivum qua bivalens {
                     # Add this property to the chain
                     si m.computatum qua bivalens {
-                        fixum idx = genExpressia(m.proprietas, g)
+                        fixum idx = genExpressia(g, m.proprietas)
                         chain.adde(scriptum("[§]", idx))
                         isComputedAccess = verum
                     } secus {
-                        fixum prop = genExpressia(m.proprietas, g)
+                        fixum prop = genExpressia(g, m.proprietas)
                         chain.adde(scriptum(".§", prop))
                     }
                     # Continue with the object
                     current = m.obiectum
                 } secus {
                     # Non-optional member, treat as base
-                    base = genExpressia(current, g)
+                    base = genExpressia(g, current)
                     rumpe
                 }
             }
             casu _ {
                 # Reached the base object
-                base = genExpressia(current, g)
+                base = genExpressia(g, current)
                 rumpe
             }
         }

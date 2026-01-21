@@ -60,18 +60,18 @@ functio mappaNomenTypi(de textus nomen) -> textus {
 
 # Generate TypeScript type from type annotation
 @ publica
-functio genTypus(de TypusAnnotatio adnotatio, in TsGenerator g) -> textus {
+functio genTypus(in TsGenerator g, de TypusAnnotatio adnotatio) -> textus {
     si adnotatio.nomen == "" et nonnihil adnotatio.reditus {
         varia params = [] innatum lista<textus>
         si nonnihil adnotatio.parametra {
             varia index = 0
             ex (adnotatio.parametra qua lista<TypusAnnotatio>) fixum param {
-                params.adde(scriptum("arg§: §", index, genTypus(param, g)))
+                params.adde(scriptum("arg§: §", index, genTypus(g, param)))
                 index = index + 1
             }
         }
         fixum paramStr = params.coniunge(", ")
-        fixum retStr = genTypus(adnotatio.reditus novum TypusAnnotatio, g)
+        fixum retStr = genTypus(g, adnotatio.reditus novum TypusAnnotatio)
         redde scriptum("(§) => §", paramStr, retStr)
     }
 
@@ -91,7 +91,7 @@ functio genTypus(de TypusAnnotatio adnotatio, in TsGenerator g) -> textus {
         si parametra.longitudo() > 0 {
             varia params = [] innatum lista<textus>
             ex parametra fixum param {
-                fixum paramStr = genTypusParametrum(param, g)
+                fixum paramStr = genTypusParametrum(g, param)
                 si nonnihil paramStr {
                     params.adde(paramStr qua textus)
                 }
@@ -113,7 +113,7 @@ functio genTypus(de TypusAnnotatio adnotatio, in TsGenerator g) -> textus {
         si unioTypi.longitudo() > 0 {
             varia parts = [] innatum lista<textus>
             ex unioTypi fixum u {
-                parts.adde(genTypus(u, g))
+                parts.adde(genTypus(g, u))
             }
             result = parts.coniunge(" | ")
         }
@@ -124,10 +124,10 @@ functio genTypus(de TypusAnnotatio adnotatio, in TsGenerator g) -> textus {
 
 # Generate a single type parameter
 @ publica
-functio genTypusParametrum(de TypusParametrum param, in TsGenerator g) -> textus? {
+functio genTypusParametrum(in TsGenerator g, de TypusParametrum param) -> textus? {
     discerne param {
         casu Typus ut p {
-            redde genTypus(p.adnotatio, g)
+            redde genTypus(g, p.adnotatio)
         }
         casu Littera {
             # Ignore numeric parameters (e.g., numerus<32>)

@@ -16,7 +16,7 @@
 § ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genImporta(de textus fons, de lista<ImportaSpecificator> specificatores, bivalens totum, de ignotum totumAlias, in TsGenerator g) -> textus {
+functio genImporta(in TsGenerator g, de textus fons, de lista<ImportaSpecificator> specificatores, bivalens totum, de ignotum totumAlias) -> textus {
     # Skip norma imports - they are compiler intrinsics, not real modules
     si estNormaImportum(fons) {
         redde ""
@@ -42,7 +42,7 @@ functio genImporta(de textus fons, de lista<ImportaSpecificator> specificatores,
 }
 
 @ publica
-functio genDestructura(de Expressia fons, VariaGenus species, de lista<ImportaSpecificator> specificatores, in TsGenerator g) -> textus {
+functio genDestructura(in TsGenerator g, de Expressia fons, VariaGenus species, de lista<ImportaSpecificator> specificatores) -> textus {
     fixum keyword = (species == VariaGenus.Fixum aut species == VariaGenus.Figendum) sic "const" secus "let"
     fixum asyncPrefix = (species == VariaGenus.Figendum aut species == VariaGenus.Variandum) sic "await " secus ""
 
@@ -57,11 +57,11 @@ functio genDestructura(de Expressia fons, VariaGenus species, de lista<ImportaSp
         }
     }
 
-    redde scriptum("§§ { § } = §§;", g.ind(), keyword, specs.coniunge(", "), asyncPrefix, genExpressia(fons, g))
+    redde scriptum("§§ { § } = §§;", g.ind(), keyword, specs.coniunge(", "), asyncPrefix, genExpressia(g, fons))
 }
 
 @ publica
-functio genSeriesDestructura(de lista<SeriesDestructuraElementum> elementa, de Expressia fons, VariaGenus species, in TsGenerator g) -> textus {
+functio genSeriesDestructura(in TsGenerator g, de lista<SeriesDestructuraElementum> elementa, de Expressia fons, VariaGenus species) -> textus {
     fixum keyword = (species == VariaGenus.Fixum aut species == VariaGenus.Figendum) sic "const" secus "let"
     fixum asyncPrefix = (species == VariaGenus.Figendum aut species == VariaGenus.Variandum) sic "await " secus ""
 
@@ -76,5 +76,5 @@ functio genSeriesDestructura(de lista<SeriesDestructuraElementum> elementa, de E
         }
     }
 
-    redde scriptum("§§ [§] = §§;", g.ind(), keyword, items.coniunge(", "), asyncPrefix, genExpressia(fons, g))
+    redde scriptum("§§ [§] = §§;", g.ind(), keyword, items.coniunge(", "), asyncPrefix, genExpressia(g, fons))
 }

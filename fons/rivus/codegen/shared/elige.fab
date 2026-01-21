@@ -23,7 +23,7 @@ functio genEligeLogica(
     de ScopusSyntaxis syn,
     de Revocata rev
 ) -> textus {
-    fixum disc = rev.genExpr(discriminans, g)
+    fixum disc = rev.genExpr(g, discriminans)
     varia wrapTry = nonnihil cape et syn.habetCape
 
     si wrapTry {
@@ -34,7 +34,7 @@ functio genEligeLogica(
     varia primus = verum
 
     ex casus fixum c {
-        fixum cond = rev.genExpr(c.condicio, g)
+        fixum cond = rev.genExpr(g, c.condicio)
 
         si primus {
             # First case: if (disc === cond) {
@@ -63,7 +63,7 @@ functio genEligeLogica(
         }
 
         g.intraProfundum()
-        fixum body = rev.genStmt(c.consequens, g)
+        fixum body = rev.genStmt(g, c.consequens)
         g.exiProfundum()
 
         si body != "" {
@@ -77,7 +77,7 @@ functio genEligeLogica(
         result = scriptum("§} § {\n", result, syn.secusVerbum)
 
         g.intraProfundum()
-        fixum defBody = rev.genStmt(praedefinitum qua Sententia, g)
+        fixum defBody = rev.genStmt(g, praedefinitum qua Sententia)
         g.exiProfundum()
 
         si defBody != "" {
@@ -97,7 +97,7 @@ functio genEligeLogica(
     si nonnihil cape et syn.habetCape {
         fixum c = cape novum CapeClausula
         g.intraProfundum()
-        fixum catchBody = rev.genStmt(c.corpus, g)
+        fixum catchBody = rev.genStmt(g, c.corpus)
         g.exiProfundum()
         redde scriptum(
             "§try {\n§\n§} catch (§) {\n§\n§}",

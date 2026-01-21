@@ -21,7 +21,7 @@
 § ex "../typus" importa genTypus
 
 @ publica
-functio genDiscretio(de textus nomen, si de ignotum generaParametra, de lista<VariansDeclaratio> variantes, si de ignotum visibilitas, in GoGenerator g) -> textus {
+functio genDiscretio(in GoGenerator g, de textus nomen, de lista<VariansDeclaratio> variantes, si de ignotum generaParametra, si de ignotum visibilitas) -> textus {
     varia lines = [] innatum lista<textus>
 
     # Generate marker method name (lowercase for unexported)
@@ -47,7 +47,7 @@ functio genDiscretio(de textus nomen, si de ignotum generaParametra, de lista<Va
             g.intraProfundum()
             ex varians.campi fixum campus {
                 fixum fieldName = capitaliza(campus.nomen)
-                fixum fieldType = genTypus(campus.typus, g)
+                fixum fieldType = genTypus(g, campus.typus)
                 lines.adde(scriptum("§§ §", g.ind(), fieldName, fieldType))
             }
             g.exiProfundum()

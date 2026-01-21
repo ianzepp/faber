@@ -19,14 +19,14 @@ functio genSiCatena(
     de Revocata rev
 ) -> textus {
     g.intraProfundum()
-    fixum consBody = rev.genStmt(consequens, g)
+    fixum consBody = rev.genStmt(g, consequens)
     g.exiProfundum()
 
     varia result = scriptum(
         "§if §§§ {\n§\n§}",
         g.ind(),
         syn.siCondicioPrae,
-        rev.genExpr(condicio, g),
+        rev.genExpr(g, condicio),
         syn.siCondicioPost,
         consBody,
         g.ind()
@@ -42,7 +42,7 @@ functio genSiCatena(
             # Nested si with cape gets wrapped in else block
             si nonnihil s.cape et syn.habetCape {
                 g.intraProfundum()
-                fixum elseBody = rev.genStmt(s, g)
+                fixum elseBody = rev.genStmt(g, s)
                 g.exiProfundum()
                 result = scriptum("§ § {\n§\n§}", result, syn.secusVerbum, elseBody, g.ind())
                 next = nihil
@@ -50,7 +50,7 @@ functio genSiCatena(
             }
 
             g.intraProfundum()
-            fixum body = rev.genStmt(s.consequens, g)
+            fixum body = rev.genStmt(g, s.consequens)
             g.exiProfundum()
 
             result = scriptum(
@@ -58,7 +58,7 @@ functio genSiCatena(
                 result,
                 syn.sinVerbum,
                 syn.siCondicioPrae,
-                rev.genExpr(s.condicio, g),
+                rev.genExpr(g, s.condicio),
                 syn.siCondicioPost,
                 body,
                 g.ind()
@@ -69,7 +69,7 @@ functio genSiCatena(
 
         # Plain else block
         g.intraProfundum()
-        fixum body = rev.genStmt(stmt, g)
+        fixum body = rev.genStmt(g, stmt)
         g.exiProfundum()
 
         result = scriptum("§ § {\n§\n§}", result, syn.secusVerbum, body, g.ind())
@@ -95,7 +95,7 @@ functio genSiLogica(
         fixum c = cape novum CapeClausula
         fixum ifBody = genSiCatena(condicio, consequens, alternans, g, syn, rev)
         g.intraProfundum()
-        fixum catchBody = rev.genStmt(c.corpus, g)
+        fixum catchBody = rev.genStmt(g, c.corpus)
         g.exiProfundum()
         redde scriptum(
             "§try {\n§\n§} catch (§) {\n§\n§}",

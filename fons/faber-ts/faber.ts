@@ -209,8 +209,9 @@ async function emit(displayName: string, outputFile?: string, options: { silent?
     // Semantic Analysis
     // ---------------------------------------------------------------------------
 
-    // WHY: No file path for stdin - import resolution not supported
-    const { errors: semanticErrors, subsidiaImports, resolvedModules } = analyze(program, { filePath: undefined });
+    // Use file path from --stdin-filename if provided, enables import resolution
+    const filePath = displayName !== '<stdin>' ? displayName : undefined;
+    const { errors: semanticErrors, subsidiaImports, resolvedModules } = analyze(program, { filePath });
 
     if (semanticErrors.length > 0) {
         console.error('Semantic errors:');
@@ -228,10 +229,9 @@ async function emit(displayName: string, outputFile?: string, options: { silent?
 
     let output: string;
     try {
-        // WHY: No filePath for stdin - CLI module resolution not available
         // WHY: Pass subsidiaImports to enable HAL import resolution
         // WHY: keepRelativeImports=true because output directory structure mirrors source
-        output = generate(program, { filePath: undefined, subsidiaImports, keepRelativeImports: true, stripTests });
+        output = generate(program, { filePath, subsidiaImports, keepRelativeImports: true, stripTests });
     } catch (err) {
         // WHY: Codegen errors should display cleanly
         const message = err instanceof Error ? err.message : String(err);

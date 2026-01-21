@@ -5,14 +5,14 @@
 # TRANSFORMS:
 #   genus Foo { ... }               -> class Foo { ... }
 #   genus Foo<T> { ... }            -> class Foo<T> { ... }
-#   genus Foo extendit Bar { ... }  -> class Foo extends Bar { ... }
-#   genus Foo implet X, Y { ... }   -> class Foo implements X, Y { ... }
-#   @ abstractum genus Foo { ... }  -> abstract class Foo { ... }
+#   genus Foo s.extendit Bar { ... }  -> class Foo extends Bar { ... }
+#   genus Foo s.implet X, Y { ... }   -> class Foo implements X, Y { ... }
+#   @ s.abstractum genus Foo { ... }  -> abstract class Foo { ... }
 #   @ publica genus Foo { ... }     -> export class Foo { ... }
 #   campus publicus x: numerus      -> public x: number
 #   campus staticus x: numerus      -> static x: number
 
-§ ex "../../../ast/sententia" importa Sententia, FunctioDeclaratio, CampusDeclaratio, Visibilitas
+§ ex "../../../ast/sententia" importa Sententia, FunctioDeclaratio, CampusDeclaratio, Visibilitas, GenusDeclaratio
 § ex "../../../ast/expressia" importa Expressia
 § ex "../../../ast/typus" importa TypusAnnotatio
 § ex "../nucleus" importa TsGenerator
@@ -23,45 +23,45 @@
 § ex "../typus" importa genTypus
 
 @ publica
-functio genGenus(de textus nomen, de ignotum generaParametra, de ignotum extendit, de ignotum implet, bivalens abstractum, de lista<CampusDeclaratio> campi, de ignotum structor, de lista<FunctioDeclaratio> methodi, de ignotum visibilitas, in TsGenerator g) -> textus {
+functio genGenus(in TsGenerator g, de GenusDeclaratio s) -> textus {
     varia result = g.ind()
 
     # Determine class visibility for field inheritance
     varia classVisibility = Visibilitas.Privata
-    si nonnihil visibilitas {
-        classVisibility = visibilitas qua Visibilitas
+    si nonnihil s.visibilitas {
+        classVisibility = s.visibilitas qua Visibilitas
     }
 
     # Module-level: export when public
-    si nonnihil visibilitas {
-        fixum vis = visibilitas qua Visibilitas
+    si nonnihil s.visibilitas {
+        fixum vis = s.visibilitas qua Visibilitas
         si vis == Visibilitas.Publica {
             result = scriptum("§export ", result)
         }
     }
 
-    si abstractum {
+    si s.abstractum {
         result = scriptum("§abstract ", result)
     }
 
-    result = scriptum("§class §", result, nomen)
+    result = scriptum("§class §", result, s.nomen)
 
     # Generics
-    si nonnihil generaParametra {
-        fixum gp = generaParametra qua lista<textus>
+    si nonnihil s.generaParametra {
+        fixum gp = s.generaParametra qua lista<textus>
         si gp.longitudo() > 0 {
             result = scriptum("§<§>", result, gp.coniunge(", "))
         }
     }
 
     # Extends
-    si nonnihil extendit {
-        result = scriptum("§ extends §", result, extendit qua textus)
+    si nonnihil s.extendit {
+        result = scriptum("§ extends §", result, s.extendit qua textus)
     }
 
     # Implements
-    si nonnihil implet {
-        fixum impl = implet qua lista<textus>
+    si nonnihil s.implet {
+        fixum impl = s.implet qua lista<textus>
         si impl.longitudo() > 0 {
             result = scriptum("§ implements §", result, impl.coniunge(", "))
         }
@@ -72,14 +72,14 @@ functio genGenus(de textus nomen, de ignotum generaParametra, de ignotum extendi
     g.inGenere = verum
 
     # Fields
-    ex campi fixum campus {
-        result = scriptum("§§\n", result, genCampus(campus, classVisibility, g))
+    ex s.campi fixum campus {
+        result = scriptum("§§\n", result, genCampus(g, campus, classVisibility))
     }
 
     # Split creo method from other methods
     varia creo = nihil qua FunctioDeclaratio?
     varia ceteri = [] innatum lista<FunctioDeclaratio>
-    ex methodi fixum m {
+    ex s.methodi fixum m {
         si m.structor {
             creo = m
         } secus {
@@ -88,16 +88,16 @@ functio genGenus(de textus nomen, de ignotum generaParametra, de ignotum extendi
     }
 
     # Constructor (auto-merge)
-    result = scriptum("§§\n", result, genAutoMergeConstructor(campi, nonnihil creo, g))
+    result = scriptum("§§\n", result, genAutoMergeConstructor(g, s.campi, nonnihil creo))
 
     # Private creo hook
     si nonnihil creo {
-        result = scriptum("§§\n", result, genCreoMethod(creo qua Sententia, g))
+        result = scriptum("§§\n", result, genCreoMethod(g, creo qua Sententia))
     }
 
     # Methods
     ex ceteri fixum methodus {
-        result = scriptum("§§\n", result, genSententia(methodus, g))
+        result = scriptum("§§\n", result, genSententia(g, methodus))
     }
 
     g.inGenere = falsum
@@ -107,7 +107,7 @@ functio genGenus(de textus nomen, de ignotum generaParametra, de ignotum extendi
     redde result
 }
 
-functio genAutoMergeConstructor(de lista<CampusDeclaratio> campi, bivalens hasCreo, in TsGenerator g) -> textus {
+functio genAutoMergeConstructor(in TsGenerator g, de lista<CampusDeclaratio> campi, bivalens hasCreo) -> textus {
     varia lines = [] innatum lista<textus>
     varia instFields = [] innatum lista<CampusDeclaratio>
     ex campi fixum campus {
@@ -118,7 +118,7 @@ functio genAutoMergeConstructor(de lista<CampusDeclaratio> campi, bivalens hasCr
 
     varia props = [] innatum lista<textus>
     ex instFields fixum campus {
-        props.adde(scriptum("§?: §", campus.nomen, genTypus(campus.typus, g)))
+        props.adde(scriptum("§?: §", campus.nomen, genTypus(g, campus.typus)))
     }
     fixum overridesType = (instFields.longitudo() > 0) sic scriptum("{ § }", props.coniunge(", ")) secus "Record<string, never>"
 
@@ -138,13 +138,13 @@ functio genAutoMergeConstructor(de lista<CampusDeclaratio> campi, bivalens hasCr
     redde lines.coniunge("\n")
 }
 
-functio genCreoMethod(de Sententia creo, in TsGenerator g) -> textus {
+functio genCreoMethod(in TsGenerator g, de Sententia creo) -> textus {
     discerne creo {
         casu FunctioDeclaratio ut f {
             varia body = "{}"
             si nonnihil f.corpus {
                 g.intraProfundum()
-                fixum content = genSententia(f.corpus, g)
+                fixum content = genSententia(g, f.corpus)
                 g.exiProfundum()
                 body = scriptum("{\n§\n§}", content, g.ind())
             }
@@ -156,7 +156,7 @@ functio genCreoMethod(de Sententia creo, in TsGenerator g) -> textus {
 }
 
 @ publica
-functio genCampus(de CampusDeclaratio campus, Visibilitas classVisibility, in TsGenerator g) -> textus {
+functio genCampus(in TsGenerator g, de CampusDeclaratio campus, Visibilitas classVisibility) -> textus {
     varia result = g.ind()
 
     # Determine effective visibility
@@ -183,10 +183,10 @@ functio genCampus(de CampusDeclaratio campus, Visibilitas classVisibility, in Ts
         result = scriptum("§static ", result)
     }
 
-    result = scriptum("§§: §", result, campus.nomen, genTypus(campus.typus, g))
+    result = scriptum("§§: §", result, campus.nomen, genTypus(g, campus.typus))
 
     si nonnihil campus.valor {
-        result = scriptum("§ = §", result, genExpressia(campus.valor, g))
+        result = scriptum("§ = §", result, genExpressia(g, campus.valor))
     }
 
     redde scriptum("§;", result)

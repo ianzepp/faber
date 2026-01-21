@@ -25,7 +25,7 @@
 # Generate TypeScript code for an ab expression
 @ publica
 functio genAbExpressia(de Expressia fons, bivalens negata, in TsGenerator g, si de AbFiltrum filtrum, si de lista<CatenaGradus> gradus) -> textus {
-    fixum fonsTxt = genExpressia(fons, g)
+    fixum fonsTxt = genExpressia(g, fons)
 
     # No filter case: just apply transforms
     si nihil filtrum {
@@ -46,12 +46,12 @@ functio genAbExpressia(de Expressia fons, bivalens negata, in TsGenerator g, si 
         fixum priorParam = g.abUbiParam
         g.inAbUbi = verum
         g.abUbiParam = param
-        condicio = genExpressia(filtrum.condicio, g)
+        condicio = genExpressia(g, filtrum.condicio)
         g.inAbUbi = priorInAbUbi
         g.abUbiParam = priorParam
     } secus {
         # Boolean property shorthand: ab users activus
-        condicio = scriptum("§.§", param, genExpressia(filtrum.condicio, g))
+        condicio = scriptum("§.§", param, genExpressia(g, filtrum.condicio))
     }
 
     # Apply negation if present
@@ -103,13 +103,13 @@ functio applicaCatenaGradus(de textus fons, de lista<CatenaGradus> gradus, in Ts
         elige verbum {
             casu "prima" {
                 # prima N -> .slice(0, N)
-                fixum arg = genExpressia(gradusSingulus.argumentum qua Expressia, g)
+                fixum arg = genExpressia(g, gradusSingulus.argumentum qua Expressia)
                 result = scriptum("§.slice(0, §)", result, arg)
             }
 
             casu "ultima" {
                 # ultima N -> .slice(-N)
-                fixum arg = genExpressia(gradusSingulus.argumentum qua Expressia, g)
+                fixum arg = genExpressia(g, gradusSingulus.argumentum qua Expressia)
                 result = scriptum("§.slice(-§)", result, arg)
             }
 
@@ -117,7 +117,7 @@ functio applicaCatenaGradus(de textus fons, de lista<CatenaGradus> gradus, in Ts
                 # summa -> .reduce((a, b) => a + b, 0)
                 # summa prop -> .reduce((a, b) => a + b.prop, 0)
                 si nonnihil gradusSingulus.proprietas {
-                    fixum prop = genExpressia(gradusSingulus.proprietas qua Expressia, g)
+                    fixum prop = genExpressia(g, gradusSingulus.proprietas qua Expressia)
                     result = scriptum("§.reduce((a, b) => a + b.§, 0)", result, prop)
                 } secus {
                     result = scriptum("§.reduce((a, b) => a + b, 0)", result)
@@ -128,7 +128,7 @@ functio applicaCatenaGradus(de textus fons, de lista<CatenaGradus> gradus, in Ts
                 # ordina per prop -> .toSorted((a, b) => compare)
                 # Uses toSorted() for immutable sort
                 si nonnihil gradusSingulus.proprietas {
-                    fixum prop = genExpressia(gradusSingulus.proprietas qua Expressia, g)
+                    fixum prop = genExpressia(g, gradusSingulus.proprietas qua Expressia)
                     fixum desc = (gradusSingulus.directio qua textus?) == "descendens"
                     fixum first = desc sic "b" secus "a"
                     fixum second = desc sic "a" secus "b"
@@ -139,7 +139,7 @@ functio applicaCatenaGradus(de textus fons, de lista<CatenaGradus> gradus, in Ts
             casu "collige" {
                 # collige prop -> .map(_x => _x.prop)
                 si nonnihil gradusSingulus.proprietas {
-                    fixum prop = genExpressia(gradusSingulus.proprietas qua Expressia, g)
+                    fixum prop = genExpressia(g, gradusSingulus.proprietas qua Expressia)
                     result = scriptum("§.map(_x => _x.§)", result, prop)
                 }
             }
@@ -147,7 +147,7 @@ functio applicaCatenaGradus(de textus fons, de lista<CatenaGradus> gradus, in Ts
             casu "grupa" {
                 # grupa per prop -> Object.groupBy(arr, _x => _x.prop)
                 si nonnihil gradusSingulus.proprietas {
-                    fixum prop = genExpressia(gradusSingulus.proprietas qua Expressia, g)
+                    fixum prop = genExpressia(g, gradusSingulus.proprietas qua Expressia)
                     result = scriptum("Object.groupBy(§, _x => _x.§)", result, prop)
                 }
             }

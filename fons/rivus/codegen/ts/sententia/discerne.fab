@@ -28,11 +28,11 @@
 § ex "./index" importa genSententia
 
 @ publica
-functio genDiscerne(de lista<Expressia> discriminantes, de lista<VariansCasus> casus, in TsGenerator g) -> textus {
+functio genDiscerne(in TsGenerator g, de lista<Expressia> discriminantes, de lista<VariansCasus> casus) -> textus {
     # Generate expressions for all discriminants
     varia discriminantStrs = [] innatum lista<textus>
     ex discriminantes fixum d {
-        discriminantStrs.adde(genExpressia(d, g))
+        discriminantStrs.adde(genExpressia(g, d))
     }
 
     varia result = scriptum("§// discerne\n", g.ind())
@@ -77,13 +77,13 @@ functio genDiscerne(de lista<Expressia> discriminantes, de lista<VariansCasus> c
             # Skip wildcards - no bindings
             si non pattern.estWildcard {
                 fixum disc = discriminantStrs[j]
-                result = scriptum("§§", result, genPatternBindings(pattern, disc, g))
+                result = scriptum("§§", result, genPatternBindings(g, pattern, disc))
             }
             j += 1
         }
 
         # Generate body statements
-        result = scriptum("§§\n", result, genSententia(c.consequens, g))
+        result = scriptum("§§\n", result, genSententia(g, c.consequens))
         g.exiProfundum()
         result = scriptum("§§}\n", result, g.ind())
     }
@@ -92,7 +92,7 @@ functio genDiscerne(de lista<Expressia> discriminantes, de lista<VariansCasus> c
 }
 
 # Generate bindings for a single pattern
-functio genPatternBindings(de VariansExemplar pattern, de textus discriminant, in TsGenerator g) -> textus {
+functio genPatternBindings(in TsGenerator g, de VariansExemplar pattern, de textus discriminant) -> textus {
     varia result = ""
 
     # Alias binding: casu Click ut c

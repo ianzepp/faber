@@ -266,7 +266,7 @@ genus Analyzator {
 
 # Create a new analyzer
 @ publica
-functio novumAnalyzator(si de textus viaIngressus, ex tabula<textus, Dependentia> dependentiae) -> Analyzator {
+functio novumAnalyzator(ex tabula<textus, Dependentia> dependentiae, si de textus viaIngressus) -> Analyzator {
     fixum analyzator = novum Analyzator {
         errores: [] innatum lista<SemanticError>,
         scopus: creaScopumGlobalem(),

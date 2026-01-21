@@ -16,19 +16,19 @@
 § ex "./index" importa genSententia
 
 @ publica
-functio genFac(de Sententia corpus, de ignotum condicio, de ignotum cape, in TsGenerator g) -> textus {
+functio genFac(in TsGenerator g, de Sententia corpus, de ignotum condicio, de ignotum cape) -> textus {
     g.intraProfundum()
-    fixum body = genSententia(corpus, g)
+    fixum body = genSententia(g, corpus)
     g.exiProfundum()
 
     si nonnihil condicio {
-        fixum test = genExpressia(condicio qua Expressia, g)
+        fixum test = genExpressia(g, condicio qua Expressia)
         fixum loop = scriptum("§do {\n§\n§} while (§);", g.ind(), body, g.ind(), test)
 
         si nonnihil cape {
             fixum c = cape novum CapeClausula
             g.intraProfundum()
-            fixum catchBody = genSententia(c.corpus, g)
+            fixum catchBody = genSententia(g, c.corpus)
             g.exiProfundum()
             redde scriptum("§try {\n§\n§} catch (§) {\n§\n§}", g.ind(), loop, g.ind(), c.param, catchBody, g.ind())
         }
@@ -39,7 +39,7 @@ functio genFac(de Sententia corpus, de ignotum condicio, de ignotum cape, in TsG
     si nonnihil cape {
         fixum c = cape novum CapeClausula
         g.intraProfundum()
-        fixum catchBody = genSententia(c.corpus, g)
+        fixum catchBody = genSententia(g, c.corpus)
         g.exiProfundum()
         redde scriptum("§try {\n§\n§} catch (§) {\n§\n§}", g.ind(), body, g.ind(), c.param, catchBody, g.ind())
     }

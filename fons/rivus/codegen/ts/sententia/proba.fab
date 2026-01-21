@@ -52,7 +52,7 @@ functio getSuitePath(de TsGenerator g) -> textus {
 # =============================================================================
 
 @ publica
-functio genProbandum(de textus nomen, si bivalens ompitur, si de textus ratioOmissionis, si bivalens solum, si de lista<textus> tags, de lista<Sententia> corpus, in TsGenerator g) -> textus {
+functio genProbandum(in TsGenerator g, de textus nomen, de lista<Sententia> corpus, si bivalens ompitur, si de textus ratioOmissionis, si bivalens solum, si de lista<textus> tags) -> textus {
     # Legacy mode: generate describe()
     si non g.inProbaStandalone {
         varia lines = [] innatum lista<textus>
@@ -60,7 +60,7 @@ functio genProbandum(de textus nomen, si bivalens ompitur, si de textus ratioOmi
 
         g.intraProfundum()
         ex corpus fixum stmt {
-            lines.adde(genSententia(stmt, g))
+            lines.adde(genSententia(g, stmt))
         }
         g.exiProfundum()
 
@@ -75,7 +75,7 @@ functio genProbandum(de textus nomen, si bivalens ompitur, si de textus ratioOmi
     lines.adde(scriptum("§// Suite: §", g.ind(), nomen))
 
     ex corpus fixum stmt {
-        lines.adde(genSententia(stmt, g))
+        lines.adde(genSententia(g, stmt))
     }
 
     g.probaSuiteStack.remove()
@@ -89,8 +89,10 @@ functio genProbandum(de textus nomen, si bivalens ompitur, si de textus ratioOmi
 
 @ publica
 functio genProba(
+    in TsGenerator g,
     de textus nomen,
     de ignotum modificator,
+    de Sententia corpus,
     si de textus ratioModificatoris,
     si bivalens solum,
     si de lista<textus> tags,
@@ -99,9 +101,7 @@ functio genProba(
     si numerus repete,
     si numerus fragilis,
     si de textus requirit,
-    si de textus solumIn,
-    de Sententia corpus,
-    in TsGenerator g
+    si de textus solumIn
 ) -> textus {
     # Legacy mode: generate test()
     si non g.inProbaStandalone {
@@ -116,7 +116,7 @@ functio genProba(
 
             si mod == ProbaModificator.Omitte {
                 g.intraProfundum()
-                fixum body = genSententia(corpus, g)
+                fixum body = genSententia(g, corpus)
                 g.exiProfundum()
                 redde scriptum("§test.skip(\"§\", () => {\n§\n§});", g.ind(), titulus, body, g.ind())
             }
@@ -126,7 +126,7 @@ functio genProba(
         }
 
         g.intraProfundum()
-        fixum body = genSententia(corpus, g)
+        fixum body = genSententia(g, corpus)
         g.exiProfundum()
 
         redde scriptum("§test(\"§\", () => {\n§\n§});", g.ind(), nomen, body, g.ind())
@@ -195,7 +195,7 @@ functio genProba(
     g.intraProfundum()
 
     # Generate body
-    fixum body = genSententia(corpus, g)
+    fixum body = genSententia(g, corpus)
     si body.longitudo() > 0 {
         lines.adde(body)
     }
@@ -218,7 +218,7 @@ functio genProba(
 # =============================================================================
 
 @ publica
-functio genPraepara(PraeparaTempus tempus, bivalens asynca, bivalens omnia, de Sententia corpus, in TsGenerator g) -> textus {
+functio genPraepara(in TsGenerator g, PraeparaTempus tempus, bivalens asynca, bivalens omnia, de Sententia corpus) -> textus {
     # In standalone mode, setup/teardown become comments (not supported in simple harness)
     si g.inProbaStandalone {
         fixum hookType = (tempus == PraeparaTempus.Praepara) sic "setup" secus "teardown"
@@ -245,7 +245,7 @@ functio genPraepara(PraeparaTempus tempus, bivalens asynca, bivalens omnia, de S
     fixum asyncPrefix = asynca sic "async " secus ""
 
     g.intraProfundum()
-    fixum body = genSententia(corpus, g)
+    fixum body = genSententia(g, corpus)
     g.exiProfundum()
 
     redde scriptum("§§(§() => {\n§\n§});", g.ind(), hook, asyncPrefix, body, g.ind())

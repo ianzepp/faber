@@ -17,7 +17,7 @@
 # Generate scriptum (format string) expression
 # Supports both § (positional) and §0, §1, etc. (indexed) placeholders
 @ publica
-functio genScriptum(de textus exemplar, de lista<Expressia> argumenta, in GoGenerator g) -> textus {
+functio genScriptum(in GoGenerator g, de textus exemplar, de lista<Expressia> argumenta) -> textus {
     # No-arg scriptum should emit a plain string literal
     si argumenta.longitudo() == 0 {
         redde scriptum("\"§\"", exemplar)
@@ -69,7 +69,7 @@ functio genScriptum(de textus exemplar, de lista<Expressia> argumenta, in GoGene
     varia args = [] innatum lista<textus>
     ex argOrder fixum idx {
         si idx < argumenta.longitudo() {
-            args.adde(genExpressia(argumenta[idx], g))
+            args.adde(genExpressia(g, argumenta[idx]))
         } secus {
             args.adde("nil")
         }

@@ -20,17 +20,17 @@
 
 # Generate est (type check) expression
 @ publica
-functio genEstExpressia(de Expressia expr, de TypusAnnotatio scopus, in TsGenerator g) -> textus {
+functio genEstExpressia(in TsGenerator g, de Expressia expr, de TypusAnnotatio scopus) -> textus {
     redde genEstExpressiaCum(expr, scopus, g, falsum)
 }
 
 @ publica
-functio genEstExpressiaNegata(de Expressia expr, de TypusAnnotatio scopus, in TsGenerator g) -> textus {
+functio genEstExpressiaNegata(in TsGenerator g, de Expressia expr, de TypusAnnotatio scopus) -> textus {
     redde genEstExpressiaCum(expr, scopus, g, verum)
 }
 
 functio genEstExpressiaCum(de Expressia expr, de TypusAnnotatio scopus, in TsGenerator g, bivalens negatum) -> textus {
-    fixum val = genExpressia(expr, g)
+    fixum val = genExpressia(g, expr)
 
     # Primitive type checks use typeof
     si scopus.nomen == "textus" {

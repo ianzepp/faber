@@ -20,24 +20,24 @@
 § ex "./index" importa genSententia
 
 @ publica
-functio genDiscerne(de lista<Expressia> discriminantes, de lista<VariansCasus> casus, in GoGenerator g) -> textus {
+functio genDiscerne(in GoGenerator g, de lista<Expressia> discriminantes, de lista<VariansCasus> casus) -> textus {
     # Generate expressions for all discriminants
     varia discriminantStrs = [] innatum lista<textus>
     ex discriminantes fixum d {
-        discriminantStrs.adde(genExpressia(d, g))
+        discriminantStrs.adde(genExpressia(g, d))
     }
 
     # Single discriminant: use type switch
     si discriminantStrs.longitudo() == 1 {
-        redde genDiscerneSimplex(discriminantStrs[0], casus, g)
+        redde genDiscerneSimplex(g, discriminantStrs[0], casus)
     }
 
     # Multi-discriminant: use type assertions with if/else
-    redde genDiscerneMultiplex(discriminantStrs, casus, g)
+    redde genDiscerneMultiplex(g, discriminantStrs, casus)
 }
 
 # Single discriminant: generates Go type switch
-functio genDiscerneSimplex(de textus discriminant, de lista<VariansCasus> casus, in GoGenerator g) -> textus {
+functio genDiscerneSimplex(in GoGenerator g, de textus discriminant, de lista<VariansCasus> casus) -> textus {
     # Check if any case uses bindings (alias or field extraction)
     varia needsBinding = falsum
     ex casus fixum c {
@@ -71,11 +71,11 @@ functio genDiscerneSimplex(de textus discriminant, de lista<VariansCasus> casus,
 
         # Generate bindings (use _v as the typed value)
         si non pattern.estWildcard {
-            result = scriptum("§§", result, genPatternBindingsTypeSwitch(pattern, g))
+            result = scriptum("§§", result, genPatternBindingsTypeSwitch(g, pattern))
         }
 
         # Generate body
-        result = scriptum("§§\n", result, genSententia(c.consequens, g))
+        result = scriptum("§§\n", result, genSententia(g, c.consequens))
         g.exiProfundum()
     }
 
@@ -101,7 +101,7 @@ functio genDiscerneSimplex(de textus discriminant, de lista<VariansCasus> casus,
 }
 
 # Multi-discriminant: generates type assertions with if/else chain
-functio genDiscerneMultiplex(de lista<textus> discriminantStrs, de lista<VariansCasus> casus, in GoGenerator g) -> textus {
+functio genDiscerneMultiplex(in GoGenerator g, de lista<textus> discriminantStrs, de lista<VariansCasus> casus) -> textus {
     varia result = ""
     varia first = verum
 
@@ -161,13 +161,13 @@ functio genDiscerneMultiplex(de lista<textus> discriminantStrs, de lista<Varians
         ex c.exemplaria fixum pattern {
             si non pattern.estWildcard {
                 fixum tempVar = scriptum("_d§", j)
-                result = scriptum("§§", result, genPatternBindingsMulti(pattern, tempVar, g))
+                result = scriptum("§§", result, genPatternBindingsMulti(g, pattern, tempVar))
             }
             j += 1
         }
 
         # Generate body
-        result = scriptum("§§\n", result, genSententia(c.consequens, g))
+        result = scriptum("§§\n", result, genSententia(g, c.consequens))
         g.exiProfundum()
         result = scriptum("§§}", result, g.ind())
     }
@@ -177,7 +177,7 @@ functio genDiscerneMultiplex(de lista<textus> discriminantStrs, de lista<Varians
 
 # Generate bindings for type switch (single discriminant)
 # The typed value is available as _v
-functio genPatternBindingsTypeSwitch(de VariansExemplar pattern, in GoGenerator g) -> textus {
+functio genPatternBindingsTypeSwitch(in GoGenerator g, de VariansExemplar pattern) -> textus {
     varia result = ""
 
     # Alias binding: casu Click ut c -> c := _v
@@ -197,7 +197,7 @@ functio genPatternBindingsTypeSwitch(de VariansExemplar pattern, in GoGenerator 
 }
 
 # Generate bindings for multi-discriminant (type assertions)
-functio genPatternBindingsMulti(de VariansExemplar pattern, de textus tempVar, in GoGenerator g) -> textus {
+functio genPatternBindingsMulti(in GoGenerator g, de VariansExemplar pattern, de textus tempVar) -> textus {
     varia result = ""
 
     # Alias binding: casu Click ut c -> c := _dN

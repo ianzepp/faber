@@ -14,13 +14,13 @@
 § ex "../expressia/index" importa genExpressia
 
 @ publica
-functio genRedde(de ignotum valor, in TsGenerator g) -> textus {
+functio genRedde(in TsGenerator g, de ignotum valor) -> textus {
     si g.inFlumina {
-        fixum data = nonnihil valor sic genExpressia(valor qua Expressia, g) secus "undefined"
+        fixum data = nonnihil valor sic genExpressia(g, valor qua Expressia) secus "undefined"
         redde scriptum("§yield respond.ok(§);", g.ind(), data)
     }
     si nonnihil valor {
-        redde scriptum("§return §;", g.ind(), genExpressia(valor qua Expressia, g))
+        redde scriptum("§return §;", g.ind(), genExpressia(g, valor qua Expressia))
     }
     redde scriptum("§return;", g.ind())
 }

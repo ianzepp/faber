@@ -12,7 +12,7 @@
 § ex "./index" importa genSententia
 
 @ publica
-functio genIncipit(si de ignotum corpus, si de ignotum ergo, in GoGenerator g) -> textus {
+functio genIncipit(in GoGenerator g, si de ignotum corpus, si de ignotum ergo) -> textus {
     # Generate main function body
     # For simple incipit { ... }, body is in corpus
     # For incipit ergo cura..., actual statements are in ergo
@@ -22,14 +22,14 @@ functio genIncipit(si de ignotum corpus, si de ignotum ergo, in GoGenerator g) -
     # Check corpus first (simple incipit { ... })
     si nonnihil corpus {
         g.intraProfundum()
-        body = genSententia(corpus qua Sententia, g)
+        body = genSententia(g, corpus qua Sententia)
         g.exiProfundum()
     }
 
     # Then check ergo (incipit ergo ... { ... })
     si nonnihil ergo {
         g.intraProfundum()
-        fixum ergoBody = genSententia(ergo qua Sententia, g)
+        fixum ergoBody = genSententia(g, ergo qua Sententia)
         g.exiProfundum()
         si body != "" {
             body = scriptum("§\n§", body, ergoBody)
@@ -47,7 +47,7 @@ functio genIncipit(si de ignotum corpus, si de ignotum ergo, in GoGenerator g) -
 
 # Async entry point - Go doesn't have async main, just use regular main
 @ publica
-functio genIncipiet(si de ignotum corpus, si de ignotum ergo, in GoGenerator g) -> textus {
+functio genIncipiet(in GoGenerator g, si de ignotum corpus, si de ignotum ergo) -> textus {
     # Go doesn't have async main - generate regular main
-    redde genIncipit(corpus, ergo, g)
+    redde genIncipit(g, corpus, ergo)
 }

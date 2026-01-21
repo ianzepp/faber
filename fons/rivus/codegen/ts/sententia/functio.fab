@@ -1,13 +1,13 @@
 # TypeScript Statement Generator - Function Declarations
 #
-# Generates TypeScript function declarations with async/generator modifiers.
+# Generates TypeScript function declarations with async/f.generator modifiers.
 #
 # TRANSFORMS:
 #   functio f() { ... }                 -> function f() { ... }
 #   futura functio f() { ... }          -> async function f() { ... }
 #   cursore functio f() { ... }         -> function* f() { ... }
 #   futura cursore functio f() { ... }  -> async function* f() { ... }
-#   @ externa functio f() -> T          -> declare function f(): T;
+#   @ f.externa functio f() -> T          -> declare function f(): T;
 #
 # DORMANT (fit/fiet/fiunt/fient return protocol):
 #   The code below still supports the Responsum protocol for structured returns:
@@ -20,7 +20,7 @@
 #   as return type syntax. Re-enable in parser/sententia/declara.fab when Go/Zig backends
 #   are ready to support the protocol. See preamble/index.fab for runtime definitions.
 
-§ ex "../../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, Visibilitas, ReddeVerbum, FunctioModificator, ExitusModificator
+§ ex "../../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, Visibilitas, ReddeVerbum, FunctioModificator, ExitusModificator, FunctioDeclaratio
 § ex "../../../ast/typus" importa TypusAnnotatio
 § ex "../nucleus" importa TsGenerator
 
@@ -30,14 +30,14 @@
 § ex "../typus" importa genTypus
 
 @ publica
-functio genFunctio(de textus nomen, de ignotum generaParametra, de lista<Parametrum> parametra, de ignotum reddeVerbum, de ignotum typusReditus, de ignotum corpus, bivalens asynca, bivalens generator, bivalens structor, de ignotum visibilitas, bivalens abstracta, bivalens externa, de ignotum modificatores, in TsGenerator g) -> textus {
+functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
     # External declarations use TypeScript's 'declare' syntax
-    si externa {
-        varia result = scriptum("§declare function §", g.ind(), nomen)
+    si f.externa {
+        varia result = scriptum("§declare function §", g.ind(), f.nomen)
 
         # Generic parameters
-        si nonnihil generaParametra {
-            fixum gp = generaParametra qua lista<TypusParametrum>
+        si nonnihil f.generaParametra {
+            fixum gp = f.generaParametra qua lista<TypusParametrum>
             si gp.longitudo() > 0 {
                 varia names = [] innatum lista<textus>
                 ex gp fixum p {
@@ -49,14 +49,14 @@ functio genFunctio(de textus nomen, de ignotum generaParametra, de lista<Paramet
 
         # Parameters
         varia params = [] innatum lista<textus>
-        ex parametra fixum param {
-            params.adde(genParametrum(param, g))
+        ex f.parametra fixum param {
+            params.adde(genParametrum(g, param))
         }
         result = scriptum("§(§)", result, params.coniunge(", "))
 
         # Return type
-        si nonnihil typusReditus {
-            result = scriptum("§: §", result, genTypus(typusReditus novum TypusAnnotatio, g))
+        si nonnihil f.typusReditus {
+            result = scriptum("§: §", result, genTypus(g, f.typusReditus novum TypusAnnotatio))
         }
 
         redde scriptum("§;", result)
@@ -69,16 +69,16 @@ functio genFunctio(de textus nomen, de ignotum generaParametra, de lista<Paramet
     varia useFiunt = falsum
     varia useFiet = falsum
     varia useFient = falsum
-    si nonnihil reddeVerbum et non structor {
-        fixum rv = reddeVerbum qua ReddeVerbum
+    si nonnihil f.reddeVerbum et non f.structor {
+        fixum rv = f.reddeVerbum qua ReddeVerbum
         useFit = rv == ReddeVerbum.Fit
         useFiunt = rv == ReddeVerbum.Fiunt
         useFiet = rv == ReddeVerbum.Fiet
         useFient = rv == ReddeVerbum.Fient
     }
 
-    varia localAsync = asynca
-    varia localGenerator = generator
+    varia localAsync = f.asynca
+    varia localGenerator = f.generator
     si useFit {
         localAsync = falsum
         localGenerator = falsum
@@ -94,9 +94,9 @@ functio genFunctio(de textus nomen, de ignotum generaParametra, de lista<Paramet
     }
 
     # Visibility: class methods get public/private/protected, module-level gets export
-    si g.inGenere et non structor {
-        si nonnihil visibilitas {
-            fixum vis = visibilitas qua Visibilitas
+    si g.inGenere et non f.structor {
+        si nonnihil f.visibilitas {
+            fixum vis = f.visibilitas qua Visibilitas
             si vis == Visibilitas.Publica {
                 result = scriptum("§public ", result)
             } sin vis == Visibilitas.Protecta {
@@ -105,13 +105,13 @@ functio genFunctio(de textus nomen, de ignotum generaParametra, de lista<Paramet
                 result = scriptum("§private ", result)
             }
         }
-        si abstracta {
+        si f.abstracta {
             result = scriptum("§abstract ", result)
         }
     } secus {
         # Module-level: export when public
-        si nonnihil visibilitas {
-            fixum vis = visibilitas qua Visibilitas
+        si nonnihil f.visibilitas {
+            fixum vis = f.visibilitas qua Visibilitas
             si vis == Visibilitas.Publica {
                 result = scriptum("§export ", result)
             }
@@ -124,25 +124,25 @@ functio genFunctio(de textus nomen, de ignotum generaParametra, de lista<Paramet
     }
 
     # Function keyword (or constructor)
-    si structor {
+    si f.structor {
         result = scriptum("§constructor", result)
     } sin g.inGenere {
         si localGenerator {
-            result = scriptum("§*§", result, nomen)
+            result = scriptum("§*§", result, f.nomen)
         } secus {
-            result = scriptum("§§", result, nomen)
+            result = scriptum("§§", result, f.nomen)
         }
     } secus {
         si localGenerator {
-            result = scriptum("§function* §", result, nomen)
+            result = scriptum("§function* §", result, f.nomen)
         } secus {
-            result = scriptum("§function §", result, nomen)
+            result = scriptum("§function §", result, f.nomen)
         }
     }
 
     # Generic parameters
-    si nonnihil generaParametra {
-        fixum gp = generaParametra qua lista<TypusParametrum>
+    si nonnihil f.generaParametra {
+        fixum gp = f.generaParametra qua lista<TypusParametrum>
         si gp.longitudo() > 0 {
             varia names = [] innatum lista<textus>
             ex gp fixum p {
@@ -154,13 +154,13 @@ functio genFunctio(de textus nomen, de ignotum generaParametra, de lista<Paramet
 
     # Parameters
     varia params = [] innatum lista<textus>
-    ex parametra fixum param {
-        params.adde(genParametrum(param, g))
+    ex f.parametra fixum param {
+        params.adde(genParametrum(g, param))
     }
     result = scriptum("§(§)", result, params.coniunge(", "))
 
-    si nonnihil typusReditus et non structor {
-        fixum base = genTypus(typusReditus novum TypusAnnotatio, g)
+    si nonnihil f.typusReditus et non f.structor {
+        fixum base = genTypus(g, f.typusReditus novum TypusAnnotatio)
         si useFiunt {
             result = scriptum("§: Generator<§>", result, base)
         } sin useFient {
@@ -185,12 +185,12 @@ functio genFunctio(de textus nomen, de ignotum generaParametra, de lista<Paramet
     }
 
     # Body
-    si abstracta aut nihil corpus {
+    si f.abstracta aut nihil f.corpus {
         result = scriptum("§;", result)
         redde result
     }
 
-    si nonnihil corpus {
+    si nonnihil f.corpus {
         # Context flags for cede/iace lowering
         fixum prevInCursore = g.inCursore
         fixum prevInFlumina = g.inFlumina
@@ -200,7 +200,7 @@ functio genFunctio(de textus nomen, de ignotum generaParametra, de lista<Paramet
         fixum prevTabula = g.tabulaNominata
 
         varia localTabula = [] innatum lista<textus>
-        ex parametra fixum param {
+        ex f.parametra fixum param {
             si nonnihil param.typus {
                 fixum typus = param.typus novum TypusAnnotatio
                 si typus.nomen == "tabula" {
@@ -212,7 +212,7 @@ functio genFunctio(de textus nomen, de ignotum generaParametra, de lista<Paramet
         g.inCursore = localGenerator
         g.tabulaNominata = localTabula
 
-        si nonnihil reddeVerbum {
+        si nonnihil f.reddeVerbum {
             g.inFlumina = useFit aut useFiet
             g.inFiet = useFiet
             g.inFiunt = useFiunt
@@ -223,7 +223,7 @@ functio genFunctio(de textus nomen, de ignotum generaParametra, de lista<Paramet
         }
 
         g.intraProfundum()
-        varia body = genSententia(corpus qua Sententia, g)
+        varia body = genSententia(g, f.corpus qua Sententia)
 
         # fiunt/fient always end with done()
         si g.inFiunt aut g.inFient {
@@ -245,8 +245,8 @@ functio genFunctio(de textus nomen, de ignotum generaParametra, de lista<Paramet
 
         # Check for exitus modifier to wrap body with exit code handling
         varia exitusNomen = nihil qua textus?
-        si nonnihil modificatores {
-            fixum mods = modificatores qua lista<FunctioModificator>
+        si nonnihil f.modificatores {
+            fixum mods = f.modificatores qua lista<FunctioModificator>
             ex mods fixum mod {
                 discerne mod {
                     casu ExitusModificator ut e {
@@ -285,7 +285,7 @@ functio genFunctio(de textus nomen, de ignotum generaParametra, de lista<Paramet
 }
 
 @ publica
-functio genParametrum(de Parametrum param, in TsGenerator g) -> textus {
+functio genParametrum(in TsGenerator g, de Parametrum param) -> textus {
     varia result = ""
 
     si param.residuum {
@@ -306,12 +306,12 @@ functio genParametrum(de Parametrum param, in TsGenerator g) -> textus {
 
     # Type
     si nonnihil param.typus {
-        result = scriptum("§: §", result, genTypus(param.typus novum TypusAnnotatio, g))
+        result = scriptum("§: §", result, genTypus(g, param.typus novum TypusAnnotatio))
     }
 
     # Default value
     si nonnihil param.praedefinitum {
-        result = scriptum("§ = §", result, genExpressia(param.praedefinitum, g))
+        result = scriptum("§ = §", result, genExpressia(g, param.praedefinitum))
     }
 
     redde result

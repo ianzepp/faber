@@ -16,7 +16,7 @@
 § ex "./index" importa genSententia
 
 @ publica
-functio genIteratio(species, de IteratioVariabilis variabilis, de Expressia iterabile, de Sententia corpus, in GoGenerator g) -> textus {
+functio genIteratio(in GoGenerator g, species, de IteratioVariabilis variabilis, de Expressia iterabile, de Sententia corpus) -> textus {
     fixum rev = creaGoRevocata()
 
     # Check for range expression - use shared handler (only for simple identifier)
@@ -25,11 +25,11 @@ functio genIteratio(species, de IteratioVariabilis variabilis, de Expressia iter
             discerne iterabile {
                 casu AmbitusExpressia ut a {
                     g.intraProfundum()
-                    fixum body = genSententia(corpus, g)
+                    fixum body = genSententia(g, corpus)
                     g.exiProfundum()
 
-                    fixum initium = genExpressia(a.initium, g)
-                    fixum finis = genExpressia(a.finis, g)
+                    fixum initium = genExpressia(g, a.initium)
+                    fixum finis = genExpressia(g, a.finis)
 
                     redde genAmbitusIteratio(
                         n.valor,
@@ -53,10 +53,10 @@ functio genIteratio(species, de IteratioVariabilis variabilis, de Expressia iter
 
     # Regular iteration - Go-specific range syntax
     g.intraProfundum()
-    fixum body = genSententia(corpus, g)
+    fixum body = genSententia(g, corpus)
     g.exiProfundum()
 
-    fixum iterStr = genExpressia(iterabile, g)
+    fixum iterStr = genExpressia(g, iterabile)
 
     discerne variabilis {
         casu Nomen ut n {
