@@ -218,6 +218,49 @@ exec python3 "$(dirname "$0")/../${compiler}/fons/rivus.py" "$@"
     await $`chmod +x ${outExe}`.quiet();
 }
 
+async function buildExecutableGo(): Promise<void> {
+    const binDir = join(ROOT, 'opus', 'bin');
+    const moduleDir = dirname(OUTPUT);
+    await mkdir(binDir, { recursive: true });
+
+    // Initialize go.mod if not present
+    const goMod = join(moduleDir, 'go.mod');
+    if (!(await Bun.file(goMod).exists())) {
+        await $`cd ${moduleDir} && go mod init rivus`.quiet();
+    }
+
+    const exeName = `rivus-${compiler}`;
+    const outExe = join(binDir, exeName);
+    await $`cd ${moduleDir} && go build -o ${outExe} ./fons/`.quiet();
+}
+
+async function buildExecutableRs(): Promise<void> {
+    const binDir = join(ROOT, 'opus', 'bin');
+    const moduleDir = dirname(OUTPUT);
+    await mkdir(binDir, { recursive: true });
+
+    // Create Cargo.toml if not present
+    const cargoToml = join(moduleDir, 'Cargo.toml');
+    if (!(await Bun.file(cargoToml).exists())) {
+        const toml = `[package]
+name = "rivus"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "rivus"
+path = "src/rivus.rs"
+`;
+        await Bun.write(cargoToml, toml);
+    }
+
+    await $`cd ${moduleDir} && cargo build --release`.quiet();
+
+    const exeName = `rivus-${compiler}`;
+    const outExe = join(binDir, exeName);
+    await $`cp ${join(moduleDir, 'target', 'release', 'rivus')} ${outExe}`.quiet();
+}
+
 /**
  * Main build function that orchestrates the rivus compilation process
  */
@@ -309,13 +352,15 @@ async function main() {
         await buildExecutableTs();
         console.log(`  Built opus/bin/rivus-${compiler}`);
     } else if (target === 'go') {
-        // Go output - compilation is manual for now
-        console.log(`\nGo source generated in ${relative(ROOT, OUTPUT)}/`);
-        console.log('Build manually with: go build .');
+        console.log('\nGo post-processing:');
+        console.log('  Building rivus executable...');
+        await buildExecutableGo();
+        console.log(`  Built opus/bin/rivus-${compiler}`);
     } else if (target === 'rs') {
-        // Rust output - compilation is manual for now
-        console.log(`\nRust source generated in ${relative(ROOT, OUTPUT)}/`);
-        console.log('Build manually with: cargo build');
+        console.log('\nRust post-processing:');
+        console.log('  Building rivus executable...');
+        await buildExecutableRs();
+        console.log(`  Built opus/bin/rivus-${compiler}`);
     } else if (target === 'py') {
         console.log('\nPython post-processing:');
         await buildExecutablePy();
