@@ -506,6 +506,9 @@ pub struct Param {
     #[serde(rename = "default_")]
     pub default: Option<Expr>,
     pub rest: bool,
+    /// Ownership annotation: "ex" (consume), "de" (borrow), "in" (mutate)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ownership: Option<String>,
 }
 
 /// Field declaration in genus.

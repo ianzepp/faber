@@ -411,9 +411,16 @@ impl Parser {
             let locus = self.peek(0).locus;
             let rest = self.match_token(TOKEN_KEYWORD, Some("ceteri")).is_some();
             let optional = self.match_token(TOKEN_KEYWORD, Some("si")).is_some();
-            // Skip ownership annotations (recognized but not enforced yet)
-            self.match_token(TOKEN_KEYWORD, Some("ex"));
-            self.match_token(TOKEN_KEYWORD, Some("de"));
+            // Capture ownership annotations
+            let ownership = if self.match_token(TOKEN_KEYWORD, Some("ex")).is_some() {
+                Some("ex".to_string())
+            } else if self.match_token(TOKEN_KEYWORD, Some("de")).is_some() {
+                Some("de".to_string())
+            } else if self.match_token(TOKEN_KEYWORD, Some("in")).is_some() {
+                Some("in".to_string())
+            } else {
+                None
+            };
 
             if !self.check_name() {
                 return Err(self.error("expected parameter name"));
@@ -475,6 +482,7 @@ impl Parser {
                 typus,
                 default,
                 rest,
+                ownership,
             });
 
             if self.match_token(TOKEN_PUNCTUATOR, Some(",")).is_none() {
@@ -1761,6 +1769,7 @@ impl Parser {
                     typus,
                     default: None,
                     rest: false,
+                    ownership: None,
                 });
                 if self.match_token(TOKEN_PUNCTUATOR, Some(",")).is_none() {
                     break;

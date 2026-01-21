@@ -684,19 +684,28 @@ fn emit_typus(typus: &Typus) -> String {
 
 fn emit_param(p: &Param) -> String {
     let mut result = String::new();
+    // Order per EBNF: si, ownership (ex/de/in), ceteri, type, name
+    if let Some(t) = &p.typus {
+        // If param type is Nullabilis, emit "si" (optional param syntax)
+        if matches!(t, Typus::Nullabilis { .. }) {
+            result.push_str("si ");
+        }
+    }
+    if let Some(own) = &p.ownership {
+        result.push_str(own);
+        result.push(' ');
+    }
     if p.rest {
         result.push_str("ceteri ");
     }
     if let Some(t) = &p.typus {
-        // If param type is Nullabilis, emit as "si inner_type name" (optional param syntax)
+        // Emit inner type for Nullabilis, otherwise the type itself
         if let Typus::Nullabilis { inner } = t {
-            result.push_str("si ");
             result.push_str(&emit_typus(inner));
-            result.push(' ');
         } else {
             result.push_str(&emit_typus(t));
-            result.push(' ');
         }
+        result.push(' ');
     }
     result.push_str(&p.nomen);
     if let Some(d) = &p.default {
