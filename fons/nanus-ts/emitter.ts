@@ -365,9 +365,16 @@ function emitStmt(stmt: Stmt, indent = ''): string {
             return `${indent}continue;`;
 
         case 'Incipit': {
-            // Entry point → IIFE (sync or async)
-            const async = stmt.asynca ? 'async ' : '';
-            return `${indent}(${async}function() ${emitStmt(stmt.corpus, indent)})();`;
+            // Async: wrap in async IIFE (required for await)
+            // Sync: emit body statements directly (no wrapper needed in ES modules)
+            if (stmt.asynca) {
+                return `${indent}(async () => ${emitStmt(stmt.corpus, indent)})();`;
+            }
+            // Emit body content without braces
+            if (stmt.corpus.tag === 'Massa') {
+                return stmt.corpus.corpus.map(s => emitStmt(s, indent)).join('\n');
+            }
+            return emitStmt(stmt.corpus, indent);
         }
 
         case 'Probandum': {

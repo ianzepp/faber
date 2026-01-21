@@ -443,11 +443,20 @@ func emitStmt(stmt subsidia.Stmt, indent string) string {
 		return indent + "continue;"
 
 	case *subsidia.StmtIncipit:
-		async := ""
+		// Async: wrap in async IIFE (required for await)
+		// Sync: emit body statements directly (no wrapper needed in ES modules)
 		if s.Asynca {
-			async = "async "
+			return indent + "(async () => " + emitStmt(s.Corpus, indent) + ")();"
 		}
-		return indent + "(" + async + "function() " + emitStmt(s.Corpus, indent) + ")();"
+		// Emit body content without braces
+		if block, ok := s.Corpus.(*subsidia.StmtMassa); ok {
+			lines := []string{}
+			for _, inner := range block.Corpus {
+				lines = append(lines, emitStmt(inner, indent))
+			}
+			return strings.Join(lines, "\n")
+		}
+		return emitStmt(s.Corpus, indent)
 
 	case *subsidia.StmtProbandum:
 		lines := []string{}
