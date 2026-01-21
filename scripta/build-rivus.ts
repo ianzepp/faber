@@ -1,19 +1,19 @@
 #!/usr/bin/env bun
 /**
- * Build rivus (bootstrap compiler) from fons/rivus/ using faber or nanus.
+ * Build rivus (bootstrap compiler) from fons/rivus/ using faber-ts or nanus.
  *
  * Uses the specified compiler to compile all .fab files in parallel.
+ * Output target is derived from the compiler (e.g., nanus-go emits Go code).
  *
  * Requires: bun run build:faber-ts (or build:nanus-ts, build:nanus-go, build:nanus-rs, build:nanus-py) first
  *
  * Usage:
- *   bun scripta/build-rivus.ts
- *   bun scripta/build-rivus.ts -c nanus-ts
- *   bun scripta/build-rivus.ts -c nanus-go
- *   bun scripta/build-rivus.ts -c nanus-rs
- *   bun scripta/build-rivus.ts -c nanus-py
- *   bun scripta/build-rivus.ts -c nanus-go -t go
- *   bun scripta/build-rivus.ts -c faber --no-typecheck
+ *   bun scripta/build-rivus.ts                    # uses faber-ts -> TypeScript
+ *   bun scripta/build-rivus.ts -c nanus-ts        # -> TypeScript
+ *   bun scripta/build-rivus.ts -c nanus-go        # -> Go
+ *   bun scripta/build-rivus.ts -c nanus-rs        # -> Rust
+ *   bun scripta/build-rivus.ts -c nanus-py        # -> Python
+ *   bun scripta/build-rivus.ts -c faber-ts --no-typecheck
  */
 
 import { Glob } from 'bun';
@@ -25,18 +25,24 @@ import { $ } from 'bun';
 // CONSTANTS AND TYPES
 // =============================================================================
 
-type Compiler = 'faber' | 'nanus-ts' | 'nanus-go' | 'nanus-rs' | 'nanus-py';
-type Target = 'ts' | 'go' | 'rs';
+type Compiler = 'faber-ts' | 'nanus-ts' | 'nanus-go' | 'nanus-rs' | 'nanus-py';
+type Target = 'ts' | 'go' | 'rs' | 'py';
 
-const VALID_COMPILERS: Compiler[] = ['faber', 'nanus-ts', 'nanus-go', 'nanus-rs', 'nanus-py'];
-const VALID_TARGETS: Target[] = ['ts', 'go', 'rs'];
+const VALID_COMPILERS: Compiler[] = ['faber-ts', 'nanus-ts', 'nanus-go', 'nanus-rs', 'nanus-py'];
+
+const COMPILER_TARGET: Record<Compiler, Target> = {
+    'faber-ts': 'ts',
+    'nanus-ts': 'ts',
+    'nanus-go': 'go',
+    'nanus-rs': 'rs',
+    'nanus-py': 'py',
+};
 
 // =============================================================================
 // CONFIGURATION
 // =============================================================================
 
-let compiler: Compiler = 'faber';
-let target: Target = 'ts';
+let compiler: Compiler = 'faber-ts';
 let skipTypecheck = false;
 
 /**
@@ -56,21 +62,12 @@ function parseArgs() {
                 }
                 compiler = c;
                 break;
-            case '-t':
-            case '--target':
-                const t = args[++i] as Target;
-                if (!VALID_TARGETS.includes(t)) {
-                    console.error(`Unknown target '${t}'. Valid: ${VALID_TARGETS.join(', ')}`);
-                    process.exit(1);
-                }
-                target = t;
-                break;
             case '--no-typecheck':
                 skipTypecheck = true;
                 break;
             default:
                 console.error(`Unknown argument: ${arg}`);
-                console.error('Usage: build-rivus.ts [-c compiler] [-t target] [--no-typecheck]');
+                console.error('Usage: build-rivus.ts [-c compiler] [--no-typecheck]');
                 process.exit(1);
         }
     }
@@ -78,23 +75,35 @@ function parseArgs() {
 
 parseArgs();
 
+const target: Target = COMPILER_TARGET[compiler];
+
 // =============================================================================
 // PATH CONFIGURATION
 // =============================================================================
 
 const ROOT = join(import.meta.dir, '..');
 const SOURCE = join(ROOT, 'fons', 'rivus');
-const OUTPUT = target === 'go'
-    ? join(ROOT, 'opus', 'rivus-go', 'fons')
-    : target === 'rs'
-    ? join(ROOT, 'opus', 'rivus-rs', 'src')
-    : join(ROOT, 'opus', 'rivus-ts', 'fons');
+
+const OUTPUT_PATH: Record<Target, string> = {
+    'ts': join(ROOT, 'opus', 'rivus-ts', 'fons'),
+    'go': join(ROOT, 'opus', 'rivus-go', 'fons'),
+    'rs': join(ROOT, 'opus', 'rivus-rs', 'src'),
+    'py': join(ROOT, 'opus', 'rivus-py', 'fons'),
+};
+
+const FILE_EXT: Record<Target, string> = {
+    'ts': '.ts',
+    'go': '.go',
+    'rs': '.rs',
+    'py': '.py',
+};
+
+const OUTPUT = OUTPUT_PATH[target];
 const COMPILER_BIN = join(ROOT, 'opus', 'bin', compiler);
-const FILE_EXT = target === 'go' ? '.go' : target === 'rs' ? '.rs' : '.ts';
 
 // Different compilers use different I/O methods:
 // - nanus-ts/nanus-go/nanus-rs/nanus-py: streaming via stdin/stdout
-// - faber: file-based arguments
+// - faber-ts: file-based arguments
 const useStdinStdout = compiler === 'nanus-ts' || compiler === 'nanus-go' || compiler === 'nanus-rs' || compiler === 'nanus-py';
 
 interface CompileResult {
@@ -108,7 +117,7 @@ interface CompileResult {
  */
 async function compileFile(fabPath: string): Promise<CompileResult> {
     const relPath = relative(SOURCE, fabPath);
-    const outPath = join(OUTPUT, relPath.replace(/\.fab$/, FILE_EXT));
+    const outPath = join(OUTPUT, relPath.replace(/\.fab$/, FILE_EXT[target]));
 
     // Calculate Go package name from directory
     // Root files (e.g., rivus.fab) -> "main", subdirs -> directory name
@@ -312,6 +321,10 @@ async function main() {
         // Rust output - compilation is manual for now
         console.log(`\nRust source generated in ${relative(ROOT, OUTPUT)}/`);
         console.log('Build manually with: cargo build');
+    } else if (target === 'py') {
+        // Python output - compilation is manual for now
+        console.log(`\nPython source generated in ${relative(ROOT, OUTPUT)}/`);
+        console.log('Run with: python -m rivus');
     }
 }
 
