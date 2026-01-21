@@ -185,13 +185,13 @@ async function main() {
     }
 
     // =============================================================================
-    // STAGE 3: Rivus with each nanus compiler (failures allowed)
+    // STAGE 3: Rivus with each compiler (faber-ts first, then nanus-*)
     // =============================================================================
 
     if (rivus) {
         console.log('\n--- Stage 3: Rivus (multi-compiler) ---\n');
 
-        const compilers = ['nanus-ts', 'nanus-go', 'nanus-rs', 'nanus-py'] as const;
+        const compilers = ['faber-ts', 'nanus-ts', 'nanus-go', 'nanus-rs', 'nanus-py'] as const;
 
         for (const compiler of compilers) {
             const result = await step(

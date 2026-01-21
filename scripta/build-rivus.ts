@@ -84,11 +84,12 @@ const target: Target = COMPILER_TARGET[compiler];
 const ROOT = join(import.meta.dir, '..');
 const SOURCE = join(ROOT, 'fons', 'rivus');
 
-const OUTPUT_PATH: Record<Target, string> = {
-    'ts': join(ROOT, 'opus', 'rivus-ts', 'fons'),
-    'go': join(ROOT, 'opus', 'rivus-go', 'fons'),
-    'rs': join(ROOT, 'opus', 'rivus-rs', 'src'),
-    'py': join(ROOT, 'opus', 'rivus-py', 'fons'),
+const OUTPUT_PATH: Record<Compiler, string> = {
+    'faber-ts': join(ROOT, 'opus', 'faber-ts', 'fons'),
+    'nanus-ts': join(ROOT, 'opus', 'nanus-ts', 'fons'),
+    'nanus-go': join(ROOT, 'opus', 'nanus-go', 'fons'),
+    'nanus-rs': join(ROOT, 'opus', 'nanus-rs', 'src'),
+    'nanus-py': join(ROOT, 'opus', 'nanus-py', 'fons'),
 };
 
 const FILE_EXT: Record<Target, string> = {
@@ -98,7 +99,7 @@ const FILE_EXT: Record<Target, string> = {
     'py': '.py',
 };
 
-const OUTPUT = OUTPUT_PATH[target];
+const OUTPUT = OUTPUT_PATH[compiler];
 const COMPILER_BIN = join(ROOT, 'opus', 'bin', compiler);
 
 interface CompileResult {
@@ -174,8 +175,8 @@ const _resolve = (basis: string, relativum: string): string => resolve(basis, re
 async function copyHalImplementations(): Promise<void> {
     const halSource = join(ROOT, 'fons', 'norma', 'hal', 'codegen', 'ts');
     // WHY: Imports use ../../../norma/hal from cli/commands/, which resolves
-    // to opus/rivus-ts/norma/hal (not opus/rivus-ts/fons/norma/hal)
-    const halDest = join(ROOT, 'opus', 'rivus-ts', 'norma', 'hal');
+    // to opus/{compiler}/norma/hal (not opus/{compiler}/fons/norma/hal)
+    const halDest = join(dirname(OUTPUT), 'norma', 'hal');
     await mkdir(halDest, { recursive: true });
 
     const glob = new Glob('*.ts');
@@ -190,18 +191,19 @@ async function copyHalImplementations(): Promise<void> {
 async function buildExecutable(): Promise<void> {
     const binDir = join(ROOT, 'opus', 'bin');
     await mkdir(binDir, { recursive: true });
-    const outExe = join(binDir, 'rivus-ts');
+
+    // Executable named after compiler: rivus-faber-ts, rivus-nanus-ts, etc.
+    const exeName = `rivus-${compiler}`;
+    const outExe = join(binDir, exeName);
     await $`bun build ${join(OUTPUT, 'rivus.ts')} --compile --outfile=${outExe}`.quiet();
     await $`bash -c 'rm -f .*.bun-build 2>/dev/null || true'`.quiet();
 
-    // Create backward-compat symlink: rivus -> rivus-ts
-    const symlinkPath = join(binDir, 'rivus');
-    try {
-        await unlink(symlinkPath);
-    } catch {
-        /* ignore */
+    // faber-ts is the primary compiler, symlink rivus -> rivus-faber-ts
+    if (compiler === 'faber-ts') {
+        const symlinkPath = join(binDir, 'rivus');
+        try { await unlink(symlinkPath); } catch { /* ignore */ }
+        await symlink(exeName, symlinkPath);
     }
-    await symlink('rivus-ts', symlinkPath);
 }
 
 /**
@@ -293,7 +295,7 @@ async function main() {
         // Build the final executable
         console.log('  Building rivus executable...');
         await buildExecutable();
-        console.log('  Built opus/bin/rivus-ts');
+        console.log(`  Built opus/bin/rivus-${compiler}`);
     } else if (target === 'go') {
         // Go output - compilation is manual for now
         console.log(`\nGo source generated in ${relative(ROOT, OUTPUT)}/`);
