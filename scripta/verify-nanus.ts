@@ -73,6 +73,27 @@ interface FileResult {
     error?: string;
 }
 
+function printHelp(): void {
+    console.log(`verify-nanus: Cross-compiler consistency check for nanus compilers.
+
+Verifies that nanus-ts, nanus-go, and nanus-rs produce identical output
+when emitting Faber source (\`-t fab\`).
+
+Usage:
+  bun run verify:nanus                     Bulk check all fons/exempla/
+  bun run verify:nanus <file.fab>          Single file (shows all outputs)
+
+Options:
+  --diff          Show line-by-line diffs on mismatch
+  -x, --fail-fast Exit on first failure
+  -q, --quiet     Single-line output, skip passes
+  -h, --help      Show this help message
+
+Exit codes:
+  0  All checked files consistent
+  1  At least one mismatch or failure`);
+}
+
 function parseArgs(): Args {
     const args = process.argv.slice(2);
     let file: string | null = null;
@@ -81,7 +102,10 @@ function parseArgs(): Args {
     let failFast = false;
 
     for (const arg of args) {
-        if (arg === '--diff') showDiffs = true;
+        if (arg === '--help' || arg === '-h') {
+            printHelp();
+            process.exit(0);
+        } else if (arg === '--diff') showDiffs = true;
         else if (arg === '--quiet' || arg === '-q') quiet = true;
         else if (arg === '--fail-fast' || arg === '-x') failFast = true;
         else if (!arg.startsWith('-')) file = arg;
