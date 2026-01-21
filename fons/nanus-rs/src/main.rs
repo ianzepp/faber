@@ -1,4 +1,5 @@
 mod emitter_faber;
+mod emitter_rs;
 mod emitter_ts;
 mod lexer;
 
@@ -36,8 +37,8 @@ fn main() {
     }
 
     // Validate target
-    if command == "emit" && target != "fab" && target != "ts" {
-        eprintln!("Unknown target: {}. Valid: fab, ts", target);
+    if command == "emit" && target != "fab" && target != "ts" && target != "rs" {
+        eprintln!("Unknown target: {}. Valid: fab, ts, rs", target);
         process::exit(1);
     }
 
@@ -78,6 +79,7 @@ fn run(command: &str, source: &str, target: &str) -> Result<String, subsidia_rs:
             match target {
                 "fab" => Ok(emitter_faber::emit_faber(&ast)),
                 "ts" => Ok(emitter_ts::emit_ts(&ast)),
+                "rs" => Ok(emitter_rs::emit_rs(&ast)),
                 _ => unreachable!(),
             }
         }
@@ -96,5 +98,5 @@ fn print_usage() {
     println!("  lex      Output tokens as JSON");
     println!();
     println!("Options (emit only):");
-    println!("  -t <target>   Output target: fab, ts (default: fab)");
+    println!("  -t <target>   Output target: fab, ts, rs (default: fab)");
 }
