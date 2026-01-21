@@ -33,7 +33,7 @@ functio adde(T elem) -> vacuum
 
 ```
 fons/                   # Source code ("fons" = source/spring)
-├── faber/              # Reference compiler (TypeScript)
+├── faber-ts/           # Reference compiler (TypeScript)
 │   ├── codegen/        # Code generators by target
 │   │   ├── norma.<target>.gen.ts  # Generated stdlib (per target)
 │   │   ├── shared/     # Shared codegen utilities
@@ -180,7 +180,7 @@ bun run test:report                   # Run tests with DB tracking + feature mat
 bun run test:report -- --compiler rivus --targets ts
 bun run test:report -- --verify       # With target verification (compile/run)
 bun run test:report -- --feature si   # Filter by feature name
-bun run lint                          # Lint TS source (fons/faber)
+bun run lint                          # Lint TS source (fons/faber-ts)
 bun run lint:fix                      # Lint with auto-fix
 bun run sanity                        # Verify test coverage
 ```
@@ -206,7 +206,7 @@ Database location: `opus/proba/results.db` (recreated each run)
 ### Build
 
 ```
-bun run build:faber                   # Build faber executable to opus/bin/faber
+bun run build:faber-ts                   # Build faber executable to opus/bin/faber
 bun run build:rivus                   # Build rivus (bootstrap) to opus/rivus/fons/ts/
 bun run build:rivus -- -t zig         # Build rivus to opus/rivus/fons/zig/
 bun run exempla                       # Compile fons/exempla/*.fab to opus/

@@ -12,9 +12,9 @@ import { readdir, readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 
 // WHY: Use Faber's actual parser - no hacky regex needed
-import { tokenize } from '../fons/faber/tokenizer';
-import { parse } from '../fons/faber/parser';
-import type { Annotation, FunctioDeclaration, GenusDeclaration, Program } from '../fons/faber/parser/ast';
+import { tokenize } from '../fons/faber-ts/tokenizer';
+import { parse } from '../fons/faber-ts/parser';
+import type { Annotation, FunctioDeclaration, GenusDeclaration, Program } from '../fons/faber-ts/parser/ast';
 
 // =============================================================================
 // CONSTANTS AND CONFIGURATION
@@ -22,7 +22,7 @@ import type { Annotation, FunctioDeclaration, GenusDeclaration, Program } from '
 
 const NORMA_DIR = join(import.meta.dir, '..', 'fons', 'norma');
 const INNATUM_DIR = join(NORMA_DIR, 'innatum');
-const CODEGEN_DIR = join(import.meta.dir, '..', 'fons', 'faber', 'codegen');
+const CODEGEN_DIR = join(import.meta.dir, '..', 'fons', 'faber-ts', 'codegen');
 const OUTPUT_FAB = join(import.meta.dir, '..', 'fons', 'rivus', 'codegen', 'norma.gen.fab');
 const TARGETS = ['ts', 'py', 'rs', 'cpp', 'zig'] as const;
 

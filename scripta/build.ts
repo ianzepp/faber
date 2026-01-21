@@ -142,11 +142,11 @@ async function main() {
     });
 
     if (faber) {
-        await step('build:faber', verbose, async () => {
+        await step('build:faber-ts', verbose, async () => {
             if (verbose) {
-                await $`bun run build:faber`;
+                await $`bun run build:faber-ts`;
             } else {
-                await $`bun run build:faber`.quiet();
+                await $`bun run build:faber-ts`.quiet();
             }
         });
     }

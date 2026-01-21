@@ -72,9 +72,9 @@ async function gatherStats(): Promise<Stat[]> {
     const testCases = await countTestCases();
 
     // Count core compiler phases
-    const tokenizerResult = await $`wc -l fons/faber/tokenizer/index.ts`.text();
-    const parserResult = await $`wc -l fons/faber/parser/index.ts`.text();
-    const semanticResult = await $`wc -l fons/faber/semantic/index.ts`.text();
+    const tokenizerResult = await $`wc -l fons/faber-ts/tokenizer/index.ts`.text();
+    const parserResult = await $`wc -l fons/faber-ts/parser/index.ts`.text();
+    const semanticResult = await $`wc -l fons/faber-ts/semantic/index.ts`.text();
     const tokenizerLines = parseInt(tokenizerResult.match(/(\d+)/)?.[1] || '0', 10);
     const parserLines = parseInt(parserResult.match(/(\d+)/)?.[1] || '0', 10);
     const semanticLines = parseInt(semanticResult.match(/(\d+)/)?.[1] || '0', 10);
@@ -82,7 +82,7 @@ async function gatherStats(): Promise<Stat[]> {
 
     // Count codegen files and lines
     const codegenFiles = await countFiles('*.ts') - await countFiles('*.gen.ts');
-    const codegenResult = await $`find fons/faber/codegen -name "*.ts" ! -name "*.gen.ts" -exec wc -l {} + | tail -1`.text();
+    const codegenResult = await $`find fons/faber-ts/codegen -name "*.ts" ! -name "*.gen.ts" -exec wc -l {} + | tail -1`.text();
     const codegenLines = parseInt(codegenResult.match(/(\d+)/)?.[1] || '0', 10);
 
     // Count documentation
@@ -98,7 +98,7 @@ async function gatherStats(): Promise<Stat[]> {
     const examplesFiles = await $`find exempla -name "*.fab" | wc -l`.text();
 
     // Count targets
-    const targetsResult = await $`find fons/faber/codegen -maxdepth 1 -type d ! -name codegen | wc -l`.text();
+    const targetsResult = await $`find fons/faber-ts/codegen -maxdepth 1 -type d ! -name codegen | wc -l`.text();
     const numTargets = parseInt(targetsResult.trim(), 10);
 
     const stats: Stat[] = [

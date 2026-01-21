@@ -17,13 +17,13 @@ const ROOT = join(import.meta.dir, '..');
 async function main() {
     const start = performance.now();
 
-    // Typecheck fons/faber/ before compiling
+    // Typecheck fons/faber-ts/ before compiling
     await $`tsc -p tsconfig.faber.json`.cwd(ROOT);
 
     const binDir = join(ROOT, 'opus', 'bin');
     await mkdir(binDir, { recursive: true });
     const outExe = join(binDir, 'faber-ts');
-    await $`bun build ${join(ROOT, 'fons', 'faber', 'faber.ts')} --compile --outfile=${outExe}`.quiet();
+    await $`bun build ${join(ROOT, 'fons', 'faber-ts', 'faber.ts')} --compile --outfile=${outExe}`.quiet();
     await $`bash -c 'rm -f .*.bun-build 2>/dev/null || true'`.quiet();
 
     // Create backward-compat symlink: faber -> faber-ts

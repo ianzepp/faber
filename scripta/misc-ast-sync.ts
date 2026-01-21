@@ -16,7 +16,7 @@ const ROOT = join(import.meta.dir, '..');
 // =============================================================================
 
 function extractAstTypes(): Set<string> {
-    const astPath = join(ROOT, 'fons', 'faber', 'parser', 'ast.ts');
+    const astPath = join(ROOT, 'fons', 'faber-ts', 'parser', 'ast.ts');
     const content = readFileSync(astPath, 'utf-8');
 
     const types = new Set<string>();
@@ -41,7 +41,7 @@ function extractAstTypes(): Set<string> {
 // =============================================================================
 
 function checkPrettierCoverage(astTypes: Set<string>): string[] {
-    const printerPath = join(ROOT, 'fons', 'faber', 'prettier', 'printer.ts');
+    const printerPath = join(ROOT, 'fons', 'faber-ts', 'prettier', 'printer.ts');
 
     if (!existsSync(printerPath)) {
         return ['prettier/printer.ts not found'];
@@ -94,7 +94,7 @@ function checkTreeSitterCoverage(astTypes: Set<string>): string[] {
 // Main
 // =============================================================================
 
-console.log('Extracting AST node types from fons/faber/parser/ast.ts...\n');
+console.log('Extracting AST node types from fons/faber-ts/parser/ast.ts...\n');
 
 const astTypes = extractAstTypes();
 console.log(`Found ${astTypes.size} node types:\n`);
@@ -107,7 +107,7 @@ for (const t of sortedTypes) {
 console.log('\n' + '='.repeat(60) + '\n');
 
 // Check prettier
-console.log('Checking fons/faber/prettier/printer.ts...\n');
+console.log('Checking fons/faber-ts/prettier/printer.ts...\n');
 const prettierMissing = checkPrettierCoverage(astTypes);
 
 if (prettierMissing.length === 0) {

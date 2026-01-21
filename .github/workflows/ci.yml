@@ -27,7 +27,7 @@ jobs:
   # Stage 2: Build faber compiler (TypeScript reference implementation)
   # Input: norma-generated artifacts
   # Output: faber executable, faber codegen artifacts
-  build-faber:
+  build-faber-ts:
     needs: build-norma
     runs-on: ubuntu-latest
     steps:
@@ -39,7 +39,7 @@ jobs:
         with:
           name: norma-generated
       - run: cp norma/index.json fons/norma/ && cp rivus/codegen/norma-registry.gen.fab fons/rivus/codegen/
-      - run: bun run build:faber
+      - run: bun run build:faber-ts
       - uses: actions/upload-artifact@v4
         with:
           name: opus-faber
@@ -47,13 +47,13 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: faber-generated
-          path: fons/faber/codegen/norma.gen.ts
+          path: fons/faber-ts/codegen/norma.gen.ts
 
   # Stage 3: Build rivus compiler (Faber self-hosting)
   # Input: faber executable, norma artifacts, faber-generated artifacts
   # Output: rivus executable
   build-rivus:
-    needs: build-faber
+    needs: build-faber-ts
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -70,7 +70,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: faber-generated
-      - run: cp norma/index.json fons/norma/ && cp rivus/codegen/norma-registry.gen.fab fons/rivus/codegen/ && cp norma.gen.ts fons/faber/codegen/
+      - run: cp norma/index.json fons/norma/ && cp rivus/codegen/norma-registry.gen.fab fons/rivus/codegen/ && cp norma.gen.ts fons/faber-ts/codegen/
       - run: bun run build:rivus
       - uses: actions/upload-artifact@v4
         with:
@@ -98,7 +98,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: faber-generated
-      - run: cp norma/index.json fons/norma/ && cp rivus/codegen/norma-registry.gen.fab fons/rivus/codegen/ && cp norma.gen.ts fons/faber/codegen/
+      - run: cp norma/index.json fons/norma/ && cp rivus/codegen/norma-registry.gen.fab fons/rivus/codegen/ && cp norma.gen.ts fons/faber-ts/codegen/
       - run: chmod +x opus/bin/rivus
       - run: bun run build:artifex
       - uses: actions/upload-artifact@v4

@@ -42,7 +42,7 @@ Both are postfix operators on object literals, making the distinction clear and 
 After parsing an object literal, check for trailing `novum Type` in addition to `qua Type`.
 
 **Files:**
-- `fons/faber/parser/` - faber parser
+- `fons/faber-ts/parser/` - faber parser
 - `fons/rivus/parser/` - rivus parser
 - `fons/nanus-ts/parser.ts` - nanus TypeScript
 - `fons/nanus-go/parser.go` - nanus Go
@@ -63,7 +63,7 @@ Or reuse/extend existing `QUA` expression with a `isConstruction: boolean` flag.
 - `{...} qua Type` → `{...} as Type` (no change)
 
 **Files:**
-- `fons/faber/codegen/ts/` - faber emitter
+- `fons/faber-ts/codegen/ts/` - faber emitter
 - `fons/rivus/codegen/ts/` - rivus emitter
 - `fons/nanus-ts/emitter.ts` - nanus TypeScript
 - `fons/nanus-go/emitter.go` - nanus Go
@@ -71,7 +71,7 @@ Or reuse/extend existing `QUA` expression with a `isConstruction: boolean` flag.
 ### 5. Remove faber magic
 Remove the `genusNames` tracking and automatic `qua` → `new` transformation in faber.
 
-**File:** `fons/faber/codegen/ts/statements/genus.ts` (lines 33-34 and related)
+**File:** `fons/faber-ts/codegen/ts/statements/genus.ts` (lines 33-34 and related)
 
 ### 6. Update rivus source
 Replace `{...} qua GenusName` with `{...} novum GenusName` for all genus (class) types.

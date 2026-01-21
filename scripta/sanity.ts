@@ -62,7 +62,7 @@ interface SanityReport {
 // =============================================================================
 
 const ROOT = join(import.meta.dir, '..');
-const CODEGEN_DIR = join(ROOT, 'fons', 'faber', 'codegen');
+const CODEGEN_DIR = join(ROOT, 'fons', 'faber-ts', 'codegen');
 const TESTS_DIR = join(ROOT, 'fons', 'proba', 'codegen');
 const TARGETS = ['ts', 'py', 'rs', 'cpp', 'zig'] as const;
 type Target = (typeof TARGETS)[number];

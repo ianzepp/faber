@@ -4,7 +4,7 @@ Reserved keywords in Faber Romanus. This reference catalogs all Latin keywords u
 
 **Implementation synchronization:** When the compiler recognizes a new keyword, it must appear in:
 
-- `fons/faber/lexicon/keywords.ts` - TypeScript compiler
+- `fons/faber-ts/lexicon/keywords.ts` - TypeScript compiler
 - `fons/rivus/lexicon/verba.fab` - Bootstrap compiler
 - This document
 
@@ -320,7 +320,7 @@ Not yet implemented:
 
 When adding a new keyword to the language:
 
-1. **Add to TypeScript compiler:** `fons/faber/lexicon/keywords.ts`
+1. **Add to TypeScript compiler:** `fons/faber-ts/lexicon/keywords.ts`
     - Include category and meaning in the keyword definition
 2. **Add to bootstrap compiler:** `fons/rivus/lexicon/verba.fab`
     - Add to `estVerbum()` function

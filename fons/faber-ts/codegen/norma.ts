@@ -2,7 +2,7 @@
  * Norma Registry - TypeScript stdlib translations.
  *
  * Data is generated at build time by: bun run build:norma
- * Source: fons/norma/ → fons/faber/codegen/norma.ts.gen.ts
+ * Source: fons/norma/ → fons/faber-ts/codegen/norma.ts.gen.ts
  */
 
 import { norma, radixForms, type Translation } from './norma.ts.gen';

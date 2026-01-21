@@ -14,4 +14,4 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-bun test fons/faber fons/proba/faber.test.ts "$@"
+bun test fons/faber-ts fons/proba/faber.test.ts "$@"

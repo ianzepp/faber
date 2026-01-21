@@ -4,7 +4,7 @@
  *
  * Uses the specified compiler to compile all .fab files in parallel.
  *
- * Requires: bun run build:faber (or build:nanus-ts, build:nanus-go, build:nanus-rs) first
+ * Requires: bun run build:faber-ts (or build:nanus-ts, build:nanus-go, build:nanus-rs) first
  *
  * Usage:
  *   bun scripta/build-rivus.ts
