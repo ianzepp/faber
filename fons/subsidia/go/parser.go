@@ -279,9 +279,6 @@ func (p *Parser) parseVaria(publica bool, externa bool) Stmt {
 	} else if p.checkName() {
 		typus = &TypusNomen{Tag: "Nomen", Nomen: first}
 		nomen = p.expectName().Valor
-	} else if p.match(TokenPunctuator, ":") != nil {
-		nomen = first
-		typus = p.parseTypus()
 	} else {
 		nomen = first
 	}
@@ -403,9 +400,6 @@ func (p *Parser) parseParams() []Param {
 			} else if p.checkName() {
 				typus = &TypusNomen{Tag: "Nomen", Nomen: first}
 				nomen = p.expectName().Valor
-			} else if p.match(TokenPunctuator, ":") != nil {
-				nomen = first
-				typus = p.parseTypus()
 			} else {
 				nomen = first
 			}
@@ -517,9 +511,6 @@ func (p *Parser) parseGenus(publica bool) Stmt {
 						fieldTypus = &TypusNullabilis{Tag: "Nullabilis", Inner: fieldTypus}
 					}
 					fieldNomen = p.expectName().Valor
-				} else if p.match(TokenPunctuator, ":") != nil {
-					fieldNomen = first
-					fieldTypus = p.parseTypus()
 				} else {
 					panic(p.error("expected field type or name"))
 				}

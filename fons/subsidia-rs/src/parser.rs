@@ -303,9 +303,6 @@ impl Parser {
             let t = Typus::Nomen { nomen: first };
             let n = self.expect_name()?.valor;
             (Some(t), n)
-        } else if self.match_token(TOKEN_PUNCTUATOR, Some(":")).is_some() {
-            let t = self.parse_typus()?;
-            (Some(t), first)
         } else {
             (None, first)
         };
@@ -453,9 +450,6 @@ impl Parser {
                 let t = Typus::Nomen { nomen: first };
                 let n = self.expect_name()?.valor;
                 (Some(t), n)
-            } else if self.match_token(TOKEN_PUNCTUATOR, Some(":")).is_some() {
-                let t = self.parse_typus()?;
-                (Some(t), first)
             } else {
                 (None, first)
             };
@@ -574,9 +568,6 @@ impl Parser {
                         }
                         let n = self.expect_name()?.valor;
                         (Some(t), n)
-                    } else if self.match_token(TOKEN_PUNCTUATOR, Some(":")).is_some() {
-                        let t = self.parse_typus()?;
-                        (Some(t), first)
                     } else {
                         return Err(self.error("expected field type or name"));
                     }

@@ -258,10 +258,6 @@ export class Parser {
             // Type-first: varia numerus count = 0
             typus = { tag: 'Nomen', nomen: first };
             nomen = this.expectName().valor;
-        } else if (this.match('Punctuator', ':')) {
-            // Name with type annotation: varia count: numerus = 0
-            nomen = first;
-            typus = this.parseTypus();
         } else {
             // Just a name: varia count = 0
             nomen = first;
@@ -383,10 +379,6 @@ export class Parser {
                     // "Type name" pattern
                     typus = { tag: 'Nomen', nomen: first };
                     nomen = this.expectName().valor;
-                } else if (this.match('Punctuator', ':')) {
-                    // "name: Type" pattern
-                    nomen = first;
-                    typus = this.parseTypus();
                 } else {
                     // Just a name
                     nomen = first;
@@ -492,9 +484,6 @@ export class Parser {
                             fieldTypus = { tag: 'Nullabilis', inner: fieldTypus };
                         }
                         fieldNomen = this.expectName().valor;
-                    } else if (this.match('Punctuator', ':')) {
-                        fieldNomen = first;
-                        fieldTypus = this.parseTypus();
                     } else {
                         throw this.error('expected field type or name');
                     }
