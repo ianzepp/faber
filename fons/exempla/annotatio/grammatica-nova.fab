@@ -1,0 +1,138 @@
+# New Annotation Grammar Example
+#
+# Demonstrates the unified keyword-dispatch grammar for annotations:
+#   @ <keyword> [args...]  - declaration metadata
+#   § <keyword> [args...]  - file/module structure
+#
+# See: https://github.com/ianzepp/faber/issues/293
+
+# =============================================================================
+# § importa - Module Imports (NEW SYNTAX)
+# =============================================================================
+# Old: § ex "./path" importa foo, bar ut baz
+# New: § importa ex "./path" foo, bar ut baz
+
+§ importa ex "./types" Numerus, Textus
+§ importa ex "./utils" auxilium ut aux, formata
+§ importa ex "./constants" *
+§ importa ex "./config" * ut cfg
+
+# =============================================================================
+# § sectio - File Sections
+# =============================================================================
+
+§ sectio "types"
+
+# =============================================================================
+# @ publica / @ privata - Visibility
+# =============================================================================
+
+@ publica
+genus PublicaRes {}
+
+@ privata
+genus PrivataRes {}
+
+# =============================================================================
+# @ futura - Async Functions
+# =============================================================================
+
+@ publica
+@ futura
+functio fetchData(textus url) -> textus {
+    redde ""
+}
+
+# =============================================================================
+# @ cli - CLI Program Declaration
+# =============================================================================
+# Keyword: cli
+# Grammar: @ cli <string>
+
+@ cli "exemplar"
+@ versio "1.0.0"
+@ descriptio "An example CLI program"
+incipit argumenta args {}
+
+# =============================================================================
+# @ optio - CLI Options
+# =============================================================================
+# Keyword: optio
+# Grammar: @ optio [type] <binding> [brevis <s>] [longum <s>] [descriptio <s>]
+
+@ optio bivalens verbose brevis "v" longum "verbose" descriptio "Enable verbose output"
+@ optio textus output brevis "o" longum "output" descriptio "Output file path"
+@ optio numerus count longum "count" descriptio "Number of iterations"
+
+# =============================================================================
+# @ operandus - CLI Positional Arguments
+# =============================================================================
+# Keyword: operandus
+# Grammar: @ operandus [ceteri] <type> <binding> [descriptio <s>]
+
+@ operandus textus input descriptio "Input file"
+@ operandus ceteri textus files descriptio "Additional files"
+
+# =============================================================================
+# @ imperium / @ alias - CLI Subcommands
+# =============================================================================
+# Keyword: imperium
+# Grammar: @ imperium <string>
+#
+# Keyword: alias
+# Grammar: @ alias <string>
+
+@ imperium "build"
+@ alias "b"
+@ descriptio "Build the project"
+@ optio bivalens release longum "release" descriptio "Build in release mode"
+functio build(si bivalens release) -> vacuum {}
+
+@ imperium "test"
+@ alias "t"
+@ descriptio "Run tests"
+@ optio textus filter brevis "f" longum "filter" descriptio "Filter tests by name"
+functio test(si textus filter) -> vacuum {}
+
+# =============================================================================
+# @ nomen - Named Blocks (for config)
+# =============================================================================
+# Keyword: nomen
+# Grammar: @ nomen <string>
+
+@ indentum 4
+@ tabulae falsum
+@ latitudo 100
+@ nomen "forma"
+fac {}
+
+@ ordinatio "alphabetica"
+@ separaGroups verum
+@ nomen "importa"
+fac {}
+
+@ bracchiae "nova-linea"
+@ methodiSeparatio 1
+@ nomen "genus"
+fac {}
+
+# =============================================================================
+# @ innatum / @ verte / @ radix / @ subsidia - Stdlib Annotations
+# =============================================================================
+# These follow the same keyword-dispatch pattern
+
+@ innatum ts "Map", py "dict", rs "HashMap"
+genus Tabula {}
+
+@ radix ordin, imperativus, perfectum
+@ verte ts "sort"
+@ verte py "sort"
+@ externa
+functio ordina()
+
+# =============================================================================
+# @ externa - External Declaration
+# =============================================================================
+
+@ externa
+functio nativeFunction(numerus x) -> numerus

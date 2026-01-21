@@ -411,7 +411,8 @@ fn emit_importa(stmt: &Stmt, indent: &str) -> String {
         ..
     } = stmt
     {
-        let mut result = format!("{}ex \"{}\" importa ", indent, fons);
+        // Always emit new syntax: § importa ex "path" bindings
+        let mut result = format!("{}§ importa ex \"{}\" ", indent, fons);
         if *totum {
             if let Some(a) = alias {
                 result.push_str(&format!("* ut {}", a));

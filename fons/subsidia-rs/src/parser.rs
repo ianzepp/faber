@@ -177,29 +177,14 @@ impl Parser {
         let mut externa = false;
 
         while self.match_token(TOKEN_PUNCTUATOR, Some("@")).is_some() {
-            let tok = self.peek(0);
-            if tok.tag != TOKEN_IDENTIFIER && tok.tag != TOKEN_KEYWORD {
-                return Err(self.error("expected annotation name"));
-            }
-            let anno = self.advance().valor;
-            match anno.as_str() {
-                "publicum" | "publica" => publica = true,
-                "futura" => futura = true,
-                "externa" => externa = true,
-                _ => {
-                    while !self.check(TOKEN_EOF, None)
-                        && !self.check(TOKEN_PUNCTUATOR, Some("@"))
-                        && !self.check(TOKEN_PUNCTUATOR, Some("§"))
-                        && !self.is_declaration_keyword()
-                    {
-                        self.advance();
-                    }
-                }
-            }
+            let (p, f, e) = self.parse_annotatio()?;
+            publica = publica || p;
+            futura = futura || f;
+            externa = externa || e;
         }
 
         if self.match_token(TOKEN_PUNCTUATOR, Some("§")).is_some() {
-            return self.parse_import();
+            return self.parse_sectio();
         }
 
         let tok = self.peek(0);
@@ -246,11 +231,111 @@ impl Parser {
         self.parse_expressia_stmt()
     }
 
-    fn parse_import(&mut self) -> Result<Stmt, CompileError> {
+    /// Dispatch § annotations based on keyword.
+    fn parse_sectio(&mut self) -> Result<Stmt, CompileError> {
+        let tok = self.peek(0);
+        if tok.tag != TOKEN_IDENTIFIER && tok.tag != TOKEN_KEYWORD {
+            return Err(self.error("expected keyword after §"));
+        }
+        let keyword = self.advance().valor;
+        match keyword.as_str() {
+            "importa" => self.parse_sectio_importa(),
+            "sectio" => self.parse_sectio_sectio(),
+            // Legacy support: § ex "path" importa ... (old syntax)
+            "ex" => self.parse_sectio_ex_legacy(),
+            _ => Err(self.error(&format!("unknown § keyword: {}", keyword))),
+        }
+    }
+
+    /// Parse: § importa ex "path" foo, bar ut baz
+    /// Or:    § importa ex "path" *
+    /// Or:    § importa ex "path" * ut alias
+    fn parse_sectio_importa(&mut self) -> Result<Stmt, CompileError> {
         let locus = self.peek(0).locus;
         self.expect(TOKEN_KEYWORD, Some("ex"))?;
         let fons = self.expect(TOKEN_TEXTUS, None)?.valor;
+
+        // Check for wildcard import
+        if self.match_token(TOKEN_OPERATOR, Some("*")).is_some() {
+            let alias = if self.match_token(TOKEN_KEYWORD, Some("ut")).is_some() {
+                Some(self.expect(TOKEN_IDENTIFIER, None)?.valor)
+            } else {
+                None
+            };
+            return Ok(Stmt::Importa {
+                locus,
+                fons,
+                specs: Vec::new(),
+                totum: true,
+                alias,
+            });
+        }
+
+        // Named imports
+        let mut specs = Vec::new();
+        loop {
+            let loc = self.peek(0).locus;
+            let imported = self.expect(TOKEN_IDENTIFIER, None)?.valor;
+            let mut local = imported.clone();
+            if self.match_token(TOKEN_KEYWORD, Some("ut")).is_some() {
+                local = self.expect(TOKEN_IDENTIFIER, None)?.valor;
+            }
+            specs.push(crate::ImportSpec {
+                locus: loc,
+                imported,
+                local,
+            });
+            if self.match_token(TOKEN_PUNCTUATOR, Some(",")).is_none() {
+                break;
+            }
+        }
+
+        Ok(Stmt::Importa {
+            locus,
+            fons,
+            specs,
+            totum: false,
+            alias: None,
+        })
+    }
+
+    /// Parse: § sectio "name"
+    fn parse_sectio_sectio(&mut self) -> Result<Stmt, CompileError> {
+        let locus = self.peek(0).locus;
+        let nomen = self.expect(TOKEN_TEXTUS, None)?.valor;
+        // Sectio doesn't have a dedicated AST node yet, emit as expression statement
+        // with the section name as a string literal
+        Ok(Stmt::Expressia {
+            locus,
+            expr: Expr::Littera {
+                locus,
+                species: crate::LitteraSpecies::Textus,
+                valor: format!("__sectio:{}", nomen),
+            },
+        })
+    }
+
+    /// Legacy support: § ex "path" importa foo, bar
+    fn parse_sectio_ex_legacy(&mut self) -> Result<Stmt, CompileError> {
+        let locus = self.peek(0).locus;
+        let fons = self.expect(TOKEN_TEXTUS, None)?.valor;
         self.expect(TOKEN_KEYWORD, Some("importa"))?;
+
+        // Check for wildcard import
+        if self.match_token(TOKEN_OPERATOR, Some("*")).is_some() {
+            let alias = if self.match_token(TOKEN_KEYWORD, Some("ut")).is_some() {
+                Some(self.expect(TOKEN_IDENTIFIER, None)?.valor)
+            } else {
+                None
+            };
+            return Ok(Stmt::Importa {
+                locus,
+                fons,
+                specs: Vec::new(),
+                totum: true,
+                alias,
+            });
+        }
 
         let mut specs = Vec::new();
         loop {
@@ -277,6 +362,54 @@ impl Parser {
             totum: false,
             alias: None,
         })
+    }
+
+    /// Dispatch @ annotations based on keyword.
+    /// Returns (publica, futura, externa) flags.
+    fn parse_annotatio(&mut self) -> Result<(bool, bool, bool), CompileError> {
+        let tok = self.peek(0);
+        if tok.tag != TOKEN_IDENTIFIER && tok.tag != TOKEN_KEYWORD {
+            return Err(self.error("expected keyword after @"));
+        }
+        let keyword = self.advance().valor;
+        match keyword.as_str() {
+            // Visibility
+            "publica" | "publicum" => Ok((true, false, false)),
+            "privata" | "privatum" => Ok((false, false, false)), // private is default
+
+            // Modifiers
+            "futura" => Ok((false, true, false)),
+            "externa" => Ok((false, false, true)),
+
+            // Stdlib annotations - parse and skip their arguments
+            // These are used by codegen tools but don't affect nanus-rs compilation
+            "innatum" | "subsidia" | "radix" | "verte" => {
+                self.skip_annotatio_args();
+                Ok((false, false, false))
+            }
+
+            // CLI annotations - parse and skip their arguments
+            // These are used by CLI codegen but don't affect nanus-rs compilation
+            "cli" | "versio" | "descriptio" | "optio" | "operandus"
+            | "imperium" | "alias" | "imperia" | "nomen" => {
+                self.skip_annotatio_args();
+                Ok((false, false, false))
+            }
+
+            // Unknown annotation - error
+            _ => Err(self.error(&format!("unknown @ keyword: {}", keyword))),
+        }
+    }
+
+    /// Skip annotation arguments until next @, §, or declaration keyword.
+    fn skip_annotatio_args(&mut self) {
+        while !self.check(TOKEN_EOF, None)
+            && !self.check(TOKEN_PUNCTUATOR, Some("@"))
+            && !self.check(TOKEN_PUNCTUATOR, Some("§"))
+            && !self.is_declaration_keyword()
+        {
+            self.advance();
+        }
     }
 
     fn parse_varia(&mut self, publica: bool, externa: bool) -> Result<Stmt, CompileError> {
