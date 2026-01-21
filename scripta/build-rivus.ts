@@ -124,10 +124,10 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
             ? (dirname(relPath) === '.' ? 'main' : basename(dirname(relPath)))
             : null;
 
-        // All compilers: cat file | compiler emit [flags] > output
+        // All compilers: cat file | compiler emit [flags] --stdin-filename file > output
         const result = pkg
-            ? await $`cat ${fabPath} | ${COMPILER_BIN} emit -p ${pkg}`.nothrow().quiet()
-            : await $`cat ${fabPath} | ${COMPILER_BIN} emit`.nothrow().quiet();
+            ? await $`cat ${fabPath} | ${COMPILER_BIN} emit -p ${pkg} --stdin-filename ${fabPath}`.nothrow().quiet()
+            : await $`cat ${fabPath} | ${COMPILER_BIN} emit --stdin-filename ${fabPath}`.nothrow().quiet();
 
         if (result.exitCode !== 0) {
             throw new Error(result.stderr.toString().trim() || `Exit code ${result.exitCode}`);
