@@ -239,6 +239,12 @@ async function buildExecutableRs(): Promise<void> {
     const moduleDir = dirname(OUTPUT);
     await mkdir(binDir, { recursive: true });
 
+    if (compiler === 'nanus-rs') {
+        const compilerExe = join(binDir, compiler);
+        console.log("  Bundling Rust modules...");
+        await $`${compilerExe} bundle ${OUTPUT} --entry rivus.rs`.quiet();
+    }
+
     // Create Cargo.toml if not present
     const cargoToml = join(moduleDir, 'Cargo.toml');
     if (!(await Bun.file(cargoToml).exists())) {

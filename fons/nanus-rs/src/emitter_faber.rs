@@ -22,12 +22,28 @@ fn emit_stmt(stmt: &Stmt, indent: &str) -> String {
         Stmt::Pactum { .. } => emit_pactum(stmt, indent),
         Stmt::Ordo { .. } => emit_ordo(stmt, indent),
         Stmt::Discretio { .. } => emit_discretio(stmt, indent),
-        Stmt::TypusAlias { nomen, typus, publica, .. } => {
+        Stmt::TypusAlias {
+            nomen,
+            typus,
+            publica,
+            ..
+        } => {
             let pub_prefix = if *publica { "publica " } else { "" };
-            format!("{}{}typus {} = {}", indent, pub_prefix, nomen, emit_typus(typus))
+            format!(
+                "{}{}typus {} = {}",
+                indent,
+                pub_prefix,
+                nomen,
+                emit_typus(typus)
+            )
         }
         Stmt::In { expr, corpus, .. } => {
-            format!("{}in {} {}", indent, emit_expr(expr), emit_stmt(corpus, indent))
+            format!(
+                "{}in {} {}",
+                indent,
+                emit_expr(expr),
+                emit_stmt(corpus, indent)
+            )
         }
         Stmt::Importa { .. } => emit_importa(stmt, indent),
         Stmt::Redde { valor, .. } => {
@@ -39,10 +55,20 @@ fn emit_stmt(stmt: &Stmt, indent: &str) -> String {
         }
         Stmt::Si { .. } => emit_si(stmt, indent),
         Stmt::Dum { cond, corpus, .. } => {
-            format!("{}dum {} {}", indent, emit_expr(cond), emit_stmt(corpus, indent))
+            format!(
+                "{}dum {} {}",
+                indent,
+                emit_expr(cond),
+                emit_stmt(corpus, indent)
+            )
         }
         Stmt::FacDum { corpus, cond, .. } => {
-            format!("{}fac {} dum {}", indent, emit_stmt(corpus, indent), emit_expr(cond))
+            format!(
+                "{}fac {} dum {}",
+                indent,
+                emit_stmt(corpus, indent),
+                emit_expr(cond)
+            )
         }
         Stmt::Iteratio {
             binding,
@@ -78,10 +104,19 @@ fn emit_stmt(stmt: &Stmt, indent: &str) -> String {
             }
             result
         }
-        Stmt::Tempta { corpus, cape, demum, .. } => {
+        Stmt::Tempta {
+            corpus,
+            cape,
+            demum,
+            ..
+        } => {
             let mut result = format!("{}tempta {}", indent, emit_stmt(corpus, indent));
             if let Some(c) = cape {
-                result.push_str(&format!(" cape {} {}", c.param, emit_stmt(&c.corpus, indent)));
+                result.push_str(&format!(
+                    " cape {} {}",
+                    c.param,
+                    emit_stmt(&c.corpus, indent)
+                ));
             }
             if let Some(d) = demum {
                 result.push_str(&format!(" demum {}", emit_stmt(d, indent)));
@@ -127,7 +162,12 @@ fn emit_stmt(stmt: &Stmt, indent: &str) -> String {
             result
         }
         Stmt::Proba { nomen, corpus, .. } => {
-            format!("{}proba \"{}\" {}", indent, nomen, emit_stmt(corpus, indent))
+            format!(
+                "{}proba \"{}\" {}",
+                indent,
+                nomen,
+                emit_stmt(corpus, indent)
+            )
         }
     }
 }
@@ -439,8 +479,16 @@ fn emit_importa(stmt: &Stmt, indent: &str) -> String {
 }
 
 fn emit_si(stmt: &Stmt, indent: &str) -> String {
-    if let Stmt::Si { cond, cons, alt, .. } = stmt {
-        let mut result = format!("{}si {} {}", indent, emit_expr(cond), emit_stmt(cons, indent));
+    if let Stmt::Si {
+        cond, cons, alt, ..
+    } = stmt
+    {
+        let mut result = format!(
+            "{}si {} {}",
+            indent,
+            emit_expr(cond),
+            emit_stmt(cons, indent)
+        );
         if let Some(a) = alt {
             result.push_str(" secus ");
             result.push_str(&emit_stmt(a, indent));
@@ -533,7 +581,9 @@ fn emit_expr(expr: &Expr) -> String {
             LitteraSpecies::Nihil => "nihil".to_string(),
             _ => valor.clone(),
         },
-        Expr::Binaria { signum, sin, dex, .. } => {
+        Expr::Binaria {
+            signum, sin, dex, ..
+        } => {
             format!("{} {} {}", emit_expr(sin), signum, emit_expr(dex))
         }
         Expr::Unaria { signum, arg, .. } => {
@@ -543,7 +593,9 @@ fn emit_expr(expr: &Expr) -> String {
                 format!("{}{}", signum, emit_expr(arg))
             }
         }
-        Expr::Assignatio { signum, sin, dex, .. } => {
+        Expr::Assignatio {
+            signum, sin, dex, ..
+        } => {
             format!("{} {} {}", emit_expr(sin), signum, emit_expr(dex))
         }
         Expr::Vocatio { callee, args, .. } => {
@@ -573,7 +625,9 @@ fn emit_expr(expr: &Expr) -> String {
                 }
             }
         }
-        Expr::Condicio { cond, cons, alt, .. } => {
+        Expr::Condicio {
+            cond, cons, alt, ..
+        } => {
             format!(
                 "{} sic {} secus {}",
                 emit_expr(cond),
@@ -606,7 +660,9 @@ fn emit_expr(expr: &Expr) -> String {
             };
             format!("({}) => {}", params_str.join(", "), body)
         }
-        Expr::Novum { callee, args, init, .. } => {
+        Expr::Novum {
+            callee, args, init, ..
+        } => {
             let args_str: Vec<String> = args.iter().map(|a| emit_expr(a)).collect();
             let mut result = format!("novum {}({})", emit_expr(callee), args_str.join(", "));
             if let Some(i) = init {
@@ -621,7 +677,12 @@ fn emit_expr(expr: &Expr) -> String {
         Expr::Innatum { expr, typus, .. } => {
             format!("{} innatum {}", emit_expr(expr), emit_typus(typus))
         }
-        Expr::Conversio { expr, species, fallback, .. } => {
+        Expr::Conversio {
+            expr,
+            species,
+            fallback,
+            ..
+        } => {
             let base = format!("{} {}", emit_expr(expr), species);
             if let Some(fb) = fallback {
                 format!("{} vel {}", base, emit_expr(fb))
@@ -655,7 +716,11 @@ fn emit_expr(expr: &Expr) -> String {
                 format!("scriptum(\"{}\")", escape_string(template))
             } else {
                 let args_str: Vec<String> = args.iter().map(emit_expr).collect();
-                format!("scriptum(\"{}\", {})", escape_string(template), args_str.join(", "))
+                format!(
+                    "scriptum(\"{}\", {})",
+                    escape_string(template),
+                    args_str.join(", ")
+                )
             }
         }
         Expr::Ambitus {

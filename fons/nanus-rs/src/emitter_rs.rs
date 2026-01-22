@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use subsidia_rs::{
-    analyze, ClausuraCorpus, Expr, LitteraSpecies, Modulus, Param, SemanticContext,
-    SemanticTypus, Stmt, Typus, VariaSpecies,
+    analyze, ClausuraCorpus, Expr, LitteraSpecies, Modulus, Param, SemanticContext, SemanticTypus,
+    Stmt, Typus, VariaSpecies,
 };
 
 /// Emitter state with semantic context
@@ -51,16 +51,41 @@ impl<'a> RsEmitter<'a> {
             Stmt::Pactum { .. } => self.emit_pactum(stmt, indent),
             Stmt::Ordo { .. } => self.emit_ordo(stmt, indent),
             Stmt::Discretio { .. } => self.emit_discretio_decl(stmt, indent),
-            Stmt::TypusAlias { nomen, typus, publica, .. } => {
+            Stmt::TypusAlias {
+                nomen,
+                typus,
+                publica,
+                ..
+            } => {
                 let vis = if *publica { "pub " } else { "" };
-                format!("{}{}type {} = {};", indent, vis, nomen, self.emit_typus(typus))
+                format!(
+                    "{}{}type {} = {};",
+                    indent,
+                    vis,
+                    nomen,
+                    self.emit_typus(typus)
+                )
             }
             Stmt::In { expr, corpus, .. } => {
-                format!("{}{{\n{}    let __target = {};\n{}\n{}}}", indent, indent, self.emit_expr(expr), self.emit_stmt(corpus, &format!("{}    ", indent)), indent)
+                format!(
+                    "{}{{\n{}    let __target = {};\n{}\n{}}}",
+                    indent,
+                    indent,
+                    self.emit_expr(expr),
+                    self.emit_stmt(corpus, &format!("{}    ", indent)),
+                    indent
+                )
             }
             Stmt::Importa { .. } => self.emit_importa(stmt, indent),
-            Stmt::Si { cond, cons, alt, .. } => {
-                let mut result = format!("{}if {} {}", indent, self.emit_expr(cond), self.emit_stmt(cons, indent));
+            Stmt::Si {
+                cond, cons, alt, ..
+            } => {
+                let mut result = format!(
+                    "{}if {} {}",
+                    indent,
+                    self.emit_expr(cond),
+                    self.emit_stmt(cons, indent)
+                );
                 if let Some(a) = alt {
                     result.push_str(" else ");
                     result.push_str(&self.emit_stmt(a, indent));
@@ -68,27 +93,62 @@ impl<'a> RsEmitter<'a> {
                 result
             }
             Stmt::Dum { cond, corpus, .. } => {
-                format!("{}while {} {}", indent, self.emit_expr(cond), self.emit_stmt(corpus, indent))
+                format!(
+                    "{}while {} {}",
+                    indent,
+                    self.peek_and_emit_expr(cond),
+                    self.emit_stmt(corpus, indent)
+                )
             }
             Stmt::FacDum { corpus, cond, .. } => {
                 let body = self.emit_stmt(corpus, &format!("{}    ", indent));
-                format!("{}loop {{\n{}\n{}    if !({}) {{ break; }}\n{}}}", indent, body, indent, self.emit_expr(cond), indent)
-            }
-            Stmt::Iteratio { binding, iter, corpus, species, .. } => {
-                let iter_method = if species == "De" { ".iter()" } else { ".into_iter()" };
                 format!(
-                    "{}for {} in {}{} {}",
-                    indent, binding, self.emit_expr(iter), iter_method, self.emit_stmt(corpus, indent)
+                    "{}loop {{\n{}\n{}    if !({}) {{ break; }}\n{}}}",
+                    indent,
+                    body,
+                    indent,
+                    self.emit_expr(cond),
+                    indent
                 )
             }
-            Stmt::Elige { discrim, casus, default, .. } => {
+            Stmt::Iteratio {
+                binding,
+                iter,
+                corpus,
+                species,
+                ..
+            } => {
+                let iter_method = if species == "De" {
+                    ".iter()"
+                } else {
+                    ".into_iter()"
+                };
+                format!(
+                    "{}for {} in {}{} {}",
+                    indent,
+                    binding,
+                    self.emit_expr(iter),
+                    iter_method,
+                    self.emit_stmt(corpus, indent)
+                )
+            }
+            Stmt::Elige {
+                discrim,
+                casus,
+                default,
+                ..
+            } => {
                 let discrim_str = self.emit_expr(discrim);
                 let mut lines: Vec<String> = Vec::new();
                 for (i, c) in casus.iter().enumerate() {
                     let kw = if i == 0 { "if" } else { "else if" };
                     lines.push(format!(
                         "{}{} {} == {} {}",
-                        indent, kw, discrim_str, self.emit_expr(&c.cond), self.emit_stmt(&c.corpus, indent)
+                        indent,
+                        kw,
+                        discrim_str,
+                        self.emit_expr(&c.cond),
+                        self.emit_stmt(&c.corpus, indent)
                     ));
                 }
                 if let Some(d) = default {
@@ -100,11 +160,23 @@ impl<'a> RsEmitter<'a> {
             Stmt::Custodi { clausulae, .. } => {
                 let lines: Vec<String> = clausulae
                     .iter()
-                    .map(|c| format!("{}if {} {}", indent, self.emit_expr(&c.cond), self.emit_stmt(&c.corpus, indent)))
+                    .map(|c| {
+                        format!(
+                            "{}if {} {}",
+                            indent,
+                            self.emit_expr(&c.cond),
+                            self.emit_stmt(&c.corpus, indent)
+                        )
+                    })
                     .collect();
                 lines.join("\n")
             }
-            Stmt::Tempta { corpus, cape, demum, .. } => {
+            Stmt::Tempta {
+                corpus,
+                cape,
+                demum,
+                ..
+            } => {
                 let mut lines: Vec<String> = Vec::new();
                 lines.push(format!("{}// try", indent));
                 lines.push(self.emit_stmt(corpus, indent));
@@ -144,19 +216,35 @@ impl<'a> RsEmitter<'a> {
                 } else {
                     let format_str = args.iter().map(|_| "{}").collect::<Vec<_>>().join(" ");
                     let args_str: Vec<String> = args.iter().map(|a| self.emit_expr(a)).collect();
-                    format!("{}{}(\"{}\", {});", indent, macro_name, format_str, args_str.join(", "))
+                    format!(
+                        "{}{}(\"{}\", {});",
+                        indent,
+                        macro_name,
+                        format_str,
+                        args_str.join(", ")
+                    )
                 }
             }
             Stmt::Adfirma { cond, msg, .. } => {
                 if let Some(m) = msg {
-                    format!("{}assert!({}, {});", indent, self.emit_expr(cond), self.emit_expr(m))
+                    format!(
+                        "{}assert!({}, {});",
+                        indent,
+                        self.emit_expr(cond),
+                        self.emit_expr(m)
+                    )
                 } else {
                     format!("{}assert!({});", indent, self.emit_expr(cond))
                 }
             }
             Stmt::Incipit { corpus, asynca, .. } => {
                 if *asynca {
-                    format!("{}#[tokio::main]\n{}async fn main() {}", indent, indent, self.emit_stmt(corpus, indent))
+                    format!(
+                        "{}#[tokio::main]\n{}async fn main() {}",
+                        indent,
+                        indent,
+                        self.emit_stmt(corpus, indent)
+                    )
                 } else {
                     format!("{}fn main() {}", indent, self.emit_stmt(corpus, indent))
                 }
@@ -173,9 +261,19 @@ impl<'a> RsEmitter<'a> {
                 lines.join("\n")
             }
             Stmt::Proba { nomen, corpus, .. } => {
-                format!("{}#[test]\n{}fn {}() {}", indent, indent, sanitize_ident(nomen), self.emit_stmt(corpus, indent))
+                format!(
+                    "{}#[test]\n{}fn {}() {}",
+                    indent,
+                    indent,
+                    sanitize_ident(nomen),
+                    self.emit_stmt(corpus, indent)
+                )
             }
         }
+    }
+
+    fn peek_and_emit_expr(&self, expr: &Expr) -> String {
+        self.emit_expr(expr)
     }
 
     fn emit_massa(&self, corpus: &[Stmt], indent: &str) -> String {
@@ -267,8 +365,14 @@ impl<'a> RsEmitter<'a> {
 
             format!(
                 "{}{}{}fn {}{}({}){}{}",
-                indent, vis, async_kw, nomen, generics_str,
-                params_str.join(", "), ret, body
+                indent,
+                vis,
+                async_kw,
+                nomen,
+                generics_str,
+                params_str.join(", "),
+                ret,
+                body
             )
         } else {
             String::new()
@@ -294,7 +398,10 @@ impl<'a> RsEmitter<'a> {
 
             let mut lines: Vec<String> = Vec::new();
             lines.push(format!("{}#[derive(Debug, Clone)]", indent));
-            lines.push(format!("{}{}struct {}{} {{", indent, vis, nomen, generics_str));
+            lines.push(format!(
+                "{}{}struct {}{} {{",
+                indent, vis, nomen, generics_str
+            ));
 
             for c in campi {
                 let field_vis = match c.visibilitas.as_str() {
@@ -306,13 +413,16 @@ impl<'a> RsEmitter<'a> {
                 } else {
                     "()".to_string()
                 };
-                lines.push(format!("{}    {}{}: {},", indent, field_vis, c.nomen, typ));
+                lines.push(format!("{}    {}{}: {},", indent, field_vis, sanitize_rs_ident(&c.nomen), typ));
             }
             lines.push(format!("{}}}", indent));
 
             if !methodi.is_empty() {
                 lines.push(String::new());
-                lines.push(format!("{}impl{} {}{} {{", indent, generics_str, nomen, generics_str));
+                lines.push(format!(
+                    "{}impl{} {}{} {{",
+                    indent, generics_str, nomen, generics_str
+                ));
 
                 for m in methodi {
                     if let Stmt::Functio {
@@ -343,7 +453,13 @@ impl<'a> RsEmitter<'a> {
                         };
                         lines.push(format!(
                             "{}    {}{}fn {}({}){}{}",
-                            indent, method_vis, async_kw, method_name, all_params.join(", "), ret, body
+                            indent,
+                            method_vis,
+                            async_kw,
+                            method_name,
+                            all_params.join(", "),
+                            ret,
+                            body
                         ));
                     }
                 }
@@ -373,7 +489,10 @@ impl<'a> RsEmitter<'a> {
             };
 
             let mut lines: Vec<String> = Vec::new();
-            lines.push(format!("{}{}trait {}{} {{", indent, vis, nomen, generics_str));
+            lines.push(format!(
+                "{}{}trait {}{} {{",
+                indent, vis, nomen, generics_str
+            ));
 
             for m in methodi {
                 let params_str: Vec<String> = m.params.iter().map(|p| self.emit_param(p)).collect();
@@ -385,7 +504,13 @@ impl<'a> RsEmitter<'a> {
                 } else {
                     String::new()
                 };
-                lines.push(format!("{}    fn {}({}){};", indent, m.nomen, all_params.join(", "), ret));
+                lines.push(format!(
+                    "{}    fn {}({}){};",
+                    indent,
+                    m.nomen,
+                    all_params.join(", "),
+                    ret
+                ));
             }
 
             lines.push(format!("{}}}", indent));
@@ -406,7 +531,10 @@ impl<'a> RsEmitter<'a> {
             let vis = if *publica { "pub " } else { "" };
             let mut lines: Vec<String> = Vec::new();
 
-            lines.push(format!("{}#[derive(Debug, Clone, Copy, PartialEq, Eq)]", indent));
+            lines.push(format!(
+                "{}#[derive(Debug, Clone, Copy, PartialEq, Eq)]",
+                indent
+            ));
             lines.push(format!("{}{}enum {} {{", indent, vis, nomen));
 
             for m in membra {
@@ -442,7 +570,10 @@ impl<'a> RsEmitter<'a> {
 
             let mut lines: Vec<String> = Vec::new();
             lines.push(format!("{}#[derive(Debug, Clone)]", indent));
-            lines.push(format!("{}{}enum {}{} {{", indent, vis, nomen, generics_str));
+            lines.push(format!(
+                "{}{}enum {}{} {{",
+                indent, vis, nomen, generics_str
+            ));
 
             for v in variantes {
                 if v.campi.is_empty() {
@@ -453,7 +584,12 @@ impl<'a> RsEmitter<'a> {
                         .iter()
                         .map(|f| format!("{}: {}", f.nomen, self.emit_typus(&f.typus)))
                         .collect();
-                    lines.push(format!("{}    {} {{ {} }},", indent, v.nomen, fields.join(", ")));
+                    lines.push(format!(
+                        "{}    {} {{ {} }},",
+                        indent,
+                        v.nomen,
+                        fields.join(", ")
+                    ));
                 }
             }
 
@@ -476,10 +612,18 @@ impl<'a> RsEmitter<'a> {
             let path = if fons.starts_with("./") {
                 format!("crate::{}", fons[2..].replace("/", "::"))
             } else if fons.starts_with("../") {
-                format!("super::{}", fons[3..].replace("/", "::"))
+                let mut super_count = 0;
+                let mut current_fons: &str = fons;
+                while current_fons.starts_with("../") {
+                    super_count += 1;
+                    current_fons = &current_fons[3..];
+                }
+                let supers = vec!["super"; super_count].join("::");
+                format!("{}::{}", supers, current_fons.replace("/", "::"))
             } else {
                 fons.replace("/", "::")
-            }.replace(".fab", "");
+            }
+            .replace(".fab", "");
 
             if *totum {
                 if let Some(a) = alias {
@@ -505,12 +649,21 @@ impl<'a> RsEmitter<'a> {
         }
     }
 
-    fn emit_discerne(&self, discrim: &[Expr], casus: &[subsidia_rs::DiscerneCasus], indent: &str) -> String {
+    fn emit_discerne(
+        &self,
+        discrim: &[Expr],
+        casus: &[subsidia_rs::DiscerneCasus],
+        indent: &str,
+    ) -> String {
         let mut lines: Vec<String> = Vec::new();
 
         if discrim.len() == 1 {
             let enum_name = self.get_discrim_type_from_patterns(casus);
-            lines.push(format!("{}match {} {{", indent, self.emit_expr(&discrim[0])));
+            lines.push(format!(
+                "{}match {} {{",
+                indent,
+                self.emit_expr(&discrim[0])
+            ));
 
             for c in casus {
                 let pattern = &c.patterns[0];
@@ -518,25 +671,36 @@ impl<'a> RsEmitter<'a> {
                 if pattern.wildcard {
                     lines.push(format!("{}    _ => {{", indent));
                 } else if pattern.bindings.is_empty() && pattern.alias.is_none() {
-                    lines.push(format!("{}    {}::{} => {{", indent, enum_name, pattern.variant));
+                    lines.push(format!(
+                        "{}    {}::{} => {{",
+                        indent, enum_name, pattern.variant
+                    ));
                 } else {
                     let binding_parts: Vec<String> = pattern.bindings.iter().cloned().collect();
                     if let Some(alias) = &pattern.alias {
                         if binding_parts.is_empty() {
-                            lines.push(format!("{}    {} @ {}::{} {{ .. }} => {{", indent, alias, enum_name, pattern.variant));
+                            lines.push(format!(
+                                "{}    {} @ {}::{} {{ .. }} => {{",
+                                indent, alias, enum_name, pattern.variant
+                            ));
                             if let Stmt::Massa { corpus: stmts, .. } = c.corpus.as_ref() {
                                 for s in stmts {
                                     lines.push(self.emit_stmt(s, &format!("{}        ", indent)));
                                 }
                             } else {
-                                lines.push(self.emit_stmt(&c.corpus, &format!("{}        ", indent)));
+                                lines.push(
+                                    self.emit_stmt(&c.corpus, &format!("{}        ", indent)),
+                                );
                             }
                             lines.push(format!("{}    }}", indent));
                             continue;
                         }
                     }
                     let binding_str = format!("{{ {} }}", binding_parts.join(", "));
-                    lines.push(format!("{}    {}::{} {} => {{", indent, enum_name, pattern.variant, binding_str));
+                    lines.push(format!(
+                        "{}    {}::{} {} => {{",
+                        indent, enum_name, pattern.variant, binding_str
+                    ));
                 }
 
                 if let Stmt::Massa { corpus: stmts, .. } = c.corpus.as_ref() {
@@ -555,15 +719,20 @@ impl<'a> RsEmitter<'a> {
             lines.push(format!("{}match ({}) {{", indent, discrim_tuple.join(", ")));
 
             for c in casus {
-                let patterns: Vec<String> = c.patterns.iter().map(|p| {
-                    if p.wildcard {
-                        "_".to_string()
-                    } else {
-                        let enum_name = self.find_discretio_for_variant(&p.variant)
-                            .unwrap_or_else(|| "Unknown".to_string());
-                        format!("{}::{}", enum_name, p.variant)
-                    }
-                }).collect();
+                let patterns: Vec<String> = c
+                    .patterns
+                    .iter()
+                    .map(|p| {
+                        if p.wildcard {
+                            "_".to_string()
+                        } else {
+                            let enum_name = self
+                                .find_discretio_for_variant(&p.variant)
+                                .unwrap_or_else(|| "Unknown".to_string());
+                            format!("{}::{}", enum_name, p.variant)
+                        }
+                    })
+                    .collect();
 
                 lines.push(format!("{}    ({}) => {{", indent, patterns.join(", ")));
 
@@ -594,7 +763,12 @@ impl<'a> RsEmitter<'a> {
                 LitteraSpecies::Nihil => "None".to_string(),
                 _ => valor.clone(),
             },
-            Expr::Binaria { signum, sin, dex, .. } => {
+            Expr::Binaria {
+                signum, sin, dex, ..
+            } => {
+                if signum == "inter" {
+                    return format!("{}.contains(&{})", self.emit_expr(dex), self.emit_expr(sin));
+                }
                 let op = map_binary_op(signum);
                 format!("({} {} {})", self.emit_expr(sin), op, self.emit_expr(dex))
             }
@@ -602,29 +776,51 @@ impl<'a> RsEmitter<'a> {
                 let op = map_unary_op(signum);
                 format!("({}{})", op, self.emit_expr(arg))
             }
-            Expr::Assignatio { signum, sin, dex, .. } => {
+            Expr::Assignatio {
+                signum, sin, dex, ..
+            } => {
                 format!("{} {} {}", self.emit_expr(sin), signum, self.emit_expr(dex))
             }
-            Expr::Condicio { cond, cons, alt, .. } => {
-                format!("if {} {{ {} }} else {{ {} }}", self.emit_expr(cond), self.emit_expr(cons), self.emit_expr(alt))
+            Expr::Condicio {
+                cond, cons, alt, ..
+            } => {
+                format!(
+                    "if {} {{ {} }} else {{ {} }}",
+                    self.emit_expr(cond),
+                    self.emit_expr(cons),
+                    self.emit_expr(alt)
+                )
             }
             Expr::Vocatio { callee, args, .. } => {
                 let args_str: Vec<String> = args.iter().map(|a| self.emit_expr(a)).collect();
 
                 if let Expr::Membrum { obj, prop, .. } = callee.as_ref() {
-                    if let Expr::Littera { valor: prop_name, .. } = prop.as_ref() {
+                    if let Expr::Littera {
+                        valor: prop_name, ..
+                    } = prop.as_ref()
+                    {
                         if prop_name == "longitudo" {
                             return format!("{}.len()", self.emit_expr(obj));
                         }
                         if let Some(translated) = map_method_name(prop_name) {
-                            return format!("{}.{}({})", self.emit_expr(obj), translated, args_str.join(", "));
+                            return format!(
+                                "{}.{}({})",
+                                self.emit_expr(obj),
+                                translated,
+                                args_str.join(", ")
+                            );
                         }
                     }
                 }
 
                 format!("{}({})", self.emit_expr(callee), args_str.join(", "))
             }
-            Expr::Membrum { obj, prop, computed, .. } => {
+            Expr::Membrum {
+                obj,
+                prop,
+                computed,
+                ..
+            } => {
                 let obj_str = self.emit_expr(obj);
                 if *computed {
                     return format!("{}[{}]", obj_str, self.emit_expr(prop));
@@ -639,7 +835,7 @@ impl<'a> RsEmitter<'a> {
                     if valor == "ultimus" {
                         return format!("{}.last().unwrap()", obj_str);
                     }
-                    valor.clone()
+                    sanitize_rs_ident(valor)
                 } else {
                     self.emit_expr(prop)
                 };
@@ -691,13 +887,22 @@ impl<'a> RsEmitter<'a> {
             Expr::Innatum { expr, typus, .. } => {
                 format!("({} as {})", self.emit_expr(expr), self.emit_typus(typus))
             }
-            Expr::Conversio { expr, species, fallback, .. } => {
+            Expr::Conversio {
+                expr,
+                species,
+                fallback,
+                ..
+            } => {
                 let conversion = match species.as_str() {
                     "numeratum" => format!("{}.parse::<i64>()", self.emit_expr(expr)),
                     "fractatum" => format!("{}.parse::<f64>()", self.emit_expr(expr)),
                     "textatum" => format!("{}.to_string()", self.emit_expr(expr)),
                     "bivalentum" => format!("({} != 0)", self.emit_expr(expr)),
-                    _ => format!("/* unknown conversion {} */ {}", species, self.emit_expr(expr)),
+                    _ => format!(
+                        "/* unknown conversion {} */ {}",
+                        species,
+                        self.emit_expr(expr)
+                    ),
                 };
                 if let Some(fb) = fallback {
                     format!("{}.unwrap_or({})", conversion, self.emit_expr(fb))
@@ -719,7 +924,7 @@ impl<'a> RsEmitter<'a> {
                         } else {
                             self.emit_expr(&p.key)
                         };
-                        format!("{}: {}", key, self.emit_expr(&p.valor))
+                        format!("{}: {}", sanitize_rs_ident(&key), self.emit_expr(&p.valor))
                     })
                     .collect();
                 format!("{} {{ {} }}", variant, fields.join(", "))
@@ -733,7 +938,12 @@ impl<'a> RsEmitter<'a> {
                 let args_str: Vec<String> = args.iter().map(|a| self.emit_expr(a)).collect();
                 format!("format!(\"{}\", {})", format_str, args_str.join(", "))
             }
-            Expr::Ambitus { start, end, inclusive, .. } => {
+            Expr::Ambitus {
+                start,
+                end,
+                inclusive,
+                ..
+            } => {
                 if *inclusive {
                     format!("({}..={})", self.emit_expr(start), self.emit_expr(end))
                 } else {
@@ -827,8 +1037,8 @@ fn map_type_name(name: &str) -> String {
 
 fn map_binary_op(op: &str) -> &'static str {
     match op {
-        "et" => "&&",
-        "aut" => "||",
+        "et" | "&&" => "&&",
+        "aut" | "||" => "||",
         "vel" => ".unwrap_or",
         "inter" => "/* in */",
         "intra" => "/* instanceof */",
@@ -840,7 +1050,7 @@ fn map_binary_op(op: &str) -> &'static str {
         "==" => "==",
         "!=" => "!=",
         "===" => "==",
-        "!==" => "!=",
+        "!=" => "!=",
         "<" => "<",
         ">" => ">",
         "<=" => "<=",
@@ -903,6 +1113,15 @@ fn map_method_name(name: &str) -> Option<&'static str> {
     .cloned()
     .collect();
     map.get(name).copied()
+}
+
+fn sanitize_rs_ident(s: &str) -> String {
+    match s {
+        "async" | "match" | "type" | "move" | "loop" | "where" | "trait" | "impl" | "dyn" => {
+            format!("r#{}", s)
+        }
+        _ => s.to_string(),
+    }
 }
 
 fn sanitize_ident(s: &str) -> String {

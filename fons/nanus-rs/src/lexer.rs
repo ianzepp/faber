@@ -1,5 +1,5 @@
-use subsidia_rs::{CompileError, Locus, Token};
 use std::collections::HashSet;
+use subsidia_rs::{CompileError, Locus, Token};
 
 /// Tokenize Faber source code.
 pub fn lex(source: &str, filename: &str) -> Result<Vec<Token>, CompileError> {
@@ -23,52 +23,109 @@ impl<'a> Lexer<'a> {
     fn new(source: &'a str, filename: &str) -> Self {
         let keywords: HashSet<&str> = [
             // Declarations
-            "varia", "fixum", "figendum", "functio", "genus", "pactum", "ordo", "discretio",
-            "ex", "importa", "ut",
+            "varia",
+            "fixum",
+            "figendum",
+            "functio",
+            "genus",
+            "pactum",
+            "ordo",
+            "discretio",
+            "ex",
+            "importa",
+            "ut",
             // Modifiers
-            "publica", "privata", "protecta", "generis", "implet", "sub",
+            "publica",
+            "privata",
+            "protecta",
+            "generis",
+            "implet",
+            "sub",
             // Control flow
-            "si", "sin", "secus", "dum", "fac", "elige", "casu", "ceterum", "discerne", "custodi",
-            "de", "in", "pro", "omnia",
+            "si",
+            "sin",
+            "secus",
+            "dum",
+            "fac",
+            "elige",
+            "casu",
+            "ceterum",
+            "discerne",
+            "custodi",
+            "de",
+            "in",
+            "pro",
+            "omnia",
             // Actions
-            "redde", "reddit", "rumpe", "perge", "iace", "mori", "tempta", "cape", "demum",
-            "scribe", "vide", "mone", "adfirma",
+            "redde",
+            "reddit",
+            "rumpe",
+            "perge",
+            "iace",
+            "mori",
+            "tempta",
+            "cape",
+            "demum",
+            "scribe",
+            "vide",
+            "mone",
+            "adfirma",
             // Expressions
-            "cede", "novum", "clausura", "qua", "innatum", "finge", "sic", "scriptum",
+            "cede",
+            "novum",
+            "clausura",
+            "qua",
+            "innatum",
+            "finge",
+            "sic",
+            "scriptum",
             // Operators (word-form)
-            "et", "aut", "vel", "inter", "intra", "non", "nihil", "nonnihil", "positivum",
+            "et",
+            "aut",
+            "vel",
+            "inter",
+            "intra",
+            "non",
+            "nihil",
+            "nonnihil",
+            "positivum",
             // Literals
-            "verum", "falsum", "ego",
+            "verum",
+            "falsum",
+            "ego",
             // Entry
-            "incipit", "incipiet",
+            "incipit",
+            "incipiet",
             // Test
-            "probandum", "proba",
+            "probandum",
+            "proba",
             // Type
             "usque",
             // Annotations
-            "publicum", "externa",
+            "publicum",
+            "externa",
             // Body shortcuts
-            "ergo", "tacet", "iacit", "moritor",
+            "ergo",
+            "tacet",
+            "iacit",
+            "moritor",
             // Iteration
             "ceteri",
         ]
         .into_iter()
         .collect();
 
-        let punctuators: HashSet<char> =
-            ['(', ')', '{', '}', '[', ']', ',', '.', ':', ';', '@', '#', '?', '!']
-                .into_iter()
-                .collect();
+        let punctuators: HashSet<char> = [
+            '(', ')', '{', '}', '[', ']', ',', '.', ':', ';', '@', '#', '?', '!',
+        ]
+        .into_iter()
+        .collect();
 
         let operators = vec![
             // Multi-char first (greedy match)
-            "===", "!==", "==", "!=", "<=", ">=", "&&", "||", "??",
-            "+=", "-=", "*=", "/=",
-            "->", "..",
-            // Single-char
-            "+", "-", "*", "/", "%",
-            "<", ">", "=",
-            "&", "|", "^", "~",
+            "===", "!==", "==", "!=", "<=", ">=", "&&", "||", "??", "+=", "-=", "*=", "/=", "->",
+            "..", // Single-char
+            "+", "-", "*", "/", "%", "<", ">", "=", "&", "|", "^", "~",
         ];
 
         Self {
