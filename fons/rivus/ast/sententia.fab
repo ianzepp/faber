@@ -103,7 +103,7 @@ genus ImportaSpecificator {
 @ publica
 genus SeriesDestructuraElementum {
     Locus locus
-    textus? nomen             # binding name (nil for omitted)
+    si textus nomen             # binding name (nil for omitted)
     bivalens residuum         # true for ceteri (rest)
     bivalens omissum          # true for placeholder _
 }
@@ -122,10 +122,10 @@ discretio IteratioVariabilis {
 genus Parametrum {
     Locus locus
     textus nomen
-    textus? alias             # ut alias
-    TypusAnnotatio? typus
-    Expressia? praedefinitum  # vel default
-    textus? praepositio       # de, in, ex
+    si textus alias             # ut alias
+    si TypusAnnotatio typus
+    si Expressia praedefinitum  # vel default
+    si textus praepositio       # de, in, ex
     bivalens optionalis       # si (optional parameter)
     bivalens residuum         # ceteri (rest)
 }
@@ -179,7 +179,7 @@ genus CampusDeclaratio {
     Locus locus
     textus nomen
     TypusAnnotatio typus
-    Expressia? valor          # default value
+    si Expressia valor          # default value
     Visibilitas visibilitas
     bivalens staticum         # generis (static)
 }
@@ -190,11 +190,11 @@ genus PactumMethodus {
     Locus locus
     textus nomen
     lista<Parametrum> parametra
-    TypusAnnotatio? typusReditus
+    si TypusAnnotatio typusReditus
     bivalens asynca
     bivalens generator
     lista<FunctioModificator>? modificatores
-    MorphologiaDeclaratio? morphologia
+    si MorphologiaDeclaratio morphologia
 }
 
 # Ordo (enum) member
@@ -203,7 +203,7 @@ genus PactumMethodus {
 genus OrdoMembrum {
     Locus locus
     textus nomen
-    textus? valor             # optional explicit value
+    si textus valor             # optional explicit value
 }
 
 # Variant field in discretio
@@ -239,7 +239,7 @@ genus VariansExemplar {
     Locus locus
     textus variansNomen          # variant tag or "_" for wildcard
     bivalens estWildcard         # true for _ patterns
-    textus? alias                # 'ut' binds entire variant
+    si textus alias                # 'ut' binds entire variant
     lista<textus> vincula        # field bindings from 'pro'
 }
 
@@ -277,9 +277,9 @@ genus CapeClausula {
 genus AdVinculum {
     Locus locus
     AdVerbumVinculandi verbum
-    TypusAnnotatio? typus
+    si TypusAnnotatio typus
     textus nomen
-    textus? alias
+    si textus alias
 }
 
 # ============================================================================
@@ -319,10 +319,10 @@ discretio Sententia {
         Locus locus
         VariaGenus species
         textus nomen
-        TypusAnnotatio? typus      # WHY: optional type annotation
-        Expressia? valor           # WHY: optional initializer
+        si TypusAnnotatio typus      # WHY: optional type annotation
+        si Expressia valor           # WHY: optional initializer
         bivalens externa        # @ externa annotation
-        Visibilitas? visibilitas  # @ publica annotation for module-level export
+        si Visibilitas visibilitas  # @ publica annotation for module-level export
     }
 
     # Import declaration
@@ -332,7 +332,7 @@ discretio Sententia {
         textus fons              # source path/module
         lista<ImportaSpecificator> specificatores
         bivalens totum           # true for wildcard *
-        textus? totumAlias       # WHY: optional alias for * ut name
+        si textus totumAlias       # WHY: optional alias for * ut name
     }
 
     # Destructure declaration
@@ -366,16 +366,16 @@ discretio Sententia {
         textus nomen
         lista<TypusParametrum>? generaParametra # WHY: optional generics
         lista<Parametrum> parametra
-        TypusAnnotatio? typusReditus            # WHY: optional return type annotation
-        MassaSententia? corpus   # WHY: optional for @ externa declarations
+        si TypusAnnotatio typusReditus            # WHY: optional return type annotation
+        si MassaSententia corpus   # WHY: optional for @ externa declarations
         bivalens asynca
         bivalens generator
         bivalens abstracta
         bivalens structor       # WHY: "constructor" is a JS reserved word
         bivalens externa        # @ externa annotation
-        Visibilitas? visibilitas
-        ReddeVerbum? reddeVerbum
-        MorphologiaDeclaratio? morphologia      # WHY: optional method morphology
+        si Visibilitas visibilitas
+        si ReddeVerbum reddeVerbum
+        si MorphologiaDeclaratio morphologia      # WHY: optional method morphology
         lista<FunctioModificator>? modificatores # WHY: optional modifiers list
         lista<Annotatio>? annotationes  # WHY: CLI annotations (@ imperium, @ optio, etc.)
     }
@@ -390,24 +390,24 @@ discretio Sententia {
         Locus locus
         textus nomen
         lista<textus>? generaParametra # WHY: optional generics
-        textus? extendit         # WHY: optional sub Parent
+        si textus extendit         # WHY: optional sub Parent
         lista<textus>? implet    # WHY: optional implet Interface list
         bivalens abstractum
         lista<CampusDeclaratio> campi
-        FunctioDeclaratio? structor   # WHY: optional constructor
+        si FunctioDeclaratio structor   # WHY: optional constructor
         lista<FunctioDeclaratio> methodi
-        MorphologiaDeclaratio? morphologia      # WHY: optional genus morphology
-        Visibilitas? visibilitas  # @ publica annotation for module-level export
+        si MorphologiaDeclaratio morphologia      # WHY: optional genus morphology
+        si Visibilitas visibilitas  # @ publica annotation for module-level export
     }
 
     # Pactum (interface) declaration
-    # Example: pactum Iterabilis { functio sequens() -> T? }
+    # Example: pactum Iterabilis { functio sequens() -> si T }
     PactumDeclaratio {
         Locus locus
         textus nomen
         lista<textus>? generaParametra # WHY: optional generics
         lista<PactumMethodus> methodi
-        Visibilitas? visibilitas  # @ publica annotation for module-level export
+        si Visibilitas visibilitas  # @ publica annotation for module-level export
     }
 
     # Type alias declaration
@@ -416,8 +416,8 @@ discretio Sententia {
         Locus locus
         textus nomen
         TypusAnnotatio typus
-        textus? scopusNomen      # WHY: optional typeof scope
-        Visibilitas? visibilitas  # @ publica annotation for module-level export
+        si textus scopusNomen      # WHY: optional typeof scope
+        si Visibilitas visibilitas  # @ publica annotation for module-level export
     }
 
     # Ordo (enum) declaration
@@ -426,7 +426,7 @@ discretio Sententia {
         Locus locus
         textus nomen
         lista<OrdoMembrum> membra
-        Visibilitas? visibilitas  # @ publica annotation for module-level export
+        si Visibilitas visibilitas  # @ publica annotation for module-level export
     }
 
     # Discretio (tagged union) declaration
@@ -436,7 +436,7 @@ discretio Sententia {
         textus nomen
         lista<textus>? generaParametra # WHY: optional generics
         lista<VariansDeclaratio> variantes
-        Visibilitas? visibilitas  # @ publica annotation for module-level export
+        si Visibilitas visibilitas  # @ publica annotation for module-level export
     }
 
     # -------------------------------------------------------------------------
@@ -449,8 +449,8 @@ discretio Sententia {
         Locus locus
         Expressia condicio
         Sententia consequens     # MassaSententia
-        Sententia? alternans     # MassaSententia or SiSententia
-        CapeClausula? cape
+        si Sententia alternans     # MassaSententia or SiSententia
+        si CapeClausula cape
     }
 
     # While loop
@@ -459,7 +459,7 @@ discretio Sententia {
         Locus locus
         Expressia condicio
         Sententia corpus         # MassaSententia
-        CapeClausula? cape
+        si CapeClausula cape
     }
 
     # For loop (iteration)
@@ -473,7 +473,7 @@ discretio Sententia {
         Sententia corpus         # MassaSententia
         bivalens asynca
         bivalens mutabilis       # varia = mutable, fixum = immutable
-        CapeClausula? cape
+        si CapeClausula cape
     }
 
     # Switch statement
@@ -482,8 +482,8 @@ discretio Sententia {
         Locus locus
         Expressia discriminans
         lista<EligeCasus> casus
-        MassaSententia? praedefinitum # WHY: optional default casus
-        CapeClausula? cape
+        si MassaSententia praedefinitum # WHY: optional default casus
+        si CapeClausula cape
     }
 
     # Pattern matching statement
@@ -512,8 +512,8 @@ discretio Sententia {
     TemptaSententia {
         Locus locus
         Sententia corpus         # MassaSententia
-        CapeClausula? cape
-        MassaSententia? demum    # WHY: optional finally block
+        si CapeClausula cape
+        si MassaSententia demum    # WHY: optional finally block
     }
 
     # Throw statement
@@ -529,8 +529,8 @@ discretio Sententia {
     FacSententia {
         Locus locus
         Sententia corpus         # MassaSententia
-        CapeClausula? cape
-        Expressia? condicio      # WHY: optional do-while condition
+        si CapeClausula cape
+        si Expressia condicio      # WHY: optional do-while condition
     }
 
     # Assert statement
@@ -538,7 +538,7 @@ discretio Sententia {
     AdfirmaSententia {
         Locus locus
         Expressia condicio
-        Expressia? nuntius       # WHY: optional message
+        si Expressia nuntius       # WHY: optional message
     }
 
     # -------------------------------------------------------------------------
@@ -557,7 +557,7 @@ discretio Sententia {
     # Example: redde 42, redde
     ReddeSententia {
         Locus locus
-        Expressia? valor         # WHY: optional redde value
+        si Expressia valor         # WHY: optional redde value
     }
 
     # Break statement
@@ -588,8 +588,8 @@ discretio Sententia {
     # Example: incipit { scribe "Hello" }
     IncipitSententia {
         Locus locus
-        MassaSententia? corpus   # WHY: optional incipit body
-        Sententia? ergo          # WHY: optional incipit ergo clause
+        si MassaSententia corpus   # WHY: optional incipit body
+        si Sententia ergo          # WHY: optional incipit ergo clause
         lista<Annotatio>? annotationes  # WHY: CLI annotations (@ cli, @ optio, etc.)
     }
 
@@ -597,8 +597,8 @@ discretio Sententia {
     # Example: incipiet { cede fetch() }
     IncipietSententia {
         Locus locus
-        MassaSententia? corpus   # WHY: optional incipiet body
-        Sententia? ergo          # WHY: optional incipiet ergo clause
+        si MassaSententia corpus   # WHY: optional incipiet body
+        si Sententia ergo          # WHY: optional incipiet ergo clause
         lista<Annotatio>? annotationes  # WHY: CLI annotations
     }
 
@@ -606,14 +606,14 @@ discretio Sententia {
     # Example: cura arena fixum mem { ... }
     CuraSententia {
         Locus locus
-        CuratorGenus? curatorSpecies # WHY: optional when `res` provides curator
-        Expressia? res           # WHY: optional for bare curator form
+        si CuratorGenus curatorSpecies # WHY: optional when `res` provides curator
+        si Expressia res           # WHY: optional for bare curator form
         textus vinculum          # binding name
-        TypusAnnotatio? typus
+        si TypusAnnotatio typus
         bivalens asynca
         bivalens mutabilis       # varia = mutable, fixum = immutable
         Sententia corpus         # MassaSententia
-        CapeClausula? cape
+        si CapeClausula cape
     }
 
     # Dispatch statement
@@ -622,9 +622,9 @@ discretio Sententia {
         Locus locus
         textus scopus            # target string
         lista<Expressia> argumenta
-        AdVinculum? vinculum
-        MassaSententia? corpus   # WHY: optional handler body
-        CapeClausula? cape
+        si AdVinculum vinculum
+        si MassaSententia corpus   # WHY: optional handler body
+        si CapeClausula cape
     }
 
     # -------------------------------------------------------------------------
@@ -641,9 +641,9 @@ discretio Sententia {
     ProbandumSententia {
         Locus locus
         textus nomen
-        bivalens? ompitur            # @ omitte - skip entire suite
-        textus? ratioOmissionis      # reason for skip
-        bivalens? solum              # @ solum - only run this suite
+        si bivalens ompitur            # @ omitte - skip entire suite
+        si textus ratioOmissionis      # reason for skip
+        si bivalens solum              # @ solum - only run this suite
         lista<textus>? tags          # @ tag - filtering tags
         lista<Sententia> corpus      # PraeparaMassa, ProbandumSententia, ProbaSententia
     }
@@ -665,16 +665,16 @@ discretio Sententia {
     ProbaSententia {
         Locus locus
         textus nomen
-        ProbaModificator? modificator
-        textus? ratioModificatoris   # reason for skip/todo
-        bivalens? solum              # @ solum - only run this test
+        si ProbaModificator modificator
+        si textus ratioModificatoris   # reason for skip/todo
+        si bivalens solum              # @ solum - only run this test
         lista<textus>? tags          # @ tag - filtering tags
-        numerus? temporis            # @ temporis - timeout in ms
-        bivalens? metior             # @ metior - benchmark mode
-        numerus? repete              # @ repete - repeat count
-        numerus? fragilis            # @ fragilis - retry count
-        textus? requirit             # @ requirit - required env var
-        textus? solumIn              # @ solum_in - platform filter
+        si numerus temporis            # @ temporis - timeout in ms
+        si bivalens metior             # @ metior - benchmark mode
+        si numerus repete              # @ repete - repeat count
+        si numerus fragilis            # @ fragilis - retry count
+        si textus requirit             # @ requirit - required env var
+        si textus solumIn              # @ solum_in - platform filter
         Sententia corpus             # MassaSententia
     }
 

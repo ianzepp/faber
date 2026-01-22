@@ -342,7 +342,7 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                 sin non habetWildcardCasu {
                     # Resolve discriminant type name
                     fixum discriminantTypus = r.expressia(d.discriminantes[0])
-                    varia discretioNomen = nihil qua textus?
+                    varia discretioNomen = nihil qua si textus
                     discerne discriminantTypus {
                         casu Usitatum ut u {
                             discretioNomen = u.nomen
@@ -355,7 +355,7 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                         si nonnihil info {
                             varia handled = {} innatum tabula<textus, bivalens>
                             ex d.casus fixum casus {
-                                varia primum = nihil qua VariansExemplar?
+                                varia primum = nihil qua si VariansExemplar
                                 ex casus.exemplaria fixum exemplar {
                                     primum = exemplar
                                     rumpe

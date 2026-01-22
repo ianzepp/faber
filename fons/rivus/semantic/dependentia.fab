@@ -22,8 +22,8 @@
 @ publica
 genus Dependentia {
     textus alias      # import alias (e.g., "norma")
-    textus? github    # github reference "owner/repo#ref" (future)
-    textus? via       # local path or subpath within github repo
+    si textus github    # github reference "owner/repo#ref" (future)
+    si textus via       # local path or subpath within github repo
 }
 
 # ============================================================================
@@ -50,12 +50,12 @@ functio extractDependentiae(de lista<SectioAnnotatio>? sectiones) -> tabula<text
 
 # Parse dependentia arguments into a Dependentia
 # Arguments: ["alias", "via", "path"] or ["alias", "github", "ref", "via", "subpath"]
-functio parseDependentiaArgs(de lista<textus> args) -> Dependentia? {
+functio parseDependentiaArgs(de lista<textus> args) -> si Dependentia {
     si args.longitudo() < 1 { redde nihil }
 
     fixum alias = args[0]
-    varia github = nihil qua textus?
-    varia via = nihil qua textus?
+    varia github = nihil qua si textus
+    varia via = nihil qua si textus
 
     # Parse keyword-value pairs: github "...", via "..."
     varia i = 1
@@ -124,7 +124,7 @@ genus GithubReferentia {
 #   "ianzepp/faber#v1.0.0" -> { dominus: "ianzepp", repo: "faber", ref: "v1.0.0" }
 #   "ianzepp/faber" -> { dominus: "ianzepp", repo: "faber", ref: "main" }
 @ publica
-functio pangeGithubFontem(de textus fons) -> GithubReferentia? {
+functio pangeGithubFontem(de textus fons) -> si GithubReferentia {
     # Split on # to get ref (default to "main")
     fixum partesHash = fons.divide("#") qua lista<textus>
     fixum viaRepo = partesHash[0]

@@ -109,7 +109,7 @@ fixum FLAGGA_FUTURUM_INDICATIVUM = {
 #
 # Returns nihil if no recognized morphology.
 @ publica
-functio parseMethodum(de textus nomen) -> RadixEtFlagga? {
+functio parseMethodum(de textus nomen) -> si RadixEtFlagga {
     fixum longitudo = nomen.longitudo()
 
     # Need at least 2 chars (1 stem + 1 ending)

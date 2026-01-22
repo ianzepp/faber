@@ -33,7 +33,7 @@ genus ModulusResolutum {
     tabula<textus, ModulusExportum> exporta    # map of name -> export info
     tabula<textus, DiscretioDeclInfo> discretiones # map of name -> discretio info
     textus via                                  # absolute file path
-    Programma? programma                        # parsed AST (for future multi-file codegen)
+    si Programma programma                        # parsed AST (for future multi-file codegen)
 }
 
 # ============================================================================
@@ -69,7 +69,7 @@ functio estDependentiaImportum(de textus fons) -> bivalens {
 functio resolveDependentiaPath(
     de textus fons,
     de tabula<textus, Dependentia> registry
-) -> textus? {
+) -> si textus {
     # Split on colon: "alias:subpath" -> ["alias", "subpath"]
     fixum partes = fons.divide(":") qua lista<textus>
     si partes.longitudo() != 2 { redde nihil }
@@ -90,7 +90,7 @@ functio resolveDependentiaPath(
 # Resolve import path to absolute filesystem path
 # NOTE: Disabled - rivus is stdin-only, bundler handles imports
 @ publica
-functio resolveViaModuli(de textus fons, de textus viaBasica) -> textus? {
+functio resolveViaModuli(de textus fons, de textus viaBasica) -> si textus {
     redde nihil
 }
 
@@ -329,6 +329,6 @@ functio resolveModulum(
     de textus viaBasica,
     in tabula<textus, ModulusResolutum> cache,
     in copia<textus> inProgressu
-) -> ModulusResolutum? {
+) -> si ModulusResolutum {
     redde nihil
 }

@@ -43,7 +43,7 @@ genus Symbolum {
 @ publica
 genus Scopus {
     tabula<textus, Symbolum> symbola  # name -> symbol bindings
-    Scopus? parens                    # parent scope (nil for global)
+    si Scopus parens                    # parent scope (nil for global)
     ScopusSpecies species             # kind of scope
 }
 
@@ -73,7 +73,7 @@ functio creaScopum(de Scopus parentScopus, ScopusSpecies scopusSpecies) -> Scopu
 
 # Define a symbol in current scope (returns error if duplicate)
 @ publica
-functio definieSymbolum(in Scopus scopus, ex Symbolum symbolum) -> textus? {
+functio definieSymbolum(in Scopus scopus, ex Symbolum symbolum) -> si textus {
     fixum existens = scopus.symbola[symbolum.nomen]
     si nonnihil existens {
         redde scriptum("'§' is already defined at line §", symbolum.nomen, existens.locus.linea)
@@ -85,7 +85,7 @@ functio definieSymbolum(in Scopus scopus, ex Symbolum symbolum) -> textus? {
 
 # Look up a symbol by name, walking up the scope chain
 @ publica
-functio quaereSymbolum(de Scopus scopus, de textus nomen) -> Symbolum? {
+functio quaereSymbolum(de Scopus scopus, de textus nomen) -> si Symbolum {
     si nonnihil scopus.symbola[nomen] {
         redde scopus.symbola[nomen]
     }
@@ -100,7 +100,7 @@ functio quaereSymbolum(de Scopus scopus, de textus nomen) -> Symbolum? {
 
 # Look up a symbol only in the current scope (no parent traversal)
 @ publica
-functio quaereSymbolumLocale(de Scopus scopus, de textus nomen) -> Symbolum? {
+functio quaereSymbolumLocale(de Scopus scopus, de textus nomen) -> si Symbolum {
     si nonnihil scopus.symbola[nomen] {
         redde scopus.symbola[nomen]
     }
@@ -123,7 +123,7 @@ functio renovaSymbolumTypum(in Scopus scopus, de textus nomen, ex SemanticTypus 
 
 # Find the enclosing function scope (for return type checking)
 @ publica
-functio inveniScopumFunctionis(de Scopus scopus) -> Scopus? {
+functio inveniScopumFunctionis(de Scopus scopus) -> si Scopus {
     si scopus.species == ScopusSpecies.Functio {
         redde scopus
     }

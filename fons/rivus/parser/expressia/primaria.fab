@@ -235,7 +235,7 @@ functio parseAbExpressia(in Resolvitor r) -> Expressia {
         p.procede()
     }
 
-    varia filtrum = nihil qua AbFiltrum?
+    varia filtrum = nihil qua si AbFiltrum
 
     functio estCatenaVerbumSym(de Symbolum symbolum) -> bivalens {
         si symbolum.species !== SymbolumGenus.Verbum {
@@ -306,9 +306,9 @@ functio parseCatenaGradus(in Resolvitor r) -> lista<CatenaGradus> {
         fixum verbum = verbSym.verbum qua textus
         fixum locus = verbSym.locus
 
-        varia argumentum = nihil qua Expressia?
-        varia proprietas = nihil qua Expressia?
-        varia directio = nihil qua textus?
+        varia argumentum = nihil qua si Expressia
+        varia proprietas = nihil qua si Expressia
+        varia directio = nihil qua si textus
 
         elige verbum {
             casu "prima" {
@@ -450,7 +450,7 @@ functio parseObiectumProprietas(in Resolvitor r) -> ObiectumProprietas {
     }
 
     # Parse the key
-    varia clavis = nihil qua Expressia?
+    varia clavis = nihil qua si Expressia
     varia computatum = falsum
 
     # Computed property: [expr]
@@ -569,7 +569,7 @@ functio parseClausuraExpressia(in Resolvitor r) -> Expressia {
             fixum paramLocus = p.locusActualis()
 
             # Type-first parameters: clausura <typus> <nomen>
-            varia paramTypus = nihil qua TypusAnnotatio?
+            varia paramTypus = nihil qua si TypusAnnotatio
             si p.estTypusNomen(p.specta(0)) {
                 paramTypus = r.adnotatio()
             } sin p.proba(SymbolumGenus.ParensSin) {
@@ -600,13 +600,13 @@ functio parseClausuraExpressia(in Resolvitor r) -> Expressia {
     }
 
     # Optional return type: -> Type
-    varia typusReditus = nihil qua TypusAnnotatio?
+    varia typusReditus = nihil qua si TypusAnnotatio
     si p.congruet(SymbolumGenus.Sagitta) {
         typusReditus = r.adnotatio()
     }
 
     # Body: ':' expression or blockStmt
-    varia corpus = nihil qua ClausuraCorpus?
+    varia corpus = nihil qua si ClausuraCorpus
     si p.congruet(SymbolumGenus.Colon) {
         corpus = finge Expr { valor: r.expressia() } qua ClausuraCorpus
     } sin p.proba(SymbolumGenus.UncusSin) {
@@ -676,7 +676,7 @@ functio parseFingeExpressia(in Resolvitor r) -> Expressia {
         p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
     }
 
-    varia scopus = nihil qua TypusAnnotatio?
+    varia scopus = nihil qua si TypusAnnotatio
     si p.congruetVerbum("qua") {
         scopus = r.adnotatio()
     }
@@ -705,7 +705,7 @@ functio parsePraefixumExpressia(in Resolvitor r) -> Expressia {
 
     p.expectaVerbum("praefixum", ParserErrorCodice.ExpectaturExpressia)
 
-    varia corpus = nihil qua ClausuraCorpus?
+    varia corpus = nihil qua si ClausuraCorpus
 
     si p.proba(SymbolumGenus.UncusSin) {
         # WHY: Block form is allowed in grammar, but AST expects an expression.

@@ -53,7 +53,7 @@ genus ObiectumProprietas {
 genus ClausuraParametrum {
     Locus locus
     textus nomen
-    TypusAnnotatio? typus
+    si TypusAnnotatio typus
 }
 
 # Chain step for collection DSL
@@ -62,9 +62,9 @@ genus ClausuraParametrum {
 genus CatenaGradus {
     Locus locus
     textus verbum            # prima, ultima, summa, ordina, collige, grupa, maximum, minimum, medium, numera
-    Expressia? argumentum    # count for prima/ultima
-    Expressia? proprietas    # property for ordina/collige/grupa/summa
-    textus? directio         # "ascendens" | "descendens" for ordina
+    si Expressia argumentum    # count for prima/ultima
+    si Expressia proprietas    # property for ordina/collige/grupa/summa
+    si textus directio         # "ascendens" | "descendens" for ordina
 }
 
 # Ab filter clause (ubi condition or boolean shorthand)
@@ -196,7 +196,7 @@ discretio Expressia {
         Locus locus
         Expressia initium
         Expressia finis
-        Expressia? gradus
+        si Expressia gradus
         bivalens inclusivum      # true for 'usque', false for '..'
     }
 
@@ -256,7 +256,7 @@ discretio Expressia {
         Expressia vocatum        # what's being called (callee)
         lista<Expressia> argumenta
         bivalens optivum         # ?. optional call
-        MorphologiaInvocatio? morphologia
+        si MorphologiaInvocatio morphologia
     }
 
     # Member access expression
@@ -276,7 +276,7 @@ discretio Expressia {
         Locus locus
         Expressia vocatum        # the type/constructor
         lista<Expressia> argumenta
-        Expressia? initor        # optional 'de { ... }' object
+        si Expressia initor        # optional 'de { ... }' object
     }
 
     # Await expression (cede in Faber)
@@ -307,7 +307,7 @@ discretio Expressia {
         Locus locus
         Expressia fons           # source
         bivalens negata          # true if "non" used
-        AbFiltrum? filtrum       # optional filter clause
+        si AbFiltrum filtrum       # optional filter clause
         lista<CatenaGradus>? gradus
     }
 
@@ -347,7 +347,7 @@ discretio Expressia {
         Locus locus
         lista<ClausuraParametrum> parametra
         ClausuraCorpus corpus
-        TypusAnnotatio? typusReditus    # optional return type
+        si TypusAnnotatio typusReditus    # optional return type
     }
 
     # -------------------------------------------------------------------------
@@ -360,7 +360,7 @@ discretio Expressia {
         Locus locus
         textus variansNomen      # variant name (e.g., "Click")
         lista<ObiectumProprietas> campi
-        TypusAnnotatio? scopus   # qua Type
+        si TypusAnnotatio scopus   # qua Type
     }
 
     # -------------------------------------------------------------------------
@@ -374,8 +374,8 @@ discretio Expressia {
         Locus locus
         Expressia expressia
         textus signum              # "numeratum" | "fractatum" | "textatum" | "bivalentum"
-        TypusAnnotatio? scopusTypus    # optional target type (i32, u64, etc.)
-        textus? radix              # optional: "Dec" | "Hex" | "Oct" | "Bin"
-        Expressia? fallback        # optional vel fallback
+        si TypusAnnotatio scopusTypus    # optional target type (i32, u64, etc.)
+        si textus radix              # optional: "Dec" | "Hex" | "Oct" | "Bin"
+        si Expressia fallback        # optional vel fallback
     }
 }

@@ -129,7 +129,7 @@ functio applicaCatenaGradus(de textus fons, de lista<CatenaGradus> gradus, in Ts
                 # Uses toSorted() for immutable sort
                 si nonnihil gradusSingulus.proprietas {
                     fixum prop = genExpressia(g, gradusSingulus.proprietas qua Expressia)
-                    fixum desc = (gradusSingulus.directio qua textus?) == "descendens"
+                    fixum desc = (gradusSingulus.directio qua si textus) == "descendens"
                     fixum first = desc sic "b" secus "a"
                     fixum second = desc sic "a" secus "b"
                     result = scriptum("§.toSorted((a, b) => §.§ < §.§ ? -1 : §.§ > §.§ ? 1 : 0)", result, first, prop, second, prop, first, prop, second, prop)

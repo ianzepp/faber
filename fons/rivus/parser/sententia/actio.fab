@@ -43,7 +43,7 @@ functio parseReddeSententia(in Resolvitor r) -> Sententia {
 
     # Check if there's a return value
     # Don't parse expression if we hit closing brace or end
-    varia valor = nihil qua Expressia?
+    varia valor = nihil qua si Expressia
 
     si non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
         valor = r.expressia()

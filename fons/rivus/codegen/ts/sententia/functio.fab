@@ -244,7 +244,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
         g.tabulaNominata = prevTabula
 
         # Check for exitus modifier to wrap body with exit code handling
-        varia exitusNomen = nihil qua textus?
+        varia exitusNomen = nihil qua si textus
         si nonnihil f.modificatores {
             fixum mods = f.modificatores qua lista<FunctioModificator>
             ex mods fixum mod {

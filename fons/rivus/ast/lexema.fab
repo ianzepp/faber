@@ -308,8 +308,8 @@ genus Symbolum {
     SymbolumGenus species
     textus valor       # raw text of the token
     Locus locus
-    textus? verbum     # if Verbum, surface spelling
-    VerbumId? verbumId # if Verbum, canonical identity
+    si textus verbum     # if Verbum, surface spelling
+    si VerbumId verbumId # if Verbum, canonical identity
 }
 
 # ============================================================================

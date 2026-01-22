@@ -174,7 +174,7 @@ functio genInvert(de textus obj, de lista<textus> args, de MorphologiaFlagga fla
 
 # Generate TS code for a lista method by stem and flags
 @ publica
-functio generaListaMethodum(de textus radix, de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) -> textus? {
+functio generaListaMethodum(de textus radix, de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) -> si textus {
     # WHY: Some verbs have different stems for different conjugations.
     #      Map alternate stems to the same generator.
     elige radix {

@@ -121,7 +121,7 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
         # Process individual annotation effects
         ex annotationes fixum a {
             # Check for visibility annotations
-            varia visibilitas = nihil qua Visibilitas?
+            varia visibilitas = nihil qua si Visibilitas
             si a.nomen inter ["publicum", "publica", "publicus"] {
                 visibilitas = Visibilitas.Publica
             } sin a.nomen inter ["protectum", "protecta", "protectus"] {

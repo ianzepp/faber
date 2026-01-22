@@ -62,13 +62,13 @@ functio parseSiSententia(in Resolvitor r) -> Sententia {
     fixum consequens = parseCorpus(r)
 
     # Check for optional catch (si expr { } cape err { })
-    varia cape = nihil qua CapeClausula?
+    varia cape = nihil qua si CapeClausula
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
     }
 
     # Check for else/else-if chain
-    varia alternans = nihil qua Sententia?
+    varia alternans = nihil qua si Sententia
 
     si p.probaVerbum("sin") {
         alternans = parseSinSententia(r)
@@ -112,7 +112,7 @@ functio parseDumSententia(in Resolvitor r) -> Sententia {
     fixum corpus = parseCorpus(r)
 
     # Optional catch
-    varia cape = nihil qua CapeClausula?
+    varia cape = nihil qua si CapeClausula
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
     }
@@ -153,7 +153,7 @@ functio parseExSententia(in Resolvitor r) -> Sententia {
     }
 
     # Parse variable name or array pattern
-    varia variabilis = nihil qua IteratioVariabilis?
+    varia variabilis = nihil qua si IteratioVariabilis
     si p.proba(SymbolumGenus.QuadratusSin) {
         fixum elementa = parseSeriesDestructura(r)
         variabilis = finge Series { elementa: elementa } qua IteratioVariabilis
@@ -166,7 +166,7 @@ functio parseExSententia(in Resolvitor r) -> Sententia {
     fixum corpus = parseCorpus(r)
 
     # Optional catch
-    varia cape = nihil qua CapeClausula?
+    varia cape = nihil qua si CapeClausula
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
     }
@@ -210,7 +210,7 @@ functio parseDeSententia(in Resolvitor r) -> Sententia {
     }
 
     # Parse variable name or array pattern
-    varia variabilis = nihil qua IteratioVariabilis?
+    varia variabilis = nihil qua si IteratioVariabilis
     si p.proba(SymbolumGenus.QuadratusSin) {
         fixum elementa = parseSeriesDestructura(r)
         variabilis = finge Series { elementa: elementa } qua IteratioVariabilis
@@ -223,7 +223,7 @@ functio parseDeSententia(in Resolvitor r) -> Sententia {
     fixum corpus = parseCorpus(r)
 
     # Optional catch
-    varia cape = nihil qua CapeClausula?
+    varia cape = nihil qua si CapeClausula
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
     }
@@ -401,7 +401,7 @@ functio parseSinSententia(in Resolvitor r) -> Sententia {
     fixum condicio = r.expressia()
     fixum consequens = parseCorpus(r)
 
-    varia alternans = nihil qua Sententia?
+    varia alternans = nihil qua si Sententia
     si p.probaVerbum("sin") {
         alternans = parseSinSententia(r)
     } sin p.probaVerbum("secus") {

@@ -429,9 +429,9 @@ functio parseOptioAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
     fixum typusVerba = ["textus", "bivalens", "numerus", "fractus", "lista"]
 
     # Check if first token is a type keyword (old syntax) or name (new syntax)
-    varia optioTypus = nihil qua textus?
-    varia optioNomen = nihil qua textus?
-    varia optioBivalens = nihil qua bivalens?
+    varia optioTypus = nihil qua si textus
+    varia optioNomen = nihil qua si textus
+    varia optioBivalens = nihil qua si bivalens
 
     si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
         fixum primumValor = p.specta(0).valor
@@ -457,7 +457,7 @@ functio parseOptioAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
     }
 
     # Parse optional brevis "x"
-    varia optioBrevis = nihil qua textus?
+    varia optioBrevis = nihil qua si textus
     si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor == "brevis" et p.specta(0).locus.linea == linea {
         p.procede()
         si p.specta(0).species == SymbolumGenus.Textus et p.specta(0).locus.linea == linea {
@@ -469,7 +469,7 @@ functio parseOptioAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
     }
 
     # Parse optional longum "xxx"
-    varia optioLongum = nihil qua textus?
+    varia optioLongum = nihil qua si textus
     si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor == "longum" et p.specta(0).locus.linea == linea {
         p.procede()
         si p.specta(0).species == SymbolumGenus.Textus et p.specta(0).locus.linea == linea {
@@ -492,7 +492,7 @@ functio parseOptioAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
     }
 
     # Parse optional descriptio "..."
-    varia optioDescriptio = nihil qua textus?
+    varia optioDescriptio = nihil qua si textus
     si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor == "descriptio" et p.specta(0).locus.linea == linea {
         p.procede()
         si p.specta(0).species == SymbolumGenus.Textus et p.specta(0).locus.linea == linea {
@@ -540,7 +540,7 @@ functio parseOperandusAnnotation(in Resolvitor r, de Locus locus, numerus linea)
     }
 
     # Parse type (required)
-    varia operandusTypus = nihil qua textus?
+    varia operandusTypus = nihil qua si textus
     si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
         operandusTypus = p.specta(0).valor
         p.procede()
@@ -549,7 +549,7 @@ functio parseOperandusAnnotation(in Resolvitor r, de Locus locus, numerus linea)
     }
 
     # Parse name (required)
-    varia operandusNomen = nihil qua textus?
+    varia operandusNomen = nihil qua si textus
     si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
         operandusNomen = p.specta(0).valor
         p.procede()
@@ -558,7 +558,7 @@ functio parseOperandusAnnotation(in Resolvitor r, de Locus locus, numerus linea)
     }
 
     # Parse optional descriptio "..."
-    varia operandusDescriptio = nihil qua textus?
+    varia operandusDescriptio = nihil qua si textus
     si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor == "descriptio" et p.specta(0).locus.linea == linea {
         p.procede()
         si p.specta(0).species == SymbolumGenus.Textus et p.specta(0).locus.linea == linea {

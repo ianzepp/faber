@@ -154,10 +154,10 @@ functio parseFunctioDeclaratio(in Resolvitor r) -> Sententia {
     varia modificatores = parseFunctioModificatores(r)
 
     # Parse return type
-    varia typusReditus = nihil qua TypusAnnotatio?
+    varia typusReditus = nihil qua si TypusAnnotatio
     varia asynca = falsum
     varia generator = falsum
-    varia reddeVerbum = nihil qua ReddeVerbum?
+    varia reddeVerbum = nihil qua si ReddeVerbum
 
     # NOTE: fit/fiet/fiunt/fient return syntax is disabled pending Go/Zig backend support.
     # The Responsum protocol machinery remains in codegen but is dormant until re-enabled here.
@@ -170,7 +170,7 @@ functio parseFunctioDeclaratio(in Resolvitor r) -> Sententia {
     # Parse body (optional for @ externa declarations)
     # WHY: Body is optional for @ externa declarations (external functions have no body)
     # If no opening brace, function has no body (validated in semantic phase)
-    varia corpus = nihil qua MassaSententia?
+    varia corpus = nihil qua si MassaSententia
     si p.proba(SymbolumGenus.UncusSin) {
         corpus = parseMassaSententia(r) qua MassaSententia
     }
@@ -227,7 +227,7 @@ functio parseGenusDeclaratio(in Resolvitor r, bivalens abstractum) -> Sententia 
     }
 
     # Optional extends
-    varia extendit = nihil qua textus?
+    varia extendit = nihil qua si textus
     si p.congruetVerbum("sub") {
         fixum parentSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
         extendit = parentSym.valor
@@ -248,7 +248,7 @@ functio parseGenusDeclaratio(in Resolvitor r, bivalens abstractum) -> Sententia 
 
     varia campi = [] innatum lista<CampusDeclaratio>
     varia methodi = [] innatum lista<FunctioDeclaratio>
-    varia structor = nihil qua FunctioDeclaratio?
+    varia structor = nihil qua si FunctioDeclaratio
 
     dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
         # Parse annotations for visibility/abstract/morphologia
@@ -299,7 +299,7 @@ functio parseGenusDeclaratio(in Resolvitor r, bivalens abstractum) -> Sententia 
 
             varia modificatores = parseFunctioModificatores(r)
 
-            varia retTypus = nihil qua TypusAnnotatio?
+            varia retTypus = nihil qua si TypusAnnotatio
             varia asynca = falsum
             varia generator = falsum
 
@@ -308,7 +308,7 @@ functio parseGenusDeclaratio(in Resolvitor r, bivalens abstractum) -> Sententia 
                 retTypus = r.adnotatio()
             }
 
-            varia body = nihil qua MassaSententia?
+            varia body = nihil qua si MassaSententia
             si p.proba(SymbolumGenus.UncusSin) {
                 # WHY: Abstract methods omit bodies inside abstract genera.
                 body = parseMassaSententia(r)
@@ -358,7 +358,7 @@ functio parseGenusDeclaratio(in Resolvitor r, bivalens abstractum) -> Sententia 
             fixum typusAnnotatio = r.adnotatio()
             fixum campusNomen = parseNomenVelVerbum(r)
 
-            varia valor = nihil qua Expressia?
+            varia valor = nihil qua si Expressia
             si p.congruet(SymbolumGenus.Colon) {
                 valor = r.expressia()
             }
@@ -404,7 +404,7 @@ functio parseGenusDeclaratio(in Resolvitor r, bivalens abstractum) -> Sententia 
 # GRAMMAR: pactumDecl := 'pactum' IDENT genericParams? '{' methods '}'
 #
 # Examples:
-#   pactum Iterabilis { functio sequens() -> T? }
+#   pactum Iterabilis { functio sequens() -> si T }
 #   pactum Comparabilis<T> { functio compara(T alius) -> numerus }
 @ publica
 functio parsePactumDeclaratio(in Resolvitor r) -> Sententia {
@@ -446,7 +446,7 @@ functio parsePactumDeclaratio(in Resolvitor r) -> Sententia {
 
         varia modificatores = parseFunctioModificatores(r)
 
-        varia typusReditus = nihil qua TypusAnnotatio?
+        varia typusReditus = nihil qua si TypusAnnotatio
         varia asynca = falsum
         varia generator = falsum
 
@@ -521,7 +521,7 @@ functio parseOrdoDeclaratio(in Resolvitor r) -> Sententia {
         fixum membrumNomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
         fixum membrumNomen = membrumNomenSym.valor
 
-        varia valor = nihil qua textus?
+        varia valor = nihil qua si textus
         si p.congruet(SymbolumGenus.Aequum) {
             # Parse value (number or string)
             si p.congruet(SymbolumGenus.Minus) {
@@ -668,8 +668,8 @@ functio parseTypusAliasDeclaratio(in Resolvitor r) -> Sententia {
     p.expecta(SymbolumGenus.Aequum, ParserErrorCodice.ExpectaturAequale)
 
     # Parse type (or typeof alias)
-    varia scopusNomen = nihil qua textus?
-    varia typusAlias = nihil qua TypusAnnotatio?
+    varia scopusNomen = nihil qua si textus
+    varia typusAlias = nihil qua si TypusAnnotatio
 
     si p.probaVerbum("typus") {
         p.procede()
@@ -700,7 +700,7 @@ functio parseTypusAliasDeclaratio(in Resolvitor r) -> Sententia {
 # HELPER FUNCTIONS
 # ============================================================================
 
-functio morphologiaEx(de lista<Annotatio> annotationes) -> MorphologiaDeclaratio? {
+functio morphologiaEx(de lista<Annotatio> annotationes) -> si MorphologiaDeclaratio {
     ex annotationes fixum a {
         si a.nomen == "radix" {
             redde { locus: a.locus, formae: a.argumenta } novum MorphologiaDeclaratio
@@ -730,7 +730,7 @@ functio parseParametra(in Resolvitor r) -> lista<Parametrum> {
         }
 
         # Check for preposition (de, in, ex)
-        varia praepositio = nihil qua textus?
+        varia praepositio = nihil qua si textus
         si p.estPraepositio(p.specta(0)) {
             praepositio = p.procede().verbum
         }
@@ -743,7 +743,7 @@ functio parseParametra(in Resolvitor r) -> lista<Parametrum> {
         }
 
         # Parse type (required)
-        varia paramTypus = nihil qua TypusAnnotatio?
+        varia paramTypus = nihil qua si TypusAnnotatio
         si p.estTypusNomen(p.specta(0)) {
             paramTypus = r.adnotatio()
         } sin p.proba(SymbolumGenus.ParensSin) {
@@ -769,14 +769,14 @@ functio parseParametra(in Resolvitor r) -> lista<Parametrum> {
         fixum nomen = parseNomenVelVerbum(r)
 
         # Optional alias: ut alias
-        varia paramAlias = nihil qua textus?
+        varia paramAlias = nihil qua si textus
         si p.probaVerbum("ut") {
             p.procede()
             paramAlias = parseNomenVelVerbum(r)
         }
 
         # Optional default: vel value
-        varia praedefinitum = nihil qua Expressia?
+        varia praedefinitum = nihil qua si Expressia
         si p.probaVerbum("vel") {
             p.procede()
             praedefinitum = r.expressia()
@@ -919,7 +919,7 @@ functio parseImportaSententia(in Resolvitor r) -> Sententia {
 
     # Check for wildcard import: * or * ut alias
     varia totum = falsum
-    varia totumAlias = nihil qua textus?
+    varia totumAlias = nihil qua si textus
     varia specificatores = [] innatum lista<ImportaSpecificator>
 
     si p.congruet(SymbolumGenus.Stella) {

@@ -108,7 +108,7 @@ functio parseIncipietSententia(in Resolvitor r) -> Sententia {
 
 # Parse short entrypoint bodies: ergo, reddit, iacit, or moritor
 @ publica
-functio parseErgoVelReddit(in Resolvitor r) -> Sententia? {
+functio parseErgoVelReddit(in Resolvitor r) -> si Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
@@ -174,7 +174,7 @@ functio parseCuraSententia(in Resolvitor r) -> Sententia {
     p.expectaVerbum("cura", ParserErrorCodice.ExpectaturCura)
 
     # Check for curator kind: arena or pagina
-    varia curatorSpecies = nihil qua CuratorGenus?
+    varia curatorSpecies = nihil qua si CuratorGenus
     si p.probaVerbum("arena") {
         p.procede()
         curatorSpecies = CuratorGenus.Arena
@@ -186,7 +186,7 @@ functio parseCuraSententia(in Resolvitor r) -> Sententia {
 
     # Parse optional resource expression
     # Skip if next token starts a binding (fixum, varia) or block
-    varia res = nihil qua Expressia?
+    varia res = nihil qua si Expressia
     si non p.probaVerbum("fixum") et non p.probaVerbum("varia") et non p.proba(SymbolumGenus.UncusSin) {
         res = r.expressia()
     }
@@ -205,7 +205,7 @@ functio parseCuraSententia(in Resolvitor r) -> Sententia {
     }
 
     # Parse optional type and binding name
-    varia adnotatioTypus = nihil qua TypusAnnotatio?
+    varia adnotatioTypus = nihil qua si TypusAnnotatio
     varia vinculum = ""
 
     si hasBinding {
@@ -226,7 +226,7 @@ functio parseCuraSententia(in Resolvitor r) -> Sententia {
     fixum corpus = parseMassaSententia(r)
 
     # Optional catch clause
-    varia cape = nihil qua CapeClausula?
+    varia cape = nihil qua si CapeClausula
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
     }
@@ -282,7 +282,7 @@ functio parseAdSententia(in Resolvitor r) -> Sententia {
     p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
 
     # Parse optional binding clause
-    varia vinculum = nihil qua AdVinculum?
+    varia vinculum = nihil qua si AdVinculum
     si p.probaVerbumId(VerbumId.Fit) aut p.probaVerbumId(VerbumId.Fiet) aut p.probaVerbumId(VerbumId.Fiunt) aut p.probaVerbumId(VerbumId.Fient) aut p.probaVerbum("pro") {
         fixum vincLocus = p.locusActualis()
 
@@ -299,7 +299,7 @@ functio parseAdSententia(in Resolvitor r) -> Sententia {
         }
 
         # Optional type before 'pro'
-        varia adnotatioTypus = nihil qua TypusAnnotatio?
+        varia adnotatioTypus = nihil qua si TypusAnnotatio
         si p.proba(SymbolumGenus.Nomen) et non p.probaVerbum("pro") {
             adnotatioTypus = r.adnotatio()
         }
@@ -312,7 +312,7 @@ functio parseAdSententia(in Resolvitor r) -> Sententia {
         fixum nomen = nomenSym.valor
 
         # Optional alias: ut alias
-        varia alias = nihil qua textus?
+        varia alias = nihil qua si textus
         si p.probaVerbum("ut") {
             p.procede()
             fixum aliasSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
@@ -329,13 +329,13 @@ functio parseAdSententia(in Resolvitor r) -> Sententia {
     }
 
     # Parse optional body block
-    varia corpus = nihil qua MassaSententia?
+    varia corpus = nihil qua si MassaSententia
     si p.proba(SymbolumGenus.UncusSin) {
         corpus = parseMassaSententia(r)
     }
 
     # Optional catch clause
-    varia cape = nihil qua CapeClausula?
+    varia cape = nihil qua si CapeClausula
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
     }

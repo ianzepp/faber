@@ -36,7 +36,7 @@
 # Result of parsing
 @ publica
 genus ParserResultatum {
-    Programma? programma        # AST root (nil on catastrophic failure)
+    si Programma programma        # AST root (nil on catastrophic failure)
     lista<ParserError> errores  # Parse errors encountered
 }
 

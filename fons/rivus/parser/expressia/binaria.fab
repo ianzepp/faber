@@ -360,7 +360,7 @@ functio parseAmbitus(in Resolvitor r) -> Expressia {
 
     si habetAmbitum {
         fixum finis = parseAdditio(r)
-        varia gradus = nihil qua Expressia?
+        varia gradus = nihil qua si Expressia
 
         si p.probaVerbum("per") {
             p.procede()

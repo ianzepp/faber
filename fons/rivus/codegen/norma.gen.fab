@@ -5,8 +5,8 @@
 # Translation result type
 @ publicum
 genus VerteTranslation {
-    textus? method
-    textus? template
+    si textus method
+    si textus template
     lista<textus>? params
 }
 
@@ -910,7 +910,7 @@ fixum norma = {
 
 # Lookup translation for target/collection/method
 @ publica
-functio getNormaTranslation(de textus target, de textus collection, de textus method) -> VerteTranslation? {
+functio getNormaTranslation(de textus target, de textus collection, de textus method) -> si VerteTranslation {
     fixum coll = norma[collection]
     si nihil coll { redde nihil }
 

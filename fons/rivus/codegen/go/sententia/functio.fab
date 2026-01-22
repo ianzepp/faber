@@ -105,7 +105,7 @@ functio genFunctio(in GoGenerator g, de FunctioDeclaratio f) -> textus {
         fixum prevInErrata = g.inErrata
         fixum prevErrataType = g.errataTypusReditus
         g.inErrata = hasErrata
-        varia errataType = nihil qua TypusAnnotatio?
+        varia errataType = nihil qua si TypusAnnotatio
         # WHY: Only track a value return type for errata when Go emits (T, error).
         # EDGE: `-> vacuum` or no return type becomes `error` only.
         si hasErrata et retType != "" et nonnihil f.typusReditus {

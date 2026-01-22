@@ -35,7 +35,7 @@ genus GoGenerator implet Generans {
 
     # Errata modifier context for function bodies
     bivalens inErrata
-    TypusAnnotatio? errataTypusReditus
+    si TypusAnnotatio errataTypusReditus
 
     # ==========================================================================
     # INDENTATION

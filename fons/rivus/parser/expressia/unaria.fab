@@ -395,9 +395,9 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
         si p.probaVerbum("numeratum") aut p.probaVerbum("fractatum") aut
            p.probaVerbum("textatum") aut p.probaVerbum("bivalentum") {
             fixum signum = p.procede().verbum
-            varia scopusTypus = nihil qua TypusAnnotatio?
-            varia radix = nihil qua textus?
-            varia fallback = nihil qua Expressia?
+            varia scopusTypus = nihil qua si TypusAnnotatio
+            varia radix = nihil qua si textus
+            varia fallback = nihil qua si Expressia
 
             # Type params for numeratum/fractatum only: <i32, Hex>
             si (signum == "numeratum" aut signum == "fractatum") et p.congruet(SymbolumGenus.Minor) {
@@ -483,7 +483,7 @@ functio parseNovumExpressia(in Resolvitor r, de Locus locus) -> Expressia {
     }
 
     # Optional overrides: { ... } or de expr
-    varia initor = nihil qua Expressia?
+    varia initor = nihil qua si Expressia
     si p.proba(SymbolumGenus.UncusSin) {
         initor = parsePrimaria(r)
     } sin p.probaVerbum("de") {

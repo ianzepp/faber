@@ -56,7 +56,7 @@ functio parseEligeSententia(in Resolvitor r) -> Sententia {
     p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
 
     varia casus = [] innatum lista<EligeCasus>
-    varia praedefinitum = nihil qua MassaSententia?
+    varia praedefinitum = nihil qua si MassaSententia
 
     # Parse cases until closing brace
     dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
@@ -93,7 +93,7 @@ functio parseEligeSententia(in Resolvitor r) -> Sententia {
     p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
 
     # Optional catch clause
-    varia cape = nihil qua CapeClausula?
+    varia cape = nihil qua si CapeClausula
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
     }
@@ -195,7 +195,7 @@ functio parseDiscerneSententia(in Resolvitor r) -> Sententia {
                     locus: casusLocus,
                     variansNomen: "_",
                     estWildcard: verum,
-                    alias: nihil qua textus?,
+                    alias: nihil qua si textus,
                     vincula: [] innatum lista<textus>
                 } novum VariansExemplar)
             }
@@ -250,14 +250,14 @@ functio parseVariansExemplar(in Parser p) -> VariansExemplar {
             locus: locus,
             variansNomen: "_",
             estWildcard: verum,
-            alias: nihil qua textus?,
+            alias: nihil qua si textus,
             vincula: [] innatum lista<textus>
         } novum VariansExemplar
     }
 
     # Parse optional bindings: ut alias OR pro x, y, z
     # WHY: 'ut' binds the whole variant, 'pro' binds fields positionally.
-    varia alias = nihil qua textus?
+    varia alias = nihil qua si textus
     varia vincula = [] innatum lista<textus>
 
     si p.probaVerbum("ut") {

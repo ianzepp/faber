@@ -22,7 +22,7 @@ functio estVerbum(textus v) -> bivalens {
 
 # Map a Faber (Latin surface) keyword spelling to canonical identity
 @ publica
-functio verbumFaberId(textus v) -> VerbumId? {
+functio verbumFaberId(textus v) -> si VerbumId {
     elige v {
         # ---- Control Flow ----
         casu "si" reddit VerbumId.Si
@@ -181,7 +181,7 @@ functio verbumFaberId(textus v) -> VerbumId? {
 
 # Map surface keyword spelling to canonical identity
 @ publica
-functio verbumId(textus v) -> VerbumId? {
+functio verbumId(textus v) -> si VerbumId {
     redde verbumFaberId(v)
 }
 

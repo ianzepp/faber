@@ -42,9 +42,9 @@ genus TypusAnnotatio {
     bivalens nullabilis                     # true if T? syntax
     lista<TypusAnnotatio>? unio             # union members for unio<A, B>
     bivalens compendiumSeries               # true if T[] shorthand
-    textus? praepositio                     # de (borrowed) or in (mutable)
+    si textus praepositio                     # de (borrowed) or in (mutable)
     lista<TypusAnnotatio>? parametra        # function type parameters
-    TypusAnnotatio? reditus                 # function return type
+    si TypusAnnotatio reditus                 # function return type
 }
 
 # ============================================================================

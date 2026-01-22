@@ -39,10 +39,20 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
     # -------------------------------------------------------------------------
     # Check for borrow preposition (de/in for ownership semantics)
     # -------------------------------------------------------------------------
-    varia praepositio = nihil qua textus?
+    varia praepositio = nihil qua si textus
 
     si p.estPraepositio(p.specta(0)) {
         praepositio = p.procede().verbum
+    }
+
+    # -------------------------------------------------------------------------
+    # Check for nullable prefix: si textus -> nullable textus
+    # -------------------------------------------------------------------------
+    varia nullabilisPraefix = falsum
+
+    si p.probaVerbum("si") {
+        nullabilisPraefix = verum
+        p.procede()
     }
 
     # -------------------------------------------------------------------------
@@ -141,11 +151,14 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
     }
 
     # -------------------------------------------------------------------------
-    # Parse optional nullable marker: ?
+    # Nullable: either from 'si' prefix or legacy '?' suffix
     # -------------------------------------------------------------------------
-    varia nullabilis = falsum
+    varia nullabilis = nullabilisPraefix
 
-    si p.congruet(SymbolumGenus.Rogatio) {
+    # SYNTAXIS ALIENA: Type? suffix is deprecated, use 'si Type' prefix
+    si p.proba(SymbolumGenus.Rogatio) {
+        p.renuncia(ParserErrorCodice.SyntaxisAlienaNullabilis, scriptum("found '§?'", nomen))
+        p.procede()
         nullabilis = verum
     }
 
@@ -214,8 +227,11 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
         p.procede()  # ]
 
         # Check for nullable array: []?
+        # SYNTAXIS ALIENA: T[]? is deprecated, use 'si T[]'
         varia arrayNullabilis = falsum
-        si p.congruet(SymbolumGenus.Rogatio) {
+        si p.proba(SymbolumGenus.Rogatio) {
+            p.renuncia(ParserErrorCodice.SyntaxisAlienaNullabilis, "found '[]?'")
+            p.procede()
             arrayNullabilis = verum
         }
 

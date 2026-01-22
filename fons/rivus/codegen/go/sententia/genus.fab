@@ -144,7 +144,7 @@ functio genGenusMethod(in GoGenerator g, de textus typeName, de Sententia method
             fixum prevInErrata = g.inErrata
             fixum prevErrataType = g.errataTypusReditus
             g.inErrata = hasErrata
-            varia errataType = nihil qua TypusAnnotatio?
+            varia errataType = nihil qua si TypusAnnotatio
             si hasErrata et retType != "" et nonnihil f.typusReditus {
                 errataType = f.typusReditus qua TypusAnnotatio
             }

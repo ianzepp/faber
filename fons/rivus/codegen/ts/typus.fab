@@ -124,7 +124,7 @@ functio genTypus(in TsGenerator g, de TypusAnnotatio adnotatio) -> textus {
 
 # Generate a single type parameter
 @ publica
-functio genTypusParametrum(in TsGenerator g, de TypusParametrum param) -> textus? {
+functio genTypusParametrum(in TsGenerator g, de TypusParametrum param) -> si textus {
     discerne param {
         casu Typus ut p {
             redde genTypus(g, p.adnotatio)

@@ -116,8 +116,8 @@ functio parseProbaSententia(in Resolvitor r) -> Sententia {
 
     p.expectaVerbum("proba", ParserErrorCodice.ExpectaturProba)
 
-    varia modificator = nihil qua ProbaModificator?
-    varia ratio = nihil qua textus?
+    varia modificator = nihil qua si ProbaModificator
+    varia ratio = nihil qua si textus
 
     si p.probaVerbum("omitte") {
         p.procede()

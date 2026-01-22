@@ -92,13 +92,13 @@ functio estGenericusTypus(de textus nomen) -> bivalens {
 genus Analyzator {
     lista<SemanticError> errores                                          # collected errors
     Scopus scopus                                                         # current scope chain
-    SemanticTypus? currentFunctioReditus                                  # for return type checking
+    si SemanticTypus currentFunctioReditus                                  # for return type checking
     bivalens currentFunctioAsync                                          # in async function?
     bivalens currentFunctioGenerator                                      # in generator function?
-    textus? currentGenusNomen                                             # name of enclosing class for ego resolution
+    si textus currentGenusNomen                                             # name of enclosing class for ego resolution
     lista<textus> resolvendoTypusAliases                                  # cycle detection
     tabula<textus, tabula<textus, lista<textus>>> morphologiaRegistra   # receiver -> stem -> forms
-    textus? viaIngressus                                                  # entry file path for module resolution
+    si textus viaIngressus                                                  # entry file path for module resolution
     tabula<textus, ModulusResolutum> modulusCache                         # module cache (path -> resolved)
     copia<textus> modulusInProgressu                                      # cycle detection for imports
     tabula<textus, DiscretioDeclInfo> discretioIndex                      # declaration metadata for discretio
@@ -164,7 +164,7 @@ genus Analyzator {
 
     # Look up a symbol in scope chain
     @ publica
-    functio quaere(de textus nomen) -> Symbolum? {
+    functio quaere(de textus nomen) -> si Symbolum {
         redde quaereSymbolum(ego.scopus, nomen)
     }
 

@@ -59,7 +59,7 @@ genus ValidatioError {
     textus contextus            # where it occurred
     numerus linea
     numerus columna
-    textus? suggestio           # help text
+    si textus suggestio           # help text
 }
 
 # =============================================================================
@@ -219,7 +219,7 @@ functio formatNuntius(FeaturaClavis clavis, de textus target, Sustentatio s) -> 
 # =============================================================================
 
 # Get suggestion for fixing incompatibility
-functio getSuggestio(FeaturaClavis clavis, de textus target) -> textus? {
+functio getSuggestio(FeaturaClavis clavis, de textus target) -> si textus {
     elige clavis {
         casu FeaturaClavis.ControlFlow_AsyncFunctio {
             elige target {

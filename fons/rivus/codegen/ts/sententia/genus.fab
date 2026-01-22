@@ -77,7 +77,7 @@ functio genGenus(in TsGenerator g, de GenusDeclaratio s) -> textus {
     }
 
     # Split creo method from other methods
-    varia creo = nihil qua FunctioDeclaratio?
+    varia creo = nihil qua si FunctioDeclaratio
     varia ceteri = [] innatum lista<FunctioDeclaratio>
     ex s.methodi fixum m {
         si m.structor {

@@ -13,7 +13,7 @@ discretio SemanticTypus {
     Primitivum {
         textus nomen                                    # "textus" | "numerus" | etc.
         bivalens nullabilis                             # T? types
-        numerus? amplitudo                              # bit width for numerus<32>
+        si numerus amplitudo                              # bit width for numerus<32>
     }
 
     # Generic types: lista<T>, tabula<K,V>, promissum<T>
@@ -38,7 +38,7 @@ discretio SemanticTypus {
 
     # Unknown type for unresolved/error cases
     Ignotum {
-        textus? ratio                                   # reason for being unknown
+        si textus ratio                                   # reason for being unknown
     }
 
     # User-defined type (class, interface, etc.)

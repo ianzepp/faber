@@ -161,7 +161,7 @@ functio zeroValueForType(de TypusAnnotatio adnotatio, in GoGenerator g) -> textu
 
 # Generate a single type parameter
 @ publica
-functio genTypusParametrum(in GoGenerator g, de TypusParametrum param) -> textus? {
+functio genTypusParametrum(in GoGenerator g, de TypusParametrum param) -> si textus {
     discerne param {
         casu Typus ut p {
             redde genTypus(g, p.adnotatio)

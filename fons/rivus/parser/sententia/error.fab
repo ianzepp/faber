@@ -71,14 +71,14 @@ functio parseTemptaSententia(in Resolvitor r) -> Sententia {
     fixum corpus = r.massa() qua MassaSententia
 
     # Parse optional catch clause
-    varia cape = nihil qua CapeClausula?
+    varia cape = nihil qua si CapeClausula
 
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
     }
 
     # Parse optional finally block
-    varia demum = nihil qua MassaSententia?
+    varia demum = nihil qua si MassaSententia
 
     si p.congruetVerbum("demum") {
         demum = r.massa() qua MassaSententia
@@ -114,14 +114,14 @@ functio parseFacSententia(in Resolvitor r) -> Sententia {
     fixum corpus = r.massa() qua MassaSententia
 
     # Parse optional catch clause
-    varia cape = nihil qua CapeClausula?
+    varia cape = nihil qua si CapeClausula
 
     si p.probaVerbum("cape") {
         cape = parseCapeClausula(r)
     }
 
     # Parse optional 'dum' for do-while loop
-    varia condicio = nihil qua Expressia?
+    varia condicio = nihil qua si Expressia
 
     si p.congruetVerbum("dum") {
         condicio = r.expressia()
@@ -156,7 +156,7 @@ functio parseAdfirmaSententia(in Resolvitor r) -> Sententia {
     fixum condicio = r.expressia()
 
     # Parse optional message expression
-    varia nuntius = nihil qua Expressia?
+    varia nuntius = nihil qua si Expressia
 
     si p.congruet(SymbolumGenus.Coma) {
         nuntius = r.expressia()

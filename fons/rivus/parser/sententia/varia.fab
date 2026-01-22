@@ -93,14 +93,14 @@ functio parseDestructuraSententia(in Resolvitor r) -> Sententia {
             fixum corpus = parseMassaSententia(r)
 
             # Optional catch
-            varia cape = nihil qua CapeClausula?
+            varia cape = nihil qua si CapeClausula
             si p.probaVerbum("cape") {
                 cape = parseCapeClausula(r)
             }
 
             fixum asynca = species == VariaGenus.Figendum aut species == VariaGenus.Variandum
             fixum mutabilis = species == VariaGenus.Varia aut species == VariaGenus.Variandum
-            varia variabilis = nihil qua IteratioVariabilis?
+            varia variabilis = nihil qua si IteratioVariabilis
             variabilis = finge Series { elementa: elementa } qua IteratioVariabilis
 
             redde finge IteratioSententia {
@@ -174,7 +174,7 @@ functio parseSeriesDestructura(in Resolvitor r) -> lista<SeriesDestructuraElemen
             fixum locus = p.locusActualis()
             varia residuum = falsum
             varia omissum = falsum
-            varia nomen = nihil qua textus?
+            varia nomen = nihil qua si textus
 
             si p.probaVerbum("ceteri") {
                 residuum = verum
@@ -257,7 +257,7 @@ functio parseVariaSententia(in Resolvitor r) -> Sententia {
     # -------------------------------------------------------------------------
     # Determine what follows: type or name
     # -------------------------------------------------------------------------
-    varia adnotatio = nihil qua TypusAnnotatio?
+    varia adnotatio = nihil qua si TypusAnnotatio
     varia nomen = ""
 
     si p.estTypusNomen(p.specta(0)) {
@@ -291,7 +291,7 @@ functio parseVariaSententia(in Resolvitor r) -> Sententia {
     # -------------------------------------------------------------------------
     # Parse optional initializer
     # -------------------------------------------------------------------------
-    varia valor = nihil qua Expressia?
+    varia valor = nihil qua si Expressia
 
     si p.congruet(SymbolumGenus.Aequum) {
         valor = r.expressia()

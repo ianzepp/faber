@@ -558,7 +558,7 @@ functio genPraefixumSententia(in TsGenerator g, de Sententia stmt) -> textus {
     }
 }
 
-functio invenitTabulaNomen(de Expressia obiectum, de TsGenerator g) -> textus? {
+functio invenitTabulaNomen(de Expressia obiectum, de TsGenerator g) -> si textus {
     discerne obiectum {
         casu Nomen ut n {
             fixum nomen = n.valor qua textus
@@ -593,7 +593,7 @@ functio genTabulaSet(de textus obj, de textus prop, de textus valor, bivalens op
     redde scriptum("§.set(§, §)", obj, prop, valor)
 }
 
-functio genTabulaAssignatio(in TsGenerator g, de AssignatioExpressia e) -> textus? {
+functio genTabulaAssignatio(in TsGenerator g, de AssignatioExpressia e) -> si textus {
     discerne e.sinister {
         casu MembrumExpressia ut m {
             redde genTabulaAssignatioMembrum(g, e, m)
@@ -603,7 +603,7 @@ functio genTabulaAssignatio(in TsGenerator g, de AssignatioExpressia e) -> textu
     redde nihil
 }
 
-functio genTabulaAssignatioMembrum(in TsGenerator g, de AssignatioExpressia e, de MembrumExpressia m) -> textus? {
+functio genTabulaAssignatioMembrum(in TsGenerator g, de AssignatioExpressia e, de MembrumExpressia m) -> si textus {
     si non (m.computatum qua bivalens) { redde nihil }
 
     fixum tabulaNomen = invenitTabulaNomen(m.obiectum, g)
@@ -757,7 +757,7 @@ functio genAmbitusSlice(in TsGenerator g, de textus obj, de AmbitusExpressia a, 
     redde scriptum("§.slice(§, §)", receiver, initium, inclusive)
 }
 
-functio legeNumerusLiteralis(de Expressia expr) -> numerus? {
+functio legeNumerusLiteralis(de Expressia expr) -> si numerus {
     discerne expr {
         casu Littera ut l {
             si l.species == LitteraGenus.Numerus {
@@ -772,7 +772,7 @@ functio legeNumerusLiteralis(de Expressia expr) -> numerus? {
     redde nihil
 }
 
-functio legeNegativusNumerus(de UnariaExpressia u) -> numerus? {
+functio legeNegativusNumerus(de UnariaExpressia u) -> si numerus {
     si (u.signum qua textus) != "-" { redde nihil }
 
     discerne u.argumentum {
