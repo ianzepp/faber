@@ -1,0 +1,491 @@
+[
+  {
+    "type": "boolean",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "builtin_type",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "keyword_control",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "keyword_declaration",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "keyword_other",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "program",
+    "named": true,
+    "root": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "annotation",
+          "named": true
+        },
+        {
+          "type": "boolean",
+          "named": true
+        },
+        {
+          "type": "builtin_type",
+          "named": true
+        },
+        {
+          "type": "comment",
+          "named": true
+        },
+        {
+          "type": "directive",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "keyword_control",
+          "named": true
+        },
+        {
+          "type": "keyword_declaration",
+          "named": true
+        },
+        {
+          "type": "keyword_other",
+          "named": true
+        },
+        {
+          "type": "number",
+          "named": true
+        },
+        {
+          "type": "operator",
+          "named": true
+        },
+        {
+          "type": "punctuation",
+          "named": true
+        },
+        {
+          "type": "string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "punctuation",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "string",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "escape_sequence",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "\"",
+    "named": false
+  },
+  {
+    "type": "'",
+    "named": false
+  },
+  {
+    "type": "(",
+    "named": false
+  },
+  {
+    "type": ")",
+    "named": false
+  },
+  {
+    "type": ",",
+    "named": false
+  },
+  {
+    "type": ";",
+    "named": false
+  },
+  {
+    "type": "[",
+    "named": false
+  },
+  {
+    "type": "]",
+    "named": false
+  },
+  {
+    "type": "abstractus",
+    "named": false
+  },
+  {
+    "type": "adfirma",
+    "named": false
+  },
+  {
+    "type": "annotation",
+    "named": true
+  },
+  {
+    "type": "aut",
+    "named": false
+  },
+  {
+    "type": "bivalens",
+    "named": false
+  },
+  {
+    "type": "cape",
+    "named": false
+  },
+  {
+    "type": "casu",
+    "named": false
+  },
+  {
+    "type": "cede",
+    "named": false
+  },
+  {
+    "type": "ceterum",
+    "named": false
+  },
+  {
+    "type": "comment",
+    "named": true
+  },
+  {
+    "type": "copia",
+    "named": false
+  },
+  {
+    "type": "cursor",
+    "named": false
+  },
+  {
+    "type": "de",
+    "named": false
+  },
+  {
+    "type": "demum",
+    "named": false
+  },
+  {
+    "type": "directive",
+    "named": true
+  },
+  {
+    "type": "discerne",
+    "named": false
+  },
+  {
+    "type": "discretio",
+    "named": false
+  },
+  {
+    "type": "dum",
+    "named": false
+  },
+  {
+    "type": "ego",
+    "named": false
+  },
+  {
+    "type": "elige",
+    "named": false
+  },
+  {
+    "type": "ergo",
+    "named": false
+  },
+  {
+    "type": "escape_sequence",
+    "named": true
+  },
+  {
+    "type": "est",
+    "named": false
+  },
+  {
+    "type": "et",
+    "named": false
+  },
+  {
+    "type": "ex",
+    "named": false
+  },
+  {
+    "type": "fac",
+    "named": false
+  },
+  {
+    "type": "falsum",
+    "named": false
+  },
+  {
+    "type": "figendum",
+    "named": false
+  },
+  {
+    "type": "finge",
+    "named": false
+  },
+  {
+    "type": "fixum",
+    "named": false
+  },
+  {
+    "type": "fractus",
+    "named": false
+  },
+  {
+    "type": "functio",
+    "named": false
+  },
+  {
+    "type": "generis",
+    "named": false
+  },
+  {
+    "type": "genus",
+    "named": false
+  },
+  {
+    "type": "iace",
+    "named": false
+  },
+  {
+    "type": "iacit",
+    "named": false
+  },
+  {
+    "type": "identifier",
+    "named": true
+  },
+  {
+    "type": "ignotum",
+    "named": false
+  },
+  {
+    "type": "implet",
+    "named": false
+  },
+  {
+    "type": "incipiet",
+    "named": false
+  },
+  {
+    "type": "incipit",
+    "named": false
+  },
+  {
+    "type": "innatum",
+    "named": false
+  },
+  {
+    "type": "lista",
+    "named": false
+  },
+  {
+    "type": "mone",
+    "named": false
+  },
+  {
+    "type": "mori",
+    "named": false
+  },
+  {
+    "type": "moritor",
+    "named": false
+  },
+  {
+    "type": "nexum",
+    "named": false
+  },
+  {
+    "type": "nihil",
+    "named": false
+  },
+  {
+    "type": "non",
+    "named": false
+  },
+  {
+    "type": "novum",
+    "named": false
+  },
+  {
+    "type": "number",
+    "named": true
+  },
+  {
+    "type": "numerus",
+    "named": false
+  },
+  {
+    "type": "numquam",
+    "named": false
+  },
+  {
+    "type": "octeti",
+    "named": false
+  },
+  {
+    "type": "operator",
+    "named": true
+  },
+  {
+    "type": "ordo",
+    "named": false
+  },
+  {
+    "type": "pactum",
+    "named": false
+  },
+  {
+    "type": "perge",
+    "named": false
+  },
+  {
+    "type": "postpara",
+    "named": false
+  },
+  {
+    "type": "praepara",
+    "named": false
+  },
+  {
+    "type": "pro",
+    "named": false
+  },
+  {
+    "type": "proba",
+    "named": false
+  },
+  {
+    "type": "probandum",
+    "named": false
+  },
+  {
+    "type": "promissum",
+    "named": false
+  },
+  {
+    "type": "qua",
+    "named": false
+  },
+  {
+    "type": "redde",
+    "named": false
+  },
+  {
+    "type": "reddit",
+    "named": false
+  },
+  {
+    "type": "rumpe",
+    "named": false
+  },
+  {
+    "type": "scribe",
+    "named": false
+  },
+  {
+    "type": "secus",
+    "named": false
+  },
+  {
+    "type": "si",
+    "named": false
+  },
+  {
+    "type": "sin",
+    "named": false
+  },
+  {
+    "type": "sparge",
+    "named": false
+  },
+  {
+    "type": "sub",
+    "named": false
+  },
+  {
+    "type": "tabula",
+    "named": false
+  },
+  {
+    "type": "tempta",
+    "named": false
+  },
+  {
+    "type": "textus",
+    "named": false
+  },
+  {
+    "type": "typus",
+    "named": false
+  },
+  {
+    "type": "unio",
+    "named": false
+  },
+  {
+    "type": "vacuum",
+    "named": false
+  },
+  {
+    "type": "varia",
+    "named": false
+  },
+  {
+    "type": "variandum",
+    "named": false
+  },
+  {
+    "type": "vel",
+    "named": false
+  },
+  {
+    "type": "verum",
+    "named": false
+  },
+  {
+    "type": "vide",
+    "named": false
+  },
+  {
+    "type": "{",
+    "named": false
+  },
+  {
+    "type": "}",
+    "named": false
+  }
+]

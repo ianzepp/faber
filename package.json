@@ -8,10 +8,6 @@
         "faber": "./fons/faber-ts/faber.ts"
     },
   "scripts": {
-    // =============================================================================
-    // BUILD SCRIPTS - Compiler Construction
-    // =============================================================================
-
     "build": "bun ./scripta/build.ts",
     "build:norma": "bun ./scripta/build-norma.ts",
     "build:nanus-ts": "bun ./scripta/build-nanus-ts.ts",
@@ -25,52 +21,25 @@
     "build:exec": "bun ./scripta/build-exec.ts",
     "build:exempla": "bun ./scripta/build-exempla.ts",
     "build:golden": "bun ./scripta/build-golden.ts",
-
-    // =============================================================================
-    // TESTING - Verification and Validation
-    // =============================================================================
-
     "test": "./scripta/test",
     "test:faber": "bun test fons/proba/faber.test.ts",
     "test:rivus": "bun test fons/proba/rivus.test.ts --timeout 5000",
     "test:report": "./scripta/test-report",
     "golden": "bun ./scripta/golden.ts",
-
-    // =============================================================================
-    // QUALITY ASSURANCE - Code Quality and Formatting
-    // =============================================================================
-
     "lint": "./scripta/lint",
     "lint:fix": "./scripta/lint --fix",
     "prettier": "./scripta/prettier",
     "prettier:check": "./scripta/prettier --check",
     "typecheck": "./scripta/typecheck",
-
-    // =============================================================================
-    // EXECUTABLES - Direct Access to Built Compilers
-    // =============================================================================
-
     "faber": "opus/bin/faber",
     "rivus": "opus/bin/rivus",
-
-    // =============================================================================
-    // DEVELOPMENT UTILITIES - Analysis and Maintenance
-    // =============================================================================
-
     "stats": "bun ./scripta/stats.ts",
     "sanity": "bun ./scripta/sanity.ts",
     "rivus:features": "bun ./scripta/rivus-features.ts",
     "verify:exempla": "bun ./scripta/verify-exempla.ts",
     "verify:nanus": "bun ./scripta/verify-nanus.ts",
     "use": "./scripta/use",
-    "release": "./scripta/release",
-
-    // =============================================================================
-    // MISCELLANEOUS - Specialized Tools
-    // =============================================================================
-
-    "misc:ast": "bun ./scripta/misc-ast-sync.ts",
-    "misc:tree-sitter": "bun ./scripta/misc-tree-sitter.ts"
+    "release": "./scripta/release"
   },
     "devDependencies": {
         "@eslint/js": "^9.39.2",

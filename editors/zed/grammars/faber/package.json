@@ -1,0 +1,29 @@
+{
+  "name": "tree-sitter-faber",
+  "version": "0.1.0",
+  "description": "Tree-sitter grammar for Faber Romanus (Latin programming language)",
+  "main": "bindings/node",
+  "scripts": {
+    "build": "tree-sitter generate && node-gyp build",
+    "test": "tree-sitter test"
+  },
+  "keywords": [
+    "tree-sitter",
+    "faber",
+    "romanus", 
+    "latin",
+    "programming-language"
+  ],
+  "author": "Ian Zepp <ianzepp@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "tree-sitter-cli": "^0.20.0"
+  },
+  "tree-sitter": [
+    {
+      "scope": "source.faber",
+      "file-types": ["fab"],
+      "highlights": "queries/highlights.scm"
+    }
+  ]
+}
