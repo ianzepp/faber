@@ -16,7 +16,7 @@
 § ex "./index" importa genSententia
 
 @ publica
-functio genIteratio(in GoGenerator g, species, de IteratioVariabilis variabilis, de Expressia iterabile, de Sententia corpus) -> textus {
+functio genIteratio(in GoGenerator g, IteratioGenus species, de IteratioVariabilis variabilis, de Expressia iterabile, de Sententia corpus) -> textus {
     fixum rev = creaGoRevocata()
 
     # Check for range expression - use shared handler (only for simple identifier)

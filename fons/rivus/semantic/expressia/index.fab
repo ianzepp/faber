@@ -6,7 +6,7 @@
 § ex "../scopus" importa quaereSymbolum
 § ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, BIVALENS, NIHIL, IGNOTUM
 § ex "../typi" importa usitatumTypus, genericumTypus
-§ ex "../typi" importa formaTypum, assignabileAd
+§ ex "../typi" importa formaTypum, assignabileAd, typiAequales
 § ex "../errores" importa immutableAssignmentError, typeMismatchError, undefinedVariableError
 § ex "../../ast/expressia" importa Expressia, CatenaGradus
 § ex "../../ast/typus" importa TypusAnnotatio
@@ -226,6 +226,46 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
     mori "Internal error: unhandled expression type in resolveExpressia"
 }
 
+# Check an expression against an expected type.
+#
+# Foundation for bidirectional inference: uses `expected` to guide inference for
+# otherwise-ambiguous expressions (notably empty arrays).
+@ publica
+functio checkExpressia(Resolvitor r, Expressia expr, de SemanticTypus expected) -> SemanticTypus {
+    # If there is no meaningful expectation, fall back to synthesis.
+    si typiAequales(expected, IGNOTUM) {
+        redde resolveExpressia(r, expr)
+    }
+
+    # Empty array literal: use expected element type when available.
+    discerne expr {
+        casu SeriesExpressia ut s {
+            discerne expected {
+                casu Genericum ut g {
+                    si g.nomen == "lista" et g.parametri.longitudo() == 1 {
+                        si (s.elementa qua lista<Expressia>).longitudo() == 0 {
+                            redde expected
+                        }
+
+                        # Check each element against the expected element type.
+                        fixum elemExpected = g.parametri.primus()
+                        ex (s.elementa qua lista<Expressia>) fixum elem {
+                            r.check(elem, elemExpected)
+                        }
+
+                        redde expected
+                    }
+                }
+                casu _ { }
+            }
+        }
+        casu _ { }
+    }
+
+    # Default: synthesize without additional context.
+    redde resolveExpressia(r, expr)
+}
+
 # ============================================================================
 # HELPER RESOLVERS
 # ============================================================================
@@ -237,8 +277,6 @@ functio resolveAssignatio(Resolvitor r, Expressia assignatioExpr) -> SemanticTyp
 
     discerne assignatioExpr {
         casu AssignatioExpressia ut as {
-            fixum dexterTypus = r.expressia(as.dexter)
-
             discerne as.sinister {
                 casu Nomen ut n {
                     fixum symbolum = a.quaere(n.valor)
@@ -247,6 +285,8 @@ functio resolveAssignatio(Resolvitor r, Expressia assignatioExpr) -> SemanticTyp
                         a.error(err.textus, n.locus, err.auxilium)
                         redde IGNOTUM
                     }
+
+                    fixum dexterTypus = r.check(as.dexter, symbolum.semanticTypus)
 
                     si non symbolum.mutabilis {
                         fixum err = immutableAssignmentError(symbolum.nomen)
@@ -262,6 +302,7 @@ functio resolveAssignatio(Resolvitor r, Expressia assignatioExpr) -> SemanticTyp
                 }
 
                 casu MembrumExpressia ut m {
+                    fixum dexterTypus = r.expressia(as.dexter)
                     # TODO: Resolve member types once genus metadata exists.
                     r.expressia(m.obiectum)
                     # WHY: Only resolve property for computed (indexed) access.
@@ -274,7 +315,7 @@ functio resolveAssignatio(Resolvitor r, Expressia assignatioExpr) -> SemanticTyp
                 casu _ { }
             }
 
-            redde dexterTypus
+            redde r.expressia(as.dexter)
         }
         casu _ { }
     }

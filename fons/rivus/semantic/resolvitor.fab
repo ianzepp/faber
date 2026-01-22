@@ -22,6 +22,15 @@
 @ publica
 pactum Resolvitor {
     functio analyzator() -> Analyzator
+
+    # Bottom-up inference: "what type is this expression?"
+    functio synthesize(de Expressia expr) -> SemanticTypus
+
+    # Top-down checking: "treat this expression as expected type"
+    # May use the expected type to refine inference (e.g. [] as lista<T>).
+    functio check(de Expressia expr, de SemanticTypus expected) -> SemanticTypus
+
+    # Legacy name; keep until call sites migrate.
     functio expressia(de Expressia expr) -> SemanticTypus
     functio sententia(de Sententia stmt) -> vacuum
 }

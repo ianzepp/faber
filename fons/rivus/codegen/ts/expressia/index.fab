@@ -100,10 +100,10 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
             # WHY: Null/empty checks are language-level operators, not JS prefixes.
             elige e.signum qua textus {
                 casu "nulla" {
-                    redde scriptum("(§ == null || (Array.isArray(§) || typeof § === 'string' ? §.length === 0 : typeof § === 'object' ? Object.keys(§).length === 0 : !§))", arg, arg, arg, arg, arg, arg, arg, arg)
+                    redde scriptum("(§ == null || (Array.isArray(§) || typeof § === 'string' ? §.length === 0 : typeof § === 'object' ? Object.keys(§).length === 0 : !§))", arg, arg, arg, arg, arg, arg, arg)
                 }
                 casu "nonnulla" {
-                    redde scriptum("(§ != null && (Array.isArray(§) || typeof § === 'string' ? §.length > 0 : typeof § === 'object' ? Object.keys(§).length > 0 : Boolean(§)))", arg, arg, arg, arg, arg, arg, arg, arg)
+                    redde scriptum("(§ != null && (Array.isArray(§) || typeof § === 'string' ? §.length > 0 : typeof § === 'object' ? Object.keys(§).length > 0 : Boolean(§)))", arg, arg, arg, arg, arg, arg, arg)
                 }
                 casu "nihil" {
                     redde scriptum("(§ == null)", arg)

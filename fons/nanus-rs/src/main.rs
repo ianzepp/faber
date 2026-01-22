@@ -126,7 +126,7 @@ fn run(
             let ast = parse(tokens, filename)?;
             match target {
                 "fab" => Ok(emitter_faber::emit_faber(&ast)),
-                "rs" => Ok(emitter_rs::emit_rs(&ast)),
+                "rs" => Ok(emitter_rs::emit_rs(&ast, filename)),
                 _ => unreachable!(),
             }
         }

@@ -20,9 +20,24 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
         casu VocatioExpressia ut v {
             fixum vocatumTypus = r.expressia(v.vocatum)
 
-            # Resolve all arguments
-            ex v.argumenta fixum arg {
-                r.expressia(arg)
+            # Resolve/check arguments (bidirectional foundation)
+            discerne vocatumTypus {
+                casu Functio ut f {
+                    varia i = 0
+                    ex v.argumenta fixum arg {
+                        si i < f.parametriTypi.longitudo() {
+                            r.check(arg, f.parametriTypi[i])
+                        } secus {
+                            r.expressia(arg)
+                        }
+                        i += 1
+                    }
+                }
+                casu _ {
+                    ex v.argumenta fixum arg {
+                        r.expressia(arg)
+                    }
+                }
             }
 
             # Morphologia dispatch validation (receiver-bound)

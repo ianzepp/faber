@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::path::{Component, Path, PathBuf};
 use subsidia_rs::{
     analyze, ClausuraCorpus, Expr, LitteraSpecies, Modulus, Param, SemanticContext, SemanticTypus,
     Stmt, Typus, VariaSpecies,
@@ -7,21 +8,74 @@ use subsidia_rs::{
 /// Emitter state with semantic context
 struct RsEmitter<'a> {
     ctx: &'a SemanticContext,
+    source_root: Option<PathBuf>,
+    current_rel: PathBuf,
 }
 
 impl<'a> RsEmitter<'a> {
     fn is_known_enum(&self, name: &str) -> bool {
         match name {
-            "SymbolumGenus" | "VerbumId" | "Visibilitas" | "VariaGenus" | 
-            "LitteraGenus" | "ScribeGradus" | "IteratioGenus" | "CuratorGenus" | 
-            "AdVerbumVinculandi" | "PraeparaTempus" | "ProbaModificator" |
-            "LexorErrorCodice" | "ParserErrorCodice" | "SemanticErrorCodice" => true,
+            "SymbolumGenus"
+            | "VerbumId"
+            | "Visibilitas"
+            | "VariaGenus"
+            | "LitteraGenus"
+            | "ScribeGradus"
+            | "IteratioGenus"
+            | "CuratorGenus"
+            | "AdVerbumVinculandi"
+            | "PraeparaTempus"
+            | "ProbaModificator"
+            | "LexorErrorCodice"
+            | "ParserErrorCodice"
+            | "SemanticErrorCodice" => true,
             _ => false,
         }
     }
 
-    fn new(ctx: &'a SemanticContext) -> Self {
-        Self { ctx }
+    fn new(ctx: &'a SemanticContext, filename: &str) -> Self {
+        let filename_path = Path::new(filename);
+        let source_root = infer_rivus_root(filename_path);
+        let current_rel = source_root
+            .as_ref()
+            .and_then(|root| filename_path.strip_prefix(root).ok())
+            .unwrap_or_else(|| Path::new(filename))
+            .to_path_buf();
+
+        Self {
+            ctx,
+            source_root,
+            current_rel,
+        }
+    }
+
+    fn resolve_import_path(&self, fons: &str) -> Option<String> {
+        let _root = self.source_root.as_ref()?;
+
+        let current_dir = self.current_rel.parent().unwrap_or(Path::new(""));
+
+        let target = if fons.ends_with(".fab") {
+            current_dir.join(fons)
+        } else {
+            current_dir.join(format!("{}.fab", fons))
+        };
+
+        let normalized = normalize_rel_path(&target);
+        let normalized = normalized.with_extension("");
+
+        let mut parts: Vec<String> = Vec::new();
+        for c in normalized.components() {
+            if let Component::Normal(os) = c {
+                let seg = os.to_string_lossy().to_string();
+                parts.push(seg.replace('.', "_"));
+            }
+        }
+
+        if parts.is_empty() {
+            return None;
+        }
+
+        Some(format!("crate::{}", parts.join("::")))
     }
 
     /// Find which discretio contains a given variant name
@@ -37,24 +91,52 @@ impl<'a> RsEmitter<'a> {
 
         // Heuristic fallback for rivus AST
         match variant_name {
-            "MassaSententia" | "VariaSententia" | "ImportaSententia" | "DestructuraSententia" |
-            "SeriesDestructuraSententia" | "FunctioDeclaratio" | "GenusDeclaratio" | "PactumDeclaratio" |
-            "TypusAliasDeclaratio" | "OrdoDeclaratio" | "DiscretioDeclaratio" | "SiSententia" |
-            "DumSententia" | "ExSententia" | "DeSententia" | "EligeSententia" | "DiscerneSententia" |
-            "CustodiSententia" | "ReddeSententia" | "RumpeSententia" | "PergeSententia" |
-            "IaceSententia" | "ScribeSententia" | "IncipitSententia" | "IncipietSententia" |
-            "CuraSententia" | "TemptaSententia" | "FacSententia" | "AdfirmaSententia" |
-            "ProbandumSententia" | "ProbaSententia" | "ExpressiaSententia" => Some("Sententia".to_string()),
+            "MassaSententia"
+            | "VariaSententia"
+            | "ImportaSententia"
+            | "DestructuraSententia"
+            | "SeriesDestructuraSententia"
+            | "FunctioDeclaratio"
+            | "GenusDeclaratio"
+            | "PactumDeclaratio"
+            | "TypusAliasDeclaratio"
+            | "OrdoDeclaratio"
+            | "DiscretioDeclaratio"
+            | "SiSententia"
+            | "DumSententia"
+            | "ExSententia"
+            | "DeSententia"
+            | "EligeSententia"
+            | "DiscerneSententia"
+            | "CustodiSententia"
+            | "ReddeSententia"
+            | "RumpeSententia"
+            | "PergeSententia"
+            | "IaceSententia"
+            | "ScribeSententia"
+            | "IncipitSententia"
+            | "IncipietSententia"
+            | "CuraSententia"
+            | "TemptaSententia"
+            | "FacSententia"
+            | "AdfirmaSententia"
+            | "ProbandumSententia"
+            | "ProbaSententia"
+            | "ExpressiaSententia" => Some("Sententia".to_string()),
 
-            "Nomen" | "Ego" | "Littera" | "Binaria" | "Unaria" | "Assignatio" |
-            "Condicio" | "Vocatio" | "Membrum" | "Series" | "Obiectum" | "Clausura" |
-            "Novum" | "Cede" | "Qua" | "Innatum" | "Conversio" | "PostfixNovum" |
-            "Finge" | "Scriptum" | "Ambitus" => Some("Expressia".to_string()),
+            "Nomen" | "Ego" | "Littera" | "Binaria" | "Unaria" | "Assignatio" | "Condicio"
+            | "Vocatio" | "Membrum" | "Series" | "Obiectum" | "Clausura" | "Novum" | "Cede"
+            | "Qua" | "Innatum" | "Conversio" | "PostfixNovum" | "Finge" | "Scriptum"
+            | "Ambitus" => Some("Expressia".to_string()),
 
             "Nullabilis" | "Genericus" | "Unio" | "Litteralis" => Some("Typus".to_string()),
 
-            "CurataModificator" | "ErrataModificator" | "ExitusModificator" |
-            "ImmutataModificator" | "IacitModificator" | "OptionesModificator" => Some("FunctioModificator".to_string()),
+            "CurataModificator"
+            | "ErrataModificator"
+            | "ExitusModificator"
+            | "ImmutataModificator"
+            | "IacitModificator"
+            | "OptionesModificator" => Some("FunctioModificator".to_string()),
 
             _ => None,
         }
@@ -160,7 +242,7 @@ impl<'a> RsEmitter<'a> {
                 format!(
                     "{}for {} in {}{} {}",
                     indent,
-                    binding,
+                    sanitize_rs_ident(binding),
                     self.emit_expr(iter),
                     iter_method,
                     self.emit_stmt(corpus, indent)
@@ -344,7 +426,7 @@ impl<'a> RsEmitter<'a> {
                 (_, false) => "let mut",
             };
 
-            let mut result = format!("{}{}{} {}", indent, vis, kw, nomen);
+            let mut result = format!("{}{}{} {}", indent, vis, kw, sanitize_rs_ident(nomen));
             if let Some(t) = typus {
                 result.push_str(&format!(": {}", self.emit_typus(t)));
             }
@@ -375,6 +457,32 @@ impl<'a> RsEmitter<'a> {
                 return format!("{}// extern: {}", indent, nomen);
             }
 
+            // Nested functions in Rust can't capture locals/self. Emit a closure instead.
+            if !indent.is_empty() {
+                let params_str: Vec<String> = params.iter().map(|p| self.emit_param(p)).collect();
+                let ret = if let Some(t) = typus_reditus {
+                    format!(" -> {}", self.emit_typus(t))
+                } else {
+                    String::new()
+                };
+
+                let body = corpus
+                    .as_ref()
+                    .map(|c| self.emit_stmt(c, indent))
+                    .unwrap_or_else(|| "{}".to_string());
+
+                let _ = asynca; // async closures not handled yet
+
+                return format!(
+                    "{}let {} = |{}|{} {};",
+                    indent,
+                    sanitize_rs_ident(nomen),
+                    params_str.join(", "),
+                    ret,
+                    body
+                );
+            }
+
             let vis = if *publica { "pub " } else { "" };
             let async_kw = if *asynca { "async " } else { "" };
 
@@ -402,7 +510,7 @@ impl<'a> RsEmitter<'a> {
                 indent,
                 vis,
                 async_kw,
-                nomen,
+                sanitize_rs_ident(nomen),
                 generics_str,
                 params_str.join(", "),
                 ret,
@@ -447,7 +555,13 @@ impl<'a> RsEmitter<'a> {
                 } else {
                     "()".to_string()
                 };
-                lines.push(format!("{}    {}{}: {},", indent, field_vis, sanitize_rs_ident(&c.nomen), typ));
+                lines.push(format!(
+                    "{}    {}{}: {},",
+                    indent,
+                    field_vis,
+                    sanitize_rs_ident(&c.nomen),
+                    typ
+                ));
             }
             lines.push(format!("{}}}", indent));
 
@@ -603,6 +717,34 @@ impl<'a> RsEmitter<'a> {
             };
 
             let mut lines: Vec<String> = Vec::new();
+
+            // Variant structs (needed so other modules can type-annotate params)
+            for v in variantes {
+                lines.push(format!("{}#[derive(Debug, Clone)]", indent));
+                if v.campi.is_empty() {
+                    lines.push(format!(
+                        "{}{}struct {}{};",
+                        indent, vis, v.nomen, generics_str
+                    ));
+                } else {
+                    lines.push(format!(
+                        "{}{}struct {}{} {{",
+                        indent, vis, v.nomen, generics_str
+                    ));
+                    for f in &v.campi {
+                        lines.push(format!(
+                            "{}    pub {}: {},",
+                            indent,
+                            sanitize_rs_ident(&f.nomen),
+                            self.emit_typus(&f.typus)
+                        ));
+                    }
+                    lines.push(format!("{}}}", indent));
+                }
+                lines.push(String::new());
+            }
+
+            // Discriminated union enum (tuple variants wrapping the structs)
             lines.push(format!("{}#[derive(Debug, Clone)]", indent));
             lines.push(format!(
                 "{}{}enum {}{} {{",
@@ -610,21 +752,10 @@ impl<'a> RsEmitter<'a> {
             ));
 
             for v in variantes {
-                if v.campi.is_empty() {
-                    lines.push(format!("{}    {},", indent, v.nomen));
-                } else {
-                    let fields: Vec<String> = v
-                        .campi
-                        .iter()
-                        .map(|f| format!("{}: {}", f.nomen, self.emit_typus(&f.typus)))
-                        .collect();
-                    lines.push(format!(
-                        "{}    {} {{ {} }},",
-                        indent,
-                        v.nomen,
-                        fields.join(", ")
-                    ));
-                }
+                lines.push(format!(
+                    "{}    {}({}{}),",
+                    indent, v.nomen, v.nomen, generics_str
+                ));
             }
 
             lines.push(format!("{}}}", indent));
@@ -643,24 +774,15 @@ impl<'a> RsEmitter<'a> {
             ..
         } = stmt
         {
-            let path = if fons.starts_with("./") {
-                format!("crate::{}", fons[2..].replace(".fab", "").replace("/", "::").replace(".", "_"))
-            } else if fons.starts_with("../") {
-                let mut super_count = 0;
-                let mut current_fons: &str = fons;
-                while current_fons.starts_with("../") {
-                    super_count += 1;
-                    current_fons = &current_fons[3..];
-                }
-                let supers = vec!["super"; super_count].join("::");
-                format!("{}::{}", supers, current_fons.replace(".fab", "").replace("/", "::").replace(".", "_"))
-            } else {
-                fons.replace(".fab", "").replace("/", "::").replace(".", "_")
-            };
+            let path = self.resolve_import_path(fons).unwrap_or_else(|| {
+                fons.replace(".fab", "")
+                    .replace("/", "::")
+                    .replace(".", "_")
+            });
 
             if *totum {
                 if let Some(a) = alias {
-                    format!("{}use {} as {};", indent, path, a)
+                    format!("{}use {} as {};", indent, path, sanitize_rs_ident(a))
                 } else {
                     format!("{}use {}::*;", indent, path)
                 }
@@ -669,7 +791,7 @@ impl<'a> RsEmitter<'a> {
                     .iter()
                     .map(|s| {
                         if !s.local.is_empty() && s.local != s.imported {
-                            format!("{} as {}", s.imported, s.local)
+                            format!("{} as {}", s.imported, sanitize_rs_ident(&s.local))
                         } else {
                             s.imported.clone()
                         }
@@ -703,37 +825,48 @@ impl<'a> RsEmitter<'a> {
 
                 if pattern.wildcard {
                     lines.push(format!("{}    _ => {{", indent));
-                } else if pattern.bindings.is_empty() && pattern.alias.is_none() {
-                    lines.push(format!(
-                        "{}    {}::{} => {{",
-                        indent, enum_name, pattern.variant
-                    ));
                 } else {
-                    let binding_parts: Vec<String> = pattern.bindings.iter().cloned().collect();
+                    let binding_parts: Vec<String> = pattern
+                        .bindings
+                        .iter()
+                        .map(|b| sanitize_rs_ident(b))
+                        .collect();
+
                     if let Some(alias) = &pattern.alias {
+                        let alias = sanitize_rs_ident(alias);
                         if binding_parts.is_empty() {
+                            // Bind the whole struct payload.
                             lines.push(format!(
-                                "{}    {} @ {}::{} {{ .. }} => {{",
-                                indent, alias, enum_name, pattern.variant
+                                "{}    {}::{}({}) => {{",
+                                indent, enum_name, pattern.variant, alias
                             ));
-                            if let Stmt::Massa { corpus: stmts, .. } = c.corpus.as_ref() {
-                                for s in stmts {
-                                    lines.push(self.emit_stmt(s, &format!("{}        ", indent)));
-                                }
-                            } else {
-                                lines.push(
-                                    self.emit_stmt(&c.corpus, &format!("{}        ", indent)),
-                                );
-                            }
-                            lines.push(format!("{}    }}", indent));
-                            continue;
+                        } else {
+                            // Bind alias + destructure fields.
+                            let struct_name = module_for_discretio(&enum_name)
+                                .map(|m| format!("{}::{}", m, pattern.variant))
+                                .unwrap_or_else(|| pattern.variant.clone());
+                            let inner =
+                                format!("{} {{ {} }}", struct_name, binding_parts.join(", "));
+                            lines.push(format!(
+                                "{}    {}::{}({} @ {}) => {{",
+                                indent, enum_name, pattern.variant, alias, inner
+                            ));
                         }
+                    } else if binding_parts.is_empty() {
+                        lines.push(format!(
+                            "{}    {}::{}(_) => {{",
+                            indent, enum_name, pattern.variant
+                        ));
+                    } else {
+                        let struct_name = module_for_discretio(&enum_name)
+                            .map(|m| format!("{}::{}", m, pattern.variant))
+                            .unwrap_or_else(|| pattern.variant.clone());
+                        let inner = format!("{} {{ {} }}", struct_name, binding_parts.join(", "));
+                        lines.push(format!(
+                            "{}    {}::{}({}) => {{",
+                            indent, enum_name, pattern.variant, inner
+                        ));
                     }
-                    let binding_str = format!("{{ {} }}", binding_parts.join(", "));
-                    lines.push(format!(
-                        "{}    {}::{} {} => {{",
-                        indent, enum_name, pattern.variant, binding_str
-                    ));
                 }
 
                 if let Stmt::Massa { corpus: stmts, .. } = c.corpus.as_ref() {
@@ -787,7 +920,7 @@ impl<'a> RsEmitter<'a> {
 
     fn emit_expr(&self, expr: &Expr) -> String {
         match expr {
-            Expr::Nomen { valor, .. } => valor.clone(),
+            Expr::Nomen { valor, .. } => sanitize_rs_ident(valor),
             Expr::Ego { .. } => "self".to_string(),
             Expr::Littera { species, valor, .. } => match species {
                 LitteraSpecies::Textus => format!("{}.to_string()", quote_string(valor)),
@@ -799,15 +932,27 @@ impl<'a> RsEmitter<'a> {
             Expr::Binaria {
                 signum, sin, dex, ..
             } => {
+                if signum == "vel" {
+                    return format!("{}.unwrap_or({})", self.emit_expr(sin), self.emit_expr(dex));
+                }
                 if signum == "inter" {
                     return format!("{}.contains(&{})", self.emit_expr(dex), self.emit_expr(sin));
                 }
                 if signum == "intra" {
                     let variant_name = self.emit_expr(dex);
                     if let Some(enum_name) = self.find_discretio_for_variant(&variant_name) {
-                        return format!("matches!({}, {}::{} {{ .. }})", self.emit_expr(sin), enum_name, variant_name);
+                        return format!(
+                            "matches!({}, {}::{} {{ .. }})",
+                            self.emit_expr(sin),
+                            enum_name,
+                            variant_name
+                        );
                     }
-                    return format!("matches!({}, {} {{ .. }})", self.emit_expr(sin), variant_name);
+                    return format!(
+                        "matches!({}, {} {{ .. }})",
+                        self.emit_expr(sin),
+                        variant_name
+                    );
                 }
                 let op = map_binary_op(signum);
                 format!("({} {} {})", self.emit_expr(sin), op, self.emit_expr(dex))
@@ -866,7 +1011,11 @@ impl<'a> RsEmitter<'a> {
                     return format!("{}[{}]", obj_str, self.emit_expr(prop));
                 }
 
-                let sep = if self.is_known_enum(&obj_str) { "::" } else { "." };
+                let sep = if self.is_known_enum(&obj_str) || looks_like_type(&obj_str) {
+                    "::"
+                } else {
+                    "."
+                };
 
                 let prop_str = if let Expr::Littera { valor, .. } = prop.as_ref() {
                     if valor == "longitudo" {
@@ -907,9 +1056,9 @@ impl<'a> RsEmitter<'a> {
                     .iter()
                     .map(|p| {
                         if let Some(t) = &p.typus {
-                            format!("{}: {}", p.nomen, self.emit_typus(t))
+                            format!("{}: {}", sanitize_rs_ident(&p.nomen), self.emit_typus(t))
                         } else {
-                            p.nomen.clone()
+                            sanitize_rs_ident(&p.nomen)
                         }
                     })
                     .collect();
@@ -958,7 +1107,12 @@ impl<'a> RsEmitter<'a> {
             Expr::PostfixNovum { expr, typus, .. } => {
                 format!("{}::from({})", self.emit_typus(typus), self.emit_expr(expr))
             }
-            Expr::Finge { variant, campi, .. } => {
+            Expr::Finge {
+                variant,
+                campi,
+                typus,
+                ..
+            } => {
                 let fields: Vec<String> = campi
                     .iter()
                     .map(|p| {
@@ -970,16 +1124,53 @@ impl<'a> RsEmitter<'a> {
                         format!("{}: {}", sanitize_rs_ident(&key), self.emit_expr(&p.valor))
                     })
                     .collect();
-                format!("{} {{ {} }}", variant, fields.join(", "))
+
+                let inner = if fields.is_empty() {
+                    variant.clone()
+                } else {
+                    format!("{} {{ {} }}", variant, fields.join(", "))
+                };
+
+                // If this finge is typed as a discretio, wrap it as an enum variant.
+                if let Some(t) = typus {
+                    let enum_name = match t {
+                        Typus::Nomen { nomen } => map_type_name(nomen),
+                        _ => self
+                            .find_discretio_for_variant(variant)
+                            .unwrap_or_else(|| "Unknown".to_string()),
+                    };
+
+                    let inner_struct = if let Some(mod_path) = module_for_discretio(&enum_name) {
+                        if fields.is_empty() {
+                            format!("{}::{}", mod_path, variant)
+                        } else {
+                            format!("{}::{} {{ {} }}", mod_path, variant, fields.join(", "))
+                        }
+                    } else {
+                        inner.clone()
+                    };
+
+                    return format!("{}::{}({})", enum_name, variant, inner_struct);
+                }
+
+                inner
             }
             Expr::Scriptum { template, args, .. } => {
                 let parts: Vec<&str> = template.split('§').collect();
                 if parts.len() == 1 {
                     return format!("{}.to_string()", quote_string(template));
                 }
-                let format_str = parts.iter().map(|p| p.replace("{", "{{").replace("}", "}}")).collect::<Vec<_>>().join("{}");
+                let format_str = parts
+                    .iter()
+                    .map(|p| p.replace("{", "{{").replace("}", "}}"))
+                    .collect::<Vec<_>>()
+                    .join("{}");
                 let args_str: Vec<String> = args.iter().map(|a| self.emit_expr(a)).collect();
-                format!("format!(\"{}\", {})", format_str, args_str.join(", "))
+                format!(
+                    "format!({}, {})",
+                    quote_string(&format_str),
+                    args_str.join(", ")
+                )
             }
             Expr::Ambitus {
                 start,
@@ -1033,27 +1224,75 @@ impl<'a> RsEmitter<'a> {
         };
 
         let typ = if let Some(t) = &p.typus {
-            format!(": {}{}", ownership, self.emit_typus(t))
+            self.emit_typus(t)
         } else {
-            String::new()
+            // Fallback for missing types so the generated crate stays buildable.
+            // The semantic pipeline should eliminate these over time.
+            "Box<dyn std::any::Any>".to_string()
         };
 
-        format!("{}{}", sanitize_rs_ident(&p.nomen), typ)
+        format!("{}: {}{}", sanitize_rs_ident(&p.nomen), ownership, typ)
     }
 }
 
 /// Emit a module to Rust source code.
-pub fn emit_rs(module: &Modulus) -> String {
+pub fn emit_rs(module: &Modulus, filename: &str) -> String {
     let ctx = analyze(module);
-    let emitter = RsEmitter::new(&ctx);
+    let emitter = RsEmitter::new(&ctx, filename);
+
+    let mut body_lines: Vec<String> = Vec::new();
+    for stmt in &module.corpus {
+        body_lines.push(emitter.emit_stmt(stmt, ""));
+    }
+    let body = body_lines.join("\n");
+
+    let has_use = |prefix: &str, name: &str| -> bool {
+        body.lines().any(|line| {
+            let t = line.trim();
+            if !t.starts_with("use ") {
+                return false;
+            }
+            if !t.contains(prefix) {
+                return false;
+            }
+            t.contains(&format!("::{};", name))
+                || t.contains(&format!("::{} ", name))
+                || t.contains(&format!("{{{},", name))
+                || t.contains(&format!("{{{}}}", name))
+                || t.contains(&format!(", {}", name))
+        })
+    };
+
+    let defines_local = |name: &str| -> bool {
+        body.contains(&format!("pub enum {}", name))
+            || body.contains(&format!("pub struct {}", name))
+            || body.contains(&format!("type {} =", name))
+    };
 
     let mut lines: Vec<String> = Vec::new();
     lines.push("use std::collections::HashMap;".to_string());
-    lines.push(String::new());
+    lines.push("use std::collections::HashSet;".to_string());
 
-    for stmt in &module.corpus {
-        lines.push(emitter.emit_stmt(stmt, ""));
+    // Some modules pattern-match on these AST enums but don't import them.
+    // Inject imports only when used and not already present.
+    if body.contains("Expressia::") && !defines_local("Expressia") {
+        if !has_use("crate::ast::expressia", "Expressia") {
+            lines.push("use crate::ast::expressia::Expressia;".to_string());
+        }
     }
+    if body.contains("Sententia::") && !defines_local("Sententia") {
+        if !has_use("crate::ast::sententia", "Sententia") {
+            lines.push("use crate::ast::sententia::Sententia;".to_string());
+        }
+    }
+    if body.contains("Typus::") && !defines_local("Typus") {
+        if !has_use("crate::ast::typus", "Typus") {
+            lines.push("use crate::ast::typus::Typus;".to_string());
+        }
+    }
+
+    lines.push(String::new());
+    lines.push(body);
     lines.join("\n")
 }
 
@@ -1158,10 +1397,11 @@ fn map_method_name(name: &str) -> Option<&'static str> {
 
 fn sanitize_rs_ident(s: &str) -> String {
     match s {
-        "as" | "async" | "await" | "break" | "const" | "continue" | "crate" | "dyn" | "else" | "enum" |
-        "extern" | "false" | "fn" | "for" | "if" | "impl" | "in" | "let" | "loop" | "match" | "mod" |
-        "move" | "mut" | "pub" | "ref" | "return" | "self" | "Self" | "static" | "struct" | "super" |
-        "trait" | "true" | "type" | "unsafe" | "use" | "where" | "while" => {
+        "as" | "async" | "await" | "break" | "const" | "continue" | "crate" | "dyn" | "else"
+        | "enum" | "extern" | "false" | "fn" | "for" | "if" | "impl" | "in" | "let" | "loop"
+        | "match" | "mod" | "move" | "mut" | "pub" | "ref" | "return" | "self" | "Self"
+        | "static" | "struct" | "super" | "trait" | "true" | "type" | "unsafe" | "use"
+        | "where" | "while" => {
             format!("r#{}", s)
         }
         _ => s.to_string(),
@@ -1170,7 +1410,13 @@ fn sanitize_rs_ident(s: &str) -> String {
 
 fn sanitize_ident(s: &str) -> String {
     s.chars()
-        .map(|c| if c.is_alphanumeric() || c == '_' { c } else { '_' })
+        .map(|c| {
+            if c.is_alphanumeric() || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect()
 }
 
@@ -1188,4 +1434,60 @@ fn quote_string(s: &str) -> String {
     }
     result.push('"');
     result
+}
+
+fn infer_rivus_root(filename: &Path) -> Option<PathBuf> {
+    // Heuristic for build-rivus: inputs look like .../fons/rivus/<rel>.fab
+    let comps: Vec<Component<'_>> = filename.components().collect();
+    for i in 0..comps.len().saturating_sub(1) {
+        if comps[i].as_os_str() == "fons" && comps[i + 1].as_os_str() == "rivus" {
+            let mut root = PathBuf::new();
+            for c in &comps[..=i + 1] {
+                root.push(c.as_os_str());
+            }
+            return Some(root);
+        }
+    }
+    None
+}
+
+fn normalize_rel_path(p: &Path) -> PathBuf {
+    let mut out = PathBuf::new();
+    for c in p.components() {
+        match c {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                out.pop();
+            }
+            Component::Normal(seg) => out.push(seg),
+
+            // Keep absolute paths absolute; build-rivus passes absolute filenames.
+            Component::RootDir => out.push(c.as_os_str()),
+            Component::Prefix(pref) => out.push(pref.as_os_str()),
+        }
+    }
+    out
+}
+
+fn module_for_discretio(discretio: &str) -> Option<&'static str> {
+    match discretio {
+        // Rivus AST
+        "Expressia" | "ClausuraCorpus" => Some("crate::ast::expressia"),
+        "Sententia" | "FunctioModificator" | "IteratioVariabilis" => Some("crate::ast::sententia"),
+        "TypusParametrum" => Some("crate::ast::typus"),
+        _ => None,
+    }
+}
+
+fn looks_like_type(ident: &str) -> bool {
+    let s = ident.strip_prefix("r#").unwrap_or(ident);
+    // Only treat bare identifiers as type/module paths. Anything containing
+    // punctuation is an expression (e.g. `Foo::from(x)`), which uses `.`.
+    if !s.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+        return false;
+    }
+    match s.chars().next() {
+        Some(c) => c.is_ascii_uppercase(),
+        None => false,
+    }
 }

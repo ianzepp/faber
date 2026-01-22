@@ -10,6 +10,7 @@
 § ex "./modulus" importa estDependentiaImportum, resolveDependentiaPath
 § ex "./dependentia" importa extractDependentiae
 § ex "./expressia/index" importa resolveExpressia
+§ ex "./expressia/index" importa checkExpressia
 § ex "./sententia/index" importa analyzeSententia
 § ex "./sententia/declara" importa resolveTypusAnnotatio
 § ex "../ast/radix" importa Programma, SectioAnnotatio
@@ -33,8 +34,18 @@ genus ResolvitorImpl implet Resolvitor {
     }
 
     @ publica
-    functio expressia(de Expressia expr) -> SemanticTypus {
+    functio synthesize(de Expressia expr) -> SemanticTypus {
         redde resolveExpressia(ego qua Resolvitor, expr)
+    }
+
+    @ publica
+    functio check(de Expressia expr, de SemanticTypus expected) -> SemanticTypus {
+        redde checkExpressia(ego qua Resolvitor, expr, expected)
+    }
+
+    @ publica
+    functio expressia(de Expressia expr) -> SemanticTypus {
+        redde ego.synthesize(expr)
     }
 
     @ publica
@@ -124,8 +135,12 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
             # Build placeholder function type
             varia paramTypi = [] innatum lista<SemanticTypus>
             ex f.parametra fixum param {
-                a.moneIgnotum("predeclare: function parameter type placeholder", param.locus)
-                paramTypi.adde(IGNOTUM)
+                si nonnihil param.typus {
+                    paramTypi.adde(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
+                } secus {
+                    a.moneIgnotum("predeclare: missing function parameter type annotation", param.locus)
+                    paramTypi.adde(IGNOTUM)
+                }
             }
             # WHY: Preserve declared return types so callers can infer receiver types
             # from forward function calls (critical for norma method translation).

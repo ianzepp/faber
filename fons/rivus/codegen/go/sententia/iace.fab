@@ -27,7 +27,7 @@ functio genErrataError(in GoGenerator g, de Expressia argumentum) -> textus {
 }
 
 @ publica
-functio genIace(in GoGenerator g, de Expressia argumentum, fatale) -> textus {
+functio genIace(in GoGenerator g, de Expressia argumentum, bivalens fatale) -> textus {
     si g.inErrata {
         fixum errExpr = genErrataError(g, argumentum)
         si nonnihil g.errataTypusReditus {

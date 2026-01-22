@@ -20,7 +20,11 @@ functio analyzeRedde(Resolvitor r, Sententia reddeStmt) -> vacuum {
         casu ReddeSententia ut rd {
             # Resolve return value if present
             si nonnihil rd.valor {
-                fixum valorTypus = r.expressia(rd.valor)
+                varia valorTypus = r.expressia(rd.valor)
+
+                si nonnihil a.currentFunctioReditus {
+                    valorTypus = r.check(rd.valor, a.currentFunctioReditus qua SemanticTypus)
+                }
 
                 # Check against function return type
                 si nonnihil a.currentFunctioReditus {

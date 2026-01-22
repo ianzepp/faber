@@ -164,7 +164,7 @@ functio analyzeVariaDeclaratio(Resolvitor r, Sententia variaStmt) -> vacuum {
                 resolvedTypus = resolveTypusAnnotatio(r, v.typus novum TypusAnnotatio)
             }
             sin nonnihil v.valor {
-                resolvedTypus = r.expressia(v.valor)
+                resolvedTypus = r.synthesize(v.valor)
             }
             secus {
                 # External declarations require type annotation but no initializer
@@ -177,7 +177,7 @@ functio analyzeVariaDeclaratio(Resolvitor r, Sententia variaStmt) -> vacuum {
 
             # Check initializer type compatibility
             si nonnihil v.typus et nonnihil v.valor {
-                fixum initTypus = r.expressia(v.valor)
+                fixum initTypus = r.check(v.valor, resolvedTypus)
                 si non assignabileAd(initTypus, resolvedTypus) {
                     fixum err = typeMismatchError(formaTypum(initTypus), formaTypum(resolvedTypus))
                     a.error(err.textus, v.locus, err.auxilium)

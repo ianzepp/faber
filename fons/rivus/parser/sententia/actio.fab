@@ -184,7 +184,7 @@ functio parseScribeElementum(in Resolvitor r) -> Expressia {
             si non p.congruet(SymbolumGenus.Coma) {
                 p.renuncia(
                     ParserErrorCodice.ExpectaturExpressia,
-                    scriptum("Expected argument for § placeholder (need §, got §)", placeholderNumerus, j)
+                    scriptum("Expected argument for § placeholder (need §, got §)", j + 1, placeholderNumerus, j)
                 )
                 rumpe
             }

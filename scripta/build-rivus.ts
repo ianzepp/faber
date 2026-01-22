@@ -247,11 +247,43 @@ async function buildExecutableRs(): Promise<void> {
         const compilerExe = join(binDir, compiler);
         console.log("  Bundling Rust modules...");
         await $`${compilerExe} bundle ${OUTPUT} --entry rivus.rs`.quiet();
+
+        // Generate a lib entrypoint containing only module declarations.
+        // The generated CLI (src/rivus.rs) is currently TS-shaped and not Rust-native.
+        const rivusRs = join(OUTPUT, 'rivus.rs');
+        const libRs = join(OUTPUT, 'lib.rs');
+        const rivusText = await Bun.file(rivusRs).text();
+        const lines = rivusText.split('\n');
+        const modLines: string[] = [];
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.length === 0) break;
+            if (trimmed.startsWith('pub mod ')) modLines.push(line);
+        }
+        await Bun.write(libRs, `${modLines.join('\n')}\n`);
     }
 
     // Create Cargo.toml if not present
     const cargoToml = join(moduleDir, 'Cargo.toml');
-    if (!(await Bun.file(cargoToml).exists())) {
+    if (compiler === 'nanus-rs') {
+        const toml = `[package]
+name = "rivus"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+cli = []
+
+[[bin]]
+name = "rivus"
+path = "src/rivus.rs"
+required-features = ["cli"]
+`;
+        await Bun.write(cargoToml, toml);
+    } else if (!(await Bun.file(cargoToml).exists())) {
         const toml = `[package]
 name = "rivus"
 version = "0.1.0"
@@ -262,6 +294,15 @@ name = "rivus"
 path = "src/rivus.rs"
 `;
         await Bun.write(cargoToml, toml);
+    }
+
+    if (compiler === 'nanus-rs') {
+        const result = await $`cd ${moduleDir} && cargo check`.nothrow().quiet();
+        if (result.exitCode !== 0) {
+            console.error(result.stderr.toString());
+            process.exit(1);
+        }
+        return;
     }
 
     const result = await $`cd ${moduleDir} && cargo build --release`.nothrow().quiet();
@@ -372,9 +413,13 @@ async function main() {
         console.log(`  Built opus/bin/rivus-${compiler}`);
     } else if (target === 'rs') {
         console.log('\nRust post-processing:');
-        console.log('  Building rivus executable...');
+        console.log(compiler === 'nanus-rs' ? '  Checking rivus crate...' : '  Building rivus executable...');
         await buildExecutableRs();
-        console.log(`  Built opus/bin/rivus-${compiler}`);
+        if (compiler === 'nanus-rs') {
+            console.log('  Checked opus/nanus-rs (no binary built)');
+        } else {
+            console.log(`  Built opus/bin/rivus-${compiler}`);
+        }
     } else if (target === 'py') {
         console.log('\nPython post-processing:');
         await buildExecutablePy();
