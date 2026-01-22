@@ -46,6 +46,7 @@ functio verbumFaberId(textus v) -> si VerbumId {
         casu "incipit" reddit VerbumId.Incipit
         casu "incipiet" reddit VerbumId.Incipiet
         casu "tacet" reddit VerbumId.Tacet
+        casu "aliter" reddit VerbumId.Aliter
 
         # ---- Testing ----
         casu "probandum" reddit VerbumId.Probandum

@@ -115,7 +115,8 @@ ordo ParserErrorCodice {
     SyntaxisAlienaColonTypus = "P400",
     SyntaxisAlienaProDe = "P401",
     SyntaxisAlienaSagittaCrassa = "P402",
-    SyntaxisAlienaNullabilis = "P403"
+    SyntaxisAlienaNullabilis = "P403",
+    SyntaxisAlienaAliter = "P404"
 }
 
 # Error message with help text
@@ -389,6 +390,9 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
         }
         casu ParserErrorCodice.SyntaxisAlienaNullabilis {
             redde creoNuntium("Nullable suffix '?' is not supported", "Use 'si Type' prefix instead of 'Type?'")
+        }
+        casu ParserErrorCodice.SyntaxisAlienaAliter {
+            redde creoNuntium("'aliter' is not a Faber keyword", "Use 'secus' for else, 'sin' for else-if: si x { } sin y { } secus { }")
         }
 
         # Default fallback

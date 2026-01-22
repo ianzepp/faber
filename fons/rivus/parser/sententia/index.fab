@@ -371,6 +371,17 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
             redde parseExpressiaSententia(r)
         }
 
+        # SYNTAXIS ALIENA: 'aliter' / 'aliter si' (false Latin for else/else-if)
+        # Faber uses 'secus' for else, 'sin' for else-if
+        si verbumId === VerbumId.Aliter {
+            p.renuncia(ParserErrorCodice.SyntaxisAlienaAliter)
+            # Skip tokens to attempt recovery (aliter { } or aliter si EXPR { })
+            p.procede()  # aliter
+            si p.probaVerbum("si") { p.procede() }  # optional si
+            # Let expression/block parsing handle the rest
+            redde parseExpressiaSententia(r)
+        }
+
         # Declarations
         si verbumId === VerbumId.Functio {
             redde parseFunctioDeclaratio(r)

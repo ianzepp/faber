@@ -75,6 +75,18 @@ functio parseSiSententia(in Resolvitor r) -> Sententia {
     } sin p.probaVerbum("secus") {
         p.procede()
         alternans = parseCorpusAutSententia(r)
+    } sin p.probaVerbum("aliter") {
+        # SYNTAXIS ALIENA: 'aliter' / 'aliter si' (false Latin for else/else-if)
+        p.renuncia(ParserErrorCodice.SyntaxisAlienaAliter)
+        p.procede()  # aliter
+        # Check for 'aliter si' (else-if) vs 'aliter' (else)
+        si p.probaVerbum("si") {
+            p.procede()  # si
+            fixum cond = r.expressia()
+            alternans = parseCorpus(r)
+        } secus {
+            alternans = parseCorpusAutSententia(r)
+        }
     }
 
     redde finge SiSententia {
@@ -407,6 +419,18 @@ functio parseSinSententia(in Resolvitor r) -> Sententia {
     } sin p.probaVerbum("secus") {
         p.procede()
         alternans = parseCorpusAutSententia(r)
+    } sin p.probaVerbum("aliter") {
+        # SYNTAXIS ALIENA: 'aliter' / 'aliter si' (false Latin for else/else-if)
+        p.renuncia(ParserErrorCodice.SyntaxisAlienaAliter)
+        p.procede()  # aliter
+        # Check for 'aliter si' (else-if) vs 'aliter' (else)
+        si p.probaVerbum("si") {
+            p.procede()  # si
+            fixum cond = r.expressia()
+            alternans = parseCorpus(r)
+        } secus {
+            alternans = parseCorpusAutSententia(r)
+        }
     }
 
     redde finge SiSententia {
