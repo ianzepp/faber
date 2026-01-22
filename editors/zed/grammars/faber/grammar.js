@@ -89,6 +89,8 @@ module.exports = grammar({
                 'fiet',
                 'fiunt',
                 'fient',
+                // No-op
+                'tacet',
             ),
 
         // Declaration keywords

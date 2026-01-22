@@ -605,6 +605,10 @@
     "named": false
   },
   {
+    "type": "tacet",
+    "named": false
+  },
+  {
     "type": "tempta",
     "named": false
   },
