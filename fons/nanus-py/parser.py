@@ -735,26 +735,12 @@ class Parser:
 
         while not self.check(TokenTag.PUNCTUATOR, "}") and not self.check(TokenTag.EOF):
             if self.match(TokenTag.KEYWORD, "ceterum"):
-                if self.check(TokenTag.PUNCTUATOR, "{"):
-                    default = self.parse_massa()
-                elif self.match(TokenTag.KEYWORD, "reddit"):
-                    red_loc = self.peek().locus
-                    valor = self.parse_expr(0)
-                    default = StmtMassa(corpus=[StmtRedde(valor=valor, locus=red_loc)], locus=red_loc)
-                else:
-                    raise self.error("expected { or reddit after ceterum")
+                default = self.parse_body()
             else:
                 self.expect(TokenTag.KEYWORD, "casu")
                 loc = self.peek().locus
                 cond = self.parse_expr(0)
-                if self.check(TokenTag.PUNCTUATOR, "{"):
-                    corpus = self.parse_massa()
-                elif self.match(TokenTag.KEYWORD, "reddit"):
-                    red_loc = self.peek().locus
-                    valor = self.parse_expr(0)
-                    corpus = StmtMassa(corpus=[StmtRedde(valor=valor, locus=red_loc)], locus=red_loc)
-                else:
-                    raise self.error("expected { or reddit after casu condition")
+                corpus = self.parse_body()
                 casus.append(EligeCasus(cond=cond, corpus=corpus, locus=loc))
 
         self.expect(TokenTag.PUNCTUATOR, "}")
@@ -774,7 +760,7 @@ class Parser:
 
             if self.match(TokenTag.KEYWORD, "ceterum"):
                 patterns = [VariansPattern(variant="_", bindings=[], alias=None, wildcard=True, locus=loc)]
-                corpus = self.parse_massa()
+                corpus = self.parse_body()
                 casus.append(DiscerneCasus(patterns=patterns, corpus=corpus, locus=loc))
                 continue
 
@@ -802,7 +788,7 @@ class Parser:
                 if not self.match(TokenTag.PUNCTUATOR, ","):
                     break
 
-            corpus = self.parse_massa()
+            corpus = self.parse_body()
             casus.append(DiscerneCasus(patterns=patterns, corpus=corpus, locus=loc))
 
         self.expect(TokenTag.PUNCTUATOR, "}")

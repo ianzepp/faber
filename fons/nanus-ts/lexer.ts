@@ -12,52 +12,133 @@ import { CompileError } from './errors';
 
 const KEYWORDS = new Set([
     // Declarations
-    'varia', 'fixum', 'figendum', 'variandum',
-    'functio', 'genus', 'pactum', 'ordo', 'discretio', 'typus',
-    'ex', 'importa', 'ut',
+    'varia',
+    'fixum',
+    'figendum',
+    'variandum',
+    'functio',
+    'genus',
+    'pactum',
+    'ordo',
+    'discretio',
+    'typus',
+    'ex',
+    'importa',
+    'ut',
     // Modifiers
-    'publica', 'privata', 'protecta', 'generis', 'implet', 'sub', 'abstractus',
+    'publica',
+    'privata',
+    'protecta',
+    'generis',
+    'implet',
+    'sub',
+    'abstractus',
     // Control flow
-    'si', 'sin', 'secus', 'dum', 'fac', 'elige', 'casu', 'ceterum', 'discerne', 'custodi',
-    'de', 'in', 'pro', 'omnia',
+    'si',
+    'sin',
+    'secus',
+    'dum',
+    'fac',
+    'elige',
+    'casu',
+    'ceterum',
+    'discerne',
+    'custodi',
+    'de',
+    'in',
+    'pro',
+    'omnia',
     // Actions
-    'redde', 'reddit', 'rumpe', 'perge', 'iace', 'mori', 'tempta', 'cape', 'demum',
-    'scribe', 'vide', 'mone', 'adfirma',
+    'redde',
+    'reddit',
+    'rumpe',
+    'perge',
+    'iace',
+    'mori',
+    'tempta',
+    'cape',
+    'demum',
+    'scribe',
+    'vide',
+    'mone',
+    'adfirma',
+    'tacet',
     // Expressions
-    'cede', 'novum', 'clausura', 'qua', 'innatum', 'finge',
-    'sic', 'scriptum',
+    'cede',
+    'novum',
+    'clausura',
+    'qua',
+    'innatum',
+    'finge',
+    'sic',
+    'scriptum',
     // Operators (word-form)
-    'et', 'aut', 'vel', 'inter', 'intra',
-    'non', 'nihil', 'nonnihil', 'positivum', 'negativum', 'nulla', 'nonnulla',
+    'et',
+    'aut',
+    'vel',
+    'inter',
+    'intra',
+    'non',
+    'nihil',
+    'nonnihil',
+    'positivum',
+    'negativum',
+    'nulla',
+    'nonnulla',
     // Conversion operators
-    'numeratum', 'fractatum', 'textatum', 'bivalentum',
+    'numeratum',
+    'fractatum',
+    'textatum',
+    'bivalentum',
     // Literals
-    'verum', 'falsum', 'ego',
+    'verum',
+    'falsum',
+    'ego',
     // Entry
-    'incipit', 'incipiet',
+    'incipit',
+    'incipiet',
     // Test
-    'probandum', 'proba',
+    'probandum',
+    'proba',
     // Type
     'usque',
     // Annotations
-    'publicum', 'externa',
+    'publicum',
+    'externa',
 ]);
 
-const PUNCTUATORS = new Set([
-    '(', ')', '{', '}', '[', ']',
-    ',', '.', ':', ';', '@', '#', '§',
-    '?', '!',
-]);
+const PUNCTUATORS = new Set(['(', ')', '{', '}', '[', ']', ',', '.', ':', ';', '@', '#', '§', '?', '!']);
 
 const OPERATORS = [
     // Multi-char first (greedy match)
-    '===', '!==', '==', '!=', '<=', '>=', '&&', '||', '??',
-    '+=', '-=', '*=', '/=',
-    '->', '..',
+    '===',
+    '!==',
+    '==',
+    '!=',
+    '<=',
+    '>=',
+    '&&',
+    '||',
+    '??',
+    '+=',
+    '-=',
+    '*=',
+    '/=',
+    '->',
+    '..',
     // Single-char
-    '+', '-', '*', '/', '%',
-    '<', '>', '=',
-    '&', '|', '^', '~',
+    '+',
+    '-',
+    '*',
+    '/',
+    '%',
+    '<',
+    '>',
+    '=',
+    '&',
+    '|',
+    '^',
+    '~',
 ];
 
 export function lex(source: string, filename = '<stdin>'): Token[] {
@@ -114,13 +195,26 @@ export function lex(source: string, filename = '<stdin>'): Token[] {
                 advance();
                 const esc = advance();
                 switch (esc) {
-                    case 'n': value += '\n'; break;
-                    case 't': value += '\t'; break;
-                    case 'r': value += '\r'; break;
-                    case '\\': value += '\\'; break;
-                    case '"': value += '"'; break;
-                    case "'": value += "'"; break;
-                    default: value += esc;
+                    case 'n':
+                        value += '\n';
+                        break;
+                    case 't':
+                        value += '\t';
+                        break;
+                    case 'r':
+                        value += '\r';
+                        break;
+                    case '\\':
+                        value += '\\';
+                        break;
+                    case '"':
+                        value += '"';
+                        break;
+                    case "'":
+                        value += "'";
+                        break;
+                    default:
+                        value += esc;
                 }
             } else {
                 value += advance();
@@ -132,7 +226,9 @@ export function lex(source: string, filename = '<stdin>'): Token[] {
 
     function readTripleString(): string {
         // Skip opening """
-        advance(); advance(); advance();
+        advance();
+        advance();
+        advance();
 
         // Skip leading newline immediately after opening """
         if (peek() === '\n') {
@@ -147,7 +243,9 @@ export function lex(source: string, filename = '<stdin>'): Token[] {
                 if (value.endsWith('\n')) {
                     value = value.slice(0, -1);
                 }
-                advance(); advance(); advance(); // skip closing """
+                advance();
+                advance();
+                advance(); // skip closing """
                 break;
             }
             value += advance();

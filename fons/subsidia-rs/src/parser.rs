@@ -1,7 +1,6 @@
 use crate::{
-    CompileError, Expr, Locus, Modulus, ObiectumProp, Param, Stmt, Token, Typus,
-    TOKEN_EOF, TOKEN_IDENTIFIER, TOKEN_KEYWORD, TOKEN_NUMERUS, TOKEN_OPERATOR,
-    TOKEN_PUNCTUATOR, TOKEN_TEXTUS,
+    CompileError, Expr, Locus, Modulus, ObiectumProp, Param, Stmt, Token, Typus, TOKEN_EOF,
+    TOKEN_IDENTIFIER, TOKEN_KEYWORD, TOKEN_NUMERUS, TOKEN_OPERATOR, TOKEN_PUNCTUATOR, TOKEN_TEXTUS,
 };
 use std::collections::HashMap;
 
@@ -190,7 +189,9 @@ impl Parser {
         let tok = self.peek(0);
         if tok.tag == TOKEN_KEYWORD {
             match tok.valor.as_str() {
-                "varia" | "fixum" | "figendum" | "variandum" => return self.parse_varia(publica, externa),
+                "varia" | "fixum" | "figendum" | "variandum" => {
+                    return self.parse_varia(publica, externa)
+                }
                 "ex" => return self.parse_ex_stmt(publica),
                 "de" => return self.parse_de_stmt(),
                 "functio" => return self.parse_functio(publica, futura, externa),
@@ -390,8 +391,8 @@ impl Parser {
 
             // CLI annotations - parse and skip their arguments
             // These are used by CLI codegen but don't affect nanus-rs compilation
-            "cli" | "versio" | "descriptio" | "optio" | "operandus"
-            | "imperium" | "alias" | "imperia" | "nomen" => {
+            "cli" | "versio" | "descriptio" | "optio" | "operandus" | "imperium" | "alias"
+            | "imperia" | "nomen" => {
                 self.skip_annotatio_args();
                 Ok((false, false, false))
             }
@@ -707,7 +708,11 @@ impl Parser {
                 }
             }
 
-            let mut visibilitas = if field_publica || publica { "Publica".to_string() } else { "Privata".to_string() };
+            let mut visibilitas = if field_publica || publica {
+                "Publica".to_string()
+            } else {
+                "Privata".to_string()
+            };
             if self.match_token(TOKEN_KEYWORD, Some("privata")).is_some()
                 || self.match_token(TOKEN_KEYWORD, Some("privatus")).is_some()
             {
@@ -719,39 +724,44 @@ impl Parser {
             }
 
             if self.check(TOKEN_KEYWORD, Some("functio")) {
-                methodi.push(self.parse_functio(visibilitas == "Publica", field_futura, field_externa)?);
+                methodi.push(self.parse_functio(
+                    visibilitas == "Publica",
+                    field_futura,
+                    field_externa,
+                )?);
             } else {
                 let loc = self.peek(0).locus;
                 let first = self.expect_name()?.valor;
 
-                let (field_typus, field_nomen) = if self.match_token(TOKEN_OPERATOR, Some("<")).is_some() {
-                    let mut args = Vec::new();
-                    loop {
-                        args.push(self.parse_typus()?);
-                        if self.match_token(TOKEN_PUNCTUATOR, Some(",")).is_none() {
-                            break;
+                let (field_typus, field_nomen) =
+                    if self.match_token(TOKEN_OPERATOR, Some("<")).is_some() {
+                        let mut args = Vec::new();
+                        loop {
+                            args.push(self.parse_typus()?);
+                            if self.match_token(TOKEN_PUNCTUATOR, Some(",")).is_none() {
+                                break;
+                            }
                         }
-                    }
-                    self.expect(TOKEN_OPERATOR, Some(">"))?;
-                    let mut t = Typus::Genericus { nomen: first, args };
-                    if self.match_token(TOKEN_PUNCTUATOR, Some("?")).is_some() {
-                        t = Typus::Nullabilis { inner: Box::new(t) };
-                    }
-                    let n = self.expect_name()?.valor;
-                    (Some(t), n)
-                } else {
-                    let nullable = self.match_token(TOKEN_PUNCTUATOR, Some("?")).is_some();
-                    if self.check_name() {
-                        let mut t = Typus::Nomen { nomen: first };
-                        if nullable {
+                        self.expect(TOKEN_OPERATOR, Some(">"))?;
+                        let mut t = Typus::Genericus { nomen: first, args };
+                        if self.match_token(TOKEN_PUNCTUATOR, Some("?")).is_some() {
                             t = Typus::Nullabilis { inner: Box::new(t) };
                         }
                         let n = self.expect_name()?.valor;
                         (Some(t), n)
                     } else {
-                        return Err(self.error("expected field type or name"));
-                    }
-                };
+                        let nullable = self.match_token(TOKEN_PUNCTUATOR, Some("?")).is_some();
+                        if self.check_name() {
+                            let mut t = Typus::Nomen { nomen: first };
+                            if nullable {
+                                t = Typus::Nullabilis { inner: Box::new(t) };
+                            }
+                            let n = self.expect_name()?.valor;
+                            (Some(t), n)
+                        } else {
+                            return Err(self.error("expected field type or name"));
+                        }
+                    };
 
                 let valor = if self.match_token(TOKEN_OPERATOR, Some("=")).is_some() {
                     Some(self.parse_expr(0)?)
@@ -972,7 +982,11 @@ impl Parser {
         self.expect(TOKEN_KEYWORD, Some("in"))?;
         let expr = self.parse_expr(0)?;
         let corpus = Box::new(self.parse_massa()?);
-        Ok(Stmt::In { locus, expr, corpus })
+        Ok(Stmt::In {
+            locus,
+            expr,
+            corpus,
+        })
     }
 
     fn parse_massa(&mut self) -> Result<Stmt, CompileError> {
@@ -1069,7 +1083,12 @@ impl Parser {
             None
         };
 
-        Ok(Stmt::Si { locus, cond, cons, alt })
+        Ok(Stmt::Si {
+            locus,
+            cond,
+            cons,
+            alt,
+        })
     }
 
     fn parse_dum(&mut self) -> Result<Stmt, CompileError> {
@@ -1077,7 +1096,11 @@ impl Parser {
         self.expect(TOKEN_KEYWORD, Some("dum"))?;
         let cond = self.parse_expr(0)?;
         let corpus = Box::new(self.parse_body()?);
-        Ok(Stmt::Dum { locus, cond, corpus })
+        Ok(Stmt::Dum {
+            locus,
+            cond,
+            corpus,
+        })
     }
 
     fn parse_fac(&mut self) -> Result<Stmt, CompileError> {
@@ -1086,7 +1109,11 @@ impl Parser {
         let corpus = Box::new(self.parse_massa()?);
         self.expect(TOKEN_KEYWORD, Some("dum"))?;
         let cond = self.parse_expr(0)?;
-        Ok(Stmt::FacDum { locus, corpus, cond })
+        Ok(Stmt::FacDum {
+            locus,
+            corpus,
+            cond,
+        })
     }
 
     fn parse_elige(&mut self) -> Result<Stmt, CompileError> {
@@ -1100,41 +1127,17 @@ impl Parser {
 
         while !self.check(TOKEN_PUNCTUATOR, Some("}")) && !self.check(TOKEN_EOF, None) {
             if self.match_token(TOKEN_KEYWORD, Some("ceterum")).is_some() {
-                if self.check(TOKEN_PUNCTUATOR, Some("{")) {
-                    default = Some(Box::new(self.parse_massa()?));
-                } else if self.match_token(TOKEN_KEYWORD, Some("reddit")).is_some() {
-                    let red_loc = self.peek(0).locus;
-                    let valor = self.parse_expr(0)?;
-                    default = Some(Box::new(Stmt::Massa {
-                        locus: red_loc,
-                        corpus: vec![Stmt::Redde {
-                            locus: red_loc,
-                            valor: Some(valor),
-                        }],
-                    }));
-                } else {
-                    return Err(self.error("expected { or reddit after ceterum"));
-                }
+                default = Some(Box::new(self.parse_body()?));
             } else {
                 self.expect(TOKEN_KEYWORD, Some("casu"))?;
                 let loc = self.peek(0).locus;
                 let cond = self.parse_expr(0)?;
-                let corpus = if self.check(TOKEN_PUNCTUATOR, Some("{")) {
-                    self.parse_massa()?
-                } else if self.match_token(TOKEN_KEYWORD, Some("reddit")).is_some() {
-                    let red_loc = self.peek(0).locus;
-                    let valor = self.parse_expr(0)?;
-                    Stmt::Massa {
-                        locus: red_loc,
-                        corpus: vec![Stmt::Redde {
-                            locus: red_loc,
-                            valor: Some(valor),
-                        }],
-                    }
-                } else {
-                    return Err(self.error("expected { or reddit after casu condition"));
-                };
-                casus.push(crate::EligeCasus { locus: loc, cond, corpus: Box::new(corpus) });
+                let corpus = self.parse_body()?;
+                casus.push(crate::EligeCasus {
+                    locus: loc,
+                    cond,
+                    corpus: Box::new(corpus),
+                });
             }
         }
 
@@ -1169,8 +1172,12 @@ impl Parser {
                     alias: None,
                     wildcard: true,
                 }];
-                let corpus = self.parse_massa()?;
-                casus.push(crate::DiscerneCasus { locus: loc, patterns, corpus: Box::new(corpus) });
+                let corpus = self.parse_body()?;
+                casus.push(crate::DiscerneCasus {
+                    locus: loc,
+                    patterns,
+                    corpus: Box::new(corpus),
+                });
                 continue;
             }
 
@@ -1210,13 +1217,21 @@ impl Parser {
                 }
             }
 
-            let corpus = self.parse_massa()?;
-            casus.push(crate::DiscerneCasus { locus: loc, patterns, corpus: Box::new(corpus) });
+            let corpus = self.parse_body()?;
+            casus.push(crate::DiscerneCasus {
+                locus: loc,
+                patterns,
+                corpus: Box::new(corpus),
+            });
         }
 
         self.expect(TOKEN_PUNCTUATOR, Some("}"))?;
 
-        Ok(Stmt::Discerne { locus, discrim, casus })
+        Ok(Stmt::Discerne {
+            locus,
+            discrim,
+            casus,
+        })
     }
 
     fn parse_custodi(&mut self) -> Result<Stmt, CompileError> {
@@ -1230,7 +1245,11 @@ impl Parser {
             self.expect(TOKEN_KEYWORD, Some("si"))?;
             let cond = self.parse_expr(0)?;
             let corpus = self.parse_massa()?;
-            clausulae.push(crate::CustodiClausula { locus: loc, cond, corpus: Box::new(corpus) });
+            clausulae.push(crate::CustodiClausula {
+                locus: loc,
+                cond,
+                corpus: Box::new(corpus),
+            });
         }
 
         self.expect(TOKEN_PUNCTUATOR, Some("}"))?;
@@ -1262,19 +1281,25 @@ impl Parser {
             None
         };
 
-        Ok(Stmt::Tempta { locus, corpus, cape, demum })
+        Ok(Stmt::Tempta {
+            locus,
+            corpus,
+            cape,
+            demum,
+        })
     }
 
     fn parse_redde(&mut self) -> Result<Stmt, CompileError> {
         let locus = self.peek(0).locus;
         self.expect(TOKEN_KEYWORD, Some("redde"))?;
-        let valor =
-            if !self.check(TOKEN_EOF, None) && !self.check(TOKEN_PUNCTUATOR, Some("}")) && !self.is_statement_keyword()
-            {
-                Some(self.parse_expr(0)?)
-            } else {
-                None
-            };
+        let valor = if !self.check(TOKEN_EOF, None)
+            && !self.check(TOKEN_PUNCTUATOR, Some("}"))
+            && !self.is_statement_keyword()
+        {
+            Some(self.parse_expr(0)?)
+        } else {
+            None
+        };
         Ok(Stmt::Redde { locus, valor })
     }
 
@@ -1338,7 +1363,19 @@ impl Parser {
         let kw = &self.peek(0).valor;
         matches!(
             kw.as_str(),
-            "functio" | "genus" | "abstractus" | "pactum" | "ordo" | "discretio" | "typus" | "varia" | "fixum" | "figendum" | "variandum" | "incipit" | "probandum"
+            "functio"
+                | "genus"
+                | "abstractus"
+                | "pactum"
+                | "ordo"
+                | "discretio"
+                | "typus"
+                | "varia"
+                | "fixum"
+                | "figendum"
+                | "variandum"
+                | "incipit"
+                | "probandum"
         )
     }
 
@@ -1360,7 +1397,10 @@ impl Parser {
         .to_string();
 
         let mut args = Vec::new();
-        if !self.check(TOKEN_EOF, None) && !self.check(TOKEN_PUNCTUATOR, Some("}")) && !self.is_statement_keyword() {
+        if !self.check(TOKEN_EOF, None)
+            && !self.check(TOKEN_PUNCTUATOR, Some("}"))
+            && !self.is_statement_keyword()
+        {
             loop {
                 args.push(self.parse_expr(0)?);
                 if self.match_token(TOKEN_PUNCTUATOR, Some(",")).is_none() {
@@ -1368,7 +1408,11 @@ impl Parser {
                 }
             }
         }
-        Ok(Stmt::Scribe { locus, gradus, args })
+        Ok(Stmt::Scribe {
+            locus,
+            gradus,
+            args,
+        })
     }
 
     fn parse_adfirma(&mut self) -> Result<Stmt, CompileError> {
@@ -1400,7 +1444,11 @@ impl Parser {
         let kw = self.advance().valor;
         let asynca = kw == "incipiet";
         let corpus = Box::new(self.parse_massa()?);
-        Ok(Stmt::Incipit { locus, corpus, asynca })
+        Ok(Stmt::Incipit {
+            locus,
+            corpus,
+            asynca,
+        })
     }
 
     fn parse_probandum(&mut self) -> Result<Stmt, CompileError> {
@@ -1415,7 +1463,11 @@ impl Parser {
         }
 
         self.expect(TOKEN_PUNCTUATOR, Some("}"))?;
-        Ok(Stmt::Probandum { locus, nomen, corpus })
+        Ok(Stmt::Probandum {
+            locus,
+            nomen,
+            corpus,
+        })
     }
 
     fn parse_proba(&mut self) -> Result<Stmt, CompileError> {
@@ -1423,7 +1475,11 @@ impl Parser {
         self.expect(TOKEN_KEYWORD, Some("proba"))?;
         let nomen = self.expect(TOKEN_TEXTUS, None)?.valor;
         let corpus = Box::new(self.parse_massa()?);
-        Ok(Stmt::Proba { locus, nomen, corpus })
+        Ok(Stmt::Proba {
+            locus,
+            nomen,
+            corpus,
+        })
     }
 
     fn parse_expressia_stmt(&mut self) -> Result<Stmt, CompileError> {
@@ -1577,11 +1633,46 @@ impl Parser {
         if tok.tag == TOKEN_OPERATOR || tok.tag == TOKEN_KEYWORD {
             if self.unary_ops.contains_key(tok.valor.as_str()) {
                 let non_expr: std::collections::HashSet<&str> = [
-                    "qua", "innatum", "et", "aut", "vel", "sic", "secus", "inter", "intra", "perge",
-                    "rumpe", "redde", "reddit", "iace", "mori", "si", "secussi", "dum", "ex", "de",
-                    "elige", "discerne", "custodi", "tempta", "functio", "genus", "pactum", "ordo",
-                    "discretio", "casu", "ceterum", "importa", "incipit", "incipiet", "probandum",
-                    "proba", "numeratum", "fractatum", "textatum", "bivalentum",
+                    "qua",
+                    "innatum",
+                    "et",
+                    "aut",
+                    "vel",
+                    "sic",
+                    "secus",
+                    "inter",
+                    "intra",
+                    "perge",
+                    "rumpe",
+                    "redde",
+                    "reddit",
+                    "iace",
+                    "mori",
+                    "si",
+                    "secussi",
+                    "dum",
+                    "ex",
+                    "de",
+                    "elige",
+                    "discerne",
+                    "custodi",
+                    "tempta",
+                    "functio",
+                    "genus",
+                    "pactum",
+                    "ordo",
+                    "discretio",
+                    "casu",
+                    "ceterum",
+                    "importa",
+                    "incipit",
+                    "incipiet",
+                    "probandum",
+                    "proba",
+                    "numeratum",
+                    "fractatum",
+                    "textatum",
+                    "bivalentum",
                 ]
                 .into_iter()
                 .collect();
@@ -1766,21 +1857,22 @@ impl Parser {
                         )
                     };
 
-                    let (valor, shorthand) = if self.match_token(TOKEN_PUNCTUATOR, Some(":")).is_some() {
-                        (self.parse_expr(0)?, false)
-                    } else {
-                        let key_name = match &key {
-                            Expr::Littera { valor, .. } => valor.clone(),
-                            _ => String::new(),
+                    let (valor, shorthand) =
+                        if self.match_token(TOKEN_PUNCTUATOR, Some(":")).is_some() {
+                            (self.parse_expr(0)?, false)
+                        } else {
+                            let key_name = match &key {
+                                Expr::Littera { valor, .. } => valor.clone(),
+                                _ => String::new(),
+                            };
+                            (
+                                Expr::Nomen {
+                                    locus: loc,
+                                    valor: key_name,
+                                },
+                                true,
+                            )
                         };
-                        (
-                            Expr::Nomen {
-                                locus: loc,
-                                valor: key_name,
-                            },
-                            true,
-                        )
-                    };
 
                     props.push(ObiectumProp {
                         locus: loc,
@@ -2005,7 +2097,11 @@ impl Parser {
             ClausuraCorpus::Expr(Box::new(self.parse_expr(0)?))
         };
 
-        Ok(Expr::Clausura { locus, params, corpus })
+        Ok(Expr::Clausura {
+            locus,
+            params,
+            corpus,
+        })
     }
 
     fn parse_scriptum(&mut self) -> Result<Expr, CompileError> {
@@ -2018,7 +2114,11 @@ impl Parser {
             args.push(self.parse_expr(0)?);
         }
         self.expect(TOKEN_PUNCTUATOR, Some(")"))?;
-        Ok(Expr::Scriptum { locus, template, args })
+        Ok(Expr::Scriptum {
+            locus,
+            template,
+            args,
+        })
     }
 }
 

@@ -16,7 +16,7 @@ KEYWORDS = frozenset([
     "de", "in", "pro", "omnia",
     # Actions
     "redde", "reddit", "rumpe", "perge", "iace", "mori", "tempta", "cape", "demum",
-    "scribe", "vide", "mone", "adfirma",
+    "scribe", "vide", "mone", "adfirma", "tacet",
     # Expressions
     "cede", "novum", "clausura", "qua", "innatum", "finge",
     "sic", "scriptum",

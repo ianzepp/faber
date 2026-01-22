@@ -18,7 +18,7 @@ var keywords = map[string]struct{}{
 	"de": {}, "in": {}, "pro": {}, "omnia": {},
 	// Actions
 	"redde": {}, "reddit": {}, "rumpe": {}, "perge": {}, "iace": {}, "mori": {}, "tempta": {}, "cape": {}, "demum": {},
-	"scribe": {}, "vide": {}, "mone": {}, "adfirma": {},
+	"scribe": {}, "vide": {}, "mone": {}, "adfirma": {}, "tacet": {},
 	// Expressions
 	"cede": {}, "novum": {}, "clausura": {}, "qua": {}, "innatum": {}, "finge": {},
 	"sic": {}, "scriptum": {},
@@ -55,7 +55,6 @@ var operators = []string{
 	"<", ">", "=",
 	"&", "|", "^", "~",
 }
-
 
 // Lex converts source text into tokens.
 func Lex(source string, filename string) []subsidia.Token {

@@ -904,29 +904,12 @@ func (p *Parser) parseElige() Stmt {
 
 	for !p.check(TokenPunctuator, "}") && !p.check(TokenEOF) {
 		if p.match(TokenKeyword, "ceterum") != nil {
-			if p.check(TokenPunctuator, "{") {
-				def = p.parseMassa()
-			} else if p.match(TokenKeyword, "reddit") != nil {
-				redLoc := p.peek(0).Locus
-				valor := p.parseExpr(0)
-				def = &StmtMassa{Tag: "Massa", Locus: redLoc, Corpus: []Stmt{&StmtRedde{Tag: "Redde", Locus: redLoc, Valor: valor}}}
-			} else {
-				panic(p.error("expected { or reddit after ceterum"))
-			}
+			def = p.parseBody()
 		} else {
 			p.expect(TokenKeyword, "casu")
 			loc := p.peek(0).Locus
 			cond := p.parseExpr(0)
-			var corpus Stmt
-			if p.check(TokenPunctuator, "{") {
-				corpus = p.parseMassa()
-			} else if p.match(TokenKeyword, "reddit") != nil {
-				redLoc := p.peek(0).Locus
-				valor := p.parseExpr(0)
-				corpus = &StmtMassa{Tag: "Massa", Locus: redLoc, Corpus: []Stmt{&StmtRedde{Tag: "Redde", Locus: redLoc, Valor: valor}}}
-			} else {
-				panic(p.error("expected { or reddit after casu condition"))
-			}
+			corpus := p.parseBody()
 			casus = append(casus, EligeCasus{Locus: loc, Cond: cond, Corpus: corpus})
 		}
 	}
@@ -950,7 +933,7 @@ func (p *Parser) parseDiscerne() Stmt {
 
 		if p.match(TokenKeyword, "ceterum") != nil {
 			patterns := []VariansPattern{{Locus: loc, Variant: "_", Bindings: []string{}, Alias: nil, Wildcard: true}}
-			corpus := p.parseMassa()
+			corpus := p.parseBody()
 			casus = append(casus, DiscerneCasus{Locus: loc, Patterns: patterns, Corpus: corpus})
 			continue
 		}
@@ -984,7 +967,7 @@ func (p *Parser) parseDiscerne() Stmt {
 			}
 		}
 
-		corpus := p.parseMassa()
+		corpus := p.parseBody()
 		casus = append(casus, DiscerneCasus{Locus: loc, Patterns: patterns, Corpus: corpus})
 	}
 

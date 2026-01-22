@@ -70,6 +70,7 @@ impl<'a> Lexer<'a> {
             "vide",
             "mone",
             "adfirma",
+            "tacet",
             // Expressions
             "cede",
             "novum",

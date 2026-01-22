@@ -877,31 +877,12 @@ export class Parser {
 
         while (!this.check('Punctuator', '}') && !this.check('EOF')) {
             if (this.match('Keyword', 'ceterum')) {
-                // ceterum { ... } or ceterum reddit expr
-                if (this.check('Punctuator', '{')) {
-                    default_ = this.parseMassa();
-                } else if (this.match('Keyword', 'reddit')) {
-                    const redLoc = this.peek().locus;
-                    const valor = this.parseExpr();
-                    default_ = { tag: 'Massa', locus: redLoc, corpus: [{ tag: 'Redde', locus: redLoc, valor }] };
-                } else {
-                    throw this.error('expected { or reddit after ceterum');
-                }
+                default_ = this.parseBody();
             } else {
                 this.expect('Keyword', 'casu');
                 const loc = this.peek().locus;
                 const cond = this.parseExpr();
-                // casu cond { ... } or casu cond reddit expr
-                let corpus: Stmt;
-                if (this.check('Punctuator', '{')) {
-                    corpus = this.parseMassa();
-                } else if (this.match('Keyword', 'reddit')) {
-                    const redLoc = this.peek().locus;
-                    const valor = this.parseExpr();
-                    corpus = { tag: 'Massa', locus: redLoc, corpus: [{ tag: 'Redde', locus: redLoc, valor }] };
-                } else {
-                    throw this.error('expected { or reddit after casu condition');
-                }
+                const corpus = this.parseBody();
                 casus.push({ locus: loc, cond, corpus });
             }
         }
@@ -934,7 +915,7 @@ export class Parser {
                         wildcard: true,
                     },
                 ];
-                const corpus = this.parseMassa();
+                const corpus = this.parseBody();
                 casus.push({ locus: loc, patterns, corpus });
                 continue;
             }
@@ -961,7 +942,7 @@ export class Parser {
                 patterns.push({ locus: pLoc, variant, bindings, alias, wildcard });
             } while (this.match('Punctuator', ','));
 
-            const corpus = this.parseMassa();
+            const corpus = this.parseBody();
             casus.push({ locus: loc, patterns, corpus });
         }
 
