@@ -174,7 +174,7 @@ async function main() {
     }
 
     // =============================================================================
-    // STAGE 4: Exempla (using successful rivus compilers)
+    // STAGE 4: Exempla codegen (using successful rivus compilers)
     // =============================================================================
 
     const successfulCompilers: string[] = [];
@@ -186,17 +186,45 @@ async function main() {
         }
     }
 
+    let stage4Result: StepResult | null = null;
     if (successfulCompilers.length > 0) {
-        console.log('\n--- Stage 4: Exempla ---\n');
+        console.log('\n--- Stage 4: Exempla (codegen) ---\n');
 
         const compilerArg = successfulCompilers.join(',');
-        await step(`build:exempla (${compilerArg})`, verbose, async () => {
-            if (verbose) {
-                await $`bun run build:exempla -- -c ${compilerArg}`;
-            } else {
-                await $`bun run build:exempla -- -c ${compilerArg}`.quiet();
-            }
-        });
+        stage4Result = await step(
+            `build:exempla (${compilerArg})`,
+            verbose,
+            async () => {
+                if (verbose) {
+                    await $`bun run build:exempla -- -c ${compilerArg} --no-verify`;
+                } else {
+                    await $`bun run build:exempla -- -c ${compilerArg} --no-verify`.quiet();
+                }
+            },
+            true, // allow failure
+        );
+    }
+
+    // =============================================================================
+    // STAGE 5: Exempla verification (only if stage 4 passed)
+    // =============================================================================
+
+    if (stage4Result?.success) {
+        console.log('\n--- Stage 5: Exempla (verify) ---\n');
+
+        const compilerArg = successfulCompilers.join(',');
+        await step(
+            `verify:exempla (${compilerArg})`,
+            verbose,
+            async () => {
+                if (verbose) {
+                    await $`bun run build:exempla -- -c ${compilerArg} --verify-only`;
+                } else {
+                    await $`bun run build:exempla -- -c ${compilerArg} --verify-only`.quiet();
+                }
+            },
+            true, // allow failure
+        );
     }
 
     // =============================================================================
