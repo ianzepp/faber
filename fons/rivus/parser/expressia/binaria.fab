@@ -138,7 +138,15 @@ functio parseAut(in Resolvitor r) -> Expressia {
     dum p.congruet(SymbolumGenus.VelVel) aut p.congruetVerbum("aut") aut p.congruet(SymbolumGenus.RogatioBis) aut p.congruetVerbum("vel") {
         fixum operatorSym = p.praevius()
         fixum locus = operatorSym.locus
-        fixum signum = operatorSym.valor
+        varia signum = operatorSym.valor
+
+        # SYNTAXIS ALIENA: '??' (JavaScript nullish coalescing)
+        # Faber uses 'vel' for nullish coalescing
+        si operatorSym.species == SymbolumGenus.RogatioBis {
+            p.renuncia(ParserErrorCodice.SyntaxisAlienaRogatioBis)
+            signum = "vel"  # Normalize to vel for codegen
+        }
+
         fixum dexter = parseEt(r)
 
         sinister = finge BinariaExpressia {

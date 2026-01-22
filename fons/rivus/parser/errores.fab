@@ -116,7 +116,8 @@ ordo ParserErrorCodice {
     SyntaxisAlienaProDe = "P401",
     SyntaxisAlienaSagittaCrassa = "P402",
     SyntaxisAlienaNullabilis = "P403",
-    SyntaxisAlienaAliter = "P404"
+    SyntaxisAlienaAliter = "P404",
+    SyntaxisAlienaRogatioBis = "P405"
 }
 
 # Error message with help text
@@ -393,6 +394,9 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
         }
         casu ParserErrorCodice.SyntaxisAlienaAliter {
             redde creoNuntium("'aliter' is not a Faber keyword", "Use 'secus' for else, 'sin' for else-if: si x { } sin y { } secus { }")
+        }
+        casu ParserErrorCodice.SyntaxisAlienaRogatioBis {
+            redde creoNuntium("Nullish coalescing '??' is not supported", "Use 'vel' instead: x vel y")
         }
 
         # Default fallback
