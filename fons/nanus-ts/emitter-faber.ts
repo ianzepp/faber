@@ -6,9 +6,20 @@
  */
 
 import type {
-    Typus, Expr, Stmt, Param, ObiectumProp, Modulus,
-    CampusDecl, OrdoMembrum, VariansDecl, ImportSpec,
-    EligeCasus, DiscerneCasus, CustodiClausula, PactumMethodus,
+    Typus,
+    Expr,
+    Stmt,
+    Param,
+    ObiectumProp,
+    Modulus,
+    CampusDecl,
+    OrdoMembrum,
+    VariansDecl,
+    ImportSpec,
+    EligeCasus,
+    DiscerneCasus,
+    CustodiClausula,
+    PactumMethodus,
 } from './ast';
 
 export function emitFaber(mod: Modulus): string {
@@ -58,9 +69,7 @@ function emitStmt(stmt: Stmt, indent: string): string {
             return emitImporta(stmt, indent);
 
         case 'Redde':
-            return stmt.valor
-                ? `${indent}redde ${emitExpr(stmt.valor)}`
-                : `${indent}redde`;
+            return stmt.valor ? `${indent}redde ${emitExpr(stmt.valor)}` : `${indent}redde`;
 
         case 'Si':
             return emitSi(stmt, indent);
@@ -146,9 +155,7 @@ function emitMassa(corpus: Stmt[], indent: string): string {
 function emitVaria(stmt: Stmt & { tag: 'Varia' }, indent: string): string {
     const pub = stmt.publica ? '@ publica\n' + indent : '';
     const ext = stmt.externa ? '@ externa\n' + indent : '';
-    const kw = stmt.species === 'Fixum' ? 'fixum'
-        : stmt.species === 'Figendum' ? 'figendum'
-        : 'varia';
+    const kw = stmt.species === 'Fixum' ? 'fixum' : stmt.species === 'Figendum' ? 'figendum' : 'varia';
     const typ = stmt.typus ? `: ${emitTypus(stmt.typus)}` : '';
     const val = stmt.valor ? ` = ${emitExpr(stmt.valor)}` : '';
     return `${ext}${pub}${indent}${kw} ${stmt.nomen}${typ}${val}`;
@@ -208,9 +215,7 @@ function emitGenus(stmt: Stmt & { tag: 'Genus' }, indent: string): string {
 }
 
 function emitCampus(campo: CampusDecl, indent: string): string {
-    const vis = campo.visibilitas === 'Privata' ? '@ privata\n' + indent
-        : campo.visibilitas === 'Protecta' ? '@ protecta\n' + indent
-        : '';
+    const vis = campo.visibilitas === 'Privata' ? '@ privata\n' + indent : campo.visibilitas === 'Protecta' ? '@ protecta\n' + indent : '';
     const typ = campo.typus ? `: ${emitTypus(campo.typus)}` : '';
     const val = campo.valor ? ` = ${emitExpr(campo.valor)}` : '';
     return `${vis}${indent}${campo.nomen}${typ}${val}`;
@@ -295,9 +300,7 @@ function emitImporta(stmt: Stmt & { tag: 'Importa' }, indent: string): string {
     if (stmt.totum) {
         code += stmt.alias ? `* ut ${stmt.alias}` : '*';
     } else {
-        const specs = stmt.specs.map(s =>
-            s.imported === s.local ? s.imported : `${s.imported} ut ${s.local}`
-        );
+        const specs = stmt.specs.map(s => (s.imported === s.local ? s.imported : `${s.imported} ut ${s.local}`));
         code += specs.join(', ');
     }
     return code;
@@ -423,23 +426,21 @@ function emitExpr(expr: Expr): string {
         }
 
         case 'Obiectum': {
-            const props = expr.props.map(p => {
-                if (p.shorthand) {
-                    return p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key);
-                }
-                const key = p.computed
-                    ? `[${emitExpr(p.key)}]`
-                    : (p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key));
-                return `${key}: ${emitExpr(p.valor)}`;
-            }).join(', ');
+            const props = expr.props
+                .map(p => {
+                    if (p.shorthand) {
+                        return p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key);
+                    }
+                    const key = p.computed ? `[${emitExpr(p.key)}]` : p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key);
+                    return `${key}: ${emitExpr(p.valor)}`;
+                })
+                .join(', ');
             return `{ ${props} }`;
         }
 
         case 'Clausura': {
             const params = expr.params.map(emitParam).join(', ');
-            const body = 'tag' in expr.corpus
-                ? emitStmt(expr.corpus as Stmt, '')
-                : emitExpr(expr.corpus as Expr);
+            const body = 'tag' in expr.corpus ? emitStmt(expr.corpus as Stmt, '') : emitExpr(expr.corpus as Expr);
             return `(${params}) => ${body}`;
         }
 
@@ -465,11 +466,13 @@ function emitExpr(expr: Expr): string {
             return `${emitExpr(expr.expr)} novum ${emitTypus(expr.typus)}`;
 
         case 'Finge': {
-            const fields = expr.campi.map(p => {
-                const key = p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key);
-                if (p.shorthand) return key;
-                return `${key}: ${emitExpr(p.valor)}`;
-            }).join(', ');
+            const fields = expr.campi
+                .map(p => {
+                    const key = p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key);
+                    if (p.shorthand) return key;
+                    return `${key}: ${emitExpr(p.valor)}`;
+                })
+                .join(', ');
             return `finge ${expr.variant} { ${fields} }`;
         }
 
@@ -505,7 +508,7 @@ function emitTypus(typus: Typus): string {
             return typus.nomen;
 
         case 'Nullabilis':
-            return `${emitTypus(typus.inner)}?`;
+            return `si ${emitTypus(typus.inner)}`;
 
         case 'Genericus': {
             const args = typus.args.map(emitTypus).join(', ');
@@ -558,12 +561,23 @@ function escapeString(s: string): string {
     let result = '';
     for (const c of s) {
         switch (c) {
-            case '\n': result += '\\n'; break;
-            case '\t': result += '\\t'; break;
-            case '\r': result += '\\r'; break;
-            case '\\': result += '\\\\'; break;
-            case '"': result += '\\"'; break;
-            default: result += c;
+            case '\n':
+                result += '\\n';
+                break;
+            case '\t':
+                result += '\\t';
+                break;
+            case '\r':
+                result += '\\r';
+                break;
+            case '\\':
+                result += '\\\\';
+                break;
+            case '"':
+                result += '\\"';
+                break;
+            default:
+                result += c;
         }
     }
     return result;

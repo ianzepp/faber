@@ -677,7 +677,7 @@ func fabTypus(t subsidia.Typus) string {
 		}
 		return "(" + strings.Join(params, ", ") + ") -> " + fabTypus(t.Returns)
 	case *subsidia.TypusNullabilis:
-		return fabTypus(t.Inner) + "?"
+		return "si " + fabTypus(t.Inner)
 	case *subsidia.TypusUnio:
 		parts := []string{}
 		for _, p := range t.Members {

@@ -7,38 +7,38 @@ import (
 
 // Operator precedence for Pratt parser.
 var Precedence = map[string]int{
-	"=":         1,
-	"+=":        1,
-	"-=":        1,
-	"*=":        1,
-	"/=":        1,
-	"vel":       2,
-	"??":        2,
-	"aut":       3,
-	"||":        3,
-	"et":        4,
-	"&&":        4,
-	"==":        5,
-	"!=":        5,
-	"===":       5,
-	"!==":       5,
-	"<":         6,
-	">":         6,
-	"<=":        6,
-	">=":        6,
-	"inter":     6,
-	"intra":     6,
-	"+":         7,
-	"-":         7,
-	"*":         8,
-	"/":         8,
-	"%":         8,
-	"qua":       9,
-	"innatum":   9,
-	"novum":     9,
-	"numeratum": 9,
-	"fractatum": 9,
-	"textatum":  9,
+	"=":          1,
+	"+=":         1,
+	"-=":         1,
+	"*=":         1,
+	"/=":         1,
+	"vel":        2,
+	"??":         2,
+	"aut":        3,
+	"||":         3,
+	"et":         4,
+	"&&":         4,
+	"==":         5,
+	"!=":         5,
+	"===":        5,
+	"!==":        5,
+	"<":          6,
+	">":          6,
+	"<=":         6,
+	">=":         6,
+	"inter":      6,
+	"intra":      6,
+	"+":          7,
+	"-":          7,
+	"*":          8,
+	"/":          8,
+	"%":          8,
+	"qua":        9,
+	"innatum":    9,
+	"novum":      9,
+	"numeratum":  9,
+	"fractatum":  9,
+	"textatum":   9,
 	"bivalentum": 9,
 }
 
@@ -376,6 +376,9 @@ func (p *Parser) parseVaria(publica bool, externa bool) Stmt {
 	var typus Typus
 	var nomen string
 
+	// Check for nullable prefix: varia si textus name
+	nullable := p.match(TokenKeyword, "si") != nil
+
 	first := p.expectName().Valor
 
 	if p.check(TokenOperator, "<") {
@@ -390,16 +393,16 @@ func (p *Parser) parseVaria(publica bool, externa bool) Stmt {
 		p.expect(TokenOperator, ">")
 		typus = &TypusGenericus{Tag: "Genericus", Nomen: first, Args: args}
 
-		if p.match(TokenPunctuator, "?") != nil {
+		if nullable {
 			typus = &TypusNullabilis{Tag: "Nullabilis", Inner: typus}
 		}
 
 		nomen = p.expectName().Valor
-	} else if p.match(TokenPunctuator, "?") != nil {
-		typus = &TypusNullabilis{Tag: "Nullabilis", Inner: &TypusNomen{Tag: "Nomen", Nomen: first}}
-		nomen = p.expectName().Valor
 	} else if p.checkName() {
 		typus = &TypusNomen{Tag: "Nomen", Nomen: first}
+		if nullable {
+			typus = &TypusNullabilis{Tag: "Nullabilis", Inner: typus}
+		}
 		nomen = p.expectName().Valor
 	} else {
 		nomen = first
@@ -511,13 +514,6 @@ func (p *Parser) parseParams() []Param {
 				p.expect(TokenOperator, ">")
 				typus = &TypusGenericus{Tag: "Genericus", Nomen: first, Args: args}
 
-				if p.match(TokenPunctuator, "?") != nil {
-					typus = &TypusNullabilis{Tag: "Nullabilis", Inner: typus}
-				}
-
-				nomen = p.expectName().Valor
-			} else if p.match(TokenPunctuator, "?") != nil {
-				typus = &TypusNullabilis{Tag: "Nullabilis", Inner: &TypusNomen{Tag: "Nomen", Nomen: first}}
 				nomen = p.expectName().Valor
 			} else if p.checkName() {
 				typus = &TypusNomen{Tag: "Nomen", Nomen: first}
@@ -529,10 +525,9 @@ func (p *Parser) parseParams() []Param {
 			panic(p.error("expected parameter name"))
 		}
 
+		// If optional (si prefix before type), wrap type in Nullabilis
 		if optional && typus != nil {
-			if _, ok := typus.(*TypusNullabilis); !ok {
-				typus = &TypusNullabilis{Tag: "Nullabilis", Inner: typus}
-			}
+			typus = &TypusNullabilis{Tag: "Nullabilis", Inner: typus}
 		}
 
 		var def Expr
@@ -600,7 +595,9 @@ func (p *Parser) parseGenus(publica bool, abstractus bool) Stmt {
 		if p.check(TokenKeyword, "functio") {
 			methodi = append(methodi, p.parseFunctio(false, false, false))
 		} else {
+			// Field: si? Typus nomen or si? Typus<T> nomen
 			loc := p.peek(0).Locus
+			nullable := p.match(TokenKeyword, "si") != nil
 			first := p.expectName().Valor
 			var fieldTypus Typus
 			var fieldNomen string
@@ -616,17 +613,12 @@ func (p *Parser) parseGenus(publica bool, abstractus bool) Stmt {
 				p.expect(TokenOperator, ">")
 				fieldTypus = &TypusGenericus{Tag: "Genericus", Nomen: first, Args: args}
 
-				if p.match(TokenPunctuator, "?") != nil {
+				if nullable {
 					fieldTypus = &TypusNullabilis{Tag: "Nullabilis", Inner: fieldTypus}
 				}
 
 				fieldNomen = p.expectName().Valor
 			} else {
-				nullable := false
-				if p.match(TokenPunctuator, "?") != nil {
-					nullable = true
-				}
-
 				if p.checkName() {
 					fieldTypus = &TypusNomen{Tag: "Nomen", Nomen: first}
 					if nullable {
@@ -748,6 +740,8 @@ func (p *Parser) parseDiscretio(publica bool) Stmt {
 
 		if p.match(TokenPunctuator, "{") != nil {
 			for !p.check(TokenPunctuator, "}") && !p.check(TokenEOF) {
+				// si? Typus nomen or si? Typus<T> nomen patterns
+				nullable := p.match(TokenKeyword, "si") != nil
 				typNomen := p.expectName().Valor
 				var fieldTypus Typus
 
@@ -765,7 +759,7 @@ func (p *Parser) parseDiscretio(publica bool) Stmt {
 					fieldTypus = &TypusNomen{Tag: "Nomen", Nomen: typNomen}
 				}
 
-				if p.match(TokenPunctuator, "?") != nil {
+				if nullable {
 					fieldTypus = &TypusNullabilis{Tag: "Nullabilis", Inner: fieldTypus}
 				}
 
@@ -1165,9 +1159,13 @@ func (p *Parser) parseExpressiaStmt() Stmt {
 }
 
 func (p *Parser) parseTypus() Typus {
+	// Check for nullable prefix: si Type
+	nullable := p.match(TokenKeyword, "si") != nil
+
 	typus := p.parseTypusPrimary()
 
-	if p.match(TokenPunctuator, "?") != nil {
+	// Wrap in Nullabilis if si prefix was present
+	if nullable {
 		typus = &TypusNullabilis{Tag: "Nullabilis", Inner: typus}
 	}
 

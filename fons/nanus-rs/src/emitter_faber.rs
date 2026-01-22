@@ -754,7 +754,7 @@ fn emit_typus(typus: &Typus) -> String {
             result
         }
         Typus::Nullabilis { inner } => {
-            format!("{}?", emit_typus(inner))
+            format!("si {}", emit_typus(inner))
         }
         Typus::Unio { members } => {
             let parts: Vec<String> = members.iter().map(emit_typus).collect();

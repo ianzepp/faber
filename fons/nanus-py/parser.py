@@ -305,6 +305,10 @@ class Parser:
             species = VariaSpecies.VARIANDUM
 
         typus: Typus = None
+
+        # Check for nullable prefix: varia si textus name
+        nullable = bool(self.match(TokenTag.KEYWORD, "si"))
+
         first = self.expect_name().valor
 
         if self.check(TokenTag.OPERATOR, "<"):
@@ -316,14 +320,13 @@ class Parser:
                     break
             self.expect(TokenTag.OPERATOR, ">")
             typus = TypusGenericus(nomen=first, args=args)
-            if self.match(TokenTag.PUNCTUATOR, "?"):
+            if nullable:
                 typus = TypusNullabilis(inner=typus)
-            nomen = self.expect_name().valor
-        elif self.match(TokenTag.PUNCTUATOR, "?"):
-            typus = TypusNullabilis(inner=TypusNomen(nomen=first))
             nomen = self.expect_name().valor
         elif self.check_name():
             typus = TypusNomen(nomen=first)
+            if nullable:
+                typus = TypusNullabilis(inner=typus)
             nomen = self.expect_name().valor
         else:
             nomen = first
@@ -411,11 +414,6 @@ class Parser:
                             break
                     self.expect(TokenTag.OPERATOR, ">")
                     typus = TypusGenericus(nomen=first, args=args)
-                    if self.match(TokenTag.PUNCTUATOR, "?"):
-                        typus = TypusNullabilis(inner=typus)
-                    nomen = self.expect_name().valor
-                elif self.match(TokenTag.PUNCTUATOR, "?"):
-                    typus = TypusNullabilis(inner=TypusNomen(nomen=first))
                     nomen = self.expect_name().valor
                 elif self.check_name():
                     typus = TypusNomen(nomen=first)
@@ -425,9 +423,9 @@ class Parser:
             else:
                 raise self.error("expected parameter name")
 
+            # If optional (si prefix before type), wrap type in Nullabilis
             if optional and typus is not None:
-                if not isinstance(typus, TypusNullabilis):
-                    typus = TypusNullabilis(inner=typus)
+                typus = TypusNullabilis(inner=typus)
 
             default: Expr = None
             if self.match(TokenTag.OPERATOR, "="):
@@ -482,7 +480,9 @@ class Parser:
             if self.check(TokenTag.KEYWORD, "functio"):
                 methodi.append(self.parse_functio(False, False, False))
             else:
+                # Field: si? Typus nomen or si? Typus<T> nomen
                 loc = self.peek().locus
+                nullable = bool(self.match(TokenTag.KEYWORD, "si"))
                 first = self.expect_name().valor
                 field_typus: Typus = None
 
@@ -494,11 +494,10 @@ class Parser:
                             break
                     self.expect(TokenTag.OPERATOR, ">")
                     field_typus = TypusGenericus(nomen=first, args=args)
-                    if self.match(TokenTag.PUNCTUATOR, "?"):
+                    if nullable:
                         field_typus = TypusNullabilis(inner=field_typus)
                     field_nomen = self.expect_name().valor
                 else:
-                    nullable = bool(self.match(TokenTag.PUNCTUATOR, "?"))
                     if self.check_name():
                         field_typus = TypusNomen(nomen=first)
                         if nullable:
@@ -598,6 +597,8 @@ class Parser:
 
             if self.match(TokenTag.PUNCTUATOR, "{"):
                 while not self.check(TokenTag.PUNCTUATOR, "}") and not self.check(TokenTag.EOF):
+                    # si? Typus nomen or si? Typus<T> nomen patterns
+                    nullable = bool(self.match(TokenTag.KEYWORD, "si"))
                     typ_nomen = self.expect_name().valor
                     field_typus: Typus
 
@@ -612,7 +613,7 @@ class Parser:
                     else:
                         field_typus = TypusNomen(nomen=typ_nomen)
 
-                    if self.match(TokenTag.PUNCTUATOR, "?"):
+                    if nullable:
                         field_typus = TypusNullabilis(inner=field_typus)
 
                     field_nomen = self.expect_name().valor
@@ -950,9 +951,13 @@ class Parser:
         return StmtExpressia(expr=expr, locus=locus)
 
     def parse_typus(self) -> Typus:
+        # Check for nullable prefix: si Type
+        nullable = bool(self.match(TokenTag.KEYWORD, "si"))
+
         typus = self._parse_typus_primary()
 
-        if self.match(TokenTag.PUNCTUATOR, "?"):
+        # Wrap in Nullabilis if si prefix was present
+        if nullable:
             typus = TypusNullabilis(inner=typus)
 
         if self.match(TokenTag.OPERATOR, "|"):

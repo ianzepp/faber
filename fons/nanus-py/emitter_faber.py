@@ -484,7 +484,7 @@ def _typus(t: Typus | None) -> str:
             params = ", ".join(_typus(p) for p in t.params)
             return f"({params}) -> {_typus(t.returns)}"
         case TypusNullabilis():
-            return f"{_typus(t.inner)}?"
+            return f"si {_typus(t.inner)}"
         case TypusUnio():
             return " | ".join(_typus(m) for m in t.members)
         case TypusLitteralis():
