@@ -210,9 +210,9 @@ function generateFaberCode(collections: CollectionDef[]): string {
     lines.push('# Translation result type');
     lines.push('@ publicum');
     lines.push('genus VerteTranslation {');
-    lines.push('    textus? method');
-    lines.push('    textus? template');
-    lines.push('    lista<textus>? params');
+    lines.push('    si textus method');
+    lines.push('    si textus template');
+    lines.push('    si lista<textus> params');
     lines.push('}');
     lines.push('');
     lines.push('# Registry data structure (type inferred)');
@@ -256,7 +256,7 @@ function generateFaberCode(collections: CollectionDef[]): string {
     lines.push('');
     lines.push('# Lookup translation for target/collection/method');
     lines.push('@ publica');
-    lines.push('functio getNormaTranslation(de textus target, de textus collection, de textus method) -> VerteTranslation? {');
+    lines.push('functio getNormaTranslation(de textus target, de textus collection, de textus method) -> si VerteTranslation {');
     lines.push('    fixum coll = norma[collection]');
     lines.push('    si nihil coll { redde nihil }');
     lines.push('');
