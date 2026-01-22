@@ -117,7 +117,8 @@ ordo ParserErrorCodice {
     SyntaxisAlienaSagittaCrassa = "P402",
     SyntaxisAlienaNullabilis = "P403",
     SyntaxisAlienaAliter = "P404",
-    SyntaxisAlienaRogatioBis = "P405"
+    SyntaxisAlienaRogatioBis = "P405",
+    SyntaxisAlienaTernaria = "P406"
 }
 
 # Error message with help text
@@ -397,6 +398,9 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
         }
         casu ParserErrorCodice.SyntaxisAlienaRogatioBis {
             redde creoNuntium("Nullish coalescing '??' is not supported", "Use 'vel' instead: x vel y")
+        }
+        casu ParserErrorCodice.SyntaxisAlienaTernaria {
+            redde creoNuntium("Ternary operator '? :' is not supported", "Use 'sic/secus' instead: x sic y secus z")
         }
 
         # Default fallback

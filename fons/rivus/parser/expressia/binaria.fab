@@ -111,7 +111,10 @@ functio parseCondicio(in Resolvitor r) -> Expressia {
         } qua Expressia
     }
 
+    # SYNTAXIS ALIENA: '? :' ternary (C/JS style)
+    # Faber uses 'sic/secus': x sic y secus z
     si p.congruet(SymbolumGenus.Rogatio) {
+        p.renuncia(ParserErrorCodice.SyntaxisAlienaTernaria)
         fixum consequens = r.expressia()
         p.expecta(SymbolumGenus.Colon, ParserErrorCodice.ExpectaturColon)
         fixum alternans = parseCondicio(r)
