@@ -13,21 +13,23 @@ from errors import CompileError, format_error
 
 
 def main():
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    parent_parser.add_argument(
+        "--stdin-filename",
+        help="Filename for error messages (default: <stdin>)",
+    )
+
     parser = argparse.ArgumentParser(
         prog="nanus-py",
         description="Faber microcompiler (stdin/stdout)",
     )
-    parser.add_argument(
-        "--stdin-filename",
-        help="Filename for error messages (default: <stdin>)",
-    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    subparsers.add_parser("lex", help="Output tokens as JSON")
+    subparsers.add_parser("lex", parents=[parent_parser], help="Output tokens as JSON")
 
-    subparsers.add_parser("parse", help="Output AST as JSON")
+    subparsers.add_parser("parse", parents=[parent_parser], help="Output AST as JSON")
 
-    emit_parser = subparsers.add_parser("emit", help="Compile Faber to target language")
+    emit_parser = subparsers.add_parser("emit", parents=[parent_parser], help="Compile Faber to target language")
     emit_parser.add_argument(
         "-t", "--target",
         choices=["fab", "py"],

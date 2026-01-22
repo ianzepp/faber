@@ -554,16 +554,18 @@ export class Parser {
 
         while (!this.check('Punctuator', '}') && !this.check('EOF')) {
             // Handle annotations in class body
+            let fieldPublica = false;
+            let fieldFutura = false;
+            let fieldExterna = false;
             while (this.match('Punctuator', '@')) {
-                const tok = this.peek();
-                if (tok.tag !== 'Identifier' && tok.tag !== 'Keyword') {
-                    throw this.error('expected annotation name');
-                }
-                this.advance(); // skip annotation name
-                    }
+                const [pub, fut, ext] = this.parseAnnotatio();
+                if (pub) fieldPublica = true;
+                if (fut) fieldFutura = true;
+                if (ext) fieldExterna = true;
+            }
 
             // Check for visibility keyword
-            let visibilitas: 'Publica' | 'Privata' | 'Protecta' = 'Publica';
+            let visibilitas: 'Publica' | 'Privata' | 'Protecta' = (fieldPublica || publica) ? 'Publica' : 'Privata';
             if (this.match('Keyword', 'privata') || this.match('Keyword', 'privatus')) {
                 visibilitas = 'Privata';
             } else if (this.match('Keyword', 'protecta') || this.match('Keyword', 'protectus')) {
@@ -571,7 +573,7 @@ export class Parser {
             }
 
             if (this.check('Keyword', 'functio')) {
-                methodi.push(this.parseFunctio(false));
+                methodi.push(this.parseFunctio(fieldPublica, fieldFutura, fieldExterna));
             } else {
                 // Field: Typus nomen, Typus<T> nomen, Typus? nomen, or nomen: Typus
                 const loc = this.peek().locus;

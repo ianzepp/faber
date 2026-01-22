@@ -29,7 +29,7 @@ functio genVaria(in GoGenerator g, VariaGenus species, de textus nomen, bivalens
 
     # Type annotation
     si nonnihil adnotatioTypus {
-        result = scriptum("§ §", result, genTypus(g, adnotatioTypus novum TypusAnnotatio))
+        result = scriptum("§ §", result, genTypus(g, adnotatioTypus qua TypusAnnotatio))
     }
 
     # Initializer

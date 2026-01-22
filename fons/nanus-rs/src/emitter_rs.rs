@@ -156,14 +156,9 @@ impl<'a> RsEmitter<'a> {
             }
             Stmt::Incipit { corpus, asynca, .. } => {
                 if *asynca {
-                    format!("{}// async entry point\n{}tokio::runtime::Runtime::new().unwrap().block_on(async {});", indent, indent, self.emit_stmt(corpus, indent))
+                    format!("{}#[tokio::main]\n{}async fn main() {}", indent, indent, self.emit_stmt(corpus, indent))
                 } else {
-                    if let Stmt::Massa { corpus: stmts, .. } = corpus.as_ref() {
-                        let lines: Vec<String> = stmts.iter().map(|s| self.emit_stmt(s, indent)).collect();
-                        lines.join("\n")
-                    } else {
-                        self.emit_stmt(corpus, indent)
-                    }
+                    format!("{}fn main() {}", indent, self.emit_stmt(corpus, indent))
                 }
             }
             Stmt::Probandum { nomen, corpus, .. } => {
@@ -478,7 +473,13 @@ impl<'a> RsEmitter<'a> {
             ..
         } = stmt
         {
-            let path = fons.replace("/", "::").replace(".fab", "");
+            let path = if fons.starts_with("./") {
+                format!("crate::{}", fons[2..].replace("/", "::"))
+            } else if fons.starts_with("../") {
+                format!("super::{}", fons[3..].replace("/", "::"))
+            } else {
+                fons.replace("/", "::")
+            }.replace(".fab", "");
 
             if *totum {
                 if let Some(a) = alias {

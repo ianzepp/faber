@@ -172,7 +172,7 @@ functio genExpressia(in GoGenerator g, de Expressia expr) -> textus {
             varia params = [] innatum lista<textus>
             ex (e.parametra qua lista<ClausuraParametrum>) fixum p {
                 si nonnihil p.typus {
-                    params.adde(scriptum("§ §", p.nomen, genTypus(g, p.typus novum TypusAnnotatio)))
+                    params.adde(scriptum("§ §", p.nomen, genTypus(g, p.typus qua TypusAnnotatio)))
                 } secus {
                     params.adde(scriptum("§ interface{}", p.nomen))
                 }
@@ -340,7 +340,7 @@ functio genClausuraSententia(in GoGenerator g, de Sententia stmt) -> textus {
         casu VariaSententia ut s {
             varia result = scriptum("§var §", g.ind(), s.nomen)
             si nonnihil s.typus {
-                result = scriptum("§ §", result, genTypus(g, s.typus novum TypusAnnotatio))
+                result = scriptum("§ §", result, genTypus(g, s.typus qua TypusAnnotatio))
             }
             si nonnihil s.valor {
                 result = scriptum("§ = §", result, genExpressia(g, s.valor qua Expressia))

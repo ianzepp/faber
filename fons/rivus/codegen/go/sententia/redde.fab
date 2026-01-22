@@ -18,7 +18,7 @@
 functio genRedde(in GoGenerator g, si de ignotum valor) -> textus {
     si g.inErrata {
         si nonnihil g.errataTypusReditus {
-            fixum zero = zeroValueForType(g.errataTypusReditus novum TypusAnnotatio, g)
+            fixum zero = zeroValueForType(g.errataTypusReditus qua TypusAnnotatio, g)
             si nonnihil valor {
                 redde scriptum("§return §, nil", g.ind(), genExpressia(g, valor qua Expressia))
             }

@@ -690,15 +690,24 @@ impl Parser {
         let mut methodi = Vec::new();
 
         while !self.check(TOKEN_PUNCTUATOR, Some("}")) && !self.check(TOKEN_EOF, None) {
+            let mut field_publica = false;
+            let mut field_futura = false;
+            let mut field_externa = false;
             while self.match_token(TOKEN_PUNCTUATOR, Some("@")).is_some() {
                 let tok = self.peek(0);
                 if tok.tag != TOKEN_IDENTIFIER && tok.tag != TOKEN_KEYWORD {
                     return Err(self.error("expected annotation name"));
                 }
-                self.advance();
+                let keyword = self.advance().valor;
+                match keyword.as_str() {
+                    "publica" | "publicum" => field_publica = true,
+                    "futura" => field_futura = true,
+                    "externa" => field_externa = true,
+                    _ => {}
+                }
             }
 
-            let mut visibilitas = "Publica".to_string();
+            let mut visibilitas = if field_publica || publica { "Publica".to_string() } else { "Privata".to_string() };
             if self.match_token(TOKEN_KEYWORD, Some("privata")).is_some()
                 || self.match_token(TOKEN_KEYWORD, Some("privatus")).is_some()
             {
@@ -710,7 +719,7 @@ impl Parser {
             }
 
             if self.check(TOKEN_KEYWORD, Some("functio")) {
-                methodi.push(self.parse_functio(false, false, false)?);
+                methodi.push(self.parse_functio(visibilitas == "Publica", field_futura, field_externa)?);
             } else {
                 let loc = self.peek(0).locus;
                 let first = self.expect_name()?.valor;

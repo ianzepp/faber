@@ -44,7 +44,7 @@ functio genFunctio(in GoGenerator g, de FunctioDeclaratio f) -> textus {
     # Determine function name - capitalize if public (Go visibility convention)
     varia funcName = f.nomen qua textus
     si nonnihil f.visibilitas {
-        fixum vis = f.visibilitas novum Visibilitas
+        fixum vis = f.visibilitas qua Visibilitas
         si vis == Visibilitas.Publica {
             # Capitalize first letter for Go export
             si funcName.longitudo() > 0 {
@@ -61,7 +61,7 @@ functio genFunctio(in GoGenerator g, de FunctioDeclaratio f) -> textus {
 
     # Generic parameters - Go 1.18+ generics
     si nonnihil f.generaParametra {
-        fixum gp = f.generaParametra novum lista<TypusParametrum>
+        fixum gp = f.generaParametra qua lista<TypusParametrum>
         si gp.longitudo() > 0 {
             varia names = [] innatum lista<textus>
             ex gp fixum p {
@@ -82,7 +82,7 @@ functio genFunctio(in GoGenerator g, de FunctioDeclaratio f) -> textus {
     # Return type
     varia retType = ""
     si nonnihil f.typusReditus {
-        retType = genTypus(g, f.typusReditus novum TypusAnnotatio)
+        retType = genTypus(g, f.typusReditus qua TypusAnnotatio)
     }
     fixum hasErrata = habetErrataModificator(f.modificatores)
     si hasErrata {
@@ -109,12 +109,12 @@ functio genFunctio(in GoGenerator g, de FunctioDeclaratio f) -> textus {
         # WHY: Only track a value return type for errata when Go emits (T, error).
         # EDGE: `-> vacuum` or no return type becomes `error` only.
         si hasErrata et retType != "" et nonnihil f.typusReditus {
-            errataType = f.typusReditus novum TypusAnnotatio
+            errataType = f.typusReditus qua TypusAnnotatio
         }
         g.errataTypusReditus = errataType
 
         g.intraProfundum()
-        fixum body = genSententia(g, f.corpus novum Sententia)
+        fixum body = genSententia(g, f.corpus qua Sententia)
         g.exiProfundum()
 
         g.inErrata = prevInErrata
@@ -136,7 +136,7 @@ functio genParametrum(in GoGenerator g, de Parametrum param) -> textus {
 
     # Type annotation
     si nonnihil param.typus {
-        fixum typeName = genTypus(g, param.typus novum TypusAnnotatio)
+        fixum typeName = genTypus(g, param.typus qua TypusAnnotatio)
         result = scriptum("§ §", result, typeName)
     }
 

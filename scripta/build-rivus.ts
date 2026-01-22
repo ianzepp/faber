@@ -231,7 +231,7 @@ async function buildExecutableGo(): Promise<void> {
 
     const exeName = `rivus-${compiler}`;
     const outExe = join(binDir, exeName);
-    await $`cd ${moduleDir} && go build -o ${outExe} ./fons/`.quiet();
+    await $`cd ${moduleDir} && GOWORK=off go build -o ${outExe} ./fons/`.quiet();
 }
 
 async function buildExecutableRs(): Promise<void> {

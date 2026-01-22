@@ -16,7 +16,7 @@ functio genGenus(in GoGenerator g, de GenusDeclaratio s) -> textus {
     # NOTE: Go has no class inheritance; extendit/implet/structor are ignored here.
     varia typeName = s.nomen qua textus
     si nonnihil s.visibilitas {
-        fixum vis = s.visibilitas novum Visibilitas
+        fixum vis = s.visibilitas qua Visibilitas
         si vis == Visibilitas.Publica {
             typeName = capitaliza(typeName)
         }
@@ -26,7 +26,7 @@ functio genGenus(in GoGenerator g, de GenusDeclaratio s) -> textus {
 
     # Generic parameters (Go 1.18+)
     si nonnihil s.generaParametra {
-        fixum gp = s.generaParametra novum lista<textus>
+        fixum gp = s.generaParametra qua lista<textus>
         si gp.longitudo() > 0 {
             varia params = [] innatum lista<textus>
             ex gp fixum p {
@@ -123,7 +123,7 @@ functio genGenusMethod(in GoGenerator g, de textus typeName, de Sententia method
             # Return type
             varia retType = ""
             si nonnihil f.typusReditus {
-                retType = genTypus(g, f.typusReditus novum TypusAnnotatio)
+                retType = genTypus(g, f.typusReditus qua TypusAnnotatio)
             }
             fixum hasErrata = habetErrataModificator(f.modificatores)
             si hasErrata {
@@ -146,7 +146,7 @@ functio genGenusMethod(in GoGenerator g, de textus typeName, de Sententia method
             g.inErrata = hasErrata
             varia errataType = nihil qua TypusAnnotatio?
             si hasErrata et retType != "" et nonnihil f.typusReditus {
-                errataType = f.typusReditus novum TypusAnnotatio
+                errataType = f.typusReditus qua TypusAnnotatio
             }
             g.errataTypusReditus = errataType
 

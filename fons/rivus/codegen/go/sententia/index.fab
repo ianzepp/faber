@@ -42,7 +42,7 @@ functio genSententia(in GoGenerator g, de Sententia stmt) -> textus {
 
         # Variable declaration
         casu VariaSententia ut v {
-            redde genVaria(g, v.species qua VariaGenus, v.nomen qua textus, v.typus, v.valor, v.externa qua bivalens, v.visibilitas)
+            redde genVaria(g, v.species qua VariaGenus, v.nomen qua textus, v.externa qua bivalens, v.typus, v.valor, v.visibilitas)
         }
 
         # Array destructuring declaration

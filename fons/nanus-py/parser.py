@@ -617,9 +617,7 @@ class Parser:
 
                     field_nomen = self.expect_name().valor
                     campi.append(VariansCampus(nomen=field_nomen, typus=field_typus))
-
-                    if not self.match(TokenTag.PUNCTUATOR, ","):
-                        break
+                    self.match(TokenTag.PUNCTUATOR, ",")
                 self.expect(TokenTag.PUNCTUATOR, "}")
 
             variantes.append(VariansDecl(nomen=name, campi=campi, locus=loc))
