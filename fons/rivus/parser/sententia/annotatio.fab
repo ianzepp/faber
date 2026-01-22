@@ -620,6 +620,12 @@ functio parseAnnotationes(in Resolvitor r) -> lista<Annotatio> {
             perge
         }
 
+        # SYNTAXIS ALIENA: '@ asynca' (false Latin for @ futura)
+        si nomen == "asynca" {
+            p.renuncia(ParserErrorCodice.SyntaxisAlienaAsynca)
+            nomen = "futura"  # Normalize for downstream processing
+        }
+
         # Dispatch to specialized parsers for stdlib annotations
         si nomen == "innatum" aut nomen == "subsidia" {
             annotationes.adde(parseTargetMappingAnnotation(r, nomen, locus, linea))

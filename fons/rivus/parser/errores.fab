@@ -119,7 +119,8 @@ ordo ParserErrorCodice {
     SyntaxisAlienaAliter = "P404",
     SyntaxisAlienaRogatioBis = "P405",
     SyntaxisAlienaTernaria = "P406",
-    SyntaxisAlienaExspecta = "P407"
+    SyntaxisAlienaExspecta = "P407",
+    SyntaxisAlienaAsynca = "P408"
 }
 
 # Error message with help text
@@ -405,6 +406,9 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
         }
         casu ParserErrorCodice.SyntaxisAlienaExspecta {
             redde creoNuntium("'exspecta' is not a Faber keyword", "Use 'cede' for await: cede fetch()")
+        }
+        casu ParserErrorCodice.SyntaxisAlienaAsynca {
+            redde creoNuntium("'@ asynca' is not a valid annotation", "Use '@ futura' for async functions")
         }
 
         # Default fallback
