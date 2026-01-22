@@ -4,18 +4,19 @@
 # Handles generics, nullable types, union types, and array shorthand.
 #
 # GRAMMAR:
-#   typeAnnotation := ('de' | 'in')? IDENTIFIER typeParams? '?'? arrayBrackets*
+#   typeAnnotation := 'si'? ('de' | 'in')? IDENTIFIER typeParams? arrayBrackets*
 #   typeParams := '<' typeParameter (',' typeParameter)* '>'
 #   typeParameter := typeAnnotation | NUMBER | MODIFIER
-#   arrayBrackets := '[]' '?'?
+#   arrayBrackets := '[]'
 #
 # EXAMPLES:
 #   textus                    -> simple type
 #   lista<numerus>            -> generic type
-#   textus?                   -> nullable type
+#   si textus                 -> nullable type
 #   numerus[]                 -> array shorthand (desugars to lista<numerus>)
 #   unio<textus, numerus>     -> union type
 #   de textus                 -> borrowed type (preposition)
+#   si de textus              -> nullable borrowed type
 #
 # LATIN VOCABULARY:
 # - typus = type
@@ -37,15 +38,6 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
     fixum locus = p.locusActualis()
 
     # -------------------------------------------------------------------------
-    # Check for borrow preposition (de/in for ownership semantics)
-    # -------------------------------------------------------------------------
-    varia praepositio = nihil qua si textus
-
-    si p.estPraepositio(p.specta(0)) {
-        praepositio = p.procede().verbum
-    }
-
-    # -------------------------------------------------------------------------
     # Check for nullable prefix: si textus -> nullable textus
     # -------------------------------------------------------------------------
     varia nullabilisPraefix = falsum
@@ -53,6 +45,15 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
     si p.probaVerbum("si") {
         nullabilisPraefix = verum
         p.procede()
+    }
+
+    # -------------------------------------------------------------------------
+    # Check for borrow preposition (de/in for ownership semantics)
+    # -------------------------------------------------------------------------
+    varia praepositio = nihil qua si textus
+
+    si p.estPraepositio(p.specta(0)) {
+        praepositio = p.procede().verbum
     }
 
     # -------------------------------------------------------------------------

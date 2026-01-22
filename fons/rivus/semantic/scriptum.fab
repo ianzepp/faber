@@ -26,7 +26,7 @@ genus Scriptum {
 # Extract script registry from sectiones
 # Returns a map of name -> Scriptum
 @ publica
-functio extractScripta(de si lista<SectioAnnotatio> sectiones) -> tabula<textus, Scriptum> {
+functio extractScripta(si de lista<SectioAnnotatio> sectiones) -> tabula<textus, Scriptum> {
     varia result = {} innatum tabula<textus, Scriptum>
     si nihil sectiones { redde result }
 

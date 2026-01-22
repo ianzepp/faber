@@ -189,13 +189,17 @@ Example:
 ## Types
 
 ```ebnf
-typeAnnotation := ('de' | 'in')? (functionType | IDENTIFIER typeParams? '?'? arrayBrackets*)
+typeAnnotation := 'si'? ('de' | 'in')? (functionType | IDENTIFIER typeParams? arrayBrackets*)
 functionType   := '(' typeList? ')' '->' typeAnnotation
 typeList       := typeAnnotation (',' typeAnnotation)*
 typeParams     := '<' typeParameter (',' typeParameter)* '>'
 typeParameter  := typeAnnotation | NUMBER | MODIFIER
-arrayBrackets  := '[]' '?'?
+arrayBrackets  := '[]'
 ```
+
+- `si` prefix marks nullable types: `si textus` = nullable string
+- `de`/`in` mark ownership for Rust/Zig targets: `de textus` = borrowed string
+- Combined: `si de textus` = nullable borrowed string
 
 Function types enable higher-order function signatures:
 

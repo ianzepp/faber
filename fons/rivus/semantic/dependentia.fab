@@ -33,7 +33,7 @@ genus Dependentia {
 # Extract dependency registry from sectiones
 # Returns a map of alias -> Dependentia
 @ publica
-functio extractDependentiae(de si lista<SectioAnnotatio> sectiones) -> tabula<textus, Dependentia> {
+functio extractDependentiae(si de lista<SectioAnnotatio> sectiones) -> tabula<textus, Dependentia> {
     varia result = {} innatum tabula<textus, Dependentia>
     si nihil sectiones { redde result }
 
