@@ -238,6 +238,58 @@
         {
           "type": "STRING",
           "value": "moritor"
+        },
+        {
+          "type": "STRING",
+          "value": "custodi"
+        },
+        {
+          "type": "STRING",
+          "value": "cura"
+        },
+        {
+          "type": "STRING",
+          "value": "in"
+        },
+        {
+          "type": "STRING",
+          "value": "ab"
+        },
+        {
+          "type": "STRING",
+          "value": "ubi"
+        },
+        {
+          "type": "STRING",
+          "value": "prima"
+        },
+        {
+          "type": "STRING",
+          "value": "ultima"
+        },
+        {
+          "type": "STRING",
+          "value": "summa"
+        },
+        {
+          "type": "STRING",
+          "value": "ad"
+        },
+        {
+          "type": "STRING",
+          "value": "fit"
+        },
+        {
+          "type": "STRING",
+          "value": "fiet"
+        },
+        {
+          "type": "STRING",
+          "value": "fiunt"
+        },
+        {
+          "type": "STRING",
+          "value": "fient"
         }
       ]
     },
@@ -247,6 +299,10 @@
         {
           "type": "STRING",
           "value": "functio"
+        },
+        {
+          "type": "STRING",
+          "value": "clausura"
         },
         {
           "type": "STRING",
@@ -306,6 +362,14 @@
         },
         {
           "type": "STRING",
+          "value": "prae"
+        },
+        {
+          "type": "STRING",
+          "value": "ceteri"
+        },
+        {
+          "type": "STRING",
           "value": "probandum"
         },
         {
@@ -319,6 +383,18 @@
         {
           "type": "STRING",
           "value": "postpara"
+        },
+        {
+          "type": "STRING",
+          "value": "praeparabit"
+        },
+        {
+          "type": "STRING",
+          "value": "postparabit"
+        },
+        {
+          "type": "STRING",
+          "value": "importa"
         }
       ]
     },
@@ -340,6 +416,10 @@
         {
           "type": "STRING",
           "value": "cede"
+        },
+        {
+          "type": "STRING",
+          "value": "futura"
         },
         {
           "type": "STRING",
@@ -388,6 +468,94 @@
         {
           "type": "STRING",
           "value": "innatum"
+        },
+        {
+          "type": "STRING",
+          "value": "numeratum"
+        },
+        {
+          "type": "STRING",
+          "value": "fractatum"
+        },
+        {
+          "type": "STRING",
+          "value": "textatum"
+        },
+        {
+          "type": "STRING",
+          "value": "bivalentum"
+        },
+        {
+          "type": "STRING",
+          "value": "sinistratum"
+        },
+        {
+          "type": "STRING",
+          "value": "dextratum"
+        },
+        {
+          "type": "STRING",
+          "value": "nulla"
+        },
+        {
+          "type": "STRING",
+          "value": "nonnulla"
+        },
+        {
+          "type": "STRING",
+          "value": "negativum"
+        },
+        {
+          "type": "STRING",
+          "value": "positivum"
+        },
+        {
+          "type": "STRING",
+          "value": "scriptum"
+        },
+        {
+          "type": "STRING",
+          "value": "praefixum"
+        },
+        {
+          "type": "STRING",
+          "value": "ut"
+        },
+        {
+          "type": "STRING",
+          "value": "ante"
+        },
+        {
+          "type": "STRING",
+          "value": "usque"
+        },
+        {
+          "type": "STRING",
+          "value": "per"
+        },
+        {
+          "type": "STRING",
+          "value": "intra"
+        },
+        {
+          "type": "STRING",
+          "value": "inter"
+        },
+        {
+          "type": "STRING",
+          "value": "lege"
+        },
+        {
+          "type": "STRING",
+          "value": "lineam"
+        },
+        {
+          "type": "STRING",
+          "value": "sed"
+        },
+        {
+          "type": "STRING",
+          "value": "sic"
         }
       ]
     },
@@ -453,6 +621,22 @@
         {
           "type": "STRING",
           "value": "unio"
+        },
+        {
+          "type": "STRING",
+          "value": "Hex"
+        },
+        {
+          "type": "STRING",
+          "value": "Oct"
+        },
+        {
+          "type": "STRING",
+          "value": "Bin"
+        },
+        {
+          "type": "STRING",
+          "value": "Dec"
         }
       ]
     },
