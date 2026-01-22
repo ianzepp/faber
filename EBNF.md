@@ -239,12 +239,13 @@ functio compose((A) -> B f, (B) -> C g) -> (A) -> C
 ifStmt     := 'si' expression (blockStmt | 'ergo' statement | inlineReturn)
               ('cape' IDENTIFIER blockStmt)? (elseClause | 'sin' ifStmt)?
 elseClause := 'secus' (ifStmt | blockStmt | statement | inlineReturn)
-inlineReturn := 'reddit' expression | 'iacit' expression | 'moritor' expression
+inlineReturn := 'reddit' expression | 'iacit' expression | 'moritor' expression | 'tacet'
 ```
 
 - `si` = if, `sin` = else-if, `secus` = else
 - `ergo` for one-liners, `reddit` for early return
 - `iacit` for inline throw, `moritor` for inline panic
+- `tacet` for explicit no-op (from musical notation: "it is silent")
 
 ### Loops
 
@@ -570,6 +571,7 @@ Not all Faber features are supported across all compilation targets. Some featur
 |                     | `reddit`                      | inline return       |
 |                     | `rumpe`                       | break               |
 |                     | `perge`                       | continue            |
+|                     | `tacet`                       | no-op (silence)     |
 | **Error Handling**  | `tempta`                      | try                 |
 |                     | `cape`                        | catch               |
 |                     | `demum`                       | finally             |
