@@ -12,7 +12,8 @@ pub fn bundle(dir: &Path, entry_file: &Path) -> io::Result<()> {
         let path = entry.path();
         if path.is_dir() {
             let name = path.file_name().unwrap().to_str().unwrap();
-            mods.push(format!("pub mod {};", name));
+            let mod_name = name.replace(".", "_");
+            mods.push(format!("pub mod {};", mod_name));
             // 2. Recursively generate mod.rs for subdirectories
             generate_mod_rs(&path)?;
         }
@@ -39,10 +40,11 @@ fn generate_mod_rs(dir: &Path) -> io::Result<()> {
         let name = path.file_name().unwrap().to_str().unwrap();
 
         if path.is_dir() {
-            mods.push(format!("pub mod {};", name));
+            let mod_name = name.replace(".", "_");
+            mods.push(format!("pub mod {};", mod_name));
             generate_mod_rs(&path)?;
         } else if path.extension().map_or(false, |ext| ext == "rs") && name != "mod.rs" {
-            let mod_name = path.file_stem().unwrap().to_str().unwrap();
+            let mod_name = path.file_stem().unwrap().to_str().unwrap().replace(".", "_");
             mods.push(format!("pub mod {};", mod_name));
         }
     }

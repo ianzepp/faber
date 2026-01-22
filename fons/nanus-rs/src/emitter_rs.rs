@@ -10,12 +10,23 @@ struct RsEmitter<'a> {
 }
 
 impl<'a> RsEmitter<'a> {
+    fn is_known_enum(&self, name: &str) -> bool {
+        match name {
+            "SymbolumGenus" | "VerbumId" | "Visibilitas" | "VariaGenus" | 
+            "LitteraGenus" | "ScribeGradus" | "IteratioGenus" | "CuratorGenus" | 
+            "AdVerbumVinculandi" | "PraeparaTempus" | "ProbaModificator" |
+            "LexorErrorCodice" | "ParserErrorCodice" | "SemanticErrorCodice" => true,
+            _ => false,
+        }
+    }
+
     fn new(ctx: &'a SemanticContext) -> Self {
         Self { ctx }
     }
 
     /// Find which discretio contains a given variant name
     fn find_discretio_for_variant(&self, variant_name: &str) -> Option<String> {
+        // Local check
         for (disc_name, disc_type) in &self.ctx.disc_registry {
             if let SemanticTypus::Discretio { variantes, .. } = disc_type {
                 if variantes.contains_key(variant_name) {
@@ -23,7 +34,30 @@ impl<'a> RsEmitter<'a> {
                 }
             }
         }
-        None
+
+        // Heuristic fallback for rivus AST
+        match variant_name {
+            "MassaSententia" | "VariaSententia" | "ImportaSententia" | "DestructuraSententia" |
+            "SeriesDestructuraSententia" | "FunctioDeclaratio" | "GenusDeclaratio" | "PactumDeclaratio" |
+            "TypusAliasDeclaratio" | "OrdoDeclaratio" | "DiscretioDeclaratio" | "SiSententia" |
+            "DumSententia" | "ExSententia" | "DeSententia" | "EligeSententia" | "DiscerneSententia" |
+            "CustodiSententia" | "ReddeSententia" | "RumpeSententia" | "PergeSententia" |
+            "IaceSententia" | "ScribeSententia" | "IncipitSententia" | "IncipietSententia" |
+            "CuraSententia" | "TemptaSententia" | "FacSententia" | "AdfirmaSententia" |
+            "ProbandumSententia" | "ProbaSententia" | "ExpressiaSententia" => Some("Sententia".to_string()),
+
+            "Nomen" | "Ego" | "Littera" | "Binaria" | "Unaria" | "Assignatio" |
+            "Condicio" | "Vocatio" | "Membrum" | "Series" | "Obiectum" | "Clausura" |
+            "Novum" | "Cede" | "Qua" | "Innatum" | "Conversio" | "PostfixNovum" |
+            "Finge" | "Scriptum" | "Ambitus" => Some("Expressia".to_string()),
+
+            "Nullabilis" | "Genericus" | "Unio" | "Litteralis" => Some("Typus".to_string()),
+
+            "CurataModificator" | "ErrataModificator" | "ExitusModificator" |
+            "ImmutataModificator" | "IacitModificator" | "OptionesModificator" => Some("FunctioModificator".to_string()),
+
+            _ => None,
+        }
     }
 
     /// Get the enum name for a discerne statement by looking up variant names
@@ -610,7 +644,7 @@ impl<'a> RsEmitter<'a> {
         } = stmt
         {
             let path = if fons.starts_with("./") {
-                format!("crate::{}", fons[2..].replace("/", "::"))
+                format!("crate::{}", fons[2..].replace(".fab", "").replace("/", "::").replace(".", "_"))
             } else if fons.starts_with("../") {
                 let mut super_count = 0;
                 let mut current_fons: &str = fons;
@@ -619,11 +653,10 @@ impl<'a> RsEmitter<'a> {
                     current_fons = &current_fons[3..];
                 }
                 let supers = vec!["super"; super_count].join("::");
-                format!("{}::{}", supers, current_fons.replace("/", "::"))
+                format!("{}::{}", supers, current_fons.replace(".fab", "").replace("/", "::").replace(".", "_"))
             } else {
-                fons.replace("/", "::")
-            }
-            .replace(".fab", "");
+                fons.replace(".fab", "").replace("/", "::").replace(".", "_")
+            };
 
             if *totum {
                 if let Some(a) = alias {
@@ -769,6 +802,13 @@ impl<'a> RsEmitter<'a> {
                 if signum == "inter" {
                     return format!("{}.contains(&{})", self.emit_expr(dex), self.emit_expr(sin));
                 }
+                if signum == "intra" {
+                    let variant_name = self.emit_expr(dex);
+                    if let Some(enum_name) = self.find_discretio_for_variant(&variant_name) {
+                        return format!("matches!({}, {}::{} {{ .. }})", self.emit_expr(sin), enum_name, variant_name);
+                    }
+                    return format!("matches!({}, {} {{ .. }})", self.emit_expr(sin), variant_name);
+                }
                 let op = map_binary_op(signum);
                 format!("({} {} {})", self.emit_expr(sin), op, self.emit_expr(dex))
             }
@@ -825,6 +865,9 @@ impl<'a> RsEmitter<'a> {
                 if *computed {
                     return format!("{}[{}]", obj_str, self.emit_expr(prop));
                 }
+
+                let sep = if self.is_known_enum(&obj_str) { "::" } else { "." };
+
                 let prop_str = if let Expr::Littera { valor, .. } = prop.as_ref() {
                     if valor == "longitudo" {
                         return format!("{}.len()", obj_str);
@@ -839,7 +882,7 @@ impl<'a> RsEmitter<'a> {
                 } else {
                     self.emit_expr(prop)
                 };
-                format!("{}.{}", obj_str, prop_str)
+                format!("{}{}{}", obj_str, sep, prop_str)
             }
             Expr::Series { elementa, .. } => {
                 let items: Vec<String> = elementa.iter().map(|e| self.emit_expr(e)).collect();
@@ -934,7 +977,7 @@ impl<'a> RsEmitter<'a> {
                 if parts.len() == 1 {
                     return format!("{}.to_string()", quote_string(template));
                 }
-                let format_str = parts.join("{}");
+                let format_str = parts.iter().map(|p| p.replace("{", "{{").replace("}", "}}")).collect::<Vec<_>>().join("{}");
                 let args_str: Vec<String> = args.iter().map(|a| self.emit_expr(a)).collect();
                 format!("format!(\"{}\", {})", format_str, args_str.join(", "))
             }
@@ -995,7 +1038,7 @@ impl<'a> RsEmitter<'a> {
             String::new()
         };
 
-        format!("{}{}", p.nomen, typ)
+        format!("{}{}", sanitize_rs_ident(&p.nomen), typ)
     }
 }
 
@@ -1040,17 +1083,15 @@ fn map_binary_op(op: &str) -> &'static str {
         "et" | "&&" => "&&",
         "aut" | "||" => "||",
         "vel" => ".unwrap_or",
-        "inter" => "/* in */",
-        "intra" => "/* instanceof */",
+        "inter" => "/* handled in emit_expr */",
+        "intra" => "/* handled in emit_expr */",
         "+" => "+",
         "-" => "-",
         "*" => "*",
         "/" => "/",
         "%" => "%",
-        "==" => "==",
-        "!=" => "!=",
-        "===" => "==",
-        "!=" => "!=",
+        "==" | "===" => "==",
+        "!=" | "!==" => "!=",
         "<" => "<",
         ">" => ">",
         "<=" => "<=",
@@ -1064,7 +1105,7 @@ fn map_unary_op(op: &str) -> &'static str {
         "non" => "!",
         "nihil" => "!",
         "nonnihil" => "",
-        "positivum" => "+",
+        "positivum" => "",
         "-" => "-",
         "!" => "!",
         _ => "/* unknown op */",
@@ -1117,7 +1158,10 @@ fn map_method_name(name: &str) -> Option<&'static str> {
 
 fn sanitize_rs_ident(s: &str) -> String {
     match s {
-        "async" | "match" | "type" | "move" | "loop" | "where" | "trait" | "impl" | "dyn" => {
+        "as" | "async" | "await" | "break" | "const" | "continue" | "crate" | "dyn" | "else" | "enum" |
+        "extern" | "false" | "fn" | "for" | "if" | "impl" | "in" | "let" | "loop" | "match" | "mod" |
+        "move" | "mut" | "pub" | "ref" | "return" | "self" | "Self" | "static" | "struct" | "super" |
+        "trait" | "true" | "type" | "unsafe" | "use" | "where" | "while" => {
             format!("r#{}", s)
         }
         _ => s.to_string(),
