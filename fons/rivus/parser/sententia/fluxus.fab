@@ -71,7 +71,7 @@ functio parseEligeSententia(in Resolvitor r) -> Sententia {
             # Parse body: block, ergo stmt, or reddit expr
             fixum consequens = parseCorpus(r)
 
-            casus.adde({
+            casus.appende({
                 locus: casusLocus,
                 condicio: condicio,
                 consequens: consequens
@@ -151,9 +151,9 @@ functio parseDiscerneSententia(in Resolvitor r) -> Sententia {
 
     # Parse comma-separated discriminants
     varia discriminantes = [] innatum lista<Expressia>
-    discriminantes.adde(r.expressia())
+    discriminantes.appende(r.expressia())
     dum p.congruet(SymbolumGenus.Coma) {
-        discriminantes.adde(r.expressia())
+        discriminantes.appende(r.expressia())
     }
 
     # Expect opening brace
@@ -169,15 +169,15 @@ functio parseDiscerneSententia(in Resolvitor r) -> Sententia {
 
             # Parse comma-separated patterns (one per discriminant)
             varia exemplaria = [] innatum lista<VariansExemplar>
-            exemplaria.adde(parseVariansExemplar(p))
+            exemplaria.appende(parseVariansExemplar(p))
             dum p.congruet(SymbolumGenus.Coma) {
-                exemplaria.adde(parseVariansExemplar(p))
+                exemplaria.appende(parseVariansExemplar(p))
             }
 
             # Parse body
             fixum consequens = parseCorpus(r)
 
-            casus.adde({
+            casus.appende({
                 locus: casusLocus,
                 exemplaria: exemplaria,
                 consequens: consequens
@@ -191,7 +191,7 @@ functio parseDiscerneSententia(in Resolvitor r) -> Sententia {
             # Create wildcard patterns (one per discriminant)
             varia exemplaria = [] innatum lista<VariansExemplar>
             ex discriminantes fixum _ {
-                exemplaria.adde({
+                exemplaria.appende({
                     locus: casusLocus,
                     variansNomen: "_",
                     estWildcard: verum,
@@ -203,7 +203,7 @@ functio parseDiscerneSententia(in Resolvitor r) -> Sententia {
             # Parse body (supports block, ergo, reddit, iacit)
             fixum consequens = parseCorpusAutSententia(r)
 
-            casus.adde({
+            casus.appende({
                 locus: casusLocus,
                 exemplaria: exemplaria,
                 consequens: consequens
@@ -268,7 +268,7 @@ functio parseVariansExemplar(in Parser p) -> VariansExemplar {
         p.procede()
         fac {
             fixum vincSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
-            vincula.adde(vincSym.valor)
+            vincula.appende(vincSym.valor)
         } dum estProximumVinculum(p)
     }
 
@@ -362,7 +362,7 @@ functio parseCustodiSententia(in Resolvitor r) -> Sententia {
             fixum condicio = r.expressia()
             fixum consequens = parseCorpus(r)
 
-            clausulae.adde({
+            clausulae.appende({
                 locus: clausulaLocus,
                 condicio: condicio,
                 consequens: consequens

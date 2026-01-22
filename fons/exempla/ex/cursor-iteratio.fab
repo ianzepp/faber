@@ -31,7 +31,7 @@ incipit {
     # Collect all results from generator function
     varia syncResults = []
     ex rangeSync(5) pro num {
-        syncResults.adde(num * 2)
+        syncResults.appende(num * 2)
     }
     scribe "Sync collected:"
     scribe syncResults

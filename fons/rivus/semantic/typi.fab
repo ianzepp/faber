@@ -500,7 +500,7 @@ functio formaTypum(de SemanticTypus t) -> textus {
             # Build parameter list
             varia params = [] innatum lista<textus>
             ex g.parametri fixum typ {
-                params.adde(formaTypum(typ))
+                params.appende(formaTypum(typ))
             }
             varia resultatum = scriptum("§<§>", g.nomen, params.coniunge(", "))
             si g.nullabilis {
@@ -513,7 +513,7 @@ functio formaTypum(de SemanticTypus t) -> textus {
             # Build parameter list
             varia params = [] innatum lista<textus>
             ex f.parametriTypi fixum typ {
-                params.adde(formaTypum(typ))
+                params.appende(formaTypum(typ))
             }
             fixum asyncPraefix = f.asyncronum sic "futura " secus ""
             redde scriptum("§(§) -> §", asyncPraefix, params.coniunge(", "), formaTypum(f.reditusTypus))
@@ -522,7 +522,7 @@ functio formaTypum(de SemanticTypus t) -> textus {
         casu Unio ut u {
             varia parts = [] innatum lista<textus>
             ex u.typi fixum typ {
-                parts.adde(formaTypum(typ))
+                parts.appende(formaTypum(typ))
             }
             redde parts.coniunge(" | ")
         }

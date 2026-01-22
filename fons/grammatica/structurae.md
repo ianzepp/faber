@@ -2,7 +2,7 @@
 
 Faber provides two fundamental building blocks for defining data structures: `genus` for concrete data types with fields and methods, and `pactum` for behavioral contracts that define what a type can do. This document explains how to declare, instantiate, and work with both.
 
-The Latin terminology reflects the conceptual distinction: a `genus` (meaning "birth, origin, kind") describes what something *is*, while a `pactum` (meaning "agreement, contract") describes what something *promises to do*.
+The Latin terminology reflects the conceptual distinction: a `genus` (meaning "birth, origin, kind") describes what something _is_, while a `pactum` (meaning "agreement, contract") describes what something _promises to do_.
 
 ---
 
@@ -51,12 +51,12 @@ When a default is provided, the field becomes optional during instantiation. Fie
 
 The colon syntax deserves explanation. Faber distinguishes between two operations:
 
-| Syntax | Meaning | Context |
-|--------|---------|---------|
-| `:` | "has value" / "defaults to" | Field defaults, object literals, construction |
-| `=` | "assign value" | Variable binding, reassignment, method bodies |
+| Syntax | Meaning                     | Context                                       |
+| ------ | --------------------------- | --------------------------------------------- |
+| `:`    | "has value" / "defaults to" | Field defaults, object literals, construction |
+| `=`    | "assign value"              | Variable binding, reassignment, method bodies |
 
-The colon represents a *declarative specification*: this field has this value by nature of its definition. The equals sign represents an *imperative action*: assign this value to that location.
+The colon represents a _declarative specification_: this field has this value by nature of its definition. The equals sign represents an _imperative action_: assign this value to that location.
 
 This distinction creates consistency across the language. Object literals use colons (`{ nomen: "Marcus" }`), construction overrides use colons, and field defaults use colons. All three are specifying property values, not performing assignment.
 
@@ -232,7 +232,7 @@ pactum Iterabilis<T> {
 }
 ```
 
-Unlike `genus`, a `pactum` cannot have fields or property requirements. It defines only what a type can *do*, not what it *has*. This constraint keeps interfaces focused on behavior.
+Unlike `genus`, a `pactum` cannot have fields or property requirements. It defines only what a type can _do_, not what it _has_. This constraint keeps interfaces focused on behavior.
 
 ### Implementation with implet
 
@@ -420,13 +420,13 @@ functio filtrata<T>(ego lista<T>, praedicatum: functio(T) fit bivalens) fit list
 
 The first identifier is the verb stem (`filtr-`), followed by valid conjugation forms:
 
-| Form | Ending | Semantics |
-|------|--------|-----------|
-| `imperativus` | `-a`, `-e`, `-i` | Mutates in place, synchronous |
-| `perfectum` | `-ata`, `-ita`, `-ta` | Returns new value, synchronous |
-| `futurum_indicativum` | `-abit`, `-ebit` | Mutates in place, asynchronous |
-| `futurum_activum` | `-atura`, `-itura` | Returns new value, asynchronous |
-| `generator` | `-ans`, `-ens` | Yields values (streaming) |
+| Form                  | Ending                | Semantics                       |
+| --------------------- | --------------------- | ------------------------------- |
+| `imperativus`         | `-a`, `-e`, `-i`      | Mutates in place, synchronous   |
+| `perfectum`           | `-ata`, `-ita`, `-ta` | Returns new value, synchronous  |
+| `futurum_indicativum` | `-abit`, `-ebit`      | Mutates in place, asynchronous  |
+| `futurum_activum`     | `-atura`, `-itura`    | Returns new value, asynchronous |
+| `generator`           | `-ans`, `-ens`        | Yields values (streaming)       |
 
 The compiler validates that called method names match declared forms. Calling `items.filtratura(pred)` would error if only `imperativus, perfectum` are declared.
 
@@ -439,10 +439,10 @@ The `@ verte` annotation (Latin "turn, transform") defines how a method call tra
 ```fab
 @ verte ts "push"
 @ verte py "append"
-functio adde<T>(ego lista<T>, elem: T) fit vacuum
+functio appende<T>(ego lista<T>, elem: T) fit vacuum
 ```
 
-This compiles `items.adde(x)` to `items.push(x)` in TypeScript and `items.append(x)` in Python.
+This compiles `items.appende(x)` to `items.push(x)` in TypeScript and `items.append(x)` in Python.
 
 **Template with placeholders:**
 
@@ -458,13 +458,13 @@ The `§` placeholders are filled positionally with the parameter values. For Zig
 Each `@ verte` specifies exactly one target. Use multiple annotations for multiple targets:
 
 ```fab
-@ radix add, imperativus, perfectum
+@ radix append, imperativus, perfectum
 @ verte ts "push"
 @ verte py "append"
 @ verte rs "push"
 @ verte cpp "push_back"
-@ verte zig (ego, elem, alloc) -> "§.adde(§, §)"
-functio adde<T>(ego lista<T>, elem: T) fit vacuum
+@ verte zig (ego, elem, alloc) -> "§.appende(§, §)"
+functio appende<T>(ego lista<T>, elem: T) fit vacuum
 ```
 
 ### Design Philosophy

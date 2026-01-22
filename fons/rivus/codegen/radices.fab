@@ -22,7 +22,7 @@ pactum RadixGenerator {
 # ============================================================================
 
 # Add element to collection
-# Imperative: items.adde(x) -> items.push(x)
+# Imperative: items.appende(x) -> items.push(x)
 # Participle: items.addita(x) -> [...items, x]
 @ publica
 functio genAdd(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) -> textus {

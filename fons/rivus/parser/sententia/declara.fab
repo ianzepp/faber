@@ -45,27 +45,27 @@ functio parseFunctioModificatores(in Resolvitor r) -> si lista<FunctioModificato
         si p.congruetVerbum("curata") {
             fixum locus = p.praevius().locus
             fixum curatorSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-            modificatores.adde(finge CurataModificator { locus: locus, nomen: curatorSym.valor } qua FunctioModificator)
+            modificatores.appende(finge CurataModificator { locus: locus, nomen: curatorSym.valor } qua FunctioModificator)
         } sin p.congruetVerbum("errata") {
             fixum locus = p.praevius().locus
             fixum errataSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-            modificatores.adde(finge ErrataModificator { locus: locus, nomen: errataSym.valor } qua FunctioModificator)
+            modificatores.appende(finge ErrataModificator { locus: locus, nomen: errataSym.valor } qua FunctioModificator)
         } sin p.congruetVerbum("immutata") {
             fixum locus = p.praevius().locus
-            modificatores.adde(finge ImmutataModificator { locus: locus } qua FunctioModificator)
+            modificatores.appende(finge ImmutataModificator { locus: locus } qua FunctioModificator)
         } sin p.congruetVerbum("iacit") {
             fixum locus = p.praevius().locus
-            modificatores.adde(finge IacitModificator { locus: locus } qua FunctioModificator)
+            modificatores.appende(finge IacitModificator { locus: locus } qua FunctioModificator)
         } sin p.congruetVerbum("optiones") {
             # Bundle all @ optio annotations into a Map<string, string> named <name>
             fixum locus = p.praevius().locus
             fixum optionesSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-            modificatores.adde(finge OptionesModificator { locus: locus, nomen: optionesSym.valor } qua FunctioModificator)
+            modificatores.appende(finge OptionesModificator { locus: locus, nomen: optionesSym.valor } qua FunctioModificator)
         } sin p.congruetVerbum("exitus") {
             # Exit code modifier: exitus <name> -> sets process.exit(<name>) at function end
             fixum locus = p.praevius().locus
             fixum exitusSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-            modificatores.adde(finge ExitusModificator { locus: locus, nomen: exitusSym.valor } qua FunctioModificator)
+            modificatores.appende(finge ExitusModificator { locus: locus, nomen: exitusSym.valor } qua FunctioModificator)
         } secus {
             rumpe
         }
@@ -110,7 +110,7 @@ functio parseFunctioDeclaratio(in Resolvitor r) -> Sententia {
         fixum nomina = parseGenericaNomina(r)
         generaParametra = [] innatum lista<TypusParametrum>
         ex nomina fixum n {
-            generaParametra.adde({ locus: locus, nomen: n } qua TypusParametrum)
+            generaParametra.appende({ locus: locus, nomen: n } qua TypusParametrum)
         }
     }
 
@@ -125,7 +125,7 @@ functio parseFunctioDeclaratio(in Resolvitor r) -> Sententia {
 
         fixum paramLocus = p.locusActualis()
         fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-        parenGenera.adde({
+        parenGenera.appende({
             locus: paramLocus,
             nomen: nomenSym.valor
         } qua TypusParametrum)
@@ -143,7 +143,7 @@ functio parseFunctioDeclaratio(in Resolvitor r) -> Sententia {
             generaParametra = parenGenera
         } secus {
             ex parenGenera fixum g {
-                (generaParametra qua lista<TypusParametrum>).adde(g)
+                (generaParametra qua lista<TypusParametrum>).appende(g)
             }
         }
     }
@@ -239,7 +239,7 @@ functio parseGenusDeclaratio(in Resolvitor r, bivalens abstractum) -> Sententia 
         implet = [] innatum lista<textus>
         fac {
             fixum ifaceSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-            implet.adde(ifaceSym.valor)
+            implet.appende(ifaceSym.valor)
         } dum p.congruet(SymbolumGenus.Coma)
     }
 
@@ -351,7 +351,7 @@ functio parseGenusDeclaratio(in Resolvitor r, bivalens abstractum) -> Sententia 
             si estStructor {
                 structor = methodus
             }
-            methodi.adde(methodus)
+            methodi.appende(methodus)
         } secus {
             # Field: type name or name: default
             fixum campusLocus = p.locusActualis()
@@ -363,7 +363,7 @@ functio parseGenusDeclaratio(in Resolvitor r, bivalens abstractum) -> Sententia 
                 valor = r.expressia()
             }
 
-            campi.adde({
+            campi.appende({
                 locus: campusLocus,
                 nomen: campusNomen,
                 typus: typusAnnotatio,
@@ -461,7 +461,7 @@ functio parsePactumDeclaratio(in Resolvitor r) -> Sententia {
             }
         }
 
-        methodi.adde({
+        methodi.appende({
             locus: methodLocus,
             nomen: methodNomen,
             parametra: params,
@@ -538,7 +538,7 @@ functio parseOrdoDeclaratio(in Resolvitor r) -> Sententia {
             }
         }
 
-        membra.adde({
+        membra.appende({
             locus: membrumLocus,
             nomen: membrumNomen,
             valor: valor
@@ -598,7 +598,7 @@ functio parseDiscretioDeclaratio(in Resolvitor r) -> Sententia {
         # Optional fields in braces or parens
         si p.congruet(SymbolumGenus.UncusSin) {
             dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
-                campi.adde(parseVariansCampusNominatus(r))
+                campi.appende(parseVariansCampusNominatus(r))
                 p.congruet(SymbolumGenus.Coma)
             }
             p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
@@ -610,7 +610,7 @@ functio parseDiscretioDeclaratio(in Resolvitor r) -> Sententia {
                     fixum campusTypus = r.adnotatio()
                     fixum campusNomen = (index == 1) sic "value" secus scriptum("value§", index)
                     index += 1
-                    campi.adde({
+                    campi.appende({
                         locus: campusLocus,
                         nomen: campusNomen,
                         typus: campusTypus
@@ -620,7 +620,7 @@ functio parseDiscretioDeclaratio(in Resolvitor r) -> Sententia {
             p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
         }
 
-        variantes.adde({
+        variantes.appende({
             locus: variansLocus,
             nomen: variansNomen,
             campi: campi
@@ -785,7 +785,7 @@ functio parseParametra(in Resolvitor r) -> lista<Parametrum> {
             praedefinitum = r.expressia()
         }
 
-        parametra.adde({
+        parametra.appende({
             locus: paramLocus,
             nomen: nomen,
             alias: paramAlias,
@@ -814,7 +814,7 @@ functio parseTypusParametra(in Resolvitor r) -> lista<TypusParametrum> {
         fixum paramLocus = p.locusActualis()
         fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
 
-        parametra.adde({
+        parametra.appende({
             locus: paramLocus,
             nomen: nomenSym.valor
         } qua TypusParametrum)
@@ -832,7 +832,7 @@ functio parseGenericaNomina(in Resolvitor r) -> lista<textus> {
     # Already consumed '<'
     fac {
         fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-        nomina.adde(nomenSym.valor)
+        nomina.appende(nomenSym.valor)
     } dum p.congruet(SymbolumGenus.Coma)
 
     p.expecta(SymbolumGenus.Maior, ParserErrorCodice.ExpectaturAngulusDex)
@@ -945,7 +945,7 @@ functio parseImportaSententia(in Resolvitor r) -> Sententia {
                 locale = aliasSym.valor
             }
 
-            specificatores.adde({
+            specificatores.appende({
                 locus: specLocus,
                 importatum: importatum,
                 locale: locale,

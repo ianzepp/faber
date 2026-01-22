@@ -19,11 +19,11 @@ functio genPreamble(de RequiredFeatures requisita) -> textus {
     varia definitions = [] innatum lista<textus>
 
     si requisita.panic {
-        definitions.adde(PANIC)
+        definitions.appende(PANIC)
     }
 
     si requisita.flumina {
-        definitions.adde(FLUMINA)
+        definitions.appende(FLUMINA)
     }
 
     si definitions.longitudo() == 0 {

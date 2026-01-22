@@ -57,7 +57,7 @@ functio genScriptum(in GoGenerator g, de textus exemplar, de lista<Expressia> ar
                 implicitIdx += 1
             }
 
-            argOrder.adde(idx)
+            argOrder.appende(idx)
             formatStr = formatStr + "%v"
         } secus {
             formatStr = formatStr + c
@@ -69,9 +69,9 @@ functio genScriptum(in GoGenerator g, de textus exemplar, de lista<Expressia> ar
     varia args = [] innatum lista<textus>
     ex argOrder fixum idx {
         si idx < argumenta.longitudo() {
-            args.adde(genExpressia(g, argumenta[idx]))
+            args.appende(genExpressia(g, argumenta[idx]))
         } secus {
-            args.adde("nil")
+            args.appende("nil")
         }
     }
 

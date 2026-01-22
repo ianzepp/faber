@@ -83,7 +83,7 @@ functio genGenus(in TsGenerator g, de GenusDeclaratio s) -> textus {
         si m.structor {
             creo = m
         } secus {
-            ceteri.adde(m)
+            ceteri.appende(m)
         }
     }
 
@@ -112,28 +112,28 @@ functio genAutoMergeConstructor(in TsGenerator g, de lista<CampusDeclaratio> cam
     varia instFields = [] innatum lista<CampusDeclaratio>
     ex campi fixum campus {
         si non campus.staticum {
-            instFields.adde(campus)
+            instFields.appende(campus)
         }
     }
 
     varia props = [] innatum lista<textus>
     ex instFields fixum campus {
-        props.adde(scriptum("§?: §", campus.nomen, genTypus(g, campus.typus)))
+        props.appende(scriptum("§?: §", campus.nomen, genTypus(g, campus.typus)))
     }
     fixum overridesType = (instFields.longitudo() > 0) sic scriptum("{ § }", props.coniunge(", ")) secus "Record<string, never>"
 
-    lines.adde(scriptum("§constructor(overrides: § = {}) {", g.ind(), overridesType))
+    lines.appende(scriptum("§constructor(overrides: § = {}) {", g.ind(), overridesType))
     g.intraProfundum()
 
     ex instFields fixum campus {
-        lines.adde(scriptum("§if (overrides.§ !== undefined) { this.§ = overrides.§; }", g.ind(), campus.nomen, campus.nomen, campus.nomen))
+        lines.appende(scriptum("§if (overrides.§ !== undefined) { this.§ = overrides.§; }", g.ind(), campus.nomen, campus.nomen, campus.nomen))
     }
     si hasCreo {
-        lines.adde(scriptum("§this.creo();", g.ind()))
+        lines.appende(scriptum("§this.creo();", g.ind()))
     }
 
     g.exiProfundum()
-    lines.adde(scriptum("§}", g.ind()))
+    lines.appende(scriptum("§}", g.ind()))
 
     redde lines.coniunge("\n")
 }

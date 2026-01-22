@@ -115,7 +115,7 @@ genus Analyzator {
     # Report a semantic error
     @ publica
     functio error(ex textus nuntius, ex Locus locus, si ex textus auxilium) {
-        ego.errores.adde({
+        ego.errores.appende({
             nuntius: nuntius,
             auxilium: auxilium vel "",
             locus: locus
@@ -271,7 +271,7 @@ genus Analyzator {
                 }
             }
             si non iam {
-                existentes.adde(forma)
+                existentes.appende(forma)
             }
         }
     }

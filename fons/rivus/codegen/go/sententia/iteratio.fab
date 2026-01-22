@@ -79,7 +79,7 @@ functio genIteratio(in GoGenerator g, IteratioGenus species, de IteratioVariabil
             ex s.elementa fixum elem {
                 si non elem.omissum et nonnihil elem.nomen {
                     g.intraProfundum()
-                    unpacks.adde(scriptum("§§ := _item[§]", g.ind(), elem.nomen, indice))
+                    unpacks.appende(scriptum("§§ := _item[§]", g.ind(), elem.nomen, indice))
                     g.exiProfundum()
                 }
                 indice = indice + 1

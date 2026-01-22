@@ -24,7 +24,7 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
     si annotatio.nomen == "" et nonnihil annotatio.parametra et nonnihil annotatio.reditus {
         varia paramTypi = [] innatum lista<SemanticTypus>
         ex (annotatio.parametra qua lista<TypusAnnotatio>) fixum param {
-            paramTypi.adde(resolveTypusAnnotatio(r, param))
+            paramTypi.appende(resolveTypusAnnotatio(r, param))
         }
         fixum reditusTypus = resolveTypusAnnotatio(r, annotatio.reditus novum TypusAnnotatio)
         redde functioTypus(paramTypi, reditusTypus, falsum, falsum)
@@ -34,10 +34,10 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
     si nonnihil annotatio.unio {
         varia typi = [] innatum lista<SemanticTypus>
         ex (annotatio.unio qua lista<TypusAnnotatio>) fixum t {
-            typi.adde(resolveTypusAnnotatio(r, t))
+            typi.appende(resolveTypusAnnotatio(r, t))
         }
         si annotatio.nullabilis {
-            typi.adde(NIHIL)
+            typi.appende(NIHIL)
         }
         redde unioTypus(typi)
     }
@@ -48,12 +48,12 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
         ex (annotatio.typusParametra qua lista<TypusParametrum>) fixum p {
             discerne p {
                 casu Typus ut tp {
-                    resolvedParametri.adde(resolveTypusAnnotatio(r, tp.adnotatio))
+                    resolvedParametri.appende(resolveTypusAnnotatio(r, tp.adnotatio))
                 }
                 casu Littera {
                     # EDGE: Numeric literal type params are not needed for self-host yet.
                     r.analyzator().moneIgnotum("type parameter literal resolves to ignotum (numeric literal type params not supported)", annotatio.locus)
-                    resolvedParametri.adde(IGNOTUM)
+                    resolvedParametri.appende(IGNOTUM)
                 }
             }
         }
@@ -287,11 +287,11 @@ functio analyzeFunctioDeclaratio(Resolvitor r, Sententia functioStmt) -> vacuum 
             varia paramTypi = [] innatum lista<SemanticTypus>
             ex f.parametra fixum param {
                 si nonnihil param.typus {
-                    paramTypi.adde(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
+                    paramTypi.appende(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
                 } secus {
                     a.error("Function parameter missing type annotation", param.locus, "Use type-first syntax: functio f(numerus x) { ... }")
                     a.moneIgnotum("missing function parameter type annotation", param.locus)
-                    paramTypi.adde(IGNOTUM)
+                    paramTypi.appende(IGNOTUM)
                 }
             }
 
@@ -412,11 +412,11 @@ functio analyzeGenusDeclaratio(Resolvitor r, Sententia genusStmt) -> vacuum {
                 varia paramTypi = [] innatum lista<SemanticTypus>
                 ex m.parametra fixum param {
                     si nonnihil param.typus {
-                        paramTypi.adde(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
+                        paramTypi.appende(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
                     } secus {
                         a.error("Method parameter missing type annotation", param.locus, "Use type-first syntax: functio f(numerus x) { ... }")
                         a.moneIgnotum("missing method parameter type annotation", param.locus)
-                        paramTypi.adde(IGNOTUM)
+                        paramTypi.appende(IGNOTUM)
                     }
                 }
 
@@ -533,11 +533,11 @@ functio analyzePactumDeclaratio(Resolvitor r, Sententia pactumStmt) -> vacuum {
                 varia paramTypi = [] innatum lista<SemanticTypus>
                 ex methodSignum.parametra fixum param {
                     si nonnihil param.typus {
-                        paramTypi.adde(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
+                        paramTypi.appende(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
                     } secus {
                         a.error("Pactum method parameter missing type annotation", param.locus, "Use type-first syntax: functio f(numerus x) -> numerus")
                         a.moneIgnotum("missing pactum method parameter type annotation", param.locus)
-                        paramTypi.adde(IGNOTUM)
+                        paramTypi.appende(IGNOTUM)
                     }
                 }
 
@@ -619,7 +619,7 @@ functio analyzeDiscretioDeclaratio(Resolvitor r, Sententia discretioStmt) -> vac
             # Record declaration metadata for exhaustiveness checks
             varia variantInfos = [] innatum lista<DiscretioVariansInfo>
             ex d.variantes fixum variante {
-                variantInfos.adde({
+                variantInfos.appende({
                     nomen: variante.nomen,
                     locus: variante.locus
                 } novum DiscretioVariansInfo)

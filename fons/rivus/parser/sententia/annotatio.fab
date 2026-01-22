@@ -137,7 +137,7 @@ functio parseRadixAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
                 p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("got '§'", p.specta(0).valor))
                 rumpe
             }
-            radixForms.adde(p.specta(0).valor)
+            radixForms.appende(p.specta(0).valor)
             p.procede()
         } dum non p.estFinis() et p.specta(0).locus.linea == linea et p.congruet(SymbolumGenus.Coma)
     }
@@ -214,7 +214,7 @@ functio parseVerteAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
                     p.renuncia(ParserErrorCodice.ExpectaturVerteParam, scriptum("got '§'", p.specta(0).valor))
                     rumpe
                 }
-                verteParams.adde(p.specta(0).valor)
+                verteParams.appende(p.specta(0).valor)
                 p.procede()
             } dum p.congruet(SymbolumGenus.Coma)
         }
@@ -348,7 +348,7 @@ functio parseImperiaAnnotation(in Resolvitor r, de Locus locus, numerus linea) -
 
     # Parse subcommand name (string)
     si p.specta(0).species == SymbolumGenus.Textus et p.specta(0).locus.linea == linea {
-        argumenta.adde(p.specta(0).valor)
+        argumenta.appende(p.specta(0).valor)
         p.procede()
     } secus {
         p.renuncia(ParserErrorCodice.ExpectaturTextus, scriptum("@ imperia requires subcommand name, got '§'", p.specta(0).valor))
@@ -384,7 +384,7 @@ functio parseImperiaAnnotation(in Resolvitor r, de Locus locus, numerus linea) -
 
     # Parse module identifier
     si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
-        argumenta.adde(p.specta(0).valor)
+        argumenta.appende(p.specta(0).valor)
         p.procede()
     } secus {
         p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("@ imperia ex requires module name, got '§'", p.specta(0).valor))
@@ -628,36 +628,36 @@ functio parseAnnotationes(in Resolvitor r) -> lista<Annotatio> {
 
         # Dispatch to specialized parsers for stdlib annotations
         si nomen == "innatum" aut nomen == "subsidia" {
-            annotationes.adde(parseTargetMappingAnnotation(r, nomen, locus, linea))
+            annotationes.appende(parseTargetMappingAnnotation(r, nomen, locus, linea))
             perge
         }
 
         si nomen == "radix" {
-            annotationes.adde(parseRadixAnnotation(r, locus, linea))
+            annotationes.appende(parseRadixAnnotation(r, locus, linea))
             perge
         }
 
         si nomen == "verte" {
-            annotationes.adde(parseVerteAnnotation(r, locus, linea))
+            annotationes.appende(parseVerteAnnotation(r, locus, linea))
             perge
         }
 
         # @ imperia "subcommand" ex moduleIdentifier
         # Mounts commands from imported module under a subcommand namespace
         si nomen == "imperia" {
-            annotationes.adde(parseImperiaAnnotation(r, locus, linea))
+            annotationes.appende(parseImperiaAnnotation(r, locus, linea))
             perge
         }
 
         # @ optio <type> <binding> [brevis "x"] [longum "xxx"] [descriptio "..."]
         si nomen == "optio" {
-            annotationes.adde(parseOptioAnnotation(r, locus, linea))
+            annotationes.appende(parseOptioAnnotation(r, locus, linea))
             perge
         }
 
         # @ operandus [ceteri] <type> <name> [descriptio "..."]
         si nomen == "operandus" {
-            annotationes.adde(parseOperandusAnnotation(r, locus, linea))
+            annotationes.appende(parseOperandusAnnotation(r, locus, linea))
             perge
         }
 
@@ -667,10 +667,10 @@ functio parseAnnotationes(in Resolvitor r) -> lista<Annotatio> {
         dum non p.estFinis() et p.specta(0).locus.linea == linea {
             fixum argSym = p.specta(0)
             si argSym.species == SymbolumGenus.Textus {
-                argumenta.adde(argSym.valor)
+                argumenta.appende(argSym.valor)
                 p.procede()
             } sin argSym.species == SymbolumGenus.Numerus {
-                argumenta.adde(argSym.valor)
+                argumenta.appende(argSym.valor)
                 p.procede()
             } sin estNomenAutVerbum(argSym.species) {
                 # Stop at next identifier (likely next annotation or statement)
@@ -680,7 +680,7 @@ functio parseAnnotationes(in Resolvitor r) -> lista<Annotatio> {
             }
         }
 
-        annotationes.adde({
+        annotationes.appende({
             locus: locus,
             nomen: nomen,
             argumenta: argumenta,
@@ -741,10 +741,10 @@ functio parseSectiones(in Resolvitor r) -> lista<SectioAnnotatio> {
         dum non p.estFinis() et p.specta(0).locus.linea == linea {
             fixum argSym = p.specta(0)
             si estNomenAutVerbum(argSym.species) {
-                argumenta.adde(argSym.valor)
+                argumenta.appende(argSym.valor)
                 p.procede()
             } sin argSym.species == SymbolumGenus.Textus {
-                argumenta.adde(argSym.valor)
+                argumenta.appende(argSym.valor)
                 p.procede()
             } secus {
                 # Stop at unexpected token
@@ -752,7 +752,7 @@ functio parseSectiones(in Resolvitor r) -> lista<SectioAnnotatio> {
             }
         }
 
-        sectiones.adde({
+        sectiones.appende({
             locus: locus,
             nomen: nomen,
             argumenta: argumenta

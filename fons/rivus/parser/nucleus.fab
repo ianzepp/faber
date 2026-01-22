@@ -95,7 +95,7 @@ genus Parser {
             }
 
             # Convert and buffer the comment
-            ego.notaePendentes.adde(ego.symbolumAdNotam(s))
+            ego.notaePendentes.appende(ego.symbolumAdNotam(s))
             ego.index += 1
         }
     }
@@ -309,7 +309,7 @@ genus Parser {
     functio renuncia(ParserErrorCodice codice, si de textus contextus) -> vacuum {
         fixum s = ego.specta(0)
         fixum err = error(codice, s.locus, contextus)
-        ego.errores.adde(err)
+        ego.errores.appende(err)
     }
 
     # Expect specific token type or record error

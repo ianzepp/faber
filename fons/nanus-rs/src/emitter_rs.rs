@@ -1353,7 +1353,8 @@ fn map_unary_op(op: &str) -> &'static str {
 
 fn map_method_name(name: &str) -> Option<&'static str> {
     let map: HashMap<&str, &str> = [
-        ("adde", "push"),
+        ("appende", "push"),
+        ("adde", "insert"),
         ("praepone", "insert"),
         ("remove", "pop"),
         ("decapita", "remove"),

@@ -117,13 +117,13 @@ functio genLoopVariable(de IteratioVariabilis variabilis) -> textus {
             varia parts = [] innatum lista<textus>
             ex s.elementa fixum elem {
                 si elem.omissum {
-                    parts.adde("")
+                    parts.appende("")
                 } sin elem.residuum et nonnihil elem.nomen {
-                    parts.adde(scriptum("...§", elem.nomen))
+                    parts.appende(scriptum("...§", elem.nomen))
                 } sin nonnihil elem.nomen {
-                    parts.adde(elem.nomen qua textus)
+                    parts.appende(elem.nomen qua textus)
                 } secus {
-                    parts.adde("")
+                    parts.appende("")
                 }
             }
             redde scriptum("[§]", parts.coniunge(", "))

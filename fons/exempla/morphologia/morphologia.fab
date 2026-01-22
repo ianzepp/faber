@@ -30,10 +30,10 @@ incipit {
     fixum extended = items.addita(6)
     scribe "addita (returns new):", extended
 
-    # adde (imperative) - mutates in place
+    # appende (imperative) - mutates in place
     varia list = [1, 2, 3]
-    list.adde(4)
-    scribe "adde (mutates):", list
+    list.appende(4)
+    scribe "appende (mutates):", list
 
     # ==========================================================================
     # REVERSE: invert-/invers-

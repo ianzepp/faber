@@ -62,7 +62,7 @@ functio mappataExemplar()
 @ verte py "append"
 @ verte rs "push"
 @ verte cpp "push_back"
-@ verte zig (ego, elem, alloc) -> "§.adde(§, §)"
+@ verte zig (ego, elem, alloc) -> "§.appende(§, §)"
 @ externa
 functio addeExemplar()
 

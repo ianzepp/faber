@@ -14,7 +14,7 @@ incipit {
     # Mutation block with array
     varia numbers = [1, 2, 3]
     in numbers {
-        numbers.adde(4)
+        numbers.appende(4)
         numbers[0] = 10
         scribe numbers
     }

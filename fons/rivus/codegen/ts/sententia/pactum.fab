@@ -45,7 +45,7 @@ functio genPactum(in TsGenerator g, de textus nomen, de ignotum generaParametra,
     ex methodi fixum methodus {
         varia params = [] innatum lista<textus>
         ex methodus.parametra fixum param {
-            params.adde(genParametrum(g, param))
+            params.appende(genParametrum(g, param))
         }
 
         varia line = scriptum("§§(§)", g.ind(), methodus.nomen, params.coniunge(", "))

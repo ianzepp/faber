@@ -142,7 +142,7 @@ genus Lexor {
     # addeSymbolum = "add a token" - append token to output stream
     # species = token type, valor = lexeme text, locus = source position
     functio addeSymbolum(SymbolumGenus species, ex textus valor, ex Locus locus) -> vacuum {
-        ego.symbola.adde({
+        ego.symbola.appende({
             species: species,
             valor: valor,
             locus: locus,
@@ -154,7 +154,7 @@ genus Lexor {
     # addeVerbum = "add a keyword" - special case for reserved words
     # verbum = "word" - the keyword text (e.g., "si", "functio")
     functio addeVerbum(ex textus verbum, ex Locus locus, si ex VerbumId id) -> vacuum {
-        ego.symbola.adde({
+        ego.symbola.appende({
             species: SymbolumGenus.Verbum,
             valor: verbum,
             locus: locus,
@@ -165,7 +165,7 @@ genus Lexor {
 
     # addeErrorem = "add an error" - record lexical error without stopping
     functio addeErrorem(LexorErrorCodice codice, ex Locus locus) -> vacuum {
-        ego.errores.adde(error(codice, locus))
+        ego.errores.appende(error(codice, locus))
     }
 
     # =========================================================================

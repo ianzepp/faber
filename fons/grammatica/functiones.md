@@ -191,7 +191,7 @@ functio processAll(textus[] urls) -> textus[] {
     varia results = []
     ex urls pro url {
         fixum data = cede fetchData(url)
-        results.adde(data)
+        results.appende(data)
     }
     redde results
 }
@@ -419,7 +419,7 @@ functio processPoints(de Point[] points, in Point[] targets) {
     # points is borrowed (read-only)
     # targets is mutably borrowed
     ex points pro point {
-        targets.adde(point)
+        targets.appende(point)
     }
 }
 ```

@@ -564,12 +564,12 @@ fixum norma = {
     },
     "lista": {
         "methods": {
-            "adde": {
+            "appende": {
                 "ts": { "method": "push" },
                 "py": { "method": "append" },
                 "rs": { "method": "push" },
                 "cpp": { "method": "push_back" },
-                "zig": { "template": "§0.adde(§2, §1)", "params": ["ego", "elem", "alloc"] }
+                "zig": { "template": "§0.appende(§2, §1)", "params": ["ego", "elem", "alloc"] }
             },
             "addita": {
                 "ts": { "template": "[...§, §]", "params": ["ego", "elem"] },

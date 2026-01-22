@@ -1,6 +1,6 @@
 # lista.fab - Standard Library lista<T> Definition
 #
-# Vertical slice: just `adde` for now to prove the annotation-driven codegen.
+# Vertical slice: just `appende` for now to prove the annotation-driven codegen.
 # See consilia/futura/norma-faber.md for the full design.
 
 # =============================================================================
@@ -14,15 +14,15 @@ genus lista { }
 # ADDING ELEMENTS
 # =============================================================================
 
-# Add element to end (mutates in place)
-@ radix add, imperativus, perfectum
+# Append element to end (mutates in place)
+@ radix append, imperativus, perfectum
 @ verte ts "push"
 @ verte py "append"
 @ verte rs "push"
 @ verte cpp "push_back"
-@ verte zig (ego, elem, alloc) -> "§0.adde(§2, §1)"
+@ verte zig (ego, elem, alloc) -> "§0.appende(§2, §1)"
 @ externa
-functio adde(T elem) -> vacuum
+functio appende(T elem) -> vacuum
 
 # Add element to end (returns new list)
 @ verte ts (ego, elem) -> "[...§, §]"

@@ -65,15 +65,15 @@ functio parseProbandumSententia(in Resolvitor r) -> Sententia {
         si sym.species == SymbolumGenus.Verbum {
             elige sym.verbum {
                 casu "probandum" {
-                    corpus.adde(parseProbandumSententia(r))
+                    corpus.appende(parseProbandumSententia(r))
                 }
                 casu "proba" {
-                    corpus.adde(parseProbaSententia(r))
+                    corpus.appende(parseProbaSententia(r))
                 }
-                casu "praepara" { corpus.adde(parsePraeparaMassa(r)) }
-                casu "praeparabit" { corpus.adde(parsePraeparaMassa(r)) }
-                casu "postpara" { corpus.adde(parsePraeparaMassa(r)) }
-                casu "postparabit" { corpus.adde(parsePraeparaMassa(r)) }
+                casu "praepara" { corpus.appende(parsePraeparaMassa(r)) }
+                casu "praeparabit" { corpus.appende(parsePraeparaMassa(r)) }
+                casu "postpara" { corpus.appende(parsePraeparaMassa(r)) }
+                casu "postparabit" { corpus.appende(parsePraeparaMassa(r)) }
                 ceterum {
                     # WHY: Test suites are restricted to suite/test/hook forms.
                     p.renuncia(ParserErrorCodice.ExpectaturProba, scriptum("got '§'", sym.valor))

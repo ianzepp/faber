@@ -314,8 +314,8 @@ functio hintForEnglishMethod(de textus typus, de textus methodus) -> si textus {
     si typus == "lista" {
         elige methodus {
             # Adding elements
-            casu "push" reddit "Use adde(): lista.adde(elem)"
-            casu "append" reddit "Use adde(): lista.adde(elem)"
+            casu "push" reddit "Use appende(): lista.appende(elem)"
+            casu "append" reddit "Use appende(): lista.appende(elem)"
             casu "unshift" reddit "Use praepone(): lista.praepone(elem)"
 
             # Removing elements

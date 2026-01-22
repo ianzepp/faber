@@ -144,7 +144,7 @@ functio parseDestructuraSententia(in Resolvitor r) -> Sententia {
             locale = parseNomenVelVerbum(r)
         }
 
-        specificatores.adde({
+        specificatores.appende({
             locus: specLocus,
             importatum: importatum,
             locale: locale,
@@ -194,7 +194,7 @@ functio parseSeriesDestructura(in Resolvitor r) -> lista<SeriesDestructuraElemen
                 p.procede()
             }
 
-            elementa.adde({
+            elementa.appende({
                 locus: locus,
                 nomen: nomen,
                 residuum: residuum,

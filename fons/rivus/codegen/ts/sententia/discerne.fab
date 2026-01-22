@@ -32,7 +32,7 @@ functio genDiscerne(in TsGenerator g, de lista<Expressia> discriminantes, de lis
     # Generate expressions for all discriminants
     varia discriminantStrs = [] innatum lista<textus>
     ex discriminantes fixum d {
-        discriminantStrs.adde(genExpressia(g, d))
+        discriminantStrs.appende(genExpressia(g, d))
     }
 
     varia result = scriptum("§// discerne\n", g.ind())
@@ -46,7 +46,7 @@ functio genDiscerne(in TsGenerator g, de lista<Expressia> discriminantes, de lis
             # Wildcard matches anything - no condition needed
             si non pattern.estWildcard {
                 fixum disc = discriminantStrs[i]
-                conditions.adde(scriptum("§.tag === '§'", disc, pattern.variansNomen))
+                conditions.appende(scriptum("§.tag === '§'", disc, pattern.variansNomen))
             }
             i += 1
         }

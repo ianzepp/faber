@@ -27,35 +27,35 @@ functio generateGo(de lista<Sententia> corpus) -> textus {
             # Entry points - inline their body statements into func main
             casu IncipitSententia ut s {
                 si nonnihil s.corpus {
-                    mainSententiae.adde(s.corpus)
+                    mainSententiae.appende(s.corpus)
                 }
                 si nonnihil s.ergo {
-                    mainSententiae.adde(s.ergo qua Sententia)
+                    mainSententiae.appende(s.ergo qua Sententia)
                 }
             }
 
             casu IncipietSententia ut s {
                 si nonnihil s.corpus {
-                    mainSententiae.adde(s.corpus)
+                    mainSententiae.appende(s.corpus)
                 }
                 si nonnihil s.ergo {
-                    mainSententiae.adde(s.ergo qua Sententia)
+                    mainSententiae.appende(s.ergo qua Sententia)
                 }
             }
 
             # Declarations (top-level)
-            casu FunctioDeclaratio { declarationes.adde(stmt) }
-            casu GenusDeclaratio { declarationes.adde(stmt) }
-            casu DiscretioDeclaratio { declarationes.adde(stmt) }
-            casu OrdoDeclaratio { declarationes.adde(stmt) }
-            casu PactumDeclaratio { declarationes.adde(stmt) }
-            casu TypusAliasDeclaratio { declarationes.adde(stmt) }
-            casu ImportaSententia { declarationes.adde(stmt) }
-            casu VariaSententia { declarationes.adde(stmt) }
+            casu FunctioDeclaratio { declarationes.appende(stmt) }
+            casu GenusDeclaratio { declarationes.appende(stmt) }
+            casu DiscretioDeclaratio { declarationes.appende(stmt) }
+            casu OrdoDeclaratio { declarationes.appende(stmt) }
+            casu PactumDeclaratio { declarationes.appende(stmt) }
+            casu TypusAliasDeclaratio { declarationes.appende(stmt) }
+            casu ImportaSententia { declarationes.appende(stmt) }
+            casu VariaSententia { declarationes.appende(stmt) }
 
             # Everything else is executable
             ceterum {
-                mainSententiae.adde(stmt)
+                mainSententiae.appende(stmt)
             }
         }
     }
@@ -63,7 +63,7 @@ functio generateGo(de lista<Sententia> corpus) -> textus {
     # Generate declarations
     varia declarationesLines = [] innatum lista<textus>
     ex declarationes fixum s {
-        declarationesLines.adde(genSententia(g, s))
+        declarationesLines.appende(genSententia(g, s))
     }
     fixum declsBody = declarationesLines.coniunge("\n")
 
@@ -75,7 +75,7 @@ functio generateGo(de lista<Sententia> corpus) -> textus {
         g.intraProfundum()
         varia mainLines = [] innatum lista<textus>
         ex mainSententiae fixum s {
-            mainLines.adde(genSententia(g, s))
+            mainLines.appende(genSententia(g, s))
         }
         g.exiProfundum()
         fixum mainContent = mainLines.coniunge("\n")
@@ -87,12 +87,12 @@ functio generateGo(de lista<Sententia> corpus) -> textus {
 
     varia parts = [] innatum lista<textus>
     si preamble != "" {
-        parts.adde(preamble)
+        parts.appende(preamble)
     }
     si declsBody != "" {
-        parts.adde(declsBody)
+        parts.appende(declsBody)
     }
-    parts.adde(mainBody)
+    parts.appende(mainBody)
 
     redde parts.coniunge("\n\n")
 }
@@ -106,24 +106,24 @@ functio genPreamble(in GoGenerator g) -> textus {
     varia parts = [] innatum lista<textus>
 
     # Package declaration - always main for executables
-    parts.adde("package main")
+    parts.appende("package main")
 
     # Imports based on required features
     varia imports = [] innatum lista<textus>
 
     si g.requisita.fmt {
-        imports.adde("\"fmt\"")
+        imports.appende("\"fmt\"")
     }
 
     si g.requisita.errors {
-        imports.adde("\"errors\"")
+        imports.appende("\"errors\"")
     }
 
     si imports.longitudo() > 0 {
         si imports.longitudo() == 1 {
-            parts.adde(scriptum("import §", imports[0]))
+            parts.appende(scriptum("import §", imports[0]))
         } secus {
-            parts.adde(scriptum("import (\n\t§\n)", imports.coniunge("\n\t")))
+            parts.appende(scriptum("import (\n\t§\n)", imports.coniunge("\n\t")))
         }
     }
 

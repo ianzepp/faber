@@ -338,7 +338,7 @@ export const norma: Record<string, NormaCollection> = {
   },
   "lista": {
     "methods": {
-      "adde": {
+      "appende": {
         "method": "append"
       },
       "addita": {
@@ -552,7 +552,7 @@ export const radixForms: Record<string, Record<string, string[]>> = {
     "purga": ["purg","imperativus"]
   },
   "lista": {
-    "adde": ["add","imperativus","perfectum"],
+    "appende": ["append","imperativus","perfectum"],
     "praepone": ["praepon","imperativus","perfectum"],
     "remove": ["remov","imperativus","perfectum"],
     "decapita": ["decapit","imperativus","perfectum"],

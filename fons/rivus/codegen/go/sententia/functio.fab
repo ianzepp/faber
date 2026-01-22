@@ -66,7 +66,7 @@ functio genFunctio(in GoGenerator g, de FunctioDeclaratio f) -> textus {
             varia names = [] innatum lista<textus>
             ex gp fixum p {
                 # Go generics need type constraint, default to 'any'
-                names.adde(scriptum("§ any", p.nomen))
+                names.appende(scriptum("§ any", p.nomen))
             }
             result = scriptum("§[§]", result, names.coniunge(", "))
         }
@@ -75,7 +75,7 @@ functio genFunctio(in GoGenerator g, de FunctioDeclaratio f) -> textus {
     # Parameters
     varia params = [] innatum lista<textus>
     ex f.parametra fixum param {
-        params.adde(genParametrum(g, param))
+        params.appende(genParametrum(g, param))
     }
     result = scriptum("§(§)", result, params.coniunge(", "))
 

@@ -114,10 +114,10 @@ functio resolveTypusShallow(de TypusAnnotatio annotatio) -> SemanticTypus {
         ex (annotatio.typusParametra qua lista<TypusParametrum>) fixum p {
             discerne p {
                 casu Typus ut tp {
-                    resolvedParametri.adde(resolveTypusShallow(tp.adnotatio))
+                    resolvedParametri.appende(resolveTypusShallow(tp.adnotatio))
                 }
                 casu _ {
-                    resolvedParametri.adde(IGNOTUM)
+                    resolvedParametri.appende(IGNOTUM)
                 }
             }
         }
@@ -196,9 +196,9 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
                     varia paramTypi = [] innatum lista<SemanticTypus>
                     ex methodSignum.parametra fixum param {
                         si nonnihil param.typus {
-                            paramTypi.adde(resolveTypusShallow(param.typus novum TypusAnnotatio))
+                            paramTypi.appende(resolveTypusShallow(param.typus novum TypusAnnotatio))
                         } secus {
-                            paramTypi.adde(IGNOTUM)
+                            paramTypi.appende(IGNOTUM)
                         }
                     }
 
@@ -235,7 +235,7 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
 
                 varia variantInfos = [] innatum lista<DiscretioVariansInfo>
                 ex d.variantes fixum variante {
-                    variantInfos.adde({
+                    variantInfos.appende({
                         nomen: variante.nomen,
                         locus: variante.locus
                     } novum DiscretioVariansInfo)

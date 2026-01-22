@@ -16,8 +16,8 @@ incipit ergo cura arena fixum alloc {
 
     # Empty lista (Array)
     varia items = [] innatum lista<textus>
-    items.adde("alpha")
-    items.adde("beta")
+    items.appende("alpha")
+    items.appende("beta")
     scribe items.longitudo()  # 2
 
     # Non-empty tabula with initial values

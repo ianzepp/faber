@@ -73,11 +73,11 @@ functio mergeSectiones(
     varia result = [] innatum lista<SectioAnnotatio>
 
     si nonnihil manifest {
-        ex manifest fixum s { result.adde(s) }
+        ex manifest fixum s { result.appende(s) }
     }
 
     si nonnihil source {
-        ex source fixum s { result.adde(s) }
+        ex source fixum s { result.appende(s) }
     }
 
     redde result
@@ -136,10 +136,10 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
             varia paramTypi = [] innatum lista<SemanticTypus>
             ex f.parametra fixum param {
                 si nonnihil param.typus {
-                    paramTypi.adde(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
+                    paramTypi.appende(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
                 } secus {
                     a.moneIgnotum("predeclare: missing function parameter type annotation", param.locus)
-                    paramTypi.adde(IGNOTUM)
+                    paramTypi.appende(IGNOTUM)
                 }
             }
             # WHY: Preserve declared return types so callers can infer receiver types

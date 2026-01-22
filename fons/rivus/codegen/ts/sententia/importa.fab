@@ -32,9 +32,9 @@ functio genImporta(in TsGenerator g, de textus fons, de lista<ImportaSpecificato
     varia specs = [] innatum lista<textus>
     ex specificatores fixum spec {
         si spec.importatum == spec.locale {
-            specs.adde(spec.importatum)
+            specs.appende(spec.importatum)
         } secus {
-            specs.adde(scriptum("§ as §", spec.importatum, spec.locale))
+            specs.appende(scriptum("§ as §", spec.importatum, spec.locale))
         }
     }
 
@@ -49,11 +49,11 @@ functio genDestructura(in TsGenerator g, de Expressia fons, VariaGenus species, 
     varia specs = [] innatum lista<textus>
     ex specificatores fixum spec {
         si spec.residuum {
-            specs.adde(scriptum("...§", spec.locale))
+            specs.appende(scriptum("...§", spec.locale))
         } sin spec.importatum == spec.locale {
-            specs.adde(spec.importatum)
+            specs.appende(spec.importatum)
         } secus {
-            specs.adde(scriptum("§: §", spec.importatum, spec.locale))
+            specs.appende(scriptum("§: §", spec.importatum, spec.locale))
         }
     }
 
@@ -68,11 +68,11 @@ functio genSeriesDestructura(in TsGenerator g, de lista<SeriesDestructuraElement
     varia items = [] innatum lista<textus>
     ex elementa fixum elem {
         si elem.omissum {
-            items.adde("")
+            items.appende("")
         } sin elem.residuum {
-            items.adde(scriptum("...§", elem.nomen))
+            items.appende(scriptum("...§", elem.nomen))
         } secus {
-            items.adde(elem.nomen)
+            items.appende(elem.nomen)
         }
     }
 

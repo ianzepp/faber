@@ -40,15 +40,15 @@ functio genDiscretio(in TsGenerator g, de textus nomen, de ignotum generaParamet
             member = scriptum("§; §: §", member, campus.nomen, genTypus(g, campus.typus))
         }
         member = scriptum("§ }", member)
-        lines.adde(scriptum("§§type §§ = §;", g.ind(), exportPrefix, varians.nomen, params, member))
+        lines.appende(scriptum("§§type §§ = §;", g.ind(), exportPrefix, varians.nomen, params, member))
     }
 
     varia unionMembers = [] innatum lista<textus>
     ex variantes fixum varians {
-        unionMembers.adde(scriptum("§§", varians.nomen, params))
+        unionMembers.appende(scriptum("§§", varians.nomen, params))
     }
 
-    lines.adde(scriptum("§§type §§ = §;", g.ind(), exportPrefix, nomen, params, unionMembers.coniunge(" | ")))
+    lines.appende(scriptum("§§type §§ = §;", g.ind(), exportPrefix, nomen, params, unionMembers.coniunge(" | ")))
 
     redde lines.coniunge("\n")
 }

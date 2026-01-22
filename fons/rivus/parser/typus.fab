@@ -62,9 +62,9 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
     si p.congruet(SymbolumGenus.ParensSin) {
         varia parametra = [] innatum lista<TypusAnnotatio>
         si non p.proba(SymbolumGenus.ParensDex) {
-            parametra.adde(r.adnotatio())
+            parametra.appende(r.adnotatio())
             dum p.congruet(SymbolumGenus.Coma) {
-                parametra.adde(r.adnotatio())
+                parametra.appende(r.adnotatio())
             }
         }
 
@@ -121,13 +121,13 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
             # Numeric literal parameter (e.g., numerus<32>)
             # TODO: Handle numeric type params properly
             fixum litSym = p.procede()
-            parametra.adde(finge Littera {
+            parametra.appende(finge Littera {
                 valor: litSym.valor
             } qua TypusParametrum)
         } secus {
             # Recursive type annotation parameter - use Resolvitor
             fixum param = r.adnotatio()
-            parametra.adde(finge Typus {
+            parametra.appende(finge Typus {
                 adnotatio: param
             } qua TypusParametrum)
         }
@@ -136,12 +136,12 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
         dum p.congruet(SymbolumGenus.Coma) {
             si p.proba(SymbolumGenus.Numerus) {
                 fixum litSym = p.procede()
-                parametra.adde(finge Littera {
+                parametra.appende(finge Littera {
                     valor: litSym.valor
                 } qua TypusParametrum)
             } secus {
                 fixum param = r.adnotatio()
-                parametra.adde(finge Typus {
+                parametra.appende(finge Typus {
                     adnotatio: param
                 } qua TypusParametrum)
             }
@@ -186,7 +186,7 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
         ex parametra fixum param {
             discerne param {
                 casu Typus ut t {
-                    unioParametra.adde(t.adnotatio)
+                    unioParametra.appende(t.adnotatio)
                 }
                 casu _ tacet
             }

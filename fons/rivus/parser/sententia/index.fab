@@ -93,7 +93,7 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
         fixum sectiones = parseSectiones(r)
         # Accumulate on parser for later extraction by parseProgramma
         ex sectiones fixum s {
-            p.sectiones.adde(s)
+            p.sectiones.appende(s)
         }
         redde parseSententiaSineNotis(r)
     }
@@ -206,7 +206,7 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
                             p.tags = [] innatum lista<textus>
                         }
                         si positivum a.argumenta.longitudo() {
-                            (p.tags qua lista<textus>).adde(a.argumenta[0])
+                            (p.tags qua lista<textus>).appende(a.argumenta[0])
                         }
                     }
                     si a.nomen == "temporis" {
@@ -254,7 +254,7 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
                             s.tags = [] innatum lista<textus>
                         }
                         si positivum a.argumenta.longitudo() {
-                            (s.tags qua lista<textus>).adde(a.argumenta[0])
+                            (s.tags qua lista<textus>).appende(a.argumenta[0])
                         }
                     }
                 }

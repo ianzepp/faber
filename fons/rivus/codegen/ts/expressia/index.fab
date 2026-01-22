@@ -200,7 +200,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
         casu VocatioExpressia ut e {
             varia args = [] innatum lista<textus>
             ex (e.argumenta qua lista<Expressia>) fixum arg {
-                args.adde(genExpressia(g, arg))
+                args.appende(genExpressia(g, arg))
             }
 
             # WHY: Check for stdlib method translation via norma-registry.
@@ -296,11 +296,11 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
         casu NovumExpressia ut e {
             varia args = [] innatum lista<textus>
             ex (e.argumenta qua lista<Expressia>) fixum arg {
-                args.adde(genExpressia(g, arg))
+                args.appende(genExpressia(g, arg))
             }
             # WHY: novum supports optional override object as a final argument.
             si nonnihil e.initor {
-                args.adde(genExpressia(g, e.initor))
+                args.appende(genExpressia(g, e.initor))
             }
             redde scriptum("new §(§)", genExpressia(g, e.vocatum), args.coniunge(", "))
         }
@@ -340,7 +340,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
         casu SeriesExpressia ut e {
             varia items = [] innatum lista<textus>
             ex (e.elementa qua lista<Expressia>) fixum elem {
-                items.adde(genExpressia(g, elem))
+                items.appende(genExpressia(g, elem))
             }
             redde scriptum("[§]", items.coniunge(", "))
         }
@@ -358,9 +358,9 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
             varia params = [] innatum lista<textus>
             ex (e.parametra qua lista<ClausuraParametrum>) fixum p {
                 si nonnihil p.typus {
-                    params.adde(scriptum("§: §", p.nomen, genTypus(g, p.typus novum TypusAnnotatio)))
+                    params.appende(scriptum("§: §", p.nomen, genTypus(g, p.typus novum TypusAnnotatio)))
                 } secus {
-                    params.adde(p.nomen)
+                    params.appende(p.nomen)
                 }
             }
             varia retType = ""
@@ -393,11 +393,11 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
         casu FingeExpressia ut e {
             # finge Click { x: 10 } qua Event -> { tag: 'Click', x: 10 }
             varia props = [] innatum lista<textus>
-            props.adde(scriptum("tag: '§'", e.variansNomen))
+            props.appende(scriptum("tag: '§'", e.variansNomen))
             ex (e.campi qua lista<ObiectumProprietas>) fixum campo {
                 fixum key = genExpressia(g, campo.clavis)
                 fixum val = genExpressia(g, campo.valor)
-                props.adde(scriptum("§: §", key, val))
+                props.appende(scriptum("§: §", key, val))
             }
             redde scriptum("{ § }", props.coniunge(", "))
         }
@@ -517,7 +517,7 @@ functio genPraefixumMassa(in TsGenerator g, de lista<Sententia> corpus) -> textu
     }
     varia lines = [] innatum lista<textus>
     ex corpus fixum stmt {
-        lines.adde(genPraefixumSententia(g, stmt))
+        lines.appende(genPraefixumSententia(g, stmt))
     }
     redde lines.coniunge("\n")
 }
@@ -668,7 +668,7 @@ functio genTabulaEntries(in TsGenerator g, de ObiectumExpressia obj, de textus k
     ex (obj.proprietates qua lista<ObiectumProprietas>) fixum prop {
         fixum key = genMapKey(g, prop.clavis)
         fixum val = genExpressia(g, prop.valor)
-        entries.adde(scriptum("[§, §]", key, val))
+        entries.appende(scriptum("[§, §]", key, val))
     }
     redde scriptum("new Map<§, §>([§])", keyType, valueType, entries.coniunge(", "))
 }
@@ -842,13 +842,13 @@ functio applyNormaTemplate(de textus template, de lista<textus> params, de textu
     varia argIdx = 0
     ex params fixum param {
         si param == "ego" {
-            values.adde(obj)
+            values.appende(obj)
         } secus {
             si argIdx < args.longitudo() {
-                values.adde(args[argIdx])
+                values.appende(args[argIdx])
                 argIdx += 1
             } secus {
-                values.adde("")
+                values.appende("")
             }
         }
     }

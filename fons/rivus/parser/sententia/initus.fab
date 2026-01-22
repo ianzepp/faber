@@ -275,7 +275,7 @@ functio parseAdSententia(in Resolvitor r) -> Sententia {
     varia argumenta = [] innatum lista<Expressia>
     si non p.proba(SymbolumGenus.ParensDex) {
         fac {
-            argumenta.adde(r.expressia())
+            argumenta.appende(r.expressia())
         } dum p.congruet(SymbolumGenus.Coma)
     }
 

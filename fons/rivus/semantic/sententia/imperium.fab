@@ -377,7 +377,7 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                                     si missingCount == 1 {
                                         firstMissing = variansInfo.nomen
                                     }
-                                    quoted.adde(scriptum("'§'", variansInfo.nomen))
+                                    quoted.appende(scriptum("'§'", variansInfo.nomen))
                                 }
                             }
 

@@ -36,7 +36,7 @@ functio genOrdo(in TsGenerator g, de textus nomen, de lista<OrdoMembrum> membra,
     si non habetValores {
         varia nomina = [] innatum lista<textus>
         ex membra fixum membrum {
-            nomina.adde(membrum.nomen)
+            nomina.appende(membrum.nomen)
         }
         result = scriptum("§§§\n", result, g.ind(), nomina.coniunge(", "))
         g.exiProfundum()

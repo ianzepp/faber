@@ -30,29 +30,29 @@ functio genGenus(in GoGenerator g, de GenusDeclaratio s) -> textus {
         si gp.longitudo() > 0 {
             varia params = [] innatum lista<textus>
             ex gp fixum p {
-                params.adde(scriptum("§ any", p))
+                params.appende(scriptum("§ any", p))
             }
             header = scriptum("§[§]", header, params.coniunge(", "))
         }
     }
 
     varia lines = [] innatum lista<textus>
-    lines.adde(scriptum("§ struct {", header))
+    lines.appende(scriptum("§ struct {", header))
     g.intraProfundum()
     ex s.campi fixum campus {
         fixum fieldName = campusNomenGo(campus)
         fixum fieldType = genTypus(g, campus.typus)
-        lines.adde(scriptum("§§ §", g.ind(), fieldName, fieldType))
+        lines.appende(scriptum("§§ §", g.ind(), fieldName, fieldType))
     }
     g.exiProfundum()
-    lines.adde(scriptum("§}", g.ind()))
+    lines.appende(scriptum("§}", g.ind()))
 
-    lines.adde("")
-    lines.adde(genGenusConstructor(g, typeName))
+    lines.appende("")
+    lines.appende(genGenusConstructor(g, typeName))
 
     ex s.methodi fixum methodus {
-        lines.adde("")
-        lines.adde(genGenusMethod(g, typeName, methodus qua Sententia))
+        lines.appende("")
+        lines.appende(genGenusMethod(g, typeName, methodus qua Sententia))
     }
 
     redde lines.coniunge("\n")
@@ -75,11 +75,11 @@ functio habetErrataModificator(si de ignotum modificatores) -> bivalens {
 
 functio genGenusConstructor(in GoGenerator g, de textus typeName) -> textus {
     varia lines = [] innatum lista<textus>
-    lines.adde(scriptum("§func New§(_ ...interface{}) *§ {", g.ind(), capitaliza(typeName), typeName))
+    lines.appende(scriptum("§func New§(_ ...interface{}) *§ {", g.ind(), capitaliza(typeName), typeName))
     g.intraProfundum()
-    lines.adde(scriptum("§return &§{}", g.ind(), typeName))
+    lines.appende(scriptum("§return &§{}", g.ind(), typeName))
     g.exiProfundum()
-    lines.adde(scriptum("§}", g.ind()))
+    lines.appende(scriptum("§}", g.ind()))
     redde lines.coniunge("\n")
 }
 
@@ -107,7 +107,7 @@ functio genGenusMethod(in GoGenerator g, de textus typeName, de Sententia method
                 si gp.longitudo() > 0 {
                     varia names = [] innatum lista<textus>
                     ex gp fixum p {
-                        names.adde(scriptum("§ any", p.nomen))
+                        names.appende(scriptum("§ any", p.nomen))
                     }
                     result = scriptum("§[§]", result, names.coniunge(", "))
                 }
@@ -116,7 +116,7 @@ functio genGenusMethod(in GoGenerator g, de textus typeName, de Sententia method
             # Parameters
             varia params = [] innatum lista<textus>
             ex (f.parametra qua lista<Parametrum>) fixum param {
-                params.adde(genParametrum(g, param))
+                params.appende(genParametrum(g, param))
             }
             result = scriptum("§(§)", result, params.coniunge(", "))
 

@@ -56,26 +56,26 @@ functio genProbandum(in TsGenerator g, de textus nomen, de lista<Sententia> corp
     # Legacy mode: generate describe()
     si non g.inProbaStandalone {
         varia lines = [] innatum lista<textus>
-        lines.adde(scriptum("§describe(\"§\", () => {", g.ind(), nomen))
+        lines.appende(scriptum("§describe(\"§\", () => {", g.ind(), nomen))
 
         g.intraProfundum()
         ex corpus fixum stmt {
-            lines.adde(genSententia(g, stmt))
+            lines.appende(genSententia(g, stmt))
         }
         g.exiProfundum()
 
-        lines.adde(scriptum("§});", g.ind()))
+        lines.appende(scriptum("§});", g.ind()))
         redde lines.coniunge("\n")
     }
 
     # Standalone mode: push suite name, generate members, pop
-    g.probaSuiteStack.adde(sanitizeNomen(nomen))
+    g.probaSuiteStack.appende(sanitizeNomen(nomen))
 
     varia lines = [] innatum lista<textus>
-    lines.adde(scriptum("§// Suite: §", g.ind(), nomen))
+    lines.appende(scriptum("§// Suite: §", g.ind(), nomen))
 
     ex corpus fixum stmt {
-        lines.adde(genSententia(g, stmt))
+        lines.appende(genSententia(g, stmt))
     }
 
     g.probaSuiteStack.remove()
@@ -185,30 +185,30 @@ functio genProba(
         entry["platformOnly"] = solumIn
     }
 
-    g.probaRegistrum.adde(entry)
+    g.probaRegistrum.appende(entry)
 
     # Generate standalone function
     varia lines = [] innatum lista<textus>
-    lines.adde(scriptum("§function §(): string | null {", g.ind(), funcName))
+    lines.appende(scriptum("§function §(): string | null {", g.ind(), funcName))
     g.intraProfundum()
-    lines.adde(scriptum("§try {", g.ind()))
+    lines.appende(scriptum("§try {", g.ind()))
     g.intraProfundum()
 
     # Generate body
     fixum body = genSententia(g, corpus)
     si body.longitudo() > 0 {
-        lines.adde(body)
+        lines.appende(body)
     }
 
-    lines.adde(scriptum("§return null;", g.ind()))
+    lines.appende(scriptum("§return null;", g.ind()))
     g.exiProfundum()
-    lines.adde(scriptum("§} catch (e) {", g.ind()))
+    lines.appende(scriptum("§} catch (e) {", g.ind()))
     g.intraProfundum()
-    lines.adde(scriptum("§return String(e);", g.ind()))
+    lines.appende(scriptum("§return String(e);", g.ind()))
     g.exiProfundum()
-    lines.adde(scriptum("§}", g.ind()))
+    lines.appende(scriptum("§}", g.ind()))
     g.exiProfundum()
-    lines.adde(scriptum("§}", g.ind()))
+    lines.appende(scriptum("§}", g.ind()))
 
     redde lines.coniunge("\n")
 }
@@ -264,174 +264,174 @@ functio genProbaHarness(in TsGenerator g) -> textus {
     }
 
     varia lines = [] innatum lista<textus>
-    lines.adde("")
-    lines.adde("// =============================================================================")
-    lines.adde("// TEST HARNESS")
-    lines.adde("// =============================================================================")
-    lines.adde("")
+    lines.appende("")
+    lines.appende("// =============================================================================")
+    lines.appende("// TEST HARNESS")
+    lines.appende("// =============================================================================")
+    lines.appende("")
 
     # Generate registry type
-    lines.adde("interface __TestEntry {")
-    lines.adde("  suite: string;")
-    lines.adde("  name: string;")
-    lines.adde("  fn: () => string | null;")
-    lines.adde("  skip?: boolean;")
-    lines.adde("  skipReason?: string;")
-    lines.adde("  todo?: boolean;")
-    lines.adde("  todoReason?: string;")
-    lines.adde("  only?: boolean;")
-    lines.adde("  tags?: string[];")
-    lines.adde("  timeout?: number;")
-    lines.adde("  benchmark?: boolean;")
-    lines.adde("  repeat?: number;")
-    lines.adde("  retries?: number;")
-    lines.adde("  requireEnv?: string;")
-    lines.adde("  platformOnly?: string;")
-    lines.adde("}")
-    lines.adde("")
+    lines.appende("interface __TestEntry {")
+    lines.appende("  suite: string;")
+    lines.appende("  name: string;")
+    lines.appende("  fn: () => string | null;")
+    lines.appende("  skip?: boolean;")
+    lines.appende("  skipReason?: string;")
+    lines.appende("  todo?: boolean;")
+    lines.appende("  todoReason?: string;")
+    lines.appende("  only?: boolean;")
+    lines.appende("  tags?: string[];")
+    lines.appende("  timeout?: number;")
+    lines.appende("  benchmark?: boolean;")
+    lines.appende("  repeat?: number;")
+    lines.appende("  retries?: number;")
+    lines.appende("  requireEnv?: string;")
+    lines.appende("  platformOnly?: string;")
+    lines.appende("}")
+    lines.appende("")
 
     # Generate registry (using bracket notation for plain object entries)
-    lines.adde("const __tests: __TestEntry[] = [")
+    lines.appende("const __tests: __TestEntry[] = [")
     ex g.probaRegistrum fixum entry {
         varia parts = [] innatum lista<textus>
-        parts.adde(scriptum("suite: \"§\"", entry["suite"] qua textus))
-        parts.adde(scriptum("name: \"§\"", entry["name"] qua textus))
-        parts.adde(scriptum("fn: §", entry["funcName"] qua textus))
+        parts.appende(scriptum("suite: \"§\"", entry["suite"] qua textus))
+        parts.appende(scriptum("name: \"§\"", entry["name"] qua textus))
+        parts.appende(scriptum("fn: §", entry["funcName"] qua textus))
 
         si nonnihil entry["skip"] {
-            parts.adde("skip: true")
+            parts.appende("skip: true")
             si nonnihil entry["skipReason"] {
-                parts.adde(scriptum("skipReason: \"§\"", entry["skipReason"] qua textus))
+                parts.appende(scriptum("skipReason: \"§\"", entry["skipReason"] qua textus))
             }
         }
         si nonnihil entry["todo"] {
-            parts.adde("todo: true")
+            parts.appende("todo: true")
             si nonnihil entry["todoReason"] {
-                parts.adde(scriptum("todoReason: \"§\"", entry["todoReason"] qua textus))
+                parts.appende(scriptum("todoReason: \"§\"", entry["todoReason"] qua textus))
             }
         }
         si nonnihil entry["only"] {
-            parts.adde("only: true")
+            parts.appende("only: true")
         }
         si nonnihil entry["tags"] {
             fixum tagsArr = entry["tags"] qua lista<textus>
             varia tagStrs = [] innatum lista<textus>
             ex tagsArr fixum t {
-                tagStrs.adde(scriptum("\"§\"", t))
+                tagStrs.appende(scriptum("\"§\"", t))
             }
-            parts.adde(scriptum("tags: [§]", tagStrs.coniunge(", ")))
+            parts.appende(scriptum("tags: [§]", tagStrs.coniunge(", ")))
         }
         si nonnihil entry["timeout"] {
-            parts.adde(scriptum("timeout: §", entry["timeout"]))
+            parts.appende(scriptum("timeout: §", entry["timeout"]))
         }
         si nonnihil entry["benchmark"] {
-            parts.adde("benchmark: true")
+            parts.appende("benchmark: true")
         }
         si nonnihil entry["repeat"] {
-            parts.adde(scriptum("repeat: §", entry["repeat"]))
+            parts.appende(scriptum("repeat: §", entry["repeat"]))
         }
         si nonnihil entry["retries"] {
-            parts.adde(scriptum("retries: §", entry["retries"]))
+            parts.appende(scriptum("retries: §", entry["retries"]))
         }
         si nonnihil entry["requireEnv"] {
-            parts.adde(scriptum("requireEnv: \"§\"", entry["requireEnv"] qua textus))
+            parts.appende(scriptum("requireEnv: \"§\"", entry["requireEnv"] qua textus))
         }
         si nonnihil entry["platformOnly"] {
-            parts.adde(scriptum("platformOnly: \"§\"", entry["platformOnly"] qua textus))
+            parts.appende(scriptum("platformOnly: \"§\"", entry["platformOnly"] qua textus))
         }
 
-        lines.adde(scriptum("  { § },", parts.coniunge(", ")))
+        lines.appende(scriptum("  { § },", parts.coniunge(", ")))
     }
-    lines.adde("];")
-    lines.adde("")
+    lines.appende("];")
+    lines.appende("")
 
     # Generate runner
-    lines.adde("function __runTests(options?: { tag?: string; exclude?: string; only?: boolean }): number {")
-    lines.adde("  const opts = options ?? {};")
-    lines.adde("  let testsToRun = __tests;")
-    lines.adde("")
-    lines.adde("  // Filter by 'only' if any test has it")
-    lines.adde("  if (opts.only || testsToRun.some(t => t.only)) {")
-    lines.adde("    testsToRun = testsToRun.filter(t => t.only);")
-    lines.adde("  }")
-    lines.adde("")
-    lines.adde("  // Filter by tag")
-    lines.adde("  if (opts.tag) {")
-    lines.adde("    testsToRun = testsToRun.filter(t => t.tags?.includes(opts.tag!));")
-    lines.adde("  }")
-    lines.adde("")
-    lines.adde("  // Exclude by tag")
-    lines.adde("  if (opts.exclude) {")
-    lines.adde("    testsToRun = testsToRun.filter(t => !t.tags?.includes(opts.exclude!));")
-    lines.adde("  }")
-    lines.adde("")
-    lines.adde("  let passed = 0, failed = 0, skipped = 0, todo = 0;")
-    lines.adde("")
-    lines.adde("  for (const t of testsToRun) {")
-    lines.adde("    const label = t.suite ? `${t.suite} > ${t.name}` : t.name;")
-    lines.adde("")
-    lines.adde("    // Check platform filter")
-    lines.adde("    if (t.platformOnly && process.platform !== t.platformOnly) {")
-    lines.adde("      console.log(`SKIP ${label} (platform: ${t.platformOnly})`);")
-    lines.adde("      skipped++;")
-    lines.adde("      continue;")
-    lines.adde("    }")
-    lines.adde("")
-    lines.adde("    // Check required env")
-    lines.adde("    if (t.requireEnv && !process.env[t.requireEnv]) {")
-    lines.adde("      console.log(`SKIP ${label} (missing env: ${t.requireEnv})`);")
-    lines.adde("      skipped++;")
-    lines.adde("      continue;")
-    lines.adde("    }")
-    lines.adde("")
-    lines.adde("    // Skip")
-    lines.adde("    if (t.skip) {")
-    lines.adde("      const reason = t.skipReason ? `: ${t.skipReason}` : '';")
-    lines.adde("      console.log(`SKIP ${label}${reason}`);")
-    lines.adde("      skipped++;")
-    lines.adde("      continue;")
-    lines.adde("    }")
-    lines.adde("")
-    lines.adde("    // Todo")
-    lines.adde("    if (t.todo) {")
-    lines.adde("      const reason = t.todoReason ? `: ${t.todoReason}` : '';")
-    lines.adde("      console.log(`TODO ${label}${reason}`);")
-    lines.adde("      todo++;")
-    lines.adde("      continue;")
-    lines.adde("    }")
-    lines.adde("")
-    lines.adde("    // Run with retries")
-    lines.adde("    const maxAttempts = t.retries ?? 1;")
-    lines.adde("    const repeatCount = t.repeat ?? 1;")
-    lines.adde("    let lastErr: string | null = null;")
-    lines.adde("")
-    lines.adde("    for (let rep = 0; rep < repeatCount; rep++) {")
-    lines.adde("      for (let attempt = 0; attempt < maxAttempts; attempt++) {")
-    lines.adde("        lastErr = t.fn();")
-    lines.adde("        if (!lastErr) break;")
-    lines.adde("      }")
-    lines.adde("      if (lastErr) break;")
-    lines.adde("    }")
-    lines.adde("")
-    lines.adde("    if (lastErr) {")
-    lines.adde("      console.log(`FAIL ${label}: ${lastErr}`);")
-    lines.adde("      failed++;")
-    lines.adde("    } else {")
-    lines.adde("      console.log(`PASS ${label}`);")
-    lines.adde("      passed++;")
-    lines.adde("    }")
-    lines.adde("  }")
-    lines.adde("")
-    lines.adde("  console.log(`\\n${passed} passed, ${failed} failed, ${skipped} skipped, ${todo} todo`);")
-    lines.adde("  return failed > 0 ? 1 : 0;")
-    lines.adde("}")
-    lines.adde("")
+    lines.appende("function __runTests(options?: { tag?: string; exclude?: string; only?: boolean }): number {")
+    lines.appende("  const opts = options ?? {};")
+    lines.appende("  let testsToRun = __tests;")
+    lines.appende("")
+    lines.appende("  // Filter by 'only' if any test has it")
+    lines.appende("  if (opts.only || testsToRun.some(t => t.only)) {")
+    lines.appende("    testsToRun = testsToRun.filter(t => t.only);")
+    lines.appende("  }")
+    lines.appende("")
+    lines.appende("  // Filter by tag")
+    lines.appende("  if (opts.tag) {")
+    lines.appende("    testsToRun = testsToRun.filter(t => t.tags?.includes(opts.tag!));")
+    lines.appende("  }")
+    lines.appende("")
+    lines.appende("  // Exclude by tag")
+    lines.appende("  if (opts.exclude) {")
+    lines.appende("    testsToRun = testsToRun.filter(t => !t.tags?.includes(opts.exclude!));")
+    lines.appende("  }")
+    lines.appende("")
+    lines.appende("  let passed = 0, failed = 0, skipped = 0, todo = 0;")
+    lines.appende("")
+    lines.appende("  for (const t of testsToRun) {")
+    lines.appende("    const label = t.suite ? `${t.suite} > ${t.name}` : t.name;")
+    lines.appende("")
+    lines.appende("    // Check platform filter")
+    lines.appende("    if (t.platformOnly && process.platform !== t.platformOnly) {")
+    lines.appende("      console.log(`SKIP ${label} (platform: ${t.platformOnly})`);")
+    lines.appende("      skipped++;")
+    lines.appende("      continue;")
+    lines.appende("    }")
+    lines.appende("")
+    lines.appende("    // Check required env")
+    lines.appende("    if (t.requireEnv && !process.env[t.requireEnv]) {")
+    lines.appende("      console.log(`SKIP ${label} (missing env: ${t.requireEnv})`);")
+    lines.appende("      skipped++;")
+    lines.appende("      continue;")
+    lines.appende("    }")
+    lines.appende("")
+    lines.appende("    // Skip")
+    lines.appende("    if (t.skip) {")
+    lines.appende("      const reason = t.skipReason ? `: ${t.skipReason}` : '';")
+    lines.appende("      console.log(`SKIP ${label}${reason}`);")
+    lines.appende("      skipped++;")
+    lines.appende("      continue;")
+    lines.appende("    }")
+    lines.appende("")
+    lines.appende("    // Todo")
+    lines.appende("    if (t.todo) {")
+    lines.appende("      const reason = t.todoReason ? `: ${t.todoReason}` : '';")
+    lines.appende("      console.log(`TODO ${label}${reason}`);")
+    lines.appende("      todo++;")
+    lines.appende("      continue;")
+    lines.appende("    }")
+    lines.appende("")
+    lines.appende("    // Run with retries")
+    lines.appende("    const maxAttempts = t.retries ?? 1;")
+    lines.appende("    const repeatCount = t.repeat ?? 1;")
+    lines.appende("    let lastErr: string | null = null;")
+    lines.appende("")
+    lines.appende("    for (let rep = 0; rep < repeatCount; rep++) {")
+    lines.appende("      for (let attempt = 0; attempt < maxAttempts; attempt++) {")
+    lines.appende("        lastErr = t.fn();")
+    lines.appende("        if (!lastErr) break;")
+    lines.appende("      }")
+    lines.appende("      if (lastErr) break;")
+    lines.appende("    }")
+    lines.appende("")
+    lines.appende("    if (lastErr) {")
+    lines.appende("      console.log(`FAIL ${label}: ${lastErr}`);")
+    lines.appende("      failed++;")
+    lines.appende("    } else {")
+    lines.appende("      console.log(`PASS ${label}`);")
+    lines.appende("      passed++;")
+    lines.appende("    }")
+    lines.appende("  }")
+    lines.appende("")
+    lines.appende("  console.log(`\\n${passed} passed, ${failed} failed, ${skipped} skipped, ${todo} todo`);")
+    lines.appende("  return failed > 0 ? 1 : 0;")
+    lines.appende("}")
+    lines.appende("")
 
     # Generate entry point check
-    lines.adde("// Run tests if executed directly")
-    lines.adde("if (typeof require !== 'undefined' && require.main === module) {")
-    lines.adde("  process.exit(__runTests());")
-    lines.adde("}")
+    lines.appende("// Run tests if executed directly")
+    lines.appende("if (typeof require !== 'undefined' && require.main === module) {")
+    lines.appende("  process.exit(__runTests());")
+    lines.appende("}")
 
     redde lines.coniunge("\n")
 }

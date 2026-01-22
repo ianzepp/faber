@@ -8,80 +8,90 @@
  */
 
 import type {
-    Typus, Expr, Stmt, Param, ObiectumProp, Modulus,
-    CampusDecl, OrdoMembrum, VariansDecl, ImportSpec,
-    EligeCasus, DiscerneCasus, CustodiClausula,
+    Typus,
+    Expr,
+    Stmt,
+    Param,
+    ObiectumProp,
+    Modulus,
+    CampusDecl,
+    OrdoMembrum,
+    VariansDecl,
+    ImportSpec,
+    EligeCasus,
+    DiscerneCasus,
+    CustodiClausula,
 } from './ast';
 
 // Operator translation: Faber → TypeScript
 const BINARY_OPS: Record<string, string> = {
-    'et': '&&',
-    'aut': '||',
-    'vel': '??',
-    'inter': 'in',
-    'intra': 'instanceof',
+    et: '&&',
+    aut: '||',
+    vel: '??',
+    inter: 'in',
+    intra: 'instanceof',
 };
 
 const UNARY_OPS: Record<string, string> = {
-    'non': '!',        // non x → !x (logical not)
-    'nihil': '!',      // nihil x → !x (null check - checks if value is null/undefined)
-    'nonnihil': '!!',  // nonnihil x → !!x (non-null assertion as boolean)
-    'positivum': '+',  // positivum x → +x (to number)
-    'negativum': '-',  // negativum x → -x (negate)
-    'nulla': '!',      // nulla x → !x (null check - same as nihil)
-    'nonnulla': '!!',  // nonnulla x → !!x (non-null check - same as nonnihil)
+    non: '!', // non x → !x (logical not)
+    nihil: '!', // nihil x → !x (null check - checks if value is null/undefined)
+    nonnihil: '!!', // nonnihil x → !!x (non-null assertion as boolean)
+    positivum: '+', // positivum x → +x (to number)
+    negativum: '-', // negativum x → -x (negate)
+    nulla: '!', // nulla x → !x (null check - same as nihil)
+    nonnulla: '!!', // nonnulla x → !!x (non-null check - same as nonnihil)
 };
 
 // Method/property name translations from norma (Faber → TypeScript)
 const METHOD_MAP: Record<string, string> = {
     // lista (Array)
-    'adde': 'push',
-    'praepone': 'unshift',
-    'remove': 'pop',
-    'decapita': 'shift',
-    'coniunge': 'join',
-    'continet': 'includes',
-    'indiceDe': 'indexOf',
-    'inveni': 'find',
-    'inveniIndicem': 'findIndex',
-    'omnes': 'every',
-    'aliquis': 'some',
-    'filtrata': 'filter',
-    'mappata': 'map',
-    'explanata': 'flatMap',
-    'plana': 'flat',
-    'sectio': 'slice',
-    'reducta': 'reduce',
-    'perambula': 'forEach',
-    'inverte': 'reverse',
-    'ordina': 'sort',
-    // tabula (Map)
-    'pone': 'set',
-    'accipe': 'get',
-    'habet': 'has',
-    'dele': 'delete',
-    'purga': 'clear',
-    'claves': 'keys',
-    'valores': 'values',
-    'paria': 'entries',
+    appende: 'push',
+    praepone: 'unshift',
+    remove: 'pop',
+    decapita: 'shift',
+    coniunge: 'join',
+    continet: 'includes',
+    indiceDe: 'indexOf',
+    inveni: 'find',
+    inveniIndicem: 'findIndex',
+    omnes: 'every',
+    aliquis: 'some',
+    filtrata: 'filter',
+    mappata: 'map',
+    explanata: 'flatMap',
+    plana: 'flat',
+    sectio: 'slice',
+    reducta: 'reduce',
+    perambula: 'forEach',
+    inverte: 'reverse',
+    ordina: 'sort',
+    // tabula (Map) / copia (Set)
+    pone: 'set',
+    accipe: 'get',
+    habet: 'has',
+    dele: 'delete',
+    purga: 'clear',
+    claves: 'keys',
+    valores: 'values',
+    paria: 'entries',
+    adde: 'add',
     // textus (string)
-    'initium': 'startsWith',
-    'finis': 'endsWith',
-    'maiuscula': 'toUpperCase',
-    'minuscula': 'toLowerCase',
-    'recide': 'trim',
-    'divide': 'split',
-    'muta': 'replaceAll',
-    // copia (Set)  - adde→add for Set, but push for Array; we use push as default
+    initium: 'startsWith',
+    finis: 'endsWith',
+    maiuscula: 'toUpperCase',
+    minuscula: 'toLowerCase',
+    recide: 'trim',
+    divide: 'split',
+    muta: 'replaceAll',
     // Properties (not methods, but accessed the same way)
-    'longitudo': 'length',
+    longitudo: 'length',
 };
 
 // Properties that should NOT be called as methods (emit without parentheses)
 const PROPERTY_ONLY: Set<string> = new Set([
-    'longitudo',  // .length (arrays, strings)
-    'primus',     // [0] (first element)
-    'ultimus',    // .at(-1) (last element)
+    'longitudo', // .length (arrays, strings)
+    'primus', // [0] (first element)
+    'ultimus', // .at(-1) (last element)
 ]);
 
 export function emit(mod: Modulus): string {
@@ -191,10 +201,12 @@ function emitStmt(stmt: Stmt, indent = ''): string {
 
         case 'Ordo': {
             const exp = stmt.publica ? 'export ' : '';
-            const members = stmt.membra.map(m => {
-                const val = m.valor ? ` = ${m.valor}` : '';
-                return `${m.nomen}${val}`;
-            }).join(', ');
+            const members = stmt.membra
+                .map(m => {
+                    const val = m.valor ? ` = ${m.valor}` : '';
+                    return `${m.nomen}${val}`;
+                })
+                .join(', ');
             return `${indent}${exp}enum ${stmt.nomen} { ${members} }`;
         }
 
@@ -222,7 +234,7 @@ function emitStmt(stmt: Stmt, indent = ''): string {
         }
 
         case 'Importa': {
-            const specs = stmt.specs.map(s => s.imported === s.local ? s.imported : `${s.imported} as ${s.local}`);
+            const specs = stmt.specs.map(s => (s.imported === s.local ? s.imported : `${s.imported} as ${s.local}`));
             return `${indent}import { ${specs.join(', ')} } from "${stmt.fons}";`;
         }
 
@@ -340,15 +352,11 @@ function emitStmt(stmt: Stmt, indent = ''): string {
         }
 
         case 'Redde':
-            return stmt.valor
-                ? `${indent}return ${emitExpr(stmt.valor)};`
-                : `${indent}return;`;
+            return stmt.valor ? `${indent}return ${emitExpr(stmt.valor)};` : `${indent}return;`;
 
         case 'Iace': {
             const kw = stmt.fatale ? 'throw new Error' : 'throw';
-            return stmt.fatale
-                ? `${indent}${kw}(${emitExpr(stmt.arg)});`
-                : `${indent}${kw} ${emitExpr(stmt.arg)};`;
+            return stmt.fatale ? `${indent}${kw}(${emitExpr(stmt.arg)});` : `${indent}${kw} ${emitExpr(stmt.arg)};`;
         }
 
         case 'Scribe': {
@@ -498,20 +506,20 @@ function emitExpr(expr: Expr): string {
         }
 
         case 'Obiectum': {
-            const props = expr.props.map(p => {
-                if (p.shorthand) {
-                    return p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key);
-                }
-                const key = p.computed
-                    ? `[${emitExpr(p.key)}]`
-                    : (p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key));
-                return `${key}: ${emitExpr(p.valor)}`;
-            }).join(', ');
+            const props = expr.props
+                .map(p => {
+                    if (p.shorthand) {
+                        return p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key);
+                    }
+                    const key = p.computed ? `[${emitExpr(p.key)}]` : p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key);
+                    return `${key}: ${emitExpr(p.valor)}`;
+                })
+                .join(', ');
             return `{ ${props} }`;
         }
 
         case 'Clausura': {
-            const params = expr.params.map(p => p.typus ? `${p.nomen}: ${emitTypus(p.typus)}` : p.nomen).join(', ');
+            const params = expr.params.map(p => (p.typus ? `${p.nomen}: ${emitTypus(p.typus)}` : p.nomen)).join(', ');
             if ('tag' in expr.corpus && expr.corpus.tag === 'Massa') {
                 return `(${params}) => ${emitStmt(expr.corpus as Stmt)}`;
             }
@@ -541,10 +549,12 @@ function emitExpr(expr: Expr): string {
             return `new ${emitTypus(expr.typus)}(${emitExpr(expr.expr)})`;
 
         case 'Finge': {
-            const fields = expr.campi.map(p => {
-                const key = p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key);
-                return `${key}: ${emitExpr(p.valor)}`;
-            }).join(', ');
+            const fields = expr.campi
+                .map(p => {
+                    const key = p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key);
+                    return `${key}: ${emitExpr(p.valor)}`;
+                })
+                .join(', ');
             const cast = expr.typus ? ` as ${emitTypus(expr.typus)}` : '';
             return `{ tag: '${expr.variant}', ${fields} }${cast}`;
         }
@@ -646,20 +656,20 @@ function emitTypus(typus: Typus): string {
 
 function mapTypeName(name: string): string {
     const MAP: Record<string, string> = {
-        'textus': 'string',
-        'numerus': 'number',
-        'fractus': 'number',
-        'bivalens': 'boolean',
-        'nihil': 'null',
-        'vacuum': 'void',
-        'vacuus': 'void',
-        'ignotum': 'unknown',
-        'quodlibet': 'any',
-        'quidlibet': 'any',
-        'lista': 'Array',
-        'tabula': 'Map',
-        'collectio': 'Set',
-        'copia': 'Set',
+        textus: 'string',
+        numerus: 'number',
+        fractus: 'number',
+        bivalens: 'boolean',
+        nihil: 'null',
+        vacuum: 'void',
+        vacuus: 'void',
+        ignotum: 'unknown',
+        quodlibet: 'any',
+        quidlibet: 'any',
+        lista: 'Array',
+        tabula: 'Map',
+        collectio: 'Set',
+        copia: 'Set',
     };
     return MAP[name] ?? name;
 }

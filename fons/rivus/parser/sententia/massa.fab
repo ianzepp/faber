@@ -50,7 +50,7 @@ functio parseMassaSententia(in Resolvitor r) -> MassaSententia {
         }
 
         # Parse the next statement
-        corpus.adde(r.sententia())
+        corpus.appende(r.sententia())
     }
 
     # Expect closing brace
@@ -106,7 +106,7 @@ functio parseProgramma(in Resolvitor r) -> Programma {
         # NOTE: No try/catch for error recovery. The parser records errors via
         # p.addeError() and returns partial AST nodes rather than throwing.
         # This keeps rivus Go-compilable (no exception handling translation needed).
-        corpus.adde(r.sententia())
+        corpus.appende(r.sententia())
     }
 
     # Extract accumulated § directives from parser

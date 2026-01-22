@@ -46,8 +46,8 @@ pub fn Lista(comptime T: type) type {
         // ADDING ELEMENTS
         // =====================================================================
 
-        # Add element to end (mutates).
-        pub fn adde(self: *Self, alloc: std.mem.Allocator, value: T) void {
+        # Append element to end (mutates).
+        pub fn appende(self: *Self, alloc: std.mem.Allocator, value: T) void {
             _ = alloc; // ArrayList tracks its allocator internally
             self.items.append(value) catch @panic("OOM");
         }

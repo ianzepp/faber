@@ -16,8 +16,8 @@ var goBinaryOps = map[string]string{
 // Go unary operators (Latin -> Go)
 var goUnaryOps = map[string]string{
 	"non":       "!",
-	"nihil":     "!",       // nil check
-	"nonnihil":  "",        // handled specially
+	"nihil":     "!", // nil check
+	"nonnihil":  "",  // handled specially
 	"positivum": "+",
 }
 
@@ -25,7 +25,7 @@ var goUnaryOps = map[string]string{
 // Format: Latin name -> Go equivalent pattern
 var goMethodMap = map[string]string{
 	"longitudo": "len",
-	"adde":      "append",
+	"appende":   "append",
 	"coniunge":  "strings.Join",
 	"continet":  "strings.Contains",
 	"initium":   "strings.HasPrefix",
@@ -498,7 +498,7 @@ func (e *GoEmitter) emitExpr(expr subsidia.Expr) string {
 				switch propName {
 				case "longitudo":
 					return "len(" + obj + ")"
-				case "adde":
+				case "appende":
 					return obj + " = append(" + obj + ", " + strings.Join(args, ", ") + ")"
 				case "coniunge":
 					return "strings.Join(" + obj + ", " + strings.Join(args, ", ") + ")"

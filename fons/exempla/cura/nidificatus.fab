@@ -14,7 +14,7 @@ incipit {
         }
         # inner freed here
 
-        a.adde("three")
+        a.appende("three")
         scribe "Outer:", a
     }
     # outer freed here

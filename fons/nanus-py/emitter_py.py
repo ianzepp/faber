@@ -595,8 +595,10 @@ class PyEmitter:
 
                         if method == "longitudo":
                             return f"len({obj})"
-                        if method == "adde":
+                        if method == "appende":
                             return f"{obj}.append({', '.join(args)})"
+                        if method == "adde":
+                            return f"{obj}.add({', '.join(args)})"
                         if method == "coniunge":
                             return f"{', '.join(args)}.join({obj})"
                         if method == "continet":

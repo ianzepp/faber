@@ -139,11 +139,11 @@ functio parseScribeSententia(in Resolvitor r, ScribeGradus gradus) -> Sententia 
     p.procede()
 
     varia argumenta = [] innatum lista<Expressia>
-    argumenta.adde(parseScribeElementum(r))
+    argumenta.appende(parseScribeElementum(r))
 
     # Parse additional comma-separated items
     dum p.congruet(SymbolumGenus.Coma) {
-        argumenta.adde(parseScribeElementum(r))
+        argumenta.appende(parseScribeElementum(r))
     }
 
     redde finge ScribeSententia {
@@ -188,7 +188,7 @@ functio parseScribeElementum(in Resolvitor r) -> Expressia {
                 )
                 rumpe
             }
-            scriptumArgumenta.adde(r.expressia())
+            scriptumArgumenta.appende(r.expressia())
             j += 1
         }
 

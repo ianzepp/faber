@@ -28,34 +28,34 @@ functio genDiscretio(in GoGenerator g, de textus nomen, de lista<VariansDeclarat
     fixum markerMethod = scriptum("is§", nomen)
 
     # Generate interface type
-    lines.adde(scriptum("§type § interface {", g.ind(), nomen))
+    lines.appende(scriptum("§type § interface {", g.ind(), nomen))
     g.intraProfundum()
-    lines.adde(scriptum("§§()", g.ind(), markerMethod))
+    lines.appende(scriptum("§§()", g.ind(), markerMethod))
     g.exiProfundum()
-    lines.adde(scriptum("§}", g.ind()))
+    lines.appende(scriptum("§}", g.ind()))
 
     # Generate struct types and marker implementations for each variant
     ex variantes fixum varians {
-        lines.adde("")  # Blank line between types
+        lines.appende("")  # Blank line between types
 
         si varians.campi.longitudo() == 0 {
             # Unit variant: empty struct
-            lines.adde(scriptum("§type § struct{}", g.ind(), varians.nomen))
+            lines.appende(scriptum("§type § struct{}", g.ind(), varians.nomen))
         } secus {
             # Variant with fields
-            lines.adde(scriptum("§type § struct {", g.ind(), varians.nomen))
+            lines.appende(scriptum("§type § struct {", g.ind(), varians.nomen))
             g.intraProfundum()
             ex varians.campi fixum campus {
                 fixum fieldName = capitaliza(campus.nomen)
                 fixum fieldType = genTypus(g, campus.typus)
-                lines.adde(scriptum("§§ §", g.ind(), fieldName, fieldType))
+                lines.appende(scriptum("§§ §", g.ind(), fieldName, fieldType))
             }
             g.exiProfundum()
-            lines.adde(scriptum("§}", g.ind()))
+            lines.appende(scriptum("§}", g.ind()))
         }
 
         # Marker method implementation
-        lines.adde(scriptum("§func (§) §() {}", g.ind(), varians.nomen, markerMethod))
+        lines.appende(scriptum("§func (§) §() {}", g.ind(), varians.nomen, markerMethod))
     }
 
     redde lines.coniunge("\n")

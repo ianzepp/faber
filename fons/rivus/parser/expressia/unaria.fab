@@ -513,7 +513,7 @@ functio parseArgumenta(in Resolvitor r) -> lista<Expressia> {
     }
 
     # Parse first argument
-    argumenta.adde(parseArgumentum(r))
+    argumenta.appende(parseArgumentum(r))
 
     # Parse remaining comma-separated arguments
     dum p.congruet(SymbolumGenus.Coma) {
@@ -521,7 +521,7 @@ functio parseArgumenta(in Resolvitor r) -> lista<Expressia> {
         si p.proba(SymbolumGenus.ParensDex) {
             rumpe
         }
-        argumenta.adde(parseArgumentum(r))
+        argumenta.appende(parseArgumentum(r))
     }
 
     redde argumenta

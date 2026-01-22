@@ -41,7 +41,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
             si gp.longitudo() > 0 {
                 varia names = [] innatum lista<textus>
                 ex gp fixum p {
-                    names.adde(p.nomen)
+                    names.appende(p.nomen)
                 }
                 result = scriptum("§<§>", result, names.coniunge(", "))
             }
@@ -50,7 +50,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
         # Parameters
         varia params = [] innatum lista<textus>
         ex f.parametra fixum param {
-            params.adde(genParametrum(g, param))
+            params.appende(genParametrum(g, param))
         }
         result = scriptum("§(§)", result, params.coniunge(", "))
 
@@ -146,7 +146,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
         si gp.longitudo() > 0 {
             varia names = [] innatum lista<textus>
             ex gp fixum p {
-                names.adde(p.nomen)
+                names.appende(p.nomen)
             }
             result = scriptum("§<§>", result, names.coniunge(", "))
         }
@@ -155,7 +155,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
     # Parameters
     varia params = [] innatum lista<textus>
     ex f.parametra fixum param {
-        params.adde(genParametrum(g, param))
+        params.appende(genParametrum(g, param))
     }
     result = scriptum("§(§)", result, params.coniunge(", "))
 
@@ -204,7 +204,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
             si nonnihil param.typus {
                 fixum typus = param.typus novum TypusAnnotatio
                 si typus.nomen == "tabula" {
-                    localTabula.adde(param.nomen)
+                    localTabula.appende(param.nomen)
                 }
             }
         }

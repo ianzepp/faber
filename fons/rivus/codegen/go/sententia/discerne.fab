@@ -24,7 +24,7 @@ functio genDiscerne(in GoGenerator g, de lista<Expressia> discriminantes, de lis
     # Generate expressions for all discriminants
     varia discriminantStrs = [] innatum lista<textus>
     ex discriminantes fixum d {
-        discriminantStrs.adde(genExpressia(g, d))
+        discriminantStrs.appende(genExpressia(g, d))
     }
 
     # Single discriminant: use type switch
@@ -133,8 +133,8 @@ functio genDiscerneMultiplex(in GoGenerator g, de lista<textus> discriminantStrs
                     fixum disc = discriminantStrs[i]
                     fixum tempVar = scriptum("_d§", i)
                     fixum okVar = scriptum("_ok§", i)
-                    assertions.adde(scriptum("§§, § := §.(§)", g.ind(), tempVar, okVar, disc, pattern.variansNomen))
-                    okVars.adde(okVar)
+                    assertions.appende(scriptum("§§, § := §.(§)", g.ind(), tempVar, okVar, disc, pattern.variansNomen))
+                    okVars.appende(okVar)
                 }
                 i += 1
             }

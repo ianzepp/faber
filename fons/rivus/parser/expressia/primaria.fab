@@ -346,7 +346,7 @@ functio parseCatenaGradus(in Resolvitor r) -> lista<CatenaGradus> {
             casu "numera" { }
         }
 
-        gradus.adde({
+        gradus.appende({
             locus: locus,
             verbum: verbum,
             argumentum: argumentum,
@@ -381,14 +381,14 @@ functio parseSeriesExpressia(in Resolvitor r) -> Expressia {
     varia elementa = [] innatum lista<Expressia>
 
     si non p.proba(SymbolumGenus.QuadratusDex) {
-        elementa.adde(parseElementumSeries(r))
+        elementa.appende(parseElementumSeries(r))
 
         dum p.congruet(SymbolumGenus.Coma) {
             # Allow trailing comma
             si p.proba(SymbolumGenus.QuadratusDex) {
                 rumpe
             }
-            elementa.adde(parseElementumSeries(r))
+            elementa.appende(parseElementumSeries(r))
         }
     }
 
@@ -523,7 +523,7 @@ functio parseObiectumExpressia(in Resolvitor r) -> Expressia {
 
     si non p.proba(SymbolumGenus.UncusDex) {
         fac {
-            proprietates.adde(parseObiectumProprietas(r))
+            proprietates.appende(parseObiectumProprietas(r))
         } dum p.congruet(SymbolumGenus.Coma) et non p.proba(SymbolumGenus.UncusDex)
     }
 
@@ -591,7 +591,7 @@ functio parseClausuraExpressia(in Resolvitor r) -> Expressia {
 
             fixum nomenSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
 
-            parametra.adde({
+            parametra.appende({
                 locus: paramLocus,
                 nomen: nomenSym.valor,
                 typus: paramTypus
@@ -662,7 +662,7 @@ functio parseFingeExpressia(in Resolvitor r) -> Expressia {
                     brevitas = falsum
                 }
 
-                campi.adde({
+                campi.appende({
                     locus: campusLocus,
                     clavis: clavis,
                     valor: valor,
@@ -781,7 +781,7 @@ functio parseScriptumExpressia(in Resolvitor r) -> Expressia {
 
     varia argumenta = [] innatum lista<Expressia>
     dum p.congruet(SymbolumGenus.Coma) {
-        argumenta.adde(r.expressia())
+        argumenta.appende(r.expressia())
     }
 
     p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)

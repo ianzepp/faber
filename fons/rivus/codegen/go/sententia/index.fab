@@ -152,7 +152,7 @@ functio genMassa(in GoGenerator g, de lista<Sententia> corpus) -> textus {
     }
     varia lines = [] innatum lista<textus>
     ex corpus fixum stmt {
-        lines.adde(genSententia(g, stmt))
+        lines.appende(genSententia(g, stmt))
     }
     redde lines.coniunge("\n")
 }

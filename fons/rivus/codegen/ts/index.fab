@@ -37,7 +37,7 @@ functio generateTsWithOptions(de lista<Sententia> corpus, bivalens stripTests, b
         fixum line = genSententia(g, stmt)
         # Skip empty lines from stripped tests
         si line.longitudo() > 0 {
-            lines.adde(line)
+            lines.appende(line)
         }
     }
 
@@ -61,7 +61,7 @@ functio generateTsWithTests(de lista<Sententia> corpus) -> textus {
     # Generate body from statements
     varia lines = [] innatum lista<textus>
     ex corpus fixum stmt {
-        lines.adde(genSententia(g, stmt))
+        lines.appende(genSententia(g, stmt))
     }
 
     # Add test harness if any tests were registered

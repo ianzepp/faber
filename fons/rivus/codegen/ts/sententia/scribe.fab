@@ -18,7 +18,7 @@
 functio genScribe(in TsGenerator g, ScribeGradus gradus, de lista<Expressia> argumenta) -> textus {
     varia args = [] innatum lista<textus>
     ex argumenta fixum arg {
-        args.adde(genExpressia(g, arg))
+        args.appende(genExpressia(g, arg))
     }
 
     varia method = "log"
