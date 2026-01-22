@@ -39,7 +39,7 @@ genus SemanticResultatum {
     @ publica
     lista<SemanticError> errores
     @ publica
-    tabula<textus, Programma>? resolvedModules
+    si tabula<textus, Programma> resolvedModules
 }
 
 # ============================================================================
@@ -243,7 +243,7 @@ genus Analyzator {
     }
 
     @ publica
-    functio formaeMorphologiae(de textus recipiens, de textus radix) -> lista<textus>? {
+    functio formaeMorphologiae(de textus recipiens, de textus radix) -> si lista<textus> {
         fixum perRecipiens = ego.morphologiaRegistra[recipiens]
         si nihil perRecipiens {
             redde nihil

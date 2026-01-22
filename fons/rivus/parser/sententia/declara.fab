@@ -37,7 +37,7 @@
 # ============================================================================
 
 # Parse post-parameter function modifiers
-functio parseFunctioModificatores(in Resolvitor r) -> lista<FunctioModificator>? {
+functio parseFunctioModificatores(in Resolvitor r) -> si lista<FunctioModificator> {
     fixum p = r.parser()
     varia modificatores = [] innatum lista<FunctioModificator>
 
@@ -103,7 +103,7 @@ functio parseFunctioDeclaratio(in Resolvitor r) -> Sententia {
     fixum nomen = nomenSym.valor
 
     # Optional generic parameters: either `prae typus T, U` or `<T, U>`
-    varia generaParametra = nihil qua lista<TypusParametrum>?
+    varia generaParametra = nihil qua si lista<TypusParametrum>
     si p.probaVerbum("prae") {
         generaParametra = parseTypusParametra(r)
     } sin p.congruet(SymbolumGenus.Minor) {
@@ -221,7 +221,7 @@ functio parseGenusDeclaratio(in Resolvitor r, bivalens abstractum) -> Sententia 
     fixum nomen = nomenSym.valor
 
     # Optional generic parameters
-    varia generaParametra = nihil qua lista<textus>?
+    varia generaParametra = nihil qua si lista<textus>
     si p.congruet(SymbolumGenus.Minor) {
         generaParametra = parseGenericaNomina(r)
     }
@@ -234,7 +234,7 @@ functio parseGenusDeclaratio(in Resolvitor r, bivalens abstractum) -> Sententia 
     }
 
     # Optional implements
-    varia implet = nihil qua lista<textus>?
+    varia implet = nihil qua si lista<textus>
     si p.congruetVerbum("implet") {
         implet = [] innatum lista<textus>
         fac {
@@ -419,7 +419,7 @@ functio parsePactumDeclaratio(in Resolvitor r) -> Sententia {
     fixum nomen = nomenSym.valor
 
     # Optional generic parameters
-    varia generaParametra = nihil qua lista<textus>?
+    varia generaParametra = nihil qua si lista<textus>
     si p.congruet(SymbolumGenus.Minor) {
         generaParametra = parseGenericaNomina(r)
     }
@@ -578,7 +578,7 @@ functio parseDiscretioDeclaratio(in Resolvitor r) -> Sententia {
     fixum nomen = nomenSym.valor
 
     # Optional generic parameters
-    varia generaParametra = nihil qua lista<textus>?
+    varia generaParametra = nihil qua si lista<textus>
     si p.congruet(SymbolumGenus.Minor) {
         generaParametra = parseGenericaNomina(r)
     }

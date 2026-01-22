@@ -308,7 +308,7 @@ discretio Expressia {
         Expressia fons           # source
         bivalens negata          # true if "non" used
         si AbFiltrum filtrum       # optional filter clause
-        lista<CatenaGradus>? gradus
+        si lista<CatenaGradus> gradus
     }
 
     # -------------------------------------------------------------------------

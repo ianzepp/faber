@@ -38,12 +38,12 @@ discretio TypusParametrum {
 genus TypusAnnotatio {
     Locus locus
     textus nomen                            # type name
-    lista<TypusParametrum>? typusParametra  # generic type parameters
+    si lista<TypusParametrum> typusParametra  # generic type parameters
     bivalens nullabilis                     # true if T? syntax
-    lista<TypusAnnotatio>? unio             # union members for unio<A, B>
+    si lista<TypusAnnotatio> unio             # union members for unio<A, B>
     bivalens compendiumSeries               # true if T[] shorthand
     si textus praepositio                     # de (borrowed) or in (mutable)
-    lista<TypusAnnotatio>? parametra        # function type parameters
+    si lista<TypusAnnotatio> parametra        # function type parameters
     si TypusAnnotatio reditus                 # function return type
 }
 

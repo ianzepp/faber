@@ -67,8 +67,8 @@ functio novumResolvitor(in Analyzator a) -> Resolvitor {
 # Merge manifest sectiones with source file sectiones
 # Manifest sectiones come first, source file can override/extend
 functio mergeSectiones(
-    de lista<SectioAnnotatio>? manifest,
-    de lista<SectioAnnotatio>? source
+    de si lista<SectioAnnotatio> manifest,
+    de si lista<SectioAnnotatio> source
 ) -> lista<SectioAnnotatio> {
     varia result = [] innatum lista<SectioAnnotatio>
 
@@ -89,7 +89,7 @@ functio mergeSectiones(
 @ publica
 functio analyze(
     de Programma programma,
-    de lista<SectioAnnotatio>? manifestSectiones,
+    de si lista<SectioAnnotatio> manifestSectiones,
     si de textus viaIngressus
 ) -> SemanticResultatum {
     # Merge manifest and source sectiones

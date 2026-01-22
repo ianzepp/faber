@@ -110,7 +110,7 @@ functio parseProgramma(in Resolvitor r) -> Programma {
     }
 
     # Extract accumulated § directives from parser
-    varia sectiones = nihil qua lista<SectioAnnotatio>?
+    varia sectiones = nihil qua si lista<SectioAnnotatio>
     si p.sectiones.longitudo() > 0 {
         sectiones = p.sectiones
     }

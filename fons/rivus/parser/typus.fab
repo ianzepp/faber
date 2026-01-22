@@ -109,7 +109,7 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
     # -------------------------------------------------------------------------
     # Parse optional type parameters: <T, U, ...>
     # -------------------------------------------------------------------------
-    varia typusParametra = nihil qua lista<TypusParametrum>?
+    varia typusParametra = nihil qua si lista<TypusParametrum>
 
     si p.congruet(SymbolumGenus.Minor) {
         typusParametra = [] innatum lista<TypusParametrum>

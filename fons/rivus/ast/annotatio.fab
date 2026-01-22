@@ -28,12 +28,12 @@ genus Annotatio {
 
     # For @ innatum and @ subsidia: target-to-value mappings
     # Example: { ts: "Array", py: "list", zig: "Lista" }
-    tabula<textus, textus>? targetMappings
+    si tabula<textus, textus> targetMappings
 
     # For @ radix: stem and valid morphological forms
     # First element is the stem, rest are form names
     # Example: ["filtr", "imperativus", "perfectum"]
-    lista<textus>? radixForms
+    si lista<textus> radixForms
 
     # For @ verte: the target language (ts, py, rs, cpp, zig)
     si textus verteTarget
@@ -44,7 +44,7 @@ genus Annotatio {
 
     # For @ verte with template: parameter names
     # Example: ["ego", "elem"] for `@ verte ts (ego, elem) -> "..."`
-    lista<textus>? verteParams
+    si lista<textus> verteParams
 
     # For @ verte with template: the template string with S placeholders
     # Example: "[...S, S]" for `@ verte ts (ego, elem) -> "[...S, S]"`

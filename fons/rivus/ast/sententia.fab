@@ -193,7 +193,7 @@ genus PactumMethodus {
     si TypusAnnotatio typusReditus
     bivalens asynca
     bivalens generator
-    lista<FunctioModificator>? modificatores
+    si lista<FunctioModificator> modificatores
     si MorphologiaDeclaratio morphologia
 }
 
@@ -364,7 +364,7 @@ discretio Sententia {
     FunctioDeclaratio {
         Locus locus
         textus nomen
-        lista<TypusParametrum>? generaParametra # WHY: optional generics
+        si lista<TypusParametrum> generaParametra # WHY: optional generics
         lista<Parametrum> parametra
         si TypusAnnotatio typusReditus            # WHY: optional return type annotation
         si MassaSententia corpus   # WHY: optional for @ externa declarations
@@ -376,8 +376,8 @@ discretio Sententia {
         si Visibilitas visibilitas
         si ReddeVerbum reddeVerbum
         si MorphologiaDeclaratio morphologia      # WHY: optional method morphology
-        lista<FunctioModificator>? modificatores # WHY: optional modifiers list
-        lista<Annotatio>? annotationes  # WHY: CLI annotations (@ imperium, @ optio, etc.)
+        si lista<FunctioModificator> modificatores # WHY: optional modifiers list
+        si lista<Annotatio> annotationes  # WHY: CLI annotations (@ imperium, @ optio, etc.)
     }
 
     # -------------------------------------------------------------------------
@@ -389,9 +389,9 @@ discretio Sententia {
     GenusDeclaratio {
         Locus locus
         textus nomen
-        lista<textus>? generaParametra # WHY: optional generics
+        si lista<textus> generaParametra # WHY: optional generics
         si textus extendit         # WHY: optional sub Parent
-        lista<textus>? implet    # WHY: optional implet Interface list
+        si lista<textus> implet    # WHY: optional implet Interface list
         bivalens abstractum
         lista<CampusDeclaratio> campi
         si FunctioDeclaratio structor   # WHY: optional constructor
@@ -405,7 +405,7 @@ discretio Sententia {
     PactumDeclaratio {
         Locus locus
         textus nomen
-        lista<textus>? generaParametra # WHY: optional generics
+        si lista<textus> generaParametra # WHY: optional generics
         lista<PactumMethodus> methodi
         si Visibilitas visibilitas  # @ publica annotation for module-level export
     }
@@ -434,7 +434,7 @@ discretio Sententia {
     DiscretioDeclaratio {
         Locus locus
         textus nomen
-        lista<textus>? generaParametra # WHY: optional generics
+        si lista<textus> generaParametra # WHY: optional generics
         lista<VariansDeclaratio> variantes
         si Visibilitas visibilitas  # @ publica annotation for module-level export
     }
@@ -590,7 +590,7 @@ discretio Sententia {
         Locus locus
         si MassaSententia corpus   # WHY: optional incipit body
         si Sententia ergo          # WHY: optional incipit ergo clause
-        lista<Annotatio>? annotationes  # WHY: CLI annotations (@ cli, @ optio, etc.)
+        si lista<Annotatio> annotationes  # WHY: CLI annotations (@ cli, @ optio, etc.)
     }
 
     # Entry point (async)
@@ -599,7 +599,7 @@ discretio Sententia {
         Locus locus
         si MassaSententia corpus   # WHY: optional incipiet body
         si Sententia ergo          # WHY: optional incipiet ergo clause
-        lista<Annotatio>? annotationes  # WHY: CLI annotations
+        si lista<Annotatio> annotationes  # WHY: CLI annotations
     }
 
     # Resource management statement
@@ -644,7 +644,7 @@ discretio Sententia {
         si bivalens ompitur            # @ omitte - skip entire suite
         si textus ratioOmissionis      # reason for skip
         si bivalens solum              # @ solum - only run this suite
-        lista<textus>? tags          # @ tag - filtering tags
+        si lista<textus> tags          # @ tag - filtering tags
         lista<Sententia> corpus      # PraeparaMassa, ProbandumSententia, ProbaSententia
     }
 
@@ -668,7 +668,7 @@ discretio Sententia {
         si ProbaModificator modificator
         si textus ratioModificatoris   # reason for skip/todo
         si bivalens solum              # @ solum - only run this test
-        lista<textus>? tags          # @ tag - filtering tags
+        si lista<textus> tags          # @ tag - filtering tags
         si numerus temporis            # @ temporis - timeout in ms
         si bivalens metior             # @ metior - benchmark mode
         si numerus repete              # @ repete - repeat count

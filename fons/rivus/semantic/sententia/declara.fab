@@ -95,7 +95,7 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
     redde usitatumTypus(annotatio.nomen, annotatio.nullabilis)
 }
 
-functio validateFunctioModificatores(Resolvitor r, lista<FunctioModificator>? modificatores, bivalens immutataPermissa) -> vacuum {
+functio validateFunctioModificatores(Resolvitor r, si lista<FunctioModificator> modificatores, bivalens immutataPermissa) -> vacuum {
     si nihil modificatores {
         redde
     }

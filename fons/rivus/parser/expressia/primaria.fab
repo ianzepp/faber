@@ -272,7 +272,7 @@ functio parseAbExpressia(in Resolvitor r) -> Expressia {
         }
     }
 
-    varia gradus = nihil qua lista<CatenaGradus>?
+    varia gradus = nihil qua si lista<CatenaGradus>
     si p.congruet(SymbolumGenus.Coma) aut estCatenaVerbumSym(p.specta(0)) {
         gradus = parseCatenaGradus(r)
     }
