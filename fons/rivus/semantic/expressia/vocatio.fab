@@ -4,7 +4,7 @@
 
 § ex "../resolvitor" importa Resolvitor
 § ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, BIVALENS, IGNOTUM
-§ ex "../errores" importa morphologiaRadixNonDeclarataError, morphologiaFormaNonPermissaError
+§ ex "../errores" importa morphologiaRadixNonDeclarataError, morphologiaFormaNonPermissaError, hintForEnglishMethod
 § ex "../scopus" importa quaereSymbolum
 § ex "../../ast/expressia" importa Expressia, MorphologiaInvocatio
 § ex "../../parser/morphologia" importa parseMethodum, formaExFlagga
@@ -185,6 +185,11 @@ functio resolveMembrum(Resolvitor r, Expressia membrumExpr) -> SemanticTypus {
                                 si n.valor == "vacua" {
                                     redde BIVALENS
                                 }
+                                # Check for English method names
+                                fixum hint = hintForEnglishMethod("lista", n.valor)
+                                si nonnihil hint {
+                                    r.analyzator().error(scriptum("Unknown method '§' on lista", n.valor), n.locus, hint)
+                                }
                             }
                             casu _ tacet
                         }
@@ -192,6 +197,34 @@ functio resolveMembrum(Resolvitor r, Expressia membrumExpr) -> SemanticTypus {
                         # Indexed access: lista[i] -> element type
                         si m.computatum et g.parametri.longitudo() > 0 {
                             redde g.parametri.primus()
+                        }
+                    }
+
+                    # tabula methods
+                    si g.nomen == "tabula" {
+                        discerne m.proprietas {
+                            casu Nomen ut n {
+                                # Check for English method names
+                                fixum hint = hintForEnglishMethod("tabula", n.valor)
+                                si nonnihil hint {
+                                    r.analyzator().error(scriptum("Unknown method '§' on tabula", n.valor), n.locus, hint)
+                                }
+                            }
+                            casu _ tacet
+                        }
+                    }
+
+                    # copia methods
+                    si g.nomen == "copia" {
+                        discerne m.proprietas {
+                            casu Nomen ut n {
+                                # Check for English method names
+                                fixum hint = hintForEnglishMethod("copia", n.valor)
+                                si nonnihil hint {
+                                    r.analyzator().error(scriptum("Unknown method '§' on copia", n.valor), n.locus, hint)
+                                }
+                            }
+                            casu _ tacet
                         }
                     }
                 }
@@ -202,6 +235,11 @@ functio resolveMembrum(Resolvitor r, Expressia membrumExpr) -> SemanticTypus {
                             casu Nomen ut n {
                                 si n.valor == "longitudo" {
                                     redde NUMERUS
+                                }
+                                # Check for English method names
+                                fixum hint = hintForEnglishMethod("textus", n.valor)
+                                si nonnihil hint {
+                                    r.analyzator().error(scriptum("Unknown method '§' on textus", n.valor), n.locus, hint)
                                 }
                             }
                             casu _ tacet

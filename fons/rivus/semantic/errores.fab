@@ -48,10 +48,70 @@ genus SemanticErrorNuntius {
 # Undefined variable error
 @ publica
 functio undefinedVariableError(de textus nomen) -> SemanticErrorNuntius {
+    # Check for assumed globals from other languages
+    fixum hint = hintForAssumedGlobal(nomen)
     redde {
         textus: scriptum("Undefined variable '§'", nomen),
-        auxilium: "Variables must be declared with 'varia' or 'fixum' before use"
+        auxilium: nonnihil hint sic hint secus "Variables must be declared with 'varia' or 'fixum' before use"
     } novum SemanticErrorNuntius
+}
+
+# Get hint for commonly assumed globals from other languages
+functio hintForAssumedGlobal(de textus nomen) -> si textus {
+    elige nomen {
+        # JavaScript globals
+        casu "JSON" reddit "JavaScript's JSON is not available."
+        casu "console" reddit "Use scribe (info), vide (debug), or mone (warn) for output."
+        casu "process" reddit "Use CLI annotations (@ optio, @ operandus) or platform-specific modules."
+        casu "Math" reddit "Math functions are available in the 'norma' standard library. Import what you need."
+        casu "Array" reddit "Use lista<T> for arrays. Construct an array with '[] innatum lista<textus>'"
+        casu "Object" reddit "Use tabula<K,V> for maps or genus for classes."
+        casu "Promise" reddit "Use @ futura annotation."
+        casu "Error" reddit "Use iace with a textus message, or define a custom error genus."
+        casu "Date" reddit "Date/time types are available in norma.tempus."
+        casu "RegExp" reddit "Use the 'sed' keyword for regex literals."
+        casu "Map" reddit "Use tabula<K,V> for maps. Construct a map with '{} innatum tabula<textus,numerus>'"
+        casu "Set" reddit "Use copia<T> for sets. Construct a set with '{} innatum copia<textus>'"
+        casu "Buffer" reddit "Binary data types are target-specific. Check norma for utilities."
+        casu "require" reddit "Use § ex 'module' importa ... for imports."
+        casu "module" reddit "Use § ex 'module' importa ... for imports."
+        casu "exports" reddit "Use @ publica annotation to export declarations."
+        casu "window" reddit "Browser APIs require target-specific bindings."
+        casu "document" reddit "Browser APIs require target-specific bindings."
+        casu "fetch" reddit "HTTP client is available in norma.caelum."
+        casu "setTimeout" reddit "Timers are available in norma.tempus."
+        casu "setInterval" reddit "Timers are available in norma.tempus."
+        casu "undefined" reddit "Use nihil for null/undefined values."
+        casu "null" reddit "Use nihil for null values."
+        casu "true" reddit "Use verum for boolean true."
+        casu "false" reddit "Use falsum for boolean false."
+        casu "this" reddit "Use ego for self-reference in methods."
+        casu "self" reddit "Use ego for self-reference in methods."
+        casu "super" reddit "Use parens for parent class reference."
+
+        # Python globals
+        casu "print" reddit "Use scribe for output: scribe 'message'"
+        casu "len" reddit "Use .longitudo() method: lista.longitudo()"
+        casu "str" reddit "Use textatum for string conversion: x textatum"
+        casu "int" reddit "Use numeratum for integer conversion: x numeratum"
+        casu "float" reddit "Use fractatum for float conversion: x fractatum"
+        casu "bool" reddit "Use bivalentum for boolean conversion: x bivalentum"
+        casu "list" reddit "Use lista<T> for lists. Construct an array with '[] innatum lista<textus>'"
+        casu "dict" reddit "Use tabula<K,V> for dicts. Construct a dictionary with '{} innatum tabula<textus,numerus>'"
+        casu "set" reddit "Use copia<T> for sets. Construct a set with '{} innatum copia<textus>'"
+        casu "None" reddit "Use nihil for null values."
+        casu "True" reddit "Use verum for boolean true."
+        casu "False" reddit "Use falsum for boolean false."
+        casu "range" reddit "Use ante/usque operators: 0 ante 10, 0 usque 10"
+        casu "enumerate" reddit "Use 'ex' with index: ex lista fixum [index, item] { }"
+        casu "zip" reddit "Zip utilities may be available in norma."
+        casu "input" reddit "Use lege lineam for reading input."
+        casu "open" reddit "File I/O is available in norma.solumn."
+        casu "type" reddit "Use est for type checking: x est Typus"
+        casu "isinstance" reddit "Use est for type checking: x est Typus"
+
+        ceterum reddit nihil
+    }
 }
 
 # Already defined error
@@ -234,4 +294,215 @@ functio emptyCaseBlockError() -> SemanticErrorNuntius {
         textus: "Empty block in casu/ceterum",
         auxilium: "Use 'tacet' for intentional no-op cases instead of empty braces."
     } novum SemanticErrorNuntius
+}
+
+# Unknown method error with hints for English method names
+@ publica
+functio unknownMethodError(de textus typus, de textus methodus) -> SemanticErrorNuntius {
+    fixum hint = hintForEnglishMethod(typus, methodus)
+    redde {
+        textus: scriptum("Unknown method '§' on type '§'", methodus, typus),
+        auxilium: nonnihil hint sic hint secus scriptum("Check available methods for '§' in norma.", typus)
+    } novum SemanticErrorNuntius
+}
+
+# Get hint for English method names on known collection types
+# Based on actual norma definitions in fons/norma/innatum/
+@ publica
+functio hintForEnglishMethod(de textus typus, de textus methodus) -> si textus {
+    # lista methods (from norma/innatum/lista.fab)
+    si typus == "lista" {
+        elige methodus {
+            # Adding elements
+            casu "push" reddit "Use adde(): lista.adde(elem)"
+            casu "append" reddit "Use adde(): lista.adde(elem)"
+            casu "unshift" reddit "Use praepone(): lista.praepone(elem)"
+
+            # Removing elements
+            casu "pop" reddit "Use remove(): lista.remove()"
+            casu "shift" reddit "Use decapita(): lista.decapita()"
+            casu "clear" reddit "Use purga(): lista.purga()"
+
+            # Accessing elements
+            casu "first" reddit "Use primus(): lista.primus()"
+            casu "last" reddit "Use ultimus(): lista.ultimus()"
+            casu "get" reddit "Use accipe(): lista.accipe(index) or lista[index]"
+            casu "at" reddit "Use accipe(): lista.accipe(index) or lista[index]"
+
+            # Properties
+            casu "length" reddit "Use longitudo(): lista.longitudo()"
+            casu "size" reddit "Use longitudo(): lista.longitudo()"
+            casu "count" reddit "Use longitudo(): lista.longitudo()"
+            casu "len" reddit "Use longitudo(): lista.longitudo()"
+            casu "isEmpty" reddit "Use vacua(): lista.vacua()"
+            casu "empty" reddit "Use vacua(): lista.vacua()"
+
+            # Searching
+            casu "includes" reddit "Use continet(): lista.continet(elem)"
+            casu "contains" reddit "Use continet(): lista.continet(elem)"
+            casu "indexOf" reddit "Use indiceDe(): lista.indiceDe(elem)"
+            casu "findIndex" reddit "Use inveniIndicem(): lista.inveniIndicem(pred)"
+            casu "find" reddit "Use inveni(): lista.inveni(pred)"
+
+            # Predicates
+            casu "every" reddit "Use omnes(): lista.omnes(pred)"
+            casu "some" reddit "Use aliquis(): lista.aliquis(pred)"
+
+            # Functional (return new list)
+            casu "filter" reddit "Use filtrata(): lista.filtrata(pred)"
+            casu "map" reddit "Use mappata(): lista.mappata(fn)"
+            casu "flatMap" reddit "Use explanata(): lista.explanata(fn)"
+            casu "flat" reddit "Use plana(): lista.plana()"
+            casu "reverse" reddit "Use inversa() (new) or inverte() (mutate)"
+            casu "sort" reddit "Use ordinata() (new) or ordina() (mutate)"
+            casu "slice" reddit "Use sectio(): lista.sectio(start, end)"
+            casu "reduce" reddit "Use reducta(): lista.reducta(fn, init)"
+
+            # Iteration
+            casu "forEach" reddit "Use perambula(): lista.perambula(fn) or ex loop"
+            casu "join" reddit "Use coniunge(): lista.coniunge(sep)"
+
+            # Aggregation
+            casu "sum" reddit "Use summa(): lista.summa()"
+            casu "min" reddit "Use minimus(): lista.minimus()"
+            casu "max" reddit "Use maximus(): lista.maximus()"
+            casu "average" reddit "Use medium(): lista.medium()"
+
+            # Misc
+            casu "unique" reddit "Use unica(): lista.unica()"
+            casu "chunk" reddit "Use fragmenta(): lista.fragmenta(n)"
+            casu "shuffle" reddit "Use miscita(): lista.miscita()"
+            casu "sample" reddit "Use specimen(): lista.specimen()"
+
+            ceterum reddit nihil
+        }
+    }
+
+    # tabula methods (from norma/innatum/tabula.fab)
+    si typus == "tabula" {
+        elige methodus {
+            # Core operations
+            casu "get" reddit "Use accipe(): tabula.accipe(clavis)"
+            casu "set" reddit "Use pone(): tabula.pone(clavis, valor)"
+            casu "put" reddit "Use pone(): tabula.pone(clavis, valor)"
+            casu "has" reddit "Use habet(): tabula.habet(clavis)"
+            casu "hasKey" reddit "Use habet(): tabula.habet(clavis)"
+            casu "contains" reddit "Use habet(): tabula.habet(clavis)"
+            casu "containsKey" reddit "Use habet(): tabula.habet(clavis)"
+            casu "delete" reddit "Use dele(): tabula.dele(clavis)"
+            casu "remove" reddit "Use dele(): tabula.dele(clavis)"
+
+            # Properties
+            casu "size" reddit "Use longitudo(): tabula.longitudo()"
+            casu "length" reddit "Use longitudo(): tabula.longitudo()"
+            casu "count" reddit "Use longitudo(): tabula.longitudo()"
+            casu "isEmpty" reddit "Use vacua(): tabula.vacua()"
+            casu "empty" reddit "Use vacua(): tabula.vacua()"
+            casu "clear" reddit "Use purga(): tabula.purga()"
+
+            # Iteration
+            casu "keys" reddit "Use claves(): tabula.claves()"
+            casu "values" reddit "Use valores(): tabula.valores()"
+            casu "entries" reddit "Use paria(): tabula.paria()"
+            casu "items" reddit "Use paria(): tabula.paria()"
+            casu "forEach" reddit "Use de loop: de tabula fixum clavis { }"
+
+            # Advanced
+            casu "merge" reddit "Use conflata(): tabula.conflata(alia)"
+            casu "pick" reddit "Use selecta(): tabula.selecta(claves)"
+            casu "omit" reddit "Use omissa(): tabula.omissa(claves)"
+            casu "invert" reddit "Use inversa(): tabula.inversa()"
+            casu "mapValues" reddit "Use mappaValores(): tabula.mappaValores(fn)"
+            casu "mapKeys" reddit "Use mappaClaves(): tabula.mappaClaves(fn)"
+
+            ceterum reddit nihil
+        }
+    }
+
+    # copia (set) methods (from norma/innatum/copia.fab)
+    si typus == "copia" {
+        elige methodus {
+            # Core operations
+            casu "add" reddit "Use adde(): copia.adde(elem)"
+            casu "has" reddit "Use habet(): copia.habet(elem)"
+            casu "contains" reddit "Use habet(): copia.habet(elem)"
+            casu "delete" reddit "Use dele(): copia.dele(elem)"
+            casu "remove" reddit "Use dele(): copia.dele(elem)"
+
+            # Properties
+            casu "size" reddit "Use longitudo(): copia.longitudo()"
+            casu "length" reddit "Use longitudo(): copia.longitudo()"
+            casu "count" reddit "Use longitudo(): copia.longitudo()"
+            casu "isEmpty" reddit "Use vacua(): copia.vacua()"
+            casu "empty" reddit "Use vacua(): copia.vacua()"
+            casu "clear" reddit "Use purga(): copia.purga()"
+
+            # Iteration
+            casu "values" reddit "Use valores(): copia.valores()"
+            casu "forEach" reddit "Use perambula() or ex loop"
+
+            # Set operations
+            casu "union" reddit "Use unio(): copia.unio(alia)"
+            casu "intersection" reddit "Use intersectio(): copia.intersectio(alia)"
+            casu "difference" reddit "Use differentia(): copia.differentia(alia)"
+            casu "symmetricDifference" reddit "Use symmetrica(): copia.symmetrica(alia)"
+            casu "isSubset" reddit "Use subcopia(): copia.subcopia(alia)"
+            casu "isSubsetOf" reddit "Use subcopia(): copia.subcopia(alia)"
+            casu "isSuperset" reddit "Use supercopia(): copia.supercopia(alia)"
+            casu "isSupersetOf" reddit "Use supercopia(): copia.supercopia(alia)"
+
+            # Conversion
+            casu "toArray" reddit "Use inLista(): copia.inLista()"
+            casu "toList" reddit "Use inLista(): copia.inLista()"
+
+            ceterum reddit nihil
+        }
+    }
+
+    # textus methods (from norma/innatum/textus.fab)
+    si typus == "textus" {
+        elige methodus {
+            # Properties
+            casu "length" reddit "Use longitudo(): textus.longitudo()"
+            casu "size" reddit "Use longitudo(): textus.longitudo()"
+            casu "len" reddit "Use longitudo(): textus.longitudo()"
+
+            # Slicing
+            casu "slice" reddit "Use sectio(): textus.sectio(start, end)"
+            casu "substring" reddit "Use sectio(): textus.sectio(start, end)"
+            casu "substr" reddit "Use sectio(): textus.sectio(start, end)"
+
+            # Searching
+            casu "includes" reddit "Use continet(): textus.continet(sub)"
+            casu "contains" reddit "Use continet(): textus.continet(sub)"
+            casu "startsWith" reddit "Use initium(): textus.initium(prefix)"
+            casu "endsWith" reddit "Use finis(): textus.finis(suffix)"
+
+            # Case conversion
+            casu "toUpperCase" reddit "Use maiuscula(): textus.maiuscula()"
+            casu "toLowerCase" reddit "Use minuscula(): textus.minuscula()"
+            casu "upper" reddit "Use maiuscula(): textus.maiuscula()"
+            casu "lower" reddit "Use minuscula(): textus.minuscula()"
+
+            # Trimming
+            casu "trim" reddit "Use recide(): textus.recide()"
+            casu "strip" reddit "Use recide(): textus.recide()"
+
+            # Splitting
+            casu "split" reddit "Use divide(): textus.divide(sep)"
+
+            # Replacement
+            casu "replace" reddit "Use muta(): textus.muta(vetus, novum)"
+            casu "replaceAll" reddit "Use muta(): textus.muta(vetus, novum)"
+
+            # Other
+            casu "charAt" reddit "Use indexed access: textus[index]"
+            casu "concat" reddit "Use + operator: textus1 + textus2"
+            casu "toString" reddit "Textus is already a string type"
+
+            ceterum reddit nihil
+        }
+    }
+
+    redde nihil
 }
