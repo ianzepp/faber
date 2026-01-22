@@ -2,17 +2,15 @@
 /**
  * Full build pipeline in three stages:
  *
- *   Stage 1: nanus-ts, nanus-go, nanus-rs, nanus-py (bootstrap compilers)
- *   Stage 2: norma (stdlib registry) + faber (main compiler)
- *   Stage 3: rivus built with each nanus compiler (failures noted, not fatal)
+ *   Stage 1: nanus-ts, nanus-go, nanus-rs, nanus-py (bootstrap compilers) + norma
+ *   Stage 2: rivus via nanus-ts (must succeed)
+ *   Stage 3: rivus via nanus-go, nanus-rs, nanus-py (optional, failures noted)
  *
  * Prework: wipes opus/* for clean builds.
  *
  * Usage:
  *   bun run build              # full build
  *   bun run build --verbose    # show subprocess output
- *   bun run build --no-faber   # skip faber (stage 2)
- *   bun run build --no-rivus   # skip rivus (stage 3)
  */
 
 import { rm } from 'fs/promises';
@@ -22,35 +20,9 @@ import { $ } from 'bun';
 const ROOT = join(import.meta.dir, '..');
 const OPUS = join(ROOT, 'opus');
 
-interface BuildOptions {
-    faber: boolean;
-    rivus: boolean;
-    verbose: boolean;
-}
-
-function parseArgs(): BuildOptions {
-    const args = process.argv.slice(2);
-    let faber = true;
-    let rivus = true;
-    let verbose = false;
-
-    for (let i = 0; i < args.length; i++) {
-        const arg = args[i];
-
-        if (arg === '--faber') {
-            faber = true;
-        } else if (arg === '--no-faber') {
-            faber = false;
-        } else if (arg === '--rivus') {
-            rivus = true;
-        } else if (arg === '--no-rivus') {
-            rivus = false;
-        } else if (arg === '-v' || arg === '--verbose') {
-            verbose = true;
-        }
-    }
-
-    return { faber, rivus, verbose };
+function parseArgs(): { verbose: boolean } {
+    const verbose = process.argv.slice(2).some(arg => arg === '-v' || arg === '--verbose');
+    return { verbose };
 }
 
 interface StepResult {
@@ -63,12 +35,7 @@ interface StepResult {
 /**
  * Execute a build step with timing. Returns result instead of throwing.
  */
-async function step(
-    name: string,
-    verbose: boolean,
-    fn: () => Promise<void>,
-    allowFailure = false,
-): Promise<StepResult> {
+async function step(name: string, verbose: boolean, fn: () => Promise<void>, allowFailure = false): Promise<StepResult> {
     const start = performance.now();
 
     if (verbose) {
@@ -108,7 +75,7 @@ async function step(
 }
 
 async function main() {
-    const { faber, rivus, verbose } = parseArgs();
+    const { verbose } = parseArgs();
     const start = performance.now();
     const rivusResults: StepResult[] = [];
 
@@ -123,10 +90,10 @@ async function main() {
     });
 
     // =============================================================================
-    // STAGE 1: Bootstrap compilers (nanus-ts, nanus-go, nanus-rs, nanus-py)
+    // STAGE 1: Bootstrap compilers (nanus-*) + norma
     // =============================================================================
 
-    console.log('\n--- Stage 1: Bootstrap compilers ---\n');
+    console.log('\n--- Stage 1: Bootstrap compilers + norma ---\n');
 
     await step('build:nanus-ts', verbose, async () => {
         if (verbose) {
@@ -160,54 +127,50 @@ async function main() {
         }
     });
 
-    // =============================================================================
-    // STAGE 2: Norma stdlib + Faber compiler
-    // =============================================================================
-
-    if (faber) {
-        console.log('\n--- Stage 2: Norma + Faber ---\n');
-
-        await step('build:norma', verbose, async () => {
-            if (verbose) {
-                await $`bun run build:norma`;
-            } else {
-                await $`bun run build:norma`.quiet();
-            }
-        });
-
-        await step('build:faber-ts', verbose, async () => {
-            if (verbose) {
-                await $`bun run build:faber-ts`;
-            } else {
-                await $`bun run build:faber-ts`.quiet();
-            }
-        });
-    }
-
-    // =============================================================================
-    // STAGE 3: Rivus with each compiler (faber-ts first, then nanus-*)
-    // =============================================================================
-
-    if (rivus) {
-        console.log('\n--- Stage 3: Rivus (multi-compiler) ---\n');
-
-        const compilers = ['faber-ts', 'nanus-ts', 'nanus-go', 'nanus-rs', 'nanus-py'] as const;
-
-        for (const compiler of compilers) {
-            const result = await step(
-                `build:rivus (${compiler})`,
-                verbose,
-                async () => {
-                    if (verbose) {
-                        await $`bun run build:rivus -- -c ${compiler}`;
-                    } else {
-                        await $`bun run build:rivus -- -c ${compiler}`.quiet();
-                    }
-                },
-                true, // allow failure
-            );
-            rivusResults.push(result);
+    await step('build:norma', verbose, async () => {
+        if (verbose) {
+            await $`bun run build:norma`;
+        } else {
+            await $`bun run build:norma`.quiet();
         }
+    });
+
+    // =============================================================================
+    // STAGE 2: Rivus via nanus-ts (must succeed)
+    // =============================================================================
+
+    console.log('\n--- Stage 2: Rivus (nanus-ts) ---\n');
+
+    await step('build:rivus (nanus-ts)', verbose, async () => {
+        if (verbose) {
+            await $`bun run build:rivus -- -c nanus-ts`;
+        } else {
+            await $`bun run build:rivus -- -c nanus-ts`.quiet();
+        }
+    });
+
+    // =============================================================================
+    // STAGE 3: Rivus via other nanus compilers (optional)
+    // =============================================================================
+
+    console.log('\n--- Stage 3: Rivus (other compilers) ---\n');
+
+    const optionalCompilers = ['nanus-go', 'nanus-rs', 'nanus-py'] as const;
+
+    for (const compiler of optionalCompilers) {
+        const result = await step(
+            `build:rivus (${compiler})`,
+            verbose,
+            async () => {
+                if (verbose) {
+                    await $`bun run build:rivus -- -c ${compiler}`;
+                } else {
+                    await $`bun run build:rivus -- -c ${compiler}`.quiet();
+                }
+            },
+            true, // allow failure
+        );
+        rivusResults.push(result);
     }
 
     // =============================================================================
