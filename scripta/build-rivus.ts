@@ -231,7 +231,11 @@ async function buildExecutableGo(): Promise<void> {
 
     const exeName = `rivus-${compiler}`;
     const outExe = join(binDir, exeName);
-    await $`cd ${moduleDir} && GOWORK=off go build -o ${outExe} ./fons/`.quiet();
+    const result = await $`cd ${moduleDir} && GOWORK=off go build -o ${outExe} ./fons/`.nothrow().quiet();
+    if (result.exitCode !== 0) {
+        console.error(result.stderr.toString());
+        process.exit(1);
+    }
 }
 
 async function buildExecutableRs(): Promise<void> {
@@ -260,7 +264,11 @@ path = "src/rivus.rs"
         await Bun.write(cargoToml, toml);
     }
 
-    await $`cd ${moduleDir} && cargo build --release`.quiet();
+    const result = await $`cd ${moduleDir} && cargo build --release`.nothrow().quiet();
+    if (result.exitCode !== 0) {
+        console.error(result.stderr.toString());
+        process.exit(1);
+    }
 
     const exeName = `rivus-${compiler}`;
     const outExe = join(binDir, exeName);
@@ -375,6 +383,10 @@ async function main() {
 }
 
 main().catch(err => {
-    console.error(err);
+    if (err && typeof err === 'object' && 'stderr' in err) {
+        console.error(err.stderr.toString());
+    } else {
+        console.error(err);
+    }
     process.exit(1);
 });
