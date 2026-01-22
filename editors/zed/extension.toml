@@ -1,5 +1,5 @@
 id = "faber"
-name = "Faber Romanus"
+name = "Faber"
 description = "Latin programming language support for Zed."
 version = "0.1.0"
 schema_version = 1

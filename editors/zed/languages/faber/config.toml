@@ -1,4 +1,4 @@
-name = "Faber Romanus"
+name = "Faber"
 grammar = "faber"
 path_suffixes = ["fab"]
 line_comments = ["#"]
