@@ -742,7 +742,7 @@ functio parseParametra(in Resolvitor r) -> lista<Parametrum> {
             p.procede()
         }
 
-        # Parse type (optional if no type annotation)
+        # Parse type (required)
         varia paramTypus = nihil qua TypusAnnotatio?
         si p.estTypusNomen(p.specta(0)) {
             paramTypus = r.adnotatio()
@@ -750,6 +750,7 @@ functio parseParametra(in Resolvitor r) -> lista<Parametrum> {
             # Function type annotation: (T) -> U
             paramTypus = r.adnotatio()
         } sin p.proba(SymbolumGenus.Verbum) et p.specta(1).species == SymbolumGenus.Nomen {
+            # Type keyword token followed by identifier
             paramTypus = r.adnotatio()
         } sin p.proba(SymbolumGenus.Nomen) et (
             p.specta(1).species == SymbolumGenus.Nomen aut
@@ -759,6 +760,9 @@ functio parseParametra(in Resolvitor r) -> lista<Parametrum> {
         ) {
             # User-defined type (Point, Point[], Point?, Point<T>)
             paramTypus = r.adnotatio()
+        } secus {
+            p.renuncia(ParserErrorCodice.ExpectaturTypusNomen, scriptum("got '§'", p.specta(0).valor))
+            paramTypus = typusSimplicis("ignotum", paramLocus)
         }
 
         # Parse name (keywords like `page` allowed)

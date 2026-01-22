@@ -5,7 +5,7 @@
 # Groups early-exit checks at function start to separate
 # validation from main logic.
 
-functio divide(a, b) -> numerus {
+functio divide(numerus a, numerus b) -> numerus {
     custodi {
         si b == 0 {
             redde 0
@@ -15,7 +15,7 @@ functio divide(a, b) -> numerus {
     redde a / b
 }
 
-functio processValue(x) -> numerus {
+functio processValue(numerus x) -> numerus {
     custodi {
         si x < 0 {
             redde -1
@@ -29,7 +29,7 @@ functio processValue(x) -> numerus {
     redde x * 2
 }
 
-functio clamp(value, min, max) -> numerus {
+functio clamp(numerus value, numerus min, numerus max) -> numerus {
     custodi {
         si value < min {
             redde min

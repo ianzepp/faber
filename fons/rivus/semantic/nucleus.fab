@@ -104,6 +104,10 @@ genus Analyzator {
     tabula<textus, DiscretioDeclInfo> discretioIndex                      # declaration metadata for discretio
     tabula<textus, Dependentia> dependentiae                              # alias -> path registry from § dependentia
 
+    # WHY: We want early visibility into where type information is missing.
+    # Track per-location IGNOTUM warnings so we can emit them once.
+    copia<textus> ignotumMonita
+
     # ========================================================================
     # ERROR REPORTING
     # ========================================================================
@@ -116,6 +120,19 @@ genus Analyzator {
             auxilium: auxilium vel "",
             locus: locus
         } novum SemanticError)
+    }
+
+    # Report a semantic warning for IGNOTUM usage.
+    # These are intentionally noisy initially; later we can add CLI flags to
+    # quiet/fail on them.
+    @ publica
+    functio moneIgnotum(ex textus ratio, ex Locus locus) -> vacuum {
+        fixum key = scriptum("§:§:§:§", locus.linea, locus.columna, locus.index, ratio)
+        si ego.ignotumMonita.habet(key) {
+            redde
+        }
+        ego.ignotumMonita.adde(key)
+        ego.error(scriptum("Warning: ignotum: §", ratio), locus, "Add explicit types or refine the analysis so this type is known.")
     }
 
     # ========================================================================
@@ -280,7 +297,8 @@ functio novumAnalyzator(ex tabula<textus, Dependentia> dependentiae, si de textu
         modulusCache: {} innatum tabula<textus, ModulusResolutum>,
         modulusInProgressu: {} innatum copia<textus>,
         discretioIndex: {} innatum tabula<textus, DiscretioDeclInfo>,
-        dependentiae: dependentiae
+        dependentiae: dependentiae,
+        ignotumMonita: {} innatum copia<textus>
     }
 
     # Define built-in intrinsics

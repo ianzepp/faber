@@ -9,7 +9,7 @@ functio saluta() {
 }
 
 # Function with parameter, no explicit return type
-functio dic(verbum) {
+functio dic(textus verbum) {
     scribe verbum
 }
 
@@ -19,7 +19,7 @@ functio nomen() -> textus {
 }
 
 # Function with parameter and return type
-functio duplica(n) -> numerus {
+functio duplica(numerus n) -> numerus {
     redde n * 2
 }
 

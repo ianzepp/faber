@@ -35,6 +35,7 @@ functio resolveNomen(Resolvitor r, Expressia nomenExpr) -> SemanticTypus {
             si nihil symbolum {
                 fixum err = undefinedVariableError(n.valor)
                 a.error(err.textus, n.locus, err.auxilium)
+                a.moneIgnotum("undefined variable resolves to ignotum", n.locus)
                 redde IGNOTUM
             }
 
@@ -93,6 +94,7 @@ functio resolveSeries(Resolvitor r, Expressia seriesExpr) -> SemanticTypus {
         casu SeriesExpressia ut s {
             # Empty array: lista<ignotum>
             si s.elementa.longitudo() == 0 {
+                r.analyzator().moneIgnotum("empty array literal defaults to lista<ignotum>", s.locus)
                 redde genericumTypus("lista", [IGNOTUM], falsum)
             }
 
@@ -127,6 +129,7 @@ functio resolveObiectum(Resolvitor r, Expressia obiectumExpr) -> SemanticTypus {
             }
 
             # Object literals have unknown structural type for now
+            r.analyzator().moneIgnotum("object literal resolves to ignotum (structural typing not implemented)", o.locus)
             redde IGNOTUM
         }
         casu _ { }

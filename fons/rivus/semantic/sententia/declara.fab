@@ -52,6 +52,7 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
                 }
                 casu Littera {
                     # EDGE: Numeric literal type params are not needed for self-host yet.
+                    r.analyzator().moneIgnotum("type parameter literal resolves to ignotum (numeric literal type params not supported)", annotatio.locus)
                     resolvedParametri.adde(IGNOTUM)
                 }
             }
@@ -64,6 +65,7 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
 
     # Handle ignotum specially - returns Ignotum variant, not a primitive
     si annotatio.nomen == "ignotum" {
+        r.analyzator().moneIgnotum("explicit 'ignotum' type annotation", annotatio.locus)
         si annotatio.nullabilis {
             redde unioTypus([ignotumTypus(nihil), NIHIL])
         }
@@ -287,6 +289,8 @@ functio analyzeFunctioDeclaratio(Resolvitor r, Sententia functioStmt) -> vacuum 
                 si nonnihil param.typus {
                     paramTypi.adde(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
                 } secus {
+                    a.error("Function parameter missing type annotation", param.locus, "Use type-first syntax: functio f(numerus x) { ... }")
+                    a.moneIgnotum("missing function parameter type annotation", param.locus)
                     paramTypi.adde(IGNOTUM)
                 }
             }
@@ -410,6 +414,8 @@ functio analyzeGenusDeclaratio(Resolvitor r, Sententia genusStmt) -> vacuum {
                     si nonnihil param.typus {
                         paramTypi.adde(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
                     } secus {
+                        a.error("Method parameter missing type annotation", param.locus, "Use type-first syntax: functio f(numerus x) { ... }")
+                        a.moneIgnotum("missing method parameter type annotation", param.locus)
                         paramTypi.adde(IGNOTUM)
                     }
                 }
@@ -529,6 +535,8 @@ functio analyzePactumDeclaratio(Resolvitor r, Sententia pactumStmt) -> vacuum {
                     si nonnihil param.typus {
                         paramTypi.adde(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
                     } secus {
+                        a.error("Pactum method parameter missing type annotation", param.locus, "Use type-first syntax: functio f(numerus x) -> numerus")
+                        a.moneIgnotum("missing pactum method parameter type annotation", param.locus)
                         paramTypi.adde(IGNOTUM)
                     }
                 }

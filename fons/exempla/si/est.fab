@@ -4,7 +4,7 @@
 # verum x = strict boolean true check
 # falsum x = strict boolean false check
 
-functio checkValue(x) -> textus {
+functio checkValue(ignotum x) -> textus {
     si x est nihil { redde "is null" }
     si verum x { redde "is true" }
     si falsum x { redde "is false" }

@@ -124,6 +124,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
             # Build placeholder function type
             varia paramTypi = [] innatum lista<SemanticTypus>
             ex f.parametra fixum param {
+                a.moneIgnotum("predeclare: function parameter type placeholder", param.locus)
                 paramTypi.adde(IGNOTUM)
             }
             # WHY: Preserve declared return types so callers can infer receiver types

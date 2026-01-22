@@ -31,8 +31,8 @@
 § ex "../../ast/positio" importa Locus
 § ex "../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, ClausuraParametrum, ClausuraCorpus
 § ex "../../ast/expressia" importa AbFiltrum, CatenaGradus
-§ ex "../../ast/typus" importa TypusAnnotatio
-§ ex "../../ast/lexema" importa SymbolumGenus
+§ ex "../../ast/typus" importa TypusAnnotatio, typusSimplicis
+§ ex "../../ast/lexema" importa Symbolum, SymbolumGenus
 § ex "../../ast/sententia" importa Sententia
 § ex "../errores" importa ParserErrorCodice
 
@@ -237,7 +237,7 @@ functio parseAbExpressia(in Resolvitor r) -> Expressia {
 
     varia filtrum = nihil qua AbFiltrum?
 
-    functio estCatenaVerbumSym(symbolum) -> bivalens {
+    functio estCatenaVerbumSym(de Symbolum symbolum) -> bivalens {
         si symbolum.species !== SymbolumGenus.Verbum {
             redde falsum
         }
@@ -291,7 +291,7 @@ functio parseCatenaGradus(in Resolvitor r) -> lista<CatenaGradus> {
     fixum p = r.parser()
     varia gradus = [] innatum lista<CatenaGradus>
 
-    functio estCatenaVerbumSym(symbolum) -> bivalens {
+    functio estCatenaVerbumSym(de Symbolum symbolum) -> bivalens {
         si symbolum.species !== SymbolumGenus.Verbum {
             redde falsum
         }
@@ -567,12 +567,34 @@ functio parseClausuraExpressia(in Resolvitor r) -> Expressia {
         # Parse parameters until we hit : or ->
         fac {
             fixum paramLocus = p.locusActualis()
+
+            # Type-first parameters: clausura <typus> <nomen>
+            varia paramTypus = nihil qua TypusAnnotatio?
+            si p.estTypusNomen(p.specta(0)) {
+                paramTypus = r.adnotatio()
+            } sin p.proba(SymbolumGenus.ParensSin) {
+                # Function type annotation: (T) -> U
+                paramTypus = r.adnotatio()
+            } sin p.proba(SymbolumGenus.Verbum) et p.specta(1).species == SymbolumGenus.Nomen {
+                paramTypus = r.adnotatio()
+            } sin p.proba(SymbolumGenus.Nomen) et (
+                p.specta(1).species == SymbolumGenus.Nomen aut
+                p.specta(1).species == SymbolumGenus.Minor aut
+                p.specta(1).species == SymbolumGenus.QuadratusSin aut
+                p.specta(1).species == SymbolumGenus.Rogatio
+            ) {
+                paramTypus = r.adnotatio()
+            } secus {
+                p.renuncia(ParserErrorCodice.ExpectaturTypusNomen, scriptum("got '§'", p.specta(0).valor))
+                paramTypus = typusSimplicis("ignotum", paramLocus)
+            }
+
             fixum nomenSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
 
             parametra.adde({
                 locus: paramLocus,
                 nomen: nomenSym.valor,
-                typus: nihil
+                typus: paramTypus
             } novum ClausuraParametrum)
         } dum p.congruet(SymbolumGenus.Coma)
     }
