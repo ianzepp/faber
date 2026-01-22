@@ -40,7 +40,7 @@ functio resolveUnaria(Resolvitor r, Expressia unariaExpr) -> SemanticTypus {
                             redde argTypus
                         }
                     }
-                    casu _ { }
+                    casu _ tacet
                 }
                 redde NUMERUS
             }
@@ -53,7 +53,7 @@ functio resolveUnaria(Resolvitor r, Expressia unariaExpr) -> SemanticTypus {
             # Default: preserve argument type
             redde argTypus
         }
-        casu _ { }
+        casu _ tacet
     }
 
     redde IGNOTUM

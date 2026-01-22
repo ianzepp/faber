@@ -27,7 +27,7 @@ functio genCustodi(in TsGenerator g, de lista<CustodiClausula> clausulae) -> tex
                     vacuus = verum
                 }
             }
-            ceterum { }
+            ceterum tacet
         }
 
         si vacuus {
@@ -42,7 +42,7 @@ functio genCustodi(in TsGenerator g, de lista<CustodiClausula> clausulae) -> tex
             casu MassaSententia ut m {
                 body = genMassa(g, m.corpus)
             }
-            ceterum { }
+            ceterum tacet
         }
         si body == "" {
             body = genSententia(g, clausula.consequens)

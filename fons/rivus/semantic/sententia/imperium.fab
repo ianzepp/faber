@@ -6,6 +6,7 @@
 § ex "../nucleus" importa DiscretioDeclInfo
 § ex "../typi" importa SemanticTypus, IGNOTUM
 § ex "../scopus" importa ScopusSpecies, Symbolum, SymbolumSpecies, quaereSymbolum
+§ ex "../errores" importa emptyCaseBlockError
 § ex "../../ast/sententia" importa Sententia, VariansExemplar, IteratioVariabilis
 
 # =============================================================================
@@ -44,7 +45,7 @@ functio analyzeSi(Resolvitor r, Sententia siStmt) -> vacuum {
                 }
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 }
 
@@ -67,7 +68,7 @@ functio analyzeDum(Resolvitor r, Sententia dumStmt) -> vacuum {
             r.sententia(d.corpus)
             a.exiScopum()
         }
-        casu _ { }
+        casu _ tacet
     }
 }
 
@@ -95,7 +96,7 @@ functio analyzeIteratio(Resolvitor r, Sententia iteratioStmt) -> vacuum {
                                 elemTypus = g.parametri.primus()
                             }
                         }
-                        ceterum { }
+                        ceterum tacet
                     }
 
                     a.scopus.symbola[n.valor] = {
@@ -126,7 +127,7 @@ functio analyzeIteratio(Resolvitor r, Sententia iteratioStmt) -> vacuum {
                                     posTypus = g.parametri[0]
                                 }
                             }
-                            ceterum { }
+                            ceterum tacet
                         }
 
                         a.scopus.symbola[elem.nomen qua textus] = {
@@ -147,13 +148,26 @@ functio analyzeIteratio(Resolvitor r, Sententia iteratioStmt) -> vacuum {
             # Exit scope
             a.exiScopum()
         }
-        casu _ { }
+        casu _ tacet
     }
 }
 
 # =============================================================================
 # PATTERN MATCHING
 # =============================================================================
+
+# Check if a statement is an empty block (MassaSententia with no body)
+# WHY: Empty blocks should use 'tacet' instead for intentional no-op.
+functio estVacuaMassa(de Sententia s) -> bivalens {
+    discerne s {
+        casu MassaSententia ut m {
+            redde m.corpus.longitudo() == 0
+        }
+        casu _ {
+            redde falsum
+        }
+    }
+}
 
 # Analyze elige (switch) statement
 @ publica
@@ -167,6 +181,12 @@ functio analyzeElige(Resolvitor r, Sententia eligeStmt) -> vacuum {
 
             # Analyze each case in its own scope
             ex e.casus fixum casus {
+                # Check for empty block
+                si estVacuaMassa(casus.consequens) {
+                    fixum err = emptyCaseBlockError()
+                    a.error(err.textus, casus.locus, err.auxilium)
+                }
+
                 # Analyze case test
                 r.expressia(casus.condicio)
 
@@ -178,12 +198,18 @@ functio analyzeElige(Resolvitor r, Sententia eligeStmt) -> vacuum {
 
             # Analyze default (aliter) if present
             si nonnihil e.praedefinitum {
+                # Check for empty block in default
+                si estVacuaMassa(e.praedefinitum qua Sententia) {
+                    fixum err = emptyCaseBlockError()
+                    a.error(err.textus, e.praedefinitum.locus, err.auxilium)
+                }
+
                 a.intraScopum(ScopusSpecies.Massa)
                 r.sententia(e.praedefinitum qua Sententia)
                 a.exiScopum()
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 }
 
@@ -278,6 +304,12 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                     patternIndex = patternIndex + 1
                 }
 
+                # Check for empty block
+                si estVacuaMassa(casus.consequens) {
+                    fixum err = emptyCaseBlockError()
+                    a.error(err.textus, casus.locus, err.auxilium)
+                }
+
                 # Analyze case body
                 r.sententia(casus.consequens)
 
@@ -315,7 +347,7 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                         casu Usitatum ut u {
                             discretioNomen = u.nomen
                         }
-                        casu _ { }
+                        casu _ tacet
                     }
 
                     si nonnihil discretioNomen {
@@ -368,7 +400,7 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                 }
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 }
 
@@ -390,6 +422,6 @@ functio analyzeCustodi(Resolvitor r, Sententia custodiStmt) -> vacuum {
                 a.exiScopum()
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 }

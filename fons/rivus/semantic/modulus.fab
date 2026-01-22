@@ -305,7 +305,7 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
                     locus: v.locus
                 } novum ModulusExportum
             }
-            casu _ { }
+            casu _ tacet
         }
     }
 

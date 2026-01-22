@@ -67,7 +67,7 @@ functio habetErrataModificator(si de ignotum modificatores) -> bivalens {
             casu ErrataModificator {
                 redde verum
             }
-            ceterum { }
+            ceterum tacet
         }
     }
     redde falsum
@@ -162,7 +162,7 @@ functio genGenusMethod(in GoGenerator g, de textus typeName, de Sententia method
             }
             redde scriptum("§ {\n§\n§}", result, body, g.ind())
         }
-        ceterum { }
+        ceterum tacet
     }
 
     redde ""

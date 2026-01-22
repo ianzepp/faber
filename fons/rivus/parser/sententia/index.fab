@@ -115,7 +115,7 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
             casu IncipietSententia ut i {
                 i.annotationes = annotationes
             }
-            casu _ { }
+            casu _ tacet
         }
 
         # Process individual annotation effects
@@ -258,7 +258,7 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
                         }
                     }
                 }
-                casu _ { }
+                casu _ tacet
             }
         }
 
@@ -357,6 +357,18 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
         }
         si verbumId === VerbumId.De {
             redde parseDeSententia(r)
+        }
+
+        # SYNTAXIS ALIENA: 'pro...de' loop (Python/JS style)
+        # Faber uses 'ex collection fixum item { }' not 'pro item de collection { }'
+        si verbumId === VerbumId.Pro {
+            p.renuncia(ParserErrorCodice.SyntaxisAlienaProDe)
+            # Skip tokens to attempt recovery (pro IDENT de EXPR { })
+            p.procede()  # pro
+            si p.proba(SymbolumGenus.Nomen) { p.procede() }  # item
+            si p.probaVerbum("de") { p.procede() }  # de
+            # Let expression parsing handle the rest, then look for block
+            redde parseExpressiaSententia(r)
         }
 
         # Declarations

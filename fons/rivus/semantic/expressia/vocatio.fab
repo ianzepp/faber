@@ -93,11 +93,11 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
                                     }
                                 }
                             }
-                            casu _ { }
+                            casu _ tacet
                         }
                     }
                 }
-                casu _ { }
+                casu _ tacet
             }
 
             # If callee is a function type, return its return type
@@ -105,13 +105,13 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
                 casu Functio ut f {
                     redde f.reditusTypus
                 }
-                casu _ { }
+                casu _ tacet
             }
 
             # Otherwise unknown
             redde IGNOTUM
         }
-        casu _ { }
+        casu _ tacet
     }
 
     redde IGNOTUM
@@ -134,7 +134,7 @@ functio nomenReceptor(SemanticTypus t) -> textus? {
         casu Usitatum ut u {
             redde u.nomen
         }
-        casu _ { }
+        casu _ tacet
     }
     redde nihil
 }
@@ -186,7 +186,7 @@ functio resolveMembrum(Resolvitor r, Expressia membrumExpr) -> SemanticTypus {
                                     redde BIVALENS
                                 }
                             }
-                            casu _ { }
+                            casu _ tacet
                         }
 
                         # Indexed access: lista[i] -> element type
@@ -204,7 +204,7 @@ functio resolveMembrum(Resolvitor r, Expressia membrumExpr) -> SemanticTypus {
                                     redde NUMERUS
                                 }
                             }
-                            casu _ { }
+                            casu _ tacet
                         }
                         # Indexed access: textus[i] -> textus (single char)
                         si m.computatum {
@@ -224,7 +224,7 @@ functio resolveMembrum(Resolvitor r, Expressia membrumExpr) -> SemanticTypus {
                                 redde ge.methodi[n.valor]
                             }
                         }
-                        casu _ { }
+                        casu _ tacet
                     }
                 }
 
@@ -245,7 +245,7 @@ functio resolveMembrum(Resolvitor r, Expressia membrumExpr) -> SemanticTypus {
                                             redde ge.methodi[n.valor]
                                         }
                                     }
-                                    casu _ { }
+                                    casu _ tacet
                                 }
                             }
                             casu Pactum ut pa {
@@ -255,20 +255,20 @@ functio resolveMembrum(Resolvitor r, Expressia membrumExpr) -> SemanticTypus {
                                             redde pa.methodi[n.valor]
                                         }
                                     }
-                                    casu _ { }
+                                    casu _ tacet
                                 }
                             }
-                            casu _ { }
+                            casu _ tacet
                         }
                     }
                 }
 
-                casu _ { }
+                casu _ tacet
             }
 
             redde IGNOTUM
         }
-        casu _ { }
+        casu _ tacet
     }
 
     redde IGNOTUM

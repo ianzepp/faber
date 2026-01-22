@@ -81,7 +81,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
                         fixum op = (r.inclusivum qua bivalens) sic "<=" secus "<"
                         redde scriptum("(§ >= § && § § §)", sinister, initium, sinister, op, finis)
                     }
-                    casu _ { }
+                    casu _ tacet
                 }
                 redde scriptum("(§ intra §)", sinister, dexter)
             }
@@ -131,7 +131,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
                     casu EstExpressia ut est {
                         redde genEstExpressiaNegata(g, est.expressia, est.scopus novum TypusAnnotatio)
                     }
-                    casu _ { }
+                    casu _ tacet
                 }
             }
 
@@ -185,7 +185,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
                             g.exiProfundum()
                             redde scriptum("(() => {\n§\n§})()", rendered, g.ind())
                         }
-                        casu _ { }
+                        casu _ tacet
                     }
                 }
                 casu Expr ut expr {
@@ -241,11 +241,11 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
                                     }
                                 }
                             }
-                            casu _ { }
+                            casu _ tacet
                         }
                     }
                 }
-                casu _ { }
+                casu _ tacet
             }
 
             # Default: pass through as-is
@@ -260,7 +260,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
                     casu AmbitusExpressia ut a {
                         redde genSectioAccess(g, obj, a, e.optivum qua bivalens, e.nonNullum qua bivalens)
                     }
-                    casu _ { }
+                    casu _ tacet
                 }
 
                 fixum idx = genNudaExpressia(g, e.proprietas)
@@ -379,7 +379,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
                             }
                             redde scriptum("(§)§ => {\n§\n§}", params.coniunge(", "), retType, rendered, g.ind())
                         }
-                        casu _ { }
+                        casu _ tacet
                     }
                 }
                 casu Expr ut expr {
@@ -568,7 +568,7 @@ functio invenitTabulaNomen(de Expressia obiectum, de TsGenerator g) -> textus? {
                 }
             }
         }
-        ceterum { }
+        ceterum tacet
     }
     redde nihil
 }
@@ -598,7 +598,7 @@ functio genTabulaAssignatio(in TsGenerator g, de AssignatioExpressia e) -> textu
         casu MembrumExpressia ut m {
             redde genTabulaAssignatioMembrum(g, e, m)
         }
-        casu _ { }
+        casu _ tacet
     }
     redde nihil
 }
@@ -639,7 +639,7 @@ functio extractTypusParam(in TsGenerator g, numerus index, si de lista<TypusPara
 
     discerne paramLista[index] {
         casu Typus ut t { redde genTypus(g, t.adnotatio) }
-        casu _ { }
+        casu _ tacet
     }
 
     redde "unknown"
@@ -657,7 +657,7 @@ functio genInnatumTabula(in TsGenerator g, de InnatumExpressia e) -> textus {
                 redde genTabulaEntries(g, obj, keyType, valueType)
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 
     redde scriptum("new Map<§, §>()", keyType, valueType)
@@ -691,7 +691,7 @@ functio genInnatumLista(in TsGenerator g, de InnatumExpressia e) -> textus {
                 redde genExpressia(g, e.expressia)
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 
     si elemType == "unknown" { redde "[]" }
@@ -711,7 +711,7 @@ functio estNegativusIndex(de Expressia expr) -> bivalens {
         casu UnariaExpressia ut u {
             redde (u.signum qua textus) == "-"
         }
-        ceterum { }
+        ceterum tacet
     }
     redde falsum
 }
@@ -733,7 +733,7 @@ functio genSectioAccess(in TsGenerator g, de textus obj, de Expressia ambitus, b
         casu AmbitusExpressia ut a {
             redde genAmbitusSlice(g, obj, a, optivum, nonNullum)
         }
-        casu _ { }
+        casu _ tacet
     }
     redde scriptum("§[§]", obj, genExpressia(g, ambitus))
 }
@@ -767,7 +767,7 @@ functio legeNumerusLiteralis(de Expressia expr) -> numerus? {
         casu UnariaExpressia ut u {
             redde legeNegativusNumerus(u)
         }
-        casu _ { }
+        casu _ tacet
     }
     redde nihil
 }
@@ -781,7 +781,7 @@ functio legeNegativusNumerus(de UnariaExpressia u) -> numerus? {
                 redde -legeNumerusTextus(l.crudus)
             }
         }
-        casu _ { }
+        casu _ tacet
     }
     redde nihil
 }
@@ -915,7 +915,7 @@ functio genNudaExpressia(in TsGenerator g, de Expressia expr) -> textus {
             }
             redde scriptum("§ § §", sin, signum, dex)
         }
-        ceterum { }
+        ceterum tacet
     }
 
     redde genExpressia(g, expr)

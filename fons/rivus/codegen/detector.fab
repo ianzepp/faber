@@ -290,7 +290,7 @@ genus FeatureDetector {
                 }
             }
 
-            casu _ { }
+            casu _ tacet
         }
     }
 

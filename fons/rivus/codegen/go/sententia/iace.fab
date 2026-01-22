@@ -20,7 +20,7 @@ functio genErrataError(in GoGenerator g, de Expressia argumentum) -> textus {
         casu ScriptumExpressia {
             redde scriptum("errors.New(§)", expr)
         }
-        ceterum { }
+        ceterum tacet
     }
 
     redde expr

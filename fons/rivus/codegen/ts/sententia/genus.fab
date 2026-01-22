@@ -150,7 +150,7 @@ functio genCreoMethod(in TsGenerator g, de Sententia creo) -> textus {
             }
             redde scriptum("§private creo() §", g.ind(), body)
         }
-        ceterum { }
+        ceterum tacet
     }
     redde scriptum("§private creo() {}", g.ind())
 }

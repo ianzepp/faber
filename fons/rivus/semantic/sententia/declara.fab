@@ -141,7 +141,7 @@ functio validateFunctioModificatores(Resolvitor r, lista<FunctioModificator>? mo
                     visa["iacit"] = verum
                 }
             }
-            casu _ { }
+            casu _ tacet
         }
     }
 }
@@ -200,7 +200,7 @@ functio analyzeVariaDeclaratio(Resolvitor r, Sententia variaStmt) -> vacuum {
                 locus: v.locus
             } novum Symbolum)
         }
-        casu _ { }
+        casu _ tacet
     }
 }
 
@@ -231,7 +231,7 @@ functio analyzeDestructuraSententia(Resolvitor r, Sententia stmt) -> vacuum {
                 } novum Symbolum)
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 }
 
@@ -266,7 +266,7 @@ functio analyzeSeriesDestructuraSententia(Resolvitor r, Sententia stmt) -> vacuu
                 } novum Symbolum)
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 }
 
@@ -373,7 +373,7 @@ functio analyzeFunctioDeclaratio(Resolvitor r, Sententia functioStmt) -> vacuum 
                 a.currentFunctioGenerator = prevGenerator
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 }
 
@@ -456,7 +456,7 @@ functio analyzeGenusDeclaratio(Resolvitor r, Sententia genusStmt) -> vacuum {
 
             a.currentGenusNomen = prevGenusNomen
         }
-        casu _ { }
+        casu _ tacet
     }
 }
 
@@ -471,7 +471,7 @@ functio analyzeMethodusCorpus(Resolvitor r, FunctioDeclaratio m, tabula<textus, 
 
     discerne methodTypus {
         casu Functio ut fn { reditusTypus = fn.reditusTypus }
-        casu _ { }
+        casu _ tacet
     }
 
     # Save function context
@@ -564,7 +564,7 @@ functio analyzePactumDeclaratio(Resolvitor r, Sententia pactumStmt) -> vacuum {
                 locus: p.locus
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 }
 
@@ -593,7 +593,7 @@ functio analyzeOrdoDeclaratio(Resolvitor r, Sententia ordoStmt) -> vacuum {
                 locus: o.locus
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 }
 
@@ -660,7 +660,7 @@ functio analyzeDiscretioDeclaratio(Resolvitor r, Sententia discretioStmt) -> vac
                 }
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 }
 
@@ -683,6 +683,6 @@ functio analyzeTypusAlias(Resolvitor r, Sententia typusStmt) -> vacuum {
                 locus: t.locus
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 }

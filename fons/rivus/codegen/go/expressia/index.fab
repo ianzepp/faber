@@ -190,7 +190,7 @@ functio genExpressia(in GoGenerator g, de Expressia expr) -> textus {
                             }
                             redde scriptum("func(§) interface{} {\n§\n§}", params.coniunge(", "), rendered, g.ind())
                         }
-                        casu _ { }
+                        casu _ tacet
                     }
                 }
                 casu Expr ut expr {
@@ -292,7 +292,7 @@ functio genObiectumClavis(in GoGenerator g, de Expressia clavis) -> textus {
                 redde genLittera(l.species qua LitteraGenus, l.crudus qua textus)
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 
     mori "Go codegen: unsupported object key expression"
@@ -356,7 +356,7 @@ functio genClausuraSententia(in GoGenerator g, de Sententia stmt) -> textus {
         casu ExpressiaSententia ut s {
             redde scriptum("§§", g.ind(), genExpressia(g, s.expressia))
         }
-        casu _ { }
+        casu _ tacet
     }
 
     mori scriptum("Go codegen: unsupported lambda statement '§'", stmt.tag)
@@ -376,10 +376,10 @@ functio genConstructorNomen(in GoGenerator g, de Expressia vocatum) -> textus {
                 casu Nomen ut n {
                     redde scriptum("§.New§", obj, capitaliza(n.valor))
                 }
-                casu _ { }
+                casu _ tacet
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 
     mori "Go codegen: unsupported constructor target"
@@ -399,7 +399,7 @@ functio genOptionalMembrum(in GoGenerator g, de Expressia expr) -> textus {
         casu MembrumExpressia ut m {
             isComputedAccess = m.computatum qua bivalens
         }
-        casu _ { }
+        casu _ tacet
     }
 
     # Walk backwards through the chain collecting properties

@@ -749,11 +749,11 @@ functio exMassaExpressia(de Sententia massa, de Locus locus) -> Expressia {
                     casu ExpressiaSententia ut e {
                         redde e.expressia
                     }
-                    casu _ { }
+                    casu _ tacet
                 }
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 
     redde finge Littera {

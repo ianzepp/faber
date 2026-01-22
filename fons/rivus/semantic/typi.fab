@@ -388,14 +388,14 @@ functio assignabileAd(de SemanticTypus fons, de SemanticTypus scopus) -> bivalen
         casu Ignotum {
             redde verum
         }
-        casu _ { }
+        casu _ tacet
     }
 
     discerne scopus {
         casu Ignotum {
             redde verum
         }
-        casu _ { }
+        casu _ tacet
     }
 
     # nihil is assignable to nullable types
@@ -427,7 +427,7 @@ functio assignabileAd(de SemanticTypus fons, de SemanticTypus scopus) -> bivalen
                 }
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 
     # Numeric type promotion: numerus -> fractus, numerus -> decimus
@@ -439,10 +439,10 @@ functio assignabileAd(de SemanticTypus fons, de SemanticTypus scopus) -> bivalen
                         redde verum
                     }
                 }
-                casu _ { }
+                casu _ tacet
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 
     # Check if source is in target union
@@ -455,7 +455,7 @@ functio assignabileAd(de SemanticTypus fons, de SemanticTypus scopus) -> bivalen
             }
             redde falsum
         }
-        casu _ { }
+        casu _ tacet
     }
 
     # Source union must have all types assignable to target
@@ -468,7 +468,7 @@ functio assignabileAd(de SemanticTypus fons, de SemanticTypus scopus) -> bivalen
             }
             redde verum
         }
-        casu _ { }
+        casu _ tacet
     }
 
     # Otherwise check equality

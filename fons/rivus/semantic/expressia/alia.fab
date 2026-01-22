@@ -66,11 +66,11 @@ functio resolveClausura(Resolvitor r, Expressia clausuraExpr) -> SemanticTypus {
                                     casu ExpressiaSententia ut s {
                                         reditusTypus = r.expressia(s.expressia)
                                     }
-                                    casu _ { }
+                                    casu _ tacet
                                 }
                             }
                         }
-                        casu _ { }
+                        casu _ tacet
                     }
                 }
                 casu Expr ut e {
@@ -84,7 +84,7 @@ functio resolveClausura(Resolvitor r, Expressia clausuraExpr) -> SemanticTypus {
             # Build function type using resolved parameter types
             redde functioTypus(paramTypi, reditusTypus, falsum, falsum)
         }
-        casu _ { }
+        casu _ tacet
     }
 
     redde IGNOTUM
@@ -112,7 +112,7 @@ functio resolveFingeExpr(Resolvitor r, Expressia fingeExpr) -> SemanticTypus {
             # Otherwise use the variant name as the type
             redde usitatumTypus(f.variansNomen, falsum)
         }
-        casu _ { }
+        casu _ tacet
     }
 
     redde IGNOTUM
@@ -144,12 +144,12 @@ functio resolveCedeExpr(Resolvitor r, Expressia cedeExpr) -> SemanticTypus {
                         redde g.parametri.primus()
                     }
                 }
-                casu _ { }
+                casu _ tacet
             }
 
             redde promissumTypus
         }
-        casu _ { }
+        casu _ tacet
     }
 
     redde IGNOTUM
@@ -174,12 +174,12 @@ functio resolveNovumExpr(Resolvitor r, Expressia novumExpr) -> SemanticTypus {
                 casu Nomen ut nom {
                     redde usitatumTypus(nom.valor, falsum)
                 }
-                casu _ { }
+                casu _ tacet
             }
 
             redde IGNOTUM
         }
-        casu _ { }
+        casu _ tacet
     }
 
     redde IGNOTUM
@@ -202,7 +202,7 @@ functio resolveCondicio(Resolvitor r, Expressia condicioExpr) -> SemanticTypus {
             redde consequensTypus
         }
 
-        casu _ { }
+        casu _ tacet
     }
 
     redde IGNOTUM

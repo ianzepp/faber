@@ -30,7 +30,7 @@ functio estTabula(de Expressia expr, de TsGenerator g) -> bivalens {
                 }
             }
         }
-        ceterum { }
+        ceterum tacet
     }
     redde falsum
 }
@@ -71,10 +71,10 @@ functio genIteratio(in TsGenerator g, IteratioGenus species, de IteratioVariabil
                         rev
                     )
                 }
-                ceterum { }
+                ceterum tacet
             }
         }
-        ceterum { }
+        ceterum tacet
     }
 
     # Regular iteration - TS-specific for-of/for-in handling

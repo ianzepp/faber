@@ -31,7 +31,7 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
                                 redde TEXTUS
                             }
                         }
-                        ceterum { }
+                        ceterum tacet
                     }
                 }
 
@@ -49,10 +49,10 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
                                     redde sinisterTypus
                                 }
                             }
-                            ceterum { }
+                            ceterum tacet
                         }
                     }
-                    casu _ { }
+                    casu _ tacet
                 }
 
                 # Default to numerus
@@ -75,10 +75,10 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
                                     a.error(err.textus, b.locus, err.auxilium)
                                 }
                             }
-                            ceterum { }
+                            ceterum tacet
                         }
                     }
-                    casu _ { }
+                    casu _ tacet
                 }
 
                 redde BIVALENS

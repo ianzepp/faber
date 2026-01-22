@@ -27,6 +27,7 @@ ordo SemanticErrorCodice {
     DuplicateModifier       # S018: Duplicate modifier
     InvalidModifierContext  # S019: Modifier not allowed in context
     NihilEqualityWarning    # S022: Use nihil/nonnihil unary operators
+    EmptyCaseBlock          # S023: Empty block in casu/ceterum
 }
 
 # ============================================================================
@@ -223,5 +224,14 @@ functio nihilEqualityWarning(de textus signum) -> SemanticErrorNuntius {
     redde {
         textus: scriptum("Use 'nihil' or 'nonnihil' unary operators instead of '§ nihil'", signum),
         auxilium: "For null checks, prefer 'nihil x' (is null) or 'nonnihil x' (is not null) over '== nihil' or '!= nihil'."
+    } novum SemanticErrorNuntius
+}
+
+# Empty case block error
+@ publica
+functio emptyCaseBlockError() -> SemanticErrorNuntius {
+    redde {
+        textus: "Empty block in casu/ceterum",
+        auxilium: "Use 'tacet' for intentional no-op cases instead of empty braces."
     } novum SemanticErrorNuntius
 }

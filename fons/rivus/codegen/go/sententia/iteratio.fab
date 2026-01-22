@@ -45,10 +45,10 @@ functio genIteratio(in GoGenerator g, IteratioGenus species, de IteratioVariabil
                         rev
                     )
                 }
-                ceterum { }
+                ceterum tacet
             }
         }
-        ceterum { }
+        ceterum tacet
     }
 
     # Regular iteration - Go-specific range syntax

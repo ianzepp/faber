@@ -256,10 +256,10 @@ functio checkExpressia(Resolvitor r, Expressia expr, de SemanticTypus expected) 
                         redde expected
                     }
                 }
-                casu _ { }
+                casu _ tacet
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 
     # Default: synthesize without additional context.
@@ -312,12 +312,12 @@ functio resolveAssignatio(Resolvitor r, Expressia assignatioExpr) -> SemanticTyp
                     }
                     redde dexterTypus
                 }
-                casu _ { }
+                casu _ tacet
             }
 
             redde r.expressia(as.dexter)
         }
-        casu _ { }
+        casu _ tacet
     }
 
     redde IGNOTUM

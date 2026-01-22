@@ -38,7 +38,7 @@ functio analyzeRedde(Resolvitor r, Sententia reddeStmt) -> vacuum {
                 }
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 }
 
@@ -54,7 +54,7 @@ functio analyzeIace(Resolvitor r, Sententia iaceStmt) -> vacuum {
             # Resolve thrown expression
             r.expressia(i.argumentum)
         }
-        casu _ { }
+        casu _ tacet
     }
 }
 
@@ -72,7 +72,7 @@ functio analyzeScribe(Resolvitor r, Sententia scribeStmt) -> vacuum {
                 r.expressia(arg)
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 }
 
@@ -93,6 +93,6 @@ functio analyzeAdfirma(Resolvitor r, Sententia adfirmaStmt) -> vacuum {
                 r.expressia(adf.nuntius)
             }
         }
-        casu _ { }
+        casu _ tacet
     }
 }

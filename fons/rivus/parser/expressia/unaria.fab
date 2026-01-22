@@ -442,6 +442,15 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
             perge
         }
 
+        # SYNTAXIS ALIENA: JavaScript arrow functions
+        # Detect (x) => or x => and give helpful error
+        si p.proba(SymbolumGenus.SagittaCrassa) {
+            p.renuncia(ParserErrorCodice.SyntaxisAlienaSagittaCrassa)
+            # Skip the => and let parsing continue
+            p.procede()
+            perge
+        }
+
         # No more postfix operators
         rumpe
     }

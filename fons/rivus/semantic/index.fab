@@ -397,6 +397,6 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
         }
 
         # Other statements don't need predeclaration
-        casu _ { }
+        casu _ tacet
     }
 }

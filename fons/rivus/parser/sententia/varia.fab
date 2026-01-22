@@ -272,6 +272,20 @@ functio parseVariaSententia(in Resolvitor r) -> Sententia {
     } secus {
         # Just a name (type inference): fixum x = 42
         nomen = parseNomenVelVerbum(r)
+
+        # =====================================================================
+        # SYNTAXIS ALIENA DETECTION: TypeScript-style colon type annotation
+        # =====================================================================
+        # Detect `fixum x: textus` pattern (TypeScript habit) and emit helpful error.
+        # The correct Faber syntax is `fixum textus x`.
+        si p.proba(SymbolumGenus.Colon) {
+            p.renuncia(ParserErrorCodice.SyntaxisAlienaColonTypus, scriptum("found '§:'", nomen))
+            # Skip the colon and whatever follows to attempt recovery
+            p.procede()
+            si p.proba(SymbolumGenus.Nomen) aut p.proba(SymbolumGenus.Verbum) {
+                p.procede()
+            }
+        }
     }
 
     # -------------------------------------------------------------------------

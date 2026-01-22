@@ -108,7 +108,13 @@ ordo ParserErrorCodice {
     ExpectaturVerteSagitta = "P305",
     ExpectaturVerteTemplate = "P306",
     VerteMultiplicemTargets = "P307",
-    ExpectaturVerteParam = "P308"
+    ExpectaturVerteParam = "P308",
+
+    # Syntaxis aliena errors (P400-P499)
+    # Foreign syntax patterns from other languages
+    SyntaxisAlienaColonTypus = "P400",
+    SyntaxisAlienaProDe = "P401",
+    SyntaxisAlienaSagittaCrassa = "P402"
 }
 
 # Error message with help text
@@ -291,7 +297,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde creoNuntium("For loop requires 'ex' or 'de'", "ex items fixum i { } or de obj fixum k { }")
         }
         casu ParserErrorCodice.InvalidumEligeCasusInitium {
-            redde creoNuntium("Switch cases need 'casu' or 'ceterum'", "elige x { casu 1 { } ceterum { } }")
+            redde creoNuntium("Switch cases need 'casu' or 'ceterum'", "elige x { casu 1 { } ceterum tacet }")
         }
         casu ParserErrorCodice.InvalidumDiscerneCasusInitium {
             redde creoNuntium("Match cases need 'casu'", "discerne e { casu Variant { } }")
@@ -368,6 +374,17 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
         }
         casu ParserErrorCodice.ExpectaturVerteParam {
             redde creoNuntium("Expected parameter name in @verte template", "@ verte ts (ego, elem) -> '...'")
+        }
+
+        # Syntaxis aliena errors (foreign syntax patterns)
+        casu ParserErrorCodice.SyntaxisAlienaColonTypus {
+            redde creoNuntium("Colon type annotations are not supported", "Move the type before the variable name: 'fixum textus nomen' instead of 'fixum nomen: textus'")
+        }
+        casu ParserErrorCodice.SyntaxisAlienaProDe {
+            redde creoNuntium("'pro...de' loop syntax is not supported", "Use 'ex collection fixum item { }' instead of 'pro item de collection { }'")
+        }
+        casu ParserErrorCodice.SyntaxisAlienaSagittaCrassa {
+            redde creoNuntium("Arrow functions '=>' are not supported", "Use 'clausura x: x + 1' instead of '(x) => x + 1'")
         }
 
         # Default fallback
