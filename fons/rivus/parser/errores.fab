@@ -118,7 +118,8 @@ ordo ParserErrorCodice {
     SyntaxisAlienaNullabilis = "P403",
     SyntaxisAlienaAliter = "P404",
     SyntaxisAlienaRogatioBis = "P405",
-    SyntaxisAlienaTernaria = "P406"
+    SyntaxisAlienaTernaria = "P406",
+    SyntaxisAlienaExspecta = "P407"
 }
 
 # Error message with help text
@@ -401,6 +402,9 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
         }
         casu ParserErrorCodice.SyntaxisAlienaTernaria {
             redde creoNuntium("Ternary operator '? :' is not supported", "Use 'sic/secus' instead: x sic y secus z")
+        }
+        casu ParserErrorCodice.SyntaxisAlienaExspecta {
+            redde creoNuntium("'exspecta' is not a Faber keyword", "Use 'cede' for await: cede fetch()")
         }
 
         # Default fallback

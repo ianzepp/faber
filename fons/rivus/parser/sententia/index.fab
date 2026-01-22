@@ -382,6 +382,14 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
             redde parseExpressiaSententia(r)
         }
 
+        # SYNTAXIS ALIENA: 'exspecta' (Latin for await, but Faber uses cede)
+        si verbumId === VerbumId.Exspecta {
+            p.renuncia(ParserErrorCodice.SyntaxisAlienaExspecta)
+            p.procede()  # exspecta
+            # Let expression parsing handle the awaited value
+            redde parseExpressiaSententia(r)
+        }
+
         # Declarations
         si verbumId === VerbumId.Functio {
             redde parseFunctioDeclaratio(r)
