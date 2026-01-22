@@ -74,7 +74,23 @@ functio parseSiSententia(in Resolvitor r) -> Sententia {
         alternans = parseSinSententia(r)
     } sin p.probaVerbum("secus") {
         p.procede()
-        alternans = parseCorpusAutSententia(r)
+        # SYNTAXIS ALIENA: 'secus si' (should be 'sin')
+        si p.probaVerbum("si") {
+            p.renuncia(ParserErrorCodice.SyntaxisAlienaSecusSi)
+            p.procede()  # si
+            fixum cond = r.expressia()
+            fixum cons = parseCorpus(r)
+            # Continue parsing the else-if chain
+            alternans = finge SiSententia {
+                locus: p.locusActualis(),
+                condicio: cond,
+                consequens: cons,
+                alternans: nihil,
+                cape: nihil
+            } qua Sententia
+        } secus {
+            alternans = parseCorpusAutSententia(r)
+        }
     } sin p.probaVerbum("aliter") {
         # SYNTAXIS ALIENA: 'aliter' / 'aliter si' (false Latin for else/else-if)
         p.renuncia(ParserErrorCodice.SyntaxisAlienaAliter)
@@ -418,7 +434,22 @@ functio parseSinSententia(in Resolvitor r) -> Sententia {
         alternans = parseSinSententia(r)
     } sin p.probaVerbum("secus") {
         p.procede()
-        alternans = parseCorpusAutSententia(r)
+        # SYNTAXIS ALIENA: 'secus si' (should be 'sin')
+        si p.probaVerbum("si") {
+            p.renuncia(ParserErrorCodice.SyntaxisAlienaSecusSi)
+            p.procede()  # si
+            fixum cond = r.expressia()
+            fixum cons = parseCorpus(r)
+            alternans = finge SiSententia {
+                locus: p.locusActualis(),
+                condicio: cond,
+                consequens: cons,
+                alternans: nihil,
+                cape: nihil
+            } qua Sententia
+        } secus {
+            alternans = parseCorpusAutSententia(r)
+        }
     } sin p.probaVerbum("aliter") {
         # SYNTAXIS ALIENA: 'aliter' / 'aliter si' (false Latin for else/else-if)
         p.renuncia(ParserErrorCodice.SyntaxisAlienaAliter)

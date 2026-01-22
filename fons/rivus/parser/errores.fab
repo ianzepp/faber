@@ -120,7 +120,8 @@ ordo ParserErrorCodice {
     SyntaxisAlienaRogatioBis = "P405",
     SyntaxisAlienaTernaria = "P406",
     SyntaxisAlienaExspecta = "P407",
-    SyntaxisAlienaAsynca = "P408"
+    SyntaxisAlienaAsynca = "P408",
+    SyntaxisAlienaSecusSi = "P409"
 }
 
 # Error message with help text
@@ -409,6 +410,9 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
         }
         casu ParserErrorCodice.SyntaxisAlienaAsynca {
             redde creoNuntium("'@ asynca' is not a valid annotation", "Use '@ futura' for async functions")
+        }
+        casu ParserErrorCodice.SyntaxisAlienaSecusSi {
+            redde creoNuntium("'secus si' is not valid syntax", "Use 'sin' for else-if: si x { } sin y { } secus { }")
         }
 
         # Default fallback
