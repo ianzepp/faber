@@ -29,11 +29,13 @@ module.exports = grammar({
         // Comments
         comment: $ => token(choice(seq('#', /.*/), seq('//', /.*/))),
 
-        // Annotations: @ ... (line-based)
-        annotation: $ => token(seq('@', /[^\n]*/)),
+        // Annotations: @ name [args...] - single token capturing entire line
+        // Allows optional space after @
+        annotation: $ => token(seq('@', / ?/, /[a-zA-Z_][a-zA-Z0-9_]*/, optional(/[^\n]*/))),
 
-        // Directives: § ... (line-based)
-        directive: $ => token(seq('§', /[^\n]*/)),
+        // Directives: § name [args...] - single token capturing entire line
+        // Allows optional space after §
+        directive: $ => token(seq('§', / ?/, /[a-zA-Z_][a-zA-Z0-9_]*/, optional(/[^\n]*/))),
 
         // Control flow keywords
         keyword_control: $ =>
