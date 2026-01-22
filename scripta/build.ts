@@ -141,7 +141,7 @@ async function main() {
 
     console.log('\n--- Stage 2: Rivus (nanus-ts) ---\n');
 
-    await step('build:rivus (nanus-ts)', verbose, async () => {
+    const stage2Result = await step('build:rivus (nanus-ts)', verbose, async () => {
         if (verbose) {
             await $`bun run build:rivus -- -c nanus-ts`;
         } else {
@@ -171,6 +171,32 @@ async function main() {
             true, // allow failure
         );
         rivusResults.push(result);
+    }
+
+    // =============================================================================
+    // STAGE 4: Exempla (using successful rivus compilers)
+    // =============================================================================
+
+    const successfulCompilers: string[] = [];
+    if (stage2Result.success) successfulCompilers.push('rivus-nanus-ts');
+    for (const result of rivusResults) {
+        if (result.success) {
+            const compiler = result.name.replace('build:rivus (', '').replace(')', '');
+            successfulCompilers.push(`rivus-${compiler}`);
+        }
+    }
+
+    if (successfulCompilers.length > 0) {
+        console.log('\n--- Stage 4: Exempla ---\n');
+
+        const compilerArg = successfulCompilers.join(',');
+        await step(`build:exempla (${compilerArg})`, verbose, async () => {
+            if (verbose) {
+                await $`bun run build:exempla -- -c ${compilerArg}`;
+            } else {
+                await $`bun run build:exempla -- -c ${compilerArg}`.quiet();
+            }
+        });
     }
 
     // =============================================================================

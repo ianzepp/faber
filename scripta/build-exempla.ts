@@ -1,13 +1,14 @@
 #!/usr/bin/env bun
 /**
- * Compile fons/exempla/ using faber, rivus, or artifex.
+ * Compile fons/exempla/ using various compilers.
  *
  * Usage:
- *   bun run exempla                          # faber + rivus (default)
- *   bun run exempla -t zig                   # faber + rivus, Zig target
- *   bun run exempla --no-rivus               # faber only
- *   bun run exempla --artifex                # faber + rivus + artifex
- *   bun run exempla --no-faber --no-rivus --artifex  # artifex only
+ *   bun run build:exempla                              # faber + rivus (default)
+ *   bun run build:exempla -t zig                       # faber + rivus, Zig target
+ *   bun run build:exempla --no-rivus                   # faber only
+ *   bun run build:exempla --artifex                    # faber + rivus + artifex
+ *   bun run build:exempla -c rivus-nanus-ts            # rivus-nanus-ts only
+ *   bun run build:exempla -c rivus-nanus-ts,rivus-nanus-py  # multiple rivus variants
  */
 
 import { mkdir, readdir, rm, stat } from 'fs/promises';
@@ -18,15 +19,19 @@ const ROOT = join(import.meta.dir, '..');
 const EXEMPLA_SOURCE = join(ROOT, 'fons', 'exempla');
 const EXEMPLA_OUTPUT = join(ROOT, 'opus', 'exempla');
 
-type Compiler = 'faber' | 'rivus' | 'artifex';
 type Target = 'ts' | 'zig' | 'py' | 'rs' | 'go';
 
 const VALID_TARGETS = ['ts', 'zig', 'py', 'rs', 'go', 'all'] as const;
 const ALL_TARGETS: Target[] = ['ts', 'zig', 'py', 'rs', 'go'];
 const TARGET_EXT: Record<Target, string> = { ts: 'ts', zig: 'zig', py: 'py', rs: 'rs', go: 'go' };
 
+interface CompilerSpec {
+    name: string;
+    bin: string;
+}
+
 interface Args {
-    compilers: Compiler[];
+    compilers: CompilerSpec[];
     targets: Target[];
 }
 
@@ -35,6 +40,7 @@ function parseArgs(): Args {
     let faber = true;
     let rivus = true;
     let artifex = false;
+    let explicitCompilers: string[] = [];
     let targets: Target[] = ['ts'];
 
     for (let i = 0; i < args.length; i++) {
@@ -42,11 +48,21 @@ function parseArgs(): Args {
 
         if (arg === '-t' || arg === '--target') {
             const t = args[++i];
-            if (!VALID_TARGETS.includes(t as typeof VALID_TARGETS[number])) {
+            if (!VALID_TARGETS.includes(t as (typeof VALID_TARGETS)[number])) {
                 console.error(`Unknown target '${t}'. Valid: ${VALID_TARGETS.join(', ')}`);
                 process.exit(1);
             }
             targets = t === 'all' ? ALL_TARGETS : [t as Target];
+        } else if (arg === '-c' || arg === '--compiler') {
+            const value = args[++i];
+            if (!value) {
+                console.error('Missing value for -c/--compiler');
+                process.exit(1);
+            }
+            explicitCompilers = value.split(',').map(c => c.trim());
+            faber = false;
+            rivus = false;
+            artifex = false;
         } else if (arg === '--faber') {
             faber = true;
         } else if (arg === '--no-faber') {
@@ -62,10 +78,20 @@ function parseArgs(): Args {
         }
     }
 
-    const compilers: Compiler[] = [];
-    if (faber) compilers.push('faber');
-    if (rivus) compilers.push('rivus');
-    if (artifex) compilers.push('artifex');
+    const compilers: CompilerSpec[] = [];
+
+    if (explicitCompilers.length > 0) {
+        for (const name of explicitCompilers) {
+            compilers.push({
+                name,
+                bin: join(ROOT, 'opus', 'bin', name),
+            });
+        }
+    } else {
+        if (faber) compilers.push({ name: 'faber', bin: join(ROOT, 'opus', 'bin', 'faber') });
+        if (rivus) compilers.push({ name: 'rivus', bin: join(ROOT, 'opus', 'bin', 'rivus') });
+        if (artifex) compilers.push({ name: 'artifex', bin: join(ROOT, 'scripta', 'artifex') });
+    }
 
     return { compilers, targets };
 }
@@ -78,9 +104,8 @@ async function findFiles(dir: string, ext: string): Promise<string[]> {
         const fullPath = join(dir, entry);
         const s = await stat(fullPath);
         if (s.isDirectory()) {
-            files.push(...await findFiles(fullPath, ext));
-        }
-        else if (entry.endsWith(ext)) {
+            files.push(...(await findFiles(fullPath, ext)));
+        } else if (entry.endsWith(ext)) {
             files.push(fullPath);
         }
     }
@@ -88,11 +113,7 @@ async function findFiles(dir: string, ext: string): Promise<string[]> {
     return files;
 }
 
-async function compileExempla(compiler: Compiler, targets: Target[]): Promise<{ total: number; failed: number }> {
-    // faber/rivus use compiled binaries, artifex uses wrapper script
-    const compilerBin = (compiler === 'faber' || compiler === 'rivus')
-        ? join(ROOT, 'opus', 'bin', compiler)
-        : join(ROOT, 'scripta', compiler);
+async function compileExempla(compiler: CompilerSpec, targets: Target[]): Promise<{ total: number; failed: number }> {
     const fabFiles = await findFiles(EXEMPLA_SOURCE, '.fab');
 
     // Clear output directories for each target to ensure fresh builds
@@ -117,12 +138,11 @@ async function compileExempla(compiler: Compiler, targets: Target[]): Promise<{ 
                 await mkdir(outDir, { recursive: true });
 
                 // All compilers use same CLI: compile <file> -t <target>
-                const result = await $`${compilerBin} compile ${fabPath} -t ${target}`.quiet();
+                const result = await $`${compiler.bin} compile ${fabPath} -t ${target}`.quiet();
 
                 await Bun.write(outPath, result.stdout);
                 console.log(`  ${relPath} -> ${target}/${subdir}/${name}.${ext}`);
-            }
-            catch (err: any) {
+            } catch (err: any) {
                 console.error(`  ${relPath} [${target}] FAILED`);
                 if (err.stderr) console.error(`    ${err.stderr.toString().trim()}`);
                 failed++;
@@ -141,8 +161,7 @@ async function verifyTypeScript(): Promise<{ total: number; failed: number }> {
     for (const file of files) {
         try {
             await $`bun build --no-bundle ${file}`.quiet();
-        }
-        catch {
+        } catch {
             console.error(`  ${relative(EXEMPLA_OUTPUT, file)}: type error`);
             failed++;
         }
@@ -162,8 +181,7 @@ async function verifyZig(): Promise<{ total: number; failed: number }> {
 
         try {
             await $`zig build-exe ${file} -femit-bin=${output}`.quiet();
-        }
-        catch (err: any) {
+        } catch (err: any) {
             console.error(`  ${relative(EXEMPLA_OUTPUT, file)}: compile error`);
             const errText = err.stderr?.toString() || '';
             const firstError = errText.split('\n').slice(0, 3).join('\n');
@@ -183,8 +201,7 @@ async function verifyPython(): Promise<{ total: number; failed: number }> {
     for (const file of files) {
         try {
             await $`python3 -m py_compile ${file}`.quiet();
-        }
-        catch (err: any) {
+        } catch (err: any) {
             console.error(`  ${relative(EXEMPLA_OUTPUT, file)}: syntax error`);
             const errText = err.stderr?.toString() || '';
             if (errText) console.error(`    ${errText.trim()}`);
@@ -203,8 +220,7 @@ async function verifyRust(): Promise<{ total: number; failed: number }> {
     for (const file of files) {
         try {
             await $`rustc --emit=metadata --edition=2021 -o /dev/null ${file}`.quiet();
-        }
-        catch (err: any) {
+        } catch (err: any) {
             console.error(`  ${relative(EXEMPLA_OUTPUT, file)}: compile error`);
             const errText = err.stderr?.toString() || '';
             const firstError = errText.split('\n').slice(0, 5).join('\n');
@@ -224,8 +240,7 @@ async function verifyGo(): Promise<{ total: number; failed: number }> {
     for (const file of files) {
         try {
             await $`go build -o /dev/null ${file}`.quiet();
-        }
-        catch (err: any) {
+        } catch (err: any) {
             console.error(`  ${relative(EXEMPLA_OUTPUT, file)}: compile error`);
             const errText = err.stderr?.toString() || '';
             const firstError = errText.split('\n').slice(0, 5).join('\n');
@@ -242,17 +257,18 @@ async function main() {
     const start = performance.now();
 
     if (compilers.length === 0) {
-        console.log('No compilers selected. Use --faber, --rivus, or --artifex.');
+        console.log('No compilers selected. Use --faber, --rivus, --artifex, or -c <compiler>.');
         process.exit(0);
     }
 
-    console.log(`Compiling exempla (compilers: ${compilers.join(', ')}, targets: ${targets.join(', ')})\n`);
+    const compilerNames = compilers.map(c => c.name).join(', ');
+    console.log(`Compiling exempla (compilers: ${compilerNames}, targets: ${targets.join(', ')})\n`);
 
     let totalCompileFailed = 0;
     let totalCompileCount = 0;
 
     for (const compiler of compilers) {
-        console.log(`\n[${compiler}]`);
+        console.log(`\n[${compiler.name}]`);
         const compile = await compileExempla(compiler, targets);
         totalCompileCount += compile.total;
         totalCompileFailed += compile.failed;
@@ -277,8 +293,7 @@ async function main() {
         const result = await verifiers[target]();
         if (result.failed === 0) {
             console.log(`OK (${result.total} files)`);
-        }
-        else {
+        } else {
             console.log(`${result.failed}/${result.total} failed`);
             verifyFailed += result.failed;
         }
