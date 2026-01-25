@@ -440,6 +440,11 @@ function emitExpr(expr: Expr): string {
             }
 
         case 'Binaria': {
+            // Special case: 'inter' with array → .includes()
+            // JavaScript 'in' checks object properties, not array membership
+            if (expr.signum === 'inter' && expr.dex.tag === 'Series') {
+                return `${emitExpr(expr.dex)}.includes(${emitExpr(expr.sin)})`;
+            }
             const op = BINARY_OPS[expr.signum] ?? expr.signum;
             return `(${emitExpr(expr.sin)} ${op} ${emitExpr(expr.dex)})`;
         }
@@ -542,8 +547,25 @@ function emitExpr(expr: Expr): string {
         case 'Qua':
             return `(${emitExpr(expr.expr)} as ${emitTypus(expr.typus)})`;
 
-        case 'Innatum':
+        case 'Innatum': {
+            // For native types, emit constructor calls instead of casts
+            // {} innatum tabula<K,V> → new Map<K,V>()
+            // {} innatum copia<T> → new Set<T>()
+            // [] innatum lista<T> → [] (arrays are fine as literals)
+            if (expr.typus.tag === 'Genericus') {
+                const name = expr.typus.nomen;
+                if (name === 'tabula') {
+                    const args = expr.typus.args.map(emitTypus).join(', ');
+                    return `new Map<${args}>()`;
+                }
+                if (name === 'copia' || name === 'collectio') {
+                    const args = expr.typus.args.map(emitTypus).join(', ');
+                    return `new Set<${args}>()`;
+                }
+            }
+            // Default: cast (for lista and other types)
             return `(${emitExpr(expr.expr)} as ${emitTypus(expr.typus)})`;
+        }
 
         case 'PostfixNovum':
             return `new ${emitTypus(expr.typus)}(${emitExpr(expr.expr)})`;

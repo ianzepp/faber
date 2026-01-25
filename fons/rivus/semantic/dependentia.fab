@@ -7,12 +7,11 @@
 #   § dependentia "alias" via "path"
 #   § dependentia "alias" github "owner/repo#ref" via "subpath"
 #
-# Also provides cache path resolution for GitHub dependencies.
-# Cache structure: ~/.cache/faber/github.com/{owner}/{repo}/{sha}/
+# NOTE: Cache path resolution and filesystem operations are CLI concerns,
+# not compiler library concerns. See docs/reference/rivus-cli/ for the
+# full implementation with HAL dependencies.
 
 § ex "../ast/radix" importa SectioAnnotatio
-§ ex "../../norma/hal/solum" importa solum
-§ ex "../../norma/hal/processus" importa processus
 
 # ============================================================================
 # TYPES
@@ -76,38 +75,7 @@ functio parseDependentiaArgs(de lista<textus> args) -> si Dependentia {
 }
 
 # ============================================================================
-# CACHE PATHS (read-only)
-# ============================================================================
-
-# Get the cache root directory
-# Respects XDG_CACHE_HOME, FABER_CACHE, or falls back to ~/.cache/faber
-@ publica
-functio radixCachei() -> textus {
-    # FABER_CACHE overrides everything
-    fixum faberCache = processus.env("FABER_CACHE")
-    si nonnihil faberCache { redde faberCache }
-
-    # XDG_CACHE_HOME or default
-    fixum xdgCache = processus.env("XDG_CACHE_HOME")
-    fixum basisCachei = nonnihil xdgCache sic xdgCache secus solum.iunge([solum.domus(), ".cache"])
-
-    redde solum.iunge([basisCachei, "faber"])
-}
-
-# Get the cache path for a specific github repo + commit
-@ publica
-functio viaCachei(de textus dominus, de textus repo, de textus sha) -> textus {
-    redde solum.iunge([radixCachei(), "github.com", dominus, repo, sha])
-}
-
-# Check if a repo+commit is already cached
-@ publica
-functio estCacheatum(de textus dominus, de textus repo, de textus sha) -> bivalens {
-    redde solum.exstat(viaCachei(dominus, repo, sha))
-}
-
-# ============================================================================
-# GITHUB REF PARSING
+# GITHUB REF PARSING (pure, no filesystem)
 # ============================================================================
 
 # Parsed GitHub reference

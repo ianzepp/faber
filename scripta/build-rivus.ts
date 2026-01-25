@@ -141,8 +141,9 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
 }
 
 async function typeCheck(): Promise<boolean> {
+    // Type check from cli.ts entry point (the native shim)
     const result =
-        await $`npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler ${join(OUTPUT, 'rivus.ts')}`.nothrow();
+        await $`npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler ${join(OUTPUT, 'cli.ts')}`.nothrow();
     if (result.exitCode !== 0) {
         console.error(result.stdout.toString());
         return false;
@@ -188,13 +189,20 @@ async function copyHalImplementations(): Promise<void> {
     }
 }
 
+async function copyCliShim(): Promise<void> {
+    const shimSource = join(ROOT, 'fons', 'rivus-cli', 'ts.ts');
+    const shimDest = join(OUTPUT, 'cli.ts');
+    await Bun.write(shimDest, await Bun.file(shimSource).text());
+}
+
 async function buildExecutableTs(): Promise<void> {
     const binDir = join(ROOT, 'opus', 'bin');
     await mkdir(binDir, { recursive: true });
 
     const exeName = `rivus-${compiler}`;
     const outExe = join(binDir, exeName);
-    await $`bun build ${join(OUTPUT, 'rivus.ts')} --compile --outfile=${outExe}`.quiet();
+    // Use cli.ts (the native shim) as entry point instead of rivus.ts
+    await $`bun build ${join(OUTPUT, 'cli.ts')} --compile --outfile=${outExe}`.quiet();
     await $`bash -c 'rm -f .*.bun-build 2>/dev/null || true'`.quiet();
 
     // faber-ts is the primary compiler, symlink rivus -> rivus-faber-ts
@@ -383,9 +391,9 @@ async function main() {
     if (target === 'ts') {
         console.log('\nTypeScript post-processing:');
 
-        // Copy HAL implementations needed for runtime
-        await copyHalImplementations();
-        console.log('  Copied HAL implementations');
+        // Copy native CLI shim (provides I/O for the pure rivus library)
+        await copyCliShim();
+        console.log('  Copied CLI shim');
 
         // Type check the generated TypeScript
         if (!skipTypecheck) {
@@ -398,7 +406,7 @@ async function main() {
             console.log('  Type check passed');
         }
 
-        // Inject runtime implementations for external functions
+        // Inject runtime implementations for semantic analyzer (module resolution)
         await injectExternImpls();
         console.log('  Injected external implementations');
 

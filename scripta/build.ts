@@ -30,12 +30,13 @@ interface StepResult {
     success: boolean;
     elapsed: number;
     error?: string;
+    retryCommand?: string;
 }
 
 /**
  * Execute a build step with timing. Returns result instead of throwing.
  */
-async function step(name: string, verbose: boolean, fn: () => Promise<void>, allowFailure = false): Promise<StepResult> {
+async function step(name: string, verbose: boolean, fn: () => Promise<void>, allowFailure = false, retryCommand?: string): Promise<StepResult> {
     const start = performance.now();
 
     if (verbose) {
@@ -54,7 +55,7 @@ async function step(name: string, verbose: boolean, fn: () => Promise<void>, all
             console.log(`OK (${elapsed.toFixed(0)}ms)`);
         }
 
-        return { name, success: true, elapsed };
+        return { name, success: true, elapsed, retryCommand };
     } catch (err: any) {
         const elapsed = performance.now() - start;
         const error = err.stderr?.toString().trim() || err.message || 'unknown error';
@@ -70,14 +71,14 @@ async function step(name: string, verbose: boolean, fn: () => Promise<void>, all
             throw err;
         }
 
-        return { name, success: false, elapsed, error };
+        return { name, success: false, elapsed, error, retryCommand };
     }
 }
 
 async function main() {
     const { verbose } = parseArgs();
     const start = performance.now();
-    const rivusResults: StepResult[] = [];
+    const allResults: StepResult[] = [];
 
     console.log('Build\n');
 
@@ -156,6 +157,7 @@ async function main() {
     console.log('\n--- Stage 3: Rivus (other compilers) ---\n');
 
     const optionalCompilers = ['nanus-go', 'nanus-rs', 'nanus-py'] as const;
+    const stage3Results: StepResult[] = [];
 
     for (const compiler of optionalCompilers) {
         const result = await step(
@@ -169,8 +171,10 @@ async function main() {
                 }
             },
             true, // allow failure
+            `bun run build:rivus -- -c ${compiler}`,
         );
-        rivusResults.push(result);
+        stage3Results.push(result);
+        allResults.push(result);
     }
 
     // =============================================================================
@@ -179,52 +183,60 @@ async function main() {
 
     const successfulCompilers: string[] = [];
     if (stage2Result.success) successfulCompilers.push('rivus-nanus-ts');
-    for (const result of rivusResults) {
+    for (const result of stage3Results) {
         if (result.success) {
             const compiler = result.name.replace('build:rivus (', '').replace(')', '');
             successfulCompilers.push(`rivus-${compiler}`);
         }
     }
 
-    let stage4Result: StepResult | null = null;
+    const exemplaCodegen: StepResult[] = [];
     if (successfulCompilers.length > 0) {
         console.log('\n--- Stage 4: Exempla (codegen) ---\n');
 
-        const compilerArg = successfulCompilers.join(',');
-        stage4Result = await step(
-            `build:exempla (${compilerArg})`,
-            verbose,
-            async () => {
-                if (verbose) {
-                    await $`bun run build:exempla -- -c ${compilerArg} --no-verify`;
-                } else {
-                    await $`bun run build:exempla -- -c ${compilerArg} --no-verify`.quiet();
-                }
-            },
-            true, // allow failure
-        );
+        for (const compiler of successfulCompilers) {
+            const result = await step(
+                `build:exempla (${compiler})`,
+                verbose,
+                async () => {
+                    if (verbose) {
+                        await $`bun run build:exempla -- -c ${compiler} --no-verify`;
+                    } else {
+                        await $`bun run build:exempla -- -c ${compiler} --no-verify`.quiet();
+                    }
+                },
+                true, // allow failure
+                `bun run build:exempla -- -c ${compiler} --no-verify`,
+            );
+            exemplaCodegen.push(result);
+            allResults.push(result);
+        }
     }
 
     // =============================================================================
-    // STAGE 5: Exempla verification (only if stage 4 passed)
+    // STAGE 5: Exempla verification (for compilers that passed stage 4)
     // =============================================================================
 
-    if (stage4Result?.success) {
+    const compilersToVerify = successfulCompilers.filter((_, i) => exemplaCodegen[i]?.success);
+    if (compilersToVerify.length > 0) {
         console.log('\n--- Stage 5: Exempla (verify) ---\n');
 
-        const compilerArg = successfulCompilers.join(',');
-        await step(
-            `verify:exempla (${compilerArg})`,
-            verbose,
-            async () => {
-                if (verbose) {
-                    await $`bun run build:exempla -- -c ${compilerArg} --verify-only`;
-                } else {
-                    await $`bun run build:exempla -- -c ${compilerArg} --verify-only`.quiet();
-                }
-            },
-            true, // allow failure
-        );
+        for (const compiler of compilersToVerify) {
+            const result = await step(
+                `verify:exempla (${compiler})`,
+                verbose,
+                async () => {
+                    if (verbose) {
+                        await $`bun run build:exempla -- -c ${compiler} --verify-only`;
+                    } else {
+                        await $`bun run build:exempla -- -c ${compiler} --verify-only`.quiet();
+                    }
+                },
+                true, // allow failure
+                `bun run build:exempla -- -c ${compiler} --verify-only`,
+            );
+            allResults.push(result);
+        }
     }
 
     // =============================================================================
@@ -232,18 +244,15 @@ async function main() {
     // =============================================================================
 
     const elapsed = performance.now() - start;
+    const failedSteps = allResults.filter(r => !r.success);
+
     console.log(`\nBuild complete (${(elapsed / 1000).toFixed(1)}s)`);
 
-    if (rivusResults.length > 0) {
-        const passed = rivusResults.filter(r => r.success).length;
-        const failed = rivusResults.filter(r => !r.success);
-
-        console.log(`\nRivus builds: ${passed}/${rivusResults.length} succeeded`);
-
-        if (failed.length > 0) {
-            console.log('Failed:');
-            for (const f of failed) {
-                console.log(`  - ${f.name}`);
+    if (failedSteps.length > 0) {
+        console.log(`\n${failedSteps.length} step(s) failed. To retry manually:\n`);
+        for (const step of failedSteps) {
+            if (step.retryCommand) {
+                console.log(`  ${step.retryCommand}`);
             }
         }
     }
