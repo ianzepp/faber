@@ -30,7 +30,7 @@ incipit {
 
     # Cast to nullable type
     fixum num = 10
-    fixum maybe = num qua numerus?
+    fixum maybe = num qua si numerus
     scribe maybe
 
     # Cast to array type

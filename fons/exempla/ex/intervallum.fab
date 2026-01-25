@@ -6,27 +6,27 @@
 
 incipit {
     # Basic range (exclusive: 0, 1, 2, 3, 4)
-    ex 0..5 pro i {
+    ex 0..5 fixum i {
         scribe i
     }
 
     # Explicit exclusive with ante (same as ..)
-    ex 0 ante 5 pro i {
+    ex 0 ante 5 fixum i {
         scribe i
     }
 
     # Inclusive range with usque (0, 1, 2, 3, 4, 5)
-    ex 0 usque 5 pro i {
+    ex 0 usque 5 fixum i {
         scribe i
     }
 
     # Range starting from non-zero
-    ex 5..10 pro i {
+    ex 5..10 fixum i {
         scribe i
     }
 
     # Countdown (negative direction)
-    ex 5..0 pro i {
+    ex 5..0 fixum i {
         scribe i
     }
 }

@@ -6,7 +6,7 @@
 
 incipit {
     # Null checking with est
-    fixum numerus? maybeValue = nihil
+    fixum si numerus maybeValue = nihil
     fixum isNull = maybeValue est nihil
     scribe isNull
 
@@ -21,7 +21,7 @@ incipit {
     scribe isFalse
 
     # Chained with logical operators
-    fixum textus? name = nihil
+    fixum si textus name = nihil
     fixum needsDefault = name est nihil et verum enabled
     scribe needsDefault
 

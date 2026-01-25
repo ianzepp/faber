@@ -8,7 +8,7 @@
 
 genus Address {
     textus city
-    textus? state
+    si textus state
 }
 
 genus User {

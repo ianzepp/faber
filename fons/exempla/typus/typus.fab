@@ -13,7 +13,7 @@ typus Scores = lista<numerus>
 typus UserCache = tabula<textus, numerus>
 
 # Nullable type alias
-typus OptionalName = textus?
+typus OptionalName = si textus
 
 incipit {
     # Using the type aliases

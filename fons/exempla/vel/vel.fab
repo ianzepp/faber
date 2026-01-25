@@ -9,12 +9,12 @@
 
 incipit {
     # Basic nullish coalescing
-    fixum textus? name = nihil
+    fixum si textus name = nihil
     fixum display = name vel "Anonymous"
     scribe display  # "Anonymous"
 
     # With non-null value
-    fixum textus? actualName = "Marcus"
+    fixum si textus actualName = "Marcus"
     fixum displayName = actualName vel "Anonymous"
     scribe displayName  # "Marcus"
 
@@ -33,9 +33,9 @@ incipit {
     scribe result2
 
     # Chaining
-    fixum textus? a = nihil
-    fixum textus? b = nihil
-    fixum textus? c = "found"
+    fixum si textus a = nihil
+    fixum si textus b = nihil
+    fixum si textus c = "found"
     fixum first = a vel b vel c vel "none"
     scribe first  # "found"
 

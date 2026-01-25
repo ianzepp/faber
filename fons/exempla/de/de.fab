@@ -7,19 +7,19 @@ incipit ergo cura arena {
     # Iterate over object keys
     fixum persona = { nomen: "Marcus", aetas: 30, urbs: "Roma" }
 
-    de persona pro clavis {
+    de persona fixum clavis {
         scribe clavis
     }
 
     # Access values using the key
-    de persona pro clavis {
+    de persona fixum clavis {
         scribe "§: §", clavis, persona[clavis]
     }
 
     # Iterate over array indices
     fixum numeri = [10, 20, 30]
 
-    de numeri pro index {
+    de numeri fixum index {
         scribe "Index §: §", index, numeri[index]
     }
 

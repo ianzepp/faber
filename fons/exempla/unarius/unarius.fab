@@ -20,11 +20,11 @@ incipit {
     scribe negativum b   # verum
 
     # Null checks
-    fixum textus? maybe = nihil
+    fixum si textus maybe = nihil
     scribe nulla maybe      # verum (is null)
     scribe nonnulla maybe   # falsum (is not null)
 
-    fixum textus? present = "salve"
+    fixum si textus present = "salve"
     scribe nulla present    # falsum
     scribe nonnulla present # verum
 }

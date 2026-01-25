@@ -34,7 +34,7 @@ incipit {
     scribe "Max:", max
 
     # With nullish values
-    fixum textus? maybe = nihil
+    fixum si textus maybe = nihil
     fixum result = nonnihil maybe ? maybe : "default"
     scribe result  # "default"
 

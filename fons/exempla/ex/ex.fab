@@ -6,21 +6,21 @@ incipit {
     # Iterate over number array
     fixum numbers = [1, 2, 3, 4, 5]
 
-    ex numbers pro n {
+    ex numbers fixum n {
         scribe n
     }
 
     # Iterate over string array
     fixum names = ["Marcus", "Julia", "Claudia"]
 
-    ex names pro name {
+    ex names fixum name {
         scribe name
     }
 
     # Process items
     fixum values = [10, 20, 30]
 
-    ex values pro v {
+    ex values fixum v {
         fixum doubled = v * 2
         scribe doubled
     }

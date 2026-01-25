@@ -5,22 +5,22 @@ incipit {
     fixum rows = [1, 2, 3]
     fixum cols = ["A", "B", "C"]
 
-    ex rows pro row {
-        ex cols pro col {
+    ex rows fixum row {
+        ex cols fixum col {
             scribe row, col
         }
     }
 
     # Multiplication table
-    ex 1..4 pro i {
-        ex 1..4 pro j {
+    ex 1..4 fixum i {
+        ex 1..4 fixum j {
             scribe i, "*", j, "=", i * j
         }
     }
 
     # Nested ranges
-    ex 0..3 pro x {
-        ex 0..3 pro y {
+    ex 0..3 fixum x {
+        ex 0..3 fixum y {
             scribe x, y
         }
     }

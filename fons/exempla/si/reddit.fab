@@ -15,7 +15,7 @@ functio classify(numerus x) -> textus {
 }
 
 # Guard clause pattern
-functio divide(numerus a, numerus b) -> numerus? {
+functio divide(numerus a, numerus b) -> si numerus {
     si b == 0 reddit nihil
     redde a / b
 }
@@ -30,8 +30,8 @@ functio grade(numerus score) -> textus {
 }
 
 # Find first in list (early return from loop)
-functio findFirst(lista<numerus> items, numerus target) -> numerus? {
-    ex items pro item {
+functio findFirst(lista<numerus> items, numerus target) -> si numerus {
+    ex items fixum item {
         si item == target reddit item
     }
     redde nihil
@@ -39,7 +39,7 @@ functio findFirst(lista<numerus> items, numerus target) -> numerus? {
 
 # Check if key exists (early return from iteration)
 functio hasKey(tabula<textus, numerus> obj, textus key) -> bivalens {
-    de obj pro k {
+    de obj fixum k {
         si k == key reddit verum
     }
     redde falsum

@@ -230,13 +230,13 @@ incipit {
     # --------------------------------------------------------------------------
     # PREFER: 'vel' — the '??' operator does not exist in Faber
 
-    fixum textus? maybeName = nihil
+    fixum si textus maybeName = nihil
     fixum name = maybeName vel "default"
     scribe name
 
     # Chain multiple fallbacks
-    fixum textus? first = nihil
-    fixum textus? second = nihil
+    fixum si textus first = nihil
+    fixum si textus second = nihil
     fixum textus third = "fallback"
     fixum result = first vel second vel third
     scribe result
