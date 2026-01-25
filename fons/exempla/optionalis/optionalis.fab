@@ -13,7 +13,7 @@ genus Address {
 
 genus User {
     textus name
-    Address? address
+    si Address address
 }
 
 incipit {

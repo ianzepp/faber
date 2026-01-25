@@ -34,13 +34,12 @@ const BINARY_OPS: Record<string, string> = {
 
 const UNARY_OPS: Record<string, string> = {
     non: '!', // non x → !x (logical not)
-    nihil: '!', // nihil x → !x (null check - checks if value is null/undefined)
-    nonnihil: '!!', // nonnihil x → !!x (non-null assertion as boolean)
     positivum: '+', // positivum x → +x (to number)
     negativum: '-', // negativum x → -x (negate)
-    nulla: '!', // nulla x → !x (null check - same as nihil)
-    nonnulla: '!!', // nonnulla x → !!x (non-null check - same as nonnihil)
 };
+
+// Null check operators need special handling (not simple prefix)
+const NULL_CHECK_OPS: Set<string> = new Set(['nihil', 'nonnihil', 'nulla', 'nonnulla']);
 
 // Method/property name translations from norma (Faber → TypeScript)
 const METHOD_MAP: Record<string, string> = {
@@ -450,6 +449,16 @@ function emitExpr(expr: Expr): string {
         }
 
         case 'Unaria': {
+            // Null check operators need proper null comparison, not truthiness
+            if (NULL_CHECK_OPS.has(expr.signum)) {
+                const arg = emitExpr(expr.arg);
+                if (expr.signum === 'nihil' || expr.signum === 'nulla') {
+                    return `(${arg} == null)`;
+                } else {
+                    // nonnihil, nonnulla
+                    return `(${arg} != null)`;
+                }
+            }
             const op = UNARY_OPS[expr.signum] ?? expr.signum;
             return `(${op}${emitExpr(expr.arg)})`;
         }
