@@ -4,9 +4,9 @@
  * Native TypeScript implementation of the HAL entropy interface.
  *
  * Design:
- *   - fractus/inter use Math.random by default (fast, seedable for tests)
- *   - octeti/uuid use crypto.getRandomValues (always secure, not seedable)
- *   - selige/miscita use the seedable RNG (Math.random or seeded)
+ *   - fractum/sortire use Math.random by default (fast, seedable for tests)
+ *   - octetos/uuid use crypto.getRandomValues (always secure, not seedable)
+ *   - semina seeds the RNG for reproducible tests
  */
 
 // Seedable RNG state
@@ -32,11 +32,11 @@ export const aleator = {
     // BASIC GENERATION
     // =========================================================================
 
-    fractus(): number {
+    fractum(): number {
         return rng();
     },
 
-    inter(min: number, max: number): number {
+    sortire(min: number, max: number): number {
         return Math.floor(rng() * (max - min + 1)) + min;
     },
 
@@ -44,7 +44,7 @@ export const aleator = {
     // CRYPTOGRAPHIC
     // =========================================================================
 
-    octeti(n: number): Uint8Array {
+    octetos(n: number): Uint8Array {
         const buffer = new Uint8Array(n);
         crypto.getRandomValues(buffer);
         return buffer;
@@ -58,7 +58,7 @@ export const aleator = {
     // SEEDING
     // =========================================================================
 
-    semen(n: number): void {
+    semina(n: number): void {
         if (n <= 0) {
             seededRng = null;
         }

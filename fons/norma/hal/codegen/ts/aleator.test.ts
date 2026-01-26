@@ -4,23 +4,23 @@ import { aleator } from './aleator';
 describe('aleator HAL', () => {
     beforeEach(() => {
         // Reset to true random before each test
-        aleator.semen(0);
+        aleator.semina(0);
     });
 
-    describe('fractus', () => {
+    describe('fractum', () => {
         test('returns value in [0, 1)', () => {
             for (let i = 0; i < 100; i++) {
-                const val = aleator.fractus();
+                const val = aleator.fractum();
                 expect(val).toBeGreaterThanOrEqual(0);
                 expect(val).toBeLessThan(1);
             }
         });
     });
 
-    describe('inter', () => {
+    describe('sortire', () => {
         test('returns value in [min, max] inclusive', () => {
             for (let i = 0; i < 100; i++) {
-                const val = aleator.inter(5, 10);
+                const val = aleator.sortire(5, 10);
                 expect(val).toBeGreaterThanOrEqual(5);
                 expect(val).toBeLessThanOrEqual(10);
                 expect(Number.isInteger(val)).toBe(true);
@@ -29,33 +29,33 @@ describe('aleator HAL', () => {
 
         test('handles single value range', () => {
             for (let i = 0; i < 10; i++) {
-                expect(aleator.inter(7, 7)).toBe(7);
+                expect(aleator.sortire(7, 7)).toBe(7);
             }
         });
 
         test('handles negative ranges', () => {
             for (let i = 0; i < 50; i++) {
-                const val = aleator.inter(-10, -5);
+                const val = aleator.sortire(-10, -5);
                 expect(val).toBeGreaterThanOrEqual(-10);
                 expect(val).toBeLessThanOrEqual(-5);
             }
         });
     });
 
-    describe('octeti', () => {
+    describe('octetos', () => {
         test('returns n random bytes', () => {
-            const bytes = aleator.octeti(16);
+            const bytes = aleator.octetos(16);
             expect(bytes).toBeInstanceOf(Uint8Array);
             expect(bytes.length).toBe(16);
         });
 
         test('returns empty array for n=0', () => {
-            const bytes = aleator.octeti(0);
+            const bytes = aleator.octetos(0);
             expect(bytes.length).toBe(0);
         });
 
         test('bytes are in valid range [0, 255]', () => {
-            const bytes = aleator.octeti(100);
+            const bytes = aleator.octetos(100);
             for (const b of bytes) {
                 expect(b).toBeGreaterThanOrEqual(0);
                 expect(b).toBeLessThanOrEqual(255);
@@ -80,54 +80,54 @@ describe('aleator HAL', () => {
         });
     });
 
-    describe('semen (seeding)', () => {
-        test('same seed produces same fractus sequence', () => {
-            aleator.semen(12345);
-            const seq1 = [aleator.fractus(), aleator.fractus(), aleator.fractus()];
+    describe('semina (seeding)', () => {
+        test('same seed produces same fractum sequence', () => {
+            aleator.semina(12345);
+            const seq1 = [aleator.fractum(), aleator.fractum(), aleator.fractum()];
 
-            aleator.semen(12345);
-            const seq2 = [aleator.fractus(), aleator.fractus(), aleator.fractus()];
+            aleator.semina(12345);
+            const seq2 = [aleator.fractum(), aleator.fractum(), aleator.fractum()];
 
             expect(seq1).toEqual(seq2);
         });
 
-        test('same seed produces same inter sequence', () => {
-            aleator.semen(42);
-            const seq1 = [aleator.inter(0, 100), aleator.inter(0, 100), aleator.inter(0, 100)];
+        test('same seed produces same sortire sequence', () => {
+            aleator.semina(42);
+            const seq1 = [aleator.sortire(0, 100), aleator.sortire(0, 100), aleator.sortire(0, 100)];
 
-            aleator.semen(42);
-            const seq2 = [aleator.inter(0, 100), aleator.inter(0, 100), aleator.inter(0, 100)];
+            aleator.semina(42);
+            const seq2 = [aleator.sortire(0, 100), aleator.sortire(0, 100), aleator.sortire(0, 100)];
 
             expect(seq1).toEqual(seq2);
         });
 
         test('different seeds produce different sequences', () => {
-            aleator.semen(111);
-            const seq1 = [aleator.fractus(), aleator.fractus(), aleator.fractus()];
+            aleator.semina(111);
+            const seq1 = [aleator.fractum(), aleator.fractum(), aleator.fractum()];
 
-            aleator.semen(222);
-            const seq2 = [aleator.fractus(), aleator.fractus(), aleator.fractus()];
+            aleator.semina(222);
+            const seq2 = [aleator.fractum(), aleator.fractum(), aleator.fractum()];
 
             expect(seq1).not.toEqual(seq2);
         });
 
-        test('semen(0) resets to true random', () => {
-            aleator.semen(12345);
-            aleator.fractus();
+        test('semina(0) resets to true random', () => {
+            aleator.semina(12345);
+            aleator.fractum();
 
-            aleator.semen(0);
+            aleator.semina(0);
             // After reset, we can't predict values, but we can verify it works
-            const val = aleator.fractus();
+            const val = aleator.fractum();
             expect(val).toBeGreaterThanOrEqual(0);
             expect(val).toBeLessThan(1);
         });
 
         test('negative seed also resets to true random', () => {
-            aleator.semen(12345);
-            aleator.fractus();
+            aleator.semina(12345);
+            aleator.fractum();
 
-            aleator.semen(-1);
-            const val = aleator.fractus();
+            aleator.semina(-1);
+            const val = aleator.fractum();
             expect(val).toBeGreaterThanOrEqual(0);
             expect(val).toBeLessThan(1);
         });
