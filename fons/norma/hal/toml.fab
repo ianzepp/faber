@@ -4,39 +4,49 @@
 #
 # Part of the Hardware Abstraction Layer (HAL).
 #
-# Design notes:
+# Design principles:
+#   - pange (compose) for serialization: composing the TOML text
+#   - solve (untangle) for parsing: solving/extracting data from text
 #   - TOML root must be a table (object), not array or primitive
-#   - More strict than JSON/YAML
+#   - All operations are synchronous (pure in-memory transforms)
 
 @ subsidia ts "codegen/ts/toml.ts"
 pactum toml {
     # =========================================================================
     # SERIALIZATION
     # =========================================================================
+    # Verb: pange from "pangere" (to fasten, compose)
 
     # Serialize table to TOML string
+    # TOML is inherently readable, so no indentation option needed
     @ externa
-    functio solve(quidlibet valor) -> textus
-
-    # Serialize with pretty formatting
-    @ externa
-    functio solvePulchre(quidlibet valor) -> textus
+    functio pange(quidlibet valor) -> textus
 
     # =========================================================================
-    # DESERIALIZATION
+    # PARSING
     # =========================================================================
+    # Verb: solve from "solvere" (to loosen, untangle)
 
-    # Parse TOML string to table
+    # Parse TOML string to table (throws on error)
     @ externa
-    functio pange(textus toml) -> quidlibet
+    functio solve(textus toml) -> quidlibet
 
-    # Parse TOML string, return nihil on error
+    # Verb: tempta from "temptare" (to try, attempt)
+
+    # Attempt to parse TOML string (returns null on error)
     @ externa
-    functio pangeTuto(textus toml) -> quidlibet?
+    functio tempta(textus toml) -> si quidlibet
 
     # =========================================================================
     # TYPE CHECKING
     # =========================================================================
+    # TOML has more specific numeric types than JSON
+
+    @ externa
+    functio estNihil(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estBivalens(quidlibet valor) -> bivalens
 
     @ externa
     functio estTextus(quidlibet valor) -> bivalens
@@ -48,9 +58,6 @@ pactum toml {
     functio estFractus(quidlibet valor) -> bivalens
 
     @ externa
-    functio estBivalens(quidlibet valor) -> bivalens
-
-    @ externa
     functio estTempus(quidlibet valor) -> bivalens
 
     @ externa
@@ -60,10 +67,34 @@ pactum toml {
     functio estTabula(quidlibet valor) -> bivalens
 
     # =========================================================================
-    # TABLE ACCESS
+    # VALUE EXTRACTION
     # =========================================================================
 
-    # Get value at key
+    @ externa
+    functio utTextus(quidlibet valor, textus defVal) -> textus
+
+    @ externa
+    functio utNumerus(quidlibet valor, numerus defVal) -> numerus
+
+    @ externa
+    functio utBivalens(quidlibet valor, bivalens defVal) -> bivalens
+
+    # =========================================================================
+    # VALUE ACCESS
+    # =========================================================================
+
+    # Verb: cape from "capere" (to take, seize)
+    # Get value by key (returns null if missing)
     @ externa
     functio cape(quidlibet valor, textus clavis) -> quidlibet
+
+    # Verb: carpe from "carpere" (to pluck)
+    # Pluck value by array index (returns null if out of bounds)
+    @ externa
+    functio carpe(quidlibet valor, numerus index) -> quidlibet
+
+    # Verb: inveni from "invenire" (to find)
+    # Find value by dotted path (returns null if not found)
+    @ externa
+    functio inveni(quidlibet valor, textus via) -> quidlibet
 }

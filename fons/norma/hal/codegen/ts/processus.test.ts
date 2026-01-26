@@ -50,19 +50,19 @@ describe('processus HAL', () => {
     });
 
     // =========================================================================
-    // SPAWN - Detached (generabit)
+    // SPAWN - Detached (dimitte)
     // =========================================================================
 
-    describe('generabit (spawn detached)', () => {
-        test('returns PID', async () => {
-            const pid = await processus.generabit(['sleep', '0.01']);
+    describe('dimitte (spawn detached)', () => {
+        test('returns PID', () => {
+            const pid = processus.dimitte(['sleep', '0.01']);
             expect(typeof pid).toBe('number');
             expect(pid).toBeGreaterThan(0);
         });
 
         test('process runs independently', async () => {
             const marker = `/tmp/_processus_test_detached_${Date.now()}`;
-            const pid = await processus.generabit(['sh', '-c', `echo detached > ${marker}`]);
+            const pid = processus.dimitte(['sh', '-c', `echo detached > ${marker}`]);
             expect(pid).toBeGreaterThan(0);
             await Bun.sleep(100);
             const content = await Bun.file(marker).text();
@@ -72,7 +72,7 @@ describe('processus HAL', () => {
 
         test('spawned process runs in specified directorium', async () => {
             const marker = `/tmp/_processus_test_detached_cwd_${Date.now()}`;
-            await processus.generabit(['sh', '-c', `pwd > ${marker}`], '/tmp');
+            processus.dimitte(['sh', '-c', `pwd > ${marker}`], '/tmp');
             await Bun.sleep(100);
             const content = await Bun.file(marker).text();
             expect(content.trim()).toMatch(/^(\/tmp|\/private\/tmp)$/);
@@ -167,16 +167,16 @@ describe('processus HAL', () => {
     // PROCESS INFO - Working Directory
     // =========================================================================
 
-    describe('directorium (get cwd)', () => {
+    describe('sedes (get cwd)', () => {
         test('returns current working directory', () => {
-            const dir = processus.directorium();
+            const dir = processus.sedes();
             expect(typeof dir).toBe('string');
             expect(dir.length).toBeGreaterThan(0);
             expect(dir.startsWith('/')).toBe(true);
         });
 
         test('matches process.cwd()', () => {
-            expect(processus.directorium()).toBe(process.cwd());
+            expect(processus.sedes()).toBe(process.cwd());
         });
     });
 
@@ -193,7 +193,7 @@ describe('processus HAL', () => {
 
         test('changes current working directory', () => {
             processus.muta('/tmp');
-            expect(processus.directorium()).toMatch(/^(\/tmp|\/private\/tmp)$/);
+            expect(processus.sedes()).toMatch(/^(\/tmp|\/private\/tmp)$/);
         });
     });
 

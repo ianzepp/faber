@@ -144,10 +144,10 @@ describe('solum HAL', () => {
     });
 
     // =========================================================================
-    // FILE INFO - Existence (exstat)
+    // FILE INFO - Existence (exstat/exstabit)
     // =========================================================================
 
-    describe('existence (exstat)', () => {
+    describe('existence (exstat/exstabit)', () => {
         test('exstat returns true for existing file', async () => {
             const filePath = path.join(testDir, 'exists.txt');
             await solum.scribet(filePath, 'test');
@@ -162,6 +162,22 @@ describe('solum HAL', () => {
 
         test('exstat returns true for directory', () => {
             expect(solum.exstat(testDir)).toBe(true);
+        });
+
+        test('exstabit returns true for existing file (async)', async () => {
+            const filePath = path.join(testDir, 'exists-async.txt');
+            await solum.scribet(filePath, 'test');
+
+            expect(await solum.exstabit(filePath)).toBe(true);
+        });
+
+        test('exstabit returns false for non-existing file (async)', async () => {
+            const filePath = path.join(testDir, 'does-not-exist-async.txt');
+            expect(await solum.exstabit(filePath)).toBe(false);
+        });
+
+        test('exstabit returns true for directory (async)', async () => {
+            expect(await solum.exstabit(testDir)).toBe(true);
         });
     });
 

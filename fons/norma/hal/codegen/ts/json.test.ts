@@ -2,43 +2,66 @@ import { test, expect, describe } from 'bun:test';
 import { json } from './json';
 
 describe('json HAL', () => {
-    describe('serialization', () => {
-        test('solve serializes to compact JSON', () => {
-            expect(json.solve({ a: 1, b: 2 })).toBe('{"a":1,"b":2}');
-            expect(json.solve([1, 2, 3])).toBe('[1,2,3]');
-            expect(json.solve('hello')).toBe('"hello"');
-            expect(json.solve(42)).toBe('42');
-            expect(json.solve(true)).toBe('true');
-            expect(json.solve(null)).toBe('null');
+    // =========================================================================
+    // SERIALIZATION (pange)
+    // =========================================================================
+
+    describe('pange (serialize)', () => {
+        test('serializes to compact JSON by default', () => {
+            expect(json.pange({ a: 1, b: 2 })).toBe('{"a":1,"b":2}');
+            expect(json.pange([1, 2, 3])).toBe('[1,2,3]');
+            expect(json.pange('hello')).toBe('"hello"');
+            expect(json.pange(42)).toBe('42');
+            expect(json.pange(true)).toBe('true');
+            expect(json.pange(null)).toBe('null');
         });
 
-        test('solvePulchre serializes with indentation', () => {
-            const result = json.solvePulchre({ a: 1 }, 2);
+        test('serializes with indentation when indentum > 0', () => {
+            const result = json.pange({ a: 1 }, 2);
             expect(result).toBe('{\n  "a": 1\n}');
         });
-    });
 
-    describe('deserialization', () => {
-        test('pange parses valid JSON', () => {
-            expect(json.pange('{"a":1}')).toEqual({ a: 1 });
-            expect(json.pange('[1,2,3]')).toEqual([1, 2, 3]);
-            expect(json.pange('"hello"')).toBe('hello');
-            expect(json.pange('42')).toBe(42);
-            expect(json.pange('true')).toBe(true);
-            expect(json.pange('null')).toBe(null);
-        });
-
-        test('pange throws on invalid JSON', () => {
-            expect(() => json.pange('invalid')).toThrow();
-            expect(() => json.pange('{')).toThrow();
-        });
-
-        test('pangeTuto returns null on invalid JSON', () => {
-            expect(json.pangeTuto('invalid')).toBe(null);
-            expect(json.pangeTuto('{')).toBe(null);
-            expect(json.pangeTuto('{"a":1}')).toEqual({ a: 1 });
+        test('serializes compact when indentum = 0', () => {
+            expect(json.pange({ a: 1 }, 0)).toBe('{"a":1}');
         });
     });
+
+    // =========================================================================
+    // PARSING (solve, tempta)
+    // =========================================================================
+
+    describe('solve (parse)', () => {
+        test('parses valid JSON', () => {
+            expect(json.solve('{"a":1}')).toEqual({ a: 1 });
+            expect(json.solve('[1,2,3]')).toEqual([1, 2, 3]);
+            expect(json.solve('"hello"')).toBe('hello');
+            expect(json.solve('42')).toBe(42);
+            expect(json.solve('true')).toBe(true);
+            expect(json.solve('null')).toBe(null);
+        });
+
+        test('throws on invalid JSON', () => {
+            expect(() => json.solve('invalid')).toThrow();
+            expect(() => json.solve('{')).toThrow();
+        });
+    });
+
+    describe('tempta (try parse)', () => {
+        test('returns parsed value on valid JSON', () => {
+            expect(json.tempta('{"a":1}')).toEqual({ a: 1 });
+            expect(json.tempta('[1,2]')).toEqual([1, 2]);
+        });
+
+        test('returns null on invalid JSON', () => {
+            expect(json.tempta('invalid')).toBe(null);
+            expect(json.tempta('{')).toBe(null);
+            expect(json.tempta('')).toBe(null);
+        });
+    });
+
+    // =========================================================================
+    // TYPE CHECKING
+    // =========================================================================
 
     describe('type checking', () => {
         test('estNihil', () => {
@@ -60,7 +83,7 @@ describe('json HAL', () => {
             expect(json.estNumerus(42)).toBe(true);
             expect(json.estNumerus(3.14)).toBe(true);
             expect(json.estNumerus('42')).toBe(false);
-            expect(json.estNumerus(NaN)).toBe(true); // NaN is typeof number
+            expect(json.estNumerus(NaN)).toBe(true);
         });
 
         test('estTextus', () => {
@@ -84,6 +107,10 @@ describe('json HAL', () => {
         });
     });
 
+    // =========================================================================
+    // VALUE EXTRACTION
+    // =========================================================================
+
     describe('value extraction', () => {
         test('utTextus', () => {
             expect(json.utTextus('hello', 'default')).toBe('hello');
@@ -105,34 +132,42 @@ describe('json HAL', () => {
         });
     });
 
-    describe('object/array access', () => {
-        test('cape gets object property', () => {
+    // =========================================================================
+    // VALUE ACCESS
+    // =========================================================================
+
+    describe('cape (get by key)', () => {
+        test('gets object property', () => {
             const obj = { name: 'Alice', age: 30 };
             expect(json.cape(obj, 'name')).toBe('Alice');
             expect(json.cape(obj, 'age')).toBe(30);
             expect(json.cape(obj, 'missing')).toBe(null);
         });
 
-        test('cape returns null for non-objects', () => {
+        test('returns null for non-objects', () => {
             expect(json.cape([1, 2, 3], '0')).toBe(null);
             expect(json.cape('string', 'length')).toBe(null);
             expect(json.cape(null, 'x')).toBe(null);
         });
+    });
 
-        test('capeIndice gets array element', () => {
+    describe('carpe (pluck by index)', () => {
+        test('gets array element', () => {
             const arr = ['a', 'b', 'c'];
-            expect(json.capeIndice(arr, 0)).toBe('a');
-            expect(json.capeIndice(arr, 2)).toBe('c');
-            expect(json.capeIndice(arr, 3)).toBe(null);
-            expect(json.capeIndice(arr, -1)).toBe(null);
+            expect(json.carpe(arr, 0)).toBe('a');
+            expect(json.carpe(arr, 2)).toBe('c');
+            expect(json.carpe(arr, 3)).toBe(null);
+            expect(json.carpe(arr, -1)).toBe(null);
         });
 
-        test('capeIndice returns null for non-arrays', () => {
-            expect(json.capeIndice({ 0: 'a' }, 0)).toBe(null);
-            expect(json.capeIndice('abc', 0)).toBe(null);
+        test('returns null for non-arrays', () => {
+            expect(json.carpe({ 0: 'a' }, 0)).toBe(null);
+            expect(json.carpe('abc', 0)).toBe(null);
         });
+    });
 
-        test('capeVia gets nested value', () => {
+    describe('inveni (find by path)', () => {
+        test('gets nested value', () => {
             const obj = {
                 user: {
                     name: 'Alice',
@@ -143,19 +178,23 @@ describe('json HAL', () => {
                 tags: ['admin', 'user'],
             };
 
-            expect(json.capeVia(obj, 'user.name')).toBe('Alice');
-            expect(json.capeVia(obj, 'user.address.city')).toBe('Paris');
-            expect(json.capeVia(obj, 'user.missing')).toBe(null);
-            expect(json.capeVia(obj, 'tags.0')).toBe('admin');
-            expect(json.capeVia(obj, 'tags.1')).toBe('user');
+            expect(json.inveni(obj, 'user.name')).toBe('Alice');
+            expect(json.inveni(obj, 'user.address.city')).toBe('Paris');
+            expect(json.inveni(obj, 'user.missing')).toBe(null);
+            expect(json.inveni(obj, 'tags.0')).toBe('admin');
+            expect(json.inveni(obj, 'tags.1')).toBe('user');
         });
 
-        test('capeVia handles missing paths', () => {
-            expect(json.capeVia(null, 'x')).toBe(null);
-            expect(json.capeVia({}, 'a.b.c')).toBe(null);
-            expect(json.capeVia({ a: null }, 'a.b')).toBe(null);
+        test('handles missing paths', () => {
+            expect(json.inveni(null, 'x')).toBe(null);
+            expect(json.inveni({}, 'a.b.c')).toBe(null);
+            expect(json.inveni({ a: null }, 'a.b')).toBe(null);
         });
     });
+
+    // =========================================================================
+    // ROUNDTRIP
+    // =========================================================================
 
     describe('roundtrip', () => {
         test('serialize then parse preserves data', () => {
@@ -169,8 +208,8 @@ describe('json HAL', () => {
                 nested: { a: { b: { c: 'deep' } } },
             };
 
-            const serialized = json.solve(original);
-            const parsed = json.pange(serialized);
+            const serialized = json.pange(original);
+            const parsed = json.solve(serialized);
 
             expect(parsed).toEqual(original);
         });

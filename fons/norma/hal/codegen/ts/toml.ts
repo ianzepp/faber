@@ -5,6 +5,11 @@
  * Uses Bun's built-in TOML.parse and smol-toml for stringify.
  *
  * Note: TOML root must be a table (object), not array or primitive.
+ *
+ * Verb meanings:
+ *   - pange (compose): serialize table to TOML string
+ *   - solve (untangle): parse TOML string to table
+ *   - tempta (try): attempt to parse, return null on error
  */
 
 import { stringify as smolStringify } from 'smol-toml';
@@ -17,12 +22,10 @@ function parse(toml: string): unknown {
     if (BunTOML) {
         return BunTOML.parse(toml);
     }
-    // Fallback: dynamic import smol-toml parse
     throw new Error('TOML parsing requires Bun runtime');
 }
 
 function stringify(value: unknown): string {
-    // smol-toml expects a Record<string, unknown>
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
         throw new Error('TOML root must be a table (object)');
     }
@@ -34,24 +37,22 @@ export const toml = {
     // SERIALIZATION
     // =========================================================================
 
-    solve(valor: unknown): string {
-        return stringify(valor);
-    },
-
-    solvePulchre(valor: unknown): string {
-        // smol-toml already produces pretty output by default
+    /** Serialize table to TOML string */
+    pange(valor: unknown): string {
         return stringify(valor);
     },
 
     // =========================================================================
-    // DESERIALIZATION
+    // PARSING
     // =========================================================================
 
-    pange(tomlStr: string): unknown {
+    /** Parse TOML string to table (throws on error) */
+    solve(tomlStr: string): unknown {
         return parse(tomlStr);
     },
 
-    pangeTuto(tomlStr: string): unknown | null {
+    /** Attempt to parse TOML string (returns null on error) */
+    tempta(tomlStr: string): unknown | null {
         try {
             return parse(tomlStr);
         }
@@ -64,6 +65,14 @@ export const toml = {
     // TYPE CHECKING
     // =========================================================================
 
+    estNihil(valor: unknown): boolean {
+        return valor === null || valor === undefined;
+    },
+
+    estBivalens(valor: unknown): boolean {
+        return typeof valor === 'boolean';
+    },
+
     estTextus(valor: unknown): boolean {
         return typeof valor === 'string';
     },
@@ -74,10 +83,6 @@ export const toml = {
 
     estFractus(valor: unknown): boolean {
         return typeof valor === 'number' && !Number.isInteger(valor);
-    },
-
-    estBivalens(valor: unknown): boolean {
-        return typeof valor === 'boolean';
     },
 
     estTempus(valor: unknown): boolean {
@@ -93,22 +98,65 @@ export const toml = {
     },
 
     // =========================================================================
-    // TABLE ACCESS
+    // VALUE EXTRACTION
     // =========================================================================
 
+    utTextus(valor: unknown, defVal: string): string {
+        return typeof valor === 'string' ? valor : defVal;
+    },
+
+    utNumerus(valor: unknown, defVal: number): number {
+        return typeof valor === 'number' ? valor : defVal;
+    },
+
+    utBivalens(valor: unknown, defVal: boolean): boolean {
+        return typeof valor === 'boolean' ? valor : defVal;
+    },
+
+    // =========================================================================
+    // VALUE ACCESS
+    // =========================================================================
+
+    /** Get value by key (returns null if missing) */
     cape(valor: unknown, clavis: string): unknown {
-        if (typeof valor !== 'object' || valor === null) {
-            return null;
+        if (typeof valor === 'object' && valor !== null && !Array.isArray(valor)) {
+            return (valor as Record<string, unknown>)[clavis] ?? null;
         }
-        // Support nested keys with dot notation
-        const parts = clavis.split('.');
+        return null;
+    },
+
+    /** Pluck value by array index (returns null if out of bounds) */
+    carpe(valor: unknown, index: number): unknown {
+        if (Array.isArray(valor) && index >= 0 && index < valor.length) {
+            return valor[index];
+        }
+        return null;
+    },
+
+    /** Find value by dotted path (returns null if not found) */
+    inveni(valor: unknown, via: string): unknown {
+        const parts = via.split('.');
         let current: unknown = valor;
+
         for (const part of parts) {
-            if (typeof current !== 'object' || current === null) {
+            if (current === null || current === undefined) {
                 return null;
             }
-            current = (current as Record<string, unknown>)[part];
+            if (typeof current === 'object' && !Array.isArray(current) && !(current instanceof Date)) {
+                current = (current as Record<string, unknown>)[part];
+            }
+            else if (Array.isArray(current)) {
+                const idx = parseInt(part, 10);
+                if (isNaN(idx) || idx < 0 || idx >= current.length) {
+                    return null;
+                }
+                current = current[idx];
+            }
+            else {
+                return null;
+            }
         }
+
         return current ?? null;
     },
 };

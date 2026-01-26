@@ -122,12 +122,23 @@ export const solum = {
     // =========================================================================
     // FILE INFO - Existence
     // =========================================================================
-    // Verb: exstat from "exstare" (to stand out, exist)
+    // Verb: exstat/exstabit from "exstare" (to stand out, exist)
 
-    /** Check if path exists (sync only) */
+    /** Check if path exists (sync) */
     exstat(via: string): boolean {
         try {
             fsSync.accessSync(via);
+            return true;
+        }
+        catch {
+            return false;
+        }
+    },
+
+    /** Check if path exists (async) */
+    async exstabit(via: string): Promise<boolean> {
+        try {
+            await fs.access(via);
             return true;
         }
         catch {

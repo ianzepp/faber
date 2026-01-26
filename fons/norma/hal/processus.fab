@@ -6,9 +6,9 @@
 # Part of the Hardware Abstraction Layer (HAL).
 #
 # Design principles:
-#   - Verb conjugation encodes spawn semantics:
-#     - Imperative (genera): spawn attached, caller manages lifecycle
-#     - Future indicative (generabit): spawn detached, fire and forget
+#   - Different verbs for different spawn semantics:
+#     - genera: spawn attached, caller manages lifecycle
+#     - dimitte: spawn detached, dismiss to run independently
 #   - Shell execution uses traditional sync/async:
 #     - Imperative (exsequi): sync, blocks until complete
 #     - Future (exsequetur): async, returns promise
@@ -31,8 +31,8 @@ pactum processus {
     # SPAWN - Attached
     # =========================================================================
     # Verb: genera from "generare" (to generate, beget, bring forth)
-    # Why: Creating/generating a new process. Imperative form indicates
-    #      the caller maintains control - can wait for exit, capture output.
+    # Why: Creating/generating a new process. Caller maintains control -
+    #      can wait for exit, capture output via handle.
     # Maps to: Bun.spawn() with handle returned
 
     # Spawn attached process - caller can wait for exit via handle.expiravit
@@ -46,16 +46,15 @@ pactum processus {
     # =========================================================================
     # SPAWN - Detached
     # =========================================================================
-    # Verb: generabit (future of generare)
-    # Why: Future tense indicates "it will run on its own" - fire and forget.
+    # Verb: dimitte from "dimittere" (to send away, dismiss, release)
+    # Why: Dismissing the process to run on its own - fire and forget.
     #      Process continues independently, survives parent exit.
-    #      Async to confirm spawn succeeded and return PID.
+    #      Distinct verb from genera to indicate different lifecycle semantics.
     # Maps to: Bun.spawn() with proc.unref(), stdio ignored
 
-    # Spawn detached process - runs independently, returns PID
-    @ futura
+    # Dismiss process to run independently - returns PID
     @ externa
-    functio generabit(
+    functio dimitte(
         lista<textus> argumenta,
         si textus directorium,
         si tabula<textus, textus> ambitus
@@ -105,13 +104,15 @@ pactum processus {
     # =========================================================================
     # PROCESS INFO - Working Directory
     # =========================================================================
-    # Noun: directorium (directory)
-    # Why: Accessor for current working directory. Not a verb - it's a property.
+    # Noun: sedes (seat, dwelling place, residence)
+    # Why: Where the process "dwells" in the filesystem tree. The CWD is
+    #      the process's seat/residence. Avoids collision with solum.directorium
+    #      which extracts directory from path strings.
     # Maps to: process.cwd()
 
-    # Get current working directory
+    # Get current working directory (where the process dwells)
     @ externa
-    functio directorium() -> textus
+    functio sedes() -> textus
 
     # =========================================================================
     # PROCESS INFO - Change Directory

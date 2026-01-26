@@ -3,42 +3,47 @@
 # Etymology: "JSON" - JavaScript Object Notation (universal, kept as-is).
 #
 # Part of the Hardware Abstraction Layer (HAL).
-# Maps to JsonDevice from monk-os-kernel.
 #
-# Design notes:
-#   - solve: serialize to JSON string
-#   - pange: parse JSON string
-#   - Type checking and value extraction utilities
+# Design principles:
+#   - pange (compose) for serialization: composing the JSON text
+#   - solve (untangle) for parsing: solving/extracting data from text
+#   - All operations are synchronous (pure in-memory transforms)
 
 @ subsidia ts "codegen/ts/json.ts"
 pactum json {
     # =========================================================================
     # SERIALIZATION
     # =========================================================================
+    # Verb: pange from "pangere" (to fasten, compose)
+    # Why: Composing/fastening data into JSON text representation.
 
-    # Serialize value to compact JSON string
+    # Serialize value to JSON string
+    # indentum = 0 or omitted: compact output
+    # indentum > 0: pretty-printed with that many spaces
     @ externa
-    functio solve(quidlibet valor) -> textus
-
-    # Serialize value to formatted JSON string
-    @ externa
-    functio solvePulchre(quidlibet valor, numerus indentum) -> textus
+    functio pange(quidlibet valor, si numerus indentum) -> textus
 
     # =========================================================================
-    # DESERIALIZATION
+    # PARSING
     # =========================================================================
+    # Verb: solve from "solvere" (to loosen, untangle)
+    # Why: Untangling/extracting data from JSON text.
 
-    # Parse JSON string to value
+    # Parse JSON string to value (throws on error)
     @ externa
-    functio pange(textus json) -> quidlibet
+    functio solve(textus json) -> quidlibet
 
-    # Parse JSON string, return nihil on error (safe parse)
+    # Verb: tempta from "temptare" (to try, attempt)
+    # Why: Attempting to parse, returning null on failure instead of throwing.
+
+    # Attempt to parse JSON string (returns null on error)
     @ externa
-    functio pangeTuto(textus json) -> quidlibet?
+    functio tempta(textus json) -> si quidlibet
 
     # =========================================================================
     # TYPE CHECKING
     # =========================================================================
+    # Predicates: "est X" = "it is X" - natural Latin predicate form
 
     @ externa
     functio estNihil(quidlibet valor) -> bivalens
@@ -61,8 +66,8 @@ pactum json {
     # =========================================================================
     # VALUE EXTRACTION
     # =========================================================================
+    # Pattern: "ut X" = "as X" - extract as type with default
 
-    # Extract as specific type (returns default if wrong type)
     @ externa
     functio utTextus(quidlibet valor, textus defVal) -> textus
 
@@ -73,18 +78,21 @@ pactum json {
     functio utBivalens(quidlibet valor, bivalens defVal) -> bivalens
 
     # =========================================================================
-    # OBJECT/ARRAY ACCESS
+    # VALUE ACCESS
     # =========================================================================
 
-    # Get value at key (returns nihil if missing)
+    # Verb: cape from "capere" (to take, seize)
+    # Get value by key (returns null if missing)
     @ externa
     functio cape(quidlibet valor, textus clavis) -> quidlibet
 
-    # Get value at index (returns nihil if out of bounds)
+    # Verb: carpe from "carpere" (to pluck)
+    # Pluck value by array index (returns null if out of bounds)
     @ externa
-    functio capeIndice(quidlibet valor, numerus index) -> quidlibet
+    functio carpe(quidlibet valor, numerus index) -> quidlibet
 
-    # Get nested value by path (e.g., "foo.bar.baz")
+    # Verb: inveni from "invenire" (to find)
+    # Find value by dotted path (returns null if not found)
     @ externa
-    functio capeVia(quidlibet valor, textus via) -> quidlibet
+    functio inveni(quidlibet valor, textus via) -> quidlibet
 }

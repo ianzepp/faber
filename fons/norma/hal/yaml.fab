@@ -3,59 +3,104 @@
 # Etymology: "YAML" - YAML Ain't Markup Language (universal, kept as-is).
 #
 # Part of the Hardware Abstraction Layer (HAL).
-# Maps to YamlDevice from monk-os-kernel.
 #
-# Design notes:
-#   - solve: serialize to YAML string
-#   - pange: parse YAML string
-#   - Multi-document support
+# Design principles:
+#   - pange (compose) for serialization: composing the YAML text
+#   - solve (untangle) for parsing: solving/extracting data from text
+#   - necto/collige for multi-document: bind/gather multiple docs
+#   - All operations are synchronous (pure in-memory transforms)
 
 @ subsidia ts "codegen/ts/yaml.ts"
 pactum yaml {
     # =========================================================================
     # SERIALIZATION
     # =========================================================================
+    # Verb: pange from "pangere" (to fasten, compose)
 
     # Serialize value to YAML string
     @ externa
-    functio solve(quidlibet valor) -> textus
+    functio pange(quidlibet valor) -> textus
 
-    # Serialize multiple documents (--- separated)
+    # Verb: necto from "nectere" (to bind, tie together)
+    # Why: Binding multiple documents into a single YAML stream.
+
+    # Bind multiple documents into multi-doc YAML string
     @ externa
-    functio solveMulti(lista<quidlibet> documenta) -> textus
+    functio necto(lista<quidlibet> documenta) -> textus
 
     # =========================================================================
-    # DESERIALIZATION
+    # PARSING
     # =========================================================================
+    # Verb: solve from "solvere" (to loosen, untangle)
 
-    # Parse YAML string (first document if multi-doc)
+    # Parse YAML string to value (throws on error)
     @ externa
-    functio pange(textus yaml) -> quidlibet
+    functio solve(textus yaml) -> quidlibet
 
-    # Parse YAML string, return nihil on error
-    @ externa
-    functio pangeTuto(textus yaml) -> quidlibet?
+    # Verb: tempta from "temptare" (to try, attempt)
 
-    # Parse all documents in YAML string
+    # Attempt to parse YAML string (returns null on error)
     @ externa
-    functio pangeMulti(textus yaml) -> lista<quidlibet>
+    functio tempta(textus yaml) -> si quidlibet
+
+    # Verb: collige from "colligere" (to collect, gather)
+    # Why: Gathering all documents from a multi-doc YAML stream.
+
+    # Gather all documents from multi-doc YAML string
+    @ externa
+    functio collige(textus yaml) -> lista<quidlibet>
 
     # =========================================================================
-    # TYPE CHECKING (same as JSON)
+    # TYPE CHECKING
     # =========================================================================
 
     @ externa
     functio estNihil(quidlibet valor) -> bivalens
 
     @ externa
-    functio estTextus(quidlibet valor) -> bivalens
+    functio estBivalens(quidlibet valor) -> bivalens
 
     @ externa
     functio estNumerus(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estTextus(quidlibet valor) -> bivalens
 
     @ externa
     functio estLista(quidlibet valor) -> bivalens
 
     @ externa
     functio estTabula(quidlibet valor) -> bivalens
+
+    # =========================================================================
+    # VALUE EXTRACTION
+    # =========================================================================
+
+    @ externa
+    functio utTextus(quidlibet valor, textus defVal) -> textus
+
+    @ externa
+    functio utNumerus(quidlibet valor, numerus defVal) -> numerus
+
+    @ externa
+    functio utBivalens(quidlibet valor, bivalens defVal) -> bivalens
+
+    # =========================================================================
+    # VALUE ACCESS
+    # =========================================================================
+
+    # Verb: cape from "capere" (to take, seize)
+    # Get value by key (returns null if missing)
+    @ externa
+    functio cape(quidlibet valor, textus clavis) -> quidlibet
+
+    # Verb: carpe from "carpere" (to pluck)
+    # Pluck value by array index (returns null if out of bounds)
+    @ externa
+    functio carpe(quidlibet valor, numerus index) -> quidlibet
+
+    # Verb: inveni from "invenire" (to find)
+    # Find value by dotted path (returns null if not found)
+    @ externa
+    functio inveni(quidlibet valor, textus via) -> quidlibet
 }

@@ -4,9 +4,9 @@
  * Native TypeScript implementation of the HAL process interface.
  * Uses Bun process APIs.
  *
- * Verb conjugation encodes spawn semantics:
- *   - Imperative (genera): spawn attached, caller manages lifecycle
- *   - Future (generabit): spawn detached, fire and forget
+ * Spawn semantics encoded via different verbs:
+ *   - genera: spawn attached, caller manages lifecycle
+ *   - dimitte: spawn detached, dismiss to run independently
  */
 
 /** Spawned subprocess handle for attached processes */
@@ -43,14 +43,14 @@ export const processus = {
     // =========================================================================
     // SPAWN - Detached
     // =========================================================================
-    // Verb: generabit (future of generare) - fire and forget
+    // Verb: dimitte from "dimittere" (to send away, dismiss)
 
-    /** Spawn detached process - runs independently, returns PID */
-    async generabit(
+    /** Dismiss process to run independently - returns PID */
+    dimitte(
         argumenta: string[],
         directorium?: string,
         ambitus?: Record<string, string>
-    ): Promise<number> {
+    ): number {
         const proc = Bun.spawn(argumenta, {
             cwd: directorium ?? process.cwd(),
             env: ambitus ? { ...process.env, ...ambitus } : process.env,
@@ -103,8 +103,8 @@ export const processus = {
     // PROCESS INFO
     // =========================================================================
 
-    /** Get current working directory */
-    directorium(): string {
+    /** Get current working directory (where the process dwells) */
+    sedes(): string {
         return process.cwd();
     },
 

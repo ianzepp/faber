@@ -134,14 +134,18 @@ pactum solum {
     # =========================================================================
     # FILE INFO - Existence
     # =========================================================================
-    # Verb: exstat from "exstare" (to stand out, exist, be visible)
+    # Verb: exstat/exstabit from "exstare" (to stand out, exist, be visible)
     # Why: Asking if something exists/stands in the filesystem.
-    #      Sync-only predicate - async existence checks should use describet.
-    # Maps to: fs.existsSync(path)
+    # Maps to: fs.existsSync(path) / fs.access(path)
 
-    # Check if path exists (sync only - use describet for async)
+    # Check if path exists (sync)
     @ externa
     functio exstat(textus via) -> bivalens
+
+    # Check if path exists (async)
+    @ futura
+    @ externa
+    functio exstabit(textus via) -> bivalens
 
     # =========================================================================
     # FILE INFO - Details

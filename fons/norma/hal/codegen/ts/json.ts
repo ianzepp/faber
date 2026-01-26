@@ -2,6 +2,11 @@
  * json.ts - JSON Encoding/Decoding Implementation
  *
  * Native TypeScript implementation of the HAL JSON interface.
+ *
+ * Verb meanings:
+ *   - pange (compose): serialize value to JSON string
+ *   - solve (untangle): parse JSON string to value
+ *   - tempta (try): attempt to parse, return null on error
  */
 
 export const json = {
@@ -9,23 +14,25 @@ export const json = {
     // SERIALIZATION
     // =========================================================================
 
-    solve(valor: unknown): string {
+    /** Serialize value to JSON string (indentum > 0 for pretty-print) */
+    pange(valor: unknown, indentum?: number): string {
+        if (indentum !== undefined && indentum > 0) {
+            return JSON.stringify(valor, null, indentum);
+        }
         return JSON.stringify(valor);
     },
 
-    solvePulchre(valor: unknown, indentum: number): string {
-        return JSON.stringify(valor, null, indentum);
-    },
-
     // =========================================================================
-    // DESERIALIZATION
+    // PARSING
     // =========================================================================
 
-    pange(json: string): unknown {
+    /** Parse JSON string to value (throws on error) */
+    solve(json: string): unknown {
         return JSON.parse(json);
     },
 
-    pangeTuto(json: string): unknown | null {
+    /** Attempt to parse JSON string (returns null on error) */
+    tempta(json: string): unknown | null {
         try {
             return JSON.parse(json);
         }
@@ -79,9 +86,10 @@ export const json = {
     },
 
     // =========================================================================
-    // OBJECT/ARRAY ACCESS
+    // VALUE ACCESS
     // =========================================================================
 
+    /** Get value by key (returns null if missing) */
     cape(valor: unknown, clavis: string): unknown {
         if (typeof valor === 'object' && valor !== null && !Array.isArray(valor)) {
             return (valor as Record<string, unknown>)[clavis] ?? null;
@@ -89,14 +97,16 @@ export const json = {
         return null;
     },
 
-    capeIndice(valor: unknown, index: number): unknown {
+    /** Pluck value by array index (returns null if out of bounds) */
+    carpe(valor: unknown, index: number): unknown {
         if (Array.isArray(valor) && index >= 0 && index < valor.length) {
             return valor[index];
         }
         return null;
     },
 
-    capeVia(valor: unknown, via: string): unknown {
+    /** Find value by dotted path (returns null if not found) */
+    inveni(valor: unknown, via: string): unknown {
         const parts = via.split('.');
         let current: unknown = valor;
 
