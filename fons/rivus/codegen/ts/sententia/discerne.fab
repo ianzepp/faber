@@ -6,7 +6,7 @@
 #   # Single discriminant
 #   discerne x { casu A {...} }       -> if (x.tag === 'A') {...}
 #   discerne x { casu B ut b {...} }  -> if (x.tag === 'B') { const b = x; ... }
-#   discerne x { casu C fixum a, b {...} } -> if (x.tag === 'C') { const { a, b } = x; ... }
+#   discerne x { casu C pro a, b {...} } -> if (x.tag === 'C') { const { a, b } = x; ... }
 #   discerne x { casu _ {...} }       -> else {...}  (wildcard pattern)
 #
 #   # Multi-discriminant
@@ -99,7 +99,7 @@ functio genPatternBindings(in TsGenerator g, de VariansExemplar pattern, de text
     si nonnihil pattern.alias {
         result = scriptum("§const § = §;\n", g.ind(), pattern.alias, discriminant)
     }
-    # Positional bindings: casu Click fixum a, b
+    # Positional bindings: casu Click pro a, b
     sin pattern.vincula.longitudo() > 0 {
         result = scriptum("§const { § } = §;\n", g.ind(), pattern.vincula.coniunge(", "), discriminant)
     }

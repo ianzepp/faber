@@ -244,7 +244,7 @@ genus VariansExemplar {
 }
 
 # Variant case for discerne (pattern matching)
-# Example: casu Click fixum x, y { ... }
+# Example: casu Click pro x, y { ... }
 # Example: casu Primitivum ut l, Primitivum ut r { ... }  (multi-discriminant)
 @ publica
 genus VariansCasus {
@@ -487,7 +487,7 @@ discretio Sententia {
     }
 
     # Pattern matching statement
-    # Example: discerne event { casu Click fixum x, y { ... } }
+    # Example: discerne event { casu Click pro x, y { ... } }
     # Example: discerne a, b { casu X ut x, Y ut y { ... } }  (multi-discriminant)
     DiscerneSententia {
         Locus locus
@@ -586,20 +586,24 @@ discretio Sententia {
 
     # Entry point (sync)
     # Example: incipit { scribe "Hello" }
+    # Example: incipit argumenta args { ... }
     IncipitSententia {
         Locus locus
         si MassaSententia corpus   # WHY: optional incipit body
         si Sententia ergo          # WHY: optional incipit ergo clause
         si lista<Annotatio> annotationes  # WHY: CLI annotations (@ cli, @ optio, etc.)
+        si textus argumenta        # WHY: binding name for collected @ optio/@ operandus
     }
 
     # Entry point (async)
     # Example: incipiet { cede fetch() }
+    # Example: incipiet argumenta args { ... }
     IncipietSententia {
         Locus locus
         si MassaSententia corpus   # WHY: optional incipiet body
         si Sententia ergo          # WHY: optional incipiet ergo clause
         si lista<Annotatio> annotationes  # WHY: CLI annotations
+        si textus argumenta        # WHY: binding name for collected @ optio/@ operandus
     }
 
     # Resource management statement

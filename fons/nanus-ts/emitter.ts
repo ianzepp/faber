@@ -441,7 +441,7 @@ function emitExpr(expr: Expr): string {
         case 'Binaria': {
             // Special case: 'inter' with array → .includes()
             // JavaScript 'in' checks object properties, not array membership
-            if (expr.signum === 'inter' && expr.dex.tag === 'Series') {
+            if (expr.signum === 'inter') {
                 return `${emitExpr(expr.dex)}.includes(${emitExpr(expr.sin)})`;
             }
             const op = BINARY_OPS[expr.signum] ?? expr.signum;

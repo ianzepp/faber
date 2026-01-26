@@ -6,7 +6,7 @@
 # TRANSFORMS:
 #   discerne x { casu A {...} }             -> switch _v := x.(type) { case A: ... }
 #   discerne x { casu B ut b {...} }        -> switch _v := x.(type) { case B: b := _v; ... }
-#   discerne x { casu C fixum a, b {...} }    -> switch _v := x.(type) { case C: a := _v.A; b := _v.B; ... }
+#   discerne x { casu C pro a, b {...} }    -> switch _v := x.(type) { case C: a := _v.A; b := _v.B; ... }
 #   discerne x { casu _ {...} }             -> default: ...
 #
 #   Multi-discriminant:
@@ -185,7 +185,7 @@ functio genPatternBindingsTypeSwitch(in GoGenerator g, de VariansExemplar patter
         result = scriptum("§§ := _v\n", g.ind(), pattern.alias)
     }
 
-    # Field bindings: casu Click fixum x, y -> x := _v.X; y := _v.Y
+    # Field bindings: casu Click pro x, y -> x := _v.X; y := _v.Y
     si pattern.vincula.longitudo() > 0 {
         ex pattern.vincula fixum vinculum {
             fixum fieldName = capitaliza(vinculum)
@@ -205,7 +205,7 @@ functio genPatternBindingsMulti(in GoGenerator g, de VariansExemplar pattern, de
         result = scriptum("§§ := §\n", g.ind(), pattern.alias, tempVar)
     }
 
-    # Field bindings: casu Click fixum x, y -> x := _dN.X; y := _dN.Y
+    # Field bindings: casu Click pro x, y -> x := _dN.X; y := _dN.Y
     si pattern.vincula.longitudo() > 0 {
         ex pattern.vincula fixum vinculum {
             fixum fieldName = capitaliza(vinculum)

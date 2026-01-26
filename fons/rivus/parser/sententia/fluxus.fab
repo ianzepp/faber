@@ -125,7 +125,7 @@ functio parseEligeSententia(in Resolvitor r) -> Sententia {
 # Examples:
 #   # Single discriminant
 #   discerne event {
-#       casu Click fixum x, y { scribe scriptum("clicked at §, §", x, y) }
+#       casu Click pro x, y { scribe scriptum("clicked at §, §", x, y) }
 #       casu Keypress ut key { scribe scriptum("pressed §", key) }
 #       casu Quit { mori "goodbye" }
 #   }
@@ -284,7 +284,7 @@ functio parseVariansExemplar(in Parser p) -> VariansExemplar {
 # Check if the token after a comma is a binding (not a new pattern)
 #
 # WHY: In multi-discriminant patterns, commas separate both:
-#   - Bindings within 'pro': `casu Click fixum x, y { ... }`
+#   - Bindings within 'pro': `casu Click pro x, y { ... }`
 #   - Patterns: `casu Click ut c, Quit { ... }`
 #
 # RULE: After comma, it's a new pattern ONLY if:

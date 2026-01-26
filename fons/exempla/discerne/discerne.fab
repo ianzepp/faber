@@ -33,7 +33,7 @@ functio handle_event(Event e) -> nihil {
         casu Click pro x, y {
             scribe "Clicked at:", x, y
         }
-        casu Keypress fixum key {
+        casu Keypress pro key {
             scribe "Key:", key
         }
         casu Quit {
