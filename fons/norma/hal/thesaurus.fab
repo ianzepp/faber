@@ -3,9 +3,11 @@
 # Etymology: "thesaurus" - treasury, storehouse. A cache of values.
 #
 # Part of the Hardware Abstraction Layer (HAL).
-# Maps to RedisDevice from monk-os-kernel.
 #
 # Design notes:
+#   - Verb conjugation encodes sync/async:
+#     - Future (-et, -abit, -ent): async operations
+#     - Imperative: sync operations
 #   - Key-value cache with TTL
 #   - Pub/sub messaging with pattern subscriptions
 #   - In-memory for dev/single-node, Redis for production
@@ -19,27 +21,27 @@ pactum thesaurus {
     # Get value by key (returns nihil if not found)
     @ futura
     @ externa
-    functio cape(textus clavis) -> textus?
+    functio capiet(textus clavis) -> textus?
 
     # Set value with optional TTL in seconds
     @ futura
     @ externa
-    functio pone(textus clavis, textus valor, numerus ttl) -> vacuum
+    functio ponet(textus clavis, textus valor, numerus ttl) -> vacuum
 
     # Set value only if key doesn't exist
     @ futura
     @ externa
-    functio poneNovum(textus clavis, textus valor) -> bivalens
+    functio ponetNovum(textus clavis, textus valor) -> bivalens
 
     # Delete key(s)
     @ futura
     @ externa
-    functio dele(lista<textus> claves) -> numerus
+    functio delet(lista<textus> claves) -> numerus
 
     # Check if key exists
     @ futura
     @ externa
-    functio exstat(textus clavis) -> bivalens
+    functio exstabit(textus clavis) -> bivalens
 
     # Get remaining TTL in seconds (-1 = no expiry, -2 = not found)
     @ futura
@@ -49,26 +51,21 @@ pactum thesaurus {
     # Set expiry on existing key
     @ futura
     @ externa
-    functio expira(textus clavis, numerus secundae) -> bivalens
+    functio expirabit(textus clavis, numerus secundae) -> bivalens
 
     # =========================================================================
     # NUMERIC OPERATIONS
     # =========================================================================
 
-    # Increment by 1
+    # Increment by amount (default 1)
     @ futura
     @ externa
-    functio incr(textus clavis) -> numerus
-
-    # Increment by amount
-    @ futura
-    @ externa
-    functio incrPer(textus clavis, numerus quantum) -> numerus
+    functio augebit(textus clavis, numerus quantum) -> numerus
 
     # Decrement by 1
     @ futura
     @ externa
-    functio decr(textus clavis) -> numerus
+    functio minuet(textus clavis) -> numerus
 
     # =========================================================================
     # KEY QUERIES
@@ -77,7 +74,7 @@ pactum thesaurus {
     # Find keys matching glob pattern
     @ futura
     @ externa
-    functio claves(textus exemplar) -> lista<textus>
+    functio quaeret(textus exemplar) -> lista<textus>
 
     # =========================================================================
     # PUB/SUB
@@ -86,20 +83,22 @@ pactum thesaurus {
     # Publish message to topic, returns subscriber count
     @ futura
     @ externa
-    functio publica(textus thema, textus nuntius) -> numerus
+    functio publicabit(textus thema, textus nuntius) -> numerus
 
     # Subscribe to topic patterns
     # Pattern: * matches one segment, ** matches multiple
     @ futura
     @ externa
-    functio subscribe(lista<textus> exemplaria) -> Subscriptio
+    functio auscultabit(lista<textus> exemplaria) -> Subscriptio
 }
 
 # Pub/Sub subscription
 pactum Subscriptio {
-    # Iterate over incoming messages
+    # Iterate over incoming messages (async generator)
+    @ futura
+    @ cursor
     @ externa
-    functio nuntii() -> cursor<Nuntius>
+    functio nuntient() -> cursor<Nuntius>
 
     # Unsubscribe and cleanup
     @ externa

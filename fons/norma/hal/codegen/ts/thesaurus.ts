@@ -172,7 +172,7 @@ export class Subscriptio {
         return false;
     }
 
-    async *nuntii(): AsyncGenerator<Nuntius> {
+    async *nuntient(): AsyncGenerator<Nuntius> {
         while (!this.closed) {
             if (this.queue.length > 0) {
                 const msg = this.queue.shift()!;
@@ -206,18 +206,18 @@ export const thesaurus = {
     // KEY-VALUE CACHE
     // =========================================================================
 
-    async cape(clavis: string): Promise<string | null> {
+    async capiet(clavis: string): Promise<string | null> {
         const entry = getValidEntry(clavis);
         return entry ? entry.value : null;
     },
 
-    async pone(clavis: string, valor: string, ttl?: number): Promise<void> {
+    async ponet(clavis: string, valor: string, ttl?: number): Promise<void> {
         startCleanup();
         const expiresAt = ttl && ttl > 0 ? Date.now() + ttl * 1000 : null;
         cache.set(clavis, { value: valor, expiresAt });
     },
 
-    async poneNovum(clavis: string, valor: string): Promise<boolean> {
+    async ponetNovum(clavis: string, valor: string): Promise<boolean> {
         startCleanup();
         const existing = getValidEntry(clavis);
         if (existing) return false;
@@ -225,7 +225,7 @@ export const thesaurus = {
         return true;
     },
 
-    async dele(claves: string[]): Promise<number> {
+    async delet(claves: string[]): Promise<number> {
         let count = 0;
         for (const key of claves) {
             if (cache.delete(key)) {
@@ -235,7 +235,7 @@ export const thesaurus = {
         return count;
     },
 
-    async exstat(clavis: string): Promise<boolean> {
+    async exstabit(clavis: string): Promise<boolean> {
         return getValidEntry(clavis) !== null;
     },
 
@@ -250,7 +250,7 @@ export const thesaurus = {
         return Math.max(0, Math.ceil((entry.expiresAt - Date.now()) / 1000));
     },
 
-    async expira(clavis: string, secundae: number): Promise<boolean> {
+    async expirabit(clavis: string, secundae: number): Promise<boolean> {
         const entry = getValidEntry(clavis);
         if (!entry) return false;
         entry.expiresAt = Date.now() + secundae * 1000;
@@ -261,11 +261,7 @@ export const thesaurus = {
     // NUMERIC OPERATIONS
     // =========================================================================
 
-    async incr(clavis: string): Promise<number> {
-        return this.incrPer(clavis, 1);
-    },
-
-    async incrPer(clavis: string, quantum: number): Promise<number> {
+    async augebit(clavis: string, quantum: number = 1): Promise<number> {
         startCleanup();
         const entry = getValidEntry(clavis);
         let current = 0;
@@ -281,15 +277,15 @@ export const thesaurus = {
         return newValue;
     },
 
-    async decr(clavis: string): Promise<number> {
-        return this.incrPer(clavis, -1);
+    async minuet(clavis: string): Promise<number> {
+        return this.augebit(clavis, -1);
     },
 
     // =========================================================================
     // KEY QUERIES
     // =========================================================================
 
-    async claves(exemplar: string): Promise<string[]> {
+    async quaeret(exemplar: string): Promise<string[]> {
         const regex = globToRegex(exemplar);
         const result: string[] = [];
         const now = Date.now();
@@ -311,7 +307,7 @@ export const thesaurus = {
     // PUB/SUB
     // =========================================================================
 
-    async publica(thema: string, nuntius: string): Promise<number> {
+    async publicabit(thema: string, nuntius: string): Promise<number> {
         const timestamp = Date.now();
         let count = 0;
 
@@ -324,7 +320,7 @@ export const thesaurus = {
         return count;
     },
 
-    async subscribe(exemplaria: string[]): Promise<Subscriptio> {
+    async auscultabit(exemplaria: string[]): Promise<Subscriptio> {
         const sub = new Subscriptio(exemplaria);
         subscriptions.add(sub as unknown as SubscriptioImpl);
         return sub;
