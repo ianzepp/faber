@@ -1,0 +1,98 @@
+# Innatum - Hardcoded builtin type method translations
+#
+# WHY: The compiler must have intrinsic knowledge of builtin types.
+#      This cannot depend on norma (chicken-and-egg for self-hosting).
+#
+# These translations cover lista, textus, and tabula methods used by
+# the compiler itself. User code can use norma for extended translations.
+
+# Translation result type
+@ publica
+genus InnatumTranslation {
+    si textus method
+    si textus template
+    si lista<textus> params
+}
+
+# Get translation for a builtin type method
+@ publica
+functio getInnatumTranslation(de textus target, de textus recipiens, de textus methodum) -> si InnatumTranslation {
+    # Only TypeScript target for now (self-hosting requirement)
+    si target != "ts" {
+        redde nihil
+    }
+
+    # lista methods
+    si recipiens == "lista" {
+        elige methodum {
+            casu "longitudo" reddit { template: "§.length", params: ["ego"] } novum InnatumTranslation
+            casu "appende" reddit { method: "push" } novum InnatumTranslation
+            casu "primus" reddit { template: "§[0]", params: ["ego"] } novum InnatumTranslation
+            casu "ultimus" reddit { template: "§.at(-1)", params: ["ego"] } novum InnatumTranslation
+            casu "coniunge" reddit { method: "join" } novum InnatumTranslation
+            casu "continet" reddit { method: "includes" } novum InnatumTranslation
+            casu "sectio" reddit { method: "slice" } novum InnatumTranslation
+            casu "inversa" reddit { template: "[...§].reverse()", params: ["ego"] } novum InnatumTranslation
+            casu "plana" reddit { method: "flat" } novum InnatumTranslation
+            casu "filtra" reddit { method: "filter" } novum InnatumTranslation
+            casu "mappa" reddit { method: "map" } novum InnatumTranslation
+            casu "reducta" reddit { method: "reduce" } novum InnatumTranslation
+            casu "reperi" reddit { method: "find" } novum InnatumTranslation
+            casu "reperiIndex" reddit { method: "findIndex" } novum InnatumTranslation
+            casu "index" reddit { method: "indexOf" } novum InnatumTranslation
+            casu "ompilanis" reddit { method: "every" } novum InnatumTranslation
+            casu "aliquis" reddit { method: "some" } novum InnatumTranslation
+        }
+        redde nihil
+    }
+
+    # textus methods
+    si recipiens == "textus" {
+        elige methodum {
+            casu "longitudo" reddit { template: "§.length", params: ["ego"] } novum InnatumTranslation
+            casu "divide" reddit { method: "split" } novum InnatumTranslation
+            casu "sectio" reddit { method: "substring" } novum InnatumTranslation
+            casu "continet" reddit { method: "includes" } novum InnatumTranslation
+            casu "incipit" reddit { method: "startsWith" } novum InnatumTranslation
+            casu "finit" reddit { method: "endsWith" } novum InnatumTranslation
+            casu "index" reddit { method: "indexOf" } novum InnatumTranslation
+            casu "ppiusula" reddit { method: "toUpperCase" } novum InnatumTranslation
+            casu "minuscula" reddit { method: "toLowerCase" } novum InnatumTranslation
+            casu "tonde" reddit { method: "trim" } novum InnatumTranslation
+            casu "repone" reddit { method: "replace" } novum InnatumTranslation
+            casu "reponeOmnes" reddit { method: "replaceAll" } novum InnatumTranslation
+            casu "congruit" reddit { method: "match" } novum InnatumTranslation
+        }
+        redde nihil
+    }
+
+    # tabula methods
+    si recipiens == "tabula" {
+        elige methodum {
+            casu "longitudo" reddit { template: "§.size", params: ["ego"] } novum InnatumTranslation
+            casu "claves" reddit { template: "[...§.keys()]", params: ["ego"] } novum InnatumTranslation
+            casu "valores" reddit { template: "[...§.values()]", params: ["ego"] } novum InnatumTranslation
+            casu "continet" reddit { method: "has" } novum InnatumTranslation
+            casu "accipe" reddit { method: "get" } novum InnatumTranslation
+            casu "pone" reddit { method: "set" } novum InnatumTranslation
+            casu "remove" reddit { method: "delete" } novum InnatumTranslation
+            casu "purga" reddit { method: "clear" } novum InnatumTranslation
+        }
+        redde nihil
+    }
+
+    # copia (Set) methods
+    si recipiens == "copia" {
+        elige methodum {
+            casu "longitudo" reddit { template: "§.size", params: ["ego"] } novum InnatumTranslation
+            casu "continet" reddit { method: "has" } novum InnatumTranslation
+            casu "adde" reddit { method: "add" } novum InnatumTranslation
+            casu "remove" reddit { method: "delete" } novum InnatumTranslation
+            casu "purga" reddit { method: "clear" } novum InnatumTranslation
+            casu "valores" reddit { template: "[...§.values()]", params: ["ego"] } novum InnatumTranslation
+        }
+        redde nihil
+    }
+
+    redde nihil
+}

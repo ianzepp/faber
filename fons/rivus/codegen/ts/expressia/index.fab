@@ -12,7 +12,7 @@
 § ex "../typus" importa genTypus
 § ex "../../../parser/morphologia" importa parseMethodum
 § ex "../../radices" importa generaListaMethodum
-§ ex "../../norma.gen" importa getNormaTranslation, VerteTranslation
+§ ex "../../innatum" importa getInnatumTranslation, InnatumTranslation
 § ex "./littera" importa genLittera, genLitteraExemplar
 § ex "./scriptum" importa genScriptum
 § ex "./ambitus" importa genAmbitusExpressia
@@ -213,10 +213,10 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
                                 fixum methodNomen = prop.valor qua textus
                                 fixum obj = genExpressia(g, m.obiectum)
 
-                                # WHY: Try norma translation if we have receiver type info.
+                                # WHY: Try innatum translation for builtin types.
                                 si nonnihil e.morphologia {
                                     fixum recipiens = (e.morphologia novum MorphologiaInvocatio).recipiens
-                                    fixum translation = getNormaTranslation("ts", recipiens, methodNomen)
+                                    fixum translation = getInnatumTranslation("ts", recipiens, methodNomen)
 
                                     si nonnihil translation {
                                         # Simple method rename: use translated method name
@@ -227,7 +227,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
 
                                         # Template-based translation
                                         si nonnihil translation.template et nonnihil translation.params {
-                                            redde applyNormaTemplate(translation.template qua textus, translation.params qua lista<textus>, obj, args)
+                                            redde applyInnatumTemplate(translation.template qua textus, translation.params qua lista<textus>, obj, args)
                                         }
                                     }
 
@@ -836,7 +836,7 @@ functio legeNumerusTextus(de textus crudus) -> numerus {
 #   - §N where N >= values.length returns empty string (silent fallback)
 #   - Implicit § continues incrementing even after explicit §N
 #   - No escaping mechanism for literal § (not needed in practice)
-functio applyNormaTemplate(de textus template, de lista<textus> params, de textus obj, de lista<textus> args) -> textus {
+functio applyInnatumTemplate(de textus template, de lista<textus> params, de textus obj, de lista<textus> args) -> textus {
     # Build values array: ego -> obj, other params -> args
     varia values = [] innatum lista<textus>
     varia argIdx = 0

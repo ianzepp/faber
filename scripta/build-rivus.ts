@@ -25,24 +25,45 @@ import { $ } from 'bun';
 // CONSTANTS AND TYPES
 // =============================================================================
 
-type Compiler = 'faber-ts' | 'nanus-ts' | 'nanus-go' | 'nanus-rs' | 'nanus-py';
 type Target = 'ts' | 'go' | 'rs' | 'py';
 
-const VALID_COMPILERS: Compiler[] = ['faber-ts', 'nanus-ts', 'nanus-go', 'nanus-rs', 'nanus-py'];
+const BOOTSTRAP_COMPILERS = ['faber-ts', 'nanus-ts', 'nanus-go', 'nanus-rs', 'nanus-py'] as const;
 
-const COMPILER_TARGET: Record<Compiler, Target> = {
-    'faber-ts': 'ts',
-    'nanus-ts': 'ts',
-    'nanus-go': 'go',
-    'nanus-rs': 'rs',
-    'nanus-py': 'py',
+const TARGET_SUFFIX: Record<Target, string> = {
+    'ts': '-ts',
+    'go': '-go',
+    'rs': '-rs',
+    'py': '-py',
 };
+
+/**
+ * Derive target language from compiler name.
+ * e.g., 'nanus-ts' -> 'ts', 'rivus-nanus-py' -> 'py'
+ */
+function deriveTarget(compiler: string): Target {
+    if (compiler.endsWith('-ts')) return 'ts';
+    if (compiler.endsWith('-go')) return 'go';
+    if (compiler.endsWith('-rs')) return 'rs';
+    if (compiler.endsWith('-py')) return 'py';
+    throw new Error(`Cannot derive target from compiler '${compiler}'`);
+}
+
+/**
+ * Validate compiler name. Accepts:
+ * - Bootstrap compilers: faber-ts, nanus-ts, nanus-go, nanus-rs, nanus-py
+ * - Self-hosted compilers: rivus-nanus-ts, rivus-nanus-py, rivus-rivus-nanus-ts, etc.
+ */
+function isValidCompiler(compiler: string): boolean {
+    if (BOOTSTRAP_COMPILERS.includes(compiler as any)) return true;
+    if (compiler.startsWith('rivus-')) return true;
+    return false;
+}
 
 // =============================================================================
 // CONFIGURATION
 // =============================================================================
 
-let compiler: Compiler = 'faber-ts';
+let compiler = 'faber-ts';
 let skipTypecheck = false;
 
 /**
@@ -55,9 +76,9 @@ function parseArgs() {
         switch (arg) {
             case '-c':
             case '--compiler':
-                const c = args[++i] as Compiler;
-                if (!VALID_COMPILERS.includes(c)) {
-                    console.error(`Unknown compiler '${c}'. Valid: ${VALID_COMPILERS.join(', ')}`);
+                const c = args[++i];
+                if (!isValidCompiler(c)) {
+                    console.error(`Unknown compiler '${c}'. Valid: ${BOOTSTRAP_COMPILERS.join(', ')}, or rivus-*`);
                     process.exit(1);
                 }
                 compiler = c;
@@ -75,7 +96,7 @@ function parseArgs() {
 
 parseArgs();
 
-const target: Target = COMPILER_TARGET[compiler];
+const target: Target = deriveTarget(compiler);
 
 // =============================================================================
 // PATH CONFIGURATION
@@ -84,14 +105,6 @@ const target: Target = COMPILER_TARGET[compiler];
 const ROOT = join(import.meta.dir, '..');
 const SOURCE = join(ROOT, 'fons', 'rivus');
 
-const OUTPUT_PATH: Record<Compiler, string> = {
-    'faber-ts': join(ROOT, 'opus', 'rivus-faber-ts', 'fons'),
-    'nanus-ts': join(ROOT, 'opus', 'rivus-nanus-ts', 'fons'),
-    'nanus-go': join(ROOT, 'opus', 'rivus-nanus-go', 'fons'),
-    'nanus-rs': join(ROOT, 'opus', 'rivus-nanus-rs', 'src'),
-    'nanus-py': join(ROOT, 'opus', 'rivus-nanus-py', 'fons'),
-};
-
 const FILE_EXT: Record<Target, string> = {
     'ts': '.ts',
     'go': '.go',
@@ -99,7 +112,17 @@ const FILE_EXT: Record<Target, string> = {
     'py': '.py',
 };
 
-const OUTPUT = OUTPUT_PATH[compiler];
+/**
+ * Derive output path from compiler name.
+ * - nanus-ts -> opus/rivus-nanus-ts/fons (or src for Rust)
+ * - rivus-nanus-ts -> opus/rivus-rivus-nanus-ts/fons
+ */
+function deriveOutputPath(compiler: string, target: Target): string {
+    const subdir = target === 'rs' ? 'src' : 'fons';
+    return join(ROOT, 'opus', `rivus-${compiler}`, subdir);
+}
+
+const OUTPUT = deriveOutputPath(compiler, target);
 const COMPILER_BIN = join(ROOT, 'opus', 'bin', compiler);
 
 interface CompileResult {
@@ -220,7 +243,7 @@ async function buildExecutablePy(): Promise<void> {
     const exeName = `rivus-${compiler}`;
     const outExe = join(binDir, exeName);
     const script = `#!/bin/bash
-exec python3 "$(dirname "$0")/../rivus-${compiler}/fons/rivus.py" "$@"
+exec python3 "$(dirname "$0")/../${exeName}/fons/rivus.py" "$@"
 `;
     await Bun.write(outExe, script);
     await $`chmod +x ${outExe}`.quiet();

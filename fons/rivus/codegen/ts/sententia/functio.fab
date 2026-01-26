@@ -124,9 +124,12 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
     }
 
     # Function keyword (or constructor)
+    # WHY: Class methods (direct children of class body) don't use 'function' keyword in JS.
+    #      But nested functions inside method bodies DO need 'function'.
+    #      inFunctioCorpus tracks whether we're inside a function body.
     si f.structor {
         result = scriptum("§constructor", result)
-    } sin g.inGenere {
+    } sin g.inGenere et non g.inFunctioCorpus {
         si localGenerator {
             result = scriptum("§*§", result, f.nomen)
         } secus {
@@ -198,6 +201,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
         fixum prevInFiet = g.inFiet
         fixum prevInFient = g.inFient
         fixum prevTabula = g.tabulaNominata
+        fixum prevInFunctioCorpus = g.inFunctioCorpus
 
         varia localTabula = [] innatum lista<textus>
         ex f.parametra fixum param {
@@ -211,6 +215,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
 
         g.inCursore = localGenerator
         g.tabulaNominata = localTabula
+        g.inFunctioCorpus = verum
 
         si nonnihil f.reddeVerbum {
             g.inFlumina = useFit aut useFiet
@@ -242,6 +247,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
         g.inFiet = prevInFiet
         g.inFient = prevInFient
         g.tabulaNominata = prevTabula
+        g.inFunctioCorpus = prevInFunctioCorpus
 
         # Check for exitus modifier to wrap body with exit code handling
         varia exitusNomen = nihil qua si textus

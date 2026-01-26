@@ -41,6 +41,9 @@ genus TsGenerator implet Generans {
     # Whether we're inside a class body (for visibility handling)
     bivalens inGenere
 
+    # Whether we're inside a function/method body (for nested function handling)
+    bivalens inFunctioCorpus
+
     # Current function-scope tabula names (for Map get/set lowering)
     lista<textus> tabulaNominata
 
@@ -140,6 +143,7 @@ functio creaTsGenerator() -> TsGenerator {
         inFiet: falsum,
         inFient: falsum,
         inGenere: falsum,
+        inFunctioCorpus: falsum,
         inAbUbi: falsum,
         abUbiParam: "_x",
         requisita: creaRequiredFeatures(),
@@ -164,6 +168,7 @@ functio creaTsGeneratorCum(de textus indentum) -> TsGenerator {
         inFiet: falsum,
         inFient: falsum,
         inGenere: falsum,
+        inFunctioCorpus: falsum,
         inAbUbi: falsum,
         abUbiParam: "_x",
         requisita: creaRequiredFeatures(),

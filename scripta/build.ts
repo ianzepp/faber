@@ -1,10 +1,13 @@
 #!/usr/bin/env bun
 /**
- * Full build pipeline in three stages:
+ * Full build pipeline:
  *
  *   Stage 1: nanus-ts, nanus-go, nanus-rs, nanus-py (bootstrap compilers) + norma
  *   Stage 2: rivus via nanus-ts (must succeed)
  *   Stage 3: rivus via nanus-go, nanus-rs, nanus-py (optional, failures noted)
+ *   Stage 4: exempla codegen via successful rivus compilers
+ *   Stage 5: exempla verification (typecheck generated code)
+ *   Stage 6: self-hosting (rivus compiles itself via verified compilers)
  *
  * Prework: wipes opus/* for clean builds.
  *
@@ -218,6 +221,7 @@ async function main() {
     // =============================================================================
 
     const compilersToVerify = successfulCompilers.filter((_, i) => exemplaCodegen[i]?.success);
+    const verifiedCompilers: string[] = [];
     if (compilersToVerify.length > 0) {
         console.log('\n--- Stage 5: Exempla (verify) ---\n');
 
@@ -234,6 +238,34 @@ async function main() {
                 },
                 true, // allow failure
                 `bun run build:exempla -- -c ${compiler} --verify-only`,
+            );
+            allResults.push(result);
+            if (result.success) {
+                verifiedCompilers.push(compiler);
+            }
+        }
+    }
+
+    // =============================================================================
+    // STAGE 6: Self-hosting (rivus compiles itself)
+    // =============================================================================
+
+    if (verifiedCompilers.length > 0) {
+        console.log('\n--- Stage 6: Self-hosting (rivus compiles rivus) ---\n');
+
+        for (const compiler of verifiedCompilers) {
+            const result = await step(
+                `build:rivus (${compiler})`,
+                verbose,
+                async () => {
+                    if (verbose) {
+                        await $`bun run build:rivus -- -c ${compiler}`;
+                    } else {
+                        await $`bun run build:rivus -- -c ${compiler}`.quiet();
+                    }
+                },
+                true, // allow failure
+                `bun run build:rivus -- -c ${compiler}`,
             );
             allResults.push(result);
         }

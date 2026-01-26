@@ -76,6 +76,12 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
             redde resolveNovumExpr(r, expr)
         }
 
+        # Postfix new expression ({ ... } novum Type)
+        casu PostfixNovumExpressia ut p {
+            r.expressia(p.expressia)
+            redde usitatumTypus(p.scopus.nomen, falsum)
+        }
+
         # Tagged union construction (finge)
         casu FingeExpressia {
             redde resolveFingeExpr(r, expr)
