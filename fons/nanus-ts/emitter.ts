@@ -406,11 +406,6 @@ function emitStmt(stmt: Stmt, indent = ''): string {
             return `${indent}${exp}type ${stmt.nomen} = ${emitTypus(stmt.typus)};`;
         }
 
-        case 'In':
-            // In mutation block - emit as block with the expression available
-            // For now, just emit the body (the semantics depend on usage)
-            return emitStmt(stmt.corpus, indent);
-
         default:
             return `${indent}/* unhandled: ${(stmt as Stmt).tag} */`;
     }

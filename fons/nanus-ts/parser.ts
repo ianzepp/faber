@@ -222,8 +222,6 @@ export class Parser {
                     return this.parseProba();
                 case 'typus':
                     return this.parseTypusAlias(publica);
-                case 'in':
-                    return this.parseInStmt();
                 case 'de':
                     return this.parseDeStmt();
             }
@@ -1141,14 +1139,6 @@ export class Parser {
         return { tag: 'TypusAlias', locus, nomen, typus, publica };
     }
 
-    private parseInStmt(): Stmt {
-        const locus = this.peek().locus;
-        this.expect('Keyword', 'in');
-        const expr = this.parseExpr();
-        const corpus = this.parseMassa();
-        return { tag: 'In', locus, expr, corpus };
-    }
-
     private parseDeStmt(): Stmt {
         const locus = this.peek().locus;
         this.expect('Keyword', 'de');
@@ -1259,7 +1249,8 @@ export class Parser {
         }
 
         // Ternary: cond sic cons secus alt
-        if (this.match('Keyword', 'sic')) {
+        // Only parse at top level (minPrec=0) so ternary has lowest precedence
+        if (minPrec === 0 && this.match('Keyword', 'sic')) {
             const cons = this.parseExpr();
             this.expect('Keyword', 'secus');
             const alt = this.parseExpr();

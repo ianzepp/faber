@@ -2,7 +2,7 @@
 #
 # TRANSFORMS:
 #   ex "fs" importa readFile       -> import { readFile } from "fs";
-#   ex "fs" importa *              -> import * from "fs";
+#   ex "fs" importa *              -> import "fs";  (side-effect only)
 #   ex "fs" importa * ut fs        -> import * as fs from "fs";
 #   ex obj importa { a, b }        -> const { a, b } = obj;
 #   ex arr importa [a, , b]        -> const [a, , b] = arr;
@@ -26,7 +26,8 @@ functio genImporta(in TsGenerator g, de textus fons, de lista<ImportaSpecificato
         si nonnihil totumAlias {
             redde scriptum("§import * as § from \"§\";", g.ind(), totumAlias qua textus, fons)
         }
-        redde scriptum("§import * from \"§\";", g.ind(), fons)
+        # No alias - side-effect import only
+        redde scriptum("§import \"§\";", g.ind(), fons)
     }
 
     varia specs = [] innatum lista<textus>

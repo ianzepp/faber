@@ -231,15 +231,15 @@ incipit {
     # PREFER: 'vel' — the '??' operator does not exist in Faber
 
     fixum si textus maybeName = nihil
-    fixum name = maybeName vel "default"
-    scribe name
+    fixum resolvedName = maybeName vel "default"
+    scribe resolvedName
 
     # Chain multiple fallbacks
     fixum si textus first = nihil
     fixum si textus second = nihil
     fixum textus third = "fallback"
-    fixum result = first vel second vel third
-    scribe result
+    fixum fallbackResult = first vel second vel third
+    scribe fallbackResult
 
     # --------------------------------------------------------------------------
     # Ternary: condition sic then secus else
@@ -247,8 +247,8 @@ incipit {
     # Latin form for ternary expressions.
 
     fixum age = 25
-    fixum result = age >= 18 sic "adult" secus "minor"
-    scribe result
+    fixum ageCategory = age >= 18 sic "adult" secus "minor"
+    scribe ageCategory
 
     # Nested ternary (right-associative)
     fixum score = 85
@@ -284,7 +284,8 @@ incipit {
     scribe rightShift
 
     # Precedence: (flags & mask) == 0, not flags & (mask == 0)
-    fixum checkMask = flags & mask == 0
+    # Using explicit parens to avoid TS literal comparison warning
+    fixum checkMask = (flags & mask) == 0
     scribe checkMask
 }
 

@@ -10,7 +10,7 @@ Formal grammar for the Faber programming language. This is the authoritative spe
 program     := statement*
 statement   := directiveDecl | importDecl | varDecl | funcDecl | genusDecl | pactumDecl
              | typeAliasDecl | enumDecl | discretioDecl
-             | ifStmt | whileStmt | exStmt | deStmt | inStmt
+             | ifStmt | whileStmt | exStmt | deStmt
              | eligeStmt | discerneStmt | guardStmt | curaStmt
              | tryStmt | returnStmt | breakStmt | continueStmt | throwStmt
              | assertStmt | outputStmt | adStmt | incipitStmt
@@ -521,15 +521,6 @@ facBlockStmt := 'fac' blockStmt ('cape' IDENTIFIER blockStmt)? ('dum' expression
 - Creates scope, optionally with catch or do-while
 
 ---
-
-## Mutation Block
-
-```ebnf
-inStmt := 'in' expression blockStmt
-```
-
----
-
 ## Target-Specific Features
 
 Not all Faber features are supported across all compilation targets. Some features are currently limited to specific targets:
