@@ -124,11 +124,11 @@ fac {}
 @ innatum ts "Map", py "dict", rs "HashMap"
 genus Tabula {}
 
-@ radix ordin, imperativus, perfectum
+@ radix sort, imperativus, perfectum
 @ verte ts "sort"
 @ verte py "sort"
 @ externa
-functio ordina()
+functio sorta()
 
 # =============================================================================
 # @ externa - External Declaration

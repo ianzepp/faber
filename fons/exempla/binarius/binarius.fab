@@ -242,20 +242,17 @@ incipit {
     scribe result
 
     # --------------------------------------------------------------------------
-    # Ternary: condition ? then : else  OR  condition sic then secus else
+    # Ternary: condition sic then secus else
     # --------------------------------------------------------------------------
-    # Both forms work. Latin form preferred when it improves readability.
+    # Latin form for ternary expressions.
 
     fixum age = 25
-    fixum symbolic = age >= 18 ? "adult" : "minor"
-    scribe symbolic
-
-    fixum latin = age >= 18 sic "adult" secus "minor"
-    scribe latin
+    fixum result = age >= 18 sic "adult" secus "minor"
+    scribe result
 
     # Nested ternary (right-associative)
     fixum score = 85
-    fixum grade = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : "F"
+    fixum grade = score >= 90 sic "A" secus score >= 80 sic "B" secus score >= 70 sic "C" secus "F"
     scribe grade
 
     # --------------------------------------------------------------------------

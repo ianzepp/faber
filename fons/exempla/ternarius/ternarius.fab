@@ -9,20 +9,12 @@
 incipit {
     fixum age = 25
 
-    # Symbolic ternary
-    fixum status = age >= 18 ? "adult" : "minor"
-    scribe status  # "adult"
-
     # Latin ternary
     fixum statusLatin = age >= 18 sic "adult" secus "minor"
     scribe statusLatin  # "adult"
 
-    # Nested ternary
-    fixum score = 85
-    fixum grade = score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : "F"
-    scribe grade  # "B"
-
     # Latin nested (reads more clearly)
+    fixum score = 85
     fixum gradeLatin =
         score >= 90 sic "A" secus
         score >= 80 sic "B" secus
@@ -30,12 +22,12 @@ incipit {
     scribe gradeLatin  # "B"
 
     # In expressions
-    fixum max = age > 30 ? age : 30
+    fixum max = age > 30 sic age secus 30
     scribe "Max:", max
 
     # With nullish values
-    fixum si textus maybe = nihil
-    fixum result = nonnihil maybe ? maybe : "default"
+    varia maybe = nihil qua si textus
+    fixum result = nonnihil maybe sic maybe secus "default"
     scribe result  # "default"
 
     # Prefer sic/secus for clarity
