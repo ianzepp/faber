@@ -32,10 +32,11 @@
 # Parse incipit (sync entry point) statement
 #
 # GRAMMAR:
-#   incipitStmt := 'incipit' (block | 'ergo' stmt)
+#   incipitStmt := 'incipit' ('argumenta' IDENT)? (block | 'ergo' stmt)
 #
 # Examples:
 #   incipit { scribe "Hello" }
+#   incipit argumenta args { ... }
 #   incipit ergo cura arena { ... }
 #   incipit ergo runMain()
 @ publica
@@ -46,6 +47,13 @@ functio parseIncipitSententia(in Resolvitor r) -> Sententia {
     # Consume 'incipit'
     p.expectaVerbum("incipit", ParserErrorCodice.ExpectaturIncipit)
 
+    # Check for argumenta binding
+    varia argumenta = nihil qua si textus
+    si p.congruetVerbum("argumenta") {
+        fixum argSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        argumenta = argSym.valor
+    }
+
     # Check for short form
     fixum ergo = parseErgoVelReddit(r)
     si nonnihil ergo {
@@ -53,7 +61,8 @@ functio parseIncipitSententia(in Resolvitor r) -> Sententia {
             locus: locus,
             corpus: nihil,
             ergo: ergo,
-            annotationes: nihil
+            annotationes: nihil,
+            argumenta: argumenta
         } qua Sententia
     }
 
@@ -64,17 +73,19 @@ functio parseIncipitSententia(in Resolvitor r) -> Sententia {
         locus: locus,
         corpus: corpus,
         ergo: nihil,
-        annotationes: nihil
+        annotationes: nihil,
+        argumenta: argumenta
     } qua Sententia
 }
 
 # Parse incipiet (async entry point) statement
 #
 # GRAMMAR:
-#   incipietStmt := 'incipiet' (block | 'ergo' stmt)
+#   incipietStmt := 'incipiet' ('argumenta' IDENT)? (block | 'ergo' stmt)
 #
 # Examples:
 #   incipiet { cede fetchData() }
+#   incipiet argumenta args { ... }
 #   incipiet ergo cura arena { cede fetch() }
 @ publica
 functio parseIncipietSententia(in Resolvitor r) -> Sententia {
@@ -84,6 +95,13 @@ functio parseIncipietSententia(in Resolvitor r) -> Sententia {
     # Consume 'incipiet'
     p.expectaVerbum("incipiet", ParserErrorCodice.ExpectaturIncipiet)
 
+    # Check for argumenta binding
+    varia argumenta = nihil qua si textus
+    si p.congruetVerbum("argumenta") {
+        fixum argSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        argumenta = argSym.valor
+    }
+
     # Check for short form
     fixum ergo = parseErgoVelReddit(r)
     si nonnihil ergo {
@@ -91,7 +109,8 @@ functio parseIncipietSententia(in Resolvitor r) -> Sententia {
             locus: locus,
             corpus: nihil,
             ergo: ergo,
-            annotationes: nihil
+            annotationes: nihil,
+            argumenta: argumenta
         } qua Sententia
     }
 
@@ -102,7 +121,8 @@ functio parseIncipietSententia(in Resolvitor r) -> Sententia {
         locus: locus,
         corpus: corpus,
         ergo: nihil,
-        annotationes: nihil
+        annotationes: nihil,
+        argumenta: argumenta
     } qua Sententia
 }
 

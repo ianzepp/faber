@@ -101,6 +101,7 @@ functio verbumFaberId(textus v) -> si VerbumId {
         casu "exitus" reddit VerbumId.Exitus
         casu "immutata" reddit VerbumId.Immutata
         casu "optiones" reddit VerbumId.Optiones
+        casu "argumenta" reddit VerbumId.Argumenta
         casu "publicus" reddit VerbumId.Publicus
         casu "privatus" reddit VerbumId.Privatus
         casu "generis" reddit VerbumId.Generis

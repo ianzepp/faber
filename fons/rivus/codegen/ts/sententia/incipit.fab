@@ -4,7 +4,9 @@
 #
 # TRANSFORMS:
 #   incipit { ... }  -> (unwrapped body statements)
+#   incipit argumenta args { ... } -> const args = process.argv.slice(2); (body statements)
 #   incipiet { ... } -> (async () => { ... })();
+#   incipiet argumenta args { ... } -> (async () => { const args = process.argv.slice(2); ... })();
 
 § ex "../../../ast/sententia" importa Sententia
 § ex "../nucleus" importa TsGenerator
@@ -12,26 +14,40 @@
 § ex "./index" importa genSententia
 
 @ publica
-functio genIncipit(in TsGenerator g, de ignotum corpus, de ignotum ergo) -> textus {
+functio genIncipit(in TsGenerator g, de ignotum corpus, de ignotum ergo, si de textus argNomen) -> textus {
+    varia result = ""
+
+    # Emit argumenta binding if present
+    si nonnihil argNomen {
+        result = scriptum("§const § = process.argv.slice(2);\n", g.ind(), argNomen)
+    }
+
     si nonnihil corpus {
-        varia result = genSententia(g, corpus qua Sententia)
+        result = scriptum("§§", result, genSententia(g, corpus qua Sententia))
         si nonnihil ergo {
             result = scriptum("§\n§", result, genSententia(g, ergo qua Sententia))
         }
         redde result
     }
     si nonnihil ergo {
-        redde genSententia(g, ergo qua Sententia)
+        redde scriptum("§§", result, genSententia(g, ergo qua Sententia))
     }
-    redde ""
+    redde result
 }
 
 @ publica
-functio genIncipiet(in TsGenerator g, de ignotum corpus, de ignotum ergo) -> textus {
+functio genIncipiet(in TsGenerator g, de ignotum corpus, de ignotum ergo, si de textus argNomen) -> textus {
     g.intraProfundum()
+
     varia body = ""
+
+    # Emit argumenta binding if present
+    si nonnihil argNomen {
+        body = scriptum("§const § = process.argv.slice(2);\n", g.ind(), argNomen)
+    }
+
     si nonnihil corpus {
-        body = genSententia(g, corpus qua Sententia)
+        body = scriptum("§§", body, genSententia(g, corpus qua Sententia))
     }
     g.exiProfundum()
 

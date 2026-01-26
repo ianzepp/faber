@@ -175,11 +175,11 @@ functio genSententiaContent(in TsGenerator g, de Sententia stmt) -> textus {
         }
 
         casu IncipitSententia ut s {
-            redde genIncipit(g, s.corpus, s.ergo)
+            redde genIncipit(g, s.corpus, s.ergo, s.argumenta)
         }
 
         casu IncipietSententia ut s {
-            redde genIncipiet(g, s.corpus, s.ergo)
+            redde genIncipiet(g, s.corpus, s.ergo, s.argumenta)
         }
 
         casu CuraSententia ut s {

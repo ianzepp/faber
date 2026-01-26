@@ -214,6 +214,7 @@ ordo VerbumId {
     Exitus         # exit code modifier for CLI functions
     Immutata
     Optiones       # CLI options bundle modifier
+    Argumenta      # CLI arguments binding for incipit/incipiet
     Publicus
     Privatus
     Generis
