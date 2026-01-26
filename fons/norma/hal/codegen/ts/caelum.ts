@@ -1,14 +1,16 @@
 /**
- * caelum.ts - Network Socket Implementation (TCP/UDP)
+ * caelum.ts - Network Socket Implementation (TCP)
  *
  * Native TypeScript implementation of the HAL network socket interface.
- * Uses Bun's native TCP APIs when available, falls back to Node's net module.
- * UDP uses Node's dgram module.
+ * Uses Node's net/tls modules.
+ *
+ * Verb conjugation:
+ *   - Imperative (ausculta, connecte, hauri, funde): sync (throws in JS runtime)
+ *   - Future (auscultabit, connectet, hauriet, fundet): async
  */
 
 import * as net from 'node:net';
 import * as tls from 'node:tls';
-import * as dgram from 'node:dgram';
 import * as fs from 'node:fs';
 
 // Strip IPv6-mapped IPv4 prefix (::ffff:) for consistency
@@ -17,6 +19,10 @@ function normalizeAddress(addr: string): string {
         return addr.slice(7);
     }
     return addr;
+}
+
+function syncNotSupported(): never {
+    throw new Error('Synchronous socket I/O is not supported in JavaScript runtime');
 }
 
 // =============================================================================
@@ -46,7 +52,13 @@ export class Auscultator {
         });
     }
 
-    async accipe(): Promise<Connexus> {
+    // Sync accept - not supported in JS
+    accipe(): Connexus {
+        return syncNotSupported();
+    }
+
+    // Async accept
+    async accipiet(): Promise<Connexus> {
         if (this.closed) {
             throw new Error('Listener is closed');
         }
@@ -64,7 +76,6 @@ export class Auscultator {
     claude(): void {
         this.closed = true;
         this.server.close();
-        // Reject any pending accipe calls
         this.pendingResolvers = [];
     }
 
@@ -98,7 +109,6 @@ export class Connexus {
 
         this.socket.on('close', () => {
             this.closed = true;
-            // Resolve pending reads with empty data
             for (const resolver of this.dataResolvers) {
                 resolver(new Uint8Array(0));
             }
@@ -110,7 +120,17 @@ export class Connexus {
         });
     }
 
-    async lege(): Promise<Uint8Array> {
+    // Sync draw bytes - not supported in JS
+    hauri(_n?: number): Uint8Array {
+        return syncNotSupported();
+    }
+
+    // Async draw bytes (up to n if provided, otherwise whatever is available)
+    async hauriet(n?: number): Promise<Uint8Array> {
+        if (n !== undefined) {
+            return this.haurietUsque(n);
+        }
+
         if (this.dataBuffer.length > 0) {
             const chunk = this.dataBuffer.shift()!;
             return new Uint8Array(chunk);
@@ -125,8 +145,8 @@ export class Connexus {
         });
     }
 
-    async legeUsque(n: number): Promise<Uint8Array> {
-        // Collect up to n bytes
+    // Internal: read up to n bytes
+    private async haurietUsque(n: number): Promise<Uint8Array> {
         const result: number[] = [];
 
         while (result.length < n) {
@@ -139,7 +159,6 @@ export class Connexus {
                     result.push(...chunk);
                 }
                 else {
-                    // Take partial chunk
                     result.push(...chunk.slice(0, needed));
                     this.dataBuffer[0] = chunk.slice(needed);
                 }
@@ -148,10 +167,9 @@ export class Connexus {
                 break;
             }
             else {
-                // Wait for more data
-                const data = await this.lege();
+                const data = await this.hauriet();
                 if (data.length === 0) {
-                    break; // Connection closed
+                    break;
                 }
                 this.dataBuffer.unshift(Buffer.from(data));
             }
@@ -160,7 +178,13 @@ export class Connexus {
         return new Uint8Array(result);
     }
 
-    async scribe(data: Uint8Array): Promise<void> {
+    // Sync pour bytes - not supported in JS
+    funde(_data: Uint8Array): void {
+        syncNotSupported();
+    }
+
+    // Async pour bytes
+    async fundet(data: Uint8Array): Promise<void> {
         return new Promise((resolve, reject) => {
             this.socket.write(Buffer.from(data), (err) => {
                 if (err) {
@@ -196,99 +220,6 @@ export class Connexus {
 }
 
 // =============================================================================
-// UDP DATAGRAM
-// =============================================================================
-
-export class DatumUdp {
-    private _data: Uint8Array;
-    private _hospes: string;
-    private _portus: number;
-
-    constructor(data: Uint8Array, hospes: string, portus: number) {
-        this._data = data;
-        this._hospes = hospes;
-        this._portus = portus;
-    }
-
-    data(): Uint8Array {
-        return this._data;
-    }
-
-    hospes(): string {
-        return this._hospes;
-    }
-
-    portus(): number {
-        return this._portus;
-    }
-}
-
-// =============================================================================
-// UDP SOCKET
-// =============================================================================
-
-export class SocketumUdp {
-    private socket: dgram.Socket;
-    private pendingMessages: DatumUdp[] = [];
-    private pendingResolvers: Array<(msg: DatumUdp) => void> = [];
-    private closed = false;
-    private localPort: number;
-
-    constructor(socket: dgram.Socket, port: number) {
-        this.socket = socket;
-        this.localPort = port;
-
-        this.socket.on('message', (msg: Buffer, rinfo: dgram.RemoteInfo) => {
-            const datum = new DatumUdp(new Uint8Array(msg), rinfo.address, rinfo.port);
-            const resolver = this.pendingResolvers.shift();
-            if (resolver) {
-                resolver(datum);
-            }
-            else {
-                this.pendingMessages.push(datum);
-            }
-        });
-    }
-
-    async recipe(): Promise<DatumUdp> {
-        if (this.closed) {
-            throw new Error('Socket is closed');
-        }
-
-        const pending = this.pendingMessages.shift();
-        if (pending) {
-            return pending;
-        }
-
-        return new Promise((resolve) => {
-            this.pendingResolvers.push(resolve);
-        });
-    }
-
-    async mitte(hospes: string, portus: number, data: Uint8Array): Promise<void> {
-        return new Promise((resolve, reject) => {
-            this.socket.send(Buffer.from(data), portus, hospes, (err) => {
-                if (err) {
-                    reject(err);
-                }
-                else {
-                    resolve();
-                }
-            });
-        });
-    }
-
-    claude(): void {
-        this.closed = true;
-        this.socket.close();
-    }
-
-    portus(): number {
-        return this.localPort;
-    }
-}
-
-// =============================================================================
 // MAIN MODULE EXPORT
 // =============================================================================
 
@@ -297,27 +228,28 @@ export const caelum = {
     // TCP SERVER
     // =========================================================================
 
-    async ausculta(portus: number): Promise<Auscultator> {
-        return new Promise((resolve, reject) => {
-            const server = net.createServer();
-
-            server.on('error', reject);
-
-            server.listen(portus, () => {
-                const addr = server.address() as net.AddressInfo;
-                resolve(new Auscultator(server, addr.port));
-            });
-        });
+    // Sync listen - not supported in JS
+    ausculta(_portus: number, _cert?: string, _key?: string): Auscultator {
+        return syncNotSupported();
     },
 
-    async auscultaTls(portus: number, certPath: string, keyPath: string): Promise<Auscultator> {
-        return new Promise((resolve, reject) => {
-            const options: tls.TlsOptions = {
-                cert: fs.readFileSync(certPath),
-                key: fs.readFileSync(keyPath),
-            };
+    // Async listen (TLS when cert/key provided)
+    async auscultabit(portus: number, cert?: string, key?: string): Promise<Auscultator> {
+        const useTls = cert !== undefined && key !== undefined;
 
-            const server = tls.createServer(options);
+        return new Promise((resolve, reject) => {
+            let server: net.Server;
+
+            if (useTls) {
+                const options: tls.TlsOptions = {
+                    cert: fs.readFileSync(cert),
+                    key: fs.readFileSync(key),
+                };
+                server = tls.createServer(options);
+            }
+            else {
+                server = net.createServer();
+            }
 
             server.on('error', reject);
 
@@ -332,56 +264,19 @@ export const caelum = {
     // TCP CLIENT
     // =========================================================================
 
-    async connecta(hospes: string, portus: number): Promise<Connexus> {
-        return new Promise((resolve, reject) => {
-            const socket = net.createConnection({ host: hospes, port: portus }, () => {
-                resolve(new Connexus(socket));
-            });
-
-            socket.on('error', reject);
-        });
+    // Sync connect - not supported in JS
+    connecte(_hospes: string, _portus: number, _tute?: boolean): Connexus {
+        return syncNotSupported();
     },
 
-    async connectaTls(hospes: string, portus: number): Promise<Connexus> {
+    // Async connect (TLS when tute=true)
+    async connectet(hospes: string, portus: number, tute: boolean = false): Promise<Connexus> {
         return new Promise((resolve, reject) => {
-            const socket = tls.connect({ host: hospes, port: portus }, () => {
-                resolve(new Connexus(socket));
-            });
+            const socket = tute
+                ? tls.connect({ host: hospes, port: portus }, () => resolve(new Connexus(socket)))
+                : net.createConnection({ host: hospes, port: portus }, () => resolve(new Connexus(socket)));
 
             socket.on('error', reject);
-        });
-    },
-
-    // =========================================================================
-    // UDP
-    // =========================================================================
-
-    async bindUdp(portus: number): Promise<SocketumUdp> {
-        return new Promise((resolve, reject) => {
-            const socket = dgram.createSocket('udp4');
-
-            socket.on('error', reject);
-
-            socket.bind(portus, () => {
-                const addr = socket.address();
-                resolve(new SocketumUdp(socket, addr.port));
-            });
-        });
-    },
-
-    async mitteUdp(hospes: string, portus: number, data: Uint8Array): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const socket = dgram.createSocket('udp4');
-
-            socket.send(Buffer.from(data), portus, hospes, (err) => {
-                socket.close();
-                if (err) {
-                    reject(err);
-                }
-                else {
-                    resolve();
-                }
-            });
         });
     },
 };

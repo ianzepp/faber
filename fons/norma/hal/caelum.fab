@@ -7,9 +7,12 @@
 # For HTTP, see http.fab.
 #
 # Design notes:
-#   - TCP: ausculta (listen), connecta (connect)
+#   - Verb conjugation encodes sync/async:
+#     - Imperative (-a, -e, -i): synchronous (blocking)
+#     - Future indicative (-et, -ebit): asynchronous
+#   - TLS enabled via optional cert/key params (listen) or tute flag (connect)
+#   - TCP: ausculta/auscultabit (listen), connecte/connectet (connect)
 #   - Sockets are bidirectional byte streams
-#   - All operations are async
 
 @ subsidia ts "codegen/ts/caelum.ts"
 pactum caelum {
@@ -17,51 +20,36 @@ pactum caelum {
     # TCP SERVER
     # =========================================================================
 
-    # Create TCP listener on port
-    @ futura
+    # Create TCP listener (TLS when cert/key provided)
     @ externa
-    functio ausculta(numerus portus) -> Auscultator
+    functio ausculta(numerus portus, si textus cert, si textus key) -> Auscultator
 
-    # Create TCP listener with TLS
     @ futura
     @ externa
-    functio auscultaTls(numerus portus, textus certPath, textus keyPath) -> Auscultator
+    functio auscultabit(numerus portus, si textus cert, si textus key) -> Auscultator
 
     # =========================================================================
     # TCP CLIENT
     # =========================================================================
 
-    # Connect to TCP server
+    # Connect to TCP server (TLS when tute=verum)
+    @ externa
+    functio connecte(textus hospes, numerus portus, si bivalens tute vel falsum) -> Connexus
+
     @ futura
     @ externa
-    functio connecta(textus hospes, numerus portus) -> Connexus
-
-    # Connect with TLS
-    @ futura
-    @ externa
-    functio connectaTls(textus hospes, numerus portus) -> Connexus
-
-    # =========================================================================
-    # UDP
-    # =========================================================================
-
-    # Create UDP socket bound to port
-    @ futura
-    @ externa
-    functio bindUdp(numerus portus) -> SocketumUdp
-
-    # Send UDP datagram (unconnected)
-    @ futura
-    @ externa
-    functio mitteUdp(textus hospes, numerus portus, octeti data) -> vacuum
+    functio connectet(textus hospes, numerus portus, si bivalens tute vel falsum) -> Connexus
 }
 
 # TCP Listener
 pactum Auscultator {
     # Accept next incoming connection
-    @ futura
     @ externa
     functio accipe() -> Connexus
+
+    @ futura
+    @ externa
+    functio accipiet() -> Connexus
 
     # Stop listening
     @ externa
@@ -72,22 +60,23 @@ pactum Auscultator {
     functio portus() -> numerus
 }
 
-# TCP Socket (connected)
+# TCP Socket (connected byte stream)
 pactum Connexus {
-    # Read bytes (blocks until data available)
-    @ futura
+    # Draw bytes (up to n if provided, otherwise whatever is available)
     @ externa
-    functio lege() -> octeti
+    functio hauri(si numerus n) -> octeti
 
-    # Read up to n bytes
     @ futura
     @ externa
-    functio legeUsque(numerus n) -> octeti
+    functio hauriet(si numerus n) -> octeti
 
-    # Write bytes
+    # Pour bytes
+    @ externa
+    functio funde(octeti data) -> vacuum
+
     @ futura
     @ externa
-    functio scribe(octeti data) -> vacuum
+    functio fundet(octeti data) -> vacuum
 
     # Close connection
     @ externa
@@ -110,35 +99,6 @@ pactum Connexus {
     functio portusLocalis() -> numerus
 }
 
-# UDP Socket
-pactum SocketumUdp {
-    # Receive datagram (returns data and sender info)
-    @ futura
-    @ externa
-    functio recipe() -> DatumUdp
-
-    # Send datagram to address
-    @ futura
-    @ externa
-    functio mitte(textus hospes, numerus portus, octeti data) -> vacuum
-
-    # Close socket
-    @ externa
-    functio claude() -> vacuum
-
-    # Local port
-    @ externa
-    functio portus() -> numerus
-}
-
-# UDP Datagram
-pactum DatumUdp {
-    @ externa
-    functio data() -> octeti
-
-    @ externa
-    functio hospes() -> textus
-
-    @ externa
-    functio portus() -> numerus
-}
+# TODO: UDP support deferred
+# pactum SocketumUdp { ... }
+# pactum DatumUdp { ... }
