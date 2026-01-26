@@ -27,50 +27,50 @@ describe('nuncius HAL', () => {
     });
 
     describe('message ports', () => {
-        test('portae creates a port pair', () => {
-            const pair = nuncius.portae();
+        test('aperi creates a port pair', () => {
+            const pair = nuncius.aperi();
             expect(pair).toBeInstanceOf(ParPortarum);
             expect(pair.a()).toBeInstanceOf(Porta);
             expect(pair.b()).toBeInstanceOf(Porta);
         });
 
         test('send on A, receive on B', async () => {
-            const pair = nuncius.portae();
+            const pair = nuncius.aperi();
             const portA = pair.a();
             const portB = pair.b();
 
             portA.mitte({ hello: 'world' });
-            const msg = await portB.recipe();
+            const msg = await portB.recipiet();
             expect(msg).toEqual({ hello: 'world' });
         });
 
         test('send on B, receive on A', async () => {
-            const pair = nuncius.portae();
+            const pair = nuncius.aperi();
             const portA = pair.a();
             const portB = pair.b();
 
             portB.mitte('test message');
-            const msg = await portA.recipe();
+            const msg = await portA.recipiet();
             expect(msg).toBe('test message');
         });
 
         test('bidirectional communication', async () => {
-            const pair = nuncius.portae();
+            const pair = nuncius.aperi();
             const portA = pair.a();
             const portB = pair.b();
 
             portA.mitte('from A');
             portB.mitte('from B');
 
-            const msgOnB = await portB.recipe();
-            const msgOnA = await portA.recipe();
+            const msgOnB = await portB.recipiet();
+            const msgOnA = await portA.recipiet();
 
             expect(msgOnB).toBe('from A');
             expect(msgOnA).toBe('from B');
         });
 
         test('multiple messages in sequence', async () => {
-            const pair = nuncius.portae();
+            const pair = nuncius.aperi();
             const portA = pair.a();
             const portB = pair.b();
 
@@ -78,19 +78,19 @@ describe('nuncius HAL', () => {
             portA.mitte(2);
             portA.mitte(3);
 
-            expect(await portB.recipe()).toBe(1);
-            expect(await portB.recipe()).toBe(2);
-            expect(await portB.recipe()).toBe(3);
+            expect(await portB.recipiet()).toBe(1);
+            expect(await portB.recipiet()).toBe(2);
+            expect(await portB.recipiet()).toBe(3);
         });
 
         test('paratum returns false when no messages', () => {
-            const pair = nuncius.portae();
+            const pair = nuncius.aperi();
             expect(pair.a().paratum()).toBe(false);
             expect(pair.b().paratum()).toBe(false);
         });
 
         test('paratum returns true when message available', async () => {
-            const pair = nuncius.portae();
+            const pair = nuncius.aperi();
             const portA = pair.a();
             const portB = pair.b();
 
@@ -103,7 +103,7 @@ describe('nuncius HAL', () => {
         });
 
         test('paratum becomes false after receiving', async () => {
-            const pair = nuncius.portae();
+            const pair = nuncius.aperi();
             const portA = pair.a();
             const portB = pair.b();
 
@@ -111,12 +111,12 @@ describe('nuncius HAL', () => {
             await new Promise(resolve => setTimeout(resolve, 10));
 
             expect(portB.paratum()).toBe(true);
-            await portB.recipe();
+            await portB.recipiet();
             expect(portB.paratum()).toBe(false);
         });
 
         test('claude closes the port', () => {
-            const pair = nuncius.portae();
+            const pair = nuncius.aperi();
             const portA = pair.a();
 
             portA.claude();
@@ -126,15 +126,15 @@ describe('nuncius HAL', () => {
     });
 
     describe('mutex', () => {
-        test('mutex creation works', () => {
+        test('restringe creates a mutex', () => {
             const mem = nuncius.alloca(16);
-            const mutex = nuncius.mutex(mem, 0);
+            const mutex = nuncius.restringe(mem, 0);
             expect(mutex).toBeInstanceOf(Mutex);
         });
 
         test('tempta acquires unlocked mutex', () => {
             const mem = nuncius.alloca(16);
-            const mutex = nuncius.mutex(mem, 0);
+            const mutex = nuncius.restringe(mem, 0);
 
             const acquired = mutex.tempta();
             expect(acquired).toBe(true);
@@ -142,7 +142,7 @@ describe('nuncius HAL', () => {
 
         test('tempta returns false when already locked', () => {
             const mem = nuncius.alloca(16);
-            const mutex = nuncius.mutex(mem, 0);
+            const mutex = nuncius.restringe(mem, 0);
 
             mutex.tempta(); // First lock succeeds
             const secondAttempt = mutex.tempta(); // Should fail
@@ -151,7 +151,7 @@ describe('nuncius HAL', () => {
 
         test('solve releases the lock', () => {
             const mem = nuncius.alloca(16);
-            const mutex = nuncius.mutex(mem, 0);
+            const mutex = nuncius.restringe(mem, 0);
 
             mutex.tempta();
             mutex.solve();
@@ -163,8 +163,8 @@ describe('nuncius HAL', () => {
 
         test('multiple mutexes at different offsets', () => {
             const mem = nuncius.alloca(32);
-            const mutex1 = nuncius.mutex(mem, 0);
-            const mutex2 = nuncius.mutex(mem, 4);
+            const mutex1 = nuncius.restringe(mem, 0);
+            const mutex2 = nuncius.restringe(mem, 4);
 
             expect(mutex1.tempta()).toBe(true);
             expect(mutex2.tempta()).toBe(true); // Different mutex, should succeed
@@ -175,74 +175,74 @@ describe('nuncius HAL', () => {
     });
 
     describe('semaphore', () => {
-        test('semaphorum creation with initial value', () => {
+        test('numera creates a semaphore with initial value', () => {
             const mem = nuncius.alloca(16);
-            const sem = nuncius.semaphorum(mem, 0, 5);
+            const sem = nuncius.numera(mem, 0, 5);
 
             expect(sem).toBeInstanceOf(Semaphorum);
-            expect(sem.valor()).toBe(5);
+            expect(sem.lege()).toBe(5);
         });
 
         test('signa increments value', () => {
             const mem = nuncius.alloca(16);
-            const sem = nuncius.semaphorum(mem, 0, 0);
+            const sem = nuncius.numera(mem, 0, 0);
 
-            expect(sem.valor()).toBe(0);
+            expect(sem.lege()).toBe(0);
             sem.signa();
-            expect(sem.valor()).toBe(1);
+            expect(sem.lege()).toBe(1);
             sem.signa();
-            expect(sem.valor()).toBe(2);
+            expect(sem.lege()).toBe(2);
         });
 
         test('tempta decrements when value > 0', () => {
             const mem = nuncius.alloca(16);
-            const sem = nuncius.semaphorum(mem, 0, 3);
+            const sem = nuncius.numera(mem, 0, 3);
 
             expect(sem.tempta()).toBe(true);
-            expect(sem.valor()).toBe(2);
+            expect(sem.lege()).toBe(2);
 
             expect(sem.tempta()).toBe(true);
-            expect(sem.valor()).toBe(1);
+            expect(sem.lege()).toBe(1);
         });
 
         test('tempta returns false when value is 0', () => {
             const mem = nuncius.alloca(16);
-            const sem = nuncius.semaphorum(mem, 0, 0);
+            const sem = nuncius.numera(mem, 0, 0);
 
             expect(sem.tempta()).toBe(false);
-            expect(sem.valor()).toBe(0);
+            expect(sem.lege()).toBe(0);
         });
 
         test('tempta returns false after decrementing to 0', () => {
             const mem = nuncius.alloca(16);
-            const sem = nuncius.semaphorum(mem, 0, 1);
+            const sem = nuncius.numera(mem, 0, 1);
 
             expect(sem.tempta()).toBe(true);
-            expect(sem.valor()).toBe(0);
+            expect(sem.lege()).toBe(0);
             expect(sem.tempta()).toBe(false);
         });
 
         test('signa then tempta works', () => {
             const mem = nuncius.alloca(16);
-            const sem = nuncius.semaphorum(mem, 0, 0);
+            const sem = nuncius.numera(mem, 0, 0);
 
             expect(sem.tempta()).toBe(false);
             sem.signa();
             expect(sem.tempta()).toBe(true);
-            expect(sem.valor()).toBe(0);
+            expect(sem.lege()).toBe(0);
         });
     });
 
     describe('condition variable', () => {
-        test('conditio creation works', () => {
+        test('vigila creates a condition variable', () => {
             const mem = nuncius.alloca(16);
-            const cond = nuncius.conditio(mem, 0);
+            const cond = nuncius.vigila(mem, 0);
             expect(cond).toBeInstanceOf(Conditio);
         });
 
         test('signa wakes waiters', () => {
             const mem = nuncius.alloca(16);
-            const cond = nuncius.conditio(mem, 0);
+            const cond = nuncius.vigila(mem, 0);
 
             // Just verify signa doesn't throw
             cond.signa();
@@ -250,7 +250,7 @@ describe('nuncius HAL', () => {
 
         test('diffunde wakes all waiters', () => {
             const mem = nuncius.alloca(16);
-            const cond = nuncius.conditio(mem, 0);
+            const cond = nuncius.vigila(mem, 0);
 
             // Just verify diffunde doesn't throw
             cond.diffunde();
@@ -259,8 +259,8 @@ describe('nuncius HAL', () => {
         test('exspectaUsque times out correctly', () => {
             const mem = nuncius.alloca(16);
             const mutexMem = nuncius.alloca(16);
-            const mutex = nuncius.mutex(mutexMem, 0);
-            const cond = nuncius.conditio(mem, 0);
+            const mutex = nuncius.restringe(mutexMem, 0);
+            const cond = nuncius.vigila(mem, 0);
 
             mutex.obstringe();
             const start = Date.now();
@@ -280,8 +280,8 @@ describe('nuncius HAL', () => {
             // between loading the wait value and actually waiting, we get immediate return
             const mem = nuncius.alloca(16);
             const mutexMem = nuncius.alloca(16);
-            const mutex = nuncius.mutex(mutexMem, 0);
-            const cond = nuncius.conditio(mem, 0);
+            const mutex = nuncius.restringe(mutexMem, 0);
+            const cond = nuncius.vigila(mem, 0);
 
             // Pre-signal to change the internal counter
             cond.signa();
@@ -307,24 +307,24 @@ describe('nuncius HAL', () => {
             const mem = nuncius.alloca(32);
 
             // Create two semaphores at different offsets
-            const sem1 = nuncius.semaphorum(mem, 0, 10);
-            const sem2 = nuncius.semaphorum(mem, 4, 20);
+            const sem1 = nuncius.numera(mem, 0, 10);
+            const sem2 = nuncius.numera(mem, 4, 20);
 
-            expect(sem1.valor()).toBe(10);
-            expect(sem2.valor()).toBe(20);
+            expect(sem1.lege()).toBe(10);
+            expect(sem2.lege()).toBe(20);
 
             sem1.signa();
             sem2.tempta();
 
-            expect(sem1.valor()).toBe(11);
-            expect(sem2.valor()).toBe(19);
+            expect(sem1.lege()).toBe(11);
+            expect(sem2.lege()).toBe(19);
         });
 
         test('mutex and semaphore in same memory', () => {
             const mem = nuncius.alloca(16);
 
-            const mutex = nuncius.mutex(mem, 0);
-            const sem = nuncius.semaphorum(mem, 4, 1);
+            const mutex = nuncius.restringe(mem, 0);
+            const sem = nuncius.numera(mem, 4, 1);
 
             expect(mutex.tempta()).toBe(true);
             expect(sem.tempta()).toBe(true);
@@ -333,7 +333,7 @@ describe('nuncius HAL', () => {
             sem.signa();
 
             expect(mutex.tempta()).toBe(true);
-            expect(sem.valor()).toBe(1);
+            expect(sem.lege()).toBe(1);
         });
     });
 });

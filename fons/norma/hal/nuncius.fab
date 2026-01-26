@@ -6,6 +6,9 @@
 # Maps to IPCDevice from monk-os-kernel.
 #
 # Design notes:
+#   - Verb conjugation encodes sync/async:
+#     - Imperative (-a, -e, -i): synchronous
+#     - Future indicative (-et, -ebit): asynchronous
 #   - Shared memory for fast data exchange
 #   - Mutex/semaphore/condvar for synchronization
 #   - Message ports for structured communication
@@ -23,26 +26,36 @@ pactum nuncius {
     # =========================================================================
     # MESSAGE PORTS
     # =========================================================================
+    # Verb: aperi from "aperire" (to open, uncover)
+    # Why: Opening a communication channel between endpoints.
 
-    # Create a connected message port pair
+    # Open a connected message port pair
     @ externa
-    functio portae() -> ParPortarum
+    functio aperi() -> ParPortarum
 
     # =========================================================================
     # SYNCHRONIZATION PRIMITIVES
     # =========================================================================
+    # Verb: restringe from "restringere" (to restrict, bind back)
+    # Why: A mutex restricts access to a resource.
+    #
+    # Verb: numera from "numerare" (to count, reckon)
+    # Why: A semaphore counts available permits.
+    #
+    # Verb: vigila from "vigilare" (to watch, keep watch)
+    # Why: Threads keep watch at a condition variable.
 
-    # Create mutex backed by shared memory
+    # Restrict access via mutex backed by shared memory
     @ externa
-    functio mutex(octeti memoria, numerus offset) -> Mutex
+    functio restringe(octeti memoria, numerus offset) -> Mutex
 
-    # Create semaphore backed by shared memory
+    # Count permits via semaphore backed by shared memory
     @ externa
-    functio semaphorum(octeti memoria, numerus offset, numerus valor) -> Semaphorum
+    functio numera(octeti memoria, numerus offset, numerus valor) -> Semaphorum
 
-    # Create condition variable backed by shared memory
+    # Keep watch via condition variable backed by shared memory
     @ externa
-    functio conditio(octeti memoria, numerus offset) -> Conditio
+    functio vigila(octeti memoria, numerus offset) -> Conditio
 }
 
 # Message port pair
@@ -60,10 +73,10 @@ pactum Porta {
     @ externa
     functio mitte(quidlibet nuntius) -> vacuum
 
-    # Receive message (blocks until available)
+    # Receive message (async, blocks until available)
     @ futura
     @ externa
-    functio recipe() -> quidlibet
+    functio recipiet() -> quidlibet
 
     # Check if message available
     @ externa
@@ -103,9 +116,9 @@ pactum Semaphorum {
     @ externa
     functio signa() -> vacuum
 
-    # Current value
+    # Read current value
     @ externa
-    functio valor() -> numerus
+    functio lege() -> numerus
 }
 
 # Condition variable

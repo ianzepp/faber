@@ -59,7 +59,7 @@ export class Porta {
         this.port.postMessage(nuntius);
     }
 
-    async recipe(): Promise<unknown> {
+    async recipiet(): Promise<unknown> {
         if (this.closed) {
             throw new Error('Port is closed');
         }
@@ -199,7 +199,7 @@ export class Semaphorum {
         Atomics.notify(this.view, this.index, 1);
     }
 
-    valor(): number {
+    lege(): number {
         return Atomics.load(this.view, this.index);
     }
 }
@@ -263,24 +263,28 @@ export const nuncius = {
     // =========================================================================
     // MESSAGE PORTS
     // =========================================================================
+    // Verb: aperi from "aperire" (to open, uncover)
 
-    portae(): ParPortarum {
+    aperi(): ParPortarum {
         return new ParPortarum();
     },
 
     // =========================================================================
     // SYNCHRONIZATION PRIMITIVES
     // =========================================================================
+    // Verb: restringe from "restringere" (to restrict, bind back)
+    // Verb: numera from "numerare" (to count, reckon)
+    // Verb: vigila from "vigilare" (to watch, keep watch)
 
-    mutex(memoria: Uint8Array, offset: number): Mutex {
+    restringe(memoria: Uint8Array, offset: number): Mutex {
         return new Mutex(memoria, offset);
     },
 
-    semaphorum(memoria: Uint8Array, offset: number, valor: number): Semaphorum {
+    numera(memoria: Uint8Array, offset: number, valor: number): Semaphorum {
         return new Semaphorum(memoria, offset, valor);
     },
 
-    conditio(memoria: Uint8Array, offset: number): Conditio {
+    vigila(memoria: Uint8Array, offset: number): Conditio {
         return new Conditio(memoria, offset);
     },
 };
