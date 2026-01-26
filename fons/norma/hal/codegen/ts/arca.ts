@@ -25,7 +25,7 @@ export class Connexio {
     // QUERIES
     // =========================================================================
 
-    async *quaere(sql: string, params: Params = []): AsyncGenerator<Row> {
+    async *quaerent(sql: string, params: Params = []): AsyncGenerator<Row> {
         this.assertOpen();
         const stmt = this.db.prepare(sql);
         const rows = stmt.all(...params) as Row[];
@@ -34,41 +34,31 @@ export class Connexio {
         }
     }
 
-    async quaereOmnes(sql: string, params: Params = []): Promise<Row[]> {
+    async quaeret(sql: string, params: Params = []): Promise<Row[]> {
         this.assertOpen();
         const stmt = this.db.prepare(sql);
         return stmt.all(...params) as Row[];
     }
 
-    async quaerePrimum(sql: string, params: Params = []): Promise<Row | null> {
+    async capiet(sql: string, params: Params = []): Promise<Row | null> {
         this.assertOpen();
         const stmt = this.db.prepare(sql);
         const row = stmt.get(...params) as Row | null;
         return row ?? null;
     }
 
-    async quaereValorem(sql: string, params: Params = []): Promise<unknown> {
-        this.assertOpen();
-        const row = await this.quaerePrimum(sql, params);
-        if (row === null) {
-            return null;
-        }
-        const values = Object.values(row);
-        return values.length > 0 ? values[0] : null;
-    }
-
     // =========================================================================
     // MUTATIONS
     // =========================================================================
 
-    async exsequi(sql: string, params: Params = []): Promise<number> {
+    async exsequetur(sql: string, params: Params = []): Promise<number> {
         this.assertOpen();
         const stmt = this.db.prepare(sql);
         const result = stmt.run(...params);
         return result.changes;
     }
 
-    async insere(sql: string, params: Params = []): Promise<number> {
+    async inseret(sql: string, params: Params = []): Promise<number> {
         this.assertOpen();
         const stmt = this.db.prepare(sql);
         const result = stmt.run(...params);
@@ -79,7 +69,7 @@ export class Connexio {
     // TRANSACTIONS
     // =========================================================================
 
-    async incipe(): Promise<Transactio> {
+    async incipiet(): Promise<Transactio> {
         this.assertOpen();
         this.db.run('BEGIN TRANSACTION');
         return new Transactio(this.db);
@@ -122,7 +112,7 @@ export class Transactio {
     // QUERIES
     // =========================================================================
 
-    async *quaere(sql: string, params: Params = []): AsyncGenerator<Row> {
+    async *quaerent(sql: string, params: Params = []): AsyncGenerator<Row> {
         this.assertActive();
         const stmt = this.db.prepare(sql);
         const rows = stmt.all(...params) as Row[];
@@ -131,7 +121,7 @@ export class Transactio {
         }
     }
 
-    async quaereOmnes(sql: string, params: Params = []): Promise<Row[]> {
+    async quaeret(sql: string, params: Params = []): Promise<Row[]> {
         this.assertActive();
         const stmt = this.db.prepare(sql);
         return stmt.all(...params) as Row[];
@@ -141,7 +131,7 @@ export class Transactio {
     // MUTATIONS
     // =========================================================================
 
-    async exsequi(sql: string, params: Params = []): Promise<number> {
+    async exsequetur(sql: string, params: Params = []): Promise<number> {
         this.assertActive();
         const stmt = this.db.prepare(sql);
         const result = stmt.run(...params);
@@ -152,13 +142,13 @@ export class Transactio {
     // TRANSACTION CONTROL
     // =========================================================================
 
-    async committe(): Promise<void> {
+    async committet(): Promise<void> {
         this.assertActive();
         this.db.run('COMMIT');
         this.finished = true;
     }
 
-    async reverte(): Promise<void> {
+    async revertet(): Promise<void> {
         this.assertActive();
         this.db.run('ROLLBACK');
         this.finished = true;
@@ -179,10 +169,11 @@ export const arca = {
     // CONNECTION
     // =========================================================================
 
-    async connecta(url: string): Promise<Connexio> {
+    async connectet(url: string): Promise<Connexio> {
         // Handle sqlite://:memory: specially since URL parser chokes on it
         if (url === 'sqlite://:memory:' || url === 'sqlite::memory:') {
-            return arca.memoria();
+            const db = new Database(':memory:');
+            return new Connexio(db);
         }
 
         // Extract protocol manually for URLs that may not parse
@@ -195,7 +186,8 @@ export const arca = {
         if (protocol === 'sqlite:') {
             // sqlite:///path/to/db
             const path = url.slice('sqlite://'.length);
-            return arca.sqlite(path);
+            const db = new Database(path);
+            return new Connexio(db);
         }
 
         if (protocol === 'postgres:' || protocol === 'postgresql:') {
@@ -207,15 +199,5 @@ export const arca = {
         }
 
         throw new Error(`Unknown database protocol: ${protocol}`);
-    },
-
-    async sqlite(path: string): Promise<Connexio> {
-        const db = new Database(path);
-        return new Connexio(db);
-    },
-
-    async memoria(): Promise<Connexio> {
-        const db = new Database(':memory:');
-        return new Connexio(db);
     },
 };

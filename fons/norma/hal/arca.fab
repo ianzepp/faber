@@ -3,12 +3,12 @@
 # Etymology: "arca" - chest, strongbox, treasury. Where data is stored.
 #
 # Part of the Hardware Abstraction Layer (HAL).
-# Maps to StorageEngine from monk-os-kernel (structured key-value with transactions).
 #
 # Design notes:
-#   - Connection via URL: postgres://, mysql://, sqlite:///path
-#   - Query returns cursor for streaming large result sets
-#   - Transactions via incipe/committe/reverte
+#   - Connection via URL: postgres://, mysql://, sqlite:///path, sqlite://:memory:
+#   - Verb conjugation encodes sync/async and cardinality:
+#     - Future singular (-et): async, returns one value
+#     - Future plural (-ent): async generator, yields multiple values
 #   - Parameterized queries prevent SQL injection
 
 @ subsidia ts "codegen/ts/arca.ts"
@@ -18,19 +18,10 @@ pactum arca {
     # =========================================================================
 
     # Connect to database (driver inferred from URL scheme)
+    # URLs: postgres://, mysql://, sqlite:///path, sqlite://:memory:
     @ futura
     @ externa
-    functio connecta(textus url) -> Connexio
-
-    # Connect to SQLite file (convenience)
-    @ futura
-    @ externa
-    functio sqlite(textus path) -> Connexio
-
-    # Connect to in-memory SQLite (for testing)
-    @ futura
-    @ externa
-    functio memoria() -> Connexio
+    functio connectet(textus url) -> Connexio
 }
 
 # Database connection
@@ -39,25 +30,21 @@ pactum Connexio {
     # QUERIES
     # =========================================================================
 
-    # Execute SELECT, return cursor over rows
+    # Stream rows as async generator
     @ futura
+    @ cursor
     @ externa
-    functio quaere(textus sql, lista<quidlibet> params) -> cursor<series>
+    functio quaerent(textus sql, lista<quidlibet> params) -> cursor<series>
 
-    # Execute SELECT, return all rows as list
+    # Return all rows as list
     @ futura
     @ externa
-    functio quaereOmnes(textus sql, lista<quidlibet> params) -> lista<series>
+    functio quaeret(textus sql, lista<quidlibet> params) -> lista<series>
 
-    # Execute SELECT, return first row or nihil
+    # Return first row or nihil
     @ futura
     @ externa
-    functio quaerePrimum(textus sql, lista<quidlibet> params) -> series?
-
-    # Execute SELECT, return single value from first row
-    @ futura
-    @ externa
-    functio quaereValorem(textus sql, lista<quidlibet> params) -> quidlibet
+    functio capiet(textus sql, lista<quidlibet> params) -> series?
 
     # =========================================================================
     # MUTATIONS
@@ -66,12 +53,12 @@ pactum Connexio {
     # Execute INSERT/UPDATE/DELETE, return affected row count
     @ futura
     @ externa
-    functio exsequi(textus sql, lista<quidlibet> params) -> numerus
+    functio exsequetur(textus sql, lista<quidlibet> params) -> numerus
 
     # Execute INSERT, return last inserted ID
     @ futura
     @ externa
-    functio insere(textus sql, lista<quidlibet> params) -> numerus
+    functio inseret(textus sql, lista<quidlibet> params) -> numerus
 
     # =========================================================================
     # TRANSACTIONS
@@ -80,7 +67,7 @@ pactum Connexio {
     # Begin transaction
     @ futura
     @ externa
-    functio incipe() -> Transactio
+    functio incipiet() -> Transactio
 
     # =========================================================================
     # LIFECYCLE
@@ -97,27 +84,29 @@ pactum Connexio {
 
 # Database transaction
 pactum Transactio {
-    # Query within transaction
+    # Stream rows as async generator
     @ futura
+    @ cursor
     @ externa
-    functio quaere(textus sql, lista<quidlibet> params) -> cursor<series>
+    functio quaerent(textus sql, lista<quidlibet> params) -> cursor<series>
 
+    # Return all rows as list
     @ futura
     @ externa
-    functio quaereOmnes(textus sql, lista<quidlibet> params) -> lista<series>
+    functio quaeret(textus sql, lista<quidlibet> params) -> lista<series>
 
-    # Execute within transaction
+    # Execute mutation within transaction
     @ futura
     @ externa
-    functio exsequi(textus sql, lista<quidlibet> params) -> numerus
+    functio exsequetur(textus sql, lista<quidlibet> params) -> numerus
 
     # Commit transaction
     @ futura
     @ externa
-    functio committe() -> vacuum
+    functio committet() -> vacuum
 
     # Rollback transaction
     @ futura
     @ externa
-    functio reverte() -> vacuum
+    functio revertet() -> vacuum
 }
