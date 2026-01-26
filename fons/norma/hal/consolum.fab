@@ -14,6 +14,7 @@
 #   - Use dic() for partial output without newline
 
 @ subsidia ts "../../norma-ts/hal/consolum.ts"
+@ subsidia rs "../../norma-rs/hal/consolum.rs"
 pactum consolum {
     # =========================================================================
     # STDIN - Bytes

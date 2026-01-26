@@ -10,6 +10,7 @@
 #   - All operations are synchronous (pure in-memory transforms)
 
 @ subsidia ts "../norma-ts/json.ts"
+@ subsidia rs "../norma-rs/json.rs"
 pactum json {
     # =========================================================================
     # SERIALIZATION

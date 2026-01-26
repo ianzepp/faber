@@ -11,6 +11,7 @@
 #   - All operations are synchronous (pure in-memory transforms)
 
 @ subsidia ts "../norma-ts/yaml.ts"
+@ subsidia rs "../norma-rs/yaml.rs"
 pactum yaml {
     # =========================================================================
     # SERIALIZATION

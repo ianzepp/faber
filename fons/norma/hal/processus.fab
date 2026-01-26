@@ -26,6 +26,7 @@ genus Subprocessus {
 }
 
 @ subsidia ts "../../norma-ts/hal/processus.ts"
+@ subsidia rs "../../norma-rs/hal/processus.rs"
 pactum processus {
     # =========================================================================
     # SPAWN - Attached
