@@ -216,21 +216,21 @@ pactum solum {
     functio exscribet(textus fons, textus destinatio) -> vacuum
 
     # =========================================================================
-    # FILE OPERATIONS - Move/Rename
+    # FILE OPERATIONS - Rename/Move
     # =========================================================================
-    # Verb: move/movet from "movere" (to move)
-    # Why: Direct Latin root of English "move". Handles both rename and move.
-    #      Same underlying operation in most filesystems.
+    # Verb: renomina/renominabit from "renominare" (to rename)
+    # Why: Connects to "nomen" terminology used throughout Faber.
+    #      Handles both rename and move (same underlying syscall).
     # Maps to: fs.renameSync(src, dest) / fs.rename(src, dest)
 
-    # Move or rename file (sync)
+    # Rename or move file (sync)
     @ externa
-    functio move(textus fons, textus destinatio) -> vacuum
+    functio renomina(textus fons, textus destinatio) -> vacuum
 
-    # Move or rename file (async)
+    # Rename or move file (async)
     @ futura
     @ externa
-    functio movet(textus fons, textus destinatio) -> vacuum
+    functio renominabit(textus fons, textus destinatio) -> vacuum
 
     # =========================================================================
     # FILE OPERATIONS - Touch

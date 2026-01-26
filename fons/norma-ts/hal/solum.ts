@@ -227,17 +227,17 @@ export const solum = {
     },
 
     // =========================================================================
-    // FILE OPERATIONS - Move/Rename
+    // FILE OPERATIONS - Rename/Move
     // =========================================================================
-    // Verb: move/movet from "movere" (to move)
+    // Verb: renomina/renominabit from "renominare" (to rename)
 
-    /** Move or rename file (sync) */
-    move(fons: string, destinatio: string): void {
+    /** Rename or move file (sync) */
+    renomina(fons: string, destinatio: string): void {
         fsSync.renameSync(fons, destinatio);
     },
 
-    /** Move or rename file (async) */
-    async movet(fons: string, destinatio: string): Promise<void> {
+    /** Rename or move file (async) */
+    async renominabit(fons: string, destinatio: string): Promise<void> {
         await fs.rename(fons, destinatio);
     },
 
