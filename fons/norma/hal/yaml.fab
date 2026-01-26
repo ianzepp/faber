@@ -10,7 +10,7 @@
 #   - necto/collige for multi-document: bind/gather multiple docs
 #   - All operations are synchronous (pure in-memory transforms)
 
-@ subsidia ts "codegen/ts/yaml.ts"
+@ subsidia ts "../../norma-ts/hal/yaml.ts"
 pactum yaml {
     # =========================================================================
     # SERIALIZATION

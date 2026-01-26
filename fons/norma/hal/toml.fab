@@ -10,7 +10,7 @@
 #   - TOML root must be a table (object), not array or primitive
 #   - All operations are synchronous (pure in-memory transforms)
 
-@ subsidia ts "codegen/ts/toml.ts"
+@ subsidia ts "../../norma-ts/hal/toml.ts"
 pactum toml {
     # =========================================================================
     # SERIALIZATION

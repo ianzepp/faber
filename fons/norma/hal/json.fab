@@ -9,7 +9,7 @@
 #   - solve (untangle) for parsing: solving/extracting data from text
 #   - All operations are synchronous (pure in-memory transforms)
 
-@ subsidia ts "codegen/ts/json.ts"
+@ subsidia ts "../../norma-ts/hal/json.ts"
 pactum json {
     # =========================================================================
     # SERIALIZATION

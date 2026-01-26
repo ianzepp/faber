@@ -25,7 +25,7 @@ genus Subprocessus {
     promissum<numerus> expiravit   # resolves to exit code when process ends
 }
 
-@ subsidia ts "codegen/ts/processus.ts"
+@ subsidia ts "../../norma-ts/hal/processus.ts"
 pactum processus {
     # =========================================================================
     # SPAWN - Attached

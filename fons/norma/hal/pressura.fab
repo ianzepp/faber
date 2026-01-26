@@ -12,7 +12,7 @@
 #   - Sync operations suitable for data <10MB
 #   - Streaming for large data
 
-@ subsidia ts "codegen/ts/pressura.ts"
+@ subsidia ts "../../norma-ts/hal/pressura.ts"
 pactum pressura {
     # =========================================================================
     # ONE-SHOT OPERATIONS

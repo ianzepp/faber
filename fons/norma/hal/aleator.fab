@@ -13,7 +13,7 @@
 #   - octetos/uuid use crypto.getRandomValues (secure)
 #   - semina seeds the RNG for reproducible tests
 
-@ subsidia ts "codegen/ts/aleator.ts"
+@ subsidia ts "../../norma-ts/hal/aleator.ts"
 pactum aleator {
     # =========================================================================
     # BASIC GENERATION

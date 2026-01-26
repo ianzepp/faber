@@ -13,7 +13,7 @@
 #   - Default output includes newline (common case)
 #   - Use dic() for partial output without newline
 
-@ subsidia ts "codegen/ts/consolum.ts"
+@ subsidia ts "../../norma-ts/hal/consolum.ts"
 pactum consolum {
     # =========================================================================
     # STDIN - Bytes

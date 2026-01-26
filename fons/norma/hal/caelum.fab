@@ -14,7 +14,7 @@
 #   - TCP: ausculta/auscultabit (listen), connecte/connectet (connect)
 #   - Sockets are bidirectional byte streams
 
-@ subsidia ts "codegen/ts/caelum.ts"
+@ subsidia ts "../../norma-ts/hal/caelum.ts"
 pactum caelum {
     # =========================================================================
     # TCP SERVER

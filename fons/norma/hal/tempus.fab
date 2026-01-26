@@ -14,7 +14,7 @@
 #   - dormiet: async sleep
 #   - destina/itera: scheduled callbacks
 
-@ subsidia ts "codegen/ts/tempus.ts"
+@ subsidia ts "../../norma-ts/hal/tempus.ts"
 pactum tempus {
     # =========================================================================
     # WALL CLOCK (can jump forward/backward)

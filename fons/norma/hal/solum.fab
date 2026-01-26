@@ -28,7 +28,7 @@ genus SolumStatus {
     bivalens estVinculum  # is symlink
 }
 
-@ subsidia ts "codegen/ts/solum.ts"
+@ subsidia ts "../../norma-ts/hal/solum.ts"
 pactum solum {
     # =========================================================================
     # READING - Text

@@ -13,7 +13,7 @@
 #   - Mutex/semaphore/condvar for synchronization
 #   - Message ports for structured communication
 
-@ subsidia ts "codegen/ts/nuncius.ts"
+@ subsidia ts "../../norma-ts/hal/nuncius.ts"
 pactum nuncius {
     # =========================================================================
     # SHARED MEMORY

@@ -11,7 +11,7 @@
 #   - Server: exspectabit starts server, handler receives Rogatio, returns Replicatio
 #   - Response builders: replica (full), scribe (text), funde (bytes), json (JSON)
 
-@ subsidia ts "codegen/ts/http.ts"
+@ subsidia ts "../../norma-ts/hal/http.ts"
 pactum http {
     # =========================================================================
     # HTTP CLIENT - Simple Methods
