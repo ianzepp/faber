@@ -12,6 +12,7 @@
 #   - Parameterized queries prevent SQL injection
 
 @ subsidia ts "../../norma-ts/hal/arca.ts"
+@ subsidia rs "../../norma-rs/hal/arca.rs"
 pactum arca {
     # =========================================================================
     # CONNECTION
