@@ -3,62 +3,145 @@
 # Etymology: "consolum" from "con-" (together) + "solum" (base/ground)
 #            The foundation for all I/O interaction.
 #
-# Part of the Hardware Abstraction Layer (HAL). All console I/O
-# should go through this interface, enabling:
-#   - Consistent API across targets
-#   - Testability via mock implementations
-#   - Clean separation from platform-specific code
+# Part of the Hardware Abstraction Layer (HAL).
 #
-# Verbs used (to avoid keyword collision with lege/scribe):
-#   hauri  - to draw out, drain (for reading stdin)
-#   funde  - to pour (for writing stdout)
-#   error  - stderr output (not a keyword)
+# Design principles:
+#   - Verb conjugation encodes sync/async:
+#     - Imperative (-a, -e, -i): synchronous
+#     - Future indicative (-et, -ebit): asynchronous
+#   - Aligns with language keywords: scribe (info), mone (warn), vide (debug)
+#   - Default output includes newline (common case)
+#   - Use dic() for partial output without newline
 
 @ subsidia ts "codegen/ts/consolum.ts"
 pactum consolum {
     # =========================================================================
-    # STDIN
+    # STDIN - Bytes
     # =========================================================================
+    # Verb: hauri/hauriet from "haurire" (to draw up, draw out)
+    # Why: Drawing bytes from stdin like drawing water from a well.
+    # Maps to: fs.readSync(0, buffer) / async stdin read
 
+    # Draw bytes from stdin (sync)
     @ externa
-    functio hauriOctetos(numerus magnitudo) -> octeti
+    functio hauri(numerus magnitudo) -> octeti
 
+    # Draw bytes from stdin (async)
+    @ futura
     @ externa
-    functio hauriLineam() -> textus
-
-    # =========================================================================
-    # STDOUT
-    # =========================================================================
-
-    @ externa
-    functio fundeOctetos(octeti data) -> vacuum
-
-    @ externa
-    functio fundeTextum(textus msg) -> vacuum
-
-    @ externa
-    functio fundeLineam(textus msg) -> vacuum
+    functio hauriet(numerus magnitudo) -> octeti
 
     # =========================================================================
-    # STDERR
+    # STDIN - Text
     # =========================================================================
+    # Verb: lege/leget from "legere" (to read, gather)
+    # Why: Reading a line of text input from the user.
+    # Maps to: readline or character-by-character until newline
 
+    # Read line from stdin (sync, blocks until newline)
     @ externa
-    functio errorOctetos(octeti data) -> vacuum
+    functio lege() -> textus
 
+    # Read line from stdin (async)
+    @ futura
     @ externa
-    functio errorTextum(textus msg) -> vacuum
-
-    @ externa
-    functio errorLineam(textus msg) -> vacuum
+    functio leget() -> textus
 
     # =========================================================================
-    # TTY
+    # STDOUT - Bytes
     # =========================================================================
+    # Verb: funde/fundet from "fundere" (to pour, pour out)
+    # Why: Pouring raw bytes to stdout.
+    # Maps to: fs.writeSync(1, data) / process.stdout.write
 
+    # Pour bytes to stdout (sync)
+    @ externa
+    functio funde(octeti data) -> vacuum
+
+    # Pour bytes to stdout (async)
+    @ futura
+    @ externa
+    functio fundet(octeti data) -> vacuum
+
+    # =========================================================================
+    # STDOUT - Text with Newline
+    # =========================================================================
+    # Verb: scribe/scribet from "scribere" (to write)
+    # Why: Aligns with language keyword "scribe". Writes complete line.
+    #      Default behavior includes newline (most common use case).
+    # Maps to: console.log / process.stdout.write + "\n"
+
+    # Write line to stdout with newline (sync)
+    @ externa
+    functio scribe(textus msg) -> vacuum
+
+    # Write line to stdout with newline (async)
+    @ futura
+    @ externa
+    functio scribet(textus msg) -> vacuum
+
+    # =========================================================================
+    # STDOUT - Text without Newline
+    # =========================================================================
+    # Verb: dic/dicet from "dicere" (to say, speak)
+    # Why: "Saying" partial output - progress dots, inline updates.
+    #      No newline - for building up output incrementally.
+    # Maps to: process.stdout.write (no newline)
+
+    # Say text to stdout without newline (sync)
+    @ externa
+    functio dic(textus msg) -> vacuum
+
+    # Say text to stdout without newline (async)
+    @ futura
+    @ externa
+    functio dicet(textus msg) -> vacuum
+
+    # =========================================================================
+    # STDERR - Warning/Error Output
+    # =========================================================================
+    # Verb: mone/monet from "monere" (to warn, admonish)
+    # Why: Aligns with language keyword "mone". Warnings go to stderr.
+    #      Includes newline (errors are typically complete messages).
+    # Maps to: console.warn / process.stderr.write + "\n"
+
+    # Warn line to stderr with newline (sync)
+    @ externa
+    functio mone(textus msg) -> vacuum
+
+    # Warn line to stderr with newline (async)
+    @ futura
+    @ externa
+    functio monet(textus msg) -> vacuum
+
+    # =========================================================================
+    # DEBUG Output
+    # =========================================================================
+    # Verb: vide/videbit from "videre" (to see, observe)
+    # Why: Aligns with language keyword "vide". Debug/inspection output.
+    #      Includes newline. May be filtered by log level in production.
+    # Maps to: console.debug / conditional stderr write
+
+    # Debug line with newline (sync)
+    @ externa
+    functio vide(textus msg) -> vacuum
+
+    # Debug line with newline (async)
+    @ futura
+    @ externa
+    functio videbit(textus msg) -> vacuum
+
+    # =========================================================================
+    # TTY Detection
+    # =========================================================================
+    # Predicates for terminal detection. Sync only.
+    # Maps to: tty.isatty(fd)
+
+    # Is stdin connected to a terminal?
     @ externa
     functio estTerminale() -> bivalens
 
+    # Is stdout connected to a terminal?
     @ externa
     functio estTerminaleOutput() -> bivalens
 }

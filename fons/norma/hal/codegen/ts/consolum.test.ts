@@ -1,10 +1,14 @@
-import { test, expect, describe, mock, spyOn, beforeEach, afterEach } from 'bun:test';
+import { test, expect, describe, spyOn, beforeEach, afterEach } from 'bun:test';
 import { consolum } from './consolum';
 import * as fs from 'node:fs';
 import * as tty from 'node:tty';
 
 describe('consolum HAL', () => {
-    describe('stdout functions', () => {
+    // =========================================================================
+    // STDOUT - Bytes (funde/fundet)
+    // =========================================================================
+
+    describe('funde/fundet (stdout bytes)', () => {
         let writeSyncSpy: ReturnType<typeof spyOn>;
 
         beforeEach(() => {
@@ -15,24 +19,24 @@ describe('consolum HAL', () => {
             writeSyncSpy.mockRestore();
         });
 
-        test('fundeTextum writes to stdout (fd 1)', () => {
-            consolum.fundeTextum('hello');
-            expect(writeSyncSpy).toHaveBeenCalledWith(1, 'hello');
-        });
-
-        test('fundeLineam writes text with newline to stdout', () => {
-            consolum.fundeLineam('hello');
-            expect(writeSyncSpy).toHaveBeenCalledWith(1, 'hello\n');
-        });
-
-        test('fundeOctetos writes bytes to stdout', () => {
+        test('funde writes bytes to stdout (fd 1)', () => {
             const data = new Uint8Array([72, 105]);
-            consolum.fundeOctetos(data);
+            consolum.funde(data);
+            expect(writeSyncSpy).toHaveBeenCalledWith(1, data);
+        });
+
+        test('fundet writes bytes to stdout (async)', async () => {
+            const data = new Uint8Array([72, 105]);
+            await consolum.fundet(data);
             expect(writeSyncSpy).toHaveBeenCalledWith(1, data);
         });
     });
 
-    describe('stderr functions', () => {
+    // =========================================================================
+    // STDOUT - Text with Newline (scribe/scribet)
+    // =========================================================================
+
+    describe('scribe/scribet (stdout line)', () => {
         let writeSyncSpy: ReturnType<typeof spyOn>;
 
         beforeEach(() => {
@@ -43,22 +47,148 @@ describe('consolum HAL', () => {
             writeSyncSpy.mockRestore();
         });
 
-        test('errorTextum writes to stderr (fd 2)', () => {
-            consolum.errorTextum('error!');
-            expect(writeSyncSpy).toHaveBeenCalledWith(2, 'error!');
+        test('scribe writes text with newline to stdout', () => {
+            consolum.scribe('hello');
+            expect(writeSyncSpy).toHaveBeenCalledWith(1, 'hello\n');
         });
 
-        test('errorLineam writes text with newline to stderr', () => {
-            consolum.errorLineam('error!');
-            expect(writeSyncSpy).toHaveBeenCalledWith(2, 'error!\n');
-        });
-
-        test('errorOctetos writes bytes to stderr', () => {
-            const data = new Uint8Array([69, 114, 114]);
-            consolum.errorOctetos(data);
-            expect(writeSyncSpy).toHaveBeenCalledWith(2, data);
+        test('scribet writes text with newline to stdout (async)', async () => {
+            await consolum.scribet('hello');
+            expect(writeSyncSpy).toHaveBeenCalledWith(1, 'hello\n');
         });
     });
+
+    // =========================================================================
+    // STDOUT - Text without Newline (dic/dicet)
+    // =========================================================================
+
+    describe('dic/dicet (stdout partial)', () => {
+        let writeSyncSpy: ReturnType<typeof spyOn>;
+
+        beforeEach(() => {
+            writeSyncSpy = spyOn(fs, 'writeSync').mockImplementation(() => 0);
+        });
+
+        afterEach(() => {
+            writeSyncSpy.mockRestore();
+        });
+
+        test('dic writes text without newline to stdout', () => {
+            consolum.dic('.');
+            expect(writeSyncSpy).toHaveBeenCalledWith(1, '.');
+        });
+
+        test('dicet writes text without newline to stdout (async)', async () => {
+            await consolum.dicet('.');
+            expect(writeSyncSpy).toHaveBeenCalledWith(1, '.');
+        });
+    });
+
+    // =========================================================================
+    // STDERR - Warning (mone/monet)
+    // =========================================================================
+
+    describe('mone/monet (stderr warning)', () => {
+        let writeSyncSpy: ReturnType<typeof spyOn>;
+
+        beforeEach(() => {
+            writeSyncSpy = spyOn(fs, 'writeSync').mockImplementation(() => 0);
+        });
+
+        afterEach(() => {
+            writeSyncSpy.mockRestore();
+        });
+
+        test('mone writes text with newline to stderr (fd 2)', () => {
+            consolum.mone('warning!');
+            expect(writeSyncSpy).toHaveBeenCalledWith(2, 'warning!\n');
+        });
+
+        test('monet writes text with newline to stderr (async)', async () => {
+            await consolum.monet('warning!');
+            expect(writeSyncSpy).toHaveBeenCalledWith(2, 'warning!\n');
+        });
+    });
+
+    // =========================================================================
+    // DEBUG (vide/videbit)
+    // =========================================================================
+
+    describe('vide/videbit (debug output)', () => {
+        let writeSyncSpy: ReturnType<typeof spyOn>;
+
+        beforeEach(() => {
+            writeSyncSpy = spyOn(fs, 'writeSync').mockImplementation(() => 0);
+        });
+
+        afterEach(() => {
+            writeSyncSpy.mockRestore();
+        });
+
+        test('vide writes debug text with newline to stderr', () => {
+            consolum.vide('debug info');
+            expect(writeSyncSpy).toHaveBeenCalledWith(2, 'debug info\n');
+        });
+
+        test('videbit writes debug text with newline to stderr (async)', async () => {
+            await consolum.videbit('debug info');
+            expect(writeSyncSpy).toHaveBeenCalledWith(2, 'debug info\n');
+        });
+    });
+
+    // =========================================================================
+    // STDIN - Bytes (hauri/hauriet)
+    // =========================================================================
+
+    describe('hauri/hauriet (stdin bytes)', () => {
+        test('hauri returns Uint8Array', () => {
+            const readSyncSpy = spyOn(fs, 'readSync').mockReturnValue(0);
+
+            const result = consolum.hauri(10);
+            expect(result).toBeInstanceOf(Uint8Array);
+            expect(result.length).toBe(0); // EOF returns empty
+
+            readSyncSpy.mockRestore();
+        });
+
+        test('hauriet returns Uint8Array (async)', async () => {
+            const readSyncSpy = spyOn(fs, 'readSync').mockReturnValue(0);
+
+            const result = await consolum.hauriet(10);
+            expect(result).toBeInstanceOf(Uint8Array);
+            expect(result.length).toBe(0);
+
+            readSyncSpy.mockRestore();
+        });
+    });
+
+    // =========================================================================
+    // STDIN - Text (lege/leget)
+    // =========================================================================
+
+    describe('lege/leget (stdin line)', () => {
+        test('lege returns string', () => {
+            const readSyncSpy = spyOn(fs, 'readSync').mockReturnValue(0);
+
+            const result = consolum.lege();
+            expect(typeof result).toBe('string');
+
+            readSyncSpy.mockRestore();
+        });
+
+        test('leget returns string (async)', async () => {
+            const readSyncSpy = spyOn(fs, 'readSync').mockReturnValue(0);
+
+            const result = await consolum.leget();
+            expect(typeof result).toBe('string');
+
+            readSyncSpy.mockRestore();
+        });
+    });
+
+    // =========================================================================
+    // TTY Detection
+    // =========================================================================
 
     describe('TTY detection', () => {
         test('estTerminale returns a boolean', () => {
@@ -71,7 +201,6 @@ describe('consolum HAL', () => {
             expect(typeof result).toBe('boolean');
         });
 
-        // In a test environment, stdin/stdout are typically not TTYs
         test('estTerminale checks stdin (fd 0)', () => {
             const isattySpy = spyOn(tty, 'isatty');
 
@@ -94,32 +223,6 @@ describe('consolum HAL', () => {
             expect(consolum.estTerminaleOutput()).toBe(false);
 
             isattySpy.mockRestore();
-        });
-    });
-
-    // Note: stdin tests (hauriOctetos, hauriLineam) are difficult to test
-    // without complex mocking of readSync and piping. In practice, these
-    // functions would be tested via integration tests or manual verification.
-    describe('stdin functions', () => {
-        test('hauriOctetos returns Uint8Array', () => {
-            // Mock readSync to return 0 bytes (EOF)
-            const readSyncSpy = spyOn(fs, 'readSync').mockReturnValue(0);
-
-            const result = consolum.hauriOctetos(10);
-            expect(result).toBeInstanceOf(Uint8Array);
-            expect(result.length).toBe(0); // EOF returns empty
-
-            readSyncSpy.mockRestore();
-        });
-
-        test('hauriLineam returns string', () => {
-            // Mock readSync to simulate EOF immediately
-            const readSyncSpy = spyOn(fs, 'readSync').mockReturnValue(0);
-
-            const result = consolum.hauriLineam();
-            expect(typeof result).toBe('string');
-
-            readSyncSpy.mockRestore();
         });
     });
 });
