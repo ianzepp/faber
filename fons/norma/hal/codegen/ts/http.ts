@@ -11,10 +11,10 @@
 
 export class Replicatio {
     private _status: number;
-    private _body: string;
+    private _body: string | Uint8Array;
     private _headers: Record<string, string>;
 
-    constructor(status: number, headers: Record<string, string>, body: string) {
+    constructor(status: number, headers: Record<string, string>, body: string | Uint8Array) {
         this._status = status;
         this._headers = headers;
         this._body = body;
@@ -25,11 +25,21 @@ export class Replicatio {
     }
 
     corpus(): string {
-        return this._body;
+        if (typeof this._body === 'string') {
+            return this._body;
+        }
+        return new TextDecoder().decode(this._body);
+    }
+
+    corpusOcteti(): Uint8Array {
+        if (this._body instanceof Uint8Array) {
+            return this._body;
+        }
+        return new TextEncoder().encode(this._body);
     }
 
     corpusJson(): unknown {
-        return JSON.parse(this._body);
+        return JSON.parse(this.corpus());
     }
 
     capita(): Record<string, string> {
@@ -163,12 +173,12 @@ export const http = {
     // HTTP CLIENT - Simple Methods
     // =========================================================================
 
-    async pete(url: string): Promise<Replicatio> {
+    async petet(url: string): Promise<Replicatio> {
         const response = await fetch(url, { method: 'GET' });
         return responseFromFetch(response);
     },
 
-    async mitte(url: string, corpus: string): Promise<Replicatio> {
+    async mittet(url: string, corpus: string): Promise<Replicatio> {
         const response = await fetch(url, {
             method: 'POST',
             body: corpus,
@@ -176,7 +186,7 @@ export const http = {
         return responseFromFetch(response);
     },
 
-    async pone(url: string, corpus: string): Promise<Replicatio> {
+    async ponet(url: string, corpus: string): Promise<Replicatio> {
         const response = await fetch(url, {
             method: 'PUT',
             body: corpus,
@@ -184,12 +194,12 @@ export const http = {
         return responseFromFetch(response);
     },
 
-    async dele(url: string): Promise<Replicatio> {
+    async delet(url: string): Promise<Replicatio> {
         const response = await fetch(url, { method: 'DELETE' });
         return responseFromFetch(response);
     },
 
-    async muta(url: string, corpus: string): Promise<Replicatio> {
+    async mutabit(url: string, corpus: string): Promise<Replicatio> {
         const response = await fetch(url, {
             method: 'PATCH',
             body: corpus,
@@ -201,7 +211,7 @@ export const http = {
     // HTTP CLIENT - Advanced
     // =========================================================================
 
-    async roga(
+    async rogabit(
         modus: string,
         url: string,
         capita: Record<string, string>,
@@ -219,7 +229,7 @@ export const http = {
     // HTTP SERVER
     // =========================================================================
 
-    async exspecta(portus: number, handler: Handler): Promise<Servitor> {
+    async exspectabit(portus: number, handler: Handler): Promise<Servitor> {
         const server = Bun.serve({
             port: portus,
             async fetch(request: Request): Promise<Response> {
@@ -235,11 +245,19 @@ export const http = {
     // RESPONSE BUILDERS
     // =========================================================================
 
-    replicatio(status: number, capita: Record<string, string>, corpus: string): Replicatio {
+    replica(status: number, capita: Record<string, string>, corpus: string): Replicatio {
         return new Replicatio(status, capita, corpus);
     },
 
-    replicatioJson(status: number, data: unknown): Replicatio {
+    scribe(status: number, corpus: string): Replicatio {
+        return new Replicatio(status, { 'Content-Type': 'text/plain' }, corpus);
+    },
+
+    funde(status: number, data: Uint8Array): Replicatio {
+        return new Replicatio(status, { 'Content-Type': 'application/octet-stream' }, data);
+    },
+
+    json(status: number, data: unknown): Replicatio {
         return new Replicatio(
             status,
             { 'Content-Type': 'application/json' },
@@ -247,7 +265,7 @@ export const http = {
         );
     },
 
-    redirectio(url: string): Replicatio {
-        return new Replicatio(302, { Location: url }, '');
+    redirige(url: string): Replicatio {
+        return new Replicatio(302, { 'Location': url }, '');
     },
 };

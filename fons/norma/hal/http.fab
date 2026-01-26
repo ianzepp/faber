@@ -4,9 +4,12 @@
 # For raw TCP/UDP sockets, see caelum.fab.
 #
 # Design notes:
-#   - Client: pete (GET), mitte (POST), pone (PUT), dele (DELETE), muta (PATCH)
-#   - Server: exspecta starts server, handler receives Rogatio, returns Replicatio
-#   - All client methods are async
+#   - Verb conjugation encodes sync/async:
+#     - Future (-et, -abit): async operations
+#     - Imperative: sync operations
+#   - Client: petet (GET), mittet (POST), ponet (PUT), delet (DELETE), mutabit (PATCH)
+#   - Server: exspectabit starts server, handler receives Rogatio, returns Replicatio
+#   - Response builders: replica (full), scribe (text), funde (bytes), json (JSON)
 
 @ subsidia ts "codegen/ts/http.ts"
 pactum http {
@@ -17,27 +20,27 @@ pactum http {
     # GET request
     @ futura
     @ externa
-    functio pete(textus url) -> Replicatio
+    functio petet(textus url) -> Replicatio
 
     # POST request with body
     @ futura
     @ externa
-    functio mitte(textus url, textus corpus) -> Replicatio
+    functio mittet(textus url, textus corpus) -> Replicatio
 
     # PUT request with body
     @ futura
     @ externa
-    functio pone(textus url, textus corpus) -> Replicatio
+    functio ponet(textus url, textus corpus) -> Replicatio
 
     # DELETE request
     @ futura
     @ externa
-    functio dele(textus url) -> Replicatio
+    functio delet(textus url) -> Replicatio
 
     # PATCH request with body
     @ futura
     @ externa
-    functio muta(textus url, textus corpus) -> Replicatio
+    functio mutabit(textus url, textus corpus) -> Replicatio
 
     # =========================================================================
     # HTTP CLIENT - Advanced
@@ -46,7 +49,7 @@ pactum http {
     # Generic request with full control
     @ futura
     @ externa
-    functio roga(textus modus, textus url, tabula<textus, textus> capita, textus corpus) -> Replicatio
+    functio rogabit(textus modus, textus url, tabula<textus, textus> capita, textus corpus) -> Replicatio
 
     # =========================================================================
     # HTTP SERVER
@@ -55,23 +58,31 @@ pactum http {
     # Start server on port with handler
     @ futura
     @ externa
-    functio exspecta(numerus portus, (Rogatio) -> Replicatio handler) -> Servitor
+    functio exspectabit(numerus portus, (Rogatio) -> Replicatio handler) -> Servitor
 
     # =========================================================================
     # RESPONSE BUILDERS (for server handlers)
     # =========================================================================
 
-    # Create response with status, headers, body
+    # Full control: explicit status, headers, body
     @ externa
-    functio replicatio(numerus status, tabula<textus, textus> capita, textus corpus) -> Replicatio
+    functio replica(numerus status, tabula<textus, textus> capita, textus corpus) -> Replicatio
 
-    # Create JSON response (sets Content-Type)
+    # Text response (Content-Type: text/plain)
     @ externa
-    functio replicatioJson(numerus status, quidlibet data) -> Replicatio
+    functio scribe(numerus status, textus corpus) -> Replicatio
 
-    # Create redirect response
+    # Binary response (Content-Type: application/octet-stream)
     @ externa
-    functio redirectio(textus url) -> Replicatio
+    functio funde(numerus status, octeti data) -> Replicatio
+
+    # JSON response (Content-Type: application/json, auto-serializes)
+    @ externa
+    functio json(numerus status, quidlibet data) -> Replicatio
+
+    # Redirect response (302 + Location header)
+    @ externa
+    functio redirige(textus url) -> Replicatio
 }
 
 # HTTP Response
@@ -81,6 +92,9 @@ pactum Replicatio {
 
     @ externa
     functio corpus() -> textus
+
+    @ externa
+    functio corpusOcteti() -> octeti
 
     @ externa
     functio corpusJson() -> quidlibet

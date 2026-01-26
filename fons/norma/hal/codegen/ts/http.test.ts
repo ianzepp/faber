@@ -15,7 +15,7 @@ describe('http HAL', () => {
     } | null = null;
 
     beforeAll(async () => {
-        server = await http.exspecta(0, (rogatio: Rogatio) => {
+        server = await http.exspectabit(0, (rogatio: Rogatio) => {
             // Store request info for test verification
             lastRequest = {
                 method: rogatio.modus(),
@@ -32,22 +32,22 @@ describe('http HAL', () => {
             const path = rogatio.via();
 
             if (path === '/echo') {
-                return http.replicatioJson(200, {
+                return http.json(200, {
                     method: rogatio.modus(),
                     body: rogatio.corpus(),
                 });
             }
 
             if (path === '/json') {
-                return http.replicatioJson(200, { message: 'hello', count: 42 });
+                return http.json(200, { message: 'hello', count: 42 });
             }
 
             if (path === '/text') {
-                return http.replicatio(200, { 'Content-Type': 'text/plain' }, 'Hello, World!');
+                return http.scribe(200, 'Hello, World!');
             }
 
             if (path === '/headers') {
-                return http.replicatio(
+                return http.replica(
                     200,
                     {
                         'X-Custom-Header': 'custom-value',
@@ -58,22 +58,22 @@ describe('http HAL', () => {
             }
 
             if (path === '/status/201') {
-                return http.replicatio(201, {}, 'created');
+                return http.replica(201, {}, 'created');
             }
 
             if (path === '/status/404') {
-                return http.replicatio(404, {}, 'not found');
+                return http.replica(404, {}, 'not found');
             }
 
             if (path === '/status/500') {
-                return http.replicatio(500, {}, 'server error');
+                return http.replica(500, {}, 'server error');
             }
 
             if (path === '/redirect') {
-                return http.redirectio('/target');
+                return http.redirige('/target');
             }
 
-            return http.replicatio(404, {}, 'Not Found');
+            return http.replica(404, {}, 'Not Found');
         });
 
         baseUrl = `http://localhost:${server.portus()}`;
@@ -90,43 +90,43 @@ describe('http HAL', () => {
     });
 
     describe('HTTP methods', () => {
-        test('pete performs GET request', async () => {
-            const response = await http.pete(`${baseUrl}/echo`);
+        test('petet performs GET request', async () => {
+            const response = await http.petet(`${baseUrl}/echo`);
             expect(response.status()).toBe(200);
             expect(lastRequest?.method).toBe('GET');
         });
 
-        test('mitte performs POST request', async () => {
-            const response = await http.mitte(`${baseUrl}/echo`, 'post body');
+        test('mittet performs POST request', async () => {
+            const response = await http.mittet(`${baseUrl}/echo`, 'post body');
             expect(response.status()).toBe(200);
             expect(lastRequest?.method).toBe('POST');
             expect(lastRequest?.body).toBe('post body');
         });
 
-        test('pone performs PUT request', async () => {
-            const response = await http.pone(`${baseUrl}/echo`, 'put body');
+        test('ponet performs PUT request', async () => {
+            const response = await http.ponet(`${baseUrl}/echo`, 'put body');
             expect(response.status()).toBe(200);
             expect(lastRequest?.method).toBe('PUT');
             expect(lastRequest?.body).toBe('put body');
         });
 
-        test('dele performs DELETE request', async () => {
-            const response = await http.dele(`${baseUrl}/echo`);
+        test('delet performs DELETE request', async () => {
+            const response = await http.delet(`${baseUrl}/echo`);
             expect(response.status()).toBe(200);
             expect(lastRequest?.method).toBe('DELETE');
         });
 
-        test('muta performs PATCH request', async () => {
-            const response = await http.muta(`${baseUrl}/echo`, 'patch body');
+        test('mutabit performs PATCH request', async () => {
+            const response = await http.mutabit(`${baseUrl}/echo`, 'patch body');
             expect(response.status()).toBe(200);
             expect(lastRequest?.method).toBe('PATCH');
             expect(lastRequest?.body).toBe('patch body');
         });
     });
 
-    describe('roga (generic request)', () => {
+    describe('rogabit (generic request)', () => {
         test('sends custom method and headers', async () => {
-            const response = await http.roga(
+            const response = await http.rogabit(
                 'POST',
                 `${baseUrl}/echo`,
                 { 'X-Test-Header': 'test-value', 'Content-Type': 'application/json' },
@@ -141,30 +141,30 @@ describe('http HAL', () => {
 
     describe('Replicatio', () => {
         test('status returns HTTP status code', async () => {
-            const r201 = await http.pete(`${baseUrl}/status/201`);
+            const r201 = await http.petet(`${baseUrl}/status/201`);
             expect(r201.status()).toBe(201);
 
-            const r404 = await http.pete(`${baseUrl}/status/404`);
+            const r404 = await http.petet(`${baseUrl}/status/404`);
             expect(r404.status()).toBe(404);
 
-            const r500 = await http.pete(`${baseUrl}/status/500`);
+            const r500 = await http.petet(`${baseUrl}/status/500`);
             expect(r500.status()).toBe(500);
         });
 
         test('corpus returns body as text', async () => {
-            const response = await http.pete(`${baseUrl}/text`);
+            const response = await http.petet(`${baseUrl}/text`);
             expect(response.corpus()).toBe('Hello, World!');
         });
 
         test('corpusJson parses JSON body', async () => {
-            const response = await http.pete(`${baseUrl}/json`);
+            const response = await http.petet(`${baseUrl}/json`);
             const json = response.corpusJson() as { message: string; count: number };
             expect(json.message).toBe('hello');
             expect(json.count).toBe(42);
         });
 
         test('capita returns all headers', async () => {
-            const response = await http.pete(`${baseUrl}/headers`);
+            const response = await http.petet(`${baseUrl}/headers`);
             const headers = response.capita();
             expect(headers).toBeDefined();
             // Headers object should exist
@@ -172,7 +172,7 @@ describe('http HAL', () => {
         });
 
         test('caput returns specific header (case-insensitive)', async () => {
-            const response = await http.pete(`${baseUrl}/headers`);
+            const response = await http.petet(`${baseUrl}/headers`);
             expect(response.caput('x-custom-header')).toBe('custom-value');
             expect(response.caput('X-Custom-Header')).toBe('custom-value');
             expect(response.caput('X-CUSTOM-HEADER')).toBe('custom-value');
@@ -180,57 +180,57 @@ describe('http HAL', () => {
         });
 
         test('bene returns true for 2xx status codes', async () => {
-            const r200 = await http.pete(`${baseUrl}/text`);
+            const r200 = await http.petet(`${baseUrl}/text`);
             expect(r200.bene()).toBe(true);
 
-            const r201 = await http.pete(`${baseUrl}/status/201`);
+            const r201 = await http.petet(`${baseUrl}/status/201`);
             expect(r201.bene()).toBe(true);
 
-            const r404 = await http.pete(`${baseUrl}/status/404`);
+            const r404 = await http.petet(`${baseUrl}/status/404`);
             expect(r404.bene()).toBe(false);
 
-            const r500 = await http.pete(`${baseUrl}/status/500`);
+            const r500 = await http.petet(`${baseUrl}/status/500`);
             expect(r500.bene()).toBe(false);
         });
     });
 
     describe('Rogatio (server receives)', () => {
         test('modus returns HTTP method', async () => {
-            await http.mitte(`${baseUrl}/echo`, 'test');
+            await http.mittet(`${baseUrl}/echo`, 'test');
             expect(lastRequest?.method).toBe('POST');
         });
 
         test('via returns pathname', async () => {
-            await http.pete(`${baseUrl}/echo`);
+            await http.petet(`${baseUrl}/echo`);
             expect(lastRequest?.path).toBe('/echo');
         });
 
         test('corpus returns request body', async () => {
-            await http.mitte(`${baseUrl}/echo`, 'request body content');
+            await http.mittet(`${baseUrl}/echo`, 'request body content');
             expect(lastRequest?.body).toBe('request body content');
         });
 
         test('param returns query parameters', async () => {
-            await http.pete(`${baseUrl}/echo?foo=value1&bar=value2`);
+            await http.petet(`${baseUrl}/echo?foo=value1&bar=value2`);
             expect(lastRequest?.params.foo).toBe('value1');
             expect(lastRequest?.params.bar).toBe('value2');
         });
 
         test('param returns null for missing parameter', async () => {
-            await http.pete(`${baseUrl}/echo?foo=value1`);
+            await http.petet(`${baseUrl}/echo?foo=value1`);
             expect(lastRequest?.params.foo).toBe('value1');
             expect(lastRequest?.params.bar).toBe(null);
         });
 
         test('caput returns request header', async () => {
-            await http.roga('GET', `${baseUrl}/echo`, { 'X-Request-Header': 'req-value' }, '');
+            await http.rogabit('GET', `${baseUrl}/echo`, { 'X-Request-Header': 'req-value' }, '');
             expect(lastRequest?.headers['x-request-header']).toBe('req-value');
         });
     });
 
     describe('response builders', () => {
-        test('replicatio creates response with status, headers, body', () => {
-            const response = http.replicatio(
+        test('replica creates response with status, headers, body', () => {
+            const response = http.replica(
                 201,
                 { 'X-Test': 'value' },
                 'body content'
@@ -240,15 +240,30 @@ describe('http HAL', () => {
             expect(response.caput('x-test')).toBe('value');
         });
 
-        test('replicatioJson creates JSON response with correct content-type', () => {
-            const response = http.replicatioJson(200, { key: 'value' });
+        test('scribe creates text response with correct content-type', () => {
+            const response = http.scribe(200, 'plain text');
+            expect(response.status()).toBe(200);
+            expect(response.caput('content-type')).toBe('text/plain');
+            expect(response.corpus()).toBe('plain text');
+        });
+
+        test('json creates JSON response with correct content-type', () => {
+            const response = http.json(200, { key: 'value' });
             expect(response.status()).toBe(200);
             expect(response.caput('content-type')).toBe('application/json');
             expect(response.corpusJson()).toEqual({ key: 'value' });
         });
 
-        test('redirectio creates redirect response', () => {
-            const response = http.redirectio('/new-location');
+        test('funde creates binary response with correct content-type', () => {
+            const data = new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]); // "Hello"
+            const response = http.funde(200, data);
+            expect(response.status()).toBe(200);
+            expect(response.caput('content-type')).toBe('application/octet-stream');
+            expect(response.corpusOcteti()).toEqual(data);
+        });
+
+        test('redirige creates redirect response', () => {
+            const response = http.redirige('/new-location');
             expect(response.status()).toBe(302);
             expect(response.caput('location')).toBe('/new-location');
         });
@@ -257,7 +272,7 @@ describe('http HAL', () => {
     describe('roundtrip', () => {
         test('JSON roundtrip through server', async () => {
             const original = { name: 'test', values: [1, 2, 3], nested: { a: true } };
-            const response = await http.mitte(`${baseUrl}/echo`, JSON.stringify(original));
+            const response = await http.mittet(`${baseUrl}/echo`, JSON.stringify(original));
             const received = response.corpusJson() as { body: string };
             expect(JSON.parse(received.body)).toEqual(original);
         });
