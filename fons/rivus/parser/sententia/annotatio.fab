@@ -95,7 +95,7 @@ functio parseTargetMappingAnnotation(in Resolvitor r, de textus nomen, de Locus 
             fixum valor = p.specta(0).valor
             p.procede()
 
-            targetMappings.pone(target, valor)
+            targetMappings[target] = valor
         } dum non p.estFinis() et p.specta(0).locus.linea == linea et p.congruet(SymbolumGenus.Coma)
     }
 

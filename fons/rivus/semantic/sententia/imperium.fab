@@ -371,7 +371,7 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                             varia missingCount = 0
                             varia firstMissing = "" qua textus
                             varia quoted = [] innatum lista<textus>
-                            ex (info novum DiscretioDeclInfo).variantes fixum variansInfo {
+                            ex (info qua DiscretioDeclInfo).variantes fixum variansInfo {
                                 si nihil handled[variansInfo.nomen] {
                                     missingCount = missingCount + 1
                                     si missingCount == 1 {

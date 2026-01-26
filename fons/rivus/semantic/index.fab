@@ -266,7 +266,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                             # Named imports: ex "alias:path" importa foo, bar
                             ex imp.specificatores fixum spec {
                                 si nonnihil modulus.exporta[spec.importatum] {
-                                    fixum exportum = modulus.exporta[spec.importatum] novum ModulusExportum
+                                    fixum exportum = modulus.exporta[spec.importatum] qua ModulusExportum
                                     a.definie({
                                         nomen: spec.locale,
                                         semanticTypus: exportum.typus,
@@ -276,14 +276,14 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                                     } novum Symbolum)
 
                                     si nonnihil modulus.discretiones[spec.importatum] {
-                                        a.discretioIndex[spec.locale] = modulus.discretiones[spec.importatum] novum DiscretioDeclInfo
+                                        a.discretioIndex[spec.locale] = modulus.discretiones[spec.importatum] qua DiscretioDeclInfo
                                     }
 
                                     # Import variant types for discretio
                                     fixum prefix = spec.importatum + "."
                                     ex modulus.exporta.claves() fixum nomen {
                                         si nomen.startsWith(prefix) {
-                                            fixum exportum = modulus.exporta[nomen] novum ModulusExportum
+                                            fixum exportum = modulus.exporta[nomen] qua ModulusExportum
                                             fixum suffix = nomen.slice(prefix.length)
                                             fixum qualNomen = scriptum("§.§", spec.locale, suffix)
 
@@ -336,7 +336,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                             }
                             # Also add all individual exports to scope
                             ex modulus.exporta.claves() fixum nomen {
-                                fixum exportum = modulus.exporta[nomen] novum ModulusExportum
+                                fixum exportum = modulus.exporta[nomen] qua ModulusExportum
                                 a.definie({
                                     nomen: exportum.nomen,
                                     semanticTypus: exportum.typus,
@@ -349,7 +349,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                             # Named imports: ex "./x" importa foo, bar ut b
                             ex imp.specificatores fixum spec {
                                 si nonnihil modulus.exporta[spec.importatum] {
-                                    fixum exportum = modulus.exporta[spec.importatum] novum ModulusExportum
+                                    fixum exportum = modulus.exporta[spec.importatum] qua ModulusExportum
                                     a.definie({
                                         nomen: spec.locale,  # Use local alias if provided
                                         semanticTypus: exportum.typus,
@@ -360,7 +360,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
 
                                     # Record discretio metadata under the local alias, if present.
                                     si nonnihil modulus.discretiones[spec.importatum] {
-                                        a.discretioIndex[spec.locale] = modulus.discretiones[spec.importatum] novum DiscretioDeclInfo
+                                        a.discretioIndex[spec.locale] = modulus.discretiones[spec.importatum] qua DiscretioDeclInfo
                                     }
 
                                     # WHY: If a discretio type is imported by name, also import its
@@ -369,7 +369,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                                     fixum prefix = spec.importatum + "."
                                     ex modulus.exporta.claves() fixum nomen {
                                         si nomen.startsWith(prefix) {
-                                            fixum exportum = modulus.exporta[nomen] novum ModulusExportum
+                                            fixum exportum = modulus.exporta[nomen] qua ModulusExportum
                                             fixum suffix = nomen.slice(prefix.length)
                                             fixum qualNomen = scriptum("§.§", spec.locale, suffix)
 

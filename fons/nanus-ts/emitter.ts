@@ -478,6 +478,12 @@ function emitExpr(expr: Expr): string {
                     if (PROPERTY_ONLY.has(propName)) {
                         return emitExpr(expr.callee);
                     }
+                    // Special case: .claves() on tabula → Object.keys(obj)
+                    // Records don't have .keys() method, need Object.keys()
+                    if (propName === 'claves') {
+                        const obj = emitExpr(expr.callee.obj);
+                        return `Object.keys(${obj})`;
+                    }
                     // Method name translation (only for method calls, not field access)
                     const translated = METHOD_MAP[propName];
                     if (translated) {
@@ -558,14 +564,14 @@ function emitExpr(expr: Expr): string {
 
         case 'Innatum': {
             // For native types, emit constructor calls instead of casts
-            // {} innatum tabula<K,V> → new Map<K,V>()
+            // {} innatum tabula<K,V> → ({} as Record<K,V>) - use Record for bracket access
             // {} innatum copia<T> → new Set<T>()
             // [] innatum lista<T> → [] (arrays are fine as literals)
             if (expr.typus.tag === 'Genericus') {
                 const name = expr.typus.nomen;
                 if (name === 'tabula') {
                     const args = expr.typus.args.map(emitTypus).join(', ');
-                    return `new Map<${args}>()`;
+                    return `({} as Record<${args}>)`;
                 }
                 if (name === 'copia' || name === 'collectio') {
                     const args = expr.typus.args.map(emitTypus).join(', ');
@@ -698,7 +704,7 @@ function mapTypeName(name: string): string {
         quodlibet: 'any',
         quidlibet: 'any',
         lista: 'Array',
-        tabula: 'Map',
+        tabula: 'Record',
         collectio: 'Set',
         copia: 'Set',
     };
