@@ -1,76 +1,161 @@
-# processus.fab - Process Device (spawn/exec subprocesses)
+# processus.fab - Process Device
 #
 # Etymology: "processus" from "pro-" (forward) + "cedere" (to go)
 #            A going forward, a process in motion.
 #
-# Part of the Hardware Abstraction Layer (HAL). All subprocess
-# management should go through this interface.
+# Part of the Hardware Abstraction Layer (HAL).
+#
+# Design principles:
+#   - Verb conjugation encodes spawn semantics:
+#     - Imperative (genera): spawn attached, caller manages lifecycle
+#     - Future indicative (generabit): spawn detached, fire and forget
+#   - Shell execution uses traditional sync/async:
+#     - Imperative (exsequi): sync, blocks until complete
+#     - Future (exsequetur): async, returns promise
+#   - Environment uses lege/scribe (read/write) - simple and consistent
 
-# Spawned subprocess handle
+# =============================================================================
+# TYPES
+# =============================================================================
+
+# Spawned subprocess handle for attached processes
+# Maps to: Bun.spawn() result
 genus Subprocessus {
-    numerus pid
-    promissum<numerus> exited
+    numerus pid              # process ID
+    promissum<numerus> expiravit   # resolves to exit code when process ends
 }
 
 @ subsidia ts "codegen/ts/processus.ts"
 pactum processus {
     # =========================================================================
-    # SPAWN - Portable array-based process spawning
+    # SPAWN - Attached
     # =========================================================================
+    # Verb: genera from "generare" (to generate, beget, bring forth)
+    # Why: Creating/generating a new process. Imperative form indicates
+    #      the caller maintains control - can wait for exit, capture output.
+    # Maps to: Bun.spawn() with handle returned
 
-    # Spawn a detached process. Returns PID immediately.
-    # This is the primary, portable way to spawn subprocesses.
+    # Spawn attached process - caller can wait for exit via handle.expiravit
     @ externa
-    functio genera(lista<textus> args, si textus cwd, si mappa<textus, textus> env) -> numerus
-
-    # Spawn process with options. Returns object with exited promise.
-    # Options: { stdout: "inherit"|"pipe"|"ignore", stderr: "inherit"|"pipe"|"ignore" }
-    @ externa
-    functio spawn(textus cmd, lista<textus> args, tabula<textus, ignotum> options) -> Subprocessus
-
-    # =========================================================================
-    # SHELL EXECUTION - For commands needing shell features (&&, |, >, etc)
-    # =========================================================================
-
-    @ externa
-    functio exsequi(textus cmd) -> textus
-
-    @ externa
-    functio exsequiCodem(textus cmd) -> numerus
+    functio genera(
+        lista<textus> argumenta,
+        si textus directorium,
+        si tabula<textus, textus> ambitus
+    ) -> Subprocessus
 
     # =========================================================================
-    # ENVIRONMENT
+    # SPAWN - Detached
     # =========================================================================
+    # Verb: generabit (future of generare)
+    # Why: Future tense indicates "it will run on its own" - fire and forget.
+    #      Process continues independently, survives parent exit.
+    #      Async to confirm spawn succeeded and return PID.
+    # Maps to: Bun.spawn() with proc.unref(), stdio ignored
 
+    # Spawn detached process - runs independently, returns PID
+    @ futura
     @ externa
-    functio env(textus nomen) -> textus?
-
-    @ externa
-    functio envVel(textus nomen, textus defVal) -> textus
-
-    @ externa
-    functio poneEnv(textus nomen, textus valor) -> vacuum
+    functio generabit(
+        lista<textus> argumenta,
+        si textus directorium,
+        si tabula<textus, textus> ambitus
+    ) -> numerus
 
     # =========================================================================
-    # PROCESS INFO
+    # SHELL EXECUTION
     # =========================================================================
+    # Verb: exsequi/exsequetur from "exsequi" (to follow out, execute, accomplish)
+    # Why: Executing a command through to completion. Shell features available
+    #      (pipes, redirects, &&, ||, etc). Returns stdout.
+    # Maps to: sh -c "cmd" via Bun.spawnSync / Bun.spawn
 
+    # Execute shell command, block until complete, return stdout (sync)
     @ externa
-    functio cwd() -> textus
+    functio exsequi(textus imperium) -> textus
 
+    # Execute shell command, return stdout when complete (async)
+    @ futura
     @ externa
-    functio chdir(textus via) -> vacuum
+    functio exsequetur(textus imperium) -> textus
 
-    @ externa
-    functio pid() -> numerus
+    # =========================================================================
+    # ENVIRONMENT - Read
+    # =========================================================================
+    # Verb: lege from "legere" (to read, gather)
+    # Why: Reading a value from the process environment. Same verb as file
+    #      reading - context (processus vs solum) disambiguates.
+    # Maps to: Bun.env[name] / process.env[name]
 
+    # Read environment variable (returns nihil if not set)
     @ externa
-    functio argv() -> lista<textus>
+    functio lege(textus nomen) -> si textus
+
+    # =========================================================================
+    # ENVIRONMENT - Write
+    # =========================================================================
+    # Verb: scribe from "scribere" (to write)
+    # Why: Writing a value to the process environment. Same verb as file
+    #      writing - context disambiguates.
+    # Maps to: Bun.env[name] = value / process.env[name] = value
+
+    # Write environment variable
+    @ externa
+    functio scribe(textus nomen, textus valor) -> vacuum
+
+    # =========================================================================
+    # PROCESS INFO - Working Directory
+    # =========================================================================
+    # Noun: directorium (directory)
+    # Why: Accessor for current working directory. Not a verb - it's a property.
+    # Maps to: process.cwd()
+
+    # Get current working directory
+    @ externa
+    functio directorium() -> textus
+
+    # =========================================================================
+    # PROCESS INFO - Change Directory
+    # =========================================================================
+    # Verb: muta from "mutare" (to change, alter)
+    # Why: Changing/altering the working directory. Generic "change" verb
+    #      fits well - you're mutating process state.
+    # Maps to: process.chdir(path)
+
+    # Change current working directory
+    @ externa
+    functio muta(textus via) -> vacuum
+
+    # =========================================================================
+    # PROCESS INFO - Identity
+    # =========================================================================
+    # Noun: identitas (identity)
+    # Why: Accessor for process identity (PID). Not a verb - it's a property.
+    # Maps to: process.pid
+
+    # Get process ID
+    @ externa
+    functio identitas() -> numerus
+
+    # =========================================================================
+    # PROCESS INFO - Arguments
+    # =========================================================================
+    # Noun: argumenta (arguments)
+    # Why: Accessor for command line arguments. Not a verb - it's a property.
+    # Maps to: Bun.argv.slice(2) / process.argv.slice(2)
+
+    # Get command line arguments (excludes runtime and script path)
+    @ externa
+    functio argumenta() -> lista<textus>
 
     # =========================================================================
     # EXIT
     # =========================================================================
+    # Verb: exi from "exire" (to go out, exit, depart)
+    # Why: Direct Latin root of English "exit". Process departs/goes out.
+    #      Returns numquam (never) - this call does not return.
+    # Maps to: process.exit(code)
 
+    # Exit process with code (never returns)
     @ externa
     functio exi(numerus code) -> numquam
 }

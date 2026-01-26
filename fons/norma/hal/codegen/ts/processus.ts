@@ -1,15 +1,59 @@
 /**
- * processus.ts - Process Device Implementation (Bun/Node)
+ * processus.ts - Process Device Implementation
  *
  * Native TypeScript implementation of the HAL process interface.
+ * Uses Bun process APIs.
+ *
+ * Verb conjugation encodes spawn semantics:
+ *   - Imperative (genera): spawn attached, caller manages lifecycle
+ *   - Future (generabit): spawn detached, fire and forget
  */
 
+/** Spawned subprocess handle for attached processes */
+export interface Subprocessus {
+    pid: number;
+    expiravit: Promise<number>;  // resolves to exit code
+}
+
 export const processus = {
-    // SPAWN - Portable array-based process spawning
-    genera(args: string[], cwd?: string, env?: Record<string, string>): number {
-        const proc = Bun.spawn(args, {
-            cwd: cwd ?? process.cwd(),
-            env: env ? { ...process.env, ...env } : process.env,
+    // =========================================================================
+    // SPAWN - Attached
+    // =========================================================================
+    // Verb: genera from "generare" (to generate, beget)
+
+    /** Spawn attached process - caller can wait for exit via handle.expiravit */
+    genera(
+        argumenta: string[],
+        directorium?: string,
+        ambitus?: Record<string, string>
+    ): Subprocessus {
+        const proc = Bun.spawn(argumenta, {
+            cwd: directorium ?? process.cwd(),
+            env: ambitus ? { ...process.env, ...ambitus } : process.env,
+            stdout: "inherit",
+            stderr: "inherit",
+            stdin: "inherit",
+        });
+        return {
+            pid: proc.pid,
+            expiravit: proc.exited,
+        };
+    },
+
+    // =========================================================================
+    // SPAWN - Detached
+    // =========================================================================
+    // Verb: generabit (future of generare) - fire and forget
+
+    /** Spawn detached process - runs independently, returns PID */
+    async generabit(
+        argumenta: string[],
+        directorium?: string,
+        ambitus?: Record<string, string>
+    ): Promise<number> {
+        const proc = Bun.spawn(argumenta, {
+            cwd: directorium ?? process.cwd(),
+            env: ambitus ? { ...process.env, ...ambitus } : process.env,
             stdout: "ignore",
             stderr: "ignore",
             stdin: "ignore",
@@ -18,57 +62,73 @@ export const processus = {
         return proc.pid;
     },
 
-    // SPAWN - With options, returns process handle
-    spawn(cmd: string, args: string[], options: Record<string, unknown>): { pid: number; exited: Promise<number> } {
-        const proc = Bun.spawn([cmd, ...args], {
-            stdout: (options.stdout as "inherit" | "pipe" | "ignore") ?? "inherit",
-            stderr: (options.stderr as "inherit" | "pipe" | "ignore") ?? "inherit",
-        });
-        return { pid: proc.pid, exited: proc.exited };
-    },
+    // =========================================================================
+    // SHELL EXECUTION
+    // =========================================================================
+    // Verb: exsequi/exsequetur from "exsequi" (to execute, accomplish)
 
-    // SHELL EXECUTION - For commands needing shell features (&&, |, >, etc)
-    exsequi(cmd: string): string {
-        const result = Bun.spawnSync(["sh", "-c", cmd]);
+    /** Execute shell command, block until complete, return stdout (sync) */
+    exsequi(imperium: string): string {
+        const result = Bun.spawnSync(["sh", "-c", imperium]);
         return result.stdout.toString();
     },
 
-    exsequiCodem(cmd: string): number {
-        const result = Bun.spawnSync(["sh", "-c", cmd]);
-        return result.exitCode;
+    /** Execute shell command, return stdout when complete (async) */
+    async exsequetur(imperium: string): Promise<string> {
+        const proc = Bun.spawn(["sh", "-c", imperium], {
+            stdout: "pipe",
+            stderr: "pipe",
+        });
+        const output = await new Response(proc.stdout).text();
+        await proc.exited;
+        return output;
     },
 
-    // ENVIRONMENT
-    env(nomen: string): string | null {
+    // =========================================================================
+    // ENVIRONMENT - Read/Write
+    // =========================================================================
+    // Verbs: lege/scribe (read/write)
+
+    /** Read environment variable (returns null if not set) */
+    lege(nomen: string): string | null {
         return Bun.env[nomen] ?? null;
     },
 
-    envVel(nomen: string, defVal: string): string {
-        return Bun.env[nomen] ?? defVal;
-    },
-
-    poneEnv(nomen: string, valor: string): void {
+    /** Write environment variable */
+    scribe(nomen: string, valor: string): void {
         Bun.env[nomen] = valor;
     },
 
+    // =========================================================================
     // PROCESS INFO
-    cwd(): string {
+    // =========================================================================
+
+    /** Get current working directory */
+    directorium(): string {
         return process.cwd();
     },
 
-    chdir(via: string): void {
+    /** Change current working directory */
+    muta(via: string): void {
         process.chdir(via);
     },
 
-    pid(): number {
+    /** Get process ID */
+    identitas(): number {
         return process.pid;
     },
 
-    argv(): string[] {
+    /** Get command line arguments (excludes runtime and script path) */
+    argumenta(): string[] {
         return Bun.argv.slice(2);
     },
 
+    // =========================================================================
     // EXIT
+    // =========================================================================
+    // Verb: exi from "exire" (to exit, depart)
+
+    /** Exit process with code (never returns) */
     exi(code: number): never {
         process.exit(code);
     },
