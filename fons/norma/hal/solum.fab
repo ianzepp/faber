@@ -3,14 +3,20 @@
 # Etymology: "solum" - ground, floor, base. Local/ground I/O (vs caelum/sky/network).
 #
 # Part of the Hardware Abstraction Layer (HAL).
-# Maps to FileDevice + BlockDevice from monk-os-kernel.
 #
-# Design notes:
-#   - Async-first: most operations return promissum
-#   - Streaming: legens/scribens return cursors for large files
-#   - Path utilities included (iunge, dir, basis, etc.)
+# Design principles:
+#   - Verb conjugation encodes sync/async semantics:
+#     - Imperative (-a, -e, -i): synchronous operation
+#     - Future indicative (-et, -ebit): asynchronous operation (returns promissum)
+#   - Different verbs for different data types (text vs bytes vs lines)
+#   - No "Latin as paint" - verbs chosen for semantic fit, not translation
 
-# Full file status for ls -l, stat, etc.
+# =============================================================================
+# TYPES
+# =============================================================================
+
+# Full file status returned by describe/describet
+# Maps to: stat(), lstat()
 genus SolumStatus {
     numerus modus         # permission bits (e.g., 0o755)
     numerus nexus         # hard link count
@@ -25,167 +31,311 @@ genus SolumStatus {
 @ subsidia ts "codegen/ts/solum.ts"
 pactum solum {
     # =========================================================================
-    # READING - File Content
+    # READING - Text
     # =========================================================================
+    # Verb: lege/leget from "legere" (to read, gather)
+    # Why: The primary Latin verb for reading. Text is the "readable" format.
+    # Maps to: fs.readFileSync(path, 'utf8') / fs.readFile(path, 'utf8')
+
+    # Read entire file as text (sync)
+    @ externa
+    functio lege(textus via) -> textus
 
     # Read entire file as text (async)
     @ futura
     @ externa
-    functio lege(textus path) -> textus
-
-    # Read entire file as bytes (async)
-    @ futura
-    @ externa
-    functio legeOctetos(textus path) -> octeti
-
-    # Stream file chunks (for large files)
-    @ externa
-    functio legens(textus path) -> cursor<octeti>
+    functio leget(textus via) -> textus
 
     # =========================================================================
-    # WRITING
+    # READING - Bytes
     # =========================================================================
+    # Verb: hauri/hauriet from "haurire" (to draw up, draw water)
+    # Why: Drawing bytes from a file like drawing water from a well.
+    #      Distinct from "reading" text - this is raw extraction.
+    # Maps to: fs.readFileSync(path) / fs.readFile(path) returning Buffer
 
-    # Write text to file (overwrites, async)
+    # Draw entire file as bytes (sync)
+    @ externa
+    functio hauri(textus via) -> octeti
+
+    # Draw entire file as bytes (async)
     @ futura
     @ externa
-    functio scribe(textus path, textus data) -> vacuum
+    functio hauriet(textus via) -> octeti
 
-    # Write bytes to file (overwrites, async)
+    # =========================================================================
+    # READING - Lines
+    # =========================================================================
+    # Verb: carpe/carpiet from "carpere" (to pluck, pick, harvest)
+    # Why: Plucking lines one by one, like picking fruit from a tree.
+    #      Different from bulk reading - implies iteration/selection.
+    # Maps to: readline interface or line-by-line file reading
+
+    # Pluck lines from file (sync)
+    @ externa
+    functio carpe(textus via) -> lista<textus>
+
+    # Pluck lines from file (async)
     @ futura
     @ externa
-    functio scribeOctetos(textus path, octeti data) -> vacuum
+    functio carpiet(textus via) -> lista<textus>
+
+    # =========================================================================
+    # WRITING - Text
+    # =========================================================================
+    # Verb: scribe/scribet from "scribere" (to write)
+    # Why: The primary Latin verb for writing. Natural fit for text output.
+    #      Also handles writing lines (text with newlines).
+    # Maps to: fs.writeFileSync(path, data, 'utf8') / fs.writeFile(...)
+
+    # Write text to file, overwrites existing (sync)
+    @ externa
+    functio scribe(textus via, textus data) -> vacuum
+
+    # Write text to file, overwrites existing (async)
+    @ futura
+    @ externa
+    functio scribet(textus via, textus data) -> vacuum
+
+    # =========================================================================
+    # WRITING - Bytes
+    # =========================================================================
+    # Verb: funde/fundet from "fundere" (to pour, pour out)
+    # Why: Pouring bytes into a file like pouring liquid into a vessel.
+    #      Counterpart to "hauri" (drawing out) - funde pours in.
+    # Maps to: fs.writeFileSync(path, buffer) / fs.writeFile(path, buffer)
+
+    # Pour bytes to file, overwrites existing (sync)
+    @ externa
+    functio funde(textus via, octeti data) -> vacuum
+
+    # Pour bytes to file, overwrites existing (async)
+    @ futura
+    @ externa
+    functio fundet(textus via, octeti data) -> vacuum
+
+    # =========================================================================
+    # WRITING - Append
+    # =========================================================================
+    # Verb: appone/apponet from "apponere" (to place near, add to)
+    # Why: Adding content to the end of existing content.
+    #      Not overwriting - placing alongside what's already there.
+    # Maps to: fs.appendFileSync(path, data) / fs.appendFile(path, data)
+
+    # Append text to file (sync)
+    @ externa
+    functio appone(textus via, textus data) -> vacuum
 
     # Append text to file (async)
     @ futura
     @ externa
-    functio appone(textus path, textus data) -> vacuum
-
-    # Stream writes (for large files)
-    @ externa
-    functio scribens(textus path) -> cursor<octeti>
+    functio apponet(textus via, textus data) -> vacuum
 
     # =========================================================================
-    # FILE INFO
+    # FILE INFO - Existence
     # =========================================================================
+    # Verb: exstat from "exstare" (to stand out, exist, be visible)
+    # Why: Asking if something exists/stands in the filesystem.
+    #      Sync-only predicate - async existence checks should use describet.
+    # Maps to: fs.existsSync(path)
 
-    # Check if path exists
+    # Check if path exists (sync only - use describet for async)
     @ externa
-    functio exstat(textus path) -> bivalens
-
-    # Check if path is a file
-    @ externa
-    functio estLimae(textus path) -> bivalens
-
-    # Check if path is a directory
-    @ externa
-    functio estDirectorii(textus path) -> bivalens
-
-    # Get file size in bytes
-    @ futura
-    @ externa
-    functio magnitudo(textus path) -> numerus
-
-    # Get modification time (ms since epoch)
-    @ futura
-    @ externa
-    functio modificatum(textus path) -> numerus
+    functio exstat(textus via) -> bivalens
 
     # =========================================================================
-    # FILE STATUS (stat)
+    # FILE INFO - Details
     # =========================================================================
+    # Verb: describe/describet from "describere" (to write down, delineate, describe)
+    # Why: Asking the filesystem to describe/detail the file's properties.
+    #      Returns full metadata struct, not just existence.
+    # Maps to: fs.statSync(path) / fs.stat(path) - uses lstat to not follow symlinks
 
-    # Get full file status (uses lstat - doesn't follow symlinks)
+    # Get file details (sync)
+    @ externa
+    functio describe(textus via) -> SolumStatus
+
+    # Get file details (async)
     @ futura
     @ externa
-    functio status(textus path) -> SolumStatus
-
-    # Read symlink target
-    @ futura
-    @ externa
-    functio legeVinculum(textus path) -> textus
-
-    # =========================================================================
-    # FILE OPERATIONS
-    # =========================================================================
-
-    # Delete file
-    @ futura
-    @ externa
-    functio dele(textus path) -> vacuum
-
-    # Copy file
-    @ futura
-    @ externa
-    functio copia(textus src, textus dest) -> vacuum
-
-    # Move/rename file
-    @ futura
-    @ externa
-    functio move(textus src, textus dest) -> vacuum
-
-    # Touch (create empty or update mtime)
-    @ futura
-    @ externa
-    functio tange(textus path) -> vacuum
+    functio describet(textus via) -> SolumStatus
 
     # =========================================================================
-    # DIRECTORY OPERATIONS
+    # FILE INFO - Symlinks
     # =========================================================================
+    # Verb: sequere/sequetur from "sequi" (to follow)
+    # Why: Following a symbolic link to discover its target.
+    #      Like following a trail or path to its destination.
+    # Maps to: fs.readlinkSync(path) / fs.readlink(path)
 
-    # Create directory (recursive)
+    # Follow symlink to get target path (sync)
+    @ externa
+    functio sequere(textus via) -> textus
+
+    # Follow symlink to get target path (async)
     @ futura
     @ externa
-    functio creaDir(textus path) -> vacuum
+    functio sequetur(textus via) -> textus
 
-    # List directory contents
+    # =========================================================================
+    # FILE OPERATIONS - Delete
+    # =========================================================================
+    # Verb: dele/delet from "delere" (to destroy, delete, erase)
+    # Why: Direct Latin root of English "delete". Unambiguous.
+    #      Files only - use amputa/amputabit for directories.
+    # Maps to: fs.unlinkSync(path) / fs.unlink(path)
+
+    # Delete file (sync)
+    @ externa
+    functio dele(textus via) -> vacuum
+
+    # Delete file (async)
     @ futura
     @ externa
-    functio elenca(textus path) -> lista<textus>
+    functio delet(textus via) -> vacuum
 
-    # Walk directory tree (recursive)
+    # =========================================================================
+    # FILE OPERATIONS - Copy
+    # =========================================================================
+    # Verb: exscribe/exscribet from "exscribere" (to copy out, transcribe)
+    # Why: Writing out a copy of something. More precise than generic "copy".
+    #      The "ex-" prefix implies extracting/copying from source.
+    # Maps to: fs.copyFileSync(src, dest) / fs.copyFile(src, dest)
+
+    # Copy file (sync)
     @ externa
-    functio ambula(textus path) -> cursor<textus>
+    functio exscribe(textus fons, textus destinatio) -> vacuum
 
-    # Remove empty directory
+    # Copy file (async)
     @ futura
     @ externa
-    functio deleDir(textus path) -> vacuum
+    functio exscribet(textus fons, textus destinatio) -> vacuum
 
-    # Remove directory tree (recursive)
+    # =========================================================================
+    # FILE OPERATIONS - Move/Rename
+    # =========================================================================
+    # Verb: move/movet from "movere" (to move)
+    # Why: Direct Latin root of English "move". Handles both rename and move.
+    #      Same underlying operation in most filesystems.
+    # Maps to: fs.renameSync(src, dest) / fs.rename(src, dest)
+
+    # Move or rename file (sync)
+    @ externa
+    functio move(textus fons, textus destinatio) -> vacuum
+
+    # Move or rename file (async)
     @ futura
     @ externa
-    functio deleArborem(textus path) -> vacuum
+    functio movet(textus fons, textus destinatio) -> vacuum
+
+    # =========================================================================
+    # FILE OPERATIONS - Touch
+    # =========================================================================
+    # Verb: tange/tanget from "tangere" (to touch)
+    # Why: Direct Latin root of English "touch". Creates if missing,
+    #      updates mtime if exists. Light contact with the file.
+    # Maps to: touch behavior (utimes or create empty file)
+
+    # Touch file - create or update mtime (sync)
+    @ externa
+    functio tange(textus via) -> vacuum
+
+    # Touch file - create or update mtime (async)
+    @ futura
+    @ externa
+    functio tanget(textus via) -> vacuum
+
+    # =========================================================================
+    # DIRECTORY OPERATIONS - Create
+    # =========================================================================
+    # Verb: crea/creabit from "creare" (to create, bring forth)
+    # Why: Creating something new. In this context, always a directory.
+    #      Recursive by default (creates parent dirs as needed).
+    # Maps to: fs.mkdirSync(path, {recursive: true}) / fs.mkdir(...)
+
+    # Create directory (sync)
+    @ externa
+    functio crea(textus via) -> vacuum
+
+    # Create directory (async)
+    @ futura
+    @ externa
+    functio creabit(textus via) -> vacuum
+
+    # =========================================================================
+    # DIRECTORY OPERATIONS - List
+    # =========================================================================
+    # Verb: enumera/enumerabit from "enumerare" (to count out, enumerate)
+    # Why: Listing/counting the contents of a directory.
+    #      More precise than "list" - implies systematic enumeration.
+    # Maps to: fs.readdirSync(path) / fs.readdir(path)
+
+    # List directory contents (sync)
+    @ externa
+    functio enumera(textus via) -> lista<textus>
+
+    # List directory contents (async)
+    @ futura
+    @ externa
+    functio enumerabit(textus via) -> lista<textus>
+
+    # =========================================================================
+    # DIRECTORY OPERATIONS - Prune/Remove
+    # =========================================================================
+    # Verb: amputa/amputabit from "amputare" (to cut off, prune)
+    # Why: Pruning a branch from a tree (directory tree).
+    #      Recursive deletion - removes directory and all contents.
+    #      Avoids "puto" which also means "to think".
+    # Maps to: fs.rmSync(path, {recursive: true}) / fs.rm(...)
+
+    # Prune directory tree (sync)
+    @ externa
+    functio amputa(textus via) -> vacuum
+
+    # Prune directory tree (async)
+    @ futura
+    @ externa
+    functio amputabit(textus via) -> vacuum
 
     # =========================================================================
     # PATH UTILITIES
     # =========================================================================
+    # These are pure functions operating on path strings, not filesystem I/O.
+    # Sync only - no async variants needed. Not verb-based (accessors/transformers).
+    # Maps to: path.join, path.dirname, path.basename, path.extname, path.resolve
 
     # Join path segments
+    # Maps to: path.join(...parts)
     @ externa
     functio iunge(lista<textus> partes) -> textus
 
     # Get directory part of path
+    # Maps to: path.dirname(path)
     @ externa
-    functio dir(textus path) -> textus
+    functio directorium(textus via) -> textus
 
     # Get filename part of path
+    # Maps to: path.basename(path)
     @ externa
-    functio basis(textus path) -> textus
+    functio basis(textus via) -> textus
 
-    # Get file extension
+    # Get file extension (includes dot)
+    # Maps to: path.extname(path)
     @ externa
-    functio extensio(textus path) -> textus
+    functio extensio(textus via) -> textus
 
     # Resolve to absolute path
+    # Maps to: path.resolve(path)
     @ externa
-    functio absolve(textus path) -> textus
+    functio absolve(textus via) -> textus
 
-    # Get home directory
+    # Get user's home directory
+    # Maps to: os.homedir()
     @ externa
     functio domus() -> textus
 
-    # Get temp directory
+    # Get system temp directory
+    # Maps to: os.tmpdir()
     @ externa
-    functio temp() -> textus
+    functio temporarium() -> textus
 }

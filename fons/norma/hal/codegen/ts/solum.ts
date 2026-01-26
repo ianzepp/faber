@@ -3,6 +3,10 @@
  *
  * Native TypeScript implementation of the HAL solum (filesystem) interface.
  * Uses Bun file APIs and Node.js fs/path/os modules.
+ *
+ * Verb conjugation encodes sync/async:
+ *   - Imperative (-a, -e, -i): synchronous
+ *   - Future indicative (-et, -ebit): asynchronous (returns Promise)
  */
 
 import * as fs from 'node:fs/promises';
@@ -10,63 +14,120 @@ import * as fsSync from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
 
+/** Full file status returned by describe/describet */
+export interface SolumStatus {
+    modus: number;        // permission bits (e.g., 0o755)
+    nexus: number;        // hard link count
+    possessor: number;    // owner uid
+    grex: number;         // group gid
+    magnitudo: number;    // size in bytes
+    modificatum: number;  // mtime (ms since epoch)
+    estDirectorii: boolean;
+    estVinculum: boolean; // is symlink
+}
+
 export const solum = {
     // =========================================================================
-    // READING
+    // READING - Text
     // =========================================================================
+    // Verb: lege/leget from "legere" (to read, gather)
 
-    async lege(filePath: string): Promise<string> {
-        return Bun.file(filePath).text();
+    /** Read entire file as text (sync) */
+    lege(via: string): string {
+        return fsSync.readFileSync(via, 'utf-8');
     },
 
-    async legeOctetos(filePath: string): Promise<Uint8Array> {
-        return new Uint8Array(await Bun.file(filePath).arrayBuffer());
-    },
-
-    async *legens(filePath: string): AsyncIterable<Uint8Array> {
-        const stream = Bun.file(filePath).stream();
-        for await (const chunk of stream) {
-            yield chunk;
-        }
+    /** Read entire file as text (async) */
+    async leget(via: string): Promise<string> {
+        return Bun.file(via).text();
     },
 
     // =========================================================================
-    // WRITING
+    // READING - Bytes
     // =========================================================================
+    // Verb: hauri/hauriet from "haurire" (to draw up, draw water)
 
-    async scribe(filePath: string, data: string): Promise<void> {
-        await Bun.write(filePath, data);
+    /** Draw entire file as bytes (sync) */
+    hauri(via: string): Uint8Array {
+        return new Uint8Array(fsSync.readFileSync(via));
     },
 
-    async scribeOctetos(filePath: string, data: Uint8Array): Promise<void> {
-        await Bun.write(filePath, data);
+    /** Draw entire file as bytes (async) */
+    async hauriet(via: string): Promise<Uint8Array> {
+        return new Uint8Array(await Bun.file(via).arrayBuffer());
     },
 
-    async appone(filePath: string, data: string): Promise<void> {
-        await fs.appendFile(filePath, data);
+    // =========================================================================
+    // READING - Lines
+    // =========================================================================
+    // Verb: carpe/carpiet from "carpere" (to pluck, pick, harvest)
+
+    /** Pluck lines from file (sync) */
+    carpe(via: string): string[] {
+        const content = fsSync.readFileSync(via, 'utf-8');
+        return content.split(/\r?\n/);
     },
 
-    async *scribens(filePath: string): AsyncGenerator<void, void, Uint8Array> {
-        const handle = await fs.open(filePath, 'w');
+    /** Pluck lines from file (async) */
+    async carpiet(via: string): Promise<string[]> {
+        const content = await Bun.file(via).text();
+        return content.split(/\r?\n/);
+    },
+
+    // =========================================================================
+    // WRITING - Text
+    // =========================================================================
+    // Verb: scribe/scribet from "scribere" (to write)
+
+    /** Write text to file, overwrites existing (sync) */
+    scribe(via: string, data: string): void {
+        fsSync.writeFileSync(via, data, 'utf-8');
+    },
+
+    /** Write text to file, overwrites existing (async) */
+    async scribet(via: string, data: string): Promise<void> {
+        await Bun.write(via, data);
+    },
+
+    // =========================================================================
+    // WRITING - Bytes
+    // =========================================================================
+    // Verb: funde/fundet from "fundere" (to pour, pour out)
+
+    /** Pour bytes to file, overwrites existing (sync) */
+    funde(via: string, data: Uint8Array): void {
+        fsSync.writeFileSync(via, data);
+    },
+
+    /** Pour bytes to file, overwrites existing (async) */
+    async fundet(via: string, data: Uint8Array): Promise<void> {
+        await Bun.write(via, data);
+    },
+
+    // =========================================================================
+    // WRITING - Append
+    // =========================================================================
+    // Verb: appone/apponet from "apponere" (to place near, add to)
+
+    /** Append text to file (sync) */
+    appone(via: string, data: string): void {
+        fsSync.appendFileSync(via, data);
+    },
+
+    /** Append text to file (async) */
+    async apponet(via: string, data: string): Promise<void> {
+        await fs.appendFile(via, data);
+    },
+
+    // =========================================================================
+    // FILE INFO - Existence
+    // =========================================================================
+    // Verb: exstat from "exstare" (to stand out, exist)
+
+    /** Check if path exists (sync only) */
+    exstat(via: string): boolean {
         try {
-            while (true) {
-                const chunk = yield;
-                if (chunk === undefined) break;
-                await handle.write(chunk);
-            }
-        }
-        finally {
-            await handle.close();
-        }
-    },
-
-    // =========================================================================
-    // FILE INFO
-    // =========================================================================
-
-    exstat(filePath: string): boolean {
-        try {
-            fsSync.accessSync(filePath);
+            fsSync.accessSync(via);
             return true;
         }
         catch {
@@ -74,52 +135,16 @@ export const solum = {
         }
     },
 
-    estLimae(filePath: string): boolean {
-        try {
-            return fsSync.statSync(filePath).isFile();
-        }
-        catch {
-            return false;
-        }
-    },
-
-    estDirectorii(filePath: string): boolean {
-        try {
-            return fsSync.statSync(filePath).isDirectory();
-        }
-        catch {
-            return false;
-        }
-    },
-
-    async magnitudo(filePath: string): Promise<number> {
-        const stats = await fs.stat(filePath);
-        return stats.size;
-    },
-
-    async modificatum(filePath: string): Promise<number> {
-        const stats = await fs.stat(filePath);
-        return stats.mtimeMs;
-    },
-
     // =========================================================================
-    // FILE STATUS (stat)
+    // FILE INFO - Details
     // =========================================================================
+    // Verb: describe/describet from "describere" (to describe, delineate)
 
-    async status(filePath: string): Promise<{
-        modus: number;
-        nexus: number;
-        possessor: number;
-        grex: number;
-        magnitudo: number;
-        modificatum: number;
-        estDirectorii: boolean;
-        estVinculum: boolean;
-    }> {
-        // Use lstat to not follow symlinks
-        const stats = await fs.lstat(filePath);
+    /** Get file details (sync) */
+    describe(via: string): SolumStatus {
+        const stats = fsSync.lstatSync(via);
         return {
-            modus: stats.mode & 0o7777, // permission bits only
+            modus: stats.mode & 0o7777,
             nexus: stats.nlink,
             possessor: stats.uid,
             grex: stats.gid,
@@ -130,99 +155,190 @@ export const solum = {
         };
     },
 
-    async legeVinculum(filePath: string): Promise<string> {
-        return fs.readlink(filePath);
+    /** Get file details (async) */
+    async describet(via: string): Promise<SolumStatus> {
+        const stats = await fs.lstat(via);
+        return {
+            modus: stats.mode & 0o7777,
+            nexus: stats.nlink,
+            possessor: stats.uid,
+            grex: stats.gid,
+            magnitudo: stats.size,
+            modificatum: stats.mtimeMs,
+            estDirectorii: stats.isDirectory(),
+            estVinculum: stats.isSymbolicLink(),
+        };
     },
 
     // =========================================================================
-    // FILE OPERATIONS
+    // FILE INFO - Symlinks
     // =========================================================================
+    // Verb: sequere/sequetur from "sequi" (to follow)
 
-    async dele(filePath: string): Promise<void> {
-        await fs.unlink(filePath);
+    /** Follow symlink to get target path (sync) */
+    sequere(via: string): string {
+        return fsSync.readlinkSync(via);
     },
 
-    async copia(src: string, dest: string): Promise<void> {
-        await fs.copyFile(src, dest);
+    /** Follow symlink to get target path (async) */
+    async sequetur(via: string): Promise<string> {
+        return fs.readlink(via);
     },
 
-    async move(src: string, dest: string): Promise<void> {
-        await fs.rename(src, dest);
+    // =========================================================================
+    // FILE OPERATIONS - Delete
+    // =========================================================================
+    // Verb: dele/delet from "delere" (to destroy, delete)
+
+    /** Delete file (sync) */
+    dele(via: string): void {
+        fsSync.unlinkSync(via);
     },
 
-    async tange(filePath: string): Promise<void> {
+    /** Delete file (async) */
+    async delet(via: string): Promise<void> {
+        await fs.unlink(via);
+    },
+
+    // =========================================================================
+    // FILE OPERATIONS - Copy
+    // =========================================================================
+    // Verb: exscribe/exscribet from "exscribere" (to copy out, transcribe)
+
+    /** Copy file (sync) */
+    exscribe(fons: string, destinatio: string): void {
+        fsSync.copyFileSync(fons, destinatio);
+    },
+
+    /** Copy file (async) */
+    async exscribet(fons: string, destinatio: string): Promise<void> {
+        await fs.copyFile(fons, destinatio);
+    },
+
+    // =========================================================================
+    // FILE OPERATIONS - Move/Rename
+    // =========================================================================
+    // Verb: move/movet from "movere" (to move)
+
+    /** Move or rename file (sync) */
+    move(fons: string, destinatio: string): void {
+        fsSync.renameSync(fons, destinatio);
+    },
+
+    /** Move or rename file (async) */
+    async movet(fons: string, destinatio: string): Promise<void> {
+        await fs.rename(fons, destinatio);
+    },
+
+    // =========================================================================
+    // FILE OPERATIONS - Touch
+    // =========================================================================
+    // Verb: tange/tanget from "tangere" (to touch)
+
+    /** Touch file - create or update mtime (sync) */
+    tange(via: string): void {
         const now = new Date();
         try {
-            await fs.utimes(filePath, now, now);
+            fsSync.utimesSync(via, now, now);
         }
         catch {
-            // File doesn't exist, create it
-            await Bun.write(filePath, '');
+            fsSync.writeFileSync(via, '');
+        }
+    },
+
+    /** Touch file - create or update mtime (async) */
+    async tanget(via: string): Promise<void> {
+        const now = new Date();
+        try {
+            await fs.utimes(via, now, now);
+        }
+        catch {
+            await Bun.write(via, '');
         }
     },
 
     // =========================================================================
-    // DIRECTORY OPERATIONS
+    // DIRECTORY OPERATIONS - Create
     // =========================================================================
+    // Verb: crea/creabit from "creare" (to create, bring forth)
 
-    async creaDir(dirPath: string): Promise<void> {
-        await fs.mkdir(dirPath, { recursive: true });
+    /** Create directory, recursive (sync) */
+    crea(via: string): void {
+        fsSync.mkdirSync(via, { recursive: true });
     },
 
-    async elenca(dirPath: string): Promise<string[]> {
-        return fs.readdir(dirPath);
+    /** Create directory, recursive (async) */
+    async creabit(via: string): Promise<void> {
+        await fs.mkdir(via, { recursive: true });
     },
 
-    async *ambula(dirPath: string): AsyncIterable<string> {
-        const entries = await fs.readdir(dirPath, { withFileTypes: true });
-        for (const entry of entries) {
-            const fullPath = path.join(dirPath, entry.name);
-            if (entry.isDirectory()) {
-                yield* solum.ambula(fullPath);
-            }
-            else {
-                yield fullPath;
-            }
-        }
+    // =========================================================================
+    // DIRECTORY OPERATIONS - List
+    // =========================================================================
+    // Verb: enumera/enumerabit from "enumerare" (to count out, enumerate)
+
+    /** List directory contents (sync) */
+    enumera(via: string): string[] {
+        return fsSync.readdirSync(via);
     },
 
-    async deleDir(dirPath: string): Promise<void> {
-        await fs.rmdir(dirPath);
+    /** List directory contents (async) */
+    async enumerabit(via: string): Promise<string[]> {
+        return fs.readdir(via);
     },
 
-    async deleArborem(dirPath: string): Promise<void> {
-        await fs.rm(dirPath, { recursive: true, force: true });
+    // =========================================================================
+    // DIRECTORY OPERATIONS - Prune/Remove
+    // =========================================================================
+    // Verb: amputa/amputabit from "amputare" (to cut off, prune)
+
+    /** Prune directory tree, recursive (sync) */
+    amputa(via: string): void {
+        fsSync.rmSync(via, { recursive: true, force: true });
+    },
+
+    /** Prune directory tree, recursive (async) */
+    async amputabit(via: string): Promise<void> {
+        await fs.rm(via, { recursive: true, force: true });
     },
 
     // =========================================================================
     // PATH UTILITIES
     // =========================================================================
+    // Pure functions on path strings, not filesystem I/O. Sync only.
 
-    iunge(parts: string[]): string {
-        return path.join(...parts);
+    /** Join path segments */
+    iunge(partes: string[]): string {
+        return path.join(...partes);
     },
 
-    dir(filePath: string): string {
-        return path.dirname(filePath);
+    /** Get directory part of path */
+    directorium(via: string): string {
+        return path.dirname(via);
     },
 
-    basis(filePath: string): string {
-        return path.basename(filePath);
+    /** Get filename part of path */
+    basis(via: string): string {
+        return path.basename(via);
     },
 
-    extensio(filePath: string): string {
-        return path.extname(filePath);
+    /** Get file extension (includes dot) */
+    extensio(via: string): string {
+        return path.extname(via);
     },
 
-    absolve(filePath: string): string {
-        return path.resolve(filePath);
+    /** Resolve to absolute path */
+    absolve(via: string): string {
+        return path.resolve(via);
     },
 
+    /** Get user's home directory */
     domus(): string {
         return os.homedir();
     },
 
-    temp(): string {
+    /** Get system temp directory */
+    temporarium(): string {
         return os.tmpdir();
     },
 };
