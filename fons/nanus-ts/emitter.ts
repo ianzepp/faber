@@ -330,7 +330,8 @@ function emitStmt(stmt: Stmt, indent = ''): string {
             if (currentOptions.sourceFile && importPath.startsWith('norma:')) {
                 const resolved = resolveNormaImport(importPath, currentOptions.sourceFile);
                 if (resolved) {
-                    importPath = resolved;
+                    // Strip .ts extension for TypeScript compatibility
+                    importPath = resolved.replace(/\.ts$/, '');
                 }
             }
 

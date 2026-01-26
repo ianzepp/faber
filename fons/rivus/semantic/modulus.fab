@@ -4,6 +4,8 @@
 # stdin-only; an external bundler handles imports before compilation.
 # Path helpers and export extraction remain for compatibility.
 
+§ ex "norma:solum" importa solum
+
 § ex "./typi" importa SemanticTypus, IGNOTUM, VACUUM, functioTypus, usitatumTypus, pactumTypus
 § ex "./typi" importa genusTypus, genericumTypus, primitivumTypus
 § ex "./scopus" importa SymbolumSpecies
@@ -320,6 +322,12 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
 # ============================================================================
 # MODULE RESOLUTION
 # ============================================================================
+
+# Test function to verify norma:solum works
+@ publica
+functio testSolum(de textus via) -> bivalens {
+    redde solum.exstat(via)
+}
 
 # Main entry point: resolve and load a local module
 # NOTE: Disabled - rivus is stdin-only, bundler handles imports

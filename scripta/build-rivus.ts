@@ -198,9 +198,9 @@ const _resolve = (basis: string, relativum: string): string => resolve(basis, re
 
 async function copyHalImplementations(): Promise<void> {
     const halSource = join(ROOT, 'fons', 'norma', 'hal', 'codegen', 'ts');
-    // WHY: Imports use ../../../norma/hal from cli/commands/, which resolves
-    // to opus/{compiler}/norma/hal (not opus/{compiler}/fons/norma/hal)
-    const halDest = join(dirname(OUTPUT), 'norma', 'hal');
+    // WHY: Imports from rivus source use paths like ../../norma/hal/codegen/ts/solum.ts
+    // which resolves relative to opus/{compiler}/fons/semantic/ -> opus/{compiler}/norma/hal/codegen/ts/
+    const halDest = join(dirname(OUTPUT), 'norma', 'hal', 'codegen', 'ts');
     await mkdir(halDest, { recursive: true });
 
     const glob = new Glob('*.ts');
@@ -417,6 +417,10 @@ async function main() {
         // Copy native CLI shim (provides I/O for the pure rivus library)
         await copyCliShim();
         console.log('  Copied CLI shim');
+
+        // Copy HAL implementations for norma:* imports
+        await copyHalImplementations();
+        console.log('  Copied HAL implementations');
 
         // Type check the generated TypeScript
         if (!skipTypecheck) {
