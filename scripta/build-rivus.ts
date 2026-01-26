@@ -85,11 +85,11 @@ const ROOT = join(import.meta.dir, '..');
 const SOURCE = join(ROOT, 'fons', 'rivus');
 
 const OUTPUT_PATH: Record<Compiler, string> = {
-    'faber-ts': join(ROOT, 'opus', 'faber-ts', 'fons'),
-    'nanus-ts': join(ROOT, 'opus', 'nanus-ts', 'fons'),
-    'nanus-go': join(ROOT, 'opus', 'nanus-go', 'fons'),
-    'nanus-rs': join(ROOT, 'opus', 'nanus-rs', 'src'),
-    'nanus-py': join(ROOT, 'opus', 'nanus-py', 'fons'),
+    'faber-ts': join(ROOT, 'opus', 'rivus-faber-ts', 'fons'),
+    'nanus-ts': join(ROOT, 'opus', 'rivus-nanus-ts', 'fons'),
+    'nanus-go': join(ROOT, 'opus', 'rivus-nanus-go', 'fons'),
+    'nanus-rs': join(ROOT, 'opus', 'rivus-nanus-rs', 'src'),
+    'nanus-py': join(ROOT, 'opus', 'rivus-nanus-py', 'fons'),
 };
 
 const FILE_EXT: Record<Target, string> = {
@@ -220,7 +220,7 @@ async function buildExecutablePy(): Promise<void> {
     const exeName = `rivus-${compiler}`;
     const outExe = join(binDir, exeName);
     const script = `#!/bin/bash
-exec python3 "$(dirname "$0")/../${compiler}/fons/rivus.py" "$@"
+exec python3 "$(dirname "$0")/../rivus-${compiler}/fons/rivus.py" "$@"
 `;
     await Bun.write(outExe, script);
     await $`chmod +x ${outExe}`.quiet();
