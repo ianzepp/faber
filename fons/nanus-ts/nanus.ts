@@ -85,7 +85,7 @@ async function main() {
         // emit
         const tokens = prepare(lex(source, filename));
         const ast = parse(tokens, filename);
-        const output = target === 'fab' ? emitFaber(ast) : emit(ast);
+        const output = target === 'fab' ? emitFaber(ast) : emit(ast, { sourceFile: filename });
         console.log(output);
     } catch (err) {
         console.error(formatError(err, source, filename));

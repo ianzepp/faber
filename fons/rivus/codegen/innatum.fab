@@ -56,7 +56,8 @@ functio getInnatumTranslation(de textus target, de textus recipiens, de textus m
             casu "incipit" reddit { method: "startsWith" } novum InnatumTranslation
             casu "finit" reddit { method: "endsWith" } novum InnatumTranslation
             casu "index" reddit { method: "indexOf" } novum InnatumTranslation
-            casu "ppiusula" reddit { method: "toUpperCase" } novum InnatumTranslation
+            casu "maiuscula" reddit { method: "toUpperCase" } novum InnatumTranslation
+            casu "muta" reddit { method: "replaceAll" } novum InnatumTranslation
             casu "minuscula" reddit { method: "toLowerCase" } novum InnatumTranslation
             casu "tonde" reddit { method: "trim" } novum InnatumTranslation
             casu "repone" reddit { method: "replace" } novum InnatumTranslation

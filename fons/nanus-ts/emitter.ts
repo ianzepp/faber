@@ -7,6 +7,9 @@
  * Supports the subset of Faber needed to compile rivus.
  */
 
+import { readFileSync, existsSync } from 'node:fs';
+import { dirname, resolve, relative } from 'node:path';
+
 import type {
     Typus,
     Expr,
@@ -93,7 +96,94 @@ const PROPERTY_ONLY: Set<string> = new Set([
     'ultimus', // .at(-1) (last element)
 ]);
 
-export function emit(mod: Modulus): string {
+// Emitter options
+export interface EmitOptions {
+    sourceFile?: string; // Source file path for resolving imports
+}
+
+// Cache for resolved HAL paths
+const halPathCache = new Map<string, string | null>();
+
+/**
+ * Find project root by looking for fons/norma/hal directory.
+ * Walks up from the source file directory.
+ */
+function findProjectRoot(fromPath: string): string | null {
+    let dir = dirname(fromPath);
+    for (let i = 0; i < 20; i++) { // Max 20 levels up
+        const halPath = resolve(dir, 'fons', 'norma', 'hal');
+        if (existsSync(halPath)) {
+            return dir;
+        }
+        const parent = dirname(dir);
+        if (parent === dir) break;
+        dir = parent;
+    }
+    return null;
+}
+
+/**
+ * Resolve a norma:X import to its HAL implementation path.
+ * Reads the HAL .fab file and extracts the @subsidia annotation.
+ */
+function resolveNormaImport(importPath: string, sourceFile: string): string | null {
+    // Only handle norma: imports
+    if (!importPath.startsWith('norma:')) {
+        return null;
+    }
+
+    const moduleName = importPath.slice(6); // Remove "norma:" prefix
+    const cacheKey = `${moduleName}:${sourceFile}`;
+
+    if (halPathCache.has(cacheKey)) {
+        return halPathCache.get(cacheKey)!;
+    }
+
+    const projectRoot = findProjectRoot(sourceFile);
+    if (!projectRoot) {
+        halPathCache.set(cacheKey, null);
+        return null;
+    }
+
+    const halFabPath = resolve(projectRoot, 'fons', 'norma', 'hal', `${moduleName}.fab`);
+    if (!existsSync(halFabPath)) {
+        halPathCache.set(cacheKey, null);
+        return null;
+    }
+
+    // Read the HAL .fab file and find @subsidia ts annotation
+    try {
+        const content = readFileSync(halFabPath, 'utf-8');
+        const match = content.match(/@\s*subsidia\s+ts\s+"([^"]+)"/);
+        if (!match) {
+            halPathCache.set(cacheKey, null);
+            return null;
+        }
+
+        // The subsidia path is relative to the HAL .fab file
+        const subsidiaPath = match[1];
+        const halDir = dirname(halFabPath);
+        const absoluteSubsidiaPath = resolve(halDir, subsidiaPath);
+
+        // Make relative to the source file's output location
+        const sourceDir = dirname(sourceFile);
+        const relativePath = relative(sourceDir, absoluteSubsidiaPath);
+
+        // Ensure it starts with ./ for relative imports
+        const result = relativePath.startsWith('.') ? relativePath : './' + relativePath;
+        halPathCache.set(cacheKey, result);
+        return result;
+    } catch {
+        halPathCache.set(cacheKey, null);
+        return null;
+    }
+}
+
+// Current emit options (set during emit call)
+let currentOptions: EmitOptions = {};
+
+export function emit(mod: Modulus, options: EmitOptions = {}): string {
+    currentOptions = options;
     const lines: string[] = [];
 
     for (const stmt of mod.corpus) {
@@ -234,7 +324,17 @@ function emitStmt(stmt: Stmt, indent = ''): string {
 
         case 'Importa': {
             const specs = stmt.specs.map(s => (s.imported === s.local ? s.imported : `${s.imported} as ${s.local}`));
-            return `${indent}import { ${specs.join(', ')} } from "${stmt.fons}";`;
+
+            // Try to resolve norma: imports to HAL implementations
+            let importPath = stmt.fons;
+            if (currentOptions.sourceFile && importPath.startsWith('norma:')) {
+                const resolved = resolveNormaImport(importPath, currentOptions.sourceFile);
+                if (resolved) {
+                    importPath = resolved;
+                }
+            }
+
+            return `${indent}import { ${specs.join(', ')} } from "${importPath}";`;
         }
 
         case 'Si': {

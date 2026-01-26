@@ -22,7 +22,7 @@
 export * from './ast';
 export { lex, prepare } from './lexer';
 export { parse, Parser } from './parser';
-export { emit } from './emitter';
+export { emit, type EmitOptions } from './emitter';
 export { emitFaber } from './emitter-faber';
 export { CompileError, formatError } from './errors';
 
@@ -51,7 +51,7 @@ export function compile(source: string, options: CompileOptions = {}): CompileRe
     try {
         const tokens = prepare(lex(source, filename));
         const ast = parse(tokens, filename);
-        const output = emit(ast);
+        const output = emit(ast, { sourceFile: filename });
 
         return { success: true, output };
     } catch (err) {
