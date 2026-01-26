@@ -1,0 +1,130 @@
+# http.fab - HTTP Client/Server
+#
+# Part of the Hardware Abstraction Layer (HAL).
+# For raw TCP/UDP sockets, see caelum.fab.
+#
+# Design notes:
+#   - Client: pete (GET), mitte (POST), pone (PUT), dele (DELETE), muta (PATCH)
+#   - Server: exspecta starts server, handler receives Rogatio, returns Replicatio
+#   - All client methods are async
+
+@ subsidia ts "codegen/ts/http.ts"
+pactum http {
+    # =========================================================================
+    # HTTP CLIENT - Simple Methods
+    # =========================================================================
+
+    # GET request
+    @ futura
+    @ externa
+    functio pete(textus url) -> Replicatio
+
+    # POST request with body
+    @ futura
+    @ externa
+    functio mitte(textus url, textus corpus) -> Replicatio
+
+    # PUT request with body
+    @ futura
+    @ externa
+    functio pone(textus url, textus corpus) -> Replicatio
+
+    # DELETE request
+    @ futura
+    @ externa
+    functio dele(textus url) -> Replicatio
+
+    # PATCH request with body
+    @ futura
+    @ externa
+    functio muta(textus url, textus corpus) -> Replicatio
+
+    # =========================================================================
+    # HTTP CLIENT - Advanced
+    # =========================================================================
+
+    # Generic request with full control
+    @ futura
+    @ externa
+    functio roga(textus modus, textus url, tabula<textus, textus> capita, textus corpus) -> Replicatio
+
+    # =========================================================================
+    # HTTP SERVER
+    # =========================================================================
+
+    # Start server on port with handler
+    @ futura
+    @ externa
+    functio exspecta(numerus portus, (Rogatio) -> Replicatio handler) -> Servitor
+
+    # =========================================================================
+    # RESPONSE BUILDERS (for server handlers)
+    # =========================================================================
+
+    # Create response with status, headers, body
+    @ externa
+    functio replicatio(numerus status, tabula<textus, textus> capita, textus corpus) -> Replicatio
+
+    # Create JSON response (sets Content-Type)
+    @ externa
+    functio replicatioJson(numerus status, quidlibet data) -> Replicatio
+
+    # Create redirect response
+    @ externa
+    functio redirectio(textus url) -> Replicatio
+}
+
+# HTTP Response
+pactum Replicatio {
+    @ externa
+    functio status() -> numerus
+
+    @ externa
+    functio corpus() -> textus
+
+    @ externa
+    functio corpusJson() -> quidlibet
+
+    @ externa
+    functio capita() -> tabula<textus, textus>
+
+    @ externa
+    functio caput(textus nomen) -> textus?
+
+    # True if status is 2xx
+    @ externa
+    functio bene() -> bivalens
+}
+
+# HTTP Request (received by server)
+pactum Rogatio {
+    @ externa
+    functio modus() -> textus
+
+    @ externa
+    functio via() -> textus
+
+    @ externa
+    functio corpus() -> textus
+
+    @ externa
+    functio corpusJson() -> quidlibet
+
+    @ externa
+    functio capita() -> tabula<textus, textus>
+
+    @ externa
+    functio caput(textus nomen) -> textus?
+
+    @ externa
+    functio param(textus nomen) -> textus?
+}
+
+# HTTP Server handle
+pactum Servitor {
+    @ externa
+    functio siste() -> vacuum
+
+    @ externa
+    functio portus() -> numerus
+}

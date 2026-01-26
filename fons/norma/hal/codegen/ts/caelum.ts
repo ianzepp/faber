@@ -1,253 +1,387 @@
 /**
- * caelum.ts - HTTP Client/Server Implementation
+ * caelum.ts - Network Socket Implementation (TCP/UDP)
  *
- * Native TypeScript implementation of the HAL HTTP interface.
- * Uses Bun's built-in fetch and Bun.serve().
+ * Native TypeScript implementation of the HAL network socket interface.
+ * Uses Bun's native TCP APIs when available, falls back to Node's net module.
+ * UDP uses Node's dgram module.
  */
 
-// =============================================================================
-// RESPONSE CLASS
-// =============================================================================
+import * as net from 'node:net';
+import * as tls from 'node:tls';
+import * as dgram from 'node:dgram';
+import * as fs from 'node:fs';
 
-export class Replicatio {
-    private _status: number;
-    private _body: string;
-    private _headers: Record<string, string>;
-
-    constructor(status: number, headers: Record<string, string>, body: string) {
-        this._status = status;
-        this._headers = headers;
-        this._body = body;
+// Strip IPv6-mapped IPv4 prefix (::ffff:) for consistency
+function normalizeAddress(addr: string): string {
+    if (addr.startsWith('::ffff:')) {
+        return addr.slice(7);
     }
-
-    status(): number {
-        return this._status;
-    }
-
-    corpus(): string {
-        return this._body;
-    }
-
-    corpusJson(): unknown {
-        return JSON.parse(this._body);
-    }
-
-    capita(): Record<string, string> {
-        return { ...this._headers };
-    }
-
-    caput(nomen: string): string | null {
-        // Headers are case-insensitive, normalize to lowercase for lookup
-        const lower = nomen.toLowerCase();
-        for (const [key, value] of Object.entries(this._headers)) {
-            if (key.toLowerCase() === lower) {
-                return value;
-            }
-        }
-        return null;
-    }
-
-    bene(): boolean {
-        return this._status >= 200 && this._status < 300;
-    }
-
-    // Internal: convert to Bun Response for server use
-    _toResponse(): Response {
-        return new Response(this._body, {
-            status: this._status,
-            headers: this._headers,
-        });
-    }
+    return addr;
 }
 
 // =============================================================================
-// REQUEST CLASS (for server handlers)
+// TCP LISTENER
 // =============================================================================
 
-export class Rogatio {
-    private _method: string;
-    private _url: URL;
-    private _body: string;
-    private _headers: Record<string, string>;
+export class Auscultator {
+    private server: net.Server;
+    private pendingConnections: Connexus[] = [];
+    private pendingResolvers: Array<(conn: Connexus) => void> = [];
+    private closed = false;
+    private localPort: number;
 
-    constructor(method: string, url: URL, headers: Record<string, string>, body: string) {
-        this._method = method;
-        this._url = url;
-        this._headers = headers;
-        this._body = body;
-    }
+    constructor(server: net.Server, port: number) {
+        this.server = server;
+        this.localPort = port;
 
-    modus(): string {
-        return this._method;
-    }
-
-    via(): string {
-        return this._url.pathname;
-    }
-
-    corpus(): string {
-        return this._body;
-    }
-
-    corpusJson(): unknown {
-        return JSON.parse(this._body);
-    }
-
-    capita(): Record<string, string> {
-        return { ...this._headers };
-    }
-
-    caput(nomen: string): string | null {
-        const lower = nomen.toLowerCase();
-        for (const [key, value] of Object.entries(this._headers)) {
-            if (key.toLowerCase() === lower) {
-                return value;
+        this.server.on('connection', (socket: net.Socket) => {
+            const conn = new Connexus(socket);
+            const resolver = this.pendingResolvers.shift();
+            if (resolver) {
+                resolver(conn);
             }
-        }
-        return null;
-    }
-
-    param(nomen: string): string | null {
-        return this._url.searchParams.get(nomen);
-    }
-
-    // Internal: create from Bun Request
-    static async _fromRequest(request: Request): Promise<Rogatio> {
-        const headers: Record<string, string> = {};
-        request.headers.forEach((value, key) => {
-            headers[key] = value;
+            else {
+                this.pendingConnections.push(conn);
+            }
         });
-
-        const body = await request.text();
-        return new Rogatio(request.method, new URL(request.url), headers, body);
-    }
-}
-
-// =============================================================================
-// SERVER CLASS
-// =============================================================================
-
-export class Servitor {
-    private _server: ReturnType<typeof Bun.serve>;
-
-    constructor(server: ReturnType<typeof Bun.serve>) {
-        this._server = server;
     }
 
-    siste(): void {
-        this._server.stop();
+    async accipe(): Promise<Connexus> {
+        if (this.closed) {
+            throw new Error('Listener is closed');
+        }
+
+        const pending = this.pendingConnections.shift();
+        if (pending) {
+            return pending;
+        }
+
+        return new Promise((resolve) => {
+            this.pendingResolvers.push(resolve);
+        });
+    }
+
+    claude(): void {
+        this.closed = true;
+        this.server.close();
+        // Reject any pending accipe calls
+        this.pendingResolvers = [];
     }
 
     portus(): number {
-        return this._server.port;
+        return this.localPort;
     }
 }
 
 // =============================================================================
-// MAIN MODULE
+// TCP CONNECTION
 // =============================================================================
 
-type Handler = (rogatio: Rogatio) => Replicatio | Promise<Replicatio>;
+export class Connexus {
+    private socket: net.Socket;
+    private dataBuffer: Buffer[] = [];
+    private dataResolvers: Array<(data: Uint8Array) => void> = [];
+    private closed = false;
 
-async function responseFromFetch(response: Response): Promise<Replicatio> {
-    const headers: Record<string, string> = {};
-    response.headers.forEach((value, key) => {
-        headers[key] = value;
-    });
-    const body = await response.text();
-    return new Replicatio(response.status, headers, body);
+    constructor(socket: net.Socket) {
+        this.socket = socket;
+
+        this.socket.on('data', (chunk: Buffer) => {
+            const resolver = this.dataResolvers.shift();
+            if (resolver) {
+                resolver(new Uint8Array(chunk));
+            }
+            else {
+                this.dataBuffer.push(chunk);
+            }
+        });
+
+        this.socket.on('close', () => {
+            this.closed = true;
+            // Resolve pending reads with empty data
+            for (const resolver of this.dataResolvers) {
+                resolver(new Uint8Array(0));
+            }
+            this.dataResolvers = [];
+        });
+
+        this.socket.on('error', () => {
+            this.closed = true;
+        });
+    }
+
+    async lege(): Promise<Uint8Array> {
+        if (this.dataBuffer.length > 0) {
+            const chunk = this.dataBuffer.shift()!;
+            return new Uint8Array(chunk);
+        }
+
+        if (this.closed) {
+            return new Uint8Array(0);
+        }
+
+        return new Promise((resolve) => {
+            this.dataResolvers.push(resolve);
+        });
+    }
+
+    async legeUsque(n: number): Promise<Uint8Array> {
+        // Collect up to n bytes
+        const result: number[] = [];
+
+        while (result.length < n) {
+            if (this.dataBuffer.length > 0) {
+                const chunk = this.dataBuffer[0];
+                const needed = n - result.length;
+
+                if (chunk.length <= needed) {
+                    this.dataBuffer.shift();
+                    result.push(...chunk);
+                }
+                else {
+                    // Take partial chunk
+                    result.push(...chunk.slice(0, needed));
+                    this.dataBuffer[0] = chunk.slice(needed);
+                }
+            }
+            else if (this.closed) {
+                break;
+            }
+            else {
+                // Wait for more data
+                const data = await this.lege();
+                if (data.length === 0) {
+                    break; // Connection closed
+                }
+                this.dataBuffer.unshift(Buffer.from(data));
+            }
+        }
+
+        return new Uint8Array(result);
+    }
+
+    async scribe(data: Uint8Array): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.socket.write(Buffer.from(data), (err) => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    claude(): void {
+        this.closed = true;
+        this.socket.destroy();
+    }
+
+    hospesRemotus(): string {
+        return normalizeAddress(this.socket.remoteAddress ?? '');
+    }
+
+    portusRemotus(): number {
+        return this.socket.remotePort ?? 0;
+    }
+
+    hospesLocalis(): string {
+        return normalizeAddress(this.socket.localAddress ?? '');
+    }
+
+    portusLocalis(): number {
+        return this.socket.localPort ?? 0;
+    }
 }
+
+// =============================================================================
+// UDP DATAGRAM
+// =============================================================================
+
+export class DatumUdp {
+    private _data: Uint8Array;
+    private _hospes: string;
+    private _portus: number;
+
+    constructor(data: Uint8Array, hospes: string, portus: number) {
+        this._data = data;
+        this._hospes = hospes;
+        this._portus = portus;
+    }
+
+    data(): Uint8Array {
+        return this._data;
+    }
+
+    hospes(): string {
+        return this._hospes;
+    }
+
+    portus(): number {
+        return this._portus;
+    }
+}
+
+// =============================================================================
+// UDP SOCKET
+// =============================================================================
+
+export class SocketumUdp {
+    private socket: dgram.Socket;
+    private pendingMessages: DatumUdp[] = [];
+    private pendingResolvers: Array<(msg: DatumUdp) => void> = [];
+    private closed = false;
+    private localPort: number;
+
+    constructor(socket: dgram.Socket, port: number) {
+        this.socket = socket;
+        this.localPort = port;
+
+        this.socket.on('message', (msg: Buffer, rinfo: dgram.RemoteInfo) => {
+            const datum = new DatumUdp(new Uint8Array(msg), rinfo.address, rinfo.port);
+            const resolver = this.pendingResolvers.shift();
+            if (resolver) {
+                resolver(datum);
+            }
+            else {
+                this.pendingMessages.push(datum);
+            }
+        });
+    }
+
+    async recipe(): Promise<DatumUdp> {
+        if (this.closed) {
+            throw new Error('Socket is closed');
+        }
+
+        const pending = this.pendingMessages.shift();
+        if (pending) {
+            return pending;
+        }
+
+        return new Promise((resolve) => {
+            this.pendingResolvers.push(resolve);
+        });
+    }
+
+    async mitte(hospes: string, portus: number, data: Uint8Array): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.socket.send(Buffer.from(data), portus, hospes, (err) => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    claude(): void {
+        this.closed = true;
+        this.socket.close();
+    }
+
+    portus(): number {
+        return this.localPort;
+    }
+}
+
+// =============================================================================
+// MAIN MODULE EXPORT
+// =============================================================================
 
 export const caelum = {
     // =========================================================================
-    // HTTP CLIENT - Simple Methods
+    // TCP SERVER
     // =========================================================================
 
-    async pete(url: string): Promise<Replicatio> {
-        const response = await fetch(url, { method: 'GET' });
-        return responseFromFetch(response);
-    },
+    async ausculta(portus: number): Promise<Auscultator> {
+        return new Promise((resolve, reject) => {
+            const server = net.createServer();
 
-    async mitte(url: string, corpus: string): Promise<Replicatio> {
-        const response = await fetch(url, {
-            method: 'POST',
-            body: corpus,
+            server.on('error', reject);
+
+            server.listen(portus, () => {
+                const addr = server.address() as net.AddressInfo;
+                resolve(new Auscultator(server, addr.port));
+            });
         });
-        return responseFromFetch(response);
     },
 
-    async pone(url: string, corpus: string): Promise<Replicatio> {
-        const response = await fetch(url, {
-            method: 'PUT',
-            body: corpus,
+    async auscultaTls(portus: number, certPath: string, keyPath: string): Promise<Auscultator> {
+        return new Promise((resolve, reject) => {
+            const options: tls.TlsOptions = {
+                cert: fs.readFileSync(certPath),
+                key: fs.readFileSync(keyPath),
+            };
+
+            const server = tls.createServer(options);
+
+            server.on('error', reject);
+
+            server.listen(portus, () => {
+                const addr = server.address() as net.AddressInfo;
+                resolve(new Auscultator(server, addr.port));
+            });
         });
-        return responseFromFetch(response);
     },
 
-    async dele(url: string): Promise<Replicatio> {
-        const response = await fetch(url, { method: 'DELETE' });
-        return responseFromFetch(response);
-    },
+    // =========================================================================
+    // TCP CLIENT
+    // =========================================================================
 
-    async muta(url: string, corpus: string): Promise<Replicatio> {
-        const response = await fetch(url, {
-            method: 'PATCH',
-            body: corpus,
+    async connecta(hospes: string, portus: number): Promise<Connexus> {
+        return new Promise((resolve, reject) => {
+            const socket = net.createConnection({ host: hospes, port: portus }, () => {
+                resolve(new Connexus(socket));
+            });
+
+            socket.on('error', reject);
         });
-        return responseFromFetch(response);
     },
 
-    // =========================================================================
-    // HTTP CLIENT - Advanced
-    // =========================================================================
+    async connectaTls(hospes: string, portus: number): Promise<Connexus> {
+        return new Promise((resolve, reject) => {
+            const socket = tls.connect({ host: hospes, port: portus }, () => {
+                resolve(new Connexus(socket));
+            });
 
-    async roga(
-        modus: string,
-        url: string,
-        capita: Record<string, string>,
-        corpus: string
-    ): Promise<Replicatio> {
-        const response = await fetch(url, {
-            method: modus,
-            headers: capita,
-            body: corpus || undefined,
+            socket.on('error', reject);
         });
-        return responseFromFetch(response);
     },
 
     // =========================================================================
-    // HTTP SERVER
+    // UDP
     // =========================================================================
 
-    async exspecta(portus: number, handler: Handler): Promise<Servitor> {
-        const server = Bun.serve({
-            port: portus,
-            async fetch(request: Request): Promise<Response> {
-                const rogatio = await Rogatio._fromRequest(request);
-                const replicatio = await handler(rogatio);
-                return replicatio._toResponse();
-            },
+    async bindUdp(portus: number): Promise<SocketumUdp> {
+        return new Promise((resolve, reject) => {
+            const socket = dgram.createSocket('udp4');
+
+            socket.on('error', reject);
+
+            socket.bind(portus, () => {
+                const addr = socket.address();
+                resolve(new SocketumUdp(socket, addr.port));
+            });
         });
-        return new Servitor(server);
     },
 
-    // =========================================================================
-    // RESPONSE BUILDERS
-    // =========================================================================
+    async mitteUdp(hospes: string, portus: number, data: Uint8Array): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const socket = dgram.createSocket('udp4');
 
-    replicatio(status: number, capita: Record<string, string>, corpus: string): Replicatio {
-        return new Replicatio(status, capita, corpus);
-    },
-
-    replicatioJson(status: number, data: unknown): Replicatio {
-        return new Replicatio(
-            status,
-            { 'Content-Type': 'application/json' },
-            JSON.stringify(data)
-        );
-    },
-
-    redirectio(url: string): Replicatio {
-        return new Replicatio(302, { Location: url }, '');
+            socket.send(Buffer.from(data), portus, hospes, (err) => {
+                socket.close();
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve();
+                }
+            });
+        });
     },
 };

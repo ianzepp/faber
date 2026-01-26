@@ -1,133 +1,143 @@
-# caelum.fab - HTTP Client/Server Device
+# caelum.fab - Network Socket Device (TCP/UDP)
 #
-# Etymology: "caelum" - sky, heaven. The cloud, the network above.
+# Etymology: "caelum" - sky, ether. The transport layer beneath HTTP.
 #            Counterpart to solum (ground/local I/O).
 #
 # Part of the Hardware Abstraction Layer (HAL).
-# HTTP subset of NetworkDevice from monk-os-kernel.
-# For raw TCP/UDP, see rete.fab.
+# For HTTP, see http.fab.
 #
 # Design notes:
-#   - Client: pete (GET), mitte (POST), pone (PUT), dele (DELETE), muta (PATCH)
-#   - Server: exspecta starts server, handler receives Rogatio, returns Replicatio
-#   - All client methods are async
+#   - TCP: ausculta (listen), connecta (connect)
+#   - Sockets are bidirectional byte streams
+#   - All operations are async
 
 @ subsidia ts "codegen/ts/caelum.ts"
 pactum caelum {
     # =========================================================================
-    # HTTP CLIENT - Simple Methods
+    # TCP SERVER
     # =========================================================================
 
-    # GET request
+    # Create TCP listener on port
     @ futura
     @ externa
-    functio pete(textus url) -> Replicatio
+    functio ausculta(numerus portus) -> Auscultator
 
-    # POST request with body
+    # Create TCP listener with TLS
     @ futura
     @ externa
-    functio mitte(textus url, textus corpus) -> Replicatio
-
-    # PUT request with body
-    @ futura
-    @ externa
-    functio pone(textus url, textus corpus) -> Replicatio
-
-    # DELETE request
-    @ futura
-    @ externa
-    functio dele(textus url) -> Replicatio
-
-    # PATCH request with body
-    @ futura
-    @ externa
-    functio muta(textus url, textus corpus) -> Replicatio
+    functio auscultaTls(numerus portus, textus certPath, textus keyPath) -> Auscultator
 
     # =========================================================================
-    # HTTP CLIENT - Advanced
+    # TCP CLIENT
     # =========================================================================
 
-    # Generic request with full control
+    # Connect to TCP server
     @ futura
     @ externa
-    functio roga(textus modus, textus url, tabula<textus, textus> capita, textus corpus) -> Replicatio
+    functio connecta(textus hospes, numerus portus) -> Connexus
 
-    # =========================================================================
-    # HTTP SERVER
-    # =========================================================================
-
-    # Start server on port with handler
+    # Connect with TLS
     @ futura
     @ externa
-    functio exspecta(numerus portus, (Rogatio) -> Replicatio handler) -> Servitor
+    functio connectaTls(textus hospes, numerus portus) -> Connexus
 
     # =========================================================================
-    # RESPONSE BUILDERS (for server handlers)
+    # UDP
     # =========================================================================
 
-    # Create response with status, headers, body
+    # Create UDP socket bound to port
+    @ futura
     @ externa
-    functio replicatio(numerus status, tabula<textus, textus> capita, textus corpus) -> Replicatio
+    functio bindUdp(numerus portus) -> SocketumUdp
 
-    # Create JSON response (sets Content-Type)
+    # Send UDP datagram (unconnected)
+    @ futura
     @ externa
-    functio replicatioJson(numerus status, quidlibet data) -> Replicatio
-
-    # Create redirect response
-    @ externa
-    functio redirectio(textus url) -> Replicatio
+    functio mitteUdp(textus hospes, numerus portus, octeti data) -> vacuum
 }
 
-# HTTP Response
-pactum Replicatio {
+# TCP Listener
+pactum Auscultator {
+    # Accept next incoming connection
+    @ futura
     @ externa
-    functio status() -> numerus
+    functio accipe() -> Connexus
 
+    # Stop listening
     @ externa
-    functio corpus() -> textus
+    functio claude() -> vacuum
 
+    # Local port
     @ externa
-    functio corpusJson() -> quidlibet
-
-    @ externa
-    functio capita() -> tabula<textus, textus>
-
-    @ externa
-    functio caput(textus nomen) -> textus?
-
-    # True if status is 2xx
-    @ externa
-    functio bene() -> bivalens
+    functio portus() -> numerus
 }
 
-# HTTP Request (received by server)
-pactum Rogatio {
+# TCP Socket (connected)
+pactum Connexus {
+    # Read bytes (blocks until data available)
+    @ futura
     @ externa
-    functio modus() -> textus
+    functio lege() -> octeti
 
+    # Read up to n bytes
+    @ futura
     @ externa
-    functio via() -> textus
+    functio legeUsque(numerus n) -> octeti
 
+    # Write bytes
+    @ futura
     @ externa
-    functio corpus() -> textus
+    functio scribe(octeti data) -> vacuum
 
+    # Close connection
     @ externa
-    functio corpusJson() -> quidlibet
+    functio claude() -> vacuum
 
+    # Remote address
     @ externa
-    functio capita() -> tabula<textus, textus>
+    functio hospesRemotus() -> textus
 
+    # Remote port
     @ externa
-    functio caput(textus nomen) -> textus?
+    functio portusRemotus() -> numerus
 
+    # Local address
     @ externa
-    functio param(textus nomen) -> textus?
+    functio hospesLocalis() -> textus
+
+    # Local port
+    @ externa
+    functio portusLocalis() -> numerus
 }
 
-# HTTP Server handle
-pactum Servitor {
+# UDP Socket
+pactum SocketumUdp {
+    # Receive datagram (returns data and sender info)
+    @ futura
     @ externa
-    functio siste() -> vacuum
+    functio recipe() -> DatumUdp
+
+    # Send datagram to address
+    @ futura
+    @ externa
+    functio mitte(textus hospes, numerus portus, octeti data) -> vacuum
+
+    # Close socket
+    @ externa
+    functio claude() -> vacuum
+
+    # Local port
+    @ externa
+    functio portus() -> numerus
+}
+
+# UDP Datagram
+pactum DatumUdp {
+    @ externa
+    functio data() -> octeti
+
+    @ externa
+    functio hospes() -> textus
 
     @ externa
     functio portus() -> numerus

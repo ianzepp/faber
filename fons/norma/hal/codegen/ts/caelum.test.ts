@@ -1,265 +1,279 @@
-import { test, expect, describe, beforeAll, afterAll } from 'bun:test';
-import { caelum, Replicatio, Rogatio, Servitor } from './caelum';
+import { test, expect, describe, afterEach } from 'bun:test';
+import { caelum, Auscultator, Connexus, SocketumUdp } from './caelum';
+
+// Track resources for cleanup
+const listeners: Auscultator[] = [];
+const connections: Connexus[] = [];
+const udpSockets: SocketumUdp[] = [];
+
+afterEach(() => {
+    // Clean up all resources
+    for (const conn of connections) {
+        try { conn.claude(); } catch { /* ignore */ }
+    }
+    for (const listener of listeners) {
+        try { listener.claude(); } catch { /* ignore */ }
+    }
+    for (const sock of udpSockets) {
+        try { sock.claude(); } catch { /* ignore */ }
+    }
+    connections.length = 0;
+    listeners.length = 0;
+    udpSockets.length = 0;
+});
 
 describe('caelum HAL', () => {
-    let server: Servitor;
-    let baseUrl: string;
+    describe('TCP', () => {
+        test('ausculta creates listener on port', async () => {
+            const listener = await caelum.ausculta(0); // 0 = random available port
+            listeners.push(listener);
 
-    // Track received requests for verification
-    let lastRequest: {
-        method: string;
-        path: string;
-        body: string;
-        headers: Record<string, string>;
-        params: Record<string, string | null>;
-    } | null = null;
-
-    beforeAll(async () => {
-        server = await caelum.exspecta(0, (rogatio: Rogatio) => {
-            // Store request info for test verification
-            lastRequest = {
-                method: rogatio.modus(),
-                path: rogatio.via(),
-                body: rogatio.corpus(),
-                headers: rogatio.capita(),
-                params: {
-                    foo: rogatio.param('foo'),
-                    bar: rogatio.param('bar'),
-                },
-            };
-
-            // Route based on path
-            const path = rogatio.via();
-
-            if (path === '/echo') {
-                return caelum.replicatioJson(200, {
-                    method: rogatio.modus(),
-                    body: rogatio.corpus(),
-                });
-            }
-
-            if (path === '/json') {
-                return caelum.replicatioJson(200, { message: 'hello', count: 42 });
-            }
-
-            if (path === '/text') {
-                return caelum.replicatio(200, { 'Content-Type': 'text/plain' }, 'Hello, World!');
-            }
-
-            if (path === '/headers') {
-                return caelum.replicatio(
-                    200,
-                    {
-                        'X-Custom-Header': 'custom-value',
-                        'Content-Type': 'text/plain',
-                    },
-                    'check headers'
-                );
-            }
-
-            if (path === '/status/201') {
-                return caelum.replicatio(201, {}, 'created');
-            }
-
-            if (path === '/status/404') {
-                return caelum.replicatio(404, {}, 'not found');
-            }
-
-            if (path === '/status/500') {
-                return caelum.replicatio(500, {}, 'server error');
-            }
-
-            if (path === '/redirect') {
-                return caelum.redirectio('/target');
-            }
-
-            return caelum.replicatio(404, {}, 'Not Found');
+            expect(listener.portus()).toBeGreaterThan(0);
         });
 
-        baseUrl = `http://localhost:${server.portus()}`;
-    });
+        test('connecta connects to listener', async () => {
+            const listener = await caelum.ausculta(0);
+            listeners.push(listener);
 
-    afterAll(() => {
-        server.siste();
-    });
+            const port = listener.portus();
+            const clientConn = await caelum.connecta('127.0.0.1', port);
+            connections.push(clientConn);
 
-    describe('Servitor', () => {
-        test('portus returns the port number', () => {
-            expect(server.portus()).toBeGreaterThan(0);
-        });
-    });
+            const serverConn = await listener.accipe();
+            connections.push(serverConn);
 
-    describe('HTTP methods', () => {
-        test('pete performs GET request', async () => {
-            const response = await caelum.pete(`${baseUrl}/echo`);
-            expect(response.status()).toBe(200);
-            expect(lastRequest?.method).toBe('GET');
+            expect(clientConn.hospesRemotus()).toBe('127.0.0.1');
+            expect(clientConn.portusRemotus()).toBe(port);
+            expect(serverConn.portusLocalis()).toBe(port);
         });
 
-        test('mitte performs POST request', async () => {
-            const response = await caelum.mitte(`${baseUrl}/echo`, 'post body');
-            expect(response.status()).toBe(200);
-            expect(lastRequest?.method).toBe('POST');
-            expect(lastRequest?.body).toBe('post body');
+        test('send and receive data client to server', async () => {
+            const listener = await caelum.ausculta(0);
+            listeners.push(listener);
+
+            const clientConn = await caelum.connecta('127.0.0.1', listener.portus());
+            connections.push(clientConn);
+
+            const serverConn = await listener.accipe();
+            connections.push(serverConn);
+
+            const message = new TextEncoder().encode('Hello, server!');
+            await clientConn.scribe(message);
+
+            const received = await serverConn.lege();
+            expect(new TextDecoder().decode(received)).toBe('Hello, server!');
         });
 
-        test('pone performs PUT request', async () => {
-            const response = await caelum.pone(`${baseUrl}/echo`, 'put body');
-            expect(response.status()).toBe(200);
-            expect(lastRequest?.method).toBe('PUT');
-            expect(lastRequest?.body).toBe('put body');
+        test('send and receive data server to client', async () => {
+            const listener = await caelum.ausculta(0);
+            listeners.push(listener);
+
+            const clientConn = await caelum.connecta('127.0.0.1', listener.portus());
+            connections.push(clientConn);
+
+            const serverConn = await listener.accipe();
+            connections.push(serverConn);
+
+            const message = new TextEncoder().encode('Hello, client!');
+            await serverConn.scribe(message);
+
+            const received = await clientConn.lege();
+            expect(new TextDecoder().decode(received)).toBe('Hello, client!');
         });
 
-        test('dele performs DELETE request', async () => {
-            const response = await caelum.dele(`${baseUrl}/echo`);
-            expect(response.status()).toBe(200);
-            expect(lastRequest?.method).toBe('DELETE');
+        test('bidirectional communication', async () => {
+            const listener = await caelum.ausculta(0);
+            listeners.push(listener);
+
+            const clientConn = await caelum.connecta('127.0.0.1', listener.portus());
+            connections.push(clientConn);
+
+            const serverConn = await listener.accipe();
+            connections.push(serverConn);
+
+            // Client sends
+            await clientConn.scribe(new TextEncoder().encode('ping'));
+            const serverReceived = await serverConn.lege();
+            expect(new TextDecoder().decode(serverReceived)).toBe('ping');
+
+            // Server responds
+            await serverConn.scribe(new TextEncoder().encode('pong'));
+            const clientReceived = await clientConn.lege();
+            expect(new TextDecoder().decode(clientReceived)).toBe('pong');
         });
 
-        test('muta performs PATCH request', async () => {
-            const response = await caelum.muta(`${baseUrl}/echo`, 'patch body');
-            expect(response.status()).toBe(200);
-            expect(lastRequest?.method).toBe('PATCH');
-            expect(lastRequest?.body).toBe('patch body');
-        });
-    });
+        test('multiple clients can connect', async () => {
+            const listener = await caelum.ausculta(0);
+            listeners.push(listener);
 
-    describe('roga (generic request)', () => {
-        test('sends custom method and headers', async () => {
-            const response = await caelum.roga(
-                'POST',
-                `${baseUrl}/echo`,
-                { 'X-Test-Header': 'test-value', 'Content-Type': 'application/json' },
-                '{"test": true}'
-            );
-            expect(response.status()).toBe(200);
-            expect(lastRequest?.method).toBe('POST');
-            expect(lastRequest?.body).toBe('{"test": true}');
-            expect(lastRequest?.headers['x-test-header']).toBe('test-value');
-        });
-    });
+            const client1 = await caelum.connecta('127.0.0.1', listener.portus());
+            connections.push(client1);
+            const server1 = await listener.accipe();
+            connections.push(server1);
 
-    describe('Replicatio', () => {
-        test('status returns HTTP status code', async () => {
-            const r201 = await caelum.pete(`${baseUrl}/status/201`);
-            expect(r201.status()).toBe(201);
+            const client2 = await caelum.connecta('127.0.0.1', listener.portus());
+            connections.push(client2);
+            const server2 = await listener.accipe();
+            connections.push(server2);
 
-            const r404 = await caelum.pete(`${baseUrl}/status/404`);
-            expect(r404.status()).toBe(404);
+            // Send different messages
+            await client1.scribe(new TextEncoder().encode('from client 1'));
+            await client2.scribe(new TextEncoder().encode('from client 2'));
 
-            const r500 = await caelum.pete(`${baseUrl}/status/500`);
-            expect(r500.status()).toBe(500);
+            const msg1 = await server1.lege();
+            const msg2 = await server2.lege();
+
+            expect(new TextDecoder().decode(msg1)).toBe('from client 1');
+            expect(new TextDecoder().decode(msg2)).toBe('from client 2');
         });
 
-        test('corpus returns body as text', async () => {
-            const response = await caelum.pete(`${baseUrl}/text`);
-            expect(response.corpus()).toBe('Hello, World!');
+        test('legeUsque reads exact number of bytes', async () => {
+            const listener = await caelum.ausculta(0);
+            listeners.push(listener);
+
+            const clientConn = await caelum.connecta('127.0.0.1', listener.portus());
+            connections.push(clientConn);
+
+            const serverConn = await listener.accipe();
+            connections.push(serverConn);
+
+            // Send 10 bytes
+            await clientConn.scribe(new TextEncoder().encode('0123456789'));
+
+            // Read exactly 5 bytes
+            const first5 = await serverConn.legeUsque(5);
+            expect(new TextDecoder().decode(first5)).toBe('01234');
+
+            // Read remaining 5 bytes
+            const next5 = await serverConn.legeUsque(5);
+            expect(new TextDecoder().decode(next5)).toBe('56789');
         });
 
-        test('corpusJson parses JSON body', async () => {
-            const response = await caelum.pete(`${baseUrl}/json`);
-            const json = response.corpusJson() as { message: string; count: number };
-            expect(json.message).toBe('hello');
-            expect(json.count).toBe(42);
+        test('address getters return correct values', async () => {
+            const listener = await caelum.ausculta(0);
+            listeners.push(listener);
+
+            const clientConn = await caelum.connecta('127.0.0.1', listener.portus());
+            connections.push(clientConn);
+
+            const serverConn = await listener.accipe();
+            connections.push(serverConn);
+
+            // Client sees server's port as remote
+            expect(clientConn.portusRemotus()).toBe(listener.portus());
+            expect(clientConn.hospesRemotus()).toBe('127.0.0.1');
+
+            // Server sees client's port as remote
+            expect(serverConn.portusRemotus()).toBe(clientConn.portusLocalis());
+            expect(serverConn.hospesRemotus()).toBe('127.0.0.1');
         });
 
-        test('capita returns all headers', async () => {
-            const response = await caelum.pete(`${baseUrl}/headers`);
-            const headers = response.capita();
-            expect(headers).toBeDefined();
-            // Headers object should exist
-            expect(typeof headers).toBe('object');
-        });
+        test('connections close cleanly', async () => {
+            const listener = await caelum.ausculta(0);
+            listeners.push(listener);
 
-        test('caput returns specific header (case-insensitive)', async () => {
-            const response = await caelum.pete(`${baseUrl}/headers`);
-            expect(response.caput('x-custom-header')).toBe('custom-value');
-            expect(response.caput('X-Custom-Header')).toBe('custom-value');
-            expect(response.caput('X-CUSTOM-HEADER')).toBe('custom-value');
-            expect(response.caput('x-nonexistent')).toBe(null);
-        });
+            const clientConn = await caelum.connecta('127.0.0.1', listener.portus());
+            const serverConn = await listener.accipe();
 
-        test('bene returns true for 2xx status codes', async () => {
-            const r200 = await caelum.pete(`${baseUrl}/text`);
-            expect(r200.bene()).toBe(true);
+            // Close client
+            clientConn.claude();
 
-            const r201 = await caelum.pete(`${baseUrl}/status/201`);
-            expect(r201.bene()).toBe(true);
+            // Server should get empty data on read (connection closed)
+            const data = await serverConn.lege();
+            expect(data.length).toBe(0);
 
-            const r404 = await caelum.pete(`${baseUrl}/status/404`);
-            expect(r404.bene()).toBe(false);
-
-            const r500 = await caelum.pete(`${baseUrl}/status/500`);
-            expect(r500.bene()).toBe(false);
+            serverConn.claude();
+            listener.claude();
         });
     });
 
-    describe('Rogatio (server receives)', () => {
-        test('modus returns HTTP method', async () => {
-            await caelum.mitte(`${baseUrl}/echo`, 'test');
-            expect(lastRequest?.method).toBe('POST');
+    describe('UDP', () => {
+        test('bindUdp creates socket on port', async () => {
+            const socket = await caelum.bindUdp(0);
+            udpSockets.push(socket);
+
+            expect(socket.portus()).toBeGreaterThan(0);
         });
 
-        test('via returns pathname', async () => {
-            await caelum.pete(`${baseUrl}/echo`);
-            expect(lastRequest?.path).toBe('/echo');
+        test('send and receive datagram', async () => {
+            const receiver = await caelum.bindUdp(0);
+            udpSockets.push(receiver);
+
+            const sender = await caelum.bindUdp(0);
+            udpSockets.push(sender);
+
+            const message = new TextEncoder().encode('Hello, UDP!');
+            await sender.mitte('127.0.0.1', receiver.portus(), message);
+
+            const datum = await receiver.recipe();
+            expect(new TextDecoder().decode(datum.data())).toBe('Hello, UDP!');
+            expect(datum.hospes()).toBe('127.0.0.1');
+            expect(datum.portus()).toBe(sender.portus());
         });
 
-        test('corpus returns request body', async () => {
-            await caelum.mitte(`${baseUrl}/echo`, 'request body content');
-            expect(lastRequest?.body).toBe('request body content');
+        test('mitteUdp sends without binding', async () => {
+            const receiver = await caelum.bindUdp(0);
+            udpSockets.push(receiver);
+
+            const message = new TextEncoder().encode('One-shot UDP');
+            await caelum.mitteUdp('127.0.0.1', receiver.portus(), message);
+
+            const datum = await receiver.recipe();
+            expect(new TextDecoder().decode(datum.data())).toBe('One-shot UDP');
         });
 
-        test('param returns query parameters', async () => {
-            await caelum.pete(`${baseUrl}/echo?foo=value1&bar=value2`);
-            expect(lastRequest?.params.foo).toBe('value1');
-            expect(lastRequest?.params.bar).toBe('value2');
+        test('DatumUdp returns correct sender info', async () => {
+            const receiver = await caelum.bindUdp(0);
+            udpSockets.push(receiver);
+
+            const sender = await caelum.bindUdp(0);
+            udpSockets.push(sender);
+
+            await sender.mitte('127.0.0.1', receiver.portus(), new Uint8Array([1, 2, 3]));
+
+            const datum = await receiver.recipe();
+            expect(datum.data()).toEqual(new Uint8Array([1, 2, 3]));
+            expect(datum.hospes()).toBe('127.0.0.1');
+            expect(datum.portus()).toBe(sender.portus());
         });
 
-        test('param returns null for missing parameter', async () => {
-            await caelum.pete(`${baseUrl}/echo?foo=value1`);
-            expect(lastRequest?.params.foo).toBe('value1');
-            expect(lastRequest?.params.bar).toBe(null);
+        test('UDP socket closes cleanly', async () => {
+            const socket = await caelum.bindUdp(0);
+
+            // Should not throw
+            socket.claude();
         });
 
-        test('caput returns request header', async () => {
-            await caelum.roga('GET', `${baseUrl}/echo`, { 'X-Request-Header': 'req-value' }, '');
-            expect(lastRequest?.headers['x-request-header']).toBe('req-value');
-        });
-    });
+        test('multiple datagrams queued', async () => {
+            const receiver = await caelum.bindUdp(0);
+            udpSockets.push(receiver);
 
-    describe('response builders', () => {
-        test('replicatio creates response with status, headers, body', () => {
-            const response = caelum.replicatio(
-                201,
-                { 'X-Test': 'value' },
-                'body content'
-            );
-            expect(response.status()).toBe(201);
-            expect(response.corpus()).toBe('body content');
-            expect(response.caput('x-test')).toBe('value');
-        });
+            const sender = await caelum.bindUdp(0);
+            udpSockets.push(sender);
 
-        test('replicatioJson creates JSON response with correct content-type', () => {
-            const response = caelum.replicatioJson(200, { key: 'value' });
-            expect(response.status()).toBe(200);
-            expect(response.caput('content-type')).toBe('application/json');
-            expect(response.corpusJson()).toEqual({ key: 'value' });
-        });
+            // Send multiple datagrams
+            await sender.mitte('127.0.0.1', receiver.portus(), new TextEncoder().encode('msg1'));
+            await sender.mitte('127.0.0.1', receiver.portus(), new TextEncoder().encode('msg2'));
+            await sender.mitte('127.0.0.1', receiver.portus(), new TextEncoder().encode('msg3'));
 
-        test('redirectio creates redirect response', () => {
-            const response = caelum.redirectio('/new-location');
-            expect(response.status()).toBe(302);
-            expect(response.caput('location')).toBe('/new-location');
-        });
-    });
+            // Small delay to ensure all messages arrive
+            await new Promise(resolve => setTimeout(resolve, 50));
 
-    describe('roundtrip', () => {
-        test('JSON roundtrip through server', async () => {
-            const original = { name: 'test', values: [1, 2, 3], nested: { a: true } };
-            const response = await caelum.mitte(`${baseUrl}/echo`, JSON.stringify(original));
-            const received = response.corpusJson() as { body: string };
-            expect(JSON.parse(received.body)).toEqual(original);
+            // Receive all
+            const d1 = await receiver.recipe();
+            const d2 = await receiver.recipe();
+            const d3 = await receiver.recipe();
+
+            const messages = [
+                new TextDecoder().decode(d1.data()),
+                new TextDecoder().decode(d2.data()),
+                new TextDecoder().decode(d3.data()),
+            ];
+
+            // UDP doesn't guarantee order, but all messages should arrive
+            expect(messages).toContain('msg1');
+            expect(messages).toContain('msg2');
+            expect(messages).toContain('msg3');
         });
     });
 });
