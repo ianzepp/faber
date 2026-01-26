@@ -1,0 +1,66 @@
+# codex.fab - Encoding/Decoding
+#
+# Etymology: "codex" - book, code, system of laws. Encoding systems.
+#
+# Part of the Standard Library.
+#
+# Design notes:
+#   - All operations are synchronous (pure in-memory transforms)
+#   - Encoding: raw bytes -> text representation
+#   - Decoding: text representation -> raw bytes
+#   - URL encoding operates on text (percent-encoding)
+
+@ subsidia ts "../norma-ts/codex.ts"
+pactum codex {
+    # =========================================================================
+    # BASE64
+    # =========================================================================
+
+    # Encode bytes to base64 string
+    @ externa
+    functio base64(octeti data) -> textus
+
+    # Decode base64 string to bytes (throws on invalid input)
+    @ externa
+    functio deBase64(textus data) -> octeti
+
+    # Attempt to decode base64 (returns nihil on invalid input)
+    @ externa
+    functio temptaBase64(textus data) -> octeti?
+
+    # =========================================================================
+    # HEX
+    # =========================================================================
+
+    # Encode bytes to lowercase hex string
+    @ externa
+    functio hex(octeti data) -> textus
+
+    # Decode hex string to bytes (throws on invalid input)
+    @ externa
+    functio deHex(textus data) -> octeti
+
+    # Attempt to decode hex (returns nihil on invalid input)
+    @ externa
+    functio temptaHex(textus data) -> octeti?
+
+    # =========================================================================
+    # URL ENCODING (percent-encoding)
+    # =========================================================================
+
+    # Encode text for URL (percent-encoding)
+    @ externa
+    functio url(textus data) -> textus
+
+    # Decode URL-encoded text
+    @ externa
+    functio deUrl(textus data) -> textus
+
+    # Encode for URL query component (also encodes &, =, etc.)
+    @ externa
+    functio urlComponentum(textus data) -> textus
+
+    # Decode URL query component
+    @ externa
+    functio deUrlComponentum(textus data) -> textus
+}
