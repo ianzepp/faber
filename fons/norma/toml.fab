@@ -1,49 +1,46 @@
-# json.fab - JSON Encoding/Decoding Device
+# toml.fab - TOML Encoding/Decoding Device
 #
-# Etymology: "JSON" - JavaScript Object Notation (universal, kept as-is).
+# Etymology: "TOML" - Tom's Obvious Minimal Language (universal, kept as-is).
 #
 # Part of the Hardware Abstraction Layer (HAL).
 #
 # Design principles:
-#   - pange (compose) for serialization: composing the JSON text
+#   - pange (compose) for serialization: composing the TOML text
 #   - solve (untangle) for parsing: solving/extracting data from text
+#   - TOML root must be a table (object), not array or primitive
 #   - All operations are synchronous (pure in-memory transforms)
 
-@ subsidia ts "../../norma-ts/hal/json.ts"
-pactum json {
+@ subsidia ts "../norma-ts/toml.ts"
+pactum toml {
     # =========================================================================
     # SERIALIZATION
     # =========================================================================
     # Verb: pange from "pangere" (to fasten, compose)
-    # Why: Composing/fastening data into JSON text representation.
 
-    # Serialize value to JSON string
-    # indentum = 0 or omitted: compact output
-    # indentum > 0: pretty-printed with that many spaces
+    # Serialize table to TOML string
+    # TOML is inherently readable, so no indentation option needed
     @ externa
-    functio pange(quidlibet valor, si numerus indentum) -> textus
+    functio pange(quidlibet valor) -> textus
 
     # =========================================================================
     # PARSING
     # =========================================================================
     # Verb: solve from "solvere" (to loosen, untangle)
-    # Why: Untangling/extracting data from JSON text.
 
-    # Parse JSON string to value (throws on error)
+    # Parse TOML string to table (throws on error)
     @ externa
-    functio solve(textus json) -> quidlibet
+    functio solve(textus toml) -> quidlibet
 
     # Verb: tempta from "temptare" (to try, attempt)
-    # Why: Attempting to parse, returning null on failure instead of throwing.
 
-    # Attempt to parse JSON string (returns null on error)
+    # Attempt to parse TOML string (returns null on error)
     @ externa
-    functio tempta(textus json) -> si quidlibet
+    functio tempta(textus toml) -> si quidlibet
 
     # =========================================================================
     # TYPE CHECKING
     # =========================================================================
-    # Predicates: "est X" = "it is X" - natural Latin predicate form
+    # TOML has more specific numeric types than JSON
 
     @ externa
     functio estNihil(quidlibet valor) -> bivalens
@@ -52,10 +49,16 @@ pactum json {
     functio estBivalens(quidlibet valor) -> bivalens
 
     @ externa
-    functio estNumerus(quidlibet valor) -> bivalens
+    functio estTextus(quidlibet valor) -> bivalens
 
     @ externa
-    functio estTextus(quidlibet valor) -> bivalens
+    functio estInteger(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estFractus(quidlibet valor) -> bivalens
+
+    @ externa
+    functio estTempus(quidlibet valor) -> bivalens
 
     @ externa
     functio estLista(quidlibet valor) -> bivalens
@@ -66,7 +69,6 @@ pactum json {
     # =========================================================================
     # VALUE EXTRACTION
     # =========================================================================
-    # Pattern: "ut X" = "as X" - extract as type with default
 
     @ externa
     functio utTextus(quidlibet valor, textus defVal) -> textus
