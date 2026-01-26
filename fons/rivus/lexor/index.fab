@@ -282,12 +282,15 @@ genus Lexor {
 
         varia valor = ego.procede() + ego.procede()  # consume '0' and prefix
 
+        # Capture ego for nested function (JS functions don't preserve this)
+        fixum self = ego
+
         # Dispatch to appropriate validator
         functio estValidus(textus c) -> bivalens {
             elige radix {
-                casu "hex" reddit ego.estDigitusHex(c)
-                casu "bin" reddit ego.estDigitusBinarius(c)
-                casu "oct" reddit ego.estDigitusOctalis(c)
+                casu "hex" reddit self.estDigitusHex(c)
+                casu "bin" reddit self.estDigitusBinarius(c)
+                casu "oct" reddit self.estDigitusOctalis(c)
                 ceterum reddit falsum
             }
         }
