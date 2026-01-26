@@ -213,6 +213,12 @@ export function lex(source: string, filename = '<stdin>'): Token[] {
                     case "'":
                         value += "'";
                         break;
+                    case 'x': {
+                        // Hex escape: \xNN
+                        const hex = advance() + advance();
+                        value += String.fromCharCode(parseInt(hex, 16));
+                        break;
+                    }
                     default:
                         value += esc;
                 }

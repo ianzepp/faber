@@ -604,7 +604,8 @@ function emitExpr(expr: Expr): string {
             }
             let result = '`';
             for (let i = 0; i < parts.length; i++) {
-                result += parts[i].replace(/`/g, '\\`');
+                // Escape backticks and $ (to prevent ${...} interpretation)
+                result += parts[i].replace(/`/g, '\\`').replace(/\$/g, '\\$');
                 if (i < expr.args.length) {
                     result += '${' + emitExpr(expr.args[i]) + '}';
                 }
