@@ -3,13 +3,20 @@
 # Etymology: "crypta" - vault, crypt, hidden chamber. Secret operations.
 #
 # Part of the Hardware Abstraction Layer (HAL).
-# Maps to CryptoDevice from monk-os-kernel.
 #
 # Design notes:
-#   - Hash: SHA-256, SHA-384, SHA-512, MD5, BLAKE2b
-#   - Encrypt: AES-256-GCM (authenticated), AES-256-CBC
-#   - Sign: HMAC, RSA, Ed25519
-#   - KDF: PBKDF2, Argon2id, scrypt
+#   - digere: hash (digerere = to digest)
+#   - authenfica: HMAC (authenticare = to authenticate)
+#   - cela/revela: encrypt/decrypt (celare/revelare = to hide/reveal)
+#   - signa/verifica: asymmetric signatures
+#   - genera/generaPar: key generation
+#   - derivabit: key derivation (async - intentionally slow)
+#
+# Algorithms:
+#   - Hash: sha256, sha384, sha512, md5, blake2b
+#   - HMAC: hmac-sha256, hmac-sha384, hmac-sha512
+#   - Symmetric: aes-256-gcm, aes-256-cbc
+#   - Asymmetric: ed25519, rsa-2048, rsa-4096
 
 @ subsidia ts "codegen/ts/crypta.ts"
 pactum crypta {
@@ -17,109 +24,67 @@ pactum crypta {
     # HASHING
     # =========================================================================
 
-    # Hash bytes with algorithm (sha256, sha384, sha512, md5, blake2b)
-    @ futura
+    # Hash bytes (sha256, sha384, sha512, md5, blake2b)
     @ externa
-    functio digere(textus algorithmus, octeti data) -> octeti
-
-    # Hash text (convenience - encodes as UTF-8 first)
-    @ futura
-    @ externa
-    functio digereTextum(textus algorithmus, textus data) -> octeti
-
-    # Hash to hex string
-    @ futura
-    @ externa
-    functio digereHex(textus algorithmus, octeti data) -> textus
+    functio digere(textus alg, octeti data) -> octeti
 
     # =========================================================================
-    # HMAC
+    # MESSAGE AUTHENTICATION
     # =========================================================================
 
-    # HMAC with algorithm and key
-    @ futura
+    # HMAC (hmac-sha256, hmac-sha384, hmac-sha512)
     @ externa
-    functio hmac(textus algorithmus, octeti clavis, octeti data) -> octeti
-
-    # HMAC to hex string
-    @ futura
-    @ externa
-    functio hmacHex(textus algorithmus, octeti clavis, octeti data) -> textus
+    functio authenfica(textus alg, octeti clavis, octeti data) -> octeti
 
     # =========================================================================
     # SYMMETRIC ENCRYPTION
     # =========================================================================
 
-    # Encrypt with algorithm (aes-256-gcm, aes-256-cbc)
+    # Encrypt (aes-256-gcm, aes-256-cbc)
     # Returns ciphertext with IV prepended
-    @ futura
     @ externa
-    functio encripta(textus algorithmus, octeti clavis, octeti data) -> octeti
+    functio cela(textus alg, octeti clavis, octeti data) -> octeti
 
     # Decrypt (expects IV prepended to ciphertext)
-    @ futura
     @ externa
-    functio decripta(textus algorithmus, octeti clavis, octeti data) -> octeti
+    functio revela(textus alg, octeti clavis, octeti data) -> octeti
 
     # =========================================================================
-    # KEY DERIVATION
+    # ASYMMETRIC SIGNATURES
     # =========================================================================
 
-    # Derive key from password (pbkdf2, argon2id, scrypt)
-    @ futura
+    # Sign with private key
     @ externa
-    functio derivaClavem(textus algorithmus, textus password, octeti sal, numerus longitudo) -> octeti
+    functio signa(octeti clavisPrivata, octeti data) -> octeti
+
+    # Verify with public key
+    @ externa
+    functio verifica(octeti clavisPublica, octeti data, octeti signatura) -> bivalens
 
     # =========================================================================
     # KEY GENERATION
     # =========================================================================
 
     # Generate symmetric key (aes-256)
-    @ futura
     @ externa
-    functio generaClavem(textus algorithmus) -> octeti
+    functio genera(textus alg) -> octeti
 
-    # Generate key pair (rsa-2048, rsa-4096, ed25519)
-    @ futura
+    # Generate asymmetric key pair (ed25519, rsa-2048, rsa-4096)
     @ externa
-    functio generaParClavium(textus algorithmus) -> ParClavium
+    functio generaPar(textus alg) -> ParClavium
 
     # =========================================================================
-    # ASYMMETRIC SIGNATURES
+    # KEY DERIVATION
     # =========================================================================
 
-    # Sign data with private key
+    # Derive key from password (pbkdf2, argon2id, scrypt)
+    # Async because intentionally slow for security
     @ futura
     @ externa
-    functio signa(octeti clavisPrivata, octeti data) -> octeti
-
-    # Verify signature with public key
-    @ futura
-    @ externa
-    functio verifica(octeti clavisPublica, octeti data, octeti signatura) -> bivalens
-
-    # =========================================================================
-    # ENCODING UTILITIES
-    # =========================================================================
-
-    # Encode bytes as hex
-    @ externa
-    functio hexCodifica(octeti data) -> textus
-
-    # Decode hex to bytes
-    @ externa
-    functio hexDecodifica(textus hex) -> octeti
-
-    # Encode bytes as base64
-    @ externa
-    functio base64Codifica(octeti data) -> textus
-
-    # Decode base64 to bytes
-    @ externa
-    functio base64Decodifica(textus b64) -> octeti
+    functio derivabit(textus alg, textus password, octeti sal, numerus longitudo) -> octeti
 }
 
-# Key pair (asymmetric)
+# Asymmetric key pair
 pactum ParClavium {
     @ externa
     functio publica() -> octeti

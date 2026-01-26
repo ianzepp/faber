@@ -1,169 +1,156 @@
 import { test, expect, describe } from 'bun:test';
 import { crypta, ParClavium } from './crypta';
 
+// Helper for hex conversion in tests (encoding utilities removed from crypta)
+function toHex(data: Uint8Array): string {
+    return Buffer.from(data).toString('hex');
+}
+
 describe('crypta HAL', () => {
-    describe('hashing', () => {
-        test('digere produces expected SHA-256 hash', async () => {
+    describe('hashing (digere)', () => {
+        test('digere produces expected SHA-256 hash', () => {
             const data = new TextEncoder().encode('hello');
-            const hash = await crypta.digere('sha256', data);
-            const hex = crypta.hexCodifica(hash);
-            // Known SHA-256 of "hello"
-            expect(hex).toBe('2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824');
+            const hash = crypta.digere('sha256', data);
+            expect(toHex(hash)).toBe('2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824');
         });
 
-        test('digereTextum hashes text directly', async () => {
-            const hash = await crypta.digereTextum('sha256', 'hello');
-            const hex = crypta.hexCodifica(hash);
-            expect(hex).toBe('2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824');
-        });
-
-        test('digereHex returns hex string', async () => {
-            const data = new TextEncoder().encode('hello');
-            const hex = await crypta.digereHex('sha256', data);
-            expect(hex).toBe('2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824');
-        });
-
-        test('digere supports multiple algorithms', async () => {
+        test('digere supports multiple algorithms', () => {
             const data = new TextEncoder().encode('test');
 
-            // SHA-384
-            const sha384 = await crypta.digereHex('sha384', data);
-            expect(sha384.length).toBe(96); // 384 bits = 48 bytes = 96 hex chars
+            const sha384 = crypta.digere('sha384', data);
+            expect(toHex(sha384).length).toBe(96);
 
-            // SHA-512
-            const sha512 = await crypta.digereHex('sha512', data);
-            expect(sha512.length).toBe(128); // 512 bits = 64 bytes = 128 hex chars
+            const sha512 = crypta.digere('sha512', data);
+            expect(toHex(sha512).length).toBe(128);
 
-            // MD5
-            const md5 = await crypta.digereHex('md5', data);
-            expect(md5.length).toBe(32); // 128 bits = 16 bytes = 32 hex chars
+            const md5 = crypta.digere('md5', data);
+            expect(toHex(md5).length).toBe(32);
 
-            // BLAKE2b-512
-            const blake2b = await crypta.digereHex('blake2b512', data);
-            expect(blake2b.length).toBe(128); // 512 bits = 64 bytes = 128 hex chars
+            const blake2b = crypta.digere('blake2b512', data);
+            expect(toHex(blake2b).length).toBe(128);
         });
     });
 
-    describe('hmac', () => {
-        test('hmac produces expected output', async () => {
+    describe('message authentication (authenfica)', () => {
+        test('authenfica produces expected HMAC output', () => {
             const key = new TextEncoder().encode('secret');
             const data = new TextEncoder().encode('hello');
-            const mac = await crypta.hmac('sha256', key, data);
-            const hex = crypta.hexCodifica(mac);
-            // Known HMAC-SHA256 of "hello" with key "secret"
-            expect(hex).toBe('88aab3ede8d3adf94d26ab90d3bafd4a2083070c3bcce9c014ee04a443847c0b');
+            const mac = crypta.authenfica('hmac-sha256', key, data);
+            expect(toHex(mac)).toBe('88aab3ede8d3adf94d26ab90d3bafd4a2083070c3bcce9c014ee04a443847c0b');
         });
 
-        test('hmacHex returns hex string', async () => {
-            const key = new TextEncoder().encode('secret');
-            const data = new TextEncoder().encode('hello');
-            const hex = await crypta.hmacHex('sha256', key, data);
-            expect(hex).toBe('88aab3ede8d3adf94d26ab90d3bafd4a2083070c3bcce9c014ee04a443847c0b');
-        });
-
-        test('different keys produce different MACs', async () => {
+        test('different keys produce different MACs', () => {
             const data = new TextEncoder().encode('hello');
             const key1 = new TextEncoder().encode('secret1');
             const key2 = new TextEncoder().encode('secret2');
 
-            const mac1 = await crypta.hmacHex('sha256', key1, data);
-            const mac2 = await crypta.hmacHex('sha256', key2, data);
+            const mac1 = crypta.authenfica('hmac-sha256', key1, data);
+            const mac2 = crypta.authenfica('hmac-sha256', key2, data);
 
-            expect(mac1).not.toBe(mac2);
+            expect(toHex(mac1)).not.toBe(toHex(mac2));
         });
     });
 
-    describe('symmetric encryption', () => {
-        test('encrypt/decrypt roundtrip with AES-256-GCM', async () => {
-            const key = await crypta.generaClavem('aes-256');
+    describe('symmetric encryption (cela/revela)', () => {
+        test('cela/revela roundtrip with AES-256-GCM', () => {
+            const key = crypta.genera('aes-256');
             const plaintext = new TextEncoder().encode('Hello, World!');
 
-            const ciphertext = await crypta.encripta('aes-256-gcm', key, plaintext);
-            const decrypted = await crypta.decripta('aes-256-gcm', key, ciphertext);
+            const ciphertext = crypta.cela('aes-256-gcm', key, plaintext);
+            const decrypted = crypta.revela('aes-256-gcm', key, ciphertext);
 
             expect(new TextDecoder().decode(decrypted)).toBe('Hello, World!');
         });
 
-        test('encrypt/decrypt roundtrip with AES-256-CBC', async () => {
-            const key = await crypta.generaClavem('aes-256');
+        test('cela/revela roundtrip with AES-256-CBC', () => {
+            const key = crypta.genera('aes-256');
             const plaintext = new TextEncoder().encode('Hello, World!');
 
-            const ciphertext = await crypta.encripta('aes-256-cbc', key, plaintext);
-            const decrypted = await crypta.decripta('aes-256-cbc', key, ciphertext);
+            const ciphertext = crypta.cela('aes-256-cbc', key, plaintext);
+            const decrypted = crypta.revela('aes-256-cbc', key, ciphertext);
 
             expect(new TextDecoder().decode(decrypted)).toBe('Hello, World!');
         });
 
-        test('encryption produces different ciphertext each time (random IV)', async () => {
-            const key = await crypta.generaClavem('aes-256');
+        test('cela produces different ciphertext each time (random IV)', () => {
+            const key = crypta.genera('aes-256');
             const plaintext = new TextEncoder().encode('Hello');
 
-            const ct1 = await crypta.encripta('aes-256-gcm', key, plaintext);
-            const ct2 = await crypta.encripta('aes-256-gcm', key, plaintext);
+            const ct1 = crypta.cela('aes-256-gcm', key, plaintext);
+            const ct2 = crypta.cela('aes-256-gcm', key, plaintext);
 
-            // Ciphertexts should differ due to random IV
-            expect(crypta.hexCodifica(ct1)).not.toBe(crypta.hexCodifica(ct2));
+            expect(toHex(ct1)).not.toBe(toHex(ct2));
         });
 
-        test('decryption with wrong key fails', async () => {
-            const key1 = await crypta.generaClavem('aes-256');
-            const key2 = await crypta.generaClavem('aes-256');
+        test('revela with wrong key fails', () => {
+            const key1 = crypta.genera('aes-256');
+            const key2 = crypta.genera('aes-256');
             const plaintext = new TextEncoder().encode('Secret');
 
-            const ciphertext = await crypta.encripta('aes-256-gcm', key1, plaintext);
+            const ciphertext = crypta.cela('aes-256-gcm', key1, plaintext);
 
-            // GCM will throw due to auth tag mismatch
-            await expect(crypta.decripta('aes-256-gcm', key2, ciphertext)).rejects.toThrow();
+            expect(() => crypta.revela('aes-256-gcm', key2, ciphertext)).toThrow();
         });
     });
 
-    describe('key derivation', () => {
-        test('pbkdf2 produces consistent output', async () => {
-            const salt = new TextEncoder().encode('salty');
-            const key1 = await crypta.derivaClavem('pbkdf2', 'password', salt, 32);
-            const key2 = await crypta.derivaClavem('pbkdf2', 'password', salt, 32);
+    describe('asymmetric signatures (signa/verifica)', () => {
+        test('signa/verifica roundtrip with ed25519', () => {
+            const pair = crypta.generaPar('ed25519');
+            const data = new TextEncoder().encode('Sign this message');
 
-            expect(crypta.hexCodifica(key1)).toBe(crypta.hexCodifica(key2));
+            const signature = crypta.signa(pair.privata(), data);
+            const valid = crypta.verifica(pair.publica(), data, signature);
+
+            expect(valid).toBe(true);
         });
 
-        test('pbkdf2 different passwords produce different keys', async () => {
-            const salt = new TextEncoder().encode('salty');
-            const key1 = await crypta.derivaClavem('pbkdf2', 'password1', salt, 32);
-            const key2 = await crypta.derivaClavem('pbkdf2', 'password2', salt, 32);
+        test('verifica fails with wrong data', () => {
+            const pair = crypta.generaPar('ed25519');
+            const data = new TextEncoder().encode('Original message');
+            const wrongData = new TextEncoder().encode('Wrong message');
 
-            expect(crypta.hexCodifica(key1)).not.toBe(crypta.hexCodifica(key2));
+            const signature = crypta.signa(pair.privata(), data);
+            const valid = crypta.verifica(pair.publica(), wrongData, signature);
+
+            expect(valid).toBe(false);
         });
 
-        test('scrypt produces consistent output', async () => {
-            const salt = new TextEncoder().encode('salty');
-            const key1 = await crypta.derivaClavem('scrypt', 'password', salt, 32);
-            const key2 = await crypta.derivaClavem('scrypt', 'password', salt, 32);
+        test('verifica fails with wrong public key', () => {
+            const pair1 = crypta.generaPar('ed25519');
+            const pair2 = crypta.generaPar('ed25519');
+            const data = new TextEncoder().encode('Test message');
 
-            expect(crypta.hexCodifica(key1)).toBe(crypta.hexCodifica(key2));
+            const signature = crypta.signa(pair1.privata(), data);
+            const valid = crypta.verifica(pair2.publica(), data, signature);
+
+            expect(valid).toBe(false);
         });
 
-        test('argon2id throws not supported error', async () => {
-            const salt = new TextEncoder().encode('salty');
-            await expect(crypta.derivaClavem('argon2id', 'password', salt, 32)).rejects.toThrow(
-                'argon2id not supported',
-            );
+        test('signa/verifica roundtrip with RSA', () => {
+            const pair = crypta.generaPar('rsa-2048');
+            const data = new TextEncoder().encode('RSA signature test');
+
+            const signature = crypta.signa(pair.privata(), data);
+            const valid = crypta.verifica(pair.publica(), data, signature);
+
+            expect(valid).toBe(true);
         });
     });
 
-    describe('key generation', () => {
-        test('generaClavem produces 32-byte AES key', async () => {
-            const key = await crypta.generaClavem('aes-256');
+    describe('key generation (genera/generaPar)', () => {
+        test('genera produces 32-byte AES key', () => {
+            const key = crypta.genera('aes-256');
             expect(key.length).toBe(32);
         });
 
-        test('generaClavem produces unique keys', async () => {
-            const key1 = await crypta.generaClavem('aes-256');
-            const key2 = await crypta.generaClavem('aes-256');
-            expect(crypta.hexCodifica(key1)).not.toBe(crypta.hexCodifica(key2));
+        test('genera produces unique keys', () => {
+            const key1 = crypta.genera('aes-256');
+            const key2 = crypta.genera('aes-256');
+            expect(toHex(key1)).not.toBe(toHex(key2));
         });
 
-        test('generaParClavium produces ed25519 key pair', async () => {
-            const pair = await crypta.generaParClavium('ed25519');
+        test('generaPar produces ed25519 key pair', () => {
+            const pair = crypta.generaPar('ed25519');
 
             expect(pair).toBeInstanceOf(ParClavium);
             expect(pair.algorithmus()).toBe('ed25519');
@@ -171,17 +158,16 @@ describe('crypta HAL', () => {
             expect(pair.privata().length).toBeGreaterThan(0);
         });
 
-        test('generaParClavium produces rsa-2048 key pair', async () => {
-            const pair = await crypta.generaParClavium('rsa-2048');
+        test('generaPar produces rsa-2048 key pair', () => {
+            const pair = crypta.generaPar('rsa-2048');
 
             expect(pair.algorithmus()).toBe('rsa-2048');
             expect(pair.publica().length).toBeGreaterThan(0);
             expect(pair.privata().length).toBeGreaterThan(0);
         });
 
-        // RSA-4096 test skipped in CI as it's slow
-        test('generaParClavium produces rsa-4096 key pair', async () => {
-            const pair = await crypta.generaParClavium('rsa-4096');
+        test('generaPar produces rsa-4096 key pair', () => {
+            const pair = crypta.generaPar('rsa-4096');
 
             expect(pair.algorithmus()).toBe('rsa-4096');
             expect(pair.publica().length).toBeGreaterThan(0);
@@ -189,107 +175,49 @@ describe('crypta HAL', () => {
         });
     });
 
-    describe('asymmetric signatures', () => {
-        test('sign/verify roundtrip with ed25519', async () => {
-            const pair = await crypta.generaParClavium('ed25519');
-            const data = new TextEncoder().encode('Sign this message');
+    describe('key derivation (derivabit)', () => {
+        test('pbkdf2 produces consistent output', async () => {
+            const salt = new TextEncoder().encode('salty');
+            const key1 = await crypta.derivabit('pbkdf2', 'password', salt, 32);
+            const key2 = await crypta.derivabit('pbkdf2', 'password', salt, 32);
 
-            const signature = await crypta.signa(pair.privata(), data);
-            const valid = await crypta.verifica(pair.publica(), data, signature);
-
-            expect(valid).toBe(true);
+            expect(toHex(key1)).toBe(toHex(key2));
         });
 
-        test('verify fails with wrong data', async () => {
-            const pair = await crypta.generaParClavium('ed25519');
-            const data = new TextEncoder().encode('Original message');
-            const wrongData = new TextEncoder().encode('Wrong message');
+        test('pbkdf2 different passwords produce different keys', async () => {
+            const salt = new TextEncoder().encode('salty');
+            const key1 = await crypta.derivabit('pbkdf2', 'password1', salt, 32);
+            const key2 = await crypta.derivabit('pbkdf2', 'password2', salt, 32);
 
-            const signature = await crypta.signa(pair.privata(), data);
-            const valid = await crypta.verifica(pair.publica(), wrongData, signature);
-
-            expect(valid).toBe(false);
+            expect(toHex(key1)).not.toBe(toHex(key2));
         });
 
-        test('verify fails with wrong public key', async () => {
-            const pair1 = await crypta.generaParClavium('ed25519');
-            const pair2 = await crypta.generaParClavium('ed25519');
-            const data = new TextEncoder().encode('Test message');
+        test('scrypt produces consistent output', async () => {
+            const salt = new TextEncoder().encode('salty');
+            const key1 = await crypta.derivabit('scrypt', 'password', salt, 32);
+            const key2 = await crypta.derivabit('scrypt', 'password', salt, 32);
 
-            const signature = await crypta.signa(pair1.privata(), data);
-            const valid = await crypta.verifica(pair2.publica(), data, signature);
-
-            expect(valid).toBe(false);
+            expect(toHex(key1)).toBe(toHex(key2));
         });
 
-        test('sign/verify roundtrip with RSA', async () => {
-            const pair = await crypta.generaParClavium('rsa-2048');
-            const data = new TextEncoder().encode('RSA signature test');
-
-            const signature = await crypta.signa(pair.privata(), data);
-            const valid = await crypta.verifica(pair.publica(), data, signature);
-
-            expect(valid).toBe(true);
-        });
-    });
-
-    describe('encoding utilities', () => {
-        test('hex encoding roundtrip', () => {
-            const original = new Uint8Array([0, 1, 127, 128, 255]);
-            const hex = crypta.hexCodifica(original);
-            const decoded = crypta.hexDecodifica(hex);
-
-            expect(hex).toBe('00017f80ff');
-            expect(Array.from(decoded)).toEqual(Array.from(original));
-        });
-
-        test('base64 encoding roundtrip', () => {
-            const original = new Uint8Array([0, 1, 127, 128, 255]);
-            const b64 = crypta.base64Codifica(original);
-            const decoded = crypta.base64Decodifica(b64);
-
-            expect(b64).toBe('AAF/gP8=');
-            expect(Array.from(decoded)).toEqual(Array.from(original));
-        });
-
-        test('hex encoding of empty array', () => {
-            const empty = new Uint8Array(0);
-            const hex = crypta.hexCodifica(empty);
-            expect(hex).toBe('');
-            expect(crypta.hexDecodifica(hex).length).toBe(0);
-        });
-
-        test('base64 encoding of empty array', () => {
-            const empty = new Uint8Array(0);
-            const b64 = crypta.base64Codifica(empty);
-            expect(b64).toBe('');
-            expect(crypta.base64Decodifica(b64).length).toBe(0);
-        });
-
-        test('base64 handles UTF-8 text bytes', () => {
-            const text = 'Hello, World!';
-            const bytes = new TextEncoder().encode(text);
-            const b64 = crypta.base64Codifica(bytes);
-            const decoded = crypta.base64Decodifica(b64);
-            const result = new TextDecoder().decode(decoded);
-
-            expect(result).toBe(text);
+        test('argon2id throws not supported error', async () => {
+            const salt = new TextEncoder().encode('salty');
+            await expect(crypta.derivabit('argon2id', 'password', salt, 32)).rejects.toThrow('not yet supported');
         });
     });
 
     describe('ParClavium class', () => {
-        test('stores and retrieves key components', async () => {
-            const pair = await crypta.generaParClavium('ed25519');
+        test('stores and retrieves key components', () => {
+            const pair = crypta.generaPar('ed25519');
 
             expect(pair.publica()).toBeInstanceOf(Uint8Array);
             expect(pair.privata()).toBeInstanceOf(Uint8Array);
             expect(pair.algorithmus()).toBe('ed25519');
         });
 
-        test('public and private keys are different', async () => {
-            const pair = await crypta.generaParClavium('ed25519');
-
-            expect(crypta.hexCodifica(pair.publica())).not.toBe(crypta.hexCodifica(pair.privata()));
+        test('public and private keys are different', () => {
+            const pair = crypta.generaPar('ed25519');
+            expect(toHex(pair.publica())).not.toBe(toHex(pair.privata()));
         });
     });
 });

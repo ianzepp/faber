@@ -3,6 +3,14 @@
  *
  * Native TypeScript implementation of the HAL cryptography interface.
  * Uses Node's crypto module for all operations.
+ *
+ * Verbs:
+ *   - digere: hash (to digest)
+ *   - authenfica: HMAC (to authenticate)
+ *   - cela/revela: encrypt/decrypt (to hide/reveal)
+ *   - signa/verifica: asymmetric signatures
+ *   - genera/generaPar: key generation
+ *   - derivabit: key derivation (async - intentionally slow)
  */
 
 import * as crypto from 'node:crypto';
@@ -12,6 +20,7 @@ import * as crypto from 'node:crypto';
 // =========================================================================
 
 type HashAlgorithm = 'sha256' | 'sha384' | 'sha512' | 'md5' | 'blake2b512';
+type HmacAlgorithm = 'hmac-sha256' | 'hmac-sha384' | 'hmac-sha512';
 type CipherAlgorithm = 'aes-256-gcm' | 'aes-256-cbc';
 type KdfAlgorithm = 'pbkdf2' | 'scrypt' | 'argon2id';
 type KeyAlgorithm = 'aes-256';
@@ -50,23 +59,20 @@ export class ParClavium {
 // =========================================================================
 
 function normalizeHashAlgo(algo: string): string {
-    // Node crypto uses 'blake2b512' for BLAKE2b
     if (algo === 'blake2b') return 'blake2b512';
+    if (algo.startsWith('hmac-')) return algo.slice(5); // hmac-sha256 -> sha256
     return algo;
 }
 
 function getIvLength(algo: CipherAlgorithm): number {
     switch (algo) {
-        case 'aes-256-gcm':
-            return 12; // GCM recommends 12 bytes
-        case 'aes-256-cbc':
-            return 16; // CBC uses 16 bytes
-        default:
-            throw new Error(`Unknown cipher algorithm: ${algo}`);
+        case 'aes-256-gcm': return 12;
+        case 'aes-256-cbc': return 16;
+        default: throw new Error(`Unknown cipher algorithm: ${algo}`);
     }
 }
 
-const AUTH_TAG_LENGTH = 16; // GCM auth tag is 16 bytes
+const AUTH_TAG_LENGTH = 16;
 
 // =========================================================================
 // CRYPTA OBJECT
@@ -77,53 +83,34 @@ export const crypta = {
     // HASHING
     // =========================================================================
 
-    async digere(algorithmus: string, data: Uint8Array): Promise<Uint8Array> {
-        const hash = crypto.createHash(normalizeHashAlgo(algorithmus));
+    digere(alg: string, data: Uint8Array): Uint8Array {
+        const hash = crypto.createHash(normalizeHashAlgo(alg));
         hash.update(data);
         return new Uint8Array(hash.digest());
     },
 
-    async digereTextum(algorithmus: string, data: string): Promise<Uint8Array> {
-        const hash = crypto.createHash(normalizeHashAlgo(algorithmus));
-        hash.update(data, 'utf8');
-        return new Uint8Array(hash.digest());
-    },
-
-    async digereHex(algorithmus: string, data: Uint8Array): Promise<string> {
-        const hash = crypto.createHash(normalizeHashAlgo(algorithmus));
-        hash.update(data);
-        return hash.digest('hex');
-    },
-
     // =========================================================================
-    // HMAC
+    // MESSAGE AUTHENTICATION (HMAC)
     // =========================================================================
 
-    async hmac(algorithmus: string, clavis: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
-        const hmac = crypto.createHmac(normalizeHashAlgo(algorithmus), clavis);
+    authenfica(alg: string, clavis: Uint8Array, data: Uint8Array): Uint8Array {
+        const hmac = crypto.createHmac(normalizeHashAlgo(alg), clavis);
         hmac.update(data);
         return new Uint8Array(hmac.digest());
-    },
-
-    async hmacHex(algorithmus: string, clavis: Uint8Array, data: Uint8Array): Promise<string> {
-        const hmac = crypto.createHmac(normalizeHashAlgo(algorithmus), clavis);
-        hmac.update(data);
-        return hmac.digest('hex');
     },
 
     // =========================================================================
     // SYMMETRIC ENCRYPTION
     // =========================================================================
 
-    async encripta(algorithmus: CipherAlgorithm, clavis: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
-        const ivLength = getIvLength(algorithmus);
+    cela(alg: CipherAlgorithm, clavis: Uint8Array, data: Uint8Array): Uint8Array {
+        const ivLength = getIvLength(alg);
         const iv = crypto.randomBytes(ivLength);
 
-        if (algorithmus === 'aes-256-gcm') {
+        if (alg === 'aes-256-gcm') {
             const cipher = crypto.createCipheriv('aes-256-gcm', clavis, iv);
             const encrypted = Buffer.concat([cipher.update(data), cipher.final()]);
             const authTag = cipher.getAuthTag();
-            // Format: IV + authTag + ciphertext
             const result = new Uint8Array(iv.length + authTag.length + encrypted.length);
             result.set(iv, 0);
             result.set(authTag, iv.length);
@@ -131,10 +118,8 @@ export const crypta = {
             return result;
         }
         else {
-            // aes-256-cbc
             const cipher = crypto.createCipheriv('aes-256-cbc', clavis, iv);
             const encrypted = Buffer.concat([cipher.update(data), cipher.final()]);
-            // Format: IV + ciphertext
             const result = new Uint8Array(iv.length + encrypted.length);
             result.set(iv, 0);
             result.set(encrypted, iv.length);
@@ -142,10 +127,10 @@ export const crypta = {
         }
     },
 
-    async decripta(algorithmus: CipherAlgorithm, clavis: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
-        const ivLength = getIvLength(algorithmus);
+    revela(alg: CipherAlgorithm, clavis: Uint8Array, data: Uint8Array): Uint8Array {
+        const ivLength = getIvLength(alg);
 
-        if (algorithmus === 'aes-256-gcm') {
+        if (alg === 'aes-256-gcm') {
             const iv = data.slice(0, ivLength);
             const authTag = data.slice(ivLength, ivLength + AUTH_TAG_LENGTH);
             const ciphertext = data.slice(ivLength + AUTH_TAG_LENGTH);
@@ -156,7 +141,6 @@ export const crypta = {
             return new Uint8Array(decrypted);
         }
         else {
-            // aes-256-cbc
             const iv = data.slice(0, ivLength);
             const ciphertext = data.slice(ivLength);
 
@@ -167,16 +151,82 @@ export const crypta = {
     },
 
     // =========================================================================
-    // KEY DERIVATION
+    // ASYMMETRIC SIGNATURES
     // =========================================================================
 
-    async derivaClavem(
-        algorithmus: KdfAlgorithm,
-        password: string,
-        sal: Uint8Array,
-        longitudo: number,
-    ): Promise<Uint8Array> {
-        switch (algorithmus) {
+    signa(clavisPrivata: Uint8Array, data: Uint8Array): Uint8Array {
+        const keyObject = crypto.createPrivateKey({
+            key: Buffer.from(clavisPrivata),
+            format: 'der',
+            type: 'pkcs8',
+        });
+
+        const signature = crypto.sign(null, data, keyObject);
+        return new Uint8Array(signature);
+    },
+
+    verifica(clavisPublica: Uint8Array, data: Uint8Array, signatura: Uint8Array): boolean {
+        const keyObject = crypto.createPublicKey({
+            key: Buffer.from(clavisPublica),
+            format: 'der',
+            type: 'spki',
+        });
+
+        return crypto.verify(null, data, keyObject, signatura);
+    },
+
+    // =========================================================================
+    // KEY GENERATION
+    // =========================================================================
+
+    genera(alg: KeyAlgorithm): Uint8Array {
+        switch (alg) {
+            case 'aes-256':
+                return new Uint8Array(crypto.randomBytes(32));
+            default:
+                throw new Error(`Unknown key algorithm: ${alg}`);
+        }
+    },
+
+    generaPar(alg: KeyPairAlgorithm): ParClavium {
+        switch (alg) {
+            case 'ed25519': {
+                const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519', {
+                    publicKeyEncoding: { type: 'spki', format: 'der' },
+                    privateKeyEncoding: { type: 'pkcs8', format: 'der' },
+                });
+                return new ParClavium(new Uint8Array(publicKey), new Uint8Array(privateKey), 'ed25519');
+            }
+
+            case 'rsa-2048': {
+                const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+                    modulusLength: 2048,
+                    publicKeyEncoding: { type: 'spki', format: 'der' },
+                    privateKeyEncoding: { type: 'pkcs8', format: 'der' },
+                });
+                return new ParClavium(new Uint8Array(publicKey), new Uint8Array(privateKey), 'rsa-2048');
+            }
+
+            case 'rsa-4096': {
+                const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+                    modulusLength: 4096,
+                    publicKeyEncoding: { type: 'spki', format: 'der' },
+                    privateKeyEncoding: { type: 'pkcs8', format: 'der' },
+                });
+                return new ParClavium(new Uint8Array(publicKey), new Uint8Array(privateKey), 'rsa-4096');
+            }
+
+            default:
+                throw new Error(`Unknown key pair algorithm: ${alg}`);
+        }
+    },
+
+    // =========================================================================
+    // KEY DERIVATION (async - intentionally slow)
+    // =========================================================================
+
+    async derivabit(alg: KdfAlgorithm, password: string, sal: Uint8Array, longitudo: number): Promise<Uint8Array> {
+        switch (alg) {
             case 'pbkdf2':
                 return new Promise((resolve, reject) => {
                     crypto.pbkdf2(password, sal, 100000, longitudo, 'sha256', (err, key) => {
@@ -194,116 +244,10 @@ export const crypta = {
                 });
 
             case 'argon2id':
-                throw new Error('argon2id not supported: requires argon2 package');
+                throw new Error('argon2id not yet supported in JS runtime');
 
             default:
-                throw new Error(`Unknown KDF algorithm: ${algorithmus}`);
+                throw new Error(`Unknown KDF algorithm: ${alg}`);
         }
-    },
-
-    // =========================================================================
-    // KEY GENERATION
-    // =========================================================================
-
-    async generaClavem(algorithmus: KeyAlgorithm): Promise<Uint8Array> {
-        switch (algorithmus) {
-            case 'aes-256':
-                return new Uint8Array(crypto.randomBytes(32));
-
-            default:
-                throw new Error(`Unknown key algorithm: ${algorithmus}`);
-        }
-    },
-
-    async generaParClavium(algorithmus: KeyPairAlgorithm): Promise<ParClavium> {
-        switch (algorithmus) {
-            case 'ed25519': {
-                const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519', {
-                    publicKeyEncoding: { type: 'spki', format: 'der' },
-                    privateKeyEncoding: { type: 'pkcs8', format: 'der' },
-                });
-                return new ParClavium(
-                    new Uint8Array(publicKey),
-                    new Uint8Array(privateKey),
-                    'ed25519',
-                );
-            }
-
-            case 'rsa-2048': {
-                const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
-                    modulusLength: 2048,
-                    publicKeyEncoding: { type: 'spki', format: 'der' },
-                    privateKeyEncoding: { type: 'pkcs8', format: 'der' },
-                });
-                return new ParClavium(
-                    new Uint8Array(publicKey),
-                    new Uint8Array(privateKey),
-                    'rsa-2048',
-                );
-            }
-
-            case 'rsa-4096': {
-                const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
-                    modulusLength: 4096,
-                    publicKeyEncoding: { type: 'spki', format: 'der' },
-                    privateKeyEncoding: { type: 'pkcs8', format: 'der' },
-                });
-                return new ParClavium(
-                    new Uint8Array(publicKey),
-                    new Uint8Array(privateKey),
-                    'rsa-4096',
-                );
-            }
-
-            default:
-                throw new Error(`Unknown key pair algorithm: ${algorithmus}`);
-        }
-    },
-
-    // =========================================================================
-    // ASYMMETRIC SIGNATURES
-    // =========================================================================
-
-    async signa(clavisPrivata: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
-        // Create key object from DER-encoded private key
-        const keyObject = crypto.createPrivateKey({
-            key: Buffer.from(clavisPrivata),
-            format: 'der',
-            type: 'pkcs8',
-        });
-
-        const signature = crypto.sign(null, data, keyObject);
-        return new Uint8Array(signature);
-    },
-
-    async verifica(clavisPublica: Uint8Array, data: Uint8Array, signatura: Uint8Array): Promise<boolean> {
-        // Create key object from DER-encoded public key
-        const keyObject = crypto.createPublicKey({
-            key: Buffer.from(clavisPublica),
-            format: 'der',
-            type: 'spki',
-        });
-
-        return crypto.verify(null, data, keyObject, signatura);
-    },
-
-    // =========================================================================
-    // ENCODING UTILITIES
-    // =========================================================================
-
-    hexCodifica(data: Uint8Array): string {
-        return Buffer.from(data).toString('hex');
-    },
-
-    hexDecodifica(hex: string): Uint8Array {
-        return new Uint8Array(Buffer.from(hex, 'hex'));
-    },
-
-    base64Codifica(data: Uint8Array): string {
-        return Buffer.from(data).toString('base64');
-    },
-
-    base64Decodifica(b64: string): Uint8Array {
-        return new Uint8Array(Buffer.from(b64, 'base64'));
     },
 };
