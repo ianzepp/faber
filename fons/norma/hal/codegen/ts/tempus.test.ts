@@ -50,7 +50,7 @@ describe('tempus HAL', () => {
 
         test('activum increases over time', async () => {
             const first = tempus.activum();
-            await tempus.dormi(10);
+            await tempus.dormiet(10);
             const second = tempus.activum();
 
             expect(second).toBeGreaterThan(first);
@@ -58,77 +58,77 @@ describe('tempus HAL', () => {
     });
 
     describe('sleep', () => {
-        test('dormi delays execution', async () => {
+        test('dormiet delays execution', async () => {
             const start = tempus.nunc();
-            await tempus.dormi(50);
+            await tempus.dormiet(50);
             const elapsed = tempus.nunc() - start;
 
             // Should have waited at least 50ms (allow some tolerance)
             expect(elapsed).toBeGreaterThanOrEqual(45);
         });
 
-        test('dormi returns a promise', () => {
-            const result = tempus.dormi(1);
+        test('dormiet returns a promise', () => {
+            const result = tempus.dormiet(1);
             expect(result).toBeInstanceOf(Promise);
         });
     });
 
     describe('scheduled callbacks', () => {
-        test('post fires once after delay', async () => {
+        test('destina fires once after delay', async () => {
             let callCount = 0;
-            const handle = tempus.post(20, () => {
+            const handle = tempus.destina(20, () => {
                 callCount++;
             });
 
             expect(typeof handle).toBe('number');
             expect(callCount).toBe(0);
 
-            await tempus.dormi(50);
+            await tempus.dormiet(50);
             expect(callCount).toBe(1);
 
             // Should not fire again
-            await tempus.dormi(50);
+            await tempus.dormiet(50);
             expect(callCount).toBe(1);
         });
 
-        test('intervallum fires repeatedly', async () => {
+        test('itera fires repeatedly', async () => {
             let callCount = 0;
-            const handle = tempus.intervallum(15, () => {
+            const handle = tempus.itera(15, () => {
                 callCount++;
             });
 
             expect(typeof handle).toBe('number');
 
-            await tempus.dormi(80);
+            await tempus.dormiet(80);
             tempus.siste(handle);
 
             // Should have fired multiple times (roughly 80/15 = 5 times, but timing varies)
             expect(callCount).toBeGreaterThanOrEqual(3);
         });
 
-        test('siste cancels post callback', async () => {
+        test('siste cancels destina callback', async () => {
             let called = false;
-            const handle = tempus.post(30, () => {
+            const handle = tempus.destina(30, () => {
                 called = true;
             });
 
             tempus.siste(handle);
-            await tempus.dormi(60);
+            await tempus.dormiet(60);
 
             expect(called).toBe(false);
         });
 
-        test('siste cancels intervallum callback', async () => {
+        test('siste cancels itera callback', async () => {
             let callCount = 0;
-            const handle = tempus.intervallum(10, () => {
+            const handle = tempus.itera(10, () => {
                 callCount++;
             });
 
-            await tempus.dormi(35);
+            await tempus.dormiet(35);
             const countBeforeStop = callCount;
             tempus.siste(handle);
 
-            await tempus.dormi(50);
+            await tempus.dormiet(50);
             // Count should not have increased after stopping
             expect(callCount).toBe(countBeforeStop);
         });

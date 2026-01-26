@@ -6,10 +6,13 @@
 # Combines ClockDevice (time sources) and TimerDevice (scheduling) from monk-os-kernel.
 #
 # Design notes:
+#   - Verb conjugation encodes sync/async:
+#     - Imperative (-a, -e, -i): synchronous
+#     - Future indicative (-et, -ebit): asynchronous
 #   - nunc/nuncNano/nuncSecunda: wall clock (can jump, NTP adjustments)
 #   - monotonicum: monotonic time (never decreases, for measuring durations)
-#   - dormi: async sleep with optional cancellation
-#   - post/intervallum: scheduled callbacks
+#   - dormiet: async sleep
+#   - destina/itera: scheduled callbacks
 
 @ subsidia ts "codegen/ts/tempus.ts"
 pactum tempus {
@@ -45,23 +48,30 @@ pactum tempus {
     # =========================================================================
     # SLEEP / DELAY
     # =========================================================================
+    # Verb: dormiet from "dormire" (to sleep)
+    # Why: The process sleeps/waits. Future tense for async.
 
     # Sleep for milliseconds (async)
     @ futura
     @ externa
-    functio dormi(numerus ms) -> vacuum
+    functio dormiet(numerus ms) -> vacuum
 
     # =========================================================================
     # SCHEDULED CALLBACKS
     # =========================================================================
+    # Verb: destina from "destinare" (to appoint, fix, determine)
+    # Why: Appointing a function to run at a future time.
+    #
+    # Verb: itera from "iterare" (to repeat, do again)
+    # Why: Iterating/looping a function at regular intervals.
 
-    # Call function once after delay (returns handle for cancellation)
+    # Appoint function to run once after delay (returns handle for cancellation)
     @ externa
-    functio post(numerus ms, () -> vacuum fn) -> numerus
+    functio destina(numerus ms, () -> vacuum fn) -> numerus
 
-    # Call function repeatedly at interval (returns handle for cancellation)
+    # Iterate function repeatedly at interval (returns handle for cancellation)
     @ externa
-    functio intervallum(numerus ms, () -> vacuum fn) -> numerus
+    functio itera(numerus ms, () -> vacuum fn) -> numerus
 
     # Cancel a scheduled callback by handle
     @ externa

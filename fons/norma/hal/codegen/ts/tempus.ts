@@ -49,16 +49,19 @@ export const tempus = {
     // =========================================================================
     // SLEEP / DELAY
     // =========================================================================
+    // Verb: dormiet from "dormire" (to sleep)
 
-    dormi(ms: number): Promise<void> {
+    dormiet(ms: number): Promise<void> {
         return new Promise((resolve) => setTimeout(resolve, ms));
     },
 
     // =========================================================================
     // SCHEDULED CALLBACKS
     // =========================================================================
+    // Verb: destina from "destinare" (to appoint, fix, determine)
+    // Verb: itera from "iterare" (to repeat, do again)
 
-    post(ms: number, fn: () => void): number {
+    destina(ms: number, fn: () => void): number {
         const id = nextHandleId++;
         const timer = setTimeout(() => {
             timerHandles.delete(id);
@@ -68,7 +71,7 @@ export const tempus = {
         return id;
     },
 
-    intervallum(ms: number, fn: () => void): number {
+    itera(ms: number, fn: () => void): number {
         const id = nextHandleId++;
         const timer = setInterval(fn, ms);
         timerHandles.set(id, timer);
