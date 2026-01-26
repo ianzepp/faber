@@ -14,7 +14,7 @@ incipit {
     # ==========================================================================
 
     # filtrata (participle) - returns new filtered list
-    fixum evens = items.filtrata(clausura x: x % 2 == 0)
+    fixum evens = items.filtrata(clausura numerus x: x % 2 == 0)
     scribe "filtrata (returns new):", evens
 
     # TODO (type errors) - filtra (imperative) - mutates in place
@@ -63,7 +63,7 @@ incipit {
     # ==========================================================================
 
     # mappata (participle) - returns new mapped list
-    fixum doubled = items.mappata(clausura x: x * 2)
+    fixum doubled = items.mappata(clausura numerus x: x * 2)
     scribe "mappata (returns new):", doubled
 
     # ==========================================================================

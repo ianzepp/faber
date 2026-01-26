@@ -25,5 +25,5 @@ incipit ergo cura arena {
 
     # One-liner form with ergo
     fixum data = { alpha: 1, beta: 2 }
-    de data pro k ergo scribe k
+    de data fixum k ergo scribe k
 }

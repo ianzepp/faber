@@ -20,12 +20,12 @@ incipit {
     }
 
     # Complex dispatch with error handling
-    ad "rete:connecta" ("127.0.0.1", 8080) fit rete.Socket pro socket {
-        scribe "Connected successfully"
-        socket.claude()
-    } cape err {
-        scribe scriptum("Connection failed: §", err.nuntius)
-    }
+    #ad "rete:connecta" ("127.0.0.1", 8080) fit rete.Socket pro socket {
+    #    scribe "Connected successfully"
+    #    socket.claude()
+    #} cape err {
+    #    scribe scriptum("Connection failed: §", err.nuntius)
+    #}
 
     # Endpoint dispatch without handler (fire-and-forget)
     ad "notificatio:mitte" ("User logged in", userId)
