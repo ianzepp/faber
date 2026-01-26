@@ -3,18 +3,18 @@ import { pressura, Compressor, Decompressor } from './pressura';
 
 describe('pressura HAL', () => {
     describe('compression roundtrip', () => {
-        test('gzip compress then decompress returns original', () => {
+        test('gzip compress then solve returns original', () => {
             const original = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
             const compressed = pressura.comprime('gzip', original);
-            const decompressed = pressura.decomprimen('gzip', compressed);
+            const decompressed = pressura.solve('gzip', compressed);
 
             expect(decompressed).toEqual(original);
         });
 
-        test('deflate compress then decompress returns original', () => {
+        test('deflate compress then solve returns original', () => {
             const original = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
             const compressed = pressura.comprime('deflate', original);
-            const decompressed = pressura.decomprimen('deflate', compressed);
+            const decompressed = pressura.solve('deflate', compressed);
 
             expect(decompressed).toEqual(original);
         });
@@ -26,52 +26,58 @@ describe('pressura HAL', () => {
             }
 
             const gzipCompressed = pressura.comprime('gzip', original);
-            const gzipDecompressed = pressura.decomprimen('gzip', gzipCompressed);
+            const gzipDecompressed = pressura.solve('gzip', gzipCompressed);
             expect(gzipDecompressed).toEqual(original);
 
             const deflateCompressed = pressura.comprime('deflate', original);
-            const deflateDecompressed = pressura.decomprimen('deflate', deflateCompressed);
+            const deflateDecompressed = pressura.solve('deflate', deflateCompressed);
             expect(deflateDecompressed).toEqual(original);
         });
     });
 
-    describe('text compression', () => {
-        test('comprimeTextum and decomprimeTextum roundtrip', () => {
+    describe('text compression (manual encode/decode)', () => {
+        test('text roundtrip with gzip', () => {
             const original = 'Hello, world! This is a test string for compression.';
-            const compressed = pressura.comprimeTextum('gzip', original);
-            const decompressed = pressura.decomprimeTextum('gzip', compressed);
+            const encoded = new TextEncoder().encode(original);
+            const compressed = pressura.comprime('gzip', encoded);
+            const decompressed = pressura.solve('gzip', compressed);
+            const decoded = new TextDecoder().decode(decompressed);
 
-            expect(decompressed).toBe(original);
+            expect(decoded).toBe(original);
         });
 
-        test('text compression with deflate', () => {
+        test('text roundtrip with deflate', () => {
             const original = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
-            const compressed = pressura.comprimeTextum('deflate', original);
-            const decompressed = pressura.decomprimeTextum('deflate', compressed);
+            const encoded = new TextEncoder().encode(original);
+            const compressed = pressura.comprime('deflate', encoded);
+            const decompressed = pressura.solve('deflate', compressed);
+            const decoded = new TextDecoder().decode(decompressed);
 
-            expect(decompressed).toBe(original);
+            expect(decoded).toBe(original);
         });
 
         test('handles unicode text', () => {
             const original = 'Hello world';
-            const compressed = pressura.comprimeTextum('gzip', original);
-            const decompressed = pressura.decomprimeTextum('gzip', compressed);
+            const encoded = new TextEncoder().encode(original);
+            const compressed = pressura.comprime('gzip', encoded);
+            const decompressed = pressura.solve('gzip', compressed);
+            const decoded = new TextDecoder().decode(decompressed);
 
-            expect(decompressed).toBe(original);
+            expect(decoded).toBe(original);
         });
     });
 
     describe('compression levels', () => {
-        test('comprimeNivel accepts level parameter', () => {
+        test('comprime accepts level parameter', () => {
             const data = new Uint8Array(100);
             data.fill(65); // Fill with 'A' - highly compressible
 
-            const compressed1 = pressura.comprimeNivel('gzip', data, 1);
-            const compressed9 = pressura.comprimeNivel('gzip', data, 9);
+            const compressed1 = pressura.comprime('gzip', data, 1);
+            const compressed9 = pressura.comprime('gzip', data, 9);
 
             // Both should decompress to original
-            expect(pressura.decomprimen('gzip', compressed1)).toEqual(data);
-            expect(pressura.decomprimen('gzip', compressed9)).toEqual(data);
+            expect(pressura.solve('gzip', compressed1)).toEqual(data);
+            expect(pressura.solve('gzip', compressed9)).toEqual(data);
 
             // Higher level should compress at least as well (often better)
             expect(compressed9.length).toBeLessThanOrEqual(compressed1.length);
@@ -81,11 +87,11 @@ describe('pressura HAL', () => {
             const data = new Uint8Array([1, 2, 3, 4, 5]);
 
             // Should not throw for out-of-range levels
-            const compressed0 = pressura.comprimeNivel('gzip', data, 0);
-            const compressed10 = pressura.comprimeNivel('gzip', data, 10);
+            const compressed0 = pressura.comprime('gzip', data, 0);
+            const compressed10 = pressura.comprime('gzip', data, 10);
 
-            expect(pressura.decomprimen('gzip', compressed0)).toEqual(data);
-            expect(pressura.decomprimen('gzip', compressed10)).toEqual(data);
+            expect(pressura.solve('gzip', compressed0)).toEqual(data);
+            expect(pressura.solve('gzip', compressed10)).toEqual(data);
         });
     });
 
@@ -117,12 +123,12 @@ describe('pressura HAL', () => {
     describe('unsupported algorithms', () => {
         test('brotli throws not supported', () => {
             const data = new Uint8Array([1, 2, 3]);
-            expect(() => pressura.comprime('brotli', data)).toThrow('Algorithm "brotli" not supported');
+            expect(() => pressura.comprime('brotli', data)).toThrow('not yet supported');
         });
 
         test('zstd throws not supported', () => {
             const data = new Uint8Array([1, 2, 3]);
-            expect(() => pressura.comprime('zstd', data)).toThrow('Algorithm "zstd" not supported');
+            expect(() => pressura.comprime('zstd', data)).toThrow('not yet supported');
         });
 
         test('unknown algorithm throws', () => {
@@ -135,12 +141,12 @@ describe('pressura HAL', () => {
         test('Compressor accumulates and compresses', () => {
             const compressor = pressura.comprimens('gzip');
 
-            compressor.adde(new Uint8Array([1, 2, 3]));
-            compressor.adde(new Uint8Array([4, 5, 6]));
-            compressor.adde(new Uint8Array([7, 8, 9]));
+            compressor.funde(new Uint8Array([1, 2, 3]));
+            compressor.funde(new Uint8Array([4, 5, 6]));
+            compressor.funde(new Uint8Array([7, 8, 9]));
 
-            const compressed = compressor.fini();
-            const decompressed = pressura.decomprimen('gzip', compressed);
+            const compressed = compressor.claude();
+            const decompressed = pressura.solve('gzip', compressed);
 
             expect(decompressed).toEqual(new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9]));
         });
@@ -148,19 +154,19 @@ describe('pressura HAL', () => {
         test('Compressor works with deflate', () => {
             const compressor = pressura.comprimens('deflate');
 
-            compressor.adde(new Uint8Array([10, 20, 30]));
-            compressor.adde(new Uint8Array([40, 50]));
+            compressor.funde(new Uint8Array([10, 20, 30]));
+            compressor.funde(new Uint8Array([40, 50]));
 
-            const compressed = compressor.fini();
-            const decompressed = pressura.decomprimen('deflate', compressed);
+            const compressed = compressor.claude();
+            const decompressed = pressura.solve('deflate', compressed);
 
             expect(decompressed).toEqual(new Uint8Array([10, 20, 30, 40, 50]));
         });
 
-        test('Compressor class can be instantiated directly', () => {
-            const compressor = new Compressor('gzip' as 'gzip');
-            compressor.adde(new Uint8Array([1, 2, 3]));
-            const result = compressor.fini();
+        test('Compressor with level parameter', () => {
+            const compressor = pressura.comprimens('gzip', 9);
+            compressor.funde(new Uint8Array([1, 2, 3]));
+            const result = compressor.claude();
 
             expect(result).toBeInstanceOf(Uint8Array);
             expect(result.length).toBeGreaterThan(0);
@@ -172,47 +178,38 @@ describe('pressura HAL', () => {
             const original = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
             const compressed = pressura.comprime('gzip', original);
 
-            const decompressor = pressura.decomprimens('gzip');
-            decompressor.adde(compressed);
+            const decompressor = pressura.solvens('gzip');
+            decompressor.funde(compressed);
 
-            const result = decompressor.fini();
+            const result = decompressor.claude();
             expect(result).toEqual(original);
         });
 
-        test('Decompressor cape returns partial output', () => {
+        test('Decompressor hauri returns partial output', () => {
             const original = new Uint8Array([1, 2, 3, 4, 5]);
             const compressed = pressura.comprime('deflate', original);
 
-            const decompressor = pressura.decomprimens('deflate');
-            decompressor.adde(compressed);
+            const decompressor = pressura.solvens('deflate');
+            decompressor.funde(compressed);
 
-            // cape should return decompressed data
-            const partial = decompressor.cape();
+            // hauri should return decompressed data
+            const partial = decompressor.hauri();
             expect(partial).toEqual(original);
 
-            // fini should also work
-            const final = decompressor.fini();
+            // claude should also work
+            const final = decompressor.claude();
             expect(final).toEqual(original);
         });
 
-        test('Decompressor cape returns empty on incomplete data', () => {
-            const decompressor = pressura.decomprimens('gzip');
+        test('Decompressor hauri returns empty on incomplete data', () => {
+            const decompressor = pressura.solvens('gzip');
 
             // Add incomplete compressed data
-            decompressor.adde(new Uint8Array([31, 139])); // gzip magic bytes only
+            decompressor.funde(new Uint8Array([31, 139])); // gzip magic bytes only
 
-            // cape should return empty (can't decompress incomplete stream)
-            const partial = decompressor.cape();
+            // hauri should return empty (can't decompress incomplete stream)
+            const partial = decompressor.hauri();
             expect(partial.length).toBe(0);
-        });
-
-        test('Decompressor class can be instantiated directly', () => {
-            const decompressor = new Decompressor('deflate' as 'deflate');
-            const compressed = pressura.comprime('deflate', new Uint8Array([1, 2, 3]));
-            decompressor.adde(compressed);
-            const result = decompressor.fini();
-
-            expect(result).toEqual(new Uint8Array([1, 2, 3]));
         });
     });
 
@@ -221,24 +218,26 @@ describe('pressura HAL', () => {
             const empty = new Uint8Array(0);
 
             const gzipCompressed = pressura.comprime('gzip', empty);
-            const gzipDecompressed = pressura.decomprimen('gzip', gzipCompressed);
+            const gzipDecompressed = pressura.solve('gzip', gzipCompressed);
             expect(gzipDecompressed).toEqual(empty);
 
             const deflateCompressed = pressura.comprime('deflate', empty);
-            const deflateDecompressed = pressura.decomprimen('deflate', deflateCompressed);
+            const deflateDecompressed = pressura.solve('deflate', deflateCompressed);
             expect(deflateDecompressed).toEqual(empty);
         });
 
         test('empty text roundtrip', () => {
-            const compressed = pressura.comprimeTextum('gzip', '');
-            const decompressed = pressura.decomprimeTextum('gzip', compressed);
-            expect(decompressed).toBe('');
+            const encoded = new TextEncoder().encode('');
+            const compressed = pressura.comprime('gzip', encoded);
+            const decompressed = pressura.solve('gzip', compressed);
+            const decoded = new TextDecoder().decode(decompressed);
+            expect(decoded).toBe('');
         });
 
         test('single byte roundtrip', () => {
             const single = new Uint8Array([42]);
             const compressed = pressura.comprime('deflate', single);
-            const decompressed = pressura.decomprimen('deflate', compressed);
+            const decompressed = pressura.solve('deflate', compressed);
             expect(decompressed).toEqual(single);
         });
     });

@@ -3,57 +3,67 @@
  *
  * Native TypeScript implementation of the HAL compression interface.
  * Uses Bun's built-in compression functions for gzip and deflate.
+ *
+ * Verbs:
+ *   - comprime: compress (press together)
+ *   - solve: decompress (loosen/release)
+ *   - funde/hauri/claude: stream operations (pour/draw/close)
  */
 
-type Algorithm = 'gzip' | 'deflate' | 'brotli' | 'zstd';
+type Algorithm = 'gzip' | 'deflate';
 
 function validateAlgorithm(algo: string): Algorithm {
     if (algo === 'gzip' || algo === 'deflate') {
         return algo;
     }
     if (algo === 'brotli' || algo === 'zstd') {
-        throw new Error(`Algorithm "${algo}" not supported`);
+        throw new Error(`Algorithm "${algo}" not yet supported in JS runtime`);
     }
     throw new Error(`Unknown algorithm: ${algo}`);
 }
 
+function combineChunks(chunks: Uint8Array[]): Uint8Array {
+    const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+    const combined = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+        combined.set(chunk, offset);
+        offset += chunk.length;
+    }
+    return combined;
+}
+
 /**
- * Compressor stream - accumulates data and compresses on finish
+ * Compressor stream
  */
 export class Compressor {
     private algorithm: Algorithm;
+    private level: number;
     private chunks: Uint8Array[] = [];
 
-    constructor(algorithm: Algorithm) {
+    constructor(algorithm: Algorithm, level?: number) {
         this.algorithm = algorithm;
+        this.level = level !== undefined ? Math.max(1, Math.min(9, level)) : 6;
     }
 
-    adde(data: Uint8Array): void {
+    funde(data: Uint8Array): void {
         this.chunks.push(data);
     }
 
-    fini(): Uint8Array {
-        // Concatenate all chunks
-        const totalLength = this.chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-        const combined = new Uint8Array(totalLength);
-        let offset = 0;
-        for (const chunk of this.chunks) {
-            combined.set(chunk, offset);
-            offset += chunk.length;
-        }
+    claude(): Uint8Array {
+        const combined = combineChunks(this.chunks);
 
-        // Compress the combined data
         if (this.algorithm === 'gzip') {
-            return Bun.gzipSync(combined);
+            return Bun.gzipSync(combined, { level: this.level });
         }
         else {
-            return Bun.deflateSync(combined);
+            return Bun.deflateSync(combined, { level: this.level });
         }
     }
 }
 
 /**
- * Decompressor stream - accumulates compressed data and decompresses
+ * Decompressor stream
  */
 export class Decompressor {
     private algorithm: Algorithm;
@@ -63,20 +73,17 @@ export class Decompressor {
         this.algorithm = algorithm;
     }
 
-    adde(data: Uint8Array): void {
+    funde(data: Uint8Array): void {
         this.chunks.push(data);
     }
 
-    cape(): Uint8Array {
-        // Return partial decompression (attempt to decompress what we have)
-        // WHY: Partial decompression may fail if stream is incomplete,
-        // so we return empty if decompression fails
+    hauri(): Uint8Array {
         if (this.chunks.length === 0) {
             return new Uint8Array(0);
         }
 
         try {
-            const combined = this.combineChunks();
+            const combined = combineChunks(this.chunks);
             if (this.algorithm === 'gzip') {
                 return Bun.gunzipSync(combined);
             }
@@ -90,8 +97,8 @@ export class Decompressor {
         }
     }
 
-    fini(): Uint8Array {
-        const combined = this.combineChunks();
+    claude(): Uint8Array {
+        const combined = combineChunks(this.chunks);
 
         if (this.algorithm === 'gzip') {
             return Bun.gunzipSync(combined);
@@ -100,38 +107,16 @@ export class Decompressor {
             return Bun.inflateSync(combined);
         }
     }
-
-    private combineChunks(): Uint8Array {
-        const totalLength = this.chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-        const combined = new Uint8Array(totalLength);
-        let offset = 0;
-        for (const chunk of this.chunks) {
-            combined.set(chunk, offset);
-            offset += chunk.length;
-        }
-        return combined;
-    }
 }
 
 export const pressura = {
     // =========================================================================
-    // COMPRESSION
+    // ONE-SHOT OPERATIONS
     // =========================================================================
 
-    comprime(algorithmus: string, data: Uint8Array): Uint8Array {
+    comprime(algorithmus: string, data: Uint8Array, nivel?: number): Uint8Array {
         const algo = validateAlgorithm(algorithmus);
-
-        if (algo === 'gzip') {
-            return Bun.gzipSync(data);
-        }
-        else {
-            return Bun.deflateSync(data);
-        }
-    },
-
-    comprimeNivel(algorithmus: string, data: Uint8Array, nivel: number): Uint8Array {
-        const algo = validateAlgorithm(algorithmus);
-        const level = Math.max(1, Math.min(9, nivel));
+        const level = nivel !== undefined ? Math.max(1, Math.min(9, nivel)) : 6;
 
         if (algo === 'gzip') {
             return Bun.gzipSync(data, { level });
@@ -141,17 +126,7 @@ export const pressura = {
         }
     },
 
-    comprimeTextum(algorithmus: string, text: string): Uint8Array {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(text);
-        return this.comprime(algorithmus, data);
-    },
-
-    // =========================================================================
-    // DECOMPRESSION
-    // =========================================================================
-
-    decomprimen(algorithmus: string, data: Uint8Array): Uint8Array {
+    solve(algorithmus: string, data: Uint8Array): Uint8Array {
         const algo = validateAlgorithm(algorithmus);
 
         if (algo === 'gzip') {
@@ -162,22 +137,16 @@ export const pressura = {
         }
     },
 
-    decomprimeTextum(algorithmus: string, data: Uint8Array): string {
-        const decompressed = this.decomprimen(algorithmus, data);
-        const decoder = new TextDecoder();
-        return decoder.decode(decompressed);
-    },
-
     // =========================================================================
     // STREAMING
     // =========================================================================
 
-    comprimens(algorithmus: string): Compressor {
+    comprimens(algorithmus: string, nivel?: number): Compressor {
         const algo = validateAlgorithm(algorithmus);
-        return new Compressor(algo);
+        return new Compressor(algo, nivel);
     },
 
-    decomprimens(algorithmus: string): Decompressor {
+    solvens(algorithmus: string): Decompressor {
         const algo = validateAlgorithm(algorithmus);
         return new Decompressor(algo);
     },

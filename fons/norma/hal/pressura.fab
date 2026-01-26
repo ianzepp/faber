@@ -3,78 +3,64 @@
 # Etymology: "pressura" - pressing, squeezing. Data compression.
 #
 # Part of the Hardware Abstraction Layer (HAL).
-# Maps to CompressionDevice from monk-os-kernel.
 #
 # Design notes:
+#   - comprime (compress): press data together
+#   - solve (decompress): loosen/release compressed data
 #   - Algorithms: gzip, deflate, brotli, zstd
 #   - Levels: 1 (fast) to 9 (best compression)
 #   - Sync operations suitable for data <10MB
+#   - Streaming for large data
 
 @ subsidia ts "codegen/ts/pressura.ts"
 pactum pressura {
     # =========================================================================
-    # COMPRESSION
+    # ONE-SHOT OPERATIONS
     # =========================================================================
 
-    # Compress bytes with algorithm (gzip, deflate, brotli, zstd)
+    # Compress bytes (optional level 1-9)
     @ externa
-    functio comprime(textus algorithmus, octeti data) -> octeti
-
-    # Compress with level (1-9)
-    @ externa
-    functio comprimeNivel(textus algorithmus, octeti data, numerus nivel) -> octeti
-
-    # Compress text (convenience - encodes as UTF-8)
-    @ externa
-    functio comprimeTextum(textus algorithmus, textus data) -> octeti
-
-    # =========================================================================
-    # DECOMPRESSION
-    # =========================================================================
+    functio comprime(textus algorithmus, octeti data, si numerus nivel) -> octeti
 
     # Decompress bytes
     @ externa
-    functio decomprimen(textus algorithmus, octeti data) -> octeti
-
-    # Decompress to text (convenience - decodes as UTF-8)
-    @ externa
-    functio decomprimeTextum(textus algorithmus, octeti data) -> textus
+    functio solve(textus algorithmus, octeti data) -> octeti
 
     # =========================================================================
-    # STREAMING (for large data)
+    # STREAMING
     # =========================================================================
 
-    # Create compression stream
+    # Create compression stream (optional level 1-9)
     @ externa
-    functio comprimens(textus algorithmus) -> Compressor
+    functio comprimens(textus algorithmus, si numerus nivel) -> Compressor
 
     # Create decompression stream
     @ externa
-    functio decomprimens(textus algorithmus) -> Decompressor
+    functio solvens(textus algorithmus) -> Decompressor
 }
 
 # Compression stream
 pactum Compressor {
-    # Add data to compress
+    # Pour data in
     @ externa
-    functio adde(octeti data) -> vacuum
+    functio funde(octeti data) -> vacuum
 
-    # Finish and get compressed output
+    # Close and get compressed result
     @ externa
-    functio fini() -> octeti
+    functio claude() -> octeti
 }
 
 # Decompression stream
 pactum Decompressor {
-    # Add compressed data
+    # Pour compressed data in
     @ externa
-    functio adde(octeti data) -> vacuum
+    functio funde(octeti data) -> vacuum
 
-    # Get decompressed output so far
+    # Draw decompressed data out (partial)
     @ externa
-    functio cape() -> octeti
+    functio hauri() -> octeti
 
-    # Finish decompression
+    # Close and get final result
     @ externa
-    functio fini() -> octeti
+    functio claude() -> octeti
 }
