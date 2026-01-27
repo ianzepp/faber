@@ -324,13 +324,15 @@ class Parser:
         locus = self.peek().locus
         self.expect(TokenTag.KEYWORD, "itera")
 
-        # Expect 'ex' (for-of) or 'de' (for-in)
+        # Expect 'ex' (for-of), 'de' (for-in), or 'pro' (range - not supported)
         if self.match(TokenTag.KEYWORD, "ex"):
             species = "Ex"
         elif self.match(TokenTag.KEYWORD, "de"):
             species = "De"
+        elif self.match(TokenTag.KEYWORD, "pro"):
+            raise self.error("'itera pro' (range iteration) is not supported in nanus-py")
         else:
-            raise self.error("expected 'ex' or 'de' after 'itera'")
+            raise self.error("expected 'ex', 'de', or 'pro' after 'itera'")
 
         expr = self.parse_expr(0)
 

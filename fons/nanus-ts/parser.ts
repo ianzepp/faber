@@ -1109,14 +1109,16 @@ export class Parser {
         const locus = this.peek().locus;
         this.expect('Keyword', 'itera');
 
-        // Expect 'ex' (for-of) or 'de' (for-in)
+        // Expect 'ex' (for-of), 'de' (for-in), or 'pro' (range - not supported)
         let species: 'Ex' | 'De';
         if (this.match('Keyword', 'ex')) {
             species = 'Ex';
         } else if (this.match('Keyword', 'de')) {
             species = 'De';
+        } else if (this.match('Keyword', 'pro')) {
+            throw this.error("'itera pro' (range iteration) is not supported in nanus-ts");
         } else {
-            throw this.error("expected 'ex' or 'de' after 'itera'");
+            throw this.error("expected 'ex', 'de', or 'pro' after 'itera'");
         }
 
         const iter = this.parseExpr();

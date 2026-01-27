@@ -394,14 +394,16 @@ func (p *Parser) parseIteraStmt() Stmt {
 	locus := p.peek(0).Locus
 	p.expect(TokenKeyword, "itera")
 
-	// Expect 'ex' (for-of) or 'de' (for-in)
+	// Expect 'ex' (for-of), 'de' (for-in), or 'pro' (range - not supported)
 	var species string
 	if p.match(TokenKeyword, "ex") != nil {
 		species = "Ex"
 	} else if p.match(TokenKeyword, "de") != nil {
 		species = "De"
+	} else if p.match(TokenKeyword, "pro") != nil {
+		panic(p.error("'itera pro' (range iteration) is not supported in nanus-go"))
 	} else {
-		panic(p.error("expected 'ex' or 'de' after 'itera'"))
+		panic(p.error("expected 'ex', 'de', or 'pro' after 'itera'"))
 	}
 
 	expr := p.parseExpr(0)

@@ -436,15 +436,18 @@ impl Parser {
         let locus = self.peek(0).locus;
         self.expect(TOKEN_KEYWORD, Some("itera"))?;
 
-        // Expect 'ex' (for-of) or 'de' (for-in)
+        // Expect 'ex' (for-of), 'de' (for-in), or 'pro' (range - not supported)
         let species = if self.check(TOKEN_KEYWORD, Some("ex")) {
             self.advance();
             "Ex".to_string()
         } else if self.check(TOKEN_KEYWORD, Some("de")) {
             self.advance();
             "De".to_string()
+        } else if self.check(TOKEN_KEYWORD, Some("pro")) {
+            self.advance();
+            return Err(self.error("'itera pro' (range iteration) is not supported in nanus-rs"));
         } else {
-            return Err(self.error("expected 'ex' or 'de' after 'itera'"));
+            return Err(self.error("expected 'ex', 'de', or 'pro' after 'itera'"));
         };
 
         let iter = self.parse_expr(0)?;
