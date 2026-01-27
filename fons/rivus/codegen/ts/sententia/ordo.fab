@@ -28,7 +28,7 @@ functio genOrdo(in TsGenerator g, de textus nomen, de lista<OrdoMembrum> membra,
 
     # If no member has an explicit value, keep them on one line.
     varia habetValores = falsum
-    ex membra fixum membrum {
+    itera ex membra fixum membrum {
         si nonnihil membrum.valor {
             habetValores = verum
         }
@@ -36,7 +36,7 @@ functio genOrdo(in TsGenerator g, de textus nomen, de lista<OrdoMembrum> membra,
 
     si non habetValores {
         varia nomina = [] innatum lista<textus>
-        ex membra fixum membrum {
+        itera ex membra fixum membrum {
             nomina.appende(membrum.nomen)
         }
         result = scriptum("§§§\n", result, g.ind(), nomina.coniunge(", "))
@@ -45,7 +45,7 @@ functio genOrdo(in TsGenerator g, de textus nomen, de lista<OrdoMembrum> membra,
         redde result
     }
 
-    ex membra fixum membrum {
+    itera ex membra fixum membrum {
         si nonnihil membrum.valor {
             result = scriptum("§§§ = §,\n", result, g.ind(), membrum.nomen, membrum.valor qua textus)
         } secus {

@@ -33,18 +33,18 @@ importa ex "./index" privata genSententia
 functio genDiscerne(in TsGenerator g, de lista<Expressia> discriminantes, de lista<VariansCasus> casus) -> textus {
     # Generate expressions for all discriminants
     varia discriminantStrs = [] innatum lista<textus>
-    ex discriminantes fixum d {
+    itera ex discriminantes fixum d {
         discriminantStrs.appende(genExpressia(g, d))
     }
 
     varia result = scriptum("§// discerne\n", g.ind())
 
     varia first = verum
-    ex casus fixum c {
+    itera ex casus fixum c {
         # Build combined condition for all patterns
         varia conditions = [] innatum lista<textus>
         varia i = 0
-        ex c.exemplaria fixum pattern {
+        itera ex c.exemplaria fixum pattern {
             # Wildcard matches anything - no condition needed
             si non pattern.estWildcard {
                 fixum disc = discriminantStrs[i]
@@ -75,7 +75,7 @@ functio genDiscerne(in TsGenerator g, de lista<Expressia> discriminantes, de lis
 
         # Generate bindings for each pattern
         varia j = 0
-        ex c.exemplaria fixum pattern {
+        itera ex c.exemplaria fixum pattern {
             # Skip wildcards - no bindings
             si non pattern.estWildcard {
                 fixum disc = discriminantStrs[j]

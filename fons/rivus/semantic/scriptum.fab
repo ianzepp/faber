@@ -30,7 +30,7 @@ functio extractScripta(si de lista<SectioAnnotatio> sectiones) -> tabula<textus,
     varia result = {} innatum tabula<textus, Scriptum>
     si nihil sectiones { redde result }
 
-    ex sectiones fixum s {
+    itera ex sectiones fixum s {
         si s.nomen == "scriptum" {
             fixum scr = parseScriptumArgs(s.argumenta)
             si nonnihil scr {
@@ -74,7 +74,7 @@ functio parseScriptumArgs(de lista<textus> args) -> si Scriptum {
 @ publica
 functio nominaScriptorum(de tabula<textus, Scriptum> scripta) -> lista<textus> {
     varia nomina = [] innatum lista<textus>
-    ex scripta.claves() fixum nomen {
+    itera ex scripta.claves() fixum nomen {
         nomina.push(nomen)
     }
     redde nomina.sort()

@@ -197,7 +197,7 @@ functio parseDiscerneSententia(in Resolvitor r) -> Sententia {
 
             # Create wildcard patterns (one per discriminant)
             varia exemplaria = [] innatum lista<VariansExemplar>
-            ex discriminantes fixum _ {
+            itera ex discriminantes fixum _ {
                 exemplaria.appende({
                     locus: casusLocus,
                     variansNomen: "_",

@@ -36,7 +36,7 @@ functio extractDependentiae(si de lista<SectioAnnotatio> sectiones) -> tabula<te
     varia result = {} innatum tabula<textus, Dependentia>
     si nihil sectiones { redde result }
 
-    ex sectiones fixum s {
+    itera ex sectiones fixum s {
         si s.nomen == "dependentia" {
             fixum dep = parseDependentiaArgs(s.argumenta)
             si nonnihil dep {

@@ -79,8 +79,8 @@ functio estDependentiaImportum(de textus fons) -> bivalens {
 # Does NOT resolve to absolute path - caller should use resolveModulum for that
 @ publica
 functio resolveDependentiaPath(
-    de textus fons,
-    de tabula<textus, Dependentia> registry
+    itera de textus fons,
+    itera de tabula<textus, Dependentia> registry
 ) -> si textus {
     # Split on colon: "alias:subpath" -> ["alias", "subpath"]
     fixum partes = fons.divide(":") qua lista<textus>
@@ -139,7 +139,7 @@ functio resolveTypusShallow(de TypusAnnotatio annotatio) -> SemanticTypus {
     # Generic types: lista<T>, tabula<K,V>, etc.
     varia resolvedParametri = [] innatum lista<SemanticTypus>
     si nonnihil annotatio.typusParametra {
-        ex (annotatio.typusParametra qua lista<TypusParametrum>) fixum p {
+        itera ex (annotatio.typusParametra qua lista<TypusParametrum>) fixum p {
             discerne p {
                 casu Typus ut tp {
                     resolvedParametri.appende(resolveTypusShallow(tp.adnotatio))
@@ -175,7 +175,7 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
     varia exporta = {} innatum tabula<textus, ModulusExportum>
     varia discretiones = {} innatum tabula<textus, DiscretioDeclInfo>
 
-    ex programma.corpus fixum stmt {
+    itera ex programma.corpus fixum stmt {
         discerne stmt {
             casu FunctioDeclaratio ut f {
                 # WHY: Resolve return type so callers can infer variable types
@@ -196,7 +196,7 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
                 # WHY: Build proper Genus type with field types so cross-module
                 # member access can resolve field types for norma translation.
                 varia agri = {} innatum tabula<textus, SemanticTypus>
-                ex g.campi fixum campo {
+                itera ex g.campi fixum campo {
                     si nonnihil campo.typus {
                         agri[campo.nomen] = resolveTypusShallow(campo.typus novum TypusAnnotatio)
                     } secus {
@@ -220,9 +220,9 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
                 # WHY: Preserve method return types so callers can infer types from calls
                 # (needed for norma translation when compiling in dependency order).
                 varia methodi = {} innatum tabula<textus, SemanticTypus>
-                ex p.methodi fixum methodSignum {
+                itera ex p.methodi fixum methodSignum {
                     varia paramTypi = [] innatum lista<SemanticTypus>
-                    ex methodSignum.parametra fixum param {
+                    itera ex methodSignum.parametra fixum param {
                         si nonnihil param.typus {
                             paramTypi.appende(resolveTypusShallow(param.typus novum TypusAnnotatio))
                         } secus {
@@ -262,7 +262,7 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
                 } novum ModulusExportum
 
                 varia variantInfos = [] innatum lista<DiscretioVariansInfo>
-                ex d.variantes fixum variante {
+                itera ex d.variantes fixum variante {
                     variantInfos.appende({
                         nomen: variante.nomen,
                         locus: variante.locus
@@ -276,9 +276,9 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
 
                 # WHY: Pattern matching (`discerne`) expects variant types to be resolvable as
                 # `DiscretioNomen.VariansNomen`, even across module boundaries.
-                ex d.variantes fixum variante {
+                itera ex d.variantes fixum variante {
                     varia campi = {} innatum tabula<textus, SemanticTypus>
-                    ex variante.campi fixum campo {
+                    itera ex variante.campi fixum campo {
                         campi[campo.nomen] = resolveTypusShallow(campo.typus)
                     }
 
@@ -353,8 +353,8 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
 # Handles path resolution, caching, cycle detection, parsing, and export extraction
 @ publica
 functio resolveModulum(
-    de textus fons,
-    de textus viaBasica,
+    itera de textus fons,
+    itera de textus viaBasica,
     in tabula<textus, ModulusResolutum> cache,
     in copia<textus> inProgressu
 ) -> si ModulusResolutum {

@@ -245,7 +245,7 @@ functio genMassa(in GlyphGenerator g, de lista<Sententia> corpus) -> textus {
         redde ""
     }
     varia lines = [] innatum lista<textus>
-    ex corpus fixum stmt {
+    itera ex corpus fixum stmt {
         lines.appende(genSententia(g, stmt))
     }
     redde lines.coniunge("\n")
@@ -323,7 +323,7 @@ functio genDestructura(in GlyphGenerator g, de DestructuraSententia s) -> textus
     fixum comma = glyphPunctuation(",")
 
     varia specs = [] innatum lista<textus>
-    ex (s.specificatores qua lista<ImportaSpecificator>) fixum spec {
+    itera ex (s.specificatores qua lista<ImportaSpecificator>) fixum spec {
         si spec.residuum qua bivalens {
             specs.appende(scriptum("§ §", glyphKeyword("ceteri"), encodeBraille(spec.locale)))
         } sin spec.importatum != spec.locale {
@@ -343,7 +343,7 @@ functio genSeriesDestructura(in GlyphGenerator g, de SeriesDestructuraSententia 
     fixum comma = glyphPunctuation(",")
 
     varia elems = [] innatum lista<textus>
-    ex (s.elementa qua lista<SeriesDestructuraElementum>) fixum elem {
+    itera ex (s.elementa qua lista<SeriesDestructuraElementum>) fixum elem {
         si elem.omissum qua bivalens {
             elems.appende("_")
         } sin elem.residuum qua bivalens {
@@ -410,7 +410,7 @@ functio genFunctio(in GlyphGenerator g, de FunctioDeclaratio f) -> textus {
         fixum generics = f.generaParametra qua lista<TypusParametrum>
         si generics.longitudo() > 0 {
             varia gparams = [] innatum lista<textus>
-            ex generics fixum gp {
+            itera ex generics fixum gp {
                 gparams.appende(encodeBraille(gp.nomen))
             }
             result = scriptum("§ § § §", result, glyphKeyword("prae"), encodeBraille("typus"), gparams.coniunge(comma + " "))
@@ -420,14 +420,14 @@ functio genFunctio(in GlyphGenerator g, de FunctioDeclaratio f) -> textus {
     # Parameters
     result = result + lp
     varia params = [] innatum lista<textus>
-    ex (f.parametra qua lista<Parametrum>) fixum p {
+    itera ex (f.parametra qua lista<Parametrum>) fixum p {
         params.appende(genParametrum(g, p))
     }
     result = result + params.coniunge(comma + " ") + rp
 
     # Modifiers
     si nonnihil f.modificatores {
-        ex (f.modificatores qua lista<FunctioModificator>) fixum mod {
+        itera ex (f.modificatores qua lista<FunctioModificator>) fixum mod {
             discerne mod {
                 casu CurataModificator ut m { result = scriptum("§ § §", result, encodeBraille("curata"), encodeBraille(m.nomen)) }
                 casu ErrataModificator ut m { result = scriptum("§ § §", result, encodeBraille("errata"), encodeBraille(m.nomen)) }
@@ -540,7 +540,7 @@ functio genGenus(in GlyphGenerator g, de GenusDeclaratio s) -> textus {
         fixum generics = s.generaParametra qua lista<textus>
         si generics.longitudo() > 0 {
             varia gparams = [] innatum lista<textus>
-            ex generics fixum gp {
+            itera ex generics fixum gp {
                 gparams.appende(encodeBraille(gp))
             }
             result = scriptum("§ § § §", result, glyphKeyword("prae"), encodeBraille("typus"), gparams.coniunge(comma + " "))
@@ -557,7 +557,7 @@ functio genGenus(in GlyphGenerator g, de GenusDeclaratio s) -> textus {
         fixum interfaces = s.implet qua lista<textus>
         si interfaces.longitudo() > 0 {
             varia impls = [] innatum lista<textus>
-            ex interfaces fixum iface {
+            itera ex interfaces fixum iface {
                 impls.appende(encodeBraille(iface))
             }
             result = scriptum("§ § §", result, glyphKeyword("implet"), impls.coniunge(comma + " "))
@@ -569,7 +569,7 @@ functio genGenus(in GlyphGenerator g, de GenusDeclaratio s) -> textus {
     g.intraProfundum()
 
     # Fields
-    ex (s.campi qua lista<CampusDeclaratio>) fixum campo {
+    itera ex (s.campi qua lista<CampusDeclaratio>) fixum campo {
         result = result + "\n" + genCampus(g, campo)
     }
 
@@ -579,7 +579,7 @@ functio genGenus(in GlyphGenerator g, de GenusDeclaratio s) -> textus {
     }
 
     # Methods
-    ex (s.methodi qua lista<FunctioDeclaratio>) fixum methodus {
+    itera ex (s.methodi qua lista<FunctioDeclaratio>) fixum methodus {
         result = result + "\n\n" + genFunctio(g, methodus)
     }
 
@@ -639,7 +639,7 @@ functio genPactum(in GlyphGenerator g, de PactumDeclaratio s) -> textus {
         fixum generics = s.generaParametra qua lista<textus>
         si generics.longitudo() > 0 {
             varia gparams = [] innatum lista<textus>
-            ex generics fixum gp {
+            itera ex generics fixum gp {
                 gparams.appende(encodeBraille(gp))
             }
             result = scriptum("§ § § §", result, glyphKeyword("prae"), encodeBraille("typus"), gparams.coniunge(comma + " "))
@@ -650,7 +650,7 @@ functio genPactum(in GlyphGenerator g, de PactumDeclaratio s) -> textus {
 
     g.intraProfundum()
 
-    ex (s.methodi qua lista<PactumMethodus>) fixum methodus {
+    itera ex (s.methodi qua lista<PactumMethodus>) fixum methodus {
         result = result + "\n" + genPactumMethodus(g, methodus)
     }
 
@@ -667,7 +667,7 @@ functio genPactumMethodus(in GlyphGenerator g, de PactumMethodus m) -> textus {
     varia result = g.ind() + glyphKeyword("functio") + " " + encodeBraille(m.nomen) + lp
 
     varia params = [] innatum lista<textus>
-    ex (m.parametra qua lista<Parametrum>) fixum p {
+    itera ex (m.parametra qua lista<Parametrum>) fixum p {
         params.appende(genParametrum(g, p))
     }
     result = result + params.coniunge(comma + " ") + rp
@@ -719,7 +719,7 @@ functio genOrdo(in GlyphGenerator g, de OrdoDeclaratio s) -> textus {
     g.intraProfundum()
 
     varia members = [] innatum lista<textus>
-    ex (s.membra qua lista<OrdoMembrum>) fixum membrum {
+    itera ex (s.membra qua lista<OrdoMembrum>) fixum membrum {
         si nonnihil membrum.valor {
             members.appende(scriptum("§§ § §", g.ind(), encodeBraille(membrum.nomen), glyphOperator("="), encodeBraille(membrum.valor qua textus)))
         } secus {
@@ -759,7 +759,7 @@ functio genDiscretio(in GlyphGenerator g, de DiscretioDeclaratio s) -> textus {
         fixum generics = s.generaParametra qua lista<textus>
         si generics.longitudo() > 0 {
             varia gparams = [] innatum lista<textus>
-            ex generics fixum gp {
+            itera ex generics fixum gp {
                 gparams.appende(encodeBraille(gp))
             }
             result = scriptum("§ § § §", result, glyphKeyword("prae"), encodeBraille("typus"), gparams.coniunge(comma + " "))
@@ -770,7 +770,7 @@ functio genDiscretio(in GlyphGenerator g, de DiscretioDeclaratio s) -> textus {
 
     g.intraProfundum()
 
-    ex (s.variantes qua lista<VariansDeclaratio>) fixum variante {
+    itera ex (s.variantes qua lista<VariansDeclaratio>) fixum variante {
         result = result + "\n" + genVariante(g, variante)
     }
 
@@ -790,7 +790,7 @@ functio genVariante(in GlyphGenerator g, de VariansDeclaratio v) -> textus {
     }
 
     varia fields = [] innatum lista<textus>
-    ex campi fixum campo {
+    itera ex campi fixum campo {
         fields.appende(scriptum("§ §", genTypus(g, campo.typus qua TypusAnnotatio), encodeBraille(campo.nomen)))
     }
 
@@ -891,7 +891,7 @@ functio genIteratio(in GlyphGenerator g, de IteratioSententia s) -> textus {
         casu Nomen ut n { binding = encodeBraille(n.valor) }
         casu Series ut ser {
             varia elems = [] innatum lista<textus>
-            ex (ser.elementa qua lista<SeriesDestructuraElementum>) fixum elem {
+            itera ex (ser.elementa qua lista<SeriesDestructuraElementum>) fixum elem {
                 si elem.omissum qua bivalens {
                     elems.appende("_")
                 } sin elem.residuum qua bivalens {
@@ -930,7 +930,7 @@ functio genElige(in GlyphGenerator g, de EligeSententia s) -> textus {
 
     g.intraProfundum()
 
-    ex (s.casus qua lista<EligeCasus>) fixum caso {
+    itera ex (s.casus qua lista<EligeCasus>) fixum caso {
         g.intraProfundum()
         fixum body = genMassa(g, (caso.consequens qua MassaSententia).corpus qua lista<Sententia>)
         g.exiProfundum()
@@ -969,7 +969,7 @@ functio genDiscerne(in GlyphGenerator g, de DiscerneSententia s) -> textus {
     fixum comma = glyphPunctuation(",")
 
     varia discriminantes = [] innatum lista<textus>
-    ex (s.discriminantes qua lista<Expressia>) fixum d {
+    itera ex (s.discriminantes qua lista<Expressia>) fixum d {
         discriminantes.appende(genExpressia(g, d))
     }
 
@@ -978,7 +978,7 @@ functio genDiscerne(in GlyphGenerator g, de DiscerneSententia s) -> textus {
 
     g.intraProfundum()
 
-    ex (s.casus qua lista<VariansCasus>) fixum caso {
+    itera ex (s.casus qua lista<VariansCasus>) fixum caso {
         result = result + "\n" + genVariansCasus(g, caso)
     }
 
@@ -993,7 +993,7 @@ functio genVariansCasus(in GlyphGenerator g, de VariansCasus caso) -> textus {
     fixum comma = glyphPunctuation(",")
 
     varia patterns = [] innatum lista<textus>
-    ex (caso.exemplaria qua lista<VariansExemplar>) fixum exemplar {
+    itera ex (caso.exemplaria qua lista<VariansExemplar>) fixum exemplar {
         patterns.appende(genVariansExemplar(g, exemplar))
     }
 
@@ -1022,7 +1022,7 @@ functio genVariansExemplar(in GlyphGenerator g, de VariansExemplar exemplar) -> 
 
     si (exemplar.vincula qua lista<textus>).longitudo() > 0 {
         varia vincs = [] innatum lista<textus>
-        ex (exemplar.vincula qua lista<textus>) fixum v {
+        itera ex (exemplar.vincula qua lista<textus>) fixum v {
             vincs.appende(encodeBraille(v))
         }
         result = scriptum("§ § §", result, glyphKeyword("pro"), vincs.coniunge(comma + " "))
@@ -1039,7 +1039,7 @@ functio genCustodi(in GlyphGenerator g, de CustodiSententia s) -> textus {
 
     g.intraProfundum()
 
-    ex (s.clausulae qua lista<CustodiClausula>) fixum clausula {
+    itera ex (s.clausulae qua lista<CustodiClausula>) fixum clausula {
         g.intraProfundum()
         fixum body = genMassa(g, (clausula.consequens qua MassaSententia).corpus qua lista<Sententia>)
         g.exiProfundum()
@@ -1165,7 +1165,7 @@ functio genScribe(in GlyphGenerator g, de ScribeSententia s) -> textus {
 
     fixum comma = glyphPunctuation(",")
     varia args = [] innatum lista<textus>
-    ex (s.argumenta qua lista<Expressia>) fixum arg {
+    itera ex (s.argumenta qua lista<Expressia>) fixum arg {
         args.appende(genExpressia(g, arg))
     }
 
@@ -1285,7 +1285,7 @@ functio genAd(in GlyphGenerator g, de AdSententia s) -> textus {
 
     # Arguments
     varia args = [] innatum lista<textus>
-    ex (s.argumenta qua lista<Expressia>) fixum arg {
+    itera ex (s.argumenta qua lista<Expressia>) fixum arg {
         args.appende(genExpressia(g, arg))
     }
     si args.longitudo() > 0 {
@@ -1359,7 +1359,7 @@ functio genProbandum(in GlyphGenerator g, de ProbandumSententia s) -> textus {
     }
 
     si nonnihil s.tags {
-        ex (s.tags qua lista<textus>) fixum tag {
+        itera ex (s.tags qua lista<textus>) fixum tag {
             result = scriptum("§§ § §§§\n§", result, anno, encodeBraille("tag"), quote, encodeBraille(tag), quote, g.ind())
         }
     }
@@ -1368,7 +1368,7 @@ functio genProbandum(in GlyphGenerator g, de ProbandumSententia s) -> textus {
 
     g.intraProfundum()
 
-    ex (s.corpus qua lista<Sententia>) fixum stmt {
+    itera ex (s.corpus qua lista<Sententia>) fixum stmt {
         result = result + "\n" + genSententia(g, stmt)
     }
 
@@ -1409,7 +1409,7 @@ functio genProba(in GlyphGenerator g, de ProbaSententia s) -> textus {
     }
 
     si nonnihil s.tags {
-        ex (s.tags qua lista<textus>) fixum tag {
+        itera ex (s.tags qua lista<textus>) fixum tag {
             result = scriptum("§§ § §§§\n§", result, anno, encodeBraille("tag"), quote, encodeBraille(tag), quote, g.ind())
         }
     }

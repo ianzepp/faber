@@ -116,7 +116,7 @@ functio analyzeIteratio(Resolvitor r, Sententia iteratioStmt) -> vacuum {
                 casu Series ut s {
                     # Array pattern - define each element as a binding
                     varia indice = 0
-                    ex s.elementa fixum elem {
+                    itera ex s.elementa fixum elem {
                         si elem.omissum aut nihil elem.nomen {
                             indice = indice + 1
                             perge
@@ -186,7 +186,7 @@ functio analyzeElige(Resolvitor r, Sententia eligeStmt) -> vacuum {
             r.expressia(e.discriminans)
 
             # Analyze each case in its own scope
-            ex e.casus fixum casus {
+            itera ex e.casus fixum casus {
                 # Check for empty block
                 si estVacuaMassa(casus.consequens) {
                     fixum err = emptyCaseBlockError()
@@ -227,19 +227,19 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
     discerne discerneStmt {
         casu DiscerneSententia ut d {
             # Analyze all discriminants
-            ex d.discriminantes fixum disc {
+            itera ex d.discriminantes fixum disc {
                 r.expressia(disc)
             }
 
             # Analyze each variant case
-            ex d.casus fixum casus {
+            itera ex d.casus fixum casus {
                 # Enter scope for pattern bindings
                 a.intraScopum(ScopusSpecies.Massa)
 
                 # Define bound variables for all patterns in this case
                 # WHY: Each pattern can introduce 'ut' alias or 'pro' field bindings.
                 varia patternIndex = 0
-                ex casus.exemplaria fixum pattern {
+                itera ex casus.exemplaria fixum pattern {
                     # Skip wildcards - they have no bindings
                     si pattern.estWildcard {
                         patternIndex = patternIndex + 1
@@ -282,7 +282,7 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
 
                     # Define field bindings if present
                     varia fieldIndex = 0
-                    ex pattern.vincula fixum vinculum {
+                    itera ex pattern.vincula fixum vinculum {
                         # Extract field type from variant fields
                         varia fieldTypus = IGNOTUM
                         discerne variantTypus {
@@ -326,10 +326,10 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
             si d.exhaustiva {
                 # Treat all-wildcard case as catch-all (ceterum)
                 varia habetWildcardCasu = falsum
-                ex d.casus fixum casus {
+                itera ex d.casus fixum casus {
                     varia habetExemplar = falsum
                     varia omniaWildcard = verum
-                    ex casus.exemplaria fixum exemplar {
+                    itera ex casus.exemplaria fixum exemplar {
                         habetExemplar = verum
                         si non exemplar.estWildcard {
                             omniaWildcard = falsum
@@ -360,9 +360,9 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                         fixum info = a.discretioIndex[discretioNomen qua textus]
                         si nonnihil info {
                             varia handled = {} innatum tabula<textus, bivalens>
-                            ex d.casus fixum casus {
+                            itera ex d.casus fixum casus {
                                 varia primum = nihil qua si VariansExemplar
-                                ex casus.exemplaria fixum exemplar {
+                                itera ex casus.exemplaria fixum exemplar {
                                     primum = exemplar
                                     rumpe
                                 }
@@ -377,7 +377,7 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                             varia missingCount = 0
                             varia firstMissing = "" qua textus
                             varia quoted = [] innatum lista<textus>
-                            ex (info qua DiscretioDeclInfo).variantes fixum variansInfo {
+                            itera ex (info qua DiscretioDeclInfo).variantes fixum variansInfo {
                                 si nihil handled[variansInfo.nomen] {
                                     missingCount = missingCount + 1
                                     si missingCount == 1 {
@@ -418,7 +418,7 @@ functio analyzeCustodi(Resolvitor r, Sententia custodiStmt) -> vacuum {
     discerne custodiStmt {
         casu CustodiSententia ut c {
             # Analyze each guard clause
-            ex c.clausulae fixum clausula {
+            itera ex c.clausulae fixum clausula {
                 # Analyze condition
                 r.expressia(clausula.condicio)
 

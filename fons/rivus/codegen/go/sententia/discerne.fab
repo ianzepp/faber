@@ -25,7 +25,7 @@ importa ex "./index" privata genSententia
 functio genDiscerne(in GoGenerator g, de lista<Expressia> discriminantes, de lista<VariansCasus> casus) -> textus {
     # Generate expressions for all discriminants
     varia discriminantStrs = [] innatum lista<textus>
-    ex discriminantes fixum d {
+    itera ex discriminantes fixum d {
         discriminantStrs.appende(genExpressia(g, d))
     }
 
@@ -42,7 +42,7 @@ functio genDiscerne(in GoGenerator g, de lista<Expressia> discriminantes, de lis
 functio genDiscerneSimplex(in GoGenerator g, de textus discriminant, de lista<VariansCasus> casus) -> textus {
     # Check if any case uses bindings (alias or field extraction)
     varia needsBinding = falsum
-    ex casus fixum c {
+    itera ex casus fixum c {
         fixum pattern = c.exemplaria[0]
         si non pattern.estWildcard {
             si nonnihil pattern.alias aut pattern.vincula.longitudo() > 0 {
@@ -60,7 +60,7 @@ functio genDiscerneSimplex(in GoGenerator g, de textus discriminant, de lista<Va
         result = scriptum("§switch §.(type) {\n", g.ind(), discriminant)
     }
 
-    ex casus fixum c {
+    itera ex casus fixum c {
         fixum pattern = c.exemplaria[0]
 
         si pattern.estWildcard {
@@ -83,7 +83,7 @@ functio genDiscerneSimplex(in GoGenerator g, de textus discriminant, de lista<Va
 
     # Check if we have a default case (wildcard)
     varia hasDefault = falsum
-    ex casus fixum c {
+    itera ex casus fixum c {
         si c.exemplaria[0].estWildcard {
             hasDefault = verum
             rumpe
@@ -107,10 +107,10 @@ functio genDiscerneMultiplex(in GoGenerator g, de lista<textus> discriminantStrs
     varia result = ""
     varia first = verum
 
-    ex casus fixum c {
+    itera ex casus fixum c {
         # Check if all patterns are wildcards
         varia allWildcards = verum
-        ex c.exemplaria fixum pattern {
+        itera ex c.exemplaria fixum pattern {
             si non pattern.estWildcard {
                 allWildcards = falsum
                 rumpe
@@ -130,7 +130,7 @@ functio genDiscerneMultiplex(in GoGenerator g, de lista<textus> discriminantStrs
             varia okVars = [] innatum lista<textus>
             varia i = 0
 
-            ex c.exemplaria fixum pattern {
+            itera ex c.exemplaria fixum pattern {
                 si non pattern.estWildcard {
                     fixum disc = discriminantStrs[i]
                     fixum tempVar = scriptum("_d§", i)
@@ -142,7 +142,7 @@ functio genDiscerneMultiplex(in GoGenerator g, de lista<textus> discriminantStrs
             }
 
             # Add assertions before the if
-            ex assertions fixum assertion {
+            itera ex assertions fixum assertion {
                 result = scriptum("§§\n", result, assertion)
             }
 
@@ -160,7 +160,7 @@ functio genDiscerneMultiplex(in GoGenerator g, de lista<textus> discriminantStrs
 
         # Generate bindings for each pattern
         varia j = 0
-        ex c.exemplaria fixum pattern {
+        itera ex c.exemplaria fixum pattern {
             si non pattern.estWildcard {
                 fixum tempVar = scriptum("_d§", j)
                 result = scriptum("§§", result, genPatternBindingsMulti(g, pattern, tempVar))
@@ -189,7 +189,7 @@ functio genPatternBindingsTypeSwitch(in GoGenerator g, de VariansExemplar patter
 
     # Field bindings: casu Click pro x, y -> x := _v.X; y := _v.Y
     si pattern.vincula.longitudo() > 0 {
-        ex pattern.vincula fixum vinculum {
+        itera ex pattern.vincula fixum vinculum {
             fixum fieldName = capitaliza(vinculum)
             result = scriptum("§§§ := _v.§\n", result, g.ind(), vinculum, fieldName)
         }
@@ -209,7 +209,7 @@ functio genPatternBindingsMulti(in GoGenerator g, de VariansExemplar pattern, de
 
     # Field bindings: casu Click pro x, y -> x := _dN.X; y := _dN.Y
     si pattern.vincula.longitudo() > 0 {
-        ex pattern.vincula fixum vinculum {
+        itera ex pattern.vincula fixum vinculum {
             fixum fieldName = capitaliza(vinculum)
             result = scriptum("§§§ := §.§\n", result, g.ind(), vinculum, tempVar, fieldName)
         }

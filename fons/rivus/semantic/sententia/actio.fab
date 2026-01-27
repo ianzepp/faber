@@ -70,7 +70,7 @@ functio analyzeScribe(Resolvitor r, Sententia scribeStmt) -> vacuum {
     discerne scribeStmt {
         casu ScribeSententia ut s {
             # Resolve all arguments
-            ex s.argumenta fixum arg {
+            itera ex s.argumenta fixum arg {
                 r.expressia(arg)
             }
         }

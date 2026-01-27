@@ -61,7 +61,7 @@ functio genProbandum(in TsGenerator g, de textus nomen, de lista<Sententia> corp
         lines.appende(scriptum("§describe(\"§\", () => {", g.ind(), nomen))
 
         g.intraProfundum()
-        ex corpus fixum stmt {
+        itera ex corpus fixum stmt {
             lines.appende(genSententia(g, stmt))
         }
         g.exiProfundum()
@@ -76,7 +76,7 @@ functio genProbandum(in TsGenerator g, de textus nomen, de lista<Sententia> corp
     varia lines = [] innatum lista<textus>
     lines.appende(scriptum("§// Suite: §", g.ind(), nomen))
 
-    ex corpus fixum stmt {
+    itera ex corpus fixum stmt {
         lines.appende(genSententia(g, stmt))
     }
 
@@ -92,9 +92,9 @@ functio genProbandum(in TsGenerator g, de textus nomen, de lista<Sententia> corp
 @ publica
 functio genProba(
     in TsGenerator g,
-    de textus nomen,
-    de ignotum modificator,
-    de Sententia corpus,
+    itera de textus nomen,
+    itera de ignotum modificator,
+    itera de Sententia corpus,
     si de textus ratioModificatoris,
     si bivalens solum,
     si de lista<textus> tags,
@@ -294,7 +294,7 @@ functio genProbaHarness(in TsGenerator g) -> textus {
 
     # Generate registry (using bracket notation for plain object entries)
     lines.appende("const __tests: __TestEntry[] = [")
-    ex g.probaRegistrum fixum entry {
+    itera ex g.probaRegistrum fixum entry {
         varia parts = [] innatum lista<textus>
         parts.appende(scriptum("suite: \"§\"", entry["suite"] qua textus))
         parts.appende(scriptum("name: \"§\"", entry["name"] qua textus))
@@ -318,7 +318,7 @@ functio genProbaHarness(in TsGenerator g) -> textus {
         si nonnihil entry["tags"] {
             fixum tagsArr = entry["tags"] qua lista<textus>
             varia tagStrs = [] innatum lista<textus>
-            ex tagsArr fixum t {
+            itera ex tagsArr fixum t {
                 tagStrs.appende(scriptum("\"§\"", t))
             }
             parts.appende(scriptum("tags: [§]", tagStrs.coniunge(", ")))

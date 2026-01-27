@@ -87,11 +87,11 @@ functio mergeSectiones(
     varia result = [] innatum lista<SectioAnnotatio>
 
     si nonnihil manifest {
-        ex manifest fixum s { result.appende(s) }
+        itera ex manifest fixum s { result.appende(s) }
     }
 
     si nonnihil source {
-        ex source fixum s { result.appende(s) }
+        itera ex source fixum s { result.appende(s) }
     }
 
     redde result
@@ -102,7 +102,7 @@ functio mergeSectiones(
 # manifestSectiones: optional sectiones from project manifest (faber.fab)
 @ publica
 functio analyze(
-    de Programma programma,
+    itera de Programma programma,
     si de lista<SectioAnnotatio> manifestSectiones,
     si de textus viaIngressus
 ) -> SemanticResultatum {
@@ -118,12 +118,12 @@ functio analyze(
 
     # Phase 1: Predeclare all top-level names
     # (allows forward references)
-    ex programma.corpus fixum stmt {
+    itera ex programma.corpus fixum stmt {
         predeclare(r, stmt)
     }
 
     # Phase 2: Analyze all statements
-    ex programma.corpus fixum stmt {
+    itera ex programma.corpus fixum stmt {
         r.sententia(stmt)
     }
 
@@ -148,7 +148,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
         casu FunctioDeclaratio ut f {
             # Build placeholder function type
             varia paramTypi = [] innatum lista<SemanticTypus>
-            ex f.parametra fixum param {
+            itera ex f.parametra fixum param {
                 si nonnihil param.typus {
                     paramTypi.appende(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
                 } secus {
@@ -183,7 +183,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                 locus: g.locus
             } novum Symbolum)
 
-            ex g.methodi fixum f {
+            itera ex g.methodi fixum f {
                 si nonnihil f.morphologia {
                     fixum parsed = parseMethodum(f.nomen)
                     si nonnihil parsed {
@@ -204,7 +204,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                 locus: p.locus
             } novum Symbolum)
 
-            ex p.methodi fixum methodus {
+            itera ex p.methodi fixum methodus {
                 si nonnihil methodus.morphologia {
                     fixum parsed = parseMethodum(methodus.nomen)
                     si nonnihil parsed {
@@ -297,7 +297,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
 
                                     # Import variant types for discretio
                                     fixum prefix = importatum + "."
-                                    ex modulus.exporta.claves() fixum nomen {
+                                    itera ex modulus.exporta.claves() fixum nomen {
                                         si nomen.startsWith(prefix) {
                                             fixum exportum = modulus.exporta[nomen] qua ModulusExportum
                                             fixum suffix = nomen.slice(prefix.length)
@@ -349,7 +349,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                                 locus: imp.locus
                             } novum Symbolum)
                             # Also add all individual exports to scope
-                            ex modulus.exporta.claves() fixum nomen {
+                            itera ex modulus.exporta.claves() fixum nomen {
                                 fixum exportum = modulus.exporta[nomen] qua ModulusExportum
                                 a.definie({
                                     nomen: exportum.nomen,
@@ -380,7 +380,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
 
                                     # Import variant types for discretio
                                     fixum prefix = importatum + "."
-                                    ex modulus.exporta.claves() fixum nomen {
+                                    itera ex modulus.exporta.claves() fixum nomen {
                                         si nomen.startsWith(prefix) {
                                             fixum exportum = modulus.exporta[nomen] qua ModulusExportum
                                             fixum suffix = nomen.slice(prefix.length)

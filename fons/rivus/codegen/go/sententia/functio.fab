@@ -26,7 +26,7 @@ functio habetErrataModificator(si de ignotum modificatores) -> bivalens {
     si nihil modificatores {
         redde falsum
     }
-    ex (modificatores qua lista<FunctioModificator>) fixum m {
+    itera ex (modificatores qua lista<FunctioModificator>) fixum m {
         discerne m {
             casu ErrataModificator {
                 redde verum
@@ -69,7 +69,7 @@ functio genFunctio(in GoGenerator g, de FunctioDeclaratio f) -> textus {
         fixum gp = f.generaParametra qua lista<TypusParametrum>
         si gp.longitudo() > 0 {
             varia names = [] innatum lista<textus>
-            ex gp fixum p {
+            itera ex gp fixum p {
                 # Go generics need type constraint, default to 'any'
                 names.appende(scriptum("§ any", p.nomen))
             }
@@ -79,7 +79,7 @@ functio genFunctio(in GoGenerator g, de FunctioDeclaratio f) -> textus {
 
     # Parameters
     varia params = [] innatum lista<textus>
-    ex f.parametra fixum param {
+    itera ex f.parametra fixum param {
         params.appende(genParametrum(g, param))
     }
     result = scriptum("§(§)", result, params.coniunge(", "))

@@ -73,7 +73,7 @@ functio genDestructura(in TsGenerator g, de Expressia fons, VariaGenus species, 
     fixum asyncPrefix = (species == VariaGenus.Figendum aut species == VariaGenus.Variandum) sic "await " secus ""
 
     varia specs = [] innatum lista<textus>
-    ex specificatores fixum spec {
+    itera ex specificatores fixum spec {
         si spec.residuum {
             specs.appende(scriptum("...§", spec.locale))
         } sin spec.importatum == spec.locale {
@@ -92,7 +92,7 @@ functio genSeriesDestructura(in TsGenerator g, de lista<SeriesDestructuraElement
     fixum asyncPrefix = (species == VariaGenus.Figendum aut species == VariaGenus.Variandum) sic "await " secus ""
 
     varia items = [] innatum lista<textus>
-    ex elementa fixum elem {
+    itera ex elementa fixum elem {
         si elem.omissum {
             items.appende("")
         } sin elem.residuum {

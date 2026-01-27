@@ -131,7 +131,7 @@ functio analyzeSententia(Resolvitor r, Sententia stmt) -> vacuum {
 
         # Block
         casu MassaSententia ut m {
-            ex m.corpus fixum s {
+            itera ex m.corpus fixum s {
                 r.sententia(s)
             }
         }

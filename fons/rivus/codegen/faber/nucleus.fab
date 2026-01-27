@@ -116,7 +116,7 @@ functio formataNotaePraeFaber(ignotum nodus, de textus indentum) -> textus {
     }
 
     varia out = ""
-    ex notae fixum nota {
+    itera ex notae fixum nota {
         out = out + indentum + formataNotaFaber(nota) + "\n"
     }
     redde out
@@ -135,7 +135,7 @@ functio formataNotaePostFaber(ignotum nodus) -> textus {
     }
 
     varia out = ""
-    ex notae fixum nota {
+    itera ex notae fixum nota {
         out = out + " " + formataNotaFaber(nota)
     }
     redde out

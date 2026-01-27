@@ -251,7 +251,7 @@ functio genMassa(in TsGenerator g, de lista<Sententia> corpus) -> textus {
         redde ""
     }
     varia lines = [] innatum lista<textus>
-    ex corpus fixum stmt {
+    itera ex corpus fixum stmt {
         lines.appende(genSententia(g, stmt))
     }
     redde lines.coniunge("\n")

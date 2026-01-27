@@ -109,8 +109,8 @@ functio genericumTypus(ex textus nomen, ex lista<SemanticTypus> parametri, bival
 # Create a function type
 @ publica
 functio functioTypus(
-    ex lista<SemanticTypus> parametriTypi,
-    ex SemanticTypus reditusTypus,
+    itera ex lista<SemanticTypus> parametriTypi,
+    itera ex SemanticTypus reditusTypus,
     bivalens asyncronum,
     bivalens habetCuratorem
 ) -> SemanticTypus {
@@ -156,11 +156,11 @@ functio ordoTypus(ex textus nomen, ex tabula<textus, SemanticTypus> membra, biva
 # Create a genus type
 @ publica
 functio genusTypus(
-    ex textus nomen,
-    ex tabula<textus, SemanticTypus> agri,
-    ex tabula<textus, SemanticTypus> methodi,
-    ex tabula<textus, SemanticTypus> agriStatici,
-    ex tabula<textus, SemanticTypus> methodiStatici,
+    itera ex textus nomen,
+    itera ex tabula<textus, SemanticTypus> agri,
+    itera ex tabula<textus, SemanticTypus> methodi,
+    itera ex tabula<textus, SemanticTypus> agriStatici,
+    itera ex tabula<textus, SemanticTypus> methodiStatici,
     bivalens nullabilis
 ) -> SemanticTypus {
     redde finge Genus {
@@ -249,7 +249,7 @@ functio typiAequales(de SemanticTypus a, de SemanticTypus b) -> bivalens {
                     }
 
                     varia i = 0
-                    ex ga.parametri fixum t {
+                    itera ex ga.parametri fixum t {
                         si non typiAequales(t, gb.parametri[i]) {
                             redde falsum
                         }
@@ -278,7 +278,7 @@ functio typiAequales(de SemanticTypus a, de SemanticTypus b) -> bivalens {
                     }
 
                     varia i = 0
-                    ex fa.parametriTypi fixum t {
+                    itera ex fa.parametriTypi fixum t {
                         si non typiAequales(t, fb.parametriTypi[i]) {
                             redde falsum
                         }
@@ -301,7 +301,7 @@ functio typiAequales(de SemanticTypus a, de SemanticTypus b) -> bivalens {
                     }
 
                     varia i = 0
-                    ex ua.typi fixum t {
+                    itera ex ua.typi fixum t {
                         si non typiAequales(t, ub.typi[i]) {
                             redde falsum
                         }
@@ -448,7 +448,7 @@ functio assignabileAd(de SemanticTypus fons, de SemanticTypus scopus) -> bivalen
     # Check if source is in target union
     discerne scopus {
         casu Unio ut u {
-            ex u.typi fixum t {
+            itera ex u.typi fixum t {
                 si assignabileAd(fons, t) {
                     redde verum
                 }
@@ -461,7 +461,7 @@ functio assignabileAd(de SemanticTypus fons, de SemanticTypus scopus) -> bivalen
     # Source union must have all types assignable to target
     discerne fons {
         casu Unio ut u {
-            ex u.typi fixum t {
+            itera ex u.typi fixum t {
                 si non assignabileAd(t, scopus) {
                     redde falsum
                 }
@@ -499,7 +499,7 @@ functio formaTypum(de SemanticTypus t) -> textus {
         casu Genericum ut g {
             # Build parameter list
             varia params = [] innatum lista<textus>
-            ex g.parametri fixum typ {
+            itera ex g.parametri fixum typ {
                 params.appende(formaTypum(typ))
             }
             varia resultatum = scriptum("§<§>", g.nomen, params.coniunge(", "))
@@ -512,7 +512,7 @@ functio formaTypum(de SemanticTypus t) -> textus {
         casu Functio ut f {
             # Build parameter list
             varia params = [] innatum lista<textus>
-            ex f.parametriTypi fixum typ {
+            itera ex f.parametriTypi fixum typ {
                 params.appende(formaTypum(typ))
             }
             fixum asyncPraefix = f.asyncronum sic "futura " secus ""
@@ -521,7 +521,7 @@ functio formaTypum(de SemanticTypus t) -> textus {
 
         casu Unio ut u {
             varia parts = [] innatum lista<textus>
-            ex u.typi fixum typ {
+            itera ex u.typi fixum typ {
                 parts.appende(formaTypum(typ))
             }
             redde parts.coniunge(" | ")

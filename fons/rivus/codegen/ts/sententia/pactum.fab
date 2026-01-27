@@ -44,9 +44,9 @@ functio genPactum(in TsGenerator g, de textus nomen, de ignotum generaParametra,
     result = scriptum("§ {\n", result)
     g.intraProfundum()
 
-    ex methodi fixum methodus {
+    itera ex methodi fixum methodus {
         varia params = [] innatum lista<textus>
-        ex methodus.parametra fixum param {
+        itera ex methodus.parametra fixum param {
             params.appende(genParametrum(g, param))
         }
 

@@ -32,7 +32,7 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
             discerne vocatumTypus {
                 casu Functio ut f {
                     varia i = 0
-                    ex v.argumenta fixum arg {
+                    itera ex v.argumenta fixum arg {
                         si i < f.parametriTypi.longitudo() {
                             r.check(arg, f.parametriTypi[i])
                         } secus {
@@ -42,7 +42,7 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
                     }
                 }
                 casu _ {
-                    ex v.argumenta fixum arg {
+                    itera ex v.argumenta fixum arg {
                         r.expressia(arg)
                     }
                 }
@@ -148,7 +148,7 @@ functio nomenReceptor(SemanticTypus t) -> si textus {
 }
 
 functio estFormaPermissa(lista<textus> formae, textus forma) -> bivalens {
-    ex formae fixum item {
+    itera ex formae fixum item {
         si item == forma {
             redde verum
         }

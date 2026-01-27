@@ -188,7 +188,7 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
 
         # Format string (scriptum)
         casu ScriptumExpressia ut s {
-            ex s.argumenta fixum arg {
+            itera ex s.argumenta fixum arg {
                 r.expressia(arg)
             }
             redde TEXTUS
@@ -274,7 +274,7 @@ functio checkExpressia(Resolvitor r, Expressia expr, de SemanticTypus expected) 
 
                         # Check each element against the expected element type.
                         fixum elemExpected = g.parametri.primus()
-                        ex (s.elementa qua lista<Expressia>) fixum elem {
+                        itera ex (s.elementa qua lista<Expressia>) fixum elem {
                             r.check(elem, elemExpected)
                         }
 

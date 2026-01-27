@@ -69,7 +69,7 @@ functio genExpressia(in GoGenerator g, de Expressia expr) -> textus {
         # Function calls
         casu VocatioExpressia ut e {
             varia args = [] innatum lista<textus>
-            ex (e.argumenta qua lista<Expressia>) fixum arg {
+            itera ex (e.argumenta qua lista<Expressia>) fixum arg {
                 args.appende(genExpressia(g, arg))
             }
             redde scriptum("§(§)", genExpressia(g, e.vocatum), args.coniunge(", "))
@@ -99,7 +99,7 @@ functio genExpressia(in GoGenerator g, de Expressia expr) -> textus {
         # Arrays
         casu SeriesExpressia ut e {
             varia items = [] innatum lista<textus>
-            ex (e.elementa qua lista<Expressia>) fixum elem {
+            itera ex (e.elementa qua lista<Expressia>) fixum elem {
                 items.appende(genExpressia(g, elem))
             }
 
@@ -113,7 +113,7 @@ functio genExpressia(in GoGenerator g, de Expressia expr) -> textus {
         casu ObiectumExpressia ut e {
             varia props = [] innatum lista<textus>
             varia habetDispersum = falsum
-            ex (e.proprietates qua lista<ObiectumProprietas>) fixum prop {
+            itera ex (e.proprietates qua lista<ObiectumProprietas>) fixum prop {
                 si prop.computatum {
                     mori "Go codegen: unsupported object property (computed key)"
                 }
@@ -160,7 +160,7 @@ functio genExpressia(in GoGenerator g, de Expressia expr) -> textus {
         casu FingeExpressia ut e {
             # finge Click { x: 10, y: 20 } -> Click{X: 10, Y: 20}
             varia props = [] innatum lista<textus>
-            ex (e.campi qua lista<ObiectumProprietas>) fixum campo {
+            itera ex (e.campi qua lista<ObiectumProprietas>) fixum campo {
                 fixum key = genExpressia(g, campo.clavis)
                 fixum keyCapitalized = capitaliza(key)
                 fixum val = genExpressia(g, campo.valor)
@@ -175,7 +175,7 @@ functio genExpressia(in GoGenerator g, de Expressia expr) -> textus {
         # Clausura
         casu ClausuraExpressia ut e {
             varia params = [] innatum lista<textus>
-            ex (e.parametra qua lista<ClausuraParametrum>) fixum p {
+            itera ex (e.parametra qua lista<ClausuraParametrum>) fixum p {
                 si nonnihil p.typus {
                     params.appende(scriptum("§ §", p.nomen, genTypus(g, p.typus qua TypusAnnotatio)))
                 } secus {
@@ -209,7 +209,7 @@ functio genExpressia(in GoGenerator g, de Expressia expr) -> textus {
         # New instance creation
         casu NovumExpressia ut e {
             varia args = [] innatum lista<textus>
-            ex (e.argumenta qua lista<Expressia>) fixum arg {
+            itera ex (e.argumenta qua lista<Expressia>) fixum arg {
                 args.appende(genExpressia(g, arg))
             }
             si nonnihil e.initor {
@@ -236,7 +236,7 @@ functio inferSeriesElemTypus(de lista<Expressia> elementa) -> textus {
     varia viditFractus = falsum
     varia viditBivalens = falsum
 
-    ex elementa fixum elem {
+    itera ex elementa fixum elem {
         discerne elem {
             casu Littera ut l {
                 elige l.species {
@@ -310,7 +310,7 @@ functio genObiectumDispersum(in GoGenerator g, de lista<ObiectumProprietas> prop
     lines.appende(scriptum("§func() map[string]interface{} {", baseInd))
     g.intraProfundum()
     lines.appende(scriptum("§m := map[string]interface{}{}", g.ind()))
-    ex proprietates fixum prop {
+    itera ex proprietates fixum prop {
         si prop.computatum {
             mori "Go codegen: unsupported object property (computed key)"
         }
@@ -334,7 +334,7 @@ functio genClausuraMassa(in GoGenerator g, de lista<Sententia> corpus) -> textus
         redde ""
     }
     varia lines = [] innatum lista<textus>
-    ex corpus fixum stmt {
+    itera ex corpus fixum stmt {
         lines.appende(genClausuraSententia(g, stmt))
     }
     redde lines.coniunge("\n")
@@ -448,7 +448,7 @@ functio genOptionalMembrum(in GoGenerator g, de Expressia expr) -> textus {
     # Build the access path for checks: base, base.prop1, base.prop1.prop2, etc.
     fixum baseExpr = base qua textus
     varia accessPath = baseExpr
-    ex reversedChain fixum segment {
+    itera ex reversedChain fixum segment {
         checks.appende(scriptum("§ != nil", accessPath))
         accessPath = scriptum("§§", accessPath, segment)
     }

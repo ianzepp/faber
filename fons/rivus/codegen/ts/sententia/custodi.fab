@@ -20,7 +20,7 @@ importa ex "./index" privata genMassa
 @ publica
 functio genCustodi(in TsGenerator g, de lista<CustodiClausula> clausulae) -> textus {
     varia result = ""
-    ex clausulae fixum clausula {
+    itera ex clausulae fixum clausula {
         varia vacuus = falsum
         discerne clausula.consequens {
             casu MassaSententia ut m {

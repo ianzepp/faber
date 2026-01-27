@@ -17,7 +17,7 @@ importa ex "../expressia/index" privata genExpressia
 @ publica
 functio genScribe(in TsGenerator g, ScribeGradus gradus, de lista<Expressia> argumenta) -> textus {
     varia args = [] innatum lista<textus>
-    ex argumenta fixum arg {
+    itera ex argumenta fixum arg {
         args.appende(genExpressia(g, arg))
     }
 

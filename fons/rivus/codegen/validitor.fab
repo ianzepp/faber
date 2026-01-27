@@ -80,7 +80,7 @@ functio validateCompatibilitatem(de lista<Sententia> corpus, de textus target, d
 
     varia errores = [] innatum lista<ValidatioError>
 
-    ex usitata fixum featura {
+    itera ex usitata fixum featura {
         fixum sustentatio = getSustentatio(featura.clavis, capacitas)
 
         si non estPermissum(sustentatio, politia) {
@@ -352,7 +352,7 @@ functio formatValidatioErrores(de lista<ValidatioError> errores, de textus targe
     lines.appende(scriptum("Target compatibility errors for '§':", target))
     lines.appende("")
 
-    ex errores fixum err {
+    itera ex errores fixum err {
         lines.appende(scriptum("  --> §:§", err.linea, err.columna))
         lines.appende(scriptum("error: § (in §)", err.nuntius, err.contextus))
         si nonnihil err.suggestio {

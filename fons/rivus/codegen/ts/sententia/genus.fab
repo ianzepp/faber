@@ -76,14 +76,14 @@ functio genGenus(in TsGenerator g, de GenusDeclaratio s) -> textus {
     g.inGenere = verum
 
     # Fields
-    ex s.campi fixum campus {
+    itera ex s.campi fixum campus {
         result = scriptum("§§\n", result, genCampus(g, campus, classVisibility))
     }
 
     # Split creo method from other methods
     varia creo = nihil qua si FunctioDeclaratio
     varia ceteri = [] innatum lista<FunctioDeclaratio>
-    ex s.methodi fixum m {
+    itera ex s.methodi fixum m {
         si m.structor {
             creo = m
         } secus {
@@ -100,7 +100,7 @@ functio genGenus(in TsGenerator g, de GenusDeclaratio s) -> textus {
     }
 
     # Methods
-    ex ceteri fixum methodus {
+    itera ex ceteri fixum methodus {
         result = scriptum("§§\n", result, genSententia(g, methodus))
     }
 
@@ -114,14 +114,14 @@ functio genGenus(in TsGenerator g, de GenusDeclaratio s) -> textus {
 functio genAutoMergeConstructor(in TsGenerator g, de lista<CampusDeclaratio> campi, bivalens hasCreo) -> textus {
     varia lines = [] innatum lista<textus>
     varia instFields = [] innatum lista<CampusDeclaratio>
-    ex campi fixum campus {
+    itera ex campi fixum campus {
         si non campus.staticum {
             instFields.appende(campus)
         }
     }
 
     varia props = [] innatum lista<textus>
-    ex instFields fixum campus {
+    itera ex instFields fixum campus {
         props.appende(scriptum("§?: §", campus.nomen, genTypus(g, campus.typus)))
     }
     fixum overridesType = (instFields.longitudo() > 0) sic scriptum("{ § }", props.coniunge(", ")) secus "Record<string, never>"
@@ -129,7 +129,7 @@ functio genAutoMergeConstructor(in TsGenerator g, de lista<CampusDeclaratio> cam
     lines.appende(scriptum("§constructor(overrides: § = {}) {", g.ind(), overridesType))
     g.intraProfundum()
 
-    ex instFields fixum campus {
+    itera ex instFields fixum campus {
         lines.appende(scriptum("§if (overrides.§ !== undefined) { this.§ = overrides.§; }", g.ind(), campus.nomen, campus.nomen, campus.nomen))
     }
     si hasCreo {

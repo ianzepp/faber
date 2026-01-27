@@ -35,9 +35,9 @@ functio genDiscretio(in TsGenerator g, de textus nomen, de ignotum generaParamet
     #      sibling variants (Union -> VariantAlias -> Union).
     varia lines = [] innatum lista<textus>
 
-    ex variantes fixum varians {
+    itera ex variantes fixum varians {
         varia member = scriptum("{ tag: '§'", varians.nomen)
-        ex varians.campi fixum campus {
+        itera ex varians.campi fixum campus {
             member = scriptum("§; §: §", member, campus.nomen, genTypus(g, campus.typus))
         }
         member = scriptum("§ }", member)
@@ -45,7 +45,7 @@ functio genDiscretio(in TsGenerator g, de textus nomen, de ignotum generaParamet
     }
 
     varia unionMembers = [] innatum lista<textus>
-    ex variantes fixum varians {
+    itera ex variantes fixum varians {
         unionMembers.appende(scriptum("§§", varians.nomen, params))
     }
 

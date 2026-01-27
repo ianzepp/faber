@@ -22,7 +22,7 @@ functio generateFaber(de lista<Sententia> corpus) -> textus {
     fixum g = creaFaberGenerator()
 
     varia lines = [] innatum lista<textus>
-    ex corpus fixum stmt {
+    itera ex corpus fixum stmt {
         fixum line = genSententia(g, stmt)
         si line.longitudo() > 0 {
             lines.appende(line)
@@ -39,7 +39,7 @@ functio generateFaberStripComments(de lista<Sententia> corpus) -> textus {
     g.stripComments = verum
 
     varia lines = [] innatum lista<textus>
-    ex corpus fixum stmt {
+    itera ex corpus fixum stmt {
         fixum line = genSententia(g, stmt)
         si line.longitudo() > 0 {
             lines.appende(line)

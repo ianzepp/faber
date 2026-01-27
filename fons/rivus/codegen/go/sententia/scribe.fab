@@ -20,7 +20,7 @@ functio genScribe(in GoGenerator g, ScribeGradus gradus, de lista<Expressia> arg
     g.requisita.fmt = verum
 
     varia args = [] innatum lista<textus>
-    ex argumenta fixum arg {
+    itera ex argumenta fixum arg {
         args.appende(genExpressia(g, arg))
     }
 

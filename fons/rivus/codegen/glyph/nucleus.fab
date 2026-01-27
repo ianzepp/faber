@@ -120,7 +120,7 @@ functio formataNotaePraeGlyph(ignotum nodus, de textus indentum) -> textus {
     }
 
     varia out = ""
-    ex notae fixum nota {
+    itera ex notae fixum nota {
         out = out + indentum + formataNotaGlyph(nota) + "\n"
     }
     redde out
@@ -139,7 +139,7 @@ functio formataNotaePostGlyph(ignotum nodus) -> textus {
     }
 
     varia out = ""
-    ex notae fixum nota {
+    itera ex notae fixum nota {
         out = out + " " + formataNotaGlyph(nota)
     }
     redde out

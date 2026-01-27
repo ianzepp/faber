@@ -50,7 +50,7 @@ functio genSeriesDestructura(in GoGenerator g, VariaGenus species, de lista<Seri
 
     varia assignments = [] innatum lista<textus>
     varia indice = 0
-    ex elementa fixum elem {
+    itera ex elementa fixum elem {
         si non elem.omissum et nonnihil elem.nomen {
             assignments.appende(scriptum("§var § = §[§]", g.ind(), elem.nomen, fonsStr, indice))
         }

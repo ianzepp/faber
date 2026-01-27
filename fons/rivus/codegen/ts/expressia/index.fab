@@ -219,7 +219,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
         # Calls and member access
         casu VocatioExpressia ut e {
             varia args = [] innatum lista<textus>
-            ex (e.argumenta qua lista<Expressia>) fixum arg {
+            itera ex (e.argumenta qua lista<Expressia>) fixum arg {
                 args.appende(genExpressia(g, arg))
             }
 
@@ -315,7 +315,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
 
         casu NovumExpressia ut e {
             varia args = [] innatum lista<textus>
-            ex (e.argumenta qua lista<Expressia>) fixum arg {
+            itera ex (e.argumenta qua lista<Expressia>) fixum arg {
                 args.appende(genExpressia(g, arg))
             }
             # WHY: novum supports optional override object as a final argument.
@@ -359,7 +359,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
         # Collections
         casu SeriesExpressia ut e {
             varia items = [] innatum lista<textus>
-            ex (e.elementa qua lista<Expressia>) fixum elem {
+            itera ex (e.elementa qua lista<Expressia>) fixum elem {
                 items.appende(genExpressia(g, elem))
             }
             redde scriptum("[§]", items.coniunge(", "))
@@ -376,7 +376,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
         # Clausura
         casu ClausuraExpressia ut e {
             varia params = [] innatum lista<textus>
-            ex (e.parametra qua lista<ClausuraParametrum>) fixum p {
+            itera ex (e.parametra qua lista<ClausuraParametrum>) fixum p {
                 si nonnihil p.typus {
                     params.appende(scriptum("§: §", p.nomen, genTypus(g, p.typus novum TypusAnnotatio)))
                 } secus {
@@ -414,7 +414,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
             # finge Click { x: 10 } qua Event -> { tag: 'Click', x: 10 }
             varia props = [] innatum lista<textus>
             props.appende(scriptum("tag: '§'", e.variansNomen))
-            ex (e.campi qua lista<ObiectumProprietas>) fixum campo {
+            itera ex (e.campi qua lista<ObiectumProprietas>) fixum campo {
                 fixum key = genExpressia(g, campo.clavis)
                 fixum val = genExpressia(g, campo.valor)
                 props.appende(scriptum("§: §", key, val))
@@ -536,7 +536,7 @@ functio genPraefixumMassa(in TsGenerator g, de lista<Sententia> corpus) -> textu
         redde ""
     }
     varia lines = [] innatum lista<textus>
-    ex corpus fixum stmt {
+    itera ex corpus fixum stmt {
         lines.appende(genPraefixumSententia(g, stmt))
     }
     redde lines.coniunge("\n")
@@ -582,7 +582,7 @@ functio invenitTabulaNomen(de Expressia obiectum, de TsGenerator g) -> si textus
     discerne obiectum {
         casu Nomen ut n {
             fixum nomen = n.valor qua textus
-            ex g.tabulaNominata fixum item {
+            itera ex g.tabulaNominata fixum item {
                 si item == nomen {
                     redde nomen
                 }
@@ -685,7 +685,7 @@ functio genInnatumTabula(in TsGenerator g, de InnatumExpressia e) -> textus {
 
 functio genTabulaEntries(in TsGenerator g, de ObiectumExpressia obj, de textus keyType, de textus valueType) -> textus {
     varia entries = [] innatum lista<textus>
-    ex (obj.proprietates qua lista<ObiectumProprietas>) fixum prop {
+    itera ex (obj.proprietates qua lista<ObiectumProprietas>) fixum prop {
         fixum key = genMapKey(g, prop.clavis)
         fixum val = genExpressia(g, prop.valor)
         entries.appende(scriptum("[§, §]", key, val))
@@ -860,7 +860,7 @@ functio applyInnatumTemplate(de textus template, de lista<textus> params, de tex
     # Build values array: ego -> obj, other params -> args
     varia values = [] innatum lista<textus>
     varia argIdx = 0
-    ex params fixum param {
+    itera ex params fixum param {
         si param == "ego" {
             values.appende(obj)
         } secus {

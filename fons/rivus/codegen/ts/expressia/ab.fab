@@ -100,7 +100,7 @@ functio genAbExpressia(de Expressia fons, bivalens negata, in TsGenerator g, si 
 functio applicaCatenaGradus(de textus fons, de lista<CatenaGradus> gradus, in TsGenerator g) -> textus {
     varia result = fons
 
-    ex gradus fixum gradusSingulus {
+    itera ex gradus fixum gradusSingulus {
         fixum verbum = gradusSingulus.verbum qua textus
 
         elige verbum {

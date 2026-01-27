@@ -282,9 +282,9 @@ genus Analyzator {
         }
 
         fixum existentes = perRecipiens[radix]
-        ex formae fixum forma {
+        itera ex formae fixum forma {
             varia iam = falsum
-            ex existentes fixum existens {
+            itera ex existentes fixum existens {
                 si existens == forma {
                     iam = verum
                 }

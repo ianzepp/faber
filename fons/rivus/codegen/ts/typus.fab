@@ -66,7 +66,7 @@ functio genTypus(in TsGenerator g, de TypusAnnotatio adnotatio) -> textus {
         varia params = [] innatum lista<textus>
         si nonnihil adnotatio.parametra {
             varia index = 0
-            ex (adnotatio.parametra qua lista<TypusAnnotatio>) fixum param {
+            itera ex (adnotatio.parametra qua lista<TypusAnnotatio>) fixum param {
                 params.appende(scriptum("arg§: §", index, genTypus(g, param)))
                 index = index + 1
             }
@@ -91,7 +91,7 @@ functio genTypus(in TsGenerator g, de TypusAnnotatio adnotatio) -> textus {
         fixum parametra = adnotatio.typusParametra qua lista<TypusParametrum>
         si parametra.longitudo() > 0 {
             varia params = [] innatum lista<textus>
-            ex parametra fixum param {
+            itera ex parametra fixum param {
                 fixum paramStr = genTypusParametrum(g, param)
                 si nonnihil paramStr {
                     params.appende(paramStr qua textus)
@@ -113,7 +113,7 @@ functio genTypus(in TsGenerator g, de TypusAnnotatio adnotatio) -> textus {
         fixum unioTypi = adnotatio.unio qua lista<TypusAnnotatio>
         si unioTypi.longitudo() > 0 {
             varia parts = [] innatum lista<textus>
-            ex unioTypi fixum u {
+            itera ex unioTypi fixum u {
                 parts.appende(genTypus(g, u))
             }
             result = parts.coniunge(" | ")

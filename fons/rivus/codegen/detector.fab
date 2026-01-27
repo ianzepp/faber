@@ -63,13 +63,13 @@ genus FeatureDetector {
     functio detect(de lista<Sententia> corpus) -> lista<UsitataFeatura> {
         ego.featurae = {} innatum tabula<textus, UsitataFeatura>
 
-        ex corpus fixum stmt {
+        itera ex corpus fixum stmt {
             ego.visitSententia(stmt)
         }
 
         # Return unique features
         varia result = [] innatum lista<UsitataFeatura>
-        ex ego.featurae.claves() fixum clavis {
+        itera ex ego.featurae.claves() fixum clavis {
             result.appende(ego.featurae[clavis] qua UsitataFeatura)
         }
         redde result
@@ -137,7 +137,7 @@ genus FeatureDetector {
             }
 
             casu MassaSententia ut m {
-                ex m.corpus fixum child {
+                itera ex m.corpus fixum child {
                     ego.visitSententia(child)
                 }
             }
@@ -168,7 +168,7 @@ genus FeatureDetector {
 
             casu EligeSententia ut e {
                 ego.visitExpressia(e.discriminans)
-                ex e.casus fixum c {
+                itera ex e.casus fixum c {
                     ego.visitExpressia(c.condicio)
                     ego.visitSententia(c.consequens)
                 }
@@ -178,16 +178,16 @@ genus FeatureDetector {
             }
 
             casu DiscerneSententia ut d {
-                ex d.discriminantes fixum disc {
+                itera ex d.discriminantes fixum disc {
                     ego.visitExpressia(disc)
                 }
-                ex d.casus fixum c {
+                itera ex d.casus fixum c {
                     ego.visitSententia(c.consequens)
                 }
             }
 
             casu CustodiSententia ut c {
-                ex c.clausulae fixum clause {
+                itera ex c.clausulae fixum clause {
                     ego.visitExpressia(clause.condicio)
                     ego.visitSententia(clause.consequens)
                 }
@@ -208,7 +208,7 @@ genus FeatureDetector {
             }
 
             casu GenusDeclaratio ut g {
-                ex g.methodi fixum methodus {
+                itera ex g.methodi fixum methodus {
                     ego.visitSententia(methodus)
                 }
             }
@@ -228,7 +228,7 @@ genus FeatureDetector {
             }
 
             casu ProbandumSententia ut p {
-                ex p.corpus fixum child {
+                itera ex p.corpus fixum child {
                     ego.visitSententia(child)
                 }
             }
@@ -274,7 +274,7 @@ genus FeatureDetector {
                 }
 
                 # Check for default parameters
-                ex f.parametra fixum param {
+                itera ex f.parametra fixum param {
                     si nonnihil param.praedefinitum {
                         ego.registraFeatura({
                             clavis: FeaturaClavis.Parametra_ValorPraedefinitus,
@@ -324,7 +324,7 @@ genus FeatureDetector {
                     } novum UsitataFeatura)
                 }
                 ego.visitExpressia(v.vocatum)
-                ex v.argumenta fixum arg {
+                itera ex v.argumenta fixum arg {
                     ego.visitExpressia(arg)
                 }
             }
@@ -358,13 +358,13 @@ genus FeatureDetector {
             }
 
             casu SeriesExpressia ut s {
-                ex s.elementa fixum elem {
+                itera ex s.elementa fixum elem {
                     ego.visitExpressia(elem)
                 }
             }
 
             casu ObiectumExpressia ut o {
-                ex o.proprietates fixum prop {
+                itera ex o.proprietates fixum prop {
                     ego.visitExpressia(prop.valor)
                 }
             }

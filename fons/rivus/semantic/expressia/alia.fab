@@ -34,7 +34,7 @@ functio resolveClausura(Resolvitor r, Expressia clausuraExpr) -> SemanticTypus {
 
             # Define parameters in scope with resolved types
             varia paramTypi = [] innatum lista<SemanticTypus>
-            ex l.parametra fixum param {
+            itera ex l.parametra fixum param {
                 # Resolve parameter type from annotation if present
                 varia paramTypus = IGNOTUM qua SemanticTypus
                 si nonnihil param.typus {
@@ -106,7 +106,7 @@ functio resolveFingeExpr(Resolvitor r, Expressia fingeExpr) -> SemanticTypus {
     discerne fingeExpr {
         casu FingeExpressia ut f {
             # Resolve all field values
-            ex f.campi fixum campo {
+            itera ex f.campi fixum campo {
                 r.expressia(campo.valor)
             }
 
@@ -171,7 +171,7 @@ functio resolveNovumExpr(Resolvitor r, Expressia novumExpr) -> SemanticTypus {
     discerne novumExpr {
         casu NovumExpressia ut n {
             # Resolve constructor arguments
-            ex n.argumenta fixum arg {
+            itera ex n.argumenta fixum arg {
                 r.expressia(arg)
             }
 

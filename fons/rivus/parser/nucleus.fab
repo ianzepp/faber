@@ -296,7 +296,7 @@ genus Parser {
     # Returns true if any matched, false otherwise
     @ publica
     functio congruetAliquod(de lista<SymbolumGenus> species) -> bivalens {
-        ex species fixum s {
+        itera ex species fixum s {
             si ego.proba(s) {
                 ego.procede()
                 redde verum

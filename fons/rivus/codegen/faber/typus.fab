@@ -25,7 +25,7 @@ functio genTypus(in FaberGenerator g, de TypusAnnotatio typ) -> textus {
         fixum params = typ.typusParametra qua lista<TypusParametrum>
         si params.longitudo() > 0 {
             varia paramTexti = [] innatum lista<textus>
-            ex params fixum param {
+            itera ex params fixum param {
                 discerne param {
                     casu Typus ut t {
                         paramTexti.appende(genTypus(g, t.adnotatio))

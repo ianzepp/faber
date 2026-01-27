@@ -47,7 +47,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
             fixum gp = f.generaParametra qua lista<TypusParametrum>
             si gp.longitudo() > 0 {
                 varia names = [] innatum lista<textus>
-                ex gp fixum p {
+                itera ex gp fixum p {
                     names.appende(p.nomen)
                 }
                 result = scriptum("§<§>", result, names.coniunge(", "))
@@ -56,7 +56,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
 
         # Parameters
         varia params = [] innatum lista<textus>
-        ex f.parametra fixum param {
+        itera ex f.parametra fixum param {
             params.appende(genParametrum(g, param))
         }
         result = scriptum("§(§)", result, params.coniunge(", "))
@@ -155,7 +155,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
         fixum gp = f.generaParametra qua lista<TypusParametrum>
         si gp.longitudo() > 0 {
             varia names = [] innatum lista<textus>
-            ex gp fixum p {
+            itera ex gp fixum p {
                 names.appende(p.nomen)
             }
             result = scriptum("§<§>", result, names.coniunge(", "))
@@ -164,7 +164,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
 
     # Parameters
     varia params = [] innatum lista<textus>
-    ex f.parametra fixum param {
+    itera ex f.parametra fixum param {
         params.appende(genParametrum(g, param))
     }
     result = scriptum("§(§)", result, params.coniunge(", "))
@@ -211,7 +211,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
         fixum prevInFunctioCorpus = g.inFunctioCorpus
 
         varia localTabula = [] innatum lista<textus>
-        ex f.parametra fixum param {
+        itera ex f.parametra fixum param {
             si nonnihil param.typus {
                 fixum typus = param.typus novum TypusAnnotatio
                 si typus.nomen == "tabula" {
@@ -260,7 +260,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
         varia exitusNomen = nihil qua si textus
         si nonnihil f.modificatores {
             fixum mods = f.modificatores qua lista<FunctioModificator>
-            ex mods fixum mod {
+            itera ex mods fixum mod {
                 discerne mod {
                     casu ExitusModificator ut e {
                         exitusNomen = e.nomen
