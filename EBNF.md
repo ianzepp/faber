@@ -276,7 +276,7 @@ defaultCase  := 'ceterum' (blockStmt | statement | inlineReturn)
 ### Pattern Matching
 
 ```ebnf
-discerneStmt := 'discerne' discriminants '{' variantCase* defaultCase? '}'
+discerneStmt := 'discerne' 'omnia'? discriminants '{' variantCase* defaultCase? '}'
 discriminants := expression (',' expression)*
 variantCase  := 'casu' patterns (blockStmt | 'ergo' statement | inlineReturn)
 patterns     := pattern (',' pattern)*
