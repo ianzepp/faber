@@ -372,10 +372,16 @@ func fabIteratio(s *subsidia.StmtIteratio, indent string) string {
 	if s.Asynca {
 		b.WriteString("cede ")
 	}
-	b.WriteString("pro ")
-	b.WriteString(s.Binding)
-	b.WriteString(" de ")
+	kw := "ex"
+	if s.Species == "De" {
+		kw = "de"
+	}
+	b.WriteString("itera ")
+	b.WriteString(kw)
+	b.WriteString(" ")
 	b.WriteString(fabExpr(s.Iter))
+	b.WriteString(" fixum ")
+	b.WriteString(s.Binding)
 	b.WriteString(" ")
 	b.WriteString(fabStmt(s.Corpus, indent))
 	return b.String()

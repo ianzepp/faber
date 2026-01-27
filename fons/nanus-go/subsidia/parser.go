@@ -163,7 +163,9 @@ func (p *Parser) parseStmt() Stmt {
 		case "varia", "fixum", "figendum", "variandum":
 			return p.parseVaria(publica, externa)
 		case "ex":
-			return p.parseExStmt(publica)
+			return p.parseExStmt()
+		case "itera":
+			return p.parseIteraStmt()
 		case "functio":
 			return p.parseFunctio(publica, futura, externa)
 		case "abstractus":
@@ -384,22 +386,33 @@ func (p *Parser) parseVaria(publica bool, externa bool) Stmt {
 	return &StmtVaria{Tag: "Varia", Locus: locus, Species: species, Nomen: nomen, Typus: typus, Valor: valor, Publica: publica, Externa: externa}
 }
 
-func (p *Parser) parseExStmt(_ bool) Stmt {
+func (p *Parser) parseExStmt() Stmt {
+	panic(p.error("standalone 'ex' not supported; use 'itera ex' for loops"))
+}
+
+func (p *Parser) parseIteraStmt() Stmt {
 	locus := p.peek(0).Locus
-	p.expect(TokenKeyword, "ex")
+	p.expect(TokenKeyword, "itera")
+
+	// Expect 'ex' (for-of) or 'de' (for-in)
+	var species string
+	if p.match(TokenKeyword, "ex") != nil {
+		species = "Ex"
+	} else if p.match(TokenKeyword, "de") != nil {
+		species = "De"
+	} else {
+		panic(p.error("expected 'ex' or 'de' after 'itera'"))
+	}
 
 	expr := p.parseExpr(0)
 
-	if p.check(TokenKeyword, "fixum") || p.check(TokenKeyword, "varia") {
-		species := "Ex"
-		asynca := false
-		p.advance()
-		binding := p.expect(TokenIdentifier).Valor
-		corpus := p.parseMassa()
-		return &StmtIteratio{Tag: "Iteratio", Locus: locus, Species: species, Binding: binding, Iter: expr, Corpus: corpus, Asynca: asynca}
+	if !p.check(TokenKeyword, "fixum") && !p.check(TokenKeyword, "varia") {
+		panic(p.error("expected 'fixum' or 'varia' after iteration expression"))
 	}
-
-	panic(p.error("destructuring not supported in nanus"))
+	p.advance()
+	binding := p.expect(TokenIdentifier).Valor
+	corpus := p.parseMassa()
+	return &StmtIteratio{Tag: "Iteratio", Locus: locus, Species: species, Binding: binding, Iter: expr, Corpus: corpus, Asynca: false}
 }
 
 func (p *Parser) parseFunctio(publica bool, futura bool, externa bool) Stmt {
@@ -762,18 +775,7 @@ func (p *Parser) parseInStmt() Stmt {
 }
 
 func (p *Parser) parseDeStmt() Stmt {
-	locus := p.peek(0).Locus
-	p.expect(TokenKeyword, "de")
-	expr := p.parseExpr(0)
-
-	// Expect fixum or varia for binding
-	if !p.check(TokenKeyword, "fixum") && !p.check(TokenKeyword, "varia") {
-		panic(p.error("expected 'fixum' or 'varia' after 'de' expression"))
-	}
-	p.advance()
-	binding := p.expect(TokenIdentifier).Valor
-	corpus := p.parseMassa()
-	return &StmtIteratio{Tag: "Iteratio", Locus: locus, Species: "De", Binding: binding, Iter: expr, Corpus: corpus, Asynca: false}
+	panic(p.error("standalone 'de' not supported; use 'itera de' for loops"))
 }
 
 func (p *Parser) parseMassa() Stmt {

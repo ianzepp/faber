@@ -15,7 +15,7 @@ var keywords = map[string]struct{}{
 	"publica": {}, "privata": {}, "protecta": {}, "generis": {}, "implet": {}, "sub": {}, "abstractus": {},
 	// Control flow
 	"si": {}, "sin": {}, "secus": {}, "dum": {}, "fac": {}, "elige": {}, "casu": {}, "ceterum": {}, "discerne": {}, "custodi": {},
-	"de": {}, "in": {}, "pro": {}, "omnia": {},
+	"de": {}, "itera": {}, "in": {}, "pro": {}, "omnia": {},
 	// Actions
 	"redde": {}, "reddit": {}, "rumpe": {}, "perge": {}, "iace": {}, "mori": {}, "tempta": {}, "cape": {}, "demum": {},
 	"scribe": {}, "vide": {}, "mone": {}, "adfirma": {}, "tacet": {},
