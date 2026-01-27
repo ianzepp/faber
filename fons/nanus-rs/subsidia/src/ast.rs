@@ -368,9 +368,10 @@ pub enum Stmt {
     Importa {
         locus: Locus,
         fons: String,
-        specs: Vec<ImportSpec>,
+        imported: Option<String>,
+        local: String,
         totum: bool,
-        alias: Option<String>,
+        publica: bool,
     },
 
     #[serde(rename = "Si")]

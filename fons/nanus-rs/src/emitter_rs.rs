@@ -768,9 +768,10 @@ impl<'a> RsEmitter<'a> {
     fn emit_importa(&self, stmt: &Stmt, indent: &str) -> String {
         if let Stmt::Importa {
             fons,
-            specs,
+            imported,
+            local,
             totum,
-            alias,
+            publica,
             ..
         } = stmt
         {
@@ -780,24 +781,19 @@ impl<'a> RsEmitter<'a> {
                     .replace(".", "_")
             });
 
+            let vis = if *publica { "pub " } else { "" };
+
             if *totum {
-                if let Some(a) = alias {
-                    format!("{}use {} as {};", indent, path, sanitize_rs_ident(a))
+                format!("{}{}use {} as {};", indent, vis, path, sanitize_rs_ident(local))
+            } else if let Some(imp) = imported {
+                let spec = if imp != local {
+                    format!("{} as {}", imp, sanitize_rs_ident(local))
                 } else {
-                    format!("{}use {}::*;", indent, path)
-                }
+                    imp.clone()
+                };
+                format!("{}{}use {}::{{{}}};", indent, vis, path, spec)
             } else {
-                let specs_str: Vec<String> = specs
-                    .iter()
-                    .map(|s| {
-                        if !s.local.is_empty() && s.local != s.imported {
-                            format!("{} as {}", s.imported, sanitize_rs_ident(&s.local))
-                        } else {
-                            s.imported.clone()
-                        }
-                    })
-                    .collect();
-                format!("{}use {}::{{{}}};", indent, path, specs_str.join(", "))
+                String::new()
             }
         } else {
             String::new()

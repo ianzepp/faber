@@ -445,32 +445,23 @@ fn emit_discretio(stmt: &Stmt, indent: &str) -> String {
 fn emit_importa(stmt: &Stmt, indent: &str) -> String {
     if let Stmt::Importa {
         fons,
-        specs,
+        imported,
+        local,
         totum,
-        alias,
+        publica,
         ..
     } = stmt
     {
-        // Always emit new syntax: § importa ex "path" bindings
-        let mut result = format!("{}§ importa ex \"{}\" ", indent, fons);
+        let visibility = if *publica { "publica" } else { "privata" };
+        let mut result = format!("{}importa ex \"{}\" {} ", indent, fons, visibility);
         if *totum {
-            if let Some(a) = alias {
-                result.push_str(&format!("* ut {}", a));
+            result.push_str(&format!("* ut {}", local));
+        } else if let Some(imp) = imported {
+            if imp != local {
+                result.push_str(&format!("{} ut {}", imp, local));
             } else {
-                result.push('*');
+                result.push_str(imp);
             }
-        } else {
-            let specs_str: Vec<String> = specs
-                .iter()
-                .map(|s| {
-                    if !s.local.is_empty() && s.local != s.imported {
-                        format!("{} ut {}", s.imported, s.local)
-                    } else {
-                        s.imported.clone()
-                    }
-                })
-                .collect();
-            result.push_str(&specs_str.join(", "));
         }
         result
     } else {

@@ -221,6 +221,7 @@ impl Parser {
                 "incipit" | "incipiet" => return self.parse_incipit(),
                 "probandum" => return self.parse_probandum(),
                 "proba" => return self.parse_proba(),
+                "importa" => return self.parse_importa(),
                 _ => {}
             }
         }
@@ -240,64 +241,12 @@ impl Parser {
         }
         let keyword = self.advance().valor;
         match keyword.as_str() {
-            "importa" => self.parse_sectio_importa(),
+            "importa" | "ex" => Err(self.error(
+                "§ import syntax is deprecated; use: importa ex \"path\" privata|publica T",
+            )),
             "sectio" => self.parse_sectio_sectio(),
-            // Legacy support: § ex "path" importa ... (old syntax)
-            "ex" => self.parse_sectio_ex_legacy(),
             _ => Err(self.error(&format!("unknown § keyword: {}", keyword))),
         }
-    }
-
-    /// Parse: § importa ex "path" foo, bar ut baz
-    /// Or:    § importa ex "path" *
-    /// Or:    § importa ex "path" * ut alias
-    fn parse_sectio_importa(&mut self) -> Result<Stmt, CompileError> {
-        let locus = self.peek(0).locus;
-        self.expect(TOKEN_KEYWORD, Some("ex"))?;
-        let fons = self.expect(TOKEN_TEXTUS, None)?.valor;
-
-        // Check for wildcard import
-        if self.match_token(TOKEN_OPERATOR, Some("*")).is_some() {
-            let alias = if self.match_token(TOKEN_KEYWORD, Some("ut")).is_some() {
-                Some(self.expect(TOKEN_IDENTIFIER, None)?.valor)
-            } else {
-                None
-            };
-            return Ok(Stmt::Importa {
-                locus,
-                fons,
-                specs: Vec::new(),
-                totum: true,
-                alias,
-            });
-        }
-
-        // Named imports
-        let mut specs = Vec::new();
-        loop {
-            let loc = self.peek(0).locus;
-            let imported = self.expect(TOKEN_IDENTIFIER, None)?.valor;
-            let mut local = imported.clone();
-            if self.match_token(TOKEN_KEYWORD, Some("ut")).is_some() {
-                local = self.expect(TOKEN_IDENTIFIER, None)?.valor;
-            }
-            specs.push(crate::ImportSpec {
-                locus: loc,
-                imported,
-                local,
-            });
-            if self.match_token(TOKEN_PUNCTUATOR, Some(",")).is_none() {
-                break;
-            }
-        }
-
-        Ok(Stmt::Importa {
-            locus,
-            fons,
-            specs,
-            totum: false,
-            alias: None,
-        })
     }
 
     /// Parse: § sectio "name"
@@ -316,52 +265,52 @@ impl Parser {
         })
     }
 
-    /// Legacy support: § ex "path" importa foo, bar
-    fn parse_sectio_ex_legacy(&mut self) -> Result<Stmt, CompileError> {
+    /// Parse: importa ex "path" privata|publica T [ut alias]
+    /// Or wildcard: importa ex "path" privata|publica * ut alias
+    fn parse_importa(&mut self) -> Result<Stmt, CompileError> {
         let locus = self.peek(0).locus;
-        let fons = self.expect(TOKEN_TEXTUS, None)?.valor;
         self.expect(TOKEN_KEYWORD, Some("importa"))?;
+        self.expect(TOKEN_KEYWORD, Some("ex"))?;
+        let fons = self.expect(TOKEN_TEXTUS, None)?.valor;
 
-        // Check for wildcard import
+        // Require explicit visibility: privata or publica
+        let publica = if self.match_token(TOKEN_KEYWORD, Some("publica")).is_some() {
+            true
+        } else if self.match_token(TOKEN_KEYWORD, Some("privata")).is_some() {
+            false
+        } else {
+            return Err(self.error("expected 'privata' or 'publica' after import path"));
+        };
+
+        // Wildcard import: * ut alias (alias required)
         if self.match_token(TOKEN_OPERATOR, Some("*")).is_some() {
-            let alias = if self.match_token(TOKEN_KEYWORD, Some("ut")).is_some() {
-                Some(self.expect(TOKEN_IDENTIFIER, None)?.valor)
-            } else {
-                None
-            };
+            self.expect(TOKEN_KEYWORD, Some("ut"))?;
+            let local = self.expect(TOKEN_IDENTIFIER, None)?.valor;
             return Ok(Stmt::Importa {
                 locus,
                 fons,
-                specs: Vec::new(),
+                imported: None,
+                local,
                 totum: true,
-                alias,
+                publica,
             });
         }
 
-        let mut specs = Vec::new();
-        loop {
-            let loc = self.peek(0).locus;
-            let imported = self.expect(TOKEN_IDENTIFIER, None)?.valor;
-            let mut local = imported.clone();
-            if self.match_token(TOKEN_KEYWORD, Some("ut")).is_some() {
-                local = self.expect(TOKEN_IDENTIFIER, None)?.valor;
-            }
-            specs.push(crate::ImportSpec {
-                locus: loc,
-                imported,
-                local,
-            });
-            if self.match_token(TOKEN_PUNCTUATOR, Some(",")).is_none() {
-                break;
-            }
-        }
+        // Named import: T [ut alias]
+        let imported = self.expect(TOKEN_IDENTIFIER, None)?.valor;
+        let local = if self.match_token(TOKEN_KEYWORD, Some("ut")).is_some() {
+            self.expect(TOKEN_IDENTIFIER, None)?.valor
+        } else {
+            imported.clone()
+        };
 
         Ok(Stmt::Importa {
             locus,
             fons,
-            specs,
+            imported: Some(imported),
+            local,
             totum: false,
-            alias: None,
+            publica,
         })
     }
 
