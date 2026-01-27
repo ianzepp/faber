@@ -18,8 +18,8 @@
 § ex "./validitor" importa validatioSuccessit, ValidatioError
 § ex "./ts/index" importa generateTs, generateTsWithTests, generateTsWithOptions
 § ex "./go/index" importa generateGo
-§ ex "./faber/index" importa generateFaber
-§ ex "./glyph/index" importa generateGlyph
+§ ex "./faber/index" importa generateFaber, generateFaberStripComments
+§ ex "./glyph/index" importa generateGlyph, generateGlyphStripComments
 
 # =============================================================================
 # PUBLIC API
@@ -57,14 +57,12 @@ functio generateWithStripping(de lista<Sententia> corpus, de textus target, biva
         casu "ts" { redde generateTsWithOptions(corpus, stripTests, stripComments, viaFons) }
         casu "faber" {
             si stripComments {
-                § ex "./faber/index" importa generateFaberStripComments
                 redde generateFaberStripComments(corpus)
             }
             redde generateFaber(corpus)
         }
         casu "glyph" {
             si stripComments {
-                § ex "./glyph/index" importa generateGlyphStripComments
                 redde generateGlyphStripComments(corpus)
             }
             redde generateGlyph(corpus)

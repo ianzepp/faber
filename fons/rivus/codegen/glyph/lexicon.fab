@@ -277,12 +277,12 @@ functio encodeBraille(de textus content) -> textus {
         # For extended chars, we encode the code point directly (simplified)
         si charCode < 256 {
             # U+2800 + byte value
-            fixum brailleCode = 0x2800 + charCode
+            fixum brailleCode = 10240 + charCode
             result = result + fromCharCode(brailleCode)
         } secus {
             # For higher code points, encode as multiple braille chars
             # This is a simplification - full UTF-8 encoding would split bytes
-            fixum brailleCode = 0x2800 + (charCode % 256)
+            fixum brailleCode = 10240 + (charCode % 256)
             result = result + fromCharCode(brailleCode)
         }
 
@@ -302,8 +302,8 @@ functio decodeBraille(de textus braille) -> textus {
         fixum charCode = braille.charCodeAt(i)
 
         # Check if in braille range
-        si charCode >= 0x2800 et charCode <= 0x28FF {
-            fixum originalCode = charCode - 0x2800
+        si charCode >= 10240 et charCode <= 10495 {
+            fixum originalCode = charCode - 10240
             result = result + fromCharCode(originalCode)
         } secus {
             # Pass through non-braille chars

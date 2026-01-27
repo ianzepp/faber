@@ -4,7 +4,7 @@
 
 § ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum, Typus
 § ex "./nucleus" importa GlyphGenerator
-§ ex "./lexicon" importa glyphKeyword, glyphDelimiter, encodeBraille
+§ ex "./lexicon" importa glyphKeyword, glyphDelimiter, glyphPunctuation, encodeBraille
 
 # =============================================================================
 # TYPE GENERATION
@@ -14,8 +14,8 @@
 functio genTypus(in GlyphGenerator g, de TypusAnnotatio typ) -> textus {
     varia result = ""
 
-    # Handle optional (si) prefix
-    si typ.optionalis qua bivalens {
+    # Handle nullable (si) prefix
+    si typ.nullabilis qua bivalens {
         result = glyphKeyword("si") + " "
     }
 
@@ -44,5 +44,3 @@ functio genTypus(in GlyphGenerator g, de TypusAnnotatio typ) -> textus {
 
     redde result
 }
-
-§ ex "./lexicon" importa glyphPunctuation

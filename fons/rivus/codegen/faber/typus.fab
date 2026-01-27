@@ -13,8 +13,8 @@
 functio genTypus(in FaberGenerator g, de TypusAnnotatio typ) -> textus {
     varia result = typ.nomen qua textus
 
-    # Handle optional (si) prefix
-    si typ.optionalis qua bivalens {
+    # Handle nullable (si) prefix
+    si typ.nullabilis qua bivalens {
         result = scriptum("si §", result)
     }
 
