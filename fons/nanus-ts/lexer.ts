@@ -219,6 +219,12 @@ export function lex(source: string, filename = '<stdin>'): Token[] {
                         value += String.fromCharCode(parseInt(hex, 16));
                         break;
                     }
+                    case 'u': {
+                        // Unicode escape: \uNNNN
+                        const hex = advance() + advance() + advance() + advance();
+                        value += String.fromCharCode(parseInt(hex, 16));
+                        break;
+                    }
                     default:
                         value += esc;
                 }
