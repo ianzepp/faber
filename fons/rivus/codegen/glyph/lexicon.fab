@@ -1,7 +1,7 @@
 # Glyph Lexicon - Mapping tables for Faber to Unicode glyph representation
 #
 # Maps Faber tokens (keywords, operators, delimiters) to their Unicode glyph
-# equivalents as specified in glyph-go/README.md.
+# equivalents.
 #
 # DESIGN PRINCIPLES
 # =================

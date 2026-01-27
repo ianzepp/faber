@@ -112,7 +112,6 @@ bun test                                                  # Run tests
 | **Micro-compilers**   |             |         |                                               |
 |   **nanus-ts**        |             |         | TypeScript compiler in TypeScript             |
 |   **nanus-go**        |             |         | Go compiler in Go                             |
-|   **glyph-go**        |             |         | Fun translator in Go                          |
 | **Tests**             |      12,002 |       — | Test infrastructure                           |
 | **Test Specs**        |      19,573 |       — | YAML test definitions (0 passing)             |
 | **Core Phases**       |       5,897 |       3 | Tokenizer, parser, semantic analyzer          |

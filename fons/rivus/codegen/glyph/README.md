@@ -217,5 +217,4 @@ Recommended: JuliaMono, Iosevka, or Nerd Fonts variants.
 
 ## See Also
 
-- `fons/glyph-go/README.md` - Canonical glyph specification
 - `lexicon.fab` - Complete mapping tables

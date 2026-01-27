@@ -10,7 +10,6 @@
     "build:nanus-go": "bun ./scripta/build-nanus-go.ts",
     "build:nanus-rs": "bun ./scripta/build-nanus-rs.ts",
     "build:nanus-py": "bun ./scripta/build-nanus-py.ts",
-    "build:glyph-go": "bun ./scripta/build-glyph-go.ts",
     "build:rivus": "bun ./scripta/build-rivus.ts",
     "build:artifex": "bun ./scripta/build-artifex.ts",
     "build:exec": "bun ./scripta/build-exec.ts",
