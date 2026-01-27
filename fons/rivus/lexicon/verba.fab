@@ -43,6 +43,7 @@ functio verbumFaberId(textus v) -> si VerbumId {
         casu "custodi" reddit VerbumId.Custodi
         casu "adfirma" reddit VerbumId.Adfirma
         casu "discerne" reddit VerbumId.Discerne
+        casu "itera" reddit VerbumId.Itera
         casu "incipit" reddit VerbumId.Incipit
         casu "incipiet" reddit VerbumId.Incipiet
         casu "tacet" reddit VerbumId.Tacet
@@ -214,6 +215,7 @@ functio estVerbumSententiae(textus v) -> bivalens {
         # ---- Control Flow ----
         casu "si" reddit verum
         casu "dum" reddit verum
+        casu "itera" reddit verum
         casu "ex" reddit verum
         casu "de" reddit verum
         casu "elige" reddit verum

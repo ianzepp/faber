@@ -156,20 +156,33 @@ functio parseDumSententia(in Resolvitor r) -> Sententia {
     } qua Sententia
 }
 
-# Parse for-of loop (iterate values)
+# Parse iteration loop (itera ex/itera de)
 #
-# GRAMMAR: exStmt := 'ex' expr ('fixum'|'varia') (IDENT | arrayPattern) blockStmt ('cape' IDENT blockStmt)?
+# GRAMMAR: iteraStmt := 'itera' ('ex'|'de') expr ('fixum'|'varia') (IDENT | arrayPattern) blockStmt ('cape' IDENT blockStmt)?
 #
 # Examples:
-#   ex items fixum item { scribe item }
-#   ex 0 ante 10 varia i { scribe i }
+#   itera ex items fixum item { scribe item }
+#   itera ex 0 ante 10 varia i { scribe i }
+#   itera de obiectum fixum clavis { scribe clavis }
 @ publica
-functio parseExSententia(in Resolvitor r) -> Sententia {
+functio parseIteraSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
-    # Consume 'ex'
-    p.expectaVerbum("ex", ParserErrorCodice.ExpectaturEx)
+    # Consume 'itera'
+    p.expectaVerbum("itera", ParserErrorCodice.ExpectaturEx)
+
+    # Determine species: ex (values) or de (keys)
+    varia species = IteratioGenus.Ex
+    si p.probaVerbum("ex") {
+        p.procede()
+        species = IteratioGenus.Ex
+    } sin p.probaVerbum("de") {
+        p.procede()
+        species = IteratioGenus.De
+    } secus {
+        p.renuncia(ParserErrorCodice.InvalidumExDeInitium, "expected 'ex' or 'de' after 'itera'")
+    }
 
     # Parse iterable expression
     fixum iterabile = r.expressia()
@@ -204,6 +217,67 @@ functio parseExSententia(in Resolvitor r) -> Sententia {
 
     redde finge IteratioSententia {
         locus: locus,
+        species: species,
+        variabilis: variabilis qua IteratioVariabilis,
+        iterabile: iterabile,
+        corpus: corpus,
+        asynca: falsum,
+        mutabilis: mutabilis,
+        cape: cape
+    } qua Sententia
+}
+
+# Parse for-of loop (DEPRECATED - now requires 'itera ex')
+#
+# GRAMMAR: exStmt := 'ex' expr ('fixum'|'varia') IDENT blockStmt
+#
+# This function now emits an error directing users to use 'itera ex' syntax
+@ publica
+functio parseExSententia(in Resolvitor r) -> Sententia {
+    fixum p = r.parser()
+    fixum locus = p.locusActualis()
+
+    # Report deprecation error
+    p.renuncia(ParserErrorCodice.SyntaxisAlienaExDe)
+
+    # Skip 'ex' and attempt to parse the rest for better error recovery
+    p.procede()
+
+    # Parse iterable expression
+    fixum iterabile = r.expressia()
+
+    # Parse binding keyword: fixum (const) or varia (let)
+    varia mutabilis = falsum
+    si p.probaVerbum("varia") {
+        mutabilis = verum
+        p.procede()
+    } sin p.probaVerbum("fixum") {
+        p.procede()
+    }
+
+    # Parse variable name or array pattern
+    varia variabilis = nihil qua si IteratioVariabilis
+    si p.proba(SymbolumGenus.QuadratusSin) {
+        fixum elementa = parseSeriesDestructura(r)
+        variabilis = finge Series { elementa: elementa } qua IteratioVariabilis
+    } sin p.proba(SymbolumGenus.Nomen) {
+        fixum nomenSym = p.procede()
+        variabilis = finge Nomen { valor: nomenSym.valor } qua IteratioVariabilis
+    } secus {
+        variabilis = finge Nomen { valor: "_" } qua IteratioVariabilis
+    }
+
+    # Parse body
+    fixum corpus = parseCorpus(r)
+
+    # Optional catch
+    varia cape = nihil qua si CapeClausula
+    si p.probaVerbum("cape") {
+        cape = parseCapeClausula(r)
+    }
+
+    redde finge IteratioSententia {
+        locus: locus,
         species: IteratioGenus.Ex,
         variabilis: variabilis qua IteratioVariabilis,
         iterabile: iterabile,
@@ -214,19 +288,21 @@ functio parseExSententia(in Resolvitor r) -> Sententia {
     } qua Sententia
 }
 
-# Parse for-in loop (iterate keys)
+# Parse for-in loop (DEPRECATED - now requires 'itera de')
 #
-# GRAMMAR: deStmt := 'de' expr ('fixum'|'varia') (IDENT | arrayPattern) blockStmt ('cape' IDENT blockStmt)?
+# GRAMMAR: deStmt := 'de' expr ('fixum'|'varia') IDENT blockStmt
 #
-# Examples:
-#   de obiectum fixum clavis { scribe clavis }
+# This function now emits an error directing users to use 'itera de' syntax
 @ publica
 functio parseDeSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
 
-    # Consume 'de'
-    p.expectaVerbum("de", ParserErrorCodice.ExpectaturDe)
+    # Report deprecation error
+    p.renuncia(ParserErrorCodice.SyntaxisAlienaExDe)
+
+    # Skip 'de' and attempt to parse the rest for better error recovery
+    p.procede()
 
     # Parse iterable expression
     fixum iterabile = r.expressia()
@@ -236,8 +312,8 @@ functio parseDeSententia(in Resolvitor r) -> Sententia {
     si p.probaVerbum("varia") {
         mutabilis = verum
         p.procede()
-    } secus {
-        p.expectaVerbum("fixum", ParserErrorCodice.ExpectaturFixum)
+    } sin p.probaVerbum("fixum") {
+        p.procede()
     }
 
     # Parse variable name or array pattern
@@ -245,9 +321,11 @@ functio parseDeSententia(in Resolvitor r) -> Sententia {
     si p.proba(SymbolumGenus.QuadratusSin) {
         fixum elementa = parseSeriesDestructura(r)
         variabilis = finge Series { elementa: elementa } qua IteratioVariabilis
-    } secus {
-        fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    } sin p.proba(SymbolumGenus.Nomen) {
+        fixum nomenSym = p.procede()
         variabilis = finge Nomen { valor: nomenSym.valor } qua IteratioVariabilis
+    } secus {
+        variabilis = finge Nomen { valor: "_" } qua IteratioVariabilis
     }
 
     # Parse body
@@ -410,8 +488,7 @@ functio estCompositumVerbum(in Parser p) -> bivalens {
     si p.probaVerbum("si") { redde verum }
     si p.probaVerbum("sin") { redde verum }
     si p.probaVerbum("dum") { redde verum }
-    si p.probaVerbum("ex") { redde verum }
-    si p.probaVerbum("de") { redde verum }
+    si p.probaVerbum("itera") { redde verum }
     si p.probaVerbum("elige") { redde verum }
     si p.probaVerbum("discerne") { redde verum }
     si p.probaVerbum("custodi") { redde verum }

@@ -122,7 +122,8 @@ ordo ParserErrorCodice {
     SyntaxisAlienaTernaria = "P406",
     SyntaxisAlienaExspecta = "P407",
     SyntaxisAlienaAsynca = "P408",
-    SyntaxisAlienaSecusSi = "P409"
+    SyntaxisAlienaSecusSi = "P409",
+    SyntaxisAlienaExDe = "P410"
 }
 
 # Error message with help text
@@ -417,6 +418,9 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
         }
         casu ParserErrorCodice.SyntaxisAlienaSecusSi {
             redde creoNuntium("'secus si' is not valid syntax", "Use 'sin' for else-if: si x { } sin y { } secus { }")
+        }
+        casu ParserErrorCodice.SyntaxisAlienaExDe {
+            redde creoNuntium("Bare 'ex'/'de' loop syntax is deprecated", "Use 'itera ex items fixum x { }' or 'itera de obj fixum k { }'")
         }
 
         # Default fallback

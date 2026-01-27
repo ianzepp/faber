@@ -48,6 +48,7 @@ importa ex "./error" privata parseFacSententia
 importa ex "./error" privata parseAdfirmaSententia
 importa ex "./imperium" privata parseSiSententia
 importa ex "./imperium" privata parseDumSententia
+importa ex "./imperium" privata parseIteraSententia
 importa ex "./imperium" privata parseExSententia
 importa ex "./imperium" privata parseDeSententia
 importa ex "./fluxus" privata parseEligeSententia
@@ -349,6 +350,10 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
         }
         si verbumId === VerbumId.Dum {
             redde parseDumSententia(r)
+        }
+        # 'itera' for iteration loops (itera ex / itera de)
+        si verbumId === VerbumId.Itera {
+            redde parseIteraSententia(r)
         }
         # 'ex' for for-of loops and destructuring
         # NOTE: imports use § ex sectional syntax, not bare ex

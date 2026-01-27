@@ -154,6 +154,7 @@ ordo VerbumId {
     Incipit
     Incipiet
     Tacet
+    Itera       # Loop keyword (itera ex/itera de)
     Aliter      # DEPRECATED: syntaxis aliena for secus/sin
     Exspecta    # DEPRECATED: syntaxis aliena for cede
 

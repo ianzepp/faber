@@ -813,7 +813,7 @@ functio genDum(in FaberGenerator g, de DumSententia s) -> textus {
 }
 
 functio genIteratio(in FaberGenerator g, de IteratioSententia s) -> textus {
-    fixum prepo = ((s.species qua IteratioGenus) == IteratioGenus.Ex) sic "ex" secus "de"
+    fixum prepo = ((s.species qua IteratioGenus) == IteratioGenus.Ex) sic "itera ex" secus "itera de"
     fixum keyword = (s.mutabilis qua bivalens) sic "varia" secus "fixum"
     fixum asyncMark = (s.asynca qua bivalens) sic "cede " secus ""
 
@@ -823,7 +823,7 @@ functio genIteratio(in FaberGenerator g, de IteratioSententia s) -> textus {
         casu Nomen ut n { binding = n.valor }
         casu Series ut ser {
             varia elems = [] innatum lista<textus>
-            ex (ser.elementa qua lista<SeriesDestructuraElementum>) fixum elem {
+            itera ex (ser.elementa qua lista<SeriesDestructuraElementum>) fixum elem {
                 si elem.omissum qua bivalens {
                     elems.appende("_")
                 } sin elem.residuum qua bivalens {
