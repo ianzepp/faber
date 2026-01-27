@@ -4,6 +4,7 @@
 # for TypeScript code generation. Individual gen* functions are in
 # separate files under sententia/ and expressia/.
 
+§ ex "norma:solum" importa solum
 § ex "../typi" importa RequiredFeatures, creaRequiredFeatures, formataNotaePrae, formataNotaePost
 § ex "../shared/generans" importa Generans
 
@@ -17,6 +18,9 @@
 #      that are shared across all statement/expression generators.
 @ publica
 genus TsGenerator implet Generans {
+    # Source file path (for import path resolution)
+    si textus viaFons
+
     # Indentation depth (number of levels)
     numerus profunditas
 
@@ -128,13 +132,83 @@ genus TsGenerator implet Generans {
 }
 
 # =============================================================================
+# NORMA HAL RESOLUTION
+# =============================================================================
+
+# Find project root by looking for fons/norma-ts/hal directory
+functio findProjectRoot(de textus fromPath) -> si textus {
+    varia dir = solum.directorium(fromPath)
+    varia i = 0
+    dum i < 20 {
+        fixum halPath = solum.iunge([dir, "fons", "norma-ts", "hal"])
+        si solum.exstat(halPath) {
+            redde dir
+        }
+        fixum parent = solum.directorium(dir)
+        si parent == dir { rumpe }
+        dir = parent
+        i += 1
+    }
+    redde nihil
+}
+
+# Resolve norma:X import to HAL implementation path
+# Returns relative path from OUTPUT file to HAL implementation
+# Output structure: opus/COMPILER/fons/X/Y.ts (without rivus/ level)
+# HAL is at: opus/COMPILER/norma-ts/hal/
+@ publica
+functio resolveNormaHal(de textus importPath, si de textus viaFons) -> si textus {
+    si nihil viaFons { redde nihil }
+    si non importPath.initium("norma:") { redde nihil }
+
+    fixum moduleName = importPath.sectio(6, importPath.longitudo())
+
+    # Find the "fons/rivus/" marker in the path to calculate output depth
+    # Source: fons/rivus/X/Y.fab -> Output: fons/X/Y.ts
+    # We need depth from "fons/" in output, which is depth after "fons/rivus/" in source
+
+    fixum marker = "fons/rivus/"
+    fixum markerIdx = viaFons.indiceDe(marker)
+
+    si markerIdx < 0 {
+        # Fallback: not a rivus source file, use simple calculation
+        redde nihil
+    }
+
+    # Get path after "fons/rivus/": e.g., "codegen/ts/nucleus.fab"
+    fixum afterMarker = viaFons.sectio(markerIdx + marker.longitudo(), viaFons.longitudo())
+
+    # Count directory separators to get depth
+    # e.g., "codegen/ts/nucleus.fab" has 2 separators -> depth 2, plus 1 for fons/ = 3
+    varia depth = 1  # Start at 1 for the "fons/" level in output
+    varia i = 0
+    dum i < afterMarker.longitudo() {
+        si afterMarker[i] == "/" {
+            depth += 1
+        }
+        i += 1
+    }
+
+    # Build relative path: ../../../norma-ts/hal/module
+    varia prefix = ""
+    varia j = 0
+    dum j < depth {
+        prefix = prefix + "../"
+        j += 1
+    }
+
+    redde prefix + "norma-ts/hal/" + moduleName
+}
+
+# =============================================================================
 # FACTORY
 # =============================================================================
 
 # Create a new TsGenerator with default settings
 @ publica
-functio creaTsGenerator() -> TsGenerator {
+functio creaTsGenerator(si de textus viaFons) -> TsGenerator {
     redde novum TsGenerator {
+        viaFons: viaFons,
         profunditas: 0,
         indentum: "  ",
         inCursore: falsum,
@@ -158,8 +232,9 @@ functio creaTsGenerator() -> TsGenerator {
 
 # Create a TsGenerator with custom indentation
 @ publica
-functio creaTsGeneratorCum(de textus indentum) -> TsGenerator {
+functio creaTsGeneratorCum(de textus indentum, si de textus viaFons) -> TsGenerator {
     redde novum TsGenerator {
+        viaFons: viaFons,
         profunditas: 0,
         indentum: indentum,
         inCursore: falsum,

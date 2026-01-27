@@ -197,10 +197,10 @@ const _resolve = (basis: string, relativum: string): string => resolve(basis, re
 }
 
 async function copyHalImplementations(): Promise<void> {
-    const halSource = join(ROOT, 'fons', 'norma', 'hal', 'codegen', 'ts');
-    // WHY: Imports from rivus source use paths like ../../norma/hal/codegen/ts/solum.ts
-    // which resolves relative to opus/{compiler}/fons/semantic/ -> opus/{compiler}/norma/hal/codegen/ts/
-    const halDest = join(dirname(OUTPUT), 'norma', 'hal', 'codegen', 'ts');
+    const halSource = join(ROOT, 'fons', 'norma-ts', 'hal');
+    // WHY: Imports from rivus source use paths like ../../norma-ts/hal/solum.ts
+    // which resolves relative to opus/{compiler}/fons/semantic/ -> opus/{compiler}/norma-ts/hal/
+    const halDest = join(dirname(OUTPUT), 'norma-ts', 'hal');
     await mkdir(halDest, { recursive: true });
 
     const glob = new Glob('*.ts');

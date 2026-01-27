@@ -26,25 +26,25 @@
 # Generate code for target with validation
 # Throws if target compatibility validation fails
 @ publica
-functio generate(de lista<Sententia> corpus, de textus target) -> textus {
-    redde generateWithPolicy(corpus, target, POLITIA_STRICTA)
+functio generate(de lista<Sententia> corpus, de textus target, si de textus viaFons) -> textus {
+    redde generateWithPolicy(corpus, target, POLITIA_STRICTA, viaFons)
 }
 
 # Generate code with test blocks stripped (for production builds)
 @ publica
-functio generateStripTests(de lista<Sententia> corpus, de textus target) -> textus {
-    redde generateWithStripping(corpus, target, verum, falsum)
+functio generateStripTests(de lista<Sententia> corpus, de textus target, si de textus viaFons) -> textus {
+    redde generateWithStripping(corpus, target, verum, falsum, viaFons)
 }
 
 # Generate code with comments stripped
 @ publica
-functio generateStripComments(de lista<Sententia> corpus, de textus target) -> textus {
-    redde generateWithStripping(corpus, target, falsum, verum)
+functio generateStripComments(de lista<Sententia> corpus, de textus target, si de textus viaFons) -> textus {
+    redde generateWithStripping(corpus, target, falsum, verum, viaFons)
 }
 
 # Generate code with optional stripping of tests and/or comments
 @ publica
-functio generateWithStripping(de lista<Sententia> corpus, de textus target, bivalens stripTests, bivalens stripComments) -> textus {
+functio generateWithStripping(de lista<Sententia> corpus, de textus target, bivalens stripTests, bivalens stripComments, si de textus viaFons) -> textus {
     # Validate first
     fixum errores = validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
     si non validatioSuccessit(errores) {
@@ -52,7 +52,7 @@ functio generateWithStripping(de lista<Sententia> corpus, de textus target, biva
     }
 
     elige target {
-        casu "ts" { redde generateTsWithOptions(corpus, stripTests, stripComments) }
+        casu "ts" { redde generateTsWithOptions(corpus, stripTests, stripComments, viaFons) }
         ceterum {
             mori scriptum("Stripping not supported for target '§'. Only 'ts' is supported.", target)
         }
@@ -61,7 +61,7 @@ functio generateWithStripping(de lista<Sententia> corpus, de textus target, biva
 
 # Generate code with explicit policy
 @ publica
-functio generateWithPolicy(de lista<Sententia> corpus, de textus target, de ValidatioPolitia politia) -> textus {
+functio generateWithPolicy(de lista<Sententia> corpus, de textus target, de ValidatioPolitia politia, si de textus viaFons) -> textus {
     # Validate target compatibility BEFORE codegen
     fixum errores = validateCompatibilitatem(corpus, target, politia)
 
@@ -72,7 +72,7 @@ functio generateWithPolicy(de lista<Sententia> corpus, de textus target, de Vali
     # Dispatch to target-specific generator
     # NOTE: rs, zig, cpp archived until reimplemented (see archivum/rivus-codegen/)
     elige target {
-        casu "ts" { redde generateTs(corpus) }
+        casu "ts" { redde generateTs(corpus, viaFons) }
         casu "go" { redde generateGo(corpus) }
         ceterum {
             mori scriptum("Unknown target '§'. Supported: ts, go", target)
@@ -83,7 +83,7 @@ functio generateWithPolicy(de lista<Sententia> corpus, de textus target, de Vali
 # Generate code with standalone test harness (for `rivus test` command)
 # Currently only supports TypeScript target
 @ publica
-functio generateWithTests(de lista<Sententia> corpus, de textus target) -> textus {
+functio generateWithTests(de lista<Sententia> corpus, de textus target, si de textus viaFons) -> textus {
     # Validate first
     fixum errores = validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
     si non validatioSuccessit(errores) {
@@ -91,7 +91,7 @@ functio generateWithTests(de lista<Sententia> corpus, de textus target) -> textu
     }
 
     elige target {
-        casu "ts" { redde generateTsWithTests(corpus) }
+        casu "ts" { redde generateTsWithTests(corpus, viaFons) }
         ceterum {
             mori scriptum("Test generation not supported for target '§'. Only 'ts' is supported.", target)
         }

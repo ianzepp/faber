@@ -97,7 +97,7 @@ if (command === 'emit') {
         }
     }
 
-    const output = generate(parseResult.programma.corpus, target);
+    const output = generate(parseResult.programma.corpus, target, stdinFilename);
     console.log(output);
     process.exit(0);
 }

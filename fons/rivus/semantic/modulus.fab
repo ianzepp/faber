@@ -1,8 +1,7 @@
-# Modulus - Module Resolution (DISABLED)
+# Modulus - Module Resolution
 #
-# NOTE: Multi-file resolution removed for Go compatibility. Rivus is now
-# stdin-only; an external bundler handles imports before compilation.
-# Path helpers and export extraction remain for compatibility.
+# Handles resolution of local .fab file imports during semantic analysis.
+# Uses norma:solum for file I/O operations.
 
 § ex "norma:solum" importa solum
 
@@ -15,6 +14,8 @@
 § ex "../ast/radix" importa Programma
 § ex "../ast/sententia" importa Sententia
 § ex "../ast/typus" importa TypusAnnotatio, TypusParametrum
+§ ex "../lexor/index" importa lexare
+§ ex "../parser/index" importa resolvere
 
 # ============================================================================
 # TYPES
@@ -90,10 +91,26 @@ functio resolveDependentiaPath(
 }
 
 # Resolve import path to absolute filesystem path
-# NOTE: Disabled - rivus is stdin-only, bundler handles imports
+# Adds .fab extension if not present, resolves relative to base path
 @ publica
 functio resolveViaModuli(de textus fons, de textus viaBasica) -> si textus {
-    redde nihil
+    fixum baseDir = solum.directorium(viaBasica)
+
+    # Add .fab extension if not present
+    varia targetPath = fons
+    si non fons.finis(".fab") {
+        targetPath = fons + ".fab"
+    }
+
+    # Resolve to absolute path
+    fixum absolutePath = solum.iunge([baseDir, targetPath])
+
+    # Check if file exists
+    si non solum.exstat(absolutePath) {
+        redde nihil
+    }
+
+    redde absolutePath
 }
 
 # ============================================================================
@@ -323,14 +340,8 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
 # MODULE RESOLUTION
 # ============================================================================
 
-# Test function to verify norma:solum works
-@ publica
-functio testSolum(de textus via) -> bivalens {
-    redde solum.exstat(via)
-}
-
 # Main entry point: resolve and load a local module
-# NOTE: Disabled - rivus is stdin-only, bundler handles imports
+# Handles path resolution, caching, cycle detection, parsing, and export extraction
 @ publica
 functio resolveModulum(
     de textus fons,
@@ -338,5 +349,68 @@ functio resolveModulum(
     in tabula<textus, ModulusResolutum> cache,
     in copia<textus> inProgressu
 ) -> si ModulusResolutum {
-    redde nihil
+    # Resolve to absolute path
+    fixum absolutePath = resolveViaModuli(fons, viaBasica)
+    si nihil absolutePath {
+        redde nihil
+    }
+
+    # Check cache first
+    si nonnihil cache[absolutePath] {
+        redde cache[absolutePath]
+    }
+
+    # Check for cycles - return empty exports while cycle in progress
+    # WHY: Circular imports are valid in JS/TS. We detect but don't error.
+    # Values resolve when module finishes loading (JS module runtime model).
+    si inProgressu.habet(absolutePath) {
+        redde {
+            exporta: {} innatum tabula<textus, ModulusExportum>,
+            discretiones: {} innatum tabula<textus, DiscretioDeclInfo>,
+            via: absolutePath,
+            programma: nihil
+        } novum ModulusResolutum
+    }
+
+    # Mark as in-progress
+    inProgressu.adde(absolutePath)
+
+    # Read the source file (sync to avoid async cascade)
+    varia sourceCode = ""
+    tempta {
+        sourceCode = solum.lege(absolutePath)
+    } cape e {
+        inProgressu.dele(absolutePath)
+        redde nihil
+    }
+
+    # Tokenize
+    fixum lexResult = lexare(sourceCode)
+    si lexResult.errores.longitudo() > 0 {
+        inProgressu.dele(absolutePath)
+        redde nihil
+    }
+
+    # Parse
+    fixum parseResult = resolvere(lexResult.symbola)
+    si parseResult.errores.longitudo() > 0 {
+        inProgressu.dele(absolutePath)
+        redde nihil
+    }
+
+    si nihil parseResult.programma {
+        inProgressu.dele(absolutePath)
+        redde nihil
+    }
+
+    # Extract exports
+    fixum moduleExports = extraheExporta(parseResult.programma, absolutePath)
+
+    # Cache the result
+    cache[absolutePath] = moduleExports
+
+    # Remove from in-progress
+    inProgressu.dele(absolutePath)
+
+    redde moduleExports
 }

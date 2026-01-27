@@ -9,7 +9,7 @@
 
 § ex "../../../ast/sententia" importa ImportaSpecificator, VariaGenus, SeriesDestructuraElementum
 § ex "../../../ast/expressia" importa Expressia
-§ ex "../nucleus" importa TsGenerator
+§ ex "../nucleus" importa TsGenerator, resolveNormaHal
 § ex "../../../semantic/modulus" importa estNormaImportum
 
 # External declaration - implementation lives in index.fab
@@ -17,17 +17,26 @@
 
 @ publica
 functio genImporta(in TsGenerator g, de textus fons, de lista<ImportaSpecificator> specificatores, bivalens totum, de ignotum totumAlias) -> textus {
-    # Skip norma imports - they are compiler intrinsics, not real modules
+    # Skip norma imports (norma/ prefix) - they are compiler intrinsics, not real modules
     si estNormaImportum(fons) {
         redde ""
     }
 
+    # Resolve norma:* imports to HAL paths
+    varia importPath = fons
+    si fons.initium("norma:") {
+        fixum resolved = resolveNormaHal(fons, g.viaFons)
+        si nonnihil resolved {
+            importPath = resolved
+        }
+    }
+
     si totum {
         si nonnihil totumAlias {
-            redde scriptum("§import * as § from \"§\";", g.ind(), totumAlias qua textus, fons)
+            redde scriptum("§import * as § from \"§\";", g.ind(), totumAlias qua textus, importPath)
         }
         # No alias - side-effect import only
-        redde scriptum("§import \"§\";", g.ind(), fons)
+        redde scriptum("§import \"§\";", g.ind(), importPath)
     }
 
     varia specs = [] innatum lista<textus>
@@ -39,7 +48,7 @@ functio genImporta(in TsGenerator g, de textus fons, de lista<ImportaSpecificato
         }
     }
 
-    redde scriptum("§import { § } from \"§\";", g.ind(), specs.coniunge(", "), fons)
+    redde scriptum("§import { § } from \"§\";", g.ind(), specs.coniunge(", "), importPath)
 }
 
 @ publica
