@@ -282,7 +282,8 @@ def _iteratio(s: StmtIteratio, indent: str) -> str:
     parts = [indent]
     if s.asynca:
         parts.append("cede ")
-    parts.append(f"pro {s.binding} de {_expr(s.iter)} {_stmt(s.corpus, indent)}")
+    kw = "ex" if s.species == "Ex" else "de"
+    parts.append(f"itera {kw} {_expr(s.iter)} fixum {s.binding} {_stmt(s.corpus, indent)}")
     return "".join(parts)
 
 

@@ -122,7 +122,9 @@ class Parser:
                 case "varia" | "fixum" | "figendum" | "variandum":
                     return self.parse_varia(publica, externa)
                 case "ex":
-                    return self.parse_ex_stmt(publica)
+                    return self.parse_ex_stmt()
+                case "itera":
+                    return self.parse_itera_stmt()
                 case "functio":
                     return self.parse_functio(publica, futura, externa)
                 case "abstractus":
@@ -315,19 +317,30 @@ class Parser:
         return StmtVaria(nomen=nomen, species=species, typus=typus, valor=valor,
                          publica=publica, externa=externa, locus=locus)
 
-    def parse_ex_stmt(self, publica: bool) -> Stmt:
+    def parse_ex_stmt(self) -> Stmt:
+        raise self.error("standalone 'ex' not supported; use 'itera ex' for loops")
+
+    def parse_itera_stmt(self) -> Stmt:
         locus = self.peek().locus
-        self.expect(TokenTag.KEYWORD, "ex")
+        self.expect(TokenTag.KEYWORD, "itera")
+
+        # Expect 'ex' (for-of) or 'de' (for-in)
+        if self.match(TokenTag.KEYWORD, "ex"):
+            species = "Ex"
+        elif self.match(TokenTag.KEYWORD, "de"):
+            species = "De"
+        else:
+            raise self.error("expected 'ex' or 'de' after 'itera'")
+
         expr = self.parse_expr(0)
 
-        if self.check(TokenTag.KEYWORD, "fixum") or self.check(TokenTag.KEYWORD, "varia"):
-            self.advance()
-            binding = self.expect(TokenTag.IDENTIFIER).valor
-            corpus = self.parse_massa()
-            return StmtIteratio(binding=binding, iter=expr, corpus=corpus, species="Ex",
-                                asynca=False, locus=locus)
-
-        raise self.error("destructuring not supported in nanus")
+        if not self.check(TokenTag.KEYWORD, "fixum") and not self.check(TokenTag.KEYWORD, "varia"):
+            raise self.error("expected 'fixum' or 'varia' after iteration expression")
+        self.advance()
+        binding = self.expect(TokenTag.IDENTIFIER).valor
+        corpus = self.parse_massa()
+        return StmtIteratio(binding=binding, iter=expr, corpus=corpus, species=species,
+                            asynca=False, locus=locus)
 
     def parse_functio(self, publica: bool, futura: bool, externa: bool) -> Stmt:
         locus = self.peek().locus
@@ -619,17 +632,7 @@ class Parser:
         return StmtIn(expr=expr, corpus=corpus, locus=locus)
 
     def parse_de_stmt(self) -> Stmt:
-        locus = self.peek().locus
-        self.expect(TokenTag.KEYWORD, "de")
-        expr = self.parse_expr(0)
-
-        if not self.check(TokenTag.KEYWORD, "fixum") and not self.check(TokenTag.KEYWORD, "varia"):
-            raise self.error("expected 'fixum' or 'varia' after 'de' expression")
-        self.advance()
-        binding = self.expect(TokenTag.IDENTIFIER).valor
-        corpus = self.parse_massa()
-        return StmtIteratio(binding=binding, iter=expr, corpus=corpus, species="De",
-                            asynca=False, locus=locus)
+        raise self.error("standalone 'de' not supported; use 'itera de' for loops")
 
     def parse_massa(self) -> Stmt:
         locus = self.peek().locus
