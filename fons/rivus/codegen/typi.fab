@@ -23,7 +23,7 @@ genus RequiredFeatures {
     bivalens copia           # copia<T>
 
     # Async/generators
-    bivalens async           # futura, cede, promissum
+    bivalens asynca          # futura, cede, promissum
     bivalens asyncIterator   # fiet, async for
     bivalens generator       # cursor, fiunt
 
@@ -45,7 +45,7 @@ functio creaRequiredFeatures() -> RequiredFeatures {
         lista: falsum,
         tabula: falsum,
         copia: falsum,
-        async: falsum,
+        asynca: falsum,
         asyncIterator: falsum,
         generator: falsum,
         decimal: falsum,

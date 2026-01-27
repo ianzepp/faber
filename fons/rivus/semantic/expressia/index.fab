@@ -81,8 +81,8 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
         }
 
         # Assignment (x = value)
-        casu AssignatioExpressia ut as {
-            redde resolveAssignatio(r, as)
+        casu AssignatioExpressia ut assign {
+            redde resolveAssignatio(r, assign)
         }
 
         # Await expression (cede)
@@ -301,8 +301,8 @@ functio resolveAssignatio(Resolvitor r, Expressia assignatioExpr) -> SemanticTyp
     fixum a = r.analyzator()
 
     discerne assignatioExpr {
-        casu AssignatioExpressia ut as {
-            discerne as.sinister {
+        casu AssignatioExpressia ut assign {
+            discerne assign.sinister {
                 casu Nomen ut n {
                     fixum symbolum = a.quaere(n.valor)
                     si nihil symbolum {
@@ -311,23 +311,23 @@ functio resolveAssignatio(Resolvitor r, Expressia assignatioExpr) -> SemanticTyp
                         redde IGNOTUM
                     }
 
-                    fixum dexterTypus = r.check(as.dexter, symbolum.semanticTypus)
+                    fixum dexterTypus = r.check(assign.dexter, symbolum.semanticTypus)
 
                     si non symbolum.mutabilis {
                         fixum err = immutableAssignmentError(symbolum.nomen)
-                        a.error(err.textus, as.locus, err.auxilium)
+                        a.error(err.textus, assign.locus, err.auxilium)
                     }
 
                     si non assignabileAd(dexterTypus, symbolum.semanticTypus) {
                         fixum err = typeMismatchError(formaTypum(dexterTypus), formaTypum(symbolum.semanticTypus))
-                        a.error(err.textus, as.locus, err.auxilium)
+                        a.error(err.textus, assign.locus, err.auxilium)
                     }
 
                     redde symbolum.semanticTypus
                 }
 
                 casu MembrumExpressia ut m {
-                    fixum dexterTypus = r.expressia(as.dexter)
+                    fixum dexterTypus = r.expressia(assign.dexter)
                     # TODO: Resolve member types once genus metadata exists.
                     r.expressia(m.obiectum)
                     # WHY: Only resolve property for computed (indexed) access.
@@ -340,7 +340,7 @@ functio resolveAssignatio(Resolvitor r, Expressia assignatioExpr) -> SemanticTyp
                 casu _ tacet
             }
 
-            redde r.expressia(as.dexter)
+            redde r.expressia(assign.dexter)
         }
         casu _ tacet
     }

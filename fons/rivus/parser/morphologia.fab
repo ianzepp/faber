@@ -14,7 +14,7 @@
 @ publica
 genus MorphologiaFlagga {
     bivalens mutare           # Modifies receiver in place
-    bivalens async            # Returns Promise
+    bivalens asynca            # Returns Promise
     bivalens reddeNovum       # Returns new collection (allocates)
     bivalens allocatio        # Needs allocator (Zig target)
 }
@@ -29,16 +29,16 @@ genus RadixEtFlagga {
 # Map semantic flags to canonical form name
 @ publica
 functio formaExFlagga(de MorphologiaFlagga flagga) -> textus {
-    si flagga.mutare et non flagga.async et non flagga.reddeNovum {
+    si flagga.mutare et non flagga.asynca et non flagga.reddeNovum {
         redde "imperativus"
     }
-    si non flagga.mutare et non flagga.async et flagga.reddeNovum {
+    si non flagga.mutare et non flagga.asynca et flagga.reddeNovum {
         redde "perfectum"
     }
-    si flagga.mutare et flagga.async et non flagga.reddeNovum {
+    si flagga.mutare et flagga.asynca et non flagga.reddeNovum {
         redde "futurum_indicativum"
     }
-    si non flagga.mutare et flagga.async et flagga.reddeNovum {
+    si non flagga.mutare et flagga.asynca et flagga.reddeNovum {
         redde "futurum_activum"
     }
     redde "ignotum"
@@ -51,7 +51,7 @@ functio formaExFlagga(de MorphologiaFlagga flagga) -> textus {
 # Imperative: adde, filtra, ordina - mutates in place, sync
 fixum FLAGGA_IMPERATIVUS = {
     mutare: verum,
-    async: falsum,
+    asynca: falsum,
     reddeNovum: falsum,
     allocatio: falsum
 } novum MorphologiaFlagga
@@ -59,7 +59,7 @@ fixum FLAGGA_IMPERATIVUS = {
 # Perfect passive participle: addita, filtrata, ordinata - returns new, sync
 fixum FLAGGA_PERFECTUM = {
     mutare: falsum,
-    async: falsum,
+    asynca: falsum,
     reddeNovum: verum,
     allocatio: verum
 } novum MorphologiaFlagga
@@ -67,7 +67,7 @@ fixum FLAGGA_PERFECTUM = {
 # Future active participle: additura, filtratura - returns new, async
 fixum FLAGGA_FUTURUM_ACTIVUM = {
     mutare: falsum,
-    async: verum,
+    asynca: verum,
     reddeNovum: verum,
     allocatio: verum
 } novum MorphologiaFlagga
@@ -75,7 +75,7 @@ fixum FLAGGA_FUTURUM_ACTIVUM = {
 # Future indicative: addet, filtrabit - mutates, async
 fixum FLAGGA_FUTURUM_INDICATIVUM = {
     mutare: verum,
-    async: verum,
+    asynca: verum,
     reddeNovum: falsum,
     allocatio: falsum
 } novum MorphologiaFlagga
