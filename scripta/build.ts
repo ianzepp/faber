@@ -131,14 +131,6 @@ async function main() {
         }
     });
 
-    await step('build:norma', verbose, async () => {
-        if (verbose) {
-            await $`bun run build:norma`;
-        } else {
-            await $`bun run build:norma`.quiet();
-        }
-    });
-
     // =============================================================================
     // STAGE 2: Rivus via nanus-ts (must succeed)
     // =============================================================================
