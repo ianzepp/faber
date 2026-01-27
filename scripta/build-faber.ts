@@ -1,16 +1,16 @@
 #!/usr/bin/env bun
 /**
- * Build artifex: Use rivus to compile itself into a new executable
+ * Build faber: Use rivus to compile itself into a new executable
  *
  * Uses the compiled rivus executable (opus/bin/rivus) to compile
- * the rivus source files in fons/rivus/, then builds opus/bin/artifex.
+ * the rivus source files in fons/rivus/, then builds opus/bin/faber-ts.
  *
  * This proves rivus can self-host and produces a working compiler.
  *
  * Usage:
- *   bun scripta/build-artifex.ts                # Build artifex executable
- *   bun scripta/build-artifex.ts --verify-diff  # Also compare output with faber
- *   bun scripta/build-artifex.ts --no-typecheck # Skip TypeScript type checking
+ *   bun scripta/build-faber.ts                # Build faber executable
+ *   bun scripta/build-faber.ts --verify-diff  # Also compare output with rivus-ts
+ *   bun scripta/build-faber.ts --no-typecheck # Skip TypeScript type checking
  */
 
 const SKIP_TYPECHECK = process.argv.includes('--no-typecheck');
@@ -23,7 +23,7 @@ import { $ } from 'bun';
 const ROOT = join(import.meta.dir, '..');
 const SOURCE = join(ROOT, 'fons', 'rivus');
 const RIVUS_BIN = join(ROOT, 'opus', 'bin', 'rivus');
-const ARTIFEX_DIR = join(ROOT, 'opus', 'artifex-ts', 'fons');
+const FABER_DIR = join(ROOT, 'opus', 'faber-ts', 'fons');
 const REFERENCE_DIR = join(ROOT, 'opus', 'rivus-ts', 'fons');
 
 interface CompileResult {
@@ -35,7 +35,7 @@ interface CompileResult {
 
 async function compileFile(fabPath: string): Promise<CompileResult> {
     const relPath = relative(SOURCE, fabPath);
-    const outPath = join(ARTIFEX_DIR, relPath.replace(/\.fab$/, '.ts'));
+    const outPath = join(FABER_DIR, relPath.replace(/\.fab$/, '.ts'));
 
     try {
         await mkdir(dirname(outPath), { recursive: true });
@@ -62,11 +62,11 @@ async function compileFile(fabPath: string): Promise<CompileResult> {
 }
 
 async function injectExternImpls(): Promise<void> {
-    const modulusPath = join(ARTIFEX_DIR, 'semantic', 'modulus.ts');
+    const modulusPath = join(FABER_DIR, 'semantic', 'modulus.ts');
     let modulusContent = await Bun.file(modulusPath).text();
 
     const externImpls = `
-// FILE I/O IMPLEMENTATIONS (injected by build-artifex.ts)
+// FILE I/O IMPLEMENTATIONS (injected by build-faber.ts)
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 const _readFileSync = (via: string): string => readFileSync(via, 'utf-8');
@@ -85,7 +85,7 @@ const _resolve = (basis: string, relativum: string): string => resolve(basis, re
 
 async function typeCheck(): Promise<boolean> {
     try {
-        await $`npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler ${join(ARTIFEX_DIR, 'cli.ts')}`.quiet();
+        await $`npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler ${join(FABER_DIR, 'cli.ts')}`.quiet();
         return true;
     }
     catch {
@@ -93,33 +93,63 @@ async function typeCheck(): Promise<boolean> {
     }
 }
 
+async function copyCliShim(): Promise<void> {
+    const shimSource = join(ROOT, 'fons', 'rivus-cli', 'ts.ts');
+    const shimDest = join(FABER_DIR, 'cli.ts');
+    await Bun.write(shimDest, await Bun.file(shimSource).text());
+}
+
+async function copyNorma(): Promise<boolean> {
+    const normaSource = join(ROOT, 'fons', 'norma-ts');
+
+    try {
+        const { readdirSync } = await import('node:fs');
+        readdirSync(normaSource);
+    } catch {
+        return false;
+    }
+
+    const normaDest = join(dirname(FABER_DIR), 'norma');
+    await mkdir(normaDest, { recursive: true });
+
+    const glob = new Glob('**/*.ts');
+    for await (const file of glob.scan({ cwd: normaSource, absolute: false })) {
+        if (file.includes('.test.')) { continue; }
+        const src = join(normaSource, file);
+        const dest = join(normaDest, file);
+        await mkdir(dirname(dest), { recursive: true });
+        await Bun.write(dest, await Bun.file(src).text());
+    }
+    return true;
+}
+
 async function buildExecutable(): Promise<void> {
     const binDir = join(ROOT, 'opus', 'bin');
     await mkdir(binDir, { recursive: true });
-    const outExe = join(binDir, 'artifex-ts');
-    await $`bun build ${join(ARTIFEX_DIR, 'cli.ts')} --compile --outfile=${outExe}`.quiet();
+    const outExe = join(binDir, 'faber-ts');
+    await $`bun build ${join(FABER_DIR, 'cli.ts')} --compile --outfile=${outExe}`.quiet();
     await $`bash -c 'rm -f .*.bun-build 2>/dev/null || true'`.quiet();
 
-    // Create backward-compat symlink: artifex -> artifex-ts
-    const symlinkPath = join(binDir, 'artifex');
+    // Create symlink: faber -> faber-ts
+    const symlinkPath = join(binDir, 'faber');
     try { await unlink(symlinkPath); } catch { /* ignore */ }
-    await symlink('artifex-ts', symlinkPath);
+    await symlink('faber-ts', symlinkPath);
 }
 
 async function compareFiles(file: string): Promise<{ match: boolean; diff?: string }> {
-    const artifexPath = join(ARTIFEX_DIR, file.replace(/\.fab$/, '.ts'));
+    const faberPath = join(FABER_DIR, file.replace(/\.fab$/, '.ts'));
     const referencePath = join(REFERENCE_DIR, file.replace(/\.fab$/, '.ts'));
 
     try {
-        const artifexContent = await Bun.file(artifexPath).text();
+        const faberContent = await Bun.file(faberPath).text();
         const referenceContent = await Bun.file(referencePath).text();
 
-        if (artifexContent === referenceContent) {
+        if (faberContent === referenceContent) {
             return { match: true };
         }
 
         // Files differ - show diff
-        const diffProc = Bun.spawn(['diff', '-u', referencePath, artifexPath], {
+        const diffProc = Bun.spawn(['diff', '-u', referencePath, faberPath], {
             stdout: 'pipe',
         });
         const diff = await new Response(diffProc.stdout).text();
@@ -141,7 +171,7 @@ async function main() {
         process.exit(1);
     }
 
-    console.log('Building artifex: rivus compiling itself\n');
+    console.log('Building faber: rivus compiling itself\n');
 
     // Find all .fab files
     const glob = new Glob('**/*.fab');
@@ -171,6 +201,12 @@ async function main() {
     const warnSuffix = withWarnings.length > 0 ? `, ${withWarnings.length} with warnings` : '';
     console.log(`OK (${succeeded} files${warnSuffix}, ${compileElapsed.toFixed(0)}ms)`);
 
+    // Copy CLI shim
+    await copyCliShim();
+
+    // Copy norma HAL implementations
+    await copyNorma();
+
     // Inject extern implementations
     await injectExternImpls();
 
@@ -186,7 +222,7 @@ async function main() {
         }
         else {
             console.log('FAILED');
-            await $`npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler ${join(ARTIFEX_DIR, 'cli.ts')}`;
+            await $`npx tsc --noEmit --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler ${join(FABER_DIR, 'cli.ts')}`;
             process.exit(1);
         }
     }
@@ -199,7 +235,7 @@ async function main() {
     console.log(`OK (${buildElapsed.toFixed(0)}ms)`);
 
     if (verifyDiff) {
-        // Compare with faber-compiled output
+        // Compare with rivus-compiled output
         process.stdout.write('\nComparing with reference... ');
         const compareStart = performance.now();
         const relFiles = results.map(r => r.file);
@@ -224,7 +260,7 @@ async function main() {
 
     const elapsed = performance.now() - start;
     const verified = verifyDiff ? ', verified' : '';
-    console.log(`\nArtifex built: ${succeeded} files compiled${verified} -> opus/bin/artifex-ts (${(elapsed / 1000).toFixed(1)}s)`);
+    console.log(`\nFaber built: ${succeeded} files compiled${verified} -> opus/bin/faber-ts (${(elapsed / 1000).toFixed(1)}s)`);
 }
 
 main().catch(err => {

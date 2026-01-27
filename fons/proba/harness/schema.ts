@@ -13,7 +13,7 @@ export interface TestRun {
     git_branch: string;
 }
 
-export type Compiler = 'faber' | 'rivus' | 'artifex';
+export type Compiler = 'faber' | 'rivus';
 
 export interface TestResult {
     id: number;

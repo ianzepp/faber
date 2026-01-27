@@ -6,7 +6,7 @@
  *   bun run fons/proba/harness/runner.ts                    Run all tests
  *   bun run fons/proba/harness/runner.ts --verify           Run with verification
  *   bun run fons/proba/harness/runner.ts --db path/to.db    Custom database path
- *   bun run fons/proba/harness/runner.ts --compiler faber   Compiler (faber|rivus|artifex)
+ *   bun run fons/proba/harness/runner.ts --compiler faber   Compiler (faber|rivus)
  *   bun run fons/proba/harness/runner.ts --feature si       Filter by feature
  *
  * OUTPUT

@@ -224,14 +224,15 @@ async function main() {
     let successfulCompilers: string[] = [];
     if (!aborted) {
         if (target) {
-            successfulCompilers = [`rivus-nanus-${target}`];
+            successfulCompilers = [`rivus-${target}`];
         } else {
             const stage2Success = allResults.find(r => r.name === 'build:rivus (nanus-ts)')?.success;
-            if (stage2Success) successfulCompilers.push('rivus-nanus-ts');
+            if (stage2Success) successfulCompilers.push('rivus-ts');
             for (const result of stage3Results) {
                 if (result.success) {
-                    const compiler = result.name.replace('build:rivus (', '').replace(')', '');
-                    successfulCompilers.push(`rivus-${compiler}`);
+                    // Extract target from step name: "build:rivus (nanus-go)" -> "go"
+                    const match = result.name.match(/nanus-(\w+)/);
+                    if (match) successfulCompilers.push(`rivus-${match[1]}`);
                 }
             }
         }

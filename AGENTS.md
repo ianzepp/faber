@@ -120,7 +120,7 @@ Binaries must be built before use:
 ```
 bun run build                         # Build faber + rivus (default)
 bun run build --no-rivus              # Build faber only
-bun run build --no-faber --artifex    # Build artifex (rivus compiling itself)
+bun run build:faber                   # Build faber (rivus compiling itself)
 ```
 
 ### Rivus CLI (Primary Compiler)
@@ -187,7 +187,7 @@ Output includes:
 - List of failed tests with error messages
 
 Available options (via `--`):
-- `--compiler <faber|rivus|artifex>` - Which compiler to test (default: rivus)
+- `--compiler <faber|rivus>` - Which compiler to test (default: rivus)
 - `--targets <ts,py,cpp,rs,zig>` - Comma-separated target list (default: all)
 - `--verify` - Compile and execute generated code (slower but thorough)
 - `--feature <pattern>` - Filter tests by feature name

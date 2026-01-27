@@ -7,8 +7,8 @@
  *
  * Usage:
  *   bun run build:exempla -c nanus-ts                       # compile + verify
- *   bun run build:exempla -c rivus-nanus-ts                 # compile + verify
- *   bun run build:exempla -c rivus-nanus-ts,rivus-nanus-py  # multiple compilers
+ *   bun run build:exempla -c rivus-ts                       # compile + verify
+ *   bun run build:exempla -c rivus-ts,rivus-py              # multiple compilers
  *   bun run build:exempla -c nanus-ts -t zig                # specific target
  *   bun run build:exempla -c nanus-ts --no-verify           # compile only
  *   bun run build:exempla -c nanus-ts --verify-only         # verify only (no compile)
@@ -242,7 +242,7 @@ async function main() {
     const start = performance.now();
 
     if (compilers.length === 0) {
-        console.log('No compilers selected. Use -c <compiler> (e.g., -c nanus-ts or -c rivus-nanus-ts).');
+        console.log('No compilers selected. Use -c <compiler> (e.g., -c nanus-ts or -c rivus-ts).');
         process.exit(0);
     }
 

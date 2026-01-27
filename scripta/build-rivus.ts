@@ -38,7 +38,7 @@ const TARGET_SUFFIX: Record<Target, string> = {
 
 /**
  * Derive target language from compiler name.
- * e.g., 'nanus-ts' -> 'ts', 'rivus-nanus-py' -> 'py'
+ * e.g., 'nanus-ts' -> 'ts', 'rivus-py' -> 'py'
  */
 function deriveTarget(compiler: string): Target {
     if (compiler.endsWith('-ts')) return 'ts';
@@ -51,7 +51,7 @@ function deriveTarget(compiler: string): Target {
 /**
  * Validate compiler name. Accepts:
  * - Bootstrap compilers: nanus-ts, nanus-go, nanus-rs, nanus-py
- * - Self-hosted compilers: rivus-nanus-ts, rivus-nanus-py, rivus-rivus-nanus-ts, etc.
+ * - Self-hosted compilers: rivus-ts, rivus-py, etc. (outputs to faber-* when used)
  */
 function isValidCompiler(compiler: string): boolean {
     if (BOOTSTRAP_COMPILERS.includes(compiler as any)) return true;
@@ -114,12 +114,13 @@ const FILE_EXT: Record<Target, string> = {
 
 /**
  * Derive output path from compiler name.
- * - nanus-ts -> opus/rivus-nanus-ts/fons (or src for Rust)
- * - rivus-nanus-ts -> opus/rivus-rivus-nanus-ts/fons
+ * - nanus-ts -> opus/rivus-ts/fons (or src for Rust)
+ * - rivus-ts -> opus/faber-ts/fons (self-hosting)
  */
 function deriveOutputPath(compiler: string, target: Target): string {
     const subdir = target === 'rs' ? 'src' : 'fons';
-    return join(ROOT, 'opus', `rivus-${compiler}`, subdir);
+    const product = BOOTSTRAP_COMPILERS.includes(compiler as any) ? 'rivus' : 'faber';
+    return join(ROOT, 'opus', `${product}${TARGET_SUFFIX[target]}`, subdir);
 }
 
 const OUTPUT = deriveOutputPath(compiler, target);
@@ -259,13 +260,14 @@ async function buildExecutableTs(): Promise<void> {
     const binDir = join(ROOT, 'opus', 'bin');
     await mkdir(binDir, { recursive: true });
 
-    const exeName = `rivus-${compiler}`;
+    const product = BOOTSTRAP_COMPILERS.includes(compiler as any) ? 'rivus' : 'faber';
+    const exeName = `${product}${TARGET_SUFFIX[target]}`;
     const outExe = join(binDir, exeName);
     // Use cli.ts (the native shim) as entry point instead of rivus.ts
     await $`bun build ${join(OUTPUT, 'cli.ts')} --compile --outfile=${outExe}`.quiet();
     await $`bash -c 'rm -f .*.bun-build 2>/dev/null || true'`.quiet();
 
-    // nanus-ts is the primary compiler, symlink rivus -> rivus-nanus-ts
+    // nanus-ts is the primary bootstrap compiler, symlink rivus -> rivus-ts
     if (compiler === 'nanus-ts') {
         const symlinkPath = join(binDir, 'rivus');
         try { await unlink(symlinkPath); } catch { /* ignore */ }
@@ -277,7 +279,8 @@ async function buildExecutablePy(): Promise<void> {
     const binDir = join(ROOT, 'opus', 'bin');
     await mkdir(binDir, { recursive: true });
 
-    const exeName = `rivus-${compiler}`;
+    const product = BOOTSTRAP_COMPILERS.includes(compiler as any) ? 'rivus' : 'faber';
+    const exeName = `${product}${TARGET_SUFFIX[target]}`;
     const outExe = join(binDir, exeName);
     const script = `#!/bin/bash
 exec python3 "$(dirname "$0")/../${exeName}/fons/rivus.py" "$@"
@@ -297,7 +300,8 @@ async function buildExecutableGo(): Promise<void> {
         await $`cd ${moduleDir} && go mod init rivus`.quiet();
     }
 
-    const exeName = `rivus-${compiler}`;
+    const product = BOOTSTRAP_COMPILERS.includes(compiler as any) ? 'rivus' : 'faber';
+    const exeName = `${product}${TARGET_SUFFIX[target]}`;
     const outExe = join(binDir, exeName);
     const result = await $`cd ${moduleDir} && GOWORK=off go build -o ${outExe} ./fons/`.nothrow().quiet();
     if (result.exitCode !== 0) {
@@ -379,7 +383,8 @@ path = "src/rivus.rs"
         process.exit(1);
     }
 
-    const exeName = `rivus-${compiler}`;
+    const product = BOOTSTRAP_COMPILERS.includes(compiler as any) ? 'rivus' : 'faber';
+    const exeName = `${product}${TARGET_SUFFIX[target]}`;
     const outExe = join(binDir, exeName);
     await $`cp ${join(moduleDir, 'target', 'release', 'rivus')} ${outExe}`.quiet();
 }
@@ -476,28 +481,31 @@ async function main() {
         console.log('  Injected external implementations');
 
         // Build the final executable
-        console.log('  Building rivus executable...');
+        const productTs = BOOTSTRAP_COMPILERS.includes(compiler as any) ? 'rivus' : 'faber';
+        console.log(`  Building ${productTs} executable...`);
         await buildExecutableTs();
-        console.log(`  Built opus/bin/rivus-${compiler}`);
+        console.log(`  Built opus/bin/${productTs}${TARGET_SUFFIX[target]}`);
     } else if (target === 'go') {
         console.log('\nGo post-processing:');
         if (await copyNorma(target)) {
             console.log('  Copied HAL implementations');
         }
-        console.log('  Building rivus executable...');
+        const productGo = BOOTSTRAP_COMPILERS.includes(compiler as any) ? 'rivus' : 'faber';
+        console.log(`  Building ${productGo} executable...`);
         await buildExecutableGo();
-        console.log(`  Built opus/bin/rivus-${compiler}`);
+        console.log(`  Built opus/bin/${productGo}${TARGET_SUFFIX[target]}`);
     } else if (target === 'rs') {
         console.log('\nRust post-processing:');
         if (await copyNorma(target)) {
             console.log('  Copied HAL implementations');
         }
-        console.log(compiler === 'nanus-rs' ? '  Checking rivus crate...' : '  Building rivus executable...');
+        const productRs = BOOTSTRAP_COMPILERS.includes(compiler as any) ? 'rivus' : 'faber';
+        console.log(compiler === 'nanus-rs' ? '  Checking rivus crate...' : `  Building ${productRs} executable...`);
         await buildExecutableRs();
         if (compiler === 'nanus-rs') {
-            console.log('  Checked opus/nanus-rs (no binary built)');
+            console.log('  Checked opus/rivus-rs (no binary built)');
         } else {
-            console.log(`  Built opus/bin/rivus-${compiler}`);
+            console.log(`  Built opus/bin/${productRs}${TARGET_SUFFIX[target]}`);
         }
     } else if (target === 'py') {
         console.log('\nPython post-processing:');
@@ -511,8 +519,9 @@ async function main() {
             process.exit(1);
         }
         console.log('  Syntax check passed');
+        const productPy = BOOTSTRAP_COMPILERS.includes(compiler as any) ? 'rivus' : 'faber';
         await buildExecutablePy();
-        console.log(`  Built opus/bin/rivus-${compiler}`);
+        console.log(`  Built opus/bin/${productPy}${TARGET_SUFFIX[target]}`);
     }
 }
 

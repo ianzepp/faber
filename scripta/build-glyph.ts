@@ -5,7 +5,7 @@
  * Compiles all .fab files in fons/rivus/ to Unicode glyph format.
  * Output: opus/glyph/
  *
- * Requires: bun run build (or at least rivus-nanus-ts)
+ * Requires: bun run build (or at least rivus-ts)
  *
  * Usage:
  *   bun scripta/build-glyph.ts
@@ -19,7 +19,7 @@ import { $ } from 'bun';
 const ROOT = join(import.meta.dir, '..');
 const SOURCE = join(ROOT, 'fons', 'rivus');
 const OUTPUT = join(ROOT, 'opus', 'glyph');
-const COMPILER = join(ROOT, 'opus', 'bin', 'rivus-nanus-ts');
+const COMPILER = join(ROOT, 'opus', 'bin', 'rivus-ts');
 
 interface CompileResult {
     file: string;
