@@ -1,0 +1,49 @@
+# Glyph Code Generator - Public API
+#
+# Entry point for generating Unicode glyph representation from Faber AST.
+# Pure serialization: keywords→glyphs, operators→math symbols, identifiers→braille.
+#
+# USAGE
+# =====
+# fixum glyphs = generateGlyph(corpus)
+
+§ ex "../../ast/sententia" importa Sententia
+§ ex "./nucleus" importa GlyphGenerator, creaGlyphGenerator
+§ ex "./sententia" importa genSententia
+
+# =============================================================================
+# PUBLIC API
+# =============================================================================
+
+# Generate glyph representation from a list of statements
+@ publica
+functio generateGlyph(de lista<Sententia> corpus) -> textus {
+    fixum g = creaGlyphGenerator()
+
+    varia lines = [] innatum lista<textus>
+    ex corpus fixum stmt {
+        fixum line = genSententia(g, stmt)
+        si line.longitudo() > 0 {
+            lines.appende(line)
+        }
+    }
+
+    redde lines.coniunge("\n")
+}
+
+# Generate glyph representation with comments stripped
+@ publica
+functio generateGlyphStripComments(de lista<Sententia> corpus) -> textus {
+    fixum g = creaGlyphGenerator()
+    g.stripComments = verum
+
+    varia lines = [] innatum lista<textus>
+    ex corpus fixum stmt {
+        fixum line = genSententia(g, stmt)
+        si line.longitudo() > 0 {
+            lines.appende(line)
+        }
+    }
+
+    redde lines.coniunge("\n")
+}

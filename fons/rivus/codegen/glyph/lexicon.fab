@@ -1,0 +1,329 @@
+# Glyph Lexicon - Mapping tables for Faber to Unicode glyph representation
+#
+# Maps Faber tokens (keywords, operators, delimiters) to their Unicode glyph
+# equivalents as specified in glyph-go/README.md.
+#
+# DESIGN PRINCIPLES
+# =================
+# 1. One concept, one symbol - No multi-character tokens
+# 2. Visual stratification:
+#    - Block characters (U+2580-U+259F) for delimiters
+#    - Math operators (U+2200-U+22FF, U+2A00-U+2AFF) for operators
+#    - Geometric shapes (U+25A0-U+25FF) for keywords
+#    - Braille (U+2800-U+28FF) for identifiers/literals
+
+# =============================================================================
+# DELIMITER GLYPHS
+# =============================================================================
+
+@ publica
+functio glyphDelimiter(de textus token) -> textus {
+    elige token {
+        casu "{" { redde "\u2590" }   # Right half block
+        casu "}" { redde "\u258C" }   # Left half block
+        casu "(" { redde "\u259D" }   # Upper right quadrant
+        casu ")" { redde "\u2598" }   # Upper left quadrant
+        casu "[" { redde "\u2597" }   # Lower right quadrant
+        casu "]" { redde "\u2596" }   # Lower left quadrant
+        casu "<" { redde "\u2580" }   # Upper half block (type params)
+        casu ">" { redde "\u2584" }   # Lower half block (type params)
+        casu "\"" { redde "\u259A" }  # Upper left + lower right
+        casu "'" { redde "\u259E" }   # Upper right + lower left
+    }
+    redde token
+}
+
+# =============================================================================
+# OPERATOR GLYPHS
+# =============================================================================
+
+@ publica
+functio glyphOperator(de textus token) -> textus {
+    elige token {
+        # Arithmetic
+        casu "+" { redde "\u2295" }   # Circled plus
+        casu "-" { redde "\u2296" }   # Circled minus
+        casu "*" { redde "\u229B" }   # Circled asterisk
+        casu "/" { redde "\u2298" }   # Circled division
+        casu "%" { redde "\u229C" }   # Circled equals
+        casu "++" { redde "\u29FA" }  # Double plus
+        casu "--" { redde "\u29FB" }  # Double minus
+
+        # Comparison
+        casu "<" { redde "\u227A" }   # Precedes
+        casu ">" { redde "\u227B" }   # Succeeds
+        casu "<=" { redde "\u227C" }  # Precedes or equal
+        casu ">=" { redde "\u227D" }  # Succeeds or equal
+        casu "==" { redde "\u2248" }  # Almost equal
+        casu "===" { redde "\u2263" } # Strictly equivalent
+        casu "!=" { redde "\u2260" }  # Not equal
+        casu "!==" { redde "\u2262" } # Not strictly equivalent
+
+        # Assignment
+        casu "=" { redde "\u2190" }   # Leftwards arrow
+        casu "+=" { redde "\u219E" }  # Leftwards two headed arrow
+        casu "-=" { redde "\u21A2" }  # Leftwards arrow with tail
+        casu "*=" { redde "\u21A9" }  # Leftwards arrow with hook
+        casu "/=" { redde "\u21AB" }  # Leftwards arrow with loop
+        casu "&=" { redde "\u21A4" }  # Leftwards arrow from bar
+        casu "|=" { redde "\u219C" }  # Leftwards wave arrow
+
+        # Bitwise
+        casu "&" { redde "\u2293" }   # Square cap
+        casu "|" { redde "\u2294" }   # Square cup
+        casu "^" { redde "\u22BB" }   # XOR
+        casu "~" { redde "\u223C" }   # Tilde operator
+
+        # Logical (symbol form)
+        casu "&&" { redde "\u22C0" }  # N-ary logical and
+        casu "||" { redde "\u22C1" }  # N-ary logical or
+        casu "!" { redde "\u00AC" }   # Not sign
+
+        # Other operators
+        casu ".." { redde "\u2025" }  # Two dot leader (range)
+        casu "->" { redde "\u2192" }  # Rightwards arrow
+        casu "=>" { redde "\u21D2" }  # Rightwards double arrow
+    }
+    redde token
+}
+
+# =============================================================================
+# PUNCTUATION GLYPHS
+# =============================================================================
+
+@ publica
+functio glyphPunctuation(de textus token) -> textus {
+    elige token {
+        casu ";" { redde "\u204F" }   # Reversed semicolon
+        casu "," { redde "\u2E34" }   # Raised comma
+        casu "." { redde "\u00B7" }   # Middle dot
+        casu ":" { redde "\u2236" }   # Ratio
+        casu "?" { redde "\u2E2E" }   # Reversed question mark
+        casu "!" { redde "\u00A1" }   # Inverted exclamation (non-null)
+        casu "@" { redde "\u203B" }   # Reference mark
+        casu "#" { redde "\u2317" }   # Viewdata square
+    }
+    redde token
+}
+
+# =============================================================================
+# KEYWORD GLYPHS
+# =============================================================================
+
+@ publica
+functio glyphKeyword(de textus token) -> textus {
+    elige token {
+        # Declarations
+        casu "fixum" { redde "\u2261" }       # Identical/immutable
+        casu "varia" { redde "\u2254" }       # Definition
+        casu "figendum" { redde "\u2AE2" }    # Const + await
+        casu "variandum" { redde "\u2AE4" }   # Let + await
+        casu "functio" { redde "\u222B" }     # Integral
+        casu "typus" { redde "\u22B7" }       # Image of
+        casu "ordo" { redde "\u229E" }        # Boxed plus
+        casu "abstractus" { redde "\u229F" }  # Boxed minus
+
+        # Type/Class
+        casu "pactum" { redde "\u25CC" }      # Dotted circle
+        casu "genus" { redde "\u25CE" }       # Bullseye
+        casu "ego" { redde "\u25C9" }         # Fisheye
+        casu "novum" { redde "\u29BF" }       # Circled bullet
+        casu "qua" { redde "\u29B6" }         # Circled vertical bar
+        casu "innatum" { redde "\u29B5" }     # Circle with horizontal bar
+
+        # Tagged Union
+        casu "discretio" { redde "\u29BB" }   # Circle with X
+        casu "finge" { redde "\u29BA" }       # Circle divided
+        casu "discerne" { redde "\u29BC" }    # Circled rotated division
+
+        # Class Members
+        casu "sub" { redde "\u228F" }         # Square image of
+        casu "implet" { redde "\u2292" }      # Square original of
+        casu "generis" { redde "\u22BA" }     # Intercalate
+        casu "nexum" { redde "\u22B8" }       # Multimap
+
+        # Control Flow
+        casu "si" { redde "\u21B3" }          # Down-right arrow
+        casu "sin" { redde "\u21B4" }         # Right arrow corner down
+        casu "secus" { redde "\u21B2" }       # Down-left arrow
+        casu "ergo" { redde "\u2234" }        # Therefore
+        casu "dum" { redde "\u221E" }         # Infinity
+        casu "ex" { redde "\u2208" }          # Element of
+        casu "de" { redde "\u220B" }          # Contains
+        casu "pro" { redde "\u2200" }         # For all
+        casu "elige" { redde "\u22D4" }       # Pitchfork
+        casu "casu" { redde "\u231C" }        # Top-left corner
+        casu "ceterum" { redde "\u231F" }     # Bottom-right corner
+        casu "custodi" { redde "\u22A7" }     # Guard
+        casu "fac" { redde "\u22A1" }         # Boxed empty
+
+        # Control Transfer
+        casu "redde" { redde "\u22A2" }       # Turnstile
+        casu "reddit" { redde "\u22A3" }      # Reverse turnstile
+        casu "rumpe" { redde "\u2297" }       # Circled times
+        casu "perge" { redde "\u21BB" }       # Clockwise arrow
+
+        # Error Handling
+        casu "tempta" { redde "\u25C7" }      # Possibility
+        casu "cape" { redde "\u25C6" }        # Filled diamond
+        casu "demum" { redde "\u25C8" }       # Diamond in diamond
+        casu "iace" { redde "\u21AF" }        # Downwards zigzag
+        casu "iacit" { redde "\u290B" }       # Downwards triple arrow
+        casu "mori" { redde "\u27C2" }        # Perpendicular
+        casu "moritor" { redde "\u2AEB" }     # Double up tack
+        casu "adfirma" { redde "\u22A9" }     # Forces
+
+        # Async
+        casu "cede" { redde "\u22C6" }        # Star
+        casu "futura" { redde "\u22B6" }      # Original of
+
+        # Boolean and Logic
+        casu "verum" { redde "\u22A4" }       # Top
+        casu "falsum" { redde "\u22A5" }      # Bottom
+        casu "nihil" { redde "\u2205" }       # Empty set
+        casu "et" { redde "\u2227" }          # Logical and
+        casu "aut" { redde "\u2228" }         # Logical or
+        casu "non" { redde "\u00AC" }         # Negation
+        casu "vel" { redde "\u2047" }         # Double question mark
+        casu "est" { redde "\u225F" }         # Questioned equal
+
+        # Type Conversions
+        casu "numeratum" { redde "\u230A" }   # Left floor
+        casu "fractatum" { redde "\u2308" }   # Left ceiling
+        casu "textatum" { redde "\u224B" }    # Triple tilde
+        casu "bivalentum" { redde "\u22BC" }  # NAND
+
+        # Parameters
+        casu "in" { redde "\u22B3" }          # Contains as normal subgroup
+        casu "ceteri" { redde "\u22EF" }      # Midline horizontal ellipsis
+        casu "sparge" { redde "\u22F0" }      # Up right diagonal ellipsis
+        casu "ut" { redde "\u21A6" }          # Rightwards arrow from bar
+
+        # Imports
+        casu "importa" { redde "\u22B2" }     # Import
+
+        # Output
+        casu "scribe" { redde "\u229D" }      # Circled dash
+        casu "vide" { redde "\u22F1" }        # Diagonal ellipsis
+        casu "mone" { redde "\u22EE" }        # Vertical ellipsis
+
+        # Bitwise Keywords
+        casu "sinistratum" { redde "\u22D8" } # Left shift
+        casu "dextratum" { redde "\u22D9" }   # Right shift
+
+        # Testing
+        casu "probandum" { redde "\u22AC" }   # Does not prove
+        casu "proba" { redde "\u2ADE" }       # Short left tack
+        casu "praepara" { redde "\u22B0" }    # Precedes under relation
+        casu "postpara" { redde "\u22B1" }    # Succeeds under relation
+        casu "omitte" { redde "\u29B8" }      # Circled reverse solidus
+
+        # Entry Points
+        casu "incipit" { redde "\u27D9" }     # Large down tack
+        casu "incipiet" { redde "\u2ADF" }    # Short up tack
+
+        # Resource Management
+        casu "cura" { redde "\u29BE" }        # Circled white bullet
+
+        # Range Keywords
+        casu "ante" { redde "\u25B7" }        # Exclusive end (before)
+        casu "usque" { redde "\u25B6" }       # Inclusive end (up to)
+        casu "per" { redde "\u25B4" }         # Step/stride
+        casu "intra" { redde "\u226C" }       # Range containment
+        casu "inter" { redde "\u220A" }       # Set membership
+
+        # Visibility (annotations)
+        casu "publica" { redde "\u203B" }     # Using @ glyph
+        casu "privata" { redde "\u203B" }
+        casu "protecta" { redde "\u203B" }
+        casu "externa" { redde "\u203B" }
+
+        # Additional keywords
+        casu "abstracta" { redde "\u229F" }
+        casu "abstractum" { redde "\u229F" }
+        casu "clausura" { redde "\u222B" }    # Same as functio
+        casu "tacet" { redde "\u22A1" }       # Same as fac (empty block)
+        casu "sic" { redde "\u2234" }         # Same as ergo (ternary then)
+        casu "fit" { redde "\u2192" }         # Same as arrow
+        casu "fiet" { redde "\u22B6\u2192" }  # Async + arrow
+        casu "fiunt" { redde "\u21BB\u2192" } # Generator + arrow
+        casu "fient" { redde "\u22B6\u21BB\u2192" } # Async generator + arrow
+        casu "lege" { redde "\u22B2" }        # Same as importa
+        casu "lineam" { redde "\u22B2" }
+        casu "arena" { redde "\u29BE" }       # Same as cura
+        casu "pagina" { redde "\u29BE" }
+        casu "prae" { redde "\u22B0" }        # Same as praepara
+        casu "omnia" { redde "\u2200" }       # Same as pro (for all)
+    }
+    redde token
+}
+
+# =============================================================================
+# BRAILLE ENCODING
+# =============================================================================
+
+# Encode a string to braille representation
+# Each UTF-8 byte maps to U+2800 + byte value
+@ publica
+functio encodeBraille(de textus content) -> textus {
+    varia result = ""
+    varia i = 0
+
+    dum i < content.longitudo() {
+        fixum charCode = content.charCodeAt(i)
+
+        # Handle multi-byte UTF-8 by treating each JS char as a unit
+        # For ASCII range (0-127), this is straightforward
+        # For extended chars, we encode the code point directly (simplified)
+        si charCode < 256 {
+            # U+2800 + byte value
+            fixum brailleCode = 0x2800 + charCode
+            result = result + fromCharCode(brailleCode)
+        } secus {
+            # For higher code points, encode as multiple braille chars
+            # This is a simplification - full UTF-8 encoding would split bytes
+            fixum brailleCode = 0x2800 + (charCode % 256)
+            result = result + fromCharCode(brailleCode)
+        }
+
+        i += 1
+    }
+
+    redde result
+}
+
+# Decode braille back to text
+@ publica
+functio decodeBraille(de textus braille) -> textus {
+    varia result = ""
+    varia i = 0
+
+    dum i < braille.longitudo() {
+        fixum charCode = braille.charCodeAt(i)
+
+        # Check if in braille range
+        si charCode >= 0x2800 et charCode <= 0x28FF {
+            fixum originalCode = charCode - 0x2800
+            result = result + fromCharCode(originalCode)
+        } secus {
+            # Pass through non-braille chars
+            result = result + braille[i]
+        }
+
+        i += 1
+    }
+
+    redde result
+}
+
+# Helper: Get char code
+functio charCodeAt(de textus s, de numerus i) -> numerus {
+    # This would be implemented by the runtime
+    redde s.charCodeAt(i)
+}
+
+# Helper: Create char from code
+functio fromCharCode(de numerus code) -> textus {
+    # This would be implemented by the runtime
+    redde String.fromCharCode(code)
+}

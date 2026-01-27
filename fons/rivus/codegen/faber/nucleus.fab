@@ -1,0 +1,153 @@
+# Faber Code Generator - Core generator state
+#
+# This module provides the FaberGenerator genus that holds shared state
+# for Faber source code serialization. Unlike TS/Go generators, this is
+# a pure AST→text serializer with no semantic transformation.
+#
+# DESIGN
+# ======
+# - No type system translation
+# - No preamble generation
+# - No HAL/norma import rewriting
+# - Pure 1:1 AST→canonical Faber source
+
+§ ex "../shared/generans" importa Generans
+§ ex "../typi" importa formataNotaePrae, formataNotaePost
+
+# =============================================================================
+# FABER GENERATOR
+# =============================================================================
+
+# Core generator state for Faber source output.
+#
+# WHY: Minimal state needed - just indentation tracking and comment handling.
+#      No semantic context flags (inFlumina, inCursore, etc.) because we're
+#      serializing, not compiling.
+@ publica
+genus FaberGenerator implet Generans {
+    # Indentation depth (number of levels)
+    numerus profunditas
+
+    # Indentation unit (2 spaces for canonical Faber)
+    textus indentum
+
+    # Whether to strip comments from output
+    bivalens stripComments
+
+    # ==========================================================================
+    # INDENTATION
+    # ==========================================================================
+
+    # Generate indentation string for current depth
+    @ publica
+    functio ind() -> textus {
+        varia result = ""
+        varia i = 0
+        dum i < ego.profunditas {
+            result = result + ego.indentum
+            i += 1
+        }
+        redde result
+    }
+
+    # Increment depth
+    @ publica
+    functio intraProfundum() {
+        ego.profunditas += 1
+    }
+
+    # Decrement depth
+    @ publica
+    functio exiProfundum() {
+        ego.profunditas -= 1
+    }
+
+    # ==========================================================================
+    # COMMENT FORMATTING
+    # ==========================================================================
+
+    # Format leading comments for a node
+    @ publica
+    functio notaePrae(de ignotum nodus) -> textus {
+        si ego.stripComments {
+            redde ""
+        }
+        redde formataNotaePraeFaber(nodus, ego.ind())
+    }
+
+    # Format trailing comments for a node
+    @ publica
+    functio notaePost(de ignotum nodus) -> textus {
+        si ego.stripComments {
+            redde ""
+        }
+        redde formataNotaePostFaber(nodus)
+    }
+}
+
+# =============================================================================
+# COMMENT FORMATTING (FABER SYNTAX)
+# =============================================================================
+
+§ ex "../../ast/radix" importa Nota, NotaGenus, NodusRadix
+
+functio formataNotaFaber(de Nota nota) -> textus {
+    elige nota.species {
+        casu NotaGenus.Massa reddit scriptum("/*§*/", nota.valor)
+        casu NotaGenus.Docens reddit scriptum("/**§*/", nota.valor)
+    }
+
+    redde scriptum("#§", nota.valor)
+}
+
+# Format leading comments (emitted on separate lines)
+functio formataNotaePraeFaber(ignotum nodus, de textus indentum) -> textus {
+    si nihil nodus {
+        redde ""
+    }
+
+    fixum radix = nodus novum NodusRadix
+    fixum notae = radix.notaePrae
+    si nihil notae {
+        redde ""
+    }
+
+    varia out = ""
+    ex notae fixum nota {
+        out = out + indentum + formataNotaFaber(nota) + "\n"
+    }
+    redde out
+}
+
+# Format trailing comments (emitted inline at end)
+functio formataNotaePostFaber(ignotum nodus) -> textus {
+    si nihil nodus {
+        redde ""
+    }
+
+    fixum radix = nodus novum NodusRadix
+    fixum notae = radix.notaePost
+    si nihil notae {
+        redde ""
+    }
+
+    varia out = ""
+    ex notae fixum nota {
+        out = out + " " + formataNotaFaber(nota)
+    }
+    redde out
+}
+
+# =============================================================================
+# FACTORY
+# =============================================================================
+
+# Create a new FaberGenerator with default settings
+@ publica
+functio creaFaberGenerator() -> FaberGenerator {
+    redde novum FaberGenerator {
+        profunditas: 0,
+        indentum: "  ",
+        stripComments: falsum
+    }
+}

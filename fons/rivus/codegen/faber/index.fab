@@ -1,0 +1,49 @@
+# Faber Code Generator - Public API
+#
+# Entry point for generating canonical Faber source from Faber AST.
+# Pure serialization: no semantic transformation, no type lowering.
+#
+# USAGE
+# =====
+# fixum source = generateFaber(corpus)
+
+§ ex "../../ast/sententia" importa Sententia
+§ ex "./nucleus" importa FaberGenerator, creaFaberGenerator
+§ ex "./sententia" importa genSententia
+
+# =============================================================================
+# PUBLIC API
+# =============================================================================
+
+# Generate canonical Faber source code from a list of statements
+@ publica
+functio generateFaber(de lista<Sententia> corpus) -> textus {
+    fixum g = creaFaberGenerator()
+
+    varia lines = [] innatum lista<textus>
+    ex corpus fixum stmt {
+        fixum line = genSententia(g, stmt)
+        si line.longitudo() > 0 {
+            lines.appende(line)
+        }
+    }
+
+    redde lines.coniunge("\n")
+}
+
+# Generate Faber source with comments stripped
+@ publica
+functio generateFaberStripComments(de lista<Sententia> corpus) -> textus {
+    fixum g = creaFaberGenerator()
+    g.stripComments = verum
+
+    varia lines = [] innatum lista<textus>
+    ex corpus fixum stmt {
+        fixum line = genSententia(g, stmt)
+        si line.longitudo() > 0 {
+            lines.appende(line)
+        }
+    }
+
+    redde lines.coniunge("\n")
+}

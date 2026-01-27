@@ -1,0 +1,157 @@
+# Glyph Code Generator - Core generator state
+#
+# This module provides the GlyphGenerator genus that holds shared state
+# for Unicode glyph serialization. Similar to FaberGenerator but maps
+# tokens through the lexicon for glyph output.
+#
+# DESIGN
+# ======
+# - Keywords → glyph symbols
+# - Operators → math symbols
+# - Delimiters → block characters
+# - Identifiers/literals → braille encoding
+# - Comments → ⌗ + braille content
+
+§ ex "../shared/generans" importa Generans
+§ ex "./lexicon" importa glyphPunctuation, encodeBraille
+
+# =============================================================================
+# GLYPH GENERATOR
+# =============================================================================
+
+# Core generator state for glyph output.
+@ publica
+genus GlyphGenerator implet Generans {
+    # Indentation depth (number of levels)
+    numerus profunditas
+
+    # Indentation unit (2 spaces preserved for readability)
+    textus indentum
+
+    # Whether to strip comments from output
+    bivalens stripComments
+
+    # ==========================================================================
+    # INDENTATION
+    # ==========================================================================
+
+    # Generate indentation string for current depth
+    @ publica
+    functio ind() -> textus {
+        varia result = ""
+        varia i = 0
+        dum i < ego.profunditas {
+            result = result + ego.indentum
+            i += 1
+        }
+        redde result
+    }
+
+    # Increment depth
+    @ publica
+    functio intraProfundum() {
+        ego.profunditas += 1
+    }
+
+    # Decrement depth
+    @ publica
+    functio exiProfundum() {
+        ego.profunditas -= 1
+    }
+
+    # ==========================================================================
+    # COMMENT FORMATTING (GLYPH)
+    # ==========================================================================
+
+    # Format leading comments for a node (glyph format)
+    @ publica
+    functio notaePrae(de ignotum nodus) -> textus {
+        si ego.stripComments {
+            redde ""
+        }
+        redde formataNotaePraeGlyph(nodus, ego.ind())
+    }
+
+    # Format trailing comments for a node (glyph format)
+    @ publica
+    functio notaePost(de ignotum nodus) -> textus {
+        si ego.stripComments {
+            redde ""
+        }
+        redde formataNotaePostGlyph(nodus)
+    }
+}
+
+# =============================================================================
+# COMMENT FORMATTING (GLYPH SYNTAX)
+# =============================================================================
+
+§ ex "../../ast/radix" importa Nota, NotaGenus, NodusRadix
+
+functio formataNotaGlyph(de Nota nota) -> textus {
+    # Comments use ⌗ (U+2317) followed by braille-encoded content
+    fixum commentGlyph = "\u2317"
+
+    elige nota.species {
+        casu NotaGenus.Massa {
+            redde scriptum("§§§", commentGlyph, encodeBraille(nota.valor), commentGlyph)
+        }
+        casu NotaGenus.Docens {
+            redde scriptum("§§§§", commentGlyph, commentGlyph, encodeBraille(nota.valor), commentGlyph)
+        }
+    }
+
+    redde scriptum("§ §", commentGlyph, encodeBraille(nota.valor))
+}
+
+# Format leading comments (emitted on separate lines)
+functio formataNotaePraeGlyph(ignotum nodus, de textus indentum) -> textus {
+    si nihil nodus {
+        redde ""
+    }
+
+    fixum radix = nodus novum NodusRadix
+    fixum notae = radix.notaePrae
+    si nihil notae {
+        redde ""
+    }
+
+    varia out = ""
+    ex notae fixum nota {
+        out = out + indentum + formataNotaGlyph(nota) + "\n"
+    }
+    redde out
+}
+
+# Format trailing comments (emitted inline at end)
+functio formataNotaePostGlyph(ignotum nodus) -> textus {
+    si nihil nodus {
+        redde ""
+    }
+
+    fixum radix = nodus novum NodusRadix
+    fixum notae = radix.notaePost
+    si nihil notae {
+        redde ""
+    }
+
+    varia out = ""
+    ex notae fixum nota {
+        out = out + " " + formataNotaGlyph(nota)
+    }
+    redde out
+}
+
+# =============================================================================
+# FACTORY
+# =============================================================================
+
+# Create a new GlyphGenerator with default settings
+@ publica
+functio creaGlyphGenerator() -> GlyphGenerator {
+    redde novum GlyphGenerator {
+        profunditas: 0,
+        indentum: "  ",
+        stripComments: falsum
+    }
+}

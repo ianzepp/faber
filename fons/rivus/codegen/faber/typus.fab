@@ -1,0 +1,41 @@
+# Faber Type Generator - Type annotation serialization
+#
+# Converts type annotations back to canonical Faber syntax.
+
+§ ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum, Typus
+§ ex "./nucleus" importa FaberGenerator
+
+# =============================================================================
+# TYPE GENERATION
+# =============================================================================
+
+@ publica
+functio genTypus(in FaberGenerator g, de TypusAnnotatio typ) -> textus {
+    varia result = typ.nomen qua textus
+
+    # Handle optional (si) prefix
+    si typ.optionalis qua bivalens {
+        result = scriptum("si §", result)
+    }
+
+    # Handle type parameters
+    si nonnihil typ.typusParametra {
+        fixum params = typ.typusParametra qua lista<TypusParametrum>
+        si params.longitudo() > 0 {
+            varia paramTexti = [] innatum lista<textus>
+            ex params fixum param {
+                discerne param {
+                    casu Typus ut t {
+                        paramTexti.appende(genTypus(g, t.adnotatio))
+                    }
+                    casu _ {
+                        paramTexti.appende("ignotum")
+                    }
+                }
+            }
+            result = scriptum("§<§>", result, paramTexti.coniunge(", "))
+        }
+    }
+
+    redde result
+}

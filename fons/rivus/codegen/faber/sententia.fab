@@ -1,0 +1,1304 @@
+# Faber Statement Generator - AST to Faber source serialization
+#
+# Routes statement AST nodes to their canonical Faber representation.
+# Pure serialization with no semantic transformation.
+
+§ ex "../../ast/sententia" importa Sententia, VariaGenus, ScribeGradus, IteratioGenus
+§ ex "../../ast/sententia" importa Parametrum, CampusDeclaratio, EligeCasus, VariansCasus
+§ ex "../../ast/sententia" importa CustodiClausula, CapeClausula, OrdoMembrum, VariansDeclaratio
+§ ex "../../ast/sententia" importa ImportaSpecificator, PactumMethodus, TypusParametrum
+§ ex "../../ast/sententia" importa SeriesDestructuraElementum, VariansExemplar
+§ ex "../../ast/sententia" importa Visibilitas, ProbaModificator, PraeparaTempus, ReddeVerbum
+§ ex "../../ast/sententia" importa FunctioModificator, IteratioVariabilis, AdVinculum, AdVerbumVinculandi
+§ ex "../../ast/sententia" importa CuratorGenus
+§ ex "../../ast/expressia" importa Expressia
+§ ex "../../ast/typus" importa TypusAnnotatio
+§ ex "./nucleus" importa FaberGenerator
+§ ex "./expressia" importa genExpressia
+§ ex "./typus" importa genTypus
+
+# =============================================================================
+# STATEMENT DISPATCH
+# =============================================================================
+
+@ publica
+functio genSententia(in FaberGenerator g, de Sententia stmt) -> textus {
+    fixum leading = g.notaePrae(stmt)
+    fixum trailing = g.notaePost(stmt)
+    fixum content = genSententiaContent(g, stmt)
+    redde scriptum("§§§", leading, content, trailing)
+}
+
+functio genSententiaContent(in FaberGenerator g, de Sententia stmt) -> textus {
+    discerne stmt {
+        # Block
+        casu MassaSententia ut s {
+            redde genMassa(g, s.corpus qua lista<Sententia>)
+        }
+
+        # Variable declarations
+        casu VariaSententia ut s {
+            redde genVaria(g, s)
+        }
+
+        casu ImportaSententia ut s {
+            redde genImporta(g, s)
+        }
+
+        casu DestructuraSententia ut s {
+            redde genDestructura(g, s)
+        }
+
+        casu SeriesDestructuraSententia ut s {
+            redde genSeriesDestructura(g, s)
+        }
+
+        # Function declaration
+        casu FunctioDeclaratio ut f {
+            redde genFunctio(g, f)
+        }
+
+        # Type declarations
+        casu GenusDeclaratio ut s {
+            redde genGenus(g, s)
+        }
+
+        casu PactumDeclaratio ut s {
+            redde genPactum(g, s)
+        }
+
+        casu TypusAliasDeclaratio ut s {
+            redde genTypusAlias(g, s)
+        }
+
+        casu OrdoDeclaratio ut s {
+            redde genOrdo(g, s)
+        }
+
+        casu DiscretioDeclaratio ut s {
+            redde genDiscretio(g, s)
+        }
+
+        # Control flow
+        casu SiSententia ut s {
+            redde genSi(g, s)
+        }
+
+        casu DumSententia ut s {
+            redde genDum(g, s)
+        }
+
+        casu IteratioSententia ut s {
+            redde genIteratio(g, s)
+        }
+
+        casu EligeSententia ut s {
+            redde genElige(g, s)
+        }
+
+        casu DiscerneSententia ut s {
+            redde genDiscerne(g, s)
+        }
+
+        casu CustodiSententia ut s {
+            redde genCustodi(g, s)
+        }
+
+        # Error handling
+        casu TemptaSententia ut s {
+            redde genTempta(g, s)
+        }
+
+        casu IaceSententia ut s {
+            redde genIace(g, s)
+        }
+
+        casu FacSententia ut s {
+            redde genFac(g, s)
+        }
+
+        casu AdfirmaSententia ut s {
+            redde genAdfirma(g, s)
+        }
+
+        # Actions
+        casu ScribeSententia ut s {
+            redde genScribe(g, s)
+        }
+
+        casu ReddeSententia ut s {
+            si nonnihil s.valor {
+                redde scriptum("§redde §", g.ind(), genExpressia(g, s.valor qua Expressia))
+            }
+            redde scriptum("§redde", g.ind())
+        }
+
+        casu RumpeSententia {
+            redde scriptum("§rumpe", g.ind())
+        }
+
+        casu PergeSententia {
+            redde scriptum("§perge", g.ind())
+        }
+
+        casu TacetSententia {
+            redde scriptum("§tacet", g.ind())
+        }
+
+        casu ExpressiaSententia ut s {
+            redde scriptum("§§", g.ind(), genExpressia(g, s.expressia))
+        }
+
+        casu IncipitSententia ut s {
+            redde genIncipit(g, s)
+        }
+
+        casu IncipietSententia ut s {
+            redde genIncipiet(g, s)
+        }
+
+        casu CuraSententia ut s {
+            redde genCura(g, s)
+        }
+
+        casu AdSententia ut s {
+            redde genAd(g, s)
+        }
+
+        # Tests
+        casu ProbandumSententia ut s {
+            redde genProbandum(g, s)
+        }
+
+        casu ProbaSententia ut s {
+            redde genProba(g, s)
+        }
+
+        casu PraeparaMassa ut s {
+            redde genPraepara(g, s)
+        }
+    }
+
+    mori "Faber codegen error: unhandled statement type"
+}
+
+# =============================================================================
+# BLOCK
+# =============================================================================
+
+@ publica
+functio genMassa(in FaberGenerator g, de lista<Sententia> corpus) -> textus {
+    si corpus.longitudo() == 0 {
+        redde ""
+    }
+    varia lines = [] innatum lista<textus>
+    ex corpus fixum stmt {
+        lines.appende(genSententia(g, stmt))
+    }
+    redde lines.coniunge("\n")
+}
+
+# =============================================================================
+# VARIABLE DECLARATIONS
+# =============================================================================
+
+functio genVaria(in FaberGenerator g, de VariaSententia s) -> textus {
+    varia result = g.ind()
+
+    # Visibility annotation
+    si nonnihil s.visibilitas {
+        elige s.visibilitas qua Visibilitas {
+            casu Visibilitas.Publica { result = result + "@ publica\n" + g.ind() }
+            casu Visibilitas.Protecta { result = result + "@ protecta\n" + g.ind() }
+            casu Visibilitas.Privata { result = result + "@ privata\n" + g.ind() }
+        }
+    }
+
+    # External annotation
+    si s.externa qua bivalens {
+        result = result + "@ externa\n" + g.ind()
+    }
+
+    # Kind keyword
+    elige s.species qua VariaGenus {
+        casu VariaGenus.Varia { result = result + "varia " }
+        casu VariaGenus.Fixum { result = result + "fixum " }
+        casu VariaGenus.Figendum { result = result + "figendum " }
+        casu VariaGenus.Variandum { result = result + "variandum " }
+    }
+
+    result = result + s.nomen
+
+    # Type annotation
+    si nonnihil s.typus {
+        result = scriptum("§ §", genTypus(g, s.typus novum TypusAnnotatio), result)
+    }
+
+    # Initializer
+    si nonnihil s.valor {
+        result = scriptum("§ = §", result, genExpressia(g, s.valor qua Expressia))
+    }
+
+    redde result
+}
+
+functio genImporta(in FaberGenerator g, de ImportaSententia s) -> textus {
+    si s.totum qua bivalens {
+        si nonnihil s.totumAlias {
+            redde scriptum("§§ ex \"§\" importa * ut §", g.ind(), s.fons, s.totumAlias)
+        }
+        redde scriptum("§§ ex \"§\" importa *", g.ind(), s.fons)
+    }
+
+    varia specs = [] innatum lista<textus>
+    ex (s.specificatores qua lista<ImportaSpecificator>) fixum spec {
+        si spec.residuum qua bivalens {
+            specs.appende(scriptum("ceteri §", spec.locale))
+        } sin spec.importatum != spec.locale {
+            specs.appende(scriptum("§ ut §", spec.importatum, spec.locale))
+        } secus {
+            specs.appende(spec.importatum)
+        }
+    }
+
+    redde scriptum("§§ ex \"§\" importa §", g.ind(), s.fons, specs.coniunge(", "))
+}
+
+functio genDestructura(in FaberGenerator g, de DestructuraSententia s) -> textus {
+    fixum keyword = variaGenusKeyword(s.species qua VariaGenus)
+
+    varia specs = [] innatum lista<textus>
+    ex (s.specificatores qua lista<ImportaSpecificator>) fixum spec {
+        si spec.residuum qua bivalens {
+            specs.appende(scriptum("ceteri §", spec.locale))
+        } sin spec.importatum != spec.locale {
+            specs.appende(scriptum("§ ut §", spec.importatum, spec.locale))
+        } secus {
+            specs.appende(spec.importatum)
+        }
+    }
+
+    redde scriptum("§ex § § §", g.ind(), genExpressia(g, s.fons), keyword, specs.coniunge(", "))
+}
+
+functio genSeriesDestructura(in FaberGenerator g, de SeriesDestructuraSententia s) -> textus {
+    fixum keyword = variaGenusKeyword(s.species qua VariaGenus)
+
+    varia elems = [] innatum lista<textus>
+    ex (s.elementa qua lista<SeriesDestructuraElementum>) fixum elem {
+        si elem.omissum qua bivalens {
+            elems.appende("_")
+        } sin elem.residuum qua bivalens {
+            elems.appende(scriptum("ceteri §", elem.nomen))
+        } secus {
+            elems.appende(elem.nomen vel "_")
+        }
+    }
+
+    redde scriptum("§§ [§] = §", g.ind(), keyword, elems.coniunge(", "), genExpressia(g, s.fons))
+}
+
+functio variaGenusKeyword(de VariaGenus species) -> textus {
+    elige species {
+        casu VariaGenus.Varia { redde "varia" }
+        casu VariaGenus.Fixum { redde "fixum" }
+        casu VariaGenus.Figendum { redde "figendum" }
+        casu VariaGenus.Variandum { redde "variandum" }
+    }
+    redde "fixum"
+}
+
+# =============================================================================
+# FUNCTION DECLARATION
+# =============================================================================
+
+functio genFunctio(in FaberGenerator g, de FunctioDeclaratio f) -> textus {
+    varia result = g.ind()
+
+    # Visibility annotation
+    si nonnihil f.visibilitas {
+        elige f.visibilitas qua Visibilitas {
+            casu Visibilitas.Publica { result = result + "@ publica\n" + g.ind() }
+            casu Visibilitas.Protecta { result = result + "@ protecta\n" + g.ind() }
+            casu Visibilitas.Privata { result = result + "@ privata\n" + g.ind() }
+        }
+    }
+
+    # External annotation
+    si f.externa qua bivalens {
+        result = result + "@ externa\n" + g.ind()
+    }
+
+    # Abstract marker
+    si f.abstracta qua bivalens {
+        result = result + "abstracta "
+    }
+
+    # Structor or functio
+    si f.structor qua bivalens {
+        result = result + "structor"
+    } secus {
+        result = result + "functio " + f.nomen
+    }
+
+    # Generic parameters
+    si nonnihil f.generaParametra {
+        fixum generics = f.generaParametra qua lista<TypusParametrum>
+        si generics.longitudo() > 0 {
+            varia gparams = [] innatum lista<textus>
+            ex generics fixum gp {
+                gparams.appende(gp.nomen)
+            }
+            result = scriptum("§ prae typus §", result, gparams.coniunge(", "))
+        }
+    }
+
+    # Parameters
+    result = result + "("
+    varia params = [] innatum lista<textus>
+    ex (f.parametra qua lista<Parametrum>) fixum p {
+        params.appende(genParametrum(g, p))
+    }
+    result = result + params.coniunge(", ") + ")"
+
+    # Modifiers
+    si nonnihil f.modificatores {
+        ex (f.modificatores qua lista<FunctioModificator>) fixum mod {
+            discerne mod {
+                casu CurataModificator ut m { result = scriptum("§ curata §", result, m.nomen) }
+                casu ErrataModificator ut m { result = scriptum("§ errata §", result, m.nomen) }
+                casu ExitusModificator ut m { result = scriptum("§ exitus §", result, m.nomen) }
+                casu ImmutataModificator { result = result + " immutata" }
+                casu IacitModificator { result = result + " iacit" }
+                casu OptionesModificator ut m { result = scriptum("§ optiones §", result, m.nomen) }
+            }
+        }
+    }
+
+    # Return type
+    si nonnihil f.typusReditus {
+        # Determine return verb
+        si nonnihil f.reddeVerbum {
+            elige f.reddeVerbum qua ReddeVerbum {
+                casu ReddeVerbum.Fit { result = scriptum("§ fit §", result, genTypus(g, f.typusReditus novum TypusAnnotatio)) }
+                casu ReddeVerbum.Fiet { result = scriptum("§ fiet §", result, genTypus(g, f.typusReditus novum TypusAnnotatio)) }
+                casu ReddeVerbum.Fiunt { result = scriptum("§ fiunt §", result, genTypus(g, f.typusReditus novum TypusAnnotatio)) }
+                casu ReddeVerbum.Fient { result = scriptum("§ fient §", result, genTypus(g, f.typusReditus novum TypusAnnotatio)) }
+                ceterum { result = scriptum("§ -> §", result, genTypus(g, f.typusReditus novum TypusAnnotatio)) }
+            }
+        } secus {
+            result = scriptum("§ -> §", result, genTypus(g, f.typusReditus novum TypusAnnotatio))
+        }
+    }
+
+    # Body
+    si nonnihil f.corpus {
+        g.intraProfundum()
+        fixum body = genMassa(g, (f.corpus novum MassaSententia).corpus qua lista<Sententia>)
+        g.exiProfundum()
+        si body == "" {
+            result = result + " {}"
+        } secus {
+            result = scriptum("§ {\n§\n§}", result, body, g.ind())
+        }
+    }
+
+    redde result
+}
+
+functio genParametrum(in FaberGenerator g, de Parametrum p) -> textus {
+    varia result = ""
+
+    # Preposition (de, in, ex)
+    si nonnihil p.praepositio {
+        result = result + p.praepositio + " "
+    }
+
+    # Optional marker (si)
+    si p.optionalis qua bivalens {
+        result = result + "si "
+    }
+
+    # Type
+    si nonnihil p.typus {
+        result = result + genTypus(g, p.typus novum TypusAnnotatio) + " "
+    }
+
+    # Rest marker (ceteri)
+    si p.residuum qua bivalens {
+        result = result + "ceteri "
+    }
+
+    # Name
+    result = result + p.nomen
+
+    # Alias (ut)
+    si nonnihil p.alias {
+        result = scriptum("§ ut §", result, p.alias)
+    }
+
+    # Default value (vel)
+    si nonnihil p.praedefinitum {
+        result = scriptum("§ vel §", result, genExpressia(g, p.praedefinitum qua Expressia))
+    }
+
+    redde result
+}
+
+# =============================================================================
+# TYPE DECLARATIONS
+# =============================================================================
+
+functio genGenus(in FaberGenerator g, de GenusDeclaratio s) -> textus {
+    varia result = g.ind()
+
+    # Visibility
+    si nonnihil s.visibilitas {
+        elige s.visibilitas qua Visibilitas {
+            casu Visibilitas.Publica { result = result + "@ publica\n" + g.ind() }
+            casu Visibilitas.Protecta { result = result + "@ protecta\n" + g.ind() }
+            casu Visibilitas.Privata { result = result + "@ privata\n" + g.ind() }
+        }
+    }
+
+    # Abstract
+    si s.abstractum qua bivalens {
+        result = result + "abstractum "
+    }
+
+    result = result + "genus " + s.nomen
+
+    # Generic parameters
+    si nonnihil s.generaParametra {
+        fixum generics = s.generaParametra qua lista<textus>
+        si generics.longitudo() > 0 {
+            result = scriptum("§ prae typus §", result, generics.coniunge(", "))
+        }
+    }
+
+    # Extends
+    si nonnihil s.extendit {
+        result = scriptum("§ sub §", result, s.extendit)
+    }
+
+    # Implements
+    si nonnihil s.implet {
+        fixum interfaces = s.implet qua lista<textus>
+        si interfaces.longitudo() > 0 {
+            result = scriptum("§ implet §", result, interfaces.coniunge(", "))
+        }
+    }
+
+    result = result + " {"
+
+    g.intraProfundum()
+
+    # Fields
+    ex (s.campi qua lista<CampusDeclaratio>) fixum campo {
+        result = result + "\n" + genCampus(g, campo)
+    }
+
+    # Constructor
+    si nonnihil s.structor {
+        result = result + "\n\n" + genFunctio(g, s.structor novum FunctioDeclaratio)
+    }
+
+    # Methods
+    ex (s.methodi qua lista<FunctioDeclaratio>) fixum methodus {
+        result = result + "\n\n" + genFunctio(g, methodus)
+    }
+
+    g.exiProfundum()
+
+    redde scriptum("§\n§}", result, g.ind())
+}
+
+functio genCampus(in FaberGenerator g, de CampusDeclaratio campo) -> textus {
+    varia result = g.ind()
+
+    # Visibility
+    elige campo.visibilitas qua Visibilitas {
+        casu Visibilitas.Publica { result = result + "@ publica\n" + g.ind() }
+        casu Visibilitas.Protecta { result = result + "@ protecta\n" + g.ind() }
+        casu Visibilitas.Privata tacet
+    }
+
+    # Static
+    si campo.staticum qua bivalens {
+        result = result + "generis "
+    }
+
+    # Type and name
+    result = result + genTypus(g, campo.typus novum TypusAnnotatio) + " " + campo.nomen
+
+    # Default value
+    si nonnihil campo.valor {
+        result = scriptum("§: §", result, genExpressia(g, campo.valor qua Expressia))
+    }
+
+    redde result
+}
+
+functio genPactum(in FaberGenerator g, de PactumDeclaratio s) -> textus {
+    varia result = g.ind()
+
+    # Visibility
+    si nonnihil s.visibilitas {
+        elige s.visibilitas qua Visibilitas {
+            casu Visibilitas.Publica { result = result + "@ publica\n" + g.ind() }
+            casu Visibilitas.Protecta { result = result + "@ protecta\n" + g.ind() }
+            casu Visibilitas.Privata { result = result + "@ privata\n" + g.ind() }
+        }
+    }
+
+    result = result + "pactum " + s.nomen
+
+    # Generic parameters
+    si nonnihil s.generaParametra {
+        fixum generics = s.generaParametra qua lista<textus>
+        si generics.longitudo() > 0 {
+            result = scriptum("§ prae typus §", result, generics.coniunge(", "))
+        }
+    }
+
+    result = result + " {"
+
+    g.intraProfundum()
+
+    ex (s.methodi qua lista<PactumMethodus>) fixum methodus {
+        result = result + "\n" + genPactumMethodus(g, methodus)
+    }
+
+    g.exiProfundum()
+
+    redde scriptum("§\n§}", result, g.ind())
+}
+
+functio genPactumMethodus(in FaberGenerator g, de PactumMethodus m) -> textus {
+    varia result = g.ind() + "functio " + m.nomen + "("
+
+    varia params = [] innatum lista<textus>
+    ex (m.parametra qua lista<Parametrum>) fixum p {
+        params.appende(genParametrum(g, p))
+    }
+    result = result + params.coniunge(", ") + ")"
+
+    si nonnihil m.typusReditus {
+        result = scriptum("§ -> §", result, genTypus(g, m.typusReditus novum TypusAnnotatio))
+    }
+
+    redde result
+}
+
+functio genTypusAlias(in FaberGenerator g, de TypusAliasDeclaratio s) -> textus {
+    varia result = g.ind()
+
+    # Visibility
+    si nonnihil s.visibilitas {
+        elige s.visibilitas qua Visibilitas {
+            casu Visibilitas.Publica { result = result + "@ publica\n" + g.ind() }
+            casu Visibilitas.Protecta { result = result + "@ protecta\n" + g.ind() }
+            casu Visibilitas.Privata { result = result + "@ privata\n" + g.ind() }
+        }
+    }
+
+    si nonnihil s.scopusNomen {
+        redde scriptum("§typus § = typusex §", result, s.nomen, s.scopusNomen)
+    }
+
+    redde scriptum("§typus § = §", result, s.nomen, genTypus(g, s.typus novum TypusAnnotatio))
+}
+
+functio genOrdo(in FaberGenerator g, de OrdoDeclaratio s) -> textus {
+    varia result = g.ind()
+
+    # Visibility
+    si nonnihil s.visibilitas {
+        elige s.visibilitas qua Visibilitas {
+            casu Visibilitas.Publica { result = result + "@ publica\n" + g.ind() }
+            casu Visibilitas.Protecta { result = result + "@ protecta\n" + g.ind() }
+            casu Visibilitas.Privata { result = result + "@ privata\n" + g.ind() }
+        }
+    }
+
+    result = result + "ordo " + s.nomen + " {"
+
+    g.intraProfundum()
+
+    varia members = [] innatum lista<textus>
+    ex (s.membra qua lista<OrdoMembrum>) fixum membrum {
+        si nonnihil membrum.valor {
+            members.appende(scriptum("§§ = §", g.ind(), membrum.nomen, membrum.valor))
+        } secus {
+            members.appende(g.ind() + membrum.nomen)
+        }
+    }
+
+    g.exiProfundum()
+
+    si members.longitudo() > 0 {
+        redde scriptum("§\n§\n§}", result, members.coniunge("\n"), g.ind())
+    }
+
+    redde result + "\n" + g.ind() + "}"
+}
+
+functio genDiscretio(in FaberGenerator g, de DiscretioDeclaratio s) -> textus {
+    varia result = g.ind()
+
+    # Visibility
+    si nonnihil s.visibilitas {
+        elige s.visibilitas qua Visibilitas {
+            casu Visibilitas.Publica { result = result + "@ publica\n" + g.ind() }
+            casu Visibilitas.Protecta { result = result + "@ protecta\n" + g.ind() }
+            casu Visibilitas.Privata { result = result + "@ privata\n" + g.ind() }
+        }
+    }
+
+    result = result + "discretio " + s.nomen
+
+    # Generic parameters
+    si nonnihil s.generaParametra {
+        fixum generics = s.generaParametra qua lista<textus>
+        si generics.longitudo() > 0 {
+            result = scriptum("§ prae typus §", result, generics.coniunge(", "))
+        }
+    }
+
+    result = result + " {"
+
+    g.intraProfundum()
+
+    ex (s.variantes qua lista<VariansDeclaratio>) fixum variante {
+        result = result + "\n" + genVariante(g, variante)
+    }
+
+    g.exiProfundum()
+
+    redde scriptum("§\n§}", result, g.ind())
+}
+
+functio genVariante(in FaberGenerator g, de VariansDeclaratio v) -> textus {
+    fixum campi = v.campi qua lista<VariansCampus>
+
+    si campi.longitudo() == 0 {
+        redde g.ind() + v.nomen
+    }
+
+    varia fields = [] innatum lista<textus>
+    ex campi fixum campo {
+        fields.appende(scriptum("§ §", genTypus(g, campo.typus novum TypusAnnotatio), campo.nomen))
+    }
+
+    redde scriptum("§§ { § }", g.ind(), v.nomen, fields.coniunge(", "))
+}
+
+# =============================================================================
+# CONTROL FLOW
+# =============================================================================
+
+functio genSi(in FaberGenerator g, de SiSententia s) -> textus {
+    varia result = scriptum("§si § ", g.ind(), genExpressia(g, s.condicio))
+
+    # Consequent
+    discerne s.consequens {
+        casu MassaSententia ut m {
+            g.intraProfundum()
+            fixum body = genMassa(g, m.corpus qua lista<Sententia>)
+            g.exiProfundum()
+            si body == "" {
+                result = result + "{}"
+            } secus {
+                result = scriptum("§{\n§\n§}", result, body, g.ind())
+            }
+        }
+        casu _ {
+            result = scriptum("§ergo §", result, genSententia(g, s.consequens))
+        }
+    }
+
+    # Cape clause
+    si nonnihil s.cape {
+        result = result + " " + genCape(g, s.cape novum CapeClausula)
+    }
+
+    # Alternans
+    si nonnihil s.alternans {
+        discerne s.alternans qua Sententia {
+            casu SiSententia ut alt {
+                result = result + " s" + genSi(g, alt).sectio(g.ind().longitudo() + 1, -1)
+            }
+            casu MassaSententia ut m {
+                g.intraProfundum()
+                fixum body = genMassa(g, m.corpus qua lista<Sententia>)
+                g.exiProfundum()
+                si body == "" {
+                    result = result + " secus {}"
+                } secus {
+                    result = scriptum("§ secus {\n§\n§}", result, body, g.ind())
+                }
+            }
+            casu _ tacet
+        }
+    }
+
+    redde result
+}
+
+functio genDum(in FaberGenerator g, de DumSententia s) -> textus {
+    g.intraProfundum()
+    fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    varia result = ""
+    si body == "" {
+        result = scriptum("§dum § {}", g.ind(), genExpressia(g, s.condicio))
+    } secus {
+        result = scriptum("§dum § {\n§\n§}", g.ind(), genExpressia(g, s.condicio), body, g.ind())
+    }
+
+    si nonnihil s.cape {
+        result = result + " " + genCape(g, s.cape novum CapeClausula)
+    }
+
+    redde result
+}
+
+functio genIteratio(in FaberGenerator g, de IteratioSententia s) -> textus {
+    fixum prepo = ((s.species qua IteratioGenus) == IteratioGenus.Ex) sic "ex" secus "de"
+    fixum keyword = (s.mutabilis qua bivalens) sic "varia" secus "fixum"
+    fixum asyncMark = (s.asynca qua bivalens) sic "cede " secus ""
+
+    # Variable binding
+    varia binding = ""
+    discerne s.variabilis {
+        casu Nomen ut n { binding = n.valor }
+        casu Series ut ser {
+            varia elems = [] innatum lista<textus>
+            ex (ser.elementa qua lista<SeriesDestructuraElementum>) fixum elem {
+                si elem.omissum qua bivalens {
+                    elems.appende("_")
+                } sin elem.residuum qua bivalens {
+                    elems.appende(scriptum("ceteri §", elem.nomen))
+                } secus {
+                    elems.appende(elem.nomen vel "_")
+                }
+            }
+            binding = scriptum("[§]", elems.coniunge(", "))
+        }
+    }
+
+    g.intraProfundum()
+    fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    varia result = ""
+    si body == "" {
+        result = scriptum("§§ § § § {}", g.ind(), prepo, asyncMark, genExpressia(g, s.iterabile), keyword, binding)
+    } secus {
+        result = scriptum("§§ § § § {\n§\n§}", g.ind(), prepo, asyncMark, genExpressia(g, s.iterabile), keyword, binding, body, g.ind())
+    }
+
+    si nonnihil s.cape {
+        result = result + " " + genCape(g, s.cape novum CapeClausula)
+    }
+
+    redde result
+}
+
+functio genElige(in FaberGenerator g, de EligeSententia s) -> textus {
+    varia result = scriptum("§elige § {", g.ind(), genExpressia(g, s.discriminans))
+
+    g.intraProfundum()
+
+    ex (s.casus qua lista<EligeCasus>) fixum caso {
+        g.intraProfundum()
+        fixum body = genMassa(g, (caso.consequens novum MassaSententia).corpus qua lista<Sententia>)
+        g.exiProfundum()
+
+        si body == "" {
+            result = scriptum("§\n§casu § {}", result, g.ind(), genExpressia(g, caso.condicio))
+        } secus {
+            result = scriptum("§\n§casu § {\n§\n§}", result, g.ind(), genExpressia(g, caso.condicio), body, g.ind())
+        }
+    }
+
+    si nonnihil s.praedefinitum {
+        g.intraProfundum()
+        fixum body = genMassa(g, (s.praedefinitum novum MassaSententia).corpus qua lista<Sententia>)
+        g.exiProfundum()
+
+        si body == "" {
+            result = scriptum("§\n§ceterum {}", result, g.ind())
+        } secus {
+            result = scriptum("§\n§ceterum {\n§\n§}", result, g.ind(), body, g.ind())
+        }
+    }
+
+    g.exiProfundum()
+
+    si nonnihil s.cape {
+        redde scriptum("§\n§} §", result, g.ind(), genCape(g, s.cape novum CapeClausula))
+    }
+
+    redde scriptum("§\n§}", result, g.ind())
+}
+
+functio genDiscerne(in FaberGenerator g, de DiscerneSententia s) -> textus {
+    varia discriminantes = [] innatum lista<textus>
+    ex (s.discriminantes qua lista<Expressia>) fixum d {
+        discriminantes.appende(genExpressia(g, d))
+    }
+
+    fixum exhaustiva = (s.exhaustiva qua bivalens) sic "omnia " secus ""
+    varia result = scriptum("§discerne §§ {", g.ind(), exhaustiva, discriminantes.coniunge(", "))
+
+    g.intraProfundum()
+
+    ex (s.casus qua lista<VariansCasus>) fixum caso {
+        result = result + "\n" + genVariansCasus(g, caso)
+    }
+
+    g.exiProfundum()
+
+    redde scriptum("§\n§}", result, g.ind())
+}
+
+functio genVariansCasus(in FaberGenerator g, de VariansCasus caso) -> textus {
+    varia patterns = [] innatum lista<textus>
+    ex (caso.exemplaria qua lista<VariansExemplar>) fixum ex {
+        patterns.appende(genVariansExemplar(ex))
+    }
+
+    g.intraProfundum()
+    fixum body = genMassa(g, (caso.consequens novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    si body == "" {
+        redde scriptum("§casu § {}", g.ind(), patterns.coniunge(", "))
+    }
+
+    redde scriptum("§casu § {\n§\n§}", g.ind(), patterns.coniunge(", "), body, g.ind())
+}
+
+functio genVariansExemplar(de VariansExemplar ex) -> textus {
+    si ex.estWildcard qua bivalens {
+        redde "_"
+    }
+
+    varia result = ex.variansNomen qua textus
+
+    si nonnihil ex.alias {
+        result = scriptum("§ ut §", result, ex.alias)
+    }
+
+    si (ex.vincula qua lista<textus>).longitudo() > 0 {
+        result = scriptum("§ pro §", result, (ex.vincula qua lista<textus>).coniunge(", "))
+    }
+
+    redde result
+}
+
+functio genCustodi(in FaberGenerator g, de CustodiSententia s) -> textus {
+    varia result = scriptum("§custodi {", g.ind())
+
+    g.intraProfundum()
+
+    ex (s.clausulae qua lista<CustodiClausula>) fixum clausula {
+        g.intraProfundum()
+        fixum body = genMassa(g, (clausula.consequens novum MassaSententia).corpus qua lista<Sententia>)
+        g.exiProfundum()
+
+        si body == "" {
+            result = scriptum("§\n§si § {}", result, g.ind(), genExpressia(g, clausula.condicio))
+        } secus {
+            result = scriptum("§\n§si § {\n§\n§}", result, g.ind(), genExpressia(g, clausula.condicio), body, g.ind())
+        }
+    }
+
+    g.exiProfundum()
+
+    redde scriptum("§\n§}", result, g.ind())
+}
+
+# =============================================================================
+# ERROR HANDLING
+# =============================================================================
+
+functio genTempta(in FaberGenerator g, de TemptaSententia s) -> textus {
+    g.intraProfundum()
+    fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    varia result = ""
+    si body == "" {
+        result = scriptum("§tempta {}", g.ind())
+    } secus {
+        result = scriptum("§tempta {\n§\n§}", g.ind(), body, g.ind())
+    }
+
+    si nonnihil s.cape {
+        result = result + " " + genCape(g, s.cape novum CapeClausula)
+    }
+
+    si nonnihil s.demum {
+        g.intraProfundum()
+        fixum demumBody = genMassa(g, (s.demum novum MassaSententia).corpus qua lista<Sententia>)
+        g.exiProfundum()
+
+        si demumBody == "" {
+            result = result + " demum {}"
+        } secus {
+            result = scriptum("§ demum {\n§\n§}", result, demumBody, g.ind())
+        }
+    }
+
+    redde result
+}
+
+functio genCape(in FaberGenerator g, de CapeClausula cape) -> textus {
+    g.intraProfundum()
+    fixum body = genMassa(g, (cape.corpus novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    si body == "" {
+        redde scriptum("cape § {}", cape.param)
+    }
+
+    redde scriptum("cape § {\n§\n§}", cape.param, body, g.ind())
+}
+
+functio genIace(in FaberGenerator g, de IaceSententia s) -> textus {
+    fixum keyword = (s.fatale qua bivalens) sic "mori" secus "iace"
+    redde scriptum("§§ §", g.ind(), keyword, genExpressia(g, s.argumentum))
+}
+
+functio genFac(in FaberGenerator g, de FacSententia s) -> textus {
+    g.intraProfundum()
+    fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    varia result = ""
+    si body == "" {
+        result = scriptum("§fac {}", g.ind())
+    } secus {
+        result = scriptum("§fac {\n§\n§}", g.ind(), body, g.ind())
+    }
+
+    si nonnihil s.cape {
+        result = result + " " + genCape(g, s.cape novum CapeClausula)
+    }
+
+    si nonnihil s.condicio {
+        result = scriptum("§ dum §", result, genExpressia(g, s.condicio qua Expressia))
+    }
+
+    redde result
+}
+
+functio genAdfirma(in FaberGenerator g, de AdfirmaSententia s) -> textus {
+    varia result = scriptum("§adfirma §", g.ind(), genExpressia(g, s.condicio))
+
+    si nonnihil s.nuntius {
+        result = scriptum("§, §", result, genExpressia(g, s.nuntius qua Expressia))
+    }
+
+    redde result
+}
+
+# =============================================================================
+# ACTIONS
+# =============================================================================
+
+functio genScribe(in FaberGenerator g, de ScribeSententia s) -> textus {
+    varia keyword = ""
+    elige s.gradus qua ScribeGradus {
+        casu ScribeGradus.Scribe { keyword = "scribe" }
+        casu ScribeGradus.Vide { keyword = "vide" }
+        casu ScribeGradus.Mone { keyword = "mone" }
+    }
+
+    varia args = [] innatum lista<textus>
+    ex (s.argumenta qua lista<Expressia>) fixum arg {
+        args.appende(genExpressia(g, arg))
+    }
+
+    redde scriptum("§§ §", g.ind(), keyword, args.coniunge(", "))
+}
+
+functio genIncipit(in FaberGenerator g, de IncipitSententia s) -> textus {
+    varia result = g.ind() + "incipit"
+
+    si nonnihil s.argumenta {
+        result = scriptum("§ argumenta §", result, s.argumenta)
+    }
+
+    si nonnihil s.ergo {
+        result = scriptum("§ ergo §", result, genSententia(g, s.ergo qua Sententia).sectio(g.ind().longitudo(), -1))
+    } sin nonnihil s.corpus {
+        g.intraProfundum()
+        fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+        g.exiProfundum()
+
+        si body == "" {
+            result = result + " {}"
+        } secus {
+            result = scriptum("§ {\n§\n§}", result, body, g.ind())
+        }
+    }
+
+    redde result
+}
+
+functio genIncipiet(in FaberGenerator g, de IncipietSententia s) -> textus {
+    varia result = g.ind() + "incipiet"
+
+    si nonnihil s.argumenta {
+        result = scriptum("§ argumenta §", result, s.argumenta)
+    }
+
+    si nonnihil s.ergo {
+        result = scriptum("§ ergo §", result, genSententia(g, s.ergo qua Sententia).sectio(g.ind().longitudo(), -1))
+    } sin nonnihil s.corpus {
+        g.intraProfundum()
+        fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+        g.exiProfundum()
+
+        si body == "" {
+            result = result + " {}"
+        } secus {
+            result = scriptum("§ {\n§\n§}", result, body, g.ind())
+        }
+    }
+
+    redde result
+}
+
+functio genCura(in FaberGenerator g, de CuraSententia s) -> textus {
+    varia result = g.ind() + "cura "
+
+    # Curator species
+    si nonnihil s.curatorSpecies {
+        elige s.curatorSpecies qua CuratorGenus {
+            casu CuratorGenus.Arena { result = result + "arena " }
+            casu CuratorGenus.Pagina { result = result + "pagina " }
+        }
+    }
+
+    # Resource expression
+    si nonnihil s.res {
+        result = result + genExpressia(g, s.res qua Expressia) + " "
+    }
+
+    # Binding
+    fixum keyword = (s.mutabilis qua bivalens) sic "varia" secus "fixum"
+    fixum asyncMark = (s.asynca qua bivalens) sic "cede " secus ""
+    result = scriptum("§§§ §", result, asyncMark, keyword, s.vinculum)
+
+    # Type
+    si nonnihil s.typus {
+        result = result + " " + genTypus(g, s.typus novum TypusAnnotatio)
+    }
+
+    # Body
+    g.intraProfundum()
+    fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    si body == "" {
+        result = result + " {}"
+    } secus {
+        result = scriptum("§ {\n§\n§}", result, body, g.ind())
+    }
+
+    si nonnihil s.cape {
+        result = result + " " + genCape(g, s.cape novum CapeClausula)
+    }
+
+    redde result
+}
+
+functio genAd(in FaberGenerator g, de AdSententia s) -> textus {
+    varia result = scriptum("§ad \"§\"", g.ind(), s.scopus)
+
+    # Arguments
+    varia args = [] innatum lista<textus>
+    ex (s.argumenta qua lista<Expressia>) fixum arg {
+        args.appende(genExpressia(g, arg))
+    }
+    si args.longitudo() > 0 {
+        result = scriptum("§ (§)", result, args.coniunge(", "))
+    }
+
+    # Binding
+    si nonnihil s.vinculum {
+        fixum v = s.vinculum novum AdVinculum
+        varia verbum = ""
+        elige v.verbum qua AdVerbumVinculandi {
+            casu AdVerbumVinculandi.Fit { verbum = "fit" }
+            casu AdVerbumVinculandi.Fiet { verbum = "fiet" }
+            casu AdVerbumVinculandi.Fiunt { verbum = "fiunt" }
+            casu AdVerbumVinculandi.Fient { verbum = "fient" }
+        }
+
+        si nonnihil v.typus {
+            result = scriptum("§ § § pro §", result, verbum, genTypus(g, v.typus novum TypusAnnotatio), v.nomen)
+        } secus {
+            result = scriptum("§ § pro §", result, verbum, v.nomen)
+        }
+
+        si nonnihil v.alias {
+            result = scriptum("§ ut §", result, v.alias)
+        }
+    }
+
+    # Body
+    si nonnihil s.corpus {
+        g.intraProfundum()
+        fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+        g.exiProfundum()
+
+        si body == "" {
+            result = result + " {}"
+        } secus {
+            result = scriptum("§ {\n§\n§}", result, body, g.ind())
+        }
+    }
+
+    si nonnihil s.cape {
+        result = result + " " + genCape(g, s.cape novum CapeClausula)
+    }
+
+    redde result
+}
+
+# =============================================================================
+# TESTS
+# =============================================================================
+
+functio genProbandum(in FaberGenerator g, de ProbandumSententia s) -> textus {
+    varia result = g.ind()
+
+    # Annotations
+    si nonnihil s.ompitur et s.ompitur qua bivalens {
+        si nonnihil s.ratioOmissionis {
+            result = scriptum("§@ omitte \"§\"\n§", result, s.ratioOmissionis, g.ind())
+        } secus {
+            result = result + "@ omitte\n" + g.ind()
+        }
+    }
+
+    si nonnihil s.solum et s.solum qua bivalens {
+        result = result + "@ solum\n" + g.ind()
+    }
+
+    si nonnihil s.tags {
+        ex (s.tags qua lista<textus>) fixum tag {
+            result = scriptum("§@ tag \"§\"\n§", result, tag, g.ind())
+        }
+    }
+
+    result = scriptum("§probandum \"§\" {", result, s.nomen)
+
+    g.intraProfundum()
+
+    ex (s.corpus qua lista<Sententia>) fixum stmt {
+        result = result + "\n" + genSententia(g, stmt)
+    }
+
+    g.exiProfundum()
+
+    redde scriptum("§\n§}", result, g.ind())
+}
+
+functio genProba(in FaberGenerator g, de ProbaSententia s) -> textus {
+    varia result = g.ind()
+
+    # Annotations
+    si nonnihil s.modificator {
+        elige s.modificator qua ProbaModificator {
+            casu ProbaModificator.Omitte {
+                si nonnihil s.ratioModificatoris {
+                    result = scriptum("§@ omitte \"§\"\n§", result, s.ratioModificatoris, g.ind())
+                } secus {
+                    result = result + "@ omitte\n" + g.ind()
+                }
+            }
+            casu ProbaModificator.Futurum {
+                si nonnihil s.ratioModificatoris {
+                    result = scriptum("§@ futurum \"§\"\n§", result, s.ratioModificatoris, g.ind())
+                } secus {
+                    result = result + "@ futurum\n" + g.ind()
+                }
+            }
+        }
+    }
+
+    si nonnihil s.solum et s.solum qua bivalens {
+        result = result + "@ solum\n" + g.ind()
+    }
+
+    si nonnihil s.tags {
+        ex (s.tags qua lista<textus>) fixum tag {
+            result = scriptum("§@ tag \"§\"\n§", result, tag, g.ind())
+        }
+    }
+
+    si nonnihil s.temporis {
+        result = scriptum("§@ temporis §\n§", result, s.temporis, g.ind())
+    }
+
+    si nonnihil s.metior et s.metior qua bivalens {
+        result = result + "@ metior\n" + g.ind()
+    }
+
+    si nonnihil s.repete {
+        result = scriptum("§@ repete §\n§", result, s.repete, g.ind())
+    }
+
+    si nonnihil s.fragilis {
+        result = scriptum("§@ fragilis §\n§", result, s.fragilis, g.ind())
+    }
+
+    si nonnihil s.requirit {
+        result = scriptum("§@ requirit \"§\"\n§", result, s.requirit, g.ind())
+    }
+
+    si nonnihil s.solumIn {
+        result = scriptum("§@ solum_in \"§\"\n§", result, s.solumIn, g.ind())
+    }
+
+    result = scriptum("§proba \"§\"", result, s.nomen)
+
+    g.intraProfundum()
+    fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    si body == "" {
+        redde result + " {}"
+    }
+
+    redde scriptum("§ {\n§\n§}", result, body, g.ind())
+}
+
+functio genPraepara(in FaberGenerator g, de PraeparaMassa s) -> textus {
+    varia keyword = ((s.tempus qua PraeparaTempus) == PraeparaTempus.Praepara) sic "praepara" secus "postpara"
+
+    si s.omnia qua bivalens {
+        keyword = keyword + " omnia"
+    }
+
+    si s.asynca qua bivalens {
+        keyword = keyword + " futura"
+    }
+
+    g.intraProfundum()
+    fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    si body == "" {
+        redde scriptum("§§ {}", g.ind(), keyword)
+    }
+
+    redde scriptum("§§ {\n§\n§}", g.ind(), keyword, body, g.ind())
+}

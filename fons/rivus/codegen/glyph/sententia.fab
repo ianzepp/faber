@@ -1,0 +1,1428 @@
+# Glyph Statement Generator - AST to glyph serialization
+#
+# Routes statement AST nodes to their Unicode glyph representation.
+
+§ ex "../../ast/sententia" importa Sententia, VariaGenus, ScribeGradus, IteratioGenus
+§ ex "../../ast/sententia" importa Parametrum, CampusDeclaratio, EligeCasus, VariansCasus
+§ ex "../../ast/sententia" importa CustodiClausula, CapeClausula, OrdoMembrum, VariansDeclaratio
+§ ex "../../ast/sententia" importa ImportaSpecificator, PactumMethodus, TypusParametrum
+§ ex "../../ast/sententia" importa SeriesDestructuraElementum, VariansExemplar
+§ ex "../../ast/sententia" importa Visibilitas, ProbaModificator, PraeparaTempus, ReddeVerbum
+§ ex "../../ast/sententia" importa FunctioModificator, IteratioVariabilis, AdVinculum, AdVerbumVinculandi
+§ ex "../../ast/sententia" importa CuratorGenus
+§ ex "../../ast/expressia" importa Expressia
+§ ex "../../ast/typus" importa TypusAnnotatio
+§ ex "./nucleus" importa GlyphGenerator
+§ ex "./expressia" importa genExpressia
+§ ex "./typus" importa genTypus
+§ ex "./lexicon" importa glyphKeyword, glyphOperator, glyphDelimiter, glyphPunctuation, encodeBraille
+
+# =============================================================================
+# STATEMENT DISPATCH
+# =============================================================================
+
+@ publica
+functio genSententia(in GlyphGenerator g, de Sententia stmt) -> textus {
+    fixum leading = g.notaePrae(stmt)
+    fixum trailing = g.notaePost(stmt)
+    fixum content = genSententiaContent(g, stmt)
+    redde scriptum("§§§", leading, content, trailing)
+}
+
+functio genSententiaContent(in GlyphGenerator g, de Sententia stmt) -> textus {
+    discerne stmt {
+        # Block
+        casu MassaSententia ut s {
+            redde genMassa(g, s.corpus qua lista<Sententia>)
+        }
+
+        # Variable declarations
+        casu VariaSententia ut s {
+            redde genVaria(g, s)
+        }
+
+        casu ImportaSententia ut s {
+            redde genImporta(g, s)
+        }
+
+        casu DestructuraSententia ut s {
+            redde genDestructura(g, s)
+        }
+
+        casu SeriesDestructuraSententia ut s {
+            redde genSeriesDestructura(g, s)
+        }
+
+        # Function declaration
+        casu FunctioDeclaratio ut f {
+            redde genFunctio(g, f)
+        }
+
+        # Type declarations
+        casu GenusDeclaratio ut s {
+            redde genGenus(g, s)
+        }
+
+        casu PactumDeclaratio ut s {
+            redde genPactum(g, s)
+        }
+
+        casu TypusAliasDeclaratio ut s {
+            redde genTypusAlias(g, s)
+        }
+
+        casu OrdoDeclaratio ut s {
+            redde genOrdo(g, s)
+        }
+
+        casu DiscretioDeclaratio ut s {
+            redde genDiscretio(g, s)
+        }
+
+        # Control flow
+        casu SiSententia ut s {
+            redde genSi(g, s)
+        }
+
+        casu DumSententia ut s {
+            redde genDum(g, s)
+        }
+
+        casu IteratioSententia ut s {
+            redde genIteratio(g, s)
+        }
+
+        casu EligeSententia ut s {
+            redde genElige(g, s)
+        }
+
+        casu DiscerneSententia ut s {
+            redde genDiscerne(g, s)
+        }
+
+        casu CustodiSententia ut s {
+            redde genCustodi(g, s)
+        }
+
+        # Error handling
+        casu TemptaSententia ut s {
+            redde genTempta(g, s)
+        }
+
+        casu IaceSententia ut s {
+            redde genIace(g, s)
+        }
+
+        casu FacSententia ut s {
+            redde genFac(g, s)
+        }
+
+        casu AdfirmaSententia ut s {
+            redde genAdfirma(g, s)
+        }
+
+        # Actions
+        casu ScribeSententia ut s {
+            redde genScribe(g, s)
+        }
+
+        casu ReddeSententia ut s {
+            si nonnihil s.valor {
+                redde scriptum("§§ §", g.ind(), glyphKeyword("redde"), genExpressia(g, s.valor qua Expressia))
+            }
+            redde scriptum("§§", g.ind(), glyphKeyword("redde"))
+        }
+
+        casu RumpeSententia {
+            redde scriptum("§§", g.ind(), glyphKeyword("rumpe"))
+        }
+
+        casu PergeSententia {
+            redde scriptum("§§", g.ind(), glyphKeyword("perge"))
+        }
+
+        casu TacetSententia {
+            redde scriptum("§§", g.ind(), glyphKeyword("tacet"))
+        }
+
+        casu ExpressiaSententia ut s {
+            redde scriptum("§§", g.ind(), genExpressia(g, s.expressia))
+        }
+
+        casu IncipitSententia ut s {
+            redde genIncipit(g, s)
+        }
+
+        casu IncipietSententia ut s {
+            redde genIncipiet(g, s)
+        }
+
+        casu CuraSententia ut s {
+            redde genCura(g, s)
+        }
+
+        casu AdSententia ut s {
+            redde genAd(g, s)
+        }
+
+        # Tests
+        casu ProbandumSententia ut s {
+            redde genProbandum(g, s)
+        }
+
+        casu ProbaSententia ut s {
+            redde genProba(g, s)
+        }
+
+        casu PraeparaMassa ut s {
+            redde genPraepara(g, s)
+        }
+    }
+
+    mori "Glyph codegen error: unhandled statement type"
+}
+
+# =============================================================================
+# BLOCK
+# =============================================================================
+
+@ publica
+functio genMassa(in GlyphGenerator g, de lista<Sententia> corpus) -> textus {
+    si corpus.longitudo() == 0 {
+        redde ""
+    }
+    varia lines = [] innatum lista<textus>
+    ex corpus fixum stmt {
+        lines.appende(genSententia(g, stmt))
+    }
+    redde lines.coniunge("\n")
+}
+
+# =============================================================================
+# VARIABLE DECLARATIONS
+# =============================================================================
+
+functio genVaria(in GlyphGenerator g, de VariaSententia s) -> textus {
+    varia result = g.ind()
+    fixum anno = glyphPunctuation("@")
+
+    # Visibility annotation
+    si nonnihil s.visibilitas {
+        elige s.visibilitas qua Visibilitas {
+            casu Visibilitas.Publica { result = result + anno + " " + encodeBraille("publica") + "\n" + g.ind() }
+            casu Visibilitas.Protecta { result = result + anno + " " + encodeBraille("protecta") + "\n" + g.ind() }
+            casu Visibilitas.Privata { result = result + anno + " " + encodeBraille("privata") + "\n" + g.ind() }
+        }
+    }
+
+    # External annotation
+    si s.externa qua bivalens {
+        result = result + anno + " " + encodeBraille("externa") + "\n" + g.ind()
+    }
+
+    # Kind keyword
+    elige s.species qua VariaGenus {
+        casu VariaGenus.Varia { result = result + glyphKeyword("varia") + " " }
+        casu VariaGenus.Fixum { result = result + glyphKeyword("fixum") + " " }
+        casu VariaGenus.Figendum { result = result + glyphKeyword("figendum") + " " }
+        casu VariaGenus.Variandum { result = result + glyphKeyword("variandum") + " " }
+    }
+
+    result = result + encodeBraille(s.nomen)
+
+    # Type annotation
+    si nonnihil s.typus {
+        result = scriptum("§ §", genTypus(g, s.typus novum TypusAnnotatio), result)
+    }
+
+    # Initializer
+    si nonnihil s.valor {
+        result = scriptum("§ § §", result, glyphOperator("="), genExpressia(g, s.valor qua Expressia))
+    }
+
+    redde result
+}
+
+functio genImporta(in GlyphGenerator g, de ImportaSententia s) -> textus {
+    fixum quote = glyphDelimiter("\"")
+    fixum importaGlyph = glyphKeyword("importa")
+
+    si s.totum qua bivalens {
+        si nonnihil s.totumAlias {
+            redde scriptum("§§ § §§§ § § § §", g.ind(), glyphKeyword("ex"), quote, encodeBraille(s.fons), quote, importaGlyph, "*", glyphKeyword("ut"), encodeBraille(s.totumAlias))
+        }
+        redde scriptum("§§ § §§§ § *", g.ind(), glyphKeyword("ex"), quote, encodeBraille(s.fons), quote, importaGlyph)
+    }
+
+    varia specs = [] innatum lista<textus>
+    fixum comma = glyphPunctuation(",")
+    ex (s.specificatores qua lista<ImportaSpecificator>) fixum spec {
+        si spec.residuum qua bivalens {
+            specs.appende(scriptum("§ §", glyphKeyword("ceteri"), encodeBraille(spec.locale)))
+        } sin spec.importatum != spec.locale {
+            specs.appende(scriptum("§ § §", encodeBraille(spec.importatum), glyphKeyword("ut"), encodeBraille(spec.locale)))
+        } secus {
+            specs.appende(encodeBraille(spec.importatum))
+        }
+    }
+
+    redde scriptum("§§ § §§§ § §", g.ind(), glyphKeyword("ex"), quote, encodeBraille(s.fons), quote, importaGlyph, specs.coniunge(comma + " "))
+}
+
+functio genDestructura(in GlyphGenerator g, de DestructuraSententia s) -> textus {
+    fixum keyword = variaGenusKeyword(s.species qua VariaGenus)
+    fixum comma = glyphPunctuation(",")
+
+    varia specs = [] innatum lista<textus>
+    ex (s.specificatores qua lista<ImportaSpecificator>) fixum spec {
+        si spec.residuum qua bivalens {
+            specs.appende(scriptum("§ §", glyphKeyword("ceteri"), encodeBraille(spec.locale)))
+        } sin spec.importatum != spec.locale {
+            specs.appende(scriptum("§ § §", encodeBraille(spec.importatum), glyphKeyword("ut"), encodeBraille(spec.locale)))
+        } secus {
+            specs.appende(encodeBraille(spec.importatum))
+        }
+    }
+
+    redde scriptum("§§ § § §", g.ind(), glyphKeyword("ex"), genExpressia(g, s.fons), keyword, specs.coniunge(comma + " "))
+}
+
+functio genSeriesDestructura(in GlyphGenerator g, de SeriesDestructuraSententia s) -> textus {
+    fixum keyword = variaGenusKeyword(s.species qua VariaGenus)
+    fixum lb = glyphDelimiter("[")
+    fixum rb = glyphDelimiter("]")
+    fixum comma = glyphPunctuation(",")
+
+    varia elems = [] innatum lista<textus>
+    ex (s.elementa qua lista<SeriesDestructuraElementum>) fixum elem {
+        si elem.omissum qua bivalens {
+            elems.appende("_")
+        } sin elem.residuum qua bivalens {
+            elems.appende(scriptum("§ §", glyphKeyword("ceteri"), encodeBraille(elem.nomen vel "")))
+        } secus {
+            elems.appende(encodeBraille(elem.nomen vel "_"))
+        }
+    }
+
+    redde scriptum("§§ §§ §§ § §", g.ind(), keyword, lb, elems.coniunge(comma + " "), rb, glyphOperator("="), genExpressia(g, s.fons))
+}
+
+functio variaGenusKeyword(de VariaGenus species) -> textus {
+    elige species {
+        casu VariaGenus.Varia { redde glyphKeyword("varia") }
+        casu VariaGenus.Fixum { redde glyphKeyword("fixum") }
+        casu VariaGenus.Figendum { redde glyphKeyword("figendum") }
+        casu VariaGenus.Variandum { redde glyphKeyword("variandum") }
+    }
+    redde glyphKeyword("fixum")
+}
+
+# =============================================================================
+# FUNCTION DECLARATION
+# =============================================================================
+
+functio genFunctio(in GlyphGenerator g, de FunctioDeclaratio f) -> textus {
+    varia result = g.ind()
+    fixum anno = glyphPunctuation("@")
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+    fixum lp = glyphDelimiter("(")
+    fixum rp = glyphDelimiter(")")
+    fixum comma = glyphPunctuation(",")
+
+    # Visibility annotation
+    si nonnihil f.visibilitas {
+        elige f.visibilitas qua Visibilitas {
+            casu Visibilitas.Publica { result = result + anno + " " + encodeBraille("publica") + "\n" + g.ind() }
+            casu Visibilitas.Protecta { result = result + anno + " " + encodeBraille("protecta") + "\n" + g.ind() }
+            casu Visibilitas.Privata { result = result + anno + " " + encodeBraille("privata") + "\n" + g.ind() }
+        }
+    }
+
+    # External annotation
+    si f.externa qua bivalens {
+        result = result + anno + " " + encodeBraille("externa") + "\n" + g.ind()
+    }
+
+    # Abstract marker
+    si f.abstracta qua bivalens {
+        result = result + glyphKeyword("abstracta") + " "
+    }
+
+    # Structor or functio
+    si f.structor qua bivalens {
+        result = result + encodeBraille("structor")
+    } secus {
+        result = result + glyphKeyword("functio") + " " + encodeBraille(f.nomen)
+    }
+
+    # Generic parameters
+    si nonnihil f.generaParametra {
+        fixum generics = f.generaParametra qua lista<TypusParametrum>
+        si generics.longitudo() > 0 {
+            varia gparams = [] innatum lista<textus>
+            ex generics fixum gp {
+                gparams.appende(encodeBraille(gp.nomen))
+            }
+            result = scriptum("§ § § §", result, glyphKeyword("prae"), encodeBraille("typus"), gparams.coniunge(comma + " "))
+        }
+    }
+
+    # Parameters
+    result = result + lp
+    varia params = [] innatum lista<textus>
+    ex (f.parametra qua lista<Parametrum>) fixum p {
+        params.appende(genParametrum(g, p))
+    }
+    result = result + params.coniunge(comma + " ") + rp
+
+    # Modifiers
+    si nonnihil f.modificatores {
+        ex (f.modificatores qua lista<FunctioModificator>) fixum mod {
+            discerne mod {
+                casu CurataModificator ut m { result = scriptum("§ § §", result, encodeBraille("curata"), encodeBraille(m.nomen)) }
+                casu ErrataModificator ut m { result = scriptum("§ § §", result, encodeBraille("errata"), encodeBraille(m.nomen)) }
+                casu ExitusModificator ut m { result = scriptum("§ § §", result, encodeBraille("exitus"), encodeBraille(m.nomen)) }
+                casu ImmutataModificator { result = result + " " + encodeBraille("immutata") }
+                casu IacitModificator { result = result + " " + glyphKeyword("iacit") }
+                casu OptionesModificator ut m { result = scriptum("§ § §", result, encodeBraille("optiones"), encodeBraille(m.nomen)) }
+            }
+        }
+    }
+
+    # Return type
+    si nonnihil f.typusReditus {
+        si nonnihil f.reddeVerbum {
+            elige f.reddeVerbum qua ReddeVerbum {
+                casu ReddeVerbum.Fit { result = scriptum("§ § §", result, glyphKeyword("fit"), genTypus(g, f.typusReditus novum TypusAnnotatio)) }
+                casu ReddeVerbum.Fiet { result = scriptum("§ § §", result, glyphKeyword("fiet"), genTypus(g, f.typusReditus novum TypusAnnotatio)) }
+                casu ReddeVerbum.Fiunt { result = scriptum("§ § §", result, glyphKeyword("fiunt"), genTypus(g, f.typusReditus novum TypusAnnotatio)) }
+                casu ReddeVerbum.Fient { result = scriptum("§ § §", result, glyphKeyword("fient"), genTypus(g, f.typusReditus novum TypusAnnotatio)) }
+                ceterum { result = scriptum("§ § §", result, glyphOperator("->"), genTypus(g, f.typusReditus novum TypusAnnotatio)) }
+            }
+        } secus {
+            result = scriptum("§ § §", result, glyphOperator("->"), genTypus(g, f.typusReditus novum TypusAnnotatio))
+        }
+    }
+
+    # Body
+    si nonnihil f.corpus {
+        g.intraProfundum()
+        fixum body = genMassa(g, (f.corpus novum MassaSententia).corpus qua lista<Sententia>)
+        g.exiProfundum()
+        si body == "" {
+            result = result + " " + lb + rb
+        } secus {
+            result = scriptum("§ §\n§\n§§", result, lb, body, g.ind(), rb)
+        }
+    }
+
+    redde result
+}
+
+functio genParametrum(in GlyphGenerator g, de Parametrum p) -> textus {
+    varia result = ""
+
+    # Preposition (de, in, ex)
+    si nonnihil p.praepositio {
+        result = result + glyphKeyword(p.praepositio qua textus) + " "
+    }
+
+    # Optional marker (si)
+    si p.optionalis qua bivalens {
+        result = result + glyphKeyword("si") + " "
+    }
+
+    # Type
+    si nonnihil p.typus {
+        result = result + genTypus(g, p.typus novum TypusAnnotatio) + " "
+    }
+
+    # Rest marker (ceteri)
+    si p.residuum qua bivalens {
+        result = result + glyphKeyword("ceteri") + " "
+    }
+
+    # Name
+    result = result + encodeBraille(p.nomen)
+
+    # Alias (ut)
+    si nonnihil p.alias {
+        result = scriptum("§ § §", result, glyphKeyword("ut"), encodeBraille(p.alias qua textus))
+    }
+
+    # Default value (vel)
+    si nonnihil p.praedefinitum {
+        result = scriptum("§ § §", result, glyphKeyword("vel"), genExpressia(g, p.praedefinitum qua Expressia))
+    }
+
+    redde result
+}
+
+# =============================================================================
+# TYPE DECLARATIONS
+# =============================================================================
+
+functio genGenus(in GlyphGenerator g, de GenusDeclaratio s) -> textus {
+    varia result = g.ind()
+    fixum anno = glyphPunctuation("@")
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+    fixum comma = glyphPunctuation(",")
+
+    # Visibility
+    si nonnihil s.visibilitas {
+        elige s.visibilitas qua Visibilitas {
+            casu Visibilitas.Publica { result = result + anno + " " + encodeBraille("publica") + "\n" + g.ind() }
+            casu Visibilitas.Protecta { result = result + anno + " " + encodeBraille("protecta") + "\n" + g.ind() }
+            casu Visibilitas.Privata { result = result + anno + " " + encodeBraille("privata") + "\n" + g.ind() }
+        }
+    }
+
+    # Abstract
+    si s.abstractum qua bivalens {
+        result = result + glyphKeyword("abstractum") + " "
+    }
+
+    result = result + glyphKeyword("genus") + " " + encodeBraille(s.nomen)
+
+    # Generic parameters
+    si nonnihil s.generaParametra {
+        fixum generics = s.generaParametra qua lista<textus>
+        si generics.longitudo() > 0 {
+            varia gparams = [] innatum lista<textus>
+            ex generics fixum gp {
+                gparams.appende(encodeBraille(gp))
+            }
+            result = scriptum("§ § § §", result, glyphKeyword("prae"), encodeBraille("typus"), gparams.coniunge(comma + " "))
+        }
+    }
+
+    # Extends
+    si nonnihil s.extendit {
+        result = scriptum("§ § §", result, glyphKeyword("sub"), encodeBraille(s.extendit qua textus))
+    }
+
+    # Implements
+    si nonnihil s.implet {
+        fixum interfaces = s.implet qua lista<textus>
+        si interfaces.longitudo() > 0 {
+            varia impls = [] innatum lista<textus>
+            ex interfaces fixum iface {
+                impls.appende(encodeBraille(iface))
+            }
+            result = scriptum("§ § §", result, glyphKeyword("implet"), impls.coniunge(comma + " "))
+        }
+    }
+
+    result = result + " " + lb
+
+    g.intraProfundum()
+
+    # Fields
+    ex (s.campi qua lista<CampusDeclaratio>) fixum campo {
+        result = result + "\n" + genCampus(g, campo)
+    }
+
+    # Constructor
+    si nonnihil s.structor {
+        result = result + "\n\n" + genFunctio(g, s.structor novum FunctioDeclaratio)
+    }
+
+    # Methods
+    ex (s.methodi qua lista<FunctioDeclaratio>) fixum methodus {
+        result = result + "\n\n" + genFunctio(g, methodus)
+    }
+
+    g.exiProfundum()
+
+    redde scriptum("§\n§§", result, g.ind(), rb)
+}
+
+functio genCampus(in GlyphGenerator g, de CampusDeclaratio campo) -> textus {
+    varia result = g.ind()
+    fixum anno = glyphPunctuation("@")
+    fixum colon = glyphPunctuation(":")
+
+    # Visibility
+    elige campo.visibilitas qua Visibilitas {
+        casu Visibilitas.Publica { result = result + anno + " " + encodeBraille("publica") + "\n" + g.ind() }
+        casu Visibilitas.Protecta { result = result + anno + " " + encodeBraille("protecta") + "\n" + g.ind() }
+        casu Visibilitas.Privata tacet
+    }
+
+    # Static
+    si campo.staticum qua bivalens {
+        result = result + glyphKeyword("generis") + " "
+    }
+
+    # Type and name
+    result = result + genTypus(g, campo.typus novum TypusAnnotatio) + " " + encodeBraille(campo.nomen)
+
+    # Default value
+    si nonnihil campo.valor {
+        result = scriptum("§§ §", result, colon, genExpressia(g, campo.valor qua Expressia))
+    }
+
+    redde result
+}
+
+functio genPactum(in GlyphGenerator g, de PactumDeclaratio s) -> textus {
+    varia result = g.ind()
+    fixum anno = glyphPunctuation("@")
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+    fixum comma = glyphPunctuation(",")
+
+    # Visibility
+    si nonnihil s.visibilitas {
+        elige s.visibilitas qua Visibilitas {
+            casu Visibilitas.Publica { result = result + anno + " " + encodeBraille("publica") + "\n" + g.ind() }
+            casu Visibilitas.Protecta { result = result + anno + " " + encodeBraille("protecta") + "\n" + g.ind() }
+            casu Visibilitas.Privata { result = result + anno + " " + encodeBraille("privata") + "\n" + g.ind() }
+        }
+    }
+
+    result = result + glyphKeyword("pactum") + " " + encodeBraille(s.nomen)
+
+    # Generic parameters
+    si nonnihil s.generaParametra {
+        fixum generics = s.generaParametra qua lista<textus>
+        si generics.longitudo() > 0 {
+            varia gparams = [] innatum lista<textus>
+            ex generics fixum gp {
+                gparams.appende(encodeBraille(gp))
+            }
+            result = scriptum("§ § § §", result, glyphKeyword("prae"), encodeBraille("typus"), gparams.coniunge(comma + " "))
+        }
+    }
+
+    result = result + " " + lb
+
+    g.intraProfundum()
+
+    ex (s.methodi qua lista<PactumMethodus>) fixum methodus {
+        result = result + "\n" + genPactumMethodus(g, methodus)
+    }
+
+    g.exiProfundum()
+
+    redde scriptum("§\n§§", result, g.ind(), rb)
+}
+
+functio genPactumMethodus(in GlyphGenerator g, de PactumMethodus m) -> textus {
+    fixum lp = glyphDelimiter("(")
+    fixum rp = glyphDelimiter(")")
+    fixum comma = glyphPunctuation(",")
+
+    varia result = g.ind() + glyphKeyword("functio") + " " + encodeBraille(m.nomen) + lp
+
+    varia params = [] innatum lista<textus>
+    ex (m.parametra qua lista<Parametrum>) fixum p {
+        params.appende(genParametrum(g, p))
+    }
+    result = result + params.coniunge(comma + " ") + rp
+
+    si nonnihil m.typusReditus {
+        result = scriptum("§ § §", result, glyphOperator("->"), genTypus(g, m.typusReditus novum TypusAnnotatio))
+    }
+
+    redde result
+}
+
+functio genTypusAlias(in GlyphGenerator g, de TypusAliasDeclaratio s) -> textus {
+    varia result = g.ind()
+    fixum anno = glyphPunctuation("@")
+
+    # Visibility
+    si nonnihil s.visibilitas {
+        elige s.visibilitas qua Visibilitas {
+            casu Visibilitas.Publica { result = result + anno + " " + encodeBraille("publica") + "\n" + g.ind() }
+            casu Visibilitas.Protecta { result = result + anno + " " + encodeBraille("protecta") + "\n" + g.ind() }
+            casu Visibilitas.Privata { result = result + anno + " " + encodeBraille("privata") + "\n" + g.ind() }
+        }
+    }
+
+    si nonnihil s.scopusNomen {
+        redde scriptum("§§ § § § §", result, glyphKeyword("typus"), encodeBraille(s.nomen), glyphOperator("="), encodeBraille("typusex"), encodeBraille(s.scopusNomen qua textus))
+    }
+
+    redde scriptum("§§ § § §", result, glyphKeyword("typus"), encodeBraille(s.nomen), glyphOperator("="), genTypus(g, s.typus novum TypusAnnotatio))
+}
+
+functio genOrdo(in GlyphGenerator g, de OrdoDeclaratio s) -> textus {
+    varia result = g.ind()
+    fixum anno = glyphPunctuation("@")
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+
+    # Visibility
+    si nonnihil s.visibilitas {
+        elige s.visibilitas qua Visibilitas {
+            casu Visibilitas.Publica { result = result + anno + " " + encodeBraille("publica") + "\n" + g.ind() }
+            casu Visibilitas.Protecta { result = result + anno + " " + encodeBraille("protecta") + "\n" + g.ind() }
+            casu Visibilitas.Privata { result = result + anno + " " + encodeBraille("privata") + "\n" + g.ind() }
+        }
+    }
+
+    result = result + glyphKeyword("ordo") + " " + encodeBraille(s.nomen) + " " + lb
+
+    g.intraProfundum()
+
+    varia members = [] innatum lista<textus>
+    ex (s.membra qua lista<OrdoMembrum>) fixum membrum {
+        si nonnihil membrum.valor {
+            members.appende(scriptum("§§ § §", g.ind(), encodeBraille(membrum.nomen), glyphOperator("="), encodeBraille(membrum.valor qua textus)))
+        } secus {
+            members.appende(g.ind() + encodeBraille(membrum.nomen))
+        }
+    }
+
+    g.exiProfundum()
+
+    si members.longitudo() > 0 {
+        redde scriptum("§\n§\n§§", result, members.coniunge("\n"), g.ind(), rb)
+    }
+
+    redde result + "\n" + g.ind() + rb
+}
+
+functio genDiscretio(in GlyphGenerator g, de DiscretioDeclaratio s) -> textus {
+    varia result = g.ind()
+    fixum anno = glyphPunctuation("@")
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+    fixum comma = glyphPunctuation(",")
+
+    # Visibility
+    si nonnihil s.visibilitas {
+        elige s.visibilitas qua Visibilitas {
+            casu Visibilitas.Publica { result = result + anno + " " + encodeBraille("publica") + "\n" + g.ind() }
+            casu Visibilitas.Protecta { result = result + anno + " " + encodeBraille("protecta") + "\n" + g.ind() }
+            casu Visibilitas.Privata { result = result + anno + " " + encodeBraille("privata") + "\n" + g.ind() }
+        }
+    }
+
+    result = result + glyphKeyword("discretio") + " " + encodeBraille(s.nomen)
+
+    # Generic parameters
+    si nonnihil s.generaParametra {
+        fixum generics = s.generaParametra qua lista<textus>
+        si generics.longitudo() > 0 {
+            varia gparams = [] innatum lista<textus>
+            ex generics fixum gp {
+                gparams.appende(encodeBraille(gp))
+            }
+            result = scriptum("§ § § §", result, glyphKeyword("prae"), encodeBraille("typus"), gparams.coniunge(comma + " "))
+        }
+    }
+
+    result = result + " " + lb
+
+    g.intraProfundum()
+
+    ex (s.variantes qua lista<VariansDeclaratio>) fixum variante {
+        result = result + "\n" + genVariante(g, variante)
+    }
+
+    g.exiProfundum()
+
+    redde scriptum("§\n§§", result, g.ind(), rb)
+}
+
+functio genVariante(in GlyphGenerator g, de VariansDeclaratio v) -> textus {
+    fixum campi = v.campi qua lista<VariansCampus>
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+    fixum comma = glyphPunctuation(",")
+
+    si campi.longitudo() == 0 {
+        redde g.ind() + encodeBraille(v.nomen)
+    }
+
+    varia fields = [] innatum lista<textus>
+    ex campi fixum campo {
+        fields.appende(scriptum("§ §", genTypus(g, campo.typus novum TypusAnnotatio), encodeBraille(campo.nomen)))
+    }
+
+    redde scriptum("§§ § § §", g.ind(), encodeBraille(v.nomen), lb, fields.coniunge(comma + " "), rb)
+}
+
+# =============================================================================
+# CONTROL FLOW
+# =============================================================================
+
+functio genSi(in GlyphGenerator g, de SiSententia s) -> textus {
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+
+    varia result = scriptum("§§ § ", g.ind(), glyphKeyword("si"), genExpressia(g, s.condicio))
+
+    # Consequent
+    discerne s.consequens {
+        casu MassaSententia ut m {
+            g.intraProfundum()
+            fixum body = genMassa(g, m.corpus qua lista<Sententia>)
+            g.exiProfundum()
+            si body == "" {
+                result = result + lb + rb
+            } secus {
+                result = scriptum("§§\n§\n§§", result, lb, body, g.ind(), rb)
+            }
+        }
+        casu _ {
+            result = scriptum("§§ §", result, glyphKeyword("ergo"), genSententia(g, s.consequens))
+        }
+    }
+
+    # Cape clause
+    si nonnihil s.cape {
+        result = result + " " + genCape(g, s.cape novum CapeClausula)
+    }
+
+    # Alternans
+    si nonnihil s.alternans {
+        discerne s.alternans qua Sententia {
+            casu SiSententia ut alt {
+                result = result + " " + glyphKeyword("sin") + genSi(g, alt).sectio(g.ind().longitudo() + glyphKeyword("si").longitudo(), -1)
+            }
+            casu MassaSententia ut m {
+                g.intraProfundum()
+                fixum body = genMassa(g, m.corpus qua lista<Sententia>)
+                g.exiProfundum()
+                si body == "" {
+                    result = result + " " + glyphKeyword("secus") + " " + lb + rb
+                } secus {
+                    result = scriptum("§ § §\n§\n§§", result, glyphKeyword("secus"), lb, body, g.ind(), rb)
+                }
+            }
+            casu _ tacet
+        }
+    }
+
+    redde result
+}
+
+functio genDum(in GlyphGenerator g, de DumSententia s) -> textus {
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+
+    g.intraProfundum()
+    fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    varia result = ""
+    si body == "" {
+        result = scriptum("§§ § §§", g.ind(), glyphKeyword("dum"), genExpressia(g, s.condicio), lb, rb)
+    } secus {
+        result = scriptum("§§ § §\n§\n§§", g.ind(), glyphKeyword("dum"), genExpressia(g, s.condicio), lb, body, g.ind(), rb)
+    }
+
+    si nonnihil s.cape {
+        result = result + " " + genCape(g, s.cape novum CapeClausula)
+    }
+
+    redde result
+}
+
+functio genIteratio(in GlyphGenerator g, de IteratioSententia s) -> textus {
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+    fixum lbr = glyphDelimiter("[")
+    fixum rbr = glyphDelimiter("]")
+    fixum comma = glyphPunctuation(",")
+
+    fixum prepo = ((s.species qua IteratioGenus) == IteratioGenus.Ex) sic glyphKeyword("ex") secus glyphKeyword("de")
+    fixum keyword = (s.mutabilis qua bivalens) sic glyphKeyword("varia") secus glyphKeyword("fixum")
+    fixum asyncMark = (s.asynca qua bivalens) sic (glyphKeyword("cede") + " ") secus ""
+
+    # Variable binding
+    varia binding = ""
+    discerne s.variabilis {
+        casu Nomen ut n { binding = encodeBraille(n.valor) }
+        casu Series ut ser {
+            varia elems = [] innatum lista<textus>
+            ex (ser.elementa qua lista<SeriesDestructuraElementum>) fixum elem {
+                si elem.omissum qua bivalens {
+                    elems.appende("_")
+                } sin elem.residuum qua bivalens {
+                    elems.appende(scriptum("§ §", glyphKeyword("ceteri"), encodeBraille(elem.nomen vel "")))
+                } secus {
+                    elems.appende(encodeBraille(elem.nomen vel "_"))
+                }
+            }
+            binding = scriptum("§§§", lbr, elems.coniunge(comma + " "), rbr)
+        }
+    }
+
+    g.intraProfundum()
+    fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    varia result = ""
+    si body == "" {
+        result = scriptum("§§ §§ § § §§", g.ind(), prepo, asyncMark, genExpressia(g, s.iterabile), keyword, binding, lb, rb)
+    } secus {
+        result = scriptum("§§ §§ § § §\n§\n§§", g.ind(), prepo, asyncMark, genExpressia(g, s.iterabile), keyword, binding, lb, body, g.ind(), rb)
+    }
+
+    si nonnihil s.cape {
+        result = result + " " + genCape(g, s.cape novum CapeClausula)
+    }
+
+    redde result
+}
+
+functio genElige(in GlyphGenerator g, de EligeSententia s) -> textus {
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+
+    varia result = scriptum("§§ § §", g.ind(), glyphKeyword("elige"), genExpressia(g, s.discriminans), lb)
+
+    g.intraProfundum()
+
+    ex (s.casus qua lista<EligeCasus>) fixum caso {
+        g.intraProfundum()
+        fixum body = genMassa(g, (caso.consequens novum MassaSententia).corpus qua lista<Sententia>)
+        g.exiProfundum()
+
+        si body == "" {
+            result = scriptum("§\n§§ § §§", result, g.ind(), glyphKeyword("casu"), genExpressia(g, caso.condicio), lb, rb)
+        } secus {
+            result = scriptum("§\n§§ § §\n§\n§§", result, g.ind(), glyphKeyword("casu"), genExpressia(g, caso.condicio), lb, body, g.ind(), rb)
+        }
+    }
+
+    si nonnihil s.praedefinitum {
+        g.intraProfundum()
+        fixum body = genMassa(g, (s.praedefinitum novum MassaSententia).corpus qua lista<Sententia>)
+        g.exiProfundum()
+
+        si body == "" {
+            result = scriptum("§\n§§ §§", result, g.ind(), glyphKeyword("ceterum"), lb, rb)
+        } secus {
+            result = scriptum("§\n§§ §\n§\n§§", result, g.ind(), glyphKeyword("ceterum"), lb, body, g.ind(), rb)
+        }
+    }
+
+    g.exiProfundum()
+
+    si nonnihil s.cape {
+        redde scriptum("§\n§§ §", result, g.ind(), rb, genCape(g, s.cape novum CapeClausula))
+    }
+
+    redde scriptum("§\n§§", result, g.ind(), rb)
+}
+
+functio genDiscerne(in GlyphGenerator g, de DiscerneSententia s) -> textus {
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+    fixum comma = glyphPunctuation(",")
+
+    varia discriminantes = [] innatum lista<textus>
+    ex (s.discriminantes qua lista<Expressia>) fixum d {
+        discriminantes.appende(genExpressia(g, d))
+    }
+
+    fixum exhaustiva = (s.exhaustiva qua bivalens) sic (glyphKeyword("omnia") + " ") secus ""
+    varia result = scriptum("§§ §§ §", g.ind(), glyphKeyword("discerne"), exhaustiva, discriminantes.coniunge(comma + " "), lb)
+
+    g.intraProfundum()
+
+    ex (s.casus qua lista<VariansCasus>) fixum caso {
+        result = result + "\n" + genVariansCasus(g, caso)
+    }
+
+    g.exiProfundum()
+
+    redde scriptum("§\n§§", result, g.ind(), rb)
+}
+
+functio genVariansCasus(in GlyphGenerator g, de VariansCasus caso) -> textus {
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+    fixum comma = glyphPunctuation(",")
+
+    varia patterns = [] innatum lista<textus>
+    ex (caso.exemplaria qua lista<VariansExemplar>) fixum ex {
+        patterns.appende(genVariansExemplar(g, ex))
+    }
+
+    g.intraProfundum()
+    fixum body = genMassa(g, (caso.consequens novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    si body == "" {
+        redde scriptum("§§ § §§", g.ind(), glyphKeyword("casu"), patterns.coniunge(comma + " "), lb, rb)
+    }
+
+    redde scriptum("§§ § §\n§\n§§", g.ind(), glyphKeyword("casu"), patterns.coniunge(comma + " "), lb, body, g.ind(), rb)
+}
+
+functio genVariansExemplar(in GlyphGenerator g, de VariansExemplar ex) -> textus {
+    si ex.estWildcard qua bivalens {
+        redde "_"
+    }
+
+    fixum comma = glyphPunctuation(",")
+    varia result = encodeBraille(ex.variansNomen qua textus)
+
+    si nonnihil ex.alias {
+        result = scriptum("§ § §", result, glyphKeyword("ut"), encodeBraille(ex.alias qua textus))
+    }
+
+    si (ex.vincula qua lista<textus>).longitudo() > 0 {
+        varia vincs = [] innatum lista<textus>
+        ex (ex.vincula qua lista<textus>) fixum v {
+            vincs.appende(encodeBraille(v))
+        }
+        result = scriptum("§ § §", result, glyphKeyword("pro"), vincs.coniunge(comma + " "))
+    }
+
+    redde result
+}
+
+functio genCustodi(in GlyphGenerator g, de CustodiSententia s) -> textus {
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+
+    varia result = scriptum("§§ §", g.ind(), glyphKeyword("custodi"), lb)
+
+    g.intraProfundum()
+
+    ex (s.clausulae qua lista<CustodiClausula>) fixum clausula {
+        g.intraProfundum()
+        fixum body = genMassa(g, (clausula.consequens novum MassaSententia).corpus qua lista<Sententia>)
+        g.exiProfundum()
+
+        si body == "" {
+            result = scriptum("§\n§§ § §§", result, g.ind(), glyphKeyword("si"), genExpressia(g, clausula.condicio), lb, rb)
+        } secus {
+            result = scriptum("§\n§§ § §\n§\n§§", result, g.ind(), glyphKeyword("si"), genExpressia(g, clausula.condicio), lb, body, g.ind(), rb)
+        }
+    }
+
+    g.exiProfundum()
+
+    redde scriptum("§\n§§", result, g.ind(), rb)
+}
+
+# =============================================================================
+# ERROR HANDLING
+# =============================================================================
+
+functio genTempta(in GlyphGenerator g, de TemptaSententia s) -> textus {
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+
+    g.intraProfundum()
+    fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    varia result = ""
+    si body == "" {
+        result = scriptum("§§ §§", g.ind(), glyphKeyword("tempta"), lb, rb)
+    } secus {
+        result = scriptum("§§ §\n§\n§§", g.ind(), glyphKeyword("tempta"), lb, body, g.ind(), rb)
+    }
+
+    si nonnihil s.cape {
+        result = result + " " + genCape(g, s.cape novum CapeClausula)
+    }
+
+    si nonnihil s.demum {
+        g.intraProfundum()
+        fixum demumBody = genMassa(g, (s.demum novum MassaSententia).corpus qua lista<Sententia>)
+        g.exiProfundum()
+
+        si demumBody == "" {
+            result = result + " " + glyphKeyword("demum") + " " + lb + rb
+        } secus {
+            result = scriptum("§ § §\n§\n§§", result, glyphKeyword("demum"), lb, demumBody, g.ind(), rb)
+        }
+    }
+
+    redde result
+}
+
+functio genCape(in GlyphGenerator g, de CapeClausula cape) -> textus {
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+
+    g.intraProfundum()
+    fixum body = genMassa(g, (cape.corpus novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    si body == "" {
+        redde scriptum("§ § §§", glyphKeyword("cape"), encodeBraille(cape.param), lb, rb)
+    }
+
+    redde scriptum("§ § §\n§\n§§", glyphKeyword("cape"), encodeBraille(cape.param), lb, body, g.ind(), rb)
+}
+
+functio genIace(in GlyphGenerator g, de IaceSententia s) -> textus {
+    fixum keyword = (s.fatale qua bivalens) sic glyphKeyword("mori") secus glyphKeyword("iace")
+    redde scriptum("§§ §", g.ind(), keyword, genExpressia(g, s.argumentum))
+}
+
+functio genFac(in GlyphGenerator g, de FacSententia s) -> textus {
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+
+    g.intraProfundum()
+    fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    varia result = ""
+    si body == "" {
+        result = scriptum("§§ §§", g.ind(), glyphKeyword("fac"), lb, rb)
+    } secus {
+        result = scriptum("§§ §\n§\n§§", g.ind(), glyphKeyword("fac"), lb, body, g.ind(), rb)
+    }
+
+    si nonnihil s.cape {
+        result = result + " " + genCape(g, s.cape novum CapeClausula)
+    }
+
+    si nonnihil s.condicio {
+        result = scriptum("§ § §", result, glyphKeyword("dum"), genExpressia(g, s.condicio qua Expressia))
+    }
+
+    redde result
+}
+
+functio genAdfirma(in GlyphGenerator g, de AdfirmaSententia s) -> textus {
+    fixum comma = glyphPunctuation(",")
+    varia result = scriptum("§§ §", g.ind(), glyphKeyword("adfirma"), genExpressia(g, s.condicio))
+
+    si nonnihil s.nuntius {
+        result = scriptum("§§ §", result, comma, genExpressia(g, s.nuntius qua Expressia))
+    }
+
+    redde result
+}
+
+# =============================================================================
+# ACTIONS
+# =============================================================================
+
+functio genScribe(in GlyphGenerator g, de ScribeSententia s) -> textus {
+    varia keyword = ""
+    elige s.gradus qua ScribeGradus {
+        casu ScribeGradus.Scribe { keyword = glyphKeyword("scribe") }
+        casu ScribeGradus.Vide { keyword = glyphKeyword("vide") }
+        casu ScribeGradus.Mone { keyword = glyphKeyword("mone") }
+    }
+
+    fixum comma = glyphPunctuation(",")
+    varia args = [] innatum lista<textus>
+    ex (s.argumenta qua lista<Expressia>) fixum arg {
+        args.appende(genExpressia(g, arg))
+    }
+
+    redde scriptum("§§ §", g.ind(), keyword, args.coniunge(comma + " "))
+}
+
+functio genIncipit(in GlyphGenerator g, de IncipitSententia s) -> textus {
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+
+    varia result = g.ind() + glyphKeyword("incipit")
+
+    si nonnihil s.argumenta {
+        result = scriptum("§ § §", result, encodeBraille("argumenta"), encodeBraille(s.argumenta qua textus))
+    }
+
+    si nonnihil s.ergo {
+        result = scriptum("§ § §", result, glyphKeyword("ergo"), genSententia(g, s.ergo qua Sententia).sectio(g.ind().longitudo(), -1))
+    } sin nonnihil s.corpus {
+        g.intraProfundum()
+        fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+        g.exiProfundum()
+
+        si body == "" {
+            result = result + " " + lb + rb
+        } secus {
+            result = scriptum("§ §\n§\n§§", result, lb, body, g.ind(), rb)
+        }
+    }
+
+    redde result
+}
+
+functio genIncipiet(in GlyphGenerator g, de IncipietSententia s) -> textus {
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+
+    varia result = g.ind() + glyphKeyword("incipiet")
+
+    si nonnihil s.argumenta {
+        result = scriptum("§ § §", result, encodeBraille("argumenta"), encodeBraille(s.argumenta qua textus))
+    }
+
+    si nonnihil s.ergo {
+        result = scriptum("§ § §", result, glyphKeyword("ergo"), genSententia(g, s.ergo qua Sententia).sectio(g.ind().longitudo(), -1))
+    } sin nonnihil s.corpus {
+        g.intraProfundum()
+        fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+        g.exiProfundum()
+
+        si body == "" {
+            result = result + " " + lb + rb
+        } secus {
+            result = scriptum("§ §\n§\n§§", result, lb, body, g.ind(), rb)
+        }
+    }
+
+    redde result
+}
+
+functio genCura(in GlyphGenerator g, de CuraSententia s) -> textus {
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+
+    varia result = g.ind() + glyphKeyword("cura") + " "
+
+    # Curator species
+    si nonnihil s.curatorSpecies {
+        elige s.curatorSpecies qua CuratorGenus {
+            casu CuratorGenus.Arena { result = result + glyphKeyword("arena") + " " }
+            casu CuratorGenus.Pagina { result = result + glyphKeyword("pagina") + " " }
+        }
+    }
+
+    # Resource expression
+    si nonnihil s.res {
+        result = result + genExpressia(g, s.res qua Expressia) + " "
+    }
+
+    # Binding
+    fixum keyword = (s.mutabilis qua bivalens) sic glyphKeyword("varia") secus glyphKeyword("fixum")
+    fixum asyncMark = (s.asynca qua bivalens) sic (glyphKeyword("cede") + " ") secus ""
+    result = scriptum("§§§ §", result, asyncMark, keyword, encodeBraille(s.vinculum))
+
+    # Type
+    si nonnihil s.typus {
+        result = result + " " + genTypus(g, s.typus novum TypusAnnotatio)
+    }
+
+    # Body
+    g.intraProfundum()
+    fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    si body == "" {
+        result = result + " " + lb + rb
+    } secus {
+        result = scriptum("§ §\n§\n§§", result, lb, body, g.ind(), rb)
+    }
+
+    si nonnihil s.cape {
+        result = result + " " + genCape(g, s.cape novum CapeClausula)
+    }
+
+    redde result
+}
+
+functio genAd(in GlyphGenerator g, de AdSententia s) -> textus {
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+    fixum lp = glyphDelimiter("(")
+    fixum rp = glyphDelimiter(")")
+    fixum quote = glyphDelimiter("\"")
+    fixum comma = glyphPunctuation(",")
+
+    varia result = scriptum("§§ §§§", g.ind(), encodeBraille("ad"), quote, encodeBraille(s.scopus), quote)
+
+    # Arguments
+    varia args = [] innatum lista<textus>
+    ex (s.argumenta qua lista<Expressia>) fixum arg {
+        args.appende(genExpressia(g, arg))
+    }
+    si args.longitudo() > 0 {
+        result = scriptum("§ §§§", result, lp, args.coniunge(comma + " "), rp)
+    }
+
+    # Binding
+    si nonnihil s.vinculum {
+        fixum v = s.vinculum novum AdVinculum
+        varia verbum = ""
+        elige v.verbum qua AdVerbumVinculandi {
+            casu AdVerbumVinculandi.Fit { verbum = glyphKeyword("fit") }
+            casu AdVerbumVinculandi.Fiet { verbum = glyphKeyword("fiet") }
+            casu AdVerbumVinculandi.Fiunt { verbum = glyphKeyword("fiunt") }
+            casu AdVerbumVinculandi.Fient { verbum = glyphKeyword("fient") }
+        }
+
+        si nonnihil v.typus {
+            result = scriptum("§ § § § §", result, verbum, genTypus(g, v.typus novum TypusAnnotatio), glyphKeyword("pro"), encodeBraille(v.nomen))
+        } secus {
+            result = scriptum("§ § § §", result, verbum, glyphKeyword("pro"), encodeBraille(v.nomen))
+        }
+
+        si nonnihil v.alias {
+            result = scriptum("§ § §", result, glyphKeyword("ut"), encodeBraille(v.alias qua textus))
+        }
+    }
+
+    # Body
+    si nonnihil s.corpus {
+        g.intraProfundum()
+        fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+        g.exiProfundum()
+
+        si body == "" {
+            result = result + " " + lb + rb
+        } secus {
+            result = scriptum("§ §\n§\n§§", result, lb, body, g.ind(), rb)
+        }
+    }
+
+    si nonnihil s.cape {
+        result = result + " " + genCape(g, s.cape novum CapeClausula)
+    }
+
+    redde result
+}
+
+# =============================================================================
+# TESTS
+# =============================================================================
+
+functio genProbandum(in GlyphGenerator g, de ProbandumSententia s) -> textus {
+    varia result = g.ind()
+    fixum anno = glyphPunctuation("@")
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+    fixum quote = glyphDelimiter("\"")
+
+    # Annotations
+    si nonnihil s.ompitur et s.ompitur qua bivalens {
+        si nonnihil s.ratioOmissionis {
+            result = scriptum("§§ § §§§\n§", result, anno, glyphKeyword("omitte"), quote, encodeBraille(s.ratioOmissionis qua textus), quote, g.ind())
+        } secus {
+            result = result + anno + " " + glyphKeyword("omitte") + "\n" + g.ind()
+        }
+    }
+
+    si nonnihil s.solum et s.solum qua bivalens {
+        result = result + anno + " " + encodeBraille("solum") + "\n" + g.ind()
+    }
+
+    si nonnihil s.tags {
+        ex (s.tags qua lista<textus>) fixum tag {
+            result = scriptum("§§ § §§§\n§", result, anno, encodeBraille("tag"), quote, encodeBraille(tag), quote, g.ind())
+        }
+    }
+
+    result = scriptum("§§ §§§ §", result, glyphKeyword("probandum"), quote, encodeBraille(s.nomen), quote, lb)
+
+    g.intraProfundum()
+
+    ex (s.corpus qua lista<Sententia>) fixum stmt {
+        result = result + "\n" + genSententia(g, stmt)
+    }
+
+    g.exiProfundum()
+
+    redde scriptum("§\n§§", result, g.ind(), rb)
+}
+
+functio genProba(in GlyphGenerator g, de ProbaSententia s) -> textus {
+    varia result = g.ind()
+    fixum anno = glyphPunctuation("@")
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+    fixum quote = glyphDelimiter("\"")
+
+    # Annotations
+    si nonnihil s.modificator {
+        elige s.modificator qua ProbaModificator {
+            casu ProbaModificator.Omitte {
+                si nonnihil s.ratioModificatoris {
+                    result = scriptum("§§ § §§§\n§", result, anno, glyphKeyword("omitte"), quote, encodeBraille(s.ratioModificatoris qua textus), quote, g.ind())
+                } secus {
+                    result = result + anno + " " + glyphKeyword("omitte") + "\n" + g.ind()
+                }
+            }
+            casu ProbaModificator.Futurum {
+                si nonnihil s.ratioModificatoris {
+                    result = scriptum("§§ § §§§\n§", result, anno, encodeBraille("futurum"), quote, encodeBraille(s.ratioModificatoris qua textus), quote, g.ind())
+                } secus {
+                    result = result + anno + " " + encodeBraille("futurum") + "\n" + g.ind()
+                }
+            }
+        }
+    }
+
+    si nonnihil s.solum et s.solum qua bivalens {
+        result = result + anno + " " + encodeBraille("solum") + "\n" + g.ind()
+    }
+
+    si nonnihil s.tags {
+        ex (s.tags qua lista<textus>) fixum tag {
+            result = scriptum("§§ § §§§\n§", result, anno, encodeBraille("tag"), quote, encodeBraille(tag), quote, g.ind())
+        }
+    }
+
+    si nonnihil s.temporis {
+        result = scriptum("§§ § §\n§", result, anno, encodeBraille("temporis"), encodeBraille(s.temporis qua textus), g.ind())
+    }
+
+    si nonnihil s.metior et s.metior qua bivalens {
+        result = result + anno + " " + encodeBraille("metior") + "\n" + g.ind()
+    }
+
+    si nonnihil s.repete {
+        result = scriptum("§§ § §\n§", result, anno, encodeBraille("repete"), encodeBraille(s.repete qua textus), g.ind())
+    }
+
+    si nonnihil s.fragilis {
+        result = scriptum("§§ § §\n§", result, anno, encodeBraille("fragilis"), encodeBraille(s.fragilis qua textus), g.ind())
+    }
+
+    si nonnihil s.requirit {
+        result = scriptum("§§ § §§§\n§", result, anno, encodeBraille("requirit"), quote, encodeBraille(s.requirit qua textus), quote, g.ind())
+    }
+
+    si nonnihil s.solumIn {
+        result = scriptum("§§ § §§§\n§", result, anno, encodeBraille("solum_in"), quote, encodeBraille(s.solumIn qua textus), quote, g.ind())
+    }
+
+    result = scriptum("§§ §§§", result, glyphKeyword("proba"), quote, encodeBraille(s.nomen), quote)
+
+    g.intraProfundum()
+    fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    si body == "" {
+        redde result + " " + lb + rb
+    }
+
+    redde scriptum("§ §\n§\n§§", result, lb, body, g.ind(), rb)
+}
+
+functio genPraepara(in GlyphGenerator g, de PraeparaMassa s) -> textus {
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+
+    varia keyword = ((s.tempus qua PraeparaTempus) == PraeparaTempus.Praepara) sic glyphKeyword("praepara") secus glyphKeyword("postpara")
+
+    si s.omnia qua bivalens {
+        keyword = keyword + " " + glyphKeyword("omnia")
+    }
+
+    si s.asynca qua bivalens {
+        keyword = keyword + " " + glyphKeyword("futura")
+    }
+
+    g.intraProfundum()
+    fixum body = genMassa(g, (s.corpus novum MassaSententia).corpus qua lista<Sententia>)
+    g.exiProfundum()
+
+    si body == "" {
+        redde scriptum("§§ §§", g.ind(), keyword, lb, rb)
+    }
+
+    redde scriptum("§§ §\n§\n§§", g.ind(), keyword, lb, body, g.ind(), rb)
+}

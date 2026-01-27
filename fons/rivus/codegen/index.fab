@@ -18,6 +18,8 @@
 § ex "./validitor" importa validatioSuccessit, ValidatioError
 § ex "./ts/index" importa generateTs, generateTsWithTests, generateTsWithOptions
 § ex "./go/index" importa generateGo
+§ ex "./faber/index" importa generateFaber
+§ ex "./glyph/index" importa generateGlyph
 
 # =============================================================================
 # PUBLIC API
@@ -53,8 +55,22 @@ functio generateWithStripping(de lista<Sententia> corpus, de textus target, biva
 
     elige target {
         casu "ts" { redde generateTsWithOptions(corpus, stripTests, stripComments, viaFons) }
+        casu "faber" {
+            si stripComments {
+                § ex "./faber/index" importa generateFaberStripComments
+                redde generateFaberStripComments(corpus)
+            }
+            redde generateFaber(corpus)
+        }
+        casu "glyph" {
+            si stripComments {
+                § ex "./glyph/index" importa generateGlyphStripComments
+                redde generateGlyphStripComments(corpus)
+            }
+            redde generateGlyph(corpus)
+        }
         ceterum {
-            mori scriptum("Stripping not supported for target '§'. Only 'ts' is supported.", target)
+            mori scriptum("Stripping not supported for target '§'. Supported: ts, faber, glyph", target)
         }
     }
 }
@@ -74,8 +90,10 @@ functio generateWithPolicy(de lista<Sententia> corpus, de textus target, de Vali
     elige target {
         casu "ts" { redde generateTs(corpus, viaFons) }
         casu "go" { redde generateGo(corpus) }
+        casu "faber" { redde generateFaber(corpus) }
+        casu "glyph" { redde generateGlyph(corpus) }
         ceterum {
-            mori scriptum("Unknown target '§'. Supported: ts, go", target)
+            mori scriptum("Unknown target '§'. Supported: ts, go, faber, glyph", target)
         }
     }
 }

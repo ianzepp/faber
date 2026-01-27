@@ -1,0 +1,48 @@
+# Glyph Type Generator - Type annotation to glyph serialization
+#
+# Converts type annotations to glyph representation.
+
+§ ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum, Typus
+§ ex "./nucleus" importa GlyphGenerator
+§ ex "./lexicon" importa glyphKeyword, glyphDelimiter, encodeBraille
+
+# =============================================================================
+# TYPE GENERATION
+# =============================================================================
+
+@ publica
+functio genTypus(in GlyphGenerator g, de TypusAnnotatio typ) -> textus {
+    varia result = ""
+
+    # Handle optional (si) prefix
+    si typ.optionalis qua bivalens {
+        result = glyphKeyword("si") + " "
+    }
+
+    # Type name as braille
+    result = result + encodeBraille(typ.nomen qua textus)
+
+    # Handle type parameters
+    si nonnihil typ.typusParametra {
+        fixum params = typ.typusParametra qua lista<TypusParametrum>
+        si params.longitudo() > 0 {
+            varia paramTexti = [] innatum lista<textus>
+            ex params fixum param {
+                discerne param {
+                    casu Typus ut t {
+                        paramTexti.appende(genTypus(g, t.adnotatio))
+                    }
+                    casu _ {
+                        paramTexti.appende(encodeBraille("ignotum"))
+                    }
+                }
+            }
+            fixum comma = glyphPunctuation(",")
+            result = scriptum("§§§ §", result, glyphDelimiter("<"), paramTexti.coniunge(comma + " "), glyphDelimiter(">"))
+        }
+    }
+
+    redde result
+}
+
+§ ex "./lexicon" importa glyphPunctuation

@@ -1,0 +1,452 @@
+# Glyph Expression Generator - AST to glyph serialization
+#
+# Routes expression AST nodes to their Unicode glyph representation.
+
+§ ex "../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas
+§ ex "../../ast/expressia" importa ClausuraParametrum, ClausuraCorpus
+§ ex "../../ast/expressia" importa AbFiltrum, CatenaGradus
+§ ex "../../ast/typus" importa TypusAnnotatio
+§ ex "../../ast/sententia" importa Sententia
+§ ex "./nucleus" importa GlyphGenerator
+§ ex "./typus" importa genTypus
+§ ex "./lexicon" importa glyphKeyword, glyphOperator, glyphDelimiter, glyphPunctuation, encodeBraille
+
+# =============================================================================
+# EXPRESSION DISPATCH
+# =============================================================================
+
+@ publica
+functio genExpressia(in GlyphGenerator g, de Expressia expr) -> textus {
+    discerne expr {
+        # Identifiers
+        casu Nomen ut e {
+            redde encodeBraille(e.valor qua textus)
+        }
+
+        casu EgoExpressia {
+            redde glyphKeyword("ego")
+        }
+
+        # Literals
+        casu Littera ut e {
+            redde genLittera(e.species qua LitteraGenus, e.crudus qua textus)
+        }
+
+        casu LitteraExemplar ut e {
+            redde genLitteraExemplar(g, e.partes qua lista<textus>, e.expressiae qua lista<Expressia>)
+        }
+
+        casu LitteraRegex ut e {
+            # sed "pattern" -> braille-encoded pattern in quotes
+            fixum quote = glyphDelimiter("\"")
+            redde scriptum("§ §§§", encodeBraille("sed"), quote, encodeBraille(e.forma), quote)
+        }
+
+        # Binary and unary
+        casu BinariaExpressia ut e {
+            fixum sinister = genExpressia(g, e.sinister)
+            fixum dexter = genExpressia(g, e.dexter)
+            fixum signum = translateOperator(e.signum qua textus)
+            fixum lp = glyphDelimiter("(")
+            fixum rp = glyphDelimiter(")")
+            redde scriptum("§ § § § §", lp, sinister, signum, dexter, rp)
+        }
+
+        casu UnariaExpressia ut e {
+            fixum arg = genExpressia(g, e.argumentum)
+            fixum signum = translateOperator(e.signum qua textus)
+            redde scriptum("§ §", signum, arg)
+        }
+
+        casu AssignatioExpressia ut e {
+            fixum sinister = genExpressia(g, e.sinister)
+            fixum dexter = genExpressia(g, e.dexter)
+            fixum signum = glyphOperator(e.signum qua textus)
+            redde scriptum("§ § §", sinister, signum, dexter)
+        }
+
+        casu CondicioExpressia ut e {
+            fixum cond = genExpressia(g, e.condicio)
+            fixum cons = genExpressia(g, e.consequens)
+            fixum alt = genExpressia(g, e.alternans)
+            redde scriptum("§ § § § §", cond, glyphKeyword("sic"), cons, glyphKeyword("secus"), alt)
+        }
+
+        casu TranslatioExpressia ut e {
+            fixum expr = genExpressia(g, e.expressia)
+            fixum quant = genExpressia(g, e.quantitas)
+            fixum dir = glyphKeyword(e.directio qua textus)
+            redde scriptum("§ § §", expr, dir, quant)
+        }
+
+        casu AmbitusExpressia ut e {
+            fixum init = genExpressia(g, e.initium)
+            fixum fin = genExpressia(g, e.finis)
+            fixum op = (e.inclusivum qua bivalens) sic glyphKeyword("usque") secus glyphKeyword("ante")
+            si nonnihil e.gradus {
+                fixum step = genExpressia(g, e.gradus qua Expressia)
+                redde scriptum("§ § § § §", init, op, fin, glyphKeyword("per"), step)
+            }
+            redde scriptum("§ § §", init, op, fin)
+        }
+
+        casu QuaExpressia ut e {
+            fixum expr = genExpressia(g, e.expressia)
+            fixum typus = genTypus(g, e.scopus novum TypusAnnotatio)
+            redde scriptum("§ § §", expr, glyphKeyword("qua"), typus)
+        }
+
+        casu InnatumExpressia ut e {
+            fixum expr = genExpressia(g, e.expressia)
+            fixum typus = genTypus(g, e.scopus novum TypusAnnotatio)
+            redde scriptum("§ § §", expr, glyphKeyword("innatum"), typus)
+        }
+
+        casu PostfixNovumExpressia ut e {
+            fixum expr = genExpressia(g, e.expressia)
+            fixum typus = genTypus(g, e.scopus novum TypusAnnotatio)
+            redde scriptum("§ § §", expr, glyphKeyword("novum"), typus)
+        }
+
+        casu EstExpressia ut e {
+            fixum expr = genExpressia(g, e.expressia)
+            fixum typus = genTypus(g, e.scopus novum TypusAnnotatio)
+            redde scriptum("§ § §", expr, glyphKeyword("est"), typus)
+        }
+
+        casu PraefixumExpressia ut e {
+            discerne e.corpus {
+                casu Massa ut m {
+                    discerne m.valor {
+                        casu MassaSententia ut body {
+                            § ex "./sententia" importa genMassa
+                            g.intraProfundum()
+                            fixum rendered = genMassa(g, body.corpus qua lista<Sententia>)
+                            g.exiProfundum()
+                            fixum lb = glyphDelimiter("{")
+                            fixum rb = glyphDelimiter("}")
+                            redde scriptum("§ §\n§\n§§", encodeBraille("praefixum"), lb, rendered, g.ind(), rb)
+                        }
+                        casu _ tacet
+                    }
+                }
+                casu Expr ut expr {
+                    fixum lp = glyphDelimiter("(")
+                    fixum rp = glyphDelimiter(")")
+                    redde scriptum("§ §§§", encodeBraille("praefixum"), lp, genExpressia(g, expr.valor), rp)
+                }
+            }
+            redde encodeBraille("praefixum") + " " + glyphDelimiter("{") + glyphDelimiter("}")
+        }
+
+        # Calls and member access
+        casu VocatioExpressia ut e {
+            varia args = [] innatum lista<textus>
+            ex (e.argumenta qua lista<Expressia>) fixum arg {
+                args.appende(genExpressia(g, arg))
+            }
+            fixum vocatum = genExpressia(g, e.vocatum)
+            fixum optMark = (e.optivum qua bivalens) sic (glyphPunctuation("?") + glyphPunctuation(".")) secus ""
+            fixum lp = glyphDelimiter("(")
+            fixum rp = glyphDelimiter(")")
+            fixum comma = glyphPunctuation(",")
+            redde scriptum("§§§ § §", vocatum, optMark, lp, args.coniunge(comma + " "), rp)
+        }
+
+        casu MembrumExpressia ut e {
+            fixum obj = genExpressia(g, e.obiectum)
+            fixum lb = glyphDelimiter("[")
+            fixum rb = glyphDelimiter("]")
+            si e.computatum qua bivalens {
+                fixum prop = genExpressia(g, e.proprietas)
+                si e.optivum qua bivalens {
+                    redde scriptum("§§§§§", obj, glyphPunctuation("?"), lb, prop, rb)
+                }
+                si e.nonNullum qua bivalens {
+                    redde scriptum("§§§§§", obj, glyphPunctuation("!"), lb, prop, rb)
+                }
+                redde scriptum("§§§§", obj, lb, prop, rb)
+            }
+            fixum prop = genExpressia(g, e.proprietas)
+            fixum dot = glyphPunctuation(".")
+            si e.optivum qua bivalens {
+                redde scriptum("§§§§", obj, glyphPunctuation("?"), dot, prop)
+            }
+            si e.nonNullum qua bivalens {
+                redde scriptum("§§§§", obj, glyphPunctuation("!"), dot, prop)
+            }
+            redde scriptum("§§§", obj, dot, prop)
+        }
+
+        casu NovumExpressia ut e {
+            varia args = [] innatum lista<textus>
+            ex (e.argumenta qua lista<Expressia>) fixum arg {
+                args.appende(genExpressia(g, arg))
+            }
+            fixum vocatum = genExpressia(g, e.vocatum)
+            fixum lb = glyphDelimiter("{")
+            fixum rb = glyphDelimiter("}")
+            si nonnihil e.initor {
+                args.appende(scriptum("§ §", glyphKeyword("de"), genExpressia(g, e.initor qua Expressia)))
+            }
+            fixum comma = glyphPunctuation(",")
+            si args.longitudo() > 0 {
+                redde scriptum("§ § § § §", glyphKeyword("novum"), vocatum, lb, args.coniunge(comma + " "), rb)
+            }
+            redde scriptum("§ §", glyphKeyword("novum"), vocatum)
+        }
+
+        casu CedeExpressia ut e {
+            redde scriptum("§ §", glyphKeyword("cede"), genExpressia(g, e.argumentum))
+        }
+
+        casu ScriptumExpressia ut e {
+            varia args = [] innatum lista<textus>
+            ex (e.argumenta qua lista<Expressia>) fixum arg {
+                args.appende(genExpressia(g, arg))
+            }
+            fixum quote = glyphDelimiter("\"")
+            fixum lp = glyphDelimiter("(")
+            fixum rp = glyphDelimiter(")")
+            fixum comma = glyphPunctuation(",")
+            si args.longitudo() > 0 {
+                redde scriptum("§§§§§§ §§", encodeBraille("scriptum"), lp, quote, encodeBraille(e.exemplar), quote, comma, args.coniunge(comma + " "), rp)
+            }
+            redde scriptum("§§§§§§", encodeBraille("scriptum"), lp, quote, encodeBraille(e.exemplar), quote, rp)
+        }
+
+        casu LegeExpressia ut e {
+            si (e.modus qua textus) == "line" {
+                redde glyphKeyword("lege") + " " + glyphKeyword("lineam")
+            }
+            redde glyphKeyword("lege")
+        }
+
+        casu AbExpressia ut e {
+            redde genAbExpressia(g, e)
+        }
+
+        # Collections
+        casu SeriesExpressia ut e {
+            varia items = [] innatum lista<textus>
+            ex (e.elementa qua lista<Expressia>) fixum elem {
+                items.appende(genExpressia(g, elem))
+            }
+            fixum lb = glyphDelimiter("[")
+            fixum rb = glyphDelimiter("]")
+            fixum comma = glyphPunctuation(",")
+            redde scriptum("§ § §", lb, items.coniunge(comma + " "), rb)
+        }
+
+        casu ObiectumExpressia ut e {
+            redde genObiectum(g, e.proprietates qua lista<ObiectumProprietas>)
+        }
+
+        casu DispersioElementum ut e {
+            redde scriptum("§ §", glyphKeyword("sparge"), genExpressia(g, e.argumentum))
+        }
+
+        # Clausura
+        casu ClausuraExpressia ut e {
+            varia params = [] innatum lista<textus>
+            ex (e.parametra qua lista<ClausuraParametrum>) fixum p {
+                si nonnihil p.typus {
+                    params.appende(scriptum("§ §", genTypus(g, p.typus novum TypusAnnotatio), encodeBraille(p.nomen)))
+                } secus {
+                    params.appende(encodeBraille(p.nomen))
+                }
+            }
+            varia retType = ""
+            si nonnihil e.typusReditus {
+                retType = scriptum(" § §", glyphOperator("->"), genTypus(g, e.typusReditus novum TypusAnnotatio))
+            }
+            fixum comma = glyphPunctuation(",")
+            fixum colon = glyphPunctuation(":")
+            discerne e.corpus {
+                casu Massa ut m {
+                    discerne m.valor {
+                        casu MassaSententia ut body {
+                            § ex "./sententia" importa genMassa
+                            g.intraProfundum()
+                            fixum rendered = genMassa(g, body.corpus qua lista<Sententia>)
+                            g.exiProfundum()
+                            fixum lb = glyphDelimiter("{")
+                            fixum rb = glyphDelimiter("}")
+                            si rendered == "" {
+                                redde scriptum("§ §§ §§", glyphKeyword("clausura"), params.coniunge(comma + " "), retType, lb, rb)
+                            }
+                            redde scriptum("§ §§ §\n§\n§§", glyphKeyword("clausura"), params.coniunge(comma + " "), retType, lb, rendered, g.ind(), rb)
+                        }
+                        casu _ tacet
+                    }
+                }
+                casu Expr ut expr {
+                    redde scriptum("§ §§§ §", glyphKeyword("clausura"), params.coniunge(comma + " "), retType, colon, genExpressia(g, expr.valor))
+                }
+            }
+            redde scriptum("§ §§§ §", glyphKeyword("clausura"), params.coniunge(comma + " "), retType, colon, glyphKeyword("nihil"))
+        }
+
+        # Discretio construction
+        casu FingeExpressia ut e {
+            varia props = [] innatum lista<textus>
+            ex (e.campi qua lista<ObiectumProprietas>) fixum campo {
+                fixum key = genExpressia(g, campo.clavis)
+                fixum val = genExpressia(g, campo.valor)
+                fixum colon = glyphPunctuation(":")
+                props.appende(scriptum("§§ §", key, colon, val))
+            }
+            varia scopus = ""
+            si nonnihil e.scopus {
+                scopus = scriptum(" § §", glyphKeyword("qua"), genTypus(g, e.scopus novum TypusAnnotatio))
+            }
+            fixum lb = glyphDelimiter("{")
+            fixum rb = glyphDelimiter("}")
+            fixum comma = glyphPunctuation(",")
+            si props.longitudo() > 0 {
+                redde scriptum("§ § § § §§", glyphKeyword("finge"), encodeBraille(e.variansNomen), lb, props.coniunge(comma + " "), rb, scopus)
+            }
+            redde scriptum("§ §§", glyphKeyword("finge"), encodeBraille(e.variansNomen), scopus)
+        }
+
+        # Type conversion
+        casu ConversioExpressia ut e {
+            fixum src = genExpressia(g, e.expressia)
+            varia result = scriptum("§ §", src, glyphKeyword(e.signum qua textus))
+            si nonnihil e.scopusTypus {
+                fixum lt = glyphDelimiter("<")
+                fixum gt = glyphDelimiter(">")
+                result = scriptum("§§§§", result, lt, genTypus(g, e.scopusTypus novum TypusAnnotatio), gt)
+            }
+            si nonnihil e.radix {
+                fixum lt = glyphDelimiter("<")
+                fixum gt = glyphDelimiter(">")
+                result = scriptum("§§§§", result, lt, encodeBraille(e.radix qua textus), gt)
+            }
+            si nonnihil e.fallback {
+                result = scriptum("§ § §", result, glyphKeyword("vel"), genExpressia(g, e.fallback qua Expressia))
+            }
+            redde result
+        }
+    }
+
+    mori "Glyph codegen error: unhandled expression type"
+}
+
+# =============================================================================
+# HELPERS
+# =============================================================================
+
+functio translateOperator(de textus signum) -> textus {
+    # Try keyword first (et, aut, non, etc.)
+    fixum keyword = glyphKeyword(signum)
+    si keyword != signum {
+        redde keyword
+    }
+    # Then try operator
+    redde glyphOperator(signum)
+}
+
+functio genLittera(de LitteraGenus species, de textus crudus) -> textus {
+    fixum quote = glyphDelimiter("\"")
+
+    elige species {
+        casu LitteraGenus.Numerus { redde encodeBraille(crudus) }
+        casu LitteraGenus.Fractus { redde encodeBraille(crudus) }
+        casu LitteraGenus.Textus { redde scriptum("§§§", quote, encodeBraille(crudus), quote) }
+        casu LitteraGenus.Exemplar { redde scriptum("`§`", encodeBraille(crudus)) }
+        casu LitteraGenus.Verum { redde glyphKeyword("verum") }
+        casu LitteraGenus.Falsum { redde glyphKeyword("falsum") }
+        casu LitteraGenus.Nihil { redde glyphKeyword("nihil") }
+    }
+    redde encodeBraille(crudus)
+}
+
+functio genLitteraExemplar(in GlyphGenerator g, de lista<textus> partes, de lista<Expressia> expressiae) -> textus {
+    varia result = "`"
+    varia i = 0
+    dum i < partes.longitudo() {
+        result = result + encodeBraille(partes[i])
+        si i < expressiae.longitudo() {
+            fixum lb = glyphDelimiter("{")
+            fixum rb = glyphDelimiter("}")
+            result = result + "$" + lb + genExpressia(g, expressiae[i]) + rb
+        }
+        i += 1
+    }
+    redde result + "`"
+}
+
+functio genObiectum(in GlyphGenerator g, de lista<ObiectumProprietas> proprietates) -> textus {
+    fixum lb = glyphDelimiter("{")
+    fixum rb = glyphDelimiter("}")
+
+    si proprietates.longitudo() == 0 {
+        redde lb + rb
+    }
+
+    varia props = [] innatum lista<textus>
+    fixum colon = glyphPunctuation(":")
+    ex proprietates fixum prop {
+        si prop.dispersum qua bivalens {
+            props.appende(scriptum("§ §", glyphKeyword("sparge"), genExpressia(g, prop.valor)))
+        } sin prop.brevitas qua bivalens {
+            props.appende(genExpressia(g, prop.clavis))
+        } sin prop.computatum qua bivalens {
+            fixum lbr = glyphDelimiter("[")
+            fixum rbr = glyphDelimiter("]")
+            props.appende(scriptum("§§§§ §", lbr, genExpressia(g, prop.clavis), rbr, colon, genExpressia(g, prop.valor)))
+        } secus {
+            props.appende(scriptum("§§ §", genExpressia(g, prop.clavis), colon, genExpressia(g, prop.valor)))
+        }
+    }
+
+    fixum comma = glyphPunctuation(",")
+    redde scriptum("§ § §", lb, props.coniunge(comma + " "), rb)
+}
+
+functio genAbExpressia(in GlyphGenerator g, de AbExpressia e) -> textus {
+    varia result = ""
+
+    si e.negata qua bivalens {
+        result = scriptum("§ § §", encodeBraille("ab"), glyphKeyword("non"), genExpressia(g, e.fons))
+    } secus {
+        result = scriptum("§ §", encodeBraille("ab"), genExpressia(g, e.fons))
+    }
+
+    si nonnihil e.filtrum {
+        fixum f = e.filtrum novum AbFiltrum
+        si f.habetUbi qua bivalens {
+            result = scriptum("§ § §", result, encodeBraille("ubi"), genExpressia(g, f.condicio))
+        } secus {
+            result = scriptum("§ §", result, genExpressia(g, f.condicio))
+        }
+    }
+
+    si nonnihil e.gradus {
+        fixum comma = glyphPunctuation(",")
+        ex (e.gradus qua lista<CatenaGradus>) fixum step {
+            result = scriptum("§§ §", result, comma, genCatenaGradus(g, step))
+        }
+    }
+
+    redde result
+}
+
+functio genCatenaGradus(in GlyphGenerator g, de CatenaGradus step) -> textus {
+    varia result = encodeBraille(step.verbum qua textus)
+
+    si nonnihil step.argumentum {
+        result = scriptum("§ §", result, genExpressia(g, step.argumentum qua Expressia))
+    }
+
+    si nonnihil step.proprietas {
+        result = scriptum("§ § §", result, glyphKeyword("per"), genExpressia(g, step.proprietas qua Expressia))
+    }
+
+    si nonnihil step.directio {
+        result = scriptum("§ §", result, encodeBraille(step.directio qua textus))
+    }
+
+    redde result
+}
