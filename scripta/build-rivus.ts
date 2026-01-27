@@ -207,32 +207,32 @@ const TARGET_EXT: Record<Target, string> = {
  * Copy norma (stdlib) implementations for the target language.
  * Source: fons/norma-{target}/
  * Dest: opus/{compiler}/norma/
+ * Recursively copies all files with target extension, excluding tests.
  * Returns false if source directory doesn't exist.
  */
 async function copyNorma(target: Target): Promise<boolean> {
-    const halSource = join(ROOT, 'fons', `norma-${target}`, 'hal');
+    const normaSource = join(ROOT, 'fons', `norma-${target}`);
 
-    // Check if HAL source exists for this target
-    if (!await Bun.file(halSource).exists().catch(() => false)) {
-        try {
-            const { readdirSync } = await import('node:fs');
-            readdirSync(halSource);
-        } catch {
-            return false;
-        }
+    // Check if norma source exists for this target
+    try {
+        const { readdirSync } = await import('node:fs');
+        readdirSync(normaSource);
+    } catch {
+        return false;
     }
 
     // WHY: Imports from rivus source use paths like ../../norma/hal/solum
-    // which resolves relative to opus/{compiler}/fons/semantic/ -> opus/{compiler}/norma/hal/
-    const halDest = join(dirname(OUTPUT), 'norma', 'hal');
-    await mkdir(halDest, { recursive: true });
+    // which resolves relative to opus/{compiler}/fons/semantic/ -> opus/{compiler}/norma/
+    const normaDest = join(dirname(OUTPUT), 'norma');
+    await mkdir(normaDest, { recursive: true });
 
     const ext = TARGET_EXT[target];
-    const glob = new Glob(`*${ext}`);
-    for await (const file of glob.scan({ cwd: halSource, absolute: false })) {
+    const glob = new Glob(`**/*${ext}`);
+    for await (const file of glob.scan({ cwd: normaSource, absolute: false })) {
         if (file.includes('.test.')) { continue; }
-        const src = join(halSource, file);
-        const dest = join(halDest, file);
+        const src = join(normaSource, file);
+        const dest = join(normaDest, file);
+        await mkdir(dirname(dest), { recursive: true });
         await Bun.write(dest, await Bun.file(src).text());
     }
     return true;

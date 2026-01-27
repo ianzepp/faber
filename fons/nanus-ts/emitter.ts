@@ -132,8 +132,8 @@ function resolveNormaImport(importPath: string, sourceFile: string): string | nu
         return null;
     }
 
-    const moduleName = importPath.slice(6); // Remove "norma:" prefix
-    const cacheKey = `${moduleName}:${sourceFile}`;
+    const modulePath = importPath.slice(6); // Remove "norma:" prefix (e.g., "hal/solum")
+    const cacheKey = `${modulePath}:${sourceFile}`;
 
     if (halPathCache.has(cacheKey)) {
         return halPathCache.get(cacheKey)!;
@@ -145,7 +145,8 @@ function resolveNormaImport(importPath: string, sourceFile: string): string | nu
         return null;
     }
 
-    const halFabPath = resolve(projectRoot, 'fons', 'norma', 'hal', `${moduleName}.fab`);
+    // modulePath is relative to fons/norma/, e.g., "hal/solum" -> "fons/norma/hal/solum.fab"
+    const halFabPath = resolve(projectRoot, 'fons', 'norma', `${modulePath}.fab`);
     if (!existsSync(halFabPath)) {
         halPathCache.set(cacheKey, null);
         return null;
@@ -167,7 +168,10 @@ function resolveNormaImport(importPath: string, sourceFile: string): string | nu
 
         // Make relative to the source file's output location
         const sourceDir = dirname(sourceFile);
-        const relativePath = relative(sourceDir, absoluteSubsidiaPath);
+        let relativePath = relative(sourceDir, absoluteSubsidiaPath);
+
+        // Rewrite norma-{target} to norma for output (build copies norma-ts -> norma)
+        relativePath = relativePath.replace(/norma-(ts|go|rs|py)\//g, 'norma/');
 
         // Ensure it starts with ./ for relative imports
         const result = relativePath.startsWith('.') ? relativePath : './' + relativePath;

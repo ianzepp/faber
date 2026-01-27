@@ -3,7 +3,7 @@
 # Handles resolution of local .fab file imports during semantic analysis.
 # Uses norma:solum for file I/O operations.
 
-§ ex "norma:solum" importa solum
+§ ex "norma:hal/solum" importa solum
 
 § ex "./typi" importa SemanticTypus, IGNOTUM, VACUUM, functioTypus, usitatumTypus, pactumTypus
 § ex "./typi" importa genusTypus, genericumTypus, primitivumTypus
