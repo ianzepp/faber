@@ -204,12 +204,12 @@ const TARGET_EXT: Record<Target, string> = {
 };
 
 /**
- * Copy HAL implementations for the target language.
- * Source: fons/norma-{target}/hal/
- * Dest: opus/{compiler}/norma/hal/
+ * Copy norma (stdlib) implementations for the target language.
+ * Source: fons/norma-{target}/
+ * Dest: opus/{compiler}/norma/
  * Returns false if source directory doesn't exist.
  */
-async function copyHalImplementations(target: Target): Promise<boolean> {
+async function copyNorma(target: Target): Promise<boolean> {
     const halSource = join(ROOT, 'fons', `norma-${target}`, 'hal');
 
     // Check if HAL source exists for this target
@@ -445,7 +445,7 @@ async function main() {
         console.log('  Copied CLI shim');
 
         // Copy HAL implementations for norma:* imports
-        if (await copyHalImplementations(target)) {
+        if (await copyNorma(target)) {
             console.log('  Copied HAL implementations');
         }
 
@@ -470,7 +470,7 @@ async function main() {
         console.log(`  Built opus/bin/rivus-${compiler}`);
     } else if (target === 'go') {
         console.log('\nGo post-processing:');
-        if (await copyHalImplementations(target)) {
+        if (await copyNorma(target)) {
             console.log('  Copied HAL implementations');
         }
         console.log('  Building rivus executable...');
@@ -478,7 +478,7 @@ async function main() {
         console.log(`  Built opus/bin/rivus-${compiler}`);
     } else if (target === 'rs') {
         console.log('\nRust post-processing:');
-        if (await copyHalImplementations(target)) {
+        if (await copyNorma(target)) {
             console.log('  Copied HAL implementations');
         }
         console.log(compiler === 'nanus-rs' ? '  Checking rivus crate...' : '  Building rivus executable...');
@@ -490,7 +490,7 @@ async function main() {
         }
     } else if (target === 'py') {
         console.log('\nPython post-processing:');
-        if (await copyHalImplementations(target)) {
+        if (await copyNorma(target)) {
             console.log('  Copied HAL implementations');
         }
         await buildExecutablePy();
