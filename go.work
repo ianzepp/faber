@@ -1,7 +1,0 @@
-go 1.21
-
-use (
-	./fons/glyph-go
-	./fons/nanus-go
-	./fons/subsidia/go
-)
