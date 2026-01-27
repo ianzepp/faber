@@ -2,8 +2,9 @@
 #
 # Maps Latin type names to their Go equivalents.
 
-§ ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum
-§ ex "./nucleus" importa GoGenerator
+importa ex "../../ast/typus" privata TypusAnnotatio
+importa ex "../../ast/typus" privata TypusParametrum
+importa ex "./nucleus" privata GoGenerator
 
 # =============================================================================
 # TYPE MAPPING

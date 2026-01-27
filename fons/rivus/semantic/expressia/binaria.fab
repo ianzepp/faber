@@ -2,10 +2,17 @@
 #
 # Handles arithmetic, comparison, and logical operators.
 
-§ ex "../resolvitor" importa Resolvitor
-§ ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, BIVALENS, IGNOTUM, formaTypum
-§ ex "../errores" importa incompatibleComparisonError, nihilEqualityWarning
-§ ex "../../ast/expressia" importa Expressia, LitteraGenus
+importa ex "../resolvitor" privata Resolvitor
+importa ex "../typi" privata SemanticTypus
+importa ex "../typi" privata TEXTUS
+importa ex "../typi" privata NUMERUS
+importa ex "../typi" privata BIVALENS
+importa ex "../typi" privata IGNOTUM
+importa ex "../typi" privata formaTypum
+importa ex "../errores" privata incompatibleComparisonError
+importa ex "../errores" privata nihilEqualityWarning
+importa ex "../../ast/expressia" privata Expressia
+importa ex "../../ast/expressia" privata LitteraGenus
 
 # ============================================================================
 # BINARY EXPRESSION RESOLUTION

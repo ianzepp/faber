@@ -9,13 +9,15 @@
 #
 # WHY: GC targets (arena/page) skip allocator management - memory is automatic.
 
-§ ex "../../../ast/sententia" importa Sententia, CuratorGenus, CapeClausula
-§ ex "../../../ast/expressia" importa Expressia
-§ ex "../nucleus" importa TsGenerator
+importa ex "../../../ast/sententia" privata Sententia
+importa ex "../../../ast/sententia" privata CuratorGenus
+importa ex "../../../ast/sententia" privata CapeClausula
+importa ex "../../../ast/expressia" privata Expressia
+importa ex "../nucleus" privata TsGenerator
 
 # External declarations - implementations live in index.fab
-§ ex "./index" importa genSententia
-§ ex "../expressia/index" importa genExpressia
+importa ex "./index" privata genSententia
+importa ex "../expressia/index" privata genExpressia
 
 @ publica
 functio genCura(in TsGenerator g, de ignotum curatorSpecies, de ignotum res, de textus vinculum, de Sententia corpus, bivalens asynca, bivalens mutabilis, de ignotum cape) -> textus {

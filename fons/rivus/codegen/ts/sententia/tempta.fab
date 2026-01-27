@@ -8,11 +8,12 @@
 #   tempta { ... } demum { ... }         -> try { ... } finally { ... }
 #   tempta { ... } cape e { } demum { }  -> try { ... } catch (e) { } finally { }
 
-§ ex "../../../ast/sententia" importa Sententia, CapeClausula
-§ ex "../nucleus" importa TsGenerator
+importa ex "../../../ast/sententia" privata Sententia
+importa ex "../../../ast/sententia" privata CapeClausula
+importa ex "../nucleus" privata TsGenerator
 
 # External declarations - implementations live in index.fab
-§ ex "./index" importa genSententia
+importa ex "./index" privata genSententia
 
 @ publica
 functio genTempta(in TsGenerator g, de Sententia corpus, de ignotum cape, de ignotum demum) -> textus {

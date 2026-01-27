@@ -6,10 +6,10 @@
 # and statement analyzers need to analyze expressions. This interface lets
 # both call each other without circular imports.
 
-§ ex "./nucleus" importa Analyzator
-§ ex "./typi" importa SemanticTypus
-§ ex "../ast/expressia" importa Expressia
-§ ex "../ast/sententia" importa Sententia
+importa ex "./nucleus" privata Analyzator
+importa ex "./typi" privata SemanticTypus
+importa ex "../ast/expressia" privata Expressia
+importa ex "../ast/sententia" privata Sententia
 
 # Semantic resolver interface for cross-module analysis
 #

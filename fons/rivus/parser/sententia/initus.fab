@@ -16,14 +16,20 @@
 # - varia = mutable binding
 # - ad = to/toward (preposition for dispatch)
 
-§ ex "../resolvitor" importa Resolvitor
-§ ex "../../ast/positio" importa Locus
-§ ex "../../ast/expressia" importa Expressia
-§ ex "../../ast/sententia" importa Sententia, MassaSententia, CapeClausula, CuratorGenus, AdVinculum, AdVerbumVinculandi
-§ ex "../../ast/typus" importa TypusAnnotatio
-§ ex "../../ast/lexema" importa SymbolumGenus, VerbumId
-§ ex "../errores" importa ParserErrorCodice
-§ ex "./massa" importa parseMassaSententia
+importa ex "../resolvitor" privata Resolvitor
+importa ex "../../ast/positio" privata Locus
+importa ex "../../ast/expressia" privata Expressia
+importa ex "../../ast/sententia" privata Sententia
+importa ex "../../ast/sententia" privata MassaSententia
+importa ex "../../ast/sententia" privata CapeClausula
+importa ex "../../ast/sententia" privata CuratorGenus
+importa ex "../../ast/sententia" privata AdVinculum
+importa ex "../../ast/sententia" privata AdVerbumVinculandi
+importa ex "../../ast/typus" privata TypusAnnotatio
+importa ex "../../ast/lexema" privata SymbolumGenus
+importa ex "../../ast/lexema" privata VerbumId
+importa ex "../errores" privata ParserErrorCodice
+importa ex "./massa" privata parseMassaSententia
 
 # ============================================================================
 # ENTRY POINTS

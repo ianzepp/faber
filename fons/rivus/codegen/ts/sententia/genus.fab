@@ -12,15 +12,19 @@
 #   campus publicus x: numerus      -> public x: number
 #   campus staticus x: numerus      -> static x: number
 
-§ ex "../../../ast/sententia" importa Sententia, FunctioDeclaratio, CampusDeclaratio, Visibilitas, GenusDeclaratio
-§ ex "../../../ast/expressia" importa Expressia
-§ ex "../../../ast/typus" importa TypusAnnotatio
-§ ex "../nucleus" importa TsGenerator
+importa ex "../../../ast/sententia" privata Sententia
+importa ex "../../../ast/sententia" privata FunctioDeclaratio
+importa ex "../../../ast/sententia" privata CampusDeclaratio
+importa ex "../../../ast/sententia" privata Visibilitas
+importa ex "../../../ast/sententia" privata GenusDeclaratio
+importa ex "../../../ast/expressia" privata Expressia
+importa ex "../../../ast/typus" privata TypusAnnotatio
+importa ex "../nucleus" privata TsGenerator
 
 # External declarations - implementations live in index.fab
-§ ex "../expressia/index" importa genExpressia
-§ ex "./index" importa genSententia
-§ ex "../typus" importa genTypus
+importa ex "../expressia/index" privata genExpressia
+importa ex "./index" privata genSententia
+importa ex "../typus" privata genTypus
 
 @ publica
 functio genGenus(in TsGenerator g, de GenusDeclaratio s) -> textus {

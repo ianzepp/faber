@@ -2,21 +2,40 @@
 #
 # Routes expression AST nodes to their appropriate resolution functions.
 
-§ ex "../resolvitor" importa Resolvitor
-§ ex "../scopus" importa quaereSymbolum
-§ ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, BIVALENS, NIHIL, IGNOTUM
-§ ex "../typi" importa usitatumTypus, genericumTypus
-§ ex "../typi" importa formaTypum, assignabileAd, typiAequales
-§ ex "../errores" importa immutableAssignmentError, typeMismatchError, undefinedVariableError
-§ ex "../../ast/expressia" importa Expressia, CatenaGradus
-§ ex "../../ast/typus" importa TypusAnnotatio
+importa ex "../resolvitor" privata Resolvitor
+importa ex "../scopus" privata quaereSymbolum
+importa ex "../typi" privata SemanticTypus
+importa ex "../typi" privata TEXTUS
+importa ex "../typi" privata NUMERUS
+importa ex "../typi" privata BIVALENS
+importa ex "../typi" privata NIHIL
+importa ex "../typi" privata IGNOTUM
+importa ex "../typi" privata usitatumTypus
+importa ex "../typi" privata genericumTypus
+importa ex "../typi" privata formaTypum
+importa ex "../typi" privata assignabileAd
+importa ex "../typi" privata typiAequales
+importa ex "../errores" privata immutableAssignmentError
+importa ex "../errores" privata typeMismatchError
+importa ex "../errores" privata undefinedVariableError
+importa ex "../../ast/expressia" privata Expressia
+importa ex "../../ast/expressia" privata CatenaGradus
+importa ex "../../ast/typus" privata TypusAnnotatio
 
-§ ex "./primaria" importa resolveNomen, resolveLittera, resolveSeries, resolveObiectum
-§ ex "./binaria" importa resolveBinaria
-§ ex "./unaria" importa resolveUnaria
-§ ex "./vocatio" importa resolveVocatio, resolveMembrum
-§ ex "./alia" importa resolveClausura, resolveFingeExpr, resolveCedeExpr, resolveNovumExpr, resolveCondicio
-§ ex "../sententia/declara" importa resolveTypusAnnotatio
+importa ex "./primaria" privata resolveNomen
+importa ex "./primaria" privata resolveLittera
+importa ex "./primaria" privata resolveSeries
+importa ex "./primaria" privata resolveObiectum
+importa ex "./binaria" privata resolveBinaria
+importa ex "./unaria" privata resolveUnaria
+importa ex "./vocatio" privata resolveVocatio
+importa ex "./vocatio" privata resolveMembrum
+importa ex "./alia" privata resolveClausura
+importa ex "./alia" privata resolveFingeExpr
+importa ex "./alia" privata resolveCedeExpr
+importa ex "./alia" privata resolveNovumExpr
+importa ex "./alia" privata resolveCondicio
+importa ex "../sententia/declara" privata resolveTypusAnnotatio
 
 # ============================================================================
 # MAIN DISPATCHER

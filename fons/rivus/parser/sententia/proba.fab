@@ -22,12 +22,14 @@
 # - omitte = skip
 # - futurum = future/todo
 
-§ ex "../resolvitor" importa Resolvitor
-§ ex "../../ast/positio" importa Locus
-§ ex "../../ast/sententia" importa Sententia, ProbaModificator, PraeparaTempus
-§ ex "../../ast/lexema" importa SymbolumGenus
-§ ex "../errores" importa ParserErrorCodice
-§ ex "./massa" importa parseMassaSententia
+importa ex "../resolvitor" privata Resolvitor
+importa ex "../../ast/positio" privata Locus
+importa ex "../../ast/sententia" privata Sententia
+importa ex "../../ast/sententia" privata ProbaModificator
+importa ex "../../ast/sententia" privata PraeparaTempus
+importa ex "../../ast/lexema" privata SymbolumGenus
+importa ex "../errores" privata ParserErrorCodice
+importa ex "./massa" privata parseMassaSententia
 
 # ============================================================================
 # TEST SUITE

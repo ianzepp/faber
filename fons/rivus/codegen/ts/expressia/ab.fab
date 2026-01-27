@@ -14,9 +14,12 @@
 # WHY: 'ab' is the sole DSL entry point for collection operations.
 #      ex is used only for iteration (ex items fixum x) and imports.
 
-§ ex "../../../ast/expressia" importa Expressia, CatenaGradus, AbFiltrum, Nomen
-§ ex "../nucleus" importa TsGenerator
-§ ex "./index" importa genExpressia
+importa ex "../../../ast/expressia" privata Expressia
+importa ex "../../../ast/expressia" privata CatenaGradus
+importa ex "../../../ast/expressia" privata AbFiltrum
+importa ex "../../../ast/expressia" privata Nomen
+importa ex "../nucleus" privata TsGenerator
+importa ex "./index" privata genExpressia
 
 # =============================================================================
 # AB EXPRESSION CODEGEN

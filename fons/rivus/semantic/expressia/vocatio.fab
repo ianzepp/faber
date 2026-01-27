@@ -2,12 +2,20 @@
 #
 # Handles function calls, method calls, and member access.
 
-§ ex "../resolvitor" importa Resolvitor
-§ ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, BIVALENS, IGNOTUM
-§ ex "../errores" importa morphologiaRadixNonDeclarataError, morphologiaFormaNonPermissaError, hintForEnglishMethod
-§ ex "../scopus" importa quaereSymbolum
-§ ex "../../ast/expressia" importa Expressia, MorphologiaInvocatio
-§ ex "../../parser/morphologia" importa parseMethodum, formaExFlagga
+importa ex "../resolvitor" privata Resolvitor
+importa ex "../typi" privata SemanticTypus
+importa ex "../typi" privata TEXTUS
+importa ex "../typi" privata NUMERUS
+importa ex "../typi" privata BIVALENS
+importa ex "../typi" privata IGNOTUM
+importa ex "../errores" privata morphologiaRadixNonDeclarataError
+importa ex "../errores" privata morphologiaFormaNonPermissaError
+importa ex "../errores" privata hintForEnglishMethod
+importa ex "../scopus" privata quaereSymbolum
+importa ex "../../ast/expressia" privata Expressia
+importa ex "../../ast/expressia" privata MorphologiaInvocatio
+importa ex "../../parser/morphologia" privata parseMethodum
+importa ex "../../parser/morphologia" privata formaExFlagga
 
 # ============================================================================
 # CALL EXPRESSION RESOLUTION

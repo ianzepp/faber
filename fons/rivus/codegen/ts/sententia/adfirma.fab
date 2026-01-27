@@ -6,11 +6,11 @@
 #   adfirma x > 0        -> if (!(x > 0)) { throw new Error("Assertion failed: x > 0"); }
 #   adfirma x > 0, "msg" -> if (!(x > 0)) { throw new Error("msg"); }
 
-§ ex "../../../ast/expressia" importa Expressia
-§ ex "../nucleus" importa TsGenerator
+importa ex "../../../ast/expressia" privata Expressia
+importa ex "../nucleus" privata TsGenerator
 
 # External declarations - implementations live in index.fab
-§ ex "../expressia/index" importa genExpressia
+importa ex "../expressia/index" privata genExpressia
 
 @ publica
 functio genAdfirma(in TsGenerator g, de Expressia condicio, de ignotum nuntius) -> textus {

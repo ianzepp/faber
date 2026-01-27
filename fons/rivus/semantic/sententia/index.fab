@@ -2,18 +2,32 @@
 #
 # Routes statement AST nodes to their appropriate analysis functions.
 
-§ ex "../resolvitor" importa Resolvitor
-§ ex "../../ast/sententia" importa Sententia
+importa ex "../resolvitor" privata Resolvitor
+importa ex "../../ast/sententia" privata Sententia
 
 # Import analyzers - no circular dependency since they only use Resolvitor
-§ ex "./declara" importa analyzeVariaDeclaratio, analyzeFunctioDeclaratio
-§ ex "./declara" importa analyzeDestructuraSententia, analyzeSeriesDestructuraSententia
-§ ex "./declara" importa analyzeGenusDeclaratio, analyzePactumDeclaratio
-§ ex "./declara" importa analyzeOrdoDeclaratio, analyzeDiscretioDeclaratio, analyzeTypusAlias
-§ ex "./imperium" importa analyzeSi, analyzeDum, analyzeIteratio
-§ ex "./imperium" importa analyzeElige, analyzeDiscerne, analyzeCustodi
-§ ex "./actio" importa analyzeRedde, analyzeIace, analyzeScribe, analyzeAdfirma
-§ ex "./error" importa analyzeTempta, analyzeFac, analyzeCura
+importa ex "./declara" privata analyzeVariaDeclaratio
+importa ex "./declara" privata analyzeFunctioDeclaratio
+importa ex "./declara" privata analyzeDestructuraSententia
+importa ex "./declara" privata analyzeSeriesDestructuraSententia
+importa ex "./declara" privata analyzeGenusDeclaratio
+importa ex "./declara" privata analyzePactumDeclaratio
+importa ex "./declara" privata analyzeOrdoDeclaratio
+importa ex "./declara" privata analyzeDiscretioDeclaratio
+importa ex "./declara" privata analyzeTypusAlias
+importa ex "./imperium" privata analyzeSi
+importa ex "./imperium" privata analyzeDum
+importa ex "./imperium" privata analyzeIteratio
+importa ex "./imperium" privata analyzeElige
+importa ex "./imperium" privata analyzeDiscerne
+importa ex "./imperium" privata analyzeCustodi
+importa ex "./actio" privata analyzeRedde
+importa ex "./actio" privata analyzeIace
+importa ex "./actio" privata analyzeScribe
+importa ex "./actio" privata analyzeAdfirma
+importa ex "./error" privata analyzeTempta
+importa ex "./error" privata analyzeFac
+importa ex "./error" privata analyzeCura
 
 # =============================================================================
 # MAIN DISPATCHER

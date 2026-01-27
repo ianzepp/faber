@@ -19,13 +19,15 @@
 #          return l.nomen === r.nomen;
 #      } else { return false; }
 
-§ ex "../../../ast/sententia" importa Sententia, VariansCasus, VariansExemplar
-§ ex "../../../ast/expressia" importa Expressia
-§ ex "../nucleus" importa TsGenerator
+importa ex "../../../ast/sententia" privata Sententia
+importa ex "../../../ast/sententia" privata VariansCasus
+importa ex "../../../ast/sententia" privata VariansExemplar
+importa ex "../../../ast/expressia" privata Expressia
+importa ex "../nucleus" privata TsGenerator
 
 # External declarations - implementations live in index.fab
-§ ex "../expressia/index" importa genExpressia
-§ ex "./index" importa genSententia
+importa ex "../expressia/index" privata genExpressia
+importa ex "./index" privata genSententia
 
 @ publica
 functio genDiscerne(in TsGenerator g, de lista<Expressia> discriminantes, de lista<VariansCasus> casus) -> textus {

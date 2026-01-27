@@ -14,7 +14,7 @@
 # - Error codes are P-prefixed and sequentially numbered
 # - textus is concise, auxilium provides remediation guidance
 
-§ ex "../ast/positio" importa Locus
+importa ex "../ast/positio" privata Locus
 
 # Parser error codes with P prefix
 @ publica

@@ -2,13 +2,13 @@
 #
 # Implements the shared Revocata interface for Go codegen.
 
-§ ex "../../ast/sententia" importa Sententia
-§ ex "../../ast/expressia" importa Expressia
-§ ex "../shared/revocata" importa Revocata
-§ ex "../shared/generans" importa Generans
-§ ex "./nucleus" importa GoGenerator
-§ ex "./expressia/index" importa genExpressia
-§ ex "./sententia/index" importa genSententia
+importa ex "../../ast/sententia" privata Sententia
+importa ex "../../ast/expressia" privata Expressia
+importa ex "../shared/revocata" privata Revocata
+importa ex "../shared/generans" privata Generans
+importa ex "./nucleus" privata GoGenerator
+importa ex "./expressia/index" privata genExpressia
+importa ex "./sententia/index" privata genSententia
 
 # Adapter implementing Revocata for Go codegen
 @ publica

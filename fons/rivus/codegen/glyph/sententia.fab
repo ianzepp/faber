@@ -2,32 +2,73 @@
 #
 # Routes statement AST nodes to their Unicode glyph representation.
 
-§ ex "../../ast/sententia" importa Sententia, VariaGenus, ScribeGradus, IteratioGenus
-§ ex "../../ast/sententia" importa Parametrum, CampusDeclaratio, EligeCasus, VariansCasus
-§ ex "../../ast/sententia" importa CustodiClausula, CapeClausula, OrdoMembrum, VariansDeclaratio
-§ ex "../../ast/sententia" importa ImportaSpecificator, PactumMethodus, TypusParametrum
-§ ex "../../ast/sententia" importa SeriesDestructuraElementum, VariansExemplar
-§ ex "../../ast/sententia" importa Visibilitas, ProbaModificator, PraeparaTempus, ReddeVerbum
-§ ex "../../ast/sententia" importa FunctioModificator, IteratioVariabilis, AdVinculum, AdVerbumVinculandi
-§ ex "../../ast/sententia" importa CuratorGenus
+importa ex "../../ast/sententia" privata Sententia
+importa ex "../../ast/sententia" privata VariaGenus
+importa ex "../../ast/sententia" privata ScribeGradus
+importa ex "../../ast/sententia" privata IteratioGenus
+importa ex "../../ast/sententia" privata Parametrum
+importa ex "../../ast/sententia" privata CampusDeclaratio
+importa ex "../../ast/sententia" privata EligeCasus
+importa ex "../../ast/sententia" privata VariansCasus
+importa ex "../../ast/sententia" privata CustodiClausula
+importa ex "../../ast/sententia" privata CapeClausula
+importa ex "../../ast/sententia" privata OrdoMembrum
+importa ex "../../ast/sententia" privata VariansDeclaratio
+importa ex "../../ast/sententia" privata ImportaSpecificator
+importa ex "../../ast/sententia" privata PactumMethodus
+importa ex "../../ast/sententia" privata TypusParametrum
+importa ex "../../ast/sententia" privata SeriesDestructuraElementum
+importa ex "../../ast/sententia" privata VariansExemplar
+importa ex "../../ast/sententia" privata Visibilitas
+importa ex "../../ast/sententia" privata ProbaModificator
+importa ex "../../ast/sententia" privata PraeparaTempus
+importa ex "../../ast/sententia" privata ReddeVerbum
+importa ex "../../ast/sententia" privata FunctioModificator
+importa ex "../../ast/sententia" privata IteratioVariabilis
+importa ex "../../ast/sententia" privata AdVinculum
+importa ex "../../ast/sententia" privata AdVerbumVinculandi
+importa ex "../../ast/sententia" privata CuratorGenus
 # Sententia variant imports for function parameter types
-§ ex "../../ast/sententia" importa MassaSententia, VariaSententia, ImportaSententia
-§ ex "../../ast/sententia" importa DestructuraSententia, SeriesDestructuraSententia
-§ ex "../../ast/sententia" importa FunctioDeclaratio, GenusDeclaratio, PactumDeclaratio
-§ ex "../../ast/sententia" importa TypusAliasDeclaratio, OrdoDeclaratio, DiscretioDeclaratio
-§ ex "../../ast/sententia" importa SiSententia, DumSententia, IteratioSententia
-§ ex "../../ast/sententia" importa EligeSententia, DiscerneSententia, CustodiSententia
-§ ex "../../ast/sententia" importa TemptaSententia, IaceSententia, FacSententia
-§ ex "../../ast/sententia" importa AdfirmaSententia, ScribeSententia
-§ ex "../../ast/sententia" importa IncipitSententia, IncipietSententia, CuraSententia
-§ ex "../../ast/sententia" importa AdSententia, ProbandumSententia, ProbaSententia
-§ ex "../../ast/sententia" importa VariansCampus, PraeparaMassa
-§ ex "../../ast/expressia" importa Expressia
-§ ex "../../ast/typus" importa TypusAnnotatio
-§ ex "./nucleus" importa GlyphGenerator
-§ ex "./expressia" importa genExpressia
-§ ex "./typus" importa genTypus
-§ ex "./lexicon" importa glyphKeyword, glyphOperator, glyphDelimiter, glyphPunctuation, encodeBraille
+importa ex "../../ast/sententia" privata MassaSententia
+importa ex "../../ast/sententia" privata VariaSententia
+importa ex "../../ast/sententia" privata ImportaSententia
+importa ex "../../ast/sententia" privata DestructuraSententia
+importa ex "../../ast/sententia" privata SeriesDestructuraSententia
+importa ex "../../ast/sententia" privata FunctioDeclaratio
+importa ex "../../ast/sententia" privata GenusDeclaratio
+importa ex "../../ast/sententia" privata PactumDeclaratio
+importa ex "../../ast/sententia" privata TypusAliasDeclaratio
+importa ex "../../ast/sententia" privata OrdoDeclaratio
+importa ex "../../ast/sententia" privata DiscretioDeclaratio
+importa ex "../../ast/sententia" privata SiSententia
+importa ex "../../ast/sententia" privata DumSententia
+importa ex "../../ast/sententia" privata IteratioSententia
+importa ex "../../ast/sententia" privata EligeSententia
+importa ex "../../ast/sententia" privata DiscerneSententia
+importa ex "../../ast/sententia" privata CustodiSententia
+importa ex "../../ast/sententia" privata TemptaSententia
+importa ex "../../ast/sententia" privata IaceSententia
+importa ex "../../ast/sententia" privata FacSententia
+importa ex "../../ast/sententia" privata AdfirmaSententia
+importa ex "../../ast/sententia" privata ScribeSententia
+importa ex "../../ast/sententia" privata IncipitSententia
+importa ex "../../ast/sententia" privata IncipietSententia
+importa ex "../../ast/sententia" privata CuraSententia
+importa ex "../../ast/sententia" privata AdSententia
+importa ex "../../ast/sententia" privata ProbandumSententia
+importa ex "../../ast/sententia" privata ProbaSententia
+importa ex "../../ast/sententia" privata VariansCampus
+importa ex "../../ast/sententia" privata PraeparaMassa
+importa ex "../../ast/expressia" privata Expressia
+importa ex "../../ast/typus" privata TypusAnnotatio
+importa ex "./nucleus" privata GlyphGenerator
+importa ex "./expressia" privata genExpressia
+importa ex "./typus" privata genTypus
+importa ex "./lexicon" privata glyphKeyword
+importa ex "./lexicon" privata glyphOperator
+importa ex "./lexicon" privata glyphDelimiter
+importa ex "./lexicon" privata glyphPunctuation
+importa ex "./lexicon" privata encodeBraille
 
 # =============================================================================
 # STATEMENT DISPATCH

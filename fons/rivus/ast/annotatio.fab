@@ -3,7 +3,7 @@
 # WHY: Collocated with other AST types so both parser and AST can import.
 #      Parser functions remain in parser/sententia/annotatio.fab.
 
-§ ex "./positio" importa Locus
+importa ex "./positio" privata Locus
 
 # ============================================================================
 # ANNOTATION TYPE

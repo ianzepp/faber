@@ -4,40 +4,64 @@
 #
 # WHY: Uses scriptum() for string formatting to avoid method call return type bugs.
 
-§ ex "../../../ast/sententia" importa Sententia, VariaGenus, ScribeGradus, IteratioGenus, CuratorGenus
-§ ex "../../../ast/sententia" importa Parametrum, CampusDeclaratio, EligeCasus, VariansCasus
-§ ex "../../../ast/sententia" importa CustodiClausula, CapeClausula, OrdoMembrum, VariansDeclaratio
-§ ex "../../../ast/sententia" importa ImportaSpecificator, PactumMethodus, TypusParametrum
-§ ex "../../../ast/sententia" importa SeriesDestructuraElementum
-§ ex "../../../ast/sententia" importa Visibilitas, ProbaModificator, PraeparaTempus, ReddeVerbum
-§ ex "../../../ast/expressia" importa Expressia, LitteraGenus
-§ ex "../../../ast/typus" importa TypusAnnotatio
-§ ex "../nucleus" importa TsGenerator
-§ ex "../typus" importa genTypus
-§ ex "../expressia/index" importa genExpressia
-§ ex "./varia" importa genVaria
-§ ex "./si" importa genSi
-§ ex "./importa" importa genImporta, genDestructura, genSeriesDestructura
-§ ex "./functio" importa genFunctio, genParametrum
-§ ex "./genus" importa genGenus, genCampus
-§ ex "./pactum" importa genPactum
-§ ex "./typealias" importa genTypusAlias
-§ ex "./ordo" importa genOrdo
-§ ex "./discretio" importa genDiscretio
-§ ex "./dum" importa genDum
-§ ex "./iteratio" importa genIteratio
-§ ex "./elige" importa genElige
-§ ex "./discerne" importa genDiscerne
-§ ex "./custodi" importa genCustodi
-§ ex "./tempta" importa genTempta
-§ ex "./iace" importa genIace
-§ ex "./fac" importa genFac
-§ ex "./adfirma" importa genAdfirma
-§ ex "./scribe" importa genScribe
-§ ex "./redde" importa genRedde
-§ ex "./incipit" importa genIncipit, genIncipiet
-§ ex "./cura" importa genCura
-§ ex "./proba" importa genProbandum, genProba, genPraepara, genProbaHarness
+importa ex "../../../ast/sententia" privata Sententia
+importa ex "../../../ast/sententia" privata VariaGenus
+importa ex "../../../ast/sententia" privata ScribeGradus
+importa ex "../../../ast/sententia" privata IteratioGenus
+importa ex "../../../ast/sententia" privata CuratorGenus
+importa ex "../../../ast/sententia" privata Parametrum
+importa ex "../../../ast/sententia" privata CampusDeclaratio
+importa ex "../../../ast/sententia" privata EligeCasus
+importa ex "../../../ast/sententia" privata VariansCasus
+importa ex "../../../ast/sententia" privata CustodiClausula
+importa ex "../../../ast/sententia" privata CapeClausula
+importa ex "../../../ast/sententia" privata OrdoMembrum
+importa ex "../../../ast/sententia" privata VariansDeclaratio
+importa ex "../../../ast/sententia" privata ImportaSpecificator
+importa ex "../../../ast/sententia" privata PactumMethodus
+importa ex "../../../ast/sententia" privata TypusParametrum
+importa ex "../../../ast/sententia" privata SeriesDestructuraElementum
+importa ex "../../../ast/sententia" privata Visibilitas
+importa ex "../../../ast/sententia" privata ProbaModificator
+importa ex "../../../ast/sententia" privata PraeparaTempus
+importa ex "../../../ast/sententia" privata ReddeVerbum
+importa ex "../../../ast/expressia" privata Expressia
+importa ex "../../../ast/expressia" privata LitteraGenus
+importa ex "../../../ast/typus" privata TypusAnnotatio
+importa ex "../nucleus" privata TsGenerator
+importa ex "../typus" privata genTypus
+importa ex "../expressia/index" privata genExpressia
+importa ex "./varia" privata genVaria
+importa ex "./si" privata genSi
+importa ex "./importa" privata genImporta
+importa ex "./importa" privata genDestructura
+importa ex "./importa" privata genSeriesDestructura
+importa ex "./functio" privata genFunctio
+importa ex "./functio" privata genParametrum
+importa ex "./genus" privata genGenus
+importa ex "./genus" privata genCampus
+importa ex "./pactum" privata genPactum
+importa ex "./typealias" privata genTypusAlias
+importa ex "./ordo" privata genOrdo
+importa ex "./discretio" privata genDiscretio
+importa ex "./dum" privata genDum
+importa ex "./iteratio" privata genIteratio
+importa ex "./elige" privata genElige
+importa ex "./discerne" privata genDiscerne
+importa ex "./custodi" privata genCustodi
+importa ex "./tempta" privata genTempta
+importa ex "./iace" privata genIace
+importa ex "./fac" privata genFac
+importa ex "./adfirma" privata genAdfirma
+importa ex "./scribe" privata genScribe
+importa ex "./redde" privata genRedde
+importa ex "./incipit" privata genIncipit
+importa ex "./incipit" privata genIncipiet
+importa ex "./cura" privata genCura
+importa ex "./proba" privata genProbandum
+importa ex "./proba" privata genProba
+importa ex "./proba" privata genPraepara
+importa ex "./proba" privata genProbaHarness
 
 # =============================================================================
 # STATEMENT DISPATCH

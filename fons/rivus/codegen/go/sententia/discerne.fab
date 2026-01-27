@@ -13,11 +13,13 @@
 #   discerne a, b { casu X ut x, Y ut y {...} }
 #     -> _a, aOk := a.(X); _b, bOk := b.(Y); if aOk && bOk { x := _a; y := _b; ... }
 
-§ ex "../../../ast/sententia" importa Sententia, VariansCasus, VariansExemplar
-§ ex "../../../ast/expressia" importa Expressia
-§ ex "../nucleus" importa GoGenerator
-§ ex "../expressia/index" importa genExpressia
-§ ex "./index" importa genSententia
+importa ex "../../../ast/sententia" privata Sententia
+importa ex "../../../ast/sententia" privata VariansCasus
+importa ex "../../../ast/sententia" privata VariansExemplar
+importa ex "../../../ast/expressia" privata Expressia
+importa ex "../nucleus" privata GoGenerator
+importa ex "../expressia/index" privata genExpressia
+importa ex "./index" privata genSententia
 
 @ publica
 functio genDiscerne(in GoGenerator g, de lista<Expressia> discriminantes, de lista<VariansCasus> casus) -> textus {

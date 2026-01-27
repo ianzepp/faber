@@ -7,9 +7,10 @@
 # =====
 # fixum source = generateFaber(corpus)
 
-§ ex "../../ast/sententia" importa Sententia
-§ ex "./nucleus" importa FaberGenerator, creaFaberGenerator
-§ ex "./sententia" importa genSententia
+importa ex "../../ast/sententia" privata Sententia
+importa ex "./nucleus" privata FaberGenerator
+importa ex "./nucleus" privata creaFaberGenerator
+importa ex "./sententia" privata genSententia
 
 # =============================================================================
 # PUBLIC API

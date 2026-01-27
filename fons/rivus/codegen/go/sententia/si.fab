@@ -5,12 +5,12 @@
 #   si x > 0 { ... } secus { }  -> if x > 0 { ... } else { ... }
 #   si x > 0 { } sin y > 0 { }  -> if x > 0 { } else if y > 0 { }
 
-§ ex "../../../ast/sententia" importa Sententia
-§ ex "../../../ast/expressia" importa Expressia
-§ ex "../nucleus" importa GoGenerator
-§ ex "../../shared/syntaxis" importa SYNTAXIS_GO
-§ ex "../../shared/si" importa genSiLogica
-§ ex "../revocata" importa creaGoRevocata
+importa ex "../../../ast/sententia" privata Sententia
+importa ex "../../../ast/expressia" privata Expressia
+importa ex "../nucleus" privata GoGenerator
+importa ex "../../shared/syntaxis" privata SYNTAXIS_GO
+importa ex "../../shared/si" privata genSiLogica
+importa ex "../revocata" privata creaGoRevocata
 
 @ publica
 functio genSi(in GoGenerator g, de Expressia condicio, de Sententia consequens, si de ignotum alternans) -> textus {

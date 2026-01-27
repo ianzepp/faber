@@ -2,18 +2,44 @@
 #
 # Handles: varia/fixum, functio, genus, pactum, ordo, discretio, typus
 
-§ ex "../resolvitor" importa Resolvitor
-§ ex "../typi" importa SemanticTypus, VACUUM, IGNOTUM, NIHIL, NUMERUS
-§ ex "../typi" importa primitivumTypus, genericumTypus, unioTypus, ignotumTypus
-§ ex "../typi" importa functioTypus, usitatumTypus, genusTypus, pactumTypus, ordoTypus
-§ ex "../typi" importa formaTypum, assignabileAd
-§ ex "../scopus" importa Symbolum, SymbolumSpecies, ScopusSpecies, quaereSymbolumLocale
-§ ex "../nucleus" importa estGenericusTypus, DiscretioDeclInfo, DiscretioVariansInfo
-§ ex "../errores" importa noTypeOrInitializerError, typeMismatchError, awaitOutsideAsyncError, missingFunctionBodyError
-§ ex "../errores" importa duplicateModifierError, invalidModifierContextError
-§ ex "../../ast/sententia" importa Sententia, VariaGenus, FunctioModificator, FunctioDeclaratio
-§ ex "../../ast/sententia" importa ImportaSpecificator, SeriesDestructuraElementum
-§ ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum
+importa ex "../resolvitor" privata Resolvitor
+importa ex "../typi" privata SemanticTypus
+importa ex "../typi" privata VACUUM
+importa ex "../typi" privata IGNOTUM
+importa ex "../typi" privata NIHIL
+importa ex "../typi" privata NUMERUS
+importa ex "../typi" privata primitivumTypus
+importa ex "../typi" privata genericumTypus
+importa ex "../typi" privata unioTypus
+importa ex "../typi" privata ignotumTypus
+importa ex "../typi" privata functioTypus
+importa ex "../typi" privata usitatumTypus
+importa ex "../typi" privata genusTypus
+importa ex "../typi" privata pactumTypus
+importa ex "../typi" privata ordoTypus
+importa ex "../typi" privata formaTypum
+importa ex "../typi" privata assignabileAd
+importa ex "../scopus" privata Symbolum
+importa ex "../scopus" privata SymbolumSpecies
+importa ex "../scopus" privata ScopusSpecies
+importa ex "../scopus" privata quaereSymbolumLocale
+importa ex "../nucleus" privata estGenericusTypus
+importa ex "../nucleus" privata DiscretioDeclInfo
+importa ex "../nucleus" privata DiscretioVariansInfo
+importa ex "../errores" privata noTypeOrInitializerError
+importa ex "../errores" privata typeMismatchError
+importa ex "../errores" privata awaitOutsideAsyncError
+importa ex "../errores" privata missingFunctionBodyError
+importa ex "../errores" privata duplicateModifierError
+importa ex "../errores" privata invalidModifierContextError
+importa ex "../../ast/sententia" privata Sententia
+importa ex "../../ast/sententia" privata VariaGenus
+importa ex "../../ast/sententia" privata FunctioModificator
+importa ex "../../ast/sententia" privata FunctioDeclaratio
+importa ex "../../ast/sententia" privata ImportaSpecificator
+importa ex "../../ast/sententia" privata SeriesDestructuraElementum
+importa ex "../../ast/typus" privata TypusAnnotatio
+importa ex "../../ast/typus" privata TypusParametrum
 
 @ publica
 functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> SemanticTypus {

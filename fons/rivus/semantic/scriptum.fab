@@ -6,7 +6,7 @@
 # Syntax:
 #   § scriptum "name" via "path"
 
-§ ex "../ast/radix" importa SectioAnnotatio
+importa ex "../ast/radix" privata SectioAnnotatio
 
 # ============================================================================
 # TYPES

@@ -2,18 +2,37 @@
 #
 # Provides the Analyzator genus that manages semantic analysis state.
 
-§ ex "./typi" importa SemanticTypus, TEXTUS, NUMERUS, FRACTUS, BIVALENS, NIHIL, VACUUM, IGNOTUM
-§ ex "./typi" importa primitivumTypus, genericumTypus, functioTypus, usitatumTypus
-§ ex "./typi" importa formaTypum, assignabileAd, typiAequales
-§ ex "./scopus" importa Scopus, Symbolum, SymbolumSpecies, ScopusSpecies
-§ ex "./scopus" importa creaScopumGlobalem, creaScopum, definieSymbolum, quaereSymbolum
-§ ex "./errores" importa SemanticErrorCodice, SemanticErrorNuntius
-§ ex "./modulus" importa ModulusResolutum
-§ ex "./dependentia" importa Dependentia
-§ ex "../ast/positio" importa Locus
-§ ex "../ast/radix" importa Programma
-§ ex "../ast/sententia" importa Sententia
-§ ex "../ast/expressia" importa Expressia
+importa ex "./typi" privata SemanticTypus
+importa ex "./typi" privata TEXTUS
+importa ex "./typi" privata NUMERUS
+importa ex "./typi" privata FRACTUS
+importa ex "./typi" privata BIVALENS
+importa ex "./typi" privata NIHIL
+importa ex "./typi" privata VACUUM
+importa ex "./typi" privata IGNOTUM
+importa ex "./typi" privata primitivumTypus
+importa ex "./typi" privata genericumTypus
+importa ex "./typi" privata functioTypus
+importa ex "./typi" privata usitatumTypus
+importa ex "./typi" privata formaTypum
+importa ex "./typi" privata assignabileAd
+importa ex "./typi" privata typiAequales
+importa ex "./scopus" privata Scopus
+importa ex "./scopus" privata Symbolum
+importa ex "./scopus" privata SymbolumSpecies
+importa ex "./scopus" privata ScopusSpecies
+importa ex "./scopus" privata creaScopumGlobalem
+importa ex "./scopus" privata creaScopum
+importa ex "./scopus" privata definieSymbolum
+importa ex "./scopus" privata quaereSymbolum
+importa ex "./errores" privata SemanticErrorCodice
+importa ex "./errores" privata SemanticErrorNuntius
+importa ex "./modulus" privata ModulusResolutum
+importa ex "./dependentia" privata Dependentia
+importa ex "../ast/positio" privata Locus
+importa ex "../ast/radix" privata Programma
+importa ex "../ast/sententia" privata Sententia
+importa ex "../ast/expressia" privata Expressia
 
 # ============================================================================
 # SEMANTIC ERROR

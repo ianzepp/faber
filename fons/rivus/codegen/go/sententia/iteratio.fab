@@ -6,14 +6,16 @@
 #   ex 0..10 fixum i { ... }      -> for i := 0; i < 10; i++ { ... }
 #   ex 0 usque 10 fixum i { ... } -> for i := 0; i <= 10; i++ { ... }
 
-§ ex "../../../ast/sententia" importa Sententia, IteratioGenus, IteratioVariabilis
-§ ex "../../../ast/expressia" importa Expressia
-§ ex "../nucleus" importa GoGenerator
-§ ex "../../shared/syntaxis" importa SYNTAXIS_GO
-§ ex "../../shared/iteratio" importa genAmbitusIteratio
-§ ex "../revocata" importa creaGoRevocata
-§ ex "../expressia/index" importa genExpressia
-§ ex "./index" importa genSententia
+importa ex "../../../ast/sententia" privata Sententia
+importa ex "../../../ast/sententia" privata IteratioGenus
+importa ex "../../../ast/sententia" privata IteratioVariabilis
+importa ex "../../../ast/expressia" privata Expressia
+importa ex "../nucleus" privata GoGenerator
+importa ex "../../shared/syntaxis" privata SYNTAXIS_GO
+importa ex "../../shared/iteratio" privata genAmbitusIteratio
+importa ex "../revocata" privata creaGoRevocata
+importa ex "../expressia/index" privata genExpressia
+importa ex "./index" privata genSententia
 
 @ publica
 functio genIteratio(in GoGenerator g, IteratioGenus species, de IteratioVariabilis variabilis, de Expressia iterabile, de Sententia corpus) -> textus {

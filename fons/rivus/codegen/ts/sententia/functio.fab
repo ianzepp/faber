@@ -20,14 +20,21 @@
 #   as return type syntax. Re-enable in parser/sententia/declara.fab when Go/Zig backends
 #   are ready to support the protocol. See preamble/index.fab for runtime definitions.
 
-§ ex "../../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, Visibilitas, ReddeVerbum, FunctioModificator, ExitusModificator, FunctioDeclaratio
-§ ex "../../../ast/typus" importa TypusAnnotatio
-§ ex "../nucleus" importa TsGenerator
+importa ex "../../../ast/sententia" privata Sententia
+importa ex "../../../ast/sententia" privata Parametrum
+importa ex "../../../ast/sententia" privata TypusParametrum
+importa ex "../../../ast/sententia" privata Visibilitas
+importa ex "../../../ast/sententia" privata ReddeVerbum
+importa ex "../../../ast/sententia" privata FunctioModificator
+importa ex "../../../ast/sententia" privata ExitusModificator
+importa ex "../../../ast/sententia" privata FunctioDeclaratio
+importa ex "../../../ast/typus" privata TypusAnnotatio
+importa ex "../nucleus" privata TsGenerator
 
 # External declarations - implementations live in index.fab
-§ ex "../expressia/index" importa genExpressia
-§ ex "./index" importa genSententia
-§ ex "../typus" importa genTypus
+importa ex "../expressia/index" privata genExpressia
+importa ex "./index" privata genSententia
+importa ex "../typus" privata genTypus
 
 @ publica
 functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {

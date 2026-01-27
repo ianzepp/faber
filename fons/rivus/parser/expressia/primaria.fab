@@ -27,14 +27,21 @@
 # - sed = regex (but/except)
 # - ab = from (collection DSL)
 
-§ ex "../resolvitor" importa Resolvitor
-§ ex "../../ast/positio" importa Locus
-§ ex "../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, ClausuraParametrum, ClausuraCorpus
-§ ex "../../ast/expressia" importa AbFiltrum, CatenaGradus
-§ ex "../../ast/typus" importa TypusAnnotatio, typusSimplicis
-§ ex "../../ast/lexema" importa Symbolum, SymbolumGenus
-§ ex "../../ast/sententia" importa Sententia
-§ ex "../errores" importa ParserErrorCodice
+importa ex "../resolvitor" privata Resolvitor
+importa ex "../../ast/positio" privata Locus
+importa ex "../../ast/expressia" privata Expressia
+importa ex "../../ast/expressia" privata LitteraGenus
+importa ex "../../ast/expressia" privata ObiectumProprietas
+importa ex "../../ast/expressia" privata ClausuraParametrum
+importa ex "../../ast/expressia" privata ClausuraCorpus
+importa ex "../../ast/expressia" privata AbFiltrum
+importa ex "../../ast/expressia" privata CatenaGradus
+importa ex "../../ast/typus" privata TypusAnnotatio
+importa ex "../../ast/typus" privata typusSimplicis
+importa ex "../../ast/lexema" privata Symbolum
+importa ex "../../ast/lexema" privata SymbolumGenus
+importa ex "../../ast/sententia" privata Sententia
+importa ex "../errores" privata ParserErrorCodice
 
 # ============================================================================
 # PRIMARY DISPATCHER

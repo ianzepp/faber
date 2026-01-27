@@ -15,16 +15,21 @@
 # - ceteri = the rest (rest pattern)
 # - omissum = omitted/skipped (placeholder _)
 
-§ ex "../resolvitor" importa Resolvitor
-§ ex "../../ast/positio" importa Locus
-§ ex "../../ast/expressia" importa Expressia
-§ ex "../../ast/sententia" importa Sententia, VariaGenus, ImportaSpecificator
-§ ex "../../ast/sententia" importa SeriesDestructuraElementum, IteratioVariabilis, IteratioGenus, CapeClausula
-§ ex "../../ast/typus" importa TypusAnnotatio
-§ ex "../../ast/lexema" importa SymbolumGenus
-§ ex "../errores" importa ParserErrorCodice
-§ ex "./massa" importa parseMassaSententia
-§ ex "./imperium" importa parseCapeClausula
+importa ex "../resolvitor" privata Resolvitor
+importa ex "../../ast/positio" privata Locus
+importa ex "../../ast/expressia" privata Expressia
+importa ex "../../ast/sententia" privata Sententia
+importa ex "../../ast/sententia" privata VariaGenus
+importa ex "../../ast/sententia" privata ImportaSpecificator
+importa ex "../../ast/sententia" privata SeriesDestructuraElementum
+importa ex "../../ast/sententia" privata IteratioVariabilis
+importa ex "../../ast/sententia" privata IteratioGenus
+importa ex "../../ast/sententia" privata CapeClausula
+importa ex "../../ast/typus" privata TypusAnnotatio
+importa ex "../../ast/lexema" privata SymbolumGenus
+importa ex "../errores" privata ParserErrorCodice
+importa ex "./massa" privata parseMassaSententia
+importa ex "./imperium" privata parseCapeClausula
 
 # ============================================================================
 # IDENTIFIER PARSING

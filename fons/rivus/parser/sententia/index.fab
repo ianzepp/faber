@@ -13,27 +13,58 @@
 # - declara = declare
 # - imperium = control (command)
 
-§ ex "../resolvitor" importa Resolvitor
-§ ex "../../ast/positio" importa Locus
-§ ex "../../ast/expressia" importa Expressia
-§ ex "../../ast/sententia" importa Sententia, ScribeGradus, MorphologiaDeclaratio, Visibilitas, ProbaModificator
-§ ex "../../ast/lexema" importa SymbolumGenus, VerbumId
-§ ex "../../ast/radix" importa NodusRadix
-§ ex "../../ast/annotatio" importa Annotatio
-§ ex "../errores" importa ParserErrorCodice
-§ ex "./annotatio" importa parseAnnotationes, parseSectiones
-§ ex "../../ast/radix" importa SectioAnnotatio
+importa ex "../resolvitor" privata Resolvitor
+importa ex "../../ast/positio" privata Locus
+importa ex "../../ast/expressia" privata Expressia
+importa ex "../../ast/sententia" privata Sententia
+importa ex "../../ast/sententia" privata ScribeGradus
+importa ex "../../ast/sententia" privata MorphologiaDeclaratio
+importa ex "../../ast/sententia" privata Visibilitas
+importa ex "../../ast/sententia" privata ProbaModificator
+importa ex "../../ast/lexema" privata SymbolumGenus
+importa ex "../../ast/lexema" privata VerbumId
+importa ex "../../ast/radix" privata NodusRadix
+importa ex "../../ast/annotatio" privata Annotatio
+importa ex "../errores" privata ParserErrorCodice
+importa ex "./annotatio" privata parseAnnotationes
+importa ex "./annotatio" privata parseSectiones
+importa ex "../../ast/radix" privata SectioAnnotatio
 
 # Import statement parsers from submodules
-§ ex "./actio" importa parseReddeSententia, parseRumpeSententia, parsePergeSententia, parseIaceSententia, parseScribeSententia
-§ ex "./declara" importa parseFunctioDeclaratio, parseGenusDeclaratio, parsePactumDeclaratio, parseOrdoDeclaratio, parseDiscretioDeclaratio, parseTypusAliasDeclaratio, parseImportaSententia
-§ ex "./error" importa parseTemptaSententia, parseFacSententia, parseAdfirmaSententia
-§ ex "./imperium" importa parseSiSententia, parseDumSententia, parseExSententia, parseDeSententia
-§ ex "./fluxus" importa parseEligeSententia, parseDiscerneSententia, parseCustodiSententia
-§ ex "./initus" importa parseIncipitSententia, parseIncipietSententia, parseCuraSententia, parseAdSententia
-§ ex "./massa" importa parseMassaSententia, parseExpressiaSententia
-§ ex "./varia" importa parseVariaSententia, parseDestructuraSententia, parseNomenVelVerbum
-§ ex "./proba" importa parseProbandumSententia, parseProbaSententia, parsePraeparaMassa
+importa ex "./actio" privata parseReddeSententia
+importa ex "./actio" privata parseRumpeSententia
+importa ex "./actio" privata parsePergeSententia
+importa ex "./actio" privata parseIaceSententia
+importa ex "./actio" privata parseScribeSententia
+importa ex "./declara" privata parseFunctioDeclaratio
+importa ex "./declara" privata parseGenusDeclaratio
+importa ex "./declara" privata parsePactumDeclaratio
+importa ex "./declara" privata parseOrdoDeclaratio
+importa ex "./declara" privata parseDiscretioDeclaratio
+importa ex "./declara" privata parseTypusAliasDeclaratio
+importa ex "./declara" privata parseImportaSententia
+importa ex "./error" privata parseTemptaSententia
+importa ex "./error" privata parseFacSententia
+importa ex "./error" privata parseAdfirmaSententia
+importa ex "./imperium" privata parseSiSententia
+importa ex "./imperium" privata parseDumSententia
+importa ex "./imperium" privata parseExSententia
+importa ex "./imperium" privata parseDeSententia
+importa ex "./fluxus" privata parseEligeSententia
+importa ex "./fluxus" privata parseDiscerneSententia
+importa ex "./fluxus" privata parseCustodiSententia
+importa ex "./initus" privata parseIncipitSententia
+importa ex "./initus" privata parseIncipietSententia
+importa ex "./initus" privata parseCuraSententia
+importa ex "./initus" privata parseAdSententia
+importa ex "./massa" privata parseMassaSententia
+importa ex "./massa" privata parseExpressiaSententia
+importa ex "./varia" privata parseVariaSententia
+importa ex "./varia" privata parseDestructuraSententia
+importa ex "./varia" privata parseNomenVelVerbum
+importa ex "./proba" privata parseProbandumSententia
+importa ex "./proba" privata parseProbaSententia
+importa ex "./proba" privata parsePraeparaMassa
 
 # Parse a statement
 #

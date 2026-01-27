@@ -6,9 +6,10 @@
 #   discretio Result { Ok, Err } -> type Result = { tag: 'Ok'; ... } | { tag: 'Err'; ... }
 #   @ publica discretio X { ... } -> export type X = ...
 
-§ ex "../../../ast/sententia" importa VariansDeclaratio, Visibilitas
-§ ex "../nucleus" importa TsGenerator
-§ ex "../typus" importa genTypus
+importa ex "../../../ast/sententia" privata VariansDeclaratio
+importa ex "../../../ast/sententia" privata Visibilitas
+importa ex "../nucleus" privata TsGenerator
+importa ex "../typus" privata genTypus
 
 @ publica
 functio genDiscretio(in TsGenerator g, de textus nomen, de ignotum generaParametra, de lista<VariansDeclaratio> variantes, de ignotum visibilitas) -> textus {

@@ -3,11 +3,12 @@
 # Shared logic for si/sin/secus (if/else-if/else) chains.
 # Parameterized by ScopusSyntaxis for target-specific output.
 
-§ ex "../../ast/sententia" importa Sententia, CapeClausula
-§ ex "../../ast/expressia" importa Expressia
-§ ex "./syntaxis" importa ScopusSyntaxis
-§ ex "./revocata" importa Revocata
-§ ex "./generans" importa Generans
+importa ex "../../ast/sententia" privata Sententia
+importa ex "../../ast/sententia" privata CapeClausula
+importa ex "../../ast/expressia" privata Expressia
+importa ex "./syntaxis" privata ScopusSyntaxis
+importa ex "./revocata" privata Revocata
+importa ex "./generans" privata Generans
 
 # Build the if/else-if/else chain without cape wrapper
 functio genSiCatena(

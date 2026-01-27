@@ -12,14 +12,22 @@
 # ======
 # Throws if validation fails. Use validateOnly() for non-throwing checks.
 
-§ ex "../ast/sententia" importa Sententia
-§ ex "./validitor" importa validateCompatibilitatem, formatValidatioErrores
-§ ex "./validitor" importa ValidatioPolitia, POLITIA_STRICTA, POLITIA_RELAXATA
-§ ex "./validitor" importa validatioSuccessit, ValidatioError
-§ ex "./ts/index" importa generateTs, generateTsWithTests, generateTsWithOptions
-§ ex "./go/index" importa generateGo
-§ ex "./faber/index" importa generateFaber, generateFaberStripComments
-§ ex "./glyph/index" importa generateGlyph, generateGlyphStripComments
+importa ex "../ast/sententia" privata Sententia
+importa ex "./validitor" privata validateCompatibilitatem
+importa ex "./validitor" privata formatValidatioErrores
+importa ex "./validitor" privata ValidatioPolitia
+importa ex "./validitor" privata POLITIA_STRICTA
+importa ex "./validitor" privata POLITIA_RELAXATA
+importa ex "./validitor" privata validatioSuccessit
+importa ex "./validitor" privata ValidatioError
+importa ex "./ts/index" privata generateTs
+importa ex "./ts/index" privata generateTsWithTests
+importa ex "./ts/index" privata generateTsWithOptions
+importa ex "./go/index" privata generateGo
+importa ex "./faber/index" privata generateFaber
+importa ex "./faber/index" privata generateFaberStripComments
+importa ex "./glyph/index" privata generateGlyph
+importa ex "./glyph/index" privata generateGlyphStripComments
 
 # =============================================================================
 # PUBLIC API

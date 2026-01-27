@@ -8,16 +8,19 @@
 #   per x ex lista { ... }  -> for (const x of lista) { ... }
 #   per x ex 0..10 { ... }  -> for (let x = 0; x < 10; x++) { ... }
 
-§ ex "../../../ast/sententia" importa Sententia, IteratioGenus, CapeClausula, IteratioVariabilis
-§ ex "../../../ast/expressia" importa Expressia
-§ ex "../nucleus" importa TsGenerator
-§ ex "../../shared/syntaxis" importa SYNTAXIS_TS
-§ ex "../../shared/iteratio" importa genAmbitusIteratio
-§ ex "../revocata" importa creaTsRevocata
+importa ex "../../../ast/sententia" privata Sententia
+importa ex "../../../ast/sententia" privata IteratioGenus
+importa ex "../../../ast/sententia" privata CapeClausula
+importa ex "../../../ast/sententia" privata IteratioVariabilis
+importa ex "../../../ast/expressia" privata Expressia
+importa ex "../nucleus" privata TsGenerator
+importa ex "../../shared/syntaxis" privata SYNTAXIS_TS
+importa ex "../../shared/iteratio" privata genAmbitusIteratio
+importa ex "../revocata" privata creaTsRevocata
 
 # External declarations
-§ ex "../expressia/index" importa genExpressia
-§ ex "./index" importa genSententia
+importa ex "../expressia/index" privata genExpressia
+importa ex "./index" privata genSententia
 
 # Check if expression is a known tabula variable name
 functio estTabula(de Expressia expr, de TsGenerator g) -> bivalens {

@@ -3,10 +3,10 @@
 # WHY: Single file defines all statement variants for pattern matching.
 #      Parsers construct variants with `finge VariantName { ... } qua Sententia`.
 
-§ ex "./positio" importa Locus
-§ ex "./typus" importa TypusAnnotatio
-§ ex "./expressia" importa Expressia
-§ ex "./annotatio" importa Annotatio
+importa ex "./positio" privata Locus
+importa ex "./typus" privata TypusAnnotatio
+importa ex "./expressia" privata Expressia
+importa ex "./annotatio" privata Annotatio
 
 # ============================================================================
 # SUPPORTING ENUMS

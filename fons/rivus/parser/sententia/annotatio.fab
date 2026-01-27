@@ -49,12 +49,12 @@
 # - exitus = exit/output
 # - dependentia = dependency
 
-§ ex "../resolvitor" importa Resolvitor
-§ ex "../../ast/positio" importa Locus
-§ ex "../../ast/lexema" importa SymbolumGenus
-§ ex "../../ast/radix" importa SectioAnnotatio
-§ ex "../../ast/annotatio" importa Annotatio
-§ ex "../errores" importa ParserErrorCodice
+importa ex "../resolvitor" privata Resolvitor
+importa ex "../../ast/positio" privata Locus
+importa ex "../../ast/lexema" privata SymbolumGenus
+importa ex "../../ast/radix" privata SectioAnnotatio
+importa ex "../../ast/annotatio" privata Annotatio
+importa ex "../errores" privata ParserErrorCodice
 
 # ============================================================================
 # HELPERS

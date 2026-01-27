@@ -2,23 +2,43 @@
 #
 # Routes expression AST nodes to their specific generators.
 
-§ ex "../../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas, ClausuraParametrum, MorphologiaInvocatio, ClausuraCorpus
-§ ex "../../../ast/expressia" importa AbFiltrum, CatenaGradus, AssignatioExpressia, MembrumExpressia
-§ ex "../../../ast/expressia" importa InnatumExpressia, ObiectumExpressia, SeriesExpressia, Nomen, AmbitusExpressia
-§ ex "../../../ast/expressia" importa Littera, UnariaExpressia
-§ ex "../../../ast/sententia" importa Sententia, VariaGenus
-§ ex "../../../ast/typus" importa TypusAnnotatio, TypusParametrum, Typus
-§ ex "../nucleus" importa TsGenerator
-§ ex "../typus" importa genTypus
-§ ex "../../../parser/morphologia" importa parseMethodum
-§ ex "../../radices" importa generaListaMethodum
-§ ex "../../innatum" importa getInnatumTranslation, InnatumTranslation
-§ ex "./littera" importa genLittera, genLitteraExemplar
-§ ex "./scriptum" importa genScriptum
-§ ex "./ambitus" importa genAmbitusExpressia
-§ ex "./est" importa genEstExpressia, genEstExpressiaNegata
-§ ex "./obiectum" importa genObiectum
-§ ex "./ab" importa genAbExpressia, applicaCatenaGradus
+importa ex "../../../ast/expressia" privata Expressia
+importa ex "../../../ast/expressia" privata LitteraGenus
+importa ex "../../../ast/expressia" privata ObiectumProprietas
+importa ex "../../../ast/expressia" privata ClausuraParametrum
+importa ex "../../../ast/expressia" privata MorphologiaInvocatio
+importa ex "../../../ast/expressia" privata ClausuraCorpus
+importa ex "../../../ast/expressia" privata AbFiltrum
+importa ex "../../../ast/expressia" privata CatenaGradus
+importa ex "../../../ast/expressia" privata AssignatioExpressia
+importa ex "../../../ast/expressia" privata MembrumExpressia
+importa ex "../../../ast/expressia" privata InnatumExpressia
+importa ex "../../../ast/expressia" privata ObiectumExpressia
+importa ex "../../../ast/expressia" privata SeriesExpressia
+importa ex "../../../ast/expressia" privata Nomen
+importa ex "../../../ast/expressia" privata AmbitusExpressia
+importa ex "../../../ast/expressia" privata Littera
+importa ex "../../../ast/expressia" privata UnariaExpressia
+importa ex "../../../ast/sententia" privata Sententia
+importa ex "../../../ast/sententia" privata VariaGenus
+importa ex "../../../ast/typus" privata TypusAnnotatio
+importa ex "../../../ast/typus" privata TypusParametrum
+importa ex "../../../ast/typus" privata Typus
+importa ex "../nucleus" privata TsGenerator
+importa ex "../typus" privata genTypus
+importa ex "../../../parser/morphologia" privata parseMethodum
+importa ex "../../radices" privata generaListaMethodum
+importa ex "../../innatum" privata getInnatumTranslation
+importa ex "../../innatum" privata InnatumTranslation
+importa ex "./littera" privata genLittera
+importa ex "./littera" privata genLitteraExemplar
+importa ex "./scriptum" privata genScriptum
+importa ex "./ambitus" privata genAmbitusExpressia
+importa ex "./est" privata genEstExpressia
+importa ex "./est" privata genEstExpressiaNegata
+importa ex "./obiectum" privata genObiectum
+importa ex "./ab" privata genAbExpressia
+importa ex "./ab" privata applicaCatenaGradus
 # =============================================================================
 # EXPRESSION DISPATCH
 # =============================================================================

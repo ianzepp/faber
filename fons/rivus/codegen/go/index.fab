@@ -5,9 +5,10 @@
 # TRANSFORMS:
 #   lista<Sententia> -> Go source code string
 
-§ ex "../../ast/sententia" importa Sententia
-§ ex "./nucleus" importa GoGenerator, creaGoGenerator
-§ ex "./sententia/index" importa genSententia
+importa ex "../../ast/sententia" privata Sententia
+importa ex "./nucleus" privata GoGenerator
+importa ex "./nucleus" privata creaGoGenerator
+importa ex "./sententia/index" privata genSententia
 
 # =============================================================================
 # PUBLIC API

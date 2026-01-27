@@ -12,8 +12,9 @@
 # - Identifiers/literals → braille encoding
 # - Comments → ⌗ + braille content
 
-§ ex "../shared/generans" importa Generans
-§ ex "./lexicon" importa glyphPunctuation, encodeBraille
+importa ex "../shared/generans" privata Generans
+importa ex "./lexicon" privata glyphPunctuation
+importa ex "./lexicon" privata encodeBraille
 
 # =============================================================================
 # GLYPH GENERATOR
@@ -86,7 +87,9 @@ genus GlyphGenerator implet Generans {
 # COMMENT FORMATTING (GLYPH SYNTAX)
 # =============================================================================
 
-§ ex "../../ast/radix" importa Nota, NotaGenus, NodusRadix
+importa ex "../../ast/radix" privata Nota
+importa ex "../../ast/radix" privata NotaGenus
+importa ex "../../ast/radix" privata NodusRadix
 
 functio formataNotaGlyph(de Nota nota) -> textus {
     # Comments use ⌗ (U+2317) followed by braille-encoded content

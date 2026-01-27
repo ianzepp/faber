@@ -4,12 +4,12 @@
 #   dum x > 0 { ... }         -> while (x > 0) { ... }
 #   dum x > 0 { } cape e { }  -> try { while (...) {...} } catch (e) { }
 
-§ ex "../../../ast/sententia" importa Sententia
-§ ex "../../../ast/expressia" importa Expressia
-§ ex "../nucleus" importa TsGenerator
-§ ex "../../shared/syntaxis" importa SYNTAXIS_TS
-§ ex "../../shared/dum" importa genDumLogica
-§ ex "../revocata" importa creaTsRevocata
+importa ex "../../../ast/sententia" privata Sententia
+importa ex "../../../ast/expressia" privata Expressia
+importa ex "../nucleus" privata TsGenerator
+importa ex "../../shared/syntaxis" privata SYNTAXIS_TS
+importa ex "../../shared/dum" privata genDumLogica
+importa ex "../revocata" privata creaTsRevocata
 
 @ publica
 functio genDum(in TsGenerator g, de Expressia condicio, de Sententia corpus, de ignotum cape) -> textus {

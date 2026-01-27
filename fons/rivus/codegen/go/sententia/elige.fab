@@ -5,12 +5,12 @@
 # TRANSFORMS:
 #   elige x { casu 1 {...} casu 2 {...} } -> if x == 1 {...} else if x == 2 {...}
 
-§ ex "../../../ast/sententia" importa EligeCasus
-§ ex "../../../ast/expressia" importa Expressia
-§ ex "../nucleus" importa GoGenerator
-§ ex "../../shared/syntaxis" importa SYNTAXIS_GO
-§ ex "../../shared/elige" importa genEligeLogica
-§ ex "../revocata" importa creaGoRevocata
+importa ex "../../../ast/sententia" privata EligeCasus
+importa ex "../../../ast/expressia" privata Expressia
+importa ex "../nucleus" privata GoGenerator
+importa ex "../../shared/syntaxis" privata SYNTAXIS_GO
+importa ex "../../shared/elige" privata genEligeLogica
+importa ex "../revocata" privata creaGoRevocata
 
 @ publica
 functio genElige(in GoGenerator g, de Expressia discriminans, de lista<EligeCasus> casus, si de ignotum praedefinitum, si de ignotum cape) -> textus {

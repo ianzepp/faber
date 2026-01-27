@@ -20,17 +20,35 @@
 # - typus = type alias
 # - importa = import
 
-§ ex "../resolvitor" importa Resolvitor
-§ ex "../../ast/positio" importa Locus
-§ ex "../../ast/expressia" importa Expressia
-§ ex "../../ast/sententia" importa Sententia, MassaSententia, FunctioDeclaratio, Parametrum, TypusParametrum, CampusDeclaratio, PactumMethodus, OrdoMembrum, VariansDeclaratio, VariansCampus, Visibilitas, ReddeVerbum, ImportaSpecificator, MorphologiaDeclaratio, FunctioModificator, OptionesModificator, ExitusModificator
-§ ex "../../ast/typus" importa TypusAnnotatio, typusSimplicis
-§ ex "../../ast/lexema" importa SymbolumGenus, VerbumId
-§ ex "../errores" importa ParserErrorCodice
-§ ex "./massa" importa parseMassaSententia
-§ ex "./varia" importa parseNomenVelVerbum
-§ ex "../../ast/annotatio" importa Annotatio
-§ ex "./annotatio" importa parseAnnotationes
+importa ex "../resolvitor" privata Resolvitor
+importa ex "../../ast/positio" privata Locus
+importa ex "../../ast/expressia" privata Expressia
+importa ex "../../ast/sententia" privata Sententia
+importa ex "../../ast/sententia" privata MassaSententia
+importa ex "../../ast/sententia" privata FunctioDeclaratio
+importa ex "../../ast/sententia" privata Parametrum
+importa ex "../../ast/sententia" privata TypusParametrum
+importa ex "../../ast/sententia" privata CampusDeclaratio
+importa ex "../../ast/sententia" privata PactumMethodus
+importa ex "../../ast/sententia" privata OrdoMembrum
+importa ex "../../ast/sententia" privata VariansDeclaratio
+importa ex "../../ast/sententia" privata VariansCampus
+importa ex "../../ast/sententia" privata Visibilitas
+importa ex "../../ast/sententia" privata ReddeVerbum
+importa ex "../../ast/sententia" privata ImportaSpecificator
+importa ex "../../ast/sententia" privata MorphologiaDeclaratio
+importa ex "../../ast/sententia" privata FunctioModificator
+importa ex "../../ast/sententia" privata OptionesModificator
+importa ex "../../ast/sententia" privata ExitusModificator
+importa ex "../../ast/typus" privata TypusAnnotatio
+importa ex "../../ast/typus" privata typusSimplicis
+importa ex "../../ast/lexema" privata SymbolumGenus
+importa ex "../../ast/lexema" privata VerbumId
+importa ex "../errores" privata ParserErrorCodice
+importa ex "./massa" privata parseMassaSententia
+importa ex "./varia" privata parseNomenVelVerbum
+importa ex "../../ast/annotatio" privata Annotatio
+importa ex "./annotatio" privata parseAnnotationes
 
 # ============================================================================
 # FUNCTION DECLARATIONS

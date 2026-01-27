@@ -11,8 +11,9 @@
 # - No HAL/norma import rewriting
 # - Pure 1:1 AST→canonical Faber source
 
-§ ex "../shared/generans" importa Generans
-§ ex "../typi" importa formataNotaePrae, formataNotaePost
+importa ex "../shared/generans" privata Generans
+importa ex "../typi" privata formataNotaePrae
+importa ex "../typi" privata formataNotaePost
 
 # =============================================================================
 # FABER GENERATOR
@@ -89,7 +90,9 @@ genus FaberGenerator implet Generans {
 # COMMENT FORMATTING (FABER SYNTAX)
 # =============================================================================
 
-§ ex "../../ast/radix" importa Nota, NotaGenus, NodusRadix
+importa ex "../../ast/radix" privata Nota
+importa ex "../../ast/radix" privata NotaGenus
+importa ex "../../ast/radix" privata NodusRadix
 
 functio formataNotaFaber(de Nota nota) -> textus {
     elige nota.species {

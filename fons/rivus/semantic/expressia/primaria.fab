@@ -2,12 +2,19 @@
 #
 # Handles identifiers, literals, arrays, and objects.
 
-§ ex "../resolvitor" importa Resolvitor
-§ ex "../typi" importa SemanticTypus, TEXTUS, NUMERUS, FRACTUS, BIVALENS, NIHIL, IGNOTUM
-§ ex "../typi" importa genericumTypus
-§ ex "../scopus" importa quaereSymbolum
-§ ex "../errores" importa undefinedVariableError
-§ ex "../../ast/expressia" importa Expressia, LitteraGenus
+importa ex "../resolvitor" privata Resolvitor
+importa ex "../typi" privata SemanticTypus
+importa ex "../typi" privata TEXTUS
+importa ex "../typi" privata NUMERUS
+importa ex "../typi" privata FRACTUS
+importa ex "../typi" privata BIVALENS
+importa ex "../typi" privata NIHIL
+importa ex "../typi" privata IGNOTUM
+importa ex "../typi" privata genericumTypus
+importa ex "../scopus" privata quaereSymbolum
+importa ex "../errores" privata undefinedVariableError
+importa ex "../../ast/expressia" privata Expressia
+importa ex "../../ast/expressia" privata LitteraGenus
 
 # ============================================================================
 # IDENTIFIER RESOLUTION

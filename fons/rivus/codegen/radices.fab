@@ -5,7 +5,7 @@
 #
 # WHY: One stem entry generates all conjugated forms. The grammar does the work.
 
-§ ex "../parser/morphologia" importa MorphologiaFlagga
+importa ex "../parser/morphologia" privata MorphologiaFlagga
 
 # ============================================================================
 # TYPES

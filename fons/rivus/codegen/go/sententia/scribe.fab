@@ -7,12 +7,12 @@
 #   scribe.vide "debug" -> fmt.Println("debug")  # Go has no debug level
 #   scribe.mone "warn"  -> fmt.Println("warn")   # Go has no warn level
 
-§ ex "../../../ast/sententia" importa ScribeGradus
-§ ex "../../../ast/expressia" importa Expressia
-§ ex "../nucleus" importa GoGenerator
+importa ex "../../../ast/sententia" privata ScribeGradus
+importa ex "../../../ast/expressia" privata Expressia
+importa ex "../nucleus" privata GoGenerator
 
 # External declaration - implementation lives in expressia/index.fab
-§ ex "../expressia/index" importa genExpressia
+importa ex "../expressia/index" privata genExpressia
 
 @ publica
 functio genScribe(in GoGenerator g, ScribeGradus gradus, de lista<Expressia> argumenta) -> textus {

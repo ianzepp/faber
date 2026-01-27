@@ -14,10 +14,11 @@
 #
 # LATIN: resolvitor = "one who resolves/parses"
 
-§ ex "./nucleus" importa Parser
-§ ex "../ast/expressia" importa Expressia
-§ ex "../ast/sententia" importa Sententia, MassaSententia
-§ ex "../ast/typus" importa TypusAnnotatio
+importa ex "./nucleus" privata Parser
+importa ex "../ast/expressia" privata Expressia
+importa ex "../ast/sententia" privata Sententia
+importa ex "../ast/sententia" privata MassaSententia
+importa ex "../ast/typus" privata TypusAnnotatio
 
 # Parser interface for cross-module parsing.
 #

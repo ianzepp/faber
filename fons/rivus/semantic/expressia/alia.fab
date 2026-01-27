@@ -2,15 +2,21 @@
 #
 # Handles lambda, finge, cede, novum, and conditional expressions.
 
-§ ex "../resolvitor" importa Resolvitor
-§ ex "../typi" importa SemanticTypus, IGNOTUM, VACUUM
-§ ex "../typi" importa functioTypus, usitatumTypus, genericumTypus
-§ ex "../scopus" importa ScopusSpecies, SymbolumSpecies
-§ ex "../errores" importa cedeOutsideAsyncError
-§ ex "../sententia/declara" importa resolveTypusAnnotatio
-§ ex "../../ast/expressia" importa Expressia, ClausuraCorpus
-§ ex "../../ast/sententia" importa Sententia
-§ ex "../../ast/typus" importa TypusAnnotatio
+importa ex "../resolvitor" privata Resolvitor
+importa ex "../typi" privata SemanticTypus
+importa ex "../typi" privata IGNOTUM
+importa ex "../typi" privata VACUUM
+importa ex "../typi" privata functioTypus
+importa ex "../typi" privata usitatumTypus
+importa ex "../typi" privata genericumTypus
+importa ex "../scopus" privata ScopusSpecies
+importa ex "../scopus" privata SymbolumSpecies
+importa ex "../errores" privata cedeOutsideAsyncError
+importa ex "../sententia/declara" privata resolveTypusAnnotatio
+importa ex "../../ast/expressia" privata Expressia
+importa ex "../../ast/expressia" privata ClausuraCorpus
+importa ex "../../ast/sententia" privata Sententia
+importa ex "../../ast/typus" privata TypusAnnotatio
 
 # ============================================================================
 # CLAUSURA EXPRESSION RESOLUTION

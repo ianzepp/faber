@@ -10,10 +10,15 @@
 # - Applies policy (strict vs relaxed) for emulated/mismatched features
 # - Returns list of validation errors with suggestions
 
-§ ex "./capacitas" importa TargetCapacitas, Sustentatio, getCapacitas
-§ ex "./detector" importa FeatureDetector, UsitataFeatura, FeaturaClavis
-§ ex "./detector" importa novumDetector, featuraClavisAdTextus
-§ ex "../ast/sententia" importa Sententia
+importa ex "./capacitas" privata TargetCapacitas
+importa ex "./capacitas" privata Sustentatio
+importa ex "./capacitas" privata getCapacitas
+importa ex "./detector" privata FeatureDetector
+importa ex "./detector" privata UsitataFeatura
+importa ex "./detector" privata FeaturaClavis
+importa ex "./detector" privata novumDetector
+importa ex "./detector" privata featuraClavisAdTextus
+importa ex "../ast/sententia" privata Sententia
 
 # =============================================================================
 # VALIDATION POLICY

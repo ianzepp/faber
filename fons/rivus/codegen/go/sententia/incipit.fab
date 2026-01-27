@@ -6,10 +6,10 @@
 #   incipit { ... }                        -> func main() { ... }
 #   incipit ergo cura arena fixum alloc { }  -> func main() { ... } (ignore arena)
 
-§ ex "../../../ast/sententia" importa Sententia
-§ ex "../nucleus" importa GoGenerator
+importa ex "../../../ast/sententia" privata Sententia
+importa ex "../nucleus" privata GoGenerator
 
-§ ex "./index" importa genSententia
+importa ex "./index" privata genSententia
 
 @ publica
 functio genIncipit(in GoGenerator g, si de ignotum corpus, si de ignotum ergo) -> textus {

@@ -11,9 +11,11 @@
 # - Tracks first occurrence for error reporting
 # - Feature keys match capability structure hierarchy
 
-§ ex "../ast/positio" importa Locus
-§ ex "../ast/sententia" importa Sententia
-§ ex "../ast/expressia" importa Expressia, ObiectumProprietas, ClausuraCorpus
+importa ex "../ast/positio" privata Locus
+importa ex "../ast/sententia" privata Sententia
+importa ex "../ast/expressia" privata Expressia
+importa ex "../ast/expressia" privata ObiectumProprietas
+importa ex "../ast/expressia" privata ClausuraCorpus
 
 # =============================================================================
 # FEATURE KEYS

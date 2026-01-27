@@ -2,8 +2,10 @@
 #
 # Converts type annotations back to canonical Faber syntax.
 
-§ ex "../../ast/typus" importa TypusAnnotatio, TypusParametrum, Typus
-§ ex "./nucleus" importa FaberGenerator
+importa ex "../../ast/typus" privata TypusAnnotatio
+importa ex "../../ast/typus" privata TypusParametrum
+importa ex "../../ast/typus" privata Typus
+importa ex "./nucleus" privata FaberGenerator
 
 # =============================================================================
 # TYPE GENERATION

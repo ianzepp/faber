@@ -11,7 +11,7 @@
 # not compiler library concerns. See docs/reference/rivus-cli/ for the
 # full implementation with HAL dependencies.
 
-§ ex "../ast/radix" importa SectioAnnotatio
+importa ex "../ast/radix" privata SectioAnnotatio
 
 # ============================================================================
 # TYPES

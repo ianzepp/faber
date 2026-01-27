@@ -4,9 +4,12 @@
 # for TypeScript code generation. Individual gen* functions are in
 # separate files under sententia/ and expressia/.
 
-§ ex "norma:hal/solum" importa solum
-§ ex "../typi" importa RequiredFeatures, creaRequiredFeatures, formataNotaePrae, formataNotaePost
-§ ex "../shared/generans" importa Generans
+importa ex "norma:hal/solum" privata solum
+importa ex "../typi" privata RequiredFeatures
+importa ex "../typi" privata creaRequiredFeatures
+importa ex "../typi" privata formataNotaePrae
+importa ex "../typi" privata formataNotaePost
+importa ex "../shared/generans" privata Generans
 
 # =============================================================================
 # TS GENERATOR

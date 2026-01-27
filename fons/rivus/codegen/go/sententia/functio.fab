@@ -8,14 +8,19 @@
 #   functio f() curata alloc -> T { ... }  -> func f() T { ... }  (ignore allocator)
 #   @ publica functio f() { ... }          -> func F() { ... }    (capitalize)
 
-§ ex "../../../ast/sententia" importa Sententia, Parametrum, TypusParametrum, Visibilitas, FunctioModificator, FunctioDeclaratio
-§ ex "../../../ast/typus" importa TypusAnnotatio
-§ ex "../nucleus" importa GoGenerator
+importa ex "../../../ast/sententia" privata Sententia
+importa ex "../../../ast/sententia" privata Parametrum
+importa ex "../../../ast/sententia" privata TypusParametrum
+importa ex "../../../ast/sententia" privata Visibilitas
+importa ex "../../../ast/sententia" privata FunctioModificator
+importa ex "../../../ast/sententia" privata FunctioDeclaratio
+importa ex "../../../ast/typus" privata TypusAnnotatio
+importa ex "../nucleus" privata GoGenerator
 
 # External declarations
-§ ex "../expressia/index" importa genExpressia
-§ ex "./index" importa genSententia
-§ ex "../typus" importa genTypus
+importa ex "../expressia/index" privata genExpressia
+importa ex "./index" privata genSententia
+importa ex "../typus" privata genTypus
 
 functio habetErrataModificator(si de ignotum modificatores) -> bivalens {
     si nihil modificatores {

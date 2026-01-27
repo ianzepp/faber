@@ -10,13 +10,15 @@
 #   pactum Foo { cursore f(): T } -> interface Foo { f(): Generator<T> }
 #   @ publica pactum Foo { ... }  -> export interface Foo { ... }
 
-§ ex "../../../ast/sententia" importa Parametrum, PactumMethodus, Visibilitas
-§ ex "../../../ast/typus" importa TypusAnnotatio
-§ ex "../nucleus" importa TsGenerator
+importa ex "../../../ast/sententia" privata Parametrum
+importa ex "../../../ast/sententia" privata PactumMethodus
+importa ex "../../../ast/sententia" privata Visibilitas
+importa ex "../../../ast/typus" privata TypusAnnotatio
+importa ex "../nucleus" privata TsGenerator
 
 # External declarations - implementations live in index.fab
-§ ex "./functio" importa genParametrum
-§ ex "../typus" importa genTypus
+importa ex "./functio" privata genParametrum
+importa ex "../typus" privata genTypus
 
 @ publica
 functio genPactum(in TsGenerator g, de textus nomen, de ignotum generaParametra, de lista<PactumMethodus> methodi, de ignotum visibilitas) -> textus {

@@ -2,22 +2,36 @@
 #
 # Performs semantic analysis on the AST. Resolves types, builds symbol tables.
 
-§ ex "./resolvitor" importa Resolvitor
-§ ex "./nucleus" importa Analyzator, SemanticResultatum, novumAnalyzator, DiscretioDeclInfo
-§ ex "./typi" importa SemanticTypus, IGNOTUM, VACUUM, functioTypus, usitatumTypus
-§ ex "./scopus" importa Symbolum, SymbolumSpecies
-§ ex "./modulus" importa estLocaleImportum, estNormaImportum, resolveModulum, ModulusExportum
-§ ex "./modulus" importa estDependentiaImportum, resolveDependentiaPath
-§ ex "./dependentia" importa extractDependentiae
-§ ex "./expressia/index" importa resolveExpressia
-§ ex "./expressia/index" importa checkExpressia
-§ ex "./sententia/index" importa analyzeSententia
-§ ex "./sententia/declara" importa resolveTypusAnnotatio
-§ ex "../ast/radix" importa Programma, SectioAnnotatio
-§ ex "../ast/expressia" importa Expressia
-§ ex "../ast/sententia" importa Sententia, MorphologiaDeclaratio
-§ ex "../ast/typus" importa TypusAnnotatio
-§ ex "../parser/morphologia" importa parseMethodum
+importa ex "./resolvitor" privata Resolvitor
+importa ex "./nucleus" privata Analyzator
+importa ex "./nucleus" privata SemanticResultatum
+importa ex "./nucleus" privata novumAnalyzator
+importa ex "./nucleus" privata DiscretioDeclInfo
+importa ex "./typi" privata SemanticTypus
+importa ex "./typi" privata IGNOTUM
+importa ex "./typi" privata VACUUM
+importa ex "./typi" privata functioTypus
+importa ex "./typi" privata usitatumTypus
+importa ex "./scopus" privata Symbolum
+importa ex "./scopus" privata SymbolumSpecies
+importa ex "./modulus" privata estLocaleImportum
+importa ex "./modulus" privata estNormaImportum
+importa ex "./modulus" privata resolveModulum
+importa ex "./modulus" privata ModulusExportum
+importa ex "./modulus" privata estDependentiaImportum
+importa ex "./modulus" privata resolveDependentiaPath
+importa ex "./dependentia" privata extractDependentiae
+importa ex "./expressia/index" privata resolveExpressia
+importa ex "./expressia/index" privata checkExpressia
+importa ex "./sententia/index" privata analyzeSententia
+importa ex "./sententia/declara" privata resolveTypusAnnotatio
+importa ex "../ast/radix" privata Programma
+importa ex "../ast/radix" privata SectioAnnotatio
+importa ex "../ast/expressia" privata Expressia
+importa ex "../ast/sententia" privata Sententia
+importa ex "../ast/sententia" privata MorphologiaDeclaratio
+importa ex "../ast/typus" privata TypusAnnotatio
+importa ex "../parser/morphologia" privata parseMethodum
 
 # ============================================================================
 # RESOLVITOR IMPLEMENTATION

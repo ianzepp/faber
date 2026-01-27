@@ -7,11 +7,11 @@
 #   1...10     -> Array.from({length: 10 - 1 + 1}, (_, i) => 1 + i)
 #   1..10 per 2 -> Array.from({length: Math.ceil((10 - 1) / 2)}, (_, i) => 1 + i * 2)
 
-§ ex "../../../ast/expressia" importa Expressia
-§ ex "../nucleus" importa TsGenerator
+importa ex "../../../ast/expressia" privata Expressia
+importa ex "../nucleus" privata TsGenerator
 
 # External declaration - implementation lives in index.fab
-§ ex "./index" importa genExpressia
+importa ex "./index" privata genExpressia
 
 # Generate range expression as array
 @ publica

@@ -3,19 +3,28 @@
 # Handles resolution of local .fab file imports during semantic analysis.
 # Uses norma:solum for file I/O operations.
 
-§ ex "norma:hal/solum" importa solum
+importa ex "norma:hal/solum" privata solum
 
-§ ex "./typi" importa SemanticTypus, IGNOTUM, VACUUM, functioTypus, usitatumTypus, pactumTypus
-§ ex "./typi" importa genusTypus, genericumTypus, primitivumTypus
-§ ex "./scopus" importa SymbolumSpecies
-§ ex "./nucleus" importa DiscretioDeclInfo, DiscretioVariansInfo
-§ ex "./dependentia" importa Dependentia
-§ ex "../ast/positio" importa Locus
-§ ex "../ast/radix" importa Programma
-§ ex "../ast/sententia" importa Sententia
-§ ex "../ast/typus" importa TypusAnnotatio, TypusParametrum
-§ ex "../lexor/index" importa lexare
-§ ex "../parser/index" importa resolvere
+importa ex "./typi" privata SemanticTypus
+importa ex "./typi" privata IGNOTUM
+importa ex "./typi" privata VACUUM
+importa ex "./typi" privata functioTypus
+importa ex "./typi" privata usitatumTypus
+importa ex "./typi" privata pactumTypus
+importa ex "./typi" privata genusTypus
+importa ex "./typi" privata genericumTypus
+importa ex "./typi" privata primitivumTypus
+importa ex "./scopus" privata SymbolumSpecies
+importa ex "./nucleus" privata DiscretioDeclInfo
+importa ex "./nucleus" privata DiscretioVariansInfo
+importa ex "./dependentia" privata Dependentia
+importa ex "../ast/positio" privata Locus
+importa ex "../ast/radix" privata Programma
+importa ex "../ast/sententia" privata Sententia
+importa ex "../ast/typus" privata TypusAnnotatio
+importa ex "../ast/typus" privata TypusParametrum
+importa ex "../lexor/index" privata lexare
+importa ex "../parser/index" privata resolvere
 
 # ============================================================================
 # TYPES

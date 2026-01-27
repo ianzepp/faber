@@ -15,15 +15,22 @@
 # - discerne = distinguish (imperative of discernere)
 # - custodi = guard (imperative of custodire)
 
-§ ex "../resolvitor" importa Resolvitor
-§ ex "../nucleus" importa Parser
-§ ex "../../ast/positio" importa Locus
-§ ex "../../ast/expressia" importa Expressia
-§ ex "../../ast/sententia" importa Sententia, MassaSententia, EligeCasus, VariansCasus, VariansExemplar, CustodiClausula, CapeClausula
-§ ex "../../ast/lexema" importa SymbolumGenus
-§ ex "../errores" importa ParserErrorCodice
-§ ex "./massa" importa parseMassaSententia
-§ ex "./imperium" importa parseCorpus, parseCorpusAutSententia
+importa ex "../resolvitor" privata Resolvitor
+importa ex "../nucleus" privata Parser
+importa ex "../../ast/positio" privata Locus
+importa ex "../../ast/expressia" privata Expressia
+importa ex "../../ast/sententia" privata Sententia
+importa ex "../../ast/sententia" privata MassaSententia
+importa ex "../../ast/sententia" privata EligeCasus
+importa ex "../../ast/sententia" privata VariansCasus
+importa ex "../../ast/sententia" privata VariansExemplar
+importa ex "../../ast/sententia" privata CustodiClausula
+importa ex "../../ast/sententia" privata CapeClausula
+importa ex "../../ast/lexema" privata SymbolumGenus
+importa ex "../errores" privata ParserErrorCodice
+importa ex "./massa" privata parseMassaSententia
+importa ex "./imperium" privata parseCorpus
+importa ex "./imperium" privata parseCorpusAutSententia
 
 # ============================================================================
 # SWITCH STATEMENT (elige)

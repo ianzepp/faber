@@ -2,12 +2,18 @@
 #
 # Handles: si, dum, ex/de...pro, elige, discerne, custodi
 
-§ ex "../resolvitor" importa Resolvitor
-§ ex "../nucleus" importa DiscretioDeclInfo
-§ ex "../typi" importa SemanticTypus, IGNOTUM
-§ ex "../scopus" importa ScopusSpecies, Symbolum, SymbolumSpecies, quaereSymbolum
-§ ex "../errores" importa emptyCaseBlockError
-§ ex "../../ast/sententia" importa Sententia, VariansExemplar, IteratioVariabilis
+importa ex "../resolvitor" privata Resolvitor
+importa ex "../nucleus" privata DiscretioDeclInfo
+importa ex "../typi" privata SemanticTypus
+importa ex "../typi" privata IGNOTUM
+importa ex "../scopus" privata ScopusSpecies
+importa ex "../scopus" privata Symbolum
+importa ex "../scopus" privata SymbolumSpecies
+importa ex "../scopus" privata quaereSymbolum
+importa ex "../errores" privata emptyCaseBlockError
+importa ex "../../ast/sententia" privata Sententia
+importa ex "../../ast/sententia" privata VariansExemplar
+importa ex "../../ast/sententia" privata IteratioVariabilis
 
 # =============================================================================
 # CONDITIONAL

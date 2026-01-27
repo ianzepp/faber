@@ -7,9 +7,10 @@
 # =====
 # fixum glyphs = generateGlyph(corpus)
 
-§ ex "../../ast/sententia" importa Sententia
-§ ex "./nucleus" importa GlyphGenerator, creaGlyphGenerator
-§ ex "./sententia" importa genSententia
+importa ex "../../ast/sententia" privata Sententia
+importa ex "./nucleus" privata GlyphGenerator
+importa ex "./nucleus" privata creaGlyphGenerator
+importa ex "./sententia" privata genSententia
 
 # =============================================================================
 # PUBLIC API

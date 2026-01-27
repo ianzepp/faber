@@ -3,15 +3,22 @@
 # Routes expression AST nodes to their canonical Faber representation.
 # Pure serialization with no semantic transformation.
 
-§ ex "../../ast/expressia" importa Expressia, LitteraGenus, ObiectumProprietas
-§ ex "../../ast/expressia" importa ClausuraParametrum, ClausuraCorpus
-§ ex "../../ast/expressia" importa AbFiltrum, CatenaGradus
-§ ex "../../ast/expressia" importa AbExpressia, Massa, Expr
-§ ex "../../ast/typus" importa TypusAnnotatio
-§ ex "../../ast/sententia" importa Sententia, MassaSententia
-§ ex "./nucleus" importa FaberGenerator
-§ ex "./typus" importa genTypus
-§ ex "./sententia" importa genMassa
+importa ex "../../ast/expressia" privata Expressia
+importa ex "../../ast/expressia" privata LitteraGenus
+importa ex "../../ast/expressia" privata ObiectumProprietas
+importa ex "../../ast/expressia" privata ClausuraParametrum
+importa ex "../../ast/expressia" privata ClausuraCorpus
+importa ex "../../ast/expressia" privata AbFiltrum
+importa ex "../../ast/expressia" privata CatenaGradus
+importa ex "../../ast/expressia" privata AbExpressia
+importa ex "../../ast/expressia" privata Massa
+importa ex "../../ast/expressia" privata Expr
+importa ex "../../ast/typus" privata TypusAnnotatio
+importa ex "../../ast/sententia" privata Sententia
+importa ex "../../ast/sententia" privata MassaSententia
+importa ex "./nucleus" privata FaberGenerator
+importa ex "./typus" privata genTypus
+importa ex "./sententia" privata genMassa
 
 # =============================================================================
 # EXPRESSION DISPATCH

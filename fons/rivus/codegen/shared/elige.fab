@@ -6,11 +6,13 @@
 # TRANSFORMS:
 #   elige x { casu 1 {...} casu 2 {...} } -> if (x === 1) {...} else if (x === 2) {...}
 
-§ ex "../../ast/sententia" importa Sententia, EligeCasus, CapeClausula
-§ ex "../../ast/expressia" importa Expressia
-§ ex "./syntaxis" importa ScopusSyntaxis
-§ ex "./revocata" importa Revocata
-§ ex "./generans" importa Generans
+importa ex "../../ast/sententia" privata Sententia
+importa ex "../../ast/sententia" privata EligeCasus
+importa ex "../../ast/sententia" privata CapeClausula
+importa ex "../../ast/expressia" privata Expressia
+importa ex "./syntaxis" privata ScopusSyntaxis
+importa ex "./revocata" privata Revocata
+importa ex "./generans" privata Generans
 
 # Main entry point - generates if/else chain with optional cape wrapper
 @ publica

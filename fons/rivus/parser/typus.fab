@@ -24,11 +24,12 @@
 # - parametra = parameters
 # - nullabilis = nullable
 
-§ ex "./resolvitor" importa Resolvitor
-§ ex "../ast/positio" importa Locus
-§ ex "../ast/typus" importa TypusAnnotatio, TypusParametrum
-§ ex "../ast/lexema" importa SymbolumGenus
-§ ex "./errores" importa ParserErrorCodice
+importa ex "./resolvitor" privata Resolvitor
+importa ex "../ast/positio" privata Locus
+importa ex "../ast/typus" privata TypusAnnotatio
+importa ex "../ast/typus" privata TypusParametrum
+importa ex "../ast/lexema" privata SymbolumGenus
+importa ex "./errores" privata ParserErrorCodice
 
 # Parse a type annotation
 # Handles generics, nullable, array shorthand, and union types

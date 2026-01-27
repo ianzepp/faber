@@ -8,10 +8,10 @@
 #   incipiet { ... } -> (async () => { ... })();
 #   incipiet argumenta args { ... } -> (async () => { const args = process.argv.slice(2); ... })();
 
-§ ex "../../../ast/sententia" importa Sententia
-§ ex "../nucleus" importa TsGenerator
+importa ex "../../../ast/sententia" privata Sententia
+importa ex "../nucleus" privata TsGenerator
 
-§ ex "./index" importa genSententia
+importa ex "./index" privata genSententia
 
 @ publica
 functio genIncipit(in TsGenerator g, de ignotum corpus, de ignotum ergo, si de textus argNomen) -> textus {
