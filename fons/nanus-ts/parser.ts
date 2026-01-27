@@ -167,6 +167,8 @@ export class Parser {
                     return this.parseVaria(publica, externa);
                 case 'ex':
                     return this.parseExStmt(publica);
+                case 'de':
+                    return this.parseDeStmt();
                 case 'functio':
                     return this.parseFunctio(publica, futura, externa);
                 case 'abstractus': {
@@ -221,8 +223,8 @@ export class Parser {
                     return this.parseProba();
                 case 'typus':
                     return this.parseTypusAlias(publica);
-                case 'de':
-                    return this.parseDeStmt();
+                case 'itera':
+                    return this.parseIteraStmt();
                 case 'importa':
                     return this.parseImporta();
             }
@@ -404,25 +406,12 @@ export class Parser {
         return { tag: 'Varia', locus, species, nomen, typus, valor, publica, externa };
     }
 
-    private parseExStmt(publica: boolean): Stmt {
-        const locus = this.peek().locus;
-        this.expect('Keyword', 'ex');
+    private parseExStmt(_publica: boolean): Stmt {
+        throw this.error("standalone 'ex' not supported; use 'itera ex' for loops");
+    }
 
-        // ex items fixum item { ... } — iteration
-        // Check if this is iteration: ex <expr> fixum/varia <ident> { ... }
-        const expr = this.parseExpr();
-
-        if (this.check('Keyword', 'fixum') || this.check('Keyword', 'varia')) {
-            const species: 'Ex' | 'De' = 'Ex';
-            const asynca = false; // TODO: handle cede
-            this.advance(); // fixum/varia
-            const binding = this.expect('Identifier').valor;
-            const corpus = this.parseMassa();
-            return { tag: 'Iteratio', locus, species, binding, iter: expr, corpus, asynca };
-        }
-
-        // ex obj fixum a, b — destructuring (not implemented in nanus)
-        throw this.error('destructuring not supported in nanus');
+    private parseDeStmt(): Stmt {
+        throw this.error("standalone 'de' not supported; use 'itera de' for loops");
     }
 
     private parseFunctio(publica: boolean, futura: boolean = false, externa: boolean = false): Stmt {
@@ -1116,18 +1105,30 @@ export class Parser {
         return { tag: 'TypusAlias', locus, nomen, typus, publica };
     }
 
-    private parseDeStmt(): Stmt {
+    private parseIteraStmt(): Stmt {
         const locus = this.peek().locus;
-        this.expect('Keyword', 'de');
+        this.expect('Keyword', 'itera');
+
+        // Expect 'ex' (for-of) or 'de' (for-in)
+        let species: 'Ex' | 'De';
+        if (this.match('Keyword', 'ex')) {
+            species = 'Ex';
+        } else if (this.match('Keyword', 'de')) {
+            species = 'De';
+        } else {
+            throw this.error("expected 'ex' or 'de' after 'itera'");
+        }
+
         const iter = this.parseExpr();
+
         // Expect 'fixum' or 'varia' before binding
         if (!this.check('Keyword', 'fixum') && !this.check('Keyword', 'varia')) {
-            throw this.error("expected 'fixum' or 'varia' after 'de' expression");
+            throw this.error("expected 'fixum' or 'varia' after iteration expression");
         }
         this.advance(); // consume fixum/varia
         const binding = this.expect('Identifier').valor;
         const corpus = this.parseMassa();
-        return { tag: 'Iteratio', locus, species: 'De', binding, iter, corpus, asynca: false };
+        return { tag: 'Iteratio', locus, species, binding, iter, corpus, asynca: false };
     }
 
     private parseExpressiaStmt(): Stmt {

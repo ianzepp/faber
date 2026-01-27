@@ -45,6 +45,7 @@ const KEYWORDS = new Set([
     'discerne',
     'custodi',
     'de',
+    'itera',
     'in',
     'pro',
     'omnia',

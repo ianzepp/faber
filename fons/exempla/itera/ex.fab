@@ -1,26 +1,26 @@
-# Iterating over arrays with ex...pro
+# Iterating over arrays with itera ex
 #
-# ex <collection> pro <item> { <body> }
+# itera ex <collection> fixum <item> { <body> }
 
 incipit {
     # Iterate over number array
     fixum numbers = [1, 2, 3, 4, 5]
 
-    ex numbers fixum n {
+    itera ex numbers fixum n {
         scribe n
     }
 
     # Iterate over string array
     fixum names = ["Marcus", "Julia", "Claudia"]
 
-    ex names fixum name {
+    itera ex names fixum name {
         scribe name
     }
 
     # Process items
     fixum values = [10, 20, 30]
 
-    ex values fixum v {
+    itera ex values fixum v {
         fixum doubled = v * 2
         scribe doubled
     }

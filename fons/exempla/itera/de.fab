@@ -1,0 +1,31 @@
+# Basic itera de (for-in) key iteration
+#
+# itera de <object> fixum <key> { <body> }
+# itera de <array> fixum <index> { <body> }
+
+incipit {
+    # Iterate over object keys
+    fixum persona = { nomen: "Marcus", aetas: 30, urbs: "Roma" }
+
+    itera de persona fixum clavis {
+        scribe clavis
+    }
+
+    # Access values using the key
+    itera de persona fixum clavis {
+        scribe clavis, persona[clavis]
+    }
+
+    # Iterate over array indices
+    fixum numeri = [10, 20, 30]
+
+    itera de numeri fixum index {
+        scribe "Index", index, numeri[index]
+    }
+
+    # With objects
+    fixum data = { alpha: 1, beta: 2 }
+    itera de data fixum k {
+        scribe k
+    }
+}

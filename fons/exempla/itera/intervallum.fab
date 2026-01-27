@@ -1,0 +1,32 @@
+# Range expressions with itera ex
+#
+# itera ex <start>..<end> fixum <item> { }      # exclusive (end not included)
+# itera ex <start> ante <end> fixum <item> { }  # explicit exclusive
+# itera ex <start> usque <end> fixum <item> { } # inclusive (end included)
+
+incipit {
+    # Basic range (exclusive: 0, 1, 2, 3, 4)
+    itera ex 0..5 fixum i {
+        scribe i
+    }
+
+    # Explicit exclusive with ante (same as ..)
+    itera ex 0 ante 5 fixum i {
+        scribe i
+    }
+
+    # Inclusive range with usque (0, 1, 2, 3, 4, 5)
+    itera ex 0 usque 5 fixum i {
+        scribe i
+    }
+
+    # Range starting from non-zero
+    itera ex 5..10 fixum i {
+        scribe i
+    }
+
+    # Countdown (negative direction)
+    itera ex 5..0 fixum i {
+        scribe i
+    }
+}

@@ -31,7 +31,7 @@ functio grade(numerus score) -> textus {
 
 # Find first in list (early return from loop)
 functio findFirst(lista<numerus> items, numerus target) -> si numerus {
-    ex items fixum item {
+    itera ex items fixum item {
         si item == target reddit item
     }
     redde nihil
@@ -39,7 +39,7 @@ functio findFirst(lista<numerus> items, numerus target) -> si numerus {
 
 # Check if key exists (early return from iteration)
 functio hasKey(tabula<textus, numerus> obj, textus key) -> bivalens {
-    de obj fixum k {
+    itera de obj fixum k {
         si k == key reddit verum
     }
     redde falsum

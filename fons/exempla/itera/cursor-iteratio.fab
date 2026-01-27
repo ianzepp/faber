@@ -1,13 +1,13 @@
 
-# Iterating over generator function returns with ex...pro
+# Iterating over generator function returns with itera ex
 #
 # This demonstrates that @ cursor functions produce iterable results
-# that can be consumed with ex...pro loops
+# that can be consumed with itera ex loops
 
 # Multi-value sync function that yields values via cede
 @ cursor
 functio rangeSync(numerus n) -> numerus {
-    ex 0..n fixum i {
+    itera ex 0..n fixum i {
         cede i
     }
 }
@@ -16,7 +16,7 @@ functio rangeSync(numerus n) -> numerus {
 @ futura
 @ cursor
 functio rangeAsync(numerus n) -> numerus {
-    ex 0..n fixum i {
+    itera ex 0..n fixum i {
         cede i
     }
 }
@@ -24,20 +24,20 @@ functio rangeAsync(numerus n) -> numerus {
 incipit {
     # Iterate over sync generator function results
     scribe "Sync cursor iteration:"
-    ex rangeSync(3) fixum num {
+    itera ex rangeSync(3) fixum num {
         scribe "  num: {num}"
     }
 
     # Collect all results from generator function
     varia syncResults = []
-    ex rangeSync(5) fixum num {
+    itera ex rangeSync(5) fixum num {
         syncResults.appende(num * 2)
     }
     scribe "Sync collected:"
     scribe syncResults
 
     # Note: Async iteration would require async context
-    # ex rangeAsync(3) fiunt num {
+    # itera ex rangeAsync(3) fixum num {
     #     scribe num
     # }
 }

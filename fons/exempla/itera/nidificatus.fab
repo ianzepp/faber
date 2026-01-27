@@ -1,26 +1,26 @@
-# Nested ex...pro loops
+# Nested itera ex loops
 
 incipit {
     # Nested array iteration
     fixum rows = [1, 2, 3]
     fixum cols = ["A", "B", "C"]
 
-    ex rows fixum row {
-        ex cols fixum col {
+    itera ex rows fixum row {
+        itera ex cols fixum col {
             scribe row, col
         }
     }
 
     # Multiplication table
-    ex 1..4 fixum i {
-        ex 1..4 fixum j {
+    itera ex 1..4 fixum i {
+        itera ex 1..4 fixum j {
             scribe i, "*", j, "=", i * j
         }
     }
 
     # Nested ranges
-    ex 0..3 fixum x {
-        ex 0..3 fixum y {
+    itera ex 0..3 fixum x {
+        itera ex 0..3 fixum y {
             scribe x, y
         }
     }

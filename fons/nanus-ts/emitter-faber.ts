@@ -80,9 +80,9 @@ function emitStmt(stmt: Stmt, indent: string): string {
             return `${indent}fac ${emitStmt(stmt.corpus, indent)} dum ${emitExpr(stmt.cond)}`;
 
         case 'Iteratio': {
-            const prefix = stmt.asynca ? 'cede ' : '';
+            const asyncPrefix = stmt.asynca ? 'cede ' : '';
             const kw = stmt.species === 'Ex' ? 'ex' : 'de';
-            return `${indent}${prefix}${kw} ${emitExpr(stmt.iter)} fixum ${stmt.binding} ${emitStmt(stmt.corpus, indent)}`;
+            return `${indent}${asyncPrefix}itera ${kw} ${emitExpr(stmt.iter)} fixum ${stmt.binding} ${emitStmt(stmt.corpus, indent)}`;
         }
 
         case 'Elige':
