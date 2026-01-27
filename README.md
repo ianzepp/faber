@@ -18,7 +18,7 @@ You don't need an IR to generate TypeScript. You need one to generate Rust witho
 Faber Romanus is an **intermediate representation** optimized for LLM generation and human review.
 
 ```
-ex items fixum item {
+itera ex items fixum item {
     si item.price > 100 {
         scribe item.name
     }

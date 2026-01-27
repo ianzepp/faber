@@ -94,11 +94,11 @@ This is the async equivalent of the perfect participle: functional transformatio
 The present participle describes ongoing action: _legens_ ("reading"), _scribens_ ("writing"), _filtrans_ ("filtering"). In Faber, present participle methods produce **streams or generators**.
 
 ```fab
-ex solum.legens(path) pro chunk {
+itera ex solum.legens(path) fixum chunk {
     processa(chunk)  # process each chunk as it arrives
 }
 
-ex items.filtrans(pred) pro item {
+itera ex items.filtrans(pred) fixum item {
     scribe item  # lazy evaluation, processes one at a time
 }
 ```
@@ -183,7 +183,7 @@ fixum content = solum.lege(path)
 fixum content = cede solum.leget(path)
 
 # Present participle: streaming
-ex solum.legens(path) pro chunk {
+itera ex solum.legens(path) fixum chunk {
     processa(chunk)
 }
 ```

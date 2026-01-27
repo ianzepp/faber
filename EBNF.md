@@ -10,7 +10,7 @@ Formal grammar for the Faber programming language. This is the authoritative spe
 program     := statement*
 statement   := directiveDecl | importDecl | varDecl | funcDecl | genusDecl | pactumDecl
              | typeAliasDecl | enumDecl | discretioDecl
-             | ifStmt | whileStmt | exStmt | deStmt
+             | ifStmt | whileStmt | iteraStmt
              | eligeStmt | discerneStmt | guardStmt | curaStmt
              | tryStmt | returnStmt | breakStmt | continueStmt | throwStmt
              | assertStmt | outputStmt | adStmt | incipitStmt
@@ -257,15 +257,13 @@ inlineReturn := 'reddit' expression | 'iacit' expression | 'moritor' expression 
 ### Loops
 
 ```ebnf
-whileStmt := 'dum' expression (blockStmt | 'ergo' statement | inlineReturn) ('cape' IDENTIFIER blockStmt)?
-exStmt    := 'ex' expression (forBinding | destructBinding)
-forBinding := ('fixum' | 'varia') IDENTIFIER (blockStmt | 'ergo' statement | inlineReturn) catchClause?
-deStmt    := 'de' expression ('fixum' | 'varia') IDENTIFIER (blockStmt | 'ergo' statement) catchClause?
+whileStmt  := 'dum' expression (blockStmt | 'ergo' statement | inlineReturn) ('cape' IDENTIFIER blockStmt)?
+iteraStmt  := 'itera' ('ex' | 'de') expression ('fixum' | 'varia') IDENTIFIER (blockStmt | 'ergo' statement | inlineReturn) catchClause?
 ```
 
 - `dum` = while
-- `ex...fixum`/`ex...varia` = for-of (values)
-- `de...fixum`/`de...varia` = for-in (keys)
+- `itera ex...fixum`/`itera ex...varia` = for-of (values)
+- `itera de...fixum`/`itera de...varia` = for-in (keys)
 
 ### Switch/Match
 
@@ -509,7 +507,7 @@ dslVerb       := 'prima' | 'ultima' | 'summa'
 - `ab items prima 5` - direct transform (no filter)
 - `ab items prima 10, ultima 3` - chained transforms
 
-`ex` is used only for iteration (`ex items pro x`) and imports (`ex path importa`).
+`ex` is used for iteration (`itera ex items fixum x`) and imports (`importa ex "path"`).
 
 **Note:** Collection DSL transforms (`prima`, `ultima`, `summa`) are implemented for TypeScript target only. Other targets not yet supported.
 
@@ -560,8 +558,8 @@ Not all Faber features are supported across all compilation targets. Some featur
 |                     | `discretio`                   | tagged union        |
 | **Control Flow**    | `si` / `sin` / `secus`        | if / else-if / else |
 |                     | `dum`                         | while               |
-|                     | `ex...fixum`/`ex...varia`     | for-of              |
-|                     | `de...fixum`/`de...varia`     | for-in              |
+|                     | `itera ex...fixum`            | for-of (values)     |
+|                     | `itera de...fixum`            | for-in (keys)       |
 |                     | `elige` / `casu`              | switch / case       |
 |                     | `discerne`                    | pattern match       |
 |                     | `custodi`                     | guard               |
@@ -606,6 +604,6 @@ Not all Faber features are supported across all compilation targets. Some featur
 
 1. **Type-first parameters**: `functio f(numerus x)` NOT `functio f(x: numerus)`
 2. **Type-first declarations**: `fixum textus name` NOT `fixum name: textus`
-3. **For-of loops**: `ex collection fixum item { }` (collection first, use `fixum` or `varia`)
+3. **For-of loops**: `itera ex collection fixum item { }` (verb-first, collection, then binding)
 4. **Parentheses around conditions are valid but not idiomatic**: prefer `si x > 0 { }` or `si positivum x { }` over `si (x > 0) { }`
 5. **Output keywords are statements**, not functions — `scribe x` works, `scribe(x)` also works (parentheses group the expression), but `scribe` is not a callable value

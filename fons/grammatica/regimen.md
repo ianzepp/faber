@@ -185,28 +185,28 @@ The one-liner form uses `ergo`:
 dum i > 0 ergo i = i - 1
 ```
 
-### ex...pro (For Each Values)
+### itera ex (For Each Values)
 
-The `ex...pro` construct iterates over values in a collection. The syntax reads naturally in Latin: "from items, for each item."
+The `itera ex` construct iterates over values in a collection. The syntax follows Faber's verb-first pattern: "iterate from items, binding each item."
 
 ```fab
 fixum numbers = [1, 2, 3, 4, 5]
 
-ex numbers pro n {
+itera ex numbers fixum n {
     scribe n
 }
 ```
 
-The Latin preposition `ex` means "from" or "out of"—the source from which values are drawn. The preposition `pro` means "for" or "on behalf of"—introducing the binding for each iteration.
+The verb `itera` is the imperative of *iterare* ("to repeat, traverse"). The preposition `ex` means "from" or "out of"—the source from which values are drawn. The binding uses `fixum` (immutable) or `varia` (mutable).
 
-This source-first syntax differs from most programming languages. Where JavaScript writes `for (const item of items)`, Faber writes `ex items pro item`. The Faber form mirrors natural language: "from the list, for each element, do this."
+This verb-first syntax aligns with other Faber statements like `scribe`, `iace`, and `importa`. Where JavaScript writes `for (const item of items)`, Faber writes `itera ex items fixum item`.
 
 The syntax works with any iterable:
 
 ```fab
 fixum names = ["Marcus", "Julia", "Claudia"]
 
-ex names pro name {
+itera ex names fixum name {
     scribe name
 }
 ```
@@ -216,7 +216,7 @@ Processing each item:
 ```fab
 fixum values = [10, 20, 30]
 
-ex values pro v {
+itera ex values fixum v {
     fixum doubled = v * 2
     scribe doubled
 }
@@ -225,7 +225,7 @@ ex values pro v {
 The one-liner form:
 
 ```fab
-ex numbers pro n ergo scribe n
+itera ex numbers fixum n ergo scribe n
 ```
 
 #### Range Expressions
@@ -241,7 +241,7 @@ Ranges generate sequences of numbers. Faber provides three range operators:
 The `..` operator is convenient shorthand matching common programming conventions (Python's `range()`, Rust's `..`):
 
 ```fab
-ex 0..5 pro i {
+itera ex 0..5 fixum i {
     scribe i
 }
 ```
@@ -249,7 +249,7 @@ ex 0..5 pro i {
 The `ante` keyword makes exclusivity explicit—the range stops *before* the end value:
 
 ```fab
-ex 0 ante 5 pro i {
+itera ex 0 ante 5 fixum i {
     scribe i
 }
 ```
@@ -257,7 +257,7 @@ ex 0 ante 5 pro i {
 The `usque` keyword includes the end value—the range goes *up to and including* the end:
 
 ```fab
-ex 0 usque 5 pro i {
+itera ex 0 usque 5 fixum i {
     scribe i
 }
 ```
@@ -265,33 +265,33 @@ ex 0 usque 5 pro i {
 For step increments, use `per`:
 
 ```fab
-ex 0..10 per 2 pro i {
+itera ex 0..10 per 2 fixum i {
     scribe i  # 0, 2, 4, 6, 8
 }
 
-ex 0 usque 10 per 2 pro i {
+itera ex 0 usque 10 per 2 fixum i {
     scribe i  # 0, 2, 4, 6, 8, 10
 }
 ```
 
-### de...pro (For Each Keys)
+### itera de (For Each Keys)
 
-The `de...pro` construct iterates over keys (property names or indices) rather than values. The syntax reads: "concerning the object, for each key."
+The `itera de` construct iterates over keys (property names or indices) rather than values. The syntax reads: "iterate concerning the object, binding each key."
 
 ```fab
 fixum persona = { nomen: "Marcus", aetas: 30, urbs: "Roma" }
 
-de persona pro clavis {
+itera de persona fixum clavis {
     scribe clavis
 }
 ```
 
-The Latin preposition `de` means "from" or "concerning"—indicating a read-only relationship with the object. You're iterating *concerning* the object's structure, not extracting its contents.
+The preposition `de` means "about" or "concerning"—indicating a read-only relationship with the object. You're iterating *concerning* the object's structure, not extracting its contents.
 
 To access values, use the key with bracket notation:
 
 ```fab
-de persona pro clavis {
+itera de persona fixum clavis {
     scribe scriptum("Key: §, Value: §", clavis, persona[clavis])
 }
 ```
@@ -301,34 +301,26 @@ For arrays, `de` iterates indices:
 ```fab
 fixum numeri = [10, 20, 30]
 
-de numeri pro index {
+itera de numeri fixum index {
     scribe scriptum("Index §: §", index, numeri[index])
 }
 ```
 
 The distinction between `ex` and `de` mirrors their Latin meanings:
-- `ex items pro item` — draw *values* **from** the collection
-- `de object pro key` — inspect *keys* **concerning** the object
+- `itera ex items fixum item` — draw *values* **from** the collection
+- `itera de object fixum key` — inspect *keys* **concerning** the object
 
 ### Async Iteration
 
-For asynchronous streams, replace `pro` with `fiet` ("it will become"):
+For asynchronous streams, use `cede` (await) prefix with `itera`:
 
 ```fab
-ex stream fiet chunk {
+cede itera ex stream fixum chunk {
     scribe chunk
 }
 ```
 
-The verb `fiet` is the future tense of `fio` ("to become"). It signals that each iteration awaits the next value—the chunk "will become" available.
-
-| Keyword | Meaning | Compiles To |
-|---------|---------|-------------|
-| `pro` | "for" (preposition) | `for...of` |
-| `fit` | "it becomes" (present) | `for...of` |
-| `fiet` | "it will become" (future) | `for await...of` |
-
-The `fit` form is equivalent to `pro` and can be used interchangeably for sync iteration.
+This compiles to `for await...of` in JavaScript/TypeScript.
 
 ### Loop Control
 
@@ -355,8 +347,8 @@ Output: 0, 1, 2, 3, 4 (loop breaks when `i` reaches 5).
 In nested loops, `rumpe` exits only the inner loop:
 
 ```fab
-ex 0..3 pro outer {
-    ex 0..10 pro inner {
+itera ex 0..3 fixum outer {
+    itera ex 0..10 fixum inner {
         si inner == 2 {
             rumpe  # exits inner loop only
         }
@@ -370,7 +362,7 @@ ex 0..3 pro outer {
 The keyword `perge` is the imperative of *pergere* ("to continue" or "proceed"). It skips to the next iteration.
 
 ```fab
-ex 0..10 pro i {
+itera ex 0..10 fixum i {
     si i % 2 == 0 {
         perge  # skip even numbers
     }

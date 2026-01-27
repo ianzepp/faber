@@ -90,7 +90,7 @@ Before proposing new syntax, consult these authoritative sources:
 
 **Block Pattern:** `keyword expr VERB name { body }`
 ```
-ex items pro item { ... }           # iterate values
+itera ex items fixum item { ... }   # iterate values
 cura resource fit handle { ... }    # scoped resource
 discerne expr { casu T ut x { } }   # pattern match
 ```

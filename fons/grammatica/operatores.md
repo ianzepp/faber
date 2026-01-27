@@ -210,7 +210,7 @@ Range operators create sequences of numbers for iteration.
 The `..` operator creates a range that excludes the end value:
 
 ```fab
-ex 0..10 pro i {
+itera ex 0..10 fixum i {
     scribe i    # 0, 1, 2, ..., 9
 }
 ```
@@ -218,7 +218,7 @@ ex 0..10 pro i {
 The Latin keyword `ante` ("before") means the same thing:
 
 ```fab
-ex 0 ante 10 pro i {
+itera ex 0 ante 10 fixum i {
     scribe i    # 0, 1, 2, ..., 9
 }
 ```
@@ -228,7 +228,7 @@ ex 0 ante 10 pro i {
 The `usque` operator includes the end value:
 
 ```fab
-ex 0 usque 10 pro i {
+itera ex 0 usque 10 fixum i {
     scribe i    # 0, 1, 2, ..., 10
 }
 ```
@@ -240,7 +240,7 @@ Etymology: `usque` means "up to" or "as far as" in Latin, implying inclusion of 
 The `per` modifier controls the step size:
 
 ```fab
-ex 0..10 per 2 pro i {
+itera ex 0..10 per 2 fixum i {
     scribe i    # 0, 2, 4, 6, 8
 }
 ```
@@ -248,7 +248,7 @@ ex 0..10 per 2 pro i {
 For descending ranges, use a negative step:
 
 ```fab
-ex 10..0 per -1 pro i {
+itera ex 10..0 per -1 fixum i {
     scribe i    # 10, 9, 8, ..., 1
 }
 ```

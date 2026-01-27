@@ -271,9 +271,9 @@ Latin prepositions used in various syntactic contexts:
 
 | Verbum | Meaning    | Contexts                                                      |
 | ------ | ---------- | ------------------------------------------------------------- |
-| `de`   | from/of    | Key iteration (`de...pro`); borrowed reference (Rust/Zig)     |
+| `de`   | from/of    | Key iteration (`itera de`); borrowed reference (Rust/Zig)     |
 | `in`   | in/into    | Membership test; mutable reference (Rust/Zig); mutation block |
-| `ex`   | from       | Value iteration (`ex...pro`); module import (`ex...importa`)  |
+| `ex`   | from       | Value iteration (`itera ex`); module import (`importa ex`)    |
 | `ad`   | to         | Target/destination (planned)                                  |
 | `per`  | through    | Iteration step in ranges                                      |
 | `qua`  | as (type)  | Type cast: `x qua textus`                                     |

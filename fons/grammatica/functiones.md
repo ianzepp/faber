@@ -109,7 +109,7 @@ The `ceteri` modifier (Latin "the rest, the others") collects remaining argument
 ```fab
 functio sum(ceteri numerus[] nums) -> numerus {
     varia total = 0
-    ex nums pro n {
+    itera ex nums fixum n {
         total += n
     }
     redde total
@@ -189,7 +189,7 @@ Inside async functions, `cede` (Latin "yield, give way, surrender") awaits a pro
 @ futura
 functio processAll(textus[] urls) -> textus[] {
     varia results = []
-    ex urls pro url {
+    itera ex urls fixum url {
         fixum data = cede fetchData(url)
         results.appende(data)
     }
@@ -238,7 +238,7 @@ The `@ cursor` annotation (Latin "runner," from _currere_ "to run") creates a ge
 ```fab
 @ cursor
 functio range(numerus n) -> numerus {
-    ex 0..n pro i {
+    itera ex 0..n fixum i {
         cede i
     }
 }
@@ -252,7 +252,7 @@ The `fiunt` verb ("they become," plural) implies generator behavior:
 
 ```fab
 functio range(numerus n) fiunt numerus {
-    ex 0..n pro i {
+    itera ex 0..n fixum i {
         cede i
     }
 }
@@ -262,7 +262,7 @@ For async generators that yield promises, use `fient` ("they will become"):
 
 ```fab
 functio fetchAll(textus[] urls) fient textus {
-    ex urls pro url {
+    itera ex urls fixum url {
         cede fetch(url)
     }
 }
@@ -270,10 +270,10 @@ functio fetchAll(textus[] urls) fient textus {
 
 ### Iterating Over Generators
 
-Generator results can be consumed with `ex...pro` loops:
+Generator results can be consumed with `itera ex` loops:
 
 ```fab
-ex rangeSync(5) pro num {
+itera ex rangeSync(5) fixum num {
     scribe num
 }
 ```
@@ -418,7 +418,7 @@ Latin prepositions indicate how parameters are passed and what the function may 
 functio processPoints(de Point[] points, in Point[] targets) {
     # points is borrowed (read-only)
     # targets is mutably borrowed
-    ex points pro point {
+    itera ex points fixum point {
         targets.appende(point)
     }
 }

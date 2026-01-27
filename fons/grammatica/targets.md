@@ -221,7 +221,7 @@ functio distance(Punto a, Punto b) fit numerus {
 
 functio sum(numerus[] items) fit numerus {
     varia total = 0
-    ex items pro item {
+    itera ex items fixum item {
         total = total + item
     }
     redde total

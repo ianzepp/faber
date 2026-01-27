@@ -243,8 +243,8 @@ genus Persona
 ### Block Syntax
 
 ```
-ex...pro        # ex items pro item { }         - iterate values
-de...pro        # de obj pro key { }            - iterate keys
+itera ex        # itera ex items fixum item { }  - iterate values
+itera de        # itera de obj fixum key { }    - iterate keys
 cura...fit      # cura r fit h { }              - resource scope
 tempta...cape   # tempta { } cape err { }       - error handling
 dum             # dum cond { }                  - while loop
