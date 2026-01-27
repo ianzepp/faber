@@ -56,7 +56,13 @@ functio genScriptum(in TsGenerator g, de textus exemplar, de lista<Expressia> ar
             fixum arg = (idx < argumenta.longitudo()) sic genExpressia(g, argumenta[idx]) secus "undefined"
             result = result + "${" + arg + "}"
         } secus {
-            result = result + c
+            si c == "`" {
+                result = result + "\\`"
+            } sin c == "$" {
+                result = result + "\\$"
+            } secus {
+                result = result + c
+            }
         }
         i += 1
     }
