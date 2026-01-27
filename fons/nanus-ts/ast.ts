@@ -86,7 +86,7 @@ export type Stmt =
     | { tag: 'Pactum'; locus: Locus; nomen: string; methodi: PactumMethodus[]; generics: string[]; publica: boolean }
     | { tag: 'Ordo'; locus: Locus; nomen: string; membra: OrdoMembrum[]; publica: boolean }
     | { tag: 'Discretio'; locus: Locus; nomen: string; variantes: VariansDecl[]; generics: string[]; publica: boolean }
-    | { tag: 'Importa'; locus: Locus; fons: string; specs: ImportSpec[]; totum: boolean; alias: string | null }
+    | { tag: 'Importa'; locus: Locus; fons: string; imported: string | null; local: string; totum: boolean; publica: boolean }
     | { tag: 'Si'; locus: Locus; cond: Expr; cons: Stmt; alt: Stmt | null }
     | { tag: 'Dum'; locus: Locus; cond: Expr; corpus: Stmt }
     | { tag: 'FacDum'; locus: Locus; corpus: Stmt; cond: Expr }
@@ -147,11 +147,6 @@ export interface VariansDecl {
     campi: { nomen: string; typus: Typus }[];
 }
 
-export interface ImportSpec {
-    locus: Locus;
-    imported: string;
-    local: string;
-}
 
 export interface EligeCasus {
     locus: Locus;

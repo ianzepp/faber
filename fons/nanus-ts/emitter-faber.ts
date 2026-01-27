@@ -15,7 +15,6 @@ import type {
     CampusDecl,
     OrdoMembrum,
     VariansDecl,
-    ImportSpec,
     EligeCasus,
     DiscerneCasus,
     CustodiClausula,
@@ -295,15 +294,14 @@ function emitDiscretio(stmt: Stmt & { tag: 'Discretio' }, indent: string): strin
 }
 
 function emitImporta(stmt: Stmt & { tag: 'Importa' }, indent: string): string {
-    // Always emit new syntax: § importa ex "path" bindings
-    let code = `${indent}§ importa ex "${stmt.fons}" `;
+    const visibility = stmt.publica ? 'publica' : 'privata';
     if (stmt.totum) {
-        code += stmt.alias ? `* ut ${stmt.alias}` : '*';
-    } else {
-        const specs = stmt.specs.map(s => (s.imported === s.local ? s.imported : `${s.imported} ut ${s.local}`));
-        code += specs.join(', ');
+        // Wildcard: importa ex "path" privata|publica * ut alias
+        return `${indent}importa ex "${stmt.fons}" ${visibility} * ut ${stmt.local}`;
     }
-    return code;
+    // Named: importa ex "path" privata|publica T [ut alias]
+    const binding = stmt.imported === stmt.local ? stmt.imported : `${stmt.imported} ut ${stmt.local}`;
+    return `${indent}importa ex "${stmt.fons}" ${visibility} ${binding}`;
 }
 
 function emitSi(stmt: Stmt & { tag: 'Si' }, indent: string): string {

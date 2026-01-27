@@ -21,7 +21,6 @@ import type {
     PactumMethodus,
     OrdoMembrum,
     VariansDecl,
-    ImportSpec,
     EligeCasus,
     DiscerneCasus,
     VariansPattern,
@@ -224,6 +223,8 @@ export class Parser {
                     return this.parseTypusAlias(publica);
                 case 'de':
                     return this.parseDeStmt();
+                case 'importa':
+                    return this.parseImporta();
             }
         }
 
@@ -245,43 +246,13 @@ export class Parser {
         const keyword = this.advance().valor;
         switch (keyword) {
             case 'importa':
-                return this.parseSectioImporta();
+            case 'ex':
+                throw this.error('§ import syntax is deprecated; use: importa ex "path" privata|publica T');
             case 'sectio':
                 return this.parseSectioSectio();
-            case 'ex':
-                return this.parseSectioExLegacy();
             default:
                 throw this.error(`unknown § keyword: ${keyword}`);
         }
-    }
-
-    // New syntax: § importa ex "path" bindings
-    private parseSectioImporta(): Stmt {
-        const locus = this.peek().locus;
-        this.expect('Keyword', 'ex');
-        const fons = this.expect('Textus').valor;
-
-        // Check for wildcard import: * or * ut alias
-        if (this.match('Operator', '*')) {
-            let alias: string | null = null;
-            if (this.match('Keyword', 'ut')) {
-                alias = this.expect('Identifier').valor;
-            }
-            return { tag: 'Importa', locus, fons, specs: [], totum: true, alias };
-        }
-
-        const specs: ImportSpec[] = [];
-        do {
-            const loc = this.peek().locus;
-            const imported = this.expect('Identifier').valor;
-            let local = imported;
-            if (this.match('Keyword', 'ut')) {
-                local = this.expect('Identifier').valor;
-            }
-            specs.push({ locus: loc, imported, local });
-        } while (this.match('Punctuator', ','));
-
-        return { tag: 'Importa', locus, fons, specs, totum: false, alias: null };
     }
 
     // § sectio "name" - file section marker (ignored in nanus, but parsed)
@@ -291,33 +262,39 @@ export class Parser {
         return { tag: 'Expressia', locus, expr: { tag: 'Littera', locus, species: 'Nihil', valor: 'null' } };
     }
 
-    // Legacy syntax: § ex "path" importa bindings
-    private parseSectioExLegacy(): Stmt {
+    // New syntax: importa ex "path" privata|publica T [ut alias]
+    // Or wildcard: importa ex "path" privata|publica * ut alias
+    private parseImporta(): Stmt {
         const locus = this.peek().locus;
-        const fons = this.expect('Textus').valor;
         this.expect('Keyword', 'importa');
+        this.expect('Keyword', 'ex');
+        const fons = this.expect('Textus').valor;
 
-        // Check for wildcard import: * or * ut alias
-        if (this.match('Operator', '*')) {
-            let alias: string | null = null;
-            if (this.match('Keyword', 'ut')) {
-                alias = this.expect('Identifier').valor;
-            }
-            return { tag: 'Importa', locus, fons, specs: [], totum: true, alias };
+        // Require explicit visibility: privata or publica
+        let publica = false;
+        if (this.match('Keyword', 'publica')) {
+            publica = true;
+        } else if (this.match('Keyword', 'privata')) {
+            publica = false;
+        } else {
+            throw this.error("expected 'privata' or 'publica' after import path");
         }
 
-        const specs: ImportSpec[] = [];
-        do {
-            const loc = this.peek().locus;
-            const imported = this.expect('Identifier').valor;
-            let local = imported;
-            if (this.match('Keyword', 'ut')) {
-                local = this.expect('Identifier').valor;
-            }
-            specs.push({ locus: loc, imported, local });
-        } while (this.match('Punctuator', ','));
+        // Wildcard import: * ut alias (alias required)
+        if (this.match('Operator', '*')) {
+            this.expect('Keyword', 'ut');
+            const local = this.expect('Identifier').valor;
+            return { tag: 'Importa', locus, fons, imported: null, local, totum: true, publica };
+        }
 
-        return { tag: 'Importa', locus, fons, specs, totum: false, alias: null };
+        // Named import: T [ut alias]
+        const imported = this.expect('Identifier').valor;
+        let local = imported;
+        if (this.match('Keyword', 'ut')) {
+            local = this.expect('Identifier').valor;
+        }
+
+        return { tag: 'Importa', locus, fons, imported, local, totum: false, publica };
     }
 
     // Dispatch @ annotations based on keyword. Returns [publica, futura, externa].

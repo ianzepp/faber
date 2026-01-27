@@ -20,7 +20,6 @@ import type {
     CampusDecl,
     OrdoMembrum,
     VariansDecl,
-    ImportSpec,
     EligeCasus,
     DiscerneCasus,
     CustodiClausula,
@@ -327,19 +326,34 @@ function emitStmt(stmt: Stmt, indent = ''): string {
         }
 
         case 'Importa': {
-            const specs = stmt.specs.map(s => (s.imported === s.local ? s.imported : `${s.imported} as ${s.local}`));
-
             // Try to resolve norma: imports to HAL implementations
             let importPath = stmt.fons;
             if (currentOptions.sourceFile && importPath.startsWith('norma:')) {
                 const resolved = resolveNormaImport(importPath, currentOptions.sourceFile);
                 if (resolved) {
-                    // Strip .ts extension for TypeScript compatibility
                     importPath = resolved.replace(/\.ts$/, '');
                 }
             }
 
-            return `${indent}import { ${specs.join(', ')} } from "${importPath}";`;
+            const lines: string[] = [];
+
+            if (stmt.totum) {
+                // Wildcard import: import * as local from "path"
+                lines.push(`${indent}import * as ${stmt.local} from "${importPath}";`);
+                if (stmt.publica) {
+                    lines.push(`${indent}export { ${stmt.local} };`);
+                }
+            } else {
+                // Named import
+                const spec = stmt.imported === stmt.local ? stmt.imported : `${stmt.imported} as ${stmt.local}`;
+                lines.push(`${indent}import { ${spec} } from "${importPath}";`);
+                if (stmt.publica) {
+                    // Re-export uses original name, not alias
+                    lines.push(`${indent}export { ${stmt.imported} };`);
+                }
+            }
+
+            return lines.join('\n');
         }
 
         case 'Si': {
