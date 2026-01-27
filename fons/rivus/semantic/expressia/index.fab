@@ -168,9 +168,19 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
 
         # Type cast (expr qua Type)
         casu QuaExpressia ut q {
-            r.synthesize(q.expressia)
-            # Resolve target type annotation and return it
+            fixum a = r.analyzator()
+            fixum sourceTypus = r.synthesize(q.expressia)
             fixum targetTypus = resolveTypusAnnotatio(r, q.scopus)
+
+            # Warn if cast is redundant (source already assignable to target)
+            si assignabileAd(sourceTypus, targetTypus) et non typiAequales(sourceTypus, IGNOTUM) {
+                a.error(
+                    scriptum("Warning: unnecessary cast: expression of type '§' is already assignable to '§'", formaTypum(sourceTypus), formaTypum(targetTypus)),
+                    q.locus,
+                    "Remove the 'qua' cast"
+                )
+            }
+
             redde targetTypus
         }
 
