@@ -176,6 +176,8 @@ class Parser:
                     return self.parse_probandum()
                 case "proba":
                     return self.parse_proba()
+                case "importa":
+                    return self.parse_importa()
 
         if self.check(TokenTag.PUNCTUATOR, "{"):
             return self.parse_massa()
@@ -188,40 +190,12 @@ class Parser:
         if tok.tag not in (TokenTag.IDENTIFIER, TokenTag.KEYWORD):
             raise self.error("expected keyword after §")
         keyword = self.advance().valor
-        if keyword == "importa":
-            return self.parse_sectio_importa()
+        if keyword in ("importa", "ex"):
+            raise self.error("§ import syntax is deprecated; use: importa ex \"path\" privata|publica T")
         elif keyword == "sectio":
             return self.parse_sectio_sectio()
-        elif keyword == "ex":
-            return self.parse_sectio_ex_legacy()
         else:
             raise self.error(f"unknown § keyword: {keyword}")
-
-    def parse_sectio_importa(self) -> Stmt:
-        """New syntax: § importa ex 'path' bindings"""
-        locus = self.peek().locus
-        self.expect(TokenTag.KEYWORD, "ex")
-        fons = self.expect(TokenTag.TEXTUS).valor
-
-        # Check for wildcard import: * or * ut alias
-        if self.match(TokenTag.OPERATOR, "*"):
-            alias: str | None = None
-            if self.match(TokenTag.KEYWORD, "ut"):
-                alias = self.expect(TokenTag.IDENTIFIER).valor
-            return StmtImporta(fons=fons, specs=[], totum=True, alias=alias, locus=locus)
-
-        specs: list[ImportSpec] = []
-        while True:
-            loc = self.peek().locus
-            imported = self.expect(TokenTag.IDENTIFIER).valor
-            local = imported
-            if self.match(TokenTag.KEYWORD, "ut"):
-                local = self.expect(TokenTag.IDENTIFIER).valor
-            specs.append(ImportSpec(imported=imported, local=local, locus=loc))
-            if not self.match(TokenTag.PUNCTUATOR, ","):
-                break
-
-        return StmtImporta(fons=fons, specs=specs, totum=False, alias=None, locus=locus)
 
     def parse_sectio_sectio(self) -> Stmt:
         """§ sectio 'name' - file section marker (ignored in nanus, but parsed)"""
@@ -229,31 +203,34 @@ class Parser:
         self.expect(TokenTag.TEXTUS)  # section name, ignored
         return StmtExpressia(expr=ExprLittera(species=LitteraSpecies.NIHIL, valor="null", locus=locus), locus=locus)
 
-    def parse_sectio_ex_legacy(self) -> Stmt:
-        """Legacy syntax: § ex 'path' importa bindings"""
+    def parse_importa(self) -> Stmt:
+        """Parse: importa ex "path" privata|publica T [ut alias]"""
         locus = self.peek().locus
-        fons = self.expect(TokenTag.TEXTUS).valor
         self.expect(TokenTag.KEYWORD, "importa")
+        self.expect(TokenTag.KEYWORD, "ex")
+        fons = self.expect(TokenTag.TEXTUS).valor
 
-        # Check for wildcard import: * or * ut alias
+        # Require explicit visibility: privata or publica
+        if self.match(TokenTag.KEYWORD, "publica"):
+            publica = True
+        elif self.match(TokenTag.KEYWORD, "privata"):
+            publica = False
+        else:
+            raise self.error("expected 'privata' or 'publica' after import path")
+
+        # Wildcard import: * ut alias (alias required)
         if self.match(TokenTag.OPERATOR, "*"):
-            alias: str | None = None
-            if self.match(TokenTag.KEYWORD, "ut"):
-                alias = self.expect(TokenTag.IDENTIFIER).valor
-            return StmtImporta(fons=fons, specs=[], totum=True, alias=alias, locus=locus)
+            self.expect(TokenTag.KEYWORD, "ut")
+            local = self.expect(TokenTag.IDENTIFIER).valor
+            return StmtImporta(fons=fons, imported=None, local=local, totum=True, publica=publica, locus=locus)
 
-        specs: list[ImportSpec] = []
-        while True:
-            loc = self.peek().locus
-            imported = self.expect(TokenTag.IDENTIFIER).valor
-            local = imported
-            if self.match(TokenTag.KEYWORD, "ut"):
-                local = self.expect(TokenTag.IDENTIFIER).valor
-            specs.append(ImportSpec(imported=imported, local=local, locus=loc))
-            if not self.match(TokenTag.PUNCTUATOR, ","):
-                break
+        # Named import: T [ut alias]
+        imported = self.expect(TokenTag.IDENTIFIER).valor
+        local = imported
+        if self.match(TokenTag.KEYWORD, "ut"):
+            local = self.expect(TokenTag.IDENTIFIER).valor
 
-        return StmtImporta(fons=fons, specs=specs, totum=False, alias=None, locus=locus)
+        return StmtImporta(fons=fons, imported=imported, local=local, totum=False, publica=publica, locus=locus)
 
     def parse_annotatio(self) -> tuple[bool, bool, bool]:
         """Dispatch @ annotations based on keyword. Returns (publica, futura, externa)."""

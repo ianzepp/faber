@@ -239,22 +239,16 @@ def _discretio(s: StmtDiscretio, indent: str) -> str:
 
 
 def _importa(s: StmtImporta, indent: str) -> str:
-    """Emit an import statement. Always uses new syntax."""
-    # Always emit new syntax: § importa ex "path" bindings
-    parts = [f'{indent}§ importa ex "{s.fons}" ']
+    """Emit an import statement."""
+    visibility = "publica" if s.publica else "privata"
+    parts = [f'{indent}importa ex "{s.fons}" {visibility} ']
     if s.totum:
-        if s.alias:
-            parts.append(f"* ut {s.alias}")
+        parts.append(f"* ut {s.local}")
+    elif s.imported:
+        if s.imported != s.local:
+            parts.append(f"{s.imported} ut {s.local}")
         else:
-            parts.append("*")
-    else:
-        specs = []
-        for spec in s.specs:
-            if spec.local and spec.local != spec.imported:
-                specs.append(f"{spec.imported} ut {spec.local}")
-            else:
-                specs.append(spec.imported)
-        parts.append(", ".join(specs))
+            parts.append(s.imported)
     return "".join(parts)
 
 

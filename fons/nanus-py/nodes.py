@@ -506,9 +506,10 @@ class StmtDiscretio:
 class StmtImporta:
     """Import statement."""
     fons: str
-    specs: list[ImportSpec] = field(default_factory=list)
+    imported: str | None = None
+    local: str = ""
     totum: bool = False
-    alias: str | None = None
+    publica: bool = False
     locus: Locus = field(default_factory=Locus)
     tag: str = "StmtImporta"
 

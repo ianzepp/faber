@@ -374,18 +374,16 @@ class PyEmitter:
         """Emit an import statement."""
         module = s.fons.replace("/", ".").replace("-", "_")
         if s.totum:
-            if s.alias:
-                return f"{indent}import {module} as {s.alias}"
-            return f"{indent}from {module} import *"
+            return f"{indent}import {module} as {s.local}"
 
-        specs = []
-        for spec in s.specs:
-            if spec.local and spec.local != spec.imported:
-                specs.append(f"{spec.imported} as {spec.local}")
+        if s.imported:
+            if s.imported != s.local:
+                spec = f"{s.imported} as {s.local}"
             else:
-                specs.append(spec.imported)
+                spec = s.imported
+            return f"{indent}from {module} import {spec}"
 
-        return f"{indent}from {module} import {', '.join(specs)}"
+        return f"{indent}# empty import from {module}"
 
     def _redde(self, s: StmtRedde, indent: str) -> str:
         """Emit a return statement."""
