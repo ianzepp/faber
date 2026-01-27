@@ -200,7 +200,7 @@ functio genSententiaContent(in FaberGenerator g, de Sententia stmt) -> textus {
 
 @ publica
 functio genMassa(in FaberGenerator g, de lista<Sententia> corpus) -> textus {
-    si corpus.longitudo() == 0 {
+    si nihil corpus aut corpus.longitudo() == 0 {
         redde ""
     }
     varia lines = [] innatum lista<textus>

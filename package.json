@@ -33,6 +33,7 @@
     "typecheck": "./scripta/typecheck",
     "faber": "opus/bin/faber",
     "rivus": "opus/bin/rivus",
+    "glyph": "bun ./scripta/build-glyph.ts",
     "stats": "bun ./scripta/stats.ts",
     "sanity": "bun ./scripta/sanity.ts",
     "rivus:features": "bun ./scripta/rivus-features.ts",
