@@ -1,0 +1,97 @@
+# rivus.fab - Rivus Compiler CLI
+#
+# Entry point for the rivus compiler. Uses norma HAL for I/O.
+
+§ ex "norma:hal/consolum" importa consolum
+§ ex "norma:hal/processus" importa processus
+
+§ ex "../rivus/lexor/index" importa lexare
+§ ex "../rivus/parser/index" importa resolvere
+§ ex "../rivus/codegen/index" importa generate
+
+functio main() {
+    fixum args = processus.argumenta()
+
+    si args.longitudo() == 0 {
+        consolum.scribe("Usage: <source> | rivus <command> [options]")
+        consolum.scribe("Commands: lex, parse, emit")
+        consolum.scribe("Options:")
+        consolum.scribe("  -t, --target <lang>      Target language: ts (default), go")
+        consolum.scribe("  --stdin-filename <name>  Filename for error messages")
+        redde
+    }
+
+    fixum command = args[0]
+
+    # Parse options
+    varia stdinFilename = "<stdin>"
+    varia target = "ts"
+
+    varia i = 1
+    dum i < args.longitudo() {
+        fixum arg = args[i]
+        si arg == "--stdin-filename" et i + 1 < args.longitudo() {
+            i += 1
+            stdinFilename = args[i]
+        } sin (arg == "-t" aut arg == "--target") et i + 1 < args.longitudo() {
+            i += 1
+            target = args[i]
+        }
+        i += 1
+    }
+
+    # Read source from stdin
+    fixum source = consolum.lege()
+
+    # Command: lex
+    si command == "lex" {
+        fixum result = lexare(source)
+        # TODO: JSON output
+        consolum.scribe("Lexed " + result.symbola.longitudo().textum() + " tokens")
+        redde
+    }
+
+    # Command: parse
+    si command == "parse" {
+        fixum lexResult = lexare(source)
+        fixum parseResult = resolvere(lexResult.symbola)
+        # TODO: JSON output
+        consolum.scribe("Parsed")
+        redde
+    }
+
+    # Command: emit
+    si command == "emit" {
+        fixum lexResult = lexare(source)
+
+        si lexResult.errores.longitudo() > 0 {
+            ex lexResult.errores fixum err {
+                consolum.mone(stdinFilename + ":" + err.locus.linea.textum() + ":" + err.locus.columna.textum() + ": " + err.textus)
+            }
+            redde
+        }
+
+        fixum parseResult = resolvere(lexResult.symbola)
+
+        si parseResult.errores.longitudo() > 0 {
+            ex parseResult.errores fixum err {
+                consolum.mone(stdinFilename + ":" + err.locus.linea.textum() + ":" + err.locus.columna.textum() + ": " + err.nuntius)
+            }
+            redde
+        }
+
+        si nihil parseResult.programma {
+            consolum.mone("Parse failed")
+            redde
+        }
+
+        fixum output = generate(parseResult.programma.corpus, target, stdinFilename)
+        consolum.scribe(output)
+        redde
+    }
+
+    consolum.mone("Unknown command: " + command)
+    consolum.mone("Commands: lex, parse, emit")
+}
+
+main()
