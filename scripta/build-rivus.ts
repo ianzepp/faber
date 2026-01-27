@@ -174,6 +174,17 @@ async function typeCheck(): Promise<boolean> {
     return true;
 }
 
+async function syntaxCheckPy(): Promise<boolean> {
+    // Syntax check all generated Python files
+    const moduleDir = dirname(OUTPUT);
+    const result = await $`python3 -m compileall -q ${moduleDir}`.nothrow();
+    if (result.exitCode !== 0) {
+        console.error(result.stderr.toString());
+        return false;
+    }
+    return true;
+}
+
 async function injectExternImpls(): Promise<void> {
     const modulusPath = join(OUTPUT, 'semantic', 'modulus.ts');
     let modulusContent = await Bun.file(modulusPath).text();
@@ -493,6 +504,13 @@ async function main() {
         if (await copyNorma(target)) {
             console.log('  Copied HAL implementations');
         }
+        console.log('  Syntax checking...');
+        const syntaxOk = await syntaxCheckPy();
+        if (!syntaxOk) {
+            console.error('  Python syntax check failed');
+            process.exit(1);
+        }
+        console.log('  Syntax check passed');
         await buildExecutablePy();
         console.log(`  Built opus/bin/rivus-${compiler}`);
     }
