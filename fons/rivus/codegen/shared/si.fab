@@ -12,12 +12,12 @@ importa ex "./generans" privata Generans
 
 # Build the if/else-if/else chain without cape wrapper
 functio genSiCatena(
-    itera de Expressia condicio,
-    itera de Sententia consequens,
+    de Expressia condicio,
+    de Sententia consequens,
     ignotum alternans,
     in Generans g,
-    itera de ScopusSyntaxis syn,
-    itera de Revocata rev
+    de ScopusSyntaxis syn,
+    de Revocata rev
 ) -> textus {
     g.intraProfundum()
     fixum consBody = rev.genStmt(g, consequens)
@@ -83,13 +83,13 @@ functio genSiCatena(
 # Main entry point - handles optional cape wrapper
 @ publica
 functio genSiLogica(
-    itera de Expressia condicio,
-    itera de Sententia consequens,
+    de Expressia condicio,
+    de Sententia consequens,
     ignotum alternans,
     ignotum cape,
     in Generans g,
-    itera de ScopusSyntaxis syn,
-    itera de Revocata rev
+    de ScopusSyntaxis syn,
+    de Revocata rev
 ) -> textus {
     # If target supports cape and cape is present, wrap in try/catch
     si nonnihil cape et syn.habetCape {

@@ -109,8 +109,8 @@ functio genericumTypus(ex textus nomen, ex lista<SemanticTypus> parametri, bival
 # Create a function type
 @ publica
 functio functioTypus(
-    itera ex lista<SemanticTypus> parametriTypi,
-    itera ex SemanticTypus reditusTypus,
+    ex lista<SemanticTypus> parametriTypi,
+    ex SemanticTypus reditusTypus,
     bivalens asyncronum,
     bivalens habetCuratorem
 ) -> SemanticTypus {
@@ -156,11 +156,11 @@ functio ordoTypus(ex textus nomen, ex tabula<textus, SemanticTypus> membra, biva
 # Create a genus type
 @ publica
 functio genusTypus(
-    itera ex textus nomen,
-    itera ex tabula<textus, SemanticTypus> agri,
-    itera ex tabula<textus, SemanticTypus> methodi,
-    itera ex tabula<textus, SemanticTypus> agriStatici,
-    itera ex tabula<textus, SemanticTypus> methodiStatici,
+    ex textus nomen,
+    ex tabula<textus, SemanticTypus> agri,
+    ex tabula<textus, SemanticTypus> methodi,
+    ex tabula<textus, SemanticTypus> agriStatici,
+    ex tabula<textus, SemanticTypus> methodiStatici,
     bivalens nullabilis
 ) -> SemanticTypus {
     redde finge Genus {

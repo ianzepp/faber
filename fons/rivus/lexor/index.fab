@@ -270,11 +270,11 @@ genus Lexor {
     # Returns verum if prefix matched (even if malformed), falsum otherwise
     # radix: "hex", "bin", "oct"
     functio legeNumerumRadix(
-        itera de textus praefixumMinor,
-        itera de textus praefixumMaior,
-        itera de textus radix,
+        de textus praefixumMinor,
+        de textus praefixumMaior,
+        de textus radix,
         LexorErrorCodice errorCodice,
-        itera ex Locus loc
+        ex Locus loc
     ) -> bivalens {
         # Check for prefix: 0x, 0b, 0o (case insensitive)
         si ego.specta(0) != "0" {

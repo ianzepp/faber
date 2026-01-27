@@ -102,7 +102,7 @@ functio mergeSectiones(
 # manifestSectiones: optional sectiones from project manifest (faber.fab)
 @ publica
 functio analyze(
-    itera de Programma programma,
+    de Programma programma,
     si de lista<SectioAnnotatio> manifestSectiones,
     si de textus viaIngressus
 ) -> SemanticResultatum {

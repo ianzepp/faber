@@ -79,8 +79,8 @@ functio estDependentiaImportum(de textus fons) -> bivalens {
 # Does NOT resolve to absolute path - caller should use resolveModulum for that
 @ publica
 functio resolveDependentiaPath(
-    itera de textus fons,
-    itera de tabula<textus, Dependentia> registry
+    de textus fons,
+    de tabula<textus, Dependentia> registry
 ) -> si textus {
     # Split on colon: "alias:subpath" -> ["alias", "subpath"]
     fixum partes = fons.divide(":") qua lista<textus>
@@ -353,8 +353,8 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
 # Handles path resolution, caching, cycle detection, parsing, and export extraction
 @ publica
 functio resolveModulum(
-    itera de textus fons,
-    itera de textus viaBasica,
+    de textus fons,
+    de textus viaBasica,
     in tabula<textus, ModulusResolutum> cache,
     in copia<textus> inProgressu
 ) -> si ModulusResolutum {

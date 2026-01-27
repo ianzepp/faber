@@ -881,7 +881,9 @@ functio genIteratio(in GlyphGenerator g, de IteratioSententia s) -> textus {
     fixum rbr = glyphDelimiter("]")
     fixum comma = glyphPunctuation(",")
 
-    fixum prepo = ((s.species qua IteratioGenus) == IteratioGenus.Ex) sic glyphKeyword("ex") secus glyphKeyword("de")
+    varia prepo = glyphKeyword("ex")
+    si s.species == IteratioGenus.De { prepo = glyphKeyword("de") }
+    sin s.species == IteratioGenus.Pro { prepo = glyphKeyword("pro") }
     fixum keyword = (s.mutabilis qua bivalens) sic glyphKeyword("varia") secus glyphKeyword("fixum")
     fixum asyncMark = (s.asynca qua bivalens) sic (glyphKeyword("cede") + " ") secus ""
 
@@ -908,11 +910,12 @@ functio genIteratio(in GlyphGenerator g, de IteratioSententia s) -> textus {
     fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus qua lista<Sententia>)
     g.exiProfundum()
 
+    fixum itera = glyphKeyword("itera")
     varia result = ""
     si body == "" {
-        result = scriptum("§§ §§ § § §§", g.ind(), prepo, asyncMark, genExpressia(g, s.iterabile), keyword, binding, lb, rb)
+        result = scriptum("§§ § §§ § § §§", g.ind(), itera, prepo, asyncMark, genExpressia(g, s.iterabile), keyword, binding, lb, rb)
     } secus {
-        result = scriptum("§§ §§ § § §\n§\n§§", g.ind(), prepo, asyncMark, genExpressia(g, s.iterabile), keyword, binding, lb, body, g.ind(), rb)
+        result = scriptum("§§ § §§ § § §\n§\n§§", g.ind(), itera, prepo, asyncMark, genExpressia(g, s.iterabile), keyword, binding, lb, body, g.ind(), rb)
     }
 
     si nonnihil s.cape {

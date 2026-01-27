@@ -1,31 +1,31 @@
 # Ranges with step using per
 #
-# itera ex <start>..<end> per <step> fixum <item> { }
-# itera ex <start> usque <end> per <step> fixum <item> { }
+# itera pro <start>..<end> per <step> fixum <item> { }
+# itera pro <start> usque <end> per <step> fixum <item> { }
 
 incipit {
     # Step by 2 (exclusive: 0, 2, 4, 6, 8)
-    itera ex 0..10 per 2 fixum i {
+    itera pro 0..10 per 2 fixum i {
         scribe i
     }
 
     # Step by 2 (inclusive: 0, 2, 4, 6, 8, 10)
-    itera ex 0 usque 10 per 2 fixum i {
+    itera pro 0 usque 10 per 2 fixum i {
         scribe i
     }
 
     # Step by 3
-    itera ex 0..15 per 3 fixum i {
+    itera pro 0..15 per 3 fixum i {
         scribe i
     }
 
     # Countdown with negative step
-    itera ex 10..0 per -1 fixum i {
+    itera pro 10..0 per -1 fixum i {
         scribe i
     }
 
     # Countdown by 2
-    itera ex 10..0 per -2 fixum i {
+    itera pro 10..0 per -2 fixum i {
         scribe i
     }
 }

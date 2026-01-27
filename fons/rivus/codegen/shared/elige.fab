@@ -17,13 +17,13 @@ importa ex "./generans" privata Generans
 # Main entry point - generates if/else chain with optional cape wrapper
 @ publica
 functio genEligeLogica(
-    itera de Expressia discriminans,
-    itera de lista<EligeCasus> casus,
+    de Expressia discriminans,
+    de lista<EligeCasus> casus,
     ignotum praedefinitum,
     ignotum cape,
     in Generans g,
-    itera de ScopusSyntaxis syn,
-    itera de Revocata rev
+    de ScopusSyntaxis syn,
+    de Revocata rev
 ) -> textus {
     fixum disc = rev.genExpr(g, discriminans)
     varia wrapTry = nonnihil cape et syn.habetCape

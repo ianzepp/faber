@@ -13,12 +13,12 @@ importa ex "./generans" privata Generans
 # Main entry point - handles while loop with optional cape wrapper
 @ publica
 functio genDumLogica(
-    itera de Expressia condicio,
-    itera de Sententia corpus,
+    de Expressia condicio,
+    de Sententia corpus,
     ignotum cape,
     in Generans g,
-    itera de ScopusSyntaxis syn,
-    itera de Revocata rev
+    de ScopusSyntaxis syn,
+    de Revocata rev
 ) -> textus {
     g.intraProfundum()
     fixum body = rev.genStmt(g, corpus)

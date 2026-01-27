@@ -52,6 +52,7 @@ ordo ScribeGradus {
 ordo IteratioGenus {
     Ex      # iterate values (for...of)
     De      # iterate keys (for...in)
+    Pro     # iterate range (for i = 0; i < n; i++)
 }
 
 # Curator kind for cura statements

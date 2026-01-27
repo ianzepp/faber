@@ -1,13 +1,12 @@
 # Control Flow Statement Parsers
 #
-# Handles: si, dum, ex, de, in (conditionals and loops)
+# Handles: si, dum, itera (ex/de/pro), in (conditionals and loops)
 #
 # GRAMMAR:
 #   siStmt := 'si' expr blockStmt ('secus' 'si' expr blockStmt)* ('secus' blockStmt)?
 #           | 'si' expr blockStmt 'cape' IDENT blockStmt
 #   dumStmt := 'dum' expr blockStmt ('cape' IDENT blockStmt)?
-#   exStmt := 'ex' expr ('fixum'|'varia') (IDENT | arrayPattern) blockStmt ('cape' IDENT blockStmt)?
-#   deStmt := 'de' expr ('fixum'|'varia') (IDENT | arrayPattern) blockStmt ('cape' IDENT blockStmt)?
+#   iteraStmt := 'itera' ('ex'|'de'|'pro') expr ('fixum'|'varia') (IDENT | arrayPattern) blockStmt ('cape' IDENT blockStmt)?
 #   inStmt := 'in' expr blockStmt
 #
 # LATIN VOCABULARY:
@@ -15,8 +14,9 @@
 # - secus = else
 # - sin = else if
 # - dum = while
-# - ex = from (iterate values)
-# - de = from (iterate keys)
+# - ex = from (iterate values from collection)
+# - de = from (iterate keys from collection)
+# - pro = for (iterate range)
 # - in = into (mutation)
 # - fixum = const binding
 # - varia = mutable binding
@@ -156,13 +156,13 @@ functio parseDumSententia(in Resolvitor r) -> Sententia {
     } qua Sententia
 }
 
-# Parse iteration loop (itera ex/itera de)
+# Parse iteration loop (itera ex/itera de/itera pro)
 #
-# GRAMMAR: iteraStmt := 'itera' ('ex'|'de') expr ('fixum'|'varia') (IDENT | arrayPattern) blockStmt ('cape' IDENT blockStmt)?
+# GRAMMAR: iteraStmt := 'itera' ('ex'|'de'|'pro') expr ('fixum'|'varia') (IDENT | arrayPattern) blockStmt ('cape' IDENT blockStmt)?
 #
 # Examples:
 #   itera ex items fixum item { scribe item }
-#   itera ex 0 ante 10 varia i { scribe i }
+#   itera pro 0 ante 10 varia i { scribe i }
 #   itera de obiectum fixum clavis { scribe clavis }
 @ publica
 functio parseIteraSententia(in Resolvitor r) -> Sententia {
@@ -172,7 +172,7 @@ functio parseIteraSententia(in Resolvitor r) -> Sententia {
     # Consume 'itera'
     p.expectaVerbum("itera", ParserErrorCodice.ExpectaturEx)
 
-    # Determine species: ex (values) or de (keys)
+    # Determine species: ex (values), de (keys), or pro (ranges)
     varia species = IteratioGenus.Ex
     si p.probaVerbum("ex") {
         p.procede()
@@ -180,12 +180,28 @@ functio parseIteraSententia(in Resolvitor r) -> Sententia {
     } sin p.probaVerbum("de") {
         p.procede()
         species = IteratioGenus.De
+    } sin p.probaVerbum("pro") {
+        p.procede()
+        species = IteratioGenus.Pro
     } secus {
-        p.renuncia(ParserErrorCodice.InvalidumExDeInitium, "expected 'ex' or 'de' after 'itera'")
+        p.renuncia(ParserErrorCodice.InvalidumExDeInitium, "expected 'ex', 'de', or 'pro' after 'itera'")
     }
 
     # Parse iterable expression
     fixum iterabile = r.expressia()
+
+    # Validate species-expression match
+    varia estAmbitus = falsum
+    discerne iterabile {
+        casu AmbitusExpressia { estAmbitus = verum }
+        ceterum tacet
+    }
+
+    si species == IteratioGenus.Pro et non estAmbitus {
+        p.renuncia(ParserErrorCodice.InvalidumExDeInitium, "'itera pro' requires a range expression (use .. or ante/usque)")
+    } sin estAmbitus et species != IteratioGenus.Pro {
+        p.renuncia(ParserErrorCodice.InvalidumExDeInitium, "range expressions require 'itera pro', not 'itera " + (species == IteratioGenus.Ex sic "ex" secus "de") + "'")
+    }
 
     # Parse binding keyword: fixum (const) or varia (let)
     varia mutabilis = falsum

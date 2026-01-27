@@ -18,17 +18,17 @@ importa ex "./generans" privata Generans
 # Returns the loop string, optionally wrapped in try/catch.
 @ publica
 functio genAmbitusIteratio(
-    itera de textus variabilis,
-    itera de textus initium,
-    itera de textus finis,
+    de textus variabilis,
+    de textus initium,
+    de textus finis,
     bivalens inclusivum,
     ignotum gradusExpr,
-    itera de textus body,
+    de textus body,
     bivalens asynca,
     ignotum cape,
     in Generans g,
-    itera de ScopusSyntaxis syn,
-    itera de Revocata rev
+    de ScopusSyntaxis syn,
+    de Revocata rev
 ) -> textus {
     fixum op = inclusivum sic "<=" secus "<"
 
