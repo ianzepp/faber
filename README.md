@@ -33,7 +33,7 @@ The workflow: LLM drafts Faber → Human approves → Compiler emits production 
 
 ## Why It Works
 
-**No ecosystem problem.** Faber compiles to the target language, so you use its libraries directly. `§ ex "hono" importa Hono` becomes `import { Hono } from 'hono'`. No need to rewrite npm/PyPI/crates.io in a new language.
+**No ecosystem problem.** Faber compiles to the target language, so you use its libraries directly. `importa ex "hono" privata Hono` becomes `import { Hono } from 'hono'`. No need to rewrite npm/PyPI/crates.io in a new language.
 
 **Grammar designed for LLMs.** The [EBNF.md](EBNF.md) specification is built for LLM consumption: formal grammar, type tables, keyword mappings. Trials show models achieve 96-98% accuracy after reading the grammar specification alone — no prose documentation required.
 
@@ -77,7 +77,7 @@ See [faber-trials/docs/framework-1.1-results.md](https://github.com/ianzepp/fabe
 Faber uses the `§` symbol as a distinctive marker for declarative constructs:
 
 - **String formatting**: `scriptum("Hello, §!", name)` → `"Hello, World!"`
-- **Imports**: `§ ex "hono" importa Hono` → `import { Hono } from 'hono'`
+- **Imports**: `importa ex "hono" privata Hono` → `import { Hono } from 'hono'`
 - **File-level directives**: `§ dependentia "hono" github "honojs/hono#main" via "."`
 
 The `§` symbol (section marker) distinguishes file-level configuration and imports from executable code. Use `@` for code annotations like `@ futura`, `@ radix`, `@ verte`.

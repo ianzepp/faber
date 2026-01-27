@@ -171,17 +171,20 @@ Example:
 ### Imports
 
 ```ebnf
-importDecl    := '§' 'ex' (STRING | IDENTIFIER) 'importa' (specifierList | '*' ('ut' IDENTIFIER)?)
-specifierList := specifier (',' specifier)*
-specifier     := IDENTIFIER ('ut' IDENTIFIER)?
+importDecl    := 'importa' 'ex' STRING visibility (namedImport | wildcardImport)
+visibility    := 'privata' | 'publica'
+namedImport   := IDENTIFIER ('ut' IDENTIFIER)?
+wildcardImport := '*' 'ut' IDENTIFIER
 ```
 
 Example:
 
 ```fab
-§ ex "hono" importa Hono, Context
-§ ex norma importa scribe ut s
-§ ex "lodash" importa * ut _
+importa ex "hono" privata Hono
+importa ex "hono" privata Context
+importa ex "norma:scribe" privata scribe ut s
+importa ex "lodash" privata * ut _
+importa ex "./types" publica User               # re-export
 ```
 
 ---
