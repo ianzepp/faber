@@ -9,6 +9,7 @@ importa ex "../typi" privata NUMERUS
 importa ex "../typi" privata BIVALENS
 importa ex "../typi" privata IGNOTUM
 importa ex "../typi" privata formaTypum
+importa ex "../typi" privata sineNullabilitate
 importa ex "../errores" privata incompatibleComparisonError
 importa ex "../errores" privata nihilEqualityWarning
 importa ex "../../ast/expressia" privata Expressia
@@ -110,6 +111,42 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
                 redde BIVALENS
             }
 
+            # Bitwise operators: &, |, ^
+            si estBitwise(b.signum) {
+                # Both operands must be numerus (integer)
+                varia sinisterOk = falsum
+                varia dexterOk = falsum
+
+                discerne sinisterTypus {
+                    casu Primitivum ut p {
+                        sinisterOk = p.nomen == "numerus"
+                    }
+                    casu _ tacet
+                }
+
+                discerne dexterTypus {
+                    casu Primitivum ut p {
+                        dexterOk = p.nomen == "numerus"
+                    }
+                    casu _ tacet
+                }
+
+                si non sinisterOk aut non dexterOk {
+                    a.error(
+                        scriptum("Bitwise operator '§' requires numerus operands, got § and §", b.signum, formaTypum(sinisterTypus), formaTypum(dexterTypus)),
+                        b.locus,
+                        "Bitwise operators only work on integers"
+                    )
+                }
+
+                redde NUMERUS
+            }
+
+            # Nullish coalescing: vel
+            si b.signum == "vel" {
+                redde sineNullabilitate(sinisterTypus)
+            }
+
             # EDGE: Unknown operator - return ignotum to avoid nil leakage.
             redde IGNOTUM
         }
@@ -137,6 +174,11 @@ functio estComparatio(textus signum) -> bivalens {
 @ publica
 functio estLogicum(textus signum) -> bivalens {
     redde signum inter ["&&", "||", "et", "aut"]
+}
+
+@ publica
+functio estBitwise(textus signum) -> bivalens {
+    redde signum inter ["&", "|", "^"]
 }
 
 @ publica

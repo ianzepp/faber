@@ -411,13 +411,18 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
 
         # Discretio construction
         casu FingeExpressia ut e {
-            # finge Click { x: 10 } qua Event -> { tag: 'Click', x: 10 }
+            # finge Click { x: 10 } qua Event -> { tag: 'Click', x: 10 } as Event
             varia props = [] innatum lista<textus>
             props.appende(scriptum("tag: '§'", e.variansNomen))
             itera ex (e.campi qua lista<ObiectumProprietas>) fixum campo {
                 fixum key = genExpressia(g, campo.clavis)
                 fixum val = genExpressia(g, campo.valor)
                 props.appende(scriptum("§: §", key, val))
+            }
+            # WHY: Emit 'as Type' when qua clause is present, so TypeScript
+            # preserves literal tag types for nested discriminated unions.
+            si nonnihil e.scopus {
+                redde scriptum("({ § } as §)", props.coniunge(", "), genTypus(g, e.scopus novum TypusAnnotatio))
             }
             redde scriptum("{ § }", props.coniunge(", "))
         }

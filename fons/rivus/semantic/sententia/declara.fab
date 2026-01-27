@@ -316,7 +316,6 @@ functio analyzeFunctioDeclaratio(Resolvitor r, Sententia functioStmt) -> vacuum 
                     paramTypi.appende(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
                 } secus {
                     a.error("Function parameter missing type annotation", param.locus, "Use type-first syntax: functio f(numerus x) { ... }")
-                    a.moneIgnotum("missing function parameter type annotation", param.locus)
                     paramTypi.appende(IGNOTUM)
                 }
             }
@@ -441,7 +440,6 @@ functio analyzeGenusDeclaratio(Resolvitor r, Sententia genusStmt) -> vacuum {
                         paramTypi.appende(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
                     } secus {
                         a.error("Method parameter missing type annotation", param.locus, "Use type-first syntax: functio f(numerus x) { ... }")
-                        a.moneIgnotum("missing method parameter type annotation", param.locus)
                         paramTypi.appende(IGNOTUM)
                     }
                 }
@@ -562,7 +560,6 @@ functio analyzePactumDeclaratio(Resolvitor r, Sententia pactumStmt) -> vacuum {
                         paramTypi.appende(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
                     } secus {
                         a.error("Pactum method parameter missing type annotation", param.locus, "Use type-first syntax: functio f(numerus x) -> numerus")
-                        a.moneIgnotum("missing pactum method parameter type annotation", param.locus)
                         paramTypi.appende(IGNOTUM)
                     }
                 }

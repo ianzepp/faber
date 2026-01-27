@@ -152,7 +152,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                 si nonnihil param.typus {
                     paramTypi.appende(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
                 } secus {
-                    a.moneIgnotum("predeclare: missing function parameter type annotation", param.locus)
+                    a.error("Function parameter missing type annotation", param.locus, "Use type-first syntax: functio f(numerus x) { ... }")
                     paramTypi.appende(IGNOTUM)
                 }
             }

@@ -230,7 +230,7 @@ functio typiAequales(de SemanticTypus a, de SemanticTypus b) -> bivalens {
         casu Primitivum ut pa {
             discerne b {
                 casu Primitivum ut pb {
-                    redde pa.nomen == pb.nomen
+                    redde pa.nomen == pb.nomen et pa.nullabilis == pb.nullabilis
                 }
                 ceterum {
                     redde falsum
@@ -241,7 +241,7 @@ functio typiAequales(de SemanticTypus a, de SemanticTypus b) -> bivalens {
         casu Genericum ut ga {
             discerne b {
                 casu Genericum ut gb {
-                    si ga.nomen != gb.nomen {
+                    si ga.nomen != gb.nomen aut ga.nullabilis != gb.nullabilis {
                         redde falsum
                     }
                     si ga.parametri.longitudo() != gb.parametri.longitudo() {
@@ -330,7 +330,7 @@ functio typiAequales(de SemanticTypus a, de SemanticTypus b) -> bivalens {
         casu Usitatum ut usa {
             discerne b {
                 casu Usitatum ut usb {
-                    redde usa.nomen == usb.nomen
+                    redde usa.nomen == usb.nomen et usa.nullabilis == usb.nullabilis
                 }
                 ceterum {
                     redde falsum
@@ -341,7 +341,7 @@ functio typiAequales(de SemanticTypus a, de SemanticTypus b) -> bivalens {
         casu Ordo ut oa {
             discerne b {
                 casu Ordo ut ob {
-                    redde oa.nomen == ob.nomen
+                    redde oa.nomen == ob.nomen et oa.nullabilis == ob.nullabilis
                 }
                 ceterum {
                     redde falsum
@@ -352,7 +352,7 @@ functio typiAequales(de SemanticTypus a, de SemanticTypus b) -> bivalens {
         casu Genus ut gea {
             discerne b {
                 casu Genus ut geb {
-                    redde gea.nomen == geb.nomen
+                    redde gea.nomen == geb.nomen et gea.nullabilis == geb.nullabilis
                 }
                 ceterum {
                     redde falsum
@@ -363,7 +363,7 @@ functio typiAequales(de SemanticTypus a, de SemanticTypus b) -> bivalens {
         casu Pactum ut paa {
             discerne b {
                 casu Pactum ut pab {
-                    redde paa.nomen == pab.nomen
+                    redde paa.nomen == pab.nomen et paa.nullabilis == pab.nullabilis
                 }
                 ceterum {
                     redde falsum
@@ -430,20 +430,14 @@ functio assignabileAd(de SemanticTypus fons, de SemanticTypus scopus) -> bivalen
         casu _ tacet
     }
 
-    # Numeric type promotion: numerus -> fractus, numerus -> decimus
-    discerne fons {
-        casu Primitivum ut pf {
-            discerne scopus {
-                casu Primitivum ut ps {
-                    si estNumericum(pf.nomen) et estNumericum(ps.nomen) {
-                        redde verum
-                    }
-                }
-                casu _ tacet
-            }
-        }
-        casu _ tacet
-    }
+    # WHY NO IMPLICIT NUMERIC COERCION:
+    # Target languages have varying strictness for numeric conversions:
+    # - TypeScript: permissive (numerus/fractus both map to `number`)
+    # - Go: strict (int64/float64 require explicit casts)
+    # - Rust: strictest (no implicit conversions, even widening i32→i64)
+    # To support strict targets without silent data loss (fractus→numerus truncation),
+    # Faber requires explicit `qua` casts for all numeric type conversions.
+    # Same-type assignment falls through to typiAequales() below.
 
     # Check if source is in target union
     discerne scopus {
@@ -564,4 +558,64 @@ functio formaTypum(de SemanticTypus t) -> textus {
     }
 
     redde "ignotum"
+}
+
+# Strip nullability from a type (for vel/nullish coalescing narrowing)
+@ publica
+functio sineNullabilitate(de SemanticTypus t) -> SemanticTypus {
+    discerne t {
+        casu Primitivum ut p {
+            si non p.nullabilis { redde t }
+            redde finge Primitivum {
+                nomen: p.nomen,
+                nullabilis: falsum,
+                amplitudo: p.amplitudo
+            } qua SemanticTypus
+        }
+        casu Genericum ut g {
+            si non g.nullabilis { redde t }
+            redde finge Genericum {
+                nomen: g.nomen,
+                parametri: g.parametri,
+                nullabilis: falsum
+            } qua SemanticTypus
+        }
+        casu Usitatum ut u {
+            si non u.nullabilis { redde t }
+            redde finge Usitatum {
+                nomen: u.nomen,
+                nullabilis: falsum
+            } qua SemanticTypus
+        }
+        casu Ordo ut o {
+            si non o.nullabilis { redde t }
+            redde finge Ordo {
+                nomen: o.nomen,
+                membra: o.membra,
+                nullabilis: falsum
+            } qua SemanticTypus
+        }
+        casu Genus ut g {
+            si non g.nullabilis { redde t }
+            redde finge Genus {
+                nomen: g.nomen,
+                agri: g.agri,
+                methodi: g.methodi,
+                agriStatici: g.agriStatici,
+                methodiStatici: g.methodiStatici,
+                nullabilis: falsum
+            } qua SemanticTypus
+        }
+        casu Pactum ut p {
+            si non p.nullabilis { redde t }
+            redde finge Pactum {
+                nomen: p.nomen,
+                methodi: p.methodi,
+                nullabilis: falsum
+            } qua SemanticTypus
+        }
+        casu _ {
+            redde t
+        }
+    }
 }
