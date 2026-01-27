@@ -196,20 +196,46 @@ const _resolve = (basis: string, relativum: string): string => resolve(basis, re
     await Bun.write(modulusPath, modulusContent);
 }
 
-async function copyHalImplementations(): Promise<void> {
-    const halSource = join(ROOT, 'fons', 'norma-ts', 'hal');
-    // WHY: Imports from rivus source use paths like ../../norma-ts/hal/solum.ts
-    // which resolves relative to opus/{compiler}/fons/semantic/ -> opus/{compiler}/norma-ts/hal/
-    const halDest = join(dirname(OUTPUT), 'norma-ts', 'hal');
+const TARGET_EXT: Record<Target, string> = {
+    'ts': '.ts',
+    'go': '.go',
+    'rs': '.rs',
+    'py': '.py',
+};
+
+/**
+ * Copy HAL implementations for the target language.
+ * Source: fons/norma-{target}/hal/
+ * Dest: opus/{compiler}/norma/hal/
+ * Returns false if source directory doesn't exist.
+ */
+async function copyHalImplementations(target: Target): Promise<boolean> {
+    const halSource = join(ROOT, 'fons', `norma-${target}`, 'hal');
+
+    // Check if HAL source exists for this target
+    if (!await Bun.file(halSource).exists().catch(() => false)) {
+        try {
+            const { readdirSync } = await import('node:fs');
+            readdirSync(halSource);
+        } catch {
+            return false;
+        }
+    }
+
+    // WHY: Imports from rivus source use paths like ../../norma/hal/solum
+    // which resolves relative to opus/{compiler}/fons/semantic/ -> opus/{compiler}/norma/hal/
+    const halDest = join(dirname(OUTPUT), 'norma', 'hal');
     await mkdir(halDest, { recursive: true });
 
-    const glob = new Glob('*.ts');
+    const ext = TARGET_EXT[target];
+    const glob = new Glob(`*${ext}`);
     for await (const file of glob.scan({ cwd: halSource, absolute: false })) {
-        if (file.endsWith('.test.ts')) { continue; }
+        if (file.includes('.test.')) { continue; }
         const src = join(halSource, file);
         const dest = join(halDest, file);
         await Bun.write(dest, await Bun.file(src).text());
     }
+    return true;
 }
 
 async function copyCliShim(): Promise<void> {
@@ -419,8 +445,9 @@ async function main() {
         console.log('  Copied CLI shim');
 
         // Copy HAL implementations for norma:* imports
-        await copyHalImplementations();
-        console.log('  Copied HAL implementations');
+        if (await copyHalImplementations(target)) {
+            console.log('  Copied HAL implementations');
+        }
 
         // Type check the generated TypeScript
         if (!skipTypecheck) {
@@ -443,11 +470,17 @@ async function main() {
         console.log(`  Built opus/bin/rivus-${compiler}`);
     } else if (target === 'go') {
         console.log('\nGo post-processing:');
+        if (await copyHalImplementations(target)) {
+            console.log('  Copied HAL implementations');
+        }
         console.log('  Building rivus executable...');
         await buildExecutableGo();
         console.log(`  Built opus/bin/rivus-${compiler}`);
     } else if (target === 'rs') {
         console.log('\nRust post-processing:');
+        if (await copyHalImplementations(target)) {
+            console.log('  Copied HAL implementations');
+        }
         console.log(compiler === 'nanus-rs' ? '  Checking rivus crate...' : '  Building rivus executable...');
         await buildExecutableRs();
         if (compiler === 'nanus-rs') {
@@ -457,6 +490,9 @@ async function main() {
         }
     } else if (target === 'py') {
         console.log('\nPython post-processing:');
+        if (await copyHalImplementations(target)) {
+            console.log('  Copied HAL implementations');
+        }
         await buildExecutablePy();
         console.log(`  Built opus/bin/rivus-${compiler}`);
     }

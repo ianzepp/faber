@@ -155,7 +155,7 @@ functio findProjectRoot(de textus fromPath) -> si textus {
 # Resolve norma:X import to HAL implementation path
 # Returns relative path from OUTPUT file to HAL implementation
 # Output structure: opus/COMPILER/fons/X/Y.ts (without rivus/ level)
-# HAL is at: opus/COMPILER/norma-ts/hal/
+# HAL is at: opus/COMPILER/norma/hal/
 @ publica
 functio resolveNormaHal(de textus importPath, si de textus viaFons) -> si textus {
     si nihil viaFons { redde nihil }
@@ -197,7 +197,7 @@ functio resolveNormaHal(de textus importPath, si de textus viaFons) -> si textus
         j += 1
     }
 
-    redde prefix + "norma-ts/hal/" + moduleName
+    redde prefix + "norma/hal/" + moduleName
 }
 
 # =============================================================================
